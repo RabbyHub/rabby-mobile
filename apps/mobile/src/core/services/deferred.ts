@@ -90,7 +90,11 @@ export function ensureDeferredService(name: string) {
 
   const loader = serviceLoaderMap.get(name);
   if (!loader) {
-    return Promise.resolve();
+    const error = new Error(
+      `Deferred service "${name}" has no registered loader`,
+    );
+    rejectWaiters(name, error);
+    return Promise.reject(error);
   }
 
   const pendingLoader = serviceLoaderPromiseMap.get(name);

@@ -32,6 +32,7 @@ export class TransactionWatcherService {
   store!: TransactionWatcherStore;
   timers = {};
   transactionHistoryService: TransactionHistoryService;
+  private started = false;
 
   constructor(
     options: StorageAdapaterOptions & {
@@ -157,6 +158,14 @@ export class TransactionWatcherService {
   };
 
   // fetch pending txs status every 5s
+  start = () => {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.roll();
+  };
+
   roll = () => {
     interval(async () => {
       const list = Object.keys(this.store.pendingTx);

@@ -1,13 +1,7 @@
 import type { MetamaskModeService } from '@/core/services/metamaskModeService';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type MetamaskModeServiceApiContract = MetamaskModeService;
-
-registerLegacyCoreServiceLoader('metamaskModeService');
-
 export const metamaskModeServiceApi = createDeferredServiceApi<
   'metamaskModeService',
   MetamaskModeServiceApiContract

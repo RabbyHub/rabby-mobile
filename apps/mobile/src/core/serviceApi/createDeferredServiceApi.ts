@@ -3,18 +3,12 @@ import {
   ensureCoreService,
   getRegisteredService,
   isCoreServiceRegistered,
-  registerCoreServiceLoader,
   waitForCoreService,
 } from '@/core/services/serviceRegistry';
 import type {
   CoreServiceName,
   CoreServiceRegistry,
 } from '@/core/services/serviceRegistry';
-import { runOnDemandStartupTask } from '@/core/utils/startupScheduler';
-import type {
-  StartupTaskOptions,
-  StartupTaskPriority,
-} from '@/core/utils/startupScheduler';
 import type {
   MethodArgs,
   MethodReturn,
@@ -26,63 +20,6 @@ export type DeferredServiceApi<TService extends object> = {
     ...args: MethodArgs<TService, TMethod>
   ) => Promise<MethodReturn<TService, TMethod>>;
 };
-
-const featureCoreServiceLoadPromiseMap = new Map<string, Promise<void>>();
-
-const CORE_SERVICE_LOAD_PRIORITIES: Partial<
-  Record<CoreServiceName, StartupTaskPriority>
-> = {
-  keyringService: 'critical',
-  preferenceService: 'critical',
-  securityEngineService: 'high',
-  transactionHistoryService: 'high',
-  notificationService: 'high',
-};
-
-function getCoreServiceLoaderTaskOptions(
-  name: CoreServiceName,
-): StartupTaskOptions {
-  return {
-    label: `service.${name}.load`,
-    owner: 'service',
-    reason:
-      'load a core service implementation after an explicit service API demand',
-    stage: 'onDemand',
-    priority: CORE_SERVICE_LOAD_PRIORITIES[name] || 'normal',
-    budgetMs: 240,
-  };
-}
-
-function loadFeatureCoreService(name: CoreServiceName) {
-  const pending = featureCoreServiceLoadPromiseMap.get(name);
-  if (pending) {
-    return pending;
-  }
-
-  const loadPromise = Promise.resolve(
-    runOnDemandStartupTask(
-      () =>
-        import('@/core/services/featureLoaders').then(module =>
-          module.loadFeatureCoreService(name),
-        ),
-      getCoreServiceLoaderTaskOptions(name),
-    ),
-  )
-    .then(() => undefined)
-    .catch(error => {
-      featureCoreServiceLoadPromiseMap.delete(name);
-      throw error;
-    });
-
-  featureCoreServiceLoadPromiseMap.set(name, loadPromise);
-  return loadPromise;
-}
-
-export function registerLegacyCoreServiceLoader<Name extends CoreServiceName>(
-  name: Name,
-) {
-  return registerCoreServiceLoader(name, () => loadFeatureCoreService(name));
-}
 
 export function createDeferredServiceApi<
   Name extends CoreServiceName,

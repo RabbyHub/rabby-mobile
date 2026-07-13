@@ -8,15 +8,9 @@ import type {
   TokenDisplayMode,
 } from '@/core/startupServices/preference';
 import { getRegisteredService } from '@/core/services/serviceRegistry';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type PreferenceServiceApiContract = PreferenceService;
-
-registerLegacyCoreServiceLoader('preferenceService');
-
 export const preferenceServiceApi = createDeferredServiceApi<
   'preferenceService',
   PreferenceServiceApiContract

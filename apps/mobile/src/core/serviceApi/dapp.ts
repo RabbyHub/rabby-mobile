@@ -10,14 +10,10 @@ import {
 } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
   runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type DappServiceApiContract = DappService;
-
-registerLegacyCoreServiceLoader('dappService');
-
 export const dappServiceApi = createDeferredServiceApi<
   'dappService',
   DappServiceApiContract

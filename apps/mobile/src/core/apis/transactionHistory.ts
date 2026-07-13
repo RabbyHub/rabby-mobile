@@ -1,12 +1,10 @@
 import BigNumber from 'bignumber.js';
-import {
-  transactionBroadcastWatcherServiceApi,
-  transactionWatcherServiceApi,
-} from '@/core/serviceApi';
+import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import {
   getTransactionHistoryTransactionsSnapshot,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
+import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { groupBy } from 'lodash';
 import { findChain } from '@/utils/chain';

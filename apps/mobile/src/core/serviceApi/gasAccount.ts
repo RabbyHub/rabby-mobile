@@ -2,14 +2,10 @@ import type { GasAccountService } from '@/core/services/gasAccount';
 import { getRegisteredService } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
   runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type GasAccountServiceApiContract = GasAccountService;
-
-registerLegacyCoreServiceLoader('gasAccountService');
-
 export const gasAccountServiceApi = createDeferredServiceApi<
   'gasAccountService',
   GasAccountServiceApiContract

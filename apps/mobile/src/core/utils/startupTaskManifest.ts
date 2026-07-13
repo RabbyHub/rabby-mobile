@@ -133,6 +133,16 @@ export const STARTUP_TASKS = {
     priority: 'normal',
     budgetMs: 80,
   }),
+  transactionWatchersStart: defineStartupTask({
+    label: 'transaction.watchersStart',
+    owner: 'transaction',
+    reason:
+      'restore and monitor pending transactions after Home is usable without coupling watchers to keyring construction',
+    stage: 'homePostStartupReady',
+    priority: 'high',
+    fallbackMs: 5000,
+    budgetMs: 180,
+  }),
   homeHistoryWarmup: defineStartupTask({
     label: 'home.historyWarmup',
     owner: 'home-history',

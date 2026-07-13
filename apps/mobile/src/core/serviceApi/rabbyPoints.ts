@@ -1,13 +1,7 @@
 import type { RabbyPointsService } from '@/core/services/rabbyPoints';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type RabbyPointsServiceApiContract = RabbyPointsService;
-
-registerLegacyCoreServiceLoader('rabbyPointsService');
-
 export const rabbyPointsServiceApi = createDeferredServiceApi<
   'rabbyPointsService',
   RabbyPointsServiceApiContract

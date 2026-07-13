@@ -1,14 +1,10 @@
 import type { HDKeyringService } from '@/core/services/hdKeyringService';
 import {
   createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
   runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type HDKeyringServiceApiContract = HDKeyringService;
-
-registerLegacyCoreServiceLoader('hdKeyringService');
-
 export const hdKeyringServiceApi = createDeferredServiceApi<
   'hdKeyringService',
   HDKeyringServiceApiContract

@@ -3,16 +3,12 @@ import type { SyncChainService } from '@/core/services/syncChainService';
 import {
   createDeferredServiceApi,
   ensureServiceApiReady,
-  registerLegacyCoreServiceLoader,
 } from './createDeferredServiceApi';
 
 export type SyncChainServiceApiContract = Pick<
   SyncChainService,
   'syncMainnetChainList'
 >;
-
-registerLegacyCoreServiceLoader('syncChainService');
-
 export const syncChainServiceApi = createDeferredServiceApi<
   'syncChainService',
   SyncChainServiceApiContract

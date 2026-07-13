@@ -1,14 +1,8 @@
 import type { SessionService } from '@/core/services/session';
 import { getRegisteredService } from '@/core/services/serviceRegistry';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type SessionServiceApiContract = SessionService;
-
-registerLegacyCoreServiceLoader('sessionService');
-
 export const sessionServiceApi = createDeferredServiceApi<
   'sessionService',
   SessionServiceApiContract

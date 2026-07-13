@@ -52,10 +52,6 @@ function loadCustomTestnetModule() {
       getNonceByChain: (...args: unknown[]) => mockGetNonceByChain(...args),
     },
   }));
-  jest.doMock('../services/shared', () => ({
-    transactionHistoryService,
-  }));
-
   const { apiCustomTestnet } =
     require('./customTestnet') as typeof import('./customTestnet');
 

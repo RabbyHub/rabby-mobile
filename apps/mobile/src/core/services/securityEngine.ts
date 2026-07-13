@@ -65,60 +65,78 @@ export class SecurityEngineService {
   rules: RuleConfig[] = [];
 
   engine: Engine | null = null;
+  private initPromise: Promise<void> | null = null;
+  private storageOptions?: StorageAdapaterOptions;
 
   constructor(options?: StorageAdapaterOptions) {
-    this.init(options);
+    this.storageOptions = options;
   }
 
-  init = async (options?: StorageAdapaterOptions) => {
-    const storage = await createPersistStore<SecurityEngineStore>(
-      {
-        name: APP_STORE_NAMES.securityEngine,
-        template: {
-          userData: {
-            originBlacklist: [],
-            originWhitelist: [],
-            contractBlacklist: [],
-            contractWhitelist: [],
-            addressBlacklist: [],
-            addressWhitelist: [],
+  init = (options: StorageAdapaterOptions = this.storageOptions || {}) => {
+    if (this.engine) {
+      return Promise.resolve();
+    }
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
+    this.initPromise = Promise.resolve(
+      createPersistStore<SecurityEngineStore>(
+        {
+          name: APP_STORE_NAMES.securityEngine,
+          template: {
+            userData: {
+              originBlacklist: [],
+              originWhitelist: [],
+              contractBlacklist: [],
+              contractWhitelist: [],
+              addressBlacklist: [],
+              addressWhitelist: [],
+            },
+            rules: getRuleConfigFromRules(defaultRules),
           },
-          rules: getRuleConfigFromRules(defaultRules),
         },
-      },
-      {
-        storage: options?.storageAdapter,
-      },
-    );
-    this.rules = mergeRules(defaultRules, storage.rules);
-    this.store = storage || this.store;
-    this.store.rules = this.rules;
-    if (!this.store.userData.contractBlacklist) {
-      this.store.userData = {
-        ...this.store.userData,
-        contractBlacklist: [],
-      };
-    }
-    if (!this.store.userData.contractWhitelist) {
-      this.store.userData = {
-        ...this.store.userData,
-        contractWhitelist: [],
-      };
-    }
-    if (!this.store.userData.addressBlacklist) {
-      this.store.userData = {
-        ...this.store.userData,
-        addressBlacklist: [],
-      };
-    }
-    if (!this.store.userData.addressWhitelist) {
-      this.store.userData = {
-        ...this.store.userData,
-        addressWhitelist: [],
-      };
-    }
-    // todo
-    this.engine = new Engine(this.rules, openapi);
+        {
+          storage: options.storageAdapter,
+        },
+      ),
+    )
+      .then(storage => {
+        this.rules = mergeRules(defaultRules, storage.rules);
+        this.store = storage || this.store;
+        this.store.rules = this.rules;
+        if (!this.store.userData.contractBlacklist) {
+          this.store.userData = {
+            ...this.store.userData,
+            contractBlacklist: [],
+          };
+        }
+        if (!this.store.userData.contractWhitelist) {
+          this.store.userData = {
+            ...this.store.userData,
+            contractWhitelist: [],
+          };
+        }
+        if (!this.store.userData.addressBlacklist) {
+          this.store.userData = {
+            ...this.store.userData,
+            addressBlacklist: [],
+          };
+        }
+        if (!this.store.userData.addressWhitelist) {
+          this.store.userData = {
+            ...this.store.userData,
+            addressWhitelist: [],
+          };
+        }
+        this.engine = new Engine(this.rules, openapi);
+      })
+      .catch(error => {
+        this.initPromise = null;
+        throw error;
+      });
+
+    return this.initPromise;
   };
 
   execute = async (actionData: ContextActionData) => {

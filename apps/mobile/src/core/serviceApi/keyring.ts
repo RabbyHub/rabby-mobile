@@ -8,10 +8,7 @@ import {
   getRegisteredService,
   waitForCoreServiceRegistration,
 } from '@/core/services/serviceRegistry';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type KeyringServiceApiContract = KeyringService;
 
@@ -58,9 +55,6 @@ type KeyringServiceWithUnlockOptions = KeyringService & {
   ) => ReturnType<KeyringService['submitPassword']>;
   refreshMemStoreKeyrings?: () => Promise<unknown>;
 };
-
-registerLegacyCoreServiceLoader('keyringService');
-
 export const keyringServiceApi = createDeferredServiceApi<
   'keyringService',
   KeyringServiceApiContract
@@ -246,7 +240,10 @@ export function bindKeyringEventAfterRegistration(
     })
     .catch(error => {
       if (!disposed) {
-        console.error('[keyringServiceApi] bind event after registration', error);
+        console.error(
+          '[keyringServiceApi] bind event after registration',
+          error,
+        );
       }
     });
 

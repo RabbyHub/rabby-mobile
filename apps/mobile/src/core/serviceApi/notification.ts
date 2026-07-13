@@ -5,14 +5,10 @@ import {
 } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
   runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type NotificationServiceApiContract = NotificationService;
-
-registerLegacyCoreServiceLoader('notificationService');
-
 export const notificationServiceApi = createDeferredServiceApi<
   'notificationService',
   NotificationServiceApiContract

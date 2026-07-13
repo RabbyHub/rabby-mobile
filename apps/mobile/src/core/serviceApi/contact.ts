@@ -2,15 +2,9 @@ import type { ContactBookService } from '@rabby-wallet/service-address';
 import type { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
 import { getRegisteredService } from '@/core/services/serviceRegistry';
 import { onSetAddressAlias } from '@/core/services/keyringParams';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type ContactServiceApiContract = ContactBookService;
-
-registerLegacyCoreServiceLoader('contactService');
-
 export const contactServiceApi = createDeferredServiceApi<
   'contactService',
   ContactServiceApiContract

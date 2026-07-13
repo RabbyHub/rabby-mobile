@@ -10,15 +10,9 @@ import {
   getRegisteredService,
   waitForCoreService,
 } from '@/core/services/serviceRegistry';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type CurrencyServiceApiContract = CurrencyService;
-
-registerLegacyCoreServiceLoader('currencyService');
-
 export const currencyServiceApi = createDeferredServiceApi<
   'currencyService',
   CurrencyServiceApiContract

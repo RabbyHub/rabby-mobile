@@ -2,7 +2,6 @@ import { debounce } from 'lodash';
 
 import {
   getTransactionHistoryFailedCountSnapshot,
-  getTransactionHistoryPendingsAddressesSnapshot,
   getTransactionHistorySucceedCountSnapshot,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
@@ -10,12 +9,8 @@ import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { onAppOrmSyncEvents } from '@/databases/sync/_event';
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
-import {
-  resolveValFromUpdater,
-  runStartupTask
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import type { RefLikeObject } from '@/utils/type';
 import {
@@ -126,7 +121,7 @@ export const resetFetchHistoryTxCount = makeAvoidParallelAsyncFunc(async () => {
     return;
   }
   const { pendingsLength } =
-    getTransactionHistoryPendingsAddressesSnapshot(addresses);
+    await transactionHistoryServiceApi.getPendingsAddresses(addresses);
   setPendingTxCount(pendingsLength);
   timeRef.current = pendingsLength
     ? setInterval(resetFetchHistoryTxCount, 5000)

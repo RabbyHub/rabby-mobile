@@ -8,15 +8,9 @@ import {
   callCoreService,
   getRegisteredService,
 } from '@/core/services/serviceRegistry';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type BrowserServiceApiContract = BrowserService;
-
-registerLegacyCoreServiceLoader('browserService');
-
 export const browserServiceApi = createDeferredServiceApi<
   'browserService',
   BrowserServiceApiContract
@@ -71,7 +65,10 @@ export function getBrowserBookmarkSnapshot() {
 }
 
 export function getBrowserBookmarkCountSnapshot() {
-  return getRegisteredService('browserService')?.bookmark.selectors.selectTotal() || 0;
+  return (
+    getRegisteredService('browserService')?.bookmark.selectors.selectTotal() ||
+    0
+  );
 }
 
 export function getBrowserTabCountSnapshot() {

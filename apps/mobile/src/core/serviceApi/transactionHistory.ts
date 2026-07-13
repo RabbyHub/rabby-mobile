@@ -4,15 +4,9 @@ import type {
   TransactionGroup,
 } from '@/core/services/transactionHistory';
 import { getRegisteredService } from '@/core/services/serviceRegistry';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type TransactionHistoryServiceApiContract = TransactionHistoryService;
-
-registerLegacyCoreServiceLoader('transactionHistoryService');
-
 export const transactionHistoryServiceApi = createDeferredServiceApi<
   'transactionHistoryService',
   TransactionHistoryServiceApiContract

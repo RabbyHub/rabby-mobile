@@ -3,22 +3,18 @@ import {
   callCoreService,
   getRegisteredService,
 } from '@/core/services/serviceRegistry';
-import {
-  createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
-} from './createDeferredServiceApi';
+import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type OfflineChainServiceApiContract = OfflineChainService;
-
-registerLegacyCoreServiceLoader('offlineChainService');
-
 export const offlineChainServiceApi = createDeferredServiceApi<
   'offlineChainService',
   OfflineChainServiceApiContract
 >('offlineChainService');
 
 export function getCloseTipsChainsSnapshot() {
-  return getRegisteredService('offlineChainService')?.getCloseTipsChains() || [];
+  return (
+    getRegisteredService('offlineChainService')?.getCloseTipsChains() || []
+  );
 }
 
 export async function setCloseTipsChains(chains: string[]) {

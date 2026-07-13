@@ -40,6 +40,11 @@ const serviceRuntimeImportBoundaryPatterns = [
   /\/src\/core\/serviceApi\//,
 ];
 
+const coreServiceLoaderRegistrationFiles = new Set([
+  'src/core/serviceApi/serviceLoaderCatalog.ts',
+  'src/core/services/serviceRegistry.ts',
+]);
+
 const heavyStartupRuntimeModules = [
   '@noble/curves',
   '@rabby-wallet/rabby-swap',
@@ -250,6 +255,17 @@ function checkDatabaseGovernanceImports(filePath, relPath, source) {
   }
 }
 
+function checkCoreServiceLoaderRegistration(relPath, source) {
+  if (
+    source.includes('registerCoreServiceLoader(') &&
+    !coreServiceLoaderRegistrationFiles.has(relPath)
+  ) {
+    errors.push(
+      `${relPath} core service loaders must be registered in src/core/serviceApi/serviceLoaderCatalog.ts`,
+    );
+  }
+}
+
 function walk(dir, output = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
@@ -381,6 +397,7 @@ for (const filePath of walk(srcRoot)) {
 
   checkCoreServiceRuntimeImports(filePath, relPath, source);
   checkDatabaseGovernanceImports(filePath, relPath, source);
+  checkCoreServiceLoaderRegistration(relPath, source);
 
   while (true) {
     const callIndex = source.indexOf('runStartupTask(', searchIndex);

@@ -10,7 +10,7 @@ import {
   waitForCoreService,
 } from './serviceRegistry';
 
-let bootstrapCoreServicesPromise: Promise<void> | null = null;
+let startupCoreServicesPromise: Promise<void> | null = null;
 
 function traceFeatureServiceLoad(
   name: CoreServiceName,
@@ -37,14 +37,112 @@ async function loadFeatureService<Name extends CoreServiceName>(
   });
 }
 
-function loadBootstrapCoreServices(name: CoreServiceName) {
+function loadStartupCoreService(name: CoreServiceName) {
   return loadFeatureService(name, async () => {
-    if (!bootstrapCoreServicesPromise) {
-      bootstrapCoreServicesPromise = import('./bootstrap').then(
-        () => undefined,
+    if (!startupCoreServicesPromise) {
+      startupCoreServicesPromise = import('./startupCoreLoader').then(module =>
+        module.loadStartupCoreServices(),
       );
+      startupCoreServicesPromise.catch(() => {
+        startupCoreServicesPromise = null;
+      });
     }
-    await bootstrapCoreServicesPromise;
+    await startupCoreServicesPromise;
+  });
+}
+
+export function loadTransactionHistoryService() {
+  return loadFeatureService('transactionHistoryService', async () => {
+    const { TransactionHistoryService } = await import('./transactionHistory');
+    const preferenceService = await waitForCoreService('preferenceService');
+    registerService(
+      'transactionHistoryService',
+      new TransactionHistoryService({
+        storageAdapter: appStorage,
+        preferenceService,
+      }),
+    );
+  });
+}
+
+async function restorePendingTransactions() {
+  const [transactionHistoryService, transactionWatcherService] =
+    await Promise.all([
+      waitForCoreService('transactionHistoryService'),
+      waitForCoreService('transactionWatcherService'),
+    ]);
+  const { findChainByID } = await import('@/utils/chain');
+
+  transactionHistoryService
+    .getTransactionGroups()
+    .filter(item => item.isPending)
+    .forEach(item => {
+      const chain = findChainByID(item.chainId);
+      if (!chain || !item.maxGasTx.hash) {
+        return;
+      }
+
+      const key = `${item.address}_${item.nonce}_${chain.enum}`;
+      if (transactionWatcherService.hasTx(key)) {
+        return;
+      }
+
+      transactionWatcherService.addTx(key, {
+        nonce: String(item.nonce),
+        hash: item.maxGasTx.hash,
+        chain: chain.enum,
+      });
+    });
+}
+
+export function loadTransactionWatcherService() {
+  return loadFeatureService('transactionWatcherService', async () => {
+    const { TransactionWatcherService } = await import('./transactionWatcher');
+    const transactionHistoryService = await waitForCoreService(
+      'transactionHistoryService',
+    );
+    const transactionWatcherService = new TransactionWatcherService({
+      storageAdapter: appStorage,
+      transactionHistoryService,
+    });
+    registerService('transactionWatcherService', transactionWatcherService);
+    transactionWatcherService.start();
+    await restorePendingTransactions();
+  });
+}
+
+export function loadTransactionBroadcastWatcherService() {
+  return loadFeatureService('transactionBroadcastWatcherService', async () => {
+    const { TransactionBroadcastWatcherService } = await import(
+      './transactionBroadcastWatcher'
+    );
+    const [transactionHistoryService, transactionWatcherService] =
+      await Promise.all([
+        waitForCoreService('transactionHistoryService'),
+        waitForCoreService('transactionWatcherService'),
+      ]);
+    const transactionBroadcastWatcherService =
+      new TransactionBroadcastWatcherService({
+        storageAdapter: appStorage,
+        transactionHistoryService,
+        transactionWatcherService,
+      });
+    registerService(
+      'transactionBroadcastWatcherService',
+      transactionBroadcastWatcherService,
+    );
+    transactionBroadcastWatcherService.start();
+  });
+}
+
+export function loadSecurityEngineService() {
+  return loadFeatureService('securityEngineService', async () => {
+    const { SecurityEngineService } = await import('./securityEngine');
+    const securityEngineService = new SecurityEngineService({
+      storageAdapter: appStorage,
+    });
+    await securityEngineService.init();
+    registerService('securityEngineService', securityEngineService);
   });
 }
 
@@ -337,7 +435,7 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'browserService':
       return loadBrowserService();
     case 'contactService':
-      return loadBootstrapCoreServices(name);
+      return loadStartupCoreService(name);
     case 'currencyService':
       return loadCurrencyService();
     case 'customRPCService':
@@ -351,7 +449,7 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'hdKeyringService':
       return loadHDKeyringService();
     case 'keyringService':
-      return loadBootstrapCoreServices(name);
+      return loadStartupCoreService(name);
     case 'lendingService':
       return loadLendingService();
     case 'metamaskModeService':
@@ -363,11 +461,11 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'perpsService':
       return loadPerpsService();
     case 'preferenceService':
-      return loadBootstrapCoreServices(name);
+      return loadStartupCoreService(name);
     case 'rabbyPointsService':
       return loadRabbyPointsService();
     case 'securityEngineService':
-      return loadBootstrapCoreServices(name);
+      return loadSecurityEngineService();
     case 'sessionService':
       return loadSessionService();
     case 'swapService':
@@ -375,11 +473,11 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'syncChainService':
       return loadSyncChainService();
     case 'transactionBroadcastWatcherService':
-      return loadBootstrapCoreServices(name);
+      return loadTransactionBroadcastWatcherService();
     case 'transactionHistoryService':
-      return loadBootstrapCoreServices(name);
+      return loadTransactionHistoryService();
     case 'transactionWatcherService':
-      return loadBootstrapCoreServices(name);
+      return loadTransactionWatcherService();
     case 'whitelistService':
       return loadWhitelistService();
     default:

@@ -1,20 +1,6 @@
 const mockGetList = jest.fn();
 const mockGetNonceByChain = jest.fn();
 
-jest.mock('../services/shared', () => ({
-  transactionHistoryService: {
-    getList: (...args: unknown[]) => mockGetList(...args),
-  },
-  transactionWatcherService: {
-    removeLocalPendingTx: jest.fn(),
-    clearPendingTx: jest.fn(),
-  },
-  transactionBroadcastWatcherService: {
-    removeLocalPendingTx: jest.fn(),
-    clearPendingTx: jest.fn(),
-  },
-}));
-
 jest.mock('@/core/serviceApi/transactionHistory', () => ({
   transactionHistoryServiceApi: {
     getList: (...args: unknown[]) => mockGetList(...args),

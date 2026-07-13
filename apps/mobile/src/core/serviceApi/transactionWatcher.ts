@@ -1,14 +1,10 @@
 import type { TransactionWatcherService } from '@/core/services/transactionWatcher';
 import {
   createDeferredServiceApi,
-  registerLegacyCoreServiceLoader,
   runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type TransactionWatcherServiceApiContract = TransactionWatcherService;
-
-registerLegacyCoreServiceLoader('transactionWatcherService');
-
 export const transactionWatcherServiceApi = createDeferredServiceApi<
   'transactionWatcherService',
   TransactionWatcherServiceApiContract
