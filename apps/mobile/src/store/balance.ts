@@ -2,9 +2,7 @@ import { openapi } from '@/core/request';
 import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
 import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
-import { BalanceEntity } from '@/databases/entities/balance';
 import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
-import { syncBalance } from '@/databases/sync/assets';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
@@ -44,6 +42,31 @@ const getTotalBalanceQueue = new PQueue({
   interval: 1000,
   intervalCap: 10,
 });
+
+let balanceEntityModulePromise: Promise<
+  typeof import('@/databases/entities/balance')
+> | null = null;
+function loadBalanceEntityModule() {
+  if (!balanceEntityModulePromise) {
+    balanceEntityModulePromise = import('@/databases/entities/balance');
+  }
+  return balanceEntityModulePromise;
+}
+
+let balanceSyncModulePromise: Promise<
+  typeof import('@/databases/sync/assets')
+> | null = null;
+async function syncBalanceToDb(
+  address: string,
+  isCore: boolean,
+  balance: EvmTotalBalanceResponse,
+) {
+  if (!balanceSyncModulePromise) {
+    balanceSyncModulePromise = import('@/databases/sync/assets');
+  }
+  const { syncBalance } = await balanceSyncModulePromise;
+  return syncBalance(address, isCore, balance);
+}
 
 const buildBalanceLocalTargets = (address: string): ResourceLocalTarget[] => [
   {
@@ -421,6 +444,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   };
   initStore = async () => {
     await ensureAppChainStoreInitialized();
+    const { BalanceEntity } = await loadBalanceEntityModule();
     const result = await BalanceEntity.queryAllBalance();
     const appChainMap = useAppChainStore.getState().appChainMap;
 
@@ -485,6 +509,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       return;
     }
 
+    const { BalanceEntity } = await loadBalanceEntityModule();
     const coreAddressSet = buildCoreAddressSet(accounts as Account[]);
     const startupBalanceCacheMap = options?.startupFastPath
       ? await BalanceEntity.queryBalanceCacheMapForStartup(
@@ -600,6 +625,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       await ensureAppChainStoreInitialized();
     }
 
+    const balanceEntityModule = !force ? await loadBalanceEntityModule() : null;
+
     for (const address of lowerAddresses) {
       const isCore = coreAddressSet.has(address);
       const localTargets = buildBalanceLocalTargets(address);
@@ -616,12 +643,16 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           ),
         });
 
-        const isExpired = await BalanceEntity.isExpired(address, isCore);
+        const isExpired = await balanceEntityModule!.BalanceEntity.isExpired(
+          address,
+          isCore,
+        );
         if (!isExpired) {
-          const cachedBalance = await BalanceEntity.queryBalance(
-            address,
-            isCore,
-          );
+          const cachedBalance =
+            await balanceEntityModule!.BalanceEntity.queryBalance(
+              address,
+              isCore,
+            );
           const appChainUsdValue = getAppChainUsdValue(address);
           const value = buildPersistedBalanceValue(
             cachedBalance,
@@ -770,7 +801,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
       this.persistInBackground(
         result.address,
-        () => syncBalance(result.address, result.isCore, formatBalance),
+        () => syncBalanceToDb(result.address, result.isCore, formatBalance),
         {
           requestId: result.requestId,
           localTargets: result.localTargets,
@@ -805,6 +836,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     try {
       if (!force) {
         await ensureAppChainStoreInitialized();
+        const { BalanceEntity } = await loadBalanceEntityModule();
         this.markHydrateStarted(lowerAddress, {
           localTargets,
           detail: buildBalanceTraceDetail(
@@ -906,7 +938,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
       this.persistInBackground(
         lowerAddress,
-        () => syncBalance(lowerAddress, isCore, formatBalance),
+        () => syncBalanceToDb(lowerAddress, isCore, formatBalance),
         {
           requestId,
           localTargets,
