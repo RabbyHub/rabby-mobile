@@ -1,7 +1,7 @@
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   FlatListProps} from 'react-native';
@@ -33,7 +33,7 @@ import { ReactIconHome } from '@/assets2024/icons/browser';
 import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
 import type { DappInfo } from '@/core/services/dappService';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,6 +61,7 @@ const AnimatedFlatList =
 
 const DRAWER_GESTURE_ACTIVE_OFFSET_Y = 8;
 const DRAWER_GESTURE_FAIL_OFFSET_X = 12;
+const DRAWER_CONTENT_IDLE_MOUNT_DELAY_MS = 3000;
 
 const { pullPercent, isExpanded, translateY, swipeUpHintHeight } =
   homeDrawerAnimateMutable;
@@ -74,52 +75,29 @@ export const HomeDappDrawer: React.FC<{
   const { t } = useTranslation();
   const height = Dimensions.get('screen').height;
 
-  const { openTab, setPartialBrowserState } = useBrowser();
-  const { bookmarkList, removeBookmark } = useBrowserBookmark();
-  const [_isEditing, setIsEditing] = React.useState(false);
-  const [removedItems, setRemovedItems] = useState<string[]>([]);
-  const list = useMemo(() => {
-    return bookmarkList.filter(
-      item =>
-        !removedItems.find(
-          url => safeGetOrigin(url) === safeGetOrigin(item.origin),
-        ),
-    );
-  }, [bookmarkList, removedItems]);
+  const { setPartialBrowserState } = useBrowser();
+  const isDrawerExpanded = useValueFromSharedValue(isExpanded);
+  const [shouldMountContent, setShouldMountContent] = React.useState(false);
 
-  const hasData = bookmarkList.length > 0;
-  const isEditing = _isEditing && hasData;
-
-  const startEditing = useCallback(() => {
-    if (!hasData) return;
-    setIsEditing(true);
-    setRemovedItems([]);
-  }, [hasData]);
-
-  const resetEditing = useCallback(() => {
-    setIsEditing(false);
-    setRemovedItems([]);
-  }, []);
-
-  const completeEditing = useCallback(() => {
-    setIsEditing(false);
-    removedItems.forEach(url => {
-      removeBookmark(url);
-    });
-    setRemovedItems([]);
-  }, [removedItems, removeBookmark]);
-
-  const handleRemoveLocal = useCallback((url: string) => {
-    setRemovedItems(prev => [...prev, url]);
-  }, []);
-
-  const handle = useCallback(() => {
-    if (isEditing) {
-      completeEditing();
-    } else {
-      startEditing();
+  useEffect(() => {
+    if (isDrawerExpanded) {
+      setShouldMountContent(true);
     }
-  }, [completeEditing, isEditing, startEditing]);
+  }, [isDrawerExpanded]);
+
+  useEffect(() => {
+    if (shouldMountContent) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setShouldMountContent(true);
+    }, DRAWER_CONTENT_IDLE_MOUNT_DELAY_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [shouldMountContent]);
 
   const handleScrollBack = useCallback(() => {
     'worklet';
@@ -410,11 +388,13 @@ export const HomeDappDrawer: React.FC<{
                     </Text>
                   </TouchableOpacity>
                 </View> */}
-                <HomeDappDrawerContent
-                  drawerScrollableGesture={drawerScrollableGesture}
-                  drawerScrollOffsetY={drawerScrollOffsetY}
-                  scrollableStatus={scrollableStatus}
-                />
+                {shouldMountContent ? (
+                  <HomeDappDrawerContent
+                    drawerScrollableGesture={drawerScrollableGesture}
+                    drawerScrollOffsetY={drawerScrollOffsetY}
+                    scrollableStatus={scrollableStatus}
+                  />
+                ) : null}
                 {/* <GestureDetector gesture={drawerScrollableGesture}>
                   <AnimatedFlatList
                     data={list}

@@ -227,9 +227,13 @@ export function useSetupWebview({
           // }
 
           const dappOrigin = nativeEvent.url;
-          const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
-            ? dappOrigin
-            : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+          if (BUILTIN_SPECIAL_URLS.includes(dappOrigin)) {
+            urlRef.current = dappOrigin;
+            return;
+          }
+
+          const formattedDappOrigin =
+            urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
           initializeBackgroundBridge(formattedDappOrigin, true);
         }
       } catch (e: any) {
