@@ -21,8 +21,7 @@ import { apisSafe } from '@/core/apis/safe';
 import type { RefLikeObject } from '@/utils/type';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
-import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
@@ -222,12 +221,19 @@ const hideSplashScreen = (forceHide = false) => {
   }
 };
 
-runStartupTask(() => {
+let hideSplashOnNavigationReadyStarted = false;
+
+export function startHideSplashOnNavigationReady() {
+  if (hideSplashOnNavigationReadyStarted) {
+    return;
+  }
+
+  hideSplashOnNavigationReadyStarted = true;
   const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
     hideSplashScreen(true);
     sub.remove();
   });
-}, STARTUP_TASKS.bootstrapHideSplashOnNavigationReady);
+}
 
 const postRenderBootstrapWarmupsStateRef = {
   started: false,

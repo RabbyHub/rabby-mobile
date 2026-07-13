@@ -28,8 +28,6 @@ import {
   checkMultipleFailed,
   shouldRejectUnlockDueToMultipleFailed,
 } from '../utils/unlockRateLimit';
-import { runStartupTask } from '../utils/store';
-import { STARTUP_TASKS } from '../utils/startupTaskManifest';
 import { perfEvents } from '../utils/perf';
 import {
   getPersistedUnlockSessionExpireTime,
@@ -748,7 +746,14 @@ export function deferNotifyUserManuallyUnlockUIReady() {
   return deferNotifyPostUnlockUIReady();
 }
 
-runStartupTask(() => {
+let lockUnlockEventBridgeStarted = false;
+
+export function startLockUnlockEventBridge() {
+  if (lockUnlockEventBridgeStarted) {
+    return;
+  }
+
+  lockUnlockEventBridgeStarted = true;
   const isFirstTimeAfterLaunchRef = {
     current: true,
   };
@@ -779,4 +784,4 @@ runStartupTask(() => {
     pendingPostUnlockUIReadyRef.current = null;
     cancelKeyringRuntimeConvergence('lock');
   });
-}, STARTUP_TASKS.lockUnlockEventBridge);
+}

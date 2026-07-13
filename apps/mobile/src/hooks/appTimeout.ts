@@ -5,13 +5,8 @@ import { autoLockEvent } from '@/core/apis/autoLock';
 import { unlockTimeEvent } from '@/core/apis/lock';
 import { setPreference } from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
-import {
-  resolveValFromUpdater,
-  runStartupTask
-} from '@/core/utils/store';
-import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { atom, useAtom } from 'jotai';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -28,14 +23,21 @@ const autoLockStore = zCreate<AppTimeoutState>(() => {
   };
 });
 
-runStartupTask(() => {
+let appTimeoutAutoLockHydrationStarted = false;
+
+export function startAppTimeoutAutoLockHydration() {
+  if (appTimeoutAutoLockHydrationStarted) {
+    return;
+  }
+
+  appTimeoutAutoLockHydrationStarted = true;
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
 
   autoLockEvent.addListener('change', value => {
     autoLockStore.setState({ autoLockTime: value });
   });
-}, STARTUP_TASKS.appTimeoutAutoLockHydrate);
+}
 
 function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   autoLockStore.setState(prev => {

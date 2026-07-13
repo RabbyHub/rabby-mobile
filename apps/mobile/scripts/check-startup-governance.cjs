@@ -422,7 +422,48 @@ function readStartupTaskModuleFiles() {
   return files;
 }
 
+function readStartupTaskModuleGroupFiles(groupName) {
+  if (!fs.existsSync(startupTaskModulesPath)) {
+    return new Set();
+  }
+
+  const manifestSource = fs.readFileSync(startupTaskModulesPath, 'utf8');
+  const groupPattern = new RegExp(
+    `export const ${groupName} = \\[([\\s\\S]*?)\\] as const`,
+  );
+  const groupMatch = manifestSource.match(groupPattern);
+  if (!groupMatch) {
+    errors.push(`src/startup/startupTaskModules.ts is missing ${groupName}`);
+    return new Set();
+  }
+
+  const files = new Set();
+  const fileLiteralPattern = /['"](src\/[^'"]+\.[jt]sx?)['"]/g;
+  let match;
+  while ((match = fileLiteralPattern.exec(groupMatch[1]))) {
+    files.add(match[1]);
+  }
+  return files;
+}
+
 const governedStartupTaskModuleFiles = readStartupTaskModuleFiles();
+const launchStartupTaskModuleFiles = readStartupTaskModuleGroupFiles(
+  'STARTUP_LAUNCH_TASK_MODULE_FILES',
+);
+
+if (!launchStartupTaskModuleFiles.has('src/startup/launchTasks.ts')) {
+  errors.push(
+    'STARTUP_LAUNCH_TASK_MODULE_FILES must include src/startup/launchTasks.ts',
+  );
+}
+
+for (const moduleFile of launchStartupTaskModuleFiles) {
+  if (!moduleFile.startsWith('src/startup/')) {
+    errors.push(
+      `${moduleFile} launch work must be registered from src/startup instead of an incidental owner import`,
+    );
+  }
+}
 
 for (const filePath of walk(srcRoot)) {
   if (isIgnored(filePath)) {
@@ -474,7 +515,7 @@ for (const filePath of walk(srcRoot)) {
       );
     }
 
-    if (!callSource.includes('STARTUP_TASKS.')) {
+    if (!/STARTUP_TASKS(?:\.|\[)/.test(callSource)) {
       errors.push(
         `${relPath}:${getLineNumber(
           source,

@@ -7,12 +7,6 @@
  * listed so task registration does not spread through incidental imports.
  */
 export const STARTUP_LAUNCH_TASK_MODULE_FILES = [
-  'src/core/apis/lock.ts',
-  'src/hooks/appSettings.ts',
-  'src/hooks/appTimeout.ts',
-  'src/hooks/biometrics.ts',
-  'src/hooks/useBootstrap.ts',
-  'src/hooks/useGlobalStatus.ts',
   'src/startup/launchTasks.ts',
 ] as const;
 

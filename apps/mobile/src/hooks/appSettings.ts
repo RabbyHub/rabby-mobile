@@ -1,13 +1,8 @@
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { isNonPublicProductionEnv } from '@/constant';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
-import {
-  resolveValFromUpdater,
-  runStartupTask
-} from '@/core/utils/store';
-import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
@@ -477,10 +472,17 @@ function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   });
 }
 
-runStartupTask(() => {
+let appSettingsAutoLockHydrationStarted = false;
+
+export function startAppSettingsAutoLockHydration() {
+  if (appSettingsAutoLockHydrationStarted) {
+    return;
+  }
+
+  appSettingsAutoLockHydrationStarted = true;
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
-}, STARTUP_TASKS.appSettingsAutoLockHydrate);
+}
 
 export function useAutoLockTimeMinites() {
   const autoLockMinutes = autoLockState(s => s.minutes);
