@@ -23,13 +23,9 @@ export const AddressDetail: React.FC<Props> = ({
         item =>
           addressUtils.isSameAddress(item.address, account.address) &&
           item.type === account.type,
-      ),
+      ) ?? account,
     [accounts, account],
   );
-
-  if (!currentAccount) {
-    return null;
-  }
 
   return (
     <AddressDetailInner

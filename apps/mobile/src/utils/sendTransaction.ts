@@ -70,6 +70,22 @@ export enum FailedCode {
 }
 
 type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
+const LEDGER_TIMING_PREFIX = '[DEBUG-ledger-timing]';
+
+function logLedgerTiming(
+  startedAt: number,
+  label: string,
+  detail?: Record<string, unknown>,
+) {
+  if (!__DEV__) {
+    return;
+  }
+
+  console.log(LEDGER_TIMING_PREFIX, label, {
+    elapsedMs: Date.now() - startedAt,
+    ...detail,
+  });
+}
 
 const checkEnoughUseGasAccount = async ({
   gasAccount,
@@ -735,6 +751,7 @@ export const sendTransactionByMiniSignV2 = async ({
   preExecResult: ExplainTxResponse;
   onSigningTxCreated?: (signingTxId: string) => void;
 }) => {
+  const ledgerTimingStartedAt = Date.now();
   const buildTempoTx = (
     rawTx: Tx & Record<string, unknown>,
     opts?: { stripTopLevelData?: boolean; feePayer?: boolean },
@@ -744,6 +761,12 @@ export const sendTransactionByMiniSignV2 = async ({
       feePayer: opts?.feePayer,
     });
   onProgress?.('building');
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:start', {
+    chainServerId,
+    isGasAccount: !!isGasAccount,
+    isGasLess: !!isGasLess,
+    pushType,
+  });
 
   const chain = findChain({
     serverId: chainServerId,
@@ -819,8 +842,13 @@ export const sendTransactionByMiniSignV2 = async ({
         }) as any),
       } as any)
     : transaction;
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:tx-normalized', {
+    shouldUseTempoTx,
+    support1559,
+  });
 
   // fetch action data
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:parseTx:start');
   const actionData = await openapi.parseTx({
     chainId: chain.serverId,
     tx: shouldUseTempoTx
@@ -848,6 +876,7 @@ export const sendTransactionByMiniSignV2 = async ({
     origin: INTERNAL_REQUEST_SESSION.origin || '',
     addr: currentAccount.address,
   });
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:parseTx:done');
   const parsed = parseAction({
     type: 'transaction',
     data: actionData.action,
@@ -876,6 +905,7 @@ export const sendTransactionByMiniSignV2 = async ({
     sender: tx.from,
   });
   const cexInfo = getCexInfo(parsed.send?.to || '');
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:requiredData:start');
   const requiredData = await fetchActionRequiredData({
     type: 'transaction',
     actionData: parsed,
@@ -916,7 +946,9 @@ export const sendTransactionByMiniSignV2 = async ({
     },
     apiProvider: openapi,
   });
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:requiredData:done');
 
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:updateSigningTx:start');
   await transactionHistoryService.updateSigningTx(signingTxId, {
     rawTx: {
       nonce: tx.nonce,
@@ -930,8 +962,10 @@ export const sendTransactionByMiniSignV2 = async ({
       requiredData,
     },
   });
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:updateSigningTx:done');
 
   onProgress?.('builded');
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:builded');
 
   const handleSendAfter = async () => {
     const statsData = await notificationService.getStatsData();
@@ -982,6 +1016,10 @@ export const sendTransactionByMiniSignV2 = async ({
   let hash = '';
   const account = currentAccount;
   try {
+    logLedgerTiming(
+      ledgerTimingStartedAt,
+      'mini-send:ethSendTransaction:start',
+    );
     hash = await apiProvider.ethSendTransaction({
       data: {
         $ctx: {
@@ -1009,8 +1047,16 @@ export const sendTransactionByMiniSignV2 = async ({
       result: undefined,
       account: account,
     });
+    logLedgerTiming(ledgerTimingStartedAt, 'mini-send:ethSendTransaction:done');
     await handleSendAfter();
   } catch (e) {
+    logLedgerTiming(
+      ledgerTimingStartedAt,
+      'mini-send:ethSendTransaction:error',
+      {
+        message: (e as any)?.message || String(e),
+      },
+    );
     await handleSendAfter();
     const err = new Error((e as any).message);
     err.name = FailedCode.SubmitTxFailed;
@@ -1019,6 +1065,7 @@ export const sendTransactionByMiniSignV2 = async ({
   }
 
   onProgress?.('signed');
+  logLedgerTiming(ledgerTimingStartedAt, 'mini-send:signed');
 
   return {
     txHash: hash,

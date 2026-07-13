@@ -259,7 +259,6 @@ const ensureHardwareConnected = async (account: Account) => {
       try {
         const [isConnected, deviceId] = await apiLedger.isConnected(
           account.address,
-          // true,
         );
         setLedgerStatus(isConnected);
         if (isConnected) {

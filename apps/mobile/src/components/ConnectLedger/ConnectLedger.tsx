@@ -8,7 +8,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Device } from 'react-native-ble-plx';
+import type { LedgerDmkDevice } from '@/core/keyring-bridge/ledger/ledger-dmk';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
 import { toast, toastIndicator } from '@/components2024/Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
@@ -27,9 +27,11 @@ import { useMemoizedFn } from 'ahooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 
+const LEDGER_SCAN_TIMEOUT_MS = 15000;
+
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
-  onSelectDevice?: (d: Device) => void | Promise<void>;
+  onSelectDevice?: (d: LedgerDmkDevice) => void | Promise<void>;
   deviceId?: string;
 }> = ({ onDone, onSelectDevice, deviceId }) => {
   const { searchAndPair, devices, errorCode } = useLedgerImport();
@@ -40,19 +42,12 @@ export const ConnectLedger: React.FC<{
     'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
-  const openEthAppExpiredTimerRef = React.useRef<any>(null);
+  const unmountedRef = React.useRef(false);
+  const selectingDeviceRef = React.useRef(false);
   let toastHiddenRef = React.useRef<() => void>(() => {});
   let loopCountRef = React.useRef(0);
 
   const { showImportMorePopup } = useShowImportMoreAddressPopup();
-
-  const handleBleNext = React.useCallback(async () => {
-    setCurrentScreen('scan');
-    searchAndPair();
-    notfoundTimerRef.current = setTimeout(() => {
-      setCurrentScreen('notfound');
-    }, 5000);
-  }, [searchAndPair]);
 
   const handleScanDone = React.useCallback(() => {
     setCurrentScreen('select');
@@ -64,10 +59,6 @@ export const ConnectLedger: React.FC<{
       return await apiLedger.checkEthApp(result => {
         if (!result) {
           setCurrentScreen('openEthApp');
-          clearTimeout(openEthAppExpiredTimerRef.current);
-          openEthAppExpiredTimerRef.current = setTimeout(() => {
-            setCurrentScreen('select');
-          }, 60000);
         }
       });
     } catch (err: any) {
@@ -105,16 +96,17 @@ export const ConnectLedger: React.FC<{
           toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
         }
         setIsLoaded(true);
+        setCurrentScreen('select');
 
-        return;
+        return false;
       }
-      await apiLedger.getCurrentUsedHDPathType().then(res => {
-        const hdPathType = res ?? LedgerHDPathType.LedgerLive;
-        apiLedger.setHDPathType(hdPathType);
-        setSetting({
-          startNumber: 1,
-          hdPath: hdPathType,
-        });
+      const hdPathType =
+        (await apiLedger.getCurrentUsedHDPathType()) ??
+        LedgerHDPathType.LedgerLive;
+      await apiLedger.setHDPathType(hdPathType);
+      setSetting({
+        startNumber: 1,
+        hdPath: hdPathType,
       });
 
       if (address) {
@@ -141,31 +133,76 @@ export const ConnectLedger: React.FC<{
         });
         onDone?.();
       }
+      return true;
     },
     [onDone, setIsLoaded, setSetting, showImportMorePopup, t],
   );
 
   const handleSelectDevice = React.useCallback(
     async device => {
-      await apiLedger.setDeviceId(device.id);
-      if (onSelectDevice) {
-        await onSelectDevice(device);
-      } else {
-        if (await checkEthApp()) {
-          await importFirstAddress(1);
+      if (selectingDeviceRef.current) {
+        return;
+      }
+
+      selectingDeviceRef.current = true;
+      let isSelected = false;
+      try {
+        await apiLedger.connectDevice(device);
+        await apiLedger.setDeviceId(device.id);
+        if (onSelectDevice) {
+          await onSelectDevice(device);
+          isSelected = true;
         } else {
-          toastHiddenRef.current = toastIndicator('Connecting', {
-            isTop: true,
-          });
-          // maybe need to reconnect device
-          await importFirstAddress(5);
-          toastHiddenRef.current?.();
+          const isEthAppOpen = await checkEthApp();
+          const retryCount = isEthAppOpen ? 1 : 5;
+
+          if (!isEthAppOpen) {
+            toastHiddenRef.current = toastIndicator('Connecting', {
+              isTop: true,
+            });
+          }
+
+          try {
+            isSelected = await importFirstAddress(retryCount);
+          } finally {
+            if (!isEthAppOpen) {
+              toastHiddenRef.current?.();
+            }
+          }
+        }
+      } finally {
+        if (!isSelected) {
+          selectingDeviceRef.current = false;
         }
       }
     },
 
     [checkEthApp, importFirstAddress, onSelectDevice],
   );
+
+  const handleBleNext = React.useCallback(async () => {
+    setCurrentScreen('scan');
+    searchAndPair();
+    notfoundTimerRef.current = setTimeout(() => {
+      setCurrentScreen('notfound');
+    }, LEDGER_SCAN_TIMEOUT_MS);
+
+    if (!deviceId) {
+      return;
+    }
+
+    void apiLedger
+      .connectDeviceById(deviceId)
+      .then(() => {
+        if (unmountedRef.current) {
+          return;
+        }
+
+        clearTimeout(notfoundTimerRef.current);
+        return handleSelectDevice(apiLedger.getKnownDevice(deviceId));
+      })
+      .catch(() => {});
+  }, [deviceId, handleSelectDevice, searchAndPair]);
 
   React.useEffect(() => {
     if (devices.length) {
@@ -175,6 +212,7 @@ export const ConnectLedger: React.FC<{
 
   React.useEffect(() => {
     return () => {
+      unmountedRef.current = true;
       toastHiddenRef.current?.();
     };
   }, []);

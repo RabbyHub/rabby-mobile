@@ -7,12 +7,13 @@ import {
   initAccountsAtom,
   isLoadedAtom,
   MainContainer,
+  type Setting,
   settingAtom,
 } from './MainContainer';
 import { InitAccounts } from './type';
 
 export const SettingLedger: React.FC<{
-  onDone: () => void;
+  onDone: (setting: Setting) => void;
 }> = ({ onDone }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
@@ -50,11 +51,10 @@ export const SettingLedger: React.FC<{
   const [setting, setSetting] = useAtom(settingAtom);
   const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
   const handleConfirm = React.useCallback(
-    value => {
-      apiLedger
-        .setCurrentUsedHDPathType(value.hdPath)
-        .then(() => setSetting(value));
-      onDone?.();
+    async (value: Setting) => {
+      await apiLedger.setCurrentUsedHDPathType(value.hdPath);
+      setSetting(value);
+      onDone?.(value);
     },
     [onDone, setSetting],
   );

@@ -22,7 +22,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { replace } from '@/utils/navigation';
 
 import { toast } from '@/components2024/Toast';
-import { settingAtom } from '@/components/HDSetting/MainContainer';
+import {
+  settingAtom,
+  type Setting,
+} from '@/components/HDSetting/MainContainer';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
@@ -152,6 +155,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
   const abortLoadRef = React.useRef<(() => void) | null>(null);
   const exitRef = React.useRef(false);
+  const loadVersionRef = React.useRef(0);
   const startNumberRef = React.useRef(0); // Default to index 0, updated when setting changes
   const [currentAccounts, setCurrentAccounts] = React.useState<ViewAccount[]>(
     [],
@@ -162,6 +166,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   );
   const [importing, setImporting] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const maxCountRef = React.useRef(MAX_ACCOUNT_COUNT);
   const stepCountRef = React.useRef(
     params.type === KEYRING_TYPE.HdKeyring ? MAX_STEP_COUNT : 1,
@@ -229,64 +234,88 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     [apiHD, getMnemonicKeyring, params.type, getAliasByAddress],
   );
 
-  const handleLoadAddress = React.useCallback(() => {
-    let isAborted = false;
-    const abort = () => {
-      isAborted = true;
-    };
+  const handleLoadAddress = React.useCallback(
+    (startIndex?: number) => {
+      let isAborted = false;
+      const loadVersion = loadVersionRef.current;
+      const isCurrentLoad = () =>
+        !isAborted && loadVersion === loadVersionRef.current;
+      const abort = () => {
+        isAborted = true;
+      };
 
-    const run = async () => {
-      setLoading(true);
-      const start = startNumberRef.current;
-      let i = start;
+      const run = async () => {
+        setLoading(true);
+        setLoadError(null);
+        const start = startIndex ?? startNumberRef.current;
+        let i = start;
 
-      try {
-        await yieldToRN();
-        maxCountRef.current =
-          (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
-
-        for (; i < start + maxCountRef.current && !isAborted; ) {
+        try {
           await yieldToRN();
-          const nextAccounts = await loadAddress(i);
-          if (nextAccounts) {
-            startTransition(() => {
-              setAccounts(prev => {
-                return [...prev, ...nextAccounts];
+          maxCountRef.current =
+            (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+
+          for (; i < start + maxCountRef.current && !isAborted; ) {
+            await yieldToRN();
+            const nextAccounts = await loadAddress(i);
+            if (!isCurrentLoad()) {
+              break;
+            }
+            if (nextAccounts) {
+              startTransition(() => {
+                setAccounts(prev => {
+                  if (loadVersion !== loadVersionRef.current) {
+                    return prev;
+                  }
+                  return [...prev, ...nextAccounts];
+                });
               });
-            });
+            }
+            i += stepCountRef.current;
           }
-          i += stepCountRef.current;
+        } catch (err: any) {
+          if (!isCurrentLoad()) {
+            return;
+          }
+          const errorCode = ledgerErrorHandler(err);
+          let errMessage = err.message;
+          if (
+            errorCode === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP ||
+            errorCode === LEDGER_ERROR_CODES.OFF_OR_LOCKED ||
+            errorCode === LEDGER_ERROR_CODES.DISCONNECTED ||
+            errorCode === LEDGER_ERROR_CODES.NO_ETH_APP
+          ) {
+            errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
+          } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
+            errMessage = t('page.newAddress.ledger.error.unknown');
+            if (__DEV__) exitRef.current = true;
+          }
+          if (errMessage) {
+            setLoadError(errMessage);
+            toast.show(errMessage);
+          }
+          setLoading(false);
+          return;
         }
-      } catch (err: any) {
-        const errorCode = ledgerErrorHandler(err);
-        let errMessage = err.message;
-        if (errorCode === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
-          errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
-        } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
-          errMessage = t('page.newAddress.ledger.error.unknown');
-          if (__DEV__) exitRef.current = true;
+
+        if (!isCurrentLoad()) return;
+
+        setLoading(false);
+
+        if (exitRef.current) {
+          return;
         }
-        if (errMessage) {
-          toast.show(errMessage);
+
+        if (i !== start + maxCountRef.current) {
+          handleLoadAddress();
         }
-      }
+      };
 
-      if (isAborted) return;
-
-      setLoading(false);
-
-      if (exitRef.current) {
-        return;
-      }
-
-      if (i !== start + maxCountRef.current) {
-        handleLoadAddress();
-      }
-    };
-
-    run();
-    return abort;
-  }, [apiHD, loadAddress, t]);
+      run();
+      return abort;
+    },
+    [apiHD, loadAddress, t],
+  );
 
   const handleSelectIndex = React.useCallback(
     async (address, index) => {
@@ -310,12 +339,21 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     [t],
   );
 
-  const handleSettingChange = React.useCallback(() => {
-    setAccounts([]);
-    setSelectedAccounts([]);
-    abortLoadRef.current?.();
-    abortLoadRef.current = handleLoadAddress();
-  }, [handleLoadAddress]);
+  const handleSettingChange = React.useCallback(
+    (nextSetting?: Setting) => {
+      const nextStartIndex = nextSetting
+        ? nextSetting.startNumber - 1
+        : startNumberRef.current;
+      loadVersionRef.current += 1;
+      startNumberRef.current = nextStartIndex;
+      setAccounts([]);
+      setSelectedAccounts([]);
+      setLoadError(null);
+      abortLoadRef.current?.();
+      abortLoadRef.current = handleLoadAddress(nextStartIndex);
+    },
+    [handleLoadAddress],
+  );
 
   // Init HD path settings - must run BEFORE startNumberRef sync effect
   React.useEffect(() => {
@@ -357,16 +395,19 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         }
       });
     } else {
-      apiHD?.getCurrentAccounts().then(res => {
-        if (res) {
-          setCurrentAccounts(
-            res.map(a => ({
-              ...a,
-              aliasName: a.aliasName || getAliasByAddress(a.address),
-            })),
-          );
-        }
-      });
+      apiHD
+        ?.getCurrentAccounts()
+        .then(res => {
+          if (res) {
+            setCurrentAccounts(
+              res.map(a => ({
+                ...a,
+                aliasName: a.aliasName || getAliasByAddress(a.address),
+              })),
+            );
+          }
+        })
+        .catch(() => undefined);
     }
   }, [apiHD, getMnemonicKeyring, params.type, getAliasByAddress]);
 
@@ -380,6 +421,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   React.useEffect(() => {
     return () => {
       exitRef.current = true;
+      loadVersionRef.current += 1;
       abortLoadRef.current?.();
       setSetting(prev => ({ ...prev, startNumber: 1 }));
     };
@@ -483,8 +525,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     const id = createGlobalBottomSheetModal2024({
       name: settingModalName!,
       brand: params.brandName,
-      onDone: () => {
-        handleSettingChange();
+      onDone: (nextSetting?: Setting) => {
+        handleSettingChange(nextSetting);
         removeGlobalBottomSheetModal2024(id);
       },
       ...(params.type === KEYRING_TYPE.KeystoneKeyring
@@ -516,6 +558,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     handleSettingChange,
   ]);
 
+  const showInitialLoadError = !accounts.length && !loading && !!loadError;
+
   return (
     <View style={styles.root}>
       <TouchableOpacity
@@ -530,13 +574,27 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         </Text>
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
-            {!accounts.length
+            {showInitialLoadError
+              ? loadError
+              : !accounts.length
               ? t('page.newAddress.generatingWallets')
               : t('page.newAddress.selectAddressesToAdd')}
           </Text>
         </View>
       </View>
-      {!accounts.length && loading ? (
+      {showInitialLoadError ? (
+        <View style={styles.errorContainer}>
+          <Button
+            type="ghost"
+            title={t('global.refresh')}
+            onPress={() => {
+              loadVersionRef.current += 1;
+              abortLoadRef.current?.();
+              abortLoadRef.current = handleLoadAddress();
+            }}
+          />
+        </View>
+      ) : !accounts.length && loading ? (
         <LoadingSkeleton />
       ) : (
         <AccountListView
@@ -598,6 +656,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 22,
+    textAlign: 'center',
     color: colors2024['neutral-secondary'],
   },
   settingButton: {
@@ -615,5 +674,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 35,
+  },
+  errorContainer: {
+    paddingHorizontal: 20,
   },
 }));

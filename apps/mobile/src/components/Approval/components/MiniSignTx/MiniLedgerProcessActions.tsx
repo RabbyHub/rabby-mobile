@@ -19,17 +19,13 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
     autoConnect: false,
   });
 
-  const isConnectedPromise = React.useMemo(
-    () => apiLedger.isConnected(account.address),
-    [account.address],
-  );
-
   const handleSubmit = useMemoizedFn(() => {
     if (isSubmitting) {
       return;
     }
     setIsSubmitting(true);
-    isConnectedPromise
+    apiLedger
+      .isConnected(account.address)
       .then(([isConnected]) => {
         if (!isConnected) {
           onClickConnect(
@@ -60,6 +56,7 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
       submitText={t('page.signFooterBar.ledgerConfirm')}
       disabledProcess={disabledProcess}
       buttonIcon={<LedgerSVG width={22} height={22} viewBox="0 0 28 28" />}
+      loading={isSubmitting}
     />
   );
 };
