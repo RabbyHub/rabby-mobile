@@ -12,7 +12,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import org.devio.rn.splashscreen.SplashScreen;
+import com.zoontek.rnbootsplash.RNBootSplash;
 
 public class MainActivity extends ReactActivity {
   private static final String FRAME_RATE_TAG = "RabbyFrameRate";
@@ -22,11 +22,9 @@ public class MainActivity extends ReactActivity {
   protected void onCreate(Bundle savedInstanceState) {
     RabbyStartupTrace.beginSection("MainActivity.onCreate");
     try {
-      // SplashScreen.show(this);
-      // https://github.com/crazycodeboy/react-native-splash-screen/blob/b47197626804a742b8569cad50d5e0ed92fc765c/android/src/main/java/org/devio/rn/splashscreen/SplashScreen.java#L25
-      RabbyStartupTrace.beginSection("MainActivity.splash.show");
+      RabbyStartupTrace.beginSection("MainActivity.bootSplash.init");
       try {
-        SplashScreen.show(this, R.style.SplashScreenTheme, true);
+        RNBootSplash.init(this, R.style.BootTheme);
       } finally {
         RabbyStartupTrace.endSection();
       }
