@@ -44,6 +44,7 @@ export const trustedProtocolToDeeplink = [
   'metamask:',
   'ethereum:',
   'dapp:',
+  'rabby:',
 ];
 
 /**
