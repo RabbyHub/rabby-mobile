@@ -1,4 +1,5 @@
 import {
+  ensureDeferredService,
   registerDeferredService,
   registerDeferredServiceLoader,
   waitDeferredService,
@@ -22,6 +23,77 @@ describe('deferred service loading', () => {
     await expect(waitDeferredService<typeof service>(name)).resolves.toBe(
       service,
     );
+    disposeLoader();
+  });
+
+  it('rejects pending callers when a loader completes without registration', async () => {
+    const name = 'loader-without-registration';
+    const disposeLoader = registerDeferredServiceLoader(name, async () => {});
+
+    await expect(waitDeferredService(name)).rejects.toThrow(
+      'loader completed without registering a service',
+    );
+
+    disposeLoader();
+  });
+
+  it('allows a failed no-registration loader to retry', async () => {
+    const name = 'retry-after-missing-registration';
+    const service = { value: 7 };
+    let shouldRegister = false;
+    const disposeLoader = registerDeferredServiceLoader(name, async () => {
+      if (shouldRegister) {
+        registerDeferredService(name, service);
+      }
+    });
+
+    await expect(ensureDeferredService(name)).rejects.toThrow(
+      'loader completed without registering a service',
+    );
+
+    shouldRegister = true;
+    await expect(ensureDeferredService(name)).resolves.toBeUndefined();
+    await expect(waitDeferredService<typeof service>(name)).resolves.toBe(
+      service,
+    );
+
+    disposeLoader();
+  });
+
+  it('waits for a running loader to finish even after it registers early', async () => {
+    const name = 'early-registration-loader';
+    const service = { value: 99 };
+    let releaseLoader: (() => void) | undefined;
+    let markRegistered: (() => void) | undefined;
+    const registered = new Promise<void>(resolve => {
+      markRegistered = resolve;
+    });
+    const loaderFinished = new Promise<void>(resolve => {
+      releaseLoader = resolve;
+    });
+    const disposeLoader = registerDeferredServiceLoader(name, async () => {
+      registerDeferredService(name, service);
+      markRegistered?.();
+      await loaderFinished;
+    });
+
+    const registrationPromise = waitDeferredService<typeof service>(name);
+    const ensurePromise = ensureDeferredService(name);
+
+    await registered;
+    await expect(registrationPromise).resolves.toBe(service);
+
+    let ensureSettled = false;
+    void ensurePromise.then(() => {
+      ensureSettled = true;
+    });
+    await Promise.resolve();
+    expect(ensureSettled).toBe(false);
+
+    releaseLoader?.();
+    await expect(ensurePromise).resolves.toBeUndefined();
+    expect(ensureSettled).toBe(true);
+
     disposeLoader();
   });
 });

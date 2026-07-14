@@ -84,6 +84,11 @@ export function registerDeferredServiceLoader(
 }
 
 export function ensureDeferredService(name: string) {
+  const pendingLoader = serviceLoaderPromiseMap.get(name);
+  if (pendingLoader) {
+    return pendingLoader;
+  }
+
   if (serviceMap.has(name)) {
     return Promise.resolve();
   }
@@ -97,13 +102,15 @@ export function ensureDeferredService(name: string) {
     return Promise.reject(error);
   }
 
-  const pendingLoader = serviceLoaderPromiseMap.get(name);
-  if (pendingLoader) {
-    return pendingLoader;
-  }
-
   const loaderPromise = Promise.resolve()
     .then(loader)
+    .then(() => {
+      if (!serviceMap.has(name)) {
+        throw new Error(
+          `Deferred service "${name}" loader completed without registering a service`,
+        );
+      }
+    })
     .catch(error => {
       serviceLoaderPromiseMap.delete(name);
       if (!serviceMap.has(name)) {
