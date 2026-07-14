@@ -8,6 +8,7 @@ import {
   updateDappSync,
 } from '@/core/serviceApi/dapp';
 import {
+  ensureNotificationServiceReady,
   getNotificationStatsDataSnapshot,
   notificationServiceApi,
   setCurrentRequestDeferFnSync,
@@ -569,7 +570,7 @@ function reportStatsData() {
   setNotificationStatsDataSync(statsData);
 }
 
-export default async (request: ProviderRequest) => {
+async function runRpcFlow(request: ProviderRequest) {
   const ctx: any = {
     request: { ...request, requestedApproval: false },
   };
@@ -593,4 +594,9 @@ export default async (request: ProviderRequest) => {
       unlockNotificationSync();
     }
   });
-};
+}
+
+export default async function rpcFlow(request: ProviderRequest) {
+  await ensureNotificationServiceReady();
+  return runRpcFlow(request);
+}

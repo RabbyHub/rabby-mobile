@@ -5,6 +5,7 @@ import { useClearMiniApprovalTask } from './useMiniApprovalTask';
 import { noop, uniqueId } from 'lodash';
 import type { sendTransaction } from '@/utils/sendTransaction';
 import {
+  ensureNotificationServiceReady,
   getCurrentMiniApprovalSnapshot,
   setCurrentMiniApprovalSync,
 } from '@/core/serviceApi/notification';
@@ -68,6 +69,7 @@ export const useMiniApproval = () => {
       directSubmit?: boolean;
       account: Account;
     }) => {
+      await ensureNotificationServiceReady();
       // const currentApprovalId = uniqueId('mini-approval');
       // await sleep(200);
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(

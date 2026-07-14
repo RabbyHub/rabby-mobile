@@ -12,7 +12,10 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
-import { setCurrentMiniApprovalSync } from '@/core/serviceApi/notification';
+import {
+  ensureNotificationServiceReady,
+  setCurrentMiniApprovalSync,
+} from '@/core/serviceApi/notification';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
@@ -316,6 +319,7 @@ export const ethSendTransaction = async (
 ) => {
   const signingTxId = args?.[0]?.approvalRes?.signingTxId;
   try {
+    await ensureNotificationServiceReady();
     setCurrentMiniApprovalSync({
       signingTxId,
     });

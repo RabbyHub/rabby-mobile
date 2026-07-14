@@ -46,28 +46,59 @@ describe('core/serviceApi deferred side effects', () => {
     });
   });
 
-  it('runs notification sync side effects after the service is loaded', async () => {
+  it('requires notification sync side effects to run after activation', () => {
     mockStartupScheduler();
 
     const { setNotificationStatsDataSync } =
+      require('./notification') as typeof import('./notification');
+    const { registerService } =
+      require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
+
+    const setStatsData = jest.fn();
+    const statsData = { type: 'personalSign', signed: true };
+    expect(() => setNotificationStatsDataSync(statsData as any)).toThrow(
+      'Core service "notificationService" is not registered',
+    );
+
+    registerService('notificationService', {
+      setStatsData,
+    } as any);
+
+    setNotificationStatsDataSync(statsData as any);
+    expect(setStatsData).toHaveBeenCalledWith(statsData);
+  });
+
+  it('keeps notification sync side effects unavailable until its loader completes', async () => {
+    mockStartupScheduler();
+
+    const { ensureNotificationServiceReady, setNotificationStatsDataSync } =
       require('./notification') as typeof import('./notification');
     const { registerCoreServiceLoader, registerService } =
       require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
 
     const setStatsData = jest.fn();
-    registerCoreServiceLoader('notificationService', () => {
+    let finishLoader: (() => void) | undefined;
+    registerCoreServiceLoader('notificationService', async () => {
       registerService('notificationService', {
         setStatsData,
       } as any);
+      await new Promise<void>(resolve => {
+        finishLoader = resolve;
+      });
     });
 
-    const statsData = { type: 'personalSign', signed: true };
-    expect(() => setNotificationStatsDataSync(statsData as any)).not.toThrow();
-    expect(setStatsData).not.toHaveBeenCalled();
-
+    const readiness = ensureNotificationServiceReady();
     await flushDeferredServiceWork();
 
-    expect(setStatsData).toHaveBeenCalledWith(statsData);
+    expect(() => setNotificationStatsDataSync(undefined)).toThrow(
+      'Core service "notificationService" is not fully loaded',
+    );
+
+    finishLoader?.();
+    await readiness;
+
+    setNotificationStatsDataSync(undefined);
+    expect(setStatsData).toHaveBeenCalledWith(undefined);
   });
 
   it('keeps ready services synchronous', () => {
