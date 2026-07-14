@@ -4,11 +4,11 @@ import { useCallback, useRef, useEffect } from 'react';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { addDappSync, getDappSnapshot } from '@/core/serviceApi/dapp';
+import { deleteSessionSync } from '@/core/serviceApi/session';
 import {
-  deleteSessionSync,
-  sessionServiceApi,
-} from '@/core/serviceApi/session';
+  runWithCoreServices,
+  serviceDependency,
+} from '@/core/serviceApi/serviceDependencies';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
@@ -16,6 +16,11 @@ import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
 export const BUILTIN_SPECIAL_URLS = [BLANK_PAGE, BLANK_RABBY_PAGE];
+
+const BACKGROUND_BRIDGE_SERVICES = [
+  serviceDependency('dappService'),
+  serviceDependency('sessionService'),
+] as const;
 
 type WebView = import('react-native-webview').WebView;
 type OnLoadStart = (
@@ -79,21 +84,30 @@ export function useSetupWebview({
         isFromMobileInnerDapp,
       });
 
-      const session = await sessionServiceApi.getOrCreateSession(newBridge);
+      await runWithCoreServices(
+        BACKGROUND_BRIDGE_SERVICES,
+        ({ dappService, sessionService }) => {
+          const session = sessionService.getOrCreateSession(newBridge);
+          if (initSeq !== bridgeInitSeqRef.current) {
+            newBridge.onDisconnect();
+            sessionService.deleteSession(newBridge);
+            return;
+          }
+
+          session?.setProp({
+            origin: urlBridge,
+            icon: '',
+            name: titleRef.current,
+          });
+
+          if (!dappService.getDapp(urlBridge) && session) {
+            dappService.addDapp(createDappBySession(session));
+          }
+        },
+      );
+
       if (initSeq !== bridgeInitSeqRef.current) {
-        newBridge.onDisconnect();
-        deleteSessionSync(newBridge);
         return;
-      }
-
-      session?.setProp({
-        origin: urlBridge,
-        icon: '',
-        name: titleRef.current,
-      });
-
-      if (!getDappSnapshot(urlBridge) && session) {
-        addDappSync(createDappBySession(session));
       }
 
       putBackgroundBridge(newBridge, true);
