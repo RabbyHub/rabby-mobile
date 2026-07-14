@@ -44,7 +44,7 @@ export function registerSetupAppBeforeRenderDeferredTasks(reason = 'unknown') {
     const { storeApiGasAccount } = await import(
       './screens/GasAccount/hooks/atom'
     );
-    storeApiGasAccount.fetchGasAccountInfo();
+    await storeApiGasAccount.fetchGasAccountInfo();
   }, STARTUP_TASKS.setupGasAccountInfoFetch);
 
   runStartupTask(async () => {

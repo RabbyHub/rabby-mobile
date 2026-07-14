@@ -95,18 +95,34 @@ describe('core/serviceApi deferred side effects', () => {
     expect(setStatsData).toHaveBeenCalledWith(undefined);
   });
 
-  it('keeps ready services synchronous', () => {
+  it('requires gas account sync side effects to run after activation', async () => {
     mockStartupScheduler();
 
-    const { setGasAccountSigSync } =
+    const { ensureGasAccountServiceReady, setGasAccountSigSync } =
       require('./gasAccount') as typeof import('./gasAccount');
-    const { registerService } =
+    const { registerCoreServiceLoader, registerService } =
       require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
 
     const setGasAccountSig = jest.fn();
-    registerService('gasAccountService', {
-      setGasAccountSig,
-    } as any);
+    let finishLoader: (() => void) | undefined;
+    registerCoreServiceLoader('gasAccountService', async () => {
+      registerService('gasAccountService', {
+        setGasAccountSig,
+      } as any);
+      await new Promise<void>(resolve => {
+        finishLoader = resolve;
+      });
+    });
+
+    const readiness = ensureGasAccountServiceReady();
+    await flushDeferredServiceWork();
+
+    expect(() => setGasAccountSigSync('0xsig', { address: '0xabc' } as any)).toThrow(
+      'Core service "gasAccountService" is not fully loaded',
+    );
+
+    finishLoader?.();
+    await readiness;
 
     setGasAccountSigSync('0xsig', { address: '0xabc' } as any);
 
