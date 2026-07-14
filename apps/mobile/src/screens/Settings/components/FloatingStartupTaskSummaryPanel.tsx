@@ -174,8 +174,14 @@ function formatTaskLine(task: StartupGovernanceTaskRecord) {
     task.status === 'scheduled'
       ? `wait ${formatMs(Date.now() - task.scheduledAt)}`
       : task.status === 'running'
-      ? `run ${formatMs(Date.now() - task.firedAt)}`
-      : formatMs(task.durationMs);
+      ? `run ${formatMs(Date.now() - task.firedAt)} · sync ${formatMs(
+          task.invokeSyncMs,
+        )}`
+      : task.isAsync
+      ? `sync ${formatMs(task.invokeSyncMs)} · wall ${formatMs(
+          task.durationMs,
+        )}`
+      : `sync ${formatMs(task.invokeSyncMs)}`;
   const budget = task.budgetExceeded ? ' over budget' : '';
 
   return `#${task.id} ${task.status}${budget} · ${task.stage} · ${task.owner}/${task.label} · ${timing}`;

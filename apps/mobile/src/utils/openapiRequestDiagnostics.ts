@@ -2,6 +2,7 @@ import type { OpenApiService } from '@rabby-wallet/rabby-api';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { shouldSuppressPerfCaptureConsoleNoise } from '@/core/utils/perfCaptureConsole';
+import { recordStartupPerformanceEvent } from '@/startup/performance/recorder';
 import { logger } from './logger';
 import {
   openApiDebugEvents,
@@ -356,11 +357,20 @@ function getRequestMeta(config?: AxiosRequestConfig) {
 }
 
 function markOpenApiRequestStarted(config: InstrumentedRequestConfig) {
-  if (!diagnosticsEnabled || !config[REQUEST_LOG_META_KEY]) {
+  const meta = config[REQUEST_LOG_META_KEY];
+  if (!diagnosticsEnabled || !meta) {
     return;
   }
 
-  openApiInFlightRequests.set(config[REQUEST_LOG_META_KEY].requestId, true);
+  openApiInFlightRequests.set(meta.requestId, true);
+  recordStartupPerformanceEvent('network', 'request_start', {
+    source: meta.source,
+    requestId: meta.requestId,
+    method: normalizeRequestMethod(config),
+    baseURL: config.baseURL || '',
+    path: buildRequestPath(config),
+    startedAt: meta.startedAt,
+  });
   lastOpenApiDiagnosticsUpdatedAt = Date.now();
   notifyOpenApiDiagnosticListeners();
 }
@@ -372,7 +382,27 @@ function shouldRecordOpenApiDiagnostic(record: OpenApiRequestDiagnosticRecord) {
 function pushOpenApiRequestDiagnosticRecord(
   record: OpenApiRequestDiagnosticRecord,
 ) {
-  if (!diagnosticsEnabled || !shouldRecordOpenApiDiagnostic(record)) {
+  if (!diagnosticsEnabled) {
+    return;
+  }
+
+  recordStartupPerformanceEvent('network', 'request_end', {
+    source: record.source,
+    requestId: record.requestId,
+    method: record.method,
+    baseURL: record.baseURL,
+    path: record.path,
+    startedAt: record.startedAt,
+    endedAt: record.endedAt,
+    durationMs: record.durationMs,
+    status: record.status,
+    apiCode: record.apiCode,
+    outcome: record.outcome,
+    isSlow: record.isSlow,
+    errorCode: record.errorCode,
+  });
+
+  if (!shouldRecordOpenApiDiagnostic(record)) {
     return;
   }
 

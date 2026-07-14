@@ -918,6 +918,39 @@ function DevSettingsBlocks({
   const { setDevCapabilityPlaygroundModalVisible } =
     useDevCapabilityPlaygroundModalVisible();
 
+  const openLogVerificationScreen = useCallback(
+    (
+      screen:
+        | typeof RootNames.DebugLogViewer
+        | typeof RootNames.StartupPerformanceLogViewer,
+    ) => {
+      navigation.dispatch(
+        StackActions.push(RootNames.StackTestkits, {
+          screen,
+        }),
+      );
+    },
+    [navigation],
+  );
+
+  const showLogVerificationPicker = useCallback(() => {
+    Alert.alert('Log Verification', 'Choose a log type to inspect.', [
+      {
+        text: 'App File Logs',
+        onPress: () => openLogVerificationScreen(RootNames.DebugLogViewer),
+      },
+      {
+        text: 'Startup Performance Logs',
+        onPress: () =>
+          openLogVerificationScreen(RootNames.StartupPerformanceLogViewer),
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
+  }, [openLogVerificationScreen]);
+
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = getFallbackAccountSnapshot();
@@ -1065,15 +1098,9 @@ function DevSettingsBlocks({
               },
             },
             {
-              label: 'App Log Verification',
+              label: 'Log Verification',
               icon: RcCode,
-              onPress: () => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackTestkits, {
-                    screen: RootNames.DebugLogViewer,
-                  }),
-                );
-              },
+              onPress: showLogVerificationPicker,
             },
           ],
         },

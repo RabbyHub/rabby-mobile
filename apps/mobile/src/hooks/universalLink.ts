@@ -72,6 +72,7 @@ type OnParseUrlAndProcessAction = (payload: {
   testkitScreen?:
     | typeof RootNames.DevCapabilityFile
     | typeof RootNames.DebugLogViewer
+    | typeof RootNames.StartupPerformanceLogViewer
     | typeof RootNames.DevDataSQLite
     | typeof RootNames.DevSwitches;
   testkitParams?: {
@@ -90,6 +91,7 @@ type OnParseUrlAndProcessAction = (payload: {
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DebugLogViewer: RootNames.DebugLogViewer,
+  StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
   DevSwitches: RootNames.DevSwitches,
 } as const;
