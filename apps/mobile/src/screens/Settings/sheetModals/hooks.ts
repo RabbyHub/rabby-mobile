@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { atom, useAtomValue } from 'jotai';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { useDapps } from '@/hooks/useDapps';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
 

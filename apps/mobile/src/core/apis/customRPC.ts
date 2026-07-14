@@ -1,14 +1,14 @@
-import { customRPCService } from '../services/shared';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 
 import { findChain } from '@/utils/chain';
 
 class ApiCustomRPC {
-  setCustomRPC = customRPCService.setRPC;
-  removeCustomRPC = customRPCService.removeCustomRPC;
-  getAllCustomRPC = customRPCService.getAllRPC;
-  getCustomRpcByChain = customRPCService.getRPCByChain;
-  pingCustomRPC = customRPCService.ping;
-  setRPCEnable = customRPCService.setRPCEnable;
+  setCustomRPC = customRPCServiceApi.setRPC;
+  removeCustomRPC = customRPCServiceApi.removeCustomRPC;
+  getAllCustomRPC = customRPCServiceApi.getAllRPC;
+  getCustomRpcByChain = customRPCServiceApi.getRPCByChain;
+  pingCustomRPC = customRPCServiceApi.ping;
+  setRPCEnable = customRPCServiceApi.setRPCEnable;
   validateRPC = async (url: string, chainId: number) => {
     const chain = findChain({
       id: chainId,
@@ -17,13 +17,13 @@ class ApiCustomRPC {
       throw new Error(`ChainId ${chainId} is not supported`);
     }
     const [_, rpcChainId] = await Promise.all([
-      customRPCService.ping(chain.enum),
-      customRPCService.request(url, 'eth_chainId', []),
+      customRPCServiceApi.ping(chain.enum),
+      customRPCServiceApi.request(url, 'eth_chainId', []),
     ]);
     return chainId === Number(rpcChainId);
   };
 
-  hasCustomRPC = customRPCService.hasCustomRPC;
+  hasCustomRPC = customRPCServiceApi.hasCustomRPC;
 }
 
 export const apiCustomRPC = new ApiCustomRPC();

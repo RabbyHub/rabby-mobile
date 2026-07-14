@@ -1,6 +1,7 @@
 import type { OpenApiService } from '@rabby-wallet/rabby-api';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import { shouldSuppressPerfCaptureConsoleNoise } from '@/core/utils/perfCaptureConsole';
 import { logger } from './logger';
 import {
   openApiDebugEvents,
@@ -97,6 +98,10 @@ type AxiosRequestLike = OpenApiService['request'] & {
       } | null>;
     };
   };
+};
+
+type OpenApiDiagnosticsGlobal = typeof globalThis & {
+  __RABBY_OPENAPI_DIAGNOSTIC_CONSOLE_DISABLED__?: boolean;
 };
 
 const diagnosticsEnabled = isNonProductionDiagnosticsEnabled;
@@ -377,22 +382,24 @@ function pushOpenApiRequestDiagnosticRecord(
   }
   lastOpenApiDiagnosticsUpdatedAt = record.endedAt;
 
-  logger.info('[openapi] request diagnostic', {
-    source: record.source,
-    requestId: record.requestId,
-    outcome: record.outcome,
-    method: record.method,
-    baseURL: record.baseURL,
-    path: record.path,
-    url: record.url,
-    params: record.params,
-    durationMs: record.durationMs,
-    status: record.status,
-    apiCode: record.apiCode,
-    errorCode: record.errorCode,
-    errorMessage: record.errorMessage,
-    slowThresholdMs: OPENAPI_SLOW_REQUEST_MS,
-  });
+  if (!shouldSuppressOpenApiDiagnosticConsole()) {
+    logger.info('[openapi] request diagnostic', {
+      source: record.source,
+      requestId: record.requestId,
+      outcome: record.outcome,
+      method: record.method,
+      baseURL: record.baseURL,
+      path: record.path,
+      url: record.url,
+      params: record.params,
+      durationMs: record.durationMs,
+      status: record.status,
+      apiCode: record.apiCode,
+      errorCode: record.errorCode,
+      errorMessage: record.errorMessage,
+      slowThresholdMs: OPENAPI_SLOW_REQUEST_MS,
+    });
+  }
 
   notifyOpenApiDiagnosticListeners();
 }
@@ -657,6 +664,16 @@ export function buildOpenApiFailurePayload(args: {
   };
 }
 
+export function shouldSuppressOpenApiDiagnosticConsole() {
+  const global = globalThis as OpenApiDiagnosticsGlobal;
+
+  if (global.__RABBY_OPENAPI_DIAGNOSTIC_CONSOLE_DISABLED__) {
+    return true;
+  }
+
+  return shouldSuppressPerfCaptureConsoleNoise();
+}
+
 function logOpenApiFailure(args: {
   source: OpenApiFailureSource;
   config?: AxiosRequestConfig;
@@ -664,6 +681,10 @@ function logOpenApiFailure(args: {
   error?: unknown;
 }) {
   if (!diagnosticsEnabled) {
+    return;
+  }
+
+  if (shouldSuppressOpenApiDiagnosticConsole()) {
     return;
   }
 

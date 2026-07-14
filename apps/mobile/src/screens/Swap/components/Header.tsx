@@ -18,7 +18,7 @@ export const SwapHeader = ({
   clearSwapHistoryRedDot,
 }: {
   isForMultipleAddress: boolean;
-  clearSwapHistoryRedDot?: () => number;
+  clearSwapHistoryRedDot?: () => number | Promise<number>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [recentShowTime, setRecentShowTime] = React.useState<number>(0);
@@ -29,13 +29,14 @@ export const SwapHeader = ({
 
   const { visible, setVisible } = useSwapTxHistoryVisible();
 
-  const openSwapHistory = React.useCallback(() => {
+  const openSwapHistory = React.useCallback(async () => {
     setVisible(true);
     const currentTs = (
       clearSwapHistoryRedDot || clearSwapHistoryRedDotFromScene
     )();
-    if (currentTs) {
-      setRecentShowTime(currentTs);
+    const resolvedCurrentTs = await currentTs;
+    if (resolvedCurrentTs) {
+      setRecentShowTime(resolvedCurrentTs);
     }
   }, [setVisible, clearSwapHistoryRedDot, clearSwapHistoryRedDotFromScene]);
 

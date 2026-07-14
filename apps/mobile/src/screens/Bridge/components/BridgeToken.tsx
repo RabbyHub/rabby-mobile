@@ -8,14 +8,14 @@ import React, {
 } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useBridgeSupportedChains } from '../hooks';
 import { ChainInfo } from './ChainInfo';
 import BridgeToTokenSelect from './BridgeToTokenSelect';
 import { findChainByEnum } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
+import type { CHAINS_ENUM } from '@debank/common';
 import {
   formatTokenAmount,
   formatTokenAmountInput,
@@ -27,8 +27,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton, Slider } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import { Account } from '@/core/services/preference';
-import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import type { Account } from '@/core/startupServices/preference';
+import type { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 import { SliderBubblePortal } from '@/screens/Swap/components/Slider';

@@ -1,9 +1,9 @@
 import { OpenApiService } from '@rabby-wallet/rabby-api';
-import { notificationOpenApiStore } from '../services/openapiStore';
+import { notificationOpenApiStore } from '../storage/openapiStore';
 import { SignApiPlugin } from '../request';
 import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { makeDeviceUUID } from '../apis/device';
-import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
+import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { AppState } from 'react-native';
 import { instrumentOpenApiRequestDiagnostics } from '@/utils/openapiRequestDiagnostics';
 import { APP_FEATURE_SWITCH } from '@/constant';

@@ -2,6 +2,7 @@ describe('store/balance', () => {
   const mockQueryAllBalance = jest.fn();
   const mockQueryBalanceCache = jest.fn();
   const mockQueryBalance = jest.fn();
+  const mockQueryBalanceCacheMapForStartup = jest.fn();
   const mockIsExpired = jest.fn();
   const mockSyncBalance = jest.fn();
   const mockOpenapiGetTotalBalanceV2 = jest.fn();
@@ -13,8 +14,7 @@ describe('store/balance', () => {
   let mockAppStorageState: Record<string, unknown>;
 
   const flushResourceFlowPersist = async () => {
-    await Promise.resolve();
-    await Promise.resolve();
+    await new Promise<void>(resolve => setImmediate(resolve));
   };
 
   let balanceModule: typeof import('./balance');
@@ -30,8 +30,9 @@ describe('store/balance', () => {
           mockOpenapiGetTotalBalanceV2(...args),
       },
     }));
-    jest.doMock('@/core/services', () => ({
-      keyringService: {
+    jest.doMock('@/core/serviceApi/keyring', () => ({
+      bindKeyringEvent: jest.fn(),
+      keyringServiceApi: {
         getAllAddresses: (...args: unknown[]) =>
           mockKeyringServiceGetAllAddresses(...args),
       },
@@ -59,6 +60,8 @@ describe('store/balance', () => {
         queryAllBalance: (...args: unknown[]) => mockQueryAllBalance(...args),
         queryBalanceCache: (...args: unknown[]) =>
           mockQueryBalanceCache(...args),
+        queryBalanceCacheMapForStartup: (...args: unknown[]) =>
+          mockQueryBalanceCacheMapForStartup(...args),
         queryBalance: (...args: unknown[]) => mockQueryBalance(...args),
         isExpired: (...args: unknown[]) => mockIsExpired(...args),
       },
@@ -135,6 +138,73 @@ describe('store/balance', () => {
     ).toMatchObject({
       sourceOfCurrentValue: 'hydrate',
       hasValue: true,
+    });
+  });
+
+  it('uses persisted total balance on startup fast path', async () => {
+    mockQueryBalanceCacheMapForStartup.mockResolvedValue({
+      '0xabcd-core': {
+        total_usd_value: 100,
+        evm_usd_value: 80,
+        chain_list: [{ id: 'eth' }],
+      },
+    });
+
+    await balanceModule.default.hydrateCachedBalancesForAccounts(
+      [
+        {
+          address: '0xABCD',
+          type: 'SimpleKeyring',
+        },
+      ],
+      {
+        startupFastPath: true,
+      },
+    );
+
+    expect(mockEnsureAppChainStoreInitialized).not.toHaveBeenCalled();
+    expect(mockQueryBalanceCacheMapForStartup).toHaveBeenCalledWith([
+      {
+        owner_addr: '0xabcd',
+        isCore: true,
+      },
+    ]);
+    expect(balanceModule.default.getAddressValue('0xabcd')).toEqual({
+      evmBalance: 80,
+      totalBalance: 100,
+      chainList: [{ id: 'eth' }],
+      isCore: true,
+    });
+  });
+
+  it('falls back to appchain store for ambiguous migrated startup cache', async () => {
+    mockQueryBalanceCacheMapForStartup.mockResolvedValue({
+      '0xabcd-core': {
+        total_usd_value: 100,
+        evm_usd_value: 0,
+        chain_list: [{ id: 'eth' }],
+      },
+    });
+    mockGetAppChainTotalUsdValue.mockReturnValue(20);
+
+    await balanceModule.default.hydrateCachedBalancesForAccounts(
+      [
+        {
+          address: '0xABCD',
+          type: 'SimpleKeyring',
+        },
+      ],
+      {
+        startupFastPath: true,
+      },
+    );
+
+    expect(mockEnsureAppChainStoreInitialized).toHaveBeenCalled();
+    expect(balanceModule.default.getAddressValue('0xabcd')).toEqual({
+      evmBalance: 0,
+      totalBalance: 20,
+      chainList: [{ id: 'eth' }],
+      isCore: true,
     });
   });
 

@@ -3,7 +3,7 @@ import { findChain } from '@/utils/chain';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import React, {
   useCallback,
   useEffect,
@@ -39,7 +39,11 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { AssetAvatar } from '@/components';
 import { ONE_DAY_MS, ONE_HOUR_MS, ONE_MINUTE_MS } from '../constants';
 import { openapi } from '@/core/request';
-import { transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryRecentPendingSnapshot,
+  getTransactionHistoryRecentTxSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
 import { Button } from '@/components2024/Button';
 import {
   useSafeAreaFrame,
@@ -48,7 +52,7 @@ import {
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
-import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Text } from '@/components/Typography';
 
@@ -992,7 +996,7 @@ export const BridgePendingTxItem = ({
   const [data, setData] = useState<BridgeTxHistoryItem | null>(null);
 
   const fetchHistory = useCallback(async () => {
-    const historyData = transactionHistoryService.getRecentPendingTxHistory(
+    const historyData = getTransactionHistoryRecentPendingSnapshot(
       userAddress,
       'bridge',
     ) as BridgeTxHistoryItem;
@@ -1002,7 +1006,7 @@ export const BridgePendingTxItem = ({
       historyData?.createdAt &&
       Date.now() - historyData.createdAt > ONE_DAY_MS
     ) {
-      transactionHistoryService.completeBridgeTxHistory(
+      await transactionHistoryServiceApi.completeBridgeTxHistory(
         historyData?.hash,
         historyData.fromChainId!,
         'failed',
@@ -1035,7 +1039,7 @@ export const BridgePendingTxItem = ({
           const txCreateTime = historyData.createdAt;
           if (currentTime - txCreateTime > ONE_HOUR_MS) {
             // tx create time is more than 60 minutes, set this tx failed
-            transactionHistoryService.completeBridgeTxHistory(
+            void transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               'failed',
@@ -1054,7 +1058,7 @@ export const BridgePendingTxItem = ({
               completedAt: Date.now(),
             };
             setData(updateData as BridgeTxHistoryItem);
-            transactionHistoryService.completeBridgeTxHistory(
+            void transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               status,
@@ -1081,7 +1085,7 @@ export const BridgePendingTxItem = ({
     const address = data.address;
     const chainId = data.fromChainId;
     const hash = data.hash;
-    const newData = transactionHistoryService.getRecentTxHistory(
+    const newData = getTransactionHistoryRecentTxSnapshot(
       address,
       hash,
       chainId!,
@@ -1112,7 +1116,7 @@ export const BridgePendingTxItem = ({
         const txCreateTime = data?.createdAt;
         if (currentTime - txCreateTime > ONE_HOUR_MS) {
           // tx create time is more than 60 minutes, set this tx failed
-          transactionHistoryService.completeBridgeTxHistory(
+          void transactionHistoryServiceApi.completeBridgeTxHistory(
             recentlyTxHash,
             data?.fromChainId,
             'failed',
@@ -1135,7 +1139,7 @@ export const BridgePendingTxItem = ({
           completedAt: Date.now(),
         };
         setData(updateData as BridgeTxHistoryItem);
-        transactionHistoryService.completeBridgeTxHistory(
+        void transactionHistoryServiceApi.completeBridgeTxHistory(
           recentlyTxHash,
           data.fromChainId,
           status,

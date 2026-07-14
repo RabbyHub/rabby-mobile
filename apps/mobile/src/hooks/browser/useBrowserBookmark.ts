@@ -1,7 +1,11 @@
-import { browserService } from '@/core/services';
-import { BrowserBookmarkItem } from '@/core/services/browserService';
-import { DappInfo } from '@/core/services/dappService';
-import { EntityState } from '@/core/utils/createEntryAdapter';
+import {
+  addBrowserBookmarkItem,
+  getBrowserBookmarks,
+  removeBrowserBookmarkItems,
+} from '@/core/serviceApi/browser';
+import type { BrowserBookmarkItem } from '@/core/services/browserService';
+import type { DappInfo } from '@/core/services/dappService';
+import type { EntityState } from '@/core/utils/createEntryAdapter';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { useMemo } from 'react';
@@ -11,7 +15,8 @@ import {
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 
 type zBrowserBookmarkState = EntityState<BrowserBookmarkItem, string>;
 const zBrowserBookmarkStore = zCreate<zBrowserBookmarkState>(() => ({
@@ -30,9 +35,8 @@ function setBrowserBookmarkStore(
   });
 }
 
-export const getBookmarkList = () => {
-  const entities = browserService.bookmark.selectors.selectEntities();
-  const ids = browserService.bookmark.selectors.selectIds();
+export const getBookmarkList = async () => {
+  const { entities, ids } = await getBrowserBookmarks();
   setBrowserBookmarkStore({
     ids,
     entities,
@@ -47,9 +51,19 @@ export function useBrowserBookmark() {
     if (!item || !/^https?:\/\//.test(item.url)) {
       return;
     }
-    removeBookmark(item.url);
-    browserService.bookmark.addOne(item);
-    getBookmarkList();
+    void (async () => {
+      try {
+        const urlInfo = safeParseURL(item.url);
+        const idsToRemove = store.ids.filter(id => {
+          return safeGetOrigin(id) === urlInfo?.origin;
+        });
+        await removeBrowserBookmarkItems(idsToRemove);
+        await addBrowserBookmarkItem(item);
+        await getBookmarkList();
+      } catch (e) {
+        console.error(e);
+      }
+    })();
   });
 
   const removeBookmark = useMemoizedFn((url: string) => {
@@ -57,10 +71,9 @@ export function useBrowserBookmark() {
     const idsToRemove = store.ids.filter(id => {
       return safeGetOrigin(id) === urlInfo?.origin;
     });
-    if (idsToRemove.length) {
-      browserService.bookmark.removeMany(idsToRemove);
-    }
-    getBookmarkList();
+    void removeBrowserBookmarkItems(idsToRemove)
+      .then(() => getBookmarkList())
+      .catch(console.error);
   });
 
   // const updateBookmark = useMemoizedFn((item: BrowserBookmarkItem) => {

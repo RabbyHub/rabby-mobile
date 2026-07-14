@@ -1,19 +1,17 @@
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
+import type { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
 import { useFindChain } from '@/hooks/useFindChain';
 import React, { useCallback } from 'react';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import {
-  MODAL_ID,
-  MODAL_NAMES,
-} from '@/components2024/GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {

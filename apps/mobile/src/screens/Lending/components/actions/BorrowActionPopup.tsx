@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../../type';
+import type { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import {
@@ -21,15 +21,13 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildBorrowTx, optimizedPath } from '../../poolService';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import BorrowActionOverView from './BorrowActionOverView';
 import {
@@ -53,7 +51,7 @@ import {
   LendingReportType,
   LendingSignType,
 } from '@/screens/Transaction/components/type';
-import { transactionHistoryService } from '@/core/services/shared';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useRefreshHistoryId } from '../../hooks';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
@@ -269,7 +267,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         }
         const txId = last(results);
         if (txId && txs[0]?.chainId) {
-          transactionHistoryService.setCustomTxItem(
+          void transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
             txId,

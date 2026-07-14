@@ -1,10 +1,12 @@
 import BigNumber from 'bignumber.js';
+import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import {
-  transactionBroadcastWatcherService,
-  transactionHistoryService,
-  transactionWatcherService,
-} from '../services/shared';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+  getTransactionHistoryTransactions,
+  getTransactionHistoryTransactionsSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { groupBy } from 'lodash';
 import { findChain } from '@/utils/chain';
 import { requestETHRpc } from './provider';
@@ -21,17 +23,17 @@ class ApisTransactionHistory {
     nonce?: number;
     chainId?: number;
   }) => {
-    transactionHistoryService.removeLocalPendingTx({
+    void transactionHistoryServiceApi.removeLocalPendingTx({
       address,
       nonce,
       chainId,
     });
-    transactionWatcherService.removeLocalPendingTx({
+    void transactionWatcherServiceApi.removeLocalPendingTx({
       address,
       nonce,
       chainId,
     });
-    transactionBroadcastWatcherService.removeLocalPendingTx({
+    void transactionBroadcastWatcherServiceApi.removeLocalPendingTx({
       address,
       nonce,
       chainId,
@@ -40,9 +42,9 @@ class ApisTransactionHistory {
   };
 
   clearPendingTxs = (address: string) => {
-    transactionHistoryService.clearPendingTransactions(address);
-    transactionWatcherService.clearPendingTx(address);
-    transactionBroadcastWatcherService.clearPendingTx(address);
+    void transactionHistoryServiceApi.clearPendingTransactions(address);
+    void transactionWatcherServiceApi.clearPendingTx(address);
+    void transactionBroadcastWatcherServiceApi.clearPendingTx(address);
   };
 
   getPendingTxs = async ({
@@ -54,7 +56,7 @@ class ApisTransactionHistory {
     address: string;
     chainId: number;
   }) => {
-    const { pendings } = await transactionHistoryService.getList(address);
+    const { pendings } = await transactionHistoryServiceApi.getList(address);
 
     return pendings
       .filter(
@@ -84,7 +86,7 @@ class ApisTransactionHistory {
 
   getSkipedTxs = async (address: string, account?: Account) => {
     const { pendings: pendingList } =
-      transactionHistoryService.getList(address);
+      await transactionHistoryServiceApi.getList(address);
     const dict = groupBy(pendingList, item => item.chainId);
 
     const res: Record<
@@ -107,7 +109,10 @@ class ApisTransactionHistory {
         account,
       );
       const localNonce =
-        transactionHistoryService.getNonceByChain(address, +chainId) || 0;
+        (await transactionHistoryServiceApi.getNonceByChain(
+          address,
+          +chainId,
+        )) || 0;
       for (let nonce = +onChainNonce; nonce < +localNonce; nonce++) {
         if (
           !list.find(txGroup => {
@@ -126,8 +131,8 @@ class ApisTransactionHistory {
     return res;
   };
 
-  getRabbySendPendingTxs = ({ address }: { address: string }) => {
-    const { pendings } = transactionHistoryService.getList(address);
+  getRabbySendPendingTxs = async ({ address }: { address: string }) => {
+    const { pendings } = await transactionHistoryServiceApi.getList(address);
 
     return pendings.filter(
       item =>
@@ -137,7 +142,7 @@ class ApisTransactionHistory {
     );
   };
 
-  updateBridgeGasAccountTx = ({
+  updateBridgeGasAccountTx = async ({
     address,
     chainId,
     hash,
@@ -149,7 +154,8 @@ class ApisTransactionHistory {
     if (!chainId) {
       return;
     }
-    const tx = transactionHistoryService.store.transactions.find(item => {
+    const transactions = await getTransactionHistoryTransactions();
+    const tx = transactions.find(item => {
       return (
         isSameAddress(item.address, address) &&
         item.chainId === chainId &&
@@ -158,7 +164,7 @@ class ApisTransactionHistory {
     });
 
     if (tx) {
-      transactionHistoryService.updateTx({
+      void transactionHistoryServiceApi.updateTx({
         ...tx,
         isGasDeposit: true,
       });
@@ -176,7 +182,7 @@ class ApisTransactionHistory {
       return false;
     }
 
-    return !!transactionHistoryService.store.transactions.find(item => {
+    return !!getTransactionHistoryTransactionsSnapshot().find(item => {
       return (
         item.chainId === chainId && item.hash === hash && item.isGasDeposit
       );

@@ -1,12 +1,20 @@
 import { Text } from '@/components';
-import { contactService, preferenceService } from '@/core/services';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
+import {
+  getFallbackAccountSnapshot,
+  setReportActionTs,
+  setCurrentAccount,
+} from '@/core/serviceApi/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   useIsFocused,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,8 +29,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { RootStackParamsList } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKRCategoryByType } from '@/utils/transaction';
@@ -46,7 +54,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import addressBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import useTokenList from '@/store/tokens';
 import usePortfolioList from '@/store/protocols';
 import { eventBus } from '@/utils/events';
@@ -54,14 +62,10 @@ import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { apisSingleHome } from '../Home/hooks/singleHome';
 import { isNonPublicProductionEnv } from '@/constant';
 import { useMount } from 'ahooks';
-import {
-  accountEvents,
-  PerfAccountEventBusListeners,
-} from '@/core/apis/account';
-import {
-  WalletSuccessCard,
-  AddressItem,
-} from '@/components2024/WalletSuccessCard';
+import type { PerfAccountEventBusListeners } from '@/core/apis/account';
+import { accountEvents } from '@/core/apis/account';
+import type { AddressItem } from '@/components2024/WalletSuccessCard';
+import { WalletSuccessCard } from '@/components2024/WalletSuccessCard';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
@@ -156,12 +160,14 @@ export const ImportSuccessScreen2024 = () => {
   >([]);
 
   const saveFirstAddressAlias = React.useCallback(() => {
-    importAddresses.forEach(item => {
-      contactService.setAlias({
-        address: item.address,
-        alias: item.aliasName || ellipsisAddress(item.address), // for empty inputText
-      });
-    });
+    return Promise.all(
+      importAddresses.map(item =>
+        contactServiceApi.setAlias({
+          address: item.address,
+          alias: item.aliasName || ellipsisAddress(item.address), // for empty inputText
+        }),
+      ),
+    );
   }, [importAddresses]);
 
   const onlyFirstAccount = useMemo(() => {
@@ -173,13 +179,13 @@ export const ImportSuccessScreen2024 = () => {
         }
       : null;
   }, [importAddresses, state?.brandName, state?.type]);
-  const handleDone = React.useCallback(() => {
-    saveFirstAddressAlias();
+  const handleDone = React.useCallback(async () => {
+    await saveFirstAddressAlias();
     Keyboard.dismiss();
 
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.ADD_NEW_ADDRESS_DONE,
-    );
+    ).catch(console.error);
 
     if (onlyFirstAccount) {
       apisSingleHome.navigateToSingleHome(onlyFirstAccount, { replace: true });
@@ -200,7 +206,7 @@ export const ImportSuccessScreen2024 = () => {
         address,
         aliasName:
           state?.alias ||
-          contactService.getAliasByAddress(address)?.alias ||
+          getContactAliasSnapshot(address)?.alias ||
           ellipsisAddress(address || '') ||
           '',
       })),
@@ -246,14 +252,14 @@ export const ImportSuccessScreen2024 = () => {
           a.brandName === state?.brandName &&
           addressUtils.isSameAddress(a.address, lastAddress),
       );
-      const currentAccount = preferenceService.getFallbackAccount();
+      const currentAccount = getFallbackAccountSnapshot();
       if (targetAccount) {
         if (
           !currentAccount ||
           targetAccount.brandName !== currentAccount.brandName ||
           !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
-          preferenceService.setCurrentAccount(targetAccount);
+          void setCurrentAccount(targetAccount).catch(console.error);
         }
       }
     }

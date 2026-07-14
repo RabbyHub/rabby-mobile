@@ -1,5 +1,4 @@
 import EventEmitter from 'events';
-import type { Account } from './preference';
 
 type Listener = (resp?: any) => void;
 
@@ -49,10 +48,3 @@ export function makeJsEEClass<
 
   return { EventEmitter: EE as typeof BizEventEmitter<Listeners> };
 }
-
-const { EventEmitter: AppServiceEvents } = makeJsEEClass<{
-  currentAccountChanged: (account: Account) => void;
-  backupReminderChanged: (dbId: string) => void;
-}>();
-
-export const appServiceEvents = new AppServiceEvents();

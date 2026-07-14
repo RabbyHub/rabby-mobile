@@ -1,9 +1,14 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { dappService, sessionService } from '../services/shared';
+import { addDappSync, getDappSnapshot } from '@/core/serviceApi/dapp';
+import {
+  deleteSessionSync,
+  sessionServiceApi,
+} from '@/core/serviceApi/session';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
@@ -49,17 +54,20 @@ export function useSetupWebview({
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
+  const bridgeInitSeqRef = useRef(0);
 
   const destroyCurrentBridge = useCallback(() => {
+    bridgeInitSeqRef.current += 1;
     if (currentBridgeRef.current) {
       currentBridgeRef.current.onDisconnect();
-      sessionService.deleteSession(currentBridgeRef.current);
+      deleteSessionSync(currentBridgeRef.current);
       currentBridgeRef.current = null;
     }
   }, [currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
-    (urlBridge: string, isMainFrame: boolean = true) => {
+    async (urlBridge: string, isMainFrame: boolean = true) => {
+      const initSeq = ++bridgeInitSeqRef.current;
       urlRef.current = urlBridge;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
@@ -71,21 +79,28 @@ export function useSetupWebview({
         isFromMobileInnerDapp,
       });
 
-      const session = sessionService.getOrCreateSession(newBridge);
+      const session = await sessionServiceApi.getOrCreateSession(newBridge);
+      if (initSeq !== bridgeInitSeqRef.current) {
+        newBridge.onDisconnect();
+        deleteSessionSync(newBridge);
+        return;
+      }
+
       session?.setProp({
         origin: urlBridge,
         icon: '',
         name: titleRef.current,
       });
 
-      if (!dappService.getDapp(urlBridge) && session) {
-        dappService.addDapp(createDappBySession(session));
+      if (!getDappSnapshot(urlBridge) && session) {
+        addDappSync(createDappBySession(session));
       }
 
       putBackgroundBridge(newBridge, true);
     },
     [
       isFromMobileInnerDapp,
+      bridgeInitSeqRef,
       urlRef,
       webviewRef,
       webviewIdRef,
@@ -211,9 +226,13 @@ export function useSetupWebview({
           // }
 
           const dappOrigin = nativeEvent.url;
-          const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
-            ? dappOrigin
-            : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+          if (BUILTIN_SPECIAL_URLS.includes(dappOrigin)) {
+            urlRef.current = dappOrigin;
+            return;
+          }
+
+          const formattedDappOrigin =
+            urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
           initializeBackgroundBridge(formattedDappOrigin, true);
         }
       } catch (e: any) {

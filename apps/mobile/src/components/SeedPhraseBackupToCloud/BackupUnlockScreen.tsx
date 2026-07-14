@@ -1,5 +1,5 @@
 import { APP_TEST_PWD } from '@/constant';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
@@ -89,7 +89,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
     setLoading(true);
     try {
       if (!ignoreValidation) {
-        await keyringService.verifyPassword(password);
+        await keyringServiceApi.verifyPassword(password);
       }
       onConfirm(password);
     } catch (e) {

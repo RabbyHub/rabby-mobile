@@ -2,6 +2,7 @@
  * @format
  */
 import 'react-native-gesture-handler';
+import './src/core/utils/hermesStartupProfiler';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,

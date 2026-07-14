@@ -1,4 +1,7 @@
-import { contactService } from '@/core/services';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
 import { atom, useAtom } from 'jotai';
 import React from 'react';
 
@@ -24,7 +27,7 @@ export const useApprovalAlias = () => {
       if (accounts.some(account => account.address === address)) {
         return accounts;
       }
-      const alias = await contactService.getAliasByAddress(address)?.alias;
+      const alias = getContactAliasSnapshot(address)?.alias;
       setAccounts([...accounts, { address, alias }]);
     },
     [accounts, setAccounts],
@@ -35,7 +38,7 @@ export const useApprovalAlias = () => {
       setAccounts(accounts => {
         return accounts.map(account => {
           if (account.address === address) {
-            contactService.updateAlias({ address, name: alias });
+            void contactServiceApi.updateAlias({ address, name: alias });
             return { ...account, alias };
           }
           return account;

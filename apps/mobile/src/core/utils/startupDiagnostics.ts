@@ -33,6 +33,28 @@ function getStartupDiagnosticsLogger() {
 type DiagnosticData = Record<string, unknown>;
 type StartupDiagnosticFile = Awaited<ReturnType<typeof RNFS.readDir>>[number];
 
+type OpSqliteDiagnosticPayload = {
+  op?: string;
+  opId?: string;
+  phase?: string;
+  durationMs?: number;
+  argsConvertMs?: number;
+  nativeExecuteMs?: number;
+  commandCount?: number;
+  [key: string]: unknown;
+};
+
+type OpSqliteDiagnosticContext = {
+  dbSyncTaskId: number | null;
+  schedulerTaskId?: number;
+  taskFor: string;
+  entityName: string;
+  round: number;
+  count: number;
+  totalRound: number;
+  method: string;
+};
+
 type ActiveDbSyncTask = {
   id: number;
   traceCookie: number;
@@ -52,6 +74,7 @@ type ActiveDbSyncTask = {
   paramsBuildMs: number;
   executeMs: number;
   batchDurationMs: number;
+  executionActive: boolean;
   status: 'running' | 'success' | 'error' | 'aborted';
   endedAt?: number;
 };
@@ -62,6 +85,32 @@ type ActiveWarmupTask = {
   startedAt: number;
   name: string;
   detail?: DiagnosticData;
+};
+
+export type StartupGovernanceTaskStatus =
+  | 'scheduled'
+  | 'running'
+  | 'success'
+  | 'error'
+  | 'canceled';
+
+export type StartupGovernanceTaskRecord = {
+  id: number;
+  label: string;
+  owner: string;
+  reason: string;
+  stage: string;
+  priority: string;
+  status: StartupGovernanceTaskStatus;
+  budgetMs: number;
+  fallbackMs: number;
+  scheduledAt: number;
+  firedAt: number;
+  endedAt: number;
+  durationMs: number;
+  waitMs: number;
+  budgetExceeded: boolean;
+  error: string;
 };
 
 type UnlockCriticalWindow = {
@@ -176,6 +225,18 @@ export type KeyringRuntimeConvergenceSnapshot = {
   records: KeyringRuntimeConvergenceRecord[];
 };
 
+export type StartupTaskSummarySnapshot = {
+  enabled: boolean;
+  updatedAt: number;
+  activeCount: number;
+  scheduledCount: number;
+  runningCount: number;
+  budgetExceededCount: number;
+  errorCount: number;
+  activeTasks: StartupGovernanceTaskRecord[];
+  recentTasks: StartupGovernanceTaskRecord[];
+};
+
 const isAndroid = Platform.OS === 'android';
 const enabled = isAndroid && isNonProductionDiagnosticsEnabled;
 const STALL_INTERVAL_MS = 50;
@@ -184,18 +245,23 @@ const STALL_LOG_MS = 250;
 const MAX_STALL_LOGS_PER_WINDOW = 8;
 const MAX_SNAPSHOT_TASKS = 5;
 const MAX_KEYRING_CONVERGENCE_RECORDS = 5;
+const MAX_STARTUP_TASK_SUMMARY_RECORDS = 12;
 
 let dbTaskSeq = 0;
 let warmupTaskSeq = 0;
+let startupGovernanceTaskSeq = 0;
 let unlockWindowSeq = 0;
 let dbActiveWindowSeq = 0;
 let keyringRuntimeConvergenceRecordSeq = 0;
 
 const activeDbSyncTasks = new Map<number, ActiveDbSyncTask>();
 const activeWarmupTasks = new Map<number, ActiveWarmupTask>();
+const startupGovernanceTasks = new Map<number, StartupGovernanceTaskRecord>();
+let recentStartupGovernanceTasks: StartupGovernanceTaskRecord[] = [];
 const dbSyncTaskSummaries = new Map<number, ActiveDbSyncTask>();
 const dbSummaryListeners = new Set<() => void>();
 const keyringRuntimeConvergenceListeners = new Set<() => void>();
+const startupTaskSummaryListeners = new Set<() => void>();
 
 const activeUnlockWindowRef: {
   current: UnlockCriticalWindow | null;
@@ -208,6 +274,14 @@ const activeDbWindowRef: {
 } = {
   current: null,
 };
+
+const opSqliteDiagnosticContextRef: {
+  current: OpSqliteDiagnosticContext | null;
+} = {
+  current: null,
+};
+
+let didInstallOpSqliteDiagnosticHook = false;
 
 const diagnosticFilePath =
   enabled && RNFS.ExternalDirectoryPath
@@ -248,8 +322,21 @@ let lastKeyringRuntimeConvergenceSnapshot: KeyringRuntimeConvergenceSnapshot = {
   lastPerfElapsedMs: 0,
   records: [],
 };
+let lastStartupTaskSummarySnapshot: StartupTaskSummarySnapshot = {
+  enabled,
+  updatedAt: now(),
+  activeCount: 0,
+  scheduledCount: 0,
+  runningCount: 0,
+  budgetExceededCount: 0,
+  errorCount: 0,
+  activeTasks: [],
+  recentTasks: [],
+};
 let dbSummaryPublishTimer: ReturnType<typeof setTimeout> | null = null;
 let lastDbSummaryPublishAt = 0;
+let startupTaskSummaryPublishTimer: ReturnType<typeof setTimeout> | null = null;
+let lastStartupTaskSummaryPublishAt = 0;
 
 function now() {
   return Date.now();
@@ -293,6 +380,28 @@ function toDbSyncSummaryTask(task: ActiveDbSyncTask): DbSyncSummaryTask {
   };
 }
 
+function isDbSyncExecutionStage(stage: string) {
+  return (
+    stage === 'running' ||
+    stage === 'upsert_method' ||
+    stage === 'params_build' ||
+    stage === 'params_built' ||
+    stage === 'execute_batch' ||
+    stage === 'typeorm_upsert' ||
+    stage === 'after_batches_start'
+  );
+}
+
+function getDbSyncExecutionTaskCount() {
+  let count = 0;
+  activeDbSyncTasks.forEach(task => {
+    if (task.executionActive) {
+      count += 1;
+    }
+  });
+  return count;
+}
+
 function buildDbWindowSummary(
   window: DbActiveWindow,
   endedAt?: number,
@@ -333,6 +442,36 @@ function buildDbSummarySnapshot(): DbSyncSummarySnapshot {
     updatedAt: now(),
     activeWindow: activeWindow ? buildDbWindowSummary(activeWindow) : null,
     lastWindow: lastDbSummarySnapshot.lastWindow,
+  };
+}
+
+function cloneStartupTaskRecord(
+  task: StartupGovernanceTaskRecord,
+): StartupGovernanceTaskRecord {
+  return { ...task };
+}
+
+function buildStartupTaskSummarySnapshot(): StartupTaskSummarySnapshot {
+  const activeTasks = Array.from(startupGovernanceTasks.values())
+    .slice(-MAX_STARTUP_TASK_SUMMARY_RECORDS)
+    .map(cloneStartupTaskRecord);
+  const recentTasks = recentStartupGovernanceTasks
+    .slice(0, MAX_STARTUP_TASK_SUMMARY_RECORDS)
+    .map(cloneStartupTaskRecord);
+  const allVisibleTasks = [...activeTasks, ...recentTasks];
+
+  return {
+    enabled,
+    updatedAt: now(),
+    activeCount: startupGovernanceTasks.size,
+    scheduledCount: activeTasks.filter(task => task.status === 'scheduled')
+      .length,
+    runningCount: activeTasks.filter(task => task.status === 'running').length,
+    budgetExceededCount: allVisibleTasks.filter(task => task.budgetExceeded)
+      .length,
+    errorCount: allVisibleTasks.filter(task => task.status === 'error').length,
+    activeTasks,
+    recentTasks,
   };
 }
 
@@ -396,6 +535,42 @@ function publishDbSummarySnapshot(immediate = false) {
   );
 }
 
+function publishStartupTaskSummarySnapshot(immediate = false) {
+  if (!enabled) {
+    return;
+  }
+
+  const current = now();
+  if (
+    !immediate &&
+    current - lastStartupTaskSummaryPublishAt < 250 &&
+    startupTaskSummaryPublishTimer
+  ) {
+    return;
+  }
+
+  const publish = () => {
+    startupTaskSummaryPublishTimer = null;
+    lastStartupTaskSummaryPublishAt = now();
+    lastStartupTaskSummarySnapshot = buildStartupTaskSummarySnapshot();
+    startupTaskSummaryListeners.forEach(listener => listener());
+  };
+
+  if (immediate || current - lastStartupTaskSummaryPublishAt >= 250) {
+    if (startupTaskSummaryPublishTimer) {
+      clearTimeout(startupTaskSummaryPublishTimer);
+      startupTaskSummaryPublishTimer = null;
+    }
+    publish();
+    return;
+  }
+
+  startupTaskSummaryPublishTimer = setTimeout(
+    publish,
+    Math.max(0, 250 - (current - lastStartupTaskSummaryPublishAt)),
+  );
+}
+
 export function getDbSyncSummarySnapshot() {
   return lastDbSummarySnapshot;
 }
@@ -405,6 +580,18 @@ export function subscribeDbSyncSummarySnapshot(listener: () => void) {
 
   return () => {
     dbSummaryListeners.delete(listener);
+  };
+}
+
+export function getStartupTaskSummarySnapshot() {
+  return lastStartupTaskSummarySnapshot;
+}
+
+export function subscribeStartupTaskSummarySnapshot(listener: () => void) {
+  startupTaskSummaryListeners.add(listener);
+
+  return () => {
+    startupTaskSummaryListeners.delete(listener);
   };
 }
 
@@ -746,6 +933,50 @@ function trace(scope: string, event: string, data: DiagnosticData = {}) {
   }
 }
 
+function getGlobalForOpSqliteDiagnostics() {
+  return globalThis as typeof globalThis & {
+    __RABBY_OP_SQLITE_DIAGNOSTIC__?: (
+      payload: OpSqliteDiagnosticPayload,
+    ) => void;
+  };
+}
+
+function installOpSqliteDiagnosticHook() {
+  if (!enabled || didInstallOpSqliteDiagnosticHook) {
+    return;
+  }
+
+  didInstallOpSqliteDiagnosticHook = true;
+  getGlobalForOpSqliteDiagnostics().__RABBY_OP_SQLITE_DIAGNOSTIC__ =
+    payload => {
+      const context = opSqliteDiagnosticContextRef.current;
+
+      trace('db', 'op_sqlite_execute_batch_phase', {
+        ...(context || {}),
+        ...payload,
+      });
+    };
+}
+
+export async function withOpSqliteDiagnosticContext<T>(
+  context: OpSqliteDiagnosticContext,
+  task: () => Promise<T>,
+): Promise<T> {
+  if (!enabled) {
+    return task();
+  }
+
+  installOpSqliteDiagnosticHook();
+  const previousContext = opSqliteDiagnosticContextRef.current;
+  opSqliteDiagnosticContextRef.current = context;
+
+  try {
+    return await task();
+  } finally {
+    opSqliteDiagnosticContextRef.current = previousContext;
+  }
+}
+
 function serializeDbTask(task: ActiveDbSyncTask) {
   return {
     id: task.id,
@@ -756,6 +987,7 @@ function serializeDbTask(task: ActiveDbSyncTask) {
     totalBatches: task.totalBatches,
     completedBatches: task.completedBatches,
     stage: task.stage,
+    executionActive: task.executionActive,
     ageMs: now() - task.startedAt,
   };
 }
@@ -779,6 +1011,7 @@ function getActiveTaskSnapshot() {
 
   return {
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount: getDbSyncExecutionTaskCount(),
     activeWarmupTaskCount: activeWarmupTasks.size,
     dbTasks,
     warmupTasks,
@@ -843,6 +1076,7 @@ function ensureDbActiveWindow() {
   }
 
   const startedAt = now();
+  const activeDbExecutionTaskCount = getDbSyncExecutionTaskCount();
   const window: DbActiveWindow = {
     id: ++dbActiveWindowSeq,
     traceCookie: nextAndroidTraceCookie(),
@@ -852,7 +1086,7 @@ function ensureDbActiveWindow() {
     maxGapMs: 0,
     stallCount: 0,
     loggedStallCount: 0,
-    peakActiveTaskCount: activeDbSyncTasks.size,
+    peakActiveTaskCount: activeDbExecutionTaskCount,
     taskIds: [],
   };
 
@@ -862,7 +1096,7 @@ function ensureDbActiveWindow() {
     window.lastTickAt = current;
     window.peakActiveTaskCount = Math.max(
       window.peakActiveTaskCount,
-      activeDbSyncTasks.size,
+      getDbSyncExecutionTaskCount(),
     );
 
     if (gapMs >= STALL_WARN_MS) {
@@ -884,13 +1118,14 @@ function ensureDbActiveWindow() {
   beginAndroidAsyncTrace('db.active_window', window.traceCookie, {
     id: window.id,
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount,
   });
-  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
+  traceAndroidCounter('db.active_task_count', activeDbExecutionTaskCount);
   publishDbSummarySnapshot(true);
 }
 
 function endDbActiveWindowIfIdle() {
-  if (!enabled || activeDbSyncTasks.size > 0) {
+  if (!enabled || getDbSyncExecutionTaskCount() > 0) {
     return;
   }
 
@@ -932,6 +1167,43 @@ function endDbActiveWindowIfIdle() {
   flushDiagnosticLines();
 }
 
+function attachDbTaskToActiveWindow(task: ActiveDbSyncTask) {
+  const activeDbWindow = activeDbWindowRef.current;
+  if (!activeDbWindow) {
+    return;
+  }
+
+  dbSyncTaskSummaries.set(task.id, task);
+  if (!activeDbWindow.taskIds.includes(task.id)) {
+    activeDbWindow.taskIds.push(task.id);
+  }
+  activeDbWindow.peakActiveTaskCount = Math.max(
+    activeDbWindow.peakActiveTaskCount,
+    getDbSyncExecutionTaskCount(),
+  );
+}
+
+function setDbSyncTaskExecutionActive(
+  task: ActiveDbSyncTask,
+  executionActive: boolean,
+) {
+  if (task.executionActive === executionActive) {
+    if (executionActive) {
+      attachDbTaskToActiveWindow(task);
+    }
+    return;
+  }
+
+  task.executionActive = executionActive;
+  if (executionActive) {
+    ensureDbActiveWindow();
+    attachDbTaskToActiveWindow(task);
+  } else {
+    endDbActiveWindowIfIdle();
+  }
+  traceAndroidCounter('db.active_task_count', getDbSyncExecutionTaskCount());
+}
+
 export function isStartupDiagnosticsEnabled() {
   return enabled;
 }
@@ -942,6 +1214,116 @@ export function traceStartupDiagnostic(
   data: DiagnosticData = {},
 ) {
   trace(scope, event, data);
+}
+
+export function beginStartupTaskDiagnostic(meta: {
+  label?: string;
+  owner?: string;
+  reason?: string;
+  stage?: string;
+  priority?: string;
+  budgetMs?: number;
+  fallbackMs?: number;
+}) {
+  if (!enabled) {
+    return null;
+  }
+
+  const timestamp = now();
+  const id = ++startupGovernanceTaskSeq;
+  const task: StartupGovernanceTaskRecord = {
+    id,
+    label: meta.label || 'anonymous',
+    owner: meta.owner || '',
+    reason: meta.reason || '',
+    stage: meta.stage || 'immediate',
+    priority: meta.priority || '',
+    status: 'scheduled',
+    budgetMs: meta.budgetMs || 0,
+    fallbackMs: meta.fallbackMs || 0,
+    scheduledAt: timestamp,
+    firedAt: 0,
+    endedAt: 0,
+    durationMs: 0,
+    waitMs: 0,
+    budgetExceeded: false,
+    error: '',
+  };
+
+  startupGovernanceTasks.set(id, task);
+  trace('startup-task', 'task_schedule', {
+    id,
+    label: task.label,
+    owner: task.owner,
+    reason: task.reason,
+    stage: task.stage,
+    priority: task.priority,
+    budgetMs: task.budgetMs,
+    fallbackMs: task.fallbackMs,
+  });
+  publishStartupTaskSummarySnapshot(true);
+
+  return id;
+}
+
+export function markStartupTaskDiagnostic(
+  id: number | null,
+  event: 'fire' | 'done' | 'error' | 'cancel' | 'budget_exceeded',
+  data: DiagnosticData = {},
+) {
+  if (!enabled || id === null) {
+    return;
+  }
+
+  const task = startupGovernanceTasks.get(id);
+  if (!task) {
+    return;
+  }
+
+  const timestamp = now();
+  if (event === 'fire') {
+    task.status = 'running';
+    task.firedAt = timestamp;
+    task.waitMs = timestamp - task.scheduledAt;
+  } else if (event === 'budget_exceeded') {
+    task.budgetExceeded = true;
+  } else {
+    startupGovernanceTasks.delete(id);
+    task.endedAt = timestamp;
+    task.durationMs =
+      typeof data.durationMs === 'number'
+        ? data.durationMs
+        : task.firedAt
+        ? timestamp - task.firedAt
+        : timestamp - task.scheduledAt;
+    task.status =
+      event === 'done' ? 'success' : event === 'cancel' ? 'canceled' : 'error';
+    task.error =
+      typeof data.error === 'string'
+        ? data.error
+        : event === 'error'
+        ? 'error'
+        : '';
+    recentStartupGovernanceTasks = [
+      cloneStartupTaskRecord(task),
+      ...recentStartupGovernanceTasks,
+    ].slice(0, MAX_STARTUP_TASK_SUMMARY_RECORDS);
+  }
+
+  trace('startup-task', `task_${event}`, {
+    id,
+    label: task.label,
+    owner: task.owner,
+    stage: task.stage,
+    priority: task.priority,
+    status: task.status,
+    waitMs: task.waitMs,
+    durationMs: task.durationMs,
+    budgetMs: task.budgetMs,
+    budgetExceeded: task.budgetExceeded,
+    ...data,
+  });
+  publishStartupTaskSummarySnapshot(event !== 'fire');
 }
 
 export function beginUnlockCriticalWindow(reason: string) {
@@ -1123,20 +1505,12 @@ export function beginDbSyncTask(meta: {
     paramsBuildMs: 0,
     executeMs: 0,
     batchDurationMs: 0,
+    executionActive: false,
     status: 'running',
     ...meta,
   };
   activeDbSyncTasks.set(id, task);
   dbSyncTaskSummaries.set(id, task);
-  ensureDbActiveWindow();
-  activeDbWindowRef.current?.taskIds.push(id);
-  const activeDbWindow = activeDbWindowRef.current;
-  if (activeDbWindow) {
-    activeDbWindow.peakActiveTaskCount = Math.max(
-      activeDbWindow.peakActiveTaskCount,
-      activeDbSyncTasks.size,
-    );
-  }
 
   trace('db', 'sync_task_start', {
     ...serializeDbTask(task),
@@ -1145,6 +1519,7 @@ export function beginDbSyncTask(meta: {
     waitTaskDoneReturn: meta.waitTaskDoneReturn,
     delayBetweenTasks: meta.delayBetweenTasks,
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount: getDbSyncExecutionTaskCount(),
   });
   beginAndroidAsyncTrace(`db.sync_task.${meta.entityName}`, task.traceCookie, {
     id: task.id,
@@ -1152,7 +1527,7 @@ export function beginDbSyncTask(meta: {
     rows: meta.totalRows,
     batches: meta.totalBatches,
   });
-  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
+  traceAndroidCounter('db.active_task_count', getDbSyncExecutionTaskCount());
   publishDbSummarySnapshot(true);
 
   return id;
@@ -1175,6 +1550,7 @@ export function markDbSyncTaskStage(
 
   task.stage = stage;
   task.stageDetail = formatDbTaskStageDetail(data);
+  setDbSyncTaskExecutionActive(task, isDbSyncExecutionStage(stage));
   publishDbSummarySnapshot(immediate);
   trace('db', 'sync_task_stage', {
     ...serializeDbTask(task),
@@ -1204,6 +1580,7 @@ export function markDbSyncTaskBatch(
   }
 
   task.stage = 'batch_upsert';
+  setDbSyncTaskExecutionActive(task, false);
   task.completedBatches = Math.max(task.completedBatches, data.round + 1);
   task.paramsBuildMs += data.paramsBuildMs || 0;
   task.executeMs += data.executeMs || 0;
@@ -1253,14 +1630,16 @@ export function endDbSyncTask(
     return;
   }
 
-  activeDbSyncTasks.delete(id);
   task.status = status;
   task.endedAt = now();
+  task.executionActive = false;
+  activeDbSyncTasks.delete(id);
   trace('db', 'sync_task_end', {
     ...serializeDbTask(task),
     status,
     durationMs: task.endedAt - task.startedAt,
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount: getDbSyncExecutionTaskCount(),
     ...data,
   });
   endAndroidAsyncTrace(`db.sync_task.${task.entityName}`, task.traceCookie, {
@@ -1268,7 +1647,7 @@ export function endDbSyncTask(
     status,
     durationMs: task.endedAt - task.startedAt,
   });
-  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
+  traceAndroidCounter('db.active_task_count', getDbSyncExecutionTaskCount());
   publishDbSummarySnapshot(true);
   endDbActiveWindowIfIdle();
 }

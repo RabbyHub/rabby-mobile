@@ -6,7 +6,7 @@ import { ActivityIndicator, TouchableOpacity, View, Image } from 'react-native';
 import { ModalLayouts, RootNames } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { Skeleton } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,13 +21,17 @@ import IconEmpty from '@/assets2024/images/lending/empty.png';
 import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
+import {
+  getTransactionHistoryCustomTxItemMapSnapshot,
+  getTransactionHistoryListSnapshot,
+} from '@/core/serviceApi/transactionHistory';
 import {
   switchSceneCurrentAccount,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
@@ -286,7 +290,7 @@ export const SwapTxHistory = ({
           return;
         }
 
-        const { pendings, completeds } = transactionHistoryService.getList(
+        const { pendings, completeds } = getTransactionHistoryListSnapshot(
           currentAccount?.address ?? '',
         );
         const itemData = pendings
@@ -333,8 +337,8 @@ export const SwapTxHistory = ({
         return;
       }
 
-      const pinedQueue = preferenceService.getPinToken();
-      const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
+      const pinedQueue = getPinnedTokenSnapshot();
+      const customTxItemsMap = getTransactionHistoryCustomTxItemMapSnapshot();
       const historyDisplayItem = txResultToToHistoryDisplayItem({
         address: currentAccount?.address || '',
         res: txDetail,

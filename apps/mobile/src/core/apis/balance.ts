@@ -1,5 +1,5 @@
 import { cached } from '@/utils/cache';
-import { keyringService } from '../services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { testOpenapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
@@ -15,7 +15,7 @@ import {
 } from '@/utils/testnetAddressBalanceCache';
 
 const getTotalBalanceCached = async (address: string, force?: boolean) => {
-  const addresses = await keyringService.getAllAddresses();
+  const addresses = await keyringServiceApi.getAllAddresses();
   const filtered = addresses.filter(item =>
     isSameAddress(item.address, address),
   );

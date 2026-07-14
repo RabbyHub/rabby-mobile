@@ -9,14 +9,15 @@ import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import {
-  BridgeTxHistoryItem,
+import type {
   SwapTxHistoryItem,
+  BridgeTxHistoryItem,
   TransactionGroup,
 } from '@/core/services/transactionHistory';
-import { bridgeService, transactionHistoryService } from '@/core/services';
+import { bridgeServiceApi } from '@/core/serviceApi/bridge';
+import { getTransactionHistoryRecentPendingSnapshot } from '@/core/serviceApi/transactionHistory';
 import { findChain } from '@/utils/chain';
-import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
 
@@ -39,20 +40,22 @@ export const useClearBridgeHistoryRedDot = () => {
     forScene: 'MakeTransactionAbout',
   });
 
-  return useCallback(() => {
+  return useCallback(async () => {
     if (!account?.address) {
       return 0;
     }
 
     setBridgeHistoryRedDot(false);
-    const currentTs = bridgeService.getOpenBridgeHistoryTs(account.address);
-    bridgeService.setOpenBridgeHistoryTs(account.address);
+    const currentTs = await bridgeServiceApi.getOpenBridgeHistoryTs(
+      account.address,
+    );
+    await bridgeServiceApi.setOpenBridgeHistoryTs(account.address);
     return currentTs;
   }, [account?.address, setBridgeHistoryRedDot]);
 };
 
 export const fetchLocalBridgePendingTx = (address: string) => {
-  return transactionHistoryService.getRecentPendingTxHistory(
+  return getTransactionHistoryRecentPendingSnapshot(
     address,
     'bridge',
   ) as BridgeTxHistoryItem;
@@ -106,14 +109,16 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
         is_all: true,
       });
 
-      const openModalTs = bridgeService.getOpenBridgeHistoryTs(account.address);
+      const openModalTs = await bridgeServiceApi.getOpenBridgeHistoryTs(
+        account.address,
+      );
       const ts = data?.history_list
         ?.filter(item => item?.status !== 'pending')
         .sort((a, b) => b.create_at - a.create_at);
       if (openModalTs) {
         setBridgeHistoryRedDot(ts?.[0]?.create_at > openModalTs / 1000);
       } else {
-        bridgeService.setOpenBridgeHistoryTs(account.address);
+        await bridgeServiceApi.setOpenBridgeHistoryTs(account.address);
       }
 
       // const pendingTx = data?.history_list
@@ -155,10 +160,12 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     // setPendingTxData(null);
   };
 
-  const clearBridgeHistoryRedDot = useCallback(() => {
+  const clearBridgeHistoryRedDot = useCallback(async () => {
     setBridgeHistoryRedDot(false);
-    const currentTs = bridgeService.getOpenBridgeHistoryTs(account?.address!);
-    bridgeService.setOpenBridgeHistoryTs(account?.address!);
+    const currentTs = await bridgeServiceApi.getOpenBridgeHistoryTs(
+      account?.address!,
+    );
+    await bridgeServiceApi.setOpenBridgeHistoryTs(account?.address!);
     return currentTs;
   }, [setBridgeHistoryRedDot, account?.address]);
 

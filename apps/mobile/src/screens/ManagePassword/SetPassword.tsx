@@ -28,14 +28,15 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from './components/UserAgreementLikeModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
 import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { sheetModalRefsNeedLock, useLoadLockInfo } from '@/hooks/useLock';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
-import { Text, TextInput } from '@/components/Typography';
-import { preferenceService } from '@/core/services';
+import type { TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
+import { setUserBehaviorTrackingOptOut } from '@/core/serviceApi/preference';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -100,7 +101,7 @@ function useSetupPasswordForm() {
 
       if (getFormikErrorsCount(errors)) return;
 
-      preferenceService.setUserBehaviorTrackingOptOut(false);
+      void setUserBehaviorTrackingOptOut(false).catch(console.error);
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />

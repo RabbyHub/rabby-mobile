@@ -17,11 +17,16 @@ type SyncChainServiceStore = {
   };
 };
 
+export type SyncMainnetChainListOptions = {
+  force?: boolean;
+};
+
 export class SyncChainService extends StoreServiceBase<
   SyncChainServiceStore,
   APP_STORE_NAMES.syncChain
 > {
   timer: ReturnType<typeof setInterval> | null = null;
+  private syncPromise: Promise<void> | null = null;
 
   constructor(options?: StorageAdapaterOptions<SyncChainServiceStore>) {
     super(
@@ -47,32 +52,45 @@ export class SyncChainService extends StoreServiceBase<
     this.resetTimer();
   }
 
-  syncMainnetChainList = async () => {
-    if (dayjs().isBefore(dayjs(this.store.data.updatedAt).add(55, 'minute'))) {
-      return;
+  syncMainnetChainList = (
+    options: SyncMainnetChainListOptions = {},
+  ): Promise<void> => {
+    if (
+      !options.force &&
+      this.store.data.chains.length > 0 &&
+      dayjs().isBefore(dayjs(this.store.data.updatedAt).add(55, 'minute'))
+    ) {
+      return Promise.resolve();
     }
+
+    if (this.syncPromise) {
+      return this.syncPromise;
+    }
+
+    this.syncPromise = this.fetchMainnetChainList().finally(() => {
+      this.syncPromise = null;
+    });
+    return this.syncPromise;
+  };
+
+  private fetchMainnetChainList = async () => {
     try {
       const chains = await axios
         .get('https://static.debank.com/supported_chains.json')
-        .then(res => {
-          return res.data as SupportedChain[];
-        });
-      const list: Chain[] = chains
+        .then(res => res.data as SupportedChain[]);
+      const list = chains
         .filter(item => !item.is_disabled)
-        .map(item => {
-          const chain: Chain = supportedChainToChain(item);
-          return chain;
-        });
+        .map(item => supportedChainToChain(item));
+
       updateChainStore({
         mainnetList: list,
       });
-
       this.store.data = {
         chains: list,
         updatedAt: Date.now(),
       };
-    } catch (e) {
-      console.error('fetch chain list error: ', e);
+    } catch (error) {
+      console.error('fetch chain list error: ', error);
     }
   };
 

@@ -135,7 +135,12 @@ import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
-import { perpsService, preferenceService } from '@/core/services';
+import {
+  getFallbackAccountSnapshot,
+  getLedgerDmkClearSigningEnabledSnapshot,
+  setLedgerDmkClearSigningEnabled,
+  setUserBehaviorTrackingOptOut,
+} from '@/core/serviceApi/preference';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
 import {
@@ -158,12 +163,10 @@ import {
   setEnableTransactionNofification,
   useAppNotificationEnabled,
 } from '@/hooks/appNotification';
-import {
-  AppSwitch2024,
-  SwitchToggleType,
-} from '@/components/customized/Switch2024';
-import { SupportedLang } from '@/utils/i18n';
-import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { SwitchToggleType } from '@/components/customized/Switch2024';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import type { SupportedLang } from '@/utils/i18n';
+import type { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 import {
   trackSettingsCurrency,
   trackSettingsFaceId,
@@ -182,6 +185,7 @@ import {
 } from './components/SwitchUserBehaviorTrackingOptOut';
 import { sleep } from '@/utils/async';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -918,19 +922,19 @@ function DevSettingsBlocks({
 
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
   const toggleUserBehaviorTrackingOptOut = useCallback(() => {
-    preferenceService.setUserBehaviorTrackingOptOut(
-      !preferenceService.getUserBehaviorTrackingOptOut(),
+    void setUserBehaviorTrackingOptOut(!getUserBehaviorTrackingOptOut()).catch(
+      console.error,
     );
   }, []);
   const [ledgerDmkClearSigningEnabled, setLedgerDmkClearSigningEnabledState] =
-    useState(() => preferenceService.getLedgerDmkClearSigningEnabled());
+    useState(getLedgerDmkClearSigningEnabledSnapshot);
   const toggleLedgerDmkClearSigning = useCallback((enabled?: boolean) => {
     setLedgerDmkClearSigningEnabledState(prev => {
       const next = typeof enabled === 'boolean' ? enabled : !prev;
-      preferenceService.setLedgerDmkClearSigningEnabled(next);
+      void setLedgerDmkClearSigningEnabled(next).catch(console.error);
       return next;
     });
   }, []);

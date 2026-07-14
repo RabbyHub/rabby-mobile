@@ -19,7 +19,7 @@ import { openExternalUrl } from '@/core/utils/linking';
 import {
   resolveValFromUpdater,
   runDevIIFEFunc,
-  runIIFEFunc,
+  runStartupTask,
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';

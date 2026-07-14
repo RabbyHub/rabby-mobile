@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import { keyringService } from '@/core/services';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
+import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { balance24hMMKV } from '@/core/storage/mmkvInstances';
+import type { AccountsBalanceState } from './balance';
 import {
-  AccountsBalanceState,
   accountsBalanceEvents,
   balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
 } from './balance';
 import { formatSmallUsdValue } from './curveShared';
 import { formatUsdValue } from '@/utils/number';
@@ -16,8 +18,9 @@ import { debounce, isEqual } from 'lodash';
 import PQueue from 'p-queue';
 import { useShallow } from 'zustand/react/shallow';
 import { BaseStore } from './_base';
-import { ResourceBaseStore, ResourceFlowState } from './_resourceBase';
-import { ResourceLocalTarget } from './_resourceFlowDebug';
+import type { ResourceFlowState } from './_resourceBase';
+import { ResourceBaseStore } from './_resourceBase';
+import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import addressBalanceStore, { type AddressBalanceSnapshot } from './balance';
 import {
   fetch24hBalance,
@@ -25,6 +28,7 @@ import {
   type IBalance24hData,
   setBalance24hCache,
 } from '@/utils/24hBalanceCache';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 export type Address24hBalanceValue = IBalance24hData['data'] & {
   updateTime: IBalance24hData['updateTime'];
@@ -132,6 +136,15 @@ const build24hTraceDetail = (
   };
 };
 
+async function getSelectedBalanceAddressesOrTop10Fallback() {
+  const selectedAddresses = getSelectedBalanceAddressesSnapshot();
+  if (selectedAddresses.length) {
+    return selectedAddresses;
+  }
+
+  return (await getTop10MyAccounts()).top10Addresses;
+}
+
 class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   constructor() {
     super('address24hBalance');
@@ -202,7 +215,15 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   };
 
   initStore = async () => {
-    balance24hMMKV.getAllKeys().forEach(key => {
+    const startedAt = Date.now();
+    const keys = balance24hMMKV.getAllKeys();
+    let hydratedCount = 0;
+
+    markStartupPerf('balance24hStore', 'initStore_start', {
+      keyCount: keys.length,
+    });
+
+    keys.forEach(key => {
       const lowerAddress = this.normalizeAddress(key);
       if (!lowerAddress) {
         return;
@@ -237,6 +258,13 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
           },
         },
       );
+      hydratedCount += 1;
+    });
+
+    markStartupPerf('balance24hStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      keyCount: keys.length,
+      hydratedCount,
     });
   };
 
@@ -759,7 +787,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
       let { addresses, force = false, reason } = options || {};
       if (!addresses?.length) {
-        addresses = (await getTop10MyAccounts()).top10Addresses;
+        addresses = await getSelectedBalanceAddressesOrTop10Fallback();
       }
 
       const normalizedAddresses = normalizeAddressesForCompare(
@@ -875,7 +903,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       addresses ||
       (balanceAccounts && Object.keys(balanceAccounts).length
         ? Object.keys(balanceAccounts)
-        : (await getTop10MyAccounts()).top10Addresses);
+        : await getSelectedBalanceAddressesOrTop10Fallback());
 
     const lastTop10Addresses = this.lastTop10AddressesRef.current;
     this.lastTop10AddressesRef.current =
@@ -901,9 +929,10 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     }
     this.hasStartedLifecycle = true;
 
-    keyringService.on('removedAccount', async account => {
-      const lowerAddress = account.address.toLowerCase();
-      const addresses = await keyringService.getAllAddresses();
+    void bindKeyringEvent('removedAccount', async account => {
+      const removedAccount = account as Account;
+      const lowerAddress = removedAccount.address.toLowerCase();
+      const addresses = await keyringServiceApi.getAllAddresses();
       const stillExists = addresses.some(item => {
         return item.address.toLowerCase() === lowerAddress;
       });
@@ -916,7 +945,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         source: 'keyringService.removedAccount',
         reason: 'address_deleted',
       });
-    });
+    }).catch(console.error);
 
     balance24hStore.subscribe(() => {
       const addresses = this.getState().addresses.Home;

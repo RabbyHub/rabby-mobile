@@ -24,7 +24,8 @@ import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { BridgeHeader, BridgeHeaderRef } from './BridgeHeader';
+import type { BridgeHeaderRef } from './BridgeHeader';
+import { BridgeHeader } from './BridgeHeader';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
@@ -53,14 +54,12 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { BridgePendingTxItem } from './PendingTxItem';
 import { last } from 'lodash';
-import { transactionHistoryService } from '@/core/services/shared';
-import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -70,8 +69,8 @@ import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
+import type { FormAmountMode } from '@/utils/form';
 import {
-  FormAmountMode,
   FormValuesOnSubmit,
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
@@ -84,11 +83,62 @@ import {
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
 import { IS_ANDROID } from '@/core/native/utils';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
   amount: string;
   amountMode?: FormAmountMode;
+}
+
+function BridgeActivationDataProbe({
+  currentAddress,
+  fromChainReady,
+  fromTokenChain,
+  fromTokenId,
+  toChainReady,
+  toTokenChain,
+  toTokenId,
+}: {
+  currentAddress?: string;
+  fromChainReady: boolean;
+  fromTokenChain?: string;
+  fromTokenId?: string;
+  toChainReady: boolean;
+  toTokenChain?: string;
+  toTokenId?: string;
+}) {
+  useEffect(() => {
+    if (
+      !currentAddress ||
+      !fromChainReady ||
+      !fromTokenId ||
+      !toChainReady ||
+      !toTokenId
+    ) {
+      return;
+    }
+
+    const cycleId = ensureFeatureActivation('bridge', 'bridge_data_probe');
+    markFeatureActivation('bridge', 'data-ready', {
+      cycleId,
+      reason: 'bridge_token_pair_ready',
+      detail: `${fromTokenChain}:${fromTokenId}->${toTokenChain}:${toTokenId}`,
+    });
+  }, [
+    currentAddress,
+    fromChainReady,
+    fromTokenChain,
+    fromTokenId,
+    toChainReady,
+    toTokenChain,
+    toTokenId,
+  ]);
+
+  return null;
 }
 
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -227,10 +277,12 @@ export const BridgeContent = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
   disableAccountSwitcherModal = false,
+  diagnosticActive = false,
 }: {
   isForMultipleAddress?: boolean;
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
+  diagnosticActive?: boolean;
 }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -345,6 +397,7 @@ export const BridgeContent = ({
     slider,
     onChangeSlider,
   } = useBridge(isForMultipleAddress);
+
   const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
   const setQuotePollingPauseReason = useCallback(
     (reason: string, paused: boolean) => {
@@ -1038,7 +1091,7 @@ export const BridgeContent = ({
         const txHash = last(res) || '';
 
         if (txHash) {
-          transactionHistoryService.addBridgeTxHistory({
+          void transactionHistoryServiceApi.addBridgeTxHistory({
             address: currentAccount?.address!,
             fromChainId: findChainByServerID(fromToken?.chain || '')?.id || 0,
             toChainId: findChainByServerID(toToken?.chain || '')?.id || 0,
@@ -1333,6 +1386,17 @@ export const BridgeContent = ({
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer overwriteStyle={styles.screen}>
+        {diagnosticActive ? (
+          <BridgeActivationDataProbe
+            currentAddress={currentAccount?.address}
+            fromChainReady={Boolean(fromChain)}
+            fromTokenChain={fromToken?.chain}
+            fromTokenId={fromToken?.id}
+            toChainReady={Boolean(toChain)}
+            toTokenChain={toToken?.chain}
+            toTokenId={toToken?.id}
+          />
+        ) : null}
         {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
@@ -1383,7 +1447,9 @@ export const BridgeContent = ({
                 onChangeChain={switchFromChain}
                 value={amount}
                 onInputChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) return;
+                  if (directSignBtnRef.current?.isAuthInProgress()) {
+                    return;
+                  }
                   handleAmountChange(value);
                 }}
                 excludeChains={toChain ? [toChain] : undefined}

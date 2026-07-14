@@ -1,19 +1,16 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/provider';
-import {
-  bridgeService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
-import { BridgeRecord } from '@/core/services/bridge';
-import { Account } from '@/core/services/preference';
-import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import { bridgeServiceApi } from '@/core/serviceApi/bridge';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { BridgeRecord } from '@/core/services/bridge';
+import type { Account } from '@/core/startupServices/preference';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { approveToken } from '@/screens/Swap/hooks/swap';
 import { findChain } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import { navigationRef } from '@/utils/navigation';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { StackActions } from '@react-navigation/native';
 import BigNumber from 'bignumber.js';
 import {
@@ -111,7 +108,7 @@ export const bridgeToken = async (
       }
 
       if (info) {
-        bridgeService.addTx(chainObj.enum, data, info);
+        await bridgeServiceApi.addTx(chainObj.enum, data, info);
       }
       txs.push({
         from: account.address,
@@ -145,7 +142,7 @@ export const bridgeToken = async (
       }).then(res => {
         const hash = res as string;
         if (addBridgeTxHistoryObj) {
-          transactionHistoryService.addBridgeTxHistory({
+          void transactionHistoryServiceApi.addBridgeTxHistory({
             ...addBridgeTxHistoryObj,
             hash,
           });
@@ -196,7 +193,7 @@ export const bridgeToken = async (
     }
 
     if (info) {
-      bridgeService.addTx(chainObj.enum, data, info);
+      await bridgeServiceApi.addTx(chainObj.enum, data, info);
     }
     await sendRequest({
       data: {
@@ -229,7 +226,7 @@ export const bridgeToken = async (
     }).then(res => {
       const hash = res as string;
       if (addBridgeTxHistoryObj) {
-        transactionHistoryService.addBridgeTxHistory({
+        void transactionHistoryServiceApi.addBridgeTxHistory({
           ...addBridgeTxHistoryObj,
           hash,
         });
@@ -332,7 +329,7 @@ export const buildBridgeToken = async (
     }
 
     if (info) {
-      bridgeService.addTx(chainObj.enum, data, info);
+      await bridgeServiceApi.addTx(chainObj.enum, data, info);
     }
     const res = await sendRequest(
       {

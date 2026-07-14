@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../../type';
+import type { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import { calculateHFAfterWithdraw } from '../../utils/hfUtils';
@@ -22,17 +22,15 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildWithdrawTx, optimizedPath } from '../../poolService';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import WithdrawActionOverView from './WithdrawActionOverView';
 import {
@@ -45,7 +43,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
-import { transactionHistoryService } from '@/core/services/shared';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -62,7 +60,7 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { CHAINS_ENUM } from '@debank/common';
-import { ReserveDataHumanized } from '@aave/contract-helpers';
+import type { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
@@ -501,7 +499,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
         const txId = last(results);
         if (txId && activeTxs[0]?.chainId) {
-          transactionHistoryService.setCustomTxItem(
+          void transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             activeTxs[0].chainId,
             txId,

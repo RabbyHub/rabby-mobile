@@ -10,9 +10,9 @@ import type {
 
 import { signatureReducer } from './machine';
 import { findChain } from '@/utils/chain';
-import { SignerCtx } from '../domain/ctx';
+import type { SignerCtx } from '../domain/ctx';
 import { signatureService } from '../services/SignatureService';
-import { SignerConfig } from '../domain/types';
+import type { SignerConfig } from '../domain/types';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { t } from 'i18next';
@@ -26,7 +26,7 @@ import {
   callConnectOneKeyModal,
   setOneKeyStatus,
 } from '@/hooks/onekey/useOneKeyStatus';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { getMiniSignGasPanelController } from './MiniSignGasPanelController';
 
 const ETH_GAS_USD_LIMIT = 15;
@@ -527,7 +527,7 @@ export class SignatureManager {
         retry,
         onSigningTxCreated: signingTxId => {
           if (!this.isActive(opId, fingerprint)) {
-            transactionHistoryService.removeSigningTx(signingTxId);
+            void transactionHistoryServiceApi.removeSigningTx(signingTxId);
             return;
           }
           this.signingTxIds.add(signingTxId);
@@ -576,7 +576,7 @@ export class SignatureManager {
       return;
     }
     for (const signingTxId of this.signingTxIds) {
-      transactionHistoryService.removeSigningTx(signingTxId);
+      void transactionHistoryServiceApi.removeSigningTx(signingTxId);
     }
     this.signingTxIds.clear();
   }

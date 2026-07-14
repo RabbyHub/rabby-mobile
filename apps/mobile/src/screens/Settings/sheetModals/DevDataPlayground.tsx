@@ -12,7 +12,8 @@ import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 import { RcCode } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
+import type { DevTestItem } from './testDevUtils';
+import { makeNoop, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -25,7 +26,7 @@ import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { downloadDbFile } from '@/databases/dbfs';
 import { IS_IOS } from '@/core/native/utils';
-import { perpsService } from '@/core/services';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { toast } from '@/components2024/Toast';
 import { naviPush } from '@/utils/navigation';
 import { Text } from '@/components/Typography';
@@ -136,7 +137,7 @@ export default function DevDataPlaygroundModal({
         label: 'Reset Perps Store',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
-          perpsService.resetStore();
+          void perpsServiceApi.resetStore();
           toast.success('PERPS STORE RESET SUCCESS');
         },
       },

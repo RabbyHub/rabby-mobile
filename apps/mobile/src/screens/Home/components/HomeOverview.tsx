@@ -15,11 +15,11 @@ import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
-import { useIsPostUnlockLockedSession } from '@/hooks/useLock';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/hooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import {
@@ -29,13 +29,12 @@ import {
 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import type { ScrollView, ViewProps } from 'react-native';
 import {
   Dimensions,
-  ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
-  ViewProps,
 } from 'react-native';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -54,11 +53,14 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import { currencyService } from '@/core/services';
+import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
+import addressBalanceStore, {
+  balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
+} from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
@@ -81,9 +83,15 @@ import {
 } from '@/constant/home';
 import { perfEvents } from '@/core/utils/perf';
 import {
+  beginFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
+import {
   useHomePostStartupReady,
   useHomeStartupReady,
 } from '@/core/utils/homeStartupReady';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
@@ -115,14 +123,10 @@ import {
   useHomeHistoryCount,
   useHomePendingTxCount,
 } from '../hooks/history';
-import {
-  TabsScrollView,
-  TabsScrollViewProps,
-} from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
-import {
-  RNGHRefreshControl,
-  RNGHScrollView,
-} from '@/components/customized/reexports';
+import type { TabsScrollViewProps } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+import { TabsScrollView } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+import type { RNGHScrollView } from '@/components/customized/reexports';
+import { RNGHRefreshControl } from '@/components/customized/reexports';
 import {
   getPullThreshold,
   getScrollContainerPb,
@@ -131,12 +135,10 @@ import {
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
-import {
-  SharedValue,
-  WorkletFunction,
-} from 'react-native-reanimated/lib/typescript/commonTypes';
+import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { SharedValue } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
   HOME_TOP_HEADER_SIZES,
@@ -149,13 +151,12 @@ import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
-import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import type { Account } from '@/types/account';
+import type { OnRefreshOnJs } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import {
   isOverPulldownRefreshThreshold,
-  OnRefreshOnJs,
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
@@ -167,6 +168,35 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
+}
+
+function cancelStartupTaskHandle(
+  handle: ReturnType<typeof scheduleStartupTask> | undefined,
+) {
+  if (handle && typeof handle === 'object' && 'cancel' in handle) {
+    const maybeCancelable = handle as { cancel?: unknown };
+    if (typeof maybeCancelable.cancel === 'function') {
+      maybeCancelable.cancel();
+    }
+  }
+}
+
+async function warmHomeHistoryAfterStartup() {
+  const top10Addresses = getSelectedBalanceAddressesSnapshot();
+  if (!top10Addresses.length) {
+    return;
+  }
+  await syncTop10History(top10Addresses, false);
+}
+
+async function warmReceiveAddressListAfterStartup() {
+  await Promise.all([
+    storeApiAccounts.fetchAccounts(),
+    fetchTop5TokensForAllAccountsOnce(),
+    preloadTransactionHotNavigator(),
+    import('@/screens/Address/ReceiveAddressListSheet'),
+    import('@/components/AccountSelector/AccountsPanel'),
+  ]);
 }
 
 const OFFSETS = {
@@ -694,6 +724,22 @@ function HomeOverviewPostStartupEffects({
     return () => clearTimeout(timeoutId);
   }, []);
 
+  useEffect(() => {
+    const historyWarmupHandle = scheduleStartupTask(
+      () => warmHomeHistoryAfterStartup(),
+      STARTUP_TASKS.homeHistoryWarmup,
+    );
+    const receiveAddressListWarmupHandle = scheduleStartupTask(
+      () => warmReceiveAddressListAfterStartup(),
+      STARTUP_TASKS.homeReceiveAddressListWarmup,
+    );
+
+    return () => {
+      cancelStartupTaskHandle(historyWarmupHandle);
+      cancelStartupTaskHandle(receiveAddressListWarmupHandle);
+    };
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       refreshSuccessAndFailList();
@@ -741,9 +787,6 @@ function HomeOverviewPostStartupEffects({
       triggerApprovalAlertCounts(HOME_REFRESH_INTERVAL);
       // // leave here to measure perf impact
       // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-      getTop10MyAccounts().then(({ top10Addresses }) => {
-        syncTop10History(top10Addresses, false);
-      });
     }, [triggerUpdate]),
   );
 
@@ -756,9 +799,8 @@ function DeferredHomeDappDrawer({
   onScrollBack: React.ComponentProps<typeof HomeDappDrawer>['onScrollBack'];
 }) {
   const postStartupReady = useHomePostStartupReady();
-  const isPostUnlockLockedSession = useIsPostUnlockLockedSession();
 
-  if (!postStartupReady && !isPostUnlockLockedSession) {
+  if (!postStartupReady) {
     return null;
   }
 
@@ -983,9 +1025,13 @@ export const HomeOverview = React.memo(() => {
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
     const forceRefresh = true;
-    const { top10Addresses } = await getTop10MyAccounts();
+    void currencyServiceApi.syncCurrencyList(forceRefresh);
+
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
+    if (!top10Addresses.length) {
+      return;
+    }
     syncTop10History(top10Addresses, forceRefresh);
-    currencyService.syncCurrencyList(forceRefresh);
 
     // refresh token/protocol list
     useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);
@@ -1115,6 +1161,16 @@ export const HomeOverview = React.memo(() => {
           handlePressReceive();
           break;
         case MultiHomeFeatTitle.Swap:
+          {
+            const cycleId = beginFeatureActivation(
+              'swap',
+              'multi_home_swap_press',
+            );
+            markFeatureActivation('swap', 'navigation-dispatched', {
+              cycleId,
+              reason: 'multi_home_navigation_push',
+            });
+          }
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.MultiSwapBridge,
@@ -1126,6 +1182,16 @@ export const HomeOverview = React.memo(() => {
 
           break;
         case MultiHomeFeatTitle.Bridge:
+          {
+            const cycleId = beginFeatureActivation(
+              'bridge',
+              'multi_home_bridge_press',
+            );
+            markFeatureActivation('bridge', 'navigation-dispatched', {
+              cycleId,
+              reason: 'multi_home_navigation_push',
+            });
+          }
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.MultiSwapBridge,

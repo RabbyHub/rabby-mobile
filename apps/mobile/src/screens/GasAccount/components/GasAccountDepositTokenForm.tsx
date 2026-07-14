@@ -12,7 +12,7 @@ import {
   topUpGasAccount,
 } from '@/core/apis/gasAccount';
 import { sendRequest } from '@/core/apis/sendRequest';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { useAccounts } from '@/hooks/account';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -42,9 +42,11 @@ import {
   useGasAccountBridgeSupportUpdatedAt,
   useGasAccountSign,
 } from '@/screens/GasAccount/hooks/atom';
-import {
+import type {
   GasAccountAvailableToken,
   GasAccountAvailableTokenRow,
+} from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
+import {
   getGasAccountAvailableTokenFromRow,
   useGasAccountDepositAvailableTokens,
 } from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
@@ -62,7 +64,10 @@ import { formatUsdValue } from '@/utils/number';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { GasAccountBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  GasAccountBridgeQuote,
+  Tx,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@debank/common';
 import { GasAccountDepositTokenPicker } from './GasAccountDepositTokenPicker';
 import {
@@ -77,7 +82,7 @@ import { useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
 import { pollDepositStatus } from '@/core/apis/gasAccount';
 import { toast } from '@/components2024/Toast';
-import { GasAccountTopUpWaitCallback } from './topUpContinuation';
+import type { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { apiProvider } from '@/core/apis';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import AuthButton from '@/components2024/AuthButton';
@@ -88,8 +93,38 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { getGasAccountLastDepositAccount } from '@/core/serviceApi/gasAccount';
 
 type DepositAccount = Account;
+
+const getInitialDepositToken = (
+  availableTokenRows: GasAccountAvailableTokenRow[],
+  lastDepositAccount?: Account,
+) => {
+  const findToken = (matcher: (token: GasAccountAvailableToken) => boolean) => {
+    const row = availableTokenRows.find(item => {
+      const token = getGasAccountAvailableTokenFromRow(item);
+      return !!token && matcher(token);
+    });
+
+    return getGasAccountAvailableTokenFromRow(row) || undefined;
+  };
+
+  if (lastDepositAccount?.address) {
+    const tokenByLastAccount = findToken(token =>
+      isSameAddress(token.owner_addr || '', lastDepositAccount.address),
+    );
+    if (tokenByLastAccount) {
+      return tokenByLastAccount;
+    }
+  }
+
+  return (
+    findToken(token => token.chain !== 'eth') ||
+    getGasAccountAvailableTokenFromRow(availableTokenRows[0]) ||
+    undefined
+  );
+};
 
 export const GasAccountDepositTokenForm: React.FC<{
   visible?: boolean;
@@ -205,6 +240,10 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const [bridgeQuoteError, setBridgeQuoteError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showEstimateTip, setShowEstimateTip] = useState(false);
+  const [lastDepositAccount, setLastDepositAccount] = useState<
+    Account | undefined
+  >();
+  const [lastDepositAccountReady, setLastDepositAccountReady] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -212,6 +251,36 @@ const GasAccountDepositTokenFormInner: React.FC<{
       pollCancelRef.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    let cancelled = false;
+    setLastDepositAccountReady(false);
+
+    getGasAccountLastDepositAccount()
+      .then(account => {
+        if (!cancelled) {
+          setLastDepositAccount(account);
+        }
+      })
+      .catch(error => {
+        if (__DEV__) {
+          console.error('getGasAccountLastDepositAccount error', error);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLastDepositAccountReady(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visible]);
 
   const { data: _tokenInfo } = useRequest(
     async () => {
@@ -271,24 +340,20 @@ const GasAccountDepositTokenFormInner: React.FC<{
       setSelectedToken(undefined);
       return;
     }
+    if (!lastDepositAccountReady) {
+      return;
+    }
     if (!didInitSelectedTokenRef.current) {
       didInitSelectedTokenRef.current = true;
       setSelectedToken(prev => {
         if (!prev) {
-          return (
-            getGasAccountAvailableTokenFromRow(
-              availableTokenRows.find(row => {
-                const token = getGasAccountAvailableTokenFromRow(row);
-                return token?.chain !== 'eth';
-              }) || availableTokenRows[0],
-            ) || undefined
-          );
+          return getInitialDepositToken(availableTokenRows, lastDepositAccount);
         }
 
         return prev;
       });
     }
-  }, [availableTokenRows]);
+  }, [availableTokenRows, lastDepositAccount, lastDepositAccountReady]);
 
   const selectedOwnerAccount = useMemo(() => {
     const matched = myAccounts.filter(
@@ -629,7 +694,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           return;
         }
 
-        apisTransactionHistory.updateBridgeGasAccountTx({
+        await apisTransactionHistory.updateBridgeGasAccountTx({
           address: selectedOwnerAccount.address,
           chainId: findChain({ serverId: selectedToken.chain })!.id,
           hash: lastHash,

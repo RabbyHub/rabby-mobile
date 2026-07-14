@@ -5,8 +5,48 @@ import { getBrowserHistoryList } from '@/hooks/browser/useBrowserHistory';
 import { getAllRPC } from '@/hooks/useCustomRPC';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMount } from 'ahooks';
-import { browserService, dappService } from '../services/shared';
+import { browserServiceApi } from '@/core/serviceApi/browser';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { setChainList } from '@/hooks/useChainList';
+
+let browserDappWarmupScheduled = false;
+
+async function warmBrowserDappStores() {
+  const [browserTabs, dapps] = await Promise.all([
+    browserServiceApi.getBrowserTabs(),
+    dappServiceApi.getDapps(),
+    getAllRPC(),
+  ]);
+
+  await Promise.all([getBookmarkList(), getBrowserHistoryList()]);
+  setTabs(
+    browserTabs.tabs.map(tab => {
+      if (tab.isDapp) {
+        return tab;
+      }
+      const isDapp = !!dapps[safeGetOrigin(tab.url || tab.initialUrl)]?.isDapp;
+
+      return {
+        ...tab,
+        isDapp,
+      };
+    }),
+  );
+}
+
+function scheduleBrowserDappWarmup() {
+  if (browserDappWarmupScheduled) {
+    return;
+  }
+
+  browserDappWarmupScheduled = true;
+  scheduleStartupTask(
+    () => warmBrowserDappStores().catch(console.error),
+    STARTUP_TASKS.serviceStoreStubBrowserDappWarmup,
+  );
+}
 
 /**
  * @description only call this hook on app's top level
@@ -20,24 +60,6 @@ export function useSetupServiceStub() {
   });
 
   useMount(() => {
-    getAllRPC();
-    getBookmarkList();
-    getBrowserHistoryList();
-    const data = browserService.getBrowserTabs();
-    setTabs(
-      data.tabs.map(tab => {
-        if (tab.isDapp) {
-          return tab;
-        }
-        const isDapp = !!dappService.getDapp(
-          safeGetOrigin(tab.url || tab.initialUrl),
-        )?.isDapp;
-
-        return {
-          ...tab,
-          isDapp,
-        };
-      }),
-    );
+    scheduleBrowserDappWarmup();
   });
 }

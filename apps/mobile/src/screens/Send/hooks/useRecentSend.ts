@@ -1,21 +1,25 @@
-import { transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryListSnapshot,
+  getTransactionHistoryRecentPendingSnapshot,
+} from '@/core/serviceApi/transactionHistory';
 import { useMyAccounts } from '@/hooks/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import {
+import type {
   TransactionGroup,
   SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
-import { SendRequireData } from '@rabby-wallet/rabby-action';
+import type { SendRequireData } from '@rabby-wallet/rabby-action';
 import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import { atom, useAtom } from 'jotai';
 import { sortBy, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Hex, isValidHexAddress } from '@metamask/utils';
+import type { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { Hex } from '@metamask/utils';
+import { isValidHexAddress } from '@metamask/utils';
 import { jotaiStore } from '@/core/utils/reexports';
 
 interface DisplayHistoryItem {
@@ -74,7 +78,7 @@ function markFirstItems(
  */
 const fetchLocalSendTx = (address: string) => {
   const { completeds: _completeds, pendings: _pendings } =
-    transactionHistoryService.getList(address);
+    getTransactionHistoryListSnapshot(address);
 
   return [..._pendings, ..._completeds].filter(item => {
     const chain = findChain({ id: item.chainId });
@@ -220,7 +224,7 @@ export const fetchLocalSendPendingTx = (address: string) => {
   // });
 
   // return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
-  return transactionHistoryService.getRecentPendingTxHistory(
+  return getTransactionHistoryRecentPendingSnapshot(
     address,
     'send',
   ) as SendTxHistoryItem | null;

@@ -2,13 +2,11 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
+import type { RootNames } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
-import {
-  preferenceService,
-  swapService,
-  transactionHistoryService,
-} from '@/core/services';
+import { swapServiceApi } from '@/core/serviceApi/swap';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   getMarketTabActionPrefix,
@@ -18,8 +16,8 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
+import type { CompositeScreenProps } from '@react-navigation/native';
 import {
-  CompositeScreenProps,
   useIsFocused,
   useNavigation,
   useRoute,
@@ -54,8 +52,8 @@ import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
+import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import {
-  PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
@@ -66,13 +64,13 @@ import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useSwapRecentToTokens } from '../Swap/hooks/recent';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
-import {
+import type {
   GetNestedScreenRouteProp,
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   ExternalSwapBridgeDappTips,
   SwapBridgeDappPopup,
@@ -87,14 +85,12 @@ import {
 } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
 import { last } from 'lodash';
-import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
+import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTwoStepSwap } from '../Swap/hooks/twoStepSwap';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -106,8 +102,8 @@ import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
+import type { FormAmountMode } from '@/utils/form';
 import {
-  FormAmountMode,
   FormValuesOnSubmit,
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
@@ -119,6 +115,10 @@ import {
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
 import ArrowDownSVG from '@/assets/icons/swap/icon-arrow-down-with-bg.svg';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -138,12 +138,49 @@ type SwapRouteProps = CompositeScreenProps<
 type SwapProps = PropsForAccountSwitchScreen<{
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
+  diagnosticActive?: boolean;
 }>;
+
+function SwapActivationDataProbe({
+  currentAddress,
+  payTokenChain,
+  payTokenId,
+  receiveTokenChain,
+  receiveTokenId,
+}: {
+  currentAddress?: string;
+  payTokenChain?: string;
+  payTokenId?: string;
+  receiveTokenChain?: string;
+  receiveTokenId?: string;
+}) {
+  useEffect(() => {
+    if (!currentAddress || !payTokenId || !receiveTokenId) {
+      return;
+    }
+
+    const cycleId = ensureFeatureActivation('swap', 'swap_data_probe');
+    markFeatureActivation('swap', 'data-ready', {
+      cycleId,
+      reason: 'swap_token_pair_ready',
+      detail: `${payTokenChain}:${payTokenId}->${receiveTokenChain}:${receiveTokenId}`,
+    });
+  }, [
+    currentAddress,
+    payTokenChain,
+    payTokenId,
+    receiveTokenChain,
+    receiveTokenId,
+  ]);
+
+  return null;
+}
 
 const Swap = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
   disableAccountSwitcherModal = false,
+  diagnosticActive = false,
 }: SwapProps) => {
   /** Swap form snapshot for validation during auth */
   interface SwapFormSnapshot {
@@ -358,13 +395,13 @@ const Swap = ({
   );
 
   const switchPreferMEV = useMemoizedFn((bool: boolean) => {
-    swapService.setSwapPreferMEVGuarded(bool);
+    void swapServiceApi.setSwapPreferMEVGuarded(bool);
     mutatePreferMEVGuarded(bool);
   });
 
   const { data: originPreferMEVGuarded, mutate: mutatePreferMEVGuarded } =
     useRequest(async () => {
-      return swapService.getSwapPreferMEVGuarded();
+      return swapServiceApi.getSwapPreferMEVGuarded();
     });
 
   const preferMEVGuarded = useMemo(
@@ -381,9 +418,9 @@ const Swap = ({
   const navState = route.params;
 
   useMount(() => {
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
-    );
+    ).catch(console.error);
 
     if (!navState?.chainEnum) {
       return;
@@ -903,7 +940,7 @@ const Swap = ({
           prefetchedSwapTxsKeyRef.current = '';
           mutateTxs([]);
           const createdAt = Date.now();
-          transactionHistoryService.addSwapTxHistory({
+          void transactionHistoryServiceApi.addSwapTxHistory({
             hash: txHash,
             chainId: findChainByEnum(chain)?.id || 0,
             address: currentAccount?.address!,
@@ -964,12 +1001,12 @@ const Swap = ({
               action: createSwapTxAction,
             });
           }
-          preferenceService.setReportActionTs(
+          void setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {
               chain: chainServerId,
             },
-          );
+          ).catch(console.error);
           if (currentIsCopyTrading) {
             matomoRequestEvent({
               category: 'CopyTrading',
@@ -1004,12 +1041,12 @@ const Swap = ({
     } else {
       gotoSwap();
     }
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
       {
         chain: chainServerId,
       },
-    );
+    ).catch(console.error);
   });
 
   const amountAvailable = useMemo(
@@ -1141,7 +1178,7 @@ const Swap = ({
 
   const miniSignNextStep = (hash: string) => {
     if (isApprove) {
-      transactionHistoryService.addApproveSwapTokenTxHistory({
+      void transactionHistoryServiceApi.addApproveSwapTokenTxHistory({
         address: currentAccount?.address!,
         chainId: currentTxs![0]!.chainId,
         amount: Number(payAmount),
@@ -1491,6 +1528,15 @@ const Swap = ({
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer2024 type="bg1">
+        {diagnosticActive ? (
+          <SwapActivationDataProbe
+            currentAddress={currentAccount?.address}
+            payTokenChain={payToken?.chain}
+            payTokenId={payToken?.id}
+            receiveTokenChain={receiveToken?.chain}
+            receiveTokenId={receiveToken?.id}
+          />
+        ) : null}
         {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}

@@ -1,35 +1,26 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import * as Sentry from '@sentry/react-native';
 
 import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@/constant/chains';
 import createPersistStore, {
   StorageAdapaterOptions,
   StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import type { Account, IPinAddress } from '@/types/account';
-import { BroadcastEvent } from '@/constant/event';
-import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { appServiceEvents } from './_utils';
+import { appServiceEvents } from '@/core/events/appServiceEvents';
 import { isNonPublicProductionEnv } from '@/constant';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { reportActionStats } from '../utils/reportActionStats';
-import { REPORT_TIMEOUT_ACTION_KEY } from './type';
-import {
-  matomoRequestEvent,
-  syncFirebaseAnalyticsCollectionWithOptOut,
-} from '@/utils/analytics';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { BALANCE_HIDE_TYPE } from '@/constant/balanceHide';
 import {
   resolveDefaultUserBehaviorTrackingOptOut,
   setUserBehaviorTrackingOptOutCache,
   USER_BEHAVIOR_TRACKING_OPT_OUT_KEY,
 } from '@/utils/trackingOptOut';
-import { syncSentryUserBehaviorTrackingEnabled } from '@/core/sentry';
 import type {
   IDefiOrToken,
   IManageNft,
@@ -51,6 +42,58 @@ export type {
 } from '@/types/assets';
 
 const { isSameAddress } = addressUtils;
+
+function capturePreferenceException(error: Error) {
+  void import('@sentry/react-native')
+    .then(Sentry => {
+      Sentry.captureException(error);
+    })
+    .catch(() => undefined);
+}
+
+function syncUserBehaviorTrackingSdkOptOut() {
+  void import('@/utils/analytics')
+    .then(({ syncFirebaseAnalyticsCollectionWithOptOut }) =>
+      syncFirebaseAnalyticsCollectionWithOptOut(),
+    )
+    .catch(error => {
+      if (__DEV__) {
+        console.error(
+          '[PreferenceService] syncFirebaseAnalyticsCollectionWithOptOut error',
+          error,
+        );
+      }
+    });
+
+  void import('@/core/sentry')
+    .then(({ syncSentryUserBehaviorTrackingEnabled }) =>
+      syncSentryUserBehaviorTrackingEnabled(),
+    )
+    .catch(error => {
+      if (__DEV__) {
+        console.error(
+          '[PreferenceService] syncSentryUserBehaviorTrackingEnabled error',
+          error,
+        );
+      }
+    });
+}
+
+function reportMatomoWatchlistStarToken(token: IManageToken) {
+  void import('@/utils/analytics')
+    .then(({ matomoRequestEvent }) => {
+      matomoRequestEvent({
+        category: 'Watchlist Usage',
+        action: 'Watchlist_StarToken',
+        label: `${token.chainId}_${token.tokenId}`,
+      });
+    })
+    .catch(error => {
+      if (__DEV__) {
+        console.error('[PreferenceService] matomoRequestEvent error', error);
+      }
+    });
+}
 
 export interface ChainGas {
   gasPrice?: number | null; // custom cached gas price
@@ -191,24 +234,23 @@ export type SetCurrentAccountOptions = {
   needSyncToSession?: boolean;
 };
 
+type PreferenceServiceOptions = StorageAdapaterOptions & {
+  getAllVisibleAccountsArray?: () => Promise<Account[]>;
+};
+
 export class PreferenceService extends StoreServiceBase<
   PreferenceStore,
   APP_STORE_NAMES.preference
 > {
   [x: string]: any;
   // store!: PreferenceStore;
-  keyringService: KeyringService;
-  sessionService: import('./session').SessionService;
   // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
 
   private _allowedToNotifyAccountsChanged = false;
 
-  constructor(
-    options: StorageAdapaterOptions & {
-      keyringService: KeyringService;
-      sessionService: import('./session').SessionService;
-    },
-  ) {
+  private getAllVisibleAccountsArray: () => Promise<Account[]>;
+
+  constructor(options: PreferenceServiceOptions) {
     const defaultLang = 'en';
     const storedPreference = options.storageAdapter?.getItem(
       APP_STORE_NAMES.preference,
@@ -276,11 +318,14 @@ export class PreferenceService extends StoreServiceBase<
           if (!obj) {
             const msg = `[preferenceService] preference set as nil value (${obj}), it's unexpected`;
             if (__DEV__) console.error(msg);
-            Sentry.captureException(new Error(msg));
+            capturePreferenceException(new Error(msg));
           }
         },
       },
     );
+
+    this.getAllVisibleAccountsArray =
+      options.getAllVisibleAccountsArray || (() => Promise.resolve([]));
 
     if ('balanceMap' in this.store) {
       delete this.store.balanceMap;
@@ -288,9 +333,6 @@ export class PreferenceService extends StoreServiceBase<
     if ('testnetBalanceMap' in this.store) {
       delete this.store.testnetBalanceMap;
     }
-
-    this.keyringService = options.keyringService;
-    this.sessionService = options.sessionService;
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
@@ -303,8 +345,7 @@ export class PreferenceService extends StoreServiceBase<
 
   private _syncUserBehaviorTrackingOptOut(value: boolean) {
     setUserBehaviorTrackingOptOutCache(value);
-    void syncFirebaseAnalyticsCollectionWithOptOut();
-    syncSentryUserBehaviorTrackingEnabled();
+    syncUserBehaviorTrackingSdkOptOut();
   }
 
   getPreferenceByKey<T extends keyof PreferenceStore>(
@@ -532,7 +573,7 @@ export class PreferenceService extends StoreServiceBase<
    * to the first address in address list
    */
   resetCurrentAccount = async () => {
-    const [account] = await this.keyringService.getAllVisibleAccountsArray();
+    const [account] = await this.getAllVisibleAccountsArray();
     this.setCurrentAccount(account);
   };
 
@@ -576,9 +617,6 @@ export class PreferenceService extends StoreServiceBase<
 
   private _notifyAccountsChanged(account: Account, doNotify: boolean = true) {
     if (this._allowedToNotifyAccountsChanged && doNotify) {
-      this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
-        account.address.toLowerCase(),
-      ]);
       console.debug(
         '[PreferenceService::_notifyAccountsChanged] notify accountsChanged event',
         account,
@@ -608,7 +646,7 @@ export class PreferenceService extends StoreServiceBase<
     }
     // TODO: 排序
     // return the first account in the account list
-    const [first] = await this.keyringService.getAllVisibleAccountsArray();
+    const [first] = await this.getAllVisibleAccountsArray();
 
     return first!;
   };
@@ -793,7 +831,15 @@ export class PreferenceService extends StoreServiceBase<
       }
 
       // report stats
-      reportActionStats(this, key, beforeKey, reportExtra);
+      void import('../utils/reportActionStats')
+        .then(({ reportActionStats }) => {
+          reportActionStats(this, key, beforeKey, reportExtra);
+        })
+        .catch(error => {
+          if (__DEV__) {
+            console.error('[PreferenceService] reportActionStats error', error);
+          }
+        });
 
       this.store.currentReportActionStats = key;
     } catch (error) {
@@ -921,11 +967,7 @@ export class PreferenceService extends StoreServiceBase<
     if (!exist) {
       this.store.pinedQueue = [token, ...pinedQueue];
       // this.manualUnFoldToken(token);
-      matomoRequestEvent({
-        category: 'Watchlist Usage',
-        action: 'Watchlist_StarToken',
-        label: `${token.chainId}_${token.tokenId}`,
-      });
+      reportMatomoWatchlistStarToken(token);
     }
   };
   removePinedToken = (token: IManageToken) => {

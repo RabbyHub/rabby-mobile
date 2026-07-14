@@ -9,9 +9,10 @@ import React, {
   useState,
 } from 'react';
 
-import { ChainId, InterestRate } from '@aave/contract-helpers';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { OptimalRate } from '@paraswap/sdk';
+import type { ChainId } from '@aave/contract-helpers';
+import { InterestRate } from '@aave/contract-helpers';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { OptimalRate } from '@paraswap/sdk';
 import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -26,7 +27,7 @@ import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { createGetStyles2024 } from '@/utils/styles';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
@@ -70,7 +71,7 @@ import {
   APP_CODE_LENDING_REPAY_WITH_COLLATERAL,
   LIQUIDATION_SAFETY_THRESHOLD,
 } from '../../../utils/constant';
-import { ParaswapRatesType, SwappableToken } from '../../../types/swap';
+import type { ParaswapRatesType, SwappableToken } from '../../../types/swap';
 import { getParaswap } from '../../../config/paraswap';
 import { getParaswapSellRates } from '../DebtSwap/paraswap';
 import {
@@ -97,7 +98,8 @@ import {
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
-import { ethers, PopulatedTransaction } from 'ethers';
+import type { PopulatedTransaction } from 'ethers';
+import { ethers } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 import RepayWithCollateralOverview from './Overview';
 import { Text } from '@/components/Typography';
@@ -840,7 +842,7 @@ export default function RepayWithCollateral({
 
         const txId = last(results);
         if (txId && chainInfo?.id) {
-          transactionHistoryService.setCustomTxItem(
+          void transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             chainInfo?.id,
             txId,

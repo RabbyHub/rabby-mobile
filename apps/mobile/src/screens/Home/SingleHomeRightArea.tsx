@@ -2,15 +2,16 @@
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { AbstractPortfolioToken } from './types';
+import type { AbstractPortfolioToken } from './types';
 import { useTranslation } from 'react-i18next';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useSingleHomeAccount, apisSingleHome } from './hooks/singleHome';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { naviPush } from '@/utils/navigation';
@@ -65,17 +66,16 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 
   const { currentAccount } = useSingleHomeAccount();
 
-  const fetchHistory = useCallback(() => {
+  const fetchHistory = useCallback(async () => {
     if (!currentAccount) {
       return;
     }
 
-    const failCount = transactionHistoryService.getFailedCount(
-      currentAccount.address,
-    );
-    const successCount = transactionHistoryService.getSucceedCount(
-      currentAccount.address,
-    );
+    const address = currentAccount.address;
+    const [failCount, successCount] = await Promise.all([
+      transactionHistoryServiceApi.getFailedCount(address),
+      transactionHistoryServiceApi.getSucceedCount(address),
+    ]);
     setHistoryCount({
       success: successCount,
       fail: failCount,
@@ -86,28 +86,34 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
       return;
     }
 
-    if (!currentAccount) {
-      return;
-    }
-    const addresses = [currentAccount.address];
     const { pendingsLength } =
-      transactionHistoryService.getPendingsAddresses(addresses);
+      await transactionHistoryServiceApi.getPendingsAddresses([address]);
     setPendingTxCount(pendingsLength);
     timeRef.current && clearInterval(timeRef.current);
-    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
+    timeRef.current = pendingsLength
+      ? setInterval(() => {
+          void fetchHistory().catch(console.error);
+        }, 5000)
+      : null;
   }, [currentAccount, tokenItem]);
 
   const refreshId = refreshHistoryIdState(s => s.refreshId);
   useEffect(() => {
     if (refreshId > 0) {
-      fetchHistory();
+      void fetchHistory().catch(console.error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshId]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchHistory();
+      void fetchHistory().catch(console.error);
+      return () => {
+        if (timeRef.current) {
+          clearInterval(timeRef.current);
+          timeRef.current = null;
+        }
+      };
     }, [fetchHistory]),
   );
 

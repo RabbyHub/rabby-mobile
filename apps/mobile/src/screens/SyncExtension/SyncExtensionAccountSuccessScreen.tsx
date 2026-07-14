@@ -9,22 +9,20 @@ import {
   resetNavigationTo,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useRoute } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import addressBalanceStore from '@/store/balance';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { apisSingleHome } from '../Home/hooks/singleHome';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { accountEvents } from '@/core/apis/account';
 import { Button } from '@/components2024/Button';
-import {
-  WalletSuccessCard,
-  AddressItem,
-} from '@/components2024/WalletSuccessCard';
+import type { AddressItem } from '@/components2024/WalletSuccessCard';
+import { WalletSuccessCard } from '@/components2024/WalletSuccessCard';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
@@ -155,9 +153,9 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     }
     apisHomeTabIndex.setTabIndex(0);
 
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_DONE,
-    );
+    ).catch(console.error);
   };
 
   return (

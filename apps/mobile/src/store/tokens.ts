@@ -14,7 +14,10 @@ import {
   lpTokenFilter,
 } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
-import { preferenceService } from '@/core/services/shared';
+import {
+  getTokenDisplayModeSnapshot,
+  setTokenDisplayMode as setPreferenceTokenDisplayMode,
+} from '@/core/serviceApi/preference';
 import { getTokenSymbol } from '@/utils/token';
 import {
   tokenItemEntityToTokenItem,
@@ -30,6 +33,8 @@ import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { uniqBy } from 'lodash';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import { getSelectedBalanceAddressesSnapshot } from './balance';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1652,23 +1657,42 @@ const syncTokenRuntimeStoresFromTokenListMap = (
 const tokenListStore = zCreate<TokenListState>((set, get) => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
-  tokenDisplayMode: preferenceService.getTokenDisplayMode(),
+  tokenDisplayMode: getTokenDisplayModeSnapshot(),
   // 单个地址的 loading 状态：cache token拿到loading设置false，等所有token都拿到allLoading才设置false
   isLoadingByAddress: {},
   setTokenDisplayMode(mode) {
     set(() => ({ tokenDisplayMode: mode }));
-    preferenceService.setTokenDisplayMode(mode);
+    void setPreferenceTokenDisplayMode(mode).catch(console.error);
   },
   async initStore() {
+    const startedAt = Date.now();
+    markStartupPerf('tokenListStore', 'initStore_start');
+
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
-    const { top10Addresses } = await getTop10MyAccounts(true);
+    const addressesStartedAt = Date.now();
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
+    markStartupPerf('tokenListStore', 'selected_addresses_snapshot_end', {
+      elapsedMs: Date.now() - addressesStartedAt,
+      count: top10Addresses.length,
+    });
+
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
+    const loadStartedAt = Date.now();
     const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
       lowerAddresses,
     );
+    markStartupPerf('tokenListStore', 'load_cache_end', {
+      elapsedMs: Date.now() - loadStartedAt,
+      count: lowerAddresses.length,
+      tokenCount: Object.values(tokenMap).reduce(
+        (acc, tokens) => acc + tokens.length,
+        0,
+      ),
+    });
+
     // 写入 Store
     syncTokenRuntimeStoresFromTokenListMap(
       tokenMap,
@@ -1679,6 +1703,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       },
     );
     set(() => ({ tokenListMap: tokenMap }));
+    markStartupPerf('tokenListStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: lowerAddresses.length,
+    });
   },
 
   async batchGetTokenList(addresses: string[], force = false) {

@@ -15,7 +15,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useSQLiteInfo } from '@/core/databases/hooks';
 import { Button } from '@/components2024/Button';
 import { useAssetsBasicInfo } from '@/databases/hooks/assets';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { makeNoop } from '../Settings/sheetModals/testDevUtils';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import {
@@ -621,7 +621,7 @@ function DevDataAccount() {
     getStyle: getStyles,
     isLight: true,
   });
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { assetsInfo, fetchAssetsInfo } = useAssetsBasicInfo({
     enableAutoFetch: true,
   });

@@ -8,13 +8,13 @@ import React, {
 } from 'react';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts } from '@/constant/layout';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { formatTimestamp } from '@/utils/time';
 import { View } from 'react-native';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
@@ -22,7 +22,7 @@ import { TransactionItem } from '@/screens/TransactionRecord/components/Transact
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
 import { useRecentSend } from '../../hooks/useRecentSend';
-import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
+import type { SendAction } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useGetCexList } from '@/screens/Transaction/hook';

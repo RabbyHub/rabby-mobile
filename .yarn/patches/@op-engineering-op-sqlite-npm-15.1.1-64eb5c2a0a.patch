@@ -1,3 +1,68 @@
+diff --git a/cpp/DBHostObject.cpp b/cpp/DBHostObject.cpp
+index a8b0fd2ccdf8af78ef7141db606274d6262a0569..e0400e8b32df84247f429ba7b5dbf951e8738d0f 100644
+--- a/cpp/DBHostObject.cpp
++++ b/cpp/DBHostObject.cpp
+@@ -8,6 +8,7 @@
+ #include "logs.h"
+ #include "macros.hpp"
+ #include "utils.hpp"
++#include <chrono>
+ #include <iostream>
+ #include <utility>
+
+@@ -16,6 +17,11 @@ namespace opsqlite {
+ namespace jsi = facebook::jsi;
+ namespace react = facebook::react;
+
++static double elapsed_ms(std::chrono::steady_clock::time_point startedAt) {
++  auto elapsed = std::chrono::steady_clock::now() - startedAt;
++  return std::chrono::duration<double, std::milli>(elapsed).count();
++}
++
+ #ifdef OP_SQLITE_USE_LIBSQL
+ void DBHostObject::flush_pending_reactive_queries(
+     const std::shared_ptr<jsi::Value> &resolve) {
+@@ -407,19 +413,24 @@ void DBHostObject::create_jsi_functions() {
+           "commands or parameters is needed");
+     }
+
++    auto argsConvertStartedAt = std::chrono::steady_clock::now();
+     const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
+
+     std::vector<BatchArguments> commands;
+     to_batch_arguments(rt, batchParams, &commands);
++    const double argsConvertMs = elapsed_ms(argsConvertStartedAt);
+
+     return promisify(
+         rt,
+-        [this, commands]() {
++        [this, commands, argsConvertMs]() {
++          auto nativeExecuteStartedAt = std::chrono::steady_clock::now();
+ #ifdef OP_SQLITE_USE_LIBSQL
+           auto batchResult = opsqlite_libsql_execute_batch(db, &commands);
+ #else
+           auto batchResult = opsqlite_execute_batch(db, &commands);
+ #endif
++          batchResult.argsConvertMs = argsConvertMs;
++          batchResult.nativeExecuteMs = elapsed_ms(nativeExecuteStartedAt);
+           return batchResult;
+         },
+         [](jsi::Runtime &rt, std::any prev) {
+@@ -427,6 +438,14 @@ void DBHostObject::create_jsi_functions() {
+           auto res = jsi::Object(rt);
+           res.setProperty(rt, "rowsAffected",
+                           jsi::Value(batchResult.affectedRows));
++          auto diagnostics = jsi::Object(rt);
++          diagnostics.setProperty(rt, "argsConvertMs",
++                                  jsi::Value(batchResult.argsConvertMs));
++          diagnostics.setProperty(rt, "nativeExecuteMs",
++                                  jsi::Value(batchResult.nativeExecuteMs));
++          diagnostics.setProperty(rt, "commandCount",
++                                  jsi::Value(batchResult.commands));
++          res.setProperty(rt, "__diagnostics", std::move(diagnostics));
+           return res;
+         });
+   });
 diff --git a/cpp/OPSqlite.cpp b/cpp/OPSqlite.cpp
 index 33a869788b4d7d9e4d8ab66bc90218858613227e..e1139a4e19d9b030be73b0962817fe5caeed6fdc 100644
 --- a/cpp/OPSqlite.cpp
@@ -5,13 +70,59 @@ index 33a869788b4d7d9e4d8ab66bc90218858613227e..e1139a4e19d9b030be73b0962817fe5c
 @@ -47,6 +47,9 @@ void install(jsi::Runtime &rt,
               const char *base_path, const char *crsqlite_path,
               const char *sqlite_vec_path) {
- 
+
 +  // Reset invalidated flag when reinstalling (e.g., after hot reload)
 +  invalidated = false;
 +
    _base_path = std::string(base_path);
    _crsqlite_path = std::string(crsqlite_path);
    _sqlite_vec_path = std::string(sqlite_vec_path);
+diff --git a/cpp/bridge.cpp b/cpp/bridge.cpp
+index f298505fa6d3093fb91c8a5ae8d793dfc09cfa1d..be5e5080ba9f9eb68c629090c04e9a1cface8ac1 100644
+--- a/cpp/bridge.cpp
++++ b/cpp/bridge.cpp
+@@ -870,6 +870,8 @@ opsqlite_execute_batch(sqlite3 *db,
+   return BatchResult{
+       .affectedRows = affectedRows,
+       .commands = static_cast<int>(commandCount),
++      .argsConvertMs = 0,
++      .nativeExecuteMs = 0,
+   };
+ }
+
+diff --git a/cpp/libsql/bridge.cpp b/cpp/libsql/bridge.cpp
+index fdd9a5d1fca722c6b479b1b0c7a28bc35565a3c8..b3f8ae9664c6dfff01dc8171e0cf85f8dd4d683b 100644
+--- a/cpp/libsql/bridge.cpp
++++ b/cpp/libsql/bridge.cpp
+@@ -760,11 +760,15 @@ opsqlite_libsql_execute_batch(DB const &db,
+         return BatchResult{
+             .affectedRows = affectedRows,
+             .commands = static_cast<int>(commandCount),
++            .argsConvertMs = 0,
++            .nativeExecuteMs = 0,
+         };
+     } catch (std::exception &exc) {
+         // opsqlite_libsql_execute(db, "ROLLBACK", nullptr);
+         return BatchResult{
+             .message = exc.what(),
++            .argsConvertMs = 0,
++            .nativeExecuteMs = 0,
+         };
+     }
+ }
+diff --git a/cpp/types.hpp b/cpp/types.hpp
+index 54907eb67e3e24c391f6cc792ed7985eb8afcb9e..64a56cbd5c7322ac673a85fdcd869c575625ef56 100644
+--- a/cpp/types.hpp
++++ b/cpp/types.hpp
+@@ -32,6 +32,8 @@ struct BatchResult {
+   std::string message;
+   int affectedRows;
+   int commands;
++  double argsConvertMs;
++  double nativeExecuteMs;
+ };
+
+ struct BatchArguments {
 diff --git a/cpp/utils.cpp b/cpp/utils.cpp
 index d3e49ed2b9023fcbad2bd9f1b275e1f7be329f62..8b00e4f45b2f039930eb927593957b4a86d8a8db 100644
 --- a/cpp/utils.cpp
@@ -28,6 +139,276 @@ index d3e49ed2b9023fcbad2bd9f1b275e1f7be329f62..8b00e4f45b2f039930eb927593957b4a
        try {
          std::any result = lambda();
 +        LOGD("[op-sqlite utils.cpp] promisify:: opsqlite::invoker is %p", &opsqlite::invoker);
- 
+
          if (opsqlite::invalidated) {
            return;
+diff --git a/lib/module/functions.js b/lib/module/functions.js
+index 28836e28059cfaa75f878f4c995160fdabca6a73..7c38a8841ef1023e0a319b0c589b1c6b48ef33ca 100644
+--- a/lib/module/functions.js
++++ b/lib/module/functions.js
+@@ -19,6 +19,21 @@ if (global.__OPSQLiteProxy == null) {
+ }
+ const proxy = global.__OPSQLiteProxy;
+ export const OPSQLite = proxy;
++
++function emitRabbyOPSQLiteDiagnostic(payload) {
++  const hook = global.__RABBY_OP_SQLITE_DIAGNOSTIC__;
++
++  if (typeof hook !== 'function') {
++    return;
++  }
++
++  try {
++    hook(payload);
++  } catch {
++    // Diagnostics must never affect database behavior.
++  }
++}
++
+ function enhanceDB(db, options) {
+   const lock = {
+     queue: [],
+@@ -74,6 +89,24 @@ function enhanceDB(db, options) {
+     close: db.close,
+     flushPendingReactiveQueries: db.flushPendingReactiveQueries,
+     executeBatch: async commands => {
++      const diagnosticEnabled = typeof global.__RABBY_OP_SQLITE_DIAGNOSTIC__ === 'function';
++      const diagnosticOpId = diagnosticEnabled ? `${Date.now()}-${Math.random().toString(36).slice(2)}` : '';
++      const traceDiagnostic = (phase, data = {}) => {
++        if (!diagnosticEnabled) {
++          return;
++        }
++
++        emitRabbyOPSQLiteDiagnostic({
++          op: 'executeBatch',
++          opId: diagnosticOpId,
++          phase,
++          ...data
++        });
++      };
++      traceDiagnostic('wrapper_start', {
++        tupleCount: commands.length
++      });
++      const sanitizeStartedAt = Date.now();
+       // Do normal for loop and replace in place for performance
+       for (let i = 0; i < commands.length; i++) {
+         // [1] is the params arg
+@@ -81,21 +114,58 @@ function enhanceDB(db, options) {
+           commands[i][1] = sanitizeArrayBuffersInArray(commands[i][1]);
+         }
+       }
++      traceDiagnostic('sanitize_end', {
++        durationMs: Date.now() - sanitizeStartedAt
++      });
+       async function run() {
++        let status = 'success';
+         try {
++          traceDiagnostic('begin_start');
++          const beginStartedAt = Date.now();
+           enhancedDb.executeSync('BEGIN TRANSACTION;');
++          traceDiagnostic('begin_end', {
++            durationMs: Date.now() - beginStartedAt
++          });
++          traceDiagnostic('native_start');
++          const nativeStartedAt = Date.now();
+           let res = await db.executeBatch(commands);
++          traceDiagnostic('native_end', {
++            durationMs: Date.now() - nativeStartedAt,
++            ...(res.__diagnostics || {})
++          });
++          traceDiagnostic('commit_start');
++          const commitStartedAt = Date.now();
+           enhancedDb.executeSync('COMMIT;');
++          traceDiagnostic('commit_end', {
++            durationMs: Date.now() - commitStartedAt
++          });
++          traceDiagnostic('flush_reactive_start');
++          const flushStartedAt = Date.now();
+           await db.flushPendingReactiveQueries();
++          traceDiagnostic('flush_reactive_end', {
++            durationMs: Date.now() - flushStartedAt
++          });
+           return res;
+         } catch (executionError) {
++          status = 'error';
+           try {
++            traceDiagnostic('rollback_start');
++            const rollbackStartedAt = Date.now();
+             enhancedDb.executeSync('ROLLBACK;');
++            traceDiagnostic('rollback_end', {
++              durationMs: Date.now() - rollbackStartedAt
++            });
+           } catch (rollbackError) {
+             throw rollbackError;
+           }
++          traceDiagnostic('error', {
++            error: executionError instanceof Error ? executionError.message : String(executionError)
++          });
+           throw executionError;
+         } finally {
++          traceDiagnostic('wrapper_end', {
++            status
++          });
+           lock.inProgress = false;
+           startNextTransaction();
+         }
+diff --git a/lib/typescript/src/types.d.ts b/lib/typescript/src/types.d.ts
+index d2f7a20253b8180d0abd22455dd36ffe3de0d9ca..a01ee806808f835c1fc1ae5cf40be5fe59d535b8 100644
+--- a/lib/typescript/src/types.d.ts
++++ b/lib/typescript/src/types.d.ts
+@@ -49,6 +49,11 @@ export type UpdateHookOperation = 'INSERT' | 'DELETE' | 'UPDATE';
+  */
+ export type BatchQueryResult = {
+     rowsAffected?: number;
++    __diagnostics?: {
++        argsConvertMs?: number;
++        nativeExecuteMs?: number;
++        commandCount?: number;
++    };
+ };
+ /**
+  * Result of loading a file and executing every line as a SQL command
+diff --git a/src/functions.ts b/src/functions.ts
+index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f708205800b4cc 100644
+--- a/src/functions.ts
++++ b/src/functions.ts
+@@ -14,6 +14,22 @@ import {
+
+ declare global {
+   var __OPSQLiteProxy: object | undefined;
++  var __RABBY_OP_SQLITE_DIAGNOSTIC__:
++    | ((payload: Record<string, unknown>) => void)
++    | undefined;
++}
++
++function emitRabbyOPSQLiteDiagnostic(payload: Record<string, unknown>) {
++  const hook = global.__RABBY_OP_SQLITE_DIAGNOSTIC__;
++  if (typeof hook !== 'function') {
++    return;
++  }
++
++  try {
++    hook(payload);
++  } catch {
++    // Diagnostics must never affect database behavior.
++  }
+ }
+
+ if (global.__OPSQLiteProxy == null) {
+@@ -109,6 +125,32 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
+     executeBatch: async (
+       commands: SQLBatchTuple[]
+     ): Promise<BatchQueryResult> => {
++      const diagnosticEnabled =
++        typeof global.__RABBY_OP_SQLITE_DIAGNOSTIC__ === 'function';
++      const diagnosticOpId = diagnosticEnabled
++        ? `${Date.now()}-${Math.random().toString(36).slice(2)}`
++        : '';
++      const traceDiagnostic = (
++        phase: string,
++        data: Record<string, unknown> = {}
++      ) => {
++        if (!diagnosticEnabled) {
++          return;
++        }
++
++        emitRabbyOPSQLiteDiagnostic({
++          op: 'executeBatch',
++          opId: diagnosticOpId,
++          phase,
++          ...data,
++        });
++      };
++
++      traceDiagnostic('wrapper_start', {
++        tupleCount: commands.length,
++      });
++
++      const sanitizeStartedAt = Date.now();
+       // Do normal for loop and replace in place for performance
+       for (let i = 0; i < commands.length; i++) {
+         // [1] is the params arg
+@@ -116,27 +158,67 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
+           commands[i]![1] = sanitizeArrayBuffersInArray(commands[i]![1]) as any;
+         }
+       }
++      traceDiagnostic('sanitize_end', {
++        durationMs: Date.now() - sanitizeStartedAt,
++      });
+
+       async function run() {
++        let status = 'success';
+         try {
++          traceDiagnostic('begin_start');
++          const beginStartedAt = Date.now();
+           enhancedDb.executeSync('BEGIN TRANSACTION;');
++          traceDiagnostic('begin_end', {
++            durationMs: Date.now() - beginStartedAt,
++          });
+
++          traceDiagnostic('native_start');
++          const nativeStartedAt = Date.now();
+           let res = await db.executeBatch(commands as any[]);
++          traceDiagnostic('native_end', {
++            durationMs: Date.now() - nativeStartedAt,
++            ...(res.__diagnostics || {}),
++          });
+
++          traceDiagnostic('commit_start');
++          const commitStartedAt = Date.now();
+           enhancedDb.executeSync('COMMIT;');
++          traceDiagnostic('commit_end', {
++            durationMs: Date.now() - commitStartedAt,
++          });
+
++          traceDiagnostic('flush_reactive_start');
++          const flushStartedAt = Date.now();
+           await db.flushPendingReactiveQueries();
++          traceDiagnostic('flush_reactive_end', {
++            durationMs: Date.now() - flushStartedAt,
++          });
+
+           return res;
+         } catch (executionError) {
++          status = 'error';
+           try {
++            traceDiagnostic('rollback_start');
++            const rollbackStartedAt = Date.now();
+             enhancedDb.executeSync('ROLLBACK;');
++            traceDiagnostic('rollback_end', {
++              durationMs: Date.now() - rollbackStartedAt,
++            });
+           } catch (rollbackError) {
+             throw rollbackError;
+           }
+
++          traceDiagnostic('error', {
++            error:
++              executionError instanceof Error
++                ? executionError.message
++                : String(executionError),
++          });
+           throw executionError;
+         } finally {
++          traceDiagnostic('wrapper_end', {
++            status,
++          });
+           lock.inProgress = false;
+           startNextTransaction();
+         }
+diff --git a/src/types.ts b/src/types.ts
+index 61145246758c16ae766269a1672dd39ec6ddc48f..5fc84c30b6a99690dcebdbb9ae50ea9e9bb3917c 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -64,6 +64,11 @@ export type UpdateHookOperation = 'INSERT' | 'DELETE' | 'UPDATE';
+  */
+ export type BatchQueryResult = {
+   rowsAffected?: number;
++  __diagnostics?: {
++    argsConvertMs?: number;
++    nativeExecuteMs?: number;
++    commandCount?: number;
++  };
+ };
+
+ /**

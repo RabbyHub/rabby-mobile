@@ -3,11 +3,16 @@ import { Platform } from 'react-native';
 import { useMemoizedFn } from 'ahooks';
 import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
+import type { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { browserService, dappService } from '@/core/services';
-import { Tab } from '@/core/services/browserService';
+import {
+  browserServiceApi,
+  getBrowserTabsSnapshot,
+  removeBrowserScreenshot,
+} from '@/core/serviceApi/browser';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import type { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
   EVENT_SHOW_BROWSER,
@@ -20,13 +25,10 @@ import {
   safeGetOrigin,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
-import { useDappsValue } from '../useDapps';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
 
 type TabsState = {
@@ -177,17 +179,14 @@ function useDisplayedTabs() {
 
 export function useHomeDisplayedTabs() {
   const tabs = tabsStore(s => s.tabs);
-  const { dapps } = useDappsValue();
 
   const homeDisplayedTabs = useMemo(
     () =>
       sortBy(
-        tabs.filter(item => {
-          return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
-        }),
+        getDisplayedTabs(tabs),
         tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
       ).slice(0, 4),
-    [tabs, dapps],
+    [tabs],
   );
 
   return { homeDisplayedTabs };
@@ -209,12 +208,19 @@ export const browserApis = {
   },
 
   getBrowserTabs: () => {
-    setTabsStore(browserService.getBrowserTabs());
+    setTabsStore(getBrowserTabsSnapshot());
+    void browserServiceApi
+      .getBrowserTabs()
+      .then(setTabsStore)
+      .catch(console.error);
   },
 
   updateBrowserTabs: (payload: Partial<TabsState>) => {
-    browserService.updateBrowserTabs(payload);
-    browserApis.getBrowserTabs();
+    setTabsStore(prev => ({
+      ...prev,
+      ...payload,
+    }));
+    void browserServiceApi.updateBrowserTabs(payload).catch(console.error);
   },
 
   navigateToBrowserScreen: () => {
@@ -263,13 +269,13 @@ export const browserApis = {
     browserApis.updateBrowserTabs({
       tabs: newTabs,
     });
-    browserService.removeScreenshot({ tabId });
+    void removeBrowserScreenshot({ tabId }).catch(console.error);
   },
 
   closeAllTabs: () => {
     const store = tabsStore.getState();
     store.tabs.forEach(tab => {
-      browserService.removeScreenshot({ tabId: tab.id });
+      void removeBrowserScreenshot({ tabId: tab.id }).catch(console.error);
     });
     browserApis.updateBrowserTabs({
       tabs: [],
@@ -307,7 +313,7 @@ export const browserApis = {
           tabs: finalTabs,
         };
 
-        browserService.updateBrowserTabs(result);
+        void browserServiceApi.updateBrowserTabs(result).catch(console.error);
         return result;
       });
     });
@@ -331,7 +337,7 @@ export const browserApis = {
           return item;
         }),
       };
-      browserService.updateBrowserTabs(res);
+      void browserServiceApi.updateBrowserTabs(res).catch(console.error);
       return res;
     });
   },
@@ -351,7 +357,7 @@ export const browserApis = {
     }
     if (
       options?.isRemindOpen &&
-      !dappService.getDapp(safeGetOrigin(url))?.isSkipRemind
+      !getDappSnapshot(safeGetOrigin(url))?.isSkipRemind
     ) {
       browserApis.setPartialBrowserState({
         isShowDappInfo: true,
@@ -441,7 +447,7 @@ export const browserApis = {
         activeTabId,
         tabs,
       };
-      browserService.updateBrowserTabs(res);
+      void browserServiceApi.updateBrowserTabs(res).catch(console.error);
       return res;
     });
   },
@@ -481,8 +487,8 @@ export function useBrowser() {
   };
 }
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
     browserApis.hideBrowser();
   });
-});
+}, STARTUP_TASKS.browserGlobalClearListener);

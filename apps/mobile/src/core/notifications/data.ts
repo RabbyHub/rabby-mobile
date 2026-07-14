@@ -1,5 +1,5 @@
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 
 type RemoteBizCommonBase = {
   bizVersion: 'v20260122';

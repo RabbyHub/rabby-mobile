@@ -8,6 +8,7 @@ import React, {
   useImperativeHandle,
   type Ref,
 } from 'react';
+import type { ListRenderItem } from 'react-native';
 import {
   View,
   Keyboard,
@@ -16,21 +17,21 @@ import {
   Platform,
   Dimensions,
   Alert,
-  ListRenderItem,
 } from 'react-native';
-import {
+import type {
   BottomSheetBackdropProps,
-  BottomSheetFlatList,
   BottomSheetFlatListMethods,
 } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import useDebounce from 'react-use/lib/useDebounce';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import {
+import type { CHAINS_ENUM, Chain } from '@/constant/chains';
+import type {
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
+import type { SheetModalShowType } from '@/hooks/useSheetModal';
+import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -46,7 +47,8 @@ import {
   getTop3Chains,
 } from '@/utils/chain';
 import ChainFilterItem, { AccountFilterItem } from './ChainFilterItem';
-import FavoriteFilterItem, { FavoriteFilterType } from './FavoriteFilterItem';
+import type { FavoriteFilterType } from './FavoriteFilterItem';
+import FavoriteFilterItem from './FavoriteFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '@/components2024/Toast';
 import { ModalLayouts, RootNames } from '@/constant/layout';
@@ -56,18 +58,18 @@ import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { CompositeScreenProps } from '@react-navigation/native';
 import {
-  CompositeScreenProps,
   useFocusEffect,
   useIsFocused,
   useRoute,
 } from '@react-navigation/native';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { AccountInfoInTokenRow } from './AccountWidgets';
 import { findAccountByPriority, isWatchOrSafeAccount } from '@/utils/account';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import {
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type {
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
@@ -91,12 +93,11 @@ import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/Exchan
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
+import type { ITokenItem, TokenSelectIndexRow } from '@/store/tokens';
 import {
   buildTokenEntityId,
   getTokenSelectIndexRowKey,
-  ITokenItem,
   tokenEntityResourceStore,
-  TokenSelectIndexRow,
   useTokenEntity,
 } from '@/store/tokens';
 import {
@@ -113,7 +114,8 @@ import { CustomNetworkChainPreview } from '@/screens/Send/components/CustomNetwo
 import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
 import { colord } from 'colord';
 import { isNumber } from 'lodash';
-import { Text, TextInput } from '@/components/Typography';
+import type { TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'SwapBridge'>,

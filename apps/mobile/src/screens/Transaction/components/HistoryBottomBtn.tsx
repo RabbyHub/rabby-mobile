@@ -6,8 +6,8 @@ import {
   RootNames,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import { transactionHistoryService } from '@/core/services';
-import { Account } from '@/core/services/preference';
+import { getTransactionHistoryListSnapshot } from '@/core/serviceApi/transactionHistory';
+import type { Account } from '@/core/startupServices/preference';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
@@ -23,7 +23,8 @@ import { StackActions } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { HistoryItemCateType } from './type';
 
 interface ItemProps {
@@ -59,7 +60,7 @@ export const HistoryBottomBtn = ({
   const { accounts } = useMyAccounts();
 
   const { data: transactionTxs } = useRequest(async () => {
-    const { completeds } = transactionHistoryService.getList(
+    const { completeds } = getTransactionHistoryListSnapshot(
       data.tx?.from_addr || '',
     );
 

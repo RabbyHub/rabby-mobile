@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
-import { DisplayPoolReserveInfo } from '../type';
+import type { DisplayPoolReserveInfo } from '../type';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import ToggleCollateralOverView from '../components/actions/ToggleCollateralOverView';
@@ -21,7 +21,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Button } from '@/components2024/Button';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { toast } from '@/components2024/Toast';
 import {
@@ -34,7 +34,7 @@ import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignat
 import { apiProvider } from '@/core/apis';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { last, noop } from 'lodash';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   API_ETH_MOCK_ADDRESS,
   HF_RISK_CHECKBOX_THRESHOLD,
@@ -361,7 +361,7 @@ function ToggleCollateralContent({}: {}) {
 
         const txId = last(results);
         if (txId && txs[0]) {
-          transactionHistoryService.setCustomTxItem(
+          void transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
             txId,

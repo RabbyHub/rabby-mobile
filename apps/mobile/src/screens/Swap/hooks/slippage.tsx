@@ -1,40 +1,31 @@
-import { swapService } from '@/core/services';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import { atom, useAtom } from 'jotai';
 
-const slippageAtom = atom(
-  swapService.getSlippage(),
-  (get, set, slippage: string) => {
-    swapService.setSlippage(slippage);
-    set(slippageAtom, slippage);
-  },
-);
+const slippageAtom = atom('0.1', async (get, set, slippage: string) => {
+  await swapServiceApi.setSlippage(slippage);
+  set(slippageAtom, slippage);
+});
 
 slippageAtom.onMount = set => {
-  set(swapService.getSlippage());
+  swapServiceApi.getSlippage().then(set);
 };
 
-const autoSlippageAtom = atom(
-  swapService.getAutoSlippage(),
-  (get, set, bool: boolean) => {
-    swapService.setAutoSlippage(bool);
-    set(autoSlippageAtom, bool);
-  },
-);
+const autoSlippageAtom = atom(true, async (get, set, bool: boolean) => {
+  await swapServiceApi.setAutoSlippage(bool);
+  set(autoSlippageAtom, bool);
+});
 
 autoSlippageAtom.onMount = set => {
-  set(swapService.getAutoSlippage());
+  swapServiceApi.getAutoSlippage().then(set);
 };
 
-const isCustomSlippageAtom = atom(
-  !!swapService.getIsCustomSlippage(),
-  (get, set, bool: boolean) => {
-    swapService.setIsCustomSlippage(bool);
-    set(isCustomSlippageAtom, bool);
-  },
-);
+const isCustomSlippageAtom = atom(false, async (get, set, bool: boolean) => {
+  await swapServiceApi.setIsCustomSlippage(bool);
+  set(isCustomSlippageAtom, bool);
+});
 
 isCustomSlippageAtom.onMount = set => {
-  set(!!swapService.getIsCustomSlippage());
+  swapServiceApi.getIsCustomSlippage().then(value => set(!!value));
 };
 
 export const useSlippageStore = () => {

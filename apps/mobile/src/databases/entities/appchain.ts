@@ -7,8 +7,14 @@ import { Entity, Column, In } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { jsonTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
-import { ORM_TABLE_NAMES } from '../constant';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { ParseEntity } from '@/core/utils/typeorm';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import {
+  executeStartupSqlite,
+  getStartupSqliteRowItem,
+  getStartupSqliteRowsLength,
+} from '../startupSqlite';
 
 // AppChain 数据过期时间：10分钟
 export const APPCHAIN_EXPIRED_TIME = 10 * 60 * 1000;
@@ -91,6 +97,64 @@ export class AppChainEntity extends EntityAddressAssetBase {
     return this.getRepository().find({
       order: { usd_value: 'DESC' },
     });
+  }
+
+  static async queryAllForStartup(): Promise<AppChainEntity[]> {
+    const startedAt = Date.now();
+    const tableName = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_appchain}`;
+
+    try {
+      const result = await executeStartupSqlite(
+        `
+          SELECT owner_addr, id, name, site_url, logo_url, is_support_portfolio,
+                 is_visible, portfolio_item_list, usd_value
+          FROM "${tableName}"
+          ORDER BY usd_value DESC
+        `,
+      );
+      const rows = result.rows;
+      const rowCount = getStartupSqliteRowsLength(rows);
+      const entities: AppChainEntity[] = [];
+
+      for (let index = 0; index < rowCount; index++) {
+        const row = getStartupSqliteRowItem(rows, index);
+        if (!row?.owner_addr) {
+          continue;
+        }
+
+        const entity = new AppChainEntity();
+        entity.owner_addr = String(row.owner_addr);
+        entity.id = String(row.id || '');
+        entity.name = String(row.name || '');
+        entity.site_url = String(row.site_url || '');
+        entity.logo_url = String(row.logo_url || '');
+        entity.is_support_portfolio = !!row.is_support_portfolio;
+        entity.is_visible =
+          row.is_visible === undefined || row.is_visible === null
+            ? true
+            : !!row.is_visible;
+        entity.portfolio_item_list =
+          jsonTransformer.from(row.portfolio_item_list || '[]') || [];
+        entity.usd_value = Number(row.usd_value) || 0;
+        entity.makeDbId();
+        entities.push(entity);
+      }
+
+      traceStartupDiagnostic('db', 'appchain_startup_cache_fast_read', {
+        rowCount,
+        hitCount: entities.length,
+        durationMs: Date.now() - startedAt,
+      });
+
+      return entities;
+    } catch (error) {
+      traceStartupDiagnostic('db', 'appchain_startup_cache_fast_read_failed', {
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      return [];
+    }
   }
 
   static async getCountOfAccount() {

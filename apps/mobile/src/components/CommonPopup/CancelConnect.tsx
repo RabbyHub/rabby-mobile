@@ -1,4 +1,4 @@
-import { notificationService } from '@/core/services';
+import { notificationServiceApi } from '@/core/serviceApi/notification';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { CancelItem } from './CancelApproval/CancelItem';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import AutoLockView from '../AutoLockView';
 import { Text } from '@/components/Typography';
@@ -35,7 +35,7 @@ export const CancelConnect = () => {
 
   const handleBlockedRequestApproval = () => {
     closePopup();
-    notificationService.blockedDapp();
+    void notificationServiceApi.blockedDapp();
     onCancel();
   };
   const colors = useThemeColors();

@@ -1,8 +1,8 @@
+import type { ComponentProps } from 'react';
 import React, {
   useState,
   useEffect,
   useCallback,
-  ComponentProps,
   useMemo,
   useImperativeHandle,
   useLayoutEffect,
@@ -11,12 +11,10 @@ import React, {
 } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import {
-  ITokenCheck,
-  useTokenSelectorModalVisible,
-} from '@/components/Token/TokenSelectorSheetModal';
+import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import {
   getTokenSymbol,
@@ -30,8 +28,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { CHAINS_ENUM } from '@debank/common';
-import { Account } from '@/core/services/preference';
+import type { CHAINS_ENUM } from '@debank/common';
+import type { Account } from '@/core/startupServices/preference';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
@@ -40,8 +38,8 @@ import { useLongPressTokenAtom } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useFocusEffect } from '@react-navigation/native';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
-import { ITokenItem } from '@/store/tokens';
+import type { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
+import type { ITokenItem } from '@/store/tokens';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { isAddress } from 'viem';

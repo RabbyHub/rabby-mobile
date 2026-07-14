@@ -6,11 +6,8 @@ import React, {
   useState,
 } from 'react';
 import { Image, InteractionManager, StyleSheet, View } from 'react-native';
-import {
-  PanGestureHandler,
-  PanGestureHandlerStateChangeEvent,
-  State,
-} from 'react-native-gesture-handler';
+import type { PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 import {
   DappFrameAccountHeader_LAYOUT,
@@ -20,11 +17,12 @@ import { RootNames } from '@/constant/layout';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { WebViewProps } from 'react-native-webview';
+import type { WebViewProps } from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
 import { useTranslation } from 'react-i18next';
 
-import DappWebViewCore, { DappWebViewProgressState } from './DappWebViewCore';
+import type { DappWebViewProgressState } from './DappWebViewCore';
+import DappWebViewCore from './DappWebViewCore';
 import { useAppUnlocked } from '@/hooks/useLock';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useInnerDappLastUrl } from '@/hooks/useInnerDappLastUrl';
@@ -40,7 +38,7 @@ import {
 import { openapi } from '@/core/request';
 import RcIconGlobeCC from '@/assets2024/icons/common/globe-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
-import { dappService } from '@/core/services';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
@@ -226,7 +224,7 @@ export default function InnerDappWebViewPreloadLayer({
     }
     const dappOrigin = safeGetOrigin(activeItem.url);
     const requestId = ++permissionRequestIdRef.current;
-    const dappInfo = dappService.getDapp(dappOrigin);
+    const dappInfo = getDappSnapshot(dappOrigin);
     let cancelled = false;
     setDappPermission(true);
 

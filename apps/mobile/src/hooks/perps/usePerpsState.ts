@@ -12,7 +12,7 @@ import {
 } from '@/constant/perps';
 import { apisKeyring } from '@/core/apis/keyring';
 import { sendRequest } from '@/core/apis/sendRequest';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { Abstraction, UserAbstraction } from '@rabby-wallet/hyperliquid-sdk';
@@ -21,12 +21,12 @@ import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
+import type { PositionAndOpenOrder } from './usePerpsStore';
 import {
   AccountSummary,
   apisPerpsStore,
   getClearinghouseStateByMap,
   perpsStore,
-  PositionAndOpenOrder,
   usePerpsStore,
   waitForInitialWsData,
   fetchUserAbstraction,

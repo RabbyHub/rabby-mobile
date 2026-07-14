@@ -2,7 +2,10 @@ import { useEffect, useLayoutEffect } from 'react';
 import { Linking } from 'react-native';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
-import { keyringService } from '@/core/services';
+import {
+  bindKeyringEvent,
+  isKeyringUnlockedSnapshot,
+} from '@/core/serviceApi/keyring';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
@@ -19,7 +22,7 @@ import {
   UL_MATCH_PREFIX,
   WALLETCONNECT_REDIRECT_PATH,
 } from '@/constant/universalLink';
-import { RefLikeObject } from '@/utils/type';
+import type { RefLikeObject } from '@/utils/type';
 import {
   markWalletConnectDappRedirectPending,
   pairWalletConnectUri,
@@ -29,7 +32,13 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { navigationRef } from '@/utils/navigation';
 import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
-import { abortAllSyncTasks } from '@/databases/sync/_task';
+import {
+  abortAllSyncTasks,
+  clearDbSyncWritePolicyOverride,
+  getDbSyncWritePolicyDebugSnapshot,
+  setDbSyncWritePolicyOverride,
+  type DbSyncWritePolicyOverride,
+} from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from './historyTokenDict';
 
 const nextAppLinkRef = {
@@ -54,15 +63,27 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'walletconnect-uri'
     | 'walletconnect-redirect'
     | 'open-testkit-screen'
-    | 'clear-app-cache';
+    | 'clear-app-cache'
+    | 'debug-sync-all-history'
+    | 'debug-db-sync-policy'
+    | 'debug-lending';
   dappUrl?: string;
   uri?: string;
   testkitScreen?:
     | typeof RootNames.DevCapabilityFile
     | typeof RootNames.DebugLogViewer
-    | typeof RootNames.DevDataSQLite;
+    | typeof RootNames.DevDataSQLite
+    | typeof RootNames.DevSwitches;
   testkitParams?: {
     tab?: 'overview' | 'debug';
+  };
+  debugDbSyncPolicy?: {
+    resetWritePolicyOverride?: boolean;
+    writePolicyOverride?: DbSyncWritePolicyOverride;
+  };
+  debugLending?: {
+    action: 'open' | 'refresh' | 'probe';
+    market?: string;
   };
 }) => void;
 
@@ -70,6 +91,7 @@ const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DebugLogViewer: RootNames.DebugLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
+  DevSwitches: RootNames.DevSwitches,
 } as const;
 
 function getRabbyGoTarget(
@@ -125,6 +147,102 @@ function parseNonProductionTestkitLink(appLink: string) {
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
 }
 
+function parseBooleanParam(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function parseIntegerParam(
+  params: URLSearchParams,
+  keys: string[],
+  options: {
+    min: number;
+    max: number;
+  },
+) {
+  for (const key of keys) {
+    const raw = params.get(key);
+    if (!raw) {
+      continue;
+    }
+
+    const value = Number(raw);
+    if (!Number.isFinite(value)) {
+      console.warn('[useUniversalLinkOnTop] Invalid integer param:', {
+        key,
+        raw,
+      });
+      continue;
+    }
+
+    const normalized = Math.trunc(value);
+    if (normalized < options.min || normalized > options.max) {
+      console.warn('[useUniversalLinkOnTop] Integer param out of range:', {
+        key,
+        raw,
+        min: options.min,
+        max: options.max,
+      });
+      continue;
+    }
+
+    return normalized;
+  }
+
+  return undefined;
+}
+
+function parseDebugDbSyncPolicyParams(params: URLSearchParams) {
+  const writePolicyOverride: DbSyncWritePolicyOverride = {};
+  const maxBatchSize = parseIntegerParam(
+    params,
+    ['batchSize', 'maxBatchSize', 'allHistoryBatchSize'],
+    {
+      min: 1,
+      max: 2000,
+    },
+  );
+  const minDelayBetweenTasks = parseIntegerParam(
+    params,
+    ['minDelayBetweenTasks', 'minDelay'],
+    {
+      min: 0,
+      max: 60 * 1000,
+    },
+  );
+  const maxDelayBetweenTasks = parseIntegerParam(
+    params,
+    ['maxDelayBetweenTasks', 'maxDelay', 'delayBetweenTasks'],
+    {
+      min: 0,
+      max: 60 * 1000,
+    },
+  );
+
+  if (typeof maxBatchSize === 'number') {
+    writePolicyOverride.maxBatchSize = maxBatchSize;
+  }
+  if (typeof minDelayBetweenTasks === 'number') {
+    writePolicyOverride.minDelayBetweenTasks = minDelayBetweenTasks;
+  }
+  if (typeof maxDelayBetweenTasks === 'number') {
+    writePolicyOverride.maxDelayBetweenTasks = maxDelayBetweenTasks;
+  }
+
+  return {
+    resetWritePolicyOverride:
+      parseBooleanParam(params.get('resetPolicy')) ||
+      parseBooleanParam(params.get('clearPolicy')) ||
+      parseBooleanParam(params.get('resetDbSyncPolicy')),
+    writePolicyOverride: Object.keys(writePolicyOverride).length
+      ? writePolicyOverride
+      : undefined,
+  };
+}
+
 function parseNonProductionMaintenanceLink(appLink: string) {
   if (!isNonPublicProductionEnv) {
     return null;
@@ -145,6 +263,45 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   ) {
     return {
       type: 'clear-app-cache',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'debug-sync-all-history' ||
+    target === 'debug-sync-all-history'
+  ) {
+    return {
+      type: 'debug-sync-all-history',
+      debugDbSyncPolicy: parseDebugDbSyncPolicyParams(urlInfo.searchParams),
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'debug-db-sync-policy' ||
+    target === 'debug-db-sync-policy'
+  ) {
+    return {
+      type: 'debug-db-sync-policy',
+      debugDbSyncPolicy: parseDebugDbSyncPolicyParams(urlInfo.searchParams),
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (rabbyGoCmd === 'debug-lending' || target === 'debug-lending') {
+    const action = urlInfo.searchParams.get('action') || 'open';
+    if (!['open', 'refresh', 'probe'].includes(action)) {
+      console.warn(
+        '[useUniversalLinkOnTop] Unknown Lending debug action:',
+        action,
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-lending',
+      debugLending: {
+        action: action as 'open' | 'refresh' | 'probe',
+        market: urlInfo.searchParams.get('market') || undefined,
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -254,7 +411,7 @@ async function clearAppCacheFromLink() {
     return;
   }
 
-  if (!keyringService.isUnlocked() && !isUnlockSessionValid()) {
+  if (!isKeyringUnlockedSnapshot() && !isUnlockSessionValid()) {
     console.warn(
       '[useUniversalLinkOnTop] clear app cache link ignored before unlock',
     );
@@ -271,6 +428,50 @@ async function clearAppCacheFromLink() {
   } catch (error) {
     clearAppCacheFromLinkStateRef.running = false;
     console.error('[useUniversalLinkOnTop] clear app cache failed', error);
+  }
+}
+
+async function applyDebugDbSyncPolicyFromLink(
+  policy?: Parameters<OnParseUrlAndProcessAction>[0]['debugDbSyncPolicy'],
+) {
+  if (!policy) {
+    return;
+  }
+
+  if (policy.resetWritePolicyOverride) {
+    clearDbSyncWritePolicyOverride('all-history');
+  }
+  if (policy.writePolicyOverride) {
+    setDbSyncWritePolicyOverride('all-history', policy.writePolicyOverride);
+  }
+
+  console.info('[useUniversalLinkOnTop] debug db sync policy applied', {
+    writePolicy: getDbSyncWritePolicyDebugSnapshot('all-history'),
+  });
+}
+
+async function debugSyncAllHistoryFromLink(
+  policy?: Parameters<OnParseUrlAndProcessAction>[0]['debugDbSyncPolicy'],
+) {
+  await applyDebugDbSyncPolicyFromLink(policy);
+
+  if (!isKeyringUnlockedSnapshot() && !isUnlockSessionValid()) {
+    console.warn(
+      '[useUniversalLinkOnTop] debug history all-sync link ignored before unlock',
+    );
+    return;
+  }
+
+  try {
+    const { debugResetAndSyncAllHistory } = await import(
+      '@/databases/debug/historySyncDebug'
+    );
+    await debugResetAndSyncAllHistory(policy);
+  } catch (error) {
+    console.error(
+      '[useUniversalLinkOnTop] debug history all-sync failed',
+      error,
+    );
   }
 }
 
@@ -335,6 +536,42 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
     case 'clear-app-cache':
       void clearAppCacheFromLink();
       break;
+    case 'debug-sync-all-history':
+      void debugSyncAllHistoryFromLink(payload.debugDbSyncPolicy);
+      break;
+    case 'debug-db-sync-policy':
+      void applyDebugDbSyncPolicyFromLink(payload.debugDbSyncPolicy);
+      break;
+    case 'debug-lending':
+      if (!isNonPublicProductionEnv || !payload.debugLending) {
+        return;
+      }
+      void import('@/screens/Lending/debugDeepLink')
+        .then(module =>
+          module.runNonProductionLendingDebugCommand(payload.debugLending!, {
+            openLending: () => {
+              dispatchWhenNavigationReady(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: RootNames.Lending,
+                  params: {
+                    dappId: 'aave',
+                  },
+                }),
+                RootNames.Lending,
+              );
+            },
+          }),
+        )
+        .catch(error => {
+          console.error(
+            '[useUniversalLinkOnTop] Lending debug command failed',
+            {
+              command: payload.debugLending,
+              error,
+            },
+          );
+        });
+      break;
   }
 };
 
@@ -347,7 +584,7 @@ const handleAppLink = async (url: string, isInit = false) => {
     return;
   }
 
-  if (keyringService.isUnlocked() || isUnlockSessionValid()) {
+  if (isKeyringUnlockedSnapshot() || isUnlockSessionValid()) {
     // Parse the link when the wallet is fully unlocked or in a valid post-unlock session.
     parseActionAndProcessLink(url, handleActions);
     setNextAppLink('');
@@ -394,6 +631,9 @@ export function useUniversalLinkOnTop() {
   }, []);
 
   useLayoutEffect(() => {
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+
     const onUnlock = () => {
       hideToastRef.current?.();
       const nextAppLink = getNextAppLink();
@@ -402,10 +642,21 @@ export function useUniversalLinkOnTop() {
         parseActionAndProcessLink(nextAppLink, handleActions);
       }
     };
-    keyringService.on('unlock', onUnlock);
+
+    void bindKeyringEvent('unlock', onUnlock)
+      .then(nextCleanup => {
+        if (disposed) {
+          nextCleanup();
+          return;
+        }
+
+        cleanup = nextCleanup;
+      })
+      .catch(console.error);
 
     return () => {
-      keyringService.off('unlock', onUnlock);
+      disposed = true;
+      cleanup?.();
     };
   }, []);
 }

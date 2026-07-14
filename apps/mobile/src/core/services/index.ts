@@ -1,1 +1,1 @@
-export * from './shared';
+export { default as debugLogService } from '../utils/debugLogService';

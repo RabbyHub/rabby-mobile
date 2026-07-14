@@ -1,6 +1,6 @@
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { preferenceService } from '@/core/services';
+import { toggleAllowNotifyAccountsChanged } from '@/core/serviceApi/preference';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,9 +11,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { BrowserSearch } from './components/BrowserSearch';
-import { BrowserRef, BrowserTab } from './components/BrowserTab';
+import type { BrowserRef } from './components/BrowserTab';
+import { BrowserTab } from './components/BrowserTab';
 
 export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
   const { styles: stylesScreen } = useTheme2024({
@@ -49,9 +51,9 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
 
   useLayoutEffect(() => {
     console.debug('BrowserScreen mounted');
-    preferenceService.toggleAllowNotifyAccountsChanged(true);
+    void toggleAllowNotifyAccountsChanged(true).catch(console.error);
     return () => {
-      preferenceService.toggleAllowNotifyAccountsChanged(false);
+      void toggleAllowNotifyAccountsChanged(false).catch(console.error);
       console.debug('BrowserScreen unmounted 1');
     };
   }, []);

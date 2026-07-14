@@ -22,7 +22,10 @@ import {
   subscribeModalGateDebugSnapshot,
 } from '@/utils/modalGate';
 import type { ModalGateDebugSnapshot } from '@/utils/modalGate';
-import { keyringService } from '@/core/services';
+import {
+  bindKeyringEvent,
+  isKeyringUnlockedSnapshot,
+} from '@/core/serviceApi/keyring';
 
 const modalDebugCount = makeMutable(0);
 const modalDebugSummary = makeMutable('No blocking modals');
@@ -156,21 +159,39 @@ export function FloatingDiagnosticsPanel() {
 
 function useKeyringUnlockStatus() {
   const [isUnlocked, setIsUnlocked] = React.useState(() =>
-    keyringService.isUnlocked(),
+    isKeyringUnlockedSnapshot(),
   );
 
   React.useEffect(() => {
+    let disposed = false;
+    const cleanups: Array<() => void> = [];
+
     const syncUnlockStatus = () => {
-      setIsUnlocked(keyringService.isUnlocked());
+      if (!disposed) {
+        setIsUnlocked(isKeyringUnlockedSnapshot());
+      }
     };
 
-    keyringService.on('lock', syncUnlockStatus);
-    keyringService.on('unlock', syncUnlockStatus);
     syncUnlockStatus();
 
+    void Promise.all([
+      bindKeyringEvent('lock', syncUnlockStatus),
+      bindKeyringEvent('unlock', syncUnlockStatus),
+    ])
+      .then(nextCleanups => {
+        if (disposed) {
+          nextCleanups.forEach(cleanup => cleanup());
+          return;
+        }
+
+        cleanups.push(...nextCleanups);
+        syncUnlockStatus();
+      })
+      .catch(console.error);
+
     return () => {
-      keyringService.off('lock', syncUnlockStatus);
-      keyringService.off('unlock', syncUnlockStatus);
+      disposed = true;
+      cleanups.forEach(cleanup => cleanup());
     };
   }, []);
 

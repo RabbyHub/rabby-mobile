@@ -120,9 +120,13 @@ export const useApprovalSecurityEngine = () => {
     },
     [setCurrentTx],
   );
-  const init = React.useCallback(() => {
-    setUserData(apiSecurityEngine.getSecurityEngineUserData());
-    setRules(apiSecurityEngine.getSecurityEngineRules());
+  const init = React.useCallback(async () => {
+    const [nextUserData, nextRules] = await Promise.all([
+      apiSecurityEngine.getSecurityEngineUserData(),
+      apiSecurityEngine.getSecurityEngineRules(),
+    ]);
+    setUserData(nextUserData);
+    setRules(nextRules);
   }, [setRules, setUserData]);
 
   return {

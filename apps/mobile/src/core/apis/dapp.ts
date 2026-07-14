@@ -1,11 +1,24 @@
-import { SessionProp } from './../services/session';
-import { DappInfo } from '@/core/services/dappService';
-import { dappService } from '../services';
-import { preferenceService, sessionService } from '../services/shared';
+import type { SessionProp } from './../services/session';
+import type { DappInfo } from '@/core/services/dappService';
+import {
+  addDappSync,
+  disconnectDappSync,
+  getDappSnapshot,
+  getDappsSnapshot,
+  hasDappPermissionSnapshot,
+  patchDappsSync,
+  removeDappSync,
+  updateDappSync,
+} from '@/core/serviceApi/dapp';
+import {
+  getFallbackAccountSnapshot,
+  getPinnedAddressSnapshot,
+} from '@/core/serviceApi/preference';
+import { broadcastSessionEventSync } from '@/core/serviceApi/session';
 import { BroadcastEvent } from '@/constant/event';
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '../request';
-import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
+import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { getAllAccountsToDisplay } from './account';
@@ -18,15 +31,15 @@ export { createDappBySession };
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
-  dappService.removeDapp(origin);
+  removeDappSync(origin);
 };
 
 export const disconnect = (origin: string) => {
-  if (!dappService.hasPermission(origin)) {
+  if (!hasDappPermissionSnapshot(origin)) {
     return;
   }
-  sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [], origin);
-  dappService.disconnect(origin);
+  broadcastSessionEventSync(BroadcastEvent.accountsChanged, [], origin);
+  disconnectDappSync(origin);
 };
 
 export const connect = async ({
@@ -42,9 +55,9 @@ export const connect = async ({
   info?: BasicDappInfo;
   currentAccount?: DappInfo['currentAccount'];
 }) => {
-  const dapp = dappService.getDapp(origin);
+  const dapp = getDappSnapshot(origin);
   const allAccounts = await getAllAccountsToDisplay();
-  const pinAddresses = preferenceService.getPinAddresses();
+  const pinAddresses = getPinnedAddressSnapshot();
   const accounts = sortAccountList(allAccounts, {
     highlightedAddresses: pinAddresses,
   });
@@ -60,10 +73,10 @@ export const connect = async ({
     dapp?.currentAccount ||
     myAccounts?.[0] ||
     accounts?.[0] ||
-    preferenceService.getFallbackAccount();
+    getFallbackAccountSnapshot();
 
   if (dapp) {
-    dappService.patchDapps({
+    patchDappsSync({
       [origin]: {
         chainId,
         isConnected: true,
@@ -73,7 +86,7 @@ export const connect = async ({
     return;
   }
   if (info) {
-    dappService.addDapp({
+    addDappSync({
       origin,
       name: info?.name,
       info,
@@ -83,7 +96,7 @@ export const connect = async ({
     });
     return;
   }
-  dappService.addDapp({
+  addDappSync({
     ...createDappBySession(
       session || {
         name: '',
@@ -104,17 +117,17 @@ export function setCurrentAccountForDapp(
   currentAccount?: DappInfo['currentAccount'],
 ) {
   if (currentAccount === undefined) {
-    currentAccount = preferenceService.getFallbackAccount();
+    currentAccount = getFallbackAccountSnapshot();
   }
-  dappService.patchDapps({
+  patchDappsSync({
     [origin]: {
       currentAccount,
     },
   });
-  const dapp = dappService.getDapp(origin);
+  const dapp = getDappSnapshot(origin);
 
   if (dapp?.isConnected) {
-    sessionService.broadcastEvent(
+    broadcastSessionEventSync(
       BroadcastEvent.accountsChanged,
       !dapp.currentAccount ? [] : [dapp.currentAccount?.address.toLowerCase()],
       dapp.origin,
@@ -147,7 +160,7 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
     ids: ids,
   });
 
-  dappService.patchDapps(
+  patchDappsSync(
     res.reduce((accu, item) => {
       if (item.id) {
         const dappOrigin = stringUtils.ensurePrefix(item.id, 'https://');
@@ -159,11 +172,11 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
     }, {} as Record<DappInfo['origin'], Partial<DappInfo>>),
   );
 
-  return dappService.getDapps();
+  return getDappsSnapshot();
 };
 
 export const syncBasicDappsInfo = async () => {
-  const dapps = Object.values(dappService.getDapps());
+  const dapps = Object.values(getDappsSnapshot());
   const ids = dapps
     .filter(
       item =>
@@ -176,7 +189,7 @@ export const syncBasicDappsInfo = async () => {
       ids,
     });
 
-    dappService.patchDapps(
+    patchDappsSync(
       res.reduce((accu, item) => {
         if (item.id) {
           const dappOrigin = stringUtils.ensurePrefix(item.id, 'https://');
@@ -198,12 +211,12 @@ export const syncBasicDappsInfo = async () => {
 };
 
 export const updateDappChain = (dapp: DappInfo) => {
-  dappService.updateDapp(dapp);
+  updateDappSync(dapp);
   const chain = findChain({
     enum: dapp.chainId,
   });
   if (dapp.isConnected && chain) {
-    sessionService.broadcastEvent(
+    broadcastSessionEventSync(
       BroadcastEvent.chainChanged,
       {
         chainId: chain.hex,

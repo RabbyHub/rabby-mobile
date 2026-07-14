@@ -23,7 +23,7 @@ import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useEIP7702Approvals } from '../useEIP7702Approvals';
 import { Text } from '@/components/Typography';
 import {

@@ -8,8 +8,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { transactionHistoryService } from '@/core/services';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { ApproveToken } from '@/screens/Transaction/components/Actions/ApproveToken';
 import { ApproveNFT } from '@/screens/Transaction/components/Actions/ApproveNFT';
 import { ApproveNFTCollection } from '@/screens/Transaction/components/Actions/ApproveNFTCollection';
@@ -22,7 +22,8 @@ import { Swap } from '@/screens/Transaction/components/Actions/Swap';
 import { Send } from '@/screens/Transaction/components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from '@/screens/Transaction/components/Actions/UnknownAction';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
@@ -30,7 +31,8 @@ import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { useAccountSelectModalCtx } from '../hooks';
 import { View } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { Hex, isValidHexAddress } from '@metamask/utils';
+import type { Hex } from '@metamask/utils';
+import { isValidHexAddress } from '@metamask/utils';
 
 function ScreenHistoryLocalDetail(): JSX.Element {
   const { viewingHistoryTxData, fnNavTo } = useAccountSelectModalCtx();
@@ -49,7 +51,7 @@ function ScreenHistoryLocalDetail(): JSX.Element {
   const isPending = useMemo(() => data.isPending, [data]);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-  const fetchRefreshData = useCallback(() => {
+  const fetchRefreshData = useCallback(async () => {
     if (!isPending) {
       // has done
       return;
@@ -58,7 +60,7 @@ function ScreenHistoryLocalDetail(): JSX.Element {
     const address = data.address;
     const chainId = data.chainId;
     const nonce = data.nonce;
-    const groups = transactionHistoryService.getPendingTxsByNonce(
+    const groups = await transactionHistoryServiceApi.getPendingTxsByNonce(
       address,
       chainId,
       nonce,
@@ -74,7 +76,7 @@ function ScreenHistoryLocalDetail(): JSX.Element {
   useEffect(() => {
     if (!data.isPending) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
-      transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+      void transactionHistoryServiceApi.clearSuccessAndFailSingleId(rawId);
     }
   }, [data]);
 

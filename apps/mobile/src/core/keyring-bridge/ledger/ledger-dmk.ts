@@ -13,7 +13,7 @@ import type { LedgerKeyringSession } from '@rabby-wallet/eth-keyring-ledger';
 import { filter, firstValueFrom, take, tap, type Observable } from 'rxjs';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import type { PreferenceStore } from '@/core/services/preference';
+import type { PreferenceStore } from '@/core/startupServices/preference';
 import {
   connectLedgerDeviceById,
   disconnectLedgerDevice,

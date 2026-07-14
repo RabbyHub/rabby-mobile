@@ -1,19 +1,19 @@
 import { AssetAvatar } from '@/components';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { RootNames } from '@/constant/layout';
-import {
+import type {
   SwapTxHistoryItem,
   SendTxHistoryItem,
   ApproveTokenTxHistoryItem,
 } from '@/core/services/transactionHistory';
 import {
-  bridgeService,
-  swapService,
-  transactionHistoryService,
-} from '@/core/services';
+  getTransactionHistoryListSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import {
   switchSceneCurrentAccount,
   useSceneAccountInfo,
@@ -38,7 +38,7 @@ import { noop } from 'lodash';
 import useAsync from 'react-use/lib/useAsync';
 import useMount from 'react-use/lib/useMount';
 import { Text } from '@/components/Typography';
-import { Account } from '@/types/account';
+import type { Account } from '@/types/account';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -75,10 +75,10 @@ export const PendingTxItem = ({
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
-        swapService.setOpenSwapHistoryTs(currentAccount?.address ?? '');
+        void swapServiceApi.setOpenSwapHistoryTs(currentAccount?.address ?? '');
     }
 
-    const { pendings, completeds } = transactionHistoryService.getList(
+    const { pendings, completeds } = getTransactionHistoryListSnapshot(
       currentAccount?.address ?? '',
     );
     const naviData = isPending ? pendings : completeds;
@@ -239,7 +239,7 @@ export const ApprovePendingTxItem = ({
   hash: string;
 }) => {
   const [{ value: data }, getApproveItem] = useAsyncFn(async () => {
-    const v = await transactionHistoryService.getRecentTxHistory(
+    const v = await transactionHistoryServiceApi.getRecentTxHistory(
       address,
       hash,
       chainId,

@@ -70,6 +70,7 @@ import {
   FloatingDiagnosticsPanel,
   FloatingKeyringRuntimePanel,
   FloatingOpenApiSummaryPanel,
+  FloatingStartupTaskSummaryPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
   GlobalSecurityTipStubModal,
@@ -94,7 +95,7 @@ import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
-import { useHomeStartupReady } from './core/utils/homeStartupReady';
+import { useHomePostStartupReady } from './core/utils/homeStartupReady';
 import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
@@ -283,11 +284,11 @@ function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
 function useReadableAccountWarmupsOnHomeVisible({
   shouldWarmupReadableAccounts,
   hasVisibleAccounts,
-  homeStartupReady,
+  homePostStartupReady,
 }: {
   shouldWarmupReadableAccounts: boolean;
   hasVisibleAccounts: boolean;
-  homeStartupReady: boolean;
+  homePostStartupReady: boolean;
 }) {
   const startedRef = React.useRef(false);
 
@@ -296,7 +297,7 @@ function useReadableAccountWarmupsOnHomeVisible({
       startedRef.current ||
       !shouldWarmupReadableAccounts ||
       !hasVisibleAccounts ||
-      !homeStartupReady
+      !homePostStartupReady
     ) {
       return;
     }
@@ -306,7 +307,7 @@ function useReadableAccountWarmupsOnHomeVisible({
       startedRef.current = false;
       console.error('useReadableAccountWarmupsOnHomeVisible::error', error);
     });
-  }, [shouldWarmupReadableAccounts, hasVisibleAccounts, homeStartupReady]);
+  }, [shouldWarmupReadableAccounts, hasVisibleAccounts, homePostStartupReady]);
 }
 
 function AppNavigationDeferredGlobals({
@@ -362,6 +363,7 @@ function AppNavigationOverlayGlobals({
       {showDiagnostics && <FloatingDbSyncSummaryPanel />}
       {showDiagnostics && <FloatingKeyringRuntimePanel />}
       {showDiagnostics && <FloatingOpenApiSummaryPanel />}
+      {showDiagnostics && <FloatingStartupTaskSummaryPanel />}
       {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}
@@ -407,7 +409,7 @@ export default function AppNavigation() {
     hasVisibleAccounts,
     hasStoredKeyrings,
   } = useAppUnlocked();
-  const homeStartupReady = useHomeStartupReady();
+  const homePostStartupReady = useHomePostStartupReady();
   const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
 
   const initialRouteName = hasVisibleAccounts
@@ -424,7 +426,7 @@ export default function AppNavigation() {
   useReadableAccountWarmupsOnHomeVisible({
     shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
     hasVisibleAccounts,
-    homeStartupReady,
+    homePostStartupReady,
   });
 
   const onReady = useCallback<
@@ -492,7 +494,11 @@ export default function AppNavigation() {
                 <RootStack.Screen
                   name={RootNames.StackRoot}
                   component={HomeScreenNavigator}
-                  options={RootAnimOptions}
+                  options={{
+                    ...RootAnimOptions,
+                    // Hidden Home state updates should not compete with the pushed screen.
+                    freezeOnBlur: true,
+                  }}
                 />
                 <RootStack.Screen
                   name={RootNames.StackHomeNonTab}

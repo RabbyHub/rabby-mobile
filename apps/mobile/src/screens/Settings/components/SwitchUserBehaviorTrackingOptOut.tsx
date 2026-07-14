@@ -5,11 +5,9 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 
-import {
-  AppSwitch2024,
-  SwitchToggleType,
-} from '@/components/customized/Switch2024';
-import { preferenceService } from '@/core/services';
+import type { SwitchToggleType } from '@/components/customized/Switch2024';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { setUserBehaviorTrackingOptOut } from '@/core/serviceApi/preference';
 import { perfEvents } from '@/core/utils/perf';
 import { useThemeColors } from '@/hooks/theme';
 import {
@@ -47,11 +45,11 @@ export const SwitchUserBehaviorTrackingOptOut = ({
   const colors = useThemeColors();
 
   const setOptOut = useCallback((enabled?: boolean) => {
-    preferenceService.setUserBehaviorTrackingOptOut(
+    void setUserBehaviorTrackingOptOut(
       typeof enabled === 'boolean'
         ? enabled
         : !getUserBehaviorTrackingOptOutSnapshot(),
-    );
+    ).catch(console.error);
   }, []);
 
   useImperativeHandle(
@@ -90,11 +88,11 @@ export const SwitchDataAnalysis = ({
   );
 
   const setOptOut = useCallback((enabled?: boolean) => {
-    preferenceService.setUserBehaviorTrackingOptOut(
+    void setUserBehaviorTrackingOptOut(
       typeof enabled === 'boolean'
         ? enabled
         : !getUserBehaviorTrackingOptOutSnapshot(),
-    );
+    ).catch(console.error);
   }, []);
 
   useImperativeHandle(

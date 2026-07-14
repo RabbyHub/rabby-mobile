@@ -11,7 +11,7 @@ import type {
   ActionRequireData,
   ParsedTransactionActionData,
 } from '@rabby-wallet/rabby-action';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { GasTokenInfo } from '@/utils/tempo';
 
 export type CalcItem = {

@@ -1,8 +1,8 @@
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import BigNumber from 'bignumber.js';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type BigNumber from 'bignumber.js';
 import PQueue from 'p-queue';
 import React from 'react';
-import {
+import type {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from '../Approvals/useApprovalsPage';
@@ -13,7 +13,7 @@ import { useGasAccountSign } from '../GasAccount/hooks/atom';
 import { findIndexRevokeList } from './utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 export async function buildTx(

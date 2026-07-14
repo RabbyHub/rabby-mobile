@@ -7,24 +7,24 @@ import {
   isValidAddress,
   toChecksumAddress,
 } from '@ethereumjs/util';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
-import {
-  customRPCService,
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+import { setCurrentMiniApprovalSync } from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { OP_STACK_ENUMS } from '@/constant/gas';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
-import abiCoder, { AbiCoder } from 'web3-eth-abi';
-import { IExtractFromPromise } from '@/utils/type';
+import type { AbiCoder } from 'web3-eth-abi';
+import abiCoder from 'web3-eth-abi';
+import type { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { Account } from '@/types/account';
 import { getRecommendNonce } from './recommendNonce';
 
@@ -80,7 +80,7 @@ export const scrollL1FeeEstimate = async (
   txParams: any,
   _account?: Account,
 ) => {
-  const account = _account || preferenceService.getFallbackAccount();
+  const account = _account || getFallbackAccountSnapshot();
   const iface = new ethers.utils.Interface([
     {
       type: 'constructor',
@@ -102,7 +102,7 @@ export const scrollL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await customRPCService.defaultEthRPC({
+  const res = await customRPCServiceApi.defaultEthRPC({
     chainServerId: findChain({ enum: CHAINS_ENUM.SCRL })!.serverId,
     method: 'eth_call',
     params: [
@@ -123,7 +123,7 @@ export const opStackL1FeeEstimate = async (
   chain: CHAINS_ENUM,
   _account?: Account,
 ) => {
-  const account = _account || preferenceService.getFallbackAccount();
+  const account = _account || getFallbackAccountSnapshot();
   const address = addresses.GasPriceOracle[420];
   const abi = abis.GasPriceOracle;
   const serializedTransaction = buildUnserializedTransaction({
@@ -133,7 +133,7 @@ export const opStackL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await customRPCService.defaultEthRPC({
+  const res = await customRPCServiceApi.defaultEthRPC({
     chainServerId: findChain({ enum: chain })!.serverId,
     method: 'eth_call',
     params: [
@@ -157,12 +157,12 @@ export const citreaL1FeeEstimate = async (txParams: any) => {
     }
 
     const [diffSizeRes, latestBlock] = await Promise.all([
-      customRPCService.defaultEthRPC({
+      customRPCServiceApi.defaultEthRPC({
         chainServerId,
         method: 'eth_estimateDiffSize',
         params: [txParams],
       }),
-      customRPCService.defaultEthRPC({
+      customRPCServiceApi.defaultEthRPC({
         chainServerId,
         method: 'eth_getBlockByNumber',
         params: ['latest', false],
@@ -316,14 +316,14 @@ export const ethSendTransaction = async (
 ) => {
   const signingTxId = args?.[0]?.approvalRes?.signingTxId;
   try {
-    notificationService.currentMiniApproval = {
+    setCurrentMiniApprovalSync({
       signingTxId,
-    };
+    });
     const res = await providerController.ethSendTransaction(...args);
     return res;
   } catch (e) {
     if (signingTxId != null) {
-      transactionHistoryService.removeSigningTx(signingTxId);
+      void transactionHistoryServiceApi.removeSigningTx(signingTxId);
     }
 
     throw e;

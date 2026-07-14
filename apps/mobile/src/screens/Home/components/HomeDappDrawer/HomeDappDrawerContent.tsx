@@ -15,24 +15,20 @@ import { useTranslation } from 'react-i18next';
 import { MaterialTabBar, Tabs } from 'react-native-collapsible-tab-view';
 
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
-import {
-  Gesture,
-  GestureDetector,
-  NativeGesture,
-} from 'react-native-gesture-handler';
-import Animated from 'react-native-reanimated';
-import {
-  homeDrawerAnimateMutable,
-  SCROLLABLE_STATUS,
-} from '../../hooks/useHomeDrawerAnimate';
+import type { NativeGesture } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import type Animated from 'react-native-reanimated';
+import type { SCROLLABLE_STATUS } from '../../hooks/useHomeDrawerAnimate';
+import { homeDrawerAnimateMutable } from '../../hooks/useHomeDrawerAnimate';
 
 import { useAtom } from 'jotai';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useMemoizedFn } from 'ahooks';
-import { browserService, dappService } from '@/core/services';
+import { getBrowserBookmarkCountSnapshot } from '@/core/serviceApi/browser';
+import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { DappFavoriteList } from './DappFavoriteList';
@@ -95,7 +91,7 @@ const FavoriteTabLabel = ({
 
 const dappTabAtom = atomByMMKV<TabKey>(
   '@dapp.activeTab',
-  browserService.bookmark.selectors.selectTotal() ? 'favorite' : 'all',
+  getBrowserBookmarkCountSnapshot() ? 'favorite' : 'all',
   {
     getOnInit: true,
   },
@@ -179,11 +175,11 @@ export const HomeDappDrawerContent: React.FC<{
       isDapp: true,
       isRemindOpen: true,
     });
-    const dapp = dappService.getDapp(item.origin);
+    const dapp = getDappSnapshot(item.origin);
     if (!dapp) {
-      dappService.addDapp(item);
+      void dappServiceApi.addDapp(item);
     } else if (!dapp.isDapp) {
-      dappService.updateDapp({
+      void dappServiceApi.updateDapp({
         ...dapp,
         origin: item.origin,
         isDapp: true,

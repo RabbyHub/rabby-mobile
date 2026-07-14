@@ -1,5 +1,5 @@
 import { CHAINS_ENUM } from '@/constant/chains';
-import { lendingService } from '@/core/services/shared';
+import { lendingServiceApi } from '@/core/serviceApi/lending';
 import type { LendingServiceStore } from '@/core/services/lendingService';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
@@ -12,8 +12,8 @@ export const lendingAtom = atom<LendingServiceStore>({
 });
 lendingAtom.onMount = setter => {
   Promise.all([
-    lendingService.getLastSelectedChain(),
-    lendingService.getSkipHealthFactorWarning(),
+    lendingServiceApi.getLastSelectedChain(),
+    lendingServiceApi.getSkipHealthFactorWarning(),
   ])
     .then(([chainId, skipWarning]) => {
       setter({
@@ -39,7 +39,7 @@ export const useLendingService = () => {
 
   const setLastSelectedChain = useMemoizedFn(async (chainId: CustomMarket) => {
     try {
-      await lendingService.setLastSelectedChain(chainId);
+      await lendingServiceApi.setLastSelectedChain(chainId);
       setLendingStore(prev => ({
         ...prev,
         lastSelectedChain: chainId,
@@ -51,7 +51,7 @@ export const useLendingService = () => {
 
   const getLastSelectedChain = useMemoizedFn(async () => {
     try {
-      const chainId = await lendingService.getLastSelectedChain();
+      const chainId = await lendingServiceApi.getLastSelectedChain();
       setLendingStore(prev => ({
         ...prev,
         lastSelectedChain: chainId,
@@ -65,7 +65,7 @@ export const useLendingService = () => {
 
   const setSkipHealthFactorWarning = useMemoizedFn(async (skip: boolean) => {
     try {
-      await lendingService.setSkipHealthFactorWarning(skip);
+      await lendingServiceApi.setSkipHealthFactorWarning(skip);
       setLendingStore(prev => ({
         ...prev,
         skipHealthFactorWarning: skip,
@@ -77,7 +77,7 @@ export const useLendingService = () => {
 
   const getSkipHealthFactorWarning = useMemoizedFn(async () => {
     try {
-      const skip = await lendingService.getSkipHealthFactorWarning();
+      const skip = await lendingServiceApi.getSkipHealthFactorWarning();
       setLendingStore(prev => ({
         ...prev,
         skipHealthFactorWarning: skip,
@@ -92,8 +92,8 @@ export const useLendingService = () => {
   const syncState = useMemoizedFn(async () => {
     try {
       const [chainId, skipWarning] = await Promise.all([
-        lendingService.getLastSelectedChain(),
-        lendingService.getSkipHealthFactorWarning(),
+        lendingServiceApi.getLastSelectedChain(),
+        lendingServiceApi.getSkipHealthFactorWarning(),
       ]);
 
       setLendingStore({

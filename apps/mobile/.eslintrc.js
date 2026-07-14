@@ -7,6 +7,7 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/no-unused-vars': 'warn',
+    'no-runtime-service-imports': 'error',
     'import/no-cycle': [
       'warn',
       {
