@@ -55,15 +55,6 @@ registerLaunchTask('lockUnlockEventBridge', async () => {
   startLockUnlockEventBridge();
 });
 
-registerLaunchTask('bootstrapHideSplashOnNavigationReady', async () => {
-  const { startHideSplashOnNavigationReady } = await loadLaunchModule(
-    'bootstrapHideSplashOnNavigationReady',
-    'hooks/useBootstrap',
-    () => import('@/hooks/useBootstrap'),
-  );
-  startHideSplashOnNavigationReady();
-});
-
 registerLaunchTask('bootstrapI18nReady', async () => {
   const { startSubscribeLangChange } = await loadLaunchModule(
     'bootstrapI18nReady',
