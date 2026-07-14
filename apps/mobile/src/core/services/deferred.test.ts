@@ -1,5 +1,6 @@
 import {
   ensureDeferredService,
+  isDeferredServiceLoaded,
   registerDeferredService,
   registerDeferredServiceLoader,
   waitDeferredService,
@@ -82,6 +83,7 @@ describe('deferred service loading', () => {
 
     await registered;
     await expect(registrationPromise).resolves.toBe(service);
+    expect(isDeferredServiceLoaded(name)).toBe(false);
 
     let ensureSettled = false;
     void ensurePromise.then(() => {
@@ -93,6 +95,23 @@ describe('deferred service loading', () => {
     releaseLoader?.();
     await expect(ensurePromise).resolves.toBeUndefined();
     expect(ensureSettled).toBe(true);
+    expect(isDeferredServiceLoaded(name)).toBe(true);
+
+    disposeLoader();
+  });
+
+  it('does not report an early-registered service as loaded when its loader fails', async () => {
+    const name = 'early-registration-failed-loader';
+    const service = { value: 101 };
+    const disposeLoader = registerDeferredServiceLoader(name, async () => {
+      registerDeferredService(name, service);
+      throw new Error('loader failed after registration');
+    });
+
+    await expect(ensureDeferredService(name)).rejects.toThrow(
+      'loader failed after registration',
+    );
+    expect(isDeferredServiceLoaded(name)).toBe(false);
 
     disposeLoader();
   });

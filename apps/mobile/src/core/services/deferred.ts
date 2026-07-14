@@ -29,6 +29,7 @@ const serviceMap = new Map<string, unknown>();
 const waiterMap = new Map<string, Waiter<any>[]>();
 const serviceLoaderMap = new Map<string, DeferredServiceLoader>();
 const serviceLoaderPromiseMap = new Map<string, Promise<void>>();
+const serviceLoaderErrorMap = new Map<string, Error>();
 
 function rejectWaiters(name: string, error: Error) {
   const waiters = waiterMap.get(name);
@@ -50,6 +51,7 @@ export function registerDeferredService<TService extends object>(
   service: TService,
 ) {
   serviceMap.set(name, service);
+  serviceLoaderErrorMap.delete(name);
 
   const waiters = waiterMap.get(name);
   if (waiters?.length) {
@@ -74,11 +76,13 @@ export function registerDeferredServiceLoader(
   loader: DeferredServiceLoader,
 ) {
   serviceLoaderMap.set(name, loader);
+  serviceLoaderErrorMap.delete(name);
 
   return () => {
     if (serviceLoaderMap.get(name) === loader) {
       serviceLoaderMap.delete(name);
       serviceLoaderPromiseMap.delete(name);
+      serviceLoaderErrorMap.delete(name);
     }
   };
 }
@@ -87,6 +91,11 @@ export function ensureDeferredService(name: string) {
   const pendingLoader = serviceLoaderPromiseMap.get(name);
   if (pendingLoader) {
     return pendingLoader;
+  }
+
+  const loaderError = serviceLoaderErrorMap.get(name);
+  if (loaderError && serviceMap.has(name)) {
+    return Promise.reject(loaderError);
   }
 
   if (serviceMap.has(name)) {
@@ -102,6 +111,7 @@ export function ensureDeferredService(name: string) {
     return Promise.reject(error);
   }
 
+  serviceLoaderErrorMap.delete(name);
   const loaderPromise = Promise.resolve()
     .then(loader)
     .then(() => {
@@ -111,15 +121,19 @@ export function ensureDeferredService(name: string) {
         );
       }
     })
+    .then(() => {
+      serviceLoaderPromiseMap.delete(name);
+      serviceLoaderErrorMap.delete(name);
+    })
     .catch(error => {
       serviceLoaderPromiseMap.delete(name);
+      const normalizedError =
+        error instanceof Error ? error : new Error(String(error));
+      serviceLoaderErrorMap.set(name, normalizedError);
       if (!serviceMap.has(name)) {
-        rejectWaiters(
-          name,
-          error instanceof Error ? error : new Error(String(error)),
-        );
+        rejectWaiters(name, normalizedError);
       }
-      throw error;
+      throw normalizedError;
     });
 
   serviceLoaderPromiseMap.set(name, loaderPromise);
@@ -128,6 +142,14 @@ export function ensureDeferredService(name: string) {
 
 export function isDeferredServiceRegistered(name: string) {
   return serviceMap.has(name);
+}
+
+export function isDeferredServiceLoaded(name: string) {
+  return (
+    serviceMap.has(name) &&
+    !serviceLoaderPromiseMap.has(name) &&
+    !serviceLoaderErrorMap.has(name)
+  );
 }
 
 export function getRegisteredDeferredService<TService extends object>(
