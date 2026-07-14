@@ -21,11 +21,8 @@ import { apisSingleHome } from '../Home/hooks/singleHome';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { accountEvents } from '@/core/apis/account';
 import { Button } from '@/components2024/Button';
-import type {
-  AddressItem} from '@/components2024/WalletSuccessCard';
-import {
-  WalletSuccessCard
-} from '@/components2024/WalletSuccessCard';
+import type { AddressItem } from '@/components2024/WalletSuccessCard';
+import { WalletSuccessCard } from '@/components2024/WalletSuccessCard';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();

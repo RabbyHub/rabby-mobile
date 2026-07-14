@@ -3,7 +3,7 @@ import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import {
   getFallbackAccountSnapshot,
   getPinnedAddressSnapshot,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/preference';
 import {
   forgetWalletConnectAccountForTopic,
   getWalletConnectAccountForTopic,
@@ -25,7 +25,7 @@ jest.mock('@/core/storage/mmkv', () => ({
   },
 }));
 
-jest.mock('@/core/serviceApi', () => ({
+jest.mock('@/core/serviceApi/preference', () => ({
   getPinnedAddressSnapshot: jest.fn(() => []),
   getFallbackAccountSnapshot: jest.fn(() => null),
 }));
@@ -119,9 +119,7 @@ describe('walletconnect account selection', () => {
       type: 'Gnosis',
       brandName: 'Gnosis',
     } as Account;
-    jest
-      .mocked(getFallbackAccountSnapshot)
-      .mockReturnValue(secondSignable);
+    jest.mocked(getFallbackAccountSnapshot).mockReturnValue(secondSignable);
 
     expect(
       selectWalletConnectAccountForOrigin('https://example.com', [

@@ -1,5 +1,5 @@
 import { CHAINS_ENUM } from '@/constant/chains';
-import { lendingServiceApi } from '@/core/serviceApi';
+import { lendingServiceApi } from '@/core/serviceApi/lending';
 import type { LendingServiceStore } from '@/core/services/lendingService';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';

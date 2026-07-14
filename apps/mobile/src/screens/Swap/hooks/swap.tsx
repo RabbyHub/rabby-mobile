@@ -7,7 +7,7 @@ import i18n from '@/utils/i18n';
 import type { AbiCoder } from 'web3-eth-abi';
 import abiCoder from 'web3-eth-abi';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { swapServiceApi } from '@/core/serviceApi';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import { setReportActionTs } from '@/core/serviceApi/preference';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { sendRequest } from '@/core/apis/provider';

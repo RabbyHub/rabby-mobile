@@ -1,7 +1,8 @@
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
-import { keyringServiceApi, preferenceServiceApi } from '@/core/serviceApi';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { preferenceServiceApi } from '@/core/serviceApi/preference';
 import { bindOneKeyEvents } from '@/utils/onekey';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { DEVICE } from '@onekeyfe/hd-core';

@@ -96,7 +96,11 @@ export function requestComputationThreadStart(reason = 'manual') {
     .then(() => getLatestOnlineConfig())
     .then(() => startWorkerThreadIfEnabled(`${reason}:latest_config`))
     .catch(error => {
-      console.warn('Failed to request computation worker thread', reason, error);
+      console.warn(
+        'Failed to request computation worker thread',
+        reason,
+        error,
+      );
     })
     .finally(() => {
       workerThreadStartRequestPromise = null;

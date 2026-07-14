@@ -161,11 +161,8 @@ import {
   setEnableTransactionNofification,
   useAppNotificationEnabled,
 } from '@/hooks/appNotification';
-import type {
-  SwitchToggleType} from '@/components/customized/Switch2024';
-import {
-  AppSwitch2024
-} from '@/components/customized/Switch2024';
+import type { SwitchToggleType } from '@/components/customized/Switch2024';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import type { SupportedLang } from '@/utils/i18n';
 import type { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 import {
@@ -926,9 +923,9 @@ function DevSettingsBlocks({
   const currentAccount = getFallbackAccountSnapshot();
   const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
   const toggleUserBehaviorTrackingOptOut = useCallback(() => {
-    void setUserBehaviorTrackingOptOut(
-      !getUserBehaviorTrackingOptOut(),
-    ).catch(console.error);
+    void setUserBehaviorTrackingOptOut(!getUserBehaviorTrackingOptOut()).catch(
+      console.error,
+    );
   }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {

@@ -2,7 +2,7 @@ import {
   exportTrustedVaultKeyStringForDebug,
   getKeyringVaultDebugStateSnapshot,
   measureKeyringUnlockPathsForDebug,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/keyring';
 
 export function getVaultStorageDebugState() {
   return getKeyringVaultDebugStateSnapshot();

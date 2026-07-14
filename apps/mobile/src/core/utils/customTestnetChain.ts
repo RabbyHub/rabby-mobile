@@ -1,13 +1,8 @@
 import { CHAINS_ENUM } from '@debank/common';
 import { intToHex } from 'ethereumjs-util';
-import type {
-  TestnetChain,
-  TestnetChainBase,
-} from '@/types/customTestnet';
+import type { TestnetChain, TestnetChainBase } from '@/types/customTestnet';
 
-export const createTestnetChain = (
-  chain: TestnetChainBase,
-): TestnetChain => {
+export const createTestnetChain = (chain: TestnetChainBase): TestnetChain => {
   return {
     ...chain,
     id: +chain.id,

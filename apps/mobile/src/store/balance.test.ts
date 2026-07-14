@@ -14,8 +14,7 @@ describe('store/balance', () => {
   let mockAppStorageState: Record<string, unknown>;
 
   const flushResourceFlowPersist = async () => {
-    await Promise.resolve();
-    await Promise.resolve();
+    await new Promise<void>(resolve => setImmediate(resolve));
   };
 
   let balanceModule: typeof import('./balance');

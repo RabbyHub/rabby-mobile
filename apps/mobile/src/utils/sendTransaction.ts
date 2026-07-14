@@ -47,14 +47,13 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeStore } from '@/hooks/appSettings';
 import type { Account } from '@/types/account';
-import type {
-  TxWithTempoExtras} from './tempo';
+import type { TxWithTempoExtras } from './tempo';
 import {
   buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   shouldUseTempoTransaction,
-  toTempoCallsTx
+  toTempoCallsTx,
 } from './tempo';
 
 // fail code

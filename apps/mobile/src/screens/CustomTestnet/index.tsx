@@ -26,11 +26,8 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { CustomTestnetItem } from './components/CustomTestnetItem';
-import type {
-  EditCustomTestnetPopupType} from './components/EditTestnetPopup';
-import {
-  EditCustomTestnetPopup
-} from './components/EditTestnetPopup';
+import type { EditCustomTestnetPopupType } from './components/EditTestnetPopup';
+import { EditCustomTestnetPopup } from './components/EditTestnetPopup';
 import { Empty } from './components/Empty';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';

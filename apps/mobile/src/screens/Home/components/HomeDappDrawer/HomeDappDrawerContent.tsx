@@ -18,18 +18,11 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import type { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
-import type {
-  NativeGesture} from 'react-native-gesture-handler';
-import {
-  Gesture,
-  GestureDetector
-} from 'react-native-gesture-handler';
+import type { NativeGesture } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type Animated from 'react-native-reanimated';
-import type {
-  SCROLLABLE_STATUS} from '../../hooks/useHomeDrawerAnimate';
-import {
-  homeDrawerAnimateMutable
-} from '../../hooks/useHomeDrawerAnimate';
+import type { SCROLLABLE_STATUS } from '../../hooks/useHomeDrawerAnimate';
+import { homeDrawerAnimateMutable } from '../../hooks/useHomeDrawerAnimate';
 
 import { useAtom } from 'jotai';
 import { useBrowser } from '@/hooks/browser/useBrowser';

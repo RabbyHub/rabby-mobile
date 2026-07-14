@@ -17,10 +17,8 @@ import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { createOriginMiddleware } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
-import {
-  getDappSnapshot,
-  isKeyringUnlockedSnapshot,
-} from '@/core/serviceApi';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import getRpcMethodMiddleware, {
   RefLikeObject,
 } from './middlewares/RPCMethodMiddleware';

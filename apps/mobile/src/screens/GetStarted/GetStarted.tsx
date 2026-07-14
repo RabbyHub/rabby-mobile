@@ -123,9 +123,9 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
-    void setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
-    ).catch(console.error);
+    void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS).catch(
+      console.error,
+    );
     navigateDeprecated(RootNames.SelectImportMethod);
   }, [getStarted.processedInit]);
 

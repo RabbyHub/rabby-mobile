@@ -22,7 +22,7 @@ import { Swap } from '@/screens/Transaction/components/Actions/Swap';
 import { Send } from '@/screens/Transaction/components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from '@/screens/Transaction/components/Actions/UnknownAction';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -31,7 +31,7 @@ import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { useAccountSelectModalCtx } from '../hooks';
 import { View } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import type { Hex} from '@metamask/utils';
+import type { Hex } from '@metamask/utils';
 import { isValidHexAddress } from '@metamask/utils';
 
 function ScreenHistoryLocalDetail(): JSX.Element {

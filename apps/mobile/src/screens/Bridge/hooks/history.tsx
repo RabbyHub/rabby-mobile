@@ -14,7 +14,7 @@ import type {
   BridgeTxHistoryItem,
   TransactionGroup,
 } from '@/core/services/transactionHistory';
-import { bridgeServiceApi } from '@/core/serviceApi';
+import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { getTransactionHistoryRecentPendingSnapshot } from '@/core/serviceApi/transactionHistory';
 import { findChain } from '@/utils/chain';
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';

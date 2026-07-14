@@ -1,9 +1,9 @@
 import cloneDeep from 'lodash/cloneDeep';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import {
   getFallbackAccountSnapshot,
-  keyringServiceApi,
   preferenceServiceApi,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/preference';
 import type { Account } from '@/types/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
@@ -12,8 +12,7 @@ const { isSameAddress } = addressUtils;
 class BaseController {
   @Reflect.metadata('PRIVATE', true)
   getCurrentAccount = async () => {
-    let account: Account | null | undefined =
-      getFallbackAccountSnapshot();
+    let account: Account | null | undefined = getFallbackAccountSnapshot();
     if (account) {
       const accounts = await this.getAccounts();
       const matchAcct = accounts.find(acct =>

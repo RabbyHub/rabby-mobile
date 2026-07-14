@@ -1,7 +1,7 @@
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apisLock } from '@/core/apis';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useRemoveAccount } from '@/hooks/account';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { redirectToAddAddressEntry } from '@/utils/navigation';

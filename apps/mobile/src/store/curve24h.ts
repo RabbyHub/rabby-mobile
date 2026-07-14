@@ -1,18 +1,11 @@
 import { openapi } from '@/core/request';
-import {
-  bindKeyringEvent,
-  keyringServiceApi,
-} from '@/core/serviceApi/keyring';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { dayCurveMMKV } from '@/core/storage/mmkvInstances';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { CurveDayType } from '@/utils/curveDayType';
-import type {
-  ITIME_STEP_ITEM} from '@/utils/24balanceCurveCache';
-import {
-  getCurveCache,
-  setCurveCache,
-} from '@/utils/24balanceCurveCache';
+import type { ITIME_STEP_ITEM } from '@/utils/24balanceCurveCache';
+import { getCurveCache, setCurveCache } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import { debounce } from 'lodash';
 import dayjs from 'dayjs';
@@ -26,7 +19,7 @@ import addressBalanceStore, {
 import { BaseStore } from './_base';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ResourceLocalTarget } from './_resourceFlowDebug';
-import type { CurveList} from './curveShared';
+import type { CurveList } from './curveShared';
 import { combineMultiCurve, formChartData } from './curveShared';
 import type { Account } from '@/types/account';
 

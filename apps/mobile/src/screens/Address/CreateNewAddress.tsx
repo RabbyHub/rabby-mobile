@@ -1,9 +1,7 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React, { useCallback, useState } from 'react';
 
-import type {
-  StyleProp,
-  TextStyle} from 'react-native';
+import type { StyleProp, TextStyle } from 'react-native';
 import {
   StyleSheet,
   View,

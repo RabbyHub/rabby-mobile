@@ -40,7 +40,7 @@ import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
-import { perpsServiceApi } from '@/core/serviceApi';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import type {
   PerpTopTokenV3,
   PerpTopTokenCategory,

@@ -1,5 +1,5 @@
 import { apiMnemonic } from '@/core/apis';
-import type { BackupData} from '@/core/utils/cloudBackup';
+import type { BackupData } from '@/core/utils/cloudBackup';
 import { decryptFiles } from '@/core/utils/cloudBackup';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

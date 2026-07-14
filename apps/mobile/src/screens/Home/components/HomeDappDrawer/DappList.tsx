@@ -8,14 +8,8 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  FlatListProps,
-  GestureResponderEvent} from 'react-native';
-import {
-  FlatList as RNFlatList,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import type { FlatListProps, GestureResponderEvent } from 'react-native';
+import { FlatList as RNFlatList, TouchableOpacity, View } from 'react-native';
 import type { NativeGesture } from 'react-native-gesture-handler';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {

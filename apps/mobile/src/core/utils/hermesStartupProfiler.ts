@@ -66,9 +66,9 @@ function traceStartupProfilerInstant(name: string) {
 
 function getSentryProfilerModule(): SentryProfilerModule | null {
   try {
-    const turboModule = TurboModuleRegistry.get('RNSentry') as
-      | SentryProfilerModule
-      | null;
+    const turboModule = TurboModuleRegistry.get(
+      'RNSentry',
+    ) as SentryProfilerModule | null;
 
     if (turboModule) {
       return turboModule;
@@ -108,7 +108,11 @@ async function persistStartupProfile(
 
   if (androidProfile) {
     const content = JSON.stringify(androidProfile);
-    await RNFS.default.writeFile(`${basePath}.android-profile.json`, content, 'utf8');
+    await RNFS.default.writeFile(
+      `${basePath}.android-profile.json`,
+      content,
+      'utf8',
+    );
     console.info('[RabbyStartupProfiler] android_profile_saved', {
       path: `${basePath}.android-profile.json`,
       bytes: content.length,

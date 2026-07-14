@@ -2,10 +2,9 @@ import { CloudStorage } from 'react-native-cloud-storage';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
 import type {
   SignInResponse,
-  User} from '@react-native-google-signin/google-signin';
-import {
-  GoogleSignin
+  User,
 } from '@react-native-google-signin/google-signin';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appEncryptorApi } from '@/core/serviceApi/appEncryptor';
 import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';

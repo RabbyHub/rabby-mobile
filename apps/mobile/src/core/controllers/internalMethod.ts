@@ -1,13 +1,13 @@
 import { keyBy } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { autoConnectServiceApi } from '@/core/serviceApi/autoConnect';
 import {
   addDappSync,
-  autoConnectServiceApi,
   getDappSnapshot,
-  getKeyringMemStoreStateSnapshot,
-  metamaskModeServiceApi,
   updateDappSync,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/dapp';
+import { getKeyringMemStoreStateSnapshot } from '@/core/serviceApi/keyring';
+import { metamaskModeServiceApi } from '@/core/serviceApi/metamaskMode';
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import type { ProviderRequest } from './type';

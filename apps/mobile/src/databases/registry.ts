@@ -54,7 +54,9 @@ export function ensureAppDataSourceLoaderStarted(
   const registration = appDataSourceRegistryRef.registration;
   if (!registration) {
     return Promise.reject(
-      new Error('[databases/registry] app data source loader is not registered'),
+      new Error(
+        '[databases/registry] app data source loader is not registered',
+      ),
     );
   }
 

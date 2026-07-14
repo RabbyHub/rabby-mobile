@@ -16,7 +16,7 @@ import { useMemoizedFn, useMount } from 'ahooks';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 // import { toast } from '@/components2024/Toast';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
 import { getTransactionHistoryListSnapshot } from '@/core/serviceApi/transactionHistory';
 import { apiCustomTestnet } from '@/core/apis/customTestnet';

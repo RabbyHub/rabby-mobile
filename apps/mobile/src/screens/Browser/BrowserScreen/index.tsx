@@ -14,7 +14,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { View } from 'react-native';
 import { BrowserSearch } from './components/BrowserSearch';
-import type { BrowserRef} from './components/BrowserTab';
+import type { BrowserRef } from './components/BrowserTab';
 import { BrowserTab } from './components/BrowserTab';
 
 export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {

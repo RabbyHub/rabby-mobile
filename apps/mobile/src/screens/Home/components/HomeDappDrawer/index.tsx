@@ -3,8 +3,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  FlatListProps} from 'react-native';
+import type { FlatListProps } from 'react-native';
 import {
   Dimensions,
   Platform,

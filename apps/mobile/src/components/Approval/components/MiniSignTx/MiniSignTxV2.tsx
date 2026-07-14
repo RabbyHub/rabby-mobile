@@ -3,11 +3,8 @@ import { MiniFooterBar } from './MiniFooterBar';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
-import type {
-  GasSelectorResponse} from '../TxComponents/GasSelector/GasSelectorHeader';
-import {
-  GasSelectorHeader
-} from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
+import { GasSelectorHeader } from '../TxComponents/GasSelector/GasSelectorHeader';
 import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { useTranslation } from 'react-i18next';
 import { MiniSecurityHeader } from '@/components2024/MiniSignV2/components/MiniSecurityHeader';
@@ -37,20 +34,15 @@ import BigNumber from 'bignumber.js';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { miscServiceApi } from '@/core/serviceApi/misc';
-import type {
-  GasAccountTopUpResult} from '@/screens/GasAccount/components/topUpContinuation';
-import {
-  buildTopUpResumedTxs
-} from '@/screens/GasAccount/components/topUpContinuation';
-import type {
-  TempoFeeTokenOption,
-  TxWithTempoExtras} from '@/utils/tempo';
+import type { GasAccountTopUpResult } from '@/screens/GasAccount/components/topUpContinuation';
+import { buildTopUpResumedTxs } from '@/screens/GasAccount/components/topUpContinuation';
+import type { TempoFeeTokenOption, TxWithTempoExtras } from '@/utils/tempo';
 import {
   calcTempoMaxGasCostRawAmountIn18,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   listTempoFeeTokenOptionsFromCache,
-  loadTempoFeeTokenOptionsState
+  loadTempoFeeTokenOptionsState,
 } from '@/utils/tempo';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import tokenListStore from '@/store/tokens';

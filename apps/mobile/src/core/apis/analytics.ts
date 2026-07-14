@@ -3,11 +3,11 @@ import addressBalanceStore from '@/store/balance';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import dayjs from 'dayjs';
 import groupBy from 'lodash/groupBy';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import {
   getSendLogTime,
-  keyringServiceApi,
   updateSendLogTime,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/preference';
 
 export const sendUserAddressEvent = async () => {
   const time = await getSendLogTime();

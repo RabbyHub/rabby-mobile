@@ -62,16 +62,10 @@ import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { apisSingleHome } from '../Home/hooks/singleHome';
 import { isNonPublicProductionEnv } from '@/constant';
 import { useMount } from 'ahooks';
-import type {
-  PerfAccountEventBusListeners} from '@/core/apis/account';
-import {
-  accountEvents
-} from '@/core/apis/account';
-import type {
-  AddressItem} from '@/components2024/WalletSuccessCard';
-import {
-  WalletSuccessCard
-} from '@/components2024/WalletSuccessCard';
+import type { PerfAccountEventBusListeners } from '@/core/apis/account';
+import { accountEvents } from '@/core/apis/account';
+import type { AddressItem } from '@/components2024/WalletSuccessCard';
+import { WalletSuccessCard } from '@/components2024/WalletSuccessCard';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 

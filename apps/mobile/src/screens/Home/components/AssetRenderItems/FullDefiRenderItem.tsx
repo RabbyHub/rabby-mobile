@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ViewStyle, StyleProp} from 'react-native';
+import type { ViewStyle, StyleProp } from 'react-native';
 import { View, Pressable } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';

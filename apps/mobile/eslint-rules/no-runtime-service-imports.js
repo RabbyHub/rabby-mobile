@@ -101,6 +101,21 @@ function isLegacyCoreServiceSource(importSource, filePath) {
   );
 }
 
+function isServiceApiBarrelSource(importSource, filePath) {
+  const resolved = resolveImportSource(importSource, filePath);
+  if (!resolved) {
+    return false;
+  }
+
+  const normalized = normalizePath(resolved);
+  return (
+    normalized === serviceApiRoot ||
+    normalized === path.join(serviceApiRoot, 'index') ||
+    normalized === path.join(serviceApiRoot, 'index.js') ||
+    normalized === path.join(serviceApiRoot, 'index.ts')
+  );
+}
+
 function getStaticSourceValue(sourceNode) {
   if (!sourceNode) {
     return null;
@@ -146,6 +161,14 @@ function reportRuntimeServiceImport(context, node, importSource) {
   });
 }
 
+function reportRuntimeServiceApiBarrelImport(context, node) {
+  context.report({
+    node,
+    message:
+      'Do not import the service API runtime barrel. Import the specific @/core/serviceApi/<contract> module so unrelated contracts and native implementations stay unloaded. Type-only barrel imports are allowed.',
+  });
+}
+
 module.exports = {
   meta: {
     type: 'problem',
@@ -157,105 +180,53 @@ module.exports = {
   },
   create(context) {
     const filePath = context.getFilename();
-    if (isStartupServiceFile(filePath)) {
-      return {
-        ImportDeclaration(node) {
-          const importSource = getStaticSourceValue(node.source);
-          if (
-            importSource &&
-            isLegacyCoreServiceSource(importSource, filePath) &&
-            !isTypeOnlyImport(node)
-          ) {
-            reportRuntimeServiceImport(context, node.source, importSource);
-          }
-        },
-        ExportNamedDeclaration(node) {
-          const importSource = getStaticSourceValue(node.source);
-          if (
-            importSource &&
-            isLegacyCoreServiceSource(importSource, filePath) &&
-            !isTypeOnlyExport(node)
-          ) {
-            reportRuntimeServiceImport(context, node.source, importSource);
-          }
-        },
-        ExportAllDeclaration(node) {
-          const importSource = getStaticSourceValue(node.source);
-          if (
-            importSource &&
-            isLegacyCoreServiceSource(importSource, filePath) &&
-            node.exportKind !== 'type'
-          ) {
-            reportRuntimeServiceImport(context, node.source, importSource);
-          }
-        },
-        CallExpression(node) {
-          if (
-            node.callee.type !== 'Identifier' ||
-            node.callee.name !== 'require' ||
-            !node.arguments.length
-          ) {
-            return;
-          }
-
-          const importSource = getStaticSourceValue(node.arguments[0]);
-          if (
-            importSource &&
-            isLegacyCoreServiceSource(importSource, filePath)
-          ) {
-            reportRuntimeServiceImport(
-              context,
-              node.arguments[0],
-              importSource,
-            );
-          }
-        },
-        ImportExpression(node) {
-          const importSource = getStaticSourceValue(node.source);
-          if (
-            importSource &&
-            isLegacyCoreServiceSource(importSource, filePath)
-          ) {
-            reportRuntimeServiceImport(context, node.source, importSource);
-          }
-        },
-      };
+    if (
+      filePath &&
+      !filePath.startsWith('<') &&
+      isSameOrInside(normalizePath(filePath), serviceApiRoot)
+    ) {
+      return {};
     }
 
-    if (isAllowedFile(filePath)) {
-      return {};
+    const startupServiceFile = isStartupServiceFile(filePath);
+    const allowedServiceImplementationFile = isAllowedFile(filePath);
+
+    function reportRuntimeImport(node, importSource, typeOnly = false) {
+      if (!importSource || typeOnly) {
+        return;
+      }
+
+      if (isServiceApiBarrelSource(importSource, filePath)) {
+        reportRuntimeServiceApiBarrelImport(context, node);
+        return;
+      }
+
+      const importsForbiddenService = startupServiceFile
+        ? isLegacyCoreServiceSource(importSource, filePath)
+        : !allowedServiceImplementationFile &&
+          isCoreServiceSource(importSource, filePath);
+
+      if (importsForbiddenService) {
+        reportRuntimeServiceImport(context, node, importSource);
+      }
     }
 
     return {
       ImportDeclaration(node) {
         const importSource = getStaticSourceValue(node.source);
-        if (
-          importSource &&
-          isCoreServiceSource(importSource, filePath) &&
-          !isTypeOnlyImport(node)
-        ) {
-          reportRuntimeServiceImport(context, node.source, importSource);
-        }
+        reportRuntimeImport(node.source, importSource, isTypeOnlyImport(node));
       },
       ExportNamedDeclaration(node) {
         const importSource = getStaticSourceValue(node.source);
-        if (
-          importSource &&
-          isCoreServiceSource(importSource, filePath) &&
-          !isTypeOnlyExport(node)
-        ) {
-          reportRuntimeServiceImport(context, node.source, importSource);
-        }
+        reportRuntimeImport(node.source, importSource, isTypeOnlyExport(node));
       },
       ExportAllDeclaration(node) {
         const importSource = getStaticSourceValue(node.source);
-        if (
-          importSource &&
-          isCoreServiceSource(importSource, filePath) &&
-          node.exportKind !== 'type'
-        ) {
-          reportRuntimeServiceImport(context, node.source, importSource);
-        }
+        reportRuntimeImport(
+          node.source,
+          importSource,
+          node.exportKind === 'type',
+        );
       },
       CallExpression(node) {
         if (
@@ -267,15 +238,11 @@ module.exports = {
         }
 
         const importSource = getStaticSourceValue(node.arguments[0]);
-        if (importSource && isCoreServiceSource(importSource, filePath)) {
-          reportRuntimeServiceImport(context, node.arguments[0], importSource);
-        }
+        reportRuntimeImport(node.arguments[0], importSource);
       },
       ImportExpression(node) {
         const importSource = getStaticSourceValue(node.source);
-        if (importSource && isCoreServiceSource(importSource, filePath)) {
-          reportRuntimeServiceImport(context, node.source, importSource);
-        }
+        reportRuntimeImport(node.source, importSource);
       },
     };
   },

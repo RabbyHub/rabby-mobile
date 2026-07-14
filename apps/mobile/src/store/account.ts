@@ -17,10 +17,7 @@ import type {
   IPinAddress,
   KeyringAccountWithAlias,
 } from '@/types/account';
-import {
-  bindKeyringEvent,
-  bindKeyringStore,
-} from '@/core/serviceApi/keyring';
+import { bindKeyringEvent, bindKeyringStore } from '@/core/serviceApi/keyring';
 import {
   clearNeedsBackupReminder,
   getPinnedAddressSnapshot,
@@ -32,7 +29,7 @@ import { perfEvents } from '@/core/utils/perf';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import type { KeyringAccount} from '@rabby-wallet/keyring-utils';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { updateHistoryTimeSingleAddress } from '@/hooks/historyTokenDict';
@@ -308,10 +305,7 @@ class AccountStore extends BaseStore<AccountStoreState> {
                   account.address,
                 );
                 if (info?.basePublicKey) {
-                  await setNeedsBackupReminder(
-                    info.basePublicKey,
-                    true,
-                  );
+                  await setNeedsBackupReminder(info.basePublicKey, true);
                 }
               } catch {
                 // Silently ignore errors - account might not be from mnemonic

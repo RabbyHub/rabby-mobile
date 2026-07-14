@@ -1,7 +1,7 @@
 import type { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import type { FlatListProps} from 'react-native';
+import type { FlatListProps } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { BrowserSiteCard } from './BrowserSiteCard';

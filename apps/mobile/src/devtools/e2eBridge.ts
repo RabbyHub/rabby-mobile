@@ -35,7 +35,7 @@ import { getLatestNavigationName, naviPush } from '@/utils/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { getIsFoldMultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 import { getRecentSendPendingTxData } from '@/screens/Send/hooks/useRecentSend';
-import { whitelistServiceApi } from '@/core/serviceApi';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { setWhitelist as setWhitelistState } from '@/hooks/whitelist';
 
 type DevtoolsMethod = (...args: any[]) => unknown;

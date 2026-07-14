@@ -37,11 +37,13 @@ function setupApiOneKeyModule() {
   jest.doMock('@/utils/onekey', () => ({
     bindOneKeyEvents: mockBindOneKeyEvents,
   }));
-  jest.doMock('@/core/serviceApi', () => ({
+  jest.doMock('@/core/serviceApi/keyring', () => ({
     keyringServiceApi: {
       addNewAccount: mockAddNewAccount,
       persistKeyringsForKeyring: mockPersistKeyringsForKeyring,
     },
+  }));
+  jest.doMock('@/core/serviceApi/preference', () => ({
     preferenceServiceApi: {
       initCurrentAccount: mockInitCurrentAccount,
     },
@@ -92,7 +94,8 @@ describe('core/apis/onekey', () => {
     jest.dontMock('@rabby-wallet/keyring-utils');
     jest.dontMock('./keyring');
     jest.dontMock('@/utils/onekey');
-    jest.dontMock('@/core/serviceApi');
+    jest.dontMock('@/core/serviceApi/keyring');
+    jest.dontMock('@/core/serviceApi/preference');
     jest.dontMock('@onekeyfe/hd-ble-sdk');
     jest.dontMock('@onekeyfe/hd-core');
     jest.dontMock('../utils/reexports');

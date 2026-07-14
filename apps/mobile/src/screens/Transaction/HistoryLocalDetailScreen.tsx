@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useMyAccounts } from '@/hooks/account';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';

@@ -21,11 +21,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildRepayTx, optimizedPath } from '../../poolService';
-import type {
-  DirectSignBtnMethods} from '@/components2024/DirectSignBtn';
-import {
-  DirectSignBtn
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { isAccountSupportMiniApproval } from '@/utils/account';

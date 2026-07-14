@@ -1,7 +1,8 @@
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import type { TrezorKeyring } from '@/core/keyring-bridge/trezor/trezor-keyring';
-import { keyringServiceApi, preferenceServiceApi } from '@/core/serviceApi';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { preferenceServiceApi } from '@/core/serviceApi/preference';
 import type { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 // import { bindOneKeyEvents } from '@/utils/onekey';
 

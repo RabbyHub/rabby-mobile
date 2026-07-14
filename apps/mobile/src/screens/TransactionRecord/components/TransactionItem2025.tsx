@@ -6,10 +6,9 @@ import type {
   ApproveNFTAction,
   ProjectItem,
   SendAction,
-  TokenItem} from '@rabby-wallet/rabby-api/dist/types';
-import {
-  GasLevel
+  TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -20,10 +19,9 @@ import type {
   ApproveTokenRequireData,
   ReceiveTokenItem,
   SendRequireData,
-  SwapRequireData} from '@rabby-wallet/rabby-action';
-import {
-  ParsedTransactionActionData
+  SwapRequireData,
 } from '@rabby-wallet/rabby-action';
+import { ParsedTransactionActionData } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';

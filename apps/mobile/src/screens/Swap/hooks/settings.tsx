@@ -1,6 +1,6 @@
 import { DEX } from '@/constant/swap';
 import { openapi } from '@/core/request';
-import { swapServiceApi } from '@/core/serviceApi';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import type { SwapServiceStore, ViewKey } from '@/core/services/swap';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
@@ -87,8 +87,7 @@ export const useSwapSettings = () => {
       {
         setSelectedChain: (
           chain: NonNullable<SwapServiceStore['selectedChain']>,
-        ) =>
-          swapServiceApi.setSelectedChain(chain),
+        ) => swapServiceApi.setSelectedChain(chain),
         setSwapTrade: (dexId: ViewKey, bool: boolean) =>
           swapServiceApi.setSwapTrade(dexId, bool),
         setSwapView: (id: ViewKey, bool: boolean) =>

@@ -24,7 +24,7 @@ import { appOrmEvents } from './_event';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
-import { getPinnedTokenSnapshot } from '@/core/serviceApi';
+import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
 import {
   getTransactionHistoryCustomTxItemMap,
   getTransactionHistorySwapFailTransactions,

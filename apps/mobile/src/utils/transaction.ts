@@ -1,4 +1,4 @@
-import type { Chain} from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { DEFAULT_GAS_LIMIT_RATIO, MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';

@@ -1,7 +1,7 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/provider';
-import { bridgeServiceApi } from '@/core/serviceApi';
+import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { BridgeRecord } from '@/core/services/bridge';
 import type { Account } from '@/core/startupServices/preference';

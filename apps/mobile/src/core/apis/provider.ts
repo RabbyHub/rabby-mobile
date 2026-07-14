@@ -12,10 +12,8 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
-import {
-  getFallbackAccountSnapshot,
-  setCurrentMiniApprovalSync,
-} from '@/core/serviceApi';
+import { setCurrentMiniApprovalSync } from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { OP_STACK_ENUMS } from '@/constant/gas';

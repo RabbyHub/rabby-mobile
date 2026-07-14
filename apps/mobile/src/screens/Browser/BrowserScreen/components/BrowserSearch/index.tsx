@@ -1,13 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
-import {
-  Keyboard,
-  Platform,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import { NextSearchBar } from '@/components2024/SearchBar';

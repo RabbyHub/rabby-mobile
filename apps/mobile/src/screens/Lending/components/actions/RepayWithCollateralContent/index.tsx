@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 
-import type { ChainId} from '@aave/contract-helpers';
+import type { ChainId } from '@aave/contract-helpers';
 import { InterestRate } from '@aave/contract-helpers';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { OptimalRate } from '@paraswap/sdk';

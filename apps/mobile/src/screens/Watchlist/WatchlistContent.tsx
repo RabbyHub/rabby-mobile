@@ -1,13 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import type {
-  ViewToken} from 'react-native';
-import {
-  Platform,
-  Pressable,
-  RefreshControl,
-  View
-} from 'react-native';
+import type { ViewToken } from 'react-native';
+import { Platform, Pressable, RefreshControl, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';

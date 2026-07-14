@@ -6,12 +6,8 @@ import React, {
   useState,
 } from 'react';
 import { Image, InteractionManager, StyleSheet, View } from 'react-native';
-import type {
-  PanGestureHandlerStateChangeEvent} from 'react-native-gesture-handler';
-import {
-  PanGestureHandler,
-  State,
-} from 'react-native-gesture-handler';
+import type { PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 import {
   DappFrameAccountHeader_LAYOUT,

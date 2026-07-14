@@ -8,28 +8,16 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import type { Ref } from 'react';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
-import {
-  Dimensions,
-  Linking,
-  Platform,
-  StyleSheet,
-  View
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Dimensions, Linking, Platform, StyleSheet, View } from 'react-native';
 import type { WebViewProps } from 'react-native-webview';
 import WebView from 'react-native-webview';
 
 import { ScreenLayouts2 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import type {
-  WebViewActions,
-  WebViewState} from '@/components/WebView/hooks';
-import {
-  useWebViewControl
-} from '@/components/WebView/hooks';
+import type { WebViewActions, WebViewState } from '@/components/WebView/hooks';
+import { useWebViewControl } from '@/components/WebView/hooks';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '@/components/WebView/utils';
 import { APP_UA_PARIALS } from '@/constant';
 import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
@@ -38,7 +26,7 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { saveBrowserScreenshot } from '@/core/serviceApi/browser';
-import { perpsServiceApi } from '@/core/serviceApi';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { setHasShowAsterPopup } from '@/core/serviceApi/preference';
 import type { Tab } from '@/core/services/browserService';

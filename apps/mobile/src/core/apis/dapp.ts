@@ -2,17 +2,19 @@ import type { SessionProp } from './../services/session';
 import type { DappInfo } from '@/core/services/dappService';
 import {
   addDappSync,
-  broadcastSessionEventSync,
   disconnectDappSync,
   getDappSnapshot,
   getDappsSnapshot,
-  getFallbackAccountSnapshot,
-  getPinnedAddressSnapshot,
   hasDappPermissionSnapshot,
   patchDappsSync,
   removeDappSync,
   updateDappSync,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/dapp';
+import {
+  getFallbackAccountSnapshot,
+  getPinnedAddressSnapshot,
+} from '@/core/serviceApi/preference';
+import { broadcastSessionEventSync } from '@/core/serviceApi/session';
 import { BroadcastEvent } from '@/constant/event';
 import type { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '../request';

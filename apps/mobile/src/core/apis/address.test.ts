@@ -99,18 +99,49 @@ function loadAddressModule({
   jest.doMock('./keyring', () => ({
     getKeyring: (...args: unknown[]) => mockGetKeyring(...args),
   }));
-  jest.doMock('@/core/serviceApi', () => ({
+  jest.doMock('@/core/serviceApi/contact', () => ({
     contactServiceApi: {
       removeAlias: (...args: unknown[]) => mockRemoveAlias(...args),
     },
+  }));
+  jest.doMock('@/core/serviceApi/dapp', () => ({
     dappServiceApi: {
       getDapps: (...args: unknown[]) => mockGetDapps(...args),
       updateDapp: (...args: unknown[]) => mockUpdateDapp(...args),
     },
-    perpsServiceApi: {
-      removeAgentWallet: (...args: unknown[]) =>
-        mockRemoveAgentWallet(...args),
+  }));
+  jest.doMock('@/core/serviceApi/keyring', () => ({
+    keyringServiceApi: {
+      addNewAccount: (...args: unknown[]) => mockAddNewAccount(...args),
+      getAllVisibleAccountsArray: (...args: unknown[]) =>
+        mockGetAllVisibleAccountsArray(...args),
+      hasAddress: (...args: unknown[]) => mockHasAddress(...args),
+      removeAccount: (...args: unknown[]) => mockRemoveAccount(...args),
     },
+  }));
+  jest.doMock('@/core/serviceApi/perps', () => ({
+    perpsServiceApi: {
+      removeAgentWallet: (...args: unknown[]) => mockRemoveAgentWallet(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/preference', () => ({
+    getFallbackAccountSnapshot: (...args: unknown[]) =>
+      mockGetFallbackAccount(...args),
+    preferenceServiceApi: {
+      initCurrentAccount: (...args: unknown[]) =>
+        mockInitCurrentAccount(...args),
+      removeAddressAvatar: (...args: unknown[]) =>
+        mockRemoveAddressAvatar(...args),
+      removePinAddress: (...args: unknown[]) => mockRemovePinAddress(...args),
+      setCurrentAccount: (...args: unknown[]) => mockSetCurrentAccount(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/session', () => ({
+    sessionServiceApi: {
+      broadcastEvent: (...args: unknown[]) => mockBroadcastEvent(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/whitelist', () => ({
     whitelistServiceApi: {
       removeWhitelist: (...args: unknown[]) => mockRemoveWhitelist(...args),
     },

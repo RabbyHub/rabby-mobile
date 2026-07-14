@@ -11,13 +11,8 @@ import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect } from 'react';
-import type {
-  FlatListProps} from 'react-native';
-import {
-  FlatList as RNFlatList,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import type { FlatListProps } from 'react-native';
+import { FlatList as RNFlatList, TouchableOpacity, View } from 'react-native';
 import type { NativeGesture } from 'react-native-gesture-handler';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';

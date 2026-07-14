@@ -3,8 +3,7 @@ import { ensureAccountBalanceSelectionLifecycle } from './store/balanceAccountSe
 import { startReadableAccountHeavyStoreInitializer } from './store/initializers';
 import type { ReadableAccountHeavyStoreTarget } from './store/initializers';
 
-export type ReadableAccountStoreWarmupTarget =
-  ReadableAccountHeavyStoreTarget;
+export type ReadableAccountStoreWarmupTarget = ReadableAccountHeavyStoreTarget;
 
 export async function startInitReadableAccountStores(
   target: ReadableAccountStoreWarmupTarget = 'all',

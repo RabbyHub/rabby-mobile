@@ -2,8 +2,7 @@ import type {
   AllDexsClearinghouseState,
   MarketData,
 } from '@/hooks/perps/usePerpsStore';
-import type {
-  PerpsQuoteAsset} from '@/constant/perps';
+import type { PerpsQuoteAsset } from '@/constant/perps';
 import {
   PERPS_MAX_NTL_VALUE,
   COLLATERAL_TOKEN_TO_QUOTE,
@@ -19,7 +18,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import type { Account } from '@/types/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis/perps';
-import { perpsServiceApi } from '@/core/serviceApi';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import type { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 

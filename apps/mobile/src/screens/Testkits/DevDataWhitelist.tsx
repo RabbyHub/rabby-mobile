@@ -28,7 +28,7 @@ import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useWhitelist } from '@/hooks/whitelist';

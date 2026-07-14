@@ -35,7 +35,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import type { TokenChartRef} from './components/TokenPriceChart';
+import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
@@ -61,9 +61,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
-import type {
-  TradingViewChartRef,
-} from '@/components2024/TradingViewCandleChart';
+import type { TradingViewChartRef } from '@/components2024/TradingViewCandleChart';
 import TradingViewCandleChart from '@/components2024/TradingViewCandleChart';
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';

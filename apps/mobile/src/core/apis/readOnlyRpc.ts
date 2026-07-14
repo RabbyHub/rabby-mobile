@@ -43,9 +43,7 @@ export const requestReadOnlyETHRpc = async <T = any>(
           params,
         });
   } else {
-    promise = (
-      await customTestnetServiceApi.getClient(chain.id)
-    ).request({
+    promise = (await customTestnetServiceApi.getClient(chain.id)).request({
       method: method as any,
       params: params as any,
     });

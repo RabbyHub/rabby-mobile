@@ -1,7 +1,7 @@
 import { createAsyncMiddleware } from 'json-rpc-engine';
 
 import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
-import { keyringServiceApi } from '@/core/serviceApi';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { dappSendRequest } from '@/core/apis/sendRequest';
 import type { ProviderRequest } from '@/core/controllers/type';
 import { getActiveDappState, isRpcAllowed } from '../state';

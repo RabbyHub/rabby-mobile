@@ -4,7 +4,7 @@ import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { RootNames } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
-import { swapServiceApi } from '@/core/serviceApi';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import { setReportActionTs } from '@/core/serviceApi/preference';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useTheme2024 } from '@/hooks/theme';

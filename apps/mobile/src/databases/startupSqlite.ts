@@ -51,10 +51,7 @@ export function getStartupSqliteDb() {
   return startupSqliteDbRef.current;
 }
 
-export async function executeStartupSqlite(
-  sql: string,
-  params: Scalar[] = [],
-) {
+export async function executeStartupSqlite(sql: string, params: Scalar[] = []) {
   const database = getStartupSqliteDb();
   const result = __DEV__
     ? await database.execute(sql, params)

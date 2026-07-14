@@ -58,8 +58,7 @@ import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import type {
-  PropsForAccountSwitchScreen} from '@/hooks/accountsSwitcher';
+import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import {
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
@@ -567,9 +566,7 @@ function SendScreen({
         const lastTokenStartedAt = Date.now();
         markSendScreenPerf('last_time_send_token_start');
         targetToken =
-          (await getLastTimeSendToken(
-            currentAccount?.address,
-          )) ?? null;
+          (await getLastTimeSendToken(currentAccount?.address)) ?? null;
         markSendScreenPerf('last_time_send_token_end', {
           elapsedMs: Date.now() - lastTokenStartedAt,
           hasToken: !!targetToken,

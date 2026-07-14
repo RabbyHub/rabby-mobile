@@ -1,7 +1,8 @@
 import { getKeyring } from './keyring';
 import type { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { keyringServiceApi, preferenceServiceApi } from '@/core/serviceApi';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { preferenceServiceApi } from '@/core/serviceApi/preference';
 import type { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import {
   AcquireMemeStoreData,
@@ -33,8 +34,9 @@ export async function importAddress(index: number) {
   );
 
   keyring.setAccountToUnlock(index);
-  const res = ((await keyringServiceApi.addNewAccount(keyring as any))[0] as any)
-    .address;
+  const res = (
+    (await keyringServiceApi.addNewAccount(keyring as any))[0] as any
+  ).address;
 
   await preferenceServiceApi.initCurrentAccount();
 

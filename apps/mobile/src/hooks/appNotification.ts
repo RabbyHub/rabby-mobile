@@ -11,12 +11,8 @@ import {
   setPreferenceByKey,
 } from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
-import {
-  resolveValFromUpdater,
-  runStartupTask
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
 import { UseValueHook } from '@/screens/Settings/components/SwitchSettingCommon';
 import DeviceUtils from '@/core/utils/device';
 import { goToSystemSettingsFor, PerAndroid } from '@/core/utils/permissions';
@@ -39,8 +35,7 @@ const appNotificationStore = zCreate<{
     hasSystemPermission: null,
     enabledTransactionNofification:
       APP_FEATURE_SWITCH.transactionNotification &&
-      (getPreferenceSnapshot('enabledTransactionNofification') ??
-        false),
+      (getPreferenceSnapshot('enabledTransactionNofification') ?? false),
   };
 });
 
@@ -133,10 +128,9 @@ export async function setEnableTransactionNofification(
     );
     if (!prevHasSystemPermission) newVal = true;
 
-    void setPreferenceByKey(
-      'enabledTransactionNofification',
-      newVal,
-    ).catch(console.error);
+    void setPreferenceByKey('enabledTransactionNofification', newVal).catch(
+      console.error,
+    );
     finalValue = newVal;
 
     return { enabledTransactionNofification: newVal };

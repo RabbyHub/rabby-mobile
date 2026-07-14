@@ -8,8 +8,7 @@ import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import type {
-  ActiveDappState} from '@/core/bridges/state';
+import type { ActiveDappState } from '@/core/bridges/state';
 import {
   activeDappStateEvents,
   getActiveDappState,

@@ -1,5 +1,5 @@
 import { cached } from '@/utils/cache';
-import { keyringServiceApi } from '@/core/serviceApi';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { testOpenapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';

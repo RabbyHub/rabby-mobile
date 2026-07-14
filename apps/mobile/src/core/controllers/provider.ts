@@ -3,10 +3,7 @@ import type {
   AuthorizationListBytes,
   AuthorizationListItem,
 } from '@ethereumjs/common';
-import {
-  Common,
-  Hardfork,
-} from '@ethereumjs/common';
+import { Common, Hardfork } from '@ethereumjs/common';
 import type { FeeMarketEIP1559TxData } from '@ethereumjs/tx';
 import { TransactionFactory } from '@ethereumjs/tx';
 import {
@@ -23,24 +20,26 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
+import { bridgeServiceApi } from '@/core/serviceApi/bridge';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import {
-  addBroadcastTransactionSync,
-  addWatchedTransactionSync,
-  broadcastSessionEventSync,
-  bridgeServiceApi,
-  customRPCServiceApi,
-  customTestnetServiceApi,
   disconnectDappSync,
   getConnectedDappSnapshot,
   getDappSnapshot,
-  getNotificationStatsDataSnapshot,
   isInternalDappSnapshot,
-  keyringServiceApi,
-  setNotificationStatsDataSync,
-  swapServiceApi,
-  transactionHistoryServiceApi,
   updateDappSync,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import {
+  getNotificationStatsDataSnapshot,
+  setNotificationStatsDataSync,
+} from '@/core/serviceApi/notification';
+import { broadcastSessionEventSync } from '@/core/serviceApi/session';
+import { swapServiceApi } from '@/core/serviceApi/swap';
+import { addBroadcastTransactionSync } from '@/core/serviceApi/transactionBroadcastWatcher';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { addWatchedTransactionSync } from '@/core/serviceApi/transactionWatcher';
 // import {
 //   transactionWatchService,
 //   transactionHistoryService,
@@ -89,10 +88,7 @@ import { Transaction as ViemTempoTransaction } from 'viem/tempo';
 import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
-import type {
-  TempoTxCall,
-  TxWithTempoExtras,
-} from '@/utils/tempo';
+import type { TempoTxCall, TxWithTempoExtras } from '@/utils/tempo';
 import { shouldUseTempoTransaction } from '@/utils/tempo';
 // import eventBus from '@/eventBus';
 
@@ -671,11 +667,7 @@ class ProviderController extends BaseController {
     const _account = req.account;
     const account = _account ? [_account.address.toLowerCase()] : [];
 
-    broadcastSessionEventSync(
-      BroadcastEvent.accountsChanged,
-      account,
-      origin,
-    );
+    broadcastSessionEventSync(BroadcastEvent.accountsChanged, account, origin);
     const connectSite = getConnectedDappSnapshot(origin);
 
     if (connectSite) {
@@ -2104,11 +2096,7 @@ class ProviderController extends BaseController {
   walletRevokePermissions = ({ session: { origin }, data: { params } }) => {
     if (getConnectedDappSnapshot(origin)) {
       if (params?.[0] && 'eth_accounts' in params[0]) {
-        broadcastSessionEventSync(
-          BroadcastEvent.accountsChanged,
-          [],
-          origin,
-        );
+        broadcastSessionEventSync(BroadcastEvent.accountsChanged, [], origin);
         disconnectDappSync(origin);
       }
     }

@@ -1,11 +1,9 @@
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apisLock } from '@/core/apis';
-import {
-  contactServiceApi,
-  keyringServiceApi,
-  whitelistServiceApi,
-} from '@/core/serviceApi';
+import { contactServiceApi } from '@/core/serviceApi/contact';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -10,7 +10,7 @@ import {
   getTransactionHistoryListSnapshot,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
-import { swapServiceApi } from '@/core/serviceApi';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
 import type { TransactionGroup } from '@/core/services/transactionHistory';

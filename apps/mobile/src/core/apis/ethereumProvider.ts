@@ -7,10 +7,8 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
 import { findChain } from '@/utils/chain';
 import providerController from '@/core/controllers/provider';
-import {
-  bindNotificationEvent,
-  getFallbackAccountSnapshot,
-} from '@/core/serviceApi';
+import { bindNotificationEvent } from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { underline2Camelcase } from '../utils/common';
 
 type SendRequestHandler = typeof import('./sendRequest').sendRequest;

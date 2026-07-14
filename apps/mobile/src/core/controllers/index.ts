@@ -1,11 +1,9 @@
 import { ProviderRequest } from './type';
 
 import { ethErrors } from 'eth-rpc-errors';
-import {
-  getDappSnapshot,
-  getFallbackAccountSnapshot,
-  keyringServiceApi,
-} from '@/core/serviceApi';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 
 import rpcFlow from './rpcFlow';
 import internalMethod from './internalMethod';
@@ -31,15 +29,12 @@ export default async function provider<T = void>(
     account = req.account || undefined;
   } else if (origin) {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
-      account =
-        req.account || getFallbackAccountSnapshot() || undefined;
+      account = req.account || getFallbackAccountSnapshot() || undefined;
     } else {
       const site = getDappSnapshot(origin);
       if (site?.isConnected) {
         account =
-          site.currentAccount ||
-          getFallbackAccountSnapshot() ||
-          undefined;
+          site.currentAccount || getFallbackAccountSnapshot() || undefined;
       }
     }
   }

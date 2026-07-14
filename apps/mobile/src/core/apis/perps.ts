@@ -1,5 +1,5 @@
 import { HyperliquidSDK } from '@rabby-wallet/hyperliquid-sdk';
-import { perpsServiceApi } from '@/core/serviceApi';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisKeyring } from './keyring';

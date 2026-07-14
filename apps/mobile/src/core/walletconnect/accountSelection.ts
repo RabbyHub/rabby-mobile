@@ -5,7 +5,7 @@ import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import {
   getFallbackAccountSnapshot,
   getPinnedAddressSnapshot,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/preference';
 import { getFirstMyAccountFromAccountSelectorList } from '@/utils/accountSelectorList';
 import type { Account } from '@/types/account';
 

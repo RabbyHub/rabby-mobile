@@ -1,8 +1,6 @@
 import { openapi } from '@/core/request';
 import type { Account } from '@/types/account';
-import {
-  gasAccountServiceApi,
-} from '@/core/serviceApi/gasAccount';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 const fireGasAccountStatusEvent = (hasBalance: boolean) => {

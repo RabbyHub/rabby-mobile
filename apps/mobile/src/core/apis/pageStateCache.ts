@@ -1,4 +1,4 @@
-import { isKeyringUnlockedSnapshot } from '@/core/serviceApi';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 
 interface CacheState {
   path: string;

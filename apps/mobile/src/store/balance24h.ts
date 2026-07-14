@@ -1,16 +1,12 @@
 import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import {
-  bindKeyringEvent,
-  keyringServiceApi,
-} from '@/core/serviceApi/keyring';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
 import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { balance24hMMKV } from '@/core/storage/mmkvInstances';
-import type {
-  AccountsBalanceState} from './balance';
+import type { AccountsBalanceState } from './balance';
 import {
   accountsBalanceEvents,
   balanceAccountsStore,

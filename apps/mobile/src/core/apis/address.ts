@@ -4,16 +4,16 @@ import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 
 import { isSameAccount } from '@/utils/isSameAccount';
 import type { KeyringAccountWithAlias } from '@/types/account';
+import { contactServiceApi } from '@/core/serviceApi/contact';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import {
-  contactServiceApi,
-  dappServiceApi,
   getFallbackAccountSnapshot,
-  keyringServiceApi,
-  perpsServiceApi,
   preferenceServiceApi,
-  sessionServiceApi,
-  whitelistServiceApi,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/preference';
+import { sessionServiceApi } from '@/core/serviceApi/session';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { getKeyring } from './keyring';
 import { BroadcastEvent } from '@/constant/event';

@@ -124,72 +124,80 @@ const loadLockModule = () => {
     sessionService,
   }));
 
-  jest.doMock('@/core/serviceApi', () => {
-    const getPreferenceSnapshot = (key?: string) => {
-      if (key) {
-        return mockGetPreference(key);
-      }
+  const getPreferenceSnapshot = (key?: string) => {
+    if (key) {
+      return mockGetPreference(key);
+    }
 
-      const lastUnlockTime = mockGetPreference('lastUnlockTime');
-      return lastUnlockTime === undefined
-        ? undefined
-        : {
-            lastUnlockTime,
-          };
-    };
+    const lastUnlockTime = mockGetPreference('lastUnlockTime');
+    return lastUnlockTime === undefined
+      ? undefined
+      : {
+          lastUnlockTime,
+        };
+  };
 
-    const bindKeyringEventSync = (
-      event: string,
-      listener: (...args: unknown[]) => void,
-    ) => {
-      mockKeyringOn(event, listener);
-      return () => mockKeyringOff(event, listener);
-    };
+  const bindKeyringEventSync = (
+    event: string,
+    listener: (...args: unknown[]) => void,
+  ) => {
+    mockKeyringOn(event, listener);
+    return () => mockKeyringOff(event, listener);
+  };
 
-    const bindKeyringEvent = async (
-      event: string,
-      listener: (...args: unknown[]) => void,
-    ) => bindKeyringEventSync(event, listener);
+  const bindKeyringEvent = async (
+    event: string,
+    listener: (...args: unknown[]) => void,
+  ) => bindKeyringEventSync(event, listener);
 
-    return {
-      bindKeyringEvent,
-      bindKeyringEventSync,
-      broadcastSessionEventSync: (...args: unknown[]) =>
-        mockBroadcastEvent(...args),
-      getKeyringMemStoreStateSnapshot: () => keyringService.memStore.getState(),
-      getPreferenceSnapshot,
-      hasKeyringPublicAccountSnapshot: () => mockHasPublicAccountSnapshot(),
-      initCurrentAccountSync: (...args: unknown[]) =>
-        mockInitCurrentAccount(...args),
-      isKeyringBootedSnapshot: () => mockIsBooted(),
-      isKeyringRuntimeReadySnapshot: () => mockIsKeyringRuntimeReady(),
-      isKeyringUnlockedSnapshot: () => mockIsUnlocked(),
-      keyringServiceApi: {
-        boot: (...args: unknown[]) => mockBoot(...args),
-        dangerouslyResetPasswordAndKeyrings: (...args: unknown[]) =>
-          mockDangerouslyResetPasswordAndKeyrings(...args),
-        ensureKeyringRuntimeReady: (...args: unknown[]) =>
-          mockEnsureKeyringRuntimeReady(...args),
-        getCountOfAccountsInKeyring: (...args: unknown[]) =>
-          mockGetCountOfAccountsInKeyring(...args),
-        resetPassword: (...args: unknown[]) => mockResetPassword(...args),
-        restoreUnencryptedKeyrings: (...args: unknown[]) =>
-          mockRestoreUnencryptedKeyrings(...args),
-        setLocked: (...args: unknown[]) => mockSetLocked(...args),
-        submitPassword: (...args: unknown[]) => mockSubmitPassword(...args),
-        updatePassword: (...args: unknown[]) => mockUpdatePassword(...args),
-        verifyPassword: (...args: unknown[]) => mockVerifyPassword(...args),
-      },
-      perpsServiceApi: {
-        resetStore: (...args: unknown[]) => mockResetPerpsStore(...args),
-      },
-      refreshKeyringMemStoreKeyringsIfPossible: (...args: unknown[]) =>
-        mockRefreshMemStoreKeyrings(...args),
-      setPreferenceSync: (...args: unknown[]) => mockSetPreference(...args),
-      submitKeyringPasswordForUnlock: (...args: unknown[]) =>
-        mockSubmitPassword(...args),
-    };
-  });
+  jest.doMock('@/core/serviceApi/keyring', () => ({
+    bindKeyringEvent,
+    bindKeyringEventAfterRegistration: bindKeyringEventSync,
+    bindKeyringEventSync,
+    getKeyringMemStoreStateSnapshot: () => keyringService.memStore.getState(),
+    hasKeyringPublicAccountSnapshot: () => mockHasPublicAccountSnapshot(),
+    isKeyringBootedSnapshot: () => mockIsBooted(),
+    isKeyringRuntimeReadySnapshot: () => mockIsKeyringRuntimeReady(),
+    isKeyringUnlockedSnapshot: () => mockIsUnlocked(),
+    keyringServiceApi: {
+      boot: (...args: unknown[]) => mockBoot(...args),
+      dangerouslyResetPasswordAndKeyrings: (...args: unknown[]) =>
+        mockDangerouslyResetPasswordAndKeyrings(...args),
+      ensureKeyringRuntimeReady: (...args: unknown[]) =>
+        mockEnsureKeyringRuntimeReady(...args),
+      getCountOfAccountsInKeyring: (...args: unknown[]) =>
+        mockGetCountOfAccountsInKeyring(...args),
+      resetPassword: (...args: unknown[]) => mockResetPassword(...args),
+      restoreUnencryptedKeyrings: (...args: unknown[]) =>
+        mockRestoreUnencryptedKeyrings(...args),
+      setLocked: (...args: unknown[]) => mockSetLocked(...args),
+      submitPassword: (...args: unknown[]) => mockSubmitPassword(...args),
+      updatePassword: (...args: unknown[]) => mockUpdatePassword(...args),
+      verifyPassword: (...args: unknown[]) => mockVerifyPassword(...args),
+    },
+    refreshKeyringMemStoreKeyringsIfPossible: (...args: unknown[]) =>
+      mockRefreshMemStoreKeyrings(...args),
+    submitKeyringPasswordForUnlock: (...args: unknown[]) =>
+      mockSubmitPassword(...args),
+  }));
+
+  jest.doMock('@/core/serviceApi/perps', () => ({
+    perpsServiceApi: {
+      resetStore: (...args: unknown[]) => mockResetPerpsStore(...args),
+    },
+  }));
+
+  jest.doMock('@/core/serviceApi/preference', () => ({
+    getPreferenceSnapshot,
+    initCurrentAccountSync: (...args: unknown[]) =>
+      mockInitCurrentAccount(...args),
+    setPreferenceSync: (...args: unknown[]) => mockSetPreference(...args),
+  }));
+
+  jest.doMock('@/core/serviceApi/session', () => ({
+    broadcastSessionEventSync: (...args: unknown[]) =>
+      mockBroadcastEvent(...args),
+  }));
 
   jest.doMock('./event', () => ({
     makeEEClass: () => ({

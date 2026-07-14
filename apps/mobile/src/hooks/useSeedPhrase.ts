@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import type { TypeKeyringGroup} from './useWalletTypeData';
+import type { TypeKeyringGroup } from './useWalletTypeData';
 import { useWalletTypeData } from './useWalletTypeData';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { apiMnemonic } from '@/core/apis';

@@ -1,6 +1,6 @@
-import type { ScrollView} from 'react-native';
+import type { ScrollView } from 'react-native';
 import { Keyboard, useWindowDimensions, View } from 'react-native';
-import type { AccountSwitcherAopProps} from './hooks';
+import type { AccountSwitcherAopProps } from './hooks';
 import { useAccountSceneVisible } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';

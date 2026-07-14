@@ -43,8 +43,8 @@ import { setWhitelist } from '@/hooks/whitelist';
 import {
   contactServiceApi,
   getContactAliasSnapshot,
-  whitelistServiceApi,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/contact';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import type { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';

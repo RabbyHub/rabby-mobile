@@ -4,12 +4,11 @@ import { useCallback, useRef, useEffect } from 'react';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
+import { addDappSync, getDappSnapshot } from '@/core/serviceApi/dapp';
 import {
-  addDappSync,
   deleteSessionSync,
-  getDappSnapshot,
   sessionServiceApi,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/session';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';

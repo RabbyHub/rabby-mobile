@@ -1,18 +1,20 @@
 import { ethErrors } from 'eth-rpc-errors';
+import { autoConnectServiceApi } from '@/core/serviceApi/autoConnect';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import {
-  autoConnectServiceApi,
-  customTestnetServiceApi,
   getConnectedDappSnapshot,
   getDappSnapshot,
-  getFallbackAccountSnapshot,
-  getNotificationStatsDataSnapshot,
   hasDappPermissionSnapshot,
+  updateDappSync,
+} from '@/core/serviceApi/dapp';
+import {
+  getNotificationStatsDataSnapshot,
   notificationServiceApi,
   setCurrentRequestDeferFnSync,
   setNotificationStatsDataSync,
   unlockNotificationSync,
-  updateDappSync,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import PromiseFlow from '@/utils/promiseFlow';
 import providerController from './provider';
 // import eventBus from '@/eventBus';
@@ -191,8 +193,7 @@ const flowContext = flow
           await apisDapp.connect({
             origin,
             chainId: defaultChain || CHAINS_ENUM.ETH,
-            currentAccount:
-              defaultAccount || getFallbackAccountSnapshot(),
+            currentAccount: defaultAccount || getFallbackAccountSnapshot(),
             session: {
               name,
               icon,
@@ -200,8 +201,7 @@ const flowContext = flow
               $mobileCtx,
             },
           });
-          ctx.request.account =
-            defaultAccount || getFallbackAccountSnapshot()!;
+          ctx.request.account = defaultAccount || getFallbackAccountSnapshot()!;
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;

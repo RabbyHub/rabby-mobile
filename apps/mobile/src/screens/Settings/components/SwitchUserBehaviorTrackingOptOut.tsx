@@ -5,11 +5,8 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 
-import type {
-  SwitchToggleType} from '@/components/customized/Switch2024';
-import {
-  AppSwitch2024
-} from '@/components/customized/Switch2024';
+import type { SwitchToggleType } from '@/components/customized/Switch2024';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { setUserBehaviorTrackingOptOut } from '@/core/serviceApi/preference';
 import { perfEvents } from '@/core/utils/perf';
 import { useThemeColors } from '@/hooks/theme';

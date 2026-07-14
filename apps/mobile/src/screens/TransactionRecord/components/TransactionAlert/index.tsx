@@ -5,7 +5,7 @@ import { apiCustomTestnet, apiProvider } from '@/core/apis';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';

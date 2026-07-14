@@ -1,10 +1,11 @@
 import type {
   CreateParams,
   MODAL_ID,
-  RemoveParams} from '@/components2024/GlobalBottomSheetModal/types';
+  RemoveParams,
+} from '@/components2024/GlobalBottomSheetModal/types';
 import {
   EVENT_NAMES,
-  MODAL_NAMES
+  MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import { uniqueId } from 'lodash';
 

@@ -1,7 +1,7 @@
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { fromHex, isHex } from 'viem';
 import type { Account } from '@/types/account';
-import { getKeyringsByTypeSnapshot } from '@/core/serviceApi';
+import { getKeyringsByTypeSnapshot } from '@/core/serviceApi/keyring';
 
 const AUTO_CONNECT_SILENTLY_ORIGINS = new Set<string>([
   'https://polymarket.com',

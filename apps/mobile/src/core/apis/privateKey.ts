@@ -1,5 +1,5 @@
 import * as ethUtil from 'ethereumjs-util';
-import { keyringServiceApi } from '@/core/serviceApi';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { t } from 'i18next';
 import { _setCurrentAccountFromKeyring } from './keyring';
 import { verifyPasswordOrUnlock } from './lock';

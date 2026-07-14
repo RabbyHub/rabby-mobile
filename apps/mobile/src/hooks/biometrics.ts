@@ -12,11 +12,8 @@ import {
   type KeychainSupportedBiometryType,
 } from '@/core/apis/keychain';
 import { useTranslation } from 'react-i18next';
-import type {
-  ValidationBehaviorProps} from '@/core/apis/lock';
-import {
-  parseValidationBehavior,
-} from '@/core/apis/lock';
+import type { ValidationBehaviorProps } from '@/core/apis/lock';
+import { parseValidationBehavior } from '@/core/apis/lock';
 import { Alert, Vibration } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import type { IExtractFromPromise } from '@/utils/type';

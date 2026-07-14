@@ -3,7 +3,7 @@ import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHisto
 import {
   gasAccountServiceApi,
   setGasAccountLastDepositAccount,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/gasAccount';
 import { sendToken } from './token';
 import { openapi } from '../request';
 import * as Sentry from '@sentry/react-native';

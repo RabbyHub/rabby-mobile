@@ -6,9 +6,7 @@ import React, {
   useImperativeHandle,
   type Ref,
 } from 'react';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   FlatList,
   Platform,

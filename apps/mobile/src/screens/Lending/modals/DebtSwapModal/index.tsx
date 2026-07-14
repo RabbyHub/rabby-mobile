@@ -29,11 +29,8 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import type {
-  DirectSignBtnMethods} from '@/components2024/DirectSignBtn';
-import {
-  DirectSignBtn
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';

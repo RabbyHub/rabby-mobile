@@ -5,14 +5,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
-import {
-  Image,
-  useWindowDimensions,
-  View
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Image, useWindowDimensions, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { DappIcon } from '../DappIcon';
 import { Text } from '@/components/Typography';

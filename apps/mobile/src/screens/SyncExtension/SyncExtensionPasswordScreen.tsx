@@ -15,8 +15,8 @@ import { NextInput } from '@/components2024/Form/Input';
 import {
   contactServiceApi,
   getContactAliasSnapshot,
-  whitelistServiceApi,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/contact';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import {
   getPinnedAddressSnapshot,
@@ -188,7 +188,9 @@ export const SyncExtensionPasswordScreen = () => {
   const finishAccountSync = ({
     newAccounts,
   }: {
-    newAccounts: Awaited<ReturnType<typeof keyringServiceApi.syncExtensionData>>;
+    newAccounts: Awaited<
+      ReturnType<typeof keyringServiceApi.syncExtensionData>
+    >;
   }) => {
     clear();
     navigation.reset({

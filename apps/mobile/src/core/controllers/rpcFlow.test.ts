@@ -1,4 +1,5 @@
 const mockCaptureException = jest.fn();
+const mockAutoConnect = jest.fn();
 const mockFindChain = jest.fn();
 const mockRequestApproval = jest.fn();
 const mockEthSendTransaction = jest.fn();
@@ -26,6 +27,37 @@ jest.mock('@/constant/chains', () => ({
     ETH: 'eth',
   },
   getTestnetChainList: (...args: unknown[]) => mockGetTestnetChainList(...args),
+}));
+
+jest.mock('@/core/serviceApi/autoConnect', () => ({
+  autoConnectServiceApi: {
+    autoConnect: (...args: unknown[]) => mockAutoConnect(...args),
+  },
+}));
+
+jest.mock('@/core/serviceApi/dapp', () => ({
+  getConnectedDappSnapshot: (...args: unknown[]) =>
+    mockGetConnectedDapp(...args),
+  getDappSnapshot: (...args: unknown[]) => mockGetDapp(...args),
+  hasDappPermissionSnapshot: jest.fn(() => true),
+  updateDappSync: (...args: unknown[]) => mockUpdateDapp(...args),
+}));
+
+jest.mock('@/core/serviceApi/notification', () => ({
+  getNotificationStatsDataSnapshot: (...args: unknown[]) =>
+    mockGetStatsData(...args),
+  notificationServiceApi: {
+    requestApproval: (...args: unknown[]) => mockRequestApproval(...args),
+  },
+  setCurrentRequestDeferFnSync: (...args: unknown[]) =>
+    mockSetCurrentRequestDeferFn(...args),
+  setNotificationStatsDataSync: (...args: unknown[]) =>
+    mockSetStatsData(...args),
+  unlockNotificationSync: (...args: unknown[]) => mockUnLock(...args),
+}));
+
+jest.mock('@/core/serviceApi/preference', () => ({
+  getFallbackAccountSnapshot: jest.fn(),
 }));
 
 jest.mock('../services', () => ({
@@ -163,6 +195,7 @@ describe('rpcFlow SignTx chain guard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAutoConnect.mockResolvedValue(undefined);
     mockFindChain.mockReturnValue(null);
     mockGetCustomTestnetList.mockReturnValue([]);
     mockGetTestnetChainList.mockReturnValue([]);

@@ -85,7 +85,9 @@ export type RunStartupTaskOptions = StartupTaskOptions;
 
 type ScheduledStartupTask = StartupTaskHandle;
 
-function isRunStartupTaskOptions(value: unknown): value is RunStartupTaskOptions {
+function isRunStartupTaskOptions(
+  value: unknown,
+): value is RunStartupTaskOptions {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return false;
   }
@@ -122,10 +124,10 @@ export function runStartupTask<T extends (...args: any[]) => any>(
       : [optionsOrFirstArg, ...restArgs]
   ) as Parameters<T>;
 
-  return scheduleStartupTask(
-    () => func(...inputArgs),
-    options,
-  ) as ReturnType<T> | ScheduledStartupTask | undefined;
+  return scheduleStartupTask(() => func(...inputArgs), options) as
+    | ReturnType<T>
+    | ScheduledStartupTask
+    | undefined;
 }
 
 export function runDevIIFEFunc<T extends (...args: any[]) => any>(

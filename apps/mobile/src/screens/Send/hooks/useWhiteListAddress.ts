@@ -1,7 +1,7 @@
 import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
 import { useWhitelist } from '@/hooks/whitelist';
@@ -197,8 +197,7 @@ export function useWhitelistVariedAccounts() {
     ).map(record => {
       const address = record.address;
       const aliasName =
-        getContactAliasSnapshot(address)?.alias ||
-        ellipsisAddress(address);
+        getContactAliasSnapshot(address)?.alias || ellipsisAddress(address);
       const matchedAccounts = accountsByAddress[address.toLowerCase()] || [];
 
       if (matchedAccounts.length) {

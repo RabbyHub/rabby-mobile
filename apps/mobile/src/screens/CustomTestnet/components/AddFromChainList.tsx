@@ -1,7 +1,6 @@
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
-import type {
-  TestnetChain} from '@/core/services/customTestnetService';
+import type { TestnetChain } from '@/core/services/customTestnetService';
 import { createTestnetChain } from '@/core/utils/customTestnetChain';
 import { useDebounce, useInfiniteScroll, useRequest } from 'ahooks';
 // import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
@@ -16,16 +15,14 @@ import { Input } from '@rneui/themed';
 import { range, sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   Dimensions,
   Keyboard,
   StyleSheet,
   TouchableWithoutFeedback,
   useWindowDimensions,
-  View
+  View,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {

@@ -18,7 +18,7 @@ import { atom, useAtom } from 'jotai';
 import { sortBy, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import type { Hex} from '@metamask/utils';
+import type { Hex } from '@metamask/utils';
 import { isValidHexAddress } from '@metamask/utils';
 import { jotaiStore } from '@/core/utils/reexports';
 

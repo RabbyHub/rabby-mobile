@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { refreshIdAtom } from './atom';
 import { useInterval, useMount, useRequest } from 'ahooks';
-import { swapServiceApi } from '@/core/serviceApi';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import {
   getTransactionHistoryRecentPendingSnapshot,
   getTransactionHistoryRecentTxSnapshot,

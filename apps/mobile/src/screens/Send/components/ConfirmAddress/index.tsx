@@ -5,7 +5,7 @@ import { noop } from 'lodash';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
 import AddressPopover from '../AddressPopover';
 import AddressSource from '../AddressSourceCard';

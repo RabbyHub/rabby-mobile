@@ -8,9 +8,7 @@ const homeSceneActivationStateRef = {
   promise: null as Promise<void> | null,
 };
 
-export async function startHomeSceneDerivedDataActivation(
-  reason = 'unknown',
-) {
+export async function startHomeSceneDerivedDataActivation(reason = 'unknown') {
   if (homeSceneActivationStateRef.promise) {
     return homeSceneActivationStateRef.promise;
   }

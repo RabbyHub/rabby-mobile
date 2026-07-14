@@ -41,12 +41,9 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
     setIsSign(true);
 
     isSwap &&
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
-        {
-          chain: chain?.serverId as string,
-        },
-      );
+      void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+        chain: chain?.serverId as string,
+      });
   }, [chain, isSwap]);
   const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle: getStyles2024 });

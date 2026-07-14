@@ -7,7 +7,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 
-import type { KeyringAccount} from '@rabby-wallet/keyring-utils';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 import type {

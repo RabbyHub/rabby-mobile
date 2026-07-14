@@ -3,7 +3,7 @@ import {
   ContractAddress,
   UserData,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { securityEngineServiceApi } from '@/core/serviceApi';
+import { securityEngineServiceApi } from '@/core/serviceApi/securityEngine';
 
 export const getSecurityEngineRules = () => {
   return securityEngineServiceApi.getRules();
@@ -36,7 +36,9 @@ export const removeContractWhitelist = (contract: ContractAddress) => {
 };
 
 export const removeContractBlacklist = (contract: ContractAddress) => {
-  return securityEngineServiceApi.removeContractBlacklistFromAllChains(contract);
+  return securityEngineServiceApi.removeContractBlacklistFromAllChains(
+    contract,
+  );
 };
 
 export const addAddressWhitelist = async (address: string) => {

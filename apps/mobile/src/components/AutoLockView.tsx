@@ -10,10 +10,9 @@ import { autoLockEvent } from '@/core/apis/autoLock';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import type {
   AsName,
-  MakePropsByAsMap} from '@/hooks/common/useComponentAsProp';
-import {
-  useComponentByAsProp,
+  MakePropsByAsMap,
 } from '@/hooks/common/useComponentAsProp';
+import { useComponentByAsProp } from '@/hooks/common/useComponentAsProp';
 import { perfEvents } from '@/core/utils/perf';
 
 const implUiRefreshTimeout = throttle(

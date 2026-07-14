@@ -39,7 +39,7 @@ import { calculateDistanceToLiquidation } from './components/PerpsPositionSectio
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
 import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
-import { perpsServiceApi } from '@/core/serviceApi';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';

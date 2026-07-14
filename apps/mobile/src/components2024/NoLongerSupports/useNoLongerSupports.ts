@@ -1,11 +1,11 @@
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { storeApiAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '../GlobalBottomSheetModal';
-import type { MODAL_ID} from '../GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '../GlobalBottomSheetModal/types';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { apisAccount } from '@/core/apis';
 import { redirectToAddAddressEntry } from '@/utils/navigation';

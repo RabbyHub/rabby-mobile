@@ -2,13 +2,9 @@ import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import type {
   NativeSyntheticEvent,
-  TextInputSubmitEditingEventData} from 'react-native';
-import {
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+  TextInputSubmitEditingEventData,
 } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { RcIconCopyCC } from '@/assets/icons/common';
 import { contactServiceApi } from '@/core/serviceApi/contact';
 import Clipboard from '@react-native-clipboard/clipboard';

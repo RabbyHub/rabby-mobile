@@ -15,7 +15,7 @@ import {
   RcLockWallet,
   RcManagePassword,
 } from '@/assets/icons/settings';
-import type { DevTestItem} from './testDevUtils';
+import type { DevTestItem } from './testDevUtils';
 import { makeNoop, GeneralTestItem } from './testDevUtils';
 import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';

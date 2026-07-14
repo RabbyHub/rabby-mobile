@@ -13,16 +13,12 @@ import { filterCustomTestnetUserTokenSettings } from '@/utils/favoriteToken';
 type UserTokenSettingsState = UserTokenSettings;
 
 export const getDisplayUserTokenSettingsSync = (): UserTokenSettingsState => {
-  return filterCustomTestnetUserTokenSettings(
-    getUserTokenSettingsSnapshot(),
-  );
+  return filterCustomTestnetUserTokenSettings(getUserTokenSettingsSnapshot());
 };
 
 export const getDisplayUserTokenSettings =
   async (): Promise<UserTokenSettingsState> => {
-    return filterCustomTestnetUserTokenSettings(
-      await getUserTokenSettings(),
-    );
+    return filterCustomTestnetUserTokenSettings(await getUserTokenSettings());
   };
 
 const userTokenSettingsStore = zCreate<UserTokenSettingsState>(() => {

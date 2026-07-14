@@ -1,4 +1,4 @@
-import { swapServiceApi } from '@/core/serviceApi';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 

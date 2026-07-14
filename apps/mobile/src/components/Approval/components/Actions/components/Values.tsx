@@ -1,19 +1,7 @@
-import type {
-  ReactNode} from 'react';
-import React, {
-  useMemo,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
-import type {
-  TextStyle} from 'react-native';
-import {
-  View,
-  StyleSheet,
-  Image,
-  TouchableOpacity
-} from 'react-native';
+import type { ReactNode } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import type { TextStyle } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';

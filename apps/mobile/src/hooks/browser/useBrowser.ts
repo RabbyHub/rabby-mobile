@@ -26,12 +26,8 @@ import {
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
-import {
-  resolveValFromUpdater,
-  runStartupTask
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
 

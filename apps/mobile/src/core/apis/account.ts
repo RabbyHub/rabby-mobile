@@ -18,9 +18,9 @@ import {
 } from '../serviceApi/contact';
 import {
   getPublicAccountSnapshotAccounts,
-  getPinnedAddressSnapshot,
   keyringServiceApi,
-} from '../serviceApi';
+} from '../serviceApi/keyring';
+import { getPinnedAddressSnapshot } from '../serviceApi/preference';
 import addressBalanceStore from '@/store/balance';
 
 import { getAddressCacheBalance } from './balance';

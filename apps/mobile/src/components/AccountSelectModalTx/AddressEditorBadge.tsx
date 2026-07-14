@@ -6,7 +6,7 @@ import { RcEditPenCC } from '@/assets/icons/send';
 import { touchedFeedback } from '@/utils/touch';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import {

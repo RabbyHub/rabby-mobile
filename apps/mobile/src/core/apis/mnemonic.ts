@@ -5,18 +5,18 @@ import type { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
 import * as import_english from '@scure/bip39/wordlists/english';
+import { setDefaultAddressAliasFromKeyringParamsSync } from '@/core/serviceApi/contact';
+import { addHdKeyringUnixRecordSync } from '@/core/serviceApi/hdKeyring';
 import {
-  addHdKeyringUnixRecordSync,
   assertKeyringUnlockedSync,
   generateMnemonicSync,
   getKeyringClassForTypeSnapshot,
   getKeyringInstancesSnapshot,
   keyringServiceApi,
   removePreMnemonicsSync,
-  setCurrentAccountSync,
-  setDefaultAddressAliasFromKeyringParamsSync,
   updateHdKeyringIndexSync,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/keyring';
+import { setCurrentAccountSync } from '@/core/serviceApi/preference';
 import type { Account } from '@/types/account';
 import {
   _getKeyringByType,
@@ -380,9 +380,7 @@ export const addKeyringAndactiveAndPersistAccounts = async (
   try {
     await ensureWalletUnlocked();
 
-    const Keyring = getKeyringClassForTypeSnapshot(
-      KEYRING_CLASS.MNEMONIC,
-    );
+    const Keyring = getKeyringClassForTypeSnapshot(KEYRING_CLASS.MNEMONIC);
 
     const keyring = new Keyring({ mnemonic, passphrase });
 

@@ -2,20 +2,22 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { sendRequest } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
 import {
-  bindKeyringEventSync,
   clearGasAccountPendingHardwareAccountSync,
   getGasAccountData,
   getGasAccountAccountsWithBalanceSnapshot,
   getGasAccountDataSnapshot,
   getGasAccountPendingHardwareAccountSnapshot,
-  keyringServiceApi,
-  perpsServiceApi,
   setGasAccountAccountsWithBalanceSync,
   setGasAccountCurrentBalanceStateSync,
   setGasAccountHasClaimedGiftSync,
   setGasAccountPendingHardwareAccountSync,
   setGasAccountSigSync,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/gasAccount';
+import {
+  bindKeyringEventSync,
+  keyringServiceApi,
+} from '@/core/serviceApi/keyring';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import type {
   GasAccountRuntimeAccount,
   GasAccountServiceStore,
