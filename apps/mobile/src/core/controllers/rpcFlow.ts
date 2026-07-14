@@ -2,6 +2,7 @@ import { ethErrors } from 'eth-rpc-errors';
 import { autoConnectServiceApi } from '@/core/serviceApi/autoConnect';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import {
+  ensureDappServiceReady,
   getConnectedDappSnapshot,
   getDappSnapshot,
   hasDappPermissionSnapshot,
@@ -597,6 +598,9 @@ async function runRpcFlow(request: ProviderRequest) {
 }
 
 export default async function rpcFlow(request: ProviderRequest) {
-  await ensureNotificationServiceReady();
+  await Promise.all([
+    ensureDappServiceReady(),
+    ensureNotificationServiceReady(),
+  ]);
   return runRpcFlow(request);
 }

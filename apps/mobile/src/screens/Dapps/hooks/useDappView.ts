@@ -369,7 +369,7 @@ export function useOpenDappView() {
         );
       }
 
-      syncBasicDappInfo(item.origin);
+      void syncBasicDappInfo(item.origin).catch(console.error);
 
       const needTriggerWebViewReload =
         forceReopen || item.$openParams?.initialUrl !== newUrl;

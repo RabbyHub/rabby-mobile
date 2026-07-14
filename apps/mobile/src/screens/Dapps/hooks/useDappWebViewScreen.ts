@@ -5,6 +5,7 @@ import type { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import type { ActiveDappState } from '@/core/bridges/state';
 import {
@@ -316,12 +317,17 @@ export function useDappWebViewScreen() {
       }
 
       // this will change data in dapps backend, maybe not sync with dappInfo, but we don't need basic info later
-      syncBasicDappInfo(item.origin);
+      void syncBasicDappInfo(item.origin).catch(console.error);
 
       const dappInfo: DappInfo = dapps[item.origin];
-      if (!dappInfo.currentAccount) {
-        const account = apisDapp.setCurrentAccountForDapp(item.origin);
-        dappInfo.currentAccount = account;
+      if (!dappInfo?.currentAccount) {
+        const account = getFallbackAccountSnapshot();
+        if (dappInfo) {
+          dappInfo.currentAccount = account || null;
+        }
+        void apisDapp
+          .setCurrentAccountForDapp(item.origin, account)
+          .catch(console.error);
       }
 
       const needTriggerWebViewReload =

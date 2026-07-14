@@ -1,22 +1,29 @@
 import provider from './index';
 import rpcFlow from './rpcFlow';
 
+const mockEnsureDappServiceReady = jest.fn();
+const mockGetDappSnapshot = jest.fn();
+
 const walletConnectAccount = {
   address: '0x1111111111111111111111111111111111111111',
   type: 'Simple Key Pair',
   brandName: 'Rabby',
 };
 
-jest.mock('../services', () => ({
-  dappService: {
-    getDapp: jest.fn(() => undefined),
+jest.mock('@/core/serviceApi/dapp', () => ({
+  ensureDappServiceReady: (...args: unknown[]) =>
+    mockEnsureDappServiceReady(...args),
+  getDappSnapshot: (...args: unknown[]) => mockGetDappSnapshot(...args),
+}));
+
+jest.mock('@/core/serviceApi/keyring', () => ({
+  keyringServiceApi: {
+    hasVault: jest.fn(async () => true),
   },
-  keyringService: {
-    hasVault: jest.fn(() => true),
-  },
-  preferenceService: {
-    getFallbackAccount: jest.fn(() => null),
-  },
+}));
+
+jest.mock('@/core/serviceApi/preference', () => ({
+  getFallbackAccountSnapshot: jest.fn(() => null),
 }));
 
 jest.mock('@/constant', () => ({
@@ -30,6 +37,9 @@ jest.mock('./rpcFlow', () => jest.fn(async request => request.account));
 describe('provider entrypoint', () => {
   beforeEach(() => {
     jest.mocked(rpcFlow).mockClear();
+    mockEnsureDappServiceReady.mockReset();
+    mockGetDappSnapshot.mockReset();
+    mockGetDappSnapshot.mockReturnValue(undefined);
   });
 
   it('preserves WalletConnect account instead of deriving it from dappService', async () => {
@@ -60,5 +70,34 @@ describe('provider entrypoint', () => {
         account: walletConnectAccount,
       }),
     );
+  });
+
+  it('activates dapp state before reading a browser session account', async () => {
+    let finishActivation: (() => void) | undefined;
+    mockEnsureDappServiceReady.mockReturnValue(
+      new Promise<void>(resolve => {
+        finishActivation = resolve;
+      }),
+    );
+
+    const request = provider({
+      data: {
+        method: 'wallet_importAddress',
+        params: [],
+      },
+      session: {
+        origin: 'https://example.com',
+        name: 'Example dapp',
+        icon: '',
+      },
+    } as any);
+
+    await Promise.resolve();
+    expect(mockGetDappSnapshot).not.toHaveBeenCalled();
+
+    finishActivation?.();
+    await request;
+
+    expect(mockGetDappSnapshot).toHaveBeenCalledWith('https://example.com');
   });
 });

@@ -1,7 +1,10 @@
 import { ProviderRequest } from './type';
 
 import { ethErrors } from 'eth-rpc-errors';
-import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import {
+  ensureDappServiceReady,
+  getDappSnapshot,
+} from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 
@@ -31,6 +34,7 @@ export default async function provider<T = void>(
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       account = req.account || getFallbackAccountSnapshot() || undefined;
     } else {
+      await ensureDappServiceReady();
       const site = getDappSnapshot(origin);
       if (site?.isConnected) {
         account =

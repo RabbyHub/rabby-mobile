@@ -63,7 +63,9 @@ export const InnerDappWebViewScreen = ({
     if (!dappOrigin) {
       return;
     }
-    apisDapp.setCurrentAccountForDapp(dappOrigin, nextAccount);
+    void apisDapp
+      .setCurrentAccountForDapp(dappOrigin, nextAccount)
+      .catch(console.error);
   };
 
   if (!activeItem?.url) {

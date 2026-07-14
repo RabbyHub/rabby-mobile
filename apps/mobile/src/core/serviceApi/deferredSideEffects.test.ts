@@ -14,36 +14,30 @@ describe('core/serviceApi deferred side effects', () => {
     jest.clearAllMocks();
   });
 
-  it('runs dapp sync side effects after the service is loaded', async () => {
+  it('requires dapp sync side effects to run after activation', () => {
     mockStartupScheduler();
 
     const { addDappSync } = require('./dapp') as typeof import('./dapp');
-    const { registerCoreServiceLoader, registerService } =
+    const { registerService } =
       require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
 
     const addDapp = jest.fn();
-    registerCoreServiceLoader('dappService', () => {
-      registerService('dappService', {
-        addDapp,
-      } as any);
-    });
-
-    expect(() =>
-      addDappSync({
-        origin: 'https://app.example',
-        name: 'Example',
-        chainId: 'eth',
-      } as any),
-    ).not.toThrow();
-    expect(addDapp).not.toHaveBeenCalled();
-
-    await flushDeferredServiceWork();
-
-    expect(addDapp).toHaveBeenCalledWith({
+    const dapp = {
       origin: 'https://app.example',
       name: 'Example',
       chainId: 'eth',
-    });
+    };
+    expect(() => addDappSync(dapp as any)).toThrow(
+      'Core service "dappService" is not registered',
+    );
+
+    registerService('dappService', {
+      addDapp,
+    } as any);
+
+    addDappSync(dapp as any);
+
+    expect(addDapp).toHaveBeenCalledWith(dapp);
   });
 
   it('requires notification sync side effects to run after activation', () => {

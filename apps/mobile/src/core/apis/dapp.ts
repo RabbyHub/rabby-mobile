@@ -3,6 +3,7 @@ import type { DappInfo } from '@/core/services/dappService';
 import {
   addDappSync,
   disconnectDappSync,
+  ensureDappServiceReady,
   getDappSnapshot,
   getDappsSnapshot,
   hasDappPermissionSnapshot,
@@ -14,7 +15,7 @@ import {
   getFallbackAccountSnapshot,
   getPinnedAddressSnapshot,
 } from '@/core/serviceApi/preference';
-import { broadcastSessionEventSync } from '@/core/serviceApi/session';
+import { sessionServiceApi } from '@/core/serviceApi/session';
 import { BroadcastEvent } from '@/constant/event';
 import type { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '../request';
@@ -29,16 +30,21 @@ import { createDappBySession } from '@/core/utils/createDappBySession';
 
 export { createDappBySession };
 
-export const removeDapp = (origin: string) => {
-  disconnect(origin);
+export const removeDapp = async (origin: string) => {
+  await disconnect(origin);
   removeDappSync(origin);
 };
 
-export const disconnect = (origin: string) => {
+export const disconnect = async (origin: string) => {
+  await ensureDappServiceReady();
   if (!hasDappPermissionSnapshot(origin)) {
     return;
   }
-  broadcastSessionEventSync(BroadcastEvent.accountsChanged, [], origin);
+  await sessionServiceApi.broadcastEvent(
+    BroadcastEvent.accountsChanged,
+    [],
+    origin,
+  );
   disconnectDappSync(origin);
 };
 
@@ -55,6 +61,7 @@ export const connect = async ({
   info?: BasicDappInfo;
   currentAccount?: DappInfo['currentAccount'];
 }) => {
+  await ensureDappServiceReady();
   const dapp = getDappSnapshot(origin);
   const allAccounts = await getAllAccountsToDisplay();
   const pinAddresses = getPinnedAddressSnapshot();
@@ -109,13 +116,14 @@ export const connect = async ({
     isConnected: true,
     chainId,
   });
-  syncBasicDappInfo(origin);
+  void syncBasicDappInfo(origin).catch(console.error);
 };
 
-export function setCurrentAccountForDapp(
+export async function setCurrentAccountForDapp(
   origin: string,
   currentAccount?: DappInfo['currentAccount'],
 ) {
+  await ensureDappServiceReady();
   if (currentAccount === undefined) {
     currentAccount = getFallbackAccountSnapshot();
   }
@@ -127,7 +135,7 @@ export function setCurrentAccountForDapp(
   const dapp = getDappSnapshot(origin);
 
   if (dapp?.isConnected) {
-    broadcastSessionEventSync(
+    await sessionServiceApi.broadcastEvent(
       BroadcastEvent.accountsChanged,
       !dapp.currentAccount ? [] : [dapp.currentAccount?.address.toLowerCase()],
       dapp.origin,
@@ -156,6 +164,8 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
 
   if (!ids.length) return;
 
+  await ensureDappServiceReady();
+
   const res = await openapi.getDappsInfo({
     ids: ids,
   });
@@ -176,6 +186,7 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
 };
 
 export const syncBasicDappsInfo = async () => {
+  await ensureDappServiceReady();
   const dapps = Object.values(getDappsSnapshot());
   const ids = dapps
     .filter(
@@ -210,13 +221,14 @@ export const syncBasicDappsInfo = async () => {
   }
 };
 
-export const updateDappChain = (dapp: DappInfo) => {
+export const updateDappChain = async (dapp: DappInfo) => {
+  await ensureDappServiceReady();
   updateDappSync(dapp);
   const chain = findChain({
     enum: dapp.chainId,
   });
   if (dapp.isConnected && chain) {
-    broadcastSessionEventSync(
+    await sessionServiceApi.broadcastEvent(
       BroadcastEvent.chainChanged,
       {
         chainId: chain.hex,

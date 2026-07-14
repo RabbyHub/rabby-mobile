@@ -6,11 +6,12 @@ import type {
 import type { FieldNilable } from '@rabby-wallet/base-utils';
 import {
   getRegisteredService,
+  requireCoreService,
   waitForCoreService,
 } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
-  runServiceSideEffectWhenReady,
+  ensureServiceApiReady,
 } from './createDeferredServiceApi';
 
 export type DappServiceApiContract = DappService;
@@ -21,50 +22,38 @@ export const dappServiceApi = createDeferredServiceApi<
 
 const EMPTY_DAPPS: Record<string, DappInfo> = {};
 
+export function ensureDappServiceReady() {
+  return ensureServiceApiReady('dappService');
+}
+
+function requireDappService() {
+  return requireCoreService('dappService');
+}
+
 export function getDappSnapshot(origin: string) {
   return getRegisteredService('dappService')?.getDapp(origin);
 }
 
 export function addDappSync(...args: Parameters<DappService['addDapp']>) {
-  runServiceSideEffectWhenReady(
-    'dappService',
-    service => service.addDapp(...args),
-    'dappService.addDapp',
-  );
+  requireDappService().addDapp(...args);
 }
 
 export function removeDappSync(...args: Parameters<DappService['removeDapp']>) {
-  runServiceSideEffectWhenReady(
-    'dappService',
-    service => service.removeDapp(...args),
-    'dappService.removeDapp',
-  );
+  requireDappService().removeDapp(...args);
 }
 
 export function updateDappSync(...args: Parameters<DappService['updateDapp']>) {
-  runServiceSideEffectWhenReady(
-    'dappService',
-    service => service.updateDapp(...args),
-    'dappService.updateDapp',
-  );
+  requireDappService().updateDapp(...args);
 }
 
 export function patchDappsSync(...args: Parameters<DappService['patchDapps']>) {
-  runServiceSideEffectWhenReady(
-    'dappService',
-    service => service.patchDapps(...args),
-    'dappService.patchDapps',
-  );
+  requireDappService().patchDapps(...args);
 }
 
 export function disconnectDappSync(
   ...args: Parameters<DappService['disconnect']>
 ) {
-  runServiceSideEffectWhenReady(
-    'dappService',
-    service => service.disconnect(...args),
-    'dappService.disconnect',
-  );
+  requireDappService().disconnect(...args);
 }
 
 export function getDappsSnapshot() {

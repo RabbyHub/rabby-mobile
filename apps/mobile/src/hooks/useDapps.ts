@@ -131,11 +131,11 @@ export function useDapps() {
   }, []);
 
   const removeDapp = useCallback((id: string) => {
-    apisDapp.removeDapp(id);
+    void apisDapp.removeDapp(id).catch(console.error);
   }, []);
 
   const disconnectDapp = useCallback((dappOrigin: string) => {
-    apisDapp.disconnect(dappOrigin);
+    void apisDapp.disconnect(dappOrigin).catch(console.error);
   }, []);
 
   // const isDappConnected = useCallback(
