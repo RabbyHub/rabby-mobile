@@ -37,9 +37,9 @@ import {
 } from '@/core/serviceApi/notification';
 import { broadcastSessionEventSync } from '@/core/serviceApi/session';
 import { swapServiceApi } from '@/core/serviceApi/swap';
-import { addBroadcastTransactionSync } from '@/core/serviceApi/transactionBroadcastWatcher';
+import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
-import { addWatchedTransactionSync } from '@/core/serviceApi/transactionWatcher';
+import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
 // import {
 //   transactionWatchService,
 //   transactionHistoryService,
@@ -1177,22 +1177,30 @@ class ProviderController extends BaseController {
         });
         void transactionHistoryServiceApi.removeSigningTx(signingTxId!);
         if (hash) {
-          addWatchedTransactionSync(
-            `${txParams.from}_${approvalRes.nonce}_${chain}`,
-            {
+          void transactionWatcherServiceApi
+            .addTx(`${txParams.from}_${approvalRes.nonce}_${chain}`, {
               nonce: approvalRes.nonce,
               hash,
               chain,
-            },
-          );
+            })
+            .catch(error => {
+              console.error('[transactionWatcher] addTx failed', error);
+            });
         }
         if (reqId && !hash) {
-          addBroadcastTransactionSync(reqId, {
-            reqId,
-            address: txParams.from,
-            chainId: findChain({ enum: chain })!.id,
-            nonce: approvalRes.nonce,
-          });
+          void transactionBroadcastWatcherServiceApi
+            .addTx(reqId, {
+              reqId,
+              address: txParams.from,
+              chainId: findChain({ enum: chain })!.id,
+              nonce: approvalRes.nonce,
+            })
+            .catch(error => {
+              console.error(
+                '[transactionBroadcastWatcher] addTx failed',
+                error,
+              );
+            });
         }
 
         // if (isCoboSafe) {
