@@ -9,7 +9,6 @@ import {
   StyleProp,
   ViewStyle,
   TouchableOpacity,
-  Pressable,
   Image,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -19,7 +18,7 @@ import {
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
-import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
+import { RcIconLockCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
@@ -35,10 +34,14 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
+import DragHandleSVG from '@/assets2024/icons/whitelist/drag-handle.svg';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Sortable, { useItemContext } from 'react-native-sortables';
 
 const SIZES = {
+  dragHandleW: 60,
+  dragIcon: 20,
   itemH: 78,
-  itemGap: 12,
 };
 
 interface IProps {
@@ -49,8 +52,45 @@ interface IProps {
   enableMenu?: boolean;
   isMyImported?: boolean;
   hideBalance?: boolean;
+  interactionDisabled?: boolean;
+  isActiveDragging?: boolean;
   onPress?: () => void;
+  sortable?: boolean;
 }
+
+type DragHandleTouchableProps = React.PropsWithChildren<{
+  onTouchesDown: () => void;
+  onTouchesEnd: () => void;
+  style?: StyleProp<ViewStyle>;
+}>;
+
+const DragHandleTouchable = ({
+  children,
+  onTouchesDown,
+  onTouchesEnd,
+  style,
+}: DragHandleTouchableProps) => {
+  const { gesture: dragGesture } = useItemContext();
+  const touchGesture = useMemo(
+    () =>
+      Gesture.Manual()
+        .simultaneousWithExternalGesture(dragGesture)
+        .runOnJS(true)
+        .onTouchesDown(onTouchesDown)
+        .onTouchesUp(onTouchesEnd)
+        .onTouchesCancelled(onTouchesEnd),
+    [dragGesture, onTouchesDown, onTouchesEnd],
+  );
+
+  return (
+    <GestureDetector gesture={touchGesture} userSelect="none">
+      <View collapsable={false} style={style}>
+        {children}
+      </View>
+    </GestureDetector>
+  );
+};
+
 export const WhiteListItemInSheetModal = ({
   account,
   style,
@@ -58,11 +98,20 @@ export const WhiteListItemInSheetModal = ({
   enableMenu,
   isMyImported,
   hideBalance,
+  interactionDisabled = false,
+  isActiveDragging = false,
   onPress,
+  sortable = false,
 }: IProps) => {
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
+  const handleDragHandleTouchesDown = React.useCallback(() => {
+    setIsPressing(true);
+  }, []);
+  const handleDragHandleTouchesEnd = React.useCallback(() => {
+    setIsPressing(false);
+  }, []);
   const { removeWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
@@ -71,6 +120,12 @@ export const WhiteListItemInSheetModal = ({
   const showCexInfo = useMemo(() => {
     return cexInfo?.id && cexInfo.is_deposit;
   }, [cexInfo?.id, cexInfo?.is_deposit]);
+
+  React.useEffect(() => {
+    if (interactionDisabled) {
+      handleDragHandleTouchesEnd();
+    }
+  }, [handleDragHandleTouchesEnd, interactionDisabled]);
 
   const editAliasName = useAliasNameEditModal();
 
@@ -142,7 +197,104 @@ export const WhiteListItemInSheetModal = ({
     };
   }, [account.address, account.aliasName]);
 
-  const children = (
+  const handlePress = React.useCallback(() => {
+    if (interactionDisabled) {
+      return;
+    }
+
+    if (inWhiteList || isMyImported) {
+      onPress?.();
+    } else {
+      const id = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.CONFIRM_ADDRESS,
+        account,
+        bottomSheetModalProps: {
+          enableDynamicSizing: true,
+        },
+        onCancel: () => {
+          removeGlobalBottomSheetModal2024(id);
+        },
+        onConfirm: () => {
+          removeGlobalBottomSheetModal2024(id);
+          onPress?.();
+        },
+      });
+    }
+  }, [account, inWhiteList, interactionDisabled, isMyImported, onPress]);
+
+  const addressContent = (
+    <InnerAddressItem style={styles.rootItem} account={account}>
+      {({ WalletIcon, WalletBalance }) => (
+        <View style={styles.item}>
+          <View style={styles.iconWrapper}>
+            {showCexInfo && cexInfo?.logo_url ? (
+              <Image
+                source={{ uri: cexInfo?.logo_url }}
+                style={styles.walletIcon}
+                width={46}
+                height={46}
+              />
+            ) : (
+              <WalletIcon style={styles.walletIcon} width={46} height={46} />
+            )}
+            {inWhiteList && (
+              <RcIconLockCC
+                style={styles.lockIcon}
+                color={colors2024['green-default']}
+                surroundColor={colors2024['neutral-bg-1']}
+                width={22}
+                height={22}
+              />
+            )}
+          </View>
+          <View style={styles.itemInfo}>
+            <View
+              style={[
+                styles.itemName,
+                hideBalance && styles.itemNameNoBalance,
+              ]}>
+              <Text
+                style={[
+                  styles.itemNameText,
+                  {
+                    maxWidth: hideTail ? '100%' : '30%',
+                  },
+                  hideBalance && styles.hideBalanceNameText,
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {formatName}
+              </Text>
+              {hideBalance ? (
+                <Text style={styles.hideBalanceAddress}>
+                  {ellipsisAddress(account.address)}
+                </Text>
+              ) : (
+                !hideTail && (
+                  <Text style={styles.address}>
+                    {`(${ellipsisAddress(account.address)})`}
+                  </Text>
+                )
+              )}
+            </View>
+            {!hideBalance && <WalletBalance style={styles.itemBalanceText} />}
+          </View>
+        </View>
+      )}
+    </InnerAddressItem>
+  );
+
+  const cardStyle = StyleSheet.flatten([
+    styles.card,
+    style,
+    enableMenu && (isPressing || isActiveDragging) && styles.cardPressing,
+  ]);
+
+  const effectiveMenuActions = interactionDisabled
+    ? menuActions.map(action => ({ ...action, disabled: true }))
+    : menuActions;
+
+  const pressableItem = (
     <AddressItemShadowView
       style={[
         styles.shadowView,
@@ -154,26 +306,8 @@ export const WhiteListItemInSheetModal = ({
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root])}
         delayLongPress={IS_ANDROID ? 350 : 200} // long press delay
-        onPress={() => {
-          if (inWhiteList || isMyImported) {
-            onPress?.();
-          } else {
-            const id = createGlobalBottomSheetModal2024({
-              name: MODAL_NAMES.CONFIRM_ADDRESS,
-              account,
-              bottomSheetModalProps: {
-                enableDynamicSizing: true,
-              },
-              onCancel: () => {
-                removeGlobalBottomSheetModal2024(id);
-              },
-              onConfirm: (acc, addressDesc) => {
-                removeGlobalBottomSheetModal2024(id);
-                onPress?.();
-              },
-            });
-          }
-        }}
+        disabled={interactionDisabled}
+        onPress={handlePress}
         onLongPress={() => {
           if (enableMenu) {
             return;
@@ -183,102 +317,67 @@ export const WhiteListItemInSheetModal = ({
             ignoreAndroidSystemSettings: false,
           });
         }}>
-        <Card
-          style={StyleSheet.flatten([
-            styles.card,
-            style,
-            enableMenu && isPressing && styles.cardPressing,
-          ])}>
-          <InnerAddressItem style={styles.rootItem} account={account}>
-            {({ WalletIcon, WalletBalance }) => (
-              <View style={styles.item}>
-                <View style={styles.iconWrapper}>
-                  {showCexInfo && cexInfo?.logo_url ? (
-                    <Image
-                      source={{ uri: cexInfo?.logo_url }}
-                      style={styles.walletIcon}
-                      width={46}
-                      height={46}
-                    />
-                  ) : (
-                    <WalletIcon
-                      style={styles.walletIcon}
-                      width={46}
-                      height={46}
-                    />
-                  )}
-                  {inWhiteList && (
-                    <RcIconLockCC
-                      style={styles.lockIcon}
-                      color={colors2024['green-default']}
-                      surroundColor={colors2024['neutral-bg-1']}
-                      width={22}
-                      height={22}
-                    />
-                  )}
-                </View>
-                <View style={styles.itemInfo}>
-                  <View
-                    style={[
-                      styles.itemName,
-                      hideBalance && styles.itemNameNoBalance,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.itemNameText,
-                        {
-                          maxWidth: hideTail ? '100%' : '30%',
-                        },
-                        hideBalance && styles.hideBalanceNameText,
-                      ]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {formatName}
-                    </Text>
-                    {hideBalance ? (
-                      <Text style={styles.hideBalanceAddress}>
-                        {ellipsisAddress(account.address)}
-                      </Text>
-                    ) : (
-                      !hideTail && (
-                        <Text style={styles.address}>
-                          {`(${ellipsisAddress(account.address)})`}
-                        </Text>
-                      )
-                    )}
-                  </View>
-                  {!hideBalance && (
-                    <WalletBalance style={styles.itemBalanceText} />
-                  )}
-                </View>
-              </View>
-            )}
-          </InnerAddressItem>
-        </Card>
+        <Card style={cardStyle}>{addressContent}</Card>
       </TouchableOpacity>
     </AddressItemShadowView>
   );
-  if (!enableMenu) {
-    return children;
-  }
-  return (
+
+  const itemWithMenu = enableMenu ? (
     <ContextMenuView
       menuConfig={{
         menuTitle: account.address,
-        menuActions: menuActions,
+        menuActions: effectiveMenuActions,
       }}
       preViewBorderRadius={16}
       triggerProps={{ action: 'longPress' }}>
-      {children}
+      {pressableItem}
     </ContextMenuView>
+  ) : (
+    pressableItem
+  );
+
+  if (!sortable) {
+    return itemWithMenu;
+  }
+
+  return (
+    <View style={styles.sortableRoot}>
+      {itemWithMenu}
+      <Sortable.Handle style={styles.dragHandle}>
+        <DragHandleTouchable
+          style={styles.dragHandleTouchable}
+          onTouchesDown={handleDragHandleTouchesDown}
+          onTouchesEnd={handleDragHandleTouchesEnd}>
+          <DragHandleSVG height={SIZES.dragIcon} width={SIZES.dragIcon} />
+        </DragHandleTouchable>
+      </Sortable.Handle>
+    </View>
   );
 };
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
-    // borderRadius: 20,
     overflow: 'hidden',
-    // backgroundColor: colors2024['neutral-bg-1'],
+  },
+  sortableRoot: {
+    position: 'relative',
+    width: '100%',
+  },
+  dragHandle: {
+    alignItems: 'center',
+    height: SIZES.itemH,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: SIZES.dragHandleW,
+    zIndex: 1,
+  },
+  dragHandleTouchable: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    width: '100%',
   },
   rootPressing: {
     borderColor: colors2024['brand-light-2'],
@@ -288,6 +387,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
+    position: 'relative',
+    width: '100%',
   },
   card: {
     flexDirection: 'row',

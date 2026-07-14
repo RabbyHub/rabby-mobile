@@ -30,7 +30,13 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BottomSheetFlatList, TouchableHighlight } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetFlatList,
+  type BottomSheetFlatListMethods,
+  TouchableHighlight,
+} from '@gorhom/bottom-sheet';
+import { useAnimatedRef } from 'react-native-reanimated';
+import Sortable from 'react-native-sortables';
 import { useWhitelistVariedAccounts } from '@/screens/Send/hooks/useWhiteListAddress';
 import {
   RecentHistoryItem,
@@ -39,8 +45,6 @@ import {
 import { RecentUsedItem } from './RecentUsedItem';
 import { isAddrInWhitelist } from '@/hooks/whitelist';
 import { filterMyAccounts, makeAccountObject } from '@/utils/account';
-import { addressUtils } from '@rabby-wallet/base-utils';
-import { WhiteListItemInSheetModal } from './WhiteListItem';
 import { AddressItemInSheetModal } from './AddressItem';
 import EmptyWhiteListHolder from './EmptyWhiteListHolder';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
@@ -50,6 +54,7 @@ import { RcIconLockCC } from '@/assets/icons/send';
 import { default as RcIconUnknownAddressAvatarCC } from '@/screens/Send/icons/unknown-address-avatar-cc.svg';
 import { SelectAccountSheetModalSizes } from './layout';
 import { Text } from '@/components/Typography';
+import { SortableWhitelistSection } from './SortableWhitelistSection';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -170,6 +175,18 @@ export function AccountsPanelInSheetModal({
 }) {
   const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const scrollableRef = useAnimatedRef<FlatList<CombineDataInterface>>();
+  const setScrollableRef = useCallback(
+    (instance: BottomSheetFlatListMethods | null) => {
+      if (instance) {
+        // BottomSheetFlatList forwards its underlying animated FlatList at
+        // runtime, while its public ref type intentionally exposes only the
+        // supported list methods.
+        scrollableRef(instance as FlatList<CombineDataInterface>);
+      }
+    },
+    [scrollableRef],
+  );
 
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
@@ -193,6 +210,7 @@ export function AccountsPanelInSheetModal({
     whitelist,
     myAccounts,
     findAccountWithoutBalance,
+    updateWhitelistOrder,
   } = useWhitelistVariedAccounts();
 
   useEffect(() => {
@@ -476,116 +494,114 @@ export function AccountsPanelInSheetModal({
 
   return (
     <View style={[styles.panel, containerStyle]}>
-      <View style={styles.scrollViewContainer}>
-        <BottomSheetFlatList<CombineDataInterface>
-          style={styles.scrollView}
-          data={combinedData}
-          // ref={scrollViewRef}
-          // contentContainerStyle={styles.scrollViewContentContainer}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={renderEmpty}
-          renderItem={({
-            item: combinedItem,
-          }: {
-            item: CombineDataInterface;
-          }) => {
-            const isOfWhitelistSection =
-              combinedItem.title === TxAccountPannelSectionTitle.Whitelist;
+      {/* Keep the active sortable item outside the moving FlatList content so
+          auto-scroll does not have to visually cancel the parent scroll. */}
+      <Sortable.PortalProvider>
+        <View style={styles.scrollViewContainer}>
+          <BottomSheetFlatList<CombineDataInterface>
+            ref={setScrollableRef}
+            style={styles.scrollView}
+            data={combinedData}
+            // ref={scrollViewRef}
+            // contentContainerStyle={styles.scrollViewContentContainer}
+            ListHeaderComponent={renderHeader}
+            ListEmptyComponent={renderEmpty}
+            renderItem={({
+              item: combinedItem,
+            }: {
+              item: CombineDataInterface;
+            }) => {
+              const isOfWhitelistSection =
+                combinedItem.title === TxAccountPannelSectionTitle.Whitelist;
 
-            return (
-              <View style={styles.section}>
-                {ListHeaderComponent(combinedItem.title)}
-                {shouldShowDatalist(combinedItem.title) && (
-                  <FlatList<RecentHistoryItem | AccountToSelect>
-                    data={
-                      combinedItem.title === TxAccountPannelSectionTitle.Recent
-                        ? combinedItem.recentUsedAddresses
-                        : combinedItem.data
-                    }
-                    style={styles.addressListContainer}
-                    renderItem={({ item, index }) => {
-                      const { account, history } = extractMixedItem(item);
+              return (
+                <View style={styles.section}>
+                  {ListHeaderComponent(combinedItem.title)}
+                  {shouldShowDatalist(combinedItem.title) &&
+                    (isOfWhitelistSection ? (
+                      <SortableWhitelistSection
+                        accounts={combinedItem.data}
+                        myAccounts={myAccounts}
+                        scrollableRef={scrollableRef}
+                        onReorder={updateWhitelistOrder}
+                        onSelect={cbOnSelectedAccount}
+                      />
+                    ) : (
+                      <FlatList<RecentHistoryItem | AccountToSelect>
+                        data={
+                          combinedItem.title ===
+                          TxAccountPannelSectionTitle.Recent
+                            ? combinedItem.recentUsedAddresses
+                            : combinedItem.data
+                        }
+                        style={styles.addressListContainer}
+                        renderItem={({ item, index }) => {
+                          const { account, history } = extractMixedItem(item);
 
-                      if (account) {
-                        const Content = isOfWhitelistSection ? (
-                          <WhiteListItemInSheetModal
-                            account={account}
-                            hideBalance
-                            inWhiteList
-                            enableMenu
-                            isMyImported={myAccounts.some(i =>
-                              addressUtils.isSameAddress(
-                                i.address,
-                                account.address,
-                              ),
-                            )}
-                            onPress={() => {
-                              cbOnSelectedAccount?.(account);
-                            }}
-                          />
-                        ) : (
-                          <AddressItemInSheetModal
-                            ofTitleType={combinedItem.title}
-                            recentAddressData={null}
-                            addressItemProps={{ account: account }}
-                            isPinned={isPinnedAccount(account)}
-                            onPressAccount={cbOnSelectedAccount}
-                            replaceNameWithAliasAddress={false}
-                            isReceive={false}
-                            showCopyAndQR={false}
-                            defaultPressAction={defaultPressItemAction}
-                          />
-                        );
-                        return (
-                          <View
-                            key={`${account.address}-${account.type}-${account.brandName}-${index}`}
-                            style={[
-                              { borderRadius: 16 },
-                              index > 0 && styles.addressItemTopGap,
-                            ]}>
-                            {Content}
-                          </View>
-                        );
-                      } else if (history) {
-                        const { account, inWhitelist } =
-                          findAccountWithoutBalance(history.toAddress);
+                          if (account) {
+                            return (
+                              <View
+                                key={`${account.address}-${account.type}-${account.brandName}-${index}`}
+                                style={[
+                                  { borderRadius: 16 },
+                                  index > 0 && styles.addressItemTopGap,
+                                ]}>
+                                <AddressItemInSheetModal
+                                  ofTitleType={combinedItem.title}
+                                  recentAddressData={null}
+                                  addressItemProps={{ account: account }}
+                                  isPinned={isPinnedAccount(account)}
+                                  onPressAccount={cbOnSelectedAccount}
+                                  replaceNameWithAliasAddress={false}
+                                  isReceive={false}
+                                  showCopyAndQR={false}
+                                  defaultPressAction={defaultPressItemAction}
+                                />
+                              </View>
+                            );
+                          } else if (history) {
+                            const { account, inWhitelist } =
+                              findAccountWithoutBalance(history.toAddress);
 
-                        return (
-                          <RecentUsedItem
-                            key={history.time}
-                            account={account}
-                            timeStamp={history.time}
-                            inWhiteList={inWhitelist}
-                            onPress={() => {
-                              cbOnSelectedAccount?.(account);
-                            }}
-                            style={[index > 0 && styles.addressItemTopGap]}
-                          />
-                        );
-                      }
+                            return (
+                              <RecentUsedItem
+                                key={history.time}
+                                account={account}
+                                timeStamp={history.time}
+                                inWhiteList={inWhitelist}
+                                onPress={() => {
+                                  cbOnSelectedAccount?.(account);
+                                }}
+                                style={[index > 0 && styles.addressItemTopGap]}
+                              />
+                            );
+                          }
 
-                      return null;
-                    }}
-                    keyExtractor={(item, index) => {
-                      const { account, history } = extractMixedItem(item);
+                          return null;
+                        }}
+                        keyExtractor={(item, index) => {
+                          const { account, history } = extractMixedItem(item);
 
-                      if (account) {
-                        return `account-${account.address}-${account.brandName}-${index}`;
-                      } else if (history) {
-                        return `recent-${history.toAddress}-${history.time}-${index}`;
-                      }
-                      return `empty-${index}`;
-                    }}
-                    ListFooterComponent={null}
-                  />
-                )}
-              </View>
-            );
-          }}
-          keyExtractor={(item, index) => `${item.type}-${index}`}
-          ListFooterComponent={<View style={{ height: 40 + safeOffBottom }} />}
-        />
-      </View>
+                          if (account) {
+                            return `account-${account.address}-${account.brandName}-${index}`;
+                          } else if (history) {
+                            return `recent-${history.toAddress}-${history.time}-${index}`;
+                          }
+                          return `empty-${index}`;
+                        }}
+                        ListFooterComponent={null}
+                      />
+                    ))}
+                </View>
+              );
+            }}
+            keyExtractor={(item, index) => `${item.type}-${index}`}
+            ListFooterComponent={
+              <View style={{ height: 40 + safeOffBottom }} />
+            }
+          />
+        </View>
+      </Sortable.PortalProvider>
     </View>
   );
 }
