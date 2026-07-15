@@ -437,7 +437,11 @@ export const PerpsMultiAssetPosition: React.FC = () => {
       marketDataRetryCount.current = 0;
       return;
     }
-    if (!hasPosition || marketDataStatus === 'loading') {
+    if (!hasPosition) {
+      marketDataRetryCount.current = 0;
+      return;
+    }
+    if (marketDataStatus === 'loading') {
       return;
     }
     const delay = Math.min(30_000, 2_000 * 2 ** marketDataRetryCount.current);
