@@ -80,39 +80,93 @@ const walletConnectKeyValueStorageShim = path.resolve(
   projectRoot,
   'src/core/walletconnect/keyvaluestorageRuntimeShim.js',
 );
+const nodeModulesRoots = [
+  path.resolve(projectRoot, 'node_modules'),
+  path.resolve(workspaceRoot, 'node_modules'),
+];
 // Keep these exceptions explicit so resolution stays deterministic and cacheable.
-const resolverSourceAliases = new Map([
+// Resolve lazily because not every bundle target installs or consumes every alias.
+const resolverSourceAliasCandidates = new Map([
   [
     '@craftzdog/react-native-buffer',
-    require.resolve('@craftzdog/react-native-buffer'),
+    ['@craftzdog/react-native-buffer/index.js'],
   ],
   [
     '@ledgerhq/devices/ble/receiveAPDU',
-    require.resolve('@ledgerhq/devices/ble/receiveAPDU'),
+    [
+      '@ledgerhq/devices/lib/ble/receiveAPDU.js',
+      '@ledgerhq/devices/lib-es/ble/receiveAPDU.js',
+    ],
   ],
   [
     '@ledgerhq/devices/ble/sendAPDU',
-    require.resolve('@ledgerhq/devices/ble/sendAPDU'),
+    [
+      '@ledgerhq/devices/lib/ble/sendAPDU.js',
+      '@ledgerhq/devices/lib-es/ble/sendAPDU.js',
+    ],
   ],
   [
     '@ledgerhq/domain-service/signers/index',
-    require.resolve('@ledgerhq/domain-service/signers/index'),
+    [
+      '@ledgerhq/domain-service/lib/signers/index.js',
+      '@ledgerhq/domain-service/lib-es/signers/index.js',
+    ],
   ],
   [
     '@ledgerhq/evm-tools/message/EIP712/index',
-    require.resolve('@ledgerhq/evm-tools/message/EIP712/index'),
+    [
+      '@ledgerhq/evm-tools/lib/message/EIP712/index.js',
+      '@ledgerhq/evm-tools/lib-es/message/EIP712/index.js',
+    ],
   ],
   [
     '@ledgerhq/evm-tools/message/index',
-    require.resolve('@ledgerhq/evm-tools/message/index'),
+    [
+      '@ledgerhq/evm-tools/lib/message/index.js',
+      '@ledgerhq/evm-tools/lib-es/message/index.js',
+    ],
   ],
   [
     '@ledgerhq/evm-tools/selectors/index',
-    require.resolve('@ledgerhq/evm-tools/selectors/index'),
+    [
+      '@ledgerhq/evm-tools/lib/selectors/index.js',
+      '@ledgerhq/evm-tools/lib-es/selectors/index.js',
+    ],
   ],
-  ['p-queue', require.resolve('p-queue')],
-  ['react-native-quick-crypto', require.resolve('react-native-quick-crypto')],
+  ['p-queue', ['p-queue/dist/index.js']],
+  [
+    'react-native-quick-crypto',
+    [
+      'react-native-quick-crypto/lib/commonjs/index.js',
+      'react-native-quick-crypto/lib/module/index.js',
+    ],
+  ],
 ]);
+const resolveSourceFileAlias = moduleName => {
+  const relativeCandidates = resolverSourceAliasCandidates.get(moduleName);
+  if (!relativeCandidates) {
+    return undefined;
+  }
+
+  const absoluteCandidates = nodeModulesRoots.flatMap(nodeModulesRoot =>
+    relativeCandidates.map(relativePath =>
+      path.resolve(nodeModulesRoot, relativePath),
+    ),
+  );
+  const sourceFile = absoluteCandidates.find(candidate =>
+    fs.existsSync(candidate),
+  );
+
+  if (!sourceFile) {
+    throw new Error(
+      `Unable to resolve configured Metro alias ${moduleName}. Checked: ${absoluteCandidates.join(
+        ', ',
+      )}`,
+    );
+  }
+
+  return sourceFile;
+};
 const escapePathForRegex = value =>
   value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 const turboBuildBlockList = new RegExp(
@@ -264,7 +318,7 @@ const config = {
         };
       }
 
-      const sourceFileAlias = resolverSourceAliases.get(moduleName);
+      const sourceFileAlias = resolveSourceFileAlias(moduleName);
       if (sourceFileAlias) {
         return {
           filePath: sourceFileAlias,
