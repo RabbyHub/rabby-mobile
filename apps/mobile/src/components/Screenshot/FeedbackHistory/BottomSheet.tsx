@@ -84,7 +84,8 @@ const DEFAULT_FEEDBACK_MESSAGE: ClientFeedbackMessage = {
   conversation_id: '',
   sender: 'ops',
   ops_user_id: null,
-  content: 'Report any bugs directly to Rabby in this chat!',
+  content:
+    'Need help? Share your feedback directly with the Rabby team in this chat.',
   image_url_list: [],
   video_url_list: [],
   source: '',
