@@ -39371,7 +39371,7 @@ __metadata:
     react-native-dotenv: "npm:^3.4.9"
     react-native-edge-to-edge: "npm:^1.6.0"
     react-native-exception-handler: "npm:^2.10.10"
-    react-native-fast-image: "npm:^8.6.3"
+    react-native-fast-image: "patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch"
     react-native-gesture-handler: "npm:2.30.0"
     react-native-get-random-values: "npm:^2.0.0"
     react-native-haptic-feedback: "npm:2.3.3"
@@ -40158,13 +40158,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-fast-image@npm:^8.6.3":
+"react-native-fast-image@npm:8.6.3":
   version: 8.6.3
-  resolution: "react-native-fast-image@npm:8.6.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-fast-image%2F-%2Freact-native-fast-image-8.6.3.tgz"
+  resolution: "react-native-fast-image@npm:8.6.3"
   peerDependencies:
     react: ^17 || ^18
     react-native: ">=0.60.0"
   checksum: 10/ed340c2b6c2e76658fa0a899a45132871017018bec0a03423b7456610810e79b2844dfa16063c05d98b89a7613eeb0de2fdf3ad978cdfa4d488a4e01228a7349
+  languageName: node
+  linkType: hard
+
+"react-native-fast-image@patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
+  version: 8.6.3
+  resolution: "react-native-fast-image@patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch::version=8.6.3&hash=471527&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  peerDependencies:
+    react: ^17 || ^18
+    react-native: ">=0.60.0"
+  checksum: 10/981d9568989632d245c4a494abf235d3f6659bac1993df955f47285861be2766f276dc730fdfa6cd467157c46bd8a78952573a12edccd1c0b617c6f63ba94acd
   languageName: node
   linkType: hard
 

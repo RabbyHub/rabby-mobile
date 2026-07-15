@@ -192,7 +192,7 @@
     "react-native-dotenv": "^3.4.9",
     "react-native-edge-to-edge": "^1.6.0",
     "react-native-exception-handler": "^2.10.10",
-    "react-native-fast-image": "^8.6.3",
+    "react-native-fast-image": "patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch",
     "react-native-gesture-handler": "2.30.0",
     "react-native-get-random-values": "^2.0.0",
     "react-native-haptic-feedback": "2.3.3",
