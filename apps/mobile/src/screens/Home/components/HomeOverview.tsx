@@ -170,7 +170,7 @@ function couldDoRefresh() {
 }
 
 const OFFSETS = {
-  atBottomThreshold: 0,
+  atBottomThreshold: 2,
   // homeSwipeThreadhold: 20,
 };
 
@@ -184,30 +184,18 @@ const {
   swipeUpHintHeight,
 } = homeDrawerAnimateMutable;
 
-function getIsAtBottom(scrollY: number, translateY = 0) {
+function getIsAtBottom(scrollY: number) {
   'worklet';
-  const ret = {
-    isAtBottom: false,
-  };
-  if (!scrollViewContentHeight || !scrollViewLayoutHeight) {
-    ret;
+  const contentHeight = scrollViewContentHeight.value;
+  const layoutHeight = scrollViewLayoutHeight.value;
+
+  if (contentHeight <= 0 || layoutHeight <= 0) {
+    return false;
   }
 
-  const scrollOffset = Math.max(
-    0,
-    scrollViewContentHeight.value - scrollViewLayoutHeight.value,
-  );
+  const scrollOffset = Math.max(0, contentHeight - layoutHeight);
   const restScrollOffset = clamp(scrollOffset - scrollY, 0, scrollOffset);
-  ret.isAtBottom = restScrollOffset <= OFFSETS.atBottomThreshold;
-
-  const absScrollY = scrollY - translateY;
-
-  return {
-    ...ret,
-    absScrollY,
-    scrollOffset,
-    restScrollOffset,
-  };
+  return restScrollOffset <= OFFSETS.atBottomThreshold;
 }
 
 const scrHeight = Dimensions.get('screen').height;
@@ -355,7 +343,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 
   const startValues = useSharedValue({
     startedAtTop: scrollY.value <= 5,
-    restScrollOffset: 0,
+    startedAtBottom: false,
     hasImpactOnPandown: false,
     hasImpactOnPanup: false,
   });
@@ -366,24 +354,24 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
       .maxPointers(1)
       .onStart(() => {
-        startValues.value.restScrollOffset = getIsAtBottom(
-          scrollY.value,
-        ).restScrollOffset;
+        startValues.value.startedAtBottom = getIsAtBottom(scrollY.value);
         startValues.value.startedAtTop = scrollY.value <= 5;
       })
       .onUpdate(event => {
         panUp: {
-          const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
-          const restScrollOffset = startValues.value.restScrollOffset;
-
-          translateY.value = event.translationY + restScrollOffset;
-          if (isAtBottom) {
+          if (startValues.value.startedAtBottom && event.translationY < 0) {
+            translateY.value = event.translationY;
             scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
           } else {
+            translateY.value = 0;
             scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
           }
 
-          if (hasOverThreshold() && event.translationY < 0) {
+          if (
+            startValues.value.startedAtBottom &&
+            hasOverThreshold() &&
+            event.translationY < 0
+          ) {
             if (IS_ANDROID) {
               scrollToEnd(true, true);
             }
@@ -411,7 +399,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         panUp: {
           const hasImpactOnPandown = startValues.value.hasImpactOnPandown;
 
-          if (hasOverThreshold()) {
+          if (startValues.value.startedAtBottom && hasOverThreshold()) {
             translateY.value = withTiming(-scrHeight, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
             });
@@ -421,6 +409,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
             });
           }
+          startValues.value.startedAtBottom = false;
           startValues.value.hasImpactOnPandown = false;
         }
 
