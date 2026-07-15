@@ -337,6 +337,23 @@ describe('ledger DMK bridge discovery', () => {
 
   it('retries direct device connect when DMK reports a stale session', async () => {
     const device = { id: 'ledger-stale-connect-device-id', name: 'Ledger' };
+    let finishDisconnect = () => undefined;
+    let markDisconnectStarted = () => undefined;
+    const disconnectStarted = new Promise<void>(resolve => {
+      markDisconnectStarted = resolve;
+    });
+
+    mockDmk.listConnectedDevices
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([{ id: device.id, sessionId: 'stale-session' }])
+      .mockReturnValue([]);
+    mockDmk.disconnect.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          finishDisconnect = resolve;
+          markDisconnectStarted();
+        }),
+    );
 
     mockDmk.connect
       .mockRejectedValueOnce({
@@ -347,7 +364,15 @@ describe('ledger DMK bridge discovery', () => {
 
     const { connectLedgerDevice } = require('./ledger-dmk');
 
-    await expect(connectLedgerDevice(device)).resolves.toBe('session-2');
+    const connection = connectLedgerDevice(device);
+
+    await disconnectStarted;
+
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+
+    finishDisconnect();
+
+    await expect(connection).resolves.toBe('session-2');
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
     expect(mockDmk.listenToAvailableDevices).not.toHaveBeenCalled();
   });
@@ -366,7 +391,7 @@ describe('ledger DMK bridge discovery', () => {
       resetLedgerDeviceSession,
     } = require('./ledger-dmk');
 
-    resetLedgerDeviceSession(deviceId);
+    await resetLedgerDeviceSession(deviceId);
 
     await expect(connectKnownLedgerDeviceById(deviceId)).resolves.toBe(
       'fresh-session-1',

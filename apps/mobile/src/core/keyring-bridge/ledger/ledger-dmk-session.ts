@@ -81,14 +81,14 @@ function getListedSessionId(deviceId: string) {
     .find(device => device.id === deviceId)?.sessionId;
 }
 
-function clearLedgerDeviceSession(deviceId: string) {
+async function clearLedgerDeviceSession(deviceId: string) {
   const sessionId =
     sessionsByDeviceId.get(deviceId) ?? getListedSessionId(deviceId);
 
   sessionsByDeviceId.delete(deviceId);
 
   if (sessionId) {
-    getDmk()
+    await getDmk()
       .disconnect({ sessionId })
       .catch(() => {});
   }
@@ -97,7 +97,7 @@ function clearLedgerDeviceSession(deviceId: string) {
 export function resetLedgerDeviceSession(deviceId: string) {
   pendingConnections.delete(deviceId);
   devicesById.delete(deviceId);
-  clearLedgerDeviceSession(deviceId);
+  return clearLedgerDeviceSession(deviceId);
 }
 
 function withConnectTimeout<T>({
@@ -219,7 +219,7 @@ export async function connectLedgerDevice(device: LedgerDmkDevice) {
       timeoutMs: CONNECT_TIMEOUT_MS,
       onTimeout: () => {
         timedOut = true;
-        clearLedgerDeviceSession(device.id);
+        void clearLedgerDeviceSession(device.id);
         devicesById.delete(device.id);
       },
       errorMessage: 'Ledger: Device connection timeout',
@@ -227,12 +227,12 @@ export async function connectLedgerDevice(device: LedgerDmkDevice) {
   };
 
   const promise = connectOnce()
-    .catch(error => {
+    .catch(async error => {
       if (!isDeviceSessionNotFound(error)) {
         throw error;
       }
 
-      clearLedgerDeviceSession(device.id);
+      await clearLedgerDeviceSession(device.id);
       return connectOnce();
     })
     .then(sessionId => {
@@ -240,8 +240,8 @@ export async function connectLedgerDevice(device: LedgerDmkDevice) {
       sessionsByDeviceId.set(device.id, sessionId);
       return sessionId;
     })
-    .catch(error => {
-      clearLedgerDeviceSession(device.id);
+    .catch(async error => {
+      await clearLedgerDeviceSession(device.id);
       devicesById.delete(device.id);
       throw error;
     })
@@ -330,7 +330,7 @@ export async function getLedgerAppAndVersion(deviceId: string) {
       throw error;
     }
 
-    clearLedgerDeviceSession(deviceId);
+    await clearLedgerDeviceSession(deviceId);
     return readCurrentApp();
   }
 }
@@ -346,13 +346,13 @@ export async function getLedgerDeviceSessionState(deviceId: string) {
     const state = await getSessionState(sessionId);
 
     if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
-      clearLedgerDeviceSession(deviceId);
+      await clearLedgerDeviceSession(deviceId);
       return undefined;
     }
 
     return state;
   } catch {
-    clearLedgerDeviceSession(deviceId);
+    await clearLedgerDeviceSession(deviceId);
     return undefined;
   }
 }

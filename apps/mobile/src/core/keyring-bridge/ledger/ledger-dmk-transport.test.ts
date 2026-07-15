@@ -72,7 +72,7 @@ type MonitorListener = (
 ) => void;
 
 function createBleHarness() {
-  let disconnectListener: DisconnectListener | undefined;
+  const disconnectListeners: DisconnectListener[] = [];
   let monitorListener: MonitorListener | undefined;
   let rejectPayloadWrites = false;
   let rssiReadErrorCode: number | undefined;
@@ -137,7 +137,7 @@ function createBleHarness() {
     discoverAllServicesAndCharacteristicsForDevice: jest.fn(async () => device),
     onDeviceDisconnected: jest.fn(
       (_deviceId: string, listener: DisconnectListener) => {
-        disconnectListener = listener;
+        disconnectListeners.push(listener);
         return { remove: jest.fn() };
       },
     ),
@@ -148,8 +148,11 @@ function createBleHarness() {
   return {
     device,
     manager,
-    disconnect(error: Error | null = null) {
-      disconnectListener?.(error, device);
+    disconnect(
+      error: Error | null = null,
+      listenerIndex = disconnectListeners.length - 1,
+    ) {
+      disconnectListeners[listenerIndex]?.(error, device);
     },
     rejectPayloadWrites() {
       rejectPayloadWrites = true;
@@ -201,6 +204,57 @@ async function flushMicrotasks() {
 }
 
 describe('patched Ledger DMK RN BLE transport', () => {
+  it('waits for BLE teardown and ignores late callbacks from the old connection', async () => {
+    const harness = createBleHarness();
+    let finishFirstTeardown = () => undefined;
+    let markFirstTeardownStarted = () => undefined;
+    const firstTeardownStarted = new Promise<void>(resolve => {
+      markFirstTeardownStarted = resolve;
+    });
+
+    harness.manager.connectedDevices
+      .mockResolvedValueOnce([])
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            finishFirstTeardown = () => resolve([harness.device]);
+            markFirstTeardownStarted();
+          }),
+      )
+      .mockResolvedValue([]);
+
+    const transport = createTransport(harness.manager);
+    let connectedDevice = await connectTransport(transport);
+
+    try {
+      const disconnecting = transport.disconnect({ connectedDevice });
+      await firstTeardownStarted;
+      let teardownFinished = false;
+      void disconnecting.then(() => {
+        teardownFinished = true;
+      });
+
+      await flushMicrotasks();
+      expect(teardownFinished).toBe(false);
+
+      finishFirstTeardown();
+      await disconnecting;
+
+      connectedDevice = await connectTransport(transport);
+      expect(harness.manager.connectToDevice).toHaveBeenCalledTimes(2);
+
+      harness.disconnect(null, 0);
+      await flushMicrotasks();
+
+      connectedDevice = await connectTransport(transport);
+      expect(harness.manager.connectToDevice).toHaveBeenCalledTimes(2);
+    } finally {
+      finishFirstTeardown();
+      await flushMicrotasks();
+      await transport.disconnect({ connectedDevice }).catch(() => undefined);
+    }
+  });
+
   it('reconnects when the Android disconnect callback includes an error', async () => {
     const harness = createBleHarness();
     const transport = createTransport(harness.manager);

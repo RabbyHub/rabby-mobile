@@ -50,7 +50,7 @@ export async function getAddresses(start: number, end: number) {
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
-      resetLedgerDeviceSession(deviceId);
+      await resetLedgerDeviceSession(deviceId);
     }
     throw e;
   }
@@ -103,7 +103,7 @@ export async function getCurrentUsedHDPathType() {
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
-      resetLedgerDeviceSession(deviceId);
+      await resetLedgerDeviceSession(deviceId);
     }
   }
 }
