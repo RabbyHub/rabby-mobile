@@ -1,4 +1,8 @@
-import { parseWalletConnectUri, parseWalletConnectUriFromLink } from './uri';
+import {
+  isRabbyWalletConnectDeeplink,
+  parseWalletConnectUri,
+  parseWalletConnectUriFromLink,
+} from './uri';
 
 const WC_URI =
   'wc:abc123@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
@@ -12,6 +16,32 @@ describe('walletconnect uri', () => {
     const link = `rabby://walletconnect?uri=${encodeURIComponent(WC_URI)}`;
     expect(parseWalletConnectUri(link).uri).toBe(WC_URI);
     expect(parseWalletConnectUriFromLink(link)).toBe(WC_URI);
+  });
+
+  it('only allows valid Rabby WalletConnect deeplinks', () => {
+    const link = `rabby://walletconnect?uri=${encodeURIComponent(WC_URI)}`;
+    expect(isRabbyWalletConnectDeeplink(link)).toBe(true);
+    expect(
+      isRabbyWalletConnectDeeplink(
+        `rabby://wc?uri=${encodeURIComponent(WC_URI)}`,
+      ),
+    ).toBe(true);
+    expect(isRabbyWalletConnectDeeplink(`rabby://walletconnect`)).toBe(false);
+    expect(
+      isRabbyWalletConnectDeeplink(
+        'rabby://walletconnect?uri=wc%3Aabc123%402%3Frelay-protocol%3Dirn',
+      ),
+    ).toBe(false);
+    expect(
+      isRabbyWalletConnectDeeplink(
+        `rabby://clear-app-cache?uri=${encodeURIComponent(WC_URI)}`,
+      ),
+    ).toBe(false);
+    expect(
+      isRabbyWalletConnectDeeplink(
+        `https://walletconnect?uri=${encodeURIComponent(WC_URI)}`,
+      ),
+    ).toBe(false);
   });
 
   it('rejects empty and malformed input', () => {
