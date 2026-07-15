@@ -305,33 +305,41 @@ const DappWebViewControl2 = ({
     handleCopyUrl,
   ]);
 
-  const { isBridgeReady, onLoadStart, onMessage: onBridgeMessage } =
-    useSetupWebview({
-      dappOrigin,
-      webviewRef,
-      webviewIdRef,
-      siteInfoRefs: {
-        urlRef,
-        titleRef,
-        iconRef,
-      },
-      // onSelfClose,
-    });
+  const {
+    isBridgeReady,
+    onLoadStart,
+    onMessage: onBridgeMessage,
+  } = useSetupWebview({
+    dappOrigin,
+    webviewRef,
+    webviewIdRef,
+    siteInfoRefs: {
+      urlRef,
+      titleRef,
+      iconRef,
+    },
+    // onSelfClose,
+  });
 
   const initialUrl = useMemo(() => {
-    if (!_initialUrl) return convertToWebviewUrl(dappOrigin);
+    if (!_initialUrl) {
+      return convertToWebviewUrl(dappOrigin);
+    }
 
     if (
       canoicalizeDappUrl(_initialUrl).origin !==
       canoicalizeDappUrl(dappOrigin).origin
-    )
+    ) {
       return convertToWebviewUrl(dappOrigin);
+    }
 
     return convertToWebviewUrl(_initialUrl);
   }, [dappOrigin, _initialUrl]);
 
   const renderedWebviewNode = useMemo(() => {
-    if (!entryScriptWeb3Loaded || !isBridgeReady) return null;
+    if (!entryScriptWeb3Loaded || !isBridgeReady) {
+      return null;
+    }
 
     const node = (
       <WebView

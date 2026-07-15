@@ -117,9 +117,9 @@ describe('core/serviceApi deferred side effects', () => {
     const readiness = ensureGasAccountServiceReady();
     await flushDeferredServiceWork();
 
-    expect(() => setGasAccountSigSync('0xsig', { address: '0xabc' } as any)).toThrow(
-      'Core service "gasAccountService" is not fully loaded',
-    );
+    expect(() =>
+      setGasAccountSigSync('0xsig', { address: '0xabc' } as any),
+    ).toThrow('Core service "gasAccountService" is not fully loaded');
 
     finishLoader?.();
     await readiness;

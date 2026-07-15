@@ -63,9 +63,7 @@ export function useSetupWebview({
     BACKGROUND_BRIDGE_SERVICES,
   );
   const bridgeServices =
-    bridgeServiceState.status === 'ready'
-      ? bridgeServiceState.services
-      : null;
+    bridgeServiceState.status === 'ready' ? bridgeServiceState.services : null;
   const isBridgeReady = bridgeServices !== null;
 
   const destroyCurrentBridge = useCallback(() => {

@@ -86,9 +86,9 @@ describe('core service dependencies', () => {
         unregisterService = registerService('dappService', service);
       },
     );
-    const readiness = resolveCoreServices(
-      [serviceDependency('dappService')] as const,
-    );
+    const readiness = resolveCoreServices([
+      serviceDependency('dappService'),
+    ] as const);
     let resolved = false;
     void readiness.then(() => {
       resolved = true;
