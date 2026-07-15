@@ -596,10 +596,14 @@ const runFetchMarketData = async () => {
       return;
     }
 
-    // perpDexs failure is degradable
-    perpDexsCache = perpDexs ?? null;
+    // perpDexs failure falls back to the last known roster — an empty
+    // dexIdMap would fail the whole round in formatMarkData.
+    if (perpDexs) {
+      perpDexsCache = perpDexs;
+    }
+    const effectivePerpDexs = perpDexs ?? perpDexsCache ?? [];
     const dexIdMap: Record<number, string> = {};
-    (perpDexs ?? []).forEach((dex, idx) => {
+    effectivePerpDexs.forEach((dex, idx) => {
       dexIdMap[idx] = dex?.name ?? '';
     });
 
@@ -1530,10 +1534,9 @@ runIIFEFunc(fetchFavoriteMarkets);
 runIIFEFunc(fetchMarginModeByCoin);
 
 export function startSubscribePerpsOnAppState() {
-  const sdk = apisPerps.getPerpsSDK();
   const subscription = AppState.addEventListener('change', nextAppState => {
-    // Pass the state string ('active', 'background', 'inactive') directly
-    sdk.ws.handleAppStateChange(nextAppState);
+    // Resolve per event — destroyPerpsSDK (wallet lock) replaces the singleton.
+    apisPerps.getPerpsSDK().ws.handleAppStateChange(nextAppState);
 
     // When app returns to active, retry market data if it previously failed or never loaded.
     if (nextAppState === 'active') {
