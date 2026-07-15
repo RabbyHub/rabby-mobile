@@ -78,6 +78,10 @@ const invalidCases = [
     import { dappServiceApi } from '@/core/serviceApi/dapp';
     void Promise.all([dappServiceApi.getDapp('origin')]);
   `,
+  `
+    import { dappServiceApi } from '@/core/serviceApi/dapp';
+    async function run() { await dappServiceApi.unknownSemanticMethod(); }
+  `,
 ];
 
 validCases.forEach((source, index) => {
@@ -100,5 +104,8 @@ invalidCases.forEach((source, index) => {
     'no-floating-deferred-service-api-calls',
   );
 });
+
+const unclassifiedMessages = verify(invalidCases[invalidCases.length - 1]);
+assert.strictEqual(unclassifiedMessages[0].messageId, 'unclassifiedMethod');
 
 console.log('service API ESLint rule tests passed');

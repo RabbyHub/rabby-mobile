@@ -97,6 +97,7 @@ import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
 import { useHomePostStartupReady } from './core/utils/homeStartupReady';
 import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
+import { setServiceRuntimeDiagnosticsContextProvider } from './core/serviceApi/serviceRuntimeDiagnostics';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -402,6 +403,14 @@ export default function AppNavigation() {
   const { t } = useTranslation();
 
   const colors = useThemeColors();
+
+  React.useEffect(
+    () =>
+      setServiceRuntimeDiagnosticsContextProvider(() => ({
+        route: navigationRef.getCurrentRoute()?.name,
+      })),
+    [],
+  );
 
   const {
     isAppUnlocked,
