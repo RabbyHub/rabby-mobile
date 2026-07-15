@@ -3847,8 +3847,8 @@
       "noAvailableAddress": "沒有可用地址"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "輸入新的回覆...（選填）",
-      "mediaPlaceholder": "圖片/影片\n（必填）"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "圖片/影片"
     }
   },
   "common": {

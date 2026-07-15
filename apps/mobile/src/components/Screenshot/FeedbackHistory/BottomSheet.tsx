@@ -67,6 +67,7 @@ const ONE_MB = 1024 * 1024;
 const MAX_IMAGE_FILE_SIZE = 5 * ONE_MB;
 const MAX_VIDEO_FILE_SIZE = 50 * ONE_MB;
 const FEEDBACK_HISTORY_PAGE_SIZE = 50;
+const FEEDBACK_UNREAD_POLLING_INTERVAL = 10 * 1000;
 const LOAD_MORE_TOP_THRESHOLD = 40;
 
 type PickedFeedbackMedia = Asset;
@@ -77,6 +78,19 @@ type UploadedFeedbackMediaUrls = {
 type FeedbackMessagesPage = {
   list: ClientFeedbackMessage[];
   totalCount: number;
+};
+
+const DEFAULT_FEEDBACK_MESSAGE: ClientFeedbackMessage = {
+  id: 'default-feedback-message',
+  conversation_id: '',
+  sender: 'ops',
+  ops_user_id: null,
+  content:
+    'Need help? Share your feedback directly with the Rabby team in this chat.',
+  image_url_list: [],
+  video_url_list: [],
+  source: '',
+  create_at: 0,
 };
 
 function isVideoMedia(media?: PickedFeedbackMedia | null) {
@@ -251,17 +265,14 @@ async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
     throw new Error('No selected feedback media uri');
   }
 
-  console.log('-------start--------', Date.now());
   const formData = new FormData();
   formData.append('file', {
     uri: media.uri,
     type: getUploadMimeType(media),
     name: getUploadFilename(media),
   } as unknown as Blob);
-  console.log('-------append--------', Date.now());
 
   const res = await openapi.uploadClientFeedback(formData, true);
-  console.log('----------end--------', Date.now());
   return res;
 }
 
@@ -303,18 +314,22 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     null,
   );
   const replyTextRef = useRef('');
+  const [hasReplyText, setHasReplyText] = useState(false);
   const replyInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingScrollToBottomRef = useRef(false);
   const shouldScrollAfterReloadRef = useRef(false);
   const loadingMoreGuardRef = useRef(false);
+  const isReloadingFeedbackMessagesRef = useRef(false);
   const mediaUploadRequestIdRef = useRef(0);
   const videoCompressionCancellationIdRef = useRef<string | null>(null);
   const handleReplyTextChange = useCallback((text: string) => {
     replyTextRef.current = text;
+    setHasReplyText(!!text.trim());
   }, []);
   const clearReplyText = useCallback(() => {
     replyTextRef.current = '';
+    setHasReplyText(false);
     replyInputRef.current?.clear();
   }, []);
   const scrollToBottom = useCallback((animated = false) => {
@@ -496,13 +511,39 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
 
   const reloadFeedbackMessages = useCallback(async () => {
+    if (isReloadingFeedbackMessagesRef.current) {
+      return;
+    }
+
+    isReloadingFeedbackMessagesRef.current = true;
     shouldScrollAfterReloadRef.current = true;
     try {
       await reloadFeedbackMessagesAsync();
     } catch {
       // useInfiniteScroll's onError handles logging and resets scroll state.
+    } finally {
+      isReloadingFeedbackMessagesRef.current = false;
     }
   }, [reloadFeedbackMessagesAsync]);
+
+  useRequest(
+    () =>
+      openapi.getClientFeedbackUnread({
+        device_id: deviceId,
+      }),
+    {
+      ready: isShowHistory,
+      pollingInterval: FEEDBACK_UNREAD_POLLING_INTERVAL,
+      onSuccess: data => {
+        if (data.unread_count > 0) {
+          void reloadFeedbackMessages();
+        }
+      },
+      onError: error => {
+        console.error('feedback unread polling error', error);
+      },
+    },
+  );
 
   useEffect(() => {
     if (!loadingMore) {
@@ -530,11 +571,14 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
 
   const feedbackMessages = useMemo(() => {
-    return sortBy(
-      uniqBy(feedbackMessagesData?.list || [], message => message.id),
-      message => message.create_at,
-    );
-  }, [feedbackMessagesData?.list]);
+    return [
+      ...(noMore ? [DEFAULT_FEEDBACK_MESSAGE] : []),
+      ...sortBy(
+        uniqBy(feedbackMessagesData?.list || [], message => message.id),
+        message => message.create_at,
+      ),
+    ];
+  }, [feedbackMessagesData?.list, noMore]);
 
   const {
     runAsync: handleSubmitReply,
@@ -543,15 +587,15 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   } = useRequest(
     async () => {
       const content = replyTextRef.current.trim();
-      if (!selectedMedia) {
-        throw new Error('No selected feedback media to upload');
+      if (!content && !selectedMedia) {
+        throw new Error('Feedback message or media is required.');
       }
 
-      if (isUploadingMedia) {
+      if (selectedMedia && isUploadingMedia) {
         throw new Error('Feedback media is still uploading.');
       }
 
-      if (!hasUploadedFeedbackMediaUrls(uploadedMediaUrls)) {
+      if (selectedMedia && !hasUploadedFeedbackMediaUrls(uploadedMediaUrls)) {
         throw new Error('No uploaded feedback media url');
       }
       Keyboard.dismiss();
@@ -670,7 +714,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
             <KeyboardProvider>
               <BottomSheetHandlableView style={styles.titleContainer}>
                 <Text style={styles.title}>
-                  {t('page.setting.bugReportHistory')}
+                  {t('page.setting.bugReportChat')}
                 </Text>
               </BottomSheetHandlableView>
 
@@ -704,6 +748,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                   key="reply-composer"
                   inputRef={replyInputRef}
                   onChangeText={handleReplyTextChange}
+                  hasReplyText={hasReplyText}
                   selectedMedia={selectedMedia}
                   mediaUploadReady={hasUploadedFeedbackMediaUrls(
                     uploadedMediaUrls,
@@ -717,13 +762,13 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                 />
               </KeyboardAwareScrollView>
 
-              <View style={styles.footerTipContainer}>
+              {/* <View style={styles.footerTipContainer}>
                 <Text style={styles.footerTip}>
                   {t('component.feedbackHistoryModal.findHistoryTip', {
                     defaultValue: 'You can find the history in Settings',
                   })}
                 </Text>
-              </View>
+              </View> */}
             </KeyboardProvider>
           </AutoLockView>
         </View>
@@ -840,6 +885,7 @@ function FeedbackMessageItem({
 function ReplyComposer({
   inputRef,
   onChangeText,
+  hasReplyText,
   selectedMedia,
   onPickMedia,
   onRemoveMedia,
@@ -851,6 +897,7 @@ function ReplyComposer({
 }: {
   inputRef: React.Ref<React.ComponentRef<typeof TextInput>>;
   onChangeText: (text: string) => void;
+  hasReplyText?: boolean;
   selectedMedia?: PickedFeedbackMedia | null;
   mediaUploadReady?: boolean;
   uploadingMedia?: boolean;
@@ -895,7 +942,10 @@ function ReplyComposer({
           style={styles.replyInput}
           enterKeyHint="send"
           onSubmitEditing={() => {
-            if (selectedMedia && mediaUploadReady && !uploadingMedia) {
+            if (
+              !uploadingMedia &&
+              (hasReplyText || (selectedMedia && mediaUploadReady))
+            ) {
               onSubmit?.();
             }
           }}
@@ -952,7 +1002,7 @@ function ReplyComposer({
                 <Text style={styles.mediaPlaceholderText}>+</Text>
                 <Text style={styles.mediaPlaceholderText}>
                   {t('component.feedbackHistoryModal.mediaPlaceholder', {
-                    defaultValue: 'Image/Video\n(required)',
+                    defaultValue: 'Image/Video',
                   })}
                 </Text>
               </View>
@@ -968,8 +1018,7 @@ function ReplyComposer({
           disabled={
             submitting ||
             uploadingMedia ||
-            !selectedMediaUri ||
-            !mediaUploadReady
+            (!hasReplyText && (!selectedMediaUri || !mediaUploadReady))
           }
           containerStyle={styles.replySubmitButtonContainer}
           buttonStyle={styles.replySubmitButton}
@@ -986,6 +1035,7 @@ const getStyle = createGetStyles2024(
     mainContainer: {
       height: '100%',
       maxHeight: SHEET_HEIGHT,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
     },
     container: {
       flex: 1,

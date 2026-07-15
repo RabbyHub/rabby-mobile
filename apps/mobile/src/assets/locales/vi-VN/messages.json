@@ -3787,8 +3787,8 @@
       "noAvailableAddress": "Không có địa chỉ nào có sẵn"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Nhập phản hồi mới... (tùy chọn)",
-      "mediaPlaceholder": "Hình ảnh/Video\n(bắt buộc)"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Hình ảnh/Video"
     }
   },
   "constant": {

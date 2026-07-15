@@ -3844,8 +3844,8 @@
       "noAvailableAddress": "利用可能なアドレスがありません"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "新しい返信を入力...（任意）",
-      "mediaPlaceholder": "画像/動画\n（必須）"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "画像/動画"
     }
   },
   "common": {
