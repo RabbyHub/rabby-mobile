@@ -397,7 +397,9 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.userAbstractionReady
         : false,
   }));
-  void perpsServiceApi.setCurrentAccount(payload);
+  void perpsServiceApi.setCurrentAccount(payload).catch(error => {
+    console.error('[perpsService] persist current account failed', error);
+  });
 };
 
 export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
@@ -423,7 +425,9 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     accountNeedApproveAgent: false,
     accountNeedApproveBuilderFee: false,
   }));
-  void perpsServiceApi.setCurrentAccount(payload);
+  void perpsServiceApi.setCurrentAccount(payload).catch(error => {
+    console.error('[perpsService] persist current account failed', error);
+  });
 };
 
 // Cache of the latest WS-pushed asset ctxs keyed by dex name.
@@ -638,7 +642,9 @@ export const addFavoriteMarket = (market: string) => {
     ...prev,
     favoriteMarkets: [...prev.favoriteMarkets, normalizedMarket.toUpperCase()],
   }));
-  void perpsServiceApi.addFavoriteMarket(normalizedMarket);
+  void perpsServiceApi.addFavoriteMarket(normalizedMarket).catch(error => {
+    console.error('[perpsService] persist favorite market failed', error);
+  });
 };
 
 const fetchMarginModeByCoin = async () => {
@@ -662,7 +668,9 @@ export const setMarginModeForCoin = (
       marginModeByCoin: { ...prev.marginModeByCoin, [coin]: mode },
     };
   });
-  void perpsServiceApi.setMarginModeForCoin(coin, mode);
+  void perpsServiceApi.setMarginModeForCoin(coin, mode).catch(error => {
+    console.error('[perpsService] persist margin mode failed', error);
+  });
 };
 
 export const removeFavoriteMarket = (market: string) => {
@@ -671,7 +679,9 @@ export const removeFavoriteMarket = (market: string) => {
     ...prev,
     favoriteMarkets: prev.favoriteMarkets.filter(m => m !== normalizedMarket),
   }));
-  void perpsServiceApi.removeFavoriteMarket(normalizedMarket);
+  void perpsServiceApi.removeFavoriteMarket(normalizedMarket).catch(error => {
+    console.error('[perpsService] remove favorite market failed', error);
+  });
 };
 
 const handleSelectDefaultAccount = async (accounts: Account[]) => {

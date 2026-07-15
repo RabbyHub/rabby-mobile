@@ -62,12 +62,21 @@ export function AddressEditorBadge({
           undefined,
           alias => {
             if (alias.trim().length) {
-              void contactServiceApi.updateAlias({
-                address: account.address,
-                name: alias,
-              });
-              fetchAlias();
-              onUpdatedAlias?.({ account, newAlias: alias });
+              void contactServiceApi
+                .updateAlias({
+                  address: account.address,
+                  name: alias,
+                })
+                .then(() => {
+                  fetchAlias();
+                  onUpdatedAlias?.({ account, newAlias: alias });
+                })
+                .catch(error => {
+                  console.error(
+                    '[AddressEditorBadge] update alias failed',
+                    error,
+                  );
+                });
             }
           },
         );

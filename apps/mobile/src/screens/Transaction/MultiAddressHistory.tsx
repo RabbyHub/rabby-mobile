@@ -386,10 +386,17 @@ function History({
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              void transactionHistoryServiceApi.updateTx({
-                ...item.maxGasTx,
-                isSynced: true,
-              });
+              void transactionHistoryServiceApi
+                .updateTx({
+                  ...item.maxGasTx,
+                  isSynced: true,
+                })
+                .catch(error => {
+                  console.error(
+                    '[MultiAddressHistory] mark tx synced failed',
+                    error,
+                  );
+                });
             }
 
             return (
@@ -520,9 +527,13 @@ function History({
   useMount(() => {
     const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    void transactionHistoryServiceApi.clearSuccessAndFailList(
-      isForMultipleAddress ? undefined : currentAddress,
-    );
+    void transactionHistoryServiceApi
+      .clearSuccessAndFailList(
+        isForMultipleAddress ? undefined : currentAddress,
+      )
+      .catch(error => {
+        console.error('[MultiAddressHistory] clear local status failed', error);
+      });
   });
 
   const displayList = useMemo(() => {

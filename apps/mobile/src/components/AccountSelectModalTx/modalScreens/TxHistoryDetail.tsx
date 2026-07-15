@@ -76,7 +76,11 @@ function ScreenHistoryLocalDetail(): JSX.Element {
   useEffect(() => {
     if (!data.isPending) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
-      void transactionHistoryServiceApi.clearSuccessAndFailSingleId(rawId);
+      void transactionHistoryServiceApi
+        .clearSuccessAndFailSingleId(rawId)
+        .catch(error => {
+          console.error('[TxHistoryDetail] clear local status failed', error);
+        });
     }
   }, [data]);
 

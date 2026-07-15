@@ -5,7 +5,7 @@ import { atom, useAtom } from 'jotai';
 const _recentToTokensAtom = atom<TokenItem[]>([]);
 
 _recentToTokensAtom.onMount = set => {
-  swapServiceApi.getRecentSwapToTokens().then(set);
+  void swapServiceApi.getRecentSwapToTokens().then(set).catch(console.error);
 };
 
 const recentToTokensAtom = atom(

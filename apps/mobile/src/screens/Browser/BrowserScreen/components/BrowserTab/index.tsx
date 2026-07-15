@@ -921,14 +921,21 @@ export const BrowserTab = ({
             }
             onClose={() => {
               setIsShowInvite(false);
-              void perpsServiceApi.setInviteConfig(account?.address || '', {
-                lastConnectedAt: Date.now(),
-              });
+              void perpsServiceApi
+                .setInviteConfig(account?.address || '', {
+                  lastConnectedAt: Date.now(),
+                })
+                .catch(error => {
+                  console.error(
+                    '[PerpsInvite] persist close state failed',
+                    error,
+                  );
+                });
             }}
             onInvite={async () => {
               try {
                 await handleInvite();
-                void perpsServiceApi.setInviteConfig(account?.address || '', {
+                await perpsServiceApi.setInviteConfig(account?.address || '', {
                   lastConnectedAt: Date.now(),
                 });
                 setIsShowInvite(false);

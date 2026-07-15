@@ -256,7 +256,7 @@ export const dexSwap = async (
         },
         session: INTERNAL_REQUEST_SESSION,
         account,
-      }).then(res => {
+      }).then(async res => {
         const hash = res as string;
         void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
           chain: chainObj.serverId as string,
@@ -266,7 +266,7 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          void transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
+          await transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
 
           const marketTab = from?.scene
             ? getMarketTabActionPrefix(from.scene)
@@ -393,7 +393,7 @@ export const dexSwap = async (
       session: INTERNAL_REQUEST_SESSION,
       account,
     })
-      .then(res => {
+      .then(async res => {
         const hash = res as string;
         console.log('after swap  hash: ', hash);
         void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
@@ -404,7 +404,7 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          void transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
+          await transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
 
           const marketTab = from?.scene
             ? getMarketTabActionPrefix(from.scene)

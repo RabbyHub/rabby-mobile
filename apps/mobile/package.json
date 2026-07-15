@@ -30,7 +30,7 @@
     "lint:commit:fix": "eslint ./src --rulesdir ./eslint-rules --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
     "lint:cycles:eslint": "eslint ./src --rulesdir ./eslint-rules --ext .js,.jsx,.ts,.tsx --quiet --rule '{\"import/no-cycle\":[\"error\",{\"maxDepth\":12,\"ignoreExternal\":true}]}'",
     "lint:cycles": "madge --circular --extensions ts,tsx --ts-config ./tsconfig.json --exclude '(^\\.\\./\\.\\./packages/.*/dist|\\.d\\.ts$)' ./index.js",
-    "lint:service-api-boundaries": "node ./scripts/check-service-api-boundaries.cjs",
+    "lint:service-api-boundaries": "node ./scripts/test-service-api-eslint-rules.cjs && node ./scripts/check-service-api-boundaries.cjs",
     "lint:fix": "eslint ./src --rulesdir ./eslint-rules --fix --ext .js,.jsx,.ts,.tsx",
     "loadables:generate": "node ./scripts/generate-loadables-dev.cjs",
     "loadables:generate-dev": "yarn loadables:generate",

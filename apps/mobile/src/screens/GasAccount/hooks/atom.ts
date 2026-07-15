@@ -315,7 +315,7 @@ const syncDeleteGasAccount = async ({
       perpsAccount?.type === type
     ) {
       eventBus.emit(EVENTS.PERPS.LOG_OUT, perpsAccount);
-      void perpsServiceApi.setCurrentAccount(null);
+      await perpsServiceApi.setCurrentAccount(null);
     }
   }
 };

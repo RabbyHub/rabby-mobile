@@ -7,7 +7,7 @@ const slippageAtom = atom('0.1', async (get, set, slippage: string) => {
 });
 
 slippageAtom.onMount = set => {
-  swapServiceApi.getSlippage().then(set);
+  void swapServiceApi.getSlippage().then(set).catch(console.error);
 };
 
 const autoSlippageAtom = atom(true, async (get, set, bool: boolean) => {
@@ -16,7 +16,7 @@ const autoSlippageAtom = atom(true, async (get, set, bool: boolean) => {
 });
 
 autoSlippageAtom.onMount = set => {
-  swapServiceApi.getAutoSlippage().then(set);
+  void swapServiceApi.getAutoSlippage().then(set).catch(console.error);
 };
 
 const isCustomSlippageAtom = atom(false, async (get, set, bool: boolean) => {
@@ -25,7 +25,10 @@ const isCustomSlippageAtom = atom(false, async (get, set, bool: boolean) => {
 });
 
 isCustomSlippageAtom.onMount = set => {
-  swapServiceApi.getIsCustomSlippage().then(value => set(!!value));
+  void swapServiceApi
+    .getIsCustomSlippage()
+    .then(value => set(!!value))
+    .catch(console.error);
 };
 
 export const useSlippageStore = () => {

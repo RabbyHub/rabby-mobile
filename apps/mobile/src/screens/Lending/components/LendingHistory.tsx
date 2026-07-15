@@ -186,7 +186,7 @@ function LendingHistory(): JSX.Element {
         );
         return uniqueList;
       });
-      void transactionHistoryServiceApi.clearLendingSuccessHistoryList(
+      await transactionHistoryServiceApi.clearLendingSuccessHistoryList(
         finalSceneCurrentAccount?.address.toLowerCase()!,
       );
     }
@@ -222,10 +222,17 @@ function LendingHistory(): JSX.Element {
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              void transactionHistoryServiceApi.updateTx({
-                ...item.maxGasTx,
-                isSynced: true,
-              });
+              void transactionHistoryServiceApi
+                .updateTx({
+                  ...item.maxGasTx,
+                  isSynced: true,
+                })
+                .catch(error => {
+                  console.error(
+                    '[LendingHistory] mark tx synced failed',
+                    error,
+                  );
+                });
             }
 
             return (

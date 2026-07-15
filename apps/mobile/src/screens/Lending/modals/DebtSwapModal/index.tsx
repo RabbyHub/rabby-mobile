@@ -762,7 +762,7 @@ export default function DebtSwapModal({
 
         const txId = last(results);
         if (txId && chainInfo?.id) {
-          void transactionHistoryServiceApi.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             chainInfo?.id,
             txId,

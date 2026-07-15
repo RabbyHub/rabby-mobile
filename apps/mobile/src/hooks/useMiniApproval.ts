@@ -99,9 +99,14 @@ export const useMiniApproval = () => {
                 const signingTxId =
                   getCurrentMiniApprovalSnapshot()?.signingTxId;
                 if (signingTxId) {
-                  void transactionHistoryServiceApi.removeSigningTx(
-                    signingTxId,
-                  );
+                  void transactionHistoryServiceApi
+                    .removeSigningTx(signingTxId)
+                    .catch(error => {
+                      console.error(
+                        '[useMiniApproval] remove signing tx failed',
+                        error,
+                      );
+                    });
                   setCurrentMiniApprovalSync(null);
                 }
                 reject(e);

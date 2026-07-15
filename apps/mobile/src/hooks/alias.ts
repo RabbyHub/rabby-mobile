@@ -29,8 +29,13 @@ export const useAlias = (address?: string) => {
         return;
       }
       setName(alias);
-      void contactServiceApi.updateAlias({ address, name: alias });
-      fetchAccounts();
+      void contactServiceApi.updateAlias({ address, name: alias }).then(
+        () => fetchAccounts(),
+        error => {
+          console.error('[useAlias] update alias failed', error);
+          return fetchAccounts();
+        },
+      );
     },
     [address, fetchAccounts],
   );
@@ -125,10 +130,16 @@ export function useAlias2(
 
   const updateAlias = useCallback(
     (alias: string) => {
-      void contactServiceApi.updateAlias({ address, name: alias });
-      if (FETCH_AFTER_UPDATE) {
-        fetchAlias();
-      }
+      void contactServiceApi
+        .updateAlias({ address, name: alias })
+        .then(() => {
+          if (FETCH_AFTER_UPDATE) {
+            fetchAlias();
+          }
+        })
+        .catch(error => {
+          console.error('[useAlias2] update alias failed', error);
+        });
     },
     [address, fetchAlias, FETCH_AFTER_UPDATE],
   );

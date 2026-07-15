@@ -28,7 +28,12 @@ import { useAtom } from 'jotai';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useMemoizedFn } from 'ahooks';
 import { getBrowserBookmarkCountSnapshot } from '@/core/serviceApi/browser';
-import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
+import {
+  addDappSync,
+  ensureDappServiceReady,
+  getDappSnapshot,
+  updateDappSync,
+} from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { DappFavoriteList } from './DappFavoriteList';
@@ -170,19 +175,25 @@ export const HomeDappDrawerContent: React.FC<{
   const { t } = useTranslation();
   const { activeTab, setActiveTab, tabs } = useDappTab();
   const { openTab } = useBrowser();
-  const handleDappPress = useMemoizedFn((item: DappInfo) => {
-    openTab(item.url || item.origin, {
-      isDapp: true,
-      isRemindOpen: true,
-    });
-    const dapp = getDappSnapshot(item.origin);
-    if (!dapp) {
-      void dappServiceApi.addDapp(item);
-    } else if (!dapp.isDapp) {
-      void dappServiceApi.updateDapp({
-        ...dapp,
-        origin: item.origin,
+  const handleDappPress = useMemoizedFn(async (item: DappInfo) => {
+    try {
+      await ensureDappServiceReady();
+      const dapp = getDappSnapshot(item.origin);
+      if (!dapp) {
+        addDappSync(item);
+      } else if (!dapp.isDapp) {
+        updateDappSync({
+          ...dapp,
+          origin: item.origin,
+          isDapp: true,
+        });
+      }
+    } catch (error) {
+      console.error('[HomeDappDrawer] persist dapp failed', error);
+    } finally {
+      openTab(item.url || item.origin, {
         isDapp: true,
+        isRemindOpen: true,
       });
     }
   });

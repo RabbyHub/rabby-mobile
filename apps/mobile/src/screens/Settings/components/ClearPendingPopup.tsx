@@ -28,14 +28,16 @@ export const ClearPendingPopup: React.FC<{
   const [isClearNonce, setIsClearNonce] = useState(false);
   const { accounts } = useMyAccounts({ disableAutoFetch: true });
 
-  const handleClearPending = useMemoizedFn(() => {
+  const handleClearPending = useMemoizedFn(async () => {
     try {
-      accounts.forEach(item => {
-        apisTransactionHistory.clearPendingTxs(item.address);
-        if (isClearNonce) {
-          void transactionHistoryServiceApi.removeList(item.address);
-        }
-      });
+      await Promise.all(
+        accounts.map(async item => {
+          await apisTransactionHistory.clearPendingTxs(item.address);
+          if (isClearNonce) {
+            await transactionHistoryServiceApi.removeList(item.address);
+          }
+        }),
+      );
       toast.success(t('page.setting.clearPendingToast'));
       onConfirm?.();
     } catch (e) {

@@ -122,7 +122,12 @@ export function useInitializeAppOnTop() {
           ...accountFlags,
         }));
       });
-      void perpsServiceApi.unlockAgentWallets();
+      void perpsServiceApi.unlockAgentWallets().catch(error => {
+        console.error(
+          '[useBootstrap] unlock perps agent wallets failed',
+          error,
+        );
+      });
       traceAndroidInstant('global_task.post_unlock_ui_ready.end', {
         source: 'useBootstrap',
       });
@@ -149,7 +154,9 @@ export function useInitializeAppOnTop() {
         searchTabId: '',
         trigger: '',
       });
-      void perpsServiceApi.lockAgentWallets();
+      void perpsServiceApi.lockAgentWallets().catch(error => {
+        console.error('[useBootstrap] lock perps agent wallets failed', error);
+      });
       apisPerpsStore.logout();
       apisPerps.destroyPerpsSDK();
     };

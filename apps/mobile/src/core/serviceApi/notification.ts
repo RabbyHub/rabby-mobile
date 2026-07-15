@@ -79,6 +79,14 @@ export function unlockNotificationSync() {
   requireNotificationService().unLock();
 }
 
+export function rejectAllNotificationApprovalsSync() {
+  requireNotificationService().rejectAllApprovals();
+}
+
+export function blockCurrentNotificationDappSync() {
+  requireNotificationService().blockedDapp();
+}
+
 export async function bindNotificationEvent(
   event: string,
   listener: (...args: any[]) => void,

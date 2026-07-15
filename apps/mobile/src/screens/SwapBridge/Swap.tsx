@@ -395,7 +395,9 @@ const Swap = ({
   );
 
   const switchPreferMEV = useMemoizedFn((bool: boolean) => {
-    void swapServiceApi.setSwapPreferMEVGuarded(bool);
+    void swapServiceApi.setSwapPreferMEVGuarded(bool).catch(error => {
+      console.error('[Swap] persist MEV preference failed', error);
+    });
     mutatePreferMEVGuarded(bool);
   });
 
@@ -933,14 +935,14 @@ const Swap = ({
         });
         txHash = last(res) || '';
 
-        miniSignNextStep(txHash);
+        await miniSignNextStep(txHash);
 
         if (!isApprove) {
           builtSwapTxsKeyRef.current = '';
           prefetchedSwapTxsKeyRef.current = '';
           mutateTxs([]);
           const createdAt = Date.now();
-          void transactionHistoryServiceApi.addSwapTxHistory({
+          await transactionHistoryServiceApi.addSwapTxHistory({
             hash: txHash,
             chainId: findChainByEnum(chain)?.id || 0,
             address: currentAccount?.address!,
@@ -1176,9 +1178,9 @@ const Swap = ({
     // onApprovePending,
   });
 
-  const miniSignNextStep = (hash: string) => {
+  const miniSignNextStep = async (hash: string) => {
     if (isApprove) {
-      void transactionHistoryServiceApi.addApproveSwapTokenTxHistory({
+      await transactionHistoryServiceApi.addApproveSwapTokenTxHistory({
         address: currentAccount?.address!,
         chainId: currentTxs![0]!.chainId,
         amount: Number(payAmount),

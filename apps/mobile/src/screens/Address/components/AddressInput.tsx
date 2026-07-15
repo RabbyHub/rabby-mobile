@@ -104,10 +104,14 @@ export const AddressInput: React.FC<Props> = ({
 
   const handleSubmit = React.useCallback(
     (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
-      void contactServiceApi.setAlias({
-        address,
-        alias: e.nativeEvent.text,
-      });
+      void contactServiceApi
+        .setAlias({
+          address,
+          alias: e.nativeEvent.text,
+        })
+        .catch(error => {
+          console.error('[AddressInput] update alias failed', error);
+        });
     },
     [address],
   );

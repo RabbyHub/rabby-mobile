@@ -1025,7 +1025,9 @@ export const HomeOverview = React.memo(() => {
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
     const forceRefresh = true;
-    void currencyServiceApi.syncCurrencyList(forceRefresh);
+    void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
+      console.error('[HomeOverview] refresh currency list failed', error);
+    });
 
     const top10Addresses = getSelectedBalanceAddressesSnapshot();
     if (!top10Addresses.length) {

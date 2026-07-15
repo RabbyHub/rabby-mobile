@@ -327,7 +327,7 @@ export const ethSendTransaction = async (
     return res;
   } catch (e) {
     if (signingTxId != null) {
-      void transactionHistoryServiceApi.removeSigningTx(signingTxId);
+      await transactionHistoryServiceApi.removeSigningTx(signingTxId);
     }
 
     throw e;

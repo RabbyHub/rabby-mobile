@@ -6,12 +6,12 @@ import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 
 const swapUnlimitedAllowanceAtom = atom(false, (get, set, bool: boolean) => {
-  void swapServiceApi.setUnlimitedAllowance(bool);
+  void swapServiceApi.setUnlimitedAllowance(bool).catch(console.error);
   set(swapUnlimitedAllowanceAtom, bool);
 });
 
 swapUnlimitedAllowanceAtom.onMount = s => {
-  swapServiceApi.getUnlimitedAllowance().then(s);
+  void swapServiceApi.getUnlimitedAllowance().then(s).catch(console.error);
 };
 
 export const useSwapUnlimitedAllowance = () =>

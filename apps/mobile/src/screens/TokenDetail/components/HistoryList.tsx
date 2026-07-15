@@ -295,7 +295,11 @@ export const TokenDetailHistoryList = ({
   useMount(() => {
     const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    void transactionHistoryServiceApi.clearSuccessAndFailList(currentAddress);
+    void transactionHistoryServiceApi
+      .clearSuccessAndFailList(currentAddress)
+      .catch(error => {
+        console.error('[TokenHistory] clear local status failed', error);
+      });
   });
 
   const displayList = useMemo(() => {

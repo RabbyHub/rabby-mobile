@@ -1039,7 +1039,7 @@ export const BridgePendingTxItem = ({
           const txCreateTime = historyData.createdAt;
           if (currentTime - txCreateTime > ONE_HOUR_MS) {
             // tx create time is more than 60 minutes, set this tx failed
-            void transactionHistoryServiceApi.completeBridgeTxHistory(
+            await transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               'failed',
@@ -1058,7 +1058,7 @@ export const BridgePendingTxItem = ({
               completedAt: Date.now(),
             };
             setData(updateData as BridgeTxHistoryItem);
-            void transactionHistoryServiceApi.completeBridgeTxHistory(
+            await transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               status,
@@ -1116,11 +1116,18 @@ export const BridgePendingTxItem = ({
         const txCreateTime = data?.createdAt;
         if (currentTime - txCreateTime > ONE_HOUR_MS) {
           // tx create time is more than 60 minutes, set this tx failed
-          void transactionHistoryServiceApi.completeBridgeTxHistory(
-            recentlyTxHash,
-            data?.fromChainId,
-            'failed',
-          );
+          void transactionHistoryServiceApi
+            .completeBridgeTxHistory(
+              recentlyTxHash,
+              data?.fromChainId,
+              'failed',
+            )
+            .catch(error => {
+              console.error(
+                '[BridgeHistory] persist failed status failed',
+                error,
+              );
+            });
           setData(null);
           return;
         }
@@ -1139,12 +1146,16 @@ export const BridgePendingTxItem = ({
           completedAt: Date.now(),
         };
         setData(updateData as BridgeTxHistoryItem);
-        void transactionHistoryServiceApi.completeBridgeTxHistory(
-          recentlyTxHash,
-          data.fromChainId,
-          status,
-          findTx,
-        );
+        void transactionHistoryServiceApi
+          .completeBridgeTxHistory(
+            recentlyTxHash,
+            data.fromChainId,
+            status,
+            findTx,
+          )
+          .catch(error => {
+            console.error('[BridgeHistory] persist completion failed', error);
+          });
       }
     },
   );
