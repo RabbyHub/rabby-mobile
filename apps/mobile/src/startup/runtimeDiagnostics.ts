@@ -1,4 +1,6 @@
 import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import { scheduleStartupPerformanceIdleFlush } from './performance/persistence';
+import { recordStartupPerformanceEvent } from './performance/recorder';
 
 export type StartupRuntimePhase = 'bootstrap' | 'launch' | 'home';
 
@@ -153,6 +155,17 @@ export function markStartupRuntimePhase(
   milestone = nextMilestone;
   phaseReason = reason;
   phaseChangedAt = Date.now();
+  recordStartupPerformanceEvent('runtime', 'phase', {
+    phase,
+    milestone,
+    reason,
+  });
+  if (
+    phase === 'home' &&
+    (milestone === 'post-startup-ready' || milestone === 'idle')
+  ) {
+    scheduleStartupPerformanceIdleFlush(reason);
+  }
   publish();
 }
 
@@ -177,6 +190,13 @@ export function markStartupModuleLoaded(options: StartupModuleLoadOptions) {
     endedAt: timestamp,
     durationMs: 0,
     error: '',
+  });
+  recordStartupPerformanceEvent('module', 'loaded', {
+    name: options.name,
+    group: options.group,
+    taskStage: options.taskStage,
+    reason: options.reason || '',
+    durationMs: 0,
   });
   pruneModuleRecords();
   publish();
@@ -213,6 +233,12 @@ export function observeStartupModuleLoad<T>(
     error: '',
   };
   moduleRecords.set(options.name, record);
+  recordStartupPerformanceEvent('module', 'requested', {
+    name: options.name,
+    group: options.group,
+    taskStage: options.taskStage,
+    reason: options.reason || '',
+  });
   pruneModuleRecords();
   publish();
 
@@ -224,6 +250,13 @@ export function observeStartupModuleLoad<T>(
     record.endedAt = Date.now();
     record.durationMs = record.endedAt - requestedAt;
     record.error = error instanceof Error ? error.message : String(error);
+    recordStartupPerformanceEvent('module', 'error', {
+      name: options.name,
+      group: options.group,
+      taskStage: options.taskStage,
+      durationMs: record.durationMs,
+      error: record.error,
+    });
     publish();
     throw error;
   }
@@ -233,6 +266,12 @@ export function observeStartupModuleLoad<T>(
       record.status = 'loaded';
       record.endedAt = Date.now();
       record.durationMs = record.endedAt - requestedAt;
+      recordStartupPerformanceEvent('module', 'loaded', {
+        name: options.name,
+        group: options.group,
+        taskStage: options.taskStage,
+        durationMs: record.durationMs,
+      });
       publish();
       return value;
     },
@@ -241,6 +280,13 @@ export function observeStartupModuleLoad<T>(
       record.endedAt = Date.now();
       record.durationMs = record.endedAt - requestedAt;
       record.error = error instanceof Error ? error.message : String(error);
+      recordStartupPerformanceEvent('module', 'error', {
+        name: options.name,
+        group: options.group,
+        taskStage: options.taskStage,
+        durationMs: record.durationMs,
+        error: record.error,
+      });
       publish();
       throw error;
     },

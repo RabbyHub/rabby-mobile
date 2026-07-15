@@ -23,7 +23,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeBottomSheetProps } from './utils-help';
 import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
-import { runStartupTask } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
 

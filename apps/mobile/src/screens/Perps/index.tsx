@@ -167,12 +167,13 @@ export const PerpsOriginScreen = () => {
       ready: !!currentPerpsAccount?.address,
       onSuccess: shouldShow => {
         if (shouldShow) {
-          void perpsServiceApi.setInviteConfig(
-            currentPerpsAccount?.address || '',
-            {
+          void perpsServiceApi
+            .setInviteConfig(currentPerpsAccount?.address || '', {
               lastInvitedAt: Date.now(),
-            },
-          );
+            })
+            .catch(error => {
+              console.error('[Perps] persist invite state failed', error);
+            });
         }
       },
     },

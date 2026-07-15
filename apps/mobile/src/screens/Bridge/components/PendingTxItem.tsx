@@ -39,11 +39,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { AssetAvatar } from '@/components';
 import { ONE_DAY_MS, ONE_HOUR_MS, ONE_MINUTE_MS } from '../constants';
 import { openapi } from '@/core/request';
-import {
-  getTransactionHistoryRecentPendingSnapshot,
-  getTransactionHistoryRecentTxSnapshot,
-  transactionHistoryServiceApi,
-} from '@/core/serviceApi/transactionHistory';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { Button } from '@/components2024/Button';
 import {
   useSafeAreaFrame,
@@ -996,10 +992,11 @@ export const BridgePendingTxItem = ({
   const [data, setData] = useState<BridgeTxHistoryItem | null>(null);
 
   const fetchHistory = useCallback(async () => {
-    const historyData = getTransactionHistoryRecentPendingSnapshot(
-      userAddress,
-      'bridge',
-    ) as BridgeTxHistoryItem;
+    const historyData =
+      (await transactionHistoryServiceApi.getRecentPendingTxHistory(
+        userAddress,
+        'bridge',
+      )) as BridgeTxHistoryItem;
 
     // tx create time is more than one day, set this tx failed and no show in loading pendingTxItem
     if (
@@ -1039,7 +1036,7 @@ export const BridgePendingTxItem = ({
           const txCreateTime = historyData.createdAt;
           if (currentTime - txCreateTime > ONE_HOUR_MS) {
             // tx create time is more than 60 minutes, set this tx failed
-            void transactionHistoryServiceApi.completeBridgeTxHistory(
+            await transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               'failed',
@@ -1058,7 +1055,7 @@ export const BridgePendingTxItem = ({
               completedAt: Date.now(),
             };
             setData(updateData as BridgeTxHistoryItem);
-            void transactionHistoryServiceApi.completeBridgeTxHistory(
+            await transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               status,
@@ -1073,29 +1070,33 @@ export const BridgePendingTxItem = ({
   }, [userAddress]);
 
   useEffect(() => {
-    fetchHistory();
+    void fetchHistory().catch(error => {
+      console.error('[BridgePendingTxItem] load local history failed', error);
+    });
   }, [fetchHistory]);
 
-  const fetchRefreshLocalData = useMemoizedFn((data: BridgeTxHistoryItem) => {
-    if (data.status !== 'pending') {
-      // has done
-      return;
-    }
+  const fetchRefreshLocalData = useMemoizedFn(
+    async (data: BridgeTxHistoryItem) => {
+      if (data.status !== 'pending') {
+        // has done
+        return;
+      }
 
-    const address = data.address;
-    const chainId = data.fromChainId;
-    const hash = data.hash;
-    const newData = getTransactionHistoryRecentTxSnapshot(
-      address,
-      hash,
-      chainId!,
-      'bridge',
-    );
+      const address = data.address;
+      const chainId = data.fromChainId;
+      const hash = data.hash;
+      const newData = await transactionHistoryServiceApi.getRecentTxHistory(
+        address,
+        hash,
+        chainId!,
+        'bridge',
+      );
 
-    if (newData?.status !== 'pending') {
-      return newData;
-    }
-  });
+      if (newData?.status !== 'pending') {
+        return newData;
+      }
+    },
+  );
 
   const handleBridgeHistoryUpdate = useMemoizedFn(
     (bridgeHistoryList: BridgeHistory[]) => {
@@ -1116,11 +1117,18 @@ export const BridgePendingTxItem = ({
         const txCreateTime = data?.createdAt;
         if (currentTime - txCreateTime > ONE_HOUR_MS) {
           // tx create time is more than 60 minutes, set this tx failed
-          void transactionHistoryServiceApi.completeBridgeTxHistory(
-            recentlyTxHash,
-            data?.fromChainId,
-            'failed',
-          );
+          void transactionHistoryServiceApi
+            .completeBridgeTxHistory(
+              recentlyTxHash,
+              data?.fromChainId,
+              'failed',
+            )
+            .catch(error => {
+              console.error(
+                '[BridgeHistory] persist failed status failed',
+                error,
+              );
+            });
           setData(null);
           return;
         }
@@ -1139,12 +1147,16 @@ export const BridgePendingTxItem = ({
           completedAt: Date.now(),
         };
         setData(updateData as BridgeTxHistoryItem);
-        void transactionHistoryServiceApi.completeBridgeTxHistory(
-          recentlyTxHash,
-          data.fromChainId,
-          status,
-          findTx,
-        );
+        void transactionHistoryServiceApi
+          .completeBridgeTxHistory(
+            recentlyTxHash,
+            data.fromChainId,
+            status,
+            findTx,
+          )
+          .catch(error => {
+            console.error('[BridgeHistory] persist completion failed', error);
+          });
       }
     },
   );

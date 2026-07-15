@@ -1,6 +1,3 @@
-import { Platform } from 'react-native';
-import RNFS from '@rabby-wallet/react-native-fs';
-
 import {
   beginAndroidAsyncTrace,
   endAndroidAsyncTrace,
@@ -9,29 +6,14 @@ import {
   traceAndroidInstant,
 } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
-
-let startupDiagnosticsLogger:
-  | typeof import('@/utils/logger').logger
-  | null
-  | undefined;
-
-function getStartupDiagnosticsLogger() {
-  if (startupDiagnosticsLogger !== undefined) {
-    return startupDiagnosticsLogger;
-  }
-
-  try {
-    startupDiagnosticsLogger = require('@/utils/logger')
-      .logger as typeof import('@/utils/logger').logger;
-  } catch {
-    startupDiagnosticsLogger = null;
-  }
-
-  return startupDiagnosticsLogger;
-}
+import {
+  recordStartupPerformanceEvent,
+  STARTUP_PERFORMANCE_STALL_WARN_MS,
+  subscribeStartupPerformanceStalls,
+} from '@/startup/performance/recorder';
+import { shouldSuppressPerfCaptureConsoleNoise } from './perfCaptureConsole';
 
 type DiagnosticData = Record<string, unknown>;
-type StartupDiagnosticFile = Awaited<ReturnType<typeof RNFS.readDir>>[number];
 
 type OpSqliteDiagnosticPayload = {
   op?: string;
@@ -108,6 +90,9 @@ export type StartupGovernanceTaskRecord = {
   firedAt: number;
   endedAt: number;
   durationMs: number;
+  invokeSyncMs: number;
+  awaitWallMs: number;
+  isAsync: boolean;
   waitMs: number;
   budgetExceeded: boolean;
   error: string;
@@ -118,8 +103,6 @@ type UnlockCriticalWindow = {
   traceCookie: number;
   startedAt: number;
   reason: string;
-  intervalId: ReturnType<typeof setInterval> | null;
-  lastTickAt: number;
   maxGapMs: number;
   stallCount: number;
   loggedStallCount: number;
@@ -129,8 +112,6 @@ type DbActiveWindow = {
   id: number;
   traceCookie: number;
   startedAt: number;
-  intervalId: ReturnType<typeof setInterval> | null;
-  lastTickAt: number;
   maxGapMs: number;
   stallCount: number;
   loggedStallCount: number;
@@ -237,10 +218,7 @@ export type StartupTaskSummarySnapshot = {
   recentTasks: StartupGovernanceTaskRecord[];
 };
 
-const isAndroid = Platform.OS === 'android';
-const enabled = isAndroid && isNonProductionDiagnosticsEnabled;
-const STALL_INTERVAL_MS = 50;
-const STALL_WARN_MS = 120;
+const enabled = isNonProductionDiagnosticsEnabled;
 const STALL_LOG_MS = 250;
 const MAX_STALL_LOGS_PER_WINDOW = 8;
 const MAX_SNAPSHOT_TASKS = 5;
@@ -283,17 +261,6 @@ const opSqliteDiagnosticContextRef: {
 
 let didInstallOpSqliteDiagnosticHook = false;
 
-const diagnosticFilePath =
-  enabled && RNFS.ExternalDirectoryPath
-    ? `${
-        RNFS.ExternalDirectoryPath
-      }/rabby-startup-diagnostics-${Date.now()}.ndjson`
-    : '';
-
-const pendingDiagnosticLines: string[] = [];
-let diagnosticFlushTimer: ReturnType<typeof setTimeout> | null = null;
-let isFlushingDiagnosticLines = false;
-let didRunDiagnosticFileRetention = false;
 let lastDbSummarySnapshot: DbSyncSummarySnapshot = {
   enabled,
   updatedAt: now(),
@@ -789,141 +756,16 @@ export function recordKeyringRuntimePerfDiagnostic(
   });
 }
 
-function queueDiagnosticLine(
-  scope: string,
-  event: string,
-  data: DiagnosticData = {},
-) {
-  if (!diagnosticFilePath) {
-    return;
-  }
-
-  try {
-    pendingDiagnosticLines.push(
-      JSON.stringify({
-        timestamp: new Date().toISOString(),
-        scope,
-        event,
-        data,
-      }),
-    );
-  } catch {
-    pendingDiagnosticLines.push(
-      JSON.stringify({
-        timestamp: new Date().toISOString(),
-        scope,
-        event,
-        data: {
-          serializationError: true,
-        },
-      }),
-    );
-  }
-
-  if (activeDbSyncTasks.size > 0 || diagnosticFlushTimer) {
-    return;
-  }
-
-  diagnosticFlushTimer = setTimeout(() => {
-    diagnosticFlushTimer = null;
-    flushDiagnosticLines();
-  }, 15000);
-}
-
-function getStartupDiagnosticFileTimestamp(file: StartupDiagnosticFile) {
-  const maybeDate = file.mtime || file.ctime;
-
-  if (maybeDate instanceof Date) {
-    return maybeDate.getTime();
-  }
-
-  if (maybeDate) {
-    const parsedTime = new Date(maybeDate).getTime();
-    if (!Number.isNaN(parsedTime)) {
-      return parsedTime;
-    }
-  }
-
-  const nameTime = file.name.match(
-    /^rabby-startup-diagnostics-(\d+)\.ndjson$/,
-  )?.[1];
-
-  return nameTime ? Number(nameTime) : 0;
-}
-
-async function runStartupDiagnosticFileRetentionOnce() {
-  if (
-    didRunDiagnosticFileRetention ||
-    !enabled ||
-    !RNFS.ExternalDirectoryPath
-  ) {
-    return;
-  }
-
-  didRunDiagnosticFileRetention = true;
-
-  try {
-    const files = await RNFS.readDir(RNFS.ExternalDirectoryPath);
-    const diagnosticFiles = files
-      .filter(file => /^rabby-startup-diagnostics-\d+\.ndjson$/.test(file.name))
-      .sort(
-        (left, right) =>
-          getStartupDiagnosticFileTimestamp(right) -
-          getStartupDiagnosticFileTimestamp(left),
-      );
-
-    await Promise.all(
-      diagnosticFiles.slice(5).map(file => RNFS.unlink(file.path)),
-    );
-  } catch (error) {
-    getStartupDiagnosticsLogger()?.warn(
-      '[RabbyStartupDiag:file] retention_failed',
-      {
-        error: error instanceof Error ? error.message : String(error),
-      },
-    );
-  }
-}
-
-function flushDiagnosticLines() {
-  if (
-    !diagnosticFilePath ||
-    isFlushingDiagnosticLines ||
-    pendingDiagnosticLines.length === 0
-  ) {
-    return;
-  }
-
-  isFlushingDiagnosticLines = true;
-  const content = `${pendingDiagnosticLines.splice(0).join('\n')}\n`;
-  RNFS.appendFile(diagnosticFilePath, content, 'utf8')
-    .then(() => runStartupDiagnosticFileRetentionOnce())
-    .catch(error => {
-      getStartupDiagnosticsLogger()?.warn(
-        '[RabbyStartupDiag:file] flush_failed',
-        {
-          error: error instanceof Error ? error.message : String(error),
-        },
-      );
-    })
-    .finally(() => {
-      isFlushingDiagnosticLines = false;
-      if (pendingDiagnosticLines.length > 0 && activeDbSyncTasks.size === 0) {
-        flushDiagnosticLines();
-      }
-    });
-}
-
 function trace(scope: string, event: string, data: DiagnosticData = {}) {
   if (!enabled) {
     return;
   }
 
-  queueDiagnosticLine(scope, event, data);
-  getStartupDiagnosticsLogger()?.info(
-    `[RabbyStartupDiag:${scope}] ${event}`,
-    data,
-  );
+  recordStartupPerformanceEvent(scope, event, data);
+  if (shouldSuppressPerfCaptureConsoleNoise()) {
+    return;
+  }
+
   try {
     console.info(
       `[RabbyStartupDiag:${scope}] ${event} ${JSON.stringify(data)}`,
@@ -1070,6 +912,27 @@ function markDbActiveWindowStall(window: DbActiveWindow, gapMs: number) {
   });
 }
 
+subscribeStartupPerformanceStalls(({ gapMs }) => {
+  if (!enabled || gapMs < STARTUP_PERFORMANCE_STALL_WARN_MS) {
+    return;
+  }
+
+  const unlockWindow = activeUnlockWindowRef.current;
+  if (unlockWindow) {
+    markUnlockWindowStall(unlockWindow, gapMs);
+  }
+
+  const dbWindow = activeDbWindowRef.current;
+  if (dbWindow) {
+    dbWindow.peakActiveTaskCount = Math.max(
+      dbWindow.peakActiveTaskCount,
+      getDbSyncExecutionTaskCount(),
+    );
+    markDbActiveWindowStall(dbWindow, gapMs);
+    publishDbSummarySnapshot();
+  }
+});
+
 function ensureDbActiveWindow() {
   if (!enabled || activeDbWindowRef.current) {
     return;
@@ -1081,8 +944,6 @@ function ensureDbActiveWindow() {
     id: ++dbActiveWindowSeq,
     traceCookie: nextAndroidTraceCookie(),
     startedAt,
-    intervalId: null,
-    lastTickAt: startedAt,
     maxGapMs: 0,
     stallCount: 0,
     loggedStallCount: 0,
@@ -1090,27 +951,7 @@ function ensureDbActiveWindow() {
     taskIds: [],
   };
 
-  window.intervalId = setInterval(() => {
-    const current = now();
-    const gapMs = current - window.lastTickAt;
-    window.lastTickAt = current;
-    window.peakActiveTaskCount = Math.max(
-      window.peakActiveTaskCount,
-      getDbSyncExecutionTaskCount(),
-    );
-
-    if (gapMs >= STALL_WARN_MS) {
-      markDbActiveWindowStall(window, gapMs);
-    }
-
-    publishDbSummarySnapshot();
-  }, STALL_INTERVAL_MS);
-
   activeDbWindowRef.current = window;
-  if (diagnosticFlushTimer) {
-    clearTimeout(diagnosticFlushTimer);
-    diagnosticFlushTimer = null;
-  }
   trace('db', 'active_window_start', {
     id: window.id,
     ...getActiveTaskSnapshot(),
@@ -1132,10 +973,6 @@ function endDbActiveWindowIfIdle() {
   const window = activeDbWindowRef.current;
   if (!window) {
     return;
-  }
-
-  if (window.intervalId) {
-    clearInterval(window.intervalId);
   }
 
   const endedAt = now();
@@ -1164,7 +1001,6 @@ function endDbActiveWindowIfIdle() {
     stallCount: window.stallCount,
   });
   traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
-  flushDiagnosticLines();
 }
 
 function attachDbTaskToActiveWindow(task: ActiveDbSyncTask) {
@@ -1245,6 +1081,9 @@ export function beginStartupTaskDiagnostic(meta: {
     firedAt: 0,
     endedAt: 0,
     durationMs: 0,
+    invokeSyncMs: 0,
+    awaitWallMs: 0,
+    isAsync: false,
     waitMs: 0,
     budgetExceeded: false,
     error: '',
@@ -1268,7 +1107,13 @@ export function beginStartupTaskDiagnostic(meta: {
 
 export function markStartupTaskDiagnostic(
   id: number | null,
-  event: 'fire' | 'done' | 'error' | 'cancel' | 'budget_exceeded',
+  event:
+    | 'fire'
+    | 'invoke_return'
+    | 'done'
+    | 'error'
+    | 'cancel'
+    | 'budget_exceeded',
   data: DiagnosticData = {},
 ) {
   if (!enabled || id === null) {
@@ -1285,6 +1130,10 @@ export function markStartupTaskDiagnostic(
     task.status = 'running';
     task.firedAt = timestamp;
     task.waitMs = timestamp - task.scheduledAt;
+  } else if (event === 'invoke_return') {
+    task.invokeSyncMs =
+      typeof data.invokeSyncMs === 'number' ? data.invokeSyncMs : 0;
+    task.isAsync = data.isAsync === true;
   } else if (event === 'budget_exceeded') {
     task.budgetExceeded = true;
   } else {
@@ -1296,6 +1145,14 @@ export function markStartupTaskDiagnostic(
         : task.firedAt
         ? timestamp - task.firedAt
         : timestamp - task.scheduledAt;
+    task.invokeSyncMs =
+      typeof data.invokeSyncMs === 'number'
+        ? data.invokeSyncMs
+        : task.invokeSyncMs;
+    task.awaitWallMs =
+      typeof data.awaitWallMs === 'number' ? data.awaitWallMs : 0;
+    task.isAsync =
+      typeof data.isAsync === 'boolean' ? data.isAsync : task.isAsync;
     task.status =
       event === 'done' ? 'success' : event === 'cancel' ? 'canceled' : 'error';
     task.error =
@@ -1319,11 +1176,16 @@ export function markStartupTaskDiagnostic(
     status: task.status,
     waitMs: task.waitMs,
     durationMs: task.durationMs,
+    invokeSyncMs: task.invokeSyncMs,
+    awaitWallMs: task.awaitWallMs,
+    isAsync: task.isAsync,
     budgetMs: task.budgetMs,
     budgetExceeded: task.budgetExceeded,
     ...data,
   });
-  publishStartupTaskSummarySnapshot(event !== 'fire');
+  publishStartupTaskSummarySnapshot(
+    event !== 'fire' && event !== 'invoke_return',
+  );
 }
 
 export function beginUnlockCriticalWindow(reason: string) {
@@ -1343,22 +1205,10 @@ export function beginUnlockCriticalWindow(reason: string) {
     traceCookie: nextAndroidTraceCookie(),
     startedAt,
     reason,
-    intervalId: null,
-    lastTickAt: startedAt,
     maxGapMs: 0,
     stallCount: 0,
     loggedStallCount: 0,
   };
-
-  window.intervalId = setInterval(() => {
-    const current = now();
-    const gapMs = current - window.lastTickAt;
-    window.lastTickAt = current;
-
-    if (gapMs >= STALL_WARN_MS) {
-      markUnlockWindowStall(window, gapMs);
-    }
-  }, STALL_INTERVAL_MS);
 
   activeUnlockWindowRef.current = window;
   trace('unlock', 'critical_window_start', {
@@ -1385,10 +1235,6 @@ export function endUnlockCriticalWindow(
   const window = activeUnlockWindowRef.current;
   if (!window || window.id !== id) {
     return;
-  }
-
-  if (window.intervalId) {
-    clearInterval(window.intervalId);
   }
 
   activeUnlockWindowRef.current = null;

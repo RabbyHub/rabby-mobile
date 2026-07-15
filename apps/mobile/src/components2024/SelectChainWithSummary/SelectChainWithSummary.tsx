@@ -32,10 +32,6 @@ import type { Account } from '@/core/startupServices/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
-import { apiCustomTestnet } from '@/core/apis';
-
-let hasInitializedCustomTestnetServiceForChainSelector = false;
-
 const useChainSelectorList = ({
   supportChains,
   netTabKey,
@@ -48,17 +44,6 @@ const useChainSelectorList = ({
   account?: Account;
 }) => {
   const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    if (
-      netTabKey !== 'testnet' ||
-      hasInitializedCustomTestnetServiceForChainSelector
-    ) {
-      return;
-    }
-    hasInitializedCustomTestnetServiceForChainSelector = true;
-    apiCustomTestnet.initCustomTestnetService();
-  }, [netTabKey]);
 
   const {
     testnetMatteredChainBalances,

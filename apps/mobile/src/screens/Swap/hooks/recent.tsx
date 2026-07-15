@@ -1,21 +1,16 @@
 import { swapServiceApi } from '@/core/serviceApi/swap';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
+import { useAtom } from 'jotai';
+import { createRaceSafeHydratedAtom } from './raceSafeHydratedAtom';
 
-const _recentToTokensAtom = atom<TokenItem[]>([]);
-
-_recentToTokensAtom.onMount = set => {
-  swapServiceApi.getRecentSwapToTokens().then(set);
-};
-
-const recentToTokensAtom = atom(
-  get => get(_recentToTokensAtom),
-  async (get, set, newVal: TokenItem) => {
-    await swapServiceApi.setRecentSwapToToken(newVal);
-    const newToTokens = await swapServiceApi.getRecentSwapToTokens();
-    set(_recentToTokensAtom, newToTokens);
+const recentToTokensAtom = createRaceSafeHydratedAtom<TokenItem[], TokenItem>({
+  initialValue: [],
+  hydrate: () => swapServiceApi.getRecentSwapToTokens(),
+  commitUpdate: async (_previous, token) => {
+    await swapServiceApi.setRecentSwapToToken(token);
+    return swapServiceApi.getRecentSwapToTokens();
   },
-);
+});
 
 export const useSwapRecentToTokens = () => {
   return useAtom(recentToTokensAtom);

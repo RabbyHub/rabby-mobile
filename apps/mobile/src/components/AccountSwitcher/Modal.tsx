@@ -195,7 +195,7 @@ export function AccountSwitcherModalInDappWebView({
                 if (!activeDappId) {
                   return;
                 }
-                setDappCurrentAccount(activeDappId, ctx.sceneAccount);
+                await setDappCurrentAccount(activeDappId, ctx.sceneAccount);
                 await ctx.switchAction();
               }}
               scrollToBottom={scrollToBottom}

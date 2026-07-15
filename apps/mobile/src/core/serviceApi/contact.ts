@@ -1,7 +1,6 @@
 import type { ContactBookService } from '@rabby-wallet/service-address';
-import type { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
 import { getRegisteredService } from '@/core/services/serviceRegistry';
-import { onSetAddressAlias } from '@/core/services/keyringParams';
+import { setDefaultAddressAlias } from '@/core/utils/addressAlias';
 import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type ContactServiceApiContract = ContactBookService;
@@ -36,11 +35,19 @@ export function getContactsByMapSnapshot() {
   return service.getContactsByMap();
 }
 
-export function setDefaultAddressAliasFromKeyringParamsSync(
-  account: Parameters<
-    NonNullable<KeyringServiceOptions['onSetAddressAlias']>
-  >[1],
+export function updateContactAliasSync(
+  ...args: Parameters<ContactBookService['updateAlias']>
 ) {
   const service = getRegisteredService('contactService');
-  void onSetAddressAlias(undefined, account, service);
+  if (!service) {
+    throw new Error('contactService is not ready');
+  }
+  service.updateAlias(...args);
+}
+
+export function setDefaultAddressAliasFromKeyringParamsSync(
+  account: Parameters<typeof setDefaultAddressAlias>[0],
+) {
+  const service = getRegisteredService('contactService');
+  setDefaultAddressAlias(account, service);
 }

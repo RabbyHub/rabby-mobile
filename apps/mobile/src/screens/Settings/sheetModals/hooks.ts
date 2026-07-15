@@ -60,7 +60,7 @@ export function useSheetWebViewTester() {
   const openMetaMaskTestDapp = React.useCallback(() => {
     makeSureTestDapp();
 
-    openUrlAsDapp(
+    void openUrlAsDapp(
       {
         dappTabId: DAPP_METAMASK_TEST_DAPP.origin,
         openTime: Date.now(),
@@ -70,7 +70,7 @@ export function useSheetWebViewTester() {
         },
       },
       { isActiveDapp: true, showSheetModalFirst: true },
-    );
+    ).catch(console.error);
   }, [makeSureTestDapp, openUrlAsDapp]);
 
   return {

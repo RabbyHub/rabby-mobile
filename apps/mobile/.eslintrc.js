@@ -8,6 +8,7 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/no-unused-vars': 'warn',
     'no-runtime-service-imports': 'error',
+    'no-floating-deferred-service-api-calls': 'error',
     'import/no-cycle': [
       'warn',
       {

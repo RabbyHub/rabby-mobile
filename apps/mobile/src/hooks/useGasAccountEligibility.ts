@@ -15,7 +15,9 @@ import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 
 runDevIIFEFunc(() => {
   // mock haven't claimed gift
-  void gasAccountServiceApi.setHasClaimedGift(false);
+  void gasAccountServiceApi.setHasClaimedGift(false).catch(error => {
+    console.error('[gasAccount] reset claimed gift dev state failed', error);
+  });
 });
 
 const gasAccountState = zCreate(() => ({

@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { appMMKVInstance, atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -27,8 +27,12 @@ import { homeDrawerAnimateMutable } from '../../hooks/useHomeDrawerAnimate';
 import { useAtom } from 'jotai';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useMemoizedFn } from 'ahooks';
-import { getBrowserBookmarkCountSnapshot } from '@/core/serviceApi/browser';
-import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
+import {
+  addDappSync,
+  ensureDappServiceReady,
+  getDappSnapshot,
+  updateDappSync,
+} from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { DappFavoriteList } from './DappFavoriteList';
@@ -89,21 +93,44 @@ const FavoriteTabLabel = ({
   );
 };
 
-const dappTabAtom = atomByMMKV<TabKey>(
-  '@dapp.activeTab',
-  getBrowserBookmarkCountSnapshot() ? 'favorite' : 'all',
-  {
-    getOnInit: true,
-  },
-);
+const DAPP_ACTIVE_TAB_STORAGE_KEY = '@dapp.activeTab';
+const dappTabAtom = atomByMMKV<TabKey>(DAPP_ACTIVE_TAB_STORAGE_KEY, 'all', {
+  getOnInit: true,
+});
 
 export const dappRemindAtom = atomByMMKV<boolean>('@dapp.remind', true, {
   getOnInit: true,
 });
 
-const useDappTab = () => {
+const useDappTab = ({
+  hasBookmarks,
+  bookmarksHydrated,
+}: {
+  hasBookmarks: boolean;
+  bookmarksHydrated: boolean;
+}) => {
   const [storedActiveTab, setStoredActiveTab] = useAtom(dappTabAtom);
+  const shouldResolveInitialDappTabRef = useRef(
+    !appMMKVInstance.contains(DAPP_ACTIVE_TAB_STORAGE_KEY),
+  );
   const { t } = useTranslation();
+  useEffect(() => {
+    if (!shouldResolveInitialDappTabRef.current || !bookmarksHydrated) {
+      return;
+    }
+    shouldResolveInitialDappTabRef.current = false;
+    if (hasBookmarks) {
+      setStoredActiveTab('favorite');
+    }
+  }, [bookmarksHydrated, hasBookmarks, setStoredActiveTab]);
+
+  const setActiveTab = useCallback(
+    (tab: TabKey) => {
+      shouldResolveInitialDappTabRef.current = false;
+      setStoredActiveTab(tab);
+    },
+    [setStoredActiveTab],
+  );
   const tabs = useMemo(
     () =>
       [
@@ -153,7 +180,7 @@ const useDappTab = () => {
   return {
     tabs,
     activeTab,
-    setActiveTab: setStoredActiveTab,
+    setActiveTab,
   };
 };
 
@@ -168,21 +195,31 @@ export const HomeDappDrawerContent: React.FC<{
   const isDrawerExpanded = useValueFromSharedValue(isExpanded);
   const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
-  const { activeTab, setActiveTab, tabs } = useDappTab();
+  const { bookmarkList, bookmarkStore, removeBookmark } = useBrowserBookmark();
+  const { activeTab, setActiveTab, tabs } = useDappTab({
+    hasBookmarks: bookmarkList.length > 0,
+    bookmarksHydrated: bookmarkStore.hydrated,
+  });
   const { openTab } = useBrowser();
-  const handleDappPress = useMemoizedFn((item: DappInfo) => {
-    openTab(item.url || item.origin, {
-      isDapp: true,
-      isRemindOpen: true,
-    });
-    const dapp = getDappSnapshot(item.origin);
-    if (!dapp) {
-      void dappServiceApi.addDapp(item);
-    } else if (!dapp.isDapp) {
-      void dappServiceApi.updateDapp({
-        ...dapp,
-        origin: item.origin,
+  const handleDappPress = useMemoizedFn(async (item: DappInfo) => {
+    try {
+      await ensureDappServiceReady();
+      const dapp = getDappSnapshot(item.origin);
+      if (!dapp) {
+        addDappSync(item);
+      } else if (!dapp.isDapp) {
+        updateDappSync({
+          ...dapp,
+          origin: item.origin,
+          isDapp: true,
+        });
+      }
+    } catch (error) {
+      console.error('[HomeDappDrawer] persist dapp failed', error);
+    } finally {
+      openTab(item.url || item.origin, {
         isDapp: true,
+        isRemindOpen: true,
       });
     }
   });
@@ -254,7 +291,6 @@ export const HomeDappDrawerContent: React.FC<{
     [renderCategoryLabel, renderFavoriteLabel, tabs],
   );
 
-  const { bookmarkList, removeBookmark } = useBrowserBookmark();
   const [_isEditing, setIsEditing] = React.useState(false);
   const [removedItems, setRemovedItems] = useState<string[]>([]);
   const list = useMemo(() => {

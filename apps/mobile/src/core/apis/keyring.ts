@@ -7,7 +7,10 @@ import {
   hasKeyringInstanceSnapshot,
   keyringServiceApi,
 } from '@/core/serviceApi/keyring';
-import { setCurrentRequestDeferFnSync } from '@/core/serviceApi/notification';
+import {
+  ensureNotificationServiceReady,
+  setCurrentRequestDeferFnSync,
+} from '@/core/serviceApi/notification';
 import { preferenceServiceApi } from '@/core/serviceApi/preference';
 import { ethErrors } from 'eth-rpc-errors';
 import { getKeyringParams } from '../utils/getKeyringParams';
@@ -134,6 +137,7 @@ export const apisKeyring = {
     data: string,
     options?: any,
   ) => {
+    await ensureNotificationServiceReady();
     const fn = () =>
       waitSignComponentAmounted().then(() => {
         apisKeyring.signTypedData(type, from, data as any, options);

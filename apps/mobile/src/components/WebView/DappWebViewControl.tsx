@@ -323,7 +323,11 @@ const DappWebViewControl = ({
     styles,
   ]);
 
-  const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+  const {
+    isBridgeReady,
+    onLoadStart,
+    onMessage: onBridgeMessage,
+  } = useSetupWebview({
     dappOrigin,
     webviewRef,
     webviewIdRef,
@@ -336,13 +340,16 @@ const DappWebViewControl = ({
   });
 
   const initialUrl = useMemo(() => {
-    if (!_initialUrl) return convertToWebviewUrl(dappOrigin);
+    if (!_initialUrl) {
+      return convertToWebviewUrl(dappOrigin);
+    }
 
     if (
       canoicalizeDappUrl(_initialUrl).origin !==
       canoicalizeDappUrl(dappOrigin).origin
-    )
+    ) {
       return convertToWebviewUrl(dappOrigin);
+    }
 
     return convertToWebviewUrl(_initialUrl);
   }, [dappOrigin, _initialUrl]);
@@ -354,7 +361,9 @@ const DappWebViewControl = ({
   });
 
   const renderedWebviewNode = useMemo(() => {
-    if (!entryScriptWeb3Loaded) return null;
+    if (!entryScriptWeb3Loaded || !isBridgeReady) {
+      return null;
+    }
 
     const node = (
       <WebView
@@ -428,6 +437,7 @@ const DappWebViewControl = ({
     embedHtml,
     webviewProps,
     entryScriptWeb3Loaded,
+    isBridgeReady,
     beforeContentLoadedBuiltinScriptIds,
     documentEndBuiltinScriptIds,
     initialUrl,

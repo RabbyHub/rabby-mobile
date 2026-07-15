@@ -38,7 +38,7 @@ import {
 import { openapi } from '@/core/request';
 import RcIconGlobeCC from '@/assets2024/icons/common/globe-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
-import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
@@ -224,15 +224,17 @@ export default function InnerDappWebViewPreloadLayer({
     }
     const dappOrigin = safeGetOrigin(activeItem.url);
     const requestId = ++permissionRequestIdRef.current;
-    const dappInfo = getDappSnapshot(dappOrigin);
     let cancelled = false;
     setDappPermission(true);
 
-    openapi
-      .getDappPermission({
-        dapp: activeItem.id,
-        id: dappInfo?.currentAccount?.address,
-      })
+    dappServiceApi
+      .getDapp(dappOrigin)
+      .then(dappInfo =>
+        openapi.getDappPermission({
+          dapp: activeItem.id,
+          id: dappInfo?.currentAccount?.address,
+        }),
+      )
       .then(result => {
         if (cancelled || requestId !== permissionRequestIdRef.current) {
           return;

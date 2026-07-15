@@ -1,4 +1,4 @@
-import { runStartupTask } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 
 import { registerStartupPhaseTask } from './phaseRegistry';
@@ -53,15 +53,6 @@ registerLaunchTask('lockUnlockEventBridge', async () => {
     () => import('@/core/apis/lock'),
   );
   startLockUnlockEventBridge();
-});
-
-registerLaunchTask('bootstrapHideSplashOnNavigationReady', async () => {
-  const { startHideSplashOnNavigationReady } = await loadLaunchModule(
-    'bootstrapHideSplashOnNavigationReady',
-    'hooks/useBootstrap',
-    () => import('@/hooks/useBootstrap'),
-  );
-  startHideSplashOnNavigationReady();
 });
 
 registerLaunchTask('bootstrapI18nReady', async () => {

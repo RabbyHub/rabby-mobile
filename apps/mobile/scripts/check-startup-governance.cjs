@@ -47,8 +47,8 @@ const coreServiceLoaderRegistrationFiles = new Set([
 
 const setupRuntimeStaticImportSources = new Set([
   './core/utils/androidTrace',
+  './core/utils/startupScheduler',
   './core/utils/startupTaskManifest',
-  './core/utils/store',
 ]);
 
 const heavyStartupRuntimeModules = [

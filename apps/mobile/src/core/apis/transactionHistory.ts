@@ -2,7 +2,6 @@ import BigNumber from 'bignumber.js';
 import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import {
   getTransactionHistoryTransactions,
-  getTransactionHistoryTransactionsSnapshot,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
@@ -14,7 +13,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import type { Account } from '@/types/account';
 
 class ApisTransactionHistory {
-  removeLocalPendingTx = ({
+  removeLocalPendingTx = async ({
     address,
     nonce,
     chainId,
@@ -23,28 +22,31 @@ class ApisTransactionHistory {
     nonce?: number;
     chainId?: number;
   }) => {
-    void transactionHistoryServiceApi.removeLocalPendingTx({
-      address,
-      nonce,
-      chainId,
-    });
-    void transactionWatcherServiceApi.removeLocalPendingTx({
-      address,
-      nonce,
-      chainId,
-    });
-    void transactionBroadcastWatcherServiceApi.removeLocalPendingTx({
-      address,
-      nonce,
-      chainId,
-    });
-    return;
+    await Promise.all([
+      transactionHistoryServiceApi.removeLocalPendingTx({
+        address,
+        nonce,
+        chainId,
+      }),
+      transactionWatcherServiceApi.removeLocalPendingTx({
+        address,
+        nonce,
+        chainId,
+      }),
+      transactionBroadcastWatcherServiceApi.removeLocalPendingTx({
+        address,
+        nonce,
+        chainId,
+      }),
+    ]);
   };
 
-  clearPendingTxs = (address: string) => {
-    void transactionHistoryServiceApi.clearPendingTransactions(address);
-    void transactionWatcherServiceApi.clearPendingTx(address);
-    void transactionBroadcastWatcherServiceApi.clearPendingTx(address);
+  clearPendingTxs = async (address: string) => {
+    await Promise.all([
+      transactionHistoryServiceApi.clearPendingTransactions(address),
+      transactionWatcherServiceApi.clearPendingTx(address),
+      transactionBroadcastWatcherServiceApi.clearPendingTx(address),
+    ]);
   };
 
   getPendingTxs = async ({
@@ -164,14 +166,14 @@ class ApisTransactionHistory {
     });
 
     if (tx) {
-      void transactionHistoryServiceApi.updateTx({
+      await transactionHistoryServiceApi.updateTx({
         ...tx,
         isGasDeposit: true,
       });
     }
   };
 
-  checkIsGasDepositTx = ({
+  checkIsGasDepositTx = async ({
     chainId,
     hash,
   }: {
@@ -182,7 +184,8 @@ class ApisTransactionHistory {
       return false;
     }
 
-    return !!getTransactionHistoryTransactionsSnapshot().find(item => {
+    const transactions = await getTransactionHistoryTransactions();
+    return transactions.some(item => {
       return (
         item.chainId === chainId && item.hash === hash && item.isGasDeposit
       );

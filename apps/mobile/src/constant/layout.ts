@@ -157,6 +157,7 @@ export const RootNames = {
   DevSwitches: 'DevSwitches',
   DevPerf: 'DevPerf',
   DebugLogViewer: 'DebugLogViewer',
+  StartupPerformanceLogViewer: 'StartupPerformanceLogViewer',
   InMemoryLogViewer: 'InMemoryLogViewer',
   /* warning: testkits only ------ start */
 
@@ -422,6 +423,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevSwitches]: bg1Default2024Conf,
       [RootNames.DevPerf]: bg1Default2024Conf,
       [RootNames.DebugLogViewer]: bg1Default2024Conf,
+      [RootNames.StartupPerformanceLogViewer]: bg1Default2024Conf,
       [RootNames.InMemoryLogViewer]: bg1Default2024Conf,
 
       // StackTransaction

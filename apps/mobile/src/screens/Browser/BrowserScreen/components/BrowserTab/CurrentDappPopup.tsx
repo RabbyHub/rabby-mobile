@@ -88,10 +88,12 @@ export function CurrentDappPopup({
                   account={account}
                   value={dapp.chainId || CHAINS_ENUM.ETH}
                   onChange={v => {
-                    apisDapp.updateDappChain({
-                      ...dapp,
-                      chainId: v,
-                    });
+                    void apisDapp
+                      .updateDappChain({
+                        ...dapp,
+                        chainId: v,
+                      })
+                      .catch(console.error);
                   }}
                 />
               </View>
@@ -104,7 +106,9 @@ export function CurrentDappPopup({
                 <AccountSelector
                   value={account}
                   onChange={v => {
-                    apisDapp.setCurrentAccountForDapp(origin || dapp.origin, v);
+                    void apisDapp
+                      .setCurrentAccountForDapp(origin || dapp.origin, v)
+                      .catch(console.error);
                   }}
                 />
               </View>
@@ -115,7 +119,9 @@ export function CurrentDappPopup({
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              apisDapp.disconnect(origin || dapp.origin);
+              void apisDapp
+                .disconnect(origin || dapp.origin)
+                .catch(console.error);
               onClose?.();
             }}>
             <RcIconDisconnectCC color={colors2024['red-default']} />

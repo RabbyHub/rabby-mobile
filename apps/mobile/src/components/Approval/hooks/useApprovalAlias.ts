@@ -38,7 +38,11 @@ export const useApprovalAlias = () => {
       setAccounts(accounts => {
         return accounts.map(account => {
           if (account.address === address) {
-            void contactServiceApi.updateAlias({ address, name: alias });
+            void contactServiceApi
+              .updateAlias({ address, name: alias })
+              .catch(error => {
+                console.error('[useApprovalAlias] update alias failed', error);
+              });
             return { ...account, alias };
           }
           return account;

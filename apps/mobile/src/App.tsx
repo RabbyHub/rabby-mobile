@@ -46,6 +46,7 @@ import { traceAndroidInstant } from './core/utils/androidTrace';
 import { startLaunchPhase } from './startup/launchPlan';
 import { StartupRuntimePanelHost } from './screens/Settings/components/StartupRuntimePanelHost';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { AnimatedBootSplash } from './components/BootSplash/AnimatedBootSplash';
 
 Safe.openapiService = openapi;
 
@@ -177,6 +178,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
                 <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
             </Suspense>
+            <AnimatedBootSplash />
           </RootSiblingParent>
         </SafeAreaProvider>
       </ThemeProvider>

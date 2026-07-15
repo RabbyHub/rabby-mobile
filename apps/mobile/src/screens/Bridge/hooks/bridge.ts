@@ -139,10 +139,10 @@ export const bridgeToken = async (
         },
         session: INTERNAL_REQUEST_SESSION,
         account,
-      }).then(res => {
+      }).then(async res => {
         const hash = res as string;
         if (addBridgeTxHistoryObj) {
-          void transactionHistoryServiceApi.addBridgeTxHistory({
+          await transactionHistoryServiceApi.addBridgeTxHistory({
             ...addBridgeTxHistoryObj,
             hash,
           });
@@ -223,10 +223,10 @@ export const bridgeToken = async (
       },
       session: INTERNAL_REQUEST_SESSION,
       account,
-    }).then(res => {
+    }).then(async res => {
       const hash = res as string;
       if (addBridgeTxHistoryObj) {
-        void transactionHistoryServiceApi.addBridgeTxHistory({
+        await transactionHistoryServiceApi.addBridgeTxHistory({
           ...addBridgeTxHistoryObj,
           hash,
         });

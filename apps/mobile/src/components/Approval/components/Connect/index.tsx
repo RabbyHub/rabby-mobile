@@ -54,8 +54,9 @@ import type { Account } from '@/core/startupServices/preference';
 import { ConnectSkeleton } from './ConnectSkeleton';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { getDappAccount } from '@/hooks/useDapps';
+import { getDappAccount } from '@/core/utils/dappAccount';
 import { Text } from '@/components/Typography';
+import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
 
 const RuleDesc = [
   {
@@ -354,8 +355,15 @@ ConnectProps) => {
   };
 
   const init = async () => {
-    const site = await dappServiceApi.getDapp(origin);
-    const _selectedAccount = getDappAccount({ dappInfo: site, accounts });
+    const [site, transactions] = await Promise.all([
+      dappServiceApi.getDapp(origin),
+      getTransactionHistoryTransactions(),
+    ]);
+    const _selectedAccount = getDappAccount({
+      dappInfo: site,
+      accounts,
+      transactions,
+    });
     setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
     let collectList: { name: string; logo_url: string }[] = [];

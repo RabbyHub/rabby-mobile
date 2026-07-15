@@ -8,7 +8,7 @@
 #import <React/RCTHTTPRequestHandler.h>
 
 // splash screen
-#import "RNSplashScreen.h"
+#import "RNBootSplash.h"
 
 // push notification
 #import <UserNotifications/UserNotifications.h>
@@ -87,20 +87,13 @@
                                             initialProperties:self.initialProps];
 
   rootView.backgroundColor = [UIColor systemBackgroundColor];
+  [RNBootSplash initWithStoryboard:@"LaunchScreen" rootView:rootView];
 
   self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
   UIViewController *rootViewController = [UIViewController new];
   rootViewController.view = rootView;
   self.window.rootViewController = rootViewController;
   [self.window makeKeyAndVisible];
-
-#if DEBUG
-  // react-native-splash-screen's iOS `show` implementation blocks the main
-  // thread until JS hides it, which can trigger scene-create watchdog when
-  // running a Metro-backed debug build on newer iOS versions.
-#else
-  [RNSplashScreen show];
-#endif
 
   return YES;
 }

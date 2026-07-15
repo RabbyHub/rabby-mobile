@@ -35,9 +35,12 @@ import { openapi } from '@/core/request';
 import { unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
-import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import {
+  runStartupTask,
+  scheduleStartupTask,
+} from '@/core/utils/startupScheduler';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
@@ -397,7 +400,9 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.userAbstractionReady
         : false,
   }));
-  void perpsServiceApi.setCurrentAccount(payload);
+  void perpsServiceApi.setCurrentAccount(payload).catch(error => {
+    console.error('[perpsService] persist current account failed', error);
+  });
 };
 
 export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
@@ -423,7 +428,9 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     accountNeedApproveAgent: false,
     accountNeedApproveBuilderFee: false,
   }));
-  void perpsServiceApi.setCurrentAccount(payload);
+  void perpsServiceApi.setCurrentAccount(payload).catch(error => {
+    console.error('[perpsService] persist current account failed', error);
+  });
 };
 
 // Cache of the latest WS-pushed asset ctxs keyed by dex name.
@@ -638,7 +645,9 @@ export const addFavoriteMarket = (market: string) => {
     ...prev,
     favoriteMarkets: [...prev.favoriteMarkets, normalizedMarket.toUpperCase()],
   }));
-  void perpsServiceApi.addFavoriteMarket(normalizedMarket);
+  void perpsServiceApi.addFavoriteMarket(normalizedMarket).catch(error => {
+    console.error('[perpsService] persist favorite market failed', error);
+  });
 };
 
 const fetchMarginModeByCoin = async () => {
@@ -662,7 +671,9 @@ export const setMarginModeForCoin = (
       marginModeByCoin: { ...prev.marginModeByCoin, [coin]: mode },
     };
   });
-  void perpsServiceApi.setMarginModeForCoin(coin, mode);
+  void perpsServiceApi.setMarginModeForCoin(coin, mode).catch(error => {
+    console.error('[perpsService] persist margin mode failed', error);
+  });
 };
 
 export const removeFavoriteMarket = (market: string) => {
@@ -671,7 +682,9 @@ export const removeFavoriteMarket = (market: string) => {
     ...prev,
     favoriteMarkets: prev.favoriteMarkets.filter(m => m !== normalizedMarket),
   }));
-  void perpsServiceApi.removeFavoriteMarket(normalizedMarket);
+  void perpsServiceApi.removeFavoriteMarket(normalizedMarket).catch(error => {
+    console.error('[perpsService] remove favorite market failed', error);
+  });
 };
 
 const handleSelectDefaultAccount = async (accounts: Account[]) => {

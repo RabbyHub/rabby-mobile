@@ -267,7 +267,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         }
         const txId = last(results);
         if (txId && txs[0]?.chainId) {
-          void transactionHistoryServiceApi.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
             txId,

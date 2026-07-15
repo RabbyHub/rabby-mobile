@@ -45,10 +45,10 @@ export function FavoriteDappsScreen(): JSX.Element {
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, {
+      void openUrlAsDapp(url, {
         ...options,
         dappsWebViewFromRoute: RootNames.FavoriteDapps,
-      });
+      }).catch(console.error);
       // @ts-expect-error code has been expired due to biz changes, whole file could be removed later
       setBrowserHistory(safeGetOrigin(url));
     },

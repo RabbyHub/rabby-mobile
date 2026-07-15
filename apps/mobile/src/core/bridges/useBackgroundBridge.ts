@@ -4,11 +4,11 @@ import { useCallback, useRef, useEffect } from 'react';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { addDappSync, getDappSnapshot } from '@/core/serviceApi/dapp';
+import { deleteSessionSync } from '@/core/serviceApi/session';
 import {
-  deleteSessionSync,
-  sessionServiceApi,
-} from '@/core/serviceApi/session';
+  serviceDependency,
+  useCoreServiceDependencies,
+} from '@/core/serviceApi/serviceDependencies';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
@@ -16,6 +16,11 @@ import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
 export const BUILTIN_SPECIAL_URLS = [BLANK_PAGE, BLANK_RABBY_PAGE];
+
+const BACKGROUND_BRIDGE_SERVICES = [
+  serviceDependency('dappService'),
+  serviceDependency('sessionService'),
+] as const;
 
 type WebView = import('react-native-webview').WebView;
 type OnLoadStart = (
@@ -54,10 +59,14 @@ export function useSetupWebview({
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
-  const bridgeInitSeqRef = useRef(0);
+  const bridgeServiceState = useCoreServiceDependencies(
+    BACKGROUND_BRIDGE_SERVICES,
+  );
+  const bridgeServices =
+    bridgeServiceState.status === 'ready' ? bridgeServiceState.services : null;
+  const isBridgeReady = bridgeServices !== null;
 
   const destroyCurrentBridge = useCallback(() => {
-    bridgeInitSeqRef.current += 1;
     if (currentBridgeRef.current) {
       currentBridgeRef.current.onDisconnect();
       deleteSessionSync(currentBridgeRef.current);
@@ -66,8 +75,12 @@ export function useSetupWebview({
   }, [currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
-    async (urlBridge: string, isMainFrame: boolean = true) => {
-      const initSeq = ++bridgeInitSeqRef.current;
+    (urlBridge: string, isMainFrame: boolean = true) => {
+      if (!bridgeServices) {
+        return;
+      }
+
+      const { dappService, sessionService } = bridgeServices;
       urlRef.current = urlBridge;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
@@ -79,28 +92,22 @@ export function useSetupWebview({
         isFromMobileInnerDapp,
       });
 
-      const session = await sessionServiceApi.getOrCreateSession(newBridge);
-      if (initSeq !== bridgeInitSeqRef.current) {
-        newBridge.onDisconnect();
-        deleteSessionSync(newBridge);
-        return;
-      }
-
+      const session = sessionService.getOrCreateSession(newBridge);
       session?.setProp({
         origin: urlBridge,
         icon: '',
         name: titleRef.current,
       });
 
-      if (!getDappSnapshot(urlBridge) && session) {
-        addDappSync(createDappBySession(session));
+      if (!dappService.getDapp(urlBridge) && session) {
+        dappService.addDapp(createDappBySession(session));
       }
 
       putBackgroundBridge(newBridge, true);
     },
     [
       isFromMobileInnerDapp,
-      bridgeInitSeqRef,
+      bridgeServices,
       urlRef,
       webviewRef,
       webviewIdRef,
@@ -190,7 +197,11 @@ export function useSetupWebview({
   const onReloadingRef = useRef<boolean>(false);
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
-    async ({ nativeEvent }, treatAsReload = false) => {
+    ({ nativeEvent }, treatAsReload = false) => {
+      if (!bridgeServices) {
+        return;
+      }
+
       if (onReloadingRef.current) {
         return;
       }
@@ -248,6 +259,7 @@ export function useSetupWebview({
       urlRef,
       putBackgroundBridge,
       currentBridgeRef,
+      bridgeServices,
     ],
   );
 
@@ -258,6 +270,7 @@ export function useSetupWebview({
   }, [destroyCurrentBridge]);
 
   return {
+    isBridgeReady,
     onLoadStart,
     onMessage,
   };

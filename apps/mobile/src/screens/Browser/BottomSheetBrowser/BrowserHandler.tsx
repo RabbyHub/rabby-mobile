@@ -90,9 +90,9 @@ export const BrowserHandler = () => {
           text: t('global.Confirm'),
           // style: 'destructive',
           onPress: () => {
-            connectedDapps.forEach(dapp => {
-              apisDapp.disconnect(dapp.origin);
-            });
+            void Promise.all(
+              connectedDapps.map(dapp => apisDapp.disconnect(dapp.origin)),
+            ).catch(console.error);
             toast.success(t('page.browser.disconnectAllAlert.success'));
           },
         },

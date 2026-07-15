@@ -2,10 +2,11 @@ import type { NotificationService } from '@/core/services/notification';
 import {
   callCoreService,
   getRegisteredService,
+  requireCoreService,
 } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
-  runServiceSideEffectWhenReady,
+  ensureServiceApiReady,
 } from './createDeferredServiceApi';
 
 export type NotificationServiceApiContract = NotificationService;
@@ -13,6 +14,14 @@ export const notificationServiceApi = createDeferredServiceApi<
   'notificationService',
   NotificationServiceApiContract
 >('notificationService');
+
+export function ensureNotificationServiceReady() {
+  return ensureServiceApiReady('notificationService');
+}
+
+function requireNotificationService() {
+  return requireCoreService('notificationService');
+}
 
 export function getNotificationApprovalCountSnapshot() {
   return getRegisteredService('notificationService')?.approvals.length || 0;
@@ -47,23 +56,13 @@ export function getCurrentMiniApprovalSnapshot() {
 export function setCurrentMiniApprovalSync(
   value: NotificationService['currentMiniApproval'],
 ) {
-  runServiceSideEffectWhenReady(
-    'notificationService',
-    service => {
-      service.currentMiniApproval = value;
-    },
-    'notificationService.setCurrentMiniApproval',
-  );
+  requireNotificationService().currentMiniApproval = value;
 }
 
 export function setCurrentRequestDeferFnSync(
   value: Parameters<NotificationService['setCurrentRequestDeferFn']>[0],
 ) {
-  runServiceSideEffectWhenReady(
-    'notificationService',
-    service => service.setCurrentRequestDeferFn(value),
-    'notificationService.setCurrentRequestDeferFn',
-  );
+  requireNotificationService().setCurrentRequestDeferFn(value);
 }
 
 export function getNotificationStatsDataSnapshot() {
@@ -73,19 +72,19 @@ export function getNotificationStatsDataSnapshot() {
 export function setNotificationStatsDataSync(
   ...args: Parameters<NotificationService['setStatsData']>
 ) {
-  runServiceSideEffectWhenReady(
-    'notificationService',
-    service => service.setStatsData(...args),
-    'notificationService.setStatsData',
-  );
+  requireNotificationService().setStatsData(...args);
 }
 
 export function unlockNotificationSync() {
-  runServiceSideEffectWhenReady(
-    'notificationService',
-    service => service.unLock(),
-    'notificationService.unLock',
-  );
+  requireNotificationService().unLock();
+}
+
+export function rejectAllNotificationApprovalsSync() {
+  requireNotificationService().rejectAllApprovals();
+}
+
+export function blockCurrentNotificationDappSync() {
+  requireNotificationService().blockedDapp();
 }
 
 export async function bindNotificationEvent(

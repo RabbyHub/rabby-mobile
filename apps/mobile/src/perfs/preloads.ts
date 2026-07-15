@@ -64,6 +64,7 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevSwitches]: 'DevSwitches',
   [RootNames.DevPerf]: 'DevPerf',
   [RootNames.DebugLogViewer]: 'DebugLogViewer',
+  [RootNames.StartupPerformanceLogViewer]: 'StartupPerformanceLogViewer',
   [RootNames.InMemoryLogViewer]: 'InMemoryLogViewer',
 };
 

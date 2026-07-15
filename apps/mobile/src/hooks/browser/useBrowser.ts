@@ -8,10 +8,13 @@ import type { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import {
   browserServiceApi,
-  getBrowserTabsSnapshot,
   removeBrowserScreenshot,
 } from '@/core/serviceApi/browser';
-import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import {
+  dappServiceApi,
+  getDappSnapshot,
+  isDappServiceReady,
+} from '@/core/serviceApi/dapp';
 import type { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
@@ -27,7 +30,8 @@ import {
 
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
 
@@ -41,7 +45,9 @@ const tabsStore = zCreate<TabsState>(() => ({
   activeTabId: '',
 }));
 
-function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
+let tabsStoreRevision = 0;
+
+function applyTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
   tabsStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
       strict: false,
@@ -50,22 +56,31 @@ function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
   });
 }
 
+function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
+  ++tabsStoreRevision;
+  applyTabsStore(valOrFunc);
+}
+
 export function resetTabsStore() {
-  tabsStore.setState({
+  setTabsStore({
     tabs: [],
     activeTabId: '',
   });
 }
 
-export function setTabs(val: UpdaterOrPartials<TabsState['tabs']>) {
-  tabsStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.tabs, val, { strict: false });
-
-    return {
-      ...prev,
-      tabs: newVal,
-    };
-  });
+export async function hydrateBrowserTabs(
+  loadTabs: () => Promise<TabsState> = () => browserServiceApi.getBrowserTabs(),
+  mergeTabs: (current: TabsState, loaded: TabsState) => TabsState = (
+    _current,
+    loaded,
+  ) => loaded,
+) {
+  const hydrationRevision = tabsStoreRevision;
+  const tabs = await loadTabs();
+  if (hydrationRevision === tabsStoreRevision) {
+    applyTabsStore(current => mergeTabs(current, tabs));
+  }
+  return tabs;
 }
 
 const browserExtraStore = zCreate<{
@@ -208,11 +223,7 @@ export const browserApis = {
   },
 
   getBrowserTabs: () => {
-    setTabsStore(getBrowserTabsSnapshot());
-    void browserServiceApi
-      .getBrowserTabs()
-      .then(setTabsStore)
-      .catch(console.error);
+    void hydrateBrowserTabs().catch(console.error);
   },
 
   updateBrowserTabs: (payload: Partial<TabsState>) => {
@@ -353,6 +364,22 @@ export const browserApis = {
     const { isNewTab = false } = options || {};
     if (!url?.trim() || !/^https?:\/\//.test(url)) {
       // switchToTab(emptyTab.id);
+      return;
+    }
+    if (options?.isRemindOpen && !isDappServiceReady()) {
+      void dappServiceApi
+        .getDapp(safeGetOrigin(url))
+        .then(() => {
+          browserApis.openTab(url, options);
+        })
+        .catch(error => {
+          console.error('[browserApis.openTab] load dapp state failed', error);
+          browserApis.setPartialBrowserState({
+            isShowDappInfo: true,
+            dappInfoUrl: url,
+          });
+          browserApis.forceShowBrowserDappInfo();
+        });
       return;
     }
     if (

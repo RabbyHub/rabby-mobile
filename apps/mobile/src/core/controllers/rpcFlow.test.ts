@@ -10,6 +10,8 @@ const mockGetStatsData = jest.fn();
 const mockSetStatsData = jest.fn();
 const mockSetCurrentRequestDeferFn = jest.fn();
 const mockUnLock = jest.fn();
+const mockEnsureNotificationServiceReady = jest.fn();
+const mockEnsureDappServiceReady = jest.fn();
 const mockSyncCustomTestnetChainList = jest.fn();
 const mockGetCustomTestnetList = jest.fn();
 const mockGetTestnetChainList = jest.fn();
@@ -36,6 +38,8 @@ jest.mock('@/core/serviceApi/autoConnect', () => ({
 }));
 
 jest.mock('@/core/serviceApi/dapp', () => ({
+  ensureDappServiceReady: (...args: unknown[]) =>
+    mockEnsureDappServiceReady(...args),
   getConnectedDappSnapshot: (...args: unknown[]) =>
     mockGetConnectedDapp(...args),
   getDappSnapshot: (...args: unknown[]) => mockGetDapp(...args),
@@ -44,6 +48,8 @@ jest.mock('@/core/serviceApi/dapp', () => ({
 }));
 
 jest.mock('@/core/serviceApi/notification', () => ({
+  ensureNotificationServiceReady: (...args: unknown[]) =>
+    mockEnsureNotificationServiceReady(...args),
   getNotificationStatsDataSnapshot: (...args: unknown[]) =>
     mockGetStatsData(...args),
   notificationServiceApi: {
@@ -232,6 +238,8 @@ describe('rpcFlow SignTx chain guard', () => {
     });
 
     expect(mockRequestApproval).not.toHaveBeenCalled();
+    expect(mockEnsureDappServiceReady).toHaveBeenCalledTimes(1);
+    expect(mockEnsureNotificationServiceReady).toHaveBeenCalledTimes(1);
     expect(mockEthSendTransaction).not.toHaveBeenCalled();
     expect(mockUnLock).not.toHaveBeenCalled();
     expect(mockCaptureException).toHaveBeenCalledWith(

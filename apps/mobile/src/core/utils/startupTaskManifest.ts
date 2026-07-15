@@ -89,14 +89,6 @@ export const STARTUP_TASKS = {
     priority: 'normal',
     budgetMs: 30,
   }),
-  bootstrapHideSplashOnNavigationReady: defineStartupTask({
-    label: 'bootstrap.hideSplashOnNavigationReady',
-    owner: 'bootstrap',
-    reason: 'hide native splash once app navigation is ready',
-    stage: 'registration',
-    priority: 'critical',
-    budgetMs: 8,
-  }),
   bootstrapI18nReady: defineStartupTask({
     label: 'bootstrap.i18nReady',
     owner: 'i18n',

@@ -1,6 +1,6 @@
 import {
-  contactServiceApi,
   getContactAliasSnapshot,
+  updateContactAliasSync,
 } from '@/core/serviceApi/contact';
 import { useCallback, useEffect, useState } from 'react';
 import { useAccounts } from './account';
@@ -29,7 +29,7 @@ export const useAlias = (address?: string) => {
         return;
       }
       setName(alias);
-      void contactServiceApi.updateAlias({ address, name: alias });
+      updateContactAliasSync({ address, name: alias });
       fetchAccounts();
     },
     [address, fetchAccounts],
@@ -125,7 +125,7 @@ export function useAlias2(
 
   const updateAlias = useCallback(
     (alias: string) => {
-      void contactServiceApi.updateAlias({ address, name: alias });
+      updateContactAliasSync({ address, name: alias });
       if (FETCH_AFTER_UPDATE) {
         fetchAlias();
       }

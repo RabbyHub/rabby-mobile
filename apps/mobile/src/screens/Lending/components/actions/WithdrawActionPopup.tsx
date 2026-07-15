@@ -499,7 +499,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
         const txId = last(results);
         if (txId && activeTxs[0]?.chainId) {
-          void transactionHistoryServiceApi.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             activeTxs[0].chainId,
             txId,

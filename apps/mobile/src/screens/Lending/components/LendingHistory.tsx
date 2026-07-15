@@ -46,6 +46,7 @@ import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHisto
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
 import { Text } from '@/components/Typography';
+import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 
 const _PAGE_COUNT = 200;
 
@@ -86,6 +87,7 @@ function LendingHistory(): JSX.Element {
     });
   const isSceneUsingAllAccounts = false;
   const [firstFetchDone, setFirstFetchDone] = useState(false);
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [historySuccessList, setHistorySuccessList] = useState<string[]>([]);
 
   const mergeDataWithDeduplication = useMemoizedFn(
@@ -186,7 +188,7 @@ function LendingHistory(): JSX.Element {
         );
         return uniqueList;
       });
-      void transactionHistoryServiceApi.clearLendingSuccessHistoryList(
+      await transactionHistoryServiceApi.clearLendingSuccessHistoryList(
         finalSceneCurrentAccount?.address.toLowerCase()!,
       );
     }
@@ -222,10 +224,17 @@ function LendingHistory(): JSX.Element {
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              void transactionHistoryServiceApi.updateTx({
-                ...item.maxGasTx,
-                isSynced: true,
-              });
+              void transactionHistoryServiceApi
+                .updateTx({
+                  ...item.maxGasTx,
+                  isSynced: true,
+                })
+                .catch(error => {
+                  console.error(
+                    '[LendingHistory] mark tx synced failed',
+                    error,
+                  );
+                });
             }
 
             return (
@@ -237,9 +246,17 @@ function LendingHistory(): JSX.Element {
     ];
   });
 
-  const { data: groups, runAsync: runFetchLocalTx } = useRequest(async () => {
-    return batchFetchLocalTx();
-  });
+  const { data: groups, runAsync: runFetchLocalTx } = useRequest(
+    async () => {
+      if (!transactionHistoryReady) {
+        return [];
+      }
+      return batchFetchLocalTx();
+    },
+    {
+      refreshDeps: [transactionHistoryReady],
+    },
+  );
 
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
@@ -247,7 +264,6 @@ function LendingHistory(): JSX.Element {
     if (dbData.length === 0 && !isSceneUsingAllAccounts && firstFetchDone) {
       syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dbData.length,
     isSceneUsingAllAccounts,

@@ -24,7 +24,7 @@ import {
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { resetFetchHistoryTxCount } from '../../hooks/history';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
-import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { ensureDappServiceReady, patchDappsSync } from '@/core/serviceApi/dapp';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
@@ -73,7 +73,7 @@ export const FullDefiRenderItem = ({
   const { openTab } = useBrowser();
 
   const { navigation } = useSafeSetNavigationOptions();
-  const handleOpenSite = useCallback(() => {
+  const handleOpenSite = useCallback(async () => {
     if (data?.site_url) {
       if (data?.id === 'hyperliquid' && account) {
         switchPerpsAccountBeforeNavigate(account);
@@ -82,18 +82,23 @@ export const FullDefiRenderItem = ({
           params: {},
         });
       } else {
-        openTab(data?.site_url);
         const origin = safeGetOrigin(data?.site_url);
         const chain = findChain({ serverId: data.chain });
-        void dappServiceApi.patchDapps({
-          [origin]: {
-            currentAccount: account,
-            chainId: isFromAppChain
-              ? undefined
-              : chain?.enum || CHAINS_ENUM.ETH,
-            isDapp: true,
-          },
-        });
+        try {
+          await ensureDappServiceReady();
+          patchDappsSync({
+            [origin]: {
+              currentAccount: account,
+              chainId: isFromAppChain
+                ? undefined
+                : chain?.enum || CHAINS_ENUM.ETH,
+              isDapp: true,
+            },
+          });
+        } catch (error) {
+          console.error('[FullDefiRenderItem] persist dapp failed', error);
+        }
+        openTab(data?.site_url);
         if (origin) {
           matomoRequestEvent({
             category: 'Websites Usage',

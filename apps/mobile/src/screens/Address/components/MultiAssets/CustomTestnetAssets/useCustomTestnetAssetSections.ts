@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import PQueue from 'p-queue';
 
 import { apiCustomTestnet } from '@/core/apis';
@@ -24,8 +24,6 @@ const customTestnetTokenListQueue = new PQueue({
   interval: 1000,
 });
 
-let hasInitializedCustomTestnetServiceForAssetList = false;
-
 const makeFallbackTokenItem = (
   chain: TestnetChain,
   token: CustomTestnetAssetSectionToken,
@@ -34,14 +32,6 @@ const makeFallbackTokenItem = (
 
 // for multi-address
 export function useCustomTestnetAssetSections(addresses: string[]) {
-  useEffect(() => {
-    if (hasInitializedCustomTestnetServiceForAssetList) {
-      return;
-    }
-    hasInitializedCustomTestnetServiceForAssetList = true;
-    apiCustomTestnet.initCustomTestnetService();
-  }, []);
-
   const sections = useCustomTestnetAssetSectionsData(addresses);
 
   const loadTokenItems = useCallback(

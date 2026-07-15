@@ -96,6 +96,12 @@ function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
   getGasAccountStoreApi().setAccountsWithGasAccountBalance(merged);
 }
 
+async function getReadyGasAccountStoreApi() {
+  const storeApiGasAccount = getGasAccountStoreApi();
+  await storeApiGasAccount.ensureRuntimeReady();
+  return storeApiGasAccount;
+}
+
 async function loginAutoDetectedAccount(account?: KeyringAccount) {
   if (!account) {
     return false;
@@ -131,15 +137,16 @@ function refreshAllAccountsWithBalanceInBackground(logContext: string) {
 export const refreshAccountsWithGasAccountBalance = makeAvoidParallelAsyncFunc(
   async () => {
     try {
+      const storeApiGasAccount = await getReadyGasAccountStoreApi();
       const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
       if (!sortedAccounts.length) {
-        getGasAccountStoreApi().setAccountsWithGasAccountBalance([]);
+        storeApiGasAccount.setAccountsWithGasAccountBalance([]);
         return [];
       }
 
       const allWithBalance = await findAccountsWithBalance(sortedAccounts);
       const mapped = toGasAccountBalanceAccounts(allWithBalance);
-      getGasAccountStoreApi().setAccountsWithGasAccountBalance(mapped);
+      storeApiGasAccount.setAccountsWithGasAccountBalance(mapped);
       return mapped;
     } catch (error) {
       console.error('refreshAccountsWithGasAccountBalance error', error);
@@ -153,7 +160,8 @@ export async function autoLoginGasAccountIfNeeded() {
     return;
   }
 
-  const { sig } = getGasAccountStoreApi().getSession() || {};
+  const storeApiGasAccount = await getReadyGasAccountStoreApi();
+  const { sig } = storeApiGasAccount.getSession() || {};
   if (sig) {
     hasAttemptedAutoLogin = true;
     return;
@@ -196,7 +204,8 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       return;
     }
 
-    const { sig } = getGasAccountStoreApi().getSession() || {};
+    const storeApiGasAccount = await getReadyGasAccountStoreApi();
+    const { sig } = storeApiGasAccount.getSession() || {};
     if (sig) {
       return;
     }

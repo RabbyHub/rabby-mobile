@@ -40,7 +40,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import type { AddressNavigatorParamList } from '@/navigation-type';
 import {
   setReportActionTs,
-  setUserBehaviorTrackingOptOut,
+  setUserBehaviorTrackingOptOutSync,
 } from '@/core/serviceApi/preference';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import type { TextInput } from '@/components/Typography';
@@ -112,7 +112,7 @@ function useSetupPasswordForm(
         return;
       }
 
-      void setUserBehaviorTrackingOptOut(false).catch(console.error);
+      setUserBehaviorTrackingOptOutSync(false);
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />

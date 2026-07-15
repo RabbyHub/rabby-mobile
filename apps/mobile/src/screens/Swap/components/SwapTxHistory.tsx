@@ -23,8 +23,9 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
 import {
-  getTransactionHistoryCustomTxItemMapSnapshot,
-  getTransactionHistoryListSnapshot,
+  getTransactionHistoryCustomTxItemMap,
+  getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import {
   switchSceneCurrentAccount,
@@ -39,6 +40,7 @@ import { notificationOpenapi } from '@/core/notifications/openapi';
 import { txResultToToHistoryDisplayItem } from '@/utils/transaction';
 import { useDebugSwapHistorySkipLocalLookup } from '@/hooks/appSettings';
 import { Account } from '@/types/account';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -290,9 +292,18 @@ export const SwapTxHistory = ({
           return;
         }
 
-        const { pendings, completeds } = getTransactionHistoryListSnapshot(
-          currentAccount?.address ?? '',
-        );
+        const { pendings, completeds } = await transactionHistoryServiceApi
+          .getList(currentAccount?.address ?? '')
+          .catch(error => {
+            console.error(
+              '[SwapTxHistory] load local transaction history failed',
+              error,
+            );
+            return {
+              pendings: [] as TransactionGroup[],
+              completeds: [] as TransactionGroup[],
+            };
+          });
         const itemData = pendings
           .concat(completeds)
           .find(i => i.txs[0]?.hash === txId);
@@ -338,12 +349,16 @@ export const SwapTxHistory = ({
       }
 
       const pinedQueue = getPinnedTokenSnapshot();
-      const customTxItemsMap = getTransactionHistoryCustomTxItemMapSnapshot();
+      const [customTxItemsMap, transactions] = await Promise.all([
+        getTransactionHistoryCustomTxItemMap(),
+        getTransactionHistoryTransactions(),
+      ]);
       const historyDisplayItem = txResultToToHistoryDisplayItem({
         address: currentAccount?.address || '',
         res: txDetail,
         pinedQueue,
         customTxItemsMap,
+        transactions,
       })[0];
 
       if (historyDisplayItem) {
