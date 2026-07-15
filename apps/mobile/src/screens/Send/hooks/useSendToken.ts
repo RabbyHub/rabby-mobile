@@ -108,6 +108,7 @@ import type { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeConte
 import { toast } from '@/components2024/Toast';
 import { getChainDefaultToken } from '@/constant/swap';
 import { eventBus, EVENTS } from '@/utils/events';
+import type { SendTxHistoryItem } from '@/core/services/transactionHistory';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -892,6 +893,14 @@ export function useSendTokenForm({
   const { runFetchLocalPendingTx } =
     useRecentSendPendingTx(isForMultipleAddress);
 
+  const persistSendTxHistory = useCallback(async (tx: SendTxHistoryItem) => {
+    try {
+      await transactionHistoryServiceApi.addSendTxHistory(tx);
+    } catch (error) {
+      console.error('sendToken persist local history failed', error);
+    }
+  }, []);
+
   const patchFormValues = useCallback(
     (changedValues: Partial<FormSendToken>) => {
       setCommittedFormValues(prev => {
@@ -1357,7 +1366,7 @@ export function useSendTokenForm({
                 },
               });
 
-              void transactionHistoryServiceApi.addSendTxHistory({
+              await persistSendTxHistory({
                 token: currentToken,
                 amount: Number(amount),
                 to,
@@ -1367,11 +1376,6 @@ export function useSendTokenForm({
                 address: currentAccount?.address!,
                 status: 'pending',
                 createdAt: Date.now(),
-              }).catch(error => {
-                console.error(
-                  '[useSendToken] persist local history failed',
-                  error,
-                );
               });
 
               runFetchPendingCount();
@@ -1438,11 +1442,11 @@ export function useSendTokenForm({
               session: INTERNAL_REQUEST_SESSION,
               account: currentAccount,
             })
-            .then(resp => {
+            .then(async resp => {
               const hash = resp as string;
               console.debug('hash', hash);
-              currentAccount?.type !== KEYRING_CLASS.GNOSIS &&
-                void transactionHistoryServiceApi.addSendTxHistory({
+              if (currentAccount?.type !== KEYRING_CLASS.GNOSIS) {
+                await persistSendTxHistory({
                   token: currentToken,
                   amount: Number(amount),
                   to,
@@ -1452,12 +1456,8 @@ export function useSendTokenForm({
                   address: currentAccount?.address!,
                   status: 'pending',
                   createdAt: Date.now(),
-                }).catch(error => {
-                  console.error(
-                    '[useSendToken] persist local history failed',
-                    error,
-                  );
                 });
+              }
 
               runFetchPendingCount();
               runFetchLocalPendingTx();
@@ -1492,6 +1492,7 @@ export function useSendTokenForm({
       screenState.selectedGasLevel?.price,
       prepareDirectSubmitMiniTx,
       openDirect,
+      persistSendTxHistory,
       runFetchPendingCount,
       runFetchLocalPendingTx,
       handleFieldChange,
