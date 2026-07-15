@@ -7,8 +7,12 @@ import {
   protocolAllowList,
   trustedProtocolToDeeplink,
 } from '@/constant/dappView';
-import { isRabbyWalletConnectDeeplink } from '@/core/walletconnect/uri';
+import {
+  isRabbyWalletConnectDeeplink,
+  parseWalletConnectUriFromLink,
+} from '@/core/walletconnect/uri';
 import { Alert } from 'react-native';
+import { pairWalletConnectUri } from '@/core/walletconnect';
 
 /**
  *  Function that allows custom handling of any web view requests.
@@ -25,11 +29,20 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
   // If it is a trusted deeplink protocol, do not show the
   // warning alert. Allow the OS to deeplink the URL
   // and stop the webview from loading it.
-  if (
-    trustedProtocolToDeeplink.includes(protocol) ||
-    isRabbyWalletConnectDeeplink(url)
-  ) {
+  if (trustedProtocolToDeeplink.includes(protocol)) {
     allowLinkOpen(url);
+    return false;
+  }
+
+  if (isRabbyWalletConnectDeeplink(url)) {
+    const uri = parseWalletConnectUriFromLink(url);
+    if (!uri) {
+      return false;
+    }
+    pairWalletConnectUri({
+      uri: uri,
+      source: 'inner-webview',
+    }).catch(() => {});
     return false;
   }
 
