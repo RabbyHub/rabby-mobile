@@ -246,6 +246,7 @@ const Swap = ({
   const {
     bestQuoteDex,
     chain,
+    markExplicitSwapSelection,
     switchChain,
     switchSwapAgain,
 
@@ -470,6 +471,10 @@ const Swap = ({
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
+
+    if (navState?.tokenId) {
+      markExplicitSwapSelection();
+    }
 
     if (navState?.isFromSwap) {
       if (navState?.tokenId && chainItem?.enum === chain) {
