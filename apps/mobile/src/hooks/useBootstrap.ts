@@ -24,18 +24,13 @@ import {
   loadBootstrapAppLockState,
   storeApiLock,
 } from './useLock';
-import SplashScreen from 'react-native-splash-screen';
 import { storeApisBiometrics } from './biometrics';
 import { apisPerpsStore } from './perps/usePerpsStore';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
 import { RefLikeObject } from '@/utils/type';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
@@ -292,24 +287,6 @@ export function useJavaScriptBeforeContentLoaded() {
   };
 }
 
-const splashScreenVisibleRef = { current: true };
-const hideSplashScreen = (forceHide = false) => {
-  if (splashScreenVisibleRef.current || forceHide) {
-    traceAndroidInstant('bootstrap.splash.hide', {
-      forceHide,
-    });
-    SplashScreen.hide();
-    splashScreenVisibleRef.current = false;
-  }
-};
-
-runIIFEFunc(() => {
-  const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
-    hideSplashScreen(true);
-    sub.remove();
-  });
-});
-
 const postRenderBootstrapWarmupsStateRef = {
   started: false,
 };
@@ -434,12 +411,6 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
       })
       .finally(() => {
         endAndroidAsyncTrace('bootstrap.useBootstrapApp', bootstrapTraceCookie);
-        setTimeout(() => {
-          hideSplashScreen(false);
-          console.debug(
-            'useBootstrapApp:: splash screen hidden due to timeout',
-          );
-        }, 3e3);
       });
   }, [rabbitCode]);
 }
