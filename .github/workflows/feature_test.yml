@@ -15,14 +15,6 @@ on:
         required: false
         type: boolean
         default: false
-      FAST_BUILD_ON_ANDROID:
-        required: false
-        type: boolean
-        default: false
-      FAST_BUILD_ON_IOS:
-        required: false
-        type: boolean
-        default: false
       SKIP_NOTIFY_LARK:
         required: false
         type: boolean
@@ -43,6 +35,10 @@ on:
         type: boolean
         default: false
       RABBY_MOBILE_GRADLE_USE_CACHE:
+        required: false
+        type: boolean
+        default: true
+      RABBY_MOBILE_METRO_USE_CACHE:
         required: false
         type: boolean
         default: true
@@ -85,7 +81,7 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
-      RABBY_MOBILE_IOS_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_IOS }}
+      RABBY_MOBILE_METRO_USE_CACHE: ${{ inputs.RABBY_MOBILE_METRO_USE_CACHE }}
       I18N_LIVE_PREVIEW: ${{ inputs.I18N_LIVE_PREVIEW && '1' || '0' }}
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
@@ -130,22 +126,11 @@ jobs:
               git clean -ffdx "${yarn_exclude_args[@]}";
             fi
           elif [ "$OS_TYPE" == "Darwin" ]; then
-            if [ "$RABBY_MOBILE_IOS_FAST_BUILD" = "true" ]; then
-              echo "Keep iOS fast-build template cache";
-              ios_fast_build_exclude_args=(
-                -e apps/mobile/scripts/.fast-build-work/template.xcarchive
-                -e apps/mobile/scripts/.fast-build-work/template-ios.template-shell-hash
-              )
-            else
-              ios_fast_build_exclude_args=()
-            fi
-
             if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
               echo "Keep cocoapods cache";
               git clean -ffdx "${yarn_exclude_args[@]}" \
                 -e .turbo-build \
                 -e apps/mobile/.turbo-build \
-                "${ios_fast_build_exclude_args[@]}" \
                 -e apps/mobile/assets/ios/builtin-pages \
                 -e apps/mobile/assets/ios/threads \
                 -e apps/mobile/ios/RabbyMobile/Resources \
@@ -153,7 +138,7 @@ jobs:
                 -e apps/mobile/ios/build;
             else
               echo "Clean cocoapods cache";
-              git clean -ffdx "${yarn_exclude_args[@]}" "${ios_fast_build_exclude_args[@]}";
+              git clean -ffdx "${yarn_exclude_args[@]}";
             fi
           fi
           git reset --hard HEAD;
@@ -274,8 +259,6 @@ jobs:
           CONFIGURATION: release
           TYPE: adhoc
           RABBY_MOBILE_BUILD_ENV: regression
-          RABBY_MOBILE_ANDROID_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_ANDROID }}
-          RABBY_MOBILE_IOS_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_IOS }}
           SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}

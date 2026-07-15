@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
@@ -28,19 +29,90 @@ const withI18nLivePreview = config => {
 };
 
 const defaultConfig = getDefaultConfig(__dirname);
-const {
-  assetExts,
-  sourceExts,
-  nodeModulesPaths,
-  resolveRequest: defaultModuleResolver,
-} = defaultConfig.resolver;
+const { assetExts, sourceExts } = defaultConfig.resolver;
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
+const babelTransformEnvironmentKeys = [
+  'APP_ENV',
+  'BABEL_ENV',
+  'DEV_SERVER_HOSTNAME',
+  'NODE_ENV',
+  'RABBY_MOBILE_BUILD_CHANNEL',
+  'RABBY_MOBILE_BUILD_ENV',
+  'RABBY_MOBILE_E2E_SILENT_LOGS',
+  'RABBY_MOBILE_FE_SERVICE_URL',
+  'RABBY_MOBILE_KR_PWD',
+  'RABBY_MOBILE_WALLETCONNECT_PROJECT_ID',
+  'WITH_ROZENITE',
+  'buildchannel',
+];
+const babelTransformInputFiles = [
+  path.resolve(projectRoot, 'babel.config.js'),
+  path.resolve(projectRoot, 'package.json'),
+  path.resolve(projectRoot, 'scripts/loadables-aliases.generated.cjs'),
+  path.resolve(workspaceRoot, 'package.json'),
+  path.resolve(workspaceRoot, 'yarn.lock'),
+  ...fs
+    .readdirSync(projectRoot)
+    .filter(fileName => fileName === '.env' || fileName.startsWith('.env.'))
+    .sort()
+    .map(fileName => path.resolve(projectRoot, fileName)),
+];
+const babelTransformCacheHash = crypto.createHash('sha256');
+
+for (const filePath of babelTransformInputFiles) {
+  if (!fs.existsSync(filePath)) {
+    continue;
+  }
+
+  babelTransformCacheHash.update(path.relative(workspaceRoot, filePath));
+  babelTransformCacheHash.update(fs.readFileSync(filePath));
+}
+
+for (const environmentKey of babelTransformEnvironmentKeys) {
+  babelTransformCacheHash.update(environmentKey);
+  babelTransformCacheHash.update(process.env[environmentKey] || '');
+}
+
+const babelTransformCacheVersion = babelTransformCacheHash.digest('hex');
 const walletConnectKeyValueStorageShim = path.resolve(
   projectRoot,
   'src/core/walletconnect/keyvaluestorageRuntimeShim.js',
 );
+// Keep these exceptions explicit so resolution stays deterministic and cacheable.
+const resolverSourceAliases = new Map([
+  [
+    '@craftzdog/react-native-buffer',
+    require.resolve('@craftzdog/react-native-buffer'),
+  ],
+  [
+    '@ledgerhq/devices/ble/receiveAPDU',
+    require.resolve('@ledgerhq/devices/ble/receiveAPDU'),
+  ],
+  [
+    '@ledgerhq/devices/ble/sendAPDU',
+    require.resolve('@ledgerhq/devices/ble/sendAPDU'),
+  ],
+  [
+    '@ledgerhq/domain-service/signers/index',
+    require.resolve('@ledgerhq/domain-service/signers/index'),
+  ],
+  [
+    '@ledgerhq/evm-tools/message/EIP712/index',
+    require.resolve('@ledgerhq/evm-tools/message/EIP712/index'),
+  ],
+  [
+    '@ledgerhq/evm-tools/message/index',
+    require.resolve('@ledgerhq/evm-tools/message/index'),
+  ],
+  [
+    '@ledgerhq/evm-tools/selectors/index',
+    require.resolve('@ledgerhq/evm-tools/selectors/index'),
+  ],
+  ['p-queue', require.resolve('p-queue')],
+  ['react-native-quick-crypto', require.resolve('react-native-quick-crypto')],
+]);
 const escapePathForRegex = value =>
   value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 const turboBuildBlockList = new RegExp(
@@ -148,6 +220,7 @@ const withPackageExportsDisabled = config => {
  * @type {import('metro-config').MetroConfig}
  */
 const config = {
+  cacheVersion: `${defaultConfig.cacheVersion}:${babelTransformCacheVersion}`,
   projectRoot,
   transformer: {
     babelTransformerPath: require.resolve('./webview-raw-transformer'),
@@ -180,11 +253,6 @@ const config = {
       stream: require.resolve('readable-stream'),
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
-    /**
-     * fix ledger import issue
-     * https://github.com/LedgerHQ/ledger-live/issues/6173#issuecomment-2008939013
-     *
-     * */
     resolveRequest: (context, moduleName, platform) => {
       if (moduleName === '@walletconnect/keyvaluestorage') {
         return {
@@ -193,58 +261,15 @@ const config = {
         };
       }
 
-      try {
-        return context.resolveRequest(context, moduleName, platform);
-      } catch (error) {
-        console.warn(
-          '\n1️⃣ context.resolveRequest cannot resolve: ',
-          moduleName,
-        );
-      }
-
-      try {
-        const resolution = require.resolve(moduleName, {
-          paths: [path.dirname(context.originModulePath), ...nodeModulesPaths],
-        });
-
-        if (path.isAbsolute(resolution)) {
-          return {
-            filePath: resolution,
-            type: 'sourceFile',
-          };
-        }
-      } catch (error) {
-        console.warn('\n2️⃣ require.resolve cannot resolve: ', moduleName);
-      }
-
-      try {
-        return defaultModuleResolver(context, moduleName, platform);
-      } catch (error) {
-        console.warn('\n3️⃣ defaultModuleResolver cannot resolve: ', moduleName);
-      }
-
-      try {
+      const sourceFileAlias = resolverSourceAliases.get(moduleName);
+      if (sourceFileAlias) {
         return {
-          filePath: require.resolve(moduleName),
+          filePath: sourceFileAlias,
           type: 'sourceFile',
         };
-      } catch (error) {
-        console.warn('\n4️⃣ require.resolve cannot resolve: ', moduleName);
       }
 
-      try {
-        const resolution = getDefaultConfig(require.resolve(moduleName))
-          .resolver?.resolveRequest;
-        return resolution(context, moduleName, platform);
-      } catch (error) {
-        console.warn('\n5️⃣ getDefaultConfig cannot resolve: ', moduleName);
-      }
-
-      // If all resolution attempts fail, throw the original error
-      // instead of returning undefined to avoid "Cannot read properties of undefined (reading 'type')"
-      throw new Error(
-        `Unable to resolve module ${moduleName} from ${context.originModulePath}`,
-      );
+      return context.resolveRequest(context, moduleName, platform);
     },
   },
   watchFolders: [

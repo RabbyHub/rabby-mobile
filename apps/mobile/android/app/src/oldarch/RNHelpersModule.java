@@ -13,11 +13,19 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RNHelpersModule extends SimplePackageSpec {
   public static final String NAME = "RNHelpers";
@@ -32,6 +40,54 @@ public class RNHelpersModule extends SimplePackageSpec {
   @NonNull
   public String getName() {
     return NAME;
+  }
+
+  @Override
+  public Map<String, Object> getConstants() {
+    Map<String, Object> constants = new HashMap<>();
+    constants.put("buildInfo", readBuildInfo());
+    return constants;
+  }
+
+  private Map<String, Object> readBuildInfo() {
+    Map<String, Object> buildInfo = new HashMap<>();
+
+    try (
+      BufferedReader reader = new BufferedReader(
+        new InputStreamReader(
+          reactContext.getAssets().open("rabby-build-info.json"),
+          StandardCharsets.UTF_8
+        )
+      )
+    ) {
+      StringBuilder json = new StringBuilder();
+      char[] buffer = new char[512];
+      int count;
+      while ((count = reader.read(buffer)) != -1) {
+        json.append(buffer, 0, count);
+      }
+
+      JSONObject decodedBuildInfo = new JSONObject(json.toString());
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_HASH");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_HASH_TIME");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_TIME");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_COMMITOR");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "METRO_CACHE_ENABLED");
+    } catch (IOException | JSONException ignored) {
+      // JS keeps its existing defaults when build metadata is unavailable.
+    }
+
+    return buildInfo;
+  }
+
+  private void copyBuildInfoValue(
+    JSONObject source,
+    Map<String, Object> destination,
+    String key
+  ) throws JSONException {
+    if (source.has(key) && !source.isNull(key)) {
+      destination.put(key, source.get(key));
+    }
   }
 
   @ReactMethod
