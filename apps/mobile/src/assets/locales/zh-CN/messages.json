@@ -3797,8 +3797,8 @@
       "noAvailableAddress": "没有可用地址"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "输入新的回复...（可选）",
-      "mediaPlaceholder": "图片/视频\n（必填）"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "图片/视频"
     }
   },
   "bluetooth": {

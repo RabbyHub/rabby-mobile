@@ -3711,8 +3711,8 @@
       "noAvailableAddress": "Aucune adresse disponible"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Saisissez une nouvelle réponse... (facultatif)",
-      "mediaPlaceholder": "Image/Vidéo\n(obligatoire)"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Image/Vidéo"
     }
   },
   "global": {
