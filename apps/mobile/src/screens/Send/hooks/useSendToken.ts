@@ -1367,6 +1367,11 @@ export function useSendTokenForm({
                 address: currentAccount?.address!,
                 status: 'pending',
                 createdAt: Date.now(),
+              }).catch(error => {
+                console.error(
+                  '[useSendToken] persist local history failed',
+                  error,
+                );
               });
 
               runFetchPendingCount();
@@ -1447,6 +1452,11 @@ export function useSendTokenForm({
                   address: currentAccount?.address!,
                   status: 'pending',
                   createdAt: Date.now(),
+                }).catch(error => {
+                  console.error(
+                    '[useSendToken] persist local history failed',
+                    error,
+                  );
                 });
 
               runFetchPendingCount();
