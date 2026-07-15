@@ -92,6 +92,13 @@ const resolverSourceAliasCandidates = new Map([
     ['@craftzdog/react-native-buffer/index.js'],
   ],
   [
+    '@ledgerhq/context-module',
+    [
+      '@ledgerhq/context-module/lib/cjs/index.js',
+      '@ledgerhq/context-module/lib/esm/index.js',
+    ],
+  ],
+  [
     '@ledgerhq/devices/ble/receiveAPDU',
     [
       '@ledgerhq/devices/lib/ble/receiveAPDU.js',
