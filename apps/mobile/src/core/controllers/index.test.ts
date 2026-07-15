@@ -3,6 +3,7 @@ import rpcFlow from './rpcFlow';
 
 const mockEnsureDappServiceReady = jest.fn();
 const mockGetDappSnapshot = jest.fn();
+const mockInternalMethod = jest.fn();
 
 const walletConnectAccount = {
   address: '0x1111111111111111111111111111111111111111',
@@ -30,7 +31,9 @@ jest.mock('@/constant', () => ({
   INTERNAL_REQUEST_ORIGIN: 'rabby-internal-request',
 }));
 
-jest.mock('./internalMethod', () => ({}));
+jest.mock('./internalMethod', () => ({
+  rabby_testInternal: (...args: unknown[]) => mockInternalMethod(...args),
+}));
 
 jest.mock('./rpcFlow', () => jest.fn(async request => request.account));
 
@@ -39,6 +42,7 @@ describe('provider entrypoint', () => {
     jest.mocked(rpcFlow).mockClear();
     mockEnsureDappServiceReady.mockReset();
     mockGetDappSnapshot.mockReset();
+    mockInternalMethod.mockReset();
     mockGetDappSnapshot.mockReturnValue(undefined);
   });
 
@@ -99,5 +103,34 @@ describe('provider entrypoint', () => {
     await request;
 
     expect(mockGetDappSnapshot).toHaveBeenCalledWith('https://example.com');
+  });
+
+  it('activates dapp state before dispatching an internal method', async () => {
+    let finishActivation: (() => void) | undefined;
+    mockEnsureDappServiceReady.mockReturnValue(
+      new Promise<void>(resolve => {
+        finishActivation = resolve;
+      }),
+    );
+
+    const request = provider({
+      data: {
+        method: 'rabby_testInternal',
+        params: [],
+      },
+      session: {
+        origin: 'rabby-internal-request',
+        name: 'Rabby internal',
+        icon: '',
+      },
+    } as any);
+
+    await Promise.resolve();
+    expect(mockInternalMethod).not.toHaveBeenCalled();
+
+    finishActivation?.();
+    await request;
+
+    expect(mockInternalMethod).toHaveBeenCalledTimes(1);
   });
 });

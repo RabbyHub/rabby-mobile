@@ -46,6 +46,7 @@ export default async function provider<T = void>(
   req.account = account;
 
   if (internalMethod[method]) {
+    await ensureDappServiceReady();
     return internalMethod[method](req);
   }
 
