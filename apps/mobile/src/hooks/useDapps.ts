@@ -221,18 +221,16 @@ export function useDappAccountResolver() {
   const dependencyState = useCoreServiceDependencies(DAPP_ACCOUNT_DEPENDENCIES);
 
   return useCallback(
-    ({ dappInfo, accounts }: DappAccountResolverParams) => {
-      if (dependencyState.status !== 'ready') {
-        return undefined;
-      }
-
-      return getDappAccount({
+    ({ dappInfo, accounts }: DappAccountResolverParams) =>
+      getDappAccount({
         dappInfo,
         accounts,
         transactions:
-          dependencyState.services.transactionHistoryService.store.transactions,
-      });
-    },
+          dependencyState.status === 'ready'
+            ? dependencyState.services.transactionHistoryService.store
+                .transactions
+            : [],
+      }),
     [dependencyState],
   );
 }
