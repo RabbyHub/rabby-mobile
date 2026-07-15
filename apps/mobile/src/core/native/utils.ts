@@ -38,6 +38,7 @@ interface NativeModulesStatic {
       BUILD_GIT_HASH_TIME?: string;
       BUILD_TIME?: string;
       BUILD_GIT_COMMITOR?: string;
+      METRO_CACHE_ENABLED?: boolean;
     };
     forceExitApp(): void;
     androidTraceInstant?(name: string): void;

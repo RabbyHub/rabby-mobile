@@ -121,10 +121,6 @@ tasks.withType(com.facebook.react.tasks.BundleHermesCTask).configureEach {
         "rabbyMobileBuildEnvironment",
         System.getenv("RABBY_MOBILE_BUILD_ENV") ?: ""
     )
-    inputs.property(
-        "rabbyMetroCacheEnabled",
-        System.getenv("RABBY_MOBILE_METRO_USE_CACHE") ?: ""
-    )
 }
 
 /**

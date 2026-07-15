@@ -23,6 +23,9 @@ const shouldMarkDirty =
   Boolean(process.env.LOCAL_PACK) &&
   !process.env.CI &&
   git(['status', '--porcelain']).length > 0;
+const metroCacheEnabled = ['1', 'true'].includes(
+  (process.env.RABBY_MOBILE_METRO_USE_CACHE || '').toLowerCase(),
+);
 
 const buildInfo = {
   BUILD_GIT_HASH: `${commitHash.slice(0, 8)}${shouldMarkDirty ? '-dirty' : ''}`,
@@ -43,6 +46,7 @@ const buildInfo = {
     buildChannel === 'selfhost-reg'
       ? git(['show', '--quiet', '--format=%cn'])
       : '',
+  METRO_CACHE_ENABLED: metroCacheEnabled,
 };
 
 process.stdout.write(JSON.stringify(buildInfo));

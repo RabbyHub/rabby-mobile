@@ -72,6 +72,7 @@ public class RNHelpersModule extends SimplePackageSpec {
       copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_HASH_TIME");
       copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_TIME");
       copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_COMMITOR");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "METRO_CACHE_ENABLED");
     } catch (IOException | JSONException ignored) {
       // JS keeps its existing defaults when build metadata is unavailable.
     }
@@ -85,7 +86,7 @@ public class RNHelpersModule extends SimplePackageSpec {
     String key
   ) throws JSONException {
     if (source.has(key) && !source.isNull(key)) {
-      destination.put(key, source.getString(key));
+      destination.put(key, source.get(key));
     }
   }
 

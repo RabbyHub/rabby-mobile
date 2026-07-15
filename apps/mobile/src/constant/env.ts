@@ -25,6 +25,7 @@ type AppBuildGitInfo = {
   BUILD_GIT_HASH_TIME?: string;
   BUILD_GIT_COMMITOR?: string;
   BUILD_TIME?: string;
+  METRO_CACHE_ENABLED?: boolean;
 };
 
 const nativeBuildInfo = (NativeModules.RNHelpers?.buildInfo ||
@@ -52,7 +53,7 @@ export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
 export const IS_ROZENITE_ENABLED = process.env.WITH_ROZENITE === 'true';
 export const IS_METRO_CACHE_ENABLED =
-  process.env.RABBY_MOBILE_METRO_USE_CACHE === 'true';
+  BUILD_GIT_INFO.METRO_CACHE_ENABLED === true;
 export const DEFAULT_RABBY_MOBILE_CODE = 'RABBY_MOBILE_CODE_DEV';
 
 export const RABBY_MOBILE_FE_SERVICE_URL =
