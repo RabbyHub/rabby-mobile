@@ -22,6 +22,7 @@ import {
   GasAccountCheckResult,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { isSameTypeTokenPair } from '@rabby-wallet/rabby-swap';
 import { BridgeSlippage, useSlippageTooLowOrTooHigh } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar } from '@/components';
@@ -70,6 +71,7 @@ import {
   TxWithTempoExtras,
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
+import RcIconSwapFree from '@/assets2024/icons/swap/free.svg';
 
 const RABBY_FEE = '0.25%';
 
@@ -151,6 +153,8 @@ const BridgeShowMore = ({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
+  const isFreeTokenPair =
+    type === 'swap' && isSameTypeTokenPair(fromToken, toToken);
 
   const data = useMemo(() => {
     if (quoteLoading || (!sourceLogo && !sourceName)) {
@@ -353,6 +357,15 @@ const BridgeShowMore = ({
           />
         ) : null}
 
+        {isFreeTokenPair && (
+          <ListItem name={t('page.swap.rabbyFee.title')}>
+            <View style={styles.freeFeeContainer}>
+              <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
+              <RcIconSwapFree width={52} height={16} />
+            </View>
+          </ListItem>
+        )}
+
         {showSlippageWarning ? (
           <BridgeSlippage
             autoSuggestSlippage={autoSuggestSlippage}
@@ -411,15 +424,17 @@ const BridgeShowMore = ({
           />
         )}
 
-        <ListItem name={t('page.swap.rabbyFee.title')}>
-          <Pressable onPress={openFeePopup}>
-            <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
-              {isWrapToken && type === 'swap'
-                ? t('page.swap.no-fees-for-wrap')
-                : RABBY_FEE}
-            </Text>
-          </Pressable>
-        </ListItem>
+        {!isFreeTokenPair && (
+          <ListItem name={t('page.swap.rabbyFee.title')}>
+            <Pressable onPress={openFeePopup}>
+              <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
+                {isWrapToken && type === 'swap'
+                  ? t('page.swap.no-fees-for-wrap')
+                  : RABBY_FEE}
+              </Text>
+            </Pressable>
+          </ListItem>
+        )}
 
         {showMEVGuardedSwitch && (
           <ListItem name={t('page.swap.preferMEV')}>
@@ -1305,6 +1320,19 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontStyle: 'normal',
     fontWeight: '500',
     lineHeight: 20,
+  },
+  freeFeeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  waivedFee: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    textDecorationLine: 'line-through',
   },
   recommendFromToken: {
     // flexDirection: 'row',
