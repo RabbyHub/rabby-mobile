@@ -22,6 +22,9 @@ module.exports = api => {
   const resolvedBuildEnv = inputBuildEnv || 'production';
   const resolvedBuildChannel = inputBuildChannel || 'selfhost-reg';
   const shouldEnableRozenite = process.env.WITH_ROZENITE === 'true';
+  const shouldUseMetroCache = ['1', 'true'].includes(
+    (process.env.RABBY_MOBILE_METRO_USE_CACHE || '').toLowerCase(),
+  );
   const shouldStripConsole =
     inputBuildEnv === 'production' ||
     (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
@@ -35,6 +38,7 @@ module.exports = api => {
       callerName,
       isDevTransform,
       shouldEnableRozenite,
+      shouldUseMetroCache,
     }),
   );
 
@@ -112,6 +116,9 @@ module.exports = api => {
           }),
           'process.env.RABBY_MOBILE_FE_SERVICE_URL':
             process.env.RABBY_MOBILE_FE_SERVICE_URL || '',
+          'process.env.RABBY_MOBILE_METRO_USE_CACHE': shouldUseMetroCache
+            ? 'true'
+            : 'false',
         },
       ],
       [

@@ -5,6 +5,7 @@ apply plugin: "com.google.gms.google-services"
 
 def metroMaxWorkers = System.getenv("RABBY_MOBILE_METRO_MAX_WORKERS")
 def metroNodeMaxOldSpaceSize = System.getenv("RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE")
+def metroBundleCli = file("../../scripts/metro-bundle-cli.js")
 def metroNodeExecutableAndArgs = ["node"]
 def metroExtraPackagerArgs = []
 
@@ -29,7 +30,7 @@ react {
     //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
     // codegenDir = file("../../node_modules/@react-native/codegen")
     //   The cli.js file which is the React Native CLI entrypoint. Default is ../../node_modules/react-native/cli.js
-    // cliFile = file("../../node_modules/react-native/cli.js")
+    cliFile = metroBundleCli
 
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
@@ -70,6 +71,41 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
+}
+
+def mobileProjectDir = rootProject.projectDir.parentFile
+def workspaceProjectDir = mobileProjectDir.parentFile.parentFile
+def workspaceBundleInputs = files(
+    fileTree(new File(workspaceProjectDir, "packages")) {
+        include "**/*.js", "**/*.jsx", "**/*.json", "**/*.ts", "**/*.tsx"
+        exclude "**/.cxx/**", "**/android/build/**", "**/ios/build/**", "**/node_modules/**"
+    },
+    fileTree(new File(workspaceProjectDir, ".yarn/patches")) {
+        include "**/*.patch"
+    },
+    fileTree(mobileProjectDir) {
+        include ".env", ".env.*"
+    },
+    new File(mobileProjectDir, "babel.config.js"),
+    new File(mobileProjectDir, "metro.config.js"),
+    new File(mobileProjectDir, "package.json"),
+    new File(workspaceProjectDir, "package.json"),
+    new File(workspaceProjectDir, "yarn.lock")
+)
+
+tasks.withType(com.facebook.react.tasks.BundleHermesCTask).configureEach {
+    inputs.files(workspaceBundleInputs)
+        .withPropertyName("rabbyWorkspaceBundleInputs")
+        .withPathSensitivity(org.gradle.api.tasks.PathSensitivity.RELATIVE)
+    inputs.property("rabbyAppEnvironment", System.getenv("APP_ENV") ?: "")
+    inputs.property(
+        "rabbyMobileBuildEnvironment",
+        System.getenv("RABBY_MOBILE_BUILD_ENV") ?: ""
+    )
+    inputs.property(
+        "rabbyMetroCacheEnabled",
+        System.getenv("RABBY_MOBILE_METRO_USE_CACHE") ?: ""
+    )
 }
 
 /**

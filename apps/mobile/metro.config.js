@@ -28,12 +28,7 @@ const withI18nLivePreview = config => {
 };
 
 const defaultConfig = getDefaultConfig(__dirname);
-const {
-  assetExts,
-  sourceExts,
-  nodeModulesPaths,
-  resolveRequest: defaultModuleResolver,
-} = defaultConfig.resolver;
+const { assetExts, sourceExts } = defaultConfig.resolver;
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
@@ -41,6 +36,39 @@ const walletConnectKeyValueStorageShim = path.resolve(
   projectRoot,
   'src/core/walletconnect/keyvaluestorageRuntimeShim.js',
 );
+// Keep these exceptions explicit so resolution stays deterministic and cacheable.
+const resolverSourceAliases = new Map([
+  [
+    '@craftzdog/react-native-buffer',
+    require.resolve('@craftzdog/react-native-buffer'),
+  ],
+  [
+    '@ledgerhq/devices/ble/receiveAPDU',
+    require.resolve('@ledgerhq/devices/ble/receiveAPDU'),
+  ],
+  [
+    '@ledgerhq/devices/ble/sendAPDU',
+    require.resolve('@ledgerhq/devices/ble/sendAPDU'),
+  ],
+  [
+    '@ledgerhq/domain-service/signers/index',
+    require.resolve('@ledgerhq/domain-service/signers/index'),
+  ],
+  [
+    '@ledgerhq/evm-tools/message/EIP712/index',
+    require.resolve('@ledgerhq/evm-tools/message/EIP712/index'),
+  ],
+  [
+    '@ledgerhq/evm-tools/message/index',
+    require.resolve('@ledgerhq/evm-tools/message/index'),
+  ],
+  [
+    '@ledgerhq/evm-tools/selectors/index',
+    require.resolve('@ledgerhq/evm-tools/selectors/index'),
+  ],
+  ['p-queue', require.resolve('p-queue')],
+  ['react-native-quick-crypto', require.resolve('react-native-quick-crypto')],
+]);
 const escapePathForRegex = value =>
   value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 const turboBuildBlockList = new RegExp(
@@ -183,11 +211,6 @@ const config = {
       stream: require.resolve('readable-stream'),
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
-    /**
-     * fix ledger import issue
-     * https://github.com/LedgerHQ/ledger-live/issues/6173#issuecomment-2008939013
-     *
-     * */
     resolveRequest: (context, moduleName, platform) => {
       if (moduleName === '@walletconnect/keyvaluestorage') {
         return {
@@ -196,58 +219,15 @@ const config = {
         };
       }
 
-      try {
-        return context.resolveRequest(context, moduleName, platform);
-      } catch (error) {
-        console.warn(
-          '\n1️⃣ context.resolveRequest cannot resolve: ',
-          moduleName,
-        );
-      }
-
-      try {
-        const resolution = require.resolve(moduleName, {
-          paths: [path.dirname(context.originModulePath), ...nodeModulesPaths],
-        });
-
-        if (path.isAbsolute(resolution)) {
-          return {
-            filePath: resolution,
-            type: 'sourceFile',
-          };
-        }
-      } catch (error) {
-        console.warn('\n2️⃣ require.resolve cannot resolve: ', moduleName);
-      }
-
-      try {
-        return defaultModuleResolver(context, moduleName, platform);
-      } catch (error) {
-        console.warn('\n3️⃣ defaultModuleResolver cannot resolve: ', moduleName);
-      }
-
-      try {
+      const sourceFileAlias = resolverSourceAliases.get(moduleName);
+      if (sourceFileAlias) {
         return {
-          filePath: require.resolve(moduleName),
+          filePath: sourceFileAlias,
           type: 'sourceFile',
         };
-      } catch (error) {
-        console.warn('\n4️⃣ require.resolve cannot resolve: ', moduleName);
       }
 
-      try {
-        const resolution = getDefaultConfig(require.resolve(moduleName))
-          .resolver?.resolveRequest;
-        return resolution(context, moduleName, platform);
-      } catch (error) {
-        console.warn('\n5️⃣ getDefaultConfig cannot resolve: ', moduleName);
-      }
-
-      // If all resolution attempts fail, throw the original error
-      // instead of returning undefined to avoid "Cannot read properties of undefined (reading 'type')"
-      throw new Error(
-        `Unable to resolve module ${moduleName} from ${context.originModulePath}`,
-      );
+      return context.resolveRequest(context, moduleName, platform);
     },
   },
   watchFolders: [

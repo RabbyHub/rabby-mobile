@@ -10,6 +10,8 @@ project_dir=$(dirname $(dirname $script_dir))
 WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
 REACT_NATIVE_XCODE="$REACT_NATIVE_PATH/scripts/react-native-xcode.sh"
 SENTRY_XCODE="../node_modules/@sentry/react-native/scripts/sentry-xcode.sh"
+export CLI_PATH="$project_dir/scripts/metro-bundle-cli.js"
+export RABBY_MOBILE_METRO_CLI_DELEGATE="$REACT_NATIVE_PATH/scripts/bundle.js"
 
 # you can also run `sudo ln -s $(which node) /usr/local/bin/node` on macOS
 export NODE_BINARY=$(command -v node);
