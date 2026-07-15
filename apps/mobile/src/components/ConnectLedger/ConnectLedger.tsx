@@ -149,6 +149,11 @@ export const ConnectLedger: React.FC<{
         await apiLedger.connectDevice(device);
         await apiLedger.setDeviceId(device.id);
         if (onSelectDevice) {
+          try {
+            await checkEthApp();
+          } catch {
+            return;
+          }
           await onSelectDevice(device);
           isSelected = true;
         } else {

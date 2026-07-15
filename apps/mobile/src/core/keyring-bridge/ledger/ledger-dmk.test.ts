@@ -474,7 +474,7 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockDmk.listenToAvailableDevices).not.toHaveBeenCalled();
   });
 
-  it('uses the DMK session state current app before sending an app command', async () => {
+  it('probes the device even when the DMK state has a cached current app', async () => {
     const deviceId = 'ledger-app-state-device-id';
     const sessionId = 'session-1';
 
@@ -486,69 +486,7 @@ describe('ledger DMK bridge discovery', () => {
       appName: 'Ethereum',
       version: '1.0.0',
     });
-    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
-  });
-
-  it('falls back to an app command when the DMK session state has no current app yet', async () => {
-    const deviceId = 'ledger-app-command-device-id';
-    const sessionId = 'session-1';
-    const connectedState = {
-      sessionStateType: 0,
-      deviceStatus: 'CONNECTED',
-      deviceModelId: 'nanoX',
-    };
-
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockDmk.getDeviceSessionState
-      .mockReturnValueOnce(of(connectedState))
-      .mockReturnValueOnce(of(connectedState));
-
-    const { getLedgerAppAndVersion } = require('./ledger-dmk');
-
-    await expect(getLedgerAppAndVersion(deviceId)).resolves.toEqual({
-      appName: 'Ethereum',
-      version: '1.0.0',
-    });
     expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
-  });
-
-  it('reconnects when the app state read uses a stale DMK session', async () => {
-    const deviceId = 'ledger-stale-app-state-device-id';
-    const staleSessionId = 'stale-session-1';
-    const freshSessionId = 'fresh-session-1';
-
-    mockDmk.connect
-      .mockResolvedValueOnce(staleSessionId)
-      .mockResolvedValueOnce(freshSessionId);
-    mockDmk.getDeviceSessionState
-      .mockImplementationOnce(() => {
-        throw {
-          _tag: 'DeviceSessionNotFound',
-          originalError: new Error('Device session not found'),
-        };
-      })
-      .mockReturnValueOnce(
-        of({
-          sessionStateType: 1,
-          deviceStatus: 'CONNECTED',
-          currentApp: {
-            name: 'Ethereum',
-            version: '1.0.0',
-          },
-        }),
-      );
-
-    const { getLedgerAppAndVersion } = require('./ledger-dmk');
-
-    await expect(getLedgerAppAndVersion(deviceId)).resolves.toEqual({
-      appName: 'Ethereum',
-      version: '1.0.0',
-    });
-    expect(mockDmk.disconnect).toHaveBeenCalledWith({
-      sessionId: staleSessionId,
-    });
-    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
-    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
   });
 
   it('reconnects when the app version command uses a stale DMK session', async () => {

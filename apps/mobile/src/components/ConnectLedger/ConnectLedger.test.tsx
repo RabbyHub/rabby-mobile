@@ -179,6 +179,7 @@ describe('ConnectLedger', () => {
       mockIsScanning = false;
       throw new Error('known-id connect failed');
     });
+    mockApiLedger.checkEthApp.mockResolvedValue(true);
     mockApiLedger.connectDevice.mockResolvedValue(undefined);
     mockApiLedger.setDeviceId.mockResolvedValue(undefined);
     mockApiLedger.getCurrentUsedHDPathType.mockResolvedValue('LedgerLive');
@@ -200,6 +201,36 @@ describe('ConnectLedger', () => {
     expect(mockSearchAndPair).toHaveBeenCalledTimes(1);
     expect(mockApiLedger.connectDeviceById).not.toHaveBeenCalled();
     expect(mockIsScanning).toBe(true);
+  });
+
+  it('does not continue signing when the readiness probe fails', async () => {
+    const onSelectDevice = jest.fn();
+    mockApiLedger.checkEthApp.mockRejectedValueOnce(
+      new Error('Ledger device is locked'),
+    );
+
+    render(<ConnectLedger onSelectDevice={onSelectDevice} />);
+    await pressDevice();
+
+    await waitFor(() => {
+      expect(mockApiLedger.checkEthApp).toHaveBeenCalledTimes(1);
+    });
+    expect(onSelectDevice).not.toHaveBeenCalled();
+  });
+
+  it('continues signing when connected even if Ethereum still needs opening', async () => {
+    const onSelectDevice = jest.fn();
+    mockApiLedger.checkEthApp.mockImplementationOnce(async callback => {
+      callback(false);
+      return false;
+    });
+
+    render(<ConnectLedger onSelectDevice={onSelectDevice} />);
+    await pressDevice();
+
+    await waitFor(() => {
+      expect(onSelectDevice).toHaveBeenCalledWith(mockDevice);
+    });
   });
 
   it('starts the signer action so it can request opening the Ethereum app', async () => {

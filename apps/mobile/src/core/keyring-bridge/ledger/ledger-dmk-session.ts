@@ -297,41 +297,21 @@ export async function readLedgerAppAndVersion(
   };
 }
 
-function getCurrentAppAndVersion(state: any) {
-  const app = state?.currentApp;
-
-  if (!app?.name) {
-    return undefined;
-  }
-
-  return {
-    appName: app.name,
-    version: app.version,
-  };
-}
-
 export async function getLedgerAppAndVersion(deviceId: string) {
-  const readCurrentApp = async () => {
+  const readAppAndVersion = async () => {
     const sessionId = await connectKnownLedgerDeviceById(deviceId);
-    const state = await getSessionState(sessionId);
-    const currentApp = getCurrentAppAndVersion(state);
-
-    if (currentApp) {
-      return currentApp;
-    }
-
     return readLedgerAppAndVersion(sessionId);
   };
 
   try {
-    return await readCurrentApp();
+    return await readAppAndVersion();
   } catch (error) {
     if (!isDeviceSessionNotFound(error)) {
       throw error;
     }
 
     await clearLedgerDeviceSession(deviceId);
-    return readCurrentApp();
+    return readAppAndVersion();
   }
 }
 
