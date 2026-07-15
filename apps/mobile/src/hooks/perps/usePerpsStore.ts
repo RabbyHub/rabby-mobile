@@ -1533,9 +1533,10 @@ runIIFEFunc(fetchFavoriteMarkets);
 runIIFEFunc(fetchMarginModeByCoin);
 
 export function startSubscribePerpsOnAppState() {
+  const sdk = apisPerps.getPerpsSDK();
   const subscription = AppState.addEventListener('change', nextAppState => {
-    // Resolve per event — destroyPerpsSDK (wallet lock) replaces the singleton.
-    apisPerps.getPerpsSDK().ws.handleAppStateChange(nextAppState);
+    // Pass the state string ('active', 'background', 'inactive') directly
+    sdk.ws.handleAppStateChange(nextAppState);
 
     // When app returns to active, retry market data if it previously failed or never loaded.
     if (nextAppState === 'active') {
