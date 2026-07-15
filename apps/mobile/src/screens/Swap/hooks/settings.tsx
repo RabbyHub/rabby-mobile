@@ -4,15 +4,17 @@ import { swapServiceApi } from '@/core/serviceApi/swap';
 import type { SwapServiceStore, ViewKey } from '@/core/services/swap';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
+import { createRaceSafeHydratedAtom } from './raceSafeHydratedAtom';
 
-const swapUnlimitedAllowanceAtom = atom(false, (get, set, bool: boolean) => {
-  void swapServiceApi.setUnlimitedAllowance(bool).catch(console.error);
-  set(swapUnlimitedAllowanceAtom, bool);
+const swapUnlimitedAllowanceAtom = createRaceSafeHydratedAtom({
+  initialValue: false,
+  hydrate: () => swapServiceApi.getUnlimitedAllowance(),
+  optimisticUpdate: (_previous, value: boolean) => value,
+  commitUpdate: async (_previous, value: boolean) => {
+    await swapServiceApi.setUnlimitedAllowance(value).catch(console.error);
+    return value;
+  },
 });
-
-swapUnlimitedAllowanceAtom.onMount = s => {
-  void swapServiceApi.getUnlimitedAllowance().then(s).catch(console.error);
-};
 
 export const useSwapUnlimitedAllowance = () =>
   useAtom(swapUnlimitedAllowanceAtom);
@@ -57,23 +59,47 @@ const getSettings = async (): Promise<SwapSettingsState> => ({
 });
 
 const settingSwapAtom = atom(defaultSettings);
+let swapSettingsMutationRevision = 0;
+let swapSettingsRefreshRevision = 0;
 
 settingSwapAtom.onMount = setAtom => {
-  getSettings().then(setAtom);
+  const revision = swapSettingsMutationRevision;
+  void getSettings()
+    .then(settings => {
+      if (revision === swapSettingsMutationRevision) {
+        setAtom(settings);
+      }
+    })
+    .catch(console.error);
 };
 
 function wrapSwapSettingsMethod<
   T extends Record<string, (...args: any[]) => Promise<unknown>>,
 >(
   obj: T,
-  cb: () => Promise<void>,
+  readSettings: () => Promise<SwapSettingsState>,
+  applySettings: (settings: SwapSettingsState) => void,
 ): { [K in keyof T]: (...args: Parameters<T[K]>) => Promise<void> } {
+  const refreshSettings = async () => {
+    const refreshRevision = ++swapSettingsRefreshRevision;
+    const settings = await readSettings();
+    if (refreshRevision === swapSettingsRefreshRevision) {
+      applySettings(settings);
+    }
+  };
+
   return Object.fromEntries(
     Object.entries(obj).map(([k, v]) => [
       k,
       async (...args: Parameters<T[typeof k]>) => {
-        await v(...args);
-        await cb();
+        ++swapSettingsMutationRevision;
+        try {
+          await v(...args);
+        } catch (error) {
+          await refreshSettings().catch(console.error);
+          throw error;
+        }
+        await refreshSettings();
       },
     ]),
   ) as { [K in keyof T]: (...args: Parameters<T[K]>) => Promise<void> };
@@ -95,9 +121,8 @@ export const useSwapSettings = () => {
         setSwapSortIncludeGasFee: (bool: boolean) =>
           swapServiceApi.setSwapSortIncludeGasFee(bool),
       },
-      async () => {
-        setSettings(await getSettings());
-      },
+      getSettings,
+      setSettings,
     );
   }, [setSettings]);
 
