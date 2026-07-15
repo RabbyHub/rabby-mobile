@@ -24,8 +24,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
 import {
   getTransactionHistoryCustomTxItemMap,
-  getTransactionHistoryListSnapshot,
   getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import {
   switchSceneCurrentAccount,
@@ -40,6 +40,7 @@ import { notificationOpenapi } from '@/core/notifications/openapi';
 import { txResultToToHistoryDisplayItem } from '@/utils/transaction';
 import { useDebugSwapHistorySkipLocalLookup } from '@/hooks/appSettings';
 import { Account } from '@/types/account';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -291,9 +292,18 @@ export const SwapTxHistory = ({
           return;
         }
 
-        const { pendings, completeds } = getTransactionHistoryListSnapshot(
-          currentAccount?.address ?? '',
-        );
+        const { pendings, completeds } = await transactionHistoryServiceApi
+          .getList(currentAccount?.address ?? '')
+          .catch(error => {
+            console.error(
+              '[SwapTxHistory] load local transaction history failed',
+              error,
+            );
+            return {
+              pendings: [] as TransactionGroup[],
+              completeds: [] as TransactionGroup[],
+            };
+          });
         const itemData = pendings
           .concat(completeds)
           .find(i => i.txs[0]?.hash === txId);

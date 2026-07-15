@@ -6,6 +6,7 @@ import type {
 import type { FieldNilable } from '@rabby-wallet/base-utils';
 import {
   getRegisteredService,
+  isCoreServiceRegistered,
   requireCoreService,
   waitForCoreService,
 } from '@/core/services/serviceRegistry';
@@ -24,6 +25,10 @@ const EMPTY_DAPPS: Record<string, DappInfo> = {};
 
 export function ensureDappServiceReady() {
   return ensureServiceApiReady('dappService');
+}
+
+export function isDappServiceReady() {
+  return isCoreServiceRegistered('dappService');
 }
 
 function requireDappService() {

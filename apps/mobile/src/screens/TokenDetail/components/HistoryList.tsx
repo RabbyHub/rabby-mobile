@@ -8,7 +8,7 @@ import React, {
 import { useTheme2024 } from '@/hooks/theme';
 import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
+import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   ensureHistoryListItemFromDb,
@@ -38,6 +38,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 
 interface IFetchHistory {
   last: number;
@@ -83,6 +84,8 @@ export const TokenDetailHistoryList = ({
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     getTransactionHistorySucceedListSnapshot(),
   );
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
+  const hasConsumedLocalStatusRef = useRef(false);
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
   const handleScroll = useCallback(
@@ -296,7 +299,11 @@ export const TokenDetailHistoryList = ({
     };
   }, [throttleBatchFetchData]);
 
-  useMount(() => {
+  useEffect(() => {
+    if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {
+      return;
+    }
+    hasConsumedLocalStatusRef.current = true;
     const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
     void transactionHistoryServiceApi
@@ -304,7 +311,7 @@ export const TokenDetailHistoryList = ({
       .catch(error => {
         console.error('[TokenHistory] clear local status failed', error);
       });
-  });
+  }, [currentAddress, transactionHistoryReady]);
 
   const displayList = useMemo(() => {
     return (

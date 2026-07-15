@@ -18,10 +18,13 @@ import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 
-type zBrowserBookmarkState = EntityState<BrowserBookmarkItem, string>;
+type zBrowserBookmarkState = EntityState<BrowserBookmarkItem, string> & {
+  hydrated: boolean;
+};
 const zBrowserBookmarkStore = zCreate<zBrowserBookmarkState>(() => ({
   ids: [],
   entities: {},
+  hydrated: false,
 }));
 
 let browserBookmarkReadRevision = 0;
@@ -44,6 +47,7 @@ export const getBookmarkList = async () => {
     applyBrowserBookmarkStore({
       ids,
       entities,
+      hydrated: true,
     });
   }
 };

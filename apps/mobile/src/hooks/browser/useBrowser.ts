@@ -10,7 +10,11 @@ import {
   browserServiceApi,
   removeBrowserScreenshot,
 } from '@/core/serviceApi/browser';
-import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import {
+  dappServiceApi,
+  getDappSnapshot,
+  isDappServiceReady,
+} from '@/core/serviceApi/dapp';
 import type { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
@@ -360,6 +364,22 @@ export const browserApis = {
     const { isNewTab = false } = options || {};
     if (!url?.trim() || !/^https?:\/\//.test(url)) {
       // switchToTab(emptyTab.id);
+      return;
+    }
+    if (options?.isRemindOpen && !isDappServiceReady()) {
+      void dappServiceApi
+        .getDapp(safeGetOrigin(url))
+        .then(() => {
+          browserApis.openTab(url, options);
+        })
+        .catch(error => {
+          console.error('[browserApis.openTab] load dapp state failed', error);
+          browserApis.setPartialBrowserState({
+            isShowDappInfo: true,
+            dappInfoUrl: url,
+          });
+          browserApis.forceShowBrowserDappInfo();
+        });
       return;
     }
     if (

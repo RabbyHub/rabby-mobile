@@ -18,6 +18,7 @@ import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../hooks';
+import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -55,12 +56,16 @@ export const LendingHistoryHeader = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [pendingCount, setPendingCount] = useState(0);
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const { refreshHistoryId } = useRefreshHistoryId();
   const [showGreenDot, setShowGreenDot] = useState(false);
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
   const fetchLocalTx = useCallback(async () => {
+    if (!transactionHistoryReady) {
+      return [];
+    }
     const address = finalSceneCurrentAccount?.address.toLowerCase()!;
     if (!address) {
       return [];
@@ -79,7 +84,7 @@ export const LendingHistoryHeader = ({
     const lendingSuccessHistoryListCount = lendingSuccessHistoryList.length;
     setShowGreenDot(lendingSuccessHistoryListCount > 0);
     setPendingCount(pending.length);
-  }, [finalSceneCurrentAccount?.address]);
+  }, [finalSceneCurrentAccount?.address, transactionHistoryReady]);
 
   useInterval(() => fetchLocalTx(), pendingCount > 0 ? 5000 : 60 * 1000);
 

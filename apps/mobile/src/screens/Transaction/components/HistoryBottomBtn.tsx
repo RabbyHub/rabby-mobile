@@ -6,7 +6,7 @@ import {
   RootNames,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import { getTransactionHistoryListSnapshot } from '@/core/serviceApi/transactionHistory';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { Account } from '@/core/startupServices/preference';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -60,7 +60,7 @@ export const HistoryBottomBtn = ({
   const { accounts } = useMyAccounts();
 
   const { data: transactionTxs } = useRequest(async () => {
-    const { completeds } = getTransactionHistoryListSnapshot(
+    const { completeds } = await transactionHistoryServiceApi.getList(
       data.tx?.from_addr || '',
     );
 
