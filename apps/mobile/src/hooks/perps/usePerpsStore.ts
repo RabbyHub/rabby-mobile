@@ -619,7 +619,7 @@ const runFetchMarketData = async () => {
   }
 };
 
-const fetchMarketData = (): Promise<void> => {
+export const fetchMarketData = (): Promise<void> => {
   if (marketDataPromise) {
     return marketDataPromise;
   }
