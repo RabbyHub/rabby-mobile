@@ -4,10 +4,9 @@ const mockEllipsisAddress = jest.fn();
 function loadAccountModule() {
   jest.resetModules();
 
-  jest.doMock('@/core/services', () => ({
-    contactService: {
-      getAliasByAddress: (address: string) => mockGetAliasByAddress(address),
-    },
+  jest.doMock('@/core/serviceApi/contact', () => ({
+    getContactAliasSnapshot: (address: string) =>
+      mockGetAliasByAddress(address),
   }));
 
   jest.doMock('@/core/apis/account', () => ({
