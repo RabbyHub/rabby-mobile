@@ -32,9 +32,11 @@ import { Text } from '@/components/Typography';
 // const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
 type ClosedTipsState = {
   closedTipsChains: string[];
+  hydrated: boolean;
 };
 const closedTipsStore = zCreate<ClosedTipsState>(() => ({
   closedTipsChains: [],
+  hydrated: false,
 }));
 
 let closedTipsHydrationPromise: Promise<void> | null = null;
@@ -44,7 +46,7 @@ function hydrateClosedTipsChains() {
     closedTipsHydrationPromise = offlineChainServiceApi
       .getCloseTipsChains()
       .then(closedTipsChains => {
-        closedTipsStore.setState({ closedTipsChains });
+        closedTipsStore.setState({ closedTipsChains, hydrated: true });
       })
       .catch(error => {
         closedTipsHydrationPromise = null;
@@ -62,7 +64,7 @@ function setClosedTipsChainState(
 
     void setCloseTipsChains(newVal).catch(console.error);
 
-    return { ...prev, closedTipsChains: newVal };
+    return { ...prev, closedTipsChains: newVal, hydrated: true };
   });
 }
 
@@ -85,6 +87,7 @@ export const useOfflineChain = () => {
   }, []);
 
   const closedTipsChains = closedTipsStore(s => s.closedTipsChains);
+  const closedTipsHydrated = closedTipsStore(s => s.hydrated);
   const accounts = useAccountStore(s => s.accounts);
   const { mockData } = useMockDataForHomeCenterArea();
   const { value: offlineList } = useAsync(async () => {
@@ -131,8 +134,11 @@ export const useOfflineChain = () => {
   }, [balanceSnapshots, offlineList, mockData.forceShowOffchainNotify]);
 
   const displayWillClosedChain = useMemo(
-    () => list?.filter(e => !closedTipsChains?.includes(e.id))?.[0],
-    [closedTipsChains, list],
+    () =>
+      closedTipsHydrated
+        ? list?.filter(e => !closedTipsChains?.includes(e.id))?.[0]
+        : undefined,
+    [closedTipsChains, closedTipsHydrated, list],
   );
 
   const offlineChainInfo = useMemo(

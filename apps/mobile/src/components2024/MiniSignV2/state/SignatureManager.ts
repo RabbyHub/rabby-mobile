@@ -527,7 +527,14 @@ export class SignatureManager {
         retry,
         onSigningTxCreated: signingTxId => {
           if (!this.isActive(opId, fingerprint)) {
-            void transactionHistoryServiceApi.removeSigningTx(signingTxId);
+            void transactionHistoryServiceApi
+              .removeSigningTx(signingTxId)
+              .catch(error => {
+                console.error(
+                  '[SignatureManager] remove stale signing tx failed',
+                  error,
+                );
+              });
             return;
           }
           this.signingTxIds.add(signingTxId);
@@ -576,7 +583,11 @@ export class SignatureManager {
       return;
     }
     for (const signingTxId of this.signingTxIds) {
-      void transactionHistoryServiceApi.removeSigningTx(signingTxId);
+      void transactionHistoryServiceApi
+        .removeSigningTx(signingTxId)
+        .catch(error => {
+          console.error('[SignatureManager] remove signing tx failed', error);
+        });
     }
     this.signingTxIds.clear();
   }

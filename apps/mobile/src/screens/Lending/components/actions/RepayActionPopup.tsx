@@ -526,7 +526,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         }
         const txId = last(results);
         if (txId && txsForMiniApproval[0]?.chainId) {
-          void transactionHistoryServiceApi.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
             txId,

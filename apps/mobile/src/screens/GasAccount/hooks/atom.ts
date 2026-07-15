@@ -3,6 +3,7 @@ import { sendRequest } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
 import {
   clearGasAccountPendingHardwareAccountSync,
+  ensureGasAccountServiceReady,
   getGasAccountData,
   getGasAccountAccountsWithBalanceSnapshot,
   getGasAccountDataSnapshot,
@@ -29,8 +30,8 @@ import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
-  runStartupTask,
 } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { eventBus, EVENTS } from '@/utils/events';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
@@ -67,18 +68,21 @@ import {
 
 runStartupTask(() => {
   eventBus.on(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, () => {
-    gasAccountStore.setState({
-      session: getSessionStateFromService(),
-      discovery: {
-        ...gasAccountStore.getState().discovery,
-        ...getDiscoveryStateFromRuntime(),
-      },
+    void storeApiGasAccount.ensureRuntimeReady().catch(error => {
+      console.error('hydrate gas account after auto login event error', error);
     });
   });
   eventBus.on(EVENTS.TX_COMPLETED, () => {
-    storeApiGasAccount.scheduleSnapshotRefresh({
-      reason: 'tx_completed',
-    });
+    void storeApiGasAccount
+      .ensureRuntimeReady()
+      .then(() => {
+        storeApiGasAccount.scheduleSnapshotRefresh({
+          reason: 'tx_completed',
+        });
+      })
+      .catch(error => {
+        console.error('refresh gas account after transaction error', error);
+      });
   });
 }, STARTUP_TASKS.gasAccountEventBridge);
 
@@ -311,7 +315,7 @@ const syncDeleteGasAccount = async ({
       perpsAccount?.type === type
     ) {
       eventBus.emit(EVENTS.PERPS.LOG_OUT, perpsAccount);
-      void perpsServiceApi.setCurrentAccount(null);
+      await perpsServiceApi.setCurrentAccount(null);
     }
   }
 };
@@ -345,8 +349,8 @@ const setGasAccount = (
   );
 };
 
-const hydrateSessionFromService = makeAvoidParallelAsyncFunc(async () => {
-  const data = (await getGasAccountData()) as GasAccountServiceStore;
+const hydrateSessionFromLoadedService = () => {
+  const data = getGasAccountDataSnapshot() as GasAccountServiceStore;
   const nextSession = getSessionStateFromData(data);
 
   gasAccountStore.setState(prev => {
@@ -379,7 +383,24 @@ const hydrateSessionFromService = makeAvoidParallelAsyncFunc(async () => {
   });
 
   return nextSession;
+};
+
+const ensureGasAccountRuntimeReady = makeAvoidParallelAsyncFunc(async () => {
+  await ensureGasAccountServiceReady();
+  const nextSession = hydrateSessionFromLoadedService();
+
+  gasAccountStore.setState(prev => ({
+    ...prev,
+    discovery: {
+      ...prev.discovery,
+      ...getDiscoveryStateFromRuntime(),
+    },
+  }));
+
+  return nextSession;
 });
+
+const hydrateSessionFromService = ensureGasAccountRuntimeReady;
 
 let latestSnapshotRefreshRequestId = 0;
 const createSnapshotRefreshRequestId = () => {
@@ -405,6 +426,7 @@ const triggerReLoginAfterInvalidSession = async () => {
 };
 
 const refreshSnapshot = async () => {
+  await ensureGasAccountRuntimeReady();
   const requestId = createSnapshotRefreshRequestId();
   const { sig, accountId } = gasAccountStore.getState().session;
 
@@ -484,6 +506,8 @@ const refreshHistory = async () => {
     return undefined;
   }
 
+  await ensureGasAccountRuntimeReady();
+
   const requestId = createHistoryRefreshRequestId();
   const { sig, accountId } = gasAccountStore.getState().session;
   const prevHistory = gasAccountStore.getState().history;
@@ -561,6 +585,7 @@ const refreshHistory = async () => {
 };
 
 async function loadMoreHistory() {
+  await ensureGasAccountRuntimeReady();
   const state = gasAccountStore.getState();
   const { sig, accountId } = state.session;
   const { history } = state;
@@ -637,6 +662,9 @@ async function loadMoreHistory() {
 }
 
 export const storeApiGasAccount = {
+  async ensureRuntimeReady() {
+    await ensureGasAccountRuntimeReady();
+  },
   setGasAccount,
   getSession() {
     return gasAccountStore.getState().session;
@@ -711,6 +739,7 @@ export const storeApiGasAccount = {
     if (!selectAccount) {
       throw new Error('background.error.noCurrentAccount');
     }
+    await ensureGasAccountRuntimeReady();
     gasAccountStore.setState(prev =>
       updateSessionState(prev, {
         status: 'logging_in',

@@ -290,7 +290,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
         const txId = last(results);
         if (txId) {
-          void transactionHistoryServiceApi.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             manageEmodeTx[0].chainId,
             txId,

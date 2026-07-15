@@ -23,6 +23,12 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { isNonPublicProductionEnv } from '@/constant';
 import { useRefState } from '@/hooks/common/useRefState';
+import {
+  runWithCoreServices,
+  serviceDependency,
+} from '@/core/serviceApi/serviceDependencies';
+
+const OPEN_DAPP_DEPENDENCIES = [serviceDependency('dappService')] as const;
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -197,7 +203,7 @@ export type DappWebViewHideContext = {
   latestUrl?: string;
 };
 export function useOpenDappView() {
-  const { dapps, addDapp } = useDapps();
+  const { dapps } = useDapps();
   const [activeDappOrigin, _setActiveDappOrigin] =
     useAtom(activeDappOriginAtom);
 
@@ -314,7 +320,7 @@ export function useOpenDappView() {
   );
 
   const openUrlAsDapp = useCallback(
-    (
+    async (
       dappUrl: DappInfo['origin'] | OpenedDappItem,
       options?: {
         /** @default {true} */
@@ -359,77 +365,81 @@ export function useOpenDappView() {
 
       item.origin = targetOrigin;
 
-      if (!dapps[item.origin]) {
-        addDapp(
-          createDappBySession({
-            origin: item.origin,
-            name: '',
-            icon: '',
-          }),
-        );
-      }
-
-      syncBasicDappInfo(item.origin);
-
-      const needTriggerWebViewReload =
-        forceReopen || item.$openParams?.initialUrl !== newUrl;
-
-      const $openParams = { ...item.$openParams };
-      if (needTriggerWebViewReload) {
-        $openParams.initialUrl = item.$openParams?.initialUrl || newUrl;
-        item.$openParams = $openParams;
-      }
-
-      setOpenedOriginsDapps(prev => {
-        const itemIdx = prev.findIndex(
-          prevItem => prevItem.origin === item.origin,
-        );
-        if (itemIdx === -1) {
-          return [...prev, item];
+      return runWithCoreServices(OPEN_DAPP_DEPENDENCIES, ({ dappService }) => {
+        let dappInfo = dappService.getDapp(item.origin);
+        if (!dappInfo) {
+          dappService.addDapp(
+            createDappBySession({
+              origin: item.origin,
+              name: '',
+              icon: '',
+            }),
+          );
+          dappInfo = dappService.getDapp(item.origin);
         }
 
-        prev[itemIdx] = {
-          ...prev[itemIdx],
-          openTime: Date.now(),
-        };
+        if (!dappInfo) {
+          throw new Error(`Failed to create dapp: ${item.origin}`);
+        }
 
-        if (
-          useLatestWebViewId &&
-          prev[itemIdx].lastOpenWebViewId === prev[itemIdx].dappTabId
-        ) {
-          // call to open active id
-          setActiveDappOrigin(item.origin);
-          console.debug(
-            `[dapp webview - ${prev[itemIdx].dappTabId}] just show webview.`,
+        void syncBasicDappInfo(item.origin).catch(console.error);
+
+        const needTriggerWebViewReload =
+          forceReopen || item.$openParams?.initialUrl !== newUrl;
+
+        const $openParams = { ...item.$openParams };
+        if (needTriggerWebViewReload) {
+          $openParams.initialUrl = item.$openParams?.initialUrl || newUrl;
+          item.$openParams = $openParams;
+        }
+
+        setOpenedOriginsDapps(prev => {
+          const itemIdx = prev.findIndex(
+            prevItem => prevItem.origin === item.origin,
           );
-        } else {
+          if (itemIdx === -1) {
+            return [...prev, item];
+          }
+
           prev[itemIdx] = {
             ...prev[itemIdx],
-            $openParams: {
-              ...prev[itemIdx].$openParams,
-              ...$openParams,
-            },
+            openTime: Date.now(),
           };
-          console.debug(
-            `[dapp webview - ${prev[itemIdx].dappTabId}] will redirect webview.`,
-          );
+
+          if (
+            useLatestWebViewId &&
+            prev[itemIdx].lastOpenWebViewId === prev[itemIdx].dappTabId
+          ) {
+            setActiveDappOrigin(item.origin);
+            console.debug(
+              `[dapp webview - ${prev[itemIdx].dappTabId}] just show webview.`,
+            );
+          } else {
+            prev[itemIdx] = {
+              ...prev[itemIdx],
+              $openParams: {
+                ...prev[itemIdx].$openParams,
+                ...$openParams,
+              },
+            };
+            console.debug(
+              `[dapp webview - ${prev[itemIdx].dappTabId}] will redirect webview.`,
+            );
+          }
+
+          return [...prev];
+        });
+
+        if (isActiveDapp) {
+          setActiveDappOrigin(item.origin);
         }
 
-        return [...prev];
+        activate(dappInfo);
+        return true;
       });
-
-      if (isActiveDapp) {
-        setActiveDappOrigin(item.origin);
-      }
-
-      activate(dapps[item.origin]);
-
-      return true;
     },
     [
-      dapps,
       setOpenedOriginsDapps,
-      addDapp,
       setActiveDappOrigin,
       toggleShowSheetModal,
       activate,

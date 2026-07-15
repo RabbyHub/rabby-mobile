@@ -27,6 +27,7 @@ const result = spawnSync(
     '--rule',
     JSON.stringify({
       'no-runtime-service-imports': 'error',
+      'no-floating-deferred-service-api-calls': 'error',
     }),
     '--ext',
     '.js,.jsx,.ts,.tsx',

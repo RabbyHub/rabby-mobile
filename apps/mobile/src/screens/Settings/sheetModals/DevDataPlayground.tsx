@@ -136,9 +136,17 @@ export default function DevDataPlaygroundModal({
       {
         label: 'Reset Perps Store',
         icon: <RcCode style={styles.labelIcon} />,
-        onPress: () => {
-          void perpsServiceApi.resetStore();
-          toast.success('PERPS STORE RESET SUCCESS');
+        onPress: async () => {
+          try {
+            await perpsServiceApi.resetStore();
+            toast.success('PERPS STORE RESET SUCCESS');
+          } catch (error) {
+            console.error(
+              '[DevDataPlayground] reset perps store failed',
+              error,
+            );
+            toast.error('PERPS STORE RESET FAILED');
+          }
         },
       },
       {

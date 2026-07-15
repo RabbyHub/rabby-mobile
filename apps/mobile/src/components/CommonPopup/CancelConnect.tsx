@@ -1,4 +1,4 @@
-import { notificationServiceApi } from '@/core/serviceApi/notification';
+import { blockCurrentNotificationDappSync } from '@/core/serviceApi/notification';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
@@ -35,7 +35,7 @@ export const CancelConnect = () => {
 
   const handleBlockedRequestApproval = () => {
     closePopup();
-    void notificationServiceApi.blockedDapp();
+    blockCurrentNotificationDappSync();
     onCancel();
   };
   const colors = useThemeColors();

@@ -230,17 +230,27 @@ export const TransactionAlert = ({
     },
   );
 
-  const handleClearPending = useMemoizedFn((groups: TransactionGroup[]) => {
-    uniqBy(groups, item => `${item.address}-${item.chainId}`).forEach(item => {
-      apisTransactionHistory.removeLocalPendingTx({
-        address: item.address,
-        chainId: item.chainId,
-      });
-    });
-    toast.success(t('page.transactions.TransactionAlert.clearPendingSuccess'));
-
-    resetNavigationTo(navigation, 'Home');
-  });
+  const handleClearPending = useMemoizedFn(
+    async (groups: TransactionGroup[]) => {
+      try {
+        await Promise.all(
+          uniqBy(groups, item => `${item.address}-${item.chainId}`).map(item =>
+            apisTransactionHistory.removeLocalPendingTx({
+              address: item.address,
+              chainId: item.chainId,
+            }),
+          ),
+        );
+        toast.success(
+          t('page.transactions.TransactionAlert.clearPendingSuccess'),
+        );
+        resetNavigationTo(navigation, 'Home');
+      } catch (error) {
+        console.error('[TransactionAlert] clear pending failed', error);
+        toast.error(String(error));
+      }
+    },
+  );
 
   const [now, setNow] = useState(dayjs());
 

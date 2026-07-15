@@ -1,8 +1,11 @@
 import type { GasAccountService } from '@/core/services/gasAccount';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
+import {
+  getRegisteredService,
+  requireCoreService,
+} from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
-  runServiceSideEffectWhenReady,
+  ensureServiceApiReady,
 } from './createDeferredServiceApi';
 
 export type GasAccountServiceApiContract = GasAccountService;
@@ -10,6 +13,14 @@ export const gasAccountServiceApi = createDeferredServiceApi<
   'gasAccountService',
   GasAccountServiceApiContract
 >('gasAccountService');
+
+export function ensureGasAccountServiceReady() {
+  return ensureServiceApiReady('gasAccountService');
+}
+
+function requireGasAccountService() {
+  return requireCoreService('gasAccountService');
+}
 
 export function getGasAccountSigSnapshot() {
   return (
@@ -49,59 +60,35 @@ export async function getGasAccountLastDepositAccount() {
 export function setGasAccountSigSync(
   ...args: Parameters<GasAccountService['setGasAccountSig']>
 ) {
-  runServiceSideEffectWhenReady(
-    'gasAccountService',
-    service => service.setGasAccountSig(...args),
-    'gasAccountService.setGasAccountSig',
-  );
+  requireGasAccountService().setGasAccountSig(...args);
 }
 
 export function setGasAccountCurrentBalanceStateSync(
   ...args: Parameters<GasAccountService['setCurrentBalanceState']>
 ) {
-  runServiceSideEffectWhenReady(
-    'gasAccountService',
-    service => service.setCurrentBalanceState(...args),
-    'gasAccountService.setCurrentBalanceState',
-  );
+  requireGasAccountService().setCurrentBalanceState(...args);
 }
 
 export function setGasAccountAccountsWithBalanceSync(
   ...args: Parameters<GasAccountService['setAccountsWithGasAccountBalance']>
 ) {
-  runServiceSideEffectWhenReady(
-    'gasAccountService',
-    service => service.setAccountsWithGasAccountBalance(...args),
-    'gasAccountService.setAccountsWithGasAccountBalance',
-  );
+  requireGasAccountService().setAccountsWithGasAccountBalance(...args);
 }
 
 export function setGasAccountPendingHardwareAccountSync(
   ...args: Parameters<GasAccountService['setPendingHardwareAccount']>
 ) {
-  runServiceSideEffectWhenReady(
-    'gasAccountService',
-    service => service.setPendingHardwareAccount(...args),
-    'gasAccountService.setPendingHardwareAccount',
-  );
+  requireGasAccountService().setPendingHardwareAccount(...args);
 }
 
 export function clearGasAccountPendingHardwareAccountSync() {
-  runServiceSideEffectWhenReady(
-    'gasAccountService',
-    service => service.clearPendingHardwareAccount(),
-    'gasAccountService.clearPendingHardwareAccount',
-  );
+  requireGasAccountService().clearPendingHardwareAccount();
 }
 
 export function setGasAccountHasClaimedGiftSync(
   ...args: Parameters<GasAccountService['setHasClaimedGift']>
 ) {
-  runServiceSideEffectWhenReady(
-    'gasAccountService',
-    service => service.setHasClaimedGift(...args),
-    'gasAccountService.setHasClaimedGift',
-  );
+  requireGasAccountService().setHasClaimedGift(...args);
 }
 
 export function getGasAccountCurrentEligibleAddressSnapshot() {

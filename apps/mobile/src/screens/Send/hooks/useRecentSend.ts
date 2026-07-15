@@ -21,6 +21,7 @@ import type { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Hex } from '@metamask/utils';
 import { isValidHexAddress } from '@metamask/utils';
 import { jotaiStore } from '@/core/utils/reexports';
+import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -104,6 +105,7 @@ export const useRecentSend = ({
 }: {
   useAllHistory?: boolean;
 } = {}) => {
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -111,9 +113,14 @@ export const useRecentSend = ({
     return unionBy(accounts, account => account.address.toLowerCase());
   }, [accounts]);
 
-  const { data: historyList, runAsync } = useRequest(async () => {
-    return batchFetchLocalTx();
-  });
+  const { data: historyList, runAsync } = useRequest(
+    async () => {
+      return batchFetchLocalTx();
+    },
+    {
+      refreshDeps: [transactionHistoryReady],
+    },
+  );
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -237,6 +244,7 @@ export function getRecentSendPendingTxData() {
 }
 
 export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
     localPendingTxDataAtom,
   );
@@ -249,13 +257,13 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   }, [setLocalPendingTxData]);
 
   const runFetchLocalPendingTx = useCallback(() => {
-    if (currentAccount?.address) {
+    if (transactionHistoryReady && currentAccount?.address) {
       const resTx = fetchLocalSendPendingTx(
         currentAccount.address,
       ) as SendTxHistoryItem;
       setLocalPendingTxData(resTx);
     }
-  }, [currentAccount?.address, setLocalPendingTxData]);
+  }, [currentAccount?.address, setLocalPendingTxData, transactionHistoryReady]);
 
   useEffect(() => {
     runFetchLocalPendingTx();

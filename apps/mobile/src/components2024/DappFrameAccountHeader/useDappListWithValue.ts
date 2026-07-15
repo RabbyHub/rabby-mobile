@@ -7,7 +7,7 @@ import { useShallow } from 'zustand/shallow';
 import useProtocolListStore from '@/store/protocols';
 import useAppChainStore from '@/store/appchain';
 import type { DappSelectItem } from './constants';
-import { getDappAccount, useDapps } from '@/hooks/useDapps';
+import { useDappAccountResolver, useDapps } from '@/hooks/useDapps';
 import { useAccounts } from '@/hooks/account';
 import { perpsStore as usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -63,6 +63,7 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const resolveDappAccount = useDappAccountResolver();
   const { finalSceneCurrentAccount: aaveLendingAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -108,7 +109,7 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
 
       const dappInfo = dapps[dappOrigin];
       let dappAccount: Account | null;
-      dappAccount = getDappAccount({ dappInfo, accounts });
+      dappAccount = resolveDappAccount({ dappInfo, accounts }) || null;
       if (item.id === 'aave') {
         dappAccount = aaveLendingAccount;
       }
@@ -155,6 +156,7 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
     currentAddressAppChainMap,
     hyperliquidAccountValue,
     aaveLendingAccount,
+    resolveDappAccount,
   ]);
 
   return dappListWithValue;

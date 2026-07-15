@@ -2,12 +2,14 @@ import { ethErrors } from 'eth-rpc-errors';
 import { autoConnectServiceApi } from '@/core/serviceApi/autoConnect';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import {
+  ensureDappServiceReady,
   getConnectedDappSnapshot,
   getDappSnapshot,
   hasDappPermissionSnapshot,
   updateDappSync,
 } from '@/core/serviceApi/dapp';
 import {
+  ensureNotificationServiceReady,
   getNotificationStatsDataSnapshot,
   notificationServiceApi,
   setCurrentRequestDeferFnSync,
@@ -37,6 +39,7 @@ import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { getAccountList } from '../apis/account';
 import { getDappAccount } from '@/core/utils/dappAccount';
+import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
 import type { Account } from '@/types/account';
@@ -147,10 +150,14 @@ const flowContext = flow
             shouldAutoConnect(origin, ctx.request.data.method)
           ) {
             const site = getDappSnapshot(origin);
-            const { accounts } = await getAccountList();
+            const [{ accounts }, transactions] = await Promise.all([
+              getAccountList(),
+              getTransactionHistoryTransactions(),
+            ]);
             defaultAccount = getDappAccount({
               dappInfo: site,
               accounts,
+              transactions,
             })!;
             defaultChain =
               site?.chainId && findChain({ enum: site.chainId })
@@ -569,7 +576,7 @@ function reportStatsData() {
   setNotificationStatsDataSync(statsData);
 }
 
-export default async (request: ProviderRequest) => {
+async function runRpcFlow(request: ProviderRequest) {
   const ctx: any = {
     request: { ...request, requestedApproval: false },
   };
@@ -593,4 +600,12 @@ export default async (request: ProviderRequest) => {
       unlockNotificationSync();
     }
   });
-};
+}
+
+export default async function rpcFlow(request: ProviderRequest) {
+  await Promise.all([
+    ensureDappServiceReady(),
+    ensureNotificationServiceReady(),
+  ]);
+  return runRpcFlow(request);
+}

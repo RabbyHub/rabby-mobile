@@ -6,7 +6,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
 import * as import_english from '@scure/bip39/wordlists/english';
 import { setDefaultAddressAliasFromKeyringParamsSync } from '@/core/serviceApi/contact';
-import { addHdKeyringUnixRecordSync } from '@/core/serviceApi/hdKeyring';
+import { hdKeyringServiceApi } from '@/core/serviceApi/hdKeyring';
 import {
   assertKeyringUnlockedSync,
   generateMnemonicSync,
@@ -392,7 +392,7 @@ export const addKeyringAndactiveAndPersistAccounts = async (
     await keyringServiceApi.addKeyring(keyring);
 
     if (detail?.basePublicKey) {
-      addHdKeyringUnixRecordSync(detail.basePublicKey);
+      await hdKeyringServiceApi.addUnixRecord(detail.basePublicKey);
     }
 
     const _account = {
@@ -455,7 +455,7 @@ export const activeAndPersistAccountsByMnemonics = async (
 
   const detail = keyring.getInfoByAddress(accountsToImport[0].address);
   if (detail?.basePublicKey) {
-    addHdKeyringUnixRecordSync(detail.basePublicKey);
+    await hdKeyringServiceApi.addUnixRecord(detail.basePublicKey);
   }
 
   await keyringServiceApi.persistAllKeyrings();

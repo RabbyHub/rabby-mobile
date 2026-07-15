@@ -177,7 +177,7 @@ export const TransactionPendingDetail = ({
 
     const maxGasTx = data.maxGasTx;
     try {
-      apisTransactionHistory.removeLocalPendingTx({
+      await apisTransactionHistory.removeLocalPendingTx({
         chainId: maxGasTx.rawTx.chainId,
         nonce: +maxGasTx.rawTx.nonce,
         address: maxGasTx.rawTx.from,

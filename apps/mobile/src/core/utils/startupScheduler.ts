@@ -37,6 +37,53 @@ export type StartupTaskHandle = {
   run?: () => unknown;
 };
 
+export type RunStartupTaskStage = StartupTaskStage;
+export type RunStartupTaskOptions = StartupTaskOptions;
+
+function isRunStartupTaskOptions(
+  value: unknown,
+): value is RunStartupTaskOptions {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return (
+    'stage' in value ||
+    'label' in value ||
+    'owner' in value ||
+    'reason' in value ||
+    'priority' in value ||
+    'delayMs' in value ||
+    'fallbackMs' in value ||
+    'idleTimeoutMs' in value ||
+    'budgetMs' in value
+  );
+}
+
+/** Run a task through startup metadata and stage scheduling. */
+export function runStartupTask<T extends (...args: any[]) => any>(
+  func: T,
+  optionsOrFirstArg?: RunStartupTaskOptions | Parameters<T>[0],
+  ...restArgs: any[]
+): ReturnType<T> | StartupTaskHandle | undefined {
+  const hasOptions = isRunStartupTaskOptions(optionsOrFirstArg);
+  const options = hasOptions
+    ? (optionsOrFirstArg as RunStartupTaskOptions)
+    : ({} as RunStartupTaskOptions);
+  const inputArgs = (
+    hasOptions
+      ? restArgs
+      : optionsOrFirstArg === undefined
+      ? restArgs
+      : [optionsOrFirstArg, ...restArgs]
+  ) as Parameters<T>;
+
+  return scheduleStartupTask(() => func(...inputArgs), options) as
+    | ReturnType<T>
+    | StartupTaskHandle
+    | undefined;
+}
+
 type StartupDiagnosticsModule = typeof import('./startupDiagnostics');
 
 let startupDiagnosticsModule:
@@ -81,7 +128,13 @@ function beginStartupTaskDiagnostic(options: StartupTaskOptions) {
 
 function markStartupTaskDiagnostic(
   diagnosticId: number | null,
-  event: 'fire' | 'done' | 'error' | 'cancel' | 'budget_exceeded',
+  event:
+    | 'fire'
+    | 'invoke_return'
+    | 'done'
+    | 'error'
+    | 'cancel'
+    | 'budget_exceeded',
   extra?: Record<string, unknown>,
 ) {
   getStartupDiagnosticsModule()?.markStartupTaskDiagnostic(
@@ -122,22 +175,41 @@ function reportTaskDuration(
   options: StartupTaskOptions,
   startedAt: number,
   diagnosticId: number | null,
+  invokeSyncMs: number,
+  isAsync: boolean,
   extra?: Record<string, unknown>,
 ) {
   const durationMs = Date.now() - startedAt;
+  const awaitWallMs = isAsync ? Math.max(0, durationMs - invokeSyncMs) : 0;
   traceStartupTask('done', options, {
     durationMs,
+    invokeSyncMs,
+    awaitWallMs,
+    isAsync,
     ...extra,
   });
 
-  if (options.budgetMs && durationMs > options.budgetMs) {
+  if (options.budgetMs && invokeSyncMs > options.budgetMs) {
     traceStartupTask('budget_exceeded', options, {
       durationMs,
+      invokeSyncMs,
+      awaitWallMs,
+      isAsync,
     });
     markStartupTaskDiagnostic(diagnosticId, 'budget_exceeded', {
       durationMs,
+      invokeSyncMs,
+      awaitWallMs,
+      isAsync,
     });
   }
+
+  return {
+    durationMs,
+    invokeSyncMs,
+    awaitWallMs,
+    isAsync,
+  };
 }
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
@@ -155,22 +227,44 @@ function executeStartupTask<T>(
 
   try {
     const result = task();
-    if (isPromiseLike(result)) {
+    const invokeSyncMs = Date.now() - startedAt;
+    const asyncResult = isPromiseLike(result);
+    traceStartupTask('invoke_return', options, {
+      invokeSyncMs,
+      isAsync: asyncResult,
+    });
+    markStartupTaskDiagnostic(diagnosticId, 'invoke_return', {
+      invokeSyncMs,
+      isAsync: asyncResult,
+    });
+
+    if (asyncResult) {
       result.then(
         () => {
-          reportTaskDuration(options, startedAt, diagnosticId);
-          markStartupTaskDiagnostic(diagnosticId, 'done', {
-            durationMs: Date.now() - startedAt,
-          });
+          const timing = reportTaskDuration(
+            options,
+            startedAt,
+            diagnosticId,
+            invokeSyncMs,
+            true,
+          );
+          markStartupTaskDiagnostic(diagnosticId, 'done', timing);
         },
         (error: unknown) => {
           const durationMs = Date.now() - startedAt;
+          const awaitWallMs = Math.max(0, durationMs - invokeSyncMs);
           traceStartupTask('error', options, {
             durationMs,
+            invokeSyncMs,
+            awaitWallMs,
+            isAsync: true,
             error: error instanceof Error ? error.message : String(error),
           });
           markStartupTaskDiagnostic(diagnosticId, 'error', {
             durationMs,
+            invokeSyncMs,
+            awaitWallMs,
+            isAsync: true,
             error: error instanceof Error ? error.message : String(error),
           });
           console.error(
@@ -180,10 +274,14 @@ function executeStartupTask<T>(
         },
       );
     } else {
-      reportTaskDuration(options, startedAt, diagnosticId);
-      markStartupTaskDiagnostic(diagnosticId, 'done', {
-        durationMs: Date.now() - startedAt,
-      });
+      const timing = reportTaskDuration(
+        options,
+        startedAt,
+        diagnosticId,
+        invokeSyncMs,
+        false,
+      );
+      markStartupTaskDiagnostic(diagnosticId, 'done', timing);
     }
 
     return result;
@@ -191,10 +289,16 @@ function executeStartupTask<T>(
     const durationMs = Date.now() - startedAt;
     traceStartupTask('error', options, {
       durationMs,
+      invokeSyncMs: durationMs,
+      awaitWallMs: 0,
+      isAsync: false,
       error: error instanceof Error ? error.message : String(error),
     });
     markStartupTaskDiagnostic(diagnosticId, 'error', {
       durationMs,
+      invokeSyncMs: durationMs,
+      awaitWallMs: 0,
+      isAsync: false,
       error: error instanceof Error ? error.message : String(error),
     });
     console.error(`[StartupScheduler] ${options.label || 'anonymous'}`, error);

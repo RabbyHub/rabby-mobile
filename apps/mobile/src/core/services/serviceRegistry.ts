@@ -29,6 +29,7 @@ import {
   callDeferredService,
   ensureDeferredService,
   getRegisteredDeferredService,
+  isDeferredServiceLoaded,
   isDeferredServiceRegistered,
   registerDeferredService,
   registerDeferredServiceLoader,
@@ -109,10 +110,34 @@ export function isCoreServiceRegistered<Name extends CoreServiceName>(
   return isDeferredServiceRegistered(name);
 }
 
+export function isCoreServiceLoaded<Name extends CoreServiceName>(name: Name) {
+  return isDeferredServiceLoaded(name);
+}
+
 export function getRegisteredService<Name extends CoreServiceName>(
   name: Name,
 ): CoreServiceRegistry[Name] | undefined {
   return getRegisteredDeferredService<CoreServiceRegistry[Name]>(name);
+}
+
+/**
+ * Only serviceApi internals should use this for a synchronous facade. The
+ * caller must establish an async activation boundary with ensureCoreService or
+ * runWithCoreServices before reaching this point.
+ */
+export function requireCoreService<Name extends CoreServiceName>(
+  name: Name,
+): CoreServiceRegistry[Name] {
+  const service = getRegisteredService(name);
+  if (!service) {
+    throw new Error(`Core service "${name}" is not registered`);
+  }
+
+  if (!isCoreServiceLoaded(name)) {
+    throw new Error(`Core service "${name}" is not fully loaded`);
+  }
+
+  return service;
 }
 
 export function waitForCoreService<Name extends CoreServiceName>(

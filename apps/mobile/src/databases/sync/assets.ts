@@ -28,6 +28,7 @@ import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
 import {
   getTransactionHistoryCustomTxItemMap,
   getTransactionHistorySwapFailTransactions,
+  getTransactionHistoryTransactions,
 } from '@/core/serviceApi/transactionHistory';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
@@ -609,10 +610,12 @@ export async function syncRemoteHistory(
     const projectDict = project_dict;
 
     const pinedQueue = getPinnedTokenSnapshot();
-    const [customTxItemsMap, swapFailHistoryList] = await Promise.all([
-      getTransactionHistoryCustomTxItemMap(),
-      getTransactionHistorySwapFailTransactions(address),
-    ]);
+    const [customTxItemsMap, swapFailHistoryList, transactions] =
+      await Promise.all([
+        getTransactionHistoryCustomTxItemMap(),
+        getTransactionHistorySwapFailTransactions(address),
+        getTransactionHistoryTransactions(),
+      ]);
     const entityBuildStartedAt = Date.now();
     const historyItems = history_list
       .filter(i => Boolean(i.tx))
@@ -627,6 +630,7 @@ export async function syncRemoteHistory(
           projectDict,
           pinedQueue,
           customTxItemsMap[customKey] || undefined,
+          transactions,
         );
         updateSwapFailHistoryItem(item, swapFailHistoryList);
         return item;

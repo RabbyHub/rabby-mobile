@@ -648,7 +648,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         }
         const txId = last(results);
         if (txId && txsForMiniApproval[0]?.chainId) {
-          void transactionHistoryServiceApi.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
             txId,

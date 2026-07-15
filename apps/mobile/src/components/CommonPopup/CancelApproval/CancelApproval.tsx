@@ -3,8 +3,9 @@ import { CancelItem } from './CancelItem';
 import { useTranslation } from 'react-i18next';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import {
+  blockCurrentNotificationDappSync,
   getNotificationApprovalCountSnapshot,
-  notificationServiceApi,
+  rejectAllNotificationApprovalsSync,
 } from '@/core/serviceApi/notification';
 import { StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
@@ -43,13 +44,13 @@ export const CancelApproval = () => {
   }, [displayBlockedRequestApproval, displayCancelAllApproval]);
 
   const handleCancelAll = () => {
-    void notificationServiceApi.rejectAllApprovals();
+    rejectAllNotificationApprovalsSync();
     handleCancel();
   };
 
   const handleBlockedRequestApproval = () => {
     closePopup();
-    void notificationServiceApi.blockedDapp();
+    blockCurrentNotificationDappSync();
     onCancel();
   };
 

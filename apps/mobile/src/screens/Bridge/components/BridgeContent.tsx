@@ -1091,7 +1091,7 @@ export const BridgeContent = ({
         const txHash = last(res) || '';
 
         if (txHash) {
-          void transactionHistoryServiceApi.addBridgeTxHistory({
+          await transactionHistoryServiceApi.addBridgeTxHistory({
             address: currentAccount?.address!,
             fromChainId: findChainByServerID(fromToken?.chain || '')?.id || 0,
             toChainId: findChainByServerID(toToken?.chain || '')?.id || 0,

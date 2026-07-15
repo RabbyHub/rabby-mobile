@@ -1,5 +1,5 @@
 import { getChainList } from '@/constant/chains';
-import { setTabs } from '@/hooks/browser/useBrowser';
+import { hydrateBrowserTabs } from '@/hooks/browser/useBrowser';
 import { getBookmarkList } from '@/hooks/browser/useBrowserBookmark';
 import { getBrowserHistoryList } from '@/hooks/browser/useBrowserHistory';
 import { getAllRPC } from '@/hooks/useCustomRPC';
@@ -14,26 +14,41 @@ import { setChainList } from '@/hooks/useChainList';
 let browserDappWarmupScheduled = false;
 
 async function warmBrowserDappStores() {
-  const [browserTabs, dapps] = await Promise.all([
-    browserServiceApi.getBrowserTabs(),
-    dappServiceApi.getDapps(),
-    getAllRPC(),
-  ]);
-
-  await Promise.all([getBookmarkList(), getBrowserHistoryList()]);
-  setTabs(
-    browserTabs.tabs.map(tab => {
-      if (tab.isDapp) {
-        return tab;
-      }
-      const isDapp = !!dapps[safeGetOrigin(tab.url || tab.initialUrl)]?.isDapp;
+  const browserDappHydration = hydrateBrowserTabs(
+    async () => {
+      const [browserTabs, dapps] = await Promise.all([
+        browserServiceApi.getBrowserTabs(),
+        dappServiceApi.getDapps(),
+        getAllRPC(),
+      ]);
 
       return {
-        ...tab,
-        isDapp,
+        ...browserTabs,
+        tabs: browserTabs.tabs.map(tab => {
+          if (tab.isDapp) {
+            return tab;
+          }
+          const isDapp =
+            !!dapps[safeGetOrigin(tab.url || tab.initialUrl)]?.isDapp;
+
+          return {
+            ...tab,
+            isDapp,
+          };
+        }),
       };
+    },
+    (current, loaded) => ({
+      ...current,
+      tabs: loaded.tabs,
     }),
   );
+
+  await Promise.all([
+    browserDappHydration,
+    getBookmarkList(),
+    getBrowserHistoryList(),
+  ]);
 }
 
 function scheduleBrowserDappWarmup() {

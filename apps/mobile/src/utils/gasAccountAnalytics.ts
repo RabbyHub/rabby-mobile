@@ -8,7 +8,12 @@ const fireGasAccountStatusEvent = (hasBalance: boolean) => {
     category: 'Gas Account',
     action: `GasAccount_On_${hasBalance ? 'True' : 'False'}`,
   });
-  void gasAccountServiceApi.markGa4ActiveTracked();
+  void gasAccountServiceApi.markGa4ActiveTracked().catch(error => {
+    console.error(
+      '[gasAccountAnalytics] persist active tracking failed',
+      error,
+    );
+  });
 };
 
 const getGasAccountHasBalance = async (sig: string, accountId: string) => {

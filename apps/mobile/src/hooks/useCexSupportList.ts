@@ -6,9 +6,9 @@ import { getCexId } from '@/utils/addressCexId';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
-  runStartupTask,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 
 export const globalSupportCexList: ProjectItem[] = [];

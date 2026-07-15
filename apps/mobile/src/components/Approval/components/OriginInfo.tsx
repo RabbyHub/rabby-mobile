@@ -6,7 +6,7 @@ import React, { useEffect, useMemo } from 'react';
 import SecurityLevelTagNoText from './SecurityEngine/SecurityLevelTagNoText';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
-import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
 import { Image, View } from 'react-native';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { useTheme2024 } from '@/hooks/theme';
@@ -104,11 +104,21 @@ export const OriginInfo: React.FC<Props> = ({
     let cancelled = false;
 
     if (origin) {
-      dappServiceApi.getDapp(origin).then(result => {
-        if (!cancelled && result) {
-          setConnectedSite(result);
-        }
-      });
+      const snapshot = getDappSnapshot(origin);
+      if (snapshot) {
+        setConnectedSite(snapshot);
+      } else {
+        void dappServiceApi
+          .getDapp(origin)
+          .then(result => {
+            if (!cancelled && result) {
+              setConnectedSite(result);
+            }
+          })
+          .catch(error => {
+            console.error('[OriginInfo] load dapp failed', error);
+          });
+      }
     }
 
     return () => {

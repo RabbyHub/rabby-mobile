@@ -37,9 +37,9 @@ import {
 } from '@/core/serviceApi/notification';
 import { broadcastSessionEventSync } from '@/core/serviceApi/session';
 import { swapServiceApi } from '@/core/serviceApi/swap';
-import { addBroadcastTransactionSync } from '@/core/serviceApi/transactionBroadcastWatcher';
+import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
-import { addWatchedTransactionSync } from '@/core/serviceApi/transactionWatcher';
+import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
 // import {
 //   transactionWatchService,
 //   transactionHistoryService,
@@ -1112,7 +1112,7 @@ class ProviderController extends BaseController {
         return;
       }
 
-      const onTransactionCreated = (info: {
+      const onTransactionCreated = async (info: {
         hash?: string;
         reqId?: string;
         pushType?: TxPushType;
@@ -1131,8 +1131,12 @@ class ProviderController extends BaseController {
 
         const { r, s, v, ...other } = approvalRes;
         if (hash) {
-          void swapServiceApi.postSwap(chain, hash, other);
-          void bridgeServiceApi.postBridge(chain, hash, other);
+          void swapServiceApi.postSwap(chain, hash, other).catch(error => {
+            console.error('[swapService] postSwap failed', error);
+          });
+          void bridgeServiceApi.postBridge(chain, hash, other).catch(error => {
+            console.error('[bridgeService] postBridge failed', error);
+          });
         }
 
         statsData.submit = true;
@@ -1156,43 +1160,58 @@ class ProviderController extends BaseController {
         updateExpiredTime(txParams.from, PENDGING_TIME);
 
         // TODO: transactionHistory
-        void transactionHistoryServiceApi.addTx({
-          address: txParams.from,
-          nonce: +approvalRes.nonce,
-          chainId: approvalRes.chainId,
+        try {
+          await transactionHistoryServiceApi.addTx({
+            address: txParams.from,
+            nonce: +approvalRes.nonce,
+            chainId: approvalRes.chainId,
 
-          rawTx: _rawTx,
-          createdAt: Date.now(),
-          hash,
-          reqId,
-          pushType,
-          explain: cacheExplain,
-          action: action,
-          site: isInternalDappSnapshot(origin)
-            ? createDappBySession(INTERNAL_REQUEST_SESSION)
-            : getDappSnapshot(origin),
-          isPending: true,
-          $ctx: options?.data?.$ctx,
-          keyringType: currentAccount.type,
-        });
-        void transactionHistoryServiceApi.removeSigningTx(signingTxId!);
+            rawTx: _rawTx,
+            createdAt: Date.now(),
+            hash,
+            reqId,
+            pushType,
+            explain: cacheExplain,
+            action: action,
+            site: isInternalDappSnapshot(origin)
+              ? createDappBySession(INTERNAL_REQUEST_SESSION)
+              : getDappSnapshot(origin),
+            isPending: true,
+            $ctx: options?.data?.$ctx,
+            keyringType: currentAccount.type,
+          });
+          await transactionHistoryServiceApi.removeSigningTx(signingTxId!);
+        } catch (error) {
+          console.error(
+            '[transactionHistory] persist submitted tx failed',
+            error,
+          );
+        }
         if (hash) {
-          addWatchedTransactionSync(
-            `${txParams.from}_${approvalRes.nonce}_${chain}`,
-            {
+          void transactionWatcherServiceApi
+            .addTx(`${txParams.from}_${approvalRes.nonce}_${chain}`, {
               nonce: approvalRes.nonce,
               hash,
               chain,
-            },
-          );
+            })
+            .catch(error => {
+              console.error('[transactionWatcher] addTx failed', error);
+            });
         }
         if (reqId && !hash) {
-          addBroadcastTransactionSync(reqId, {
-            reqId,
-            address: txParams.from,
-            chainId: findChain({ enum: chain })!.id,
-            nonce: approvalRes.nonce,
-          });
+          void transactionBroadcastWatcherServiceApi
+            .addTx(reqId, {
+              reqId,
+              address: txParams.from,
+              chainId: findChain({ enum: chain })!.id,
+              nonce: approvalRes.nonce,
+            })
+            .catch(error => {
+              console.error(
+                '[transactionBroadcastWatcher] addTx failed',
+                error,
+              );
+            });
         }
 
         // if (isCoboSafe) {
@@ -1243,7 +1262,7 @@ class ProviderController extends BaseController {
       };
 
       if (typeof signedTx === 'string') {
-        onTransactionCreated({
+        await onTransactionCreated({
           hash: signedTx,
           pushType: 'default',
         });
@@ -1315,7 +1334,7 @@ class ProviderController extends BaseController {
               'eth_sendRawTransaction',
               [rawTx],
             );
-            onTransactionCreated({ hash, reqId, pushType });
+            await onTransactionCreated({ hash, reqId, pushType });
           } else {
             const chainServerId = findChain({ enum: chain })!.serverId;
             const tempoSubmitTx = isTempoTx
@@ -1463,7 +1482,7 @@ class ProviderController extends BaseController {
             if (!hash) {
               onTransactionSubmitFailed(new Error('Submit tx failed'));
             } else {
-              onTransactionCreated({ hash, reqId, pushType });
+              await onTransactionCreated({ hash, reqId, pushType });
               setStatsDataWithExistingSignMethod(statsData);
             }
           }
@@ -1488,7 +1507,7 @@ class ProviderController extends BaseController {
             method: 'eth_sendRawTransaction',
             params: [rawTx as any],
           });
-          onTransactionCreated({ hash, reqId, pushType });
+          await onTransactionCreated({ hash, reqId, pushType });
           setNotificationStatsDataSync(statsData);
         }
 
@@ -2039,7 +2058,7 @@ class ProviderController extends BaseController {
     },
     { height: 600 },
   ])
-  walletWatchAsset = ({
+  walletWatchAsset = async ({
     approvalRes,
   }: {
     approvalRes: { id: string; chain: string } & CustomTestnetTokenBase;
@@ -2049,7 +2068,7 @@ class ProviderController extends BaseController {
       serverId: chain,
     });
     if (chainInfo?.isTestnet) {
-      void customTestnetServiceApi.addToken({
+      await customTestnetServiceApi.addToken({
         chainId,
         symbol,
         decimals,

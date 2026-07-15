@@ -36,7 +36,7 @@ import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
-import { setUserBehaviorTrackingOptOut } from '@/core/serviceApi/preference';
+import { setUserBehaviorTrackingOptOutSync } from '@/core/serviceApi/preference';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -101,7 +101,7 @@ function useSetupPasswordForm() {
 
       if (getFormikErrorsCount(errors)) return;
 
-      void setUserBehaviorTrackingOptOut(false).catch(console.error);
+      setUserBehaviorTrackingOptOutSync(false);
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />

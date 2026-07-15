@@ -12,6 +12,7 @@ import { openapi } from '@/core/request';
 import {
   getTransactionHistoryListSnapshot,
   getTransactionHistorySucceedListSnapshot,
+  getTransactionHistoryTransactions,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -20,7 +21,6 @@ import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
-  useMount,
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
@@ -49,6 +49,7 @@ import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScre
 import { syncTop10History, syncSingleAddress } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { useHistoryLoading } from '@/hooks/historyTokenDict';
+import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
@@ -117,6 +118,8 @@ function History({
     forScene: isForMultipleAddress ? 'MultiHistory' : 'History',
   });
   const [firstFetchDone, setFirstFetchDone] = useState(false);
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
+  const hasConsumedLocalStatusRef = useRef(false);
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     getTransactionHistorySucceedListSnapshot(),
   );
@@ -285,13 +288,16 @@ function History({
       ? openapi.getAllTxHistory
       : openapi.listTxHisotry;
     try {
-      const res = await getHistory({
-        id: address,
-        start_time: startTime,
-        page_count: PAGE_COUNT,
-        chain_id,
-        token_id,
-      });
+      const [res, transactions] = await Promise.all([
+        getHistory({
+          id: address,
+          start_time: startTime,
+          page_count: PAGE_COUNT,
+          chain_id,
+          token_id,
+        }),
+        getTransactionHistoryTransactions(),
+      ]);
 
       const { project_dict, history_list: list } = res;
       const token_dict = (res as TxHistoryResult).token_dict;
@@ -322,7 +328,7 @@ function History({
             ...e,
             token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
           })),
-          historyType: getHistoryItemType(item),
+          historyType: getHistoryItemType(item, transactions),
         }))
         .sort((v1, v2) => v2.time_at - v1.time_at);
       return {
@@ -386,10 +392,17 @@ function History({
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              void transactionHistoryServiceApi.updateTx({
-                ...item.maxGasTx,
-                isSynced: true,
-              });
+              void transactionHistoryServiceApi
+                .updateTx({
+                  ...item.maxGasTx,
+                  isSynced: true,
+                })
+                .catch(error => {
+                  console.error(
+                    '[MultiAddressHistory] mark tx synced failed',
+                    error,
+                  );
+                });
             }
 
             return (
@@ -401,9 +414,17 @@ function History({
     ];
   });
 
-  const { data: groups, runAsync: runFetchLocalTx } = useRequest(async () => {
-    return batchFetchLocalTx();
-  });
+  const { data: groups, runAsync: runFetchLocalTx } = useRequest(
+    async () => {
+      if (!transactionHistoryReady) {
+        return [];
+      }
+      return batchFetchLocalTx();
+    },
+    {
+      refreshDeps: [transactionHistoryReady],
+    },
+  );
 
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
@@ -425,7 +446,6 @@ function History({
     if (dbData.length === 0 && !isSceneUsingAllAccounts && firstFetchDone) {
       syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dbData.length,
     isSceneUsingAllAccounts,
@@ -517,13 +537,21 @@ function History({
   //   return orderBy(data?.list || [], ['time_at', 'cate_id'], ['desc', 'asc']);
   // }, [data]);
 
-  useMount(() => {
+  useEffect(() => {
+    if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {
+      return;
+    }
+    hasConsumedLocalStatusRef.current = true;
     const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    void transactionHistoryServiceApi.clearSuccessAndFailList(
-      isForMultipleAddress ? undefined : currentAddress,
-    );
-  });
+    void transactionHistoryServiceApi
+      .clearSuccessAndFailList(
+        isForMultipleAddress ? undefined : currentAddress,
+      )
+      .catch(error => {
+        console.error('[MultiAddressHistory] clear local status failed', error);
+      });
+  }, [currentAddress, isForMultipleAddress, transactionHistoryReady]);
 
   const displayList = useMemo(() => {
     const dataList = isNeedFetchFromApi ? fetchApiData : { list: dbData };

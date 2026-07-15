@@ -37,7 +37,7 @@ import {
 } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { getDappAccount, useDapps } from '@/hooks/useDapps';
+import { useDappAccountResolver, useDapps } from '@/hooks/useDapps';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { sleep } from '@/utils/async';
 import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
@@ -266,7 +266,11 @@ export const BrowserTab = ({
     documentEndBuiltinScriptIds,
   } = useJavaScriptBeforeContentLoaded();
 
-  const { onLoadStart, onMessage: onWebViewMessage } = useSetupWebview({
+  const {
+    isBridgeReady,
+    onLoadStart,
+    onMessage: onWebViewMessage,
+  } = useSetupWebview({
     dappOrigin: origin,
     webviewRef,
     webviewIdRef,
@@ -582,9 +586,10 @@ export const BrowserTab = ({
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const resolveDappAccount = useDappAccountResolver();
   const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
-  }, [accounts, dappInfo, browserState.isShowBrowser]);
+    return resolveDappAccount({ dappInfo, accounts });
+  }, [accounts, dappInfo, browserState.isShowBrowser, resolveDappAccount]);
 
   return (
     <Freeze freeze={!isActive}>
@@ -609,7 +614,8 @@ export const BrowserTab = ({
               ]}>
               {!url ||
               !/^https?:\/\//.test(url) ||
-              !entryScriptWeb3Loaded ? null : (
+              !entryScriptWeb3Loaded ||
+              !isBridgeReady ? null : (
                 <>
                   {isLoading ? (
                     <BrowserProgressBar
@@ -920,14 +926,21 @@ export const BrowserTab = ({
             }
             onClose={() => {
               setIsShowInvite(false);
-              void perpsServiceApi.setInviteConfig(account?.address || '', {
-                lastConnectedAt: Date.now(),
-              });
+              void perpsServiceApi
+                .setInviteConfig(account?.address || '', {
+                  lastConnectedAt: Date.now(),
+                })
+                .catch(error => {
+                  console.error(
+                    '[PerpsInvite] persist close state failed',
+                    error,
+                  );
+                });
             }}
             onInvite={async () => {
               try {
                 await handleInvite();
-                void perpsServiceApi.setInviteConfig(account?.address || '', {
+                await perpsServiceApi.setInviteConfig(account?.address || '', {
                   lastConnectedAt: Date.now(),
                 });
                 setIsShowInvite(false);

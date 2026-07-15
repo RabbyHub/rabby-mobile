@@ -19,6 +19,7 @@ import type {
   SendTxHistoryItem,
   TransactionGroup,
 } from '@/core/services/transactionHistory';
+import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 const swapTxHistoryVisibleAtom = atom(false);
 
 export const useSwapTxHistoryVisible = () => {
@@ -198,6 +199,7 @@ export const useClearSwapHistoryRedDot = () => {
 };
 
 export const usePollSwapPendingNumber = (timer = 10000) => {
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [, setCount] = useAtom(swapPendingCountAtom);
   const [, setTxData] = useAtom(swapPendingTxDataAtom);
   const [localPendingTxData, setLocalPendingTxData] = useState<
@@ -253,11 +255,11 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
   const { loading, error, data: value, runAsync } = res;
 
   const runFetchLocalPendingTx = useCallback(() => {
-    if (currentAccount?.address) {
+    if (transactionHistoryReady && currentAccount?.address) {
       const resTx = fetchLocalSwapPendingTx(currentAccount.address);
       setLocalPendingTxData(resTx);
     }
-  }, [currentAccount?.address, setLocalPendingTxData]);
+  }, [currentAccount?.address, setLocalPendingTxData, transactionHistoryReady]);
 
   useEffect(() => {
     runFetchLocalPendingTx();

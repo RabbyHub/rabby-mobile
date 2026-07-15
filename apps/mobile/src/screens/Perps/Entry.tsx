@@ -51,7 +51,7 @@ const ensureDappAccount = async (
     });
     return;
   }
-  apisDapp.setCurrentAccountForDapp(origin, account);
+  await apisDapp.setCurrentAccountForDapp(origin, account);
 };
 
 type PerpsRouteProps = CompositeScreenProps<

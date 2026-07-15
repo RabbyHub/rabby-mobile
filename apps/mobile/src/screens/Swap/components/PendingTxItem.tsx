@@ -75,7 +75,14 @@ export const PendingTxItem = ({
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
-        void swapServiceApi.setOpenSwapHistoryTs(currentAccount?.address ?? '');
+        void swapServiceApi
+          .setOpenSwapHistoryTs(currentAccount?.address ?? '')
+          .catch(error => {
+            console.error(
+              '[PendingTxItem] persist history open time failed',
+              error,
+            );
+          });
     }
 
     const { pendings, completeds } = getTransactionHistoryListSnapshot(

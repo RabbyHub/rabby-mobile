@@ -193,6 +193,9 @@ type TestKitsNavigatorParamsList = {
   };
   [RootNames.DevSwitches]?: {};
   [RootNames.DevPerf]?: {};
+  [RootNames.DebugLogViewer]?: {};
+  [RootNames.StartupPerformanceLogViewer]?: {};
+  [RootNames.InMemoryLogViewer]?: {};
 };
 
 export type AddressNavigatorParamList = {

@@ -1,4 +1,4 @@
-import { runStartupTask } from './core/utils/store';
+import { runStartupTask } from './core/utils/startupScheduler';
 import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
 import { traceAndroidInstant } from './core/utils/androidTrace';
 
@@ -44,7 +44,7 @@ export function registerSetupAppBeforeRenderDeferredTasks(reason = 'unknown') {
     const { storeApiGasAccount } = await import(
       './screens/GasAccount/hooks/atom'
     );
-    storeApiGasAccount.fetchGasAccountInfo();
+    await storeApiGasAccount.fetchGasAccountInfo();
   }, STARTUP_TASKS.setupGasAccountInfoFetch);
 
   runStartupTask(async () => {

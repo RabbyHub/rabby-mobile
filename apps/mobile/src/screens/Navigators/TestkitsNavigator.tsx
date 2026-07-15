@@ -5,6 +5,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DebugLogViewer,
+  StartupPerformanceLogViewer,
   DevCapabilityFile,
   InMemoryLogViewer,
   DevDataContactService,
@@ -183,6 +184,14 @@ export function TestkitsNavigator() {
         options={{
           headerShown: true,
           title: 'App Log Verification',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.StartupPerformanceLogViewer}
+        component={StartupPerformanceLogViewer}
+        options={{
+          headerShown: true,
+          title: 'Startup Performance Logs',
         }}
       />
       <Stack.Screen
