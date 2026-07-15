@@ -266,17 +266,18 @@ export const BrowserTab = ({
     documentEndBuiltinScriptIds,
   } = useJavaScriptBeforeContentLoaded();
 
-  const { onLoadStart, onMessage: onWebViewMessage } = useSetupWebview({
-    dappOrigin: origin,
-    webviewRef,
-    webviewIdRef,
-    siteInfoRefs: {
-      urlRef,
-      titleRef,
-      iconRef,
-    },
-    // onSelfClose,
-  });
+  const { isBridgeReady, onLoadStart, onMessage: onWebViewMessage } =
+    useSetupWebview({
+      dappOrigin: origin,
+      webviewRef,
+      webviewIdRef,
+      siteInfoRefs: {
+        urlRef,
+        titleRef,
+        iconRef,
+      },
+      // onSelfClose,
+    });
 
   const handleGoTo = useMemoizedFn(async (urlToGo: string) => {
     if (!urlToGo || !/^https?:\/\//.test(urlToGo)) {
@@ -609,7 +610,7 @@ export const BrowserTab = ({
               ]}>
               {!url ||
               !/^https?:\/\//.test(url) ||
-              !entryScriptWeb3Loaded ? null : (
+              !entryScriptWeb3Loaded || !isBridgeReady ? null : (
                 <>
                   {isLoading ? (
                     <BrowserProgressBar

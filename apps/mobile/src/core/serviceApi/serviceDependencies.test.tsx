@@ -5,6 +5,7 @@ import {
 } from '@/core/services/serviceRegistry';
 import type { CoreServiceRegistry } from '@/core/services/serviceRegistry';
 import {
+  resolveCoreServices,
   runWithCoreServices,
   serviceDependency,
   type CoreServiceInjectedProps,
@@ -65,6 +66,46 @@ describe('core service dependencies', () => {
 
     unregisterService?.();
     unregisterLoader();
+  });
+
+  it('does not resolve injected services until their loader has completed', async () => {
+    const service = {} as CoreServiceRegistry['dappService'];
+    let signalLoaderStarted: (() => void) | undefined;
+    let releaseLoader: (() => void) | undefined;
+    let unregisterService: (() => void) | undefined;
+    const loaderStarted = new Promise<void>(resolve => {
+      signalLoaderStarted = resolve;
+    });
+    const unregisterLoader = registerCoreServiceLoader(
+      'dappService',
+      async () => {
+        signalLoaderStarted?.();
+        await new Promise<void>(resolve => {
+          releaseLoader = resolve;
+        });
+        unregisterService = registerService('dappService', service);
+      },
+    );
+    const readiness = resolveCoreServices(
+      [serviceDependency('dappService')] as const,
+    );
+    let resolved = false;
+    void readiness.then(() => {
+      resolved = true;
+    });
+
+    try {
+      await loaderStarted;
+      expect(resolved).toBe(false);
+
+      releaseLoader?.();
+      const services = await readiness;
+
+      expect(services.dappService).toBe(service);
+    } finally {
+      unregisterService?.();
+      unregisterLoader();
+    }
   });
 
   it('enforces keyring runtime readiness only when a dependency requests it', async () => {

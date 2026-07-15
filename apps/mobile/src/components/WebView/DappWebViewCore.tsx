@@ -164,18 +164,21 @@ export default function DappWebViewCore({
     documentEndBuiltinScriptIds,
   } = useJavaScriptBeforeContentLoaded();
 
-  const { onLoadStart: onBridgeLoadStart, onMessage: onBridgeMessage } =
-    useSetupWebview({
-      dappOrigin,
-      webviewRef,
-      webviewIdRef,
-      siteInfoRefs: {
-        urlRef,
-        titleRef,
-        iconRef,
-      },
-      isFromMobileInnerDapp: true,
-    });
+  const {
+    isBridgeReady,
+    onLoadStart: onBridgeLoadStart,
+    onMessage: onBridgeMessage,
+  } = useSetupWebview({
+    dappOrigin,
+    webviewRef,
+    webviewIdRef,
+    siteInfoRefs: {
+      urlRef,
+      titleRef,
+      iconRef,
+    },
+    isFromMobileInnerDapp: true,
+  });
 
   const resolvedUrl = useMemo(() => {
     if (embedHtml) return undefined;
@@ -482,7 +485,7 @@ export default function DappWebViewCore({
     return null;
   }
 
-  if (!entryScriptWeb3Loaded) {
+  if (!entryScriptWeb3Loaded || !isBridgeReady) {
     return <View style={[styles.placeholder, style]} />;
   }
 
