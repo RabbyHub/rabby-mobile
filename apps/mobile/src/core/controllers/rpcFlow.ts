@@ -39,6 +39,7 @@ import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { getAccountList } from '../apis/account';
 import { getDappAccount } from '@/core/utils/dappAccount';
+import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
 import type { Account } from '@/types/account';
@@ -149,10 +150,14 @@ const flowContext = flow
             shouldAutoConnect(origin, ctx.request.data.method)
           ) {
             const site = getDappSnapshot(origin);
-            const { accounts } = await getAccountList();
+            const [{ accounts }, transactions] = await Promise.all([
+              getAccountList(),
+              getTransactionHistoryTransactions(),
+            ]);
             defaultAccount = getDappAccount({
               dappInfo: site,
               accounts,
+              transactions,
             })!;
             defaultChain =
               site?.chainId && findChain({ enum: site.chainId })

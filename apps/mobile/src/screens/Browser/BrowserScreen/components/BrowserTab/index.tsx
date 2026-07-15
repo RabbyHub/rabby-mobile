@@ -37,7 +37,7 @@ import {
 } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { getDappAccount, useDapps } from '@/hooks/useDapps';
+import { useDappAccountResolver, useDapps } from '@/hooks/useDapps';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { sleep } from '@/utils/async';
 import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
@@ -586,9 +586,10 @@ export const BrowserTab = ({
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const resolveDappAccount = useDappAccountResolver();
   const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
-  }, [accounts, dappInfo, browserState.isShowBrowser]);
+    return resolveDappAccount({ dappInfo, accounts });
+  }, [accounts, dappInfo, browserState.isShowBrowser, resolveDappAccount]);
 
   return (
     <Freeze freeze={!isActive}>

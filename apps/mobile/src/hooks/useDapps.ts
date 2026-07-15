@@ -18,8 +18,19 @@ import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { getDappAccount } from '@/core/utils/dappAccount';
+import {
+  serviceDependency,
+  useCoreServiceDependencies,
+} from '@/core/serviceApi/serviceDependencies';
 
-export { getDappAccount } from '@/core/utils/dappAccount';
+const DAPP_ACCOUNT_DEPENDENCIES = [
+  serviceDependency('transactionHistoryService'),
+] as const;
+
+type DappAccountResolverParams = Omit<
+  Parameters<typeof getDappAccount>[0],
+  'transactions'
+>;
 
 const dappServiceStore = zCreate<DappStore>(() => ({ dapps: {} }));
 
@@ -188,14 +199,35 @@ export function useDappCurrentAccount() {
   return { setDappCurrentAccount };
 }
 
+export function useDappAccountResolver() {
+  const dependencyState = useCoreServiceDependencies(DAPP_ACCOUNT_DEPENDENCIES);
+
+  return useCallback(
+    ({ dappInfo, accounts }: DappAccountResolverParams) => {
+      if (dependencyState.status !== 'ready') {
+        return undefined;
+      }
+
+      return getDappAccount({
+        dappInfo,
+        accounts,
+        transactions:
+          dependencyState.services.transactionHistoryService.store.transactions,
+      });
+    },
+    [dependencyState],
+  );
+}
+
 export function useGetDappAccount(dappInfo?: DappInfo) {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const resolveAccount = useDappAccountResolver();
 
   const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
-  }, [accounts, dappInfo]);
+    return resolveAccount({ dappInfo, accounts });
+  }, [accounts, dappInfo, resolveAccount]);
 
   return account;
 }

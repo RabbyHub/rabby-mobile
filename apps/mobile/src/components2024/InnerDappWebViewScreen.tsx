@@ -7,7 +7,7 @@ import { DappFrameAccountHeader } from '@/components2024/DappFrameAccountHeader'
 import DappWebViewCore from '@/components/WebView/DappWebViewCore';
 import { apisDapp } from '@/core/apis';
 import { useAccounts } from '@/hooks/account';
-import { useDappsValue, getDappAccount } from '@/hooks/useDapps';
+import { useDappAccountResolver, useDappsValue } from '@/hooks/useDapps';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -36,6 +36,7 @@ export const InnerDappWebViewScreen = ({
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const resolveDappAccount = useDappAccountResolver();
 
   const activeItem = useMemo(() => {
     if (!list.length) {
@@ -56,8 +57,8 @@ export const InnerDappWebViewScreen = ({
   }, [dapps, dappOrigin]);
 
   const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
-  }, [accounts, dappInfo]);
+    return resolveDappAccount({ dappInfo, accounts });
+  }, [accounts, dappInfo, resolveDappAccount]);
 
   const handleSelectAccount = (nextAccount: Account) => {
     if (!dappOrigin) {
