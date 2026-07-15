@@ -107,16 +107,7 @@ export function isRabbyWalletConnectDeeplink(appLink: string) {
     const url = new URL(appLink);
     const isWalletConnectTarget =
       url.hostname === 'walletconnect' || url.hostname === 'wc';
-    return (
-      url.protocol === 'rabby:' &&
-      isWalletConnectTarget &&
-      !url.username &&
-      !url.password &&
-      !url.port &&
-      !url.pathname &&
-      !url.hash &&
-      !!parseWalletConnectUriFromLink(appLink)
-    );
+    return url.protocol === 'rabby:' && isWalletConnectTarget;
   } catch {
     return false;
   }
