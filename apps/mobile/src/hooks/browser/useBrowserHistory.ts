@@ -38,7 +38,9 @@ const browserHistoryStore = zCreate<BrowserHistoryState>(() => ({
   entities: {},
 }));
 
-function setBrowserHistoryStore(
+let browserHistoryReadRevision = 0;
+
+function applyBrowserHistoryStore(
   valOrFunc: UpdaterOrPartials<BrowserHistoryState>,
 ) {
   browserHistoryStore.setState(prev => {
@@ -50,15 +52,19 @@ function setBrowserHistoryStore(
 }
 
 export const getBrowserHistoryList = async () => {
+  const readRevision = ++browserHistoryReadRevision;
   const { entities, ids } = await getBrowserHistory();
-  setBrowserHistoryStore({
-    ids,
-    entities,
-  });
+  if (readRevision === browserHistoryReadRevision) {
+    applyBrowserHistoryStore({
+      ids,
+      entities,
+    });
+  }
 };
 
 export function resetBrowserHistoryStore() {
-  setBrowserHistoryStore({
+  ++browserHistoryReadRevision;
+  applyBrowserHistoryStore({
     ids: [],
     entities: {},
   });

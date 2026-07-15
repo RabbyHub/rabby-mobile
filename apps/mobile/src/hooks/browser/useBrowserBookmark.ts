@@ -24,7 +24,9 @@ const zBrowserBookmarkStore = zCreate<zBrowserBookmarkState>(() => ({
   entities: {},
 }));
 
-function setBrowserBookmarkStore(
+let browserBookmarkReadRevision = 0;
+
+function applyBrowserBookmarkStore(
   valOrFunc: UpdaterOrPartials<zBrowserBookmarkState>,
 ) {
   zBrowserBookmarkStore.setState(prev => {
@@ -36,11 +38,14 @@ function setBrowserBookmarkStore(
 }
 
 export const getBookmarkList = async () => {
+  const readRevision = ++browserBookmarkReadRevision;
   const { entities, ids } = await getBrowserBookmarks();
-  setBrowserBookmarkStore({
-    ids,
-    entities,
-  });
+  if (readRevision === browserBookmarkReadRevision) {
+    applyBrowserBookmarkStore({
+      ids,
+      entities,
+    });
+  }
 };
 
 export function useBrowserBookmark() {

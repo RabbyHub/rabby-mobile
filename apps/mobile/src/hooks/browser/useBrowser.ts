@@ -8,7 +8,6 @@ import type { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import {
   browserServiceApi,
-  getBrowserTabsSnapshot,
   removeBrowserScreenshot,
 } from '@/core/serviceApi/browser';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
@@ -41,7 +40,9 @@ const tabsStore = zCreate<TabsState>(() => ({
   activeTabId: '',
 }));
 
-function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
+let tabsStoreRevision = 0;
+
+function applyTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
   tabsStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
       strict: false,
@@ -50,22 +51,31 @@ function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
   });
 }
 
+function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
+  ++tabsStoreRevision;
+  applyTabsStore(valOrFunc);
+}
+
 export function resetTabsStore() {
-  tabsStore.setState({
+  setTabsStore({
     tabs: [],
     activeTabId: '',
   });
 }
 
-export function setTabs(val: UpdaterOrPartials<TabsState['tabs']>) {
-  tabsStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.tabs, val, { strict: false });
-
-    return {
-      ...prev,
-      tabs: newVal,
-    };
-  });
+export async function hydrateBrowserTabs(
+  loadTabs: () => Promise<TabsState> = () => browserServiceApi.getBrowserTabs(),
+  mergeTabs: (current: TabsState, loaded: TabsState) => TabsState = (
+    _current,
+    loaded,
+  ) => loaded,
+) {
+  const hydrationRevision = tabsStoreRevision;
+  const tabs = await loadTabs();
+  if (hydrationRevision === tabsStoreRevision) {
+    applyTabsStore(current => mergeTabs(current, tabs));
+  }
+  return tabs;
 }
 
 const browserExtraStore = zCreate<{
@@ -208,11 +218,7 @@ export const browserApis = {
   },
 
   getBrowserTabs: () => {
-    setTabsStore(getBrowserTabsSnapshot());
-    void browserServiceApi
-      .getBrowserTabs()
-      .then(setTabsStore)
-      .catch(console.error);
+    void hydrateBrowserTabs().catch(console.error);
   },
 
   updateBrowserTabs: (payload: Partial<TabsState>) => {
