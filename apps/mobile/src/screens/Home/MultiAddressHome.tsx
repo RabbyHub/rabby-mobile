@@ -10,8 +10,8 @@ import { AppState, View } from 'react-native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
 import {
-  getBrowserBookmarkCountSnapshot,
-  getBrowserTabCountSnapshot,
+  browserServiceApi,
+  getBrowserBookmarks,
 } from '@/core/serviceApi/browser';
 import {
   getPinnedTokenSnapshot,
@@ -345,27 +345,36 @@ function HomePostStartupEffects({
 
     const lastReportTime = getPreferenceSnapshot('lastReportTime') || 0;
     if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
-      void setPreference({
-        lastReportTime: Date.now(),
-      }).catch(console.error);
+      void Promise.all([
+        browserServiceApi.getBrowserTabs(),
+        getBrowserBookmarks(),
+      ])
+        .then(([browserTabs, browserBookmarks]) => {
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_LikeStatus',
+            label: `LikeDapp:${browserBookmarks.ids.length}`,
+          });
 
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_LikeStatus',
-        label: `LikeDapp:${getBrowserBookmarkCountSnapshot()}`,
-      });
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_TabStatus',
+            label: `TabNumber:${browserTabs.tabs.length}`,
+          });
 
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_TabStatus',
-        label: `TabNumber:${getBrowserTabCountSnapshot()}`,
-      });
+          matomoRequestEvent({
+            category: 'Watchlist Usage',
+            action: 'Watchlist_LikeStatus',
+            label: `LikeToken:${getPinnedTokenSnapshot().length}`,
+          });
 
-      matomoRequestEvent({
-        category: 'Watchlist Usage',
-        action: 'Watchlist_LikeStatus',
-        label: `LikeToken:${getPinnedTokenSnapshot().length}`,
-      });
+          return setPreference({
+            lastReportTime: Date.now(),
+          });
+        })
+        .catch(error => {
+          console.error('[Home] report daily local state failed', error);
+        });
     }
   }, [homePostStartupReady]);
 
