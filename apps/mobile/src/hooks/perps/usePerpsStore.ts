@@ -448,9 +448,8 @@ const applyAssetCtxsToList = (
     return {
       ...item,
       ...ctx,
-      pxDecimals: ctx.markPx
-        ? getPxDecimals(String(ctx.markPx))
-        : item.pxDecimals,
+      // Tick precision follows the price magnitude (5-sig-figs rule).
+      pxDecimals: getPxDecimals(item.szDecimals, ctx.markPx ?? item.markPx),
     };
   });
 };
@@ -1028,7 +1027,7 @@ const overlayFastCtxsToMarketData = (
       ...item,
       markPx,
       midPx,
-      pxDecimals: getPxDecimals(String(markPx ?? item.markPx ?? '')),
+      pxDecimals: getPxDecimals(item.szDecimals, markPx ?? item.markPx),
     };
   });
   return changed ? next : list;
