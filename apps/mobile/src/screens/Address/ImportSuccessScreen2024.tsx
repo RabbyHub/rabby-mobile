@@ -6,7 +6,7 @@ import {
 import {
   getFallbackAccountSnapshot,
   setReportActionTs,
-  setCurrentAccount,
+  setCurrentAccountSync,
 } from '@/core/serviceApi/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -259,7 +259,7 @@ export const ImportSuccessScreen2024 = () => {
           targetAccount.brandName !== currentAccount.brandName ||
           !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
-          void setCurrentAccount(targetAccount).catch(console.error);
+          setCurrentAccountSync(targetAccount);
         }
       }
     }
@@ -271,7 +271,7 @@ export const ImportSuccessScreen2024 = () => {
       return;
     }
 
-    saveFirstAddressAlias();
+    await saveFirstAddressAlias();
 
     const params = {
       type: state.type,
@@ -306,8 +306,8 @@ export const ImportSuccessScreen2024 = () => {
     });
   };
 
-  const handleBackupSeedPhrase = React.useCallback(() => {
-    saveFirstAddressAlias();
+  const handleBackupSeedPhrase = React.useCallback(async () => {
+    await saveFirstAddressAlias();
     Keyboard.dismiss();
     const firstAddr = importAddresses[0]?.address;
     navigation.replace(RootNames.Backup, {

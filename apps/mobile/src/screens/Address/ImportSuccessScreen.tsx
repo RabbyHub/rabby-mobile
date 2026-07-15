@@ -7,7 +7,7 @@ import {
 } from '@/core/serviceApi/contact';
 import {
   getFallbackAccountSnapshot,
-  setCurrentAccount,
+  setCurrentAccountSync,
 } from '@/core/serviceApi/preference';
 import { useThemeColors } from '@/hooks/theme';
 import {
@@ -187,7 +187,7 @@ export const ImportSuccessScreen = () => {
           targetAccount.brandName !== currentAccount.brandName ||
           !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
-          void setCurrentAccount(targetAccount).catch(console.error);
+          setCurrentAccountSync(targetAccount);
         }
       }
     }

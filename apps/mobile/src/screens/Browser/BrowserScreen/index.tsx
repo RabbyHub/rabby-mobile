@@ -1,6 +1,6 @@
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { toggleAllowNotifyAccountsChanged } from '@/core/serviceApi/preference';
+import { toggleAllowNotifyAccountsChangedSync } from '@/core/serviceApi/preference';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
@@ -51,9 +51,9 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
 
   useLayoutEffect(() => {
     console.debug('BrowserScreen mounted');
-    void toggleAllowNotifyAccountsChanged(true).catch(console.error);
+    toggleAllowNotifyAccountsChangedSync(true);
     return () => {
-      void toggleAllowNotifyAccountsChanged(false).catch(console.error);
+      toggleAllowNotifyAccountsChangedSync(false);
       console.debug('BrowserScreen unmounted 1');
     };
   }, []);

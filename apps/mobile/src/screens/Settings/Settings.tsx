@@ -137,7 +137,7 @@ import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
 import {
   getFallbackAccountSnapshot,
-  setUserBehaviorTrackingOptOut,
+  setUserBehaviorTrackingOptOutSync,
 } from '@/core/serviceApi/preference';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
@@ -956,9 +956,7 @@ function DevSettingsBlocks({
   const currentAccount = getFallbackAccountSnapshot();
   const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
   const toggleUserBehaviorTrackingOptOut = useCallback(() => {
-    void setUserBehaviorTrackingOptOut(!getUserBehaviorTrackingOptOut()).catch(
-      console.error,
-    );
+    setUserBehaviorTrackingOptOutSync(!getUserBehaviorTrackingOptOut());
   }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {

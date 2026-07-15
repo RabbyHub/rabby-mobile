@@ -1,6 +1,6 @@
 import {
-  contactServiceApi,
   getContactAliasSnapshot,
+  updateContactAliasSync,
 } from '@/core/serviceApi/contact';
 import { useCallback, useEffect, useState } from 'react';
 import { useAccounts } from './account';
@@ -29,13 +29,8 @@ export const useAlias = (address?: string) => {
         return;
       }
       setName(alias);
-      void contactServiceApi.updateAlias({ address, name: alias }).then(
-        () => fetchAccounts(),
-        error => {
-          console.error('[useAlias] update alias failed', error);
-          return fetchAccounts();
-        },
-      );
+      updateContactAliasSync({ address, name: alias });
+      fetchAccounts();
     },
     [address, fetchAccounts],
   );
@@ -130,16 +125,10 @@ export function useAlias2(
 
   const updateAlias = useCallback(
     (alias: string) => {
-      void contactServiceApi
-        .updateAlias({ address, name: alias })
-        .then(() => {
-          if (FETCH_AFTER_UPDATE) {
-            fetchAlias();
-          }
-        })
-        .catch(error => {
-          console.error('[useAlias2] update alias failed', error);
-        });
+      updateContactAliasSync({ address, name: alias });
+      if (FETCH_AFTER_UPDATE) {
+        fetchAlias();
+      }
     },
     [address, fetchAlias, FETCH_AFTER_UPDATE],
   );

@@ -2,7 +2,11 @@ import { createDappBySession } from '@/core/apis/dapp';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import * as apisDapp from '@/core/apis/dapp';
-import type { DappInfo, DappStore } from '@/core/services/dappService';
+import type {
+  DappInfo,
+  DappService,
+  DappStore,
+} from '@/core/services/dappService';
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import {
   bindDappStoreListener,
@@ -19,9 +23,12 @@ import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { getDappAccount } from '@/core/utils/dappAccount';
 import {
+  runWithCoreServices,
   serviceDependency,
   useCoreServiceDependencies,
 } from '@/core/serviceApi/serviceDependencies';
+
+const DAPP_SERVICE_DEPENDENCIES = [serviceDependency('dappService')] as const;
 
 const DAPP_ACCOUNT_DEPENDENCIES = [
   serviceDependency('transactionHistoryService'),
@@ -179,21 +186,32 @@ export function useDapps() {
 }
 
 export function useDappCurrentAccount() {
+  const dependencyState = useCoreServiceDependencies(DAPP_SERVICE_DEPENDENCIES);
+
   const setDappCurrentAccount = useCallback(
-    (id: DappInfo['origin'], currentAccount: Account) => {
-      void (async () => {
-        if (!(await dappServiceApi.getDapp(id))) {
+    async (id: DappInfo['origin'], currentAccount: Account) => {
+      const applyCurrentAccount = (dappService: DappService) => {
+        if (!dappService.getDapp(id)) {
           throw new Error('dapp not found');
         }
 
-        await dappServiceApi.patchDapps({
+        dappService.patchDapps({
           [id]: {
             currentAccount,
           },
         });
-      })().catch(console.error);
+      };
+
+      if (dependencyState.status === 'ready') {
+        applyCurrentAccount(dependencyState.services.dappService);
+        return;
+      }
+
+      await runWithCoreServices(DAPP_SERVICE_DEPENDENCIES, services => {
+        applyCurrentAccount(services.dappService);
+      });
     },
-    [],
+    [dependencyState],
   );
 
   return { setDappCurrentAccount };

@@ -62,6 +62,53 @@ describe('core/serviceApi deferred side effects', () => {
     expect(setStatsData).toHaveBeenCalledWith(statsData);
   });
 
+  it('keeps preference command side effects synchronous after activation', () => {
+    mockStartupScheduler();
+
+    const {
+      setUserBehaviorTrackingOptOutSync,
+      toggleAllowNotifyAccountsChangedSync,
+    } = require('./preference') as typeof import('./preference');
+    const { registerService } =
+      require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
+
+    const toggleAllowNotifyAccountsChanged = jest.fn();
+    const setUserBehaviorTrackingOptOut = jest.fn();
+    expect(() => toggleAllowNotifyAccountsChangedSync(true)).toThrow(
+      'preferenceService is not ready',
+    );
+
+    registerService('preferenceService', {
+      setUserBehaviorTrackingOptOut,
+      toggleAllowNotifyAccountsChanged,
+    } as any);
+
+    toggleAllowNotifyAccountsChangedSync(true);
+    setUserBehaviorTrackingOptOutSync(false);
+    expect(toggleAllowNotifyAccountsChanged).toHaveBeenCalledWith(true);
+    expect(setUserBehaviorTrackingOptOut).toHaveBeenCalledWith(false);
+  });
+
+  it('keeps startup contact alias updates synchronous', () => {
+    mockStartupScheduler();
+
+    const { updateContactAliasSync } =
+      require('./contact') as typeof import('./contact');
+    const { registerService } =
+      require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
+
+    const updateAlias = jest.fn();
+    const payload = { address: '0xabc', name: 'Main' };
+    expect(() => updateContactAliasSync(payload)).toThrow(
+      'contactService is not ready',
+    );
+
+    registerService('contactService', { updateAlias } as any);
+    updateContactAliasSync(payload);
+
+    expect(updateAlias).toHaveBeenCalledWith(payload);
+  });
+
   it('keeps notification sync side effects unavailable until its loader completes', async () => {
     mockStartupScheduler();
 

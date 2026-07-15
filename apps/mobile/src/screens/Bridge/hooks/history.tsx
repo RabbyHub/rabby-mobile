@@ -20,6 +20,7 @@ import { findChain } from '@/utils/chain';
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
+import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 
 const pendingCountAtom = atom(0);
 const bridgeTxDataPendingAtom = atom<BridgeHistory | null>(null);
@@ -62,6 +63,7 @@ export const fetchLocalBridgePendingTx = (address: string) => {
 };
 
 export const usePollBridgePendingNumber = (timer = 10000) => {
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [, setCount] = useAtom(pendingCountAtom);
   const [pendingTxData, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
   const [localPendingTxData, setLocalPendingTxData] =
@@ -86,11 +88,11 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
   }, [account?.address, clearTimer, setPendingTxData]);
 
   const runFetchLocalPendingTx = useCallback(() => {
-    if (account?.address) {
+    if (transactionHistoryReady && account?.address) {
       const resTx = fetchLocalBridgePendingTx(account.address);
       setLocalPendingTxData(resTx);
     }
-  }, [account?.address, setLocalPendingTxData]);
+  }, [account?.address, setLocalPendingTxData, transactionHistoryReady]);
 
   useEffect(() => {
     runFetchLocalPendingTx();

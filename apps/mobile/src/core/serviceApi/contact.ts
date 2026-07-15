@@ -35,6 +35,16 @@ export function getContactsByMapSnapshot() {
   return service.getContactsByMap();
 }
 
+export function updateContactAliasSync(
+  ...args: Parameters<ContactBookService['updateAlias']>
+) {
+  const service = getRegisteredService('contactService');
+  if (!service) {
+    throw new Error('contactService is not ready');
+  }
+  service.updateAlias(...args);
+}
+
 export function setDefaultAddressAliasFromKeyringParamsSync(
   account: Parameters<typeof setDefaultAddressAlias>[0],
 ) {
