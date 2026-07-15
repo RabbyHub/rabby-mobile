@@ -101,3 +101,23 @@ export function parseWalletConnectUriFromLink(appLink: string) {
     return null;
   }
 }
+
+export function isRabbyWalletConnectDeeplink(appLink: string) {
+  try {
+    const url = new URL(appLink);
+    const isWalletConnectTarget =
+      url.hostname === 'walletconnect' || url.hostname === 'wc';
+    return (
+      url.protocol === 'rabby:' &&
+      isWalletConnectTarget &&
+      !url.username &&
+      !url.password &&
+      !url.port &&
+      !url.pathname &&
+      !url.hash &&
+      !!parseWalletConnectUriFromLink(appLink)
+    );
+  } catch {
+    return false;
+  }
+}

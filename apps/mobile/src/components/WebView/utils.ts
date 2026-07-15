@@ -7,6 +7,7 @@ import {
   protocolAllowList,
   trustedProtocolToDeeplink,
 } from '@/constant/dappView';
+import { isRabbyWalletConnectDeeplink } from '@/core/walletconnect/uri';
 import { Alert } from 'react-native';
 
 /**
@@ -24,7 +25,10 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
   // If it is a trusted deeplink protocol, do not show the
   // warning alert. Allow the OS to deeplink the URL
   // and stop the webview from loading it.
-  if (trustedProtocolToDeeplink.includes(protocol)) {
+  if (
+    trustedProtocolToDeeplink.includes(protocol) ||
+    isRabbyWalletConnectDeeplink(url)
+  ) {
     allowLinkOpen(url);
     return false;
   }
