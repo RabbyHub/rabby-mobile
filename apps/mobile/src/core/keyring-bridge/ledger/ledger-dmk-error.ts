@@ -49,6 +49,10 @@ function getDmkErrorCode(error: unknown) {
     return '6985';
   }
 
+  if (getDmkErrorTag(error) === 'DeviceLockedError') {
+    return '5515';
+  }
+
   return undefined;
 }
 

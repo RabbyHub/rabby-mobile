@@ -1,6 +1,8 @@
 import type * as LedgerContextModule from '@ledgerhq/context-module/lib/types';
 import {
   DeviceActionStatus,
+  DeviceLockedError,
+  UserInteractionRequired,
   type DeviceManagementKit,
   type DeviceSessionId,
 } from '@ledgerhq/device-management-kit';
@@ -150,8 +152,11 @@ function getActionStateLabel(state: any) {
     .join('/');
 }
 
-function isTerminalActionState(state: any) {
+function shouldStopWaitingForAction(state: any) {
   return (
+    (state.status === DeviceActionStatus.Pending &&
+      state.intermediateValue?.requiredUserInteraction ===
+        UserInteractionRequired.UnlockDevice) ||
     state.status === DeviceActionStatus.Completed ||
     state.status === DeviceActionStatus.Error ||
     state.status === DeviceActionStatus.Stopped
@@ -193,7 +198,7 @@ async function resolveAction<T>(
             });
           }
         }),
-        filter(isTerminalActionState),
+        filter(shouldStopWaitingForAction),
         take(1),
       ),
     );
@@ -211,6 +216,11 @@ async function resolveAction<T>(
       message: err.message,
     });
     throw err;
+  }
+
+  if (state.status === DeviceActionStatus.Pending) {
+    action.cancel?.();
+    throw toLedgerDmkError(new DeviceLockedError());
   }
 
   if (state.status === DeviceActionStatus.Completed) {

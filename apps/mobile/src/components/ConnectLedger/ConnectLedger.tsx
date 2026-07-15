@@ -6,7 +6,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
-import React, { useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LedgerDmkDevice } from '@/core/keyring-bridge/ledger/ledger-dmk';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
@@ -42,7 +42,6 @@ export const ConnectLedger: React.FC<{
     'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
-  const unmountedRef = React.useRef(false);
   const selectingDeviceRef = React.useRef(false);
   let toastHiddenRef = React.useRef<() => void>(() => {});
   let loopCountRef = React.useRef(0);
@@ -180,29 +179,13 @@ export const ConnectLedger: React.FC<{
     [checkEthApp, importFirstAddress, onSelectDevice],
   );
 
-  const handleBleNext = React.useCallback(async () => {
+  const handleBleNext = React.useCallback(() => {
     setCurrentScreen('scan');
     searchAndPair();
     notfoundTimerRef.current = setTimeout(() => {
       setCurrentScreen('notfound');
     }, LEDGER_SCAN_TIMEOUT_MS);
-
-    if (!deviceId) {
-      return;
-    }
-
-    void apiLedger
-      .connectDeviceById(deviceId)
-      .then(() => {
-        if (unmountedRef.current) {
-          return;
-        }
-
-        clearTimeout(notfoundTimerRef.current);
-        return handleSelectDevice(apiLedger.getKnownDevice(deviceId));
-      })
-      .catch(() => {});
-  }, [deviceId, handleSelectDevice, searchAndPair]);
+  }, [searchAndPair]);
 
   React.useEffect(() => {
     if (devices.length) {
@@ -212,7 +195,6 @@ export const ConnectLedger: React.FC<{
 
   React.useEffect(() => {
     return () => {
-      unmountedRef.current = true;
       toastHiddenRef.current?.();
     };
   }, []);

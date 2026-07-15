@@ -12,13 +12,15 @@ const mockDevice = {
   name: 'Ledger',
 };
 const mockDevices = [mockDevice];
+const mockSearchAndPair = jest.fn();
+let mockBluetoothOnNext: (() => void) | undefined;
+let mockIsScanning = false;
 
 const mockApiLedger = {
   checkEthApp: jest.fn(),
   connectDevice: jest.fn(),
   connectDeviceById: jest.fn(),
   getCurrentUsedHDPathType: jest.fn(),
-  getKnownDevice: jest.fn(),
   importFirstAddress: jest.fn(),
   setDeviceId: jest.fn(),
   setHDPathType: jest.fn(),
@@ -34,7 +36,7 @@ jest.mock('@/hooks/ledger/useLedgerImport', () => ({
   useLedgerImport: () => ({
     devices: mockDevices,
     errorCode: undefined,
-    searchAndPair: jest.fn(),
+    searchAndPair: mockSearchAndPair,
   }),
 }));
 
@@ -85,7 +87,10 @@ jest.mock('../AutoLockView', () => {
 });
 
 jest.mock('./BluetoothPermissionScreen', () => ({
-  BluetoothPermissionScreen: () => null,
+  BluetoothPermissionScreen: ({ onNext }: { onNext: () => void }) => {
+    mockBluetoothOnNext = onNext;
+    return null;
+  },
 }));
 
 jest.mock('./ScanDeviceScreen', () => ({
@@ -165,6 +170,15 @@ describe('ConnectLedger', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    mockBluetoothOnNext = undefined;
+    mockIsScanning = false;
+    mockSearchAndPair.mockImplementation(() => {
+      mockIsScanning = true;
+    });
+    mockApiLedger.connectDeviceById.mockImplementation(async () => {
+      mockIsScanning = false;
+      throw new Error('known-id connect failed');
+    });
     mockApiLedger.connectDevice.mockResolvedValue(undefined);
     mockApiLedger.setDeviceId.mockResolvedValue(undefined);
     mockApiLedger.getCurrentUsedHDPathType.mockResolvedValue('LedgerLive');
@@ -173,6 +187,19 @@ describe('ConnectLedger', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('does not let a persisted-id retry stop discovery', async () => {
+    render(<ConnectLedger deviceId={mockDevice.id} />);
+
+    await act(async () => {
+      mockBluetoothOnNext?.();
+      await Promise.resolve();
+    });
+
+    expect(mockSearchAndPair).toHaveBeenCalledTimes(1);
+    expect(mockApiLedger.connectDeviceById).not.toHaveBeenCalled();
+    expect(mockIsScanning).toBe(true);
   });
 
   it('starts the signer action so it can request opening the Ethereum app', async () => {

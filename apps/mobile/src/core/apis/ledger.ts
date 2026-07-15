@@ -14,7 +14,6 @@ import {
   disconnectLedgerDevice,
   getLedgerAppAndVersion,
   getLedgerDeviceSessionState,
-  getKnownLedgerDevice,
   resetLedgerDeviceSession,
   subscribeLedgerDevices,
   type LedgerDmkDevice,
@@ -210,14 +209,6 @@ export function searchDevices({
 
 export async function connectDevice(device: LedgerDmkDevice) {
   return connectLedgerDevice(device);
-}
-
-export async function connectDeviceById(deviceId: string) {
-  return connectKnownLedgerDeviceById(deviceId);
-}
-
-export function getKnownDevice(deviceId: string) {
-  return getKnownLedgerDevice(deviceId);
 }
 
 export function getMaxAccountLimit() {

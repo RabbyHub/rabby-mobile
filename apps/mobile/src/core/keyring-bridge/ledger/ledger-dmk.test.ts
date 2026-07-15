@@ -32,6 +32,13 @@ jest.mock('@ledgerhq/device-management-kit', () => ({
     Error: 'error',
     Stopped: 'stopped',
   },
+  DeviceLockedError: class {
+    _tag = 'DeviceLockedError';
+    originalError = new Error('Device locked.');
+  },
+  UserInteractionRequired: {
+    UnlockDevice: 'unlock-device',
+  },
   DeviceManagementKitBuilder: jest.fn(() => ({
     addTransport: mockAddTransport.mockReturnThis(),
     addLogger: mockAddLogger.mockReturnThis(),
@@ -254,6 +261,51 @@ describe('ledger DMK bridge discovery', () => {
     expect(rejection).toBeUndefined();
     expect(cancel).not.toHaveBeenCalled();
     expect(mockDmk.disconnect).not.toHaveBeenCalledWith({ sessionId });
+  });
+
+  it('stops a signer action when DMK reports that the device must be unlocked', async () => {
+    const deviceId = 'ledger-locked-device-id';
+    const sessionId = 'locked-session-1';
+    const cancel = jest.fn();
+    let markActionStarted = () => undefined;
+    const actionStarted = new Promise<void>(resolve => {
+      markActionStarted = resolve;
+    });
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: new Observable(observer => {
+          observer.next({
+            status: 'pending',
+            intermediateValue: {
+              requiredUserInteraction: 'unlock-device',
+            },
+          });
+          markActionStarted();
+        }),
+        cancel,
+      })),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+    const signing = session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
+    await actionStarted;
+
+    await expect(
+      Promise.race([
+        signing,
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Ledger signing remained pending')),
+            50,
+          ),
+        ),
+      ]),
+    ).rejects.toThrow('0x5515');
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 
   it('marks a stale connected session when the DMK state read fails', async () => {
@@ -659,6 +711,20 @@ describe('ledger DMK bridge discovery', () => {
     await expect(
       session.signTransaction("44'/60'/0'/0/0", new Uint8Array()),
     ).rejects.toThrow('0x6985');
+  });
+
+  it('normalizes DMK lock errors to the legacy locked status word', () => {
+    const { toLedgerDmkError } = require('./ledger-dmk-error');
+
+    expect(
+      toLedgerDmkError({
+        _tag: 'DeviceLockedError',
+        originalError: new Error('Device locked.'),
+      }),
+    ).toMatchObject({
+      errorCode: '5515',
+      message: expect.stringContaining('0x5515'),
+    });
   });
 
   it('preserves nested DMK error details for UI display', async () => {
