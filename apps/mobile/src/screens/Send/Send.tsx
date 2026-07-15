@@ -50,13 +50,13 @@ import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
+import { formatSendTokenBalanceText } from './utils';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
-import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
@@ -902,10 +902,7 @@ function SendScreen({
       screenState.clickedMax || screenState.selectedGasLevel ? 8 : 4;
 
     return {
-      balanceNumText: bizNumberUtils.formatTokenAmount(
-        balanceNum.toFixed(decimalPlaces, BigNumber.ROUND_FLOOR),
-        decimalPlaces,
-      ),
+      balanceNumText: formatSendTokenBalanceText(balanceNum, decimalPlaces),
     };
   }, [
     currentToken.raw_amount_hex_str,
