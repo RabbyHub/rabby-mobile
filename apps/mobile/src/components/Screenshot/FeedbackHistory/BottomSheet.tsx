@@ -67,6 +67,7 @@ const ONE_MB = 1024 * 1024;
 const MAX_IMAGE_FILE_SIZE = 5 * ONE_MB;
 const MAX_VIDEO_FILE_SIZE = 50 * ONE_MB;
 const FEEDBACK_HISTORY_PAGE_SIZE = 50;
+const FEEDBACK_UNREAD_POLLING_INTERVAL = 10 * 1000;
 const LOAD_MORE_TOP_THRESHOLD = 40;
 
 type PickedFeedbackMedia = Asset;
@@ -319,6 +320,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const pendingScrollToBottomRef = useRef(false);
   const shouldScrollAfterReloadRef = useRef(false);
   const loadingMoreGuardRef = useRef(false);
+  const isReloadingFeedbackMessagesRef = useRef(false);
   const mediaUploadRequestIdRef = useRef(0);
   const videoCompressionCancellationIdRef = useRef<string | null>(null);
   const handleReplyTextChange = useCallback((text: string) => {
@@ -509,13 +511,39 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
 
   const reloadFeedbackMessages = useCallback(async () => {
+    if (isReloadingFeedbackMessagesRef.current) {
+      return;
+    }
+
+    isReloadingFeedbackMessagesRef.current = true;
     shouldScrollAfterReloadRef.current = true;
     try {
       await reloadFeedbackMessagesAsync();
     } catch {
       // useInfiniteScroll's onError handles logging and resets scroll state.
+    } finally {
+      isReloadingFeedbackMessagesRef.current = false;
     }
   }, [reloadFeedbackMessagesAsync]);
+
+  useRequest(
+    () =>
+      openapi.getClientFeedbackUnread({
+        device_id: deviceId,
+      }),
+    {
+      ready: isShowHistory,
+      pollingInterval: FEEDBACK_UNREAD_POLLING_INTERVAL,
+      onSuccess: data => {
+        if (data.unread_count > 0) {
+          void reloadFeedbackMessages();
+        }
+      },
+      onError: error => {
+        console.error('feedback unread polling error', error);
+      },
+    },
+  );
 
   useEffect(() => {
     if (!loadingMore) {
