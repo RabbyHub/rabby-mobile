@@ -2,7 +2,6 @@ import BigNumber from 'bignumber.js';
 import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import {
   getTransactionHistoryTransactions,
-  getTransactionHistoryTransactionsSnapshot,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
@@ -174,7 +173,7 @@ class ApisTransactionHistory {
     }
   };
 
-  checkIsGasDepositTx = ({
+  checkIsGasDepositTx = async ({
     chainId,
     hash,
   }: {
@@ -185,7 +184,8 @@ class ApisTransactionHistory {
       return false;
     }
 
-    return !!getTransactionHistoryTransactionsSnapshot().find(item => {
+    const transactions = await getTransactionHistoryTransactions();
+    return transactions.some(item => {
       return (
         item.chainId === chainId && item.hash === hash && item.isGasDeposit
       );

@@ -12,6 +12,7 @@ import { openapi } from '@/core/request';
 import {
   getTransactionHistoryListSnapshot,
   getTransactionHistorySucceedListSnapshot,
+  getTransactionHistoryTransactions,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -285,13 +286,16 @@ function History({
       ? openapi.getAllTxHistory
       : openapi.listTxHisotry;
     try {
-      const res = await getHistory({
-        id: address,
-        start_time: startTime,
-        page_count: PAGE_COUNT,
-        chain_id,
-        token_id,
-      });
+      const [res, transactions] = await Promise.all([
+        getHistory({
+          id: address,
+          start_time: startTime,
+          page_count: PAGE_COUNT,
+          chain_id,
+          token_id,
+        }),
+        getTransactionHistoryTransactions(),
+      ]);
 
       const { project_dict, history_list: list } = res;
       const token_dict = (res as TxHistoryResult).token_dict;
@@ -322,7 +326,7 @@ function History({
             ...e,
             token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
           })),
-          historyType: getHistoryItemType(item),
+          historyType: getHistoryItemType(item, transactions),
         }))
         .sort((v1, v2) => v2.time_at - v1.time_at);
       return {

@@ -113,7 +113,6 @@ const transactionHistory = {
   getTransactionHistorySucceedCountSnapshot: 'reactive',
   getTransactionHistorySucceedListSnapshot: 'reactive',
   getTransactionHistorySwapFailTransactionsSnapshot: 'reactive',
-  getTransactionHistoryTransactionsSnapshot: 'command-input',
 } satisfies SnapshotPolicies<typeof import('./transactionHistory')>;
 
 export const CORE_SERVICE_SNAPSHOT_POLICIES = {

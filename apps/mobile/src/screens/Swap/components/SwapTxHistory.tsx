@@ -23,8 +23,9 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
 import {
-  getTransactionHistoryCustomTxItemMapSnapshot,
+  getTransactionHistoryCustomTxItemMap,
   getTransactionHistoryListSnapshot,
+  getTransactionHistoryTransactions,
 } from '@/core/serviceApi/transactionHistory';
 import {
   switchSceneCurrentAccount,
@@ -338,12 +339,16 @@ export const SwapTxHistory = ({
       }
 
       const pinedQueue = getPinnedTokenSnapshot();
-      const customTxItemsMap = getTransactionHistoryCustomTxItemMapSnapshot();
+      const [customTxItemsMap, transactions] = await Promise.all([
+        getTransactionHistoryCustomTxItemMap(),
+        getTransactionHistoryTransactions(),
+      ]);
       const historyDisplayItem = txResultToToHistoryDisplayItem({
         address: currentAccount?.address || '',
         res: txDetail,
         pinedQueue,
         customTxItemsMap,
+        transactions,
       })[0];
 
       if (historyDisplayItem) {

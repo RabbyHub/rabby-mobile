@@ -58,7 +58,10 @@ import {
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
 import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
 import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
-import { getTransactionHistoryCustomTxItemMap } from '@/core/serviceApi/transactionHistory';
+import {
+  getTransactionHistoryCustomTxItemMap,
+  getTransactionHistoryTransactions,
+} from '@/core/serviceApi/transactionHistory';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
@@ -977,12 +980,16 @@ export function startSubscribeRemoteNotification() {
           hideToastRef.current();
 
           const pinedQueue = getPinnedTokenSnapshot();
-          const customTxItemsMap = await getTransactionHistoryCustomTxItemMap();
+          const [customTxItemsMap, transactions] = await Promise.all([
+            getTransactionHistoryCustomTxItemMap(),
+            getTransactionHistoryTransactions(),
+          ]);
           const historyDisplayItem = txResultToToHistoryDisplayItem({
             address: parsedData.txInfo?.ownerAddress || '',
             res: txDetail,
             pinedQueue,
             customTxItemsMap,
+            transactions,
           })[0];
           console.debug(
             '[notifications] [startSubscribeRemoteNotification] received parsedData',

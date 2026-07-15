@@ -62,14 +62,6 @@ export function getTransactionHistoryCustomTxItemMapSnapshot() {
   return service.getCustomTxItemMap();
 }
 
-export function getTransactionHistoryTransactionsSnapshot() {
-  const service = getRegisteredService('transactionHistoryService');
-  if (!service) {
-    return [];
-  }
-  return service.store.transactions;
-}
-
 export async function getTransactionHistoryTransactions() {
   return callCoreService(
     'transactionHistoryService',

@@ -22,6 +22,7 @@ import {
 } from '@/screens/Transaction/components/HistoryGroupList';
 import {
   getTransactionHistorySucceedListSnapshot,
+  getTransactionHistoryTransactions,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import { openapi } from '@/core/request';
@@ -125,13 +126,16 @@ export const TokenDetailHistoryList = ({
           list,
         };
       } else {
-        const res = await openapi.listTxHisotry({
-          id: address,
-          start_time: startTime,
-          page_count: PAGE_COUNT,
-          chain_id,
-          token_id,
-        });
+        const [res, transactions] = await Promise.all([
+          openapi.listTxHisotry({
+            id: address,
+            start_time: startTime,
+            page_count: PAGE_COUNT,
+            chain_id,
+            token_id,
+          }),
+          getTransactionHistoryTransactions(),
+        ]);
 
         const { project_dict, history_list: list } = res;
         const token_dict = (res as TxHistoryResult).token_dict;
@@ -163,7 +167,7 @@ export const TokenDetailHistoryList = ({
               ...e,
               token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
             })),
-            historyType: getHistoryItemType(item),
+            historyType: getHistoryItemType(item, transactions),
           }))
           .sort((v1, v2) => v2.time_at - v1.time_at);
         return {
