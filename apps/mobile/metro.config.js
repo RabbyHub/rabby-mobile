@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
@@ -32,6 +33,50 @@ const { assetExts, sourceExts } = defaultConfig.resolver;
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
+const babelTransformEnvironmentKeys = [
+  'APP_ENV',
+  'BABEL_ENV',
+  'DEV_SERVER_HOSTNAME',
+  'NODE_ENV',
+  'RABBY_MOBILE_BUILD_CHANNEL',
+  'RABBY_MOBILE_BUILD_ENV',
+  'RABBY_MOBILE_E2E_SILENT_LOGS',
+  'RABBY_MOBILE_FE_SERVICE_URL',
+  'RABBY_MOBILE_KR_PWD',
+  'RABBY_MOBILE_METRO_USE_CACHE',
+  'RABBY_MOBILE_WALLETCONNECT_PROJECT_ID',
+  'WITH_ROZENITE',
+  'buildchannel',
+];
+const babelTransformInputFiles = [
+  path.resolve(projectRoot, 'babel.config.js'),
+  path.resolve(projectRoot, 'package.json'),
+  path.resolve(projectRoot, 'scripts/loadables-aliases.generated.cjs'),
+  path.resolve(workspaceRoot, 'package.json'),
+  path.resolve(workspaceRoot, 'yarn.lock'),
+  ...fs
+    .readdirSync(projectRoot)
+    .filter(fileName => fileName === '.env' || fileName.startsWith('.env.'))
+    .sort()
+    .map(fileName => path.resolve(projectRoot, fileName)),
+];
+const babelTransformCacheHash = crypto.createHash('sha256');
+
+for (const filePath of babelTransformInputFiles) {
+  if (!fs.existsSync(filePath)) {
+    continue;
+  }
+
+  babelTransformCacheHash.update(path.relative(workspaceRoot, filePath));
+  babelTransformCacheHash.update(fs.readFileSync(filePath));
+}
+
+for (const environmentKey of babelTransformEnvironmentKeys) {
+  babelTransformCacheHash.update(environmentKey);
+  babelTransformCacheHash.update(process.env[environmentKey] || '');
+}
+
+const babelTransformCacheVersion = babelTransformCacheHash.digest('hex');
 const walletConnectKeyValueStorageShim = path.resolve(
   projectRoot,
   'src/core/walletconnect/keyvaluestorageRuntimeShim.js',
@@ -179,6 +224,7 @@ const withPackageExportsDisabled = config => {
  * @type {import('metro-config').MetroConfig}
  */
 const config = {
+  cacheVersion: `${defaultConfig.cacheVersion}:${babelTransformCacheVersion}`,
   projectRoot,
   transformer: {
     babelTransformerPath: require.resolve('./webview-raw-transformer'),

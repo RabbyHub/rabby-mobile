@@ -75,6 +75,25 @@ react {
 
 def mobileProjectDir = rootProject.projectDir.parentFile
 def workspaceProjectDir = mobileProjectDir.parentFile.parentFile
+def buildInfoScript = new File(mobileProjectDir, "scripts/resolve-build-info.js")
+def buildInfoJson = providers.exec {
+    workingDir workspaceProjectDir
+    commandLine "node", buildInfoScript.absolutePath
+}.standardOutput.asText.get().trim()
+def generatedBuildInfoAssetsDir = layout.buildDirectory.dir("generated/rabbyBuildInfo/assets")
+def generatedBuildInfoFile = generatedBuildInfoAssetsDir.map {
+    it.file("rabby-build-info.json")
+}
+def generateRabbyBuildInfo = tasks.register("generateRabbyBuildInfo") {
+    inputs.property("rabbyBuildInfo", buildInfoJson)
+    outputs.file(generatedBuildInfoFile)
+
+    doLast {
+        def outputFile = generatedBuildInfoFile.get().asFile
+        outputFile.parentFile.mkdirs()
+        outputFile.text = "${buildInfoJson}\n"
+    }
+}
 def workspaceBundleInputs = files(
     fileTree(new File(workspaceProjectDir, "packages")) {
         include "**/*.js", "**/*.jsx", "**/*.json", "**/*.ts", "**/*.tsx"
@@ -218,12 +237,19 @@ android {
         }
     }
     buildTypes.each {
-		  it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
+        it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
     }
     sourceSets {
         main {
+            assets.srcDir generatedBuildInfoAssetsDir
             java.srcDirs += ["src/oldarch"]
         }
+    }
+}
+
+tasks.configureEach {
+    if (name == "preBuild" || (name.startsWith("merge") && name.endsWith("Assets"))) {
+        dependsOn(generateRabbyBuildInfo)
     }
 }
 

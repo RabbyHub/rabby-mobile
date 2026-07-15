@@ -206,8 +206,20 @@ check_env_file() {
   fi
 }
 
+write_native_build_info() {
+  local output_dir="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+  local output_file="$output_dir/rabby-build-info.json"
+  local temporary_file="$output_file.tmp"
+
+  mkdir -p "$output_dir"
+  "$NODE_BINARY" "$project_dir/scripts/resolve-build-info.js" > "$temporary_file"
+  mv "$temporary_file" "$output_file"
+  echo "[RabbyMobileBuild] wrote native build info to $output_file"
+}
+
 log_bundle_env_diagnostics "$(resolve_bundle_env_file)"
 check_env_file;
+write_native_build_info;
 
 if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "true" ]; then
   echo "[RabbyMobileBuild] skip debug bundle while preserving Metro device setup"

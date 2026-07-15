@@ -1,3 +1,4 @@
+import { NativeModules } from 'react-native';
 import {
   DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
   RABBY_MOBILE_E2E_SILENT_LOGS as RABBY_MOBILE_E2E_SILENT_LOGS_,
@@ -19,21 +20,22 @@ export const IS_E2E_SILENT_LOGS =
   RABBY_MOBILE_E2E_SILENT_LOGS_ === 'true' ||
   process.env.RABBY_MOBILE_E2E_SILENT_LOGS === 'true';
 
-const INPUT_BUILD_GIT_INFO =
-  typeof process.env.BUILD_GIT_INFO === 'object'
-    ? process.env.BUILD_GIT_INFO
-    : JSON.parse(process.env.BUILD_GIT_INFO || '{}');
-export const BUILD_GIT_INFO: {
+type AppBuildGitInfo = {
   BUILD_GIT_HASH: string;
   BUILD_GIT_HASH_TIME?: string;
   BUILD_GIT_COMMITOR?: string;
   BUILD_TIME?: string;
-} = {
+};
+
+const nativeBuildInfo = (NativeModules.RNHelpers?.buildInfo ||
+  {}) as Partial<AppBuildGitInfo>;
+
+export const BUILD_GIT_INFO: AppBuildGitInfo = {
   BUILD_GIT_HASH: 'unknown',
   BUILD_GIT_HASH_TIME: undefined,
   BUILD_GIT_COMMITOR: undefined,
   BUILD_TIME: undefined,
-  ...INPUT_BUILD_GIT_INFO,
+  ...nativeBuildInfo,
 };
 
 export function getSentryEnv() {

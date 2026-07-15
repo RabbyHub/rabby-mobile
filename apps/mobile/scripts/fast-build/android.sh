@@ -104,6 +104,11 @@ stage_fast_build_payload() {
       fi
       ;;
   esac
+
+  build_info_file="$payload_stage_dir/assets/rabby-build-info.json"
+  temporary_build_info_file="$build_info_file.tmp"
+  node "$project_dir/scripts/resolve-build-info.js" >"$temporary_build_info_file" || exit 1
+  mv "$temporary_build_info_file" "$build_info_file"
 }
 
 write_template_apk_entries() {
@@ -114,6 +119,7 @@ delete_managed_asset_entries_from_apk() {
   write_template_apk_entries
   awk '
     /^assets\/index\.android\.bundle$/ ||
+    /^assets\/rabby-build-info\.json$/ ||
     /^assets\/fonts\// ||
     /^assets\/custom\// ||
     /^assets\/threads\//
@@ -270,10 +276,12 @@ replace_js_bundle() {
   cp "$template_apk" "$repacked_apk"
 
   if [ "$fast_build_scope" = "bundle-only" ]; then
-    echo "Replacing official Hermes bundle only..."
+    echo "Replacing official Hermes bundle and build metadata..."
     (
       cd "$payload_stage_dir"
-      zip -r1X "$repacked_apk" assets/index.android.bundle
+      zip -r1X "$repacked_apk" \
+        assets/index.android.bundle \
+        assets/rabby-build-info.json
     )
   else
     echo "Refreshing managed asset entries from official Gradle outputs..."
