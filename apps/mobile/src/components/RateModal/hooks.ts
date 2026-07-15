@@ -19,9 +19,9 @@ import { openExternalUrl } from '@/core/utils/linking';
 import {
   resolveValFromUpdater,
   runDevIIFEFunc,
-  runStartupTask,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { perfEvents } from '@/core/utils/perf';

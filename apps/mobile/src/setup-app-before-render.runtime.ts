@@ -1,4 +1,4 @@
-import { runStartupTask } from './core/utils/store';
+import { runStartupTask } from './core/utils/startupScheduler';
 import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
 import { traceAndroidInstant } from './core/utils/androidTrace';
 

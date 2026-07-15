@@ -35,9 +35,12 @@ import { openapi } from '@/core/request';
 import { unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
-import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import {
+  runStartupTask,
+  scheduleStartupTask,
+} from '@/core/utils/startupScheduler';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { perpsServiceApi } from '@/core/serviceApi/perps';

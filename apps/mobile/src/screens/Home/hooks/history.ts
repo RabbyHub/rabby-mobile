@@ -10,7 +10,8 @@ import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { onAppOrmSyncEvents } from '@/databases/sync/_event';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import type { RefLikeObject } from '@/utils/type';
 import {

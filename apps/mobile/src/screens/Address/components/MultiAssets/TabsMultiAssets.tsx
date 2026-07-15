@@ -6,7 +6,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { perfEvents } from '@/core/utils/perf';
-import { runStartupTask } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
