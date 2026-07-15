@@ -92,6 +92,34 @@ const resolverSourceAliasCandidates = new Map([
     ['@craftzdog/react-native-buffer/index.js'],
   ],
   [
+    '@ledgerhq/context-module',
+    [
+      '@ledgerhq/context-module/lib/cjs/index.js',
+      '@ledgerhq/context-module/lib/esm/index.js',
+    ],
+  ],
+  [
+    '@ledgerhq/device-management-kit',
+    [
+      '@ledgerhq/device-management-kit/lib/cjs/index.js',
+      '@ledgerhq/device-management-kit/lib/esm/index.js',
+    ],
+  ],
+  [
+    '@ledgerhq/device-signer-kit-ethereum',
+    [
+      '@ledgerhq/device-signer-kit-ethereum/lib/cjs/index.js',
+      '@ledgerhq/device-signer-kit-ethereum/lib/esm/index.js',
+    ],
+  ],
+  [
+    '@ledgerhq/device-transport-kit-react-native-ble',
+    [
+      '@ledgerhq/device-transport-kit-react-native-ble/lib/cjs/index.js',
+      '@ledgerhq/device-transport-kit-react-native-ble/lib/esm/index.js',
+    ],
+  ],
+  [
     '@ledgerhq/devices/ble/receiveAPDU',
     [
       '@ledgerhq/devices/lib/ble/receiveAPDU.js',
@@ -131,6 +159,13 @@ const resolverSourceAliasCandidates = new Map([
     [
       '@ledgerhq/evm-tools/lib/selectors/index.js',
       '@ledgerhq/evm-tools/lib-es/selectors/index.js',
+    ],
+  ],
+  [
+    '@ledgerhq/signer-utils',
+    [
+      '@ledgerhq/signer-utils/lib/cjs/index.js',
+      '@ledgerhq/signer-utils/lib/esm/index.js',
     ],
   ],
   ['p-queue', ['p-queue/dist/index.js']],
