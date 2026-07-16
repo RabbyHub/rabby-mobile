@@ -389,7 +389,7 @@ function RuntimeWindow() {
 }
 
 function FloatingStartupRuntimePanelContent() {
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState(true);
   useSyncStartupRuntimeMutables();
 
   const dockSide = useSharedValue(SIDE_RIGHT);
