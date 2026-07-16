@@ -31,6 +31,7 @@ import Video, {
   type VideoRef,
 } from 'react-native-video';
 import { SystemBars } from 'react-native-edge-to-edge';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const MEDIA_PREVIEW_MAX_SCALE = 4;
 const MEDIA_PREVIEW_MIN_DISMISS_SCALE = 0.82;
@@ -382,6 +383,9 @@ export function FeedbackMediaPreview({
   });
 
   useEffect(() => {
+    if (IS_ANDROID) {
+      return;
+    }
     // 进入预览页时,隐藏状态栏
     const entry = SystemBars.pushStackEntry({
       hidden: { statusBar: true, navigationBar: false },
