@@ -664,16 +664,27 @@ function HomeOverviewPostStartupGate({
   return <HomeOverviewPostStartupEffects triggerUpdate={triggerUpdate} />;
 }
 
+// Effect-only, deliberately NOT behind the startup gates: it only kicks off
+// the perps position WS subscription (network + store writes, renders
+// nothing), and every ms it waits behind postReady is added to the Home
+// position card's blank time. The account auto-fetch is single-flighted, so
+// racing the other Home consumers is free.
+function HomeOverviewPerpsPositionSubscription() {
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  useSubscribePosition(sortedAccounts);
+
+  return null;
+}
+
 function HomeOverviewPostStartupEffects({
   triggerUpdate,
 }: {
   triggerUpdate: HomeOverviewTriggerUpdate;
 }) {
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const sortedAccounts = useSortAddressList(accounts);
   const isFirstTriggerRef = useRef(true);
 
-  useSubscribePosition(sortedAccounts);
   useFetchCexInfo();
 
   useFocusEffect(
@@ -1258,6 +1269,7 @@ export const HomeOverview = React.memo(() => {
 
   return (
     <View style={styles.pullUpWrapper}>
+      <HomeOverviewPerpsPositionSubscription />
       <HomeOverviewDeferredStartupGate triggerUpdate={triggerUpdate} />
       <Animated.View style={[styles.main, mainStyle]}>
         <GestureDetector gesture={panGestureRef.current}>

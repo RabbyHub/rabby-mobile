@@ -1,4 +1,5 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import {
@@ -1479,9 +1480,44 @@ export const fetchAllDexsPositionOpenOrdersHttp = async () => {
   }
 };
 
+// Boot-time head start for the Home position card: the WS connection is
+// created lazily by the first subscribe, and the Home top-10 subscription
+// can't start until Home mounts and the account store fills. The persisted
+// perps account (MMKV, readable without keyring/unlock) is almost always the
+// position-bearing one, so subscribing to it at boot overlaps the whole
+// connect + first-snapshot round-trip with app startup. The subscription
+// itself is issued by a boot IIFE at the bottom of this module.
+let earlyPositionSubscription: { unsubscribe: () => void } | null = null;
+// Once torn down (top-10 handoff or logout), the boot IIFE must not install
+// a late subscription — its awaits could in principle resolve after that.
+let earlyPositionSubscriptionStopped = false;
+
+const teardownEarlyPositionSubscription = () => {
+  earlyPositionSubscriptionStopped = true;
+  if (!earlyPositionSubscription) {
+    return;
+  }
+  try {
+    earlyPositionSubscription.unsubscribe();
+  } catch (error) {
+    console.error('[earlyPerpsPosition] unsubscribe failed', error);
+  }
+  earlyPositionSubscription = null;
+};
+
+// Mirrors isMyAccount (core/apis/account) — kept local to avoid a
+// hooks -> core/apis/account import cycle. Keep the excluded types in sync.
+// The render-side lookup drops these types too, so an early snapshot for
+// them could never be shown anyway.
+const canSubscribePerpsPosition = (type: string) =>
+  type !== KEYRING_CLASS.WATCH &&
+  type !== KEYRING_CLASS.GNOSIS &&
+  type !== KEYRING_CLASS.WALLETCONNECT;
+
 export const apisPerpsStore = {
   logout: () => {
     unsubscribeAll();
+    teardownEarlyPositionSubscription();
     resetAccountState();
     // The SDK singleton is torn down on lock (destroyPerpsSDK), so force the
     // init effect to run again on next entry and reinstall the signer
@@ -1706,6 +1742,35 @@ runIIFEFunc(fetchMarketData);
 runIIFEFunc(fetchFavoriteMarkets);
 runIIFEFunc(fetchMarginModeByCoin);
 
+runIIFEFunc(async () => {
+  try {
+    const [currentAccount, lastUsedAccount] = await Promise.all([
+      apisPerps.getPerpsCurrentAccount(),
+      apisPerps.getPerpsLastUsedAccount(),
+    ]);
+    const cached = currentAccount || lastUsedAccount;
+    if (
+      !cached?.address ||
+      !canSubscribePerpsPosition(cached.type) ||
+      earlyPositionSubscriptionStopped
+    ) {
+      return;
+    }
+    const sdk = apisPerps.getPerpsSDK();
+    earlyPositionSubscription = sdk.ws.subscribeToAllDexsClearinghouseState(
+      cached.address,
+      data => {
+        setClearinghouseStateMap({
+          address: data.user,
+          data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+        });
+      },
+    );
+  } catch (error) {
+    console.error('[earlyPerpsPosition] boot subscribe failed', error);
+  }
+});
+
 export function startSubscribePerpsOnAppState() {
   const sdk = apisPerps.getPerpsSDK();
   const subscription = AppState.addEventListener('change', nextAppState => {
@@ -1786,6 +1851,10 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
         }
       }, 5 * 1000);
       const top10Addresses = top10Accounts.map(item => item.address);
+      // Hand off from the boot-time single-account subscription: the top-10
+      // set re-subscribes that address, and clearinghouseStateMap keeps its
+      // data in the meantime, so there is no visible gap.
+      teardownEarlyPositionSubscription();
       sdk.ws.subscribeToAllDexsClearinghouseState(top10Addresses, data => {
         if (!currentHasFetchAddresses.current.includes(data.user)) {
           currentHasFetchAddresses.current.push(data.user);
