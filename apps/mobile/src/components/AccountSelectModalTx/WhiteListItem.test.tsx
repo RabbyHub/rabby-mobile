@@ -19,6 +19,9 @@ type MockContextMenuProps = {
 
 let mockCardStyle: ViewStyle | undefined;
 let mockContextMenuProps: MockContextMenuProps | undefined;
+let mockShadowStyle: ViewStyle | undefined;
+let mockIsAndroid = false;
+let mockIsIos = true;
 
 jest.mock('@/components2024/ContextMenuView/ContextMenuView', () => ({
   ContextMenuView: ({ children, ...props }: any) => {
@@ -58,12 +61,17 @@ jest.mock('@/components2024/Card', () => {
 
 jest.mock('@/screens/Address/components/AddressItemShadowView', () => {
   const React = require('react');
-  const { View } = require('react-native');
+  const { StyleSheet: RNStyleSheet, View } = require('react-native');
 
   return {
-    AddressItemShadowView: ({ children, ...props }: any) => (
-      <View {...props}>{children}</View>
-    ),
+    AddressItemShadowView: ({ children, style, ...props }: any) => {
+      mockShadowStyle = RNStyleSheet.flatten(style);
+      return (
+        <View style={style} {...props}>
+          {children}
+        </View>
+      );
+    },
   };
 });
 
@@ -99,7 +107,12 @@ jest.mock('@/databases/hooks/cex', () => ({
 }));
 
 jest.mock('@/core/native/utils', () => ({
-  IS_ANDROID: false,
+  get IS_ANDROID() {
+    return mockIsAndroid;
+  },
+  get IS_IOS() {
+    return mockIsIos;
+  },
 }));
 
 jest.mock('@/components/Typography', () => {
@@ -158,9 +171,12 @@ describe('WhiteListItemInSheetModal long-press boundary', () => {
   beforeEach(() => {
     mockCardStyle = undefined;
     mockContextMenuProps = undefined;
+    mockShadowStyle = undefined;
+    mockIsAndroid = false;
+    mockIsIos = true;
   });
 
-  it('uses the same radius for the clipping layer, card, and iOS preview', () => {
+  it('keeps the iOS border and pressed fill on the same touchable surface', () => {
     const view = render(
       <WhiteListItemInSheetModal
         account={account}
@@ -174,24 +190,73 @@ describe('WhiteListItemInSheetModal long-press boundary', () => {
 
     expect(StyleSheet.flatten(touchable.props.style)).toEqual(
       expect.objectContaining({
+        borderColor: 'neutral-line',
         borderRadius: 20,
+        borderWidth: 1,
         overflow: 'hidden',
+      }),
+    );
+    expect(mockShadowStyle).toEqual(
+      expect.objectContaining({
+        backgroundColor: 'neutral-bg-1',
+        borderWidth: 0,
       }),
     );
     expect(mockCardStyle).toEqual(
       expect.objectContaining({
+        backgroundColor: 'transparent',
         borderRadius: 20,
       }),
     );
+
+    fireEvent(touchable, 'pressIn');
+
+    const pressedTouchable = view.UNSAFE_getByType(TouchableOpacity);
+    expect(StyleSheet.flatten(pressedTouchable.props.style)).toEqual(
+      expect.objectContaining({
+        backgroundColor: 'brand-light-1',
+        borderColor: 'neutral-line',
+        borderWidth: 1,
+      }),
+    );
+    expect(mockCardStyle).toEqual(
+      expect.objectContaining({
+        backgroundColor: 'transparent',
+      }),
+    );
+
+    fireEvent(pressedTouchable, 'pressOut');
+
+    expect(
+      StyleSheet.flatten(view.UNSAFE_getByType(TouchableOpacity).props.style),
+    ).not.toHaveProperty('backgroundColor');
+  });
+
+  it('keeps the iOS preview shape and whitelist menu behavior', () => {
+    render(
+      <WhiteListItemInSheetModal
+        account={account}
+        enableMenu
+        hideBalance
+        inWhiteList
+      />,
+    );
+
     expect(mockContextMenuProps).toEqual(
       expect.objectContaining({
         preViewBorderRadius: 20,
         triggerProps: { action: 'longPress' },
       }),
     );
+    expect(
+      mockContextMenuProps?.menuConfig.menuActions.map(action => action.key),
+    ).toEqual(['copy', 'edit', 'remove']);
   });
 
-  it('keeps the pressed fill inside the card radius', () => {
+  it('preserves the Android border and pressed-card ownership', () => {
+    mockIsAndroid = true;
+    mockIsIos = false;
+
     const view = render(
       <WhiteListItemInSheetModal
         account={account}
@@ -202,6 +267,23 @@ describe('WhiteListItemInSheetModal long-press boundary', () => {
     );
 
     const touchable = view.UNSAFE_getByType(TouchableOpacity);
+    const touchableStyle = StyleSheet.flatten(touchable.props.style);
+
+    expect(touchable.props.delayLongPress).toBe(350);
+    expect(touchableStyle).toEqual(
+      expect.objectContaining({
+        borderRadius: 20,
+        overflow: 'hidden',
+      }),
+    );
+    expect(touchableStyle).not.toHaveProperty('borderWidth');
+    expect(mockShadowStyle).not.toHaveProperty('borderWidth');
+    expect(mockCardStyle).toEqual(
+      expect.objectContaining({
+        backgroundColor: 'neutral-bg-1',
+      }),
+    );
+
     fireEvent(touchable, 'pressIn');
 
     expect(mockCardStyle).toEqual(
@@ -210,5 +292,29 @@ describe('WhiteListItemInSheetModal long-press boundary', () => {
         borderRadius: 20,
       }),
     );
+    expect(
+      StyleSheet.flatten(view.UNSAFE_getByType(TouchableOpacity).props.style),
+    ).not.toHaveProperty('backgroundColor');
+  });
+
+  it('keeps the iOS no-menu press feedback on the visible border', () => {
+    const view = render(
+      <WhiteListItemInSheetModal account={account} hideBalance inWhiteList />,
+    );
+
+    const touchable = view.UNSAFE_getByType(TouchableOpacity);
+    fireEvent(touchable, 'pressIn');
+
+    const pressedStyle = StyleSheet.flatten(
+      view.UNSAFE_getByType(TouchableOpacity).props.style,
+    );
+    expect(pressedStyle).toEqual(
+      expect.objectContaining({
+        borderColor: 'brand-light-2',
+        borderWidth: 1,
+      }),
+    );
+    expect(pressedStyle).not.toHaveProperty('backgroundColor');
+    expect(mockContextMenuProps).toBeUndefined();
   });
 });
