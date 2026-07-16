@@ -653,16 +653,24 @@ function HomeOverviewPostStartupGate({
   return <HomeOverviewPostStartupEffects triggerUpdate={triggerUpdate} />;
 }
 
+// Deliberately outside the startup gates: every ms this waits behind
+// postReady is added to the position card's blank time.
+function HomeOverviewPerpsPositionSubscription() {
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  useSubscribePosition(sortedAccounts);
+
+  return null;
+}
+
 function HomeOverviewPostStartupEffects({
   triggerUpdate,
 }: {
   triggerUpdate: HomeOverviewTriggerUpdate;
 }) {
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const sortedAccounts = useSortAddressList(accounts);
   const isFirstTriggerRef = useRef(true);
 
-  useSubscribePosition(sortedAccounts);
   useFetchCexInfo();
 
   useFocusEffect(
@@ -1247,6 +1255,7 @@ export const HomeOverview = React.memo(() => {
 
   return (
     <View style={styles.pullUpWrapper}>
+      <HomeOverviewPerpsPositionSubscription />
       <HomeOverviewDeferredStartupGate triggerUpdate={triggerUpdate} />
       <Animated.View style={[styles.main, mainStyle]}>
         <GestureDetector gesture={panGestureRef.current}>
