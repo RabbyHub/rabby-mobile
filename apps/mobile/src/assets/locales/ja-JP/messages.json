@@ -2183,7 +2183,8 @@
       "currency": "通貨",
       "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
       "dataAnalysis": "データ分析",
-      "bugReportHistory": "バグ報告履歴"
+      "bugReportHistory": "バグ報告履歴",
+      "bugReportChat": "チャットでフィードバックを送信"
     },
     "settingModal": {
       "themeMode": {
@@ -3844,7 +3845,7 @@
       "noAvailableAddress": "利用可能なアドレスがありません"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "",
+      "replyPlaceholder": "メッセージを入力…",
       "mediaPlaceholder": "画像/動画"
     }
   },
