@@ -33,6 +33,13 @@ interface NativeModulesStatic {
     exitAppForSecurity(): void;
   };
   RNHelpers: NativeModule & {
+    buildInfo?: {
+      BUILD_GIT_HASH?: string;
+      BUILD_GIT_HASH_TIME?: string;
+      BUILD_TIME?: string;
+      BUILD_GIT_COMMITOR?: string;
+      METRO_CACHE_ENABLED?: boolean;
+    };
     forceExitApp(): void;
     androidTraceInstant?(name: string): void;
     androidTraceBeginSection?(name: string): void;
