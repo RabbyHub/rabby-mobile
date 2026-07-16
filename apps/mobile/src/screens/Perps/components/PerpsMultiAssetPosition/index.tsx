@@ -9,7 +9,7 @@ import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
-import { fetchMarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Account } from '@/core/services/preference';
 import {
@@ -31,7 +31,8 @@ import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
-import { formatPerpsCoin } from '@/utils/perps';
+import { formatPerpsCoin, getHyperliquidCoinLogoUrl } from '@/utils/perps';
+import { SvgUri } from 'react-native-svg';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
 
@@ -48,6 +49,34 @@ interface AssetPositionWithAccount {
   quoteAsset: string;
   displayName: string;
 }
+
+// Hyperliquid's official coin icons are svg, which the shared AssetAvatar
+// deliberately renders as a placeholder (virtual-list constraint). This card
+// isn't virtualized, so render the svg fallback locally.
+const CoinAvatar = ({ logo, size }: { logo: string; size: number }) => {
+  const svgStyle = useMemo(
+    () => ({
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      overflow: 'hidden' as const,
+    }),
+    [size],
+  );
+  if (!/\.svg(\?|$)/i.test(logo)) {
+    return <AssetAvatar logo={logo} size={size} />;
+  }
+  return (
+    <View style={svgStyle}>
+      <SvgUri
+        uri={logo}
+        width={size}
+        height={size}
+        fallback={<AssetAvatar logo="" size={size} />}
+      />
+    </View>
+  );
+};
 
 const AssetPositionItem = ({
   item,
@@ -111,7 +140,7 @@ const AssetPositionItem = ({
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
           <View style={styles.coinInfoRow}>
-            <AssetAvatar logo={logoUrl} size={28} />
+            <CoinAvatar logo={logoUrl} size={28} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
                 <Text style={styles.coinName}>
@@ -321,11 +350,10 @@ const AssetPositionItem = ({
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap, marketDataStatus } = perpsStore(
+  const { clearinghouseStateMap, marketDataMap } = perpsStore(
     useShallow(s => ({
       clearinghouseStateMap: s.clearinghouseStateMap,
       marketDataMap: s.marketDataMap,
-      marketDataStatus: s.marketDataStatus,
     })),
   );
   const [selectedPositionKey, setSelectedPositionKey] = useState<{
@@ -354,7 +382,11 @@ export const PerpsMultiAssetPosition: React.FC = () => {
           account,
           quoteAsset,
           assetPositions: assetPosition,
-          logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
+          // Market meta can be missing (boot fetch still retrying) — fall
+          // back to Hyperliquid's official icon, which only needs the coin.
+          logoUrl:
+            marketDataMap[assetPosition.position.coin]?.logoUrl ||
+            getHyperliquidCoinLogoUrl(assetPosition.position.coin),
           displayName:
             marketDataMap[assetPosition.position.coin]?.displayName ||
             assetPosition.position.coin,
@@ -426,31 +458,6 @@ export const PerpsMultiAssetPosition: React.FC = () => {
   const hasLoggedEvent = useRef(false);
 
   const hasPosition = useMemo(() => dataList.length > 0, [dataList.length]);
-
-  // The boot-time fetchMarketData can fail before the network/VPN is ready,
-  // and nothing on Home retries it — positions would render with placeholder
-  // logos until the user navigates away. Retry with capped backoff while this
-  // card shows positions without market data.
-  const marketDataRetryCount = useRef(0);
-  useEffect(() => {
-    if (marketDataStatus === 'success') {
-      marketDataRetryCount.current = 0;
-      return;
-    }
-    if (!hasPosition) {
-      marketDataRetryCount.current = 0;
-      return;
-    }
-    if (marketDataStatus === 'loading') {
-      return;
-    }
-    const delay = Math.min(30_000, 2_000 * 2 ** marketDataRetryCount.current);
-    const timer = setTimeout(() => {
-      marketDataRetryCount.current += 1;
-      fetchMarketData();
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [hasPosition, marketDataStatus]);
 
   useEffect(() => {
     if (hasPosition && !hasLoggedEvent.current) {
