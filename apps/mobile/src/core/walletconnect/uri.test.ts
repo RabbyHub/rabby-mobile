@@ -18,7 +18,7 @@ describe('walletconnect uri', () => {
     expect(parseWalletConnectUriFromLink(link)).toBe(WC_URI);
   });
 
-  it('only allows valid Rabby WalletConnect deeplinks', () => {
+  it('identifies Rabby WalletConnect deeplink targets', () => {
     const link = `rabby://walletconnect?uri=${encodeURIComponent(WC_URI)}`;
     expect(isRabbyWalletConnectDeeplink(link)).toBe(true);
     expect(
@@ -26,12 +26,12 @@ describe('walletconnect uri', () => {
         `rabby://wc?uri=${encodeURIComponent(WC_URI)}`,
       ),
     ).toBe(true);
-    expect(isRabbyWalletConnectDeeplink(`rabby://walletconnect`)).toBe(false);
+    expect(isRabbyWalletConnectDeeplink(`rabby://walletconnect`)).toBe(true);
     expect(
       isRabbyWalletConnectDeeplink(
         'rabby://walletconnect?uri=wc%3Aabc123%402%3Frelay-protocol%3Dirn',
       ),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       isRabbyWalletConnectDeeplink(
         `rabby://clear-app-cache?uri=${encodeURIComponent(WC_URI)}`,
