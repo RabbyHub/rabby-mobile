@@ -2,12 +2,7 @@ import { createDappBySession } from '@/core/apis/dapp';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import * as apisDapp from '@/core/apis/dapp';
-import type {
-  DappInfo,
-  DappService,
-  DappStore,
-} from '@/core/services/dappService';
-import type { Account, KeyringAccountWithAlias } from '@/types/account';
+import type { DappInfo, DappStore } from '@/core/services/dappService';
 import {
   bindDappStoreListener,
   dappServiceApi,
@@ -16,19 +11,15 @@ import {
 } from '@/core/serviceApi/dapp';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
 import { useAccounts } from './account';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { getDappAccount } from '@/core/utils/dappAccount';
 import {
-  runWithCoreServices,
   serviceDependency,
   useCoreServiceDependencies,
 } from '@/core/serviceApi/serviceDependencies';
-
-const DAPP_SERVICE_DEPENDENCIES = [serviceDependency('dappService')] as const;
 
 const DAPP_ACCOUNT_DEPENDENCIES = [
   serviceDependency('transactionHistoryService'),
@@ -183,38 +174,6 @@ export function useDapps() {
     disconnectDapp,
     isDappConnected,
   };
-}
-
-export function useDappCurrentAccount() {
-  const dependencyState = useCoreServiceDependencies(DAPP_SERVICE_DEPENDENCIES);
-
-  const setDappCurrentAccount = useCallback(
-    async (id: DappInfo['origin'], currentAccount: Account) => {
-      const applyCurrentAccount = (dappService: DappService) => {
-        if (!dappService.getDapp(id)) {
-          throw new Error('dapp not found');
-        }
-
-        dappService.patchDapps({
-          [id]: {
-            currentAccount,
-          },
-        });
-      };
-
-      if (dependencyState.status === 'ready') {
-        applyCurrentAccount(dependencyState.services.dappService);
-        return;
-      }
-
-      await runWithCoreServices(DAPP_SERVICE_DEPENDENCIES, services => {
-        applyCurrentAccount(services.dappService);
-      });
-    },
-    [dependencyState],
-  );
-
-  return { setDappCurrentAccount };
 }
 
 export function useDappAccountResolver() {

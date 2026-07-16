@@ -13,7 +13,6 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import { useDappCurrentAccount } from '@/hooks/useDapps';
 import type { DappInfo } from '@/core/services/dappService';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
@@ -21,6 +20,11 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import type { ITokenItem } from '@/store/tokens';
+import {
+  withDappAccountSwitcherServices,
+  type DappAccountSwitcherServiceInjectedProps,
+} from './dappAccountSwitcherServices';
+import type { Account } from '@/types/account';
 
 export function AccountSwitcherModal({
   forScene,
@@ -122,16 +126,20 @@ const getModalStyle = createGetStyles2024(ctx => {
   };
 });
 
-export function AccountSwitcherModalInDappWebView({
-  activeDappId,
-  __IS_IN_SHEET_MODAL__ = false,
-}: {
+type AccountSwitcherModalInDappWebViewProps = {
   // activeDapp: DappInfo | null;
   activeDappId?: DappInfo['origin'];
   /** @deprecated */
   forScene?: AccountSwitcherAopProps['forScene'];
   __IS_IN_SHEET_MODAL__?: boolean;
-}) {
+};
+
+function AccountSwitcherModalInDappWebViewImpl({
+  activeDappId,
+  __IS_IN_SHEET_MODAL__ = false,
+  coreServices,
+}: AccountSwitcherModalInDappWebViewProps &
+  DappAccountSwitcherServiceInjectedProps) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(
     '@ActiveDappWebViewModal',
   );
@@ -150,7 +158,20 @@ export function AccountSwitcherModalInDappWebView({
     };
   }, [toggleSceneVisible]);
 
-  const { setDappCurrentAccount } = useDappCurrentAccount();
+  const setDappCurrentAccount = useCallback(
+    (id: DappInfo['origin'], currentAccount: Account) => {
+      if (!coreServices.dappService.getDapp(id)) {
+        throw new Error('dapp not found');
+      }
+
+      coreServices.dappService.patchDapps({
+        [id]: {
+          currentAccount,
+        },
+      });
+    },
+    [coreServices.dappService],
+  );
 
   const onCancel = useCallback(() => {
     toggleSceneVisible('@ActiveDappWebViewModal', false);
@@ -195,7 +216,7 @@ export function AccountSwitcherModalInDappWebView({
                 if (!activeDappId) {
                   return;
                 }
-                await setDappCurrentAccount(activeDappId, ctx.sceneAccount);
+                setDappCurrentAccount(activeDappId, ctx.sceneAccount);
                 await ctx.switchAction();
               }}
               scrollToBottom={scrollToBottom}
@@ -206,6 +227,9 @@ export function AccountSwitcherModalInDappWebView({
     </AppBottomSheetModal>
   );
 }
+
+export const AccountSwitcherModalInDappWebView =
+  withDappAccountSwitcherServices(AccountSwitcherModalInDappWebViewImpl);
 
 const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
   return {

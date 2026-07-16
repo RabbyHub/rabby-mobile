@@ -25,11 +25,22 @@ const TypedWrappedComponent = withCoreServices(
   SWAP_DEPENDENCIES,
   TypedComponent,
 );
+const TypedWrappedComponentWithFallback = withCoreServices(
+  SWAP_DEPENDENCIES,
+  TypedComponent,
+  {
+    fallback: props => React.createElement(React.Fragment, null, props.title),
+  },
+);
 
 const typedExternalProps: React.ComponentProps<typeof TypedWrappedComponent> = {
   title: 'Swap',
 };
 void typedExternalProps;
+const typedFallbackExternalProps: React.ComponentProps<
+  typeof TypedWrappedComponentWithFallback
+> = { title: 'Swap' };
+void typedFallbackExternalProps;
 
 // @ts-expect-error coreServices is internal to the HOC and cannot be supplied by callers.
 const invalidTypedExternalProps: React.ComponentProps<

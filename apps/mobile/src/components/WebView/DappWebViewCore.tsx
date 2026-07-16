@@ -14,8 +14,12 @@ import { APP_UA_PARIALS, isNonPublicProductionEnv } from '@/constant';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import {
   BUILTIN_SPECIAL_URLS,
-  useSetupWebview,
+  useSetupWebviewWithServices,
 } from '@/core/bridges/useBackgroundBridge';
+import {
+  withBackgroundBridgeServices,
+  type BackgroundBridgeServiceInjectedProps,
+} from '@/core/bridges/backgroundBridgeServices';
 import { useWebViewControl } from '@/components/WebView/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
@@ -88,7 +92,7 @@ function convertToWebviewUrl(dappOrigin: string) {
   return stringUtils.ensurePrefix(dappOrigin, 'https://');
 }
 
-export default function DappWebViewCore({
+function DappWebViewCore({
   dappOrigin,
   url,
   embedHtml,
@@ -116,7 +120,8 @@ export default function DappWebViewCore({
   style,
   offscreenPreload,
   disabled,
-}: DappWebViewCoreProps) {
+  coreServices,
+}: DappWebViewCoreProps & BackgroundBridgeServiceInjectedProps) {
   const internalController = useWebViewControl({});
   const {
     webviewRef,
@@ -164,21 +169,19 @@ export default function DappWebViewCore({
     documentEndBuiltinScriptIds,
   } = useJavaScriptBeforeContentLoaded();
 
-  const {
-    isBridgeReady,
-    onLoadStart: onBridgeLoadStart,
-    onMessage: onBridgeMessage,
-  } = useSetupWebview({
-    dappOrigin,
-    webviewRef,
-    webviewIdRef,
-    siteInfoRefs: {
-      urlRef,
-      titleRef,
-      iconRef,
-    },
-    isFromMobileInnerDapp: true,
-  });
+  const { onLoadStart: onBridgeLoadStart, onMessage: onBridgeMessage } =
+    useSetupWebviewWithServices({
+      dappOrigin,
+      webviewRef,
+      webviewIdRef,
+      siteInfoRefs: {
+        urlRef,
+        titleRef,
+        iconRef,
+      },
+      isFromMobileInnerDapp: true,
+      coreServices,
+    });
 
   const resolvedUrl = useMemo(() => {
     if (embedHtml) return undefined;
@@ -485,7 +488,7 @@ export default function DappWebViewCore({
     return null;
   }
 
-  if (!entryScriptWeb3Loaded || !isBridgeReady) {
+  if (!entryScriptWeb3Loaded) {
     return <View style={[styles.placeholder, style]} />;
   }
 
@@ -549,6 +552,11 @@ export default function DappWebViewCore({
     </View>
   );
 }
+
+export default withBackgroundBridgeServices(DappWebViewCore, {
+  fallback: props =>
+    props.disabled ? null : <View style={[styles.placeholder, props.style]} />,
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -4,11 +4,11 @@ import { useCallback, useRef, useEffect } from 'react';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { deleteSessionSync } from '@/core/serviceApi/session';
 import {
-  serviceDependency,
-  useCoreServiceDependencies,
-} from '@/core/serviceApi/serviceDependencies';
+  BACKGROUND_BRIDGE_SERVICE_DEPENDENCIES,
+  type BackgroundBridgeServices,
+} from './backgroundBridgeServices';
+import { useCoreServiceDependencies } from '@/core/serviceApi/serviceDependencies';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
@@ -16,11 +16,6 @@ import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
 export const BUILTIN_SPECIAL_URLS = [BLANK_PAGE, BLANK_RABBY_PAGE];
-
-const BACKGROUND_BRIDGE_SERVICES = [
-  serviceDependency('dappService'),
-  serviceDependency('sessionService'),
-] as const;
 
 type WebView = import('react-native-webview').WebView;
 type OnLoadStart = (
@@ -40,12 +35,7 @@ type WebViewDataPayload<P = any> = {
   payload?: P;
 };
 
-export function useSetupWebview({
-  siteInfoRefs: { urlRef, titleRef, iconRef },
-  webviewRef,
-  webviewIdRef,
-  isFromMobileInnerDapp,
-}: {
+type SetupWebviewParams = {
   /** @deprecated */
   dappOrigin?: string;
   siteInfoRefs: {
@@ -56,31 +46,48 @@ export function useSetupWebview({
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
   isFromMobileInnerDapp?: boolean;
+};
+
+export function useSetupWebview(params: SetupWebviewParams) {
+  const serviceState = useCoreServiceDependencies(
+    BACKGROUND_BRIDGE_SERVICE_DEPENDENCIES,
+  );
+
+  return useSetupWebviewWithServices({
+    ...params,
+    coreServices:
+      serviceState.status === 'ready' ? serviceState.services : null,
+  });
+}
+
+export function useSetupWebviewWithServices({
+  siteInfoRefs: { urlRef, titleRef, iconRef },
+  webviewRef,
+  webviewIdRef,
+  isFromMobileInnerDapp,
+  coreServices,
+}: SetupWebviewParams & {
+  coreServices: BackgroundBridgeServices | null;
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
-  const bridgeServiceState = useCoreServiceDependencies(
-    BACKGROUND_BRIDGE_SERVICES,
-  );
-  const bridgeServices =
-    bridgeServiceState.status === 'ready' ? bridgeServiceState.services : null;
-  const isBridgeReady = bridgeServices !== null;
+  const isBridgeReady = coreServices !== null;
 
   const destroyCurrentBridge = useCallback(() => {
     if (currentBridgeRef.current) {
       currentBridgeRef.current.onDisconnect();
-      deleteSessionSync(currentBridgeRef.current);
+      coreServices?.sessionService.deleteSession(currentBridgeRef.current);
       currentBridgeRef.current = null;
     }
-  }, [currentBridgeRef]);
+  }, [coreServices, currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
-      if (!bridgeServices) {
+      if (!coreServices) {
         return;
       }
 
-      const { dappService, sessionService } = bridgeServices;
+      const { dappService, sessionService } = coreServices;
       urlRef.current = urlBridge;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
@@ -107,7 +114,7 @@ export function useSetupWebview({
     },
     [
       isFromMobileInnerDapp,
-      bridgeServices,
+      coreServices,
       urlRef,
       webviewRef,
       webviewIdRef,
@@ -198,7 +205,7 @@ export function useSetupWebview({
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
     ({ nativeEvent }, treatAsReload = false) => {
-      if (!bridgeServices) {
+      if (!coreServices) {
         return;
       }
 
@@ -237,13 +244,9 @@ export function useSetupWebview({
           // }
 
           const dappOrigin = nativeEvent.url;
-          if (BUILTIN_SPECIAL_URLS.includes(dappOrigin)) {
-            urlRef.current = dappOrigin;
-            return;
-          }
-
-          const formattedDappOrigin =
-            urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+          const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
+            ? dappOrigin
+            : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
           initializeBackgroundBridge(formattedDappOrigin, true);
         }
       } catch (e: any) {
@@ -259,7 +262,7 @@ export function useSetupWebview({
       urlRef,
       putBackgroundBridge,
       currentBridgeRef,
-      bridgeServices,
+      coreServices,
     ],
   );
 

@@ -257,8 +257,10 @@ export function CoreServiceBoundary<
   return children(state.services);
 }
 
-export type WithCoreServicesOptions = {
-  fallback?: React.ReactNode;
+export type WithCoreServicesOptions<ExternalProps = never> = {
+  fallback?:
+    | React.ReactNode
+    | ((props: Readonly<ExternalProps>) => React.ReactNode);
   renderError?: (error: Error) => React.ReactNode;
 };
 
@@ -275,7 +277,9 @@ export function withCoreServices<
 >(
   dependencies: Dependencies,
   Component: React.ComponentType<Props>,
-  options: WithCoreServicesOptions = {},
+  options: WithCoreServicesOptions<
+    Omit<Props, keyof CoreServiceInjectedProps<Dependencies>>
+  > = {},
 ): React.ComponentType<
   Omit<Props, keyof CoreServiceInjectedProps<Dependencies>>
 > {
@@ -285,10 +289,15 @@ export function withCoreServices<
   >;
 
   const Wrapped: React.FC<ExternalProps> = props => {
+    const fallback =
+      typeof options.fallback === 'function'
+        ? options.fallback(props)
+        : options.fallback;
+
     return (
       <CoreServiceBoundary
         dependencies={dependencies}
-        fallback={options.fallback}
+        fallback={fallback}
         renderError={options.renderError}>
         {coreServices =>
           React.createElement(Component, {
