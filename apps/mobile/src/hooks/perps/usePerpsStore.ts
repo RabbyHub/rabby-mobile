@@ -448,9 +448,8 @@ const applyAssetCtxsToList = (
     return {
       ...item,
       ...ctx,
-      pxDecimals: ctx.markPx
-        ? getPxDecimals(String(ctx.markPx))
-        : item.pxDecimals,
+      // Tick precision follows the price magnitude (5-sig-figs rule).
+      pxDecimals: getPxDecimals(item.szDecimals, ctx.markPx ?? item.markPx),
     };
   });
 };
@@ -596,10 +595,14 @@ const runFetchMarketData = async () => {
       return;
     }
 
-    // perpDexs failure is degradable
-    perpDexsCache = perpDexs ?? null;
+    // perpDexs failure falls back to the last known roster — an empty
+    // dexIdMap would fail the whole round in formatMarkData.
+    if (perpDexs) {
+      perpDexsCache = perpDexs;
+    }
+    const effectivePerpDexs = perpDexs ?? perpDexsCache ?? [];
     const dexIdMap: Record<number, string> = {};
-    (perpDexs ?? []).forEach((dex, idx) => {
+    effectivePerpDexs.forEach((dex, idx) => {
       dexIdMap[idx] = dex?.name ?? '';
     });
 
@@ -616,7 +619,7 @@ const runFetchMarketData = async () => {
   }
 };
 
-const fetchMarketData = (): Promise<void> => {
+export const fetchMarketData = (): Promise<void> => {
   if (marketDataPromise) {
     return marketDataPromise;
   }
@@ -1024,7 +1027,7 @@ const overlayFastCtxsToMarketData = (
       ...item,
       markPx,
       midPx,
-      pxDecimals: getPxDecimals(String(markPx ?? item.markPx ?? '')),
+      pxDecimals: getPxDecimals(item.szDecimals, markPx ?? item.markPx),
     };
   });
   return changed ? next : list;

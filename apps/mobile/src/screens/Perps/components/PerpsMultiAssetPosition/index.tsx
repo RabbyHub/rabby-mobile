@@ -9,7 +9,7 @@ import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { fetchMarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Account } from '@/core/services/preference';
 import {
@@ -321,10 +321,11 @@ const AssetPositionItem = ({
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
+  const { clearinghouseStateMap, marketDataMap, marketDataStatus } = perpsStore(
     useShallow(s => ({
       clearinghouseStateMap: s.clearinghouseStateMap,
       marketDataMap: s.marketDataMap,
+      marketDataStatus: s.marketDataStatus,
     })),
   );
   const [selectedPositionKey, setSelectedPositionKey] = useState<{
@@ -425,6 +426,31 @@ export const PerpsMultiAssetPosition: React.FC = () => {
   const hasLoggedEvent = useRef(false);
 
   const hasPosition = useMemo(() => dataList.length > 0, [dataList.length]);
+
+  // The boot-time fetchMarketData can fail before the network/VPN is ready,
+  // and nothing on Home retries it — positions would render with placeholder
+  // logos until the user navigates away. Retry with capped backoff while this
+  // card shows positions without market data.
+  const marketDataRetryCount = useRef(0);
+  useEffect(() => {
+    if (marketDataStatus === 'success') {
+      marketDataRetryCount.current = 0;
+      return;
+    }
+    if (!hasPosition) {
+      marketDataRetryCount.current = 0;
+      return;
+    }
+    if (marketDataStatus === 'loading') {
+      return;
+    }
+    const delay = Math.min(30_000, 2_000 * 2 ** marketDataRetryCount.current);
+    const timer = setTimeout(() => {
+      marketDataRetryCount.current += 1;
+      fetchMarketData();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [hasPosition, marketDataStatus]);
 
   useEffect(() => {
     if (hasPosition && !hasLoggedEvent.current) {
