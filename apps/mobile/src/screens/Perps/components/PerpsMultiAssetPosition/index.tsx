@@ -31,7 +31,7 @@ import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
-import { formatPerpsCoin, getHyperliquidCoinLogoUrl } from '@/utils/perps';
+import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
@@ -50,9 +50,8 @@ interface AssetPositionWithAccount {
   displayName: string;
 }
 
-// Hyperliquid's official coin icons are svg, which the shared AssetAvatar
-// deliberately renders as a placeholder (virtual-list constraint). This card
-// isn't virtualized, so render the svg fallback locally.
+// AssetAvatar deliberately won't render remote svg (virtual-list constraint);
+// this card isn't virtualized, so render the svg fallback locally.
 const CoinAvatar = ({ logo, size }: { logo: string; size: number }) => {
   const svgStyle = useMemo(
     () => ({
@@ -382,11 +381,11 @@ export const PerpsMultiAssetPosition: React.FC = () => {
           account,
           quoteAsset,
           assetPositions: assetPosition,
-          // Market meta can be missing (boot fetch still retrying) — fall
-          // back to Hyperliquid's official icon, which only needs the coin.
+          // Meta can be missing while the boot fetch retries — fall back to
+          // the bundled PNG, then HL's svg.
           logoUrl:
             marketDataMap[assetPosition.position.coin]?.logoUrl ||
-            getHyperliquidCoinLogoUrl(assetPosition.position.coin),
+            getFallbackCoinLogoUrl(assetPosition.position.coin),
           displayName:
             marketDataMap[assetPosition.position.coin]?.displayName ||
             assetPosition.position.coin,

@@ -22,10 +22,16 @@ const PerpsMarketItemComponent: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  // markPx/prevDayPx are '' until the first ticker lands (fresh fetch or
+  // hydrated cache) — render placeholders instead of $NaN.
+  const hasPrice = !!item.markPx && Number.isFinite(Number(item.markPx));
+  const hasChange = hasPrice && !!item.prevDayPx && Number(item.prevDayPx) > 0;
   const isUp = Number(item.markPx) - Number(item.prevDayPx) > 0;
   const absPnlUsd = Math.abs(Number(item.markPx) - Number(item.prevDayPx));
   const absPnlPct = Math.abs(absPnlUsd / Number(item.prevDayPx));
-  const pnlText = `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`;
+  const pnlText = hasChange
+    ? `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`
+    : '-';
 
   return (
     <TouchableOpacity onPress={onPress}>
@@ -40,7 +46,7 @@ const PerpsMarketItemComponent: React.FC<{
               <PerpsDisplayCoinName item={item} />
             </View>
             <Text style={styles.price}>
-              {`$${splitNumberByStep(item.markPx)}`}
+              {hasPrice ? `$${splitNumberByStep(item.markPx)}` : '-'}
             </Text>
           </View>
           <View style={styles.row}>
@@ -55,7 +61,11 @@ const PerpsMarketItemComponent: React.FC<{
             <Text
               style={[
                 styles.priceChange,
-                isUp ? null : styles.priceChangeDown,
+                hasChange
+                  ? isUp
+                    ? null
+                    : styles.priceChangeDown
+                  : styles.priceChangeMuted,
               ]}>
               {pnlText}
             </Text>
@@ -191,6 +201,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   priceChangeDown: {
     color: colors2024['red-default'],
+  },
+  priceChangeMuted: {
+    color: colors2024['neutral-secondary'],
   },
   favoriteTag: {
     position: 'absolute',

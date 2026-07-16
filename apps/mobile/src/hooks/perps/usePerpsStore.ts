@@ -52,6 +52,22 @@ import BigNumber from 'bignumber.js';
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
 
+// Meta-only marketData snapshot: ticker fields are blanked (stale prices must
+// never render as current). Bump the version on MarketData shape changes.
+const MARKET_DATA_CACHE_VERSION = 1;
+const MARKET_DATA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+const EMPTY_MARKET_TICKER = {
+  dayBaseVlm: '0',
+  dayNtlVlm: '0',
+  funding: '0',
+  markPx: '',
+  midPx: '',
+  openInterest: '0',
+  oraclePx: '',
+  premium: '0',
+  prevDayPx: '',
+} satisfies Partial<MarketData>;
+
 // Per-dex raw snapshots, source of truth for rebuilding the aggregated
 // `currentClearinghouseState`. Stale frames (older `time`) never win.
 // Key '' === hyper native dex.
@@ -651,6 +667,15 @@ const runFetchMarketData = async () => {
     }
     setMarketData(marketData, categories);
     setMarketDataStatus('success');
+    perpsService.setMarketDataCache({
+      v: MARKET_DATA_CACHE_VERSION,
+      updatedAt: Date.now(),
+      // Blank the ticker; read from the store (WS-merged) so the cached
+      // pxDecimals is the price-informed one.
+      list: perpsStore
+        .getState()
+        .marketData.map(item => ({ ...item, ...EMPTY_MARKET_TICKER })),
+    });
   } catch (error) {
     console.error('Failed to fetch market data:', error);
     setMarketDataStatus('error');
@@ -1645,6 +1670,38 @@ export const usePerpsStore = () => {
   };
 };
 
+// Cold-start bootstrap: hydrate last-known meta so logos/names/decimals
+// render before the first fetch lands. Status is left untouched.
+runIIFEFunc(() => {
+  try {
+    const cache = perpsService.getMarketDataCache<MarketData>();
+    if (
+      !cache ||
+      cache.v !== MARKET_DATA_CACHE_VERSION ||
+      Date.now() - cache.updatedAt > MARKET_DATA_CACHE_TTL ||
+      !Array.isArray(cache.list) ||
+      cache.list.length === 0
+    ) {
+      return;
+    }
+    setPerpsState(prev => {
+      // A fetch already landed — never overwrite fresh data with cache.
+      if (prev.marketData.length > 0) {
+        return prev;
+      }
+      const list = lastCtxsByDex
+        ? applyAssetCtxsToList(cache.list, lastCtxsByDex)
+        : cache.list;
+      return {
+        ...prev,
+        marketData: list,
+        marketDataMap: buildMarketDataMap(list),
+      };
+    });
+  } catch (error) {
+    console.error('Failed to hydrate market data cache:', error);
+  }
+});
 runIIFEFunc(fetchMarketData);
 runIIFEFunc(fetchFavoriteMarkets);
 runIIFEFunc(fetchMarginModeByCoin);
