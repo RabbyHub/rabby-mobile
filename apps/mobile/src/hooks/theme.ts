@@ -29,6 +29,7 @@ import { runDevIIFEFunc } from '@/core/utils/store';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { isWorkletFunction, useAnimatedStyle } from 'react-native-reanimated';
 import { svsLayout } from './useAppLayout';
+import { applyAppAppearanceWhenReady } from '@/core/utils/appAppearanceHandoff';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -74,6 +75,12 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
     : 'light';
 }
 
+function applyAppThemeToAppearance(appTheme: AppThemeScheme) {
+  return applyAppAppearanceWhenReady(() => {
+    Appearance.setColorScheme(appThemeToColorScheme(appTheme));
+  });
+}
+
 // runDevIIFEFunc(() => {
 //   appJsonStore.setItem('@AppTheme', 'dark');
 // });
@@ -109,7 +116,7 @@ function toggleThemeMode(nextTheme?: AppThemeScheme) {
           (AppColorSchemes.indexOf(prev.appTheme) + 1) % AppColorSchemes.length
         ];
     }
-    Appearance.setColorScheme(appThemeToColorScheme(nextTheme));
+    applyAppThemeToAppearance(nextTheme);
     return { ...prev, appTheme: nextTheme };
   });
 }
@@ -164,7 +171,7 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
   React.useEffect(() => {
     if (!options?.isAppTop) return;
 
-    Appearance.setColorScheme(appThemeToColorScheme(appTheme));
+    return applyAppThemeToAppearance(appTheme);
   }, [options?.isAppTop, appTheme]);
 
   const { setMode: rneui_setMode } = useThemeMode();
