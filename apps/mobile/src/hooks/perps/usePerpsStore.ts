@@ -1772,10 +1772,9 @@ runIIFEFunc(async () => {
 });
 
 export function startSubscribePerpsOnAppState() {
-  const sdk = apisPerps.getPerpsSDK();
   const subscription = AppState.addEventListener('change', nextAppState => {
     // Pass the state string ('active', 'background', 'inactive') directly
-    sdk.ws.handleAppStateChange(nextAppState);
+    apisPerps.getPerpsSDK().ws.handleAppStateChange(nextAppState);
 
     // When app returns to active, retry market data if it previously failed or never loaded.
     if (nextAppState === 'active') {
