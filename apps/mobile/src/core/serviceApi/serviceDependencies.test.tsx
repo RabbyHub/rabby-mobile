@@ -1,5 +1,7 @@
 import React from 'react';
 import {
+  isCoreServiceLoaded,
+  isCoreServiceRegistered,
   registerCoreServiceLoader,
   registerService,
 } from '@/core/services/serviceRegistry';
@@ -79,11 +81,11 @@ describe('core service dependencies', () => {
     const unregisterLoader = registerCoreServiceLoader(
       'dappService',
       async () => {
+        unregisterService = registerService('dappService', service);
         signalLoaderStarted?.();
         await new Promise<void>(resolve => {
           releaseLoader = resolve;
         });
-        unregisterService = registerService('dappService', service);
       },
     );
     const readiness = resolveCoreServices([
@@ -96,12 +98,15 @@ describe('core service dependencies', () => {
 
     try {
       await loaderStarted;
+      expect(isCoreServiceRegistered('dappService')).toBe(true);
+      expect(isCoreServiceLoaded('dappService')).toBe(false);
       expect(resolved).toBe(false);
 
       releaseLoader?.();
       const services = await readiness;
 
       expect(services.dappService).toBe(service);
+      expect(isCoreServiceLoaded('dappService')).toBe(true);
     } finally {
       unregisterService?.();
       unregisterLoader();

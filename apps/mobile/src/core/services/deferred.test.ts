@@ -4,6 +4,7 @@ import {
   registerDeferredService,
   registerDeferredServiceLoader,
   waitDeferredService,
+  waitDeferredServiceRegistration,
 } from './deferred';
 
 describe('deferred service loading', () => {
@@ -61,7 +62,7 @@ describe('deferred service loading', () => {
     disposeLoader();
   });
 
-  it('waits for a running loader to finish even after it registers early', async () => {
+  it('distinguishes instance registration from loader completion', async () => {
     const name = 'early-registration-loader';
     const service = { value: 99 };
     let releaseLoader: (() => void) | undefined;
@@ -78,23 +79,24 @@ describe('deferred service loading', () => {
       await loaderFinished;
     });
 
-    const registrationPromise = waitDeferredService<typeof service>(name);
-    const ensurePromise = ensureDeferredService(name);
+    const registrationPromise =
+      waitDeferredServiceRegistration<typeof service>(name);
+    const loadedPromise = waitDeferredService<typeof service>(name);
 
     await registered;
     await expect(registrationPromise).resolves.toBe(service);
     expect(isDeferredServiceLoaded(name)).toBe(false);
 
-    let ensureSettled = false;
-    void ensurePromise.then(() => {
-      ensureSettled = true;
+    let loadedSettled = false;
+    void loadedPromise.then(() => {
+      loadedSettled = true;
     });
     await Promise.resolve();
-    expect(ensureSettled).toBe(false);
+    expect(loadedSettled).toBe(false);
 
     releaseLoader?.();
-    await expect(ensurePromise).resolves.toBeUndefined();
-    expect(ensureSettled).toBe(true);
+    await expect(loadedPromise).resolves.toBe(service);
+    expect(loadedSettled).toBe(true);
     expect(isDeferredServiceLoaded(name)).toBe(true);
 
     disposeLoader();
@@ -112,6 +114,29 @@ describe('deferred service loading', () => {
       'loader failed after registration',
     );
     expect(isDeferredServiceLoaded(name)).toBe(false);
+
+    disposeLoader();
+  });
+
+  it('retries a loader that failed after registering an instance', async () => {
+    const name = 'early-registration-retry-loader';
+    const service = { value: 102 };
+    let shouldFail = true;
+    const disposeLoader = registerDeferredServiceLoader(name, async () => {
+      registerDeferredService(name, service);
+      if (shouldFail) {
+        throw new Error('retryable loader failure');
+      }
+    });
+
+    await expect(waitDeferredService(name)).rejects.toThrow(
+      'retryable loader failure',
+    );
+    expect(isDeferredServiceLoaded(name)).toBe(false);
+
+    shouldFail = false;
+    await expect(waitDeferredService(name)).resolves.toBe(service);
+    expect(isDeferredServiceLoaded(name)).toBe(true);
 
     disposeLoader();
   });

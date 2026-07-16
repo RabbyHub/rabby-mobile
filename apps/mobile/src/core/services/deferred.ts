@@ -108,11 +108,9 @@ export function ensureDeferredService(name: string) {
   }
 
   const loaderError = serviceLoaderErrorMap.get(name);
-  if (loaderError && serviceMap.has(name)) {
-    return Promise.reject(loaderError);
-  }
-
-  if (serviceMap.has(name)) {
+  if (loaderError) {
+    serviceLoaderErrorMap.delete(name);
+  } else if (serviceMap.has(name)) {
     return Promise.resolve();
   }
 
@@ -192,42 +190,47 @@ export function getRegisteredDeferredService<TService extends object>(
   return serviceMap.get(name) as TService | undefined;
 }
 
-export function waitDeferredService<TService extends object>(
+function waitForLoaderCompletion(
+  name: string,
+  loaderPromise: Promise<void>,
+  options: { timeoutMs?: number } = {},
+) {
+  if (typeof options.timeoutMs !== 'number') {
+    return loaderPromise;
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Deferred service "${name}" timed out`));
+    }, options.timeoutMs);
+
+    loaderPromise.then(
+      () => {
+        clearTimeout(timeoutId);
+        resolve();
+      },
+      error => {
+        clearTimeout(timeoutId);
+        reject(error);
+      },
+    );
+  });
+}
+
+export async function waitDeferredService<TService extends object>(
   name: string,
   options: { timeoutMs?: number } = {},
 ) {
+  await waitForLoaderCompletion(name, ensureDeferredService(name), options);
+
   const service = serviceMap.get(name) as TService | undefined;
-  if (service) {
-    return Promise.resolve(service);
+  if (!service) {
+    throw new Error(
+      `Deferred service "${name}" loader completed without registering a service`,
+    );
   }
 
-  return new Promise<TService>((resolve, reject) => {
-    const waiter: Waiter<TService> = { resolve, reject };
-
-    if (typeof options.timeoutMs === 'number') {
-      waiter.timeoutId = setTimeout(() => {
-        const waiters = waiterMap.get(name);
-        if (waiters) {
-          waiterMap.set(
-            name,
-            waiters.filter(item => item !== waiter),
-          );
-        }
-        reject(new Error(`Deferred service "${name}" timed out`));
-      }, options.timeoutMs);
-    }
-
-    const waiters = waiterMap.get(name);
-    if (waiters) {
-      waiters.push(waiter);
-    } else {
-      waiterMap.set(name, [waiter]);
-    }
-
-    ensureDeferredService(name).catch(() => {
-      // Waiters are rejected inside ensureDeferredService.
-    });
-  });
+  return service;
 }
 
 export function waitDeferredServiceRegistration<TService extends object>(

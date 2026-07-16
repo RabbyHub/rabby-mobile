@@ -1,7 +1,7 @@
 import {
   callCoreServiceMethod,
   ensureCoreService,
-  isCoreServiceRegistered,
+  isCoreServiceLoaded,
   waitForCoreService,
 } from '@/core/services/serviceRegistry';
 import type {
@@ -66,7 +66,7 @@ export function ensureServiceApiReady<Name extends CoreServiceName>(
 }
 
 export function isServiceApiReady<Name extends CoreServiceName>(name: Name) {
-  return isCoreServiceRegistered(name);
+  return isCoreServiceLoaded(name);
 }
 
 export async function waitServiceApiReady<Name extends CoreServiceName>(
