@@ -835,6 +835,23 @@ describe('ledger DMK bridge discovery', () => {
     );
   });
 
+  it('reports the legacy BOLOS dashboard when GetAppAndVersion returns 0x6e00', async () => {
+    const deviceId = 'ledger-legacy-dashboard-device-id';
+    const sessionId = 'legacy-dashboard-session-1';
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.sendCommand.mockResolvedValueOnce({
+      error: { errorCode: '6e00' },
+    });
+
+    const { getLedgerAppAndVersion } = require('./ledger-dmk');
+
+    await expect(getLedgerAppAndVersion(deviceId)).resolves.toEqual({
+      appName: 'BOLOS',
+      version: '0.0.0',
+    });
+  });
+
   it('reconnects when the app version command uses a stale DMK session', async () => {
     const deviceId = 'ledger-stale-app-command-device-id';
     const staleSessionId = 'stale-session-1';

@@ -25,6 +25,7 @@ export type LedgerDmkDevice = DiscoveredDevice;
 const CONNECT_TIMEOUT_MS = 10000;
 const CONNECT_DRAIN_TIMEOUT_MS = 10000;
 const DEVICE_RESPONSE_TIMEOUT_MS = 15000;
+const LEGACY_DASHBOARD_STATUS_CODE = '6e00';
 const LEDGER_DMK_SDK_LOG_PREFIX = '[DEBUG-ledger-dmk-sdk]';
 const LEDGER_DMK_SDK_LOG_TAGS = [
   'ReactNativeBleTransport',
@@ -514,6 +515,13 @@ export async function readLedgerAppAndVersion(
   const result = await sendLedgerAppAndVersionCommand(sessionId, abortTimeout);
 
   if (!isSuccessCommandResult(result)) {
+    if (
+      'errorCode' in result.error &&
+      result.error.errorCode === LEGACY_DASHBOARD_STATUS_CODE
+    ) {
+      return { appName: 'BOLOS', version: '0.0.0' };
+    }
+
     throw toLedgerDmkError(result.error);
   }
 

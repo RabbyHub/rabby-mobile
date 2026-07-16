@@ -22,6 +22,8 @@ import {
   type LedgerDmkDevice,
 } from '@/core/keyring-bridge/ledger/ledger-dmk';
 
+const LEDGER_CONNECTION_CHECK_TIMEOUT_MS = 2000;
+
 let queue: PQueue;
 setTimeout(() => {
   queue = new (require('p-queue/dist').default)({ concurrency: 1 });
@@ -82,16 +84,32 @@ export async function isConnected(
 
   keyring.setDeviceId(detail.deviceId);
 
+  let connectionCheckTimeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    await getLedgerAppAndVersion(detail.deviceId);
+    await Promise.race([
+      getLedgerAppAndVersion(
+        detail.deviceId,
+        LEDGER_CONNECTION_CHECK_TIMEOUT_MS,
+      ),
+      new Promise<never>((_, reject) => {
+        connectionCheckTimeout = setTimeout(
+          () => reject(new Error('Ledger: Connection check timeout')),
+          LEDGER_CONNECTION_CHECK_TIMEOUT_MS,
+        );
+      }),
+    ]);
     return [true, detail.deviceId];
   } catch (error) {
     if (isLedgerBusyError(error)) {
       return [true, detail.deviceId];
     }
 
-    await resetLedgerDeviceSession(detail.deviceId);
+    void resetLedgerDeviceSession(detail.deviceId).catch(() => {});
     return [false, detail.deviceId];
+  } finally {
+    if (connectionCheckTimeout) {
+      clearTimeout(connectionCheckTimeout);
+    }
   }
 }
 

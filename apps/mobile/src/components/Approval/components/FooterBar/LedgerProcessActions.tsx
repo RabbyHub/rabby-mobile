@@ -17,6 +17,7 @@ export const LedgerProcessActions: React.FC<Props> = props => {
     onDismiss: () => {
       setSubmitting(false);
     },
+    autoConnect: false,
   });
 
   const handleSubmit = React.useCallback(async () => {

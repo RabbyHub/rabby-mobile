@@ -35,7 +35,7 @@ function setupLedgerApiModule(appName: string) {
     appName,
     version: '1.0.0',
   }));
-  const mockResetLedgerDeviceSession = jest.fn();
+  const mockResetLedgerDeviceSession = jest.fn(async () => true);
   const mockAddNewAccount = jest.fn();
   const mockInitCurrentAccount = jest.fn();
 
@@ -180,7 +180,10 @@ describe('core/apis/ledger', () => {
     ).resolves.toEqual([true, 'ledger-device-id']);
 
     expect(mockKeyring.setDeviceId).toHaveBeenCalledWith('ledger-device-id');
-    expect(mockGetLedgerAppAndVersion).toHaveBeenCalledWith('ledger-device-id');
+    expect(mockGetLedgerAppAndVersion).toHaveBeenCalledWith(
+      'ledger-device-id',
+      2000,
+    );
   });
 
   it('resets a cached Ledger session when the live probe reports it locked', async () => {
@@ -236,7 +239,10 @@ describe('core/apis/ledger', () => {
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([true, 'ledger-device-id']);
 
-    expect(mockGetLedgerAppAndVersion).toHaveBeenCalledWith('ledger-device-id');
+    expect(mockGetLedgerAppAndVersion).toHaveBeenCalledWith(
+      'ledger-device-id',
+      2000,
+    );
   });
 
   it('resets the session when the persisted Ledger device is unreachable', async () => {
@@ -260,6 +266,94 @@ describe('core/apis/ledger', () => {
     expect(mockResetLedgerDeviceSession).toHaveBeenCalledWith(
       'ledger-device-id',
     );
+  });
+
+  it('reports a stale session before its BLE teardown finishes', async () => {
+    const {
+      isConnected,
+      mockKeyring,
+      mockGetLedgerAppAndVersion,
+      mockResetLedgerDeviceSession,
+    } = setupLedgerApiModule('Ethereum');
+    mockKeyring.getAccountInfo.mockReturnValue({
+      deviceId: 'ledger-device-id',
+    });
+    mockGetLedgerAppAndVersion.mockRejectedValueOnce(
+      new Error('OpeningConnectionError'),
+    );
+
+    let finishReset = () => undefined;
+    mockResetLedgerDeviceSession.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          finishReset = resolve;
+        }),
+    );
+
+    let result: unknown;
+    const checking = isConnected(
+      '0x0000000000000000000000000000000000000001',
+    ).then(value => {
+      result = value;
+    });
+
+    try {
+      for (let index = 0; index < 10; index += 1) {
+        await Promise.resolve();
+      }
+      expect(result).toEqual([false, 'ledger-device-id']);
+    } finally {
+      finishReset();
+      await checking;
+    }
+  });
+
+  it('bounds the entire connection check before a BLE connect settles', async () => {
+    const {
+      isConnected,
+      mockKeyring,
+      mockGetLedgerAppAndVersion,
+      mockResetLedgerDeviceSession,
+    } = setupLedgerApiModule('Ethereum');
+    mockKeyring.getAccountInfo.mockReturnValue({
+      deviceId: 'ledger-device-id',
+    });
+
+    let finishProbe: (value: {
+      appName: string;
+      version: string;
+    }) => void = () => undefined;
+    mockGetLedgerAppAndVersion.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finishProbe = resolve;
+        }),
+    );
+
+    let result: unknown;
+    const checking = isConnected(
+      '0x0000000000000000000000000000000000000001',
+    ).then(value => {
+      result = value;
+    });
+
+    for (let index = 0; index < 10; index += 1) {
+      await Promise.resolve();
+    }
+    jest.advanceTimersByTime(2000);
+
+    try {
+      for (let index = 0; index < 10; index += 1) {
+        await Promise.resolve();
+      }
+      expect(result).toEqual([false, 'ledger-device-id']);
+      expect(mockResetLedgerDeviceSession).toHaveBeenCalledWith(
+        'ledger-device-id',
+      );
+    } finally {
+      finishProbe({ appName: 'Ethereum', version: '1.0.0' });
+      await checking;
+    }
   });
 
   it('does not retry account import after the user rejects opening the app', async () => {

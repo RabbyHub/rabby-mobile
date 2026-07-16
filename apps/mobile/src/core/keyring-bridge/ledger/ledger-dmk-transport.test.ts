@@ -76,6 +76,7 @@ function createBleHarness() {
   let monitorListener: MonitorListener | undefined;
   let rejectPayloadWrites = false;
   let rssiReadErrorCode: number | undefined;
+  let rssiReadsHang = false;
   let connected = true;
 
   const mtuResponse = Buffer.from([0x08, 0x00, 0x00, 0x00, 0x00, 0x99]);
@@ -117,7 +118,11 @@ function createBleHarness() {
       },
     ),
     isConnected: jest.fn(async () => connected),
-    readRSSI: jest.fn(async () => {
+    readRSSI: jest.fn(async (_transactionId?: string) => {
+      if (rssiReadsHang) {
+        return new Promise<Device>(() => undefined);
+      }
+
       if (rssiReadErrorCode !== undefined) {
         const error = new Error('RSSI read failed');
         Object.assign(error, { errorCode: rssiReadErrorCode });
@@ -143,6 +148,7 @@ function createBleHarness() {
     ),
     characteristicsForDevice: jest.fn(async () => [characteristic]),
     cancelDeviceConnection: jest.fn(async () => device),
+    cancelTransaction: jest.fn(async () => undefined),
   } as unknown as BleManager;
 
   return {
@@ -159,6 +165,9 @@ function createBleHarness() {
     },
     rejectRssiReads(errorCode = 201) {
       rssiReadErrorCode = errorCode;
+    },
+    hangRssiReads() {
+      rssiReadsHang = true;
     },
     respondToApdu() {
       monitorListener?.(null, {
@@ -366,28 +375,57 @@ describe('patched Ledger DMK RN BLE transport', () => {
     }
   });
 
-  it('keeps waiting when the Android RSSI probe fails without a disconnect error', async () => {
+  it('requires two Android RSSI read failures before treating them as a disconnect', async () => {
     const harness = createBleHarness();
     const transport = createTransport(harness.manager);
     const connectedDevice = await connectTransport(transport);
     harness.rejectRssiReads(202);
 
-    try {
-      let settled = false;
-      const resultPromise = connectedDevice
-        .sendApdu(Uint8Array.from([0xe0, 0x04, 0x00, 0x00, 0x00]))
-        .finally(() => {
-          settled = true;
+    let errorTag: string | undefined;
+    connectedDevice
+      .sendApdu(Uint8Array.from([0xe0, 0x04, 0x00, 0x00, 0x00]))
+      .then(result => {
+        result.ifLeft(error => {
+          errorTag = error._tag;
         });
+      });
 
+    try {
       await new Promise(resolve => setTimeout(resolve, 550));
       await flushMicrotasks();
       expect(harness.device.readRSSI).toHaveBeenCalledTimes(1);
-      expect(settled).toBe(false);
+      expect(errorTag).toBeUndefined();
 
-      harness.respondToApdu();
-      const result = await resultPromise;
-      expect(result.isRight()).toBe(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await flushMicrotasks();
+      expect(harness.device.readRSSI).toHaveBeenCalledTimes(2);
+      expect(errorTag).toBe('DeviceDisconnectedWhileSendingError');
+    } finally {
+      await transport.disconnect({ connectedDevice });
+    }
+  });
+
+  it('bounds hanging Android RSSI probes while an APDU is pending', async () => {
+    const harness = createBleHarness();
+    const transport = createTransport(harness.manager);
+    const connectedDevice = await connectTransport(transport);
+    harness.hangRssiReads();
+
+    let errorTag: string | undefined;
+    connectedDevice
+      .sendApdu(Uint8Array.from([0xe0, 0x04, 0x00, 0x00, 0x00]))
+      .then(result => {
+        result.ifLeft(error => {
+          errorTag = error._tag;
+        });
+      });
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2100));
+      await flushMicrotasks();
+      expect(harness.device.readRSSI).toHaveBeenCalledTimes(2);
+      expect(harness.manager.cancelTransaction).toHaveBeenCalledTimes(2);
+      expect(errorTag).toBe('DeviceDisconnectedWhileSendingError');
     } finally {
       await transport.disconnect({ connectedDevice });
     }

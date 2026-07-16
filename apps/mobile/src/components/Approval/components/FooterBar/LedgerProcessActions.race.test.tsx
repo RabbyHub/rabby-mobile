@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render, waitFor } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 
 const mockApiLedger = {
   isConnected: jest.fn(),
@@ -42,13 +42,37 @@ describe('LedgerProcessActions navigation races', () => {
     mockApiLedger.fixDeviceId.mockResolvedValue(undefined);
   });
 
-  it('rechecks a stale disconnected snapshot before opening ConnectLedger', async () => {
+  it('leaves Ledger readiness probing to the sign click', async () => {
+    const { LedgerProcessActions } =
+      require('./LedgerProcessActions') as typeof import('./LedgerProcessActions');
+    mockApiLedger.isConnected.mockResolvedValue([true, 'ledger-device-id']);
+
+    render(
+      <LedgerProcessActions
+        {...({
+          account: {
+            address: '0x0000000000000000000000000000000000000001',
+            type: 'Ledger Hardware',
+            brandName: 'Ledger',
+          },
+          disabledProcess: false,
+          onSubmit: jest.fn(),
+        } as never)}
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(mockApiLedger.isConnected).not.toHaveBeenCalled();
+  });
+
+  it('uses one readiness probe for simultaneous sign clicks', async () => {
     const { LedgerProcessActions } =
       require('./LedgerProcessActions') as typeof import('./LedgerProcessActions');
     const onSubmit = jest.fn();
-    mockApiLedger.isConnected
-      .mockResolvedValueOnce([false, 'ledger-device-id'])
-      .mockResolvedValue([true, 'ledger-device-id']);
+    mockApiLedger.isConnected.mockResolvedValue([true, 'ledger-device-id']);
 
     render(
       <LedgerProcessActions
@@ -64,12 +88,6 @@ describe('LedgerProcessActions navigation races', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(1);
-    });
-
-    // The initial render observed a locked/disconnected Ledger. The physical
-    // device is now unlocked, but no React state update reports that change.
     await act(async () => {
       const submit = mockProcessActionProps?.onSubmit as
         | (() => Promise<void>)
@@ -77,18 +95,16 @@ describe('LedgerProcessActions navigation races', () => {
       await Promise.all([submit?.(), submit?.()]);
     });
 
-    expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(2);
+    expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(mockCreateGlobalBottomSheetModal).not.toHaveBeenCalled();
   });
 
-  it('rechecks a stale connected snapshot before starting hardware signing', async () => {
+  it('opens ConnectLedger when the click-time probe is disconnected', async () => {
     const { LedgerProcessActions } =
       require('./LedgerProcessActions') as typeof import('./LedgerProcessActions');
     const onSubmit = jest.fn();
-    mockApiLedger.isConnected
-      .mockResolvedValueOnce([true, 'ledger-device-id'])
-      .mockResolvedValue([false, 'ledger-device-id']);
+    mockApiLedger.isConnected.mockResolvedValue([false, 'ledger-device-id']);
 
     render(
       <LedgerProcessActions
@@ -104,19 +120,13 @@ describe('LedgerProcessActions navigation races', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(1);
-    });
-
-    // The device was connected for the mount-time probe, then locked before
-    // the user pressed Sign. The click must not trust the old CONNECTED atom.
     await act(async () => {
       await (
         mockProcessActionProps?.onSubmit as (() => Promise<void>) | undefined
       )?.();
     });
 
-    expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(2);
+    expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
     expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledTimes(1);
   });
@@ -147,10 +157,6 @@ describe('LedgerProcessActions navigation races', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(1);
-    });
-
     await act(async () => {
       await (
         mockProcessActionProps?.onSubmit as (() => Promise<void>) | undefined
@@ -169,7 +175,7 @@ describe('LedgerProcessActions navigation races', () => {
       )?.();
     });
 
-    expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(2);
+    expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(1);
     expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledTimes(1);
 
