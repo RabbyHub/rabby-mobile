@@ -18,12 +18,3 @@ export const isLedgerLockError = (message = '') => {
     message.includes('0x650f')
   );
 };
-
-export const isLedgerDisconnectedError = (message = '') => {
-  return (
-    message.includes('DeviceDisconnectedWhileSendingError') ||
-    message.includes('DeviceDisconnectedBeforeSendingApdu') ||
-    message.includes('DisconnectedDeviceDuringOperation') ||
-    message.includes('Disconnected')
-  );
-};

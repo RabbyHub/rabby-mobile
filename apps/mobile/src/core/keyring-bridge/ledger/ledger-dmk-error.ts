@@ -11,6 +11,16 @@ const LEDGER_ERROR_KEYS = [
   'cause',
 ];
 
+const LEDGER_DMK_SESSION_UNAVAILABLE_ERROR_TAGS = [
+  'DeviceSessionNotFound',
+  'DeviceDisconnectedWhileSendingError',
+  'DeviceDisconnectedBeforeSendingApdu',
+  'ReconnectionFailedError',
+  'DeviceNotInitializedError',
+  'SendApduTimeoutError',
+  'SendCommandTimeoutError',
+];
+
 function normalizeStatusWord(value: unknown) {
   if (typeof value !== 'string' && typeof value !== 'number') {
     return undefined;
@@ -109,6 +119,21 @@ function stringifyLedgerErrorValue(value: unknown, key?: string): string {
   }
 
   return String(value);
+}
+
+export function isLedgerDmkSessionUnavailableError(error: unknown) {
+  const tag = getDmkErrorTag(error);
+  const text = stringifyLedgerErrorValue(error);
+  const normalizedText = text.toLowerCase();
+
+  return (
+    (tag != null && LEDGER_DMK_SESSION_UNAVAILABLE_ERROR_TAGS.includes(tag)) ||
+    LEDGER_DMK_SESSION_UNAVAILABLE_ERROR_TAGS.some(errorTag =>
+      text.includes(errorTag),
+    ) ||
+    normalizedText.includes('device session not found') ||
+    normalizedText.includes('disconnected')
+  );
 }
 
 function appendStatusWord(message: string, code?: string) {

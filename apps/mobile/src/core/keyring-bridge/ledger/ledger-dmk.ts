@@ -1,25 +1,33 @@
 import type * as LedgerContextModule from '@ledgerhq/context-module/lib/types';
 import {
+  CloseAppCommand,
   DeviceActionStatus,
   DeviceLockedError,
+  OpenAppCommand,
   UserInteractionRequired,
+  isSuccessCommandResult,
+  type DeviceActionIntermediateValue,
+  type DeviceActionState,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type DmkError,
+  type ExecuteDeviceActionReturnType,
 } from '@ledgerhq/device-management-kit';
 import {
   SignerEthBuilder,
   type Signature,
   type TypedData,
 } from '@ledgerhq/device-signer-kit-ethereum';
-import type { LedgerKeyringSession } from '@rabby-wallet/eth-keyring-ledger';
-import { filter, firstValueFrom, take, tap, type Observable } from 'rxjs';
-import { appStorage } from '@/core/storage/mmkv';
-import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import type { PreferenceStore } from '@/core/services/preference';
+import {
+  LedgerKeyringBusyError,
+  type LedgerKeyringSession,
+} from '@rabby-wallet/eth-keyring-ledger';
+import { filter, firstValueFrom, take, tap } from 'rxjs';
 import {
   connectLedgerDeviceById,
   disconnectLedgerDevice,
   getDmk,
+  probeLedgerDeviceSession,
   readLedgerAppAndVersion,
 } from './ledger-dmk-session';
 import { toLedgerDmkError } from './ledger-dmk-error';
@@ -46,69 +54,24 @@ const {
 > = require('@ledgerhq/context-module');
 
 const LEDGER_TIMING_PREFIX = '[DEBUG-ledger-timing]';
+const LEDGER_CLEAR_SIGNING_NETWORK_TIMEOUT = 2000;
+// GetAppAndVersion is a single APDU. Bound stale BLE detection without
+// timing out user confirmation.
+const LEDGER_SIGNER_SESSION_PROBE_TIMEOUT = 2000;
 
-let fullEthContextModule: LedgerContextModule.ContextModule | undefined;
-let basicEthContextModule: LedgerContextModule.ContextModule | undefined;
 // ponytail: keep Ledger telemetry off the signing critical path; add async app-owned reporting only if product needs it.
 const noOpBlindSigningReporter = {
   report: async () => undefined,
 } as unknown as LedgerContextModule.BlindSigningReporter;
-const noOpTypedDataLoader: LedgerContextModule.TypedDataContextLoader = {
-  load: async () => ({
-    type: 'error',
-    error: new Error('Ledger typed data clear signing disabled'),
-  }),
-};
 
-function createEthContextModule({
-  sdk,
-  defaultLoaders,
-}: {
-  sdk: DeviceManagementKit;
-  defaultLoaders: boolean;
-}) {
-  const builder = new ContextModuleBuilder({
+function getEthContextModule(sdk: DeviceManagementKit) {
+  return new ContextModuleBuilder({
     loggerFactory: tag => sdk.getLoggerFactory()(['ContextModule', tag]),
+    networkTimeoutMs: LEDGER_CLEAR_SIGNING_NETWORK_TIMEOUT,
   })
     .setChain(ContextModuleChainID.Ethereum)
-    .setBlindSigningReporter(noOpBlindSigningReporter);
-
-  if (!defaultLoaders) {
-    builder.removeDefaultLoaders();
-    builder.addTypedDataLoader(noOpTypedDataLoader);
-  }
-
-  return builder.build();
-}
-
-function getFullEthContextModule(sdk: DeviceManagementKit) {
-  if (!fullEthContextModule) {
-    fullEthContextModule = createEthContextModule({
-      sdk,
-      defaultLoaders: true,
-    });
-  }
-
-  return fullEthContextModule;
-}
-
-function getBasicEthContextModule(sdk: DeviceManagementKit) {
-  if (!basicEthContextModule) {
-    basicEthContextModule = createEthContextModule({
-      sdk,
-      defaultLoaders: false,
-    });
-  }
-
-  return basicEthContextModule;
-}
-
-function isLedgerDmkClearSigningEnabled() {
-  const preference = appStorage.getItem(
-    APP_STORE_NAMES.preference,
-  ) as Partial<PreferenceStore> | null;
-
-  return preference?.ledgerDmkClearSigningEnabledV2 === true;
+    .setBlindSigningReporter(noOpBlindSigningReporter)
+    .build();
 }
 
 function buildEthSigner({
@@ -118,13 +81,9 @@ function buildEthSigner({
   sdk: DeviceManagementKit;
   sessionId: DeviceSessionId;
 }) {
-  const builder = new SignerEthBuilder({ dmk: sdk, sessionId });
-
-  if (isLedgerDmkClearSigningEnabled()) {
-    return builder.withContextModule(getFullEthContextModule(sdk)).build();
-  }
-
-  return builder.withContextModule(getBasicEthContextModule(sdk)).build();
+  return new SignerEthBuilder({ dmk: sdk, sessionId })
+    .withContextModule(getEthContextModule(sdk))
+    .build();
 }
 
 function logLedgerTiming(
@@ -144,15 +103,35 @@ function logLedgerTiming(
   });
 }
 
-function getActionStateLabel(state: any) {
-  const { step, requiredUserInteraction } = state?.intermediateValue ?? {};
+type LedgerActionIntermediateValue = DeviceActionIntermediateValue & {
+  readonly step?: string;
+};
+
+type LedgerActionState<T> = DeviceActionState<
+  T,
+  DmkError,
+  LedgerActionIntermediateValue
+>;
+
+type LedgerAction<T> = ExecuteDeviceActionReturnType<
+  T,
+  DmkError,
+  LedgerActionIntermediateValue
+>;
+
+function getActionStateLabel<T>(state: LedgerActionState<T>) {
+  if (state.status !== DeviceActionStatus.Pending) {
+    return '';
+  }
+
+  const { step, requiredUserInteraction } = state.intermediateValue;
 
   return [step, requiredUserInteraction]
     .filter(value => typeof value === 'string' && value.length > 0)
     .join('/');
 }
 
-function shouldStopWaitingForAction(state: any) {
+function shouldStopWaitingForAction<T>(state: LedgerActionState<T>) {
   return (
     (state.status === DeviceActionStatus.Pending &&
       state.intermediateValue?.requiredUserInteraction ===
@@ -164,7 +143,7 @@ function shouldStopWaitingForAction(state: any) {
 }
 
 async function resolveAction<T>(
-  action: { observable: Observable<any>; cancel?: () => void },
+  action: LedgerAction<T>,
   options?: {
     actionName?: string;
   },
@@ -177,7 +156,7 @@ async function resolveAction<T>(
     actionName: options?.actionName,
   });
 
-  let state: any;
+  let state: LedgerActionState<T>;
   try {
     state = await firstValueFrom(
       action.observable.pipe(
@@ -219,7 +198,7 @@ async function resolveAction<T>(
   }
 
   if (state.status === DeviceActionStatus.Pending) {
-    action.cancel?.();
+    action.cancel();
     throw toLedgerDmkError(new DeviceLockedError());
   }
 
@@ -227,7 +206,7 @@ async function resolveAction<T>(
     logLedgerTiming(startedAt, 'dmk-action:completed', {
       actionName: options?.actionName,
     });
-    return state.output as T;
+    return state.output;
   }
 
   if (state.status === DeviceActionStatus.Error) {
@@ -252,24 +231,11 @@ export async function getLedgerDmkSession(
     throw new Error('Ledger: Device id is not set');
   }
 
-  let sessionId = await connectLedgerDeviceById(deviceId);
-  let signer = buildEthSigner({ sdk: getDmk(), sessionId });
-  const refreshSignerSession = async () => {
-    const currentSessionId = await connectLedgerDeviceById(deviceId);
-
-    if (currentSessionId !== sessionId) {
-      sessionId = currentSessionId;
-      signer = buildEthSigner({ sdk: getDmk(), sessionId });
-    }
-
-    return currentSessionId;
-  };
+  await connectLedgerDeviceById(deviceId);
   let isDeviceActionActive = false;
   const runDeviceAction = async <T>(task: () => Promise<T>) => {
     if (isDeviceActionActive) {
-      throw new Error(
-        'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
-      );
+      throw new LedgerKeyringBusyError();
     }
 
     isDeviceActionActive = true;
@@ -281,13 +247,16 @@ export async function getLedgerDmkSession(
   };
   const runSignerAction = async <T>(
     actionName: string,
-    task: (currentSigner: ReturnType<typeof buildEthSigner>) => {
-      observable: Observable<any>;
-      cancel?: () => void;
-    },
+    task: (currentSigner: ReturnType<typeof buildEthSigner>) => LedgerAction<T>,
   ) =>
     runDeviceAction(async () => {
-      await refreshSignerSession();
+      const sessionId = await connectLedgerDeviceById(deviceId);
+      await probeLedgerDeviceSession(
+        deviceId,
+        sessionId,
+        LEDGER_SIGNER_SESSION_PROBE_TIMEOUT,
+      );
+      const signer = buildEthSigner({ sdk: getDmk(), sessionId });
       return await resolveAction<T>(task(signer), { actionName });
     });
 
@@ -315,10 +284,34 @@ export async function getLedgerDmkSession(
         currentSigner.signTypedData(path, data as TypedData),
       );
     },
+    openEthApp() {
+      return runDeviceAction(async () => {
+        const sessionId = await connectLedgerDeviceById(deviceId);
+        const result = await getDmk().sendCommand({
+          sessionId,
+          command: new OpenAppCommand({ appName: 'Ethereum' }),
+        });
+        if (!isSuccessCommandResult(result)) {
+          throw toLedgerDmkError(result.error);
+        }
+      });
+    },
+    quitApp() {
+      return runDeviceAction(async () => {
+        const sessionId = await connectLedgerDeviceById(deviceId);
+        const result = await getDmk().sendCommand({
+          sessionId,
+          command: new CloseAppCommand(),
+        });
+        if (!isSuccessCommandResult(result)) {
+          throw toLedgerDmkError(result.error);
+        }
+      });
+    },
     getAppAndVersion() {
       return runDeviceAction(async () => {
-        const currentSessionId = await refreshSignerSession();
-        return readLedgerAppAndVersion(currentSessionId);
+        const sessionId = await connectLedgerDeviceById(deviceId);
+        return readLedgerAppAndVersion(sessionId);
       });
     },
     close() {

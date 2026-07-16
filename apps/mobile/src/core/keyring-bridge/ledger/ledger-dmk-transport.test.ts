@@ -261,6 +261,11 @@ describe('patched Ledger DMK RN BLE transport', () => {
     const connectedDevice = await connectTransport(transport);
 
     try {
+      expect(harness.manager.connectToDevice.mock.calls[0]?.[1]).toEqual(
+        expect.objectContaining({
+          timeout: 10000,
+        }),
+      );
       expect(
         harness.manager.connectToDevice.mock.calls[0]?.[1],
       ).not.toHaveProperty('connectionPriority');

@@ -37,7 +37,7 @@ export interface Props {
     value: LedgerHDPathType;
     isOnChain?: boolean;
   }[];
-  onConfirm: (setting: Setting) => void;
+  onConfirm: (setting: Setting) => void | Promise<void>;
   initAccounts?: InitAccounts;
   setting: Setting;
   loading?: boolean;
@@ -277,10 +277,16 @@ export const MainContainer: React.FC<Props> = ({
           disabled={isPressing}
           onPress={async () => {
             setIsPressing(true);
-            onConfirm({
-              hdPath,
-              startNumber,
-            });
+            try {
+              await onConfirm({
+                hdPath,
+                startNumber,
+              });
+            } catch (error) {
+              console.error('[HDSetting] Failed to apply setting', error);
+            } finally {
+              setIsPressing(false);
+            }
           }}
         />
       </AutoLockView>

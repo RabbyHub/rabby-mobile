@@ -25,21 +25,19 @@ function setupLedgerApiModule(appName: string) {
     getDeviceId: jest.fn(() => 'ledger-device-id'),
     getAccountInfo: jest.fn(),
     setDeviceId: jest.fn(),
+    setHDPathType: jest.fn(async () => undefined),
+    setAccountToUnlock: jest.fn(async () => undefined),
   };
   const mockGetKeyring = jest.fn(async () => mockKeyring);
   const mockBindLedgerEvents = jest.fn();
   const mockUpdateFirmwareAlert = jest.fn();
-  const mockConnectKnownLedgerDeviceById = jest.fn();
   const mockGetLedgerAppAndVersion = jest.fn(async () => ({
     appName,
     version: '1.0.0',
   }));
-  const mockGetLedgerDeviceSessionState = jest.fn();
-  const mockGetKnownLedgerDevice = jest.fn((deviceId: string) => ({
-    id: deviceId,
-    name: 'Ledger',
-  }));
   const mockResetLedgerDeviceSession = jest.fn();
+  const mockAddNewAccount = jest.fn();
+  const mockInitCurrentAccount = jest.fn();
 
   jest.doMock('@rabby-wallet/keyring-utils', () => ({
     KEYRING_TYPE: {
@@ -54,11 +52,13 @@ function setupLedgerApiModule(appName: string) {
   }));
   jest.doMock('../services/shared', () => ({
     keyringService: {
-      addNewAccount: jest.fn(),
+      addNewAccount: mockAddNewAccount,
       persistKeyringsForKeyring: jest.fn(),
     },
+  }));
+  jest.doMock('@/core/services', () => ({
     preferenceService: {
-      initCurrentAccount: jest.fn(),
+      initCurrentAccount: mockInitCurrentAccount,
     },
   }));
   jest.doMock('@/hooks/ledger/error', () => ({
@@ -66,6 +66,12 @@ function setupLedgerApiModule(appName: string) {
       FIRMWARE_OR_APP_UPDATE_REQUIRED: 'firmware_or_app_update_required',
       UNKNOWN: 'unknown',
     },
+    isLedgerBusyError: jest.fn((error: Error) =>
+      error.message.includes('SendApduConcurrencyError'),
+    ),
+    isLedgerUserRejectedError: jest.fn((error: Error) =>
+      /(?:0x5501|0x6985|RefusedByUserDAError)/u.test(error.message),
+    ),
     ledgerErrorHandler: jest.fn(() => 'unknown'),
   }));
   jest.doMock('@/utils/bluetoothPermissions', () => ({
@@ -73,11 +79,8 @@ function setupLedgerApiModule(appName: string) {
   }));
   jest.doMock('@/core/keyring-bridge/ledger/ledger-dmk', () => ({
     connectLedgerDevice: jest.fn(),
-    connectKnownLedgerDeviceById: mockConnectKnownLedgerDeviceById,
     disconnectLedgerDevice: jest.fn(),
     getLedgerAppAndVersion: mockGetLedgerAppAndVersion,
-    getLedgerDeviceSessionState: mockGetLedgerDeviceSessionState,
-    getKnownLedgerDevice: mockGetKnownLedgerDevice,
     resetLedgerDeviceSession: mockResetLedgerDeviceSession,
     subscribeLedgerDevices: jest.fn(),
   }));
@@ -88,11 +91,10 @@ function setupLedgerApiModule(appName: string) {
     ...apiLedger,
     mockKeyring,
     mockGetKeyring,
-    mockConnectKnownLedgerDeviceById,
     mockGetLedgerAppAndVersion,
-    mockGetLedgerDeviceSessionState,
-    mockGetKnownLedgerDevice,
     mockResetLedgerDeviceSession,
+    mockAddNewAccount,
+    mockInitCurrentAccount,
   };
 }
 
@@ -104,6 +106,7 @@ describe('core/apis/ledger', () => {
     jest.dontMock('./keyring');
     jest.dontMock('@/utils/ledger');
     jest.dontMock('../services/shared');
+    jest.dontMock('@/core/services');
     jest.dontMock('@/hooks/ledger/error');
     jest.dontMock('@/utils/bluetoothPermissions');
     jest.dontMock('@/core/keyring-bridge/ledger/ledger-dmk');
@@ -165,14 +168,11 @@ describe('core/apis/ledger', () => {
     );
   });
 
-  it('reports connected when a current Ledger session exists', async () => {
-    const { isConnected, mockKeyring, mockGetLedgerDeviceSessionState } =
+  it('reports connected only after a live Ledger app probe succeeds', async () => {
+    const { isConnected, mockKeyring, mockGetLedgerAppAndVersion } =
       setupLedgerApiModule('Ethereum');
     mockKeyring.getAccountInfo.mockReturnValue({
       deviceId: 'ledger-device-id',
-    });
-    mockGetLedgerDeviceSessionState.mockResolvedValueOnce({
-      deviceStatus: 'CONNECTED',
     });
 
     await expect(
@@ -180,77 +180,100 @@ describe('core/apis/ledger', () => {
     ).resolves.toEqual([true, 'ledger-device-id']);
 
     expect(mockKeyring.setDeviceId).toHaveBeenCalledWith('ledger-device-id');
-    expect(mockGetLedgerDeviceSessionState).toHaveBeenCalledWith(
-      'ledger-device-id',
-    );
+    expect(mockGetLedgerAppAndVersion).toHaveBeenCalledWith('ledger-device-id');
   });
 
-  it('reports disconnected when the current Ledger session is locked', async () => {
+  it('resets a cached Ledger session when the live probe reports it locked', async () => {
     const {
       isConnected,
       mockKeyring,
-      mockConnectKnownLedgerDeviceById,
-      mockGetLedgerDeviceSessionState,
+      mockGetLedgerAppAndVersion,
+      mockResetLedgerDeviceSession,
     } = setupLedgerApiModule('Ethereum');
     mockKeyring.getAccountInfo.mockReturnValue({
       deviceId: 'ledger-device-id',
     });
-    mockGetLedgerDeviceSessionState
-      .mockResolvedValueOnce({
-        deviceStatus: 'LOCKED',
-      })
-      .mockResolvedValueOnce({
-        deviceStatus: 'LOCKED',
-      });
-    mockConnectKnownLedgerDeviceById.mockResolvedValueOnce('session-1');
+    mockGetLedgerAppAndVersion.mockRejectedValueOnce(new Error('0x5515'));
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([false, 'ledger-device-id']);
+
+    expect(mockResetLedgerDeviceSession).toHaveBeenCalledWith(
+      'ledger-device-id',
+    );
   });
 
-  it('checks the persisted Ledger device id when no live session exists', async () => {
+  it('keeps an active Ledger session when a live probe reports APDU concurrency', async () => {
     const {
       isConnected,
       mockKeyring,
-      mockConnectKnownLedgerDeviceById,
-      mockGetLedgerDeviceSessionState,
+      mockGetLedgerAppAndVersion,
+      mockResetLedgerDeviceSession,
     } = setupLedgerApiModule('Ethereum');
     mockKeyring.getAccountInfo.mockReturnValue({
       deviceId: 'ledger-device-id',
     });
-    mockGetLedgerDeviceSessionState.mockResolvedValueOnce(undefined);
-    mockGetLedgerDeviceSessionState.mockResolvedValueOnce({
-      deviceStatus: 'CONNECTED',
-    });
-    mockConnectKnownLedgerDeviceById.mockResolvedValueOnce('session-1');
+    mockGetLedgerAppAndVersion.mockRejectedValueOnce(
+      new Error('SendApduConcurrencyError'),
+    );
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([true, 'ledger-device-id']);
 
-    expect(mockConnectKnownLedgerDeviceById).toHaveBeenCalledWith(
-      'ledger-device-id',
-    );
+    expect(mockResetLedgerDeviceSession).not.toHaveBeenCalled();
   });
 
-  it('reports disconnected when the persisted Ledger device id cannot connect', async () => {
+  it('checks the persisted Ledger device id with a live app probe', async () => {
+    const { isConnected, mockKeyring, mockGetLedgerAppAndVersion } =
+      setupLedgerApiModule('Ethereum');
+    mockKeyring.getAccountInfo.mockReturnValue({
+      deviceId: 'ledger-device-id',
+    });
+
+    await expect(
+      isConnected('0x0000000000000000000000000000000000000001'),
+    ).resolves.toEqual([true, 'ledger-device-id']);
+
+    expect(mockGetLedgerAppAndVersion).toHaveBeenCalledWith('ledger-device-id');
+  });
+
+  it('resets the session when the persisted Ledger device is unreachable', async () => {
     const {
       isConnected,
       mockKeyring,
-      mockConnectKnownLedgerDeviceById,
-      mockGetLedgerDeviceSessionState,
+      mockGetLedgerAppAndVersion,
+      mockResetLedgerDeviceSession,
     } = setupLedgerApiModule('Ethereum');
     mockKeyring.getAccountInfo.mockReturnValue({
       deviceId: 'ledger-device-id',
     });
-    mockGetLedgerDeviceSessionState.mockResolvedValueOnce(undefined);
-    mockConnectKnownLedgerDeviceById.mockRejectedValueOnce(
+    mockGetLedgerAppAndVersion.mockRejectedValueOnce(
       new Error('OpeningConnectionError'),
     );
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([false, 'ledger-device-id']);
+
+    expect(mockResetLedgerDeviceSession).toHaveBeenCalledWith(
+      'ledger-device-id',
+    );
+  });
+
+  it('does not retry account import after the user rejects opening the app', async () => {
+    const { importFirstAddress, mockAddNewAccount, mockInitCurrentAccount } =
+      setupLedgerApiModule('Ethereum');
+    mockAddNewAccount.mockRejectedValueOnce(
+      new Error('RefusedByUserDAError 0x5501'),
+    );
+
+    await expect(importFirstAddress({ retryCount: 5 })).rejects.toThrow(
+      'RefusedByUserDAError 0x5501',
+    );
+
+    expect(mockAddNewAccount).toHaveBeenCalledTimes(1);
+    expect(mockInitCurrentAccount).not.toHaveBeenCalled();
   });
 });

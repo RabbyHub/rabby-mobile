@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 
 const mockAddTransport = jest.fn();
 const mockAddLogger = jest.fn();
@@ -11,7 +11,6 @@ const mockContextModuleRemoveDefaultLoaders = jest.fn();
 const mockContextModuleSetBlindSigningReporter = jest.fn();
 const mockContextModuleSetChain = jest.fn();
 const mockIsSuccessCommandResult = jest.fn();
-const mockAppStorageGetItem = jest.fn();
 const mockRNBleTransportFactory = jest.fn();
 const mockDmk = {
   connect: jest.fn(),
@@ -26,6 +25,9 @@ const mockDmk = {
 };
 
 jest.mock('@ledgerhq/device-management-kit', () => ({
+  CloseAppCommand: class {
+    name = 'closeApp';
+  },
   DeviceActionStatus: {
     Pending: 'pending',
     Completed: 'completed',
@@ -56,6 +58,14 @@ jest.mock('@ledgerhq/device-management-kit', () => ({
     ReadyWithSecureChannel: 2,
   },
   GetAppAndVersionCommand: jest.fn(),
+  OpenAppCommand: class {
+    name = 'openApp';
+    args: { appName: string };
+
+    constructor(args: { appName: string }) {
+      this.args = args;
+    }
+  },
   isSuccessCommandResult: (...args: unknown[]) =>
     mockIsSuccessCommandResult(...args),
 }));
@@ -67,12 +77,6 @@ jest.mock('@ledgerhq/device-transport-kit-react-native-ble', () => ({
 
 jest.mock('@ledgerhq/device-signer-kit-ethereum', () => ({
   SignerEthBuilder: (...args: unknown[]) => mockSignerEthBuilder(...args),
-}));
-
-jest.mock('@/core/storage/mmkv', () => ({
-  appStorage: {
-    getItem: (...args: unknown[]) => mockAppStorageGetItem(...args),
-  },
 }));
 
 jest.mock('@ledgerhq/context-module', () => ({
@@ -104,8 +108,6 @@ function makeSignerBuilder(signer: Record<string, unknown>) {
 describe('ledger DMK bridge discovery', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockAppStorageGetItem.mockReset();
-    mockAppStorageGetItem.mockReturnValue({});
     mockDmk.stopDiscovering.mockResolvedValue(undefined);
     mockDmk.disconnect.mockResolvedValue(undefined);
     mockDmk.listConnectedDevices.mockReturnValue([]);
@@ -263,6 +265,69 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockDmk.disconnect).not.toHaveBeenCalledWith({ sessionId });
   });
 
+  it('rejects a signer action before it starts when a cached session is disconnected', async () => {
+    const deviceId = 'ledger-disconnected-cached-session-device-id';
+    const sessionId = 'disconnected-cached-session-1';
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: of({
+          status: 'completed',
+          output: { r: '1', s: '2', v: '1b' },
+        }),
+        cancel: jest.fn(),
+      })),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.sendCommand.mockRejectedValueOnce({
+      _tag: 'DeviceDisconnectedWhileSendingError',
+      originalError: new Error('Device disconnected while sending APDU'),
+    });
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+
+    await expect(
+      session.signTransaction("44'/60'/0'/0/0", new Uint8Array()),
+    ).rejects.toThrow('DeviceDisconnectedWhileSendingError');
+    expect(mockDmk.sendCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId,
+        abortTimeout: 2000,
+      }),
+    );
+    expect(signer.signTransaction).not.toHaveBeenCalled();
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({ sessionId });
+  });
+
+  it('continues a signer action when the liveness probe receives a dashboard status', async () => {
+    const deviceId = 'ledger-dashboard-session-device-id';
+    const sessionId = 'dashboard-session-1';
+    const signature = { r: '1', s: '2', v: '1b' };
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: of({ status: 'completed', output: signature }),
+        cancel: jest.fn(),
+      })),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.sendCommand.mockResolvedValueOnce({
+      error: { errorCode: '6e00' },
+    });
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+
+    await expect(
+      session.signTransaction("44'/60'/0'/0/0", new Uint8Array()),
+    ).resolves.toEqual(signature);
+    expect(signer.signTransaction).toHaveBeenCalledTimes(1);
+    expect(mockDmk.disconnect).not.toHaveBeenCalledWith({ sessionId });
+  });
+
   it('stops a signer action when DMK reports that the device must be unlocked', async () => {
     const deviceId = 'ledger-locked-device-id';
     const sessionId = 'locked-session-1';
@@ -324,6 +389,35 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockDmk.disconnect).toHaveBeenCalledWith({ sessionId });
   });
 
+  it('keeps stale-session validation and reconnection single-flight', async () => {
+    const device = { id: 'ledger-stale-single-flight-device' };
+    const state = new Subject<{
+      deviceStatus: string;
+      sessionStateType: number;
+    }>();
+
+    mockDmk.listConnectedDevices.mockReturnValue([
+      { id: device.id, sessionId: 'stale-session' },
+    ]);
+    mockDmk.getDeviceSessionState.mockReturnValueOnce(state);
+    mockDmk.connect.mockResolvedValueOnce('fresh-session');
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+    const first = connectLedgerDevice(device);
+    const second = connectLedgerDevice(device);
+
+    expect(mockDmk.getDeviceSessionState).toHaveBeenCalledTimes(1);
+
+    state.next({ deviceStatus: 'NOT CONNECTED', sessionStateType: 1 });
+    state.complete();
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      'fresh-session',
+      'fresh-session',
+    ]);
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+  });
+
   it('times out a pending connect and allows a later retry', async () => {
     jest.useFakeTimers();
 
@@ -345,17 +439,199 @@ describe('ledger DMK bridge discovery', () => {
       'Ledger: Device connection timeout',
     );
 
-    resolveConnect('late-session');
-    await Promise.resolve();
+    mockDmk.connect.mockResolvedValueOnce('session-2');
+    const retrying = connectLedgerDevice(device);
 
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+
+    resolveConnect('late-session');
+
+    await expect(retrying).resolves.toBe('session-2');
     expect(mockDmk.disconnect).toHaveBeenCalledWith({
       sessionId: 'late-session',
     });
-
-    mockDmk.connect.mockResolvedValueOnce('session-2');
-
-    await expect(connectLedgerDevice(device)).resolves.toBe('session-2');
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+  });
+
+  it('bounds the connection drain when the native connect never settles', async () => {
+    jest.useFakeTimers();
+
+    const device = { id: 'ledger-never-settles-device' };
+    mockDmk.connect
+      .mockReturnValueOnce(new Promise(() => undefined))
+      .mockResolvedValueOnce('fresh-session');
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+    const connecting = connectLedgerDevice(device);
+
+    jest.advanceTimersByTime(10000);
+    await expect(connecting).rejects.toThrow(
+      'Ledger: Device connection timeout',
+    );
+
+    const retrying = connectLedgerDevice(device);
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(10000);
+
+    await expect(retrying).resolves.toBe('fresh-session');
+    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not disconnect a session reclaimed by a retry after drain timeout', async () => {
+    jest.useFakeTimers();
+
+    const device = { id: 'ledger-reclaimed-session-device' };
+    let resolveStaleConnect: (sessionId: string) => void = () => undefined;
+    let resolveFreshConnect: (sessionId: string) => void = () => undefined;
+    let markFreshConnectStarted: () => void = () => undefined;
+    const freshConnectStarted = new Promise<void>(resolve => {
+      markFreshConnectStarted = resolve;
+    });
+    mockDmk.connect
+      .mockReturnValueOnce(
+        new Promise(resolve => {
+          resolveStaleConnect = resolve;
+        }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            resolveFreshConnect = resolve;
+            markFreshConnectStarted();
+          }),
+      );
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+    const staleConnection = connectLedgerDevice(device);
+
+    jest.advanceTimersByTime(10000);
+    await expect(staleConnection).rejects.toThrow(
+      'Ledger: Device connection timeout',
+    );
+
+    const freshConnection = connectLedgerDevice(device);
+    jest.advanceTimersByTime(10000);
+    await freshConnectStarted;
+
+    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+
+    resolveStaleConnect('shared-session');
+    resolveFreshConnect('shared-session');
+
+    await expect(freshConnection).resolves.toBe('shared-session');
+    await Promise.resolve();
+    expect(mockDmk.disconnect).not.toHaveBeenCalledWith({
+      sessionId: 'shared-session',
+    });
+  });
+
+  it('prevents a reset connection from overwriting or deleting its retry', async () => {
+    const device = { id: 'ledger-reset-pending-device' };
+    let resolveStaleConnect: (sessionId: string) => void = () => undefined;
+    let resolveFreshConnect: (sessionId: string) => void = () => undefined;
+
+    mockDmk.connect
+      .mockReturnValueOnce(
+        new Promise(resolve => {
+          resolveStaleConnect = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise(resolve => {
+          resolveFreshConnect = resolve;
+        }),
+      );
+
+    const {
+      connectLedgerDevice,
+      resetLedgerDeviceSession,
+    } = require('./ledger-dmk');
+    const staleConnection = connectLedgerDevice(device);
+
+    await resetLedgerDeviceSession(device.id);
+    const freshConnection = connectLedgerDevice(device);
+
+    resolveStaleConnect('stale-session');
+    await expect(staleConnection).rejects.toThrow(
+      'Ledger: Device connection cancelled',
+    );
+    expect(mockDmk.disconnect).not.toHaveBeenCalledWith({
+      sessionId: 'stale-session',
+    });
+
+    const sharedFreshConnection = connectLedgerDevice(device);
+    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+
+    resolveFreshConnect('fresh-session');
+    await expect(
+      Promise.all([freshConnection, sharedFreshConnection]),
+    ).resolves.toEqual(['fresh-session', 'fresh-session']);
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({
+      sessionId: 'stale-session',
+    });
+  });
+
+  it('does not return a connected session reset during its state probe', async () => {
+    const deviceId = 'ledger-reset-state-probe-device';
+    const sessionId = 'stale-session';
+    const state = new Subject<{
+      deviceStatus: string;
+      sessionStateType: number;
+    }>();
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.getDeviceSessionState.mockReturnValueOnce(state);
+
+    const {
+      connectKnownLedgerDeviceById,
+      resetLedgerDeviceSession,
+    } = require('./ledger-dmk');
+    const connecting = connectKnownLedgerDeviceById(deviceId);
+
+    await resetLedgerDeviceSession(deviceId);
+    state.next({ deviceStatus: 'CONNECTED', sessionStateType: 1 });
+    state.complete();
+
+    await expect(connecting).rejects.toThrow(
+      'Ledger: Device connection cancelled',
+    );
+  });
+
+  it('does not let an old state probe clear a replacement session', async () => {
+    const deviceId = 'ledger-replaced-state-probe-device';
+    const staleSessionId = 'stale-session';
+    const freshSessionId = 'fresh-session';
+    const state = new Subject<{
+      deviceStatus: string;
+      sessionStateType: number;
+    }>();
+
+    mockDmk.listConnectedDevices
+      .mockReturnValueOnce([{ id: deviceId, sessionId: staleSessionId }])
+      .mockReturnValue([]);
+    mockDmk.getDeviceSessionState.mockReturnValueOnce(state);
+    mockDmk.connect.mockResolvedValueOnce(freshSessionId);
+
+    const {
+      connectKnownLedgerDeviceById,
+      getLedgerDeviceSessionState,
+      resetLedgerDeviceSession,
+    } = require('./ledger-dmk');
+    const probing = getLedgerDeviceSessionState(deviceId);
+
+    await resetLedgerDeviceSession(deviceId);
+    await expect(connectKnownLedgerDeviceById(deviceId)).resolves.toBe(
+      freshSessionId,
+    );
+
+    state.error(new Error('stale state probe failed'));
+
+    await expect(probing).resolves.toBeUndefined();
+    expect(mockDmk.disconnect).toHaveBeenCalledTimes(1);
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({
+      sessionId: staleSessionId,
+    });
   });
 
   it('connects a known Ledger id directly after a cached device connect fails', async () => {
@@ -385,6 +661,23 @@ describe('ledger DMK bridge discovery', () => {
       }),
       sessionRefresherOptions: { isRefresherDisabled: false },
     });
+  });
+
+  it('normalizes plain DMK connection errors before exposing them', async () => {
+    const device = { id: 'ledger-normalized-connect-error-device' };
+
+    mockDmk.connect.mockRejectedValueOnce({
+      _tag: 'ConnectionOpeningError',
+      originalError: new Error('Failed to open the device'),
+    });
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+
+    const error = await connectLedgerDevice(device).catch(value => value);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toContain('ConnectionOpeningError');
+    expect(error.message).toContain('Failed to open the device');
   });
 
   it('retries direct device connect when DMK reports a stale session', async () => {
@@ -427,6 +720,54 @@ describe('ledger DMK bridge discovery', () => {
     await expect(connection).resolves.toBe('session-2');
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
     expect(mockDmk.listenToAvailableDevices).not.toHaveBeenCalled();
+  });
+
+  it('does not retry an old stale-session request after reset', async () => {
+    const device = { id: 'ledger-reset-stale-connect-device', name: 'Ledger' };
+    let finishDisconnect = () => undefined;
+    let markDisconnectStarted = () => undefined;
+    const disconnectStarted = new Promise<void>(resolve => {
+      markDisconnectStarted = resolve;
+    });
+
+    mockDmk.listConnectedDevices
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([{ id: device.id, sessionId: 'stale-session' }])
+      .mockReturnValue([]);
+    mockDmk.disconnect.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          finishDisconnect = resolve;
+          markDisconnectStarted();
+        }),
+    );
+    mockDmk.connect
+      .mockRejectedValueOnce({
+        _tag: 'DeviceSessionNotFound',
+        originalError: new Error('Device session not found'),
+      })
+      .mockResolvedValueOnce('fresh-session');
+
+    const {
+      connectLedgerDevice,
+      resetLedgerDeviceSession,
+    } = require('./ledger-dmk');
+    const staleConnection = connectLedgerDevice(device);
+
+    await disconnectStarted;
+    const resetting = resetLedgerDeviceSession(device.id);
+    const freshConnection = connectLedgerDevice(device);
+
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+
+    finishDisconnect();
+
+    await resetting;
+    await expect(staleConnection).rejects.toThrow(
+      'Ledger: Device connection cancelled',
+    );
+    await expect(freshConnection).resolves.toBe('fresh-session');
+    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
   });
 
   it('clears a listed DMK session before reconnecting a known device id', async () => {
@@ -486,7 +827,12 @@ describe('ledger DMK bridge discovery', () => {
       appName: 'Ethereum',
       version: '1.0.0',
     });
-    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
+    expect(mockDmk.sendCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId,
+        abortTimeout: 15000,
+      }),
+    );
   });
 
   it('reconnects when the app version command uses a stale DMK session', async () => {
@@ -526,6 +872,57 @@ describe('ledger DMK bridge discovery', () => {
     });
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
     expect(mockDmk.sendCommand).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not let an old app probe clear a replacement session', async () => {
+    const deviceId = 'ledger-replaced-app-probe-device';
+    const staleSessionId = 'stale-session';
+    const freshSessionId = 'fresh-session';
+    let rejectAppProbe: (error: unknown) => void = () => undefined;
+    let markAppProbeStarted = () => undefined;
+    const appProbeStarted = new Promise<void>(resolve => {
+      markAppProbeStarted = resolve;
+    });
+
+    mockDmk.listConnectedDevices
+      .mockReturnValueOnce([{ id: deviceId, sessionId: staleSessionId }])
+      .mockReturnValue([]);
+    mockDmk.connect.mockResolvedValueOnce(freshSessionId);
+    mockDmk.sendCommand.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectAppProbe = reject;
+          markAppProbeStarted();
+        }),
+    );
+
+    const {
+      connectKnownLedgerDeviceById,
+      getLedgerAppAndVersion,
+      resetLedgerDeviceSession,
+    } = require('./ledger-dmk');
+    const probing = getLedgerAppAndVersion(deviceId);
+    const probingRejected = expect(probing).rejects.toThrow(
+      'Ledger: Device connection cancelled',
+    );
+
+    await appProbeStarted;
+    await resetLedgerDeviceSession(deviceId);
+    await expect(connectKnownLedgerDeviceById(deviceId)).resolves.toBe(
+      freshSessionId,
+    );
+
+    rejectAppProbe({
+      _tag: 'DeviceSessionNotFound',
+      originalError: new Error('Device session not found'),
+    });
+
+    await probingRejected;
+    expect(mockDmk.disconnect).toHaveBeenCalledTimes(1);
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({
+      sessionId: staleSessionId,
+    });
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
   });
 
   it('leaves user-interaction actions pending until DMK emits a terminal state', async () => {
@@ -621,6 +1018,7 @@ describe('ledger DMK bridge discovery', () => {
       dmk: mockDmk,
       sessionId: freshSessionId,
     });
+    expect(mockContextModuleBuild).toHaveBeenCalledTimes(1);
   });
 
   it('normalizes DMK user rejection errors to the legacy rejected status word', async () => {
@@ -739,14 +1137,17 @@ describe('ledger DMK bridge discovery', () => {
     });
 
     expect(mockDmk.executeDeviceAction).not.toHaveBeenCalled();
-    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
+    expect(mockDmk.sendCommand).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId, abortTimeout: 2000 }),
+    );
     expect(signer.signTransaction).toHaveBeenCalledWith(
       "44'/60'/0'/0/0",
       rawTx,
     );
   });
 
-  it('unsubscribes a completed action before allowing the next signer action', async () => {
+  it('unsubscribes a completed action and resets the clear signing deadline before the next action', async () => {
     const deviceId = 'ledger-sequential-device-id';
     const sessionId = 'session-1';
     const firstUnsubscribe = jest.fn();
@@ -787,7 +1188,8 @@ describe('ledger DMK bridge discovery', () => {
     await session.signTransaction("44'/60'/0'/0/1", new Uint8Array());
 
     expect(signer.signTransaction).toHaveBeenCalledTimes(2);
-    expect(mockSignerEthBuilder).toHaveBeenCalledTimes(1);
+    expect(mockSignerEthBuilder).toHaveBeenCalledTimes(2);
+    expect(mockContextModuleBuild).toHaveBeenCalledTimes(2);
   });
 
   it('rejects a concurrent signer action and allows retry after the active action finishes', async () => {
@@ -840,7 +1242,10 @@ describe('ledger DMK bridge discovery', () => {
       'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
     );
     expect(signer.signTransaction).toHaveBeenCalledTimes(1);
-    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
+    expect(mockDmk.sendCommand).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId, abortTimeout: 2000 }),
+    );
 
     completeFirstAction?.();
     await firstAction;
@@ -849,52 +1254,38 @@ describe('ledger DMK bridge discovery', () => {
       session.signTransaction("44'/60'/0'/0/1", new Uint8Array()),
     ).resolves.toEqual({ r: '0x3', s: '0x4', v: '0x1c' });
     expect(signer.signTransaction).toHaveBeenCalledTimes(2);
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(2);
   });
 
-  it('uses a basic context module by default and ignores the deprecated clear signing key', async () => {
-    jest.resetModules();
-    mockAppStorageGetItem.mockReturnValue({
-      ledgerDmkClearSigningEnabled: true,
-    });
-
-    const deviceId = 'ledger-default-basic-context-device-id';
+  it('runs the public app controls through real DMK commands', async () => {
+    const deviceId = 'ledger-app-control-device-id';
     const sessionId = 'session-1';
-    const signer = {
-      signTransaction: jest.fn(() => ({
-        observable: of({
-          status: 'completed',
-          output: { r: '0x1', s: '0x2', v: '0x1b' },
-        }),
-      })),
-    };
-    const signerBuilder = makeSignerBuilder(signer);
 
     mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockSignerEthBuilder.mockReturnValue(signerBuilder);
+    mockDmk.sendCommand.mockResolvedValue({ data: undefined });
+    mockIsSuccessCommandResult.mockReturnValue(true);
 
     const { getLedgerDmkSession } = require('./ledger-dmk');
     const session = await getLedgerDmkSession(deviceId);
 
-    await session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
+    await session.openEthApp?.();
+    await session.quitApp?.();
 
-    expect(mockContextModuleSetChain).toHaveBeenCalledWith('ethereum');
-    expect(mockContextModuleSetBlindSigningReporter).toHaveBeenCalledWith(
-      expect.objectContaining({ report: expect.any(Function) }),
-    );
-    expect(mockContextModuleRemoveDefaultLoaders).toHaveBeenCalledTimes(1);
-    expect(mockContextModuleAddTypedDataLoader).toHaveBeenCalledWith(
-      expect.objectContaining({ load: expect.any(Function) }),
-    );
-    expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
-      mockContextModule,
-    );
+    expect(mockDmk.sendCommand).toHaveBeenNthCalledWith(1, {
+      sessionId,
+      command: expect.objectContaining({
+        name: 'openApp',
+        args: { appName: 'Ethereum' },
+      }),
+    });
+    expect(mockDmk.sendCommand).toHaveBeenNthCalledWith(2, {
+      sessionId,
+      command: expect.objectContaining({ name: 'closeApp' }),
+    });
   });
 
-  it('keeps clear signing loaders when the new clear signing key is enabled', async () => {
+  it('builds the signer with default clear signing and a bounded network budget', async () => {
     jest.resetModules();
-    mockAppStorageGetItem.mockReturnValue({
-      ledgerDmkClearSigningEnabledV2: true,
-    });
 
     const deviceId = 'ledger-clear-signing-context-device-id';
     const sessionId = 'session-1';
@@ -916,6 +1307,16 @@ describe('ledger DMK bridge discovery', () => {
 
     await session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
 
+    const { ContextModuleBuilder } = jest.requireMock(
+      '@ledgerhq/context-module',
+    );
+    expect(ContextModuleBuilder).toHaveBeenCalledWith({
+      loggerFactory: expect.any(Function),
+      networkTimeoutMs: 2000,
+    });
+    expect(mockSignerEthBuilder.mock.calls[0][0]).not.toHaveProperty(
+      'originToken',
+    );
     expect(mockContextModuleSetChain).toHaveBeenCalledWith('ethereum');
     expect(mockContextModuleSetBlindSigningReporter).toHaveBeenCalledWith(
       expect.objectContaining({ report: expect.any(Function) }),
@@ -925,5 +1326,8 @@ describe('ledger DMK bridge discovery', () => {
     expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
       mockContextModule,
     );
+    const blindSigningReporter =
+      mockContextModuleSetBlindSigningReporter.mock.calls[0][0];
+    await expect(blindSigningReporter.report()).resolves.toBeUndefined();
   });
 });

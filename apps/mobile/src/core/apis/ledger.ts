@@ -6,14 +6,17 @@ import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { keyringService } from '../services/shared';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import PQueue from 'p-queue';
-import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
+import {
+  isLedgerBusyError,
+  isLedgerUserRejectedError,
+  ledgerErrorHandler,
+  LEDGER_ERROR_CODES,
+} from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 import {
   connectLedgerDevice,
-  connectKnownLedgerDeviceById,
   disconnectLedgerDevice,
   getLedgerAppAndVersion,
-  getLedgerDeviceSessionState,
   resetLedgerDeviceSession,
   subscribeLedgerDevices,
   type LedgerDmkDevice,
@@ -79,16 +82,15 @@ export async function isConnected(
 
   keyring.setDeviceId(detail.deviceId);
 
-  const state = await getLedgerDeviceSessionState(detail.deviceId);
-  if (state?.deviceStatus === 'CONNECTED') {
-    return [true, detail.deviceId];
-  }
-
   try {
-    await connectKnownLedgerDeviceById(detail.deviceId);
-    const connectedState = await getLedgerDeviceSessionState(detail.deviceId);
-    return [connectedState?.deviceStatus === 'CONNECTED', detail.deviceId];
-  } catch {
+    await getLedgerAppAndVersion(detail.deviceId);
+    return [true, detail.deviceId];
+  } catch (error) {
+    if (isLedgerBusyError(error)) {
+      return [true, detail.deviceId];
+    }
+
+    await resetLedgerDeviceSession(detail.deviceId);
     return [false, detail.deviceId];
   }
 }
@@ -155,7 +157,7 @@ export async function importFirstAddress({
       await task();
       break;
     } catch (e) {
-      if (i === retryCount - 1) {
+      if (isLedgerUserRejectedError(e) || i === retryCount - 1) {
         throw e;
       }
     }

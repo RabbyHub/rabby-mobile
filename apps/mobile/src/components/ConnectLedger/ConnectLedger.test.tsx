@@ -15,6 +15,7 @@ const mockDevices = [mockDevice];
 const mockSearchAndPair = jest.fn();
 let mockBluetoothOnNext: (() => void) | undefined;
 let mockIsScanning = false;
+let mockLedgerErrorCode: string | undefined;
 
 const mockApiLedger = {
   checkEthApp: jest.fn(),
@@ -26,6 +27,8 @@ const mockApiLedger = {
   setHDPathType: jest.fn(),
 };
 const mockHideToast = jest.fn();
+const mockToastShow = jest.fn();
+const mockLedgerErrorHandler = jest.fn();
 const mockNavigateDeprecated = jest.fn();
 
 jest.mock('@/core/apis', () => ({
@@ -35,22 +38,25 @@ jest.mock('@/core/apis', () => ({
 jest.mock('@/hooks/ledger/useLedgerImport', () => ({
   useLedgerImport: () => ({
     devices: mockDevices,
-    errorCode: undefined,
+    errorCode: mockLedgerErrorCode,
     searchAndPair: mockSearchAndPair,
   }),
 }));
 
 jest.mock('@/hooks/ledger/error', () => ({
-  ledgerErrorHandler: jest.fn(),
+  ledgerErrorHandler: (...args: unknown[]) => mockLedgerErrorHandler(...args),
   LEDGER_ERROR_CODES: {
     FIRMWARE_OR_APP_UPDATE_REQUIRED: 'FIRMWARE_OR_APP_UPDATE_REQUIRED',
     LOCKED_OR_NO_ETH_APP: 'LOCKED_OR_NO_ETH_APP',
+    NO_ETH_APP: 'NO_ETH_APP',
+    BLUETOOTH_PERMISSION_DENIED: 'bluetooth_permission_denied',
+    BLUETOOTH_POWERED_OFF: 'bluetooth_powered_off',
   },
 }));
 
 jest.mock('@/components2024/Toast', () => ({
   toast: {
-    show: jest.fn(),
+    show: (...args: unknown[]) => mockToastShow(...args),
   },
   toastIndicator: jest.fn(() => mockHideToast),
 }));
@@ -88,13 +94,19 @@ jest.mock('../AutoLockView', () => {
 
 jest.mock('./BluetoothPermissionScreen', () => ({
   BluetoothPermissionScreen: ({ onNext }: { onNext: () => void }) => {
+    const React = require('react');
+    const { Text } = require('react-native');
     mockBluetoothOnNext = onNext;
-    return null;
+    return <Text>bluetooth-permission-screen</Text>;
   },
 }));
 
 jest.mock('./ScanDeviceScreen', () => ({
-  ScanDeviceScreen: () => null,
+  ScanDeviceScreen: () => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    return <Text>scan-device-screen</Text>;
+  },
 }));
 
 jest.mock('./NotFoundDeviceScreen', () => ({
@@ -172,6 +184,7 @@ describe('ConnectLedger', () => {
     jest.useFakeTimers();
     mockBluetoothOnNext = undefined;
     mockIsScanning = false;
+    mockLedgerErrorCode = undefined;
     mockSearchAndPair.mockImplementation(() => {
       mockIsScanning = true;
     });
@@ -203,6 +216,26 @@ describe('ConnectLedger', () => {
     expect(mockIsScanning).toBe(true);
   });
 
+  it.each(['bluetooth_permission_denied', 'bluetooth_powered_off'])(
+    'returns to the Bluetooth step after %s',
+    async errorCode => {
+      const { rerender } = render(<ConnectLedger />);
+
+      act(() => mockBluetoothOnNext?.());
+      expect(screen.getByText('scan-device-screen')).toBeTruthy();
+
+      mockLedgerErrorCode = errorCode;
+      rerender(<ConnectLedger />);
+
+      await waitFor(() => {
+        expect(screen.getByText('bluetooth-permission-screen')).toBeTruthy();
+      });
+
+      act(() => jest.runOnlyPendingTimers());
+      expect(screen.getByText('bluetooth-permission-screen')).toBeTruthy();
+    },
+  );
+
   it('does not continue signing when the readiness probe fails', async () => {
     const onSelectDevice = jest.fn();
     mockApiLedger.checkEthApp.mockRejectedValueOnce(
@@ -216,6 +249,24 @@ describe('ConnectLedger', () => {
       expect(mockApiLedger.checkEthApp).toHaveBeenCalledTimes(1);
     });
     expect(onSelectDevice).not.toHaveBeenCalled();
+  });
+
+  it('surfaces an eager connection failure and allows retry', async () => {
+    const onSelectDevice = jest.fn();
+    mockApiLedger.connectDevice.mockRejectedValueOnce(
+      new Error('Failed to open Ledger'),
+    );
+
+    render(<ConnectLedger onSelectDevice={onSelectDevice} />);
+    await pressDevice();
+
+    expect(mockToastShow).toHaveBeenCalledWith('Failed to open Ledger');
+    expect(onSelectDevice).not.toHaveBeenCalled();
+
+    await pressDevice();
+    await waitFor(() => {
+      expect(onSelectDevice).toHaveBeenCalledWith(mockDevice);
+    });
   });
 
   it('continues signing when connected even if Ethereum still needs opening', async () => {
@@ -280,6 +331,26 @@ describe('ConnectLedger', () => {
     await pressDevice();
     await waitFor(() => {
       expect(mockApiLedger.importFirstAddress).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('shows the existing guidance when the Ethereum app is missing', async () => {
+    mockApiLedger.checkEthApp.mockImplementation(async callback => {
+      callback(false);
+      return false;
+    });
+    mockApiLedger.importFirstAddress.mockRejectedValueOnce(
+      new Error('OpenAppCommandError 0x6807'),
+    );
+    mockLedgerErrorHandler.mockReturnValueOnce('NO_ETH_APP');
+
+    render(<ConnectLedger />);
+    await pressDevice();
+
+    await waitFor(() => {
+      expect(mockToastShow).toHaveBeenCalledWith(
+        'page.newAddress.ledger.error.lockedOrNoEthApp',
+      );
     });
   });
 });

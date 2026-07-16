@@ -7934,6 +7934,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ledgerhq/context-module@patch:@ledgerhq/context-module@npm%3A2.1.0#~/.yarn/patches/@ledgerhq-context-module-npm-2.1.0-82709c1f3a.patch":
+  version: 2.1.0
+  resolution: "@ledgerhq/context-module@patch:@ledgerhq/context-module@npm%3A2.1.0#~/.yarn/patches/@ledgerhq-context-module-npm-2.1.0-82709c1f3a.patch::version=2.1.0&hash=70ed38"
+  dependencies:
+    bs58: "npm:^6.0.0"
+    crypto-js: "npm:^4.2.0"
+    ethers: "npm:6.14.1"
+    inversify: "npm:7.5.1"
+    purify-ts: "npm:2.1.0"
+    reflect-metadata: "npm:0.2.2"
+  peerDependencies:
+    "@ledgerhq/device-management-kit": ^1.5.1
+  checksum: 10/3e7709cb6353558ddcc54f5edf0daca7935e7989f9135e3cbccfc014eb676d95caa8e869e1d0d075ba04ee375790be928879a9146ce6f072d7d8ab9db8125de5
+  languageName: node
+  linkType: hard
+
 "@ledgerhq/device-management-kit@npm:1.7.1":
   version: 1.7.1
   resolution: "@ledgerhq/device-management-kit@npm:1.7.1"
@@ -7974,7 +7990,7 @@ __metadata:
 
 "@ledgerhq/device-signer-kit-ethereum@patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch":
   version: 1.16.0
-  resolution: "@ledgerhq/device-signer-kit-ethereum@patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch::version=1.16.0&hash=a4eeea"
+  resolution: "@ledgerhq/device-signer-kit-ethereum@patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch::version=1.16.0&hash=e52517"
   dependencies:
     "@ledgerhq/signer-utils": "npm:^1.2.0"
     ethers: "npm:6.14.1"
@@ -7986,7 +8002,7 @@ __metadata:
   peerDependencies:
     "@ledgerhq/context-module": ^2.0.0
     "@ledgerhq/device-management-kit": ^1.5.0
-  checksum: 10/20c2763d9b1150005960330a74852d2f8b5bef0d45c133830dd922b97de409c5cfccdf643d459ef02d14bb3eeeae6e4b2b801fe8e6e92b7a5733945e82561dff
+  checksum: 10/fedd4537165e539b4342e22e96f25577763ff09d00f62aa721ed4f89a04b6b3cb179976a7900f99a00c3fa54b5c26534e4507e9211aed9fa473cf3d0b14ce602
   languageName: node
   linkType: hard
 
@@ -8001,7 +8017,7 @@ __metadata:
   peerDependencies:
     "@ledgerhq/device-management-kit": ^1.0.0
     react-native: ">0.74.1"
-    react-native-ble-plx: 3.4.0
+    react-native-ble-plx: 3.5.1
     rxjs: 7.8.2
   checksum: 10/50afe97ab1260f2537aa06ff107fddd3b1e906ca808c3a6bea672cfada8ef96a26088443a992a5795ec51441780225e84a8711b49e7987a720f4a8e02b9014ad
   languageName: node
@@ -8009,7 +8025,7 @@ __metadata:
 
 "@ledgerhq/device-transport-kit-react-native-ble@patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch":
   version: 1.3.2
-  resolution: "@ledgerhq/device-transport-kit-react-native-ble@patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch::version=1.3.2&hash=b1bd5f"
+  resolution: "@ledgerhq/device-transport-kit-react-native-ble@patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch::version=1.3.2&hash=904889"
   dependencies:
     "@sentry/minimal": "npm:6.19.7"
     js-base64: "npm:^3.7.8"
@@ -8018,9 +8034,9 @@ __metadata:
   peerDependencies:
     "@ledgerhq/device-management-kit": ^1.0.0
     react-native: ">0.74.1"
-    react-native-ble-plx: 3.4.0
+    react-native-ble-plx: 3.5.1
     rxjs: 7.8.2
-  checksum: 10/321b2ce102acbfb4ea163d15c747c853c3f49fe0a74f667d6a31b1ff9d5ef5f8b6043f1cca9dd7aa845e222ed9b710ce3328a0f2b14ad9c2b553d337aa691653
+  checksum: 10/27d35ed29219b2ee85d54d50a96b4749e73873d5809b5e59b9976cffe1aacda641d4befe0b1dc559c80891c7ef8e6a6091de339987f10331bbe5869338e00624
   languageName: node
   linkType: hard
 
@@ -38770,7 +38786,7 @@ __metadata:
     "@ethereumjs/tx": "npm:5.4.0"
     "@ethereumjs/util": "npm:9.1.0"
     "@gorhom/bottom-sheet": "npm:5.2.8"
-    "@ledgerhq/context-module": "npm:2.1.0"
+    "@ledgerhq/context-module": "patch:@ledgerhq/context-module@npm%3A2.1.0#~/.yarn/patches/@ledgerhq-context-module-npm-2.1.0-82709c1f3a.patch"
     "@ledgerhq/device-management-kit": "npm:1.7.1"
     "@ledgerhq/device-signer-kit-ethereum": "patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch"
     "@ledgerhq/device-transport-kit-react-native-ble": "patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch"

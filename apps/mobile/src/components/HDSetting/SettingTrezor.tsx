@@ -11,7 +11,7 @@ import {
 import { apiTrezor } from '@/core/apis';
 
 export const SettingTrezor: React.FC<{
-  onDone: (setting: Setting) => void;
+  onDone: (setting?: Setting) => void;
 }> = ({ onDone }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
@@ -48,15 +48,16 @@ export const SettingTrezor: React.FC<{
   const [setting, setSetting] = useAtom(settingAtom);
   const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
   const handleConfirm = React.useCallback(
-    (value: Setting) => {
-      apiTrezor
-        .setHDPathType(value.hdPath)
-        .then(async () => {
-          setSetting(value);
-        })
-        .finally(() => {
-          onDone?.(value);
-        });
+    async (value: Setting) => {
+      try {
+        await apiTrezor.setHDPathType(value.hdPath);
+      } catch {
+        onDone?.();
+        return;
+      }
+
+      setSetting(value);
+      onDone?.(value);
     },
     [onDone, setSetting],
   );

@@ -62,8 +62,8 @@ export const useLedgerStatus = (
           onDismiss: () => {
             if (!isConnected) {
               rej?.();
+              onDismiss?.();
             }
-            onDismiss?.();
           },
         },
       });

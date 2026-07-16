@@ -1,3 +1,5 @@
+import { isLedgerDmkSessionUnavailableError } from '@/core/keyring-bridge/ledger/ledger-dmk-error';
+
 /**
  * Common Ledger Error Codes
  */
@@ -9,6 +11,8 @@ export enum LEDGER_ERROR_CODES {
   LOCKED_OR_NO_ETH_APP = 'locked_or_no_eth_app',
   FIRMWARE_OR_APP_UPDATE_REQUIRED = 'firmware_or_app_update_required',
   USER_REJECTED = 'user_rejected',
+  BLUETOOTH_PERMISSION_DENIED = 'bluetooth_permission_denied',
+  BLUETOOTH_POWERED_OFF = 'bluetooth_powered_off',
 }
 
 function normalizeStatusWord(value: unknown) {
@@ -28,10 +32,47 @@ function getErrorCode(error: unknown) {
 }
 
 function getErrorText(error: unknown) {
+  if (typeof error === 'string') {
+    return error;
+  }
+
   const value = error as any;
 
   return [value?.message, value?.name, value?._tag].filter(Boolean).join(' ');
 }
+
+const LEDGER_BUSY_ERROR_TAGS = [
+  'DeviceBusyError',
+  'SendApduConcurrencyError',
+  'AlreadySendingApduError',
+];
+
+export const isLedgerBusyError = (error: unknown) => {
+  const value = error as any;
+  const text = getErrorText(error);
+
+  return (
+    LEDGER_BUSY_ERROR_TAGS.includes(value?._tag) ||
+    LEDGER_BUSY_ERROR_TAGS.some(tag => text.includes(tag))
+  );
+};
+
+export const isLedgerDisconnectedError = isLedgerDmkSessionUnavailableError;
+
+export const isLedgerUserRejectedError = (error: unknown) => {
+  const value = error as any;
+  const code = getErrorCode(error);
+  const text = getErrorText(error);
+
+  return (
+    value?._tag === 'RefusedByUserDAError' ||
+    code === '5501' ||
+    code === '6985' ||
+    text.includes('0x5501') ||
+    text.includes('0x6985') ||
+    text.includes('RefusedByUserDAError')
+  );
+};
 
 /**
  * Parses ledger errors based on common issues
@@ -42,14 +83,7 @@ export const ledgerErrorHandler = (error: unknown) => {
   const code = getErrorCode(error);
   const text = getErrorText(error);
 
-  if (
-    tag === 'RefusedByUserDAError' ||
-    code === '5501' ||
-    code === '6985' ||
-    text.includes('0x5501') ||
-    text.includes('0x6985') ||
-    text.includes('RefusedByUserDAError')
-  ) {
+  if (isLedgerUserRejectedError(error)) {
     return LEDGER_ERROR_CODES.USER_REJECTED;
   }
 
@@ -69,8 +103,19 @@ export const ledgerErrorHandler = (error: unknown) => {
     return LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP;
   }
 
-  if (text.includes('0x6511')) {
+  if (code === '6807' || text.includes('0x6807') || text.includes('0x6511')) {
     return LEDGER_ERROR_CODES.NO_ETH_APP;
+  }
+
+  if (
+    tag === 'BlePermissionsNotGranted' ||
+    text.includes('BlePermissionsNotGranted')
+  ) {
+    return LEDGER_ERROR_CODES.BLUETOOTH_PERMISSION_DENIED;
+  }
+
+  if (tag === 'BlePoweredOff' || text.includes('BlePoweredOff')) {
+    return LEDGER_ERROR_CODES.BLUETOOTH_POWERED_OFF;
   }
 
   if (
@@ -81,12 +126,7 @@ export const ledgerErrorHandler = (error: unknown) => {
     return LEDGER_ERROR_CODES.OFF_OR_LOCKED;
   }
 
-  if (
-    tag === 'DeviceSessionNotFound' ||
-    text.includes('DeviceSessionNotFound') ||
-    text.includes('Device session not found') ||
-    text.includes('Disconnected')
-  ) {
+  if (isLedgerDisconnectedError(error)) {
     console.error(new Error('[Ledger] - Disconnected Error'), {
       error,
     });

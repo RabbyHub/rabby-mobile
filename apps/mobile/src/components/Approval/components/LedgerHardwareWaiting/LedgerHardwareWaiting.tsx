@@ -40,7 +40,10 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
-import { isLedgerDisconnectedError } from '@/utils/ledger';
+import {
+  isLedgerDisconnectedError,
+  isLedgerUserRejectedError,
+} from '@/hooks/ledger/error';
 
 interface ApprovalParams {
   address: string;
@@ -140,17 +143,17 @@ export const LedgerHardwareWaiting = ({
     }
   });
 
-  const [isRetrying, setIsRetrying] = React.useState(false);
+  const isRetryingRef = React.useRef(false);
 
   const handleRetry = async (showToast = true) => {
-    if (isRetrying) {
+    if (isRetryingRef.current) {
       return;
     }
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
-    setIsRetrying(true);
+    isRetryingRef.current = true;
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
     retryTxReset();
     if (params.nonce && params.chainId && params.from && account) {
@@ -171,7 +174,6 @@ export const LedgerHardwareWaiting = ({
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
     emitSignComponentAmounted();
-    setIsRetrying(false);
   };
 
   const account = params.isGnosis ? params.account! : $account;
@@ -226,6 +228,7 @@ export const LedgerHardwareWaiting = ({
       });
     }
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
+      isRetryingRef.current = false;
       setErrorMessage(data);
       setConnectStatus(
         isLedgerDisconnectedError(data)
@@ -237,6 +240,7 @@ export const LedgerHardwareWaiting = ({
       setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
     });
     eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
+      isRetryingRef.current = false;
       if (data.success) {
         cancelRef.current = true;
         let sig = data.data;
@@ -381,7 +385,7 @@ export const LedgerHardwareWaiting = ({
         description?.includes('0x6b00')
       ) {
         return [t('page.signFooterBar.ledger.updateFirmwareAlert'), 'origin'];
-      } else if (description?.includes('0x6985')) {
+      } else if (isLedgerUserRejectedError(description)) {
         return [t('page.signFooterBar.ledger.txRejectedByLedger'), 'origin'];
       }
 

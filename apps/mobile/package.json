@@ -74,7 +74,7 @@
     "@ethereumjs/tx": "5.4.0",
     "@ethereumjs/util": "9.1.0",
     "@gorhom/bottom-sheet": "5.2.8",
-    "@ledgerhq/context-module": "2.1.0",
+    "@ledgerhq/context-module": "patch:@ledgerhq/context-module@npm%3A2.1.0#~/.yarn/patches/@ledgerhq-context-module-npm-2.1.0-82709c1f3a.patch",
     "@ledgerhq/device-management-kit": "1.7.1",
     "@ledgerhq/device-signer-kit-ethereum": "patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch",
     "@ledgerhq/device-transport-kit-react-native-ble": "patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch",

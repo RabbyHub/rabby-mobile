@@ -91,7 +91,10 @@ export const ConnectLedger: React.FC<{
         });
       } catch (err: any) {
         const code = ledgerErrorHandler(err);
-        if (code === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
+        if (
+          code === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP ||
+          code === LEDGER_ERROR_CODES.NO_ETH_APP
+        ) {
           toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
         }
         setIsLoaded(true);
@@ -174,6 +177,12 @@ export const ConnectLedger: React.FC<{
             }
           }
         }
+      } catch (error) {
+        toast.show(
+          error instanceof Error && error.message
+            ? error.message
+            : t('page.newAddress.ledger.error.unknown'),
+        );
       } finally {
         if (!isSelected) {
           selectingDeviceRef.current = false;
@@ -181,7 +190,7 @@ export const ConnectLedger: React.FC<{
       }
     },
 
-    [checkEthApp, importFirstAddress, onSelectDevice],
+    [checkEthApp, importFirstAddress, onSelectDevice, t],
   );
 
   const handleBleNext = React.useCallback(() => {
@@ -197,6 +206,16 @@ export const ConnectLedger: React.FC<{
       handleScanDone();
     }
   }, [devices, handleScanDone]);
+
+  React.useEffect(() => {
+    if (
+      errorCode === LEDGER_ERROR_CODES.BLUETOOTH_PERMISSION_DENIED ||
+      errorCode === LEDGER_ERROR_CODES.BLUETOOTH_POWERED_OFF
+    ) {
+      clearTimeout(notfoundTimerRef.current);
+      setCurrentScreen('ble');
+    }
+  }, [errorCode]);
 
   React.useEffect(() => {
     return () => {
