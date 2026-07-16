@@ -4,10 +4,11 @@ import { migrateService } from '@/migrations/migrations';
 import { traceAndroidInstant } from '../utils/androidTrace';
 import {
   getRegisteredService,
-  isCoreServiceRegistered,
+  isCoreServiceLoaded,
   registerService,
+  requireCoreService,
   type CoreServiceName,
-  waitForCoreService,
+  type CoreServiceRegistry,
 } from './serviceRegistry';
 import { observeStartupModuleLoad } from '@/startup/runtimeDiagnostics';
 
@@ -25,7 +26,7 @@ async function loadFeatureService<Name extends CoreServiceName>(
   name: Name,
   loader: () => Promise<void>,
 ) {
-  if (isCoreServiceRegistered(name)) {
+  if (isCoreServiceLoaded(name)) {
     traceFeatureServiceLoad(name, 'skip');
     return;
   }
@@ -63,7 +64,7 @@ function loadStartupCoreService(name: CoreServiceName) {
 export function loadTransactionHistoryService() {
   return loadFeatureService('transactionHistoryService', async () => {
     const { TransactionHistoryService } = await import('./transactionHistory');
-    const preferenceService = await waitForCoreService('preferenceService');
+    const preferenceService = requireCoreService('preferenceService');
     registerService(
       'transactionHistoryService',
       new TransactionHistoryService({
@@ -74,12 +75,10 @@ export function loadTransactionHistoryService() {
   });
 }
 
-async function restorePendingTransactions() {
-  const [transactionHistoryService, transactionWatcherService] =
-    await Promise.all([
-      waitForCoreService('transactionHistoryService'),
-      waitForCoreService('transactionWatcherService'),
-    ]);
+async function restorePendingTransactions(
+  transactionHistoryService: CoreServiceRegistry['transactionHistoryService'],
+  transactionWatcherService: CoreServiceRegistry['transactionWatcherService'],
+) {
   const { findChainByID } = await import('@/utils/chain');
 
   transactionHistoryService
@@ -104,19 +103,28 @@ async function restorePendingTransactions() {
     });
 }
 
+function getTransactionHistoryServiceDependency() {
+  return requireCoreService('transactionHistoryService');
+}
+
+function getTransactionWatcherServiceDependency() {
+  return requireCoreService('transactionWatcherService');
+}
+
 export function loadTransactionWatcherService() {
   return loadFeatureService('transactionWatcherService', async () => {
     const { TransactionWatcherService } = await import('./transactionWatcher');
-    const transactionHistoryService = await waitForCoreService(
-      'transactionHistoryService',
-    );
+    const transactionHistoryService = getTransactionHistoryServiceDependency();
     const transactionWatcherService = new TransactionWatcherService({
       storageAdapter: appStorage,
       transactionHistoryService,
     });
     registerService('transactionWatcherService', transactionWatcherService);
     transactionWatcherService.start();
-    await restorePendingTransactions();
+    await restorePendingTransactions(
+      transactionHistoryService,
+      transactionWatcherService,
+    );
   });
 }
 
@@ -125,11 +133,8 @@ export function loadTransactionBroadcastWatcherService() {
     const { TransactionBroadcastWatcherService } = await import(
       './transactionBroadcastWatcher'
     );
-    const [transactionHistoryService, transactionWatcherService] =
-      await Promise.all([
-        waitForCoreService('transactionHistoryService'),
-        waitForCoreService('transactionWatcherService'),
-      ]);
+    const transactionHistoryService = getTransactionHistoryServiceDependency();
+    const transactionWatcherService = getTransactionWatcherServiceDependency();
     const transactionBroadcastWatcherService =
       new TransactionBroadcastWatcherService({
         storageAdapter: appStorage,
@@ -317,7 +322,7 @@ export function loadBrowserHistoryService() {
 export function loadDappService() {
   return loadFeatureService('dappService', async () => {
     const { DappService } = await import('./dappService');
-    const preferenceService = await waitForCoreService('preferenceService');
+    const preferenceService = requireCoreService('preferenceService');
     const dappService = new DappService({
       storageAdapter: appStorage,
     });
@@ -331,7 +336,7 @@ export function loadDappService() {
 export function loadSessionService() {
   return loadFeatureService('sessionService', async () => {
     const { SessionService } = await import('./session');
-    const dappService = await waitForCoreService('dappService');
+    const dappService = requireCoreService('dappService');
     registerService(
       'sessionService',
       new SessionService({
@@ -355,10 +360,8 @@ export function loadWhitelistService() {
 export function loadNotificationService() {
   return loadFeatureService('notificationService', async () => {
     const { NotificationService } = await import('./notification');
-    const [preferenceService, transactionHistoryService] = await Promise.all([
-      waitForCoreService('preferenceService'),
-      waitForCoreService('transactionHistoryService'),
-    ]);
+    const preferenceService = requireCoreService('preferenceService');
+    const transactionHistoryService = getTransactionHistoryServiceDependency();
     registerService(
       'notificationService',
       new NotificationService({
@@ -396,17 +399,10 @@ export function loadGasAccountService() {
 export function loadAutoConnectService() {
   return loadFeatureService('autoConnectService', async () => {
     const { AutoConnectService } = await import('./autoConnect');
-    const [
-      dappService,
-      keyringService,
-      preferenceService,
-      transactionHistoryService,
-    ] = await Promise.all([
-      waitForCoreService('dappService'),
-      waitForCoreService('keyringService'),
-      waitForCoreService('preferenceService'),
-      waitForCoreService('transactionHistoryService'),
-    ]);
+    const dappService = requireCoreService('dappService');
+    const keyringService = requireCoreService('keyringService');
+    const preferenceService = requireCoreService('preferenceService');
+    const transactionHistoryService = getTransactionHistoryServiceDependency();
 
     registerService(
       'autoConnectService',
