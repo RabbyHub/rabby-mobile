@@ -29,7 +29,9 @@ export const LedgerProcessActions: React.FC<Props> = props => {
     let waitingForConnectModal = false;
 
     try {
-      const [isConnected] = await apiLedger.isConnected(account.address);
+      const [isConnected, deviceId] = await apiLedger.isConnected(
+        account.address,
+      );
       if (!isConnected) {
         onClickConnect(
           async () => {
@@ -40,6 +42,7 @@ export const LedgerProcessActions: React.FC<Props> = props => {
             }
           },
           () => setSubmitting(false),
+          deviceId,
         );
         waitingForConnectModal = true;
         return;

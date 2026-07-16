@@ -33,7 +33,9 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
     let waitingForConnectModal = false;
 
     try {
-      const [isConnected] = await apiLedger.isConnected(account.address);
+      const [isConnected, deviceId] = await apiLedger.isConnected(
+        account.address,
+      );
       if (!isConnected) {
         onClickConnect(
           async () => {
@@ -47,6 +49,7 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
             setSubmitting(false);
             props.onCancel?.();
           },
+          deviceId,
         );
         waitingForConnectModal = true;
         return;

@@ -128,7 +128,9 @@ describe('LedgerProcessActions navigation races', () => {
 
     expect(mockApiLedger.isConnected).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledTimes(1);
+    expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledWith(
+      expect.objectContaining({ deviceId: 'ledger-device-id' }),
+    );
   });
 
   it('keeps the submit locked when a successful connection modal dismisses', async () => {

@@ -1,4 +1,5 @@
 import { isLedgerDmkSessionUnavailableError } from '@/core/keyring-bridge/ledger/ledger-dmk-error';
+export { isLedgerBusyError } from '@rabby-wallet/eth-keyring-ledger';
 
 /**
  * Common Ledger Error Codes
@@ -40,22 +41,6 @@ function getErrorText(error: unknown) {
 
   return [value?.message, value?.name, value?._tag].filter(Boolean).join(' ');
 }
-
-const LEDGER_BUSY_ERROR_TAGS = [
-  'DeviceBusyError',
-  'SendApduConcurrencyError',
-  'AlreadySendingApduError',
-];
-
-export const isLedgerBusyError = (error: unknown) => {
-  const value = error as any;
-  const text = getErrorText(error);
-
-  return (
-    LEDGER_BUSY_ERROR_TAGS.includes(value?._tag) ||
-    LEDGER_BUSY_ERROR_TAGS.some(tag => text.includes(tag))
-  );
-};
 
 export const isLedgerDisconnectedError = isLedgerDmkSessionUnavailableError;
 

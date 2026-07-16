@@ -34,12 +34,12 @@ export const useLedgerStatus = (
   }, [address, setStatus, extra?.autoConnect]);
 
   const onClickConnect = React.useCallback(
-    (cb?: () => void, rej?: () => void) => {
+    (cb?: () => void, rej?: () => void, currentDeviceId?: string) => {
       let isConnected = false;
       const onDismiss = extra?.onDismiss;
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.CONNECT_LEDGER,
-        deviceId,
+        deviceId: currentDeviceId ?? deviceId,
         onSelectDevice: async (d: LedgerDmkDevice) => {
           console.log('selected device', d.id);
           try {

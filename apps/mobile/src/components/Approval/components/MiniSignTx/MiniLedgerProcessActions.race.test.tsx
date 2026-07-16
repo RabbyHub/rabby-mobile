@@ -73,6 +73,11 @@ describe('MiniLedgerProcessActions connection races', () => {
     await waitFor(() => {
       expect(mockOnClickConnect).toHaveBeenCalledTimes(1);
     });
+    expect(mockOnClickConnect).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Function),
+      'ledger-device-id',
+    );
     expect(mockMiniProcessActionProps?.loading).toBe(true);
 
     act(() => {

@@ -446,6 +446,36 @@ describe('LedgerKeyring DMK session adapter', () => {
     expect(close).not.toHaveBeenCalled();
   });
 
+  it('does not close the active session for a normalized DMK busy error', async () => {
+    const close = jest.fn();
+    const session = {
+      getAddress: jest.fn(),
+      signTransaction: jest.fn(async () => {
+        throw new Error('SendApduConcurrencyError');
+      }),
+      signPersonalMessage: jest.fn(),
+      signTypedData: jest.fn(),
+      close,
+    } as unknown as LedgerKeyringSession;
+    const keyring = new LedgerKeyring({
+      accounts: [ADDRESS.toLowerCase()],
+      accountDetails: {
+        [ADDRESS]: {
+          hdPath: "m/44'/60'/0'/0/0",
+          deviceId: 'ledger-device-id',
+        },
+      },
+      getLedgerSession: jest.fn(async () => session),
+    });
+    keyring.setDeviceId('ledger-device-id');
+
+    await expect(
+      (keyring as any)._signTransaction(ADDRESS, '00', () => undefined),
+    ).rejects.toThrow('SendApduConcurrencyError');
+
+    expect(close).not.toHaveBeenCalled();
+  });
+
   it('does not close a replacement session when an old signature fails', async () => {
     let rejectOldSignature: (error: Error) => void = () => undefined;
     let markSigningStarted: () => void = () => undefined;

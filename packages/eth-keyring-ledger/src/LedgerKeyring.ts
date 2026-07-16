@@ -65,17 +65,21 @@ export class LedgerKeyringBusyError extends Error {
   }
 }
 
-function isLedgerBusyError(error: unknown) {
+const LEDGER_BUSY_ERROR_TAGS = [
+  'DeviceBusyError',
+  'SendApduConcurrencyError',
+  'AlreadySendingApduError',
+];
+
+export function isLedgerBusyError(error: unknown) {
   const value = error as { _tag?: string; message?: string } | undefined;
+  const message = typeof error === 'string' ? error : value?.message;
 
   return (
     error instanceof LedgerKeyringBusyError ||
-    [
-      'DeviceBusyError',
-      'SendApduConcurrencyError',
-      'AlreadySendingApduError',
-    ].includes(value?._tag ?? '') ||
-    value?.message?.includes('Another request is awaiting confirmation')
+    LEDGER_BUSY_ERROR_TAGS.includes(value?._tag ?? '') ||
+    LEDGER_BUSY_ERROR_TAGS.some(tag => message?.includes(tag)) ||
+    message?.includes('Another request is awaiting confirmation') === true
   );
 }
 
