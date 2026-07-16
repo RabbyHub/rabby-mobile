@@ -1297,8 +1297,8 @@ const computeMultiAssetsFromTokens = (
   return {
     unFoldTokens: unfoldedTokens,
     hasFoldTokens:
-      foldedTokens.filter(includeLpTokensFilter).length > 0 ||
-      aggregatedScamTokens.filter(includeLpTokensFilter).length > 0,
+      foldedTokens.some(includeLpTokensFilter) ||
+      aggregatedScamTokens.some(includeLpTokensFilter),
     foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
     scamTokens: aggregatedScamTokens.filter(i =>
       lpTokenFilter(i, isLpTokenEnabled),
@@ -1344,6 +1344,9 @@ const computeSingleAssetsFromTokens = (
   const coreTokens: ITokenItem[] = [];
   let totalValue = 0;
   tokens.forEach(token => {
+    if (chainServerId && token.chain !== chainServerId) {
+      return;
+    }
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
     const isScam =
@@ -1365,32 +1368,14 @@ const computeSingleAssetsFromTokens = (
     coreTokens,
     totalValue,
   });
-  return chainServerId
-    ? {
-        unFoldTokens: unfoldedTokens.filter(
-          item => item.chain === chainServerId,
-        ),
-        hasFoldTokens:
-          foldedTokens.filter(item => item.chain === chainServerId).length >
-            0 ||
-          scamTokens.filter(item => item.chain === chainServerId).length > 0,
-        foldTokens: foldedTokens
-          .filter(item => item.chain === chainServerId)
-          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-        scamTokens: scamTokens
-          .filter(item => item.chain === chainServerId)
-          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-      }
-    : {
-        unFoldTokens: unfoldedTokens,
-        hasFoldTokens:
-          foldedTokens.filter(includeLpTokensFilter).length > 0 ||
-          scamTokens.filter(includeLpTokensFilter).length > 0,
-        foldTokens: foldedTokens.filter(i =>
-          lpTokenFilter(i, isLpTokenEnabled),
-        ),
-        scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-      };
+  return {
+    unFoldTokens: unfoldedTokens,
+    hasFoldTokens:
+      foldedTokens.some(includeLpTokensFilter) ||
+      scamTokens.some(includeLpTokensFilter),
+    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+    scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+  };
 };
 
 export const buildSingleAssetsIndexFromTokenIds = (
