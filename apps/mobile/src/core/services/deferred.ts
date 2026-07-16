@@ -1,3 +1,10 @@
+import {
+  beginServiceContractCall,
+  finishServiceContractCall,
+  recordServiceLifecycleEvent,
+} from '@/core/serviceApi/serviceRuntimeDiagnostics';
+import type { CoreServiceName } from './serviceRegistry';
+
 export type ServiceMethod<TService> = {
   [TKey in keyof TService]: TService[TKey] extends (...args: any[]) => any
     ? TKey
@@ -52,6 +59,12 @@ export function registerDeferredService<TService extends object>(
 ) {
   serviceMap.set(name, service);
   serviceLoaderErrorMap.delete(name);
+  recordServiceLifecycleEvent(name, 'registered');
+  if (!serviceLoaderPromiseMap.has(name)) {
+    recordServiceLifecycleEvent(name, 'ready', {
+      reason: 'registered_without_active_loader',
+    });
+  }
 
   const waiters = waiterMap.get(name);
   if (waiters?.length) {
@@ -77,6 +90,7 @@ export function registerDeferredServiceLoader(
 ) {
   serviceLoaderMap.set(name, loader);
   serviceLoaderErrorMap.delete(name);
+  recordServiceLifecycleEvent(name, 'loader-registered');
 
   return () => {
     if (serviceLoaderMap.get(name) === loader) {
@@ -107,11 +121,22 @@ export function ensureDeferredService(name: string) {
     const error = new Error(
       `Deferred service "${name}" has no registered loader`,
     );
+    recordServiceLifecycleEvent(name, 'rejected', {
+      reason: 'missing_loader',
+      error,
+    });
     rejectWaiters(name, error);
     return Promise.reject(error);
   }
 
   serviceLoaderErrorMap.delete(name);
+  const startedAt = Date.now();
+  recordServiceLifecycleEvent(name, 'requested', {
+    reason: 'first_demand',
+  });
+  recordServiceLifecycleEvent(name, 'loading', {
+    reason: 'loader_started',
+  });
   const loaderPromise = Promise.resolve()
     .then(loader)
     .then(() => {
@@ -124,12 +149,21 @@ export function ensureDeferredService(name: string) {
     .then(() => {
       serviceLoaderPromiseMap.delete(name);
       serviceLoaderErrorMap.delete(name);
+      recordServiceLifecycleEvent(name, 'ready', {
+        reason: 'loader_completed',
+        durationMs: Date.now() - startedAt,
+      });
     })
     .catch(error => {
       serviceLoaderPromiseMap.delete(name);
       const normalizedError =
         error instanceof Error ? error : new Error(String(error));
       serviceLoaderErrorMap.set(name, normalizedError);
+      recordServiceLifecycleEvent(name, 'rejected', {
+        reason: 'loader_failed',
+        durationMs: Date.now() - startedAt,
+        error: normalizedError,
+      });
       if (!serviceMap.has(name)) {
         rejectWaiters(name, normalizedError);
       }
@@ -239,12 +273,21 @@ export async function callDeferredService<
   args: MethodArgs<TService, TMethod>,
   options?: { timeoutMs?: number },
 ): Promise<MethodReturn<TService, TMethod>> {
-  const service = await waitDeferredService<TService>(name, options);
-  const handler = service[method] as (
-    ...methodArgs: MethodArgs<TService, TMethod>
-  ) =>
-    | MethodReturn<TService, TMethod>
-    | Promise<MethodReturn<TService, TMethod>>;
+  const serviceName = name as CoreServiceName;
+  const callId = beginServiceContractCall(serviceName, method);
 
-  return handler.apply(service, args);
+  try {
+    const service = await waitDeferredService<TService>(name, options);
+    const handler = service[method] as (
+      ...methodArgs: MethodArgs<TService, TMethod>
+    ) =>
+      | MethodReturn<TService, TMethod>
+      | Promise<MethodReturn<TService, TMethod>>;
+    const result = await handler.apply(service, args);
+    finishServiceContractCall(callId, 'resolved');
+    return result;
+  } catch (error) {
+    finishServiceContractCall(callId, 'rejected', error);
+    throw error;
+  }
 }

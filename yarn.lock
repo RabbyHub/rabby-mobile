@@ -10117,9 +10117,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.79":
-  version: 0.0.79
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.79"
+"@rabby-wallet/rabby-swap@npm:0.0.80-alpha.3":
+  version: 0.0.80-alpha.3
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.80-alpha.3"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -10128,7 +10128,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/384840e692eaef0a071064e52789220dc4bb806af67576ed5349a6d39780ee280840aeb03caad92fdcd903752bd4f553ed546b97e7ab5f167e4eb89ed37e9c1b
+  checksum: 10/3df9c15af383ac38562b32c27afa63e188af29343572cc0e871853d1494649dae36799f2d4304aa22d5ab9d35344dfc58a32e3dba5e3c995e0415d62cdf4fffa
   languageName: node
   linkType: hard
 
@@ -39245,7 +39245,7 @@ __metadata:
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.79"
+    "@rabby-wallet/rabby-swap": "npm:0.0.80-alpha.3"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
@@ -39375,7 +39375,7 @@ __metadata:
     react-native-dotenv: "npm:^3.4.9"
     react-native-edge-to-edge: "npm:^1.6.0"
     react-native-exception-handler: "npm:^2.10.10"
-    react-native-fast-image: "npm:^8.6.3"
+    react-native-fast-image: "patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch"
     react-native-gesture-handler: "npm:2.30.0"
     react-native-get-random-values: "npm:^2.0.0"
     react-native-haptic-feedback: "npm:2.3.3"
@@ -40152,13 +40152,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-fast-image@npm:^8.6.3":
+"react-native-fast-image@npm:8.6.3":
   version: 8.6.3
-  resolution: "react-native-fast-image@npm:8.6.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-fast-image%2F-%2Freact-native-fast-image-8.6.3.tgz"
+  resolution: "react-native-fast-image@npm:8.6.3"
   peerDependencies:
     react: ^17 || ^18
     react-native: ">=0.60.0"
   checksum: 10/ed340c2b6c2e76658fa0a899a45132871017018bec0a03423b7456610810e79b2844dfa16063c05d98b89a7613eeb0de2fdf3ad978cdfa4d488a4e01228a7349
+  languageName: node
+  linkType: hard
+
+"react-native-fast-image@patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
+  version: 8.6.3
+  resolution: "react-native-fast-image@patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch::version=8.6.3&hash=471527&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  peerDependencies:
+    react: ^17 || ^18
+    react-native: ">=0.60.0"
+  checksum: 10/981d9568989632d245c4a494abf235d3f6659bac1993df955f47285861be2766f276dc730fdfa6cd467157c46bd8a78952573a12edccd1c0b617c6f63ba94acd
   languageName: node
   linkType: hard
 

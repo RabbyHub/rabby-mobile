@@ -17,19 +17,27 @@ import {
   type FeatureActivationEventRecord,
 } from '@/core/utils/featureActivationDiagnostics';
 import {
+  getServiceRuntimeDiagnosticsSnapshot,
+  subscribeServiceRuntimeDiagnostics,
+  type ServiceCallRecord,
+  type ServiceLifecycleEventRecord,
+  type ServiceRuntimeDiagnosticsSnapshot,
+} from '@/core/serviceApi/serviceRuntimeDiagnostics';
+import {
   getStartupRuntimeDiagnosticsSnapshot,
   subscribeStartupRuntimeDiagnostics,
   type StartupModuleLoadRecord,
   type StartupRuntimeDiagnosticsSnapshot,
 } from '@/startup/runtimeDiagnostics';
 
-const MAX_MODULE_ROWS = 4;
-const MAX_FEATURE_ROWS = 5;
+const MAX_MODULE_ROWS = 3;
+const MAX_SERVICE_ROWS = 4;
+const MAX_FEATURE_ROWS = 3;
 const screenLayout = Dimensions.get('window');
 const HANDLE_SIZE = 48;
 const PANEL_WIDTH = Math.min(screenLayout.width - 24, 580);
 const PANEL_BODY_WIDTH = PANEL_WIDTH - HANDLE_SIZE;
-const PANEL_HEIGHT = Math.min(350, screenLayout.height * 0.8);
+const PANEL_HEIGHT = Math.min(380, screenLayout.height * 0.8);
 const VERTICAL_EDGE_PADDING = 40;
 const HORIZONTAL_EDGE_PADDING = 0;
 const SIDE_LEFT = 0;
@@ -46,11 +54,20 @@ const runtimeMetricElapsed = makeMutable('0ms');
 const runtimeModuleLines = Array.from({ length: MAX_MODULE_ROWS }, () =>
   makeMutable(''),
 );
+const runtimeServiceSummary = makeMutable('pending 0 | slow 0 | rejected 0');
+const runtimeServiceLines = Array.from({ length: MAX_SERVICE_ROWS }, () =>
+  makeMutable(''),
+);
 const runtimeFeatureLines = Array.from({ length: MAX_FEATURE_ROWS }, () =>
   makeMutable(''),
 );
 const startupRuntimeDiagnosticsEnabled =
   getStartupRuntimeDiagnosticsSnapshot().enabled;
+let latestRuntimeLoadingCount = 0;
+let latestRuntimeErrorCount = 0;
+let latestServicePendingCount = 0;
+let latestServiceSlowCount = 0;
+let latestServiceErrorCount = 0;
 
 function clamp(value: number, min: number, max: number) {
   'worklet';
@@ -154,6 +171,35 @@ function formatFeatureLine(record: FeatureActivationEventRecord) {
   } | +${formatMs(record.elapsedMs)} / ${formatMs(record.stepMs)}`;
 }
 
+function formatServiceCallLine(record: ServiceCallRecord) {
+  const duration =
+    record.status === 'pending'
+      ? formatMs(Date.now() - record.requestedAt)
+      : formatMs(record.durationMs);
+  const route = record.route ? ` @${record.route}` : '';
+
+  return `${record.status}${record.slow ? '!' : ''} | ${record.semantic} ${
+    record.serviceName
+  }.${record.method}${route} | ${duration}`;
+}
+
+function formatServiceEventLine(record: ServiceLifecycleEventRecord) {
+  const duration = record.durationMs ? ` | ${formatMs(record.durationMs)}` : '';
+  return `${record.status} | ${record.serviceName}${duration}`;
+}
+
+function syncPanelTone() {
+  const errorCount = latestRuntimeErrorCount + latestServiceErrorCount;
+  const activeCount =
+    latestRuntimeLoadingCount +
+    latestServicePendingCount +
+    latestServiceSlowCount;
+
+  runtimeTone.value = errorCount > 0 ? 2 : activeCount > 0 ? 1 : 0;
+  runtimeHandleLabel.value =
+    errorCount > 0 ? 'SM!' : activeCount > 0 ? 'SM*' : 'SM';
+}
+
 function syncRuntimeMutables(snapshot: StartupRuntimeDiagnosticsSnapshot) {
   runtimePhaseTitle.value = `${snapshot.phase}: ${snapshot.milestone}`;
   runtimePhaseReason.value = snapshot.phaseReason;
@@ -163,10 +209,9 @@ function syncRuntimeMutables(snapshot: StartupRuntimeDiagnosticsSnapshot) {
   runtimeMetricElapsed.value = formatMs(
     snapshot.updatedAt - snapshot.startedAt,
   );
-  runtimeTone.value =
-    snapshot.errorCount > 0 ? 2 : snapshot.loadingCount > 0 ? 1 : 0;
-  runtimeHandleLabel.value =
-    snapshot.errorCount > 0 ? 'SM!' : snapshot.loadingCount > 0 ? 'SM*' : 'SM';
+  latestRuntimeLoadingCount = snapshot.loadingCount;
+  latestRuntimeErrorCount = snapshot.errorCount;
+  syncPanelTone();
 
   runtimeModuleLines.forEach((line, index) => {
     line.value = snapshot.modules[index]
@@ -177,9 +222,37 @@ function syncRuntimeMutables(snapshot: StartupRuntimeDiagnosticsSnapshot) {
   });
 }
 
+function syncServiceMutables(snapshot: ServiceRuntimeDiagnosticsSnapshot) {
+  latestServicePendingCount = snapshot.pendingCallCount;
+  latestServiceSlowCount = snapshot.slowPendingCallCount;
+  latestServiceErrorCount = snapshot.errorCount;
+  runtimeServiceSummary.value = `loading ${snapshot.loadingServiceCount} | pending ${snapshot.pendingCallCount} | slow ${snapshot.slowPendingCallCount} | rejected ${snapshot.rejectedCallCount}`;
+
+  const relevantCalls = snapshot.calls.filter(
+    record =>
+      record.status === 'pending' ||
+      record.status === 'rejected' ||
+      record.slow,
+  );
+  const rows = [
+    ...relevantCalls.map(formatServiceCallLine),
+    ...snapshot.serviceEvents.map(formatServiceEventLine),
+  ].slice(0, MAX_SERVICE_ROWS);
+
+  runtimeServiceLines.forEach((line, index) => {
+    line.value = rows[index]
+      ? rows[index]
+      : index === 0
+      ? 'No deferred service activity recorded yet'
+      : '';
+  });
+  syncPanelTone();
+}
+
 function useSyncStartupRuntimeMutables() {
   React.useEffect(() => {
     syncRuntimeMutables(getStartupRuntimeDiagnosticsSnapshot());
+    syncServiceMutables(getServiceRuntimeDiagnosticsSnapshot());
     const syncFeatureMutables = () => {
       const snapshot = getFeatureActivationDiagnosticsSnapshot();
       runtimeFeatureLines.forEach((line, index) => {
@@ -195,11 +268,15 @@ function useSyncStartupRuntimeMutables() {
     const unsubscribeRuntime = subscribeStartupRuntimeDiagnostics(() => {
       syncRuntimeMutables(getStartupRuntimeDiagnosticsSnapshot());
     });
+    const unsubscribeServices = subscribeServiceRuntimeDiagnostics(() => {
+      syncServiceMutables(getServiceRuntimeDiagnosticsSnapshot());
+    });
     const unsubscribeFeatures =
       subscribeFeatureActivationDiagnostics(syncFeatureMutables);
 
     return () => {
       unsubscribeRuntime();
+      unsubscribeServices();
       unsubscribeFeatures();
     };
   }, []);
@@ -231,18 +308,15 @@ function ModuleLine({ value }: { value: SharedValue<string> }) {
   const animatedProps = useAnimatedProps(() => ({
     text: value.value,
   }));
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: value.value ? 1 : 0,
-  }));
 
   return (
-    <Animated.View style={animatedStyle}>
+    <View style={styles.moduleLine}>
       <AnimateableText
         animatedProps={animatedProps}
         numberOfLines={1}
         style={styles.moduleText}
       />
-    </Animated.View>
+    </View>
   );
 }
 
@@ -291,7 +365,20 @@ function RuntimeWindow() {
           <ModuleLine key={index} value={line} />
         ))}
       </View>
-      <Text style={styles.sectionLabel}>feature cycles</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionLabel}>services</Text>
+        <MutableText
+          numberOfLines={1}
+          style={styles.sectionSummary}
+          value={runtimeServiceSummary}
+        />
+      </View>
+      <View style={styles.serviceList}>
+        {runtimeServiceLines.map((line, index) => (
+          <ModuleLine key={index} value={line} />
+        ))}
+      </View>
+      <Text style={styles.sectionLabelStandalone}>feature cycles</Text>
       <View style={styles.featureList}>
         {runtimeFeatureLines.map((line, index) => (
           <ModuleLine key={index} value={line} />
@@ -603,10 +690,33 @@ const styles = StyleSheet.create({
     rowGap: 3,
   },
   sectionLabel: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 9,
+    lineHeight: 12,
+  },
+  sectionHeader: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 6,
+  },
+  sectionSummary: {
+    flexShrink: 1,
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 9,
+    lineHeight: 12,
+    textAlign: 'right',
+  },
+  sectionLabelStandalone: {
     marginTop: 8,
     color: 'rgba(255, 255, 255, 0.5)',
     fontSize: 9,
     lineHeight: 12,
+  },
+  serviceList: {
+    marginTop: 3,
+    rowGap: 3,
   },
   featureList: {
     marginTop: 3,
@@ -616,5 +726,8 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.78)',
     fontSize: 10,
     lineHeight: 13,
+  },
+  moduleLine: {
+    height: 13,
   },
 });

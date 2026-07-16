@@ -1,31 +1,16 @@
-const DEFERRED_SERVICE_APIS = new Map([
-  ['autoConnect', 'autoConnectServiceApi'],
-  ['bridge', 'bridgeServiceApi'],
-  ['browser', 'browserServiceApi'],
-  ['contact', 'contactServiceApi'],
-  ['currency', 'currencyServiceApi'],
-  ['customRPC', 'customRPCServiceApi'],
-  ['customTestnet', 'customTestnetServiceApi'],
-  ['dapp', 'dappServiceApi'],
-  ['gasAccount', 'gasAccountServiceApi'],
-  ['hdKeyring', 'hdKeyringServiceApi'],
-  ['keyring', 'keyringServiceApi'],
-  ['lending', 'lendingServiceApi'],
-  ['metamaskMode', 'metamaskModeServiceApi'],
-  ['notification', 'notificationServiceApi'],
-  ['offlineChain', 'offlineChainServiceApi'],
-  ['perps', 'perpsServiceApi'],
-  ['preference', 'preferenceServiceApi'],
-  ['rabbyPoints', 'rabbyPointsServiceApi'],
-  ['securityEngine', 'securityEngineServiceApi'],
-  ['session', 'sessionServiceApi'],
-  ['swap', 'swapServiceApi'],
-  ['syncChain', 'syncChainServiceApi'],
-  ['transactionBroadcastWatcher', 'transactionBroadcastWatcherServiceApi'],
-  ['transactionHistory', 'transactionHistoryServiceApi'],
-  ['transactionWatcher', 'transactionWatcherServiceApi'],
-  ['whitelist', 'whitelistServiceApi'],
-]);
+const contractCatalog = require('../src/core/serviceApi/serviceContractCatalog.json');
+
+const DEFERRED_SERVICE_APIS = new Map(
+  Object.entries(contractCatalog.services)
+    .filter(([, definition]) => definition.apiModule && definition.apiExport)
+    .map(([serviceName, definition]) => [
+      definition.apiModule,
+      {
+        apiExport: definition.apiExport,
+        serviceName,
+      },
+    ]),
+);
 
 const FUNCTION_NODES = new Set([
   'ArrowFunctionExpression',
@@ -33,7 +18,7 @@ const FUNCTION_NODES = new Set([
   'FunctionExpression',
 ]);
 
-function getDeferredServiceApiName(importSource) {
+function getDeferredServiceDefinition(importSource) {
   if (typeof importSource !== 'string') {
     return null;
   }
@@ -44,6 +29,38 @@ function getDeferredServiceApiName(importSource) {
   }
 
   return DEFERRED_SERVICE_APIS.get(match[1]) || null;
+}
+
+function matchesMethodPrefix(method, prefix) {
+  if (method === prefix) {
+    return true;
+  }
+
+  if (!method.startsWith(prefix)) {
+    return false;
+  }
+
+  const nextCharacter = method[prefix.length];
+  return nextCharacter === '_' || /[A-Z]/.test(nextCharacter || '');
+}
+
+function getMethodSemantic(serviceName, method) {
+  const overridden = contractCatalog.methodOverrides[serviceName]?.[method];
+  if (overridden) {
+    return overridden;
+  }
+
+  for (const semantic of ['subscription', 'query', 'command']) {
+    if (
+      contractCatalog.methodPrefixes[semantic].some(prefix =>
+        matchesMethodPrefix(method, prefix),
+      )
+    ) {
+      return semantic;
+    }
+  }
+
+  return null;
 }
 
 function getPropertyName(memberExpression) {
@@ -184,15 +201,17 @@ module.exports = {
     messages: {
       floatingCall:
         'Deferred service API calls must be awaited, returned, transferred to an explicit consumer, or handle rejection before being discarded.',
+      unclassifiedMethod:
+        'Deferred service API method "{{serviceName}}.{{method}}" has no query, command, or subscription semantic in serviceContractCatalog.json.',
     },
   },
   create(context) {
-    const deferredServiceBindings = new Set();
+    const deferredServiceBindings = new Map();
 
     return {
       ImportDeclaration(node) {
-        const expectedApiName = getDeferredServiceApiName(node.source.value);
-        if (!expectedApiName || node.importKind === 'type') {
+        const definition = getDeferredServiceDefinition(node.source.value);
+        if (!definition || node.importKind === 'type') {
           return;
         }
 
@@ -200,12 +219,15 @@ module.exports = {
           if (
             specifier.type !== 'ImportSpecifier' ||
             specifier.importKind === 'type' ||
-            specifier.imported.name !== expectedApiName
+            specifier.imported.name !== definition.apiExport
           ) {
             return;
           }
 
-          deferredServiceBindings.add(specifier.local.name);
+          deferredServiceBindings.set(
+            specifier.local.name,
+            definition.serviceName,
+          );
         });
       },
       CallExpression(node) {
@@ -214,6 +236,22 @@ module.exports = {
           node.callee.object.type !== 'Identifier' ||
           !deferredServiceBindings.has(node.callee.object.name)
         ) {
+          return;
+        }
+
+        const serviceName = deferredServiceBindings.get(
+          node.callee.object.name,
+        );
+        const method = getPropertyName(node.callee);
+        if (!method || !getMethodSemantic(serviceName, method)) {
+          context.report({
+            node,
+            messageId: 'unclassifiedMethod',
+            data: {
+              serviceName,
+              method: method || '<dynamic>',
+            },
+          });
           return;
         }
 
