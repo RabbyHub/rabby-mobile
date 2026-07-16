@@ -28,7 +28,7 @@ type AppBuildGitInfo = {
   METRO_CACHE_ENABLED?: boolean;
 };
 
-const nativeBuildInfo = (NativeModules.RNHelpers?.buildInfo ||
+const nativeBuildInfo = (NativeModules?.RNHelpers?.buildInfo ||
   {}) as Partial<AppBuildGitInfo>;
 
 export const BUILD_GIT_INFO: AppBuildGitInfo = {
