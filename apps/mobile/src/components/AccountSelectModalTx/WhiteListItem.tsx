@@ -33,10 +33,11 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 
 const SIZES = {
+  itemBorderRadius: 20,
   itemH: 78,
   itemGap: 12,
 };
@@ -146,13 +147,17 @@ export const WhiteListItemInSheetModal = ({
     <AddressItemShadowView
       style={[
         styles.shadowView,
-        !enableMenu && isPressing && styles.rootPressing,
+        !IS_IOS && !enableMenu && isPressing && styles.rootPressing,
       ]}>
       <TouchableOpacity
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
-        style={StyleSheet.flatten([styles.root])}
+        style={StyleSheet.flatten([
+          styles.root,
+          IS_IOS && !enableMenu && isPressing && styles.rootPressing,
+          IS_IOS && enableMenu && isPressing && styles.menuPressing,
+        ])}
         delayLongPress={IS_ANDROID ? 350 : 200} // long press delay
         onPress={() => {
           if (inWhiteList || isMyImported) {
@@ -187,7 +192,7 @@ export const WhiteListItemInSheetModal = ({
           style={StyleSheet.flatten([
             styles.card,
             style,
-            enableMenu && isPressing && styles.cardPressing,
+            !IS_IOS && enableMenu && isPressing && styles.menuPressing,
           ])}>
           <InnerAddressItem style={styles.rootItem} account={account}>
             {({ WalletIcon, WalletBalance }) => (
@@ -267,7 +272,7 @@ export const WhiteListItemInSheetModal = ({
         menuTitle: account.address,
         menuActions: menuActions,
       }}
-      preViewBorderRadius={16}
+      preViewBorderRadius={SIZES.itemBorderRadius}
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>
@@ -276,28 +281,36 @@ export const WhiteListItemInSheetModal = ({
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
-    // borderRadius: 20,
+    borderRadius: SIZES.itemBorderRadius,
     overflow: 'hidden',
-    // backgroundColor: colors2024['neutral-bg-1'],
+    ...(IS_IOS
+      ? {
+          borderWidth: 1,
+          borderColor: colors2024['neutral-line'],
+        }
+      : {}),
   },
   rootPressing: {
     borderColor: colors2024['brand-light-2'],
   },
   shadowView: {
-    borderRadius: 20,
+    borderRadius: SIZES.itemBorderRadius,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
+    ...(IS_IOS ? { borderWidth: 0 } : {}),
   },
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
-    borderRadius: 20,
+    borderRadius: SIZES.itemBorderRadius,
     flex: 1,
     flexGrow: 1,
-    backgroundColor: isLight
+    backgroundColor: IS_IOS
+      ? 'transparent'
+      : isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     padding: 16,
@@ -373,9 +386,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
-  cardPressing: {
+  menuPressing: {
     backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 16,
   },
   walletIcon: {
     borderRadius: 12,

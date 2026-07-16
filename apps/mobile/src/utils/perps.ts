@@ -6,6 +6,7 @@ import {
   PERPS_MAX_NTL_VALUE,
   PerpsQuoteAsset,
   COLLATERAL_TOKEN_TO_QUOTE,
+  DEFAULT_TOP_ASSET,
 } from '@/constant/perps';
 import {
   Meta,
@@ -22,13 +23,24 @@ import { perpsService } from '@/core/services';
 import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 
-export const getPxDecimals = (markPx: string) => {
-  const parts = markPx.split('.');
-  if (!parts[1]) {
-    return 2;
+// Hyperliquid price-axis precision, ported from the official app bundle:
+// decimals = clamp(4 - floor(log10(0.95 * px)), 0, cap) — i.e. 5
+// significant figures derived from the price magnitude (BTC at 64,026 →
+// whole numbers; 0.123456 → 5 decimals). The ×0.95 is HL's hysteresis:
+// prices just above a power of ten keep the finer precision, so the axis
+// doesn't flap when hovering around a boundary (it also keeps log10 away
+// from exact powers of ten where floats have edges). We cap by
+// 6 - szDecimals (the perp tick bound) where HL's chart caps by a flat 6;
+// ours is never looser. Recomputed per tick but only changes when the
+// price crosses a magnitude.
+export const getPxDecimals = (szDecimals: number, refPx?: string | number) => {
+  const maxBySz = Math.max(0, 6 - Number(szDecimals ?? 0));
+  const px = Math.abs(Number(refPx));
+  if (!Number.isFinite(px) || px === 0) {
+    return maxBySz;
   }
-  const decimalPart = parts[1];
-  return decimalPart.length;
+  const sigDecimals = 4 - Math.floor(Math.log10(0.95 * px));
+  return Math.max(0, Math.min(sigDecimals, maxBySz));
 };
 
 export const normalizeHyperliquidCoinForLogo = (coin: string) => {
@@ -48,6 +60,23 @@ export const getHyperliquidCoinLogoUrl = (coin: string) => {
     return '';
   }
   return `https://app.hyperliquid.xyz/coins/${iconKey}.svg`;
+};
+
+// Logo fallback when marketDataMap hasn't loaded: bundled DeBank PNG first
+// (reachable in degraded networks where HL's domain isn't), HL svg last.
+let defaultTopAssetLogoMap: Record<string, string> | null = null;
+
+export const getFallbackCoinLogoUrl = (coin: string) => {
+  if (!defaultTopAssetLogoMap) {
+    const map: Record<string, string> = {};
+    DEFAULT_TOP_ASSET.forEach(asset => {
+      if (asset.full_logo_url) {
+        map[asset.name] = asset.full_logo_url;
+      }
+    });
+    defaultTopAssetLogoMap = map;
+  }
+  return defaultTopAssetLogoMap[coin] || getHyperliquidCoinLogoUrl(coin);
 };
 
 /**
@@ -129,7 +158,7 @@ export const formatMarkData = (
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
           onlyIsolated: hlDataAsset.onlyIsolated,
-          pxDecimals: 2, // Will be updated by WebSocket AssetCtx
+          pxDecimals: getPxDecimals(Number(hlDataAsset.szDecimals ?? 0)),
           dayBaseVlm: '0',
           dayNtlVlm: '0',
           funding: '0',

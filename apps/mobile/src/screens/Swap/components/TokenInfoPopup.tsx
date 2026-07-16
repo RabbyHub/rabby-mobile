@@ -20,11 +20,12 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Text } from '@/components/Typography';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { colord } from 'colord';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
-  const { styles, isLight } = useTheme2024({ getStyle });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const [longPressToken, setLongPressToken] = useLongPressTokenAtom();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -147,7 +148,11 @@ export const TokenInfoPopup = () => {
             <BlurView
               blurType={isLight ? 'dark' : 'light'}
               blurAmount={10}
-              reducedTransparencyFallbackColor="white"
+              reducedTransparencyFallbackColor={colord(
+                colors2024['neutral-bg-4'],
+              )
+                .alpha(0.9)
+                .toRgbString()}
               style={styles.blurView}
             />
           </TouchableOpacity>

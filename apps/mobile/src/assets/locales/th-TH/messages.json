@@ -292,8 +292,8 @@
       "noAvailableAddress": "ไม่มีที่อยู่ที่ใช้ได้"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "ป้อนการตอบกลับใหม่... (ไม่บังคับ)",
-      "mediaPlaceholder": "รูปภาพ/วิดีโอ\n(จำเป็น)"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "รูปภาพ/วิดีโอ"
     }
   },
   "page": {

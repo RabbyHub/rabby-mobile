@@ -22,7 +22,7 @@ import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Skeleton } from '@rneui/themed';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
-import { apiKeyring, apiSecurityEngine } from '@/core/apis';
+import { apiKeyring, apiProvider, apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
 import {
   dappService,
@@ -508,6 +508,7 @@ export const SignTypedData = ({
       sender: currentAccount.address,
       chainId: chainServerId || CHAINS.ETH.serverId,
       walletProvider: {
+        ethRpc: apiProvider.requestETHRpc,
         hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
         hasAddress: keyringService.hasAddress.bind(keyringService),
         getWhitelist: async () => whitelistService.getWhitelist(),
