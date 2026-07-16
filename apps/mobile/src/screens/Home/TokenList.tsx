@@ -170,7 +170,24 @@ interface Props {
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
+const TOKEN_LOADING_SKELETON_COUNT = 5;
 const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
+
+type BuildTokenListItemsParams = {
+  unFoldTokenIds: TokenEntityId[];
+  foldTokenIds: TokenEntityId[];
+  scamTokenIds: TokenEntityId[];
+  scamTokenPreviewLogoUrls: string[];
+  foldHideList: boolean;
+  foldScam: boolean;
+  hasFoldTokens: boolean;
+  isLpTokenEnabled: boolean;
+  isLoading: boolean;
+  isAllLoading: boolean;
+  noAnyAssets: boolean;
+  emptyAssetsText: string;
+  visibleCustomTestnetSections: CustomTestnetAssetSectionData[];
+};
 
 const appendCustomTestnetItems = (
   items: TokenListItem[],
@@ -186,6 +203,166 @@ const appendCustomTestnetItems = (
       data: section,
     });
   });
+};
+
+const appendTokenItems = (
+  items: TokenListItem[],
+  tokenIds: TokenEntityId[],
+  type: 'unfold_token' | 'fold_token',
+) => {
+  tokenIds.forEach(tokenId => {
+    items.push({ type, tokenId });
+  });
+};
+
+const appendScamTokenItems = (
+  items: TokenListItem[],
+  {
+    scamTokenIds,
+    scamTokenPreviewLogoUrls,
+    foldScam,
+  }: Pick<
+    BuildTokenListItemsParams,
+    'scamTokenIds' | 'scamTokenPreviewLogoUrls' | 'foldScam'
+  >,
+) => {
+  if (scamTokenIds.length === 0) {
+    return;
+  }
+
+  if (foldScam) {
+    items.push({
+      type: 'scam_token',
+      data: {
+        total: scamTokenIds.length,
+        logoUrls: scamTokenPreviewLogoUrls,
+      },
+    });
+    return;
+  }
+
+  appendTokenItems(items, scamTokenIds, 'fold_token');
+};
+
+const appendFoldSectionItems = (
+  items: TokenListItem[],
+  params: BuildTokenListItemsParams,
+) => {
+  if (!params.hasFoldTokens && !params.isLpTokenEnabled) {
+    return;
+  }
+
+  items.push({ type: 'toggle_token_fold' });
+
+  if (params.foldHideList) {
+    return;
+  }
+
+  appendTokenItems(items, params.foldTokenIds, 'fold_token');
+  appendScamTokenItems(items, params);
+  appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
+};
+
+const appendLoadingSkeletonItems = (
+  items: TokenListItem[],
+  params: BuildTokenListItemsParams,
+) => {
+  /**
+   * 两类 loading：
+   * 1. 初始加载无token时需要展示loading
+   * 2. lpToken筛选打开时，并且当前无lpTokens数据时展示loading
+   */
+  const shouldShowInitialLoading =
+    params.isLoading &&
+    items.length === 0 &&
+    params.visibleCustomTestnetSections.length === 0;
+
+  const shouldShowLpLoading =
+    params.isAllLoading &&
+    params.isLpTokenEnabled &&
+    params.foldTokenIds.length === 0;
+
+  if (!shouldShowInitialLoading && !shouldShowLpLoading) {
+    return;
+  }
+
+  items.push(
+    ...Array.from({ length: TOKEN_LOADING_SKELETON_COUNT }, (_, index) => ({
+      type: 'loading-skeleton' as const,
+      data: `index-token-${index.toString()}`,
+    })),
+  );
+};
+
+const appendEmptyAssetsItem = (
+  items: TokenListItem[],
+  params: BuildTokenListItemsParams,
+) => {
+  const hasNoTokenItems =
+    params.unFoldTokenIds.length +
+      params.foldTokenIds.length +
+      params.scamTokenIds.length ===
+      0 && !params.hasFoldTokens;
+
+  if (
+    params.isLoading ||
+    !hasNoTokenItems ||
+    (items.length !== 0 && params.visibleCustomTestnetSections.length === 0)
+  ) {
+    return;
+  }
+
+  if (params.noAnyAssets) {
+    // Keep this branch explicit because the old empty-state logic distinguished
+    // all-asset emptiness even though both branches currently render the same row.
+    items.push({
+      type: 'empty-assets',
+      data: params.emptyAssetsText,
+    });
+    return;
+  }
+
+  items.push({
+    type: 'empty-assets',
+    data: params.emptyAssetsText,
+  });
+};
+
+const buildTokenListItems = (params: BuildTokenListItemsParams) => {
+  const items: TokenListItem[] = [];
+
+  appendTokenItems(items, params.unFoldTokenIds, 'unfold_token');
+  appendFoldSectionItems(items, params);
+  appendLoadingSkeletonItems(items, params);
+  appendEmptyAssetsItem(items, params);
+
+  if (!params.hasFoldTokens) {
+    appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
+  }
+
+  return items;
+};
+
+const getTokenListItemKey = (item: TokenListItem) => {
+  if (item.type === 'unfold_token' || item.type === 'fold_token') {
+    return `${item.type}-${item.tokenId}`;
+  }
+  if (item.type === 'scam_token') {
+    return `scam-token-${item.data.total}`;
+  }
+  if (item.type === 'custom_testnet_assets') {
+    return `custom-testnet-assets-${item.data.chain.id}`;
+  }
+  if (item.type === 'custom_testnet_divider') {
+    return 'custom-testnet-divider';
+  }
+  if (item.type === 'loading-skeleton') {
+    return `loading-${item.data}`;
+  }
+  if (item.type === 'empty-assets') {
+    return `empty-assets-${item.data}`;
+  }
+  return item.type;
 };
 
 export const TokenList = ({
@@ -376,86 +553,32 @@ export const TokenList = ({
 
   const { selectData } = useSingleHomeSelectData();
   const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;
+  const emptyAssetsText = useMemo(
+    () =>
+      t('page.singleHome.sectionHeader.NoData', {
+        name: t('page.singleHome.sectionHeader.Token'),
+      }),
+    [t],
+  );
 
   const dataList = useMemo(() => {
-    const items: TokenListItem[] = [];
-    const hasNoTokenItems =
-      unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length === 0 &&
-      !hasFoldTokens;
-
-    unFoldTokenIds.forEach(tokenId => {
-      items.push({ type: 'unfold_token', tokenId });
+    return buildTokenListItems({
+      unFoldTokenIds,
+      foldTokenIds,
+      scamTokenIds,
+      scamTokenPreviewLogoUrls,
+      foldHideList,
+      foldScam,
+      hasFoldTokens,
+      isLpTokenEnabled,
+      isLoading,
+      isAllLoading,
+      noAnyAssets,
+      emptyAssetsText,
+      visibleCustomTestnetSections,
     });
-
-    const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
-    if (hasFoldSection) {
-      items.push({ type: 'toggle_token_fold' });
-      if (!foldHideList) {
-        foldTokenIds.forEach(tokenId => {
-          items.push({ type: 'fold_token', tokenId });
-        });
-        if (scamTokenIds.length > 0) {
-          if (foldScam) {
-            items.push({
-              type: 'scam_token',
-              data: {
-                total: scamTokenIds.length,
-                logoUrls: scamTokenPreviewLogoUrls,
-              },
-            });
-          } else {
-            scamTokenIds.forEach(tokenId => {
-              items.push({ type: 'fold_token', tokenId });
-            });
-          }
-        }
-        appendCustomTestnetItems(items, visibleCustomTestnetSections);
-      }
-    }
-
-    if (
-      (isLoading &&
-        items.length === 0 &&
-        visibleCustomTestnetSections.length === 0) ||
-      (isAllLoading && isLpTokenEnabled)
-    ) {
-      items.push(
-        ...Array.from({ length: 5 }, (_, index) => ({
-          type: 'loading-skeleton' as const,
-          data: `index-token-${index.toString()}`,
-        })),
-      );
-    }
-
-    if (
-      !isLoading &&
-      hasNoTokenItems &&
-      (items.length === 0 || visibleCustomTestnetSections.length > 0)
-    ) {
-      if (noAnyAssets) {
-        // items.push({ type: 'empty-token' });
-        items.push({
-          type: 'empty-assets',
-          data: t('page.singleHome.sectionHeader.NoData', {
-            name: t('page.singleHome.sectionHeader.Token'),
-          }),
-        });
-      } else {
-        items.push({
-          type: 'empty-assets',
-          data: t('page.singleHome.sectionHeader.NoData', {
-            name: t('page.singleHome.sectionHeader.Token'),
-          }),
-        });
-      }
-    }
-
-    if (!hasFoldTokens) {
-      appendCustomTestnetItems(items, visibleCustomTestnetSections);
-    }
-
-    return items;
   }, [
+    emptyAssetsText,
     foldHideList,
     foldScam,
     foldTokenIds,
@@ -466,7 +589,6 @@ export const TokenList = ({
     noAnyAssets,
     scamTokenIds,
     scamTokenPreviewLogoUrls,
-    t,
     unFoldTokenIds,
     visibleCustomTestnetSections,
   ]);
@@ -477,6 +599,10 @@ export const TokenList = ({
     () =>
       StyleSheet.flatten([styles.renderItemWrapper, !isLight && styles.bg2]),
     [isLight, styles.bg2, styles.renderItemWrapper],
+  );
+  const foldHeaderButtonStyle = useMemo(
+    () => StyleSheet.flatten([styles.buttonHeader, !isLight && styles.bg2]),
+    [isLight, styles.bg2, styles.buttonHeader],
   );
 
   const handleOpenTokenDetail = useCallback(
@@ -543,6 +669,14 @@ export const TokenList = ({
     [t],
   );
 
+  const handleToggleTokenFold = useCallback(() => {
+    if (!foldHideList) {
+      setFoldScam(true);
+      setIsLpTokenEnabled(false);
+    }
+    setFoldHideList(pre => !pre);
+  }, [foldHideList]);
+
   const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
       return;
@@ -560,77 +694,125 @@ export const TokenList = ({
     }
   }, [currentAddress, getTokenList, onRefresh]);
 
+  const renderTokenItem = useCallback(
+    (item: Extract<TokenListItem, { type: 'unfold_token' | 'fold_token' }>) => (
+      <View style={styles.rowWrap}>
+        <TokenResourceRow
+          tokenId={item.tokenId}
+          tokenStyle={tokenRowStyle}
+          loaderStyle={styles.removeLeft}
+          onTokenPress={handleOpenTokenDetail}
+        />
+      </View>
+    ),
+    [handleOpenTokenDetail, styles.removeLeft, styles.rowWrap, tokenRowStyle],
+  );
+
+  const renderScamTokenItem = useCallback(
+    (item: Extract<TokenListItem, { type: 'scam_token' }>) => (
+      <View style={styles.rowWrap}>
+        <ScamTokenHeader
+          total={item.data.total}
+          logoUrls={item.data.logoUrls}
+          style={tokenRowStyle}
+          onPress={() => {
+            setFoldScam(false);
+          }}
+        />
+      </View>
+    ),
+    [styles.rowWrap, tokenRowStyle],
+  );
+
+  const renderFoldHeaderItem = useCallback(
+    () => (
+      <TokenFoldSectionHeader
+        isEnabled={isLpTokenEnabled}
+        onValueChange={setIsLpTokenEnabled}
+        fold={foldHideList}
+        str={foldTokenUsdValue}
+        style={styles.sectionHeader}
+        buttonStyle={foldHeaderButtonStyle}
+        onPressFold={handleToggleTokenFold}
+      />
+    ),
+    [
+      foldHeaderButtonStyle,
+      foldHideList,
+      foldTokenUsdValue,
+      handleToggleTokenFold,
+      isLpTokenEnabled,
+      styles.sectionHeader,
+    ],
+  );
+
+  const renderCustomTestnetSectionItem = useCallback(
+    (item: Extract<TokenListItem, { type: 'custom_testnet_assets' }>) => (
+      <View style={styles.customTestnetSectionWrap}>
+        <CustomTestnetAssetSection
+          data={item.data}
+          tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
+          loadTokens={loadCustomTestnetTokens}
+          loadToken={loadCustomTestnetToken}
+          getAccountByAddress={getCustomTestnetAccountByAddress}
+          tokenDisplayMode="byAsset"
+          hideAccount
+          onTokenPress={handleOpenCustomTestnetTokenDetail}
+          onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+          onTokenRemove={handleCustomTestnetTokenRemove}
+          collapseKey={customTestnetCollapseKey}
+        />
+      </View>
+    ),
+    [
+      customTestnetCollapseKey,
+      getCustomTestnetAccountByAddress,
+      handleCustomTestnetTokenButtonPress,
+      handleCustomTestnetTokenRemove,
+      handleOpenCustomTestnetTokenDetail,
+      loadCustomTestnetToken,
+      loadCustomTestnetTokens,
+      styles.customTestnetSectionWrap,
+      t,
+    ],
+  );
+
+  const renderEmptyItem = useCallback(
+    (
+      item: Extract<TokenListItem, { type: 'empty-token' | 'empty-assets' }>,
+    ) => {
+      if (item.type === 'empty-token') {
+        return (
+          <EmptyTokenRow
+            currentAccount={currentAccount}
+            // onReceive={handleOnReceive}
+          />
+        );
+      }
+
+      return (
+        <EmptyAssets
+          style={styles.emptyAssets}
+          desc={item.data ?? undefined}
+          type={item.type}
+        />
+      );
+    },
+    [currentAccount, styles.emptyAssets],
+  );
+
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(
     ({ item }) => {
-      const { type } = item;
-      switch (type) {
+      switch (item.type) {
         case 'unfold_token':
         case 'fold_token':
-          return (
-            <View style={styles.rowWrap}>
-              <TokenResourceRow
-                tokenId={item.tokenId}
-                tokenStyle={tokenRowStyle}
-                loaderStyle={styles.removeLeft}
-                onTokenPress={handleOpenTokenDetail}
-              />
-            </View>
-          );
+          return renderTokenItem(item);
         case 'scam_token':
-          return (
-            <View style={styles.rowWrap}>
-              <ScamTokenHeader
-                total={item.data.total}
-                logoUrls={item.data.logoUrls}
-                style={StyleSheet.flatten([
-                  styles.renderItemWrapper,
-                  !isLight && styles.bg2,
-                ])}
-                onPress={() => {
-                  setFoldScam(false);
-                }}
-              />
-            </View>
-          );
+          return renderScamTokenItem(item);
         case 'toggle_token_fold':
-          return (
-            <TokenFoldSectionHeader
-              isEnabled={isLpTokenEnabled}
-              onValueChange={setIsLpTokenEnabled}
-              fold={foldHideList}
-              str={foldTokenUsdValue}
-              style={styles.sectionHeader}
-              buttonStyle={StyleSheet.flatten([
-                styles.buttonHeader,
-                !isLight && styles.bg2,
-              ])}
-              onPressFold={() => {
-                if (!foldHideList) {
-                  setFoldScam(true);
-                  setIsLpTokenEnabled(false);
-                }
-                setFoldHideList(pre => !pre);
-              }}
-            />
-          );
+          return renderFoldHeaderItem();
         case 'custom_testnet_assets':
-          return (
-            <View style={styles.customTestnetSectionWrap}>
-              <CustomTestnetAssetSection
-                data={item.data}
-                tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
-                loadTokens={loadCustomTestnetTokens}
-                loadToken={loadCustomTestnetToken}
-                getAccountByAddress={getCustomTestnetAccountByAddress}
-                tokenDisplayMode="byAsset"
-                hideAccount
-                onTokenPress={handleOpenCustomTestnetTokenDetail}
-                onTokenButtonPress={handleCustomTestnetTokenButtonPress}
-                onTokenRemove={handleCustomTestnetTokenRemove}
-                collapseKey={customTestnetCollapseKey}
-              />
-            </View>
-          );
+          return renderCustomTestnetSectionItem(item);
         case 'custom_testnet_divider':
           return (
             <CustomTestnetAssetDivider
@@ -638,20 +820,8 @@ export const TokenList = ({
             />
           );
         case 'empty-token':
-          return (
-            <EmptyTokenRow
-              currentAccount={currentAccount}
-              // onReceive={handleOnReceive}
-            />
-          );
         case 'empty-assets':
-          return (
-            <EmptyAssets
-              style={styles.emptyAssets}
-              desc={item.data ?? undefined}
-              type={type}
-            />
-          );
+          return renderEmptyItem(item);
         case 'loading-skeleton':
           return (
             <View style={styles.rowWrap}>
@@ -663,46 +833,28 @@ export const TokenList = ({
       }
     },
     [
-      currentAccount,
-      customTestnetCollapseKey,
-      foldHideList,
-      foldTokenUsdValue,
-      handleOpenTokenDetail,
-      handleOpenCustomTestnetTokenDetail,
-      handleCustomTestnetTokenButtonPress,
-      handleCustomTestnetTokenRemove,
-      isLight,
-      isLpTokenEnabled,
-      getCustomTestnetAccountByAddress,
-      loadCustomTestnetToken,
-      loadCustomTestnetTokens,
-      styles,
-      t,
-      tokenRowStyle,
+      renderCustomTestnetSectionItem,
+      renderEmptyItem,
+      renderFoldHeaderItem,
+      renderScamTokenItem,
+      renderTokenItem,
+      styles.removeLeft,
+      styles.rowWrap,
+      styles.singleCustomTestnetDivider,
     ],
   );
 
-  const keyExtractor = useCallback((item: TokenListItem) => {
-    if (item.type === 'unfold_token' || item.type === 'fold_token') {
-      return `${item.type}-${item.tokenId}`;
-    }
-    if (item.type === 'scam_token') {
-      return `scam-token-${item.data.total}`;
-    }
-    if (item.type === 'custom_testnet_assets') {
-      return `custom-testnet-assets-${item.data.chain.id}`;
-    }
-    if (item.type === 'custom_testnet_divider') {
-      return 'custom-testnet-divider';
-    }
-    if (item.type === 'loading-skeleton') {
-      return `loading-${item.data}`;
-    }
-    if (item.type === 'empty-assets') {
-      return `empty-assets-${item.data}`;
-    }
-    return item.type;
-  }, []);
+  const keyExtractor = useCallback(getTokenListItemKey, []);
+  const listExtraData = useMemo(
+    () => ({
+      foldHideList,
+      foldScam,
+      foldTokenIds,
+      isLpTokenEnabled,
+      scamTokenIds,
+    }),
+    [foldHideList, foldScam, foldTokenIds, isLpTokenEnabled, scamTokenIds],
+  );
 
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -736,6 +888,7 @@ export const TokenList = ({
     <View style={styles.container}>
       <Tabs.FlatList
         data={dataList}
+        extraData={listExtraData}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ItemSeparatorComponent={ListRenderSeparator}
