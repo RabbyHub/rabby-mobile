@@ -307,8 +307,8 @@
       "noAvailableAddress": "No hay dirección disponible"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Escribe una nueva respuesta... (opcional)",
-      "mediaPlaceholder": "Imagen/Vídeo\n(obligatorio)"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Imagen/Vídeo"
     }
   },
   "page": {

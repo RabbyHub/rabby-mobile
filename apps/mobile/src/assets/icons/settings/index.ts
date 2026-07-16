@@ -206,7 +206,7 @@ export const RcScreenshotReport = makeThemeIcon2024FromCC(
   }),
 );
 
-import { default as RcBugReportCC } from './bug-report-cc.svg';
+import { default as RcBugReportCC } from '../feedback/chat-cc.svg';
 export const RcBugReport = makeThemeIcon2024FromCC(RcBugReportCC, ctx => ({
   onLight: ctx.colors2024['brand-default'],
   onDark: ctx.colors2024['brand-default'],

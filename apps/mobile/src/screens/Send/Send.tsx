@@ -16,6 +16,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import {
   StackActions,
+  useIsFocused,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
@@ -49,13 +50,13 @@ import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
+import { formatSendTokenBalanceText } from './utils';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
-import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
@@ -89,6 +90,13 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import Animated from 'react-native-reanimated';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import {
+  claimSendScreenSession,
+  getSendScreenActivationPlan,
+  isSendScreenSessionActive,
+  releaseSendScreenSession,
+  type SendScreenSession,
+} from './sendScreenSession';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -324,6 +332,10 @@ function SendScreen({
       >
     >();
   const navParams = route.params;
+  const isFocused = useIsFocused();
+  const initByCacheFinishedRef = useRef(false);
+  const sendScreenSessionRef = useRef<SendScreenSession | null>(null);
+  const hasClaimedSendScreenSessionRef = useRef(false);
 
   const { chainItem, currentToken } = useSendTokenScreenChainToken();
   const routeParams = useAtomValue(sendScreenParamsAtom);
@@ -347,6 +359,32 @@ function SendScreen({
     clickedMax: screenState.clickedMax,
     hasSelectedGasLevel: !!screenState.selectedGasLevel,
   });
+
+  useEffect(() => {
+    if (!currentAccount || !isFocused) {
+      return;
+    }
+
+    const hadClaimedSession = hasClaimedSendScreenSessionRef.current;
+    const { ownerChanged, session } = claimSendScreenSession(route.key);
+    sendScreenSessionRef.current = session;
+    hasClaimedSendScreenSessionRef.current = true;
+    const activationPlan = getSendScreenActivationPlan({
+      hadClaimedSession,
+      ownerChanged,
+      screenStateInited: screenState.inited,
+    });
+
+    if (activationPlan.restartInitialization) {
+      initByCacheFinishedRef.current = false;
+    }
+    if (activationPlan.resetSharedState) {
+      apiSendToken.resetScreenState();
+    }
+
+    apiSendToken.putScreenState({ inited: true });
+    markSendScreenPerf('screen_inited_set');
+  }, [currentAccount, isFocused, route.key, screenState.inited]);
 
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
@@ -481,8 +519,18 @@ function SendScreen({
     if (!formValues.to) return;
     if (!isValidHexAddress(formValues.to as `0x${string}`)) return;
 
+    const session = sendScreenSessionRef.current;
+    if (!isFocused || !session || !isSendScreenSessionActive(session)) {
+      return;
+    }
+
+    let disposed = false;
+
     markSendScreenPerf('to_addr_desc_start');
     getAddrDescWithCexLocalCacheSync(formValues.to).then(res => {
+      if (disposed || !isSendScreenSessionActive(session)) {
+        return;
+      }
       markSendScreenPerf('to_addr_desc_end', {
         hasCex: !!res?.cex,
         contractChainCount: Object.keys(res?.contract || {}).length,
@@ -491,12 +539,15 @@ function SendScreen({
         toAddrDesc: res,
       });
     });
-  }, [formValues.to]);
+
+    return () => {
+      disposed = true;
+    };
+  }, [formValues.to, isFocused]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount,
   });
-  const initByCacheFinishedRef = useRef(false);
   const initByCache = useCallback(async () => {
     const startedAt = Date.now();
     markSendScreenPerf('init_by_cache_start', {
@@ -505,6 +556,10 @@ function SendScreen({
       hasCurrentAccount: !!currentAccount,
       isForMultipleAddress,
     });
+    const session = sendScreenSessionRef.current;
+    if (!session) return;
+    const isSessionActive = () => isSendScreenSessionActive(session);
+    if (!isSessionActive()) return;
 
     let targetToken: TokenItem | null = null;
     const { chainItem: latestChainItem, currentToken } = getSendChainToken();
@@ -573,6 +628,7 @@ function SendScreen({
           chain: targetToken?.chain,
           tokenId: targetToken?.id,
         });
+        if (!isSessionActive()) return;
       }
       if (!targetToken) {
         const orderedChainStartedAt = Date.now();
@@ -588,6 +644,7 @@ function SendScreen({
           hasFirstChain: !!firstChain,
           firstChain: firstChain?.serverId,
         });
+        if (!isSessionActive()) return;
         targetToken = firstChain ? makeTokenFromChain(firstChain) : null;
       }
       if (!targetToken) {
@@ -612,6 +669,7 @@ function SendScreen({
         chain: res.chain,
         tokenId: res.tokenId,
       });
+      if (!isSessionActive()) return;
       if (
         !lowcaseSame(res.chain, targetToken.chain) ||
         !lowcaseSame(res.tokenId, targetToken.id)
@@ -623,6 +681,7 @@ function SendScreen({
         };
       }
     }
+    if (!isSessionActive()) return;
     if (latestChainItem && targetToken.chain !== latestChainItem.serverId) {
       const target = findChainByServerID(targetToken.chain);
       if (target?.enum) {
@@ -662,6 +721,8 @@ function SendScreen({
           targetToken.id,
           targetToken.chain,
           currentAccount.address,
+          false,
+          isSessionActive,
         )
           .then(loadedToken => {
             markSendScreenPerf('load_current_token_end', {
@@ -687,7 +748,7 @@ function SendScreen({
 
     if (!initialDisplayToken) {
       void loadedTokenPromise.then(loadedToken => {
-        if (loadedToken) {
+        if (loadedToken && isSessionActive()) {
           apiSendToken.putScreenState({ initialTokenIdentityReady: true });
         }
       });
@@ -739,7 +800,12 @@ function SendScreen({
       initByCacheFinished: initByCacheFinishedRef.current,
     });
 
-    if (screenState.inited) {
+    if (screenState.inited && isFocused) {
+      const session = sendScreenSessionRef.current;
+      if (!session || !isSendScreenSessionActive(session)) {
+        return;
+      }
+
       (async () => {
         if (initByCacheFinishedRef.current) return;
         initByCacheFinishedRef.current = true;
@@ -751,16 +817,21 @@ function SendScreen({
             error: e instanceof Error ? e.message : String(e),
           });
           console.error('SendScreen initByCache error', e);
-          initByCacheFinishedRef.current = false;
+          if (isSendScreenSessionActive(session)) {
+            initByCacheFinishedRef.current = false;
+          }
         } finally {
-          apiSendToken.putScreenState({ initialTokenReady: true });
-          markSendScreenPerf('initial_token_ready_set');
+          if (isSendScreenSessionActive(session)) {
+            apiSendToken.putScreenState({ initialTokenReady: true });
+            markSendScreenPerf('initial_token_ready_set');
+          }
         }
       })();
       checkIsAddressBlocked(navParams?.toAddress);
     }
   }, [
     screenState.inited,
+    isFocused,
     initByCache,
     checkIsAddressBlocked,
     navParams?.toAddress,
@@ -770,6 +841,8 @@ function SendScreen({
     (async () => {
       if (!initByCacheFinishedRef.current) return;
       if (!currentAccount?.address) return;
+      const session = sendScreenSessionRef.current;
+      if (!session || !isSendScreenSessionActive(session)) return;
 
       const startedAt = Date.now();
       markSendScreenPerf('refresh_current_token_balance_start');
@@ -794,25 +867,29 @@ function SendScreen({
     });
 
     if (!currentAccount) {
-      redirectBackErrorHandler(navigation);
-      return;
-    } else {
-      apiSendToken.putScreenState({ inited: true });
-      markSendScreenPerf('screen_inited_set');
-
-      return () => {
-        apiPageStateCache.clearPageStateCache();
-        markSendScreenPerf('page_state_cache_clear_on_account_effect_cleanup');
-      };
+      if (isFocused) {
+        redirectBackErrorHandler(navigation);
+      }
     }
-  }, [currentAccount, navigation]);
+  }, [currentAccount, isFocused, navigation]);
+
+  useEffect(() => {
+    if (!currentAccount) return;
+    return () => {
+      apiPageStateCache.clearPageStateCache();
+      markSendScreenPerf('page_state_cache_clear_on_account_effect_cleanup');
+    };
+  }, [currentAccount]);
 
   const { fetchContactAccounts } = useContactAccounts();
 
   useLayoutEffect(() => {
     return () => {
-      markSendScreenPerf('layout_cleanup_reset_screen_state');
-      apiSendToken.resetScreenState();
+      const session = sendScreenSessionRef.current;
+      if (session && releaseSendScreenSession(session)) {
+        markSendScreenPerf('layout_cleanup_reset_screen_state');
+        apiSendToken.resetScreenState();
+      }
     };
   }, []);
 
@@ -824,10 +901,7 @@ function SendScreen({
       screenState.clickedMax || screenState.selectedGasLevel ? 8 : 4;
 
     return {
-      balanceNumText: bizNumberUtils.formatTokenAmount(
-        balanceNum.toFixed(decimalPlaces, BigNumber.ROUND_FLOOR),
-        decimalPlaces,
-      ),
+      balanceNumText: formatSendTokenBalanceText(balanceNum, decimalPlaces),
     };
   }, [
     currentToken.raw_amount_hex_str,

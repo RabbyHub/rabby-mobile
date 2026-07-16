@@ -3787,8 +3787,8 @@
       "noAvailableAddress": "Нет доступного адреса"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Введите новый ответ... (необязательно)",
-      "mediaPlaceholder": "Изображение/Видео\n(обязательно)"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Изображение/Видео"
     }
   },
   "constant": {

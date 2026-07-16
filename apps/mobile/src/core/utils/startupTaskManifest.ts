@@ -273,6 +273,15 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 5000,
     budgetMs: 160,
   }),
+  perpsHydrateMarketDataCache: defineStartupTask({
+    label: 'perps.hydrateMarketDataCache',
+    owner: 'perps',
+    reason: 'hydrate cached Perps metadata after Home is usable',
+    stage: 'homePostStartupReady',
+    priority: 'normal',
+    fallbackMs: 5000,
+    budgetMs: 160,
+  }),
   perpsFetchMarketData: defineStartupTask({
     label: 'perps.fetchMarketData',
     owner: 'perps',
@@ -304,6 +313,18 @@ export const STARTUP_TASKS = {
     delayMs: 3000,
     fallbackMs: 8000,
     budgetMs: 200,
+  }),
+  perpsPersistedPositionSubscription: defineStartupTask({
+    label: 'perps.persistedPositionSubscription',
+    owner: 'perps',
+    reason:
+      'subscribe the persisted Perps account after Home while the account list warms',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 3000,
+    fallbackMs: 8000,
+    idleTimeoutMs: 5000,
+    budgetMs: 220,
   }),
   perpsHomePositionSubscription: defineStartupTask({
     label: 'perps.homePositionSubscription',

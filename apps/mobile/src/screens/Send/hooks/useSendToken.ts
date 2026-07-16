@@ -1510,13 +1510,17 @@ export function useSendTokenForm({
       chainItem?: Chain | null;
       tokenItem?: TokenItem;
       currentAddress?: string;
+      shouldCommit?: () => boolean;
     }) => {
       const result = { gasNumber: 0 };
+      const shouldCommit = input?.shouldCommit;
 
       const doReturn = (nextGas = DEFAULT_GAS_USED) => {
         result.gasNumber = nextGas;
 
-        putScreenState({ estimatedGas: result.gasNumber });
+        if (!shouldCommit || shouldCommit()) {
+          putScreenState({ estimatedGas: result.gasNumber });
+        }
         return result;
       };
 
@@ -1582,6 +1586,7 @@ export function useSendTokenForm({
       chainId: string,
       currentAddress: string,
       disableBalanceCheck?: boolean,
+      shouldCommit?: () => boolean,
     ) => {
       const balanceLoadedKey = makeBalanceLoadKey(chainId, currentAddress, id);
       const chain = findChain({
@@ -1592,11 +1597,15 @@ export function useSendTokenForm({
         currentAddress,
         id,
       );
+      if (shouldCommit && !shouldCommit()) {
+        return null;
+      }
       if (result) {
         estimateGasOnChain({
           chainItem: chain,
           tokenItem: result,
           currentAddress,
+          shouldCommit,
         });
         setRouteParams(pre => ({
           ...pre,

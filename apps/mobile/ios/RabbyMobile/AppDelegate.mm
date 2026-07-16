@@ -3,6 +3,7 @@
 #import <Firebase.h>
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
+#import <React/RCTI18nUtil.h>
 #import <React/RCTRootView.h>
 #import <React/RCTLinkingManager.h>
 #import <React/RCTHTTPRequestHandler.h>
@@ -51,6 +52,11 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  // Rabby currently ships LTR locales only. Set this before React resolves the root layout direction.
+  RCTI18nUtil *i18nUtil = [RCTI18nUtil sharedInstance];
+  [i18nUtil allowRTL:NO];
+  [i18nUtil forceRTL:NO];
+
   [FIRApp configure];
 
   self.moduleName = @"RabbyMobile";

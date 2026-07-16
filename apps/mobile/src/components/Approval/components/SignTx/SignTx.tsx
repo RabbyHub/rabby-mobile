@@ -978,6 +978,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 chainId: chain.serverId,
                 sender: address,
                 walletProvider: {
+                  ethRpc: apiProvider.requestETHRpc,
                   hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
                   hasAddress: address => keyringServiceApi.hasAddress(address),
                   getWhitelist: async () => whitelistServiceApi.getWhitelist(),
@@ -1045,6 +1046,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             chainId: chain.serverId,
             sender: address,
             walletProvider: {
+              ethRpc: apiProvider.requestETHRpc,
               hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
               hasAddress: address => keyringServiceApi.hasAddress(address),
               getWhitelist: async () => whitelistServiceApi.getWhitelist(),

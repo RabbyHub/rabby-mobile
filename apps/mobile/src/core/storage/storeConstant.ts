@@ -31,6 +31,7 @@ export const enum APP_STORE_NAMES {
   'metamaskMode' = 'metamaskMode',
 
   'perps' = 'perps',
+  'perpsMarketCache' = 'perpsMarketCache',
   'lending' = 'lending',
 
   'currency' = 'currency',

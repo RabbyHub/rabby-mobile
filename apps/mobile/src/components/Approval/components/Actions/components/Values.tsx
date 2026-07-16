@@ -8,7 +8,7 @@ import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import AddressMemo from './AddressMemo';
 import UserListDrawer from './UserListDrawer';
-import { getTimeSpan } from '@/utils/time';
+import { formatTimeSpanToMinutes, getTimeSpan } from '@/utils/time';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import LogoWithText from './LogoWithText';
 import { ellipsis } from '@/utils/address';
@@ -136,14 +136,19 @@ const TimeSpanFuture = ({
   from = Math.floor(Date.now() / 1000),
   to,
   style,
+  showMinutes = false,
 }: {
   from?: number;
   to: number;
   style?: TextStyle;
+  showMinutes?: boolean;
 }) => {
   const timeSpan = useMemo(() => {
     if (!to) return '-';
     const { d, h, m } = getTimeSpan(to - from);
+    if (showMinutes) {
+      return formatTimeSpanToMinutes({ d, h, m });
+    }
     if (d > 0) {
       return `${d} day${d > 1 ? 's' : ''}`;
     }
@@ -154,7 +159,7 @@ const TimeSpanFuture = ({
       return `${m} minutes`;
     }
     return '1 minute';
-  }, [from, to]);
+  }, [from, showMinutes, to]);
   return <Text style={style}>{timeSpan}</Text>;
 };
 

@@ -1,6 +1,9 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
+import {
+  isSameTypeTokenPair,
+  WrapTokenAddressMap,
+} from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -55,6 +58,7 @@ import {
 } from './initialSelection';
 
 export const enableInsufficientQuote = true;
+const FREE_TOKEN_PAIR_AUTO_SLIPPAGE = '0.1';
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 const SWAP_QUOTE_REFRESH_INTERVAL = 1000 * 20;
@@ -889,6 +893,15 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     return false;
   }, [payToken, receiveToken]);
 
+  const isFreeTokenPair = useMemo(
+    () => isSameTypeTokenPair(payToken, receiveToken),
+    [payToken, receiveToken],
+  );
+
+  const autoSlippageValue = isFreeTokenPair
+    ? FREE_TOKEN_PAIR_AUTO_SLIPPAGE
+    : getSwapAutoSlippageValue(isStableCoin);
+
   const [isWrapToken, wrapTokenSymbol] = useMemo(() => {
     if (payToken?.id && receiveToken?.id) {
       const res = isSwapWrapToken(payToken?.id, receiveToken?.id, chain);
@@ -931,11 +944,15 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       feeRate
     ) && canRequestQuote;
 
+  const [autoSuggestSlippage, setAutoSuggestSlippage] =
+    useState(autoSlippageValue);
+
   useEffect(() => {
     if (autoSlippage) {
-      setSlippage(getSwapAutoSlippageValue(isStableCoin));
+      setSlippage(autoSlippageValue);
+      setAutoSuggestSlippage(autoSlippageValue);
     }
-  }, [autoSlippage, isStableCoin, setSlippage]);
+  }, [autoSlippage, autoSlippageValue, setSlippage]);
 
   const [quoteList, setQuotesList] = useState<TDexQuoteData[]>([]);
 
@@ -954,10 +971,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       }
     },
     [],
-  );
-
-  const [autoSuggestSlippage, setAutoSuggestSlippage] = useState(
-    getSwapAutoSlippageValue(isStableCoin),
   );
 
   const fetchIdRef = useRef(0);
@@ -984,7 +997,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         );
 
         let realSlippage = slippage;
-        if (autoSlippage) {
+        if (autoSlippage && isFreeTokenPair) {
+          realSlippage = autoSlippageValue;
+          if (currentFetchId === fetchIdRef.current) {
+            setAutoSuggestSlippage(realSlippage);
+          }
+        } else if (autoSlippage) {
           try {
             const suggestSlippage = await openapi.suggestSlippage({
               chain_id: findChainByEnum(chain)!.serverId,

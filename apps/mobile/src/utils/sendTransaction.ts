@@ -518,6 +518,7 @@ export const sendTransaction = async ({
     sender: address,
     cex: cexInfo,
     walletProvider: {
+      ethRpc: apiProvider.requestETHRpc,
       hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
       hasAddress: keyringServiceApi.hasAddress,
       getWhitelist: async () => whitelistServiceApi.getWhitelist(),
@@ -881,6 +882,7 @@ export const sendTransactionByMiniSignV2 = async ({
     sender: currentAccount.address,
     cex: cexInfo,
     walletProvider: {
+      ethRpc: apiProvider.requestETHRpc,
       hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
       hasAddress: keyringServiceApi.hasAddress,
       getWhitelist: async () => whitelistServiceApi.getWhitelist(),

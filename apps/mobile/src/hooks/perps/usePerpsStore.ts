@@ -1,4 +1,5 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import type {
@@ -15,7 +16,10 @@ import type {
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 // import { ApproveSignatures } from '@/background/service/perps';
 import type { Account } from '@/core/startupServices/preference';
-import type { ApproveSignatures } from '@/core/services/perpsService';
+import type {
+  ApproveSignatures,
+  PerpsMarketDataCache,
+} from '@/core/services/perpsService';
 import {
   DEFAULT_TOP_ASSET,
   DEFAULT_TOKEN_CATEGORY,
@@ -50,9 +54,50 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
+import { mergeUserFills, reconcileHttpFills } from './userFills';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
+
+// Meta-only marketData snapshot: ticker fields are blanked (stale prices must
+// never render as current). Bump the version on MarketData shape changes.
+const MARKET_DATA_CACHE_VERSION = 1;
+const MARKET_DATA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+const EMPTY_MARKET_TICKER = {
+  dayBaseVlm: '0',
+  dayNtlVlm: '0',
+  funding: '0',
+  markPx: '',
+  midPx: '',
+  openInterest: '0',
+  oraclePx: '',
+  premium: '0',
+  prevDayPx: '',
+} satisfies Partial<MarketData>;
+
+// A blanket `{ ...item, ...EMPTY_MARKET_TICKER }` would persist undeclared
+// extras riding along from `applyAssetCtxsToList`'s ctx spread (e.g.
+// `impactPxs`, a live price pair) — stale prices must never hit the disk.
+const toCachedMarketData = (item: MarketData): MarketData => ({
+  index: item.index,
+  logoUrl: item.logoUrl,
+  name: item.name,
+  displayName: item.displayName,
+  quoteAsset: item.quoteAsset,
+  maxLeverage: item.maxLeverage,
+  minLeverage: item.minLeverage,
+  maxUsdValueSize: item.maxUsdValueSize,
+  szDecimals: item.szDecimals,
+  pxDecimals: item.pxDecimals,
+  onlyIsolated: item.onlyIsolated,
+  dexId: item.dexId,
+  category: item.category,
+  categoryId: item.categoryId,
+  brief: item.brief,
+  description: item.description,
+  ...EMPTY_MARKET_TICKER,
+});
+
 // Per-dex raw snapshots, source of truth for rebuilding the aggregated
 // `currentClearinghouseState`. Stale frames (older `time`) never win.
 // Key '' === hyper native dex.
@@ -376,35 +421,38 @@ export const getClearinghouseStateByMap = (address: string) => {
   return perpsStore.getState().clearinghouseStateMap[address.toLowerCase()];
 };
 
+const isSamePerpsAccount = (prev: Account | null, next: Account): boolean =>
+  !!prev &&
+  isSameAddress(prev.address, next.address) &&
+  prev.type === next.type;
+
 const setCurrentPerpsAccount = (payload: Account) => {
-  setPerpsState(prev => ({
-    ...prev,
-    currentPerpsAccount: payload,
-    isLogin: !!payload,
-    isUserDataReady:
-      prev.currentPerpsAccount &&
-      isSameAddress(prev.currentPerpsAccount.address, payload.address) &&
-      prev.currentPerpsAccount.type === payload.type
-        ? prev.isUserDataReady
-        : false,
-    isSpotStateReady:
-      prev.currentPerpsAccount &&
-      isSameAddress(prev.currentPerpsAccount.address, payload.address) &&
-      prev.currentPerpsAccount.type === payload.type
-        ? prev.isSpotStateReady
-        : false,
-    userAbstractionReady:
-      prev.currentPerpsAccount &&
-      isSameAddress(prev.currentPerpsAccount.address, payload.address) &&
-      prev.currentPerpsAccount.type === payload.type
-        ? prev.userAbstractionReady
-        : false,
-  }));
+  setPerpsState(prev => {
+    const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, payload);
+    return {
+      ...prev,
+      currentPerpsAccount: payload,
+      isLogin: !!payload,
+      isUserDataReady: sameAccount ? prev.isUserDataReady : false,
+      isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
+      userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
+      // Fills are merged (not overwritten) on WS snapshots, so a stale
+      // account's list must be cleared explicitly on switch.
+      userFills: sameAccount ? prev.userFills : [],
+    };
+  });
   void perpsServiceApi.setCurrentAccount(payload).catch(error => {
     console.error('[perpsService] persist current account failed', error);
   });
 };
 
+/**
+ * Caller MUST navigate to a screen mounting `usePerpsState` right after:
+ * `unsubscribeAll()` also drops the global ticker streams, and nothing on
+ * this flow restores them except the init effect re-running off
+ * `isInitialized: false` — skipping the navigation leaves perps prices
+ * silently frozen until some unrelated resubscription path runs.
+ */
 export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   const clearinghouseState =
     perpsStore.getState().clearinghouseStateMap[payload.address.toLowerCase()];
@@ -415,6 +463,10 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   // previous account's sub-dex data still in the cache.
   dexClearinghouseStatesCache.clear();
   dexOpenOrdersCache.clear();
+  // Tear down the old account's subscriptions now — resubscription happens on
+  // the Perps screen init, and with merge semantics a late push from the old
+  // account would pollute the cleared fills list until the next switch.
+  unsubscribeAll();
   setPerpsState(prev => ({
     ...prev,
     currentPerpsAccount: payload,
@@ -427,6 +479,9 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     homePositionPnl: pnl,
     accountNeedApproveAgent: false,
     accountNeedApproveBuilderFee: false,
+    userFills: isSamePerpsAccount(prev.currentPerpsAccount, payload)
+      ? prev.userFills
+      : [],
   }));
   void perpsServiceApi.setCurrentAccount(payload).catch(error => {
     console.error('[perpsService] persist current account failed', error);
@@ -453,9 +508,8 @@ const applyAssetCtxsToList = (
     return {
       ...item,
       ...ctx,
-      pxDecimals: ctx.markPx
-        ? getPxDecimals(String(ctx.markPx))
-        : item.pxDecimals,
+      // Tick precision follows the price magnitude (5-sig-figs rule).
+      pxDecimals: getPxDecimals(item.szDecimals, ctx.markPx ?? item.markPx),
     };
   });
 };
@@ -508,6 +562,41 @@ async function withRetry<T>(
 // Single-flight: concurrent callers await the same in-flight fetch, so an
 // awaited fetchMarketData() resolves only when data is loaded.
 let marketDataPromise: Promise<void> | null = null;
+
+// The boot-time fetch races network/VPN readiness and can fail before any
+// screen is around to retry it. Reschedule from the store itself: first retry
+// fires immediately (the failed round is already over), then capped backoff.
+let marketDataRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let marketDataRetryCount = 0;
+
+const clearMarketDataRetry = () => {
+  if (marketDataRetryTimer) {
+    clearTimeout(marketDataRetryTimer);
+    marketDataRetryTimer = null;
+  }
+};
+
+const scheduleMarketDataRetry = () => {
+  if (marketDataRetryTimer) {
+    return;
+  }
+  const delay =
+    marketDataRetryCount === 0
+      ? 0
+      : Math.min(30_000, 1_000 * 2 ** marketDataRetryCount);
+  marketDataRetryTimer = setTimeout(() => {
+    marketDataRetryTimer = null;
+    marketDataRetryCount += 1;
+    // Don't burn requests in background — reschedule so the chain survives
+    // an early-boot 'unknown' state; on resume the AppState 'active'
+    // listener refetches anyway (deduped by single-flight).
+    if (AppState.currentState === 'active') {
+      fetchMarketData();
+    } else {
+      scheduleMarketDataRetry();
+    }
+  }, delay);
+};
 
 // These openapi endpoints have no axios timeout — a stalled connection would
 // hang fetchMarketData forever. Cap them and fall back to defaults on timeout.
@@ -601,10 +690,14 @@ const runFetchMarketData = async () => {
       return;
     }
 
-    // perpDexs failure is degradable
-    perpDexsCache = perpDexs ?? null;
+    // perpDexs failure falls back to the last known roster — an empty
+    // dexIdMap would fail the whole round in formatMarkData.
+    if (perpDexs) {
+      perpDexsCache = perpDexs;
+    }
+    const effectivePerpDexs = perpDexs ?? perpDexsCache ?? [];
     const dexIdMap: Record<number, string> = {};
-    (perpDexs ?? []).forEach((dex, idx) => {
+    effectivePerpDexs.forEach((dex, idx) => {
       dexIdMap[idx] = dex?.name ?? '';
     });
 
@@ -615,6 +708,17 @@ const runFetchMarketData = async () => {
     }
     setMarketData(marketData, categories);
     setMarketDataStatus('success');
+    void perpsServiceApi
+      .setMarketDataCache({
+        v: MARKET_DATA_CACHE_VERSION,
+        updatedAt: Date.now(),
+        // Blank the ticker; read from the store (WS-merged) so the cached
+        // pxDecimals is the price-informed one.
+        list: perpsStore.getState().marketData.map(toCachedMarketData),
+      })
+      .catch(error => {
+        console.error('[perpsService] persist market data cache failed', error);
+      });
   } catch (error) {
     console.error('Failed to fetch market data:', error);
     setMarketDataStatus('error');
@@ -625,8 +729,16 @@ const fetchMarketData = (): Promise<void> => {
   if (marketDataPromise) {
     return marketDataPromise;
   }
+  // Any fetch (boot, AppState resume, Perps screen init, pull-to-refresh)
+  // doubles as the pending retry.
+  clearMarketDataRetry();
   marketDataPromise = runFetchMarketData().finally(() => {
     marketDataPromise = null;
+    if (perpsStore.getState().marketDataStatus === 'success') {
+      marketDataRetryCount = 0;
+    } else {
+      scheduleMarketDataRetry();
+    }
   });
   return marketDataPromise;
 };
@@ -793,11 +905,22 @@ const resetAccountState = () => {
 
 const fetchUserFillHistory = async () => {
   const sdk = apisPerps.getPerpsSDK();
-  const res = await sdk.info.getUserFills();
-  setPerpsState(prev => ({
-    ...prev,
-    userFills: (res as unknown as WsFill[]).slice(0, 2000),
-  }));
+  const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
+  try {
+    const res = await sdk.info.getUserFills();
+    // Account switched during the await — drop the response.
+    if (
+      perpsStore.getState().currentPerpsAccount?.address !== expectedAddress
+    ) {
+      return;
+    }
+    setPerpsState(prev => ({
+      ...prev,
+      userFills: reconcileHttpFills(res as unknown as WsFill[], prev.userFills),
+    }));
+  } catch (error) {
+    console.error('Failed to fetch user fill history:', error);
+  }
 };
 
 const addUserFills = (payload: {
@@ -806,13 +929,20 @@ const addUserFills = (payload: {
   user: string;
 }) => {
   const { fills, isSnapshot } = payload;
+  // The subscription callback filters by its own account; also check the
+  // store's CURRENT account so a not-yet-unsubscribed old subscription can't
+  // pollute the list right after a switch (merge never self-heals).
+  const currentAddress = perpsStore.getState().currentPerpsAccount?.address;
+  if (!currentAddress || !isSameAddress(payload.user, currentAddress)) {
+    return;
+  }
   if (isSnapshot) {
     fetchUserFillHistory();
   }
 
   setPerpsState(prev => ({
     ...prev,
-    userFills: isSnapshot ? fills : [...fills, ...prev.userFills],
+    userFills: mergeUserFills(fills, prev.userFills),
   }));
 };
 
@@ -1035,7 +1165,7 @@ const overlayFastCtxsToMarketData = (
       ...item,
       markPx,
       midPx,
-      pxDecimals: getPxDecimals(String(markPx ?? item.markPx ?? '')),
+      pxDecimals: getPxDecimals(item.szDecimals, markPx ?? item.markPx),
     };
   });
   return changed ? next : list;
@@ -1362,9 +1492,43 @@ export const fetchAllDexsPositionOpenOrdersHttp = async () => {
   }
 };
 
+// The Home top-10 subscription waits for Home mount + account store, seconds
+// after boot — subscribing the persisted perps account at boot lets the Home
+// position card render immediately.
+let earlyPositionSubscription: {
+  address: string;
+  unsubscribe: () => void;
+} | null = null;
+// A start resolving after teardown must not install a zombie subscription.
+let earlyPositionSubscriptionStopped = false;
+
+const getEarlyPositionSubscriptionAddress = () =>
+  earlyPositionSubscription?.address ?? null;
+
+const teardownEarlyPositionSubscription = () => {
+  earlyPositionSubscriptionStopped = true;
+  if (!earlyPositionSubscription) {
+    return;
+  }
+  try {
+    earlyPositionSubscription.unsubscribe();
+  } catch (error) {
+    console.error('[earlyPerpsPosition] unsubscribe failed', error);
+  }
+  earlyPositionSubscription = null;
+};
+
+// Mirrors isMyAccount (core/apis/account); local copy because its parameter
+// type rejects the persisted StoreAccount. Keep the excluded types in sync.
+const canSubscribePerpsPosition = (type: string) =>
+  type !== KEYRING_CLASS.WATCH &&
+  type !== KEYRING_CLASS.GNOSIS &&
+  type !== KEYRING_CLASS.WALLETCONNECT;
+
 export const apisPerpsStore = {
   logout: () => {
     unsubscribeAll();
+    teardownEarlyPositionSubscription();
     resetAccountState();
     // The SDK singleton is torn down on lock (destroyPerpsSDK), so force the
     // init effect to run again on next entry and reinstall the signer
@@ -1442,6 +1606,9 @@ export const usePerpsStore = () => {
       userAbstraction: UserAbstractionResp.default,
       userAbstractionReady: false,
       localLoadingHistory: [],
+      userFills: isSamePerpsAccount(prev.currentPerpsAccount, account)
+        ? prev.userFills
+        : [],
     }));
     fetchUserHistoricalOrders();
     subscribeToUserData(account);
@@ -1550,6 +1717,40 @@ export const usePerpsStore = () => {
   };
 };
 
+// Hydrate last-known metadata after Home is usable so the Perps route can
+// render names, logos, and decimals before its first network refresh lands.
+const hydrateMarketDataCache = async () => {
+  try {
+    const cache =
+      (await perpsServiceApi.getMarketDataCache()) as PerpsMarketDataCache<MarketData> | null;
+    if (
+      !cache ||
+      cache.v !== MARKET_DATA_CACHE_VERSION ||
+      Date.now() - cache.updatedAt > MARKET_DATA_CACHE_TTL ||
+      !Array.isArray(cache.list) ||
+      cache.list.length === 0
+    ) {
+      return;
+    }
+    setPerpsState(prev => {
+      // A fetch already landed — never overwrite fresh data with cache.
+      if (prev.marketData.length > 0) {
+        return prev;
+      }
+      const list = lastCtxsByDex
+        ? applyAssetCtxsToList(cache.list, lastCtxsByDex)
+        : cache.list;
+      return {
+        ...prev,
+        marketData: list,
+        marketDataMap: buildMarketDataMap(list),
+      };
+    });
+  } catch (error) {
+    console.error('Failed to hydrate market data cache:', error);
+  }
+};
+
 const fetchMarketDataIfNeeded = () => {
   const { marketData, marketDataStatus } = perpsStore.getState();
   if (marketDataStatus === 'success' && marketData.length > 0) {
@@ -1558,9 +1759,48 @@ const fetchMarketDataIfNeeded = () => {
   return fetchMarketData();
 };
 
+const startPersistedPositionSubscription = async () => {
+  try {
+    const [currentAccount, lastUsedAccount] = await Promise.all([
+      apisPerps.getPerpsCurrentAccount(),
+      apisPerps.getPerpsLastUsedAccount(),
+    ]);
+    const cached = currentAccount || lastUsedAccount;
+    if (
+      !cached?.address ||
+      !canSubscribePerpsPosition(cached.type) ||
+      earlyPositionSubscriptionStopped ||
+      earlyPositionSubscription
+    ) {
+      return;
+    }
+    const sdk = apisPerps.getPerpsSDK();
+    const { unsubscribe } = sdk.ws.subscribeToAllDexsClearinghouseState(
+      cached.address,
+      data => {
+        setClearinghouseStateMap({
+          address: data.user,
+          data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+        });
+      },
+    );
+    earlyPositionSubscription = { address: cached.address, unsubscribe };
+  } catch (error) {
+    console.error('[earlyPerpsPosition] subscribe failed', error);
+  }
+};
+
+runStartupTask(
+  hydrateMarketDataCache,
+  STARTUP_TASKS.perpsHydrateMarketDataCache,
+);
 runStartupTask(fetchMarketDataIfNeeded, STARTUP_TASKS.perpsFetchMarketData);
 runStartupTask(fetchFavoriteMarkets, STARTUP_TASKS.perpsFetchFavoriteMarkets);
 runStartupTask(fetchMarginModeByCoin, STARTUP_TASKS.perpsFetchMarginModeByCoin);
+runStartupTask(
+  startPersistedPositionSubscription,
+  STARTUP_TASKS.perpsPersistedPositionSubscription,
+);
 
 export function startSubscribePerpsOnAppState() {
   const subscription = AppState.addEventListener('change', nextAppState => {
@@ -1652,25 +1892,38 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
           }
         }, 5 * 1000);
         const top10Addresses = accounts.map(item => item.address);
-        sdk.ws.subscribeToAllDexsClearinghouseState(top10Addresses, data => {
-          if (!currentHasFetchAddresses.current.includes(data.user)) {
-            currentHasFetchAddresses.current.push(data.user);
-            if (
-              currentHasFetchAddresses.current.length === top10Addresses.length
-            ) {
-              setIsFetchAllDone(true);
-              clearTimeout(timeout);
-              if (!hasSelectedDefaultAccount.current) {
-                hasSelectedDefaultAccount.current = true;
-                handleSelectDefaultAccount(accounts);
+        // Keep the persisted account live even when it ranks outside the top
+        // ten, then replace the temporary subscription with this combined one.
+        const earlyAddress = getEarlyPositionSubscriptionAddress();
+        const subscribeAddresses = unionBy(
+          top10Addresses,
+          earlyAddress ? [earlyAddress] : [],
+          address => address.toLowerCase(),
+        );
+        teardownEarlyPositionSubscription();
+        sdk.ws.subscribeToAllDexsClearinghouseState(
+          subscribeAddresses,
+          data => {
+            if (!currentHasFetchAddresses.current.includes(data.user)) {
+              currentHasFetchAddresses.current.push(data.user);
+              if (
+                currentHasFetchAddresses.current.length ===
+                subscribeAddresses.length
+              ) {
+                setIsFetchAllDone(true);
+                clearTimeout(timeout);
+                if (!hasSelectedDefaultAccount.current) {
+                  hasSelectedDefaultAccount.current = true;
+                  handleSelectDefaultAccount(accounts);
+                }
               }
             }
-          }
-          setClearinghouseStateMap({
-            address: data.user,
-            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
-          });
-        });
+            setClearinghouseStateMap({
+              address: data.user,
+              data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+            });
+          },
+        );
       }, STARTUP_TASKS.perpsHomePositionSubscription);
     }
   }, [top10Accounts]);
