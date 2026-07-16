@@ -3,7 +3,7 @@ import { TouchableOpacity, View } from 'react-native';
 
 import { toggleFeedbackHistoryVisible } from '../hooks';
 
-import RcEntryCC from '../icons/entry-cc.svg';
+import RcChatCC from '@/assets/icons/feedback/chat-cc.svg';
 
 import { Button } from '@/components2024/Button';
 import {
@@ -37,10 +37,6 @@ export function FeedbackHistoryHeaderEntry({ style }: RNViewProps) {
     },
   );
 
-  if (!data?.unread_count) {
-    return null;
-  }
-
   return (
     <>
       <TouchableOpacity
@@ -58,7 +54,10 @@ export function FeedbackHistoryHeaderEntry({ style }: RNViewProps) {
             return prev;
           });
         }}>
-        <RcEntryCC style={styles.icon} color={styles.icon.color} />
+        <View style={styles.chatIconContainer}>
+          {data?.unread_count ? <View style={styles.dot} /> : null}
+          <RcChatCC style={styles.icon} color={styles.icon.color} />
+        </View>
       </TouchableOpacity>
     </>
   );
@@ -68,10 +67,23 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   iconContainer: {
     height: '100%',
   },
+
   icon: {
     width: 20,
     height: 20,
     color: colors2024['neutral-title-1'],
+  },
+  chatIconContainer: {
+    position: 'relative',
+  },
+  dot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: colors2024['red-default'],
+    width: 4,
+    height: 4,
+    borderRadius: 1000,
   },
 
   mainContainer: {
