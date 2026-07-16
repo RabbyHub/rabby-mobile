@@ -1480,17 +1480,18 @@ export const fetchAllDexsPositionOpenOrdersHttp = async () => {
   }
 };
 
-// Boot-time head start for the Home position card: the WS connection is
-// created lazily by the first subscribe, and the Home top-10 subscription
-// can't start until Home mounts and the account store fills. The persisted
-// perps account (MMKV, readable without keyring/unlock) is almost always the
-// position-bearing one, so subscribing to it at boot overlaps the whole
-// connect + first-snapshot round-trip with app startup. The subscription
-// itself is issued by a boot IIFE at the bottom of this module.
-let earlyPositionSubscription: { unsubscribe: () => void } | null = null;
-// Once torn down (top-10 handoff or logout), the boot IIFE must not install
-// a late subscription — its awaits could in principle resolve after that.
+// The Home top-10 subscription waits for Home mount + account store, seconds
+// after boot — subscribing the persisted perps account at boot lets the Home
+// position card render immediately.
+let earlyPositionSubscription: {
+  address: string;
+  unsubscribe: () => void;
+} | null = null;
+// A start resolving after teardown must not install a zombie subscription.
 let earlyPositionSubscriptionStopped = false;
+
+const getEarlyPositionSubscriptionAddress = () =>
+  earlyPositionSubscription?.address ?? null;
 
 const teardownEarlyPositionSubscription = () => {
   earlyPositionSubscriptionStopped = true;
@@ -1505,10 +1506,8 @@ const teardownEarlyPositionSubscription = () => {
   earlyPositionSubscription = null;
 };
 
-// Mirrors isMyAccount (core/apis/account) — kept local to avoid a
-// hooks -> core/apis/account import cycle. Keep the excluded types in sync.
-// The render-side lookup drops these types too, so an early snapshot for
-// them could never be shown anyway.
+// Mirrors isMyAccount (core/apis/account); local copy because its parameter
+// type rejects the persisted StoreAccount. Keep the excluded types in sync.
 const canSubscribePerpsPosition = (type: string) =>
   type !== KEYRING_CLASS.WATCH &&
   type !== KEYRING_CLASS.GNOSIS &&
@@ -1752,12 +1751,13 @@ runIIFEFunc(async () => {
     if (
       !cached?.address ||
       !canSubscribePerpsPosition(cached.type) ||
-      earlyPositionSubscriptionStopped
+      earlyPositionSubscriptionStopped ||
+      earlyPositionSubscription
     ) {
       return;
     }
     const sdk = apisPerps.getPerpsSDK();
-    earlyPositionSubscription = sdk.ws.subscribeToAllDexsClearinghouseState(
+    const { unsubscribe } = sdk.ws.subscribeToAllDexsClearinghouseState(
       cached.address,
       data => {
         setClearinghouseStateMap({
@@ -1766,8 +1766,9 @@ runIIFEFunc(async () => {
         });
       },
     );
+    earlyPositionSubscription = { address: cached.address, unsubscribe };
   } catch (error) {
-    console.error('[earlyPerpsPosition] boot subscribe failed', error);
+    console.error('[earlyPerpsPosition] subscribe failed', error);
   }
 });
 
@@ -1850,15 +1851,21 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
         }
       }, 5 * 1000);
       const top10Addresses = top10Accounts.map(item => item.address);
-      // Hand off from the boot-time single-account subscription: the top-10
-      // set re-subscribes that address, and clearinghouseStateMap keeps its
-      // data in the meantime, so there is no visible gap.
+      // Keep the early-subscribed address live — it may rank outside the
+      // top 10, and a dropped address would render frozen data all session.
+      const earlyAddress = getEarlyPositionSubscriptionAddress();
+      const subscribeAddresses = unionBy(
+        top10Addresses,
+        earlyAddress ? [earlyAddress] : [],
+        address => address.toLowerCase(),
+      );
       teardownEarlyPositionSubscription();
-      sdk.ws.subscribeToAllDexsClearinghouseState(top10Addresses, data => {
+      sdk.ws.subscribeToAllDexsClearinghouseState(subscribeAddresses, data => {
         if (!currentHasFetchAddresses.current.includes(data.user)) {
           currentHasFetchAddresses.current.push(data.user);
           if (
-            currentHasFetchAddresses.current.length === top10Addresses.length
+            currentHasFetchAddresses.current.length ===
+            subscribeAddresses.length
           ) {
             setIsFetchAllDone(true);
             clearTimeout(timeout);

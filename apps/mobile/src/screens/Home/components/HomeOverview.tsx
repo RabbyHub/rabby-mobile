@@ -664,11 +664,8 @@ function HomeOverviewPostStartupGate({
   return <HomeOverviewPostStartupEffects triggerUpdate={triggerUpdate} />;
 }
 
-// Effect-only, deliberately NOT behind the startup gates: it only kicks off
-// the perps position WS subscription (network + store writes, renders
-// nothing), and every ms it waits behind postReady is added to the Home
-// position card's blank time. The account auto-fetch is single-flighted, so
-// racing the other Home consumers is free.
+// Deliberately outside the startup gates: every ms this waits behind
+// postReady is added to the position card's blank time.
 function HomeOverviewPerpsPositionSubscription() {
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
