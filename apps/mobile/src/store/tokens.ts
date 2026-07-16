@@ -8,7 +8,11 @@ import {
   syncRemoteTokensForAddresses,
 } from '@/databases/sync/assets';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
-import { includeLpTokensFilter, lpTokenFilter } from '@/utils/lpToken';
+import {
+  commonTokenFilter,
+  includeLpTokensFilter,
+  lpTokenFilter,
+} from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
 import { getTokenSymbol } from '@/utils/token';
@@ -25,6 +29,7 @@ import PQueue from 'p-queue';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { uniqBy } from 'lodash';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -124,13 +129,26 @@ const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
 const sortByUsdValueDesc = (list: ITokenItem[]) =>
   list.slice().sort(compareByUsdValueDesc);
 
+const getTokenUniqueKey = (token: ITokenItem) =>
+  `${token.chain.toLowerCase()}:${token.id.toLowerCase()}`;
+
 const replacePreviousCoreTokensWithCacheTokens = (
   previousTokens: ITokenItem[],
   cacheTokens: ITokenItem[],
+  cacheNoCoreTokens?: ITokenItem[],
 ) => {
+  // 优先用内存态的noCore数据，如果内存态没有noCore数据，则用db的noCore数据
+  if (
+    cacheNoCoreTokens &&
+    cacheNoCoreTokens.length > 0 &&
+    previousTokens.every(token => token.is_core)
+  ) {
+    const filteredTokens = cacheNoCoreTokens.filter(token => !token.is_core);
+    return uniqBy([...cacheTokens, ...filteredTokens], getTokenUniqueKey);
+  }
   const previousNonCoreTokens = previousTokens.filter(token => !token.is_core);
 
-  return [...cacheTokens, ...previousNonCoreTokens];
+  return uniqBy([...cacheTokens, ...previousNonCoreTokens], getTokenUniqueKey);
 };
 
 const replaceTokensByChain = (
@@ -148,6 +166,9 @@ const replaceTokensByChain = (
 
   return [...previousOtherChainTokens, ...nextChainTokens];
 };
+
+const filterInterfaceTokenList = (tokens: ITokenItem[]) =>
+  tokens.filter(commonTokenFilter);
 
 const isDataExpired = async (address: string) => {
   const isExpired = await TokenItemEntity.isExpired(address);
@@ -1297,8 +1318,8 @@ const computeMultiAssetsFromTokens = (
   return {
     unFoldTokens: unfoldedTokens,
     hasFoldTokens:
-      foldedTokens.filter(includeLpTokensFilter).length > 0 ||
-      aggregatedScamTokens.filter(includeLpTokensFilter).length > 0,
+      foldedTokens.some(includeLpTokensFilter) ||
+      aggregatedScamTokens.some(includeLpTokensFilter),
     foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
     scamTokens: aggregatedScamTokens.filter(i =>
       lpTokenFilter(i, isLpTokenEnabled),
@@ -1344,6 +1365,9 @@ const computeSingleAssetsFromTokens = (
   const coreTokens: ITokenItem[] = [];
   let totalValue = 0;
   tokens.forEach(token => {
+    if (chainServerId && token.chain !== chainServerId) {
+      return;
+    }
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
     const isScam =
@@ -1365,32 +1389,14 @@ const computeSingleAssetsFromTokens = (
     coreTokens,
     totalValue,
   });
-  return chainServerId
-    ? {
-        unFoldTokens: unfoldedTokens.filter(
-          item => item.chain === chainServerId,
-        ),
-        hasFoldTokens:
-          foldedTokens.filter(item => item.chain === chainServerId).length >
-            0 ||
-          scamTokens.filter(item => item.chain === chainServerId).length > 0,
-        foldTokens: foldedTokens
-          .filter(item => item.chain === chainServerId)
-          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-        scamTokens: scamTokens
-          .filter(item => item.chain === chainServerId)
-          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-      }
-    : {
-        unFoldTokens: unfoldedTokens,
-        hasFoldTokens:
-          foldedTokens.filter(includeLpTokensFilter).length > 0 ||
-          scamTokens.filter(includeLpTokensFilter).length > 0,
-        foldTokens: foldedTokens.filter(i =>
-          lpTokenFilter(i, isLpTokenEnabled),
-        ),
-        scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-      };
+  return {
+    unFoldTokens: unfoldedTokens,
+    hasFoldTokens:
+      foldedTokens.some(includeLpTokensFilter) ||
+      scamTokens.some(includeLpTokensFilter),
+    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+    scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+  };
 };
 
 export const buildSingleAssetsIndexFromTokenIds = (
@@ -1717,8 +1723,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     lowerAddresses.forEach(address => {
       cacheTokenQueue.add(async () => {
         const list = await queryTokensCache(address);
-        cacheTokenMap[address.toLowerCase()] = list.map(item =>
-          tokenItemToITokenItem(item, address),
+        cacheTokenMap[address.toLowerCase()] = filterInterfaceTokenList(
+          list.map(item => tokenItemToITokenItem(item, address)),
         );
       });
     });
@@ -1759,8 +1765,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                     isTestnet: false,
                   },
                 );
-                const tokenList = chainTokensRes.map(item =>
-                  tokenItemToITokenItem(item, address),
+                const tokenList = filterInterfaceTokenList(
+                  chainTokensRes.map(item =>
+                    tokenItemToITokenItem(item, address),
+                  ),
                 );
                 return tokenList;
               }),
@@ -1787,9 +1795,14 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
   async getTokenList(address: string, force = false, chainServerId?: string) {
     const normalizedAddress = address.toLowerCase();
     const isExpired = await isDataExpired(normalizedAddress);
-    const hasCurrentAddressTokens =
-      (get().tokenListMap[normalizedAddress] || []).length > 0;
+    const currentStateTokens = get().tokenListMap[normalizedAddress] || [];
+    const hasCurrentAddressTokens = currentStateTokens.length > 0;
+    const hasCurrentNoCoreTokens = currentStateTokens.some(
+      token => !token.is_core,
+    );
     const targetChainServerId = chainServerId || undefined;
+
+    // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
     const isRefreshingWithValidLocalTokens =
       hasCurrentAddressTokens && (!isExpired || !!targetChainServerId);
 
@@ -1837,15 +1850,27 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         }));
       } else {
         const cacheList = await queryTokensCache(address);
-        const cacheTokens = cacheList.map(item =>
-          tokenItemToITokenItem(item, address),
+        const cacheTokens = filterInterfaceTokenList(
+          cacheList.map(item => tokenItemToITokenItem(item, address)),
         );
         const currentState = get();
         const previousTokens =
           currentState.tokenListMap[normalizedAddress] || [];
+
+        // 以此弥补cache接口数据不完整，带来的接口列表闪动
+        let noCoreDBTokens: ITokenItem[] = [];
+        if (!hasCurrentNoCoreTokens) {
+          const noCoreDBTokensList =
+            await TokenItemEntity.batchQueryNoCoreTokens(normalizedAddress);
+          noCoreDBTokens = filterInterfaceTokenList(
+            noCoreDBTokensList.map(tokenItemEntityToTokenItem),
+          );
+        }
+
         const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
           previousTokens,
           cacheTokens,
+          noCoreDBTokens,
         );
         const nextTokenListMap = {
           ...currentState.tokenListMap,
@@ -1893,8 +1918,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                   isTestnet: false,
                 },
               );
-              const tokenList = chainTokensRes.map(item =>
-                tokenItemToITokenItem(item, address),
+              const tokenList = filterInterfaceTokenList(
+                chainTokensRes.map(item =>
+                  tokenItemToITokenItem(item, address),
+                ),
               );
               return tokenList;
             }),

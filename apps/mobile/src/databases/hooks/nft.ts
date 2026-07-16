@@ -1,6 +1,7 @@
 import { openapi } from '@/core/request';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { syncRemoteNFTs } from '@/databases/sync/assets';
+import { isValidCollection } from '@/utils/collections';
 import type { Collection, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export const batchQueryNFTsWithLocalCache = async (
@@ -14,18 +15,22 @@ export const batchQueryNFTsWithLocalCache = async (
     if (force || isExpired) {
       const nfts = await openapi.listNFT(id, isAll, sortByCredit);
       const collectionNfts = await openapi.collectionList({ id, isAll });
-      const nftsWithCollection = nfts.map(nft => {
-        const collection = collectionNfts.find(
-          c => `${c.chain}:${c.id}` === nft.collection_id,
-        );
-        return {
-          ...nft,
-          collection: {
-            ...(collection || {}),
-            nft_list: [],
-          } as unknown as Collection,
-        };
-      });
+      const nftsWithCollection = nfts
+        .map(nft => {
+          const collection = collectionNfts.find(
+            c => `${c.chain}:${c.id}` === nft.collection_id,
+          );
+          return {
+            ...nft,
+            collection: {
+              ...(collection || {}),
+              nft_list: [],
+            } as unknown as Collection,
+          };
+        })
+        .filter(n => {
+          return isValidCollection(n.collection);
+        });
       syncRemoteNFTs(id, [...nftsWithCollection]);
       return nftsWithCollection;
     } else {

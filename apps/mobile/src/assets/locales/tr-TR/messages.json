@@ -3666,8 +3666,8 @@
       "noAvailableAddress": "Mevcut adres yok"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Yeni bir yanıt girin... (isteğe bağlı)",
-      "mediaPlaceholder": "Görsel/Video\n(gerekli)"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Görsel/Video"
     }
   },
   "native": {

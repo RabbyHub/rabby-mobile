@@ -3787,8 +3787,8 @@
       "noAvailableAddress": "사용 가능한 주소가 없습니다"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "새 답장을 입력하세요... (선택 사항)",
-      "mediaPlaceholder": "이미지/동영상\n(필수)"
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "이미지/동영상"
     }
   },
   "constant": {

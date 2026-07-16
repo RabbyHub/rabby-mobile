@@ -246,6 +246,46 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     }));
   }
 
+  static async batchQueryNoCoreTokens(owner_addr: string) {
+    try {
+      await prepareAppDataSource();
+
+      const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+      queryBuilder
+        .where({
+          owner_addr,
+          id: Not(EMPTY_TOKEN_ITEM_ID),
+        })
+        .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
+        .andWhere(
+          `(tokenitem.is_core IS NULL OR tokenitem.is_core != :is_core)`,
+          {
+            is_core: true,
+          },
+        )
+        .andWhere(
+          `(tokenitem.is_verified IS NULL OR tokenitem.is_verified != :is_verified)`,
+          {
+            is_verified: false,
+          },
+        )
+        .andWhere(
+          `(tokenitem.is_suspicious IS NULL OR tokenitem.is_suspicious != :is_suspicious)`,
+          {
+            is_suspicious: true,
+          },
+        );
+
+      return (await queryBuilder.getMany()).map(i => ({
+        ...i,
+        cex_ids: [],
+      }));
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+
   static async batchMultiAddressTokensByIdAndChain(
     addresses: string[],
     chain: string,
