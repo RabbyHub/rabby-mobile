@@ -49,6 +49,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
+import { mergeUserFills, reconcileHttpFills } from './userFills';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
@@ -68,6 +69,29 @@ const EMPTY_MARKET_TICKER = {
   premium: '0',
   prevDayPx: '',
 } satisfies Partial<MarketData>;
+
+// A blanket `{ ...item, ...EMPTY_MARKET_TICKER }` would persist undeclared
+// extras riding along from `applyAssetCtxsToList`'s ctx spread (e.g.
+// `impactPxs`, a live price pair) — stale prices must never hit the disk.
+const toCachedMarketData = (item: MarketData): MarketData => ({
+  index: item.index,
+  logoUrl: item.logoUrl,
+  name: item.name,
+  displayName: item.displayName,
+  quoteAsset: item.quoteAsset,
+  maxLeverage: item.maxLeverage,
+  minLeverage: item.minLeverage,
+  maxUsdValueSize: item.maxUsdValueSize,
+  szDecimals: item.szDecimals,
+  pxDecimals: item.pxDecimals,
+  onlyIsolated: item.onlyIsolated,
+  dexId: item.dexId,
+  category: item.category,
+  categoryId: item.categoryId,
+  brief: item.brief,
+  description: item.description,
+  ...EMPTY_MARKET_TICKER,
+});
 
 // Per-dex raw snapshots, source of truth for rebuilding the aggregated
 // `currentClearinghouseState`. Stale frames (older `time`) never win.
@@ -415,6 +439,13 @@ const setCurrentPerpsAccount = (payload: Account) => {
   perpsService.setCurrentAccount(payload);
 };
 
+/**
+ * Caller MUST navigate to a screen mounting `usePerpsState` right after:
+ * `unsubscribeAll()` also drops the global ticker streams, and nothing on
+ * this flow restores them except the init effect re-running off
+ * `isInitialized: false` — skipping the navigation leaves perps prices
+ * silently frozen until some unrelated resubscription path runs.
+ */
 export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   const clearinghouseState =
     perpsStore.getState().clearinghouseStateMap[payload.address.toLowerCase()];
@@ -673,9 +704,7 @@ const runFetchMarketData = async () => {
       updatedAt: Date.now(),
       // Blank the ticker; read from the store (WS-merged) so the cached
       // pxDecimals is the price-informed one.
-      list: perpsStore
-        .getState()
-        .marketData.map(item => ({ ...item, ...EMPTY_MARKET_TICKER })),
+      list: perpsStore.getState().marketData.map(toCachedMarketData),
     });
   } catch (error) {
     console.error('Failed to fetch market data:', error);
@@ -853,56 +882,6 @@ const resetAccountState = () => {
     userAbstractionReady: false,
     currentClearinghouseState: null,
   }));
-};
-
-const MAX_USER_FILLS = 2000;
-
-// tid alone is only a 50-bit hash of (buyer_oid, seller_oid) — HL docs say a
-// globally unique trade id is (time, coin, tid); side disambiguates the two
-// legs of a self-trade, which share one tid.
-const getFillKey = (fill: WsFill): string =>
-  `${fill.time}-${fill.coin}-${fill.side}-${fill.tid}`;
-
-// Merge, newest first. A WS reconnect snapshot only carries recent fills and
-// must never overwrite the fuller HTTP history — overwriting blanks the
-// single-coin history until the HTTP refetch lands.
-const mergeUserFills = (incoming: WsFill[], prev: WsFill[]): WsFill[] => {
-  const seen = new Set<string>();
-  const merged: WsFill[] = [];
-  for (const fill of [...incoming, ...prev].sort((a, b) => b.time - a.time)) {
-    const key = getFillKey(fill);
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    merged.push(fill);
-    if (merged.length >= MAX_USER_FILLS) {
-      break;
-    }
-  }
-  return merged;
-};
-
-// The HTTP result is authoritative inside its own time window: replace
-// overlapping entries (normalizes any WS-vs-HTTP aggregation drift) but keep
-// WS fills newer than the response and history older than its window.
-const reconcileHttpFills = (res: WsFill[], prev: WsFill[]): WsFill[] => {
-  const first = res[0];
-  if (!first) {
-    return prev;
-  }
-  let newest = first.time;
-  let oldest = first.time;
-  for (const fill of res) {
-    if (fill.time > newest) {
-      newest = fill.time;
-    }
-    if (fill.time < oldest) {
-      oldest = fill.time;
-    }
-  }
-  const keep = prev.filter(fill => fill.time > newest || fill.time < oldest);
-  return mergeUserFills(res, keep);
 };
 
 const fetchUserFillHistory = async () => {
