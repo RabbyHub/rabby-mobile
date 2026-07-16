@@ -26,4 +26,12 @@ describe('patched Ledger transaction fallback', () => {
       false,
     );
   });
+
+  it.each([
+    'DeviceBusyError',
+    'SendApduConcurrencyError',
+    'AlreadySendingApduError',
+  ])('does not blind-sign after %s', _tag => {
+    expect(shouldFallbackToBlindSign({ _tag })).toBe(false);
+  });
 });

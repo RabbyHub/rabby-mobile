@@ -7990,7 +7990,7 @@ __metadata:
 
 "@ledgerhq/device-signer-kit-ethereum@patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch":
   version: 1.16.0
-  resolution: "@ledgerhq/device-signer-kit-ethereum@patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch::version=1.16.0&hash=f161e6"
+  resolution: "@ledgerhq/device-signer-kit-ethereum@patch:@ledgerhq/device-signer-kit-ethereum@npm%3A1.16.0#~/.yarn/patches/@ledgerhq-device-signer-kit-ethereum-npm-1.16.0-df4b883905.patch::version=1.16.0&hash=e95162"
   dependencies:
     "@ledgerhq/signer-utils": "npm:^1.2.0"
     ethers: "npm:6.14.1"
@@ -8002,7 +8002,7 @@ __metadata:
   peerDependencies:
     "@ledgerhq/context-module": ^2.0.0
     "@ledgerhq/device-management-kit": ^1.5.0
-  checksum: 10/6fbe2ed4dc5b65c5039ac4b81749b8a9c59388feecd442760fd7d6114a26eec45068fb33678a99ce744c4603e1f57dad6304b6c32cbe1d9b8f6018f6379ba051
+  checksum: 10/91471fb31cba6615a0022cdfe7c07afb707fbd71348a1e03303c4c13525f4cc86d0a0f77f124078e72a5eeca6446339e17fb5a7c27faba258ac33293896b6264
   languageName: node
   linkType: hard
 
