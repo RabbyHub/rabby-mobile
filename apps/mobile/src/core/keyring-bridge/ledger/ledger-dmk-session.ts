@@ -24,7 +24,6 @@ import {
 export type LedgerDmkDevice = DiscoveredDevice;
 
 const CONNECT_TIMEOUT_MS = 10000;
-const CONNECT_DRAIN_TIMEOUT_MS = 10000;
 const DEVICE_RESPONSE_TIMEOUT_MS = 15000;
 const LEGACY_DASHBOARD_STATUS_CODE = '6e00';
 const LEDGER_DMK_SDK_LOG_PREFIX = '[DEBUG-ledger-dmk-sdk]';
@@ -60,7 +59,6 @@ const pendingConnections = new Map<string, Promise<DeviceSessionId>>();
 const connectionDrains = new Map<string, Promise<void>>();
 const pendingTeardowns = new Map<string, Promise<void>>();
 const connectionVersionsByDeviceId = new Map<string, number>();
-const deferredSessionDisconnects = new Map<string, Set<DeviceSessionId>>();
 const activeDeviceActions = new Set<string>();
 
 export async function runLedgerDeviceAction<T>(
@@ -133,16 +131,6 @@ function disconnectLedgerSession(deviceId: string, sessionId: DeviceSessionId) {
   );
 }
 
-function deferLedgerSessionDisconnect(
-  deviceId: string,
-  sessionId: DeviceSessionId,
-) {
-  const sessions =
-    deferredSessionDisconnects.get(deviceId) ?? new Set<DeviceSessionId>();
-  sessions.add(sessionId);
-  deferredSessionDisconnects.set(deviceId, sessions);
-}
-
 async function disconnectUnownedLedgerSession(
   deviceId: string,
   sessionId: DeviceSessionId,
@@ -151,33 +139,9 @@ async function disconnectUnownedLedgerSession(
     return;
   }
 
-  if (pendingConnections.has(deviceId)) {
-    deferLedgerSessionDisconnect(deviceId, sessionId);
-    return;
-  }
-
   await withLedgerTeardownTimeout(
     disconnectLedgerSession(deviceId, sessionId).catch(() => {}),
   );
-}
-
-async function flushDeferredSessionDisconnects(deviceId: string) {
-  if (pendingConnections.has(deviceId)) {
-    return;
-  }
-
-  const deferred = deferredSessionDisconnects.get(deviceId);
-  if (!deferred) {
-    return;
-  }
-
-  deferredSessionDisconnects.delete(deviceId);
-  const currentSessionId = sessionsByDeviceId.get(deviceId);
-  for (const sessionId of deferred) {
-    if (sessionId !== currentSessionId) {
-      await disconnectLedgerSession(deviceId, sessionId).catch(() => {});
-    }
-  }
 }
 
 function startLedgerDeviceSessionClear(
@@ -327,6 +291,35 @@ function getConnectedSession(deviceId: string) {
   return undefined;
 }
 
+function waitForLedgerDeviceOwnership(deviceId: string) {
+  if (!connectionDrains.has(deviceId) && !pendingTeardowns.has(deviceId)) {
+    return;
+  }
+
+  return withLedgerTeardownTimeout(
+    (async () => {
+      while (true) {
+        const connectionDrain = connectionDrains.get(deviceId);
+        if (connectionDrain) {
+          await connectionDrain.catch(() => {});
+        }
+
+        const pendingTeardown = pendingTeardowns.get(deviceId);
+        if (pendingTeardown) {
+          await pendingTeardown.catch(() => {});
+        }
+
+        if (
+          !connectionDrains.has(deviceId) &&
+          !pendingTeardowns.has(deviceId)
+        ) {
+          return;
+        }
+      }
+    })(),
+  );
+}
+
 export function subscribeLedgerDevices({
   next,
   error,
@@ -358,19 +351,12 @@ async function connectLedgerDeviceInternal(
   device: LedgerDmkDevice,
   connectionVersion: number,
 ) {
-  const connectionDrain = connectionDrains.get(device.id);
-  const pendingTeardown = pendingTeardowns.get(device.id);
-  const blockers = [
-    connectionDrain?.catch(() => {}),
-    pendingTeardown
-      ? withLedgerTeardownTimeout(pendingTeardown.catch(() => {}))
-      : undefined,
-  ].filter((blocker): blocker is Promise<void> => Boolean(blocker));
-  if (blockers.length > 0) {
-    await Promise.all(blockers);
-    if (connectionVersion !== getConnectionVersion(device.id)) {
-      throw new Error('Ledger: Device connection cancelled');
-    }
+  const initialOwnershipWait = waitForLedgerDeviceOwnership(device.id);
+  if (initialOwnershipWait) {
+    await initialOwnershipWait;
+  }
+  if (connectionVersion !== getConnectionVersion(device.id)) {
+    throw new Error('Ledger: Device connection cancelled');
   }
 
   const existing = getConnectedSession(device.id);
@@ -381,6 +367,11 @@ async function connectLedgerDeviceInternal(
     return existing;
   }
 
+  const refreshedOwnershipWait = waitForLedgerDeviceOwnership(device.id);
+  if (refreshedOwnershipWait) {
+    await refreshedOwnershipWait;
+  }
+
   if (connectionVersion !== getConnectionVersion(device.id)) {
     throw new Error('Ledger: Device connection cancelled');
   }
@@ -389,7 +380,6 @@ async function connectLedgerDeviceInternal(
 
   let publicSettled = false;
   let drainFinished = false;
-  let drainTimeout: ReturnType<typeof setTimeout> | undefined;
   let finishDrain = () => {};
   const rawConnects = new Set<Promise<void>>();
   const drain = new Promise<void>(resolve => {
@@ -402,9 +392,6 @@ async function connectLedgerDeviceInternal(
       return;
     }
     drainFinished = true;
-    if (drainTimeout) {
-      clearTimeout(drainTimeout);
-    }
     if (connectionDrains.get(device.id) === drain) {
       connectionDrains.delete(device.id);
     }
@@ -417,12 +404,7 @@ async function connectLedgerDeviceInternal(
     }
     if (rawConnects.size === 0) {
       finishConnectionDrain();
-      return;
     }
-    drainTimeout ??= setTimeout(
-      finishConnectionDrain,
-      CONNECT_DRAIN_TIMEOUT_MS,
-    );
   };
 
   const trackRawConnect = <T>(rawConnect: Promise<T>) => {
@@ -535,7 +517,6 @@ export function connectLedgerDevice(device: LedgerDmkDevice) {
       if (pendingConnections.get(device.id) === connection) {
         pendingConnections.delete(device.id);
       }
-      void flushDeferredSessionDisconnects(device.id);
     },
   );
 
