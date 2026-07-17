@@ -71,6 +71,7 @@ import {
   type SignMessageHighlightToken,
 } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
+import { addSignMessageOriginFallback } from './signMessageOrigin';
 
 interface SignTypedDataProps {
   method: string;
@@ -321,6 +322,7 @@ export const SignTypedData = ({
     }
     return;
   }, [data, isSignTypedDataV1, signTypedData]);
+  const isUnparsedAction = typedDataActionData?.action === null;
 
   if (error) {
     console.error('error', error);
@@ -546,6 +548,14 @@ export const SignTypedData = ({
     return requireData;
   };
 
+  const withOriginFallback = (ctx: Parameters<typeof executeEngine>[0]) =>
+    addSignMessageOriginFallback(ctx, {
+      isUnparsedAction,
+      isInternalOrigin: params.session.origin === INTERNAL_REQUEST_ORIGIN,
+      message: parsedMessage,
+      origin: params.session.origin,
+    });
+
   const getSecurityEngineResult = async ({
     data,
     requireData,
@@ -559,7 +569,7 @@ export const SignTypedData = ({
         id: Number(data.chainId),
       })?.serverId;
     }
-    const ctx = await formatSecurityEngineContext({
+    const baseCtx = await formatSecurityEngineContext({
       type: 'typed_data',
       actionData: data,
       requireData,
@@ -571,7 +581,7 @@ export const SignTypedData = ({
       },
       origin: params.session.origin,
     });
-    const result = await executeEngine(ctx);
+    const result = await executeEngine(withOriginFallback(baseCtx));
     return result;
   };
 
@@ -585,7 +595,7 @@ export const SignTypedData = ({
         id: Number(parsedActionData.chainId),
       })?.serverId;
     }
-    const ctx = await formatSecurityEngineContext({
+    const baseCtx = await formatSecurityEngineContext({
       type: 'typed_data',
       actionData: parsedActionData,
       requireData: actionRequireData,
@@ -597,7 +607,7 @@ export const SignTypedData = ({
       },
       origin: params.session.origin,
     });
-    const result = await executeEngine(ctx);
+    const result = await executeEngine(withOriginFallback(baseCtx));
     setEngineResults(result);
   };
 
