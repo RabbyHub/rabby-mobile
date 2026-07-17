@@ -8025,7 +8025,7 @@ __metadata:
 
 "@ledgerhq/device-transport-kit-react-native-ble@patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch":
   version: 1.3.2
-  resolution: "@ledgerhq/device-transport-kit-react-native-ble@patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch::version=1.3.2&hash=0e151a"
+  resolution: "@ledgerhq/device-transport-kit-react-native-ble@patch:@ledgerhq/device-transport-kit-react-native-ble@npm%3A1.3.2#~/.yarn/patches/@ledgerhq-device-transport-kit-react-native-ble-npm-1.3.2-6954f323e6.patch::version=1.3.2&hash=4b5d39"
   dependencies:
     "@sentry/minimal": "npm:6.19.7"
     js-base64: "npm:^3.7.8"
@@ -8036,7 +8036,7 @@ __metadata:
     react-native: ">0.74.1"
     react-native-ble-plx: 3.5.1
     rxjs: 7.8.2
-  checksum: 10/f53f62b4c49cee2e1c3bec1e4bbfbaa7651d914bf65212cd6fa28972fa417561cf58af918ba7089bbf1e24a76b73f23b45f22c6ca26239bf9ee9211a784fac76
+  checksum: 10/b88970cdceb2c38accd7063ad8c8fd856e37d94d4ea91965e7d96b2b4ad649fdff4fb4a54c13682b5039e4a547eee7a51d3b36004fa844ca6d2725194bff7208
   languageName: node
   linkType: hard
 
