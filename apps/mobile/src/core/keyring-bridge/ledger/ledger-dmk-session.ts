@@ -156,7 +156,9 @@ async function disconnectUnownedLedgerSession(
     return;
   }
 
-  await disconnectLedgerSession(deviceId, sessionId).catch(() => {});
+  await withLedgerTeardownTimeout(
+    disconnectLedgerSession(deviceId, sessionId).catch(() => {}),
+  );
 }
 
 async function flushDeferredSessionDisconnects(deviceId: string) {
@@ -178,7 +180,7 @@ async function flushDeferredSessionDisconnects(deviceId: string) {
   }
 }
 
-async function clearLedgerDeviceSession(
+function startLedgerDeviceSessionClear(
   deviceId: string,
   expected?: {
     sessionId: DeviceSessionId;
@@ -193,18 +195,48 @@ async function clearLedgerDeviceSession(
     (expected.connectionVersion !== getConnectionVersion(deviceId) ||
       sessionId !== expected.sessionId)
   ) {
-    return false;
+    return { cleared: false, teardown: Promise.resolve() };
   }
 
   if (sessionsByDeviceId.get(deviceId) === sessionId) {
     sessionsByDeviceId.delete(deviceId);
   }
 
-  if (sessionId) {
-    await disconnectLedgerSession(deviceId, sessionId).catch(() => {});
-  }
+  const teardown = sessionId
+    ? disconnectLedgerSession(deviceId, sessionId).catch(() => {})
+    : Promise.resolve();
 
-  return true;
+  return { cleared: true, teardown };
+}
+
+function clearLedgerDeviceSessionInBackground(
+  deviceId: string,
+  expected?: {
+    sessionId: DeviceSessionId;
+    connectionVersion: number;
+  },
+) {
+  const { cleared, teardown } = startLedgerDeviceSessionClear(
+    deviceId,
+    expected,
+  );
+  void teardown;
+  return cleared;
+}
+
+async function clearLedgerDeviceSessionWithTimeout(
+  deviceId: string,
+  expected?: {
+    sessionId: DeviceSessionId;
+    connectionVersion: number;
+  },
+) {
+  const { cleared, teardown } = startLedgerDeviceSessionClear(
+    deviceId,
+    expected,
+  );
+  await withLedgerTeardownTimeout(teardown);
+  return cleared;
 }
 
 function getConnectionVersion(deviceId: string) {
@@ -226,7 +258,7 @@ function invalidatePendingConnection(deviceId: string) {
 export function resetLedgerDeviceSession(deviceId: string) {
   invalidatePendingConnection(deviceId);
   devicesById.delete(deviceId);
-  return clearLedgerDeviceSession(deviceId);
+  return clearLedgerDeviceSessionWithTimeout(deviceId).catch(() => false);
 }
 
 function withConnectTimeout<T>({
@@ -271,6 +303,14 @@ function withConnectTimeout<T>({
         reject(error);
       },
     );
+  });
+}
+
+function withLedgerTeardownTimeout<T>(teardown: Promise<T>) {
+  return withConnectTimeout({
+    promise: teardown,
+    timeoutMs: CONNECT_TIMEOUT_MS,
+    errorMessage: 'Ledger: Device connection timeout',
   });
 }
 
@@ -323,11 +363,7 @@ async function connectLedgerDeviceInternal(
   const blockers = [
     connectionDrain?.catch(() => {}),
     pendingTeardown
-      ? withConnectTimeout({
-          promise: pendingTeardown.catch(() => {}),
-          timeoutMs: CONNECT_TIMEOUT_MS,
-          errorMessage: 'Ledger: Device connection timeout',
-        })
+      ? withLedgerTeardownTimeout(pendingTeardown.catch(() => {}))
       : undefined,
   ].filter((blocker): blocker is Promise<void> => Boolean(blocker));
   if (blockers.length > 0) {
@@ -432,14 +468,14 @@ async function connectLedgerDeviceInternal(
     return withConnectTimeout({
       promise: rawConnect,
       timeoutMs: CONNECT_TIMEOUT_MS,
-      onTimeout: async () => {
+      onTimeout: () => {
         timedOut = true;
         if (connectionVersion !== getConnectionVersion(device.id)) {
           return;
         }
         advanceConnectionVersion(device.id);
         devicesById.delete(device.id);
-        await clearLedgerDeviceSession(device.id);
+        clearLedgerDeviceSessionInBackground(device.id);
       },
       errorMessage: 'Ledger: Device connection timeout',
     });
@@ -451,7 +487,7 @@ async function connectLedgerDeviceInternal(
         throw error;
       }
 
-      await clearLedgerDeviceSession(device.id);
+      await clearLedgerDeviceSessionWithTimeout(device.id);
       if (connectionVersion !== getConnectionVersion(device.id)) {
         throw new Error('Ledger: Device connection cancelled');
       }
@@ -467,12 +503,14 @@ async function connectLedgerDeviceInternal(
       sessionsByDeviceId.set(device.id, sessionId);
       return sessionId;
     })
-    .catch(async error => {
+    .catch(error => {
       if (connectionVersion !== getConnectionVersion(device.id)) {
         throw toLedgerDmkError(error);
       }
 
-      await clearLedgerDeviceSession(device.id);
+      if (!pendingTeardowns.has(device.id)) {
+        clearLedgerDeviceSessionInBackground(device.id);
+      }
       if (connectionVersion === getConnectionVersion(device.id)) {
         devicesById.delete(device.id);
       }
@@ -578,7 +616,7 @@ export async function probeLedgerDeviceSession(
     }
   } catch (error) {
     if (isLedgerDmkSessionUnavailableError(error)) {
-      if (!(await clearLedgerDeviceSession(deviceId, expectedSession))) {
+      if (!clearLedgerDeviceSessionInBackground(deviceId, expectedSession)) {
         throw new Error('Ledger: Device connection cancelled');
       }
     }
@@ -616,7 +654,7 @@ export async function getLedgerAppAndVersion(
 
     if (
       !probedSession ||
-      !(await clearLedgerDeviceSession(deviceId, probedSession)) ||
+      !(await clearLedgerDeviceSessionWithTimeout(deviceId, probedSession)) ||
       probedSession.connectionVersion !== getConnectionVersion(deviceId)
     ) {
       throw new Error('Ledger: Device connection cancelled');
@@ -635,26 +673,27 @@ export async function getLedgerDeviceSessionState(deviceId: string) {
   const connectionVersion = getConnectionVersion(deviceId);
   const expectedSession = { sessionId, connectionVersion };
 
+  let state: Awaited<ReturnType<typeof getSessionState>>;
   try {
-    const state = await getSessionState(sessionId);
-
-    if (
-      connectionVersion !== getConnectionVersion(deviceId) ||
-      sessionsByDeviceId.get(deviceId) !== sessionId
-    ) {
-      return undefined;
-    }
-
-    if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
-      await clearLedgerDeviceSession(deviceId, expectedSession);
-      return undefined;
-    }
-
-    return state;
+    state = await getSessionState(sessionId);
   } catch {
-    await clearLedgerDeviceSession(deviceId, expectedSession);
+    await clearLedgerDeviceSessionWithTimeout(deviceId, expectedSession);
     return undefined;
   }
+
+  if (
+    connectionVersion !== getConnectionVersion(deviceId) ||
+    sessionsByDeviceId.get(deviceId) !== sessionId
+  ) {
+    return undefined;
+  }
+
+  if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
+    await clearLedgerDeviceSessionWithTimeout(deviceId, expectedSession);
+    return undefined;
+  }
+
+  return state;
 }
 
 export async function disconnectLedgerDevice(deviceId: string) {
@@ -668,5 +707,5 @@ export async function disconnectLedgerDevice(deviceId: string) {
     return;
   }
 
-  await disconnectLedgerSession(deviceId, sessionId);
+  await withLedgerTeardownTimeout(disconnectLedgerSession(deviceId, sessionId));
 }

@@ -301,6 +301,45 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockDmk.disconnect).toHaveBeenCalledWith({ sessionId });
   });
 
+  it('returns a signer probe error without waiting for stale session teardown', async () => {
+    const deviceId = 'ledger-disconnected-probe-teardown-device-id';
+    const sessionId = 'disconnected-probe-teardown-session-1';
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: of({
+          status: 'completed',
+          output: { r: '1', s: '2', v: '1b' },
+        }),
+        cancel: jest.fn(),
+      })),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.sendCommand.mockRejectedValueOnce({
+      _tag: 'DeviceDisconnectedWhileSendingError',
+      originalError: new Error('Device disconnected while sending APDU'),
+    });
+    mockDmk.disconnect.mockReturnValueOnce(new Promise(() => undefined));
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+    const signing = session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
+    const outcome = await Promise.race([
+      signing.then(
+        () => 'resolved',
+        (error: Error) => error,
+      ),
+      new Promise(resolve => setTimeout(() => resolve('still pending'), 0)),
+    ]);
+
+    expect(outcome).toMatchObject({
+      message: expect.stringContaining('DeviceDisconnectedWhileSendingError'),
+    });
+    expect(signer.signTransaction).not.toHaveBeenCalled();
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({ sessionId });
+  });
+
   it('continues a signer action when the liveness probe receives a dashboard status', async () => {
     const deviceId = 'ledger-dashboard-session-device-id';
     const sessionId = 'dashboard-session-1';
@@ -533,6 +572,30 @@ describe('ledger DMK bridge discovery', () => {
 
     expect(reconnectError?.message).toBe('Ledger: Device connection timeout');
     expect(mockDmk.connect).not.toHaveBeenCalled();
+  });
+
+  it('bounds a direct device disconnect when native teardown remains pending', async () => {
+    jest.useFakeTimers();
+
+    const device = { id: 'ledger-direct-disconnect-timeout-device' };
+    mockDmk.connect.mockResolvedValueOnce('session-1');
+
+    const {
+      connectLedgerDevice,
+      disconnectLedgerDevice,
+    } = require('./ledger-dmk');
+    await expect(connectLedgerDevice(device)).resolves.toBe('session-1');
+
+    mockDmk.disconnect.mockReturnValueOnce(new Promise(() => undefined));
+    const disconnecting = disconnectLedgerDevice(device.id);
+    let disconnectError: Error | undefined;
+    void disconnecting.catch((error: Error) => {
+      disconnectError = error;
+    });
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(disconnectError?.message).toBe('Ledger: Device connection timeout');
   });
 
   it('does not disconnect a session reclaimed by a retry after drain timeout', async () => {
@@ -777,6 +840,72 @@ describe('ledger DMK bridge discovery', () => {
     await expect(connection).resolves.toBe('session-2');
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
     expect(mockDmk.listenToAvailableDevices).not.toHaveBeenCalled();
+  });
+
+  it('does not retry a stale connect while its teardown remains pending', async () => {
+    jest.useFakeTimers();
+
+    const device = {
+      id: 'ledger-stale-connect-pending-teardown-device-id',
+      name: 'Ledger',
+    };
+    mockDmk.listConnectedDevices
+      .mockReturnValueOnce([])
+      .mockReturnValue([{ id: device.id, sessionId: 'stale-session' }]);
+    mockDmk.disconnect.mockReturnValueOnce(new Promise(() => undefined));
+    mockDmk.connect.mockRejectedValueOnce({
+      _tag: 'DeviceSessionNotFound',
+      originalError: new Error('Device session not found'),
+    });
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+    const connecting = connectLedgerDevice(device);
+    let connectError: Error | undefined;
+    void connecting.catch((error: Error) => {
+      connectError = error;
+    });
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(connectError?.message).toBe('Ledger: Device connection timeout');
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+
+    const retrying = connectLedgerDevice(device);
+    let retryError: Error | undefined;
+    void retrying.catch((error: Error) => {
+      retryError = error;
+    });
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(retryError?.message).toBe('Ledger: Device connection timeout');
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not connect across a pending teardown after a state probe fails', async () => {
+    jest.useFakeTimers();
+
+    const device = { id: 'ledger-state-probe-pending-teardown-device-id' };
+    const sessionId = 'stale-session';
+    mockDmk.listConnectedDevices.mockReturnValue([
+      { id: device.id, sessionId },
+    ]);
+    mockDmk.getDeviceSessionState.mockImplementationOnce(() => {
+      throw new Error('SessionStateError');
+    });
+    mockDmk.disconnect.mockReturnValueOnce(new Promise(() => undefined));
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+    const connecting = connectLedgerDevice(device);
+    let connectError: Error | undefined;
+    void connecting.catch((error: Error) => {
+      connectError = error;
+    });
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(connectError?.message).toBe('Ledger: Device connection timeout');
+    expect(mockDmk.connect).not.toHaveBeenCalled();
   });
 
   it('does not retry an old stale-session request after reset', async () => {

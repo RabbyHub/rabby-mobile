@@ -85,6 +85,8 @@ function createBleHarness() {
     let mtuFrameSize = 0x99;
     let rssiReadErrorCode: number | undefined;
     let rssiReadsHang = false;
+    let shouldHangNextServices = false;
+    let resolvePendingServices: (() => void) | undefined;
     let shouldHangNextPayloadWrite = false;
     const pendingPayloadWriteResolutions: Array<() => void> = [];
     const pendingRssiReadRejections: Array<(error: Error) => void> = [];
@@ -133,7 +135,16 @@ function createBleHarness() {
       localName: 'Ledger',
       name: 'Ledger',
       mtu: 156,
-      services: jest.fn(async () => [{ uuid: SERVICE_UUID }]),
+      services: jest.fn(async () => {
+        if (shouldHangNextServices) {
+          shouldHangNextServices = false;
+          return new Promise<Array<{ uuid: string }>>(resolve => {
+            resolvePendingServices = () => resolve([{ uuid: SERVICE_UUID }]);
+          });
+        }
+
+        return [{ uuid: SERVICE_UUID }];
+      }),
       discoverAllServicesAndCharacteristics: jest.fn(async () => device),
       monitorCharacteristicForService: jest.fn(
         (_serviceUuid, _notifyUuid, listener: MonitorListener) => {
@@ -171,6 +182,9 @@ function createBleHarness() {
       hangRssiReads() {
         rssiReadsHang = true;
       },
+      hangNextServices() {
+        shouldHangNextServices = true;
+      },
       hangNextPayloadWrite() {
         shouldHangNextPayloadWrite = true;
       },
@@ -181,6 +195,10 @@ function createBleHarness() {
       },
       releasePendingPayloadWrites() {
         pendingPayloadWriteResolutions.splice(0).forEach(resolve => resolve());
+      },
+      releasePendingServices() {
+        resolvePendingServices?.();
+        resolvePendingServices = undefined;
       },
       rejectPendingRssiReads(errorCode = 201) {
         rssiReadsHang = false;
@@ -204,14 +222,28 @@ function createBleHarness() {
   const reconnectedDevice = createDeviceRecord();
   let activeDevice = initialDevice;
   let connectCount = 0;
+  let shouldHangNextConnect = false;
+  let resolvePendingConnect: (() => void) | undefined;
 
   const manager = {
     onStateChange: jest.fn(() => ({ remove: jest.fn() })),
     stopDeviceScan: jest.fn(async () => undefined),
     connectedDevices: jest.fn(async () => []),
     connectToDevice: jest.fn(async () => {
-      activeDevice = connectCount === 0 ? initialDevice : reconnectedDevice;
+      const nextDevice = connectCount === 0 ? initialDevice : reconnectedDevice;
       connectCount += 1;
+
+      if (shouldHangNextConnect) {
+        shouldHangNextConnect = false;
+        return new Promise<Device>(resolve => {
+          resolvePendingConnect = () => {
+            activeDevice = nextDevice;
+            resolve(nextDevice.device);
+          };
+        });
+      }
+
+      activeDevice = nextDevice;
       return activeDevice.device;
     }),
     discoverAllServicesAndCharacteristicsForDevice: jest.fn(
@@ -237,6 +269,13 @@ function createBleHarness() {
     device: initialDevice.device,
     reconnectedDevice: reconnectedDevice.device,
     manager,
+    hangNextConnect() {
+      shouldHangNextConnect = true;
+    },
+    resolvePendingConnect() {
+      resolvePendingConnect?.();
+      resolvePendingConnect = undefined;
+    },
     disconnect(
       error: Error | null = null,
       listenerIndex = disconnectListeners.length - 1,
@@ -255,6 +294,9 @@ function createBleHarness() {
     hangRssiReads(target = initialDevice.device) {
       getDeviceRecord(target).hangRssiReads();
     },
+    hangNextServices(target = initialDevice.device) {
+      getDeviceRecord(target).hangNextServices();
+    },
     hangNextPayloadWrite(target = initialDevice.device) {
       getDeviceRecord(target).hangNextPayloadWrite();
     },
@@ -263,6 +305,9 @@ function createBleHarness() {
     },
     releasePendingPayloadWrites(target = initialDevice.device) {
       getDeviceRecord(target).releasePendingPayloadWrites();
+    },
+    releasePendingServices(target = initialDevice.device) {
+      getDeviceRecord(target).releasePendingServices();
     },
     sendMonitorFrame(frame: Uint8Array, target = activeDevice.device) {
       getDeviceRecord(target).emitMonitorFrame(frame);
@@ -328,6 +373,20 @@ async function flushMicrotasks() {
   }
 }
 
+async function waitForConnectCalls(
+  harness: ReturnType<typeof createBleHarness>,
+  count: number,
+) {
+  for (let index = 0; index < 10; index += 1) {
+    await flushMicrotasks();
+    if (harness.manager.connectToDevice.mock.calls.length >= count) {
+      return;
+    }
+  }
+
+  throw new Error(`BLE connect call ${count} did not start`);
+}
+
 async function waitForReconnectSetup(
   harness: ReturnType<typeof createBleHarness>,
 ) {
@@ -344,7 +403,98 @@ async function waitForReconnectSetup(
   throw new Error('BLE reconnect setup did not finish');
 }
 
+async function waitForReconnectServices(
+  harness: ReturnType<typeof createBleHarness>,
+) {
+  for (let index = 0; index < 10; index += 1) {
+    await flushMicrotasks();
+    if (harness.reconnectedDevice.services.mock.calls.length > 0) {
+      return;
+    }
+  }
+
+  throw new Error('BLE reconnect services lookup did not start');
+}
+
 describe('patched Ledger DMK RN BLE transport', () => {
+  it('ignores a reconnect that finishes after teardown and a fresh connection', async () => {
+    const harness = createBleHarness();
+    const transport = createTransport(harness.manager);
+    let connectedDevice = await connectTransport(transport);
+
+    harness.hangNextConnect();
+    harness.disconnect();
+    await waitForConnectCalls(harness, 2);
+
+    await transport.disconnect({ connectedDevice });
+    connectedDevice = await connectTransport(transport);
+    expect(harness.manager.connectToDevice).toHaveBeenCalledTimes(3);
+
+    const freshResultPromise = sendTestApdu(connectedDevice);
+    let freshResultSettled = false;
+    void freshResultPromise.then(() => {
+      freshResultSettled = true;
+    });
+    await flushMicrotasks();
+
+    try {
+      harness.resolvePendingConnect();
+      await flushMicrotasks();
+
+      expect(freshResultSettled).toBe(false);
+
+      harness.respondToApdu(harness.reconnectedDevice);
+      await expectSuccessfulApdu(freshResultPromise);
+    } finally {
+      harness.resolvePendingConnect();
+      await transport.disconnect({ connectedDevice }).catch(() => undefined);
+    }
+  });
+
+  it('ignores reconnect setup that resumes while teardown is in progress', async () => {
+    const harness = createBleHarness();
+    let finishTeardown = () => undefined;
+    let markTeardownStarted = () => undefined;
+    const teardownStarted = new Promise<void>(resolve => {
+      markTeardownStarted = resolve;
+    });
+
+    harness.manager.connectedDevices
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            finishTeardown = () => resolve([]);
+            markTeardownStarted();
+          }),
+      )
+      .mockResolvedValue([]);
+
+    const transport = createTransport(harness.manager);
+    const connectedDevice = await connectTransport(transport);
+
+    harness.hangNextServices(harness.reconnectedDevice);
+    harness.disconnect();
+    await waitForReconnectServices(harness);
+
+    const disconnecting = transport.disconnect({ connectedDevice });
+    await teardownStarted;
+
+    try {
+      harness.releasePendingServices(harness.reconnectedDevice);
+      await flushMicrotasks();
+
+      expect(
+        harness.reconnectedDevice.monitorCharacteristicForService,
+      ).not.toHaveBeenCalled();
+    } finally {
+      harness.releasePendingServices(harness.reconnectedDevice);
+      finishTeardown();
+      await disconnecting;
+    }
+  });
+
   it('waits for BLE teardown and ignores late callbacks from the old connection', async () => {
     const harness = createBleHarness();
     let finishFirstTeardown = () => undefined;
