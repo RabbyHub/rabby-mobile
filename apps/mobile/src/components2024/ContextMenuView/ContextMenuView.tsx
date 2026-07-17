@@ -1,14 +1,17 @@
 import * as ContextMenu from 'zeego/src/context-menu';
 import { MenuTriggerProps } from 'zeego/src/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
-import { ImageSourcePropType } from 'react-native';
+import { ImageSourcePropType, Platform } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { MenuComponentRef } from '@react-native-menu/menu';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 // import { touchedFeedback } from '@/utils/touch';
+
+const IS_IOS_27_OR_ABOVE =
+  Platform.OS === 'ios' && Number.parseInt(String(Platform.Version), 10) >= 27;
 
 export interface MenuAction {
   title: string;
@@ -29,6 +32,7 @@ type Props = {
     menuActions: MenuAction[];
   };
   preViewBorderRadius?: number;
+  enableIos27OpaquePreview?: boolean;
   children: React.ReactElement<any>;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
   androidLongPressDuration?: number;
@@ -42,9 +46,10 @@ export const ContextMenuView: React.FC<Props> = ({
   avoidCollisions = true,
   triggerProps,
   preViewBorderRadius = 30,
+  enableIos27OpaquePreview,
   androidLongPressDuration = 350,
 }) => {
-  const { colors2024 } = useTheme2024();
+  const { colors2024, isLight } = useTheme2024();
 
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
 
@@ -67,6 +72,15 @@ export const ContextMenuView: React.FC<Props> = ({
       __unsafeIosProps={{
         previewConfig: {
           borderRadius: preViewBorderRadius,
+          // iOS 27 can composite a transparent target against black during
+          // the transition into the native context-menu preview.
+          ...(IS_IOS_27_OR_ABOVE && enableIos27OpaquePreview
+            ? {
+                backgroundColor: isLight
+                  ? colors2024['neutral-bg-1']
+                  : colors2024['neutral-bg-2'],
+              }
+            : {}),
         },
       }}
       androidMenuViewRef={androidMenuViewRef}>
