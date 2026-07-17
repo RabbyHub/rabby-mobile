@@ -32,7 +32,6 @@ type Props = {
     menuActions: MenuAction[];
   };
   preViewBorderRadius?: number;
-  enableIos27OpaquePreview?: boolean;
   children: React.ReactElement<any>;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
   androidLongPressDuration?: number;
@@ -46,7 +45,6 @@ export const ContextMenuView: React.FC<Props> = ({
   avoidCollisions = true,
   triggerProps,
   preViewBorderRadius = 30,
-  enableIos27OpaquePreview,
   androidLongPressDuration = 350,
 }) => {
   const { colors2024, isLight } = useTheme2024();
@@ -74,7 +72,7 @@ export const ContextMenuView: React.FC<Props> = ({
           borderRadius: preViewBorderRadius,
           // iOS 27 can composite a transparent target against black during
           // the transition into the native context-menu preview.
-          ...(IS_IOS_27_OR_ABOVE && enableIos27OpaquePreview
+          ...(IS_IOS_27_OR_ABOVE
             ? {
                 backgroundColor: isLight
                   ? colors2024['neutral-bg-1']

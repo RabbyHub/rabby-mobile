@@ -56,7 +56,6 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
         menuActions: menuActions,
       }}
       preViewBorderRadius={20}
-      enableIos27OpaquePreview
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>
