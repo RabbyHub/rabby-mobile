@@ -11,7 +11,8 @@ import FastImage from 'react-native-fast-image';
 import BootSplash, {
   type Manifest,
   useHideAnimation,
-} from 'react-native-bootsplash';
+} from '@rabby-wallet/react-native-bootsplash';
+import { releaseAppAppearanceHandoff } from '@/core/utils/appAppearanceHandoff';
 
 const LIGHT_RABBIT = require('@/assets/images/bootsplash/rabbit-light.gif');
 const DARK_RABBIT = require('@/assets/images/bootsplash/rabbit-dark.gif');
@@ -63,6 +64,9 @@ function AnimatedBootSplashImpl() {
     exitScheduledRef.current = true;
     exitTimerRef.current = setTimeout(() => {
       requestAnimationFrame(() => {
+        // Keep the launch artwork on the captured system appearance, then prepare
+        // the app appearance underneath it one frame before the splash fades.
+        releaseAppAppearanceHandoff();
         requestAnimationFrame(() => {
           fadeStartedRef.current = true;
           Animated.timing(opacity, {

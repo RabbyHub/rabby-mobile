@@ -2986,7 +2986,7 @@ PODS:
     - SocketRocket
   - ReactNativeExceptionHandler (2.10.10):
     - React-Core
-  - RNBootSplash (7.3.2):
+  - RNBootSplash (7.3.2-rabby.0):
     - React-Core
   - RNCClipboard (1.13.2):
     - React-Core
@@ -3499,7 +3499,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeExceptionHandler (from `../node_modules/react-native-exception-handler`)
-  - RNBootSplash (from `../node_modules/react-native-bootsplash`)
+  - "RNBootSplash (from `../node_modules/@rabby-wallet/react-native-bootsplash`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - "RNCPushNotificationIOS (from `../node_modules/@react-native-community/push-notification-ios`)"
@@ -3762,7 +3762,7 @@ EXTERNAL SOURCES:
   ReactNativeExceptionHandler:
     :path: "../node_modules/react-native-exception-handler"
   RNBootSplash:
-    :path: "../node_modules/react-native-bootsplash"
+    :path: "../node_modules/@rabby-wallet/react-native-bootsplash"
   RNCClipboard:
     :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCMaskedView:
@@ -3938,7 +3938,7 @@ SPEC CHECKSUMS:
   ReactCodegen: d683c37a16b7e7a50d3b769dac5a8be80d81b5b0
   ReactCommon: 3321d89a161a9129f5694948779e1de51400ceb3
   ReactNativeExceptionHandler: b11ff67c78802b2f62eed0e10e75cb1ef7947c60
-  RNBootSplash: 2404c592271f188766c010c77a7d629e2ed7c9b2
+  RNBootSplash: 8bda8e567c5b24b935215dcff4081c5a03014d93
   RNCClipboard: 60fed4b71560d7bfe40e9d35dea9762b024da86d
   RNCMaskedView: 090213d32d8b3bb83a4dcb7d12c18f0152591906
   RNCPushNotificationIOS: b9dcb4f28c85f77483c3f86d2fcb1e0f0ab396fa
