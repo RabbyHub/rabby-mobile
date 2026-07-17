@@ -453,6 +453,34 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
   });
 
+  it('rejects a connect timeout without waiting for teardown cleanup', async () => {
+    jest.useFakeTimers();
+
+    const device = { id: 'ledger-timeout-cleanup-device' };
+    const sessionId = 'partial-session';
+    mockDmk.connect.mockReturnValueOnce(new Promise(() => undefined));
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+    const connecting = connectLedgerDevice(device);
+
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+
+    mockDmk.listConnectedDevices.mockReturnValue([
+      { id: device.id, sessionId },
+    ]);
+    mockDmk.disconnect.mockReturnValueOnce(new Promise(() => undefined));
+
+    let connectError: Error | undefined;
+    void connecting.catch((error: Error) => {
+      connectError = error;
+    });
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(connectError?.message).toBe('Ledger: Device connection timeout');
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({ sessionId });
+  });
+
   it('bounds the connection drain when the native connect never settles', async () => {
     jest.useFakeTimers();
 
@@ -476,6 +504,35 @@ describe('ledger DMK bridge discovery', () => {
 
     await expect(retrying).resolves.toBe('fresh-session');
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+  });
+
+  it('times out while a previous device teardown remains pending', async () => {
+    jest.useFakeTimers();
+
+    const device = { id: 'ledger-pending-teardown-device' };
+    mockDmk.connect.mockResolvedValueOnce('stale-session');
+
+    const {
+      connectLedgerDevice,
+      resetLedgerDeviceSession,
+    } = require('./ledger-dmk');
+
+    await expect(connectLedgerDevice(device)).resolves.toBe('stale-session');
+
+    mockDmk.connect.mockClear();
+    mockDmk.disconnect.mockReturnValueOnce(new Promise(() => undefined));
+
+    void resetLedgerDeviceSession(device.id);
+    const reconnecting = connectLedgerDevice(device);
+    let reconnectError: Error | undefined;
+    void reconnecting.catch((error: Error) => {
+      reconnectError = error;
+    });
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(reconnectError?.message).toBe('Ledger: Device connection timeout');
+    expect(mockDmk.connect).not.toHaveBeenCalled();
   });
 
   it('does not disconnect a session reclaimed by a retry after drain timeout', async () => {

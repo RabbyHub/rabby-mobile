@@ -335,7 +335,7 @@ class LedgerKeyring {
     }
 
     this.sessionGeneration += 1;
-    await this.closeCurrentSession();
+    void this.closeCurrentSession();
   }
 
   private async closeCurrentSession() {

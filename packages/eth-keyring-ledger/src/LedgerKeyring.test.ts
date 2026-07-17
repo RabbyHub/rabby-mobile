@@ -386,6 +386,49 @@ describe('LedgerKeyring DMK session adapter', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
+  it('returns a transaction signing failure without waiting for stale session teardown', async () => {
+    const close = jest.fn(() => new Promise<void>(() => undefined));
+    const session = {
+      getAddress: jest.fn(),
+      signTransaction: jest.fn(async () => {
+        throw new Error('Ledger disconnected');
+      }),
+      signPersonalMessage: jest.fn(),
+      signTypedData: jest.fn(),
+      close,
+    } as unknown as LedgerKeyringSession;
+    const keyring = new LedgerKeyring({
+      accounts: [ADDRESS.toLowerCase()],
+      accountDetails: {
+        [ADDRESS]: {
+          hdPath: "m/44'/60'/0'/0/0",
+          deviceId: 'ledger-device-id',
+        },
+      },
+      getLedgerSession: jest.fn(async () => session),
+    });
+    keyring.setDeviceId('ledger-device-id');
+
+    const signing = (keyring as any)._signTransaction(
+      ADDRESS,
+      '00',
+      () => undefined,
+    );
+    const outcome = await Promise.race([
+      signing.then(
+        () => 'resolved',
+        (error: Error) => error,
+      ),
+      new Promise(resolve => setTimeout(() => resolve('still pending'), 0)),
+    ]);
+
+    expect(outcome).toMatchObject({
+      message: 'Error: Ledger disconnected',
+    });
+    expect(keyring.session).toBeNull();
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
   it('does not close the active session when a concurrent signature is rejected', async () => {
     let resolveSignature: (signature: {
       r: string;

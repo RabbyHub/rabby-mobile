@@ -247,9 +247,10 @@ function withConnectTimeout<T>({
         return;
       }
       settled = true;
-      void Promise.resolve(onTimeout?.())
-        .catch(() => {})
-        .then(() => reject(new Error(errorMessage)));
+      try {
+        void Promise.resolve(onTimeout?.()).catch(() => {});
+      } catch {}
+      reject(new Error(errorMessage));
     }, timeoutMs);
 
     promise.then(
@@ -317,12 +318,20 @@ async function connectLedgerDeviceInternal(
   device: LedgerDmkDevice,
   connectionVersion: number,
 ) {
+  const connectionDrain = connectionDrains.get(device.id);
+  const pendingTeardown = pendingTeardowns.get(device.id);
   const blockers = [
-    connectionDrains.get(device.id),
-    pendingTeardowns.get(device.id),
+    connectionDrain?.catch(() => {}),
+    pendingTeardown
+      ? withConnectTimeout({
+          promise: pendingTeardown.catch(() => {}),
+          timeoutMs: CONNECT_TIMEOUT_MS,
+          errorMessage: 'Ledger: Device connection timeout',
+        })
+      : undefined,
   ].filter((blocker): blocker is Promise<void> => Boolean(blocker));
   if (blockers.length > 0) {
-    await Promise.all(blockers.map(blocker => blocker.catch(() => {})));
+    await Promise.all(blockers);
     if (connectionVersion !== getConnectionVersion(device.id)) {
       throw new Error('Ledger: Device connection cancelled');
     }
