@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
@@ -38,12 +38,27 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
 import { mergeWhitelistAddresses } from '@/utils/whitelist';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import type { RegressionScenarioEventName } from '@/devtools/regressionScenarios/contracts';
 
-export const SyncExtensionPasswordScreen = () => {
+export type SyncExtensionPasswordRegressionScenarioProps = {
+  regressionScenario?: {
+    runId: string;
+    autoSubmit: boolean;
+    password: string;
+    report: (
+      name: RegressionScenarioEventName,
+      data?: Readonly<Record<string, unknown>>,
+    ) => void;
+  };
+};
+
+export const SyncExtensionPasswordScreen = ({
+  regressionScenario,
+}: SyncExtensionPasswordRegressionScenarioProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { text, clear } = useScanner();
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(regressionScenario?.password || '');
   const navigation = useRabbyAppNavigation();
   const [loading, setLoading] = useState(false);
 
@@ -291,6 +306,37 @@ export const SyncExtensionPasswordScreen = () => {
 
     setLoading(false);
   };
+
+  const handleConfirmRef = useRef(handleConfirm);
+  handleConfirmRef.current = handleConfirm;
+  const autoSubmittedRunIdRef = useRef('');
+  useEffect(() => {
+    if (!regressionScenario) {
+      return;
+    }
+    setPassword(regressionScenario.password);
+    setError('');
+  }, [regressionScenario]);
+
+  useEffect(() => {
+    if (
+      !regressionScenario?.autoSubmit ||
+      !text ||
+      shouldSetupPasswordLoading ||
+      loading ||
+      password !== regressionScenario.password ||
+      autoSubmittedRunIdRef.current === regressionScenario.runId
+    ) {
+      return;
+    }
+
+    autoSubmittedRunIdRef.current = regressionScenario.runId;
+    regressionScenario.report('assertion', {
+      assertion: 'sync-extension-password-auto-submit-started',
+      passed: true,
+    });
+    void handleConfirmRef.current();
+  }, [loading, password, regressionScenario, shouldSetupPasswordLoading, text]);
 
   return (
     <>

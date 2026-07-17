@@ -40,6 +40,12 @@ import {
   type DbSyncWritePolicyOverride,
 } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from './historyTokenDict';
+import type { RegressionScenarioCommand } from '@/devtools/regressionScenarios/contracts';
+import {
+  handleRegressionScenarioCommand,
+  parseRegressionScenarioLink,
+  sanitizeLinkForLogging,
+} from '@/devtools/regressionScenarios/runtime';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -66,7 +72,8 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'clear-app-cache'
     | 'debug-sync-all-history'
     | 'debug-db-sync-policy'
-    | 'debug-lending';
+    | 'debug-lending'
+    | 'regression-scenario';
   dappUrl?: string;
   uri?: string;
   testkitScreen?:
@@ -86,6 +93,8 @@ type OnParseUrlAndProcessAction = (payload: {
     action: 'open' | 'refresh' | 'probe';
     market?: string;
   };
+  regressionScenarioCommand?: RegressionScenarioCommand | null;
+  regressionScenarioError?: string;
 }) => void;
 
 const NON_PRODUCTION_TESTKIT_SCREENS = {
@@ -311,6 +320,15 @@ function parseNonProductionMaintenanceLink(appLink: string) {
 }
 
 function parseNonProductionLink(appLink: string) {
+  const regressionResult = parseRegressionScenarioLink(appLink);
+  if (regressionResult.matched) {
+    return {
+      type: 'regression-scenario',
+      regressionScenarioCommand: regressionResult.command,
+      regressionScenarioError: regressionResult.error,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
   return (
     parseNonProductionMaintenanceLink(appLink) ||
     parseNonProductionTestkitLink(appLink)
@@ -375,12 +393,18 @@ function parseActionAndProcessLink(
     return;
   }
 
-  if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) return;
+  if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) {
+    return;
+  }
 
   const urlInfo = urlUtils.safeParseURL(appLink);
-  if (!urlInfo) return;
+  if (!urlInfo) {
+    return;
+  }
   const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
-  if (!rabbyGoCmd) return;
+  if (!rabbyGoCmd) {
+    return;
+  }
 
   if (rabbyGoCmd === 'open-dapp') {
     const dappUrlRaw = urlInfo.searchParams.get('dapp');
@@ -388,7 +412,7 @@ function parseActionAndProcessLink(
     if (!dappUrl) {
       console.warn(
         '[useUniversalLinkOnTop] No dapp URL found in link:',
-        appLink,
+        sanitizeLinkForLogging(appLink),
       );
       return;
     }
@@ -574,6 +598,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         });
       break;
+    case 'regression-scenario':
+      handleRegressionScenarioCommand(
+        payload.regressionScenarioCommand ?? null,
+        payload.regressionScenarioError,
+      );
+      break;
   }
 };
 
@@ -615,7 +645,10 @@ export function useUniversalLinkOnTop() {
   useMount(() => {
     Linking.getInitialURL().then(url => {
       if (url) {
-        console.debug('[useUniversalLinkOnTop] Initial URL:', url);
+        console.debug(
+          '[useUniversalLinkOnTop] Initial URL:',
+          sanitizeLinkForLogging(url),
+        );
         handleAppLink(url, true);
       }
     });
@@ -623,7 +656,10 @@ export function useUniversalLinkOnTop() {
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', event => {
-      console.debug('[useUniversalLinkOnTop] App Link:', event.url);
+      console.debug(
+        '[useUniversalLinkOnTop] App Link:',
+        sanitizeLinkForLogging(event.url),
+      );
       handleAppLink(event.url);
     });
 

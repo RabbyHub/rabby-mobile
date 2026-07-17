@@ -42,12 +42,31 @@ import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 const CONVERT_DUST_HEADER_HEIGHT = 58;
 const SEND_IOS_HEADER_ICON_OFFSET = 6;
+const RegressionSendScreen = withRegressionScenario(SendScreen, {
+  screen: 'Send',
+});
+const RegressionMultiSendScreen = withRegressionScenario(
+  SendScreen.ForMultipleAddress,
+  {
+    screen: 'Send',
+  },
+);
+const RegressionSwapBridgeScreen = withRegressionScenario(SwapBridgeScreen, {
+  screen: 'SwapBridge',
+});
+const RegressionMultiSwapBridgeScreen = withRegressionScenario(
+  SwapBridgeScreen.ForMultipleAddress,
+  {
+    screen: 'SwapBridge',
+  },
+);
 
 function ConvertDustHeader({
   title,
@@ -112,7 +131,7 @@ export default function TransactionNavigator() {
       })}>
       <TransactionStack.Screen
         name={RootNames.Send}
-        component={SendScreen}
+        component={RegressionSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
@@ -126,7 +145,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.MultiSend}
-        component={SendScreen.ForMultipleAddress}
+        component={RegressionMultiSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
@@ -277,7 +296,7 @@ export default function TransactionNavigator() {
       {/* SwapBridgeScreen */}
       <TransactionStack.Screen
         name={RootNames.SwapBridge}
-        component={SwapBridgeScreen}
+        component={RegressionSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',
@@ -288,7 +307,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MultiSwapBridge}
-        component={SwapBridgeScreen.ForMultipleAddress}
+        component={RegressionMultiSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',

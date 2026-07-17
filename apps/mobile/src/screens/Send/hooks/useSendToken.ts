@@ -1383,6 +1383,7 @@ export function useSendTokenForm({
               handleFieldChange('amount', '');
               sendTokenEventsRef.current.emit(
                 SendTokenEvents.ON_SIGNED_SUCCESS,
+                { hash: last(res) || '' },
               );
             } catch (error: any) {
               console.log('sendToken mini sign error', error);
@@ -1464,6 +1465,7 @@ export function useSendTokenForm({
               handleFieldChange('amount', '');
               sendTokenEventsRef.current.emit(
                 SendTokenEvents.ON_SIGNED_SUCCESS,
+                { hash },
               );
             })
             .catch(err => {

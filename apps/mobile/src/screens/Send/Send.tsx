@@ -28,8 +28,10 @@ import {
   getSendChainToken,
   SendTokenEvents,
   SendTokenInternalContextProvider,
+  subscribeEvent,
   useSendTokenCanSubmit,
   useSendTokenForm,
+  useSendTokenFormValuesShallowSelector,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
   useSendTokenScreenStateShallowSelector,
@@ -98,6 +100,7 @@ import {
   type SendScreenSession,
 } from './sendScreenSession';
 import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -122,6 +125,27 @@ const EMPTY_TOKEN_ITEM = {
 
 const SEND_SCREEN_RENDER_MARK_LIMIT = 20;
 let sendScreenRenderSeq = 0;
+
+function formatSafeAddress(address: string) {
+  if (!address) {
+    return '';
+  }
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function formatSafeHash(hash?: string) {
+  if (!hash) {
+    return '';
+  }
+  return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
+}
+
+function isRegressionBroadcastRequested(
+  params: Readonly<Record<string, string>>,
+) {
+  const value = params.broadcast;
+  return !!value && ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
 
 function markSendScreenPerf(event: string, data: Record<string, unknown> = {}) {
   markStartupPerf('sendScreen', event, data);
@@ -185,6 +209,146 @@ const SendPendingTxItem = React.memo(function SendPendingTxItem({
     />
   );
 });
+
+function SendTransferRegressionProbe() {
+  const regressionScenario = useRegressionScenario<'Send'>();
+  const canSubmit = useSendTokenCanSubmit();
+  const { chainItem, currentToken } = useSendTokenScreenChainToken();
+  const { balanceError, initialTokenReady, isLoading } =
+    useSendTokenScreenStateShallowSelector(state => ({
+      balanceError: state.balanceError,
+      initialTokenReady: state.initialTokenReady,
+      isLoading: state.isLoading,
+    }));
+  const { amount, to } = useSendTokenFormValuesShallowSelector(values => ({
+    amount: values.amount,
+    to: values.to,
+  }));
+  const { sendTokenEvents, submitForm, saveCurrentFormValuesSnapshot } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      sendTokenEvents: ctx.sendTokenEvents,
+      submitForm: ctx.callbacks.submitForm,
+      saveCurrentFormValuesSnapshot:
+        ctx.callbacks.saveCurrentFormValuesSnapshot,
+    }));
+  const shouldBroadcast =
+    regressionScenario.active &&
+    regressionScenario.scenario === 'send-transfer' &&
+    isRegressionBroadcastRequested(regressionScenario.params);
+
+  useEffect(() => {
+    if (
+      !shouldBroadcast ||
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'send-transfer'
+    ) {
+      return;
+    }
+
+    return subscribeEvent(
+      sendTokenEvents,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      payload => {
+        if (!regressionScenario.claimOnce('send-transfer-broadcast-success')) {
+          return;
+        }
+        regressionScenario.report('assertion', {
+          assertion: 'send-transfer-broadcast-success',
+          passed: true,
+          mode: 'broadcast',
+          txHash: formatSafeHash(payload?.hash),
+          chain: chainItem?.serverId,
+          token: currentToken.symbol,
+          tokenId: currentToken.id,
+          amount,
+          to: formatSafeAddress(String(to || '')),
+        });
+      },
+    );
+  }, [
+    amount,
+    chainItem?.serverId,
+    currentToken.id,
+    currentToken.symbol,
+    regressionScenario,
+    sendTokenEvents,
+    shouldBroadcast,
+    to,
+  ]);
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'send-transfer'
+    ) {
+      return;
+    }
+
+    const requestedChain = (
+      regressionScenario.params.chain || 'polygon'
+    ).toLowerCase();
+    const expectedServerId =
+      requestedChain === 'polygon' ? 'matic' : requestedChain;
+    const expectedTo = regressionScenario.params.toAddress || '';
+    const chainReady =
+      !expectedServerId || chainItem?.serverId === expectedServerId;
+    const toReady =
+      !expectedTo || lowcaseSame(String(to || ''), expectedTo || '');
+    const amountReady = new BigNumber(amount || 0).gt(0);
+
+    if (
+      !canSubmit ||
+      !initialTokenReady ||
+      isLoading ||
+      balanceError ||
+      !chainReady ||
+      !toReady ||
+      !amountReady
+    ) {
+      return;
+    }
+
+    const assertion = shouldBroadcast
+      ? 'send-transfer-submit-started'
+      : 'send-transfer-dry-run-ready';
+    if (!regressionScenario.claimOnce(assertion)) {
+      return;
+    }
+
+    regressionScenario.report('assertion', {
+      assertion,
+      passed: true,
+      mode: shouldBroadcast ? 'broadcast' : 'dry-run',
+      chain: chainItem?.serverId,
+      token: currentToken.symbol,
+      tokenId: currentToken.id,
+      amount,
+      to: formatSafeAddress(String(to || '')),
+      canSubmit,
+    });
+
+    if (shouldBroadcast) {
+      saveCurrentFormValuesSnapshot();
+      submitForm();
+    }
+  }, [
+    amount,
+    balanceError,
+    canSubmit,
+    chainItem?.serverId,
+    currentToken.id,
+    currentToken.symbol,
+    initialTokenReady,
+    isLoading,
+    regressionScenario,
+    saveCurrentFormValuesSnapshot,
+    shouldBroadcast,
+    submitForm,
+    to,
+  ]);
+
+  return null;
+}
 
 const SendScreenBody = React.memo(function SendScreenBody({
   clearLocalPendingTxData,
@@ -1007,6 +1171,7 @@ function SendScreen({
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
       <SendTokenInternalContextProvider value={sendTokenInternalValue}>
+        <SendTransferRegressionProbe />
         <SendScreenBody
           clearLocalPendingTxData={clearLocalPendingTxData}
           isForMultipleAddress={isForMultipleAddress}

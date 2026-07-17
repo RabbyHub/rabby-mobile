@@ -47,6 +47,7 @@ import { startLaunchPhase } from './startup/launchPlan';
 import { StartupRuntimePanelHost } from './screens/Settings/components/StartupRuntimePanelHost';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { AnimatedBootSplash } from './components/BootSplash/AnimatedBootSplash';
+import { RegressionScenarioHost } from '@/devtools/regressionScenarios/react';
 
 Safe.openapiService = openapi;
 
@@ -174,6 +175,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
                 {NEED_DEVSETTINGBLOCKS ? <StartupRuntimePanelHost /> : null}
+                <RegressionScenarioHost />
                 {/* read from native bundle on production */}
                 <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>

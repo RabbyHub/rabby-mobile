@@ -285,5 +285,6 @@ dependencies {
 
     // implementation project(':isudaji_react-native-install-apk')
 
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
     implementation 'com.android.billingclient:billing:7.0.0'
 }

@@ -124,7 +124,8 @@ export const FIREBASE_WEBCLIENT_ID =
     ios: FirebaseWebClientIds[APPLICATION_ID],
   }) || FirebaseWebClientIds[realAndroidPackageName];
 
-export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
+export const APP_TEST_PASSWORD = '11111111';
+export const APP_TEST_PWD = __DEV__ ? APP_TEST_PASSWORD : '';
 
 export const APP_FEATURE_SWITCH = {
   customizePassword: true,
