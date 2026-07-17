@@ -56,6 +56,8 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { Text } from '@/components/Typography';
 import { HighlightedSignMessageText } from '../SignMessageHighlighter';
+import type { SignMessageHighlightToken } from '../signMessageTokenizer';
+import type { SignMessageAddressDataMap } from '../signMessageAddressData';
 
 export interface MultiActionProps {
   actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];
@@ -324,6 +326,8 @@ const Actions = ({
   typedDataActionData,
   account,
   multiAction,
+  messageTokens,
+  addressData,
 }: {
   data: ParsedTypedDataActionData | null;
   requireData: ActionRequireData;
@@ -336,6 +340,8 @@ const Actions = ({
   typedDataActionData?: ParseCommonResponse | null;
   account: Account;
   multiAction?: MultiActionProps;
+  messageTokens?: SignMessageHighlightToken[];
+  addressData?: SignMessageAddressDataMap;
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -420,6 +426,10 @@ const Actions = ({
           </View>
           <HighlightedSignMessageText
             text={message}
+            tokens={messageTokens}
+            chain={chain}
+            addressData={addressData}
+            account={account}
             style={styles.messageText}
             highlightStyle={styles.messageHighlight}
           />

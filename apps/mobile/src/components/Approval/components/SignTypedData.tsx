@@ -66,6 +66,11 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
+import {
+  tokenizeSignTypedDataMessage,
+  type SignMessageHighlightToken,
+} from './signMessageTokenizer';
+import { useSignMessageAddressData } from './useSignMessageAddressData';
 
 interface SignTypedDataProps {
   method: string;
@@ -107,9 +112,6 @@ export const SignTypedData = ({
   const styles = useMemo(() => getStyles(colors2024), [colors2024]);
   const site = dappService.getDapp(params.session.origin);
 
-  const [currentChainId, setCurrentChainId] = useState<number | undefined>(
-    undefined,
-  );
   const isGnosisAccount = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [gnosisFooterBarVisible, setGnosisFooterBarVisible] = useState(false);
@@ -251,30 +253,50 @@ export const SignTypedData = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isSignTypedDataV1, signTypedData, requestChainId]);
 
-  const getCurrentChainId = async () => {
-    if (requestChainId) {
-      return requestChainId;
+  const currentChainId =
+    requestChainId ||
+    (params.session.origin !== INTERNAL_REQUEST_ORIGIN
+      ? findChain({ enum: site?.chainId })?.id
+      : params.$ctx?.chainId || chain?.id);
+
+  const messageTokens = useMemo<SignMessageHighlightToken[]>(() => {
+    if (!parsedMessage) return [];
+    if (isSignTypedDataV1) {
+      const fields = (Array.isArray(data[0]) ? data[0] : []) as Array<{
+        name: string;
+        type: string;
+        value: unknown;
+      }>;
+      return tokenizeSignTypedDataMessage(
+        {
+          primaryType: 'RabbySignTypedDataV1',
+          types: {
+            RabbySignTypedDataV1: fields.map(({ name, type }) => ({
+              name,
+              type,
+            })),
+          },
+          message: Object.fromEntries(
+            fields.map(({ name, value }) => [name, value]),
+          ),
+        },
+        parsedMessage,
+      );
     }
 
-    if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappService.getDapp(params.session.origin);
-      if (site) {
-        return findChain({
-          enum: site?.chainId,
-        })?.id;
-      }
-    } else if (params.$ctx.chainId) {
-      return params.$ctx.chainId;
-    } else {
-      return chain?.id;
-    }
-  };
-  useEffect(() => {
-    getCurrentChainId().then(id => {
-      setCurrentChainId(id);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.session.origin, requestChainId]);
+    return rawMessage
+      ? tokenizeSignTypedDataMessage(rawMessage, parsedMessage)
+      : [{ type: 'text', value: parsedMessage }];
+  }, [data, isSignTypedDataV1, parsedMessage, rawMessage]);
+  const resolvedAddressChain =
+    chain ||
+    (currentChainId ? findChain({ id: currentChainId }) : undefined) ||
+    CHAINS.ETH;
+  const addressData = useSignMessageAddressData({
+    tokens: messageTokens,
+    chain: resolvedAddressChain,
+    accountAddress: currentAccount.address,
+  });
 
   const {
     value: typedDataActionData,
@@ -794,10 +816,12 @@ export const SignTypedData = ({
             account={currentAccount}
             data={parsedActionData}
             requireData={actionRequireData}
-            chain={chain}
+            chain={resolvedAddressChain || CHAINS.ETH}
             engineResults={engineResults}
             raw={isSignTypedDataV1 ? data[0] : signTypedData || data[1]}
             message={parsedMessage}
+            messageTokens={messageTokens}
+            addressData={addressData}
             origin={params.session.origin}
             originLogo={site?.icon}
             typedDataActionData={typedDataActionData}

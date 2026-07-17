@@ -1,4 +1,7 @@
-import { tokenizeSignMessageText } from './signMessageTokenizer';
+import {
+  tokenizeSignMessageText,
+  tokenizeSignTypedDataMessage,
+} from './signMessageTokenizer';
 
 const address = '0xde709f2102306220921060314715629080e2fb77';
 
@@ -26,9 +29,47 @@ describe('sign message highlighter', () => {
     ]);
   });
 
-  it('prefers the url when an address appears inside it', () => {
+  it('finds an address inside a url without changing the displayed text', () => {
     const url = `https://etherscan.io/address/${address}`;
+    const tokens = tokenizeSignMessageText(url);
 
-    expect(tokenizeSignMessageText(url)).toEqual([{ type: 'url', value: url }]);
+    expect(tokens.map(token => token.value).join('')).toBe(url);
+    expect(tokens).toEqual([
+      { type: 'url', value: 'https://etherscan.io/address/' },
+      { type: 'address', value: address },
+    ]);
+  });
+
+  it('finds only values declared as nested typed-data addresses', () => {
+    const withoutPrefix = 'de709f2102306220921060314715629080e2fb77';
+    const recipient = '0x27b1fdb04752bbc536007a920d24acb045561c26';
+    const typedData = {
+      primaryType: 'Mail',
+      types: {
+        Mail: [
+          { name: 'from', type: 'Person' },
+          { name: 'recipients', type: 'address[]' },
+          { name: 'note', type: 'string' },
+        ],
+        Person: [{ name: 'wallet', type: 'address' }],
+      },
+      message: {
+        from: { wallet: withoutPrefix },
+        recipients: [recipient],
+        note: recipient,
+      },
+    };
+    const message = JSON.stringify(typedData.message, null, 4);
+    const tokens = tokenizeSignTypedDataMessage(typedData, message);
+
+    expect(tokens.map(token => token.value).join('')).toBe(message);
+    expect(tokens.filter(token => token.type === 'address')).toEqual([
+      {
+        type: 'address',
+        value: withoutPrefix,
+        address: `0x${withoutPrefix}`,
+      },
+      { type: 'address', value: recipient, address: recipient },
+    ]);
   });
 });

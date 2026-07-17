@@ -52,6 +52,8 @@ import { useSetState } from 'ahooks';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
+import { tokenizeSignMessageText } from './signMessageTokenizer';
+import { useSignMessageAddressData } from './useSignMessageAddressData';
 
 interface SignTextProps {
   data: string[];
@@ -111,6 +113,15 @@ export const SignText = ({
     () => (chainId ? findChain({ id: chainId }) || undefined : undefined),
     [chainId],
   );
+  const messageTokens = useMemo(
+    () => tokenizeSignMessageText(signText),
+    [signText],
+  );
+  const addressData = useSignMessageAddressData({
+    tokens: messageTokens,
+    chain,
+    accountAddress: currentAccount.address,
+  });
 
   const securityLevel = useMemo(() => {
     const enableResults = engineResults.filter(result => {
@@ -496,6 +507,8 @@ export const SignText = ({
             engineResults={engineResults}
             raw={hexData}
             message={signText}
+            messageTokens={messageTokens}
+            addressData={addressData}
             origin={params.session.origin}
             originLogo={site?.icon}
             chain={chain}

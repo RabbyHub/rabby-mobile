@@ -23,6 +23,8 @@ import { Text } from '@/components/Typography';
 import { getMessageStyles } from './styles';
 import type { Chain } from '@debank/common';
 import { HighlightedSignMessageText } from '../SignMessageHighlighter';
+import type { SignMessageHighlightToken } from '../signMessageTokenizer';
+import type { SignMessageAddressDataMap } from '../signMessageAddressData';
 
 export { getMessageStyles } from './styles';
 
@@ -35,6 +37,8 @@ const Actions = ({
   originLogo,
   account,
   chain,
+  messageTokens,
+  addressData,
 }: {
   data: ParsedTextActionData | null;
   engineResults: Result[];
@@ -44,6 +48,8 @@ const Actions = ({
   originLogo?: string;
   account: Account;
   chain?: Chain;
+  messageTokens?: SignMessageHighlightToken[];
+  addressData?: SignMessageAddressDataMap;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -175,6 +181,10 @@ const Actions = ({
           </View>
           <HighlightedSignMessageText
             text={message}
+            tokens={messageTokens}
+            chain={chain}
+            addressData={addressData}
+            account={account}
             style={styles.messageText}
             highlightStyle={styles.messageHighlight}
           />
