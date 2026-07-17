@@ -24,7 +24,6 @@ import {
 import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
-import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 // import { updateExpiredTime } from '@/databases/sync/assets'
@@ -33,13 +32,14 @@ import {
   loadTxSaveFromLocalStore,
   txDonePatchTokenAmountInDb,
 } from '@/databases/sync/history';
-import { REPORT_TIMEOUT_ACTION_KEY } from './type';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/types/history';
+import { callCoreService } from './serviceRegistry';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -191,14 +191,14 @@ export class TransactionHistoryService {
    * @description notice, always set store.transactions by calling `_setStoreTransaction`
    */
   store!: TxHistoryStore;
-  preferenceService?: import('./preference').PreferenceService;
+  preferenceService?: import('../startupServices/preference').PreferenceService;
 
   private _signingTxList: TransactionSigningItem[] = [];
   private _txHistoryLimit = 500;
 
   constructor(
     options?: StorageAdapaterOptions & {
-      preferenceService: import('./preference').PreferenceService;
+      preferenceService: import('../startupServices/preference').PreferenceService;
     },
   ) {
     this.preferenceService = options?.preferenceService;
@@ -1002,10 +1002,12 @@ export class TransactionHistoryService {
       const results = await Promise.all(
         broadcastedTxs.map(tx => {
           if (chain.isTestnet) {
-            return customTestnetService.getTx({
-              chainId: chain.id,
-              hash: tx.hash!,
-            });
+            return callCoreService('customTestnetService', service =>
+              service.getTx({
+                chainId: chain.id,
+                hash: tx.hash!,
+              }),
+            );
           } else {
             // Use standard RPC to get transaction receipt
             return getRpcTxReceipt(chain.serverId, tx.hash!);

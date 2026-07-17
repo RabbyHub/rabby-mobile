@@ -14,7 +14,10 @@ import UnknownDarkPNG from '@/assets2024/icons/wallet/unknown_dark.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
 import TrezorPNG from '@/assets2024/icons/wallet/trezor.png';
 import blockies from 'ethereum-blockies-base64';
-import { preferenceService } from '@/core/services';
+import {
+  addAddressAvatar,
+  getAddressAvatarSnapshot,
+} from '@/core/serviceApi/preference';
 
 export const getWalletAvator2024 = (
   brandName: string | undefined,
@@ -31,12 +34,12 @@ export const getWalletAvator2024 = (
     return isWatchAddress ? watchAvator : unknownAvator;
   }
   if (address) {
-    const cacheAvatar = preferenceService.getAddressAvatar(address);
+    const cacheAvatar = getAddressAvatarSnapshot(address);
     if (cacheAvatar) {
       return { uri: cacheAvatar };
     }
     const avatar = blockies(address);
-    preferenceService.addAddressAvatar(address, avatar);
+    void addAddressAvatar(address, avatar).catch(console.error);
     return { uri: avatar };
   }
   return undefined;

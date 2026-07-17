@@ -40,6 +40,9 @@ import { fetchIconSymbolAndName, IconSymbolInterface } from './utils/icon';
 import { jotaiStore, zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { shouldSuppressPerfCaptureConsoleNoise } from '@/core/utils/perfCaptureConsole';
+import { isNonPublicProductionEnv } from '@/constant';
+import { toast } from '@/components2024/Toast';
 import { debounce } from 'lodash';
 import {
   worker_formatReserves,
@@ -50,6 +53,8 @@ import { StoreApi, UseBoundStore } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from './config/nativeToWrapper';
+import { useChainList } from '@/hooks/useChainList';
+import { ensureMainnetChainAvailable } from '@/core/serviceApi/syncChain';
 
 const marketAtom = atomByMMKV(
   APP_MMKV_WEAK_KEYS.LENDING_MARKET,
@@ -80,6 +85,72 @@ const getMarketInfo = (market?: CustomMarket) => {
   };
 };
 
+function debugLendingPerf(
+  label: string,
+  summary: Record<string, unknown>,
+  ...verboseValues: unknown[]
+) {
+  if (shouldSuppressPerfCaptureConsoleNoise()) {
+    console.debug(label, summary);
+    return;
+  }
+
+  if (verboseValues.length) {
+    console.debug(label, ...verboseValues);
+    return;
+  }
+
+  console.debug(label, summary);
+}
+
+const lendingDependencyToastAt = new Map<string, number>();
+function showLendingDependencyToast(
+  dependency: string,
+  context: {
+    marketKey?: CustomMarket;
+    chainId?: number;
+  },
+) {
+  if (!isNonPublicProductionEnv) {
+    return;
+  }
+
+  const key = `${dependency}:${context.marketKey || 'unknown'}:${
+    context.chainId || 'unknown'
+  }`;
+  const now = Date.now();
+  if (now - (lendingDependencyToastAt.get(key) || 0) < 8000) {
+    return;
+  }
+  lendingDependencyToastAt.set(key, now);
+
+  toast.error(
+    `[Lending] ${dependency} 异常 ${context.marketKey || 'unknown'} (${
+      context.chainId || 'unknown'
+    })`,
+    {
+      duration: 5000,
+      standalone: true,
+    },
+  );
+}
+
+async function resolveLendingDependency<T>(
+  dependency: string,
+  context: {
+    marketKey?: CustomMarket;
+    chainId?: number;
+  },
+  request: Promise<T>,
+) {
+  try {
+    return await request;
+  } catch (error) {
+    showLendingDependencyToast(dependency, context);
+    throw error;
+  }
+}
+
 function useSelectedMarketKey() {
   const [marketKey, setMarketKey] = useAtom(marketAtom);
 
@@ -91,10 +162,9 @@ function useSelectedMarketKey() {
 
 export const useSelectedMarket = () => {
   const { marketKey, setMarketKey: setMarket } = useSelectedMarketKey();
-  const { marketData, chainEnum, chainInfo, isMainnet } = useMemo(
-    () => getMarketInfo(marketKey),
-    [marketKey],
-  );
+  useChainList();
+  const { marketData, chainEnum, chainInfo, isMainnet } =
+    getMarketInfo(marketKey);
 
   return {
     marketKey: marketKey,
@@ -120,14 +190,14 @@ const poolsMap = new Map<
 const getCachePools = (marketKey?: CustomMarket) => {
   const { marketData: selectedMarketData, chainInfo } =
     getMarketInfo(marketKey);
-  if (!marketKey || !selectedMarketData) {
+  if (!marketKey || !selectedMarketData || !chainInfo) {
     return undefined;
   }
   const existingPools = poolsMap.get(marketKey as CustomMarket);
   if (existingPools) {
     return existingPools;
   }
-  const provider = getProvider(chainInfo?.network || '');
+  const provider = getProvider(chainInfo.network);
   const newPools = {
     provider,
     uiPoolDataProvider: new UiPoolDataProvider({
@@ -160,43 +230,123 @@ const getCachePools = (marketKey?: CustomMarket) => {
   return newPools;
 };
 
-const fetchContractData = async (address: string, marketKey?: CustomMarket) => {
-  const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
-  const pools = getPools();
-  if (!selectedMarketData || !pools) {
-    return {};
+const loggedLendingProviders = new Set<string>();
+
+async function getReadyLendingMarket(marketKey?: CustomMarket) {
+  const resolvedMarketKey = marketKey || getMarketKey();
+  let marketInfo = getMarketInfo(resolvedMarketKey);
+  if (!marketInfo.marketData) {
+    throw new Error(`Unknown Lending market: ${resolvedMarketKey}`);
+  }
+  const selectedMarketData = marketInfo.marketData;
+
+  if (!marketInfo.chainInfo) {
+    await ensureMainnetChainAvailable(selectedMarketData.chainId);
+    marketInfo = getMarketInfo(resolvedMarketKey);
   }
 
+  if (!marketInfo.chainInfo) {
+    throw new Error(
+      `Lending chain metadata is unavailable: ${selectedMarketData.chainId}`,
+    );
+  }
+  const chainInfo = marketInfo.chainInfo;
+
+  const pools = getCachePools(resolvedMarketKey);
+  if (!pools) {
+    throw new Error(`Lending pools are unavailable: ${resolvedMarketKey}`);
+  }
+
+  if (isNonPublicProductionEnv) {
+    const providerKey = `${resolvedMarketKey}:${chainInfo.network}`;
+    if (!loggedLendingProviders.has(providerKey)) {
+      loggedLendingProviders.add(providerKey);
+      console.info('[Lending] market provider resolved', {
+        marketKey: resolvedMarketKey,
+        configuredChainId: selectedMarketData.chainId,
+        resolvedChainId: chainInfo.id,
+        network: chainInfo.network,
+        serverId: chainInfo.serverId,
+      });
+    }
+  }
+
+  return {
+    marketKey: resolvedMarketKey,
+    selectedMarketData,
+    chainInfo,
+    pools,
+  };
+}
+
+const fetchContractData = async (
+  address: string,
+  marketKey?: CustomMarket,
+): Promise<Partial<RemoteDataState>> => {
+  const marketInfo = getSelectedMarketInfo(marketKey);
+
   try {
+    const {
+      selectedMarketData,
+      pools,
+      marketKey: resolvedMarketKey,
+    } = await getReadyLendingMarket(marketKey);
+    const context = {
+      marketKey: resolvedMarketKey,
+      chainId: selectedMarketData.chainId,
+    };
     const [reserves, userReserves, walletBalances, eModes] = await Promise.all([
-      pools.uiPoolDataProvider.getReservesHumanized({
-        lendingPoolAddressProvider:
-          selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-      }),
-      pools.uiPoolDataProvider.getUserReservesHumanized({
-        lendingPoolAddressProvider:
-          selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-        user: address,
-      }),
-      pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
-        address,
-        selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+      resolveLendingDependency(
+        'reserves',
+        context,
+        pools.uiPoolDataProvider.getReservesHumanized({
+          lendingPoolAddressProvider:
+            selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+        }),
       ),
-      pools.uiPoolDataProvider.getEModesHumanized({
-        lendingPoolAddressProvider:
+      resolveLendingDependency(
+        'userReserves',
+        context,
+        pools.uiPoolDataProvider.getUserReservesHumanized({
+          lendingPoolAddressProvider:
+            selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+          user: address,
+        }),
+      ),
+      resolveLendingDependency(
+        'walletBalances',
+        context,
+        pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
+          address,
           selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-      }),
+        ),
+      ),
+      resolveLendingDependency(
+        'eModes',
+        context,
+        pools.uiPoolDataProvider.getEModesHumanized({
+          lendingPoolAddressProvider:
+            selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+        }),
+      ),
     ]);
 
     return {
       reserves,
       userReserves,
       walletBalances,
-      // walletBalances: EMPTY_WALLET_BALANCES as UserWalletBalancesResponse,
       eModes,
     };
   } catch (error) {
-    console.error('CUSTOM_LOGGER:=>: error', error);
+    showLendingDependencyToast('market/pools', {
+      marketKey,
+      chainId: marketInfo.marketData?.chainId,
+    });
+    console.error('CUSTOM_LOGGER:=>: error', {
+      marketKey,
+      chainId: marketInfo.marketData?.chainId,
+      error,
+    });
     return {};
   }
 };
@@ -339,8 +489,13 @@ async function computeFormattedReservesAndIncentives({
         baseCurrencyData.marketReferenceCurrencyPriceInUsd,
     })) || []
   ).map(mapItem);
-  console.debug(
+  debugLendingPerf(
     '[perf] formattedReservesAndIncentivesAtom:: formattedReserves',
+    {
+      reservesCount: reservesArray.length,
+      eModeCount: eModes?.length || 0,
+      formattedReserveCount: formattedReserves.length,
+    },
     formattedReserves,
   );
   const formattedPoolReservesAndIncentives = (
@@ -355,8 +510,13 @@ async function computeFormattedReservesAndIncentives({
       eModes,
     })) || []
   ).map(mapItem) as unknown as FormattedReservesAndIncentives[];
-  console.debug(
+  debugLendingPerf(
     '[perf] formattedReservesAndIncentivesAtom:: formattedPoolReservesAndIncentives',
+    {
+      reservesCount: reservesArray.length,
+      eModeCount: eModes?.length || 0,
+      formattedPoolReserveCount: formattedPoolReservesAndIncentives.length,
+    },
     formattedPoolReservesAndIncentives,
   );
 
@@ -407,8 +567,14 @@ async function computeIUserSummary({
   const currentTimestamp = dayjs().unix();
   const userReservesArray = userReserves.userReserves;
 
-  console.debug(
+  debugLendingPerf(
     '[perf] iUserSummaryAtom:: userReservesArray, formattedReserves',
+    {
+      userReserveCount: userReservesArray.length,
+      formattedReserveCount: Array.isArray(formattedReserves)
+        ? formattedReserves.length
+        : 0,
+    },
     userReservesArray,
     formattedReserves,
   );
@@ -429,8 +595,12 @@ async function computeIUserSummary({
   });
   const endTime = Date.now();
   const diff = endTime - startTime;
-  console.debug(
+  debugLendingPerf(
     '[perf] iUserSummaryAtom:: syncResult, startTime, endTime, diff',
+    {
+      elapsedMs: diff,
+      userReserveCount: syncResult?.userReservesData?.length || 0,
+    },
     syncResult,
     startTime,
     endTime,
@@ -711,7 +881,17 @@ async function applyRemoteData(
     iUserSummary: iUserSummary as UserSummary,
   });
 
-  console.debug('[perf] lending:: remote data will be set', newVal);
+  debugLendingPerf(
+    '[perf] lending:: remote data will be set',
+    {
+      marketKey,
+      reservesCount: newVal.reserves?.reservesData?.length || 0,
+      userReserveCount: newVal.userReserves?.userReserves?.length || 0,
+      walletTokenCount: newVal.walletBalances?.[0]?.length || 0,
+      eModeCount: newVal.eModes?.length || 0,
+    },
+    newVal,
+  );
   remoteDataState.setState({
     ...prev,
     [lendingDataKey]: newVal,
@@ -786,11 +966,25 @@ const refreshLendingWalletBalances = makeSWRKeyAsyncFunc(
     }
 
     const marketKey = paramMarketKey || getMarketKey();
-    const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
-    const pools = marketKey ? getCachePools(marketKey) : undefined;
-    if (!marketKey || !selectedMarketData || !pools) {
+    if (!marketKey) {
       return;
     }
+
+    let readyMarket: Awaited<ReturnType<typeof getReadyLendingMarket>>;
+    try {
+      readyMarket = await getReadyLendingMarket(marketKey);
+    } catch (error) {
+      showLendingDependencyToast('market/pools', {
+        marketKey,
+        chainId: getSelectedMarketInfo(marketKey).marketData?.chainId,
+      });
+      console.error('[Lending] wallet balance market resolution failed', {
+        marketKey,
+        error,
+      });
+      return;
+    }
+    const { selectedMarketData, pools } = readyMarket;
 
     if (!ignoreLoading) {
       globalSets.setLoading(true, { address: requestAddress, marketKey });
@@ -892,13 +1086,36 @@ function getMarketKey() {
   const marketKey = jotaiStore.get(marketAtom);
   return marketKey;
 }
-function getPools() {
-  const marketKey = getMarketKey();
-  const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
-  if (!marketKey || !selectedMarketData) {
-    return undefined;
+
+export function setLendingMarketKey(marketKey: CustomMarket) {
+  jotaiStore.set(marketAtom, marketKey);
+}
+
+export async function debugProbeLendingMarket(marketKey: CustomMarket) {
+  if (!isNonPublicProductionEnv) {
+    return null;
   }
-  return getCachePools(marketKey);
+
+  const accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
+    forScene: 'Lending',
+  }).finalSceneCurrentAccount?.address;
+  if (!accountAddress) {
+    throw new Error('No Lending account is available for the debug probe');
+  }
+
+  const data = await fetchContractData(accountAddress, marketKey);
+  const snapshot = {
+    marketKey,
+    success: Boolean(
+      data.reserves && data.userReserves && data.walletBalances && data.eModes,
+    ),
+    reservesCount: data.reserves?.reservesData?.length || 0,
+    userReserveCount: data.userReserves?.userReserves?.length || 0,
+    walletTokenCount: data.walletBalances?.[0]?.length || 0,
+    eModeCount: data.eModes?.length || 0,
+  };
+  console.info('[Lending] debug probe completed', snapshot);
+  return snapshot;
 }
 
 export const apisLending = {

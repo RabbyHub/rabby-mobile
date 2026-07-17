@@ -2390,8 +2390,6 @@ PODS:
     - React-Core
   - react-native-safe-area-context (5.6.2):
     - React-Core
-  - react-native-splash-screen (3.3.0):
-    - React-Core
   - react-native-version-check (3.4.7):
     - React-Core
   - react-native-video (6.19.0):
@@ -2988,6 +2986,8 @@ PODS:
     - SocketRocket
   - ReactNativeExceptionHandler (2.10.10):
     - React-Core
+  - RNBootSplash (7.3.2):
+    - React-Core
   - RNCClipboard (1.13.2):
     - React-Core
   - RNCMaskedView (0.3.1):
@@ -2998,7 +2998,7 @@ PODS:
     - React-Core
   - RNFastImage (8.6.3):
     - React-Core
-    - SDWebImage (~> 5.11.1)
+    - SDWebImage (~> 5.18.6)
     - SDWebImageWebPCoder (~> 0.8.4)
   - RNFBAnalytics (18.8.0):
     - Firebase/Analytics (= 10.20.0)
@@ -3378,9 +3378,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - SDWebImage (5.11.1):
-    - SDWebImage/Core (= 5.11.1)
-  - SDWebImage/Core (5.11.1)
+  - SDWebImage (5.18.12):
+    - SDWebImage/Core (= 5.18.12)
+  - SDWebImage/Core (5.18.12)
   - SDWebImageWebPCoder (0.8.5):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.10)
@@ -3464,7 +3464,6 @@ DEPENDENCIES:
   - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
-  - react-native-splash-screen (from `../node_modules/react-native-splash-screen`)
   - react-native-version-check (from `../node_modules/react-native-version-check`)
   - react-native-video (from `../node_modules/react-native-video`)
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
@@ -3500,6 +3499,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeExceptionHandler (from `../node_modules/react-native-exception-handler`)
+  - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - "RNCPushNotificationIOS (from `../node_modules/@react-native-community/push-notification-ios`)"
@@ -3691,8 +3691,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-randombytes"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
-  react-native-splash-screen:
-    :path: "../node_modules/react-native-splash-screen"
   react-native-version-check:
     :path: "../node_modules/react-native-version-check"
   react-native-video:
@@ -3763,6 +3761,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeExceptionHandler:
     :path: "../node_modules/react-native-exception-handler"
+  RNBootSplash:
+    :path: "../node_modules/react-native-bootsplash"
   RNCClipboard:
     :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCMaskedView:
@@ -3903,7 +3903,6 @@ SPEC CHECKSUMS:
   react-native-quick-crypto: 324688800acf6a351c53597d627684b0d3ac14fa
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: e48706fb09fde89f82e12bfb49b140cfdcb761f7
-  react-native-splash-screen: 4312f786b13a81b5169ef346d76d33bc0c6dc457
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
   react-native-video: 7582bbe571c0332538d3b3ad3338fc1190bf962f
   react-native-view-shot: f5507655f122e6b104888a11130f267a427f0d57
@@ -3939,11 +3938,12 @@ SPEC CHECKSUMS:
   ReactCodegen: d683c37a16b7e7a50d3b769dac5a8be80d81b5b0
   ReactCommon: 3321d89a161a9129f5694948779e1de51400ceb3
   ReactNativeExceptionHandler: b11ff67c78802b2f62eed0e10e75cb1ef7947c60
+  RNBootSplash: 2404c592271f188766c010c77a7d629e2ed7c9b2
   RNCClipboard: 60fed4b71560d7bfe40e9d35dea9762b024da86d
   RNCMaskedView: 090213d32d8b3bb83a4dcb7d12c18f0152591906
   RNCPushNotificationIOS: b9dcb4f28c85f77483c3f86d2fcb1e0f0ab396fa
   RNDeviceInfo: feea80a690d2bde1fe51461cf548039258bd03f2
-  RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
+  RNFastImage: ac82f320c9d1441e46b68721141c4d6aee495406
   RNFBAnalytics: 991772a4cd8c90de9a5eec33ef24dbba6e028c5b
   RNFBApp: a4f5b074984cf612e4c97d68b42be690c59e2638
   RNFBMessaging: 1e7415390ae579c5949505a0709686a2de8a47e5
@@ -3962,7 +3962,7 @@ SPEC CHECKSUMS:
   RNSentry: 0c4143e43acee4334a965a00c1583a316310efee
   RNSVG: 3e87821b2215b30e19f90232247007e5c313a06c
   RNVectorIcons: dad3d501c383f9ba1414de38735e0ccfb50044e4
-  SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
+  SDWebImage: 2d6d229046fea284d62e36bfb8ebe8287dfc5b10
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   Sentry: b53951377b78e21a734f5dc8318e333dbfc682d7
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748

@@ -13,7 +13,7 @@ import { useMiniSigner } from '@/hooks/useSigner';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -290,7 +290,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
         const txId = last(results);
         if (txId) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             manageEmodeTx[0].chainId,
             txId,

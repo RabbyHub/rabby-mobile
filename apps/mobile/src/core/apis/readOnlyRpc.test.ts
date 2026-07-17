@@ -23,19 +23,19 @@ function loadReadOnlyRpcModule() {
   jest.doMock('@/utils/chain', () => ({
     findChain: (...args: unknown[]) => mockFindChain(...args),
   }));
-  jest.doMock('@/core/services/customRPCService', () => ({
-    customRPCService: {
+  jest.doMock('@/core/serviceApi/customRPC', () => ({
+    customRPCServiceApi: {
       defaultEthRPC: (...args: unknown[]) => mockDefaultEthRPC(...args),
       hasCustomRPC: (...args: unknown[]) => mockHasCustomRPC(...args),
       requestCustomRPC: (...args: unknown[]) => mockRequestCustomRPC(...args),
     },
   }));
-  jest.doMock('@/core/services/customTestnetService', () => ({
-    customTestnetService: {
+  jest.doMock('@/core/serviceApi/customTestnet', () => ({
+    customTestnetServiceApi: {
       getClient: (...args: unknown[]) => mockGetClient(...args),
     },
   }));
-  jest.doMock('@/core/services/rpcCache', () => ({
+  jest.doMock('@/core/utils/rpcCache', () => ({
     __esModule: true,
     default: {
       get: (...args: unknown[]) => mockRpcCacheGet(...args),

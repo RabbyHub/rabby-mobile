@@ -9,7 +9,11 @@ import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
-import { contactService } from '@/core/services';
+import {
+  contactServiceApi,
+  getContactAliasMapSnapshot,
+  getContactsByMapSnapshot,
+} from '@/core/serviceApi/contact';
 import { perfEvents } from '@/core/utils/perf';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -36,8 +40,8 @@ function normalizeKey(address: string) {
 }
 
 function makeContactServiceSnapshot(): ContactServiceSnapshot {
-  const aliases = contactService.getAliasByMap();
-  const contacts = contactService.getContactsByMap();
+  const aliases = getContactAliasMapSnapshot();
+  const contacts = getContactsByMapSnapshot();
   const allKeys = new Set([...Object.keys(aliases), ...Object.keys(contacts)]);
 
   const rows = [...allKeys]
@@ -274,8 +278,8 @@ function DevDataContactService(): JSX.Element {
   }, [rawJson]);
 
   const saveRemark = useCallback(
-    (address: string, remark: string) => {
-      contactService.updateAlias({
+    async (address: string, remark: string) => {
+      await contactServiceApi.updateAlias({
         address,
         name: remark,
       });

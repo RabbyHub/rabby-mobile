@@ -1,0 +1,462 @@
+import { InteractionManager } from 'react-native';
+
+import { traceAndroidInstant } from './androidTrace';
+import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
+import {
+  runAfterHomePostStartupReady,
+  traceHomeStartupReady,
+} from './homeStartupReady';
+import { markStartupRuntimePhase } from '@/startup/runtimeDiagnostics';
+
+export type StartupTaskStage =
+  | 'registration'
+  | 'immediate'
+  | 'preSplash'
+  | 'homeCritical'
+  | 'homePostStartupReady'
+  | 'homePostStartupIdle'
+  | 'onDemand';
+
+export type StartupTaskPriority = 'critical' | 'high' | 'normal' | 'low';
+
+export type StartupTaskOptions = {
+  label?: string;
+  owner?: string;
+  reason?: string;
+  stage?: StartupTaskStage;
+  priority?: StartupTaskPriority;
+  delayMs?: number;
+  fallbackMs?: number;
+  idleTimeoutMs?: number;
+  budgetMs?: number;
+  tracePrefix?: string;
+};
+
+export type StartupTaskHandle = {
+  cancel: () => void;
+  run?: () => unknown;
+};
+
+export type RunStartupTaskStage = StartupTaskStage;
+export type RunStartupTaskOptions = StartupTaskOptions;
+
+function isRunStartupTaskOptions(
+  value: unknown,
+): value is RunStartupTaskOptions {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return (
+    'stage' in value ||
+    'label' in value ||
+    'owner' in value ||
+    'reason' in value ||
+    'priority' in value ||
+    'delayMs' in value ||
+    'fallbackMs' in value ||
+    'idleTimeoutMs' in value ||
+    'budgetMs' in value
+  );
+}
+
+/** Run a task through startup metadata and stage scheduling. */
+export function runStartupTask<T extends (...args: any[]) => any>(
+  func: T,
+  optionsOrFirstArg?: RunStartupTaskOptions | Parameters<T>[0],
+  ...restArgs: any[]
+): ReturnType<T> | StartupTaskHandle | undefined {
+  const hasOptions = isRunStartupTaskOptions(optionsOrFirstArg);
+  const options = hasOptions
+    ? (optionsOrFirstArg as RunStartupTaskOptions)
+    : ({} as RunStartupTaskOptions);
+  const inputArgs = (
+    hasOptions
+      ? restArgs
+      : optionsOrFirstArg === undefined
+      ? restArgs
+      : [optionsOrFirstArg, ...restArgs]
+  ) as Parameters<T>;
+
+  return scheduleStartupTask(() => func(...inputArgs), options) as
+    | ReturnType<T>
+    | StartupTaskHandle
+    | undefined;
+}
+
+type StartupDiagnosticsModule = typeof import('./startupDiagnostics');
+
+let startupDiagnosticsModule:
+  | Pick<
+      StartupDiagnosticsModule,
+      'beginStartupTaskDiagnostic' | 'markStartupTaskDiagnostic'
+    >
+  | null
+  | undefined;
+
+function getStartupDiagnosticsModule() {
+  if (!isNonProductionDiagnosticsEnabled) {
+    return null;
+  }
+
+  if (startupDiagnosticsModule !== undefined) {
+    return startupDiagnosticsModule;
+  }
+
+  try {
+    startupDiagnosticsModule = require('./startupDiagnostics');
+  } catch {
+    startupDiagnosticsModule = null;
+  }
+
+  return startupDiagnosticsModule;
+}
+
+function beginStartupTaskDiagnostic(options: StartupTaskOptions) {
+  return (
+    getStartupDiagnosticsModule()?.beginStartupTaskDiagnostic({
+      label: options.label,
+      owner: options.owner,
+      reason: options.reason,
+      stage: options.stage ?? 'immediate',
+      priority: options.priority,
+      budgetMs: options.budgetMs,
+      fallbackMs: options.fallbackMs,
+    }) ?? null
+  );
+}
+
+function markStartupTaskDiagnostic(
+  diagnosticId: number | null,
+  event:
+    | 'fire'
+    | 'invoke_return'
+    | 'done'
+    | 'error'
+    | 'cancel'
+    | 'budget_exceeded',
+  extra?: Record<string, unknown>,
+) {
+  getStartupDiagnosticsModule()?.markStartupTaskDiagnostic(
+    diagnosticId,
+    event,
+    extra,
+  );
+}
+
+function getTracePrefix(options: StartupTaskOptions) {
+  return options.tracePrefix || 'startup_task';
+}
+
+function traceStartupTask(
+  event: string,
+  options: StartupTaskOptions,
+  extra?: Record<string, unknown>,
+) {
+  if (!options.label) {
+    return;
+  }
+
+  const payload = {
+    label: options.label,
+    owner: options.owner,
+    reason: options.reason,
+    stage: options.stage ?? 'immediate',
+    priority: options.priority,
+    budgetMs: options.budgetMs,
+    ...extra,
+  };
+  const tracePrefix = getTracePrefix(options);
+  traceAndroidInstant(`${tracePrefix}.${event}`, payload);
+  traceHomeStartupReady(`${tracePrefix}_${event}`, payload);
+}
+
+function reportTaskDuration(
+  options: StartupTaskOptions,
+  startedAt: number,
+  diagnosticId: number | null,
+  invokeSyncMs: number,
+  isAsync: boolean,
+  extra?: Record<string, unknown>,
+) {
+  const durationMs = Date.now() - startedAt;
+  const awaitWallMs = isAsync ? Math.max(0, durationMs - invokeSyncMs) : 0;
+  traceStartupTask('done', options, {
+    durationMs,
+    invokeSyncMs,
+    awaitWallMs,
+    isAsync,
+    ...extra,
+  });
+
+  if (options.budgetMs && invokeSyncMs > options.budgetMs) {
+    traceStartupTask('budget_exceeded', options, {
+      durationMs,
+      invokeSyncMs,
+      awaitWallMs,
+      isAsync,
+    });
+    markStartupTaskDiagnostic(diagnosticId, 'budget_exceeded', {
+      durationMs,
+      invokeSyncMs,
+      awaitWallMs,
+      isAsync,
+    });
+  }
+
+  return {
+    durationMs,
+    invokeSyncMs,
+    awaitWallMs,
+    isAsync,
+  };
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return !!value && typeof (value as any).then === 'function';
+}
+
+function executeStartupTask<T>(
+  task: () => T,
+  options: StartupTaskOptions,
+  diagnosticId: number | null,
+): T | undefined {
+  traceStartupTask('fire', options);
+  markStartupTaskDiagnostic(diagnosticId, 'fire');
+  const startedAt = Date.now();
+
+  try {
+    const result = task();
+    const invokeSyncMs = Date.now() - startedAt;
+    const asyncResult = isPromiseLike(result);
+    traceStartupTask('invoke_return', options, {
+      invokeSyncMs,
+      isAsync: asyncResult,
+    });
+    markStartupTaskDiagnostic(diagnosticId, 'invoke_return', {
+      invokeSyncMs,
+      isAsync: asyncResult,
+    });
+
+    if (asyncResult) {
+      result.then(
+        () => {
+          const timing = reportTaskDuration(
+            options,
+            startedAt,
+            diagnosticId,
+            invokeSyncMs,
+            true,
+          );
+          markStartupTaskDiagnostic(diagnosticId, 'done', timing);
+        },
+        (error: unknown) => {
+          const durationMs = Date.now() - startedAt;
+          const awaitWallMs = Math.max(0, durationMs - invokeSyncMs);
+          traceStartupTask('error', options, {
+            durationMs,
+            invokeSyncMs,
+            awaitWallMs,
+            isAsync: true,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          markStartupTaskDiagnostic(diagnosticId, 'error', {
+            durationMs,
+            invokeSyncMs,
+            awaitWallMs,
+            isAsync: true,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          console.error(
+            `[StartupScheduler] ${options.label || 'anonymous'}`,
+            error,
+          );
+        },
+      );
+    } else {
+      const timing = reportTaskDuration(
+        options,
+        startedAt,
+        diagnosticId,
+        invokeSyncMs,
+        false,
+      );
+      markStartupTaskDiagnostic(diagnosticId, 'done', timing);
+    }
+
+    return result;
+  } catch (error) {
+    const durationMs = Date.now() - startedAt;
+    traceStartupTask('error', options, {
+      durationMs,
+      invokeSyncMs: durationMs,
+      awaitWallMs: 0,
+      isAsync: false,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    markStartupTaskDiagnostic(diagnosticId, 'error', {
+      durationMs,
+      invokeSyncMs: durationMs,
+      awaitWallMs: 0,
+      isAsync: false,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    console.error(`[StartupScheduler] ${options.label || 'anonymous'}`, error);
+    return undefined;
+  }
+}
+
+function scheduleHomePostStartupIdle<T>(
+  task: () => T,
+  options: StartupTaskOptions,
+  diagnosticId: number | null,
+): StartupTaskHandle {
+  let disposed = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let idleId: ReturnType<typeof requestIdleCallback> | null = null;
+  let interactionHandle: ReturnType<
+    typeof InteractionManager.runAfterInteractions
+  > | null = null;
+
+  const executeIdleTask = () => {
+    markStartupRuntimePhase('home', 'idle', options.label || 'idle_task');
+    executeStartupTask(task, options, diagnosticId);
+  };
+
+  const cancelHomePostStartupReady = runAfterHomePostStartupReady(
+    () => {
+      if (disposed) {
+        return;
+      }
+
+      const scheduleIdleTask = () => {
+        interactionHandle = InteractionManager.runAfterInteractions(() => {
+          if (disposed) {
+            return;
+          }
+
+          if (typeof requestIdleCallback === 'function') {
+            idleId = requestIdleCallback(
+              () => {
+                if (!disposed) {
+                  executeIdleTask();
+                }
+              },
+              { timeout: options.idleTimeoutMs ?? 5000 },
+            );
+            return;
+          }
+
+          executeIdleTask();
+        });
+      };
+
+      if (options.delayMs && options.delayMs > 0) {
+        timeoutId = setTimeout(scheduleIdleTask, options.delayMs);
+        return;
+      }
+
+      scheduleIdleTask();
+    },
+    {
+      label: options.label,
+      fallbackMs: options.fallbackMs,
+    },
+  );
+
+  return {
+    cancel: () => {
+      disposed = true;
+      cancelHomePostStartupReady();
+      interactionHandle?.cancel?.();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (idleId !== null && typeof cancelIdleCallback === 'function') {
+        cancelIdleCallback(idleId);
+      }
+      markStartupTaskDiagnostic(diagnosticId, 'cancel');
+    },
+  };
+}
+
+function scheduleOnDemandStartupTask<T>(
+  task: () => T,
+  options: StartupTaskOptions,
+  diagnosticId: number | null,
+): StartupTaskHandle {
+  let disposed = false;
+  let fired = false;
+
+  return {
+    run: () => {
+      if (disposed || fired) {
+        return undefined;
+      }
+
+      fired = true;
+      return executeStartupTask(task, options, diagnosticId);
+    },
+    cancel: () => {
+      if (disposed || fired) {
+        return;
+      }
+
+      disposed = true;
+      markStartupTaskDiagnostic(diagnosticId, 'cancel');
+    },
+  };
+}
+
+export function scheduleStartupTask<T>(
+  task: () => T,
+  options: StartupTaskOptions = {},
+): T | StartupTaskHandle | undefined {
+  const stage = options.stage ?? 'immediate';
+  traceStartupTask('schedule', options);
+  const diagnosticId = beginStartupTaskDiagnostic({
+    ...options,
+    stage,
+  });
+
+  if (stage === 'homePostStartupReady') {
+    const cancelHomePostStartupReady = runAfterHomePostStartupReady(
+      () => {
+        executeStartupTask(task, options, diagnosticId);
+      },
+      {
+        label: options.label,
+        fallbackMs: options.fallbackMs,
+      },
+    );
+
+    return {
+      cancel: () => {
+        cancelHomePostStartupReady();
+        markStartupTaskDiagnostic(diagnosticId, 'cancel');
+      },
+    };
+  }
+
+  if (stage === 'homePostStartupIdle') {
+    return scheduleHomePostStartupIdle(task, options, diagnosticId);
+  }
+
+  if (stage === 'onDemand') {
+    return scheduleOnDemandStartupTask(task, options, diagnosticId);
+  }
+
+  return executeStartupTask(task, options, diagnosticId);
+}
+
+export function runOnDemandStartupTask<T>(
+  task: () => T,
+  options: StartupTaskOptions = {},
+): T | undefined {
+  const handle = scheduleStartupTask(task, {
+    ...options,
+    stage: 'onDemand',
+  }) as StartupTaskHandle;
+
+  return handle.run?.() as T | undefined;
+}

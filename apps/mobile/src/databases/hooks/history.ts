@@ -1,7 +1,7 @@
 import { syncRemoteHistory } from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   historyTimeStore,
   setHistoryLoading,
@@ -9,7 +9,7 @@ import {
 } from '@/hooks/historyTokenDict';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
-import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
+import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 
 const USE_REALTIME_API_DURATION = 24 * 5 * 60 * 60 * 1000; // use async history api if user not opened app in 5 days
 
@@ -27,8 +27,8 @@ const isSyncingRef = {
   current: false,
 };
 
-const getIsNeedSyncData = (address: string) => {
-  if (transactionHistoryService.getIsNeedFetchTxHistory(address)) {
+const getIsNeedSyncData = async (address: string) => {
+  if (await transactionHistoryServiceApi.getIsNeedFetchTxHistory(address)) {
     // some tx done need to update
     console.debug('🔍syncTop10History some tx done so isNeedSyncData');
     return true;
@@ -238,6 +238,9 @@ export const syncTop10History = async (
   top10Addresses: string[],
   force?: boolean,
   resetEntity?: boolean,
+  options?: {
+    forceAllHistoryApi?: boolean;
+  },
 ) => {
   if (top10Addresses.length === 0) {
     console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: No account');
@@ -264,8 +267,9 @@ export const syncTop10History = async (
       const isForceFetchFromApi = force || (await getIsNeedSyncData(address));
       if (isForceFetchFromApi) {
         const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
-        const isUseRealTimeApi =
-          latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
+        const isUseRealTimeApi = options?.forceAllHistoryApi
+          ? false
+          : latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
         updateHistoryTimeSingleAddress(address);
         console.debug(
           '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',

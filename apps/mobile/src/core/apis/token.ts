@@ -1,5 +1,4 @@
 import { findChain, findChainByServerID } from '@/utils/chain';
-import { preferenceService } from '../services';
 import { abiCoder, sendRequest } from './sendRequest';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { t } from 'i18next';

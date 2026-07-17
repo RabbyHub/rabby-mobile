@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import { View } from 'react-native';
 // import { useOpenDappView } from '../hooks/useDappView';
-import { CHAINS_ENUM } from '@/constant/chains';
-import { DappInfo } from '@/core/services/dappService';
+import type { CHAINS_ENUM } from '@/constant/chains';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';

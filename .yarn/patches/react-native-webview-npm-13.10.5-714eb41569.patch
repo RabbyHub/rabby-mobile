@@ -19,11 +19,11 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +import android.webkit.JsPromptResult;
  import android.widget.FrameLayout;
 +import android.widget.Button;
- 
+
 +import androidx.annotation.Nullable;
  import androidx.annotation.RequiresApi;
  import androidx.core.content.ContextCompat;
- 
+
 @@ -28,6 +34,7 @@ import com.facebook.react.bridge.WritableMap;
  import com.facebook.react.common.build.ReactBuildConfig;
  import com.facebook.react.modules.core.PermissionAwareActivity;
@@ -35,7 +35,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 @@ -36,6 +43,24 @@ import java.util.ArrayList;
  import java.util.Collections;
  import java.util.List;
- 
+
 +import okhttp3.MediaType;
 +import okhttp3.OkHttpClient;
 +import okhttp3.Request;
@@ -58,25 +58,25 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
      protected static final FrameLayout.LayoutParams FULLSCREEN_LAYOUT_PARAMS = new FrameLayout.LayoutParams(
              ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
 @@ -54,6 +79,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
- 
+
      protected View mVideoView;
      protected WebChromeClient.CustomViewCallback mCustomViewCallback;
 +    protected boolean blockJsDuringLoading = true;
- 
+
      /*
       * - Permissions -
 @@ -144,30 +170,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
- 
+
      @Override
      public void onPermissionRequest(final PermissionRequest request) {
 -
          grantedPermissions = new ArrayList<>();
- 
+
 +        ArrayList<String> requestPermissionIdentifiers = new ArrayList<>();
          ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
          for (String requestedResource : request.getResources()) {
              String androidPermission = null;
- 
+
              if (requestedResource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
                  androidPermission = Manifest.permission.RECORD_AUDIO;
 +                requestPermissionIdentifiers.add("microphone");
@@ -114,7 +114,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 @@ -178,40 +207,128 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
              }
          }
- 
+
 -        // If all the permissions are already granted, send the response to the WebView synchronously
 -        if (requestedAndroidPermissions.isEmpty()) {
 -            request.grant(grantedPermissions.toArray(new String[0]));
@@ -153,7 +153,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +            );
          }
 +    }
- 
+
 -        // Otherwise, ask to Android System for native permissions asynchronously
 -
 -        this.permissionRequest = request;
@@ -161,7 +161,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +        Handler handler = new Handler();
 +        handler.postDelayed(function, delayMillis);
 +    }
- 
+
 -        requestPermissions(requestedAndroidPermissions);
 +    private void showPermissionPrompt(
 +        @Nullable CharSequence message,
@@ -188,8 +188,8 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +        posButton.setEnabled(false);
 +        this.runDelayed(() -> posButton.setEnabled(true), 500);
      }
- 
- 
+
+
      @Override
      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 -
@@ -204,7 +204,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +            */
              geolocationPermissionCallback = callback;
              geolocationPermissionOrigin = origin;
- 
+
              requestPermissions(Collections.singletonList(Manifest.permission.ACCESS_FINE_LOCATION));
 -
          } else {
@@ -222,7 +222,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +            );
          }
      }
- 
+
 +    @Override
 +    public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
 +        android.graphics.Rect r = new android.graphics.Rect();
@@ -257,21 +257,33 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
          Activity activity = this.mWebView.getThemedReactContext().getCurrentActivity();
          if (activity == null) {
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java
-index 6664b6f6eacb37743d049556dc55f613c0244517..7d639e3c139cb506fc8ef23044e3e121aabb16a5 100644
+index 6664b6f6eacb37743d049556dc55f613c0244517..315d954165153852fc65c1ad1378a66ecf50d459 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java
-@@ -68,6 +68,7 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
+@@ -45,7 +45,11 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
+     protected @Nullable
+     String injectedJS;
+     protected @Nullable
++    String injectedJSBuiltin;
++    protected @Nullable
+     String injectedJSBeforeContentLoaded;
++    protected @Nullable
++    String injectedJSBeforeContentLoadedBuiltin;
+     protected static final String JAVASCRIPT_INTERFACE = "ReactNativeWebView";
+     protected @Nullable
+     RNCWebViewBridge bridge;
+@@ -68,6 +72,7 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
      private OnScrollDispatchHelper mOnScrollDispatchHelper;
      protected boolean hasScrollEvent = false;
      protected boolean nestedScrollEnabled = false;
 +    protected boolean disableJsPromptLike = false;
      protected ProgressChangedFilter progressChangedFilter;
- 
+
      /**
-@@ -102,6 +103,10 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
+@@ -102,6 +107,10 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
          this.nestedScrollEnabled = nestedScrollEnabled;
      }
- 
+
 +    public void setDisableJsPromptLike(boolean val) {
 +        this.disableJsPromptLike = val;
 +    }
@@ -279,13 +291,56 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..7d639e3c139cb506fc8ef23044e3e121
      @Override
      public void onHostResume() {
          // do nothing
+@@ -267,19 +276,36 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
+         evaluateJavascript(script, null);
+     }
+
++    private @Nullable String buildInjectedScript(@Nullable String builtinScript, @Nullable String propScript) {
++        StringBuilder script = new StringBuilder();
++        if (!TextUtils.isEmpty(builtinScript)) {
++            script.append(builtinScript);
++        }
++        if (!TextUtils.isEmpty(propScript)) {
++            if (script.length() > 0) {
++                script.append("\n");
++            }
++            script.append(propScript);
++        }
++
++        return script.length() == 0 ? null : script.toString();
++    }
++
+     public void callInjectedJavaScript() {
++        String script = buildInjectedScript(injectedJSBuiltin, injectedJS);
+         if (getSettings().getJavaScriptEnabled() &&
+-                injectedJS != null &&
+-                !TextUtils.isEmpty(injectedJS)) {
+-            evaluateJavascriptWithFallback("(function() {\n" + injectedJS + ";\n})();");
++                script != null &&
++                !TextUtils.isEmpty(script)) {
++            evaluateJavascriptWithFallback("(function() {\n" + script + ";\n})();");
+         }
+     }
+
+     public void callInjectedJavaScriptBeforeContentLoaded() {
++        String script = buildInjectedScript(injectedJSBeforeContentLoadedBuiltin, injectedJSBeforeContentLoaded);
+         if (getSettings().getJavaScriptEnabled() &&
+-                injectedJSBeforeContentLoaded != null &&
+-                !TextUtils.isEmpty(injectedJSBeforeContentLoaded)) {
+-            evaluateJavascriptWithFallback("(function() {\n" + injectedJSBeforeContentLoaded + ";\n})();");
++                script != null &&
++                !TextUtils.isEmpty(script)) {
++            evaluateJavascriptWithFallback("(function() {\n" + script + ";\n})();");
+         }
+     }
+
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55bb61f261 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -1,7 +1,9 @@
  package com.reactnativecommunity.webview;
- 
+
  import android.annotation.TargetApi;
 +import android.content.Intent;
  import android.graphics.Bitmap;
@@ -296,11 +351,11 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
 @@ -32,6 +34,8 @@ import com.reactnativecommunity.webview.events.TopLoadingStartEvent;
  import com.reactnativecommunity.webview.events.TopRenderProcessGoneEvent;
  import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
- 
+
 +import java.util.Arrays;
 +import java.util.Objects;
  import java.util.concurrent.atomic.AtomicReference;
- 
+
  public class RNCWebViewClient extends WebViewClient {
 @@ -41,6 +45,8 @@ public class RNCWebViewClient extends WebViewClient {
      protected boolean mLastLoadFailed = false;
@@ -309,12 +364,12 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
 +    // Allow list is used to support specific deeplinks in the webview.
 +    private final String[] DEEPLINK_ALLOW_LIST = new String[] {"https://twitter.com/i/wallet/verify"};
      protected @Nullable RNCBasicAuthCredential basicAuthCredential = null;
- 
+
      public void setIgnoreErrFailedForThisURL(@Nullable String url) {
 @@ -51,12 +57,28 @@ public class RNCWebViewClient extends WebViewClient {
          basicAuthCredential = credential;
      }
- 
+
 +    private Boolean SetBlockJsDuringLoading(Boolean val, RNCWebView reactWebView) {
 +        RNCWebChromeClient chromeClient = (RNCWebChromeClient) reactWebView.mWebChromeClient;
 +
@@ -333,14 +388,14 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
 +        // Only return the URL that the web view is currently showing.
 +        String visibleUrl = webView.getUrl();
 +        Boolean isFinishedLoading = url.equals(visibleUrl);
- 
+
 -        if (!mLastLoadFailed) {
 +        if (!mLastLoadFailed && isFinishedLoading) {
              RNCWebView reactWebView = (RNCWebView) webView;
 +            this.SetBlockJsDuringLoading(false, reactWebView);
- 
+
              reactWebView.callInjectedJavaScript();
- 
+
 @@ -72,7 +94,7 @@ public class RNCWebViewClient extends WebViewClient {
          webView,
          new TopLoadingStartEvent(
@@ -348,11 +403,11 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
 -          createWebViewEvent(webView, url)));
 +          createWebViewEvent(webView, url, "updateVisitedHistory", isReload)));
      }
- 
+
      @Override
 @@ -121,7 +143,18 @@ public class RNCWebViewClient extends WebViewClient {
              RNCWebViewModuleImpl.shouldOverrideUrlLoadingLock.removeLock(lockIdentifier);
- 
+
              return shouldOverride;
 -        } else {
 +        } else if (url != null && Arrays.asList(DEEPLINK_ALLOW_LIST).contains(url)) {
@@ -369,7 +424,7 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
 +       } else {
              FLog.w(TAG, "Couldn't use blocking synchronous call for onShouldStartLoadWithRequest due to debugging or missing Catalyst instance, falling back to old event-and-load.");
              progressChangedFilter.setWaitingForCommandLoadUrl(true);
- 
+
 @@ -136,6 +169,21 @@ public class RNCWebViewClient extends WebViewClient {
      @TargetApi(Build.VERSION_CODES.N)
      @Override
@@ -399,11 +454,11 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
 -        );
 +            );
      }
- 
+
      @Override
 @@ -300,12 +348,26 @@ public class RNCWebViewClient extends WebViewClient {
      }
- 
+
      protected WritableMap createWebViewEvent(WebView webView, String url) {
 +        return createWebViewEvent(webView, url, "unknown", false);
 +    }
@@ -429,10 +484,291 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
          event.putBoolean("canGoBack", webView.canGoBack());
          event.putBoolean("canGoForward", webView.canGoForward());
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
-index 4600a8dc5c448a2236d25e40172453f93ae92c45..52672555350070ea2ca434d20c4117457fa1e692 100644
+index 4600a8dc5c448a2236d25e40172453f93ae92c45..213520b0fb13b4d4eaa6ca2320c6d1181135894d 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
-@@ -337,7 +337,11 @@ class RNCWebViewManagerImpl {
+@@ -28,9 +28,280 @@ import java.io.UnsupportedEncodingException
+ import java.net.MalformedURLException
+ import java.net.URL
+ import java.util.Locale
++import java.util.concurrent.ConcurrentHashMap
+
+ val invalidCharRegex = "[\\\\/%\"]".toRegex()
+
++private object RNCWebViewBuiltinScripts {
++    private const val TAG = "RNCWebViewBuiltinScripts"
++    private val cache = ConcurrentHashMap<String, String>()
++
++    fun resolve(context: ThemedReactContext, scriptIds: ReadableArray?): String? {
++        if (scriptIds == null || scriptIds.size() == 0) {
++            return null
++        }
++
++        val scripts = mutableListOf<String>()
++        for (i in 0 until scriptIds.size()) {
++            val scriptId = scriptIds.getString(i) ?: continue
++            val script = resolveOne(context, scriptId)
++            if (!script.isNullOrBlank()) {
++                scripts.add(script)
++            }
++        }
++
++        return scripts.takeIf { it.isNotEmpty() }?.joinToString("\n")
++    }
++
++    private fun resolveOne(context: ThemedReactContext, scriptId: String): String? {
++        return cache.getOrPut(scriptId) {
++            when (scriptId) {
++                "rabby-jsbridge-harden" -> jsBridgeHarden
++                "rabby-inpage-web3" -> readAsset(context, "custom/InpageBridgeWeb3.js")
++                "rabby-browser-script-base" -> browserScriptBase
++                "rabby-spa-url-change-listener" -> spaUrlChangeListener
++                "rabby-return-true" -> ";true;"
++                "rabby-dev-window-info-after-load" -> getWindowInfoAfterLoad
++                "rabby-dev-vconsole" -> readAsset(context, "custom/vconsole.min.js")
++                "rabby-dev-vconsole-init" -> vConsoleInit
++                "rabby-dev-log-on-message" -> logOnMessage
++                "rabby-android-patch-anchor-target" -> patchAnchorTarget
++                else -> {
++                    Log.w(TAG, "Unknown builtin script id: $scriptId")
++                    ""
++                }
++            } ?: ""
++        }.ifBlank { null }
++    }
++
++    private fun readAsset(context: ThemedReactContext, path: String): String? {
++        return try {
++            context.assets.open(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
++        } catch (e: Exception) {
++            Log.w(TAG, "Failed to read builtin script asset: $path", e)
++            null
++        }
++    }
++
++    private val jsBridgeHarden = """
++        (function () {
++          function safeStartsWith(str, search) {
++            if (typeof str !== 'string' || typeof search !== 'string') return false;
++            for (var i = 0; i < search.length; i++) {
++              if (str[i] !== search[i]) return false;
++            }
++            return true;
++          }
++
++          if (window.ReactNativeWebView == null) return;
++          var parse = JSON.parse;
++          var realPost = window.ReactNativeWebView.postMessage.bind(window.ReactNativeWebView);
++          function myPostMessage(msg) {
++            try {
++              var json = parse(msg);
++              if (
++                json &&
++                json.name != null &&
++                !(location.origin === json.origin ||
++                  location.origin === json.origin + '/' ||
++                  safeStartsWith(json.origin, location.origin + '/'))
++              ) {
++                console.warn('Origin mismatch in postMessage: expected ' + location.origin + ', got ' + json.origin);
++                return;
++              }
++            } catch (_a) {}
++            return realPost(msg);
++          }
++          window.ReactNativeWebView = new Proxy(window.ReactNativeWebView || {}, {
++            get: function (target, prop) {
++              if (prop === 'postMessage') return myPostMessage;
++              var f = Reflect.get(target, prop);
++              return typeof f === 'function' ? f.bind(target) : f;
++            },
++          });
++        })();
++    """.trimIndent()
++
++    private val browserScriptBase = """
++        ;(function () {
++          if (!window.__RABBY_WEBVIEW_BRIDGE_POSTER__) {
++            window.__RABBY_WEBVIEW_BRIDGE_POSTER__ = function (content, pos) {
++              if (typeof content !== 'object') content = { primitive: content };
++              pos = pos || 'unknown';
++              var jsonString = "";
++
++              var safeJsonStringifyReplacer = (function () {
++                var cache = new WeakSet();
++                return function (key, value) {
++                  if (key.indexOf('__reactFiber') === 0) return 'TRIMED';
++                  if (typeof value === 'object' && value !== null) {
++                    if (cache.has(value)) return;
++                    cache.add(value);
++                  }
++                  if (typeof value === 'bigint') return value.toString() + 'n';
++                  return value;
++                };
++              })();
++
++              try {
++                jsonString = JSON.stringify(content, safeJsonStringifyReplacer);
++              } catch (e) {
++                jsonString = JSON.stringify({
++                  type: 'RD::BROWSER_SCRIPT_ERR_CAPTURED',
++                  payload: {
++                    message: e.message,
++                    stack: e.stack,
++                    position: pos,
++                  }
++                });
++              }
++
++              if (window.ReactNativeWebView) {
++                window.ReactNativeWebView.postMessage(jsonString);
++              }
++            };
++          }
++
++          window.__RABBY_WEBVIEW_BRIDGE_GET_WINDOW_INFO__ = function() {
++            var siteNameMeta = document.querySelector('head > meta[property="og:site_name"]');
++            var ogSiteName = siteNameMeta ? siteNameMeta.getAttribute('content') : '';
++            var title = (function () {
++              var titleMeta = document.querySelector('head > meta[name="title"]');
++              return titleMeta ? titleMeta.getAttribute('content') : '';
++            })() || document.title;
++
++            var shortcutIconNode = window.document.querySelector('head > link[rel="shortcut icon"]');
++            var shortcutIconHref = shortcutIconNode ? shortcutIconNode.href : '';
++            var iconHref = shortcutIconHref || (function () {
++              var iconNodes = Array.from(window.document.querySelectorAll('head > link[rel="icon"]')).find(function (icon) {
++                return Boolean(icon.href);
++              }) || [];
++              return iconNodes && iconNodes.length > 0 ? iconNodes[0].href : '';
++            })();
++
++            var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
++
++            return {
++              title: title,
++              ogSiteName: ogSiteName,
++              height: height,
++              shortcutIconHref: shortcutIconHref,
++              iconHref: iconHref,
++              referrer: document.referrer,
++            };
++          };
++        })();
++    """.trimIndent()
++
++    private val spaUrlChangeListener = """
++        ;(function () {
++          var __rabbyHistory = window.history;
++          var __rabbyPushState = __rabbyHistory.pushState;
++          var __rabbyReplaceState = __rabbyHistory.replaceState;
++          function __rabby__updateUrl() {
++            var info = window.__RABBY_WEBVIEW_BRIDGE_GET_WINDOW_INFO__();
++
++            window.__RABBY_WEBVIEW_BRIDGE_POSTER__({
++              type: 'RD::NAV_CHANGE',
++              payload: {
++                url: location.href,
++                title: info.title,
++                ogSiteName: info.ogSiteName,
++                icon: info.iconHref,
++                shortcutIconHref: info.shortcutIconHref,
++                height: info.height,
++              }
++            }, 'NAV_CHANGE');
++
++            setTimeout(function () {
++              var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
++              window.__RABBY_WEBVIEW_BRIDGE_POSTER__({
++                type: 'RD::GET_HEIGHT',
++                payload: {
++                  height: height
++                }
++              }, 'GET_HEIGHT');
++            }, 500);
++          }
++
++          __rabbyHistory.pushState = function(state) {
++            setTimeout(function () {
++              __rabby__updateUrl();
++            }, 100);
++            return __rabbyPushState.apply(history, arguments);
++          };
++
++          __rabbyHistory.replaceState = function(state) {
++            setTimeout(function () {
++              __rabby__updateUrl();
++            }, 100);
++            return __rabbyReplaceState.apply(history, arguments);
++          };
++
++          window.addEventListener('popstate', function(event) {
++            __rabby__updateUrl();
++          });
++        })();
++    """.trimIndent()
++
++    private val getWindowInfoAfterLoad = """
++        ;(function () {
++          setTimeout(function() {
++            var info = window.__RABBY_WEBVIEW_BRIDGE_GET_WINDOW_INFO__();
++
++            window.__RABBY_WEBVIEW_BRIDGE_POSTER__({
++              type: 'RD::GET_WINDOW_INFO_AFTER_LOAD',
++              payload: {
++                url: location.href,
++                title: info.title,
++                ogSiteName: info.ogSiteName,
++                icon: info.iconHref,
++                shortcutIconHref: info.shortcutIconHref,
++                height: info.height,
++              }
++            }, 'GET_WINDOW_INFO_AFTER_LOAD');
++          }, 500);
++        })();
++    """.trimIndent()
++
++    private val vConsoleInit = """
++        ;(function() {
++          function setVConsoleSwithXY(x, y) {
++            localStorage.setItem('vConsole_switch_x', window.innerWidth - x + '');
++            localStorage.setItem('vConsole_switch_y', window.innerHeight - y + '');
++          }
++
++          function initVConsole() {
++            setVConsoleSwithXY(50, 50);
++            if (window.VConsole) {
++              new window.VConsole();
++            } else {
++              console.error("VConsole is not loaded properly.");
++            }
++          }
++
++          initVConsole();
++        })();
++    """.trimIndent()
++
++    private val logOnMessage = """
++        ;(function() {
++          window.addEventListener('message', function(event) {
++            console.debug('received event', event);
++          });
++        })();
++    """.trimIndent()
++
++    private val patchAnchorTarget = """
++        (function () {
++          setTimeout(function () {
++            Array.from(document.querySelectorAll('a[target="_blank"]'))
++              .forEach(function(link) { link.removeAttribute('target'); });
++          }, 50);
++        })();
++    """.trimIndent()
++}
++
+ class RNCWebViewManagerImpl {
+     companion object {
+         const val NAME = "RNCWebView"
+@@ -337,7 +608,11 @@ class RNCWebViewManagerImpl {
              throw RuntimeException("Arguments for loading an url are null!")
            }
            webView.progressChangedFilter.setWaitingForCommandLoadUrl(false)
@@ -445,7 +781,29 @@ index 4600a8dc5c448a2236d25e40172453f93ae92c45..52672555350070ea2ca434d20c411745
          }
          "requestFocus" -> webView.requestFocus()
          "clearFormData" -> webView.clearFormData()
-@@ -705,4 +709,10 @@ class RNCWebViewManagerImpl {
+@@ -483,11 +758,21 @@ class RNCWebViewManagerImpl {
+         view.injectedJS = injectedJavaScript
+     }
+
++    fun setInjectedJavaScriptBuiltinScriptIds(viewWrapper: RNCWebViewWrapper, value: ReadableArray?) {
++        val view = viewWrapper.webView
++        view.injectedJSBuiltin = RNCWebViewBuiltinScripts.resolve(view.themedReactContext, value)
++    }
++
+     fun setInjectedJavaScriptBeforeContentLoaded(viewWrapper: RNCWebViewWrapper, value: String?) {
+         val view = viewWrapper.webView
+         view.injectedJSBeforeContentLoaded = value
+     }
+
++    fun setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(viewWrapper: RNCWebViewWrapper, value: ReadableArray?) {
++        val view = viewWrapper.webView
++        view.injectedJSBeforeContentLoadedBuiltin = RNCWebViewBuiltinScripts.resolve(view.themedReactContext, value)
++    }
++
+     fun setInjectedJavaScriptForMainFrameOnly(viewWrapper: RNCWebViewWrapper, value: Boolean) {
+         val view = viewWrapper.webView
+         view.injectedJavaScriptForMainFrameOnly = value
+@@ -705,4 +990,10 @@ class RNCWebViewManagerImpl {
      fun setWebviewDebuggingEnabled(viewWrapper: RNCWebViewWrapper, enabled: Boolean) {
          RNCWebView.setWebContentsDebuggingEnabled(enabled)
      }
@@ -458,13 +816,38 @@ index 4600a8dc5c448a2236d25e40172453f93ae92c45..52672555350070ea2ca434d20c411745
  }
 \ No newline at end of file
 diff --git a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..456547621a60911296e878fe45d9aa55ae6ebf80 100644
+index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..5cf879e9f6eb253f4651d46d98f7fb1a6e27eb91 100644
 --- a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 +++ b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-@@ -331,6 +331,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
+@@ -165,12 +165,24 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
+         mRNCWebViewManagerImpl.setInjectedJavaScript(view, value);
+     }
+
++    @Override
++    @ReactProp(name = "injectedJavaScriptBuiltinScriptIds")
++    public void setInjectedJavaScriptBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
++        mRNCWebViewManagerImpl.setInjectedJavaScriptBuiltinScriptIds(view, value);
++    }
++
+     @Override
+     @ReactProp(name = "injectedJavaScriptBeforeContentLoaded")
+     public void setInjectedJavaScriptBeforeContentLoaded(RNCWebViewWrapper view, @Nullable String value) {
+         mRNCWebViewManagerImpl.setInjectedJavaScriptBeforeContentLoaded(view, value);
+     }
+
++    @Override
++    @ReactProp(name = "injectedJavaScriptBeforeContentLoadedBuiltinScriptIds")
++    public void setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
++        mRNCWebViewManagerImpl.setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(view, value);
++    }
++
+     @Override
+     @ReactProp(name = "injectedJavaScriptForMainFrameOnly")
+     public void setInjectedJavaScriptForMainFrameOnly(RNCWebViewWrapper view, boolean value) {
+@@ -331,6 +343,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
- 
+
 +    @Override
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
@@ -475,13 +858,35 @@ index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..456547621a60911296e878fe45d9aa55
      @Override
      public void setAllowingReadAccessToURL(RNCWebViewWrapper view, @Nullable String value) {}
 diff --git a/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java b/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-index 709117a91e44c2e32a263c638b0c092185d76e94..4e0713dd00704b5ca42a9868acc89f560ec7cb30 100644
+index 709117a91e44c2e32a263c638b0c092185d76e94..92e698594e0fdc650b8c59c8d3a41c2452cda10f 100644
 --- a/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 +++ b/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-@@ -268,6 +268,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper> {
+@@ -131,11 +131,21 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper> {
+         mRNCWebViewManagerImpl.setInjectedJavaScript(view, value);
+     }
+
++    @ReactProp(name = "injectedJavaScriptBuiltinScriptIds")
++    public void setInjectedJavaScriptBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
++        mRNCWebViewManagerImpl.setInjectedJavaScriptBuiltinScriptIds(view, value);
++    }
++
+     @ReactProp(name = "injectedJavaScriptBeforeContentLoaded")
+     public void setInjectedJavaScriptBeforeContentLoaded(RNCWebViewWrapper view, @Nullable String value) {
+         mRNCWebViewManagerImpl.setInjectedJavaScriptBeforeContentLoaded(view, value);
+     }
+
++    @ReactProp(name = "injectedJavaScriptBeforeContentLoadedBuiltinScriptIds")
++    public void setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
++        mRNCWebViewManagerImpl.setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(view, value);
++    }
++
+     @ReactProp(name = "injectedJavaScriptForMainFrameOnly")
+     public void setInjectedJavaScriptForMainFrameOnly(RNCWebViewWrapper view, boolean value) {
+         mRNCWebViewManagerImpl.setInjectedJavaScriptForMainFrameOnly(view, value);
+@@ -268,6 +278,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper> {
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
- 
+
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
 +        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);
@@ -491,7 +896,7 @@ index 709117a91e44c2e32a263c638b0c092185d76e94..4e0713dd00704b5ca42a9868acc89f56
      public void setUserAgent(RNCWebViewWrapper view, @Nullable String value) {
          mRNCWebViewManagerImpl.setUserAgent(view, value);
 diff --git a/apple/RNCWebView.mm b/apple/RNCWebView.mm
-index 1ae84c89237f2133378b35a75f6b48a538a1502f..3939734732ecf5ff67c98096decc08f143ecec49 100644
+index 1ae84c89237f2133378b35a75f6b48a538a1502f..f1067770db645778fec82f8942e3eaafd7d96ac1 100644
 --- a/apple/RNCWebView.mm
 +++ b/apple/RNCWebView.mm
 @@ -90,6 +90,7 @@ - (instancetype)initWithFrame:(CGRect)frame
@@ -502,7 +907,28 @@ index 1ae84c89237f2133378b35a75f6b48a538a1502f..3939734732ecf5ff67c98096decc08f1
                      .lockIdentifier = [[dictionary valueForKey:@"lockIdentifier"] doubleValue],
                      .title = std::string([[dictionary valueForKey:@"title"] UTF8String]),
                      .navigationType = stringToOnLoadingStartNavigationTypeEnum(std::string([[dictionary valueForKey:@"navigationType"] UTF8String])),
-@@ -275,6 +276,7 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
+@@ -263,9 +264,20 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
+         _view.name = RCTNSStringFromString(newViewProps.name);      \
+     }
+
++#define REMAP_WEBVIEW_STRING_ARRAY_PROP(name)                       \
++    if (oldViewProps.name != newViewProps.name) {                   \
++        NSMutableArray *values = [NSMutableArray array];            \
++        for (const auto &value: newViewProps.name) {                \
++            [values addObject:RCTNSStringFromString(value)];        \
++        }                                                           \
++        _view.name = values;                                        \
++    }
++
+     REMAP_WEBVIEW_PROP(scrollEnabled)
+     REMAP_WEBVIEW_STRING_PROP(injectedJavaScript)
++    REMAP_WEBVIEW_STRING_ARRAY_PROP(injectedJavaScriptBuiltinScriptIds)
+     REMAP_WEBVIEW_STRING_PROP(injectedJavaScriptBeforeContentLoaded)
++    REMAP_WEBVIEW_STRING_ARRAY_PROP(injectedJavaScriptBeforeContentLoadedBuiltinScriptIds)
+     REMAP_WEBVIEW_PROP(injectedJavaScriptForMainFrameOnly)
+     REMAP_WEBVIEW_PROP(injectedJavaScriptBeforeContentLoadedForMainFrameOnly)
+     REMAP_WEBVIEW_STRING_PROP(injectedJavaScriptObject)
+@@ -275,6 +287,7 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
      REMAP_WEBVIEW_PROP(allowUniversalAccessFromFileURLs)
      REMAP_WEBVIEW_PROP(allowsInlineMediaPlayback)
      REMAP_WEBVIEW_PROP(webviewDebuggingEnabled)
@@ -511,10 +937,20 @@ index 1ae84c89237f2133378b35a75f6b48a538a1502f..3939734732ecf5ff67c98096decc08f1
      REMAP_WEBVIEW_PROP(mediaPlaybackRequiresUserAction)
      REMAP_WEBVIEW_PROP(automaticallyAdjustContentInsets)
 diff --git a/apple/RNCWebViewImpl.h b/apple/RNCWebViewImpl.h
-index ba9adf749d3874b74952a8f7d7044d939672a6b3..1a2d15a61e1a1e4715fa63bcacd9989deb636774 100644
+index ba9adf749d3874b74952a8f7d7044d939672a6b3..3bc7975e654fba288e1307f4556be53cdace002d 100644
 --- a/apple/RNCWebViewImpl.h
 +++ b/apple/RNCWebViewImpl.h
-@@ -81,6 +81,7 @@ shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *)request
+@@ -70,7 +70,9 @@ shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *)request
+ @property (nonatomic, copy) NSDictionary * _Nullable source;
+ @property (nonatomic, assign) BOOL messagingEnabled;
+ @property (nonatomic, copy) NSString * _Nullable injectedJavaScript;
++@property (nonatomic, copy) NSArray<NSString *> * _Nullable injectedJavaScriptBuiltinScriptIds;
+ @property (nonatomic, copy) NSString * _Nullable injectedJavaScriptBeforeContentLoaded;
++@property (nonatomic, copy) NSArray<NSString *> * _Nullable injectedJavaScriptBeforeContentLoadedBuiltinScriptIds;
+ @property (nonatomic, assign) BOOL injectedJavaScriptForMainFrameOnly;
+ @property (nonatomic, assign) BOOL injectedJavaScriptBeforeContentLoadedForMainFrameOnly;
+ @property (nonatomic, copy) NSString * _Nullable injectedJavaScriptObject;
+@@ -81,6 +83,7 @@ shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *)request
  @property (nonatomic, assign) CGFloat decelerationRate;
  @property (nonatomic, assign) BOOL allowsInlineMediaPlayback;
  @property (nonatomic, assign) BOOL webviewDebuggingEnabled;
@@ -523,38 +959,340 @@ index ba9adf749d3874b74952a8f7d7044d939672a6b3..1a2d15a61e1a1e4715fa63bcacd9989d
  @property (nonatomic, assign) BOOL bounces;
  @property (nonatomic, assign) BOOL mediaPlaybackRequiresUserAction;
 diff --git a/apple/RNCWebViewImpl.m b/apple/RNCWebViewImpl.m
-index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b4855878b7d 100644
+index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a91b3c04b 100644
 --- a/apple/RNCWebViewImpl.m
 +++ b/apple/RNCWebViewImpl.m
-@@ -145,6 +145,8 @@ @implementation RNCWebViewImpl
+@@ -25,6 +25,301 @@
+
+ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
+
++#define RNC_WEBVIEW_BUILTIN_SCRIPT(...) @#__VA_ARGS__
++
++static NSMutableDictionary<NSString *, NSString *> *RNCWebViewBuiltinScriptCache(void)
++{
++  static NSMutableDictionary<NSString *, NSString *> *cache;
++  static dispatch_once_t onceToken;
++  dispatch_once(&onceToken, ^{
++    cache = [NSMutableDictionary new];
++  });
++  return cache;
++}
++
++static NSString *RNCWebViewReadBundleScript(NSString *resourceName)
++{
++  NSString *path = [[NSBundle mainBundle] pathForResource:resourceName ofType:@"js"];
++  if (path == nil) {
++    RCTLogWarn(@"RNCWebView builtin script resource not found: %@", resourceName);
++    return nil;
++  }
++
++  NSError *error = nil;
++  NSString *source = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
++  if (source == nil) {
++    RCTLogWarn(@"RNCWebView failed to read builtin script resource %@: %@", resourceName, error);
++  }
++  return source;
++}
++
++static NSString *RNCWebViewLoadBuiltinScript(NSString *scriptId)
++{
++  NSString *cached = RNCWebViewBuiltinScriptCache()[scriptId];
++  if (cached != nil) {
++    return cached.length > 0 ? cached : nil;
++  }
++
++  NSString *source = nil;
++  if ([scriptId isEqualToString:@"rabby-jsbridge-harden"]) {
++    source = RNC_WEBVIEW_BUILTIN_SCRIPT(
++      (function () {
++        function safeStartsWith(str, search) {
++          if (typeof str !== "string" || typeof search !== "string") return false;
++          for (var i = 0; i < search.length; i++) {
++            if (str[i] !== search[i]) return false;
++          }
++          return true;
++        }
++
++        if (window.ReactNativeWebView == null) return;
++        var parse = JSON.parse;
++        var realPost = window.ReactNativeWebView.postMessage.bind(window.ReactNativeWebView);
++        function myPostMessage(msg) {
++          try {
++            var json = parse(msg);
++            if (
++              json &&
++              json.name != null &&
++              !(location.origin === json.origin ||
++                location.origin === json.origin + "/" ||
++                safeStartsWith(json.origin, location.origin + "/"))
++            ) {
++              console.warn("Origin mismatch in postMessage: expected " + location.origin + ", got " + json.origin);
++              return;
++            }
++          } catch (_a) {}
++          return realPost(msg);
++        }
++        window.ReactNativeWebView = new Proxy(window.ReactNativeWebView || {}, {
++          get: function (target, prop) {
++            if (prop === "postMessage") return myPostMessage;
++            var f = Reflect.get(target, prop);
++            return typeof f === "function" ? f.bind(target) : f;
++          },
++        });
++      })();
++    );
++  } else if ([scriptId isEqualToString:@"rabby-inpage-web3"]) {
++    source = RNCWebViewReadBundleScript(@"InpageBridgeWeb3");
++  } else if ([scriptId isEqualToString:@"rabby-browser-script-base"]) {
++    source = RNC_WEBVIEW_BUILTIN_SCRIPT(
++      ;(function () {
++        if (!window.__RABBY_WEBVIEW_BRIDGE_POSTER__) {
++          window.__RABBY_WEBVIEW_BRIDGE_POSTER__ = function (content, pos) {
++            if (typeof content !== "object") content = { primitive: content };
++            pos = pos || "unknown";
++            var jsonString = "";
++
++            var safeJsonStringifyReplacer = (function () {
++              var cache = new WeakSet();
++              return function (key, value) {
++                if (key.indexOf("__reactFiber") === 0) return "TRIMED";
++                if (typeof value === "object" && value !== null) {
++                  if (cache.has(value)) return;
++                  cache.add(value);
++                }
++                if (typeof value === "bigint") return value.toString() + "n";
++                return value;
++              };
++            })();
++
++            try {
++              jsonString = JSON.stringify(content, safeJsonStringifyReplacer);
++            } catch (e) {
++              jsonString = JSON.stringify({
++                type: "RD::BROWSER_SCRIPT_ERR_CAPTURED",
++                payload: {
++                  message: e.message,
++                  stack: e.stack,
++                  position: pos,
++                }
++              });
++            }
++
++            if (window.ReactNativeWebView) {
++              window.ReactNativeWebView.postMessage(jsonString);
++            }
++          };
++        }
++
++        window.__RABBY_WEBVIEW_BRIDGE_GET_WINDOW_INFO__ = function() {
++          var siteNameMeta = document.querySelector("head > meta[property=\"og:site_name\"]");
++          var ogSiteName = siteNameMeta ? siteNameMeta.getAttribute("content") : "";
++          var title = (function () {
++            var titleMeta = document.querySelector("head > meta[name=\"title\"]");
++            return titleMeta ? titleMeta.getAttribute("content") : "";
++          })() || document.title;
++
++          var shortcutIconNode = window.document.querySelector("head > link[rel=\"shortcut icon\"]");
++          var shortcutIconHref = shortcutIconNode ? shortcutIconNode.href : "";
++          var iconHref = shortcutIconHref || (function () {
++            var iconNodes = Array.from(window.document.querySelectorAll("head > link[rel=\"icon\"]")).find(function (icon) {
++              return Boolean(icon.href);
++            }) || [];
++            return iconNodes && iconNodes.length > 0 ? iconNodes[0].href : "";
++          })();
++
++          var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
++
++          return {
++            title: title,
++            ogSiteName: ogSiteName,
++            height: height,
++            shortcutIconHref: shortcutIconHref,
++            iconHref: iconHref,
++            referrer: document.referrer,
++          };
++        };
++      })();
++    );
++  } else if ([scriptId isEqualToString:@"rabby-spa-url-change-listener"]) {
++    source = RNC_WEBVIEW_BUILTIN_SCRIPT(
++      ;(function () {
++        var __rabbyHistory = window.history;
++        var __rabbyPushState = __rabbyHistory.pushState;
++        var __rabbyReplaceState = __rabbyHistory.replaceState;
++        function __rabby__updateUrl() {
++          var info = window.__RABBY_WEBVIEW_BRIDGE_GET_WINDOW_INFO__();
++
++          window.__RABBY_WEBVIEW_BRIDGE_POSTER__({
++            type: "RD::NAV_CHANGE",
++            payload: {
++              url: location.href,
++              title: info.title,
++              ogSiteName: info.ogSiteName,
++              icon: info.iconHref,
++              shortcutIconHref: info.shortcutIconHref,
++              height: info.height,
++            }
++          }, "NAV_CHANGE");
++
++          setTimeout(function () {
++            var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
++            window.__RABBY_WEBVIEW_BRIDGE_POSTER__({
++              type: "RD::GET_HEIGHT",
++              payload: {
++                height: height
++              }
++            }, "GET_HEIGHT");
++          }, 500);
++        }
++
++        __rabbyHistory.pushState = function(state) {
++          setTimeout(function () {
++            __rabby__updateUrl();
++          }, 100);
++          return __rabbyPushState.apply(history, arguments);
++        };
++
++        __rabbyHistory.replaceState = function(state) {
++          setTimeout(function () {
++            __rabby__updateUrl();
++          }, 100);
++          return __rabbyReplaceState.apply(history, arguments);
++        };
++
++        window.addEventListener("popstate", function(event) {
++          __rabby__updateUrl();
++        });
++      })();
++    );
++  } else if ([scriptId isEqualToString:@"rabby-return-true"]) {
++    source = @";true;";
++  } else if ([scriptId isEqualToString:@"rabby-dev-window-info-after-load"]) {
++    source = RNC_WEBVIEW_BUILTIN_SCRIPT(
++      ;(function () {
++        setTimeout(function() {
++          var info = window.__RABBY_WEBVIEW_BRIDGE_GET_WINDOW_INFO__();
++
++          window.__RABBY_WEBVIEW_BRIDGE_POSTER__({
++            type: "RD::GET_WINDOW_INFO_AFTER_LOAD",
++            payload: {
++              url: location.href,
++              title: info.title,
++              ogSiteName: info.ogSiteName,
++              icon: info.iconHref,
++              shortcutIconHref: info.shortcutIconHref,
++              height: info.height,
++            }
++          }, "GET_WINDOW_INFO_AFTER_LOAD");
++        }, 500);
++      })();
++    );
++  } else if ([scriptId isEqualToString:@"rabby-dev-vconsole"]) {
++    source = RNCWebViewReadBundleScript(@"vconsole.min");
++  } else if ([scriptId isEqualToString:@"rabby-dev-vconsole-init"]) {
++    source = RNC_WEBVIEW_BUILTIN_SCRIPT(
++      ;(function() {
++        function setVConsoleSwithXY(x, y) {
++          localStorage.setItem("vConsole_switch_x", window.innerWidth - x + "");
++          localStorage.setItem("vConsole_switch_y", window.innerHeight - y + "");
++        }
++
++        function initVConsole() {
++          setVConsoleSwithXY(50, 50);
++          if (window.VConsole) {
++            new window.VConsole();
++          } else {
++            console.error("VConsole is not loaded properly.");
++          }
++        }
++
++        initVConsole();
++      })();
++    );
++  } else if ([scriptId isEqualToString:@"rabby-dev-log-on-message"]) {
++    source = RNC_WEBVIEW_BUILTIN_SCRIPT(
++      ;(function() {
++        window.addEventListener("message", function(event) {
++          console.debug("received event", event);
++        });
++      })();
++    );
++  } else if ([scriptId isEqualToString:@"rabby-android-patch-anchor-target"]) {
++    source = nil;
++  } else {
++    RCTLogWarn(@"RNCWebView unknown builtin script id: %@", scriptId);
++  }
++
++  RNCWebViewBuiltinScriptCache()[scriptId] = source ?: @"";
++  return source;
++}
++
++static NSString *RNCWebViewResolveBuiltinScripts(NSArray<NSString *> *scriptIds)
++{
++  if (scriptIds == nil || scriptIds.count == 0) {
++    return nil;
++  }
++
++  NSMutableArray<NSString *> *parts = [NSMutableArray new];
++  for (id scriptId in scriptIds) {
++    if (![scriptId isKindOfClass:NSString.class]) {
++      continue;
++    }
++    NSString *source = RNCWebViewLoadBuiltinScript((NSString *)scriptId);
++    if (source.length > 0) {
++      [parts addObject:source];
++    }
++  }
++
++  return parts.count > 0 ? [parts componentsJoinedByString:@"\n"] : nil;
++}
++
++static NSString *RNCWebViewCombineScripts(NSArray<NSString *> *builtinScriptIds, NSString *source)
++{
++  NSMutableArray<NSString *> *parts = [NSMutableArray new];
++  NSString *builtinSource = RNCWebViewResolveBuiltinScripts(builtinScriptIds);
++  if (builtinSource.length > 0) {
++    [parts addObject:builtinSource];
++  }
++  if (source.length > 0) {
++    [parts addObject:source];
++  }
++
++  return parts.count > 0 ? [parts componentsJoinedByString:@"\n"] : nil;
++}
++
+ #if TARGET_OS_IOS
+ // runtime trick to remove WKWebView keyboard default toolbar
+ // see: http://stackoverflow.com/questions/19033292/ios-7-uiwebview-keyboard-issue/19042279#19042279
+@@ -145,6 +440,8 @@ @implementation RNCWebViewImpl
    UIStatusBarStyle _savedStatusBarStyle;
  #endif // !TARGET_OS_OSX
    BOOL _savedStatusBarHidden;
 +  BOOL _disablePromptDuringLoading;
 +  BOOL _disableJsPromptLike;
- 
+
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
    UIScrollViewContentInsetAdjustmentBehavior _savedContentInsetAdjustmentBehavior;
-@@ -179,6 +181,8 @@ - (instancetype)initWithFrame:(CGRect)frame
+@@ -179,6 +476,8 @@ - (instancetype)initWithFrame:(CGRect)frame
      _injectedJavaScriptForMainFrameOnly = YES;
      _injectedJavaScriptBeforeContentLoaded = nil;
      _injectedJavaScriptBeforeContentLoadedForMainFrameOnly = YES;
 +    _disablePromptDuringLoading = YES;
 +    _disableJsPromptLike = NO;
- 
+
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
      _savedContentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-@@ -588,6 +592,9 @@ - (void)setWebviewDebuggingEnabled:(BOOL)webviewDebuggingEnabled {
+@@ -588,6 +887,9 @@ - (void)setWebviewDebuggingEnabled:(BOOL)webviewDebuggingEnabled {
        _webView.inspectable = _webviewDebuggingEnabled;
  }
  #endif
 +- (void)setDisableJsPromptLike:(BOOL)disableJsPromptLike {
 +  _disableJsPromptLike = disableJsPromptLike;
 +}
- 
+
  #ifdef RCT_NEW_ARCH_ENABLED
  - (void)destroyWebView
-@@ -685,6 +692,7 @@ -(void)keyboardDisplacementFix
+@@ -685,6 +987,7 @@ -(void)keyboardDisplacementFix
  - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context{
    if ([keyPath isEqual:@"estimatedProgress"] && object == self.webView) {
      if(_onLoadingProgress){
@@ -562,7 +1300,7 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
        NSMutableDictionary<NSString *, id> *event = [self baseEvent];
        [event addEntriesFromDictionary:@{@"progress":[NSNumber numberWithDouble:self.webView.estimatedProgress]}];
        _onLoadingProgress(event);
-@@ -762,6 +770,7 @@ - (void)userContentController:(WKUserContentController *)userContentController
+@@ -762,6 +1065,7 @@ - (void)userContentController:(WKUserContentController *)userContentController
        NSMutableDictionary<NSString *, id> *event = [self baseEvent];
        [event addEntriesFromDictionary: @{@"navigationType": message.body}];
        _onLoadingFinish(event);
@@ -570,10 +1308,10 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
      }
    } else if ([message.name isEqualToString:MessageHandlerName]) {
      if (_onMessage) {
-@@ -1156,17 +1165,45 @@ - (void)                    webView:(WKWebView *)webView
- 
+@@ -1156,17 +1460,45 @@ - (void)                    webView:(WKWebView *)webView
+
  #pragma mark - WKNavigationDelegate methods
- 
+
 +/**
 + * one method to construct dialog title information based on the frame,
 + * if get host, show it as title, otherwise show a default title
@@ -621,7 +1359,7 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
  #else
    NSAlert *alert = [[NSAlert alloc] init];
    [alert setMessageText:message];
-@@ -1180,12 +1217,18 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
+@@ -1180,12 +1512,18 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
   * confirm
   */
  - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL))completionHandler{
@@ -643,7 +1381,7 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
      completionHandler(NO);
    }]];
    [[self topViewController] presentViewController:alert animated:YES completion:NULL];
-@@ -1205,16 +1248,23 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
+@@ -1205,16 +1543,23 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
   * prompt
   */
  - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *))completionHandler{
@@ -671,7 +1409,7 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
      completionHandler(nil);
    }];
    [alert addAction:cancelAction];
-@@ -1253,21 +1303,21 @@ - (void)                         webView:(WKWebView *)webView
+@@ -1253,21 +1598,21 @@ - (void)                         webView:(WKWebView *)webView
    requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin
                          initiatedByFrame:(WKFrameInfo *)frame
                                      type:(WKMediaCaptureType)type
@@ -707,8 +1445,8 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
 +   }
  }
  #endif
- 
-@@ -1336,6 +1386,7 @@ - (void)                  webView:(WKWebView *)webView
+
+@@ -1336,6 +1681,7 @@ - (void)                  webView:(WKWebView *)webView
                          NSMutableDictionary<NSString *, id> *event = [self baseEvent];
                          [event addEntriesFromDictionary: @{
                              @"url": (request.URL).absoluteString,
@@ -716,7 +1454,7 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
                              @"navigationType": navigationTypes[@(navigationType)]
                          }];
                          self->_onLoadingStart(event);
-@@ -1370,6 +1421,7 @@ - (void)                  webView:(WKWebView *)webView
+@@ -1370,6 +1716,7 @@ - (void)                  webView:(WKWebView *)webView
              NSMutableDictionary<NSString *, id> *event = [self baseEvent];
              [event addEntriesFromDictionary: @{
                  @"url": (request.URL).absoluteString,
@@ -724,19 +1462,75 @@ index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b48
                  @"navigationType": navigationTypes[@(navigationType)]
              }];
              _onLoadingStart(event);
-@@ -1535,6 +1587,7 @@ - (void)webView:(WKWebView *)webView
+@@ -1535,6 +1882,7 @@ - (void)webView:(WKWebView *)webView
    }
- 
+
    if (_onLoadingFinish) {
 +    _disablePromptDuringLoading = NO;
      _onLoadingFinish([self baseEvent]);
    }
  }
+@@ -1667,8 +2015,9 @@ - (void)setBounces:(BOOL)bounces
+
+ - (void)setInjectedJavaScript:(NSString *)source {
+   _injectedJavaScript = source;
++  NSString *scriptSource = RNCWebViewCombineScripts(_injectedJavaScriptBuiltinScriptIds, source);
+
+-  self.atEndScript = source == nil ? nil : [[WKUserScript alloc] initWithSource:source
++  self.atEndScript = scriptSource == nil ? nil : [[WKUserScript alloc] initWithSource:scriptSource
+                                                                   injectionTime:WKUserScriptInjectionTimeAtDocumentEnd
+                                                                forMainFrameOnly:_injectedJavaScriptForMainFrameOnly];
+
+@@ -1677,6 +2026,11 @@ - (void)setInjectedJavaScript:(NSString *)source {
+   }
+ }
+
++- (void)setInjectedJavaScriptBuiltinScriptIds:(NSArray<NSString *> *)scriptIds {
++  _injectedJavaScriptBuiltinScriptIds = [scriptIds copy];
++  [self setInjectedJavaScript:_injectedJavaScript];
++}
++
+ - (void)setInjectedJavaScriptObject:(NSString *)source
+ {
+   self.injectedObjectJsonScript = [
+@@ -1706,8 +2060,9 @@ - (void)setEnableApplePay:(BOOL)enableApplePay {
+
+ - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
+   _injectedJavaScriptBeforeContentLoaded = source;
++  NSString *scriptSource = RNCWebViewCombineScripts(_injectedJavaScriptBeforeContentLoadedBuiltinScriptIds, source);
+
+-  self.atStartScript = source == nil ? nil : [[WKUserScript alloc] initWithSource:source
++  self.atStartScript = scriptSource == nil ? nil : [[WKUserScript alloc] initWithSource:scriptSource
+                                                                     injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+                                                                  forMainFrameOnly:_injectedJavaScriptBeforeContentLoadedForMainFrameOnly];
+
+@@ -1716,6 +2071,11 @@ - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
+   }
+ }
+
++- (void)setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds:(NSArray<NSString *> *)scriptIds {
++  _injectedJavaScriptBeforeContentLoadedBuiltinScriptIds = [scriptIds copy];
++  [self setInjectedJavaScriptBeforeContentLoaded:_injectedJavaScriptBeforeContentLoaded];
++}
++
+ - (void)setInjectedJavaScriptForMainFrameOnly:(BOOL)mainFrameOnly {
+   _injectedJavaScriptForMainFrameOnly = mainFrameOnly;
+   [self setInjectedJavaScript:_injectedJavaScript];
 diff --git a/apple/RNCWebViewManager.mm b/apple/RNCWebViewManager.mm
-index 1d22028a1c44d18f8bf333265dd6781ff3df4250..2960b926cf1fca31eab5b114afc8236be6ca744c 100644
+index 1d22028a1c44d18f8bf333265dd6781ff3df4250..98a8ecaa47c470d0b6725da9bd96d1404b2282e7 100644
 --- a/apple/RNCWebViewManager.mm
 +++ b/apple/RNCWebViewManager.mm
-@@ -63,6 +63,7 @@ - (RNCView *)view
+@@ -53,7 +53,9 @@ - (RNCView *)view
+ RCT_EXPORT_VIEW_PROPERTY(onContentProcessDidTerminate, RCTDirectEventBlock)
+ RCT_EXPORT_VIEW_PROPERTY(onOpenWindow, RCTDirectEventBlock)
+ RCT_EXPORT_VIEW_PROPERTY(injectedJavaScript, NSString)
++RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptBuiltinScriptIds, NSArray)
+ RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptBeforeContentLoaded, NSString)
++RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptBeforeContentLoadedBuiltinScriptIds, NSArray)
+ RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptForMainFrameOnly, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptBeforeContentLoadedForMainFrameOnly, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptObject, NSString)
+@@ -63,6 +65,7 @@ - (RNCView *)view
  RCT_EXPORT_VIEW_PROPERTY(allowUniversalAccessFromFileURLs, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(allowsInlineMediaPlayback, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(webviewDebuggingEnabled, BOOL)
@@ -744,6 +1538,29 @@ index 1d22028a1c44d18f8bf333265dd6781ff3df4250..2960b926cf1fca31eab5b114afc8236b
  RCT_EXPORT_VIEW_PROPERTY(allowsAirPlayForMediaPlayback, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(mediaPlaybackRequiresUserAction, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(dataDetectorTypes, WKDataDetectorTypes)
+diff --git a/lib/RNCWebViewNativeComponent.d.ts b/lib/RNCWebViewNativeComponent.d.ts
+index d898feb33b08830382a565b1503f0c3ffebd8bb5..1550510cac52c869d749174cf84987c7284e7d4e 100644
+--- a/lib/RNCWebViewNativeComponent.d.ts
++++ b/lib/RNCWebViewNativeComponent.d.ts
+@@ -188,7 +188,9 @@ export interface NativeProps extends ViewProps {
+     cacheEnabled?: boolean;
+     incognito?: boolean;
+     injectedJavaScript?: string;
++    injectedJavaScriptBuiltinScriptIds?: ReadonlyArray<string>;
+     injectedJavaScriptBeforeContentLoaded?: string;
++    injectedJavaScriptBeforeContentLoadedBuiltinScriptIds?: ReadonlyArray<string>;
+     injectedJavaScriptForMainFrameOnly?: boolean;
+     injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
+     javaScriptCanOpenWindowsAutomatically?: boolean;
+diff --git a/lib/RNCWebViewNativeComponent.js b/lib/RNCWebViewNativeComponent.js
+index f90905ba00650c3a2013e12b11db2806764e1eba..ce95ceb595ac53b555f70b856f1c6193e3b1e8bd 100644
+--- a/lib/RNCWebViewNativeComponent.js
++++ b/lib/RNCWebViewNativeComponent.js
+@@ -1 +1 @@
+-var _interopRequireDefault=require("@babel/runtime/helpers/interopRequireDefault");Object.defineProperty(exports,"__esModule",{value:true});exports.default=exports.__INTERNAL_VIEW_CONFIG=exports.Commands=void 0;var _codegenNativeComponent=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeComponent"));var _codegenNativeCommands=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeCommands"));var NativeComponentRegistry=require('react-native/Libraries/NativeComponent/NativeComponentRegistry');var _require=require('react-native/Libraries/NativeComponent/ViewConfigIgnore'),ConditionallyIgnoredEventHandlers=_require.ConditionallyIgnoredEventHandlers;var _require2=require("react-native/Libraries/ReactNative/RendererProxy"),dispatchCommand=_require2.dispatchCommand;var nativeComponentName='RNCWebView';var __INTERNAL_VIEW_CONFIG=exports.__INTERNAL_VIEW_CONFIG={uiViewClassName:'RNCWebView',directEventTypes:{topContentSizeChange:{registrationName:'onContentSizeChange'},topRenderProcessGone:{registrationName:'onRenderProcessGone'},topContentProcessDidTerminate:{registrationName:'onContentProcessDidTerminate'},topCustomMenuSelection:{registrationName:'onCustomMenuSelection'},topFileDownload:{registrationName:'onFileDownload'},topLoadingError:{registrationName:'onLoadingError'},topLoadingFinish:{registrationName:'onLoadingFinish'},topLoadingProgress:{registrationName:'onLoadingProgress'},topLoadingStart:{registrationName:'onLoadingStart'},topHttpError:{registrationName:'onHttpError'},topMessage:{registrationName:'onMessage'},topOpenWindow:{registrationName:'onOpenWindow'},topScroll:{registrationName:'onScroll'},topShouldStartLoadWithRequest:{registrationName:'onShouldStartLoadWithRequest'}},validAttributes:Object.assign({allowFileAccess:true,allowsProtectedMedia:true,allowsFullscreenVideo:true,androidLayerType:true,cacheMode:true,domStorageEnabled:true,downloadingMessage:true,forceDarkOn:true,geolocationEnabled:true,lackPermissionToDownloadMessage:true,messagingModuleName:true,minimumFontSize:true,mixedContentMode:true,nestedScrollEnabled:true,overScrollMode:true,saveFormDataDisabled:true,scalesPageToFit:true,setBuiltInZoomControls:true,setDisplayZoomControls:true,setSupportMultipleWindows:true,textZoom:true,thirdPartyCookiesEnabled:true,hasOnScroll:true,allowingReadAccessToURL:true,allowsBackForwardNavigationGestures:true,allowsInlineMediaPlayback:true,allowsAirPlayForMediaPlayback:true,allowsLinkPreview:true,automaticallyAdjustContentInsets:true,autoManageStatusBarEnabled:true,bounces:true,contentInset:true,contentInsetAdjustmentBehavior:true,contentMode:true,dataDetectorTypes:true,decelerationRate:true,directionalLockEnabled:true,enableApplePay:true,hideKeyboardAccessoryView:true,keyboardDisplayRequiresUserAction:true,limitsNavigationsToAppBoundDomains:true,mediaCapturePermissionGrantType:true,pagingEnabled:true,pullToRefreshEnabled:true,scrollEnabled:true,sharedCookiesEnabled:true,textInteractionEnabled:true,useSharedProcessPool:true,menuItems:true,suppressMenuItems:true,hasOnFileDownload:true,fraudulentWebsiteWarningEnabled:true,allowFileAccessFromFileURLs:true,allowUniversalAccessFromFileURLs:true,applicationNameForUserAgent:true,basicAuthCredential:true,cacheEnabled:true,incognito:true,injectedJavaScript:true,injectedJavaScriptBeforeContentLoaded:true,injectedJavaScriptForMainFrameOnly:true,injectedJavaScriptBeforeContentLoadedForMainFrameOnly:true,javaScriptCanOpenWindowsAutomatically:true,javaScriptEnabled:true,webviewDebuggingEnabled:true,mediaPlaybackRequiresUserAction:true,messagingEnabled:true,hasOnOpenWindowEvent:true,showsHorizontalScrollIndicator:true,showsVerticalScrollIndicator:true,newSource:true,userAgent:true,injectedJavaScriptObject:true},ConditionallyIgnoredEventHandlers({onContentSizeChange:true,onRenderProcessGone:true,onContentProcessDidTerminate:true,onCustomMenuSelection:true,onFileDownload:true,onLoadingError:true,onLoadingFinish:true,onLoadingProgress:true,onLoadingStart:true,onHttpError:true,onMessage:true,onOpenWindow:true,onScroll:true,onShouldStartLoadWithRequest:true}))};var _default=exports.default=NativeComponentRegistry.get(nativeComponentName,function(){return __INTERNAL_VIEW_CONFIG;});var Commands=exports.Commands={goBack:function goBack(ref){dispatchCommand(ref,"goBack",[]);},goForward:function goForward(ref){dispatchCommand(ref,"goForward",[]);},reload:function reload(ref){dispatchCommand(ref,"reload",[]);},stopLoading:function stopLoading(ref){dispatchCommand(ref,"stopLoading",[]);},injectJavaScript:function injectJavaScript(ref,javascript){dispatchCommand(ref,"injectJavaScript",[javascript]);},requestFocus:function requestFocus(ref){dispatchCommand(ref,"requestFocus",[]);},postMessage:function postMessage(ref,data){dispatchCommand(ref,"postMessage",[data]);},loadUrl:function loadUrl(ref,url){dispatchCommand(ref,"loadUrl",[url]);},clearFormData:function clearFormData(ref){dispatchCommand(ref,"clearFormData",[]);},clearCache:function clearCache(ref,includeDiskFiles){dispatchCommand(ref,"clearCache",[includeDiskFiles]);},clearHistory:function clearHistory(ref){dispatchCommand(ref,"clearHistory",[]);}};
+\ No newline at end of file
++var _interopRequireDefault=require("@babel/runtime/helpers/interopRequireDefault");Object.defineProperty(exports,"__esModule",{value:true});exports.default=exports.__INTERNAL_VIEW_CONFIG=exports.Commands=void 0;var _codegenNativeComponent=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeComponent"));var _codegenNativeCommands=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeCommands"));var NativeComponentRegistry=require('react-native/Libraries/NativeComponent/NativeComponentRegistry');var _require=require('react-native/Libraries/NativeComponent/ViewConfigIgnore'),ConditionallyIgnoredEventHandlers=_require.ConditionallyIgnoredEventHandlers;var _require2=require("react-native/Libraries/ReactNative/RendererProxy"),dispatchCommand=_require2.dispatchCommand;var nativeComponentName='RNCWebView';var __INTERNAL_VIEW_CONFIG=exports.__INTERNAL_VIEW_CONFIG={uiViewClassName:'RNCWebView',directEventTypes:{topContentSizeChange:{registrationName:'onContentSizeChange'},topRenderProcessGone:{registrationName:'onRenderProcessGone'},topContentProcessDidTerminate:{registrationName:'onContentProcessDidTerminate'},topCustomMenuSelection:{registrationName:'onCustomMenuSelection'},topFileDownload:{registrationName:'onFileDownload'},topLoadingError:{registrationName:'onLoadingError'},topLoadingFinish:{registrationName:'onLoadingFinish'},topLoadingProgress:{registrationName:'onLoadingProgress'},topLoadingStart:{registrationName:'onLoadingStart'},topHttpError:{registrationName:'onHttpError'},topMessage:{registrationName:'onMessage'},topOpenWindow:{registrationName:'onOpenWindow'},topScroll:{registrationName:'onScroll'},topShouldStartLoadWithRequest:{registrationName:'onShouldStartLoadWithRequest'}},validAttributes:Object.assign({allowFileAccess:true,allowsProtectedMedia:true,allowsFullscreenVideo:true,androidLayerType:true,cacheMode:true,domStorageEnabled:true,downloadingMessage:true,forceDarkOn:true,geolocationEnabled:true,lackPermissionToDownloadMessage:true,messagingModuleName:true,minimumFontSize:true,mixedContentMode:true,nestedScrollEnabled:true,overScrollMode:true,saveFormDataDisabled:true,scalesPageToFit:true,setBuiltInZoomControls:true,setDisplayZoomControls:true,setSupportMultipleWindows:true,textZoom:true,thirdPartyCookiesEnabled:true,hasOnScroll:true,allowingReadAccessToURL:true,allowsBackForwardNavigationGestures:true,allowsInlineMediaPlayback:true,allowsAirPlayForMediaPlayback:true,allowsLinkPreview:true,automaticallyAdjustContentInsets:true,autoManageStatusBarEnabled:true,bounces:true,contentInset:true,contentInsetAdjustmentBehavior:true,contentMode:true,dataDetectorTypes:true,decelerationRate:true,directionalLockEnabled:true,enableApplePay:true,hideKeyboardAccessoryView:true,keyboardDisplayRequiresUserAction:true,limitsNavigationsToAppBoundDomains:true,mediaCapturePermissionGrantType:true,pagingEnabled:true,pullToRefreshEnabled:true,scrollEnabled:true,sharedCookiesEnabled:true,textInteractionEnabled:true,useSharedProcessPool:true,menuItems:true,suppressMenuItems:true,hasOnFileDownload:true,fraudulentWebsiteWarningEnabled:true,allowFileAccessFromFileURLs:true,allowUniversalAccessFromFileURLs:true,applicationNameForUserAgent:true,basicAuthCredential:true,cacheEnabled:true,incognito:true,injectedJavaScript:true,injectedJavaScriptBuiltinScriptIds:true,injectedJavaScriptBeforeContentLoaded:true,injectedJavaScriptBeforeContentLoadedBuiltinScriptIds:true,injectedJavaScriptForMainFrameOnly:true,injectedJavaScriptBeforeContentLoadedForMainFrameOnly:true,javaScriptCanOpenWindowsAutomatically:true,javaScriptEnabled:true,webviewDebuggingEnabled:true,mediaPlaybackRequiresUserAction:true,messagingEnabled:true,hasOnOpenWindowEvent:true,showsHorizontalScrollIndicator:true,showsVerticalScrollIndicator:true,newSource:true,userAgent:true,injectedJavaScriptObject:true},ConditionallyIgnoredEventHandlers({onContentSizeChange:true,onRenderProcessGone:true,onContentProcessDidTerminate:true,onCustomMenuSelection:true,onFileDownload:true,onLoadingError:true,onLoadingFinish:true,onLoadingProgress:true,onLoadingStart:true,onHttpError:true,onMessage:true,onOpenWindow:true,onScroll:true,onShouldStartLoadWithRequest:true}))};var _default=exports.default=NativeComponentRegistry.get(nativeComponentName,function(){return __INTERNAL_VIEW_CONFIG;});var Commands=exports.Commands={goBack:function goBack(ref){dispatchCommand(ref,"goBack",[]);},goForward:function goForward(ref){dispatchCommand(ref,"goForward",[]);},reload:function reload(ref){dispatchCommand(ref,"reload",[]);},stopLoading:function stopLoading(ref){dispatchCommand(ref,"stopLoading",[]);},injectJavaScript:function injectJavaScript(ref,javascript){dispatchCommand(ref,"injectJavaScript",[javascript]);},requestFocus:function requestFocus(ref){dispatchCommand(ref,"requestFocus",[]);},postMessage:function postMessage(ref,data){dispatchCommand(ref,"postMessage",[data]);},loadUrl:function loadUrl(ref,url){dispatchCommand(ref,"loadUrl",[url]);},clearFormData:function clearFormData(ref){dispatchCommand(ref,"clearFormData",[]);},clearCache:function clearCache(ref,includeDiskFiles){dispatchCommand(ref,"clearCache",[includeDiskFiles]);},clearHistory:function clearHistory(ref){dispatchCommand(ref,"clearHistory",[]);}};
+\ No newline at end of file
 diff --git a/lib/WebViewShared.d.ts b/lib/WebViewShared.d.ts
 index 37344a794b0cffd2e748e04f6827e732a7b4117b..3975335120549d725a1d1e24522f280abe0ed161 100644
 --- a/lib/WebViewShared.d.ts
@@ -765,7 +1582,7 @@ index 37344a794b0cffd2e748e04f6827e732a7b4117b..3975335120549d725a1d1e24522f280a
      onLoadProgress?: ((event: WebViewProgressEvent) => void) | undefined;
      onLoadEnd?: ((event: WebViewNavigationEvent | WebViewErrorEvent) => void) | undefined;
 diff --git a/lib/WebViewTypes.d.ts b/lib/WebViewTypes.d.ts
-index 7cbd83521257c1a730cca632a712737253dcddab..9a7011445029fbbd22524879f8fc01283e7f856d 100644
+index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9dd12ad93b 100644
 --- a/lib/WebViewTypes.d.ts
 +++ b/lib/WebViewTypes.d.ts
 @@ -45,6 +45,7 @@ export interface ContentInsetProp {
@@ -800,7 +1617,17 @@ index 7cbd83521257c1a730cca632a712737253dcddab..9a7011445029fbbd22524879f8fc0128
  export type ShouldStartLoadRequestEvent = NativeSyntheticEvent<ShouldStartLoadRequest>;
  export type FileDownloadEvent = NativeSyntheticEvent<FileDownload>;
  export type WebViewMessageEvent = NativeSyntheticEvent<WebViewMessage>;
-@@ -961,7 +969,7 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -183,7 +191,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
+     cacheEnabled?: boolean;
+     incognito?: boolean;
+     injectedJavaScript?: string;
++    injectedJavaScriptBuiltinScriptIds?: string[];
+     injectedJavaScriptBeforeContentLoaded?: string;
++    injectedJavaScriptBeforeContentLoadedBuiltinScriptIds?: string[];
+     injectedJavaScriptForMainFrameOnly?: boolean;
+     injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
+     javaScriptCanOpenWindowsAutomatically?: boolean;
+@@ -961,7 +971,7 @@ export interface WebViewSharedProps extends ViewProps {
      /**
       * Function that is invoked when the `WebView` starts loading.
       */
@@ -809,7 +1636,27 @@ index 7cbd83521257c1a730cca632a712737253dcddab..9a7011445029fbbd22524879f8fc0128
      /**
       * Function that is invoked when the `WebView` load fails.
       */
-@@ -1066,5 +1074,9 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -997,11 +1007,19 @@ export interface WebViewSharedProps extends ViewProps {
+      * when the view loads.
+      */
+     injectedJavaScript?: string;
++    /**
++     * Rabby extension: inject built-in native scripts by id at document end.
++     */
++    injectedJavaScriptBuiltinScriptIds?: string[];
+     /**
+      * Set this to provide JavaScript that will be injected into the web page
+      * once the webview is initialized but before the view loads any content.
+      */
+     injectedJavaScriptBeforeContentLoaded?: string;
++    /**
++     * Rabby extension: inject built-in native scripts by id before content loads.
++     */
++    injectedJavaScriptBeforeContentLoadedBuiltinScriptIds?: string[];
+     /**
+      * If `true` (default; mandatory for Android), loads the `injectedJavaScript` only into the main frame.
+      * If `false` (only supported on iOS and macOS), loads it into all frames (e.g. iframes).
+@@ -1066,5 +1084,9 @@ export interface WebViewSharedProps extends ViewProps {
       * Enables WebView remote debugging using Chrome (Android) or Safari (iOS).
       */
      webviewDebuggingEnabled?: boolean;
@@ -819,3 +1666,54 @@ index 7cbd83521257c1a730cca632a712737253dcddab..9a7011445029fbbd22524879f8fc0128
 +    disableJsPromptLike?: boolean;
  }
  export {};
+diff --git a/src/RNCWebViewNativeComponent.ts b/src/RNCWebViewNativeComponent.ts
+index 682ab39b9136598f62666e4f89a069702e654499..db75f6aada6d755f85b2a5e87191db064b62d646 100644
+--- a/src/RNCWebViewNativeComponent.ts
++++ b/src/RNCWebViewNativeComponent.ts
+@@ -256,7 +256,9 @@ export interface NativeProps extends ViewProps {
+   cacheEnabled?: boolean;
+   incognito?: boolean;
+   injectedJavaScript?: string;
++  injectedJavaScriptBuiltinScriptIds?: ReadonlyArray<string>;
+   injectedJavaScriptBeforeContentLoaded?: string;
++  injectedJavaScriptBeforeContentLoadedBuiltinScriptIds?: ReadonlyArray<string>;
+   injectedJavaScriptForMainFrameOnly?: boolean;
+   injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
+   javaScriptCanOpenWindowsAutomatically?: boolean;
+diff --git a/src/WebViewTypes.ts b/src/WebViewTypes.ts
+index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..cc3e507bf91c9da76a37f748ae6b6a76181b1b83 100644
+--- a/src/WebViewTypes.ts
++++ b/src/WebViewTypes.ts
+@@ -289,7 +289,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
+   cacheEnabled?: boolean;
+   incognito?: boolean;
+   injectedJavaScript?: string;
++  injectedJavaScriptBuiltinScriptIds?: string[];
+   injectedJavaScriptBeforeContentLoaded?: string;
++  injectedJavaScriptBeforeContentLoadedBuiltinScriptIds?: string[];
+   injectedJavaScriptForMainFrameOnly?: boolean;
+   injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
+   javaScriptCanOpenWindowsAutomatically?: boolean;
+@@ -1223,12 +1225,22 @@ export interface WebViewSharedProps extends ViewProps {
+    */
+   injectedJavaScript?: string;
+
++  /**
++   * Rabby extension: inject built-in native scripts by id at document end.
++   */
++  injectedJavaScriptBuiltinScriptIds?: string[];
++
+   /**
+    * Set this to provide JavaScript that will be injected into the web page
+    * once the webview is initialized but before the view loads any content.
+    */
+   injectedJavaScriptBeforeContentLoaded?: string;
+
++  /**
++   * Rabby extension: inject built-in native scripts by id before content loads.
++   */
++  injectedJavaScriptBeforeContentLoadedBuiltinScriptIds?: string[];
++
+   /**
+    * If `true` (default; mandatory for Android), loads the `injectedJavaScript` only into the main frame.
+    * If `false` (only supported on iOS and macOS), loads it into all frames (e.g. iframes).

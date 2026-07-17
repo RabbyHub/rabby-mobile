@@ -1,6 +1,6 @@
 import { toast } from '@/components2024/Toast';
 import { apisSafe } from '@/core/apis/safe';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { findChain } from '@/utils/chain';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useRequest } from 'ahooks';

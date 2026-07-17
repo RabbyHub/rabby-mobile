@@ -6,16 +6,16 @@ import React, {
   useState,
 } from 'react';
 
-import { ChainId } from '@aave/contract-helpers';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { OptimalRate } from '@paraswap/sdk';
+import type { ChainId } from '@aave/contract-helpers';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { OptimalRate } from '@paraswap/sdk';
 import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PopulatedTransaction } from 'ethers';
+import type { PopulatedTransaction } from 'ethers';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
@@ -26,13 +26,11 @@ import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -68,7 +66,7 @@ import { SwapType } from '../../types/swap';
 import DebtSwapModalOverview from './Overview';
 import TokenIcon from '../../components/TokenIcon';
 import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
-import { ParaswapRatesType, SwappableToken } from '../../types/swap';
+import type { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
 import {
@@ -764,7 +762,7 @@ export default function DebtSwapModal({
 
         const txId = last(results);
         if (txId && chainInfo?.id) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             chainInfo?.id,
             txId,

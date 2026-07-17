@@ -1776,6 +1776,16 @@ export class KeyringService extends RNEventEmitter {
       this.getPublicAccountSnapshotFromStore(),
     );
   }
+  getPublicAccountSnapshotAccounts() {
+    const snapshotAccounts = this.getAccountsFromSnapshot();
+    if (snapshotAccounts.length) {
+      this.traceKeyringPerf('public_snapshot_used', {
+        method: 'getPublicAccountSnapshotAccounts',
+        accountCount: snapshotAccounts.length,
+      });
+    }
+    return snapshotAccounts;
+  }
   private async getPublicAccountSnapshotAccountInfo(
     keyring: KeyringInstance,
     address: string,

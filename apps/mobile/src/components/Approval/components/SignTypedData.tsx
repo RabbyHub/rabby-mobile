@@ -1,20 +1,23 @@
-import React, { ReactNode, useEffect, useMemo, useState, useRef } from 'react';
+import type { ReactNode } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { WaitingSignComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
 import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TypedDataActions';
+import type {
+  ActionRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import {
   parseAction,
   formatSecurityEngineContext,
   fetchActionRequiredData,
-  ActionRequireData,
-  ParsedTypedDataActionData,
 } from '@rabby-wallet/rabby-action';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { findChain, isTestnetChainId } from '@/utils/chain';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useApproval } from '@/hooks/useApproval';
@@ -24,13 +27,10 @@ import { Skeleton } from '@rneui/themed';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { apiKeyring, apiProvider, apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
-import {
-  dappService,
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { openapi, testOpenapi } from '@/core/request';
 import { View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
@@ -60,7 +60,7 @@ import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { underline2Camelcase } from '@/core/utils/common';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import {
+import type {
   MultiAction,
   TypeDataActionItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -105,7 +105,7 @@ export const SignTypedData = ({
     useApprovalSecurityEngine();
   const { colors2024 } = useTheme2024();
   const styles = useMemo(() => getStyles(colors2024), [colors2024]);
-  const site = dappService.getDapp(params.session.origin);
+  const site = getDappSnapshot(params.session.origin);
 
   const [currentChainId, setCurrentChainId] = useState<number | undefined>(
     undefined,
@@ -257,7 +257,7 @@ export const SignTypedData = ({
     }
 
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappService.getDapp(params.session.origin);
+      const site = await dappServiceApi.getDapp(params.session.origin);
       if (site) {
         return findChain({
           enum: site?.chainId,
@@ -486,7 +486,7 @@ export const SignTypedData = ({
     if (requestChainId) {
       data.chainId = requestChainId.toString();
     } else if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappService.getDapp(params.session.origin);
+      const site = await dappServiceApi.getDapp(params.session.origin);
       if (site) {
         data.chainId = findChain({
           enum: site.chainId,
@@ -510,11 +510,12 @@ export const SignTypedData = ({
       walletProvider: {
         ethRpc: apiProvider.requestETHRpc,
         hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
-        getWhitelist: async () => whitelistService.getWhitelist(),
-        isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
+        getWhitelist: async () => whitelistServiceApi.getWhitelist(),
+        isWhitelistEnabled: async () =>
+          whitelistServiceApi.isWhitelistEnabled(),
         getPendingTxsByNonce: async (...args) =>
-          transactionHistoryService.getPendingTxsByNonce(...args),
+          transactionHistoryServiceApi.getPendingTxsByNonce(...args),
         findChain,
         ALIAS_ADDRESS,
       },
@@ -545,7 +546,7 @@ export const SignTypedData = ({
       isTestnet: isTestnetChainId(data.chainId),
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
       },
       origin: params.session.origin,
     });
@@ -571,7 +572,7 @@ export const SignTypedData = ({
       isTestnet: isTestnetChainId(parsedActionData.chainId),
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
       },
       origin: params.session.origin,
     });

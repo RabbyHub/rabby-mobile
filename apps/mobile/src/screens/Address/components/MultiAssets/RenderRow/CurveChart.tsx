@@ -387,40 +387,37 @@ const ChartHeader = React.memo(
     return (
       <Animated.View style={styles.charHeader}>
         <View style={styles.netWorthContainer}>
-          <Pressable
-            style={[
-              styles.netWorthTextContainer,
-              showNetWorthLoading ? styles.hidden : undefined,
-            ]}
-            onPress={onPressNetWorth}
-            {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <RefreshNudgedTickerText
-              value={formatNetWorth}
-              maxLength={24}
-              lineHeight={42}
-              duration={320}
-              style={[
-                styles.netWorth,
-                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-              ]}
-              fontSizeByLength={{
-                maxFontSize: MAX_NETWORTH_FS,
-                minFontSize: MIN_NETWORTH_FS,
-                threshold: NETWORTH_FIT_LEN,
-              }}
+          {showNetWorthLoading ? (
+            <Skeleton
+              {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
+              width={181}
+              height={42}
+              style={styles.skeletonNetWorth}
+              LinearGradientComponent={LoadingLinear}
             />
-          </Pressable>
-
-          <Skeleton
-            {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
-            width={181}
-            height={44}
-            style={[
-              styles.skeletonNetWorth,
-              !showNetWorthLoading && styles.hidden,
-            ]}
-            LinearGradientComponent={LoadingLinear}
-          />
+          ) : (
+            <Pressable
+              style={styles.netWorthTextContainer}
+              onPress={onPressNetWorth}
+              {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
+              <RefreshNudgedTickerText
+                value={formatNetWorth}
+                animateWidth={false}
+                maxLength={24}
+                lineHeight={42}
+                duration={320}
+                style={[
+                  styles.netWorth,
+                  hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+                ]}
+                fontSizeByLength={{
+                  maxFontSize: MAX_NETWORTH_FS,
+                  minFontSize: MIN_NETWORTH_FS,
+                  threshold: NETWORTH_FIT_LEN,
+                }}
+              />
+            </Pressable>
+          )}
 
           <Pressable
             style={({ pressed }) => [
@@ -449,8 +446,8 @@ const ChartHeader = React.memo(
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioChangeLoading)}
             width={100}
-            height={22}
-            style={styles.skeletonNetWorth}
+            height={18}
+            style={styles.skeletonChange}
             LinearGradientComponent={LoadingLinear}
           />
         ) : (
@@ -527,6 +524,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   skeletonNetWorth: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  skeletonChange: {
     borderRadius: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']

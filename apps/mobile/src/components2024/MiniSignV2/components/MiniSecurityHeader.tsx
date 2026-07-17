@@ -7,7 +7,7 @@ import { normalizeTxParams } from '@/components/Approval/components/SignTx/util'
 import { TxTypeComponent } from '@/components/Approval/components/SignTx/TxTypeComponent';
 
 import type { ExplainTxResponse, Tx } from '@rabby-wallet/rabby-api/dist/types';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { SecurityResult } from '../domain';
 
 export const MiniSecurityHeader: React.FC<{

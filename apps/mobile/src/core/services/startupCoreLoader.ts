@@ -1,0 +1,177 @@
+import {
+  ContactBookService,
+  ContactBookStore,
+} from '@rabby-wallet/service-address';
+import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
+import { KeyringService } from '@rabby-wallet/service-keyring';
+import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
+import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
+import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
+import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
+import HDKeyring from '@rabby-wallet/eth-hd-keyring';
+import type { KeyringIntf } from '@rabby-wallet/keyring-utils';
+
+import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
+import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
+import { TrezorKeyring } from '@/core/keyring-bridge/trezor/trezor-keyring';
+import { migrateAppStorage, migrateService } from '@/migrations/migrations';
+import { isNonPublicProductionEnv } from '@/constant';
+import {
+  setUserBehaviorTrackingOptOutCache,
+  USER_BEHAVIOR_TRACKING_OPT_OUT_KEY,
+} from '@/utils/trackingOptOut';
+import { logger } from '@/utils/logger';
+
+import {
+  appStorage,
+  keyringStorage,
+  normalizeKeyringState,
+} from '../storage/mmkv';
+import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
+import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { PreferenceService } from '../startupServices/preference';
+import { openapi } from '../request';
+import { setTxRpcClient } from '../utils/tx';
+import { perfEvents } from '../utils/perf';
+import { traceAndroidInstant } from '../utils/androidTrace';
+import { recordKeyringRuntimePerfDiagnostic } from '../utils/startupDiagnostics';
+import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
+import { callCoreService, registerCoreServices } from './serviceRegistry';
+import RNEncryptor from './encryptor';
+
+function captureStartupCoreException(error: Error) {
+  void import('@sentry/react-native')
+    .then(Sentry => Sentry.captureException(error))
+    .catch(() => undefined);
+}
+
+function capturePreferenceStorageIssue(
+  position: 'before_preference' | 'after_preference',
+  keyringState: unknown,
+) {
+  try {
+    const preferenceData = appStorage.getItem(APP_STORE_NAMES.preference);
+    if (!preferenceData && keyringState) {
+      const message = `[${position}] keyringState is not empty but preference is empty`;
+      if (__DEV__) {
+        console.error(message);
+      }
+      captureStartupCoreException(new Error(message));
+    }
+  } catch (error) {
+    captureStartupCoreException(
+      new Error(`Failed to get preference from appStorage: ${error}`),
+    );
+  }
+}
+
+const keyringClasses = [
+  MockWalletConnectKeyring,
+  WatchKeyring,
+  LedgerKeyring,
+  KeystoneKeyring,
+  OneKeyKeyring,
+  GnosisKeyring,
+  SimpleKeyring,
+  HDKeyring,
+  TrezorKeyring,
+] as (typeof KeyringIntf)[];
+
+export function loadStartupCoreServices() {
+  migrateAppStorage(appStorage);
+
+  const keyringState = normalizeKeyringState().keyringData;
+  capturePreferenceStorageIssue('before_preference', keyringState);
+
+  GnosisKeyring.setOpenapiService(openapi);
+  setTxRpcClient(payload =>
+    callCoreService('customRPCService', service =>
+      service.defaultEthRPC(payload),
+    ),
+  );
+
+  const contactService = new ContactBookService({
+    storageAdapter: appStorage,
+  });
+  contactService.setBeforeSetKV((key, value) => {
+    if (key === 'aliases') {
+      perfEvents.emit('CONTACTS_ALIASES_UPDATE', {
+        nextState: value as unknown as ContactBookStore['aliases'],
+      });
+    }
+  });
+  migrateService(APP_STORE_NAMES.contactBook, contactService);
+
+  const keyringService = new KeyringService({
+    encryptor: new RNEncryptor(),
+    keyringClasses,
+    onSetAddressAlias,
+    onCreateKeyring,
+    contactService,
+    perfLogger: {
+      instant(event, data) {
+        if (!isNonPublicProductionEnv) {
+          return;
+        }
+
+        logger.info(`[RabbyKeyringPerf] ${event}`, data || {});
+        traceAndroidInstant(`keyring.${event}`, data);
+        recordKeyringRuntimePerfDiagnostic(event, data || {});
+      },
+    },
+  });
+  keyringService.loadStore(keyringState || {});
+  keyringService.store.subscribe(value => {
+    keyringStorage.clearAll();
+    keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, value);
+  });
+
+  const preferenceService = new PreferenceService({
+    storageAdapter: appStorage,
+    getAllVisibleAccountsArray: () =>
+      keyringService.getAllVisibleAccountsArray(),
+  });
+  preferenceService.setBeforeSetKV((key, value) => {
+    if (key === USER_BEHAVIOR_TRACKING_OPT_OUT_KEY) {
+      setUserBehaviorTrackingOptOutCache(value !== false);
+      void import('@/utils/analytics')
+        .then(({ syncFirebaseAnalyticsCollectionWithOptOut }) =>
+          syncFirebaseAnalyticsCollectionWithOptOut(),
+        )
+        .catch(error => {
+          if (__DEV__) {
+            console.error(
+              '[startupCoreLoader] syncFirebaseAnalyticsCollectionWithOptOut error',
+              error,
+            );
+          }
+        });
+      void import('@/core/sentry')
+        .then(({ syncSentryUserBehaviorTrackingEnabled }) =>
+          syncSentryUserBehaviorTrackingEnabled(),
+        )
+        .catch(error => {
+          if (__DEV__) {
+            console.error(
+              '[startupCoreLoader] syncSentryUserBehaviorTrackingEnabled error',
+              error,
+            );
+          }
+        });
+    }
+
+    perfEvents.emit('PREFERENCE_UPDATED', {
+      key,
+      value,
+    });
+  });
+
+  capturePreferenceStorageIssue('after_preference', keyringState);
+  migrateService(APP_STORE_NAMES.preference, preferenceService);
+
+  registerCoreServices({
+    contactService,
+    keyringService,
+    preferenceService,
+  });
+}

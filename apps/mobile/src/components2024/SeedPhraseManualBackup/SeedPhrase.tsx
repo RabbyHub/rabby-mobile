@@ -23,7 +23,7 @@ import { WordsMatrix } from '@/components2024/WordsMatrix';
 import { replaceToFirst } from '@/utils/navigation';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
@@ -538,7 +538,7 @@ export const SeedPhrase: React.FC<Props> = ({
           accountsToCreate as any,
           true,
         );
-        keyringService.removePreMnemonics();
+        await keyringServiceApi.removePreMnemonics();
         replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
           params: {

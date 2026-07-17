@@ -1,5 +1,8 @@
-import { notificationService } from '@/core/services';
-import { Approval } from '@/core/services/notification';
+import type { Approval } from '@/core/services/notification';
+import {
+  getNotificationWindowIdSnapshot,
+  notificationServiceApi,
+} from '@/core/serviceApi/notification';
 import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
@@ -7,7 +10,7 @@ import { useDeviceConnect } from './useDeviceConnect';
 
 export const useApproval = () => {
   const getApproval: () => Promise<Approval | null> = useCallback(async () => {
-    const approval = notificationService.getApproval();
+    const approval = await notificationServiceApi.getApproval();
     return approval;
   }, []);
   const { showPopup, enablePopup, closePopup } = useApprovalPopup();
@@ -27,13 +30,17 @@ export const useApproval = () => {
     const approval = await getApproval();
 
     if (approval) {
-      notificationService.resolveApproval(data, forceReject, approvalId);
+      await notificationServiceApi.resolveApproval(
+        data,
+        forceReject,
+        approvalId,
+      );
     }
     if (stay) {
       return;
     }
 
-    let currentNotificationId = notificationService.notifyWindowId;
+    let currentNotificationId = getNotificationWindowIdSnapshot();
 
     setTimeout(() => {
       if (data && enablePopup(data.type)) {
@@ -46,7 +53,7 @@ export const useApproval = () => {
   };
 
   const rejectApproval = async (err?, stay = false, isInternal = false) => {
-    let currentNotificationId = notificationService.notifyWindowId;
+    let currentNotificationId = getNotificationWindowIdSnapshot();
 
     closePopup();
     const approval = await getApproval();
@@ -55,7 +62,7 @@ export const useApproval = () => {
     }
 
     if (approval) {
-      await notificationService.rejectApproval(err, stay, isInternal);
+      await notificationServiceApi.rejectApproval(err, stay, isInternal);
     }
     if (!stay) {
       eventBus.emit(EVENT_ACTIVE_WINDOW, currentNotificationId);

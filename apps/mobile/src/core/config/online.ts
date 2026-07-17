@@ -3,6 +3,7 @@ import axios from 'axios';
 import { merge } from 'lodash';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
+import { appMMKV } from '../storage/mmkvInstances';
 
 function sleep(ms = 0) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -15,6 +16,8 @@ const BASE_URL = isNonPublicProductionEnv
 const CONFIG_URL = `${BASE_URL}/rabby-mobile.json`;
 export const ONLINE_SWITCH_ENABLE_WORKER_THREAD =
   '20251226.enable_worker_thread' as const;
+const ONLINE_CONFIG_CACHE_KEY = '@OnlineConfigCacheV1';
+const ONLINE_CONFIG_CACHE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
 type OnlineConfig = {
   ['switches']?: {
@@ -27,6 +30,12 @@ type OnlineConfig = {
     ['20260122.enable_db_prepared_upsert']?: boolean;
     [APP_FILE_LOGGING_ONLINE_SWITCH]?: boolean;
   };
+};
+
+type CachedOnlineConfig = {
+  version: 1;
+  updateTime: number;
+  config: Partial<OnlineConfig>;
 };
 
 function getDefaultOnlineConfig(): OnlineConfig {
@@ -43,7 +52,46 @@ function getDefaultOnlineConfig(): OnlineConfig {
   };
 }
 
-const configRef = { current: getDefaultOnlineConfig() };
+function readCachedOnlineConfig(): Partial<OnlineConfig> | undefined {
+  const raw = appMMKV.getString(ONLINE_CONFIG_CACHE_KEY);
+  if (!raw) {
+    return undefined;
+  }
+
+  const cached = stringUtils.safeParseJSON<CachedOnlineConfig>(raw, {
+    defaultValue: null,
+  });
+  if (!cached?.config || cached.version !== 1) {
+    appMMKV.delete(ONLINE_CONFIG_CACHE_KEY);
+    return undefined;
+  }
+
+  if (Date.now() - cached.updateTime > ONLINE_CONFIG_CACHE_MAX_AGE_MS) {
+    appMMKV.delete(ONLINE_CONFIG_CACHE_KEY);
+    return undefined;
+  }
+
+  return cached.config;
+}
+
+function writeCachedOnlineConfig(config: Partial<OnlineConfig> | undefined) {
+  if (!config) {
+    return;
+  }
+
+  appMMKV.set(
+    ONLINE_CONFIG_CACHE_KEY,
+    JSON.stringify({
+      version: 1,
+      updateTime: Date.now(),
+      config,
+    } satisfies CachedOnlineConfig),
+  );
+}
+
+const configRef = {
+  current: merge(getDefaultOnlineConfig(), readCachedOnlineConfig()),
+};
 const listeners = new Set<() => void>();
 
 function notifyOnlineConfigUpdated() {
@@ -59,6 +107,7 @@ export async function fetchConfigOnBootstrap() {
       : response.data;
 
   configRef.current = merge(configRef.current, json);
+  writeCachedOnlineConfig(json);
   notifyOnlineConfigUpdated();
 
   return json as Partial<OnlineConfig> | undefined;

@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../../type';
+import type { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import SupplyActionOverView from './SupplyActionOverView';
@@ -26,17 +26,15 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildSupplyTx, optimizedPath } from '../../poolService';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { debounce, last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { parseUnits } from 'ethers/lib/utils';
 import { toast } from '@/components2024/Toast';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
@@ -50,7 +48,7 @@ import {
   LendingReportType,
   LendingSignType,
 } from '@/screens/Transaction/components/type';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -650,7 +648,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         }
         const txId = last(results);
         if (txId && txsForMiniApproval[0]?.chainId) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
             txId,

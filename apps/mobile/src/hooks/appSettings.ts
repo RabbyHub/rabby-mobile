@@ -1,11 +1,8 @@
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { isNonPublicProductionEnv } from '@/constant';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
@@ -16,7 +13,7 @@ import {
   coerceKeychainStorageType,
   type KeychainStorageType,
 } from '@/core/apis/keychainCommon';
-import { preferenceService } from '@/core/services';
+import { setPreference } from '@/core/serviceApi/preference';
 import { useCallback, useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
@@ -475,10 +472,17 @@ function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   });
 }
 
-runIIFEFunc(() => {
+let appSettingsAutoLockHydrationStarted = false;
+
+export function startAppSettingsAutoLockHydration() {
+  if (appSettingsAutoLockHydrationStarted) {
+    return;
+  }
+
+  appSettingsAutoLockHydrationStarted = true;
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
-});
+}
 
 export function useAutoLockTimeMinites() {
   const autoLockMinutes = autoLockState(s => s.minutes);
@@ -489,9 +493,9 @@ export function useAutoLockTimeMinites() {
 const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
   setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
+  void setPreference({
     autoLockTime: minutes,
-  });
+  }).catch(console.error);
   apisAutoLock.refreshAutolockTimeout();
 };
 export function useAutoLockTimeMs() {

@@ -6,13 +6,16 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { assetsMapStore, computeAssetsApis } from './hooks/store';
 import tokenStore, { ITokenItem } from '@/store/tokens';
 import { debounce, isEqual } from 'lodash';
-import { getTop10MyAccounts } from '@/core/apis/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { IProtocolItem } from '@/store/protocols';
 import useProtocolListStore from '@/store/protocols';
+import {
+  balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
+} from '@/store/balance';
 
 type ChainAssetsUnit = Record<string, BigNumber>;
 interface BaseInfo {
@@ -49,21 +52,14 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
   });
 }
 
-const debounceComputeChainList = debounce<
-  Parameters<
-    | typeof assetsMapStore.subscribe
-    | typeof tokenStore.subscribe
-    | typeof useProtocolListStore.subscribe
-  >[0]
->(async () => {
-  const { top10Addresses } = await getTop10MyAccounts();
-
-  setFinalInfo(computeChainsListV2(top10Addresses));
+const debounceComputeChainList = debounce(() => {
+  setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
 }, 100);
 
 assetsMapStore.subscribe(debounceComputeChainList);
 tokenStore.subscribe(debounceComputeChainList);
 useProtocolListStore.subscribe(debounceComputeChainList);
+balanceAccountsStore.subscribe(debounceComputeChainList);
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();

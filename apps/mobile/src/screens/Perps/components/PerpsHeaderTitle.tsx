@@ -5,7 +5,7 @@ import { TouchableOpacity, View } from 'react-native';
 
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { apiContact } from '@/core/apis';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ellipsisAddress } from '@/utils/address';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
@@ -14,7 +14,7 @@ import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
 import { PerpHistoryHeader } from './PerpHistoryHeader';
-import { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
+import type { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 
 const HEADER_HEIGHT = 58;
 

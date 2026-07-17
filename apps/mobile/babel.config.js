@@ -10,6 +10,7 @@ module.exports = api => {
       ? callerDev
       : process.env.BABEL_ENV === 'development' ||
         process.env.NODE_ENV === 'development';
+  const isJestTransform = callerName === 'babel-jest';
 
   const { version } = pkg;
   const inputBuildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
@@ -90,6 +91,7 @@ module.exports = api => {
       ['nativewind/babel', {}],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
+      ...(isJestTransform ? ['@babel/plugin-transform-dynamic-import'] : []),
       ['react-native-reanimated/plugin'],
     ],
     ...(shouldStripConsole

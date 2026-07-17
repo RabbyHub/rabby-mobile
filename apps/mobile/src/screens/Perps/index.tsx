@@ -19,7 +19,7 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
 import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
@@ -39,7 +39,7 @@ import { calculateDistanceToLiquidation } from './components/PerpsPositionSectio
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
 import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
-import { perpsService } from '@/core/services';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
@@ -167,9 +167,13 @@ export const PerpsOriginScreen = () => {
       ready: !!currentPerpsAccount?.address,
       onSuccess: shouldShow => {
         if (shouldShow) {
-          perpsService.setInviteConfig(currentPerpsAccount?.address || '', {
-            lastInvitedAt: Date.now(),
-          });
+          void perpsServiceApi
+            .setInviteConfig(currentPerpsAccount?.address || '', {
+              lastInvitedAt: Date.now(),
+            })
+            .catch(error => {
+              console.error('[Perps] persist invite state failed', error);
+            });
         }
       },
     },

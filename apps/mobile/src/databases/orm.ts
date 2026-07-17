@@ -44,9 +44,10 @@ const dbOptions: DataSourceOptions = {
   migrations: getMigrations(),
 };
 
-initializeAppDataSource(dbOptions).catch(err => {
-  console.log('initializeAppDataSource error', err);
-});
+export async function startAppDataSource(reason = 'unknown') {
+  console.debug('[startAppDataSource] start', { reason });
+  return initializeAppDataSource(dbOptions);
+}
 
 export async function exp_reConnectAppDataSource() {
   abortAllSyncTasks('reconnect-app-data-source');

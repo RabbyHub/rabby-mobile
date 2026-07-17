@@ -8,20 +8,22 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
-import { Result } from '@rabby-wallet/rabby-security-engine';
-import {
+import type { Result } from '@rabby-wallet/rabby-security-engine';
+import type {
   GasAccountCheckResult,
   GasLevel,
   Tx,
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  NativeSyntheticEvent,
+  TextInputChangeEventData,
+} from 'react-native';
 import {
   Image,
   Keyboard,
-  NativeSyntheticEvent,
   Pressable,
   StyleSheet,
-  TextInputChangeEventData,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -66,18 +68,19 @@ import { default as RcIconGasBlurCC } from '@/assets/icons/sign/tx/gas-blur-cc.s
 
 import { default as RcIconGasAccountBlurCC } from '@/assets/icons/sign/tx/gas-account-blur-cc.svg';
 import { default as RcIconGasAccountActive } from '@/assets/icons/sign/tx/gas-account-active.svg';
-import { SvgProps } from 'react-native-svg';
+import type { SvgProps } from 'react-native-svg';
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { apiProvider } from '@/core/apis';
 import useDebounce from 'react-use/lib/useDebounce';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import {
   useMiniSignGasPanelController,
   useMiniSignGasPanelState,
 } from '@/components2024/MiniSignV2/state/useMiniSignGasPanel';
-import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
-import { GasTokenInfo } from '@/utils/tempo';
+import type { RNGHTextInput as TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
+import type { GasTokenInfo } from '@/utils/tempo';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 export interface GasSelectorResponse extends GasLevel {

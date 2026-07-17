@@ -1,33 +1,12 @@
-import {
-  balance24hStore,
-  hydrateCachedHome24hBalanceScene,
-} from './store/balance24h';
-import { hydrateCachedHomeDayCurve, initCurve24hStore } from './store/curve24h';
-import { useAppChainStore } from './store/appchain';
-import addressBalanceStore from './store/balance';
 import { ensureAccountBalanceSelectionLifecycle } from './store/balanceAccountSelection';
 import { runStartupDiagnosticTask } from './core/utils/startupDiagnostics';
+import { startReadableAccountBootStoreInitializers } from './store/initializers';
 
 async function initPersistedStores() {
   return runStartupDiagnosticTask('initPersistedStores', {}, async () => {
     console.time('initPersistedStores');
     try {
-      await runStartupDiagnosticTask('appChainStore.initStore', {}, () =>
-        useAppChainStore.getState().initStore(),
-      );
-      await Promise.all([
-        runStartupDiagnosticTask('addressBalanceStore.initStore', {}, () =>
-          addressBalanceStore.initStore(),
-        ),
-        runStartupDiagnosticTask('balance24hStore.initStore', {}, () =>
-          balance24hStore.initStore(),
-        ),
-        runStartupDiagnosticTask('initCurve24hStore', {}, () =>
-          initCurve24hStore(),
-        ),
-      ]);
-      hydrateCachedHome24hBalanceScene();
-      hydrateCachedHomeDayCurve();
+      await startReadableAccountBootStoreInitializers();
     } finally {
       console.timeEnd('initPersistedStores');
     }

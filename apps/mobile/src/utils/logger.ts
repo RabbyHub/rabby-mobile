@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { AppLogger, RollingTextLogWriter } from '@rabby-wallet/rabby-logger';
-import debugLogService from '@/core/services/debugLogService';
+import debugLogService from '@/core/utils/debugLogService';
 import { APP_DOCUMENT_LIKE_PATH } from '@/core/utils/appFS';
 import { APP_RUNTIME_ENV } from '@/constant/env';
 import { isNonPublicProductionEnv } from '@/constant';

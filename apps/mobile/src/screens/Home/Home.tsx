@@ -14,6 +14,7 @@ import {
   apisSingleHome,
   useSingleHomeAccount,
   useSingleHomeIsDecrease,
+  useSingleHomeLoading,
 } from './hooks/singleHome';
 import { useUnmount } from 'ahooks';
 import { HomeTopArea } from './components/HomeTopArea';
@@ -29,6 +30,39 @@ import {
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
+import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+
+function SingleAddressActivationProbe({
+  currentAddress,
+}: {
+  currentAddress: string;
+}) {
+  useFeatureActivationDiagnostics('single-address');
+  const { balanceLoading, isLoadingCurve } = useSingleHomeLoading();
+
+  React.useEffect(() => {
+    if (balanceLoading || isLoadingCurve) {
+      return;
+    }
+
+    const cycleId = ensureFeatureActivation(
+      'single-address',
+      'single_address_data_probe',
+    );
+    markFeatureActivation('single-address', 'data-ready', {
+      cycleId,
+      reason: 'balance_and_curve_settled',
+      detail: `address=*${currentAddress.slice(-4)}`,
+    });
+  }, [balanceLoading, currentAddress, isLoadingCurve]);
+
+  return null;
+}
 
 function HomeHeader() {
   const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
@@ -144,6 +178,9 @@ function SingleAddressHome(): JSX.Element {
           paddingTop: topHeight,
         },
       ]}>
+      {isNonProductionDiagnosticsEnabled && currentAddress ? (
+        <SingleAddressActivationProbe currentAddress={currentAddress} />
+      ) : null}
       <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
 
       <View style={styles.safeView} onTouchStart={handleTouchEnd}>

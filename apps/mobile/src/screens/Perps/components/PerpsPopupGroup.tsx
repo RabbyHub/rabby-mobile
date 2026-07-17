@@ -1,12 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMemoizedFn } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { apisPerps } from '@/core/apis';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { HYPE_SEND_ASSET_TOKEN_MAP } from '@/constant/perps';
-import { PerpBridgeHistory } from './PerpsDepositPopup';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { HYPE_SEND_ASSET_TOKEN_MAP } from '@/constant/perps';
+import type { PerpBridgeHistory } from './PerpsDepositPopup';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { PerpsAccountSelectorPopup } from './PerpsAccountSelectorPopup';
 import { PerpsAccountLogoutPopup } from './PerpsAccountLogoutPopup';

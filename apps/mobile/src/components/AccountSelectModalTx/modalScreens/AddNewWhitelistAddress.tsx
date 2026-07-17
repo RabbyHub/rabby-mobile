@@ -9,7 +9,8 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
-import { isValidHexAddress, Hex } from '@metamask/utils';
+import type { Hex } from '@metamask/utils';
+import { isValidHexAddress } from '@metamask/utils';
 import {
   Keyboard,
   Platform,
@@ -39,8 +40,12 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { setWhitelist } from '@/hooks/whitelist';
-import { contactService, whitelistService } from '@/core/services';
-import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
+import type { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { setCexId } from '@/utils/addressCexId';
@@ -100,7 +105,7 @@ export const ScreenAddNewWhitelistAddress = ({
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
 
   const getWhitelist = React.useCallback(async () => {
-    const data = await whitelistService.getWhitelist();
+    const data = await whitelistServiceApi.getWhitelist();
     setWhitelist(data);
   }, []);
   // TODO: make auto focus
@@ -164,13 +169,13 @@ export const ScreenAddNewWhitelistAddress = ({
               if (isCex && cex?.id) {
                 setCexId(address, cex.id);
               }
-              contactService.updateAlias({
+              await contactServiceApi.updateAlias({
                 address,
                 name: aliasName || ellipsisAddress(address),
               });
               fetchAccounts();
               setInput('');
-              await whitelistService.addWhitelist(address);
+              await whitelistServiceApi.addWhitelist(address);
               await getWhitelist();
               toast.success(t('page.whitelist.addSuccessful'));
               fnNavTo('default');
@@ -263,7 +268,7 @@ export const ScreenAddNewWhitelistAddress = ({
     setIsAliasEditing(false);
     setAliasSelection(undefined);
     if (isValidHexAddress(input as Hex)) {
-      const aliasInfo = contactService.getAliasByAddress(input);
+      const aliasInfo = getContactAliasSnapshot(input);
       setAliasName(aliasInfo?.isDefaultAlias ? '' : aliasInfo?.alias || '');
       getAddrDescWithCexLocalCacheSync(input).then(res => {
         if (res?.cex?.id && res?.cex?.is_deposit) {

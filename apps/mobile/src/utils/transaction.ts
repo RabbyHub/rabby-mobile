@@ -1,4 +1,5 @@
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { DEFAULT_GAS_LIMIT_RATIO, MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -24,8 +25,10 @@ import { openExternalUrl } from '@/core/utils/linking';
 import type { Account } from '@/types/account';
 import type { IManageToken } from '@/types/assets';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { preferenceService, transactionHistoryService } from '@/core/services';
-import { CustomTxItem } from '@/core/services/transactionHistory';
+import type {
+  CustomTxItem,
+  TransactionHistoryItem,
+} from '@/core/services/transactionHistory';
 import { ensureHistoryListItemFromDb } from '@/utils/historyDisplay';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -666,8 +669,9 @@ export function txResultToToHistoryDisplayItem(input: {
   res: TxHistoryResult | TxAllHistoryResult;
   pinedQueue: IManageToken[];
   customTxItemsMap: Record<string, CustomTxItem>;
+  transactions: readonly TransactionHistoryItem[];
 }) {
-  const { address, res, pinedQueue, customTxItemsMap } = input;
+  const { address, res, pinedQueue, customTxItemsMap, transactions } = input;
   const { cate_dict, project_dict: projectDict, history_list } = res;
   const tokenDict =
     (res as TxAllHistoryResult).token_uuid_dict ||
@@ -689,6 +693,7 @@ export function txResultToToHistoryDisplayItem(input: {
         projectDict,
         pinedQueue,
         customTxItemsMap[customKey] || undefined,
+        transactions,
       );
       return ensureHistoryListItemFromDb(item);
     });

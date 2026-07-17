@@ -26,6 +26,7 @@ interface TransactionBroadcastWatcherStore {
 export class TransactionBroadcastWatcherService {
   store!: TransactionBroadcastWatcherStore;
   timers = {};
+  private started = false;
 
   transactionHistoryService: TransactionHistoryService;
   transactionWatcherService: TransactionWatcherService;
@@ -49,8 +50,6 @@ export class TransactionBroadcastWatcherService {
         storage: options?.storageAdapter,
       },
     );
-
-    this.roll();
   }
 
   addTx = (reqId: string, data: WatcherItem) => {
@@ -158,6 +157,14 @@ export class TransactionBroadcastWatcherService {
   };
 
   // fetch pending txs status every 5s
+  start = () => {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.roll();
+  };
+
   roll = () => {
     interval(async () => {
       this.queryTxRequests();

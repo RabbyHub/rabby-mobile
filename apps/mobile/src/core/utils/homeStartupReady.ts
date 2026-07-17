@@ -1,9 +1,9 @@
 import { InteractionManager, Platform } from 'react-native';
 
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import { logger } from '@/utils/logger';
 import { traceAndroidInstant } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
+import { markStartupRuntimePhase } from '@/startup/runtimeDiagnostics';
 
 const HOME_CRITICAL_READY_DELAY_MS = 32;
 const HOME_POST_STARTUP_DEFER_MS = 450;
@@ -42,7 +42,7 @@ function traceHomeStartup(event: string, data: Record<string, unknown> = {}) {
     return;
   }
 
-  logger.info(`[RabbyUnlockPerf:home] ${event}`, data);
+  console.info(`[RabbyUnlockPerf:home] ${event}`, data);
   traceAndroidInstant(`home.${event}`, data);
 }
 
@@ -148,6 +148,7 @@ function markHomeStartupReady(
   }
 
   traceHomeStartup('home_startup_ready');
+  markStartupRuntimePhase('home', 'ready', 'home_startup_ready');
   homeStartupReadyStore.setState(state => {
     state.ready = true;
     state.readyAt = Date.now();
@@ -168,6 +169,11 @@ function markHomePostStartupReady(
   }
 
   traceHomeStartup('home_post_startup_ready');
+  markStartupRuntimePhase(
+    'home',
+    'post-startup-ready',
+    'home_post_startup_ready',
+  );
   homeStartupReadyStore.setState(state => {
     state.postReady = true;
     state.postReadyAt = Date.now();
@@ -175,6 +181,7 @@ function markHomePostStartupReady(
 }
 
 export function scheduleHomeStartupReady() {
+  markStartupRuntimePhase('home', 'mounted', 'home_screen_mounted');
   const scheduledGeneration = homeStartupReadyStore.getState().generation;
   let disposed = false;
   let criticalTimeoutId: ReturnType<typeof setTimeout> | null = null;

@@ -2,12 +2,11 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { DEX, ETH_USDT_CONTRACT, SWAP_FEE_ADDRESS } from '@/constant/swap';
 import { getERC20Allowance, getRecommendNonce } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
-import { swapService } from '@/core/services';
 import { formatUsdValue } from '@/utils/number';
 import { stats } from '@/utils/stats';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import {
+import type {
   ExplainTxResponse,
   GasLevel,
   TokenItem,
@@ -21,19 +20,18 @@ import {
   UNI_NATIVE_TO_ADDRESSES,
   WrapTokenAddressMap,
 } from '@rabby-wallet/rabby-swap';
-import {
+import type {
   DecodeCalldataResult,
   QuoteResult,
-  decodeCalldata,
-  getQuote,
 } from '@rabby-wallet/rabby-swap/dist/quote';
+import { decodeCalldata, getQuote } from '@rabby-wallet/rabby-swap/dist/quote';
 import BigNumber from 'bignumber.js';
 import pRetry from 'p-retry';
 import React, { useRef } from 'react';
-import { useSwapSupportedDexList } from './settings';
+import { useSwapSettings, useSwapSupportedDexList } from './settings';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { apiProvider } from '@/core/apis';
-import { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 
 const { isSameAddress } = addressUtils;
 
@@ -46,6 +44,7 @@ export interface validSlippageParams {
 
 export const useQuoteMethods = () => {
   const walletOpenapi = openapi;
+  const { swapViewList } = useSwapSettings();
   const validSlippage = React.useCallback(
     async ({
       chain,
@@ -622,8 +621,6 @@ export const useQuoteMethods = () => {
       walletOpenapi,
     ],
   );
-
-  const swapViewList = swapService.getSwapViewList();
 
   const [supportedDEXList] = useSwapSupportedDexList();
 

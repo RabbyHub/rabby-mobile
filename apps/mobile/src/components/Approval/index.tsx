@@ -17,6 +17,10 @@ import {
 } from '@/core/bridges/state';
 // import TouchableText from '../Touchable/TouchableText';
 import { Text } from '@/components/Typography';
+import {
+  APPROVAL_REQUEST_SERVICE_DEPENDENCIES,
+  withApprovalServices,
+} from './approvalServiceDependencies';
 
 function ShouldntRenderApproveDueToDappDisappeared() {
   return (
@@ -40,7 +44,7 @@ function ShouldntRenderApproveDueToDappDisappeared() {
   );
 }
 
-export const Approval = () => {
+const ApprovalContent = () => {
   const [getApproval, ,] = useApproval();
   type IApproval = Exclude<
     IExtractFromPromise<ReturnType<typeof getApproval>>,
@@ -133,3 +137,9 @@ export const Approval = () => {
     />
   );
 };
+
+export const Approval = withApprovalServices(
+  APPROVAL_REQUEST_SERVICE_DEPENDENCIES,
+  ApprovalContent,
+  { fallback: <View /> },
+);

@@ -184,4 +184,83 @@ describe('core/services/syncChainService', () => {
       updatedAt: now,
     });
   });
+
+  it('force refreshes a fresh cached chain list', async () => {
+    const now = 7_000_000;
+    jest.useFakeTimers().setSystemTime(new Date(now));
+    const { SyncChainService, mocks, storageAdapter } =
+      loadSyncChainServiceModule({
+        data: {
+          chains: [
+            {
+              enum: 'eth',
+              id: 1,
+              name: 'Ethereum',
+              serverId: 'eth',
+            },
+          ],
+          updatedAt: now,
+        },
+      });
+    mocks.mockAxiosGet.mockResolvedValue({
+      data: [
+        {
+          enum: 'megaeth',
+          id: 4326,
+          is_disabled: false,
+          name: 'MegaETH',
+          server_id: 'megaeth',
+        },
+      ],
+    });
+
+    const service = new SyncChainService({
+      storageAdapter: storageAdapter as never,
+    });
+    activeTimers.push(service.timer);
+    await service.syncMainnetChainList({ force: true });
+
+    expect(mocks.mockAxiosGet).toHaveBeenCalledTimes(1);
+    expect(mocks.mockUpdateChainStore).toHaveBeenLastCalledWith({
+      mainnetList: [
+        {
+          enum: 'megaeth',
+          id: 4326,
+          name: 'MegaETH',
+          serverId: 'megaeth',
+        },
+      ],
+    });
+  });
+
+  it('deduplicates concurrent remote chain refreshes', async () => {
+    const now = 8_000_000;
+    jest.useFakeTimers().setSystemTime(new Date(now));
+    const { SyncChainService, mocks, storageAdapter } =
+      loadSyncChainServiceModule({
+        data: {
+          chains: [],
+          updatedAt: 0,
+        },
+      });
+    let resolveRequest!: (value: { data: unknown[] }) => void;
+    mocks.mockAxiosGet.mockReturnValue(
+      new Promise(resolve => {
+        resolveRequest = resolve;
+      }),
+    );
+
+    const service = new SyncChainService({
+      storageAdapter: storageAdapter as never,
+    });
+    activeTimers.push(service.timer);
+    const firstRequest = service.syncMainnetChainList();
+    const secondRequest = service.syncMainnetChainList({ force: true });
+
+    expect(firstRequest).toBe(secondRequest);
+    expect(mocks.mockAxiosGet).toHaveBeenCalledTimes(1);
+
+    resolveRequest({ data: [] });
+    await firstRequest;
+  });
 });

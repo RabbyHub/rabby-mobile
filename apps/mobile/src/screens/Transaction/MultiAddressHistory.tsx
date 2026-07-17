@@ -9,21 +9,25 @@ import React, {
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryListSnapshot,
+  getTransactionHistorySucceedListSnapshot,
+  getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
-  useMount,
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, unionBy, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import {
+import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -32,7 +36,7 @@ import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -45,6 +49,10 @@ import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScre
 import { syncTop10History, syncSingleAddress } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { useHistoryLoading } from '@/hooks/historyTokenDict';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
@@ -52,7 +60,7 @@ import {
   getHistoryItemType,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
@@ -79,7 +87,7 @@ const waitQueueFinished = (q: PQueue) => {
   });
 };
 
-function History({
+function HistoryContent({
   isTestnet = false,
   isForMultipleAddress,
 }: {
@@ -113,8 +121,10 @@ function History({
     forScene: isForMultipleAddress ? 'MultiHistory' : 'History',
   });
   const [firstFetchDone, setFirstFetchDone] = useState(false);
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
+  const hasConsumedLocalStatusRef = useRef(false);
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
+    getTransactionHistorySucceedListSnapshot(),
   );
 
   const mergeDataWithDeduplication = useMemoizedFn(
@@ -281,13 +291,16 @@ function History({
       ? openapi.getAllTxHistory
       : openapi.listTxHisotry;
     try {
-      const res = await getHistory({
-        id: address,
-        start_time: startTime,
-        page_count: PAGE_COUNT,
-        chain_id,
-        token_id,
-      });
+      const [res, transactions] = await Promise.all([
+        getHistory({
+          id: address,
+          start_time: startTime,
+          page_count: PAGE_COUNT,
+          chain_id,
+          token_id,
+        }),
+        getTransactionHistoryTransactions(),
+      ]);
 
       const { project_dict, history_list: list } = res;
       const token_dict = (res as TxHistoryResult).token_dict;
@@ -318,7 +331,7 @@ function History({
             ...e,
             token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
           })),
-          historyType: getHistoryItemType(item),
+          historyType: getHistoryItemType(item, transactions),
         }))
         .sort((v1, v2) => v2.time_at - v1.time_at);
       return {
@@ -356,7 +369,7 @@ function History({
 
   const fetchLocalTx = useMemoizedFn(async (address: string) => {
     const { pendings: _pendings, completeds: _completeds } =
-      transactionHistoryService.getList(address);
+      getTransactionHistoryListSnapshot(address);
 
     const pendings = _pendings.filter(item => {
       const chain = findChain({ id: item.chainId });
@@ -382,10 +395,17 @@ function History({
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              transactionHistoryService.updateTx({
-                ...item.maxGasTx,
-                isSynced: true,
-              });
+              void transactionHistoryServiceApi
+                .updateTx({
+                  ...item.maxGasTx,
+                  isSynced: true,
+                })
+                .catch(error => {
+                  console.error(
+                    '[MultiAddressHistory] mark tx synced failed',
+                    error,
+                  );
+                });
             }
 
             return (
@@ -397,9 +417,17 @@ function History({
     ];
   });
 
-  const { data: groups, runAsync: runFetchLocalTx } = useRequest(async () => {
-    return batchFetchLocalTx();
-  });
+  const { data: groups, runAsync: runFetchLocalTx } = useRequest(
+    async () => {
+      if (!transactionHistoryReady) {
+        return [];
+      }
+      return batchFetchLocalTx();
+    },
+    {
+      refreshDeps: [transactionHistoryReady],
+    },
+  );
 
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
@@ -421,7 +449,6 @@ function History({
     if (dbData.length === 0 && !isSceneUsingAllAccounts && firstFetchDone) {
       syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dbData.length,
     isSceneUsingAllAccounts,
@@ -513,13 +540,21 @@ function History({
   //   return orderBy(data?.list || [], ['time_at', 'cate_id'], ['desc', 'asc']);
   // }, [data]);
 
-  useMount(() => {
-    const list = transactionHistoryService.getSucceedList();
+  useEffect(() => {
+    if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {
+      return;
+    }
+    hasConsumedLocalStatusRef.current = true;
+    const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList(
-      isForMultipleAddress ? undefined : currentAddress,
-    );
-  });
+    void transactionHistoryServiceApi
+      .clearSuccessAndFailList(
+        isForMultipleAddress ? undefined : currentAddress,
+      )
+      .catch(error => {
+        console.error('[MultiAddressHistory] clear local status failed', error);
+      });
+  }, [currentAddress, isForMultipleAddress, transactionHistoryReady]);
 
   const displayList = useMemo(() => {
     const dataList = isNeedFetchFromApi ? fetchApiData : { list: dbData };
@@ -688,6 +723,8 @@ function History({
     </View>
   );
 }
+
+const History = withTransactionHistoryService(HistoryContent);
 
 const HistoryScreen = ({ isForMultipleAddress = true }) => {
   const {

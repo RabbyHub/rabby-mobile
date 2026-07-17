@@ -51,7 +51,8 @@ import {
   WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
   WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
-import { AppBottomSheetModal, SwitchToggleType } from '@/components';
+import type { SwitchToggleType } from '@/components';
+import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
@@ -68,6 +69,8 @@ import { useAutoLockCountDown } from '../Settings/components/LockAbout';
 import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/SwitchFloatingView';
 import { useToggleShowOpenApiSummaryPanel } from '../Settings/components/FloatingOpenApiSummaryPanel';
 import { useToggleShowKeyringRuntimePanel } from '../Settings/components/FloatingKeyringRuntimePanel';
+import { useToggleShowStartupTaskSummaryPanel } from '../Settings/components/FloatingStartupTaskSummaryPanel';
+import { useToggleShowStartupRuntimePanel } from '../Settings/components/startupRuntimePanelSetting';
 import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
   deleteAllBackups,
@@ -79,6 +82,7 @@ import {
   useMakeMockDataForRateGuideExposure,
 } from '@/components/RateModal/hooks';
 import { useMakeMockDataForHomeCenterArea } from '@/screens/Home/hooks/homeCenterArea';
+import { useConvertDustBannerDebugControls } from '@/screens/Home/hooks/useConvertDustBanner';
 import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
 import {
   toggleViewedGuidance,
@@ -89,14 +93,15 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { toast } from '@/components2024/Toast';
 import RNHelpers from '@/core/native/RNHelpers';
-import { keyringService, preferenceService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { dangerouslySetTokenManageSettingMapForDev } from '@/core/serviceApi/preference';
 import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
 import { getKeyring } from '@/core/apis/keyring';
-import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
+import type { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import type { SharedValue } from 'react-native-reanimated';
 import {
-  SharedValue,
   useAnimatedProps,
   useAnimatedStyle,
   useFrameCallback,
@@ -826,6 +831,10 @@ function DevSwitchAboutAutoLock() {
   const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
   const { showKeyringRuntimePanel, toggleShowKeyringRuntimePanel } =
     useToggleShowKeyringRuntimePanel();
+  const { showStartupTaskSummaryPanel, toggleShowStartupTaskSummaryPanel } =
+    useToggleShowStartupTaskSummaryPanel();
+  const { showStartupRuntimePanel, toggleShowStartupRuntimePanel } =
+    useToggleShowStartupRuntimePanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -870,6 +879,38 @@ function DevSwitchAboutAutoLock() {
             {showKeyringRuntimePanel
               ? 'Hide Floating Keyring Runtime Panel'
               : 'Show Floating Keyring Runtime Panel'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowStartupTaskSummaryPanel();
+          }}>
+          <AppSwitch2024
+            value={showStartupTaskSummaryPanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowStartupTaskSummaryPanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showStartupTaskSummaryPanel
+              ? 'Hide Floating Startup Task Panel'
+              : 'Show Floating Startup Task Panel'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowStartupRuntimePanel();
+          }}>
+          <AppSwitch2024
+            value={showStartupRuntimePanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowStartupRuntimePanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showStartupRuntimePanel
+              ? 'Hide Floating Startup Phase and Module Panel'
+              : 'Show Floating Startup Phase and Module Panel'}
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>
@@ -1069,6 +1110,11 @@ function DevTestHomeCenterArea() {
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { viewedHomeTip, mockResetViewedHomeTip } = useViewedHomeTip();
+  const {
+    convertDustBannerVisited,
+    resetConvertDustBannerVisited,
+    markConvertDustBannerVisited,
+  } = useConvertDustBannerDebugControls();
   const { multiTabs20251205Viewed } = useGuidanceShown();
   const [isShow0331SnapshotModal, setIsShow0331SnapshotModal] = useState(false);
 
@@ -1157,6 +1203,34 @@ function DevTestHomeCenterArea() {
             }}
           />
         )}
+
+        <Text style={[styles.metaLabel, { marginTop: 12 }]}>
+          Convert Dust Banner Visited: {convertDustBannerVisited ? 'yes' : 'no'}
+        </Text>
+
+        <Button
+          title={'Reset Convert Dust Banner Visited'}
+          type="ghost"
+          height={48}
+          containerStyle={{ marginTop: 12 }}
+          disabled={!convertDustBannerVisited}
+          onPress={() => {
+            resetConvertDustBannerVisited();
+            toast.success('Convert Dust banner visited reset');
+          }}
+        />
+
+        <Button
+          title={'Mark Convert Dust Banner Visited'}
+          type="ghost"
+          height={48}
+          containerStyle={{ marginTop: 12 }}
+          disabled={convertDustBannerVisited}
+          onPress={() => {
+            markConvertDustBannerVisited();
+            toast.success('Convert Dust banner marked visited');
+          }}
+        />
       </View>
 
       <View style={[styles.secondarySectionHeader, { marginTop: 24 }]}>
@@ -1565,7 +1639,7 @@ async function importWalletConnectAddress({
     realBrandUrl,
   });
 
-  await keyringService.addNewAccount(keyring as any);
+  await keyringServiceApi.addNewAccount(keyring as any);
 }
 
 function DevMock() {
@@ -1612,8 +1686,8 @@ function DevMock() {
           title={'Mock assets data <= 0.5.4'}
           type="ghost"
           height={48}
-          onPress={() => {
-            preferenceService._dangerouslySetTokenManageSettingMap(
+          onPress={async () => {
+            await dangerouslySetTokenManageSettingMapForDev(
               makeTokenManageSettingMap(),
             );
 

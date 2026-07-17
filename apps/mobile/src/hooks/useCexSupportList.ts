@@ -4,11 +4,9 @@ import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { getCexId } from '@/utils/addressCexId';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 
 export const globalSupportCexList: ProjectItem[] = [];
 type SupportedCexListState = {
@@ -26,12 +24,12 @@ function setSupportCexList(valOrFunc: UpdaterOrPartials<ProjectItem[]>) {
   });
 }
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   openapi.getCexSupportList().then(res => {
     globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
     setSupportCexList(res);
   });
-});
+}, STARTUP_TASKS.cexSupportListFetch);
 export const useCexSupportList = () => {
   const list = supportCexListStore(s => s.list);
 

@@ -1,5 +1,4 @@
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
-import { transactionHistoryService } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { eventBus, EVENTS } from '@/utils/events';

@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { CANCEL_TX_TYPE } from '@/constant';
-import { AppColorsVariants } from '@/constant/theme';
-import { TransactionHistoryItem } from '@/core/services/transactionHistory';
+import type { AppColorsVariants } from '@/constant/theme';
+import type { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';

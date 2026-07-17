@@ -8,7 +8,7 @@ import {
   getAccountList,
 } from '@/core/apis/account';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useFocusEffect } from '@react-navigation/native';
@@ -36,8 +36,9 @@ import { GasAccountEmptyState } from './components/GasAccountEmptyState';
 import { getGasAccountEmptyStatePrimaryMode } from './components/GasAccountEmptyState.utils';
 import { GasAccountUserState } from './components/GasAccountUserState';
 import { useGasAccountHistory, useGasAccountMethods } from './hooks';
+import { withGasAccountService } from './gasAccountServiceDependencies';
 
-export const GasAccountScreen = () => {
+const GasAccountScreenContent = () => {
   const { t } = useTranslation();
   const [depositState, setDepositState] = useState<{
     isOpen?: boolean;
@@ -92,21 +93,47 @@ export const GasAccountScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      let isActive = true;
       storeApiGasAccount.setHistoryRefreshEnabled(true);
-      storeApiGasAccount.refreshSnapshot().catch(error => {
-        console.error('refreshSnapshot on GasAccountScreen focus error', error);
-      });
-      storeApiGasAccount.refreshHistory().catch(error => {
-        console.error('refreshHistory on GasAccountScreen focus error', error);
-      });
-      refreshAccountsWithGasAccountBalance().catch(error => {
-        console.error('refreshAccountsWithGasAccountBalance error', error);
-      });
+
+      const refreshGasAccountState = async () => {
+        try {
+          await storeApiGasAccount.hydrateSessionFromService();
+        } catch (error) {
+          console.error(
+            'hydrateSessionFromService on GasAccountScreen error',
+            error,
+          );
+        }
+
+        if (!isActive) {
+          return;
+        }
+
+        storeApiGasAccount.refreshSnapshot().catch(error => {
+          console.error(
+            'refreshSnapshot on GasAccountScreen focus error',
+            error,
+          );
+        });
+        storeApiGasAccount.refreshHistory().catch(error => {
+          console.error(
+            'refreshHistory on GasAccountScreen focus error',
+            error,
+          );
+        });
+        refreshAccountsWithGasAccountBalance().catch(error => {
+          console.error('refreshAccountsWithGasAccountBalance error', error);
+        });
+      };
+
+      void refreshGasAccountState();
       if (pendingHardwareAddress) {
         refreshPendingHardwareGasAccountInfo();
       }
 
       return () => {
+        isActive = false;
         storeApiGasAccount.setHistoryRefreshEnabled(false);
       };
     }, [pendingHardwareAddress, refreshPendingHardwareGasAccountInfo]),
@@ -321,6 +348,10 @@ export const GasAccountScreen = () => {
     </NormalScreenContainer>
   );
 };
+
+export const GasAccountScreen = withGasAccountService(GasAccountScreenContent, {
+  fallback: <View />,
+});
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   giftPrimaryButtonContainer: {

@@ -7,6 +7,19 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect } from 'react';
 import { Text } from '@/components/Typography';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+
+function cancelStartupTaskHandle(
+  handle: ReturnType<typeof scheduleStartupTask> | undefined,
+) {
+  if (handle && typeof handle === 'object' && 'cancel' in handle) {
+    const maybeCancelable = handle as { cancel?: unknown };
+    if (typeof maybeCancelable.cancel === 'function') {
+      maybeCancelable.cancel();
+    }
+  }
+}
 
 const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -26,11 +39,12 @@ export const LendingHF: React.FC<{}> = () => {
     if (lendingHf) {
       return;
     }
-    const timer = setTimeout(() => {
+    const warmupHandle = scheduleStartupTask(() => {
       apisLending.fetchLendingData();
-    }, 200);
+    }, STARTUP_TASKS.homeLendingDataWarmup);
+
     return () => {
-      timer && clearTimeout(timer);
+      cancelStartupTaskHandle(warmupHandle);
     };
   }, [lendingHf]);
 
