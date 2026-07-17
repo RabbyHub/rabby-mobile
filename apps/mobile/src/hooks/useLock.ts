@@ -69,6 +69,10 @@ function getIsAppUnlocked() {
   return state.appUnlocked;
 }
 
+export function getAppLockStateSnapshot() {
+  return zAppLockStore.getState();
+}
+
 export const storeApiLock = {
   setAppLock,
   getIsAppUnlocked,

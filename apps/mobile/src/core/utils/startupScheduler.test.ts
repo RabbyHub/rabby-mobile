@@ -1,5 +1,7 @@
 function loadStartupScheduler() {
   const markStartupTaskDiagnostic = jest.fn();
+  const runAfterHomeEntryReady = jest.fn();
+  const runAfterHomeContentReady = jest.fn();
 
   jest.doMock('./diagnosticEnv', () => ({
     isNonProductionDiagnosticsEnabled: true,
@@ -10,6 +12,10 @@ function loadStartupScheduler() {
   jest.doMock('./homeStartupReady', () => ({
     runAfterHomePostStartupReady: jest.fn(),
     traceHomeStartupReady: jest.fn(),
+  }));
+  jest.doMock('./homeStartupMilestones', () => ({
+    runAfterHomeEntryReady,
+    runAfterHomeContentReady,
   }));
   jest.doMock('@/startup/runtimeDiagnostics', () => ({
     markStartupRuntimePhase: jest.fn(),
@@ -23,6 +29,8 @@ function loadStartupScheduler() {
     scheduler:
       require('./startupScheduler') as typeof import('./startupScheduler'),
     markStartupTaskDiagnostic,
+    runAfterHomeEntryReady,
+    runAfterHomeContentReady,
   };
 }
 
@@ -95,4 +103,35 @@ describe('startup scheduler timing diagnostics', () => {
       },
     );
   });
+
+  it.each([
+    ['homeEntryReady', 'runAfterHomeEntryReady', { label: 'homeEntryReady' }],
+    [
+      'homeContentReady',
+      'runAfterHomeContentReady',
+      { label: 'homeContentReady', fallbackMs: 5000 },
+    ],
+  ] as const)(
+    'waits for the %s milestone',
+    (stage, waiterName, expectedOptions) => {
+      const loaded = loadStartupScheduler();
+      const task = jest.fn();
+
+      loaded.scheduler.scheduleStartupTask(task, {
+        stage,
+        label: stage,
+        fallbackMs: 5000,
+      });
+
+      expect(task).not.toHaveBeenCalled();
+      const waiter = loaded[waiterName];
+      expect(waiter).toHaveBeenCalledWith(
+        expect.any(Function),
+        expectedOptions,
+      );
+
+      waiter.mock.calls[0]?.[0]();
+      expect(task).toHaveBeenCalledTimes(1);
+    },
+  );
 });

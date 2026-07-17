@@ -289,11 +289,21 @@ export const STARTUP_TASKS = {
     label: 'perps.fetchMarketData',
     owner: 'perps',
     reason:
-      'start the single-flight market request after Home so Perps can reuse it on entry',
-    stage: 'homePostStartupReady',
+      'start the single-flight market request after first Home content settles so Perps can reuse it on entry',
+    stage: 'homeContentReady',
     priority: 'normal',
-    fallbackMs: 5000,
+    fallbackMs: 10000,
     budgetMs: 450,
+  }),
+  perpsMarketSnapshotSubscription: defineStartupTask({
+    label: 'perps.marketSnapshotSubscription',
+    owner: 'perps',
+    reason:
+      'start the low-frequency global market snapshot after first Home content without enabling the fast trading feed',
+    stage: 'homeContentReady',
+    priority: 'normal',
+    fallbackMs: 10000,
+    budgetMs: 80,
   }),
   perpsFetchFavoriteMarkets: defineStartupTask({
     label: 'perps.fetchFavoriteMarkets',
@@ -319,20 +329,18 @@ export const STARTUP_TASKS = {
     label: 'perps.persistedPositionSubscription',
     owner: 'perps',
     reason:
-      'subscribe the persisted Perps account position after Home without starting trading state',
-    stage: 'homePostStartupReady',
+      'subscribe only the persisted Perps account position once either startup path may enter Home',
+    stage: 'homeEntryReady',
     priority: 'normal',
-    fallbackMs: 5000,
     budgetMs: 220,
   }),
   perpsHomePositionSubscription: defineStartupTask({
     label: 'perps.homePositionSubscription',
     owner: 'perps',
     reason:
-      'subscribe Home Perps position data as soon as Home accounts are available',
-    stage: 'homePostStartupReady',
+      'subscribe Home-only Perps position data when accounts arrive after either startup path may enter Home',
+    stage: 'homeEntryReady',
     priority: 'normal',
-    fallbackMs: 5000,
     budgetMs: 220,
   }),
   readableAccountStoresIdleWarmup: defineStartupTask({

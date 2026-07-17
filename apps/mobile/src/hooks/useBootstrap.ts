@@ -9,6 +9,7 @@ import { apisLock, apisPerps } from '@/core/apis';
 import { loadSecurityChain } from './global';
 import {
   getBootstrapAccountFlags,
+  getAppLockStateSnapshot,
   getTriedUnlock,
   loadBootstrapAppLockState,
   storeApiLock,
@@ -34,6 +35,7 @@ import {
   nextAndroidTraceCookie,
   traceAndroidInstant,
 } from '@/core/utils/androidTrace';
+import { markHomeEntryReady } from '@/core/utils/homeStartupMilestones';
 
 const syncCustomTestChainList = () => {
   customTestnetServiceApi.syncChainList().catch(e => {
@@ -103,6 +105,9 @@ export function useInitializeAppOnTop() {
         appUnlocked: true,
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       }));
+      if (getAppLockStateSnapshot().hasVisibleAccounts) {
+        markHomeEntryReady('wallet_auth_unlocked');
+      }
       traceAndroidInstant('global_task.wallet_auth_unlocked.end', {
         source: 'useBootstrap',
       });
@@ -321,6 +326,17 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           unlockStatus: unlockResult?.status ?? 'deferred',
           shouldWaitAutoUnlock,
         });
+        const appLockState = getAppLockStateSnapshot();
+        if (
+          appLockState.hasVisibleAccounts &&
+          (appLockState.appUnlocked || appLockState.isUnlockSessionValid)
+        ) {
+          markHomeEntryReady(
+            shouldWaitAutoUnlock
+              ? 'bootstrap_auto_unlock_ready'
+              : 'bootstrap_session_ready',
+          );
+        }
         setBootstrap({ couldRender: true });
 
         if (shouldWaitAutoUnlock) {

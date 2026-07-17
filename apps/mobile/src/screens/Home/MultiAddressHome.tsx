@@ -43,6 +43,7 @@ import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
 import { storeApiAccounts } from '@/hooks/account';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import { markHomeContentReady } from '@/core/utils/homeStartupMilestones';
 
 let hasStartedInitReadableAccountStoresIdleWarmup = false;
 let hasStartedHomeSceneDerivedDataActivation = false;
@@ -191,6 +192,31 @@ function HomeStartupReadyScheduler() {
       stopHomeDbLowPriorityHold();
     };
   }, []);
+
+  return null;
+}
+
+function HomeContentReadyScheduler() {
+  const homePostStartupReady = useHomePostStartupReady();
+  const hasSettledFirstContent = useHomePortfolioStore(state => {
+    const hasResolvedAccountContext =
+      state.hasResolvedSelection ||
+      (state.hasFetchedAccounts && !state.isFetchingAccounts);
+
+    return (
+      hasResolvedAccountContext &&
+      !state.isPendingDisplayAddresses &&
+      !state.showBalanceLoadingWithoutLocal &&
+      !state.showChangeLoadingWithoutLocal
+    );
+  });
+
+  useEffect(() => {
+    if (!homePostStartupReady || !hasSettledFirstContent) {
+      return;
+    }
+    markHomeContentReady('portfolio_first_content_settled');
+  }, [hasSettledFirstContent, homePostStartupReady]);
 
   return null;
 }
@@ -437,6 +463,7 @@ function MultiAddressHome(): JSX.Element {
       </View>
 
       <HomeStartupReadyScheduler />
+      <HomeContentReadyScheduler />
       <HomeReadableAccountStoresBootstrap />
       <HomePostStartupEffects
         appThemeConfig={appThemeConfig}
