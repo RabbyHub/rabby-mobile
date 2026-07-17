@@ -162,6 +162,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
         menuActions: menuActions,
       }}
       preViewBorderRadius={preViewBorderRadius}
+      enableIos27OpaquePreview
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>
