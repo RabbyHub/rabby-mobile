@@ -181,6 +181,7 @@ export const RecentUsedItem = ({
         menuActions: menuActions,
       }}
       preViewBorderRadius={16}
+      enableIos27OpaquePreview
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>
