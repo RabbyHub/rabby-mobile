@@ -14,15 +14,27 @@ export const CORE_REGRESSION_SCENARIO_IDS = [
   'swap-bridge',
   'swap-funded',
   'settings-restart',
+  'app-background-restore',
 ] as const;
 
 export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'dapp-browser',
   'dapp-connect',
+  'dapp-switch-chain',
+  'dapp-disconnect',
+  'dapp-sign-tx',
+  'dapp-sign-text',
+  'dapp-sign-typed-data',
+  'dapp-cancel-signing',
   'lending-markets',
   'perps-entry',
   'sync-extension-password',
   'transaction-history',
+  'gas-account-entry',
+  'market-entry',
+  'approvals-entry',
+  'rabby-points-entry',
+  'convert-dust-entry',
 ] as const;
 
 export const REGRESSION_SCENARIO_IDS = [
@@ -45,6 +57,11 @@ export const REGRESSION_SCREEN_IDS = [
   'Receive',
   'SwapBridge',
   'Settings',
+  'GasAccount',
+  'Market',
+  'ApprovalAddressList',
+  'Points',
+  'ConvertDust',
   'BrowserScreen',
   'Lending',
   'Perps',
@@ -177,6 +194,17 @@ export type RegressionScenarioContext<
 > =
   | InactiveRegressionScenarioContext
   | ActiveRegressionScenarioContext<TScreen>;
+
+export type ActiveRegressionScenarioRuntimeContext = Omit<
+  ActiveRegressionScenarioContext,
+  'screen'
+> & {
+  screen?: RegressionScreenId;
+};
+
+export type RegressionScenarioRuntimeContext =
+  | InactiveRegressionScenarioContext
+  | ActiveRegressionScenarioRuntimeContext;
 
 export type RegressionScenarioScreenOptions<
   TInjectedProps extends object = {},

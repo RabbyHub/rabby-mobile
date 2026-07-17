@@ -11,6 +11,7 @@ import {
   apiSendToken,
   requestSendTokenFormPatch,
 } from '@/screens/Send/hooks/useSendToken';
+import { StablecoinMapAggregatedByChain } from '@/constant/swap';
 import {
   getFallbackAccountSnapshot,
   preferenceServiceApi,
@@ -32,8 +33,14 @@ import {
 } from './utils';
 
 const DEFAULT_FUNDED_TEST_CHAIN = CHAINS_ENUM.POLYGON;
+const DEFAULT_BRIDGE_TO_CHAIN = CHAINS_ENUM.ARBITRUM;
 const DEFAULT_TARGET_USD = '0.1';
 const DEFAULT_MAX_TOTAL_USD = '1';
+const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
+  1: 'home-assets-token-ready',
+  2: 'home-assets-defi-ready',
+  3: 'home-assets-nft-ready',
+};
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -173,6 +180,88 @@ async function resolveNativeTokenPlan({
   };
 }
 
+async function resolveStableTokenPlan({
+  account,
+  chainEnum,
+  maxTotalUsd,
+  stable = 'usdc',
+  targetUsd,
+}: {
+  account: Awaited<ReturnType<typeof getScenarioAccounts>>[number];
+  chainEnum: CHAINS_ENUM;
+  targetUsd: BigNumber;
+  maxTotalUsd: BigNumber;
+  stable?: keyof NonNullable<
+    (typeof StablecoinMapAggregatedByChain)[CHAINS_ENUM]
+  >;
+}) {
+  const chain = findChainByEnum(chainEnum);
+  if (!chain) {
+    throw new Error(`Unable to resolve chain: ${chainEnum}`);
+  }
+
+  const tokenId = StablecoinMapAggregatedByChain[chainEnum]?.[stable];
+  if (!tokenId) {
+    throw new Error(`No ${stable} token configured for ${chain.serverId}`);
+  }
+
+  const token = await openapi.getToken(
+    account.address,
+    chain.serverId,
+    tokenId,
+  );
+  const price = new BigNumber(token.price || 0);
+  if (!price.gt(0)) {
+    throw new Error(`Unable to price ${chain.serverId} ${stable}`);
+  }
+
+  const amount = targetUsd
+    .div(price)
+    .decimalPlaces(Math.min(token.decimals || 6, 6), BigNumber.ROUND_UP);
+  const actualUsd = amount.times(price);
+  if (!amount.gt(0) || actualUsd.gt(maxTotalUsd)) {
+    throw new Error('Calculated funded test amount is outside safety limits');
+  }
+
+  const balance = tokenAmountFromRawHex(
+    token.raw_amount_hex_str,
+    token.decimals,
+  );
+  if (!balance.gt(amount)) {
+    throw new Error(
+      `Insufficient ${chain.serverId} ${stable} balance for funded dry-run`,
+    );
+  }
+
+  return {
+    chain,
+    token,
+    amount: amount.toString(10),
+    actualUsd: actualUsd.toString(10),
+    balance: balance.toString(10),
+  };
+}
+
+function readBridgeToChain(context: RegressionScenarioExecutionContext) {
+  const raw = (context.command.params.toChain || 'arbitrum').trim();
+  const normalized = raw.toLowerCase();
+  if (['arbitrum', 'arb'].includes(normalized)) {
+    return DEFAULT_BRIDGE_TO_CHAIN;
+  }
+
+  const byEnum = findChainByEnum(raw.toUpperCase() as CHAINS_ENUM);
+  if (byEnum) {
+    return byEnum.enum;
+  }
+
+  const byServerId = findChain({ serverId: raw });
+  if (byServerId) {
+    return byServerId.enum;
+  }
+
+  throw new Error(`Unsupported bridge target chain: ${raw}`);
+}
+
 async function prepareScenario(context: RegressionScenarioExecutionContext) {
   await context.waitForNavigation();
   await ensureScenarioWalletUnlocked();
@@ -199,7 +288,12 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
       tabIndex,
       route: navigationRef.getCurrentRoute()?.name || null,
     });
-    await delay(350);
+    const readyAssertion = HOME_TAB_READY_ASSERTIONS[tabIndex];
+    if (readyAssertion) {
+      await waitForScenarioAssertion(context, readyAssertion, 45_000);
+    } else {
+      await delay(350);
+    }
   }
 }
 
@@ -325,6 +419,7 @@ async function openSendReceive(
       assertion: 'receive-screen-opened',
       passed: true,
     });
+    await waitForScenarioAssertion(context, 'receive-address-ready', 10_000);
   }
 }
 
@@ -357,6 +452,7 @@ async function openSendTransfer(
     chainEnum,
     tokenId: plan.token.id,
     toAddress,
+    regressionRunId: context.command.runId,
   });
   await context.waitForRoute(RootNames.Send);
   requestSendTokenFormPatch({
@@ -387,11 +483,64 @@ async function openSendTransfer(
 
 async function openSwapBridge(
   context: RegressionScenarioExecutionContext,
-  account: Awaited<ReturnType<typeof getScenarioAccounts>>[number],
+  accounts: Awaited<ReturnType<typeof getScenarioAccounts>>,
 ) {
+  const account = selectScenarioAccount(
+    accounts,
+    context.command.params.accountSuffix ||
+      context.command.params.fundedAccountSuffix,
+  );
   await switchSceneCurrentAccount('MakeTransactionAbout', account);
   const requestedTab =
     context.command.params.tab === 'bridge' ? 'bridge' : 'swap';
+
+  if (requestedTab === 'bridge') {
+    const chainEnum = readScenarioChain(context);
+    const toChainEnum = readBridgeToChain(context);
+    const { targetUsd, maxTotalUsd } = readTargetUsd(context);
+    const plan = await resolveStableTokenPlan({
+      account,
+      chainEnum,
+      targetUsd,
+      maxTotalUsd,
+    });
+    const toTokenId = StablecoinMapAggregatedByChain[toChainEnum]?.usdc;
+    if (!toTokenId) {
+      const toChain = findChainByEnum(toChainEnum);
+      throw new Error(
+        `No usdc token configured for ${toChain?.serverId || toChainEnum}`,
+      );
+    }
+
+    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
+      activeTab: requestedTab,
+      chainEnum,
+      tokenId: plan.token.id,
+      toChainEnum,
+      toTokenId,
+    });
+    await context.waitForRoute(RootNames.SwapBridge);
+    context.report('assertion', {
+      assertion: 'bridge-funded-plan-ready',
+      passed: true,
+      mode: 'dry-run',
+      account: formatSafeAddress(account.address),
+      chain: plan.chain.serverId,
+      token: plan.token.symbol,
+      amount: plan.amount,
+      toChain: findChainByEnum(toChainEnum)?.serverId || toChainEnum,
+      targetUsd: targetUsd.toString(10),
+      actualUsd: plan.actualUsd,
+    });
+
+    await waitForScenarioAssertion(
+      context,
+      'bridge-funded-dry-run-ready',
+      90_000,
+    );
+    return;
+  }
+
   pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
     activeTab: requestedTab,
   });
@@ -486,6 +635,18 @@ async function openSettingsRestart(
   }
 }
 
+async function openAppBackgroundRestore(
+  context: RegressionScenarioExecutionContext,
+) {
+  resetToHome();
+  await context.waitForRoute(RootNames.Home);
+  context.report('assertion', {
+    assertion: 'background-restore-precondition-home-ready',
+    passed: true,
+    route: navigationRef.getCurrentRoute()?.name || null,
+  });
+}
+
 export async function executeRegressionScenario(
   context: RegressionScenarioExecutionContext,
 ) {
@@ -518,13 +679,16 @@ export async function executeRegressionScenario(
       await openSendTransfer(context, accounts);
       break;
     case 'swap-bridge':
-      await openSwapBridge(context, account);
+      await openSwapBridge(context, accounts);
       break;
     case 'swap-funded':
       await openSwapFunded(context, accounts);
       break;
     case 'settings-restart':
       await openSettingsRestart(context);
+      break;
+    case 'app-background-restore':
+      await openAppBackgroundRestore(context);
       break;
     default:
       throw new Error(

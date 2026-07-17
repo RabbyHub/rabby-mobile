@@ -61,6 +61,9 @@ const RegressionMultiSendScreen = withRegressionScenario(
 const RegressionSwapBridgeScreen = withRegressionScenario(SwapBridgeScreen, {
   screen: 'SwapBridge',
 });
+const RegressionReceiveScreen = withRegressionScenario(ReceiveScreen, {
+  screen: 'Receive',
+});
 const RegressionMultiSwapBridgeScreen = withRegressionScenario(
   SwapBridgeScreen.ForMultipleAddress,
   {
@@ -172,7 +175,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.Receive}
-        component={ReceiveScreen}
+        component={RegressionReceiveScreen}
         options={mergeScreenOptions({
           title: 'Receive',
           headerTitleStyle: {

@@ -34,6 +34,7 @@ const AUTO_LOCK_CHECK_GRACE_MS = 30_000;
 const AUTO_LOCK_EARLY_TOLERANCE_MS = 7_000;
 const MAX_REGRESSION_AUTO_LOCK_MINUTES = 24 * 60;
 const MIN_BACKUP_WORD_COUNT = 12;
+const ACCOUNT_VISIBILITY_TIMEOUT_MS = 8_000;
 
 function isMnemonicAccount(
   account: Awaited<ReturnType<typeof getScenarioAccounts>>[number],
@@ -76,6 +77,50 @@ async function importAdditionalPrivateKey(privateKey: string) {
     scene: 'privateKey',
   });
   return true;
+}
+
+async function waitForCreatedAccountVisible(address: string) {
+  const startedAt = Date.now();
+  let runtimeVisible = false;
+  let accounts: Awaited<ReturnType<typeof getScenarioAccounts>> = [];
+
+  while (Date.now() - startedAt < ACCOUNT_VISIBILITY_TIMEOUT_MS) {
+    const visibleAccounts =
+      await keyringServiceApi.getAllVisibleAccountsArray();
+    runtimeVisible = visibleAccounts.some(account =>
+      addressUtils.isSameAddress(account.address, address),
+    );
+
+    try {
+      accounts = await getScenarioAccounts({ force: true });
+    } catch {
+      accounts = [];
+    }
+
+    const accountStoreVisible = accounts.some(account =>
+      addressUtils.isSameAddress(account.address, address),
+    );
+
+    if (runtimeVisible && accountStoreVisible) {
+      return {
+        accounts,
+        runtimeVisible,
+        accountStoreVisible,
+        elapsedMs: Date.now() - startedAt,
+      };
+    }
+
+    await delay(150);
+  }
+
+  return {
+    accounts,
+    runtimeVisible,
+    accountStoreVisible: accounts.some(account =>
+      addressUtils.isSameAddress(account.address, address),
+    ),
+    elapsedMs: Date.now() - startedAt,
+  };
 }
 
 async function prepareWalletFixture(
@@ -199,21 +244,21 @@ async function runWalletCreate(context: RegressionScenarioExecutionContext) {
 
   resetToHome();
   await context.waitForRoute(RootNames.Home);
-  const afterAccounts = await getScenarioAccounts({ force: true });
-  const createdAccount = afterAccounts.find(account =>
-    addressUtils.isSameAddress(account.address, prepared.address),
-  );
+  const visibility = await waitForCreatedAccountVisible(prepared.address);
   context.report('assertion', {
     assertion: 'mnemonic-wallet-created',
-    passed: !!createdAccount,
+    passed: visibility.runtimeVisible && visibility.accountStoreVisible,
     beforeAccountCount: beforeAccounts.length,
-    afterAccountCount: afterAccounts.length,
+    afterAccountCount: visibility.accounts.length,
     address: prepared.address
       ? `${prepared.address.slice(0, 6)}...${prepared.address.slice(-4)}`
       : null,
+    runtimeVisible: visibility.runtimeVisible,
+    accountStoreVisible: visibility.accountStoreVisible,
+    elapsedMs: visibility.elapsedMs,
   });
 
-  if (!createdAccount) {
+  if (!visibility.runtimeVisible || !visibility.accountStoreVisible) {
     throw new Error('Created mnemonic wallet is not visible');
   }
 }

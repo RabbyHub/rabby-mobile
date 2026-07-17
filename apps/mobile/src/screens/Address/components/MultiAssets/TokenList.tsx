@@ -79,6 +79,7 @@ import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { useIsFocused } from '@react-navigation/native';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -234,6 +235,17 @@ const appendCustomTestnetItems = (
 export const TokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const regressionScenario = useRegressionScenario<'Home'>();
+  const regressionScenarioActive = regressionScenario.active;
+  const regressionScenarioId = regressionScenario.active
+    ? regressionScenario.scenario
+    : null;
+  const regressionScenarioRunId = regressionScenario.active
+    ? regressionScenario.runId
+    : null;
+  const regressionScenarioReport = regressionScenario.active
+    ? regressionScenario.report
+    : null;
   const { myTop10Addresses } = useAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
@@ -393,6 +405,93 @@ export const TokenList = () => {
     !isLoading &&
     !hasFoldTokens &&
     isFocused;
+
+  const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'home-assets' ||
+      !isFocused
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setScenarioReadyCheckTick(Date.now());
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [
+    isFocused,
+    multiAssetsKey,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioRunId,
+  ]);
+
+  const lastReadyReportKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'home-assets' ||
+      !regressionScenarioRunId ||
+      !regressionScenarioReport ||
+      !isFocused ||
+      !scenarioReadyCheckTick ||
+      isLoading
+    ) {
+      return;
+    }
+
+    const tokenCount = tokenRows.length + foldRows.length + scamRows.length;
+    const customTestnetSectionCount = visibleCustomTestnetSections.length;
+    const readyKey = [
+      regressionScenarioRunId,
+      multiAssetsKey,
+      tokenCount,
+      customTestnetSectionCount,
+      hasFoldTokens ? 'has-fold' : 'no-fold',
+    ].join(':');
+    if (lastReadyReportKeyRef.current === readyKey) {
+      return;
+    }
+    lastReadyReportKeyRef.current = readyKey;
+
+    regressionScenarioReport('assertion', {
+      assertion: 'home-assets-token-ready',
+      passed: true,
+      state:
+        tokenCount > 0 || customTestnetSectionCount > 0 || hasFoldTokens
+          ? 'data'
+          : hasNoAssets
+          ? 'empty-assets'
+          : 'empty-token',
+      accountCount: myTop10Addresses.length,
+      tokenCount,
+      customTestnetSectionCount,
+      selectedChain: chain || null,
+      tokenDisplayMode,
+      isLpTokenEnabled,
+    });
+  }, [
+    chain,
+    foldRows.length,
+    hasFoldTokens,
+    hasNoAssets,
+    isFocused,
+    isLoading,
+    isLpTokenEnabled,
+    multiAssetsKey,
+    myTop10Addresses.length,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioReport,
+    regressionScenarioRunId,
+    scamRows.length,
+    scenarioReadyCheckTick,
+    tokenDisplayMode,
+    tokenRows.length,
+    visibleCustomTestnetSections.length,
+  ]);
 
   const handleOpenTokenDetail = useCallback(
     (

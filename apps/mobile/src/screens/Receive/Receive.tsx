@@ -37,6 +37,7 @@ import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
 import { BackupReminderCard } from '@/components2024/BackupReminderCard';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useBackupReminder } from '@/hooks/account';
 import {
   OfflineChainNotify,
@@ -46,10 +47,15 @@ import { rateGuideLastExposureState } from '@/components/RateModal/hooks';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
+function formatSafeAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const regressionScenario = useRegressionScenario<'Receive'>();
 
   const route =
     useRoute<
@@ -176,6 +182,34 @@ function ReceiveScreen(): JSX.Element {
       setIsShowWatchModeModal(false);
     }
   }, [isWatchMode]);
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'send-receive' ||
+      !account?.address ||
+      isShowWatchModeModal
+    ) {
+      return;
+    }
+
+    if (!regressionScenario.claimOnce('receive-address-ready')) {
+      return;
+    }
+
+    regressionScenario.report('assertion', {
+      assertion: 'receive-address-ready',
+      passed: true,
+      address: formatSafeAddress(account.address),
+      chain: selectedChain || 'all-evm',
+      hasQr: true,
+    });
+  }, [
+    account?.address,
+    isShowWatchModeModal,
+    regressionScenario,
+    selectedChain,
+  ]);
 
   const navState = route.params;
 

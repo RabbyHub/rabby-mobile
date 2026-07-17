@@ -63,6 +63,7 @@ import {
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useAppForeground } from '@/hooks/useAppForeground';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -76,6 +77,17 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
 const NFTListInner = () => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const regressionScenario = useRegressionScenario<'Home'>();
+  const regressionScenarioActive = regressionScenario.active;
+  const regressionScenarioId = regressionScenario.active
+    ? regressionScenario.scenario
+    : null;
+  const regressionScenarioRunId = regressionScenario.active
+    ? regressionScenario.runId
+    : null;
+  const regressionScenarioReport = regressionScenario.active
+    ? regressionScenario.report
+    : null;
   const { myTop10Addresses } = useAccountInfo();
 
   const selectedChainItem = useSelectedChainItem();
@@ -164,6 +176,80 @@ const NFTListInner = () => {
   const hasNotAssets = useMemo(() => {
     return nftList.length === 0 && !isLoading && isFocused;
   }, [nftList.length, isLoading, isFocused]);
+
+  const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'home-assets' ||
+      !isFocused
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setScenarioReadyCheckTick(Date.now());
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [
+    chain,
+    isFocused,
+    myTop10Addresses,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioRunId,
+  ]);
+
+  const lastReadyReportKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'home-assets' ||
+      !regressionScenarioRunId ||
+      !regressionScenarioReport ||
+      !isFocused ||
+      !scenarioReadyCheckTick ||
+      isLoading
+    ) {
+      return;
+    }
+
+    const visibleCount = unFoldNftList.length;
+    const foldedCount = foldNftList.length;
+    const readyKey = [
+      regressionScenarioRunId,
+      myTop10Addresses.join(','),
+      chain || 'all',
+      visibleCount,
+      foldedCount,
+    ].join(':');
+    if (lastReadyReportKeyRef.current === readyKey) {
+      return;
+    }
+    lastReadyReportKeyRef.current = readyKey;
+
+    regressionScenarioReport('assertion', {
+      assertion: 'home-assets-nft-ready',
+      passed: true,
+      state: visibleCount + foldedCount > 0 ? 'data' : 'empty-nft',
+      accountCount: myTop10Addresses.length,
+      visibleCount,
+      foldedCount,
+      selectedChain: chain || null,
+    });
+  }, [
+    chain,
+    foldNftList.length,
+    isFocused,
+    isLoading,
+    myTop10Addresses,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioReport,
+    regressionScenarioRunId,
+    scenarioReadyCheckTick,
+    unFoldNftList.length,
+  ]);
 
   const handlePressNft = useCallback(
     (item: NftItemWithCollection) => {

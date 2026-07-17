@@ -15,6 +15,7 @@ import {
   type ActiveRegressionScenarioContext,
   type RegressionScenarioCommand,
   type RegressionScenarioContext,
+  type RegressionScenarioRuntimeContext,
   type RegressionScreenId,
   type WithRegressionScenario,
 } from './contracts';
@@ -130,6 +131,31 @@ export function useRegressionScenario<
   TScreen extends RegressionScreenId = RegressionScreenId,
 >() {
   return useContext(ScenarioContext) as RegressionScenarioContext<TScreen>;
+}
+
+export function useRegressionScenarioRuntime(): RegressionScenarioRuntimeContext {
+  const snapshot = useRuntimeSnapshot();
+  const command = snapshot.command || snapshot.session?.command || null;
+
+  return useMemo(() => {
+    if (!snapshot.enabled || !command?.scenario) {
+      return INACTIVE_REGRESSION_SCENARIO_CONTEXT;
+    }
+
+    return {
+      active: true,
+      runId: command.runId,
+      scenario: command.scenario,
+      screen: command.screen,
+      action: command.action,
+      fixture: command.fixture,
+      credentialProfile: command.credentialProfile,
+      params: command.params,
+      claimOnce: actionKey =>
+        claimRegressionScenarioAction(command.runId, actionKey),
+      report: reportRegressionScenarioEvent,
+    };
+  }, [command, snapshot.enabled]);
 }
 
 export function RegressionScenarioHost() {

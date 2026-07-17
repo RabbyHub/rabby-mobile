@@ -32,7 +32,7 @@ import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components2024/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
@@ -75,6 +75,7 @@ import {
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
+import { tokenAmountBn } from '@/screens/Swap/utils';
 import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 import {
@@ -87,6 +88,9 @@ import {
   ensureFeatureActivation,
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { RootNames } from '@/constant/layout';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -146,6 +150,32 @@ const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
 const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 const BUILD_BRIDGE_TXS_DEBOUNCE_MS = 500;
+const DEFAULT_REGRESSION_TARGET_USD = '0.1';
+const DEFAULT_REGRESSION_MAX_TOTAL_USD = '1';
+
+function readRegressionUsdParam(value: string | undefined, fallback: string) {
+  const parsed = new BigNumber(value || fallback);
+  if (!parsed.isFinite() || !parsed.gt(0)) {
+    return new BigNumber(fallback);
+  }
+  return parsed;
+}
+
+function isSameAmountValue(left: string | number, right: BigNumber) {
+  return new BigNumber(left || 0).eq(right);
+}
+
+function normalizeRegressionTokenId(tokenId?: string | null) {
+  return (tokenId || '').toLowerCase();
+}
+
+function isSameRegressionTokenId(left?: string | null, right?: string | null) {
+  return (
+    !!left &&
+    !!right &&
+    normalizeRegressionTokenId(left) === normalizeRegressionTokenId(right)
+  );
+}
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -317,6 +347,22 @@ export const BridgeContent = ({
   const quoteVisible = useQuoteVisible();
 
   const setQuoteVisible = useSetQuoteVisible();
+  const regressionScenario = useRegressionScenario<'SwapBridge'>();
+  const regressionScenarioActive = regressionScenario.active;
+  const regressionScenarioId = regressionScenario.active
+    ? regressionScenario.scenario
+    : null;
+  const regressionScenarioTab = regressionScenario.active
+    ? regressionScenario.params.tab
+    : null;
+  const bridgeFundedAmountAppliedRunIdRef = useRef('');
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        typeof RootNames.SwapBridge | typeof RootNames.MultiSwapBridge
+      >
+    >();
 
   const openHistory = useMemoizedFn(() => {
     headerRef.current?.openHistory();
@@ -397,6 +443,142 @@ export const BridgeContent = ({
     slider,
     onChangeSlider,
   } = useBridge(isForMultipleAddress);
+
+  const isRegressionBridgePairMatched = useMemo(() => {
+    const params = route.params;
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'swap-bridge' ||
+      regressionScenarioTab !== 'bridge' ||
+      !params?.chainEnum ||
+      !params.tokenId ||
+      !params.toChainEnum ||
+      !params.toTokenId ||
+      !fromToken ||
+      !toToken
+    ) {
+      return false;
+    }
+
+    const expectedFromChain = findChainByEnum(params.chainEnum)?.serverId;
+    const expectedToChain = findChainByEnum(params.toChainEnum)?.serverId;
+
+    return (
+      !!expectedFromChain &&
+      !!expectedToChain &&
+      fromToken.chain === expectedFromChain &&
+      toToken.chain === expectedToChain &&
+      isSameRegressionTokenId(fromToken.id, params.tokenId) &&
+      isSameRegressionTokenId(toToken.id, params.toTokenId)
+    );
+  }, [
+    fromToken,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioTab,
+    route.params,
+    toToken,
+  ]);
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-bridge' ||
+      regressionScenario.params.tab !== 'bridge' ||
+      !isRegressionBridgePairMatched ||
+      !fromToken ||
+      !toToken
+    ) {
+      return;
+    }
+
+    const price = new BigNumber(fromToken.price || 0);
+    if (!price.gt(0)) {
+      return;
+    }
+
+    const targetUsd = readRegressionUsdParam(
+      regressionScenario.params.targetUsd,
+      DEFAULT_REGRESSION_TARGET_USD,
+    );
+    const maxTotalUsd = readRegressionUsdParam(
+      regressionScenario.params.maxTotalUsd,
+      DEFAULT_REGRESSION_MAX_TOTAL_USD,
+    );
+    const amountValue = targetUsd
+      .div(price)
+      .decimalPlaces(Math.min(fromToken.decimals || 6, 6), BigNumber.ROUND_UP);
+    const actualUsd = amountValue.times(price);
+    const balance = tokenAmountBn(fromToken);
+
+    if (
+      !amountValue.gt(0) ||
+      actualUsd.gt(maxTotalUsd) ||
+      !balance.gt(amountValue)
+    ) {
+      if (regressionScenario.claimOnce('bridge-funded-amount-invalid')) {
+        regressionScenario.report('assertion', {
+          assertion: 'bridge-funded-amount-valid',
+          passed: false,
+          fromChain: fromToken.chain,
+          fromToken: fromToken.symbol,
+          toChain: toToken.chain,
+          toToken: toToken.symbol,
+          targetUsd: targetUsd.toString(10),
+          actualUsd: actualUsd.toString(10),
+          balance: balance.toString(10),
+        });
+      }
+      return;
+    }
+
+    if (!isSameAmountValue(amount, amountValue)) {
+      const hasApplied =
+        bridgeFundedAmountAppliedRunIdRef.current === regressionScenario.runId;
+      const assertion = hasApplied
+        ? 'bridge-funded-amount-reapplied'
+        : 'bridge-funded-amount-applied';
+      handleAmountChange(amountValue.toString(10));
+      if (!hasApplied || regressionScenario.claimOnce(assertion)) {
+        regressionScenario.report('assertion', {
+          assertion,
+          passed: true,
+          mode: 'dry-run',
+          fromChain: fromToken.chain,
+          fromToken: fromToken.symbol,
+          toChain: toToken.chain,
+          toToken: toToken.symbol,
+          amount: amountValue.toString(10),
+          targetUsd: targetUsd.toString(10),
+          actualUsd: actualUsd.toString(10),
+        });
+      }
+      bridgeFundedAmountAppliedRunIdRef.current = regressionScenario.runId;
+      return;
+    }
+
+    if (regressionScenario.claimOnce('bridge-funded-form-amount-ready')) {
+      regressionScenario.report('assertion', {
+        assertion: 'bridge-funded-form-amount-ready',
+        passed: true,
+        mode: 'dry-run',
+        fromChain: fromToken.chain,
+        fromToken: fromToken.symbol,
+        toChain: toToken.chain,
+        toToken: toToken.symbol,
+        amount,
+        targetUsd: targetUsd.toString(10),
+        actualUsd: actualUsd.toString(10),
+      });
+    }
+  }, [
+    amount,
+    fromToken,
+    handleAmountChange,
+    isRegressionBridgePairMatched,
+    regressionScenario,
+    toToken,
+  ]);
 
   const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
   const setQuotePollingPauseReason = useCallback(
@@ -1167,6 +1349,51 @@ export const BridgeContent = ({
     !selectedBridgeQuote ||
     quoteLoading ||
     !quoteList?.length;
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-bridge' ||
+      regressionScenario.params.tab !== 'bridge' ||
+      !isRegressionBridgePairMatched ||
+      !fromToken ||
+      !toToken ||
+      !amountAvailable ||
+      quoteLoading ||
+      !selectedBridgeQuote ||
+      !quoteList?.length
+    ) {
+      return;
+    }
+
+    if (!regressionScenario.claimOnce('bridge-funded-dry-run-ready')) {
+      return;
+    }
+
+    regressionScenario.report('assertion', {
+      assertion: 'bridge-funded-dry-run-ready',
+      passed: true,
+      mode: 'dry-run',
+      fromChain: fromToken.chain,
+      fromToken: fromToken.symbol,
+      toChain: toToken.chain,
+      toToken: toToken.symbol,
+      amount,
+      aggregator: selectedBridgeQuote.aggregator.id,
+      bridge: selectedBridgeQuote.bridge_id,
+      quoteCount: quoteList.length,
+    });
+  }, [
+    amount,
+    amountAvailable,
+    fromToken,
+    isRegressionBridgePairMatched,
+    quoteList?.length,
+    quoteLoading,
+    regressionScenario,
+    selectedBridgeQuote,
+    toToken,
+  ]);
 
   useEffect(() => {
     const clearBuildTimer = () => {

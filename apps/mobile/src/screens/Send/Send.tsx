@@ -212,6 +212,13 @@ const SendPendingTxItem = React.memo(function SendPendingTxItem({
 
 function SendTransferRegressionProbe() {
   const regressionScenario = useRegressionScenario<'Send'>();
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'Send' | 'MultiSend'
+      >
+    >();
   const canSubmit = useSendTokenCanSubmit();
   const { chainItem, currentToken } = useSendTokenScreenChainToken();
   const { balanceError, initialTokenReady, isLoading } =
@@ -235,10 +242,15 @@ function SendTransferRegressionProbe() {
     regressionScenario.active &&
     regressionScenario.scenario === 'send-transfer' &&
     isRegressionBroadcastRequested(regressionScenario.params);
+  const isRegressionRouteMatched =
+    regressionScenario.active &&
+    regressionScenario.scenario === 'send-transfer' &&
+    route.params?.regressionRunId === regressionScenario.runId;
 
   useEffect(() => {
     if (
       !shouldBroadcast ||
+      !isRegressionRouteMatched ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'send-transfer'
     ) {
@@ -271,6 +283,7 @@ function SendTransferRegressionProbe() {
     currentToken.id,
     currentToken.symbol,
     regressionScenario,
+    isRegressionRouteMatched,
     sendTokenEvents,
     shouldBroadcast,
     to,
@@ -279,7 +292,8 @@ function SendTransferRegressionProbe() {
   useEffect(() => {
     if (
       !regressionScenario.active ||
-      regressionScenario.scenario !== 'send-transfer'
+      regressionScenario.scenario !== 'send-transfer' ||
+      !isRegressionRouteMatched
     ) {
       return;
     }
@@ -340,6 +354,7 @@ function SendTransferRegressionProbe() {
     currentToken.symbol,
     initialTokenReady,
     isLoading,
+    isRegressionRouteMatched,
     regressionScenario,
     saveCurrentFormValuesSnapshot,
     shouldBroadcast,

@@ -91,7 +91,8 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     kind: 'core',
     screens: ['SwapBridge'],
     requiresFixture: false,
-    description: 'Open Swap and Bridge with real account context.',
+    description:
+      'Prepare a low-value Polygon to Arbitrum Bridge and validate dry-run readiness.',
   },
   'swap-funded': {
     id: 'swap-funded',
@@ -108,6 +109,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     requiresFixture: false,
     description: 'Open Settings and verify lock/restart state restoration.',
   },
+  'app-background-restore': {
+    id: 'app-background-restore',
+    kind: 'core',
+    screens: ['Home'],
+    requiresFixture: false,
+    description:
+      'Open Home, then let the host runner background and restore the app.',
+  },
   'dapp-browser': {
     id: 'dapp-browser',
     kind: 'focused',
@@ -122,6 +131,54 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     requiresFixture: false,
     description:
       'Open a configured Dapp URL and verify connected Dapp permission state.',
+  },
+  'dapp-switch-chain': {
+    id: 'dapp-switch-chain',
+    kind: 'focused',
+    screens: ['BrowserScreen'],
+    requiresFixture: false,
+    description:
+      'Send a deterministic Dapp wallet_switchEthereumChain request and verify the connected Dapp chain changes.',
+  },
+  'dapp-disconnect': {
+    id: 'dapp-disconnect',
+    kind: 'focused',
+    screens: ['BrowserScreen'],
+    requiresFixture: false,
+    description:
+      'Connect a deterministic Dapp, revoke eth_accounts permission through provider flow, and verify it is disconnected.',
+  },
+  'dapp-sign-tx': {
+    id: 'dapp-sign-tx',
+    kind: 'focused',
+    screens: ['BrowserScreen'],
+    requiresFixture: false,
+    description:
+      'Send a deterministic Dapp eth_sendTransaction request and verify SignTx approval opens without broadcasting.',
+  },
+  'dapp-sign-text': {
+    id: 'dapp-sign-text',
+    kind: 'focused',
+    screens: ['BrowserScreen'],
+    requiresFixture: false,
+    description:
+      'Send a deterministic Dapp personal_sign request and verify SignText approval opens without signing.',
+  },
+  'dapp-sign-typed-data': {
+    id: 'dapp-sign-typed-data',
+    kind: 'focused',
+    screens: ['BrowserScreen'],
+    requiresFixture: false,
+    description:
+      'Send a deterministic Dapp eth_signTypedData_v4 request and verify SignTypedData approval opens without signing.',
+  },
+  'dapp-cancel-signing': {
+    id: 'dapp-cancel-signing',
+    kind: 'focused',
+    screens: ['BrowserScreen'],
+    requiresFixture: false,
+    description:
+      'Open a deterministic Dapp signing approval, cancel it, and verify the approval queue is cleared.',
   },
   'lending-markets': {
     id: 'lending-markets',
@@ -151,6 +208,41 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     screens: ['MultiAddressHistory'],
     requiresFixture: false,
     description: 'Open transaction history and observe refresh completion.',
+  },
+  'gas-account-entry': {
+    id: 'gas-account-entry',
+    kind: 'focused',
+    screens: ['GasAccount'],
+    requiresFixture: false,
+    description: 'Open GasAccount from the transaction stack.',
+  },
+  'market-entry': {
+    id: 'market-entry',
+    kind: 'focused',
+    screens: ['Market'],
+    requiresFixture: false,
+    description: 'Open the Market screen from the home non-tab stack.',
+  },
+  'approvals-entry': {
+    id: 'approvals-entry',
+    kind: 'focused',
+    screens: ['ApprovalAddressList'],
+    requiresFixture: false,
+    description: 'Open the Approvals address list entry point.',
+  },
+  'rabby-points-entry': {
+    id: 'rabby-points-entry',
+    kind: 'focused',
+    screens: ['Points'],
+    requiresFixture: false,
+    description: 'Open the Rabby Points screen.',
+  },
+  'convert-dust-entry': {
+    id: 'convert-dust-entry',
+    kind: 'focused',
+    screens: ['ConvertDust'],
+    requiresFixture: false,
+    description: 'Open the Convert Dust screen.',
   },
 });
 
