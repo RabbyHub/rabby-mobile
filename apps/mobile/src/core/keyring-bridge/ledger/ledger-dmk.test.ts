@@ -835,6 +835,101 @@ describe('ledger DMK bridge discovery', () => {
     );
   });
 
+  it('does not mark a pending connection probe as an active device action', async () => {
+    jest.useFakeTimers();
+
+    const deviceId = 'ledger-pending-probe-device-id';
+    mockDmk.connect.mockReturnValueOnce(new Promise(() => undefined));
+
+    const { getLedgerAppAndVersion } = require('./ledger-dmk');
+    const firstProbe = getLedgerAppAndVersion(deviceId, 2000);
+    const publicCheck = Promise.race([
+      firstProbe,
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Ledger: Connection check timeout')),
+          2000,
+        ),
+      ),
+    ]);
+
+    jest.advanceTimersByTime(2000);
+    await expect(publicCheck).rejects.toThrow(
+      'Ledger: Connection check timeout',
+    );
+
+    const retry = getLedgerAppAndVersion(deviceId, 2000);
+    const retryRejected = expect(retry).rejects.toThrow(
+      'Ledger: Device connection timeout',
+    );
+    const firstProbeRejected = expect(firstProbe).rejects.toThrow(
+      'Ledger: Device connection timeout',
+    );
+    jest.advanceTimersByTime(8000);
+
+    await retryRejected;
+    await firstProbeRejected;
+    expect(mockDmk.connect).toHaveBeenCalledTimes(1);
+    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it('does not start a signer while a readiness APDU is pending', async () => {
+    const deviceId = 'ledger-pending-readiness-device-id';
+    const sessionId = 'pending-readiness-session-1';
+    let finishReadiness: (value: {
+      data: { name: string; version: string };
+    }) => void = () => undefined;
+    let markReadinessStarted = () => undefined;
+    const readinessStarted = new Promise<void>(resolve => {
+      markReadinessStarted = resolve;
+    });
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: of({
+          status: 'completed',
+          output: { r: '0x1', s: '0x2', v: '0x1b' },
+        }),
+      })),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.sendCommand.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finishReadiness = resolve;
+          markReadinessStarted();
+        }),
+    );
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const {
+      getLedgerAppAndVersion,
+      getLedgerDmkSession,
+    } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+    const readiness = getLedgerAppAndVersion(deviceId, 2000);
+    await readinessStarted;
+
+    await expect(
+      session.signTransaction("44'/60'/0'/0/0", new Uint8Array()),
+    ).rejects.toThrow(
+      'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
+    );
+    expect(signer.signTransaction).not.toHaveBeenCalled();
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
+    expect(mockDmk.sendCommand).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId, abortTimeout: 2000 }),
+    );
+
+    finishReadiness({
+      data: { name: 'Ethereum', version: '1.0.0' },
+    });
+    await expect(readiness).resolves.toEqual({
+      appName: 'Ethereum',
+      version: '1.0.0',
+    });
+  });
+
   it('reports the legacy BOLOS dashboard when GetAppAndVersion returns 0x6e00', async () => {
     const deviceId = 'ledger-legacy-dashboard-device-id';
     const sessionId = 'legacy-dashboard-session-1';
@@ -1209,9 +1304,11 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockContextModuleBuild).toHaveBeenCalledTimes(2);
   });
 
-  it('rejects a concurrent signer action and allows retry after the active action finishes', async () => {
+  it('guards concurrent actions per device and allows retry after signing finishes', async () => {
     const deviceId = 'ledger-concurrent-device-id';
     const sessionId = 'session-1';
+    const otherDeviceId = 'ledger-other-device-id';
+    const otherSessionId = 'session-2';
     let completeFirstAction: (() => void) | undefined;
     let markFirstActionStarted: (() => void) | undefined;
     const firstActionStarted = new Promise<void>(resolve => {
@@ -1239,10 +1336,16 @@ describe('ledger DMK bridge discovery', () => {
         }),
     };
 
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.listConnectedDevices.mockReturnValue([
+      { id: deviceId, sessionId },
+      { id: otherDeviceId, sessionId: otherSessionId },
+    ]);
     mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
 
-    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const {
+      getLedgerAppAndVersion,
+      getLedgerDmkSession,
+    } = require('./ledger-dmk');
     const session = await getLedgerDmkSession(deviceId);
     const firstAction = session.signTransaction(
       "44'/60'/0'/0/0",
@@ -1258,11 +1361,27 @@ describe('ledger DMK bridge discovery', () => {
     await expect(session.getAppAndVersion()).rejects.toThrow(
       'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
     );
+    await expect(getLedgerAppAndVersion(deviceId, 2000)).rejects.toThrow(
+      'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
+    );
+    await expect(getLedgerAppAndVersion(otherDeviceId, 2000)).resolves.toEqual({
+      appName: 'Ethereum',
+      version: '1.0.0',
+    });
     expect(signer.signTransaction).toHaveBeenCalledTimes(1);
-    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
-    expect(mockDmk.sendCommand).toHaveBeenCalledWith(
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(2);
+    expect(mockDmk.sendCommand).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({ sessionId, abortTimeout: 2000 }),
     );
+    expect(mockDmk.sendCommand).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        sessionId: otherSessionId,
+        abortTimeout: 2000,
+      }),
+    );
+    expect(mockDmk.disconnect).not.toHaveBeenCalledWith({ sessionId });
 
     completeFirstAction?.();
     await firstAction;
@@ -1271,7 +1390,7 @@ describe('ledger DMK bridge discovery', () => {
       session.signTransaction("44'/60'/0'/0/1", new Uint8Array()),
     ).resolves.toEqual({ r: '0x3', s: '0x4', v: '0x1c' });
     expect(signer.signTransaction).toHaveBeenCalledTimes(2);
-    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(2);
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(3);
   });
 
   it('runs the public app controls through real DMK commands', async () => {

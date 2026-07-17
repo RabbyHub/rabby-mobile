@@ -13,6 +13,7 @@ import {
   RNBleTransportFactory,
   rnBleTransportIdentifier,
 } from '@ledgerhq/device-transport-kit-react-native-ble';
+import { LedgerKeyringBusyError } from '@rabby-wallet/eth-keyring-ledger';
 import { firstValueFrom, take } from 'rxjs';
 import {
   isDeviceSessionNotFound,
@@ -60,6 +61,23 @@ const connectionDrains = new Map<string, Promise<void>>();
 const pendingTeardowns = new Map<string, Promise<void>>();
 const connectionVersionsByDeviceId = new Map<string, number>();
 const deferredSessionDisconnects = new Map<string, Set<DeviceSessionId>>();
+const activeDeviceActions = new Set<string>();
+
+export async function runLedgerDeviceAction<T>(
+  deviceId: string,
+  task: () => Promise<T>,
+) {
+  if (activeDeviceActions.has(deviceId)) {
+    throw new LedgerKeyringBusyError();
+  }
+
+  activeDeviceActions.add(deviceId);
+  try {
+    return await task();
+  } finally {
+    activeDeviceActions.delete(deviceId);
+  }
+}
 
 export function getDmk() {
   if (!dmk) {
@@ -575,7 +593,9 @@ export async function getLedgerAppAndVersion(
       sessionId,
       connectionVersion: getConnectionVersion(deviceId),
     };
-    return readLedgerAppAndVersion(sessionId, abortTimeout);
+    return runLedgerDeviceAction(deviceId, () =>
+      readLedgerAppAndVersion(sessionId, abortTimeout),
+    );
   };
 
   try {

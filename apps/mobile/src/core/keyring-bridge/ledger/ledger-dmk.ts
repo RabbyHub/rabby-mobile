@@ -18,10 +18,7 @@ import {
   type Signature,
   type TypedData,
 } from '@ledgerhq/device-signer-kit-ethereum';
-import {
-  LedgerKeyringBusyError,
-  type LedgerKeyringSession,
-} from '@rabby-wallet/eth-keyring-ledger';
+import type { LedgerKeyringSession } from '@rabby-wallet/eth-keyring-ledger';
 import { filter, firstValueFrom, take, tap } from 'rxjs';
 import {
   connectLedgerDeviceById,
@@ -29,6 +26,7 @@ import {
   getDmk,
   probeLedgerDeviceSession,
   readLedgerAppAndVersion,
+  runLedgerDeviceAction,
 } from './ledger-dmk-session';
 import { toLedgerDmkError } from './ledger-dmk-error';
 
@@ -232,19 +230,8 @@ export async function getLedgerDmkSession(
   }
 
   await connectLedgerDeviceById(deviceId);
-  let isDeviceActionActive = false;
-  const runDeviceAction = async <T>(task: () => Promise<T>) => {
-    if (isDeviceActionActive) {
-      throw new LedgerKeyringBusyError();
-    }
-
-    isDeviceActionActive = true;
-    try {
-      return await task();
-    } finally {
-      isDeviceActionActive = false;
-    }
-  };
+  const runDeviceAction = <T>(task: () => Promise<T>) =>
+    runLedgerDeviceAction(deviceId, task);
   const runSignerAction = async <T>(
     actionName: string,
     task: (currentSigner: ReturnType<typeof buildEthSigner>) => LedgerAction<T>,
