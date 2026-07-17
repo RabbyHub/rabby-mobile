@@ -1986,7 +1986,8 @@
       "currency": "Валюта",
       "searchCurrency": "Поиск валюты",
       "dataAnalysis": "Анализ данных",
-      "bugReportHistory": "История отчетов об ошибках"
+      "bugReportHistory": "История отчетов об ошибках",
+      "bugReportChat": "Поделиться отзывом в чате"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -3787,7 +3788,7 @@
       "noAvailableAddress": "Нет доступного адреса"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "",
+      "replyPlaceholder": "Введите сообщение…",
       "mediaPlaceholder": "Изображение/Видео"
     }
   },
