@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ensureCoreService,
-  getRegisteredService,
+  getLoadedCoreService,
 } from '@/core/services/serviceRegistry';
 import type {
   CoreServiceName,
@@ -87,6 +87,85 @@ function toError(error: unknown) {
   return error instanceof Error ? error : new Error(String(error));
 }
 
+function validateDependencies(dependencies: CoreServiceDependencyList) {
+  const names = new Set<CoreServiceName>();
+  dependencies.forEach(dependency => {
+    if (names.has(dependency.name)) {
+      throw new CoreServiceDependencyError(
+        `Duplicate core service dependency "${dependency.name}"`,
+        dependency.name,
+        dependency.readiness || 'loaded',
+      );
+    }
+    names.add(dependency.name);
+  });
+}
+
+function isDependencyRuntimeReadySynchronously<Name extends CoreServiceName>(
+  dependency: CoreServiceDependency<Name>,
+  service: CoreServiceRegistry[Name],
+) {
+  if (dependency.readiness !== 'runtimeReady') {
+    return true;
+  }
+
+  if (dependency.name !== 'keyringService') {
+    throw new CoreServiceDependencyError(
+      `Unsupported runtime readiness for core service "${dependency.name}"`,
+      dependency.name,
+      dependency.readiness,
+    );
+  }
+
+  const keyringService = service as CoreServiceRegistry['keyringService'];
+  if (!keyringService.isUnlocked()) {
+    throw new CoreServiceDependencyError(
+      'keyringService runtime readiness requires an unlocked wallet',
+      dependency.name,
+      dependency.readiness,
+    );
+  }
+
+  return keyringService.isKeyringRuntimeReady();
+}
+
+/**
+ * Reads only fully loaded services. Reactive fallback consumers use this to
+ * avoid one artificial loading render when their deferred services are
+ * already ready, without exposing a service while its loader is still active.
+ */
+export function getCoreServiceDependencyStateSnapshot<
+  const Dependencies extends CoreServiceDependencyList,
+>(dependencies: Dependencies): CoreServiceDependencyState<Dependencies> {
+  try {
+    validateDependencies(dependencies);
+    const entries: [CoreServiceName, CoreServiceRegistry[CoreServiceName]][] =
+      [];
+
+    for (const dependency of dependencies) {
+      const service = getLoadedCoreService(dependency.name);
+      if (!service) {
+        return { status: 'loading' };
+      }
+
+      if (!isDependencyRuntimeReadySynchronously(dependency, service)) {
+        return { status: 'loading' };
+      }
+
+      entries.push([dependency.name, service]);
+    }
+
+    return {
+      status: 'ready',
+      services: Object.fromEntries(
+        entries,
+      ) as ResolvedCoreServices<Dependencies>,
+    };
+  } catch (error) {
+    return { status: 'error', error: toError(error) };
+  }
+}
+
 async function ensureDependencyRuntimeReady<Name extends CoreServiceName>(
   dependency: CoreServiceDependency<Name>,
   service: CoreServiceRegistry[Name],
@@ -132,7 +211,7 @@ async function resolveCoreServiceDependency<Name extends CoreServiceName>(
 ) {
   await ensureCoreService(dependency.name);
 
-  const service = getRegisteredService(dependency.name);
+  const service = getLoadedCoreService(dependency.name);
   if (!service) {
     throw new CoreServiceDependencyError(
       `Core service "${dependency.name}" finished loading without registration`,
@@ -148,17 +227,7 @@ async function resolveCoreServiceDependency<Name extends CoreServiceName>(
 export async function resolveCoreServices<
   const Dependencies extends CoreServiceDependencyList,
 >(dependencies: Dependencies): Promise<ResolvedCoreServices<Dependencies>> {
-  const names = new Set<CoreServiceName>();
-  dependencies.forEach(dependency => {
-    if (names.has(dependency.name)) {
-      throw new CoreServiceDependencyError(
-        `Duplicate core service dependency \"${dependency.name}\"`,
-        dependency.name,
-        dependency.readiness || 'loaded',
-      );
-    }
-    names.add(dependency.name);
-  });
+  validateDependencies(dependencies);
 
   const entries = await Promise.all(
     dependencies.map(async dependency => {
@@ -195,23 +264,51 @@ export function useCoreServiceDependencies<
   const dependencyKey = getDependencyKey(dependencies);
   const dependenciesRef = React.useRef(dependencies);
   dependenciesRef.current = dependencies;
-  const [state, setState] = React.useState<
-    CoreServiceDependencyState<Dependencies>
-  >({ status: 'loading' });
+  const [stateRecord, setStateRecord] = React.useState(() => ({
+    dependencyKey,
+    state: getCoreServiceDependencyStateSnapshot(dependencies),
+  }));
+  const currentState =
+    stateRecord.dependencyKey === dependencyKey
+      ? stateRecord.state
+      : getCoreServiceDependencyStateSnapshot(dependencies);
 
   React.useEffect(() => {
     let disposed = false;
-    setState({ status: 'loading' });
+    const synchronousState = getCoreServiceDependencyStateSnapshot(
+      dependenciesRef.current,
+    );
+
+    if (synchronousState.status !== 'loading') {
+      setStateRecord({
+        dependencyKey,
+        state: synchronousState,
+      });
+      return () => {
+        disposed = true;
+      };
+    }
+
+    setStateRecord({
+      dependencyKey,
+      state: synchronousState,
+    });
 
     void resolveCoreServices(dependenciesRef.current).then(
       services => {
         if (!disposed) {
-          setState({ status: 'ready', services });
+          setStateRecord({
+            dependencyKey,
+            state: { status: 'ready', services },
+          });
         }
       },
       error => {
         if (!disposed) {
-          setState({ status: 'error', error: toError(error) });
+          setStateRecord({
+            dependencyKey,
+            state: { status: 'error', error: toError(error) },
+          });
         }
       },
     );
@@ -221,7 +318,7 @@ export function useCoreServiceDependencies<
     };
   }, [dependencyKey]);
 
-  return state;
+  return currentState;
 }
 
 export type CoreServiceBoundaryProps<

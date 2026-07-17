@@ -5,7 +5,7 @@ import type {
 } from '@/core/services/transactionHistory';
 import {
   callCoreService,
-  getRegisteredService,
+  getLoadedCoreService,
 } from '@/core/services/serviceRegistry';
 import { createDeferredServiceApi } from './createDeferredServiceApi';
 
@@ -24,7 +24,7 @@ const EMPTY_TRANSACTION_LIST: {
 };
 
 export function getTransactionHistoryListSnapshot(address: string) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return EMPTY_TRANSACTION_LIST;
   }
@@ -35,7 +35,7 @@ export function getTransactionHistoryRecentPendingSnapshot(
   address: string,
   type: Parameters<TransactionHistoryService['getRecentPendingTxHistory']>[1],
 ) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return null;
   }
@@ -45,7 +45,7 @@ export function getTransactionHistoryRecentPendingSnapshot(
 export function getTransactionHistoryRecentTxSnapshot(
   ...args: Parameters<TransactionHistoryService['getRecentTxHistory']>
 ) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return null;
   }
@@ -55,7 +55,7 @@ export function getTransactionHistoryRecentTxSnapshot(
 const EMPTY_CUSTOM_TX_ITEM_MAP: Record<string, CustomTxItem> = {};
 
 export function getTransactionHistoryCustomTxItemMapSnapshot() {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return EMPTY_CUSTOM_TX_ITEM_MAP;
   }
@@ -86,7 +86,7 @@ export async function getTransactionHistorySwapFailTransactions(
 export function getTransactionHistorySwapFailTransactionsSnapshot(
   address: string,
 ) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return [];
   }
@@ -94,7 +94,7 @@ export function getTransactionHistorySwapFailTransactionsSnapshot(
 }
 
 export function getTransactionHistorySucceedListSnapshot() {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return [];
   }
@@ -102,7 +102,7 @@ export function getTransactionHistorySucceedListSnapshot() {
 }
 
 export function getTransactionHistorySucceedCountSnapshot(address?: string) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return 0;
   }
@@ -110,7 +110,7 @@ export function getTransactionHistorySucceedCountSnapshot(address?: string) {
 }
 
 export function getTransactionHistoryFailedCountSnapshot(address?: string) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return 0;
   }
@@ -118,7 +118,7 @@ export function getTransactionHistoryFailedCountSnapshot(address?: string) {
 }
 
 export function getTransactionHistoryClearSuccessAndFailListTsSnapshot() {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return Date.now();
   }
@@ -128,7 +128,7 @@ export function getTransactionHistoryClearSuccessAndFailListTsSnapshot() {
 export function getTransactionHistoryPendingsAddressesSnapshot(
   addresses: string[],
 ) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return {
       pendings: [],
@@ -141,7 +141,7 @@ export function getTransactionHistoryPendingsAddressesSnapshot(
 export function getTransactionHistoryLendingSuccessListSnapshot(
   address: string,
 ) {
-  const service = getRegisteredService('transactionHistoryService');
+  const service = getLoadedCoreService('transactionHistoryService');
   if (!service) {
     return [];
   }

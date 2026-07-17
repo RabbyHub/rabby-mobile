@@ -120,6 +120,16 @@ export function getRegisteredService<Name extends CoreServiceName>(
   return getRegisteredDeferredService<CoreServiceRegistry[Name]>(name);
 }
 
+export function getLoadedCoreService<Name extends CoreServiceName>(
+  name: Name,
+): CoreServiceRegistry[Name] | undefined {
+  if (!isCoreServiceLoaded(name)) {
+    return undefined;
+  }
+
+  return getRegisteredService(name);
+}
+
 /**
  * Only serviceApi internals should use this for a synchronous facade. The
  * caller must establish an async activation boundary with ensureCoreService or

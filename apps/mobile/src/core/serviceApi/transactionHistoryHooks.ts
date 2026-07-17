@@ -8,7 +8,6 @@ import type {
   CoreServiceInjectedProps,
   WithCoreServicesOptions,
 } from './serviceDependencies';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
 
 export const TRANSACTION_HISTORY_DEPENDENCIES = [
   serviceDependency('transactionHistoryService'),
@@ -20,10 +19,7 @@ export const TRANSACTION_HISTORY_DEPENDENCIES = [
  */
 export function useTransactionHistoryServiceReady() {
   const state = useCoreServiceDependencies(TRANSACTION_HISTORY_DEPENDENCIES);
-  return (
-    !!getRegisteredService('transactionHistoryService') ||
-    state.status === 'ready'
-  );
+  return state.status === 'ready';
 }
 
 export function withTransactionHistoryService<Props extends object>(
