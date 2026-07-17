@@ -29,7 +29,7 @@ public class MainActivity extends ReactActivity {
     try {
       RabbyStartupTrace.beginSection("MainActivity.bootSplash.init");
       try {
-        RNBootSplash.init(this, R.style.BootTheme);
+        RNBootSplash.init(this, R.style.BootTheme, R.layout.launch_screen);
         applyInitialEdgeToEdgeWindowPolicy();
       } finally {
         RabbyStartupTrace.endSection();
