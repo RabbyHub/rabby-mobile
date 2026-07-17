@@ -223,6 +223,7 @@ function createBleHarness() {
   let activeDevice = initialDevice;
   let connectCount = 0;
   let shouldHangNextConnect = false;
+  let shouldFailNextCharacteristicsLookup = false;
   let resolvePendingConnect: (() => void) | undefined;
 
   const manager = {
@@ -255,9 +256,14 @@ function createBleHarness() {
         return { remove: jest.fn() };
       },
     ),
-    characteristicsForDevice: jest.fn(async () => [
-      activeDevice.characteristic,
-    ]),
+    characteristicsForDevice: jest.fn(async () => {
+      if (shouldFailNextCharacteristicsLookup) {
+        shouldFailNextCharacteristicsLookup = false;
+        return [];
+      }
+
+      return [activeDevice.characteristic];
+    }),
     cancelDeviceConnection: jest.fn(async () => activeDevice.device),
     cancelTransaction: jest.fn(async () => undefined),
   } as unknown as BleManager;
@@ -271,6 +277,9 @@ function createBleHarness() {
     manager,
     hangNextConnect() {
       shouldHangNextConnect = true;
+    },
+    failNextCharacteristicsLookup() {
+      shouldFailNextCharacteristicsLookup = true;
     },
     resolvePendingConnect() {
       resolvePendingConnect?.();
@@ -336,6 +345,140 @@ function createTransport(manager: BleManager) {
   );
 }
 
+function createMultiDeviceReconnectHarness() {
+  const deviceIds = ['ledger-device-a', 'ledger-device-b'] as const;
+  const disconnectListeners = new Map<string, DisconnectListener>();
+  const devices = new Map(
+    deviceIds.map(deviceId => {
+      let device: Device;
+      device = {
+        id: deviceId,
+        localName: deviceId,
+        name: deviceId,
+        services: jest.fn(async () => [{ uuid: SERVICE_UUID }]),
+        discoverAllServicesAndCharacteristics: jest.fn(async () => device),
+      } as unknown as Device;
+      return [deviceId, device] as const;
+    }),
+  );
+  const connectCounts = new Map<string, number>();
+  let rejectPendingReconnect = () => undefined;
+  let markPendingReconnectStarted = () => undefined;
+  const pendingReconnectStarted = new Promise<void>(resolve => {
+    markPendingReconnectStarted = resolve;
+  });
+
+  const manager = {
+    onStateChange: jest.fn(() => ({ remove: jest.fn() })),
+    stopDeviceScan: jest.fn(async () => undefined),
+    connectedDevices: jest.fn(async () => []),
+    connectToDevice: jest.fn((deviceId: string) => {
+      const connectCount = (connectCounts.get(deviceId) ?? 0) + 1;
+      connectCounts.set(deviceId, connectCount);
+
+      if (deviceId === deviceIds[1] && connectCount === 2) {
+        markPendingReconnectStarted();
+        return new Promise<Device>((_resolve, reject) => {
+          rejectPendingReconnect = () =>
+            reject(new Error('BLE reconnect attempt failed'));
+        });
+      }
+
+      return Promise.resolve(devices.get(deviceId));
+    }),
+    discoverAllServicesAndCharacteristicsForDevice: jest.fn(
+      async (deviceId: string) => devices.get(deviceId),
+    ),
+    onDeviceDisconnected: jest.fn(
+      (deviceId: string, listener: DisconnectListener) => {
+        disconnectListeners.set(deviceId, listener);
+        return { remove: jest.fn() };
+      },
+    ),
+    cancelDeviceConnection: jest.fn(async () => undefined),
+  } as unknown as BleManager;
+
+  type DeviceApduSenderFactory = NonNullable<
+    ConstructorParameters<typeof RNBleTransport>[9]
+  >;
+  const deviceApduSenderFactory: DeviceApduSenderFactory = args => {
+    let dependencies = args.dependencies;
+    return {
+      getDependencies: () => dependencies,
+      setDependencies: nextDependencies => {
+        dependencies = nextDependencies;
+      },
+      setupConnection: jest.fn(async () => undefined),
+      sendApdu: jest.fn(),
+      closeConnection: jest.fn(),
+    } as never;
+  };
+  type StateMachineFactory = NonNullable<
+    ConstructorParameters<typeof RNBleTransport>[8]
+  >;
+  const stateMachineFactory: StateMachineFactory = args => {
+    let terminated = false;
+    return {
+      getDependencies: () => args.deviceApduSender.getDependencies(),
+      sendApdu: jest.fn(),
+      closeConnection: () => {
+        if (!terminated) {
+          terminated = true;
+          void args.onTerminated();
+        }
+      },
+      eventDeviceDisconnected: () => {
+        void args.tryToReconnect();
+      },
+      setDependencies: dependencies =>
+        args.deviceApduSender.setDependencies(dependencies),
+      setupConnection: () => args.deviceApduSender.setupConnection(),
+      eventDeviceConnected: jest.fn(),
+    } as never;
+  };
+
+  const transport = new RNBleTransport(
+    deviceModelDataSource,
+    noopLoggerFactory,
+    apduSenderServiceFactory,
+    apduReceiverServiceFactory,
+    manager,
+    { OS: 'android', Version: 34 } as Platform,
+    {
+      checkRequiredPermissions: async () => true,
+      requestRequiredPermissions: async () => true,
+    },
+    1000,
+    stateMachineFactory,
+    deviceApduSenderFactory,
+  );
+
+  return {
+    deviceIds,
+    manager,
+    pendingReconnectStarted,
+    rejectPendingReconnect() {
+      rejectPendingReconnect();
+    },
+    disconnect(deviceId: string) {
+      disconnectListeners.get(deviceId)?.(null, devices.get(deviceId) ?? null);
+    },
+    async connect(deviceId: string) {
+      const result = await transport.connect({
+        deviceId,
+        onDisconnect: jest.fn(),
+      });
+      return result.caseOf({
+        Left: error => {
+          throw error;
+        },
+        Right: connectedDevice => connectedDevice,
+      });
+    },
+    transport,
+  };
+}
+
 async function connectTransport(transport: RNBleTransport) {
   const result = await transport.connect({
     deviceId: DEVICE_ID,
@@ -385,6 +528,24 @@ async function waitForConnectCalls(
   }
 
   throw new Error(`BLE connect call ${count} did not start`);
+}
+
+async function waitForDeviceConnectCalls(
+  manager: BleManager,
+  deviceId: string,
+  count: number,
+) {
+  for (let index = 0; index < 10; index += 1) {
+    await flushMicrotasks();
+    const calls = manager.connectToDevice.mock.calls.filter(
+      ([calledDeviceId]) => calledDeviceId === deviceId,
+    );
+    if (calls.length >= count) {
+      return;
+    }
+  }
+
+  throw new Error(`BLE connect call ${count} did not start for ${deviceId}`);
 }
 
 async function waitForReconnectSetup(
@@ -576,6 +737,56 @@ describe('patched Ledger DMK RN BLE transport', () => {
       ).not.toHaveProperty('connectionPriority');
     } finally {
       await transport.disconnect({ connectedDevice });
+    }
+  });
+
+  it('retries when reconnect setup fails before the device is ready', async () => {
+    const harness = createBleHarness();
+    const transport = createTransport(harness.manager);
+    const connectedDevice = await connectTransport(transport);
+
+    try {
+      harness.failNextCharacteristicsLookup();
+      harness.disconnect();
+
+      await waitForConnectCalls(harness, 3);
+      await flushMicrotasks();
+
+      expect(harness.manager.connectToDevice).toHaveBeenCalledTimes(3);
+
+      const resultPromise = sendTestApdu(connectedDevice);
+      await flushMicrotasks();
+      harness.respondToApdu(harness.reconnectedDevice);
+      await expectSuccessfulApdu(resultPromise);
+    } finally {
+      await transport.disconnect({ connectedDevice });
+    }
+  });
+
+  it('keeps one device reconnecting when another device terminates', async () => {
+    const harness = createMultiDeviceReconnectHarness();
+    const [deviceAId, deviceBId] = harness.deviceIds;
+    const connectedDeviceA = await harness.connect(deviceAId);
+    const connectedDeviceB = await harness.connect(deviceBId);
+
+    try {
+      harness.disconnect(deviceBId);
+      await harness.pendingReconnectStarted;
+
+      await harness.transport.disconnect({ connectedDevice: connectedDeviceA });
+      harness.rejectPendingReconnect();
+
+      await waitForDeviceConnectCalls(harness.manager, deviceBId, 3);
+      expect(
+        harness.manager.connectToDevice.mock.calls.filter(
+          ([calledDeviceId]) => calledDeviceId === deviceBId,
+        ),
+      ).toHaveLength(3);
+    } finally {
+      harness.rejectPendingReconnect();
+      await harness.transport
+        .disconnect({ connectedDevice: connectedDeviceB })
+        .catch(() => undefined);
     }
   });
 
