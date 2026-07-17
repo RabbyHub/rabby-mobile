@@ -3,7 +3,7 @@ import './setup';
 import { MakeSurePromise } from '@rabby-wallet/base-utils';
 import { getRabbyAppDbDir } from '@/databases/constant';
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { SQLite, SQLiteDriverType } from './exports';
 import {
   formatSQLiteTempStoreValue,

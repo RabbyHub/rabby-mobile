@@ -53,8 +53,8 @@ export const PerpsCategorySectionHeader: React.FC<{
       {showSearch ? (
         <TouchableOpacity hitSlop={8} onPress={handleSearchPress}>
           <RcIconSearchCC
-            width={20}
-            height={20}
+            width={18}
+            height={18}
             color={colors2024['neutral-foot']}
           />
         </TouchableOpacity>
@@ -65,8 +65,8 @@ export const PerpsCategorySectionHeader: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
-    marginTop: 24,
-    marginBottom: 4,
+    marginTop: 30,
+    marginBottom: 12,
     paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
@@ -75,13 +75,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   touchable: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
 }));

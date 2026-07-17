@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 export const APP_DB_PREFIX = 'rabby_';
 

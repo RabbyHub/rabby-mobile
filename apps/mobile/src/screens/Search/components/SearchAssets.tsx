@@ -31,7 +31,6 @@ import { findChainByEnum } from '@/utils/chain';
 import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
 import { IManageToken } from '@/core/services/preference';
-import { preferenceService } from '@/core/services';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -40,6 +39,7 @@ import { ITokenItem } from '@/store/tokens';
 import { FavoriteTag } from '@/components2024/Favorite';
 import { Text } from '@/components/Typography';
 import { SearchTokenHeader } from './SearchTokenHeader';
+import { getDisplayUserTokenSettings } from '@/hooks/useTokenSettings';
 
 interface Props {
   resultTokens: ITokenItem[];
@@ -76,8 +76,8 @@ export const SearchAssets: React.FC<Props> = ({
   }, []);
 
   const fetchPinedTokenList = useCallback(() => {
-    preferenceService.getUserTokenSettings().then(res => {
-      setWatchlistTokenList(res.pinedQueue || []);
+    getDisplayUserTokenSettings().then(res => {
+      setWatchlistTokenList(res.pinedQueue);
     });
   }, []);
 

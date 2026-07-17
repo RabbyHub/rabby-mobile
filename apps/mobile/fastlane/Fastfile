@@ -109,16 +109,20 @@ platform :ios do
 
     ENV['CONFIGURATION'] = opts[:type] == 'adhoc' ? 'Regression' : 'Release'
 
-    # Main App: RabbyMobile
-    match(
-      type: opts[:type],
-      app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
-      readonly: true,
-      shallow_clone: true,
-      verbose: false,
-      force_for_new_devices: true,
-      clone_branch_directly: true)
+    if ENV['RABBY_MOBILE_IOS_SKIP_MATCH'] == 'true'
+      UI.important("Skipping fastlane match because RABBY_MOBILE_IOS_SKIP_MATCH=true")
+    else
+      # Main App: RabbyMobile
+      match(
+        type: opts[:type],
+        app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
+        profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
+        readonly: true,
+        shallow_clone: true,
+        verbose: false,
+        force_for_new_devices: true,
+        clone_branch_directly: true)
+    end
 
     # # App Extension: RabbyMobileNotification
     # match(

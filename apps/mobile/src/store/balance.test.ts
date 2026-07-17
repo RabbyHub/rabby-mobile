@@ -9,6 +9,7 @@ describe('store/balance', () => {
   const mockGetAppChainTotalUsdValue = jest.fn();
   const mockBatchGetAppChains = jest.fn();
   const mockGetAppChains = jest.fn();
+  const mockEnsureAppChainStoreInitialized = jest.fn();
   let mockAppStorageState: Record<string, unknown>;
 
   const flushResourceFlowPersist = async () => {
@@ -79,6 +80,8 @@ describe('store/balance', () => {
       },
     }));
     jest.doMock('./appchain', () => ({
+      ensureAppChainStoreInitialized: (...args: unknown[]) =>
+        mockEnsureAppChainStoreInitialized(...args),
       useAppChainStore: {
         getState: () => ({
           appChainMap: {},
@@ -117,6 +120,7 @@ describe('store/balance', () => {
     ]);
 
     expect(mockQueryBalanceCache).toHaveBeenCalledWith('0xabcd', true);
+    expect(mockEnsureAppChainStoreInitialized).toHaveBeenCalled();
     expect(balanceModule.default.getAddressValue('0xabcd')).toEqual({
       evmBalance: 80,
       totalBalance: 100,
@@ -186,6 +190,41 @@ describe('store/balance', () => {
       sourceOfCurrentValue: 'remote',
       persistStatus: 'success',
       hasValue: true,
+    });
+  });
+
+  it('recomputes total balance when appchain value changes after balance hydrate', async () => {
+    mockQueryBalanceCache.mockResolvedValue({
+      total_usd_value: 80,
+      evm_usd_value: 80,
+      chain_list: [{ id: 'eth' }],
+    });
+    mockGetAppChainTotalUsdValue.mockReturnValueOnce(0);
+
+    await balanceModule.default.hydrateCachedBalancesForAccounts([
+      {
+        address: '0xABCD',
+        type: 'SimpleKeyring',
+      },
+    ]);
+
+    expect(balanceModule.default.getAddressValue('0xabcd')).toMatchObject({
+      evmBalance: 80,
+      totalBalance: 80,
+    });
+
+    mockGetAppChainTotalUsdValue.mockReturnValue(25);
+    const changed = balanceModule.default.syncAppChainTotalsForAddresses(
+      ['0xABCD'],
+      {
+        trigger: 'test',
+      },
+    );
+
+    expect(changed).toBe(true);
+    expect(balanceModule.default.getAddressValue('0xabcd')).toMatchObject({
+      evmBalance: 80,
+      totalBalance: 105,
     });
   });
 });

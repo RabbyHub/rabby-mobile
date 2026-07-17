@@ -2222,7 +2222,8 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Wallet to Receive",
+      "title": "Select Wallet",
+      "subtitle": "Choose a wallet to receive your crypto.",
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
@@ -2319,7 +2320,9 @@
       "currency": "Currency",
       "searchCurrency": "Search Currency",
       "transactionNotification": "Txn notifications (Beta)",
-      "dataAnalysis": "Data Analysis"
+      "dataAnalysis": "Data Analysis",
+      "bugReportHistory": "Bug Report History",
+      "bugReportChat": "Share Feedback via Chat"
     },
     "settingModal": {
       "themeMode": {
@@ -2332,6 +2335,8 @@
           "clear_and_quit": "Clear & Close App",
           "clear": "Clear"
         },
+        "clearingToast": "Clearing...",
+        "clearDoneQuitToast": "Cleared. Closing app soon.",
         "iOSToastTitle": "Clear Cache Success",
         "iOSToastDesc": "You need to restart the app to take effect."
       },
@@ -3708,6 +3713,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "No available address"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "Enter a message…",
+      "mediaPlaceholder": "Image/Video"
     }
   },
   "native": {

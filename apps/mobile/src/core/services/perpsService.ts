@@ -65,8 +65,19 @@ export interface PerpsServiceMemoryState {
   unlockPromise: Promise<void> | null;
 }
 
+// Generic item type — importing MarketData here would create a hooks <-> core cycle.
+export interface PerpsMarketDataCache<TItem = unknown> {
+  v: number;
+  updatedAt: number;
+  list: TItem[];
+}
+
 export class PerpsService {
   private store?: PerpsServiceStore;
+  // ~150KB write-once/read-once blob: bypasses createPersistStore (boot-time
+  // clone + rewrite) and must own its own key — the perps store proxy
+  // rewrites its whole object and would clobber foreign fields.
+  private marketCacheStorage?: StorageAdapaterOptions['storageAdapter'];
   private keyringCrypto: KeyringCrypto;
   private agentWalletUnlockVersion = 0;
   private memoryState: PerpsServiceMemoryState = {
@@ -100,8 +111,28 @@ export class PerpsService {
         storage: options?.storageAdapter,
       },
     );
+    this.marketCacheStorage = options?.storageAdapter;
     this.memoryState.agentWallets = {};
   }
+
+  getMarketDataCache = <TItem = unknown>() => {
+    try {
+      return (this.marketCacheStorage?.getItem(
+        APP_STORE_NAMES.perpsMarketCache,
+      ) ?? null) as PerpsMarketDataCache<TItem> | null;
+    } catch (error) {
+      console.error('Failed to read perps market cache:', error);
+      return null;
+    }
+  };
+
+  setMarketDataCache = (cache: PerpsMarketDataCache) => {
+    try {
+      this.marketCacheStorage?.setItem(APP_STORE_NAMES.perpsMarketCache, cache);
+    } catch (error) {
+      console.error('Failed to write perps market cache:', error);
+    }
+  };
 
   getFavoriteMarkets = async () => {
     if (!this.store) {

@@ -240,7 +240,7 @@ export const PerpsPosition: React.FC<{
             </Text>
           </View>
         </View>
-        <View style={styles.list}>
+        <View style={[styles.list, styles.listPadded]}>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -277,12 +277,12 @@ export const PerpsPosition: React.FC<{
             </View>
           )}
         </View>
-        <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.subTitle}>
-            {t('page.perpsDetail.PerpsPosition.settings')}
-          </Text>
-        </View>
-        <View style={styles.list}>
+        <View style={[styles.list, styles.listPadded]}>
+          <View style={styles.cardTitleRow}>
+            <Text style={styles.cardTitle}>
+              {t('page.perpsDetail.PerpsPosition.settings')}
+            </Text>
+          </View>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -504,12 +504,12 @@ export const PerpsPosition: React.FC<{
             )}
           </View>
         </View>
-        <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.subTitle}>
-            {t('page.perpsDetail.PerpsPosition.details')}
-          </Text>
-        </View>
-        <View style={styles.list}>
+        <View style={[styles.list, styles.listPadded]}>
+          <View style={styles.cardTitleRow}>
+            <Text style={styles.cardTitle}>
+              {t('page.perpsDetail.PerpsPosition.details')}
+            </Text>
+          </View>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -669,15 +669,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-  },
-  subTitle: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  cardTitleRow: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  cardTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
   },
   unrealizedPnlTitle: {
     fontFamily: 'SF Pro Rounded',
@@ -689,7 +694,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   distanceCardWrapper: {
     paddingHorizontal: 8,
-    paddingBottom: 16,
+    paddingBottom: 10,
   },
   distanceCard: {
     borderRadius: 6,
@@ -713,14 +718,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '800',
     color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
-  paddingTopHeader: {
-    marginTop: 0,
-  },
   unrealizedPnl: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
   },
   positionValueWrapper: {
@@ -755,7 +757,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   list: {
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  listPadded: {
+    paddingVertical: 6,
   },
   listItemContainer: {
     padding: 16,
@@ -790,7 +797,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
     justifyContent: 'space-between',
   },
   listItemRow: {
@@ -832,7 +839,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
   },
   leverageTag: {
     borderRadius: 4,
@@ -855,8 +862,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   value: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
@@ -872,7 +879,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   listItemColumn: {
     display: 'flex',
     flexDirection: 'column',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
   },
   listItemHeader: {
     display: 'flex',
@@ -882,9 +890,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   expectedPnlContainer: {
     backgroundColor: isLight
-      ? colors2024['neutral-line']
+      ? colors2024['neutral-bg-3']
       : colors2024['neutral-card-1'],
-    borderRadius: 8,
+    borderRadius: 6,
     flex: 1,
     width: '100%',
     justifyContent: 'space-between',
@@ -892,7 +900,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 8,
     alignSelf: 'flex-end',
     position: 'relative',
-    marginTop: 12,
+    marginTop: 10,
     // marginRight: 4,
   },
   expectedPnlArrow: {
@@ -909,7 +917,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: isLight
-      ? colors2024['neutral-line']
+      ? colors2024['neutral-bg-3']
       : colors2024['neutral-card-1'],
   },
   expectedPnlContent: {

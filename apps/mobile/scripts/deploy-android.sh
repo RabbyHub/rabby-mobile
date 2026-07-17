@@ -265,6 +265,21 @@ fi
 
 cp $android_export_target $deployment_local_dir/$apk_name
 
+android_16kb_check_mode="${RABBY_MOBILE_ANDROID_16KB_CHECK:-warn}"
+android_16kb_report_json="$deployment_local_dir/android-16kb-page-size.json"
+android_16kb_report_text="$deployment_local_dir/android-16kb-page-size.txt"
+if [[ "$version_bundle_suffix" =~ .*\.apk ]] && [ "$android_16kb_check_mode" != "off" ]; then
+  echo "[deploy-android] check APK 16KB page-size support..."
+  if ! node $script_dir/check-android-apk-16kb.js \
+    --apk "$android_export_target" \
+    --json "$android_16kb_report_json" \
+    --text "$android_16kb_report_text" \
+    --mode "$android_16kb_check_mode"; then
+    echo "[deploy-android] APK 16KB page-size check failed in $android_16kb_check_mode mode."
+    exit 1
+  fi
+fi
+
 print_manual_upload_sentry_sourcemap() {
   if [ ! -z $SENTRY_DISABLE_AUTO_UPLOAD ]; then
     echo "[deploy-android] manual upload sourcemap to sentry:"
@@ -295,6 +310,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
 
@@ -319,7 +335,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
+    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT="$android_16kb_report_text" node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
   fi
 fi
 

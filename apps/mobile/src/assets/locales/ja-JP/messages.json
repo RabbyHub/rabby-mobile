@@ -1787,7 +1787,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "チェーンを選択",
-      "title": "ウォレットを選択して受け取る"
+      "title": "ウォレットを選択して受け取る",
+      "subtitle": "暗号資産を受け取るウォレットを選択してください。"
     },
     "backupPrivateKey": {
       "clickToShow": "クリックしてプライベートキーを表示",
@@ -2181,7 +2182,8 @@
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
       "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
-      "dataAnalysis": "データ分析"
+      "dataAnalysis": "データ分析",
+      "bugReportHistory": "バグ報告履歴"
     },
     "settingModal": {
       "themeMode": {
@@ -2195,7 +2197,9 @@
         "title": "アプリのキャッシュをクリア",
         "clearAppCacheDesc": "これにより、一時的なキャッシュファイルが削除されますが、個人データや設定には影響しません。プロセスを完了するにはアプリを再起動する必要があります。続行しますか？",
         "iOSToastTitle": "キャッシュのクリアに成功しました",
-        "iOSToastDesc": "有効にするには、アプリを再起動する必要があります。"
+        "iOSToastDesc": "有効にするには、アプリを再起動する必要があります。",
+        "clearingToast": "クリア中...",
+        "clearDoneQuitToast": "クリアしました。まもなくアプリを終了します。"
       },
       "clearBrowserData": {
         "button": "クリア",
@@ -3838,6 +3842,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "利用可能なアドレスがありません"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "画像/動画"
     }
   },
   "common": {

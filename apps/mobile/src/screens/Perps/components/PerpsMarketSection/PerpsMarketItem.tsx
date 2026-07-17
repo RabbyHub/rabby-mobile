@@ -22,23 +22,31 @@ const PerpsMarketItemComponent: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  // markPx/prevDayPx are '' until the first ticker lands (fresh fetch or
+  // hydrated cache) — render placeholders instead of $NaN.
+  const hasPrice = !!item.markPx && Number.isFinite(Number(item.markPx));
+  const hasChange = hasPrice && !!item.prevDayPx && Number(item.prevDayPx) > 0;
   const isUp = Number(item.markPx) - Number(item.prevDayPx) > 0;
   const absPnlUsd = Math.abs(Number(item.markPx) - Number(item.prevDayPx));
   const absPnlPct = Math.abs(absPnlUsd / Number(item.prevDayPx));
-  const pnlText = `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`;
+  const pnlText = hasChange
+    ? `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`
+    : '-';
 
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
-        {rank != null && <PerpsRankBadge rank={rank} />}
-        <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={36} />
+        <View style={styles.logoWrap}>
+          <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={40} />
+          {rank != null && <PerpsRankBadge rank={rank} />}
+        </View>
         <View style={styles.content}>
           <View style={styles.row}>
             <View style={styles.nameContainer}>
               <PerpsDisplayCoinName item={item} />
             </View>
             <Text style={styles.price}>
-              {`$${splitNumberByStep(item.markPx)}`}
+              {hasPrice ? `$${splitNumberByStep(item.markPx)}` : '-'}
             </Text>
           </View>
           <View style={styles.row}>
@@ -53,7 +61,11 @@ const PerpsMarketItemComponent: React.FC<{
             <Text
               style={[
                 styles.priceChange,
-                isUp ? null : styles.priceChangeDown,
+                hasChange
+                  ? isUp
+                    ? null
+                    : styles.priceChangeDown
+                  : styles.priceChangeMuted,
               ]}>
               {pnlText}
             </Text>
@@ -91,19 +103,19 @@ export const PerpsMarketItem = React.memo(
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    // backgroundColor: isLight
-    //   ? colors2024['neutral-bg-1']
-    //   : colors2024['neutral-bg-3'],
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  logoWrap: {
+    flexShrink: 0,
+  },
   icon: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: 1000,
     backgroundColor: 'white',
     flexShrink: 0,
@@ -113,7 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    gap: 2,
   },
   row: {
     display: 'flex',
@@ -155,16 +167,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   volText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },
   price: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
   leverageContainer: {
@@ -175,20 +187,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   leverage: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-foot'],
   },
   priceChange: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['green-default'],
   },
   priceChangeDown: {
     color: colors2024['red-default'],
+  },
+  priceChangeMuted: {
+    color: colors2024['neutral-secondary'],
   },
   favoriteTag: {
     position: 'absolute',

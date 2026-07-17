@@ -305,6 +305,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "Nenhum endereço disponível"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Imagem/Vídeo"
     }
   },
   "global": {
@@ -2088,7 +2092,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Selecionar Chain",
-      "title": "Selecionar Carteira para Receber"
+      "title": "Selecionar Carteira para Receber",
+      "subtitle": "Escolha uma carteira para receber os seus criptoativos."
     },
     "miniSignFooterBar": {
       "signWithLedger": "Assinar",
@@ -2374,7 +2379,8 @@
       "currency": "Moeda",
       "searchCurrency": "Pesquisar Moeda",
       "screenshotReportSwitch": "Captura de ecrã para reportar erro",
-      "dataAnalysis": "Análise de dados"
+      "dataAnalysis": "Análise de dados",
+      "bugReportHistory": "Histórico de relatórios de erro"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2524,7 +2530,9 @@
         "title": "Limpar Cache da App",
         "clearAppCacheDesc": "'Isto removerá ficheiros temporários em cache sem afetar os seus dados pessoais ou definições. A aplicação precisa de reiniciar para concluir o processo. Deseja continuar?'",
         "iOSToastTitle": "Sucesso claro do cache",
-        "iOSToastDesc": "Precisa de reiniciar a aplicação para que tenha efeito."
+        "iOSToastDesc": "Precisa de reiniciar a aplicação para que tenha efeito.",
+        "clearingToast": "A limpar...",
+        "clearDoneQuitToast": "Limpo. A app vai fechar em breve."
       },
       "clearBrowserData": {
         "button": "Limpar",

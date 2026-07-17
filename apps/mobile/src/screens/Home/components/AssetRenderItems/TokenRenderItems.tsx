@@ -153,7 +153,11 @@ export const TokenRowV2 = memo(
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price) && (
+                <Text style={styles.price}>{`$${formatPrice(
+                  data.price,
+                )}`}</Text>
+              )}
               {isNumber(data.price_24h_change) && (
                 <Text
                   style={StyleSheet.compose(styles.percent, {
@@ -168,7 +172,11 @@ export const TokenRowV2 = memo(
             </View>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price) && (
+                <Text style={styles.price}>{`$${formatPrice(
+                  data.price,
+                )}`}</Text>
+              )}
               {isNumber(data.price_24h_change) && (
                 <Text
                   style={StyleSheet.compose(styles.percent, {

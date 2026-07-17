@@ -9,6 +9,7 @@ import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.facebook.react.modules.i18nmanager.I18nUtil
 
 import com.facebook.react.modules.network.OkHttpClientProvider;
 
@@ -41,8 +42,23 @@ class MainApplication : Application(), ReactApplication {
     get() = getDefaultReactHost(applicationContext, reactNativeHost)
 
   override fun onCreate() {
-    super.onCreate()
-    loadReactNative(this)
-    OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory())
+    RabbyStartupTrace.beginSection("Application.onCreate")
+    try {
+      super.onCreate()
+      RabbyStartupTrace.instant("Application.super.onCreate")
+      // Rabby currently ships LTR locales only. Set this before React resolves layout direction.
+      I18nUtil.instance.allowRTL(this, false)
+      I18nUtil.instance.forceRTL(this, false)
+      RabbyStartupTrace.beginSection("Application.loadReactNative")
+      try {
+        loadReactNative(this)
+      } finally {
+        RabbyStartupTrace.endSection()
+      }
+      OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory())
+      RabbyStartupTrace.instant("Application.okhttpFactoryReady")
+    } finally {
+      RabbyStartupTrace.endSection()
+    }
   }
 }

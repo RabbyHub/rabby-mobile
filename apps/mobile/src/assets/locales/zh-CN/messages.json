@@ -2091,7 +2091,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "选择链",
-      "title": "选择钱包接收"
+      "title": "选择钱包接收",
+      "subtitle": "选择钱包以接收您的加密资产。"
     },
     "tokenDetail": {
       "relateDefi": "相关 DeFi",
@@ -2282,7 +2283,8 @@
       "currency": "货币",
       "searchCurrency": "搜索货币",
       "screenshotReportSwitch": "截图以报告错误",
-      "dataAnalysis": "数据分析"
+      "dataAnalysis": "数据分析",
+      "bugReportHistory": "Bug 报告历史"
     },
     "settingModal": {
       "themeMode": {
@@ -2295,6 +2297,8 @@
         },
         "title": "清除应用缓存",
         "clearAppCacheDesc": "这将删除临时缓存文件，而不会影响您的个人数据或设置。应用程序需要重新启动以完成此过程。您希望继续吗？",
+        "clearingToast": "正在清理...",
+        "clearDoneQuitToast": "已清理，即将关闭应用。",
         "iOSToastTitle": "清除缓存成功",
         "iOSToastDesc": "您需要重新启动应用程序才能生效。"
       },
@@ -3791,6 +3795,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "没有可用地址"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "图片/视频"
     }
   },
   "bluetooth": {

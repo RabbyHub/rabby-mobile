@@ -253,6 +253,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   itemName: {
     gap: 4,
+    flex: 1,
     flexDirection: 'column',
   },
   address: {

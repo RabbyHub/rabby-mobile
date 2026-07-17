@@ -1862,7 +1862,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Выберите Chain",
-      "title": "Выберите кошелек для получения"
+      "title": "Выберите кошелек для получения",
+      "subtitle": "Выберите кошелек для получения криптовалюты."
     },
     "customTestnet": {
       "currency": "Валюта",
@@ -1984,7 +1985,8 @@
       "screenshotReportSwitch": "Скриншот для сообщения об ошибке",
       "currency": "Валюта",
       "searchCurrency": "Поиск валюты",
-      "dataAnalysis": "Анализ данных"
+      "dataAnalysis": "Анализ данных",
+      "bugReportHistory": "История отчетов об ошибках"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2263,7 +2265,9 @@
         "title": "Очистить кэш приложения",
         "clearAppCacheDesc": "Это удалит временные кэшированные файлы без воздействия на ваши личные данные или настройки. Приложению необходимо перезапуститься, чтобы завершить процесс. Вы хотите продолжить?",
         "iOSToastTitle": "Очистенный успех кэша",
-        "iOSToastDesc": "Вам необходимо перезапустить приложение, чтобы изменения вступили в силу."
+        "iOSToastDesc": "Вам необходимо перезапустить приложение, чтобы изменения вступили в силу.",
+        "clearingToast": "Очистка...",
+        "clearDoneQuitToast": "Очищено. Приложение скоро закроется."
       },
       "clearBrowserData": {
         "title": "Очистить данные браузера",
@@ -3781,6 +3785,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "Нет доступного адреса"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Изображение/Видео"
     }
   },
   "constant": {

@@ -35,6 +35,7 @@ import {
   RcWalletConnect,
   RcAutolock,
   RcDataAnalysis,
+  RcBugReport,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -44,6 +45,7 @@ import {
   BUILD_GIT_INFO,
   IS_CONSOLE_STRIPPED,
   IS_HERMES_ENABLED,
+  IS_METRO_CACHE_ENABLED,
 } from '@/constant/env';
 import { E2E_ID } from '@/constant/e2e';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
@@ -61,7 +63,7 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 
-import { toast } from '@/components2024/Toast';
+import { toast, toastLoading } from '@/components2024/Toast';
 import {
   APP_FEATURE_SWITCH,
   APP_URLS,
@@ -143,6 +145,7 @@ import {
 } from './Modals/DevModalDevServer';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+  toggleFeedbackHistoryVisible,
   useScreenshotToReportEnabled,
 } from '@/components/Screenshot/hooks';
 import { SwitchScreenshotToReport } from './components/SwitchScreenshotToReport';
@@ -150,6 +153,7 @@ import {
   CurrencySelectorPopup,
   useCurrentCurrencyVisible,
 } from './sheetModals/CurrencySelectorPopup';
+import { isOnlineWorkerThreadEnabled } from '@/core/config/online';
 import { isWorkerThreadRunning } from '@/perfs/thread';
 import {
   setEnableTransactionNofification,
@@ -177,10 +181,13 @@ import {
   SwitchDataAnalysis,
   SwitchUserBehaviorTrackingOptOut,
 } from './components/SwitchUserBehaviorTrackingOptOut';
+import { sleep } from '@/utils/async';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
+const CLEAR_APP_CACHE_EXIT_DELAY_MS = 2000;
 
 const isIOS = Platform.OS === 'ios';
 
@@ -236,7 +243,10 @@ function AlertBuildInfo({
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
     `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
-    `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
+    `Worker Thread Switch: ${
+      isOnlineWorkerThreadEnabled() ? 'Enabled' : 'Disabled'
+    }`,
+    `Worker Thread Running: ${isWorkerThreadRunning() ? 'Yes' : 'No'}`,
   ];
 
   if (isNonPublicProductionEnv) {
@@ -270,6 +280,135 @@ function AlertBuildInfo({
 }
 
 const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
+type CustomSettingItem = {
+  key: string;
+  render: () => React.ReactNode;
+};
+type SettingBlock = Omit<SettingConfBlock, 'items'> & {
+  items: Array<SettingConfBlock['items'][number] | CustomSettingItem>;
+};
+function isCustomSettingItem(
+  item: SettingBlock['items'][number],
+): item is CustomSettingItem {
+  return 'render' in item;
+}
+
+function ClearAppCacheSettingItem() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleClearIOSAppCache = useCallback(async () => {
+    if (isClearing) {
+      return;
+    }
+    setIsClearing(true);
+    try {
+      abortAllSyncTasks('clear-app-cache-ios');
+      resetUpdateHistoryTime();
+      await clearAppDataSource();
+      Alert.alert(
+        t('page.settingModal.clearAppCache.iOSToastTitle'),
+        t('page.settingModal.clearAppCache.iOSToastDesc'),
+        [],
+      );
+    } finally {
+      setIsClearing(false);
+    }
+  }, [isClearing, t]);
+
+  const handleClearAndroidAppCache = useCallback(async () => {
+    if (isClearing) {
+      return;
+    }
+    setIsClearing(true);
+    const hideLoading = toastLoading(
+      t('page.settingModal.clearAppCache.clearingToast'),
+      {
+        blockInteraction: true,
+      },
+    );
+
+    try {
+      await sleep(50);
+      abortAllSyncTasks('clear-app-cache-android');
+      resetUpdateHistoryTime();
+      await dropAppDataSourceAndQuitApp({
+        exitDelayMs: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+      });
+      hideLoading();
+      toast.success(t('page.settingModal.clearAppCache.clearDoneQuitToast'), {
+        duration: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+        hideOnPress: false,
+        position: toast.positions.CENTER,
+      });
+    } catch (error) {
+      hideLoading();
+      setIsClearing(false);
+      console.error('[Settings] clear app cache failed', error);
+      toast.error(String(error || 'Clear cache failed'));
+    }
+  }, [isClearing, t]);
+
+  const handlePress = useCallback(() => {
+    if (isClearing) {
+      return;
+    }
+    Alert.alert(
+      t('page.settingModal.clearAppCache.title'),
+      t('page.settingModal.clearAppCache.clearAppCacheDesc'),
+      [
+        { text: t('common.dialog.button.cancel'), onPress: () => {} },
+        IS_IOS
+          ? {
+              text: t('page.settingModal.clearAppCache.button.clear'),
+              style: 'destructive',
+              onPress: handleClearIOSAppCache,
+            }
+          : {
+              text: t('page.settingModal.clearAppCache.button.clear_and_quit'),
+              style: 'destructive',
+              onPress: handleClearAndroidAppCache,
+            },
+      ],
+    );
+  }, [handleClearAndroidAppCache, handleClearIOSAppCache, isClearing, t]);
+
+  return (
+    <Block.Item
+      label={t('page.setting.appCache')}
+      icon={RcClearPending}
+      disabled={isClearing}
+      rightNode={
+        IS_IOS
+          ? undefined
+          : ({ rightIconNode }) => {
+              return (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {isClearing ? (
+                    <CustomSkeleton
+                      width={64}
+                      height={16}
+                      style={{ borderRadius: 8, marginRight: 8 }}
+                    />
+                  ) : (
+                    <AppCacheSizeText
+                      style={{
+                        ...styles.rightText,
+                        paddingRight: 8,
+                      }}
+                    />
+                  )}
+                  {rightIconNode}
+                </View>
+              );
+            }
+      }
+      onPress={handlePress}
+    />
+  );
+}
+
 function SettingsBlocks() {
   const { colors, styles } = useTheme2024({ getStyle: getStyles });
 
@@ -413,7 +552,7 @@ function SettingsBlocks() {
 
   const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
 
-  const settingsBlocks: Record<string, SettingConfBlock> = (() => {
+  const settingsBlocks: Record<string, SettingBlock> = (() => {
     return {
       settings: {
         label: t('page.setting.screenTitle'),
@@ -555,6 +694,14 @@ function SettingsBlocks() {
             visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {
+            label: t('page.setting.bugReportChat'),
+            icon: RcBugReport,
+            onPress: () => {
+              toggleFeedbackHistoryVisible(true);
+            },
+            // visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+          },
+          {
             label: t('page.setting.dataAnalysis'),
             icon: RcDataAnalysis,
             onPress: () => {
@@ -587,6 +734,7 @@ function SettingsBlocks() {
                 <View style={{ flexDirection: 'row' }}>
                   <Text style={styles.rightText}>
                     {localVersion || APP_VERSIONS.fromJs}
+                    {IS_METRO_CACHE_ENABLED ? ' · MC' : ''}
                   </Text>
                   {remoteVersion.couldUpgrade && (
                     <Text
@@ -644,57 +792,8 @@ function SettingsBlocks() {
         label: '',
         items: [
           {
-            label: t('page.setting.appCache'),
-            icon: RcClearPending,
-            rightNode: IS_IOS
-              ? undefined
-              : ({ rightIconNode }) => {
-                  return (
-                    <View style={{ flexDirection: 'row' }}>
-                      <AppCacheSizeText
-                        style={{
-                          ...styles.rightText,
-                          paddingRight: 8,
-                        }}
-                      />
-                      {rightIconNode}
-                    </View>
-                  );
-                },
-            onPress: () => {
-              Alert.alert(
-                t('page.settingModal.clearAppCache.title'),
-                t('page.settingModal.clearAppCache.clearAppCacheDesc'),
-                [
-                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
-                  IS_IOS
-                    ? {
-                        text: t('page.settingModal.clearAppCache.button.clear'),
-                        style: 'destructive',
-                        onPress: async () => {
-                          abortAllSyncTasks();
-                          resetUpdateHistoryTime();
-                          await clearAppDataSource();
-                          Alert.alert(
-                            t('page.settingModal.clearAppCache.iOSToastTitle'),
-                            t('page.settingModal.clearAppCache.iOSToastDesc'),
-                            [],
-                          );
-                        },
-                      }
-                    : {
-                        text: t(
-                          'page.settingModal.clearAppCache.button.clear_and_quit',
-                        ),
-                        style: 'destructive',
-                        onPress: async () => {
-                          resetUpdateHistoryTime();
-                          await dropAppDataSourceAndQuitApp();
-                        },
-                      },
-                ],
-              );
-            },
+            key: 'clear-app-cache',
+            render: () => <ClearAppCacheSettingItem />,
           },
           // {
           //   label: t('page.setting.clearBrowserData'),
@@ -738,6 +837,14 @@ function SettingsBlocks() {
                 },
             ]}>
             {block.items.map((item, idx_l2) => {
+              if (isCustomSettingItem(item)) {
+                return (
+                  <React.Fragment key={`${l1key}-${item.key}-${idx_l2}`}>
+                    {item.render()}
+                  </React.Fragment>
+                );
+              }
+
               return (
                 <Block.Item
                   key={`${l1key}-${item.label}-${idx_l2}`}

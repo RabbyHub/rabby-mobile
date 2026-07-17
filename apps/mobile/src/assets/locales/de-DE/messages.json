@@ -410,6 +410,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "Keine verfügbare Adresse"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Bild/Video"
     }
   },
   "page": {
@@ -2109,7 +2113,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Kette auswählen",
-      "title": "Wallet auswählen, um zu empfangen"
+      "title": "Wallet auswählen, um zu empfangen",
+      "subtitle": "Wählen Sie eine Wallet aus, um Ihre Krypto zu empfangen."
     },
     "approvalsAddressList": {
       "title": "Genehmigungen"
@@ -2451,7 +2456,8 @@
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
       "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
-      "dataAnalysis": "Datenanalyse"
+      "dataAnalysis": "Datenanalyse",
+      "bugReportHistory": "Fehlerbericht-Verlauf"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -2524,7 +2530,9 @@
         "title": "App-Cache leeren",
         "clearAppCacheDesc": "'Dadurch werden temporäre zwischengespeicherte Dateien entfernt, ohne Ihre persönlichen Daten oder Einstellungen zu beeinträchtigen. Die App muss neu gestartet werden, um den Vorgang abzuschließen. Möchten Sie fortfahren?'",
         "iOSToastTitle": "Cache erfolgreich löschen",
-        "iOSToastDesc": "Sie müssen die App neu starten, damit sie wirksam wird."
+        "iOSToastDesc": "Sie müssen die App neu starten, damit sie wirksam wird.",
+        "clearingToast": "Wird geleert...",
+        "clearDoneQuitToast": "Geleert. App wird bald geschlossen."
       },
       "clearBrowserData": {
         "button": "Löschen",

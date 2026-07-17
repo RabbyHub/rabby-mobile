@@ -1716,7 +1716,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Chọn Chain",
-      "title": "Chọn Ví để Nhận"
+      "title": "Chọn Ví để Nhận",
+      "subtitle": "Chọn ví để nhận crypto của bạn."
     },
     "miniSignFooterBar": {
       "signWithLedger": "Ký tên",
@@ -1940,7 +1941,8 @@
       "currency": "Tiền tệ",
       "searchCurrency": "Tìm kiếm Tiền tệ",
       "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
-      "dataAnalysis": "Phân tích dữ liệu"
+      "dataAnalysis": "Phân tích dữ liệu",
+      "bugReportHistory": "Lịch sử báo cáo lỗi"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -2263,7 +2265,9 @@
         "clearAppCacheDesc": "'Điều này sẽ xóa các tập tin tạm thời trong bộ nhớ đệm mà không ảnh hưởng đến dữ liệu cá nhân hoặc cài đặt của bạn. Ứng dụng cần khởi động lại để hoàn tất quá trình. Bạn có muốn tiếp tục không?'",
         "title": "Xóa bộ nhớ đệm của ứng dụng",
         "iOSToastTitle": "Xóa bộ nhớ đệm thành công",
-        "iOSToastDesc": "Bạn cần khởi động lại ứng dụng để có hiệu lực."
+        "iOSToastDesc": "Bạn cần khởi động lại ứng dụng để có hiệu lực.",
+        "clearingToast": "Đang xóa...",
+        "clearDoneQuitToast": "Đã xóa. Ứng dụng sẽ sớm đóng."
       },
       "clearBrowserData": {
         "button": "Rõ ràng",
@@ -3781,6 +3785,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "Không có địa chỉ nào có sẵn"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "Hình ảnh/Video"
     }
   },
   "constant": {

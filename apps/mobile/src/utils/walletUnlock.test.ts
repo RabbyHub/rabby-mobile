@@ -58,6 +58,7 @@ describe('utils/walletUnlock', () => {
 
     jest.doMock('@/core/apis/lock', () => ({
       isUnlocked: jest.fn(() => isUnlocked),
+      ensureKeyringRuntimeReady: jest.fn(async () => undefined),
       verifyPasswordOrUnlock: mockVerifyPasswordOrUnlock,
     }));
 

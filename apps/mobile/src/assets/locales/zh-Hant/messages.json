@@ -2012,7 +2012,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈",
-      "title": "選擇錢包以接收"
+      "title": "選擇錢包以接收",
+      "subtitle": "選擇錢包以接收您的加密資產。"
     },
     "tokenDetail": {
       "relateDefi": "相關 DeFi",
@@ -2298,7 +2299,8 @@
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
       "screenshotReportSwitch": "截圖以報告錯誤",
-      "dataAnalysis": "資料分析"
+      "dataAnalysis": "資料分析",
+      "bugReportHistory": "Bug 回報歷史"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -2323,7 +2325,9 @@
         "title": "清除 App 緩存",
         "clearAppCacheDesc": "這將移除暫存的快取檔案，而不影響您的個人資料或設定。應用程式需要重新啟動才能完成此過程。您是否希望繼續？",
         "iOSToastTitle": "清除緩存成功",
-        "iOSToastDesc": "您需要重新啟動該應用以生效。"
+        "iOSToastDesc": "您需要重新啟動該應用以生效。",
+        "clearingToast": "清除中...",
+        "clearDoneQuitToast": "已清除。即將關閉 App。"
       },
       "clearBrowserData": {
         "title": "清除瀏覽器資料",
@@ -3841,6 +3845,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "沒有可用地址"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "",
+      "mediaPlaceholder": "圖片/影片"
     }
   },
   "common": {

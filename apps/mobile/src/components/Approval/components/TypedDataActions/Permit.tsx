@@ -107,7 +107,7 @@ const Permit = ({
           <Row>
             <Text style={commonStyle.primaryText}>
               {actionData.expire_at ? (
-                <Values.TimeSpanFuture to={actionData.expire_at} />
+                <Values.TimeSpanFuture to={actionData.expire_at} showMinutes />
               ) : (
                 '-'
               )}

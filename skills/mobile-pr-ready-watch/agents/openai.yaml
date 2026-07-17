@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile PR Ready Watch"
+  short_description: "Watch mobile PR reviews and handle feedback"
+  default_prompt: "Use $mobile-pr-ready-watch to mark this PR ready and watch review feedback."

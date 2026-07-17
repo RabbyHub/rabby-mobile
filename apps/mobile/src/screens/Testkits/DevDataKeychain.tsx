@@ -16,7 +16,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import RcIconQuestionCC from '@/assets/icons/transaction-record/icon-question-cc.svg';
