@@ -5,6 +5,7 @@ import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
 
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,11 +13,15 @@ import android.view.Display;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import com.zoontek.rnbootsplash.RNBootSplash;
 
 public class MainActivity extends ReactActivity {
   private static final String FRAME_RATE_TAG = "RabbyFrameRate";
   private static final float MIN_HIGH_REFRESH_RATE = 90.0f;
+  private boolean initialWindowInsetsReapplied = false;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +30,7 @@ public class MainActivity extends ReactActivity {
       RabbyStartupTrace.beginSection("MainActivity.bootSplash.init");
       try {
         RNBootSplash.init(this, R.style.BootTheme);
+        applyInitialEdgeToEdgeWindowPolicy();
       } finally {
         RabbyStartupTrace.endSection();
       }
@@ -54,6 +60,10 @@ public class MainActivity extends ReactActivity {
   public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
     if (hasFocus) {
+      if (!initialWindowInsetsReapplied) {
+        applyInitialEdgeToEdgeWindowPolicy();
+        initialWindowInsetsReapplied = true;
+      }
       requestHighRefreshRate("onWindowFocusChanged");
     }
   }
@@ -88,6 +98,43 @@ public class MainActivity extends ReactActivity {
         return initialProperties;
       }
     };
+  }
+
+  @SuppressWarnings("deprecation")
+  private void applyInitialEdgeToEdgeWindowPolicy() {
+    Window window = getWindow();
+    View decorView = window.getDecorView();
+
+    // Keep the launch and app themes on the same inset policy before native screens lay out.
+    WindowCompat.setDecorFitsSystemWindows(window, false);
+    window.setStatusBarColor(Color.TRANSPARENT);
+
+    boolean lightSystemBars = getResources().getBoolean(R.bool.windowLightStatusBar);
+    WindowInsetsControllerCompat insetsController =
+      WindowCompat.getInsetsController(window, decorView);
+    insetsController.setAppearanceLightStatusBars(lightSystemBars);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+      window.setNavigationBarColor(Color.TRANSPARENT);
+      insetsController.setAppearanceLightNavigationBars(lightSystemBars);
+    } else {
+      window.setNavigationBarColor(Color.argb(0x80, 0x1b, 0x1b, 0x1b));
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      window.setStatusBarContrastEnforced(false);
+      window.setNavigationBarContrastEnforced(false);
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      WindowManager.LayoutParams attributes = window.getAttributes();
+      attributes.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+      window.setAttributes(attributes);
+    }
+
+    ViewCompat.requestApplyInsets(decorView);
   }
 
   private void requestHighRefreshRate(String reason) {
