@@ -1,22 +1,17 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { toast } from '@/components2024/Toast';
 import type { AppColorsVariants } from '@/constant/theme';
-import { apiCustomTestnet } from '@/core/apis';
 import type {
   TestnetChain,
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
 import { useThemeColors } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
-import {
-  useEventEmitter,
-  useMemoizedFn,
-  useRequest,
-  useSetState,
-} from 'ahooks';
+import { useEventEmitter, useMemoizedFn, useSetState } from 'ahooks';
+import type { EventEmitter } from 'ahooks/lib/useEventEmitter';
 import { sortBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -32,6 +27,78 @@ import { Empty } from './components/Empty';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
+import {
+  useCustomTestnetService,
+  withCustomTestnetService,
+} from './customTestnetServiceDependencies';
+
+type CustomTestnetListProps = {
+  close$: EventEmitter<void>;
+  refreshVersion: number;
+  onEdit: (item: TestnetChain) => void;
+};
+
+const CustomTestnetListContent = ({
+  close$,
+  refreshVersion,
+  onEdit,
+}: CustomTestnetListProps) => {
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  const { t } = useTranslation();
+  const customTestnetService = useCustomTestnetService();
+  const [list, setList] = useState(() =>
+    sortBy(customTestnetService.getList(), 'name'),
+  );
+
+  const refreshList = useMemoizedFn(() => {
+    setList(sortBy(customTestnetService.getList(), 'name'));
+  });
+
+  useEffect(() => {
+    refreshList();
+  }, [refreshList, refreshVersion]);
+
+  const handleRemoveClick = useMemoizedFn((item: TestnetChain) => {
+    customTestnetService.remove(item.id);
+    refreshList();
+    toast.success(t('global.Deleted'));
+    close$.emit();
+  });
+
+  return (
+    <FlatList
+      style={styles.list}
+      data={list}
+      onScrollBeginDrag={() => close$.emit()}
+      keyboardShouldPersistTaps="handled"
+      renderItem={({ item }) => {
+        return (
+          <CustomTestnetItem
+            item={item}
+            onEdit={onEdit}
+            onRemove={handleRemoveClick}
+            onPress={onEdit}
+            editable
+            containerStyle={styles.item}
+            close$={close$}
+          />
+        );
+      }}
+      keyExtractor={item => item.enum}
+      ListEmptyComponent={
+        <Empty
+          description={t('page.customTestnet.empty')}
+          style={{
+            paddingTop: 200,
+          }}
+        />
+      }
+    />
+  );
+};
+
+const CustomTestnetList = withCustomTestnetService(CustomTestnetListContent);
 
 export function CustomTestnetScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -49,6 +116,7 @@ export function CustomTestnetScreen(): JSX.Element {
   });
 
   const close$ = useEventEmitter<void>();
+  const [listRefreshVersion, setListRefreshVersion] = useState(0);
 
   const handleAddClick = useMemoizedFn(() => {
     const next = {
@@ -65,13 +133,6 @@ export function CustomTestnetScreen(): JSX.Element {
     });
   });
 
-  const { data: list, runAsync: runGetCustomTestnetList } = useRequest(
-    async () => {
-      const res = await apiCustomTestnet.getCustomTestnetList();
-      return sortBy(res, 'name');
-    },
-  );
-
   const handleConfirm = useMemoizedFn(async () => {
     setState({
       isShowModal: false,
@@ -79,14 +140,7 @@ export function CustomTestnetScreen(): JSX.Element {
       isEdit: false,
     });
     close$.emit();
-    await runGetCustomTestnetList();
-  });
-
-  const handleRemoveClick = useMemoizedFn(async (item: TestnetChain) => {
-    await apiCustomTestnet.removeCustomTestnet(item.id);
-    toast.success(t('global.Deleted'));
-    await runGetCustomTestnetList();
-    close$.emit();
+    setListRefreshVersion(version => version + 1);
   });
 
   const handleEditClick = useMemoizedFn(async (item: TestnetChain) => {
@@ -125,33 +179,10 @@ export function CustomTestnetScreen(): JSX.Element {
             <Text style={styles.desc}>{t('page.customTestnet.desc')}</Text>
           </View>
           <View style={styles.main}>
-            <FlatList
-              style={styles.list}
-              data={list}
-              onScrollBeginDrag={() => close$.emit()}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => {
-                return (
-                  <CustomTestnetItem
-                    item={item}
-                    onEdit={handleEditClick}
-                    onRemove={handleRemoveClick}
-                    onPress={handleEditClick}
-                    editable
-                    containerStyle={styles.item}
-                    close$={close$}
-                  />
-                );
-              }}
-              keyExtractor={item => item.enum}
-              ListEmptyComponent={
-                <Empty
-                  description={t('page.customTestnet.empty')}
-                  style={{
-                    paddingTop: 200,
-                  }}
-                />
-              }
+            <CustomTestnetList
+              close$={close$}
+              refreshVersion={listRefreshVersion}
+              onEdit={handleEditClick}
             />
           </View>
           <FooterButton

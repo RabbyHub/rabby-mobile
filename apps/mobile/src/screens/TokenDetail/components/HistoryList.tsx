@@ -38,7 +38,10 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 
 interface IFetchHistory {
   last: number;
@@ -47,7 +50,7 @@ interface IFetchHistory {
 
 const PAGE_COUNT = 20;
 
-export const TokenDetailHistoryList = ({
+const TokenDetailHistoryListContent = ({
   finalAccount,
   token,
   onRefresh,
@@ -365,6 +368,10 @@ export const TokenDetailHistoryList = ({
     />
   );
 };
+
+export const TokenDetailHistoryList = withTransactionHistoryService(
+  TokenDetailHistoryListContent,
+);
 
 const getStyle = createGetStyles2024(ctx => ({
   overwriteListContainer: {

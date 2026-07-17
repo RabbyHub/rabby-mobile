@@ -26,6 +26,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { toast } from '@/components2024/Toast';
 import { contactServiceApi } from '@/core/serviceApi/contact';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disableWhiteSwitch?: boolean;
@@ -195,7 +196,7 @@ const ConfirmAddress = ({
   );
 };
 
-export default ConfirmAddress;
+export default withWhitelistService(ConfirmAddress);
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   modalTitle: {

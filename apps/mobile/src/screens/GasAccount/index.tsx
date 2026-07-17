@@ -36,8 +36,9 @@ import { GasAccountEmptyState } from './components/GasAccountEmptyState';
 import { getGasAccountEmptyStatePrimaryMode } from './components/GasAccountEmptyState.utils';
 import { GasAccountUserState } from './components/GasAccountUserState';
 import { useGasAccountHistory, useGasAccountMethods } from './hooks';
+import { withGasAccountService } from './gasAccountServiceDependencies';
 
-export const GasAccountScreen = () => {
+const GasAccountScreenContent = () => {
   const { t } = useTranslation();
   const [depositState, setDepositState] = useState<{
     isOpen?: boolean;
@@ -347,6 +348,10 @@ export const GasAccountScreen = () => {
     </NormalScreenContainer>
   );
 };
+
+export const GasAccountScreen = withGasAccountService(GasAccountScreenContent, {
+  fallback: <View />,
+});
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   giftPrimaryButtonContainer: {

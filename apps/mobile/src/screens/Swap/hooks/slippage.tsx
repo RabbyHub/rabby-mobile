@@ -1,4 +1,5 @@
 import { swapServiceApi } from '@/core/serviceApi/swap';
+import type { SwapService } from '@/core/services/swap';
 import { useAtom } from 'jotai';
 import { createRaceSafeHydratedAtom } from './raceSafeHydratedAtom';
 
@@ -28,6 +29,12 @@ const isCustomSlippageAtom = createRaceSafeHydratedAtom({
     return value;
   },
 });
+
+export function prepareSwapSlippageFromService(service: SwapService) {
+  slippageAtom.prepare(service.getSlippage());
+  autoSlippageAtom.prepare(service.getAutoSlippage());
+  isCustomSlippageAtom.prepare(!!service.getIsCustomSlippage());
+}
 
 export const useSlippageStore = () => {
   const [slippage, setSlippage] = useAtom(slippageAtom);

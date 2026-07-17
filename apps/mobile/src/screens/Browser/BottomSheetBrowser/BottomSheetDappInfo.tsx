@@ -29,6 +29,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { Image, TouchableOpacity, View } from 'react-native';
 import { EVENT_SHOW_BROWSER_DAPP_INFO, eventBus } from '@/utils/events';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
 const LIST_BY_ICON_SIZE = 12;
 const LIST_BY_GAP = 4;
@@ -39,12 +40,19 @@ const hotDappMap = new Map(
   hotDappList.map(item => [item.origin, item] as const),
 );
 
-export const DappInfoPopup: React.FC<{
+type DappInfoPopupProps = {
   url?: string;
   visible?: boolean;
   onClose: () => void;
   onOpenDapp?: (url: string) => void;
-}> = ({ visible, onClose, url, onOpenDapp }) => {
+};
+
+const DappInfoPopupContent: React.FC<DappInfoPopupProps> = ({
+  visible,
+  onClose,
+  url,
+  onOpenDapp,
+}) => {
   const { addBookmark, removeBookmark, getBookmark } = useBrowserBookmark();
   const [listByRowWidth, setListByRowWidth] = useState(0);
   const [listByLabelWidth, setListByLabelWidth] = useState(0);
@@ -510,6 +518,8 @@ export const DappInfoPopup: React.FC<{
     </AppBottomSheetModal>
   );
 };
+
+export const DappInfoPopup = withBrowserDappServices(DappInfoPopupContent);
 
 export const BottomSheetDappInfoPopup: React.FC = () => {
   const { browserState, setPartialBrowserState, openTab } = useBrowser();

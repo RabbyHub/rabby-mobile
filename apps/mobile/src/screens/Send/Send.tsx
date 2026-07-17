@@ -97,6 +97,7 @@ import {
   releaseSendScreenSession,
   type SendScreenSession,
 } from './sendScreenSession';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -1071,5 +1072,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
   }),
 );
-SendScreen.ForMultipleAddress = ForMultipleAddress;
-export default SendScreen;
+const SendScreenWithWhitelist = withWhitelistService(SendScreen);
+const ForMultipleAddressWithWhitelist =
+  withWhitelistService(ForMultipleAddress);
+
+export default Object.assign(SendScreenWithWhitelist, {
+  ForMultipleAddress: ForMultipleAddressWithWhitelist,
+});

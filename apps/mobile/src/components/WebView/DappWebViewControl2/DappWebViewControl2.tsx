@@ -27,10 +27,8 @@ import { RcIconCloseDapp } from './icons';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { WebViewActions, WebViewState, useWebViewControl } from '../hooks';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import {
-  BUILTIN_SPECIAL_URLS,
-  useSetupWebview,
-} from '@/core/bridges/useBackgroundBridge';
+import { BUILTIN_SPECIAL_URLS } from '@/core/bridges/useBackgroundBridge';
+import { BackgroundBridgeBoundary } from '@/core/bridges/BackgroundBridgeBoundary';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl2, BottomNavControlCbCtx } from './Widgets';
 import { APP_UA_PARIALS } from '@/constant';
@@ -305,22 +303,6 @@ const DappWebViewControl2 = ({
     handleCopyUrl,
   ]);
 
-  const {
-    isBridgeReady,
-    onLoadStart,
-    onMessage: onBridgeMessage,
-  } = useSetupWebview({
-    dappOrigin,
-    webviewRef,
-    webviewIdRef,
-    siteInfoRefs: {
-      urlRef,
-      titleRef,
-      iconRef,
-    },
-    // onSelfClose,
-  });
-
   const initialUrl = useMemo(() => {
     if (!_initialUrl) {
       return convertToWebviewUrl(dappOrigin);
@@ -337,90 +319,89 @@ const DappWebViewControl2 = ({
   }, [dappOrigin, _initialUrl]);
 
   const renderedWebviewNode = useMemo(() => {
-    if (!entryScriptWeb3Loaded || !isBridgeReady) {
-      return null;
-    }
+    return (
+      <BackgroundBridgeBoundary
+        dappOrigin={dappOrigin}
+        webviewRef={webviewRef}
+        webviewIdRef={webviewIdRef}
+        siteInfoRefs={{ urlRef, titleRef, iconRef }}>
+        {({ onLoadStart, onMessage: onBridgeMessage }) => {
+          if (!entryScriptWeb3Loaded) {
+            return null;
+          }
 
-    const node = (
-      <WebView
-        // cacheEnabled={false}
-        cacheEnabled
-        startInLoadingState
-        allowsFullscreenVideo={false}
-        allowsInlineMediaPlayback={false}
-        originWhitelist={['*']}
-        {...webviewProps}
-        style={[styles.dappWebView, webviewProps?.style]}
-        ref={webviewRef}
-        source={{
-          ...(embedHtml
-            ? {
-                html: embedHtml,
+          const node = (
+            <WebView
+              // cacheEnabled={false}
+              cacheEnabled
+              startInLoadingState
+              allowsFullscreenVideo={false}
+              allowsInlineMediaPlayback={false}
+              originWhitelist={['*']}
+              {...webviewProps}
+              style={[styles.dappWebView, webviewProps?.style]}
+              ref={webviewRef}
+              source={{
+                ...(embedHtml
+                  ? {
+                      html: embedHtml,
+                    }
+                  : {
+                      uri: initialUrl,
+                    }),
+                // TODO: cusotmize userAgent here
+                // 'User-Agent': ''
+              }}
+              testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
+              applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+              javaScriptEnabled
+              // androidLayerType='software'
+              injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
+                beforeContentLoadedBuiltinScriptIds
               }
-            : {
-                uri: initialUrl,
-              }),
-          // TODO: cusotmize userAgent here
-          // 'User-Agent': ''
-        }}
-        testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
-        applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
-        javaScriptEnabled
-        // androidLayerType='software'
-        injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
-          beforeContentLoadedBuiltinScriptIds
-        }
-        injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-        injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
-        onNavigationStateChange={webviewActions.onNavigationStateChange}
-        webviewDebuggingEnabled={__DEV__}
-        onLoadStart={nativeEvent => {
-          webviewProps?.onLoadStart?.(nativeEvent);
-          onLoadStart(nativeEvent);
-        }}
-        onShouldStartLoadWithRequest={nativeEvent => {
-          return checkShouldStartLoadingWithRequestForDappWebView(nativeEvent);
-        }}
-        onError={errorLog}
-        onMessage={event => {
-          // // leave here for debug
-          // if (__DEV__) {
-          //   console.log('WebView:: onMessage event', event);
-          // }
-          onBridgeMessage(event);
-          webviewProps?.onMessage?.(event);
+              injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+              injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
+              onNavigationStateChange={webviewActions.onNavigationStateChange}
+              webviewDebuggingEnabled={__DEV__}
+              onLoadStart={nativeEvent => {
+                webviewProps?.onLoadStart?.(nativeEvent);
+                onLoadStart(nativeEvent);
+              }}
+              onShouldStartLoadWithRequest={nativeEvent => {
+                return checkShouldStartLoadingWithRequestForDappWebView(
+                  nativeEvent,
+                );
+              }}
+              onError={errorLog}
+              onMessage={event => {
+                onBridgeMessage(event);
+                webviewProps?.onMessage?.(event);
+              }}
+            />
+          );
 
-          // // leave here for debug
-          // webviewRef.current?.injectJavaScript(
-          //   JS_POST_MESSAGE_TO_PROVIDER(
-          //     JSON.stringify({
-          //       type: 'hello',
-          //       data: 'I have received your message!',
-          //     }),
-          //     '*',
-          //   ),
-          // );
+          if (typeof webviewNode === 'function') {
+            return webviewNode({ webview: node });
+          }
+
+          return webviewNode || node;
         }}
-      />
+      </BackgroundBridgeBoundary>
     );
-
-    if (typeof webviewNode === 'function') {
-      return webviewNode({ webview: node });
-    }
-
-    return webviewNode || node;
   }, [
-    embedHtml,
-    webviewProps,
-    entryScriptWeb3Loaded,
-    isBridgeReady,
     beforeContentLoadedBuiltinScriptIds,
+    dappOrigin,
     documentEndBuiltinScriptIds,
+    embedHtml,
+    entryScriptWeb3Loaded,
+    iconRef,
     initialUrl,
-    onBridgeMessage,
-    onLoadStart,
+    titleRef,
+    urlRef,
     webviewActions.onNavigationStateChange,
+    webviewIdRef,
     webviewNode,
+    webviewProps,
     webviewRef,
     styles,
   ]);

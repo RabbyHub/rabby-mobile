@@ -19,6 +19,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useRecentSend } from '@/screens/Send/hooks/useRecentSend';
 import { useAccountSelectModalCtx } from '../hooks';
 import { Text } from '@/components/Typography';
+import { withTransactionHistoryService } from '@/core/serviceApi/transactionHistoryHooks';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -31,7 +32,7 @@ interface IProps {
   isForMultipleAddress?: boolean;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
 }
-export const ScreenSentHistory = ({
+const ScreenSentHistoryContent = ({
   title,
   isForMultipleAddress = true,
   onPressAddToWhitelistButton,
@@ -134,6 +135,10 @@ export const ScreenSentHistory = ({
     </>
   );
 };
+
+export const ScreenSentHistory = withTransactionHistoryService(
+  ScreenSentHistoryContent,
+);
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {

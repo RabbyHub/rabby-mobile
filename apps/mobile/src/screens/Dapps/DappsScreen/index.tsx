@@ -25,8 +25,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { IS_IOS } from '@/core/native/utils';
 import { debounce } from 'lodash';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-export function DappsScreen(): JSX.Element {
+function DappsScreenContent(): JSX.Element {
   const {
     browserHistoryList,
     favoriteApps,
@@ -206,6 +207,8 @@ export function DappsScreen(): JSX.Element {
     </TouchableWithoutFeedback>
   );
 }
+
+export const DappsScreen = withBrowserDappServices(DappsScreenContent);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {

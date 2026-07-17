@@ -18,7 +18,10 @@ import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../hooks';
-import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -50,7 +53,7 @@ let preCount = 0;
 interface LendingHistoryHeaderProps {
   onPendingClear?: () => void;
 }
-export const LendingHistoryHeader = ({
+const LendingHistoryHeaderContent = ({
   onPendingClear,
 }: LendingHistoryHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -136,3 +139,7 @@ export const LendingHistoryHeader = ({
     </>
   );
 };
+
+export const LendingHistoryHeader = withTransactionHistoryService(
+  LendingHistoryHeaderContent,
+);

@@ -2,7 +2,8 @@ import { DEX } from '@/constant/swap';
 import { openapi } from '@/core/request';
 import { swapServiceApi } from '@/core/serviceApi/swap';
 import type { SwapServiceStore, ViewKey } from '@/core/services/swap';
-import { atom, useAtom } from 'jotai';
+import type { SwapService } from '@/core/services/swap';
+import { atom, getDefaultStore, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { createRaceSafeHydratedAtom } from './raceSafeHydratedAtom';
 
@@ -58,9 +59,21 @@ const getSettings = async (): Promise<SwapSettingsState> => ({
   sortIncludeGasFee: await swapServiceApi.getSwapSortIncludeGasFee(),
 });
 
+const getSettingsFromService = (service: SwapService): SwapSettingsState => ({
+  swapViewList: service.getSwapViewList(),
+  swapTradeList: service.getSwapTradeList(),
+  selectedChain: service.getSelectedChain(),
+  sortIncludeGasFee: service.getSwapSortIncludeGasFee(),
+});
+
 const settingSwapAtom = atom(defaultSettings);
 let swapSettingsMutationRevision = 0;
 let swapSettingsRefreshRevision = 0;
+
+export function prepareSwapSettingsFromService(service: SwapService) {
+  swapUnlimitedAllowanceAtom.prepare(service.getUnlimitedAllowance());
+  getDefaultStore().set(settingSwapAtom, getSettingsFromService(service));
+}
 
 settingSwapAtom.onMount = setAtom => {
   const revision = swapSettingsMutationRevision;

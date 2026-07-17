@@ -3,7 +3,10 @@ import {
   getBrowserBookmarks,
   removeBrowserBookmarkItems,
 } from '@/core/serviceApi/browser';
-import type { BrowserBookmarkItem } from '@/core/services/browserService';
+import type {
+  BrowserBookmarkItem,
+  BrowserService,
+} from '@/core/services/browserService';
 import type { DappInfo } from '@/core/services/dappService';
 import type { EntityState } from '@/core/utils/createEntryAdapter';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -51,6 +54,17 @@ export const getBookmarkList = async () => {
     });
   }
 };
+
+export function prepareBrowserBookmarkStoreFromService(
+  service: BrowserService,
+) {
+  ++browserBookmarkReadRevision;
+  applyBrowserBookmarkStore({
+    ids: service.bookmark.selectors.selectIds(),
+    entities: service.bookmark.selectors.selectEntities(),
+    hydrated: true,
+  });
+}
 
 export function useBrowserBookmark() {
   const store = zBrowserBookmarkStore(s => s);

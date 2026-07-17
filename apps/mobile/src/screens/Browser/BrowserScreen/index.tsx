@@ -16,8 +16,11 @@ import { View } from 'react-native';
 import { BrowserSearch } from './components/BrowserSearch';
 import type { BrowserRef } from './components/BrowserTab';
 import { BrowserTab } from './components/BrowserTab';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
+type BrowserScreenProps = { style?: StyleProp<ViewStyle> };
+
+function BrowserScreenContent({ style }: BrowserScreenProps) {
   const { styles: stylesScreen } = useTheme2024({
     getStyle: getScreenStyle,
   });
@@ -235,6 +238,27 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
       ) : null}
     </View>
   );
+}
+
+const BrowserScreenWithServices = withBrowserDappServices(
+  BrowserScreenContent,
+  {
+    fallback: props => <View style={props.style} />,
+  },
+);
+
+export function BrowserScreen(props: BrowserScreenProps) {
+  const { browserState } = useBrowser();
+  const activatedRef = useRef(false);
+  if (browserState.isShowBrowser) {
+    activatedRef.current = true;
+  }
+
+  if (!activatedRef.current) {
+    return <View style={props.style} />;
+  }
+
+  return <BrowserScreenWithServices {...props} />;
 }
 
 const getScreenStyle = createGetStyles2024(({ colors2024 }) => {

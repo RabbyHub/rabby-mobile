@@ -47,7 +47,7 @@ export class LendingService {
     this.store.skipHealthFactorWarning = skip;
   };
 
-  getSkipHealthFactorWarning = async () => {
+  getSkipHealthFactorWarning = () => {
     if (!this.store) {
       throw new Error('LendingService not initialized');
     }

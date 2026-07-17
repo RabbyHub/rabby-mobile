@@ -1,4 +1,4 @@
-import { atom } from 'jotai';
+import { atom, getDefaultStore } from 'jotai';
 
 type RaceSafeHydratedAtomOptions<Value, Update> = {
   initialValue: Value;
@@ -29,7 +29,7 @@ export function createRaceSafeHydratedAtom<Value, Update>({
       .catch(onHydrationError);
   };
 
-  return atom(
+  const hydratedAtom = atom(
     get => get(valueAtom),
     async (get, set, update: Update) => {
       const previous = get(valueAtom);
@@ -61,4 +61,11 @@ export function createRaceSafeHydratedAtom<Value, Update>({
       }
     },
   );
+
+  return Object.assign(hydratedAtom, {
+    prepare(value: Value) {
+      ++revision;
+      getDefaultStore().set(valueAtom, value);
+    },
+  });
 }

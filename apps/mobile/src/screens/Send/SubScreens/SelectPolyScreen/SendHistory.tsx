@@ -30,6 +30,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
+import { withTransactionHistoryService } from '@/core/serviceApi/transactionHistoryHooks';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -44,7 +45,7 @@ interface IProps {
   isForMultipleAddress?: boolean;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
 }
-export const SendHistory = ({
+const SendHistoryContent = ({
   visible,
   onClose,
   title,
@@ -184,6 +185,21 @@ export const SendHistory = ({
       {/* </BottomSheetScrollView> */}
     </AppBottomSheetModal>
   );
+};
+
+const SendHistoryWithService =
+  withTransactionHistoryService(SendHistoryContent);
+
+export const SendHistory = (props: IProps) => {
+  const [activated, setActivated] = useState(props.visible);
+
+  useEffect(() => {
+    if (props.visible) {
+      setActivated(true);
+    }
+  }, [props.visible]);
+
+  return activated ? <SendHistoryWithService {...props} /> : null;
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({

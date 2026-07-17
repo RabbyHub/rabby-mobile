@@ -53,6 +53,7 @@ import {
   ActionDetailSection,
 } from './components/ActionDetailSection';
 import { ProjectItemInDetail } from '../ProjectItemInDetail';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 
 interface Props {
   data: TransactionGroup;
@@ -61,7 +62,7 @@ interface Props {
   account?: Account;
 }
 
-export const Send: React.FC<Props> = ({
+const SendContent: React.FC<Props> = ({
   data,
   isSingleAddress,
   onPressAddToWhitelistButton,
@@ -304,6 +305,8 @@ export const Send: React.FC<Props> = ({
     </>
   );
 };
+
+export const Send = withWhitelistService(SendContent);
 
 const SIZES = {
   buttonHeight: BOTTOM_BUTTON_SINGLE_HEIGHT,

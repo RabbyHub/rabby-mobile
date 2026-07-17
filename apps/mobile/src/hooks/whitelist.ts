@@ -16,6 +16,7 @@ import {
   normalizeWhitelistAddresses,
   type WhitelistRecord,
 } from '@/utils/whitelist';
+import type { WhitelistService } from '@/core/services/whitelist';
 
 const { isSameAddress } = addressUtils;
 
@@ -26,18 +27,26 @@ type WhitelistState = {
   whitelist: WhitelistRecord[];
   whitelistAddresses: string[];
   enable: boolean;
+  hydrated: boolean;
 };
 const whitelistStore = zCreate<WhitelistState>(() => ({
   whitelist: [],
   whitelistAddresses: [],
   enable: false,
+  hydrated: false,
 }));
+
+let whitelistRevision = 0;
+let whitelistHydrationPromise: Promise<void> | null = null;
 
 function mapWhitelistAddresses(whitelist: WhitelistRecord[]) {
   return whitelist.map(item => item.address);
 }
 
-function gSetWhitelist(valOrFunc: UpdaterOrPartials<WhitelistRecord[]>) {
+function gSetWhitelist(
+  valOrFunc: UpdaterOrPartials<WhitelistRecord[]>,
+  options: { hydrated?: boolean } = {},
+) {
   whitelistStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
       prev.whitelist,
@@ -52,29 +61,52 @@ function gSetWhitelist(valOrFunc: UpdaterOrPartials<WhitelistRecord[]>) {
       ...prev,
       whitelist: newVal,
       whitelistAddresses: mapWhitelistAddresses(newVal),
+      hydrated: options.hydrated ?? prev.hydrated,
     };
   });
 }
 
-const getWhitelist = async () => {
+function applyWhitelistSnapshot(whitelist: WhitelistRecord[], enable: boolean) {
+  whitelistStore.setState({
+    whitelist,
+    whitelistAddresses: mapWhitelistAddresses(whitelist),
+    enable,
+    hydrated: true,
+  });
+}
+
+export function prepareWhitelistStoreFromService(service: WhitelistService) {
+  whitelistRevision += 1;
+  applyWhitelistSnapshot(
+    service.getWhitelistRecords(),
+    service.isWhitelistEnabled(),
+  );
+}
+
+const getWhitelist = async (revision = whitelistRevision) => {
   const data = await whitelistServiceApi.getWhitelistRecords();
-  gSetWhitelist(data);
+  if (revision === whitelistRevision) {
+    gSetWhitelist(data, { hydrated: true });
+  }
 };
 
 export const setWhitelist = async (addresses: string[]) => {
   const normalizedAddresses = normalizeWhitelistAddresses(addresses);
+  const revision = ++whitelistRevision;
 
   await whitelistServiceApi.setWhitelist(normalizedAddresses);
-  gSetWhitelist(await whitelistServiceApi.getWhitelistRecords());
+  await getWhitelist(revision);
 };
 
-function setEnable(val: boolean) {
-  whitelistStore.setState(prev => ({ ...prev, enable: val }));
+function setEnable(val: boolean, hydrated = true) {
+  whitelistStore.setState(prev => ({ ...prev, enable: val, hydrated }));
 }
 
-const getWhitelistEnabled = async () => {
+const getWhitelistEnabled = async (revision = whitelistRevision) => {
   const data = await whitelistServiceApi.isWhitelistEnabled();
-  setEnable(data);
+  if (revision === whitelistRevision) {
+    setEnable(data);
+  }
 };
 
 const gIsAddrOnWhitelist = (
@@ -101,13 +133,14 @@ export const isAddrInWhitelist = (
 };
 
 const removeWhitelist = async (address: string) => {
+  const revision = ++whitelistRevision;
   await whitelistServiceApi.removeWhitelist(address);
   removeCexId(address);
   const hasSameAddressLeft = await keyringServiceApi.hasAddress(address);
   if (!hasSameAddressLeft) {
     await contactServiceApi.removeAlias(address);
   }
-  await getWhitelist();
+  await getWhitelist(revision);
 };
 
 const toggleWhitelist = async (bool: boolean) => {
@@ -125,19 +158,32 @@ const toggleWhitelist = async (bool: boolean) => {
       return apisLock.verifyPasswordOrUnlock(password);
     },
     async onFinished() {
+      const revision = ++whitelistRevision;
       if (bool) {
         await whitelistServiceApi.enableWhitelist();
       } else {
         await whitelistServiceApi.disableWhiteList();
       }
-      setEnable(bool);
+      if (revision === whitelistRevision) {
+        setEnable(bool);
+      }
     },
   });
 };
 
 const init = async () => {
-  getWhitelist();
-  getWhitelistEnabled();
+  if (!whitelistHydrationPromise) {
+    const revision = whitelistRevision;
+    whitelistHydrationPromise = Promise.all([
+      getWhitelist(revision),
+      getWhitelistEnabled(revision),
+    ])
+      .then(() => undefined)
+      .finally(() => {
+        whitelistHydrationPromise = null;
+      });
+  }
+  return whitelistHydrationPromise;
 };
 
 export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
@@ -152,8 +198,9 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
       const { hasValidated = false } = addOptions || {};
 
       const onFinished = async () => {
+        const revision = ++whitelistRevision;
         await whitelistServiceApi.addWhitelist(address);
-        await getWhitelist();
+        await getWhitelist(revision);
         addOptions?.onAdded?.();
       };
 
@@ -183,7 +230,7 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
 
   useEffect(() => {
     if (!disableAutoFetch) {
-      init();
+      void init().catch(console.error);
     }
   }, [disableAutoFetch]);
 

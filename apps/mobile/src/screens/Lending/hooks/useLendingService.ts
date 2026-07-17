@@ -5,6 +5,8 @@ import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { CustomMarket } from '../config/market';
+import { jotaiStore } from '@/core/utils/reexports';
+import type { LendingService } from '@/core/services/lendingService';
 
 export const lendingAtom = atom<LendingServiceStore>({
   lastSelectedChain: CustomMarket.proto_mainnet_v3,
@@ -12,6 +14,15 @@ export const lendingAtom = atom<LendingServiceStore>({
 });
 let lastSelectedChainRevision = 0;
 let skipHealthFactorWarningRevision = 0;
+
+export function prepareLendingStoreFromService(service: LendingService) {
+  lastSelectedChainRevision += 1;
+  skipHealthFactorWarningRevision += 1;
+  jotaiStore.set(lendingAtom, {
+    lastSelectedChain: service.getLastSelectedChain(),
+    skipHealthFactorWarning: service.getSkipHealthFactorWarning(),
+  });
+}
 
 lendingAtom.onMount = setter => {
   const chainRevision = lastSelectedChainRevision;

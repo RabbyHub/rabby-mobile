@@ -21,6 +21,7 @@ import {
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import type {
   GasAccountRuntimeAccount,
+  GasAccountService,
   GasAccountServiceStore,
 } from '@/core/services/gasAccount';
 import type { Account } from '@/core/startupServices/preference';
@@ -133,11 +134,6 @@ const getSessionStateFromData = (
     status: hasSession ? ('logged_in' as const) : ('idle' as const),
   };
 };
-
-const getSessionStateFromService = () =>
-  getSessionStateFromData(
-    getGasAccountDataSnapshot() as GasAccountServiceStore,
-  );
 
 const getDiscoveryStateFromRuntime = () => ({
   pendingHardwareAccount: getGasAccountPendingHardwareAccountSnapshot() as
@@ -349,8 +345,9 @@ const setGasAccount = (
   );
 };
 
-const hydrateSessionFromLoadedService = () => {
-  const data = getGasAccountDataSnapshot() as GasAccountServiceStore;
+const hydrateSessionFromData = (
+  data: Partial<GasAccountServiceStore> | undefined,
+) => {
   const nextSession = getSessionStateFromData(data);
 
   gasAccountStore.setState(prev => {
@@ -384,6 +381,30 @@ const hydrateSessionFromLoadedService = () => {
 
   return nextSession;
 };
+
+export function prepareGasAccountStoreFromService(service: GasAccountService) {
+  const nextSession = hydrateSessionFromData(
+    service.getGasAccountData() as GasAccountServiceStore,
+  );
+
+  gasAccountStore.setState(prev => ({
+    ...prev,
+    discovery: {
+      ...prev.discovery,
+      pendingHardwareAccount: service.getPendingHardwareAccount() as
+        | GasAccountRuntimeAccount
+        | undefined,
+      accountsWithBalance:
+        service.getAccountsWithGasAccountBalance() as GasAccountBalanceAccount[],
+      status: 'idle',
+    },
+  }));
+
+  return nextSession;
+}
+
+const hydrateSessionFromLoadedService = () =>
+  hydrateSessionFromData(getGasAccountDataSnapshot() as GasAccountServiceStore);
 
 const ensureGasAccountRuntimeReady = makeAvoidParallelAsyncFunc(async () => {
   await ensureGasAccountServiceReady();

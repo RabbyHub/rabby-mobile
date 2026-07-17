@@ -14,8 +14,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import { debounce } from 'lodash';
 import { RootNames } from '@/constant/layout';
 import { Text } from '@/components/Typography';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-export function FavoriteDappsScreen(): JSX.Element {
+function FavoriteDappsScreenContent(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { favoriteApps } = useDappsHome();
 
@@ -79,6 +80,10 @@ export function FavoriteDappsScreen(): JSX.Element {
     </LinearGradient>
   );
 }
+
+export const FavoriteDappsScreen = withBrowserDappServices(
+  FavoriteDappsScreenContent,
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {

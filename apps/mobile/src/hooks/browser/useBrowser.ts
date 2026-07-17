@@ -15,7 +15,8 @@ import {
   getDappSnapshot,
   isDappServiceReady,
 } from '@/core/serviceApi/dapp';
-import type { Tab } from '@/core/services/browserService';
+import type { BrowserService, Tab } from '@/core/services/browserService';
+import type { DappService } from '@/core/services/dappService';
 import { isGoogle } from '@/utils/browser';
 import {
   EVENT_SHOW_BROWSER,
@@ -81,6 +82,51 @@ export async function hydrateBrowserTabs(
     applyTabsStore(current => mergeTabs(current, tabs));
   }
   return tabs;
+}
+
+function normalizePersistedBrowserTabs(
+  tabsState: TabsState,
+  dappService: DappService,
+): TabsState {
+  return {
+    ...tabsState,
+    tabs: tabsState.tabs.map(tab => {
+      if (tab.isDapp) {
+        return tab;
+      }
+
+      const isDapp = !!dappService.getDapp(
+        safeGetOrigin(tab.url || tab.initialUrl),
+      )?.isDapp;
+      return isDapp ? { ...tab, isDapp } : tab;
+    }),
+  };
+}
+
+export function prepareBrowserTabsFromServices(
+  browserService: BrowserService,
+  dappService: DappService,
+) {
+  const loaded = normalizePersistedBrowserTabs(
+    browserService.getBrowserTabs(),
+    dappService,
+  );
+  const current = tabsStore.getState();
+
+  if (!current.tabs.length && !current.activeTabId) {
+    applyTabsStore(loaded);
+    return;
+  }
+
+  const currentById = new Map(current.tabs.map(tab => [tab.id, tab]));
+  const loadedIds = new Set(loaded.tabs.map(tab => tab.id));
+  applyTabsStore({
+    tabs: [
+      ...loaded.tabs.map(tab => currentById.get(tab.id) || tab),
+      ...current.tabs.filter(tab => !loadedIds.has(tab.id)),
+    ],
+    activeTabId: current.activeTabId || loaded.activeTabId,
+  });
 }
 
 const browserExtraStore = zCreate<{

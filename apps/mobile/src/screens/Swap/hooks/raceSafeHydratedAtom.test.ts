@@ -1,4 +1,4 @@
-import { createStore } from 'jotai/vanilla';
+import { createStore, getDefaultStore } from 'jotai/vanilla';
 
 import { createRaceSafeHydratedAtom } from './raceSafeHydratedAtom';
 
@@ -78,5 +78,28 @@ describe('createRaceSafeHydratedAtom', () => {
     resolveFirstCommit?.('stale-first-value');
     await firstUpdate;
     expect(store.get(hydratedAtom)).toBe('second-value');
+  });
+
+  it('prepares the default store and invalidates an older hydration', async () => {
+    let resolveHydration: ((value: string) => void) | undefined;
+    const hydratedAtom = createRaceSafeHydratedAtom({
+      initialValue: 'default',
+      hydrate: () =>
+        new Promise<string>(resolve => {
+          resolveHydration = resolve;
+        }),
+      commitUpdate: async (_previous, update: string) => update,
+    });
+    const store = getDefaultStore();
+    const unsubscribe = store.sub(hydratedAtom, () => undefined);
+
+    await Promise.resolve();
+    hydratedAtom.prepare('prepared-value');
+    expect(store.get(hydratedAtom)).toBe('prepared-value');
+
+    resolveHydration?.('stale-hydration');
+    await Promise.resolve();
+    expect(store.get(hydratedAtom)).toBe('prepared-value');
+    unsubscribe();
   });
 });

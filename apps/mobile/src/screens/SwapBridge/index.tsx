@@ -23,6 +23,7 @@ import { BridgeHeader } from '../Bridge/components/BridgeHeader';
 import Swap from './Swap';
 import { SwapHeader } from '../Swap/components/Header';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
+import { withSwapService } from '../Swap/swapServiceDependencies';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -152,7 +153,7 @@ function SwapBridgeNativeHeader({
   );
 }
 
-function SwapBridgeScreen({
+function SwapBridgeScreenContent({
   isForMultipleAddress = false,
 }: SwapBridgeScreenProps) {
   const route = useRoute<SwapBridgeRoute>();
@@ -249,11 +250,17 @@ function SwapBridgeScreen({
   );
 }
 
+const SwapBridgeScreenBase = withSwapService(SwapBridgeScreenContent, {
+  fallback: <View />,
+});
+
 function ForMultipleAddress() {
-  return <SwapBridgeScreen isForMultipleAddress />;
+  return <SwapBridgeScreenBase isForMultipleAddress />;
 }
 
-SwapBridgeScreen.ForMultipleAddress = ForMultipleAddress;
+const SwapBridgeScreen = Object.assign(SwapBridgeScreenBase, {
+  ForMultipleAddress,
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

@@ -5,7 +5,10 @@ import {
   removeBrowserHistoryItem,
   resetBrowserHistory,
 } from '@/core/serviceApi/browser';
-import type { BrowserHistoryItem } from '@/core/services/browserService';
+import type {
+  BrowserHistoryItem,
+  BrowserService,
+} from '@/core/services/browserService';
 import type { DappInfo } from '@/core/services/dappService';
 import type { EntityState } from '@/core/utils/createEntryAdapter';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -61,6 +64,14 @@ export const getBrowserHistoryList = async () => {
     });
   }
 };
+
+export function prepareBrowserHistoryStoreFromService(service: BrowserService) {
+  ++browserHistoryReadRevision;
+  applyBrowserHistoryStore({
+    ids: service.history.selectors.selectIds(),
+    entities: service.history.selectors.selectEntities(),
+  });
+}
 
 export function resetBrowserHistoryStore() {
   ++browserHistoryReadRevision;

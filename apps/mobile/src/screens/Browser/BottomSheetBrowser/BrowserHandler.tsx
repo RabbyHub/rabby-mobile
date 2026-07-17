@@ -22,8 +22,9 @@ import RcIconFavoriteCC from '@/assets2024/icons/browser/favorite-cc.svg';
 import { useDapps } from '@/hooks/useDapps';
 import { toast } from '@/components2024/Toast';
 import { apisDapp } from '@/core/apis';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-export const BrowserHandler = () => {
+const BrowserHandlerContent = () => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
@@ -307,6 +308,21 @@ export const BrowserHandler = () => {
         <View style={styles.placeholder} />
       )}
     </TouchableWithoutFeedback>
+  );
+};
+
+const BrowserHandlerWithServices = withBrowserDappServices(
+  BrowserHandlerContent,
+);
+
+export const BrowserHandler = () => {
+  const { styles } = useTheme2024({ getStyle });
+  const { browserState } = useBrowser();
+
+  return (
+    <View style={styles.placeholder}>
+      {browserState.isShowBrowser ? <BrowserHandlerWithServices /> : null}
+    </View>
   );
 };
 

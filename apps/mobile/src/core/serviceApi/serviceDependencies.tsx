@@ -264,6 +264,15 @@ export type WithCoreServicesOptions<ExternalProps = never> = {
   renderError?: (error: Error) => React.ReactNode;
 };
 
+export type WithPreparedCoreServicesOptions<
+  Dependencies extends CoreServiceDependencyList,
+  ExternalProps = never,
+> = WithCoreServicesOptions<ExternalProps> & {
+  prepare: (
+    services: ResolvedCoreServices<Dependencies>,
+  ) => void | Promise<void>;
+};
+
 /**
  * Injects already-loaded core services into a component. The wrapper only
  * exposes the component's business props; `coreServices` stays internal.
@@ -313,4 +322,102 @@ export function withCoreServices<
     Component.displayName || Component.name || 'Component'
   })`;
   return Wrapped;
+}
+
+/**
+ * Loads concrete services, prepares feature-local synchronous state, and only
+ * then renders the business component. Use this when the old singleton path
+ * exposed persisted state on the component's first meaningful render.
+ */
+export function withPreparedCoreServices<
+  const Dependencies extends CoreServiceDependencyList,
+  Props extends CoreServiceInjectedProps<Dependencies>,
+>(
+  dependencies: Dependencies,
+  Component: React.ComponentType<Props>,
+  options: WithPreparedCoreServicesOptions<
+    Dependencies,
+    Omit<Props, keyof CoreServiceInjectedProps<Dependencies>>
+  >,
+): React.ComponentType<
+  Omit<Props, keyof CoreServiceInjectedProps<Dependencies>>
+> {
+  type ExternalProps = Omit<
+    Props,
+    keyof CoreServiceInjectedProps<Dependencies>
+  >;
+
+  const Prepared: React.FC<Props> = props => {
+    const { coreServices } = props;
+    const [state, setState] = React.useState<
+      | { status: 'preparing'; services: typeof coreServices }
+      | { status: 'ready'; services: typeof coreServices }
+      | { status: 'error'; services: typeof coreServices; error: Error }
+    >({ status: 'preparing', services: coreServices });
+
+    React.useLayoutEffect(() => {
+      let disposed = false;
+      setState({ status: 'preparing', services: coreServices });
+
+      const markReady = () => {
+        if (!disposed) {
+          setState({ status: 'ready', services: coreServices });
+        }
+      };
+      const markError = (error: unknown) => {
+        if (!disposed) {
+          setState({
+            status: 'error',
+            services: coreServices,
+            error: toError(error),
+          });
+        }
+      };
+
+      try {
+        const preparation = options.prepare(coreServices);
+        if (preparation) {
+          void preparation.then(markReady, markError);
+        } else {
+          // A synchronous persisted-state preparation is flushed from the
+          // layout effect before the fallback can become visible.
+          markReady();
+        }
+      } catch (error) {
+        markError(error);
+      }
+
+      return () => {
+        disposed = true;
+      };
+    }, [coreServices]);
+
+    const externalProps = props as ExternalProps;
+    const fallback =
+      typeof options.fallback === 'function'
+        ? options.fallback(externalProps)
+        : options.fallback;
+
+    if (state.services !== coreServices || state.status === 'preparing') {
+      return fallback;
+    }
+
+    if (state.status === 'error') {
+      if (options.renderError) {
+        return options.renderError(state.error);
+      }
+      throw state.error;
+    }
+
+    return React.createElement(Component, props);
+  };
+
+  Prepared.displayName = `prepareCoreServices(${
+    Component.displayName || Component.name || 'Component'
+  })`;
+
+  return withCoreServices(dependencies, Prepared, {
+    fallback: options.fallback,
+    renderError: options.renderError,
+  });
 }

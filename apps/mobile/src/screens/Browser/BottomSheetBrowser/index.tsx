@@ -26,8 +26,14 @@ import { BrowserScreen } from '../BrowserScreen';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 import { BrowserHandler } from './BrowserHandler';
 import { BrowserFavoriteManage } from '../BrowserScreen/components/BrowserFavoriteManage';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
 export { BottomSheetDappInfoPopup } from './BottomSheetDappInfo';
+
+const BrowserManageWithServices = withBrowserDappServices(BrowserManage);
+const BrowserFavoriteManageWithServices = withBrowserDappServices(
+  BrowserFavoriteManage,
+);
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
@@ -251,7 +257,7 @@ export const BrowserManagePopup = () => {
         }
       }}>
       <AutoLockView as="View">
-        {browserState.isShowManage ? <BrowserManage /> : null}
+        {browserState.isShowManage ? <BrowserManageWithServices /> : null}
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -328,7 +334,9 @@ export const BrowserFavoritePopup = () => {
         }
       }}>
       <AutoLockView as="View">
-        {browserState.isShowFavorite ? <BrowserFavoriteManage /> : null}
+        {browserState.isShowFavorite ? (
+          <BrowserFavoriteManageWithServices />
+        ) : null}
       </AutoLockView>
     </AppBottomSheetModal>
   );

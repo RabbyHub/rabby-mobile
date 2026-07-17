@@ -49,7 +49,10 @@ import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScre
 import { syncTop10History, syncSingleAddress } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { useHistoryLoading } from '@/hooks/historyTokenDict';
-import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
@@ -84,7 +87,7 @@ const waitQueueFinished = (q: PQueue) => {
   });
 };
 
-function History({
+function HistoryContent({
   isTestnet = false,
   isForMultipleAddress,
 }: {
@@ -720,6 +723,8 @@ function History({
     </View>
   );
 }
+
+const History = withTransactionHistoryService(HistoryContent);
 
 const HistoryScreen = ({ isForMultipleAddress = true }) => {
   const {

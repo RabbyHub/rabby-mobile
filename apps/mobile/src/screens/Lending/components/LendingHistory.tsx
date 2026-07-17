@@ -46,7 +46,10 @@ import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHisto
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
 import { Text } from '@/components/Typography';
-import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 
 const _PAGE_COUNT = 200;
 
@@ -386,4 +389,4 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 }));
 
-export default LendingHistory;
+export default withTransactionHistoryService(LendingHistory);

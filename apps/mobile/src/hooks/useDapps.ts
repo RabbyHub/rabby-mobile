@@ -2,7 +2,11 @@ import { createDappBySession } from '@/core/apis/dapp';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import * as apisDapp from '@/core/apis/dapp';
-import type { DappInfo, DappStore } from '@/core/services/dappService';
+import type {
+  DappInfo,
+  DappService,
+  DappStore,
+} from '@/core/services/dappService';
 import {
   bindDappStoreListener,
   dappServiceApi,
@@ -35,6 +39,12 @@ const dappServiceStore = zCreate<DappStore>(() => ({ dapps: {} }));
 let dappStoreBindingPromise: Promise<void> | null = null;
 let disposeDappStoreBinding: (() => void) | null = null;
 
+function replaceDappStoreFromService(service: DappService) {
+  dappServiceStore.setState({
+    dapps: { ...service.store.dapps },
+  });
+}
+
 function applyDappStoreUpdate<K extends keyof DappStore>(
   k: K,
   v: DappStore[K],
@@ -60,12 +70,27 @@ function ensureDappStoreBinding() {
     applyDappStoreUpdate(k, v as DappStore[typeof k]);
   })
     .then(dispose => {
+      if (disposeDappStoreBinding) {
+        dispose();
+        return;
+      }
       disposeDappStoreBinding = dispose;
     })
     .catch(error => {
       dappStoreBindingPromise = null;
       console.error(error);
     });
+}
+
+export function prepareDappStoreFromService(service: DappService) {
+  replaceDappStoreFromService(service);
+  if (disposeDappStoreBinding) {
+    return;
+  }
+
+  disposeDappStoreBinding = service.setBeforeSetKV((k, v) => {
+    applyDappStoreUpdate(k, v as DappStore[typeof k]);
+  });
 }
 
 function setDapps(valOrFunc: UpdaterOrPartials<Record<string, DappInfo>>) {

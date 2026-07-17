@@ -19,6 +19,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingService } from '../../hooks/useLendingService';
 import { Text } from '@/components/Typography';
+import { withLendingService } from '../../lendingServiceDependencies';
 
 interface SummaryItemProps {
   netWorth: string;
@@ -276,7 +277,7 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
   );
 };
 
-export default SummaryItem;
+export default withLendingService(SummaryItem);
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
