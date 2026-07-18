@@ -123,17 +123,21 @@ export const useGasAccountHistory = () => {
       const shouldClearHistory = history.status !== 'ready' || hasHistory;
 
       if (shouldClearHistory) {
-        storeApiGasAccount.refreshHistory().catch(error => {
-          console.error('useGasAccountHistory clear error', error);
-        });
+        storeApiGasAccount
+          .refreshHistory({ reason: 'hook_clear_no_session' })
+          .catch(error => {
+            console.error('useGasAccountHistory clear error', error);
+          });
       }
       return;
     }
 
     if (history.status === 'idle' && !hasHistory) {
-      storeApiGasAccount.refreshHistory().catch(error => {
-        console.error('useGasAccountHistory refresh error', error);
-      });
+      storeApiGasAccount
+        .refreshHistory({ reason: 'hook_idle_empty' })
+        .catch(error => {
+          console.error('useGasAccountHistory refresh error', error);
+        });
     }
   }, [
     accountId,
@@ -154,9 +158,11 @@ export const useGasAccountHistory = () => {
       hasPendingHistory
     ) {
       timer = setTimeout(() => {
-        storeApiGasAccount.refreshHistory().catch(error => {
-          console.error('pending history refresh error', error);
-        });
+        storeApiGasAccount
+          .refreshHistory({ reason: 'hook_pending_poll' })
+          .catch(error => {
+            console.error('pending history refresh error', error);
+          });
       }, 2000);
     }
     return () => {

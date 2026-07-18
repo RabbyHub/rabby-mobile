@@ -1,7 +1,11 @@
 import { traceAndroidInstant } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
-export type FeatureActivationName = 'swap' | 'bridge' | 'single-address';
+export type FeatureActivationName =
+  | 'swap'
+  | 'bridge'
+  | 'single-address'
+  | 'gas-account';
 
 export type FeatureActivationEventName =
   | 'requested'

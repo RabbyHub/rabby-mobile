@@ -34,6 +34,7 @@ import {
 } from '@/core/utils/store';
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { eventBus, EVENTS } from '@/utils/events';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import { setGasAccountStoreApi } from '@/utils/gasAccountStoreApiBridge';
@@ -66,6 +67,71 @@ import {
   updateDiscoveryState,
   updateSessionState,
 } from './state';
+
+const traceGasAccountStore = (
+  event: string,
+  data: Record<string, unknown> = {},
+) => {
+  traceStartupDiagnostic('gas-account-store', event, data);
+};
+
+const measureGasAccountStoreSyncStep = <T>(
+  label: string,
+  task: () => T,
+  data: Record<string, unknown> = {},
+) => {
+  const startedAt = Date.now();
+  traceGasAccountStore('sync_step_start', {
+    label,
+    ...data,
+  });
+  try {
+    const result = task();
+    traceGasAccountStore('sync_step_end', {
+      label,
+      durationMs: Date.now() - startedAt,
+      ...data,
+    });
+    return result;
+  } catch (error) {
+    traceGasAccountStore('sync_step_error', {
+      label,
+      durationMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+      ...data,
+    });
+    throw error;
+  }
+};
+
+const traceGasAccountStoreAsyncStep = async <T>(
+  label: string,
+  task: () => Promise<T> | T,
+  data: Record<string, unknown> = {},
+) => {
+  const startedAt = Date.now();
+  traceGasAccountStore('async_step_start', {
+    label,
+    ...data,
+  });
+  try {
+    const result = await task();
+    traceGasAccountStore('async_step_end', {
+      label,
+      durationMs: Date.now() - startedAt,
+      ...data,
+    });
+    return result;
+  } catch (error) {
+    traceGasAccountStore('async_step_error', {
+      label,
+      durationMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+      ...data,
+    });
+    throw error;
+  }
+};
 
 runStartupTask(() => {
   eventBus.on(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, () => {
@@ -347,36 +413,71 @@ const setGasAccount = (
 
 const hydrateSessionFromData = (
   data: Partial<GasAccountServiceStore> | undefined,
+  source = 'unknown',
 ) => {
   const nextSession = getSessionStateFromData(data);
+  let previousStatus = gasAccountStore.getState().session.status;
+  let changed = false;
+  let changeReason = 'unknown';
 
-  gasAccountStore.setState(prev => {
-    if (nextSession.status !== 'logged_in') {
-      if (
-        prev.session.status === 'logged_in' ||
-        prev.session.status === 'logging_in'
-      ) {
-        return prev;
-      }
-      return updateSessionState(prev, nextSession);
-    }
+  measureGasAccountStoreSyncStep(
+    'hydrate_session_set_state',
+    () => {
+      gasAccountStore.setState(prev => {
+        previousStatus = prev.session.status;
+        if (nextSession.status !== 'logged_in') {
+          if (
+            prev.session.status === 'logged_in' ||
+            prev.session.status === 'logging_in'
+          ) {
+            changed = false;
+            changeReason = 'keep_existing_session';
+            return prev;
+          }
+          changed = true;
+          changeReason = 'update_empty_session';
+          return updateSessionState(prev, nextSession);
+        }
 
-    const isSameSession =
-      prev.session.sig === nextSession.sig &&
-      prev.session.accountId === nextSession.accountId &&
-      prev.session.account?.address === nextSession.account?.address &&
-      prev.session.account?.type === nextSession.account?.type &&
-      prev.session.account?.brandName === nextSession.account?.brandName &&
-      prev.session.status === nextSession.status;
+        const isSameSession =
+          prev.session.sig === nextSession.sig &&
+          prev.session.accountId === nextSession.accountId &&
+          prev.session.account?.address === nextSession.account?.address &&
+          prev.session.account?.type === nextSession.account?.type &&
+          prev.session.account?.brandName === nextSession.account?.brandName &&
+          prev.session.status === nextSession.status;
 
-    if (isSameSession) {
-      return prev;
-    }
+        if (isSameSession) {
+          changed = false;
+          changeReason = 'same_session';
+          return prev;
+        }
 
-    return markSnapshotDirtyState(
-      updateSessionState(prev, nextSession),
-      'session_hydrated',
-    );
+        changed = true;
+        changeReason = 'session_hydrated';
+        return markSnapshotDirtyState(
+          updateSessionState(prev, nextSession),
+          'session_hydrated',
+        );
+      });
+    },
+    {
+      source,
+      previousStatus,
+      nextStatus: nextSession.status,
+      hasSig: !!nextSession.sig,
+      hasAccountId: !!nextSession.accountId,
+    },
+  );
+
+  traceGasAccountStore('hydrate_session_result', {
+    source,
+    previousStatus,
+    nextStatus: nextSession.status,
+    changed,
+    changeReason,
+    hasSig: !!nextSession.sig,
+    hasAccountId: !!nextSession.accountId,
   });
 
   return nextSession;
@@ -385,38 +486,83 @@ const hydrateSessionFromData = (
 export function prepareGasAccountStoreFromService(service: GasAccountService) {
   const nextSession = hydrateSessionFromData(
     service.getGasAccountData() as GasAccountServiceStore,
+    'prepare_service',
   );
 
-  gasAccountStore.setState(prev => ({
-    ...prev,
-    discovery: {
-      ...prev.discovery,
-      pendingHardwareAccount: service.getPendingHardwareAccount() as
-        | GasAccountRuntimeAccount
-        | undefined,
-      accountsWithBalance:
-        service.getAccountsWithGasAccountBalance() as GasAccountBalanceAccount[],
-      status: 'idle',
+  measureGasAccountStoreSyncStep(
+    'prepare_service_discovery_set_state',
+    () => {
+      gasAccountStore.setState(prev => ({
+        ...prev,
+        discovery: {
+          ...prev.discovery,
+          pendingHardwareAccount: service.getPendingHardwareAccount() as
+            | GasAccountRuntimeAccount
+            | undefined,
+          accountsWithBalance:
+            service.getAccountsWithGasAccountBalance() as GasAccountBalanceAccount[],
+          status: 'idle',
+        },
+      }));
     },
-  }));
+    {
+      hasPendingHardwareAccount: !!service.getPendingHardwareAccount(),
+      accountsWithBalanceCount:
+        service.getAccountsWithGasAccountBalance()?.length || 0,
+    },
+  );
 
   return nextSession;
 }
 
 const hydrateSessionFromLoadedService = () =>
-  hydrateSessionFromData(getGasAccountDataSnapshot() as GasAccountServiceStore);
+  hydrateSessionFromData(
+    getGasAccountDataSnapshot() as GasAccountServiceStore,
+    'runtime_ready',
+  );
 
 const ensureGasAccountRuntimeReady = makeAvoidParallelAsyncFunc(async () => {
-  await ensureGasAccountServiceReady();
-  const nextSession = hydrateSessionFromLoadedService();
+  const startedAt = Date.now();
+  traceGasAccountStore('ensure_runtime_ready_start');
 
-  gasAccountStore.setState(prev => ({
-    ...prev,
-    discovery: {
-      ...prev.discovery,
-      ...getDiscoveryStateFromRuntime(),
+  await traceGasAccountStoreAsyncStep('ensure_service_ready', () =>
+    ensureGasAccountServiceReady(),
+  );
+
+  const nextSession = measureGasAccountStoreSyncStep(
+    'hydrate_loaded_service',
+    () => hydrateSessionFromLoadedService(),
+  );
+  const discoveryState = measureGasAccountStoreSyncStep(
+    'read_discovery_runtime',
+    getDiscoveryStateFromRuntime,
+  );
+
+  measureGasAccountStoreSyncStep(
+    'discovery_set_state',
+    () => {
+      gasAccountStore.setState(prev => ({
+        ...prev,
+        discovery: {
+          ...prev.discovery,
+          ...discoveryState,
+        },
+      }));
     },
-  }));
+    {
+      hasPendingHardwareAccount: !!discoveryState.pendingHardwareAccount,
+      accountsWithBalanceCount: discoveryState.accountsWithBalance.length,
+    },
+  );
+
+  traceGasAccountStore('ensure_runtime_ready_end', {
+    durationMs: Date.now() - startedAt,
+    sessionStatus: nextSession.status,
+    hasSig: !!nextSession.sig,
+    hasAccountId: !!nextSession.accountId,
+    hasPendingHardwareAccount: !!discoveryState.pendingHardwareAccount,
+    accountsWithBalanceCount: discoveryState.accountsWithBalance.length,
+  });
 
   return nextSession;
 });
@@ -446,20 +592,49 @@ const triggerReLoginAfterInvalidSession = async () => {
   }
 };
 
-const refreshSnapshot = async () => {
-  await ensureGasAccountRuntimeReady();
+const refreshSnapshot = async (options?: { reason?: string }) => {
+  const reason = options?.reason || 'manual';
+  const startedAt = Date.now();
+  traceGasAccountStore('refresh_snapshot_start', { reason });
+
+  await traceGasAccountStoreAsyncStep(
+    'refresh_snapshot_ensure_runtime_ready',
+    () => ensureGasAccountRuntimeReady(),
+    { reason },
+  );
+
   const requestId = createSnapshotRefreshRequestId();
   const { sig, accountId } = gasAccountStore.getState().session;
 
   if (!sig || !accountId) {
-    setGasAccountCurrentBalanceStateSync();
+    traceGasAccountStore('refresh_snapshot_no_session', {
+      reason,
+      requestId,
+    });
+    measureGasAccountStoreSyncStep(
+      'refresh_snapshot_clear_balance_state',
+      () => {
+        setGasAccountCurrentBalanceStateSync();
+      },
+      { reason, requestId },
+    );
     return undefined;
   }
 
-  gasAccountStore.setState(prev => startSnapshotRefreshState(prev, 'manual'));
+  measureGasAccountStoreSyncStep(
+    'refresh_snapshot_set_refreshing',
+    () => {
+      gasAccountStore.setState(prev => startSnapshotRefreshState(prev, reason));
+    },
+    { reason, requestId },
+  );
 
   try {
-    const result = await openapi.getGasAccountInfo({ sig, id: accountId });
+    const result = await traceGasAccountStoreAsyncStep(
+      'refresh_snapshot_api',
+      () => openapi.getGasAccountInfo({ sig, id: accountId }),
+      { reason, requestId },
+    );
 
     const latestSession = gasAccountStore.getState().session;
 
@@ -468,20 +643,53 @@ const refreshSnapshot = async () => {
       latestSession.sig !== sig ||
       latestSession.accountId !== accountId
     ) {
+      traceGasAccountStore('refresh_snapshot_stale_result', {
+        reason,
+        requestId,
+      });
       return undefined;
     }
 
     if (result.account.id) {
-      setGasAccountCurrentBalanceStateSync(
-        accountId,
-        Number(result.account.balance || 0) > 0,
+      const hasBalance = Number(result.account.balance || 0) > 0;
+      measureGasAccountStoreSyncStep(
+        'refresh_snapshot_set_current_balance_state',
+        () => {
+          setGasAccountCurrentBalanceStateSync(accountId, hasBalance);
+        },
+        {
+          reason,
+          requestId,
+          hasBalance,
+        },
       );
-      gasAccountStore.setState(prev =>
-        finishSnapshotRefreshState(prev, result),
+      measureGasAccountStoreSyncStep(
+        'refresh_snapshot_finish_set_state',
+        () => {
+          gasAccountStore.setState(prev =>
+            finishSnapshotRefreshState(prev, result),
+          );
+        },
+        {
+          reason,
+          requestId,
+          hasBalance,
+        },
       );
+      traceGasAccountStore('refresh_snapshot_end', {
+        reason,
+        requestId,
+        durationMs: Date.now() - startedAt,
+        hasBalance,
+      });
       return result;
     }
 
+    traceGasAccountStore('refresh_snapshot_invalid_session', {
+      reason,
+      requestId,
+      durationMs: Date.now() - startedAt,
+    });
     storeApiGasAccount.invalidateSession({ recheckAccounts: true });
     return undefined;
   } catch (error: any) {
@@ -491,14 +699,35 @@ const refreshSnapshot = async () => {
       latestSession.sig !== sig ||
       latestSession.accountId !== accountId
     ) {
+      traceGasAccountStore('refresh_snapshot_error_stale', {
+        reason,
+        requestId,
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return undefined;
     }
 
-    gasAccountStore.setState(prev => failSnapshotRefreshState(prev));
+    measureGasAccountStoreSyncStep(
+      'refresh_snapshot_fail_set_state',
+      () => {
+        gasAccountStore.setState(prev => failSnapshotRefreshState(prev));
+      },
+      {
+        reason,
+        requestId,
+      },
+    );
     if (error?.message?.includes?.('gas account verified failed')) {
       storeApiGasAccount.invalidateSession({ recheckAccounts: true });
       return undefined;
     }
+    traceGasAccountStore('refresh_snapshot_error', {
+      reason,
+      requestId,
+      durationMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 };
@@ -522,12 +751,24 @@ const isCurrentHistorySession = ({
   return latestSession.sig === sig && latestSession.accountId === accountId;
 };
 
-const refreshHistory = async () => {
+const refreshHistory = async (options?: { reason?: string }) => {
+  const reason = options?.reason || 'manual';
+  const startedAt = Date.now();
+  traceGasAccountStore('refresh_history_start', { reason });
+
   if (!isGasAccountHistoryRefreshEnabled) {
+    traceGasAccountStore('refresh_history_skip_disabled', {
+      reason,
+      durationMs: Date.now() - startedAt,
+    });
     return undefined;
   }
 
-  await ensureGasAccountRuntimeReady();
+  await traceGasAccountStoreAsyncStep(
+    'refresh_history_ensure_runtime_ready',
+    () => ensureGasAccountRuntimeReady(),
+    { reason },
+  );
 
   const requestId = createHistoryRefreshRequestId();
   const { sig, accountId } = gasAccountStore.getState().session;
@@ -537,58 +778,129 @@ const refreshHistory = async () => {
 
   if (!sig || !accountId) {
     if (!isLatestHistoryRefreshRequest(requestId)) {
+      traceGasAccountStore('refresh_history_no_session_stale', {
+        reason,
+        requestId,
+      });
       return undefined;
     }
-    gasAccountStore.setState(prev =>
-      finishHistoryRefreshState(prev, {
-        list: [],
-        rechargeList: [],
-        withdrawList: [],
-        totalCount: 0,
-      }),
+    measureGasAccountStoreSyncStep(
+      'refresh_history_clear_set_state',
+      () => {
+        gasAccountStore.setState(prev =>
+          finishHistoryRefreshState(prev, {
+            list: [],
+            rechargeList: [],
+            withdrawList: [],
+            totalCount: 0,
+          }),
+        );
+      },
+      {
+        reason,
+        requestId,
+      },
     );
+    traceGasAccountStore('refresh_history_no_session_end', {
+      reason,
+      requestId,
+      durationMs: Date.now() - startedAt,
+    });
     return undefined;
   }
 
-  gasAccountStore.setState(prev => startHistoryRefreshState(prev));
+  measureGasAccountStoreSyncStep(
+    'refresh_history_set_refreshing',
+    () => {
+      gasAccountStore.setState(prev => startHistoryRefreshState(prev));
+    },
+    {
+      reason,
+      requestId,
+      previousConfirmedCount: prevHistory.list.length,
+      previousRechargeCount: prevHistory.rechargeList.length,
+      previousWithdrawCount: prevHistory.withdrawList.length,
+    },
+  );
 
   try {
-    const data = await openapi.getGasAccountHistory({
-      sig,
-      account_id: accountId,
-      start: 0,
-      limit: 10,
-    });
+    const data = await traceGasAccountStoreAsyncStep(
+      'refresh_history_api',
+      () =>
+        openapi.getGasAccountHistory({
+          sig,
+          account_id: accountId,
+          start: 0,
+          limit: 10,
+        }),
+      {
+        reason,
+        requestId,
+      },
+    );
 
     if (
       !isGasAccountHistoryRefreshEnabled ||
       !isLatestHistoryRefreshRequest(requestId) ||
       !isCurrentHistorySession({ sig, accountId })
     ) {
+      traceGasAccountStore('refresh_history_stale_result', {
+        reason,
+        requestId,
+      });
       return undefined;
     }
 
-    gasAccountStore.setState(prev =>
-      finishHistoryRefreshState(prev, {
-        list: data.history_list || [],
-        rechargeList: data.recharge_list || [],
-        withdrawList: data.withdraw_list || [],
+    const confirmedCount = data.history_list?.length || 0;
+    const rechargeCount = data.recharge_list?.length || 0;
+    const withdrawCount = data.withdraw_list?.length || 0;
+
+    measureGasAccountStoreSyncStep(
+      'refresh_history_finish_set_state',
+      () => {
+        gasAccountStore.setState(prev =>
+          finishHistoryRefreshState(prev, {
+            list: data.history_list || [],
+            rechargeList: data.recharge_list || [],
+            withdrawList: data.withdraw_list || [],
+            totalCount: data.pagination.total,
+          }),
+        );
+      },
+      {
+        reason,
+        requestId,
+        confirmedCount,
+        rechargeCount,
+        withdrawCount,
         totalCount: data.pagination.total,
-      }),
+      },
     );
 
-    const hasPendingAfterRefresh =
-      (data.recharge_list?.length || 0) > 0 ||
-      (data.withdraw_list?.length || 0) > 0;
+    const hasPendingAfterRefresh = rechargeCount > 0 || withdrawCount > 0;
 
     if (hadPendingBeforeRefresh && !hasPendingAfterRefresh) {
-      storeApiGasAccount.refreshSnapshot().catch(error => {
-        console.error(
-          'refreshSnapshot after pending history settled error',
-          error,
-        );
-      });
+      storeApiGasAccount
+        .refreshSnapshot({ reason: 'pending_history_settled' })
+        .catch(error => {
+          console.error(
+            'refreshSnapshot after pending history settled error',
+            error,
+          );
+        });
     }
+
+    traceGasAccountStore('refresh_history_end', {
+      reason,
+      requestId,
+      durationMs: Date.now() - startedAt,
+      confirmedCount,
+      rechargeCount,
+      withdrawCount,
+      totalCount: data.pagination.total,
+      hadPendingBeforeRefresh,
+      hasPendingAfterRefresh,
+    });
 
     return data;
   } catch (error) {
@@ -597,10 +909,31 @@ const refreshHistory = async () => {
       !isLatestHistoryRefreshRequest(requestId) ||
       !isCurrentHistorySession({ sig, accountId })
     ) {
+      traceGasAccountStore('refresh_history_error_stale', {
+        reason,
+        requestId,
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return undefined;
     }
 
-    gasAccountStore.setState(prev => failHistoryRefreshState(prev));
+    measureGasAccountStoreSyncStep(
+      'refresh_history_fail_set_state',
+      () => {
+        gasAccountStore.setState(prev => failHistoryRefreshState(prev));
+      },
+      {
+        reason,
+        requestId,
+      },
+    );
+    traceGasAccountStore('refresh_history_error', {
+      reason,
+      requestId,
+      durationMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 };

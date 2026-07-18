@@ -1,5 +1,6 @@
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -33,8 +34,25 @@ export const GasAccountUserState: React.FC<{
   style,
   warningMessage,
 }) => {
+  const renderStartedAt = Date.now();
+  const renderSeqRef = React.useRef(0);
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+
+  React.useEffect(() => {
+    renderSeqRef.current += 1;
+    traceStartupDiagnostic('gas-account', 'user_state_render_commit', {
+      seq: renderSeqRef.current,
+      renderCommitMs: Date.now() - renderStartedAt,
+      isLoading: !!isLoading,
+      hasBalance: Number(balance || 0) > 0,
+      historyLoading: historyState.loading,
+      hasHistory: historyState.hasHistory,
+      confirmedCount: historyState.txList.list.length,
+      rechargeCount: historyState.txList.rechargeList.length,
+      withdrawCount: historyState.txList.withdrawList.length,
+    });
+  });
 
   return (
     <View style={[styles.container, style]}>
