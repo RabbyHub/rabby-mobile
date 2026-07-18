@@ -30,8 +30,16 @@ import { NextInput } from '@/components2024/Form/Input';
 import { coerceInteger } from '@/utils/number';
 import { apisLending } from '../Lending/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { worker_plus } from '@/perfs/workerReq';
+import { worker_fetchProbe, worker_plus } from '@/perfs/workerReq';
 import { Text } from '@/components/Typography';
+
+const DEFAULT_WORKER_FETCH_PROBE_URL =
+  'https://download.rabby.io/downloads/wallet-mobile-config-reg/rabby-mobile.json';
+
+type WorkerFetchProbeResult = NonNullable<
+  WorkerDuplexReceiveDict['fetchProbe']['data']
+>;
+type WorkerLogMessage = WorkerSendDict['@workerLog'];
 
 export const makeNoop = () => () => {};
 
@@ -51,13 +59,26 @@ const workerThreadState = zCreate<{ running: boolean }>(() => ({
 
 function DevWorker() {
   const ACK_LIMIT = 5;
+  const WORKER_LOG_LIMIT = 12;
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const threadRunning = workerThreadState(s => s.running);
   const [ackMsgs, setAckMsgs] = useState<WorkerSendDict['ack'][]>([]);
+  const [workerLogs, setWorkerLogs] = useState<WorkerLogMessage[]>([]);
+  const [fetchProbeUrl, setFetchProbeUrl] = useState(
+    DEFAULT_WORKER_FETCH_PROBE_URL,
+  );
+  const [fetchProbeBusy, setFetchProbeBusy] = useState(false);
+  const [fetchProbeResult, setFetchProbeResult] =
+    useState<WorkerFetchProbeResult | null>(null);
   const sortedAckMsgs = useMemo(() => {
     return ackMsgs.slice(0, ACK_LIMIT).sort((a, b) => b.time - a.time);
   }, [ackMsgs]);
+  const sortedWorkerLogs = useMemo(() => {
+    return workerLogs
+      .slice(0, WORKER_LOG_LIMIT)
+      .sort((a, b) => b.time - a.time);
+  }, [workerLogs]);
 
   const [plusData, setPlusData] = useState<{
     leftValue: number | string;
@@ -74,6 +95,12 @@ function DevWorker() {
           setAckMsgs(msgs => {
             const newMsgs = [...msgs, payload].slice(-ACK_LIMIT);
             return newMsgs;
+          });
+          break;
+        }
+        case '@workerLog': {
+          setWorkerLogs(msgs => {
+            return [...msgs, payload].slice(-WORKER_LOG_LIMIT);
           });
           break;
         }
@@ -293,6 +320,131 @@ function DevWorker() {
       </View>
 
       <View
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'column', marginTop: 16, width: '100%' },
+        ]}>
+        <Text style={[styles.secondarySectionTitle, { fontSize: 18 }]}>
+          Worker Network Probe
+        </Text>
+        <View style={{ marginTop: 12, width: '100%' }}>
+          <NextInput
+            inputProps={{
+              value: fetchProbeUrl,
+              onChangeText: setFetchProbeUrl,
+              autoCapitalize: 'none',
+              autoCorrect: false,
+              placeholder: 'Fetch URL',
+            }}
+          />
+          <Button
+            title="Run Worker Fetch"
+            type="ghost"
+            height={48}
+            loading={fetchProbeBusy}
+            disabled={fetchProbeBusy || !fetchProbeUrl.trim()}
+            containerStyle={{ height: '100%', marginTop: 12 }}
+            onPress={async () => {
+              const url = fetchProbeUrl.trim();
+              if (!url) {
+                toast.info('Fetch URL is empty');
+                return;
+              }
+
+              setFetchProbeBusy(true);
+              setFetchProbeResult(null);
+              try {
+                const result = await worker_fetchProbe({
+                  url,
+                  method: 'GET',
+                  timeoutMs: 10_000,
+                  readBody: true,
+                  readBodyLimit: 220,
+                });
+                setFetchProbeResult(result || null);
+                if (result?.ok) {
+                  toast.success(`Worker fetch ${result.status}`);
+                } else {
+                  toast.error(result?.error || 'Worker fetch failed');
+                }
+              } catch (error) {
+                const message =
+                  error instanceof Error ? error.message : String(error);
+                setFetchProbeResult({
+                  ok: false,
+                  status: 0,
+                  statusText: '',
+                  url,
+                  elapsedMs: 0,
+                  headerElapsedMs: 0,
+                  bodyElapsedMs: 0,
+                  bodyChars: 0,
+                  bodyBytes: 0,
+                  contentType: null,
+                  preview: '',
+                  error: message,
+                });
+                toast.error(message);
+              } finally {
+                setFetchProbeBusy(false);
+              }
+            }}
+          />
+        </View>
+        {fetchProbeResult ? (
+          <View style={{ marginTop: 12 }}>
+            <Text style={styles.label}>
+              status: {fetchProbeResult.status} / ok:{' '}
+              {fetchProbeResult.ok ? 'yes' : 'no'}
+            </Text>
+            <Text style={styles.label}>
+              elapsed: {fetchProbeResult.elapsedMs}ms, headers:{' '}
+              {fetchProbeResult.headerElapsedMs}ms, body:{' '}
+              {fetchProbeResult.bodyElapsedMs}ms
+            </Text>
+            <Text style={styles.label}>
+              body: {fetchProbeResult.bodyBytes} bytes /{' '}
+              {fetchProbeResult.bodyChars} chars
+            </Text>
+            {!!fetchProbeResult.contentType && (
+              <Text style={styles.label}>
+                type: {fetchProbeResult.contentType}
+              </Text>
+            )}
+            {!!fetchProbeResult.error && (
+              <Text
+                style={[styles.label, { color: colors2024['red-default'] }]}>
+                error: {fetchProbeResult.error}
+              </Text>
+            )}
+            {!!fetchProbeResult.preview && (
+              <Text style={styles.workerLogText}>
+                preview: {fetchProbeResult.preview}
+              </Text>
+            )}
+          </View>
+        ) : null}
+      </View>
+
+      <View
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'column', marginTop: 16, width: '100%' },
+        ]}>
+        <Text style={[styles.secondarySectionTitle, { fontSize: 18 }]}>
+          Worker Logs
+        </Text>
+        {sortedWorkerLogs.map((item, index) => (
+          <Text
+            key={`${item.time}-${item.event}-${index}`}
+            style={styles.workerLogText}>
+            [{dayjs(item.time).format('HH:mm:ss.SSS')}] {item.event}{' '}
+            {item.data ? JSON.stringify(item.data) : ''}
+          </Text>
+        ))}
+      </View>
+
+      <View
         style={{
           marginTop: 8,
           width: '100%',
@@ -431,6 +583,12 @@ const getStyles = createGetStyles2024(ctx =>
     propertyType: {
       color: ctx.colors2024['blue-default'],
       fontSize: 16,
+    },
+    workerLogText: {
+      color: ctx.colors2024['neutral-secondary'],
+      fontSize: 13,
+      lineHeight: 18,
+      marginTop: 4,
     },
   }),
 );

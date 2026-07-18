@@ -4,7 +4,22 @@ import {
   formatUserSummary,
   formatUserSummaryAndIncentives,
 } from '@aave/math-utils';
-import { rpcCallAndFallback } from './thread';
+import { rpcCallAndFallback, workerThread } from './thread';
+
+type WorkerFetchProbeInput = Omit<
+  Extract<WorkerDuplexPost, { type: 'fetchProbe' }>,
+  'type' | 'reqid'
+>;
+
+export async function worker_fetchProbe(input: WorkerFetchProbeInput) {
+  if (!workerThread.isRunning) {
+    await workerThread.start();
+  }
+
+  return workerThread.remoteCall('fetchProbe', input, {
+    timeout: Math.max(1, input.timeoutMs || 10_000) + 3_000,
+  });
+}
 
 export async function worker_plus(a: number, b: number) {
   return rpcCallAndFallback(
