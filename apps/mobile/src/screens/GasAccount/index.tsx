@@ -93,10 +93,25 @@ const GasAccountScreenContent = () => {
     isDisplayBalanceLoading,
   } = useGasAccountBalanceWithPendingHardware();
   const historyState = useGasAccountHistory();
+  const focusDiagnosticsRef = useRef({
+    isLogin,
+    hasPendingHardwareAccount: !!pendingHardwareAccount,
+    hasPendingHardwareAddress: !!pendingHardwareAddress,
+    isDisplayBalanceLoading,
+  });
+  focusDiagnosticsRef.current = {
+    isLogin,
+    hasPendingHardwareAccount: !!pendingHardwareAccount,
+    hasPendingHardwareAddress: !!pendingHardwareAddress,
+    isDisplayBalanceLoading,
+  };
 
   const { login } = useGasAccountMethods();
   const { claimGift, currentEligibleAddress, checkAddressesEligibility } =
     useGasAccountEligibility();
+  const refreshPendingHardwareBalance = useMemoizedFn(() =>
+    refreshPendingHardwareGasAccountInfo(),
+  );
 
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     setDepositState({
@@ -129,7 +144,8 @@ const GasAccountScreenContent = () => {
         null;
       storeApiGasAccount.setHistoryRefreshEnabled(true);
       traceGasAccount('focus_enter', {
-        hasPendingHardwareAddress: !!pendingHardwareAddress,
+        hasPendingHardwareAddress:
+          focusDiagnosticsRef.current.hasPendingHardwareAddress,
       });
 
       const scheduleAccountsBalanceRefresh = () => {
@@ -195,12 +211,15 @@ const GasAccountScreenContent = () => {
               return;
             }
 
+            const diagnosticState = focusDiagnosticsRef.current;
             markFeatureActivation('gas-account', 'data-ready', {
               reason: 'snapshot_and_history_settled',
               detail: JSON.stringify({
-                isLogin,
-                hasPendingHardwareAccount: !!pendingHardwareAccount,
-                isDisplayBalanceLoading,
+                isLogin: diagnosticState.isLogin,
+                hasPendingHardwareAccount:
+                  diagnosticState.hasPendingHardwareAccount,
+                isDisplayBalanceLoading:
+                  diagnosticState.isDisplayBalanceLoading,
               }),
             });
           },
@@ -209,13 +228,6 @@ const GasAccountScreenContent = () => {
       };
 
       void refreshGasAccountState();
-      if (pendingHardwareAddress) {
-        traceGasAccountTask('refresh_pending_hardware_balance', () =>
-          refreshPendingHardwareGasAccountInfo(),
-        ).catch(error => {
-          console.error('refreshPendingHardwareGasAccountInfo error', error);
-        });
-      }
 
       return () => {
         isActive = false;
@@ -226,13 +238,22 @@ const GasAccountScreenContent = () => {
         storeApiGasAccount.setHistoryRefreshEnabled(false);
         traceGasAccount('focus_exit');
       };
-    }, [
-      isDisplayBalanceLoading,
-      isLogin,
-      pendingHardwareAccount,
-      pendingHardwareAddress,
-      refreshPendingHardwareGasAccountInfo,
-    ]),
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!pendingHardwareAddress) {
+        return;
+      }
+
+      traceGasAccountTask(
+        'refresh_pending_hardware_balance',
+        refreshPendingHardwareBalance,
+      ).catch(error => {
+        console.error('refreshPendingHardwareGasAccountInfo error', error);
+      });
+    }, [pendingHardwareAddress, refreshPendingHardwareBalance]),
   );
 
   useFocusEffect(
