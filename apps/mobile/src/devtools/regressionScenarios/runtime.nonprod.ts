@@ -1,4 +1,5 @@
 import { isNonPublicProductionEnv } from '@/constant';
+import { shouldSuppressPerfCaptureConsoleNoise } from '@/core/utils/perfCaptureConsole';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 
 import {
@@ -19,11 +20,12 @@ import {
 import {
   activateRegressionScenarioCommand,
   clearRegressionScenarioRuntime,
+  getRegressionScenarioRuntimeControlSnapshot,
   getRegressionScenarioRuntimeSnapshot,
   reportRegressionScenarioEvent as reportRegressionScenarioEventToStore,
   setRegressionScenarioRuntimeEnabled,
   setRegressionScenarioRuntimeStatus,
-  subscribeRegressionScenarioRuntime,
+  subscribeRegressionScenarioRuntimeControl,
 } from './runtimeStore';
 
 function makeSession(
@@ -52,6 +54,10 @@ function logScenarioResult(
   message: string,
   data?: Record<string, unknown>,
 ) {
+  if (level === 'info' && shouldSuppressPerfCaptureConsoleNoise()) {
+    return;
+  }
+
   const logger = console[level] || console.log;
   logger(
     '[RabbyRegressionScenario]',
@@ -284,7 +290,8 @@ export function finishRegressionScenario(
 }
 
 export {
+  getRegressionScenarioRuntimeControlSnapshot,
   getRegressionScenarioRuntimeSnapshot,
   sanitizeLinkForLogging,
-  subscribeRegressionScenarioRuntime,
+  subscribeRegressionScenarioRuntimeControl,
 };

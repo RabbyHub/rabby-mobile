@@ -403,11 +403,16 @@ async function openSendReceive(
   account: Awaited<ReturnType<typeof getScenarioAccounts>>[number],
 ) {
   await switchSceneCurrentAccount('MakeTransactionAbout', account);
-  pushNestedScreen(RootNames.StackTransaction, RootNames.Send);
-  await context.waitForRoute(RootNames.Send);
+  const sendRoute =
+    context.command.params.variant === 'multi'
+      ? RootNames.MultiSend
+      : RootNames.Send;
+  pushNestedScreen(RootNames.StackTransaction, sendRoute);
+  await context.waitForRoute(sendRoute);
   context.report('assertion', {
     assertion: 'send-screen-opened',
     passed: true,
+    route: sendRoute,
   });
 
   if (context.command.action === 'start') {
@@ -493,6 +498,10 @@ async function openSwapBridge(
   await switchSceneCurrentAccount('MakeTransactionAbout', account);
   const requestedTab =
     context.command.params.tab === 'bridge' ? 'bridge' : 'swap';
+  const swapBridgeRoute =
+    context.command.params.variant === 'multi'
+      ? RootNames.MultiSwapBridge
+      : RootNames.SwapBridge;
 
   if (requestedTab === 'bridge') {
     const chainEnum = readScenarioChain(context);
@@ -512,14 +521,14 @@ async function openSwapBridge(
       );
     }
 
-    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
+    pushNestedScreen(RootNames.StackTransaction, swapBridgeRoute, {
       activeTab: requestedTab,
       chainEnum,
       tokenId: plan.token.id,
       toChainEnum,
       toTokenId,
     });
-    await context.waitForRoute(RootNames.SwapBridge);
+    await context.waitForRoute(swapBridgeRoute);
     context.report('assertion', {
       assertion: 'bridge-funded-plan-ready',
       passed: true,
@@ -541,10 +550,10 @@ async function openSwapBridge(
     return;
   }
 
-  pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
+  pushNestedScreen(RootNames.StackTransaction, swapBridgeRoute, {
     activeTab: requestedTab,
   });
-  await context.waitForRoute(RootNames.SwapBridge);
+  await context.waitForRoute(swapBridgeRoute);
   context.report('assertion', {
     assertion: 'swap-bridge-opened',
     passed: true,
@@ -553,10 +562,10 @@ async function openSwapBridge(
 
   if (context.command.action === 'start') {
     const secondTab = requestedTab === 'swap' ? 'bridge' : 'swap';
-    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
+    pushNestedScreen(RootNames.StackTransaction, swapBridgeRoute, {
       activeTab: secondTab,
     });
-    await context.waitForRoute(RootNames.SwapBridge);
+    await context.waitForRoute(swapBridgeRoute);
     context.report('assertion', {
       assertion: 'swap-bridge-second-tab-opened',
       passed: true,
