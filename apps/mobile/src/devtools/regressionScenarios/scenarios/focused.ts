@@ -3,6 +3,7 @@ import { findChain } from '@/utils/chain';
 import { RootNames } from '@/constant/layout';
 import * as apisDapp from '@/core/apis/dapp';
 import { sendRequest } from '@/core/apis/sendRequest';
+import type { HermesProfilerSessionResult } from '@/core/utils/hermesStartupProfiler';
 import {
   getConnectedDappSnapshot,
   hasDappPermissionSnapshot,
@@ -20,6 +21,7 @@ import {
   delay,
   ensureScenarioWalletUnlocked,
   getScenarioAccounts,
+  parseScenarioBoolean,
   pushNestedScreen,
   startScenarioPerformanceWindow,
 } from './utils';
@@ -589,11 +591,93 @@ async function openTransactionHistory(
   });
 }
 
+async function startGasAccountMainRuntimeProfile(
+  context: RegressionScenarioExecutionContext,
+  observeMs: number,
+) {
+  const profileMode = context.command.params.hermesProfile?.toLowerCase();
+  if (!profileMode || !['1', 'true', 'main'].includes(profileMode)) {
+    return null;
+  }
+
+  const profiler = await import('@/core/utils/hermesStartupProfiler');
+  const profileWaitMs = Math.min(
+    Math.max(Number(context.command.params.profileWaitMs || 12_000), 0),
+    15_000,
+  );
+  const waitStartedAt = Date.now();
+  while (
+    profiler.isHermesProfilerSessionActive() &&
+    Date.now() - waitStartedAt < profileWaitMs
+  ) {
+    await delay(100);
+  }
+  if (profiler.isHermesProfilerSessionActive()) {
+    throw new Error('Hermes profiler is still occupied by another session');
+  }
+
+  const computationThread = await import('@/perfs/thread');
+  const workerWasRunning = computationThread.workerThread.isRunning;
+  if (workerWasRunning) {
+    context.report('perf-mark', {
+      label: 'gas-account-entry',
+      mark: 'main-runtime-profile-worker-stop-start',
+    });
+    await computationThread.workerThread.terminate();
+    await delay(250);
+    context.report('perf-mark', {
+      label: 'gas-account-entry',
+      mark: 'main-runtime-profile-worker-stopped',
+    });
+  }
+
+  const session = profiler.startHermesProfilerSession({
+    label: `gas-account-entry-${context.command.runId}`,
+    expectedDurationMs: Math.min(Math.max(observeMs, 0), 10_000) + 4000,
+    filePrefix: `rabby-gas-account-main-${context.command.runId}`,
+    includePlatformProfile: parseScenarioBoolean(
+      context.command.params.platformProfile,
+      true,
+    ),
+  });
+
+  if (!session) {
+    if (workerWasRunning) {
+      computationThread.requestComputationThreadStart(
+        'gas_account_profile_start_failed',
+      );
+    }
+    throw new Error('Unable to start Gas Account Hermes profile');
+  }
+
+  context.report('perf-mark', {
+    label: 'gas-account-entry',
+    mark: 'main-runtime-profile-started',
+    workerWasRunning,
+  });
+
+  return {
+    session,
+    restoreWorker() {
+      if (workerWasRunning) {
+        computationThread.requestComputationThreadStart(
+          'gas_account_profile_complete',
+        );
+      }
+    },
+  };
+}
+
 async function openGasAccount(context: RegressionScenarioExecutionContext) {
   const observeMs = Number(context.command.params.observeMs || 2500);
+  const profileCapture = await startGasAccountMainRuntimeProfile(
+    context,
+    observeMs,
+  );
   const perfWindow = startScenarioPerformanceWindow(context, {
     label: 'gas-account-entry',
   });
+  let profileResult: HermesProfilerSessionResult | undefined;
 
   try {
     perfWindow.mark('navigation-dispatch-start');
@@ -614,6 +698,24 @@ async function openGasAccount(context: RegressionScenarioExecutionContext) {
     }
   } finally {
     perfWindow.stop('gas-account-scenario-complete');
+    if (profileCapture) {
+      profileResult = await profileCapture.session.stop();
+      profileCapture.restoreWorker();
+      context.report('perf-mark', {
+        label: 'gas-account-entry',
+        mark: 'main-runtime-profile-saved',
+        durationMs: profileResult.durationMs,
+        profilePath: profileResult.profilePath || '',
+        androidProfilePath: profileResult.androidProfilePath || '',
+        error: profileResult.error || '',
+      });
+    }
+  }
+
+  if (profileCapture && !profileResult?.profilePath) {
+    throw new Error(
+      profileResult?.error || 'Gas Account Hermes profile was not saved',
+    );
   }
 }
 
