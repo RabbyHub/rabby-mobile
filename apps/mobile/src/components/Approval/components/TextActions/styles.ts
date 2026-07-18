@@ -9,6 +9,11 @@ export const getMessageStyles = (colors: AppColorsVariants) =>
       height: 320,
       paddingTop: 0,
     },
+    signMessageContent: {
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+      maxHeight: 544,
+    },
     messageText: {
       color: colors['neutral-body'],
       fontSize: 13,
@@ -35,6 +40,18 @@ export const getMessageStyles = (colors: AppColorsVariants) =>
       textAlign: 'center',
       zIndex: 1,
       backgroundColor: colors['neutral-card-1'],
+    },
+    messageTitleContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 10,
+      zIndex: 1,
+      backgroundColor: colors['neutral-card-1'],
+    },
+    messageTitleTextWithCopy: {
+      paddingHorizontal: 0,
+      backgroundColor: 'transparent',
     },
     noAction: {},
     messageCard: {

@@ -25,6 +25,9 @@ import type { Chain } from '@debank/common';
 import { HighlightedSignMessageText } from '../SignMessageHighlighter';
 import type { SignMessageHighlightToken } from '../signMessageTokenizer';
 import type { SignMessageAddressDataMap } from '../signMessageAddressData';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { RcIconCopyCC } from '@/assets/icons/common';
+import { toast } from '@/components2024/Toast';
 
 export { getMessageStyles } from './styles';
 
@@ -157,28 +160,48 @@ const Actions = ({
         </Card>
       </View>
       <Card style={styles.messageCard}>
+        <View style={styles.messageTitle}>
+          <Text
+            style={styles.dashLine}
+            ellipsizeMode="clip"
+            accessible={false}
+            numberOfLines={1}>
+            - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            - - - - - - - - - - - - - - - - - - - - - - - - - -
+          </Text>
+
+          <View style={styles.messageTitleContent}>
+            <Text
+              style={[
+                styles.messageTitleText,
+                styles.messageTitleTextWithCopy,
+              ]}>
+              {t('page.signText.title')}
+            </Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('global.copy')}
+              hitSlop={10}
+              onPress={() => {
+                Clipboard.setString(message);
+                toast.success(t('global.copied'));
+              }}>
+              <RcIconCopyCC
+                color={colors['neutral-foot']}
+                width={14}
+                height={14}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
         <BottomSheetScrollView
           nestedScrollEnabled
           style={StyleSheet.flatten([
-            styles.messageContent,
+            styles.signMessageContent,
             data ? {} : styles.noAction,
           ])}>
-          <View style={styles.messageTitle}>
-            <Text
-              style={styles.dashLine}
-              ellipsizeMode="clip"
-              accessible={false}
-              numberOfLines={1}>
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            </Text>
-
-            <Text style={styles.messageTitleText}>
-              {t('page.signText.title')}
-            </Text>
-          </View>
           <HighlightedSignMessageText
             text={message}
             tokens={messageTokens}
