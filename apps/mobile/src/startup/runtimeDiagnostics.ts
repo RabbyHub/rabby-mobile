@@ -7,9 +7,11 @@ export type StartupRuntimePhase = 'bootstrap' | 'launch' | 'home';
 export type StartupRuntimeMilestone =
   | 'module-evaluation'
   | 'phase-advanced'
+  | 'entry-ready'
   | 'mounted'
   | 'ready'
   | 'post-startup-ready'
+  | 'content-ready'
   | 'idle';
 
 export type StartupModuleGroup = 'launch' | 'setup' | 'service' | 'database';
@@ -51,10 +53,10 @@ type StartupModuleLoadOptions = {
 };
 
 const MAX_MODULE_RECORDS = 48;
-const PHASE_ORDER: Record<
-  `${StartupRuntimePhase}:${StartupRuntimeMilestone}`,
-  number
-> = {
+type StartupRuntimePhaseKey =
+  `${StartupRuntimePhase}:${StartupRuntimeMilestone}`;
+
+const PHASE_ORDER = {
   'bootstrap:module-evaluation': 0,
   'bootstrap:phase-advanced': 1,
   'bootstrap:mounted': 2,
@@ -69,11 +71,13 @@ const PHASE_ORDER: Record<
   'launch:idle': 15,
   'home:module-evaluation': 20,
   'home:phase-advanced': 21,
-  'home:mounted': 22,
-  'home:ready': 23,
-  'home:post-startup-ready': 24,
-  'home:idle': 25,
-};
+  'home:entry-ready': 22,
+  'home:mounted': 23,
+  'home:ready': 24,
+  'home:post-startup-ready': 25,
+  'home:idle': 26,
+  'home:content-ready': 27,
+} satisfies Partial<Record<StartupRuntimePhaseKey, number>>;
 
 const enabled = isNonProductionDiagnosticsEnabled;
 const startedAt = enabled ? Date.now() : 0;
@@ -125,7 +129,8 @@ function getPhaseOrder(
   nextPhase: StartupRuntimePhase,
   nextMilestone: StartupRuntimeMilestone,
 ) {
-  return PHASE_ORDER[`${nextPhase}:${nextMilestone}`];
+  const key = `${nextPhase}:${nextMilestone}` as StartupRuntimePhaseKey;
+  return PHASE_ORDER[key as keyof typeof PHASE_ORDER] ?? -1;
 }
 
 export function markStartupRuntimePhase(

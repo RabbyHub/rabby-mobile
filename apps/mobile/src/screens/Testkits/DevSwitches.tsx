@@ -44,6 +44,7 @@ import {
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
+  useScreenE2EEnabled,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
@@ -1617,6 +1618,51 @@ function DevSwitchPerpsWatchAddress() {
   );
 }
 
+function DevSwitchRegressionScenarioE2E() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { screenE2EEnabled, setScreenE2EEnabled } = useScreenE2EEnabled();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Lifecycle E2E
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          setScreenE2EEnabled(!screenE2EEnabled);
+        }}>
+        <AppSwitch2024
+          value={screenE2EEnabled}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={setScreenE2EEnabled}
+        />
+        <Text style={styles.switchLabel}>
+          {screenE2EEnabled
+            ? 'Accept explicit lifecycle E2E commands'
+            : 'Reject lifecycle E2E commands'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Non-production only. A valid one-time deep link is still required to
+        activate a scenario.
+      </Text>
+    </View>
+  );
+}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -1816,6 +1862,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Perps</Text>
         <DevSwitchPerpsWatchAddress />
+
+        <Text style={styles.areaTitle}>Lifecycle E2E</Text>
+        <DevSwitchRegressionScenarioE2E />
       </ScrollView>
     </NormalScreenContainer>
   );

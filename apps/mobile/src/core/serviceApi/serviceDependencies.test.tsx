@@ -7,6 +7,7 @@ import {
 } from '@/core/services/serviceRegistry';
 import type { CoreServiceRegistry } from '@/core/services/serviceRegistry';
 import {
+  getCoreServiceDependencyStateSnapshot,
   resolveCoreServices,
   runWithCoreServices,
   serviceDependency,
@@ -49,6 +50,24 @@ const invalidTypedExternalProps: React.ComponentProps<
 void invalidTypedExternalProps;
 
 describe('core service dependencies', () => {
+  it('exposes an already loaded service in the synchronous dependency snapshot', () => {
+    const service = {
+      getSlippage: () => '0.5',
+    } as CoreServiceRegistry['swapService'];
+    const unregisterService = registerService('swapService', service);
+
+    try {
+      expect(getCoreServiceDependencyStateSnapshot(SWAP_DEPENDENCIES)).toEqual({
+        status: 'ready',
+        services: {
+          swapService: service,
+        },
+      });
+    } finally {
+      unregisterService();
+    }
+  });
+
   it('injects an actual service instance and preserves synchronous method types inside the runner', async () => {
     let slippage = '0.5';
     const service = {
@@ -111,6 +130,11 @@ describe('core service dependencies', () => {
       await loaderStarted;
       expect(isCoreServiceRegistered('dappService')).toBe(true);
       expect(isCoreServiceLoaded('dappService')).toBe(false);
+      expect(
+        getCoreServiceDependencyStateSnapshot([
+          serviceDependency('dappService'),
+        ] as const),
+      ).toEqual({ status: 'loading' });
       expect(resolved).toBe(false);
 
       releaseLoader?.();
@@ -118,6 +142,16 @@ describe('core service dependencies', () => {
 
       expect(services.dappService).toBe(service);
       expect(isCoreServiceLoaded('dappService')).toBe(true);
+      expect(
+        getCoreServiceDependencyStateSnapshot([
+          serviceDependency('dappService'),
+        ] as const),
+      ).toEqual({
+        status: 'ready',
+        services: {
+          dappService: service,
+        },
+      });
     } finally {
       unregisterService?.();
       unregisterLoader();

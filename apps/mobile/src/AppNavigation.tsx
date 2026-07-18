@@ -93,14 +93,30 @@ import {
 } from '@/perfs/loadables/navigators';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
-import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { APP_TEST_PASSWORD, NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
 import { useHomePostStartupReady } from './core/utils/homeStartupReady';
 import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
 import { setServiceRuntimeDiagnosticsContextProvider } from './core/serviceApi/serviceRuntimeDiagnostics';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
+const RegressionUnlockScreen = withRegressionScenario(UnlockScreen, {
+  screen: 'Unlock',
+  injectProps: context => ({
+    regressionScenario: {
+      runId: context.runId,
+      autoSubmit:
+        context.scenario === 'lock-unlock' &&
+        context.params.autoSubmit === 'true',
+      claimAutoSubmit: () => context.claimOnce('unlock-password-auto-submit'),
+      skipBiometricsEnrollmentPrompt: context.scenario === 'lock-unlock',
+      password: APP_TEST_PASSWORD,
+      report: context.report,
+    },
+  }),
+});
 
 const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
@@ -520,7 +536,7 @@ export default function AppNavigation() {
                 />
                 <RootStack.Screen
                   name={RootNames.Unlock}
-                  component={UnlockScreen}
+                  component={RegressionUnlockScreen}
                   options={mergeScreenOptions({
                     title: '',
                     // another valid composition

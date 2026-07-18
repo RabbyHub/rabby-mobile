@@ -7,7 +7,7 @@ import { appStorage } from '@/core/storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import type { FieldNilable } from '@rabby-wallet/base-utils';
 import {
-  getRegisteredService,
+  getLoadedCoreService,
   waitForCoreService,
 } from '@/core/services/serviceRegistry';
 import { createDeferredServiceApi } from './createDeferredServiceApi';
@@ -52,7 +52,7 @@ function normalizeCurrencyStoreSnapshot(
 }
 
 export function getCurrencyStoreSnapshot() {
-  const registeredStore = getRegisteredService('currencyService')?.store;
+  const registeredStore = getLoadedCoreService('currencyService')?.store;
   if (registeredStore) {
     return registeredStore;
   }

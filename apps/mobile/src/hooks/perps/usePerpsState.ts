@@ -79,7 +79,6 @@ export const usePerpsState = () => {
     refreshData,
     fetchMarketData,
     fetchPerpFee,
-    unsubscribeAll,
   } = usePerpsStore();
 
   const perpsState = perpsStore(

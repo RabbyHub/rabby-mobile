@@ -17,6 +17,7 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Button } from '@/components2024/Button';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useGetMiniSigningTypedData } from '@/hooks/useMiniApprovalDirectSignTypedData';
+import { useRegressionScenarioRuntime } from '@/devtools/regressionScenarios/react';
 
 extend([mixPlugin]);
 
@@ -37,6 +38,7 @@ export const MiniSubmitActions: React.FC<PropsWithAuthSession> = ({
   miniSignType = 'tx',
 }) => {
   const { t } = useTranslation();
+  const regressionScenario = useRegressionScenarioRuntime();
   const [isSign, setIsSign] = React.useState(!gasLess);
 
   const handleClickSign = React.useCallback(() => {
@@ -66,6 +68,58 @@ export const MiniSubmitActions: React.FC<PropsWithAuthSession> = ({
   }, [onSubmit, setPressedConfirm, onPress]);
 
   const signingTypedData = useGetMiniSigningTypedData();
+  const shouldRegressionAutoSubmit =
+    regressionScenario.active &&
+    (regressionScenario.scenario === 'send-transfer' ||
+      regressionScenario.scenario === 'swap-funded') &&
+    ['1', 'true', 'yes', 'on'].includes(
+      String(regressionScenario.params.broadcast || '').toLowerCase(),
+    );
+
+  React.useEffect(() => {
+    if (
+      !shouldRegressionAutoSubmit ||
+      disabledProcess ||
+      pressedConfirm ||
+      !regressionScenario.active
+    ) {
+      return;
+    }
+
+    if (!isSign) {
+      if (regressionScenario.claimOnce('mini-sign-show-submit')) {
+        regressionScenario.report('assertion', {
+          assertion: 'mini-sign-show-submit',
+          passed: true,
+          scenario: regressionScenario.scenario,
+        });
+      }
+      handleClickSign();
+      return;
+    }
+
+    if (!regressionScenario.claimOnce('mini-sign-submit-started')) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      regressionScenario.report('assertion', {
+        assertion: 'mini-sign-submit-started',
+        passed: true,
+        scenario: regressionScenario.scenario,
+      });
+      handlePress();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [
+    disabledProcess,
+    handleClickSign,
+    handlePress,
+    isSign,
+    pressedConfirm,
+    regressionScenario,
+    shouldRegressionAutoSubmit,
+  ]);
 
   useDebounce(
     () => {

@@ -138,6 +138,7 @@ type ScreenshotSettings = {
   [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
   enablePerpsWatchAddress: boolean;
+  screenE2EEnabled: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -162,6 +163,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
     enablePerpsWatchAddress: false,
+    screenE2EEnabled: false,
   },
 );
 
@@ -171,6 +173,19 @@ export const storeApiExpSettingData = {
   getCurrentKeychainVersion,
   getDebugKeychainStorageByVersion,
   getShouldBlockSubmitIfFormChangedOnAuth,
+  getScreenE2EEnabled: () =>
+    isNonPublicProductionEnv &&
+    experimentalSettingsStore.getState().screenE2EEnabled,
+  setScreenE2EEnabled: (enabled: boolean) => {
+    if (!isNonPublicProductionEnv) {
+      return false;
+    }
+    setExpSettingData(prev => ({
+      ...prev,
+      screenE2EEnabled: enabled,
+    }));
+    return enabled;
+  },
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
     if (!__DEV__) {
       return 'pasted';
@@ -180,6 +195,21 @@ export const storeApiExpSettingData = {
       .timeTipAboutSeedPhraseAndPrivateKey;
   },
 };
+
+export function useScreenE2EEnabled() {
+  const screenE2EEnabled = experimentalSettingsStore(
+    state => state.screenE2EEnabled,
+  );
+
+  const setScreenE2EEnabled = useCallback((enabled: boolean) => {
+    return storeApiExpSettingData.setScreenE2EEnabled(enabled);
+  }, []);
+
+  return {
+    screenE2EEnabled: isNonPublicProductionEnv && screenE2EEnabled,
+    setScreenE2EEnabled,
+  };
+}
 
 function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
   experimentalSettingsStore.setState(prev => {

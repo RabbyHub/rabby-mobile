@@ -6,6 +6,10 @@ import {
   runAfterHomePostStartupReady,
   traceHomeStartupReady,
 } from './homeStartupReady';
+import {
+  runAfterHomeContentReady,
+  runAfterHomeEntryReady,
+} from './homeStartupMilestones';
 import { markStartupRuntimePhase } from '@/startup/runtimeDiagnostics';
 
 export type StartupTaskStage =
@@ -13,7 +17,9 @@ export type StartupTaskStage =
   | 'immediate'
   | 'preSplash'
   | 'homeCritical'
+  | 'homeEntryReady'
   | 'homePostStartupReady'
+  | 'homeContentReady'
   | 'homePostStartupIdle'
   | 'onDemand';
 
@@ -433,6 +439,30 @@ export function scheduleStartupTask<T>(
     return {
       cancel: () => {
         cancelHomePostStartupReady();
+        markStartupTaskDiagnostic(diagnosticId, 'cancel');
+      },
+    };
+  }
+
+  if (stage === 'homeEntryReady' || stage === 'homeContentReady') {
+    const runAfterMilestone =
+      stage === 'homeEntryReady'
+        ? runAfterHomeEntryReady
+        : runAfterHomeContentReady;
+    const milestoneOptions =
+      stage === 'homeEntryReady'
+        ? { label: options.label }
+        : {
+            label: options.label,
+            fallbackMs: options.fallbackMs,
+          };
+    const cancelWait = runAfterMilestone(() => {
+      executeStartupTask(task, options, diagnosticId);
+    }, milestoneOptions);
+
+    return {
+      cancel: () => {
+        cancelWait();
         markStartupTaskDiagnostic(diagnosticId, 'cancel');
       },
     };
