@@ -13,6 +13,109 @@ export function delay(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
 
+type ScenarioPerformanceWindowOptions = {
+  label: string;
+  heartbeatMs?: number;
+  warnGapMs?: number;
+  maxGapSamples?: number;
+  reportEachGap?: boolean;
+};
+
+const getScenarioPerfNow = () => {
+  const perf = globalThis.performance;
+  return typeof perf?.now === 'function' ? perf.now() : Date.now();
+};
+
+export function startScenarioPerformanceWindow(
+  context: RegressionScenarioExecutionContext,
+  {
+    label,
+    heartbeatMs = 50,
+    warnGapMs = 120,
+    maxGapSamples = 40,
+    reportEachGap = false,
+  }: ScenarioPerformanceWindowOptions,
+) {
+  const startedAt = getScenarioPerfNow();
+  let lastTickAt = startedAt;
+  let closed = false;
+  let sampleCount = 0;
+  let gapCount = 0;
+  let maxGapMs = 0;
+  let totalGapMs = 0;
+  const gapSamples: Array<{
+    elapsedMs: number;
+    gapMs: number;
+    stallMs: number;
+  }> = [];
+
+  context.report('perf-window-start', {
+    label,
+    heartbeatMs,
+    warnGapMs,
+  });
+
+  const timer = setInterval(() => {
+    const now = getScenarioPerfNow();
+    const gapMs = now - lastTickAt;
+    lastTickAt = now;
+    sampleCount += 1;
+    maxGapMs = Math.max(maxGapMs, gapMs);
+
+    if (gapMs < warnGapMs) {
+      return;
+    }
+
+    gapCount += 1;
+    totalGapMs += gapMs;
+    const gapSample = {
+      label,
+      gapMs: Math.round(gapMs),
+      stallMs: Math.round(Math.max(0, gapMs - heartbeatMs)),
+      elapsedMs: Math.round(now - startedAt),
+    };
+
+    if (gapSamples.length < maxGapSamples) {
+      gapSamples.push(gapSample);
+    }
+
+    if (reportEachGap) {
+      context.report('perf-js-gap', gapSample);
+    }
+  }, heartbeatMs);
+
+  return {
+    mark(name: string, data?: Readonly<Record<string, unknown>>) {
+      if (closed) {
+        return;
+      }
+      context.report('perf-mark', {
+        label,
+        mark: name,
+        elapsedMs: Math.round(getScenarioPerfNow() - startedAt),
+        ...(data || {}),
+      });
+    },
+    stop(reason = 'complete') {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      clearInterval(timer);
+      context.report('perf-window-end', {
+        label,
+        reason,
+        durationMs: Math.round(getScenarioPerfNow() - startedAt),
+        sampleCount,
+        gapCount,
+        maxGapMs: Math.round(maxGapMs),
+        totalGapMs: Math.round(totalGapMs),
+        gapSamples,
+      });
+    },
+  };
+}
+
 export async function waitForScenarioAssertion(
   context: RegressionScenarioExecutionContext,
   assertion: string,

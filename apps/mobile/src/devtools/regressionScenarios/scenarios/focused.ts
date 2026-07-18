@@ -21,6 +21,7 @@ import {
   ensureScenarioWalletUnlocked,
   getScenarioAccounts,
   pushNestedScreen,
+  startScenarioPerformanceWindow,
 } from './utils';
 
 const REGRESSION_DAPP_INFO = {
@@ -589,12 +590,31 @@ async function openTransactionHistory(
 }
 
 async function openGasAccount(context: RegressionScenarioExecutionContext) {
-  pushNestedScreen(RootNames.StackTransaction, RootNames.GasAccount, {});
-  await context.waitForRoute(RootNames.GasAccount);
-  context.report('assertion', {
-    assertion: 'gas-account-opened',
-    passed: true,
+  const observeMs = Number(context.command.params.observeMs || 2500);
+  const perfWindow = startScenarioPerformanceWindow(context, {
+    label: 'gas-account-entry',
   });
+
+  try {
+    perfWindow.mark('navigation-dispatch-start');
+    pushNestedScreen(RootNames.StackTransaction, RootNames.GasAccount, {});
+    perfWindow.mark('navigation-dispatch-end');
+    await context.waitForRoute(RootNames.GasAccount);
+    perfWindow.mark('route-ready');
+    context.report('assertion', {
+      assertion: 'gas-account-opened',
+      passed: true,
+    });
+
+    if (Number.isFinite(observeMs) && observeMs > 0) {
+      await delay(Math.min(observeMs, 10_000));
+      perfWindow.mark('post-route-observed', {
+        observeMs,
+      });
+    }
+  } finally {
+    perfWindow.stop('gas-account-scenario-complete');
+  }
 }
 
 async function openMarket(context: RegressionScenarioExecutionContext) {
