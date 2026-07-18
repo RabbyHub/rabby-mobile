@@ -13,6 +13,7 @@ import {
   ListRenderItem,
   TouchableOpacity,
   Image,
+  InteractionManager,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
@@ -29,6 +30,7 @@ import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
 import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
 import { Text } from '@/components/Typography';
 import { StyleProp, ViewStyle } from 'react-native';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
 type GasAccountPendingHistoryItem =
@@ -55,6 +57,13 @@ const getPendingHistoryKey = ({
     item.create_at,
     index,
   ].join('-');
+
+const traceGasAccountHistory = (
+  event: string,
+  data: Record<string, unknown> = {},
+) => {
+  traceStartupDiagnostic('gas-account', event, data);
+};
 
 const HistoryItem = ({
   time,
@@ -163,6 +172,7 @@ export const GasAccountHistory: React.FC<{
   style?: StyleProp<ViewStyle>;
   listStyle?: StyleProp<ViewStyle>;
 }> = ({ historyState, style, listStyle }) => {
+  const renderStartedAt = Date.now();
   const { t } = useTranslation();
   const { loading, loadingMore, txList, loadMore, noMore, hasHistory } =
     historyState;
@@ -170,6 +180,15 @@ export const GasAccountHistory: React.FC<{
   const [isModalVisible, setIsModalVisible] = useState(false);
   const listHeightRef = useRef(0);
   const contentHeightRef = useRef(0);
+  const renderSeqRef = useRef(0);
+  const itemRenderCountRef = useRef(0);
+  const hasUserScrolledRef = useRef(false);
+  const autoLoadMoreTaskRef = useRef<ReturnType<
+    typeof InteractionManager.runAfterInteractions
+  > | null>(null);
+  const autoLoadMoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const hasRechargeHistory = Boolean(txList?.rechargeList.length);
 
   const { bottom } = useSafeAreaInsets();
@@ -201,7 +220,16 @@ export const GasAccountHistory: React.FC<{
     return <LoadingItem borderT />;
   }, [loadingMore, noMore]);
 
-  const maybeLoadMore = useCallback(() => {
+  const clearScheduledAutoLoadMore = useCallback(() => {
+    autoLoadMoreTaskRef.current?.cancel();
+    autoLoadMoreTaskRef.current = null;
+    if (autoLoadMoreTimerRef.current) {
+      clearTimeout(autoLoadMoreTimerRef.current);
+      autoLoadMoreTimerRef.current = null;
+    }
+  }, []);
+
+  const canAutoLoadMore = useCallback(() => {
     if (
       loading ||
       loadingMore ||
@@ -209,18 +237,87 @@ export const GasAccountHistory: React.FC<{
       !listHeightRef.current ||
       !contentHeightRef.current
     ) {
+      return false;
+    }
+
+    return contentHeightRef.current <= listHeightRef.current;
+  }, [loading, loadingMore, noMore]);
+
+  const scheduleAutoLoadMore = useCallback(() => {
+    if (!canAutoLoadMore() || autoLoadMoreTaskRef.current) {
       return;
     }
 
-    if (contentHeightRef.current <= listHeightRef.current) {
-      loadMore();
-    }
-  }, [loadMore, loading, loadingMore, noMore]);
+    traceGasAccountHistory('history_auto_load_more_scheduled', {
+      listHeight: listHeightRef.current,
+      contentHeight: contentHeightRef.current,
+      confirmedCount: txList?.list.length || 0,
+      rechargeCount: txList?.rechargeList.length || 0,
+      withdrawCount: txList?.withdrawList.length || 0,
+    });
+
+    autoLoadMoreTaskRef.current = InteractionManager.runAfterInteractions(
+      () => {
+        autoLoadMoreTimerRef.current = setTimeout(() => {
+          autoLoadMoreTaskRef.current = null;
+          autoLoadMoreTimerRef.current = null;
+
+          if (!canAutoLoadMore()) {
+            return;
+          }
+
+          traceGasAccountHistory('history_auto_load_more', {
+            listHeight: listHeightRef.current,
+            contentHeight: contentHeightRef.current,
+            confirmedCount: txList?.list.length || 0,
+            rechargeCount: txList?.rechargeList.length || 0,
+            withdrawCount: txList?.withdrawList.length || 0,
+          });
+          loadMore();
+        }, 600);
+      },
+    );
+  }, [
+    canAutoLoadMore,
+    loadMore,
+    txList?.list.length,
+    txList?.rechargeList.length,
+    txList?.withdrawList.length,
+  ]);
 
   useEffect(() => {
-    maybeLoadMore();
+    return clearScheduledAutoLoadMore;
+  }, [clearScheduledAutoLoadMore]);
+
+  const handleEndReached = useCallback(() => {
+    if (!hasUserScrolledRef.current) {
+      traceGasAccountHistory('history_end_reached_ignored', {
+        listHeight: listHeightRef.current,
+        contentHeight: contentHeightRef.current,
+        confirmedCount: txList?.list.length || 0,
+        rechargeCount: txList?.rechargeList.length || 0,
+        withdrawCount: txList?.withdrawList.length || 0,
+      });
+      return;
+    }
+
+    traceGasAccountHistory('history_end_reached', {
+      confirmedCount: txList?.list.length || 0,
+      rechargeCount: txList?.rechargeList.length || 0,
+      withdrawCount: txList?.withdrawList.length || 0,
+    });
+    loadMore();
   }, [
-    maybeLoadMore,
+    loadMore,
+    txList?.list.length,
+    txList?.rechargeList.length,
+    txList?.withdrawList.length,
+  ]);
+
+  useEffect(() => {
+    scheduleAutoLoadMore();
+  }, [
+    scheduleAutoLoadMore,
     txList?.list.length,
     txList?.rechargeList.length,
     txList?.withdrawList.length,
@@ -238,6 +335,25 @@ export const GasAccountHistory: React.FC<{
     (index: number) => (hasRechargeHistory ? true : index !== 0),
     [hasRechargeHistory],
   );
+
+  useEffect(() => {
+    renderSeqRef.current += 1;
+    traceGasAccountHistory('history_render_commit', {
+      seq: renderSeqRef.current,
+      renderCommitMs: Date.now() - renderStartedAt,
+      loading,
+      loadingMore,
+      noMore,
+      hasHistory,
+      confirmedCount: txList?.list.length || 0,
+      rechargeCount: txList?.rechargeList.length || 0,
+      withdrawCount: txList?.withdrawList.length || 0,
+      listHeight: listHeightRef.current,
+      contentHeight: contentHeightRef.current,
+    });
+  });
+
+  itemRenderCountRef.current = 0;
 
   const ListHeaderComponent = useCallback(() => {
     return (
@@ -294,16 +410,28 @@ export const GasAccountHistory: React.FC<{
 
   const renderItem: ListRenderItem<GasAccountConfirmedHistoryItem> =
     useCallback(
-      ({ item, index }) => (
-        <HistoryItem
-          time={item.create_at}
-          value={item.usd_value}
-          sign={item.history_type === 'recharge' ? '+' : '-'}
-          borderT={shouldShowTopBorder(index)}
-          source={item.source}
-          onGiftIconPress={handleGiftIconPress}
-        />
-      ),
+      ({ item, index }) => {
+        itemRenderCountRef.current += 1;
+        if (itemRenderCountRef.current <= 5) {
+          traceGasAccountHistory('history_render_item', {
+            index,
+            renderCountInCommit: itemRenderCountRef.current,
+            historyType: item.history_type,
+            hasSource: !!item.source,
+          });
+        }
+
+        return (
+          <HistoryItem
+            time={item.create_at}
+            value={item.usd_value}
+            sign={item.history_type === 'recharge' ? '+' : '-'}
+            borderT={shouldShowTopBorder(index)}
+            source={item.source}
+            onGiftIconPress={handleGiftIconPress}
+          />
+        );
+      },
       [handleGiftIconPress, shouldShowTopBorder],
     );
 
@@ -344,11 +472,24 @@ export const GasAccountHistory: React.FC<{
         contentInset={{ bottom: 12 }}
         onLayout={event => {
           listHeightRef.current = event.nativeEvent.layout.height;
-          maybeLoadMore();
+          traceGasAccountHistory('history_list_layout', {
+            height: listHeightRef.current,
+            confirmedCount: txList?.list.length || 0,
+            rechargeCount: txList?.rechargeList.length || 0,
+            withdrawCount: txList?.withdrawList.length || 0,
+          });
+          scheduleAutoLoadMore();
         }}
         onContentSizeChange={(_, height) => {
           contentHeightRef.current = height;
-          maybeLoadMore();
+          traceGasAccountHistory('history_content_size', {
+            height,
+            listHeight: listHeightRef.current,
+            confirmedCount: txList?.list.length || 0,
+            rechargeCount: txList?.rechargeList.length || 0,
+            withdrawCount: txList?.withdrawList.length || 0,
+          });
+          scheduleAutoLoadMore();
         }}
         ListHeaderComponent={ListHeaderComponent}
         renderItem={renderItem}
@@ -358,7 +499,15 @@ export const GasAccountHistory: React.FC<{
             item.create_at
           }`
         }
-        onEndReached={loadMore}
+        onScrollBeginDrag={() => {
+          hasUserScrolledRef.current = true;
+          clearScheduledAutoLoadMore();
+        }}
+        onMomentumScrollBegin={() => {
+          hasUserScrolledRef.current = true;
+          clearScheduledAutoLoadMore();
+        }}
+        onEndReached={handleEndReached}
         onEndReachedThreshold={0.6}
         ListFooterComponent={ListEndLoader}
         ListEmptyComponent={ListEmptyComponent}
