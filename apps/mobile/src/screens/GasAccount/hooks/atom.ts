@@ -8,6 +8,7 @@ import {
   getGasAccountAccountsWithBalanceSnapshot,
   getGasAccountDataSnapshot,
   getGasAccountPendingHardwareAccountSnapshot,
+  getGasAccountServiceGenerationSnapshot,
   setGasAccountAccountsWithBalanceSync,
   setGasAccountCurrentBalanceStateSync,
   setGasAccountHasClaimedGiftSync,
@@ -136,9 +137,17 @@ const traceGasAccountStoreAsyncStep = async <T>(
 
 runStartupTask(() => {
   eventBus.on(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, () => {
-    void storeApiGasAccount.ensureRuntimeReady().catch(error => {
-      console.error('hydrate gas account after auto login event error', error);
-    });
+    void storeApiGasAccount
+      .ensureRuntimeReady({
+        forceHydrate: true,
+        reason: 'auto_login_event',
+      })
+      .catch(error => {
+        console.error(
+          'hydrate gas account after auto login event error',
+          error,
+        );
+      });
   });
   eventBus.on(EVENTS.TX_COMPLETED, () => {
     void storeApiGasAccount
@@ -209,7 +218,6 @@ const getDiscoveryStateFromRuntime = () => ({
     | undefined,
   accountsWithBalance:
     getGasAccountAccountsWithBalanceSnapshot() as GasAccountBalanceAccount[],
-  status: 'idle' as const,
 });
 
 function setVisibleFor(
@@ -443,31 +451,23 @@ const hydrateSessionFromData = (
             changeReason = 'keep_existing_session';
             return prev;
           }
-          changed = true;
-          changeReason = 'update_empty_session';
-          return updateSessionState(prev, nextSession);
         }
 
-        const isSameSession =
-          prev.session.sig === nextSession.sig &&
-          prev.session.accountId === nextSession.accountId &&
-          prev.session.account?.address === nextSession.account?.address &&
-          prev.session.account?.type === nextSession.account?.type &&
-          prev.session.account?.brandName === nextSession.account?.brandName &&
-          prev.session.status === nextSession.status;
-
-        if (isSameSession) {
+        const nextState = updateSessionState(prev, nextSession);
+        if (nextState === prev) {
           changed = false;
           changeReason = 'same_session';
           return prev;
         }
 
         changed = true;
+        if (nextSession.status !== 'logged_in') {
+          changeReason = 'update_empty_session';
+          return nextState;
+        }
+
         changeReason = 'session_hydrated';
-        return markSnapshotDirtyState(
-          updateSessionState(prev, nextSession),
-          'session_hydrated',
-        );
+        return markSnapshotDirtyState(nextState, 'session_hydrated');
       });
     },
     {
@@ -492,79 +492,145 @@ const hydrateSessionFromData = (
   return nextSession;
 };
 
-export function prepareGasAccountStoreFromService(service: GasAccountService) {
-  const nextSession = hydrateSessionFromData(
-    service.getGasAccountData() as GasAccountServiceStore,
-    'prepare_service',
-  );
+type GasAccountRuntimeReadyOptions = {
+  forceHydrate?: boolean;
+  reason?: string;
+};
 
+let preparedGasAccountService: GasAccountService | undefined;
+let preparedGasAccountServiceGeneration: number | undefined;
+let gasAccountHydrationRevision = 0;
+let preparedGasAccountHydrationRevision = -1;
+
+const updateDiscoveryFromRuntime = (
+  discoveryState: ReturnType<typeof getDiscoveryStateFromRuntime>,
+  source: string,
+) => {
+  let changed = false;
   measureGasAccountStoreSyncStep(
-    'prepare_service_discovery_set_state',
+    `${source}_discovery_set_state`,
     () => {
-      gasAccountStore.setState(prev => ({
-        ...prev,
-        discovery: {
-          ...prev.discovery,
-          pendingHardwareAccount: service.getPendingHardwareAccount() as
-            | GasAccountRuntimeAccount
-            | undefined,
-          accountsWithBalance:
-            service.getAccountsWithGasAccountBalance() as GasAccountBalanceAccount[],
-          status: 'idle',
-        },
-      }));
-    },
-    {
-      hasPendingHardwareAccount: !!service.getPendingHardwareAccount(),
-      accountsWithBalanceCount:
-        service.getAccountsWithGasAccountBalance()?.length || 0,
-    },
-  );
-
-  return nextSession;
-}
-
-const hydrateSessionFromLoadedService = () =>
-  hydrateSessionFromData(
-    getGasAccountDataSnapshot() as GasAccountServiceStore,
-    'runtime_ready',
-  );
-
-const ensureGasAccountRuntimeReady = makeAvoidParallelAsyncFunc(async () => {
-  const startedAt = Date.now();
-  traceGasAccountStore('ensure_runtime_ready_start');
-
-  await traceGasAccountStoreAsyncStep('ensure_service_ready', () =>
-    ensureGasAccountServiceReady(),
-  );
-
-  const nextSession = measureGasAccountStoreSyncStep(
-    'hydrate_loaded_service',
-    () => hydrateSessionFromLoadedService(),
-  );
-  const discoveryState = measureGasAccountStoreSyncStep(
-    'read_discovery_runtime',
-    getDiscoveryStateFromRuntime,
-  );
-
-  measureGasAccountStoreSyncStep(
-    'discovery_set_state',
-    () => {
-      gasAccountStore.setState(prev => ({
-        ...prev,
-        discovery: {
-          ...prev.discovery,
-          ...discoveryState,
-        },
-      }));
+      gasAccountStore.setState(prev => {
+        const nextState = updateDiscoveryState(prev, discoveryState);
+        changed = nextState !== prev;
+        return nextState;
+      });
     },
     {
       hasPendingHardwareAccount: !!discoveryState.pendingHardwareAccount,
       accountsWithBalanceCount: discoveryState.accountsWithBalance.length,
     },
   );
+  traceGasAccountStore('hydrate_discovery_result', {
+    source,
+    changed,
+    hasPendingHardwareAccount: !!discoveryState.pendingHardwareAccount,
+    accountsWithBalanceCount: discoveryState.accountsWithBalance.length,
+  });
+};
+
+export function prepareGasAccountStoreFromService(service: GasAccountService) {
+  const generation = getGasAccountServiceGenerationSnapshot(service);
+  if (
+    (preparedGasAccountService === service ||
+      (generation !== undefined &&
+        preparedGasAccountServiceGeneration === generation)) &&
+    preparedGasAccountHydrationRevision === gasAccountHydrationRevision
+  ) {
+    traceGasAccountStore('prepare_service_skipped', {
+      reason: 'same_service_generation',
+      generation,
+      hydrationRevision: gasAccountHydrationRevision,
+    });
+    return gasAccountStore.getState().session;
+  }
+
+  const serviceData = service.getGasAccountData() as GasAccountServiceStore;
+  const discoveryState = {
+    pendingHardwareAccount: service.getPendingHardwareAccount() as
+      | GasAccountRuntimeAccount
+      | undefined,
+    accountsWithBalance:
+      service.getAccountsWithGasAccountBalance() as GasAccountBalanceAccount[],
+  };
+  const nextSession = hydrateSessionFromData(serviceData, 'prepare_service');
+
+  updateDiscoveryFromRuntime(discoveryState, 'prepare_service');
+  preparedGasAccountService = service;
+  preparedGasAccountServiceGeneration = generation;
+  preparedGasAccountHydrationRevision = gasAccountHydrationRevision;
+
+  return nextSession;
+}
+
+const performEnsureGasAccountRuntimeReady = async ({
+  hydrationRevision,
+  reason,
+}: {
+  hydrationRevision: number;
+  reason: string;
+}) => {
+  const startedAt = Date.now();
+  traceGasAccountStore('ensure_runtime_ready_start', {
+    reason,
+    hydrationRevision,
+  });
+
+  const generation = await traceGasAccountStoreAsyncStep(
+    'ensure_service_ready',
+    () => ensureGasAccountServiceReady(),
+    {
+      reason,
+      hydrationRevision,
+    },
+  );
+
+  if (
+    preparedGasAccountServiceGeneration === generation &&
+    preparedGasAccountHydrationRevision >= hydrationRevision
+  ) {
+    const session = gasAccountStore.getState().session;
+    traceGasAccountStore('ensure_runtime_ready_skipped', {
+      reason,
+      generation,
+      hydrationRevision,
+      durationMs: Date.now() - startedAt,
+    });
+    return session;
+  }
+
+  const nextSession = measureGasAccountStoreSyncStep(
+    'hydrate_loaded_service',
+    () =>
+      hydrateSessionFromData(
+        getGasAccountDataSnapshot() as GasAccountServiceStore,
+        'runtime_ready',
+      ),
+    {
+      reason,
+      generation,
+      hydrationRevision,
+    },
+  );
+  const discoveryState = measureGasAccountStoreSyncStep(
+    'read_discovery_runtime',
+    getDiscoveryStateFromRuntime,
+    {
+      reason,
+      generation,
+      hydrationRevision,
+    },
+  );
+
+  updateDiscoveryFromRuntime(discoveryState, 'runtime_ready');
+  preparedGasAccountService = undefined;
+  preparedGasAccountServiceGeneration = generation;
+  preparedGasAccountHydrationRevision = hydrationRevision;
 
   traceGasAccountStore('ensure_runtime_ready_end', {
+    reason,
+    generation,
+    hydrationRevision,
     durationMs: Date.now() - startedAt,
     sessionStatus: nextSession.status,
     hasSig: !!nextSession.sig,
@@ -574,7 +640,58 @@ const ensureGasAccountRuntimeReady = makeAvoidParallelAsyncFunc(async () => {
   });
 
   return nextSession;
-});
+};
+
+let gasAccountRuntimeReadyFlight:
+  | Promise<GasAccountZustandState['session']>
+  | undefined;
+
+const startGasAccountRuntimeReadyFlight = (
+  hydrationRevision: number,
+  reason: string,
+) => {
+  const flight = performEnsureGasAccountRuntimeReady({
+    hydrationRevision,
+    reason,
+  });
+  gasAccountRuntimeReadyFlight = flight;
+  flight.then(
+    () => {
+      if (gasAccountRuntimeReadyFlight === flight) {
+        gasAccountRuntimeReadyFlight = undefined;
+      }
+    },
+    () => {
+      if (gasAccountRuntimeReadyFlight === flight) {
+        gasAccountRuntimeReadyFlight = undefined;
+      }
+    },
+  );
+  return flight;
+};
+
+const ensureGasAccountRuntimeReady = async (
+  options: GasAccountRuntimeReadyOptions = {},
+) => {
+  if (options.forceHydrate) {
+    gasAccountHydrationRevision += 1;
+    traceGasAccountStore('runtime_hydration_invalidated', {
+      reason: options.reason || 'forced',
+      hydrationRevision: gasAccountHydrationRevision,
+    });
+  }
+
+  const requestedHydrationRevision = gasAccountHydrationRevision;
+  const reason = options.reason || 'runtime_demand';
+
+  while (true) {
+    const session = await (gasAccountRuntimeReadyFlight ||
+      startGasAccountRuntimeReadyFlight(requestedHydrationRevision, reason));
+    if (preparedGasAccountHydrationRevision >= requestedHydrationRevision) {
+      return session;
+    }
+  }
+};
 
 const hydrateSessionFromService = ensureGasAccountRuntimeReady;
 
@@ -1201,8 +1318,8 @@ async function loadMoreHistory() {
 }
 
 export const storeApiGasAccount = {
-  async ensureRuntimeReady() {
-    await ensureGasAccountRuntimeReady();
+  async ensureRuntimeReady(options?: GasAccountRuntimeReadyOptions) {
+    await ensureGasAccountRuntimeReady(options);
   },
   setGasAccount,
   getSession() {

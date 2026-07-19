@@ -14,8 +14,32 @@ export const gasAccountServiceApi = createDeferredServiceApi<
   GasAccountServiceApiContract
 >('gasAccountService');
 
-export function ensureGasAccountServiceReady() {
-  return ensureServiceApiReady('gasAccountService');
+let observedGasAccountService: GasAccountService | undefined;
+let gasAccountServiceGeneration = 0;
+
+export function getGasAccountServiceGenerationSnapshot(
+  expectedService?: GasAccountService,
+) {
+  const service = getRegisteredService('gasAccountService');
+  if (service !== observedGasAccountService) {
+    observedGasAccountService = service;
+    gasAccountServiceGeneration += 1;
+  }
+
+  if (!service || (expectedService && service !== expectedService)) {
+    return undefined;
+  }
+
+  return gasAccountServiceGeneration;
+}
+
+export async function ensureGasAccountServiceReady() {
+  await ensureServiceApiReady('gasAccountService');
+  const generation = getGasAccountServiceGenerationSnapshot();
+  if (generation === undefined) {
+    throw new Error('Gas Account service is ready but not registered');
+  }
+  return generation;
 }
 
 function requireGasAccountService() {
