@@ -15,6 +15,7 @@ import FromAddressControl2024 from '@/screens/SendNFT/components/FromAddressCont
 import {
   SendNFTEvents,
   SendNFTInternalContextProvider,
+  SendNFTRecipientController,
   subscribeEvent,
   useSendNFTForm,
   useSendNFTInternalShallowSelector,
@@ -141,7 +142,6 @@ function SendNFT() {
 
   const {
     sendNFTEvents,
-    fetchContactAccounts,
     formValues,
     formValuesStore,
     submitForm,
@@ -153,20 +153,10 @@ function SendNFT() {
     scrollViewStyle,
     scrollToBottom,
 
-    whitelistEnabled,
-    computed: {
-      toAccount,
-      toAddressPositiveTips,
-      toAddressInContactBook,
-      toAddrCex,
-      // toAddressIsRecentlySend,
-      // toAddressInWhitelist,
-      canDirectSign,
-    },
+    computed: { canDirectSign },
     miniSignInstance,
   } = useSendNFTForm({
     toAddress: navParams?.toAddress,
-    toAddressBrandName: navParams?.addressBrandName,
     nftToken: nftItem,
     currentAccount: account,
   });
@@ -228,13 +218,11 @@ function SendNFT() {
         addrDesc: addrDesc || null,
         collectionName,
         fromAddress: account.address,
-        toAccount,
-        toAddressPositiveTips,
-        // toAddressIsRecentlySend,
-        // toAddressInWhitelist,
-        whitelistEnabled,
-        toAddrCex,
-        toAddressInContactBook,
+        toAccount: null,
+        toAddressPositiveTips: null,
+        whitelistEnabled: false,
+        toAddrCex: null,
+        toAddressInContactBook: false,
         chainItem: chainItem || null,
         currentNFT: nftItem || null,
         canDirectSign,
@@ -244,7 +232,7 @@ function SendNFT() {
       scrollViewRef: scrollviewRef,
       scrollViewStyle,
       fns: {
-        fetchContactAccounts,
+        fetchContactAccounts: () => {},
       },
 
       callbacks: {
@@ -262,7 +250,6 @@ function SendNFT() {
       canDirectSign,
       chainItem,
       collectionName,
-      fetchContactAccounts,
       formValuesStore,
       handleFieldChange,
       submitForm,
@@ -274,11 +261,6 @@ function SendNFT() {
       scrollviewRef,
       scrollViewStyle,
       sendNFTEvents,
-      toAccount,
-      toAddrCex,
-      toAddressInContactBook,
-      toAddressPositiveTips,
-      whitelistEnabled,
     ],
   );
 
@@ -297,6 +279,9 @@ function SendNFT() {
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
       <SendNFTInternalContextProvider value={sendNFTInternalValue}>
+        <SendNFTRecipientController
+          toAddressBrandName={navParams?.addressBrandName}
+        />
         <SendNFTScreenBody />
       </SendNFTInternalContextProvider>
     </SignatureInstanceProvider>

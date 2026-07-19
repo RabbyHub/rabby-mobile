@@ -27,7 +27,6 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import type {
   AddrDescResponse,
   GasLevel,
-  ProjectItem,
   TokenItem,
   TokenItemWithEntity,
   Tx,
@@ -38,7 +37,6 @@ import type { TFunction } from 'i18next';
 import i18next from 'i18next';
 import BigNumber from 'bignumber.js';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { useContactAccounts } from '@/hooks/contact';
 import type { UIContactBookItem } from '@/core/apis/contact';
 import type { Account } from '@/core/startupServices/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
@@ -66,7 +64,6 @@ import {
 } from '@/utils/account';
 import { usePollSendPendingCount } from './useSendPendingCount';
 import { useMemoizedFn } from 'ahooks';
-import { useRecentSendToHistoryFor } from './useRecentSend';
 import { isEqual, last } from 'lodash';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -75,9 +72,7 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
-import type { ExtractAtomValueType, IExtractFromPromise } from '@/utils/type';
-import { useFindAddressByWhitelist } from './useWhiteListAddress';
+import type { ExtractAtomValueType } from '@/utils/type';
 import { coerceNumber } from '@/utils/coerce';
 import {
   runOnJS,
@@ -102,6 +97,10 @@ import { toast } from '@/components2024/Toast';
 import { getChainDefaultToken } from '@/constant/swap';
 import { eventBus, EVENTS } from '@/utils/events';
 import type { SendTxHistoryItem } from '@/core/services/transactionHistory';
+import {
+  useSendRecipientState,
+  type SendRecipientDerivedState,
+} from './useSendRecipientState';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -617,14 +616,12 @@ const fallbackAccount = makeAccountObject({ address: '0x' });
  */
 export function useSendTokenForm({
   toAddress,
-  toAddressBrandName,
   isForMultipleAddress = false,
   disableItemCheck,
   currentAccount,
   runFetchLocalPendingTx,
 }: {
   toAddress?: string;
-  toAddressBrandName?: string;
   isForMultipleAddress: boolean;
   disableItemCheck?: ITokenCheck;
   currentAccount: Account | null;
@@ -643,7 +640,6 @@ export function useSendTokenForm({
     balanceError: state.balanceError,
     isLoading: state.isLoading,
     initialTokenIdentityReady: state.initialTokenIdentityReady,
-    toAddrDesc: state.toAddrDesc,
   }));
   const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
 
@@ -2005,111 +2001,13 @@ export function useSendTokenForm({
     ],
   );
 
-  const { fetchContactAccounts, isAddrOnContactBook } = useContactAccounts();
-  useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-
-    const task = InteractionManager.runAfterInteractions(() => {
-      fetchContactAccounts();
-    });
-
-    return () => {
-      task.cancel();
-    };
-  }, [fetchContactAccounts, isFocused]);
-
-  const { list: cexList } = useCexSupportList();
-
-  const {
-    whitelist,
-    enabled: whitelistEnabled,
-    findAccountWithoutBalance,
-  } = useFindAddressByWhitelist({ disableAutoFetch: true });
-  const { isRecentlySent: toAddressIsRecentlySend, reFetch } =
-    useRecentSendToHistoryFor(formValues.to, currentAccount?.address);
-
-  useEffect(() => {
-    const disposeRets = [] as Function[];
-    subscribeEvent(
-      sendTokenEventsRef.current,
-      SendTokenEvents.ON_SIGNED_SUCCESS,
-      () => {
-        if (isGasAccountDepositFlowActive()) {
-          return;
-        }
-        reFetch();
-        setTimeout(() => {
-          if (isGasAccountDepositFlowActive()) {
-            return;
-          }
-          reFetch();
-        }, 5000);
-      },
-      { disposeRets },
-    );
-
-    return () => {
-      disposeRets.forEach(dispose => dispose());
-    };
-  }, [reFetch]);
-
-  const foundToAccountInfo = useMemo(() => {
-    return findAccountWithoutBalance(formValues.to, {
-      brandName: toAddressBrandName,
-    });
-  }, [formValues.to, toAddressBrandName, findAccountWithoutBalance]);
-  const toAccount = useMemo(() => {
-    return (
-      foundToAccountInfo?.account ||
-      makeAccountObject({
-        address: formValues.to,
-        brandName: toAddressBrandName,
-      })
-    );
-  }, [foundToAccountInfo?.account, formValues.to, toAddressBrandName]);
   const computed = useMemo(() => {
-    const toAddressInWhitelist = !!whitelist.find(item =>
-      addressUtils.isSameAddress(item, formValues.to),
-    );
-    const toAddressPositiveTips = {
-      hasPositiveTips:
-        toAddressIsRecentlySend ||
-        toAddressInWhitelist ||
-        !!foundToAccountInfo?.isMyImported,
-      inWhitelist: toAddressInWhitelist,
-      isRecentlySend: toAddressIsRecentlySend,
-      isMyImported: foundToAccountInfo?.isMyImported,
-    };
     return {
-      toAccount,
-      toAddressIsCex:
-        !!screenState.toAddrDesc?.cex?.id &&
-        !!screenState.toAddrDesc?.cex?.is_deposit,
-      toAddressInContactBook: isAddrOnContactBook(formValues.to),
-      toAddressPositiveTips: toAddressPositiveTips,
-
-      toAddrCex: cexList.find(
-        item => item.id === screenState.toAddrDesc?.cex?.id,
-      ),
-
       canDirectSign:
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chainItem?.isTestnet,
     };
-  }, [
-    whitelist,
-    formValues.to,
-    toAccount,
-    toAddressIsRecentlySend,
-    foundToAccountInfo?.isMyImported,
-    cexList,
-    isAddrOnContactBook,
-    screenState.toAddrDesc,
-    currentAccount?.type,
-    chainItem?.isTestnet,
-  ]);
+  }, [currentAccount?.type, chainItem?.isTestnet]);
 
   const resetFormValues = useCallback(() => {
     cacheAmountRef.current = DFLT_SEND_STATE.cacheAmount;
@@ -2372,7 +2270,6 @@ export function useSendTokenForm({
     setSlider,
 
     sendTokenEvents: sendTokenEventsRef.current,
-    fetchContactAccounts,
     submitForm,
     formValues,
     resetFormValues,
@@ -2380,21 +2277,10 @@ export function useSendTokenForm({
     patchFormValues,
     handleFormValuesChange,
 
-    whitelist,
-    whitelistEnabled,
     computed,
     miniSignInstance,
   };
 }
-type FoundAccountResult = IExtractFromPromise<
-  ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
->;
-type ToAddressPositiveTips = {
-  hasPositiveTips: boolean;
-  inWhitelist: boolean;
-  isRecentlySend: boolean;
-  isMyImported?: boolean;
-};
 type InternalContext = {
   computed: {
     account: Account | null;
@@ -2404,11 +2290,13 @@ type InternalContext = {
     currentTokenBalance: string;
     whitelistEnabled: boolean;
     canDirectSign: boolean;
-    toAccount: FoundAccountResult['account'] | null;
+    toAccount: SendRecipientDerivedState['toAccount'];
     toAddressIsCex: boolean;
     toAddressInContactBook: boolean;
-    toAddressPositiveTips: ToAddressPositiveTips | null;
-    toAddrCex: null | undefined | ProjectItem;
+    toAddressPositiveTips:
+      | SendRecipientDerivedState['toAddressPositiveTips']
+      | null;
+    toAddrCex: SendRecipientDerivedState['toAddrCex'];
   };
 
   sendTokenEvents: EventEmitter;
@@ -2526,7 +2414,30 @@ export function SendTokenInternalContextProvider({
   }
 
   React.useLayoutEffect(() => {
-    storeRef.current?.setState(value, true);
+    const store = storeRef.current;
+    if (!store) {
+      return;
+    }
+    const prev = store.getState();
+    store.setState(
+      {
+        ...value,
+        computed: {
+          ...value.computed,
+          whitelistEnabled: prev.computed.whitelistEnabled,
+          toAccount: prev.computed.toAccount,
+          toAddressIsCex: prev.computed.toAddressIsCex,
+          toAddressInContactBook: prev.computed.toAddressInContactBook,
+          toAddressPositiveTips: prev.computed.toAddressPositiveTips,
+          toAddrCex: prev.computed.toAddrCex,
+        },
+        fns: {
+          ...value.fns,
+          fetchContactAccounts: prev.fns.fetchContactAccounts,
+        },
+      },
+      true,
+    );
   }, [value]);
 
   return React.createElement(
@@ -2579,6 +2490,74 @@ export function useSendTokenFormValuesShallowSelector<T>(
   );
   const shallowSelector = useShallow(selector);
   return useStore(formValuesStore, shallowSelector);
+}
+
+export function SendTokenRecipientController({
+  toAddressBrandName,
+}: {
+  toAddressBrandName?: string;
+}) {
+  const store = useSendTokenInternalStoreApi();
+  const { account, sendTokenEvents } = useSendTokenInternalShallowSelector(
+    ctx => ({
+      account: ctx.computed.account,
+      sendTokenEvents: ctx.sendTokenEvents,
+    }),
+  );
+  const toAddress = useSendTokenFormValuesSelector(values => values.to);
+  const toAddrDesc = useSendTokenScreenStateSelector(state => state.toAddrDesc);
+  const { fetchContactAccounts, reFetch, state } = useSendRecipientState({
+    currentAccount: account,
+    toAddress,
+    toAddressBrandName,
+    toAddrDesc,
+  });
+
+  React.useLayoutEffect(() => {
+    const prev = store.getState();
+    store.setState(
+      {
+        ...prev,
+        computed: {
+          ...prev.computed,
+          ...state,
+        },
+        fns: {
+          ...prev.fns,
+          fetchContactAccounts,
+        },
+      },
+      true,
+    );
+  }, [fetchContactAccounts, state, store]);
+
+  React.useEffect(() => {
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const dispose = subscribeEvent(
+      sendTokenEvents,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      () => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
+        void reFetch();
+        refreshTimer = setTimeout(() => {
+          if (!isGasAccountDepositFlowActive()) {
+            void reFetch();
+          }
+        }, 5000);
+      },
+    );
+
+    return () => {
+      dispose();
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+    };
+  }, [reFetch, sendTokenEvents]);
+
+  return null;
 }
 
 export function useSendTokenCanSubmit() {
