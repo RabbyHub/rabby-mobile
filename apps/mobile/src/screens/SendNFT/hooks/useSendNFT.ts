@@ -751,6 +751,7 @@ export function useSendNFTForm({
   useEffect(() => {
     if (
       isFocused &&
+      isValidAddress(formValues.to) &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
@@ -768,6 +769,7 @@ export function useSendNFTForm({
     isFocused,
     prefetchMiniSigner,
     chainItem?.id,
+    formValues.to,
     currentAccount?.type,
     currentAccount?.address,
     chainItem?.isTestnet,
