@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import { Alert } from 'react-native';
+import { Alert, InteractionManager } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
@@ -37,7 +37,6 @@ import { openapi } from '@/core/request';
 import type { TFunction } from 'i18next';
 import i18next from 'i18next';
 import BigNumber from 'bignumber.js';
-import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import type { UIContactBookItem } from '@/core/apis/contact';
@@ -67,10 +66,7 @@ import {
 } from '@/utils/account';
 import { usePollSendPendingCount } from './useSendPendingCount';
 import { useMemoizedFn } from 'ahooks';
-import {
-  useRecentSendToHistoryFor,
-  useRecentSendPendingTx,
-} from './useRecentSend';
+import { useRecentSendToHistoryFor } from './useRecentSend';
 import { isEqual, last } from 'lodash';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -93,10 +89,7 @@ import type { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll
 import { useStore } from 'zustand';
 import { useShallow } from 'zustand/shallow';
 import { createStore } from 'zustand/vanilla';
-import {
-  makeAvoidParallelAsyncFunc,
-  makeSWRKeyAsyncFunc,
-} from '@/core/utils/concurrency';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { jotaiStore, zMutative } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
@@ -192,7 +185,8 @@ function setRouteParams(
       strict: false,
     });
 
-    return { ...prev, ...newVal };
+    const nextVal = { ...prev, ...newVal };
+    return isEqual(prev, nextVal) ? prev : nextVal;
   });
 }
 
@@ -627,12 +621,14 @@ export function useSendTokenForm({
   isForMultipleAddress = false,
   disableItemCheck,
   currentAccount,
+  runFetchLocalPendingTx,
 }: {
   toAddress?: string;
   toAddressBrandName?: string;
   isForMultipleAddress: boolean;
   disableItemCheck?: ITokenCheck;
   currentAccount: Account | null;
+  runFetchLocalPendingTx: () => void;
 }) {
   const { t } = useTranslation();
   const sendTokenEventsRef = useRef(new EventEmitter());
@@ -641,6 +637,7 @@ export function useSendTokenForm({
 
   const { chainEnum, isNativeToken, currentToken, chainItem } =
     useSendTokenScreenChainToken();
+  const isFocused = useIsFocused();
 
   const screenState = useSendTokenScreenStateShallowSelector(state => ({
     balanceError: state.balanceError,
@@ -650,6 +647,7 @@ export function useSendTokenForm({
     isEstimatingGas: state.isEstimatingGas,
     isGnosisSafe: state.isGnosisSafe,
     isLoading: state.isLoading,
+    initialTokenIdentityReady: state.initialTokenIdentityReady,
     safeInfo: state.safeInfo,
     selectedGasLevel: state.selectedGasLevel,
     showGasReserved: state.showGasReserved,
@@ -870,10 +868,21 @@ export function useSendTokenForm({
   }, [loadGasList]);
 
   useEffect(() => {
+    if (!isFocused || !screenState.initialTokenIdentityReady) {
+      return;
+    }
+
+    let active = true;
     loadGasListAndResolve().then(result => {
-      result.isValidArray && putScreenState({ gasList: result.gasList });
+      if (active && result.isValidArray) {
+        putScreenState({ gasList: result.gasList });
+      }
     });
-  }, [loadGasListAndResolve]);
+
+    return () => {
+      active = false;
+    };
+  }, [isFocused, loadGasListAndResolve, screenState.initialTokenIdentityReady]);
 
   const {
     openDirect,
@@ -890,8 +899,6 @@ export function useSendTokenForm({
   const { runAsync: runFetchPendingCount } = usePollSendPendingCount({
     isForMultipleAddress: isForMultipleAddress,
   });
-  const { runFetchLocalPendingTx } =
-    useRecentSendPendingTx(isForMultipleAddress);
 
   const persistSendTxHistory = useCallback(async (tx: SendTxHistoryItem) => {
     try {
@@ -2006,14 +2013,28 @@ export function useSendTokenForm({
     ],
   );
 
-  const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
+  const { fetchContactAccounts, isAddrOnContactBook } = useContactAccounts();
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    const task = InteractionManager.runAfterInteractions(() => {
+      fetchContactAccounts();
+    });
+
+    return () => {
+      task.cancel();
+    };
+  }, [fetchContactAccounts, isFocused]);
+
   const { list: cexList } = useCexSupportList();
 
   const {
     whitelist,
     enabled: whitelistEnabled,
     findAccountWithoutBalance,
-  } = useFindAddressByWhitelist();
+  } = useFindAddressByWhitelist({ disableAutoFetch: true });
   const { recentHistory: recentSendToHistory, reFetch } =
     useRecentSendToHistoryFor(formValues.to);
 
@@ -2104,31 +2125,38 @@ export function useSendTokenForm({
     setCommittedFormValues({ ...DF_SEND_TOKEN_FORM });
   }, [setCommittedFormValues]);
 
-  const refreshCurrentTokenBalance = useMemoizedFn(async () => {
-    if (!currentAccount?.address) {
-      return;
-    }
+  const refreshCurrentTokenBalance = useMemoizedFn(
+    async (shouldCommit?: () => boolean) => {
+      if (shouldCommit && !shouldCommit()) {
+        return;
+      }
+      if (!currentAccount?.address) {
+        return;
+      }
 
-    putScreenState({
-      balanceError: null,
-      balanceWarn: null,
-    });
-    markBalanceLoading({
-      tokenId: currentToken.id,
-      chainId: currentToken.chain,
-      currentAddress: currentAccount.address,
-    });
+      putScreenState({
+        balanceError: null,
+        balanceWarn: null,
+      });
+      markBalanceLoading({
+        tokenId: currentToken.id,
+        chainId: currentToken.chain,
+        currentAddress: currentAccount.address,
+      });
 
-    try {
-      await loadCurrentToken(
-        currentToken.id,
-        currentToken.chain,
-        currentAccount.address,
-      );
-    } catch (error) {
-      console.error('SendScreen refresh current token error', error);
-    }
-  });
+      try {
+        await loadCurrentToken(
+          currentToken.id,
+          currentToken.chain,
+          currentAccount.address,
+          false,
+          shouldCommit,
+        );
+      } catch (error) {
+        console.error('SendScreen refresh current token error', error);
+      }
+    },
+  );
 
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
@@ -2194,8 +2222,6 @@ export function useSendTokenForm({
     };
   }, [refreshCurrentTokenBalance, resetAfterSignedSuccess]);
 
-  const isFocused = useIsFocused();
-
   useEffect(() => {
     if (!isFocused || !currentAccount?.address) {
       return;
@@ -2238,14 +2264,23 @@ export function useSendTokenForm({
 
   useEffect(() => {
     if (
+      isFocused &&
+      screenState.initialTokenIdentityReady &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
-      prefetchMiniSigner({
-        txs: [],
+      const task = InteractionManager.runAfterInteractions(() => {
+        prefetchMiniSigner({
+          txs: [],
+        });
       });
+
+      return () => {
+        task.cancel();
+      };
     }
   }, [
+    isFocused,
     prefetchMiniSigner,
     chainItem?.id,
     // formValues.to,
@@ -2256,6 +2291,7 @@ export function useSendTokenForm({
     chainItem?.isTestnet,
     toAddress,
     currentAccount?.address,
+    screenState.initialTokenIdentityReady,
   ]);
 
   const canPrepareDirectSubmit =
@@ -2345,6 +2381,7 @@ export function useSendTokenForm({
     setSlider,
 
     sendTokenEvents: sendTokenEventsRef.current,
+    fetchContactAccounts,
     submitForm,
     formValues,
     resetFormValues,
