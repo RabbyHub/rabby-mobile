@@ -49,6 +49,7 @@ import type { GasAccountBridgeToken } from '@rabby-wallet/rabby-api/dist/types';
 import type { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import pRetry from 'p-retry';
 import { useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import type {
   GasAccountBalanceAccount,
   GasAccountSessionAccount,
@@ -384,7 +385,14 @@ const syncDeleteGasAccount = async ({
 bindKeyringEventSync('removedAccount', syncDeleteGasAccount);
 
 export const useGasAccountSign = () => {
-  return gasAccountStore(s => s.session) || {};
+  return gasAccountStore(
+    useShallow(state => ({
+      sig: state.session.sig,
+      accountId: state.session.accountId,
+      account: state.session.account,
+      status: state.session.status,
+    })),
+  );
 };
 
 const setGasAccount = (

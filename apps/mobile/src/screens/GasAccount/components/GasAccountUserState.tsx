@@ -9,7 +9,6 @@ import { StyleProp, View, ViewStyle } from 'react-native';
 import { GasAccountBalanceCard } from './GasAccountBalanceCard';
 import { GasAccountHistory } from './History';
 import { GasAccountWarning } from './GasAccountWarning';
-import type { useGasAccountHistory } from '../hooks';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TEXT_SIZE,
@@ -17,76 +16,70 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
-type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
-
-export const GasAccountUserState: React.FC<{
+type GasAccountUserStateProps = {
   balance?: number | string | null;
-  historyState: GasAccountHistoryState;
   onDepositPress?(): void;
   isLoading?: boolean;
   style?: StyleProp<ViewStyle>;
   warningMessage?: string;
-}> = ({
-  balance,
-  historyState,
-  onDepositPress,
-  isLoading,
-  style,
-  warningMessage,
-}) => {
-  const renderStartedAt = Date.now();
-  const renderSeqRef = React.useRef(0);
-  const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+};
 
-  React.useEffect(() => {
-    renderSeqRef.current += 1;
-    traceStartupDiagnostic('gas-account', 'user_state_render_commit', {
-      seq: renderSeqRef.current,
-      renderCommitMs: Date.now() - renderStartedAt,
-      isLoading: !!isLoading,
-      hasBalance: Number(balance || 0) > 0,
-      historyLoading: historyState.loading,
-      hasHistory: historyState.hasHistory,
-      confirmedCount: historyState.txList.list.length,
-      rechargeCount: historyState.txList.rechargeList.length,
-      withdrawCount: historyState.txList.withdrawList.length,
+export const GasAccountUserState = React.memo<GasAccountUserStateProps>(
+  function GasAccountUserState({
+    balance,
+    onDepositPress,
+    isLoading,
+    style,
+    warningMessage,
+  }) {
+    const renderStartedAt = Date.now();
+    const renderSeqRef = React.useRef(0);
+    const { t } = useTranslation();
+    const { styles } = useTheme2024({ getStyle });
+
+    React.useEffect(() => {
+      renderSeqRef.current += 1;
+      traceStartupDiagnostic('gas-account', 'user_state_render_commit', {
+        seq: renderSeqRef.current,
+        renderCommitMs: Date.now() - renderStartedAt,
+        isLoading: !!isLoading,
+        hasBalance: Number(balance || 0) > 0,
+      });
     });
-  });
 
-  return (
-    <View style={[styles.container, style]}>
-      <View style={styles.topContent}>
-        <GasAccountWarning
-          balance={balance}
-          style={styles.warning}
-          message={warningMessage}
-        />
-        <GasAccountBalanceCard balance={balance} style={styles.balanceCard} />
-        <View style={styles.historyWrapper}>
-          <GasAccountHistory
-            historyState={historyState}
-            style={styles.historyCard}
-            listStyle={styles.historyList}
+    return (
+      <View style={[styles.container, style]}>
+        <View style={styles.topContent}>
+          <GasAccountWarning
+            balance={balance}
+            style={styles.warning}
+            message={warningMessage}
+          />
+          <GasAccountBalanceCard balance={balance} style={styles.balanceCard} />
+          <View style={styles.historyWrapper}>
+            <GasAccountHistory
+              style={styles.historyCard}
+              listStyle={styles.historyList}
+            />
+          </View>
+        </View>
+        <View style={styles.footer}>
+          <Button
+            type="primary"
+            loading={isLoading}
+            onPress={onDepositPress}
+            containerStyle={styles.primaryButton}
+            title={
+              <Text style={styles.primaryButtonText}>
+                {t('page.gasAccount.depositNow')}
+              </Text>
+            }
           />
         </View>
       </View>
-      <View style={styles.footer}>
-        <Button
-          type="primary"
-          loading={isLoading}
-          onPress={onDepositPress}
-          containerStyle={styles.primaryButton}
-          title={
-            <Text style={styles.primaryButtonText}>
-              {t('page.gasAccount.depositNow')}
-            </Text>
-          }
-        />
-      </View>
-    </View>
-  );
-};
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: {

@@ -7,20 +7,18 @@ import {
   filterDirectlySignableAccounts,
   getAccountList,
 } from '@/core/apis/account';
-import { markFeatureActivation } from '@/core/utils/featureActivationDiagnostics';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
 import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useFocusEffect } from '@react-navigation/native';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InteractionManager, View } from 'react-native';
+import { View } from 'react-native';
 import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
 import { GasAccountLoginPopup } from './components/GasAccountLoginPopup';
 import { GasAccountHeader } from './components/HeaderRight';
@@ -28,38 +26,15 @@ import { WithDrawPopup } from './components/WithDrawPopup';
 import { useGasAccountBalanceWithPendingHardware } from './hooks/useGasAccountBalanceWithPendingHardware';
 import { storeApiGasAccount, useGasAccountLoginVisible } from './hooks/atom';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { refreshAccountsWithGasAccountBalance } from '@/utils/autoLoginGasAccount';
 import { GasAccountEmptyState } from './components/GasAccountEmptyState';
 import { getGasAccountEmptyStatePrimaryMode } from './components/GasAccountEmptyState.utils';
 import { GasAccountUserState } from './components/GasAccountUserState';
-import { useGasAccountHistory, useGasAccountMethods } from './hooks';
+import { useGasAccountHistorySummary, useGasAccountMethods } from './hooks';
 import { withGasAccountService } from './gasAccountServiceDependencies';
+import { useGasAccountScreenActivation } from './hooks/useGasAccountScreenActivation';
 
 const traceGasAccount = (event: string, data: Record<string, unknown> = {}) => {
   traceStartupDiagnostic('gas-account', event, data);
-};
-
-const traceGasAccountTask = async <T,>(
-  label: string,
-  task: () => Promise<T> | T,
-) => {
-  const startedAt = Date.now();
-  traceGasAccount('task_start', { label });
-  try {
-    const result = await task();
-    traceGasAccount('task_end', {
-      label,
-      durationMs: Date.now() - startedAt,
-    });
-    return result;
-  } catch (error) {
-    traceGasAccount('task_error', {
-      label,
-      durationMs: Date.now() - startedAt,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    throw error;
-  }
 };
 
 const GasAccountScreenContent = () => {
@@ -92,26 +67,17 @@ const GasAccountScreenContent = () => {
     displayBalance: gasBalance,
     isDisplayBalanceLoading,
   } = useGasAccountBalanceWithPendingHardware();
-  const historyState = useGasAccountHistory();
-  const focusDiagnosticsRef = useRef({
-    isLogin,
-    hasPendingHardwareAccount: !!pendingHardwareAccount,
-    hasPendingHardwareAddress: !!pendingHardwareAddress,
-    isDisplayBalanceLoading,
-  });
-  focusDiagnosticsRef.current = {
-    isLogin,
-    hasPendingHardwareAccount: !!pendingHardwareAccount,
-    hasPendingHardwareAddress: !!pendingHardwareAddress,
-    isDisplayBalanceLoading,
-  };
+  const historySummary = useGasAccountHistorySummary();
 
   const { login } = useGasAccountMethods();
-  const { claimGift, currentEligibleAddress, checkAddressesEligibility } =
-    useGasAccountEligibility();
-  const refreshPendingHardwareBalance = useMemoizedFn(() =>
-    refreshPendingHardwareGasAccountInfo(),
-  );
+  const { claimGift, currentEligibleAddress } = useGasAccountEligibility();
+  useGasAccountScreenActivation({
+    isLogin,
+    hasPendingHardwareAccount: !!pendingHardwareAccount,
+    pendingHardwareAddress,
+    isDisplayBalanceLoading,
+    refreshPendingHardwareBalance: refreshPendingHardwareGasAccountInfo,
+  });
 
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     setDepositState({
@@ -134,151 +100,12 @@ const GasAccountScreenContent = () => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
 
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
-      let accountBalanceRefreshTask: ReturnType<
-        typeof InteractionManager.runAfterInteractions
-      > | null = null;
-      let accountBalanceRefreshTimer: ReturnType<typeof setTimeout> | null =
-        null;
-      storeApiGasAccount.setHistoryRefreshEnabled(true);
-      traceGasAccount('focus_enter', {
-        hasPendingHardwareAddress:
-          focusDiagnosticsRef.current.hasPendingHardwareAddress,
-      });
-
-      const scheduleAccountsBalanceRefresh = () => {
-        traceGasAccount('refresh_accounts_balance_scheduled');
-        accountBalanceRefreshTask = InteractionManager.runAfterInteractions(
-          () => {
-            accountBalanceRefreshTask = null;
-            accountBalanceRefreshTimer = setTimeout(() => {
-              accountBalanceRefreshTimer = null;
-              if (!isActive) {
-                return;
-              }
-
-              traceGasAccountTask('refresh_accounts_balance', () =>
-                refreshAccountsWithGasAccountBalance(),
-              ).catch(error => {
-                console.error(
-                  'refreshAccountsWithGasAccountBalance error',
-                  error,
-                );
-              });
-            }, 300);
-          },
-        );
-      };
-
-      const refreshGasAccountState = async () => {
-        try {
-          await traceGasAccountTask('hydrate_session', () =>
-            storeApiGasAccount.hydrateSessionFromService(),
-          );
-        } catch (error) {
-          console.error(
-            'hydrateSessionFromService on GasAccountScreen error',
-            error,
-          );
-        }
-
-        if (!isActive) {
-          return;
-        }
-
-        const refreshSnapshotTask = traceGasAccountTask(
-          'refresh_snapshot',
-          () => storeApiGasAccount.refreshSnapshot({ reason: 'screen_focus' }),
-        ).catch(error => {
-          console.error(
-            'refreshSnapshot on GasAccountScreen focus error',
-            error,
-          );
-        });
-        const refreshHistoryTask = traceGasAccountTask('refresh_history', () =>
-          storeApiGasAccount.refreshHistory({ reason: 'screen_focus' }),
-        ).catch(error => {
-          console.error(
-            'refreshHistory on GasAccountScreen focus error',
-            error,
-          );
-        });
-        Promise.allSettled([refreshSnapshotTask, refreshHistoryTask]).then(
-          () => {
-            if (!isActive) {
-              return;
-            }
-
-            const diagnosticState = focusDiagnosticsRef.current;
-            markFeatureActivation('gas-account', 'data-ready', {
-              reason: 'snapshot_and_history_settled',
-              detail: JSON.stringify({
-                isLogin: diagnosticState.isLogin,
-                hasPendingHardwareAccount:
-                  diagnosticState.hasPendingHardwareAccount,
-                isDisplayBalanceLoading:
-                  diagnosticState.isDisplayBalanceLoading,
-              }),
-            });
-          },
-        );
-        scheduleAccountsBalanceRefresh();
-      };
-
-      void refreshGasAccountState();
-
-      return () => {
-        isActive = false;
-        accountBalanceRefreshTask?.cancel();
-        if (accountBalanceRefreshTimer) {
-          clearTimeout(accountBalanceRefreshTimer);
-        }
-        storeApiGasAccount.setHistoryRefreshEnabled(false);
-        traceGasAccount('focus_exit');
-      };
-    }, []),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!pendingHardwareAddress) {
-        return;
-      }
-
-      traceGasAccountTask(
-        'refresh_pending_hardware_balance',
-        refreshPendingHardwareBalance,
-      ).catch(error => {
-        console.error('refreshPendingHardwareGasAccountInfo error', error);
-      });
-    }, [pendingHardwareAddress, refreshPendingHardwareBalance]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      if (isLogin || pendingHardwareAccount) {
-        return;
-      }
-
-      traceGasAccountTask('check_addresses_eligibility', () =>
-        checkAddressesEligibility(),
-      ).catch(error => {
-        console.error(
-          'checkAddressesEligibility on GasAccountScreen error',
-          error,
-        );
-      });
-    }, [checkAddressesEligibility, isLogin, pendingHardwareAccount]),
-  );
-
   const showEmptyState =
     (!isLogin && !pendingHardwareAccount) ||
     (isLogin &&
-      !historyState.loading &&
+      !historySummary.loading &&
       gasBalance === 0 &&
-      !historyState.hasHistory);
+      !historySummary.hasHistory);
 
   useEffect(() => {
     renderSeqRef.current += 1;
@@ -287,11 +114,11 @@ const GasAccountScreenContent = () => {
       renderCommitMs: Date.now() - renderStartedAt,
       isLogin,
       showEmptyState,
-      historyLoading: historyState.loading,
-      hasHistory: historyState.hasHistory,
-      confirmedCount: historyState.txList.list.length,
-      rechargeCount: historyState.txList.rechargeList.length,
-      withdrawCount: historyState.txList.withdrawList.length,
+      historyLoading: historySummary.loading,
+      hasHistory: historySummary.hasHistory,
+      confirmedCount: historySummary.confirmedCount,
+      rechargeCount: historySummary.rechargeCount,
+      withdrawCount: historySummary.withdrawCount,
       isDisplayBalanceLoading,
       hasGasBalance: gasBalance > 0,
     });
@@ -422,7 +249,6 @@ const GasAccountScreenContent = () => {
       ) : (
         <GasAccountUserState
           balance={gasBalance}
-          historyState={historyState}
           onDepositPress={handleOldUserStatePrimaryPress}
           isLoading={emptyStateLoading}
         />
