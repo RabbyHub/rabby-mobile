@@ -28,10 +28,31 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
 );
+
+const SEND_NFT_RENDER_MARK_LIMIT = 20;
+let nextSendNFTCycleId = 0;
+
+function markSendNFTPerf(event: string, data: Record<string, unknown> = {}) {
+  markStartupPerf('sendNFTScreen', event, data);
+}
+
+function markSendNFTRenderPerf(
+  renderSeq: number,
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (renderSeq > SEND_NFT_RENDER_MARK_LIMIT) {
+    return;
+  }
+  markSendNFTPerf(event, { renderSeq, ...data });
+}
+
+markSendNFTPerf('module_loaded');
 
 const SendNFTScreenBody = React.memo(function SendNFTScreenBody() {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -73,8 +94,21 @@ const SendNFTScreenBody = React.memo(function SendNFTScreenBody() {
 });
 
 function SendNFT() {
+  const cycleIdRef = React.useRef(0);
+  const renderSeqRef = React.useRef(0);
+  if (!cycleIdRef.current) {
+    cycleIdRef.current = ++nextSendNFTCycleId;
+  }
+  const cycleId = cycleIdRef.current;
+  const renderSeq = ++renderSeqRef.current;
+  markSendNFTRenderPerf(renderSeq, 'render_start', { cycleId });
+
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
+  });
+  markSendNFTRenderPerf(renderSeq, 'scene_account_hook_end', {
+    cycleId,
+    hasCurrentAccount: !!currentAccount,
   });
 
   const navigation = useRabbyAppNavigation();
@@ -92,6 +126,12 @@ function SendNFT() {
   const toAddress = navParams?.toAddress || '';
   const addrDesc = navParams?.addrDesc;
   const account = fromAccount || currentAccount;
+  markSendNFTRenderPerf(renderSeq, 'route_and_chain_hook_end', {
+    cycleId,
+    hasAccount: !!account,
+    hasChain: !!chainItem,
+    hasNFT: !!nftItem,
+  });
 
   if (!account) {
     throw new Error('Account is required to send NFT');
@@ -130,6 +170,19 @@ function SendNFT() {
     nftToken: nftItem,
     currentAccount: account,
   });
+  markSendNFTRenderPerf(renderSeq, 'send_nft_form_hook_end', {
+    cycleId,
+    hasRecipient: !!formValues.to,
+  });
+
+  React.useEffect(() => {
+    markSendNFTPerf('mounted', { cycleId });
+    return () => {
+      markSendNFTPerf('unmounted', {
+        cycleId,
+      });
+    };
+  }, [cycleId]);
 
   // Initialize formValues.to with toAddress from navParams
   React.useEffect(() => {
@@ -230,9 +283,17 @@ function SendNFT() {
   );
 
   if (!nftItem || !chainItem || !account) {
+    markSendNFTRenderPerf(renderSeq, 'render_end', {
+      cycleId,
+      rendered: false,
+    });
     return null;
   }
 
+  markSendNFTRenderPerf(renderSeq, 'render_end', {
+    cycleId,
+    rendered: true,
+  });
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
       <SendNFTInternalContextProvider value={sendNFTInternalValue}>

@@ -123,7 +123,7 @@ const EMPTY_TOKEN_ITEM = {
 };
 
 const SEND_SCREEN_RENDER_MARK_LIMIT = 20;
-let sendScreenRenderSeq = 0;
+let nextSendScreenCycleId = 0;
 
 type SendInitialTokenLoadState = {
   status: 'idle' | 'running' | 'ready';
@@ -480,8 +480,15 @@ const SendScreenBody = React.memo(function SendScreenBody({
 function SendScreen({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
-  const renderSeq = ++sendScreenRenderSeq;
+  const cycleIdRef = useRef(0);
+  const renderSeqRef = useRef(0);
+  if (!cycleIdRef.current) {
+    cycleIdRef.current = ++nextSendScreenCycleId;
+  }
+  const cycleId = cycleIdRef.current;
+  const renderSeq = ++renderSeqRef.current;
   markSendScreenRenderPerf(renderSeq, 'render_start', {
+    cycleId,
     isForMultipleAddress,
   });
 
@@ -512,15 +519,17 @@ function SendScreen({
 
   useEffect(() => {
     markSendScreenPerf('mounted', {
+      cycleId,
       isForMultipleAddress,
     });
 
     return () => {
       markSendScreenPerf('unmounted', {
+        cycleId,
         isForMultipleAddress,
       });
     };
-  }, [isForMultipleAddress]);
+  }, [cycleId, isForMultipleAddress]);
 
   const route =
     useRoute<
