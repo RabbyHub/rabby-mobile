@@ -498,15 +498,6 @@ function SendScreen({
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
-  const {
-    localPendingTxData,
-    clearLocalPendingTxData,
-    runFetchLocalPendingTx,
-  } = useRecentSendPendingTx();
-  markSendScreenRenderPerf(renderSeq, 'recent_pending_tx_hook_end', {
-    hasLocalPendingTx: !!localPendingTxData,
-  });
-
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -514,6 +505,15 @@ function SendScreen({
     hasCurrentAccount: !!currentAccount,
     accountType: currentAccount?.type,
     brandName: currentAccount?.brandName,
+  });
+
+  const {
+    localPendingTxData,
+    clearLocalPendingTxData,
+    runFetchLocalPendingTx,
+  } = useRecentSendPendingTx(currentAccount?.address);
+  markSendScreenRenderPerf(renderSeq, 'recent_pending_tx_hook_end', {
+    hasLocalPendingTx: !!localPendingTxData,
   });
 
   useRendererDetect({ name: 'SendScreen' });

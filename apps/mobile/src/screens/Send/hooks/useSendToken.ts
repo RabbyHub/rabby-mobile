@@ -856,7 +856,11 @@ export function useSendTokenForm({
   }, [loadGasList]);
 
   useEffect(() => {
-    if (!isFocused || !screenState.initialTokenIdentityReady) {
+    if (
+      !isFocused ||
+      !screenState.initialTokenIdentityReady ||
+      !isValidAddress(formValues.to)
+    ) {
       return;
     }
 
@@ -870,7 +874,12 @@ export function useSendTokenForm({
     return () => {
       active = false;
     };
-  }, [isFocused, loadGasListAndResolve, screenState.initialTokenIdentityReady]);
+  }, [
+    formValues.to,
+    isFocused,
+    loadGasListAndResolve,
+    screenState.initialTokenIdentityReady,
+  ]);
 
   const {
     openDirect,
@@ -1598,12 +1607,15 @@ export function useSendTokenForm({
         return null;
       }
       if (result) {
-        estimateGasOnChain({
-          chainItem: chain,
-          tokenItem: result,
-          currentAddress,
-          shouldCommit,
-        });
+        const recipientAddress = getLatestFormValues().to;
+        if (isValidAddress(recipientAddress)) {
+          void estimateGasOnChain({
+            chainItem: chain,
+            tokenItem: result,
+            currentAddress,
+            shouldCommit,
+          });
+        }
         setRouteParams(pre => ({
           ...pre,
           tokenId: id,
