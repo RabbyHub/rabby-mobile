@@ -1,6 +1,7 @@
 import {
   getTransactionHistoryListSnapshot,
   getTransactionHistoryRecentPendingSnapshot,
+  getTransactionHistorySendListSnapshot,
 } from '@/core/serviceApi/transactionHistory';
 import { useMyAccounts } from '@/hooks/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -22,6 +23,9 @@ import type { Hex } from '@metamask/utils';
 import { isValidHexAddress } from '@metamask/utils';
 import { jotaiStore } from '@/core/utils/reexports';
 import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
+import { getPublicAccountSnapshotAccounts } from '@/core/serviceApi/keyring';
+import { useReducer } from 'react';
+import { hasRecentSuccessfulSendTo } from './recentSendRecipient';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -292,23 +296,55 @@ export const useRecentSendPendingTx = () => {
   };
 };
 
-export function useRecentSendToHistoryFor(toAddress?: string) {
+export function useRecentSendToHistoryFor(
+  toAddress?: string,
+  currentAccountAddress?: string,
+) {
   const ready = !!toAddress && isValidHexAddress(toAddress as Hex);
-  const { recentHistory, runAsync } = useRecentSend({
-    useAllHistory: true,
-    ready,
-  });
-  const reFetch = useCallback(
-    () => (ready ? runAsync() : Promise.resolve([])),
-    [ready, runAsync],
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
+  const [refreshVersion, refresh] = useReducer(version => version + 1, 0);
+  const sendHistorySnapshot = useMemo(
+    () => ({
+      history: transactionHistoryReady
+        ? getTransactionHistorySendListSnapshot()
+        : [],
+      refreshVersion,
+    }),
+    [refreshVersion, transactionHistoryReady],
   );
+  const isRecentlySent = useMemo(() => {
+    if (!ready || !transactionHistoryReady || !toAddress) {
+      return false;
+    }
+
+    const visibleAddresses = getPublicAccountSnapshotAccounts().map(
+      account => account.address,
+    );
+    if (currentAccountAddress) {
+      visibleAddresses.push(currentAccountAddress);
+    }
+
+    return hasRecentSuccessfulSendTo({
+      history: sendHistorySnapshot.history,
+      fromAddresses: visibleAddresses,
+      toAddress,
+    });
+  }, [
+    currentAccountAddress,
+    ready,
+    sendHistorySnapshot,
+    toAddress,
+    transactionHistoryReady,
+  ]);
+  const reFetch = useCallback(() => {
+    if (ready) {
+      refresh();
+    }
+    return Promise.resolve([]);
+  }, [ready]);
 
   return {
-    recentHistory: ready
-      ? recentHistory.filter(
-          item => item.toAddress.toLowerCase() === toAddress.toLowerCase(),
-        )
-      : [],
+    isRecentlySent,
     reFetch,
   };
 }

@@ -2027,8 +2027,8 @@ export function useSendTokenForm({
     enabled: whitelistEnabled,
     findAccountWithoutBalance,
   } = useFindAddressByWhitelist({ disableAutoFetch: true });
-  const { recentHistory: recentSendToHistory, reFetch } =
-    useRecentSendToHistoryFor(formValues.to);
+  const { isRecentlySent: toAddressIsRecentlySend, reFetch } =
+    useRecentSendToHistoryFor(formValues.to, currentAccount?.address);
 
   useEffect(() => {
     const disposeRets = [] as Function[];
@@ -2060,7 +2060,6 @@ export function useSendTokenForm({
       brandName: toAddressBrandName,
     });
   }, [formValues.to, toAddressBrandName, findAccountWithoutBalance]);
-  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
   const toAccount = useMemo(() => {
     return (
       foundToAccountInfo?.account ||

@@ -760,8 +760,8 @@ export function useSendNFTForm({
     enabled: whitelistEnabled,
     findAccountWithoutBalance,
   } = useFindAddressByWhitelist({ disableAutoFetch: true });
-  const { recentHistory: recentSendToHistory, reFetch } =
-    useRecentSendToHistoryFor(formValues.to);
+  const { isRecentlySent: toAddressIsRecentlySend, reFetch } =
+    useRecentSendToHistoryFor(formValues.to, currentAccount?.address);
 
   useEffect(() => {
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
@@ -789,7 +789,6 @@ export function useSendNFTForm({
       brandName: toAddressBrandName,
     });
   }, [formValues.to, toAddressBrandName, findAccountWithoutBalance]);
-  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
   const toAccount = useMemo(() => {
     return (
       foundToAccountInfo?.account ||
