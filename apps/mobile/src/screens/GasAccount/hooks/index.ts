@@ -10,13 +10,30 @@ import { useRequest } from 'ahooks';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { getIsGasAccountLoggedIn } from './loginState';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { useShallow } from 'zustand/react/shallow';
 
 export const useGasAccountInfo = () => {
-  const { sig, accountId } = useGasAccountSign();
-  const snapshot = gasAccountStore(s => s.snapshot);
-  const value = snapshot.accountInfo;
-  const snapshotAccountId = (
-    snapshot.accountInfo as
+  const { value, status } = gasAccountStore(
+    useShallow(state => ({
+      value: state.snapshot.accountInfo,
+      status: state.snapshot.status,
+    })),
+  );
+  const loading = status === 'refreshing' && !value;
+  const runFetchGasAccountInfo = useCallback(() => {
+    return storeApiGasAccount.refreshSnapshot();
+  }, []);
+
+  return { loading, value, runFetchGasAccountInfo };
+};
+
+const getSnapshotAccountId = (
+  accountInfo: ReturnType<
+    typeof gasAccountStore.getState
+  >['snapshot']['accountInfo'],
+) =>
+  (
+    accountInfo as
       | {
           account?: {
             id?: string;
@@ -24,36 +41,51 @@ export const useGasAccountInfo = () => {
         }
       | undefined
   )?.account?.id;
-  const loading = snapshot.status === 'refreshing' && !snapshot.accountInfo;
-  const runFetchGasAccountInfo = useCallback(() => {
-    return storeApiGasAccount.refreshSnapshot();
-  }, []);
 
+const activateGasAccountSnapshot = () => {
+  const state = gasAccountStore.getState();
+  const { sig, accountId } = state.session;
+  if (!sig || !accountId || state.snapshot.status === 'refreshing') {
+    return;
+  }
+
+  const snapshotAccountId = getSnapshotAccountId(state.snapshot.accountInfo);
+  if (
+    state.snapshot.accountInfo &&
+    !state.snapshot.dirty &&
+    (!snapshotAccountId ||
+      addressUtils.isSameAddress(snapshotAccountId, accountId))
+  ) {
+    return;
+  }
+
+  void storeApiGasAccount.refreshSnapshot().catch(error => {
+    console.error('activateGasAccountSnapshot refresh error', error);
+  });
+};
+
+/**
+ * Activates the snapshot resource without subscribing the caller's render tree
+ * to Gas Account state. Large approval screens only need the side effect.
+ */
+export const useGasAccountSnapshotActivation = () => {
   useEffect(() => {
-    if (!sig || !accountId) {
-      return;
-    }
+    activateGasAccountSnapshot();
 
-    if (
-      !snapshot.accountInfo ||
-      snapshot.dirty ||
-      (snapshotAccountId &&
-        !addressUtils.isSameAddress(snapshotAccountId, accountId))
-    ) {
-      runFetchGasAccountInfo().catch(error => {
-        console.error('useGasAccountInfo refresh error', error);
-      });
-    }
-  }, [
-    accountId,
-    runFetchGasAccountInfo,
-    sig,
-    snapshot.accountInfo,
-    snapshotAccountId,
-    snapshot.dirty,
-  ]);
+    return gasAccountStore.subscribe((state, previousState) => {
+      const sessionChanged =
+        state.session.sig !== previousState.session.sig ||
+        state.session.accountId !== previousState.session.accountId;
+      const snapshotInvalidated =
+        state.snapshot.dirty && !previousState.snapshot.dirty;
+      const snapshotCleared =
+        !state.snapshot.accountInfo && !!previousState.snapshot.accountInfo;
 
-  return { loading, value, runFetchGasAccountInfo };
+      if (sessionChanged || snapshotInvalidated || snapshotCleared) {
+        activateGasAccountSnapshot();
+      }
+    });
+  }, []);
 };
 
 export const useGasAccountInfoV2 = ({ address }: { address?: string }) => {
@@ -110,73 +142,22 @@ export const useGasAccountLogin = () => {
 };
 
 export const useGasAccountHistory = () => {
-  const { sig, accountId } = useGasAccountSign();
-  const history = gasAccountStore(s => s.history);
+  const history = gasAccountStore(
+    useShallow(state => ({
+      list: state.history.list,
+      rechargeList: state.history.rechargeList,
+      withdrawList: state.history.withdrawList,
+      totalCount: state.history.totalCount,
+      status: state.history.status,
+      lastFetchedAt: state.history.lastFetchedAt,
+      loadingMore: state.history.loadingMore,
+    })),
+  );
   const confirmedCount = history.list.length;
   const pendingCount =
     history.rechargeList.length + history.withdrawList.length;
   const hasHistory = confirmedCount > 0 || pendingCount > 0;
   const hasPendingHistory = pendingCount > 0;
-
-  useEffect(() => {
-    if (!sig || !accountId) {
-      const shouldClearHistory = history.status !== 'ready' || hasHistory;
-
-      if (shouldClearHistory) {
-        storeApiGasAccount
-          .refreshHistory({ reason: 'hook_clear_no_session' })
-          .catch(error => {
-            console.error('useGasAccountHistory clear error', error);
-          });
-      }
-      return;
-    }
-
-    if (history.status === 'idle' && !hasHistory) {
-      storeApiGasAccount
-        .refreshHistory({ reason: 'hook_idle_empty' })
-        .catch(error => {
-          console.error('useGasAccountHistory refresh error', error);
-        });
-    }
-  }, [
-    accountId,
-    hasHistory,
-    history.list.length,
-    history.rechargeList.length,
-    history.totalCount,
-    history.status,
-    history.withdrawList.length,
-    sig,
-  ]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (
-      history.status !== 'refreshing' &&
-      !history.loadingMore &&
-      hasPendingHistory
-    ) {
-      timer = setTimeout(() => {
-        storeApiGasAccount
-          .refreshHistory({ reason: 'hook_pending_poll' })
-          .catch(error => {
-            console.error('pending history refresh error', error);
-          });
-      }, 2000);
-    }
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [
-    hasPendingHistory,
-    history.loadingMore,
-    history.rechargeList.length,
-    history.status,
-    history.withdrawList.length,
-  ]);
 
   const txList = useMemo(
     () => ({
@@ -203,6 +184,26 @@ export const useGasAccountHistory = () => {
     noMore,
     hasHistory,
     hasPendingHistory,
+  };
+};
+
+export const useGasAccountHistorySummary = () => {
+  const summary = gasAccountStore(
+    useShallow(state => ({
+      status: state.history.status,
+      lastFetchedAt: state.history.lastFetchedAt,
+      confirmedCount: state.history.list.length,
+      rechargeCount: state.history.rechargeList.length,
+      withdrawCount: state.history.withdrawList.length,
+    })),
+  );
+  const hasHistory =
+    summary.confirmedCount + summary.rechargeCount + summary.withdrawCount > 0;
+
+  return {
+    ...summary,
+    loading: summary.status === 'refreshing' && !summary.lastFetchedAt,
+    hasHistory,
   };
 };
 

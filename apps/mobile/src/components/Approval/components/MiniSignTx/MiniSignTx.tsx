@@ -61,7 +61,7 @@ import { calcGasLimit } from '@/core/apis/transactions';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { apiCustomRPC, apiProvider } from '@/core/apis';
 import { toast as toast2024 } from '@/components2024/Toast';
-import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { useGasAccountSnapshotActivation } from '@/screens/GasAccount/hooks';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import type { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { useMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
@@ -1176,7 +1176,7 @@ export const MiniSignTx = ({
     }
   }, [handleIsGnosisAccountChange, isGnosisAccount]);
 
-  useGasAccountInfo();
+  useGasAccountSnapshotActivation();
 
   const gasCalcMethod = useCallback(
     async price => {
