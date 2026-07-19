@@ -641,16 +641,8 @@ export function useSendTokenForm({
 
   const screenState = useSendTokenScreenStateShallowSelector(state => ({
     balanceError: state.balanceError,
-    contactInfo: state.contactInfo,
-    estimatedGas: state.estimatedGas,
-    gasList: state.gasList,
-    isEstimatingGas: state.isEstimatingGas,
-    isGnosisSafe: state.isGnosisSafe,
     isLoading: state.isLoading,
     initialTokenIdentityReady: state.initialTokenIdentityReady,
-    safeInfo: state.safeInfo,
-    selectedGasLevel: state.selectedGasLevel,
-    showGasReserved: state.showGasReserved,
     toAddrDesc: state.toAddrDesc,
   }));
   const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
@@ -785,8 +777,9 @@ export function useSendTokenForm({
         data: abiCoder.encodeFunctionCall(dataInput[0], dataInput[1]),
         isSend: true,
       };
-      if (screenState.safeInfo?.nonce != null) {
-        params.nonce = screenState.safeInfo.nonce;
+      const safeInfo = getSendTokenScreenState().safeInfo;
+      if (safeInfo?.nonce != null) {
+        params.nonce = safeInfo.nonce;
       }
       if (isNativeToken) {
         params.to = to;
@@ -815,7 +808,6 @@ export function useSendTokenForm({
       isNativeToken,
       isShowMessageDataForContract,
       isShowMessageDataForToken,
-      screenState.safeInfo,
     ],
   );
 
@@ -938,6 +930,7 @@ export function useSendTokenForm({
       };
 
       const { token, isInitFromCache } = opts || {};
+      const latestScreenState = getSendTokenScreenState();
       if (changedValues && changedValues.to) {
         putScreenState({ temporaryGrant: false });
       }
@@ -963,7 +956,10 @@ export function useSendTokenForm({
       }
 
       if (currentValues.amount !== cacheAmountRef.current) {
-        if (screenState.showGasReserved && coerceNumber(resultAmount, 0) > 0) {
+        if (
+          latestScreenState.showGasReserved &&
+          coerceNumber(resultAmount, 0) > 0
+        ) {
           putScreenState({ showGasReserved: false });
         } /*  else if (isNativeToken && !screenState.isGnosisSafe) {
           const gasCostTokenAmount = calcGasCost({ chainEnum, gasPriceMap });
@@ -1017,7 +1013,7 @@ export function useSendTokenForm({
       // });
       patchFormValues(nextFormValues);
       cacheAmountRef.current = resultAmount;
-      if (!resultAmount && screenState.showGasReserved) {
+      if (!resultAmount && latestScreenState.showGasReserved) {
         putScreenState({ showGasReserved: false });
       }
       const aliasName = apiContact.getAliasName(currentValues.to.toLowerCase());
@@ -1026,7 +1022,7 @@ export function useSendTokenForm({
           showContactInfo: true,
           contactInfo: { address: currentValues.to, name: aliasName },
         });
-      } else if (screenState.contactInfo) {
+      } else if (latestScreenState.contactInfo) {
         putScreenState({ contactInfo: null });
       }
     },
@@ -1035,9 +1031,6 @@ export function useSendTokenForm({
       // chainEnum,
       // gasPriceMap,
       // isNativeToken,
-      // screenState.isGnosisSafe,
-      screenState.contactInfo,
-      screenState.showGasReserved,
       getLatestFormValues,
       currentToken,
       t,
@@ -1133,6 +1126,7 @@ export function useSendTokenForm({
 
     const { to, amount, messageDataForSendToEoa, messageDataForContractCall } =
       getLatestFormValues();
+    const latestScreenState = getSendTokenScreenState();
 
     const params = getParams({
       to: to,
@@ -1157,8 +1151,8 @@ export function useSendTokenForm({
         const notContract = !!code && (code === '0x' || code === '0x0');
         let gasLimit = 0;
 
-        if (screenState.estimatedGas) {
-          gasLimit = screenState.estimatedGas;
+        if (latestScreenState.estimatedGas) {
+          gasLimit = latestScreenState.estimatedGas;
         }
 
         /**
@@ -1185,8 +1179,8 @@ export function useSendTokenForm({
       ) {
         delete params.gas;
       }
-      if (screenState.showGasReserved) {
-        params.gasPrice = screenState.selectedGasLevel?.price;
+      if (latestScreenState.showGasReserved) {
+        params.gasPrice = latestScreenState.selectedGasLevel?.price;
       }
     }
 
@@ -1280,6 +1274,7 @@ export function useSendTokenForm({
 
       sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
       putScreenState({ isSubmitLoading: true });
+      const latestScreenState = getSendTokenScreenState();
       const chain = findChain({
         serverId: currentToken.chain,
       })!;
@@ -1310,8 +1305,8 @@ export function useSendTokenForm({
           const notContract = !!code && (code === '0x' || code === '0x0');
           let gasLimit = 0;
 
-          if (screenState.estimatedGas) {
-            gasLimit = screenState.estimatedGas;
+          if (latestScreenState.estimatedGas) {
+            gasLimit = latestScreenState.estimatedGas;
           }
 
           /**
@@ -1339,8 +1334,8 @@ export function useSendTokenForm({
           delete params.gas;
         }
         putScreenState({ isSubmitLoading: false });
-        if (screenState.showGasReserved) {
-          params.gasPrice = screenState.selectedGasLevel?.price;
+        if (latestScreenState.showGasReserved) {
+          params.gasPrice = latestScreenState.selectedGasLevel?.price;
         }
       }
       try {
@@ -1496,9 +1491,6 @@ export function useSendTokenForm({
       currentAccount,
       isNativeToken,
       isShowMessageDataForToken,
-      screenState.showGasReserved,
-      screenState.estimatedGas,
-      screenState.selectedGasLevel?.price,
       prepareDirectSubmitMiniTx,
       openDirect,
       persistSendTxHistory,
@@ -1654,8 +1646,6 @@ export function useSendTokenForm({
     },
   );
 
-  const couldReserveGas = isNativeToken && !screenState.isGnosisSafe;
-
   const onGasChange = useCallback(
     ({
       gasLevel,
@@ -1707,10 +1697,11 @@ export function useSendTokenForm({
         return;
       }
 
-      if (screenState.isLoading) {
+      const latestScreenState = getSendTokenScreenState();
+      if (latestScreenState.isLoading) {
         return;
       }
-      if (screenState.isEstimatingGas) {
+      if (latestScreenState.isEstimatingGas) {
         return;
       }
 
@@ -1721,12 +1712,13 @@ export function useSendTokenForm({
       const to = getLatestFormValues().to;
 
       const {
-        gasLevel = screenState.selectedGasLevel ||
+        gasLevel = latestScreenState.selectedGasLevel ||
           (await loadGasListAndResolve().then(
             result => result.instantGasLevel,
           )),
       } = input || {};
       const needReserveGasOnSendToken = !!gasLevel && gasLevel?.price > 0;
+      const couldReserveGas = isNativeToken && !latestScreenState.isGnosisSafe;
 
       if (couldReserveGas && needReserveGasOnSendToken) {
         putScreenState({ showGasReserved: true, isEstimatingGas: true });
@@ -1770,7 +1762,7 @@ export function useSendTokenForm({
             putScreenState({ showGasReserved: false });
           }
         } catch (e) {
-          if (!screenState.isGnosisSafe) {
+          if (!latestScreenState.isGnosisSafe) {
             // // Gas fee reservation required
             // setBalanceWarn(t('page.sendToken.balanceWarn.gasFeeReservation'));
             putScreenState({ showGasReserved: false });
@@ -1788,14 +1780,10 @@ export function useSendTokenForm({
     },
     [
       currentAccount,
-      screenState.isLoading,
-      screenState.isEstimatingGas,
-      screenState.selectedGasLevel,
-      screenState.isGnosisSafe,
       currentToken,
       getLatestFormValues,
       loadGasListAndResolve,
-      couldReserveGas,
+      isNativeToken,
       patchFormValues,
 
       estimateGasOnChain,
@@ -1819,9 +1807,13 @@ export function useSendTokenForm({
   });
 
   const handleSlider100 = useMemoizedFn(async () => {
+    const latestScreenState = getSendTokenScreenState();
+    const couldReserveGas = isNativeToken && !latestScreenState.isGnosisSafe;
     if (currentToken && couldReserveGas) {
-      if (screenState.gasList) {
-        const gasLevel = screenState.gasList.find(e => e.level === 'fast');
+      if (latestScreenState.gasList) {
+        const gasLevel = latestScreenState.gasList.find(
+          e => e.level === 'fast',
+        );
         if (gasLevel) {
           putScreenState({ selectedGasLevel: gasLevel });
           handleMaxInfoChanged({ gasLevel });
@@ -1861,7 +1853,7 @@ export function useSendTokenForm({
     });
 
   const handleCurrentTokenChange = useMemoizedFn(async (token: TokenItem) => {
-    if (screenState.showGasReserved) {
+    if (getSendTokenScreenState().showGasReserved) {
       putScreenState({ showGasReserved: false });
     }
     if (!currentAccount) {

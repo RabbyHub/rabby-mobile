@@ -20,7 +20,6 @@ import {
   useSendNFTInternalShallowSelector,
   useSendNFTScreenStateActions,
 } from './hooks/useSendNFT';
-import { useContactAccounts } from '@/hooks/contact';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import BottomArea from './components/BottomArea';
 import { findChain } from '@/utils/chain';
@@ -102,6 +101,7 @@ function SendNFT() {
 
   const {
     sendNFTEvents,
+    fetchContactAccounts,
     formValues,
     formValuesStore,
     submitForm,
@@ -130,8 +130,6 @@ function SendNFT() {
     nftToken: nftItem,
     currentAccount: account,
   });
-
-  const { fetchContactAccounts } = useContactAccounts();
 
   // Initialize formValues.to with toAddress from navParams
   React.useEffect(() => {

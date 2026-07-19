@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import { Alert } from 'react-native';
+import { Alert, InteractionManager } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
@@ -26,7 +26,6 @@ import { openapi } from '@/core/request';
 import type { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
-import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import type { UIContactBookItem } from '@/core/apis/contact';
@@ -198,6 +197,10 @@ export function useSendNFTScreenStateShallowSelector<T>(
   return useStore(sendNFTScreenStateStore, shallowSelector);
 }
 
+export function getSendNFTScreenState() {
+  return sendNFTScreenStateStore.getState();
+}
+
 export function useSendNFTScreenStateActions() {
   return {
     putScreenState,
@@ -261,12 +264,12 @@ export function useSendNFTForm({
   currentAccount: Account;
 }) {
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
 
   const sendNFTEventsRef = useRef(new EventEmitter());
 
   const screenState = useSendNFTScreenStateShallowSelector(state => ({
     balanceError: state.balanceError,
-    contactInfo: state.contactInfo,
     isLoading: state.isLoading,
     toAddrDesc: state.toAddrDesc,
   }));
@@ -468,11 +471,11 @@ export function useSendNFTForm({
           showContactInfo: true,
           contactInfo: { address: currentValues.to, name: aliasName },
         });
-      } else if (screenState.contactInfo) {
+      } else if (getSendNFTScreenState().contactInfo) {
         putScreenState({ contactInfo: null });
       }
     },
-    [patchFormValues, screenState.contactInfo, getLatestFormValues, t],
+    [patchFormValues, getLatestFormValues, t],
   );
 
   const submitForm = useMemoizedFn(async () => {
@@ -735,14 +738,28 @@ export function useSendNFTForm({
     // }
   });
 
-  const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
+  const { fetchContactAccounts, isAddrOnContactBook } = useContactAccounts();
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    const task = InteractionManager.runAfterInteractions(() => {
+      fetchContactAccounts();
+    });
+
+    return () => {
+      task.cancel();
+    };
+  }, [fetchContactAccounts, isFocused]);
+
   const { list: cexList } = useCexSupportList();
 
   const {
     whitelist,
     enabled: whitelistEnabled,
     findAccountWithoutBalance,
-  } = useFindAddressByWhitelist();
+  } = useFindAddressByWhitelist({ disableAutoFetch: true });
   const { recentHistory: recentSendToHistory, reFetch } =
     useRecentSendToHistoryFor(formValues.to);
 
@@ -832,23 +849,29 @@ export function useSendNFTForm({
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
-  const isFocused = useIsFocused();
   useEffect(() => {
     if (
+      isFocused &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
-      prefetchMiniSigner({
-        txs: [],
+      const task = InteractionManager.runAfterInteractions(() => {
+        prefetchMiniSigner({
+          txs: [],
+        });
       });
+
+      return () => {
+        task.cancel();
+      };
     }
   }, [
+    isFocused,
     prefetchMiniSigner,
     chainItem?.id,
-    formValues.to,
     currentAccount?.type,
+    currentAccount?.address,
     chainItem?.isTestnet,
-    toAddress,
   ]);
 
   useEffect(() => {
@@ -886,6 +909,7 @@ export function useSendNFTForm({
     chainItem,
 
     sendNFTEvents: sendNFTEventsRef.current,
+    fetchContactAccounts,
     formValuesStore: formValuesStoreRef.current,
     submitForm,
     formValues,
