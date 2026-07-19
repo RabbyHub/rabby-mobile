@@ -55,6 +55,7 @@ const gasAccount = {
   getGasAccountDataSnapshot: 'reactive',
   getGasAccountHasClaimedGiftSnapshot: 'reactive',
   getGasAccountPendingHardwareAccountSnapshot: 'reactive',
+  getGasAccountServiceGenerationSnapshot: 'startup-critical',
   getGasAccountSigSnapshot: 'command-input',
   hasGasAccountTrackedGa4ActiveTodaySnapshot: 'reactive',
 } satisfies SnapshotPolicies<typeof import('./gasAccount')>;

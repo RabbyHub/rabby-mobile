@@ -4,6 +4,8 @@ import {
   finishSnapshotRefreshState,
   markSnapshotDirtyState,
   startSnapshotRefreshState,
+  updateDiscoveryState,
+  updateSessionState,
 } from './state';
 
 describe('Gas Account snapshot refresh state', () => {
@@ -52,5 +54,64 @@ describe('Gas Account snapshot refresh state', () => {
       status: 'error',
       dirty: true,
     });
+  });
+});
+
+describe('Gas Account hydration state', () => {
+  const account = {
+    address: '0xabc',
+    type: 'SimpleKeyring',
+    brandName: 'Rabby',
+  };
+
+  it('keeps the state identity for an equivalent session', () => {
+    const initial = createInitialGasAccountState({
+      session: {
+        sig: 'sig',
+        accountId: account.address,
+        account,
+        status: 'logged_in',
+      },
+    });
+
+    expect(
+      updateSessionState(initial, {
+        account: { ...account },
+      }),
+    ).toBe(initial);
+  });
+
+  it('keeps the state identity for equivalent discovery data', () => {
+    const initial = createInitialGasAccountState({
+      discovery: {
+        pendingHardwareAccount: account,
+        accountsWithBalance: [account],
+        status: 'ready',
+        lastFetchedAt: 100,
+      },
+    });
+
+    expect(
+      updateDiscoveryState(initial, {
+        pendingHardwareAccount: { ...account },
+        accountsWithBalance: [{ ...account }],
+      }),
+    ).toBe(initial);
+  });
+
+  it('updates discovery when an account changes', () => {
+    const initial = createInitialGasAccountState({
+      discovery: {
+        accountsWithBalance: [account],
+        status: 'ready',
+      },
+    });
+
+    const next = updateDiscoveryState(initial, {
+      accountsWithBalance: [{ ...account, brandName: 'Ledger' }],
+    });
+
+    expect(next).not.toBe(initial);
+    expect(next.discovery.accountsWithBalance[0].brandName).toBe('Ledger');
   });
 });
