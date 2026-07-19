@@ -250,27 +250,24 @@ export function getRecentSendPendingTxData() {
   return jotaiStore.get(localPendingTxDataAtom);
 }
 
-export const useRecentSendPendingTx = () => {
+export const useRecentSendPendingTx = (currentAccountAddress?: string) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
     localPendingTxDataAtom,
   );
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
 
   const clearLocalPendingTxData = useCallback(() => {
     setLocalPendingTxData(null);
   }, [setLocalPendingTxData]);
 
   const runFetchLocalPendingTx = useCallback(() => {
-    if (transactionHistoryReady && currentAccount?.address) {
+    if (transactionHistoryReady && currentAccountAddress) {
       const resTx = fetchLocalSendPendingTx(
-        currentAccount.address,
+        currentAccountAddress,
       ) as SendTxHistoryItem;
       setLocalPendingTxData(resTx);
     }
-  }, [currentAccount?.address, setLocalPendingTxData, transactionHistoryReady]);
+  }, [currentAccountAddress, setLocalPendingTxData, transactionHistoryReady]);
 
   useEffect(() => {
     setLocalPendingTxData(null);
