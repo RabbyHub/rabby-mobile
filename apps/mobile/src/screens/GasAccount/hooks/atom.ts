@@ -144,6 +144,7 @@ runStartupTask(() => {
     void storeApiGasAccount
       .ensureRuntimeReady()
       .then(() => {
+        storeApiGasAccount.markSnapshotDirty('tx_completed');
         storeApiGasAccount.scheduleSnapshotRefresh({
           reason: 'tx_completed',
         });
@@ -584,6 +585,20 @@ const createSnapshotRefreshRequestId = () => {
 };
 const isLatestSnapshotRefreshRequest = (requestId: number) =>
   requestId === latestSnapshotRefreshRequestId;
+type GasAccountRefreshOptions = {
+  reason?: string;
+};
+const getGasAccountRefreshSessionKey = ({
+  sig,
+  accountId,
+}: {
+  sig: string;
+  accountId: string;
+}) => `${accountId}\u0000${sig}`;
+const snapshotRefreshFlights = new Map<
+  string,
+  Promise<GasAccountInfoResponse | undefined>
+>();
 
 const triggerReLoginAfterInvalidSession = async () => {
   try {
@@ -600,34 +615,18 @@ const triggerReLoginAfterInvalidSession = async () => {
   }
 };
 
-const refreshSnapshot = async (options?: { reason?: string }) => {
-  const reason = options?.reason || 'manual';
-  const startedAt = Date.now();
-  traceGasAccountStore('refresh_snapshot_start', { reason });
-
-  await traceGasAccountStoreAsyncStep(
-    'refresh_snapshot_ensure_runtime_ready',
-    () => ensureGasAccountRuntimeReady(),
-    { reason },
-  );
-
+const performSnapshotRefresh = async ({
+  reason,
+  startedAt,
+  sig,
+  accountId,
+}: {
+  reason: string;
+  startedAt: number;
+  sig: string;
+  accountId: string;
+}): Promise<GasAccountInfoResponse | undefined> => {
   const requestId = createSnapshotRefreshRequestId();
-  const { sig, accountId } = gasAccountStore.getState().session;
-
-  if (!sig || !accountId) {
-    traceGasAccountStore('refresh_snapshot_no_session', {
-      reason,
-      requestId,
-    });
-    measureGasAccountStoreSyncStep(
-      'refresh_snapshot_clear_balance_state',
-      () => {
-        setGasAccountCurrentBalanceStateSync();
-      },
-      { reason, requestId },
-    );
-    return undefined;
-  }
 
   measureGasAccountStoreSyncStep(
     'refresh_snapshot_set_refreshing',
@@ -740,6 +739,102 @@ const refreshSnapshot = async (options?: { reason?: string }) => {
   }
 };
 
+const refreshSnapshot = async (
+  options?: GasAccountRefreshOptions,
+): Promise<GasAccountInfoResponse | undefined> => {
+  const reason = options?.reason || 'manual';
+  const startedAt = Date.now();
+  traceGasAccountStore('refresh_snapshot_start', { reason });
+
+  await traceGasAccountStoreAsyncStep(
+    'refresh_snapshot_ensure_runtime_ready',
+    () => ensureGasAccountRuntimeReady(),
+    { reason },
+  );
+
+  const { sig, accountId } = gasAccountStore.getState().session;
+  if (!sig || !accountId) {
+    const requestId = createSnapshotRefreshRequestId();
+    traceGasAccountStore('refresh_snapshot_no_session', {
+      reason,
+      requestId,
+    });
+    measureGasAccountStoreSyncStep(
+      'refresh_snapshot_clear_balance_state',
+      () => {
+        setGasAccountCurrentBalanceStateSync();
+      },
+      { reason, requestId },
+    );
+    return undefined;
+  }
+
+  const sessionKey = getGasAccountRefreshSessionKey({ sig, accountId });
+  const activeFlight = snapshotRefreshFlights.get(sessionKey);
+  if (activeFlight) {
+    const shouldRevalidate = gasAccountStore.getState().snapshot.dirty;
+    traceGasAccountStore('refresh_snapshot_coalesced', {
+      reason,
+      shouldRevalidate,
+      durationMs: Date.now() - startedAt,
+    });
+    if (shouldRevalidate) {
+      return activeFlight.then(() =>
+        refreshSnapshot({
+          reason: `revalidate:${reason}`,
+        }),
+      );
+    }
+    return activeFlight;
+  }
+
+  const flight = performSnapshotRefresh({
+    reason,
+    startedAt,
+    sig,
+    accountId,
+  });
+  snapshotRefreshFlights.set(sessionKey, flight);
+
+  try {
+    return await flight;
+  } finally {
+    if (snapshotRefreshFlights.get(sessionKey) === flight) {
+      snapshotRefreshFlights.delete(sessionKey);
+    }
+
+    const latestState = gasAccountStore.getState();
+    const latestSession = latestState.session;
+    const isCurrentSession =
+      latestSession.sig === sig && latestSession.accountId === accountId;
+    if (
+      isCurrentSession &&
+      latestState.snapshot.status === 'ready' &&
+      latestState.snapshot.dirty
+    ) {
+      const revalidationReason =
+        latestState.snapshot.refreshReason || 'invalidated_during_refresh';
+      setTimeout(() => {
+        const currentState = gasAccountStore.getState();
+        if (
+          currentState.session.sig !== sig ||
+          currentState.session.accountId !== accountId ||
+          currentState.snapshot.status === 'refreshing' ||
+          !currentState.snapshot.dirty
+        ) {
+          return;
+        }
+
+        void refreshSnapshot({
+          reason: `revalidate:${revalidationReason}`,
+        }).catch(error => {
+          console.error('revalidate Gas Account snapshot error', error);
+        });
+      }, 0);
+    }
+  }
+};
+
 let latestHistoryRefreshRequestId = 0;
 let isGasAccountHistoryRefreshEnabled = false;
 const createHistoryRefreshRequestId = () => {
@@ -758,69 +853,35 @@ const isCurrentHistorySession = ({
   const latestSession = gasAccountStore.getState().session;
   return latestSession.sig === sig && latestSession.accountId === accountId;
 };
+type GasAccountHistoryRefreshOptions = GasAccountRefreshOptions & {
+  revalidateIfInFlight?: boolean;
+};
+const historyRefreshFlights = new Map<
+  string,
+  Promise<GasAccountHistoryResponse | undefined>
+>();
+const queuedHistoryRevalidations = new Map<string, string>();
 
-const refreshHistory = async (options?: { reason?: string }) => {
-  const reason = options?.reason || 'manual';
-  const startedAt = Date.now();
-  traceGasAccountStore('refresh_history_start', { reason });
-
-  if (!isGasAccountHistoryRefreshEnabled) {
-    traceGasAccountStore('refresh_history_skip_disabled', {
-      reason,
-      durationMs: Date.now() - startedAt,
-    });
-    return undefined;
-  }
-
-  await traceGasAccountStoreAsyncStep(
-    'refresh_history_ensure_runtime_ready',
-    () => ensureGasAccountRuntimeReady(),
-    { reason },
-  );
-
+const performHistoryRefresh = async ({
+  reason,
+  startedAt,
+  sig,
+  accountId,
+}: {
+  reason: string;
+  startedAt: number;
+  sig: string;
+  accountId: string;
+}): Promise<GasAccountHistoryResponse | undefined> => {
   const requestId = createHistoryRefreshRequestId();
-  const { sig, accountId } = gasAccountStore.getState().session;
   const prevHistory = gasAccountStore.getState().history;
   const hadPendingBeforeRefresh =
     prevHistory.rechargeList.length > 0 || prevHistory.withdrawList.length > 0;
 
-  if (!sig || !accountId) {
-    if (!isLatestHistoryRefreshRequest(requestId)) {
-      traceGasAccountStore('refresh_history_no_session_stale', {
-        reason,
-        requestId,
-      });
-      return undefined;
-    }
-    measureGasAccountStoreSyncStep(
-      'refresh_history_clear_set_state',
-      () => {
-        gasAccountStore.setState(prev =>
-          finishHistoryRefreshState(prev, {
-            list: [],
-            rechargeList: [],
-            withdrawList: [],
-            totalCount: 0,
-          }),
-        );
-      },
-      {
-        reason,
-        requestId,
-      },
-    );
-    traceGasAccountStore('refresh_history_no_session_end', {
-      reason,
-      requestId,
-      durationMs: Date.now() - startedAt,
-    });
-    return undefined;
-  }
-
   measureGasAccountStoreSyncStep(
     'refresh_history_set_refreshing',
     () => {
-      gasAccountStore.setState(prev => startHistoryRefreshState(prev));
+      gasAccountStore.setState(prev => startHistoryRefreshState(prev, reason));
     },
     {
       reason,
@@ -888,6 +949,7 @@ const refreshHistory = async (options?: { reason?: string }) => {
     const hasPendingAfterRefresh = rechargeCount > 0 || withdrawCount > 0;
 
     if (hadPendingBeforeRefresh && !hasPendingAfterRefresh) {
+      storeApiGasAccount.markSnapshotDirty('pending_history_settled');
       storeApiGasAccount
         .refreshSnapshot({ reason: 'pending_history_settled' })
         .catch(error => {
@@ -943,6 +1005,118 @@ const refreshHistory = async (options?: { reason?: string }) => {
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;
+  }
+};
+
+const refreshHistory = async (
+  options?: GasAccountHistoryRefreshOptions,
+): Promise<GasAccountHistoryResponse | undefined> => {
+  const reason = options?.reason || 'manual';
+  const startedAt = Date.now();
+  traceGasAccountStore('refresh_history_start', { reason });
+
+  if (!isGasAccountHistoryRefreshEnabled) {
+    traceGasAccountStore('refresh_history_skip_disabled', {
+      reason,
+      durationMs: Date.now() - startedAt,
+    });
+    return undefined;
+  }
+
+  await traceGasAccountStoreAsyncStep(
+    'refresh_history_ensure_runtime_ready',
+    () => ensureGasAccountRuntimeReady(),
+    { reason },
+  );
+
+  const { sig, accountId } = gasAccountStore.getState().session;
+  if (!sig || !accountId) {
+    const requestId = createHistoryRefreshRequestId();
+    measureGasAccountStoreSyncStep(
+      'refresh_history_clear_set_state',
+      () => {
+        gasAccountStore.setState(prev =>
+          finishHistoryRefreshState(prev, {
+            list: [],
+            rechargeList: [],
+            withdrawList: [],
+            totalCount: 0,
+          }),
+        );
+      },
+      {
+        reason,
+        requestId,
+      },
+    );
+    traceGasAccountStore('refresh_history_no_session_end', {
+      reason,
+      requestId,
+      durationMs: Date.now() - startedAt,
+    });
+    return undefined;
+  }
+
+  const sessionKey = getGasAccountRefreshSessionKey({ sig, accountId });
+  const activeFlight = historyRefreshFlights.get(sessionKey);
+  if (activeFlight) {
+    if (options?.revalidateIfInFlight) {
+      queuedHistoryRevalidations.set(sessionKey, reason);
+    }
+    traceGasAccountStore('refresh_history_coalesced', {
+      reason,
+      revalidateIfInFlight: !!options?.revalidateIfInFlight,
+      durationMs: Date.now() - startedAt,
+    });
+    if (options?.revalidateIfInFlight) {
+      return activeFlight.then(() =>
+        refreshHistory({
+          reason: `revalidate:${reason}`,
+        }),
+      );
+    }
+    return activeFlight;
+  }
+
+  const flight = performHistoryRefresh({
+    reason,
+    startedAt,
+    sig,
+    accountId,
+  });
+  historyRefreshFlights.set(sessionKey, flight);
+
+  try {
+    return await flight;
+  } finally {
+    if (historyRefreshFlights.get(sessionKey) === flight) {
+      historyRefreshFlights.delete(sessionKey);
+    }
+
+    const queuedReason = queuedHistoryRevalidations.get(sessionKey);
+    if (queuedReason) {
+      queuedHistoryRevalidations.delete(sessionKey);
+    }
+    if (
+      queuedReason &&
+      isGasAccountHistoryRefreshEnabled &&
+      isCurrentHistorySession({ sig, accountId })
+    ) {
+      setTimeout(() => {
+        if (
+          !isGasAccountHistoryRefreshEnabled ||
+          !isCurrentHistorySession({ sig, accountId })
+        ) {
+          return;
+        }
+
+        void refreshHistory({
+          reason: `revalidate:${queuedReason}`,
+        }).catch(error => {
+          console.error('revalidate Gas Account history error', error);
+        });
+      }, 0);
+    }
   }
 };
 
@@ -1003,12 +1177,15 @@ async function loadMoreHistory() {
       latestHistory.totalCount <= latestHistory.list.length;
 
     if (latestHistoryExhausted) {
-      storeApiGasAccount.refreshSnapshot().catch(error => {
-        console.error(
-          'refreshSnapshot after loadMoreHistory complete error',
-          error,
-        );
-      });
+      storeApiGasAccount.markSnapshotDirty('history_exhausted');
+      storeApiGasAccount
+        .refreshSnapshot({ reason: 'history_exhausted' })
+        .catch(error => {
+          console.error(
+            'refreshSnapshot after loadMoreHistory complete error',
+            error,
+          );
+        });
     }
   } catch (error) {
     gasAccountStore.setState(prev => ({
@@ -1042,9 +1219,11 @@ export const storeApiGasAccount = {
   },
   scheduleSnapshotRefresh(options?: { reason?: string; delay?: number }) {
     const run = () =>
-      storeApiGasAccount.refreshSnapshot().catch(error => {
-        console.error('scheduleSnapshotRefresh error', error);
-      });
+      storeApiGasAccount
+        .refreshSnapshot({ reason: options?.reason })
+        .catch(error => {
+          console.error('scheduleSnapshotRefresh error', error);
+        });
     if (options?.delay && options.delay > 0) {
       setTimeout(run, options.delay);
     } else {
@@ -1054,6 +1233,9 @@ export const storeApiGasAccount = {
   refreshHistory,
   setHistoryRefreshEnabled(enabled: boolean) {
     isGasAccountHistoryRefreshEnabled = enabled;
+    if (!enabled) {
+      queuedHistoryRevalidations.clear();
+    }
   },
   loadMoreHistory,
   invalidateSession(options?: { recheckAccounts?: boolean }) {
