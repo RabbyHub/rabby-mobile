@@ -26,6 +26,7 @@ import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/Sig
 import {
   apiSendToken,
   getSendChainToken,
+  SendTokenRecipientController,
   SendTokenEvents,
   SendTokenInternalContextProvider,
   subscribeEvent,
@@ -680,7 +681,6 @@ function SendScreen({
 
   const {
     sendTokenEvents,
-    fetchContactAccounts,
     formValues,
     submitForm,
     handleFieldChange,
@@ -705,19 +705,10 @@ function SendScreen({
     formValuesStore,
     saveCurrentFormValuesSnapshot,
 
-    whitelistEnabled,
-    computed: {
-      toAccount,
-      toAddressInContactBook,
-      toAddressIsCex,
-      toAddressPositiveTips,
-      canDirectSign,
-      toAddrCex,
-    },
+    computed: { canDirectSign },
     miniSignInstance,
   } = useSendTokenForm({
     toAddress: navParams?.toAddress,
-    toAddressBrandName: navParams?.addressBrandName,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
     currentAccount,
@@ -725,10 +716,8 @@ function SendScreen({
   });
   markSendScreenRenderPerf(renderSeq, 'send_token_form_hook_end', {
     hasTo: !!formValues.to,
-    whitelistEnabled,
     hasMiniSignInstance: !!miniSignInstance,
     canDirectSign,
-    hasToAccount: !!toAccount,
     hasCurrentAccount: !!currentAccount,
   });
 
@@ -1196,13 +1185,13 @@ function SendScreen({
       computed: {
         account: currentAccount || null,
         fromAddress: currentAccount?.address || '',
-        toAccount,
-        toAddressIsCex,
-        whitelistEnabled,
-        toAddressInContactBook,
-        toAddressPositiveTips,
+        toAccount: null,
+        toAddressIsCex: false,
+        whitelistEnabled: false,
+        toAddressInContactBook: false,
+        toAddressPositiveTips: null,
         canDirectSign,
-        toAddrCex,
+        toAddrCex: null,
 
         chainItem,
         currentToken,
@@ -1212,7 +1201,7 @@ function SendScreen({
       scrollViewRef,
       scrollViewStyle,
       fns: {
-        fetchContactAccounts,
+        fetchContactAccounts: () => {},
         disableItemCheck,
       },
 
@@ -1244,7 +1233,6 @@ function SendScreen({
       currentToken,
       directSignBtnRef,
       disableItemCheck,
-      fetchContactAccounts,
       formValuesRef,
       formValuesStore,
       handleClickMaxButton,
@@ -1262,12 +1250,6 @@ function SendScreen({
       saveCurrentFormValuesSnapshot,
       sendTokenEvents,
       setReloadTxRefreshPaused,
-      toAccount,
-      toAddrCex,
-      toAddressInContactBook,
-      toAddressIsCex,
-      toAddressPositiveTips,
-      whitelistEnabled,
     ],
   );
 
@@ -1283,6 +1265,9 @@ function SendScreen({
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
       <SendTokenInternalContextProvider value={sendTokenInternalValue}>
+        <SendTokenRecipientController
+          toAddressBrandName={navParams?.addressBrandName}
+        />
         <SendTransferRegressionProbe />
         <SendScreenBody
           clearLocalPendingTxData={clearLocalPendingTxData}
