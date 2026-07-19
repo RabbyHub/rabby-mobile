@@ -12,11 +12,11 @@ import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
 import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
 import type { SendRequireData } from '@rabby-wallet/rabby-action';
-import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
+import { useInterval, useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import { atom, useAtom } from 'jotai';
-import { sortBy, unionBy } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { unionBy } from 'lodash';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Hex } from '@metamask/utils';
 import { isValidHexAddress } from '@metamask/utils';
@@ -102,8 +102,10 @@ export type RecentHistoryItem = {
 };
 export const useRecentSend = ({
   useAllHistory,
+  ready = true,
 }: {
   useAllHistory?: boolean;
+  ready?: boolean;
 } = {}) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const { accounts } = useMyAccounts({
@@ -118,7 +120,8 @@ export const useRecentSend = ({
       return batchFetchLocalTx();
     },
     {
-      refreshDeps: [transactionHistoryReady],
+      ready: ready && transactionHistoryReady,
+      refreshDeps: [ready, transactionHistoryReady],
     },
   );
 
@@ -243,7 +246,7 @@ export function getRecentSendPendingTxData() {
   return jotaiStore.get(localPendingTxDataAtom);
 }
 
-export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
+export const useRecentSendPendingTx = () => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
     localPendingTxDataAtom,
@@ -266,8 +269,9 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   }, [currentAccount?.address, setLocalPendingTxData, transactionHistoryReady]);
 
   useEffect(() => {
+    setLocalPendingTxData(null);
     runFetchLocalPendingTx();
-  }, [runFetchLocalPendingTx]);
+  }, [runFetchLocalPendingTx, setLocalPendingTxData]);
 
   useInterval(() => {
     if (localPendingTxData) {
@@ -289,15 +293,22 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
 };
 
 export function useRecentSendToHistoryFor(toAddress?: string) {
-  const { recentHistory, runAsync } = useRecentSend({ useAllHistory: true });
+  const ready = !!toAddress && isValidHexAddress(toAddress as Hex);
+  const { recentHistory, runAsync } = useRecentSend({
+    useAllHistory: true,
+    ready,
+  });
+  const reFetch = useCallback(
+    () => (ready ? runAsync() : Promise.resolve([])),
+    [ready, runAsync],
+  );
 
   return {
-    recentHistory:
-      toAddress && isValidHexAddress(toAddress as Hex)
-        ? recentHistory.filter(
-            item => item.toAddress.toLowerCase() === toAddress.toLowerCase(),
-          )
-        : [],
-    reFetch: runAsync,
+    recentHistory: ready
+      ? recentHistory.filter(
+          item => item.toAddress.toLowerCase() === toAddress.toLowerCase(),
+        )
+      : [],
+    reFetch,
   };
 }
