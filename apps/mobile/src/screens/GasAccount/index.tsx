@@ -142,7 +142,10 @@ const GasAccountScreenContent = () => {
       try {
         await claimGift(currentEligibleAddress.address);
         await runFetchGasAccountInfo();
-        await storeApiGasAccount.refreshHistory();
+        await storeApiGasAccount.refreshHistory({
+          reason: 'gift_claimed',
+          revalidateIfInFlight: true,
+        });
       } catch (error) {
         console.error('handleEmptyStatePrimaryPress claimGift error', error);
         toast.error(t('page.gasAccount.loginFailed'));
@@ -172,7 +175,10 @@ const GasAccountScreenContent = () => {
 
     await login(targetAccount);
     const latest = await runFetchGasAccountInfo();
-    await storeApiGasAccount.refreshHistory();
+    await storeApiGasAccount.refreshHistory({
+      reason: 'login_for_deposit',
+      revalidateIfInFlight: true,
+    });
     return latest?.account?.id || targetAccount.address;
   });
 
@@ -186,7 +192,10 @@ const GasAccountScreenContent = () => {
       try {
         await login(pendingHardwareAccount as Account);
         await runFetchGasAccountInfo();
-        await storeApiGasAccount.refreshHistory();
+        await storeApiGasAccount.refreshHistory({
+          reason: 'pending_hardware_login',
+          revalidateIfInFlight: true,
+        });
         toast.success(t('page.gasAccount.loginSuccess'));
       } catch (error) {
         console.error('handleOldUserStatePrimaryPress error', error);
@@ -264,7 +273,10 @@ const GasAccountScreenContent = () => {
             setDepositState({
               isOpen: false,
             });
-            await storeApiGasAccount.refreshHistory();
+            await storeApiGasAccount.refreshHistory({
+              reason: 'deposit_submitted',
+              revalidateIfInFlight: true,
+            });
             await runFetchGasAccountInfo();
             toast.success(t('page.gasAccount.depositSubmitted'), {
               position: toast.positions.CENTER,
@@ -291,7 +303,10 @@ const GasAccountScreenContent = () => {
           setLoginVisible(false);
         }}
         onLogin={async () => {
-          await storeApiGasAccount.refreshHistory();
+          await storeApiGasAccount.refreshHistory({
+            reason: 'login_popup',
+            revalidateIfInFlight: true,
+          });
           await runFetchGasAccountInfo();
           setLoginVisible(false);
         }}

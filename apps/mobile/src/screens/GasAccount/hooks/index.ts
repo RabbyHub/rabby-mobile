@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { Linking, Platform } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import { gasAccountStore, storeApiGasAccount, useGasAccountSign } from './atom';
-import { useRequest } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { getIsGasAccountLoggedIn } from './loginState';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -91,13 +91,27 @@ export const useGasAccountSnapshotActivation = () => {
 export const useGasAccountInfoV2 = ({ address }: { address?: string }) => {
   const targetAddress = address;
 
-  return useRequest(() => openapi.getGasAccountInfoV2({ id: targetAddress! }), {
-    refreshDeps: [targetAddress],
-    ready: !!targetAddress,
-    ...(targetAddress
-      ? { cacheKey: `gas-account-info-v2-${targetAddress}` }
-      : {}),
+  const request = useRequest(
+    () => openapi.getGasAccountInfoV2({ id: targetAddress! }),
+    {
+      refreshDeps: [targetAddress],
+      ready: !!targetAddress,
+      ...(targetAddress
+        ? { cacheKey: `gas-account-info-v2-${targetAddress}` }
+        : {}),
+    },
+  );
+  const refreshWhenIdle = useMemoizedFn(() => {
+    if (!targetAddress || request.loading) {
+      return;
+    }
+    request.refresh();
   });
+
+  return {
+    ...request,
+    refresh: refreshWhenIdle,
+  };
 };
 
 export const useGasAccountGoBack = () => {

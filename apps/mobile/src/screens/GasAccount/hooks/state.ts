@@ -184,7 +184,7 @@ export const startSnapshotRefreshState = <
   snapshot: {
     ...state.snapshot,
     status: 'refreshing',
-    dirty: true,
+    dirty: false,
     refreshReason: reason,
   },
 });
@@ -202,7 +202,6 @@ export const finishSnapshotRefreshState = <
     ...state.snapshot,
     accountInfo,
     status: 'ready',
-    dirty: false,
     lastFetchedAt: Date.now(),
   },
 });
@@ -218,6 +217,7 @@ export const failSnapshotRefreshState = <
   snapshot: {
     ...state.snapshot,
     status: 'error',
+    dirty: true,
   },
 });
 
