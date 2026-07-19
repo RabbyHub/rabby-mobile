@@ -1,5 +1,6 @@
 import { isNonPublicProductionEnv } from '@/constant';
 import { appMMKV } from '@/core/storage/mmkvInstances';
+import { readZustandPersistedState } from '@/core/storage/mmkvJsonCompat';
 
 import {
   DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
@@ -14,44 +15,10 @@ type ExperimentalSettingsSnapshot = Partial<
   Record<typeof DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD, unknown>
 >;
 
-function safeParseJson(value: string): unknown {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
-
-function parsePossiblyNestedJson(value: string): unknown {
-  const parsed = safeParseJson(value);
-
-  if (typeof parsed === 'string') {
-    return safeParseJson(parsed);
-  }
-
-  return parsed;
-}
-
 function readExperimentalSettingsSnapshot(): ExperimentalSettingsSnapshot | null {
-  const raw = appMMKV.getString(EXPERIMENTAL_SETTINGS_STORE_KEY);
-  if (!raw) {
-    return null;
-  }
-
-  const parsed = parsePossiblyNestedJson(raw);
-  if (!parsed || typeof parsed !== 'object') {
-    return null;
-  }
-
-  const persisted = parsed as {
-    state?: unknown;
-  };
-
-  if (persisted.state && typeof persisted.state === 'object') {
-    return persisted.state as ExperimentalSettingsSnapshot;
-  }
-
-  return parsed as ExperimentalSettingsSnapshot;
+  return readZustandPersistedState(
+    appMMKV.getString(EXPERIMENTAL_SETTINGS_STORE_KEY),
+  ) as ExperimentalSettingsSnapshot | null;
 }
 
 export function getCurrentKeychainVersion(): CurrentKeychainVersion {
