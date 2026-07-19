@@ -742,13 +742,19 @@ const GasAccountDepositTokenFormInner: React.FC<{
           }
         }
 
-        await storeApiGasAccount.refreshHistory();
+        await storeApiGasAccount.refreshHistory({
+          reason: 'deposit_poll_settled',
+          revalidateIfInFlight: true,
+        });
         onClose?.();
         return;
       }
 
       storeApiGasAccount.markSnapshotDirty('deposit_submitted');
-      await storeApiGasAccount.refreshHistory();
+      await storeApiGasAccount.refreshHistory({
+        reason: 'deposit_submitted',
+        revalidateIfInFlight: true,
+      });
       if (onDeposit) {
         await onDeposit();
       } else {

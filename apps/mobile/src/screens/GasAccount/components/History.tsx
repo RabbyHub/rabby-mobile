@@ -13,6 +13,7 @@ import {
   ListRenderItem,
   TouchableOpacity,
   Image,
+  InteractionManager,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
@@ -29,6 +30,7 @@ import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
 import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
 import { Text } from '@/components/Typography';
 import { StyleProp, ViewStyle } from 'react-native';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
 type GasAccountPendingHistoryItem =
@@ -56,16 +58,52 @@ const getPendingHistoryKey = ({
     index,
   ].join('-');
 
-const HistoryItem = ({
-  time,
-  isPending = false,
-  value = 0,
-  sign = '-',
-  borderT = false,
-  isWithdraw = false,
-  source,
-  onGiftIconPress,
-}: {
+const traceGasAccountHistory = (
+  event: string,
+  data: Record<string, unknown> = {},
+) => {
+  traceStartupDiagnostic('gas-account', event, data);
+};
+
+const PendingHistorySpinner = React.memo(function PendingHistorySpinner() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const [transAnim] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    transAnim.setValue(0);
+    const animation = Animated.loop(
+      Animated.timing(transAnim, {
+        toValue: 360,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    animation.start();
+
+    return () => {
+      animation.stop();
+      transAnim.stopAnimation();
+    };
+  }, [transAnim]);
+
+  const rotate = transAnim.interpolate({
+    inputRange: [0, 360],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View
+      style={{
+        ...styles.pendingIcon,
+        transform: [{ rotate }],
+      }}>
+      <RcIconHistoryLoading width={16} height={16} />
+    </Animated.View>
+  );
+});
+
+type HistoryItemProps = {
   time: number;
   value: number;
   sign: string;
@@ -74,27 +112,20 @@ const HistoryItem = ({
   isWithdraw?: boolean;
   source?: string;
   onGiftIconPress?: () => void;
-}) => {
+};
+
+const HistoryItem = React.memo(function HistoryItem({
+  time,
+  isPending = false,
+  value = 0,
+  sign = '-',
+  borderT = false,
+  isWithdraw = false,
+  source,
+  onGiftIconPress,
+}: HistoryItemProps) {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-
-  const transAnim = React.useRef(new Animated.Value(0));
-
-  React.useEffect(() => {
-    Animated.loop(
-      Animated.timing(transAnim.current, {
-        toValue: 360,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    ).start();
-  }, []);
-
-  const rotate = transAnim.current.interpolate({
-    inputRange: [0, 360],
-    outputRange: ['0deg', '360deg'],
-  });
 
   const showGiftIcon = source === 'gas_account_airdrop';
 
@@ -109,18 +140,7 @@ const HistoryItem = ({
       <View style={styles.leftContainer}>
         {isPending ? (
           <View style={styles.pendingContainer}>
-            <Animated.View
-              style={{
-                ...styles.pendingIcon,
-                transform: [
-                  {
-                    rotate,
-                  },
-                ],
-              }}>
-              <RcIconHistoryLoading width={16} height={16} />
-            </Animated.View>
-
+            <PendingHistorySpinner />
             <Text style={styles.pendingText}>
               {isWithdraw
                 ? t('page.gasAccount.withdraw')
@@ -145,7 +165,7 @@ const HistoryItem = ({
       </Text>
     </TouchableOpacity>
   );
-};
+});
 
 const LoadingItem = ({ borderT }: { borderT?: boolean }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -158,227 +178,371 @@ const LoadingItem = ({ borderT }: { borderT?: boolean }) => {
   );
 };
 
-export const GasAccountHistory: React.FC<{
-  historyState: GasAccountHistoryState;
+type GasAccountHistoryProps = {
   style?: StyleProp<ViewStyle>;
   listStyle?: StyleProp<ViewStyle>;
-}> = ({ historyState, style, listStyle }) => {
-  const { t } = useTranslation();
-  const { loading, loadingMore, txList, loadMore, noMore, hasHistory } =
-    historyState;
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const listHeightRef = useRef(0);
-  const contentHeightRef = useRef(0);
-  const hasRechargeHistory = Boolean(txList?.rechargeList.length);
+};
 
-  const { bottom } = useSafeAreaInsets();
+export const GasAccountHistory = React.memo<GasAccountHistoryProps>(
+  function GasAccountHistory({ style, listStyle }) {
+    const renderStartedAt = Date.now();
+    const { t } = useTranslation();
+    const historyState = useGasAccountHistory();
+    const { loading, loadingMore, txList, loadMore, noMore, hasHistory } =
+      historyState;
+    const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const listHeightRef = useRef(0);
+    const contentHeightRef = useRef(0);
+    const renderSeqRef = useRef(0);
+    const itemRenderCountRef = useRef(0);
+    const hasUserScrolledRef = useRef(false);
+    const autoLoadMoreTaskRef = useRef<ReturnType<
+      typeof InteractionManager.runAfterInteractions
+    > | null>(null);
+    const autoLoadMoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+      null,
+    );
+    const hasRechargeHistory = Boolean(txList?.rechargeList.length);
 
-  const handleGiftIconPress = useCallback(() => {
-    setIsModalVisible(true);
-  }, []);
+    const { bottom } = useSafeAreaInsets();
 
-  const handleCloseGiftInfo = useCallback(() => {
-    setIsModalVisible(false);
-  }, []);
+    const handleGiftIconPress = useCallback(() => {
+      setIsModalVisible(true);
+    }, []);
 
-  const ListEmptyComponent = useMemo(
-    () =>
-      loading ? (
-        <>
-          {Array.from({ length: 10 }).map((_, idx) => (
-            <LoadingItem key={idx} borderT={idx !== 0} />
-          ))}
-        </>
-      ) : null,
-    [loading],
-  );
+    const handleCloseGiftInfo = useCallback(() => {
+      setIsModalVisible(false);
+    }, []);
 
-  const ListEndLoader = useCallback(() => {
-    if (!loadingMore || noMore) {
-      return null;
-    }
-    return <LoadingItem borderT />;
-  }, [loadingMore, noMore]);
+    const ListEmptyComponent = useMemo(
+      () =>
+        loading ? (
+          <>
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <LoadingItem key={idx} borderT={idx !== 0} />
+            ))}
+          </>
+        ) : null,
+      [loading],
+    );
 
-  const maybeLoadMore = useCallback(() => {
-    if (
-      loading ||
-      loadingMore ||
-      noMore ||
-      !listHeightRef.current ||
-      !contentHeightRef.current
-    ) {
-      return;
-    }
+    const ListEndLoader = useCallback(() => {
+      if (!loadingMore || noMore) {
+        return null;
+      }
+      return <LoadingItem borderT />;
+    }, [loadingMore, noMore]);
 
-    if (contentHeightRef.current <= listHeightRef.current) {
+    const clearScheduledAutoLoadMore = useCallback(() => {
+      autoLoadMoreTaskRef.current?.cancel();
+      autoLoadMoreTaskRef.current = null;
+      if (autoLoadMoreTimerRef.current) {
+        clearTimeout(autoLoadMoreTimerRef.current);
+        autoLoadMoreTimerRef.current = null;
+      }
+    }, []);
+
+    const canAutoLoadMore = useCallback(() => {
+      if (
+        loading ||
+        loadingMore ||
+        noMore ||
+        !listHeightRef.current ||
+        !contentHeightRef.current
+      ) {
+        return false;
+      }
+
+      return contentHeightRef.current <= listHeightRef.current;
+    }, [loading, loadingMore, noMore]);
+
+    const scheduleAutoLoadMore = useCallback(() => {
+      if (!canAutoLoadMore() || autoLoadMoreTaskRef.current) {
+        return;
+      }
+
+      traceGasAccountHistory('history_auto_load_more_scheduled', {
+        listHeight: listHeightRef.current,
+        contentHeight: contentHeightRef.current,
+        confirmedCount: txList?.list.length || 0,
+        rechargeCount: txList?.rechargeList.length || 0,
+        withdrawCount: txList?.withdrawList.length || 0,
+      });
+
+      autoLoadMoreTaskRef.current = InteractionManager.runAfterInteractions(
+        () => {
+          autoLoadMoreTimerRef.current = setTimeout(() => {
+            autoLoadMoreTaskRef.current = null;
+            autoLoadMoreTimerRef.current = null;
+
+            if (!canAutoLoadMore()) {
+              return;
+            }
+
+            traceGasAccountHistory('history_auto_load_more', {
+              listHeight: listHeightRef.current,
+              contentHeight: contentHeightRef.current,
+              confirmedCount: txList?.list.length || 0,
+              rechargeCount: txList?.rechargeList.length || 0,
+              withdrawCount: txList?.withdrawList.length || 0,
+            });
+            loadMore();
+          }, 600);
+        },
+      );
+    }, [
+      canAutoLoadMore,
+      loadMore,
+      txList?.list.length,
+      txList?.rechargeList.length,
+      txList?.withdrawList.length,
+    ]);
+
+    useEffect(() => {
+      return clearScheduledAutoLoadMore;
+    }, [clearScheduledAutoLoadMore]);
+
+    const handleEndReached = useCallback(() => {
+      if (!hasUserScrolledRef.current) {
+        traceGasAccountHistory('history_end_reached_ignored', {
+          listHeight: listHeightRef.current,
+          contentHeight: contentHeightRef.current,
+          confirmedCount: txList?.list.length || 0,
+          rechargeCount: txList?.rechargeList.length || 0,
+          withdrawCount: txList?.withdrawList.length || 0,
+        });
+        return;
+      }
+
+      traceGasAccountHistory('history_end_reached', {
+        confirmedCount: txList?.list.length || 0,
+        rechargeCount: txList?.rechargeList.length || 0,
+        withdrawCount: txList?.withdrawList.length || 0,
+      });
       loadMore();
-    }
-  }, [loadMore, loading, loadingMore, noMore]);
+    }, [
+      loadMore,
+      txList?.list.length,
+      txList?.rechargeList.length,
+      txList?.withdrawList.length,
+    ]);
 
-  useEffect(() => {
-    maybeLoadMore();
-  }, [
-    maybeLoadMore,
-    txList?.list.length,
-    txList?.rechargeList.length,
-    txList?.withdrawList.length,
-  ]);
+    useEffect(() => {
+      scheduleAutoLoadMore();
+    }, [
+      scheduleAutoLoadMore,
+      txList?.list.length,
+      txList?.rechargeList.length,
+      txList?.withdrawList.length,
+    ]);
 
-  const sourceByTxKey = useMemo(() => {
-    const map = new Map<string, string | undefined>();
-    txList?.list?.forEach(item => {
-      map.set(`${item.tx_id}-${item.chain_id}`, item.source);
+    const sourceByTxKey = useMemo(() => {
+      const map = new Map<string, string | undefined>();
+      txList?.list?.forEach(item => {
+        map.set(`${item.tx_id}-${item.chain_id}`, item.source);
+      });
+      return map;
+    }, [txList?.list]);
+
+    const shouldShowTopBorder = useCallback(
+      (index: number) => (hasRechargeHistory ? true : index !== 0),
+      [hasRechargeHistory],
+    );
+
+    useEffect(() => {
+      renderSeqRef.current += 1;
+      traceGasAccountHistory('history_render_commit', {
+        seq: renderSeqRef.current,
+        renderCommitMs: Date.now() - renderStartedAt,
+        loading,
+        loadingMore,
+        noMore,
+        hasHistory,
+        confirmedCount: txList?.list.length || 0,
+        rechargeCount: txList?.rechargeList.length || 0,
+        withdrawCount: txList?.withdrawList.length || 0,
+        listHeight: listHeightRef.current,
+        contentHeight: contentHeightRef.current,
+      });
     });
-    return map;
-  }, [txList?.list]);
 
-  const shouldShowTopBorder = useCallback(
-    (index: number) => (hasRechargeHistory ? true : index !== 0),
-    [hasRechargeHistory],
-  );
+    itemRenderCountRef.current = 0;
 
-  const ListHeaderComponent = useCallback(() => {
-    return (
-      <>
-        {!loading &&
-          txList?.withdrawList?.map((item, index) => {
-            return (
-              <HistoryItem
-                isWithdraw={true}
-                key={getPendingHistoryKey({
-                  item,
-                  type: 'withdraw',
-                  index,
-                })}
-                time={item.create_at}
-                value={item.amount}
-                sign={'-'}
-                borderT={shouldShowTopBorder(index)}
-                isPending={true}
-                source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
-                onGiftIconPress={handleGiftIconPress}
-              />
-            );
-          })}
-        {!loading &&
-          txList?.rechargeList?.map((item, index) => {
-            return (
-              <HistoryItem
-                key={getPendingHistoryKey({
-                  item,
-                  type: 'recharge',
-                  index,
-                })}
-                time={item.create_at}
-                value={item.amount}
-                sign={'+'}
-                borderT={true}
-                isPending={true}
-                source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
-                onGiftIconPress={handleGiftIconPress}
-              />
-            );
-          })}
-      </>
-    );
-  }, [
-    loading,
-    shouldShowTopBorder,
-    txList?.rechargeList,
-    txList?.withdrawList,
-    handleGiftIconPress,
-    sourceByTxKey,
-  ]);
+    const ListHeaderComponent = useCallback(() => {
+      return (
+        <>
+          {!loading &&
+            txList?.withdrawList?.map((item, index) => {
+              return (
+                <HistoryItem
+                  isWithdraw={true}
+                  key={getPendingHistoryKey({
+                    item,
+                    type: 'withdraw',
+                    index,
+                  })}
+                  time={item.create_at}
+                  value={item.amount}
+                  sign={'-'}
+                  borderT={shouldShowTopBorder(index)}
+                  isPending={true}
+                  source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
+                  onGiftIconPress={handleGiftIconPress}
+                />
+              );
+            })}
+          {!loading &&
+            txList?.rechargeList?.map((item, index) => {
+              return (
+                <HistoryItem
+                  key={getPendingHistoryKey({
+                    item,
+                    type: 'recharge',
+                    index,
+                  })}
+                  time={item.create_at}
+                  value={item.amount}
+                  sign={'+'}
+                  borderT={true}
+                  isPending={true}
+                  source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
+                  onGiftIconPress={handleGiftIconPress}
+                />
+              );
+            })}
+        </>
+      );
+    }, [
+      loading,
+      shouldShowTopBorder,
+      txList?.rechargeList,
+      txList?.withdrawList,
+      handleGiftIconPress,
+      sourceByTxKey,
+    ]);
 
-  const renderItem: ListRenderItem<GasAccountConfirmedHistoryItem> =
-    useCallback(
-      ({ item, index }) => (
-        <HistoryItem
-          time={item.create_at}
-          value={item.usd_value}
-          sign={item.history_type === 'recharge' ? '+' : '-'}
-          borderT={shouldShowTopBorder(index)}
-          source={item.source}
-          onGiftIconPress={handleGiftIconPress}
-        />
-      ),
-      [handleGiftIconPress, shouldShowTopBorder],
-    );
+    const renderItem: ListRenderItem<GasAccountConfirmedHistoryItem> =
+      useCallback(
+        ({ item, index }) => {
+          itemRenderCountRef.current += 1;
+          if (itemRenderCountRef.current <= 5) {
+            traceGasAccountHistory('history_render_item', {
+              index,
+              renderCountInCommit: itemRenderCountRef.current,
+              historyType: item.history_type,
+              hasSource: !!item.source,
+            });
+          }
 
-  if (!loading && !hasHistory) {
-    return (
-      <View
-        style={[
-          styles.container,
-          styles.emptyContainer,
-          style,
-          isLight ? styles.containerLight : styles.containerDark,
-        ]}>
-        <View style={styles.emptyContent}>
-          <Image
-            source={isLight ? ImgEmpty : ImgEmptyDark}
-            style={styles.emptyImg}
-            resizeMode="contain"
-          />
-          <Text style={styles.emptyText}>
-            {t('page.gasAccount.history.noHistory')}
-          </Text>
-        </View>
-      </View>
-    );
-  }
+          return (
+            <HistoryItem
+              time={item.create_at}
+              value={item.usd_value}
+              sign={item.history_type === 'recharge' ? '+' : '-'}
+              borderT={shouldShowTopBorder(index)}
+              source={item.source}
+              onGiftIconPress={handleGiftIconPress}
+            />
+          );
+        },
+        [handleGiftIconPress, shouldShowTopBorder],
+      );
 
-  return (
-    <>
-      <FlatList
-        style={[
-          styles.container,
-          listStyle,
-          { marginBottom: bottom },
-          style,
-          isLight ? styles.containerLight : styles.containerDark,
-        ]}
-        data={txList?.list}
-        contentInset={{ bottom: 12 }}
-        onLayout={event => {
-          listHeightRef.current = event.nativeEvent.layout.height;
-          maybeLoadMore();
-        }}
-        onContentSizeChange={(_, height) => {
-          contentHeightRef.current = height;
-          maybeLoadMore();
-        }}
-        ListHeaderComponent={ListHeaderComponent}
-        renderItem={renderItem}
-        extraData={txList?.rechargeList.length}
-        keyExtractor={item =>
-          `${item.tx_id}-${item.chain_id}-${item.id || item.user_addr}-${
-            item.create_at
-          }`
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.6}
-        ListFooterComponent={ListEndLoader}
-        ListEmptyComponent={ListEmptyComponent}
-      />
-      <GiftInfoModal
-        visible={isModalVisible}
-        snapPoints={[209]}
-        header={
-          <View style={styles.giftInfoHeader}>
-            <IconGift width={18} height={18} />
-            <Text style={styles.giftInfoHeaderText}>
-              {t('component.gasAccount.giftInfo.giftTips')}
+    if (!loading && !hasHistory) {
+      return (
+        <View
+          style={[
+            styles.container,
+            styles.emptyContainer,
+            style,
+            isLight ? styles.containerLight : styles.containerDark,
+          ]}>
+          <View style={styles.emptyContent}>
+            <Image
+              source={isLight ? ImgEmpty : ImgEmptyDark}
+              style={styles.emptyImg}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyText}>
+              {t('page.gasAccount.history.noHistory')}
             </Text>
           </View>
-        }
-        onClose={handleCloseGiftInfo}
-      />
-    </>
-  );
-};
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <FlatList
+          style={[
+            styles.container,
+            listStyle,
+            { marginBottom: bottom },
+            style,
+            isLight ? styles.containerLight : styles.containerDark,
+          ]}
+          data={txList?.list}
+          contentInset={{ bottom: 12 }}
+          onLayout={event => {
+            listHeightRef.current = event.nativeEvent.layout.height;
+            traceGasAccountHistory('history_list_layout', {
+              height: listHeightRef.current,
+              confirmedCount: txList?.list.length || 0,
+              rechargeCount: txList?.rechargeList.length || 0,
+              withdrawCount: txList?.withdrawList.length || 0,
+            });
+            scheduleAutoLoadMore();
+          }}
+          onContentSizeChange={(_, height) => {
+            contentHeightRef.current = height;
+            traceGasAccountHistory('history_content_size', {
+              height,
+              listHeight: listHeightRef.current,
+              confirmedCount: txList?.list.length || 0,
+              rechargeCount: txList?.rechargeList.length || 0,
+              withdrawCount: txList?.withdrawList.length || 0,
+            });
+            scheduleAutoLoadMore();
+          }}
+          ListHeaderComponent={ListHeaderComponent}
+          renderItem={renderItem}
+          extraData={txList?.rechargeList.length}
+          keyExtractor={item =>
+            `${item.tx_id}-${item.chain_id}-${item.id || item.user_addr}-${
+              item.create_at
+            }`
+          }
+          onScrollBeginDrag={() => {
+            hasUserScrolledRef.current = true;
+            clearScheduledAutoLoadMore();
+          }}
+          onMomentumScrollBegin={() => {
+            hasUserScrolledRef.current = true;
+            clearScheduledAutoLoadMore();
+          }}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.6}
+          ListFooterComponent={ListEndLoader}
+          ListEmptyComponent={ListEmptyComponent}
+        />
+        <GiftInfoModal
+          visible={isModalVisible}
+          snapPoints={[209]}
+          header={
+            <View style={styles.giftInfoHeader}>
+              <IconGift width={18} height={18} />
+              <Text style={styles.giftInfoHeaderText}>
+                {t('component.gasAccount.giftInfo.giftTips')}
+              </Text>
+            </View>
+          }
+          onClose={handleCloseGiftInfo}
+        />
+      </>
+    );
+  },
+);
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {

@@ -124,7 +124,7 @@ import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
-import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { useGasAccountSnapshotActivation } from '@/screens/GasAccount/hooks';
 import { EIP7702Warning } from '../EIP7702Warning';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import { GnosisAdminFooterBarPopup } from '../TxComponents/GnosisAdminFooterBarPopup';
@@ -2095,7 +2095,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData, rules]);
 
-  useGasAccountInfo();
+  useGasAccountSnapshotActivation();
 
   // TODO
   // useEffect(() => {

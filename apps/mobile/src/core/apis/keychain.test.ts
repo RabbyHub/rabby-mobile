@@ -31,7 +31,7 @@ describe('core/apis/keychain current facade', () => {
     const mockLoggerInfo = jest.fn();
     const mockLoggerWarn = jest.fn();
 
-    jest.doMock('@/hooks/appSettings', () => ({
+    jest.doMock('@/core/apis/keychainVersion', () => ({
       getCurrentKeychainVersion: jest.fn(() => version),
     }));
     jest.doMock('react-native', () => ({
