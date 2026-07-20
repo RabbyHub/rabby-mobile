@@ -107,6 +107,9 @@ export function ChainInfo({
           : t('page.bridge.bridgeTo'),
       onChange: chain => {
         removeChainModal();
+        if (chain === chainEnum) {
+          return;
+        }
         onChange?.(chain);
       },
       bottomSheetModalProps: {
