@@ -2131,7 +2131,8 @@
       "screenshotReportSwitch": "버그 보고를 위한 스크린샷",
       "searchCurrency": "통화 검색",
       "dataAnalysis": "데이터 분석",
-      "bugReportHistory": "버그 신고 내역"
+      "bugReportHistory": "버그 신고 내역",
+      "bugReportChat": "채팅으로 피드백 보내기"
     },
     "settingModal": {
       "themeMode": {
@@ -3787,7 +3788,7 @@
       "noAvailableAddress": "사용 가능한 주소가 없습니다"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "",
+      "replyPlaceholder": "메시지를 입력하세요…",
       "mediaPlaceholder": "이미지/동영상"
     }
   },

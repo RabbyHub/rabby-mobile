@@ -1942,7 +1942,8 @@
       "searchCurrency": "Tìm kiếm Tiền tệ",
       "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
       "dataAnalysis": "Phân tích dữ liệu",
-      "bugReportHistory": "Lịch sử báo cáo lỗi"
+      "bugReportHistory": "Lịch sử báo cáo lỗi",
+      "bugReportChat": "Gửi phản hồi qua trò chuyện"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -3787,7 +3788,7 @@
       "noAvailableAddress": "Không có địa chỉ nào có sẵn"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "",
+      "replyPlaceholder": "Nhập tin nhắn…",
       "mediaPlaceholder": "Hình ảnh/Video"
     }
   },

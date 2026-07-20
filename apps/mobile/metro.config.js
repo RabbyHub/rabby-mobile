@@ -172,8 +172,10 @@ const resolverSourceAliasCandidates = new Map([
   [
     'react-native-quick-crypto',
     [
-      'react-native-quick-crypto/lib/commonjs/index.js',
+      // Match the package's React Native entry; our CryptoKey polyfill patch
+      // is applied to this build.
       'react-native-quick-crypto/lib/module/index.js',
+      'react-native-quick-crypto/lib/commonjs/index.js',
     ],
   ],
 ]);
