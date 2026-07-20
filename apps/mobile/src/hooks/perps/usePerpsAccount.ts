@@ -5,37 +5,40 @@ import {
 import { useCallback, useMemo } from 'react';
 import { perpsStore } from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
 import { getSpotBalanceKey } from '@/utils/perps';
+import { useFocusedPerpsStore } from './useFocusedPerpsStore';
 
-export const usePerpsAccount = () => {
-  const {
-    userAbstraction,
-    perpsAccountValue,
-    perpsWithdrawable,
-    crossMaintenanceMarginUsed,
-    spotAccountValue,
-    spotAvailableToTrade,
-    spotBalances,
-    spotBalancesMap,
-    tokenToAvailableAfterMaintenance,
-  } = perpsStore(
-    useShallow(s => ({
-      userAbstraction: s.userAbstraction,
-      perpsAccountValue:
-        s.currentClearinghouseState?.marginSummary?.accountValue,
-      perpsWithdrawable: s.currentClearinghouseState?.withdrawable,
-      crossMaintenanceMarginUsed:
-        s.currentClearinghouseState?.crossMaintenanceMarginUsed,
+type PerpsState = ReturnType<typeof perpsStore.getState>;
 
-      spotAccountValue: s.spotState.accountValue,
-      spotAvailableToTrade: s.spotState.availableToTrade,
-      spotBalances: s.spotState.balances,
-      spotBalancesMap: s.spotState.balancesMap,
-      tokenToAvailableAfterMaintenance:
-        s.spotState.tokenToAvailableAfterMaintenance,
-    })),
-  );
+const selectPerpsAccountState = (state: PerpsState) => ({
+  userAbstraction: state.userAbstraction,
+  perpsAccountValue:
+    state.currentClearinghouseState?.marginSummary?.accountValue,
+  perpsWithdrawable: state.currentClearinghouseState?.withdrawable,
+  crossMaintenanceMarginUsed:
+    state.currentClearinghouseState?.crossMaintenanceMarginUsed,
+  spotAccountValue: state.spotState.accountValue,
+  spotAvailableToTrade: state.spotState.availableToTrade,
+  spotBalances: state.spotState.balances,
+  spotBalancesMap: state.spotState.balancesMap,
+  tokenToAvailableAfterMaintenance:
+    state.spotState.tokenToAvailableAfterMaintenance,
+});
 
+type PerpsAccountState = ReturnType<typeof selectPerpsAccountState>;
+
+const usePerpsAccountState = ({
+  userAbstraction,
+  perpsAccountValue,
+  perpsWithdrawable,
+  crossMaintenanceMarginUsed,
+  spotAccountValue,
+  spotAvailableToTrade,
+  spotBalances,
+  spotBalancesMap,
+  tokenToAvailableAfterMaintenance,
+}: PerpsAccountState) => {
   const isUnifiedAccount = useMemo(() => {
     return userAbstraction === UserAbstractionResp.unifiedAccount;
   }, [userAbstraction]);
@@ -134,4 +137,14 @@ export const usePerpsAccount = () => {
     getSpotBalance,
     getAvailableByAsset,
   };
+};
+
+export const usePerpsAccount = () => {
+  const state = perpsStore(useShallow(selectPerpsAccountState));
+  return usePerpsAccountState(state);
+};
+
+export const useFocusedPerpsAccount = () => {
+  const state = useFocusedPerpsStore(selectPerpsAccountState, shallow);
+  return usePerpsAccountState(state);
 };

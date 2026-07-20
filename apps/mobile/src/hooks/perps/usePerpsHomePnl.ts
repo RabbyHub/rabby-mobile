@@ -1,7 +1,7 @@
-import { perpsStore } from './usePerpsStore';
-import { useShallow } from 'zustand/react/shallow';
-import { usePerpsAccount } from './usePerpsAccount';
+import { shallow } from 'zustand/shallow';
+import { useFocusedPerpsAccount } from './usePerpsAccount';
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
+import { useFocusedPerpsStore } from './useFocusedPerpsStore';
 
 export const usePerpsHomePnl = () => {
   const {
@@ -12,8 +12,8 @@ export const usePerpsHomePnl = () => {
     isUserDataReady,
     userAbstraction,
     userAbstractionReady,
-  } = perpsStore(
-    useShallow(s => ({
+  } = useFocusedPerpsStore(
+    s => ({
       currentPerpsAccount: s.currentPerpsAccount,
       homePositionPnl: s.homePositionPnl,
       isFetchAllDone: s.isFetchAllDone,
@@ -21,9 +21,10 @@ export const usePerpsHomePnl = () => {
       isUserDataReady: s.isUserDataReady,
       userAbstraction: s.userAbstraction,
       userAbstractionReady: s.userAbstractionReady,
-    })),
+    }),
+    shallow,
   );
-  const { availableBalance } = usePerpsAccount();
+  const { availableBalance } = useFocusedPerpsAccount();
   const isSpotCollateralMode =
     userAbstraction === UserAbstractionResp.unifiedAccount ||
     userAbstraction === UserAbstractionResp.portfolioMargin;
