@@ -100,7 +100,9 @@ const ViewMore = (
         <BottomSheetView style={styles.mainView}>
           <View style={styles.popupContainer}>
             {props.type === 'contract' && <ContractPopup data={props.data} />}
-            {props.type === 'spender' && <SpenderPopup data={props.data} />}
+            {props.type === 'spender' && (
+              <SpenderPopup data={props.data} title={props.title} />
+            )}
             {props.type === 'nftSpender' && (
               <NFTSpenderPopup data={props.data} />
             )}

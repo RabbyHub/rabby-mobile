@@ -48,14 +48,15 @@ import RevokePermit2 from '../Actions/RevokePermit2';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from '../Actions/components/TransactionActionList';
 import { noop } from 'lodash';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type { Account } from '@/core/startupServices/preference';
 import type { ParseCommonResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS } from '@debank/common';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { Text } from '@/components/Typography';
-import { HighlightedSignMessageText } from '../SignMessageHighlighter';
+import type { SignMessageHighlightToken } from '../signMessageTokenizer';
+import type { SignMessageAddressDataMap } from '../signMessageAddressData';
+import { SignMessageCard } from '../TextActions/SignMessageCard';
 
 export interface MultiActionProps {
   actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];
@@ -324,6 +325,9 @@ const Actions = ({
   typedDataActionData,
   account,
   multiAction,
+  messageTokens,
+  addressData,
+  approvalViewportHeight,
 }: {
   data: ParsedTypedDataActionData | null;
   requireData: ActionRequireData;
@@ -336,10 +340,11 @@ const Actions = ({
   typedDataActionData?: ParseCommonResponse | null;
   account: Account;
   multiAction?: MultiActionProps;
+  messageTokens?: SignMessageHighlightToken[];
+  addressData?: SignMessageAddressDataMap;
+  approvalViewportHeight: number;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
   const { styles: actionStyles } = useTheme2024({ getStyle: getActionsStyle });
 
   const isMultiAction = useMemo(() => {
@@ -395,36 +400,16 @@ const Actions = ({
         )}
       </View>
 
-      <Card style={styles.messageCard}>
-        <BottomSheetScrollView
-          nestedScrollEnabled
-          style={StyleSheet.flatten([
-            styles.messageContent,
-            data ? {} : styles.noAction,
-          ])}>
-          <View style={styles.messageTitle}>
-            <Text
-              style={styles.dashLine}
-              ellipsizeMode="clip"
-              accessible={false}
-              numberOfLines={1}>
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            </Text>
-
-            <Text style={styles.messageTitleText}>
-              {t('page.signTx.typedDataMessage')}
-            </Text>
-          </View>
-          <HighlightedSignMessageText
-            text={message}
-            style={styles.messageText}
-            highlightStyle={styles.messageHighlight}
-          />
-        </BottomSheetScrollView>
-      </Card>
+      <SignMessageCard
+        title={t('page.signTx.typedDataMessage')}
+        message={message}
+        hasAction={!!data}
+        messageTokens={messageTokens}
+        chain={chain}
+        addressData={addressData}
+        account={account}
+        approvalViewportHeight={approvalViewportHeight}
+      />
     </View>
   );
 };
