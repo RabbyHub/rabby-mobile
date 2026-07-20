@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -125,10 +125,12 @@ function SwapBridgeHeaderRight({
 function SwapBridgeNativeHeader({
   activeTab,
   isForMultipleAddress,
+  isScreenFocused,
   onTabPress,
 }: {
   activeTab: SwapBridgeTab;
   isForMultipleAddress: boolean;
+  isScreenFocused: boolean;
   onTabPress: (tab: SwapBridgeTab) => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
@@ -144,10 +146,12 @@ function SwapBridgeNativeHeader({
             onTabPress={onTabPress}
           />
         </View>
-        <SwapBridgeHeaderRight
-          activeTab={activeTab}
-          isForMultipleAddress={isForMultipleAddress}
-        />
+        {isScreenFocused && (
+          <SwapBridgeHeaderRight
+            activeTab={activeTab}
+            isForMultipleAddress={isForMultipleAddress}
+          />
+        )}
       </View>
     </View>
   );
@@ -159,6 +163,9 @@ function SwapBridgeScreenContent({
   const route = useRoute<SwapBridgeRoute>();
   const initialTab = useMemo(() => getInitialTab(route), [route]);
   const [activeTab, setActiveTab] = useState<SwapBridgeTab>(initialTab);
+  // Swap-again can leave an earlier SwapBridge route mounted. Shared scene
+  // modals must have only one focused host.
+  const isScreenFocused = useIsFocused();
   const { styles } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -178,10 +185,11 @@ function SwapBridgeScreenContent({
       <SwapBridgeNativeHeader
         activeTab={activeTab}
         isForMultipleAddress={isForMultipleAddress}
+        isScreenFocused={isScreenFocused}
         onTabPress={handleTabPress}
       />
     ),
-    [activeTab, handleTabPress, isForMultipleAddress],
+    [activeTab, handleTabPress, isForMultipleAddress, isScreenFocused],
   );
 
   useEffect(() => {
@@ -196,7 +204,9 @@ function SwapBridgeScreenContent({
       {isNonProductionDiagnosticsEnabled ? (
         <SwapBridgeActivationProbe activeTab={activeTab} />
       ) : null}
-      <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      {isScreenFocused && (
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      )}
       <View
         pointerEvents={activeTab === 'swap' ? 'auto' : 'none'}
         style={[

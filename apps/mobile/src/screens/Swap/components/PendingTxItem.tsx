@@ -69,9 +69,6 @@ export const PendingTxItem = ({
   });
 
   const handlePress = useMemoizedFn(() => {
-    if (type === 'approveSwap') {
-      return;
-    }
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
@@ -97,17 +94,24 @@ export const PendingTxItem = ({
     if (!groupData) {
       return;
     }
+
+    let historyType = HistoryItemCateType.Swap;
+    let title = t('page.transactions.itemTitle.Swap');
+    if (type === 'send') {
+      historyType = HistoryItemCateType.Send;
+      title = t('page.transactions.itemTitle.Send');
+    } else if (type === 'approveSwap') {
+      historyType = HistoryItemCateType.Approve;
+      title = t('page.transactions.itemTitle.Approve');
+    }
+
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
         isForMultipleAddress,
         data: groupData,
-        type:
-          type === 'send' ? HistoryItemCateType.Send : HistoryItemCateType.Swap,
-        title:
-          type === 'send'
-            ? t('page.transactions.itemTitle.Send')
-            : t('page.transactions.itemTitle.Swap'),
+        type: historyType,
+        title,
         account,
       },
     });
