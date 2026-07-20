@@ -1,14 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { openapi } from '@/core/request';
 import { transactionHistoryService } from '@/core/services';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
@@ -16,11 +9,8 @@ import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
-  useMount,
   useRequest,
 } from 'ahooks';
-import PQueue from 'p-queue';
-import { last, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
 import { TransactionGroup } from '@/core/services/transactionHistory';
@@ -28,37 +18,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { syncSingleAddress } from '@/databases/hooks/history';
-import {
-  ensureHistoryListItemFromDb,
-  fetchHistoryTokenItem,
-  getHistoryItemType,
-} from '@/screens/Transaction/components/utils';
+import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import {
-  CUSTOM_HISTORY_ACTION,
-  CUSTOM_HISTORY_TITLE_TYPE,
-} from '@/screens/Transaction/components/type';
+import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
-import { Text } from '@/components/Typography';
-
-const _PAGE_COUNT = 200;
-
-interface IFetchHistory {
-  last: number;
-  list: HistoryDisplayItem[];
-}
-
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('empty', () => {
-      if (q.pending <= 0) {
-        resolve(null);
-      }
-    });
-  });
-};
 
 function LendingHistory(): JSX.Element {
   const { myTop10Addresses } = useAccountInfo();
@@ -69,11 +34,8 @@ function LendingHistory(): JSX.Element {
   const isTestnet = false;
 
   const isReady = useRef(false);
-  const lastMap = useRef<Record<string, number>>({});
   const dbLastCursorRef = useRef<number>(0);
   const dbFetchLoadingRef = useRef<boolean>(false);
-  const hasMoreMap = useRef<Record<string, boolean>>({});
-  const [isShowAll, setIsShowAll] = useState(false);
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
 
   const { finalSceneCurrentAccount, sceneCurrentAccountDepKey } =
@@ -212,7 +174,7 @@ function LendingHistory(): JSX.Element {
             const isSynced =
               !!rawDataList?.list.find(tx => {
                 return (
-                  tx.id === item.maxGasTx.hash &&
+                  tx.id === item?.maxGasTx?.hash &&
                   findChainByServerID(tx.chain)?.id === item.chainId
                 );
               }) || item.isSynced;
@@ -243,27 +205,21 @@ function LendingHistory(): JSX.Element {
     if (dbData.length === 0 && !isSceneUsingAllAccounts && firstFetchDone) {
       syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dbData.length,
     isSceneUsingAllAccounts,
     firstFetchDone,
     finalSceneCurrentAccount?.address,
   ]);
-  const {
-    data: fetchApiData,
-    loading,
-    loadingMore,
-    loadMore,
-    noMore,
-    reloadAsync,
-    cancel,
-  } = useInfiniteScroll(() => batchFetchData(), {
-    isNoMore: d => (d ? !d.hasMore : false),
-    onSuccess() {
-      runFetchLocalTx();
+  const { loading, loadingMore, loadMore, reloadAsync } = useInfiniteScroll(
+    () => batchFetchData(),
+    {
+      isNoMore: d => (d ? !d.hasMore : false),
+      onSuccess() {
+        runFetchLocalTx();
+      },
     },
-  });
+  );
 
   useEffect(() => {
     if (isReady.current) {
@@ -321,7 +277,7 @@ function LendingHistory(): JSX.Element {
         }
 
         return !recentTxKeys.has(
-          `${group.address.toLowerCase()}-${group.maxGasTx.hash}`,
+          `${group.address.toLowerCase()}-${group?.maxGasTx?.hash}`,
         );
       }) || [];
     return [...(uniqueGroups || []), ...(displayList || [])];

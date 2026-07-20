@@ -35,7 +35,6 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
-import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { preferenceService } from '@/core/services';
 
 const ListItem = (props: {

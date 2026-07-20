@@ -17,11 +17,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, {
-  SharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 import { CurveLoader } from './CurveLoader';
 import { DataHeaderInfo, DataHeaderInfoSkeleton } from './DataHeaderInfo';

@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, View } from 'react-native';
 

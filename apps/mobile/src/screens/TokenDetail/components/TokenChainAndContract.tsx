@@ -6,7 +6,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import HelpIconCC from '@/assets2024/icons/common/help-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';

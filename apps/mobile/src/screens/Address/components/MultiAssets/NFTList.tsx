@@ -23,7 +23,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
-import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
