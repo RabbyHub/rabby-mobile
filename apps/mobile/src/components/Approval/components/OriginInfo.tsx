@@ -61,6 +61,20 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     position: 'relative',
     marginRight: 8,
   },
+  securityTagContainer: {
+    position: 'absolute',
+    top: 0,
+    right: -14,
+    bottom: 0,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  securityTag: {
+    position: 'relative',
+    top: 0,
+    right: 0,
+    marginTop: 0,
+  },
 }));
 
 export const OriginInfo: React.FC<Props> = ({
@@ -178,28 +192,34 @@ export const OriginInfo: React.FC<Props> = ({
         {displayOrigin}
       </Text>
       {engineResultMap['1088'] && (
-        <SecurityLevelTagNoText
-          enable={engineResultMap['1088'].enable}
-          level={
-            security.currentTx.processedRules.includes('1088')
-              ? 'proceed'
-              : engineResultMap['1088'].level
-          }
-          onClick={() => handleClickRule('1088')}
-          right={-14}
-        />
+        <View style={styles.securityTagContainer}>
+          <SecurityLevelTagNoText
+            enable={engineResultMap['1088'].enable}
+            level={
+              security.currentTx.processedRules.includes('1088')
+                ? 'proceed'
+                : engineResultMap['1088'].level
+            }
+            onClick={() => handleClickRule('1088')}
+            right={0}
+            style={styles.securityTag}
+          />
+        </View>
       )}
       {engineResultMap['1089'] && (
-        <SecurityLevelTagNoText
-          enable={engineResultMap['1089'].enable}
-          level={
-            security.currentTx.processedRules.includes('1089')
-              ? 'proceed'
-              : engineResultMap['1089'].level
-          }
-          onClick={() => handleClickRule('1089')}
-          right={-14}
-        />
+        <View style={styles.securityTagContainer}>
+          <SecurityLevelTagNoText
+            enable={engineResultMap['1089'].enable}
+            level={
+              security.currentTx.processedRules.includes('1089')
+                ? 'proceed'
+                : engineResultMap['1089'].level
+            }
+            onClick={() => handleClickRule('1089')}
+            right={0}
+            style={styles.securityTag}
+          />
+        </View>
       )}
     </View>
   );

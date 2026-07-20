@@ -13,6 +13,8 @@ export const getMessageStyles = (colors: AppColorsVariants) =>
     },
     signMessageContent: {
       paddingHorizontal: 16,
+      paddingRight: 40,
+      marginRight: -24,
       paddingBottom: 16,
       maxHeight: 544,
       flexShrink: 1,
