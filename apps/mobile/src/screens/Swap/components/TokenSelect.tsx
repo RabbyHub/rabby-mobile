@@ -42,6 +42,7 @@ import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
 import type { ITokenItem } from '@/store/tokens';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { Text } from '@/components/Typography';
+import { isSameAccount } from '@/utils/isSameAccount';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -219,9 +220,6 @@ const TokenSelect = ({
     () => userTokenSettings.pinedQueue,
     [userTokenSettings.pinedQueue],
   );
-  const favoriteTokenKeySet = useMemo(() => {
-    return new Set(pinedQueue?.map(x => `${x.chainId}:${x.tokenId}`));
-  }, [pinedQueue]);
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
@@ -299,11 +297,20 @@ const TokenSelect = ({
   }, [setTokenSelectorVisible, setIsLpTokenEnabled]);
 
   const resetQueryConds = useCallback(() => {
-    setQueryConds(prev => ({
-      ...prev,
-      chainServerId: chainId,
-      account: accountInScreen,
-    }));
+    setQueryConds(prev => {
+      const isSameQueryAccount =
+        prev.account === accountInScreen ||
+        isSameAccount(prev.account, accountInScreen);
+      if (prev.chainServerId === chainId && isSameQueryAccount) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        chainServerId: chainId,
+        account: accountInScreen,
+      };
+    });
   }, [chainId, accountInScreen]);
 
   const handleSelectToken = useCallback(() => {
@@ -312,11 +319,20 @@ const TokenSelect = ({
   }, [resetQueryConds, setTokenSelectorVisible]);
 
   useEffect(() => {
-    setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
+    setQueryConds(prev =>
+      prev.chainServerId === chainId
+        ? prev
+        : { ...prev, chainServerId: chainId },
+    );
   }, [chainId]);
 
   useLayoutEffect(() => {
-    setQueryConds(prev => ({ ...prev, account: accountInScreen }));
+    setQueryConds(prev => {
+      const isSameQueryAccount =
+        prev.account === accountInScreen ||
+        isSameAccount(prev.account, accountInScreen);
+      return isSameQueryAccount ? prev : { ...prev, account: accountInScreen };
+    });
   }, [accountInScreen]);
 
   const { t } = useTranslation();
@@ -524,7 +540,6 @@ const TokenSelect = ({
         showLpTokenSwitch={!queryConds.keyword && !isCustomNetworkTab}
         isLpTokenEnabled={effectiveIsLpTokenEnabled}
         onLpTokenChange={setIsLpTokenEnabled}
-        favoriteTokenKeySet={favoriteTokenKeySet}
         showCustomNetworkChainPreview={isCustomNetworkTab}
         customNetworkTop3Chains={customNetworkTop3Chains}
       />
