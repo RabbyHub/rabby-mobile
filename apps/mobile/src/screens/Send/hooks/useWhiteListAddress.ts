@@ -1,5 +1,4 @@
 import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
-import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
@@ -8,10 +7,9 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { filterMyAccounts, findAccountByPriority } from '@/utils/account';
 import { ellipsisAddress } from '@/utils/address';
 import { getTokenSettings } from '@/utils/getTokenSettings';
-import { sortWhitelistRecordsForSend } from '@/utils/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 const isSameAddress = addressUtils.isSameAddress;
 
@@ -21,6 +19,7 @@ export const useFindAddressByWhitelist = () => {
     whitelistRecords,
     enable: enabled,
     isAddrOnWhitelist,
+    updateWhitelistOrder,
   } = useWhitelist({
     disableAutoFetch: false,
   });
@@ -125,47 +124,20 @@ export const useFindAddressByWhitelist = () => {
     whitelist,
     whitelistRecords,
     isAddrOnWhitelist,
+    updateWhitelistOrder,
     findAccount,
     findAccountWithoutBalance,
   };
 };
 
 export function useWhitelistVariedAccounts() {
-  const { accounts, whitelist, whitelistRecords, findAccountWithoutBalance } =
-    useFindAddressByWhitelist();
-  const [resolvedAddedAtByAddress, setResolvedAddedAtByAddress] = useState<
-    Record<string, number>
-  >({});
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    const loadAddedAtByAddress = async () => {
-      if (!whitelist.length) {
-        setResolvedAddedAtByAddress({});
-        return;
-      }
-
-      try {
-        const nextResolvedAddedAtByAddress =
-          await AccountInfoEntity.getCreatedAtByAddresses(whitelist);
-
-        if (isCurrent) {
-          setResolvedAddedAtByAddress(nextResolvedAddedAtByAddress);
-        }
-      } catch {
-        if (isCurrent) {
-          setResolvedAddedAtByAddress({});
-        }
-      }
-    };
-
-    loadAddedAtByAddress();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [whitelist]);
+  const {
+    accounts,
+    whitelist,
+    whitelistRecords,
+    findAccountWithoutBalance,
+    updateWhitelistOrder,
+  } = useFindAddressByWhitelist();
 
   const myAccounts = useCreationWithDeepCompare(() => {
     return filterMyAccounts(accounts);
@@ -191,10 +163,7 @@ export function useWhitelistVariedAccounts() {
       list: [] as KeyringAccountWithAlias[],
     };
 
-    ret.list = sortWhitelistRecordsForSend(
-      whitelistRecords,
-      resolvedAddedAtByAddress,
-    ).map(record => {
+    ret.list = whitelistRecords.map(record => {
       const address = record.address;
       const aliasName =
         getContactAliasSnapshot(address)?.alias || ellipsisAddress(address);
@@ -223,12 +192,13 @@ export function useWhitelistVariedAccounts() {
     });
 
     return ret;
-  }, [accountsByAddress, resolvedAddedAtByAddress, whitelistRecords]);
+  }, [accountsByAddress, whitelistRecords]);
 
   return {
     list,
     whitelist,
     myAccounts,
     findAccountWithoutBalance,
+    updateWhitelistOrder,
   };
 }

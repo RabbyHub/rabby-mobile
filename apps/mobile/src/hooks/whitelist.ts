@@ -98,6 +98,24 @@ export const setWhitelist = async (addresses: string[]) => {
   await getWhitelist(revision);
 };
 
+export const updateWhitelistOrder = async (addresses: string[]) => {
+  const revision = ++whitelistRevision;
+
+  try {
+    await whitelistServiceApi.updateWhitelistOrder(addresses);
+    await getWhitelist(revision);
+    return true;
+  } catch {
+    try {
+      await getWhitelist(revision);
+    } catch {
+      // Keep the action result deterministic even if the authoritative refresh
+      // also fails. The sortable view will reset its local visual order.
+    }
+    return false;
+  }
+};
+
 function setEnable(val: boolean, hydrated = true) {
   whitelistStore.setState(prev => ({ ...prev, enable: val, hydrated }));
 }
@@ -244,6 +262,7 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
     addWhitelist,
     removeWhitelist,
     setWhitelist,
+    updateWhitelistOrder,
     toggleWhitelist,
     isAddrOnWhitelist,
   };

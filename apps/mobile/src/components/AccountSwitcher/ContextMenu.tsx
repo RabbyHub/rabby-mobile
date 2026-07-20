@@ -14,9 +14,10 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 interface Props {
   children: React.ReactElement<any>;
   account: KeyringAccountWithAlias;
+  preViewBorderRadius?: number;
 }
 export const AccountSwitcherContextMenu: React.FC<Props> = props => {
-  const { children, account } = props;
+  const { children, account, preViewBorderRadius = 20 } = props;
   const editAliasName = useAliasNameEditModal();
   const { t } = useTranslation();
   const { isLight, colors2024 } = useTheme2024();
@@ -55,7 +56,7 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
         menuTitle: account.address,
         menuActions: menuActions,
       }}
-      preViewBorderRadius={20}
+      preViewBorderRadius={preViewBorderRadius}
       enableIos27OpaquePreview
       triggerProps={{ action: 'longPress' }}>
       {children}

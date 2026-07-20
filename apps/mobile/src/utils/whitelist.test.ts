@@ -3,8 +3,8 @@ import {
   mergeWhitelistAddresses,
   normalizeWhitelistAddresses,
   normalizeWhitelistRecords,
+  reorderWhitelistRecords,
   syncWhitelistRecords,
-  sortWhitelistRecordsForSend,
   sortWhitelistRecords,
 } from './whitelist';
 
@@ -110,36 +110,90 @@ describe('whitelist utils', () => {
     ]);
   });
 
-  it('sorts send whitelist with undated records first and dated records by ascending addedAt', () => {
-    expect(
-      sortWhitelistRecordsForSend(
-        [
-          {
-            address: '0xcccccccccccccccccccccccccccccccccccccccc',
-            addedAt: 300,
-          },
-          {
-            address: '0xdddddddddddddddddddddddddddddddddddddddd',
-          },
-          {
-            address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            addedAt: 100,
-          },
-          {
-            address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-          },
-        ],
-        {
-          '0xcccccccccccccccccccccccccccccccccccccccc': 300,
-          '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb': 100,
-        },
-      ).map(item => item.address),
-    ).toEqual([
-      '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      '0xdddddddddddddddddddddddddddddddddddddddd',
-      '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-      '0xcccccccccccccccccccccccccccccccccccccccc',
+  it('reorders existing records case-insensitively and preserves metadata', () => {
+    const first = {
+      address: '0x1111111111111111111111111111111111111111',
+      addedAt: 111,
+    };
+    const second = {
+      address: '0x2222222222222222222222222222222222222222',
+      addedAt: 222,
+    };
+    const reordered = reorderWhitelistRecords(
+      [first, second],
+      [
+        '0x2222222222222222222222222222222222222222'.toUpperCase(),
+        '0x1111111111111111111111111111111111111111',
+      ],
+    );
+
+    expect(reordered).toEqual([second, first]);
+    expect(reordered[0]).toBe(second);
+    expect(reordered[1]).toBe(first);
+  });
+
+  it.each([
+    {
+      name: 'a missing address',
+      next: ['0x1111111111111111111111111111111111111111'],
+    },
+    {
+      name: 'a foreign address',
+      next: [
+        '0x1111111111111111111111111111111111111111',
+        '0x3333333333333333333333333333333333333333',
+      ],
+    },
+    {
+      name: 'a duplicate address',
+      next: [
+        '0x1111111111111111111111111111111111111111',
+        '0x1111111111111111111111111111111111111111'.toUpperCase(),
+      ],
+    },
+    {
+      name: 'an empty address',
+      next: ['0x1111111111111111111111111111111111111111', ''],
+    },
+    {
+      name: 'a non-string address',
+      next: [
+        '0x1111111111111111111111111111111111111111',
+        123,
+      ] as unknown as string[],
+    },
+  ])('rejects an invalid whitelist order containing $name', ({ next }) => {
+    const current = [
+      {
+        address: '0x1111111111111111111111111111111111111111',
+        addedAt: 111,
+      },
+      {
+        address: '0x2222222222222222222222222222222222222222',
+        addedAt: 222,
+      },
+    ];
+
+    expect(() => reorderWhitelistRecords(current, next)).toThrow(
+      'Invalid whitelist order',
+    );
+    expect(current.map(record => record.address)).toEqual([
+      '0x1111111111111111111111111111111111111111',
+      '0x2222222222222222222222222222222222222222',
     ]);
+  });
+
+  it('rejects duplicate current records instead of silently normalizing them', () => {
+    const current = [
+      '0x1111111111111111111111111111111111111111',
+      '0x1111111111111111111111111111111111111111'.toUpperCase(),
+    ];
+
+    expect(() =>
+      reorderWhitelistRecords(current, [
+        '0x1111111111111111111111111111111111111111',
+      ]),
+    ).toThrow('Invalid whitelist order');
   });
 
   it('preserves existing addedAt and stamps newly added records during sync', () => {
