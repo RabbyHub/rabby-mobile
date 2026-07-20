@@ -507,6 +507,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   protocolActionsList: {
     display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: 4,
   },
   protocolActionsItemWrapper: {
