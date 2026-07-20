@@ -1,17 +1,14 @@
+import { urlUtils } from '@rabby-wallet/base-utils';
 import type { ContextActionData } from '@rabby-wallet/rabby-security-engine/dist/rules';
 
 const DOMAIN_RE =
   /(?:https?:\/\/)?(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+(?:xn--[a-z0-9-]{2,59}|[\p{L}]{2,63})(?::\d+)?(?:[/?#][^\s"'<>]*)?/giu;
 
 const normalizeHostname = (value: string) => {
-  try {
-    const url = new URL(
-      /^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : `https://${value}`,
-    );
-    return url.hostname.toLowerCase().replace(/\.+$/, '');
-  } catch {
-    return null;
-  }
+  const url = urlUtils.safeParseURL(
+    /^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : `https://${value}`,
+  );
+  return url ? url.hostname.toLowerCase().replace(/\.+$/, '') : null;
 };
 
 export const extractSignMessageHostnames = (message: string) =>
