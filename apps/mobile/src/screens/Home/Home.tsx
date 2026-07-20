@@ -36,6 +36,7 @@ import {
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
 import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import { useHomeChainInfoFocus } from './useChainInfo';
 
 function SingleAddressActivationProbe({
   currentAddress,
@@ -119,6 +120,7 @@ const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
 
 function SingleAddressHome(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  useHomeChainInfoFocus();
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const { topHeight } = useBgSize();
   const { currentAccount } = useSingleHomeAccount();
