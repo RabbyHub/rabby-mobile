@@ -10,6 +10,8 @@ project_dir=$(dirname $(dirname $script_dir))
 WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
 REACT_NATIVE_XCODE="$REACT_NATIVE_PATH/scripts/react-native-xcode.sh"
 SENTRY_XCODE="../node_modules/@sentry/react-native/scripts/sentry-xcode.sh"
+export CLI_PATH="$project_dir/scripts/metro-bundle-cli.js"
+export RABBY_MOBILE_METRO_CLI_DELEGATE="$REACT_NATIVE_PATH/scripts/bundle.js"
 
 # you can also run `sudo ln -s $(which node) /usr/local/bin/node` on macOS
 export NODE_BINARY=$(command -v node);
@@ -204,8 +206,20 @@ check_env_file() {
   fi
 }
 
+write_native_build_info() {
+  local output_dir="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+  local output_file="$output_dir/rabby-build-info.json"
+  local temporary_file="$output_file.tmp"
+
+  mkdir -p "$output_dir"
+  "$NODE_BINARY" "$project_dir/scripts/resolve-build-info.js" > "$temporary_file"
+  mv "$temporary_file" "$output_file"
+  echo "[RabbyMobileBuild] wrote native build info to $output_file"
+}
+
 log_bundle_env_diagnostics "$(resolve_bundle_env_file)"
 check_env_file;
+write_native_build_info;
 
 if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "true" ]; then
   echo "[RabbyMobileBuild] skip debug bundle while preserving Metro device setup"

@@ -2140,7 +2140,8 @@
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
       "currency": "Monnaie",
       "dataAnalysis": "Analyse des données",
-      "bugReportHistory": "Historique des rapports de bug"
+      "bugReportHistory": "Historique des rapports de bug",
+      "bugReportChat": "Partager vos commentaires via le chat"
     },
     "settingModal": {
       "themeMode": {
@@ -3711,8 +3712,8 @@
       "noAvailableAddress": "Aucune adresse disponible"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Saisissez une nouvelle réponse... (facultatif)",
-      "mediaPlaceholder": "Image/Vidéo\n(obligatoire)"
+      "replyPlaceholder": "Saisissez un message…",
+      "mediaPlaceholder": "Image/Vidéo"
     }
   },
   "global": {

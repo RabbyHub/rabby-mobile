@@ -2196,7 +2196,8 @@
       "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
       "currency": "Mata Uang",
       "dataAnalysis": "Analisis Data",
-      "bugReportHistory": "Riwayat Laporan Bug"
+      "bugReportHistory": "Riwayat Laporan Bug",
+      "bugReportChat": "Bagikan Umpan Balik melalui Obrolan"
     },
     "settingModal": {
       "themeMode": {
@@ -3666,8 +3667,8 @@
       "noAvailableAddress": "Tidak ada alamat yang tersedia"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Masukkan balasan baru... (opsional)",
-      "mediaPlaceholder": "Gambar/Video\n(wajib)"
+      "replyPlaceholder": "Masukkan pesan…",
+      "mediaPlaceholder": "Gambar/Video"
     }
   },
   "native": {

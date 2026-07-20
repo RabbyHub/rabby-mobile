@@ -307,8 +307,8 @@
       "noAvailableAddress": "Nenhum endereço disponível"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Introduza uma nova resposta... (opcional)",
-      "mediaPlaceholder": "Imagem/Vídeo\n(obrigatório)"
+      "replyPlaceholder": "Escreva uma mensagem…",
+      "mediaPlaceholder": "Imagem/Vídeo"
     }
   },
   "global": {
@@ -2380,7 +2380,8 @@
       "searchCurrency": "Pesquisar Moeda",
       "screenshotReportSwitch": "Captura de ecrã para reportar erro",
       "dataAnalysis": "Análise de dados",
-      "bugReportHistory": "Histórico de relatórios de erro"
+      "bugReportHistory": "Histórico de relatórios de erro",
+      "bugReportChat": "Partilhar feedback através do chat"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {

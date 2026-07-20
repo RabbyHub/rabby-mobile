@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 
-import { formatUsdValue } from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 
 function getSafeSendAmountBn(amount?: string | number | BigNumber | null) {
   const bn = new BigNumber(amount || 0);
@@ -15,6 +15,20 @@ function formatFixedUsdAmountText(value: BigNumber) {
   const groupedIntPart = absIntPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
   return `${sign}${groupedIntPart}.${decimalPart || '00'}`;
+}
+
+export function formatSendTokenBalanceText(
+  value: string | number | BigNumber | null | undefined,
+  decimalPlaces: number,
+) {
+  const balance = getSafeSendAmountBn(value);
+  const flooredBalance = balance.toFixed(decimalPlaces, BigNumber.ROUND_FLOOR);
+  const displayBalance =
+    balance.gt(0) && new BigNumber(flooredBalance).isZero()
+      ? balance.toFixed()
+      : flooredBalance;
+
+  return formatTokenAmount(displayBalance, decimalPlaces);
 }
 
 export function formatSendUsdValueText(

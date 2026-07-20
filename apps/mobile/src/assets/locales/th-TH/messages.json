@@ -292,8 +292,8 @@
       "noAvailableAddress": "ไม่มีที่อยู่ที่ใช้ได้"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "ป้อนการตอบกลับใหม่... (ไม่บังคับ)",
-      "mediaPlaceholder": "รูปภาพ/วิดีโอ\n(จำเป็น)"
+      "replyPlaceholder": "พิมพ์ข้อความ…",
+      "mediaPlaceholder": "รูปภาพ/วิดีโอ"
     }
   },
   "page": {
@@ -2396,7 +2396,8 @@
       "currency": "สกุลเงิน",
       "searchCurrency": "ค้นหาเงินตรา",
       "dataAnalysis": "การวิเคราะห์ข้อมูล",
-      "bugReportHistory": "ประวัติรายงานบั๊ก"
+      "bugReportHistory": "ประวัติรายงานบั๊ก",
+      "bugReportChat": "ส่งข้อเสนอแนะผ่านแชต"
     },
     "settingModal": {
       "themeMode": {

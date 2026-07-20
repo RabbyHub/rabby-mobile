@@ -45,6 +45,7 @@ import {
   BUILD_GIT_INFO,
   IS_CONSOLE_STRIPPED,
   IS_HERMES_ENABLED,
+  IS_METRO_CACHE_ENABLED,
 } from '@/constant/env';
 import { E2E_ID } from '@/constant/e2e';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
@@ -693,7 +694,7 @@ function SettingsBlocks() {
             visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {
-            label: t('page.setting.bugReportHistory'),
+            label: t('page.setting.bugReportChat'),
             icon: RcBugReport,
             onPress: () => {
               toggleFeedbackHistoryVisible(true);
@@ -733,6 +734,7 @@ function SettingsBlocks() {
                 <View style={{ flexDirection: 'row' }}>
                   <Text style={styles.rightText}>
                     {localVersion || APP_VERSIONS.fromJs}
+                    {IS_METRO_CACHE_ENABLED ? ' · MC' : ''}
                   </Text>
                   {remoteVersion.couldUpgrade && (
                     <Text

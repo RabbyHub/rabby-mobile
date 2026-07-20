@@ -13,7 +13,7 @@ die() {
 
 usage() {
   cat <<'EOF'
-Promote committed changes onto a Friday tmp branch and optionally dispatch Feature Test.
+Promote committed changes onto a Thursday tmp branch and optionally dispatch Feature Test.
 
 Usage:
   promote_to_tmp_feature_test.sh [options]
@@ -47,14 +47,14 @@ require_bool() {
   esac
 }
 
-next_friday_tmp_branch() {
+next_thursday_tmp_branch() {
   python3 - <<'PY'
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
-days_until_friday = (4 - today.weekday()) % 7
-target = today + timedelta(days=days_until_friday)
+days_until_thursday = (3 - today.weekday()) % 7
+target = today + timedelta(days=days_until_thursday)
 print(f"tmp/{target:%Y%m%d}")
 PY
 }
@@ -190,7 +190,7 @@ require_bool --gradle-cache "$GRADLE_CACHE"
 require_bool --really-upload "$REALLY_UPLOAD"
 
 if [ -z "$TMP_BRANCH" ]; then
-  TMP_BRANCH="$(next_friday_tmp_branch)"
+  TMP_BRANCH="$(next_thursday_tmp_branch)"
 fi
 
 case "$TMP_BRANCH" in
