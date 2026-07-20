@@ -17,6 +17,7 @@ import { browserApis } from '@/hooks/browser/useBrowser';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
+import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -591,12 +592,25 @@ async function openTransactionHistory(
   });
 }
 
-async function startGasAccountMainRuntimeProfile(
+async function startMainRuntimeProfile(
   context: RegressionScenarioExecutionContext,
-  observeMs: number,
+  {
+    label,
+    observeMs,
+    filePrefix,
+    enabledByDefault = false,
+  }: {
+    label: string;
+    observeMs: number;
+    filePrefix: string;
+    enabledByDefault?: boolean;
+  },
 ) {
-  const profileMode = context.command.params.hermesProfile?.toLowerCase();
-  if (!profileMode || !['1', 'true', 'main'].includes(profileMode)) {
+  const profileMode = context.command.params.hermesProfile;
+  const shouldProfile =
+    profileMode?.toLowerCase() === 'main' ||
+    parseScenarioBoolean(profileMode, enabledByDefault);
+  if (!shouldProfile) {
     return null;
   }
 
@@ -618,23 +632,24 @@ async function startGasAccountMainRuntimeProfile(
 
   const computationThread = await import('@/perfs/thread');
   const workerWasRunning = computationThread.workerThread.isRunning;
+  const reasonLabel = label.replace(/[^a-z0-9]+/gi, '_').toLowerCase();
   if (workerWasRunning) {
     context.report('perf-mark', {
-      label: 'gas-account-entry',
+      label,
       mark: 'main-runtime-profile-worker-stop-start',
     });
     await computationThread.workerThread.terminate();
     await delay(250);
     context.report('perf-mark', {
-      label: 'gas-account-entry',
+      label,
       mark: 'main-runtime-profile-worker-stopped',
     });
   }
 
   const session = profiler.startHermesProfilerSession({
-    label: `gas-account-entry-${context.command.runId}`,
+    label: `${label}-${context.command.runId}`,
     expectedDurationMs: Math.min(Math.max(observeMs, 0), 10_000) + 4000,
-    filePrefix: `rabby-gas-account-main-${context.command.runId}`,
+    filePrefix: `${filePrefix}-${context.command.runId}`,
     includePlatformProfile: parseScenarioBoolean(
       context.command.params.platformProfile,
       true,
@@ -644,14 +659,14 @@ async function startGasAccountMainRuntimeProfile(
   if (!session) {
     if (workerWasRunning) {
       computationThread.requestComputationThreadStart(
-        'gas_account_profile_start_failed',
+        `${reasonLabel}_profile_start_failed`,
       );
     }
-    throw new Error('Unable to start Gas Account Hermes profile');
+    throw new Error(`Unable to start ${label} Hermes profile`);
   }
 
   context.report('perf-mark', {
-    label: 'gas-account-entry',
+    label,
     mark: 'main-runtime-profile-started',
     workerWasRunning,
   });
@@ -661,7 +676,7 @@ async function startGasAccountMainRuntimeProfile(
     restoreWorker() {
       if (workerWasRunning) {
         computationThread.requestComputationThreadStart(
-          'gas_account_profile_complete',
+          `${reasonLabel}_profile_complete`,
         );
       }
     },
@@ -670,10 +685,11 @@ async function startGasAccountMainRuntimeProfile(
 
 async function openGasAccount(context: RegressionScenarioExecutionContext) {
   const observeMs = Number(context.command.params.observeMs || 2500);
-  const profileCapture = await startGasAccountMainRuntimeProfile(
-    context,
+  const profileCapture = await startMainRuntimeProfile(context, {
+    label: 'gas-account-entry',
     observeMs,
-  );
+    filePrefix: 'rabby-gas-account-main',
+  });
   const perfWindow = startScenarioPerformanceWindow(context, {
     label: 'gas-account-entry',
   });
@@ -717,6 +733,137 @@ async function openGasAccount(context: RegressionScenarioExecutionContext) {
       profileResult?.error || 'Gas Account Hermes profile was not saved',
     );
   }
+}
+
+async function openSendTokenSelector(
+  context: RegressionScenarioExecutionContext,
+) {
+  const observeMs = Math.min(
+    Math.max(Number(context.command.params.observeMs || 2500), 500),
+    5000,
+  );
+  const settleMs = Math.min(
+    Math.max(Number(context.command.params.settleMs || 800), 300),
+    2000,
+  );
+  const initialDelayMs = Math.min(
+    Math.max(Number(context.command.params.initialDelayMs || 600), 0),
+    15_000,
+  );
+  const openCount = Math.min(
+    Math.max(Math.round(Number(context.command.params.openCount || 2)), 1),
+    2,
+  );
+  const warmupOpenCount = Math.min(
+    Math.max(
+      Math.round(Number(context.command.params.warmupOpenCount || 0)),
+      0,
+    ),
+    1,
+  );
+  const warmupObserveMs = Math.min(
+    Math.max(Number(context.command.params.warmupObserveMs || observeMs), 500),
+    5000,
+  );
+
+  pushNestedScreen(RootNames.StackTransaction, RootNames.Send, {});
+  await context.waitForRoute(RootNames.Send);
+  context.report('assertion', {
+    assertion: 'send-token-selector-screen-opened',
+    passed: true,
+  });
+  await delay(initialDelayMs);
+
+  for (let index = 0; index < warmupOpenCount; index += 1) {
+    context.report('perf-mark', {
+      label: 'send-token-selector-entry',
+      mark: 'selector-warmup-open-start',
+      openSequence: index + 1,
+    });
+    await runRegressionScenarioComponentAction(
+      context.command.runId,
+      'send-token-selector.open',
+    );
+    await delay(warmupObserveMs);
+    await runRegressionScenarioComponentAction(
+      context.command.runId,
+      'send-token-selector.close',
+    );
+    await delay(settleMs);
+    context.report('perf-mark', {
+      label: 'send-token-selector-entry',
+      mark: 'selector-warmup-complete',
+      openSequence: index + 1,
+    });
+  }
+
+  const profileDurationMs =
+    observeMs * openCount + settleMs * Math.max(0, openCount - 1) + 1000;
+  const profileCapture = await startMainRuntimeProfile(context, {
+    label: 'send-token-selector-entry',
+    observeMs: profileDurationMs,
+    filePrefix: 'rabby-send-token-selector-main',
+    enabledByDefault: true,
+  });
+  const perfWindow = startScenarioPerformanceWindow(context, {
+    label: 'send-token-selector-entry',
+    reportEachGap: true,
+  });
+  let profileResult: HermesProfilerSessionResult | undefined;
+
+  try {
+    for (let index = 0; index < openCount; index += 1) {
+      const openSequence = index + 1;
+      perfWindow.mark('selector-open-start', { openSequence });
+      await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'send-token-selector.open',
+      );
+      perfWindow.mark('selector-open-dispatched', { openSequence });
+      await delay(observeMs);
+
+      perfWindow.mark('selector-close-start', { openSequence });
+      await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'send-token-selector.close',
+      );
+      perfWindow.mark('selector-close-dispatched', { openSequence });
+
+      if (index + 1 < openCount) {
+        await delay(settleMs);
+      }
+    }
+  } finally {
+    perfWindow.stop('send-token-selector-scenario-complete');
+    if (profileCapture) {
+      profileResult = await profileCapture.session.stop();
+      profileCapture.restoreWorker();
+      context.report('perf-mark', {
+        label: 'send-token-selector-entry',
+        mark: 'main-runtime-profile-saved',
+        durationMs: profileResult.durationMs,
+        profilePath: profileResult.profilePath || '',
+        androidProfilePath: profileResult.androidProfilePath || '',
+        error: profileResult.error || '',
+      });
+    }
+  }
+
+  if (profileCapture && !profileResult?.profilePath) {
+    throw new Error(
+      profileResult?.error ||
+        'Send token selector Hermes profile was not saved',
+    );
+  }
+
+  context.report('assertion', {
+    assertion: 'send-token-selector-profile-ready',
+    passed: true,
+    openCount,
+    warmupOpenCount,
+    observeMs,
+    profilePath: profileResult?.profilePath || '',
+  });
 }
 
 async function openMarket(context: RegressionScenarioExecutionContext) {
@@ -792,6 +939,9 @@ export async function executeRegressionScenario(
       return;
     case 'gas-account-entry':
       await openGasAccount(context);
+      return;
+    case 'send-token-selector-entry':
+      await openSendTokenSelector(context);
       return;
     case 'market-entry':
       await openMarket(context);

@@ -98,21 +98,16 @@ export const useSelectTokens = ({
     return myTop10Addresses;
   }, [currentAddress, myTop10Addresses, keyword]);
 
-  const isLoading = useTokenList(s => s.isLoading);
-  const isLoadingByAddress = useTokenList(s => s.isLoadingByAddress);
+  const loadingAddress = currentAccount?.address.toLowerCase();
+  const isLoadingToken = useTokenList(state => {
+    if (!loadingAddress) {
+      return state.isLoading;
+    }
+    const loadingState = state.isLoadingByAddress[loadingAddress];
+    return isLpTokenEnabled ? loadingState?.allLoading : loadingState?.loading;
+  });
   const batchGetTokenList = useTokenList(s => s.batchGetTokenList);
   const getTokenList = useTokenList(s => s.getTokenList);
-
-  const isLoadingToken = useMemo(() => {
-    if (!currentAccount) {
-      return isLoading;
-    }
-    const address = currentAccount.address.toLowerCase();
-    if (isLpTokenEnabled) {
-      return isLoadingByAddress[address]?.allLoading;
-    }
-    return isLoadingByAddress[address]?.loading;
-  }, [currentAccount, isLpTokenEnabled, isLoadingByAddress, isLoading]);
 
   const { fetchAccountsAndTokenSettings, userTokenSettings } =
     useSelectTokensThreadSafe();

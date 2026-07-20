@@ -25,6 +25,7 @@ import {
   reportRegressionScenarioEvent,
   subscribeRegressionScenarioRuntimeControl,
 } from './runtime.nonprod';
+import { registerRegressionScenarioComponentAction } from './componentActions.nonprod';
 import { claimRegressionScenarioAction } from './runtimeStore';
 import { makeScreenContext } from './screenContext';
 
@@ -164,6 +165,25 @@ export function useRegressionScenario<
   TScreen extends RegressionScreenId = RegressionScreenId,
 >() {
   return useContext(ScenarioContext) as RegressionScenarioContext<TScreen>;
+}
+
+export function useRegressionScenarioComponentAction(
+  action: string,
+  handler: () => void | Promise<void>,
+) {
+  const context = useContext(ScenarioContext);
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  const runId = context.active ? context.runId : null;
+
+  useEffect(() => {
+    if (!runId) {
+      return;
+    }
+    return registerRegressionScenarioComponentAction(runId, action, () =>
+      handlerRef.current(),
+    );
+  }, [action, runId]);
 }
 
 export function useRegressionScenarioRuntime(): RegressionScenarioRuntimeContext {

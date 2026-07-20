@@ -17,6 +17,11 @@ export function useRegressionScenario<
   return INACTIVE_REGRESSION_SCENARIO_CONTEXT;
 }
 
+export function useRegressionScenarioComponentAction(
+  _action: string,
+  _handler: () => void | Promise<void>,
+) {}
+
 export function useRegressionScenarioRuntime(): RegressionScenarioRuntimeContext {
   return INACTIVE_REGRESSION_SCENARIO_CONTEXT;
 }

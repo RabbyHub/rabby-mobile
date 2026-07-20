@@ -91,6 +91,7 @@ import { useRefState } from '@/hooks/common/useRefState';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { useChainList } from '@/hooks/useChainList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
 import type { ITokenItem, TokenSelectIndexRow } from '@/store/tokens';
@@ -139,16 +140,16 @@ type TokenListItem =
 
 type UnfoldTokenListItem = Extract<TokenListItem, { type: 'unfold_token' }>;
 
+type TokenSelectorTokenRowProps = {
+  item: UnfoldTokenListItem;
+  children: (token: ITokenItem) => React.ReactNode;
+  showRenderProbe: boolean;
+  // renderItem creates a new child function; this tracks its real captures.
+  renderRevision: object;
+};
+
 const TokenSelectorTokenRow = React.memo(
-  ({
-    item,
-    children,
-    showRenderProbe,
-  }: {
-    item: UnfoldTokenListItem;
-    children: (token: ITokenItem) => React.ReactNode;
-    showRenderProbe: boolean;
-  }) => {
+  ({ item, children, showRenderProbe }: TokenSelectorTokenRowProps) => {
     const resourceToken = useTokenEntity(item.row?.tokenId);
     const token = item.data || resourceToken;
     const tokenId =
@@ -167,6 +168,10 @@ const TokenSelectorTokenRow = React.memo(
       </View>
     );
   },
+  (prev, next) =>
+    prev.item === next.item &&
+    prev.showRenderProbe === next.showRenderProbe &&
+    prev.renderRevision === next.renderRevision,
 );
 
 function TokenSelectorRowRenderCountOverlay({ tokenId }: { tokenId?: string }) {
@@ -293,6 +298,7 @@ export interface TokenSelectorProps<
   foldTokensList?: ITokenItem[];
   scamTokensList?: ITokenItem[];
   isLoading?: boolean;
+  onOpened?: () => void;
   onConfirm(item: ITokenItem): void;
   onCancel(): void;
   type?: T;
@@ -414,6 +420,7 @@ export const TokenSelectorSheetModal = ({
   supportChains,
   disabledTips,
   isLoading,
+  onOpened,
   headerTitle: customHeaderTitle,
   searchPlaceholder,
   disableItemCheck,
@@ -437,6 +444,11 @@ export const TokenSelectorSheetModal = ({
   const listRef = useRef<BottomSheetFlatListMethods>(null);
   const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
   const { list: cexList } = useCexSupportList();
+  const { testnetList } = useChainList();
+  const testnetChainServerIdSet = useMemo(
+    () => new Set(testnetList.map(chain => chain.serverId)),
+    [testnetList],
+  );
 
   useImperativeHandle(
     ref,
@@ -729,6 +741,44 @@ export const TokenSelectorSheetModal = ({
   );
 
   const longPressTriggered = useRef(false);
+  const tokenRowRenderRevision = useMemo(
+    () => ({
+      cexLogoById,
+      filterAccountItem: chainSearchCtx.filterAccountItem,
+      colors2024,
+      confirmTokenSelection,
+      debouncedQuery,
+      disableItemCheck,
+      disabledTips,
+      isBridgeTo,
+      needToTokenMarketInfo,
+      ownerAccountByAddress,
+      selectTab,
+      styles,
+      supportChainServerIdSet,
+      t,
+      testnetChainServerIdSet,
+      type,
+    }),
+    [
+      cexLogoById,
+      chainSearchCtx.filterAccountItem,
+      colors2024,
+      confirmTokenSelection,
+      debouncedQuery,
+      disableItemCheck,
+      disabledTips,
+      isBridgeTo,
+      needToTokenMarketInfo,
+      ownerAccountByAddress,
+      selectTab,
+      styles,
+      supportChainServerIdSet,
+      t,
+      testnetChainServerIdSet,
+      type,
+    ],
+  );
   const renderItemRenderComponent = useCallback<
     ListRenderItem<TokenListItem[][number]>
   >(
@@ -742,7 +792,8 @@ export const TokenSelectorSheetModal = ({
           return (
             <TokenSelectorTokenRow
               item={item}
-              showRenderProbe={shouldShowRenderProbe}>
+              showRenderProbe={shouldShowRenderProbe}
+              renderRevision={tokenRowRenderRevision}>
               {token => {
                 const {
                   disable: lightDisable,
@@ -770,7 +821,7 @@ export const TokenSelectorSheetModal = ({
                   !supportChainServerIdSet.has(token.chain);
                 const isCustomTestnetToken =
                   selectTab === 'testnet' ||
-                  !!findChainByServerID(token.chain)?.isTestnet;
+                  testnetChainServerIdSet.has(token.chain);
 
                 let percentColor = colors2024['red-default'];
                 if (
@@ -1142,6 +1193,8 @@ export const TokenSelectorSheetModal = ({
       disabledTips,
       confirmTokenSelection,
       shouldShowRenderProbe,
+      testnetChainServerIdSet,
+      tokenRowRenderRevision,
     ],
   );
 
@@ -1237,7 +1290,9 @@ export const TokenSelectorSheetModal = ({
       onChange={idx => {
         if (idx < 0) {
           onCancel();
+          return;
         }
+        onOpened?.();
       }}
       {...{
         containerStyle:
