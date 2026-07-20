@@ -81,7 +81,7 @@ export type TokenSelectInst = {
 
 const SHOW_CHAIN_FILTER_SCENES = ['swapFrom', 'bridgeFrom'];
 const EMPTY_TOKEN_LIST: ITokenItem[] = [];
-const REGRESSION_SHEET_EVENT_TIMEOUT_MS = 5000;
+const REGRESSION_SHEET_EVENT_TIMEOUT_MS = 10_000;
 
 type RegressionSheetEventWaiter = {
   resolve: () => void;

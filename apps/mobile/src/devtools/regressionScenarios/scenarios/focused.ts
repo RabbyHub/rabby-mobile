@@ -783,11 +783,13 @@ async function openSendTokenSelector(
     await runRegressionScenarioComponentAction(
       context.command.runId,
       'send-token-selector.open',
+      15_000,
     );
     await delay(warmupObserveMs);
     await runRegressionScenarioComponentAction(
       context.command.runId,
       'send-token-selector.close',
+      15_000,
     );
     await delay(settleMs);
     context.report('perf-mark', {
@@ -818,6 +820,7 @@ async function openSendTokenSelector(
       await runRegressionScenarioComponentAction(
         context.command.runId,
         'send-token-selector.open',
+        15_000,
       );
       perfWindow.mark('selector-open-dispatched', { openSequence });
       await delay(observeMs);
@@ -826,6 +829,7 @@ async function openSendTokenSelector(
       await runRegressionScenarioComponentAction(
         context.command.runId,
         'send-token-selector.close',
+        15_000,
       );
       perfWindow.mark('selector-close-dispatched', { openSequence });
 

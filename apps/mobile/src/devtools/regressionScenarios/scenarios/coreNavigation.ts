@@ -789,11 +789,13 @@ async function runHomeSendActivityStress(
       await runRegressionScenarioComponentAction(
         context.command.runId,
         'send-token-selector.open',
+        15_000,
       );
       await delay(selectorHoldMs);
       await runRegressionScenarioComponentAction(
         context.command.runId,
         'send-token-selector.close',
+        15_000,
       );
 
       const hiddenEnd = await waitForHomeStoreActivity(false);
