@@ -3,6 +3,7 @@
 Agent guidance for this repository:
 
 - Read `CLAUDE.md` for the main repo workflow and architecture notes.
+- When reviewing a Rabby Mobile pull request and publishing outbound findings, read `skills/rabby-mobile-code-review/SKILL.md`; use `skills/mobile-pr-ready-watch/SKILL.md` instead for making a PR ready or handling incoming review feedback.
 - When working in `apps/mobile` on Google Play upload or Android store-release preflight flows, read `apps/mobile/skills/google-play-release.md` and preserve the repo's public `./scripts/google-play.sh upload-internal-track` workflow instead of documenting or committing private `.codex` helpers.
 - When working in `apps/mobile` on debug export or local file sharing flows, read `apps/mobile/skills/file-share.md` and reuse `src/utils/shareLocalFile.ts` instead of duplicating platform-specific share code.
 - When patching, forking, or upgrading `react-native-keychain` in `apps/mobile`, read `apps/mobile/skills/keychain-upgrade.md` before changing Android behavior, fallback cipher selection, or package wiring.
