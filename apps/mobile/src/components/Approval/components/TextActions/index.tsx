@@ -20,7 +20,7 @@ import { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
-import { getMessageStyles } from './styles';
+import { getMessageStyles, SIGN_MESSAGE_CARD_MARGIN } from './styles';
 import type { Chain } from '@debank/common';
 import { HighlightedSignMessageText } from '../SignMessageHighlighter';
 import type { SignMessageHighlightToken } from '../signMessageTokenizer';
@@ -42,6 +42,7 @@ const Actions = ({
   chain,
   messageTokens,
   addressData,
+  approvalViewportHeight,
 }: {
   data: ParsedTextActionData | null;
   engineResults: Result[];
@@ -53,6 +54,7 @@ const Actions = ({
   chain?: Chain;
   messageTokens?: SignMessageHighlightToken[];
   addressData?: SignMessageAddressDataMap;
+  approvalViewportHeight: number;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -159,7 +161,19 @@ const Actions = ({
           )}
         </Card>
       </View>
-      <Card style={styles.messageCard}>
+      <Card
+        style={[
+          styles.messageCard,
+          styles.signMessageCard,
+          approvalViewportHeight
+            ? {
+                maxHeight: Math.max(
+                  0,
+                  approvalViewportHeight - SIGN_MESSAGE_CARD_MARGIN * 2,
+                ),
+              }
+            : undefined,
+        ]}>
         <View style={styles.messageTitle}>
           <Text
             style={styles.dashLine}

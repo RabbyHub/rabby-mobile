@@ -86,6 +86,7 @@ export const SignText = ({
   const signText = useMemo(() => hex2Text(hexData), [hexData]);
   const [isWatch, setIsWatch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [approvalViewportHeight, setApprovalViewportHeight] = useState(0);
   const [cantProcessReason, setCantProcessReason] =
     useState<ReactNode | null>();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -501,7 +502,12 @@ export const SignText = ({
 
   return (
     <View style={styles.wrapper}>
-      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
+      <BottomSheetScrollView
+        style={styles.approvalTx}
+        nestedScrollEnabled
+        onLayout={event =>
+          setApprovalViewportHeight(event.nativeEvent.layout.height)
+        }>
         {isLoading && (
           <Skeleton
             style={{
@@ -522,6 +528,7 @@ export const SignText = ({
             origin={params.session.origin}
             originLogo={site?.icon}
             chain={chain}
+            approvalViewportHeight={approvalViewportHeight}
           />
         )}
       </BottomSheetScrollView>

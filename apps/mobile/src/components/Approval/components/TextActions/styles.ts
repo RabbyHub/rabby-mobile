@@ -2,6 +2,8 @@ import { StyleSheet } from 'react-native';
 
 import { AppColorsVariants } from '@/constant/theme';
 
+export const SIGN_MESSAGE_CARD_MARGIN = 12;
+
 export const getMessageStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     messageContent: {
@@ -13,6 +15,7 @@ export const getMessageStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 16,
       paddingBottom: 16,
       maxHeight: 544,
+      flexShrink: 1,
     },
     messageText: {
       color: colors['neutral-body'],
@@ -55,7 +58,10 @@ export const getMessageStyles = (colors: AppColorsVariants) =>
     },
     noAction: {},
     messageCard: {
-      marginTop: 12,
+      marginTop: SIGN_MESSAGE_CARD_MARGIN,
+    },
+    signMessageCard: {
+      marginBottom: SIGN_MESSAGE_CARD_MARGIN,
     },
     testnetMessage: {
       padding: 15,

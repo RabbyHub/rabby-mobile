@@ -98,6 +98,7 @@ export const SignTypedData = ({
   const currentAccount = params.isGnosis ? params.account! : $account;
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
+  const [approvalViewportHeight, setApprovalViewportHeight] = useState(0);
   const { data, session, method, isGnosis, isSend } = params;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -812,7 +813,12 @@ export const SignTypedData = ({
 
   return (
     <View style={styles.wrapper}>
-      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
+      <BottomSheetScrollView
+        style={styles.approvalTx}
+        nestedScrollEnabled
+        onLayout={event =>
+          setApprovalViewportHeight(event.nativeEvent.layout.height)
+        }>
         {isLoading && (
           <Skeleton
             style={{
@@ -835,6 +841,7 @@ export const SignTypedData = ({
             origin={params.session.origin}
             originLogo={site?.icon}
             typedDataActionData={typedDataActionData}
+            approvalViewportHeight={approvalViewportHeight}
             multiAction={
               isMultiActions
                 ? {

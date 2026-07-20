@@ -40,7 +40,10 @@ import { getActionsStyle } from '../Actions/styles';
 import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
-import { getMessageStyles } from '../TextActions/styles';
+import {
+  getMessageStyles,
+  SIGN_MESSAGE_CARD_MARGIN,
+} from '../TextActions/styles';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Col, Row } from '../Actions/components/Table';
 import useCommonStyle from '../../hooks/useCommonStyle';
@@ -331,6 +334,7 @@ const Actions = ({
   multiAction,
   messageTokens,
   addressData,
+  approvalViewportHeight,
 }: {
   data: ParsedTypedDataActionData | null;
   requireData: ActionRequireData;
@@ -345,6 +349,7 @@ const Actions = ({
   multiAction?: MultiActionProps;
   messageTokens?: SignMessageHighlightToken[];
   addressData?: SignMessageAddressDataMap;
+  approvalViewportHeight: number;
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -404,7 +409,19 @@ const Actions = ({
         )}
       </View>
 
-      <Card style={styles.messageCard}>
+      <Card
+        style={[
+          styles.messageCard,
+          styles.signMessageCard,
+          approvalViewportHeight
+            ? {
+                maxHeight: Math.max(
+                  0,
+                  approvalViewportHeight - SIGN_MESSAGE_CARD_MARGIN * 2,
+                ),
+              }
+            : undefined,
+        ]}>
         <View style={styles.messageTitle}>
           <Text
             style={styles.dashLine}
