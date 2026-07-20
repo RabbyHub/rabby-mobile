@@ -84,8 +84,13 @@ const nodeModulesRoots = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
-const resolveMobileReactModule = moduleName => {
-  if (moduleName !== 'react' && !moduleName.startsWith('react/')) {
+const resolveMobileReactRuntimeModule = moduleName => {
+  const isReactModule =
+    moduleName === 'react' || moduleName.startsWith('react/');
+  const isReactNativeModule =
+    moduleName === 'react-native' || moduleName.startsWith('react-native/');
+
+  if (!isReactModule && !isReactNativeModule) {
     return undefined;
   }
 
@@ -357,10 +362,11 @@ const config = {
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
     resolveRequest: (context, moduleName, platform) => {
-      const mobileReactModule = resolveMobileReactModule(moduleName);
-      if (mobileReactModule) {
+      const mobileReactRuntimeModule =
+        resolveMobileReactRuntimeModule(moduleName);
+      if (mobileReactRuntimeModule) {
         return {
-          filePath: mobileReactModule,
+          filePath: mobileReactRuntimeModule,
           type: 'sourceFile',
         };
       }
