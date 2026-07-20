@@ -7,7 +7,7 @@ import { perpsStore } from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { shallow } from 'zustand/shallow';
 import { getSpotBalanceKey } from '@/utils/perps';
-import { useFocusedPerpsStore } from './useFocusedPerpsStore';
+import { useActivityPerpsStore } from './useActivityPerpsStore';
 
 type PerpsState = ReturnType<typeof perpsStore.getState>;
 
@@ -144,7 +144,7 @@ export const usePerpsAccount = () => {
   return usePerpsAccountState(state);
 };
 
-export const useFocusedPerpsAccount = () => {
-  const state = useFocusedPerpsStore(selectPerpsAccountState, shallow);
+export const useActivityPerpsAccount = () => {
+  const state = useActivityPerpsStore(selectPerpsAccountState, shallow);
   return usePerpsAccountState(state);
 };
