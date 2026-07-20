@@ -1,4 +1,3 @@
-import PQueue from 'p-queue';
 import type {
   AddrDescResponse,
   ContractInfo,
@@ -197,12 +196,28 @@ export const resolveSignMessageAddressData = async ({
   };
 
   const addressEntries = Array.from(addresses);
-  const queue = new PQueue({
-    concurrency: SIGN_MESSAGE_ADDRESS_ENRICHMENT_CONCURRENCY,
-  });
-  const entries = (await queue.addAll(
-    addressEntries.map(entry => () => resolveAddress(entry)),
-  )) as Array<Awaited<ReturnType<typeof resolveAddress>>>;
+  const entries = new Array<Awaited<ReturnType<typeof resolveAddress>>>(
+    addressEntries.length,
+  );
+  let nextIndex = 0;
+  const resolveNext = async () => {
+    while (nextIndex < addressEntries.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      entries[index] = await resolveAddress(addressEntries[index]);
+    }
+  };
+  await Promise.all(
+    Array.from(
+      {
+        length: Math.min(
+          SIGN_MESSAGE_ADDRESS_ENRICHMENT_CONCURRENCY,
+          addressEntries.length,
+        ),
+      },
+      () => resolveNext(),
+    ),
+  );
 
   return Object.fromEntries(entries);
 };
