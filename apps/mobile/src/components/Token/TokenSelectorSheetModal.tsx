@@ -486,9 +486,9 @@ export const TokenSelectorSheetModal = ({
     useCallback(
       () => () => {
         isSheetMountedRef.current = false;
-        toggleShowSheetModal('destroy');
+        tokenSelectorModalRef.current?.destroy();
       },
-      [toggleShowSheetModal],
+      [tokenSelectorModalRef],
     ),
   );
 

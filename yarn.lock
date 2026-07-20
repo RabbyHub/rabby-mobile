@@ -6379,7 +6379,7 @@ __metadata:
 
 "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 5.2.8
-  resolution: "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch::version=5.2.8&hash=0c6240&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch::version=5.2.8&hash=6b2430&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@gorhom/portal": "npm:1.0.14"
     invariant: "npm:^2.2.4"
@@ -6395,7 +6395,7 @@ __metadata:
       optional: true
     "@types/react-native":
       optional: true
-  checksum: 10/c10af0909079cf39cbaf1ed5e587cc5bf3deba24f2369aeb3bd9987efad2a300a193e4f273ed4cb9b440d9b9bf629e701356fa8d4f820598dc8fe16ecff1abc4
+  checksum: 10/3864e9fcda83d853e15f5bfafdd1a773efeede6855eb8fd81b5a9aa9dae288b24b1e2de3d8339122c8220a96285c5a7352e5cc5046b8171955dc9fa5cecd8f0e
   languageName: node
   linkType: hard
 
