@@ -299,6 +299,7 @@ export interface TokenSelectorProps<
   scamTokensList?: ITokenItem[];
   isLoading?: boolean;
   onOpened?: () => void;
+  onClosed?: () => void;
   onConfirm(item: ITokenItem): void;
   onCancel(): void;
   type?: T;
@@ -421,6 +422,7 @@ export const TokenSelectorSheetModal = ({
   disabledTips,
   isLoading,
   onOpened,
+  onClosed,
   headerTitle: customHeaderTitle,
   searchPlaceholder,
   disableItemCheck,
@@ -1290,6 +1292,7 @@ export const TokenSelectorSheetModal = ({
       onChange={idx => {
         if (idx < 0) {
           onCancel();
+          onClosed?.();
           return;
         }
         onOpened?.();

@@ -38,7 +38,24 @@ export async function runRegressionScenarioComponentAction(
   while (Date.now() - startedAt < timeoutMs) {
     const handler = registeredActions.get(runId)?.get(action);
     if (handler) {
-      await handler();
+      const remainingMs = Math.max(1, timeoutMs - (Date.now() - startedAt));
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          Promise.resolve().then(handler),
+          new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(
+                new Error(`Timed out running component action: ${action}`),
+              );
+            }, remainingMs);
+          }),
+        ]);
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      }
       return;
     }
     await new Promise<void>(resolve => setTimeout(resolve, 50));
