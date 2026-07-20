@@ -732,6 +732,12 @@ async function runHomeSendActivityStress(
     50,
     2000,
   );
+  const selectorEvery = readBoundedInteger(
+    context.command.params.selectorEvery,
+    1,
+    0,
+    100,
+  );
   const homeSettleMs = readBoundedInteger(
     context.command.params.homeSettleMs,
     120,
@@ -773,6 +779,7 @@ async function runHomeSendActivityStress(
   );
   let hiddenSourceNotificationCount = 0;
   let hiddenPublishedNotificationCount = 0;
+  let selectorInteractionCount = 0;
   const perfWindow = startScenarioPerformanceWindow(context, {
     label: 'home-send-activity-stress',
     reportEachGap: false,
@@ -803,17 +810,20 @@ async function runHomeSendActivityStress(
         'publishedNotificationCount',
       );
 
-      await runRegressionScenarioComponentAction(
-        context.command.runId,
-        'send-token-selector.open',
-        15_000,
-      );
-      await delay(selectorHoldMs);
-      await runRegressionScenarioComponentAction(
-        context.command.runId,
-        'send-token-selector.close',
-        15_000,
-      );
+      if (selectorEvery > 0 && cycle % selectorEvery === 0) {
+        await runRegressionScenarioComponentAction(
+          context.command.runId,
+          'send-token-selector.open',
+          15_000,
+        );
+        await delay(selectorHoldMs);
+        await runRegressionScenarioComponentAction(
+          context.command.runId,
+          'send-token-selector.close',
+          15_000,
+        );
+        selectorInteractionCount += 1;
+      }
 
       const hiddenEnd = await waitForHomeStoreActivity(false);
       hiddenSourceNotificationCount +=
@@ -857,6 +867,7 @@ async function runHomeSendActivityStress(
           catchUpCount:
             sumStoreActivityCounter(resumedScope, 'catchUpCount') -
             initialCatchUpCount,
+          selectorInteractionCount,
           hiddenSourceNotificationCount,
           hiddenPublishedNotificationCount,
         });
@@ -884,6 +895,7 @@ async function runHomeSendActivityStress(
     hiddenPublishedNotificationCount,
     catchUpCount,
     maxExpectedCatchUps,
+    selectorInteractionCount,
     stores: finalScope.stores.map(store => ({
       label: store.label,
       consumerCount: store.consumerCount,

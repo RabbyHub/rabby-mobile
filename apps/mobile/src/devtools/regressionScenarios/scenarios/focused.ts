@@ -752,7 +752,11 @@ async function openSendTokenSelector(
   );
   const openCount = Math.min(
     Math.max(Math.round(Number(context.command.params.openCount || 2)), 1),
-    2,
+    100,
+  );
+  const reportEvery = Math.min(
+    Math.max(Math.round(Number(context.command.params.reportEvery || 10)), 1),
+    100,
   );
   const warmupOpenCount = Math.min(
     Math.max(
@@ -836,6 +840,15 @@ async function openSendTokenSelector(
       if (index + 1 < openCount) {
         await delay(settleMs);
       }
+
+      if (openSequence % reportEvery === 0 || openSequence === openCount) {
+        context.report('perf-mark', {
+          label: 'send-token-selector-entry',
+          mark: 'selector-cycle-checkpoint',
+          openSequence,
+          openCount,
+        });
+      }
     }
   } finally {
     perfWindow.stop('send-token-selector-scenario-complete');
@@ -866,6 +879,7 @@ async function openSendTokenSelector(
     openCount,
     warmupOpenCount,
     observeMs,
+    reportEvery,
     profilePath: profileResult?.profilePath || '',
   });
 }
