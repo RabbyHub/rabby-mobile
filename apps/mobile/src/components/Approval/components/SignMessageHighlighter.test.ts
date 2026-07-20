@@ -86,6 +86,18 @@ describe('sign message origin fallback', () => {
         'http://127.0.0.1:8080',
       ),
     ).toBe(true);
+    expect(
+      hasSignMessageOriginMismatch(
+        '"verifying_contract": "intents.near"',
+        'https://near.com',
+      ),
+    ).toBe(false);
+    expect(
+      hasSignMessageOriginMismatch(
+        '"verifying_contract": "https://intents.near"',
+        'https://near.com',
+      ),
+    ).toBe(true);
   });
 
   it('adds verifyAddress only for unparsed external requests', () => {

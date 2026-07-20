@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
   },
   tagRail: {
     ...StyleSheet.absoluteFillObject,
+    right: -24,
   },
   tag: {
     position: 'absolute',
