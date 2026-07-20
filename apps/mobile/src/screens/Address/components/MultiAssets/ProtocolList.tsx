@@ -16,10 +16,7 @@ import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
 import { HomeTabName as TabName } from '@/hooks/navigation';
-import {
-  ListRenderFooter as ListRenderFooterComponent,
-  ListRenderSeparator,
-} from './RenderRow/Common';
+import { ListRenderSeparator } from './RenderRow/Common';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { getAllDefiCount } from '@/screens/Home/utils/converAssets';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
@@ -90,11 +87,8 @@ export const ProtocolList = () => {
 
   const isLoading = useProtocols(state => state.isLoading);
 
-  const {
-    data: portfoliosData,
-    loadMore: loadMorePortfolios,
-    hasMore: hasMorePortfolios,
-  } = useLoadMoreData(multiProtocols.unFold);
+  const { data: portfoliosData, loadMore: loadMorePortfolios } =
+    useLoadMoreData(multiProtocols.unFold);
 
   const shouldDefaultExpand = useMemo(
     () => multiProtocols.unFold.length <= 5,
@@ -260,14 +254,6 @@ export const ProtocolList = () => {
     ],
   );
 
-  const ListRenderFooter = useCallback(() => {
-    return hasMorePortfolios ? (
-      <MemoizedDefiItemLoader style={[styles.loadingMore]} />
-    ) : (
-      <ListRenderFooterComponent />
-    );
-  }, [hasMorePortfolios, styles.loadingMore]);
-
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
     const protocolRefresh = batchGetProtocols(myTop10Addresses, true);
@@ -353,7 +339,6 @@ export const ProtocolList = () => {
             />
           </>
         }
-        // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         style={[
@@ -398,10 +383,6 @@ const getStyles = createGetStyles2024(() => ({
   },
   defiLoading: {
     paddingHorizontal: 0,
-  },
-  loadingMore: {
-    paddingHorizontal: 0,
-    marginTop: 16,
   },
   fullDefi: {
     marginHorizontal: 0,
