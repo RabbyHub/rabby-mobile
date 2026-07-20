@@ -40,10 +40,7 @@ import { getActionsStyle } from '../Actions/styles';
 import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
-import {
-  getMessageStyles,
-  SIGN_MESSAGE_CARD_MARGIN,
-} from '../TextActions/styles';
+import { getMessageStyles } from '../TextActions/styles';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Col, Row } from '../Actions/components/Table';
 import useCommonStyle from '../../hooks/useCommonStyle';
@@ -51,19 +48,15 @@ import RevokePermit2 from '../Actions/RevokePermit2';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from '../Actions/components/TransactionActionList';
 import { noop } from 'lodash';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import { ParseCommonResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS } from '@debank/common';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { Text } from '@/components/Typography';
-import { HighlightedSignMessageText } from '../SignMessageHighlighter';
 import type { SignMessageHighlightToken } from '../signMessageTokenizer';
 import type { SignMessageAddressDataMap } from '../signMessageAddressData';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { RcIconCopyCC } from '@/assets/icons/common';
-import { toast } from '@/components2024/Toast';
+import { SignMessageCard } from '../TextActions/SignMessageCard';
 
 export interface MultiActionProps {
   actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];
@@ -352,8 +345,6 @@ const Actions = ({
   approvalViewportHeight: number;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
   const { styles: actionStyles } = useTheme2024({ getStyle: getActionsStyle });
 
   const isMultiAction = useMemo(() => {
@@ -409,72 +400,16 @@ const Actions = ({
         )}
       </View>
 
-      <Card
-        style={[
-          styles.messageCard,
-          styles.signMessageCard,
-          approvalViewportHeight
-            ? {
-                maxHeight: Math.max(
-                  0,
-                  approvalViewportHeight - SIGN_MESSAGE_CARD_MARGIN * 2,
-                ),
-              }
-            : undefined,
-        ]}>
-        <View style={styles.messageTitle}>
-          <Text
-            style={styles.dashLine}
-            ellipsizeMode="clip"
-            accessible={false}
-            numberOfLines={1}>
-            - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            - - - - - - - - - - - - - - - - - - - - - - - - - -
-          </Text>
-
-          <View style={styles.messageTitleContent}>
-            <Text
-              style={[
-                styles.messageTitleText,
-                styles.messageTitleTextWithCopy,
-              ]}>
-              {t('page.signTx.typedDataMessage')}
-            </Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('global.copy')}
-              hitSlop={10}
-              onPress={() => {
-                Clipboard.setString(message);
-                toast.success(t('global.copied'));
-              }}>
-              <RcIconCopyCC
-                color={colors['neutral-foot']}
-                width={14}
-                height={14}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <BottomSheetScrollView
-          nestedScrollEnabled
-          style={StyleSheet.flatten([
-            styles.signMessageContent,
-            data ? {} : styles.noAction,
-          ])}>
-          <HighlightedSignMessageText
-            text={message}
-            tokens={messageTokens}
-            chain={chain}
-            addressData={addressData}
-            account={account}
-            style={styles.messageText}
-            highlightStyle={styles.messageHighlight}
-          />
-        </BottomSheetScrollView>
-      </Card>
+      <SignMessageCard
+        title={t('page.signTx.typedDataMessage')}
+        message={message}
+        hasAction={!!data}
+        messageTokens={messageTokens}
+        chain={chain}
+        addressData={addressData}
+        account={account}
+        approvalViewportHeight={approvalViewportHeight}
+      />
     </View>
   );
 };
