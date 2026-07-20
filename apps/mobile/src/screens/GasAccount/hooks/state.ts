@@ -234,6 +234,7 @@ export const startHistoryRefreshState = <
     ...state.history,
     status: 'refreshing',
     refreshReason: reason,
+    loadingMore: false,
   },
 });
 

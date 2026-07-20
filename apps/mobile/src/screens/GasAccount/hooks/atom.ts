@@ -418,6 +418,11 @@ const isCurrentHistorySession = ({
   const latestSession = gasAccountStore.getState().session;
   return latestSession.sig === sig && latestSession.accountId === accountId;
 };
+const isCurrentHistoryRequest = (
+  requestId: number,
+  session: { sig?: string; accountId?: string },
+) =>
+  isLatestHistoryRefreshRequest(requestId) && isCurrentHistorySession(session);
 
 const refreshHistory = async () => {
   if (!isGasAccountHistoryRefreshEnabled) {
@@ -457,8 +462,7 @@ const refreshHistory = async () => {
 
     if (
       !isGasAccountHistoryRefreshEnabled ||
-      !isLatestHistoryRefreshRequest(requestId) ||
-      !isCurrentHistorySession({ sig, accountId })
+      !isCurrentHistoryRequest(requestId, { sig, accountId })
     ) {
       return undefined;
     }
@@ -489,8 +493,7 @@ const refreshHistory = async () => {
   } catch (error) {
     if (
       !isGasAccountHistoryRefreshEnabled ||
-      !isLatestHistoryRefreshRequest(requestId) ||
-      !isCurrentHistorySession({ sig, accountId })
+      !isCurrentHistoryRequest(requestId, { sig, accountId })
     ) {
       return undefined;
     }
@@ -504,6 +507,7 @@ async function loadMoreHistory() {
   const state = gasAccountStore.getState();
   const { sig, accountId } = state.session;
   const { history } = state;
+  const refreshRequestIdAtStart = latestHistoryRefreshRequestId;
   const hasLoadedAllHistory = history.totalCount <= history.list.length;
 
   if (
@@ -532,7 +536,7 @@ async function loadMoreHistory() {
       limit: 10,
     });
 
-    if (!isCurrentHistorySession({ sig, accountId })) {
+    if (!isCurrentHistoryRequest(refreshRequestIdAtStart, { sig, accountId })) {
       return;
     }
 
@@ -564,6 +568,10 @@ async function loadMoreHistory() {
       });
     }
   } catch (error) {
+    if (!isCurrentHistoryRequest(refreshRequestIdAtStart, { sig, accountId })) {
+      return;
+    }
+
     gasAccountStore.setState(prev => ({
       ...prev,
       history: {

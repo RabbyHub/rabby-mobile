@@ -15,6 +15,7 @@ import {
   Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import usePrevious from 'react-use/lib/usePrevious';
 import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
@@ -35,6 +36,8 @@ type GasAccountPendingHistoryItem =
   GasAccountHistoryState['txList']['rechargeList'][number];
 type GasAccountConfirmedHistoryItem =
   GasAccountHistoryState['txList']['list'][number];
+
+const END_REACHED_THRESHOLD = 0.6;
 
 const getPendingHistoryKey = ({
   item,
@@ -164,12 +167,22 @@ export const GasAccountHistory: React.FC<{
   listStyle?: StyleProp<ViewStyle>;
 }> = ({ historyState, style, listStyle }) => {
   const { t } = useTranslation();
-  const { loading, loadingMore, txList, loadMore, noMore, hasHistory } =
-    historyState;
+  const {
+    loading,
+    refreshing,
+    historyReady,
+    loadingMore,
+    txList,
+    loadMore,
+    noMore,
+    hasHistory,
+  } = historyState;
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const [isModalVisible, setIsModalVisible] = useState(false);
   const listHeightRef = useRef(0);
   const contentHeightRef = useRef(0);
+  const scrollOffsetRef = useRef(0);
+  const prevRefreshing = usePrevious(refreshing);
   const hasRechargeHistory = Boolean(txList?.rechargeList.length);
 
   const { bottom } = useSafeAreaInsets();
@@ -203,7 +216,7 @@ export const GasAccountHistory: React.FC<{
 
   const maybeLoadMore = useCallback(() => {
     if (
-      loading ||
+      refreshing ||
       loadingMore ||
       noMore ||
       !listHeightRef.current ||
@@ -212,19 +225,19 @@ export const GasAccountHistory: React.FC<{
       return;
     }
 
-    if (contentHeightRef.current <= listHeightRef.current) {
+    if (
+      contentHeightRef.current - listHeightRef.current <=
+      scrollOffsetRef.current + listHeightRef.current * END_REACHED_THRESHOLD
+    ) {
       loadMore();
     }
-  }, [loadMore, loading, loadingMore, noMore]);
+  }, [loadMore, loadingMore, noMore, refreshing]);
 
   useEffect(() => {
-    maybeLoadMore();
-  }, [
-    maybeLoadMore,
-    txList?.list.length,
-    txList?.rechargeList.length,
-    txList?.withdrawList.length,
-  ]);
+    if (prevRefreshing && historyReady) {
+      maybeLoadMore();
+    }
+  }, [historyReady, maybeLoadMore, prevRefreshing]);
 
   const sourceByTxKey = useMemo(() => {
     const map = new Map<string, string | undefined>();
@@ -350,6 +363,9 @@ export const GasAccountHistory: React.FC<{
           contentHeightRef.current = height;
           maybeLoadMore();
         }}
+        onScroll={event => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        }}
         ListHeaderComponent={ListHeaderComponent}
         renderItem={renderItem}
         extraData={txList?.rechargeList.length}
@@ -359,7 +375,7 @@ export const GasAccountHistory: React.FC<{
           }`
         }
         onEndReached={loadMore}
-        onEndReachedThreshold={0.6}
+        onEndReachedThreshold={END_REACHED_THRESHOLD}
         ListFooterComponent={ListEndLoader}
         ListEmptyComponent={ListEmptyComponent}
       />

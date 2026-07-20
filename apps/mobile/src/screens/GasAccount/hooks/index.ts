@@ -117,6 +117,8 @@ export const useGasAccountHistory = () => {
     history.rechargeList.length + history.withdrawList.length;
   const hasHistory = confirmedCount > 0 || pendingCount > 0;
   const hasPendingHistory = pendingCount > 0;
+  const refreshing = history.status === 'refreshing';
+  const historyReady = history.status === 'ready';
 
   useEffect(() => {
     if (!sig || !accountId) {
@@ -190,7 +192,9 @@ export const useGasAccountHistory = () => {
   const noMore = history.totalCount <= confirmedCount;
 
   return {
-    loading: history.status === 'refreshing' && !history.lastFetchedAt,
+    loading: refreshing && !history.lastFetchedAt,
+    refreshing,
+    historyReady,
     txList,
     loadingMore: !!history.loadingMore,
     loadMore: storeApiGasAccount.loadMoreHistory,
