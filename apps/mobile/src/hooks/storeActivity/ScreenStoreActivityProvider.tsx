@@ -5,6 +5,7 @@ import {
   createStoreActivityScope,
   type StoreActivityScope,
 } from '@/core/state/storeActivity';
+import { registerStoreActivityScope } from '@/core/state/storeActivityDiagnostics';
 import { StoreActivityProvider } from './StoreActivityProvider';
 
 type StoreActivityNavigation = {
@@ -48,12 +49,14 @@ export function ScreenStoreActivityProvider({
     };
   }, [navigation, scope]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const unregisterDiagnostics = registerStoreActivityScope(scope);
+
+    return () => {
+      unregisterDiagnostics();
       scope.dispose();
-    },
-    [scope],
-  );
+    };
+  }, [scope]);
 
   return (
     <StoreActivityProvider scope={scope}>{children}</StoreActivityProvider>

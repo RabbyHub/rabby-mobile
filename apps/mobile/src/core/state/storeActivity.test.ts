@@ -182,4 +182,39 @@ describe('store activity scope', () => {
     source.store.setState({ count: 1 });
     expect(boundStore.getState()).toEqual({ count: 0 });
   });
+
+  it('remains subscription-stable across 100 inactive update cycles', () => {
+    const source = createTrackedCountStore();
+    const scope = createStoreActivityScope({ active: true, label: 'home' });
+    const boundStore = scope.bindStore(source.trackedStore, 'stress');
+    const listener = jest.fn();
+    const unsubscribe = boundStore.subscribe(listener);
+
+    for (let cycle = 1; cycle <= 100; cycle += 1) {
+      scope.setActive(false);
+      for (let update = 1; update <= 20; update += 1) {
+        source.store.setState({ count: cycle * 100 + update });
+      }
+      scope.setActive(true);
+    }
+
+    expect(listener).toHaveBeenCalledTimes(100);
+    expect(source.getSubscriptionStats()).toEqual({
+      activeSubscriptions: 1,
+      totalSubscriptions: 101,
+      totalUnsubscriptions: 100,
+    });
+    expect(boundStore.getActivityDiagnostics()).toEqual(
+      expect.objectContaining({
+        activationCount: 101,
+        deactivationCount: 100,
+        sourceNotificationCount: 0,
+        publishedNotificationCount: 100,
+        catchUpCount: 100,
+      }),
+    );
+
+    unsubscribe();
+    expect(source.getSubscriptionStats().activeSubscriptions).toBe(0);
+  });
 });
