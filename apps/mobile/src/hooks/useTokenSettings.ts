@@ -64,6 +64,36 @@ const removePinedToken = <T extends { id: string; chain: string }>(
   }).then(fetchUserTokenSettings);
 };
 
+export function isUserTokenPinnedInMemory<
+  T extends { id: string; chain: string },
+>(token: T) {
+  return userTokenSettingsStore
+    .getState()
+    .pinedQueue.some(
+      pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
+    );
+}
+
+export function toggleUserTokenPinned<T extends { id: string; chain: string }>(
+  token: T,
+) {
+  if (isUserTokenPinnedInMemory(token)) {
+    removePinedToken(token);
+  } else {
+    pinToken(token);
+  }
+}
+
+export function useIsUserTokenPinned<T extends { id: string; chain: string }>(
+  token: T,
+) {
+  return userTokenSettingsStore(state =>
+    state.pinedQueue.some(
+      pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
+    ),
+  );
+}
+
 export const useUserTokenSettings = () => {
   const userTokenSettings = userTokenSettingsStore(s => s);
 
