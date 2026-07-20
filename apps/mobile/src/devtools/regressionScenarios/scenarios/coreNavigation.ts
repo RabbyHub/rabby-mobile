@@ -86,6 +86,23 @@ async function waitForHomeStoreActivity(active: boolean, timeoutMs = 5000) {
   );
 }
 
+async function selectHomeTab(tabIndex: number, timeoutMs = 10_000) {
+  apisHomeTabIndex.setTabIndex(tabIndex, true);
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const currentIndex =
+      apisHomeTabIndex.homeTabScrollerRef.current?.getCurrentIndex();
+    const indexDecimal = apisHomeTabIndex.svTabIndexDecimal.value;
+    if (currentIndex === tabIndex && Math.abs(indexDecimal - tabIndex) < 0.01) {
+      return;
+    }
+    await delay(25);
+  }
+
+  throw new Error(`Timed out waiting for Home tab index ${tabIndex}`);
+}
+
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
@@ -325,7 +342,7 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     .map(value => Number(value.trim()))
     .filter(value => Number.isInteger(value) && value >= 0 && value <= 3);
   for (const tabIndex of requestedTabs) {
-    apisHomeTabIndex.setTabIndex(tabIndex, true);
+    await selectHomeTab(tabIndex);
     context.report('assertion', {
       assertion: 'home-tab-selected',
       passed: navigationRef.getCurrentRoute()?.name === RootNames.Home,
@@ -815,9 +832,9 @@ async function runHomeSendActivityStress(
 
       if (assetsEvery > 0 && cycle % assetsEvery === 0) {
         const tabIndex = ((cycle / assetsEvery - 1) % 3) + 1;
-        apisHomeTabIndex.setTabIndex(tabIndex, true);
+        await selectHomeTab(tabIndex);
         await delay(homeSettleMs);
-        apisHomeTabIndex.setTabIndex(0, true);
+        await selectHomeTab(0);
       }
 
       if (refreshEvery > 0 && cycle % refreshEvery === 0) {
