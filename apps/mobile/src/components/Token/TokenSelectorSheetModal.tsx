@@ -482,6 +482,16 @@ export const TokenSelectorSheetModal = ({
     [regressionAnimatedIndex, toggleShowSheetModal, tokenSelectorModalRef],
   );
 
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        isSheetMountedRef.current = false;
+        toggleShowSheetModal('destroy');
+      },
+      [toggleShowSheetModal],
+    ),
+  );
+
   const initialRouteRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!initialRouteRef.current && visible) {
