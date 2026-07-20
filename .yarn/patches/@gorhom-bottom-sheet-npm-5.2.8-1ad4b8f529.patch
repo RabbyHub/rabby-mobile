@@ -49,7 +49,21 @@ diff --git a/src/components/bottomSheetModal/BottomSheetModal.tsx b/src/componen
 index 5d131f1ed227fefa637dd655b5d0e41a328aa8d5..dc1840a7ea63259c486210701f43475d1df79272 100644
 --- a/src/components/bottomSheetModal/BottomSheetModal.tsx
 +++ b/src/components/bottomSheetModal/BottomSheetModal.tsx
-@@ -474,9 +474,7 @@ const BottomSheetModal = memo(forwardRef(BottomSheetModalComponent)) as <
+@@ -237,5 +237,8 @@ function BottomSheetModalComponent<T = any>(
+         minimized.current === false &&
+         !animating
+       ) {
++        if (mounted.current) {
++          unmount();
++        }
+         return;
+       }
+@@ -410,3 +413,3 @@ function BottomSheetModalComponent<T = any>(
+-      if (enableDismissOnClose) {
++      if (enableDismissOnClose || forcedDismissed.current) {
+         unmount();
+       }
+@@ -474,9 +477,7 @@ const BottomSheetModal = memo(forwardRef(BottomSheetModalComponent)) as <
    }
  ) => ReturnType<typeof BottomSheetModalComponent>;
  (
