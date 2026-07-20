@@ -86,13 +86,6 @@ const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionLpTokenHeader);
 
 const MemoizedItemLoader = React.memo(ItemLoader);
-export const MemoizedTokenItemLoader = React.memo((props: RNViewProps) => {
-  return (
-    <View {...props} style={[{ paddingHorizontal: 12 }, props.style]}>
-      <MemoizedItemLoader />
-    </View>
-  );
-});
 
 const TokenResourceRow = React.memo(
   ({
