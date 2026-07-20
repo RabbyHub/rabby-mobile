@@ -261,16 +261,6 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
   },
-  skeletonBlock: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-    width: '100%',
-    height: 74,
-    padding: 0,
-    borderRadius: 16,
-    marginTop: 8,
-  },
   emptyView: {
     flex: 1,
     alignItems: 'center',
@@ -344,13 +334,6 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 24,
   },
-  emptyHolder: {
-    marginTop: 65,
-  },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
   emptyText: {
     marginTop: 21,
     fontSize: 16,
@@ -384,12 +367,6 @@ const getStyles = createGetStyles2024(ctx => ({
   image: {
     marginTop: 200,
     // marginBottom: 16,
-  },
-  footer: {
-    height: 200,
-  },
-  rightSlot: {
-    marginLeft: 8,
   },
   favoriteTag: {
     position: 'absolute',

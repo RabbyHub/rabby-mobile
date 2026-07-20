@@ -1080,12 +1080,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
   contentContainer: {
     paddingHorizontal: 0,
     paddingBottom: 200,
@@ -1105,13 +1099,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   gasPreContainer: {
     paddingHorizontal: 8,
-  },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],
@@ -1183,18 +1170,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   fullWidthButton: {
     flex: 1,

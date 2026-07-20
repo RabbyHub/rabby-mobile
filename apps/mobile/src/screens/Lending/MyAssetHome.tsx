@@ -568,17 +568,5 @@ const getStyle = createGetStyles2024(
     item: {
       marginHorizontal: 0,
     },
-    emptyContainer: {
-      paddingTop: 80,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    emptyText: {
-      fontSize: 14,
-      lineHeight: 18,
-      color: colors2024['neutral-secondary'],
-      fontWeight: '500',
-      fontFamily: 'SF Pro Rounded',
-    },
   }),
 );

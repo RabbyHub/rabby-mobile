@@ -502,12 +502,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   );
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  center: {
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    width: '100%',
-    marginLeft: -16,
-  },
   skeleton: {
     marginTop: 7,
     marginLeft: 8,
@@ -551,20 +545,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // textAlign: 'center',
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeSection: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changePercent: {

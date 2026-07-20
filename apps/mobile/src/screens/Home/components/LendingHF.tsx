@@ -94,12 +94,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '500',
   },
-  green: {
-    color: colors2024['green-default'],
-  },
-  red: {
-    color: colors2024['red-default'],
-  },
   netWorthText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,

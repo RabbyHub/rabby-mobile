@@ -366,30 +366,6 @@ export const FullDefiRenderItem = ({
 };
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
-  scrollContainer: {
-    flex: 1,
-    width: '100%',
-    marginTop: 8,
-    // backgroundColor: colors2024['neutral-bg-4'],
-  },
-  backButtonStyle: {
-    // width: 56,
-    // height: 56,
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginLeft: -16,
-    paddingLeft: 16,
-  },
-  projectHeaderBalance: {
-    color: colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'left',
-    marginLeft: 25,
-    marginBottom: 7,
-  },
   projectHeaderNetWorth: {
     color: colors2024['neutral-title-1'],
     fontSize: 17,
@@ -474,41 +450,10 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingHorizontal: 12,
     paddingTop: 12,
   },
-  footer: {
-    width: '100%',
-    paddingBottom: 56,
-    paddingHorizontal: 16,
-  },
-  appChainHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    backgroundColor: colors2024['neutral-bg-5'],
-    marginHorizontal: 16,
-    borderRadius: 6,
-    marginBottom: 20,
-  },
-  appChainHeaderText: {
-    color: colors2024['neutral-title-1'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
   innerProtocolContainer: {
     position: 'absolute',
     top: -12,
     right: 0,
-  },
-  gradientBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    borderRadius: 16,
-    right: 0,
-    height: 82,
   },
   protocolActionsList: {
     display: 'flex',

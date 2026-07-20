@@ -346,15 +346,6 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
   },
-  done: {
-    color: ctx.colors2024['neutral-secondary'],
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
-  },
   title: {
     fontSize: 20,
     fontWeight: '800',
@@ -412,12 +403,6 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
   },
-  bgContainer: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-  },
   moreWalletsContainer: {
     marginTop: 24,
     // paddingHorizontal: 16,
@@ -469,11 +454,6 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 2,
     borderColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 10,
-  },
-  moreWalletsButtonIconImage: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
   },
   horizontalLine: {
     // width: 100,

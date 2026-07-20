@@ -516,13 +516,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
     // ...makeDebugBorder('blue'),
   },
-  skeleton: {
-    marginTop: 20,
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
   skeletonNetWorth: {
     borderRadius: 8,
     backgroundColor: isLight
@@ -546,13 +539,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
     alignItems: 'center',
     justifyContent: 'flex-start',
-  },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
   },
   changePercent: {
     fontSize: 14,
@@ -580,23 +566,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // ...makeDebugBorder('red'),
   },
   chartContainer: {},
-  globalWarning: {
-    marginHorizontal: 16,
-    marginBottom: 13,
-  },
   loading: {
     width: '100%',
     height: 114,
     paddingHorizontal: 0,
   },
   relative: { position: 'relative' },
-  bg: {
-    position: 'absolute',
-    left: 0,
-    width: '100%',
-    height: 32,
-    zIndex: -100,
-  },
   balanceOpacity: {
     opacity: 0.2,
   },

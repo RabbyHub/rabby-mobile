@@ -228,27 +228,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  changeText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    width: 60,
-  },
-  changeTextPositive: {
-    color: colors2024['red-default'],
-  },
-  trendChartContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    //paddingHorizontal: 6.5,
-    paddingVertical: 6,
-    borderRadius: 6,
-    width: 60,
-    alignItems: 'flex-end',
-  },
   leftSlot: {
     width: 24,
     marginRight: 0,
@@ -272,16 +251,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeletonItem: {
     backgroundColor: 'transparent',
-  },
-  trendChartWrapper: {
-    height: 30,
-    marginTop: -10,
-    marginBottom: 10,
-  },
-  lpTokenIconContainer: {
-    marginLeft: 0,
-    flexShrink: 0,
-    justifyContent: 'flex-start',
   },
   tokenAssetContainer: {
     flexDirection: 'row',

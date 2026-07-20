@@ -374,48 +374,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 3,
   },
-  sectionHeader: {
-    color: colors2024['neutral-foot'],
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: 'SF Pro Rounded',
-  },
-  hfTipsContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  hfTipsContentText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-InvertHighlight'],
-  },
-  moreContainer: {
-    height: 14,
-  },
-  moreText: {
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
-  },
-  closeButton: {},
-  parentWrapperStyle: {
-    width: '100%',
-    flex: 1,
-    gap: 6,
-  },
-  contentStyle: {
-    paddingHorizontal: 12,
-    paddingRight: 19,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 54,
-  },
   extraContainer: {
     position: 'relative',
     backgroundColor: colors2024['neutral-bg-5'],
