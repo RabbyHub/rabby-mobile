@@ -20,8 +20,10 @@ import tokenStore from '@/store/tokens';
 import { findChain, findChainByEnum, makeTokenFromChain } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { getLatestStoreActivityScopeDiagnostics } from '@/core/state/storeActivityDiagnostics';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
+import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -29,6 +31,7 @@ import {
   parseScenarioBoolean,
   pushNestedScreen,
   resetToHome,
+  startScenarioPerformanceWindow,
   waitForScenarioAssertion,
 } from './utils';
 
@@ -41,6 +44,47 @@ const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
   2: 'home-assets-defi-ready',
   3: 'home-assets-nft-ready',
 };
+
+function readBoundedInteger(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, Math.round(parsed)));
+}
+
+function sumStoreActivityCounter(
+  scope: NonNullable<ReturnType<typeof getLatestStoreActivityScopeDiagnostics>>,
+  key:
+    | 'sourceNotificationCount'
+    | 'publishedNotificationCount'
+    | 'catchUpCount',
+) {
+  return scope.stores.reduce((total, store) => total + store[key], 0);
+}
+
+async function waitForHomeStoreActivity(active: boolean, timeoutMs = 5000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const scope = getLatestStoreActivityScopeDiagnostics('home');
+    if (scope?.active === active) {
+      return scope;
+    }
+    await delay(25);
+  }
+
+  throw new Error(
+    `Timed out waiting for Home store activity to become ${
+      active ? 'active' : 'inactive'
+    }`,
+  );
+}
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -656,6 +700,190 @@ async function openAppBackgroundRestore(
   });
 }
 
+async function runHomeSendActivityStress(
+  context: RegressionScenarioExecutionContext,
+) {
+  const cycleCount = readBoundedInteger(
+    context.command.params.cycles,
+    10,
+    1,
+    100,
+  );
+  const selectorHoldMs = readBoundedInteger(
+    context.command.params.selectorHoldMs,
+    120,
+    50,
+    2000,
+  );
+  const homeSettleMs = readBoundedInteger(
+    context.command.params.homeSettleMs,
+    120,
+    50,
+    2000,
+  );
+  const refreshEvery = readBoundedInteger(
+    context.command.params.refreshEvery,
+    10,
+    0,
+    100,
+  );
+  const assetsEvery = readBoundedInteger(
+    context.command.params.assetsEvery,
+    5,
+    0,
+    100,
+  );
+  const reportEvery = readBoundedInteger(
+    context.command.params.reportEvery,
+    10,
+    1,
+    100,
+  );
+
+  resetToHome();
+  await context.waitForRoute(RootNames.Home);
+  const initialScope = await waitForHomeStoreActivity(true);
+  const managedStores = initialScope.stores.filter(
+    store => store.consumerCount > 0,
+  );
+  if (!managedStores.length) {
+    throw new Error('Home activity scope has no managed store consumers');
+  }
+
+  const initialCatchUpCount = sumStoreActivityCounter(
+    initialScope,
+    'catchUpCount',
+  );
+  let hiddenSourceNotificationCount = 0;
+  let hiddenPublishedNotificationCount = 0;
+  const perfWindow = startScenarioPerformanceWindow(context, {
+    label: 'home-send-activity-stress',
+    reportEachGap: false,
+  });
+
+  try {
+    for (let cycle = 1; cycle <= cycleCount; cycle += 1) {
+      pushNestedScreen(RootNames.StackTransaction, RootNames.Send, {});
+      await context.waitForRoute(RootNames.Send);
+      const hiddenStart = await waitForHomeStoreActivity(false);
+      const subscribedWhileHidden = hiddenStart.stores.filter(
+        store => store.consumerCount > 0 && store.sourceSubscribed,
+      );
+      if (subscribedWhileHidden.length) {
+        throw new Error(
+          `Home stores remained subscribed while hidden: ${subscribedWhileHidden
+            .map(store => store.label)
+            .join(', ')}`,
+        );
+      }
+
+      const sourceNotificationsBefore = sumStoreActivityCounter(
+        hiddenStart,
+        'sourceNotificationCount',
+      );
+      const publishedNotificationsBefore = sumStoreActivityCounter(
+        hiddenStart,
+        'publishedNotificationCount',
+      );
+
+      await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'send-token-selector.open',
+      );
+      await delay(selectorHoldMs);
+      await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'send-token-selector.close',
+      );
+
+      const hiddenEnd = await waitForHomeStoreActivity(false);
+      hiddenSourceNotificationCount +=
+        sumStoreActivityCounter(hiddenEnd, 'sourceNotificationCount') -
+        sourceNotificationsBefore;
+      hiddenPublishedNotificationCount +=
+        sumStoreActivityCounter(hiddenEnd, 'publishedNotificationCount') -
+        publishedNotificationsBefore;
+
+      if (!navigationRef.canGoBack()) {
+        throw new Error('Send screen cannot navigate back to Home');
+      }
+      navigationRef.goBack();
+      await context.waitForRoute(RootNames.Home);
+      const resumedScope = await waitForHomeStoreActivity(true);
+
+      if (assetsEvery > 0 && cycle % assetsEvery === 0) {
+        const tabIndex = ((cycle / assetsEvery - 1) % 3) + 1;
+        apisHomeTabIndex.setTabIndex(tabIndex, true);
+        await delay(homeSettleMs);
+        apisHomeTabIndex.setTabIndex(0, true);
+      }
+
+      if (refreshEvery > 0 && cycle % refreshEvery === 0) {
+        await runRegressionScenarioComponentAction(
+          context.command.runId,
+          'home.manual-refresh',
+          10_000,
+        );
+      }
+      await delay(homeSettleMs);
+
+      if (cycle % reportEvery === 0 || cycle === cycleCount) {
+        context.report('perf-mark', {
+          label: 'home-send-activity-stress',
+          mark: 'cycle-checkpoint',
+          cycle,
+          managedStoreCount: resumedScope.stores.filter(
+            store => store.consumerCount > 0,
+          ).length,
+          catchUpCount:
+            sumStoreActivityCounter(resumedScope, 'catchUpCount') -
+            initialCatchUpCount,
+          hiddenSourceNotificationCount,
+          hiddenPublishedNotificationCount,
+        });
+      }
+    }
+  } finally {
+    perfWindow.stop('home-send-activity-stress-complete');
+  }
+
+  const finalScope = await waitForHomeStoreActivity(true);
+  const catchUpCount =
+    sumStoreActivityCounter(finalScope, 'catchUpCount') - initialCatchUpCount;
+  const maxExpectedCatchUps = cycleCount * managedStores.length;
+  const passed =
+    hiddenSourceNotificationCount === 0 &&
+    hiddenPublishedNotificationCount === 0 &&
+    catchUpCount <= maxExpectedCatchUps;
+
+  context.report('assertion', {
+    assertion: 'home-hidden-store-publication-paused',
+    passed,
+    cycleCount,
+    managedStoreCount: managedStores.length,
+    hiddenSourceNotificationCount,
+    hiddenPublishedNotificationCount,
+    catchUpCount,
+    maxExpectedCatchUps,
+    stores: finalScope.stores.map(store => ({
+      label: store.label,
+      consumerCount: store.consumerCount,
+      sourceSubscribed: store.sourceSubscribed,
+      activationCount: store.activationCount,
+      deactivationCount: store.deactivationCount,
+      sourceSubscribeCount: store.sourceSubscribeCount,
+      sourceUnsubscribeCount: store.sourceUnsubscribeCount,
+      sourceNotificationCount: store.sourceNotificationCount,
+      publishedNotificationCount: store.publishedNotificationCount,
+      catchUpCount: store.catchUpCount,
+    })),
+  });
+
+  if (!passed) {
+    throw new Error('Hidden Home store publications were not fully paused');
+  }
+}
+
 export async function executeRegressionScenario(
   context: RegressionScenarioExecutionContext,
 ) {
@@ -698,6 +926,9 @@ export async function executeRegressionScenario(
       break;
     case 'app-background-restore':
       await openAppBackgroundRestore(context);
+      break;
+    case 'home-send-activity-stress':
+      await runHomeSendActivityStress(context);
       break;
     default:
       throw new Error(

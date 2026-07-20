@@ -165,6 +165,7 @@ import {
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -1073,6 +1074,11 @@ export const HomeOverview = React.memo(() => {
     });
     await Promise.race([safeFullRefresh, sleep(3000)]);
   }, [refreshManualBalance, refreshManualHomeBackgroundData]);
+
+  useRegressionScenarioComponentAction(
+    'home.manual-refresh',
+    handleManualPulldownRefresh,
+  );
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {

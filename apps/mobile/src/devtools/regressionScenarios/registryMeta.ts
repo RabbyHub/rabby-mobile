@@ -117,6 +117,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     description:
       'Open Home, then let the host runner background and restore the app.',
   },
+  'home-send-activity-stress': {
+    id: 'home-send-activity-stress',
+    kind: 'core',
+    screens: ['Home', 'Send'],
+    requiresFixture: false,
+    description:
+      'Repeat Home, Send, token selector, refresh, and asset-tab cycles while validating inactive store subscriptions.',
+  },
   'dapp-browser': {
     id: 'dapp-browser',
     kind: 'focused',

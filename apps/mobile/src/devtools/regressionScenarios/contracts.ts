@@ -15,6 +15,7 @@ export const CORE_REGRESSION_SCENARIO_IDS = [
   'swap-funded',
   'settings-restart',
   'app-background-restore',
+  'home-send-activity-stress',
 ] as const;
 
 export const FOCUSED_REGRESSION_SCENARIO_IDS = [

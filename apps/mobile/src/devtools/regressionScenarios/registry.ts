@@ -21,6 +21,7 @@ const SCENARIO_MODULE_LOADERS: Record<
   'swap-funded': () => import('./scenarios/coreNavigation'),
   'settings-restart': () => import('./scenarios/coreNavigation'),
   'app-background-restore': () => import('./scenarios/coreNavigation'),
+  'home-send-activity-stress': () => import('./scenarios/coreNavigation'),
   'dapp-browser': () => import('./scenarios/focused'),
   'dapp-connect': () => import('./scenarios/focused'),
   'dapp-switch-chain': () => import('./scenarios/focused'),
