@@ -265,7 +265,7 @@ describe('WhiteListItemInSheetModal sortable interactions', () => {
     );
     expect(mockContextMenuProps).toEqual(
       expect.objectContaining({
-        preViewBorderRadius: 16,
+        preViewBorderRadius: 20,
         triggerProps: { action: 'longPress' },
       }),
     );

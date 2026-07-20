@@ -32,15 +32,17 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import DragHandleSVG from '@/assets2024/icons/whitelist/drag-handle.svg';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Sortable, { useItemContext } from 'react-native-sortables';
+import { SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS } from './layout';
 
 const SIZES = {
   dragHandleW: 60,
   dragIcon: 20,
+  itemBorderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
   itemH: 78,
 };
 
@@ -287,7 +289,10 @@ export const WhiteListItemInSheetModal = ({
   const cardStyle = StyleSheet.flatten([
     styles.card,
     style,
-    enableMenu && (isPressing || isActiveDragging) && styles.cardPressing,
+    !IS_IOS &&
+      enableMenu &&
+      (isPressing || isActiveDragging) &&
+      styles.menuPressing,
   ]);
 
   const effectiveMenuActions = interactionDisabled
@@ -296,15 +301,23 @@ export const WhiteListItemInSheetModal = ({
 
   const pressableItem = (
     <AddressItemShadowView
+      disableShadow={isActiveDragging}
       style={[
         styles.shadowView,
-        !enableMenu && isPressing && styles.rootPressing,
+        !IS_IOS && !enableMenu && isPressing && styles.rootPressing,
       ]}>
       <TouchableOpacity
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
-        style={StyleSheet.flatten([styles.root])}
+        style={StyleSheet.flatten([
+          styles.root,
+          IS_IOS && !enableMenu && isPressing && styles.rootPressing,
+          IS_IOS &&
+            enableMenu &&
+            (isPressing || isActiveDragging) &&
+            styles.menuPressing,
+        ])}
         delayLongPress={IS_ANDROID ? 350 : 200} // long press delay
         disabled={interactionDisabled}
         onPress={handlePress}
@@ -328,7 +341,7 @@ export const WhiteListItemInSheetModal = ({
         menuTitle: account.address,
         menuActions: effectiveMenuActions,
       }}
-      preViewBorderRadius={16}
+      preViewBorderRadius={SIZES.itemBorderRadius}
       triggerProps={{ action: 'longPress' }}>
       {pressableItem}
     </ContextMenuView>
@@ -357,7 +370,14 @@ export const WhiteListItemInSheetModal = ({
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
+    borderRadius: SIZES.itemBorderRadius,
     overflow: 'hidden',
+    ...(IS_IOS
+      ? {
+          borderWidth: 1,
+          borderColor: colors2024['neutral-line'],
+        }
+      : {}),
   },
   sortableRoot: {
     position: 'relative',
@@ -383,22 +403,25 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderColor: colors2024['brand-light-2'],
   },
   shadowView: {
-    borderRadius: 20,
+    borderRadius: SIZES.itemBorderRadius,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     position: 'relative',
     width: '100%',
+    ...(IS_IOS ? { borderWidth: 0 } : {}),
   },
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
-    borderRadius: 20,
+    borderRadius: SIZES.itemBorderRadius,
     flex: 1,
     flexGrow: 1,
-    backgroundColor: isLight
+    backgroundColor: IS_IOS
+      ? 'transparent'
+      : isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     padding: 16,
@@ -474,9 +497,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
-  cardPressing: {
+  menuPressing: {
     backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 16,
   },
   walletIcon: {
     borderRadius: 12,

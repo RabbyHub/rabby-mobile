@@ -18,6 +18,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { IS_ANDROID } from '@/core/native/utils';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 
+import { SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS } from './layout';
 import { WhiteListItemInSheetModal } from './WhiteListItem';
 
 type SortableWhitelistItem = {
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   item: {
-    borderRadius: 16,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     width: '100%',
   },
 });
