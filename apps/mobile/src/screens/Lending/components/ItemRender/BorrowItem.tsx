@@ -377,14 +377,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  buttonPrimary: {
-    flex: 1,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors2024['brand-light-1'],
-  },
   aaveButtonPrimary: {
     flex: 1,
     height: 32,
@@ -398,13 +390,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  buttonPrimaryText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
   },
   badgeContainer: {

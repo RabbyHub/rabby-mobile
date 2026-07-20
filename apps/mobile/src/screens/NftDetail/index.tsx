@@ -470,9 +470,6 @@ const getStyle = createGetStyles2024(
       gap: 8,
       alignItems: 'center',
     },
-    assetIcon: {
-      borderRadius: 8,
-    },
     tokenSymbol: {
       flexShrink: 1,
       color: colors2024['neutral-title-1'],

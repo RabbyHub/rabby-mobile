@@ -4,10 +4,6 @@ import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { ActionItem } from './types';
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_SECTION_HEADER,
-} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import {
@@ -375,56 +371,8 @@ const getStyles = createGetStyles2024(ctx => ({
   list: {
     flex: 1,
   },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: ASSETS_SECTION_HEADER,
-    // paddingHorizontal: 16,
-    zIndex: 1,
-  },
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
-  removeLeft: {
-    marginLeft: 0,
-  },
-  renderItemWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    height: ASSETS_ITEM_HEIGHT_NEW,
-    paddingLeft: 12,
-    width: '100%',
-  },
-  bg2: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  sectionHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
-    // paddingRight: 8,
-    height: ASSETS_SECTION_HEADER,
-  },
-  buttonHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
-  assetHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
-    height: ASSETS_SECTION_HEADER,
-    paddingBottom: 8,
-    paddingLeft: 12 + 16,
-    paddingRight: 16,
-    width: '100%',
-  },
-  symbol: {
-    fontSize: 16,
-    height: ASSETS_SECTION_HEADER,
-    lineHeight: ASSETS_SECTION_HEADER,
-    paddingLeft: 9 + 16,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   emptyAssets: {
     //backgroundColor: 'transparent',

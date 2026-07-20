@@ -251,12 +251,6 @@ export default function SendNFT() {
 }
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    position: 'relative',
-  },
   sendNFTScreen: {
     width: '100%',
     height: '100%',
@@ -267,13 +261,5 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   mainContent: {
     paddingHorizontal: 20,
     paddingBottom: 308,
-  },
-
-  buttonContainer: {
-    width: '100%',
-    height: 52,
-  },
-  button: {
-    backgroundColor: colors2024['blue-default'],
   },
 }));

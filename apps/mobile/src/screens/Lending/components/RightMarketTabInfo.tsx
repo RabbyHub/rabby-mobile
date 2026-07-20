@@ -167,20 +167,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  emodeValue: {
-    fontSize: 12,
-    lineHeight: 16,
-    maxWidth: 100,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  enabledEmodeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-  },
   border: {
     padding: 1,
     borderRadius: 6,

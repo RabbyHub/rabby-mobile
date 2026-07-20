@@ -59,11 +59,6 @@ const AssetItem = ({
 export default AssetItem;
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    position: 'relative',
-    flex: 1,
-    width: '100%',
-  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -75,12 +70,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
     marginTop: 8,
-  },
-  ava: {
-    width: 46,
-    height: 46,
-    borderRadius: 46,
-    backgroundColor: colors2024['neutral-bg-2'],
   },
   left: {
     flex: 1,
@@ -126,88 +115,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   zeroBorrowed: {
     color: colors2024['neutral-info'],
-  },
-  listHeader: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    marginBottom: 2,
-  },
-  headerToken: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    flex: 1,
-  },
-  headerApy: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    width: 60,
-    flex: 0,
-  },
-  headerMyBorrows: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    flex: 0,
-    marginLeft: 10,
-    width: 80,
-  },
-  headerContainer: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  loading: {
-    width: 124,
-    marginTop: 16,
-    backgroundColor: colors2024['neutral-bg-5'],
-    marginBottom: 2,
-    marginLeft: 8,
-  },
-  availableCard: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 6,
-    marginTop: 8,
-    gap: 2,
-  },
-  availableCardIsolated: {
-    backgroundColor: colors2024['orange-light-1'],
-  },
-  availableCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  availableCardTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  orangeText: {
-    color: colors2024['orange-default'],
-  },
-  usdValue: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  availableCardValue: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
   },
   yourBalanceContainer: {
     flexDirection: 'row',

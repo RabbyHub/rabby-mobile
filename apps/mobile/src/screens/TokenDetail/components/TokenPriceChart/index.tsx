@@ -381,29 +381,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 7,
     paddingBottom: 30,
   },
-  xTitle: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  xText: {
-    fontSize: 13,
-    color: colors2024['neutral-foot'],
-  },
   hidden: {
     display: 'none',
-  },
-  dateTime: {
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    paddingTop: 0,
-  },
-  empty: {
-    height: 115,
   },
   item: {
     flexShrink: 1,

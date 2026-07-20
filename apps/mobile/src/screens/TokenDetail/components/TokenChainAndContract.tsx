@@ -267,26 +267,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 6,
   },
-  tokenSymbol: {
-    flexShrink: 1,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    flexWrap: 'nowrap',
-  },
-  contract: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',

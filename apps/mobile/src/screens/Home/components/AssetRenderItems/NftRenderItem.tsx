@@ -217,9 +217,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginRight: 8,
     maxWidth: 200,
   },
-  highlightText: {
-    color: colors2024['brand-default'],
-  },
   amount: {
     fontSize: 16,
     lineHeight: 20,

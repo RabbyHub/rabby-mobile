@@ -166,31 +166,6 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontWeight: '900',
     flexWrap: 'nowrap',
   },
-  contract: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  address: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-  },
-  icon: {
-    width: 14,
-    height: 14,
-  },
-  iconJump: {
-    marginLeft: 8,
-  },
   chainLogo: {
     borderWidth: 1.5,
     overflow: 'hidden',

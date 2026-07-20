@@ -136,9 +136,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     flex: 1,
   },
-  apyContainer: {
-    marginTop: 26,
-  },
   availableValue: {
     flex: 1,
     textAlign: 'right',

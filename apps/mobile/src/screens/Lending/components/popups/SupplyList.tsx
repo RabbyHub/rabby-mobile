@@ -595,36 +595,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       overflow: 'hidden',
       textAlign: 'left',
     },
-    yourSupplied: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'right',
-    },
-    zeroSupplied: {
-      color: colors2024['neutral-info'],
-    },
-    yourBalanceContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 2,
-    },
-    walletIcon: {
-      width: 16,
-      height: 16,
-      color: colors2024['neutral-secondary'],
-      marginTop: -2,
-    },
-    yourBalance: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'right',
-    },
     listHeader: {
       paddingVertical: 2,
       paddingHorizontal: 4,
@@ -671,14 +641,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingRight: 4,
       textAlign: 'right',
       flex: 0,
-    },
-    headerMySupplies: {
-      fontSize: 14,
-      lineHeight: 18,
-      color: colors2024['neutral-secondary'],
-      flex: 0,
-      marginLeft: 10,
-      width: 80,
     },
     absoluteContainer: {
       position: 'absolute',

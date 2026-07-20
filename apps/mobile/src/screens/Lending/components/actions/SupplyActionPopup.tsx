@@ -943,16 +943,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    width: '100%',
-  },
   bottomSheetScrollView: {
     width: '100%',
   },
@@ -962,18 +952,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   gasPreContainer: {
     paddingHorizontal: 8,
-  },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
-  },
-  tokenInfos: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   reserveErrorTip: {
     marginTop: 30,
@@ -986,14 +964,6 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     marginTop: 0,
     fontFamily: 'SF Pro Rounded',
-  },
-  sectionContainer: {
-    paddingBottom: 32,
-    width: '100%',
-  },
-  section: {
-    marginTop: 28,
-    lineHeight: 24,
   },
   buttonContainer: {
     height:
@@ -1015,17 +985,5 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
 }));

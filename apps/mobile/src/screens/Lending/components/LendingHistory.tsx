@@ -351,18 +351,8 @@ function LendingHistory(): JSX.Element {
 }
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
-  headerTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   container: {
     backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
-  },
-  titleText: {
-    color: colors2024['neutral-title-1'],
-    fontSize: 16,
-    fontWeight: '600',
   },
 }));
 

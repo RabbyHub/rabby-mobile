@@ -393,14 +393,8 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 12,
     paddingBottom: 48,
   },
-  bgContainer: {
-    paddingHorizontal: 12,
-  },
   emptyAssets: {
     marginHorizontal: 0,
-  },
-  emptyTokenHolder: {
-    paddingHorizontal: 0,
   },
   defiLoading: {
     paddingHorizontal: 0,

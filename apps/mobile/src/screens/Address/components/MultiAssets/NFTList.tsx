@@ -410,9 +410,6 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 12,
     paddingBottom: 48,
   },
-  bgContainer: {
-    paddingHorizontal: 12,
-  },
   sectionHeader: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
@@ -440,9 +437,6 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],
-  },
-  footerGap: {
-    height: 70,
   },
   removeLeft: {
     marginLeft: 0,
