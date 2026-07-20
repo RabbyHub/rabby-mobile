@@ -23,6 +23,7 @@ import type {
   BottomSheetFlatListMethods,
 } from '@gorhom/bottom-sheet';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { useSharedValue } from 'react-native-reanimated';
 import useDebounce from 'react-use/lib/useDebounce';
 import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import type {
@@ -88,6 +89,7 @@ import {
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
 import { useRefState } from '@/hooks/common/useRefState';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
@@ -404,6 +406,7 @@ export function useTokenSelectorModalVisible(options?: {
 }
 export type TokenSelectorSheetModalInst = {
   toggleShow: (nextShown: SheetModalShowType) => void;
+  getCurrentIndex: () => number;
 };
 export const TokenSelectorSheetModal = ({
   visible,
@@ -442,6 +445,7 @@ export const TokenSelectorSheetModal = ({
   TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> }) => {
   const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
     useSheetModal();
+  const regressionAnimatedIndex = useSharedValue(-1);
   const isSheetMountedRef = useRef(false);
   const listRef = useRef<BottomSheetFlatListMethods>(null);
   const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
@@ -456,6 +460,7 @@ export const TokenSelectorSheetModal = ({
     ref,
     () => {
       return {
+        getCurrentIndex: () => regressionAnimatedIndex.value,
         toggleShow: nextShown => {
           if (nextShown === true) {
             if (isSheetMountedRef.current) {
@@ -474,7 +479,7 @@ export const TokenSelectorSheetModal = ({
         },
       };
     },
-    [toggleShowSheetModal, tokenSelectorModalRef],
+    [regressionAnimatedIndex, toggleShowSheetModal, tokenSelectorModalRef],
   );
 
   const initialRouteRef = useRef<string | undefined>(undefined);
@@ -1283,6 +1288,9 @@ export const TokenSelectorSheetModal = ({
   return (
     <AppBottomSheetModal
       ref={tokenSelectorModalRef}
+      animatedIndex={
+        isNonProductionDiagnosticsEnabled ? regressionAnimatedIndex : undefined
+      }
       snapPoints={snapPoints}
       enableContentPanningGesture
       enableDismissOnClose={false}

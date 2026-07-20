@@ -13,7 +13,10 @@ import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import type {
+  ITokenCheck,
+  TokenSelectorSheetModalInst,
+} from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
@@ -81,46 +84,28 @@ export type TokenSelectInst = {
 
 const SHOW_CHAIN_FILTER_SCENES = ['swapFrom', 'bridgeFrom'];
 const EMPTY_TOKEN_LIST: ITokenItem[] = [];
-const REGRESSION_SHEET_EVENT_TIMEOUT_MS = 10_000;
+const REGRESSION_SHEET_INDEX_TIMEOUT_MS = 30_000;
 
-type RegressionSheetEventWaiter = {
-  resolve: () => void;
-  reject: (error: Error) => void;
-};
-
-function waitForRegressionSheetEvent(
-  waiterRef: { current: RegressionSheetEventWaiter | null },
+async function waitForRegressionSheetIndex(
+  modalRef: { current: TokenSelectorSheetModalInst | null },
   event: 'open' | 'close',
 ) {
-  waiterRef.current?.reject(
-    new Error(`Token selector ${event} waiter was superseded`),
-  );
+  const expectedIndex = event === 'open' ? 0 : -1;
+  const startedAt = Date.now();
 
-  return new Promise<void>((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      if (waiterRef.current === waiter) {
-        waiterRef.current = null;
-      }
-      reject(new Error(`Timed out waiting for token selector to ${event}`));
-    }, REGRESSION_SHEET_EVENT_TIMEOUT_MS);
-    const waiter: RegressionSheetEventWaiter = {
-      resolve: () => {
-        clearTimeout(timeoutId);
-        if (waiterRef.current === waiter) {
-          waiterRef.current = null;
-        }
-        resolve();
-      },
-      reject: error => {
-        clearTimeout(timeoutId);
-        if (waiterRef.current === waiter) {
-          waiterRef.current = null;
-        }
-        reject(error);
-      },
-    };
-    waiterRef.current = waiter;
-  });
+  while (true) {
+    const currentIndex = modalRef.current?.getCurrentIndex();
+    if (
+      currentIndex !== undefined &&
+      Math.abs(currentIndex - expectedIndex) < 0.01
+    ) {
+      return;
+    }
+    if (Date.now() - startedAt >= REGRESSION_SHEET_INDEX_TIMEOUT_MS) {
+      throw new Error(`Timed out waiting for token selector to ${event}`);
+    }
+    await new Promise<void>(resolve => setTimeout(resolve, 50));
+  }
 }
 
 const TokenSelect = ({
@@ -235,12 +220,6 @@ const TokenSelect = ({
   }));
 
   const hasHandledTokenSelectorVisibleRef = useRef(false);
-  const regressionOpenWaiterRef = useRef<RegressionSheetEventWaiter | null>(
-    null,
-  );
-  const regressionCloseWaiterRef = useRef<RegressionSheetEventWaiter | null>(
-    null,
-  );
 
   const refreshVisibleTokenList = useCallback(() => {
     if (currentAccount?.address) {
@@ -251,17 +230,12 @@ const TokenSelect = ({
   }, [checkIsExpireAndUpdate, currentAccount?.address, loadToken]);
 
   const handleTokenSelectorOpened = useCallback(() => {
-    regressionOpenWaiterRef.current?.resolve();
     if (!hasHandledTokenSelectorVisibleRef.current) {
       hasHandledTokenSelectorVisibleRef.current = true;
       return;
     }
     refreshVisibleTokenList();
   }, [refreshVisibleTokenList]);
-
-  const handleTokenSelectorClosed = useCallback(() => {
-    regressionCloseWaiterRef.current?.resolve();
-  }, []);
 
   // Refresh account/chain changes while open. Opening itself refreshes only
   // after the native sheet animation completes via handleTokenSelectorOpened.
@@ -384,21 +358,16 @@ const TokenSelect = ({
   }, [resetQueryConds, setTokenSelectorVisible]);
 
   const handleRegressionTokenSelectorOpen = useCallback(async () => {
-    const opened = waitForRegressionSheetEvent(regressionOpenWaiterRef, 'open');
     resetQueryConds();
     setTokenSelectorVisible(true);
-    await opened;
-  }, [resetQueryConds, setTokenSelectorVisible]);
+    await waitForRegressionSheetIndex(tokenSelectorModalRef, 'open');
+  }, [resetQueryConds, setTokenSelectorVisible, tokenSelectorModalRef]);
 
   const handleRegressionTokenSelectorClose = useCallback(async () => {
-    const closed = waitForRegressionSheetEvent(
-      regressionCloseWaiterRef,
-      'close',
-    );
     setTokenSelectorVisible(false);
-    await closed;
+    await waitForRegressionSheetIndex(tokenSelectorModalRef, 'close');
     setIsLpTokenEnabled(false);
-  }, [setIsLpTokenEnabled, setTokenSelectorVisible]);
+  }, [setIsLpTokenEnabled, setTokenSelectorVisible, tokenSelectorModalRef]);
 
   useRegressionScenarioComponentAction(
     'send-token-selector.open',
@@ -408,12 +377,6 @@ const TokenSelect = ({
     'send-token-selector.close',
     handleRegressionTokenSelectorClose,
   );
-
-  useUnmount(() => {
-    const error = new Error('Token selector unmounted before action completed');
-    regressionOpenWaiterRef.current?.reject(error);
-    regressionCloseWaiterRef.current?.reject(error);
-  });
 
   useEffect(() => {
     setQueryConds(prev =>
@@ -616,7 +579,6 @@ const TokenSelect = ({
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
         onOpened={handleTokenSelectorOpened}
-        onClosed={handleTokenSelectorClosed}
         onSearch={handleSearchTokens}
         isLoading={isCustomNetworkTab ? testnetTokenListLoading : isListLoading}
         showFavoriteFilter={!queryConds.keyword && !isCustomNetworkTab}
