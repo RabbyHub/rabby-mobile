@@ -301,22 +301,32 @@ export const PortfolioList = ({
   }, [hasMorePortfolios, styles.defiLoading]);
 
   const scrollY = useCurrentTabScrollY();
-  const handleScroll = useCallback(
-    (currentScrollY: number) => {
-      if (currentScrollY <= 0) {
-        onReachTopStatusChange?.(true);
-      } else {
-        onReachTopStatusChange?.(false);
-      }
-      setShowScrollIndicator(currentScrollY >= 89);
+  const handleScrollStateChange = useCallback(
+    (reachTop: boolean, showIndicator: boolean) => {
+      onReachTopStatusChange?.(reachTop);
+      setShowScrollIndicator(showIndicator);
     },
     [onReachTopStatusChange, setShowScrollIndicator],
   );
 
   useAnimatedReaction(
-    () => scrollY.value,
-    currentScrollY => {
-      runOnJS(handleScroll)(currentScrollY);
+    () => {
+      if (scrollY.value <= 0) {
+        return -1;
+      }
+      if (scrollY.value >= 89) {
+        return 1;
+      }
+      return 0;
+    },
+    (currentScrollState, previousScrollState) => {
+      if (currentScrollState === previousScrollState) {
+        return;
+      }
+      runOnJS(handleScrollStateChange)(
+        currentScrollState === -1,
+        currentScrollState === 1,
+      );
     },
   );
   return (
