@@ -28,6 +28,15 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@ledgerhq/device-management-kit": [
+        "./node_modules/@ledgerhq/device-management-kit/lib/types/index.d.ts"
+      ],
+      "@ledgerhq/device-signer-kit-ethereum": [
+        "./node_modules/@ledgerhq/device-signer-kit-ethereum/lib/types/index.d.ts"
+      ],
+      "@ledgerhq/device-transport-kit-react-native-ble": [
+        "./node_modules/@ledgerhq/device-transport-kit-react-native-ble/lib/types/index.d.ts"
+      ],
       "@rabby-wallet/*": ["../../packages/*/dist", "../../packages/*/src"]
     }
   }

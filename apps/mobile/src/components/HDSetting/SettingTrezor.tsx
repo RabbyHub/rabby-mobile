@@ -2,11 +2,16 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { isLoadedAtom, MainContainer, settingAtom } from './MainContainer';
+import {
+  isLoadedAtom,
+  MainContainer,
+  type Setting,
+  settingAtom,
+} from './MainContainer';
 import { apiTrezor } from '@/core/apis';
 
 export const SettingTrezor: React.FC<{
-  onDone: () => void;
+  onDone: (setting?: Setting) => void;
 }> = ({ onDone }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
@@ -43,15 +48,16 @@ export const SettingTrezor: React.FC<{
   const [setting, setSetting] = useAtom(settingAtom);
   const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
   const handleConfirm = React.useCallback(
-    value => {
-      apiTrezor
-        .setHDPathType(value.hdPath)
-        .then(async () => {
-          setSetting(value);
-        })
-        .finally(() => {
-          onDone?.();
-        });
+    async (value: Setting) => {
+      try {
+        await apiTrezor.setHDPathType(value.hdPath);
+      } catch {
+        onDone?.();
+        return;
+      }
+
+      setSetting(value);
+      onDone?.(value);
     },
     [onDone, setSetting],
   );

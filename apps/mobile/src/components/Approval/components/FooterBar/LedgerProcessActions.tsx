@@ -4,33 +4,57 @@ import { useTranslation } from 'react-i18next';
 import { Props } from './ActionsContainer';
 import { ProcessActions } from './ProcessActions';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
+import { apiLedger } from '@/core/apis';
 
 export const LedgerProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
   const { t } = useTranslation();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { status, onClickConnect } = useLedgerStatus(account.address, {
+  const isSubmittingRef = React.useRef(false);
+  const setSubmitting = React.useCallback((value: boolean) => {
+    isSubmittingRef.current = value;
+  }, []);
+  const { onClickConnect } = useLedgerStatus(account.address, {
     onDismiss: () => {
-      setIsSubmitting?.(false);
+      setSubmitting(false);
     },
+    autoConnect: false,
   });
 
   const handleSubmit = React.useCallback(async () => {
-    if (status !== 'CONNECTED') {
-      if (isSubmitting) {
-        return;
-      }
-      setIsSubmitting(true);
-
-      onClickConnect(async () => {
-        await props.onSubmit();
-        setIsSubmitting(false);
-      });
+    if (isSubmittingRef.current) {
       return;
     }
-    await props.onSubmit();
-    setIsSubmitting(false);
-  }, [status, props, isSubmitting, onClickConnect]);
+    setSubmitting(true);
+
+    let waitingForConnectModal = false;
+
+    try {
+      const [isConnected, deviceId] = await apiLedger.isConnected(
+        account.address,
+      );
+      if (!isConnected) {
+        onClickConnect(
+          async () => {
+            try {
+              await props.onSubmit();
+            } finally {
+              setSubmitting(false);
+            }
+          },
+          () => setSubmitting(false),
+          deviceId,
+        );
+        waitingForConnectModal = true;
+        return;
+      }
+
+      await props.onSubmit();
+    } finally {
+      if (!waitingForConnectModal) {
+        setSubmitting(false);
+      }
+    }
+  }, [account.address, props, onClickConnect, setSubmitting]);
 
   return (
     <ProcessActions

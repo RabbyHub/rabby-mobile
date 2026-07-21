@@ -14,6 +14,7 @@ import {
   setRetryTxType,
 } from '@/utils/errorTxRetry';
 import { Text } from '@/components/Typography';
+import { isLedgerUserRejectedError } from '@/hooks/ledger/error';
 
 interface Props {
   onCancel?: () => void;
@@ -78,7 +79,7 @@ export const MiniLedgerHardwareWaiting = ({
         description?.includes('0x6b00')
       ) {
         return [t('page.signFooterBar.ledger.updateFirmwareAlert'), 'origin'];
-      } else if (description?.includes('0x6985')) {
+      } else if (isLedgerUserRejectedError(description)) {
         return [t('page.signFooterBar.ledger.txRejectedByLedger'), 'origin'];
       }
 

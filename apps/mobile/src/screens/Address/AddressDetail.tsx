@@ -3,7 +3,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 
 import { useTheme2024 } from '@/hooks/theme';
 
-import { useAccounts } from '@/hooks/account';
+import { type KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { CompositeScreenProps, useRoute } from '@react-navigation/native';
@@ -19,7 +19,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useQrCodeModal } from '@/components2024/QrCodeModal/useQrCodeModal';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
 import { resetNavigationTo } from '@/hooks/navigation';
-import { useTranslation } from 'react-i18next';
 
 type AddressDetailProps = CompositeScreenProps<
   NativeStackScreenProps<AddressNavigatorParamList, 'AddressDetail'>,
@@ -31,9 +30,8 @@ function AddressDetailScreen(): JSX.Element {
   const { params } = useRoute<AddressDetailProps['route']>();
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const qrCodeModal = useQrCodeModal();
-  const { t } = useTranslation();
   const { address, type, brandName } = params;
-  const { accounts } = useAccounts();
+  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const account = useMemo(
     () =>
       accounts.find(
@@ -43,6 +41,15 @@ function AddressDetailScreen(): JSX.Element {
           e.type === type,
       ),
     [accounts, address, type, brandName],
+  );
+  const routeAccount = useMemo(
+    () =>
+      ({
+        address,
+        type,
+        brandName,
+      } as KeyringAccountWithAlias),
+    [address, type, brandName],
   );
 
   const headerRight = useCallback(
@@ -64,21 +71,23 @@ function AddressDetailScreen(): JSX.Element {
     });
   }, [headerRight, setNavigationOptions]);
 
+  React.useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
+
   return (
     <NormalScreenContainer
       overwriteStyle={{
         backgroundColor: colors2024['neutral-bg-0'],
       }}>
       <ScrollView>
-        {account ? (
-          <AddressDetailInner
-            account={account}
-            onCancel={() => noop}
-            onDelete={() => {
-              resetNavigationTo(navigation, 'Home');
-            }}
-          />
-        ) : null}
+        <AddressDetailInner
+          account={account || routeAccount}
+          onCancel={() => noop}
+          onDelete={() => {
+            resetNavigationTo(navigation, 'Home');
+          }}
+        />
       </ScrollView>
     </NormalScreenContainer>
   );

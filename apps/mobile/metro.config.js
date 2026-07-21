@@ -291,9 +291,6 @@ const withStableHash = config => {
  * Higher-order function to disable package exports.
  * FIXME: upgrade dependencies to be compatible with metro's new default settings
  * @see https://github.com/expo/expo/discussions/36551
- *
- * known incompatible libraries:
- *   - @ledgerhq/hw-app-eth@6.45.0
  * @param {import('metro-config').MetroConfig} config - Input config (immutable)
  * @returns {import('metro-config').MetroConfig} New config with package exports disabled
  */

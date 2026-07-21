@@ -4,12 +4,25 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { keyringService } from '../services/shared';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import PQueue from 'p-queue';
-import { t } from 'i18next';
-import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
+import {
+  isLedgerBusyError,
+  isLedgerUserRejectedError,
+  ledgerErrorHandler,
+  LEDGER_ERROR_CODES,
+} from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
+import {
+  connectLedgerDevice,
+  disconnectLedgerDevice,
+  getLedgerAppAndVersion,
+  resetLedgerDeviceSession,
+  subscribeLedgerDevices,
+  type LedgerDmkDevice,
+} from '@/core/keyring-bridge/ledger/ledger-dmk';
+
+const LEDGER_CONNECTION_CHECK_TIMEOUT_MS = 2000;
 
 let queue: PQueue;
 setTimeout(() => {
@@ -37,11 +50,11 @@ export async function getAddresses(start: number, end: number) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
   try {
-    return queue.add(() => keyring.getAddresses(start, end));
+    return await queue.add(() => keyring.getAddresses(start, end));
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
-      TransportBLE.disconnectDevice(deviceId);
+      await resetLedgerDeviceSession(deviceId);
     }
     throw e;
   }
@@ -61,7 +74,6 @@ export async function cleanUp() {
 
 export async function isConnected(
   address: string,
-  skipBLEOpen = false,
 ): Promise<[boolean, string?]> {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
   const detail = keyring.getAccountInfo(address);
@@ -71,16 +83,33 @@ export async function isConnected(
   }
 
   keyring.setDeviceId(detail.deviceId);
+
+  let connectionCheckTimeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    if (!skipBLEOpen) {
-      const transport = await TransportBLE.open(detail.deviceId, 1000);
-      await transport.close();
-    }
+    await Promise.race([
+      getLedgerAppAndVersion(
+        detail.deviceId,
+        LEDGER_CONNECTION_CHECK_TIMEOUT_MS,
+      ),
+      new Promise<never>((_, reject) => {
+        connectionCheckTimeout = setTimeout(
+          () => reject(new Error('Ledger: Connection check timeout')),
+          LEDGER_CONNECTION_CHECK_TIMEOUT_MS,
+        );
+      }),
+    ]);
     return [true, detail.deviceId];
-  } catch (e) {
-    await TransportBLE.disconnectDevice(detail.deviceId);
-    console.log('ledger is disconnect', e);
+  } catch (error) {
+    if (isLedgerBusyError(error)) {
+      return [true, detail.deviceId];
+    }
+
+    void resetLedgerDeviceSession(detail.deviceId).catch(() => {});
     return [false, detail.deviceId];
+  } finally {
+    if (connectionCheckTimeout) {
+      clearTimeout(connectionCheckTimeout);
+    }
   }
 }
 
@@ -93,7 +122,7 @@ export async function getCurrentUsedHDPathType() {
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
-      TransportBLE.disconnectDevice(deviceId);
+      await resetLedgerDeviceSession(deviceId);
     }
   }
 }
@@ -146,7 +175,7 @@ export async function importFirstAddress({
       await task();
       break;
     } catch (e) {
-      if (i === retryCount - 1) {
+      if (isLedgerUserRejectedError(e) || i === retryCount - 1) {
         throw e;
       }
     }
@@ -161,7 +190,21 @@ export async function checkEthApp(cb: (result: boolean) => void) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
   try {
-    await keyring.makeApp();
+    const deviceId = await keyring.getDeviceId();
+    let appAndVersion: { appName: string; version: string };
+
+    if (deviceId) {
+      appAndVersion = await getLedgerAppAndVersion(deviceId);
+    } else {
+      await keyring.makeApp();
+      appAndVersion = await keyring.getAppAndVersion();
+    }
+
+    const { appName } = appAndVersion;
+    const isEthApp = appName === 'Ethereum';
+
+    cb(isEthApp);
+    return isEthApp;
   } catch (e: any) {
     const message = ledgerErrorHandler(e);
 
@@ -169,49 +212,23 @@ export async function checkEthApp(cb: (result: boolean) => void) {
       UpdateFirmwareAlert();
       throw new Error(message);
     }
+
+    throw e;
   }
-  const { appName } = await keyring.getAppAndVersion();
+}
 
-  if (appName === 'BOLOS') {
-    try {
-      cb(false);
-      await keyring.openEthApp();
-      return false;
-    } catch (e: any) {
-      if (e.name === 'TransportStatusError') {
-        switch (e.statusCode) {
-          case 0x6984:
-          case 0x6807:
-            throw new Error(
-              t(
-                'page.newAddress.ledger.error.ethereum_app_not_installed_error',
-              ),
-            );
-          case 0x6985:
-          case 0x5501:
-            throw new Error(
-              t('page.newAddress.ledger.error.ethereum_app_unconfirmed_error'),
-            );
-        }
-      }
+export function searchDevices({
+  next,
+  error,
+}: {
+  next(device: LedgerDmkDevice): void;
+  error(error: Error): void;
+}) {
+  return subscribeLedgerDevices({ next, error });
+}
 
-      throw new Error(
-        t('page.newAddress.ledger.error.ethereum_app_open_error'),
-      );
-    }
-  } else if (appName !== 'Ethereum') {
-    try {
-      await keyring.quitApp();
-    } catch (e) {
-      throw new Error(
-        t('page.newAddress.ledger.error.running_app_close_error'),
-      );
-    }
-
-    return checkEthApp(cb);
-  }
-
-  return true;
+export async function connectDevice(device: LedgerDmkDevice) {
+  return connectLedgerDevice(device);
 }
 
 export function getMaxAccountLimit() {

@@ -12,45 +12,55 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
 
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const isSubmittingRef = React.useRef(false);
+  const setSubmitting = React.useCallback((value: boolean) => {
+    isSubmittingRef.current = value;
+    setIsSubmitting(value);
+  }, []);
   const { onClickConnect } = useLedgerStatus(account.address, {
     onDismiss: () => {
-      setIsSubmitting(false);
+      setSubmitting(false);
     },
     autoConnect: false,
   });
 
-  const isConnectedPromise = React.useMemo(
-    () => apiLedger.isConnected(account.address),
-    [account.address],
-  );
-
-  const handleSubmit = useMemoizedFn(() => {
-    if (isSubmitting) {
+  const handleSubmit = useMemoizedFn(async () => {
+    if (isSubmittingRef.current) {
       return;
     }
-    setIsSubmitting(true);
-    isConnectedPromise
-      .then(([isConnected]) => {
-        if (!isConnected) {
-          onClickConnect(
-            () => {
-              setIsSubmitting(false);
-              props.onSubmit();
-            },
-            () => {
-              setIsSubmitting(false);
-              props.onCancel?.();
-            },
-          );
-          return;
-        } else {
-          props.onSubmit();
-          setIsSubmitting(false);
-        }
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+    setSubmitting(true);
+
+    let waitingForConnectModal = false;
+
+    try {
+      const [isConnected, deviceId] = await apiLedger.isConnected(
+        account.address,
+      );
+      if (!isConnected) {
+        onClickConnect(
+          async () => {
+            try {
+              await props.onSubmit();
+            } finally {
+              setSubmitting(false);
+            }
+          },
+          () => {
+            setSubmitting(false);
+            props.onCancel?.();
+          },
+          deviceId,
+        );
+        waitingForConnectModal = true;
+        return;
+      }
+
+      await props.onSubmit();
+    } finally {
+      if (!waitingForConnectModal) {
+        setSubmitting(false);
+      }
+    }
   });
 
   return (
@@ -60,6 +70,7 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
       submitText={t('page.signFooterBar.ledgerConfirm')}
       disabledProcess={disabledProcess}
       buttonIcon={<LedgerSVG width={22} height={22} viewBox="0 0 28 28" />}
+      loading={isSubmitting}
     />
   );
 };
