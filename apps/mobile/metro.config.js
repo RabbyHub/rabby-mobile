@@ -8,6 +8,8 @@ const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
 
+const { createWardenSerializer } = require('warden.rn');
+
 const {
   createI18nLivePreviewSerializer,
 } = require('./scripts/i18n-live-preview/metro-serializer');
@@ -27,6 +29,23 @@ const withI18nLivePreview = config => {
     },
   };
 };
+
+const withWarden = config => ({
+  ...config,
+  serializer: {
+    ...config.serializer,
+    customSerializer: createWardenSerializer(
+      config.serializer?.customSerializer,
+      {
+        dev: true,
+        sourceRoot: './src',
+        policyDir: './Warden-RN',
+        rootDir: './',
+        harden: false,
+      },
+    ),
+  },
+});
 
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
@@ -399,7 +418,7 @@ const mergedConfig = compose(
 
 const rozeniteEnabled = process.env.WITH_ROZENITE === 'true';
 
-module.exports = rozeniteEnabled
+const configWithRozenite = rozeniteEnabled
   ? withRozenite(mergedConfig, {
       enabled: true,
       include: [
@@ -410,3 +429,7 @@ module.exports = rozeniteEnabled
       ],
     })
   : mergedConfig;
+
+// Keep Warden outermost so it can transform the graph once before delegating
+// final bundle and source-map generation to the downstream wrappers.
+module.exports = withWarden(configWithRozenite);
