@@ -837,6 +837,7 @@ export const SignTypedData = ({
             chain={resolvedAddressChain || CHAINS.ETH}
             engineResults={engineResults}
             raw={isSignTypedDataV1 ? data[0] : signTypedData || data[1]}
+            copyMessage={isSignTypedDataV1 ? JSON.stringify(data[0]) : data[1]}
             message={parsedMessage}
             messageTokens={messageTokens}
             addressData={addressData}

@@ -319,6 +319,7 @@ const Actions = ({
   chain = CHAINS[CHAINS_ENUM.ETH],
   engineResults,
   raw,
+  copyMessage,
   message,
   origin,
   originLogo,
@@ -334,6 +335,7 @@ const Actions = ({
   chain?: Chain;
   engineResults: Result[];
   raw: Record<string, any>;
+  copyMessage: string;
   message: string;
   origin: string;
   originLogo?: string;
@@ -403,6 +405,7 @@ const Actions = ({
       <SignMessageCard
         title={t('page.signTx.typedDataMessage')}
         message={message}
+        copyMessage={copyMessage}
         hasAction={!!data}
         messageTokens={messageTokens}
         chain={chain}
