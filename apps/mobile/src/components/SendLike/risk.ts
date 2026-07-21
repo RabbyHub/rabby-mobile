@@ -92,17 +92,14 @@ function setLoading(address: string, loading: boolean) {
   });
 }
 
-function setAddressDesc(
-  address: string,
-  addressDesc: AddrDescResponse['desc'],
-) {
+function setAddressDesc(address: string, addrDesc: AddrDescResponse['desc']) {
   addrRisks.setState(prev => {
     return {
       ...prev,
       [address]: {
         ...(prev[address] || { risks: [] }),
         loading: prev[address]?.loading || false,
-        addressDesc,
+        addrDesc,
       },
     };
   });
