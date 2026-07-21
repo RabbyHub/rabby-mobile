@@ -26,6 +26,8 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { toast } from '@/components2024/Toast';
 import { contactServiceApi } from '@/core/serviceApi/contact';
+import { projectItemToCex } from '@/utils/cex';
+
 export interface ConfirmAddressScreenProps {
   title?: string;
   disableWhiteSwitch?: boolean;
@@ -61,6 +63,11 @@ const ConfirmAddress = ({
     toAddress: account.address,
     cex,
   });
+  const cexOverride = useMemo(
+    () =>
+      disableWhiteSwitch ? (cex ? projectItemToCex(cex) : null) : undefined,
+    [cex, disableWhiteSwitch],
+  );
   const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
     disableAutoFetch: true,
@@ -125,6 +132,7 @@ const ConfirmAddress = ({
       <AddressSource
         loading={loading}
         addressDesc={addressDesc}
+        cexOverride={cexOverride}
         account={account}
         allowEditAlias={!disableWhiteSwitch} // not for whitelist
         editingAlias={editingAlias}
