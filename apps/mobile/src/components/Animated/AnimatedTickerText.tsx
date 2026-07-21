@@ -59,6 +59,7 @@ type TickerColumnProps = {
   maxLength: number;
   duration: number;
   lineHeight: number;
+  initialFontSize?: number;
   style?: StyleProp<TextStyle>;
   textProps?: TextProps;
 };
@@ -224,6 +225,7 @@ const AnimatedTickerColumn = memo(
     maxLength,
     duration,
     lineHeight,
+    initialFontSize,
     style,
     textProps,
   }: TickerColumnProps) => {
@@ -234,7 +236,9 @@ const AnimatedTickerColumn = memo(
     );
     const columnWidth = useSharedValue(
       initialChar
-        ? lineHeight * 0.9 * getCharWidthUnit(initialChar) + GLYPH_SIDE_BEARING
+        ? (initialFontSize ?? lineHeight * 0.9) *
+            getCharWidthUnit(initialChar) +
+            GLYPH_SIDE_BEARING
         : 0,
     );
 
@@ -433,6 +437,7 @@ const AnimatedTickerText = ({
     () => Array.from({ length: maxLength }, (_, index) => index),
     [maxLength],
   );
+  const initialFontSize = getTextFontSize(value.value || '', fontSizeByLength);
 
   return (
     <View {...containerProps} style={[styles.row, containerStyle]}>
@@ -464,6 +469,7 @@ const AnimatedTickerText = ({
               maxLength={maxLength}
               duration={duration}
               lineHeight={lineHeight}
+              initialFontSize={initialFontSize}
               style={style}
               textProps={textProps}
             />
