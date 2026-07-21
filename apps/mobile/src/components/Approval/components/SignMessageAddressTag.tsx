@@ -47,16 +47,19 @@ export const SignMessageAddressTag = ({
       ),
     [data.localAccount?.brandName, data.localAccount?.type, isLight],
   );
-  const color = danger ? colors['red-default'] : colors['neutral-body'];
+  const color = danger ? '#ec5151' : colors['neutral-body'];
   const trigger = (
     <View
       accessible
       accessibilityLabel={label}
       style={[
         styles.trigger,
+        danger ? styles.dangerTrigger : styles.defaultTrigger,
         {
-          borderColor: danger ? colors['red-default'] : colors['neutral-line'],
-          backgroundColor: danger ? colors['red-light'] : colors['neutral-bg2'],
+          borderColor: danger
+            ? 'rgba(236, 81, 81, 0.5)'
+            : colors['neutral-line'],
+          backgroundColor: danger ? '#fce5e5' : colors['neutral-bg2'],
         },
       ]}>
       {danger ? (
@@ -152,14 +155,20 @@ export const SignMessageAddressTag = ({
 const styles = StyleSheet.create({
   trigger: {
     minWidth: 40,
-    height: 22,
     paddingLeft: 6,
     paddingRight: 2,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  dangerTrigger: {
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  defaultTrigger: {
+    height: 22,
+    borderRadius: 4,
   },
   icon: {
     width: 16,
