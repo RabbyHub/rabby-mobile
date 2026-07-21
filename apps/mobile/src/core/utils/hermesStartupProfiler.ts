@@ -236,40 +236,43 @@ export function startHermesProfilerSession({
         let stopError: string | undefined;
 
         try {
-          traceHermesProfilerInstant(`js.hermes_profile.${label}.stop`);
-          const stopped = sentryProfiler.stopProfiling?.();
-          profile = stopped?.profile;
-          androidProfile =
-            stopped?.androidProfile || stopped?.nativeProfile || undefined;
-          stopError = stopped?.error;
-        } catch (error) {
-          stopError = error instanceof Error ? error.message : String(error);
+          try {
+            traceHermesProfilerInstant(`js.hermes_profile.${label}.stop`);
+            const stopped = sentryProfiler.stopProfiling?.();
+            profile = stopped?.profile;
+            androidProfile =
+              stopped?.androidProfile || stopped?.nativeProfile || undefined;
+            stopError = stopped?.error;
+          } catch (error) {
+            stopError = error instanceof Error ? error.message : String(error);
+          }
+
+          const endedAt = Date.now();
+          const result: HermesProfilerSessionResult = {
+            label,
+            startedAt,
+            endedAt,
+            durationMs: endedAt - startedAt,
+            ...(stopError ? { error: stopError } : {}),
+          };
+
+          try {
+            Object.assign(
+              result,
+              await persistHermesProfile(profile, androidProfile, filePrefix),
+            );
+          } catch (error) {
+            result.error =
+              error instanceof Error ? error.message : String(error);
+          }
+
+          return result;
         } finally {
           if (activeProfilerSession === state) {
             activeProfilerSession = null;
           }
           setProfilerActiveUntil(0, false);
         }
-
-        const endedAt = Date.now();
-        const result: HermesProfilerSessionResult = {
-          label,
-          startedAt,
-          endedAt,
-          durationMs: endedAt - startedAt,
-          ...(stopError ? { error: stopError } : {}),
-        };
-
-        try {
-          Object.assign(
-            result,
-            await persistHermesProfile(profile, androidProfile, filePrefix),
-          );
-        } catch (error) {
-          result.error = error instanceof Error ? error.message : String(error);
-        }
-
-        return result;
       })();
 
       return stopPromise;

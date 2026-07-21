@@ -32,6 +32,7 @@ export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'sync-extension-password',
   'transaction-history',
   'gas-account-entry',
+  'send-entry-profile',
   'send-token-selector-entry',
   'market-entry',
   'approvals-entry',

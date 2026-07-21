@@ -224,6 +224,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     requiresFixture: false,
     description: 'Open GasAccount from the transaction stack.',
   },
+  'send-entry-profile': {
+    id: 'send-entry-profile',
+    kind: 'focused',
+    screens: ['Send'],
+    requiresFixture: false,
+    description:
+      'Profile Send navigation and its first screen initialization window.',
+  },
   'send-token-selector-entry': {
     id: 'send-token-selector-entry',
     kind: 'focused',

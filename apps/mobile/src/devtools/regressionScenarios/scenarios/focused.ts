@@ -735,6 +735,58 @@ async function openGasAccount(context: RegressionScenarioExecutionContext) {
   }
 }
 
+async function openSendEntry(context: RegressionScenarioExecutionContext) {
+  const observeMs = Math.min(
+    Math.max(Number(context.command.params.observeMs || 4000), 500),
+    8000,
+  );
+  const profileCapture = await startMainRuntimeProfile(context, {
+    label: 'send-entry',
+    observeMs,
+    filePrefix: 'rabby-send-entry-main',
+    enabledByDefault: true,
+  });
+  const perfWindow = startScenarioPerformanceWindow(context, {
+    label: 'send-entry',
+    reportEachGap: true,
+  });
+  let profileResult: HermesProfilerSessionResult | undefined;
+
+  try {
+    perfWindow.mark('navigation-dispatch-start');
+    pushNestedScreen(RootNames.StackTransaction, RootNames.Send, {});
+    perfWindow.mark('navigation-dispatch-end');
+    await context.waitForRoute(RootNames.Send);
+    perfWindow.mark('route-ready');
+    context.report('assertion', {
+      assertion: 'send-entry-route-ready',
+      passed: true,
+    });
+    await delay(observeMs);
+    perfWindow.mark('post-route-observed', { observeMs });
+  } finally {
+    perfWindow.stop('send-entry-scenario-complete');
+    if (profileCapture) {
+      profileResult = await profileCapture.session.stop();
+      profileCapture.restoreWorker();
+      context.report('perf-mark', {
+        label: 'send-entry',
+        mark: 'main-runtime-profile-saved',
+        durationMs: profileResult.durationMs,
+        profilePath: profileResult.profilePath || '',
+        androidProfilePath: profileResult.androidProfilePath || '',
+        error: profileResult.error || '',
+      });
+    }
+  }
+
+  if (profileCapture && !profileResult?.profilePath) {
+    throw new Error(
+      profileResult?.error || 'Send entry Hermes profile was not saved',
+    );
+  }
+}
+
 async function openSendTokenSelector(
   context: RegressionScenarioExecutionContext,
 ) {
@@ -957,6 +1009,9 @@ export async function executeRegressionScenario(
       return;
     case 'gas-account-entry':
       await openGasAccount(context);
+      return;
+    case 'send-entry-profile':
+      await openSendEntry(context);
       return;
     case 'send-token-selector-entry':
       await openSendTokenSelector(context);
