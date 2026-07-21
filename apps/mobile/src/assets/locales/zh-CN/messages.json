@@ -2141,7 +2141,7 @@
       "noTransactions": "没有交易",
       "fdvTitle": "什么是 FDV？",
       "BridgeIssue": "由第三方跨链的代币",
-      "fdvContent": "完全稀释估值（FDV）= 价格 × 最大供应量。如果最大供应量为 0，则 FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或为无穷大，则不显示 FDV。",
+      "fdvContent": "假设最大供应量全部进入流通后的市值。完全稀释估值（FDV）= 价格 × 最大供应量。如果最大供应量为空，则 FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或为无穷大，则不显示 FDV。",
       "HoldingValue": "持有价值",
       "Price": "价格",
       "ContentGeneratedByAI": "此内容由 AI 生成",
@@ -2160,7 +2160,7 @@
       "marketInfo": {
         "volume24h": "24小时交易量",
         "marketCap": "市值",
-        "totalSupply": "总量",
+        "totalSupply": "总供应量",
         "holders": "持币地址数",
         "txns24h": "24小时交易次数",
         "holderSections": {
@@ -2808,7 +2808,7 @@
       "PerpsAccountLogoutPopup": {
         "title": "退出当前地址",
         "logout": "退出登录",
-        "desc": "您正在退出当前永续合约账户。之后仍可使用此地址重新登录恢复。"
+        "desc": "您正在退出当前永续合约账户。之后可随时使用此地址重新登录并恢复账户。"
       },
       "PerpsDepositCard": {
         "availableToTrade": "可交易余额：",
@@ -2831,11 +2831,11 @@
         "topVolume": "交易量榜"
       },
       "positions": "仓位",
-      "deleteAgentSuccess": "代理已删除",
+      "deleteAgentSuccess": "代理钱包已成功删除",
       "leverageRangeMinError": "最低杠杆为 {{min}}x",
       "regionNotSupport": "您所在地区不支持开仓",
       "leverageRangeMaxError": "最大杠杆为 {{max}}x",
-      "deleteAgentModal": "您已达到代理数量上限。是否删除一个现有代理以创建新代理？",
+      "deleteAgentModal": "代理钱包数量已达上限。是否删除一个现有代理钱包以创建新的代理钱包？",
       "searchPerpsPopup": {
         "searchPosition": "搜索仓位",
         "empty": "未找到结果",
@@ -3103,8 +3103,8 @@
       "PerpsAddPositionPopup": {
         "addSize": "增加规模",
         "totalSize": "总规模",
-        "addToShort": "增加空仓",
-        "addToLong": "增加多仓"
+        "addToShort": "增加空头仓位",
+        "addToLong": "增加多头仓位"
       },
       "needDepositFirst": "您需要先充值资金。",
       "PerpMarginModePopup": {

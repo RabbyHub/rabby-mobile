@@ -3495,7 +3495,7 @@
         "subtitleInApp": "從下方選擇一種方式，快速匯入你的錢包"
       },
       "common": {
-        "orYouCanCreateNewWallet": "沒有錢包？立即<cw>建立新錢包</cw>"
+        "orYouCanCreateNewWallet": "或者你也可以<clickable>建立新錢包</clickable>"
       },
       "importSecret": {
         "privateKeyPlaceholder": "輸入你的私鑰",

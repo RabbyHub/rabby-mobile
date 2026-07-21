@@ -325,15 +325,15 @@
       "coboSafeCreate": {
         "title": "Cobo Safe Oluştur",
         "descriptionTitle": "Açıklama",
-        "safeWalletTitle": "Güvenli{Cüzdan}"
+        "safeWalletTitle": "Safe{Wallet}"
       },
       "coboSafeModificationRole": {
-        "safeWalletTitle": "Safe{Cüzdan}",
+        "safeWalletTitle": "Safe{Wallet}",
         "descriptionTitle": "Açıklama",
         "title": "Güvenli Rol Değişikliği Gönderin"
       },
       "coboSafeModificationDelegatedAddress": {
-        "safeWalletTitle": "Safe{Cüzdan}",
+        "safeWalletTitle": "Safe{Wallet}",
         "descriptionTitle": "Açıklama",
         "title": "Delegated Adres Değişikliği Gönder"
       },
