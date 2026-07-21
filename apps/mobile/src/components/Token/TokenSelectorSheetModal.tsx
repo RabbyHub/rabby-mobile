@@ -436,7 +436,6 @@ export const TokenSelectorSheetModal = ({
   useFocusEffect(
     useCallback(
       () => () => {
-        isSheetMountedRef.current = false;
         tokenSelectorModalRef.current?.destroy();
       },
       [tokenSelectorModalRef],
