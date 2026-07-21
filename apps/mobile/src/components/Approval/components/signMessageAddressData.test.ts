@@ -156,6 +156,7 @@ describe('sign message address data', () => {
       })),
     };
 
+    const resolvedAddresses: string[] = [];
     const result = await resolveSignMessageAddressData({
       tokens: [malicious, token, protocol, unknown, token].map(value => ({
         type: 'address' as const,
@@ -164,6 +165,7 @@ describe('sign message address data', () => {
       chain: { serverId: 'eth' } as never,
       accountAddress: '0x341a1fbd51825e5a107db54ccb3166deba145479',
       provider: provider as never,
+      onAddressResolved: key => resolvedAddresses.push(key),
     });
 
     expect(result[malicious]).toMatchObject({
@@ -187,6 +189,9 @@ describe('sign message address data', () => {
     expect(provider.getWhitelist).toHaveBeenCalledTimes(1);
     expect(provider.getAccountsByPriority).toHaveBeenCalledTimes(1);
     expect(provider.getContractInfo).toHaveBeenCalledTimes(4);
+    expect(resolvedAddresses.sort()).toEqual(
+      [malicious, token, protocol, unknown].sort(),
+    );
   });
 
   it('bounds enrichment concurrency without dropping addresses', async () => {

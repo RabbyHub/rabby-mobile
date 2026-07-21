@@ -72,6 +72,7 @@ import {
 } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
 import { addSignMessageOriginFallback } from './signMessageOrigin';
+import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTypedDataProps {
   method: string;
@@ -214,9 +215,9 @@ export const SignTypedData = ({
     useMemo(() => {
       if (!isSignTypedDataV1) {
         try {
-          const v = JSON.parse(data[1]);
-          const normalized = normalizeTypeData(v);
-          return [normalized, v];
+          const raw = JSON.parse(data[1]);
+          const normalized = normalizeTypeData(JSON.parse(data[1]));
+          return [normalized, raw];
         } catch (error) {
           console.error('parse signTypedData error: ', error);
           return [null, null];
@@ -813,7 +814,7 @@ export const SignTypedData = ({
   }, []);
 
   return (
-    <View style={styles.wrapper}>
+    <SignMessageTagProvider style={styles.wrapper}>
       <BottomSheetScrollView
         style={styles.approvalTx}
         nestedScrollEnabled
@@ -957,6 +958,6 @@ export const SignTypedData = ({
           resolveApproval(sameMessageState.preparedSignature);
         }}
       />
-    </View>
+    </SignMessageTagProvider>
   );
 };

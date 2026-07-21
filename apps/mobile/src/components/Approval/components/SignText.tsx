@@ -53,6 +53,7 @@ import type { ProviderRequestContext } from '@/core/controllers/type';
 import { tokenizeSignMessageText } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
 import { addSignMessageOriginFallback } from './signMessageOrigin';
+import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTextProps {
   data: string[];
@@ -499,7 +500,7 @@ export const SignText = ({
   }, []);
 
   return (
-    <View style={styles.wrapper}>
+    <SignMessageTagProvider style={styles.wrapper}>
       <BottomSheetScrollView
         style={styles.approvalTx}
         nestedScrollEnabled
@@ -612,6 +613,6 @@ export const SignText = ({
           resolveApproval(sameMessageState.preparedSignature);
         }}
       />
-    </View>
+    </SignMessageTagProvider>
   );
 };

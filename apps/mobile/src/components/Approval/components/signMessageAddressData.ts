@@ -63,7 +63,7 @@ export type SignMessageAddressDataProvider = {
 };
 
 // Signing payloads are untrusted; resolve every address without unbounded fan-out.
-export const SIGN_MESSAGE_ADDRESS_ENRICHMENT_CONCURRENCY = 4;
+export const SIGN_MESSAGE_ADDRESS_ENRICHMENT_CONCURRENCY = 6;
 
 export const getSignMessageAddressTagType = ({
   isMalicious,
@@ -119,11 +119,13 @@ export const resolveSignMessageAddressData = async ({
   chain,
   accountAddress,
   provider,
+  onAddressResolved,
 }: {
   tokens: SignMessageHighlightToken[];
   chain: Chain;
   accountAddress: string;
   provider: SignMessageAddressDataProvider;
+  onAddressResolved?: (key: string, data: SignMessageAddressData) => void;
 }): Promise<SignMessageAddressDataMap> => {
   const addresses = getSignMessageAddresses(tokens);
   if (!addresses.size) return {};
@@ -204,7 +206,9 @@ export const resolveSignMessageAddressData = async ({
     while (nextIndex < addressEntries.length) {
       const index = nextIndex;
       nextIndex += 1;
-      entries[index] = await resolveAddress(addressEntries[index]);
+      const entry = await resolveAddress(addressEntries[index]);
+      entries[index] = entry;
+      onAddressResolved?.(...entry);
     }
   };
   await Promise.all(
