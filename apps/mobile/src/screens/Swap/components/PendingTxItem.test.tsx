@@ -137,4 +137,38 @@ describe('PendingTxItem', () => {
       },
     });
   });
+
+  it('truncates long swap token symbols within the pending row', () => {
+    const fromSymbol = 'VERY_LONG_FROM_TOKEN_SYMBOL';
+    const toSymbol = 'VERY_LONG_TO_TOKEN_SYMBOL';
+    const swapData = {
+      address: '0xswap-account',
+      chainId: 999,
+      fromToken: {
+        symbol: fromSymbol,
+        chain: 'hyper',
+      },
+      toToken: {
+        symbol: toSymbol,
+        chain: 'hyper',
+      },
+      status: 'pending',
+      hash: '0xswap-hash',
+      createdAt: 1,
+    } as any;
+
+    render(
+      <PendingTxItem
+        type="swap"
+        data={swapData}
+        clearLocalPendingTxData={jest.fn()}
+        isForMultipleAddress={false}
+      />,
+    );
+
+    expect(screen.getByText(fromSymbol)).toHaveProp('numberOfLines', 1);
+    expect(screen.getByText(fromSymbol)).toHaveProp('ellipsizeMode', 'tail');
+    expect(screen.getByText(toSymbol)).toHaveProp('numberOfLines', 1);
+    expect(screen.getByText(toSymbol)).toHaveProp('ellipsizeMode', 'tail');
+  });
 });
