@@ -1061,7 +1061,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
                 : estReceiveLabelPrefix}
               {!minDepositPrice ? (
                 <Text
-                  style={showPriceImpactLoss ? styles.errorText : undefined}>
+                  style={
+                    showPriceImpactLoss ? styles.errorText : styles.estimateText
+                  }>
                   {estReceiveUsdValue}
                 </Text>
               ) : null}
