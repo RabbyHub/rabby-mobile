@@ -2284,7 +2284,8 @@
       "searchCurrency": "搜索货币",
       "screenshotReportSwitch": "截图以报告错误",
       "dataAnalysis": "数据分析",
-      "bugReportHistory": "Bug 报告历史"
+      "bugReportHistory": "Bug 报告历史",
+      "bugReportChat": "通过聊天分享反馈"
     },
     "settingModal": {
       "themeMode": {
@@ -3797,8 +3798,8 @@
       "noAvailableAddress": "没有可用地址"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "输入新的回复...（可选）",
-      "mediaPlaceholder": "图片/视频\n（必填）"
+      "replyPlaceholder": "输入消息…",
+      "mediaPlaceholder": "图片/视频"
     }
   },
   "bluetooth": {

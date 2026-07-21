@@ -2196,7 +2196,8 @@
       "searchCurrency": "Para Araştırması",
       "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
       "dataAnalysis": "Veri Analizi",
-      "bugReportHistory": "Hata Raporu Geçmişi"
+      "bugReportHistory": "Hata Raporu Geçmişi",
+      "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş"
     },
     "settingModal": {
       "themeMode": {
@@ -3666,8 +3667,8 @@
       "noAvailableAddress": "Mevcut adres yok"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Yeni bir yanıt girin... (isteğe bağlı)",
-      "mediaPlaceholder": "Görsel/Video\n(gerekli)"
+      "replyPlaceholder": "Bir mesaj girin…",
+      "mediaPlaceholder": "Görsel/Video"
     }
   },
   "native": {

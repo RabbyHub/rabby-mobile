@@ -412,8 +412,8 @@
       "noAvailableAddress": "Keine verfügbare Adresse"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Neue Antwort eingeben... (optional)",
-      "mediaPlaceholder": "Bild/Video\n(erforderlich)"
+      "replyPlaceholder": "Nachricht eingeben…",
+      "mediaPlaceholder": "Bild/Video"
     }
   },
   "page": {
@@ -2457,7 +2457,8 @@
       "searchCurrency": "Währung suchen",
       "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
       "dataAnalysis": "Datenanalyse",
-      "bugReportHistory": "Fehlerbericht-Verlauf"
+      "bugReportHistory": "Fehlerbericht-Verlauf",
+      "bugReportChat": "Feedback per Chat teilen"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",

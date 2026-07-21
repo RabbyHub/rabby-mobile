@@ -2300,7 +2300,8 @@
       "currency": "貨幣",
       "screenshotReportSwitch": "截圖以報告錯誤",
       "dataAnalysis": "資料分析",
-      "bugReportHistory": "Bug 回報歷史"
+      "bugReportHistory": "Bug 回報歷史",
+      "bugReportChat": "透過聊天分享反饋"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -3847,8 +3848,8 @@
       "noAvailableAddress": "沒有可用地址"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "輸入新的回覆...（選填）",
-      "mediaPlaceholder": "圖片/影片\n（必填）"
+      "replyPlaceholder": "輸入訊息…",
+      "mediaPlaceholder": "圖片/影片"
     }
   },
   "common": {

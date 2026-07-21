@@ -307,8 +307,8 @@
       "noAvailableAddress": "No hay dirección disponible"
     },
     "feedbackHistoryModal": {
-      "replyPlaceholder": "Escribe una nueva respuesta... (opcional)",
-      "mediaPlaceholder": "Imagen/Vídeo\n(obligatorio)"
+      "replyPlaceholder": "Escribe un mensaje…",
+      "mediaPlaceholder": "Imagen/Vídeo"
     }
   },
   "page": {
@@ -2275,7 +2275,8 @@
       "currency": "Moneda",
       "screenshotReportSwitch": "Captura de pantalla para informar un error",
       "dataAnalysis": "Análisis de datos",
-      "bugReportHistory": "Historial de informes de errores"
+      "bugReportHistory": "Historial de informes de errores",
+      "bugReportChat": "Compartir comentarios por chat"
     },
     "gasAccount": {
       "deposit": "Depósito",
