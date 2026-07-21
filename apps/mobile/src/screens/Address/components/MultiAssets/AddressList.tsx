@@ -22,6 +22,7 @@ import { balance24hStore } from '@/store/balance24h';
 import { computeBalanceChange } from '@/core/apis/balance';
 import addressBalanceStore from '@/store/balance';
 import { Text } from '@/components/Typography';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -169,7 +170,12 @@ const AddressList = ({
 
   const notMatterAvatarList = useMemo(() => {
     return notMatteredAccounts
-      .filter(x => !myTop10Records.has(x.address.toLowerCase()))
+      .filter(
+        account =>
+          account.type === KEYRING_CLASS.WATCH ||
+          account.type === KEYRING_CLASS.GNOSIS ||
+          !myTop10Records.has(account.address.toLowerCase()),
+      )
       .slice(0, 3);
   }, [notMatteredAccounts, myTop10Records]);
 

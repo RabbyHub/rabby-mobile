@@ -22,6 +22,12 @@ const AddrPointsQueue = new PQueue({
   concurrency: 10,
 });
 
+const AddrPointsSecondQueue = new PQueue({
+  interval: 1000,
+  intervalCap: 20,
+  concurrency: 10,
+});
+
 export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
 
 const pointsStore = zCreate<PointsStore>(() => ({
@@ -64,14 +70,16 @@ async function fetchPointsByKey(key: string) {
   }
 
   ids.forEach(id => {
-    AddrPointsQueue.add(async () => {
-      try {
-        const data = await openapi.getRabbyPointsV2({ id });
-        updatePoint(id, data);
-      } catch (error) {
-        console.log('getPoints error', error);
-      }
-    });
+    AddrPointsQueue.add(() =>
+      AddrPointsSecondQueue.add(async () => {
+        try {
+          const data = await openapi.getRabbyPointsV2({ id });
+          updatePoint(id, data);
+        } catch (error) {
+          console.log('getPoints error', error);
+        }
+      }),
+    );
   });
 
   await AddrPointsQueue.onIdle();
