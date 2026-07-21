@@ -75,7 +75,9 @@ import {
   getDepositAmountValidation,
   getDepositBalanceCopy,
   getDepositMaxUsdValue,
+  getGasAccountPriceImpact,
   getMinDepositUsdValue,
+  getNextDefaultQuoteToken,
 } from './GasAccountDepositTokenForm.utils';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useRequest } from 'ahooks';
@@ -124,6 +126,17 @@ const getInitialDepositToken = (
     getGasAccountAvailableTokenFromRow(availableTokenRows[0]) ||
     undefined
   );
+};
+
+const getNextDepositToken = (
+  availableTokenRows: GasAccountAvailableTokenRow[],
+  currentToken: GasAccountAvailableToken,
+) => {
+  const availableTokens = availableTokenRows
+    .map(getGasAccountAvailableTokenFromRow)
+    .filter((token): token is GasAccountAvailableToken => !!token);
+
+  return getNextDefaultQuoteToken(availableTokens, currentToken);
 };
 
 export const GasAccountDepositTokenForm: React.FC<{
@@ -334,6 +347,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   }, [resetBridgeQuoteState, visible]);
 
   const didInitSelectedTokenRef = useRef(false);
+  const isSelectingDefaultQuoteRef = useRef(false);
 
   useEffect(() => {
     if (!availableTokenRows.length) {
@@ -347,7 +361,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
       didInitSelectedTokenRef.current = true;
       setSelectedToken(prev => {
         if (!prev) {
-          return getInitialDepositToken(availableTokenRows, lastDepositAccount);
+          const initialToken = getInitialDepositToken(
+            availableTokenRows,
+            lastDepositAccount,
+          );
+          isSelectingDefaultQuoteRef.current =
+            initialToken?.gasAccountDepositType === 'bridge';
+          return initialToken;
         }
 
         return prev;
@@ -480,6 +500,26 @@ const GasAccountDepositTokenFormInner: React.FC<{
     messages: validationMessages,
   });
 
+  const tryNextDefaultQuoteToken = useCallback(
+    (currentToken: GasAccountAvailableToken) => {
+      if (!isSelectingDefaultQuoteRef.current) {
+        return false;
+      }
+
+      const nextToken = getNextDepositToken(availableTokenRows, currentToken);
+      if (!nextToken) {
+        isSelectingDefaultQuoteRef.current = false;
+        return false;
+      }
+
+      isSelectingDefaultQuoteRef.current =
+        nextToken.gasAccountDepositType === 'bridge';
+      setSelectedToken(nextToken);
+      return true;
+    },
+    [availableTokenRows],
+  );
+
   useDebounce(
     () => {
       if (
@@ -505,6 +545,26 @@ const GasAccountDepositTokenFormInner: React.FC<{
           if (quoteReqIdRef.current !== requestId) {
             return;
           }
+
+          const receiveUsd = Number(quote.to_token_amount);
+          const { isTooHigh } = getGasAccountPriceImpact({
+            payUsd: amountValue,
+            receiveUsd,
+          });
+          const isQuoteUnavailable =
+            !quote.tx || !Number.isFinite(receiveUsd) || receiveUsd <= 0;
+          if (isQuoteUnavailable || isTooHigh) {
+            if (tryNextDefaultQuoteToken(selectedToken)) {
+              return;
+            }
+            if (isQuoteUnavailable) {
+              resetBridgeQuoteState();
+              setBridgeQuoteError(validationMessages.fetchQuoteFailed);
+              return;
+            }
+          }
+
+          isSelectingDefaultQuoteRef.current = false;
           setBridgeQuote(quote);
           setQuoteAmountValue(amountValue);
         })
@@ -513,6 +573,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
             return;
           }
           console.error('getGasAccountBridgeQuote error', error);
+          if (tryNextDefaultQuoteToken(selectedToken)) {
+            return;
+          }
           resetBridgeQuoteState();
           setBridgeQuoteError(validationMessages.fetchQuoteFailed);
         })
@@ -530,6 +593,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
       resetBridgeQuoteState,
       selectedOwnerAccount,
       selectedToken,
+      tryNextDefaultQuoteToken,
       validationMessages.fetchQuoteFailed,
       visible,
     ],
@@ -811,6 +875,18 @@ const GasAccountDepositTokenFormInner: React.FC<{
       : Number(bridgeQuote?.to_token_amount || 0)
     : 0;
   const estReceiveUsdValue = formatUsdValue(estReceiveUsdNumber);
+  const { lossUsd: priceImpactLossUsd, showWarning: showPriceImpactLoss } =
+    getGasAccountPriceImpact({
+      payUsd: amountValue,
+      receiveUsd: estReceiveUsdNumber,
+    });
+  const priceImpactLossLabel = t(
+    'page.gasAccount.depositPopup.priceImpactLoss',
+    {
+      usd: `$${new BigNumber(priceImpactLossUsd).toFixed(2)}`,
+      defaultValue: "Price Impact: You're losing {{usd}}.",
+    },
+  );
   const canSubmit =
     !!selectedToken &&
     !!selectedOwnerAccount &&
@@ -919,6 +995,10 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const estReceiveLabel = t('page.gasAccount.depositPopup.estReceiveLabel', {
     usd: estReceiveUsdValue,
   });
+  const estReceiveLabelPrefix = t(
+    'page.gasAccount.depositPopup.estReceiveLabel',
+    { usd: '' },
+  );
 
   const estReceiveUsdNumberBN = useMemo(
     () =>
@@ -973,29 +1053,44 @@ const GasAccountDepositTokenFormInner: React.FC<{
       );
     } else {
       bottomContent = (
-        <View style={styles.estimateRow}>
-          <Text style={styles.estimateText}>{displayedEstReceiveLabel}</Text>
-          {selectedToken.gasAccountDepositType === 'bridge' ? (
-            <Tip
-              placement="top"
-              isVisible={showEstimateTip}
-              onClose={() => setShowEstimateTip(false)}
-              content={
-                <View style={styles.tipContent}>
-                  <Text style={styles.tipDesc}>{estReceiveLabel}</Text>
-                  <Text style={styles.tipDesc}>{estReceiveTip}</Text>
-                </View>
-              }
-              contentStyle={styles.tipContentStyle}
-              tooltipStyle={styles.tipTooltipStyle}>
-              <CustomTouchableOpacity
-                onPress={() => setShowEstimateTip(true)}
-                style={styles.tipTrigger}>
-                <RcIconSwapReceiveInfo />
-              </CustomTouchableOpacity>
-            </Tip>
+        <>
+          <View style={styles.estimateRow}>
+            <Text style={styles.estimateText}>
+              {minDepositPrice
+                ? displayedEstReceiveLabel
+                : estReceiveLabelPrefix}
+              {!minDepositPrice ? (
+                <Text
+                  style={showPriceImpactLoss ? styles.errorText : undefined}>
+                  {estReceiveUsdValue}
+                </Text>
+              ) : null}
+            </Text>
+            {selectedToken.gasAccountDepositType === 'bridge' ? (
+              <Tip
+                placement="top"
+                isVisible={showEstimateTip}
+                onClose={() => setShowEstimateTip(false)}
+                content={
+                  <View style={styles.tipContent}>
+                    <Text style={styles.tipDesc}>{estReceiveLabel}</Text>
+                    <Text style={styles.tipDesc}>{estReceiveTip}</Text>
+                  </View>
+                }
+                contentStyle={styles.tipContentStyle}
+                tooltipStyle={styles.tipTooltipStyle}>
+                <CustomTouchableOpacity
+                  onPress={() => setShowEstimateTip(true)}
+                  style={styles.tipTrigger}>
+                  <RcIconSwapReceiveInfo />
+                </CustomTouchableOpacity>
+              </Tip>
+            ) : null}
+          </View>
+          {showPriceImpactLoss ? (
+            <Text style={styles.errorText}>{priceImpactLossLabel}</Text>
           ) : null}
-        </View>
+        </>
       );
     }
   }
@@ -1111,6 +1206,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           isCheckingAvailability={isCheckingAvailability}
           onClose={() => setTokenPickerVisible(false)}
           onSelect={token => {
+            isSelectingDefaultQuoteRef.current = false;
             setSelectedToken(token);
             setTokenPickerVisible(false);
           }}
