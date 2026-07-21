@@ -90,12 +90,17 @@ function SingleAddressHome(): JSX.Element {
   const { currentAccount } = useSingleHomeAccount();
   const currentAddress = currentAccount?.address;
   const hasFocusedOnceRef = React.useRef(false);
+  const lastReachTopStatusRef = React.useRef<boolean | null>(null);
   const needsBackupReminder = useBackupReminder(currentAccount);
 
   const { isDecrease } = useSingleHomeIsDecrease();
 
   const handleReachTopStatusChange = React.useCallback(
     (status: boolean) => {
+      if (lastReachTopStatusRef.current === status) {
+        return;
+      }
+      lastReachTopStatusRef.current = status;
       apisSingleHome.setReachTop(status);
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
