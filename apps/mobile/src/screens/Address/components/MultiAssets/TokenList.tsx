@@ -298,6 +298,25 @@ export const TokenList = () => {
       ),
     [myTop10Addresses, chain, isLpTokenEnabled, tokenDisplayMode],
   );
+  const multiAssetsReleaseRef = useRef<(() => void) | undefined>(undefined);
+  const isMultiAssetsResultActive = isScreenFocused && isFocusing;
+
+  useLayoutEffect(() => {
+    return () => {
+      multiAssetsReleaseRef.current?.();
+      multiAssetsReleaseRef.current = undefined;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const previousRelease = multiAssetsReleaseRef.current;
+    multiAssetsReleaseRef.current = isMultiAssetsResultActive
+      ? useTokenAssetsIndexStore
+          .getState()
+          .retainMultiAssetsResult(multiAssetsKey)
+      : undefined;
+    previousRelease?.();
+  }, [isMultiAssetsResultActive, multiAssetsKey]);
 
   useEffect(() => {
     useTokenIndexStore
@@ -332,6 +351,9 @@ export const TokenList = () => {
     }),
   );
   useLayoutEffect(() => {
+    if (!isMultiAssetsResultActive) {
+      return;
+    }
     useTokenAssetsIndexStore.getState().syncMultiAssetsResult({
       key: multiAssetsKey,
       tokenIds,
@@ -339,7 +361,14 @@ export const TokenList = () => {
       isLpTokenEnabled,
       tokenDisplayMode,
     });
-  }, [chain, isLpTokenEnabled, multiAssetsKey, tokenDisplayMode, tokenIds]);
+  }, [
+    chain,
+    isLpTokenEnabled,
+    isMultiAssetsResultActive,
+    multiAssetsKey,
+    tokenDisplayMode,
+    tokenIds,
+  ]);
 
   const {
     unFoldRows: tokenRows,

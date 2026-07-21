@@ -465,9 +465,30 @@ export const TokenList = ({
       isLpTokenEnabled,
     );
   }, [isLpTokenEnabled, lowerAddress, selectedChain]);
+  const singleAssetsReleaseRef = useRef<(() => void) | undefined>(undefined);
+  const isSingleAssetsResultActive =
+    isScreenFocused && isFocused && !!singleAssetsKey;
 
   useLayoutEffect(() => {
-    if (!singleAssetsKey) {
+    return () => {
+      singleAssetsReleaseRef.current?.();
+      singleAssetsReleaseRef.current = undefined;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const previousRelease = singleAssetsReleaseRef.current;
+    singleAssetsReleaseRef.current =
+      isSingleAssetsResultActive && singleAssetsKey
+        ? useTokenAssetsIndexStore
+            .getState()
+            .retainSingleAssetsResult(singleAssetsKey)
+        : undefined;
+    previousRelease?.();
+  }, [isSingleAssetsResultActive, singleAssetsKey]);
+
+  useLayoutEffect(() => {
+    if (!isSingleAssetsResultActive || !singleAssetsKey) {
       return;
     }
     useTokenAssetsIndexStore.getState().syncSingleAssetsResult({
@@ -476,7 +497,13 @@ export const TokenList = ({
       chainServerId: selectedChain,
       isLpTokenEnabled,
     });
-  }, [isLpTokenEnabled, selectedChain, singleAssetsKey, tokenIds]);
+  }, [
+    isLpTokenEnabled,
+    isSingleAssetsResultActive,
+    selectedChain,
+    singleAssetsKey,
+    tokenIds,
+  ]);
 
   const {
     unFoldTokenIds,
