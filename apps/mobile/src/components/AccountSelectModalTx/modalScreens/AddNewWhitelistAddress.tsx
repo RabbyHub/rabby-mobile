@@ -67,6 +67,7 @@ import { SelectAccountSheetModalSizes } from '../layout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { touchedFeedback } from '@/utils/touch';
+import type { TextInput as TextInputRef } from '@/components/Typography';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -93,13 +94,11 @@ export const ScreenAddNewWhitelistAddress = ({
   const [isCex, setIsCex] = useState(false);
   const [aliasName, setAliasName] = useState('');
   const [isAliasEditing, setIsAliasEditing] = useState(false);
-  const [aliasSelection, setAliasSelection] = useState<
-    { start: number; end: number } | undefined
-  >();
   const [cex, setCex] = useState<ProjectItem | undefined>();
   const [error, setError] = useState<INPUT_ERROR>();
   const [loading, setLoading] = useState(false);
-  const aliasInputRef = useRef<any>(null);
+  const aliasInputRef = useRef<TextInputRef>(null);
+  const pendingAliasCursorPositionRef = useRef<number | null>(null);
   const detectAddressRequestIdRef = useRef(0);
 
   const { list } = useCexSupportList();
@@ -211,17 +210,27 @@ export const ScreenAddNewWhitelistAddress = ({
     setError(undefined);
     setInput(text);
   }, []);
-  const focusAliasInputAtEnd = useCallback(() => {
-    const position = aliasName.length;
-    setAliasSelection({ start: position, end: position });
+  const startAliasEditing = useCallback(() => {
+    pendingAliasCursorPositionRef.current = aliasName.length;
     setIsAliasEditing(true);
   }, [aliasName.length]);
-  const handleAliasSelectionChange = useCallback(() => {
-    setAliasSelection(undefined);
+  const handleAliasFocus = useCallback(() => {
+    const pendingPosition = pendingAliasCursorPositionRef.current;
+    if (pendingPosition === null) {
+      return;
+    }
+
+    pendingAliasCursorPositionRef.current = null;
+    const position = Math.min(pendingPosition, aliasName.length);
+    aliasInputRef.current?.setSelection(position, position);
+  }, [aliasName.length]);
+  const handleAliasNameChange = useCallback((text: string) => {
+    pendingAliasCursorPositionRef.current = null;
+    setAliasName(text);
   }, []);
   const handleAliasBlur = useCallback(() => {
+    pendingAliasCursorPositionRef.current = null;
     setIsAliasEditing(false);
-    setAliasSelection(undefined);
   }, []);
   const openSendHistory = useCallback(() => {
     touchedFeedback();
@@ -281,7 +290,7 @@ export const ScreenAddNewWhitelistAddress = ({
     setCex(undefined);
     setAliasName('');
     setIsAliasEditing(false);
-    setAliasSelection(undefined);
+    pendingAliasCursorPositionRef.current = null;
     if (isValidHexAddress(input as Hex)) {
       const aliasInfo = getContactAliasSnapshot(input);
       setAliasName(aliasInfo?.isDefaultAlias ? '' : aliasInfo?.alias || '');
@@ -329,7 +338,7 @@ export const ScreenAddNewWhitelistAddress = ({
     setLoading(false);
     setAliasName('');
     setIsAliasEditing(false);
-    setAliasSelection(undefined);
+    pendingAliasCursorPositionRef.current = null;
     setCex(undefined);
   }, []);
   useAlertAddress(input, onRepeatAdd);
@@ -451,14 +460,12 @@ export const ScreenAddNewWhitelistAddress = ({
                 placeholder: aliasNamePlaceholder,
                 placeholderTextColor: colors2024['neutral-secondary'],
                 value: aliasName,
-                onChangeText: setAliasName,
+                onChangeText: handleAliasNameChange,
                 multiline: false,
                 numberOfLines: 1,
                 maxLength: 80,
-                selection: aliasSelection,
-                onSelectionChange: handleAliasSelectionChange,
                 onBlur: handleAliasBlur,
-                onFocus: focusAliasInputAtEnd,
+                onFocus: handleAliasFocus,
               }}
               containerStyle={styles.nameInput}
               fieldErrorTextStyle={styles.error}
@@ -471,7 +478,7 @@ export const ScreenAddNewWhitelistAddress = ({
                 styles.nameInput,
                 styles.aliasDisplayContainer,
               ]}
-              onPress={focusAliasInputAtEnd}>
+              onPress={startAliasEditing}>
               <Text
                 numberOfLines={1}
                 ellipsizeMode="tail"
