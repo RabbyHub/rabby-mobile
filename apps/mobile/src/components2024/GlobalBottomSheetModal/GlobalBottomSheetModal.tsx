@@ -38,6 +38,7 @@ let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;
 
 export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
+  const waitForDismissIdsRef = React.useRef(new Set<MODAL_ID>());
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
   const removeAllModals = React.useCallback((params?: RemoveParams) => {
@@ -146,15 +147,7 @@ export const GlobalBottomSheetModal2024 = () => {
     [getApproval, handlePresent],
   );
 
-  const handleRemove = React.useCallback<
-    GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
-  >((key, params) => {
-    if (modalRefs.current[key]) {
-      // Empty object as props causes flash, undefined is preferred
-      modalRefs.current[key].current?.close(
-        Object.keys(params || {}).length ? { ...params } : undefined,
-      );
-    }
+  const finalizeRemove = React.useCallback((key: MODAL_ID) => {
     delete modalRefs.current[key];
 
     setModals(prev => {
@@ -165,10 +158,52 @@ export const GlobalBottomSheetModal2024 = () => {
     globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
   }, []);
 
+  const handleRemove = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
+  >(
+    (key, params) => {
+      const { waitForDismiss, ...animationParams } = params || {};
+      const currentModal = modalRefs.current[key]?.current;
+
+      if (waitForDismiss && currentModal) {
+        waitForDismissIdsRef.current.add(key);
+        currentModal.close(
+          Object.keys(animationParams).length
+            ? { ...animationParams }
+            : undefined,
+        );
+        return;
+      }
+
+      if (currentModal) {
+        // Empty object as props causes flash, undefined is preferred
+        currentModal.close(
+          Object.keys(animationParams).length
+            ? { ...animationParams }
+            : undefined,
+        );
+      }
+      finalizeRemove(key);
+    },
+    [finalizeRemove],
+  );
+
   const handleDismiss = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
   >(
     key => {
+      if (waitForDismissIdsRef.current.delete(key)) {
+        bottomSheetModalSecurityApis.removeAtSensitiveModal(key);
+
+        const params = modals.find(modal => modal.id === key)?.params;
+        if (params?.screenshotReportFreeBeforeModalClose) {
+          storeApiScreenshotReport.markIsScreenshotReportFree(false);
+        }
+
+        finalizeRemove(key);
+        return;
+      }
+
       globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
       bottomSheetModalSecurityApis.removeAtSensitiveModal(key);
 
@@ -179,7 +214,7 @@ export const GlobalBottomSheetModal2024 = () => {
 
       handleRemove(key);
     },
-    [handleRemove, modals],
+    [finalizeRemove, handleRemove, modals],
   );
 
   const handleSnapToIndex = React.useCallback<
