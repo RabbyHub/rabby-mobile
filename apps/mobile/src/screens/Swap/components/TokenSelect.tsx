@@ -199,6 +199,7 @@ const TokenSelect = ({
     tokens,
     tokenRows,
     checkIsExpireAndUpdate,
+    ensureInitialTokenLoad,
     loadToken,
     loadOnVisibleChanged,
     isLoading: isLoadingAllTokens,
@@ -210,6 +211,7 @@ const TokenSelect = ({
     keyword: queryConds.keyword,
     returnTokenObjects: shouldUseTokenObjects,
     skipEmptyChainInit: type === 'bridgeFrom',
+    deferInitialRemoteLoad: type === 'send',
   });
 
   useImperativeHandle(ref, () => ({
@@ -229,13 +231,26 @@ const TokenSelect = ({
     checkIsExpireAndUpdate();
   }, [checkIsExpireAndUpdate, currentAccount?.address, loadToken]);
 
+  const ensureVisibleTokenListLoaded = useCallback(() => {
+    if (currentAccount?.address) {
+      ensureInitialTokenLoad(currentAccount.address);
+      return;
+    }
+    checkIsExpireAndUpdate();
+  }, [checkIsExpireAndUpdate, currentAccount?.address, ensureInitialTokenLoad]);
+
   const handleTokenSelectorOpened = useCallback(() => {
     if (!hasHandledTokenSelectorVisibleRef.current) {
       hasHandledTokenSelectorVisibleRef.current = true;
+      ensureInitialTokenLoad(currentAccount?.address);
       return;
     }
     refreshVisibleTokenList();
-  }, [refreshVisibleTokenList]);
+  }, [
+    currentAccount?.address,
+    ensureInitialTokenLoad,
+    refreshVisibleTokenList,
+  ]);
 
   // Refresh account/chain changes while open. Opening itself refreshes only
   // after the native sheet animation completes via handleTokenSelectorOpened.
@@ -246,11 +261,11 @@ const TokenSelect = ({
     ) {
       return;
     }
-    refreshVisibleTokenList();
+    ensureVisibleTokenListLoaded();
   }, [
     currentAccount?.address,
+    ensureVisibleTokenListLoaded,
     queryConds.chainServerId,
-    refreshVisibleTokenList,
     tokenSelectorVisibleRef,
   ]);
 

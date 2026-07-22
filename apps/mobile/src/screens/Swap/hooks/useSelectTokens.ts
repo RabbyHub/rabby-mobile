@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { InteractionManager } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import { useShallow } from 'zustand/shallow';
 
@@ -24,6 +25,7 @@ import useTokenList, {
 import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken';
 import { openapi } from '@/core/request';
 import { tokenItemToITokenItem } from '@/utils/token';
+import { createTokenLoadCoordinator } from './tokenLoadCoordinator';
 
 const EMPTY_TOKEN_LIST: ITokenItem[] = [];
 const EMPTY_TOKEN_ROWS: TokenSelectIndexRow[] = [];
@@ -59,6 +61,7 @@ export const useSelectTokens = ({
   keyword,
   returnTokenObjects = false,
   skipEmptyChainInit = false,
+  deferInitialRemoteLoad = false,
 }: {
   currentAccount?: Account | null;
   chain_server_id?: string;
@@ -66,6 +69,7 @@ export const useSelectTokens = ({
   keyword?: string;
   returnTokenObjects?: boolean;
   skipEmptyChainInit?: boolean;
+  deferInitialRemoteLoad?: boolean;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
@@ -112,29 +116,77 @@ export const useSelectTokens = ({
   const { fetchAccountsAndTokenSettings, userTokenSettings } =
     useSelectTokensThreadSafe();
 
+  const [tokenLoadCoordinator] = useState(createTokenLoadCoordinator);
+
+  const getTokenRequestKey = useCallback(
+    (address: string) => `${address.toLowerCase()}::${chain_server_id || ''}`,
+    [chain_server_id],
+  );
+
   const loadToken = useCallback(
     (address?: string) => {
       if (!address || skipRemoteLoad) {
         return;
       }
-      getTokenList(address, true, chain_server_id);
+
+      const requestKey = getTokenRequestKey(address);
+      return tokenLoadCoordinator.load(requestKey, () =>
+        getTokenList(address, true, chain_server_id),
+      );
     },
-    [chain_server_id, getTokenList, skipRemoteLoad],
+    [
+      chain_server_id,
+      getTokenList,
+      getTokenRequestKey,
+      skipRemoteLoad,
+      tokenLoadCoordinator,
+    ],
   );
 
-  const lastLoadedTokenRequestKeyRef = useRef<string | null>(null);
+  const ensureInitialTokenLoad = useCallback(
+    (address?: string) => {
+      if (!address || skipRemoteLoad) {
+        return;
+      }
+
+      const requestKey = getTokenRequestKey(address);
+      return tokenLoadCoordinator.ensureInitial(requestKey, () =>
+        getTokenList(address, true, chain_server_id),
+      );
+    },
+    [
+      chain_server_id,
+      getTokenList,
+      getTokenRequestKey,
+      skipRemoteLoad,
+      tokenLoadCoordinator,
+    ],
+  );
+
   useEffect(() => {
     if (!currentAddress || skipRemoteLoad) {
       return;
     }
-    const requestKey = `${currentAddress.toLowerCase()}::${
-      chain_server_id || ''
-    }`;
-    if (lastLoadedTokenRequestKeyRef.current !== requestKey) {
-      lastLoadedTokenRequestKeyRef.current = requestKey;
-      getTokenList(currentAddress, true, chain_server_id);
+
+    const runInitialLoad = () => {
+      ensureInitialTokenLoad(currentAddress);
+    };
+
+    if (!deferInitialRemoteLoad) {
+      runInitialLoad();
+      return;
     }
-  }, [chain_server_id, currentAddress, getTokenList, skipRemoteLoad]);
+
+    const task = InteractionManager.runAfterInteractions(runInitialLoad);
+    return () => {
+      task.cancel();
+    };
+  }, [
+    currentAddress,
+    deferInitialRemoteLoad,
+    ensureInitialTokenLoad,
+    skipRemoteLoad,
+  ]);
 
   const { value: searchTokenResult, loading: searchingToken } =
     useAsync(async () => {
@@ -309,6 +361,7 @@ export const useSelectTokens = ({
     isSearching: searchingToken || loadingRecommendedTokens,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,
+    ensureInitialTokenLoad,
     loadToken,
     loadOnVisibleChanged,
   };
