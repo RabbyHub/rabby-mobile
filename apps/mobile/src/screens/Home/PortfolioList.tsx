@@ -48,16 +48,11 @@ const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 interface Props {
   onForeground?: () => void;
   onRefresh?: () => void | Promise<void>;
-  onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-export const PortfolioList = ({
-  onForeground,
-  onRefresh,
-  onReachTopStatusChange,
-}: Props) => {
+export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
@@ -301,32 +296,18 @@ export const PortfolioList = ({
   }, [hasMorePortfolios, styles.defiLoading]);
 
   const scrollY = useCurrentTabScrollY();
-  const handleScrollStateChange = useCallback(
-    (reachTop: boolean, showIndicator: boolean) => {
-      onReachTopStatusChange?.(reachTop);
-      setShowScrollIndicator(showIndicator);
-    },
-    [onReachTopStatusChange, setShowScrollIndicator],
+  const handleScrollIndicatorChange = useCallback(
+    (showIndicator: boolean) => setShowScrollIndicator(showIndicator),
+    [],
   );
 
   useAnimatedReaction(
-    () => {
-      if (scrollY.value <= 0) {
-        return -1;
-      }
-      if (scrollY.value >= 89) {
-        return 1;
-      }
-      return 0;
-    },
-    (currentScrollState, previousScrollState) => {
-      if (currentScrollState === previousScrollState) {
+    () => scrollY.value >= 89,
+    (showIndicator, previousShowIndicator) => {
+      if (showIndicator === previousShowIndicator) {
         return;
       }
-      runOnJS(handleScrollStateChange)(
-        currentScrollState === -1,
-        currentScrollState === 1,
-      );
+      runOnJS(handleScrollIndicatorChange)(showIndicator);
     },
   );
   return (

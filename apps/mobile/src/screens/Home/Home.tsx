@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Animated } from 'react-native';
+import { View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 import HomeHeaderArea from './HeaderArea';
 import { SingleHomeRightArea } from './SingleHomeRightArea';
 import { AssetContainer } from './AssetContainer';
@@ -7,7 +8,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { BottomBtns } from './components/BottomBtns';
-import { TopBg } from './components/BgComponents';
+import {
+  HomeBackgroundOpacityProvider,
+  TopBg,
+} from './components/BgComponents';
 import { useBgSize } from './hooks/useBgSize';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
@@ -85,31 +89,14 @@ const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
 
 function SingleAddressHome(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const backgroundOpacity = useSharedValue(1);
   const { topHeight } = useBgSize();
   const { currentAccount } = useSingleHomeAccount();
   const currentAddress = currentAccount?.address;
   const hasFocusedOnceRef = React.useRef(false);
-  const lastReachTopStatusRef = React.useRef<boolean | null>(null);
   const needsBackupReminder = useBackupReminder(currentAccount);
 
   const { isDecrease } = useSingleHomeIsDecrease();
-
-  const handleReachTopStatusChange = React.useCallback(
-    (status: boolean) => {
-      if (lastReachTopStatusRef.current === status) {
-        return;
-      }
-      lastReachTopStatusRef.current = status;
-      apisSingleHome.setReachTop(status);
-      Animated.timing(fadeAnim, {
-        toValue: status ? 1 : 0,
-        duration: 100,
-        useNativeDriver: true,
-      }).start();
-    },
-    [fadeAnim],
-  );
 
   useRendererDetect({ name: 'SingleAddressHome' });
 
@@ -140,29 +127,31 @@ function SingleAddressHome(): JSX.Element {
   });
 
   return (
-    <NormalScreenContainer2024
-      type="bg1"
-      overwriteStyle={[
-        styles.rootScreenContainer,
-        {
-          // 设计要求，TODO: check一些安卓机型
-          paddingTop: topHeight,
-        },
-      ]}>
-      <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
+    <HomeBackgroundOpacityProvider value={backgroundOpacity}>
+      <NormalScreenContainer2024
+        type="bg1"
+        overwriteStyle={[
+          styles.rootScreenContainer,
+          {
+            // 设计要求，TODO: check一些安卓机型
+            paddingTop: topHeight,
+          },
+        ]}>
+        <TopBg isDecrease={isDecrease} />
 
-      <View style={styles.safeView} onTouchStart={handleTouchEnd}>
-        <HomeTopArea />
-        <BackupReminderCard
-          visible={needsBackupReminder}
-          account={currentAccount}
-        />
-        <AssetContainer onReachTopStatusChange={handleReachTopStatusChange} />
-      </View>
-      <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
-        <BottomBtns currentAccount={currentAccount} />
-      </View>
-    </NormalScreenContainer2024>
+        <View style={styles.safeView} onTouchStart={handleTouchEnd}>
+          <HomeTopArea />
+          <BackupReminderCard
+            visible={needsBackupReminder}
+            account={currentAccount}
+          />
+          <AssetContainer />
+        </View>
+        <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
+          <BottomBtns currentAccount={currentAccount} />
+        </View>
+      </NormalScreenContainer2024>
+    </HomeBackgroundOpacityProvider>
   );
 }
 

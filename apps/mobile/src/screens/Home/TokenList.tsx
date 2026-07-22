@@ -166,7 +166,6 @@ interface Props {
   noAssetsOnAnyChain: boolean;
   onForeground?: () => void;
   onRefresh?: () => void | Promise<void>;
-  onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -369,7 +368,6 @@ export const TokenList = ({
   noAssetsOnAnyChain,
   onForeground,
   onRefresh,
-  onReachTopStatusChange,
 }: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
@@ -865,32 +863,18 @@ export const TokenList = ({
   }, []);
 
   const scrollY = useCurrentTabScrollY();
-  const handleScrollStateChange = useCallback(
-    (reachTop: boolean, showIndicator: boolean) => {
-      onReachTopStatusChange?.(reachTop);
-      setShowScrollIndicator(showIndicator);
-    },
-    [onReachTopStatusChange, setShowScrollIndicator],
+  const handleScrollIndicatorChange = useCallback(
+    (showIndicator: boolean) => setShowScrollIndicator(showIndicator),
+    [],
   );
 
   useAnimatedReaction(
-    () => {
-      if (scrollY.value <= 0) {
-        return -1;
-      }
-      if (scrollY.value >= 89) {
-        return 1;
-      }
-      return 0;
-    },
-    (currentScrollState, previousScrollState) => {
-      if (currentScrollState === previousScrollState) {
+    () => scrollY.value >= 89,
+    (showIndicator, previousShowIndicator) => {
+      if (showIndicator === previousShowIndicator) {
         return;
       }
-      runOnJS(handleScrollStateChange)(
-        currentScrollState === -1,
-        currentScrollState === 1,
-      );
+      runOnJS(handleScrollIndicatorChange)(showIndicator);
     },
   );
 
