@@ -31,7 +31,6 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import {
   clearNeedsBackupReminder,
   getNeedsBackupReminderSnapshot,
-  getPinnedAddressSnapshot,
   setNeedsBackupReminder,
 } from '@/core/serviceApi/preference';
 import { EntityAccountBase } from '@/databases/entities/base';
@@ -300,14 +299,10 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
   const pinAddresses = useAccountStore(s => s.pinnedAddresses);
 
-  const getPinAddresses = useCallback(() => {
-    const addresses = getPinnedAddressSnapshot();
-    accountStore.setPinnedAddresses(addresses);
-  }, []);
-
-  const getPinAddressesAsync = useCallback(async () => {
-    return getPinAddresses();
-  }, [getPinAddresses]);
+  const getPinAddressesAsync = useCallback(
+    () => accountStore.refreshPinnedAddresses(),
+    [],
+  );
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -325,6 +320,15 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 export const usePinnedAccountList = () => {
   const pinAddresses = useAccountStore(s => s.pinnedAddresses);
   const accounts = useAccountStore(s => s.accounts);
+
+  useEffect(() => {
+    accountStore.ensurePinnedAddressesHydrated().catch(error => {
+      if (__DEV__) {
+        console.error('[usePinnedAccountList] hydrate failed', error);
+      }
+    });
+  }, []);
+
   const pinnedBaseAccounts = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
     pinAddresses?.forEach(pinAddr => {

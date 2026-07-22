@@ -433,6 +433,15 @@ export const TokenSelectorSheetModal = ({
     };
   });
 
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        tokenSelectorModalRef.current?.destroy();
+      },
+      [tokenSelectorModalRef],
+    ),
+  );
+
   const initialRouteRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!initialRouteRef.current && visible) {
