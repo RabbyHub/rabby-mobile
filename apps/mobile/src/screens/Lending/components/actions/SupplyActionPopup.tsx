@@ -82,6 +82,7 @@ import {
 } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { isUserCancelledError } from '../../utils/error';
+import { ellipsisSymbol } from '../../utils/format';
 
 type SupplyActionPopupProps = PopupDetailProps & {
   onBeforeSwapNavigate?: () => void;
@@ -735,6 +736,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   ]);
 
   const emptyAmount = !supplyAmount.amount || supplyAmount.amount === '0';
+  const displaySymbol = useMemo(
+    () => ellipsisSymbol(currentReserve.reserve.symbol),
+    [currentReserve.reserve.symbol],
+  );
 
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
@@ -752,9 +757,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               style={[
                 styles.amountValueDescription,
                 emptyAmount && styles.amountValueDescriptionDanger,
-              ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
-              currentReserve.reserve.symbol
-            }($${
+              ]}>{`${formatTokenAmount(
+              supplyAmount.amount || '0',
+            )}${displaySymbol}($${
               supplyAmount.isLteZero
                 ? '0'
                 : formatAmountValueKMB(supplyAmount.usdValue || '0')
@@ -776,7 +781,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
             }
             setAmount(v);
           }}
-          symbol={currentReserve.reserve.symbol}
+          symbol={displaySymbol}
           handleClickMaxButton={() => {
             setAmount(supplyAmount.amount || '0');
           }}
@@ -795,7 +800,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
                 triggerVariant="pill"
                 activeUnderlyingAsset={activeUnderlyingAsset}
                 options={tokenOptions as BalancePositionTokenOption[]}
-                symbol={currentReserve.reserve.symbol}
+                symbol={displaySymbol}
                 chain={currentReserve.chain}
                 onChange={handleChangeActiveUnderlyingAsset}
               />
@@ -840,9 +845,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.supplyDetail.actions')}
-              title={`${t('page.Lending.supplyDetail.actions')} ${
-                currentReserve.reserve.symbol
-              }`}
+              title={`${t(
+                'page.Lending.supplyDetail.actions',
+              )} ${displaySymbol}`}
               onFinished={() => handleSupply()}
               disabled={
                 !amount ||

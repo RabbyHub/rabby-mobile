@@ -86,6 +86,7 @@ import {
   isNativeWithdrawApprovalRequired,
 } from '../../utils/withdrawApproval';
 import { isUserCancelledError } from '../../utils/error';
+import { ellipsisSymbol } from '../../utils/format';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -631,6 +632,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const actionTitle = needApprove
     ? t('page.Lending.withdrawDetail.approveAndWithdraw')
     : t('page.Lending.withdrawDetail.actions');
+  const displaySymbol = useMemo(
+    () => ellipsisSymbol(currentReserve.reserve.symbol),
+    [currentReserve.reserve.symbol],
+  );
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -645,7 +650,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           </Text>
           <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
             withdrawAmount.toString() || '0',
-          )}${currentReserve.reserve.symbol}($${formatAmountValueKMB(
+          )}${displaySymbol}($${formatAmountValueKMB(
             BigNumber(withdrawAmount)
               .multipliedBy(
                 BigNumber(
@@ -659,7 +664,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         <TokenAmountInput
           value={amount}
           onChange={handleChangeAmount}
-          symbol={currentReserve.reserve.symbol}
+          symbol={displaySymbol}
           handleClickMaxButton={() => {
             handleChangeAmount('-1');
           }}
@@ -677,7 +682,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 triggerVariant="pill"
                 activeUnderlyingAsset={activeUnderlyingAsset}
                 options={tokenOptions as BasicPositionTokenOption[]}
-                symbol={currentReserve.reserve.symbol}
+                symbol={displaySymbol}
                 chain={currentReserve.chain}
                 onChange={handleChangeActiveUnderlyingAsset}
               />
