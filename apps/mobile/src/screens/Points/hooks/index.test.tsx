@@ -34,7 +34,7 @@ describe('useGetRabbyPoints', () => {
     jest.clearAllMocks();
 
     mockUseAccounts.mockReturnValue({
-      accounts: Array.from({ length: 101 }, (_, index) => ({
+      accounts: Array.from({ length: 96 }, (_, index) => ({
         address: `0x${index.toString(16).padStart(40, '0')}`,
         type: 'Simple Key Pair',
       })),
@@ -51,7 +51,7 @@ describe('useGetRabbyPoints', () => {
     jest.useRealTimers();
   });
 
-  it('starts at most 20 point requests per second and 100 per minute', async () => {
+  it('starts at most 20 point requests per 1.5 seconds and 95 per minute', async () => {
     renderHook(() => useGetRabbyPoints());
 
     await act(async () => {
@@ -61,7 +61,7 @@ describe('useGetRabbyPoints', () => {
     expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(20);
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(999);
+      await jest.advanceTimersByTimeAsync(1499);
     });
     expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(20);
 
@@ -71,18 +71,18 @@ describe('useGetRabbyPoints', () => {
     expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(40);
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(3000);
+      await jest.advanceTimersByTimeAsync(4500);
     });
-    expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(100);
+    expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(95);
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(55_000);
+      await jest.advanceTimersByTimeAsync(53_000);
     });
-    expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(100);
+    expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(95);
 
     await act(async () => {
       await jest.advanceTimersByTimeAsync(1000);
     });
-    expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(101);
+    expect(mockGetRabbyPointsV2).toHaveBeenCalledTimes(96);
   });
 });
