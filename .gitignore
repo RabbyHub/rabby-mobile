@@ -21,6 +21,11 @@ preview-build-message.txt
 /packages*/*/dist
 /packages*/*/docs
 
+# Android build artifacts generated inside local package modules
+/packages/*/android/.gradle/
+/packages/*/android/.settings/
+/packages/*/android/build/
+
 # yarn v3 (w/o zero-install)
 # See: https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*
