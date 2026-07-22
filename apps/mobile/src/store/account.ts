@@ -20,6 +20,7 @@ import type {
 import { bindKeyringEvent, bindKeyringStore } from '@/core/serviceApi/keyring';
 import {
   clearNeedsBackupReminder,
+  getPinnedAddresses,
   getPinnedAddressSnapshot,
   setNeedsBackupReminder,
   updatePinnedAddresses,
@@ -35,6 +36,10 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { updateHistoryTimeSingleAddress } from '@/hooks/historyTokenDict';
 import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
+import {
+  normalizePinnedAddresses,
+  updatePinnedAddressList,
+} from './pinnedAddresses';
 
 export interface AccountStoreState {
   accounts: KeyringAccountWithAlias[];
@@ -52,7 +57,16 @@ export const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
 
 class AccountStore extends BaseStore<AccountStoreState> {
   private hasStartedLifecycle = false;
+  private hasHydratedPinnedAddresses = false;
   private deferredFetchAccountReasons = new Set<string>();
+
+  private readonly hydratePinnedAddressesInParallel =
+    this.createAvoidParallelAsyncMethod(async () => {
+      const addresses = normalizePinnedAddresses(await getPinnedAddresses());
+      this.hasHydratedPinnedAddresses = true;
+      this.setPinnedAddresses(addresses);
+      return addresses;
+    });
 
   private readonly fetchAccountsInParallel =
     this.createAvoidParallelAsyncMethod(
@@ -89,7 +103,7 @@ class AccountStore extends BaseStore<AccountStoreState> {
       accounts: [],
       hasFetchedAccounts: false,
       isFetchingAccounts: false,
-      pinnedAddresses: getPinnedAddressSnapshot(),
+      pinnedAddresses: normalizePinnedAddresses(getPinnedAddressSnapshot()),
       currentAccount: null,
       newlyAddedAccounts: {},
     });
@@ -110,6 +124,16 @@ class AccountStore extends BaseStore<AccountStoreState> {
   ) => {
     this.setField('pinnedAddresses', valOrFunc);
   };
+
+  ensurePinnedAddressesHydrated = async () => {
+    if (this.hasHydratedPinnedAddresses) {
+      return this.getState().pinnedAddresses;
+    }
+
+    return this.hydratePinnedAddressesInParallel();
+  };
+
+  refreshPinnedAddresses = () => this.hydratePinnedAddressesInParallel();
 
   fetchAccounts = async (options?: { force?: boolean }) => {
     return this.fetchAccountsInParallel(options);
@@ -180,37 +204,19 @@ class AccountStore extends BaseStore<AccountStoreState> {
     address: Account['address'];
     nextPinned?: boolean;
   }) => {
-    const allPinAddresses = getPinnedAddressSnapshot();
-    const nextPinned =
-      payload.nextPinned ??
-      !allPinAddresses.some(
-        item =>
-          isSameAddress(item.address, payload.address) &&
-          item.brandName === payload.brandName,
-      );
-
-    const nextAddresses = [...allPinAddresses];
-    const newItem = {
-      brandName: payload.brandName,
-      address: payload.address,
-    };
+    const allPinAddresses = await this.ensurePinnedAddressesHydrated();
+    const { nextPinned, nextAddresses } = updatePinnedAddressList(
+      allPinAddresses,
+      payload,
+    );
 
     if (nextPinned) {
-      nextAddresses.unshift(newItem);
       await updatePinnedAddresses(nextAddresses);
       matomoRequestEvent({
         category: 'Pin Address',
         action: 'PinAddress_Finish',
       });
     } else {
-      const index = nextAddresses.findIndex(
-        item =>
-          item.brandName === payload.brandName &&
-          isSameAddress(item.address, payload.address),
-      );
-      if (index > -1) {
-        nextAddresses.splice(index, 1);
-      }
       await updatePinnedAddresses(nextAddresses);
     }
 
