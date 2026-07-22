@@ -166,7 +166,6 @@ interface Props {
   noAssetsOnAnyChain: boolean;
   onForeground?: () => void;
   onRefresh?: () => void | Promise<void>;
-  onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -369,7 +368,6 @@ export const TokenList = ({
   noAssetsOnAnyChain,
   onForeground,
   onRefresh,
-  onReachTopStatusChange,
 }: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
@@ -865,22 +863,18 @@ export const TokenList = ({
   }, []);
 
   const scrollY = useCurrentTabScrollY();
-  const handleScroll = useCallback(
-    (currentScrollY: number) => {
-      if (currentScrollY <= 0) {
-        onReachTopStatusChange?.(true);
-      } else {
-        onReachTopStatusChange?.(false);
-      }
-      setShowScrollIndicator(currentScrollY >= 89);
-    },
-    [onReachTopStatusChange, setShowScrollIndicator],
+  const handleScrollIndicatorChange = useCallback(
+    (showIndicator: boolean) => setShowScrollIndicator(showIndicator),
+    [],
   );
 
   useAnimatedReaction(
-    () => scrollY.value,
-    currentScrollY => {
-      runOnJS(handleScroll)(currentScrollY);
+    () => scrollY.value >= 89,
+    (showIndicator, previousShowIndicator) => {
+      if (showIndicator === previousShowIndicator) {
+        return;
+      }
+      runOnJS(handleScrollIndicatorChange)(showIndicator);
     },
   );
 
