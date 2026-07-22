@@ -40042,14 +40042,14 @@ __metadata:
 
 "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.13#./.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.7.13
-  resolution: "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.13#./.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::version=0.7.13&hash=591104&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.13#./.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::version=0.7.13&hash=7ba00f&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@craftzdog/react-native-buffer": "npm:^6.0.5"
     events: "npm:^3.3.0"
     readable-stream: "npm:^4.5.2"
     string_decoder: "npm:^1.3.0"
     util: "npm:^0.12.5"
-  checksum: 10/65b13d6a1c1d339fe536c8deabcdc58f1c02f84a291aae866da6867c18108be98ed862f80ecbe2c71cdd5dc602b57646d3bcdf22eb14250071b820402879ada9
+  checksum: 10/bab700660d2a185dbdf4ef9f46a6e2fa459a7602b768eeb2921259b1232e49dc8e69a1a8934c3944aefd4cbfd044420d03d4e05dccd7ab671d89b229673d0488
   languageName: node
   linkType: hard
 

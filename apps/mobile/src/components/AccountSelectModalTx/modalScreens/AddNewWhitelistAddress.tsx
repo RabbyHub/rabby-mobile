@@ -202,10 +202,6 @@ export const ScreenAddNewWhitelistAddress = ({
   const handleAliasSelectionChange = useCallback(() => {
     setAliasSelection(undefined);
   }, []);
-  const handleAliasNameChange = useCallback((text: string) => {
-    setAliasName(text);
-    setAliasSelection(undefined);
-  }, []);
   const handleAliasBlur = useCallback(() => {
     setIsAliasEditing(false);
     setAliasSelection(undefined);
@@ -406,7 +402,7 @@ export const ScreenAddNewWhitelistAddress = ({
                 placeholder: aliasNamePlaceholder,
                 placeholderTextColor: colors2024['neutral-secondary'],
                 value: aliasName,
-                onChangeText: handleAliasNameChange,
+                onChangeText: setAliasName,
                 multiline: false,
                 numberOfLines: 1,
                 maxLength: 80,
