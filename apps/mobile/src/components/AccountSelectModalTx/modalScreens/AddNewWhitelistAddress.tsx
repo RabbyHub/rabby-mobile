@@ -48,7 +48,11 @@ import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import type { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { setCexId } from '@/utils/addressCexId';
+import { removeCexId, setCexId } from '@/utils/addressCexId';
+import {
+  findSupportedExchange,
+  resolveSupportedDepositExchange,
+} from '@/utils/cex';
 import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -96,8 +100,13 @@ export const ScreenAddNewWhitelistAddress = ({
   const [error, setError] = useState<INPUT_ERROR>();
   const [loading, setLoading] = useState(false);
   const aliasInputRef = useRef<any>(null);
+  const detectAddressRequestIdRef = useRef(0);
 
   const { list } = useCexSupportList();
+  const supportedSelectedCex = useMemo(
+    () => findSupportedExchange(list, cex?.id),
+    [cex?.id, list],
+  );
 
   const { findAccountWithoutBalance } = useFindAddressByWhitelist();
 
@@ -124,6 +133,7 @@ export const ScreenAddNewWhitelistAddress = ({
         setError(INPUT_ERROR.INVALID_ADDRESS);
         return;
       }
+      const confirmedCex = isCex ? supportedSelectedCex : undefined;
       try {
         setLoading(true);
         Keyboard.dismiss();
@@ -144,7 +154,7 @@ export const ScreenAddNewWhitelistAddress = ({
               aliasName: aliasName || account.aliasName,
             },
             title: t('page.confirmAddress.addToWhitelist'),
-            cex: isCex ? cex : undefined,
+            cex: confirmedCex,
             disableWhiteSwitch: true,
             bottomSheetModalProps: {
               enableDynamicSizing: true,
@@ -166,8 +176,10 @@ export const ScreenAddNewWhitelistAddress = ({
                   ? 'Send_AddWhitelist_imported'
                   : 'Send_AddWhitelist_notImported',
               });
-              if (isCex && cex?.id) {
-                setCexId(address, cex.id);
+              if (confirmedCex) {
+                setCexId(address, confirmedCex.id);
+              } else {
+                removeCexId(address);
               }
               await contactServiceApi.updateAlias({
                 address,
@@ -218,7 +230,7 @@ export const ScreenAddNewWhitelistAddress = ({
   }, [fnNavTo]);
 
   const onSelectCex = useCallback(() => {
-    let tmpCex = cex;
+    let tmpCex = supportedSelectedCex;
     globalBottomSheetModalAddListener2024(
       EVENT_NAMES.DISMISS,
       () => {
@@ -239,6 +251,7 @@ export const ScreenAddNewWhitelistAddress = ({
         },
       },
       onSelect: item => {
+        detectAddressRequestIdRef.current += 1;
         tmpCex = item;
         setCex(item);
         removeGlobalBottomSheetModal2024(id);
@@ -247,21 +260,23 @@ export const ScreenAddNewWhitelistAddress = ({
         removeGlobalBottomSheetModal2024(id);
       },
     });
-  }, [cex, colors2024]);
+  }, [colors2024, supportedSelectedCex]);
 
   const onSwitch = useCallback(
     (bool: boolean) => {
       if (isValidHexAddress(input as Hex)) {
+        detectAddressRequestIdRef.current += 1;
         setIsCex(!!bool);
-        if (bool && !cex) {
+        if (bool && !supportedSelectedCex) {
           onSelectCex();
         }
       }
     },
-    [cex, input, onSelectCex],
+    [input, onSelectCex, supportedSelectedCex],
   );
 
   useEffect(() => {
+    const requestId = ++detectAddressRequestIdRef.current;
     setIsCex(false);
     setCex(undefined);
     setAliasName('');
@@ -271,14 +286,43 @@ export const ScreenAddNewWhitelistAddress = ({
       const aliasInfo = getContactAliasSnapshot(input);
       setAliasName(aliasInfo?.isDefaultAlias ? '' : aliasInfo?.alias || '');
       getAddrDescWithCexLocalCacheSync(input).then(res => {
-        if (res?.cex?.id && res?.cex?.is_deposit) {
+        if (requestId !== detectAddressRequestIdRef.current) {
+          return;
+        }
+        const supportedExchange = resolveSupportedDepositExchange(
+          res?.cex,
+          list,
+        );
+        if (supportedExchange) {
           setIsCex(true);
-          setCex(list.find(item => item.id === res?.cex?.id));
+          setCex(supportedExchange);
         }
       });
     }
+    return () => {
+      if (requestId === detectAddressRequestIdRef.current) {
+        detectAddressRequestIdRef.current += 1;
+      }
+    };
   }, [input, list]);
+
+  useEffect(() => {
+    if (!cex) {
+      return;
+    }
+    if (!supportedSelectedCex) {
+      detectAddressRequestIdRef.current += 1;
+      setIsCex(false);
+      setCex(undefined);
+      return;
+    }
+    if (supportedSelectedCex !== cex) {
+      setCex(supportedSelectedCex);
+    }
+  }, [cex, supportedSelectedCex]);
+
   const onRepeatAdd = useCallback(() => {
+    detectAddressRequestIdRef.current += 1;
     setError(undefined);
     setInput('');
     setIsCex(false);
@@ -451,17 +495,17 @@ export const ScreenAddNewWhitelistAddress = ({
           {isCex && (
             <TouchableView style={styles.selectCex} onPress={onSelectCex}>
               <View style={styles.addressRow}>
-                {cex ? (
+                {supportedSelectedCex ? (
                   <View style={styles.cexContainer}>
                     <View>
                       <Image
                         source={{
-                          uri: cex.logo_url,
+                          uri: supportedSelectedCex.logo_url,
                         }}
                         style={styles.logo}
                       />
                     </View>
-                    <Text style={styles.name}>{cex.name}</Text>
+                    <Text style={styles.name}>{supportedSelectedCex.name}</Text>
                   </View>
                 ) : (
                   <Text style={styles.toSelect}>
@@ -495,7 +539,11 @@ export const ScreenAddNewWhitelistAddress = ({
             title: t('global.Confirm'),
             onPress: handleDone,
             loading: loading,
-            disabled: !input || !!error || !aliasName,
+            disabled:
+              !input ||
+              !!error ||
+              !aliasName ||
+              (isCex && !supportedSelectedCex),
           }}
         />
       </View>
