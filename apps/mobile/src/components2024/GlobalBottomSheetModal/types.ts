@@ -115,7 +115,7 @@ export type GlobalBottomSheetModalProps = Partial<BottomSheetModalProps> & {
 type CreateParamsBase<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
-  onCancel?: () => void;
+  onCancel?: () => void | Promise<void>;
   bottomSheetModalProps?: GlobalBottomSheetModalProps;
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,
@@ -160,6 +160,8 @@ export type RemoveParams = Partial<
   Parameters<BottomSheetMethods['close']>[0]
 > & {
   duration?: number;
+  /** Keep the modal mounted until the native close animation finishes. */
+  waitForDismiss?: boolean;
 };
 
 export enum EVENT_NAMES {

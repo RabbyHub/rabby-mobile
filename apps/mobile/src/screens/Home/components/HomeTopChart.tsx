@@ -249,27 +249,12 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     selectData,
     balance,
   } = useSingleHomeHomeTopChart();
-  const [animateNetWorth, setAnimateNetWorth] = useState(false);
 
   const rawNetWorth = balance || 0;
   const changePercent = selectData.changePercent;
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
   const debouncedRawChange = useDebouncedValue(selectData.rawChange, 300);
-
-  useEffect(() => {
-    if (animateNetWorth || loading || changeLoading) {
-      return;
-    }
-
-    const frame = requestAnimationFrame(() => {
-      setAnimateNetWorth(true);
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [animateNetWorth, changeLoading, loading]);
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValueParts(rawNetWorth, {
@@ -438,7 +423,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       <View style={styles.leftContainer}>
         <RefreshNudgedTickerText
           value={formatNetWorth}
-          animate={animateNetWorth}
           animateWidth={false}
           maxLength={16}
           lineHeight={42}
@@ -550,6 +534,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 42,
     // textAlign: 'center',
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },

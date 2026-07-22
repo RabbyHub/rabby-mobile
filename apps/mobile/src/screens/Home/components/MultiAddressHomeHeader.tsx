@@ -28,6 +28,11 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { computeBalanceChange } from '@/core/apis/balance';
 import { balance24hStore } from '@/store/balance24h';
+import Animated, { Easing, FadeInUp } from 'react-native-reanimated';
+
+const PINNED_ADDRESS_LIST_ENTERING = FadeInUp.duration(460).easing(
+  Easing.out(Easing.cubic),
+);
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -97,7 +102,8 @@ function MultiPinnedAddressList({
   }, [addressListData?.length]);
 
   return (
-    <View
+    <Animated.View
+      entering={PINNED_ADDRESS_LIST_ENTERING}
       style={[
         styles.accountList,
         hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
@@ -114,7 +120,7 @@ function MultiPinnedAddressList({
           />
         );
       })}
-    </View>
+    </Animated.View>
   );
 }
 

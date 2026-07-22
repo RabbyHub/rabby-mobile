@@ -128,6 +128,10 @@ export function getPinnedAddressSnapshot() {
   return getRegisteredService('preferenceService')?.getPinAddresses() || [];
 }
 
+export async function getPinnedAddresses() {
+  return (await preferenceServiceApi.getPinAddresses()) as IPinAddress[];
+}
+
 export async function updatePinnedAddresses(list: IPinAddress[]) {
   await preferenceServiceApi.updatePinAddresses(list);
 }
