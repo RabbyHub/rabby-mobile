@@ -18,12 +18,12 @@ type PointsStore = {
 
 const AddrPointsQueue = new PQueue({
   interval: 60 * 1000,
-  intervalCap: 100,
+  intervalCap: 95,
   concurrency: 10,
 });
 
 const AddrPointsSecondQueue = new PQueue({
-  interval: 1000,
+  interval: 1500,
   intervalCap: 20,
   concurrency: 10,
 });
