@@ -2,7 +2,7 @@ import { findChain } from '@/utils/chain';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, { useCallback, useMemo } from 'react';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
@@ -109,4 +109,23 @@ export function useTokenDetailSheetModalOnApprovals() {
     cleanFocusingToken,
     selectedAccount,
   };
+}
+
+export function useOpenTokenDetailSheetModalOnApprovals() {
+  const onFocusToken = useSetAtom(popups.tokenDetailPopupOnSendToken.atom);
+  const setSelectedAccount = useSetAtom(
+    popups.tokenDetailPopupOnSendToken.accountAtom,
+  );
+  const { toggleShowSheetModal } = useSheetModal(
+    popups.tokenDetailPopupOnSendToken.ref,
+  );
+
+  return useCallback(
+    (token: TokenItem | AbstractPortfolioToken, account?: Account) => {
+      setSelectedAccount(account);
+      onFocusToken(ensureAbstractPortfolioToken(token));
+      toggleShowSheetModal(true);
+    },
+    [onFocusToken, setSelectedAccount, toggleShowSheetModal],
+  );
 }
