@@ -9,6 +9,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { findSupportedExchange } from '@/utils/cex';
 
 export const globalSupportCexList: ProjectItem[] = [];
 type SupportedCexListState = {
@@ -26,12 +27,19 @@ function setSupportCexList(valOrFunc: UpdaterOrPartials<ProjectItem[]>) {
   });
 }
 
-runIIFEFunc(() => {
-  openapi.getCexSupportList().then(res => {
-    globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
-    setSupportCexList(res);
-  });
-});
+const cexSupportListReady = runIIFEFunc(() =>
+  openapi
+    .getCexSupportList()
+    .then(res => {
+      globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
+      setSupportCexList(res);
+      return res;
+    })
+    .catch(() => globalSupportCexList),
+);
+
+export const waitForCexSupportListReady = () => cexSupportListReady;
+
 export const useCexSupportList = () => {
   const list = supportCexListStore(s => s.list);
 
@@ -42,7 +50,7 @@ export const getCexInfo = (address: string) => {
     return undefined;
   }
   const cexId = getCexId(address);
-  const cexInfo = globalSupportCexList.find(item => item.id === cexId);
+  const cexInfo = findSupportedExchange(globalSupportCexList, cexId);
   if (!cexInfo || !cexId) {
     return undefined;
   }
