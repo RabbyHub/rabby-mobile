@@ -29,7 +29,6 @@ type SingleHomeState = {
   currentAccount: Account | null;
   selectedChain: ChainListItem | null;
   foldChart: boolean;
-  reachTop: boolean;
 };
 
 function isSameSingleHomeAccount(prev: Account | null, next: Account) {
@@ -70,7 +69,6 @@ function getDefault(): SingleHomeState {
     currentAccount: null,
     selectedChain: null,
     foldChart: true,
-    reachTop: false,
   };
 }
 const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
@@ -79,7 +77,6 @@ function presetSingHomeAccount(account: Account) {
   singleHomeState.setState(prev => {
     const nextState = {
       ...getDefault(),
-      reachTop: prev.reachTop,
       currentAccount: account,
     };
 
@@ -154,21 +151,6 @@ export const apisSingleHome = {
       return { ...prev, foldChart: newVal };
     });
   },
-  setReachTop(valOrFunc: UpdaterOrPartials<boolean>) {
-    singleHomeState.setState(prev => {
-      const { newVal, changed } = resolveValFromUpdater(
-        prev.reachTop,
-        valOrFunc,
-        {
-          strict: true,
-        },
-      );
-      if (!changed) {
-        return prev;
-      }
-      return { ...prev, reachTop: newVal };
-    });
-  },
 };
 
 export function useSingleHomeAccount() {
@@ -220,12 +202,6 @@ export function useSingleHomeChain() {
 export function useHomeFoldChart() {
   return {
     isFoldChart: singleHomeState(s => s.foldChart),
-  };
-}
-
-export function useHomeReachTop() {
-  return {
-    reachTop: singleHomeState(s => s.reachTop),
   };
 }
 

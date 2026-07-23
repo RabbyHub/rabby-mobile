@@ -4,7 +4,9 @@ import {
   MaterialTabBar,
   MaterialTabBarProps,
   MaterialTabItem,
+  useCurrentTabScrollY,
 } from 'react-native-collapsible-tab-view';
+import { useAnimatedReaction, withTiming } from 'react-native-reanimated';
 import { getAddrChainInfo, useAddrTop3Chains } from '../../useChainInfo';
 import { ChainSelector } from '../AssetRenderItems/SectionHeaders';
 import {
@@ -20,7 +22,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import i18next from 'i18next';
 import { apisTheme, useTheme2024 } from '@/hooks/theme';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
-import { EndBg } from '../BgComponents';
+import { EndBg, useHomeBackgroundOpacity } from '../BgComponents';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const disableInnerIndicator = {
@@ -60,11 +62,23 @@ const TabItem: MaterialTabBarProps<string>['TabItemComponent'] &
   );
 };
 
-export const DynamicCustomMaterialTabBar = (
-  props: MaterialTabBarProps<string>,
-) => {
+const CustomMaterialTabBarContent = (props: MaterialTabBarProps<string>) => {
   const { styles } = useTheme2024({ getStyle: getTabItemStyle });
   const { selectedChain } = useSingleHomeChain();
+  const scrollY = useCurrentTabScrollY();
+  const backgroundOpacity = useHomeBackgroundOpacity();
+
+  useAnimatedReaction(
+    () => scrollY.value <= 0,
+    (isAtTop, wasAtTop) => {
+      if (isAtTop === wasAtTop) {
+        return;
+      }
+      backgroundOpacity.value = withTiming(isAtTop ? 1 : 0, {
+        duration: 100,
+      });
+    },
+  );
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
@@ -133,6 +147,10 @@ export const DynamicCustomMaterialTabBar = (
     </View>
   );
 };
+
+export const DynamicCustomMaterialTabBar = (
+  props: MaterialTabBarProps<string>,
+) => <CustomMaterialTabBarContent {...props} />;
 
 const getTabItemStyle = createGetStyles2024(() => {
   return {

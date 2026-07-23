@@ -7,11 +7,7 @@ import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { CenterBg } from './BgComponents';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
-import {
-  useHomeReachTop,
-  useSingleHomeAddress,
-  useSingleHomeIsLoss,
-} from '../hooks/singleHome';
+import { useSingleHomeAddress, useSingleHomeIsLoss } from '../hooks/singleHome';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { FOLD_ASSETS_HEADER_HEIGHT } from '@/constant/layout';
 
@@ -28,11 +24,9 @@ export const HomeTopArea = () => {
     [colors2024, isLoss],
   );
 
-  const { reachTop } = useHomeReachTop();
-
   return (
     <View style={[styles.container]}>
-      {reachTop ? <CenterBg /> : null}
+      <CenterBg />
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
