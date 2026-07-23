@@ -5,6 +5,7 @@ import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import {
   addWhitelistRecord,
   normalizeWhitelistRecords,
+  reorderWhitelistRecords,
   syncWhitelistRecords,
   type WhitelistRecord,
 } from '@/utils/whitelist';
@@ -62,6 +63,13 @@ export class WhitelistService {
 
   setWhitelist = (addresses: string[]) => {
     this.store.whitelists = syncWhitelistRecords(
+      this.store.whitelists,
+      addresses,
+    );
+  };
+
+  updateWhitelistOrder = (addresses: string[]) => {
+    this.store.whitelists = reorderWhitelistRecords(
       this.store.whitelists,
       addresses,
     );
