@@ -6,7 +6,6 @@ import React, {
   useRef,
   useSyncExternalStore,
 } from 'react';
-import { useIsFocused } from '@react-navigation/native';
 
 import { navigationRef } from '@/utils/navigation';
 
@@ -22,53 +21,39 @@ import {
 import { executeRegressionScenarioCommand } from './coordinator';
 import { scenarioIncludesScreen } from './registryMeta';
 import {
-  getRegressionScenarioRuntimeSnapshot,
+  getRegressionScenarioRuntimeControlSnapshot,
   reportRegressionScenarioEvent,
-  subscribeRegressionScenarioRuntime,
+  subscribeRegressionScenarioRuntimeControl,
 } from './runtime.nonprod';
+import { registerRegressionScenarioComponentAction } from './componentActions.nonprod';
 import { claimRegressionScenarioAction } from './runtimeStore';
+import { makeScreenContext } from './screenContext';
 
 const ScenarioContext = createContext<RegressionScenarioContext>(
   INACTIVE_REGRESSION_SCENARIO_CONTEXT,
 );
 
+type ScreenNavigation = {
+  isFocused?: () => boolean;
+  addListener?: (
+    event: 'focus' | 'blur',
+    listener: () => void,
+  ) => (() => void) | undefined;
+};
+
 function useRuntimeSnapshot() {
   return useSyncExternalStore(
-    subscribeRegressionScenarioRuntime,
-    getRegressionScenarioRuntimeSnapshot,
-    getRegressionScenarioRuntimeSnapshot,
+    subscribeRegressionScenarioRuntimeControl,
+    getRegressionScenarioRuntimeControlSnapshot,
+    getRegressionScenarioRuntimeControlSnapshot,
   );
 }
 
-function makeScreenContext(
-  screen: RegressionScreenId,
-  enabled: boolean,
-  command: RegressionScenarioCommand | null,
-): RegressionScenarioContext {
-  if (
-    !enabled ||
-    !command?.scenario ||
-    (command.screen
-      ? command.screen !== screen
-      : !scenarioIncludesScreen(command.scenario, screen))
-  ) {
-    return INACTIVE_REGRESSION_SCENARIO_CONTEXT;
-  }
-
-  return {
-    active: true,
-    runId: command.runId,
-    scenario: command.scenario,
-    screen,
-    action: command.action,
-    fixture: command.fixture,
-    credentialProfile: command.credentialProfile,
-    params: command.params,
-    claimOnce: actionKey =>
-      claimRegressionScenarioAction(command.runId, actionKey),
-    report: reportRegressionScenarioEvent,
-  };
-}
+const screenContextRuntime = {
+  scenarioIncludesScreen,
+  claimAction: claimRegressionScenarioAction,
+  report: reportRegressionScenarioEvent,
+};
 
 export const withRegressionScenario = ((
   Component: React.ComponentType<any>,
@@ -78,13 +63,25 @@ export const withRegressionScenario = ((
     displayName?: string;
   },
 ) => {
-  function RegressionScenarioBoundary(props: object) {
-    const snapshot = useRuntimeSnapshot();
-    const isFocused = useIsFocused();
-    const command = snapshot.command;
+  function EnabledRegressionScenarioBoundary({
+    command,
+    componentProps,
+  }: {
+    command: RegressionScenarioCommand | null;
+    componentProps: object;
+  }) {
+    const navigation = (componentProps as { navigation?: ScreenNavigation })
+      .navigation;
     const context = useMemo(
-      () => makeScreenContext(options.screen, snapshot.enabled, command),
-      [command, snapshot.enabled],
+      () =>
+        makeScreenContext(
+          options.screen,
+          true,
+          command,
+          () => navigation?.isFocused?.() ?? true,
+          screenContextRuntime,
+        ),
+      [command, navigation],
     );
     const activeContext = context.active ? context : null;
 
@@ -102,10 +99,32 @@ export const withRegressionScenario = ((
       if (!activeContext) {
         return;
       }
-      activeContext.report(isFocused ? 'screen-visible' : 'screen-hidden', {
-        screen: options.screen,
+
+      let lastVisible: boolean | null = null;
+      const reportVisibility = (visible: boolean) => {
+        if (lastVisible === visible) {
+          return;
+        }
+        lastVisible = visible;
+        activeContext.report(visible ? 'screen-visible' : 'screen-hidden', {
+          screen: options.screen,
+        });
+      };
+      if (navigation?.isFocused?.()) {
+        reportVisibility(true);
+      }
+      const unsubscribeFocus = navigation?.addListener?.('focus', () => {
+        reportVisibility(true);
       });
-    }, [activeContext, isFocused]);
+      const unsubscribeBlur = navigation?.addListener?.('blur', () => {
+        reportVisibility(false);
+      });
+
+      return () => {
+        unsubscribeFocus?.();
+        unsubscribeBlur?.();
+      };
+    }, [activeContext, navigation]);
 
     const injectedProps =
       activeContext && options.injectProps
@@ -114,8 +133,23 @@ export const withRegressionScenario = ((
 
     return (
       <ScenarioContext.Provider value={context}>
-        <Component {...props} {...injectedProps} />
+        <Component {...componentProps} {...injectedProps} />
       </ScenarioContext.Provider>
+    );
+  }
+
+  function RegressionScenarioBoundary(props: object) {
+    const snapshot = useRuntimeSnapshot();
+
+    if (!snapshot.enabled) {
+      return <Component {...props} />;
+    }
+
+    return (
+      <EnabledRegressionScenarioBoundary
+        command={snapshot.command}
+        componentProps={props}
+      />
     );
   }
 
@@ -133,9 +167,28 @@ export function useRegressionScenario<
   return useContext(ScenarioContext) as RegressionScenarioContext<TScreen>;
 }
 
+export function useRegressionScenarioComponentAction(
+  action: string,
+  handler: () => void | Promise<void>,
+) {
+  const context = useContext(ScenarioContext);
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  const runId = context.active ? context.runId : null;
+
+  useEffect(() => {
+    if (!runId) {
+      return;
+    }
+    return registerRegressionScenarioComponentAction(runId, action, () =>
+      handlerRef.current(),
+    );
+  }, [action, runId]);
+}
+
 export function useRegressionScenarioRuntime(): RegressionScenarioRuntimeContext {
   const snapshot = useRuntimeSnapshot();
-  const command = snapshot.command || snapshot.session?.command || null;
+  const command = snapshot.command;
 
   return useMemo(() => {
     if (!snapshot.enabled || !command?.scenario) {

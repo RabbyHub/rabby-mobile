@@ -86,6 +86,7 @@ module.exports = api => {
             '^@/devtools/regressionScenarios/entry$': `./src/devtools/regressionScenarios/entry.${regressionScenarioImplExt}`,
             '^@/devtools/regressionScenarios/runtime$': `./src/devtools/regressionScenarios/runtime.${regressionScenarioImplExt}`,
             '^@/devtools/regressionScenarios/react$': `./src/devtools/regressionScenarios/react.${regressionScenarioImplExt}`,
+            '^@/hooks/useFeatureActivationDiagnostics$': `./src/hooks/useFeatureActivationDiagnostics.${regressionScenarioImplExt}`,
             ...(loadableAliases[loadableImplExt] || {}),
             '@': './src',
             'styled-components/native': 'styled-components/native',
