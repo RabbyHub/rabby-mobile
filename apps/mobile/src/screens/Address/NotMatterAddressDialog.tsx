@@ -15,8 +15,6 @@ import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomS
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
 import ArrowLeftSVG from '@/components/AccountSelectModalTx/icons/nav-left-cc.svg';
-import { ManageSetting } from './components/ManageSetting';
-import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { Text } from '@/components/Typography';
@@ -33,11 +31,6 @@ export const NotMatterAddressDialog: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isScrolling, setIsScrolling] = React.useState(false);
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout>(undefined);
-  const [isManageMode, setIsManageMode] = React.useState(false);
-
-  const switchManageMode = () => {
-    setIsManageMode(e => !e);
-  };
 
   useEffect(() => {
     fetchAccounts();
@@ -106,7 +99,7 @@ export const NotMatterAddressDialog: React.FC<{
 
   const renderSectionHeader = useCallback(
     ({ section }) => (
-      <View style={[styles.sectionHeader, isManageMode && { paddingLeft: 48 }]}>
+      <View style={styles.sectionHeader}>
         <Text style={styles.sectionHeaderText}>{section.title}</Text>
         {section.type === 'notTop10Accounts' && (
           <TouchableOpacity
@@ -138,44 +131,22 @@ export const NotMatterAddressDialog: React.FC<{
         )}
       </View>
     ),
-    [isManageMode, styles.sectionHeader, styles.sectionHeaderText, t],
+    [styles.sectionHeader, styles.sectionHeaderText, t],
   );
 
   const renderItem = useCallback(
     ({ item }) => {
-      if (isManageMode) {
-        const gotoAddressDetail = () => {
-          onDone?.();
-          naviPush(RootNames.StackAddress, {
-            screen: RootNames.AddressDetail,
-            params: {
-              address: item.address,
-              type: item.type,
-              brandName: item.brandName,
-            },
-          });
-        };
-        return (
-          <View style={[styles.itemGap, styles.manageModeItem]}>
-            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
-              <RcIconSettingCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-secondary']}
-              />
-            </Pressable>
-            <View style={{ width: '100%' }}>
-              <AddressItemEntry
-                showMarkIfNewlyAdded
-                handleGoDetail={onDone}
-                account={item}
-                isScrolling={isScrolling}
-                useLongPressing={true}
-              />
-            </View>
-          </View>
-        );
-      }
+      const gotoAddressDetail = () => {
+        onDone?.();
+        naviPush(RootNames.StackAddress, {
+          screen: RootNames.AddressDetail,
+          params: {
+            address: item.address,
+            type: item.type,
+            brandName: item.brandName,
+          },
+        });
+      };
 
       return (
         <View style={styles.itemGap}>
@@ -185,11 +156,13 @@ export const NotMatterAddressDialog: React.FC<{
             account={item}
             isScrolling={isScrolling}
             useLongPressing={true}
+            onManage={gotoAddressDetail}
+            manageAccessibilityLabel={t('component.portfolios.manage')}
           />
         </View>
       );
     },
-    [colors2024, isManageMode, isScrolling, onDone, styles],
+    [isScrolling, onDone, styles.itemGap, t],
   );
 
   return (
@@ -208,13 +181,6 @@ export const NotMatterAddressDialog: React.FC<{
           <Text style={styles.listTitle}>
             {t('page.addressDetail.notMatterAddressDialog.title')}
           </Text>
-        </View>
-
-        <View style={styles.manageButton}>
-          <ManageSetting
-            isManageMode={isManageMode}
-            switchManageMode={switchManageMode}
-          />
         </View>
       </View>
       <BottomSheetSectionList
@@ -248,11 +214,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     left: 20,
     top: 0,
   },
-  manageButton: {
-    position: 'absolute',
-    right: 20,
-    top: 0,
-  },
   listContainer: {
     flex: 1,
     paddingHorizontal: 16,
@@ -263,18 +224,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   itemGap: {
     marginBottom: 12,
-  },
-  manageModeItem: {
-    overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: -16,
-  },
-  manageBtn: {
-    width: 64,
-    height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   listHeader: {
     position: 'relative',

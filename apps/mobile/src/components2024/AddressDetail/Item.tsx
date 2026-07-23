@@ -72,12 +72,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignContent: 'center',
     alignItems: 'center',
+    gap: 8,
     width: '100%',
   },
   valueView: {
     display: 'flex',
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexShrink: 1,
+    minWidth: 0,
     alignItems: 'center',
     gap: 6,
   },
@@ -87,6 +89,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
+    flexShrink: 1,
+    minWidth: 0,
   },
   valueText: {
     fontSize: 16,
@@ -94,5 +98,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
+    flexShrink: 1,
+    textAlign: 'right',
   },
 }));

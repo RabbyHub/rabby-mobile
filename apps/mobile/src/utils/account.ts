@@ -12,10 +12,13 @@ const priority = {
   [KEYRING_TYPE.GnosisKeyring]: 6,
 };
 
+export const sortAccountByPriority = (
+  item1: KeyringAccountWithAlias,
+  item2: KeyringAccountWithAlias,
+) => (priority[item1.type] || 100) - (priority[item2.type] || 100);
+
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
-  return accounts.sort((item1, item2) => {
-    return (priority[item1.type] || 100) - (priority[item2.type] || 100);
-  })[0];
+  return accounts.sort(sortAccountByPriority)[0];
 }
 
 export { sortAccountsByBalance, filterMyAccounts } from '@/core/apis/account';

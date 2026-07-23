@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, useBackupReminder } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -13,8 +12,6 @@ import { Card } from '../Card';
 import { Item } from './Item';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { BackupBadge } from './BackupBadge';
-import ArrowSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
-import { Text } from '@/components/Typography';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 interface AddressInfoProps {
@@ -24,7 +21,7 @@ interface AddressInfoProps {
 
 export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   const { account, onCancel } = props;
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
@@ -84,21 +81,12 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   return (
     <Card style={styles.card}>
       {account.type === KEYRING_TYPE.HdKeyring && (
-        <TouchableOpacity
-          style={styles.itemRow}
-          onPress={handlePressBackupSeedPhrase}>
-          <Text style={styles.labelText}>
-            {t('page.addressDetail.backup-seed-phrase')}
-          </Text>
-          <View style={styles.valueView}>
-            {needsBackupReminder && <BackupBadge />}
-            <ArrowSVG
-              color={colors2024['neutral-foot']}
-              width={16}
-              height={16}
-            />
-          </View>
-        </TouchableOpacity>
+        <Item
+          label={t('page.addressDetail.backup-seed-phrase')}
+          value={needsBackupReminder ? <BackupBadge /> : null}
+          showArrow
+          onPress={handlePressBackupSeedPhrase}
+        />
       )}
 
       {(account.type === KEYRING_TYPE.SimpleKeyring ||
@@ -113,28 +101,10 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(() => ({
   card: {
     gap: 24,
     marginHorizontal: 16,
     width: 'auto',
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-  },
-  labelText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
-  },
-  valueView: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
 }));

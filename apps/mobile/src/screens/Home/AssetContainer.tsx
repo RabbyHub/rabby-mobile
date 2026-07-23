@@ -22,13 +22,9 @@ import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
-interface Props {
-  onReachTopStatusChange?: (status: boolean) => void;
-}
-
 const renderHeader = () => null;
 
-export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
+export const AssetContainer = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { currentAccount } = useSingleHomeAccount();
@@ -122,21 +118,18 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
           noAssetsOnAnyChain={noAssetsOnAnyChain}
           onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
-          onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
         <PortfolioList
           onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
-          onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
         <NFTList
           onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
-          onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
     </Tabs.Container>

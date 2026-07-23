@@ -49,16 +49,11 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 interface Props {
   onForeground?: () => void;
   onRefresh?: () => void | Promise<void>;
-  onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-const NFTListInner = ({
-  onForeground,
-  onRefresh,
-  onReachTopStatusChange,
-}: Props) => {
+const NFTListInner = ({ onForeground, onRefresh }: Props) => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
@@ -265,22 +260,18 @@ const NFTListInner = ({
   }, []);
 
   const scrollY = useCurrentTabScrollY();
-  const handleScroll = useCallback(
-    (currentScrollY: number) => {
-      if (currentScrollY <= 0) {
-        onReachTopStatusChange?.(true);
-      } else {
-        onReachTopStatusChange?.(false);
-      }
-      setShowScrollIndicator(currentScrollY >= 89);
-    },
-    [onReachTopStatusChange, setShowScrollIndicator],
+  const handleScrollIndicatorChange = useCallback(
+    (showIndicator: boolean) => setShowScrollIndicator(showIndicator),
+    [],
   );
 
   useAnimatedReaction(
-    () => scrollY.value,
-    currentScrollY => {
-      runOnJS(handleScroll)(currentScrollY);
+    () => scrollY.value >= 89,
+    (showIndicator, previousShowIndicator) => {
+      if (showIndicator === previousShowIndicator) {
+        return;
+      }
+      runOnJS(handleScrollIndicatorChange)(showIndicator);
     },
   );
   return (
@@ -323,7 +314,7 @@ const NFTListInner = ({
   );
 };
 
-export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
+export const NFTList = ({ onRefresh }: Props) => {
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
   if (focusedTab === 'nft') {
@@ -334,12 +325,7 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     return null;
   }
 
-  return (
-    <NFTListInner
-      onRefresh={onRefresh}
-      onReachTopStatusChange={onReachTopStatusChange}
-    />
-  );
+  return <NFTListInner onRefresh={onRefresh} />;
 };
 
 const getStyles = createGetStyles2024(ctx => ({
