@@ -2815,7 +2815,7 @@
         "minimumDepositSize": "El importe mínimo de depósito es de 5 $.",
         "fetchQuoteFailed": "No se pudo obtener la cotización del depósito. Por favor, cambia de token.",
         "estReceive": "Est. Recibir: {{balance}}",
-        "estReceiveTooltip": "El depósito entre cadenas se procesa a través de LiFi, puede incurrir en algún deslizamiento. Llegada estimada en {{number}}s."
+        "estReceiveTooltip": "El depósito entre cadenas es procesado por un proveedor externo y puede incurrir en deslizamiento. Llegada estimada en {{number}} s."
       },
       "PerpsWithdrawPopup": {
         "available": "disponible",

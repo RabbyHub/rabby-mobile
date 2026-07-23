@@ -2587,7 +2587,7 @@
         "invalidNumber": "有効な数値を入力してください。",
         "fetchQuoteFailed": "入金見積もりの取得に失敗しました。トークンを切り替えてください。",
         "estReceive": "推定受取額: {{balance}}",
-        "estReceiveTooltip": "クロスチェーン入金はLiFiを介して処理され、スリippageが発生する可能性があります。到着予定は{{number}}秒です。"
+        "estReceiveTooltip": "クロスチェーン入金はサードパーティプロバイダーによって処理され、スリッページが発生する可能性があります。到着予定は{{number}}秒です。"
       },
       "PerpsWithdrawPopup": {
         "available": "利用可能",

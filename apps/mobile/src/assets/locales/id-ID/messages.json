@@ -2534,7 +2534,7 @@
         "estReceive": "Estimasi Terima: {{balance}}",
         "invalidNumber": "Silakan masukkan angka yang valid",
         "fetchQuoteFailed": "Gagal untuk mengambil kutipan deposit. Silakan ganti token.",
-        "estReceiveTooltip": "Setoran lintas-rantai diproses melalui LiFi, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik."
+        "estReceiveTooltip": "Setoran lintas-rantai diproses oleh penyedia pihak ketiga dan mungkin mengalami slippage. Perkiraan tiba dalam {{number}} detik."
       },
       "PerpsWithdrawPopup": {
         "feeTip": "Biaya: $1,00",

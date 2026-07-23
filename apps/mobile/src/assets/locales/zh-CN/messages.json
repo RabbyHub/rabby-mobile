@@ -2690,7 +2690,7 @@
         "fetchQuoteFailed": "获取充值报价失败，请切换代币。",
         "estReceive": "预计收到：{{balance}}",
         "minimumDepositSize": "最低充值金额为 $5",
-        "estReceiveTooltip": "跨链充值通过 LiFi 处理，可能产生滑点。预计 {{number}} 秒到账。",
+        "estReceiveTooltip": "跨链充值由第三方服务商处理，可能产生滑点。预计 {{number}} 秒到账。",
         "insufficientBalance": "余额不足"
       },
       "PerpsWithdrawPopup": {

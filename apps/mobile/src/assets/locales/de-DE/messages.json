@@ -2919,7 +2919,7 @@
         "invalidNumber": "Bitte geben Sie eine gültige Zahl ein.",
         "minimumDepositSize": "Der Mindestbetrag für die Einzahlung beträgt 5 $.",
         "title": "Einzahlen",
-        "estReceiveTooltip": "Der Cross-Chain-Einzahlung wird über LiFi abgewickelt und kann zu einigen Slippage führen. Voraussichtliche Ankunft in {{number}}s.",
+        "estReceiveTooltip": "Die Cross-Chain-Einzahlung wird von einem Drittanbieter abgewickelt und kann zu Slippage führen. Voraussichtliche Ankunft in {{number}} s.",
         "fetchQuoteFailed": "Fehler beim Abrufen des Einzahlungspreises. Bitte wechseln Sie das Token."
       },
       "PerpsWithdrawPopup": {

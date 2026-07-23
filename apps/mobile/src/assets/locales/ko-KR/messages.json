@@ -2534,7 +2534,7 @@
         "minimumDepositSize": "최소 입금 금액은 $5입니다.",
         "invalidNumber": "유효한 숫자를 입력해 주세요",
         "fetchQuoteFailed": "입금 견적을 가져오는 데 실패했습니다. 토큰을 전환해 주세요.",
-        "estReceiveTooltip": "크로스체인 예치는 LiFi를 통해 처리되며, 일부 슬ippage가 발생할 수 있습니다. 예상 도착 시간: {{number}}초.",
+        "estReceiveTooltip": "크로스체인 입금은 제3자 서비스 제공업체가 처리하며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간: {{number}}초.",
         "estReceive": "예상 수령액: {{balance}}"
       },
       "PerpsWithdrawPopup": {

@@ -2534,7 +2534,7 @@
         "minimumDepositSize": "Minimum para yatırma miktarı 5$'dır.",
         "invalidNumber": "Lütfen geçerli bir sayı girin",
         "fetchQuoteFailed": "Yatırım teklifi alınamadı. Lütfen token'ı değiştirin.",
-        "estReceiveTooltip": "Cross-chain deposit LiFi üzerinden işlenmektedir, bazı kaymalar meydana gelebilir. Tahmini varış süresi {{number}}sn."
+        "estReceiveTooltip": "Zincirler arası yatırma işlemi üçüncü taraf bir sağlayıcı tarafından gerçekleştirilir ve kaymaya neden olabilir. Tahmini varış süresi {{number}} sn."
       },
       "PerpsWithdrawPopup": {
         "feeTooltipTitle": "Ücret",

@@ -2898,7 +2898,7 @@
         "invalidNumber": "Por favor, insira um número válido",
         "estReceive": "Est. Receber: {{balance}}",
         "minimumDepositSize": "O valor mínimo de depósito é de $5",
-        "estReceiveTooltip": "O depósito em cadeia cruzada é processado através do LiFi, podendo incorrer em algum deslizamento. Tempo estimado de chegada em {{number}}s."
+        "estReceiveTooltip": "O depósito entre cadeias é processado por um fornecedor externo e pode incorrer em algum deslizamento. Tempo estimado de chegada: {{number}} s."
       },
       "PerpsWithdrawPopup": {
         "amount": "Quantidade",

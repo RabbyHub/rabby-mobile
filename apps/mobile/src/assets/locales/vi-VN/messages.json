@@ -2654,7 +2654,7 @@
         "invalidNumber": "Vui lòng nhập một số hợp lệ",
         "fetchQuoteFailed": "Không thể lấy báo giá gửi tiền. Vui lòng chuyển đổi token.",
         "minimumDepositSize": "Số tiền gửi tối thiểu là 5 đô la.",
-        "estReceiveTooltip": "Gửi tiền liên chuỗi được xử lý qua LiFi, có thể phát sinh một số trượt giá. Dự kiến đến nơi trong {{number}}s.",
+        "estReceiveTooltip": "Khoản nạp chuỗi chéo được xử lý bởi nhà cung cấp bên thứ ba và có thể phát sinh trượt giá. Dự kiến đến nơi trong {{number}} giây.",
         "insufficientBalance": "Số dư không đủ"
       },
       "PerpsWithdrawPopup": {

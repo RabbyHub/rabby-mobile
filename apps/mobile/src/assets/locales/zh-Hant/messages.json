@@ -2715,7 +2715,7 @@
         "minimumDepositSize": "最低充值金額為 $5",
         "estReceive": "預計收到：{{balance}}",
         "fetchQuoteFailed": "取得充值報價失敗，請切換代幣。",
-        "estReceiveTooltip": "跨鏈充值透過 LiFi 處理，可能產生滑點。預計 {{number}} 秒到帳。"
+        "estReceiveTooltip": "跨鏈充值由第三方服務商處理，可能產生滑點。預計 {{number}} 秒到帳。"
       },
       "PerpsWithdrawPopup": {
         "amount": "金額",
