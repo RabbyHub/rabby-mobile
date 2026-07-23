@@ -1,4 +1,3 @@
-import React from 'react';
 import FastImage from 'react-native-fast-image';
 import { getCHAIN_ID_LIST } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
@@ -10,12 +9,6 @@ import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
 import { memo } from 'react';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
-import {
-  ContextMenuView,
-  MenuAction,
-} from '@/components2024/ContextMenuView/ContextMenuView';
-import { IS_ANDROID } from '@/core/native/utils';
-import { trigger } from 'react-native-haptic-feedback';
 import { NftItemWithCollection } from '../../hooks/nft';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayNftItem } from '../../types';
@@ -29,8 +22,6 @@ export const NftRow = memo(
     onPress,
     style,
     logoSize = 40,
-    disableMenu,
-    menuActions,
     hideFoldTag,
     account,
     chainLogoSize = 16,
@@ -41,8 +32,6 @@ export const NftRow = memo(
     logoSize?: number;
     chainLogoSize?: number;
     hideFoldTag?: boolean;
-    menuActions?: MenuAction[];
-    disableMenu?: boolean;
     account?: KeyringAccountWithAlias;
     onPress: () => void;
   }) => {
@@ -54,26 +43,12 @@ export const NftRow = memo(
     const isSvgURL = isCollection
       ? item.logo_url?.endsWith('.svg')
       : (item as NFTItem)?.content?.endsWith('.svg');
-    const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
     const _isManualFold = isCollection
       ? item.nft_list.every((i: DisplayNftItem) => i._isManualFold)
       : (item as DisplayNftItem)._isManualFold;
 
-    const children = (
-      <TouchableOpacity
-        onPress={onPress}
-        delayLongPress={200}
-        onLongPress={() => {
-          if (disableMenu) {
-            return;
-          }
-          setShowContextMenu(true);
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}
-        style={[styles.wrpper, style]}>
+    return (
+      <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
         <View style={styles.main}>
           <View style={styles.avator}>
             <View
@@ -143,20 +118,6 @@ export const NftRow = memo(
           {isCollection ? item.nft_list.length : (item as NFTItem).amount}
         </Text>
       </TouchableOpacity>
-    );
-    if (disableMenu) {
-      return children;
-    }
-
-    return (
-      <ContextMenuView
-        menuConfig={{
-          menuActions: showContextMenu && menuActions ? menuActions : [],
-        }}
-        preViewBorderRadius={12}
-        triggerProps={{ action: 'longPress' }}>
-        {children}
-      </ContextMenuView>
     );
   },
 );

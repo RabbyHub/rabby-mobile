@@ -225,7 +225,6 @@ const NFTListInner = () => {
                 ])}
                 logoSize={40}
                 chainLogoSize={16}
-                disableMenu
                 item={data}
                 account={getAccountByAddress(data.address)}
                 onPress={() => handlePressNft(data)}
