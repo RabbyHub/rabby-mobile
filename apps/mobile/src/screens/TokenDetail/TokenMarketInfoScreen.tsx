@@ -79,6 +79,7 @@ const currentIntervalAtom = atomByMMKV<CandlePeriod>(
 );
 
 const isAndroid = Platform.OS === 'android';
+const TOKEN_MARKET_TAB_BAR_HEIGHT = 30;
 
 export type TokenFromAddressItem = {
   address: string;
@@ -544,7 +545,7 @@ export const TokenMarketInfoScreen = () => {
 
       <Tabs.Container
         renderTabBar={renderTabBar}
-        tabBarHeight={30}
+        tabBarHeight={TOKEN_MARKET_TAB_BAR_HEIGHT}
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
         pagerProps={{ scrollEnabled: !isAndroid }}>
@@ -553,7 +554,11 @@ export const TokenMarketInfoScreen = () => {
             onScroll={handleScroll}
             scrollEventThrottle={200}
             refreshControl={
-              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={false}
+                onRefresh={handleRefresh}
+                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+              />
             }
             style={styles.innerContainer}>
             {!!account && (
@@ -635,7 +640,11 @@ export const TokenMarketInfoScreen = () => {
         <Tabs.Tab label={renderTokenSecurityLabel} name="tokenSecurity">
           <ScrollView
             refreshControl={
-              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={false}
+                onRefresh={handleRefresh}
+                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+              />
             }
             style={styles.innerContainer}>
             {riskInfo.content}
@@ -729,7 +738,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     innerContainer: {
       height: '100%',
-      paddingTop: 30,
+      paddingTop: TOKEN_MARKET_TAB_BAR_HEIGHT,
     },
     buttonGroup: {
       backgroundColor: isLight
@@ -811,7 +820,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderBottomColor: colors2024['neutral-line'],
     },
     tabBar: {
-      height: 30,
+      height: TOKEN_MARKET_TAB_BAR_HEIGHT,
       width: 'auto',
       flexShrink: 0,
       flex: 0,
@@ -822,7 +831,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       paddingLeft: 20,
       position: 'relative',
-      height: 30,
+      height: TOKEN_MARKET_TAB_BAR_HEIGHT,
       overflow: 'hidden',
     },
     indicator: {
