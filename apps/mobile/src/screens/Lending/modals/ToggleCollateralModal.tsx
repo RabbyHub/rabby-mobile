@@ -560,6 +560,7 @@ function ToggleCollateralContent({}: {}) {
                     isError
                   }
                   type="aave"
+                  iconColor={colors2024['neutral-contrast']}
                   syncUnlockTime
                   account={currentAccount}
                   showHardWalletProcess
