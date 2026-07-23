@@ -1212,9 +1212,7 @@ export default function RepayWithCollateral({
             onFinished={() => handleRepay()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="aave"
-            iconColor={
-              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-            }
+            iconColor={colors2024['neutral-contrast']}
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess

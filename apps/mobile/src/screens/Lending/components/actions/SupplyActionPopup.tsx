@@ -94,7 +94,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   onClose,
   onBeforeSwapNavigate,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState(
     reserve.underlyingAsset,
@@ -860,9 +860,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               type="aave"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
-              iconColor={
-                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-              }
+              iconColor={colors2024['neutral-contrast']}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess
