@@ -1,7 +1,9 @@
-import { Account } from '@/core/services/preference';
-import AuthButton, { IAuthButtonProps } from '../AuthButton';
+import type { Account } from '@/core/startupServices/preference';
+import type { IAuthButtonProps } from '../AuthButton';
+import AuthButton from '../AuthButton';
 import { isHardWareAccountAccountSupportMiniApproval } from '@/utils/account';
-import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';

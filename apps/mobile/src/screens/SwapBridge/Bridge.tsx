@@ -14,12 +14,14 @@ import {
 type BridgeProps = PropsForAccountSwitchScreen<{
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
+  diagnosticActive?: boolean;
 }>;
 
 export const Bridge = ({
   isForMultipleAddress,
   disableHeaderRight,
   disableAccountSwitcherModal,
+  diagnosticActive,
 }: BridgeProps) => {
   return (
     <SettingVisibleProvider>
@@ -29,6 +31,7 @@ export const Bridge = ({
             isForMultipleAddress={isForMultipleAddress}
             disableHeaderRight={disableHeaderRight}
             disableAccountSwitcherModal={disableAccountSwitcherModal}
+            diagnosticActive={diagnosticActive}
           />
         </QuoteVisibleProvider>
       </RefreshIdProvider>

@@ -136,7 +136,10 @@ import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
-import { perpsService, preferenceService } from '@/core/services';
+import {
+  getFallbackAccountSnapshot,
+  setUserBehaviorTrackingOptOutSync,
+} from '@/core/serviceApi/preference';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
 import {
@@ -159,12 +162,10 @@ import {
   setEnableTransactionNofification,
   useAppNotificationEnabled,
 } from '@/hooks/appNotification';
-import {
-  AppSwitch2024,
-  SwitchToggleType,
-} from '@/components/customized/Switch2024';
-import { SupportedLang } from '@/utils/i18n';
-import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { SwitchToggleType } from '@/components/customized/Switch2024';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import type { SupportedLang } from '@/utils/i18n';
+import type { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 import {
   trackSettingsCurrency,
   trackSettingsFaceId,
@@ -183,6 +184,7 @@ import {
 } from './components/SwitchUserBehaviorTrackingOptOut';
 import { sleep } from '@/utils/async';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -918,14 +920,45 @@ function DevSettingsBlocks({
   const { setDevCapabilityPlaygroundModalVisible } =
     useDevCapabilityPlaygroundModalVisible();
 
+  const openLogVerificationScreen = useCallback(
+    (
+      screen:
+        | typeof RootNames.DebugLogViewer
+        | typeof RootNames.StartupPerformanceLogViewer,
+    ) => {
+      navigation.dispatch(
+        StackActions.push(RootNames.StackTestkits, {
+          screen,
+        }),
+      );
+    },
+    [navigation],
+  );
+
+  const showLogVerificationPicker = useCallback(() => {
+    Alert.alert('Log Verification', 'Choose a log type to inspect.', [
+      {
+        text: 'App File Logs',
+        onPress: () => openLogVerificationScreen(RootNames.DebugLogViewer),
+      },
+      {
+        text: 'Startup Performance Logs',
+        onPress: () =>
+          openLogVerificationScreen(RootNames.StartupPerformanceLogViewer),
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
+  }, [openLogVerificationScreen]);
+
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
   const toggleUserBehaviorTrackingOptOut = useCallback(() => {
-    preferenceService.setUserBehaviorTrackingOptOut(
-      !preferenceService.getUserBehaviorTrackingOptOut(),
-    );
+    setUserBehaviorTrackingOptOutSync(!getUserBehaviorTrackingOptOut());
   }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
@@ -1065,15 +1098,9 @@ function DevSettingsBlocks({
               },
             },
             {
-              label: 'App Log Verification',
+              label: 'Log Verification',
               icon: RcCode,
-              onPress: () => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackTestkits, {
-                    screen: RootNames.DebugLogViewer,
-                  }),
-                );
-              },
+              onPress: showLogVerificationPicker,
             },
           ],
         },

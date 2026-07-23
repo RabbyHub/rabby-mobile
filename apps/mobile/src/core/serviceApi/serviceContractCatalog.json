@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "methodPrefixes": {
+    "query": ["get", "is", "has", "check", "verify", "estimate", "ping"],
+    "command": [
+      "set",
+      "add",
+      "remove",
+      "update",
+      "patch",
+      "clear",
+      "sync",
+      "mark",
+      "reset",
+      "restore",
+      "import",
+      "sign",
+      "create",
+      "submit",
+      "persist",
+      "generate",
+      "pin",
+      "toggle",
+      "enable",
+      "disable",
+      "lock",
+      "unlock",
+      "boot",
+      "init",
+      "ensure",
+      "prepare",
+      "request",
+      "claim",
+      "reject",
+      "resolve",
+      "call",
+      "broadcast",
+      "disconnect",
+      "post",
+      "complete",
+      "dangerously"
+    ],
+    "subscription": [
+      "subscribe",
+      "unsubscribe",
+      "addListener",
+      "removeListener",
+      "start",
+      "stop",
+      "watch",
+      "unwatch"
+    ]
+  },
+  "methodOverrides": {
+    "autoConnectService": {
+      "autoConnect": "command"
+    },
+    "customRPCService": {
+      "defaultEthRPC": "query",
+      "defaultRPCSubmitTxWithFallback": "command",
+      "request": "query",
+      "requestCustomRPC": "query"
+    },
+    "keyringService": {
+      "DEV_GET_UNENCRYPTED_KEYRING_DATA": "query"
+    },
+    "securityEngineService": {
+      "execute": "query"
+    }
+  },
+  "services": {
+    "autoConnectService": {
+      "apiModule": "autoConnect",
+      "apiExport": "autoConnectServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "bridgeService": {
+      "apiModule": "bridge",
+      "apiExport": "bridgeServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "browserHistoryService": {
+      "apiModule": null,
+      "apiExport": null,
+      "access": "dependency-only",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "browserService": {
+      "apiModule": "browser",
+      "apiExport": "browserServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "contactService": {
+      "apiModule": "contact",
+      "apiExport": "contactServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "currencyService": {
+      "apiModule": "currency",
+      "apiExport": "currencyServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "customRPCService": {
+      "apiModule": "customRPC",
+      "apiExport": "customRPCServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "customTestnetService": {
+      "apiModule": "customTestnet",
+      "apiExport": "customTestnetServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "dappService": {
+      "apiModule": "dapp",
+      "apiExport": "dappServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "gasAccountService": {
+      "apiModule": "gasAccount",
+      "apiExport": "gasAccountServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "hdKeyringService": {
+      "apiModule": "hdKeyring",
+      "apiExport": "hdKeyringServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "keyringService": {
+      "apiModule": "keyring",
+      "apiExport": "keyringServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "higherReadiness": ["runtimeReady"],
+      "snapshotApi": true
+    },
+    "lendingService": {
+      "apiModule": "lending",
+      "apiExport": "lendingServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "metamaskModeService": {
+      "apiModule": "metamaskMode",
+      "apiExport": "metamaskModeServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "notificationService": {
+      "apiModule": "notification",
+      "apiExport": "notificationServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "offlineChainService": {
+      "apiModule": "offlineChain",
+      "apiExport": "offlineChainServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "perpsService": {
+      "apiModule": "perps",
+      "apiExport": "perpsServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "preferenceService": {
+      "apiModule": "preference",
+      "apiExport": "preferenceServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "rabbyPointsService": {
+      "apiModule": "rabbyPoints",
+      "apiExport": "rabbyPointsServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "securityEngineService": {
+      "apiModule": "securityEngine",
+      "apiExport": "securityEngineServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "sessionService": {
+      "apiModule": "session",
+      "apiExport": "sessionServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "swapService": {
+      "apiModule": "swap",
+      "apiExport": "swapServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "syncChainService": {
+      "apiModule": "syncChain",
+      "apiExport": "syncChainServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "transactionBroadcastWatcherService": {
+      "apiModule": "transactionBroadcastWatcher",
+      "apiExport": "transactionBroadcastWatcherServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "transactionHistoryService": {
+      "apiModule": "transactionHistory",
+      "apiExport": "transactionHistoryServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": true
+    },
+    "transactionWatcherService": {
+      "apiModule": "transactionWatcher",
+      "apiExport": "transactionWatcherServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    },
+    "whitelistService": {
+      "apiModule": "whitelist",
+      "apiExport": "whitelistServiceApi",
+      "access": "deferred-api",
+      "defaultReadiness": "loaded",
+      "snapshotApi": false
+    }
+  }
+}

@@ -3,16 +3,20 @@ import addressBalanceStore from '@/store/balance';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import dayjs from 'dayjs';
 import groupBy from 'lodash/groupBy';
-import { keyringService, preferenceService } from '../services/shared';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import {
+  getSendLogTime,
+  updateSendLogTime,
+} from '@/core/serviceApi/preference';
 
 export const sendUserAddressEvent = async () => {
-  const time = preferenceService.getSendLogTime();
+  const time = await getSendLogTime();
   if (dayjs(time).utc().isSame(dayjs().utc(), 'day')) {
     return;
   }
 
   const balanceMap = addressBalanceStore.getAddressValueMap();
-  const accounts = await keyringService.getAllVisibleAccountsArray();
+  const accounts = await keyringServiceApi.getAllVisibleAccountsArray();
   const list = accounts.map(account => {
     const category = KEYRING_CATEGORY_MAP[account.type];
     const action = account.brandName;
@@ -35,5 +39,5 @@ export const sendUserAddressEvent = async () => {
       value: group.length,
     });
   });
-  preferenceService.updateSendLogTime(Date.now());
+  await updateSendLogTime(Date.now());
 };

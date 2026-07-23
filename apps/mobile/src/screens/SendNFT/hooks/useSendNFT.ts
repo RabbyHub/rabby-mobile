@@ -5,16 +5,17 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { Alert, LayoutChangeEvent } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
+import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
-import { preferenceService } from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import {
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
+import type {
   AddrDescResponse,
   GasLevel,
   NFTItem,
@@ -22,14 +23,14 @@ import {
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
-import { UIContactBookItem } from '@/core/apis/contact';
-import { Account, ChainGas } from '@/core/services/preference';
+import type { UIContactBookItem } from '@/core/apis/contact';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { apiContact, apiProvider, apiToken } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { getKRCategoryByType } from '@/utils/transaction';
@@ -46,7 +47,8 @@ import {
 } from '@/utils/account';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
-import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
+import type { EventBusListeners } from '@/utils/events';
+import { eventBus, EVENTS } from '@/utils/events';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn } from 'ahooks';
@@ -61,9 +63,9 @@ import {
 import { useStore } from 'zustand';
 import { useShallow } from 'zustand/shallow';
 import { createStore } from 'zustand/vanilla';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import type { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
-import { TextInput } from '@/components/Typography';
+import type { TextInput } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { zMutative } from '@/core/utils/reexports';
 import { isEqual } from 'lodash';

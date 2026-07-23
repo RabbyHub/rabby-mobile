@@ -29,10 +29,10 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import { onPastedSensitiveData } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import * as SecretVault from '@/core/utils/secretVault';
@@ -265,9 +265,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           seedPhraseVaultId: vaultId,
         });
       }
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-      );
+      ).catch(console.error);
     } else {
       // Clean and validate private key
       let cleanedPrivateKey: string;
@@ -314,9 +314,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           privateKeyVaultId: vaultId,
         });
       }
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-      );
+      ).catch(console.error);
     }
   }, [
     activeTab,

@@ -1,11 +1,8 @@
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { isNonPublicProductionEnv } from '@/constant';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
@@ -16,24 +13,24 @@ import {
   coerceKeychainStorageType,
   type KeychainStorageType,
 } from '@/core/apis/keychainCommon';
-import { preferenceService } from '@/core/services';
+import {
+  CURRENT_KEYCHAIN_VERSION_VALUES,
+  DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
+  DEFAULT_CURRENT_KEYCHAIN_VERSION,
+  coerceCurrentKeychainVersion,
+  type CurrentKeychainVersion,
+} from '@/core/apis/keychainVersionShared';
+import { setPreference } from '@/core/serviceApi/preference';
 import { useCallback, useMemo } from 'react';
+
+export {
+  CURRENT_KEYCHAIN_VERSION_VALUES,
+  DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
+};
+export type { CurrentKeychainVersion };
 
 const isIOS = DeviceUtils.isIOS();
 
-export const CURRENT_KEYCHAIN_VERSION_VALUES = [
-  '8.2.0-fork',
-  '9.0.0',
-  '10.0.0',
-] as const;
-
-export type CurrentKeychainVersion =
-  (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
-
-export const DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD =
-  'debugCurrentKeychainVersion20260602' as const;
-
-const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '9.0.0';
 const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
   DEFAULT_KEYCHAIN_STORAGE_TYPE;
 export const WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH = 700;
@@ -67,16 +64,6 @@ export const DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS = [
 
 export type DappSignAuthSessionIntervalMs =
   (typeof DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS)[number]['value'];
-
-function coerceCurrentKeychainVersion(
-  version: unknown,
-): CurrentKeychainVersion {
-  return CURRENT_KEYCHAIN_VERSION_VALUES.includes(
-    version as CurrentKeychainVersion,
-  )
-    ? (version as CurrentKeychainVersion)
-    : DEFAULT_CURRENT_KEYCHAIN_VERSION;
-}
 
 function coerceWideScreenDebugPanelMinWidth(value: unknown) {
   const width = typeof value === 'number' ? value : Number(value);
@@ -141,6 +128,7 @@ type ScreenshotSettings = {
   [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
   enablePerpsWatchAddress: boolean;
+  screenE2EEnabled: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -165,6 +153,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
     enablePerpsWatchAddress: false,
+    screenE2EEnabled: false,
   },
 );
 
@@ -174,6 +163,19 @@ export const storeApiExpSettingData = {
   getCurrentKeychainVersion,
   getDebugKeychainStorageByVersion,
   getShouldBlockSubmitIfFormChangedOnAuth,
+  getScreenE2EEnabled: () =>
+    isNonPublicProductionEnv &&
+    experimentalSettingsStore.getState().screenE2EEnabled,
+  setScreenE2EEnabled: (enabled: boolean) => {
+    if (!isNonPublicProductionEnv) {
+      return false;
+    }
+    setExpSettingData(prev => ({
+      ...prev,
+      screenE2EEnabled: enabled,
+    }));
+    return enabled;
+  },
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
     if (!__DEV__) {
       return 'pasted';
@@ -183,6 +185,21 @@ export const storeApiExpSettingData = {
       .timeTipAboutSeedPhraseAndPrivateKey;
   },
 };
+
+export function useScreenE2EEnabled() {
+  const screenE2EEnabled = experimentalSettingsStore(
+    state => state.screenE2EEnabled,
+  );
+
+  const setScreenE2EEnabled = useCallback((enabled: boolean) => {
+    return storeApiExpSettingData.setScreenE2EEnabled(enabled);
+  }, []);
+
+  return {
+    screenE2EEnabled: isNonPublicProductionEnv && screenE2EEnabled,
+    setScreenE2EEnabled,
+  };
+}
 
 function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
   experimentalSettingsStore.setState(prev => {
@@ -475,10 +492,17 @@ function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   });
 }
 
-runIIFEFunc(() => {
+let appSettingsAutoLockHydrationStarted = false;
+
+export function startAppSettingsAutoLockHydration() {
+  if (appSettingsAutoLockHydrationStarted) {
+    return;
+  }
+
+  appSettingsAutoLockHydrationStarted = true;
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
-});
+}
 
 export function useAutoLockTimeMinites() {
   const autoLockMinutes = autoLockState(s => s.minutes);
@@ -489,9 +513,9 @@ export function useAutoLockTimeMinites() {
 const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
   setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
+  void setPreference({
     autoLockTime: minutes,
-  });
+  }).catch(console.error);
   apisAutoLock.refreshAutolockTimeout();
 };
 export function useAutoLockTimeMs() {

@@ -73,7 +73,7 @@ function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
       postSwap: jest.fn(),
     },
   }));
-  jest.doMock('@/utils/tempo', () => ({
+  jest.doMock('@/utils/tempoTx', () => ({
     getTxMatchData: jest.fn(() => '0xdata'),
   }));
 

@@ -1,9 +1,10 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { dappService, sessionService } from '../services/shared';
+import { type BackgroundBridgeServices } from './backgroundBridgeServices';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
@@ -30,12 +31,7 @@ type WebViewDataPayload<P = any> = {
   payload?: P;
 };
 
-export function useSetupWebview({
-  siteInfoRefs: { urlRef, titleRef, iconRef },
-  webviewRef,
-  webviewIdRef,
-  isFromMobileInnerDapp,
-}: {
+export type SetupWebviewParams = {
   /** @deprecated */
   dappOrigin?: string;
   siteInfoRefs: {
@@ -46,6 +42,16 @@ export function useSetupWebview({
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
   isFromMobileInnerDapp?: boolean;
+};
+
+export function useSetupWebviewWithServices({
+  siteInfoRefs: { urlRef, titleRef, iconRef },
+  webviewRef,
+  webviewIdRef,
+  isFromMobileInnerDapp,
+  coreServices,
+}: SetupWebviewParams & {
+  coreServices: BackgroundBridgeServices;
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
@@ -53,13 +59,14 @@ export function useSetupWebview({
   const destroyCurrentBridge = useCallback(() => {
     if (currentBridgeRef.current) {
       currentBridgeRef.current.onDisconnect();
-      sessionService.deleteSession(currentBridgeRef.current);
+      coreServices.sessionService.deleteSession(currentBridgeRef.current);
       currentBridgeRef.current = null;
     }
-  }, [currentBridgeRef]);
+  }, [coreServices, currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
+      const { dappService, sessionService } = coreServices;
       urlRef.current = urlBridge;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
@@ -86,6 +93,7 @@ export function useSetupWebview({
     },
     [
       isFromMobileInnerDapp,
+      coreServices,
       urlRef,
       webviewRef,
       webviewIdRef,
@@ -175,7 +183,7 @@ export function useSetupWebview({
   const onReloadingRef = useRef<boolean>(false);
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
-    async ({ nativeEvent }, treatAsReload = false) => {
+    ({ nativeEvent }, treatAsReload = false) => {
       if (onReloadingRef.current) {
         return;
       }

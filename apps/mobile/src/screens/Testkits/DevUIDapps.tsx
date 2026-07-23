@@ -160,10 +160,10 @@ function DevUIDapps() {
               key={key}
               containerStyle={{ marginBottom: 12 }}
               onPress={() => {
-                openUrlAsDapp(url, {
+                void openUrlAsDapp(url, {
                   forceReopen: true,
                   showSheetModalFirst: false,
-                });
+                }).catch(console.error);
               }}
               title={`open ${urlUtils.canoicalizeDappUrl(url).hostname}`}
             />

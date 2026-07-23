@@ -1,6 +1,7 @@
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { WaitingSignComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
@@ -9,20 +10,17 @@ import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { findChain, isTestnetChainId } from '@/utils/chain';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { ParseTextResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { ParseTextResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useTranslation } from 'react-i18next';
-import {
-  dappService,
-  keyringService,
-  preferenceService,
-} from '@/core/services';
+import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
+import type { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 import {
   parseAction,
   formatSecurityEngineContext,
-  ParsedTextActionData,
 } from '@rabby-wallet/rabby-action';
 import { hex2Text } from '@/constant/tx';
 import { openapi, testOpenapi } from '@/core/request';
@@ -55,6 +53,7 @@ import type { ProviderRequestContext } from '@/core/controllers/type';
 import { tokenizeSignMessageText } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
 import { addSignMessageOriginFallback } from './signMessageOrigin';
+import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTextProps {
   data: string[];
@@ -81,7 +80,7 @@ export const SignText = ({
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
   const { data, session, isGnosis = false } = params;
-  const site = dappService.getDapp(session.origin);
+  const site = getDappSnapshot(session.origin);
   const [hexData, from] = data;
   const signText = useMemo(() => hex2Text(hexData), [hexData]);
   const [isWatch, setIsWatch] = useState(false);
@@ -167,7 +166,7 @@ export const SignText = ({
     if (params.requestContext?.chainId) {
       chainId = params.requestContext.chainId;
     } else if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappService.getDapp(params.session.origin);
+      const site = await dappServiceApi.getDapp(params.session.origin);
       if (site) {
         chainId =
           findChain({
@@ -277,7 +276,7 @@ export const SignText = ({
       requireData: null,
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
     const result = await executeEngine(withOriginFallback(baseCtx));
@@ -454,7 +453,7 @@ export const SignText = ({
       requireData: null,
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
     const result = await executeEngine(withOriginFallback(baseCtx));
@@ -501,7 +500,7 @@ export const SignText = ({
   }, []);
 
   return (
-    <View style={styles.wrapper}>
+    <SignMessageTagProvider style={styles.wrapper}>
       <BottomSheetScrollView
         style={styles.approvalTx}
         nestedScrollEnabled
@@ -614,6 +613,6 @@ export const SignText = ({
           resolveApproval(sameMessageState.preparedSignature);
         }}
       />
-    </View>
+    </SignMessageTagProvider>
   );
 };

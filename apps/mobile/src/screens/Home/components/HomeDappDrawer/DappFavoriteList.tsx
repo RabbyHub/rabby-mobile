@@ -4,20 +4,17 @@ import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { IS_ANDROID } from '@/core/native/utils';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect } from 'react';
-import {
-  FlatList as RNFlatList,
-  FlatListProps,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
+import type { FlatListProps } from 'react-native';
+import { FlatList as RNFlatList, TouchableOpacity, View } from 'react-native';
+import type { NativeGesture } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   runOnUI,

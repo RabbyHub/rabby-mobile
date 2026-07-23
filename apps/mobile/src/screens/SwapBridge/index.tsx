@@ -15,12 +15,15 @@ import {
   type SwapBridgeTab,
 } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
 
 import { Bridge } from './Bridge';
 import { BridgeHeader } from '../Bridge/components/BridgeHeader';
 import Swap from './Swap';
 import { SwapHeader } from '../Swap/components/Header';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
+import { withSwapService } from '../Swap/swapServiceDependencies';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -30,6 +33,15 @@ type SwapBridgeRoute = GetNestedScreenRouteProp<
 type SwapBridgeScreenProps = {
   isForMultipleAddress?: boolean;
 };
+
+function SwapBridgeActivationProbe({
+  activeTab,
+}: {
+  activeTab: SwapBridgeTab;
+}) {
+  useFeatureActivationDiagnostics(activeTab);
+  return null;
+}
 
 const TABS: { key: SwapBridgeTab; title: string }[] = [
   { key: 'swap', title: 'Swap' },
@@ -145,7 +157,7 @@ function SwapBridgeNativeHeader({
   );
 }
 
-function SwapBridgeScreen({
+function SwapBridgeScreenContent({
   isForMultipleAddress = false,
 }: SwapBridgeScreenProps) {
   const route = useRoute<SwapBridgeRoute>();
@@ -189,6 +201,9 @@ function SwapBridgeScreen({
 
   return (
     <View style={styles.container}>
+      {isNonProductionDiagnosticsEnabled ? (
+        <SwapBridgeActivationProbe activeTab={activeTab} />
+      ) : null}
       {isScreenFocused && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
@@ -202,9 +217,18 @@ function SwapBridgeScreen({
           <Swap.ForMultipleAddress
             disableHeaderRight
             disableAccountSwitcherModal
+            diagnosticActive={
+              isNonProductionDiagnosticsEnabled && activeTab === 'swap'
+            }
           />
         ) : (
-          <Swap disableHeaderRight disableAccountSwitcherModal />
+          <Swap
+            disableHeaderRight
+            disableAccountSwitcherModal
+            diagnosticActive={
+              isNonProductionDiagnosticsEnabled && activeTab === 'swap'
+            }
+          />
         )}
       </View>
       <View
@@ -217,9 +241,18 @@ function SwapBridgeScreen({
           <Bridge.ForMultipleAddress
             disableHeaderRight
             disableAccountSwitcherModal
+            diagnosticActive={
+              isNonProductionDiagnosticsEnabled && activeTab === 'bridge'
+            }
           />
         ) : (
-          <Bridge disableHeaderRight disableAccountSwitcherModal />
+          <Bridge
+            disableHeaderRight
+            disableAccountSwitcherModal
+            diagnosticActive={
+              isNonProductionDiagnosticsEnabled && activeTab === 'bridge'
+            }
+          />
         )}
       </View>
       <TokenInfoPopup />
@@ -227,11 +260,17 @@ function SwapBridgeScreen({
   );
 }
 
+const SwapBridgeScreenBase = withSwapService(SwapBridgeScreenContent, {
+  fallback: <View />,
+});
+
 function ForMultipleAddress() {
-  return <SwapBridgeScreen isForMultipleAddress />;
+  return <SwapBridgeScreenBase isForMultipleAddress />;
 }
 
-SwapBridgeScreen.ForMultipleAddress = ForMultipleAddress;
+const SwapBridgeScreen = Object.assign(SwapBridgeScreenBase, {
+  ForMultipleAddress,
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

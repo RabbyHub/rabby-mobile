@@ -47,8 +47,26 @@ import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 import PointsScreen from '../Points';
+import { APP_TEST_PASSWORD } from '@/constant';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
+const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
+  SyncExtensionPasswordScreen,
+  {
+    screen: 'SyncExtensionPassword',
+    injectProps: context => ({
+      regressionScenario: {
+        runId: context.runId,
+        autoSubmit:
+          context.scenario === 'sync-extension-password' &&
+          context.params.autoSubmit === 'true',
+        password: APP_TEST_PASSWORD,
+        report: context.report,
+      },
+    }),
+  },
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {
@@ -447,7 +465,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.SyncExtensionPassword}
-        component={SyncExtensionPasswordScreen}
+        component={RegressionSyncExtensionPasswordScreen}
         options={mergeScreenOptions({
           headerShadowVisible: false,
           headerShown: true,

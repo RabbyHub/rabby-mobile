@@ -1,7 +1,7 @@
 import {
   getCurrentKeychainVersion,
   type CurrentKeychainVersion,
-} from '@/hooks/appSettings';
+} from '@/core/apis/keychainVersion';
 import { Platform } from 'react-native';
 import { logger } from '@/utils/logger';
 

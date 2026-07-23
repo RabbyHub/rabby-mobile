@@ -1,5 +1,5 @@
 import { APP_TEST_PWD } from '@/constant';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -94,7 +94,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
     setLoading(true);
     try {
       if (!ignoreValidation) {
-        await keyringService.verifyPassword(password);
+        await keyringServiceApi.verifyPassword(password);
       }
       onConfirm(password);
     } catch (e) {

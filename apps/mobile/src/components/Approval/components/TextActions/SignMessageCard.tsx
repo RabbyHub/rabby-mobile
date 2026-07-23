@@ -9,7 +9,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { RcIconCopyCC } from '@/assets/icons/common';
 import { toast } from '@/components2024/Toast';
 import type { Chain } from '@/constant/chains';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { getMessageStyles, SIGN_MESSAGE_CARD_MARGIN } from './styles';
 import { HighlightedSignMessageText } from '../SignMessageHighlighter';
 import type { SignMessageHighlightToken } from '../signMessageTokenizer';
@@ -19,6 +19,7 @@ import { Card } from '../Actions/components/Card';
 export const SignMessageCard = ({
   title,
   message,
+  copyMessage = message,
   hasAction,
   messageTokens,
   chain,
@@ -28,6 +29,7 @@ export const SignMessageCard = ({
 }: {
   title: string;
   message: string;
+  copyMessage?: string;
   hasAction: boolean;
   messageTokens?: SignMessageHighlightToken[];
   chain?: Chain;
@@ -75,7 +77,7 @@ export const SignMessageCard = ({
             accessibilityLabel={t('global.copy')}
             hitSlop={10}
             onPress={() => {
-              Clipboard.setString(message);
+              Clipboard.setString(copyMessage);
               toast.success(t('global.copied'));
             }}>
             <RcIconCopyCC

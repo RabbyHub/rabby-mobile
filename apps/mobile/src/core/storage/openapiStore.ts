@@ -1,9 +1,9 @@
 import { INITIAL_OPENAPI_URL, isNonPublicProductionEnv } from '@/constant';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import createPersistStore from '@rabby-wallet/persist-store';
-import { APP_STORE_NAMES } from '../storage/storeConstant';
-import { appStorage } from '../storage/mmkv';
 import { v4 as uuidv4 } from 'uuid';
+import { APP_STORE_NAMES } from './storeConstant';
+import { appStorage } from './mmkv';
 
 export type Store = {
   api: {

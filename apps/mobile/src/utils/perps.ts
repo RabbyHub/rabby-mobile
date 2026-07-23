@@ -2,13 +2,13 @@ import type {
   AllDexsClearinghouseState,
   MarketData,
 } from '@/hooks/perps/usePerpsStore';
+import type { PerpsQuoteAsset } from '@/constant/perps';
 import {
   PERPS_MAX_NTL_VALUE,
-  PerpsQuoteAsset,
   COLLATERAL_TOKEN_TO_QUOTE,
   DEFAULT_TOP_ASSET,
 } from '@/constant/perps';
-import {
+import type {
   Meta,
   MarginTable,
   ClearinghouseState,
@@ -19,8 +19,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import type { Account } from '@/types/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis/perps';
-import { perpsService } from '@/core/services';
-import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
+import type { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 
 // Hyperliquid price-axis precision, ported from the official app bundle:
@@ -437,7 +437,7 @@ export const checkPerpsReference = async ({
       return false;
     }
     let accountTypes = Object.values(KEYRING_CLASS.HARDWARE);
-    const inviteConfig = perpsService.getInviteConfig(address) || {};
+    const inviteConfig = (await perpsServiceApi.getInviteConfig(address)) || {};
     let lastTime = inviteConfig.lastInvitedAt || 0;
     let duration = 7 * 24 * 60 * 60 * 1000; // 7 days
 

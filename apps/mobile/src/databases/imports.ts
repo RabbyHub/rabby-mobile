@@ -2,6 +2,12 @@ import RNHelpers from '@/core/native/RNHelpers';
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
 import RNFS from '@rabby-wallet/react-native-fs';
 import { getRabbyAppDbPath } from './constant';
+import {
+  ensureAppDataSourceLoaderStarted,
+  getAppDataSourceRegistrySnapshot,
+  resetAppDataSourceLoaderState,
+} from './registry';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -56,11 +62,23 @@ export async function initializeAppDataSource(
       },
     );
   } else if (!appDataSourceInitRef.current) {
-    const errMsg =
-      'initializeAppDataSource: app data source has not start initialization';
-    const err = new Error(errMsg);
-    throw err;
-    // Sentry.captureException(err)
+    const startedAt = Date.now();
+    traceStartupDiagnostic('db', 'app_data_source_loader_start', {
+      registry: getAppDataSourceRegistrySnapshot(),
+    });
+    await ensureAppDataSourceLoaderStarted('initialize_without_options');
+    traceStartupDiagnostic('db', 'app_data_source_loader_end', {
+      durationMs: Date.now() - startedAt,
+      registry: getAppDataSourceRegistrySnapshot(),
+    });
+
+    if (!appDataSourceInitRef.current) {
+      const errMsg =
+        'initializeAppDataSource: app data source loader did not start initialization';
+      const err = new Error(errMsg);
+      throw err;
+      // Sentry.captureException(err)
+    }
   }
 
   await appDataSourceInitRef.current;
@@ -144,6 +162,7 @@ export async function dropAppDataSourceAndQuitApp({
       console.error('[dropAppDataSourceAndQuitApp] destroy failed', error);
     }
     appDataSourceInitRef.current = null;
+    resetAppDataSourceLoaderState();
     removeAppDbFilesBestEffort().catch(error => {
       console.error(
         '[dropAppDataSourceAndQuitApp] remove db files failed',

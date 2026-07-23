@@ -6,10 +6,10 @@ import React, {
   useState,
 } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
@@ -20,9 +20,13 @@ import {
   HistoryList,
   type HistoryListHeaderComponent,
 } from '@/screens/Transaction/components/HistoryGroupList';
-import { transactionHistoryService } from '@/core/services';
-import { openapi } from '@/core/request';
 import {
+  getTransactionHistorySucceedListSnapshot,
+  getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import { openapi } from '@/core/request';
+import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -32,8 +36,12 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 
 interface IFetchHistory {
   last: number;
@@ -42,7 +50,7 @@ interface IFetchHistory {
 
 const PAGE_COUNT = 20;
 
-export const TokenDetailHistoryList = ({
+const TokenDetailHistoryListContent = ({
   finalAccount,
   token,
   onRefresh,
@@ -77,8 +85,10 @@ export const TokenDetailHistoryList = ({
   const hasMoreMap = useRef<Record<string, boolean>>({});
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
+    getTransactionHistorySucceedListSnapshot(),
   );
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
+  const hasConsumedLocalStatusRef = useRef(false);
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
   const handleScroll = useCallback(
@@ -122,13 +132,16 @@ export const TokenDetailHistoryList = ({
           list,
         };
       } else {
-        const res = await openapi.listTxHisotry({
-          id: address,
-          start_time: startTime,
-          page_count: PAGE_COUNT,
-          chain_id,
-          token_id,
-        });
+        const [res, transactions] = await Promise.all([
+          openapi.listTxHisotry({
+            id: address,
+            start_time: startTime,
+            page_count: PAGE_COUNT,
+            chain_id,
+            token_id,
+          }),
+          getTransactionHistoryTransactions(),
+        ]);
 
         const { project_dict, history_list: list } = res;
         const token_dict = (res as TxHistoryResult).token_dict;
@@ -160,7 +173,7 @@ export const TokenDetailHistoryList = ({
               ...e,
               token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
             })),
-            historyType: getHistoryItemType(item),
+            historyType: getHistoryItemType(item, transactions),
           }))
           .sort((v1, v2) => v2.time_at - v1.time_at);
         return {
@@ -289,11 +302,19 @@ export const TokenDetailHistoryList = ({
     };
   }, [throttleBatchFetchData]);
 
-  useMount(() => {
-    const list = transactionHistoryService.getSucceedList();
+  useEffect(() => {
+    if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {
+      return;
+    }
+    hasConsumedLocalStatusRef.current = true;
+    const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList(currentAddress);
-  });
+    void transactionHistoryServiceApi
+      .clearSuccessAndFailList(currentAddress)
+      .catch(error => {
+        console.error('[TokenHistory] clear local status failed', error);
+      });
+  }, [currentAddress, transactionHistoryReady]);
 
   const displayList = useMemo(() => {
     return (
@@ -347,6 +368,10 @@ export const TokenDetailHistoryList = ({
     />
   );
 };
+
+export const TokenDetailHistoryList = withTransactionHistoryService(
+  TokenDetailHistoryListContent,
+);
 
 const getStyle = createGetStyles2024(ctx => ({
   overwriteListContainer: {

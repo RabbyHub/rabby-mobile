@@ -10,6 +10,7 @@ import type { Chain } from '@/constant/chains';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { getTokenSymbol } from '@/utils/token';
 import { getWalletIcon2024 } from '@/utils/walletInfo2024';
+import { Text } from '@/components/Typography';
 import ViewMore from './Actions/components/ViewMore';
 import {
   getSignMessageAddressTagType,
@@ -19,10 +20,14 @@ import {
 export const SignMessageAddressTag = ({
   chain,
   data,
+  expanded,
+  onExpandedChange,
   onOpenTokenDetail,
 }: {
   chain: Chain;
   data: SignMessageAddressData;
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
   onOpenTokenDetail: (token: TokenItem) => void;
 }) => {
   const { t } = useTranslation();
@@ -48,10 +53,18 @@ export const SignMessageAddressTag = ({
     [data.localAccount?.brandName, data.localAccount?.type, isLight],
   );
   const color = danger ? '#ec5151' : colors['neutral-body'];
+  const expandOrOpen = () => {
+    if (expanded) {
+      return true;
+    }
+    onExpandedChange(true);
+    return false;
+  };
   const trigger = (
     <View
       accessible
       accessibilityLabel={label}
+      onTouchStart={event => event.stopPropagation()}
       style={[
         styles.trigger,
         danger ? styles.dangerTrigger : styles.defaultTrigger,
@@ -72,6 +85,14 @@ export const SignMessageAddressTag = ({
           style={[styles.icon, styles.roundIcon]}
         />
       ) : null}
+      {expanded && (
+        <Text
+          style={[styles.text, { color }]}
+          numberOfLines={1}
+          ellipsizeMode="tail">
+          {label}
+        </Text>
+      )}
       <IconArrowRight width={16} height={16} color={color} />
     </View>
   );
@@ -81,7 +102,11 @@ export const SignMessageAddressTag = ({
       <TouchableOpacity
         accessibilityLabel={label}
         activeOpacity={0.7}
-        onPress={() => onOpenTokenDetail(token)}>
+        onPress={() => {
+          if (expandOrOpen()) {
+            onOpenTokenDetail(token);
+          }
+        }}>
         {trigger}
       </TouchableOpacity>
     );
@@ -91,6 +116,7 @@ export const SignMessageAddressTag = ({
     return (
       <ViewMore
         type="spender"
+        onBeforeOpen={expandOrOpen}
         title={t('page.signTx.contract')}
         data={{
           spender: data.address,
@@ -119,6 +145,7 @@ export const SignMessageAddressTag = ({
   return (
     <ViewMore
       type="receiver"
+      onBeforeOpen={expandOrOpen}
       data={{
         title: t('page.signTx.tokenApprove.eoaAddress'),
         address: data.address,
@@ -169,6 +196,12 @@ const styles = StyleSheet.create({
   defaultTrigger: {
     height: 22,
     borderRadius: 4,
+  },
+  text: {
+    maxWidth: 128,
+    marginRight: 2,
+    fontSize: 13,
+    lineHeight: 16,
   },
   icon: {
     width: 16,

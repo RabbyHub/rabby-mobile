@@ -5,7 +5,7 @@ import createPersistStore, {
 import { TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { getTxMatchData } from '@/utils/tempo';
+import { getTxMatchData } from '@/utils/tempoTx';
 
 export type BridgeRecord = {
   aggregator_id: string;

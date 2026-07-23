@@ -17,10 +17,10 @@ import {
   useSingleHomeAccount,
   useSingleHomeHasNoData,
 } from './hooks/singleHome';
-import { apiCustomTestnet } from '@/core/apis';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
+import { useCustomTestnetStore } from '@/store/customTestnet';
 
 const renderHeader = () => null;
 
@@ -76,9 +76,8 @@ export const AssetContainer = () => {
   // const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
   const { accountToShowReceiveTip } =
     useAccountHomeShowReceiveTip(currentAccount);
-  const customTestnetCount = useMemo(
-    () => apiCustomTestnet.getCustomTestnetList().length,
-    [],
+  const customTestnetCount = useCustomTestnetStore(
+    state => Object.keys(state.customTestnet).length,
   );
 
   if (!currentAccount) {

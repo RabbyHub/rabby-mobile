@@ -1,6 +1,6 @@
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { preferenceService } from '@/core/services';
+import { toggleAllowNotifyAccountsChangedSync } from '@/core/serviceApi/preference';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,11 +11,16 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { BrowserSearch } from './components/BrowserSearch';
-import { BrowserRef, BrowserTab } from './components/BrowserTab';
+import type { BrowserRef } from './components/BrowserTab';
+import { BrowserTab } from './components/BrowserTab';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
+type BrowserScreenProps = { style?: StyleProp<ViewStyle> };
+
+function BrowserScreenContent({ style }: BrowserScreenProps) {
   const { styles: stylesScreen } = useTheme2024({
     getStyle: getScreenStyle,
   });
@@ -49,9 +54,9 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
 
   useLayoutEffect(() => {
     console.debug('BrowserScreen mounted');
-    preferenceService.toggleAllowNotifyAccountsChanged(true);
+    toggleAllowNotifyAccountsChangedSync(true);
     return () => {
-      preferenceService.toggleAllowNotifyAccountsChanged(false);
+      toggleAllowNotifyAccountsChangedSync(false);
       console.debug('BrowserScreen unmounted 1');
     };
   }, []);
@@ -233,6 +238,27 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
       ) : null}
     </View>
   );
+}
+
+const BrowserScreenWithServices = withBrowserDappServices(
+  BrowserScreenContent,
+  {
+    fallback: props => <View style={props.style} />,
+  },
+);
+
+export function BrowserScreen(props: BrowserScreenProps) {
+  const { browserState } = useBrowser();
+  const activatedRef = useRef(false);
+  if (browserState.isShowBrowser) {
+    activatedRef.current = true;
+  }
+
+  if (!activatedRef.current) {
+    return <View style={props.style} />;
+  }
+
+  return <BrowserScreenWithServices {...props} />;
 }
 
 const getScreenStyle = createGetStyles2024(({ colors2024 }) => {

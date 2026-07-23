@@ -1,5 +1,3 @@
-import { Core } from '@walletconnect/core';
-import { WalletKit } from '@reown/walletkit';
 import type { IWalletKit } from '@reown/walletkit';
 import i18n from '@/utils/i18n';
 import { RABBY_MOBILE_WALLETCONNECT_PROJECT_ID } from '@/constant/env';
@@ -27,7 +25,9 @@ import { walletConnectStorage } from './storage';
 import { emitWalletConnectUiEvent } from './uiEvents';
 import { traceAndroidInstant } from '../utils/androidTrace';
 
-type WalletConnectCore = InstanceType<typeof Core> & {
+type WalletConnectCore = InstanceType<
+  typeof import('@walletconnect/core').Core
+> & {
   pairing?: {
     events?: {
       on?: (
@@ -157,6 +157,10 @@ export async function initWalletConnect() {
   addWalletConnectLog('client', 'initializing WalletKit');
 
   initPromise = (async () => {
+    const [{ Core }, { WalletKit }] = await Promise.all([
+      import('@walletconnect/core'),
+      import('@reown/walletkit'),
+    ]);
     const core = new Core({
       projectId: RABBY_MOBILE_WALLETCONNECT_PROJECT_ID,
       storage: walletConnectStorage,

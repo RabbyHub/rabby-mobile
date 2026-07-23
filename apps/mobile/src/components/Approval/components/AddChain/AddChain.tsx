@@ -1,5 +1,5 @@
 import { useApproval } from '@/hooks/useApproval';
-import { AddEthereumChainParams } from './type';
+import type { AddEthereumChainParams } from './type';
 import { useTranslation } from 'react-i18next';
 import { useMemoizedFn, useMount, useRequest } from 'ahooks';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -12,9 +12,9 @@ import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useEffect } from 'react';
-import { TestnetChainBase } from '@/core/services/customTestnetService';
+import type { TestnetChainBase } from '@/core/services/customTestnetService';
 import { apiCustomTestnet } from '@/core/apis';
-import { dappService } from '@/core/services';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
 import { toast } from '@/components2024/Toast';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ModalLayouts } from '@/constant/layout';
@@ -80,9 +80,9 @@ export const AddChain = ({ params }: { params: AddChainProps }) => {
         throw new Error(res.error.message);
       }
 
-      const site = await dappService.getConnectedDapp(session.origin)!;
+      const site = await dappServiceApi.getConnectedDapp(session.origin);
       if (site) {
-        dappService.updateDapp({
+        await dappServiceApi.updateDapp({
           ...site,
           chainId: res.enum as any,
         });

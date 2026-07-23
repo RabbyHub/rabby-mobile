@@ -1,11 +1,11 @@
-import {
+import type {
   AuthorizationList,
   AuthorizationListBytes,
   AuthorizationListItem,
-  Common,
-  Hardfork,
 } from '@ethereumjs/common';
-import { FeeMarketEIP1559TxData, TransactionFactory } from '@ethereumjs/tx';
+import { Common, Hardfork } from '@ethereumjs/common';
+import type { FeeMarketEIP1559TxData } from '@ethereumjs/tx';
+import { TransactionFactory } from '@ethereumjs/tx';
 import {
   bufferToHex,
   isHexString,
@@ -20,20 +20,26 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
+import { bridgeServiceApi } from '@/core/serviceApi/bridge';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import {
-  preferenceService,
-  dappService,
-  transactionHistoryService,
-  transactionWatcherService,
-  transactionBroadcastWatcherService,
-  notificationService,
-  swapService,
-  customTestnetService,
-  bridgeService,
-  customRPCService,
-  gasAccountService,
-} from '@/core/services/shared';
-import { keyringService } from '../services';
+  disconnectDappSync,
+  getConnectedDappSnapshot,
+  getDappSnapshot,
+  isInternalDappSnapshot,
+  updateDappSync,
+} from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import {
+  getNotificationStatsDataSnapshot,
+  setNotificationStatsDataSync,
+} from '@/core/serviceApi/notification';
+import { broadcastSessionEventSync } from '@/core/serviceApi/session';
+import { swapServiceApi } from '@/core/serviceApi/swap';
+import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
 // import {
 //   transactionWatchService,
 //   transactionHistoryService,
@@ -48,8 +54,8 @@ import {
   KEYRING_CATEGORY_MAP,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
-import RpcCache from '../services/rpcCache';
+import type { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
+import RpcCache from '../utils/rpcCache';
 // import Wallet from '../wallet';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { SAFE_RPC_METHODS } from '@/constant/rpc';
@@ -60,13 +66,12 @@ import BigNumber from 'bignumber.js';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { is1559Tx, is7702Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
-import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
-import { StatsData } from '../services/notification';
+import type { StatsData } from '../services/notification';
 import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 import { bytesToHex } from '@ethereumjs/util';
@@ -76,18 +81,15 @@ import { PENDGING_TIME } from '@/constant/expireTime';
 import { isString } from 'lodash';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
-import { ProviderRequest } from './type';
+import type { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
 import { getProviderRequestChain } from './requestContext';
 import { Transaction as ViemTempoTransaction } from 'viem/tempo';
 import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
-import {
-  shouldUseTempoTransaction,
-  TempoTxCall,
-  TxWithTempoExtras,
-} from '@/utils/tempo';
+import type { TempoTxCall, TxWithTempoExtras } from '@/utils/tempo';
+import { shouldUseTempoTransaction } from '@/utils/tempo';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -113,6 +115,14 @@ const reportSignText = (params: {
     method,
     success,
   });
+};
+
+const setStatsDataWithExistingSignMethod = (statsData: StatsData) => {
+  const signMethod = getNotificationStatsDataSnapshot()?.signMethod;
+  if (signMethod) {
+    statsData.signMethod = signMethod;
+  }
+  setNotificationStatsDataSync(statsData);
 };
 
 const covertToHex = (data: Buffer | bigint) => {
@@ -509,10 +519,10 @@ const signTypedDataVlidation = (
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
   }
-  if (!dappService.isInternalDapp(session.origin)) {
+  if (!isInternalDappSnapshot(session.origin)) {
     const currentChain =
       getProviderRequestChain(req)?.enum ||
-      dappService.getDapp(session.origin)?.chainId;
+      getDappSnapshot(session.origin)?.chainId;
 
     if (jsonData.domain.chainId) {
       const chainItem = findChainByEnum(currentChain);
@@ -546,7 +556,7 @@ interface ControllerParams<T> {
 
 class ProviderController extends BaseController {
   @Reflect.metadata('PRIVATE', true)
-  ethRpc = (
+  ethRpc = async (
     req: ProviderRequest & {
       data: RPCRequest;
       session: Session;
@@ -560,13 +570,13 @@ class ProviderController extends BaseController {
     } = req;
 
     if (
-      !dappService.getDapp(origin)?.isConnected &&
+      !getDappSnapshot(origin)?.isConnected &&
       !SAFE_RPC_METHODS.includes(method)
     ) {
       throw ethErrors.provider.unauthorized();
     }
 
-    const site = dappService.getDapp(origin);
+    const site = getDappSnapshot(origin);
     let chainServerId = findChain({ enum: CHAINS_ENUM.ETH })!.serverId;
     if (site) {
       chainServerId =
@@ -594,8 +604,8 @@ class ProviderController extends BaseController {
       serverId: chainServerId,
     })!;
     if (!chain?.isTestnet) {
-      if (customRPCService.hasCustomRPC(chain.enum)) {
-        const promise = customRPCService
+      if (await customRPCServiceApi.hasCustomRPC(chain.enum)) {
+        const promise = customRPCServiceApi
           .requestCustomRPC(chain.enum, method, params)
           .then(result => {
             RpcCache.set(currentAddress, {
@@ -614,7 +624,7 @@ class ProviderController extends BaseController {
         });
         return promise;
       } else {
-        const promise = customRPCService
+        const promise = customRPCServiceApi
           .defaultEthRPC({
             chainServerId,
             origin,
@@ -639,7 +649,7 @@ class ProviderController extends BaseController {
         return promise;
       }
     } else {
-      const client = customTestnetService.getClient(chain.id);
+      const client = await customTestnetServiceApi.getClient(chain.id);
       return client.request({ method: method as any, params: params as any });
     }
   };
@@ -650,19 +660,15 @@ class ProviderController extends BaseController {
     } = req;
     console.log(req);
     assertProviderRequest(req as any);
-    if (!dappService.getDapp(origin)?.isConnected) {
+    if (!getDappSnapshot(origin)?.isConnected) {
       throw ethErrors.provider.unauthorized();
     }
 
     const _account = req.account;
     const account = _account ? [_account.address.toLowerCase()] : [];
 
-    sessionService.broadcastEvent(
-      BroadcastEvent.accountsChanged,
-      account,
-      origin,
-    );
-    const connectSite = dappService.getConnectedDapp(origin);
+    broadcastSessionEventSync(BroadcastEvent.accountsChanged, account, origin);
+    const connectSite = getConnectedDappSnapshot(origin);
 
     if (connectSite) {
       const chain = findChain({
@@ -670,8 +676,8 @@ class ProviderController extends BaseController {
       });
       if (chain) {
         // // rabby:chainChanged event must be sent before chainChanged event
-        // sessionService.broadcastEvent('rabby:chainChanged', chain, origin);
-        sessionService.broadcastEvent(
+        // broadcastSessionEventSync('rabby:chainChanged', chain, origin);
+        broadcastSessionEventSync(
           BroadcastEvent.chainChanged,
           {
             chainId: chain.hex,
@@ -693,7 +699,7 @@ class ProviderController extends BaseController {
     session: Session;
     account?: Account | null;
   }) => {
-    if (!dappService.getDapp(origin)?.isConnected) {
+    if (!getDappSnapshot(origin)?.isConnected) {
       return [];
     }
 
@@ -707,7 +713,7 @@ class ProviderController extends BaseController {
     session: Session;
     account?: Account;
   }) => {
-    if (!dappService.getDapp(origin)?.isConnected) {
+    if (!getDappSnapshot(origin)?.isConnected) {
       return null;
     }
 
@@ -723,7 +729,7 @@ class ProviderController extends BaseController {
 
     const { session } = req;
     const origin = session.origin;
-    const site = dappService.getDapp(origin);
+    const site = getDappSnapshot(origin);
 
     return findChainByEnum(site?.chainId, { fallback: CHAINS_ENUM.ETH })!.hex;
   };
@@ -743,9 +749,9 @@ class ProviderController extends BaseController {
       const requestChain = getProviderRequestChain(req);
       const currentChain = requestChain
         ? requestChain.enum
-        : dappService.isInternalDapp(session.origin)
+        : isInternalDappSnapshot(session.origin)
         ? findChain({ id: tx.chainId })!.enum
-        : dappService.getConnectedDapp(session.origin)?.chainId;
+        : getConnectedDappSnapshot(session.origin)?.chainId;
       if (tx.from.toLowerCase() !== currentAddress) {
         throw ethErrors.rpc.invalidParams(
           'from should be same as current address',
@@ -886,7 +892,7 @@ class ProviderController extends BaseController {
 
         for (const authorization of eip7702RevokeAuthorization) {
           const signature: string =
-            await keyringService.signEip7702Authorization(keyring, {
+            await keyringServiceApi.signEip7702Authorization(keyring, {
               from: txParams.from,
               authorization: authorization,
             });
@@ -955,15 +961,17 @@ class ProviderController extends BaseController {
     const requestChain = getProviderRequestChain(options as any);
     const chain = requestChain
       ? requestChain.enum
-      : dappService.isInternalDapp(origin)
+      : isInternalDappSnapshot(origin)
       ? findChain({ id: approvalRes.chainId })!.enum
-      : dappService.getConnectedDapp(origin)!.chainId;
+      : getConnectedDappSnapshot(origin)!.chainId;
 
-    const approvingTx = transactionHistoryService.getSigningTx(signingTxId!);
+    const approvingTx = await transactionHistoryServiceApi.getSigningTx(
+      signingTxId!,
+    );
     if (!approvingTx?.rawTx || !approvingTx?.explain) {
       throw new Error(`approvingTx not found: ${signingTxId}`);
     }
-    transactionHistoryService.updateSigningTx(signingTxId!, {
+    await transactionHistoryServiceApi.updateSigningTx(signingTxId!, {
       isSubmitted: true,
     });
 
@@ -1048,7 +1056,7 @@ class ProviderController extends BaseController {
             'tempo transaction is only supported for private key and mnemonic keyrings',
           );
         }
-        signedTx = await keyringService.signTransaction(
+        signedTx = await keyringServiceApi.signTransaction(
           keyring,
           tempoTxData,
           txParams.from,
@@ -1059,7 +1067,7 @@ class ProviderController extends BaseController {
           throw new Error('tempo transaction serialize failed');
         }
       } else {
-        signedTx = await keyringService.signTransaction(
+        signedTx = await keyringServiceApi.signTransaction(
           keyring,
           tx,
           txParams.from,
@@ -1104,7 +1112,7 @@ class ProviderController extends BaseController {
         return;
       }
 
-      const onTransactionCreated = (info: {
+      const onTransactionCreated = async (info: {
         hash?: string;
         reqId?: string;
         pushType?: TxPushType;
@@ -1123,8 +1131,12 @@ class ProviderController extends BaseController {
 
         const { r, s, v, ...other } = approvalRes;
         if (hash) {
-          swapService.postSwap(chain, hash, other);
-          bridgeService.postBridge(chain, hash, other);
+          void swapServiceApi.postSwap(chain, hash, other).catch(error => {
+            console.error('[swapService] postSwap failed', error);
+          });
+          void bridgeServiceApi.postBridge(chain, hash, other).catch(error => {
+            console.error('[bridgeService] postBridge failed', error);
+          });
         }
 
         statsData.submit = true;
@@ -1148,43 +1160,58 @@ class ProviderController extends BaseController {
         updateExpiredTime(txParams.from, PENDGING_TIME);
 
         // TODO: transactionHistory
-        transactionHistoryService.addTx({
-          address: txParams.from,
-          nonce: +approvalRes.nonce,
-          chainId: approvalRes.chainId,
+        try {
+          await transactionHistoryServiceApi.addTx({
+            address: txParams.from,
+            nonce: +approvalRes.nonce,
+            chainId: approvalRes.chainId,
 
-          rawTx: _rawTx,
-          createdAt: Date.now(),
-          hash,
-          reqId,
-          pushType,
-          explain: cacheExplain,
-          action: action,
-          site: dappService.isInternalDapp(origin)
-            ? createDappBySession(INTERNAL_REQUEST_SESSION)
-            : dappService.getDapp(origin),
-          isPending: true,
-          $ctx: options?.data?.$ctx,
-          keyringType: currentAccount.type,
-        });
-        transactionHistoryService.removeSigningTx(signingTxId!);
+            rawTx: _rawTx,
+            createdAt: Date.now(),
+            hash,
+            reqId,
+            pushType,
+            explain: cacheExplain,
+            action: action,
+            site: isInternalDappSnapshot(origin)
+              ? createDappBySession(INTERNAL_REQUEST_SESSION)
+              : getDappSnapshot(origin),
+            isPending: true,
+            $ctx: options?.data?.$ctx,
+            keyringType: currentAccount.type,
+          });
+          await transactionHistoryServiceApi.removeSigningTx(signingTxId!);
+        } catch (error) {
+          console.error(
+            '[transactionHistory] persist submitted tx failed',
+            error,
+          );
+        }
         if (hash) {
-          transactionWatcherService.addTx(
-            `${txParams.from}_${approvalRes.nonce}_${chain}`,
-            {
+          void transactionWatcherServiceApi
+            .addTx(`${txParams.from}_${approvalRes.nonce}_${chain}`, {
               nonce: approvalRes.nonce,
               hash,
               chain,
-            },
-          );
+            })
+            .catch(error => {
+              console.error('[transactionWatcher] addTx failed', error);
+            });
         }
         if (reqId && !hash) {
-          transactionBroadcastWatcherService.addTx(reqId, {
-            reqId,
-            address: txParams.from,
-            chainId: findChain({ enum: chain })!.id,
-            nonce: approvalRes.nonce,
-          });
+          void transactionBroadcastWatcherServiceApi
+            .addTx(reqId, {
+              reqId,
+              address: txParams.from,
+              chainId: findChain({ enum: chain })!.id,
+              nonce: approvalRes.nonce,
+            })
+            .catch(error => {
+              console.error(
+                '[transactionBroadcastWatcher] addTx failed',
+                error,
+              );
+            });
         }
 
         // if (isCoboSafe) {
@@ -1230,15 +1257,12 @@ class ProviderController extends BaseController {
           // );
         }
         const errMsg = e.details || e.message || JSON.stringify(e);
-        if (notificationService.statsData?.signMethod) {
-          statsData.signMethod = notificationService.statsData?.signMethod;
-        }
-        notificationService.setStatsData(statsData);
+        setStatsDataWithExistingSignMethod(statsData);
         throw new Error(errMsg);
       };
 
       if (typeof signedTx === 'string') {
-        onTransactionCreated({
+        await onTransactionCreated({
           hash: signedTx,
           pushType: 'default',
         });
@@ -1249,10 +1273,7 @@ class ProviderController extends BaseController {
           statsData.signed = true;
           statsData.signedSuccess = true;
         }
-        if (notificationService.statsData?.signMethod) {
-          statsData.signMethod = notificationService.statsData?.signMethod;
-        }
-        notificationService.setStatsData(statsData);
+        setStatsDataWithExistingSignMethod(statsData);
         return signedTx;
       }
 
@@ -1293,7 +1314,7 @@ class ProviderController extends BaseController {
           isGasLess
         ) {
           if (
-            customRPCService.hasCustomRPC(chain) &&
+            (await customRPCServiceApi.hasCustomRPC(chain)) &&
             !isGasAccount &&
             !isGasLess
           ) {
@@ -1308,12 +1329,12 @@ class ProviderController extends BaseController {
             if (!rawTx) {
               throw new Error('tempo transaction serialize failed');
             }
-            hash = await customRPCService.requestCustomRPC(
+            hash = await customRPCServiceApi.requestCustomRPC(
               chain,
               'eth_sendRawTransaction',
               [rawTx],
             );
-            onTransactionCreated({ hash, reqId, pushType });
+            await onTransactionCreated({ hash, reqId, pushType });
           } else {
             const chainServerId = findChain({ enum: chain })!.serverId;
             const tempoSubmitTx = isTempoTx
@@ -1376,7 +1397,9 @@ class ProviderController extends BaseController {
               }
             };
 
-            const defaultRPC = customRPCService.getDefaultRPC(chainServerId);
+            const defaultRPC = await customRPCServiceApi.getDefaultRPC(
+              chainServerId,
+            );
 
             if (defaultRPC?.txPushToRPC && !isGasLess && !isGasAccount) {
               let fePushedFailed = false;
@@ -1395,7 +1418,7 @@ class ProviderController extends BaseController {
 
               try {
                 const [fePushedHash, url] =
-                  await customRPCService.defaultRPCSubmitTxWithFallback(
+                  await customRPCServiceApi.defaultRPCSubmitTxWithFallback(
                     chainServerId,
                     'eth_sendRawTransaction',
                     [rawTx],
@@ -1419,7 +1442,9 @@ class ProviderController extends BaseController {
               } catch (fePushError) {
                 fePushedFailed = true;
                 const urls =
-                  customRPCService.getDefaultRPCByChainServerId(chainServerId);
+                  await customRPCServiceApi.getDefaultRPCByChainServerId(
+                    chainServerId,
+                  );
                 params.frontend_push_result = {
                   success: false,
                   has_pushed: true,
@@ -1457,12 +1482,8 @@ class ProviderController extends BaseController {
             if (!hash) {
               onTransactionSubmitFailed(new Error('Submit tx failed'));
             } else {
-              onTransactionCreated({ hash, reqId, pushType });
-              if (notificationService.statsData?.signMethod) {
-                statsData.signMethod =
-                  notificationService.statsData?.signMethod;
-              }
-              notificationService.setStatsData(statsData);
+              await onTransactionCreated({ hash, reqId, pushType });
+              setStatsDataWithExistingSignMethod(statsData);
             }
           }
         } else {
@@ -1480,14 +1501,14 @@ class ProviderController extends BaseController {
           if (!rawTx) {
             throw new Error('tempo transaction serialize failed');
           }
-          const client = customTestnetService.getClient(chainData.id);
+          const client = await customTestnetServiceApi.getClient(chainData.id);
 
           hash = await client?.request({
             method: 'eth_sendRawTransaction',
             params: [rawTx as any],
           });
-          onTransactionCreated({ hash, reqId, pushType });
-          notificationService.setStatsData(statsData);
+          await onTransactionCreated({ hash, reqId, pushType });
+          setNotificationStatsDataSync(statsData);
         }
 
         return hash;
@@ -1500,10 +1521,7 @@ class ProviderController extends BaseController {
         statsData.signed = true;
         statsData.signedSuccess = false;
       }
-      if (notificationService.statsData?.signMethod) {
-        statsData.signMethod = notificationService.statsData?.signMethod;
-      }
-      notificationService.setStatsData(statsData);
+      setStatsDataWithExistingSignMethod(statsData);
       if ('details' in (e as any)) {
         throw new Error((e as any).details);
       } else {
@@ -1569,7 +1587,7 @@ class ProviderController extends BaseController {
       const [string, from] = data.params;
       const hex = isHexString(string) ? string : stringToHex(string);
       const keyring = await this._checkAddress(from, req);
-      const result = await keyringService.signPersonalMessage(
+      const result = await keyringServiceApi.signPersonalMessage(
         keyring,
         { data: hex, from },
         approvalRes?.extra,
@@ -1620,7 +1638,7 @@ class ProviderController extends BaseController {
       }
     }
 
-    return keyringService.signTypedMessage(
+    return keyringServiceApi.signTypedMessage(
       keyring,
       {
         from,
@@ -1841,7 +1859,7 @@ class ProviderController extends BaseController {
       if (!chainParams.chainId) {
         throw ethErrors.rpc.invalidParams('chainId is required');
       }
-      const connected = dappService.getConnectedDapp(session.origin);
+      const connected = getConnectedDappSnapshot(session.origin);
 
       if (connected) {
         // if rabby supported this chain, do not show popup
@@ -1889,7 +1907,7 @@ class ProviderController extends BaseController {
       // RPCService.setRPC(approvalRes.chain, approvalRes.rpcUrl);
     }
 
-    const connectSite = dappService.getConnectedDapp(origin);
+    const connectSite = getConnectedDappSnapshot(origin);
     const prev = connectSite
       ? findChain({ enum: connectSite.chainId })
       : undefined;
@@ -1897,12 +1915,12 @@ class ProviderController extends BaseController {
       return;
     }
 
-    dappService.updateDapp({
+    updateDappSync({
       ...connectSite,
       chainId: chain.enum,
     });
 
-    sessionService.broadcastEvent(
+    broadcastSessionEventSync(
       BroadcastEvent.chainChanged,
       {
         chainId: chain.hex,
@@ -1930,7 +1948,7 @@ class ProviderController extends BaseController {
       if (!data.params[0]?.chainId) {
         throw ethErrors.rpc.invalidParams('chainId is required');
       }
-      const connected = dappService.getConnectedDapp(session.origin);
+      const connected = getConnectedDappSnapshot(session.origin);
       if (connected) {
         const { chainId } = data.params[0];
         if (
@@ -1974,7 +1992,7 @@ class ProviderController extends BaseController {
       });
     }
 
-    const connectSite = dappService.getConnectedDapp(origin);
+    const connectSite = getConnectedDappSnapshot(origin);
     const prev = connectSite
       ? findChain({ enum: connectSite.chainId })
       : undefined;
@@ -1982,14 +2000,14 @@ class ProviderController extends BaseController {
     if (!connectSite) {
       return;
     }
-    dappService.updateDapp({
+    updateDappSync({
       ...connectSite,
       chainId: chain.enum,
     });
 
     // rabby:chainChanged event must be sent before chainChanged event
     // TODO: sessionService
-    // sessionService.broadcastEvent(
+    // broadcastSessionEventSync(
     //   'rabby:chainChanged',
     //   {
     //     ...chain,
@@ -1997,7 +2015,7 @@ class ProviderController extends BaseController {
     //   },
     //   origin,
     // );
-    // sessionService.broadcastEvent(
+    // broadcastSessionEventSync(
     //   'chainChanged',
     //   {
     //     chain: chain.hex,
@@ -2005,7 +2023,7 @@ class ProviderController extends BaseController {
     //   },
     //   origin,
     // );
-    sessionService.broadcastEvent(
+    broadcastSessionEventSync(
       BroadcastEvent.chainChanged,
       {
         chainId: chain.hex,
@@ -2040,7 +2058,7 @@ class ProviderController extends BaseController {
     },
     { height: 600 },
   ])
-  walletWatchAsset = ({
+  walletWatchAsset = async ({
     approvalRes,
   }: {
     approvalRes: { id: string; chain: string } & CustomTestnetTokenBase;
@@ -2050,7 +2068,7 @@ class ProviderController extends BaseController {
       serverId: chain,
     });
     if (chainInfo?.isTestnet) {
-      customTestnetService.addToken({
+      await customTestnetServiceApi.addToken({
         chainId,
         symbol,
         decimals,
@@ -2084,7 +2102,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('SAFE', true)
   walletGetPermissions = ({ session: { origin } }: { session: Session }) => {
     const result: Web3WalletPermission[] = [];
-    if (dappService.getConnectedDapp(origin)) {
+    if (getConnectedDappSnapshot(origin)) {
       result.push({ parentCapability: 'eth_accounts' });
     }
     return result;
@@ -2095,14 +2113,10 @@ class ProviderController extends BaseController {
    */
   @Reflect.metadata('SAFE', true)
   walletRevokePermissions = ({ session: { origin }, data: { params } }) => {
-    if (dappService.getConnectedDapp(origin)) {
+    if (getConnectedDappSnapshot(origin)) {
       if (params?.[0] && 'eth_accounts' in params[0]) {
-        sessionService.broadcastEvent(
-          BroadcastEvent.accountsChanged,
-          [],
-          origin,
-        );
-        dappService.disconnect(origin);
+        broadcastSessionEventSync(BroadcastEvent.accountsChanged, [], origin);
+        disconnectDappSync(origin);
       }
     }
     return null;
@@ -2143,7 +2157,7 @@ class ProviderController extends BaseController {
           'Invalid parameters: must use the current user address to sign',
       });
     }
-    const keyring = await keyringService.getKeyringForAccount(
+    const keyring = await keyringServiceApi.getKeyringForAccount(
       currentAddress,
       type,
     );

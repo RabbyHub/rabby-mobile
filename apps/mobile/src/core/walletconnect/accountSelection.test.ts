@@ -1,6 +1,9 @@
 import type { Account } from '@/types/account';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
-import { preferenceService } from '@/core/services';
+import {
+  getFallbackAccountSnapshot,
+  getPinnedAddressSnapshot,
+} from '@/core/serviceApi/preference';
 import {
   forgetWalletConnectAccountForTopic,
   getWalletConnectAccountForTopic,
@@ -22,11 +25,9 @@ jest.mock('@/core/storage/mmkv', () => ({
   },
 }));
 
-jest.mock('@/core/services', () => ({
-  preferenceService: {
-    getPinAddresses: jest.fn(() => []),
-    getFallbackAccount: jest.fn(() => null),
-  },
+jest.mock('@/core/serviceApi/preference', () => ({
+  getPinnedAddressSnapshot: jest.fn(() => []),
+  getFallbackAccountSnapshot: jest.fn(() => null),
 }));
 
 jest.mock('@/utils/sortAccountList', () => ({
@@ -87,8 +88,8 @@ const sameAddressSameTypeDifferentBrandAccount = {
 describe('walletconnect account selection', () => {
   beforeEach(() => {
     mockStorage.clear();
-    jest.mocked(preferenceService.getPinAddresses).mockReturnValue([]);
-    jest.mocked(preferenceService.getFallbackAccount).mockReturnValue(null);
+    jest.mocked(getPinnedAddressSnapshot).mockReturnValue([]);
+    jest.mocked(getFallbackAccountSnapshot).mockReturnValue(null);
   });
 
   it('selects the first my account from the account selector list when the dapp has not connected before', () => {
@@ -118,9 +119,7 @@ describe('walletconnect account selection', () => {
       type: 'Gnosis',
       brandName: 'Gnosis',
     } as Account;
-    jest
-      .mocked(preferenceService.getFallbackAccount)
-      .mockReturnValue(secondSignable);
+    jest.mocked(getFallbackAccountSnapshot).mockReturnValue(secondSignable);
 
     expect(
       selectWalletConnectAccountForOrigin('https://example.com', [
@@ -131,7 +130,7 @@ describe('walletconnect account selection', () => {
   });
 
   it('uses pinned account ordering for the account selector fallback', () => {
-    jest.mocked(preferenceService.getPinAddresses).mockReturnValue([
+    jest.mocked(getPinnedAddressSnapshot).mockReturnValue([
       {
         address: secondSignable.address,
         brandName: secondSignable.brandName,

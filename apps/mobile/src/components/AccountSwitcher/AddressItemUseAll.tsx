@@ -1,10 +1,5 @@
-import {
-  Image,
-  ImageSourcePropType,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import type { ImageSourcePropType } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -14,9 +9,9 @@ import RcIconCorrectCC from './icons/correct-cc.svg';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useMemo, useState } from 'react';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { getWalletAvator2024 } from '@/utils/walletInfo2024';
-import { SvgProps } from 'react-native-svg';
+import type { SvgProps } from 'react-native-svg';
 import { AddressItemSizes } from './AddressItemInPanel';
 import { Text } from '@/components/Typography';
 

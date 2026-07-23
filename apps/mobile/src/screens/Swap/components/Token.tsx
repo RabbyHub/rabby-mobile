@@ -1,5 +1,5 @@
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { QuoteProvider } from '../hooks';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
 import React, {
   useCallback,
@@ -17,7 +17,8 @@ import {
 import BigNumber from 'bignumber.js';
 import { Slider } from '@rneui/themed';
 
-import TokenSelect, { TokenSelectInst } from './TokenSelect';
+import type { TokenSelectInst } from './TokenSelect';
+import TokenSelect from './TokenSelect';
 import SwapToTokenSelect from './SwapToTokenSelect';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
@@ -26,7 +27,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { SliderBubblePortal } from './Slider';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
 import { ITokenItem } from '@/store/tokens';

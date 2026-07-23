@@ -1,8 +1,6 @@
 import { AppBottomSheetModal } from '@/components';
-import {
-  AccountsPanelInSheetModal,
-  SelectAccountSheetModalType,
-} from '@/components/AccountSelectModalTx/AccountsPanel';
+import type { SelectAccountSheetModalType } from '@/components/AccountSelectModalTx/AccountsPanel';
+import { AccountsPanelInSheetModal } from '@/components/AccountSelectModalTx/AccountsPanel';
 import AutoLockView from '@/components/AutoLockView';
 import { IS_IOS } from '@/core/native/utils';
 import { FontWeightEnum } from '@/core/utils/fonts';
@@ -13,19 +11,19 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, Keyboard, Pressable, View } from 'react-native';
-import {
-  AccountSelectModalProvider,
+import type {
   SelectAccountSheetModalScreen,
   SelectAccountSheetModalValues,
 } from './hooks';
+import { AccountSelectModalProvider } from './hooks';
 import { RcIconHistory, RcIconNavLeft } from './icons';
 import ScreenPanelEnterAddress from './modalScreens/EnterAddress';
 import { SelectAccountSheetModalSizes } from './layout';
 import { ScreenAddNewWhitelistAddress } from './modalScreens/AddNewWhitelistAddress';
 import { ScreenSentHistory } from './modalScreens/SentHistory';
 import { ScreenHistoryLocalDetail } from './modalScreens/TxHistoryDetail';
-import { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
-import { Account } from '@/core/services/preference';
+import type { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
+import type { Account } from '@/core/startupServices/preference';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { touchedFeedback } from '@/utils/touch';

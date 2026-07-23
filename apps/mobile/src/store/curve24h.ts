@@ -1,14 +1,11 @@
 import { openapi } from '@/core/request';
-import { keyringService } from '@/core/services';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { dayCurveMMKV } from '@/core/storage/mmkvInstances';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { CurveDayType } from '@/utils/curveDayType';
-import {
-  getCurveCache,
-  ITIME_STEP_ITEM,
-  setCurveCache,
-} from '@/utils/24balanceCurveCache';
+import type { ITIME_STEP_ITEM } from '@/utils/24balanceCurveCache';
+import { getCurveCache, setCurveCache } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import { debounce } from 'lodash';
 import dayjs from 'dayjs';
@@ -21,8 +18,10 @@ import addressBalanceStore, {
 } from '@/store/balance';
 import { BaseStore } from './_base';
 import { ResourceBaseStore } from './_resourceBase';
-import { ResourceLocalTarget } from './_resourceFlowDebug';
-import { combineMultiCurve, CurveList, formChartData } from './curveShared';
+import type { ResourceLocalTarget } from './_resourceFlowDebug';
+import type { CurveList } from './curveShared';
+import { combineMultiCurve, formChartData } from './curveShared';
+import type { Account } from '@/types/account';
 
 export type AddressCurveValue = CurveList;
 export type AddressCurveTraceContext = {
@@ -618,9 +617,10 @@ class SceneCurve24hStore extends BaseStore<SceneCurveState> {
     }
     this.hasStartedLifecycle = true;
 
-    keyringService.on('removedAccount', async account => {
-      const lowerAddress = normalizeAddress(account.address);
-      const addresses = await keyringService.getAllAddresses();
+    void bindKeyringEvent('removedAccount', async account => {
+      const removedAccount = account as Account;
+      const lowerAddress = normalizeAddress(removedAccount.address);
+      const addresses = await keyringServiceApi.getAllAddresses();
       const stillExists = addresses.some(item => {
         return normalizeAddress(item.address) === lowerAddress;
       });
@@ -633,7 +633,7 @@ class SceneCurve24hStore extends BaseStore<SceneCurveState> {
         source: 'keyringService.removedAccount',
         reason: 'address_deleted',
       });
-    });
+    }).catch(console.error);
 
     addressCurve24hStore.subscribe(() => {
       const addresses = this.getState().addresses.Home;

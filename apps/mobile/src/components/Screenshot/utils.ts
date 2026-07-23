@@ -5,10 +5,11 @@ import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { BUILD_GIT_INFO } from '@/constant/env';
 import { getAllAccounts } from '@/core/apis/address';
 import { getLatestNavigationName } from '@/utils/navigation';
-import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
-import { gasAccountService, preferenceService } from '@/core/services';
+import type { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import {
+import type {
   AccountSwitcherScene,
   SceneAccounts,
 } from '@/hooks/sceneAccountInfoAtom';
@@ -28,12 +29,15 @@ function runTryCatch<T extends (...args: any[]) => any>(
   }
 }
 
-function getGasAccountFeedbackAddress(sceneAddress?: string | null) {
-  const { accountId } = gasAccountService.getGasAccountSig();
+async function getGasAccountFeedbackAddress(sceneAddress?: string | null) {
+  const [gasAccountSig, pendingHardwareAccount] = await Promise.all([
+    gasAccountServiceApi.getGasAccountSig(),
+    gasAccountServiceApi.getPendingHardwareAccount(),
+  ]);
 
   return (
-    accountId ||
-    gasAccountService.getPendingHardwareAccount()?.address ||
+    gasAccountSig.accountId ||
+    pendingHardwareAccount?.address ||
     sceneAddress ||
     null
   );
@@ -62,7 +66,7 @@ export async function getSceneAddresses() {
 
   return {
     ...values,
-    GasAccount: getGasAccountFeedbackAddress(values.GasAccount),
+    GasAccount: await getGasAccountFeedbackAddress(values.GasAccount),
     Perps: perpsInfo?.address || perpsInfo,
     PerpsAccountType: perpsInfo?.type,
   };
@@ -114,7 +118,7 @@ export async function getScreenshotFeedbackExtra({
     },
     { callables: 0, uncallables: 0 },
   );
-  const myCurrentAccount = preferenceService.getFallbackAccount();
+  const myCurrentAccount = getFallbackAccountSnapshot();
 
   return {
     totalBalanceText,

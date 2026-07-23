@@ -1,4 +1,4 @@
-import { contactService } from '@/core/services';
+import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { ellipsisAddress } from './address';
@@ -105,8 +105,7 @@ export function makeAccountObject<T extends Account>({
     address,
     brandName: brandName || KEYRING_CLASS.WATCH,
     aliasName:
-      contactService.getAliasByAddress(address)?.alias ||
-      ellipsisAddress(address),
+      getContactAliasSnapshot(address)?.alias || ellipsisAddress(address),
     balance: 0,
     type: KEYRING_CLASS.WATCH,
   } as any as T;

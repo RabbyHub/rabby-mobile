@@ -1,8 +1,8 @@
+import type { ComponentProps } from 'react';
 import React, {
   useState,
   useEffect,
   useCallback,
-  ComponentProps,
   useMemo,
   useImperativeHandle,
   useLayoutEffect,
@@ -11,12 +11,10 @@ import React, {
 } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import {
-  ITokenCheck,
-  useTokenSelectorModalVisible,
-} from '@/components/Token/TokenSelectorSheetModal';
+import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
@@ -25,9 +23,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { customTestnetService } from '@/core/services';
-import { CHAINS_ENUM } from '@debank/common';
-import { Account } from '@/core/services/preference';
+import type { CHAINS_ENUM } from '@debank/common';
+import type { Account } from '@/core/startupServices/preference';
+import { useCustomTestnetStore } from '@/store/customTestnet';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
@@ -39,9 +37,9 @@ import { useSelectTokens } from '../hooks/useSelectTokens';
 import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
+import type { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { Text } from '@/components/Typography';
 
@@ -117,6 +115,11 @@ const TokenSelect = ({
   );
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const currentAccount = queryConds.account;
+  const customTestnetMap = useCustomTestnetStore(state => state.customTestnet);
+  const customTestnetList = useMemo(
+    () => Object.values(customTestnetMap),
+    [customTestnetMap],
+  );
 
   const favoriteFilterValue = useMemo(() => {
     if (queryConds.keyword?.trim().length > 0) {
@@ -127,15 +130,11 @@ const TokenSelect = ({
 
   const isSend = type === 'send';
   const customNetworkTop3Chains = useMemo(
-    () =>
-      customTestnetService
-        .getList()
-        .slice(0, 3)
-        .map(chain => chain.serverId),
-    [],
+    () => customTestnetList.slice(0, 3).map(chain => chain.serverId),
+    [customTestnetList],
   );
   const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
-    hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
+    hideTestnetTab: !isSend || customTestnetList.length === 0,
   });
   const isCustomNetworkTab = isSend && selectedTab === 'testnet';
   const effectiveFavoriteFilterValue = isCustomNetworkTab

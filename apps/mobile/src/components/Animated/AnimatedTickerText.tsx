@@ -43,6 +43,7 @@ type AnimatedTickerTextProps = {
   textProps?: TextProps;
   containerProps?: ViewProps;
   fontSizeByLength?: FontSizeByLengthOptions;
+  animateWidth?: boolean;
 };
 
 type TickerTextState = {
@@ -62,6 +63,7 @@ type TickerColumnProps = {
   initialFontSize?: number;
   style?: StyleProp<TextStyle>;
   textProps?: TextProps;
+  animateWidth: boolean;
 };
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -228,6 +230,7 @@ const AnimatedTickerColumn = memo(
     initialFontSize,
     style,
     textProps,
+    animateWidth,
   }: TickerColumnProps) => {
     const initialChar = getSlotChar(value.value, slotIndex, maxLength);
     const initialDigit = getDigitIndex(initialChar);
@@ -300,12 +303,14 @@ const AnimatedTickerColumn = memo(
           return;
         }
 
-        columnWidth.value = withTiming(nextWidth, {
-          duration: Math.min(duration, 180),
-          easing: Easing.linear,
-        });
+        columnWidth.value = animateWidth
+          ? withTiming(nextWidth, {
+              duration: Math.min(duration, 180),
+              easing: Easing.linear,
+            })
+          : nextWidth;
       },
-      [duration, maxLength, slotIndex],
+      [animateWidth, duration, maxLength, slotIndex],
     );
 
     const columnStyle = useAnimatedStyle(() => {
@@ -406,6 +411,7 @@ const AnimatedTickerText = ({
   textProps,
   containerProps,
   fontSizeByLength,
+  animateWidth = true,
 }: AnimatedTickerTextProps) => {
   const textState = useDerivedValue(() => {
     const text = value.value || '';
@@ -472,6 +478,7 @@ const AnimatedTickerText = ({
               initialFontSize={initialFontSize}
               style={style}
               textProps={textProps}
+              animateWidth={animateWidth}
             />
           ))
         : null}

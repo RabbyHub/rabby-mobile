@@ -11,8 +11,12 @@ import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadHomeShortcutNavigators } from '@/perfs/preloads';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
+const RegressionMultiAddressHome = withRegressionScenario(MultiAddressHome, {
+  screen: 'Home',
+});
 
 const TabBarComponent = () => null;
 
@@ -70,7 +74,7 @@ export function HomeScreenNavigator() {
         tabBar={TabBarComponent}>
         <HomeHiddenTabStack.Screen
           name={RootNames.Home}
-          component={MultiAddressHome}
+          component={RegressionMultiAddressHome}
           options={{
             headerShown: false,
             freezeOnBlur: false,

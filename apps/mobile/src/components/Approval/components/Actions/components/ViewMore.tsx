@@ -37,6 +37,7 @@ type Props =
 const ViewMore = (
   props: Props & {
     children?: React.ReactNode;
+    onBeforeOpen?: () => boolean;
   },
 ) => {
   const [popupVisible, setPopupVisible] = useState(false);
@@ -47,6 +48,9 @@ const ViewMore = (
   const commonStyle = useCommonStyle();
 
   const handleClickViewMore = () => {
+    if (props.onBeforeOpen?.() === false) {
+      return;
+    }
     setPopupVisible(true);
   };
 

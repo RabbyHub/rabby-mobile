@@ -1,6 +1,7 @@
-import { contactService } from '@/core/services';
+import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
 import { useWhitelist } from '@/hooks/whitelist';
 import { filterMyAccounts, findAccountByPriority } from '@/utils/account';
@@ -53,7 +54,7 @@ export const useFindAddressByWhitelist = () => {
       const defaultAccount = {
         address,
         aliasName:
-          contactService.getAliasByAddress(address, {
+          getContactAliasSnapshot(address, {
             keepEmptyIfNotFound: !useEllipsisAsFallback,
           })?.alias || (useEllipsisAsFallback ? ellipsisAddress(address) : ''),
         balance,
@@ -93,7 +94,7 @@ export const useFindAddressByWhitelist = () => {
       const defaultAccount: KeyringAccountWithAlias = {
         address,
         aliasName:
-          contactService.getAliasByAddress(address, {
+          getContactAliasSnapshot(address, {
             keepEmptyIfNotFound: !useEllipsisAsFallback,
           })?.alias || (useEllipsisAsFallback ? ellipsisAddress(address) : ''),
         balance,
@@ -165,8 +166,7 @@ export function useWhitelistVariedAccounts() {
     ret.list = whitelistRecords.map(record => {
       const address = record.address;
       const aliasName =
-        contactService.getAliasByAddress(address)?.alias ||
-        ellipsisAddress(address);
+        getContactAliasSnapshot(address)?.alias || ellipsisAddress(address);
       const matchedAccounts = accountsByAddress[address.toLowerCase()] || [];
 
       if (matchedAccounts.length) {

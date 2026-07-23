@@ -25,25 +25,8 @@ import {
 } from '../utils/reexports';
 import { appMMKV, keyringMMKV } from './mmkvInstances';
 import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
+import { unwrapDuplicatedJsonString } from './mmkvJsonCompat';
 // import { lendingCacheStorage } from '@/screens/Lending/hooks';
-
-function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
-  return (
-    typeof input === 'string' &&
-    (input.startsWith('"{\\') || input.startsWith('"['))
-  );
-}
-
-const STUB = JSON.stringify(JSON.stringify('foo'));
-const STUB_START = STUB.slice(0, 3);
-const STUB_END = STUB.slice(-3);
-function checkIfDuplicatedStringifiedJsonString(input: any) {
-  return (
-    typeof input === 'string' &&
-    input.startsWith(STUB_START) &&
-    input.endsWith(STUB_END)
-  );
-}
 
 export function getJsonValueStringCompat(
   mmkv: MMKV,
@@ -52,18 +35,9 @@ export function getJsonValueStringCompat(
 ): string | null {
   const raw = mmkv.getString(key);
   if (!raw) return null;
-  let finalString: string | null = raw;
 
   try {
-    if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
-      finalString = stringUtils.safeParseJSON(raw, {
-        defaultValue: raw,
-      });
-    } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
-      finalString = stringUtils.safeParseJSON(raw, {
-        defaultValue: raw,
-      });
-    }
+    return unwrapDuplicatedJsonString(raw);
   } catch (e) {
     if (__DEV__) {
       console.warn(
@@ -73,7 +47,7 @@ export function getJsonValueStringCompat(
     }
   }
 
-  return finalString ?? null;
+  return raw;
 }
 
 export function makeMMKVStorage(options?: MMKVConfiguration) {

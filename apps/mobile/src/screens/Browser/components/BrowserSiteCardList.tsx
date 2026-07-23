@@ -1,7 +1,8 @@
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { FlatListProps, StyleSheet, View } from 'react-native';
+import type { FlatListProps } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { BrowserSiteCard } from './BrowserSiteCard';
 import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';

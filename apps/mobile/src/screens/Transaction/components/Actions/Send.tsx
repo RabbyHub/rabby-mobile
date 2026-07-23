@@ -5,11 +5,11 @@ import { findChain } from '@/utils/chain';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
-import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
@@ -21,7 +21,7 @@ import {
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { naviPush } from '@/utils/navigation';
-import { SendRequireData } from '@rabby-wallet/rabby-action';
+import type { SendRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
@@ -37,7 +37,7 @@ import { Tip } from '@/components/Tip';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { findAccountByPriority } from '@/utils/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import {
@@ -53,6 +53,7 @@ import {
   ActionDetailSection,
 } from './components/ActionDetailSection';
 import { ProjectItemInDetail } from '../ProjectItemInDetail';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 
 interface Props {
   data: TransactionGroup;
@@ -61,7 +62,7 @@ interface Props {
   account?: Account;
 }
 
-export const Send: React.FC<Props> = ({
+const SendContent: React.FC<Props> = ({
   data,
   isSingleAddress,
   onPressAddToWhitelistButton,
@@ -304,6 +305,8 @@ export const Send: React.FC<Props> = ({
     </>
   );
 };
+
+export const Send = withWhitelistService(SendContent);
 
 const SIZES = {
   buttonHeight: BOTTOM_BUTTON_SINGLE_HEIGHT,

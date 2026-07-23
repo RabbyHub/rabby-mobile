@@ -1,13 +1,14 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import type { Chain } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
 import {
   useChainBalances,
   useLoadMatteredChainBalances,
 } from './accountChainBalance';
-import { preferenceService } from '@/core/services';
-import { Account } from '@/core/services/preference';
+import { getPreferenceSnapshot } from '@/core/serviceApi/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export type ChainSelectorPurpose =
   | 'dashboard'
@@ -33,9 +34,9 @@ export function useAsyncInitializeChainList({
   const { matteredChainBalances } = useChainBalances();
 
   const pinned = useMemo(() => {
-    return ((
-      preferenceService.getPreference('pinnedChain') as CHAINS_ENUM[]
-    )?.filter(item => findChainByEnum(item)) || []) as CHAINS_ENUM[];
+    return ((getPreferenceSnapshot('pinnedChain') as CHAINS_ENUM[])?.filter(
+      item => findChainByEnum(item),
+    ) || []) as CHAINS_ENUM[];
   }, []);
 
   const { matteredList, unmatteredList } = useMemo(() => {
@@ -66,7 +67,7 @@ export function useAsyncInitializeChainList({
     if (fetchChainDataStageRef.current) return;
     updateInitStage('fetching');
 
-    preferenceService.getPreference('pinnedChain');
+    getPreferenceSnapshot('pinnedChain');
     await getMatteredChainBalance({ address: account?.address });
     updateInitStage('fetched');
   }, [updateInitStage, getMatteredChainBalance, account?.address]);

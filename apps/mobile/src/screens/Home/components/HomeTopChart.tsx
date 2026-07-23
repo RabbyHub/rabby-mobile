@@ -423,6 +423,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       <View style={styles.leftContainer}>
         <RefreshNudgedTickerText
           value={formatNetWorth}
+          animateWidth={false}
           maxLength={16}
           lineHeight={42}
           duration={320}
@@ -527,6 +528,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 42,
     // textAlign: 'center',
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },

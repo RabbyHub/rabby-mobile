@@ -10,7 +10,7 @@ import { BackupUnlockScreen } from './BackupUnlockScreen';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -108,7 +108,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
             accountsToCreate,
             true,
           );
-          keyringService.removePreMnemonics();
+          await keyringServiceApi.removePreMnemonics();
           replaceToFirst(RootNames.StackAddress, {
             screen: RootNames.ImportSuccess2024,
             params: {

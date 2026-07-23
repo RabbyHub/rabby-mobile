@@ -1,8 +1,9 @@
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import { apiCustomRPC } from '@/core/apis';
-import { RPCItem } from '@/core/services/customRPCService';
+import type { RPCItem } from '@/core/services/customRPCService';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';

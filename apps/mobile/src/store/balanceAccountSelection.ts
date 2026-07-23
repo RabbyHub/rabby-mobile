@@ -6,7 +6,10 @@ import {
   getAccountList,
   sortAccountList,
 } from '@/core/apis/account';
-import { keyringService } from '@/core/services';
+import {
+  bindKeyringEventAfterRegistration,
+  isKeyringUnlockedSnapshot,
+} from '@/core/serviceApi/keyring';
 import { traceAndroidInstant } from '@/core/utils/androidTrace';
 import type { Account, IPinAddress } from '@/types/account';
 import accountStore from './account';
@@ -139,7 +142,7 @@ async function initAccountBalanceSelectionLifecycle() {
 }
 
 export async function ensureAccountBalanceSelectionLifecycle() {
-  if (!keyringService.isUnlocked()) {
+  if (!isKeyringUnlockedSnapshot()) {
     return;
   }
 
@@ -179,9 +182,9 @@ export function startProcessAccountBalanceEvents() {
       });
   };
 
-  if (keyringService.isUnlocked()) {
+  if (isKeyringUnlockedSnapshot()) {
     ensureSelectionLifecycle();
   }
 
-  keyringService.on('unlock', ensureSelectionLifecycle);
+  bindKeyringEventAfterRegistration('unlock', ensureSelectionLifecycle);
 }

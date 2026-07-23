@@ -1,10 +1,8 @@
 import { apiKeyring } from '@/core/apis';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useAccounts, usePinAddresses } from '@/hooks/account';
-import {
-  IDisplayedAccountWithBalance,
-  useAccountsToDisplay,
-} from '@/hooks/accountToDisplay';
+import type { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
+import { useAccountsToDisplay } from '@/hooks/accountToDisplay';
 import { sortAccountsByBalance } from '@/utils/account';
 import i18n from '@/utils/i18n';
 import { WALLET_INFO } from '@/utils/walletInfo';
@@ -172,7 +170,7 @@ export const useWalletTypeData = () => {
       getTypeGroup(item),
     ) as TypeKeyringGroup[];
 
-    const allClassAccounts = await keyringService.getAllTypedAccounts();
+    const allClassAccounts = await keyringServiceApi.getAllTypedAccounts();
 
     const emptyHdKeyringList: TypeKeyringGroup[] = [];
     allClassAccounts

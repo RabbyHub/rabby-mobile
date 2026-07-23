@@ -32,7 +32,7 @@ import { touchedFeedback } from '@/utils/touch';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useSortedAccounts } from '@/screens/Address/useSortAddressList';
 import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 enum INPUT_ERROR {

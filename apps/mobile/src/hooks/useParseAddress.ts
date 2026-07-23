@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { isValidAddress } from 'ethereumjs-util';
 import { AddressType } from '../utils/address';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { formatTxExplainAbiData } from '../utils/transaction';
 import { apiProvider } from '@/core/apis';
 import { openapi as mainnetOpenApi, testOpenapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export function useCheckAddressType(
   addr: string,

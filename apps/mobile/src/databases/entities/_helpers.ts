@@ -3,7 +3,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import BigNumber from 'bignumber.js';
 import { DeleteResult, ValueTransformer } from 'typeorm/browser';
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 
 export const DECIMALS_INT_RATIO = 18;
 

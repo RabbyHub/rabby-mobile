@@ -193,6 +193,9 @@ type TestKitsNavigatorParamsList = {
   };
   [RootNames.DevSwitches]?: {};
   [RootNames.DevPerf]?: {};
+  [RootNames.DebugLogViewer]?: {};
+  [RootNames.StartupPerformanceLogViewer]?: {};
+  [RootNames.InMemoryLogViewer]?: {};
 };
 
 export type AddressNavigatorParamList = {
@@ -353,12 +356,14 @@ export type TransactionNavigatorParamList = {
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        regressionRunId?: string;
       }
     | {
         safeInfo: { nonce: number; chainId: number };
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        regressionRunId?: string;
       };
   [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {

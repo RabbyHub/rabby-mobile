@@ -1,32 +1,26 @@
 import { openapi } from '@/core/request';
-import { keyringService } from '@/core/services';
-import { makeJsEEClass } from '@/core/services/_utils';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
-import { BalanceEntity } from '@/databases/entities/balance';
 import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
-import { syncBalance } from '@/databases/sync/assets';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import {
-  CORE_KEYRING_TYPES,
-  KeyringTypeName,
-} from '@rabby-wallet/keyring-utils';
-import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
+import type { KeyringTypeName } from '@rabby-wallet/keyring-utils';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
+import type { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
 import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import {
-  ResourceBaseStore,
-  ResourceFlowState,
-  ResourceSnapshot,
-} from './_resourceBase';
-import { ResourceLocalTarget } from './_resourceFlowDebug';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import type { ResourceFlowState, ResourceSnapshot } from './_resourceBase';
+import { ResourceBaseStore } from './_resourceBase';
+import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import { ensureAppChainStoreInitialized, useAppChainStore } from './appchain';
 
 export interface CURVE_STEP_ITEM {
@@ -49,6 +43,31 @@ const getTotalBalanceQueue = new PQueue({
   intervalCap: 10,
 });
 
+let balanceEntityModulePromise: Promise<
+  typeof import('@/databases/entities/balance')
+> | null = null;
+function loadBalanceEntityModule() {
+  if (!balanceEntityModulePromise) {
+    balanceEntityModulePromise = import('@/databases/entities/balance');
+  }
+  return balanceEntityModulePromise;
+}
+
+let balanceSyncModulePromise: Promise<
+  typeof import('@/databases/sync/assets')
+> | null = null;
+async function syncBalanceToDb(
+  address: string,
+  isCore: boolean,
+  balance: EvmTotalBalanceResponse,
+) {
+  if (!balanceSyncModulePromise) {
+    balanceSyncModulePromise = import('@/databases/sync/assets');
+  }
+  const { syncBalance } = await balanceSyncModulePromise;
+  return syncBalance(address, isCore, balance);
+}
+
 const buildBalanceLocalTargets = (address: string): ResourceLocalTarget[] => [
   {
     kind: 'sqlite',
@@ -63,15 +82,30 @@ const buildPersistedBalanceValue = (
   balance: EvmTotalBalanceResponse,
   appChainUsdValue: number,
   isCore: boolean,
+  options?: {
+    preferPersistedTotal?: boolean;
+  },
 ): AddressBalanceResourceValue => {
   const evmBalance = balance.evm_usd_value || 0;
+  const totalBalance = options?.preferPersistedTotal
+    ? Number(balance.total_usd_value) || 0
+    : evmBalance + appChainUsdValue;
 
   return {
     evmBalance,
-    totalBalance: evmBalance + appChainUsdValue,
+    totalBalance,
     chainList: balance.chain_list,
     isCore,
   };
+};
+
+const canUseStartupPersistedTotal = (balance: EvmTotalBalanceResponse) => {
+  const totalBalance = Number(balance.total_usd_value) || 0;
+  const evmBalance = Number(balance.evm_usd_value) || 0;
+
+  // Older cache rows may have evm_usd_value added by migration as 0 without
+  // backfill. In that ambiguous case keep the old appchain-store path.
+  return totalBalance === 0 || evmBalance > 0;
 };
 
 const buildRemoteBalancePayload = (
@@ -410,6 +444,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   };
   initStore = async () => {
     await ensureAppChainStoreInitialized();
+    const { BalanceEntity } = await loadBalanceEntityModule();
     const result = await BalanceEntity.queryAllBalance();
     const appChainMap = useAppChainStore.getState().appChainMap;
 
@@ -451,11 +486,16 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
   hydrateCachedBalancesForAccounts = async (
     accounts: Array<Pick<Account, 'address' | 'type'>>,
+    options?: { startupFastPath?: boolean },
   ) => {
     if (!accounts.length) {
       return;
     }
-    await ensureAppChainStoreInitialized();
+    const useStartupFastPath = !!options?.startupFastPath;
+
+    if (!useStartupFastPath) {
+      await ensureAppChainStoreInitialized();
+    }
 
     const lowerAddresses = Array.from(
       new Set(accounts.map(item => item.address.toLowerCase())),
@@ -469,7 +509,30 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       return;
     }
 
+    const { BalanceEntity } = await loadBalanceEntityModule();
     const coreAddressSet = buildCoreAddressSet(accounts as Account[]);
+    const startupBalanceCacheMap = options?.startupFastPath
+      ? await BalanceEntity.queryBalanceCacheMapForStartup(
+          lowerAddresses.map(address => ({
+            owner_addr: address,
+            isCore: coreAddressSet.has(address),
+          })),
+        )
+      : null;
+    const shouldFallbackStartupPersistedTotal =
+      useStartupFastPath &&
+      lowerAddresses.some(address => {
+        const isCore = coreAddressSet.has(address);
+        const cacheBalance =
+          startupBalanceCacheMap?.[`${address}-${isCore ? 'core' : 'nocore'}`];
+
+        return !!cacheBalance && !canUseStartupPersistedTotal(cacheBalance);
+      });
+
+    if (shouldFallbackStartupPersistedTotal) {
+      await ensureAppChainStoreInitialized();
+    }
+
     for (const address of lowerAddresses) {
       const localTargets = buildBalanceLocalTargets(address);
 
@@ -491,10 +554,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         },
       });
 
-      const cacheBalance = await BalanceEntity.queryBalanceCache(
-        address,
-        coreAddressSet.has(address),
-      );
+      const isCore = coreAddressSet.has(address);
+      const cacheBalance =
+        startupBalanceCacheMap?.[`${address}-${isCore ? 'core' : 'nocore'}`] ||
+        (!startupBalanceCacheMap
+          ? await BalanceEntity.queryBalanceCache(address, isCore)
+          : null);
 
       if (!cacheBalance) {
         this.markHydrateSkipped(address, {
@@ -507,11 +572,24 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         continue;
       }
 
-      const appChainUsdValue = getAppChainUsdValue(address);
+      const preferPersistedTotal =
+        useStartupFastPath &&
+        !shouldFallbackStartupPersistedTotal &&
+        canUseStartupPersistedTotal(cacheBalance);
+      const appChainUsdValue = preferPersistedTotal
+        ? Math.max(
+            (Number(cacheBalance.total_usd_value) || 0) -
+              (Number(cacheBalance.evm_usd_value) || 0),
+            0,
+          )
+        : getAppChainUsdValue(address);
       const value = buildPersistedBalanceValue(
         cacheBalance,
         appChainUsdValue,
-        coreAddressSet.has(address),
+        isCore,
+        {
+          preferPersistedTotal,
+        },
       );
 
       this.applyHydratedValue(address, value, {
@@ -519,7 +597,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         detail: {
           source: 'hydrateCachedBalancesForAccounts',
           appChainUsdValue,
-          isCore: coreAddressSet.has(address),
+          isCore,
+          preferPersistedTotal,
           totalBalance: value.totalBalance,
         },
       });
@@ -538,13 +617,15 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
-    const addresses = await keyringService.getAllAddresses();
+    const addresses = await keyringServiceApi.getAllAddresses();
     const coreAddressSet = buildCoreAddressSet(addresses as Account[]);
 
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
     if (!force) {
       await ensureAppChainStoreInitialized();
     }
+
+    const balanceEntityModule = !force ? await loadBalanceEntityModule() : null;
 
     for (const address of lowerAddresses) {
       const isCore = coreAddressSet.has(address);
@@ -562,12 +643,16 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           ),
         });
 
-        const isExpired = await BalanceEntity.isExpired(address, isCore);
+        const isExpired = await balanceEntityModule!.BalanceEntity.isExpired(
+          address,
+          isCore,
+        );
         if (!isExpired) {
-          const cachedBalance = await BalanceEntity.queryBalance(
-            address,
-            isCore,
-          );
+          const cachedBalance =
+            await balanceEntityModule!.BalanceEntity.queryBalance(
+              address,
+              isCore,
+            );
           const appChainUsdValue = getAppChainUsdValue(address);
           const value = buildPersistedBalanceValue(
             cachedBalance,
@@ -716,7 +801,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
       this.persistInBackground(
         result.address,
-        () => syncBalance(result.address, result.isCore, formatBalance),
+        () => syncBalanceToDb(result.address, result.isCore, formatBalance),
         {
           requestId: result.requestId,
           localTargets: result.localTargets,
@@ -741,7 +826,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   ) => {
     const lowerAddress = address.toLowerCase();
 
-    const addresses = await keyringService.getAllAddresses();
+    const addresses = await keyringServiceApi.getAllAddresses();
     const isCore = addresses
       .filter(item => isSameAddress(item.address, address))
       .some(item => CORE_KEYRING_TYPES.includes(item.type as any));
@@ -751,6 +836,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     try {
       if (!force) {
         await ensureAppChainStoreInitialized();
+        const { BalanceEntity } = await loadBalanceEntityModule();
         this.markHydrateStarted(lowerAddress, {
           localTargets,
           detail: buildBalanceTraceDetail(
@@ -852,7 +938,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
       this.persistInBackground(
         lowerAddress,
-        () => syncBalance(lowerAddress, isCore, formatBalance),
+        () => syncBalanceToDb(lowerAddress, isCore, formatBalance),
         {
           requestId,
           localTargets,
@@ -1125,6 +1211,13 @@ let hasStartedAddressBalanceLifecycle = false;
 let accountBalanceSelectionSnapshotGetter: AccountBalanceSelectionSnapshotGetter | null =
   null;
 
+export function getSelectedBalanceAddressesSnapshot() {
+  const state = balanceAccountsStore.getState();
+  return state.selectedAddresses.length
+    ? state.selectedAddresses
+    : Object.keys(state.balance);
+}
+
 export function setAccountBalanceSelectionSnapshotGetter(
   getter: AccountBalanceSelectionSnapshotGetter,
 ) {
@@ -1394,21 +1487,22 @@ export function startProcessAddressBalanceEvents() {
   }
   hasStartedAddressBalanceLifecycle = true;
 
-  keyringService.on('removedAccount', async account => {
-    const addresses = await keyringService.getAllAddresses();
+  void bindKeyringEvent('removedAccount', async account => {
+    const removedAccount = account as Account;
+    const addresses = await keyringServiceApi.getAllAddresses();
     const stillExists = addresses.some(item => {
-      return isSameAddress(item.address, account.address);
+      return isSameAddress(item.address, removedAccount.address);
     });
 
     if (stillExists) {
       return;
     }
 
-    addressBalanceStore.removeAddressBalance(account.address, {
+    addressBalanceStore.removeAddressBalance(removedAccount.address, {
       source: 'keyringService.removedAccount',
       reason: 'address_deleted',
     });
-  });
+  }).catch(console.error);
 
   perfEvents.subscribe('POST_UNLOCK_UI_READY', async () => {
     syncBalanceAccountStore();

@@ -4,7 +4,7 @@ import {
   PERPS_SEND_ARB_USDC_ADDRESS,
 } from '@/constant/perps';
 import { sendRequest } from '@/core/apis/sendRequest';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 // import { useAuth } from '@/hooks/useAuth';
@@ -15,13 +15,14 @@ import {
 } from '@/utils/account';
 import { sleep } from '@/utils/async';
 import { findChain } from '@/utils/chain';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useInterval, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { useAtom } from 'jotai';
 import { useState } from 'react';
-import abiCoderInst, { AbiCoder } from 'web3-eth-abi';
-import { PerpBridgeHistory } from '../components/PerpsDepositPopup';
+import type { AbiCoder } from 'web3-eth-abi';
+import abiCoderInst from 'web3-eth-abi';
+import type { PerpBridgeHistory } from '../components/PerpsDepositPopup';
 import { openapi } from '@/core/request';
 import { last } from 'lodash';
 import { useMiniSigner } from '@/hooks/useSigner';
