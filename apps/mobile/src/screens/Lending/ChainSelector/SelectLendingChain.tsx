@@ -266,48 +266,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleTextWrapper: {
     flex: 1,
   },
-  netSwitchTabs: {
-    marginBottom: 20,
-  },
-  innerBlock: {
-    paddingHorizontal: 0,
-  },
-  inputContainerStyle: {
-    height: 46,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0,
-  },
-  inputText: {
-    color: colors2024['neutral-title-1'],
-    marginLeft: 7,
-    fontSize: 17,
-    fontWeight: '400',
-    paddingTop: 0,
-    paddingBottom: 0,
-    fontFamily: 'SF Pro Rounded',
-  },
 
   chainListWrapper: {
     flexShrink: 1,
     height: '100%',
-  },
-
-  emptyDataWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    maxHeight: 400,
-    // ...makeDebugBorder()
-  },
-
-  emptyText: {
-    paddingTop: 21,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-info'],
   },
 
   titleView: {
@@ -316,19 +278,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     alignItems: 'center',
     marginBottom: 12,
-  },
-
-  inputWrapper: {
-    marginRight: 15,
-    flex: 1,
-    overflow: 'hidden',
-  },
-
-  cancelText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 17,
-    lineHeight: 22,
   },
 
   titleViewWithText: {

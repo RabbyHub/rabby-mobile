@@ -910,14 +910,6 @@ const getStyles = createGetStyles2024(ctx => ({
   list: {
     flex: 1,
   },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: ASSETS_SECTION_HEADER,
-    zIndex: 1,
-  },
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
@@ -951,24 +943,6 @@ const getStyles = createGetStyles2024(ctx => ({
   singleCustomTestnetDivider: {
     marginBottom: 9,
     paddingHorizontal: 32.5,
-  },
-  assetHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
-    height: ASSETS_SECTION_HEADER,
-    paddingBottom: 8,
-    paddingLeft: 12 + 16,
-    paddingRight: 16,
-    width: '100%',
-  },
-  symbol: {
-    fontSize: 16,
-    height: ASSETS_SECTION_HEADER,
-    lineHeight: ASSETS_SECTION_HEADER,
-    paddingLeft: 9 + 16,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   emptyAssets: {
     //backgroundColor: 'transparent',

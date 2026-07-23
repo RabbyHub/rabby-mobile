@@ -110,13 +110,6 @@ const getStyle = createGetStyles2024(ctx => {
     addressItem: {
       flexShrink: 1,
     },
-    titleText: {
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '800',
-      lineHeight: 24,
-      fontSize: 20,
-      color: ctx.colors2024['neutral-title-1'],
-    },
     addressRow: {
       flexDirection: 'row',
       // width: '100%',
@@ -141,9 +134,6 @@ const getStyle = createGetStyles2024(ctx => {
       width: 18,
       height: 18,
       flexShrink: 0,
-    },
-    reverseCaret: {
-      // transform: [{ rotate: '180deg' }],
     },
   };
 });

@@ -69,9 +69,6 @@ export const PendingTxItem = ({
   });
 
   const handlePress = useMemoizedFn(() => {
-    if (type === 'approveSwap') {
-      return;
-    }
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
@@ -79,7 +76,7 @@ export const PendingTxItem = ({
     }
 
     const { pendings, completeds } = transactionHistoryService.getList(
-      currentAccount?.address ?? '',
+      data.address,
     );
     const naviData = isPending ? pendings : completeds;
     const groupData = naviData.find(
@@ -90,17 +87,24 @@ export const PendingTxItem = ({
     if (!groupData) {
       return;
     }
+
+    let historyType = HistoryItemCateType.Swap;
+    let title = t('page.transactions.itemTitle.Swap');
+    if (type === 'send') {
+      historyType = HistoryItemCateType.Send;
+      title = t('page.transactions.itemTitle.Send');
+    } else if (type === 'approveSwap') {
+      historyType = HistoryItemCateType.Approve;
+      title = t('page.transactions.itemTitle.Approve');
+    }
+
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
         isForMultipleAddress,
         data: groupData,
-        type:
-          type === 'send' ? HistoryItemCateType.Send : HistoryItemCateType.Swap,
-        title:
-          type === 'send'
-            ? t('page.transactions.itemTitle.Send')
-            : t('page.transactions.itemTitle.Swap'),
+        type: historyType,
+        title,
         account,
       },
     });
@@ -151,7 +155,10 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText} numberOfLines={1}>
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
                     {sendTitleTextStr}
                   </Text>
                 </>
@@ -164,7 +171,10 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText} numberOfLines={1}>
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
                     {sendTitleTextStr}
                   </Text>
                 </>
@@ -177,10 +187,11 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText} numberOfLines={1}>
-                    {` ${getTokenSymbol(
-                      (data as SwapTxHistoryItem)?.fromToken,
-                    )}`}
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {getTokenSymbol((data as SwapTxHistoryItem)?.fromToken)}
                   </Text>
                   <Text style={styles.arrowText}>{'→'}</Text>
                   <AssetAvatar
@@ -190,7 +201,10 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText} numberOfLines={1}>
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
                     {getTokenSymbol((data as SwapTxHistoryItem)?.toToken)}
                   </Text>
                 </>
@@ -281,9 +295,10 @@ export const ApprovePendingTxItem = ({
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 20,
+    gap: 12,
+    width: '100%',
   },
   IconContainer: {
     position: 'relative',
@@ -373,23 +388,26 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
   },
   titleText: {
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 18,
-    fontWeight: '500',
+    fontWeight: '700',
     flexShrink: 1,
+    minWidth: 0,
   },
   leftContainer: {
     gap: 12,
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
   rightContainer: {
     justifyContent: 'center',
     alignItems: 'flex-end',
     gap: 2,
+    flexShrink: 0,
   },
   statusContainer: {
     flexDirection: 'row',
