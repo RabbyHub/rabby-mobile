@@ -26,6 +26,7 @@ import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/Sig
 import {
   apiSendToken,
   getSendChainToken,
+  SendTokenRecipientController,
   SendTokenEvents,
   SendTokenInternalContextProvider,
   subscribeEvent,
@@ -54,7 +55,6 @@ import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
 import { formatSendTokenBalanceText } from './utils';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
@@ -124,7 +124,27 @@ const EMPTY_TOKEN_ITEM = {
 };
 
 const SEND_SCREEN_RENDER_MARK_LIMIT = 20;
-let sendScreenRenderSeq = 0;
+let nextSendScreenCycleId = 0;
+
+type SendInitialTokenLoadState = {
+  status: 'idle' | 'running' | 'ready';
+  initialAccountAddress: string;
+  loadedAccountAddress: string;
+  promise: Promise<void> | null;
+};
+
+function createInitialTokenLoadState(): SendInitialTokenLoadState {
+  return {
+    status: 'idle',
+    initialAccountAddress: '',
+    loadedAccountAddress: '',
+    promise: null,
+  };
+}
+
+function normalizeAccountAddress(address?: string) {
+  return address?.toLowerCase() || '';
+}
 
 function formatSafeAddress(address: string) {
   if (!address) {
@@ -461,8 +481,15 @@ const SendScreenBody = React.memo(function SendScreenBody({
 function SendScreen({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
-  const renderSeq = ++sendScreenRenderSeq;
+  const cycleIdRef = useRef(0);
+  const renderSeqRef = useRef(0);
+  if (!cycleIdRef.current) {
+    cycleIdRef.current = ++nextSendScreenCycleId;
+  }
+  const cycleId = cycleIdRef.current;
+  const renderSeq = ++renderSeqRef.current;
   markSendScreenRenderPerf(renderSeq, 'render_start', {
+    cycleId,
     isForMultipleAddress,
   });
 
@@ -471,12 +498,6 @@ function SendScreen({
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
-  const { localPendingTxData, clearLocalPendingTxData } =
-    useRecentSendPendingTx(isForMultipleAddress);
-  markSendScreenRenderPerf(renderSeq, 'recent_pending_tx_hook_end', {
-    hasLocalPendingTx: !!localPendingTxData,
-  });
-
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -486,23 +507,30 @@ function SendScreen({
     brandName: currentAccount?.brandName,
   });
 
+  const {
+    localPendingTxData,
+    clearLocalPendingTxData,
+    runFetchLocalPendingTx,
+  } = useRecentSendPendingTx(currentAccount?.address);
+  markSendScreenRenderPerf(renderSeq, 'recent_pending_tx_hook_end', {
+    hasLocalPendingTx: !!localPendingTxData,
+  });
+
   useRendererDetect({ name: 'SendScreen' });
 
   useEffect(() => {
     markSendScreenPerf('mounted', {
+      cycleId,
       isForMultipleAddress,
     });
 
     return () => {
       markSendScreenPerf('unmounted', {
+        cycleId,
         isForMultipleAddress,
       });
     };
-  }, [isForMultipleAddress]);
-
-  useEffect(() => {
-    clearLocalPendingTxData();
-  }, [clearLocalPendingTxData]);
+  }, [cycleId, isForMultipleAddress]);
 
   const route =
     useRoute<
@@ -513,7 +541,15 @@ function SendScreen({
     >();
   const navParams = route.params;
   const isFocused = useIsFocused();
-  const initByCacheFinishedRef = useRef(false);
+  const currentAccountAddress = normalizeAccountAddress(
+    currentAccount?.address,
+  );
+  const currentAccountAddressRef = useRef(currentAccountAddress);
+  currentAccountAddressRef.current = currentAccountAddress;
+  const initialTokenLoadRef = useRef<SendInitialTokenLoadState>(
+    createInitialTokenLoadState(),
+  );
+  const initialTokenCommitGuardRef = useRef<() => boolean>(() => true);
   const sendScreenSessionRef = useRef<SendScreenSession | null>(null);
   const hasClaimedSendScreenSessionRef = useRef(false);
 
@@ -556,7 +592,7 @@ function SendScreen({
     });
 
     if (activationPlan.restartInitialization) {
-      initByCacheFinishedRef.current = false;
+      initialTokenLoadRef.current = createInitialTokenLoadState();
     }
     if (activationPlan.resetSharedState) {
       apiSendToken.resetScreenState();
@@ -669,29 +705,19 @@ function SendScreen({
     formValuesStore,
     saveCurrentFormValuesSnapshot,
 
-    whitelistEnabled,
-    computed: {
-      toAccount,
-      toAddressInContactBook,
-      toAddressIsCex,
-      toAddressPositiveTips,
-      canDirectSign,
-      toAddrCex,
-    },
+    computed: { canDirectSign },
     miniSignInstance,
   } = useSendTokenForm({
     toAddress: navParams?.toAddress,
-    toAddressBrandName: navParams?.addressBrandName,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
     currentAccount,
+    runFetchLocalPendingTx,
   });
   markSendScreenRenderPerf(renderSeq, 'send_token_form_hook_end', {
     hasTo: !!formValues.to,
-    whitelistEnabled,
     hasMiniSignInstance: !!miniSignInstance,
     canDirectSign,
-    hasToAccount: !!toAccount,
     hasCurrentAccount: !!currentAccount,
   });
 
@@ -738,7 +764,9 @@ function SendScreen({
     });
     const session = sendScreenSessionRef.current;
     if (!session) return;
-    const isSessionActive = () => isSendScreenSessionActive(session);
+    const isSessionActive = () =>
+      isSendScreenSessionActive(session) &&
+      initialTokenCommitGuardRef.current();
     if (!isSessionActive()) return;
 
     let targetToken: TokenItem | null = null;
@@ -974,10 +1002,11 @@ function SendScreen({
   }, []);
 
   useEffect(() => {
+    const loadState = initialTokenLoadRef.current;
     markSendScreenPerf('init_effect_commit', {
       inited: screenState.inited,
       hasToAddress: !!navParams?.toAddress,
-      initByCacheFinished: initByCacheFinishedRef.current,
+      initializationStatus: loadState.status,
     });
 
     if (screenState.inited && isFocused) {
@@ -986,10 +1015,18 @@ function SendScreen({
         return;
       }
 
-      (async () => {
-        if (initByCacheFinishedRef.current) return;
-        initByCacheFinishedRef.current = true;
+      if (loadState.status !== 'idle') {
+        return;
+      }
 
+      const initialAccountAddress = currentAccountAddress;
+      const shouldCommit = () =>
+        isSendScreenSessionActive(session) &&
+        currentAccountAddressRef.current === initialAccountAddress;
+      loadState.status = 'running';
+      loadState.initialAccountAddress = initialAccountAddress;
+      initialTokenCommitGuardRef.current = shouldCommit;
+      const initializationPromise = (async () => {
         try {
           await initByCache();
         } catch (e) {
@@ -997,37 +1034,76 @@ function SendScreen({
             error: e instanceof Error ? e.message : String(e),
           });
           console.error('SendScreen initByCache error', e);
-          if (isSendScreenSessionActive(session)) {
-            initByCacheFinishedRef.current = false;
-          }
         } finally {
-          if (isSendScreenSessionActive(session)) {
+          if (shouldCommit()) {
+            loadState.status = 'ready';
+            loadState.loadedAccountAddress = initialAccountAddress;
             apiSendToken.putScreenState({ initialTokenReady: true });
             markSendScreenPerf('initial_token_ready_set');
+          } else {
+            loadState.status = 'idle';
           }
+          loadState.promise = null;
         }
       })();
+      loadState.promise = initializationPromise;
       checkIsAddressBlocked(navParams?.toAddress);
     }
   }, [
     screenState.inited,
     isFocused,
+    currentAccountAddress,
     initByCache,
     checkIsAddressBlocked,
     navParams?.toAddress,
   ]);
 
   useEffect(() => {
-    (async () => {
-      if (!initByCacheFinishedRef.current) return;
-      if (!currentAccount?.address) return;
+    if (!screenState.inited || !isFocused || !currentAccountAddress) {
+      return;
+    }
+
+    const loadState = initialTokenLoadRef.current;
+    if (
+      loadState.status === 'running' &&
+      loadState.initialAccountAddress === currentAccountAddress
+    ) {
+      return;
+    }
+    if (loadState.loadedAccountAddress === currentAccountAddress) {
+      return;
+    }
+
+    let disposed = false;
+    const refreshForCurrentAccount = async () => {
       const session = sendScreenSessionRef.current;
       if (!session || !isSendScreenSessionActive(session)) return;
+      const pendingInitialization = loadState.promise;
+      if (pendingInitialization) {
+        await pendingInitialization;
+      }
+
+      const shouldCommit = () =>
+        !disposed &&
+        isSendScreenSessionActive(session) &&
+        currentAccountAddressRef.current === currentAccountAddress;
+      if (!shouldCommit()) {
+        return;
+      }
 
       const startedAt = Date.now();
       markSendScreenPerf('refresh_current_token_balance_start');
       try {
-        await refreshCurrentTokenBalance();
+        await refreshCurrentTokenBalance(shouldCommit);
+        if (!shouldCommit()) {
+          return;
+        }
+        loadState.status = 'ready';
+        loadState.loadedAccountAddress = currentAccountAddress;
+        apiSendToken.putScreenState({
+          initialTokenIdentityReady: true,
+          initialTokenReady: true,
+        });
         markSendScreenPerf('refresh_current_token_balance_end', {
           elapsedMs: Date.now() - startedAt,
         });
@@ -1038,8 +1114,20 @@ function SendScreen({
         });
         throw error;
       }
-    })();
-  }, [currentAccount?.address, refreshCurrentTokenBalance]);
+    };
+
+    refreshForCurrentAccount().catch(error => {
+      console.error('SendScreen refresh account token error', error);
+    });
+    return () => {
+      disposed = true;
+    };
+  }, [
+    currentAccountAddress,
+    isFocused,
+    refreshCurrentTokenBalance,
+    screenState.inited,
+  ]);
 
   useEffect(() => {
     markSendScreenPerf('account_ready_effect_commit', {
@@ -1060,8 +1148,6 @@ function SendScreen({
       markSendScreenPerf('page_state_cache_clear_on_account_effect_cleanup');
     };
   }, [currentAccount]);
-
-  const { fetchContactAccounts } = useContactAccounts();
 
   useLayoutEffect(() => {
     return () => {
@@ -1099,13 +1185,13 @@ function SendScreen({
       computed: {
         account: currentAccount || null,
         fromAddress: currentAccount?.address || '',
-        toAccount,
-        toAddressIsCex,
-        whitelistEnabled,
-        toAddressInContactBook,
-        toAddressPositiveTips,
+        toAccount: null,
+        toAddressIsCex: false,
+        whitelistEnabled: false,
+        toAddressInContactBook: false,
+        toAddressPositiveTips: null,
         canDirectSign,
-        toAddrCex,
+        toAddrCex: null,
 
         chainItem,
         currentToken,
@@ -1115,7 +1201,7 @@ function SendScreen({
       scrollViewRef,
       scrollViewStyle,
       fns: {
-        fetchContactAccounts,
+        fetchContactAccounts: () => {},
         disableItemCheck,
       },
 
@@ -1147,7 +1233,6 @@ function SendScreen({
       currentToken,
       directSignBtnRef,
       disableItemCheck,
-      fetchContactAccounts,
       formValuesRef,
       formValuesStore,
       handleClickMaxButton,
@@ -1165,12 +1250,6 @@ function SendScreen({
       saveCurrentFormValuesSnapshot,
       sendTokenEvents,
       setReloadTxRefreshPaused,
-      toAccount,
-      toAddrCex,
-      toAddressInContactBook,
-      toAddressIsCex,
-      toAddressPositiveTips,
-      whitelistEnabled,
     ],
   );
 
@@ -1186,6 +1265,9 @@ function SendScreen({
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
       <SendTokenInternalContextProvider value={sendTokenInternalValue}>
+        <SendTokenRecipientController
+          toAddressBrandName={navParams?.addressBrandName}
+        />
         <SendTransferRegressionProbe />
         <SendScreenBody
           clearLocalPendingTxData={clearLocalPendingTxData}

@@ -56,6 +56,10 @@ import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
 import { mergeUserFills, reconcileHttpFills } from './userFills';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import {
+  applyPerpsStateUpdate,
+  type PerpsStateUpdater,
+} from './perpsStateUpdate';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
@@ -295,17 +299,8 @@ const canReuseUserDataSubscription = (address: string) =>
   !!activeUserDataSubscription &&
   isSameAddress(activeUserDataSubscription.address, address);
 
-function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
-  perpsStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
-      strict: true,
-    });
-    if (!changed) {
-      return prev;
-    }
-
-    return newVal;
-  });
+function setPerpsState(updater: PerpsStateUpdater<PerpsState>) {
+  perpsStore.setState(prev => applyPerpsStateUpdate(prev, updater));
 }
 
 function stopHomeSpotSubscription() {

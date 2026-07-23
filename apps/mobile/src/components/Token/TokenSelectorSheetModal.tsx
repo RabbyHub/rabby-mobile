@@ -23,6 +23,7 @@ import type {
   BottomSheetFlatListMethods,
 } from '@gorhom/bottom-sheet';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { useSharedValue } from 'react-native-reanimated';
 import useDebounce from 'react-use/lib/useDebounce';
 import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import type {
@@ -88,9 +89,11 @@ import {
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
 import { useRefState } from '@/hooks/common/useRefState';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { useChainList } from '@/hooks/useChainList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
 import type { ITokenItem, TokenSelectIndexRow } from '@/store/tokens';
@@ -116,6 +119,7 @@ import { colord } from 'colord';
 import { isNumber } from 'lodash';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
+import { useIsUserTokenPinned } from '@/hooks/useTokenSettings';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'SwapBridge'>,
@@ -138,14 +142,16 @@ type TokenListItem =
 
 type UnfoldTokenListItem = Extract<TokenListItem, { type: 'unfold_token' }>;
 
+type TokenSelectorTokenRowProps = {
+  item: UnfoldTokenListItem;
+  children: (token: ITokenItem) => React.ReactNode;
+  showRenderProbe: boolean;
+  // renderItem creates a new child function; this tracks its real captures.
+  renderRevision: object;
+};
+
 const TokenSelectorTokenRow = React.memo(
-  ({
-    item,
-    children,
-  }: {
-    item: UnfoldTokenListItem;
-    children: (token: ITokenItem) => React.ReactNode;
-  }) => {
+  ({ item, children, showRenderProbe }: TokenSelectorTokenRowProps) => {
     const resourceToken = useTokenEntity(item.row?.tokenId);
     const token = item.data || resourceToken;
     const tokenId =
@@ -158,20 +164,21 @@ const TokenSelectorTokenRow = React.memo(
     return (
       <View style={stylesForRenderProbe.rowWrapper}>
         {children(token)}
-        <TokenSelectorRowRenderCountOverlay tokenId={tokenId} />
+        {showRenderProbe ? (
+          <TokenSelectorRowRenderCountOverlay tokenId={tokenId} />
+        ) : null}
       </View>
     );
   },
+  (prev, next) =>
+    prev.item === next.item &&
+    prev.showRenderProbe === next.showRenderProbe &&
+    prev.renderRevision === next.renderRevision,
 );
 
 function TokenSelectorRowRenderCountOverlay({ tokenId }: { tokenId?: string }) {
-  const shouldShow = useShouldShowTokenSelectorRenderProbe();
   const renderCountRef = useRef(0);
   renderCountRef.current += 1;
-
-  if (!shouldShow) {
-    return null;
-  }
 
   return (
     <View pointerEvents="none" style={stylesForRenderProbe.overlay}>
@@ -189,6 +196,20 @@ function TokenSelectorRowRenderCountOverlay({ tokenId }: { tokenId?: string }) {
     </View>
   );
 }
+
+const TokenFavoriteTag = React.memo(({ token }: { token: TokenItem }) => {
+  const isPinned = useIsUserTokenPinned(token);
+
+  return isPinned ? <FavoriteTag style={tokenFavoriteStyles.tag} /> : null;
+});
+
+const tokenFavoriteStyles = StyleSheet.create({
+  tag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+});
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -279,6 +300,8 @@ export interface TokenSelectorProps<
   foldTokensList?: ITokenItem[];
   scamTokensList?: ITokenItem[];
   isLoading?: boolean;
+  onOpened?: () => void;
+  onClosed?: () => void;
   onConfirm(item: ITokenItem): void;
   onCancel(): void;
   type?: T;
@@ -315,7 +338,6 @@ export interface TokenSelectorProps<
   showLpTokenSwitch?: boolean;
   isLpTokenEnabled?: boolean;
   onLpTokenChange?: (value: boolean) => void;
-  favoriteTokenKeySet?: ReadonlySet<string>;
   showCustomNetworkChainPreview?: boolean;
   customNetworkTop3Chains?: string[];
 }
@@ -384,6 +406,7 @@ export function useTokenSelectorModalVisible(options?: {
 }
 export type TokenSelectorSheetModalInst = {
   toggleShow: (nextShown: SheetModalShowType) => void;
+  getCurrentIndex: () => number;
 };
 export const TokenSelectorSheetModal = ({
   visible,
@@ -401,6 +424,8 @@ export const TokenSelectorSheetModal = ({
   supportChains,
   disabledTips,
   isLoading,
+  onOpened,
+  onClosed,
   headerTitle: customHeaderTitle,
   searchPlaceholder,
   disableItemCheck,
@@ -413,7 +438,6 @@ export const TokenSelectorSheetModal = ({
   showLpTokenSwitch: _showLpTokenSwitch,
   isLpTokenEnabled = false,
   onLpTokenChange: _onLpTokenChange,
-  favoriteTokenKeySet,
   showCustomNetworkChainPreview = false,
   customNetworkTop3Chains,
   ref,
@@ -421,17 +445,52 @@ export const TokenSelectorSheetModal = ({
   TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> }) => {
   const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
     useSheetModal();
+  const regressionAnimatedIndex = useSharedValue(-1);
+  const isSheetMountedRef = useRef(false);
   const listRef = useRef<BottomSheetFlatListMethods>(null);
   const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
   const { list: cexList } = useCexSupportList();
+  const { testnetList } = useChainList();
+  const testnetChainServerIdSet = useMemo(
+    () => new Set(testnetList.map(chain => chain.serverId)),
+    [testnetList],
+  );
 
-  useImperativeHandle(ref, () => {
-    return {
-      toggleShow: nextShown => {
-        toggleShowSheetModal(nextShown);
+  useImperativeHandle(
+    ref,
+    () => {
+      return {
+        getCurrentIndex: () => regressionAnimatedIndex.value,
+        toggleShow: nextShown => {
+          if (nextShown === true) {
+            if (isSheetMountedRef.current) {
+              tokenSelectorModalRef.current?.snapToIndex(0);
+            } else {
+              isSheetMountedRef.current = true;
+              tokenSelectorModalRef.current?.present();
+            }
+            return;
+          }
+
+          if (nextShown === 'destroy') {
+            isSheetMountedRef.current = false;
+          }
+          toggleShowSheetModal(nextShown);
+        },
+      };
+    },
+    [regressionAnimatedIndex, toggleShowSheetModal, tokenSelectorModalRef],
+  );
+
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        isSheetMountedRef.current = false;
+        tokenSelectorModalRef.current?.destroy();
       },
-    };
-  });
+      [tokenSelectorModalRef],
+    ),
+  );
 
   useFocusEffect(
     useCallback(
@@ -450,6 +509,7 @@ export const TokenSelectorSheetModal = ({
   }, [visible]);
 
   const { t } = useTranslation();
+  const shouldShowRenderProbe = useShouldShowTokenSelectorRenderProbe();
   const isBridgeTo = type === 'bridgeTo';
   const isSwapTo = type === 'swapTo';
   const isSend = type === 'send';
@@ -707,6 +767,44 @@ export const TokenSelectorSheetModal = ({
   );
 
   const longPressTriggered = useRef(false);
+  const tokenRowRenderRevision = useMemo(
+    () => ({
+      cexLogoById,
+      filterAccountItem: chainSearchCtx.filterAccountItem,
+      colors2024,
+      confirmTokenSelection,
+      debouncedQuery,
+      disableItemCheck,
+      disabledTips,
+      isBridgeTo,
+      needToTokenMarketInfo,
+      ownerAccountByAddress,
+      selectTab,
+      styles,
+      supportChainServerIdSet,
+      t,
+      testnetChainServerIdSet,
+      type,
+    }),
+    [
+      cexLogoById,
+      chainSearchCtx.filterAccountItem,
+      colors2024,
+      confirmTokenSelection,
+      debouncedQuery,
+      disableItemCheck,
+      disabledTips,
+      isBridgeTo,
+      needToTokenMarketInfo,
+      ownerAccountByAddress,
+      selectTab,
+      styles,
+      supportChainServerIdSet,
+      t,
+      testnetChainServerIdSet,
+      type,
+    ],
+  );
   const renderItemRenderComponent = useCallback<
     ListRenderItem<TokenListItem[][number]>
   >(
@@ -718,7 +816,10 @@ export const TokenSelectorSheetModal = ({
       switch (item.type) {
         case 'unfold_token': {
           return (
-            <TokenSelectorTokenRow item={item}>
+            <TokenSelectorTokenRow
+              item={item}
+              showRenderProbe={shouldShowRenderProbe}
+              renderRevision={tokenRowRenderRevision}>
               {token => {
                 const {
                   disable: lightDisable,
@@ -735,9 +836,6 @@ export const TokenSelectorSheetModal = ({
 
                 const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
-                const isPined =
-                  token.isPin ||
-                  favoriteTokenKeySet?.has(`${token.chain}:${token.id}`);
                 const token_key = [
                   ownerKey,
                   `${token.id}-${token.symbol}-${token.chain}`,
@@ -749,7 +847,7 @@ export const TokenSelectorSheetModal = ({
                   !supportChainServerIdSet.has(token.chain);
                 const isCustomTestnetToken =
                   selectTab === 'testnet' ||
-                  !!findChainByServerID(token.chain)?.isTestnet;
+                  testnetChainServerIdSet.has(token.chain);
 
                 let percentColor = colors2024['red-default'];
                 if (
@@ -799,9 +897,6 @@ export const TokenSelectorSheetModal = ({
                         token={token}
                         needToTokenMarketInfo={needToTokenMarketInfo}
                         isCustomTestnetToken={isCustomTestnetToken}
-                        closeBottomSheet={() => {
-                          toggleShowSheetModal('destroy');
-                        }}
                         type={type}>
                         <TouchableOpacity
                           style={[
@@ -878,9 +973,7 @@ export const TokenSelectorSheetModal = ({
                               )
                             }
                           />
-                          {isPined && (
-                            <FavoriteTag style={styles.favoriteTag} />
-                          )}
+                          <TokenFavoriteTag token={token} />
                         </TouchableOpacity>
                       </TokenItemContextMenu>
                     </View>
@@ -891,9 +984,6 @@ export const TokenSelectorSheetModal = ({
                   <View style={{ marginTop: 8, marginHorizontal: 16 }}>
                     <TokenItemContextMenu
                       token={token}
-                      closeBottomSheet={() => {
-                        toggleShowSheetModal('destroy');
-                      }}
                       needToTokenMarketInfo={needToTokenMarketInfo}
                       isCustomTestnetToken={isCustomTestnetToken}
                       type={type}>
@@ -1098,7 +1188,7 @@ export const TokenSelectorSheetModal = ({
                             </Text>
                           </View>
                         )}
-                        {isPined && <FavoriteTag style={styles.favoriteTag} />}
+                        <TokenFavoriteTag token={token} />
                       </TouchableOpacity>
                     </TokenItemContextMenu>
                   </View>
@@ -1127,9 +1217,10 @@ export const TokenSelectorSheetModal = ({
       t,
       cexLogoById,
       disabledTips,
-      favoriteTokenKeySet,
       confirmTokenSelection,
-      toggleShowSheetModal,
+      shouldShowRenderProbe,
+      testnetChainServerIdSet,
+      tokenRowRenderRevision,
     ],
   );
 
@@ -1216,14 +1307,22 @@ export const TokenSelectorSheetModal = ({
   return (
     <AppBottomSheetModal
       ref={tokenSelectorModalRef}
+      animatedIndex={
+        isNonProductionDiagnosticsEnabled ? regressionAnimatedIndex : undefined
+      }
       snapPoints={snapPoints}
       enableContentPanningGesture
-      // enableDismissOnClose={false}
-      enableDismissOnClose
+      enableDismissOnClose={false}
+      onDismiss={() => {
+        isSheetMountedRef.current = false;
+      }}
       onChange={idx => {
         if (idx < 0) {
           onCancel();
+          onClosed?.();
+          return;
         }
+        onOpened?.();
       }}
       {...{
         containerStyle:
@@ -1433,8 +1532,8 @@ export const TokenSelectorSheetModal = ({
             )
           }
           extraData={isLoading}
-          initialNumToRender={20}
-          maxToRenderPerBatch={20}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
           onEndReachedThreshold={0.3}
           renderItem={renderItemRenderComponent}
         />

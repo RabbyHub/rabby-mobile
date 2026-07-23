@@ -519,11 +519,7 @@ export default function AppNavigation() {
                 <RootStack.Screen
                   name={RootNames.StackRoot}
                   component={HomeScreenNavigator}
-                  options={{
-                    ...RootAnimOptions,
-                    // Hidden Home state updates should not compete with the pushed screen.
-                    freezeOnBlur: true,
-                  }}
+                  options={RootAnimOptions}
                 />
                 <RootStack.Screen
                   name={RootNames.StackHomeNonTab}

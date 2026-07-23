@@ -13,7 +13,10 @@ import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import type {
+  ITokenCheck,
+  TokenSelectorSheetModalInst,
+} from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
@@ -42,6 +45,8 @@ import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
 import type { ITokenItem } from '@/store/tokens';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { Text } from '@/components/Typography';
+import { isSameAccount } from '@/utils/isSameAccount';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -78,6 +83,30 @@ export type TokenSelectInst = {
 };
 
 const SHOW_CHAIN_FILTER_SCENES = ['swapFrom', 'bridgeFrom'];
+const EMPTY_TOKEN_LIST: ITokenItem[] = [];
+const REGRESSION_SHEET_INDEX_TIMEOUT_MS = 30_000;
+
+async function waitForRegressionSheetIndex(
+  modalRef: { current: TokenSelectorSheetModalInst | null },
+  event: 'open' | 'close',
+) {
+  const expectedIndex = event === 'open' ? 0 : -1;
+  const startedAt = Date.now();
+
+  while (true) {
+    const currentIndex = modalRef.current?.getCurrentIndex();
+    if (
+      currentIndex !== undefined &&
+      Math.abs(currentIndex - expectedIndex) < 0.01
+    ) {
+      return;
+    }
+    if (Date.now() - startedAt >= REGRESSION_SHEET_INDEX_TIMEOUT_MS) {
+      throw new Error(`Timed out waiting for token selector to ${event}`);
+    }
+    await new Promise<void>(resolve => setTimeout(resolve, 50));
+  }
+}
 
 const TokenSelect = ({
   token,
@@ -157,6 +186,7 @@ const TokenSelect = ({
 
   const {
     visible: tokenSelectorVisible,
+    visibleRef: tokenSelectorVisibleRef,
     tokenSelectorModalRef,
     setTokenSelectorVisible,
   } = useTokenSelectorModalVisible({
@@ -169,6 +199,7 @@ const TokenSelect = ({
     tokens,
     tokenRows,
     checkIsExpireAndUpdate,
+    ensureInitialTokenLoad,
     loadToken,
     loadOnVisibleChanged,
     isLoading: isLoadingAllTokens,
@@ -180,6 +211,7 @@ const TokenSelect = ({
     keyword: queryConds.keyword,
     returnTokenObjects: shouldUseTokenObjects,
     skipEmptyChainInit: type === 'bridgeFrom',
+    deferInitialRemoteLoad: type === 'send',
   });
 
   useImperativeHandle(ref, () => ({
@@ -191,27 +223,50 @@ const TokenSelect = ({
 
   const hasHandledTokenSelectorVisibleRef = useRef(false);
 
-  // fetch tokens
-  useEffect(() => {
-    (async () => {
-      if (!tokenSelectorVisible) {
-        return;
-      }
-      if (!hasHandledTokenSelectorVisibleRef.current) {
-        hasHandledTokenSelectorVisibleRef.current = true;
-        return;
-      }
-      if (currentAccount?.address) {
-        loadToken(currentAccount.address);
-      } else {
-        checkIsExpireAndUpdate();
-      }
-    })();
+  const refreshVisibleTokenList = useCallback(() => {
+    if (currentAccount?.address) {
+      loadToken(currentAccount.address);
+      return;
+    }
+    checkIsExpireAndUpdate();
+  }, [checkIsExpireAndUpdate, currentAccount?.address, loadToken]);
+
+  const ensureVisibleTokenListLoaded = useCallback(() => {
+    if (currentAccount?.address) {
+      ensureInitialTokenLoad(currentAccount.address);
+      return;
+    }
+    checkIsExpireAndUpdate();
+  }, [checkIsExpireAndUpdate, currentAccount?.address, ensureInitialTokenLoad]);
+
+  const handleTokenSelectorOpened = useCallback(() => {
+    if (!hasHandledTokenSelectorVisibleRef.current) {
+      hasHandledTokenSelectorVisibleRef.current = true;
+      ensureInitialTokenLoad(currentAccount?.address);
+      return;
+    }
+    refreshVisibleTokenList();
   }, [
-    tokenSelectorVisible,
     currentAccount?.address,
-    loadToken,
-    checkIsExpireAndUpdate,
+    ensureInitialTokenLoad,
+    refreshVisibleTokenList,
+  ]);
+
+  // Refresh account/chain changes while open. Opening itself refreshes only
+  // after the native sheet animation completes via handleTokenSelectorOpened.
+  useEffect(() => {
+    if (
+      !tokenSelectorVisibleRef.current ||
+      !hasHandledTokenSelectorVisibleRef.current
+    ) {
+      return;
+    }
+    ensureVisibleTokenListLoaded();
+  }, [
+    currentAccount?.address,
+    ensureVisibleTokenListLoaded,
+    queryConds.chainServerId,
+    tokenSelectorVisibleRef,
   ]);
 
   const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
@@ -219,9 +274,6 @@ const TokenSelect = ({
     () => userTokenSettings.pinedQueue,
     [userTokenSettings.pinedQueue],
   );
-  const favoriteTokenKeySet = useMemo(() => {
-    return new Set(pinedQueue?.map(x => `${x.chainId}:${x.tokenId}`));
-  }, [pinedQueue]);
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
@@ -299,11 +351,20 @@ const TokenSelect = ({
   }, [setTokenSelectorVisible, setIsLpTokenEnabled]);
 
   const resetQueryConds = useCallback(() => {
-    setQueryConds(prev => ({
-      ...prev,
-      chainServerId: chainId,
-      account: accountInScreen,
-    }));
+    setQueryConds(prev => {
+      const isSameQueryAccount =
+        prev.account === accountInScreen ||
+        isSameAccount(prev.account, accountInScreen);
+      if (prev.chainServerId === chainId && isSameQueryAccount) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        chainServerId: chainId,
+        account: accountInScreen,
+      };
+    });
   }, [chainId, accountInScreen]);
 
   const handleSelectToken = useCallback(() => {
@@ -311,12 +372,42 @@ const TokenSelect = ({
     setTokenSelectorVisible(true);
   }, [resetQueryConds, setTokenSelectorVisible]);
 
+  const handleRegressionTokenSelectorOpen = useCallback(async () => {
+    resetQueryConds();
+    setTokenSelectorVisible(true);
+    await waitForRegressionSheetIndex(tokenSelectorModalRef, 'open');
+  }, [resetQueryConds, setTokenSelectorVisible, tokenSelectorModalRef]);
+
+  const handleRegressionTokenSelectorClose = useCallback(async () => {
+    setTokenSelectorVisible(false);
+    await waitForRegressionSheetIndex(tokenSelectorModalRef, 'close');
+    setIsLpTokenEnabled(false);
+  }, [setIsLpTokenEnabled, setTokenSelectorVisible, tokenSelectorModalRef]);
+
+  useRegressionScenarioComponentAction(
+    'send-token-selector.open',
+    handleRegressionTokenSelectorOpen,
+  );
+  useRegressionScenarioComponentAction(
+    'send-token-selector.close',
+    handleRegressionTokenSelectorClose,
+  );
+
   useEffect(() => {
-    setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
+    setQueryConds(prev =>
+      prev.chainServerId === chainId
+        ? prev
+        : { ...prev, chainServerId: chainId },
+    );
   }, [chainId]);
 
   useLayoutEffect(() => {
-    setQueryConds(prev => ({ ...prev, account: accountInScreen }));
+    setQueryConds(prev => {
+      const isSameQueryAccount =
+        prev.account === accountInScreen ||
+        isSameAccount(prev.account, accountInScreen);
+      return isSameQueryAccount ? prev : { ...prev, account: accountInScreen };
+    });
   }, [accountInScreen]);
 
   const { t } = useTranslation();
@@ -492,10 +583,9 @@ const TokenSelect = ({
         searchPlaceholder={searchPlaceholder}
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
-        unshiftList={[]}
         list={
           shouldUseTokenRows
-            ? []
+            ? EMPTY_TOKEN_LIST
             : selectedTab === 'testnet'
             ? testnetTokenList
             : unFoldTokenList
@@ -503,6 +593,7 @@ const TokenSelect = ({
         tokenRows={shouldUseTokenRows ? tokenRows : undefined}
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
+        onOpened={handleTokenSelectorOpened}
         onSearch={handleSearchTokens}
         isLoading={isCustomNetworkTab ? testnetTokenListLoading : isListLoading}
         showFavoriteFilter={!queryConds.keyword && !isCustomNetworkTab}
@@ -524,7 +615,6 @@ const TokenSelect = ({
         showLpTokenSwitch={!queryConds.keyword && !isCustomNetworkTab}
         isLpTokenEnabled={effectiveIsLpTokenEnabled}
         onLpTokenChange={setIsLpTokenEnabled}
-        favoriteTokenKeySet={favoriteTokenKeySet}
         showCustomNetworkChainPreview={isCustomNetworkTab}
         customNetworkTop3Chains={customNetworkTop3Chains}
       />

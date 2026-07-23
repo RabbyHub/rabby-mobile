@@ -9,8 +9,7 @@ import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
 import type { Account } from '@/core/startupServices/preference';
 import type { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
@@ -33,6 +32,7 @@ import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
+import { useActivityPerpsStore } from '@/hooks/perps/useActivityPerpsStore';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -347,11 +347,12 @@ const AssetPositionItem = ({
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
-    useShallow(s => ({
+  const { clearinghouseStateMap, marketDataMap } = useActivityPerpsStore(
+    s => ({
       clearinghouseStateMap: s.clearinghouseStateMap,
       marketDataMap: s.marketDataMap,
-    })),
+    }),
+    shallow,
   );
   const [selectedPositionKey, setSelectedPositionKey] = useState<{
     address: string;

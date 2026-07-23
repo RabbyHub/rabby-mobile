@@ -15,6 +15,7 @@ export const CORE_REGRESSION_SCENARIO_IDS = [
   'swap-funded',
   'settings-restart',
   'app-background-restore',
+  'home-send-activity-stress',
 ] as const;
 
 export const FOCUSED_REGRESSION_SCENARIO_IDS = [
@@ -31,6 +32,8 @@ export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'sync-extension-password',
   'transaction-history',
   'gas-account-entry',
+  'send-entry-profile',
+  'send-token-selector-entry',
   'market-entry',
   'approvals-entry',
   'rabby-points-entry',
@@ -132,6 +135,10 @@ export type RegressionScenarioEventName =
   | 'screen-unmounted'
   | 'route-changed'
   | 'assertion'
+  | 'perf-window-start'
+  | 'perf-window-end'
+  | 'perf-mark'
+  | 'perf-js-gap'
   | 'fixture-loaded'
   | 'fixture-removed'
   | 'auto-lock-armed'

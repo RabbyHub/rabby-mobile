@@ -117,6 +117,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     description:
       'Open Home, then let the host runner background and restore the app.',
   },
+  'home-send-activity-stress': {
+    id: 'home-send-activity-stress',
+    kind: 'core',
+    screens: ['Home', 'Send'],
+    requiresFixture: false,
+    description:
+      'Repeat Home, Send, token selector, refresh, and asset-tab cycles while validating inactive store subscriptions.',
+  },
   'dapp-browser': {
     id: 'dapp-browser',
     kind: 'focused',
@@ -215,6 +223,22 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     screens: ['GasAccount'],
     requiresFixture: false,
     description: 'Open GasAccount from the transaction stack.',
+  },
+  'send-entry-profile': {
+    id: 'send-entry-profile',
+    kind: 'focused',
+    screens: ['Send'],
+    requiresFixture: false,
+    description:
+      'Profile Send navigation and its first screen initialization window.',
+  },
+  'send-token-selector-entry': {
+    id: 'send-token-selector-entry',
+    kind: 'focused',
+    screens: ['Send'],
+    requiresFixture: false,
+    description:
+      'Open the Send token selector twice and capture its main-runtime profile.',
   },
   'market-entry': {
     id: 'market-entry',

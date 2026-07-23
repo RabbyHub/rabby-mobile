@@ -50,6 +50,34 @@ type WorkerDuplexDefs = {
     };
     response: WorkerResponse<'plus', number>;
   };
+  fetchProbe: {
+    post: WorkerReq<'fetchProbe'> & {
+      url: string;
+      method?: 'GET' | 'HEAD';
+      headers?: Record<string, string>;
+      timeoutMs?: number;
+      readBody?: boolean;
+      readBodyLimit?: number;
+    };
+    response: WorkerResponse<
+      'fetchProbe',
+      {
+        ok: boolean;
+        status: number;
+        statusText: string;
+        url: string;
+        elapsedMs: number;
+        headerElapsedMs: number;
+        bodyElapsedMs: number;
+        bodyChars: number;
+        bodyBytes: number;
+        contentType: string | null;
+        preview: string;
+        timedOut?: boolean;
+        error?: string;
+      }
+    >;
+  };
   aave_formatReserves: {
     post: WorkerReq<'formatReserves'> & {
       data: Parameters<typeof import('@aave/math-utils').formatReserves>[0];
@@ -125,6 +153,14 @@ type WorkerSend = {
         isFatal?: boolean;
         scene?: string;
         error: string;
+      }
+    >
+  | WorkerMsg<
+      '@workerLog',
+      {
+        time: number;
+        event: string;
+        data?: Record<string, unknown>;
       }
     >
 );

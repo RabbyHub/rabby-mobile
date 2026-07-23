@@ -44,6 +44,7 @@ import { storeApiAccounts } from '@/hooks/account';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { markHomeContentReady } from '@/core/utils/homeStartupMilestones';
+import { useHomeChainInfoFocus } from './useChainInfo';
 
 let hasStartedInitReadableAccountStoresIdleWarmup = false;
 let hasStartedHomeSceneDerivedDataActivation = false;
@@ -420,6 +421,7 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  useHomeChainInfoFocus();
   const appThemeConfig = useAppThemeConfig();
   const isLoss = useHomePortfolioStore(state => state.changeData.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });

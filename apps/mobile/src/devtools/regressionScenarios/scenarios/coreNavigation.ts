@@ -20,8 +20,10 @@ import tokenStore from '@/store/tokens';
 import { findChain, findChainByEnum, makeTokenFromChain } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { getLatestStoreActivityScopeDiagnostics } from '@/core/state/storeActivityDiagnostics';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
+import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -29,6 +31,7 @@ import {
   parseScenarioBoolean,
   pushNestedScreen,
   resetToHome,
+  startScenarioPerformanceWindow,
   waitForScenarioAssertion,
 } from './utils';
 
@@ -41,6 +44,64 @@ const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
   2: 'home-assets-defi-ready',
   3: 'home-assets-nft-ready',
 };
+
+function readBoundedInteger(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, Math.round(parsed)));
+}
+
+function sumStoreActivityCounter(
+  scope: NonNullable<ReturnType<typeof getLatestStoreActivityScopeDiagnostics>>,
+  key:
+    | 'sourceNotificationCount'
+    | 'publishedNotificationCount'
+    | 'catchUpCount',
+) {
+  return scope.stores.reduce((total, store) => total + store[key], 0);
+}
+
+async function waitForHomeStoreActivity(active: boolean, timeoutMs = 5000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const scope = getLatestStoreActivityScopeDiagnostics('home');
+    if (scope?.active === active) {
+      return scope;
+    }
+    await delay(25);
+  }
+
+  throw new Error(
+    `Timed out waiting for Home store activity to become ${
+      active ? 'active' : 'inactive'
+    }`,
+  );
+}
+
+async function selectHomeTab(tabIndex: number, timeoutMs = 10_000) {
+  apisHomeTabIndex.setTabIndex(tabIndex, true);
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const currentIndex =
+      apisHomeTabIndex.homeTabScrollerRef.current?.getCurrentIndex();
+    const indexDecimal = apisHomeTabIndex.svTabIndexDecimal.value;
+    if (currentIndex === tabIndex && Math.abs(indexDecimal - tabIndex) < 0.01) {
+      return;
+    }
+    await delay(25);
+  }
+
+  throw new Error(`Timed out waiting for Home tab index ${tabIndex}`);
+}
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -281,7 +342,7 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     .map(value => Number(value.trim()))
     .filter(value => Number.isInteger(value) && value >= 0 && value <= 3);
   for (const tabIndex of requestedTabs) {
-    apisHomeTabIndex.setTabIndex(tabIndex, true);
+    await selectHomeTab(tabIndex);
     context.report('assertion', {
       assertion: 'home-tab-selected',
       passed: navigationRef.getCurrentRoute()?.name === RootNames.Home,
@@ -403,11 +464,16 @@ async function openSendReceive(
   account: Awaited<ReturnType<typeof getScenarioAccounts>>[number],
 ) {
   await switchSceneCurrentAccount('MakeTransactionAbout', account);
-  pushNestedScreen(RootNames.StackTransaction, RootNames.Send);
-  await context.waitForRoute(RootNames.Send);
+  const sendRoute =
+    context.command.params.variant === 'multi'
+      ? RootNames.MultiSend
+      : RootNames.Send;
+  pushNestedScreen(RootNames.StackTransaction, sendRoute);
+  await context.waitForRoute(sendRoute);
   context.report('assertion', {
     assertion: 'send-screen-opened',
     passed: true,
+    route: sendRoute,
   });
 
   if (context.command.action === 'start') {
@@ -493,6 +559,10 @@ async function openSwapBridge(
   await switchSceneCurrentAccount('MakeTransactionAbout', account);
   const requestedTab =
     context.command.params.tab === 'bridge' ? 'bridge' : 'swap';
+  const swapBridgeRoute =
+    context.command.params.variant === 'multi'
+      ? RootNames.MultiSwapBridge
+      : RootNames.SwapBridge;
 
   if (requestedTab === 'bridge') {
     const chainEnum = readScenarioChain(context);
@@ -512,14 +582,14 @@ async function openSwapBridge(
       );
     }
 
-    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
+    pushNestedScreen(RootNames.StackTransaction, swapBridgeRoute, {
       activeTab: requestedTab,
       chainEnum,
       tokenId: plan.token.id,
       toChainEnum,
       toTokenId,
     });
-    await context.waitForRoute(RootNames.SwapBridge);
+    await context.waitForRoute(swapBridgeRoute);
     context.report('assertion', {
       assertion: 'bridge-funded-plan-ready',
       passed: true,
@@ -541,10 +611,10 @@ async function openSwapBridge(
     return;
   }
 
-  pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
+  pushNestedScreen(RootNames.StackTransaction, swapBridgeRoute, {
     activeTab: requestedTab,
   });
-  await context.waitForRoute(RootNames.SwapBridge);
+  await context.waitForRoute(swapBridgeRoute);
   context.report('assertion', {
     assertion: 'swap-bridge-opened',
     passed: true,
@@ -553,10 +623,10 @@ async function openSwapBridge(
 
   if (context.command.action === 'start') {
     const secondTab = requestedTab === 'swap' ? 'bridge' : 'swap';
-    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
+    pushNestedScreen(RootNames.StackTransaction, swapBridgeRoute, {
       activeTab: secondTab,
     });
-    await context.waitForRoute(RootNames.SwapBridge);
+    await context.waitForRoute(swapBridgeRoute);
     context.report('assertion', {
       assertion: 'swap-bridge-second-tab-opened',
       passed: true,
@@ -647,6 +717,204 @@ async function openAppBackgroundRestore(
   });
 }
 
+async function runHomeSendActivityStress(
+  context: RegressionScenarioExecutionContext,
+) {
+  const cycleCount = readBoundedInteger(
+    context.command.params.cycles,
+    10,
+    1,
+    100,
+  );
+  const selectorHoldMs = readBoundedInteger(
+    context.command.params.selectorHoldMs,
+    120,
+    50,
+    2000,
+  );
+  const selectorEvery = readBoundedInteger(
+    context.command.params.selectorEvery,
+    1,
+    0,
+    100,
+  );
+  const homeSettleMs = readBoundedInteger(
+    context.command.params.homeSettleMs,
+    120,
+    50,
+    2000,
+  );
+  const refreshEvery = readBoundedInteger(
+    context.command.params.refreshEvery,
+    10,
+    0,
+    100,
+  );
+  const assetsEvery = readBoundedInteger(
+    context.command.params.assetsEvery,
+    5,
+    0,
+    100,
+  );
+  const reportEvery = readBoundedInteger(
+    context.command.params.reportEvery,
+    10,
+    1,
+    100,
+  );
+
+  resetToHome();
+  await context.waitForRoute(RootNames.Home);
+  const initialScope = await waitForHomeStoreActivity(true);
+  const managedStores = initialScope.stores.filter(
+    store => store.consumerCount > 0,
+  );
+  if (!managedStores.length) {
+    throw new Error('Home activity scope has no managed store consumers');
+  }
+
+  const initialCatchUpCount = sumStoreActivityCounter(
+    initialScope,
+    'catchUpCount',
+  );
+  let hiddenSourceNotificationCount = 0;
+  let hiddenPublishedNotificationCount = 0;
+  let selectorInteractionCount = 0;
+  const perfWindow = startScenarioPerformanceWindow(context, {
+    label: 'home-send-activity-stress',
+    reportEachGap: false,
+  });
+
+  try {
+    for (let cycle = 1; cycle <= cycleCount; cycle += 1) {
+      pushNestedScreen(RootNames.StackTransaction, RootNames.Send, {});
+      await context.waitForRoute(RootNames.Send);
+      const hiddenStart = await waitForHomeStoreActivity(false);
+      const subscribedWhileHidden = hiddenStart.stores.filter(
+        store => store.consumerCount > 0 && store.sourceSubscribed,
+      );
+      if (subscribedWhileHidden.length) {
+        throw new Error(
+          `Home stores remained subscribed while hidden: ${subscribedWhileHidden
+            .map(store => store.label)
+            .join(', ')}`,
+        );
+      }
+
+      const sourceNotificationsBefore = sumStoreActivityCounter(
+        hiddenStart,
+        'sourceNotificationCount',
+      );
+      const publishedNotificationsBefore = sumStoreActivityCounter(
+        hiddenStart,
+        'publishedNotificationCount',
+      );
+
+      if (selectorEvery > 0 && cycle % selectorEvery === 0) {
+        await runRegressionScenarioComponentAction(
+          context.command.runId,
+          'send-token-selector.open',
+          15_000,
+        );
+        await delay(selectorHoldMs);
+        await runRegressionScenarioComponentAction(
+          context.command.runId,
+          'send-token-selector.close',
+          15_000,
+        );
+        selectorInteractionCount += 1;
+      }
+
+      const hiddenEnd = await waitForHomeStoreActivity(false);
+      hiddenSourceNotificationCount +=
+        sumStoreActivityCounter(hiddenEnd, 'sourceNotificationCount') -
+        sourceNotificationsBefore;
+      hiddenPublishedNotificationCount +=
+        sumStoreActivityCounter(hiddenEnd, 'publishedNotificationCount') -
+        publishedNotificationsBefore;
+
+      if (!navigationRef.canGoBack()) {
+        throw new Error('Send screen cannot navigate back to Home');
+      }
+      navigationRef.goBack();
+      await context.waitForRoute(RootNames.Home);
+      const resumedScope = await waitForHomeStoreActivity(true);
+
+      if (assetsEvery > 0 && cycle % assetsEvery === 0) {
+        const tabIndex = ((cycle / assetsEvery - 1) % 3) + 1;
+        await selectHomeTab(tabIndex);
+        await delay(homeSettleMs);
+        await selectHomeTab(0);
+      }
+
+      if (refreshEvery > 0 && cycle % refreshEvery === 0) {
+        await runRegressionScenarioComponentAction(
+          context.command.runId,
+          'home.manual-refresh',
+          10_000,
+        );
+      }
+      await delay(homeSettleMs);
+
+      if (cycle % reportEvery === 0 || cycle === cycleCount) {
+        context.report('perf-mark', {
+          label: 'home-send-activity-stress',
+          mark: 'cycle-checkpoint',
+          cycle,
+          managedStoreCount: resumedScope.stores.filter(
+            store => store.consumerCount > 0,
+          ).length,
+          catchUpCount:
+            sumStoreActivityCounter(resumedScope, 'catchUpCount') -
+            initialCatchUpCount,
+          selectorInteractionCount,
+          hiddenSourceNotificationCount,
+          hiddenPublishedNotificationCount,
+        });
+      }
+    }
+  } finally {
+    perfWindow.stop('home-send-activity-stress-complete');
+  }
+
+  const finalScope = await waitForHomeStoreActivity(true);
+  const catchUpCount =
+    sumStoreActivityCounter(finalScope, 'catchUpCount') - initialCatchUpCount;
+  const maxExpectedCatchUps = cycleCount * managedStores.length;
+  const passed =
+    hiddenSourceNotificationCount === 0 &&
+    hiddenPublishedNotificationCount === 0 &&
+    catchUpCount <= maxExpectedCatchUps;
+
+  context.report('assertion', {
+    assertion: 'home-hidden-store-publication-paused',
+    passed,
+    cycleCount,
+    managedStoreCount: managedStores.length,
+    hiddenSourceNotificationCount,
+    hiddenPublishedNotificationCount,
+    catchUpCount,
+    maxExpectedCatchUps,
+    selectorInteractionCount,
+    stores: finalScope.stores.map(store => ({
+      label: store.label,
+      consumerCount: store.consumerCount,
+      sourceSubscribed: store.sourceSubscribed,
+      activationCount: store.activationCount,
+      deactivationCount: store.deactivationCount,
+      sourceSubscribeCount: store.sourceSubscribeCount,
+      sourceUnsubscribeCount: store.sourceUnsubscribeCount,
+      sourceNotificationCount: store.sourceNotificationCount,
+      publishedNotificationCount: store.publishedNotificationCount,
+      catchUpCount: store.catchUpCount,
+    })),
+  });
+
+  if (!passed) {
+    throw new Error('Hidden Home store publications were not fully paused');
+  }
+}
+
 export async function executeRegressionScenario(
   context: RegressionScenarioExecutionContext,
 ) {
@@ -689,6 +957,9 @@ export async function executeRegressionScenario(
       break;
     case 'app-background-restore':
       await openAppBackgroundRestore(context);
+      break;
+    case 'home-send-activity-stress':
+      await runHomeSendActivityStress(context);
       break;
     default:
       throw new Error(

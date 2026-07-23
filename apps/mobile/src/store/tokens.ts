@@ -323,15 +323,25 @@ const getChangedTokenKeys = (
   if (!previousToken) {
     return null;
   }
+  if (previousToken === nextToken) {
+    return [];
+  }
 
-  const keys = new Set([
-    ...Object.keys(previousToken),
-    ...Object.keys(nextToken),
-  ] as Array<keyof ITokenItem>);
   const changedKeys: Array<keyof ITokenItem> = [];
+  const previousKeys = Object.keys(previousToken) as Array<keyof ITokenItem>;
 
-  keys.forEach(key => {
+  previousKeys.forEach(key => {
     if (!Object.is(previousToken[key], nextToken[key])) {
+      changedKeys.push(key);
+    }
+  });
+
+  const nextKeys = Object.keys(nextToken) as Array<keyof ITokenItem>;
+  nextKeys.forEach(key => {
+    if (
+      !Object.prototype.hasOwnProperty.call(previousToken, key) &&
+      !Object.is(previousToken[key], nextToken[key])
+    ) {
       changedKeys.push(key);
     }
   });
@@ -733,9 +743,10 @@ export const useTokenIndexStore = zCreate(
     tokenStaticMap: {},
     syncAddressTokens(address, tokens) {
       const normalizedAddress = normalizeAddress(address);
+      const previousTokenIds = get().addressTokenIds[normalizedAddress] || [];
       const nextTokenIds = buildStableTokenEntityIds(
         sortByUsdValueDesc(tokens),
-        get().addressTokenIds[normalizedAddress],
+        previousTokenIds,
       );
       const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
       const nextStaticTokenIds = new Set(
@@ -761,11 +772,8 @@ export const useTokenIndexStore = zCreate(
           }
         });
 
-        Object.keys(draft.tokenStaticMap).forEach(tokenId => {
-          if (
-            getTokenEntityIdAddress(tokenId) === normalizedAddress &&
-            !nextStaticTokenIds.has(tokenId as TokenEntityId)
-          ) {
+        previousTokenIds.forEach(tokenId => {
+          if (!nextStaticTokenIds.has(tokenId)) {
             delete draft.tokenStaticMap[tokenId];
             didChange = true;
           }

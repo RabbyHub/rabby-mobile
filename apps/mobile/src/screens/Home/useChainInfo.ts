@@ -8,7 +8,7 @@ import tokenStore, { ITokenItem } from '@/store/tokens';
 import { debounce, isEqual } from 'lodash';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { IProtocolItem } from '@/store/protocols';
 import useProtocolListStore from '@/store/protocols';
@@ -16,6 +16,7 @@ import {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from '@/store/balance';
+import { useFocusEffect } from '@react-navigation/native';
 
 type ChainAssetsUnit = Record<string, BigNumber>;
 interface BaseInfo {
@@ -52,14 +53,54 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
   });
 }
 
-const debounceComputeChainList = debounce(() => {
-  setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
-}, 100);
+let activeHomeChainInfoConsumers = 0;
+let isHomeChainInfoDirty = true;
 
-assetsMapStore.subscribe(debounceComputeChainList);
-tokenStore.subscribe(debounceComputeChainList);
-useProtocolListStore.subscribe(debounceComputeChainList);
-balanceAccountsStore.subscribe(debounceComputeChainList);
+function recomputeHomeChainInfo() {
+  if (activeHomeChainInfoConsumers === 0) {
+    isHomeChainInfoDirty = true;
+    return;
+  }
+
+  isHomeChainInfoDirty = false;
+  setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
+}
+
+const debounceComputeChainList = debounce(recomputeHomeChainInfo, 100);
+
+function scheduleHomeChainInfoUpdate() {
+  isHomeChainInfoDirty = true;
+  if (activeHomeChainInfoConsumers > 0) {
+    debounceComputeChainList();
+  }
+}
+
+assetsMapStore.subscribe(scheduleHomeChainInfoUpdate);
+tokenStore.subscribe(scheduleHomeChainInfoUpdate);
+useProtocolListStore.subscribe(scheduleHomeChainInfoUpdate);
+balanceAccountsStore.subscribe(scheduleHomeChainInfoUpdate);
+
+export function useHomeChainInfoFocus() {
+  useFocusEffect(
+    useCallback(() => {
+      activeHomeChainInfoConsumers += 1;
+      if (isHomeChainInfoDirty) {
+        debounceComputeChainList.cancel();
+        recomputeHomeChainInfo();
+      }
+
+      return () => {
+        activeHomeChainInfoConsumers = Math.max(
+          0,
+          activeHomeChainInfoConsumers - 1,
+        );
+        if (activeHomeChainInfoConsumers === 0) {
+          debounceComputeChainList.cancel();
+        }
+      };
+    }, []),
+  );
+}
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();

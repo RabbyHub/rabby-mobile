@@ -12,6 +12,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadHomeShortcutNavigators } from '@/perfs/preloads';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { ScreenStoreActivityProvider } from '@/hooks/storeActivity/ScreenStoreActivityProvider';
 
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 const RegressionMultiAddressHome = withRegressionScenario(MultiAddressHome, {
@@ -52,7 +53,7 @@ export function HomeScreenNavigator() {
   }, []);
 
   return (
-    <>
+    <ScreenStoreActivityProvider label="home">
       <HomeHiddenTabStack.Navigator
         screenOptions={
           /* mergeScreenOptions */ {
@@ -104,6 +105,6 @@ export function HomeScreenNavigator() {
       </HomeHiddenTabStack.Navigator>
 
       <WebViewControlPreload />
-    </>
+    </ScreenStoreActivityProvider>
   );
 }

@@ -111,6 +111,7 @@ const transactionHistory = {
   getTransactionHistoryPendingsAddressesSnapshot: 'reactive',
   getTransactionHistoryRecentPendingSnapshot: 'reactive',
   getTransactionHistoryRecentTxSnapshot: 'reactive',
+  getTransactionHistorySendListSnapshot: 'reactive',
   getTransactionHistorySucceedCountSnapshot: 'reactive',
   getTransactionHistorySucceedListSnapshot: 'reactive',
   getTransactionHistorySwapFailTransactionsSnapshot: 'reactive',
