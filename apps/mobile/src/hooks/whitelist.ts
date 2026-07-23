@@ -100,7 +100,6 @@ export const setWhitelist = async (addresses: string[]) => {
 
 export const updateWhitelistOrder = async (addresses: string[]) => {
   const revision = ++whitelistRevision;
-
   try {
     await whitelistServiceApi.updateWhitelistOrder(addresses);
     await getWhitelist(revision);

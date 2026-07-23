@@ -21,7 +21,7 @@
       "CreateNewAddress": "1. 确认您的钱包",
       "ImportNewAddress": "添加钱包",
       "ImportMoreAddress": "导入更多钱包",
-      "WatchAddressList": "仅观察钱包",
+      "WatchAddressList": "仅查看钱包",
       "AddressDetail": "钱包详情",
       "CreateSelectOnCurrentSeed": "2. 添加钱包",
       "ConfrimAddress": "确认您的钱包",
@@ -69,7 +69,7 @@
     "Price": "价格",
     "appName": "Rabby Wallet",
     "nonce": "nonce",
-    "appDescription": "适用于以太坊及所有 EVM 链的变革性钱包",
+    "appDescription": "您的 Ethereum 与 EVM 首选钱包",
     "next": "下一步",
     "Confirm": "确认",
     "time": {
@@ -77,9 +77,9 @@
       "hours": "{{t}} 小时",
       "hour": "{{t}} 小时"
     },
-    "Deleted": "删除",
-    "WalletCreated": "钱包创建",
-    "WalletImported": "钱包导入",
+    "Deleted": "已删除",
+    "WalletCreated": "钱包已创建",
+    "WalletImported": "钱包已导入",
     "themeMode": {
       "option_System": "跟随系统",
       "option_Light": "浅色",
@@ -94,7 +94,7 @@
     "permissionRequest": {
       "common": {
         "askMeLater": "稍后再问我",
-        "goToSettings": "去设置"
+        "goToSettings": "前往设置"
       },
       "mediaLibrary": {
         "title": "媒体库权限",
@@ -136,7 +136,7 @@
     "Other": "其他",
     "toast": {
       "clipboard": {
-        "copiedPrivateKey": "私钥已复制。剪贴板将在1分钟后清除。",
+        "copiedPrivateKey": "私钥已复制。剪贴板将在 1 分钟后清除。",
         "copiedSeedPhrase": "助记词已复制。剪贴板将在 1 分钟后清除。",
         "pasted_and_cleared": "粘贴并清空剪贴板"
       }
@@ -144,9 +144,9 @@
     "autolock": {
       "never": "从不"
     },
-    "Created": "创建",
-    "SavedSeedPhrase": "我已经保存了种子短语",
-    "Imported": "导入的",
+    "Created": "已创建",
+    "SavedSeedPhrase": "我已保存助记词",
+    "Imported": "已导入",
     "from": "从",
     "to": "到",
     "copiedSuccessfully": "已复制"
@@ -156,7 +156,7 @@
     "KEYRING_TYPE_TEXT": {
       "HdKeyring": "由助记词创建",
       "SimpleKeyring": "通过私钥导入",
-      "WatchAddressKeyring": "联系"
+      "WatchAddressKeyring": "联系人"
     },
     "IMPORTED_HD_KEYRING_NEED_PASSPHRASE": "通过助记词（密码短语）导入"
   },
@@ -207,11 +207,11 @@
         "Status": "状态",
         "SwapAgain": "再次兑换",
         "Date": "日期",
-        "RevokeToken": "撤销代币",
+        "RevokeToken": "撤销授权的代币",
         "Chain": "链",
         "name": "名称",
         "ApproveToken": "授权代币",
-        "RevokeFrom": "从中撤销",
+        "RevokeFrom": "撤销授权对象",
         "SpeedUp": "加速",
         "InteractionResults": "交互结果",
         "ApproveTo": "授权给",
@@ -257,7 +257,7 @@
       "TransactionAlert": {
         "clearPendingSuccess": "本地待处理交易已移除",
         "clearPendingText": "{{chainName}} 交易 ({{nonces}}) 已挂起超过 3 分钟。您可以 <5></5> <6>本地清除挂起</6> <7></7> 并重新提交该交易。",
-        "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 链上被跳过。这可能导致后续交易待处理。<5></5> <6>提交交易</6> <7></7> 到链上以解决"
+        "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 链上被跳过。这可能导致后续交易待处理。<5></5> <6>在链上提交一笔交易</6> <7></7> 以解决此问题。"
       },
       "HideScamTransactions": "隐藏诈骗交易",
       "ShowScamTransactions": "显示诈骗交易",
@@ -267,18 +267,18 @@
     "getStart": {
       "goToHome": "前往首页",
       "alreadyHaveAddress": "我已有一个钱包",
-      "sync": "扫描 Rabby 插件同步钱包",
+      "sync": "扫描二维码，同步 Rabby 浏览器扩展中的钱包",
       "createNewAddress": "创建新钱包",
       "alreadyUseRabby": "我已有 Rabby 钱包",
       "welcomeTitle": "欢迎使用\nRabby 钱包"
     },
     "importSeedPhrase": {
-      "enterYourSeedPhrase": "输入您的助记词"
+      "enterYourSeedPhrase": "输入您的助记词，每个单词之间用空格分隔"
     },
     "importSuccess": {
       "addressCount": "{{count}} 个地址",
       "success": "{{type}} 成功！",
-      "importMore": "导入更多钱包",
+      "importMore": "从此助记词添加更多钱包",
       "addressCount_other": "{{count}} 个钱包",
       "addressCount_one": "{{count}} 钱包",
       "viewAddress": "查看钱包",
@@ -315,39 +315,39 @@
       "nonceLowerThanExpect": "Nonce 太低，最小值应为 {{0}}",
       "gasSelectorTitle": "Gas",
       "transacted": "之前已交易过",
-      "failToFetchGasCost": "预估 gas 失败",
+      "failToFetchGasCost": "预估 Gas 失败",
       "manuallySetGasLimitAlert": "你已手动设置 Gas limit 为",
       "swapLimitPay": {
         "title": "兑换代币额度支付",
         "maxPay": "最高支付"
       },
-      "gasLimitTitle": "Gas limit",
+      "gasLimitTitle": "Gas 上限",
       "gasLimitLessThanExpect": "Gas limit 偏低，交易约有 1% 的失败概率。",
       "firstOnChain": "首次上链",
       "gasLimitModifyOnlyNecessaryAlert": "仅在必要时修改",
-      "contractPopularity": "第{{0}}个在{{1}}",
+      "contractPopularity": "在 {{1}} 排名第 {{0}}",
       "viewRaw": "查看原始内容",
       "cancelTx": {
         "title": "取消待处理交易",
-        "gasPriceAlert": "设置当前 gas 价格高于 {{value}} Gwei 以取消等待中的交易",
+        "gasPriceAlert": "设置当前 Gas 价格高于 {{value}} Gwei 以取消等待中的交易",
         "txToBeCanceled": "待取消的交易"
       },
       "revokeTokenApprove": {
-        "title": "撤销 Token 授权",
-        "revokeFrom": "从 中撤销",
-        "revokeToken": "撤销 token"
+        "title": "撤销代币授权",
+        "revokeFrom": "撤销授权对象",
+        "revokeToken": "撤销代币"
       },
       "blocked": "已阻止",
       "gasLimitMinValueAlert": "Gas limit 应大于 21000",
       "myMark": "我的标记",
       "maxPriorityFee": "最大优先费用 (Gwei)",
       "assetOrder": {
-        "listAsset": "列出资产",
-        "title": "资产排序",
+        "listAsset": "挂单资产",
+        "title": "资产订单",
         "receiveAsset": "接收资产"
       },
       "swapAndCross": {
-        "title": "兑换 Token 及跨链"
+        "title": "兑换代币及跨链"
       },
       "gasLimitEmptyAlert": "请输入 Gas limit",
       "safeAddressNotSupportChain": "当前的 Safe 地址不支持 {{0}} 链",
@@ -385,13 +385,13 @@
       },
       "addressNote": "地址备注",
       "noGasRequired": "无需 Gas",
-      "unwrap": "解包 Token",
+      "unwrap": "解除封装代币",
       "importedDelegatedAddress": "已导入的委托地址",
       "enoughSafeSigCollected": "已收集到足够的签名",
       "gasNotRequireForSafeTransaction": "Safe 交易不需要 Gas 费",
-      "wrapToken": "包装代币",
-      "canOnlyUseImportedAddress": "您无法使用仅观察地址签署交易。",
-      "gasAccountForGas": "使用我的 GasAccount 中的 USD 支付 gas 费用",
+      "wrapToken": "封装代币",
+      "canOnlyUseImportedAddress": "您无法使用仅查看地址签署交易。",
+      "gasAccountForGas": "使用我的 GasAccount 中的 USD 支付 Gas 费用",
       "crossChain": {
         "title": "跨链"
       },
@@ -410,11 +410,11 @@
       },
       "gasPriceMedian": "最近100笔链上交易的中位数：",
       "gasAccount": {
-        "sendGas": "当前交易的Gas转移给你：",
+        "sendGas": "本次交易向您转入的 Gas：",
         "maxGas": "最大 Gas: ",
         "estimatedGas": "预估 Gas:",
-        "gasCost": "将 gas 转移到您的地址的 gas 费用：",
-        "description": "使用 GasAccount 支付 gas 费用。查看支付详情如下："
+        "gasCost": "将 Gas 转入您的地址所需的 Gas 费用：",
+        "description": "使用 GasAccount 支付 Gas 费用。查看支付详情如下："
       },
       "gasLimitLessThanGasUsed": "Gas limit 太低，交易约有 95% 的失败概率。",
       "interactContract": "交互合约",
@@ -427,7 +427,7 @@
         "receiver": "接收者",
         "unknownAddress": "未知地址",
         "slippageFailToLoad": "未能加载",
-        "minReceive": "最小接收",
+        "minReceive": "最少收到",
         "simulationNotSupport": "该链不支持交易模拟",
         "failLoadReceiveToken": "加载失败",
         "receiveToken": "接收",
@@ -438,18 +438,18 @@
         "slippageTolerance": "滑点容忍度",
         "notPaymentAddress": "不是用于支付的钱包"
       },
-      "markRemoved": "马克已移除",
+      "markRemoved": "标记已移除",
       "myNativeTokenBalance": "我的 Gas 余额：",
       "nftApprove": {
         "approveNFT": "授权 NFT",
         "nftContractTrustValueTip": "信任价值是指此合约支出的最高 NFT 价值。低信任价值表示风险或 180 天未活动。",
         "title": "NFT 授权"
       },
-      "nativeTokenForGas": "在 {{chainName}} 上使用 {{tokenName}} 代币支付 gas 费用",
+      "nativeTokenForGas": "在 {{chainName}} 上使用 {{tokenName}} 代币支付 Gas 费用",
       "hardwareSupport1559Alert": "请确保你的硬件钱包固件已升级到支持 EIP-1559 的版本",
       "send": {
         "scamAddress": "诈骗地址",
-        "title": "发送 Token",
+        "title": "发送代币",
         "sendToken": "发送代币",
         "notTopupAddress": "不是一个存款地址",
         "fromMyPrivateKey": "来自我的私钥",
@@ -467,12 +467,12 @@
       },
       "trustValue": "信任价值",
       "revokePermit": {
-        "title": "撤销 Permit Token 授权"
+        "title": "撤销 Permit 代币授权"
       },
       "interacted": "之前已交互",
-      "l2GasEstimateTooltip": "对于 L2 链的 gas 估算不包括 L1 的 gas 费用。实际费用将高于当前估算。",
+      "l2GasEstimateTooltip": "对于 L2 链的 Gas 估算不包括 L1 的 Gas 费用。实际费用将高于当前估算。",
       "eip1559Desc2": "在 Rabby 中，Priority Fee（小费）= Max Fee - Base Fee。在您设置 Max Priority Fee 后，Base Fee 将从中扣除，剩余的将作为小费给矿工。",
-      "eip1559Desc1": "在支持 EIP-1559 的链上，Priority Fee 是给予矿工处理您的交易的小费。通过降低 Priority Fee，您可以节省最终的 gas 成本，但这可能会使交易处理时间更长。",
+      "eip1559Desc1": "在支持 EIP-1559 的链上，Priority Fee 是给予矿工处理您的交易的小费。通过降低 Priority Fee，您可以节省最终的 Gas 成本，但这可能会使交易处理时间更长。",
       "submitMultisig": {
         "multisigAddress": "多重签名地址",
         "title": "提交多重签名交易"
@@ -484,12 +484,12 @@
       "address": "地址",
       "hasInteraction": "之前互动过",
       "advancedSettings": "高级设置",
-      "yes": "是的",
+      "yes": "是",
       "protocol": "协议",
       "no": "否",
       "label": "标签",
       "contract": "智能合约",
-      "typedDataMessage": "签名类型数据",
+      "typedDataMessage": "签署类型化数据",
       "amount": "金额",
       "coboSafeCreate": {
         "title": "创建 Cobo Safe",
@@ -529,10 +529,10 @@
           "notSupported": "不支持"
         },
         "lowGasDeadline": {
-          "4h": "4h",
+          "4h": "4 小时",
           "label": "超时",
-          "1h": "1h",
-          "24h": "24h"
+          "1h": "1 小时",
+          "24h": "24 小时"
         },
         "mev": {
           "desc": "交易将被广播到指定的 MEV 节点",
@@ -558,7 +558,7 @@
         "approveTo": "授权至",
         "amountPopupTitle": "授权数量",
         "contractTrustValueTip": "信任值是指该合约所花费的总资产价值。信任值低可能表示风险或180天不活跃。",
-        "title": "Token 授权",
+        "title": "代币授权",
         "flagByRabby": "由 Rabby 标记"
       },
       "safeTx": {
@@ -569,13 +569,13 @@
         }
       },
       "errorRetry": {
-        "nonceTooHigh": "Nonce太高。请调整nonce后再试。",
-        "gasExceedsBlockGasLimit": "Gas 超过区块 gas 限制。请调整后再试。",
+        "nonceTooHigh": "Nonce 太高。请调整 Nonce 后重试。",
+        "gasExceedsBlockGasLimit": "Gas 超过区块 Gas 限制。请调整后重试。",
         "defaultTips": "出现了问题。请稍后再试。",
         "alreadySubmitted": "交易已提交。检测到重复交易。",
         "gasLimitTooLow": "Gas limit 过低",
         "InvalidTx": "无效交易。",
-        "insufficient": "您的 gas 余额不足以支付网络 gas 费用。请为 gas 添加资金后再试。",
+        "insufficient": "您的 Gas 余额不足以支付网络 Gas 费用。请补充 Gas 后重试。",
         "gasPriceTooLow": "Gas 价格太低。我们会将其上调 30%，以帮助交易确认。点击「重试」确认并再试一次。",
         "nonceTooLow": "Nonce 太低。我们会将其更新为 {{nonce}}。点击「重试」确认并再试一次。"
       },
@@ -583,10 +583,10 @@
         "token1": "添加代币 2",
         "receiver": "接收者",
         "title": "添加流动性",
-        "token0": "添加 Token 1",
+        "token0": "添加代币 1",
         "marketPrice": "市场价格",
         "priceDiff": "价格差异",
-        "poolPrice": "池价格"
+        "poolPrice": "资金池价格"
       },
       "gasSetting": "Gas 设置"
     },
@@ -598,14 +598,14 @@
           "unknownProtocol": "未知协议"
         },
         "empty": {
-          "title": "没有已签名的交易",
+          "title": "暂无交易记录",
           "desc": "所有通过 Rabby 签名的交易将列在这里。",
           "titleLastThreeMonths": "90天内没有交易记录",
           "testnetNoHistory": "自定义代币交易记录不可用。"
         },
         "tips": {
           "canNotCancel": "无法加速或取消：不是第一个待处理的交易。",
-          "pendingDetail": "只会完成一笔交易，几乎总是具有最高 gas 价格的那一笔。"
+          "pendingDetail": "只会完成一笔交易，几乎总是具有最高 Gas 价格的那一笔。"
         },
         "message": {
           "cancelSuccess": "已取消",
@@ -626,12 +626,12 @@
           "options": {
             "onChainCancel": {
               "title": "链上取消",
-              "desc": "新交易取消，需要gas"
+              "desc": "发起新交易进行取消，需要支付 Gas"
             },
             "quickCancel": {
               "title": "快速取消",
               "tips": "仅支持尚未广播的交易",
-              "desc": "在广播之前取消，无需 gas 费"
+              "desc": "在广播之前取消，无需 Gas 费"
             },
             "removeLocalPendingTx": {
               "desc": "从界面中移除待处理交易",
@@ -658,14 +658,14 @@
     },
     "sendNFT": {
       "sendButton": "发送",
-      "Collection": "集合",
+      "Collection": "合集",
       "NFT": "NFT",
       "Chain": "链",
       "Contract": "合约",
-      "SendAmount": "发送金额"
+      "SendAmount": "发送数量"
     },
     "sendTokenComponents": {
-      "GasReserved": "预留 <1>0</1> {{ tokenName }} 用于 gas 费用"
+      "GasReserved": "预留 <1>0</1> {{ tokenName }} 用于 Gas 费用"
     },
     "sendToken": {
       "whitelistAlert__notWhitelisted_tip": "该地址未列入白名单。",
@@ -685,7 +685,7 @@
       "allowTransferModal": {
         "addWhitelist": "添加到白名单",
         "placeholder": "输入密码以确认",
-        "title": "确认允许交易"
+        "title": "确认允许转账"
       },
       "sectionTo": {
         "addrValidator__invalid": "此地址无效",
@@ -693,7 +693,7 @@
         "addrValidator__empty": "请输入地址",
         "positiveTips": {
           "yourOwnAddress": "您的地址",
-          "sentRecently": "最近发送",
+          "sentRecently": "近期转账过",
           "whitelistedAddress": "白名单地址"
         },
         "selectPlaceholder": "选择地址"
@@ -727,7 +727,7 @@
       },
       "noSupportBtns": {
         "cancel": "取消",
-        "confirm": "继续"
+        "confirm": "仍要继续"
       },
       "From": "发送地址",
       "addressDetail": "地址详情",
@@ -743,23 +743,23 @@
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
-      "watchModeAlert": "这是一个观察地址。您确定要使用它接收资产吗？",
+      "watchModeAlert": "这是一个仅查看地址。您确定要使用它接收资产吗？",
       "copyAddress": "复制地址",
       "allEVMChain": "所有 EVM 链",
-      "newTitle": "接收资产在"
+      "newTitle": "接收资产的网络"
     },
     "signTypedData": {
       "signMultiSig": {
         "title": "确认交易"
       },
       "swapTokenOrder": {
-        "title": "Token 订单"
+        "title": "代币订单"
       },
       "contractCall": {
         "operationDecoded": "操作已从消息中解码"
       },
       "permit": {
-        "title": "Permit Token 授权"
+        "title": "Permit 代币授权"
       },
       "buyNFT": {
         "listOn": "列出",
@@ -769,7 +769,7 @@
       },
       "permit2": {
         "approvalExpiretime": "授权过期时间",
-        "title": "Permit2 Token 授权",
+        "title": "Permit2 代币授权",
         "sigExpireTimeTip": "此签名在链上的有效时长",
         "sigExpireTime": "签名过期时间"
       },
@@ -779,7 +779,7 @@
       "verifyAddress": {
         "title": "验证地址"
       },
-      "safeCantSignText": "这是一个Safe地址，不能用来签署文本。",
+      "safeCantSignText": "这是一个 Safe 地址，不能用来签署文本。",
       "sellNFT": {
         "receiveToken": "接收代币",
         "specificBuyer": "特定买家",
@@ -800,7 +800,7 @@
       "cancelCurrentConnection": "取消当前连接",
       "signAndSubmitButton": "签名",
       "beginSigning": "开始签名流程",
-      "processRiskAlert": "请在签名前处理警报",
+      "processRiskAlert": "请先处理风险提示，再进行签名",
       "cancelAll": "取消来自 DApp 的全部 {{count}} 个请求",
       "cancelCurrentTransaction": "取消当前交易",
       "ignoreAll": "忽略全部",
@@ -817,9 +817,9 @@
       "gasless": {
         "notEnough": "Gas 余额不足",
         "customRpcUnavailableTip": "免费 Gas 不支持自定义 RPC",
-        "walletConnectUnavailableTip": "通过 WalletConnect 连接的移动钱包不支持免费 Gas",
+        "walletConnectUnavailableTip": "通过 WalletConnect 连接的移动端钱包不支持免费 Gas",
         "GetFreeGasToSign": "获取免费 Gas",
-        "watchUnavailableTip": "仅观察钱包不支持免费 gas"
+        "watchUnavailableTip": "仅查看钱包不支持免费 Gas"
       },
       "confirmWithPassword": "确认",
       "detectedMultipleRequestsFromThisDapp": "检测到该 DApp 的多个请求",
@@ -827,8 +827,8 @@
       "gasAccount": {
         "useGasAccount": "使用 GasAccount",
         "login": "登录",
-        "loginFirst": "请先登录GasAccount",
-        "signWithHardwareWalletToUse": "你需要使用{{brand}}签名后才能使用",
+        "loginFirst": "请先登录 GasAccount",
+        "signWithHardwareWalletToUse": "使用 GasAccount 前，需要先通过 {{brand}} 签名。",
         "chainNotSupported": "GasAccount 不支持该链",
         "customRPC": "使用自定义 RPC 时不支持",
         "WalletConnectTips": "GasAccount 不支持 WalletConnect",
@@ -867,7 +867,7 @@
     "home": {
       "services": {
         "receive": "接收",
-        "history": "交易历史",
+        "history": "交易记录",
         "queue": "队列",
         "bridge": "跨链",
         "send": "发送",
@@ -877,17 +877,17 @@
         "gasAccount": "GasAccount",
         "dapps": "DApp",
         "approvals": "授权",
-        "search": "搜索 Token",
+        "search": "搜索代币",
         "copyTrading": "跟单交易",
         "watchlist": "代币关注列表",
-        "perpsMarketList": "更多 Perps",
+        "perpsMarketList": "更多永续合约",
         "perps": "永续合约",
         "lending": "借贷",
         "predict": "预测",
         "meme": "Memecoin",
         "market": "市场",
         "gasDeposit": "Gas 充值",
-        "convertDust": "小额资产归集"
+        "convertDust": "兑换零散资产"
       },
       "swipeUp": {
         "descAndroid": "点击探索 DApp",
@@ -897,9 +897,9 @@
       },
       "DappDrawer": {
         "favorite": "收藏",
-        "empty": "没有网站被添加到收藏夹",
+        "empty": "尚未收藏任何网站",
         "search": "搜索",
-        "emptyAndroid": "没有DApp添加到收藏夹",
+        "emptyAndroid": "尚未将 DApp 加入收藏",
         "tabs": {
           "all": "全部",
           "perps": "永续合约",
@@ -913,7 +913,7 @@
       }
     },
     "manageAddress": {
-      "watch-address": "观察地址",
+      "watch-address": "仅查看地址",
       "confirm": "确认",
       "enterThePassphrase": "输入密码短语",
       "private-key": "私钥",
@@ -921,7 +921,7 @@
       "seed-phrase": "助记词",
       "enterPassphraseTitle": "输入密码短语以进行签名",
       "delete-checklist-2": "我确认已备份私钥 / 助记词，同意立即删除",
-      "passphraseError": "密码无效",
+      "passphraseError": "密码短语无效",
       "quickAddressTitle_one": "{{count}} 地址",
       "quickAddressTitle_other": "{{count}} 个地址",
       "add-address": "添加钱包",
@@ -935,7 +935,7 @@
       "value": "余额",
       "no-quote": "无报价",
       "estimate": "估计：",
-      "bridge-from": "跨链来源",
+      "bridge-from": "跨链转出自",
       "est-receiving": "预计接收：",
       "detail-tx": "详情",
       "liquidity": "流动性",
@@ -953,11 +953,11 @@
       "showMore": {
         "title": "显示更多",
         "source": "跨链桥来源",
-        "signWarning": "我理解警报并希望继续"
+        "signWarning": "我了解风险提示并希望继续"
       },
-      "bridgeFrom": "跨链自",
-      "best": "最优",
-      "best-subtitle": "最优报价由预计总成本（含 Gas 费用）和交付速度综合决定。",
+      "bridgeFrom": "跨链转出网络",
+      "best": "最佳",
+      "best-subtitle": "最佳报价由预计总成本（含 Gas 费用）和到账速度综合决定。",
       "no-route-found": "未找到路线",
       "via-bridge": "通过 {{bridge}}",
       "history": "跨链历史",
@@ -991,7 +991,7 @@
       "gasXUsd": "Gas：{{gasUsd}}",
       "formChangedTitle": "表单已更改",
       "formChangedAmount": "金额已更改，可能是由于系统键盘的密码自动填充。请检查并重新输入正确的金额。",
-      "swap-best-subtitle": "最优报价由最低预估总成本决定，包括汇率和 gas 费。"
+      "swap-best-subtitle": "最佳报价由最低预估总成本决定，包括汇率和 Gas 费。"
     },
     "approvals": {
       "tab-switch": {
@@ -1013,7 +1013,7 @@
           "permit2Batch": {
             "modalTitle_one": "共需 <2>{{count}}</2> 个签名",
             "modalTitle_other": "总共需要<2>{{count}}</2>个签名",
-            "modalContent": "同一个Permit2合约的授权将会在相同签名下打包在一起。"
+            "modalContent": "同一个 Permit2 合约的授权会由同一个签名打包处理。"
           }
         }
       },
@@ -1027,7 +1027,7 @@
             "revokeTrends": "24h 撤销趋势"
           },
           "columnTip": {
-            "contractTrustValueDanger": "合同信任价值 < $10,000",
+            "contractTrustValueDanger": "合约信任值 < $10,000",
             "button": "我知道了。",
             "revokeRecenet": "最近撤销（24小时）：{{ count }}",
             "revokeTrendsValueDanger": "最近的撤销数量是新授权用户数量的 4 倍以上。",
@@ -1036,7 +1036,7 @@
             "normalTrustValueDanger": "合约信任价值：{{ contractUsdText }}",
             "revokeWarningTitle": "24 小时撤销数超过授权数的 2 倍",
             "revokeTrendsValueWarning": "最近撤销的数量是新授权用户数量的两倍多。",
-            "contractTrustValue": "信任价值是指此合约花费的资产总价值。信任价值低表明存在风险或者180天不活跃。",
+            "contractTrustValue": "信任值是指该合约已花费的资产总价值。信任值较低可能表示存在风险，或该合约已 180 天未活跃。",
             "revokeDangerTitle": "24 小时撤销数超过授权数的 4 倍"
           }
         },
@@ -1066,8 +1066,8 @@
         "title": "无法撤销"
       },
       "asset": "资产",
-      "startRevoke": "开始撤回",
-      "revokeFrom": "撤销来自",
+      "startRevoke": "开始撤销",
+      "revokeFrom": "撤销授权对象",
       "pauseRevoke": "暂停",
       "unknownContract": "未知合约",
       "contractAddress": "合约地址",
@@ -1077,10 +1077,10 @@
       "unselectAll": "取消全选",
       "approvedAssets": "已授权的合约和金额",
       "continueRevoke": "继续",
-      "approvedAssetsAndAmount": "审核的资产和数量",
+      "approvedAssetsAndAmount": "已授权的资产和金额",
       "gasFee": "Gas 费用",
       "revokeCompleted": "完成",
-      "stopTheRevokeProcess": "停止撤回过程？",
+      "stopTheRevokeProcess": "停止撤销流程？",
       "leavingThisPageWillStopTheRevokeProcess": "离开此页面将停止撤销过程。",
       "allApprovals": "所有授权",
       "eip7702": {
@@ -1107,27 +1107,27 @@
       "search-by-name-address": "通过名称 / 地址搜索",
       "hidden-no-quote-rates_other": "{{count}} 汇率不可用",
       "actual-slippage": "实际滑点：",
-      "slippage-tolerance": "价格滑点",
+      "slippage-tolerance": "滑点容忍度",
       "insufficient": "余额不足：",
-      "no-slippage-for-wrap": "Wrap 无滑点",
+      "no-slippage-for-wrap": "封装代币无滑点",
       "select-token": "选择代币",
-      "Pending": "等待中",
+      "Pending": "待处理",
       "usd-after-fees": "≈ {{usd}}",
       "security-verification-failed": "安全验证失败",
-      "wrap-contract": "合约包装",
+      "wrap-contract": "封装合约",
       "Auto": "自动",
       "slippage_tolerance": "滑点容忍度:",
       "Gas-fee-too-high": "Gas 费用过高",
-      "completedTip": "链上交易，解码数据生成记录",
+      "completedTip": "交易已提交到链上，正在解码数据并生成记录",
       "by-transaction-simulation-the-quote-is-valid": "通过交易模拟，报价有效",
       "source": "来源",
-      "no-fees-for-wrap": "兑换不收取 Rabby 费用",
+      "no-fees-for-wrap": "封装代币不收取 Rabby 费用",
       "actual": "实际：",
       "estimate": "估算：",
       "gas-fee": "Gas 费：{{gasUsed}}",
       "token": "代币",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "由于高滑点容忍度，交易可能会被抢跑。",
-      "sort-with-gas": "按 gas 排序",
+      "sort-with-gas": "按 Gas 排序",
       "preferMEV": "优选 MEV 防护",
       "lowCreditModal": {
         "title": "该代币的信用值较低",
@@ -1142,13 +1142,13 @@
         "rate": "费率",
         "wallet": "钱包",
         "title": "Rabby 费用",
-        "bridgeDesc": "Rabby Wallet 将始终从顶级聚合器中找到最佳汇率，并验证其报价的可靠性。Rabby 收取<1>0.25%</1>的费用，该费用已自动包含在报价中。",
-        "swapDesc": "Rabby Wallet 始终会从顶级聚合器中找到最佳汇率，并验证其报价的可靠性。Rabby 收取<1>0.25%</1>的费用（包装费用为0%），该费用已自动包含在报价中。"
+        "bridgeDesc": "Rabby Wallet 始终会从主流聚合器中寻找最佳汇率，并验证报价的可靠性。Rabby 收取 <1>0.25%</1> 的费用，该费用已自动计入报价。",
+        "swapDesc": "Rabby Wallet 始终会从主流聚合器中寻找最佳汇率，并验证报价的可靠性。Rabby 收取 <1>0.25%</1> 的费用（封装代币为 0%），该费用已自动计入报价。"
       },
-      "directlySwap": "通过智能合约直接包装{{symbol}}代币",
+      "directlySwap": "通过智能合约直接封装 {{symbol}} 代币",
       "gas-fee-too-high": "Gas 费用过高",
       "swapped": "已兑换",
-      "historyTitle": "Swap 历史记录",
+      "historyTitle": "兑换记录",
       "selectChainModalTitle": "选择链",
       "results": "结果",
       "approve": "授权",
@@ -1166,7 +1166,7 @@
       },
       "assets": {
         "AddMainnetToken": {
-          "isBuiltInToken": "Token 已支持"
+          "isBuiltInToken": "已支持该代币"
         },
         "comingSoon": "即将推出...",
         "table": {
@@ -1191,18 +1191,18 @@
       "tokenDetail": {
         "swap": "兑换",
         "send": "发送",
-        "customized": "定制化",
+        "customized": "已自定义",
         "receive": "接收",
         "blocked": "屏蔽",
-        "noTransactions": "没有交易",
+        "noTransactions": "暂无交易",
         "blockedTip": "被阻止的代币将不会显示在代币列表中",
-        "selectedCustom": "该 Token 未被 Rabby 收录。你已手动将其添加到代币列表。",
-        "notSelectedCustom": "该 Token 未被 Rabby 收录。开启后会将其添加到代币列表。",
-        "notSupported": "该链上的代币不被支持"
+        "selectedCustom": "该代币未被 Rabby 收录。你已手动将其添加到代币列表。",
+        "notSelectedCustom": "该代币未被 Rabby 收录。开启后会将其添加到代币列表。",
+        "notSupported": "不支持该链上的代币"
       },
       "offlineChain": {
-        "chain": "{{chain}} 将很快不再被集成。",
-        "tips": "{{chain}} 链将在 {{date}} 不被集成。您的资产不会受到影响，但不会计入您的总余额。要访问它们，您可以在“设置”中将其添加为自定义网络。"
+        "chain": "即将停止支持 {{chain}}。",
+        "tips": "{{chain}} 链将于 {{date}} 停止支持。您的资产不会受到影响，但不会计入总余额。如需访问这些资产，可在“设置”中将该链添加为自定义网络。"
       }
     },
     "nextComponent": {
@@ -1248,7 +1248,7 @@
         "WriteSeedPhrase": "这是你的助记词。请将其写下并妥善保管。如果你丢失或泄露它，你的资产可能会永远丢失。在下一步中，你需要按顺序重新输入这个短语。"
       },
       "importAddress": {
-        "privateKey": "导入私人密钥",
+        "privateKey": "导入私钥",
         "seedPhrase": "导入助记词",
         "hardWare": "连接硬件钱包",
         "tips": {
@@ -1258,14 +1258,14 @@
           "description": "您的数据已被安全加密并存储在您的设备本地。Rabby 无法访问您的私人信息，这些信息也不会与第三方共享。"
         },
         "importTitle": "导入钱包",
-        "safeTitle": "导入 Safe Wallet",
-        "watch": "仅观察钱包",
-        "watchOnlyTitle": "导入只读钱包",
-        "ImportCloud": "从{{cloud}}导入",
-        "ImportFromExtensionOrCloud": "从插件或者{{cloud}}导入",
-        "moreWatchOnlyTitle": "导入观察钱包",
-        "moreWatchOnly": "观察钱包",
-        "moreSafeTitle": "导入 Safe钱包"
+        "safeTitle": "导入 Safe 钱包",
+        "watch": "仅查看钱包",
+        "watchOnlyTitle": "导入仅查看钱包",
+        "ImportCloud": "从 {{cloud}} 导入",
+        "ImportFromExtensionOrCloud": "从浏览器扩展或 {{cloud}} 导入",
+        "moreWatchOnlyTitle": "导入仅查看地址",
+        "moreWatchOnly": "仅查看地址",
+        "moreSafeTitle": "导入 Safe 钱包"
       },
       "addAddress": {
         "hardwareWallet": "硬件钱包",
@@ -1274,7 +1274,7 @@
         "createAddress": "创建钱包",
         "selectAddMethod": "选择添加方法",
         "seedPhraseOrPrivateKey": "助记词或私钥",
-        "restoreRabbyWallet": "恢复 Rabby钱包",
+        "restoreRabbyWallet": "恢复 Rabby 钱包",
         "moreOptions": "更多导入方式"
       },
       "rateModalTriggerOnHome": {
@@ -1284,13 +1284,13 @@
         "confirmButtonTitleAndroid": "在 Google Play 上评分",
         "feedbackSubmit": "提交",
         "feedbackSuccess": "感谢您的反馈",
-        "confirmButtonTitleIOS": "在应用商店评分",
+        "confirmButtonTitleIOS": "在 App Store 评分",
         "descriptionAndroid": "如果你喜欢 Rabby，在 Google Play 上快速评分会非常重要。",
-        "descriptionIOS": "如果您喜欢 Rabby，在应用商店的快速评价对我们来说意义重大。",
+        "descriptionIOS": "如果您喜欢 Rabby，欢迎在 App Store 上快速评分，这对我们意义重大。",
         "feedbackTitle": "有反馈吗？我们在倾听。"
       },
       "homeCenterTipScreenshot": {
-        "description": "随时截屏以快速报告错误",
+        "description": "随时截屏，快速报告问题",
         "title": "小提示"
       },
       "homeGuidanceMultipleTabs": {
@@ -1298,7 +1298,7 @@
       },
       "copySeedPhraseSecureTip": {
         "tip2": "请勿在云服务或笔记应用中粘贴或保存您的助记词。",
-        "copyAnyway": "无论如何复制",
+        "copyAnyway": "仍要复制",
         "title": "请妥善保管你的助记词，不要泄露。",
         "tip1": "其他应用可能会读取您的剪贴板，因此在复制后请避免切换应用。",
         "subTitle": "任何获取到你的助记词的人都可以完全控制你的资金。",
@@ -1308,7 +1308,7 @@
       "screenshotSecureTip": {
         "tip3": "任何获取到你的助记词的人都能完全控制你的钱包，并且这一点无法逆转。",
         "subTitle": "将您的助记词保存为图像可能会使其暴露，因此将其写下是更安全的选择。",
-        "tip1": "截图可以同步到云端或其他设备，并且如果设备丢失、被盗或受到攻击，可以访问这些截图。",
+        "tip1": "截图可能同步到云端或其他设备；如果设备丢失、被盗或遭到入侵，截图可能被他人访问。",
         "title": "截图并不安全",
         "tip2": "应用程序或恶意软件可以读取您照片库中存储的图像。"
       }
@@ -1335,7 +1335,7 @@
       "alert": "此助记词是您资产的凭证。不要丢失或透露给他人，否则您可能会永远失去资产。请在安全的环境下查看并妥善保管。",
       "tapToReveal": {
         "line1": "点击以显示您的助记词",
-        "line2": "确保没有人监视你的屏幕。"
+        "line2": "确保没有人在查看你的屏幕。"
       }
     },
     "unlock": {
@@ -1349,7 +1349,7 @@
         "usePassword": "已切换为使用密码解锁。",
         "failedAndTipTitle": "解锁失败",
         "enableBiometricAlert": {
-          "yes": "是的",
+          "yes": "是",
           "title": "启用 {{ bioType }}",
           "no": "取消",
           "content": "您是否想启用 {{ bioType }} 解锁 Rabby Wallet？"
@@ -1382,7 +1382,7 @@
       "ledger": {
         "scan": {
           "title": "搜索设备",
-          "description": "打开蓝牙并解锁Ledger"
+          "description": "打开蓝牙并解锁 Ledger"
         },
         "openEthApp": {
           "title": "连接中",
@@ -1401,14 +1401,14 @@
         "select": {
           "title": "可用设备",
           "currentDevice": "当前",
-          "description": "保持 ETH APP 打开并选择一个 Ledger 进行连接"
+          "description": "保持 Ethereum 应用打开，并选择一个 Ledger 进行连接"
         },
         "error": {
           "running_app_close_error": "未能关闭 Ledger 设备上运行的应用程序。",
           "ethereum_app_not_installed_error": "请在您的 Ledger 设备上安装 Ethereum 应用。",
           "unknown": "连接失败，请返回并重试。",
           "ethereum_app_unconfirmed_error": "你已拒绝打开 Ethereum 应用的请求。",
-          "ethereum_app_open_error": "请在您的 Ledger 设备上安装/接受以太坊应用。",
+          "ethereum_app_open_error": "请在 Ledger 设备上安装 Ethereum 应用，并在设备上确认打开。",
           "lockedOrNoEthApp": "请保持 Ledger 处于解锁状态并打开 Ethereum 应用程序。"
         }
       },
@@ -1438,7 +1438,7 @@
         "title1": "备份",
         "title3": "安全性",
         "description4": "您的助记词存储在您的设备上，并通过您的密码加密。只有您可以访问它。Rabby 无法检索或访问您的助记词。",
-        "description3": "切勿分享您的 seed phrase—任何有权访问它的人都可以控制您的资金。",
+        "description3": "切勿分享您的助记词——任何获取助记词的人都可以控制您的资金。",
         "title": "什么是“助记词”",
         "title2": "切勿分享",
         "description2": "如果你丢失了你的助记词，你将无法恢复你的钱包。",
@@ -1459,7 +1459,7 @@
         },
         "connect": {
           "title": "连接中",
-          "description": "在设备上输入 PIN 或密码"
+          "description": "在设备上输入 PIN 或密码短语"
         },
         "select": {
           "description": "请选择一个 OneKey 进行连接",
@@ -1468,8 +1468,8 @@
         },
         "inputPin": {
           "title": "输入 PIN",
-          "onDevice": "在设备上输入PIN码",
-          "description": "根据设备屏幕上显示的数字布局输入PIN码。"
+          "onDevice": "在设备上输入 PIN 码",
+          "description": "根据设备屏幕上显示的数字布局输入 PIN 码。"
         }
       },
       "seedPhrase": {
@@ -1499,14 +1499,14 @@
         "backupErrorCloudNotAvailable": "iCloud 暂不可用",
         "backupRestoreCreatedAt": "备份时间: ",
         "backupUnlockTitle": "使用应用密码加密",
-        "backupSuccessICloud": "备份到iCloud",
+        "backupSuccessICloud": "已备份到 iCloud",
         "backupRestoreLoadingText": "正在搜索备份助记词...",
         "backupFailedButton": "重试",
         "backupRestoreDownloadTitle": "导入助记词...",
         "chooseBackupMethodTitle": "选择备份方式",
         "backupTips": "确保在备份助记词时没有其他人看到您的屏幕。",
-        "backupUploadToGDrive": "备份到 Google Drive...",
-        "backupRestoreUnlockDesc": "使用您设置的相同密码来加密您的备份。",
+        "backupUploadToGDrive": "正在备份到 Google Drive...",
+        "backupRestoreUnlockDesc": "请输入加密备份时设置的同一密码。",
         "pastedAndClear": "已粘贴并清除剪贴板",
         "backupRestoreUnlockTitle": "输入备份密码",
         "chooseBackupMethodDesc": "备份可以在您删除应用程序或丢失设备时恢复您的钱包。",
@@ -1531,20 +1531,20 @@
         "ledger": {
           "hdPathType": {
             "ledgerLive": "Ledger Live：Ledger 官方 HD Path。",
-            "legacy": "遗产：MEW / Mycrypto 使用的 HD Path。",
-            "bip44": "BIP44标准：由BIP44协议定义的HD Path。"
+            "legacy": "旧版：MEW / Mycrypto 使用的 HD Path。",
+            "bip44": "BIP44 标准：由 BIP44 协议定义的 HD Path。"
           },
           "hdPathTypeNoChain": {
             "ledgerLive": "Ledger Live：Ledger 官方 HD Path。",
-            "bip44": "BIP44标准：由BIP44协议定义的HD Path。",
-            "legacy": "遗留：MEW / Mycrypto 使用的 HD Path。"
+            "bip44": "BIP44 标准：由 BIP44 协议定义的 HD Path。",
+            "legacy": "旧版：MEW / Mycrypto 使用的 HD Path。"
           }
         },
         "keystone": {
           "hdPathTypeNoChain": {
             "bip44": "BIP44：由BIP44协议定义的HD Path。",
             "legacy": "Legacy：MEW / Mycrypto 使用的 HD Path。",
-            "ledgerLive": "Ledger Live：Ledger官方HD Path。使用Ledger Live路径时，你只能管理10个地址。"
+            "ledgerLive": "Ledger Live：Ledger 官方 HD Path。使用 Ledger Live 路径时，只能管理 10 个地址。"
           },
           "hdPathType": {
             "bip44": "BIP44：由BIP44协议定义的HD Path。",
@@ -1555,20 +1555,20 @@
         "qrCode": {
           "switch": {
             "title": "切换到新的{{0}}设备",
-            "content": "不支持导入多个{{0}}设备。如果你切换到一个新的{{0}}设备，当前设备的地址列表将在开始导入过程之前被移除。"
+            "content": "不支持导入多个 {{0}} 设备。如果切换到新的 {{0}} 设备，开始导入前会先移除当前设备的地址列表。"
           }
         },
-        "manageAddressFrom": "从{{0}}管理钱包到{{1}}",
+        "manageAddressFrom": "管理第 {{0}} 至 {{1}} 个钱包",
         "customAddressHdPath": "自定义钱包 HD Path",
         "selectIndexTip": "选择要开始的钱包序列号：",
         "trezor": {
           "hdPathType": {
             "bip44": "BIP44：由 BIP44 协议定义的 HD Path。",
             "ledgerLive": "Ledger Live: Ledger 官方 HD Path。",
-            "legacy": "遗产：MEW / Mycrypto 使用的 HD Path。"
+            "legacy": "旧版：MEW / Mycrypto 使用的 HD Path。"
           },
           "hdPathTypeNoChain": {
-            "legacy": "遗产：MEW / Mycrypto 使用的 HD Path。",
+            "legacy": "旧版：MEW / Mycrypto 使用的 HD Path。",
             "bip44": "BIP44：由 BIP44 协议定义的 HD Path。",
             "ledgerLive": "Ledger Live：Ledger 官方 HD Path。"
           }
@@ -1581,8 +1581,8 @@
         "title2": "备份",
         "ButtonGotIt": "我知道了。",
         "description1": "私钥是一串字母和数字，用于访问和控制您的钱包。您可以使用它在任何设备上恢复您的钱包。",
-        "description2": "如果您丢失了您的 private key，您将无法恢复您的钱包。",
-        "description4": "您的私钥存储在您设备的本地，并使用您的密码加密。只有您可以访问它。Rabby无法检索或访问您的私钥。",
+        "description2": "如果您丢失私钥，将无法恢复钱包。",
+        "description4": "您的私钥存储在设备本地，并使用密码加密。只有您可以访问，Rabby 无法找回或访问您的私钥。",
         "description3": "切勿分享您的私钥——任何拥有私钥的人都可以控制您的资金。",
         "title3": "永远不要分享它"
       },
@@ -1601,7 +1601,7 @@
     },
     "connect": {
       "blocked": "已阻止",
-      "markRemovedToast": "标记为已删除",
+      "markRemovedToast": "标记已移除",
       "noWebsite": "无",
       "SignTestnetPermission": {
         "title": "签名权限"
@@ -1618,7 +1618,7 @@
       "title": "连接到 DApp",
       "trusted": "可信任的",
       "markAsBlockToast": "标记为“已阻止”",
-      "foundForbiddenRisk": "发现禁用风险。连接已被阻止。",
+      "foundForbiddenRisk": "检测到高危风险，已阻止连接。",
       "flagByRabby": "由 Rabby 标记",
       "markRuleText": "我的标记",
       "popularLevelLow": "低",
@@ -1634,10 +1634,10 @@
       "screenTitle": "连接钱包",
       "connectingToRabby": "正在连接到 Rabby",
       "pairingFailed": "WalletConnect 配对失败。",
-      "connected": "连接成功，请返回Dapp",
+      "connected": "连接成功，请返回 DApp。",
       "proposalExpired": "WalletConnect 连接请求已过期。",
-      "pairingExpired": "WalletConnect 配对已过期。请刷新 dapp 二维码后重试。",
-      "duplicatePairing": "此 WalletConnect URI 已在配对中。请刷新 dapp 二维码后重试。",
+      "pairingExpired": "WalletConnect 配对已过期。请刷新 DApp 二维码后重试。",
+      "duplicatePairing": "此 WalletConnect URI 已在配对中。请刷新 DApp 二维码后重试。",
       "relayUnreachable": "无法连接 WalletConnect relay。请检查网络后重试。",
       "uriEmpty": "WalletConnect URI 不能为空。",
       "uriInvalidFormat": "WalletConnect URI 必须以 wc:<topic>@2 开头。",
@@ -1654,12 +1654,12 @@
       "transactionCanceledReturnToBrowser": "交易已取消！请返回 DApp。"
     },
     "addToken": {
-      "noTokenFound": "未找到 token",
-      "tokenSupported": "Token 已在 Rabby 上支持",
-      "tokenCustomized": "当前代币已添加到自定义",
-      "tokenNotFound": "未找到该合约地址中的Token",
+      "noTokenFound": "未找到代币",
+      "tokenSupported": "Rabby 已支持该代币",
+      "tokenCustomized": "当前代币已添加到自定义列表",
+      "tokenNotFound": "未在该合约地址找到代币",
       "title": "向 Rabby 添加自定义代币",
-      "hasAdded": "此代币已被添加。"
+      "hasAdded": "您已添加该代币。"
     },
     "createPassword": {
       "setUpSuccess": "密码设置成功",
@@ -1672,7 +1672,7 @@
       "passwordRequired": "请输入密码",
       "title": "设置密码",
       "Newpassword": "新密码",
-      "subTitle": "它将用于解锁您的钱包并加密本地数据",
+      "subTitle": "此密码用于解锁钱包并加密本机数据，无法找回。若密码丢失，您需要重置并重新导入钱包。",
       "passwordMinTip": "至少需包含 8 个字符",
       "phoneNotSupport": "您的手机不支持{{ bioType }}",
       "passwordMin": "密码长度必须至少为 8 个字符。",
@@ -1691,7 +1691,7 @@
       "replaceBtn": "替换",
       "viewBtn": "查看",
       "unlimited": "无限制",
-      "LowerNonceError": "Nonce为{{nonce}}的交易需要优先执行。",
+      "LowerNonceError": "Nonce 为 {{nonce}} 的交易需要优先执行。",
       "submitBtn": "提交交易",
       "noData": "没有待处理的交易",
       "loading": "加载待处理的交易",
@@ -1703,7 +1703,7 @@
         "desc": "已签名的交易无法移除，但可以用具有相同 nonce 的新交易替换。",
         "options": {
           "reject": "拒绝交易",
-          "send": "发送 Token"
+          "send": "发送代币"
         },
         "title": "选择如何替换此交易"
       },
@@ -1722,7 +1722,7 @@
       "remove-from-whitelist": "从白名单中移除",
       "backup-private-key": "备份私钥",
       "address": "地址",
-      "admins": "管理员们",
+      "admins": "管理员",
       "qr-code": "二维码",
       "hd-path": "HD Path",
       "safeAddressListScreen": {
@@ -1733,7 +1733,7 @@
       "add-to-whitelist": "添加到白名单",
       "addressListScreen": {
         "edit": "编辑",
-        "detail": "细节",
+        "detail": "详情",
         "unpin": "取消固定",
         "pin": "置顶",
         "delete": "删除",
@@ -1741,13 +1741,13 @@
         "title_one": "{{count}} 钱包",
         "addAddress": "添加钱包",
         "title_zero": "0 钱包",
-        "importWatchAddress": "导入的观察钱包",
-        "importSafeAddress": "导入的 Safe Wallet",
+        "importWatchAddress": "导入的仅查看钱包",
+        "importSafeAddress": "导入的 Safe 钱包",
         "moreWallets": "更多钱包",
-        "notIncludedInTotalBalance": "不包括在总余额中",
-        "notIncludedInTransactions": "不包含在 Transactions 中"
+        "notIncludedInTotalBalance": "未计入总余额",
+        "notIncludedInTransactions": "未包含在交易记录中"
       },
-      "pin-in-list": "置顶在列表中",
+      "pin-in-list": "在列表中置顶",
       "manage-seed-phrase": "管理助记词",
       "backup-seed-phrase": "备份助记词",
       "backupFailed": "备份失败，请重试",
@@ -1759,11 +1759,11 @@
       "manage-addresses-under-this-seed-phrase": "使用此助记词添加钱包",
       "notMatterAddressDialog": {
         "notTop10Address": "排名在前10名之外的钱包",
-        "title": "以下钱包不包括在总余额中",
+        "title": "以下钱包未计入总余额",
         "safeWallet": "Safe 钱包",
-        "helpDescription1": "为了确保数据更新的及时性和准确性，仅包括您的前 10 个钱包在总余额和投资组合中。",
+        "helpDescription1": "为确保数据及时、准确，只有排名前 10 的钱包会计入总余额和投资组合。",
         "helpTitle": "排名在前10之外的钱包",
-        "watchOnlyWallet": "观察钱包",
+        "watchOnlyWallet": "仅查看钱包",
         "helpDescription2": "您可以长按以固定钱包并调整包含哪些钱包。"
       },
       "basicInfo": "基本信息",
@@ -1784,7 +1784,7 @@
       "top-100": "前 100 名",
       "title": "Rabby Points",
       "earn-points": "赚取积分",
-      "out-of-x-current-total-points": "共分发点数 {{total}} 之外",
+      "out-of-x-current-total-points": "总计已分发 {{total}} 积分",
       "claimModal": {
         "rabbyDesktopGenesisNft": "Rabby Desktop Genesis NFT",
         "title": "领取初始积分",
@@ -1805,11 +1805,11 @@
         "referral-code-already-exists": "推荐代码已存在",
         "my-referral-code": "我的推荐码",
         "referral-code-cannot-be-empty": "推荐码不能为空",
-        "referral-code-cannot-exceed-15-characters": "推荐码不能超过15个字符。",
+        "referral-code-cannot-exceed-15-characters": "推荐码不能超过 15 个字符。",
         "refer-a-new-user-to-get-50-points": "推荐一位新用户可获得 50 积分",
         "referral-code-available": "推荐码可用",
         "set-my-referral-code": "设置我的推荐码",
-        "set-my-code": "设置我的密码",
+        "set-my-code": "设置我的代码",
         "confirm": "确认",
         "once-set-this-referral-code-is-permanent-and-cannot-change": "一旦设置，此推荐代码将是永久性的，无法更改。",
         "verifyAddressModal": {
@@ -1840,11 +1840,11 @@
         "totalChain_other": "总共 {{count}} 条链"
       },
       "emptyToken": {
-        "title": "为您的钱包注资",
+        "title": "暂无资产",
         "buyHeader": "使用法币购买",
         "buyBody": "简单的加密货币购买",
-        "receiveHeader": "接收 Crypto",
-        "desc": "立即快速充值",
+        "receiveHeader": "接收加密货币",
+        "desc": "立即为钱包充值",
         "receiveBody": "从另一个钱包转移代币",
         "importHeader": "导入钱包",
         "importBody": "添加一个已有资金的钱包。"
@@ -1874,14 +1874,14 @@
         "nativeTokenSymbol": "货币符号",
         "rpcUrlRequired": "请输入 RPC URL",
         "nameRequired": "请输入网络名称",
-        "idRequired": "请输入链 id",
+        "idRequired": "请输入链 ID",
         "id": "链 ID",
         "name": "网络名称",
         "nativeTokenSymbolRequired": "请输入货币符号",
         "rpcUrl": "RPC URL"
       },
       "id": "ID",
-      "desc": "Rabby无法验证自定义网络的安全性。请仅添加可信网络。",
+      "desc": "Rabby 无法验证自定义网络的安全性。请仅添加可信网络。",
       "signTx": {
         "title": "交易数据"
       },
@@ -1891,7 +1891,7 @@
         "search": "搜索自定义网络名称或 ID",
         "tips": {
           "added": "您已经添加了此链",
-          "supported": "Rabby Wallet 已集成的 Chain"
+          "supported": "Rabby Wallet 已支持该链"
         }
       },
       "ConfirmModifyRpcModal": {
@@ -1917,37 +1917,37 @@
       "title": "授权"
     },
     "gasAccount": {
-      "deposit": "存款",
+      "deposit": "充值",
       "switchLoginAddressBeforeDeposit": {
-        "title": "存款前切换地址",
+        "title": "充值前切换地址",
         "desc": "请切换到您的登录地址。"
       },
       "risk": "检测到您的当前地址存在风险，因此此功能不可用。",
       "logoutConfirmModal": {
         "logout": "登出",
         "title": "退出当前 GasAccount",
-        "desc": "退出登录后，你将无法继续使用 GasAccount 支付 Gas 费用。",
+        "desc": "退出后将停用 GasAccount。之后可使用此地址重新登录来恢复 GasAccount。",
         "logoutSuccess": "登出成功"
       },
       "loginInTip": {
         "desc": "支付所有链上的 Gas 费用",
-        "title": "存入 USDC / USDT"
+        "title": "充值 USDC / USDT"
       },
       "logout": "退出当前 GasAccount",
       "GasAccountDepositTipPopup": {
-        "title": "打开 GasAccount 并存入",
+        "title": "开启 GasAccount 并充值",
         "gotIt": "知道了"
       },
-      "withdraw": "提款",
-      "noBalance": "没有余额可提取",
+      "withdraw": "提现",
+      "noBalance": "无可提现余额",
       "gasExceed": "GasAccount 余额不能超过 $1000",
       "history": {
         "noHistory": "过去 30 天内无历史记录"
       },
       "depositPopup": {
-        "title": "存入 GasAccount",
+        "title": "充值 GasAccount",
         "desc": "将资金存入 Rabby 的 DeBank L2 Account，无需额外费用，且可随时提现。",
-        "zeroInvalidAmount": "金额不能为空。",
+        "zeroInvalidAmount": "金额不能为 0。",
         "invalidAmount": "必须在 500 以下",
         "amount": "金额",
         "token": "代币",
@@ -1955,19 +1955,19 @@
         "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
         "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现",
         "applePayFeeDesc": "包含 Apple Pay 手续费。无法提现",
-        "googlePayFeeDesc": "包括 Google Pay 费用。不允许提款",
+        "googlePayFeeDesc": "包含 Google Pay 手续费，不可提现。",
         "inSufficientTip1": "这个钱包没有足够的代币，请选择其他钱包。",
         "paymentAddress": "支付钱包",
         "pay": "支付",
-        "applePayFeeDesc1": "包含应用商店费用。不支持提款。",
+        "applePayFeeDesc1": "包含 App Store 费用，不可提现。",
         "unavailablePaymentWallet": "所选支付钱包不可用",
         "balanceLabel": "余额",
         "fetchQuoteFailed": "获取报价失败",
-        "selectToken": "Token选择",
-        "gasDepositTitle": "Gas 充值",
+        "selectToken": "选择要充值的代币",
+        "gasDepositTitle": "充值 Gas",
         "estReceiveLabel": "预计收款：{{usd}}",
         "insufficientBalanceLabel": "余额不足",
-        "minAmountRequired": "最低存款金额为 $1",
+        "minAmountRequired": "最低充值金额为 $1",
         "estReceiveTip": "服务通过 {{name}} 处理，可能会有滑点。",
         "suggestedToken": "建议的代币",
         "noAvailableToken": "没有可用的代币"
@@ -1980,48 +1980,48 @@
       },
       "withdrawPopup": {
         "noEnoughValuetBalance": "Vault Balance不足。请切换链或稍后重试。",
-        "noEnoughGas": "金额过低，无法支付 gas 费用",
-        "riskMessageFromChain": "由于风险控制，提现限额取决于从该链存入的总金额。",
-        "riskMessageFromAddress": "由于风险控制，提款限制取决于该地址的存款总额。",
+        "noEnoughGas": "金额过低，无法支付 Gas 费用",
+        "riskMessageFromChain": "由于风险控制，提现限额取决于从该链充值的总金额。",
+        "riskMessageFromAddress": "由于风险控制，提现限额取决于该地址的充值总额。",
         "selectDestinationChain": "选择目标链",
-        "withdrawalLimit": "提取限额",
+        "withdrawalLimit": "提现限额",
         "title": "提现",
         "desc": "你可以将 GasAccount 余额提现到 DeBank L2 Wallet。登录 DeBank L2 Wallet 后，可按需将资金转移到支持的区块链。",
         "amount": "金额",
-        "to": "对于",
+        "to": "转入",
         "selectChain": "选择链",
         "destinationChain": "目标链",
-        "deductGasFees": "接收金额将扣除 gas 费用",
+        "deductGasFees": "接收金额将扣除 Gas 费用",
         "tipsBtn": "我知道了",
-        "noEnoughValueBalance": "Vault Balance insufficient. 切换链或稍后重试。",
-        "recipientAddress": "接收钱包",
-        "noRecipient": "没有可用的收件人钱包",
+        "noEnoughValueBalance": "Vault 余额不足。请切换链或稍后重试。",
+        "recipientAddress": "收款钱包",
+        "noRecipient": "没有可用的收款钱包",
         "selectRecipientAddress": "选择收款钱包",
-        "availableBalance": "可提取余额：{{balance}}"
+        "availableBalance": "可提现余额：{{balance}}"
       },
       "withdrawConfirmModal": {
-        "title": "已转入您的 DeBank L2 钱包",
+        "title": "已转入您的 DeBank L2 Wallet",
         "button": "在 DeBank 上查看"
       },
       "depositPayPopup": {
         "title": "使用 Apple Pay 购买",
-        "depositCanceled": "存款已取消",
-        "depositFailed": "存款失败",
+        "depositCanceled": "充值已取消",
+        "depositFailed": "充值失败",
         "titleAndroid": "使用 Google Pay 购买",
         "balance": "当前 GasAccount 余额：",
-        "titleApple": "在应用商店购买",
+        "titleApple": "在 App Store 购买",
         "topUpPayTips": "需要 Gas：{{topUpUsd}}，Gas 剩余预估：{{balance}}"
       },
       "depositSelectPopup": {
-        "depositTokenDesc": "无额外费用，即时提款",
-        "buyWith": "使用购买",
-        "title": "存入GasAccount",
-        "buyWithDesc": "30% 手续费，不可提款",
+        "depositTokenDesc": "无额外费用，即时提现",
+        "buyWith": "使用以下方式购买",
+        "title": "充值 GasAccount",
+        "buyWithDesc": "30% 手续费，不可提现",
         "desc": "在所有链上支付 Gas 费用",
-        "depositToken": "使用 Token 充值",
-        "buyWithApple": "在应用商店购买",
-        "insufficientTokenBalance": "余额不足",
-        "appStore": "App Store 充值"
+        "depositToken": "使用代币充值",
+        "buyWithApple": "在 App Store 购买",
+        "insufficientTokenBalance": "代币余额不足",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
@@ -2030,27 +2030,27 @@
         "wallet": "钱包"
       },
       "loginFailed": "登录失败",
-      "depositSuccess": "存款成功",
-      "depositCanceled": "存款已取消",
+      "depositSuccess": "充值成功",
+      "depositCanceled": "充值已取消",
       "loginSuccess": "登录成功",
-      "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。",
+      "withdrawDisabledIAP": "由于您的余额中包含不可提现的法币资金，提现功能已禁用。请联系客服以提现代币余额。",
       "benefitCard": {
         "title": "在所有链上支付 Gas 费用",
-        "subtitle": "当你没有 gas 的时候",
+        "subtitle": "当您没有 Gas 时",
         "item3": "支持所有交易",
         "desc2": "80+ 网络上的自动 Gas 支付",
         "desc3": "兑换、跨链、发送、DApp 等更多功能",
         "item2": "支持所有网络",
-        "item1": "无 Rabby Fee",
-        "desc1": "无需支付额外的 gas 费用"
+        "item1": "无 Rabby 费用",
+        "desc1": "支付 Gas 无额外费用"
       },
-      "depositNow": "立即存款",
+      "depositNow": "立即充值",
       "switchAccount": "切换钱包",
-      "depositFailed": "存款失败",
-      "lowBalance": "您的 gas 不足（<$1.00）。请存入 gas 以确保未来交易顺利进行。",
+      "depositFailed": "充值失败",
+      "lowBalance": "您的 Gas 不足（<$1.00）。请充值 Gas，以确保后续交易顺利进行。",
       "gasBalance": "Gas 余额",
-      "depositSubmitted": "存款已提交",
-      "depositWith": "通过"
+      "depositSubmitted": "充值已提交",
+      "depositWith": "充值方式"
     },
     "search": {
       "header": {
@@ -2064,7 +2064,7 @@
         "searchTips": "搜索网络",
         "noResult": "未找到结果",
         "noResults": "没有结果",
-        "searching": "结果来自"
+        "searching": "搜索结果："
       },
       "sectionHeader": {
         "Defi": "DeFi",
@@ -2081,8 +2081,8 @@
         "title": "热门"
       },
       "globalSearch": {
-        "placeHolder": "搜索 DApp/Token",
-        "iosPlaceHolder": "搜索网站/Token"
+        "placeHolder": "搜索 DApp/代币",
+        "iosPlaceHolder": "搜索网站/代币"
       },
       "tokenHeader": {
         "tokenAndFdv": "代币/FDV",
@@ -2111,14 +2111,14 @@
         "includeBalance": "计入余额",
         "all": "全部",
         "unfavorite": "取消收藏",
-        "favorite": "收藏夹"
+        "favorite": "收藏"
       },
       "excludeBalanceTips": "此资产已从您的总余额中排除以确保准确性。您可以点击查看详情，并根据需要将其包含在内。",
       "notSupportedOnChain": "该链不支持",
       "actionsTips": {
         "includeBalance_success": "计入余额",
         "fold_success": "折叠成功",
-        "pin_success": "固定成功",
+        "pin_success": "置顶成功",
         "excludeBalance_success": "从余额中排除",
         "unfold_success": "展开成功",
         "unpin_success": "取消置顶成功"
@@ -2131,14 +2131,14 @@
       "IssuerWebsite": "发行方网站",
       "OriginIssue": "在此区块链上原生发行",
       "ListedBy": "收录方",
-      "NoListedSite": "暂无上市信息",
+      "NoListedSite": "暂无收录信息",
       "IssuedBy": "发行方",
       "TokenName": "代币名称",
       "fdv": "FDV",
-      "NoSupportedExchanges": "没有可用的受支持交易所",
-      "OriginalToken": "原生代币",
+      "NoSupportedExchanges": "暂无支持的交易所",
+      "OriginalToken": "原始代币",
       "SupportedExchanges": "支持的交易所",
-      "noTransactions": "没有交易",
+      "noTransactions": "暂无交易",
       "fdvTitle": "什么是 FDV？",
       "BridgeIssue": "由第三方跨链的代币",
       "fdvContent": "假设最大供应量全部进入流通后的市值。完全稀释估值（FDV）= 价格 × 最大供应量。如果最大供应量为空，则 FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或为无穷大，则不显示 FDV。",
@@ -2151,8 +2151,8 @@
       "balance": "余额",
       "Mybalance": "代币余额",
       "guideToMarketData": "市场数据：",
-      "notSupported": "不支持的Token",
-      "Transaction": "代币历史",
+      "notSupported": "不支持的代币",
+      "Transaction": "代币记录",
       "tabs": {
         "tokenSecurity": "代币安全",
         "marketData": "市场数据"
@@ -2177,7 +2177,7 @@
             "addresses": "地址",
             "hour": "小时",
             "time": "时间",
-            "all": "所有",
+            "all": "全部",
             "volume": "交易量",
             "buy": "买入",
             "address": "地址",
@@ -2192,7 +2192,7 @@
         },
         "empty": "无数据",
         "details": "详情",
-        "summary": "摘要数据",
+        "summary": "汇总数据",
         "activity": "交易活动",
         "pool": {
           "tab": {
@@ -2200,7 +2200,7 @@
             "liquidityDetail": "流动性详情"
           },
           "actions": {
-            "all": "所有",
+            "all": "全部",
             "remove": "移除",
             "add": "添加"
           },
@@ -2209,17 +2209,17 @@
             "amount": "金额",
             "value": "价值"
           },
-          "dex": "Dex",
+          "dex": "DEX",
           "pair": "币对",
           "amount": "金额",
           "value": "价值"
         },
-        "pools": "池子"
+        "pools": "资金池"
       },
       "headerBalanceText": "余额",
       "price": "价格",
       "headerTokenValueText": "代币价值",
-      "copyCA": "Token 合约地址已复制",
+      "copyCA": "代币合约地址已复制",
       "wallet": "钱包",
       "customTestnetNotSupported": "不支持该链上的代币"
     },
@@ -2242,12 +2242,12 @@
       }
     },
     "securityEngine": {
-      "ignoreAlert": "忽略警报",
+      "ignoreAlert": "忽略风险提示",
       "no": "否",
       "undo": "撤销",
       "riskProcessed": "风险提示已被忽略",
       "whenTheValueIs": "当值为 {{value}} 时",
-      "yes": "是的",
+      "yes": "是",
       "viewRules": "查看安全规则",
       "ruleDetailTitle": "风险详情",
       "unknownResult": "结果未知，因为安全引擎当前不可用"
@@ -2277,14 +2277,14 @@
       "appCache": "清空应用缓存",
       "currentLanguage": "当前语言",
       "clearPendingWarning": "被移除的交易可能仍会在链上确认，除非它被替换。",
-      "clearPendingResetDesc": "还重置了我的本地 nonce 数据和签名记录。",
+      "clearPendingResetDesc": "同时重置本地 Nonce 数据和签名记录",
       "clearPendingToast": "本地待处理交易已被移除",
       "clearBrowserData": "清除浏览器数据",
       "currency": "货币",
       "searchCurrency": "搜索货币",
-      "screenshotReportSwitch": "截图以报告错误",
+      "screenshotReportSwitch": "截图报告问题",
       "dataAnalysis": "数据分析",
-      "bugReportHistory": "Bug 报告历史",
+      "bugReportHistory": "问题反馈记录",
       "bugReportChat": "通过聊天分享反馈"
     },
     "settingModal": {
@@ -2324,7 +2324,7 @@
       },
       "quote": {
         "best": "最佳报价",
-        "title": "引用报价给您"
+        "title": "为您提供的报价"
       },
       "youWillPay": "支付",
       "toBuy": "继续购买",
@@ -2338,11 +2338,11 @@
       "youWillReceive": "接收",
       "paymentProviderTips": "此提供商支持以下支付方式：",
       "title": "购买",
-      "history": "购买历史",
+      "history": "购买记录",
       "noQuote": "未找到报价：请尝试输入更高的数值。"
     },
     "eip7702": {
-      "alert": "EIP-7702尚未支持"
+      "alert": "暂不支持 EIP-7702"
     },
     "sendPoly": {
       "modals": {
@@ -2356,26 +2356,26 @@
       "enterAddress": "输入地址",
       "emptyWhitelistHeader": "添加白名单地址",
       "emptyWhitelistTip": "尚无白名单地址，",
-      "whitelistTitle": "我的白名单地址列表",
+      "whitelistTitle": "我的白名单地址",
       "emptyWhitelistContent": "将受信任的地址添加到白名单以实现快速转账——下次无需确认",
       "sendTimeHeader": "发送",
       "innerEnterAddress": "输入地址 / ENS",
       "recent": "最近",
       "SelectFromHistory": "从历史中选择",
-      "SendHistory": "发送历史",
+      "SendHistory": "转账记录",
       "sentTimeHeader": "发送",
       "sendToWatchAddress": "发送到只读钱包",
       "sendToSafeAddress": "发送到 Safe 钱包",
       "sendToImportedAddress": "发送到我的导入钱包",
-      "dividerWatchOnlyWallets": "仅观察钱包",
+      "dividerWatchOnlyWallets": "仅查看钱包",
       "enterOrSearchAddress": "输入或搜索地址"
     },
     "confirmAddress": {
       "risks": {
-        "scamAddress": "接收地址是一个被 Rabby 标记的诈骗地址。",
+        "scamAddress": "您正在向诈骗地址转账。",
         "contractAddress": "收款地址是一个合约地址，可能导致资金损失",
         "cexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。",
-        "noSend": "您在过去180天内没有向这个地址发送过交易。"
+        "noSend": "您在过去 180 天内未向此地址转账。"
       },
       "brandNameTail": "地址",
       "dexNameTail": "充值地址",
@@ -2401,7 +2401,7 @@
       "header": {
         "address": "地址",
         "name": "名称",
-        "exchange": "交易地址？"
+        "exchange": "交易所地址？"
       },
       "placeholder": {
         "name": "命名您的地址",
@@ -2418,10 +2418,10 @@
       "importedSuccessfully": "导入成功！",
       "syncingTips": "请保持相机稳定，直至扫描完成",
       "newUserVerify": "它也将作为您 Rabby Mobile 的默认密码。",
-      "verifyWithPassword": "使用您的 Rabby Extension 密码进行验证",
-      "scanTips1": "在 Rabby 插件上点击“Mobile Sync”",
+      "verifyWithPassword": "使用您的 Rabby 浏览器扩展密码进行验证",
+      "scanTips1": "在 Rabby 浏览器扩展中点击“Mobile Sync”",
       "importedTips": "如果应用程序中已经存在重复地址，则不会导入。地址备注和白名单也将同步。",
-      "verifyTips": "您的数据已离线加密。请输入您的 Rabby 插件密码进行解密和验证。"
+      "verifyTips": "您的数据已离线加密。请输入 Rabby 浏览器扩展密码进行解密和验证。"
     },
     "safeMessageQueue": {
       "noData": "没有消息",
@@ -2460,8 +2460,8 @@
         "recent": "最近",
         "searchInGoogle": "在 Google 中搜索 \"{{searchText}}\"",
         "recentEmpty": "开始探索网站",
-        "favorite": "收藏夹",
-        "hot": "热",
+        "favorite": "收藏",
+        "hot": "热门",
         "otherResults": "其他结果",
         "hot10": "热榜 10"
       },
@@ -2497,7 +2497,7 @@
         "more": "更多"
       },
       "DappInfoPopup": {
-        "listedBy": "列出者",
+        "listedBy": "收录方",
         "sitePopularity": "网站热度",
         "popularLevelHigh": "高",
         "popularLevelMedium": "中",
@@ -2516,8 +2516,8 @@
     },
     "browserManage": {
       "option": {
-        "history": "历史",
-        "tab": "标签",
+        "history": "历史记录",
+        "tab": "标签页",
         "favorites": "收藏夹",
         "recent": "最近"
       },
@@ -2526,13 +2526,13 @@
         "emptyTitle": "尚未添加网站"
       },
       "BrowserHistoryList": {
-        "title": "历史",
+        "title": "历史记录",
         "clearAllHistory": "清除所有历史记录",
         "emptyTitle": "过去30天内没有历史记录"
       },
       "BrowserTabList": {
         "closeAllTabs": "关闭所有标签页",
-        "emptyTitle": "还没有打开的标签页",
+        "emptyTitle": "尚未打开任何标签页",
         "emptyDesc": "现在打开一个新标签页"
       }
     },
@@ -2556,8 +2556,8 @@
     },
     "copyTrading": {
       "tipsDollar": {
-        "title": "来自 Smart Money 的 Copy Trading",
-        "description": "发现基于 Smart Money Wallets 最近活动的代币。点按代币即可查看这些 wallets 的详细交易金额和历史收益。"
+        "title": "跟随聪明钱交易",
+        "description": "根据聪明钱钱包的近期活动发现代币。点按代币即可查看这些钱包的详细交易金额和历史收益。"
       },
       "buy": "购买",
       "updateText": "{{count}} 个趋势已更新",
@@ -2565,14 +2565,14 @@
       "historyProfit": "历史收益",
       "recentBuy": "最近购买",
       "comingSoon": "即将推出...",
-      "smartMoneyWallets": "Smart Money Wallets",
-      "refreshTitle": "加载更多来自 Smart Money 的 Copy Trading",
-      "smartMoneyWallet": "Smart Money Wallet",
+      "smartMoneyWallets": "聪明钱钱包",
+      "refreshTitle": "正在加载更多聪明钱跟单交易",
+      "smartMoneyWallet": "聪明钱钱包",
       "filterRule": {
         "tokenCreate": "最近创建的",
-        "smartMoney": "正在交易的 Smart Wallets",
+        "smartMoney": "正在交易的聪明钱钱包",
         "24HChange": "24小时变化",
-        "smartWalletCount": "Smart Wallet 数量"
+        "smartWalletCount": "聪明钱钱包数量"
       },
       "chain": "链",
       "info": "信息",
@@ -2580,8 +2580,8 @@
       "earned": "已赚取",
       "tokenName": "代币名称",
       "Liquidity": "流动性",
-      "smartWalletsBuying": "{{len}} 个 Smart Wallets 正在买入",
-      "timeLabelAgo": "创建于 {{time}} 前",
+      "smartWalletsBuying": "{{len}} 个聪明钱钱包正在买入",
+      "timeLabelAgo": "{{time}} 前创建",
       "earn": "赚取",
       "contractAddress": "合约地址",
       "noOtherTokensWithSameName": "没有找到其他名称相同的代币",
@@ -2589,22 +2589,22 @@
       "buyEarn": "24小时购买 / 赚取",
       "loss": "损失",
       "tokenInfo": "代币信息",
-      "bought": "购买",
-      "token": "令牌",
-      "twitterNews": "X 中的新闻",
+      "bought": "已买入",
+      "token": "代币",
+      "twitterNews": "X 上的新闻",
       "createdTime": "创建时间",
-      "timeSmartWallet": "时间 / Smart Wallet",
+      "timeSmartWallet": "时间 / 聪明钱钱包",
       "myCopyTradingEarnings": "我的跟单交易收益",
       "myCopyTrading": "我的跟单交易",
-      "smartWallets": "Smart Wallets",
+      "smartWallets": "聪明钱钱包",
       "currentToken": "当前代币",
       "myBalanceFromCopyTrading": "我的跟单交易余额",
       "updateTokenText": "{{count}} 个代币已更新",
-      "gettingLatest": "正在获取 Smart Money 的最新动态..."
+      "gettingLatest": "正在获取聪明钱的最新动态..."
     },
     "watchlist": {
       "empty": {
-        "title": "您的观察列表中还没有代币"
+        "title": "关注列表中暂无代币"
       },
       "search": {
         "title": "搜索代币"
@@ -2620,7 +2620,7 @@
         "add": "添加到关注列表（{{count}}）"
       },
       "toast": {
-        "remove": "成功从观察列表中移除"
+        "remove": "已从关注列表中移除"
       }
     },
     "universalLink": {
@@ -2630,7 +2630,7 @@
       }
     },
     "perpsHistory": {
-      "title": "历史"
+      "title": "历史记录"
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "内建页面"
@@ -3454,7 +3454,7 @@
       },
       "tabs": {
         "stock": "股票",
-        "watchlist": "观察列表",
+        "watchlist": "关注列表",
         "memecoin": "Memecoin",
         "commodities": "大宗商品"
       },
@@ -3465,10 +3465,10 @@
       "restoreWallet": {
         "title": "恢复您的 Rabby 钱包",
         "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。",
-        "subtitleInApp": "从下方选择一种快速导入您的钱包的方式"
+        "subtitleInApp": "从下方选择一种方式，快速从 Rabby 浏览器扩展或 iCloud 导入您的钱包"
       },
       "common": {
-        "orYouCanCreateNewWallet": "没有钱包？立即<clickable>创建新钱包</clickable>"
+        "orYouCanCreateNewWallet": "或者，您也可以<clickable>创建新钱包</clickable>"
       },
       "importSecret": {
         "seedPhrasePlaceholder": "输入你的助记词",
@@ -3482,7 +3482,7 @@
       "failReason": {
         "missingRequiredParams": "缺少必要参数",
         "quoteUnavailable": "获取报价失败",
-        "gasCostTooHigh": "超过 gas 费用上限",
+        "gasCostTooHigh": "超过 Gas 费用上限",
         "priceImpactTooHigh": "价格影响过高",
         "buildSwapTxsFailed": "构建兑换交易失败",
         "sendSwapTxFailed": "发送兑换交易失败",
@@ -3498,19 +3498,19 @@
       "receiveSummary": {
         "progress": "兑换进度",
         "priceImpact": "价格影响上限",
-        "gasLimit": "单笔交易 Gas limit",
+        "gasLimit": "单笔交易 Gas 上限",
         "estimateReceive": "预计收到：",
         "actualReceive": "收到"
       },
       "bottomBar": {
         "stop": "停止",
         "continue": "继续",
-        "start": "开始转换"
+        "start": "开始兑换"
       },
       "completed": {
-        "title": "小额资产已转换！",
+        "title": "零散资产兑换完成！",
         "receive": "已收到：",
-        "failedTitle": "转换已结束",
+        "failedTitle": "兑换已结束",
         "viewMoreDetail": "查看更多详情",
         "fold": "折叠"
       },
@@ -3525,7 +3525,7 @@
         "stop": "停止兑换"
       },
       "homeBanner": {
-        "title": "清理小额资产",
+        "title": "兑换零散资产",
         "description": "支持将小额余额转换为原生代币"
       },
       "colValueAmount": "价值/金额",
@@ -3534,16 +3534,16 @@
       "emptyText": "未找到低价值代币",
       "unsupportedAccountType": "不支持此账户类型。",
       "unsupportedAccount": "目前仅支持私钥和助记词地址。",
-      "title": "小额资产归集"
+      "title": "兑换零散资产"
     }
   },
   "component": {
     "ModalPreviewNFTItem": {
       "FieldLabel": {
         "PurschaseDate": "购买日期",
-        "Collection": "收藏",
+        "Collection": "合集",
         "Chain": "链",
-        "LastPrice": "最后价格"
+        "LastPrice": "上次价格"
       }
     },
     "AuthenticationModal": {
@@ -3551,10 +3551,10 @@
     },
     "NFTDetailModal": {
       "FieldLabel": {
-        "Collection": "收藏夹",
+        "Collection": "合集",
         "PurschaseDate": "购买日期",
         "Chain": "链",
-        "LastPrice": "最后价格"
+        "LastPrice": "上次价格"
       }
     },
     "accountSwitcher": {
@@ -3569,7 +3569,7 @@
     "AccountSelectDrawer": {
       "btn": {
         "cancel": "取消",
-        "proceed": "进行"
+        "proceed": "继续"
       }
     },
     "NFTNumberInput": {
@@ -3581,7 +3581,7 @@
       "hot": "热门",
       "common": "常规",
       "searchPlaceHolder1": "按名称 / 地址搜索",
-      "searchPlaceHolder2": "搜索 Token",
+      "searchPlaceHolder2": "搜索代币",
       "contextMenu": {
         "viewDetail": "查看详情"
       },
@@ -3594,7 +3594,7 @@
       },
       "riskDetected": {
         "proceedBtn": "继续",
-        "title": "风险检测到",
+        "title": "检测到风险",
         "simpleExplanation": "不支持"
       },
       "placeholders": {
@@ -3604,7 +3604,7 @@
     },
     "NoLongerSupports": {
       "button": "知道了",
-      "title": "不再支持移动钱包地址",
+      "title": "不再支持移动端钱包地址",
       "desc": "以下地址将被移除。你仍然可以在原钱包应用中找到它们。导入助记词或私钥以在此使用它们。"
     },
     "AuthenticationModals": {
@@ -3616,10 +3616,10 @@
         "notEnabled": "生物识别未启用"
       },
       "biometrics": {
-        "disable": "禁用 {{ bioType }}",
+        "disable": "确认禁用 {{ bioType }}？",
         "enableTip": "启用 {{ bioType }} 解锁 Rabby",
         "disableTip": "禁用 {{ bioType }} 以解锁 Rabby",
-        "enable": "启用 {{ bioType }}"
+        "enable": "输入密码\n以启用 {{ bioType }}"
       }
     },
     "PillsSwitch": {
@@ -3648,51 +3648,51 @@
     "gasAccount": {
       "deposit": "充值",
       "gasExceed": "GasAccount 余额不能超过 $1000",
-      "withdraw": "提取",
+      "withdraw": "提现",
       "history": {
         "noHistory": "暂无历史记录"
       },
       "withdrawConfirmModal": {
-        "button": "在 DeBank APP 上查看",
+        "button": "在 DeBank App 上查看",
         "title": "已转入您的 DeBank L2 钱包"
       },
       "loginInTip": {
         "login": "登录 GasAccount",
         "desc": "支付所有链上的Gas 费用",
-        "title": "存款 USDC / USDT",
+        "title": "充值 USDC / USDT",
         "loginAndClaim": "登录并领取 {{amount}}",
         "loginTips2": "任何链上的任何地址",
         "loginTips3": "当你的 GasAccount 用尽时",
-        "loginTips1": "支付 gas 费用给",
+        "loginTips1": "支付 Gas 费用给",
         "learnAbout": "了解更多关于 GasAccount 的信息",
         "depositDesc": "在所有链上，当您没有 Gas 时",
-        "depositTitle": "存入 USDC/USDT 支付 Gas 费用"
+        "depositTitle": "充值 USDC/USDT 支付 Gas 费用"
       },
       "loginConfirmModal": {
-        "desc": "登录后，您只能在此地址进行存款。",
+        "desc": "登录后，只能使用此地址充值。",
         "title": "切换钱包"
       },
       "depositPopup": {
         "token": "代币",
-        "selectToken": "选择代币进行存款",
+        "selectToken": "选择要充值的代币",
         "desc": "将资金存入 Rabby 的 DeBank L2 Account，无需额外费用，且可随时提现。",
-        "title": "存入",
+        "title": "充值",
         "amount": "金额"
       },
       "withdrawPopup": {
-        "title": "提取",
+        "title": "提现",
         "amount": "金额",
         "desc": "你可以将 GasAccount 余额提现到 DeBank L2 Wallet。登录 DeBank L2 Wallet 后，可按需将资金转移到支持的区块链。",
         "to": "至"
       },
       "depositWithTokenDesc": "无额外费用，立即提现",
-      "depositWithPay": "使用购买",
-      "depositWithPayDesc": "30% 费用，无提现",
-      "depositWithToken": "使用 Token 存款",
+      "depositWithPay": "使用以下方式购买",
+      "depositWithPayDesc": "收取 30% 费用，不可提现",
+      "depositWithToken": "使用代币充值",
       "giftInfo": {
         "noWithdrawableBalanceTitle": "{{amount}} 不可提现",
         "gotIt": "我明白了",
-        "giftTips": "活跃用户的 Gas Reward",
+        "giftTips": "活跃用户 Gas 奖励",
         "noWithdrawableBalanceDescription": "你的 Gas 余额中有 {{amount}} 不可提现：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       },
       "about": {
@@ -3715,7 +3715,7 @@
     },
     "externalSwapBrideDappPopup": {
       "thirdPartyDappToProceed": "请使用第三方 DApp 继续操作",
-      "chainNotSupported": "在这个链上不支持",
+      "chainNotSupported": "此链不支持",
       "bridgeOnDapp": "在 DApp 上跨链",
       "swapOnDapp": "在 DApp 上兑换",
       "noQuotesForChain": "该链尚无可用报价",
@@ -3748,14 +3748,14 @@
     },
     "screenshotModal": {
       "feedbackInput": {
-        "placeholder": "描述问题"
+        "placeholder": "描述问题（必填）"
       },
       "submitButtonText": "提交",
       "switchArea": {
-        "skipText": "在此弹窗上跳过 1 天"
+        "skipText": "1 天内不再显示此弹窗"
       },
-      "alertText": "第三方 DApp：如遇使用问题，请联系 DApp 支持。Rabby 仅提供查看访问权限。",
-      "title": "截图以报告bug"
+      "alertText": "第三方 DApp：如遇使用问题，请联系 DApp 支持。Rabby 仅提供浏览功能。",
+      "title": "截图报告问题"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "描述：",
@@ -3772,8 +3772,8 @@
     },
     "Prediction": {
       "price": "价格",
-      "side": "侧边",
-      "amount": "数量",
+      "side": "方向",
+      "amount": "金额",
       "usdValue": "USD 价值"
     },
     "accountSelectModalTx": {
@@ -3811,7 +3811,7 @@
     },
     "powered_off_alert": {
       "cancel": "不允许",
-      "title": "原文：蓝牙已关闭",
+      "title": "蓝牙已关闭",
       "open_settings": "OK",
       "message": "请打开蓝牙以使用此功能"
     },
@@ -3830,12 +3830,12 @@
       "duplicateAccount": "您尝试导入的账户重复",
       "invalidMnemonic": "助记词无效，请检查！",
       "notFoundKeyringByAddress": "无法通过地址找到 keyring",
-      "unknownAbi": "未知合约 abi",
+      "unknownAbi": "未知合约 ABI",
       "notFoundGnosisKeyring": "未找到 Gnosis keyring",
       "notFoundTxGnosisKeyring": "在 Gnosis keyring 中未找到交易",
-      "addKeyring404": "添加keyring失败，keyring未定义",
+      "addKeyring404": "添加 Keyring 失败：Keyring 未定义",
       "invalidPrivateKey": "私钥无效",
-      "canNotUnlock": "没有之前的保险库无法解锁",
+      "canNotUnlock": "尚未创建钱包，无法解锁",
       "invalidAddress": "不是有效的地址",
       "notFindChain": "未找到链 {{chain}}",
       "errorWords_one": "1 个错误的单词",

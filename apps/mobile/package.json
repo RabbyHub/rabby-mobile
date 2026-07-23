@@ -103,7 +103,7 @@
     "@rabby-wallet/rabby-logger": "0.3.1",
     "@rabby-wallet/rabby-security-engine": "2.0.12",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.80",
+    "@rabby-wallet/rabby-swap": "0.0.81",
     "@rabby-wallet/react-native-bootsplash": "workspace:^",
     "@rabby-wallet/react-native-fs": "workspace:^",
     "@rabby-wallet/react-native-keychain": "workspace:^",

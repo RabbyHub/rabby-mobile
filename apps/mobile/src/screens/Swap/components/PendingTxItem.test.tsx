@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-const mockGetList = jest.fn();
+const mockGetListSnapshot = jest.fn();
 const mockNaviPush = jest.fn();
 
 jest.mock('@/components', () => ({
@@ -25,14 +25,16 @@ jest.mock('@/constant/layout', () => ({
   },
 }));
 
-jest.mock('@/core/services', () => ({
-  bridgeService: {},
-  swapService: {
+jest.mock('@/core/serviceApi/swap', () => ({
+  swapServiceApi: {
     setOpenSwapHistoryTs: jest.fn(),
   },
-  transactionHistoryService: {
-    getList: (...args: unknown[]) => mockGetList(...args),
-  },
+}));
+
+jest.mock('@/core/serviceApi/transactionHistory', () => ({
+  getTransactionHistoryListSnapshot: (...args: unknown[]) =>
+    mockGetListSnapshot(...args),
+  transactionHistoryServiceApi: {},
 }));
 
 jest.mock('@/hooks/accountsSwitcher', () => ({
@@ -109,7 +111,7 @@ describe('PendingTxItem', () => {
       txs: [{ hash: approveData.hash }],
     } as any;
 
-    mockGetList.mockReturnValue({
+    mockGetListSnapshot.mockReturnValue({
       pendings: [groupData],
       completeds: [],
     });
@@ -125,7 +127,7 @@ describe('PendingTxItem', () => {
 
     fireEvent.press(screen.getByText('Approval 1 USDC'));
 
-    expect(mockGetList).toHaveBeenCalledWith(approveData.address);
+    expect(mockGetListSnapshot).toHaveBeenCalledWith(approveData.address);
     expect(mockNaviPush).toHaveBeenCalledWith('StackTransaction', {
       screen: 'HistoryLocalDetail',
       params: {

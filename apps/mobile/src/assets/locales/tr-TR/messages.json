@@ -2,20 +2,20 @@
   "screens": {
     "addressStackTitle": {
       "ImportSuccess": "Başarıyla eklendi",
-      "CreateMnemonicBackup": "Yedek tohum ifadesi",
+      "CreateMnemonicBackup": "Kurtarma ifadesini yedekle",
       "SafeAddressList": "Safe Adresi",
       "CreateSelectMethod": "1. Oluşturma Yöntemi Seçin",
-      "AddMnemonic": "Mevcut Seed Phrase'den Ekle",
+      "AddMnemonic": "Mevcut kurtarma ifadesinden ekle",
       "ImportPrivateKey": "Özel Anahtarı İçe Aktar",
       "CreateChooseBackup": "3. Bir yedekleme yöntemi seçin",
       "ImportHardwareAddress": "Donanım Cüzdanlarını Bağlayın",
-      "ImportMnemonic": "Seed Cümlesini İçe Aktar",
-      "VerifySeedPhrase": "Seed ifadesini doğrula",
-      "BackupPrivateKey": "Yedekleme Özel Anahtar",
-      "ImportSafeAddress2024": "Güvenli Adres Ekle",
+      "ImportMnemonic": "Kurtarma İfadesini İçe Aktar",
+      "VerifySeedPhrase": "Kurtarma ifadesini doğrula",
+      "BackupPrivateKey": "Özel anahtarı yedekle",
+      "ImportSafeAddress2024": "Safe Adresi Ekle",
       "SetPassword2024": "2. Şifre belirleyin",
       "ImportMethods": "İçe Aktarma Yöntemini Seçin",
-      "BackupSeedPhrase": "Yedekleme Seed Phrase",
+      "BackupSeedPhrase": "Kurtarma ifadesini yedekle",
       "RestoreFromCloud": "{{type}}'den geri yükle",
       "AddressDetail": "Cüzdan ayrıntısı",
       "WatchAddressList": "Sadece İzleme Cüzdanı",
@@ -38,7 +38,7 @@
       "sync": "Rabby Uzantı Cüzdanını Senkronize Etmek İçin Tara",
       "alreadyHaveAddress": "Zaten bir cüzdanım var",
       "alreadyUseRabby": "Zaten Rabby kullanıyorum.",
-      "welcomeTitle": "Rabby Wallet'a hoş geldiniz"
+      "welcomeTitle": "Rabby Wallet'a\nhoş geldiniz"
     },
     "transactions": {
       "itemTitle": {
@@ -55,10 +55,10 @@
         "Approve": "Onaylandı",
         "Contract": "Sözleşmeyi Dağıt",
         "Cancel": "Bekleyen İşlemi İptal Et",
-        "LendingBorrow": "Ödünç Al",
+        "LendingBorrow": "Borç Alma",
         "LendingRepay": "Geri Ödeme",
-        "LendingSupply": "Arz",
-        "LendingWithdraw": "Çekilme",
+        "LendingSupply": "Yatırma",
+        "LendingWithdraw": "Çekme",
         "LendingOffCollateral": "Teminat olarak kullanmayı kapat",
         "LendingOnCollateral": "Teminat olarak kullanmayı açın",
         "LendingManageEModeDisable": "E-Modu'nu Kapat",
@@ -76,9 +76,9 @@
         "Failed": "Başarısız",
         "Cancel": "İptal Et",
         "Status": "Durum",
-        "Name": "Adınız",
+        "Name": "Ad",
         "name": "İsim",
-        "From": "Den",
+        "From": "Kimden",
         "Chain": "Zincir",
         "Date": "Tarih",
         "Collection": "Koleksiyon",
@@ -86,15 +86,15 @@
         "ApproveToken": "Token onayla",
         "GasFee": "Gaz Ücreti",
         "BuyAgain": "Yeniden Satın Al",
-        "WillReceive": "Alacak: ≈ {{token}}",
-        "To": "To",
+        "WillReceive": "Alınacak: ≈ {{token}}",
+        "To": "Kime",
         "Unlimited": "Sınırsız",
-        "ViewOn": "Görünüm",
-        "RevokeToken": "Token İptal Et",
-        "PurchaseFrom": "Satın alındıdan",
-        "RevokeFrom": "Revokeden",
+        "ViewOn": "Şurada görüntüle",
+        "RevokeToken": "Yetkisi iptal edilen token",
+        "PurchaseFrom": "Satın alınan yer",
+        "RevokeFrom": "Yetkiyi şuradan iptal et",
         "InteractedContract": "Etkileşim kurulan (Kime)",
-        "ApproveTo": "Onayla",
+        "ApproveTo": "Şunun için onayla",
         "Revoke": "İptal Et",
         "InteractionResults": "Etkileşim Sonuçları",
         "Pending": "Beklemede",
@@ -127,13 +127,13 @@
       },
       "TransactionAlert": {
         "clearPendingSuccess": "Yerel bekleyen işlem kaldırıldı",
-        "skipNonceText": "Nonce #{{nonce}} {{chainName}} zincirinde atlandı. Bu, bekleyen işlemlere neden olabilir. <5></5> <6>Bir tx gönder</6> <7></7> zincirde çözmek için",
-        "clearPendingText": "{{chainName}} İşlemi ({{nonces}}) 3 dakikadan fazla beklemede. İşlemi <5></5> <6>Yerel Olarak Beklemeyi Temizle</6> <7></7> ve tekrar gönderin."
+        "skipNonceText": "Nonce #{{nonce}}, {{chainName}} zincirinde atlandı. Bu durum sonraki işlemlerin beklemesine neden olabilir. Çözmek için zincirde <5></5> <6>bir işlem gönderin</6> <7></7>.",
+        "clearPendingText": "{{chainName}} işlemi ({{nonces}}) 3 dakikadan uzun süredir bekliyor. <5></5> <6>Yerel bekleyen işlemi temizleyebilir</6> <7></7> ve işlemi yeniden gönderebilirsiniz."
       },
       "ViewHiddenItems": "Sahte işlemleri görüntüle",
       "title": "İşlemler",
       "HideScamTransactions": "Dolandırıcılık işlemlerini gizle",
-      "ShowScamTransactions": "Sahte işlemeleri göster",
+      "ShowScamTransactions": "Dolandırıcılık işlemlerini göster",
       "Yesterday": "Dün",
       "ShowHiddenItems": "Gizli işlemleri göster",
       "ShowAllTransactionsToast": "Gizli işlemler gösteriliyor",
@@ -154,7 +154,7 @@
       "balanceChange": {
         "errorTitle": "Bakiye değişikliği alınamadı",
         "failedTitle": "Simülasyon Başarısız",
-        "noBalanceChange": "Balans değişikliği yok",
+        "noBalanceChange": "Bakiye değişikliği yok",
         "notSupport": "Simülasyon Desteklenmiyor",
         "successTitle": "Simülasyon Sonuçları"
       },
@@ -166,7 +166,7 @@
       "swap": {
         "slippageTolerance": "Kayma toleransı",
         "valueDiff": "Değer farkı",
-        "receiveToken": "Alıcı",
+        "receiveToken": "Alınacak",
         "minReceive": "Minimum Alacak",
         "payToken": "Ödeme",
         "simulationFailed": "İşlem simülasyonu başarısız oldu",
@@ -181,15 +181,15 @@
       "safeTx": {
         "selfHostConfirm": {
           "button": "Tamam",
-          "title": "Rabby'nin Güvenli Servisine Geçiş Yapın",
+          "title": "Rabby'nin Safe Hizmetine Geç",
           "content": "Safe API mevcut değil. Safe'inizi işlevsel tutmak için Rabby tarafından dağıtılan Safe hizmetine geçin. <1></1><2>Tüm Safe imzalayıcıları, işlemleri yetkilendirmek için Rabby Wallet kullanmalıdır.</2>"
         }
       },
       "crossChain": {
-        "title": "Karma Zincir"
+        "title": "Zincirler Arası"
       },
       "swapAndCross": {
-        "title": "Token Değiştir ve Çapraz Zincir"
+        "title": "Token Takası ve Zincirler Arası Transfer"
       },
       "transferOwner": {
         "description": "Açıklama",
@@ -197,13 +197,13 @@
       },
       "swapLimitPay": {
         "maxPay": "Maksimum ödeme",
-        "title": "Token Değişimi Limit Ödeme"
+        "title": "Ödeme Limitli Token Takası"
       },
       "send": {
         "cexAddress": "CEX adresi",
-        "sendTo": "Gönderilecek",
+        "sendTo": "Alıcı",
         "sendToken": "Token Gönder",
-        "fromMySeedPhrase": "Seed ifademden",
+        "fromMySeedPhrase": "Kurtarma ifademden",
         "tokenNotSupport": "{{0}} desteklenmiyor",
         "scamAddress": "Dolandırıcılık adresi",
         "contractNotOnThisChain": "Bu zincirde değil",
@@ -213,19 +213,19 @@
         "receiverIsTokenAddress": "Token adresi",
         "addressBalanceTitle": "Adres bakiyesi",
         "onMyWhitelist": "Beyaz listemde",
-        "notOnWhitelist": "Beyaz listeimde değil.",
+        "notOnWhitelist": "Beyaz listemde değil",
         "fromMyPrivateKey": "Özel anahtarım üzerinden",
         "notTopupAddress": "Bir depozit adresi değil"
       },
       "tokenApprove": {
         "eoaAddress": "EOA",
-        "amountPopupTitle": "Onayla miktar",
+        "amountPopupTitle": "Onay miktarı",
         "approveToken": "Token onayla",
         "title": "Token Onayı",
         "deployTimeLessThan": "< {{value}} gün",
         "flagByRabby": "Rabby tarafından işaretlendi",
         "myBalance": "Bakiyem",
-        "approveTo": "Onayla",
+        "approveTo": "Onay verilecek adres",
         "contractTrustValueTip": "Güven değeri, bu sözleşme tarafından harcanan toplam varlık değerini ifade eder. Düşük bir güven değeri, ya risk ya da 180 gün boyunca faaliyetsizlik anlamına gelir."
       },
       "revokeTokenApprove": {
@@ -271,24 +271,24 @@
       "contractCall": {
         "receiver": "Alıcı Adresi",
         "payNativeToken": "{{symbol}} öde",
-        "operation": "Operasyon",
-        "operationCantDecode": "İşlem decode edilmedi.",
-        "operationABIDesc": "İşlem ABI'den çözülür.",
+        "operation": "İşlem",
+        "operationCantDecode": "İşlem çözümlenemedi",
+        "operationABIDesc": "İşlem ABI üzerinden çözümlendi",
         "title": "Sözleşme Çağrısı"
       },
       "revokePermit2": {
-        "title": "İzni İptal Et Permit2"
+        "title": "Permit2 Onayını İptal Et"
       },
       "batchRevokePermit2": {
-        "title": "Toplu İptal Permit2 Onayı"
+        "title": "Permit2 Onaylarını Toplu İptal Et"
       },
       "revokePermit": {
-        "title": "İzin Token Onayını İptal Et"
+        "title": "Permit Token Onayını İptal Et"
       },
       "assetOrder": {
-        "receiveAsset": "Varlık al",
-        "listAsset": "Varlık listele",
-        "title": "Varlık Sırası"
+        "receiveAsset": "Varlığı al",
+        "listAsset": "Varlığı listele",
+        "title": "Varlık Emri"
       },
       "BroadcastMode": {
         "instant": {
@@ -330,12 +330,12 @@
       "coboSafeModificationRole": {
         "safeWalletTitle": "Safe{Wallet}",
         "descriptionTitle": "Açıklama",
-        "title": "Güvenli Rol Değişikliği Gönderin"
+        "title": "Safe Rol Değişikliğini Gönder"
       },
       "coboSafeModificationDelegatedAddress": {
         "safeWalletTitle": "Safe{Wallet}",
         "descriptionTitle": "Açıklama",
-        "title": "Delegated Adres Değişikliği Gönder"
+        "title": "Yetkilendirilmiş Adres Değişikliğini Gönder"
       },
       "coboSafeModificationTokenApproval": {
         "title": "Token Onay Değişikliği Gönder",
@@ -344,68 +344,68 @@
       },
       "common": {
         "description": "Açıklama",
-        "interactContract": "Etkileşim sözleşmesi"
+        "interactContract": "Sözleşmeyle etkileşim"
       },
       "noGasRequired": "Gas gerekmez",
       "failToFetchGasCost": "Gas tahmini yapılamadı",
       "gasPriceTitle": "Gaz Fiyatı (Gwei)",
       "nonceTitle": "Nonce",
       "nonceLowerThanExpect": "Nonce çok düşük, minimum {{0}} olmalıdır.",
-      "manuallySetGasLimitAlert": "Gas limit'i manuel olarak ayarladınız",
-      "gasLimitTitle": "Gas limit",
+      "manuallySetGasLimitAlert": "Gas limitini manuel olarak ayarladınız",
+      "gasLimitTitle": "Gas limiti",
       "gasAccountForGas": "Gaz için ödemek amacıyla GasAccount'ımdan USD kullan.",
       "maxPriorityFee": "Maksimum Öncelik Ücreti (Gwei)",
-      "gasLimitNotEnough": "Gas limit 21000'den az. İşlem gönderilemez.",
-      "gasLimitLessThanExpect": "Gas limit düşük. İşlemin başarısız olma olasılığı %1'dir.",
+      "gasLimitNotEnough": "Gas limiti 21000'den az. İşlem gönderilemez.",
+      "gasLimitLessThanExpect": "Gas limiti düşük. İşlemin başarısız olma olasılığı %1'dir.",
       "gasNotRequireForSafeTransaction": "Safe işlemleri için Gaz ücreti gerekmemektedir.",
       "nativeTokenNotEngouthForGas": "Gaz bakiyesi yeterli değil",
       "nativeTokenForGas": "{{chainName}} üzerindeki {{tokenName}} token'ını gaz ödemek için kullanın.",
-      "gasLimitLessThanGasUsed": "Gas limit çok düşük. İşlemin başarısız olma ihtimali %95.",
+      "gasLimitLessThanGasUsed": "Gas limiti çok düşük. İşlemin başarısız olma olasılığı %95.",
       "multiSigChainNotMatch": "Multi-signature adresleri bu zincirde bulunmamaktadır ve işlemleri başlatamaz.",
       "safeAddressNotSupportChain": "Mevcut Safe adresi {{0}} zincirinde desteklenmiyor.",
       "canOnlyUseImportedAddress": "Sadece görüntüleme adresi ile işlemleri imzalayamazsınız.",
-      "recommendGasLimitTip": "Est. {{est}}. Mevcut {{current}}x, önerilir",
+      "recommendGasLimitTip": "Tahm. {{est}}. Mevcut {{current}}x, önerilen ",
       "eip1559Desc2": "Rabby'de Öncelik Ücreti (İpucu) = Maksimum Ücret - Temel Ücret. Maksimum Öncelik Ücretini ayarladıktan sonra, Temel Ücret ondan düşülecek ve geriye kalan miktar madencilere ipucu olarak verilecektir.",
       "eip1559Desc1": "EIP-1559'u destekleyen zincirlerde, Öncelik Ücreti, madencilerin işleminizi işleme alması için verilen bahşiştir. Öncelik Ücretini düşürerek nihai gaz maliyetinizi azaltabilirsiniz, bu da işlemin işlenmesi için daha fazla zaman alabilir.",
       "safeAdminSigned": "İmzalı",
       "myNativeTokenBalance": "Gas bakiyem:",
-      "gasLimitModifyOnlyNecessaryAlert": "Gerekli olduğunda sadece değiştirilir",
+      "gasLimitModifyOnlyNecessaryAlert": "Yalnızca gerektiğinde değiştirin",
       "gasPriceMedian": "Son 100 zincir üstü işlemdeki medyan:",
       "hardwareSupport1559Alert": "Donanım cüzdanı yazılımınızın EIP 1559'u destekleyen versiyona güncellendiğinden emin olun.",
       "enoughSafeSigCollected": "Yeterli imza toplandı",
       "moreSafeSigNeeded": "{{0}} daha fazla onay gerekiyor",
-      "gasLimitMinValueAlert": "Gas limit 21000'den fazla olmalıdır.",
-      "wrapToken": "Wrap Token",
-      "unwrap": "Token'i Aç",
-      "gasLimitEmptyAlert": "Lütfen Gas limit girin",
+      "gasLimitMinValueAlert": "Gas limiti 21000'den fazla olmalıdır.",
+      "wrapToken": "Token'ı Wrap Et",
+      "unwrap": "Token'ı Unwrap Et",
+      "gasLimitEmptyAlert": "Lütfen gas limiti girin",
       "gasSelectorTitle": "Gaz",
       "importedAddress": "İçe aktarılan adres",
       "nftCollection": "NFT Koleksiyonu",
       "chain": "Zincir",
       "noMark": "İşaret yok",
-      "markRemoved": "Mark kaldırıldı",
+      "markRemoved": "İşaret kaldırıldı",
       "interacted": "Daha önce etkileşimde bulunuldu",
       "markAsBlock": "Engelli olarak işaretlendi",
       "viewRaw": "Ham Veri Görüntüle",
       "trusted": "Güvenilir",
       "unknownAction": "Bilinmeyen İmza Türü",
       "markAsTrust": "Güvenilir olarak işaretlendi",
-      "speedUpTooltip": "Bu hızlandırılmış işlem ve orijinal işlem, yalnızca birinin sonunda tamamlanacak.",
+      "speedUpTooltip": "Hızlandırılmış işlem ile orijinal işlemden yalnızca biri tamamlanacaktır.",
       "transacted": "Daha önce işlem yapılmış",
-      "blocked": "Engellenmiş",
+      "blocked": "Engellendi",
       "interactContract": "Sözleşmeyle etkileşimde bulun",
       "unknownActionType": "Bilinmeyen Eylem Türü",
       "addressNote": "Adres notu",
       "myMarkWithContract": "{{chainName}} sözleşmesindeki izim",
       "trustValue": "Güven değeri",
-      "contractPopularity": "Hayır.{{0}} {{1}}'de",
+      "contractPopularity": "{{1}} üzerinde {{0}}. sırada",
       "popularity": "Popülerlik",
       "noDelegatedAddress": "İçe aktarılan delege edilmiş adres yok",
       "protocolTitle": "Protokol",
       "myMark": "Benim işaretim",
       "floorPrice": "Taban fiyat",
       "deployTimeTitle": "Yayınlama zamanı",
-      "firstOnChain": "İlk on-chain",
+      "firstOnChain": "Zincirde ilk kez",
       "contractAddress": "Sözleşme adresi",
       "collectionTitle": "Koleksiyon",
       "l2GasEstimateTooltip": "L2 zinciri için gaz tahmini L1 gaz ücretini içermemektedir. Gerçek ücret, mevcut tahminden daha yüksek olacaktır.",
@@ -421,13 +421,13 @@
       "trustValueTitle": "Güven değeri",
       "no": "Hayır",
       "amount": "Miktar",
-      "maxPriorityFeeDisabledAlert": "Lütfen önce Gas Price ayarlayın.",
+      "maxPriorityFeeDisabledAlert": "Lütfen önce gas fiyatını ayarlayın",
       "protocol": "Protokol",
       "addressSource": "Adres Kaynağı",
       "sigCantDecode": "Bu imza Rabby Wallet tarafından çözülemez.",
       "errorRetry": {
         "InvalidTx": "Geçersiz işlem.",
-        "gasLimitTooLow": "Gas limit çok düşük",
+        "gasLimitTooLow": "Gas limiti çok düşük",
         "nonceTooHigh": "Nonce çok yüksek. Lütfen nonce'u ayarlayın ve tekrar deneyin.",
         "gasExceedsBlockGasLimit": "Gaz, blok gaz limitini aşmaktadır. Lütfen ayarlayın ve tekrar deneyin.",
         "defaultTips": "Bir şeyler yanlış gitti. Lütfen daha sonra tekrar deneyin.",
@@ -451,15 +451,15 @@
       "addressCount": "{{count}} Adresler",
       "success": "{{type}} başarıyla!",
       "addressCount_one": "{{count}} Cüzdan",
-      "importMore": "Daha Fazla Cüzdan İçe Aktar",
-      "addressCount_other": "{{count}} Cüzdanlar",
+      "importMore": "Bu ifadeden daha fazla cüzdan ekle",
+      "addressCount_other": "{{count}} Cüzdan",
       "viewAddress": "Cüzdanı Görüntüle",
       "titleCreated": "Cüzdanınız oluşturuldu 🚀",
       "titleImported": "Cüzdanınız içe aktarıldı 🚀",
       "titleMultiple": "{{count}} Cüzdan Eklendi 🚀"
     },
     "importSeedPhrase": {
-      "enterYourSeedPhrase": "Seed ifrenizi girin, her kelimeyi bir boşlukla ayırın"
+      "enterYourSeedPhrase": "Kurtarma ifadenizi girin ve her kelimeyi boşlukla ayırın"
     },
     "signFooterBar": {
       "gasless": {
@@ -467,7 +467,7 @@
         "walletConnectUnavailableTip": "WalletConnect ile bağlı mobil cüzdan Ücretsiz Gas için desteklenmiyor.",
         "customRpcUnavailableTip": "Ücretsiz Gas için özel RPC'ler desteklenmiyor.",
         "notEnough": "Gaz bakiyesi yeterli değil",
-        "watchUnavailableTip": "Watch-Only cüzdanı Ücretsiz Gas için desteklenmiyor."
+        "watchUnavailableTip": "Salt izleme cüzdanlarında Ücretsiz Gas desteklenmez."
       },
       "gasAccount": {
         "deposit": "Yatırma",
@@ -477,7 +477,7 @@
         "useGasAccount": "GasAccount'u kullanın",
         "WalletConnectTips": "WalletConnect, GasAccount tarafından desteklenmiyor.",
         "loginFirst": "Lütfen önce GasAccount'a giriş yapın.",
-        "signWithHardwareWalletToUse": "{{brand}} ile imzalamak için ihtiyacınız var",
+        "signWithHardwareWalletToUse": "Kullanmak için {{brand}} ile imzalayın",
         "notEnough": "Yetersiz gas. Gas Bakiyesi: {{usd}}"
       },
       "qrcode": {
@@ -487,14 +487,14 @@
         "signWith": "{{brand}} ile imza at",
         "getSig": "İmza al",
         "afterSignDesc": "Keystone üzerindeki QR kodunu tarayın ve imza alın.",
-        "qrcodeDesc": "{{brand}} ile imzalamak için tarayın  \nİmzalamadan sonra, imzayı almak için aşağıdaki düğmeye tıklayın",
+        "qrcodeDesc": "{{brand}} ile imzalamak için tarayın\nİmzaladıktan sonra imzayı almak için aşağıdaki düğmeye dokunun",
         "unknownQRCode": "Hata: Bu QR kodunu tanımlayamadık.",
         "submitting": "İmzalandı. İşlem oluşturuluyor.",
         "misMatchSignId": "Uyumsuz işlem verisi. Lütfen işlem detaylarını kontrol edin.",
         "txFailedRetry": "Başarısız oldu: Lütfen Yeniden Deneyin"
       },
       "ledger": {
-        "resent": "Öfkelenmek",
+        "resent": "Yeniden gönderildi",
         "txRejected": "İşlem reddedildi",
         "resubmited": "Yeniden Gönderildi",
         "siging": "İmza talebi gönderiliyor",
@@ -542,8 +542,8 @@
       },
       "sellNFT": {
         "listNFT": "NFT'leri Listele",
-        "title": "NFT Sipariş",
-        "receiveToken": "Token alımlarınızı yapın",
+        "title": "NFT Emri",
+        "receiveToken": "Token al",
         "specificBuyer": "Belirli alıcı"
       },
       "signMultiSig": {
@@ -577,12 +577,12 @@
         },
         "common": {
           "unknownProtocol": "Bilinmeyen protokol",
-          "pendingDetail": "Bekleyen detay",
+          "pendingDetail": "Bekleyen işlem ayrıntısı",
           "unlimited": "sınırsız"
         },
         "tips": {
           "pendingDetail": "Sadece bir işlem tamamlanacak ve bu işlem neredeyse her zaman en yüksek gaz fiyatına sahip olandır.",
-          "canNotCancel": "Hızlandıramaz veya iptal edemezsiniz: İlk bekleyen txn değil"
+          "canNotCancel": "Hızlandırılamaz veya iptal edilemez: ilk bekleyen işlem değil"
         },
         "status": {
           "failed": "Başarısız",
@@ -598,11 +598,11 @@
           "unknown": "Bilinmeyen İşlem",
           "send": "Gönder {{amount}} {{symbol}}",
           "nftCollectionApproval": "NFT Koleksiyonu Onayı için {{protocol}}",
-          "approve": "Onayla {{count}} {{token}} için {{protocol}}",
+          "approve": "{{protocol}} için {{count}} {{token}} onayla",
           "cancelSingleNFTApproval": "{{protocol}} için Tek NFT Onayını İptal Et",
           "cancelNFTCollectionApproval": "{{protocol}} için NFT Koleksiyonu Onayını İptal Et",
-          "cancel": "İptal et {{token}} Onayla {{protocol}}",
-          "singleNFTApproval": "Tekil NFT Onayı için {{protocol}}"
+          "cancel": "{{protocol}} için {{token}} onayını iptal et",
+          "singleNFTApproval": "{{protocol}} için tek NFT onayı"
         },
         "CancelTxPopup": {
           "options": {
@@ -636,7 +636,7 @@
     "receive": {
       "copyAddress": "ADRESİ KOPYALA",
       "title": "{{chain}} üzerinde {{token}} al",
-      "newTitle": "Varlıkları alın üzerinde",
+      "newTitle": "Varlıkları şurada al",
       "allEVMChain": "Tüm EVM Zincirleri",
       "watchModeAlert": "Bu yalnızca izleme adresidir. Varlıkları almak için bunu kullanmak istediğinize emin misiniz?"
     },
@@ -647,7 +647,7 @@
           "validator__empty": "Lütfen adres notunu girin"
         },
         "editAddressNote": "Adres notunu düzenle",
-        "addedAsContacts": "Kişiler olarak eklendi"
+        "addedAsContacts": "Kişilere eklendi"
       },
       "allowTransferModal": {
         "addWhitelist": "Beyaz listeye ekle",
@@ -693,8 +693,8 @@
         "cancel": "İptal"
       },
       "Chain": "Zincir",
-      "From": "Den",
-      "To": "İçin",
+      "From": "Kimden",
+      "To": "Kime",
       "Amount": "Miktar:",
       "addressNotInContract": "Adres listesinde yok. <1></1><2>Kişilere ekle</2>",
       "whitelistAlert__notWhitelisted_tip": "Adres beyaz listeye alınmamıştır.",
@@ -724,7 +724,7 @@
       },
       "emptyWhitelistBtn": "Şimdi ekle",
       "emptyWhitelistTip": "Henüz beyaz listeye alınmış adres yok,",
-      "whitelistTitle": "Whitelist Adreslerim",
+      "whitelistTitle": "Beyaz Liste Adreslerim",
       "enterAddress": "Adres Girin",
       "emptyWhitelistHeader": "Beyaz Liste Adresi Ekle",
       "emptyWhitelistContent": "Güvenilir adresleri hızlı transferler için beyaz listeye ekleyin—bir dahaki sefere onay gerekmez.",
@@ -732,10 +732,10 @@
       "sendTimeHeader": "Gönder",
       "innerEnterAddress": "Adres / ENS Girin",
       "SendHistory": "Gönderim Geçmişi",
-      "recent": "Son zamanlarda",
+      "recent": "Son kullanılanlar",
       "sentTimeHeader": "Gönderildi",
-      "sendToWatchAddress": "Gözetim-Modu Cüzdanlarına Gönder",
-      "sendToSafeAddress": "Safe Wallets'a Gönder",
+      "sendToWatchAddress": "Yalnızca İzleme Cüzdanlarına Gönder",
+      "sendToSafeAddress": "Safe Cüzdanlarına Gönder",
       "sendToImportedAddress": "İçe Aktarılan Cüzdanlarıma Gönder",
       "dividerWatchOnlyWallets": "Sadece izleme adresleri",
       "enterOrSearchAddress": "Adres Girin veya Ara"
@@ -749,27 +749,27 @@
       },
       "brandNameTail": "Adres",
       "sendTo": "Bu Adrese Gönder",
-      "title": "Adres Onayla",
-      "dexNameTail": "Yatırım Adresi",
+      "title": "Adresi Onayla",
+      "dexNameTail": "Para Yatırma Adresi",
       "addToWhitelist": "Beyaz listeye ekle",
       "tipForWhiteList": "Beyaz listenize ekleyin, böylece hızlı transferler yapabilir, bir dahaki sefer onay gerekmez.",
       "checkbox": "Riskleri anlıyorum ve devam etmek istiyorum."
     },
     "selectAddress": {
-      "selectSafeAddress": "Güvenli adreslerden seçim yapın",
+      "selectSafeAddress": "Safe adreslerinden seçin",
       "selectWatchAddress": "Sadece İzleme adreslerinden seçin"
     },
     "whitelist": {
       "copyAddress": "Adres Kopyala",
       "removeWhitelist": "Beyaz Liste'den Kaldır",
       "addToWhitelist": "Beyaz Listeye Ekle",
-      "addSuccessful": "Beyaz listeye eklenen adres",
+      "addSuccessful": "Adres beyaz listeye eklendi",
       "confirm": "Onayla",
       "cancel": "İptal et",
       "confirmPassword": "Şifreyi Onaylamak için Girin",
       "alreadyAdded": "Zaten beyaz listenize eklendi",
       "header": {
-        "name": "Adınız",
+        "name": "Ad",
         "address": "Adres",
         "exchange": "Borsa adresi?"
       },
@@ -797,7 +797,7 @@
       },
       "tab-switch": {
         "contract": "Sözleşmelerle",
-        "assets": "Varlara Göre"
+        "assets": "Varlıklara Göre"
       },
       "component": {
         "RevokeButton": {
@@ -854,7 +854,7 @@
         "gasTooHigh": "Gaz ücreti yüksek",
         "submitTxFailed": "Gönderim Başarısız",
         "approvalCount": "{{count}} onay",
-        "stillRevoke": "Hala İptal Et",
+        "stillRevoke": "Yine de İptal Et",
         "approvalCount_one": "{{count}} onay",
         "iGotIt": "Tamamdır",
         "approvalCount_other": "{{count}} onaylar",
@@ -872,18 +872,18 @@
       "continueRevoke": "Devam et",
       "myBalance": "Bakiyem",
       "contractAddress": "Sözleşme Adresi",
-      "startRevoke": "Başlat İptal Et",
+      "startRevoke": "İptali Başlat",
       "gasFee": "Gaz Ücreti",
       "approvedContracts": "Onaylanan Varlık Miktarı & Bakiyesi",
       "approvedAssets": "Onaylanan Kontratlar ve Miktar",
       "asset": "Varlık",
       "unselectAll": "Tüm Seçimleri Kaldır",
       "revokeCompleted": "Tamamlandı",
-      "stopTheRevokeProcess": "İptal sürecini durdurmak mı?",
+      "stopTheRevokeProcess": "İptal işlemi durdurulsun mu?",
       "leavingThisPageWillStopTheRevokeProcess": "Bu sayfadan ayrılmak, yetkiyi iptal etme işlemini durduracaktır.",
       "eip7702": {
         "unsupportedTitle": "Desteklenmeyen Adres Türü",
-        "unsupportedDesc": "EIP-7702 delegasyonlarını iptal etmek yalnızca özel anahtar veya seed phrase adresleri için desteklenir."
+        "unsupportedDesc": "EIP-7702 yetkilendirmelerini iptal etme yalnızca özel anahtar veya kurtarma ifadesiyle içe aktarılan adreslerde desteklenir."
       },
       "delegatedAddress": "Yetkilendirilmiş Adres",
       "supportedChains": "Desteklenen Zincirler"
@@ -902,7 +902,7 @@
       "rabbyFee": {
         "wallet": "Cüzdan",
         "title": "Rabby ücreti",
-        "bridgeDesc": "Rabby Wallet, en iyi toplayıcılardan mümkün olan en iyi oranı bulacak ve tekliflerinin güvenilirliğini doğrulayacaktır. Rabby, alıntıya otomatik olarak dahil edilen <1>0.25%</1> bir ücret alır.",
+        "bridgeDesc": "Rabby Wallet, önde gelen toplayıcılardan en iyi oranı bulur ve tekliflerin güvenilirliğini doğrular. Rabby, teklife otomatik olarak dahil edilen <1>%0,25</1> ücret alır.",
         "swapDesc": "Rabby Wallet, en iyi agregatörlerden her zaman en iyi oranı bulacak ve tekliflerinin güvenilirliğini doğrulayacaktır. Rabby, teklifin içinde otomatik olarak dahil edilen <1>0,25%</1> bir ücret alır (sarılması için %0).",
         "button": "Tamamdır",
         "rate": "Ücret oranı"
@@ -914,7 +914,7 @@
       "title": "Değiştir",
       "insufficient-balance": "Yetersiz bakiye",
       "hidden-no-quote-rates_other": "{{count}} oran mevcut değil",
-      "from": "Daha fazla",
+      "from": "Kimden",
       "Pending": "Beklemede",
       "preferMEV": "MEV Guarded'ı Tercih Et",
       "completedTip": "Zincir üzerindeki işlem, veri çözümleme ile kayıt oluşturma",
@@ -923,7 +923,7 @@
       "actual-slippage": "Gerçek Kayma:",
       "approve-swap": "Onayla ve Takas Et",
       "pendingTip": "Tx gönderildi. Eğer tx uzun saatler boyunca bekliyorsa, ayarlardan beklemi temizlemeyi deneyebilirsiniz.",
-      "to": "To",
+      "to": "Kime",
       "search-by-name-address": "Adrese / İsimle Ara",
       "slippage_tolerance": "Kayma toleransı:",
       "Gas-fee-too-high": "Gaz ücreti çok yüksek",
@@ -942,7 +942,7 @@
       "sort-with-gas": "Gaz ile sırala",
       "gas-fee": "Gas ücreti: {{gasUsed}}",
       "source": "Kaynak",
-      "no-quote-found": "Alıntı bulunamadı",
+      "no-quote-found": "Teklif bulunamadı",
       "by-transaction-simulation-the-quote-is-valid": "İşlem simülasyonu ile, teklif geçerlidir.",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Düşük kayma, yüksek volatilite nedeniyle başarısız işlemlere neden olabilir.",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "İşlem, yüksek kayma toleransı nedeniyle öne alınabilir.",
@@ -957,7 +957,7 @@
       "selectChainModalTitle": "Zincir Seçin",
       "swapped": "Değiştirildi",
       "no-transaction-records": "Hiçbir işlem kaydı yok",
-      "historyTitle": "Takasa geçmişi",
+      "historyTitle": "Takas geçmişi",
       "results": "Sonuçlar",
       "approve": "Onayla",
       "market-closed": "Pazar açılmadı: Sipariş verme desteklenmiyor."
@@ -972,16 +972,16 @@
       "Pending": "Beklemede",
       "Select": "Seçin",
       "value": "Bakiye",
-      "To": "To",
-      "no-quote": "Alıntı yok",
+      "To": "Kime",
+      "no-quote": "Teklif yok",
       "price-impact": "Fiyat Etkisi",
-      "token": "Jeton",
+      "token": "Token",
       "bridgeFrom": "Köprüden",
       "liquidity": "Likidite",
       "est-payment": "Tahmini Ödeme:",
       "for-available-quote": "mevcut teklif için",
       "bridge-from": "Bridge kaynağı",
-      "no-quote-found": "Alıntı bulunamadı. Lütfen diğer token çiftlerini deneyin.",
+      "no-quote-found": "Teklif bulunamadı. Lütfen başka token çiftleri deneyin.",
       "estimate": "Tahmin:",
       "title": "Köprü",
       "the-following-bridge-route-are-found": "Aşağıdaki oranlar bulundu",
@@ -993,7 +993,7 @@
       "detail-tx": "Detay",
       "gas-fee": "Gas ücreti: {{gasUsed}}",
       "duration": "{{duration}} dk",
-      "via-bridge": "via {{bridge}}",
+      "via-bridge": "{{bridge}} üzerinden",
       "bridged": "Bridge başlatıldı",
       "approve-and-bridge": "Onayla ve Köprü kur",
       "gas-x-price": "Gas fiyatı: {{price}} Gwei.",
@@ -1019,7 +1019,7 @@
         "longTimeNoReceive": "Ağ yoğun. Bu daha uzun sürebilir. Lütfen sabırsızlanmayın.",
         "receivingTo": "{{chain}} üzerinde alma"
       },
-      "gasXUsd": "Gas: {{gasUsd}}",
+      "gasXUsd": "Gas Ücreti: {{gasUsd}}",
       "formChangedTitle": "Form Değiştirildi",
       "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurma nedeniyle. Lütfen kontrol edin ve doğru miktarı yeniden girin.",
       "best-subtitle": "En iyi teklif, tahmini toplam maliyet (Gas ücretleri dahil) ve teslimat hızının birleşimiyle belirlenir.",
@@ -1028,19 +1028,19 @@
     "manageAddress": {
       "watch-address": "Adres İzle",
       "private-key": "Özel Anahtar",
-      "seed-phrase": "Kök İfadesi",
+      "seed-phrase": "Kurtarma İfadesi",
       "confirm": "Onayla",
-      "passphraseError": "Geçersiz parolanız",
+      "passphraseError": "Geçersiz parola ifadesi",
       "enterPassphraseTitle": "Geçerli Parolayı Girin",
       "cancel": "İptal et",
       "enterThePassphrase": "Anahtar Kelimeyi Girin",
-      "delete-checklist-2": "Anahtar kelimeyi veya tohum ifadesini yedeklediğimi ve şimdi silmeye hazır olduğumu onaylıyorum.",
+      "delete-checklist-2": "Özel anahtarımı veya kurtarma ifademi yedeklediğimi ve şimdi silmeye hazır olduğumu onaylıyorum.",
       "quickAddressTitle_other": "{{count}} Adresler",
       "quickAddressTitle_one": "{{count}} Adres",
       "add-address": "Cüzdan Ekle",
       "delete-checklist-1": "Anladım ki, bu cüzdanı silersem, ilgili özel anahtar ve kurtarma ifadesi silinecek ve Rabby bunları kurtaramayacak.",
       "delete-private-key-title": "Cüzdanı ve Özel Anahtarı Sil",
-      "delete-seed-phrase-title": "Cüzdanı ve Seed Cümlesini Sil",
+      "delete-seed-phrase-title": "Cüzdanı ve Kurtarma İfadesini Sil",
       "delete-title": "Cüzdanı Sil"
     },
     "home": {
@@ -1118,7 +1118,7 @@
       },
       "assets": {
         "table": {
-          "blockedTokens_other": "{{count}} engellenmiş Tokenlar",
+          "blockedTokens_other": "{{count}} engellenmiş token",
           "blockedTokens_one": "{{count}} engellenmiş token",
           "customizeTokens_other": "{{count}} özel token",
           "customizeTokens_zero": "{{count}} özel token",
@@ -1137,44 +1137,44 @@
         "howToSwitch": "Nasıl geçiş yapılır"
       },
       "offlineChain": {
-        "chain": "{{chain}} çok yakında entegre edilmeyecek.",
-        "tips": "{{chain}} Ağı, {{date}} tarihinde entegre edilmeyecek. Varlıklarınız etkilenmeyecek ancak toplam bakiyenize dahil edilmeyecek. Onlara erişmek için \"Ayarlar\" kısmında özel bir ağ olarak ekleyebilirsiniz."
+        "chain": "{{chain}} entegrasyonu yakında sonlandırılacak.",
+        "tips": "{{chain}} ağı entegrasyonu {{date}} tarihinde sonlandırılacak. Varlıklarınız etkilenmez ancak toplam bakiyeye dahil edilmez. Erişmek için ağı \"Ayarlar\" bölümünden özel ağ olarak ekleyebilirsiniz."
       }
     },
     "nextComponent": {
       "createNewAddress": {
         "Verify": "Doğrula",
-        "whatIsSeedPhrase": "Seed Phrase nedir?",
+        "whatIsSeedPhrase": "Kurtarma ifadesi nedir?",
         "verificationFailed": "Doğrulama başarısız oldu",
         "Confirm": "Onayla",
         "UnderstandsecurityPrecautions": "Bu güvenlik önlemlerini anlıyorum.",
         "confirmPasswordTips": "Şifreler eşleşiyor",
         "passwordTopTips": "Bu şifre cüzdanınızı açmak ve yerel verilerinizi şifrelemek için kullanılacaktır.",
         "passwordMin": "En az 8 karakter olmalıdır.",
-        "savedPhrase": "Açıklamayı Kayıt Ettim",
-        "createOnCurrent": "Mevcut Seed Phrase'i Kullan",
-        "BackupSeedPhrase": "Manuel Olarak Seed Phrase Yedekle",
+        "savedPhrase": "İfadeyi Kaydettim",
+        "createOnCurrent": "Mevcut Kurtarma İfadesini Kullan",
+        "BackupSeedPhrase": "Kurtarma İfadesini Manuel Olarak Yedekle",
         "addressTopTips": "Bunu kullanarak blockchain üzerinde kripto gönderin ve alın.",
         "inOrder": "doğru sırayla.",
-        "createNewSeedPhrase": "Yeni Seed Phrase Oluştur",
-        "VerifyDownSeedPhrase": "Seed ifadesini doğrulayın",
-        "WriteDownSeedPhrase": "Seed ifadenizi yazın",
+        "createNewSeedPhrase": "Yeni Kurtarma İfadesi Oluştur",
+        "VerifyDownSeedPhrase": "Kurtarma ifadesini doğrulayın",
+        "WriteDownSeedPhrase": "Kurtarma ifadenizi yazın",
         "selectWords": "Kelime seçin",
-        "backupSeedPhrase": "Cüzdanınızı geri yüklemek için seed phrase'inizi yedekleyin, eğer uygulama silinirse veya cihazınız kaybolursa.",
+        "backupSeedPhrase": "Uygulama silinir veya cihazınız kaybolursa cüzdanınızı geri yükleyebilmek için kurtarma ifadenizi yedekleyin.",
         "riskTips": "Başlamadan önce, lütfen bu güvenlik ipuçlarını okuyun ve aklınızda bulundurun:",
         "Continue": "Devam et",
-        "createNewDesc": "Yeni cüzdanlar için yeni bir seed phrase oluşturun",
-        "createOnCurrentDesc": "Mevcut bir içe aktarılan seed phrase ile cüzdan oluşturun",
-        "BackupYourSeedPhrase": "Seed ifadenizi yedekleyin",
-        "WriteSeedPhrase": "Bu sizin tohum ifadenizdir. Bunu yazın ve güvenli bir yerde saklayın. Eğer kaybederseniz veya paylaşırsanız, varlıklarınız sonsuza dek kaybolabilir. Bir sonraki adımda bu ifadeyi (sırayla) tekrar girmeniz istenecektir."
+        "createNewDesc": "Yeni cüzdanlar için yeni bir kurtarma ifadesi oluşturun",
+        "createOnCurrentDesc": "İçe aktarılmış mevcut bir kurtarma ifadesiyle cüzdan oluşturun",
+        "BackupYourSeedPhrase": "Kurtarma ifadenizi yedekleyin",
+        "WriteSeedPhrase": "Bu sizin kurtarma ifadenizdir. Not alın ve güvenli bir yerde saklayın. Kaybeder veya paylaşırsanız varlıklarınızı kalıcı olarak kaybedebilirsiniz. Sonraki adımda bu ifadeyi doğru sırayla yeniden girmeniz istenecektir."
       },
       "addAddress": {
         "syncRabbyExtension": "Rabby Uzantısını Senkronize Et",
         "hardwareWallet": "Donanım Cüzdanı",
         "importAddress": "Cüzdanı İçe Aktar",
         "createAddress": "Cüzdan Oluştur",
-        "selectAddMethod": "Yöntem Ekle'yi Seçin",
-        "seedPhraseOrPrivateKey": "Seed ifadesi veya özel anahtar",
+        "selectAddMethod": "Ekleme Yöntemini Seçin",
+        "seedPhraseOrPrivateKey": "Kurtarma ifadesi veya özel anahtar",
         "restoreRabbyWallet": "Rabby Cüzdanını Geri Yükle",
         "moreOptions": "Daha fazla seçenek"
       },
@@ -1182,7 +1182,7 @@
         "services": "Hizmetler",
         "fundYourWallet": "Cüzdanınızı Fonlayın",
         "receiveCrypto": "Kripto Al ",
-        "pin": "Pin",
+        "pin": "Sabitle",
         "noAssets": "Varlık yok mu?",
         "totalBalance": "Toplam Bakiyeniz",
         "buyWithFiatDesc": "Basit kripto alımı",
@@ -1200,18 +1200,18 @@
           "entry": "Rabby'e aktarmak güvenli mi?",
           "description": "Verileriniz güvenli bir şekilde şifrelendi ve cihazınızda yerel olarak depolandı. Rabby, özel bilgilerinize erişemez ve bu bilgiler asla üçüncü şahıslarla paylaşılmaz."
         },
-        "seedPhrase": "Seed Kelimesini İçe Aktar",
+        "seedPhrase": "Kurtarma İfadesini İçe Aktar",
         "privateKey": "Özel Anahtarı İçe Aktar",
         "hardWare": "Donanım Cüzdanlarını Bağlayın",
         "importTitle": "Cüzdanı İçe Aktar",
         "watch": "Sadece İzleme Cüzdanı",
-        "watchOnlyTitle": "İzleme Yalnızca Cüzdanı İçe Aktar",
-        "safeTitle": "Güvenli Cüzdanı İçe Aktar",
+        "watchOnlyTitle": "Yalnızca İzleme Cüzdanını İçe Aktar",
+        "safeTitle": "Safe Cüzdanını İçe Aktar",
         "ImportCloud": "{{cloud}}'den İçe Aktar",
         "ImportFromExtensionOrCloud": "Uzantıdan veya {{cloud}}'dan içe aktar",
         "moreWatchOnlyTitle": "Salt İzleme Adresini İçe Aktar",
         "moreWatchOnly": "Salt İzleme Adresi",
-        "moreSafeTitle": "Gnosis Adresini İçe Aktar"
+        "moreSafeTitle": "Safe Adresini İçe Aktar"
       },
       "rateModalTriggerOnHome": {
         "description": "Rabby Wallet'ı nasıl değerlendiriyorsunuz?"
@@ -1233,62 +1233,62 @@
         "swipeToViewAllAssets": "Sağ kaydırarak tüm varlıkları görüntüleyin."
       },
       "copySeedPhraseSecureTip": {
-        "subTitle": "Seed kelimenizi alan herkes fonlarınızı tamamen kontrol edebilir.",
-        "tip2": "Seed ifadenizi bulut hizmetlerinde veya not uygulamalarında yapıştırmayın veya kaydetmeyin.",
-        "copied": "Kıdem kelimesi kopyalandı. Panoya 1 dakika içinde temizlenecek.",
+        "subTitle": "Kurtarma ifadenizi ele geçiren herkes fonlarınızın tüm kontrolünü alabilir.",
+        "tip2": "Kurtarma ifadenizi bulut hizmetlerine veya not uygulamalarına yapıştırmayın ya da kaydetmeyin.",
+        "copied": "Kurtarma ifadesi kopyalandı. Pano 1 dakika içinde temizlenecek.",
         "copyAnyway": "Yine de kopyala",
-        "title": "SeedPhrase'inizi Gizli Tutun",
-        "tip3": "Asla seed kelimenizi paylaşmayın. Biz asla bunu istemeyeceğiz.",
+        "title": "Kurtarma İfadenizi Gizli Tutun",
+        "tip3": "Kurtarma ifadenizi asla paylaşmayın. Rabby sizden bunu hiçbir zaman istemez.",
         "tip1": "Diğer uygulamalar panonuzu okuyabilir, bu yüzden kopyalama işlemi sonrası uygulamalar arasında geçiş yapmaktan kaçının."
       },
       "screenshotSecureTip": {
         "title": "Ekran görüntüleri güvenli değildir",
         "tip1": "Ekran görüntüleri buluta veya diğer cihazlara senkronize edilebilir ve bir cihaz kaybolduğunda, çalındığında veya tehlikeye girdiğinde erişilebilir.",
-        "tip3": "Seed ifrenizi alan herkes cüzdanınıza tamamen hakim olabilir ve bu geri alınamaz.",
+        "tip3": "Kurtarma ifadenizi ele geçiren biri cüzdanınızın tüm kontrolünü alabilir ve bu işlem geri alınamaz.",
         "tip2": "Uygulamalar veya kötü amaçlı yazılımlar, fotoğraf kütüphanenizde depolanan resimleri okuyabilir.",
-        "subTitle": "Seed ifadenizi bir resim olarak kaydetmek onu ifşa edebilir, bu yüzden yazılı olarak kaydetmek daha güvenli bir seçenektir."
+        "subTitle": "Kurtarma ifadenizi görsel olarak kaydetmek ifşa olmasına yol açabilir; bu nedenle yazılı olarak saklamak daha güvenlidir."
       }
     },
     "newAddress": {
       "whatIsSeedPhrase": {
-        "title": "Bir 'Seed ifadesi' nedir?",
+        "title": "Kurtarma ifadesi nedir?",
         "title1": "Yedekle",
         "title3": "Güvenlik",
         "title2": "Asla Paylaşmayın",
-        "description3": "Seed ifrenizi asla paylaşmayın—ona erişimi olan herkes, fonlarınızı kontrol edebilir.",
+        "description3": "Kurtarma ifadenizi asla paylaşmayın; ona erişen herkes varlıklarınızı kontrol edebilir.",
         "description2": "Eğer kurtarma ifadenizi kaybederseniz, cüzdanınızı geri yükleyemezsiniz.",
-        "description4": "Seed ifadeniz cihazınızda yerel olarak saklanır ve şifrenizle şifrelenir. Sadece siz buna erişebilirsiniz. Rabby seed ifadenizi geri alamaz veya erişemez.",
+        "description4": "Kurtarma ifadeniz cihazınızda yerel olarak saklanır ve şifrenizle şifrelenir. Yalnızca siz erişebilirsiniz. Rabby kurtarma ifadenize erişemez veya onu geri getiremez.",
         "GotIt": "Tamamdır.",
-        "description1": "Bir seed phrase, cüzdanınıza erişmek ve onu kontrol etmek için kullanılan bir kelime dizisidir. Bunu, cüzdanınızı herhangi bir cihazda kurtarmak için kullanabilirsiniz."
+        "description1": "Kurtarma ifadesi, cüzdanınıza erişmek ve onu kontrol etmek için kullanılan bir dizi kelimedir. Cüzdanınızı herhangi bir cihazda geri yüklemek için kullanabilirsiniz."
       },
       "addContacts": {
         "cameraTitle": "Lütfen kameranızla QR kodunu tarayın."
       },
       "seedPhrase": {
         "whatIsASeedPhrase": {
-          "question": "Seed ifadesi nedir?",
+          "question": "Kurtarma ifadesi nedir?",
           "answer": "12, 18 veya 24 kelimelik bir cümle, varlıklarınızı kontrol etmek için kullanılır."
         },
         "isItSafeToImportItInRabby": {
           "question": "Rabby'de içe aktarmak güvenli mi?",
           "answer": "Evet, telefonunuzda yerel olarak depolanacak ve sadece sizin erişiminize açık olacak."
         },
-        "showSeedPhrase": "Seed Cümlesini Göster",
+        "showSeedPhrase": "Kurtarma İfadesini Göster",
         "maxAccountCount": "Maksimum 50 adres her seferinde",
         "manuallyBackup": "Manuel Yedekleme",
         "backupUnlockTitle": "Uygulama Şifresi ile Şifrele",
         "icloudBackup": "iCloud Yedekleme",
         "googleDriveBackup": "Google Drive Yedekleme",
         "chooseBackupMethodTitle": "Yedekleme yöntemi seçin",
-        "pastedAndClear": "Pasta yapıldı ve pano temizlendi",
-        "importQuestion2": "Seed ifadesi yalnızca telefonumda saklanır ve Rabby buna erişemez.",
-        "backupTips": "Eminim ki, seed ifadesini yedeklerken başka kimse ekranınızı izlemiyor.",
-        "importQuestion1": "Eğer seed phrase'mi kaybedersem veya başkalarıyla paylaşırım, varlıklarım sonsuza dek kaybolur.",
-        "createdSuccess": "Köken ifadeniz oluşturulmuştur.",
+        "pastedAndClear": "Yapıştırıldı ve pano temizlendi",
+        "importQuestion2": "Kurtarma ifadesi yalnızca telefonumda saklanır ve Rabby buna erişemez.",
+        "backupTips": "Kurtarma ifadenizi yedeklerken ekranınızı başka kimsenin görmediğinden emin olun.",
+        "importQuestion1": "Kurtarma ifademi kaybedersem veya başkalarıyla paylaşırsam varlıklarımı kalıcı olarak kaybederim.",
+        "createdSuccess": "Kurtarma ifadeniz oluşturuldu",
         "riskTips": "Başlamadan önce, lütfen aşağıdaki güvenlik ipuçlarını okuyun ve aklınızda bulundurun.",
         "chooseBackupMethodDesc": "Yedekler, uygulamayı silerseniz veya cihazınızı kaybederseniz cüzdanınızı geri yüklemenizi sağlar.",
-        "importQuestion3": "Eğer seed phrase'i yedeklemezsem ve uygulama kasıtsız bir şekilde silinirse, cihaz kaybolursa ya da yeniden kurulum gerekirse, Rabby bunu benim için geri alamaz.",
-        "backupRestoreButton": "Seed Cümlesini İçe Aktar",
+        "importQuestion3": "Kurtarma ifadesini yedeklemeden uygulama silinir, cihaz kaybolur veya yeniden kurulum gerekirse Rabby onu benim için geri getiremez.",
+        "backupRestoreButton": "Kurtarma İfadesini İçe Aktar",
         "backupRestoreCreatedAt": "Yedekleme Zamanı:",
         "backupRestoreImported": "İçe Aktarıldı",
         "backupUploadToGDrive": "Google Drive'a Yedekleme...",
@@ -1296,12 +1296,12 @@
         "backupFailedTitle": "Yedekleme Başarısız",
         "backupSuccessICloud": "iCloud'a Yedeklendi",
         "backupFailedButton": "Yeniden Dene",
-        "backupRestoreLoadingText": "Yedek kurtarma tohum ifadesi aranıyor...",
+        "backupRestoreLoadingText": "Kurtarma ifadesi yedeği aranıyor...",
         "backupRestoreUnlockTitle": "Yedek Şifreyi Girin",
-        "backupRestoreEmpty": "Yedek tohum ifadesi bulunamadı",
+        "backupRestoreEmpty": "Kurtarma ifadesi yedeği bulunamadı",
         "backupUnlockPlaceholder": "Şifreyi Onaylamak İçin Girin",
-        "backupRestoreTitle": "{{count}} seed phrase bulundu",
-        "backupRestoreDownloadTitle": "Seed Phrase İçe Aktarılıyor...",
+        "backupRestoreTitle": "{{count}} kurtarma ifadesi bulundu",
+        "backupRestoreDownloadTitle": "Kurtarma İfadesi İçe Aktarılıyor...",
         "backupUnlockButton": "Devam et",
         "backupUploadToICloud": "iCloud'a Yedekleme...",
         "backupSuccessGDrive": "Google Drive'a Yedeklendi",
@@ -1324,27 +1324,27 @@
       "ledger": {
         "ble": {
           "title": "Bağlan Ledger",
-          "description": "Bluetooth'u açın ve Ledger'ı kilidini açın."
+          "description": "Bluetooth'u açın ve Ledger'ın kilidini açın."
         },
         "scan": {
           "title": "Cihaz Aranıyor",
-          "description": "Bluetooth'u açın ve Ledger'ı kilidini açın."
+          "description": "Bluetooth'u açın ve Ledger'ın kilidini açın."
         },
         "notFound": {
           "title": "Cihaz Bulunamadı",
           "buttonText": "Ledger destek kılavuzunu görüntüle",
-          "description": "Bluetooth'u açın ve Ledger'ı kilidini açın."
+          "description": "Bluetooth'u açın ve Ledger'ın kilidini açın."
         },
         "select": {
           "title": "Mevcut Cihazlar",
-          "description": "ETH APP'i açık tutun ve bağlanmak için bir Ledger seçin.",
+          "description": "ETH uygulamasını açık tutun ve bağlanmak için bir Ledger seçin.",
           "currentDevice": "mevcut"
         },
         "error": {
           "ethereum_app_not_installed_error": "Lütfen Ledger cihazınıza Ethereum uygulamasını kurun.",
           "running_app_close_error": "Ledger cihazınızdaki çalışan uygulamayı kapatmayı başaramadık.",
           "unknown": "Bağlantı başarısız, lütfen geri dönün ve tekrar deneyin.",
-          "lockedOrNoEthApp": "Lütfen Ledger'ı kilitsiz tutun ve Ethereum APP'ini açık bırakın.",
+          "lockedOrNoEthApp": "Lütfen Ledger'ın kilidini açık ve Ethereum uygulamasını çalışır durumda tutun.",
           "ethereum_app_open_error": "Lütfen Ledger cihazınızda Ethereum uygulamasını yükleyin/kabul edin.",
           "ethereum_app_unconfirmed_error": "Ethereum uygulamasını açma isteğini reddettiniz."
         },
@@ -1357,15 +1357,15 @@
       "onekey": {
         "ble": {
           "title": "OneKey'e Bağlanın",
-          "description": "Bluetooth'u açın ve OneKey'i kilidini açın."
+          "description": "Bluetooth'u açın ve OneKey'in kilidini açın."
         },
         "scan": {
           "title": "Cihaz Aranıyor",
-          "description": "Bluetooth'u açın ve OneKey'i kilidini açın."
+          "description": "Bluetooth'u açın ve OneKey'in kilidini açın."
         },
         "notFound": {
           "title": "Aygıt Bulunamadı",
-          "description": "Bluetooth'u açın ve OneKey'i kilidini açın."
+          "description": "Bluetooth'u açın ve OneKey'in kilidini açın."
         },
         "select": {
           "currentDevice": "mevcut",
@@ -1449,12 +1449,12 @@
         }
       },
       "Quick": "Hızlı",
-      "createNewSeedPhrase": "Yeni Seed Phrase Oluştur",
+      "createNewSeedPhrase": "Yeni Kurtarma İfadesi Oluştur",
       "createNewAddress": "Yeni Cüzdan Oluştur",
       "whatIsPrivateKey": {
         "title4": "Güvenlik",
         "ButtonGotIt": "Anladım.",
-        "description2": "Eğer özel anahtarınızı kaybedersez, cüzdanınızı geri yükleyemezsiniz.",
+        "description2": "Özel anahtarınızı kaybederseniz cüzdanınızı geri yükleyemezsiniz.",
         "title2": "Yedekleme",
         "title": "Özel anahtar nedir",
         "description4": "Özel anahtarınız cihazınızda yerel olarak saklanır ve şifrenizle şifrelenir. Ona yalnızca siz erişebilirsiniz. Rabby özel anahtarınıza erişemez veya onu geri alamaz.",
@@ -1535,7 +1535,7 @@
       "popularLevelHigh": "Yüksek",
       "popularLevelVeryLow": "Çok Düşük",
       "manageWhiteBlackList": "Beyaz liste/siyah liste yönetimi",
-      "markRemovedToast": "Mark silindi",
+      "markRemovedToast": "İşaret silindi",
       "markAsBlockToast": "\"Engelli\" olarak işaretle",
       "verifiedByRabby": "Rabby tarafından doğrulandı",
       "title": "DApp'e Bağlan",
@@ -1556,7 +1556,7 @@
     },
     "addressDetail": {
       "safeAddressListScreen": {
-        "addSafeAddress": "Güvenli Cüzdanlar Ekle"
+        "addSafeAddress": "Safe Cüzdanları Ekle"
       },
       "watchAddressListScreen": {
         "addWatchAddress": "Sadece İzleme Cüzdanları Ekle"
@@ -1566,9 +1566,9 @@
         "edit": "Düzenle",
         "unpin": "Sabitlenmeyi Kaldır",
         "delete": "Sil",
-        "pin": "Pin",
+        "pin": "Sabitle",
         "addAddress": "Cüzdan Ekle",
-        "importSafeAddress": "İçeri Aktarılan Safe Wallet",
+        "importSafeAddress": "İçe Aktarılan Safe Cüzdanı",
         "title_one": "{{count}} Cüzdan",
         "title_zero": "0 Cüzdan",
         "title_other": "{{count}} Cüzdanlar",
@@ -1577,7 +1577,7 @@
         "moreWallets": "Daha Fazla Cüzdan",
         "notIncludedInTotalBalance": "Toplam Bakiyeye Dahil Değil"
       },
-      "backup-seed-phrase": "Yedek Seed Phrase",
+      "backup-seed-phrase": "Kurtarma İfadesini Yedekle",
       "backupFailed": "Yedekleme başarısız, lütfen tekrar deneyin",
       "add-to-whitelist": "Beyaz Listeye Ekle",
       "pin-in-list": "Listeye Sabitle",
@@ -1591,13 +1591,13 @@
       "hd-path": "HD Path",
       "admins": "Yöneticiler",
       "address": "Adres",
-      "manage-seed-phrase": "Seed İfadesini Yönet",
-      "manage-addresses-under-this-seed-phrase": "Bu seed ifadesi ile cüzdan ekle",
+      "manage-seed-phrase": "Kurtarma İfadesini Yönet",
+      "manage-addresses-under-this-seed-phrase": "Bu kurtarma ifadesinden cüzdan ekle",
       "delete-address": "Cüzdanı silin",
       "delete-desc": "Bu cüzdanı silmek istediğinizden emin misiniz?",
       "notMatterAddressDialog": {
         "helpTitle": "En iyi 10'un altında sıralanan cüzdanlar",
-        "safeWallet": "Güvenli Cüzdan",
+        "safeWallet": "Safe Cüzdanı",
         "notTop10Address": "En fazla 10'un altında sıralanan cüzdanlar.",
         "watchOnlyWallet": "Sadece İzleme Cüzdanı",
         "title": "Aşağıdaki cüzdanlar Toplam Bakiye'ye dahil edilmemiştir.",
@@ -1655,7 +1655,7 @@
       "approvalExplain": "Onayla {{counts}} {{token}} için {{protocol}}",
       "replaceBtn": "Değiştir",
       "accountSelectTitle": "Bu işlemi herhangi bir adres kullanarak gönderebilirsiniz.",
-      "cancelExplain": "İptal et {{token}} Onayla için {{protocol}}",
+      "cancelExplain": "{{protocol}} için {{token}} onayını iptal et",
       "unknownTx": "Bilinmeyen İşlem",
       "sameNonceWarning": "Bu işlemler aynı nonce'u kullandıkları için çelişiyor. Birini gerçekleştirmek otomatik olarak diğerini(lerini) değiştirecektir.",
       "LowerNonceError": "Nonce {{nonce}} ile işlem öncelikle gerçekleştirilmelidir.",
@@ -1663,15 +1663,15 @@
       "viewBtn": "Görüntüle"
     },
     "backupSeedPhrase": {
-      "copySeedPhrase": "Seed ifadesini kopyala",
-      "clickToShow": "Tohum Cümlesini Göster için Tıklayın",
+      "copySeedPhrase": "Kurtarma ifadesini kopyala",
+      "clickToShow": "Kurtarma ifadesini göstermek için dokunun",
       "showQrCode": "QR Kodunu Göster",
-      "alert": "Bu seed phrase, varlıklarınıza erişim sağlayan kimlik bilgisidir. Bunu kaybetmeyin veya başkalarına ifşa etmeyin, aksi takdirde varlıklarınızı sonsuza dek kaybedebilirsiniz. Lütfen bunu güvenli bir ortamda görüntüleyin ve dikkatlice saklayın.",
-      "qrCodePopupTips": "Kimseyle seed phrase QR kodunu paylaşmayın. Lütfen bunu güvenli bir ortamda görüntüleyin ve dikkatli bir şekilde saklayın.",
+      "alert": "Bu kurtarma ifadesi varlıklarınıza erişim sağlar. Kaybetmeyin veya başkalarıyla paylaşmayın; aksi takdirde varlıklarınızı kalıcı olarak kaybedebilirsiniz. Güvenli bir ortamda görüntüleyin ve dikkatle saklayın.",
+      "qrCodePopupTips": "Kurtarma ifadesinin QR kodunu kimseyle paylaşmayın. Güvenli bir ortamda görüntüleyin ve dikkatle saklayın.",
       "qrCodePopupTitle": "QR Kodu",
       "tapToReveal": {
         "line2": "Ekranınızı kimsenin izlemediğinden emin olun.",
-        "line1": "Tohum ifadenizi görüntülemek için dokunun."
+        "line1": "Kurtarma ifadenizi görüntülemek için dokunun."
       }
     },
     "backupPrivateKey": {
@@ -1702,7 +1702,7 @@
       "setWallet": "Cüzdanı Ayarla",
       "confirmError": "Şifreler uyuşmuyor",
       "confirmTitle": "Şifreyi Onayla",
-      "subTitle": "Cüzdanınızı açmak ve yerel verileri şifrelemek için kullanılacaktır.",
+      "subTitle": "Bu şifre cüzdanınızın kilidini açar ve bu cihazdaki verilerinizi şifreler. Şifre kurtarılamaz. Kaybederseniz sıfırlayıp cüzdanınızı yeniden içe aktarmanız gerekir.",
       "Newpassword": "Yeni şifre",
       "agree": "Okudum ve <1/> <2>Kullanım Şartları</2> ile aynı fikirdeyim.",
       "agreeToTerms": "Konsoktum ve kabul ediyorum.",
@@ -1867,7 +1867,7 @@
         "balanceLabel": "Bakiye",
         "gasDepositTitle": "Gaz Yatırma",
         "suggestedToken": "Önerilen Token'lar",
-        "fetchQuoteFailed": "Alıntı alınamadı",
+        "fetchQuoteFailed": "Fiyat teklifi alınamadı",
         "minAmountRequired": "En az depozit tutarı 1 $'dır.",
         "estReceiveTip": "{{name}} üzerinden işlenen hizmetin kayma yaşama ihtimali vardır.",
         "selectToken": "Para Yatırmak İçin Token Seçin",
@@ -2018,7 +2018,7 @@
       "excludeBalanceTips": "Bu varlık, doğruluk için toplam bakiyenizden hariç tutulmuştur. Detayları görmek ve tercih ederseniz dahil etmek için üzerine dokunabilirsiniz.",
       "ShowMore": "Daha fazla göster",
       "ContentGeneratedByAI": "Bu içerik yapay zekâ tarafından oluşturuldu",
-      "Fold": "Katlan",
+      "Fold": "Daralt",
       "Introduction": "Giriş",
       "guideToMarketData": "Piyasa Verileri:",
       "balance": "Bakiyeniz",
@@ -2047,7 +2047,7 @@
         "activitySections": {
           "tableHeader": {
             "address": "Adres",
-            "min": "min",
+            "min": "dk",
             "time": "Zaman",
             "type": "Türü",
             "sell": "Satılık",
@@ -2056,7 +2056,7 @@
             "addresses": "Adresler",
             "volume": "Hacim",
             "all": "Hepsi",
-            "qnt": "Qnt",
+            "qnt": "Adet",
             "price": "Fiyat",
             "value": "Değer",
             "transactionCount": "İşlem Sayısı"
@@ -2084,7 +2084,7 @@
           "value": "Değer",
           "pair": "Çift",
           "amount": "Miktar",
-          "dex": "Dex"
+          "dex": "DEX"
         },
         "pools": "Havuzlar"
       },
@@ -2108,16 +2108,16 @@
         "Defi": "DeFi",
         "totalChain_other": "Toplam {{count}} Zincir",
         "totalChain_one": "Toplam {{count}} Zincir",
-        "NoData": "Hayır {{name}}",
-        "Token": "Jeton",
+        "NoData": "{{name}} yok",
+        "Token": "Token",
         "Nft": "NFT"
       },
       "emptyToken": {
         "buyBody": "Basit kripto alımı",
         "buyHeader": "Fiat ile Satın Al",
         "receiveHeader": "Kripto Al ",
-        "title": "Cüzdanınızı Fonlayın",
-        "desc": "Hızla fonlayın şimdi",
+        "title": "Henüz varlığınız yok",
+        "desc": "Cüzdanınıza hemen varlık ekleyin",
         "importHeader": "Cüzdan İçe Aktar",
         "receiveBody": "Başka bir cüzdandan token transfer et",
         "importBody": "Mevcut bakiyesi olan bir cüzdan ekleyin."
@@ -2132,7 +2132,7 @@
         "Defi": "DeFi",
         "NFT": "NFT",
         "AllChains": "Tüm Zincirler",
-        "token": "Jetonlar"
+        "token": "Tokenlar"
       },
       "header": {
         "placeHolder": "Araştırma",
@@ -2148,20 +2148,20 @@
       "searchWeb": {
         "title": "Tüm Sonuçlar",
         "searchTips": "Web'de ara",
-        "noResult": "Sonuç Bulunamadı için",
+        "noResult": "Şunun için sonuç bulunamadı:",
         "searching": "Sonuçlar için",
         "noResults": "Sonuç Yok"
       },
       "hotTokenList": {
-        "title": "Sıcak"
+        "title": "Popüler"
       },
       "globalSearch": {
-        "iosPlaceHolder": "Websites/Token Araştırın",
-        "placeHolder": "DApp/Tokene Araştırın"
+        "iosPlaceHolder": "Web sitesi/token ara",
+        "placeHolder": "DApp/token ara"
       },
       "tokenHeader": {
         "tokenAndFdv": "Token/FDV",
-        "token": "Jeton"
+        "token": "Token"
       }
     },
     "setting": {
@@ -2189,7 +2189,7 @@
       "clearPendingResetDesc": "Ayrıca yerel nonce verimi ve imza kaydımı sıfırlayın.",
       "clearPendingWarning": "Kaldırılan işlem, yerine geçilmediği sürece hala zincir üzerinde onaylanabilir.",
       "clearPendingDesc1": "Bu, tüm bekleyen işlemlerinizi temizleyecektir. Bu, bazı durumlarda Rabby'deki işlemin durumunun zincirdeki durumla eşleşmemesi sorununu çözmenize yardımcı olabilir.",
-      "clearPendingDesc2": "Bu, hesaplarınızdaki bakiyeleri değiştirmeyecek veya seed phrase'inizi yeniden girmenizi gerektirmeyecektir. Tüm varlıklarınız ve hesap bilgilerinizi güvende kalacaktır.",
+      "clearPendingDesc2": "Bu işlem hesap bakiyelerinizi değiştirmez veya kurtarma ifadenizi yeniden girmenizi gerektirmez. Tüm varlıklarınız ve hesap bilgileriniz güvende kalır.",
       "addCustomNetwork": "Özel Ağ Ekle",
       "clearBrowserData": "Tarayıcı Verilerini Temizle",
       "currency": "Para Birimi",
@@ -2233,8 +2233,8 @@
         "searchPlaceholder": "Para araması"
       },
       "quote": {
-        "title": "Sizin için Alıntılar",
-        "best": "En İyi Alıntılar"
+        "title": "Size Özel Teklifler",
+        "best": "En İyi Teklifler"
       },
       "youWillReceive": "Almak",
       "from": "{{dex}}'den",
@@ -2244,11 +2244,11 @@
       "purchased": "Satın alındı",
       "title": "Satın Al",
       "toBuy": "Devam Et Alım Yapmaya",
-      "quotesForYou": "Sizin İçin Alıntılar",
-      "searchingQuote": "Sizin için Alıntılar Ara...",
-      "noQuote2": "Alıntı bulunamadı.",
+      "quotesForYou": "Size Özel Fiyat Teklifleri",
+      "searchingQuote": "Size özel teklifler aranıyor...",
+      "noQuote2": "Teklif bulunamadı.",
       "noQuote": "Fiyat bulunamadı: Daha yüksek bir değer girmeyi deneyin.",
-      "noQuotePlaceholder": "Alıntı Yok",
+      "noQuotePlaceholder": "Fiyat Teklifi Yok",
       "searchRegionPlaceholder": "Bölgeyi Ara",
       "paymentProviderTips": "Bu sağlayıcı aşağıdaki ödeme yöntemlerini desteklemektedir:",
       "paymentsOnly": "Ödemeler yalnızca {{currency}} cinsinden yapılabilir."
@@ -2287,10 +2287,10 @@
       "BrowserBookmarkSection": {
         "showAll": "Tümünü Göster",
         "title": "Favoriler",
-        "fold": "Kıvrım"
+        "fold": "Daralt"
       },
       "BrowserHeader": {
-        "searchIos": "Websitesini Ara",
+        "searchIos": "Web sitesi ara",
         "searchAndroid": "DApp Ara"
       },
       "CurrentPopup": {
@@ -2307,9 +2307,9 @@
         "searchInGoogle": "Google'da \"{{searchText}}\" arayın",
         "recentEmpty": "Başlayın Keşfetmeye Web Sitesi",
         "favorite": "Favori",
-        "hot": "Sıcak",
+        "hot": "Popüler",
         "otherResults": "Diğer Sonuçlar",
-        "hot10": "Sıcak 10"
+        "hot10": "En popüler 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Web Sitelerini Aç",
@@ -2389,8 +2389,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "DApp'ta Görüntüle",
-      "viewSiteInWebsite": "Websitesi Görüntüle",
-      "appChain": "{{chain}} Hesabı üzerinde",
+      "viewSiteInWebsite": "Web sitesinde görüntüle",
+      "appChain": "{{chain}} hesabında",
       "dappActions": {
         "queueDescription": "Mevcut çekim, bir bekleme kuyruğuna girecektir. İşlem tamamlandığında, cüzdanınıza çekebilirsiniz."
       }
@@ -2403,24 +2403,24 @@
     "copyTrading": {
       "tipsDollar": {
         "title": "Smart Money’den Copy Trading",
-        "description": "Smart Money Wallets'taki son aktivitelere göre token'ları keşfedin. İşlem tutarlarını ve bu wallet'ların geçmiş kârlarını görmek için bir token'a dokunun."
+        "description": "Smart Money cüzdanlarının son aktivitelerine göre token'ları keşfedin. Bu cüzdanların işlem tutarlarını ve geçmiş kârlarını görmek için bir token'a dokunun."
       },
       "buy": "Satın Al",
-      "smartMoneyWallet": "Smart Money Wallet",
+      "smartMoneyWallet": "Smart Money Cüzdanı",
       "comingSoon": "Yakında...",
       "historyProfit": "Geçmiş Kar",
       "updateText": "{{count}} Trendler Güncellendi",
       "refreshTitle": "Smart Money’den daha fazla Copy Trading yükleniyor",
-      "smartMoneyWallets": "Smart Money Wallets",
+      "smartMoneyWallets": "Smart Money Cüzdanları",
       "recentBuy": "Son Satın Alım",
       "noMoreData": "Artık veri yok",
       "filterRule": {
         "24HChange": "24H Değişim",
         "tokenCreate": "Yeni Oluşturuldu",
-        "smartMoney": "Trading yapan Smart Wallets",
-        "smartWalletCount": "Smart Wallet sayısı"
+        "smartMoney": "İşlem yapan Smart Cüzdanlar",
+        "smartWalletCount": "Smart Cüzdan sayısı"
       },
-      "token": "Jeton",
+      "token": "Token",
       "Liquidity": "Likidite",
       "holdingProfit": "Tutma/Kâr",
       "tokenInfo": "Token Bilgisi",
@@ -2437,13 +2437,13 @@
       "currentToken": "Mevcut Token",
       "noOtherTokensWithSameName": "Aynı isimde başka token bulunamadı.",
       "createdTime": "Oluşturulma Zamanı",
-      "timeSmartWallet": "Zaman / Smart Wallet",
+      "timeSmartWallet": "Zaman / Smart Cüzdan",
       "buyEarn": "24H Satın Al / Kazan",
       "myCopyTradingEarnings": "Kopya Ticaret Kazançlarım",
-      "smartWalletsBuying": "{{len}} Smart Wallets alım yapıyor",
+      "smartWalletsBuying": "{{len}} Smart Cüzdan alım yapıyor",
       "sameNameTokens": "Aynı İsimli Token'lar",
       "earn": "Kazan",
-      "smartWallets": "Smart Wallets",
+      "smartWallets": "Smart Cüzdanlar",
       "myBalanceFromCopyTrading": "Copy Trading'den Bakiyem",
       "gettingLatest": "Smart Money’den en güncel veriler alınıyor...",
       "updateTokenText": "{{count}} token güncellendi"
@@ -2502,11 +2502,11 @@
         "failed": "Limit emir iptal edilemedi"
       },
       "PerpsCard": {
-        "depositBtn": "Para Yatırma",
+        "depositBtn": "Yatır",
         "loginBtn": "Perps işlemi için giriş yap",
-        "title": "Perps Ticaret Yapın",
+        "title": "Perps İşlemleri",
         "available": "Mevcut",
-        "withdrawBtn": "Çekilme",
+        "withdrawBtn": "Çek",
         "loginDesc": "Mevcut adresle giriş yapın ve Perps işlemine başlamak için fon yatırın.",
         "learnBtn": "Perps hakkında bilgi edinin",
         "learnMore": "Daha Fazla Bilgi Edinin",
@@ -2515,14 +2515,14 @@
       "PerpsGuidePopup": {
         "step4Title": "Kaldıraç Ayarlama",
         "step1Title": "Sürekli vadeli işlemleri öğrenin",
-        "step2Title": "Uzun",
+        "step2Title": "Long",
         "step5Title": "Tasfiye",
         "step2Desc": "Fiyatın yükselebileceğini düşündüğünüzde, bir long açarsınız. Eğer fiyat yükselirse, kazanırsınız. Eğer düşerse, kaybedersiniz.",
         "step1Desc": "Sürekli vadeli işlemlerde yalnızca varlıkları değil, fiyatın bir sonraki hareketine dair beklentinizi alıp satarsınız.",
-        "step3Desc": "Fiyata düşmesini beklediğinizde, kısa pozisyon açarsınız. Fiyat düşerse, kazanırsınız. Fiyat yükselirse, kaybedersiniz.",
+        "step3Desc": "Fiyatın düşmesini beklediğinizde short pozisyon açarsınız. Fiyat düşerse kazanır, yükselirse kaybedersiniz.",
         "step4Desc": "Kaldıraç, yatırdığınız sermayeden daha yüksek bir nominal değerle işlem yapmanızı sağlar. Hem kazançları hem de kayıpları büyütebilir.",
         "step5Desc": "Her pozisyonun bir tasfiye fiyatı vardır. Piyasa fiyatı bu seviyeye ulaşırsa pozisyonunuz kapatılır. Kaldıraç arttıkça tasfiye riski de artar.",
-        "step3Title": "Kısa"
+        "step3Title": "Short"
       },
       "PerpsDepositPopup": {
         "amount": "Miktar",
@@ -2538,9 +2538,9 @@
       },
       "PerpsWithdrawPopup": {
         "feeTooltipTitle": "Ücret",
-        "title": "Çekilme",
+        "title": "Çekim",
         "amount": "Miktar",
-        "withdrawBtn": "Para Çekme",
+        "withdrawBtn": "Çek",
         "invalidNumber": "Lütfen geçerli bir sayı girin",
         "available": "kullanılabilir",
         "feeTip": "Ücret: $1.00",
@@ -2562,16 +2562,16 @@
       },
       "historyDetail": {
         "title": {
-          "openLong": "Açık Uzun",
-          "closeLong": "Uzun Pozisyonu Kapat",
-          "openShort": "Kısa Pozisyon Aç",
-          "closeLongTp": "Kapat Long Kar Al",
-          "closeShort": "Kapat Short",
-          "closeShortSl": "Kısa Pozisyonu Kapat Stop Loss",
-          "closeLongLiquidation": "Kapat Uzun Likidasyon",
-          "closeShortLiquidation": "Kapat Kısa Tasfiye",
-          "closeLongSl": "Kapat Long Stop Loss",
-          "closeShortTp": "Kapat Kısa Kar Al"
+          "openLong": "Long Aç",
+          "closeLong": "Long Kapat",
+          "openShort": "Short Aç",
+          "closeLongTp": "Long Pozisyonu Kâr Al ile Kapat",
+          "closeShort": "Short Kapat",
+          "closeShortSl": "Short Pozisyonu Zarar Durdur ile Kapat",
+          "closeLongLiquidation": "Long Pozisyonu Tasfiye ile Kapat",
+          "closeShortLiquidation": "Short Pozisyonu Tasfiye ile Kapat",
+          "closeLongSl": "Long Pozisyonu Zarar Durdur ile Kapat",
+          "closeShortTp": "Short Pozisyonu Kâr Al ile Kapat"
         },
         "price": "Fiyat",
         "tradeValue": "Ticaret Değeri",
@@ -2587,13 +2587,13 @@
         "feeRabbyDiscount": "Sınırlı süreli işlem ücreti indirimi",
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Ücret",
-        "feeDesc": "Kullanıcılar işlemlerini gerçekleştirdiğinde, hem <1>trading fees</1> hem de <2>builder fees</2> uygulanır.",
+        "feeDesc": "İşlem yapıldığında hem <1>işlem ücretleri</1> hem de <2>builder ücretleri</2> uygulanır.",
         "amount": "Miktar",
         "asset": "Varlık",
         "action": "Eylem"
       },
       "PerpsAutoCloseModal": {
-        "profit": "Kar Sırası",
+        "profit": "Kâr",
         "takeProfitTipsLong": "Kar alım fiyatı mevcut fiyattan yüksek olmalıdır.",
         "takeProfitTipsShort": "Kar alım fiyatı mevcut fiyatın altında olmalıdır.",
         "takeProfit": "Kar al",
@@ -2619,21 +2619,21 @@
           "completed": "Tamamlandı"
         },
         "title": "Geçmiş",
-        "closeLongTp": "Uzun Pozisyon Kapat Kar Al",
-        "openLong": "Açık Long",
-        "closeLong": "Uzun Pozisyon Kapat",
+        "closeLongTp": "Long Pozisyonu Kâr Al ile Kapat",
+        "openLong": "Long Aç",
+        "closeLong": "Long Kapat",
         "withdraw": "Çekim",
-        "closeShort": "Kapat Short",
+        "closeShort": "Short Kapat",
         "deposit": "Para Yatırma",
-        "closeShortSl": "Kapat Kısa Zarar Durdurma",
-        "closeLongLiquidation": "Kapat Uzun Tasfiye",
-        "closeShortLiquidation": "Kapat Kısa Tasfiye",
-        "closeLongSl": "Close Long zararı durdurma",
-        "openShort": "Kısa Pozisyon Aç",
-        "closeShortTp": "Kapat Kısa Kar Al",
+        "closeShortSl": "Short Pozisyonu Zarar Durdur ile Kapat",
+        "closeLongLiquidation": "Long Pozisyonu Tasfiye ile Kapat",
+        "closeShortLiquidation": "Short Pozisyonu Tasfiye ile Kapat",
+        "closeLongSl": "Long Pozisyonu Zarar Durdur ile Kapat",
+        "openShort": "Short Aç",
+        "closeShortTp": "Short Pozisyonu Kâr Al ile Kapat",
         "transferToSpot": "Spot'a Transfer",
         "transferToPerps": "Perps'a Transfer",
-        "transferDetailTitle": "Transfer",
+        "transferDetailTitle": "Aktarım",
         "transferActionToSpot": "Transfer (Perps'tan Spot'a)",
         "transferActionToPerps": "Transfer (Spot'tan Perps'e)",
         "transferGotIt": "Anladım",
@@ -2665,7 +2665,7 @@
         "notActivatedAddress": "Aktive Değil",
         "hyperliquidBalance": "Perps bakiyesi"
       },
-      "selectAccountTitle": "Cüzdan Seçin ve Giriş Yapın",
+      "selectAccountTitle": "Giriş Yapmak İçin Cüzdan Seçin",
       "title": "Perps",
       "more": "Daha Fazla",
       "positions": "Pozisyonlar",
@@ -2678,13 +2678,13 @@
       "leverageRangeMaxError": "Maksimum kaldıraç {{max}}x'dir.",
       "deleteAgentSuccess": "Ajan başarıyla silindi",
       "leverageRangeMinError": "Minimum kaldıraç {{min}}x'dir.",
-      "regionNotSupport": "Pozisyon açma işlemine bulunduğunuz bölgede desteklenmiyor.",
+      "regionNotSupport": "Bölgenizde pozisyon açma desteklenmiyor.",
       "searchPerpsPopup": {
         "searchPosition": "Pozisyon ara",
         "empty": "Sonuç bulunamadı",
         "openPosition": "Pozisyon aç",
-        "searchPerps": "Perps Araştırın",
-        "searchPlaceholder": "Perps Araştırması"
+        "searchPerps": "Perps Ara",
+        "searchPlaceholder": "Perps Ara"
       },
       "PerpsRiskPopup": {
         "level": {
@@ -2705,7 +2705,7 @@
       "closeAllConfirmMessage": "Tüm açık pozisyonlarınız piyasa fiyatından kapatılacak.",
       "closeAllConfirmTitle": "Tüm pozisyonları kapatmayı onayla",
       "assetPage": {
-        "hyperliquidPosition": "Hyperliquid Pozisyon"
+        "hyperliquidPosition": "Hyperliquid Pozisyonu"
       },
       "invitePopup": {
         "title": "Hyperliquid Ücretlerinden Tasarruf Edin",
@@ -2713,15 +2713,15 @@
         "activatedFailed": "Aktivasyon başarısız oldu",
         "hyperliquidFee": "Hyperliquid işlem ücretleri.",
         "activatedSuccess": "%4 Hyperliquid ücret tasarrufu etkinleştirildi",
-        "description": "Rabby’nin kodunu etkinleştirmek için kullanın",
+        "description": "Etkinleştirmek için Rabby kodunu kullanın",
         "activateNow": "Şimdi Etkinleştir"
       },
       "dappSelect": {
         "title": "Perps Sağlayıcısını Seçin"
       },
       "search": {
-        "headerTitle": "Perps Araştır",
-        "placeholder": "Perps Araştır",
+        "headerTitle": "Perps Ara",
+        "placeholder": "Perps Ara",
         "empty": "Sonuç bulunamadı"
       },
       "EnableUnifiedAccount": {
@@ -2773,28 +2773,28 @@
       },
       "PerpsPosition": {
         "slPrice": "Zarar Durdurma Fiyatı",
-        "justMargin": "Marjinal",
-        "markPrice": "Mark Price",
+        "justMargin": "Marj",
+        "markPrice": "İşaret Fiyatı",
         "title": "Pozisyon",
-        "marginIsolated": "Marjin (yalnız)",
+        "marginIsolated": "Marj (İzole)",
         "margin": "Marj (İzole)",
         "liquidationPrice": "Tasfiye Fiyatı",
         "entryPrice": "Giriş Fiyatı",
         "size": "Boyut",
         "tpPrice": "Kar Alma Fiyatı",
-        "isolated": "İzole edilmiş",
-        "marginCross": "Teminat (Çapraz)",
+        "isolated": "İzole",
+        "marginCross": "Marj (Çapraz)",
         "fundingPayments": "Fonlama Ödemeleri",
-        "cross": "Cross",
+        "cross": "Çapraz",
         "pnl": "PNL",
         "direction": "Yön",
-        "liqPrice": "Liq.Fiyat",
+        "liqPrice": "Tasfiye Fiyatı",
         "closePosition": "Kapat {{direction}}",
         "sizeTips": "Marj ve kaldıraçla belirlenen ticaretinizin toplam değeri veya miktarı.",
         "liquidationPriceTips": "Pozisyonunuzun marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kayıpları önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat.",
         "autoClose": "Otomatik Kapat",
         "fundingPaymentsTips": "Bu, pozisyon açıldığından beri net fonlama ödemeleridir. Fonlama, perpetual sözleşme fiyatını tokenın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir.",
-        "fundingGains": "Finansman Kazançları",
+        "fundingGains": "Fonlama Kazançları",
         "fundingGainsTips": "Bu, pozisyon açıldığından beri net fonlama kazancıdır. Fonlama, perpetual sözleşme fiyatını tokenın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir.",
         "settings": "Ayarlar",
         "positionValue": "Pozisyon Değeri",
@@ -2804,13 +2804,13 @@
         "details": "Ayrıntılar",
         "realizedPnl": "Gerçekleşen PNL",
         "fundingTipsBold": "Bu, pozisyon açıldığından beri hesaplanan toplam fonlamayı gösterir. <bold>Yeşil (pozitif)</bold> değerler diğer yatırımcılardan fonlama aldığınız, <bold>kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleri anlamına gelir.",
-        "crossTips": "Cross Margin modunda, tek bir pozisyon için likidasyon fiyatı sadece referans amaçlı bir tahmindir."
+        "crossTips": "Çapraz Marj modunda tek bir pozisyonun tasfiye fiyatı yalnızca referans amaçlı bir tahmindir."
       },
       "PerpsInfo": {
         "24Vol": "24s Hacim",
         "title": "Bilgi",
-        "openInterest": "Açık Faiz",
-        "funding": "Finansman",
+        "openInterest": "Açık Pozisyon",
+        "funding": "Fonlama",
         "openInterestTips": "Bu sözleşmedeki tüm kullanıcıların toplam açık pozisyonu.",
         "fundingTips": "Bu, perpetual sözleşme fiyatını tokenın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir. Pozitifse long short’a ödeme yapar. Negatifse short long’a ödeme yapar.",
         "fundingRate": "Fonlama Oranı"
@@ -2825,7 +2825,7 @@
         "positionSize": "Pozisyon Boyutu",
         "providerFeeTips": "Hyperliquid ücreti: {{fee}}",
         "rabbyFeeTips": "Rabby ücreti: 0.04%",
-        "fee": "Ücret:",
+        "fee": "Ücret",
         "closeBtn": "Kapat {{direction}}",
         "amount": "Miktar",
         "confirm": "Onayla",
@@ -2846,8 +2846,8 @@
         "maximumOrderSize": "Maksimum emir büyüklüğü {{amount}}'dir.",
         "tpPrice": "Kar Alım Fiyatı",
         "sizeTips": "Ticaretinizin toplam değeri veya miktarı, marj ve kaldıraçla belirlenir.",
-        "available": "uygun",
-        "margin": "Marjinal",
+        "available": "kullanılabilir",
+        "margin": "Marj",
         "autoClose": "Otomatik Kapatma",
         "size": "Büyüklük",
         "slPrice": "Zarar Durdurma Fiyatı",
@@ -2856,13 +2856,13 @@
         "invalidNumber": "Lütfen geçerli bir sayı girin",
         "insufficientBalance": "Yetersiz bakiye",
         "stopLossWhen": "Stop Loss Ne Zaman",
-        "takeProfitWhenPriceBelow": "Fiyata Düşünce Kar Al",
+        "takeProfitWhenPriceBelow": "Fiyat Altına Düştüğünde Kâr Al",
         "stopLossWhenPriceAbove": "Fiyat Üstünde Stop Loss",
         "stopLossWhenPriceBelow": "Fiyat Altında Stop Loss",
-        "takeProfitWhenPriceAbove": "Kar Al, Fiyat Yukarıda Olduğunda",
+        "takeProfitWhenPriceAbove": "Fiyat Üzerine Çıktığında Kâr Al",
         "upTo": "En fazla",
         "maxMargin": "Maksimum marj {{amount}}'dır.",
-        "minMargin": "Minimum margin {{amount}}'dir.",
+        "minMargin": "Minimum marj {{amount}}'dir.",
         "onlyIsolated": "Bu token için yalnızca izole marj desteklenmektedir."
       },
       "MarketSlippage": {
@@ -2880,10 +2880,10 @@
         "slPrice": "Zarar Durdurma Fiyatı",
         "perps": "Perps",
         "autoClose": "Otomatik Kapatma",
-        "title": "Sipari Kontrolü",
+        "title": "Emri Kontrol Et",
         "initialMargin": "Başlangıç Marjı",
         "estLqPrice": "Tahmini Likidasyon Fiyatı",
-        "btn": "Açık {{direction}} Pozisyon",
+        "btn": "{{direction}} Pozisyonu Aç",
         "size": "Boyut",
         "tpPrice": "Kar Alım Fiyatı",
         "fee": "Ücret",
@@ -2896,11 +2896,11 @@
         "free": "Ücretsiz",
         "providerFee": "Hyperliquid ücreti",
         "rabbyFee": "Rabby ücreti",
-        "marginCross": "Marjin (Çapraz)"
+        "marginCross": "Marj (Çapraz)"
       },
       "action": {
-        "long": "Uzun",
-        "short": "Kısa",
+        "long": "Long",
+        "short": "Short",
         "closePosition": "Kapat {{direction}} Pozisyonu",
         "noPermission": "Açık pozisyon açma işlemi bölgenizde desteklenmemektedir.",
         "add": "Ekle",
@@ -2909,19 +2909,19 @@
       "PerpsAutoCloseModal": {
         "tpPrice": "Kar Alım Fiyatı",
         "setSlPrice": "Zararı Durdur Fiyatını Belirle",
-        "setTpPrice": "Kar Al-Karı Fiyatını Belirle",
+        "setTpPrice": "Kâr Al Fiyatını Belirle",
         "price": "Fiyat:",
         "entryPrice": "Giriş Fiyatı:",
         "slPrice": "Zarar Durdurma Fiyatı",
-        "youLoss": "Kaybettin",
+        "youLoss": "Kaybınız",
         "currentPrice": "Mevcut {{price}}",
-        "youGain": "Kazanırsınız",
+        "youGain": "Kazancınız",
         "priceReaches": "Fiyat Ulaşıyor",
         "priceAbove": "Fiyatın üstünde",
-        "takeProfitWhen": "Kar Al Xoksa Ne Zaman",
-        "stopLossExpectedPNL": "Zarar durdurma beklenen PNL",
-        "takeProfitExpectedPNL": "Kar al, beklenen PNL",
-        "stopLossWhen": "Zarar Durdurulduğunda",
+        "takeProfitWhen": "Şu Durumda Kâr Al",
+        "stopLossExpectedPNL": "Zarar Durdur için Beklenen PNL",
+        "takeProfitExpectedPNL": "Kâr Al için Beklenen PNL",
+        "stopLossWhen": "Şu Durumda Zarar Durdur",
         "priceBelow": "Fiyat altında",
         "youGainRoi": "Kazanç (ROI)",
         "youLossRoi": "Kayıp (ROI)",
@@ -2930,7 +2930,7 @@
         "EntryAndCurrentPrice": "Giriş {{entryPrice}}  Mevcut {{price}}"
       },
       "PerpsEditMarginPopup": {
-        "title": "Marjini ayarla",
+        "title": "Marjı Ayarla",
         "currentPrice": "Mevcut Fiyat",
         "perpsBalance": "Perps Bakiyesi",
         "amountToReduce": "Azaltılacak Miktar",
@@ -2940,18 +2940,18 @@
         "insufficientMargin": "Yetersiz teminat",
         "addMargin": "Marj ekle",
         "amountToAdd": "Ekleyeceğiniz Tutar",
-        "reduceMargin": "Marjini Azaltın",
-        "liqDistance": "Liq.Uzaklık"
+        "reduceMargin": "Marjı Azalt",
+        "liqDistance": "Tasfiye Mesafesi"
       },
       "PerpsAddPositionPopup": {
         "addSize": "Boyut Ekle",
         "totalSize": "Toplam Boyut",
-        "addToLong": "Uzunluğa Ekle",
-        "addToShort": "Kısaya Ekle"
+        "addToLong": "Long Pozisyona Ekle",
+        "addToShort": "Short Pozisyona Ekle"
       },
       "needDepositFirst": "Öncelikle fonları yatırmanız gerekiyor.",
       "PerpMarginModePopup": {
-        "isolatedTitle": "Izole Marjin",
+        "isolatedTitle": "İzole Marj",
         "crossTitle": "Çapraz Marj",
         "cannotChangeMarginMode": "Açık pozisyonlar varken Margin Modu değiştirilemez.",
         "isolatedDesc": "Her pozisyon kendi marjını kullanır. Kayıplar yalnızca o pozisyonla sınırlıdır, ancak pozisyon daha kolay tasfiye edilebilir.",
@@ -2970,8 +2970,8 @@
     "selectAccountSheetModal": {
       "title": {
         "addNewWhitelistAddr": "Yeni Beyaz Liste Adresi Ekle",
-        "sendTo": "Gönderilecek",
-        "sendFrom": "Gönderilecek",
+        "sendTo": "Alıcı cüzdan",
+        "sendFrom": "Gönderen cüzdan",
         "viewSentTx": "Gönderildi",
         "selectFromHistory": "Geçmişten Seçin"
       },
@@ -2982,15 +2982,15 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
-        "canBorrow": "Teminat olarak sağladığınız teminatınıza göre, borç limitine kadar borç alabilirsiniz.",
+        "canBorrow": "Yatırdığınız teminata göre borç limitine kadar borç alabilirsiniz.",
         "isolated": "İzolasyon modu nedeniyle borçlanma gücü ve varlıklar sınırlıdır.",
         "emodeNoAssets": "Aramanıza bağlı herhangi bir varlık bulamadık. Farklı bir kategori ile tekrar deneyin.",
         "emode": "E-Mode'da bazı varlıklar borç alınamıyor. Tüm varlıklara erişmek için E-Mode'dan çıkın."
       },
       "list": {
         "headers": {
-          "token": "Jeton",
-          "mySupplies": "Benim malzemelerim",
+          "token": "Token",
+          "mySupplies": "Yatırdıklarım",
           "myBorrows": "Benim borçlarım",
           "apy": "APY",
           "token_tvl": "Token/TVL",
@@ -2998,14 +2998,14 @@
           "totalBorrowed": "Toplam Borçlanma"
         },
         "item": {
-          "wrapperToken": "{{name}} için Wrapped token"
+          "wrapperToken": "{{name}} için sarmalanmış token"
         }
       },
       "summary": {
         "empty": {
           "description": "AAVE tarafından desteklenmektedir. Güvenli ve sıfır ücret.",
           "title": "Varlıklarınızla Faiz Kazanın",
-          "endDesc": "Henüz herhangi bir yatırımız yok. Faiz kazanmaya başlamak için aşağıda önerilen varlıklara göz atın."
+          "endDesc": "Henüz yatırımınız yok. Faiz kazanmaya başlamak için aşağıdaki önerilen varlıklara göz atın."
         },
         "risky": "Riskli",
         "more": "Daha Fazla",
@@ -3019,22 +3019,22 @@
           "collateral": "Teminat",
           "wallet": "Cüzdan bakiyesi"
         },
-        "repayWith": "Geri ödeme yapın ile"
+        "repayWith": "Şununla geri öde"
       },
       "supplyDetail": {
         "actions": "Yatır",
         "availableToBorrow": "Ödünç alınabilir",
-        "supplyAPY": "Arz APY",
+        "supplyAPY": "Yatırma APY'si",
         "approveAndSupply": "Onayla ve yatır",
-        "supplyBalance": "Arz Dengesi",
+        "supplyBalance": "Yatırılan Bakiye",
         "collateralization": "Teminatlandırma",
         "enabled": "Etkinleştirildi",
         "unavailable": "Kullanılamıyor",
         "isolatedTips": "Mevcut kredi verme/kredi alma varlıklarınız desteklenmiyor.",
-        "supplied": "Tedarik Edildi"
+        "supplied": "Yatırıldı"
       },
       "withdrawDetail": {
-        "remainingSupply": "Kalan arzı",
+        "remainingSupply": "Kalan yatırım",
         "actions": "Çekim",
         "approveAndWithdraw": "Onayla ve çek"
       },
@@ -3042,7 +3042,7 @@
         "actions": "Ödünç Al",
         "approveAndBorrow": "Onayla ve Borç Al",
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
-        "almostReachedWarning": "Protokol borç limiti bu varlık için %100'dür. Daha fazla borç alma available değildir.",
+        "almostReachedWarning": "Bu varlık için protokol borç limiti %100'e ulaştı. Daha fazla borç alınamaz.",
         "swapDebt": "Değiştir",
         "borrowed": "Ödünç Alındı",
         "noSupplyDesc": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
@@ -3058,16 +3058,16 @@
       },
       "borrowOverview": {
         "borrowCap": "Kredi Limiti",
-        "myBorrow": "Benim Krediğim",
+        "myBorrow": "Borcum",
         "availableToBorrow": "Kullanılabilir borç alma",
         "title": "Kredi Detayları",
-        "totalBorrowed": "Toplam Borçlu",
+        "totalBorrowed": "Toplam Borç",
         "liquidityPenalty": "Tasfiye Cezası",
         "reachCapTip": "Bu varlık borç alma sınırına ulaştı."
       },
       "supplyOverview": {
         "walletBalance": "Cüzdan Bakiyesi",
-        "mySupply": "Benim Arzım",
+        "mySupply": "Yatırdıklarım",
         "title": "Yatırım detayları",
         "availableToSupply": "Yatırılabilir",
         "totalSupplied": "Toplam yatırılan",
@@ -3097,18 +3097,18 @@
       },
       "modalDesc": {
         "availableToBorrow": "Borç almak için mevcut",
-        "availableToBorrowDesc": "Teminatınız üzerinden borç alabilirsiniz ve borç limiti ulaşana kadar.",
+        "availableToBorrowDesc": "Yatırdığınız teminata göre borç limitine ulaşana kadar borç alabilirsiniz.",
         "maxAmount": "Bu, temin edilen tüm teminatlarınıza dayanarak borç alabileceğiniz maksimum miktardır. Toplam borç alma gücünüz, her teminat varlığının piyasa değerinin Max LTV ile çarpılması ve ardından sonuçların toplanmasıyla hesaplanır.",
         "lqDesc": "Bir tasfiye gerçekleştiğinde, tasfiye edenler borçlunun adına mevcut borç miktarının %50'sine kadar geri ödeme yapar. Karşılığında, teminatı indirimli fiyatla satın alabilir ve farkı (tasfiye cezası) bonus olarak alabilirler.",
         "isolatedTitle": "Varlık teminat olarak kullanılamaz.",
-        "isolatedDesc": "Bu varlık yalnızca izolasyon modunda teminat olarak kullanılabilir; burada borç almak için başka varlık teminatı sağlayamazsınız. İzolasyon modunda teminat olarak kullanılan varlıklar yalnızca belirli bir borç tavanına kadar borç alınabilir.",
+        "isolatedDesc": "Bu varlık yalnızca İzolasyon Modunda teminat olarak kullanılabilir. Bu modda başka varlıkları teminat olarak yatıramazsınız ve borçlanma belirli bir borç tavanıyla sınırlıdır.",
         "isolatedSupplyDesc": "Teminat kullanımı izolasyon modu nedeniyle sınırlıdır.",
         "globalIsolatedDesc": "İzolasyon modunda, diğer varlıkları teminat olarak veremezsiniz. Küresel borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. İzolasyon modundan çıkmak için, başka bir varlık borçlanmadan önce UNI'yi teminat olarak devre dışı bırakın.",
         "maxLTV": "Maksimum LTV oranı, belirli bir teminatın maksimum borçlanma gücünü temsil eder. Örneğin, bir teminatın LTV'si %75 ise, kullanıcı her 1 ETH değerindeki teminat için ana para biriminde 0.75 değerinde ETH borç alabilir."
       },
-      "supplied": "Sağlanan",
+      "supplied": "Yatırılan",
       "gotIt": "Tamamdır",
-      "netWorth": "Net worth",
+      "netWorth": "Net değer",
       "submitted": "gönderildi",
       "selectChain": "Zinciri Seçin",
       "estDailyEarning": "Günlük Tahmini Kazanç",
@@ -3129,14 +3129,14 @@
         "closeTitle": "Kapatmayı onayla",
         "exitIsolationModeDesc": "İzolasyon modundan çıkacaksınız ve diğer token'lar şimdi teminat olarak kullanılabilir.",
         "exitIsolationModeTitle": "İzolasyon Modundan Çıkış",
-        "closeDesc": "Bu varlığın teminat olarak kullanımını kapatmak, borç alma gücünüzü ve Health Factor değerini etkiler.",
+        "closeDesc": "Bu varlığı teminat olarak devre dışı bırakmak borçlanma gücünüzü ve Sağlık Faktörünüzü etkiler.",
         "riskToLiquidationText": "Bu varlığın teminat durumu değiştirilemez, çünkü tasfiyeyi tetikleyebilir.",
         "enableIsolationModeDesc": "İzolasyon moduna giriyorsunuz. İzolasyon modundayken, diğer varlıkları teminat olarak sağlayamazsınız. Küresel bir borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. Başka bir varlık borçlanmadan önce teminat olarak CRV'yi devre dışı bırakarak izolasyon modundan çıkın.",
         "openDesc": "Bu varlığı teminat olarak etkinleştirmek, borçlanma gücünüzü ve Sağlık Faktörünü artırır. Ancak, sağlık faktörünüz 1'in altına düşerse tasfiye edilebilir.",
         "toggleRiskTexts": {
           "canNotSwitchUsageAsCollateralMode": "Bu varlığın teminat durumu değiştirilemez, çünkü tasfiyeyi tetikleyebilir.",
           "canNotUseThisCurrencyAsCollateral": "Bu para birimini teminat olarak kullanamazsınız.",
-          "doNotHaveSuppliesInThisCurrency": "Bu para biriminde arzınız yok.",
+          "doNotHaveSuppliesInThisCurrency": "Bu para biriminde yatırımınız yok.",
           "zeroLTVWithdrawBlocked": "Sıfır LTV'ye sahip varlıklar ({{assets}}) bu işlemi gerçekleştirmek için geri çekilmeli veya teminat olarak devre dışı bırakılmalıdır.",
           "zeroLTVEnableEModeFirst": "Bu varlığın LTV'si 0'dır ve teminat olarak kullanılamaz. {{asset}} varlığını teminat olarak kullanmak için E-Mode'u etkinleştirin."
         }
@@ -3171,7 +3171,7 @@
         },
         "title": "E-Mode'u Yönet",
         "unavailable": "• Kullanılamaz",
-        "unavailableTips": "Mevcut kredi verme/borç alma varlıklarınız desteklenmiyor.",
+        "unavailableTips": "Mevcut yatırma/borç alma varlıklarınız desteklenmiyor.",
         "disableTitle": "Devre dışı bırak",
         "enabled": "• Etkinleştirildi",
         "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır.",
@@ -3186,7 +3186,7 @@
         "collateralSwapSelector": {
           "header": {
             "collateral": "Teminatım",
-            "assets": "Jeton"
+            "assets": "Token"
           },
           "title": "Teminat Token Seçin"
         }
@@ -3211,10 +3211,10 @@
         "title": "Borç pozisyonunu dönüştür",
         "borrowBalance": "Borç bakiyesi",
         "entryTips": "Borç aldığınız varlığı tek tıkla dönüştürerek adımları ve ücretleri azaltın.",
-        "lpRiskWarning": "Takasta sonra düşük sağlık faktörü. Pozisyonunuzun tasfiye riski daha yüksek olacaktır.",
+        "lpRiskWarning": "Takas sonrasında Sağlık Faktörü düşük olacak. Pozisyonunuz daha yüksek tasfiye riski taşıyacak.",
         "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Düşük likidite veya küçük emir boyutu nedeniyle bu rotanın tahmini önemli ölçüde sapabilir.",
         "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın.",
-        "maxLtvWarning": "Yetersiz teminat, yeni borç pozisyonunu karşılamak için. Cebinizin borç değiştirme işlemi yapmak için kalan borç verme gücüne sahip olması gerekir."
+        "maxLtvWarning": "Yeni borç pozisyonunu karşılayacak yeterli teminat yok. Borç değişimi için cüzdanınızda kullanılabilir borçlanma gücü kalmalıdır."
       },
       "hfTips": {
         "more": "Daha fazla",
@@ -3241,13 +3241,13 @@
         "repayWith": "Geri ödeme için kullanılacak teminat",
         "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
         "toRepay": "Beklenen geri ödeme tutarı",
-        "insufficientLiquidity": "Insufficient liquidity.",
+        "insufficientLiquidity": "Yetersiz likidite.",
         "frozenCollateral": "Bu varlık, Aave topluluğu kararı nedeniyle donduruldu."
       },
       "repayWithAToken": {
         "header": {
           "balance": "Bakiye",
-          "assets": "Jeton"
+          "assets": "Token"
         },
         "title": "Geri Ödeme Token'i Seçin",
         "zeroLtvCollateralTips": "Aşağıdaki LTV = 0 teminatlarınız var. Teminatla geri ödeme kurallarına göre önce bu teminatlarla geri ödeme yapmanız gerekir."
@@ -3280,8 +3280,8 @@
     },
     "DAppFrame": {
       "selectAWallet": "Cüzdan Seçin",
-      "walletBalance": "Cüzdan/Balance",
-      "netWorth": "Ağ Değeri"
+      "walletBalance": "Cüzdan/Bakiye",
+      "netWorth": "Net Değer"
     },
     "meme": {
       "tokenHeader": {
@@ -3310,31 +3310,31 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "Rabby cüzdanınızı geri yükleyin",
-        "subtitle": "Hoş geldin geri! 🎉  \nCüzdanını hızlıca geri yüklemek için bir yöntem seç.",
+        "subtitle": "Tekrar hoş geldiniz! 🎉\nCüzdanınızı hızla geri yüklemek için bir yöntem seçin.",
         "subtitleInApp": "Cüzdanlarınızı Rabby uzantısından veya iCloud'dan hızlıca içe aktarmak için aşağıdan bir seçenek belirleyin."
       },
       "importSecret": {
-        "seedPhrasePlaceholder": "Seed ifadenizi girin",
+        "seedPhrasePlaceholder": "Kurtarma ifadenizi girin",
         "privateKeyPlaceholder": "Özel anahtarınızı girin"
       },
       "createWalletError": "Cüzdan oluşturma başarısız oldu",
       "walletReady": "Cüzdanınız hazır 🚀",
       "setPasswordTip": "Cüzdanınızı korumak için bir şifre belirleyin.",
       "common": {
-        "orYouCanCreateNewWallet": "Ya da <clickable>yeni bir cüzdan oluşturun</clickable> diyebilirsiniz."
+        "orYouCanCreateNewWallet": "Ya da <clickable>yeni bir cüzdan oluşturabilirsiniz</clickable>."
       }
     },
     "convertDust": {
       "failReason": {
         "missingRequiredParams": "Gerekli parametreler eksik",
         "quoteUnavailable": "Fiyat teklifi alınamadı",
-        "gasCostTooHigh": "Gas ücret limiti aşıldı",
+        "gasCostTooHigh": "Gas ücreti limiti aşıldı",
         "priceImpactTooHigh": "Yüksek fiyat etkisi",
         "buildSwapTxsFailed": "Takas işlemleri oluşturulamadı",
         "sendSwapTxFailed": "Takas işlemi gönderilemedi",
         "transactionFailed": "İşlem başarısız oldu",
         "submitFailed": "İşlemler gönderilemedi",
-        "gasNotEnough": "Yetersiz Gas"
+        "gasNotEnough": "Yetersiz gas"
       },
       "status": {
         "pending": "Takas ediliyor",
@@ -3344,7 +3344,7 @@
       "receiveSummary": {
         "progress": "Dönüştürme ilerlemesi",
         "priceImpact": "Fiyat Etkisi Limiti",
-        "gasLimit": "Tek işlem Gas limit",
+        "gasLimit": "Tek işlem için gas limiti",
         "estimateReceive": "Tah. Alım:",
         "actualReceive": "Al"
       },
@@ -3354,14 +3354,14 @@
         "start": "Dönüştürmeyi Başlat"
       },
       "completed": {
-        "title": "Toz Dönüştürüldü !",
+        "title": "Küçük Bakiyeler Dönüştürüldü!",
         "receive": "Alındı:",
         "failedTitle": "Dönüşüm Sona Erdi",
         "viewMoreDetail": "Daha fazla detay görüntüle",
         "fold": "Katla"
       },
       "entryGuide": {
-        "title": "Convert Dust'ı burada bulabilirsiniz\n👇 Anasayfa'da",
+        "title": "Küçük Bakiyeleri Dönüştür özelliğini\n👇 Ana Sayfa'da bulabilirsiniz",
         "button": "Tamam"
       },
       "stopSheet": {
@@ -3372,14 +3372,14 @@
       },
       "homeBanner": {
         "title": "Küçük Bakiyeleri Dönüştür",
-        "description": "Küçük bakiyeleri native token'e dönüştürmeyi destekler"
+        "description": "Küçük bakiyeleri yerel token'a dönüştürür"
       },
       "colValueAmount": "Değer/Miktar",
-      "colToken": "Jeton",
+      "colToken": "Token",
       "colStatusToken": "Durum/Token",
       "emptyText": "Düşük değerli token bulunamadı",
       "unsupportedAccountType": "Bu hesap türü desteklenmiyor.",
-      "unsupportedAccount": "Şu anda yalnızca private key ve seed phrase adresleri desteklenmektedir.",
+      "unsupportedAccount": "Şu anda yalnızca özel anahtar veya kurtarma ifadesiyle içe aktarılan adresler desteklenmektedir.",
       "title": "Küçük Bakiyeleri Dönüştür"
     },
     "walletConnect": {
@@ -3429,31 +3429,31 @@
       },
       "depositPopup": {
         "amount": "Miktar",
-        "title": "Yatırmak",
+        "title": "Yatır",
         "selectToken": "Para Yatırmak İçin Token Seçin",
-        "token": "Jeton",
-        "desc": "Rabbin DeBank L2 Hesabına ek bir ücret ödemeden para yatırın—istediğiniz zaman çekin."
+        "token": "Token",
+        "desc": "Rabby'nin DeBank L2 hesabına ek ücret ödemeden para yatırın; istediğiniz zaman çekin."
       },
       "withdrawPopup": {
         "amount": "Miktar",
-        "title": "Çekmek",
+        "title": "Çek",
         "desc": "GasAccount bakiyenizi DeBank L2 Cüzdanınıza çekebilirsiniz. Gerekli olduğunda fonları desteklenen bir blockchain’e transfer etmek için DeBank L2 Cüzdanınıza giriş yapın.",
-        "to": "İçin"
+        "to": "Alıcı"
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 Cüzdanınıza aktarıldı.",
         "button": "DeBank Uygulamasında Görüntüle"
       },
-      "withdraw": "Çekilmek",
-      "deposit": "Deposito",
+      "withdraw": "Çek",
+      "deposit": "Yatır",
       "gasExceed": "GasAccount bakiyesi $1000'ı geçemez.",
       "depositWithToken": "Token ile Yatırın",
       "depositWithPayDesc": "%30 ücret, para çekme yok",
       "depositWithTokenDesc": "Ekstra ücret yok, anında para çekme",
-      "depositWithPay": "Satın al ve",
+      "depositWithPay": "Şununla satın al",
       "giftInfo": {
         "giftTips": "Aktif kullanıcılar için Gas Ödülü",
-        "gotIt": "Ben Aldım",
+        "gotIt": "Anladım",
         "noWithdrawableBalanceTitle": "{{amount}} Çekilemez",
         "noWithdrawableBalanceDescription": "Gas bakiyenizdeki {{amount}} çekilemez:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       },
@@ -3465,13 +3465,13 @@
         "title2": "Gas Account'ı nasıl kullanırım",
         "desc2": "Fonları GasAccount'unuza ekleyin ve bunu herhangi bir işlem için kullanın. İmza atarken, gaz ücretini yerel token'lar veya GasAccount ile ödemeyi seçin, herhangi bir zaman geçiş yapabilirsiniz.",
         "desc4": "GasAccount, herhangi bir sözleşme onayı veya iznine ihtiyaç duymadan çalışır. Rabby’nin GasAccount adresine para yatırırsınız ve ihtiyaç duyduğunuzda Rabby gazı adresinize gönderir. Tasarımı gereği tamamen güvenlidir.",
-        "desc1": "GasAccount, gaz ücretlerini ödemenin yeni bir yoludur. Her zincirde yerel tokenler kullanmak yerine, tüm zincirlerdeki tüm adresleriniz için gazı karşılamak amacıyla tek bir hesap kullanabilirsiniz. Basit, isteğe bağlı ve asla gaz bitmez."
+        "desc1": "GasAccount, gas ücretlerini ödemenin yeni bir yoludur. Her zincirde yerel token kullanmak yerine, tüm zincirlerdeki tüm adreslerinizin gas ücretini tek bir hesapla karşılayabilirsiniz. Basit, isteğe bağlı ve gas bakiyeniz hiç tükenmez."
       }
     },
     "accountSwitcher": {
       "all": "Hepsi",
       "screenHeaderSubTitle_one": "1 cüzdan",
-      "screenHeaderSubTitle_other": "{{count}} cüzdanlar"
+      "screenHeaderSubTitle_other": "{{count}} cüzdan"
     },
     "AccountSelectDrawer": {
       "btn": {
@@ -3496,7 +3496,7 @@
         },
         "title": "Adres Seçin",
         "whitelistDisabled": "Beyaz liste devre dışı. Herhangi bir adrese varlık gönderebilirsiniz.",
-        "whitelistEnabled": "Whitelist etkin. Sadece bir beyaz listeye alınmış adrese varlık gönderebilirsiniz veya bunu \"Ayarlar\" bölümünde devre dışı bırakabilirsiniz."
+        "whitelistEnabled": "Beyaz liste etkin. Yalnızca listedeki adreslere varlık gönderebilir veya bu özelliği Ayarlar'dan devre dışı bırakabilirsiniz."
       }
     },
     "NFTNumberInput": {
@@ -3514,10 +3514,10 @@
         "viewDetail": "Ayrıntıları Görüntüle"
       },
       "searchPlaceHolder2": "Token Ara",
-      "recent": "Son zamanlarda",
+      "recent": "Son kullanılanlar",
       "searchPlaceHolder1": "İsim / Adres ile Ara",
-      "common": "Ortak",
-      "hot": "Sıcak",
+      "common": "Yaygın",
+      "hot": "Popüler",
       "bridgeTo": {
         "low": "Düşük likidite",
         "high": "Yüksek likidite"
@@ -3532,7 +3532,7 @@
       },
       "placeholders": {
         "noTokens": "Hiçbir token yok",
-        "noLpTokens": "No Likidite Sağlayıcı (LP) Token"
+        "noLpTokens": "Likidite Sağlayıcı (LP) token yok"
       }
     },
     "ModalPreviewNFTItem": {
@@ -3558,8 +3558,8 @@
     "AuthenticationModals": {
       "biometrics": {
         "enableTip": "{{ bioType }}'yi etkinleştirerek Rabby'yi açın.",
-        "disable": "Devre dışı bırak {{ bioType }}",
-        "enable": "{{ bioType }}'yi etkinleştir",
+        "disable": "{{ bioType }} devre dışı bırakılsın mı?",
+        "enable": "{{ bioType }} özelliğini etkinleştirmek için\nşifrenizi girin",
         "disableTip": "{{ bioType }}'yi devre dışı bırakın ve Rabby'yi açın"
       },
       "processBiometrics": {
@@ -3572,25 +3572,25 @@
     },
     "ReserveGasPopup": {
       "instant": "Hızlı",
-      "doNotReserve": "Gas'i ayırmayın",
+      "doNotReserve": "Gas ayırma",
       "normal": "Yavaş",
-      "title": "Gaz Ayırma",
+      "title": "Gas Ayır",
       "fast": "Normal"
     },
     "NoLongerSupports": {
       "button": "Tamam",
       "title": "Mobil cüzdan adresleri artık desteklenmiyor.",
-      "desc": "Aşağıdaki adresler kaldırılacak. Onları orijinal cüzdan uygulamasında bulmaya devam edebilirsiniz. Burada kullanmak için seed ifadesini veya özel anahtarı içe aktarın."
+      "desc": "Aşağıdaki adresler kaldırılacak. Bunlara orijinal cüzdan uygulamasından erişmeye devam edebilirsiniz. Burada kullanmak için kurtarma ifadesini veya özel anahtarı içe aktarın."
     },
     "externalSwapBrideDappPopup": {
-      "bridgeOnDapp": "DApp'te Köprü",
+      "bridgeOnDapp": "DApp'te bridge yap",
       "noDapp": "Mevcut DApp yok",
       "viewDappOptions": "DApp Seçeneklerini Görüntüle",
       "noDapps": "Bu zincirde mevcut DApp yok.",
       "selectADapp": "Bir DApp Seçin",
       "help": "Lütfen destek için bu zincirin resmi ekibiyle iletişime geçin.",
       "swapOnDapp": "DApp'ta Takas Yapın",
-      "noQuotesForChain": "Bu ağ için henüz hiç alıntı mevcut değil.",
+      "noQuotesForChain": "Bu ağ için henüz teklif yok",
       "thirdPartyDappToProceed": "Lütfen işlemi devam ettirmek için bir üçüncü taraf DApp kullanın.",
       "chainNotSupported": "Bu zincirde desteklenmiyor"
     },
@@ -3606,18 +3606,18 @@
         "globalDesc": "Bilgiler güncel olmayabilir ama varlıklarınız güvende kalır."
       },
       "serviceError": {
-        "quotesDesc": "alıntı yüklenemedi.",
-        "balanceDesc": "bakiye yüklenemedi.",
-        "globalDesc": "Bilgi belki eski olabilir ama fonlarınız güvende kalır.",
+        "quotesDesc": "Teklif yüklenemedi.",
+        "balanceDesc": "Bakiye yüklenemedi.",
+        "globalDesc": "Bilgiler güncel olmayabilir ancak varlıklarınız güvende kalır.",
         "title": "Ağ sorunu:"
       },
       "offlineText": "Ağ Hatası",
-      "buttonText": "Yenileştir",
+      "buttonText": "Yenile",
       "serviceErrorText": "Hizmet Hatası"
     },
     "screenshotModal": {
       "feedbackInput": {
-        "placeholder": "Sorunu tanımlayın"
+        "placeholder": "Sorunu açıklayın (zorunlu)"
       },
       "submitButtonText": "Gönder",
       "switchArea": {
@@ -3650,12 +3650,12 @@
         "desc": "Güvenilir adresi Beyaz Listeye ekle",
         "addBtn": "Şimdi ekle"
       },
-      "recentAccounts": "Son zamanlarda",
+      "recentAccounts": "Son kullanılanlar",
       "importedAccounts": "İçe Aktarılan Cüzdanlar",
       "whitelistAccounts": "Beyaz Liste"
     },
     "portfolios": {
-      "manage": "Yönetmek"
+      "manage": "Yönet"
     },
     "multiAddressModal": {
       "title": "Cüzdanlar"
@@ -3673,11 +3673,11 @@
   },
   "native": {
     "biometrics": {
-      "enable_faceid": "Yüz Tanıma ile aç?",
+      "enable_faceid": "Face ID ile kilidi aç?",
       "enable_fingerprint": "Parmak izi ile kilidi aç?",
-      "enable_touchid": "Touch ID ile kilidi açsın mı?",
+      "enable_touchid": "Touch ID ile kilidi aç?",
       "enable_device_passcode_android": "Cihaz PIN'i ile aç?",
-      "enable_biometrics": "Biyometrik ile Kilidi Aç?",
+      "enable_biometrics": "Biyometri ile kilidi aç?",
       "enable_device_passcode_ios": "Cihaz şifresiyle kilidi aç?"
     },
     "authentication": {
@@ -3695,7 +3695,7 @@
     "themeMode": {
       "option_Dark": "Karanlık",
       "option_System": "Sistem",
-      "option_Light": "Hafif"
+      "option_Light": "Açık"
     },
     "proceedButton": "Devam et",
     "Done": "Tamamlandı",
@@ -3708,19 +3708,19 @@
     "assets": "varlıklar",
     "copied": "Kopyalandı",
     "cancel": "İptal",
-    "pin": "Şifre",
+    "pin": "Sabitlendi",
     "cancelButton": "İptal",
     "Nonce": "Nonce",
     "nonce": "nonce",
     "backButton": "Geri",
-    "folded": "Katlanmış",
-    "appName": "Rabby Cüzdan",
-    "refresh": "Yenileştirmek",
-    "Deleted": "Silinmiş",
+    "folded": "Daraltıldı",
+    "appName": "Rabby Wallet",
+    "refresh": "Yenile",
+    "Deleted": "Silindi",
     "WalletCreated": "Cüzdan oluşturuldu",
     "WalletImported": "Cüzdan içe aktarıldı",
     "unknownNFT": "Bilinmeyen NFT",
-    "appDescription": "Ethereum ve tüm EVM zincirleri için devrim niteliğinde cüzdan",
+    "appDescription": "Ethereum ve EVM için vazgeçilmez cüzdanınız",
     "closeButton": "Kapat",
     "Addresses": "Adresler",
     "Price": "Fiyat",
@@ -3733,8 +3733,8 @@
     "Wallets": "Cüzdan Seçin",
     "permissionRequest": {
       "common": {
-        "askMeLater": "banaSonraSor",
-        "goToSettings": "Git ayarları"
+        "askMeLater": "Daha sonra sor",
+        "goToSettings": "Ayarlara git"
       },
       "mediaLibrary": {
         "title": "Medya Kütüphanesi İzni",
@@ -3769,16 +3769,16 @@
     "gotIt": "Tamamdır",
     "check": "Kontrol Et",
     "Dapp": "DApp",
-    "Token": "Jeton",
+    "Token": "Token",
     "GotIt": "Anladım",
     "Backup": "Yedekle",
     "copy": "Kopyala",
     "Other": "Diğer",
     "toast": {
       "clipboard": {
-        "copiedPrivateKey": "Özel anahtar kopyalandı. Panoya 1 dakika içinde temizlenecek.",
-        "pasted_and_cleared": "Yapıştırıldı ve panoya temizlendi",
-        "copiedSeedPhrase": "Seed ifadesi kopyalandı. Panoya 1 dakika içinde sıfırlanacak."
+        "copiedPrivateKey": "Özel anahtar kopyalandı. Pano 1 dakika içinde temizlenecek.",
+        "pasted_and_cleared": "Yapıştırıldı ve pano temizlendi",
+        "copiedSeedPhrase": "Kurtarma ifadesi kopyalandı. Pano 1 dakika içinde temizlenecek."
       }
     },
     "autolock": {
@@ -3786,7 +3786,7 @@
     },
     "Imported": "İçe Aktarıldı",
     "Created": "Oluşturuldu",
-    "SavedSeedPhrase": "Seed ifrasını kaydettim.",
+    "SavedSeedPhrase": "Kurtarma ifadesini kaydettim.",
     "from": "Kimden",
     "to": "Kime",
     "copiedSuccessfully": "Başarıyla kopyalandı"
@@ -3798,7 +3798,7 @@
       "errorWords_other": "{{count}} yanlış kelime",
       "errorWords_one": "1 yanlış kelime",
       "unknownAbi": "bilinmeyen sözleşme abi",
-      "invalidMnemonic": "Tohum ifadesi geçersiz, lütfen kontrol edin!",
+      "invalidMnemonic": "Kurtarma ifadesi geçersiz. Lütfen kontrol edin!",
       "notFoundTxGnosisKeyring": "Gnosis keyring içinde işlem bulunamadı",
       "invalidPrivateKey": "Özel anahtar geçersizdir.",
       "addKeyring404": "keyring eklenemedi, keyring tanımsızdır",
@@ -3823,10 +3823,10 @@
     "KEYRING_TYPE_TEXT": {
       "SimpleKeyring": "Özel Anahtar ile İçe Aktarıldı",
       "WatchAddressKeyring": "İletişim",
-      "HdKeyring": "Seed Phrase ile Oluşturuldu"
+      "HdKeyring": "Kurtarma İfadesiyle Oluşturuldu"
     },
-    "IMPORTED_HD_KEYRING": "Seed Phrase ile İçe Aktarıldı",
-    "IMPORTED_HD_KEYRING_NEED_PASSPHRASE": "Seed Phrase (Passphrase) ile İçe Aktarıldı"
+    "IMPORTED_HD_KEYRING": "Kurtarma İfadesiyle İçe Aktarıldı",
+    "IMPORTED_HD_KEYRING_NEED_PASSPHRASE": "Kurtarma İfadesiyle İçe Aktarıldı (Parola)"
   },
   "bluetooth": {
     "powered_off_alert": {

@@ -83,7 +83,7 @@ export const PendingTxItem = ({
     }
 
     const { pendings, completeds } = getTransactionHistoryListSnapshot(
-      currentAccount?.address ?? '',
+      data.address,
     );
     const naviData = isPending ? pendings : completeds;
     const groupData = naviData.find(
