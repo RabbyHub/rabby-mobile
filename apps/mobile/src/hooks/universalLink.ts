@@ -383,15 +383,9 @@ function parseActionAndProcessLink(
     return;
   }
 
-  const testkitAction = parseNonProductionTestkitLink(appLink);
-  if (testkitAction) {
-    onActions?.(testkitAction);
-    return;
-  }
-
-  const maintenanceAction = parseNonProductionMaintenanceLink(appLink);
-  if (maintenanceAction) {
-    onActions?.(maintenanceAction);
+  const nonProductionAction = parseNonProductionLink(appLink);
+  if (nonProductionAction) {
+    onActions?.(nonProductionAction);
     return;
   }
 
