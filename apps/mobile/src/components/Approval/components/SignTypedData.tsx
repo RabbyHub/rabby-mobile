@@ -66,6 +66,13 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
+import {
+  tokenizeSignTypedDataMessage,
+  type SignMessageHighlightToken,
+} from './signMessageTokenizer';
+import { useSignMessageAddressData } from './useSignMessageAddressData';
+import { addSignMessageOriginFallback } from './signMessageOrigin';
+import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTypedDataProps {
   method: string;
@@ -92,6 +99,7 @@ export const SignTypedData = ({
   const currentAccount = params.isGnosis ? params.account! : $account;
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
+  const [approvalViewportHeight, setApprovalViewportHeight] = useState(0);
   const { data, session, method, isGnosis, isSend } = params;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,9 +115,6 @@ export const SignTypedData = ({
   const styles = useMemo(() => getStyles(colors2024), [colors2024]);
   const site = getDappSnapshot(params.session.origin);
 
-  const [currentChainId, setCurrentChainId] = useState<number | undefined>(
-    undefined,
-  );
   const isGnosisAccount = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [gnosisFooterBarVisible, setGnosisFooterBarVisible] = useState(false);
@@ -210,9 +215,9 @@ export const SignTypedData = ({
     useMemo(() => {
       if (!isSignTypedDataV1) {
         try {
-          const v = JSON.parse(data[1]);
-          const normalized = normalizeTypeData(v);
-          return [normalized, v];
+          const raw = JSON.parse(data[1]);
+          const normalized = normalizeTypeData(JSON.parse(data[1]));
+          return [normalized, raw];
         } catch (error) {
           console.error('parse signTypedData error: ', error);
           return [null, null];
@@ -251,30 +256,50 @@ export const SignTypedData = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isSignTypedDataV1, signTypedData, requestChainId]);
 
-  const getCurrentChainId = async () => {
-    if (requestChainId) {
-      return requestChainId;
+  const currentChainId =
+    requestChainId ||
+    (params.session.origin !== INTERNAL_REQUEST_ORIGIN
+      ? findChain({ enum: site?.chainId })?.id
+      : params.$ctx?.chainId || chain?.id);
+
+  const messageTokens = useMemo<SignMessageHighlightToken[]>(() => {
+    if (!parsedMessage) return [];
+    if (isSignTypedDataV1) {
+      const fields = (Array.isArray(data[0]) ? data[0] : []) as Array<{
+        name: string;
+        type: string;
+        value: unknown;
+      }>;
+      return tokenizeSignTypedDataMessage(
+        {
+          primaryType: 'RabbySignTypedDataV1',
+          types: {
+            RabbySignTypedDataV1: fields.map(({ name, type }) => ({
+              name,
+              type,
+            })),
+          },
+          message: Object.fromEntries(
+            fields.map(({ name, value }) => [name, value]),
+          ),
+        },
+        parsedMessage,
+      );
     }
 
-    if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappServiceApi.getDapp(params.session.origin);
-      if (site) {
-        return findChain({
-          enum: site?.chainId,
-        })?.id;
-      }
-    } else if (params.$ctx.chainId) {
-      return params.$ctx.chainId;
-    } else {
-      return chain?.id;
-    }
-  };
-  useEffect(() => {
-    getCurrentChainId().then(id => {
-      setCurrentChainId(id);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.session.origin, requestChainId]);
+    return rawMessage
+      ? tokenizeSignTypedDataMessage(rawMessage, parsedMessage)
+      : [{ type: 'text', value: parsedMessage }];
+  }, [data, isSignTypedDataV1, parsedMessage, rawMessage]);
+  const resolvedAddressChain =
+    chain ||
+    (currentChainId ? findChain({ id: currentChainId }) : undefined) ||
+    CHAINS.ETH;
+  const addressData = useSignMessageAddressData({
+    tokens: messageTokens,
+    chain: resolvedAddressChain,
+    accountAddress: currentAccount.address,
+  });
 
   const {
     value: typedDataActionData,
@@ -299,6 +324,7 @@ export const SignTypedData = ({
     }
     return;
   }, [data, isSignTypedDataV1, signTypedData]);
+  const isUnparsedAction = typedDataActionData?.action === null;
 
   if (error) {
     console.error('error', error);
@@ -525,6 +551,14 @@ export const SignTypedData = ({
     return requireData;
   };
 
+  const withOriginFallback = (ctx: Parameters<typeof executeEngine>[0]) =>
+    addSignMessageOriginFallback(ctx, {
+      isUnparsedAction,
+      isInternalOrigin: params.session.origin === INTERNAL_REQUEST_ORIGIN,
+      message: parsedMessage,
+      origin: params.session.origin,
+    });
+
   const getSecurityEngineResult = async ({
     data,
     requireData,
@@ -538,7 +572,7 @@ export const SignTypedData = ({
         id: Number(data.chainId),
       })?.serverId;
     }
-    const ctx = await formatSecurityEngineContext({
+    const baseCtx = await formatSecurityEngineContext({
       type: 'typed_data',
       actionData: data,
       requireData,
@@ -550,7 +584,7 @@ export const SignTypedData = ({
       },
       origin: params.session.origin,
     });
-    const result = await executeEngine(ctx);
+    const result = await executeEngine(withOriginFallback(baseCtx));
     return result;
   };
 
@@ -564,7 +598,7 @@ export const SignTypedData = ({
         id: Number(parsedActionData.chainId),
       })?.serverId;
     }
-    const ctx = await formatSecurityEngineContext({
+    const baseCtx = await formatSecurityEngineContext({
       type: 'typed_data',
       actionData: parsedActionData,
       requireData: actionRequireData,
@@ -576,7 +610,7 @@ export const SignTypedData = ({
       },
       origin: params.session.origin,
     });
-    const result = await executeEngine(ctx);
+    const result = await executeEngine(withOriginFallback(baseCtx));
     setEngineResults(result);
   };
 
@@ -780,8 +814,13 @@ export const SignTypedData = ({
   }, []);
 
   return (
-    <View style={styles.wrapper}>
-      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
+    <SignMessageTagProvider style={styles.wrapper}>
+      <BottomSheetScrollView
+        style={styles.approvalTx}
+        nestedScrollEnabled
+        onLayout={event =>
+          setApprovalViewportHeight(event.nativeEvent.layout.height)
+        }>
         {isLoading && (
           <Skeleton
             style={{
@@ -795,13 +834,17 @@ export const SignTypedData = ({
             account={currentAccount}
             data={parsedActionData}
             requireData={actionRequireData}
-            chain={chain}
+            chain={resolvedAddressChain || CHAINS.ETH}
             engineResults={engineResults}
             raw={isSignTypedDataV1 ? data[0] : signTypedData || data[1]}
+            copyMessage={isSignTypedDataV1 ? JSON.stringify(data[0]) : data[1]}
             message={parsedMessage}
+            messageTokens={messageTokens}
+            addressData={addressData}
             origin={params.session.origin}
             originLogo={site?.icon}
             typedDataActionData={typedDataActionData}
+            approvalViewportHeight={approvalViewportHeight}
             multiAction={
               isMultiActions
                 ? {
@@ -916,6 +959,6 @@ export const SignTypedData = ({
           resolveApproval(sameMessageState.preparedSignature);
         }}
       />
-    </View>
+    </SignMessageTagProvider>
   );
 };

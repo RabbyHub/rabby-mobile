@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import { View, TouchableOpacity, Pressable } from 'react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import { View, TouchableOpacity } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { AddressEntry } from './RenderRow/AddressEntry';
@@ -14,14 +14,13 @@ import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
-import { ManageSetting } from '../ManageSetting';
-import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { balance24hStore } from '@/store/balance24h';
 import { computeBalanceChange } from '@/core/apis/balance';
 import addressBalanceStore from '@/store/balance';
 import { Text } from '@/components/Typography';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -29,14 +28,12 @@ interface AddressListProps {
   onAddAddressPress?: () => void;
   onDone?: () => void;
   onMoreAddressListPress?: () => void;
-  isManageMode?: boolean;
 }
 const AddressList = ({
   showMarkIfNewlyAdded = true,
   onAddAddressPress,
   onDone,
   onMoreAddressListPress,
-  isManageMode,
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -111,56 +108,31 @@ const AddressList = ({
 
   const renderItem = useCallback(
     ({ item }) => {
-      if (isManageMode) {
-        const gotoAddressDetail = () => {
-          onDone?.();
-          naviPush(RootNames.StackAddress, {
-            screen: RootNames.AddressDetail,
-            params: {
-              address: item.address,
-              type: item.type,
-              brandName: item.brandName,
-            },
-          });
-        };
-        return (
-          <View style={[styles.itemGap, styles.manageModeItem]}>
-            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
-              <RcIconSettingCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-secondary']}
-              />
-            </Pressable>
-            <View style={{ width: '100%' }}>
-              <AddressEntry
-                showMarkIfNewlyAdded={showMarkIfNewlyAdded}
-                data={item}
-                onSelect={onDone}
-              />
-            </View>
-          </View>
-        );
-      }
+      const gotoAddressDetail = () => {
+        onDone?.();
+        naviPush(RootNames.StackAddress, {
+          screen: RootNames.AddressDetail,
+          params: {
+            address: item.address,
+            type: item.type,
+            brandName: item.brandName,
+          },
+        });
+      };
+
       return (
         <View style={styles.itemGap}>
           <AddressEntry
             showMarkIfNewlyAdded={showMarkIfNewlyAdded}
             data={item}
             onSelect={onDone}
+            onManage={gotoAddressDetail}
+            manageAccessibilityLabel={t('component.portfolios.manage')}
           />
         </View>
       );
     },
-    [
-      isManageMode,
-      styles.itemGap,
-      styles.manageModeItem,
-      styles.manageBtn,
-      onDone,
-      colors2024,
-      showMarkIfNewlyAdded,
-    ],
+    [styles.itemGap, onDone, showMarkIfNewlyAdded, t],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
@@ -169,7 +141,12 @@ const AddressList = ({
 
   const notMatterAvatarList = useMemo(() => {
     return notMatteredAccounts
-      .filter(x => !myTop10Records.has(x.address.toLowerCase()))
+      .filter(
+        account =>
+          account.type === KEYRING_CLASS.WATCH ||
+          account.type === KEYRING_CLASS.GNOSIS ||
+          !myTop10Records.has(account.address.toLowerCase()),
+      )
       .slice(0, 3);
   }, [notMatteredAccounts, myTop10Records]);
 
@@ -286,7 +263,7 @@ const AddressList = ({
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
-      ListFooterComponent={isManageMode ? null : renderFooter}
+      ListFooterComponent={renderFooter}
       style={styles.listContainer}
       ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
     />
@@ -300,11 +277,6 @@ export const AddressListModal = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [moreAddressList, setMoreAddressList] = useState(false);
-  const [isManageMode, setIsManageMode] = useState(false);
-
-  const switchManageMode = () => {
-    setIsManageMode(e => !e);
-  };
 
   if (moreAddressList) {
     return (
@@ -316,24 +288,12 @@ export const AddressListModal = ({
   }
   return (
     <AutoLockView as="View" style={styles.container}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          paddingRight: 20,
-        }}>
-        <ManageSetting
-          isManageMode={isManageMode}
-          switchManageMode={switchManageMode}
-        />
-      </View>
       <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
 
       <AddressList
         onAddAddressPress={onAddAddressPress}
         onDone={onDone}
         onMoreAddressListPress={() => setMoreAddressList(true)}
-        isManageMode={isManageMode}
       />
     </AutoLockView>
   );
@@ -346,16 +306,8 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
   },
-  done: {
-    color: ctx.colors2024['neutral-secondary'],
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
-  },
   title: {
+    marginTop: 20,
     fontSize: 20,
     fontWeight: '800',
     lineHeight: 24,
@@ -390,29 +342,11 @@ const getStyles = createGetStyles2024(ctx => ({
   itemGap: {
     marginTop: SPACING_HEIGHT,
   },
-  manageModeItem: {
-    overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: -16,
-  },
-  manageBtn: {
-    width: 64,
-    height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   listContainer: {
     flex: 1,
     marginTop: 8,
   },
   list: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-  },
-  bgContainer: {
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
@@ -469,11 +403,6 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 2,
     borderColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 10,
-  },
-  moreWalletsButtonIconImage: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
   },
   horizontalLine: {
     // width: 100,

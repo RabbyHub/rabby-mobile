@@ -324,9 +324,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'center',
     //width: '100%',
   },
-  changeTextPositive: {
-    color: colors2024['red-default'],
-  },
   trendContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -337,12 +334,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 78,
     gap: 2,
     alignItems: 'center',
-  },
-  closedTipIcon: {
-    width: 12,
-    height: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   leftSlot: {
     width: 24,
@@ -367,11 +358,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeletonItem: {
     backgroundColor: 'transparent',
-  },
-  trendChartWrapper: {
-    height: 30,
-    marginTop: -10,
-    marginBottom: 10,
   },
   lpTokenIconContainer: {
     marginLeft: 0,

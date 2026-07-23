@@ -39,10 +39,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexGrow: 1,
     marginRight: 20,
   },
+  rootItemWithInlineArrow: {
+    marginRight: 47,
+  },
   item: {
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
+  },
+  itemWithInlineArrow: {
+    flex: 1,
   },
   itemInfo: {
     gap: 4,
@@ -65,6 +71,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 8,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  itemNameWithInlineArrow: {
+    gap: 4,
+  },
+  itemNameTextWithInlineArrow: {
+    flexShrink: 1,
   },
   newMarkView: {
     paddingHorizontal: 4,
@@ -103,6 +115,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 26,
     borderRadius: 30,
   },
+  inlineArrow: {
+    width: 16,
+    height: 16,
+    borderRadius: 16,
+    flexShrink: 0,
+  },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
   },
@@ -118,6 +136,7 @@ interface AddressItemProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   hiddenArrow?: boolean;
+  inlineArrow?: boolean;
   isPressing?: boolean;
   hiddenPin?: boolean;
   changePercent?: string;
@@ -128,6 +147,7 @@ export const AddressItemInner2024 = ({
   account,
   style,
   hiddenArrow,
+  inlineArrow,
   isPressing,
   hiddenPin,
   changePercent,
@@ -149,6 +169,12 @@ export const AddressItemInner2024 = ({
     [pinAddresses, account],
   );
   const isZeroPercentChange = changePercent === '0%';
+  const arrowColor = isPressing
+    ? colors2024['brand-default']
+    : colors2024['neutral-body'];
+  const arrowBackgroundColor = isPressing
+    ? colors2024['brand-light-1']
+    : colors2024[isLight ? 'neutral-bg-2' : 'neutral-bg-1'];
 
   const { isNewlyAdded } = useIsNewlyAddedAccount(account);
 
@@ -162,9 +188,12 @@ export const AddressItemInner2024 = ({
         style,
         isPressing && styles.cardPressing,
       ])}>
-      <InnerAddressItem style={styles.rootItem} account={account}>
+      <InnerAddressItem
+        style={[styles.rootItem, inlineArrow && styles.rootItemWithInlineArrow]}
+        account={account}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
-          <View style={styles.item}>
+          <View
+            style={[styles.item, inlineArrow && styles.itemWithInlineArrow]}>
             <WalletIcon
               address={account.address}
               width={46}
@@ -172,13 +201,31 @@ export const AddressItemInner2024 = ({
               borderRadius={12}
             />
             <View style={styles.itemInfo}>
-              <View style={styles.itemName}>
-                <WalletName style={StyleSheet.flatten([styles.itemNameText])} />
+              <View
+                style={[
+                  styles.itemName,
+                  inlineArrow && styles.itemNameWithInlineArrow,
+                ]}>
+                <WalletName
+                  style={StyleSheet.flatten([
+                    styles.itemNameText,
+                    inlineArrow && styles.itemNameTextWithInlineArrow,
+                  ])}
+                />
                 {shouldShowNewMark && (
                   <View style={styles.newMarkView}>
                     <Text style={styles.newMarkText}>New</Text>
                   </View>
                 )}
+                {inlineArrow && !hiddenArrow ? (
+                  <ArrowCircleCC
+                    width={16}
+                    height={16}
+                    style={styles.inlineArrow}
+                    color={arrowColor}
+                    backgroundColor={arrowBackgroundColor}
+                  />
+                ) : null}
               </View>
               <View style={styles.balanceContainer}>
                 <WalletBalance style={styles.itemBalanceText} />
@@ -203,21 +250,11 @@ export const AddressItemInner2024 = ({
         )}
       </InnerAddressItem>
 
-      {hiddenArrow ? null : (
+      {hiddenArrow || inlineArrow ? null : (
         <ArrowCircleCC
           style={styles.arrow}
-          color={
-            isPressing
-              ? colors2024['brand-default']
-              : colors2024['neutral-body']
-          }
-          backgroundColor={
-            isPressing
-              ? colors2024['brand-light-1']
-              : isLight
-              ? colors2024['neutral-bg-2']
-              : colors2024['neutral-bg-1']
-          }
+          color={arrowColor}
+          backgroundColor={arrowBackgroundColor}
         />
       )}
 

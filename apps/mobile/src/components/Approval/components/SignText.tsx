@@ -50,6 +50,10 @@ import { useSetState } from 'ahooks';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
+import { tokenizeSignMessageText } from './signMessageTokenizer';
+import { useSignMessageAddressData } from './useSignMessageAddressData';
+import { addSignMessageOriginFallback } from './signMessageOrigin';
+import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTextProps {
   data: string[];
@@ -81,6 +85,7 @@ export const SignText = ({
   const signText = useMemo(() => hex2Text(hexData), [hexData]);
   const [isWatch, setIsWatch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [approvalViewportHeight, setApprovalViewportHeight] = useState(0);
   const [cantProcessReason, setCantProcessReason] =
     useState<ReactNode | null>();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -109,6 +114,15 @@ export const SignText = ({
     () => (chainId ? findChain({ id: chainId }) || undefined : undefined),
     [chainId],
   );
+  const messageTokens = useMemo(
+    () => tokenizeSignMessageText(signText),
+    [signText],
+  );
+  const addressData = useSignMessageAddressData({
+    tokens: messageTokens,
+    chain,
+    accountAddress: currentAccount.address,
+  });
 
   const securityLevel = useMemo(() => {
     const enableResults = engineResults.filter(result => {
@@ -172,6 +186,7 @@ export const SignText = ({
       origin: session.origin,
     });
   }, [signText, session, params.requestContext?.chainId]);
+  const isUnparsedAction = textActionData?.action === null;
 
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
 
@@ -243,8 +258,16 @@ export const SignText = ({
     resolveApproval({});
   };
 
+  const withOriginFallback = (ctx: Parameters<typeof executeEngine>[0]) =>
+    addSignMessageOriginFallback(ctx, {
+      isUnparsedAction,
+      isInternalOrigin: session.origin === INTERNAL_REQUEST_ORIGIN,
+      message: signText,
+      origin: session.origin,
+    });
+
   const executeSecurityEngine = async () => {
-    const ctx = await formatSecurityEngineContext({
+    const baseCtx = await formatSecurityEngineContext({
       type: 'text',
       actionData: parsedActionData || ({} as any),
       origin: session.origin,
@@ -256,7 +279,7 @@ export const SignText = ({
         hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
-    const result = await executeEngine(ctx);
+    const result = await executeEngine(withOriginFallback(baseCtx));
     setEngineResults(result);
   };
 
@@ -421,7 +444,7 @@ export const SignText = ({
       sender,
     });
     setParsedActionData(parsed);
-    const ctx = await formatSecurityEngineContext({
+    const baseCtx = await formatSecurityEngineContext({
       type: 'text',
       actionData: parsed,
       origin: params.session.origin,
@@ -433,7 +456,7 @@ export const SignText = ({
         hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
-    const result = await executeEngine(ctx);
+    const result = await executeEngine(withOriginFallback(baseCtx));
     setEngineResults(result);
     setIsLoading(false);
   };
@@ -477,8 +500,13 @@ export const SignText = ({
   }, []);
 
   return (
-    <View style={styles.wrapper}>
-      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
+    <SignMessageTagProvider style={styles.wrapper}>
+      <BottomSheetScrollView
+        style={styles.approvalTx}
+        nestedScrollEnabled
+        onLayout={event =>
+          setApprovalViewportHeight(event.nativeEvent.layout.height)
+        }>
         {isLoading && (
           <Skeleton
             style={{
@@ -494,9 +522,12 @@ export const SignText = ({
             engineResults={engineResults}
             raw={hexData}
             message={signText}
+            messageTokens={messageTokens}
+            addressData={addressData}
             origin={params.session.origin}
             originLogo={site?.icon}
             chain={chain}
+            approvalViewportHeight={approvalViewportHeight}
           />
         )}
       </BottomSheetScrollView>
@@ -555,7 +586,7 @@ export const SignText = ({
         tooltipContent={cantProcessReason}
         onCancel={handleCancel}
         onSubmit={() => handleAllow()}
-        disabledProcess={isWatch || hasUnProcessSecurityResult}
+        disabledProcess={isLoading || isWatch || hasUnProcessSecurityResult}
         engineResults={engineResults}
         onIgnoreAllRules={handleIgnoreAllRules}
       />
@@ -582,6 +613,6 @@ export const SignText = ({
           resolveApproval(sameMessageState.preparedSignature);
         }}
       />
-    </View>
+    </SignMessageTagProvider>
   );
 };

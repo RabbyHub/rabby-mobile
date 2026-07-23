@@ -84,6 +84,7 @@ import {
   isNativeWithdrawApprovalRequired,
 } from '../../utils/withdrawApproval';
 import { isUserCancelledError } from '../../utils/error';
+import { ellipsisSymbol } from '../../utils/format';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -629,6 +630,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const actionTitle = needApprove
     ? t('page.Lending.withdrawDetail.approveAndWithdraw')
     : t('page.Lending.withdrawDetail.actions');
+  const displaySymbol = useMemo(
+    () => ellipsisSymbol(currentReserve.reserve.symbol),
+    [currentReserve.reserve.symbol],
+  );
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -643,7 +648,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           </Text>
           <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
             withdrawAmount.toString() || '0',
-          )}${currentReserve.reserve.symbol}($${formatAmountValueKMB(
+          )}${displaySymbol}($${formatAmountValueKMB(
             BigNumber(withdrawAmount)
               .multipliedBy(
                 BigNumber(
@@ -657,7 +662,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         <TokenAmountInput
           value={amount}
           onChange={handleChangeAmount}
-          symbol={currentReserve.reserve.symbol}
+          symbol={displaySymbol}
           handleClickMaxButton={() => {
             handleChangeAmount('-1');
           }}
@@ -675,7 +680,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 triggerVariant="pill"
                 activeUnderlyingAsset={activeUnderlyingAsset}
                 options={tokenOptions as BasicPositionTokenOption[]}
-                symbol={currentReserve.reserve.symbol}
+                symbol={displaySymbol}
                 chain={currentReserve.chain}
                 onChange={handleChangeActiveUnderlyingAsset}
               />
@@ -838,16 +843,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    width: '100%',
-  },
   bottomSheetScrollView: {
     width: '100%',
   },
@@ -857,13 +852,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   gasPreContainer: {
     paddingHorizontal: 8,
-  },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],
@@ -889,18 +877,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   checkbox: {
     display: 'flex',

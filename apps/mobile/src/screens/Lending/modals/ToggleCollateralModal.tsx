@@ -674,13 +674,6 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     paddingLeft: 15,
     paddingRight: 16,
   },
-  body: {
-    paddingHorizontal: 20,
-    marginTop: 12,
-    fontSize: 14,
-    color: colors2024['neutral-body'],
-    textAlign: 'center',
-  },
   btnContainer: {
     marginTop: 16,
     marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),

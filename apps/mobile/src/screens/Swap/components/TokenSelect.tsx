@@ -550,18 +550,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  recentItemWrapper: {
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    padding: 8,
-    paddingRight: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
   token: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -574,25 +562,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-  },
-  headerBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  headerBoxNoPb: {
-    paddingBottom: 0,
-  },
-  headerBoxText: {
-    fontSize: 17,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
   },
   selectText: {
     paddingLeft: 12,

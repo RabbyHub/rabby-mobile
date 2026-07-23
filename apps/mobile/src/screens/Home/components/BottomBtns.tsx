@@ -285,7 +285,6 @@ export const BottomBtns = ({
   );
 };
 
-const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     position: 'relative',
@@ -365,12 +364,6 @@ const getStyles = createGetStyles2024(ctx => ({
     maxWidth: '50%',
     // ...makeDebugBorder(),
   },
-  chevron: {
-    marginLeft: 'auto',
-    width: 16,
-    height: 16,
-    color: ctx.colors2024['neutral-foot'],
-  },
   list: {
     gap: 40,
     paddingTop: 16,
@@ -379,27 +372,11 @@ const getStyles = createGetStyles2024(ctx => ({
   sheetModal: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  actionBadgeWrapper: {
-    position: 'absolute',
-    top: -4,
-    right: -(BADGE_SIZE / 2),
-    // ...makeDebugBorder(),
-  },
-  rightZero: {
-    right: 0,
-  },
   actionText: {
     color: ctx.colors2024['neutral-InvertHighlight'],
     textAlign: 'center',
     fontSize: 18,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-  },
-  actionIconWrapper: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ctx.colors2024['green-default'],
   },
 }));

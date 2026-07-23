@@ -44,13 +44,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
-  percentChange: {
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
   usdValueContainer: {
     display: 'flex',
     flexDirection: 'row',

@@ -29,10 +29,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 20,
     alignItems: 'center',
   },
-  icon: {
-    width: 24,
-    height: 24,
-  },
   greenDot: {
     width: 6,
     height: 6,

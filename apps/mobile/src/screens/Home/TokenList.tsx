@@ -166,7 +166,6 @@ interface Props {
   noAssetsOnAnyChain: boolean;
   onForeground?: () => void;
   onRefresh?: () => void | Promise<void>;
-  onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -369,7 +368,6 @@ export const TokenList = ({
   noAssetsOnAnyChain,
   onForeground,
   onRefresh,
-  onReachTopStatusChange,
 }: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
@@ -865,22 +863,18 @@ export const TokenList = ({
   }, []);
 
   const scrollY = useCurrentTabScrollY();
-  const handleScroll = useCallback(
-    (currentScrollY: number) => {
-      if (currentScrollY <= 0) {
-        onReachTopStatusChange?.(true);
-      } else {
-        onReachTopStatusChange?.(false);
-      }
-      setShowScrollIndicator(currentScrollY >= 89);
-    },
-    [onReachTopStatusChange, setShowScrollIndicator],
+  const handleScrollIndicatorChange = useCallback(
+    (showIndicator: boolean) => setShowScrollIndicator(showIndicator),
+    [],
   );
 
   useAnimatedReaction(
-    () => scrollY.value,
-    currentScrollY => {
-      runOnJS(handleScroll)(currentScrollY);
+    () => scrollY.value >= 89,
+    (showIndicator, previousShowIndicator) => {
+      if (showIndicator === previousShowIndicator) {
+        return;
+      }
+      runOnJS(handleScrollIndicatorChange)(showIndicator);
     },
   );
 
@@ -916,14 +910,6 @@ const getStyles = createGetStyles2024(ctx => ({
   list: {
     flex: 1,
   },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: ASSETS_SECTION_HEADER,
-    zIndex: 1,
-  },
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
@@ -957,24 +943,6 @@ const getStyles = createGetStyles2024(ctx => ({
   singleCustomTestnetDivider: {
     marginBottom: 9,
     paddingHorizontal: 32.5,
-  },
-  assetHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
-    height: ASSETS_SECTION_HEADER,
-    paddingBottom: 8,
-    paddingLeft: 12 + 16,
-    paddingRight: 16,
-    width: '100%',
-  },
-  symbol: {
-    fontSize: 16,
-    height: ASSETS_SECTION_HEADER,
-    lineHeight: ASSETS_SECTION_HEADER,
-    paddingLeft: 9 + 16,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   emptyAssets: {
     //backgroundColor: 'transparent',

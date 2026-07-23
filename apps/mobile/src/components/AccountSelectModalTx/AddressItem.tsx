@@ -13,9 +13,10 @@ import { toast } from '@/components2024/Toast';
 import { TxAccountPannelSectionTitle } from '@/constant/newStyle';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { ellipsisAddress } from '@/utils/address';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { AccountSwitcherContextMenu } from '../AccountSwitcher/ContextMenu';
 import { Text } from '@/components/Typography';
+import { SELECT_ACCOUNT_WALLET_ITEM_RADIUS } from './layout';
 
 const SIZES = {
   itemH: 78,
@@ -79,14 +80,20 @@ export function AddressItemInSheetModal({
   };
 
   return (
-    <AddressItemShadowView
-      style={isCurrent || isPressing ? styles.active : null}>
-      <AccountSwitcherContextMenu account={account}>
+    <AccountSwitcherContextMenu
+      account={account}
+      preViewBorderRadius={SELECT_ACCOUNT_WALLET_ITEM_RADIUS}>
+      <AddressItemShadowView
+        style={[
+          styles.shadowView,
+          !IS_IOS && (isCurrent || isPressing) && styles.active,
+        ]}>
         <TouchableOpacity
           style={StyleSheet.flatten([
             styles.addressItemContainer,
             style,
             isCurrent && styles.addressItemContainerCurrent,
+            IS_IOS && (isCurrent || isPressing) && styles.active,
             isPressing && styles.containerPressing,
           ])}
           activeOpacity={1}
@@ -159,8 +166,8 @@ export function AddressItemInSheetModal({
             }}
           </AddressItem>
         </TouchableOpacity>
-      </AccountSwitcherContextMenu>
-    </AddressItemShadowView>
+      </AddressItemShadowView>
+    </AccountSwitcherContextMenu>
   );
 }
 
@@ -173,14 +180,28 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       borderColor: ctx.colors2024['brand-light-2'],
       backgroundColor: ctx.colors2024['brand-light-1'],
     },
+    shadowView: {
+      borderRadius: SELECT_ACCOUNT_WALLET_ITEM_RADIUS,
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
+      ...(IS_IOS ? { borderWidth: 0 } : {}),
+    },
     addressItemContainer: {
-      borderRadius: 16,
+      borderRadius: SELECT_ACCOUNT_WALLET_ITEM_RADIUS,
+      overflow: 'hidden',
       backgroundColor: ctx.isLight
         ? ctx.colors2024['neutral-bg-1']
         : ctx.colors2024['neutral-bg-2'],
       padding: 16,
       paddingRight: 24,
       height: SIZES.itemH,
+      ...(IS_IOS
+        ? {
+            borderWidth: 1,
+            borderColor: ctx.colors2024['neutral-line'],
+          }
+        : {}),
     },
     addressItemContainerCurrent: {
       backgroundColor: ctx.colors2024['brand-light-1'],

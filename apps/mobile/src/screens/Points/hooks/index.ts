@@ -18,7 +18,13 @@ type PointsStore = {
 
 const AddrPointsQueue = new PQueue({
   interval: 60 * 1000,
-  intervalCap: 100,
+  intervalCap: 95,
+  concurrency: 10,
+});
+
+const AddrPointsSecondQueue = new PQueue({
+  interval: 1500,
+  intervalCap: 20,
   concurrency: 10,
 });
 
@@ -64,14 +70,16 @@ async function fetchPointsByKey(key: string) {
   }
 
   ids.forEach(id => {
-    AddrPointsQueue.add(async () => {
-      try {
-        const data = await openapi.getRabbyPointsV2({ id });
-        updatePoint(id, data);
-      } catch (error) {
-        console.log('getPoints error', error);
-      }
-    });
+    AddrPointsQueue.add(() =>
+      AddrPointsSecondQueue.add(async () => {
+        try {
+          const data = await openapi.getRabbyPointsV2({ id });
+          updatePoint(id, data);
+        } catch (error) {
+          console.log('getPoints error', error);
+        }
+      }),
+    );
   });
 
   await AddrPointsQueue.onIdle();

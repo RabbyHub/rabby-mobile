@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -17,15 +17,12 @@ import { ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
-import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
 import { HomeTabName as TabName } from '@/hooks/navigation';
-import {
-  ListRenderFooter as ListRenderFooterComponent,
-  ListRenderSeparator,
-} from './RenderRow/Common';
+import { ListRenderSeparator } from './RenderRow/Common';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { getAllDefiCount } from '@/screens/Home/utils/converAssets';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
@@ -108,11 +105,8 @@ export const ProtocolList = () => {
 
   const isLoading = useProtocols(state => state.isLoading);
 
-  const {
-    data: portfoliosData,
-    loadMore: loadMorePortfolios,
-    hasMore: hasMorePortfolios,
-  } = useLoadMoreData(multiProtocols.unFold);
+  const { data: portfoliosData, loadMore: loadMorePortfolios } =
+    useLoadMoreData(multiProtocols.unFold);
 
   const shouldDefaultExpand = useMemo(
     () => multiProtocols.unFold.length <= 5,
@@ -351,14 +345,6 @@ export const ProtocolList = () => {
     ],
   );
 
-  const ListRenderFooter = useCallback(() => {
-    return hasMorePortfolios ? (
-      <MemoizedDefiItemLoader style={[styles.loadingMore]} />
-    ) : (
-      <ListRenderFooterComponent />
-    );
-  }, [hasMorePortfolios, styles.loadingMore]);
-
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
     const protocolRefresh = batchGetProtocols(myTop10Addresses, true);
@@ -444,7 +430,6 @@ export const ProtocolList = () => {
             />
           </>
         }
-        // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         style={[
@@ -484,21 +469,11 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 12,
     paddingBottom: 48,
   },
-  bgContainer: {
-    paddingHorizontal: 12,
-  },
   emptyAssets: {
     marginHorizontal: 0,
   },
-  emptyTokenHolder: {
-    paddingHorizontal: 0,
-  },
   defiLoading: {
     paddingHorizontal: 0,
-  },
-  loadingMore: {
-    paddingHorizontal: 0,
-    marginTop: 16,
   },
   fullDefi: {
     marginHorizontal: 0,
