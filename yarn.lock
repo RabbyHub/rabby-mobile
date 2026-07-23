@@ -9812,6 +9812,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/react-native-bootsplash@workspace:^, @rabby-wallet/react-native-bootsplash@workspace:packages/react-native-bootsplash":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-bootsplash@workspace:packages/react-native-bootsplash"
+  dependencies:
+    react-native-is-edge-to-edge: "npm:^1.3.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/react-native-fs@workspace:^, @rabby-wallet/react-native-fs@workspace:packages/react-native-fs":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/react-native-fs@workspace:packages/react-native-fs"
@@ -38814,6 +38825,7 @@ __metadata:
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
     "@rabby-wallet/rabby-swap": "npm:0.0.81"
+    "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
@@ -38942,7 +38954,7 @@ __metadata:
     react-native-dotenv: "npm:^3.4.9"
     react-native-edge-to-edge: "npm:^1.6.0"
     react-native-exception-handler: "npm:^2.10.10"
-    react-native-fast-image: "npm:^8.6.3"
+    react-native-fast-image: "patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch"
     react-native-gesture-handler: "npm:2.30.0"
     react-native-get-random-values: "npm:^2.0.0"
     react-native-haptic-feedback: "npm:2.3.3"
@@ -38970,7 +38982,6 @@ __metadata:
     react-native-send-intent: "npm:^1.3.0"
     react-native-size-matters: "npm:^0.4.2"
     react-native-sortables: "npm:1.9.4"
-    react-native-splash-screen: "npm:^3.3.0"
     react-native-svg: "npm:15.12.1"
     react-native-svg-transformer: "npm:1.5.0"
     react-native-switch: "npm:^1.5.1"
@@ -39707,13 +39718,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-fast-image@npm:^8.6.3":
+"react-native-fast-image@npm:8.6.3":
   version: 8.6.3
-  resolution: "react-native-fast-image@npm:8.6.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-fast-image%2F-%2Freact-native-fast-image-8.6.3.tgz"
+  resolution: "react-native-fast-image@npm:8.6.3"
   peerDependencies:
     react: ^17 || ^18
     react-native: ">=0.60.0"
   checksum: 10/ed340c2b6c2e76658fa0a899a45132871017018bec0a03423b7456610810e79b2844dfa16063c05d98b89a7613eeb0de2fdf3ad978cdfa4d488a4e01228a7349
+  languageName: node
+  linkType: hard
+
+"react-native-fast-image@patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
+  version: 8.6.3
+  resolution: "react-native-fast-image@patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch::version=8.6.3&hash=471527&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  peerDependencies:
+    react: ^17 || ^18
+    react-native: ">=0.60.0"
+  checksum: 10/981d9568989632d245c4a494abf235d3f6659bac1993df955f47285861be2766f276dc730fdfa6cd467157c46bd8a78952573a12edccd1c0b617c6f63ba94acd
   languageName: node
   linkType: hard
 
@@ -39851,6 +39872,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/8fb6d8ab7b953c7d7cec8c987cef24f1c5348a293a85cb49c7c53b54ef110c0ca746736ae730e297603c8c76020df912e93915fb17518c4f2f91143757177aba
+  languageName: node
+  linkType: hard
+
+"react-native-is-edge-to-edge@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "react-native-is-edge-to-edge@npm:1.3.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/dc82d54e0bf8f89208a538bb0d14e4891af6efae27ed5b7b21be683a72c38c5219ab9be1ea9bd40aa1c905d481174e649d0b71aeceaa9946e6c707f251568282
   languageName: node
   linkType: hard
 
@@ -40160,15 +40191,6 @@ __metadata:
     react-native-haptic-feedback:
       optional: true
   checksum: 10/3597672773f271904687390f6d100291b17a864c957bbb382c7ef40e90edf486224f7de35e19982fe21c348e8b3548a51235edc3332ff6dc150f810e2c4f5c17
-  languageName: node
-  linkType: hard
-
-"react-native-splash-screen@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "react-native-splash-screen@npm:3.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-splash-screen%2F-%2Freact-native-splash-screen-3.3.0.tgz"
-  peerDependencies:
-    react-native: ">=0.57.0"
-  checksum: 10/21eed33e445e03f748397dfacbd83db2c7ce9ad508e292a053bf2b0fc2d63e4736d0ffc1e7c3548ea7897c83142e1ecf8949e6f21e7743405d48a9072879178c
   languageName: node
   linkType: hard
 
