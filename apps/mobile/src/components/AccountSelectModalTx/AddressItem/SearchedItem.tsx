@@ -36,6 +36,7 @@ import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { IS_ANDROID } from '@/core/native/utils';
 import { touchedFeedback } from '@/utils/touch';
 import { Text } from '@/components/Typography';
+import { SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS } from '../layout';
 
 const SIZES = {
   itemH: 78,
@@ -272,7 +273,7 @@ export const SearchedAddressItemInSheetModal = ({
         menuTitle: account.address,
         menuActions: menuActions,
       }}
-      preViewBorderRadius={16}
+      preViewBorderRadius={SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS}
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>
@@ -281,7 +282,7 @@ export const SearchedAddressItemInSheetModal = ({
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
-    // borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     overflow: 'hidden',
     // backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -289,7 +290,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // borderColor: colors2024['brand-light-2'],
   },
   shadowView: {
-    borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -299,7 +300,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
-    borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     flex: 1,
     flexGrow: 1,
     backgroundColor: isLight
@@ -380,7 +381,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 16,
   },
   walletIcon: {
     borderRadius: 12,

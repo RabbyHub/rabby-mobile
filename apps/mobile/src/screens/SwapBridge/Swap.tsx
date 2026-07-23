@@ -118,7 +118,7 @@ import {
   type QuotePollingPauseReasonState,
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
-import ArrowDownSVG from '@/assets/icons/swap/icon-arrow-down-with-bg.svg';
+import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -1521,7 +1521,13 @@ const Swap = ({
               hideTestnetTab
               account={currentAccount!}
               rightArrowIcon={
-                <ArrowDownSVG color={colors2024['neutral-line']} />
+                <View style={styles.chainArrowIconContainer}>
+                  <ArrowDownSVG
+                    width={16}
+                    height={16}
+                    color={colors2024['neutral-body']}
+                  />
+                </View>
               }
             />
             <View style={styles.swapContainer}>
@@ -1904,7 +1910,7 @@ const ForMultipleAddress = (
 
 Swap.ForMultipleAddress = ForMultipleAddress;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
   },
@@ -1921,6 +1927,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+  },
+  chainArrowIconContainer: {
+    width: 26,
+    height: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 100,
+    backgroundColor: isLight
+      ? 'rgba(0, 0, 0, 0.1)'
+      : colors2024['neutral-line'],
   },
   balanceText: {
     color: colors2024['neutral-foot'],

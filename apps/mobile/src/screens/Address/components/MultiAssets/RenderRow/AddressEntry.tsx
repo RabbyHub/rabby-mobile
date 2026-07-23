@@ -6,6 +6,8 @@ import { useTheme2024 } from '@/hooks/theme';
 export const AddressEntry = ({
   data,
   onSelect,
+  onManage,
+  manageAccessibilityLabel,
   showMarkIfNewlyAdded,
 }: {
   data: KeyringAccountWithAlias & {
@@ -16,6 +18,8 @@ export const AddressEntry = ({
     typeof AddressItemEntry
   >['showMarkIfNewlyAdded'];
   onSelect?: () => void;
+  onManage?: () => void;
+  manageAccessibilityLabel?: string;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -26,6 +30,8 @@ export const AddressEntry = ({
       account={data}
       changePercent={data.changPercent}
       onSelect={onSelect}
+      onManage={onManage}
+      manageAccessibilityLabel={manageAccessibilityLabel}
       isLoss={data.isLoss}
     />
   );

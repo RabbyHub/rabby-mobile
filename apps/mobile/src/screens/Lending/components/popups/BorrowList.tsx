@@ -509,36 +509,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxWidth: 80,
     overflow: 'hidden',
   },
-  yourSupplied: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
-  zeroBorrowed: {
-    color: colors2024['neutral-info'],
-  },
-  yourBalanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  walletIcon: {
-    width: 16,
-    height: 16,
-    color: colors2024['neutral-secondary'],
-    marginTop: -2,
-  },
-  yourBalance: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
   listHeader: {
     paddingVertical: 2,
     paddingHorizontal: 4,

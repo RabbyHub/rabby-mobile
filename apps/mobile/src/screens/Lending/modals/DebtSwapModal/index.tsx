@@ -1399,10 +1399,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     top: '50%',
     transform: [{ translateX: -18 }, { translateY: -18 }],
   },
-  arrowText: {
-    fontSize: 22,
-    color: colors2024['neutral-secondary'],
-  },
   gasPreContainer: {
     paddingHorizontal: 8,
     marginTop: 12,
@@ -1478,13 +1474,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 20,
     color: colors2024['orange-default'],
     marginRight: 4,
-  },
-  priceImpactTooltipText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
   },
   errorText: {
     fontSize: 14,

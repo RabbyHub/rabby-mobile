@@ -61,23 +61,6 @@ export const Item = ({ item, onPress }: ItemProps) => {
   );
 };
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: {
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  tipContainer: {
-    position: 'relative',
-    marginVertical: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  listContainer: {
-    paddingBottom: 90,
-  },
-  list: {
-    width: '100%',
-    paddingHorizontal: 20,
-  },
   imagesView: {
     borderRadius: 4,
     justifyContent: 'center',
@@ -108,9 +91,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 14,
-  },
-  loadingWrap: {
-    width: '100%',
-    height: '100%',
   },
 }));

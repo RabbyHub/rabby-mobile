@@ -703,7 +703,7 @@
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
         "searchInputPlaceholder": "Enter an address or scan",
-        "selectPlaceholder": "Select Address",
+        "selectPlaceholder": "Enter or select address",
         "positiveTips": {
           "yourOwnAddress": "Your own address",
           "whitelistedAddress": "Whitelisted address",

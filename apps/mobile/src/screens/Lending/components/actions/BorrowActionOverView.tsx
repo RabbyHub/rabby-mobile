@@ -94,14 +94,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
-  availableValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  apyContainer: {
-    marginTop: 26,
-  },
   hfContainer: {
     gap: 6,
   },

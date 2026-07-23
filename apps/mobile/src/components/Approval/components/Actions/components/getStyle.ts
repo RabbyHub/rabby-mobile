@@ -43,5 +43,6 @@ export const getStyle = (colors: AppColorsVariants) =>
     firstRow: {
       flexShrink: 0,
       flex: 1,
+      alignItems: 'flex-start',
     },
   });

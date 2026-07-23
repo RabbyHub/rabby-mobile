@@ -713,20 +713,8 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     gap: 2,
   },
-  usdValue: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
   tokenRowLogo: {
     marginRight: 12,
-  },
-  smallTokenRowLogo: {
-    marginRight: 12,
-    width: 40,
-    height: 40,
   },
   tokenRowTokenInner: {
     flexShrink: 1,
@@ -783,11 +771,6 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     gap: 4,
   },
-  tokenAssetItemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   tokenFdv: {
     fontSize: 13,
     fontWeight: '500',
@@ -813,15 +796,6 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 0,
     flex: 0,
   },
-  tokenHeaderAmount: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    width: '100%',
-    maxWidth: '100%',
-    fontFamily: 'SF Pro Rounded',
-  },
   leftColContent: {
     maxWidth: '70%',
     justifyContent: 'flex-start',
@@ -829,16 +803,6 @@ const getStyles = createGetStyles2024(ctx => ({
     flex: 1,
     gap: 2,
     overflow: 'hidden',
-  },
-  verticalLine: {
-    width: 1,
-    height: 12,
-    backgroundColor: ctx.colors2024['neutral-secondary'],
-    marginHorizontal: 4,
-  },
-  siteList: {
-    gap: 4,
-    flexDirection: 'row',
   },
   gasBadgeText: {
     fontSize: 12,
@@ -887,16 +851,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
-  searchSubText: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-  },
-  fdvValue: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
   tokenRowUsdValueWrap: {
     flexShrink: 0,
     justifyContent: 'flex-end',
@@ -921,34 +875,6 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'right',
     maxWidth: 100,
   },
-  searchTokenIssuedby: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-  searchTokenDomain: {
-    color: ctx.colors2024['neutral-body'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-  searchTokenWarningText: {
-    color: ctx.colors2024['orange-default'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-  },
-  searchTokenDangerText: {
-    color: ctx.colors2024['red-default'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-  },
   tokenRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -963,29 +889,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   caValueText: {
     color: ctx.colors2024['neutral-secondary'],
-  },
-  searchTokenDanger: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    width: '100%',
-    padding: 8,
-    backgroundColor: ctx.colors2024['red-light-1'],
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  searchTokenWarning: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    width: '100%',
-    padding: 8,
-    backgroundColor: ctx.colors2024['orange-light-1'],
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  highlightText: {
-    color: ctx.colors2024['brand-default'],
   },
   exclude: {
     color: ctx.colors2024['neutral-info'],
@@ -1016,26 +919,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
-  smallTokenSymbol: {
-    color: ctx.colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    width: 'auto',
-  },
   arrow: {
     width: 10,
     height: 8,
-  },
-  modalNextButtonText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    textAlign: 'center',
-    color: ctx.colors2024['neutral-InvertHighlight'],
-    backgroundColor: ctx.colors2024['brand-default'],
   },
   changeText: {
     fontWeight: '500',
