@@ -129,22 +129,6 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 9,
     marginRight: 12,
   },
-  redBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: ctx.colors2024['red-default'],
-    marginTop: 9,
-    marginRight: 12,
-  },
-  greyBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: ctx.colors2024['neutral-foot'],
-    marginTop: 9,
-    marginRight: 12,
-  },
   greenRuleText: {
     flex: 1,
     fontSize: 16,

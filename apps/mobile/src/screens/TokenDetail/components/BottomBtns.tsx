@@ -234,7 +234,6 @@ export const TokenDetailBottomBtns = ({
   );
 };
 
-const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     position: 'relative',
@@ -306,20 +305,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
-  sheetModalItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flexShrink: 0,
-    maxWidth: '50%',
-    // ...makeDebugBorder(),
-  },
-  chevron: {
-    marginLeft: 'auto',
-    width: 16,
-    height: 16,
-    color: ctx.colors2024['neutral-foot'],
-  },
   list: {
     gap: 40,
     paddingTop: 16,
@@ -328,15 +313,6 @@ const getStyles = createGetStyles2024(ctx => ({
   sheetModal: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  actionBadgeWrapper: {
-    position: 'absolute',
-    top: -4,
-    right: -(BADGE_SIZE / 2),
-    // ...makeDebugBorder(),
-  },
-  rightZero: {
-    right: 0,
-  },
   actionText: {
     color: ctx.colors2024['neutral-InvertHighlight'],
     textAlign: 'center',
@@ -344,12 +320,5 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-  },
-  actionIconWrapper: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ctx.colors2024['green-default'],
   },
 }));

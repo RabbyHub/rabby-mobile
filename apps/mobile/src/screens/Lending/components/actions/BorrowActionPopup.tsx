@@ -621,16 +621,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    width: '100%',
-  },
   bottomSheetScrollView: {
     width: '100%',
   },
@@ -641,33 +631,6 @@ const getStyles = createGetStyles2024(ctx => ({
   gasPreContainer: {
     paddingHorizontal: 8,
   },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
-  },
-  tokenInfos: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  poolInfoItems: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginTop: 12,
-  },
-  poolInfoItem: {
-    flex: 1,
-    borderRadius: 8,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    gap: 4,
-  },
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
@@ -675,34 +638,6 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 0,
-    fontFamily: 'SF Pro Rounded',
-  },
-  userInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionContainer: {
-    paddingBottom: 32,
-    width: '100%',
-  },
-  section: {
-    marginTop: 28,
-    lineHeight: 24,
-  },
-  sectionTitle: {
-    marginBottom: 5,
-    fontWeight: '700',
-    fontSize: 20,
-    lineHeight: 24,
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  sectionDesc: {
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 24,
-    color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
   buttonContainer: {
@@ -715,18 +650,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   checkbox: {
     display: 'flex',
@@ -774,11 +697,6 @@ const getStyles = createGetStyles2024(ctx => ({
   noSupplyMessageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  noSupplyMessageContent: {
-    flexDirection: 'column',
-    display: 'flex',
     gap: 8,
   },
   noSupplyMessagePrefix: {

@@ -178,5 +178,4 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     position: 'relative',
   },
-  priceChangeBalance: {},
 }));

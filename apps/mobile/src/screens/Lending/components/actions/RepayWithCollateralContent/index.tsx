@@ -1250,27 +1250,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     //paddingHorizontal: 25,
     paddingBottom: 220,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  titleText: {
-    fontSize: 20,
-    fontWeight: '900',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-    marginBottom: 12,
-    paddingLeft: 4,
-  },
   content: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
@@ -1298,22 +1277,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
-  },
-  sliderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  slider: {
-    width: 100,
-  },
-  sliderValue: {
-    //width: 40,
-    textAlign: 'right',
-    color: colors2024['brand-default'],
-    fontSize: 13,
-    fontWeight: '500',
-    fontFamily: 'SF Pro',
   },
   tokenBody: {
     flexDirection: 'row',
@@ -1453,10 +1416,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     top: '50%',
     transform: [{ translateX: -18 }, { translateY: -18 }],
   },
-  arrowText: {
-    fontSize: 22,
-    color: colors2024['neutral-secondary'],
-  },
   gasPreContainer: {
     paddingHorizontal: 8,
     marginTop: 12,
@@ -1531,13 +1490,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 20,
     color: colors2024['orange-default'],
     marginRight: 4,
-  },
-  priceImpactTooltipText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
   },
   errorText: {
     fontSize: 14,
