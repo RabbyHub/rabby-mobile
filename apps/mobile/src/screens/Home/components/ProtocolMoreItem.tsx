@@ -216,13 +216,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   detail: {
     backgroundColor: 'transparent',
   },
-  gradientBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   button: {
     marginTop: 0,
     flex: 1,

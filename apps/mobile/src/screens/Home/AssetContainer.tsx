@@ -1,10 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_SECTION_HEADER,
-} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -27,16 +22,9 @@ import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
-const ScreenWidth = Dimensions.get('window').width;
-
-interface Props {
-  onReachTopStatusChange?: (status: boolean) => void;
-}
-const FOOTER_HEIGHT = 56;
-
 const renderHeader = () => null;
 
-export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
+export const AssetContainer = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { currentAccount } = useSingleHomeAccount();
@@ -130,21 +118,18 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
           noAssetsOnAnyChain={noAssetsOnAnyChain}
           onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
-          onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
         <PortfolioList
           onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
-          onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
         <NFTList
           onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
-          onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
     </Tabs.Container>
@@ -155,66 +140,6 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
   },
-  list: {
-    flex: 1,
-  },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: ASSETS_SECTION_HEADER,
-    // paddingHorizontal: 16,
-    zIndex: 1,
-  },
-  rowWrap: {
-    paddingHorizontal: 16,
-  },
-  removeLeft: {
-    marginLeft: 0,
-  },
-  renderItemWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    height: ASSETS_ITEM_HEIGHT_NEW,
-    paddingLeft: 12,
-    width: '100%',
-  },
-  bg2: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  sectionHeader: {
-    // backgroundColor: ctx.colors2024['neutral-bg-gray'],
-    // paddingRight: 8,
-    height: ASSETS_SECTION_HEADER,
-  },
-  buttonHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
-  assetHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
-    height: ASSETS_SECTION_HEADER,
-    // paddingBottom: 8,
-    paddingLeft: 12 + 16,
-    paddingRight: 16,
-    width: '100%',
-  },
-  hidden: {
-    display: 'none',
-  },
-  symbol: {
-    fontSize: 16,
-    height: ASSETS_SECTION_HEADER,
-    lineHeight: ASSETS_SECTION_HEADER,
-    paddingLeft: 9 + 16,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
-  },
-  footer: {
-    height: FOOTER_HEIGHT,
-  },
   tabBarWrap: {
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
@@ -223,20 +148,9 @@ const getStyles = createGetStyles2024(ctx => ({
     shadowOpacity: 0,
     elevation: 0,
   },
-  globalWarning: {
-    marginHorizontal: 16,
-    marginBottom: 13,
-  },
   netWorkError: {
     height: '100%',
     marginTop: -50,
     backgroundColor: ctx.colors2024['neutral-bg-0'],
-  },
-  bg: {
-    position: 'absolute',
-    left: 0,
-    width: ScreenWidth,
-    height: 32,
-    zIndex: -100,
   },
 }));

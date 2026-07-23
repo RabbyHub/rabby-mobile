@@ -188,22 +188,6 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 8,
     textAlign: 'center',
   },
-  button: {
-    position: 'absolute',
-    bottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
-    width: '100%',
-  },
-  disabledButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
-  },
-  disabledTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
-  gasPreContainer: {
-    paddingHorizontal: 8,
-    marginTop: 12,
-    width: '100%',
-  },
   buttonContainer: {
     position: 'absolute',
     paddingHorizontal: 25,
@@ -219,18 +203,9 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  directSignBtn: {
-    width: '100%',
-  },
   fullWidthButton: {
     flex: 1,
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-  },
-  closeButtonTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
-  closeButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   item: {
     width: '100%',

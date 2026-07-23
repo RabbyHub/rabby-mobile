@@ -20,11 +20,11 @@
       "ConfrimAddress": "지갑 확인",
       "WatchAddressList": "단순 조회 지갑",
       "ImportNewAddress": "지갑 추가",
-      "ImportWatchAddress2024": "시청 전용 지갑 추가",
+      "ImportWatchAddress2024": "보기 전용 지갑 추가",
       "CreateSelectOnCurrentSeed": "2. 지갑 추가",
       "CreateNewAddress": "1. 지갑 확인하기",
       "AddressDetail": "지갑 세부정보",
-      "ImportMoreAddress": "더 많은 Wallets 가져오기",
+      "ImportMoreAddress": "지갑 더 가져오기",
       "SetPassword": "비밀번호 설정",
       "ChooseBackup": "백업 방법 선택",
       "CreateWallet": "지갑 만들기",
@@ -38,14 +38,14 @@
         "cancel": "보류 중인 거래가 취소되었습니다."
       },
       "itemTitle": {
-        "Send": "보내짐",
-        "Bridge": "브릿지됨",
+        "Send": "전송 완료",
+        "Bridge": "브리지 완료",
         "Contract": "컨트랙트 배포",
         "Approve": "승인됨",
-        "Swap": "교환됨",
+        "Swap": "스왑 완료",
         "Cancel": "보류 중인 거래 취소",
         "Default": "상호작용",
-        "Recieve": "수신완료",
+        "Recieve": "수신 완료",
         "Buy": "구매 완료",
         "Revoke": "{{token}} 승인 취소됨",
         "DepositedGas": "입금된 Gas",
@@ -68,7 +68,7 @@
         "Cancel": "취소",
         "Revoke": "철회",
         "SpeedUp": "속도 향상",
-        "GasFee": "Gas Fee",
+        "GasFee": "Gas 수수료",
         "From": "부터",
         "Unlimited": "무제한",
         "Status": "상태",
@@ -84,9 +84,9 @@
         "Unknown": "알 수 없음",
         "ApproveTo": "승인하기",
         "Date": "날짜",
-        "RevokeFrom": "에서 철회",
+        "RevokeFrom": "승인 취소 대상",
         "InteractedContract": "상호작용 대상(To)",
-        "RevokeToken": "토큰 취소",
+        "RevokeToken": "승인 취소 토큰",
         "name": "이름",
         "BuyAgain": "다시 구매하기",
         "PurchaseFrom": "에서 구매함",
@@ -101,7 +101,7 @@
         "Operation": "작업"
       },
       "empty": {
-        "desc": "<1> 지원되는 체인 </1>에서 거래를 찾을 수 없습니다.",
+        "desc": "<1>지원되는 체인</1>에서 거래를 찾을 수 없습니다",
         "title": "거래 내역 없음"
       },
       "txHistory": {
@@ -123,12 +123,12 @@
       "Yesterday": "어제",
       "ShowHiddenItems": "숨겨진 거래 표시",
       "ViewSmallItems": "$0.1 미만의 거래 보기",
-      "NotShowAllTransactionsToast": "숨겨진 거래 감춤",
+      "NotShowAllTransactionsToast": "숨겨진 거래를 다시 숨겼습니다",
       "ShowAllTransactionsToast": "숨겨진 거래 표시됨",
       "TransactionAlert": {
         "clearPendingSuccess": "로컬 보류 중인 거래가 제거되었습니다.",
         "clearPendingText": "{{chainName}} 거래 ({{nonces}})가 3분 이상 대기 중입니다. <5></5> <6>로컬에서 대기 해제</6> <7></7>를 선택하고 거래를 다시 제출할 수 있습니다.",
-        "skipNonceText": "Nonce #{{nonce}}가 {{chainName}} 체인에서 건너뛰었습니다. 이로 인해 앞에 대기 중인 거래가 발생할 수 있습니다. <5></5> <6>체인에 tx 제출</6> <7></7>하여 해결하십시오."
+        "skipNonceText": "{{chainName}} 체인에서 Nonce #{{nonce}}가 건너뛰어졌습니다. 이로 인해 이후 거래가 대기 상태로 남을 수 있습니다. 문제를 해결하려면 <5></5> <6>체인에 거래를 제출하세요</6> <7></7>."
       },
       "HideScamTransactions": "사기 거래 숨기기",
       "ShowScamTransactions": "사기 거래 표시",
@@ -141,16 +141,16 @@
       "sync": "Rabby 확장 지갑 동기화를 위해 스캔하세요",
       "createNewAddress": "새 지갑 만들기",
       "welcomeTitle": "Rabby Wallet에 오신 것을 환영합니다",
-      "alreadyUseRabby": "저는 이미 Rabby를 사용하고 있습니다."
+      "alreadyUseRabby": "이미 Rabby를 사용 중입니다"
     },
     "importSeedPhrase": {
-      "enterYourSeedPhrase": "니모닉 구문을 입력하세요."
+      "enterYourSeedPhrase": "시드 구문을 입력하고 각 단어를 공백으로 구분하세요"
     },
     "importSuccess": {
-      "addressCount": "{{count}} Addresses",
+      "addressCount": "주소 {{count}}개",
       "success": "{{type}} 성공했습니다!",
       "addressCount_other": "{{count}} 지갑",
-      "importMore": "더 많은 Wallets 가져오기",
+      "importMore": "이 구문에서 지갑 더 추가하기",
       "addressCount_one": "{{count}} 지갑",
       "viewAddress": "지갑 보기",
       "titleCreated": "지갑이 생성되었습니다 🚀",
@@ -161,8 +161,8 @@
       "sendButton": "보내기",
       "NFT": "NFT",
       "Collection": "컬렉션",
-      "SendAmount": "금액 전송",
-      "Contract": "계약",
+      "SendAmount": "보낼 수량",
+      "Contract": "컨트랙트",
       "Chain": "체인"
     },
     "signFooterBar": {
@@ -207,15 +207,15 @@
         "sigCompleted": "트랜잭션 생성됨",
         "unknownQRCode": "오류: 해당 QR 코드를 식별할 수 없습니다.",
         "misMatchSignId": "일치하지 않는 거래 데이터입니다. 거래 세부 정보를 확인하십시오.",
-        "qrcodeDesc": "스캔하여 {{brand}}로 서명하세요  \n서명한 후 아래 버튼을 클릭하여 서명을 받으세요",
-        "afterSignDesc": "Keystone에서 QR 코드를 스캔하여 signature 받기",
+        "qrcodeDesc": "{{brand}}로 스캔하여 서명하세요\n서명 후 아래 버튼을 눌러 서명을 받으세요",
+        "afterSignDesc": "Keystone의 QR 코드를 스캔하여 서명 받기",
         "txFailedRetry": "생성 실패: 다시 시도해 주세요"
       },
       "blockDappFromSendingRequests": "DApp이 1분 동안 요청을 보내지 못하도록 차단합니다.",
       "resend": "재시도",
       "cancelTransaction": "트랜잭션 취소",
       "ledger": {
-        "siging": "서명 요청 전송",
+        "siging": "서명 요청 전송 중",
         "submitting": "서명되었습니다. 거래 생성 중",
         "resent": "다시 보내기",
         "txRejectedByLedger": "트랜잭션이 Ledger에서 거부되었습니다.",
@@ -229,11 +229,11 @@
       "startSigning": "서명 시작",
       "oneKeyConfirm": "확인",
       "ledgerConfirm": "확인",
-      "got": "내가 알았어"
+      "got": "알겠습니다"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "잔액 부족",
-      "Value": "가치",
+      "Value": "값",
       "Token": "토큰",
       "Loading_Tokens": "토큰 로드 중...",
       "No_Tokens": "토큰 없음",
@@ -244,12 +244,12 @@
     "receive": {
       "title": "{{chain}}에서 {{token}} 받기",
       "watchModeAlert": "이것은 보기 전용 주소입니다. 자산을 받기 위해 사용하시겠습니까?",
-      "newTitle": "자산 수신:",
+      "newTitle": "자산을 받을 체인",
       "allEVMChain": "모든 EVM 체인",
       "copyAddress": "주소 복사"
     },
     "sendTokenComponents": {
-      "GasReserved": "예약된 <1>0</1> {{ tokenName }} 가스 비용용"
+      "GasReserved": "Gas 비용으로 <1>0</1> {{ tokenName }} 예약"
     },
     "signTypedData": {
       "createKey": {
@@ -279,15 +279,15 @@
       },
       "sellNFT": {
         "specificBuyer": "특정 구매자",
-        "title": "NFT Order",
+        "title": "NFT 주문",
         "receiveToken": "토큰 받기",
-        "listNFT": "NFT 나열"
+        "listNFT": "NFT 등록"
       },
       "permit2": {
         "sigExpireTime": "서명 만료 시간",
         "approvalExpiretime": "승인 만료 시간",
         "sigExpireTimeTip": "서명 유효 기간의 온체인 기간",
-        "title": "Permit2 Token Approval"
+        "title": "Permit2 토큰 승인"
       },
       "safeCantSignTypedData": "이 주소는 Safe 주소이며, EIP-712 유형 데이터 또는 문자열 서명만 지원합니다."
     },
@@ -298,14 +298,14 @@
         "title": "연락처에 추가"
       },
       "addressNotInContract": "주소 목록에 없습니다. <1></1><2>연락처에 추가</2>",
-      "ContractAddress": "Contract Address",
+      "ContractAddress": "컨트랙트 주소",
       "whitelistAlert__whitelisted": "주소가 허용 목록에 추가되었습니다.",
       "sectionTo": {
         "addrValidator__invalid": "지갑 주소가 유효하지 않습니다.",
         "searchInputPlaceholder": "주소를 입력하거나 스캔하세요.",
         "addrValidator__empty": "주소를 입력해 주세요.",
         "positiveTips": {
-          "yourOwnAddress": "당신의 주소",
+          "yourOwnAddress": "내 주소",
           "whitelistedAddress": "허용된 주소",
           "sentRecently": "최근 전송됨"
         },
@@ -317,14 +317,14 @@
       "sectionBalance": {
         "title": "잔액"
       },
-      "whitelistAlert__disabled": "화이트리스트 비활성화. 모든 주소로 전송할 수 있습니다.",
+      "whitelistAlert__disabled": "허용 목록이 비활성화되었습니다. 모든 주소로 전송할 수 있습니다.",
       "Amount": "금액:",
       "allowTransferModal": {
-        "title": "트랜잭션 허용을 확인하십시오",
-        "placeholder": "비밀번호를 입력하여 확인하십시오.",
+        "title": "거래 허용 확인",
+        "placeholder": "확인하려면 비밀번호를 입력하세요",
         "addWhitelist": "허용 목록에 추가"
       },
-      "To": "에",
+      "To": "받는 주소",
       "AddToContactsModal": {
         "editAddressNote": "주소 노트 편집",
         "addedAsContacts": "연락처로 추가됨",
@@ -339,13 +339,13 @@
           "fast": "빠른",
           "custom": "사용자 지정",
           "slow": "느림",
-          "normal": "정상"
+          "normal": "보통"
         },
         "popupDesc": "가스 비용은 설정한 가스 가격에 따라 이체 금액에서 보류됩니다.",
         "confirm": "확인"
       },
-      "whitelistAlert__notWhitelisted_tip": "주소가 화이트리스트에 없습니다.",
-      "whitelistAlert__notWhitelisted": "해당 주소가 화이트리스트에 등록되지 않았습니다. 전송 권한을 임시로 부여하는 것에 동의합니다.",
+      "whitelistAlert__notWhitelisted_tip": "주소가 허용 목록에 없습니다.",
+      "whitelistAlert__notWhitelisted": "해당 주소가 허용 목록에 없습니다. 임시 전송 권한 부여에 동의합니다.",
       "balanceError": {
         "insufficientBalance": "잔액이 불충분합니다."
       },
@@ -366,24 +366,24 @@
       }
     },
     "signTx": {
-      "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.  \nGas limit가 낮습니다. 거래가 실패할 가능성이 1% 있습니다.",
-      "gasLimitTitle": "Gas limit",
+      "gasLimitLessThanExpect": "Gas 한도가 낮습니다. 거래가 실패할 가능성이 1% 있습니다.",
+      "gasLimitTitle": "Gas 한도",
       "gasSelectorTitle": "Gas",
       "gasPriceMedian": "마지막 100번의 온체인 거래의 중위수:",
       "gasLimitModifyOnlyNecessaryAlert": "필요한 경우에만 수정하세요",
       "nonceTitle": "Nonce",
       "noGasRequired": "Gas 필요 없음",
-      "gasPriceTitle": "Gas Price (Gwei)",
-      "gasLimitMinValueAlert": "Gas limit은 21000보다 커야 합니다.",
-      "maxPriorityFee": "Max Priority Fee (Gwei)",
+      "gasPriceTitle": "Gas 가격(Gwei)",
+      "gasLimitMinValueAlert": "Gas 한도는 21000보다 커야 합니다.",
+      "maxPriorityFee": "최대 우선 수수료(Gwei)",
       "safeAddressNotSupportChain": "현재 Safe 주소는 {{0}} 체인에서 지원되지 않습니다",
       "gasNotRequireForSafeTransaction": "Safe 거래에는 Gas 수수료가 필요하지 않습니다.",
       "nativeTokenNotEngouthForGas": "Gas 잔액이 충분하지 않습니다.",
-      "manuallySetGasLimitAlert": "Gas limit을 수동으로 설정했습니다:",
+      "manuallySetGasLimitAlert": "Gas 한도를 수동으로 설정했습니다:",
       "recommendGasLimitTip": "{{est}} 예측, 현재 {{current}}배, 추천",
       "failToFetchGasCost": "가스 비용 추정 실패",
       "nonceLowerThanExpect": "Nonce가 너무 낮습니다. 최소값은 {{0}}이어야 합니다.",
-      "gasLimitEmptyAlert": "gas limit을 입력해 주세요",
+      "gasLimitEmptyAlert": "Gas 한도를 입력해 주세요",
       "nativeTokenForGas": "{{chainName}}에서 가스 비용을 지불하려면 {{tokenName}} 토큰을 사용하세요.",
       "myNativeTokenBalance": "내 Gas 잔액:",
       "hardwareSupport1559Alert": "하드웨어 지갑의 펌웨어가 EIP 1559를 지원하는 버전으로 업그레이드되었는지 확인하세요.",
@@ -395,13 +395,13 @@
         "gasCost": "귀하의 주소로 가스를 전송하는 가스 비용:",
         "description": "GasAccount으로 가스 요금을 지불합니다. 아래에서 결제 세부정보를 확인하세요:"
       },
-      "gasLimitLessThanGasUsed": "Gas limit이 너무 낮습니다. 거래가 실패할 확률이 95%입니다.",
+      "gasLimitLessThanGasUsed": "Gas 한도가 너무 낮습니다. 거래가 실패할 확률이 95%입니다.",
       "multiSigChainNotMatch": "다중 서명 주소는 이 체인에 없으며 트랜잭션을 시작할 수 없습니다.",
       "crossChain": {
         "title": "크로스 체인"
       },
       "enoughSafeSigCollected": "충분한 서명이 수집되었습니다.",
-      "unwrap": "Unwrap 토큰",
+      "unwrap": "토큰 언랩",
       "wrapToken": "토큰 랩핑",
       "swapAndCross": {
         "title": "토큰 스왑 및 크로스 체인"
@@ -417,13 +417,13 @@
         "errorTitle": "잔액 변동을 가져오는 데 실패했습니다.",
         "notSupport": "시뮬레이션이 지원되지 않음"
       },
-      "gasLimitNotEnough": "Gas limit가 21000보다 낮습니다. 거래를 제출할 수 없습니다.",
+      "gasLimitNotEnough": "Gas 한도가 21000보다 낮습니다. 거래를 제출할 수 없습니다.",
       "customRPCErrorModal": {
         "button": "사용자 정의 RPC 비활성화",
         "content": "귀하의 사용자 지정 RPC는 현재 사용할 수 없습니다. 이를 비활성화하고 Rabby의 공식 RPC를 사용하여 서명을 계속할 수 있습니다.",
-        "title": "Custom RPC Error"
+        "title": "사용자 지정 RPC 오류"
       },
-      "markRemoved": "마크 제거",
+      "markRemoved": "표시가 삭제되었습니다",
       "transferOwner": {
         "title": "자산 소유권 이전",
         "description": "설명"
@@ -431,7 +431,7 @@
       "chain": "체인",
       "deployTimeTitle": "배포된 시간",
       "contract": "스마트 컨트랙트",
-      "maxPriorityFeeDisabledAlert": "Gas Price를 먼저 설정하세요.",
+      "maxPriorityFeeDisabledAlert": "Gas 가격을 먼저 설정하세요.",
       "importedAddress": "가져온 주소",
       "no": "아니요",
       "typedDataMessage": "타입 데이터 서명",
@@ -439,9 +439,9 @@
       "unknownActionType": "알 수 없는 작업 유형",
       "protocol": "프로토콜",
       "hasInteraction": "이전에 상호작용함",
-      "trustValueTitle": "신뢰 가치",
+      "trustValueTitle": "신뢰도",
       "label": "레이블",
-      "nftCollection": "NFT Collection",
+      "nftCollection": "NFT 컬렉션",
       "sigCantDecode": "이 서명은 Rabby Wallet에서 디코딩할 수 없습니다.",
       "swap": {
         "receiver": "수신자",
@@ -456,7 +456,7 @@
         "receiveToken": "받기",
         "slippageTolerance": "슬리피지 톨러런스",
         "slippageFailToLoad": "로드 실패",
-        "notPaymentAddress": "지불 Wallet이 아닙니다"
+        "notPaymentAddress": "결제 지갑이 아닙니다"
       },
       "revokePermit2": {
         "title": "Permit2 승인 취소"
@@ -467,7 +467,7 @@
         "description": "설명",
         "interactContract": "컨트랙트와 상호작용"
       },
-      "floorPrice": "층 가격",
+      "floorPrice": "최저가",
       "sendNFT": {
         "title": "NFT 보내기",
         "nftNotSupport": "NFT 지원 안 됨"
@@ -495,7 +495,7 @@
       },
       "advancedSettings": "고급 설정",
       "markAsBlock": "차단된 것으로 표시됨",
-      "trustValue": "신뢰 가치",
+      "trustValue": "신뢰도",
       "collectionTitle": "컬렉션",
       "revokeNFTCollectionApprove": {
         "title": "NFT 컬렉션 승인 취소",
@@ -504,7 +504,7 @@
       "markAsTrust": "신뢰할 수 있는 것으로 표시됨",
       "noMark": "표시 없음",
       "coboSafeModificationRole": {
-        "title": "안전한 역할 수정 제출",
+        "title": "Safe 역할 수정 제출",
         "descriptionTitle": "설명",
         "safeWalletTitle": "Safe{Wallet}"
       },
@@ -513,7 +513,7 @@
         "payNativeToken": "{{symbol}} 지불",
         "operation": "작업",
         "receiver": "수신자 주소",
-        "title": "Contract Call  \n컨트랙트 호출",
+        "title": "컨트랙트 호출",
         "operationABIDesc": "작업은 ABI에서 디코딩됩니다.",
         "operationCantDecode": "작업이 디코딩되지 않았습니다."
       },
@@ -533,12 +533,12 @@
       },
       "contractAddress": "컨트랙트 주소",
       "submitMultisig": {
-        "multisigAddress": "Multisig address",
+        "multisigAddress": "멀티시그 주소",
         "title": "멀티시그 트랜잭션 제출"
       },
       "protocolTitle": "프로토콜",
       "yes": "네",
-      "contractPopularity": "{{1}}의 No.{{0}}",
+      "contractPopularity": "{{1}}에서 {{0}}위",
       "myMarkWithContract": "{{chainName}} 계약에서 내 표시",
       "coboSafeModificationDelegatedAddress": {
         "descriptionTitle": "설명",
@@ -561,10 +561,10 @@
         }
       },
       "nftCollectionApprove": {
-        "title": "NFT Collection Approval  \nNFT 컬렉션 승인",
+        "title": "NFT 컬렉션 승인",
         "approveCollection": "컬렉션 승인"
       },
-      "unknownAction": "알 수 없는 Signature 유형",
+      "unknownAction": "알 수 없는 서명 유형",
       "deployContract": {
         "descriptionTitle": "설명",
         "description": "스마트 계약을 배포하고 있습니다.",
@@ -578,11 +578,11 @@
       "assetOrder": {
         "receiveAsset": "자산 받기",
         "title": "자산 주문",
-        "listAsset": "자산 목록"
+        "listAsset": "자산 매도 주문"
       },
       "nftApprove": {
         "approveNFT": "NFT 승인",
-        "title": "NFT Approval (NFT 승인)",
+        "title": "NFT 승인",
         "nftContractTrustValueTip": "신뢰 값은 이 계약에서 소비된 최고 NFT 가치를 나타냅니다. 낮은 신뢰 값은 위험 또는 180일 동안의 비활성 상태를 나타냅니다."
       },
       "BroadcastMode": {
@@ -597,7 +597,7 @@
         "title": "브로드캐스트 모드",
         "lowGasDeadline": {
           "4h": "4시간",
-          "24h": "24h",
+          "24h": "24시간",
           "label": "시간 초과",
           "1h": "1시간"
         },
@@ -616,7 +616,7 @@
         "deployTimeLessThan": "< {{value}}일",
         "approveToken": "토큰 승인",
         "myBalance": "내 잔액",
-        "contractTrustValueTip": "신뢰 가치(Trust value)는 이 계약에 의해 지출된 자산의 총 가치를 의미합니다. 낮은 신뢰 가치는 위험이 있거나 180일 동안 비활성 상태임을 나타냅니다.",
+        "contractTrustValueTip": "신뢰도는 이 컨트랙트가 사용한 자산의 총가치를 의미합니다. 신뢰도가 낮으면 위험이 있거나 180일 동안 활동이 없었음을 나타냅니다.",
         "amountPopupTitle": "승인 금액"
       },
       "addressTypeTitle": "주소 유형",
@@ -649,17 +649,17 @@
       },
       "errorRetry": {
         "alreadySubmitted": "거래가 이미 제출되었습니다. 중복 거래가 감지되었습니다.",
-        "gasLimitTooLow": "Gas limit가 너무 낮습니다",
+        "gasLimitTooLow": "Gas 한도가 너무 낮습니다",
         "defaultTips": "문제가 발생했습니다. 나중에 다시 시도해 주세요.",
         "nonceTooHigh": "Nonce가 너무 높습니다. nonce를 조정하고 다시 시도하세요.",
-        "gasExceedsBlockGasLimit": "Gas가 block gas limit을 초과합니다. 조정한 후 다시 시도해 주세요.",
+        "gasExceedsBlockGasLimit": "Gas가 블록 Gas 한도를 초과합니다. 조정한 후 다시 시도해 주세요.",
         "nonceTooLow": "Nonce가 너무 낮습니다. {{nonce}}로 업데이트하겠습니다. \"다시 시도\"를 클릭하여 확인하고 다시 시도하세요.",
         "InvalidTx": "잘못된 거래입니다.",
         "insufficient": "귀하의 가스 잔액이 네트워크 가스 요금을 충당하기에 충분하지 않습니다. 가스를 위한 자금을 추가하고 다시 시도하세요.",
         "gasPriceTooLow": "가스 가격이 너무 낮습니다. 거래가 확인될 수 있도록 30% 조정하겠습니다. \"다시 시도\"를 클릭하여 확인하고 다시 시도하세요."
       },
       "addLiquidity": {
-        "poolPrice": "POOL 가격",
+        "poolPrice": "풀 가격",
         "receiver": "수신자",
         "token1": "토큰 추가 2",
         "marketPrice": "시장 가격",
@@ -679,11 +679,11 @@
       "unable-to-fetch-the-price": "가격을 불러올 수 없습니다.",
       "from": "부터",
       "search-by-name-address": "이름 / 주소로 검색",
-      "hidden-no-quote-rates_one": "{{count}} rate unavailable",
+      "hidden-no-quote-rates_one": "{{count}}개 환율을 사용할 수 없습니다",
       "hidden-no-quote-rates_other": "{{count}}개의 요율을 사용할 수 없습니다.",
       "slippage_tolerance": "슬리피지 허용 범위:",
       "best": "최고의",
-      "preferMEV": "MEV 가드 선호",
+      "preferMEV": "MEV Guarded 우선",
       "actual-slippage": "실제 슬리피지:",
       "approve-swap": "승인 및 스왑",
       "fail-to-simulate-transaction": "트랜잭션 시뮬레이션 실패",
@@ -693,7 +693,7 @@
       "slippage-tolerance": "슬리피지 허용치",
       "select-token": "토큰 선택",
       "insufficient": "잔액 부족:",
-      "completedTip": "체인에서 거래, 데이터를 해독하여 기록 생성",
+      "completedTip": "거래가 체인에 제출되었습니다. 데이터를 디코딩하여 기록을 생성하는 중입니다",
       "estimate": "견적:",
       "insufficient-balance": "잔액 부족",
       "source": "소스",
@@ -701,7 +701,7 @@
       "pendingTip": "트랜잭션이 제출되었습니다. 트랜잭션이 오랜 시간 동안 대기 중인 경우 설정에서 대기 중을 삭제해보세요.",
       "Auto": "자동",
       "to": "에게",
-      "no-fees-for-wrap": "래핑 수수료 없음 Rabby",
+      "no-fees-for-wrap": "Rabby의 Wrap 수수료 없음",
       "wrap-contract": "래핑 계약",
       "by-transaction-simulation-the-quote-is-valid": "거래 시뮬레이션에 의해, 견적이 유효합니다.",
       "security-verification-failed": "보안 인증 실패",
@@ -714,7 +714,7 @@
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "슬리피지 허용 범위가 높기 때문에 트랜잭션이 선취될 수 있습니다.",
       "lowCreditModal": {
         "title": "이 토큰의 신용 가치가 낮습니다",
-        "desc": "신용 가치가 낮다는 것은 종종 설탕 주머니 토큰이나 매우 낮은 유동성과 같은 높은 위험을 나타냅니다."
+        "desc": "신용 가치가 낮으면 허니팟 토큰이나 매우 낮은 유동성 등 높은 위험을 나타내는 경우가 많습니다."
       },
       "gas-fee-too-high": "가스 요금이 너무 높음",
       "need-to-approve-token-before-swap": "교환하기 전에 토큰을 승인해야 합니다.",
@@ -726,7 +726,7 @@
         "bridgeDesc": "Rabby Wallet은 항상 최고의 애그리게이터에서 최상의 요율을 찾아 제공의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료를 부과하며, 이는 견적에 자동으로 포함됩니다.",
         "swapDesc": "Rabby Wallet은 항상 최고의 애그리게이터에서 가능한 최상의 비율을 찾고 그들의 제안의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료(래핑의 경우 0%)를 부과하며, 이는 견적에 자동으로 포함됩니다."
       },
-      "swapped": "교환됨",
+      "swapped": "스왑 완료",
       "historyTitle": "스왑 기록",
       "selectChainModalTitle": "체인을 선택하십시오",
       "results": "결과",
@@ -744,7 +744,7 @@
           "pendingDetail": "단 하나의 거래만 완료되며, 거의 항상 가스 가격이 가장 높은 거래가 완료됩니다."
         },
         "common": {
-          "pendingDetail": "보류 세부정보",
+          "pendingDetail": "보류 중인 거래 상세 정보",
           "unlimited": "무제한",
           "unknownProtocol": "알 수 없는 프로토콜"
         },
@@ -773,8 +773,8 @@
             },
             "quickCancel": {
               "title": "빠른 취소",
-              "tips": "방송되지 않은 거래에 대해서만 지원됩니다.",
-              "desc": "방송 전에 취소, 가스 요금 없음"
+              "tips": "아직 브로드캐스트되지 않은 거래만 지원됩니다.",
+              "desc": "브로드캐스트 전에 취소하며 Gas 수수료가 없습니다"
             },
             "removeLocalPendingTx": {
               "title": "로컬에서 보류 중인 항목 지우기",
@@ -784,7 +784,7 @@
         },
         "status": {
           "canceled": "취소됨",
-          "pendingBroadcasted": "대기 중: 방송됨",
+          "pendingBroadcasted": "대기 중: 브로드캐스트됨",
           "submitFailed": "제출 실패",
           "pending": "보류 중",
           "withdrawed": "빠른 취소",
@@ -795,7 +795,7 @@
         "CancelTxConfirmPopup": {
           "title": "로컬에서 보류된 항목 지우기",
           "warning": "제거된 거래는 교체되지 않는 한 여전히 온체인에서 확인될 수 있습니다.",
-          "desc": "이 작업은 귀하의 인터페이스에서 대기 중인 거래를 제거합니다. 그런 다음 새 거래를 시작할 수 있습니다."
+          "desc": "인터페이스에서 대기 중인 거래가 제거됩니다. 이후 새 거래를 시작할 수 있습니다."
         }
       }
     },
@@ -803,22 +803,22 @@
       "services": {
         "send": "보내기",
         "more": "더보기",
-        "bridge": "Bridge",
+        "bridge": "브리지",
         "receive": "받기",
         "queue": "대기열",
         "websites": "웹사이트",
         "swap": "스왑",
-        "history": "히스토리",
+        "history": "거래",
         "dapps": "DApp",
         "approvals": "승인",
         "search": "토큰 검색",
-        "copyTrading": "복사 거래",
+        "copyTrading": "카피 트레이딩",
         "watchlist": "토큰 워치리스트",
-        "perps": "펍스",
-        "perpsMarketList": "더 많은 Perps",
+        "perps": "무기한 선물",
+        "perpsMarketList": "무기한 선물 더 보기",
         "lending": "대출",
-        "predict": "예측하다",
-        "meme": "Memecoin",
+        "predict": "예측",
+        "meme": "밈코인",
         "market": "시장",
         "gasDeposit": "가스 예치",
         "convertDust": "소액 전환"
@@ -827,7 +827,7 @@
         "desc": "위로 스와이프하여 웹사이트 탐색 및 검색하기",
         "descAndroidMore": "DApp을 더 탐색하려면 클릭하세요",
         "descAndroid": "DApp을 탐색하려면 클릭하세요.",
-        "descMore": "더 많은 웹사이트를 탐색하려면 위로 스 와이프 하세요."
+        "descMore": "더 많은 웹사이트를 탐색하려면 위로 스와이프하세요."
       },
       "DappDrawer": {
         "search": "검색",
@@ -836,7 +836,7 @@
         "empty": "즐겨찾기에 추가된 웹사이트가 없습니다.",
         "tabs": {
           "all": "전체",
-          "perps": "퍼프",
+          "perps": "무기한 선물",
           "predict": "예측"
         },
         "websites": "웹사이트"
@@ -848,16 +848,16 @@
     },
     "bridge": {
       "detail-tx": "세부사항",
-      "bridgeTo": "브리지 투",
-      "bridge-from": "Bridge 출발지",
+      "bridgeTo": "브리지 도착지",
+      "bridge-from": "브리지 출발지",
       "est-difference": "추정 차이:",
       "value": "잔액",
       "history": "브리지 히스토리",
       "no-quote": "견적 없음",
       "Pending": "보류 중",
-      "title": "Bridge",
+      "title": "브리지",
       "gas-x-price": "가스 가격: {{price}} Gwei.",
-      "price-impact": "Price Impact: 가격 영향",
+      "price-impact": "가격 영향",
       "actual": "실제:",
       "Select": "선택",
       "token": "토큰",
@@ -869,10 +869,10 @@
         "signWarning": "알림을 이해했으며 계속 진행하겠습니다."
       },
       "From": "부터",
-      "bridgeFrom": "브리지에서",
-      "the-following-bridge-route-are-found": "다음 요금 발견됨",
+      "bridgeFrom": "브리지 출발지",
+      "the-following-bridge-route-are-found": "다음 환율을 찾았습니다",
       "est-payment": "예상 결제:",
-      "approve-and-bridge": "승인 및 브릿지",
+      "approve-and-bridge": "승인 및 브리지",
       "need-to-approve-token-before-bridge": "브리지 전에 토큰을 승인해야 합니다",
       "liquidity": "유동성",
       "gas-fee": "가스 수수료: {{gasUsed}}",
@@ -882,7 +882,7 @@
       "no-route-found": "경로를 찾을 수 없습니다.",
       "best": "최고",
       "duration": "{{duration}} 분",
-      "via-bridge": "{{bridge}} 통해",
+      "via-bridge": "{{bridge}} 경유",
       "To": "에게",
       "bridged": "브리지 시작됨",
       "gasFeeTooHight": "가스 요금이 정상보다 높습니다. 진행하시려면 확인하십시오.",
@@ -896,8 +896,8 @@
         "bridgeStatus": "브리지 상태",
         "sendingFrom": "{{chain}}에서 전송 중",
         "receivedDifferentTokenNeedSwap": "다른 토큰을 받았습니다. 선택한 토큰으로 교환할 수 있습니다.",
-        "beReturnFailed": "브릿지 실패. 귀하의 자산이 반환되었습니다.",
-        "receivedDifferentTokenFromSource": "브릿지 실패. 소스 체인에서 다른 토큰이 반환되었습니다.",
+        "beReturnFailed": "브리지에 실패했습니다. 자산이 반환되었습니다.",
+        "receivedDifferentTokenFromSource": "브리지 실패. 소스 체인에서 다른 토큰이 반환되었습니다.",
         "queued": "대기 중",
         "fromFailed": "거래가 진행되지 않았습니다. 다시 시도해 주세요.",
         "failed": "실패했습니다",
@@ -912,7 +912,7 @@
     "manageAddress": {
       "confirm": "확인",
       "cancel": "취소",
-      "watch-address": "주소 보기",
+      "watch-address": "보기 전용 주소",
       "private-key": "개인 키",
       "seed-phrase": "시드 구문",
       "enterThePassphrase": "암호 구문 입력",
@@ -935,7 +935,7 @@
         "blocked": "차단됨",
         "receive": "받기",
         "notSupported": "이 체인에서 토큰이 지원되지 않습니다.",
-        "swap": "Swap",
+        "swap": "스왑",
         "customized": "맞춤형",
         "noTransactions": "거래 없음",
         "selectedCustom": "토큰이 Rabby에 의해 나열되지 않았습니다. 사용자가 직접 토큰 목록에 추가했습니다.",
@@ -944,11 +944,11 @@
         "blockedTip": "차단된 토큰은 토큰 목록에 표시되지 않습니다."
       },
       "settings": {
-        "enableWhitelist": "화이트리스트 사용 설정",
-        "disableWhitelist": "화이트리스트 비활성화",
+        "enableWhitelist": "허용 목록 활성화",
+        "disableWhitelist": "허용 목록 비활성화",
         "cancel": "취소",
         "disableWhitelistTip": "비활성화되면 자산을 임의의 주소로 보낼 수 있습니다.",
-        "enableWhitelistTip": "사용 설정된 후에는 Rabby를 사용하여 화이트리스트에 있는 주소로만 자산을 보낼 수 있습니다."
+        "enableWhitelistTip": "활성화하면 Rabby에서 허용 목록에 있는 주소로만 자산을 보낼 수 있습니다."
       },
       "assets": {
         "comingSoon": "곧 출시 예정...",
@@ -975,7 +975,7 @@
       },
       "offlineChain": {
         "chain": "{{chain}} 통합이 곧 중단될 예정입니다.",
-        "tips": "{{chain}} 체인은 {{date}}에 통합되지 않습니다. 귀하의 자산에는 영향을 미치지 않지만 총 잔액에는 포함되지 않습니다. 이에 액세스하려면 “설정”에서 사용자 정의 네트워크로 추가할 수 있습니다."
+        "tips": "{{chain}} 체인은 {{date}}부터 지원되지 않습니다. 자산에는 영향이 없지만 총 잔액에는 포함되지 않습니다. 자산에 접근하려면 ‘설정’에서 사용자 지정 네트워크로 추가하세요."
       }
     },
     "approvals": {
@@ -994,7 +994,7 @@
           "text": "더보기"
         },
         "RevokeButton": {
-          "btnText_one": "제거 ({{count}})",
+          "btnText_one": "철회 ({{count}})",
           "btnText_other": "철회 ({{count}})",
           "btnText": "철회",
           "btnText_zero": "취소",
@@ -1017,27 +1017,27 @@
         "byContracts": {
           "columnTitle": {
             "revokeTrends": "24시간 승인 취소 추세",
-            "contractTrustValue": "Contract Trust 가치"
+            "contractTrustValue": "컨트랙트 신뢰도"
           },
           "columnTip": {
             "button": "알겠습니다.",
-            "revokeTrendsValueWarning": "최근 해지가 신규 승인 사용자 수의 두 배를 넘습니다.",
+            "revokeTrendsValueWarning": "최근 철회 건수가 신규 승인 사용자 수의 두 배를 넘습니다.",
             "revokeDangerTitle": "24시간 승인 취소가 승인 수의 4배 초과",
             "revokeRecenet": "최근 철회(24시간): {{ count }}",
             "revokeTrendsValueDanger": "최근 철회는 신규 승인 사용자 수의 4배 이상입니다.",
             "revokeNewApproved": "최근 승인된 사용자(24시간): {{ count }}",
             "revokeWarningTitle": "24시간 승인 취소가 승인 수의 2배 초과",
-            "contractTrustValueDanger": "컨트랙트 신뢰 가치 < $10,000",
-            "contractTrustValueWarning": "계약 신뢰 가치 < $100,000",
-            "contractTrustValue": "신뢰 가치란 이 계약에서 사용된 총 자산 가치를 의미합니다. 낮은 신뢰 가치는 위험을 나타내거나 180일 동안 비활성 상태임을 나타냅니다.",
-            "normalTrustValueDanger": "컨트랙트 신뢰 가치: {{ contractUsdText }}"
+            "contractTrustValueDanger": "컨트랙트 신뢰도 < $10,000",
+            "contractTrustValueWarning": "컨트랙트 신뢰도 < $100,000",
+            "contractTrustValue": "신뢰도는 이 컨트랙트가 사용한 자산의 총가치를 의미합니다. 신뢰도가 낮으면 위험이 있거나 180일 동안 활동이 없었음을 나타냅니다.",
+            "normalTrustValueDanger": "컨트랙트 신뢰도: {{ contractUsdText }}"
           }
         }
       },
       "revokeModal": {
         "simulationFailed": "시뮬레이션 실패",
         "approvalCount": "{{count}} 승인",
-        "stillRevoke": "아직 철회",
+        "stillRevoke": "계속 철회",
         "approvalCount_one": "{{count}} 승인",
         "approvalCount_other": "{{count}} 승인",
         "defaultFailed": "거래 실패",
@@ -1051,21 +1051,21 @@
         "title": "철회 실패"
       },
       "asset": "자산",
-      "startRevoke": "시작 철회",
+      "startRevoke": "철회 시작",
       "pauseRevoke": "일시 정지",
       "revokeFrom": "취소 대상",
       "continueRevoke": "계속",
       "allApprovals": "모든 승인",
       "approvedAssets": "승인된 계약 및 금액",
-      "unknownContract": "알 수 없는 계약",
+      "unknownContract": "알 수 없는 컨트랙트",
       "myBalance": "내 잔액",
       "gasFee": "가스 요금",
       "selectAll": "모두 선택",
       "approvedAssetsAndAmount": "승인된 자산 및 금액",
       "unselectAll": "모두 선택 해제",
-      "contractAddress": "계약 주소",
+      "contractAddress": "컨트랙트 주소",
       "revokeCompleted": "완료",
-      "stopTheRevokeProcess": "취소 프로세스를 중단하시겠습니까?",
+      "stopTheRevokeProcess": "철회 절차를 중단할까요?",
       "leavingThisPageWillStopTheRevokeProcess": "이 페이지를 떠나면 권한 철회 과정이 중단됩니다.",
       "approvedContracts": "승인된 자산 금액 및 잔액",
       "eip7702": {
@@ -1081,13 +1081,13 @@
         "syncRabbyExtension": "Rabby Extension 동기화",
         "importAddress": "지갑 가져오기",
         "createAddress": "지갑 생성",
-        "selectAddMethod": "방법 추가 선택",
-        "seedPhraseOrPrivateKey": "씨드 구문 또는 개인 키",
+        "selectAddMethod": "추가 방법 선택",
+        "seedPhraseOrPrivateKey": "시드 구문 또는 개인 키",
         "restoreRabbyWallet": "Rabby 지갑 복원",
         "moreOptions": "더 많은 옵션"
       },
       "multiAddressHome": {
-        "pin": "핀",
+        "pin": "고정",
         "totalBalance": "총 잔액",
         "services": "서비스",
         "receiveCrypto": "암호화폐 받기",
@@ -1095,7 +1095,7 @@
         "buyWithFiat": "법정 화폐로 구매",
         "fundYourWallet": "지갑에 자금 추가하기",
         "buyWithFiatDesc": "간편한 암호화폐 구매",
-        "foundGuideTitle": "빠르게 자금을 지원하세요",
+        "foundGuideTitle": "빠르게 입금",
         "foundGuideDesc": "지갑에 토큰을 추가하여 시작하세요.",
         "importAddress": "지갑 가져오기",
         "receiveCryptoDesc": "다른 지갑에서 토큰 전송",
@@ -1105,11 +1105,11 @@
         "Continue": "계속하기",
         "Confirm": "확인",
         "verificationFailed": "검증 실패",
-        "savedPhrase": "나는 구문을 저장했습니다",
+        "savedPhrase": "구문을 저장했습니다",
         "selectWords": "단어 선택",
         "Verify": "검증하기",
         "createNewSeedPhrase": "새 시드 구문 생성",
-        "addressTopTips": "블록체인에서 암호화폐를 보내고 받는 데 사용하세요.",
+        "addressTopTips": "블록체인에서 암호화폐를\n보내고 받을 수 있습니다",
         "createOnCurrent": "현재 Seed Phrase 사용",
         "UnderstandsecurityPrecautions": "저는 이러한 보안 예방 조치를 이해합니다.",
         "BackupSeedPhrase": "수동으로 Seed Phrase 백업하기",
@@ -1125,7 +1125,7 @@
         "createOnCurrentDesc": "기존에 가져온 시드 구문으로 지갑 생성",
         "createNewDesc": "새로운 지갑을 위한 새로운 시드 문구를 생성하세요",
         "BackupYourSeedPhrase": "시드 구문 백업하기",
-        "WriteSeedPhrase": "이것이 귀하의 시드 문구입니다. 적어 두고 안전하게 보관하세요. 이를 잃어버리거나 공유하면 귀하의 자산이 영원히 손실될 수 있습니다. 다음 단계에서 이 문구를 (순서대로) 다시 입력하라는 요청을 받게 됩니다."
+        "WriteSeedPhrase": "이것은 시드 구문입니다. 적어 두고 안전하게 보관하세요. 분실하거나 공유하면 자산을 영원히 잃을 수 있습니다. 다음 단계에서 이 구문을 순서대로 다시 입력합니다."
       },
       "importAddress": {
         "seedPhrase": "시드 구문 가져오기",
@@ -1137,14 +1137,14 @@
           "title": "Rabby에 가져오기가 안전한가요?",
           "description": "귀하의 데이터는 안전하게 암호화되어 기기 내에 로컬로 저장됩니다. Rabby는 귀하의 개인 정보에 접근할 수 없으며, 제삼자와 공유되지 않습니다."
         },
-        "safeTitle": "안전한 지갑 가져오기",
+        "safeTitle": "Safe 지갑 가져오기",
         "importTitle": "지갑 가져오기",
         "watch": "보기 전용 지갑",
-        "watchOnlyTitle": "시청 전용 지갑 가져오기",
+        "watchOnlyTitle": "보기 전용 지갑 가져오기",
         "ImportCloud": "{{cloud}}에서 가져오기",
         "ImportFromExtensionOrCloud": "확장 프로그램 또는 {{cloud}}에서 가져오기",
-        "moreWatchOnlyTitle": "감시 전용 주소 가져오기",
-        "moreWatchOnly": "감시 전용 주소",
+        "moreWatchOnlyTitle": "보기 전용 주소 가져오기",
+        "moreWatchOnly": "보기 전용 주소",
         "moreSafeTitle": "Safe 주소 가져오기"
       },
       "rateModalTriggerOnHome": {
@@ -1152,10 +1152,10 @@
       },
       "rateModal": {
         "confirmButtonTitleAndroid": "Google Play에서 평가하기",
-        "confirmButtonTitleIOS": "앱 스토어 평가",
+        "confirmButtonTitleIOS": "App Store에서 평가하기",
         "feedbackSubmit": "제출",
         "feedbackSuccess": "피드백 주셔서 감사합니다.",
-        "feedbackTitle": "피드백이 있나요? 우리는 듣고 있습니다.",
+        "feedbackTitle": "의견이 있으신가요? 귀 기울여 듣겠습니다.",
         "descriptionAndroid": "Rabby가 마음에 드시면 구글 플레이에서 빠른 평가를 남기는 것이 많은 도움이 됩니다.",
         "descriptionIOS": "Rabby가 마음에 드신다면, App Store에서 간단한 평가를 남겨주시면 큰 도움이 됩니다."
       },
@@ -1167,16 +1167,16 @@
         "swipeToViewAllAssets": "모든 자산을 보려면 오른쪽으로 스와이프하십시오."
       },
       "copySeedPhraseSecureTip": {
-        "copyAnyway": "어쨌든 복사하세요",
+        "copyAnyway": "그래도 복사",
         "tip1": "다른 앱에서 클립보드를 읽을 수 있으므로 복사한 후 앱을 전환하지 마세요.",
-        "title": "당신의 SeedPhrase를 비밀로 유지하세요",
+        "title": "시드 구문을 비밀로 유지하세요",
         "tip2": "클라우드 서비스나 메모 앱에 시드 구문을 붙여넣거나 저장하지 마십시오.",
         "copied": "시드 문구가 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
-        "subTitle": "누구든지 당신의 시드 문구를 얻으면 귀하의 자금을 완전히 제어할 수 있습니다.",
+        "subTitle": "시드 구문을 얻은 사람은 누구나 자산을 완전히 제어할 수 있습니다.",
         "tip3": "결코 시드 문구를 공유하지 마세요. 우리는 절대 그것을 요구하지 않을 것입니다."
       },
       "screenshotSecureTip": {
-        "tip3": "누구든지 당신의 seed phrase를 획득하면 지갑을 완전히 제어할 수 있으며, 이는 되돌릴 수 없습니다.",
+        "tip3": "시드 구문을 얻은 사람은 누구나 지갑을 완전히 제어할 수 있으며, 이를 되돌릴 수 없습니다.",
         "title": "스크린샷은 안전하지 않습니다",
         "tip2": "앱이나 악성코드가 사진 라이브러리에 저장된 이미지를 읽을 수 있습니다.",
         "subTitle": "시드 문구를 이미지로 저장하면 노출될 수 있으므로, 이를 적어두는 것이 더 안전한 선택입니다.",
@@ -1201,7 +1201,7 @@
           "yes": "예",
           "no": "취소",
           "title": "{{ bioType }} 활성화",
-          "content": "{{ bioType }}을(를) 사용하여 Rabby Wallet의 잠금을 해제하시겠습니까?"
+          "content": "{{ bioType }}로 Rabby Wallet의 잠금을 해제하도록 설정하시겠습니까?"
         }
       },
       "btn": {
@@ -1210,7 +1210,7 @@
         "unlock": "잠금 해제",
         "switchtype_fingerprint": "지문으로 잠금 해제"
       },
-      "unlocking": "잠금 해제"
+      "unlocking": "잠금 해제 중"
     },
     "signText": {
       "title": "텍스트 서명",
@@ -1224,36 +1224,36 @@
       "title": "Rabby에 사용자 정의 토큰 추가",
       "noTokenFound": "토큰을 찾을 수 없음",
       "hasAdded": "이 토큰이 추가되었습니다.",
-      "tokenCustomized": "현재 토큰이 이미 커스터마이즈에 추가되었습니다.",
+      "tokenCustomized": "이 토큰은 이미 사용자 지정 토큰으로 추가되었습니다.",
       "tokenNotFound": "이 계약 주소에서 토큰을 찾을 수 없습니다.",
-      "tokenSupported": "Token has been supported on Rabby 토큰이 Rabby에서 지원됩니다."
+      "tokenSupported": "이 토큰은 Rabby에서 지원됩니다."
     },
     "connect": {
       "ignoreAll": "모두 무시",
       "noMark": "표시 없음",
-      "listedBy": "상장자",
-      "markRemovedToast": "마크 제거됨",
-      "markAsTrustToast": "\"Trusted\"로 표시",
+      "listedBy": "등록 출처",
+      "markRemovedToast": "표시가 삭제되었습니다",
+      "markAsTrustToast": "\"신뢰함\"으로 표시",
       "popularLevelMedium": "보통",
       "verifiedByRabby": "Rabby에서 검증됨",
       "connectBtn": "연결",
       "flagByRabby": "Rabby에 의해 플래그 지정됨",
-      "myMark": "마이 마크",
+      "myMark": "내 평가",
       "SignTestnetPermission": {
         "title": "서명 권한"
       },
       "sitePopularity": "사이트 인기",
       "popularLevelHigh": "높음",
       "popularLevelVeryLow": "매우 낮음",
-      "markAsBlockToast": "차단됨으로 표시",
-      "markRuleText": "내 마크",
+      "markAsBlockToast": "\"차단함\"으로 표시",
+      "markRuleText": "내 평가",
       "noWebsite": "없음",
       "title": "DApp에 연결",
       "blocked": "차단됨",
-      "foundForbiddenRisk": "금지된 위험이 발견되었습니다. 연결이 차단되었습니다.",
+      "foundForbiddenRisk": "심각한 위험이 발견되어 연결이 차단되었습니다.",
       "trusted": "신뢰할 수 있는",
-      "manageWhiteBlackList": "화이트리스트/블랙리스트 관리",
-      "flagByScamSniffer": "Flagged by ScamSniffer",
+      "manageWhiteBlackList": "허용 목록/차단 목록 관리",
+      "flagByScamSniffer": "ScamSniffer에서 위험으로 표시됨",
       "onYourWhitelist": "허용 목록에 추가됨",
       "flagByMM": "MetaMask에 의해 플래그 처리됨",
       "popularLevelLow": "낮음",
@@ -1272,52 +1272,52 @@
     },
     "addressDetail": {
       "pin-in-list": "목록에 고정",
-      "add-to-whitelist": "화이트리스트에 추가",
+      "add-to-whitelist": "허용 목록에 추가",
       "hd-path": "HD Path",
       "address": "주소",
       "admins": "관리자",
       "assets": "자산",
       "manage-seed-phrase": "시드 구문 관리",
-      "qr-code": "QR Code",
-      "backup-seed-phrase": "백업 시드 구문",
+      "qr-code": "QR 코드",
+      "backup-seed-phrase": "시드 구문 백업",
       "backupFailed": "백업에 실패했습니다. 다시 시도해 주세요",
       "address-note": "주소 노트",
       "source": "출처",
       "safeAddressListScreen": {
-        "addSafeAddress": "안전한 지갑 추가"
+        "addSafeAddress": "Safe 지갑 추가"
       },
-      "backup-private-key": "프라이빗 키 백업",
-      "remove-from-whitelist": "화이트리스트에서 제거",
+      "backup-private-key": "개인 키 백업",
+      "remove-from-whitelist": "허용 목록에서 제거",
       "watchAddressListScreen": {
         "addWatchAddress": "보기 전용 지갑 추가"
       },
       "addressListScreen": {
         "edit": "편집",
         "unpin": "고정 해제",
-        "pin": "핀",
+        "pin": "고정",
         "delete": "삭제",
         "detail": "세부사항",
         "title_zero": "0 지갑",
         "title_one": "{{count}} 지갑",
-        "importSafeAddress": "가져온 Safe Wallet",
+        "importSafeAddress": "가져온 Safe 지갑",
         "title_other": "{{count}} 지갑",
-        "importWatchAddress": "가져온 조회 전용 지갑",
+        "importWatchAddress": "가져온 보기 전용 지갑",
         "addAddress": "지갑 추가",
-        "moreWallets": "더 많은 Wallets",
+        "moreWallets": "더 많은 지갑",
         "notIncludedInTransactions": "거래에 포함되지 않음",
         "notIncludedInTotalBalance": "총 잔액에 포함되지 않음"
       },
       "delete-desc-needpassword": "삭제하기 전에, 자산을 보호하는 방법을 이해하기 위해 다음 사항을 유념하십시오.",
       "delete-address": "지갑 삭제",
-      "manage-addresses-under-this-seed-phrase": "이 시드 문구로 지갑 추가",
+      "manage-addresses-under-this-seed-phrase": "이 시드 구문으로 지갑 추가",
       "delete-desc": "이 지갑을 정말로 삭제하시겠습니까?",
       "notMatterAddressDialog": {
         "watchOnlyWallet": "보기 전용 월렛",
-        "safeWallet": "안전한 지갑",
-        "notTop10Address": "상위 10위 이하의 지갑",
+        "safeWallet": "Safe 지갑",
+        "notTop10Address": "상위 10위 밖의 지갑",
         "helpTitle": "상위 10개에 해당하지 않는 지갑",
         "helpDescription2": "지갑을 고정하려면 길게 누르고 포함할 지갑을 조정할 수 있습니다.",
-        "helpDescription1": "적시 및 정확한 데이터 업데이트를 보장하기 위해, Total Balance 및 Portfolio에는 오직 상위 10개의 지갑만 포함됩니다.",
+        "helpDescription1": "데이터를 빠르고 정확하게 업데이트하기 위해 총 잔액과 포트폴리오에는 상위 10개 지갑만 포함됩니다.",
         "title": "다음 지갑은 총 잔액에 포함되지 않습니다."
       },
       "backup": "백업",
@@ -1332,8 +1332,8 @@
       "verify-fingerprint-before-backup": "백업 전에 지문을 확인하세요."
     },
     "customRpc": {
-      "opened": "Opened: 열림",
-      "closed": "닫힘",
+      "opened": "활성화됨",
+      "closed": "비활성화됨",
       "desc": "수정 후 사용자 정의 RPC가 Rabby의 노드를 대체합니다. Rabby의 노드를 계속 사용하려면 사용자 정의 RPC를 삭제하세요.",
       "add": "RPC URL 수정",
       "empty": "사용자 정의 RPC URL 없음",
@@ -1365,12 +1365,12 @@
     },
     "rabbyPoints": {
       "claimItem": {
-        "claim": "Claim  "
+        "claim": "받기"
       },
-      "initialPointsClaimEnded": "초기 포인트 청구 종료",
+      "initialPointsClaimEnded": "초기 포인트 수령 종료",
       "firstRoundEnded": "🎉 첫 번째 라운드 Rabby Points가 종료되었습니다.",
       "code-set-successfully": "추천 코드가 성공적으로 설정되었습니다.",
-      "top-100": "Top 100",
+      "top-100": "상위 100",
       "title": "Rabby Points",
       "out-of-x-current-total-points": "총 배포된 포인트 {{total}} 중",
       "earn-points": "포인트 적립하기",
@@ -1395,19 +1395,19 @@
       },
       "claimModal": {
         "rabbyUser": "Rabby 활성 사용자",
-        "rabbyValuedUserBadge": "Rabby 소중한 사용자 배지",
+        "rabbyValuedUserBadge": "Rabby 우수 사용자 배지",
         "MetaMaskSwap": "MetaMask Swap",
-        "title": "초기 포인트 청구",
+        "title": "초기 포인트 받기",
         "referral-code": "추천 코드",
         "rabbyDesktopGenesisNft": "Rabby Desktop Genesis NFT",
-        "claim": "청구하기",
+        "claim": "받기",
         "invalid-code": "유효하지 않은 코드",
         "placeholder": "추천 코드 입력하여 추가 포인트 받기 (선택 사항)",
         "addressBalance": "지갑 잔액",
         "snapshotTime": "스냅샷 시간: {{time}}"
       },
       "xPoints": "{{point}} 포인트",
-      "alreadyClaimedXPoints": "이미 청구됨: {{point}}"
+      "alreadyClaimedXPoints": "수령 완료: {{point}}"
     },
     "safeQueue": {
       "viewBtn": "보기",
@@ -1415,7 +1415,7 @@
       "unlimited": "무제한",
       "replaceBtn": "교체",
       "noData": "보류 중인 거래가 없습니다.",
-      "accountSelectTitle": "이 거래는 어떤 주소를 사용하여 제출할 수 있습니다.",
+      "accountSelectTitle": "어느 주소로든 이 거래를 제출할 수 있습니다.",
       "unknownProtocol": "알 수 없는 프로토콜",
       "sameNonceWarning": "이 트랜잭션들은 동일한 nonce를 사용함으로 인해 충돌합니다. 하나를 실행하면 자동으로 다른 트랜잭션이 대체됩니다.",
       "action": {
@@ -1445,11 +1445,11 @@
       "confirmError": "비밀번호가 일치하지 않습니다.",
       "PrivacyPolicy": "개인정보 처리방침",
       "and": "그리고",
-      "Newpassword": "새 비밀번호",
+      "Newpassword": "비밀번호 입력",
       "ConfirmPassword": "비밀번호 확인",
-      "biometricsFail": "바이오메트릭스 활성화 실패",
+      "biometricsFail": "생체 인증 활성화 실패",
       "settingUp": "비밀번호 설정",
-      "agreeToTerms": "이용 약관에 동의합니다.",
+      "agreeToTerms": "다음을 읽고 동의합니다",
       "confirmPasswordPlaceholder": "비밀번호 확인",
       "title": "비밀번호 설정",
       "termOfUse": "이용 약관",
@@ -1457,7 +1457,7 @@
       "phoneNotSupport": "고객님의 휴대전화는 {{ bioType }}를 지원하지 않습니다",
       "enable": "{{ bioType }} 활성화",
       "confirmTitle": "비밀번호 확인",
-      "subTitle": "이는 지갑을 해제하고 로컬 데이터를 암호화하는 데 사용됩니다.",
+      "subTitle": "이 비밀번호는 지갑 잠금을 해제하고 이 기기의 데이터를 암호화하는 데 사용됩니다. 비밀번호는 복구할 수 없습니다. 분실한 경우 재설정한 후 지갑을 다시 가져와야 합니다.",
       "confirmRequired": "비밀번호를 확인해 주세요.",
       "setUpSuccess": "비밀번호 설정 성공",
       "passwordMinTip": "최소 8자 이상이어야 합니다",
@@ -1468,15 +1468,15 @@
       "setWallet": "지갑 설정"
     },
     "backupSeedPhrase": {
-      "clickToShow": "클릭하여 Seed Phrase 보기",
+      "clickToShow": "클릭하여 시드 구문 보기",
       "copySeedPhrase": "시드 구문 복사하기",
-      "qrCodePopupTitle": "QR Code",
+      "qrCodePopupTitle": "QR 코드",
       "showQrCode": "QR 코드 표시",
-      "qrCodePopupTips": "절대로 seed phrase QR 코드를 다른 사람과 공유하지 마십시오. 안전한 환경에서 확인하고 주의 깊게 보관하시기 바랍니다.",
-      "alert": "이 시드 문구는 자산의 자격 증명입니다. 이를 분실하거나 다른 사람에게 공개하지 마십시오. 그렇지 않으면 자산을 영원히 잃을 수 있습니다. 안전한 환경에서 확인하고 주의 깊게 보관하십시오.",
+      "qrCodePopupTips": "시드 구문 QR 코드를 절대 다른 사람과 공유하지 마세요. 안전한 환경에서 확인하고 신중하게 보관하세요.",
+      "alert": "이 시드 구문은 자산에 접근하기 위한 인증 정보입니다. 분실하거나 다른 사람에게 공개하지 마세요. 그렇지 않으면 자산을 영원히 잃을 수 있습니다. 안전한 환경에서 확인하고 신중하게 보관하세요.",
       "tapToReveal": {
-        "line2": "누구도 당신의 화면을 지켜보고 있지 않은지 확인하세요.",
-        "line1": "시드 문구를 표시하려면 탭하세요."
+        "line2": "다른 사람이 화면을 보고 있지 않은지 확인하세요.",
+        "line1": "시드 구문을 표시하려면 탭하세요."
       }
     },
     "miniSignFooterBar": {
@@ -1497,7 +1497,7 @@
     "backupPrivateKey": {
       "clickToShow": "클릭하여 개인 키 보기",
       "clickToShowQr": "클릭하여 개인 키 QR 코드 표시",
-      "alert": "이 프라이빗 키는 자산에 대한 증명서입니다. 분실하거나 다른 사람에게 노출하지 마십시오. 그렇지 않으면 자산을 영원히 잃을 수 있습니다. 안전한 환경에서 확인하고 주의 깊게 보관하십시오."
+      "alert": "이 개인 키는 자산에 접근하기 위한 인증 정보입니다. 분실하거나 다른 사람에게 공개하지 마세요. 그렇지 않으면 자산을 영원히 잃을 수 있습니다. 안전한 환경에서 확인하고 신중하게 보관하세요."
     },
     "gasAccount": {
       "deposit": "입금",
@@ -1513,21 +1513,21 @@
       "risk": "현재 주소가 위험한 것으로 감지되어 이 기능을 사용할 수 없습니다.",
       "logoutConfirmModal": {
         "title": "현재 GasAccount 로그아웃",
-        "logout": "로그 아웃",
-        "desc": "로그아웃한 후에는 GasAccount를 사용하여 가스 요금을 지불할 수 없습니다.",
+        "logout": "로그아웃",
+        "desc": "로그아웃하면 GasAccount가 비활성화됩니다. 이 주소로 로그인하면 GasAccount를 복원할 수 있습니다.",
         "logoutSuccess": "로그아웃 성공"
       },
       "GasAccountDepositTipPopup": {
         "gotIt": "알겠습니다.",
-        "title": "GasAccount을 열고 예금하기"
+        "title": "GasAccount를 열고 입금하기"
       },
       "history": {
         "noHistory": "지난 30일 동안 기록이 없습니다."
       },
       "depositPopup": {
-        "title": "예금",
+        "title": "입금",
         "token": "토큰",
-        "invalidAmount": "500 이하여야 합니다.",
+        "invalidAmount": "500 미만이어야 합니다.",
         "zeroInvalidAmount": "금액은 0이 될 수 없습니다.",
         "followingTokenInSufficient": "다음 토큰 잔액이 부족합니다",
         "desc": "Rabby의 DeBank L2 계정에 추가 수수료 없이 입금하세요 - 언제든 출금 가능합니다.",
@@ -1538,15 +1538,15 @@
         "googlePayFeeDesc": "Google Pay 수수료가 포함됩니다. 인출 불가",
         "paymentAddress": "결제 지갑",
         "inSufficientTip1": "이 지갑에는 충분한 토큰이 없습니다. 다른 지갑을 선택하세요.",
-        "pay": "지불하다",
-        "applePayFeeDesc1": "앱 스토어 수수료가 포함되어 있습니다. 출금이 없습니다.",
+        "pay": "결제",
+        "applePayFeeDesc1": "App Store 수수료가 포함됩니다. 출금 불가",
         "balanceLabel": "잔액",
-        "gasDepositTitle": "가스 입금",
+        "gasDepositTitle": "Gas 입금",
         "fetchQuoteFailed": "견적을 가져오는 데 실패했습니다.",
-        "estReceiveTip": "{{name}}를 통해 처리된 서비스는 슬ippage가 있을 수 있습니다.",
+        "estReceiveTip": "{{name}}를 통해 처리되며 슬리피지가 발생할 수 있습니다.",
         "selectToken": "토큰 선택하여 입금하기",
         "estReceiveLabel": "예상 수령액: {{usd}}",
-        "suggestedToken": "제안된 토큰",
+        "suggestedToken": "추천 토큰",
         "insufficientBalanceLabel": "잔액 부족",
         "unavailablePaymentWallet": "선택한 결제 지갑을 사용할 수 없습니다",
         "minAmountRequired": "최소 입금 금액은 $1입니다.",
@@ -1559,7 +1559,7 @@
         "title": "지불 지갑 선택"
       },
       "withdrawPopup": {
-        "to": "에",
+        "to": "받는 곳",
         "title": "출금",
         "selectDestinationChain": "대상 체인 선택",
         "destinationChain": "대상 체인",
@@ -1569,13 +1569,13 @@
         "noEnoughValuetBalance": "볼트 잔액이 불충분합니다. 체인을 전환하거나 나중에 다시 시도하십시오.",
         "riskMessageFromAddress": "위험 관리로 인해 출금 한도는 이 주소에 입금된 총액에 따라 달라집니다.",
         "desc": "GasAccount 잔액을 DeBank L2 Wallet으로 인출할 수 있습니다. 필요한 경우 지원되는 블록체인으로 자금을 이체하려면 DeBank L2 Wallet에 로그인하세요.",
-        "amount": "수량",
+        "amount": "금액",
         "selectChain": "체인 선택",
-        "deductGasFees": "수신된 금액은 gas 수수료를 공제합니다.",
+        "deductGasFees": "수령액에서 Gas 수수료가 차감됩니다.",
         "withdrawalLimit": "출금 한도",
-        "noEnoughValueBalance": "Vault Balance insufficient. 체인을 전환하거나 나중에 다시 시도하세요.",
+        "noEnoughValueBalance": "금고 잔액이 부족합니다. 체인을 전환하거나 나중에 다시 시도하세요.",
         "noRecipient": "수신자 지갑이 없습니다.",
-        "selectRecipientAddress": "수신자 Wallet 선택",
+        "selectRecipientAddress": "수신자 지갑 선택",
         "recipientAddress": "받는 사람 지갑",
         "availableBalance": "사용 가능한 인출 잔액: {{balance}}"
       },
@@ -1584,7 +1584,7 @@
         "button": "DeBank에서 보기"
       },
       "withdraw": "출금",
-      "gasExceed": "GasAccount balance cannot exceed $1000",
+      "gasExceed": "GasAccount 잔액은 $1000를 초과할 수 없습니다",
       "noBalance": "출금 가능한 잔액 없음",
       "depositPayPopup": {
         "depositFailed": "입금 실패",
@@ -1592,7 +1592,7 @@
         "title": "Apple Pay로 구매하기",
         "depositCanceled": "입금 취소됨",
         "balance": "현재 GasAccount 잔액: ",
-        "titleApple": "앱 스토어에서 구매하세요",
+        "titleApple": "App Store에서 구매",
         "topUpPayTips": "Gas 필요: {{topUpUsd}}, Gas 잔액 예상: {{balance}}"
       },
       "depositSelectPopup": {
@@ -1602,8 +1602,8 @@
         "buyWithDesc": "30% 수수료, 출금 불가",
         "title": "GasAccount에 입금하기",
         "buyWith": "로 구매하기",
-        "buyWithApple": "앱 스토어에서 구매",
-        "insufficientTokenBalance": "잔액 부족",
+        "buyWithApple": "App Store에서 구매",
+        "insufficientTokenBalance": "토큰 잔액 부족",
         "appStore": "App Store"
       },
       "gasAccountList": {
@@ -1623,7 +1623,7 @@
         "item2": "모든 네트워크를 지원합니다.",
         "item3": "모든 거래를 지원합니다.",
         "item1": "Rabby 수수료 없음",
-        "desc3": "스왑, 브릿지, 보내기, DApp, 및 기타",
+        "desc3": "스왑, 브리지, 보내기, DApp, 및 기타",
         "title": "모든 체인에서 가스비 결제",
         "subtitle": "가스가 떨어졌을 때"
       },
@@ -1632,8 +1632,8 @@
       "switchAccount": "지갑 전환",
       "depositFailed": "입금 실패",
       "lowBalance": "가스가 충분하지 않습니다(<$1.00). 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
-      "depositSubmitted": "입금 제출됨",
-      "depositWith": "입금 via"
+      "depositSubmitted": "입금 요청 제출됨",
+      "depositWith": "입금 수단"
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -1644,21 +1644,21 @@
         "Nft": "NFT",
         "Defi": "DeFi",
         "NoData": "{{name}} 없음",
-        "totalChain_other": "총 {{count}} Chains",
+        "totalChain_other": "총 {{count}}개 체인",
         "totalChain_one": "총 {{count}} 체인"
       },
       "emptyToken": {
         "buyHeader": "법정 화폐로 구매하기",
-        "title": "지갑 자금 조달",
+        "title": "보유 자산이 없습니다",
         "receiveHeader": "암호화폐 받기",
         "buyBody": "간단한 암호화폐 구매",
-        "desc": "지금 바로 빠르게 자금을 조달하세요",
+        "desc": "지금 바로 빠르게 자금을 추가하세요",
         "importHeader": "지갑 가져오기",
         "importBody": "기존에 자금이 있는 지갑 추가.",
         "receiveBody": "다른 지갑에서 토큰 전송"
       },
       "nft": {
-        "floorPrice": "/바닥가:"
+        "floorPrice": "/최저가:"
       },
       "appChain": "DApp 계정"
     },
@@ -1684,11 +1684,11 @@
       },
       "tokenItem": {
         "verifyDangerTips": "이것은 사기 토큰입니다",
-        "Issuedby": "발행자",
+        "Issuedby": "발행처",
         "scamWarningTips": "이 토큰은 저품질이며 사기일 수 있습니다."
       },
       "hotTokenList": {
-        "title": "핫"
+        "title": "인기"
       },
       "globalSearch": {
         "iosPlaceHolder": "웹사이트/토큰 검색",
@@ -1705,8 +1705,8 @@
       "subtitle": "암호화폐를 받을 지갑을 선택하세요."
     },
     "newAddress": {
-      "Quick": "빠른",
-      "createNewSeedPhrase": "새로운 시드 구문 생성",
+      "Quick": "빠름",
+      "createNewSeedPhrase": "새 시드 구문 만들기",
       "addContacts": {
         "cameraTitle": "카메라로 QR 코드를 스캔하세요."
       },
@@ -1717,25 +1717,25 @@
         },
         "camera": {
           "title": "Keystone 연결",
-          "description": "카메라 액세스를 활성화하고 Keystone을(를) 스캔하세요."
+          "description": "카메라 접근 권한을 허용하고 Keystone을 스캔하세요."
         }
       },
       "privateKey": {
         "whatIsAPrivateKey": {
-          "answer": "자산을 제어하는 데 사용되는 문자와 숫자의 문자열.",
+          "answer": "자산을 관리하는 데 사용되는 영문자와 숫자의 문자열입니다.",
           "question": "개인 키란 무엇인가요?"
         },
         "isItSafeToImportItInRabby": {
           "answer": "네, 그것은 귀하의 휴대폰에 로컬로 저장되며 귀하만 접근할 수 있습니다.",
           "question": "Rabby에 가져오는 것이 안전한가요?"
         },
-        "repeatImportTips": "이 지갑이 가져와졌습니다"
+        "repeatImportTips": "이미 가져온 지갑입니다"
       },
       "whatIsSeedPhrase": {
         "description4": "귀하의 시드 구문은 기기에 로컬로 저장되고 비밀번호로 암호화됩니다. 귀하만 접근할 수 있습니다. Rabby는 귀하의 시드 구문을 검색하거나 접근할 수 없습니다.",
         "GotIt": "알겠습니다.",
         "title3": "안전성",
-        "title": "'Seed phrase'란 무엇인가?",
+        "title": "'시드 구문'이란 무엇인가요?",
         "title1": "백업",
         "description2": "시드 구문을 분실하면 지갑을 복구할 수 없습니다.",
         "title2": "절대 공유하지 마세요",
@@ -1751,15 +1751,15 @@
         "select": {
           "currentDevice": "현재",
           "title": "사용 가능한 장치",
-          "description": "OneKey를 연결하려면 선택하십시오."
+          "description": "연결할 OneKey를 선택하세요."
         },
         "ble": {
           "title": "OneKey 연결하기",
           "description": "Bluetooth를 켜고 OneKey를 잠금 해제하세요."
         },
         "connect": {
-          "title": "연결중",
-          "description": "장치에서 핀 또는 암호 구문을 입력하세요."
+          "title": "연결 중",
+          "description": "기기에서 PIN 또는 암호 구문을 입력하세요."
         },
         "scan": {
           "title": "디바이스 검색 중",
@@ -1801,7 +1801,7 @@
         "ledger": {
           "hdPathType": {
             "ledgerLive": "Ledger Live: Ledger 공식 HD 경로.",
-            "legacy": "유산: MEW / Mycrypto에서 사용되는 HD 경로.",
+            "legacy": "레거시: MEW / Mycrypto에서 사용되는 HD 경로.",
             "bip44": "BIP44 표준: BIP44 프로토콜에 의해 정의된 HD Path."
           },
           "hdPathTypeNoChain": {
@@ -1820,7 +1820,7 @@
             "ledgerLive": "레저 라이브: 레저 공식 HD 경로."
           },
           "hdPathTypeNoChain": {
-            "legacy": "유산: MEW / Mycrypto에서 사용되는 HD 경로.",
+            "legacy": "레거시: MEW / Mycrypto에서 사용되는 HD 경로.",
             "bip44": "BIP44: BIP44 프로토콜에 의해 정의된 HD 경로.",
             "ledgerLive": "Ledger Live: Ledger 공식 HD 경로."
           }
@@ -1829,7 +1829,7 @@
       "seedPhrase": {
         "showSeedPhrase": "시드 구문 표시",
         "whatIsASeedPhrase": {
-          "question": "Seed Phrase란 무엇인가요?",
+          "question": "시드 구문이란 무엇인가요?",
           "answer": "자산을 관리하는 데 사용되는 12, 18, 또는 24단어 구문입니다."
         },
         "backupFailedTitle": "백업 실패",
@@ -1838,7 +1838,7 @@
         "backupUnlockButton": "계속하기",
         "backupRestoreCreatedAt": "백업 시간:",
         "backupRestoreLoadingText": "백업 시드 구문 검색 중...",
-        "backupRestoreImported": "Imported",
+        "backupRestoreImported": "가져옴",
         "backupUnlockTitle": "앱 비밀번호로 암호화하기",
         "backupRestoreEmpty": "백업 시드 구문을 찾을 수 없습니다.",
         "passwordMinTip": "최소 8자 이상이어야 합니다.",
@@ -1848,10 +1848,10 @@
         "icloudBackup": "iCloud 백업",
         "createdSuccess": "귀하의 시드 구문이 생성되었습니다.",
         "maxAccountCount": "최대 50개 주소씩",
-        "googleDriveBackup": "Google Drive Backup",
+        "googleDriveBackup": "Google Drive 백업",
         "backupUploadToGDrive": "Google Drive에 백업 중...",
-        "backupRestoreTitle": "{{count}} seed phrase found",
-        "pastedAndClear": "붙여넣기 및 클립보드 지움",
+        "backupRestoreTitle": "{{count}}개의 시드 구문을 찾았습니다",
+        "pastedAndClear": "붙여넣었으며 클립보드를 지웠습니다",
         "backupSuccessGDrive": "Google Drive에 백업 완료",
         "backupTips": "시드 구문을 백업할 때 다른 사람이 화면을 보고 있지 않은지 확인하세요.",
         "manuallyBackup": "수동 백업",
@@ -1860,17 +1860,17 @@
         "chooseBackupMethodTitle": "백업 방법 선택",
         "importQuestion1": "시드 구문을 잃어버리거나 다른 사람과 공유하면 자산이 영원히 사라집니다.",
         "riskTips": "시작하기 전에 다음 보안 팁을 읽고 꼭 기억하세요.",
-        "backupRestoreDownloadTitle": "Seed Phrase 가져오는 중...",
+        "backupRestoreDownloadTitle": "시드 구문 가져오는 중...",
         "chooseBackupMethodDesc": "백업을 통해 앱을 삭제하거나 기기를 분실했을 때 지갑을 복원할 수 있습니다.",
         "isItSafeToImportItInRabby": {
           "question": "Rabby에 가져오는 것이 안전한가요?",
-          "answer": "네, keyring은 귀하의 휴대폰에 로컬로 저장되며, 귀하만 접근할 수 있습니다."
+          "answer": "네, 휴대폰에 로컬로 저장되며 본인만 접근할 수 있습니다."
         },
         "importQuestion3": "시드 구문을 백업하지 않으면, 앱이 의도치 않게 삭제되거나, 기기를 분실하거나, 재설치가 필요한 경우 Rabby는 이를 복구할 수 없습니다.",
         "backupUnlockDesc": "백업을 복구하려면 비밀번호를 안전하게 보관하세요. Rabby Wallet은 이를 저장하지 않으며 복구할 수 없습니다.",
         "backupRestoreUnlockDesc": "백업을 암호화할 때 설정했던 동일한 비밀번호를 사용하세요.",
         "backupUnlockPlaceholder": "비밀번호를 입력하여 확인하세요",
-        "addMoreWalletTitle": "이 구문에서 더 많은 지갑 추가"
+        "addMoreWalletTitle": "이 구문에서\n지갑 더 추가"
       },
       "ledger": {
         "imported": "이미 가져왔습니다",
@@ -1886,7 +1886,7 @@
         "select": {
           "title": "사용 가능한 장치",
           "currentDevice": "현재",
-          "description": "ETH APP을 열어두고 연결할 Ledger를 선택하세요."
+          "description": "ETH 앱을 열어 둔 채 연결할 Ledger를 선택하세요."
         },
         "scan": {
           "description": "Bluetooth를 켜고 Ledger를 잠금 해제하세요.",
@@ -1895,17 +1895,17 @@
         "error": {
           "ethereum_app_not_installed_error": "Ledger 기기에 Ethereum 앱을 설치하세요.",
           "ethereum_app_open_error": "Ledger 기기에 Ethereum 앱을 설치하거나 수락하세요.",
-          "lockedOrNoEthApp": "Ledger의 잠금을 해제하고 Ethereum APP을 열어 두세요.",
+          "lockedOrNoEthApp": "Ledger의 잠금을 해제하고 Ethereum 앱을 열어 두세요.",
           "running_app_close_error": "Ledger 기기에서 실행 중인 앱을 닫는 데 실패했습니다.",
           "unknown": "연결 실패, 뒤로 가서 다시 시도하세요",
-          "ethereum_app_unconfirmed_error": "귀하는 Ethereum 앱을 열려는 요청을 거부했습니다."
+          "ethereum_app_unconfirmed_error": "Ethereum 앱 열기 요청을 거부했습니다."
         },
         "openEthApp": {
           "description": "Ledger에서 Ethereum 앱을 열어주세요.",
           "title": "연결 중"
         }
       },
-      "createNewAddress": "새로운 Wallet 생성",
+      "createNewAddress": "새 지갑 만들기",
       "whatIsPrivateKey": {
         "title3": "절대 공유하지 마세요",
         "ButtonGotIt": "알겠어요.",
@@ -1918,7 +1918,7 @@
         "description4": "당신의 개인 키는 장치에 로컬로 저장되며 비밀번호로 암호화됩니다. 오직 당신만이 접근할 수 있습니다. Rabby는 당신의 개인 키를 검색하거나 접근할 수 없습니다."
       },
       "importing": "가져오는 중...",
-      "Done": "완료되었습니다",
+      "Done": "완료",
       "generatingWallets": "지갑 생성 중, 잠시만 기다려주세요...",
       "selectAddressesToAdd": "추가할 주소를 선택하세요"
     },
@@ -1983,7 +1983,7 @@
         "includeBalance_success": "잔액에 포함됨",
         "pin_success": "고정 완료"
       },
-      "excludeBalanceTips": "이 자산은 정확성을 위해 총 잔액에서 제외됩니다. 세부 정보를 보거나 원하면 포함하려면 탭하세요.",
+      "excludeBalanceTips": "정확한 계산을 위해 이 자산은 총 잔액에서 제외됩니다. 탭하여 세부 정보를 확인하고 원하면 잔액에 포함할 수 있습니다.",
       "action": {
         "pin": "핀",
         "Buy": "구매하기",
@@ -1991,7 +1991,7 @@
         "send": "보내기",
         "unpin": "고정 해제",
         "fold": "접기",
-        "less": "적게",
+        "less": "간략히",
         "all": "모두",
         "includeBalance": "잔액에 포함",
         "unfold": "펼치기",
@@ -2002,31 +2002,31 @@
       "NoIssuer": "발행자 정보 없음",
       "Info": "정보",
       "noTransactions": "거래 없음",
-      "OriginIssue": "이 블록체인에 원주 발행됨",
-      "ListedBy": "상장자:",
+      "OriginIssue": "이 블록체인에서 네이티브로 발행됨",
+      "ListedBy": "상장 정보 제공",
       "NoSupportedExchanges": "지원되는 거래소가 없습니다",
       "fdvTitle": "FDV란 무엇인가요?",
       "TokenName": "토큰 이름",
       "fdv": "FDV",
-      "NoListedSite": "목록 정보 없음",
+      "NoListedSite": "상장 정보 없음",
       "BridgeProvider": "브리지 제공자",
       "Defi": "DeFi",
-      "BridgeIssue": "서드 파티에 의해 브릿지된 토큰",
+      "BridgeIssue": "서드 파티에 의해 브리지된 토큰",
       "IssuedBy": "발행자",
       "IssuerWebsite": "발행자의 웹사이트",
       "SupportedExchanges": "지원되는 거래소",
       "SeeMore": "더 보기",
       "OriginalToken": "오리지널 토큰",
-      "fdvContent": "최대 공급량이 유통 중일 경우의 시가 총액입니다. 완전히 희석된 평가(FDV) = 가격 × 최대 공급량. 최대 공급량이 null인 경우, FDV = 가격 × 총 공급량. 최대 공급량 또는 총 공급량이 정의되지 않거나 무한한 경우, FDV는 표시되지 않습니다.",
+      "fdvContent": "최대 공급량이 모두 유통된다고 가정했을 때의 시가총액입니다. 완전 희석 가치(FDV) = 가격 × 최대 공급량입니다. 최대 공급량이 없는 경우 FDV = 가격 × 총 공급량입니다. 최대 공급량과 총 공급량이 모두 정의되지 않았거나 무한한 경우 FDV는 표시되지 않습니다.",
       "Price": "가격",
       "HoldingValue": "보유 가치",
-      "Fold": "접히다",
+      "Fold": "접기",
       "ContentGeneratedByAI": "이 내용은 AI가 생성했습니다.",
       "ShowMore": "더보기",
       "Introduction": "소개",
       "balance": "잔액",
       "guideToMarketData": "시장 데이터:",
-      "notSupported": "토큰을 지원하지 않습니다",
+      "notSupported": "토큰이 지원되지 않습니다",
       "Mybalance": "토큰 잔액",
       "Transaction": "토큰 히스토리",
       "tabs": {
@@ -2043,7 +2043,7 @@
           "tableHeader": {
             "ratio": "비율",
             "address": "주소",
-            "position": "포지션"
+            "position": "순위"
           },
           "top100HoldersRatio": "상위 100 보유자 비율",
           "top10HoldersRatio": "상위 10 보유자 비율"
@@ -2051,18 +2051,18 @@
         "activitySections": {
           "tableHeader": {
             "hour": "시간",
-            "min": "최소",
+            "min": "분",
             "time": "시간",
-            "buy": "구입하기",
+            "buy": "매수",
             "addresses": "주소",
             "address": "주소",
             "type": "유형",
             "all": "모두",
-            "sell": "판매",
-            "volume": "볼륨",
+            "sell": "매도",
+            "volume": "거래량",
             "price": "가격",
-            "qnt": "Qnt",
-            "value": "값",
+            "qnt": "수량",
+            "value": "금액",
             "transactionCount": "거래 수"
           }
         },
@@ -2072,7 +2072,7 @@
         "summary": "요약 데이터",
         "pool": {
           "tab": {
-            "top5": "상위 5개 POOL",
+            "top5": "상위 5개 풀",
             "liquidityDetail": "유동성 세부정보"
           },
           "actions": {
@@ -2083,12 +2083,12 @@
           "headers": {
             "time": "시간",
             "amount": "금액",
-            "value": "값"
+            "value": "금액"
           },
           "value": "가치",
           "amount": "금액",
-          "pair": "쌍",
-          "dex": "Dex"
+          "pair": "페어",
+          "dex": "DEX"
         },
         "pools": "풀"
       },
@@ -2108,13 +2108,13 @@
       "fingerPrint": "지문",
       "devicePassword": "기기 비밀번호",
       "useDevicePassword": "기기 비밀번호 사용",
-      "touchId": "터치 ID",
+      "touchId": "Touch ID",
       "modifyRPCURL": "RPC URL 수정",
       "themeMode": "테마 모드",
       "followUs": "팔로우하기",
       "feedback": "피드백",
       "addCustomNetwork": "사용자 지정 네트워크 추가",
-      "clearPending": "로컬에서 보류 중인 항목 지우기",
+      "clearPending": "로컬 대기 거래 지우기",
       "clearPendingDesc1": "이 작업은 모든 대기 중인 거래를 삭제합니다. 이것은 일부 경우 Rabby에서 거래 상태가 온체인 상태와 일치하지 않는 문제를 해결하는 데 도움이 될 수 있습니다.",
       "currentVersion": "현재 버전",
       "aboutUs": "회사 소개",
@@ -2141,24 +2141,24 @@
       "clearAppCache": {
         "button": {
           "clear_and_quit": "지우기 및 앱 닫기",
-          "clear": "분명한"
+          "clear": "지우기"
         },
         "title": "앱 캐시 지우기",
-        "clearAppCacheDesc": "\"이 작업은 개인 데이터나 설정에 영향을 미치지 않고 임시 캐시 파일을 제거합니다. 프로세스를 완료하려면 앱을 다시 시작해야 합니다. 계속하시겠습니까?\"",
-        "iOSToastTitle": "클리어 캐시 성공",
-        "iOSToastDesc": "발효하려면 앱을 다시 시작해야합니다.",
+        "clearAppCacheDesc": "이 작업은 개인 데이터나 설정에 영향을 주지 않고 임시 캐시 파일을 삭제합니다. 완료하려면 앱을 다시 시작해야 합니다. 계속하시겠습니까?",
+        "iOSToastTitle": "캐시 삭제 완료",
+        "iOSToastDesc": "적용하려면 앱을 다시 시작해야 합니다.",
         "clearingToast": "지우는 중...",
         "clearDoneQuitToast": "지웠습니다. 곧 앱을 종료합니다."
       },
       "clearBrowserData": {
         "title": "브라우저 데이터 지우기",
-        "button": "명확히 하기",
+        "button": "지우기",
         "desc": "이 작업은 모든 브라우저 탭을 닫고 모든 탐색 기록을 삭제합니다."
       }
     },
     "buy": {
       "purchased": "구매함",
-      "from": "{{dex}} 에서",
+      "from": "{{dex}}에서",
       "regionBottomSheet": {
         "title": "지역을 선택하세요",
         "noRegionFound": "지역을 찾을 수 없습니다",
@@ -2170,8 +2170,8 @@
         "NoFound": "통화를 찾을 수 없음"
       },
       "quote": {
-        "title": "당신을 위한 Quotes",
-        "best": "베스트 명언"
+        "title": "추천 견적",
+        "best": "최적 견적"
       },
       "title": "구매",
       "youWillPay": "지불",
@@ -2180,8 +2180,8 @@
       "paymentMethod": "결제 수단",
       "searchRegionPlaceholder": "지역 검색",
       "searchingQuote": "견적을 검색하는 중...",
-      "quotesForYou": "당신을 위한 명언",
-      "noQuote2": "인용문을 찾을 수 없습니다.",
+      "quotesForYou": "추천 견적",
+      "noQuote2": "견적을 찾을 수 없습니다.",
       "toBuy": "구매 계속하기",
       "paymentsOnly": "결제는 {{currency}}로만 가능합니다.",
       "noQuotePlaceholder": "견적 없음",
@@ -2212,14 +2212,14 @@
       "SendHistory": "전송 내역",
       "sentTimeHeader": "보냈습니다",
       "sendToImportedAddress": "내가 가져온 지갑으로 보내기",
-      "sendToWatchAddress": "감시 전용 지갑으로 보내기",
-      "sendToSafeAddress": "Safe Wallets로 보내기",
+      "sendToWatchAddress": "보기 전용 지갑으로 보내기",
+      "sendToSafeAddress": "Safe 지갑으로 보내기",
       "enterOrSearchAddress": "주소 입력 또는 검색",
       "dividerWatchOnlyWallets": "단순 조회 주소"
     },
     "confirmAddress": {
       "risks": {
-        "scamAddress": "수신자 주소는 Rabby에 의해 신고된 사기 주소입니다.",
+        "scamAddress": "사기 주소로 전송하려고 합니다",
         "contractAddress": "수신자 주소가 계약 주소이므로 자금 손실이 발생할 수 있습니다.",
         "cexNoDeposite": "수취인 주소는 CEX의 비입금 주소입니다. 입금 주소가 올바른지 확인하십시오.",
         "noSend": "이 주소로 180일 동안 전송하지 않았습니다."
@@ -2230,7 +2230,7 @@
       "tipForWhiteList": "화이트리스트에 추가하여 빠른 전송을 위한 준비 완료, 다음번에는 확인이 필요 없습니다",
       "title": "주소 확인",
       "sendTo": "이 주소로 보내기",
-      "checkbox": "저는 위험을 이해하며 계속 진행하고 싶습니다."
+      "checkbox": "위험을 이해했으며 계속 진행합니다"
     },
     "selectAddress": {
       "selectSafeAddress": "Safe 주소에서 선택하기",
@@ -2260,10 +2260,10 @@
     "syncExtension": {
       "scanTips2": "코드를 스캔하고 동기화를 시작하세요",
       "syncingProgress": "스캔 중 ({{ percent }})",
-      "verifyWithPassword": "Rabby 확장 비밀번호로 확인하세요",
+      "verifyWithPassword": "Rabby Extension 비밀번호로\n확인하세요",
       "syncingTips": "카메라가 스캔 완료될 때까지 안정적으로 유지하세요.",
       "noNewAddr": "새로 가져올 주소가 없습니다.",
-      "scanTips1": "Rabby Extension에서 \"Mobile Sync\"을 클릭하세요.",
+      "scanTips1": "Rabby Extension에서 \"Mobile Sync\"를 클릭하세요.",
       "importedSuccessfully": "불러오기에 성공했습니다!",
       "newUserVerify": "그것은 또한 귀하의 Rabby Mobile의 기본 비밀번호로 사용됩니다.",
       "verifyTips": "귀하의 데이터는 오프라인에서 암호화됩니다. 복호화 및 확인을 위해 Rabby Extension 비밀번호를 입력하세요.",
@@ -2272,7 +2272,7 @@
     },
     "safeMessageQueue": {
       "noData": "메시지가 없습니다",
-      "loading": "로딩 중 메시지"
+      "loading": "메시지 불러오는 중"
     },
     "multiAddressAssets": {
       "tabs": {
@@ -2308,9 +2308,9 @@
         "placeholder": "웹사이트 검색",
         "recentEmpty": "웹사이트 탐색 시작",
         "otherResults": "기타 결과",
-        "hot": "핫",
+        "hot": "인기",
         "favorite": "즐겨찾기",
-        "hot10": "핫 10"
+        "hot10": "인기 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "웹사이트 열기",
@@ -2344,7 +2344,7 @@
         "more": "더 보기"
       },
       "DappInfoPopup": {
-        "listedBy": "수록된",
+        "listedBy": "등록 출처",
         "sitePopularity": "인기도",
         "popularLevelHigh": "높음",
         "popularLevelMedium": "보통",
@@ -2391,9 +2391,9 @@
     "defiDetail": {
       "viewSiteInWebsite": "웹사이트에서 보기",
       "viewSiteInApp": "DApp에서 보기",
-      "appChain": "{{chain}} 계좌에서",
+      "appChain": "{{chain}} 계정",
       "dappActions": {
-        "queueDescription": "현재 출금은 대기 Queue에 들어갑니다. 처리 후 귀하의 Wallet으로 출금할 수 있습니다."
+        "queueDescription": "현재 출금 요청은 대기열에 들어갑니다. 처리되면 지갑으로 출금할 수 있습니다."
       }
     },
     "component": {
@@ -2403,23 +2403,23 @@
     },
     "copyTrading": {
       "tipsDollar": {
-        "title": "Smart Money의 Copy Trading",
-        "description": "Smart Money Wallets의 최근 활동을 바탕으로 토큰을 찾아보세요. 토큰을 탭하면 해당 wallet들의 상세 거래 금액과 과거 수익을 확인할 수 있습니다."
+        "title": "스마트 머니 카피 트레이딩",
+        "description": "스마트 머니 지갑의 최근 활동을 바탕으로 토큰을 찾아보세요. 토큰을 탭하면 해당 지갑의 상세 거래 금액과 과거 수익을 확인할 수 있습니다."
       },
       "comingSoon": "곧 출시됩니다...",
-      "historyProfit": "히스토리 수익",
+      "historyProfit": "과거 수익",
       "updateText": "{{count}} 트렌드 업데이트됨",
       "noMoreData": "더 이상 데이터가 없습니다.",
-      "smartMoneyWallets": "Smart Money Wallets",
-      "smartMoneyWallet": "Smart Money Wallet",
+      "smartMoneyWallets": "스마트 머니 지갑",
+      "smartMoneyWallet": "스마트 머니 지갑",
       "buy": "구매하다",
-      "refreshTitle": "Smart Money의 Copy Trading 더 불러오는 중",
+      "refreshTitle": "스마트 머니 카피 트레이딩 더 불러오는 중",
       "recentBuy": "최근 구매",
       "filterRule": {
         "tokenCreate": "최근 생성됨",
-        "smartMoney": "거래 중인 Smart Wallets",
+        "smartMoney": "거래 중인 스마트 지갑",
         "24HChange": "24H 변화",
-        "smartWalletCount": "Smart Wallet 수"
+        "smartWalletCount": "스마트 지갑 수"
       },
       "chain": "체인",
       "twitterNews": "X의 뉴스",
@@ -2427,47 +2427,47 @@
       "sameNameTokens": "동일 이름 토큰",
       "tokenName": "토큰 이름",
       "tokenInfo": "토큰 정보",
-      "smartWallets": "Smart Wallets",
-      "timeSmartWallet": "시간 / Smart Wallet",
-      "contractAddress": "계약 주소",
+      "smartWallets": "스마트 지갑",
+      "timeSmartWallet": "시간 / 스마트 지갑",
+      "contractAddress": "컨트랙트 주소",
       "createdTime": "생성 시간",
-      "smartWalletsBuying": "{{len}} Smart Wallets 매수 중",
-      "myCopyTradingEarnings": "내 복사 거래 수익",
+      "smartWalletsBuying": "스마트 지갑 {{len}}개 매수 중",
+      "myCopyTradingEarnings": "내 카피 트레이딩 수익",
       "myCopyTrading": "내 카피 트레이딩",
       "holdingProfit": "보유/수익",
       "Liquidity": "유동성",
       "loss": "손실",
       "currentToken": "현재 토큰",
-      "earn": "수익을 얻다",
+      "earn": "수익",
       "token": "토큰",
-      "bought": "구매함",
+      "bought": "구매",
       "info": "정보",
       "buyEarn": "24H 구매 / 수익",
       "timeLabelAgo": "{{time}} 전에 생성됨",
       "noOtherTokensWithSameName": "동일한 이름의 다른 토큰을 찾을 수 없습니다.",
-      "myBalanceFromCopyTrading": "내 Copy Trading에서의 잔액",
-      "gettingLatest": "Smart Money의 최신 정보를 불러오는 중...",
+      "myBalanceFromCopyTrading": "내 카피 트레이딩 잔액",
+      "gettingLatest": "스마트 머니의 최신 정보를 불러오는 중...",
       "updateTokenText": "{{count}} 토큰이 업데이트되었습니다"
     },
     "watchlist": {
       "empty": {
-        "title": "아직 귀하의 감시 리스트에 토큰이 없습니다."
+        "title": "아직 관심 목록에 토큰이 없습니다"
       },
       "search": {
         "title": "토큰 검색"
       },
       "tokenHeader": {
-        "change": "24시간 변화",
+        "change": "24시간 변동",
         "token": "토큰/FDV",
         "price": "가격",
         "priceAndChange": "가격/24H 변화"
       },
       "footer": {
         "skip": "건너뛰기",
-        "add": "대기목록에 추가 ({{count}})"
+        "add": "관심 목록에 추가 ({{count}})"
       },
       "toast": {
-        "remove": "관심목록에서 제거 성공"
+        "remove": "관심 목록에서 제거했습니다"
       }
     },
     "universalLink": {
@@ -2477,7 +2477,7 @@
       }
     },
     "perpsHistory": {
-      "title": "역사"
+      "title": "거래 내역"
     },
     "perps": {
       "limitOrders": "지정가 주문",
@@ -2487,7 +2487,7 @@
       "limitOrderDetail": {
         "title": "지정가 {{side}} {{pair}}",
         "time": "시간",
-        "size": "크기",
+        "size": "주문 규모",
         "filled": "체결",
         "currentPrice": "현재 가격",
         "limitPrice": "지정가",
@@ -2504,12 +2504,12 @@
       },
       "PerpsCard": {
         "withdrawBtn": "출금",
-        "loginBtn": "로그인하여 Perps 거래",
+        "loginBtn": "로그인하여 무기한 선물 거래",
         "available": "사용 가능",
         "depositBtn": "입금",
-        "learnBtn": "Perps에 대해 알아보기",
-        "loginDesc": "현재 주소로 로그인하고 자금을 입금하면 Perps 거래를 시작할 수 있습니다.",
-        "title": "Perps 거래하기",
+        "learnBtn": "무기한 선물 알아보기",
+        "loginDesc": "현재 주소로 로그인하고 자금을 입금하면 무기한 선물 거래를 시작할 수 있습니다.",
+        "title": "무기한 선물 거래",
         "learnMore": "더 알아보기",
         "addFunds": "자금 추가"
       },
@@ -2534,7 +2534,7 @@
         "minimumDepositSize": "최소 입금 금액은 $5입니다.",
         "invalidNumber": "유효한 숫자를 입력해 주세요",
         "fetchQuoteFailed": "입금 견적을 가져오는 데 실패했습니다. 토큰을 전환해 주세요.",
-        "estReceiveTooltip": "크로스체인 예치는 LiFi를 통해 처리되며, 일부 슬ippage가 발생할 수 있습니다. 예상 도착 시간: {{number}}초.",
+        "estReceiveTooltip": "크로스체인 입금은 LiFi를 통해 처리되며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간은 {{number}}초입니다.",
         "estReceive": "예상 수령액: {{balance}}"
       },
       "PerpsWithdrawPopup": {
@@ -2564,25 +2564,25 @@
       "historyDetail": {
         "title": {
           "openLong": "롱 포지션 열기",
-          "openShort": "Short 열기",
-          "closeLong": "롱 청산",
-          "closeShortLiquidation": "Close Short 청산",
-          "closeLongLiquidation": "롱 청산 종료",
-          "closeShort": "숏 닫기",
-          "closeShortTp": "숏 청산 이익 실현",
-          "closeLongSl": "롱 포지션 청산 손절매",
-          "closeLongTp": "롱 청산 이익 실현",
-          "closeShortSl": "쇼트 정리 손실 단차"
+          "openShort": "숏 진입",
+          "closeLong": "롱 종료",
+          "closeShortLiquidation": "숏 강제 청산",
+          "closeLongLiquidation": "롱 강제 청산",
+          "closeShort": "숏 종료",
+          "closeShortTp": "숏 익절",
+          "closeLongSl": "롱 손절",
+          "closeLongTp": "롱 익절",
+          "closeShortSl": "숏 손절"
         },
         "date": "날짜",
         "price": "가격",
         "provider": "제공자",
         "size": "규모",
         "tradeValue": "거래 가치",
-        "closedPnl": "종료된 PNL",
+        "closedPnl": "실현 PNL",
         "fee": "수수료",
         "gotItBtn": "알겠습니다",
-        "perps": "영구 계약",
+        "perps": "무기한 선물",
         "sizeTips": "거래의 총 가치 또는 수량으로, 마진과 레버리지에 의해 설정됩니다.",
         "feeTitle": "수수료",
         "feeRabby": "래비 월렛",
@@ -2591,7 +2591,7 @@
         "feeDesc": "사용자가 거래를 할 때, <1>거래 수수료</1>와 <2>빌더 수수료</2>가 모두 적용됩니다.",
         "amount": "금액",
         "asset": "자산",
-        "action": "작업"
+        "action": "유형"
       },
       "PerpsAutoCloseModal": {
         "loss": "손실",
@@ -2600,7 +2600,7 @@
         "stopLossTipsShort": "손절 가격은 현재 가격보다 높아야 합니다.",
         "takeProfitTipsLong": "익절 가격은 현재 가격보다 높아야 합니다.",
         "takeProfitTipsShort": "이익 실현가는 현재 가격보다 낮아야 합니다.",
-        "takeProfit": "익스펙트 수익",
+        "takeProfit": "익절",
         "stopLossTipsLong": "손절매 가격은 현재 가격보다 낮아야 합니다.",
         "stopLossTipsShortLiquidation": "가격이 청산 가격({{price}})보다 높습니다.",
         "stopLossTipsLongLiquidation": "가격이 청산 가격 ({{price}}) 보다 낮습니다.",
@@ -2608,7 +2608,7 @@
       },
       "PerpsDepositTokenModal": {
         "directTag": "직접 입금",
-        "bridgeBtn": "브릿지",
+        "bridgeBtn": "브리지",
         "swapBtn": "스왑",
         "goSwapDesc": "현재 직접 입금은 Arbitrum에서 USDC만 지원됩니다. 입금하기 전에 현재 토큰을 USDC로 교환해 주세요.",
         "goBridgeDesc": "Arbitrum에서 직접 입금을 지원하는 것은 USDC만 가능합니다. 입금 전에 현재 토큰을 Arbitrum의 USDC로 브릿징해 주세요.",
@@ -2620,25 +2620,25 @@
           "pending": "대기 중"
         },
         "title": "기록",
-        "closeLongSl": "롱 포지션 청산 손절매",
-        "closeLongTp": "롱 포지션 청산 이익 실현",
+        "closeLongSl": "롱 손절",
+        "closeLongTp": "롱 익절",
         "deposit": "입금",
-        "closeShortTp": "숏 청산 이익 실현",
-        "closeLongLiquidation": "롱 청산 종료",
-        "closeShort": "Short 청산",
-        "closeShortLiquidation": "Short 청산 종료",
-        "openShort": "쇼트 열기",
+        "closeShortTp": "숏 익절",
+        "closeLongLiquidation": "롱 강제 청산",
+        "closeShort": "숏 종료",
+        "closeShortLiquidation": "숏 강제 청산",
+        "openShort": "숏 진입",
         "withdraw": "출금",
         "openLong": "롱 포지션 열기",
-        "closeLong": "Long 청산",
-        "closeShortSl": "숏 청산 손절매",
+        "closeLong": "롱 종료",
+        "closeShortSl": "숏 손절",
         "transferToSpot": "스팟으로 이전",
-        "transferToPerps": "Perpetuals로 이전",
+        "transferToPerps": "무기한 선물로 이체",
         "transferDetailTitle": "이전",
-        "transferActionToSpot": "(Perpetuals에서 스팟으로 이전)",
-        "transferActionToPerps": "(스팟에서 Perpetuals으로 이전)",
+        "transferActionToSpot": "이체(무기한 선물 → 스팟)",
+        "transferActionToPerps": "이체(스팟 → 무기한 선물)",
         "transferGotIt": "알겠습니다",
-        "action": "작업",
+        "action": "유형",
         "asset": "자산",
         "value": "금액",
         "date": "날짜"
@@ -2652,7 +2652,7 @@
       "PerpsAccountLogoutPopup": {
         "logout": "로그아웃",
         "title": "현재 주소 로그아웃",
-        "desc": "현재 Perps 계정에서 로그아웃합니다. 이 주소로 다시 로그인하면 언제든지 복원할 수 있습니다."
+        "desc": "현재 무기한 선물 계정에서 로그아웃합니다. 이 주소로 다시 로그인하면 언제든지 복원할 수 있습니다."
       },
       "PerpsDepositCard": {
         "availableToTrade": "거래 가능:",
@@ -2663,12 +2663,12 @@
         "lastUsed": "마지막 사용",
         "noPosition": "포지션 없음",
         "notActivatedAddress": "활성화되지 않음",
-        "hyperliquidBalance": "Perps 잔액",
+        "hyperliquidBalance": "무기한 선물 잔액",
         "activatedAddress": "활성화됨"
       },
-      "title": "영구 계약",
+      "title": "무기한 선물",
       "selectAccountTitle": "로그인할 지갑 선택",
-      "explorePerps": "Perps 탐색하기",
+      "explorePerps": "무기한 선물 살펴보기",
       "categories": {
         "favorite": "즐겨찾기",
         "topVolume": "거래량 상위"
@@ -2681,8 +2681,8 @@
       "leverageRangeMinError": "최소 레버리지는 {{min}}x입니다.",
       "deleteAgentModal": "최대 에이전트 수에 도달했습니다. 새 에이전트를 생성하기 위해 기존 에이전트를 삭제하시겠습니까?",
       "searchPerpsPopup": {
-        "searchPlaceholder": "Perps 검색",
-        "searchPerps": "Perps 검색",
+        "searchPlaceholder": "무기한 선물 검색",
+        "searchPerps": "무기한 선물 검색",
         "empty": "결과가 없습니다.",
         "searchPosition": "포지션 검색",
         "openPosition": "포지션 열기"
@@ -2699,8 +2699,8 @@
         "title": "위험 수준",
         "subtitle": "실시간 청산 거리 (%)",
         "liqIntro": "청산 거리(%)는 현재 가격이 청산 가격에서 얼마나 떨어져 있는지를 보여줍니다. 거리가 클수록 포지션이 더 안전하고, 거리가 작을수록 청산 위험이 높습니다.",
-        "liqDistanceTipsLong": "하락 <1>{{distance}}</1>은 청산을 촉발합니다.",
-        "liqDistanceTipsShort": "<1>{{distance}}</1> 만큼 상승하면 청산이 발생합니다."
+        "liqDistanceTipsLong": "가격이 <1>{{distance}}</1> 하락하면 청산됩니다.",
+        "liqDistanceTipsShort": "가격이 <1>{{distance}}</1> 상승하면 청산됩니다."
       },
       "closeAll": "모든 포지션 닫기",
       "closeAllConfirmMessage": "모든 열린 포지션이 시장가로 닫힙니다.",
@@ -2718,16 +2718,16 @@
         "activateNow": "지금 활성화하세요"
       },
       "dappSelect": {
-        "title": "Perps 제공자 선택"
+        "title": "무기한 선물 제공자 선택"
       },
       "search": {
-        "headerTitle": "퍼프 검색",
-        "placeholder": "퍼프 검색",
+        "headerTitle": "무기한 선물 검색",
+        "placeholder": "무기한 선물 검색",
         "empty": "결과 없음"
       },
       "EnableUnifiedAccount": {
         "title": "통합 계정 활성화",
-        "desc": "Unified Account는 거래 경험을 단순화하는 권장 계정 모드입니다. 모든 토큰의 Spot 및 Perps 잔액이 통합되며, 사용 가능한 모든 자산에 대해 교차 마진이 지원됩니다.",
+        "desc": "통합 계정은 거래를 간소화하는 권장 계정 모드입니다. 모든 토큰의 스팟 및 무기한 선물 잔액이 통합되며, 이용 가능한 모든 자산에서 교차 마진을 지원합니다.",
         "confirm": "확인",
         "cancel": "취소",
         "importantTips": "Unified Account를 활성화하면 모든 USDC 담보가 교차 마진으로 사용됩니다.",
@@ -2778,28 +2778,28 @@
         "cross": "크로스",
         "markPrice": "마크 가격",
         "closePosition": "{{direction}} 닫기",
-        "isolated": "격리된",
+        "isolated": "격리",
         "pnl": "PNL",
         "justMargin": "마진",
         "slPrice": "손절매 가격",
         "marginCross": "마진 (교차)",
         "liquidationPrice": "청산 가격",
-        "fundingPayments": "자금 지급",
+        "fundingPayments": "펀딩비 지급",
         "liqPrice": "청산가",
         "sizeTips": "마진과 레버리지에 의해 설정된 거래의 총 가치 또는 수량입니다.",
         "marginIsolated": "마진 (격리)",
         "autoClose": "자동 종료",
         "tpPrice": "이익 실현 가격",
-        "size": "크기",
+        "size": "포지션 규모",
         "margin": "마진(격리)",
         "entryPrice": "진입 가격",
         "fundingPaymentsTips": "포지션을 연 이후의 순 펀딩비 지급액입니다. 펀딩비는 무기한 계약 가격을 토큰의 실제 가격에 가깝게 유지하기 위해 트레이더가 매시간 지불하거나 받는 수수료입니다.",
-        "liquidationPriceTips": "교환이 유지 마진 수준 아래로 마진이 떨어졌을 때 추가 손실을 방지하기 위해 귀하의 포지션이 자동으로 청산되는 가격입니다.",
+        "liquidationPriceTips": "증거금이 유지 증거금 수준 아래로 떨어질 때 추가 손실을 막기 위해 거래소가 포지션을 자동 청산하는 가격입니다.",
         "fundingGainsTips": "포지션을 연 이후의 순 펀딩비 수익입니다. 펀딩비는 무기한 계약 가격을 토큰의 실제 가격에 가깝게 유지하기 위해 트레이더가 매시간 지불하거나 받는 수수료입니다.",
-        "fundingGains": "자금 수익",
+        "fundingGains": "펀딩비 수익",
         "details": "세부사항",
         "unrealizedPnl": "미실현 PNL",
-        "realizedPnl": "실현된 PNL",
+        "realizedPnl": "실현 PNL",
         "marginMode": "마진 모드",
         "positionValue": "포지션 가치",
         "currentPrice": "현재 가격",
@@ -2811,25 +2811,25 @@
         "title": "정보",
         "24Vol": "24시간 거래량",
         "funding": "펀딩",
-        "openInterest": "열린 거래량",
+        "openInterest": "미결제 약정",
         "openInterestTips": "이 계약에서 모든 사용자의 총 미결제 포지션입니다.",
         "fundingTips": "무기한 계약 가격을 토큰의 실제 가격에 가깝게 유지하기 위해 트레이더가 매시간 지불하거나 받는 수수료입니다. 양수이면 롱이 숏에게 지불하고, 음수이면 숏이 롱에게 지불합니다.",
         "fundingRate": "펀딩 비율"
       },
       "PerpsIntro": {
-        "title": "Perps란 무엇인가요?",
-        "desc": "영구 계약 거래는 높은 레버리지와 시장 변동성으로 인해 투자와 담보를 빠르게 잃을 가능성을 포함한 상당한 위험이 따릅니다. 이러한 거래는 모든 사용자에게 적합하지 않을 수 있습니다. 가격은 펀딩 비율 및 유동성의 영향을 받을 수 있으며, 사전 통보 없이 자동으로 청산될 수 있습니다. 시장 데이터는 Hyperliquid에서 제공됩니다."
+        "title": "무기한 선물이란 무엇인가요?",
+        "desc": "무기한 선물 거래는 높은 레버리지와 시장 변동성으로 인해 투자금과 담보를 빠르게 잃을 수 있는 상당한 위험을 수반합니다. 모든 사용자에게 적합하지 않을 수 있으며, 펀딩비와 유동성이 가격에 영향을 줄 수 있습니다. 사전 통지 없이 자동 청산될 수도 있습니다. 시장 데이터는 Hyperliquid에서 제공합니다."
       },
       "PerpsClosePositionPopup": {
         "title": "포지션 종료",
         "positionSize": "포지션 크기",
         "closeBtn": "닫기 {{direction}}",
         "pnl": "PNL",
-        "fee": "수수료:",
+        "fee": "수수료",
         "rabbyFeeTips": "Rabby 수수료: 0.04%",
         "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
-        "receive": "받기",
-        "closedPnl": "닫힌 PNL",
+        "receive": "수령액",
+        "closedPnl": "실현 PNL",
         "amount": "금액",
         "confirm": "확인",
         "minimumWarning": "최소 금액은 {{percent}}%입니다.",
@@ -2844,23 +2844,23 @@
         "orderTypeLimit": "지정가",
         "limitPrice": "지정가",
         "currentPrice": "현재 가격",
-        "minimumOrderSize": "최소 주문 크기는 $10입니다.",
+        "minimumOrderSize": "최소 주문 금액은 $10입니다.",
         "margin": "마진",
-        "invalidNumber": "유효한 번호를 입력하십시오",
+        "invalidNumber": "유효한 숫자를 입력해 주세요",
         "leverage": "레버리지",
-        "slPrice": "청산가격",
-        "size": "사이즈",
-        "maximumOrderSize": "최대 주문 크기는 {{amount}}입니다.",
+        "slPrice": "손절 가격",
+        "size": "포지션 규모",
+        "maximumOrderSize": "최대 주문 금액은 {{amount}}입니다.",
         "available": "사용 가능",
-        "autoClose": "자동 닫기",
+        "autoClose": "자동 종료",
         "sizeTips": "당신의 거래의 총 가치 또는 수량으로, 마진 및 레버리지에 의해 설정됩니다.",
         "insufficientBalance": "잔액 부족",
         "tpPrice": "이익 실현 가격",
-        "takeProfitWhenPriceAbove": "가격이 위에 있을 때 이익 실현",
-        "stopLossWhenPriceAbove": "가격이 위에 있을 때 손절매",
-        "stopLossWhenPriceBelow": "가격이 아래로 내려갈 때 손실 제한",
+        "takeProfitWhenPriceAbove": "가격이 기준값보다 높을 때 익절",
+        "stopLossWhenPriceAbove": "가격이 기준값보다 높을 때 손절",
+        "stopLossWhenPriceBelow": "가격이 기준값보다 낮을 때 손절",
         "stopLossWhen": "손절매 시",
-        "takeProfitWhenPriceBelow": "가격이 아래일 때 이익 실현",
+        "takeProfitWhenPriceBelow": "가격이 기준값보다 낮을 때 익절",
         "maxMargin": "최대 마진은 {{amount}}입니다.",
         "minMargin": "최소 마진은 {{amount}}입니다.",
         "upTo": "최대",
@@ -2883,17 +2883,17 @@
         "fee": "수수료",
         "slPrice": "손절매 가격",
         "autoClose": "자동 종료",
-        "perps": "퍼프스",
-        "size": "크기",
+        "perps": "무기한 선물",
+        "size": "포지션 규모",
         "title": "주문 확인",
         "tpPrice": "이익 실현 가격",
         "price": "가격",
-        "btn": "Open {{direction}} 포지션",
+        "btn": "{{direction}} 포지션 열기",
         "rabbyFeeTips": "Rabby 수수료: 0%",
         "margin": "마진(격리)",
         "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
         "sizeTips": "거래의 총 가치 또는 수량으로, 마진 및 레버리지에 의해 설정됩니다.",
-        "liquidationPriceTips": "관계 유지 마진 수준 이하로 마진이 떨어졌을 때, 추가 손실을 방지하기 위해 거래소에서 귀하의 포지션이 자동으로 청산되는 가격입니다.",
+        "liquidationPriceTips": "증거금이 유지 증거금 수준 아래로 떨어질 때 추가 손실을 막기 위해 거래소가 포지션을 자동 청산하는 가격입니다.",
         "free": "무료",
         "rabbyFee": "Rabby 수수료",
         "providerFee": "하이퍼리퀴드 수수료",
@@ -2902,7 +2902,7 @@
       "action": {
         "long": "롱",
         "short": "숏",
-        "noPermission": "귀하의 지역에서는 포지션 열기가 지원되지 않습니다.",
+        "noPermission": "현재 지역에서는 포지션을 열 수 없습니다.",
         "closePosition": "{{direction}} 포지션 닫기",
         "close": "닫기",
         "add": "추가"
@@ -2915,14 +2915,14 @@
         "setTpPrice": "이익 실현 가격 설정",
         "slPrice": "손절가",
         "currentPrice": "현재 {{price}}",
-        "priceBelow": "가격 아래",
-        "priceReaches": "가격 도달",
+        "priceBelow": "가격 미만",
+        "priceReaches": "가격 도달 시",
         "takeProfitExpectedPNL": "이익 실현 예상 PNL",
         "EntryAndCurrentPrice": "진입 {{entryPrice}} 현재 {{price}}",
-        "priceAbove": "가격 상승",
-        "youGain": "당신의 수익",
-        "stopLossExpectedPNL": "손실 방지 예상 PNL",
-        "youLoss": "당신의 손실",
+        "priceAbove": "가격 초과",
+        "youGain": "예상 수익",
+        "stopLossExpectedPNL": "손절 시 예상 PNL",
+        "youLoss": "예상 손실",
         "stopLossWhen": "손절매 시",
         "takeProfitWhen": "이익 실현 시",
         "youGainRoi": "수익 (ROI)",
@@ -2933,22 +2933,22 @@
       "PerpsEditMarginPopup": {
         "title": "마진 조정",
         "currentPrice": "현재 가격",
-        "perpsBalance": "Perps 잔액",
+        "perpsBalance": "무기한 선물 잔액",
         "addMargin": "마진 추가",
         "amountToAdd": "추가할 금액",
-        "insufficientMargin": "불충분한 마진",
+        "insufficientMargin": "마진 부족",
         "reduceMargin": "마진 축소",
         "amountToReduce": "줄이려는 금액",
         "insufficientMarginToReduce": "포지션을 줄이기에 충분한 마진이 없습니다.",
         "available": "사용 가능",
         "liqPrice": "청산 가격",
-        "liqDistance": "Liq.거리"
+        "liqDistance": "청산 거리"
       },
       "PerpsAddPositionPopup": {
-        "addSize": "크기 추가",
-        "addToLong": "Long에 추가",
-        "totalSize": "총 크기",
-        "addToShort": "짧게 추가"
+        "addSize": "포지션 추가",
+        "addToLong": "롱 추가",
+        "totalSize": "총 포지션 규모",
+        "addToShort": "숏 추가"
       },
       "needDepositFirst": "먼저 자금을 입금해야 합니다.",
       "PerpMarginModePopup": {
@@ -2972,9 +2972,9 @@
       "title": {
         "viewSentTx": "전송됨",
         "selectFromHistory": "기록에서 선택",
-        "sendTo": "보내기",
+        "sendTo": "받는 지갑",
         "addNewWhitelistAddr": "새로운 화이트리스트 주소 추가",
-        "sendFrom": "보내기"
+        "sendFrom": "보내는 지갑"
       },
       "addressEditorBadge": {
         "nameUnknown": "주소 이름 지정"
@@ -2984,13 +2984,13 @@
       "availableCard": {
         "needSupply": "빌리려면 자산을 담보로 제공해야 합니다.",
         "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다.",
-        "isolated": "대규모 모드로 인해 빌리기 힘이 제한되고 자산이 한정됩니다.",
+        "isolated": "격리 모드로 인해 차입 한도와 이용 가능한 자산이 제한됩니다.",
         "emodeNoAssets": "검색과 관련된 자산을 찾을 수 없습니다. 다른 카테고리로 다시 시도해 보세요.",
         "emode": "E-모드에서 빌릴 수 없는 자산이 있습니다. 모든 자산에 접근하려면 E-모드에서 나가십시오."
       },
       "list": {
         "headers": {
-          "mySupplies": "내 자산",
+          "mySupplies": "내 예치액",
           "myBorrows": "내 차입금",
           "token": "토큰",
           "apy": "APY",
@@ -2999,12 +2999,12 @@
           "totalBorrowed": "총 대출 금액"
         },
         "item": {
-          "wrapperToken": "{{name}}을(를) 위한 래핑 토큰"
+          "wrapperToken": "{{name}}의 래핑 토큰"
         }
       },
       "summary": {
         "empty": {
-          "description": "AAVE에 의해 지원됩니다. 안전하고 수수료가 없습니다.",
+          "description": "AAVE에서 제공합니다. 안전하며 수수료가 없습니다.",
           "endDesc": "아직 예치금이 없습니다. 아래 추천 자산을 확인하여 이자를 벌기 시작하세요.",
           "title": "자산으로 이자 얻기"
         },
@@ -3020,32 +3020,32 @@
           "collateral": "담보",
           "wallet": "지갑 잔액"
         },
-        "repayWith": "상환하기 위해"
+        "repayWith": "상환 수단"
       },
       "supplyDetail": {
         "actions": "예치",
         "availableToBorrow": "대출 가능",
-        "supplyAPY": "공급 APY",
+        "supplyAPY": "예치 APY",
         "approveAndSupply": "승인하고 예치",
-        "supplyBalance": "공급 잔액",
+        "supplyBalance": "예치 잔액",
         "unavailable": "사용 불가",
         "collateralization": "담보화",
         "enabled": "활성화됨",
-        "isolatedTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다.",
-        "supplied": "제공됨"
+        "isolatedTips": "현재 예치/차입 중인 자산은 지원되지 않습니다.",
+        "supplied": "예치됨"
       },
       "withdrawDetail": {
         "actions": "출금",
-        "remainingSupply": "남은 공급량",
+        "remainingSupply": "남은 예치액",
         "approveAndWithdraw": "승인하고 출금"
       },
       "borrowDetail": {
-        "approveAndBorrow": "승인 및 대출",
-        "actions": "빌리다",
+        "approveAndBorrow": "승인하고 차입",
+        "actions": "차입",
         "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
         "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다.",
         "swapDebt": "스왑",
-        "borrowed": "빌린",
+        "borrowed": "차입액",
         "noSupplyPrefix": "예치 없음:",
         "noSupplyDesc": "빌리려면 담보로 자산을 제공해야 합니다."
       },
@@ -3058,16 +3058,16 @@
         "toSwap": "스왑"
       },
       "borrowOverview": {
-        "myBorrow": "내 빌리기",
+        "myBorrow": "내 차입액",
         "totalBorrowed": "총 대출액",
         "title": "대출 세부 정보",
         "borrowCap": "대출 한도",
-        "availableToBorrow": "대여 가능",
+        "availableToBorrow": "차입 가능",
         "liquidityPenalty": "청산 패널티",
         "reachCapTip": "이 자산은 대출 한도에 도달했습니다."
       },
       "supplyOverview": {
-        "mySupply": "내 공급",
+        "mySupply": "내 예치액",
         "title": "예치 상세",
         "walletBalance": "지갑 잔고",
         "totalSupplied": "총 예치액",
@@ -3078,7 +3078,7 @@
         "collateral": "담보"
       },
       "risk": {
-        "checkbox": "알림을 이해하고 계속 진행하겠습니다.",
+        "checkbox": "위험 안내를 이해했으며 계속 진행하겠습니다.",
         "warning": "이 금액을 빌리면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
         "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
         "toggleCollateralWarning": "이 자산을 담보로 사용 중지하면 귀하의 건강 지수가 청산을 위한 위험한 수준으로 낮아집니다.",
@@ -3089,11 +3089,11 @@
         "below1title": "건강 지수 ≤ 1.0:",
         "below1desc": "귀하의 포지션은 청산 위험에 처해 있습니다.",
         "desc": "청산 가치",
-        "over3title": "건강 요소 > 3.0:",
-        "over3desc": "당신의 포지션은 안전합니다.",
+        "over3title": "건강 지수 > 3.0:",
+        "over3desc": "포지션이 안전합니다.",
         "risky": "위험한",
-        "introText": "당신의 Health Factor는 당신의 대출 위치가 얼마나 안전한지를 보여줍니다. 만약 이 수치가 너무 낮아지면, 당신의 담보가 청산될 수 있습니다.",
-        "warningText": "당신의 건강 지수가 너무 낮습니다. 청산을 피하려면:\n1. 대출의 일부 또는 전부를 상환하세요.\n2. 더 많은 담보를 추가하세요.",
+        "introText": "건강 지수는 차입 포지션의 안전도를 나타냅니다. 너무 낮아지면 담보가 청산될 수 있습니다.",
+        "warningText": "건강 지수가 너무 낮습니다. 청산을 피하려면:\n1. 대출의 일부 또는 전부를 상환하세요.\n2. 담보를 추가하세요.",
         "liquidation": "청산: 귀하의 건강 지수가 1.0 이하로 떨어지면, 채무를 상환하기 위해 귀하의 담보 중 일부가 자동으로 매각될 수 있습니다. 청산 패널티가 적용되며, 이로 인해 귀하의 담보 일부가 손실될 수 있습니다."
       },
       "modalDesc": {
@@ -3101,14 +3101,14 @@
         "maxAmount": "이것은 제공한 모든 담보를 기반으로 당신이 빌릴 수 있는 최대 금액입니다. 당신의 총 차입 가능 금액은 각 담보 자산의 시장 가치에 해당 자산의 Max LTV를 곱한 다음 결과를 합산하여 계산됩니다.",
         "availableToBorrowDesc": "담보로 제공한 자산을 기반으로 대출할 수 있으며, 대출 한도에 도달할 때까지 가능합니다.",
         "lqDesc": "청산이 발생하면 청산자는 차용자를 대신하여 미결제 차입 금액의 최대 50%를 상환합니다. 그 대가로 그들은 담보를 할인된 가격에 구매할 수 있으며, 차액(청산 벌금)을 보너스로 유지할 수 있습니다.",
-        "isolatedDesc": "이 자산은 고립 모드에서만 담보로 사용될 수 있으며, 여기서 다른 자산 담보를 공급하여 대출할 수 없습니다. 고립 모드에서 담보로 사용되는 자산은 특정 부채 한도 내에서만 대출할 수 있습니다.",
+        "isolatedDesc": "이 자산은 격리 모드에서만 담보로 사용할 수 있습니다. 이 모드에서는 다른 자산을 담보로 예치할 수 없으며, 정해진 부채 한도 내에서만 차입할 수 있습니다.",
         "isolatedTitle": "자산을 담보로 사용할 수 없습니다.",
         "isolatedSupplyDesc": "담보 사용은 격리 모드 때문에 제한됩니다.",
-        "globalIsolatedDesc": "고립 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전 세계 부채 한도가 고립된 자산의 대출 능력을 제한합니다. 다른 자산을 대출하기 전에 UNI를 담보로 사용하지 않도록 설정하여 고립 모드를 종료하십시오.",
+        "globalIsolatedDesc": "격리 모드에서는 다른 자산을 담보로 예치할 수 없습니다. 전체 부채 한도에 따라 격리 자산의 차입 한도가 제한됩니다. 격리 모드를 종료하려면 다른 자산을 차입하기 전에 UNI의 담보 사용을 해제하세요.",
         "maxLTV": "최대 LTV 비율은 특정 담보의 최대 대출 능력을 나타냅니다. 예를 들어, 담보의 LTV가 75%인 경우, 사용자는 담보 1 ETH당 0.75 가치의 ETH를 기본 통화로 대출할 수 있습니다."
       },
-      "borrowed": "빌려진",
-      "supplied": "제공됨",
+      "borrowed": "차입액",
+      "supplied": "예치액",
       "netWorth": "순자산",
       "selectChain": "체인 선택",
       "submitted": "제출됨",
@@ -3119,21 +3119,21 @@
       "enterAmount": "금액 입력",
       "estNetApy": "추정 순 APY",
       "toggleCollateralDetail": {
-        "actions": "토글 {{asset}} 담보",
-        "enable": "{{asset}}를 담보로 활성화",
+        "actions": "{{asset}} 담보 설정 전환",
+        "enable": "{{asset}}을(를) 담보로 사용",
         "error": "AAVE 서비스에 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-        "disable": "담보로 {{asset}} 비활성화"
+        "disable": "{{asset}} 담보 사용 해제"
       },
       "toggleCollateralModal": {
         "closeTitle": "비활성화 확인",
         "exitIsolationModeTitle": "격리 모드 종료",
         "openTitle": "활성화 확인",
         "enableIsolationModeTitle": "격리 모드 활성화",
-        "exitIsolationModeDesc": "격리 모드에서 종료되며, 이제 다른 토큰을 담보로 사용할 수 있습니다.",
+        "exitIsolationModeDesc": "격리 모드를 종료하면 다른 토큰도 담보로 사용할 수 있습니다.",
         "closeDesc": "이 자산을 담보로 사용하지 않으면 차입 가능 금액과 Health Factor에 영향을 줍니다.",
         "riskToLiquidationText": "이 자산의 담보 상태를 변경할 수 없습니다. 청산이 발생할 수 있기 때문입니다.",
         "openDesc": "이 자산을 담보로 설정하면 대출 능력과 건강 지수가 증가합니다. 그러나 건강 지수가 1 이하로 떨어지면 강제 청산될 수 있습니다.",
-        "enableIsolationModeDesc": "당신은 격리 모드에 들어가고 있습니다. 격리 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전역 채무 한도가 격리된 자산의 차입 능력을 제한합니다. 다른 자산을 차입하기 전에 CRV를 담보로 비활성화하여 격리 모드를 종료하십시오.",
+        "enableIsolationModeDesc": "격리 모드에서는 다른 자산을 담보로 예치할 수 없습니다. 전체 부채 한도에 따라 격리 자산의 차입 한도가 제한됩니다. 격리 모드를 종료하려면 다른 자산을 차입하기 전에 CRV의 담보 사용을 해제하세요.",
         "toggleRiskTexts": {
           "doNotHaveSuppliesInThisCurrency": "이 통화에 자산이 없습니다.",
           "canNotUseThisCurrencyAsCollateral": "이 통화를 담보로 사용할 수 없습니다.",
@@ -3202,7 +3202,7 @@
           "select": "선택하세요"
         },
         "overview": {
-          "borrowAPY": "빌리기 apy",
+          "borrowAPY": "차입 APY",
           "title": "거래 개요",
           "borrowValueAfter": "전환 후 차입 잔액"
         },
@@ -3215,7 +3215,7 @@
         "lpDangerWarning": "이 스왑 후 귀하의 건강 지수가 심각하게 낮아져 청산이 발생할 수 있습니다. 안전을 위해 다른 자산을 선택하거나 스왑 금액을 줄여 주십시오.",
         "priceImpactTips": "가격 영향이 큽니다({{lostValue}}). 유동성이 낮거나 주문 규모가 작아 이 경로의 예상 결과가 크게 달라질 수 있습니다.",
         "lpRiskWarning": "스왑 후 낮은 건강 지수. 귀하의 포지션은 청산 위험이 더 높습니다.",
-        "maxLtvWarning": "새로운 대출 포지션을 담보할 충분한 담보가 없습니다. 부채 전환을 수행하기 위해서는 지갑에 남아 있는 대출 가능성이 있어야 합니다."
+        "maxLtvWarning": "새 차입 포지션을 감당할 담보가 부족합니다. 부채를 전환하려면 지갑에 남은 차입 한도가 있어야 합니다."
       },
       "hfTips": {
         "more": "더 보기",
@@ -3226,15 +3226,15 @@
       },
       "totalSupplied": "총 예치액",
       "totalBorrowed": "총 차입금",
-      "netApy": "순수 APY",
+      "netApy": "순 APY",
       "repayWithCollateral": {
         "action": {
           "title": "{{collateral}}로 상환하기"
         },
         "overview": {
           "collateralValueAfter": "대출 상환 후 담보 잔고",
-          "title": "트랜잭션 개요",
-          "borrowValueAfter": "상환 후 차용 잔액"
+          "title": "거래 개요",
+          "borrowValueAfter": "상환 후 차입 잔액"
         },
         "button": {
           "repay": "상환"
@@ -3263,7 +3263,7 @@
     "address": {
       "receiveAssets": {
         "importTip": {
-          "desc": "기존의 자산이 있는 주소 추가.",
+          "desc": "자금이 있는 기존 주소를 추가합니다.",
           "title": "지갑 가져오기"
         },
         "title": "자산 받기",
@@ -3301,16 +3301,16 @@
       },
       "tabs": {
         "watchlist": "관심 목록",
-        "commodities": "수출품",
+        "commodities": "원자재",
         "stock": "주식",
-        "memecoin": "Memecoin"
+        "memecoin": "밈코인"
       },
-      "noOpen": "열지 않음",
-      "marketNotOpenTooltip": "시장이 열리지 않음"
+      "noOpen": "미개장",
+      "marketNotOpenTooltip": "시장이 아직 열리지 않았습니다"
     },
     "newUserOnboarding": {
       "restoreWallet": {
-        "subtitle": "환영합니다! 🎉  \n지갑을 빠르게 복원할 방법을 선택하세요.",
+        "subtitle": "다시 오신 것을 환영합니다! 🎉\n지갑을 빠르게 복원할 방법을 선택하세요.",
         "title": "Rabby 지갑 복원하기",
         "subtitleInApp": "아래에서 옵션을 선택하여 Rabby 확장 프로그램 또는 iCloud에서 지갑을 빠르게 가져오세요."
       },
@@ -3321,7 +3321,7 @@
         "privateKeyPlaceholder": "개인 키를 입력하세요",
         "seedPhrasePlaceholder": "시드 문구를 입력하세요"
       },
-      "walletReady": "당신의 지갑이 준비되었습니다 🚀",
+      "walletReady": "지갑이 준비되었습니다 🚀",
       "createWalletError": "지갑 생성 실패",
       "setPasswordTip": "지갑을 보호하기 위해 비밀번호를 설정하세요."
     },
@@ -3345,7 +3345,7 @@
       "receiveSummary": {
         "progress": "전환 진행률",
         "priceImpact": "가격 충격 상한",
-        "gasLimit": "단일 거래 Gas limit",
+        "gasLimit": "단일 거래 Gas 한도",
         "estimateReceive": "예상 수령:",
         "actualReceive": "수령"
       },
@@ -3355,14 +3355,14 @@
         "start": "전환 시작"
       },
       "completed": {
-        "title": "먼지 전환 완료!",
-        "receive": "수신:",
+        "title": "소액 자산 전환 완료!",
+        "receive": "받은 금액:",
         "failedTitle": "전환 종료",
         "viewMoreDetail": "더 많은 상세 정보 보기",
         "fold": "접기"
       },
       "entryGuide": {
-        "title": "Convert Dust \n👇는 홈페이지에서 찾을 수 있습니다",
+        "title": "홈 화면의 여기에서\n👇 소액 자산 전환을 찾을 수 있습니다",
         "button": "알겠습니다"
       },
       "stopSheet": {
@@ -3413,7 +3413,7 @@
     "backButton": "뒤로",
     "proceedButton": "진행하기",
     "appName": "Rabby Wallet",
-    "Balance": "Balance",
+    "Balance": "잔액",
     "assets": "자산",
     "next": "다음",
     "cancel": "취소",
@@ -3435,7 +3435,7 @@
       "hours": "{{t}} 시간",
       "mins": "{{t}}분"
     },
-    "appDescription": "이더리움 및 모든 EVM 체인을 위한 혁신적인 지갑",
+    "appDescription": "Ethereum과 EVM을 위한 필수 지갑",
     "folded": "접힘",
     "ok": "OK",
     "Deleted": "삭제됨",
@@ -3454,7 +3454,7 @@
     "Wallets": "지갑 선택",
     "permissionRequest": {
       "common": {
-        "askMeLater": "나중에 물어봐",
+        "askMeLater": "나중에",
         "goToSettings": "설정으로 이동"
       },
       "mediaLibrary": {
@@ -3497,19 +3497,19 @@
     "Other": "기타",
     "toast": {
       "clipboard": {
-        "copiedPrivateKey": "비공개 키가 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
+        "copiedPrivateKey": "개인 키가 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
         "copiedSeedPhrase": "시드 구문이 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
         "pasted_and_cleared": "붙여넣기 완료 및 클립보드 지움"
       }
     },
     "autolock": {
-      "never": "절대"
+      "never": "사용 안 함"
     },
     "Imported": "가져온",
     "Created": "생성됨",
-    "SavedSeedPhrase": "나는 시드 구문을 저장했습니다.",
-    "from": "보내는",
-    "to": "받는",
+    "SavedSeedPhrase": "시드 구문을 저장했습니다",
+    "from": "보내는 주소",
+    "to": "받는 주소",
     "copiedSuccessfully": "복사되었습니다"
   },
   "native": {
@@ -3570,7 +3570,7 @@
       "FieldLabel": {
         "Collection": "컬렉션",
         "Chain": "체인",
-        "LastPrice": "마지막 가격",
+        "LastPrice": "최근 거래가",
         "PurschaseDate": "구매 날짜"
       }
     },
@@ -3588,13 +3588,13 @@
     },
     "signPermissionCheckModal": {
       "reconnect": "DApp 다시 연결하기",
-      "title": "귀하는 이 DApp이 testnets에서만 서명하도록 허용합니다."
+      "title": "이 DApp은 테스트넷에서만 서명할 수 있습니다"
     },
     "ReserveGasPopup": {
       "normal": "느림",
-      "fast": "정상",
+      "fast": "보통",
       "title": "가스 예약",
-      "instant": "빠른",
+      "instant": "빠름",
       "doNotReserve": "Gas를 예약하지 마세요"
     },
     "AuthenticationModals": {
@@ -3603,12 +3603,12 @@
         "cancel": "취소",
         "title": "생체 인식 인증",
         "notEnabled": "생체 인식이 활성화되지 않았습니다.",
-        "desc": "지문/FaceID를 사용하여 잠금을 해제하세요."
+        "desc": "지문/Face ID를 사용하여 잠금을 해제하세요."
       },
       "biometrics": {
-        "enable": "{{ bioType }} 활성화",
-        "disableTip": "{{ bioType }} 사용 해제하여 Rabby 잠금 해제",
-        "disable": "{{ bioType }} 비활성화",
+        "enable": "비밀번호를 입력하여\n{{ bioType }} 활성화",
+        "disableTip": "Rabby 잠금 해제에 {{ bioType }}을(를) 사용하지 않습니다",
+        "disable": "{{ bioType }}을(를) 비활성화하시겠습니까?",
         "enableTip": "{{ bioType }}을(를) 활성화하여 Rabby를 잠금 해제합니다."
       }
     },
@@ -3630,9 +3630,9 @@
       }
     },
     "gasAccount": {
-      "deposit": "예금",
+      "deposit": "입금",
       "history": {
-        "noHistory": "히스토리 없음"
+        "noHistory": "내역 없음"
       },
       "withdraw": "출금",
       "loginConfirmModal": {
@@ -3649,27 +3649,27 @@
         "loginTips2": "모든 체인의 모든 주소",
         "loginTips1": "가스 요금 결제 대상:",
         "depositDesc": "가스가 바닥났을 때 모든 체인에서",
-        "depositTitle": "USDC/USDT 입금 가스 수수료 지불",
+        "depositTitle": "USDC/USDT를 입금해 Gas 수수료 결제",
         "learnAbout": "GasAccount에 대해 자세히 알아보기"
       },
       "depositPopup": {
         "selectToken": "입금할 토큰 선택",
         "token": "토큰",
-        "desc": "수수료 없이 언제든지 Rabby의 DeBank L2 Account에 입금하세요.",
+        "desc": "추가 수수료 없이 Rabby의 DeBank L2 계정에 입금하고 언제든지 출금하세요.",
         "amount": "금액",
         "title": "입금"
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 지갑으로 전송되었습니다.",
-        "button": "DeBank APP에서 보기"
+        "button": "DeBank 앱에서 보기"
       },
       "withdrawPopup": {
-        "amount": "수량",
+        "amount": "금액",
         "title": "출금",
-        "to": "에게",
+        "to": "받는 주소",
         "desc": "GasAccount 잔액을 DeBank L2 Wallet으로 인출할 수 있습니다. 필요한 경우 자금을 지원되는 블록체인으로 전송하기 위해 DeBank L2 Wallet에 로그인하세요."
       },
-      "depositWithPay": "구매하기",
+      "depositWithPay": "다음으로 구매",
       "depositWithPayDesc": "30% 수수료, 출금 불가",
       "depositWithTokenDesc": "추가 비용 없음, 즉시 출금",
       "depositWithToken": "토큰으로 입금하기",
@@ -3680,14 +3680,14 @@
         "noWithdrawableBalanceDescription": "가스 잔액 중 {{amount}}은(는) 출금할 수 없습니다:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       },
       "about": {
-        "title2": "Gas Account 사용 방법",
-        "title1": "GasAccount은 무엇인가요?",
+        "title2": "GasAccount 사용 방법",
+        "title1": "GasAccount란 무엇인가요?",
         "title3": "GasAccount에 추가 수수료가 있나요?",
         "desc2": "GasAccount에 자금을 추가하고 모든 거래에 사용하세요. 서명할 때 네이티브 토큰 또는 GasAccount로 가스를 지불할지 선택할 수 있으며, 언제든지 전환이 가능합니다.",
         "desc3": "Rabby Wallet은 추가 요금을 부과하지 않습니다. 거래에 대한 가스 요금과 GasAccount에서 귀하의 주소로 가스를 전송하는 데 필요한 소량의 가스 요금만 지불하면 됩니다.",
         "desc1": "GasAccount는 가스 요금을 지불하는 새로운 방법입니다. 각 체인에서 기본 토큰을 사용하는 대신, 모든 체인의 모든 주소에 대한 가스를 충당하기 위해 하나의 계정을 사용할 수 있습니다. 간단하고 선택적이며, 결코 가스 부족이 없습니다.",
-        "title4": "GasAccount은 안전한가요?",
-        "desc4": "GasAccount은 계약 승인이나 권한이 필요하지 않습니다. 사용자는 Rabby의 GasAccount 주소로 입금하고, 필요할 때 Rabby가 사용자의 주소로 가스를 전송합니다. 설계상 완전히 안전합니다."
+        "title4": "GasAccount는 안전한가요?",
+        "desc4": "GasAccount는 계약 승인이나 권한이 필요하지 않습니다. Rabby의 GasAccount 주소로 입금하면 필요할 때 Rabby가 사용자의 주소로 Gas를 전송합니다. 설계 단계부터 안전하게 만들어졌습니다."
       }
     },
     "NoLongerSupports": {
@@ -3698,7 +3698,7 @@
     "NFTDetailModal": {
       "FieldLabel": {
         "PurschaseDate": "구매 날짜",
-        "LastPrice": "마지막 가격",
+        "LastPrice": "최근 거래가",
         "Chain": "체인",
         "Collection": "컬렉션"
       }
@@ -3707,16 +3707,16 @@
       "noDapps": "이 체인에는 사용 가능한 DApp이 없습니다.",
       "noQuotesForChain": "이 체인에 대한 견적이 아직 없습니다.",
       "help": "이 체인의 공식 팀에 지원을 요청하시기 바랍니다.",
-      "bridgeOnDapp": "DApp에서 브릿지",
+      "bridgeOnDapp": "DApp에서 브리지",
       "thirdPartyDappToProceed": "서드파티 DApp을 사용하여 진행해 주세요",
       "swapOnDapp": "DApp에서 스왑하기",
-      "selectADapp": "DApp 선택하세요",
+      "selectADapp": "DApp 선택",
       "chainNotSupported": "이 체인에서는 지원되지 않습니다.",
       "noDapp": "사용 가능한 DApp 없음",
       "viewDappOptions": "DApp 옵션 보기"
     },
     "selectCexModal": {
-      "title": "교환 소스 선택"
+      "title": "거래소 선택"
     },
     "AccountSelector": {
       "title": "지갑 선택"
@@ -3738,18 +3738,18 @@
     },
     "screenshotModal": {
       "feedbackInput": {
-        "placeholder": "문제를 설명하세요"
+        "placeholder": "문제를 설명하세요(필수)"
       },
       "submitButtonText": "제출",
       "switchArea": {
         "skipText": "이 팝업을 1일 동안 건너뛰기"
       },
       "alertText": "타사 DApp: 사용 문제는 DApp 지원팀에 문의하세요. Rabby는 보기 전용 접근만 제공합니다.",
-      "title": "버그 보고를 위한 스크린샷"
+      "title": "스크린샷으로 버그 신고"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "설명:",
-      "issueDescription": "여기 귀하가 신고한 문제가 있습니다:",
+      "issueDescription": "신고한 문제:",
       "repliedTitle": "Rabby 지원팀이 답변했습니다:",
       "title": "Rabby 지원팀의 응답",
       "pendingTitle": "Rabby Support가 회신하지 않았습니다."
@@ -3764,7 +3764,7 @@
       "usdValue": "USD 가치",
       "amount": "금액",
       "price": "가격",
-      "side": "측면"
+      "side": "포지션 방향"
     },
     "accountSelectModalTx": {
       "addTrustedAddress": {
@@ -3776,7 +3776,7 @@
       "whitelistAccounts": "화이트리스트"
     },
     "portfolios": {
-      "manage": "관리하다"
+      "manage": "관리"
     },
     "multiAddressModal": {
       "title": "지갑"
@@ -3806,7 +3806,7 @@
       "noCurrentAccount": "현재 계정 없음",
       "invalidAddress": "유효하지 않은 주소",
       "notFoundKeyringByAddress": "주소로 keyring을 찾을 수 없습니다.",
-      "unknownAbi": "알 수 없는 계약 abi",
+      "unknownAbi": "알 수 없는 계약 ABI",
       "duplicateAccount": "가져오려는 계정이 중복되었습니다.",
       "invalidPrivateKey": "개인 키가 유효하지 않습니다.",
       "invalidMnemonic": "시드 구문이 유효하지 않습니다. 확인해 주세요!",
@@ -3816,7 +3816,7 @@
       "notFindChain": "체인 {{chain}}을(를) 찾을 수 없습니다.",
       "addKeyring404": "addKeyring에 실패했습니다. keyring이 정의되지 않았습니다.",
       "notFoundTxGnosisKeyring": "Gnosis keyring에 거래 내역이 없습니다.",
-      "canNotUnlock": "이전 금고가 없으면 잠금을 해제할 수 없습니다.",
+      "canNotUnlock": "생성된 지갑이 없어 잠금을 해제할 수 없습니다.",
       "errorWords_one": "1 개의 잘못된 단어",
       "errorWords_other": "{{count}} 잘못된 단어"
     },
@@ -3857,7 +3857,7 @@
     },
     "dialogs": {
       "blockedTransaction": {
-        "title": "차단된 Transaction",
+        "title": "차단된 거래",
         "button": "알겠습니다",
         "content": "이 거래는 OFAC 제재 목록에 있는 주소와 상호 작용합니다."
       }
@@ -3870,8 +3870,8 @@
     "noTransactionOwnerAddress": "트랜잭션이 귀하의 지갑에 있는 주소와 관련이 없습니다. 나중에 거래 내역을 확인해 주시기 바랍니다."
   },
   "backupReminder": {
-    "title": "당신은 지갑을 백업하지 않았습니다",
+    "title": "지갑이 백업되지 않았습니다",
     "action": "지금 백업하기",
-    "badge": "백업 안 함"
+    "badge": "백업되지 않음"
   }
 }
