@@ -33,6 +33,7 @@ import { StyleProp, ViewStyle } from 'react-native';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
+const HISTORY_END_REACHED_THRESHOLD = 0.6;
 type GasAccountPendingHistoryItem =
   GasAccountHistoryState['txList']['rechargeList'][number];
 type GasAccountConfirmedHistoryItem =
@@ -254,7 +255,10 @@ export const GasAccountHistory = React.memo<GasAccountHistoryProps>(
         return false;
       }
 
-      return contentHeightRef.current <= listHeightRef.current;
+      return (
+        contentHeightRef.current - listHeightRef.current <=
+        listHeightRef.current * HISTORY_END_REACHED_THRESHOLD
+      );
     }, [loading, loadingMore, noMore]);
 
     const scheduleAutoLoadMore = useCallback(() => {
@@ -515,14 +519,12 @@ export const GasAccountHistory = React.memo<GasAccountHistoryProps>(
           }
           onScrollBeginDrag={() => {
             hasUserScrolledRef.current = true;
-            clearScheduledAutoLoadMore();
           }}
           onMomentumScrollBegin={() => {
             hasUserScrolledRef.current = true;
-            clearScheduledAutoLoadMore();
           }}
           onEndReached={handleEndReached}
-          onEndReachedThreshold={0.6}
+          onEndReachedThreshold={HISTORY_END_REACHED_THRESHOLD}
           ListFooterComponent={ListEndLoader}
           ListEmptyComponent={ListEmptyComponent}
         />

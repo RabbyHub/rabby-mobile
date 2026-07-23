@@ -7,6 +7,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { findSupportedExchange } from '@/utils/cex';
 
 export const globalSupportCexList: ProjectItem[] = [];
 type SupportedCexListState = {
@@ -24,12 +25,27 @@ function setSupportCexList(valOrFunc: UpdaterOrPartials<ProjectItem[]>) {
   });
 }
 
-runStartupTask(() => {
-  openapi.getCexSupportList().then(res => {
-    globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
-    setSupportCexList(res);
-  });
-}, STARTUP_TASKS.cexSupportListFetch);
+let cexSupportListReady: Promise<ProjectItem[]> | undefined;
+
+const loadCexSupportList = () => {
+  if (!cexSupportListReady) {
+    cexSupportListReady = openapi
+      .getCexSupportList()
+      .then(res => {
+        globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
+        setSupportCexList(res);
+        return res;
+      })
+      .catch(() => globalSupportCexList);
+  }
+
+  return cexSupportListReady;
+};
+
+runStartupTask(loadCexSupportList, STARTUP_TASKS.cexSupportListFetch);
+
+export const waitForCexSupportListReady = loadCexSupportList;
+
 export const useCexSupportList = () => {
   const list = supportCexListStore(s => s.list);
 
@@ -40,7 +56,7 @@ export const getCexInfo = (address: string) => {
     return undefined;
   }
   const cexId = getCexId(address);
-  const cexInfo = globalSupportCexList.find(item => item.id === cexId);
+  const cexInfo = findSupportedExchange(globalSupportCexList, cexId);
   if (!cexInfo || !cexId) {
     return undefined;
   }

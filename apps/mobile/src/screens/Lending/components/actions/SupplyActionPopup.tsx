@@ -80,6 +80,7 @@ import {
 } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { isUserCancelledError } from '../../utils/error';
+import { ellipsisSymbol } from '../../utils/format';
 
 type SupplyActionPopupProps = PopupDetailProps & {
   onBeforeSwapNavigate?: () => void;
@@ -733,6 +734,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   ]);
 
   const emptyAmount = !supplyAmount.amount || supplyAmount.amount === '0';
+  const displaySymbol = useMemo(
+    () => ellipsisSymbol(currentReserve.reserve.symbol),
+    [currentReserve.reserve.symbol],
+  );
 
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
@@ -750,9 +755,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               style={[
                 styles.amountValueDescription,
                 emptyAmount && styles.amountValueDescriptionDanger,
-              ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
-              currentReserve.reserve.symbol
-            }($${
+              ]}>{`${formatTokenAmount(
+              supplyAmount.amount || '0',
+            )}${displaySymbol}($${
               supplyAmount.isLteZero
                 ? '0'
                 : formatAmountValueKMB(supplyAmount.usdValue || '0')
@@ -774,7 +779,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
             }
             setAmount(v);
           }}
-          symbol={currentReserve.reserve.symbol}
+          symbol={displaySymbol}
           handleClickMaxButton={() => {
             setAmount(supplyAmount.amount || '0');
           }}
@@ -793,7 +798,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
                 triggerVariant="pill"
                 activeUnderlyingAsset={activeUnderlyingAsset}
                 options={tokenOptions as BalancePositionTokenOption[]}
-                symbol={currentReserve.reserve.symbol}
+                symbol={displaySymbol}
                 chain={currentReserve.chain}
                 onChange={handleChangeActiveUnderlyingAsset}
               />
@@ -838,9 +843,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.supplyDetail.actions')}
-              title={`${t('page.Lending.supplyDetail.actions')} ${
-                currentReserve.reserve.symbol
-              }`}
+              title={`${t(
+                'page.Lending.supplyDetail.actions',
+              )} ${displaySymbol}`}
               onFinished={() => handleSupply()}
               disabled={
                 !amount ||
@@ -941,16 +946,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    width: '100%',
-  },
   bottomSheetScrollView: {
     width: '100%',
   },
@@ -960,18 +955,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   gasPreContainer: {
     paddingHorizontal: 8,
-  },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
-  },
-  tokenInfos: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   reserveErrorTip: {
     marginTop: 30,
@@ -984,14 +967,6 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     marginTop: 0,
     fontFamily: 'SF Pro Rounded',
-  },
-  sectionContainer: {
-    paddingBottom: 32,
-    width: '100%',
-  },
-  section: {
-    marginTop: 28,
-    lineHeight: 24,
   },
   buttonContainer: {
     height:
@@ -1013,17 +988,5 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
 }));

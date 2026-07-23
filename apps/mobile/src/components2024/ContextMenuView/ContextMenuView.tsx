@@ -1,7 +1,7 @@
 import * as ContextMenu from '@rabby-wallet/zeego/context-menu';
 import { MenuTriggerProps } from '@rabby-wallet/zeego/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
-import { ImageSourcePropType } from 'react-native';
+import { ImageSourcePropType, Platform } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { useCallback, useRef } from 'react';
@@ -9,6 +9,9 @@ import { MenuComponentRef } from '@rabby-wallet/react-native-menu';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 // import { touchedFeedback } from '@/utils/touch';
+
+const IS_IOS_27_OR_ABOVE =
+  Platform.OS === 'ios' && Number.parseInt(String(Platform.Version), 10) >= 27;
 
 export interface MenuAction {
   title: string;
@@ -52,7 +55,7 @@ export const ContextMenuView: React.FC<Props> = ({
   preViewBorderRadius = 30,
   androidLongPressDuration = 350,
 }) => {
-  const { colors2024 } = useTheme2024();
+  const { colors2024, isLight } = useTheme2024();
 
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
 
@@ -117,6 +120,15 @@ export const ContextMenuView: React.FC<Props> = ({
       __unsafeIosProps={{
         previewConfig: {
           borderRadius: preViewBorderRadius,
+          // iOS 27 can composite a transparent target against black during
+          // the transition into the native context-menu preview.
+          ...(IS_IOS_27_OR_ABOVE
+            ? {
+                backgroundColor: isLight
+                  ? colors2024['neutral-bg-1']
+                  : colors2024['neutral-bg-2'],
+              }
+            : {}),
         },
       }}
       androidMenuViewRef={androidMenuViewRef}>

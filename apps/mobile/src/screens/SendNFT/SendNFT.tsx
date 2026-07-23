@@ -1,13 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import Animated, {
-  runOnJS,
-  useAnimatedReaction,
-  useAnimatedRef,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -15,7 +9,7 @@ import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { NFTSection, SendNFTSection } from './Section';
+import { NFTSection } from './Section';
 import ToAddressControl2024 from '@/screens/SendNFT/components/ToAddressControl2024';
 import FromAddressControl2024 from '@/screens/SendNFT/components/FromAddressControl';
 import {
@@ -34,7 +28,6 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { Text } from '@/components/Typography';
 import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
@@ -298,12 +291,6 @@ function SendNFT() {
 export default withWhitelistService(SendNFT);
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    position: 'relative',
-  },
   sendNFTScreen: {
     width: '100%',
     height: '100%',
@@ -314,13 +301,5 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   mainContent: {
     paddingHorizontal: 20,
     paddingBottom: 308,
-  },
-
-  buttonContainer: {
-    width: '100%',
-    height: 52,
-  },
-  button: {
-    backgroundColor: colors2024['blue-default'],
   },
 }));

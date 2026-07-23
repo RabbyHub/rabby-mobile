@@ -9,7 +9,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components/Tip';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import { CommonAction } from '../CommonAction';
 import { Card } from '../Actions/components/Card';
@@ -17,12 +17,12 @@ import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
 import { getActionsStyle } from '../Actions/styles';
 import type { ParsedTextActionData } from '@rabby-wallet/rabby-action';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
-import { getMessageStyles } from './styles';
 import type { Chain } from '@debank/common';
-import { HighlightedSignMessageText } from '../SignMessageHighlighter';
+import type { SignMessageHighlightToken } from '../signMessageTokenizer';
+import type { SignMessageAddressDataMap } from '../signMessageAddressData';
+import { SignMessageCard } from './SignMessageCard';
 
 export { getMessageStyles } from './styles';
 
@@ -35,6 +35,9 @@ const Actions = ({
   originLogo,
   account,
   chain,
+  messageTokens,
+  addressData,
+  approvalViewportHeight,
 }: {
   data: ParsedTextActionData | null;
   engineResults: Result[];
@@ -44,14 +47,15 @@ const Actions = ({
   originLogo?: string;
   account: Account;
   chain?: Chain;
+  messageTokens?: SignMessageHighlightToken[];
+  addressData?: SignMessageAddressDataMap;
+  approvalViewportHeight: number;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
   }, [data]);
 
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
   const { styles: actionStyles } = useTheme2024({
     getStyle: getActionsStyle,
   });
@@ -150,36 +154,16 @@ const Actions = ({
           )}
         </Card>
       </View>
-      <Card style={styles.messageCard}>
-        <BottomSheetScrollView
-          nestedScrollEnabled
-          style={StyleSheet.flatten([
-            styles.messageContent,
-            data ? {} : styles.noAction,
-          ])}>
-          <View style={styles.messageTitle}>
-            <Text
-              style={styles.dashLine}
-              ellipsizeMode="clip"
-              accessible={false}
-              numberOfLines={1}>
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            </Text>
-
-            <Text style={styles.messageTitleText}>
-              {t('page.signText.title')}
-            </Text>
-          </View>
-          <HighlightedSignMessageText
-            text={message}
-            style={styles.messageText}
-            highlightStyle={styles.messageHighlight}
-          />
-        </BottomSheetScrollView>
-      </Card>
+      <SignMessageCard
+        title={t('page.signText.title')}
+        message={message}
+        hasAction={!!data}
+        messageTokens={messageTokens}
+        chain={chain}
+        addressData={addressData}
+        account={account}
+        approvalViewportHeight={approvalViewportHeight}
+      />
     </View>
   );
 };

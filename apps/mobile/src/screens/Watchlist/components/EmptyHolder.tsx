@@ -54,12 +54,6 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '400',
   },
-  desc: {
-    color: colors['neutral-body'],
-    fontSize: 14,
-    lineHeight: 17,
-  },
-  image: {},
   line: {
     width: 40,
     height: 0,

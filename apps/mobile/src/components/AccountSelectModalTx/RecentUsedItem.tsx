@@ -30,6 +30,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { touchedFeedback } from '@/utils/touch';
 import { Text } from '@/components/Typography';
+import { SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS } from './layout';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -180,7 +181,7 @@ export const RecentUsedItem = ({
         menuTitle: account.address,
         menuActions: menuActions,
       }}
-      preViewBorderRadius={16}
+      preViewBorderRadius={SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS}
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>
@@ -189,12 +190,12 @@ export const RecentUsedItem = ({
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   shadow: {
-    borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   root: {
     overflow: 'hidden',
-    borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     height: 78,
     // backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -202,7 +203,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderWidth: 0,
-    borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],

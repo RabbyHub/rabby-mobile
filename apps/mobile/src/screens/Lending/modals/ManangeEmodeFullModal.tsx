@@ -531,17 +531,6 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 8,
     textAlign: 'center',
   },
-  button: {
-    position: 'absolute',
-    bottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
-    width: '100%',
-  },
-  disabledButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
-  },
-  disabledTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
   gasPreContainer: {
     paddingHorizontal: 8,
     marginTop: 12,

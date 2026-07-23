@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
+import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 import { formatPrice, formatUsdValue } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
 import { formatAmountValueKMB, formatUsdValueKMB } from '../util';
@@ -34,11 +36,18 @@ const MarketInfo = ({
   const { t } = useTranslation();
   const currentIsLoss = isNumber(price24hChange) ? price24hChange < 0 : false;
   const priceText = `$${formatPrice(price)}`;
-  const priceValueFontSize = Math.max(
-    PRICE_VALUE_MIN_FONT_SIZE,
-    PRICE_VALUE_BASE_FONT_SIZE -
-      3 * Math.max(0, priceText.length - PRICE_VALUE_MAX_LENGTH),
-  );
+  const priceValue = useSharedValue(priceText);
+  const previousPriceTextRef = useRef(priceText);
+
+  useEffect(() => {
+    if (previousPriceTextRef.current === priceText) {
+      return;
+    }
+
+    previousPriceTextRef.current = priceText;
+    priceValue.value = priceText;
+  }, [priceText, priceValue]);
+
   const percentChangeText = useMemo(() => {
     const changeValue = isNumber(price24hChange)
       ? formatUsdValue(price24hChange * price)
@@ -59,9 +68,19 @@ const MarketInfo = ({
   return (
     <View style={styles.container}>
       <View style={styles.priceContainer}>
-        <Text style={[styles.priceValue, { fontSize: priceValueFontSize }]}>
-          {priceText}
-        </Text>
+        <AnimatedTickerText
+          value={priceValue}
+          maxLength={16}
+          duration={320}
+          lineHeight={46}
+          style={styles.priceValue}
+          fontSizeByLength={{
+            maxFontSize: PRICE_VALUE_BASE_FONT_SIZE,
+            minFontSize: PRICE_VALUE_MIN_FONT_SIZE,
+            threshold: PRICE_VALUE_MAX_LENGTH,
+            step: 3,
+          }}
+        />
         <View style={styles.priceChangeContainer}>
           <Text
             style={[
@@ -178,5 +197,4 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     position: 'relative',
   },
-  priceChangeBalance: {},
 }));

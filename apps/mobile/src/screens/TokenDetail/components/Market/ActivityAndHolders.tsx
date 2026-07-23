@@ -201,9 +201,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   content: {
     marginTop: 12,
   },
-  activityContent: {
-    borderWidth: 1,
-  },
   hideContent: {
     opacity: 0,
     zIndex: -1,

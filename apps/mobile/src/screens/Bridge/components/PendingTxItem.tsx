@@ -88,6 +88,7 @@ const getStepIndicatorStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   indicatorArrow: {
     marginHorizontal: 6,
@@ -987,7 +988,6 @@ export const BridgePendingTxItem = ({
   userAddress: string;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getItemStyles });
-  const { t } = useTranslation();
   const sheetRef = useRef<AppBottomSheetModal>(null);
   const [data, setData] = useState<BridgeTxHistoryItem | null>(null);
 
@@ -1234,40 +1234,10 @@ export const BridgePendingTxItem = ({
 
   return (
     <>
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          gap: 10,
-          paddingTop: 12,
-          marginHorizontal: 20,
-        }}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colors2024['neutral-line'],
-            height: 1,
-          }}
-        />
-        <View
-          style={{
-            width: 3,
-            height: 3,
-            borderRadius: 9999,
-            backgroundColor: colors2024['neutral-info'],
-          }}
-        />
-        <View
-          style={{
-            height: 1,
-            flex: 1,
-            backgroundColor: colors2024['neutral-line'],
-          }}
-        />
+      <View style={styles.header}>
+        <View style={styles.dottedLine} />
+        <View style={styles.dot} />
+        <View style={styles.dottedLine} />
       </View>
       <TouchableOpacity style={styles.card} onPress={openDetail}>
         <View style={styles.tokenRow}>
@@ -1278,7 +1248,9 @@ export const BridgePendingTxItem = ({
             size={24}
             innerChainStyle={styles.innerChainStyle}
           />
-          <Text style={styles.tokenText}>{getTokenSymbol(data.fromToken)}</Text>
+          <Text style={styles.tokenText} numberOfLines={1} ellipsizeMode="tail">
+            {getTokenSymbol(data.fromToken)}
+          </Text>
           <Text style={styles.arrowText}>→</Text>
           <AssetAvatar
             logo={data.toToken?.logo_url}
@@ -1287,7 +1259,9 @@ export const BridgePendingTxItem = ({
             size={24}
             innerChainStyle={styles.innerChainStyle}
           />
-          <Text style={styles.tokenText}>{getTokenSymbol(data.toToken)}</Text>
+          <Text style={styles.tokenText} numberOfLines={1} ellipsizeMode="tail">
+            {getTokenSymbol(data.toToken)}
+          </Text>
         </View>
 
         <StepStatusIndicator
@@ -1322,19 +1296,38 @@ export const BridgePendingTxItem = ({
 };
 
 const getItemStyles = createGetStyles2024(({ colors2024 }) => ({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingTop: 12,
+    marginHorizontal: 22,
+  },
+  dottedLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors2024['neutral-line'],
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors2024['neutral-info'],
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingRight: 0,
+    gap: 12,
     paddingVertical: 14,
     borderRadius: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 22,
   },
   tokenRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   tokenText: {
     color: colors2024['neutral-title-1'],
@@ -1343,6 +1336,8 @@ const getItemStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '700',
     marginLeft: 6,
+    flexShrink: 1,
+    minWidth: 0,
   },
   arrowText: {
     marginHorizontal: 8,

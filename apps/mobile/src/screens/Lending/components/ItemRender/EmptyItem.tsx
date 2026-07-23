@@ -166,14 +166,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     textAlign: 'right',
   },
-  headerMySupplies: {
-    width: 80,
-    marginLeft: 8,
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    textAlign: 'right',
-  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -221,12 +213,5 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-  },
-  yourSupplied: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
   },
 }));

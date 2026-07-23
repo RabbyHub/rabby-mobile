@@ -123,6 +123,57 @@ export function syncWhitelistRecords(
   });
 }
 
+export function reorderWhitelistRecords(
+  currentRecords: WhitelistRecordLike[] = [],
+  nextAddresses: string[],
+) {
+  if (!Array.isArray(currentRecords) || !Array.isArray(nextAddresses)) {
+    throw new Error('Invalid whitelist order');
+  }
+
+  const current = currentRecords.map(recordLike => {
+    const record = toWhitelistRecord(recordLike);
+    if (!record) {
+      throw new Error('Invalid whitelist order');
+    }
+    return typeof recordLike !== 'string' &&
+      recordLike.address === record.address
+      ? recordLike
+      : record;
+  });
+  const currentAddresses = current.map(record => record.address);
+  const next = nextAddresses.map(address => {
+    if (typeof address !== 'string' || !address) {
+      throw new Error('Invalid whitelist order');
+    }
+
+    return address.toLowerCase();
+  });
+
+  const currentSet = new Set(currentAddresses);
+  const nextSet = new Set(next);
+
+  if (
+    currentAddresses.length !== next.length ||
+    currentSet.size !== currentAddresses.length ||
+    nextSet.size !== next.length ||
+    currentAddresses.some(address => !nextSet.has(address)) ||
+    next.some(address => !currentSet.has(address))
+  ) {
+    throw new Error('Invalid whitelist order');
+  }
+
+  const currentMap = current.reduce<Record<string, WhitelistRecord>>(
+    (result, record) => {
+      result[record.address] = record;
+      return result;
+    },
+    {},
+  );
+
+  return next.map(address => currentMap[address]);
+}
+
 export function sortWhitelistRecords(
   records: WhitelistRecord[] = [],
   resolvedAddedAtByAddress: Record<string, number | null | undefined> = {},
@@ -148,38 +199,6 @@ export function sortWhitelistRecords(
 
     if (rightAddedAt != null) {
       return 1;
-    }
-
-    return left.address.localeCompare(right.address);
-  });
-}
-
-export function sortWhitelistRecordsForSend(
-  records: WhitelistRecord[] = [],
-  resolvedAddedAtByAddress: Record<string, number | null | undefined> = {},
-) {
-  const normalizedRecords = normalizeWhitelistRecords(records);
-
-  return [...normalizedRecords].sort((left, right) => {
-    const leftAddedAt =
-      left.addedAt ?? resolvedAddedAtByAddress[left.address] ?? null;
-    const rightAddedAt =
-      right.addedAt ?? resolvedAddedAtByAddress[right.address] ?? null;
-
-    if (leftAddedAt == null && rightAddedAt == null) {
-      return left.address.localeCompare(right.address);
-    }
-
-    if (leftAddedAt == null) {
-      return -1;
-    }
-
-    if (rightAddedAt == null) {
-      return 1;
-    }
-
-    if (leftAddedAt !== rightAddedAt) {
-      return leftAddedAt - rightAddedAt;
     }
 
     return left.address.localeCompare(right.address);

@@ -419,9 +419,6 @@ export function WatchlistContent({
 
 const getStyle = createGetStyles2024(
   ({ isLight, colors2024, safeAreaInsets }) => ({
-    container: {
-      flex: 1,
-    },
     header: {
       height: 8,
     },
@@ -463,16 +460,6 @@ const getStyle = createGetStyles2024(
     },
     bottomPadding: {
       height: 160,
-    },
-    skeletonBlock: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
-      width: '100%',
-      height: 74,
-      padding: 0,
-      borderRadius: 16,
-      marginTop: 8,
     },
     topEmpty: {
       marginTop: 26,

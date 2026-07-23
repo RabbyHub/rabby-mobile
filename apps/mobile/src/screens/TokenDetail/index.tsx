@@ -531,13 +531,6 @@ const getStyle = createGetStyles2024(ctx => {
     listHeader: {
       marginHorizontal: -12,
     },
-    headerRightContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerAccountSwitcher: {
-      marginRight: 12,
-    },
     bottomContainer: {
       width: '100%',
       height:
