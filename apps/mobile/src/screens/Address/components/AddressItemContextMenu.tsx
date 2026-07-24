@@ -1,19 +1,20 @@
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { aliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import {
   ContextMenuView,
   MenuAction,
+  MenuConfig,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
-import { useGetBinaryMode } from '@/hooks/theme';
+import { KeyringAccountWithAlias, storeApiAccounts } from '@/hooks/account';
+import { apisTheme } from '@/hooks/theme';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { keyBy } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import React from 'react';
 import { useDeleteAccountModal } from '../useDeleteAccountModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
+import i18n from '@/utils/i18n';
 
 const MenuIcons = {
   copyDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png'),
@@ -36,37 +37,21 @@ interface Props {
 export const AddressItemContextMenu: React.FC<Props> = props => {
   const { account, children, actions, preViewBorderRadius = 20 } = props;
   const removeAccount = useDeleteAccountModal();
-  const editAliasName = useAliasNameEditModal();
 
-  const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
-    disableAutoFetch: true,
-  });
-  const pinned = useMemo(
-    () =>
-      pinAddresses.some(
+  const getMenuConfig = (): MenuConfig => {
+    const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+    const pinned = storeApiAccounts
+      .getPinAddresses()
+      .some(
         e =>
           addressUtils.isSameAddress(e.address, account.address) &&
           e.brandName === account.brandName,
-      ),
-    [pinAddresses, account],
-  );
-
-  const handlePinned = useCallback(() => {
-    togglePinAddressAsync({
-      address: account.address,
-      brandName: account.brandName,
-      nextPinned: !pinned,
-    });
-  }, [togglePinAddressAsync, account.address, account.brandName, pinned]);
-
-  const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const menuActionDict = React.useMemo(() => {
-    return keyBy(
+      );
+    const menuActionDict = keyBy(
       (
         [
           {
-            title: t('page.whitelist.copyAddress'),
+            title: i18n.t('page.whitelist.copyAddress'),
             icon: isDarkTheme ? MenuIcons.copyDark : MenuIcons.copy,
             androidIconName: 'ic_rabby_menu_copy',
             key: 'copy',
@@ -81,8 +66,8 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
           },
           {
             title: pinned
-              ? t('page.addressDetail.addressListScreen.unpin')
-              : t('page.addressDetail.addressListScreen.pin'),
+              ? i18n.t('page.addressDetail.addressListScreen.unpin')
+              : i18n.t('page.addressDetail.addressListScreen.pin'),
             icon: pinned
               ? isDarkTheme
                 ? MenuIcons.unpinDark
@@ -95,16 +80,24 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
               : 'ic_rabby_menu_pin',
             key: 'pin',
             action() {
-              handlePinned();
+              storeApiAccounts
+                .togglePinAddressAsync({
+                  address: account.address,
+                  brandName: account.brandName,
+                  nextPinned: !pinned,
+                })
+                .catch(error => {
+                  console.error('Toggle pinned address failed:', error);
+                });
             },
           },
           {
-            title: t('page.addressDetail.addressListScreen.edit'),
+            title: i18n.t('page.addressDetail.addressListScreen.edit'),
             icon: isDarkTheme ? MenuIcons.editDark : MenuIcons.edit,
             androidIconName: 'ic_rabby_menu_edit',
             key: 'edit',
             action() {
-              editAliasName.show(account);
+              aliasNameEditModal.show(account);
             },
           },
           // {
@@ -119,7 +112,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
           //   },
           // },
           {
-            title: t('page.addressDetail.addressListScreen.delete'),
+            title: i18n.t('page.addressDetail.addressListScreen.delete'),
             icon: isDarkTheme ? MenuIcons.deleteDark : MenuIcons.delete,
             key: 'delete',
             androidIconName: 'ic_rabby_menu_delete',
@@ -128,7 +121,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
               removeAccount({
                 account,
                 onFinished: () => {
-                  toast.success(t('global.Deleted'));
+                  toast.success(i18n.t('global.Deleted'));
                 },
               });
             },
@@ -137,30 +130,18 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
       ).filter(Boolean),
       item => item.key,
     );
-  }, [
-    t,
-    isDarkTheme,
-    editAliasName,
-    account,
-    removeAccount,
-    pinned,
-    handlePinned,
-  ]);
 
-  const menuActions = React.useMemo(() => {
-    return actions
-      .map(key => {
-        return menuActionDict[key];
-      })
-      .filter(v => v) as MenuAction[];
-  }, [actions, menuActionDict]);
+    return {
+      menuTitle: account.address,
+      menuActions: actions
+        .map(key => menuActionDict[key])
+        .filter(v => v) as MenuAction[],
+    };
+  };
 
   return (
     <ContextMenuView
-      menuConfig={{
-        menuTitle: account.address,
-        menuActions: menuActions,
-      }}
+      getMenuConfig={getMenuConfig}
       preViewBorderRadius={preViewBorderRadius}
       triggerProps={{ action: 'longPress' }}>
       {children}

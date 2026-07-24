@@ -3,9 +3,8 @@ import {
   type MenuAction,
   type MenuConfig,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { useGetBinaryMode } from '@/hooks/theme';
-import React, { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { apisTheme } from '@/hooks/theme';
+import React from 'react';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -17,6 +16,7 @@ import {
   isUserTokenPinnedInMemory,
   toggleUserTokenPinned,
 } from '@/hooks/useTokenSettings';
+import i18n from '@/utils/i18n';
 
 interface Props {
   token: TokenItem;
@@ -29,11 +29,11 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   const { children, token, type, needToTokenMarketInfo, isCustomTestnetToken } =
     props;
 
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     toggleUserTokenPinned(token);
-  }, [token]);
+  };
 
-  const gotoTokenDetail = useCallback(() => {
+  const gotoTokenDetail = () => {
     Keyboard.dismiss();
     const currentAccount = storeApiAccountsSwitcher.getSceneAccountInfo({
       forScene: 'MakeTransactionAbout',
@@ -54,17 +54,16 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       account: currentAccount,
       isCustomTestnetToken,
     });
-  }, [isCustomTestnetToken, needToTokenMarketInfo, token, type]);
+  };
 
-  const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const getMenuConfig = useCallback((): MenuConfig => {
+  const getMenuConfig = (): MenuConfig => {
     const isPinned = isUserTokenPinnedInMemory(token);
+    const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
     const menuActions: MenuAction[] = [
       {
         title: isPinned
-          ? t('page.tokenDetail.action.unfavorite')
-          : t('page.tokenDetail.action.favorite'),
+          ? i18n.t('page.tokenDetail.action.unfavorite')
+          : i18n.t('page.tokenDetail.action.favorite'),
         icon: isPinned
           ? isDarkTheme
             ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
@@ -81,7 +80,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
         },
       },
       {
-        title: t('component.TokenSelector.contextMenu.viewDetail'),
+        title: i18n.t('component.TokenSelector.contextMenu.viewDetail'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
@@ -98,14 +97,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
         ? menuActions.filter(action => action.key === 'detail')
         : menuActions,
     };
-  }, [
-    gotoTokenDetail,
-    handlePress,
-    isCustomTestnetToken,
-    isDarkTheme,
-    t,
-    token,
-  ]);
+  };
 
   return (
     <ContextMenuView

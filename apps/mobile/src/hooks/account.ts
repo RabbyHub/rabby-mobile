@@ -272,6 +272,7 @@ export const storeApiAccounts = {
   },
   fetchAccounts: accountStore.fetchAccounts,
   removeAccount: accountStore.removeAccount,
+  togglePinAddressAsync: accountStore.togglePinAddressAsync,
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
