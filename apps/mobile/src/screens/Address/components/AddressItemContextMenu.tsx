@@ -34,9 +34,15 @@ interface Props {
   preViewBorderRadius?: number;
   actions: ('copy' | 'pin' | 'edit' | 'delete')[];
 }
-export const AddressItemContextMenu: React.FC<Props> = props => {
+type RemoveAccount = ReturnType<typeof useDeleteAccountModal>;
+
+const AddressItemContextMenuInner: React.FC<
+  Props & {
+    removeAccount?: RemoveAccount;
+  }
+> = props => {
   const { account, children, actions, preViewBorderRadius = 20 } = props;
-  const removeAccount = useDeleteAccountModal();
+  const { removeAccount } = props;
 
   const getMenuConfig = (): MenuConfig => {
     const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
@@ -118,7 +124,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
             androidIconName: 'ic_rabby_menu_delete',
             destructive: true,
             action() {
-              removeAccount({
+              removeAccount?.({
                 account,
                 onFinished: () => {
                   toast.success(i18n.t('global.Deleted'));
@@ -147,4 +153,20 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
       {children}
     </ContextMenuView>
   );
+};
+
+const AddressItemContextMenuWithDelete: React.FC<Props> = props => {
+  const removeAccount = useDeleteAccountModal();
+
+  return (
+    <AddressItemContextMenuInner {...props} removeAccount={removeAccount} />
+  );
+};
+
+export const AddressItemContextMenu: React.FC<Props> = props => {
+  if (props.actions.includes('delete')) {
+    return <AddressItemContextMenuWithDelete {...props} />;
+  }
+
+  return <AddressItemContextMenuInner {...props} />;
 };
