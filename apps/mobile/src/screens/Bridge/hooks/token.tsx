@@ -48,6 +48,7 @@ import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/deposi
 import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
+import { createBridgeInitializationController } from '../bridgeInitialization';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
@@ -215,6 +216,8 @@ export const useBridge = (
     active,
   );
   const [toChain, toToken, setToToken, switchToChain] = useToken('to', active);
+  const latestFromChainRef = useRef(fromChain);
+  latestFromChainRef.current = fromChain;
 
   // 标记是否已经初始化过 fromChain，避免重复初始化
   const isFromChainInitializedRef = useRef(false);
@@ -224,6 +227,7 @@ export const useBridge = (
   // 包装 switchFromChain，更新初始化标记
   const wrappedSwitchFromChain = useCallback(
     (chain?: CHAINS_ENUM, resetToken?: boolean) => {
+      latestFromChainRef.current = chain;
       if (chain) {
         isFromChainInitializedRef.current = true;
       }
@@ -243,9 +247,11 @@ export const useBridge = (
     [switchToChain],
   );
 
-  if (active && !toChain && toToken) {
-    wrappedSwitchToChain();
-  }
+  useEffect(() => {
+    if (active && !toChain && toToken) {
+      setToToken(undefined);
+    }
+  }, [active, setToToken, toChain, toToken]);
 
   const [amount, setAmount] = useState('');
 
@@ -282,50 +288,6 @@ export const useBridge = (
     () => active && inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
     [active, inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
-
-  const getRecommendToChain = async (chain: CHAINS_ENUM) => {
-    if (userAddress) {
-      // const getRemoteRecommendChain = async () => {
-      //   const data = await openapi.getRecommendBridgeToChain({
-      //     from_chain_id: findChainByEnum(chain)!.serverId,
-      //   });
-      //   switchToChain(findChainByServerID(data.to_chain_id)?.enum);
-      // };
-      const getRemoteRecommendChain = async () => {
-        const data = await openapi.getRecommendBridgeToChain({
-          from_chain_id: findChainByEnum(chain)!.serverId,
-        });
-        return findChainByServerID(data.to_chain_id)?.enum;
-      };
-
-      const getBridgeHistory = async () => {
-        const latestTx = await openapi.getBridgeHistoryList({
-          user_addr: userAddress,
-          start: 0,
-          limit: 1,
-          is_all: true,
-        });
-        return latestTx?.history_list?.[0]?.to_token;
-      };
-
-      const [remoteChain, latestToToken] = await Promise.all([
-        getRemoteRecommendChain(),
-        getBridgeHistory(),
-      ]);
-
-      if (latestToToken) {
-        const lastBridgeChain = findChainByServerID(latestToToken.chain);
-        if (lastBridgeChain && lastBridgeChain.enum !== chain) {
-          wrappedSwitchToChain(lastBridgeChain.enum);
-          setToToken(latestToToken);
-        } else {
-          wrappedSwitchToChain(remoteChain);
-        }
-      } else {
-        wrappedSwitchToChain(remoteChain);
-      }
-    }
-  };
 
   const { value: isSameToken, loading: isSameTokenLoading } =
     useAsync(async () => {
@@ -372,58 +334,6 @@ export const useBridge = (
       >
     >();
   const navState = route.params;
-
-  // init from token and chain
-  const hasAppliedInitialFromRouteRef = useRef(false);
-  useEffect(() => {
-    if (!active || hasAppliedInitialFromRouteRef.current) {
-      return;
-    }
-    hasAppliedInitialFromRouteRef.current = true;
-    if (!navState?.chainEnum || !navState?.tokenId) {
-      return;
-    }
-
-    const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
-    wrappedSwitchFromChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
-    setFromToken({
-      ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
-      id: navState?.tokenId,
-    });
-  }, [
-    active,
-    navState?.chainEnum,
-    navState?.tokenId,
-    setFromToken,
-    wrappedSwitchFromChain,
-  ]);
-
-  // init to token and chain
-  const hasAppliedInitialToRouteRef = useRef(false);
-  useEffect(() => {
-    if (!active || hasAppliedInitialToRouteRef.current) {
-      return;
-    }
-    hasAppliedInitialToRouteRef.current = true;
-    if (!navState?.toChainEnum || !navState?.toTokenId) {
-      return;
-    }
-
-    const chainItem = findChainByEnum(navState?.toChainEnum, {
-      fallback: true,
-    });
-    wrappedSwitchToChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
-    setToToken({
-      ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
-      id: navState?.toTokenId,
-    });
-  }, [
-    active,
-    navState?.toChainEnum,
-    navState?.toTokenId,
-    setToToken,
-    wrappedSwitchToChain,
-  ]);
 
   useEffect(() => {
     if (
@@ -1213,95 +1123,184 @@ export const useBridge = (
     console.error('quotesError', quotesError);
   }
 
-  const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch
-  const initChainByCache = useCallback(async () => {
+  const initializationControllerRef = useRef(
+    createBridgeInitializationController(),
+  );
+  const initializationKey = JSON.stringify({
+    account: currentAccount?.address?.toLowerCase() || '',
+    chainEnum: navState?.chainEnum || '',
+    tokenId: navState?.tokenId?.toLowerCase() || '',
+    toChainEnum: navState?.toChainEnum || '',
+    toTokenId: navState?.toTokenId?.toLowerCase() || '',
+  });
+
+  useEffect(() => {
     if (!active) {
       return;
     }
-    initIdRef.current += 1;
-    const currentFetchId = initIdRef.current;
-    const { firstChain } = await fetchOrderedChainList({
-      address: currentAccount?.address,
-      supportChains: supportedChains,
-    });
-    if (initIdRef.current !== currentFetchId) {
+
+    const controller = initializationControllerRef.current;
+    const run = controller.begin(initializationKey);
+    if (!run) {
       return;
     }
-    const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
-    setAmount('');
-    setSlider(0);
-    setUseSlider(false);
-    setIsDraggingSlider(false);
-    // 只有在没有导航状态且未初始化时才设置 chain
-    if (!navState?.chainEnum && !isFromChainInitializedRef.current) {
-      console.log('initChainByCache - setting initial chain:', firstChainEnum);
-      wrappedSwitchFromChain(firstChainEnum);
-    }
-    const getRemoteRecommendChain = async () => {
-      if (initIdRef.current === currentFetchId) {
-        const data = await openapi.getRecommendBridgeToChain({
-          from_chain_id: findChainByEnum(firstChainEnum)!.serverId,
+
+    const canCommit = () => controller.isCurrent(run);
+
+    const initializeBridge = async () => {
+      setAmount('');
+      setSlider(0);
+      setUseSlider(false);
+      setIsDraggingSlider(false);
+
+      let effectiveFromChain = latestFromChainRef.current;
+      const routeFromChain = navState?.chainEnum
+        ? findChainByEnum(navState.chainEnum, { fallback: true })?.enum ||
+          CHAINS_ENUM.ETH
+        : undefined;
+      const routeToChain = navState?.toChainEnum
+        ? findChainByEnum(navState.toChainEnum, { fallback: true })?.enum ||
+          CHAINS_ENUM.ETH
+        : undefined;
+
+      if (routeFromChain && canCommit()) {
+        wrappedSwitchFromChain(routeFromChain, false);
+        setFromToken({
+          ...getChainDefaultToken(routeFromChain),
+          id: navState?.tokenId || getChainDefaultToken(routeFromChain).id,
         });
-        // 只有在未初始化时才设置 to chain
-        if (
-          initIdRef.current === currentFetchId &&
-          !isToChainInitializedRef.current
-        ) {
-          console.log(
-            'initChainByCache - setting initial to chain:',
-            findChainByServerID(data.to_chain_id)?.enum,
-          );
-          wrappedSwitchToChain(findChainByServerID(data.to_chain_id)?.enum);
+        effectiveFromChain = routeFromChain;
+      } else if (!isFromChainInitializedRef.current) {
+        let firstChainEnum = CHAINS_ENUM.ETH;
+        try {
+          const { firstChain } = await fetchOrderedChainList({
+            address: currentAccount?.address,
+            supportChains: supportedChains,
+          });
+          firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
+        } catch (error) {
+          console.error('Bridge fetchOrderedChainList error', error);
+        }
+
+        if (!canCommit()) {
+          return;
+        }
+
+        if (!isFromChainInitializedRef.current) {
+          wrappedSwitchFromChain(firstChainEnum);
+          effectiveFromChain = firstChainEnum;
+        } else {
+          effectiveFromChain = latestFromChainRef.current;
         }
       }
-    };
-    if (userAddress) {
-      const latestTx = await openapi.getBridgeHistoryList({
-        user_addr: userAddress,
-        start: 0,
-        limit: 1,
-        is_all: true,
-      });
-      if (initIdRef.current !== currentFetchId) {
+
+      if (routeToChain && canCommit()) {
+        wrappedSwitchToChain(routeToChain, false);
+        setToToken({
+          ...getChainDefaultToken(routeToChain),
+          id: navState?.toTokenId || getChainDefaultToken(routeToChain).id,
+        });
         return;
       }
-      const latestToToken = latestTx?.history_list?.[0]?.to_token;
-      if (latestToToken && !isToChainInitializedRef.current) {
-        const lastBridgeChain = findChainByServerID(latestToToken.chain);
-        if (lastBridgeChain && lastBridgeChain.enum !== firstChainEnum) {
-          wrappedSwitchToChain(lastBridgeChain.enum);
-          setToToken(latestToToken);
-        } else {
-          await getRemoteRecommendChain();
-        }
-      } else if (!isToChainInitializedRef.current) {
-        await getRemoteRecommendChain();
+
+      if (
+        !canCommit() ||
+        !userAddress ||
+        !effectiveFromChain ||
+        isToChainInitializedRef.current
+      ) {
+        return;
       }
-    }
+
+      try {
+        const latestTx = await openapi.getBridgeHistoryList({
+          user_addr: userAddress,
+          start: 0,
+          limit: 1,
+          is_all: true,
+        });
+        if (
+          !canCommit() ||
+          latestFromChainRef.current !== effectiveFromChain ||
+          isToChainInitializedRef.current
+        ) {
+          return;
+        }
+
+        const latestToToken = latestTx?.history_list?.[0]?.to_token;
+        const latestToChain = latestToToken
+          ? findChainByServerID(latestToToken.chain)?.enum
+          : undefined;
+        if (
+          latestToToken &&
+          latestToChain &&
+          latestToChain !== effectiveFromChain
+        ) {
+          wrappedSwitchToChain(latestToChain);
+          setToToken(latestToToken);
+          return;
+        }
+      } catch (error) {
+        console.error('Bridge getBridgeHistoryList error', error);
+      }
+
+      if (
+        !canCommit() ||
+        latestFromChainRef.current !== effectiveFromChain ||
+        isToChainInitializedRef.current
+      ) {
+        return;
+      }
+
+      try {
+        const data = await openapi.getRecommendBridgeToChain({
+          from_chain_id: findChainByEnum(effectiveFromChain)!.serverId,
+        });
+        if (
+          !canCommit() ||
+          latestFromChainRef.current !== effectiveFromChain ||
+          isToChainInitializedRef.current
+        ) {
+          return;
+        }
+
+        wrappedSwitchToChain(findChainByServerID(data.to_chain_id)?.enum);
+      } catch (error) {
+        console.error('Bridge getRecommendBridgeToChain error', error);
+      }
+    };
+
+    initializeBridge()
+      .then(() => {
+        controller.complete(run);
+      })
+      .catch(error => {
+        controller.fail(run);
+        console.error('Bridge initialization error', error);
+      });
+
+    return () => {
+      controller.cancel(run);
+    };
   }, [
     active,
     currentAccount?.address,
     fetchOrderedChainList,
-    supportedChains,
-    setSlider,
-    setUseSlider,
-    setIsDraggingSlider,
+    initializationKey,
     navState?.chainEnum,
-    wrappedSwitchFromChain,
-    userAddress,
-    wrappedSwitchToChain,
+    navState?.tokenId,
+    navState?.toChainEnum,
+    navState?.toTokenId,
+    setFromToken,
+    setIsDraggingSlider,
+    setSlider,
     setToToken,
-    isFromChainInitializedRef,
-    isToChainInitializedRef,
+    setUseSlider,
+    supportedChains,
+    userAddress,
+    wrappedSwitchFromChain,
+    wrappedSwitchToChain,
   ]);
-
-  useEffect(() => {
-    if (active) {
-      initChainByCache();
-      return;
-    }
-    initIdRef.current += 1;
-  }, [active, initChainByCache]);
 
   useEffect(() => {
     setQuotesList([]);
