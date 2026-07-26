@@ -17,6 +17,7 @@ export async function waitForScenarioAssertion(
   context: RegressionScenarioExecutionContext,
   assertion: string,
   timeoutMs = 30_000,
+  afterTimestamp = 0,
 ) {
   const startedAt = Date.now();
 
@@ -32,6 +33,7 @@ export async function waitForScenarioAssertion(
       return (
         item.runId === context.command.runId &&
         item.name === 'assertion' &&
+        item.timestamp >= afterTimestamp &&
         data?.assertion === assertion &&
         data?.passed === true
       );
