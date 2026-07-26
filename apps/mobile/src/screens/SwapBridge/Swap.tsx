@@ -338,7 +338,6 @@ const Swap = ({
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
-    finishedQuotes,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
 
@@ -2073,7 +2072,6 @@ const Swap = ({
                   currentQuote={activeProvider}
                   // placeholder={t('page.swap.search-by-name-address')}
                   excludeTokens={payToken?.id ? [payToken?.id] : undefined}
-                  finishedQuotes={finishedQuotes}
                 />
               </View>
               <BridgeSwitchBtn

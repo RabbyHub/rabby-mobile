@@ -56,6 +56,7 @@ import {
   type PersistedSwapSelectionStatus,
 } from './initialSelection';
 import { useSwapService } from '../swapServiceDependencies';
+import { mergeSwapQuoteBatch } from './quoteResultBatch';
 
 export const enableInsufficientQuote = true;
 const FREE_TOKEN_PAIR_AUTO_SLIPPAGE = '0.1';
@@ -291,10 +292,12 @@ const useTokenInfo = ({
   userAddress,
   chain,
   defaultToken,
+  enabled,
 }: {
   userAddress?: string;
   chain?: CHAINS_ENUM;
   defaultToken?: TokenItem;
+  enabled: boolean;
 }) => {
   const tokenRefreshId = useTokenRefreshId();
   const [token, setToken] = useState<
@@ -302,7 +305,7 @@ const useTokenInfo = ({
   >(defaultToken);
 
   const { value, loading, error } = useAsync(async () => {
-    if (userAddress && token?.id && chain) {
+    if (enabled && userAddress && token?.id && chain) {
       const data = await openapi.getToken(
         userAddress,
         findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
@@ -310,21 +313,24 @@ const useTokenInfo = ({
       );
       return { ...data, tokenId: token.id };
     }
-  }, [tokenRefreshId, userAddress, token?.id, chain]);
+  }, [enabled, tokenRefreshId, userAddress, token?.id, chain]);
 
   useDebounce(
     () => {
-      if (value && !error && !loading) {
+      if (enabled && value && !error && !loading) {
         setToken(value);
       }
     },
     300,
-    [value, error, loading],
+    [enabled, value, error, loading],
   );
 
-  if (error) {
-    console.error('token info error', chain, token?.symbol, token?.id, error);
-  }
+  useEffect(() => {
+    if (enabled && error) {
+      console.error('token info error', chain, token?.symbol, token?.id, error);
+    }
+  }, [chain, enabled, error, token?.id, token?.symbol]);
+
   return [token, setToken] as const;
 };
 
@@ -562,11 +568,13 @@ export const useTokenPair = ({
     userAddress,
     chain,
     defaultToken: defaultSelectedFromToken || getChainDefaultToken(chain),
+    enabled: active,
   });
   const [receiveToken, _setReceiveToken] = useTokenInfo({
     userAddress,
     chain,
     defaultToken: defaultSelectedToToken,
+    enabled: active,
   });
 
   const {
@@ -928,28 +936,56 @@ export const useTokenPair = ({
   }, [autoSlippage, autoSlippageValue, setSlippage]);
 
   const [quoteList, setQuotesList] = useState<TDexQuoteData[]>([]);
+  const pendingQuoteUpdatesRef = useRef(new Map<string, TDexQuoteData>());
+  const quoteFlushFrameRef = useRef<number | null>(null);
+  const fetchIdRef = useRef(0);
+
+  const cancelPendingQuoteFlush = useCallback(() => {
+    if (quoteFlushFrameRef.current !== null) {
+      cancelAnimationFrame(quoteFlushFrameRef.current);
+      quoteFlushFrameRef.current = null;
+    }
+    pendingQuoteUpdatesRef.current.clear();
+  }, []);
+
+  const flushPendingQuoteUpdates = useCallback((id: number) => {
+    quoteFlushFrameRef.current = null;
+    if (id !== fetchIdRef.current) {
+      pendingQuoteUpdatesRef.current.clear();
+      return;
+    }
+
+    const updates = Array.from(pendingQuoteUpdatesRef.current.values());
+    pendingQuoteUpdatesRef.current.clear();
+    if (updates.length) {
+      setQuotesList(current => mergeSwapQuoteBatch(current, updates));
+    }
+  }, []);
+
+  const schedulePendingQuoteFlush = useCallback(
+    (id: number) => {
+      if (quoteFlushFrameRef.current !== null) {
+        return;
+      }
+      quoteFlushFrameRef.current = requestAnimationFrame(() => {
+        flushPendingQuoteUpdates(id);
+      });
+    },
+    [flushPendingQuoteUpdates],
+  );
 
   const setQuote = useCallback(
     (id: number) => (quote: TDexQuoteData) => {
       if (id === fetchIdRef.current) {
-        setQuotesList(e => {
-          const index = e.findIndex(q => q.name === quote.name);
-          const v: TDexQuoteData = { ...quote, loading: false };
-          if (index === -1) {
-            return [...e, v];
-          }
-          e[index] = v;
-          return [...e];
-        });
+        pendingQuoteUpdatesRef.current.set(quote.name, quote);
+        schedulePendingQuoteFlush(id);
       }
     },
-    [],
+    [schedulePendingQuoteFlush],
   );
 
-  const fetchIdRef = useRef(0);
   const [quoteRequestId, setQuoteRequestId] = useState(0);
   const { getAllQuotes, validSlippage } = useQuoteMethods();
-  const [finishedQuotes, setFinishedQuotes] = useState(0);
 
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteRequestFinished, setQuoteRequestFinished] = useState(true);
@@ -1012,11 +1048,7 @@ export const useTokenPair = ({
           payAmount,
           fee: feeRate,
           setQuote: setQuote(currentFetchId),
-          onFinishedQuote: () => {
-            if (currentFetchId === fetchIdRef.current) {
-              setFinishedQuotes(e => e + 1);
-            }
-          },
+          onFinishedQuote: () => undefined,
           inSufficient,
           account,
         });
@@ -1028,10 +1060,10 @@ export const useTokenPair = ({
         // wait for progress animation finish
         setTimeout(() => {
           if (params[0] === fetchIdRef.current) {
+            flushPendingQuoteUpdates(params[0]);
             setQuoteRequestFinished(true);
             setQuoteLoading(false);
             setShowMoreVisible(true);
-            setFinishedQuotes(0);
           }
         }, 300);
       },
@@ -1051,18 +1083,26 @@ export const useTokenPair = ({
     }
     fetchIdRef.current += 1;
     cancelGetAllQuotes();
-  }, [active, cancelGetAllQuotes]);
+    cancelPendingQuoteFlush();
+  }, [active, cancelGetAllQuotes, cancelPendingQuoteFlush]);
+
+  useEffect(
+    () => () => {
+      cancelPendingQuoteFlush();
+    },
+    [cancelPendingQuoteFlush],
+  );
 
   useLayoutEffect(() => {
     if (!active) {
       return;
     }
     fetchIdRef.current += 1;
+    cancelPendingQuoteFlush();
     setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
     setActiveProvider(undefined);
     setBestQuoteDex('');
-    setFinishedQuotes(0);
     if (canRunQuoteRequest) {
       setQuoteRequestFinished(false);
       setQuoteLoading(true);
@@ -1087,6 +1127,7 @@ export const useTokenPair = ({
     // auto slippage
     slippage,
     autoSlippage,
+    cancelPendingQuoteFlush,
   ]);
 
   const canUpdateActiveProvider = canRunQuoteRequest;
@@ -1180,16 +1221,24 @@ export const useTokenPair = ({
     receiveToken?.decimals,
   ]);
 
-  if (quotesError) {
-    console.error('quotesError', quotesError);
-  }
+  useEffect(() => {
+    if (quotesError) {
+      console.error('quotesError', quotesError);
+    }
+  }, [quotesError]);
 
   const {
     value: slippageValidInfo,
     // error: slippageValidError,
     loading: slippageValidLoading,
   } = useAsync(async () => {
-    if (chain && Number(slippage) && payToken?.id && receiveToken?.id) {
+    if (
+      active &&
+      chain &&
+      Number(slippage) &&
+      payToken?.id &&
+      receiveToken?.id
+    ) {
       return validSlippage({
         chain,
         slippage,
@@ -1197,7 +1246,7 @@ export const useTokenPair = ({
         receiveTokenId: receiveToken?.id,
       });
     }
-  }, [slippage, chain, payToken?.id, receiveToken?.id, refreshId]);
+  }, [active, slippage, chain, payToken?.id, receiveToken?.id, refreshId]);
 
   const { setSwapSortIncludeGasFee } = useSwapSettings();
 
@@ -1261,13 +1310,14 @@ export const useTokenPair = ({
     }
   }, [searchObj?.chain, searchObj?.payTokenId, setPayToken, setReceiveToken]);
 
+  const hasReportedSwapEntryRef = useRef(false);
   useEffect(() => {
-    // if (rbiSource) {
-    stats.report('enterSwapDescPage', {
-      // refer: rbiSource,
-    });
-    // }
-  }, []);
+    if (!active || hasReportedSwapEntryRef.current) {
+      return;
+    }
+    hasReportedSwapEntryRef.current = true;
+    stats.report('enterSwapDescPage', {});
+  }, [active]);
 
   /* slider */
   const [slider, setSlider] = useState<number>(0);
@@ -1487,7 +1537,6 @@ export const useTokenPair = ({
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
 
-    finishedQuotes,
     autoSuggestSlippage,
   };
 };

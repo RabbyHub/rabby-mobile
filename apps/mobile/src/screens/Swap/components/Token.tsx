@@ -52,7 +52,6 @@ interface SwapTokenItemProps {
   inSufficient?: boolean;
   valueLoading?: boolean;
   currentQuote?: QuoteProvider;
-  finishedQuotes?: number;
   skeletonLoading?: boolean;
   disabled?: boolean;
 }
