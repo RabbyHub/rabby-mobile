@@ -356,7 +356,13 @@ export interface FeeProps {
   symbol?: string;
 }
 
-export const useTokenPair = ({ account }: { account: Account }) => {
+export const useTokenPair = ({
+  account,
+  active = true,
+}: {
+  account: Account;
+  active?: boolean;
+}) => {
   const swapService = useSwapService();
   const userAddress = account?.address;
   const refreshId = useAtomValue(refreshIdAtom);
@@ -653,6 +659,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     supportChains: SWAP_SUPPORT_CHAINS,
     onChainInitializedAsync: setInitialChainFromList,
     account,
+    enabled: active,
   });
 
   useEffect(() => {
@@ -733,7 +740,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
     useAsync(async () => {
-      if (!userAddress || !isTempoSwapChain) {
+      if (!active || !userAddress || !isTempoSwapChain) {
         return null;
       }
 
@@ -742,7 +749,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         address: userAddress,
         chainId: chainInfo.id,
       });
-    }, [account, userAddress, chainInfo.id, refreshId, isTempoSwapChain]);
+    }, [
+      account,
+      active,
+      userAddress,
+      chainInfo.id,
+      refreshId,
+      isTempoSwapChain,
+    ]);
 
   const payTokenIsTempoFeeToken = useMemo(() => {
     if (
@@ -771,13 +785,16 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   );
 
   const { value: gasList, loading: isGasMarketLoading } = useAsync(() => {
+    if (!active) {
+      return Promise.resolve(undefined);
+    }
     return apiProvider.gasMarketV2(
       {
         chainId: chainInfo.serverId,
       },
       account,
     );
-  }, [chainInfo?.serverId]);
+  }, [account, active, chainInfo?.serverId]);
 
   const normalGasPrice = useMemo(
     () => gasList?.find(e => e.level === 'normal')?.price,
@@ -889,6 +906,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
   const canRunQuoteRequest =
+    active &&
     !!(
       userAddress &&
       payToken?.id &&
@@ -896,7 +914,8 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate
-    ) && canRequestQuote;
+    ) &&
+    canRequestQuote;
 
   const [autoSuggestSlippage, setAutoSuggestSlippage] =
     useState(autoSlippageValue);
@@ -1019,11 +1038,25 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     },
   );
 
-  const { run: runGetAllQuotes } = useDebounceFn(_runGetAllQuotes, {
-    wait: rateLimit ? 5000 : 300,
-  });
+  const { run: runGetAllQuotes, cancel: cancelGetAllQuotes } = useDebounceFn(
+    _runGetAllQuotes,
+    {
+      wait: rateLimit ? 5000 : 300,
+    },
+  );
+
+  useEffect(() => {
+    if (active) {
+      return;
+    }
+    fetchIdRef.current += 1;
+    cancelGetAllQuotes();
+  }, [active, cancelGetAllQuotes]);
 
   useLayoutEffect(() => {
+    if (!active) {
+      return;
+    }
     fetchIdRef.current += 1;
     setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
@@ -1039,6 +1072,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       setQuoteLoading(false);
     }
   }, [
+    active,
     canRunQuoteRequest,
     canRequestQuote,
     refreshId,
@@ -1351,6 +1385,9 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   useFocusEffect(
     useCallback(() => {
+      if (!active) {
+        return;
+      }
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
@@ -1365,7 +1402,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       return () => {
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
       };
-    }, [setTokenRefreshId]),
+    }, [active, setTokenRefreshId]),
   );
 
   const onSetAutoSlippage = useCallback(() => {
@@ -1377,10 +1414,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     fromTokenId: payToken?.id || '',
     toTokenId: receiveToken?.id || '',
     onSetAutoSlippage,
+    enabled: active,
   });
 
   useClearMiniGasStateEffect({
     chainServerId: findChainByEnum(chain)?.serverId || '',
+    enabled: active,
   });
 
   return {

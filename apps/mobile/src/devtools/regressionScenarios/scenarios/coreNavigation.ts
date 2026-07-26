@@ -22,6 +22,7 @@ import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
+import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -553,10 +554,15 @@ async function openSwapBridge(
 
   if (context.command.action === 'start') {
     const secondTab = requestedTab === 'swap' ? 'bridge' : 'swap';
-    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
-      activeTab: secondTab,
-    });
-    await context.waitForRoute(RootNames.SwapBridge);
+    await runRegressionScenarioComponentAction(
+      context.command.runId,
+      `swap-bridge.activate-${secondTab}`,
+    );
+    await waitForScenarioAssertion(
+      context,
+      `swap-bridge-${secondTab}-active`,
+      10_000,
+    );
     context.report('assertion', {
       assertion: 'swap-bridge-second-tab-opened',
       passed: true,

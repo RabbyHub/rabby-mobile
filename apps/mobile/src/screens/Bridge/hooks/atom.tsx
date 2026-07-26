@@ -10,6 +10,7 @@ const bridgeSupportedChainsAtom = atom(
 );
 
 const aggregatorsListAtom = atom<BridgeAggregator[]>([]);
+const inactiveAggregatorsListAtom = atom<BridgeAggregator[]>([]);
 
 aggregatorsListAtom.onMount = setAtom => {
   openapi.getBridgeAggregatorList().then(s => {
@@ -21,4 +22,5 @@ aggregatorsListAtom.onMount = setAtom => {
 export const useBridgeSupportedChains = () =>
   useAtomValue(bridgeSupportedChainsAtom);
 
-export const useAggregatorsList = () => useAtomValue(aggregatorsListAtom);
+export const useAggregatorsList = (enabled = true) =>
+  useAtomValue(enabled ? aggregatorsListAtom : inactiveAggregatorsListAtom);

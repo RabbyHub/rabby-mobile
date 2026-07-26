@@ -34,7 +34,6 @@ import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
 import { getGasTokenBalance } from '@/core/apis/transactions';
-import { useMount } from 'ahooks';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -127,7 +126,7 @@ const tokenRefreshIdAtom = atom(0);
 const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
 const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
 
-const useToken = (type: 'from' | 'to') => {
+const useToken = (type: 'from' | 'to', active: boolean) => {
   const refreshId = useTokenRefreshId();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -174,7 +173,7 @@ const useToken = (type: 'from' | 'to') => {
     );
 
   const { value, loading, error } = useAsync(async () => {
-    if (userAddress && token?.id && chain) {
+    if (active && userAddress && token?.id && chain) {
       const data = await openapi.getToken(
         userAddress,
         findChainByEnum(chain)!.serverId,
@@ -182,22 +181,25 @@ const useToken = (type: 'from' | 'to') => {
       );
       return { ...data, tokenId: token.id };
     }
-  }, [refreshId, userAddress, token?.id, chain]);
+  }, [active, refreshId, userAddress, token?.id, chain]);
 
   useDebounce(
     () => {
-      if (value && !error && !loading) {
+      if (active && value && !error && !loading) {
         setToken(value);
       }
     },
     300,
-    [value, error, loading],
+    [active, value, error, loading],
   );
 
   return [chain, token, setToken, switchChain] as const;
 };
 
-export const useBridge = (isForMultipleAddress?: boolean) => {
+export const useBridge = (
+  isForMultipleAddress?: boolean,
+  { active = true }: { active?: boolean } = {},
+) => {
   const setTokenRefreshId = useSetTokenRefreshId();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -208,9 +210,11 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const setRefreshId = useSetRefreshId();
 
-  const [fromChain, fromToken, setFromToken, switchFromChain] =
-    useToken('from');
-  const [toChain, toToken, setToToken, switchToChain] = useToken('to');
+  const [fromChain, fromToken, setFromToken, switchFromChain] = useToken(
+    'from',
+    active,
+  );
+  const [toChain, toToken, setToToken, switchToChain] = useToken('to', active);
 
   // 标记是否已经初始化过 fromChain，避免重复初始化
   const isFromChainInitializedRef = useRef(false);
@@ -239,7 +243,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [switchToChain],
   );
 
-  if (!toChain && toToken) {
+  if (active && !toChain && toToken) {
     wrappedSwitchToChain();
   }
 
@@ -275,8 +279,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [fromToken, toToken],
   );
   const canRequestQuote = useMemo(
-    () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
-    [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
+    () => active && inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
+    [active, inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
 
   const getRecommendToChain = async (chain: CHAINS_ENUM) => {
@@ -325,7 +329,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const { value: isSameToken, loading: isSameTokenLoading } =
     useAsync(async () => {
-      if (fromChain && fromToken?.id && toChain && toToken?.id) {
+      if (active && fromChain && fromToken?.id && toChain && toToken?.id) {
         try {
           const data = await openapi.isSameBridgeToken({
             from_chain_id: findChainByEnum(fromChain)!.serverId,
@@ -339,13 +343,13 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         }
       }
       return false;
-    }, [fromChain, fromToken?.id, toChain, toToken?.id]);
+    }, [active, fromChain, fromToken?.id, toChain, toToken?.id]);
 
   useEffect(() => {
-    if (!isSameTokenLoading && slippageObj.autoSlippage) {
+    if (active && !isSameTokenLoading && slippageObj.autoSlippage) {
       slippageObj.setSlippage(isSameToken ? '0.5' : '1');
     }
-  }, [slippageObj, isSameToken, isSameTokenLoading]);
+  }, [active, slippageObj, isSameToken, isSameTokenLoading]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount!,
@@ -370,7 +374,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const navState = route.params;
 
   // init from token and chain
-  useMount(() => {
+  const hasAppliedInitialFromRouteRef = useRef(false);
+  useEffect(() => {
+    if (!active || hasAppliedInitialFromRouteRef.current) {
+      return;
+    }
+    hasAppliedInitialFromRouteRef.current = true;
     if (!navState?.chainEnum || !navState?.tokenId) {
       return;
     }
@@ -381,10 +390,21 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
       id: navState?.tokenId,
     });
-  });
+  }, [
+    active,
+    navState?.chainEnum,
+    navState?.tokenId,
+    setFromToken,
+    wrappedSwitchFromChain,
+  ]);
 
   // init to token and chain
-  useMount(() => {
+  const hasAppliedInitialToRouteRef = useRef(false);
+  useEffect(() => {
+    if (!active || hasAppliedInitialToRouteRef.current) {
+      return;
+    }
+    hasAppliedInitialToRouteRef.current = true;
     if (!navState?.toChainEnum || !navState?.toTokenId) {
       return;
     }
@@ -397,10 +417,17 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
       id: navState?.toTokenId,
     });
-  });
+  }, [
+    active,
+    navState?.toChainEnum,
+    navState?.toTokenId,
+    setToToken,
+    wrappedSwitchToChain,
+  ]);
 
   useEffect(() => {
     if (
+      !active ||
       !toChain ||
       toToken?.id ||
       navState?.toTokenId ||
@@ -411,6 +438,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
     setToToken(getChainDefaultToken(toChain));
   }, [
+    active,
     navState?.toChainEnum,
     navState?.toTokenId,
     setToToken,
@@ -526,7 +554,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   }, []);
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
-  const aggregatorsList = useAggregatorsList();
+  const aggregatorsList = useAggregatorsList(active);
 
   const [bestQuoteId, setBestQuoteId] = useState<
     | {
@@ -566,7 +594,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
     useAsync(async () => {
-      if (!currentAccount?.address || !isTempoBridgeChain) {
+      if (!active || !currentAccount?.address || !isTempoBridgeChain) {
         return null;
       }
 
@@ -578,18 +606,22 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     }, [
       currentAccount,
       currentAccount?.address,
+      active,
       chainInfo.id,
       isTempoBridgeChain,
     ]);
 
   const { value: gasList, loading: isGasMarketLoading } = useAsync(() => {
+    if (!active) {
+      return Promise.resolve(undefined);
+    }
     return apiProvider.gasMarketV2(
       {
         chainId: chainInfo.serverId,
       },
       currentAccount!,
     );
-  }, [chainInfo?.serverId]);
+  }, [active, chainInfo?.serverId, currentAccount]);
 
   const [passGasPrice, setUseGasPrice] = useState(false);
   const isMaxRef = useRef(false);
@@ -787,6 +819,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const [quoteRequestId, setQuoteRequestId] = useState(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
+      if (!active) {
+        return;
+      }
       fetchIdRef.current += 1;
       const currentFetchId = fetchIdRef.current;
       setQuoteRequestId(currentFetchId);
@@ -1020,6 +1055,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         }
       }
     }, [
+      active,
       canRequestQuote,
       aggregatorsList,
       refreshId,
@@ -1036,6 +1072,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const [pending, setPending] = useState(false);
 
   useLayoutEffect(() => {
+    if (!active) {
+      return;
+    }
     fetchIdRef.current += 1;
     setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
@@ -1043,6 +1082,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     setSelectedBridgeQuote(undefined);
     setPending(false);
   }, [
+    active,
     userAddress,
     fromToken?.id,
     toToken?.id,
@@ -1088,11 +1128,19 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [getQuoteList],
   );
 
+  useEffect(() => {
+    if (active) {
+      return;
+    }
+    fetchIdRef.current += 1;
+    cancelDebounce();
+  }, [active, cancelDebounce]);
+
   const hasPendingBridgeQuote = pending || quoteLoading;
   const bridgeQuoteRequestFinished = !hasPendingBridgeQuote;
 
   useEffect(() => {
-    if (!toToken?.id) {
+    if (!active || !toToken?.id) {
       return;
     }
 
@@ -1150,6 +1198,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     // toToken price is needed by the early-display USD guard.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    active,
     quoteList,
     bridgeQuoteRequestFinished,
     fromToken,
@@ -1166,6 +1215,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch
   const initChainByCache = useCallback(async () => {
+    if (!active) {
+      return;
+    }
     initIdRef.current += 1;
     const currentFetchId = initIdRef.current;
     const { firstChain } = await fetchOrderedChainList({
@@ -1227,6 +1279,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       }
     }
   }, [
+    active,
     currentAccount?.address,
     fetchOrderedChainList,
     supportedChains,
@@ -1243,8 +1296,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   ]);
 
   useEffect(() => {
-    initChainByCache();
-  }, [initChainByCache]);
+    if (active) {
+      initChainByCache();
+      return;
+    }
+    initIdRef.current += 1;
+  }, [active, initChainByCache]);
 
   useEffect(() => {
     setQuotesList([]);
@@ -1253,12 +1310,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
 
   useEffect(() => {
-    if (!canRequestQuote) {
+    if (active && !canRequestQuote) {
       setQuotesList([]);
       setRecommendFromToken(undefined);
       setSelectedBridgeQuote(undefined);
     }
-  }, [canRequestQuote, setSelectedBridgeQuote]);
+  }, [active, canRequestQuote, setSelectedBridgeQuote]);
 
   useEffect(() => {
     if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
@@ -1277,6 +1334,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   useFocusEffect(
     useCallback(() => {
+      if (!active) {
+        return;
+      }
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
@@ -1291,11 +1351,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       return () => {
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
       };
-    }, [setTokenRefreshId]),
+    }, [active, setTokenRefreshId]),
   );
 
   useClearMiniGasStateEffect({
     chainServerId: findChainByEnum(fromChain)?.serverId || '',
+    enabled: active,
   });
 
   const selectedBridgeQuoteLoaded =
