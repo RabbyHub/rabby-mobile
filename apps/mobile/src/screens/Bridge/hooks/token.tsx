@@ -49,6 +49,11 @@ import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 import { createBridgeInitializationController } from '../bridgeInitialization';
+import {
+  getBridgeAllowanceRequestKey,
+  getOrCreateBridgeAllowanceRequest,
+  mergeBridgeQuoteBatch,
+} from '../utils/quoteResultBatch';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
@@ -726,6 +731,56 @@ export const useBridge = (
   ]);
 
   const fetchIdRef = useRef(0);
+  const pendingQuoteUpdatesRef = useRef(new Map<string, SelectedBridgeQuote>());
+  const quoteFlushFrameRef = useRef<number | null>(null);
+
+  const cancelPendingQuoteFlush = useCallback(() => {
+    if (quoteFlushFrameRef.current !== null) {
+      cancelAnimationFrame(quoteFlushFrameRef.current);
+      quoteFlushFrameRef.current = null;
+    }
+    pendingQuoteUpdatesRef.current.clear();
+  }, []);
+
+  const flushPendingQuoteUpdates = useCallback((id: number) => {
+    if (quoteFlushFrameRef.current !== null) {
+      cancelAnimationFrame(quoteFlushFrameRef.current);
+      quoteFlushFrameRef.current = null;
+    }
+    if (id !== fetchIdRef.current) {
+      pendingQuoteUpdatesRef.current.clear();
+      return;
+    }
+
+    const updates = Array.from(pendingQuoteUpdatesRef.current.values());
+    pendingQuoteUpdatesRef.current.clear();
+    if (updates.length) {
+      setQuotesList(current => mergeBridgeQuoteBatch(current, updates));
+    }
+  }, []);
+
+  const scheduleQuoteUpdates = useCallback(
+    (id: number, quotes: SelectedBridgeQuote[]) => {
+      if (!quotes.length || id !== fetchIdRef.current) {
+        return;
+      }
+
+      quotes.forEach(quote => {
+        pendingQuoteUpdatesRef.current.set(
+          `${quote.aggregator.id}:${quote.bridge.id}`,
+          quote,
+        );
+      });
+      if (quoteFlushFrameRef.current === null) {
+        quoteFlushFrameRef.current = requestAnimationFrame(() => {
+          quoteFlushFrameRef.current = null;
+          flushPendingQuoteUpdates(id);
+        });
+      }
+    },
+    [flushPendingQuoteUpdates],
+  );
+
   const [quoteRequestId, setQuoteRequestId] = useState(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
@@ -753,6 +808,7 @@ export const useBridge = (
         setQuotesList(e => e?.map(e => ({ ...e, loading: true })));
 
         const originData: Omit<BridgeQuote, 'tx'>[] = [];
+        const allowanceRequestCache = new Map<string, Promise<string>>();
 
         const getQuoteWithApproval = async (
           quote: Omit<BridgeQuote, 'tx'>,
@@ -769,13 +825,25 @@ export const useBridge = (
           } else if (!quote.approve_contract_id) {
             tokenApproved = true;
           } else {
-            allowance = await getERC20Allowance(
-              fromToken.chain,
-              fromToken.id,
-              quote.approve_contract_id,
-              currentAccount.address,
-              currentAccount,
+            const allowanceKey = getBridgeAllowanceRequestKey({
+              chainId: fromToken.chain,
+              tokenId: fromToken.id,
+              spender: quote.approve_contract_id,
+              account: currentAccount.address,
+            });
+            const allowanceRequest = getOrCreateBridgeAllowanceRequest(
+              allowanceRequestCache,
+              allowanceKey,
+              () =>
+                getERC20Allowance(
+                  fromToken.chain,
+                  fromToken.id,
+                  quote.approve_contract_id!,
+                  currentAccount.address,
+                  currentAccount,
+                ),
             );
+            allowance = await allowanceRequest;
             tokenApproved = new BigNumber(allowance).gte(
               new BigNumber(amount).times(10 ** fromToken.decimals),
             );
@@ -797,24 +865,6 @@ export const useBridge = (
             shouldTwoStepApprove,
             shouldApproveToken: !tokenApproved,
           };
-        };
-
-        const upsertQuotes = (quotes: SelectedBridgeQuote[]) => {
-          if (!quotes.length || currentFetchId !== fetchIdRef.current) {
-            return;
-          }
-
-          setQuotesList(prev => {
-            const filteredArr = prev.filter(
-              item =>
-                !quotes.some(
-                  quote =>
-                    item.aggregator.id === quote.aggregator.id &&
-                    item.bridge.id === quote.bridge.id,
-                ),
-            );
-            return [...filteredArr, ...quotes];
-          });
         };
 
         const getQUoteV2 = async (alternativeToken?: TokenItem) =>
@@ -894,7 +944,8 @@ export const useBridge = (
                 ) || [];
 
               if (validData.length && currentFetchId === fetchIdRef.current) {
-                upsertQuotes(
+                scheduleQuoteUpdates(
+                  currentFetchId,
                   validData.map(quote => ({ ...quote, loading: true })),
                 );
 
@@ -906,7 +957,7 @@ export const useBridge = (
                       currentFetchId === fetchIdRef.current &&
                       Number(amount) > 0
                     ) {
-                      upsertQuotes([nextQuote]);
+                      scheduleQuoteUpdates(currentFetchId, [nextQuote]);
                     }
                   }),
                 );
@@ -927,6 +978,7 @@ export const useBridge = (
         );
 
         if (currentFetchId === fetchIdRef.current) {
+          flushPendingQuoteUpdates(currentFetchId);
           setPending(false);
 
           if (data.length < 1) {
@@ -977,6 +1029,8 @@ export const useBridge = (
       amount,
       slippageObj.slippage,
       isDraggingSlider,
+      flushPendingQuoteUpdates,
+      scheduleQuoteUpdates,
     ]);
 
   const [pending, setPending] = useState(false);
@@ -986,6 +1040,7 @@ export const useBridge = (
       return;
     }
     fetchIdRef.current += 1;
+    cancelPendingQuoteFlush();
     setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
     setRecommendFromToken(undefined);
@@ -1000,6 +1055,7 @@ export const useBridge = (
     toChain,
     amount,
     slippageObj.slippage,
+    cancelPendingQuoteFlush,
     setSelectedBridgeQuote,
   ]);
 
@@ -1043,8 +1099,16 @@ export const useBridge = (
       return;
     }
     fetchIdRef.current += 1;
+    cancelPendingQuoteFlush();
     cancelDebounce();
-  }, [active, cancelDebounce]);
+  }, [active, cancelDebounce, cancelPendingQuoteFlush]);
+
+  useEffect(
+    () => () => {
+      cancelPendingQuoteFlush();
+    },
+    [cancelPendingQuoteFlush],
+  );
 
   const hasPendingBridgeQuote = pending || quoteLoading;
   const bridgeQuoteRequestFinished = !hasPendingBridgeQuote;
@@ -1119,9 +1183,11 @@ export const useBridge = (
     setSelectedBridgeQuote,
   ]);
 
-  if (quotesError) {
-    console.error('quotesError', quotesError);
-  }
+  useEffect(() => {
+    if (quotesError) {
+      console.error('quotesError', quotesError);
+    }
+  }, [quotesError]);
 
   const initializationControllerRef = useRef(
     createBridgeInitializationController(),
