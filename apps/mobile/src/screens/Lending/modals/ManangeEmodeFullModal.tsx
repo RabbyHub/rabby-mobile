@@ -469,6 +469,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
               onFinished={() => handlePressManageEMode()}
               disabled={disableDirectSignBtn}
               type="aave"
+              iconColor={colors2024['neutral-contrast']}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               syncUnlockTime
               account={currentAccount}
