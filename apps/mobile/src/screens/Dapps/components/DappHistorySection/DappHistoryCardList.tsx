@@ -48,7 +48,7 @@ export const DappHistoryCardList = ({
             <ContextMenuView
               triggerProps={{ action: 'longPress' }}
               preViewBorderRadius={20}
-              menuConfig={{
+              getMenuConfig={() => ({
                 menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
                 menuActions: [
                   {
@@ -61,7 +61,7 @@ export const DappHistoryCardList = ({
                     },
                   },
                 ],
-              }}>
+              })}>
               <TouchableOpacity
                 onPress={() => {
                   onPress?.(item);

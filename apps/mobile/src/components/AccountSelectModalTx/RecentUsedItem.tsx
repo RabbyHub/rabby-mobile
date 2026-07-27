@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
-import { useTheme2024 } from '@/hooks/theme';
+import { apisTheme, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import {
@@ -12,25 +12,24 @@ import {
   Image,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC } from '@/assets/icons/send';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { fromNow } from '@/utils/time';
-import { useTranslation } from 'react-i18next';
 import {
   ContextMenuView,
-  MenuAction,
+  type MenuAction,
+  type MenuConfig,
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { aliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { touchedFeedback } from '@/utils/touch';
 import { Text } from '@/components/Typography';
 import { SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS } from './layout';
+import i18n from '@/utils/i18n';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -49,13 +48,11 @@ export const RecentUsedItem = ({
   onPress,
 }: IProps) => {
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const showCexInfo = useMemo(() => {
     return cexInfo?.id && cexInfo.is_deposit;
   }, [cexInfo?.id, cexInfo?.is_deposit]);
-  const { t } = useTranslation();
-
   useLayoutEffect(() => {
     if (cexInfo) {
       return;
@@ -80,13 +77,12 @@ export const RecentUsedItem = ({
     return timeStamp ? `${fromNow(timeStamp, undefined, true)} ago` : '';
   }, [timeStamp]);
 
-  const editAliasName = useAliasNameEditModal();
-
-  const menuActions = React.useMemo(() => {
-    return [
+  const getMenuConfig = (): MenuConfig => {
+    const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+    const menuActions: MenuAction[] = [
       {
-        title: t('page.whitelist.copyAddress'),
-        icon: !isLight
+        title: i18n.t('page.whitelist.copyAddress'),
+        icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
         androidIconName: 'ic_rabby_menu_copy',
@@ -97,18 +93,23 @@ export const RecentUsedItem = ({
         },
       },
       {
-        title: t('page.addressDetail.addressListScreen.edit'),
-        icon: !isLight
+        title: i18n.t('page.addressDetail.addressListScreen.edit'),
+        icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
         androidIconName: 'ic_rabby_menu_edit',
         key: 'edit',
         action() {
-          editAliasName.show(account);
+          aliasNameEditModal.show(account);
         },
       },
-    ] as MenuAction[];
-  }, [account, editAliasName, isLight, t]);
+    ];
+
+    return {
+      menuTitle: account.address,
+      menuActions,
+    };
+  };
 
   const children = (
     <AddressItemShadowView style={[styles.shadow, style]}>
@@ -117,7 +118,9 @@ export const RecentUsedItem = ({
         delayLongPress={200} // long press delay
         onPress={onPress}
         onLongPress={() => {
-          if (!enableMenu) return;
+          if (!enableMenu) {
+            return;
+          }
           touchedFeedback();
         }}>
         <Card style={StyleSheet.flatten([styles.card])}>
@@ -177,10 +180,7 @@ export const RecentUsedItem = ({
 
   return (
     <ContextMenuView
-      menuConfig={{
-        menuTitle: account.address,
-        menuActions: menuActions,
-      }}
+      getMenuConfig={getMenuConfig}
       preViewBorderRadius={SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS}
       triggerProps={{ action: 'longPress' }}>
       {children}

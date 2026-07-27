@@ -1,11 +1,15 @@
-import * as ContextMenu from 'zeego/src/context-menu';
-import { MenuTriggerProps } from 'zeego/src/menu';
+// Context menus are centralized here so app code cannot bypass open-time
+// action snapshots or the platform-specific native menu fixes.
+// eslint-disable-next-line no-restricted-imports
+import * as ContextMenu from '@rabby-wallet/zeego/context-menu';
+import { MenuTriggerProps } from '@rabby-wallet/zeego/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
 import { ImageSourcePropType, Platform } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
-import { useTheme2024 } from '@/hooks/theme';
+import { apisTheme } from '@/hooks/theme';
 import { useCallback, useRef } from 'react';
-import { MenuComponentRef } from '@react-native-menu/menu';
+// eslint-disable-next-line no-restricted-imports
+import { MenuComponentRef } from '@rabby-wallet/react-native-menu';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 // import { touchedFeedback } from '@/utils/touch';
@@ -26,20 +30,57 @@ export interface MenuAction {
   androidIconColor?: string;
 }
 
+export interface MenuConfig {
+  menuTitle?: string;
+  menuActions: MenuAction[];
+}
+
 type Props = {
-  menuConfig: {
-    menuTitle?: string;
-    menuActions: MenuAction[];
-  };
+  /**
+   * Read menu state only when the native menu opens. This avoids subscribing
+   * the trigger and its ancestors to state used exclusively by menu actions.
+   */
+  getMenuConfig: () => MenuConfig;
   preViewBorderRadius?: number;
   children: React.ReactElement<any>;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
   androidLongPressDuration?: number;
 } & ContextMenuContentProps;
 
+function renderMenuActions(config: MenuConfig) {
+  const { colors2024 } = apisTheme.getColors2024();
+  return config.menuActions.map(action => {
+    const defaultAndroidColor = action.destructive
+      ? colors2024['red-default']
+      : colors2024['neutral-body'];
+
+    return (
+      <ContextMenu.Item
+        androidTitleColor={action.titleColor || defaultAndroidColor}
+        destructive={action.destructive}
+        disabled={action.disabled}
+        key={action.key}
+        onSelect={action.action}>
+        <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
+
+        {IS_ANDROID ? (
+          <ContextMenu.ItemIcon
+            androidIcon={{
+              color: action.androidIconColor || defaultAndroidColor,
+            }}
+            androidIconName={action.androidIconName}
+          />
+        ) : (
+          <ContextMenu.ItemImage source={action.icon} />
+        )}
+      </ContextMenu.Item>
+    );
+  });
+}
+
 export const ContextMenuView: React.FC<Props> = ({
   children,
-  menuConfig,
+  getMenuConfig,
   loop = true,
   alignOffset = 5,
   avoidCollisions = true,
@@ -47,8 +88,6 @@ export const ContextMenuView: React.FC<Props> = ({
   preViewBorderRadius = 30,
   androidLongPressDuration = 350,
 }) => {
-  const { colors2024, isLight } = useTheme2024();
-
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
 
   const androidShowMenu = useCallback(() => {
@@ -59,11 +98,26 @@ export const ContextMenuView: React.FC<Props> = ({
   const longPressGesture = Gesture.LongPress()
     .minDuration(androidLongPressDuration)
     .runOnJS(false)
-    .onStart(e => {
+    .onStart(() => {
       runOnJS(androidShowMenu)();
     });
 
   const needUseGdOnAndroid = IS_ANDROID && triggerProps?.action === 'longPress';
+  const getDynamicMenuChildren = useCallback(() => {
+    const config = getMenuConfig();
+    return (
+      <>
+        {config.menuTitle ? (
+          <ContextMenu.Label>{config.menuTitle}</ContextMenu.Label>
+        ) : null}
+        {renderMenuActions(config)}
+      </>
+    );
+  }, [getMenuConfig]);
+
+  const previewTheme = IS_IOS_27_OR_ABOVE
+    ? apisTheme.getColors2024()
+    : undefined;
 
   return (
     <ContextMenu.Root
@@ -74,9 +128,9 @@ export const ContextMenuView: React.FC<Props> = ({
           // the transition into the native context-menu preview.
           ...(IS_IOS_27_OR_ABOVE
             ? {
-                backgroundColor: isLight
-                  ? colors2024['neutral-bg-1']
-                  : colors2024['neutral-bg-2'],
+                backgroundColor: previewTheme?.isLight
+                  ? previewTheme.colors2024['neutral-bg-1']
+                  : previewTheme?.colors2024['neutral-bg-2'],
               }
             : {}),
         },
@@ -100,41 +154,12 @@ export const ContextMenuView: React.FC<Props> = ({
       </ContextMenu.Trigger>
 
       <ContextMenu.Content
+        getChildren={getDynamicMenuChildren}
         loop={loop}
         alignOffset={alignOffset}
         avoidCollisions={avoidCollisions}
-        collisionPadding={10}>
-        {menuConfig.menuTitle && (
-          <ContextMenu.Label>{menuConfig.menuTitle}</ContextMenu.Label>
-        )}
-        {menuConfig.menuActions?.map(action => {
-          const defaultAndroidColor = action.destructive
-            ? colors2024['red-default']
-            : colors2024['neutral-body'];
-
-          return (
-            <ContextMenu.Item
-              androidTitleColor={action.titleColor || defaultAndroidColor}
-              destructive={action.destructive}
-              disabled={action.disabled}
-              key={action.key}
-              onSelect={action.action}>
-              <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
-
-              {IS_ANDROID ? (
-                <ContextMenu.ItemIcon
-                  androidIcon={{
-                    color: action.androidIconColor || defaultAndroidColor,
-                  }}
-                  androidIconName={action.androidIconName}
-                />
-              ) : (
-                <ContextMenu.ItemImage source={action.icon} />
-              )}
-            </ContextMenu.Item>
-          );
-        })}
-      </ContextMenu.Content>
+        collisionPadding={10}
+      />
     </ContextMenu.Root>
   );
 };
