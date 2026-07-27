@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleProp, ViewStyle, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -9,13 +9,14 @@ import Animated, {
   interpolate,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import Lottie, { AnimationObject } from 'lottie-react-native';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressCard } from '../AddressCard';
 import DefaultAnimation from '@/assets2024/animations/animation-create-success.min.json';
+import SeedCreateSuccessSVG from '@/assets/icons/address/seed-create-success.svg';
 
 export const customEase = Easing.bezier(0.42, 0, 0.58, 1);
 
@@ -24,6 +25,8 @@ export const DEFAULT_ANIMATION_CONFIG = {
   DURATION: 500,
   DELAY_AFTER_TEXT: 200,
 } as const;
+
+const LOTTIE_FALLBACK_TIMEOUT_MS = 5000;
 
 export interface AddressItem {
   address: string;
@@ -38,6 +41,7 @@ export interface WalletSuccessCardProps {
   style?: StyleProp<ViewStyle>;
   addressCardStyle?: StyleProp<ViewStyle>;
   autoPlay?: boolean;
+  lottieAutoPlay?: boolean;
   animationConfig?: typeof DEFAULT_ANIMATION_CONFIG;
 }
 
@@ -48,22 +52,71 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
   style,
   addressCardStyle,
   autoPlay = true,
+  lottieAutoPlay = true,
   animationConfig = DEFAULT_ANIMATION_CONFIG,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const isFocused = useIsFocused();
 
-  const textProgress = useSharedValue(0);
-  const addressProgress = useSharedValue(0);
+  const textProgress = useSharedValue(autoPlay ? 0 : 1);
+  const addressProgress = useSharedValue(autoPlay ? 0 : 1);
+  const [forceStaticLottie, setForceStaticLottie] = useState(false);
+  const lottieFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const lottieFallbackRef = useRef(false);
 
   const TEXT_START = animationConfig.INITIAL_DELAY;
   const ADDRESS_START =
     animationConfig.INITIAL_DELAY +
     animationConfig.DURATION +
     animationConfig.DELAY_AFTER_TEXT;
+  const clearLottieFallbackTimer = useCallback(() => {
+    if (lottieFallbackTimerRef.current !== null) {
+      clearTimeout(lottieFallbackTimerRef.current);
+      lottieFallbackTimerRef.current = null;
+    }
+  }, []);
+
+  const showLottieFallback = useCallback(() => {
+    lottieFallbackRef.current = true;
+    clearLottieFallbackTimer();
+    setForceStaticLottie(true);
+  }, [clearLottieFallbackTimer]);
+
+  const handleLottieFinish = useCallback(
+    (isCancelled: boolean) => {
+      if (isCancelled) {
+        showLottieFallback();
+        return;
+      }
+      clearLottieFallbackTimer();
+    },
+    [clearLottieFallbackTimer, showLottieFallback],
+  );
+
+  useEffect(() => {
+    clearLottieFallbackTimer();
+
+    if (!autoPlay || !isFocused || lottieFallbackRef.current) {
+      return;
+    }
+
+    lottieFallbackTimerRef.current = setTimeout(
+      showLottieFallback,
+      LOTTIE_FALLBACK_TIMEOUT_MS,
+    );
+
+    return clearLottieFallbackTimer;
+  }, [autoPlay, clearLottieFallbackTimer, isFocused, showLottieFallback]);
 
   useFocusEffect(
     useCallback(() => {
-      if (!autoPlay) return;
+      if (!autoPlay) {
+        textProgress.value = 1;
+        addressProgress.value = 1;
+        return;
+      }
 
       textProgress.value = 0;
       addressProgress.value = 0;
@@ -87,6 +140,8 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
       return () => {
         cancelAnimation(textProgress);
         cancelAnimation(addressProgress);
+        textProgress.value = 1;
+        addressProgress.value = 1;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [autoPlay]),
@@ -111,15 +166,23 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
     };
   });
 
+  const renderStaticLottie = forceStaticLottie || !isFocused || !autoPlay;
+
   return (
     <View style={[styles.container, style]}>
       <View style={styles.lottieContainer}>
-        <Lottie
-          source={lottieSource}
-          style={styles.lottie}
-          loop={false}
-          autoPlay
-        />
+        {renderStaticLottie ? (
+          <SeedCreateSuccessSVG width={80} height={80} />
+        ) : (
+          <Lottie
+            source={lottieSource}
+            style={styles.lottie}
+            loop={false}
+            autoPlay={autoPlay && lottieAutoPlay}
+            onAnimationFinish={handleLottieFinish}
+            onAnimationFailure={showLottieFallback}
+          />
+        )}
       </View>
 
       <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
@@ -165,6 +228,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 190,
     marginBottom: -32,
     marginTop: -12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   lottie: {
     width: '100%',
