@@ -32,7 +32,7 @@ import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components2024/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { useIsFocused, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
@@ -308,11 +308,13 @@ export const BridgeContent = ({
   disableHeaderRight = false,
   disableAccountSwitcherModal = false,
   diagnosticActive = false,
+  sceneActive = true,
 }: {
   isForMultipleAddress?: boolean;
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
   diagnosticActive?: boolean;
+  sceneActive?: boolean;
 }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -329,7 +331,7 @@ export const BridgeContent = ({
     runFetchLocalPendingTx,
     clearLocalPendingTxData,
     clearBridgeHistoryRedDot,
-  } = usePollBridgePendingNumber();
+  } = usePollBridgePendingNumber(10000, sceneActive);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -442,7 +444,7 @@ export const BridgeContent = ({
     quoteBlockedByClosedMarket,
     slider,
     onChangeSlider,
-  } = useBridge(isForMultipleAddress);
+  } = useBridge(isForMultipleAddress, { active: sceneActive });
 
   const isRegressionBridgePairMatched = useMemo(() => {
     const params = route.params;
@@ -482,6 +484,7 @@ export const BridgeContent = ({
 
   useEffect(() => {
     if (
+      !sceneActive ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'swap-bridge' ||
       regressionScenario.params.tab !== 'bridge' ||
@@ -577,6 +580,7 @@ export const BridgeContent = ({
     handleAmountChange,
     isRegressionBridgePairMatched,
     regressionScenario,
+    sceneActive,
     toToken,
   ]);
 
@@ -622,6 +626,10 @@ export const BridgeContent = ({
     [setQuotePollingPauseReason],
   );
 
+  useEffect(() => {
+    setQuotePollingPauseReason('scene-inactive', !sceneActive);
+  }, [sceneActive, setQuotePollingPauseReason]);
+
   const chains = useMemo(
     () => [toChain, fromChain].filter(e => !!e) as CHAINS_ENUM[],
     [toChain, fromChain],
@@ -632,7 +640,7 @@ export const BridgeContent = ({
     data: externalDapps,
     loading: externalDappsLoading,
     openTab: _openTab,
-  } = useExternalSwapBridgeDapps(chains, 'bridge');
+  } = useExternalSwapBridgeDapps(chains, 'bridge', sceneActive);
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
     const origin = safeGetOrigin(url);
@@ -987,13 +995,11 @@ export const BridgeContent = ({
     manual: true,
   });
 
-  const isFocused = useIsFocused();
-
   useEffect(() => {
-    if (isFocused) {
+    if (sceneActive) {
       refresh(e => e + 1);
     }
-  }, [isFocused, refresh]);
+  }, [sceneActive, refresh]);
 
   const runBuildBridgeTxsRef = useRef<
     ReturnType<typeof runBuildTxs> | undefined
@@ -1114,7 +1120,7 @@ export const BridgeContent = ({
   );
 
   useEffect(() => {
-    if (!isFocused) {
+    if (!sceneActive) {
       closeMiniSigner();
       return;
     }
@@ -1159,7 +1165,7 @@ export const BridgeContent = ({
     canShowDirectSubmit,
     closeMiniSigner,
     currentAccount?.address,
-    isFocused,
+    sceneActive,
     miniSignGa,
     prefetchMiniSigner,
     selectedBridgeQuoteBuildKey,
@@ -1352,6 +1358,7 @@ export const BridgeContent = ({
 
   useEffect(() => {
     if (
+      !sceneActive ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'swap-bridge' ||
       regressionScenario.params.tab !== 'bridge' ||
@@ -1391,6 +1398,7 @@ export const BridgeContent = ({
     quoteList?.length,
     quoteLoading,
     regressionScenario,
+    sceneActive,
     selectedBridgeQuote,
     toToken,
   ]);
@@ -1403,7 +1411,7 @@ export const BridgeContent = ({
       }
     };
 
-    if (shouldPauseMiniSignerEffects()) {
+    if (!sceneActive || shouldPauseMiniSignerEffects()) {
       return clearBuildTimer;
     }
     if (
@@ -1503,6 +1511,7 @@ export const BridgeContent = ({
     selectedBridgeQuoteBuildKey,
     selectedBridgeQuoteCanAutoPreExec,
     selectedBridgeQuoteIsManualQuote,
+    sceneActive,
     shouldPauseMiniSignerEffects,
   ]);
 

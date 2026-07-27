@@ -17,6 +17,10 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import {
+  useRegressionScenario,
+  useRegressionScenarioComponentAction,
+} from '@/devtools/regressionScenarios/react';
 
 import { Bridge } from './Bridge';
 import { BridgeHeader } from '../Bridge/components/BridgeHeader';
@@ -24,6 +28,7 @@ import Swap from './Swap';
 import { SwapHeader } from '../Swap/components/Header';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { withSwapService } from '../Swap/swapServiceDependencies';
+import { isSwapBridgeSceneActive } from './sceneActivation';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -168,6 +173,56 @@ function SwapBridgeScreenContent({
   const isScreenFocused = useIsFocused();
   const { styles } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const regressionScenario = useRegressionScenario<'SwapBridge'>();
+
+  const activateTabForRegression = useCallback(async (tab: SwapBridgeTab) => {
+    setActiveTab(tab);
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+  }, []);
+  const activateSwapForRegression = useCallback(
+    () => activateTabForRegression('swap'),
+    [activateTabForRegression],
+  );
+  const activateBridgeForRegression = useCallback(
+    () => activateTabForRegression('bridge'),
+    [activateTabForRegression],
+  );
+
+  useRegressionScenarioComponentAction(
+    'swap-bridge.activate-swap',
+    activateSwapForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'swap-bridge.activate-bridge',
+    activateBridgeForRegression,
+  );
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-bridge'
+    ) {
+      return;
+    }
+    regressionScenario.report('assertion', {
+      assertion: `swap-bridge-${activeTab}-active`,
+      passed: true,
+      activeTab,
+    });
+  }, [activeTab, regressionScenario]);
+
+  const swapSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'swap',
+    screenFocused: isScreenFocused,
+  });
+  const bridgeSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'bridge',
+    screenFocused: isScreenFocused,
+  });
 
   const handleTabPress = useCallback(
     (tab: SwapBridgeTab) => {
@@ -217,16 +272,18 @@ function SwapBridgeScreenContent({
           <Swap.ForMultipleAddress
             disableHeaderRight
             disableAccountSwitcherModal
+            sceneActive={swapSceneActive}
             diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'swap'
+              isNonProductionDiagnosticsEnabled && swapSceneActive
             }
           />
         ) : (
           <Swap
             disableHeaderRight
             disableAccountSwitcherModal
+            sceneActive={swapSceneActive}
             diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'swap'
+              isNonProductionDiagnosticsEnabled && swapSceneActive
             }
           />
         )}
@@ -241,16 +298,18 @@ function SwapBridgeScreenContent({
           <Bridge.ForMultipleAddress
             disableHeaderRight
             disableAccountSwitcherModal
+            sceneActive={bridgeSceneActive}
             diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'bridge'
+              isNonProductionDiagnosticsEnabled && bridgeSceneActive
             }
           />
         ) : (
           <Bridge
             disableHeaderRight
             disableAccountSwitcherModal
+            sceneActive={bridgeSceneActive}
             diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'bridge'
+              isNonProductionDiagnosticsEnabled && bridgeSceneActive
             }
           />
         )}

@@ -22,6 +22,7 @@ import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
+import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -36,6 +37,8 @@ const DEFAULT_FUNDED_TEST_CHAIN = CHAINS_ENUM.POLYGON;
 const DEFAULT_BRIDGE_TO_CHAIN = CHAINS_ENUM.ARBITRUM;
 const DEFAULT_TARGET_USD = '0.1';
 const DEFAULT_MAX_TOTAL_USD = '1';
+const MAX_SWAP_BRIDGE_PRESSURE_CYCLES = 20;
+const MAX_SELECTOR_PRESSURE_CYCLES = 5;
 const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
   1: 'home-assets-token-ready',
   2: 'home-assets-defi-ready',
@@ -67,6 +70,132 @@ function readTargetUsd(context: RegressionScenarioExecutionContext) {
     throw new Error('targetUsd must not exceed maxTotalUsd');
   }
   return { targetUsd, maxTotalUsd };
+}
+
+function readBoundedScenarioInteger({
+  context,
+  key,
+  fallback,
+  min,
+  max,
+}: {
+  context: RegressionScenarioExecutionContext;
+  key: string;
+  fallback: number;
+  min: number;
+  max: number;
+}) {
+  const raw = context.command.params[key];
+  if (raw === undefined) {
+    return fallback;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+    throw new Error(`${key} must be an integer between ${min} and ${max}`);
+  }
+  return parsed;
+}
+
+async function activateSwapBridgeTabForPressure(
+  context: RegressionScenarioExecutionContext,
+  tab: 'swap' | 'bridge',
+) {
+  const actionStartedAt = Date.now();
+  await runRegressionScenarioComponentAction(
+    context.command.runId,
+    `swap-bridge.activate-${tab}`,
+  );
+  await waitForScenarioAssertion(
+    context,
+    `swap-bridge-${tab}-active`,
+    10_000,
+    actionStartedAt,
+  );
+}
+
+async function exerciseTokenSelectorForPressure(
+  context: RegressionScenarioExecutionContext,
+  selector: 'swapFrom' | 'swapTo' | 'bridgeFrom' | 'bridgeTo',
+  settleMs: number,
+) {
+  const actionPrefix = `token-selector.${selector}`;
+  await runRegressionScenarioComponentAction(
+    context.command.runId,
+    `${actionPrefix}.open`,
+  );
+  await delay(settleMs);
+  await runRegressionScenarioComponentAction(
+    context.command.runId,
+    `${actionPrefix}.close`,
+  );
+  await delay(settleMs);
+}
+
+async function runSwapBridgePressure(
+  context: RegressionScenarioExecutionContext,
+) {
+  const cycles = readBoundedScenarioInteger({
+    context,
+    key: 'pressureCycles',
+    fallback: 0,
+    min: 0,
+    max: MAX_SWAP_BRIDGE_PRESSURE_CYCLES,
+  });
+  if (!cycles) {
+    return;
+  }
+
+  const selectorCycles = readBoundedScenarioInteger({
+    context,
+    key: 'selectorCycles',
+    fallback: 1,
+    min: 0,
+    max: MAX_SELECTOR_PRESSURE_CYCLES,
+  });
+  const settleMs = readBoundedScenarioInteger({
+    context,
+    key: 'pressureSettleMs',
+    fallback: 500,
+    min: 100,
+    max: 2_000,
+  });
+  const startedAt = Date.now();
+
+  for (let cycle = 1; cycle <= cycles; cycle += 1) {
+    for (const tab of ['swap', 'bridge'] as const) {
+      await activateSwapBridgeTabForPressure(context, tab);
+      for (
+        let selectorCycle = 0;
+        selectorCycle < selectorCycles;
+        selectorCycle += 1
+      ) {
+        await exerciseTokenSelectorForPressure(
+          context,
+          tab === 'swap' ? 'swapFrom' : 'bridgeFrom',
+          settleMs,
+        );
+        await exerciseTokenSelectorForPressure(
+          context,
+          tab === 'swap' ? 'swapTo' : 'bridgeTo',
+          settleMs,
+        );
+      }
+    }
+    context.report('perf-mark', {
+      mark: 'swap-bridge-pressure-cycle',
+      cycle,
+      elapsedMs: Date.now() - startedAt,
+    });
+  }
+
+  context.report('assertion', {
+    assertion: 'swap-bridge-pressure-complete',
+    passed: true,
+    cycles,
+    selectorCycles,
+    settleMs,
+    elapsedMs: Date.now() - startedAt,
+  });
 }
 
 function readScenarioChain(context: RegressionScenarioExecutionContext) {
@@ -538,6 +667,7 @@ async function openSwapBridge(
       'bridge-funded-dry-run-ready',
       90_000,
     );
+    await runSwapBridgePressure(context);
     return;
   }
 
@@ -553,16 +683,22 @@ async function openSwapBridge(
 
   if (context.command.action === 'start') {
     const secondTab = requestedTab === 'swap' ? 'bridge' : 'swap';
-    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
-      activeTab: secondTab,
-    });
-    await context.waitForRoute(RootNames.SwapBridge);
+    await runRegressionScenarioComponentAction(
+      context.command.runId,
+      `swap-bridge.activate-${secondTab}`,
+    );
+    await waitForScenarioAssertion(
+      context,
+      `swap-bridge-${secondTab}-active`,
+      10_000,
+    );
     context.report('assertion', {
       assertion: 'swap-bridge-second-tab-opened',
       passed: true,
       activeTab: secondTab,
     });
   }
+  await runSwapBridgePressure(context);
 }
 
 async function openSwapFunded(

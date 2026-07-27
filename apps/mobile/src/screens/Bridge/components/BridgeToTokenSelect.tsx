@@ -30,6 +30,7 @@ import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSh
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { Text } from '@/components/Typography';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -166,17 +167,26 @@ const BridgeToTokenSelect = ({
     });
   }, []);
 
-  const handleTokenSelectorClose = () => {
+  const handleTokenSelectorClose = useCallback(() => {
     setTokenSelectorVisible(false);
 
     setQueryConds(prev => ({
       ...prev,
     }));
-  };
+  }, [setTokenSelectorVisible]);
 
-  const handleSelectToken = () => {
+  const handleSelectToken = useCallback(() => {
     setTokenSelectorVisible(true);
-  };
+  }, [setTokenSelectorVisible]);
+
+  useRegressionScenarioComponentAction(
+    'token-selector.bridgeTo.open',
+    handleSelectToken,
+  );
+  useRegressionScenarioComponentAction(
+    'token-selector.bridgeTo.close',
+    handleTokenSelectorClose,
+  );
 
   useEffect(() => {
     setQueryConds(prev => ({

@@ -44,6 +44,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { isAddress } from 'viem';
 import { Text } from '@/components/Typography';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -264,6 +265,15 @@ const SwapToTokenSelect = ({
     resetQueryConds();
     setTokenSelectorVisible(true);
   }, [resetQueryConds, setTokenSelectorVisible]);
+
+  useRegressionScenarioComponentAction(
+    'token-selector.swapTo.open',
+    handleSelectToken,
+  );
+  useRegressionScenarioComponentAction(
+    'token-selector.swapTo.close',
+    handleTokenSelectorClose,
+  );
 
   useEffect(() => {
     setQueryConds(prev => ({ ...prev, chainServerId: chainId }));

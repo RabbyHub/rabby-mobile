@@ -349,12 +349,14 @@ const TokenSelect = ({
     setTokenSelectorVisible(true);
   }, [resetQueryConds, setTokenSelectorVisible]);
 
+  const regressionSelectorActionPrefix =
+    type === 'send' ? 'send-token-selector' : `token-selector.${type}`;
   useRegressionScenarioComponentAction(
-    'send-token-selector.open',
+    `${regressionSelectorActionPrefix}.open`,
     handleSelectToken,
   );
   useRegressionScenarioComponentAction(
-    'send-token-selector.close',
+    `${regressionSelectorActionPrefix}.close`,
     handleTokenSelectorClose,
   );
 
