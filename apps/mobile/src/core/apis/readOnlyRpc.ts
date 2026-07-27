@@ -1,8 +1,8 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { customRPCService } from '@/core/services/customRPCService';
-import { customTestnetService } from '@/core/services/customTestnetService';
-import RpcCache from '@/core/services/rpcCache';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
+import RpcCache from '@/core/utils/rpcCache';
 import type { Account } from '@/types/account';
 import { findChain } from '@/utils/chain';
 
@@ -11,7 +11,7 @@ type ReadOnlyRPCRequest = {
   params: any[];
 };
 
-export const requestReadOnlyETHRpc = <T = any>(
+export const requestReadOnlyETHRpc = async <T = any>(
   data: ReadOnlyRPCRequest,
   chainServerId: string,
   account?: Account | null,
@@ -32,18 +32,22 @@ export const requestReadOnlyETHRpc = <T = any>(
       serverId: chainServerId,
     }) || findChain({ enum: CHAINS_ENUM.ETH })!;
 
-  const promise = !chain.isTestnet
-    ? customRPCService.hasCustomRPC(chain.enum)
-      ? customRPCService.requestCustomRPC(chain.enum, method, params)
-      : customRPCService.defaultEthRPC({
+  let promise: Promise<T>;
+  if (!chain.isTestnet) {
+    promise = (await customRPCServiceApi.hasCustomRPC(chain.enum))
+      ? customRPCServiceApi.requestCustomRPC(chain.enum, method, params)
+      : customRPCServiceApi.defaultEthRPC({
           chainServerId,
           origin: INTERNAL_REQUEST_SESSION.origin,
           method,
           params,
-        })
-    : customTestnetService
-        .getClient(chain.id)
-        .request({ method: method as any, params: params as any });
+        });
+  } else {
+    promise = (await customTestnetServiceApi.getClient(chain.id)).request({
+      method: method as any,
+      params: params as any,
+    });
+  }
 
   const cachedPromise = promise.then(result => {
     RpcCache.set(currentAddress, {

@@ -463,6 +463,28 @@ export class GasAccountService {
     }
   };
 
+  markGiftClaimed = (address: string) => {
+    this.setHasClaimedGift(true);
+
+    const normalizedAddress = address.toLowerCase();
+    const currentEligible = this.getCurrentEligibleAddress();
+    if (
+      currentEligible &&
+      currentEligible.address.toLowerCase() === normalizedAddress
+    ) {
+      this.clearCurrentEligibleAddress();
+    }
+
+    if (this.store.eligibilityCache[normalizedAddress]) {
+      this.store.eligibilityCache[normalizedAddress] = {
+        ...this.store.eligibilityCache[normalizedAddress],
+        isEligible: false,
+        isClaimed: true,
+        giftUsdValue: 0,
+      };
+    }
+  };
+
   // 检查并清理过期缓存
   checkAndClearExpiredCache = () => {
     if (!this.store.eligibilityCache) {

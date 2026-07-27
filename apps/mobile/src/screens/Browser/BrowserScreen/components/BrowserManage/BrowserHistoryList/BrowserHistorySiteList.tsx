@@ -1,5 +1,5 @@
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCardInner } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';

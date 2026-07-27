@@ -1,41 +1,27 @@
 import * as React from 'react';
-import {
-  customTestnetService,
-  keyringService,
-  perpsService,
-} from '@/core/services';
+import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
+import { initCoreServices } from '@/core/serviceApi/init';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import { initApis } from '@/core/apis/init';
-import { initServices } from '@/core/services/init';
-import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
-import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole';
-import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
-import {
-  BROWSER_SCRIPT_BASE,
-  JS_GET_WINDOW_INFO_AFTER_LOAD,
-  SPA_urlChangeListener,
-  JSBridgeHarden,
-} from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { apisLock, apisPerps } from '@/core/apis';
 import { loadSecurityChain } from './global';
 import {
   getBootstrapAccountFlags,
+  getAppLockStateSnapshot,
   getTriedUnlock,
   loadBootstrapAppLockState,
   storeApiLock,
 } from './useLock';
-import SplashScreen from 'react-native-splash-screen';
 import { storeApisBiometrics } from './biometrics';
 import { apisPerpsStore } from './perps/usePerpsStore';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
-import { RefLikeObject } from '@/utils/type';
+import type { RefLikeObject } from '@/utils/type';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
@@ -49,13 +35,12 @@ import {
   nextAndroidTraceCookie,
   traceAndroidInstant,
 } from '@/core/utils/androidTrace';
+import { markHomeEntryReady } from '@/core/utils/homeStartupMilestones';
 
 const syncCustomTestChainList = () => {
-  try {
-    customTestnetService.syncChainList();
-  } catch (e) {
+  customTestnetServiceApi.syncChainList().catch(e => {
     console.error(e);
-  }
+  });
 };
 
 type BootStrapState = {
@@ -70,29 +55,25 @@ function setBootstrap(valOrFunc: UpdaterOrPartials<BootStrapState>) {
   );
 }
 
-const DEBUG_IN_PAGE_SCRIPTS = {
-  LOAD_BEFORE: __DEV__
-    ? // leave here for debug
-      `window.alert('DEBUG_IN_PAGE_LOAD_BEFORE')`
-    : ``,
-  LOAD_AFTER: __DEV__
-    ? // leave here for debug
-      `
-;(function() {
-    setTimeout(function () {
-      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
-        {
-          type: 'RabbyContentScript:Debug:LoadLastChunk',
-          payload: {
-            time: Date.now(),
-          }
-        }
-      ));
-    }, 20);
-  })();
-  `
-    : ``,
-};
+const WEBVIEW_BEFORE_CONTENT_LOADED_BUILTIN_SCRIPT_IDS = [
+  'rabby-jsbridge-harden',
+  'rabby-inpage-web3',
+  'rabby-browser-script-base',
+  ...(__DEV__ ? ['rabby-dev-window-info-after-load'] : []),
+  'rabby-spa-url-change-listener',
+  ...(__DEV__
+    ? [
+        'rabby-dev-vconsole',
+        'rabby-dev-vconsole-init',
+        'rabby-dev-log-on-message',
+      ]
+    : []),
+  'rabby-return-true',
+];
+
+const WEBVIEW_DOCUMENT_END_BUILTIN_SCRIPT_IDS = [
+  'rabby-android-patch-anchor-target',
+];
 
 const apiInitializedRef: RefLikeObject<boolean> = { current: false };
 const doInitializeApis = async () => {
@@ -100,7 +81,7 @@ const doInitializeApis = async () => {
   apiInitializedRef.current = true;
 
   try {
-    await initServices();
+    await initCoreServices();
     await initApis();
     syncCustomTestChainList();
   } catch (error) {
@@ -124,6 +105,9 @@ export function useInitializeAppOnTop() {
         appUnlocked: true,
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       }));
+      if (getAppLockStateSnapshot().hasVisibleAccounts) {
+        markHomeEntryReady('wallet_auth_unlocked');
+      }
       traceAndroidInstant('global_task.wallet_auth_unlocked.end', {
         source: 'useBootstrap',
       });
@@ -143,7 +127,12 @@ export function useInitializeAppOnTop() {
           ...accountFlags,
         }));
       });
-      perpsService.unlockAgentWallets();
+      void perpsServiceApi.unlockAgentWallets().catch(error => {
+        console.error(
+          '[useBootstrap] unlock perps agent wallets failed',
+          error,
+        );
+      });
       traceAndroidInstant('global_task.post_unlock_ui_ready.end', {
         source: 'useBootstrap',
       });
@@ -170,7 +159,9 @@ export function useInitializeAppOnTop() {
         searchTabId: '',
         trigger: '',
       });
-      perpsService.lockAgentWallets();
+      void perpsServiceApi.lockAgentWallets().catch(error => {
+        console.error('[useBootstrap] lock perps agent wallets failed', error);
+      });
       apisPerpsStore.logout();
       apisPerps.destroyPerpsSDK();
     };
@@ -179,12 +170,15 @@ export function useInitializeAppOnTop() {
       'POST_UNLOCK_UI_READY',
       onUnlockUIReady,
     );
-    keyringService.on('lock', onLock);
+    const removeLockListener = bindKeyringEventAfterRegistration(
+      'lock',
+      onLock,
+    );
 
     return () => {
       sub.remove();
       subUIReady.remove();
-      keyringService.off('lock', onLock);
+      removeLockListener();
     };
   }, []);
 
@@ -212,103 +206,20 @@ export function subscribeUnlockToFetchAccounts() {
   });
 }
 
-type LoadEntryScriptsState = {
-  inPageWeb3: string;
-  vConsole: string;
-  fullScript: string;
-};
-const loadEntryScriptsStore = zCreate<LoadEntryScriptsState>(() => ({
-  inPageWeb3: '',
-  vConsole: '',
-  fullScript: '',
-}));
-function setEntryScripts(valOrFunc: UpdaterOrPartials<LoadEntryScriptsState>) {
-  loadEntryScriptsStore.setState(prev => ({
-    ...prev,
-    ...resolveValFromUpdater(prev, valOrFunc, { strict: false }).newVal,
-  }));
-}
-
 export async function loadJavaScriptBeforeContentLoadedOnBoot() {
-  return Promise.allSettled([
-    EntryScriptWeb3.init(),
-    __DEV__ ? EntryScriptVConsole.init() : Promise.resolve(''),
-  ]).then(([reqInPageWeb3, reqVConsole]) => {
-    const inPageWeb3 =
-      reqInPageWeb3.status === 'fulfilled' ? reqInPageWeb3.value : '';
-    const vConsole =
-      reqVConsole.status === 'fulfilled' ? reqVConsole.value : '';
-
-    setEntryScripts(prev => ({
-      ...prev,
-      inPageWeb3,
-      vConsole,
-      fullScript: getFullScript({ inPageWeb3, vConsole }),
-    }));
-  });
-}
-
-function getFullScript({
-  inPageWeb3,
-  vConsole,
-}: {
-  inPageWeb3: string;
-  vConsole: string;
-}) {
-  return [
-    // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
-    JSBridgeHarden,
-    inPageWeb3,
-    BROWSER_SCRIPT_BASE,
-    __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
-    SPA_urlChangeListener,
-    __DEV__ ? vConsole : '',
-    JS_LOG_ON_MESSAGE,
-    ';true;',
-    // DEBUG_IN_PAGE_SCRIPTS.LOAD_AFTER,
-  ]
-    .filter(Boolean)
-    .join('\n');
+  return Promise.resolve();
 }
 
 export function useJavaScriptBeforeContentLoaded() {
-  const inPageWeb3 = loadEntryScriptsStore(s => s.inPageWeb3);
-  const fullScript = loadEntryScriptsStore(s => s.fullScript);
-  const entryScriptWeb3Loaded = zBootstrapStore(s =>
-    [
-      s.couldRender,
-      !!inPageWeb3,
-      // __DEV__ ? !!entryScripts.vConsole : true,
-    ].every(x => !!x),
-  );
+  const entryScriptWeb3Loaded = zBootstrapStore(s => !!s.couldRender);
 
   return {
     entryScriptWeb3Loaded,
-    entryScripts: {
-      inPageWeb3,
-      // vConsole
-    },
-    fullScript: fullScript,
+    beforeContentLoadedBuiltinScriptIds:
+      WEBVIEW_BEFORE_CONTENT_LOADED_BUILTIN_SCRIPT_IDS,
+    documentEndBuiltinScriptIds: WEBVIEW_DOCUMENT_END_BUILTIN_SCRIPT_IDS,
   };
 }
-
-const splashScreenVisibleRef = { current: true };
-const hideSplashScreen = (forceHide = false) => {
-  if (splashScreenVisibleRef.current || forceHide) {
-    traceAndroidInstant('bootstrap.splash.hide', {
-      forceHide,
-    });
-    SplashScreen.hide();
-    splashScreenVisibleRef.current = false;
-  }
-};
-
-runIIFEFunc(() => {
-  const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
-    hideSplashScreen(true);
-    sub.remove();
-  });
-});
 
 const postRenderBootstrapWarmupsStateRef = {
   started: false,
@@ -415,6 +326,17 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           unlockStatus: unlockResult?.status ?? 'deferred',
           shouldWaitAutoUnlock,
         });
+        const appLockState = getAppLockStateSnapshot();
+        if (
+          appLockState.hasVisibleAccounts &&
+          (appLockState.appUnlocked || appLockState.isUnlockSessionValid)
+        ) {
+          markHomeEntryReady(
+            shouldWaitAutoUnlock
+              ? 'bootstrap_auto_unlock_ready'
+              : 'bootstrap_session_ready',
+          );
+        }
         setBootstrap({ couldRender: true });
 
         if (shouldWaitAutoUnlock) {
@@ -434,12 +356,6 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
       })
       .finally(() => {
         endAndroidAsyncTrace('bootstrap.useBootstrapApp', bootstrapTraceCookie);
-        setTimeout(() => {
-          hideSplashScreen(false);
-          console.debug(
-            'useBootstrapApp:: splash screen hidden due to timeout',
-          );
-        }, 3e3);
       });
   }, [rabbitCode]);
 }

@@ -28,6 +28,7 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -72,7 +73,7 @@ const SendNFTScreenBody = React.memo(function SendNFTScreenBody() {
   );
 });
 
-export default function SendNFT() {
+function SendNFT() {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -242,6 +243,8 @@ export default function SendNFT() {
     </SignatureInstanceProvider>
   );
 }
+
+export default withWhitelistService(SendNFT);
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   sendNFTScreen: {

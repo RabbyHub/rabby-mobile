@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, ViewStyle, StyleProp, Pressable } from 'react-native';
+import type { ViewStyle, StyleProp } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WrapperDappActionsMemoItem } from '../../components/ProtocolMoreItem';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { ellipsisAddress } from '@/utils/address';
@@ -23,12 +24,12 @@ import {
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { resetFetchHistoryTxCount } from '../../hooks/history';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
-import { dappService } from '@/core/services';
+import { ensureDappServiceReady, patchDappsSync } from '@/core/serviceApi/dapp';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
 import { isBlacklistMethod, isWhitelistSpender } from '../DappActions/hook';
-import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
+import type { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
 import { Text } from '@/components/Typography';
@@ -72,7 +73,7 @@ export const FullDefiRenderItem = ({
   const { openTab } = useBrowser();
 
   const { navigation } = useSafeSetNavigationOptions();
-  const handleOpenSite = useCallback(() => {
+  const handleOpenSite = useCallback(async () => {
     if (data?.site_url) {
       if (data?.id === 'hyperliquid' && account) {
         switchPerpsAccountBeforeNavigate(account);
@@ -81,18 +82,23 @@ export const FullDefiRenderItem = ({
           params: {},
         });
       } else {
-        openTab(data?.site_url);
         const origin = safeGetOrigin(data?.site_url);
         const chain = findChain({ serverId: data.chain });
-        dappService.patchDapps({
-          [origin]: {
-            currentAccount: account,
-            chainId: isFromAppChain
-              ? undefined
-              : chain?.enum || CHAINS_ENUM.ETH,
-            isDapp: true,
-          },
-        });
+        try {
+          await ensureDappServiceReady();
+          patchDappsSync({
+            [origin]: {
+              currentAccount: account,
+              chainId: isFromAppChain
+                ? undefined
+                : chain?.enum || CHAINS_ENUM.ETH,
+              isDapp: true,
+            },
+          });
+        } catch (error) {
+          console.error('[FullDefiRenderItem] persist dapp failed', error);
+        }
+        openTab(data?.site_url);
         if (origin) {
           matomoRequestEvent({
             category: 'Websites Usage',

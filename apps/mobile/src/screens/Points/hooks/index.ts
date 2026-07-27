@@ -1,5 +1,5 @@
 import { openapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { zCreate } from '@/core/utils/reexports';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';

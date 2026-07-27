@@ -362,7 +362,7 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
 
     const promise = (async () => {
       // 从数据库加载缓存数据
-      const allAppChains = await AppChainEntity.queryAll();
+      const allAppChains = await AppChainEntity.queryAllForStartup();
 
       const appChainMap: AppChainListMap = {};
       for (const entity of allAppChains) {

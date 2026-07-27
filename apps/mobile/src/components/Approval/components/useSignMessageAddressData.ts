@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 import { apiContact, apiKeyring, apisAddress } from '@/core/apis';
-import { whitelistService } from '@/core/services';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { openapi, testOpenapi } from '@/core/request';
 import type { Chain } from '@/constant/chains';
 import { sortAccountByPriority } from '@/utils/account';
@@ -16,6 +16,11 @@ import {
 } from './signMessageAddressData';
 
 const EMPTY_ADDRESS_DATA: SignMessageAddressDataMap = {};
+
+type AddressDataRequest = {
+  key: string | null;
+  data: SignMessageAddressDataMap;
+};
 
 export const useSignMessageAddressData = ({
   tokens,
@@ -31,7 +36,7 @@ export const useSignMessageAddressData = ({
     return {
       getAlias: async address =>
         apiContact.getAliasName(address, { keepEmptyIfNotFound: true }),
-      getWhitelist: async () => whitelistService.getWhitelist(),
+      getWhitelist: async () => whitelistServiceApi.getWhitelist(),
       getAccountsByPriority: async () =>
         (await apisAddress.getAllAccounts()).sort(sortAccountByPriority),
       getAddressSource: async address => {
@@ -63,21 +68,44 @@ export const useSignMessageAddressData = ({
       ),
     [accountAddress, chain?.serverId, tokens],
   );
-  const { value: request } = useAsync(async () => {
-    if (!chain || !requestKey) {
-      return { key: requestKey, data: EMPTY_ADDRESS_DATA };
-    }
+  const [request, setRequest] = useState<AddressDataRequest>({
+    key: null,
+    data: EMPTY_ADDRESS_DATA,
+  });
+  const requestKeyRef = useRef(requestKey);
+  requestKeyRef.current = requestKey;
 
-    return {
-      key: requestKey,
-      data: await resolveSignMessageAddressData({
-        tokens,
-        chain,
-        accountAddress,
-        provider,
-      }),
-    };
+  useEffect(() => {
+    setRequest({ key: requestKey, data: EMPTY_ADDRESS_DATA });
   }, [provider, requestKey]);
 
-  return request?.key === requestKey ? request.data : EMPTY_ADDRESS_DATA;
+  useAsync(async () => {
+    if (!chain || !requestKey) {
+      return;
+    }
+
+    await resolveSignMessageAddressData({
+      tokens,
+      chain,
+      accountAddress,
+      provider,
+      onAddressResolved: (key, data) => {
+        setRequest(current =>
+          requestKeyRef.current !== requestKey
+            ? current
+            : {
+                key: requestKey,
+                data: {
+                  ...(current.key === requestKey
+                    ? current.data
+                    : EMPTY_ADDRESS_DATA),
+                  [key]: data,
+                },
+              },
+        );
+      },
+    });
+  }, [provider, requestKey]);
+
+  return request.key === requestKey ? request.data : EMPTY_ADDRESS_DATA;
 };

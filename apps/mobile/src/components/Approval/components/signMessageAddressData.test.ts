@@ -6,6 +6,31 @@ import {
   resolveSignMessageAddressData,
 } from './signMessageAddressData';
 
+jest.mock('p-queue', () => ({
+  __esModule: true,
+  default: class MockPQueue {
+    private concurrency: number;
+
+    constructor(options: { concurrency: number }) {
+      this.concurrency = options.concurrency;
+    }
+
+    async addAll<T>(tasks: Array<() => Promise<T>>) {
+      const results: T[] = [];
+      let next = 0;
+      const run = async (): Promise<void> => {
+        const index = next++;
+        if (!tasks[index]) return;
+        results[index] = await tasks[index]();
+        await run();
+      };
+
+      await Promise.all(Array.from({ length: this.concurrency }, () => run()));
+      return results;
+    }
+  },
+}));
+
 const malicious = '0xde709f2102306220921060314715629080e2fb77';
 const token = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
 const protocol = '0xe592427a0aece92de3edee1f18e0157c05861564';
@@ -131,6 +156,7 @@ describe('sign message address data', () => {
       })),
     };
 
+    const resolvedAddresses: string[] = [];
     const result = await resolveSignMessageAddressData({
       tokens: [malicious, token, protocol, unknown, token].map(value => ({
         type: 'address' as const,
@@ -139,6 +165,7 @@ describe('sign message address data', () => {
       chain: { serverId: 'eth' } as never,
       accountAddress: '0x341a1fbd51825e5a107db54ccb3166deba145479',
       provider: provider as never,
+      onAddressResolved: key => resolvedAddresses.push(key),
     });
 
     expect(result[malicious]).toMatchObject({
@@ -162,6 +189,9 @@ describe('sign message address data', () => {
     expect(provider.getWhitelist).toHaveBeenCalledTimes(1);
     expect(provider.getAccountsByPriority).toHaveBeenCalledTimes(1);
     expect(provider.getContractInfo).toHaveBeenCalledTimes(4);
+    expect(resolvedAddresses.sort()).toEqual(
+      [malicious, token, protocol, unknown].sort(),
+    );
   });
 
   it('bounds enrichment concurrency without dropping addresses', async () => {

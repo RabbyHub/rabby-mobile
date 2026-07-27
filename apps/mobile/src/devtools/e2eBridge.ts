@@ -35,7 +35,7 @@ import { getLatestNavigationName, naviPush } from '@/utils/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { getIsFoldMultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 import { getRecentSendPendingTxData } from '@/screens/Send/hooks/useRecentSend';
-import { whitelistService } from '@/core/services';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { setWhitelist as setWhitelistState } from '@/hooks/whitelist';
 
 type DevtoolsMethod = (...args: any[]) => unknown;
@@ -671,13 +671,13 @@ const bridgeMethods = {
     return buildSendScreenSnapshot();
   },
   async clearWhitelistData() {
-    whitelistService.enableWhitelist();
+    await whitelistServiceApi.enableWhitelist();
     await setWhitelistState([]);
 
     return {
       ok: true,
-      enabled: await whitelistService.isWhitelistEnabled(),
-      whitelist: await whitelistService.getWhitelist(),
+      enabled: await whitelistServiceApi.isWhitelistEnabled(),
+      whitelist: await whitelistServiceApi.getWhitelist(),
       routeName: getLatestNavigationName() || null,
     };
   },

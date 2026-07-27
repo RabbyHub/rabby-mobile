@@ -1,4 +1,4 @@
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getActionTypeText } from './utils';
@@ -16,8 +16,8 @@ import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
 import { getActionsStyle } from '../Actions/styles';
-import { ParsedTextActionData } from '@rabby-wallet/rabby-action';
-import { Account } from '@/core/services/preference';
+import type { ParsedTextActionData } from '@rabby-wallet/rabby-action';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import type { Chain } from '@debank/common';
 import type { SignMessageHighlightToken } from '../signMessageTokenizer';

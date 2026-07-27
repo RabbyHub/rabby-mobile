@@ -6,7 +6,7 @@ import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
 import { Text } from '@/components';
-import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -19,7 +19,7 @@ import {
 } from '@/constant/layout';
 import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { GetRootScreenRouteProp } from '@/navigation-type';
+import type { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -35,7 +35,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 
 const ListItem = (props: {
   title: string;
@@ -136,7 +136,7 @@ export const NFTDetailScreen = () => {
   );
 
   // todo check this
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });

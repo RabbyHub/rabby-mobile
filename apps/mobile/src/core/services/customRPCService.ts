@@ -1,6 +1,5 @@
 import { CHAINS_ENUM } from '@debank/common';
 import { findChainByEnum } from '@/utils/chain';
-import { appStorage } from '../storage/mmkv';
 import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
@@ -89,7 +88,7 @@ const fetchDefaultRpc = async () => {
   return data.rpcs as RPCDefaultItem[];
 };
 
-class CustomRPCService {
+export class CustomRPCService {
   store: RPCServiceStore = {
     customRPC: {},
     defaultRPC: {},
@@ -392,7 +391,3 @@ class CustomRPCService {
     }
   };
 }
-
-export const customRPCService = new CustomRPCService({
-  storageAdapter: appStorage,
-});

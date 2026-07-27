@@ -1,7 +1,7 @@
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
@@ -19,7 +19,7 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
 import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
@@ -39,13 +39,15 @@ import { calculateDistanceToLiquidation } from './components/PerpsPositionSectio
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
 import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
-import { perpsService } from '@/core/services';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 export const PerpsOriginScreen = () => {
+  const tracedReadyRef = useRef(false);
   const { t } = useTranslation();
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -75,6 +77,24 @@ export const PerpsOriginScreen = () => {
     handleSafeSetReference,
     setInitialized,
   } = usePerpsState();
+
+  useEffect(() => {
+    traceStartupDiagnostic('perps', 'screen_mounted');
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized || tracedReadyRef.current) {
+      return;
+    }
+    tracedReadyRef.current = true;
+    const state = perpsStore.getState();
+    traceStartupDiagnostic('perps', 'screen_data_ready', {
+      marketCount: state.marketData.length,
+      userDataReady: state.isUserDataReady,
+      marketTickerReady: state.isMarketTickerReady,
+    });
+  }, [isInitialized]);
+
   const { handleCloseAllPositions, handleStableCoinOrder } = usePerpsPosition();
 
   const [, setPopupState] = usePerpsPopupState();
@@ -167,9 +187,13 @@ export const PerpsOriginScreen = () => {
       ready: !!currentPerpsAccount?.address,
       onSuccess: shouldShow => {
         if (shouldShow) {
-          perpsService.setInviteConfig(currentPerpsAccount?.address || '', {
-            lastInvitedAt: Date.now(),
-          });
+          void perpsServiceApi
+            .setInviteConfig(currentPerpsAccount?.address || '', {
+              lastInvitedAt: Date.now(),
+            })
+            .catch(error => {
+              console.error('[Perps] persist invite state failed', error);
+            });
         }
       },
     },

@@ -1,13 +1,17 @@
 import React, { useCallback, useMemo } from 'react';
-import { AppState, AppStateStatus, Platform } from 'react-native';
+import type { AppStateStatus } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
-import { keyringService } from '@/core/services';
+import {
+  isKeyringUnlockedSnapshot,
+  keyringServiceApi,
+} from '@/core/serviceApi/keyring';
 import { apisAutoLock, apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from './navigation';
 import { useFocusEffect } from '@react-navigation/native';
-import {
+import type {
   AddressNavigatorParamList,
   SettingNavigatorParamList,
 } from '@/navigation-type';
@@ -17,12 +21,12 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { zCreate } from '@/core/utils/reexports';
 import { naviPush } from '@/utils/navigation';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
-  UpdaterOrPartials,
 } from '@/core/utils/store';
-import { RefLikeObject } from '@/utils/type';
+import type { RefLikeObject } from '@/utils/type';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -49,7 +53,7 @@ function setAppLock(valOrFunc: UpdaterOrPartials<AppLockState>) {
 }
 // iife
 setAppLock({
-  appUnlocked: keyringService.isUnlocked(),
+  appUnlocked: isKeyringUnlockedSnapshot(),
   isUnlockSessionValid: apisLock.isUnlockSessionValid(),
 });
 
@@ -63,6 +67,10 @@ apisLock.unlockTimeEvent.addListener('updated', () => {
 function getIsAppUnlocked() {
   const state = zAppLockStore.getState();
   return state.appUnlocked;
+}
+
+export function getAppLockStateSnapshot() {
+  return zAppLockStore.getState();
 }
 
 export const storeApiLock = {
@@ -111,16 +119,22 @@ export function usePasswordStatus() {
 
 export async function getBootstrapAccountFlags() {
   const visibleAccountsCount =
-    await keyringService.getCountOfAccountsInKeyring();
+    await keyringServiceApi.getCountOfAccountsInKeyring();
   const hasVisibleAccounts = visibleAccountsCount > 0;
+  const [hasVault, hasEncryptedKeyringData, hasUnencryptedKeyringData] =
+    await Promise.all([
+      keyringServiceApi.hasVault(),
+      keyringServiceApi.hasEncryptedKeyringData(),
+      keyringServiceApi.hasUnencryptedKeyringData(),
+    ]);
 
   return {
     hasVisibleAccounts,
     hasStoredKeyrings:
       hasVisibleAccounts ||
-      keyringService.hasVault() ||
-      keyringService.hasEncryptedKeyringData() ||
-      keyringService.hasUnencryptedKeyringData(),
+      hasVault ||
+      hasEncryptedKeyringData ||
+      hasUnencryptedKeyringData,
   };
 }
 
@@ -129,7 +143,7 @@ export const loadBootstrapAppLockState = async () => {
     apisLock.getRabbyLockInfo(),
     getBootstrapAccountFlags(),
   ]);
-  const appUnlocked = keyringService.isUnlocked();
+  const appUnlocked = isKeyringUnlockedSnapshot();
   const isUnlockSessionValid = apisLock.isUnlockSessionValid();
 
   if (!appUnlocked && isUnlockSessionValid) {
@@ -152,11 +166,11 @@ export const getTriedUnlock = async () => {
     .tryAutoUnlockRabbyMobileWithUpdateUnlockTime()
     .then(async result => {
       const accountFlags = await getBootstrapAccountFlags();
-      if (!keyringService.isUnlocked() && apisLock.isUnlockSessionValid()) {
+      if (!isKeyringUnlockedSnapshot() && apisLock.isUnlockSessionValid()) {
         apisAutoLock.refreshAutolockTimeout();
       }
       setAppLock({
-        appUnlocked: keyringService.isUnlocked(),
+        appUnlocked: isKeyringUnlockedSnapshot(),
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
         ...accountFlags,
         pwdStatus: result.lockInfo.pwdStatus,
@@ -182,7 +196,7 @@ export const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
     const accountFlags = await getBootstrapAccountFlags();
 
     setAppLock({
-      appUnlocked: keyringService.isUnlocked(),
+      appUnlocked: isKeyringUnlockedSnapshot(),
       isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       ...accountFlags,
       pwdStatus: response.pwdStatus,

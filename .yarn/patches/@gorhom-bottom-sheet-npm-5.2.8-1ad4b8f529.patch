@@ -49,7 +49,28 @@ diff --git a/src/components/bottomSheetModal/BottomSheetModal.tsx b/src/componen
 index 5d131f1ed227fefa637dd655b5d0e41a328aa8d5..dc1840a7ea63259c486210701f43475d1df79272 100644
 --- a/src/components/bottomSheetModal/BottomSheetModal.tsx
 +++ b/src/components/bottomSheetModal/BottomSheetModal.tsx
-@@ -474,9 +474,7 @@ const BottomSheetModal = memo(forwardRef(BottomSheetModalComponent)) as <
+@@ -237,5 +237,8 @@ function BottomSheetModalComponent<T = any>(
+         minimized.current === false &&
+         !animating
+       ) {
++        if (mounted.current) {
++          unmount();
++        }
+         return;
+       }
+@@ -410,3 +413,3 @@ function BottomSheetModalComponent<T = any>(
+-      if (enableDismissOnClose) {
++      if (enableDismissOnClose || forcedDismissed.current) {
+         unmount();
+       }
+@@ -427,5 +430,6 @@ function BottomSheetModalComponent<T = any>(
+     forceClose: handleForceClose,
+     // modal methods
++    destroy: unmount,
+     dismiss: handleDismiss,
+     present: handlePresent,
+     // internal
+@@ -474,9 +477,7 @@ const BottomSheetModal = memo(forwardRef(BottomSheetModalComponent)) as <
    }
  ) => ReturnType<typeof BottomSheetModalComponent>;
  (
@@ -60,6 +81,38 @@ index 5d131f1ed227fefa637dd655b5d0e41a328aa8d5..dc1840a7ea63259c486210701f43475d
  ).displayName = 'BottomSheetModal';
  
  export default BottomSheetModal;
+diff --git a/src/types.d.ts b/src/types.d.ts
+--- a/src/types.d.ts
++++ b/src/types.d.ts
+@@ -98,8 +98,12 @@ export interface BottomSheetModalMethods<T = any> extends BottomSheetMethods {
+   /**
+    * Mount and present the bottom sheet modal to the initial snap point.
+    * @param data to be passed to the modal.
+    */
+   present: (data?: T) => void;
++  /**
++   * Immediately unmount the bottom sheet modal without a close animation.
++   */
++  destroy: () => void;
+   /**
+    * Close and unmount the bottom sheet modal.
+    * @param animationConfigs snap animation configs.
+diff --git a/lib/typescript/types.d.ts b/lib/typescript/types.d.ts
+--- a/lib/typescript/types.d.ts
++++ b/lib/typescript/types.d.ts
+@@ -98,8 +98,12 @@ export interface BottomSheetModalMethods<T = any> extends BottomSheetMethods {
+   /**
+    * Mount and present the bottom sheet modal to the initial snap point.
+    * @param data to be passed to the modal.
+    */
+   present: (data?: T) => void;
++  /**
++   * Immediately unmount the bottom sheet modal without a close animation.
++   */
++  destroy: () => void;
+   /**
+    * Close and unmount the bottom sheet modal.
+    * @param animationConfigs snap animation configs.
 diff --git a/src/hooks/useScrollHandler.ts b/src/hooks/useScrollHandler.ts
 index a7910834920a83cfc49cb52b338a656c2aef4e07..18481c13a8d1550af173c76a22f880cea26f7825 100644
 --- a/src/hooks/useScrollHandler.ts

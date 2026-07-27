@@ -3,8 +3,10 @@ import {
   StyleSheet,
   View,
   type NativeSyntheticEvent,
+  type StyleProp,
   type TextLayoutEventData,
   type TextProps,
+  type ViewStyle,
 } from 'react-native';
 
 import { Text } from '@/components/Typography';
@@ -21,6 +23,30 @@ import {
   type SignMessageAddressDataMap,
 } from './signMessageAddressData';
 import { SignMessageAddressTag } from './SignMessageAddressTag';
+
+const SignMessageTagContext = React.createContext({
+  expandedTagIndex: null as number | null,
+  setExpandedTagIndex: (_index: number | null) => {},
+});
+
+export const SignMessageTagProvider = ({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style: StyleProp<ViewStyle>;
+}) => {
+  const [expandedTagIndex, setExpandedTagIndex] = useState<number | null>(null);
+
+  return (
+    <SignMessageTagContext.Provider
+      value={{ expandedTagIndex, setExpandedTagIndex }}>
+      <View style={style} onTouchStart={() => setExpandedTagIndex(null)}>
+        {children}
+      </View>
+    </SignMessageTagContext.Provider>
+  );
+};
 
 export const HighlightedSignMessageText = ({
   text,
@@ -47,6 +73,9 @@ export const HighlightedSignMessageText = ({
   const [lines, setLines] = useState<
     Array<{ text: string; y: number; height: number }>
   >([]);
+  const { expandedTagIndex, setExpandedTagIndex } = React.useContext(
+    SignMessageTagContext,
+  );
   const addressTags = useMemo(() => {
     if (!chain || !account) return [];
 
@@ -125,6 +154,10 @@ export const HighlightedSignMessageText = ({
                 <SignMessageAddressTag
                   chain={chain}
                   data={data}
+                  expanded={expandedTagIndex === index}
+                  onExpandedChange={expanded =>
+                    setExpandedTagIndex(expanded ? index : null)
+                  }
                   onOpenTokenDetail={token =>
                     openTokenDetailPopup(token, account)
                   }

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
@@ -44,6 +50,7 @@ import {
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -60,6 +67,17 @@ const { batchGetProtocols } = useProtocols.getState();
 export const ProtocolList = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const regressionScenario = useRegressionScenario<'Home'>();
+  const regressionScenarioActive = regressionScenario.active;
+  const regressionScenarioId = regressionScenario.active
+    ? regressionScenario.scenario
+    : null;
+  const regressionScenarioRunId = regressionScenario.active
+    ? regressionScenario.runId
+    : null;
+  const regressionScenarioReport = regressionScenario.active
+    ? regressionScenario.report
+    : null;
 
   const { myTop10Addresses } = useAccountInfo();
   const selectedChainItem = useSelectedChainItem();
@@ -176,6 +194,79 @@ export const ProtocolList = () => {
     multiProtocols.unFold.length,
     isLoading,
     isFocused,
+  ]);
+
+  const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'home-assets' ||
+      !isFocused
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setScenarioReadyCheckTick(Date.now());
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [
+    isFocused,
+    multiProtocolsKey,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioRunId,
+  ]);
+
+  const lastReadyReportKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'home-assets' ||
+      !regressionScenarioRunId ||
+      !regressionScenarioReport ||
+      !isFocused ||
+      !scenarioReadyCheckTick ||
+      isLoading
+    ) {
+      return;
+    }
+
+    const visibleCount = multiProtocols.unFold.length;
+    const foldedCount = multiProtocols.fold.length;
+    const readyKey = [
+      regressionScenarioRunId,
+      multiProtocolsKey,
+      visibleCount,
+      foldedCount,
+    ].join(':');
+    if (lastReadyReportKeyRef.current === readyKey) {
+      return;
+    }
+    lastReadyReportKeyRef.current = readyKey;
+
+    regressionScenarioReport('assertion', {
+      assertion: 'home-assets-defi-ready',
+      passed: true,
+      state: visibleCount + foldedCount > 0 ? 'data' : 'empty-defi',
+      accountCount: myTop10Addresses.length,
+      visibleCount,
+      foldedCount,
+      selectedChain: chain || null,
+    });
+  }, [
+    chain,
+    isFocused,
+    isLoading,
+    multiProtocols.fold.length,
+    multiProtocols.unFold.length,
+    multiProtocolsKey,
+    myTop10Addresses.length,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioReport,
+    regressionScenarioRunId,
+    scenarioReadyCheckTick,
   ]);
 
   useEffect(() => {

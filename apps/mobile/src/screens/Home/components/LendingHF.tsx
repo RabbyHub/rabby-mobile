@@ -7,7 +7,20 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect } from 'react';
 import { Text } from '@/components/Typography';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
+
+function cancelStartupTaskHandle(
+  handle: ReturnType<typeof scheduleStartupTask> | undefined,
+) {
+  if (handle && typeof handle === 'object' && 'cancel' in handle) {
+    const maybeCancelable = handle as { cancel?: unknown };
+    if (typeof maybeCancelable.cancel === 'function') {
+      maybeCancelable.cancel();
+    }
+  }
+}
 
 const NetWorthBadge: React.FC<{ netWorth: string; isHidden: boolean }> = ({
   netWorth,
@@ -36,11 +49,12 @@ export const LendingHF: React.FC<{}> = () => {
     if (lendingHf) {
       return;
     }
-    const timer = setTimeout(() => {
+    const warmupHandle = scheduleStartupTask(() => {
       apisLending.fetchLendingData();
-    }, 200);
+    }, STARTUP_TASKS.homeLendingDataWarmup);
+
     return () => {
-      timer && clearTimeout(timer);
+      cancelStartupTaskHandle(warmupHandle);
     };
   }, [lendingHf]);
 

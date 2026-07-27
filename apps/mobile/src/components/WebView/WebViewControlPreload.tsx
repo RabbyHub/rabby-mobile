@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { Dimensions, Platform, StyleSheet } from 'react-native';
 import { atom, useAtom } from 'jotai';
 import WebView, { WebViewProps } from 'react-native-webview';
@@ -12,7 +12,7 @@ import { BLANK_RABBY_PAGE } from './hooks';
 
 const isAndroid = Platform.OS === 'android';
 
-function getTouchHtml(inPageScript: string = '') {
+function getTouchHtml() {
   return `
   <html>
   <head>
@@ -22,10 +22,6 @@ function getTouchHtml(inPageScript: string = '') {
   <body>
     <div style="display: none;">touch view</div>
     <script>
-      ;(function() {
-        ${inPageScript}
-      })();
-
       ;(function() {
         // ${
           __DEV__
@@ -63,8 +59,7 @@ const firstTouchedAtom = atom(!isAndroid);
 export default function WebViewControlPreload() {
   const [firstTouched, setFirstTouched] = useAtom(firstTouchedAtom);
 
-  const { entryScriptWeb3Loaded, entryScripts } =
-    useJavaScriptBeforeContentLoaded();
+  const { entryScriptWeb3Loaded } = useJavaScriptBeforeContentLoaded();
 
   // devLog(
   //   '[debug] entryScriptWeb3Loaded, firstTouched',
@@ -82,10 +77,6 @@ export default function WebViewControlPreload() {
     }, 500);
   }, [setFirstTouched]);
 
-  const embedHtml = useMemo(() => {
-    return getTouchHtml(entryScripts.inPageWeb3);
-  }, [entryScripts.inPageWeb3]);
-
   // const
   if (!isAndroid) return null;
 
@@ -99,7 +90,7 @@ export default function WebViewControlPreload() {
       key={'internal-webview-control-preload'}
       dappOrigin={BLANK_RABBY_PAGE}
       initialUrl={BLANK_RABBY_PAGE}
-      embedHtml={embedHtml}
+      embedHtml={getTouchHtml()}
       style={StyleSheet.flatten([
         styles.webviewStyle,
         // __DEV__ && styles.debugStyle,

@@ -14,7 +14,7 @@ function loadLoggerModule() {
     getEffectiveFileLoggingEnabled: jest.fn(() => true),
   }));
 
-  jest.doMock('@/core/services/debugLogService', () => ({
+  jest.doMock('@/core/utils/debugLogService', () => ({
     __esModule: true,
     default: {
       addLog: jest.fn(),

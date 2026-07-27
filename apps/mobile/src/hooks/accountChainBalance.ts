@@ -1,15 +1,12 @@
 import { useEffect, useMemo } from 'react';
 
-import { preferenceService } from '@/core/services';
-import { Account } from '@/core/services/preference';
-import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
+import { getPreferenceSnapshot } from '@/core/serviceApi/preference';
+import type { Account } from '@/core/startupServices/preference';
+import type { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
-import {
-  DisplayChainWithWhiteLogo,
-  formatChainToDisplay,
-  varyAndSortChainItems,
-} from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
+import type { DisplayChainWithWhiteLogo } from '@/utils/chain';
+import { formatChainToDisplay, varyAndSortChainItems } from '@/utils/chain';
+import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';
 import addressBalanceStore from '@/store/balance';
@@ -148,7 +145,7 @@ const fetchOrderedChainList = async (opts: {
 }) => {
   const { address, supportChains } = opts || {};
   const { pinned, matteredChainBalances } = await Promise.allSettled([
-    preferenceService.getPreference('pinnedChain'),
+    getPreferenceSnapshot('pinnedChain'),
     fetchMatteredChainBalance({ address }),
   ]).then(([pinnedChain, balance]) => {
     return {

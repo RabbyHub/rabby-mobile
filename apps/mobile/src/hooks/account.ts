@@ -1,4 +1,5 @@
-import React, {
+import type React from 'react';
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -6,7 +7,8 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 
-import { KeyringAccount, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 import type {
   Account,
@@ -18,19 +20,23 @@ import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { accountEvents } from '@/core/apis/account';
 import * as apiMnemonic from '@/core/apis/mnemonic';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import addressBalanceStore from '@/store/balance';
 import accountStore, {
   NEWLY_ADDED_ACCOUNT_DURATION,
   useAccountStore,
 } from '@/store/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { keyringService, preferenceService } from '@/core/services';
+import {
+  clearNeedsBackupReminder,
+  getNeedsBackupReminderSnapshot,
+  setNeedsBackupReminder,
+} from '@/core/serviceApi/preference';
 import { EntityAccountBase } from '@/databases/entities/base';
 import { ormEvents } from '@/databases/entities/_helpers';
 import { InteractionManager } from 'react-native';
-import { appServiceEvents } from '@/core/services/_utils';
-import { Store } from '@/core/services/hdKeyringService';
+import { appServiceEvents } from '@/core/events/appServiceEvents';
 import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 
@@ -96,7 +102,7 @@ async function getBasePublicKeyForAccount(
  */
 function getBackupReminderSnapshot(basePublicKey: string | null): boolean {
   if (!basePublicKey) return false;
-  return preferenceService.getNeedsBackupReminder(basePublicKey);
+  return getNeedsBackupReminderSnapshot(basePublicKey);
 }
 
 /**
@@ -203,7 +209,7 @@ export async function setAccountNeedsBackupReminder(
 ) {
   const basePublicKey = await getBasePublicKeyForAccount(account);
   if (!basePublicKey) return;
-  preferenceService.setNeedsBackupReminder(basePublicKey, needsReminder);
+  await setNeedsBackupReminder(basePublicKey, needsReminder);
 }
 
 /**
@@ -213,7 +219,7 @@ export async function setAccountNeedsBackupReminder(
 export async function clearAccountBackupReminder(account: KeyringAccount) {
   const basePublicKey = await getBasePublicKeyForAccount(account);
   if (!basePublicKey) return;
-  preferenceService.clearNeedsBackupReminder(basePublicKey);
+  await clearNeedsBackupReminder(basePublicKey);
 }
 
 export function useDevNewlyAddedAccounts() {
@@ -293,14 +299,10 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
   const pinAddresses = useAccountStore(s => s.pinnedAddresses);
 
-  const getPinAddresses = useCallback(() => {
-    const addresses = preferenceService.getPinAddresses();
-    accountStore.setPinnedAddresses(addresses);
-  }, []);
-
-  const getPinAddressesAsync = useCallback(async () => {
-    return getPinAddresses();
-  }, [getPinAddresses]);
+  const getPinAddressesAsync = useCallback(
+    () => accountStore.refreshPinnedAddresses(),
+    [],
+  );
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -318,6 +320,15 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 export const usePinnedAccountList = () => {
   const pinAddresses = useAccountStore(s => s.pinnedAddresses);
   const accounts = useAccountStore(s => s.accounts);
+
+  useEffect(() => {
+    accountStore.ensurePinnedAddressesHydrated().catch(error => {
+      if (__DEV__) {
+        console.error('[usePinnedAccountList] hydrate failed', error);
+      }
+    });
+  }, []);
+
   const pinnedBaseAccounts = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
     pinAddresses?.forEach(pinAddr => {

@@ -3,8 +3,9 @@ import { intToHex } from '@/utils/number';
 import { addHexPrefix, isHexPrefixed } from 'ethereumjs-util';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { keyringService } from '@/core/services';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 const { isStringOrNumber } = stringUtils;
 
@@ -78,7 +79,7 @@ export const toType = async (toAddress: string, hasCex?: boolean) => {
   }
   try {
     const toAddr = toAddress.toLowerCase();
-    const existAccountType = (await keyringService.getAllAddresses())?.find(
+    const existAccountType = (await keyringServiceApi.getAllAddresses())?.find(
       item => isSameAddress(item.address, toAddr),
     )?.type;
     if (!existAccountType) {

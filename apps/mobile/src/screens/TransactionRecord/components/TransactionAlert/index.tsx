@@ -4,8 +4,9 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiCustomTestnet, apiProvider } from '@/core/apis';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,7 +17,7 @@ import { intToHex } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { useInterval, useMemoizedFn, useRequest, useSetState } from 'ahooks';
 import dayjs from 'dayjs';
 import { flatten, flattenDeep, groupBy, maxBy, sortBy, uniqBy } from 'lodash';
@@ -229,17 +230,27 @@ export const TransactionAlert = ({
     },
   );
 
-  const handleClearPending = useMemoizedFn((groups: TransactionGroup[]) => {
-    uniqBy(groups, item => `${item.address}-${item.chainId}`).forEach(item => {
-      apisTransactionHistory.removeLocalPendingTx({
-        address: item.address,
-        chainId: item.chainId,
-      });
-    });
-    toast.success(t('page.transactions.TransactionAlert.clearPendingSuccess'));
-
-    resetNavigationTo(navigation, 'Home');
-  });
+  const handleClearPending = useMemoizedFn(
+    async (groups: TransactionGroup[]) => {
+      try {
+        await Promise.all(
+          uniqBy(groups, item => `${item.address}-${item.chainId}`).map(item =>
+            apisTransactionHistory.removeLocalPendingTx({
+              address: item.address,
+              chainId: item.chainId,
+            }),
+          ),
+        );
+        toast.success(
+          t('page.transactions.TransactionAlert.clearPendingSuccess'),
+        );
+        resetNavigationTo(navigation, 'Home');
+      } catch (error) {
+        console.error('[TransactionAlert] clear pending failed', error);
+        toast.error(String(error));
+      }
+    },
+  );
 
   const [now, setNow] = useState(dayjs());
 

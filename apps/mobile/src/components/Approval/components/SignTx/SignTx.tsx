@@ -1,4 +1,4 @@
-import { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024 } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
@@ -10,13 +10,13 @@ import {
   convertLegacyTo1559,
   is7702Tx,
 } from '@/utils/transaction';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import {
   KEYRING_CATEGORY_MAP,
   KEYRING_CLASS,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import {
+import type {
   ExplainTxResponse,
   GasAccountCheckResult,
   GasLevel,
@@ -24,13 +24,13 @@ import {
   Tx,
   TxPushType,
   MultiAction,
-  TransactionAction,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import { TransactionAction } from '@rabby-wallet/rabby-api/dist/types';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
+import type { ReactNode } from 'react';
 import React, {
-  ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -41,13 +41,15 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
+import type {
+  ActionRequireData,
+  ParsedTransactionActionData,
+  SendRequireData,
+} from '@rabby-wallet/rabby-action';
 import {
   fetchActionRequiredData,
   parseAction,
   formatSecurityEngineContext,
-  ActionRequireData,
-  ParsedTransactionActionData,
-  SendRequireData,
 } from '@rabby-wallet/rabby-action';
 import { openapi, testOpenapi } from '@/core/request';
 import {
@@ -56,6 +58,7 @@ import {
   apiProvider,
   apiSecurityEngine,
 } from '@/core/apis';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import {
   ALIAS_ADDRESS,
   DEFAULT_GAS_LIMIT_RATIO,
@@ -65,14 +68,14 @@ import {
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import {
-  customRPCService,
-  dappService,
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+  getLastTimeGasSelection,
+  updateLastTimeGasSelection,
+} from '@/core/serviceApi/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { toast } from '@/components2024/Toast';
 
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
@@ -107,7 +110,7 @@ import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
-import { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import { useEffectiveApprovalGasMethod } from '../TxComponents/GasSelector/useEffectiveApprovalGasMethod';
 import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
@@ -115,13 +118,13 @@ import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { BroadcastMode } from '../BroadcastMode';
 import { useFindChain } from '@/hooks/useFindChain';
 import { SignTestnetTx } from '../SignTestnetTx';
-import { GasLessConfig } from '../FooterBar/GasLessComponents';
+import type { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { CustomRPCErrorModal } from './CustomRPCErrorModal';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
-import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { useGasAccountSnapshotActivation } from '@/screens/GasAccount/hooks';
 import { EIP7702Warning } from '../EIP7702Warning';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import { GnosisAdminFooterBarPopup } from '../TxComponents/GnosisAdminFooterBarPopup';
@@ -134,19 +137,19 @@ import { calcGasLimit } from '@/core/apis/transactions';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
 import { Text } from '@/components/Typography';
 import { checkGasAccountLevelValidation } from './useGasAccountLevelValidation';
-import {
-  GasAccountTopUpResult,
-  getBumpedNonceAfterTopUp,
-} from '@/screens/GasAccount/components/topUpContinuation';
+import type { GasAccountTopUpResult } from '@/screens/GasAccount/components/topUpContinuation';
+import { getBumpedNonceAfterTopUp } from '@/screens/GasAccount/components/topUpContinuation';
+import type {
+  GasTokenInfo,
+  TempoFeeTokenOption,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
 import {
   calcTempoMaxGasCostRawAmountIn18,
-  GasTokenInfo,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   listTempoFeeTokenOptionsFromCache,
   loadTempoFeeTokenOptionsState,
-  TempoFeeTokenOption,
-  TxWithTempoExtras,
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
 
@@ -193,7 +196,7 @@ interface BlockInfo {
 const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const { isGnosis } = params;
   const currentAccount = params.isGnosis ? params.account! : $account;
-  const site = dappService.getDapp(origin || '');
+  const site = getDappSnapshot(origin || '');
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
   const [canProcess, setCanProcess] = useState(true);
@@ -977,12 +980,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 walletProvider: {
                   ethRpc: apiProvider.requestETHRpc,
                   hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-                  hasAddress: keyringService.hasAddress.bind(keyringService),
-                  getWhitelist: async () => whitelistService.getWhitelist(),
+                  hasAddress: address => keyringServiceApi.hasAddress(address),
+                  getWhitelist: async () => whitelistServiceApi.getWhitelist(),
                   isWhitelistEnabled: async () =>
-                    whitelistService.isWhitelistEnabled(),
+                    whitelistServiceApi.isWhitelistEnabled(),
                   getPendingTxsByNonce: async (...args) =>
-                    transactionHistoryService.getPendingTxsByNonce(...args),
+                    transactionHistoryServiceApi.getPendingTxsByNonce(...args),
                   findChain,
                   ALIAS_ADDRESS,
                 },
@@ -1007,7 +1010,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 isTestnet: isTestnet(chain.serverId),
                 provider: {
                   getTimeSpan,
-                  hasAddress: keyringService.hasAddress.bind(keyringService),
+                  hasAddress: address => keyringServiceApi.hasAddress(address),
                 },
               });
             }),
@@ -1045,12 +1048,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             walletProvider: {
               ethRpc: apiProvider.requestETHRpc,
               hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-              hasAddress: keyringService.hasAddress.bind(keyringService),
-              getWhitelist: async () => whitelistService.getWhitelist(),
+              hasAddress: address => keyringServiceApi.hasAddress(address),
+              getWhitelist: async () => whitelistServiceApi.getWhitelist(),
               isWhitelistEnabled: async () =>
-                whitelistService.isWhitelistEnabled(),
+                whitelistServiceApi.isWhitelistEnabled(),
               getPendingTxsByNonce: async (...args) =>
-                transactionHistoryService.getPendingTxsByNonce(...args),
+                transactionHistoryServiceApi.getPendingTxsByNonce(...args),
               findChain,
               ALIAS_ADDRESS,
             },
@@ -1071,7 +1074,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             isTestnet: isTestnet(chain.serverId),
             provider: {
               getTimeSpan,
-              hasAddress: keyringService.hasAddress.bind(keyringService),
+              hasAddress: address => keyringServiceApi.hasAddress(address),
             },
           });
           const result = await executeEngine(ctx);
@@ -1083,7 +1086,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         const approval = (await getApproval())!;
 
         approval?.signingTxId &&
-          (await transactionHistoryService.updateSigningTx(
+          (await transactionHistoryServiceApi.updateSigningTx(
             approval.signingTxId,
             {
               rawTx: {
@@ -1265,7 +1268,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       selected.gasLevel = selectedGas.level;
     }
     if (!isSpeedUp && !isCancel && !isSwap) {
-      await preferenceService.updateLastTimeGasSelection(chainId, selected);
+      await updateLastTimeGasSelection(chainId, selected);
     }
     const transaction: TxWithTempoExtras<Tx> = {
       from: tx.from,
@@ -1299,20 +1302,23 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     // gaEvent('allow');
 
     approval.signingTxId &&
-      (await transactionHistoryService.updateSigningTx(approval.signingTxId, {
-        rawTx: {
-          nonce: realNonce || tx.nonce,
+      (await transactionHistoryServiceApi.updateSigningTx(
+        approval.signingTxId,
+        {
+          rawTx: {
+            nonce: realNonce || tx.nonce,
+          },
+          explain: {
+            ...txDetail!,
+            approvalId: approval.id,
+            calcSuccess: !(checkErrors.length > 0),
+          },
+          action: {
+            actionData,
+            requiredData: actionRequireData,
+          },
         },
-        explain: {
-          ...txDetail!,
-          approvalId: approval.id,
-          calcSuccess: !(checkErrors.length > 0),
-        },
-        action: {
-          actionData,
-          requiredData: actionRequireData,
-        },
-      }));
+      ));
 
     if (isSend) {
       const sendActionRequireData = actionRequireData as SendRequireData;
@@ -1697,7 +1703,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
   const init = async () => {
     try {
-      await customRPCService.syncDefaultRPC();
+      await customRPCServiceApi.syncDefaultRPC();
     } catch (e) {
       console.error('signTx sync default rpc error', e);
     }
@@ -1767,8 +1773,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         await getSafeInfo();
       }
       checkCanProcess();
-      const lastTimeGas: ChainGas | null =
-        await preferenceService.getLastTimeGasSelection(chainId);
+      const lastTimeGas: ChainGas | null = await getLastTimeGasSelection(
+        chainId,
+      );
       let customGasPrice = 0;
       if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
         // use cached gasPrice if exist
@@ -1883,7 +1890,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       isTestnet: isTestnet(chain.serverId),
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
     const result = await executeEngine(ctx);
@@ -2088,7 +2095,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData, rules]);
 
-  useGasAccountInfo();
+  useGasAccountSnapshotActivation();
 
   // TODO
   // useEffect(() => {

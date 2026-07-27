@@ -1,11 +1,8 @@
 import { AppState } from 'react-native';
 
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 
 const PING_URL = 'https://app-api.rabby.io/ping';
@@ -27,10 +24,6 @@ const networkStatusState = zCreate<{ isDisconnected: boolean }>(() => ({
   isDisconnected: false,
 }));
 
-runIIFEFunc(() => {
-  startNetworkPolling();
-});
-
 function setNetworkStatus(valOrFunc: UpdaterOrPartials<boolean>) {
   networkStatusState.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
@@ -51,7 +44,7 @@ function setNetworkStatus(valOrFunc: UpdaterOrPartials<boolean>) {
 let timer: NodeJS.Timeout | null = null;
 let started = false;
 
-function startNetworkPolling() {
+export function startGlobalNetworkPolling() {
   if (started) {
     return;
   }

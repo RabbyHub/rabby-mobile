@@ -13,3 +13,4 @@ Agent guidance for this repository:
 - When working in `apps/mobile` on store, hooks, or Home-path logic, read `apps/mobile/skills/perf-hooks.md` before changing selector boundaries or exposing new store state to React consumers.
 - Treat `apps/mobile/skills/perf-hooks.md` as the local performance playbook for scene-picked minimal state, reusable scene-level derived data, and avoiding render fan-out from overly broad subscriptions.
 - When working in `apps/mobile` on SQLite persistence, resource cache sync, TypeORM/op-sqlite `executeBatch`/`upsert` code, app-data-source reset, or clear-cache behavior, read `apps/mobile/skills/db-sync-writes.md` before changing DB write paths.
+- When adding non-production automation, typed behavior injection, lifecycle observation, or future performance instrumentation to a Screen, component, or local feature boundary in `apps/mobile`, read `skills/mobile-testable-component-boundaries/SKILL.md`.

@@ -2,16 +2,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { formatTimestamp } from '@/utils/time';
 import { View } from 'react-native';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
-import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
+import type { SendAction } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useGetCexList } from '@/screens/Transaction/hook';
@@ -19,6 +19,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useRecentSend } from '@/screens/Send/hooks/useRecentSend';
 import { useAccountSelectModalCtx } from '../hooks';
 import { Text } from '@/components/Typography';
+import { withTransactionHistoryService } from '@/core/serviceApi/transactionHistoryHooks';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -31,7 +32,7 @@ interface IProps {
   isForMultipleAddress?: boolean;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
 }
-export const ScreenSentHistory = ({
+const ScreenSentHistoryContent = ({
   title,
   isForMultipleAddress = true,
   onPressAddToWhitelistButton,
@@ -134,6 +135,10 @@ export const ScreenSentHistory = ({
     </>
   );
 };
+
+export const ScreenSentHistory = withTransactionHistoryService(
+  ScreenSentHistoryContent,
+);
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {

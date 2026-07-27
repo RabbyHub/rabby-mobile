@@ -4,11 +4,9 @@ import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { getCexId } from '@/utils/addressCexId';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { findSupportedExchange } from '@/utils/cex';
 
 export const globalSupportCexList: ProjectItem[] = [];
@@ -27,18 +25,26 @@ function setSupportCexList(valOrFunc: UpdaterOrPartials<ProjectItem[]>) {
   });
 }
 
-const cexSupportListReady = runIIFEFunc(() =>
-  openapi
-    .getCexSupportList()
-    .then(res => {
-      globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
-      setSupportCexList(res);
-      return res;
-    })
-    .catch(() => globalSupportCexList),
-);
+let cexSupportListReady: Promise<ProjectItem[]> | undefined;
 
-export const waitForCexSupportListReady = () => cexSupportListReady;
+const loadCexSupportList = () => {
+  if (!cexSupportListReady) {
+    cexSupportListReady = openapi
+      .getCexSupportList()
+      .then(res => {
+        globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
+        setSupportCexList(res);
+        return res;
+      })
+      .catch(() => globalSupportCexList);
+  }
+
+  return cexSupportListReady;
+};
+
+runStartupTask(loadCexSupportList, STARTUP_TASKS.cexSupportListFetch);
+
+export const waitForCexSupportListReady = loadCexSupportList;
 
 export const useCexSupportList = () => {
   const list = supportCexListStore(s => s.list);

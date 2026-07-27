@@ -1,5 +1,5 @@
 import * as ethUtil from 'ethereumjs-util';
-import { keyringService } from '../services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { t } from 'i18next';
 import { _setCurrentAccountFromKeyring } from './keyring';
 import { verifyPasswordOrUnlock } from './lock';
@@ -34,7 +34,7 @@ export const getPrivateKey = async (
   { address, type }: { address: string; type: string },
 ) => {
   await verifyPasswordOrUnlock(password);
-  const keyring = await keyringService.getKeyringForAccount(address, type);
+  const keyring = await keyringServiceApi.getKeyringForAccount(address, type);
   if (!keyring) {
     return null;
   }
@@ -43,7 +43,7 @@ export const getPrivateKey = async (
 
 const importCleanPrivateKey = withWalletUnlock(
   async (cleanedPrivateKey: string) => {
-    const keyring = await keyringService.importPrivateKey(cleanedPrivateKey);
+    const keyring = await keyringServiceApi.importPrivateKey(cleanedPrivateKey);
     const accounts = await _setCurrentAccountFromKeyring(keyring);
 
     // accountEvents.emit('ACCOUNT_ADDED', {

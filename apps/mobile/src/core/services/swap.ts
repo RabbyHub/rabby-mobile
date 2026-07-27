@@ -1,6 +1,6 @@
 import { DEX_ENUM } from '@rabby-wallet/rabby-swap';
 import { CHAINS_ENUM } from '@debank/common';
-import { GasCache, ChainGas } from './preference';
+import type { GasCache, ChainGas } from '../startupServices/preference';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import createPersistStore, {
   StorageAdapaterOptions,
@@ -15,7 +15,7 @@ import {
 } from '@/constant/swap';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { getTxMatchData } from '@/utils/tempo';
+import { getTxMatchData } from '@/utils/tempoTx';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 

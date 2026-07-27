@@ -10,6 +10,7 @@ module.exports = api => {
       ? callerDev
       : process.env.BABEL_ENV === 'development' ||
         process.env.NODE_ENV === 'development';
+  const isJestTransform = callerName === 'babel-jest';
 
   const { version } = pkg;
   const inputBuildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
@@ -25,6 +26,10 @@ module.exports = api => {
     inputBuildEnv === 'production' ||
     (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
   const loadableImplExt = isDevTransform ? 'dev' : 'prod';
+  const regressionScenarioImplExt =
+    isDevTransform || resolvedBuildChannel === 'selfhost-reg'
+      ? 'nonprod'
+      : 'prod';
 
   api.cache.using(() =>
     JSON.stringify({
@@ -33,6 +38,7 @@ module.exports = api => {
       dotenvEnv: process.env.APP_ENV || '',
       callerName,
       isDevTransform,
+      regressionScenarioImplExt,
       shouldEnableRozenite,
     }),
   );
@@ -77,6 +83,9 @@ module.exports = api => {
             '.ios.tsx',
           ],
           alias: {
+            '^@/devtools/regressionScenarios/entry$': `./src/devtools/regressionScenarios/entry.${regressionScenarioImplExt}`,
+            '^@/devtools/regressionScenarios/runtime$': `./src/devtools/regressionScenarios/runtime.${regressionScenarioImplExt}`,
+            '^@/devtools/regressionScenarios/react$': `./src/devtools/regressionScenarios/react.${regressionScenarioImplExt}`,
             ...(loadableAliases[loadableImplExt] || {}),
             '@': './src',
             'styled-components/native': 'styled-components/native',
@@ -90,6 +99,7 @@ module.exports = api => {
       ['nativewind/babel', {}],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
+      ...(isJestTransform ? ['@babel/plugin-transform-dynamic-import'] : []),
       ['react-native-reanimated/plugin'],
     ],
     ...(shouldStripConsole

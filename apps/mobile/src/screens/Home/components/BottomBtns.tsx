@@ -35,6 +35,10 @@ import RcIconApprovalCC from '@/assets2024/singleHome/approvals-cc.svg';
 import RcIconQueueCC from '@/assets2024/singleHome/queue-cc.svg';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import {
+  beginFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -111,7 +115,16 @@ export const BottomBtns = ({
         if (!currentAccount) {
           return;
         }
+        const cycleId = beginFeatureActivation('bridge', 'home_bridge_press');
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+        markFeatureActivation('bridge', 'context-ready', {
+          cycleId,
+          reason: 'scene_account_switched',
+        });
+        markFeatureActivation('bridge', 'navigation-dispatched', {
+          cycleId,
+          reason: 'home_navigation_push',
+        });
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.SwapBridge,
           params: {
@@ -174,7 +187,16 @@ export const BottomBtns = ({
     if (!currentAccount) {
       return;
     }
+    const cycleId = beginFeatureActivation('swap', 'home_swap_press');
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    markFeatureActivation('swap', 'context-ready', {
+      cycleId,
+      reason: 'scene_account_switched',
+    });
+    markFeatureActivation('swap', 'navigation-dispatched', {
+      cycleId,
+      reason: 'home_navigation_push',
+    });
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.SwapBridge,
       params: {

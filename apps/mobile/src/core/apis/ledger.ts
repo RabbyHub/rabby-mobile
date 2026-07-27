@@ -1,12 +1,12 @@
-import { preferenceService } from '@/core/services';
 import { bindLedgerEvents } from '@/utils/ledger';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
-import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
-import { keyringService } from '../services/shared';
+import type { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { preferenceServiceApi } from '@/core/serviceApi/preference';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import PQueue from 'p-queue';
+import type PQueue from 'p-queue';
 import { t } from 'i18next';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
@@ -27,9 +27,9 @@ export async function importAddress(index: number) {
   keyring.setAccountToUnlock(index);
   await queue.clear();
   const result = await queue.add(() =>
-    keyringService.addNewAccount(keyring as any),
+    keyringServiceApi.addNewAccount(keyring as any),
   );
-  preferenceService.initCurrentAccount();
+  await preferenceServiceApi.initCurrentAccount();
   return result;
 }
 
@@ -131,7 +131,7 @@ export async function importFirstAddress({
     try {
       await keyring.setHDPathType(LedgerHDPathType.LedgerLive);
       await keyring.setAccountToUnlock(0);
-      address = (await keyringService.addNewAccount(keyring as any))[0];
+      address = (await keyringServiceApi.addNewAccount(keyring as any))[0];
     } catch (e: any) {
       // only catch not `duplicate import` error
       if (!e.message?.includes('import is invalid')) {
@@ -151,7 +151,7 @@ export async function importFirstAddress({
       }
     }
   }
-  preferenceService.initCurrentAccount();
+  await preferenceServiceApi.initCurrentAccount();
 
   return address;
 }
@@ -223,6 +223,6 @@ export async function fixDeviceId(address: string, deviceId: string) {
 
   keyring.setDeviceId(deviceId);
   await keyring.fixDeviceId(address, deviceId);
-  await keyringService.persistKeyringsForKeyring(keyring);
+  await keyringServiceApi.persistKeyringsForKeyring(keyring);
   return;
 }

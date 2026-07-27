@@ -30,8 +30,8 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   isNewlyInputTextSameWithContentFromClipboard,
   onPastedSensitiveData,
@@ -107,9 +107,9 @@ export const ImportPrivateKeyScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM,
-      );
+      ).catch(console.error);
 
       setConfirmCB(importPrivateKey);
       return;

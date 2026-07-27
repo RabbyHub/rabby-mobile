@@ -2,13 +2,15 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
-import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
+import type { RootNames } from '@/constant/layout';
 import {
-  preferenceService,
-  swapService,
-  transactionHistoryService,
-} from '@/core/services';
+  DEX_WITH_WRAP,
+  getChainDefaultToken,
+  getDefaultSwapToTokenItem,
+} from '@/constant/swap';
+import { swapServiceApi } from '@/core/serviceApi/swap';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   getMarketTabActionPrefix,
@@ -18,8 +20,8 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
+import type { CompositeScreenProps } from '@react-navigation/native';
 import {
-  CompositeScreenProps,
   useIsFocused,
   useNavigation,
   useRoute,
@@ -54,8 +56,8 @@ import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
+import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import {
-  PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
@@ -66,13 +68,13 @@ import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useSwapRecentToTokens } from '../Swap/hooks/recent';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
-import {
+import type {
   GetNestedScreenRouteProp,
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   ExternalSwapBridgeDappTips,
   SwapBridgeDappPopup,
@@ -87,14 +89,12 @@ import {
 } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
 import { last } from 'lodash';
-import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
+import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTwoStepSwap } from '../Swap/hooks/twoStepSwap';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -106,8 +106,8 @@ import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
+import type { FormAmountMode } from '@/utils/form';
 import {
-  FormAmountMode,
   FormValuesOnSubmit,
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
@@ -119,6 +119,11 @@ import {
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
 import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -126,6 +131,8 @@ const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
 const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 const BUILD_SWAP_TXS_DEBOUNCE_MS = 500;
+const DEFAULT_REGRESSION_TARGET_USD = '0.1';
+const DEFAULT_REGRESSION_MAX_TOTAL_USD = '1';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<
@@ -138,12 +145,85 @@ type SwapRouteProps = CompositeScreenProps<
 type SwapProps = PropsForAccountSwitchScreen<{
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
+  diagnosticActive?: boolean;
 }>;
+
+function SwapActivationDataProbe({
+  currentAddress,
+  payTokenChain,
+  payTokenId,
+  receiveTokenChain,
+  receiveTokenId,
+}: {
+  currentAddress?: string;
+  payTokenChain?: string;
+  payTokenId?: string;
+  receiveTokenChain?: string;
+  receiveTokenId?: string;
+}) {
+  useEffect(() => {
+    if (!currentAddress || !payTokenId || !receiveTokenId) {
+      return;
+    }
+
+    const cycleId = ensureFeatureActivation('swap', 'swap_data_probe');
+    markFeatureActivation('swap', 'data-ready', {
+      cycleId,
+      reason: 'swap_token_pair_ready',
+      detail: `${payTokenChain}:${payTokenId}->${receiveTokenChain}:${receiveTokenId}`,
+    });
+  }, [
+    currentAddress,
+    payTokenChain,
+    payTokenId,
+    receiveTokenChain,
+    receiveTokenId,
+  ]);
+
+  return null;
+}
+
+function readRegressionUsdParam(value: string | undefined, fallback: string) {
+  const parsed = new BigNumber(value || fallback);
+  return parsed.isFinite() && parsed.gt(0) ? parsed : new BigNumber(fallback);
+}
+
+function readRegressionSwapChain(value: string | undefined) {
+  const normalized = (value || 'polygon').toLowerCase();
+  if (normalized === 'polygon' || normalized === 'matic') {
+    return CHAINS_ENUM.POLYGON;
+  }
+  return findChainByServerID(normalized)?.enum || CHAINS_ENUM.POLYGON;
+}
+
+function isSameTokenId(left?: string, right?: string) {
+  return !!left && !!right && left.toLowerCase() === right.toLowerCase();
+}
+
+function formatSafeHash(hash?: string) {
+  if (!hash) {
+    return '';
+  }
+  return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
+}
+
+function isRegressionBroadcastRequested(
+  params: Readonly<Record<string, string>>,
+) {
+  const value = params.broadcast;
+  return !!value && ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function isSameAmountValue(current: string | undefined, target: BigNumber) {
+  const parsed = new BigNumber(current || 0);
+  return parsed.isFinite() && parsed.eq(target);
+}
 
 const Swap = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
   disableAccountSwitcherModal = false,
+  diagnosticActive = false,
 }: SwapProps) => {
   /** Swap form snapshot for validation during auth */
   interface SwapFormSnapshot {
@@ -209,6 +289,7 @@ const Swap = ({
   const {
     bestQuoteDex,
     chain,
+    markExplicitSwapSelection,
     switchChain,
     switchSwapAgain,
 
@@ -358,13 +439,15 @@ const Swap = ({
   );
 
   const switchPreferMEV = useMemoizedFn((bool: boolean) => {
-    swapService.setSwapPreferMEVGuarded(bool);
+    void swapServiceApi.setSwapPreferMEVGuarded(bool).catch(error => {
+      console.error('[Swap] persist MEV preference failed', error);
+    });
     mutatePreferMEVGuarded(bool);
   });
 
   const { data: originPreferMEVGuarded, mutate: mutatePreferMEVGuarded } =
     useRequest(async () => {
-      return swapService.getSwapPreferMEVGuarded();
+      return swapServiceApi.getSwapPreferMEVGuarded();
     });
 
   const preferMEVGuarded = useMemo(
@@ -379,11 +462,18 @@ const Swap = ({
       >
     >();
   const navState = route.params;
+  const regressionScenario = useRegressionScenario<'SwapBridge'>();
+  const swapFundedAmountAppliedRunIdRef = useRef('');
+  const swapFundedSubmitStartedRunIdRef = useRef('');
+  const regressionBroadcastRequested =
+    regressionScenario.active &&
+    regressionScenario.scenario === 'swap-funded' &&
+    isRegressionBroadcastRequested(regressionScenario.params);
 
   useMount(() => {
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
-    );
+    ).catch(console.error);
 
     if (!navState?.chainEnum) {
       return;
@@ -432,6 +522,10 @@ const Swap = ({
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
 
+    if (navState?.tokenId) {
+      markExplicitSwapSelection();
+    }
+
     if (navState?.isFromSwap) {
       if (navState?.tokenId && chainItem?.enum === chain) {
         if (
@@ -477,6 +571,186 @@ const Swap = ({
     navState?.isSwapToTokenDetail,
     navState?.tokenId,
     navState?.type,
+  ]);
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-funded'
+    ) {
+      return;
+    }
+
+    const targetChain = readRegressionSwapChain(
+      regressionScenario.params.chain,
+    );
+    const shouldBroadcast = isRegressionBroadcastRequested(
+      regressionScenario.params,
+    );
+    const targetChainInfo = findChainByEnum(targetChain);
+    const targetPayToken = getChainDefaultToken(targetChain);
+    const targetReceiveToken = getDefaultSwapToTokenItem(targetChain);
+
+    if (
+      chain !== targetChain ||
+      payToken?.chain !== targetChainInfo?.serverId ||
+      !isSameTokenId(payToken?.id, targetPayToken.id)
+    ) {
+      switchChain(targetChain, {
+        payTokenId: targetPayToken.id,
+        changeTo: false,
+        markExplicitSelection: true,
+      });
+      return;
+    }
+
+    if (
+      targetReceiveToken &&
+      (!receiveToken ||
+        receiveToken.chain !== targetReceiveToken.chain ||
+        !isSameTokenId(receiveToken.id, targetReceiveToken.id))
+    ) {
+      setReceiveToken(targetReceiveToken);
+      return;
+    }
+
+    if (swapFundedSubmitStartedRunIdRef.current === regressionScenario.runId) {
+      return;
+    }
+
+    const price = new BigNumber(payToken?.price || 0);
+    if (!price.gt(0)) {
+      return;
+    }
+
+    const targetUsd = readRegressionUsdParam(
+      regressionScenario.params.targetUsd,
+      DEFAULT_REGRESSION_TARGET_USD,
+    );
+    const maxTotalUsd = readRegressionUsdParam(
+      regressionScenario.params.maxTotalUsd,
+      DEFAULT_REGRESSION_MAX_TOTAL_USD,
+    );
+    const amount = targetUsd
+      .div(price)
+      .decimalPlaces(Math.min(payToken?.decimals || 18, 6), BigNumber.ROUND_UP);
+    const actualUsd = amount.times(price);
+    const balance = new BigNumber(payToken?.raw_amount_hex_str || 0, 16).div(
+      new BigNumber(10).pow(payToken?.decimals || 18),
+    );
+
+    if (!amount.gt(0) || actualUsd.gt(maxTotalUsd) || !balance.gt(amount)) {
+      if (regressionScenario.claimOnce('swap-funded-amount-invalid')) {
+        regressionScenario.report('assertion', {
+          assertion: 'swap-funded-amount-valid',
+          passed: false,
+          chain: targetChainInfo?.serverId,
+          token: payToken?.symbol,
+          targetUsd: targetUsd.toString(10),
+          actualUsd: actualUsd.toString(10),
+          balance: balance.toString(10),
+        });
+      }
+      return;
+    }
+
+    if (!isSameAmountValue(payAmount, amount)) {
+      const hasApplied =
+        swapFundedAmountAppliedRunIdRef.current === regressionScenario.runId;
+      const assertion = hasApplied
+        ? 'swap-funded-amount-reapplied'
+        : 'swap-funded-amount-applied';
+      handleAmountChange(amount.toString(10));
+      if (!hasApplied || regressionScenario.claimOnce(assertion)) {
+        regressionScenario.report('assertion', {
+          assertion,
+          passed: true,
+          mode: shouldBroadcast ? 'broadcast' : 'dry-run',
+          chain: targetChainInfo?.serverId,
+          payToken: payToken?.symbol,
+          receiveToken: targetReceiveToken?.symbol,
+          amount: amount.toString(10),
+          targetUsd: targetUsd.toString(10),
+          actualUsd: actualUsd.toString(10),
+        });
+      }
+      swapFundedAmountAppliedRunIdRef.current = regressionScenario.runId;
+      return;
+    }
+
+    if (regressionScenario.claimOnce('swap-funded-form-amount-ready')) {
+      regressionScenario.report('assertion', {
+        assertion: 'swap-funded-form-amount-ready',
+        passed: true,
+        mode: shouldBroadcast ? 'broadcast' : 'dry-run',
+        chain: targetChainInfo?.serverId,
+        payToken: payToken?.symbol,
+        receiveToken: targetReceiveToken?.symbol,
+        amount: payAmount,
+        targetUsd: targetUsd.toString(10),
+        actualUsd: actualUsd.toString(10),
+      });
+    }
+  }, [
+    chain,
+    handleAmountChange,
+    payAmount,
+    payToken,
+    receiveToken,
+    regressionScenario,
+    setReceiveToken,
+    switchChain,
+  ]);
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-funded' ||
+      regressionBroadcastRequested
+    ) {
+      return;
+    }
+
+    if (
+      !payToken ||
+      !receiveToken ||
+      !new BigNumber(payAmount || 0).gt(0) ||
+      quoteLoading ||
+      inSufficient ||
+      !activeProvider?.quote
+    ) {
+      return;
+    }
+
+    if (!regressionScenario.claimOnce('swap-funded-dry-run-ready')) {
+      return;
+    }
+
+    regressionScenario.report('assertion', {
+      assertion: 'swap-funded-dry-run-ready',
+      passed: true,
+      mode: 'dry-run',
+      chain: chainServerId,
+      payToken: payToken.symbol,
+      payTokenId: payToken.id,
+      receiveToken: receiveToken.symbol,
+      receiveTokenId: receiveToken.id,
+      amount: payAmount,
+      provider: activeProvider.name,
+      quoteCount: quoteList.length,
+    });
+  }, [
+    activeProvider?.name,
+    activeProvider?.quote,
+    chainServerId,
+    inSufficient,
+    payAmount,
+    payToken,
+    quoteList.length,
+    quoteLoading,
+    receiveToken,
+    regressionScenario,
+    regressionBroadcastRequested,
   ]);
 
   const { safeOffBottom } = useSafeSizes();
@@ -896,14 +1170,14 @@ const Swap = ({
         });
         txHash = last(res) || '';
 
-        miniSignNextStep(txHash);
+        await miniSignNextStep(txHash);
 
         if (!isApprove) {
           builtSwapTxsKeyRef.current = '';
           prefetchedSwapTxsKeyRef.current = '';
           mutateTxs([]);
           const createdAt = Date.now();
-          transactionHistoryService.addSwapTxHistory({
+          await transactionHistoryServiceApi.addSwapTxHistory({
             hash: txHash,
             chainId: findChainByEnum(chain)?.id || 0,
             address: currentAccount?.address!,
@@ -926,6 +1200,26 @@ const Swap = ({
               type: navState?.type || 'Buy',
             },
           });
+          if (
+            regressionBroadcastRequested &&
+            regressionScenario.active &&
+            regressionScenario.scenario === 'swap-funded' &&
+            regressionScenario.claimOnce('swap-funded-broadcast-success')
+          ) {
+            regressionScenario.report('assertion', {
+              assertion: 'swap-funded-broadcast-success',
+              passed: true,
+              mode: 'broadcast',
+              txHash: formatSafeHash(txHash),
+              chain: chainServerId,
+              payToken: payToken?.symbol,
+              payTokenId: payToken?.id,
+              receiveToken: receiveToken?.symbol,
+              receiveTokenId: receiveToken?.id,
+              amount: payAmount,
+              provider: activeProvider?.name,
+            });
+          }
           handleAmountChange('');
           setTimeout(() => {
             runFetchSwapPendingCount();
@@ -964,12 +1258,12 @@ const Swap = ({
               action: createSwapTxAction,
             });
           }
-          preferenceService.setReportActionTs(
+          void setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {
               chain: chainServerId,
             },
-          );
+          ).catch(console.error);
           if (currentIsCopyTrading) {
             matomoRequestEvent({
               category: 'CopyTrading',
@@ -1004,12 +1298,12 @@ const Swap = ({
     } else {
       gotoSwap();
     }
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
       {
         chain: chainServerId,
       },
-    );
+    ).catch(console.error);
   });
 
   const amountAvailable = useMemo(
@@ -1139,9 +1433,9 @@ const Swap = ({
     // onApprovePending,
   });
 
-  const miniSignNextStep = (hash: string) => {
+  const miniSignNextStep = async (hash: string) => {
     if (isApprove) {
-      transactionHistoryService.addApproveSwapTokenTxHistory({
+      await transactionHistoryServiceApi.addApproveSwapTokenTxHistory({
         address: currentAccount?.address!,
         chainId: currentTxs![0]!.chainId,
         amount: Number(payAmount),
@@ -1209,6 +1503,131 @@ const Swap = ({
   useEffect(() => {
     setRiskChecked(false);
   }, [riskConfirmKey]);
+
+  useEffect(() => {
+    if (
+      !regressionBroadcastRequested ||
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-funded'
+    ) {
+      return;
+    }
+
+    if (
+      !payToken ||
+      !receiveToken ||
+      !new BigNumber(payAmount || 0).gt(0) ||
+      quoteLoading ||
+      inSufficient ||
+      !activeProvider?.quote ||
+      swapBtnDisabled
+    ) {
+      return;
+    }
+
+    if (!canShowDirectSubmit) {
+      if (regressionScenario.claimOnce('swap-funded-direct-submit-required')) {
+        regressionScenario.report('assertion', {
+          assertion: 'swap-funded-direct-submit-required',
+          passed: false,
+          mode: 'broadcast',
+          reason: 'direct-submit-unavailable',
+          chain: chainServerId,
+          payToken: payToken.symbol,
+          receiveToken: receiveToken.symbol,
+        });
+      }
+      return;
+    }
+
+    if (slippageChanged) {
+      if (regressionScenario.claimOnce('swap-funded-refresh-slippage')) {
+        regressionScenario.report('assertion', {
+          assertion: 'swap-funded-refresh-slippage',
+          passed: true,
+          mode: 'broadcast',
+          chain: chainServerId,
+        });
+      }
+      refresh(e => e + 1);
+      return;
+    }
+
+    if (activeProvider?.shouldTwoStepApprove || shouldTwoStepSwap) {
+      if (regressionScenario.claimOnce('swap-funded-two-step-unsupported')) {
+        regressionScenario.report('assertion', {
+          assertion: 'swap-funded-two-step-unsupported',
+          passed: false,
+          mode: 'broadcast',
+          chain: chainServerId,
+          payToken: payToken.symbol,
+          receiveToken: receiveToken.symbol,
+          provider: activeProvider.name,
+        });
+      }
+      return;
+    }
+
+    if (showRiskConfirm && !riskChecked) {
+      if (regressionScenario.claimOnce('swap-funded-risk-confirm-accepted')) {
+        regressionScenario.report('assertion', {
+          assertion: 'swap-funded-risk-confirm-accepted',
+          passed: true,
+          mode: 'broadcast',
+          chain: chainServerId,
+        });
+      }
+      setRiskChecked(true);
+      return;
+    }
+
+    if (riskConfirmDisabled) {
+      return;
+    }
+
+    if (!regressionScenario.claimOnce('swap-funded-submit-started')) {
+      return;
+    }
+
+    formValuesRef.current.save(buildFormSnapshot());
+    swapFundedSubmitStartedRunIdRef.current = regressionScenario.runId;
+    regressionScenario.report('assertion', {
+      assertion: 'swap-funded-submit-started',
+      passed: true,
+      mode: 'broadcast',
+      chain: chainServerId,
+      payToken: payToken.symbol,
+      payTokenId: payToken.id,
+      receiveToken: receiveToken.symbol,
+      receiveTokenId: receiveToken.id,
+      amount: payAmount,
+      provider: activeProvider.name,
+      quoteCount: quoteList.length,
+    });
+    handleSwap({ ignoreGasFee: riskChecked || showRiskConfirm });
+  }, [
+    activeProvider,
+    buildFormSnapshot,
+    canShowDirectSubmit,
+    chainServerId,
+    formValuesRef,
+    handleSwap,
+    inSufficient,
+    payAmount,
+    payToken,
+    quoteList.length,
+    quoteLoading,
+    receiveToken,
+    refresh,
+    regressionBroadcastRequested,
+    regressionScenario,
+    riskChecked,
+    riskConfirmDisabled,
+    shouldTwoStepSwap,
+    showRiskConfirm,
+    slippageChanged,
+    swapBtnDisabled,
+  ]);
 
   const shouldPauseMiniSignerEffects =
     useMiniSignerEffectPause(miniSignLoading);
@@ -1491,6 +1910,15 @@ const Swap = ({
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer2024 type="bg1">
+        {diagnosticActive ? (
+          <SwapActivationDataProbe
+            currentAddress={currentAccount?.address}
+            payTokenChain={payToken?.chain}
+            payTokenId={payToken?.id}
+            receiveTokenChain={receiveToken?.chain}
+            receiveTokenId={receiveToken?.id}
+          />
+        ) : null}
         {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}

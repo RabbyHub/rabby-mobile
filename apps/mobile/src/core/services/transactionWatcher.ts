@@ -9,9 +9,8 @@ import { EVENTS, eventBus } from '@/utils/events';
 import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { TransactionHistoryService } from './transactionHistory';
-import { customTestnetService } from './customTestnetService';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { customRPCService } from './customRPCService';
+import { callCoreService } from './serviceRegistry';
 
 class Transaction {
   createdTime = 0;
@@ -33,6 +32,7 @@ export class TransactionWatcherService {
   store!: TransactionWatcherStore;
   timers = {};
   transactionHistoryService: TransactionHistoryService;
+  private started = false;
 
   constructor(
     options: StorageAdapaterOptions & {
@@ -96,21 +96,21 @@ export class TransactionWatcherService {
     }
 
     if (chainItem.isTestnet) {
-      return customTestnetService
-        .getTransactionReceipt({
+      return callCoreService('customTestnetService', service =>
+        service.getTransactionReceipt({
           chainId: chainItem.id,
           hash,
-        })
-        .catch(() => null);
+        }),
+      ).catch(() => null);
     }
 
-    return customRPCService
-      .defaultEthRPC({
+    return callCoreService('customRPCService', service =>
+      service.defaultEthRPC({
         chainServerId: chainItem.serverId,
         method: 'eth_getTransactionReceipt',
         params: [hash],
-      })
-      .catch(() => null);
+      }),
+    ).catch(() => null);
   };
 
   notify = async (id: string, txReceipt) => {
@@ -158,6 +158,14 @@ export class TransactionWatcherService {
   };
 
   // fetch pending txs status every 5s
+  start = () => {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.roll();
+  };
+
   roll = () => {
     interval(async () => {
       const list = Object.keys(this.store.pendingTx);

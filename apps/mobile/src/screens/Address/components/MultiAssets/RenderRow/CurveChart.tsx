@@ -396,6 +396,7 @@ const ChartHeader = React.memo(
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
             <RefreshNudgedTickerText
               value={formatNetWorth}
+              animateWidth={false}
               maxLength={24}
               lineHeight={42}
               duration={320}
@@ -414,7 +415,7 @@ const ChartHeader = React.memo(
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
             width={181}
-            height={44}
+            height={42}
             style={[
               styles.skeletonNetWorth,
               !showNetWorthLoading && styles.hidden,
@@ -449,8 +450,8 @@ const ChartHeader = React.memo(
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioChangeLoading)}
             width={100}
-            height={22}
-            style={styles.skeletonNetWorth}
+            height={18}
+            style={styles.skeletonChange}
             LinearGradientComponent={LoadingLinear}
           />
         ) : (
@@ -520,6 +521,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // ...makeDebugBorder('blue'),
   },
   skeletonNetWorth: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  skeletonChange: {
     borderRadius: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']

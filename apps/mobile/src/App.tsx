@@ -42,8 +42,12 @@ import { openapi } from './core/request';
 import { DEFAULT_RABBY_MOBILE_CODE, IS_ROZENITE_ENABLED } from './constant/env';
 import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
-import { startSubscribeLangChange } from './hooks/lang';
 import { traceAndroidInstant } from './core/utils/androidTrace';
+import { startLaunchPhase } from './startup/launchPlan';
+import { StartupRuntimePanelHost } from './screens/Settings/components/StartupRuntimePanelHost';
+import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { AnimatedBootSplash } from './components/BootSplash/AnimatedBootSplash';
+import { RegressionScenarioHost } from '@/devtools/regressionScenarios/react';
 
 Safe.openapiService = openapi;
 
@@ -156,7 +160,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
   useEffect(() => {
     traceAndroidInstant('react.App.mounted');
-    startSubscribeLangChange();
+    startLaunchPhase();
   }, []);
   useBootstrapApp({ rabbitCode });
 
@@ -170,10 +174,13 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
+                {NEED_DEVSETTINGBLOCKS ? <StartupRuntimePanelHost /> : null}
+                <RegressionScenarioHost />
                 {/* read from native bundle on production */}
                 <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
             </Suspense>
+            <AnimatedBootSplash />
           </RootSiblingParent>
         </SafeAreaProvider>
       </ThemeProvider>

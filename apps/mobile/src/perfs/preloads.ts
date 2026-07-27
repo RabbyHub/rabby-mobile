@@ -2,6 +2,8 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { isCached, preload } from 'react-native-bundle-splitter';
 
+const loadablesAreEager = true;
+
 export const PRELOAD_SCREENS = {
   [RootNames.Settings]: 'SettingsScreen',
 };
@@ -12,7 +14,7 @@ export const PRELOAD_NAVIGATORS = {
 };
 
 async function preloadNamedComponent(name?: string) {
-  if (__DEV__ || !name || isCached(name)) {
+  if (__DEV__ || loadablesAreEager || !name || isCached(name)) {
     return;
   }
 
@@ -62,11 +64,12 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevSwitches]: 'DevSwitches',
   [RootNames.DevPerf]: 'DevPerf',
   [RootNames.DebugLogViewer]: 'DebugLogViewer',
+  [RootNames.StartupPerformanceLogViewer]: 'StartupPerformanceLogViewer',
   [RootNames.InMemoryLogViewer]: 'InMemoryLogViewer',
 };
 
 export async function preloadNonProductionScreens() {
-  if (!isNonPublicProductionEnv) {
+  if (!isNonPublicProductionEnv || loadablesAreEager) {
     return;
   }
 

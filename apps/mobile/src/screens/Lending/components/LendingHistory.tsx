@@ -2,7 +2,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryLendingSuccessListSnapshot,
+  getTransactionHistoryListSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -13,7 +17,7 @@ import {
 } from 'ahooks';
 import { View } from 'react-native';
 import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -21,9 +25,13 @@ import { syncSingleAddress } from '@/databases/hooks/history';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 
 function LendingHistory(): JSX.Element {
   const { myTop10Addresses } = useAccountInfo();
@@ -44,6 +52,7 @@ function LendingHistory(): JSX.Element {
     });
   const isSceneUsingAllAccounts = false;
   const [firstFetchDone, setFirstFetchDone] = useState(false);
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [historySuccessList, setHistorySuccessList] = useState<string[]>([]);
 
   const mergeDataWithDeduplication = useMemoizedFn(
@@ -134,7 +143,7 @@ function LendingHistory(): JSX.Element {
 
     if (finalSceneCurrentAccount?.address) {
       const lendingSuccessHistoryList =
-        transactionHistoryService.getLendingSuccessHistoryList(
+        getTransactionHistoryLendingSuccessListSnapshot(
           finalSceneCurrentAccount?.address.toLowerCase()!,
         );
       // Merge and deduplicate using Set
@@ -144,7 +153,7 @@ function LendingHistory(): JSX.Element {
         );
         return uniqueList;
       });
-      transactionHistoryService.clearLendingSuccessHistoryList(
+      await transactionHistoryServiceApi.clearLendingSuccessHistoryList(
         finalSceneCurrentAccount?.address.toLowerCase()!,
       );
     }
@@ -154,7 +163,7 @@ function LendingHistory(): JSX.Element {
 
   const fetchLocalTx = useMemoizedFn(async (address: string) => {
     const { pendings: _pendings, completeds: _completeds } =
-      transactionHistoryService.getList(address);
+      getTransactionHistoryListSnapshot(address);
 
     const pendings = _pendings.filter(item => {
       const chain = findChain({ id: item.chainId });
@@ -180,10 +189,17 @@ function LendingHistory(): JSX.Element {
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              transactionHistoryService.updateTx({
-                ...item.maxGasTx,
-                isSynced: true,
-              });
+              void transactionHistoryServiceApi
+                .updateTx({
+                  ...item.maxGasTx,
+                  isSynced: true,
+                })
+                .catch(error => {
+                  console.error(
+                    '[LendingHistory] mark tx synced failed',
+                    error,
+                  );
+                });
             }
 
             return (
@@ -195,9 +211,17 @@ function LendingHistory(): JSX.Element {
     ];
   });
 
-  const { data: groups, runAsync: runFetchLocalTx } = useRequest(async () => {
-    return batchFetchLocalTx();
-  });
+  const { data: groups, runAsync: runFetchLocalTx } = useRequest(
+    async () => {
+      if (!transactionHistoryReady) {
+        return [];
+      }
+      return batchFetchLocalTx();
+    },
+    {
+      refreshDeps: [transactionHistoryReady],
+    },
+  );
 
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
@@ -312,4 +336,4 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 }));
 
-export default LendingHistory;
+export default withTransactionHistoryService(LendingHistory);

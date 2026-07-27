@@ -7,7 +7,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { TxAccountPannelSectionTitle } from '@/constant/newStyle';

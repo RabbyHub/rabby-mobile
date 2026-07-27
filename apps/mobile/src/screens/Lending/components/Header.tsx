@@ -10,11 +10,18 @@ import { useFocusEffect } from '@react-navigation/native';
 import { naviPush } from '@/utils/navigation';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useInterval } from 'ahooks';
-import { transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryLendingSuccessListSnapshot,
+  getTransactionHistoryListSnapshot,
+} from '@/core/serviceApi/transactionHistory';
 import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../hooks';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -42,23 +49,27 @@ let preCount = 0;
 interface LendingHistoryHeaderProps {
   onPendingClear?: () => void;
 }
-export const LendingHistoryHeader = ({
+const LendingHistoryHeaderContent = ({
   onPendingClear,
 }: LendingHistoryHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [pendingCount, setPendingCount] = useState(0);
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
   const { refreshHistoryId } = useRefreshHistoryId();
   const [showGreenDot, setShowGreenDot] = useState(false);
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
   const fetchLocalTx = useCallback(async () => {
+    if (!transactionHistoryReady) {
+      return [];
+    }
     const address = finalSceneCurrentAccount?.address.toLowerCase()!;
     if (!address) {
       return [];
     }
-    const { pendings: _pendings } = transactionHistoryService.getList(address);
+    const { pendings: _pendings } = getTransactionHistoryListSnapshot(address);
 
     const pending = _pendings.filter(item => {
       const chain = findChain({ id: item.chainId });
@@ -68,11 +79,11 @@ export const LendingHistoryHeader = ({
     });
 
     const lendingSuccessHistoryList =
-      transactionHistoryService.getLendingSuccessHistoryList(address);
+      getTransactionHistoryLendingSuccessListSnapshot(address);
     const lendingSuccessHistoryListCount = lendingSuccessHistoryList.length;
     setShowGreenDot(lendingSuccessHistoryListCount > 0);
     setPendingCount(pending.length);
-  }, [finalSceneCurrentAccount?.address]);
+  }, [finalSceneCurrentAccount?.address, transactionHistoryReady]);
 
   useInterval(() => fetchLocalTx(), pendingCount > 0 ? 5000 : 60 * 1000);
 
@@ -124,3 +135,7 @@ export const LendingHistoryHeader = ({
     </>
   );
 };
+
+export const LendingHistoryHeader = withTransactionHistoryService(
+  LendingHistoryHeaderContent,
+);

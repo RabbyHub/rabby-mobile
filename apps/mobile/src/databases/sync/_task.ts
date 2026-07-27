@@ -12,6 +12,7 @@ import {
   endDbSyncTask,
   markDbSyncTaskBatch,
   markDbSyncTaskStage,
+  withOpSqliteDiagnosticContext,
 } from '@/core/utils/startupDiagnostics';
 import {
   inferSyncTaskPriority,
@@ -22,6 +23,7 @@ import {
   type SyncTaskPriority,
 } from './scheduler';
 import { notifySyncAbortHandlers } from './abort';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 
 /**
  * @description In most cases, you don't need call it manually,
@@ -31,6 +33,154 @@ export const syncAbortControllers: {
   [P in ReturnType<typeof makeSyncTaskKey>]?: AbortController | null;
 } = {};
 const activeSyncAbortControllers = new Set<AbortController>();
+
+export type DbSyncWritePolicy = {
+  maxBatchSize?: number;
+  minDelayBetweenTasks?: number;
+  maxDelayBetweenTasks?: number;
+};
+
+export type DbSyncWritePolicyOverride = Partial<DbSyncWritePolicy>;
+
+const DEFAULT_DB_SYNC_WRITE_POLICIES: Partial<
+  Record<SyncTaskOptions['taskFor'], DbSyncWritePolicy>
+> = {
+  token: {
+    maxBatchSize: 120,
+    minDelayBetweenTasks: 16,
+  },
+  'all-history': {
+    maxBatchSize: 50,
+    maxDelayBetweenTasks: 32,
+  },
+};
+
+const runtimeDbSyncWritePolicyOverrides: Partial<
+  Record<SyncTaskOptions['taskFor'], DbSyncWritePolicyOverride>
+> = {};
+
+function normalizePositiveInt(value: unknown, max: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const normalized = Math.trunc(value);
+  if (normalized <= 0) {
+    return undefined;
+  }
+
+  return Math.min(normalized, max);
+}
+
+function normalizeNonNegativeInt(value: unknown, max: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const normalized = Math.trunc(value);
+  if (normalized < 0) {
+    return undefined;
+  }
+
+  return Math.min(normalized, max);
+}
+
+function sanitizeDbSyncWritePolicyOverride(
+  override: DbSyncWritePolicyOverride,
+) {
+  const sanitized: DbSyncWritePolicyOverride = {};
+  const maxBatchSize = normalizePositiveInt(override.maxBatchSize, 2000);
+  const minDelayBetweenTasks = normalizeNonNegativeInt(
+    override.minDelayBetweenTasks,
+    60 * 1000,
+  );
+  const maxDelayBetweenTasks = normalizeNonNegativeInt(
+    override.maxDelayBetweenTasks,
+    60 * 1000,
+  );
+
+  if (typeof maxBatchSize === 'number') {
+    sanitized.maxBatchSize = maxBatchSize;
+  }
+  if (typeof minDelayBetweenTasks === 'number') {
+    sanitized.minDelayBetweenTasks = minDelayBetweenTasks;
+  }
+  if (typeof maxDelayBetweenTasks === 'number') {
+    sanitized.maxDelayBetweenTasks = maxDelayBetweenTasks;
+  }
+
+  return sanitized;
+}
+
+function getDbSyncWritePolicy(taskFor: SyncTaskOptions['taskFor']) {
+  const defaultPolicy = DEFAULT_DB_SYNC_WRITE_POLICIES[taskFor];
+  const runtimeOverride = isNonPublicProductionEnv
+    ? runtimeDbSyncWritePolicyOverrides[taskFor]
+    : undefined;
+
+  if (!defaultPolicy && !runtimeOverride) {
+    return null;
+  }
+
+  return {
+    policy: {
+      ...(defaultPolicy || {}),
+      ...(runtimeOverride || {}),
+    },
+    defaultPolicy,
+    runtimeOverride,
+  };
+}
+
+export function setDbSyncWritePolicyOverride(
+  taskFor: SyncTaskOptions['taskFor'],
+  override: DbSyncWritePolicyOverride,
+) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  const sanitized = sanitizeDbSyncWritePolicyOverride(override);
+  if (!Object.keys(sanitized).length) {
+    delete runtimeDbSyncWritePolicyOverrides[taskFor];
+    return getDbSyncWritePolicyDebugSnapshot(taskFor);
+  }
+
+  runtimeDbSyncWritePolicyOverrides[taskFor] = sanitized;
+  return getDbSyncWritePolicyDebugSnapshot(taskFor);
+}
+
+export function clearDbSyncWritePolicyOverride(
+  taskFor: SyncTaskOptions['taskFor'],
+) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  delete runtimeDbSyncWritePolicyOverrides[taskFor];
+  return getDbSyncWritePolicyDebugSnapshot(taskFor);
+}
+
+export function getDbSyncWritePolicyDebugSnapshot(
+  taskFor: SyncTaskOptions['taskFor'],
+) {
+  const resolved = getDbSyncWritePolicy(taskFor);
+  if (!resolved) {
+    return {
+      taskFor,
+      defaultPolicy: null,
+      runtimeOverride: null,
+      effectivePolicy: null,
+    };
+  }
+
+  return {
+    taskFor,
+    defaultPolicy: resolved.defaultPolicy || null,
+    runtimeOverride: resolved.runtimeOverride || null,
+    effectivePolicy: resolved.policy,
+  };
+}
 
 export function abortAllSyncTasks(reason = 'manual') {
   notifySyncAbortHandlers(reason);
@@ -100,6 +250,108 @@ function ensureNotAborted(signal?: AbortSignal) {
   }
 }
 
+function resolveDbSyncWritePolicy(options: {
+  taskFor: SyncTaskOptions['taskFor'];
+  batchSize: number;
+  delayBetweenTasks: number;
+}) {
+  const resolvedPolicy = getDbSyncWritePolicy(options.taskFor);
+  if (!resolvedPolicy) {
+    return {
+      batchSize: options.batchSize,
+      delayBetweenTasks: options.delayBetweenTasks,
+      didApplyPolicy: false,
+    };
+  }
+  const { policy, defaultPolicy, runtimeOverride } = resolvedPolicy;
+
+  const batchSize = Math.max(
+    1,
+    Math.min(options.batchSize, policy.maxBatchSize || options.batchSize),
+  );
+  let delayBetweenTasks = Math.max(
+    options.delayBetweenTasks,
+    policy.minDelayBetweenTasks || 0,
+  );
+  if (typeof policy.maxDelayBetweenTasks === 'number') {
+    delayBetweenTasks = Math.min(
+      delayBetweenTasks,
+      policy.maxDelayBetweenTasks,
+    );
+  }
+
+  return {
+    batchSize,
+    delayBetweenTasks,
+    didApplyPolicy:
+      batchSize !== options.batchSize ||
+      delayBetweenTasks !== options.delayBetweenTasks,
+    requestedBatchSize: options.batchSize,
+    requestedDelayBetweenTasks: options.delayBetweenTasks,
+    defaultPolicy,
+    runtimeOverride,
+  };
+}
+
+function sleep(ms: number, signal?: AbortSignal) {
+  if (ms <= 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(new SyncTaskAbortError());
+    };
+
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function estimateParamsPayload(paramsRows: Scalar[][]) {
+  if (!isNonProductionDiagnosticsEnabled) {
+    return null;
+  }
+
+  let stringChars = 0;
+  let maxStringChars = 0;
+  let valueCount = 0;
+
+  paramsRows.forEach(row => {
+    row.forEach(value => {
+      valueCount += 1;
+      if (typeof value !== 'string') {
+        return;
+      }
+
+      stringChars += value.length;
+      maxStringChars = Math.max(maxStringChars, value.length);
+    });
+  });
+
+  return {
+    columnCount: paramsRows[0]?.length || 0,
+    valueCount,
+    stringChars,
+    maxStringChars,
+  };
+}
+
 export async function batchSaveWithPQueueAndTransaction<
   T extends typeof EntityAddressAssetBase,
 >(
@@ -119,9 +371,9 @@ export async function batchSaveWithPQueueAndTransaction<
   },
 ) {
   const {
-    batchSize = 50,
+    batchSize: requestedBatchSize = 50,
     concurrency = 2,
-    delayBetweenTasks = 1 * 1e3,
+    delayBetweenTasks: requestedDelayBetweenTasks = 1 * 1e3,
     owner_addr,
     taskFor,
     printLog = __DEV__,
@@ -132,6 +384,12 @@ export async function batchSaveWithPQueueAndTransaction<
     priority = inferSyncTaskPriority(taskFor),
     skipEmit = false,
   } = options;
+  const writePolicy = resolveDbSyncWritePolicy({
+    taskFor,
+    batchSize: requestedBatchSize,
+    delayBetweenTasks: requestedDelayBetweenTasks,
+  });
+  const { batchSize, delayBetweenTasks } = writePolicy;
 
   const taskKey = makeSyncTaskKey(taskFor, owner_addr);
   const curAbortController = new AbortController();
@@ -168,6 +426,21 @@ export async function batchSaveWithPQueueAndTransaction<
     waitTaskDoneReturn,
     delayBetweenTasks,
   });
+  if (writePolicy.didApplyPolicy) {
+    markDbSyncTaskStage(
+      diagTaskId,
+      'write_policy',
+      {
+        requestedBatchSize: writePolicy.requestedBatchSize,
+        effectiveBatchSize: batchSize,
+        requestedDelayBetweenTasks: writePolicy.requestedDelayBetweenTasks,
+        effectiveDelayBetweenTasks: delayBetweenTasks,
+        defaultPolicy: writePolicy.defaultPolicy,
+        runtimeOverride: writePolicy.runtimeOverride,
+      },
+      true,
+    );
+  }
   let didFinishDiagTask = false;
   let diagTaskHadError = false;
   const finishDiagTask = (
@@ -280,6 +553,7 @@ export async function batchSaveWithPQueueAndTransaction<
           try {
             let paramsBuildMs = 0;
             let executeMs = 0;
+            let paramsPayload: ReturnType<typeof estimateParamsPayload> = null;
             if (upsertMethod.supportedBulkUpsert && upsertMethod.stmSql) {
               const paramsBuildStartedAt = Date.now();
               ctx.setStage('params_build', {
@@ -308,12 +582,14 @@ export async function batchSaveWithPQueueAndTransaction<
                 }
                 return getUpsertParams.call(item) as Scalar[];
               });
+              paramsPayload = estimateParamsPayload(paramsRows);
               paramsBuildMs = Date.now() - paramsBuildStartedAt;
               markDbSyncTaskStage(diagTaskId, 'params_built', {
                 schedulerTaskId,
                 round,
                 count: curBatch.length,
                 durationMs: paramsBuildMs,
+                ...(paramsPayload || {}),
               });
 
               const commands: SQLBatchTuple[] = [
@@ -339,7 +615,19 @@ export async function batchSaveWithPQueueAndTransaction<
                 },
                 true,
               );
-              await db.executeBatch(commands);
+              await withOpSqliteDiagnosticContext(
+                {
+                  dbSyncTaskId: diagTaskId,
+                  schedulerTaskId,
+                  taskFor: taskFor || '@unknown',
+                  entityName: entityCls.name,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  method: upsertMethod.method,
+                },
+                () => db.executeBatch(commands),
+              );
               executeMs = Date.now() - executeStartedAt;
             } else {
               const executeStartedAt = Date.now();
@@ -387,6 +675,7 @@ export async function batchSaveWithPQueueAndTransaction<
               paramsBuildMs,
               executeMs,
               method: upsertMethod.method,
+              ...(paramsPayload || {}),
             });
           } catch (error) {
             makeEmit(false, syncDetails);
@@ -408,6 +697,20 @@ export async function batchSaveWithPQueueAndTransaction<
           }
 
           dataIdx += curBatch.length;
+          if (dataIdx < totalLen && delayBetweenTasks > 0) {
+            ctx.setStage('batch_delay', {
+              delayMs: delayBetweenTasks,
+              nextRound: Math.floor(dataIdx / batchSize),
+              totalRound,
+            });
+            markDbSyncTaskStage(diagTaskId, 'batch_delay', {
+              schedulerTaskId,
+              delayMs: delayBetweenTasks,
+              nextRound: Math.floor(dataIdx / batchSize),
+              totalRound,
+            });
+            await sleep(delayBetweenTasks, currentSignal);
+          }
         }
 
         if (afterBatches) {

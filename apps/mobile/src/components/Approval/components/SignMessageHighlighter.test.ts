@@ -76,6 +76,35 @@ describe('sign message highlighter', () => {
       { type: 'address', value: recipient, address: recipient },
     ]);
   });
+
+  it('finds Permit spender addresses', () => {
+    const spender = '0x1661f1b207629e4f385da89cff535c8e5eb23ee3';
+    const typedData = {
+      primaryType: 'Permit',
+      types: {
+        Permit: [
+          { name: 'owner', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'value', type: 'uint256' },
+        ],
+      },
+      message: {
+        owner: address,
+        spender,
+        value: '1033366316628',
+      },
+    };
+    const message = JSON.stringify(typedData.message, null, 4);
+
+    expect(
+      tokenizeSignTypedDataMessage(typedData, message).filter(
+        token => token.type === 'address',
+      ),
+    ).toEqual([
+      { type: 'address', value: address, address },
+      { type: 'address', value: spender, address: spender },
+    ]);
+  });
 });
 
 describe('sign message origin fallback', () => {

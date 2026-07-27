@@ -8,13 +8,13 @@ import React, {
 } from 'react';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts } from '@/constant/layout';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { formatTimestamp } from '@/utils/time';
 import { View } from 'react-native';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
@@ -22,7 +22,7 @@ import { TransactionItem } from '@/screens/TransactionRecord/components/Transact
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
 import { useRecentSend } from '../../hooks/useRecentSend';
-import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
+import type { SendAction } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useGetCexList } from '@/screens/Transaction/hook';
@@ -30,6 +30,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
+import { withTransactionHistoryService } from '@/core/serviceApi/transactionHistoryHooks';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -44,7 +45,7 @@ interface IProps {
   isForMultipleAddress?: boolean;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
 }
-export const SendHistory = ({
+const SendHistoryContent = ({
   visible,
   onClose,
   title,
@@ -184,6 +185,21 @@ export const SendHistory = ({
       {/* </BottomSheetScrollView> */}
     </AppBottomSheetModal>
   );
+};
+
+const SendHistoryWithService =
+  withTransactionHistoryService(SendHistoryContent);
+
+export const SendHistory = (props: IProps) => {
+  const [activated, setActivated] = useState(props.visible);
+
+  useEffect(() => {
+    if (props.visible) {
+      setActivated(true);
+    }
+  }, [props.visible]);
+
+  return activated ? <SendHistoryWithService {...props} /> : null;
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({

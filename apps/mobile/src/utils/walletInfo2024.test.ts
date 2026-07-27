@@ -14,11 +14,10 @@ jest.mock(
       mockBlockies(...args),
 );
 
-jest.mock('@/core/services', () => ({
-  preferenceService: {
-    addAddressAvatar: (...args: unknown[]) => mockAddAddressAvatar(...args),
-    getAddressAvatar: (...args: unknown[]) => mockGetAddressAvatar(...args),
-  },
+jest.mock('@/core/serviceApi/preference', () => ({
+  addAddressAvatar: (...args: unknown[]) => mockAddAddressAvatar(...args),
+  getAddressAvatarSnapshot: (...args: unknown[]) =>
+    mockGetAddressAvatar(...args),
 }));
 
 import {
@@ -30,6 +29,7 @@ import {
 describe('walletInfo2024', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAddAddressAvatar.mockResolvedValue(undefined);
   });
 
   it('returns gnosis and watch avatars before looking at address-generated avatars', () => {

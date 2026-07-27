@@ -1,19 +1,17 @@
-import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
+import type { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { RootNames } from '@/constant/layout';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useAlias2 } from '@/hooks/alias';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import {
   useAddressBalance,
   useIsLoadingBalance,
 } from '@/hooks/useCurrentBalance';
-import {
-  makeDefaultSelectData,
-  useAddressCurveSelectData,
-  useIsLoadingCurve,
-} from '@/hooks/useCurve';
+import type { makeDefaultSelectData } from '@/hooks/useCurve';
+import { useAddressCurveSelectData, useIsLoadingCurve } from '@/hooks/useCurve';
 import { addressCurve24hStore } from '@/store/curve24h';
 import {
   balance24hStore,
@@ -22,6 +20,10 @@ import {
 import { computeCurveBalanceChange } from '@/store/curveShared';
 import { navigateDeprecated } from '@/utils/navigation';
 import { ellipsisAddress } from '@/utils/address';
+import {
+  beginFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -93,9 +95,21 @@ function presetSingHomeAccount(account: Account) {
 }
 export const apisSingleHome = {
   navigateToSingleHome: (account: Account, options?: { replace?: boolean }) => {
+    const cycleId = beginFeatureActivation(
+      'single-address',
+      'single_address_navigation_requested',
+    );
     presetSingHomeAccount(account);
+    markFeatureActivation('single-address', 'state-prepared', {
+      cycleId,
+      reason: 'single_home_account_preset',
+    });
     requestAnimationFrame(() => {
       const { replace } = options || {};
+      markFeatureActivation('single-address', 'navigation-dispatched', {
+        cycleId,
+        reason: replace ? 'replace_after_frame' : 'navigate_after_frame',
+      });
       if (replace) {
         resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,

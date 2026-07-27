@@ -84,6 +84,15 @@ const nodeModulesRoots = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
+const resolveMobileReactModule = moduleName => {
+  if (moduleName !== 'react' && !moduleName.startsWith('react/')) {
+    return undefined;
+  }
+
+  return require.resolve(moduleName, {
+    paths: [projectRoot],
+  });
+};
 // Keep these exceptions explicit so resolution stays deterministic and cacheable.
 // Resolve lazily because not every bundle target installs or consumes every alias.
 const resolverSourceAliasCandidates = new Map([
@@ -348,6 +357,14 @@ const config = {
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
     resolveRequest: (context, moduleName, platform) => {
+      const mobileReactModule = resolveMobileReactModule(moduleName);
+      if (mobileReactModule) {
+        return {
+          filePath: mobileReactModule,
+          type: 'sourceFile',
+        };
+      }
+
       if (moduleName === '@walletconnect/keyvaluestorage') {
         return {
           filePath: walletConnectKeyValueStorageShim,

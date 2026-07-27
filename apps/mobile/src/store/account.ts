@@ -17,20 +17,29 @@ import type {
   IPinAddress,
   KeyringAccountWithAlias,
 } from '@/types/account';
+import { bindKeyringEvent, bindKeyringStore } from '@/core/serviceApi/keyring';
 import {
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+  clearNeedsBackupReminder,
+  getPinnedAddresses,
+  getPinnedAddressSnapshot,
+  setNeedsBackupReminder,
+  updatePinnedAddresses,
+} from '@/core/serviceApi/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { perfEvents } from '@/core/utils/perf';
-import { UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KeyringAccount, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { updateHistoryTimeSingleAddress } from '@/hooks/historyTokenDict';
 import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
+import {
+  normalizePinnedAddresses,
+  updatePinnedAddressList,
+} from './pinnedAddresses';
 
 export interface AccountStoreState {
   accounts: KeyringAccountWithAlias[];
@@ -48,7 +57,16 @@ export const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
 
 class AccountStore extends BaseStore<AccountStoreState> {
   private hasStartedLifecycle = false;
+  private hasHydratedPinnedAddresses = false;
   private deferredFetchAccountReasons = new Set<string>();
+
+  private readonly hydratePinnedAddressesInParallel =
+    this.createAvoidParallelAsyncMethod(async () => {
+      const addresses = normalizePinnedAddresses(await getPinnedAddresses());
+      this.hasHydratedPinnedAddresses = true;
+      this.setPinnedAddresses(addresses);
+      return addresses;
+    });
 
   private readonly fetchAccountsInParallel =
     this.createAvoidParallelAsyncMethod(
@@ -85,7 +103,7 @@ class AccountStore extends BaseStore<AccountStoreState> {
       accounts: [],
       hasFetchedAccounts: false,
       isFetchingAccounts: false,
-      pinnedAddresses: preferenceService.getPinAddresses(),
+      pinnedAddresses: normalizePinnedAddresses(getPinnedAddressSnapshot()),
       currentAccount: null,
       newlyAddedAccounts: {},
     });
@@ -106,6 +124,16 @@ class AccountStore extends BaseStore<AccountStoreState> {
   ) => {
     this.setField('pinnedAddresses', valOrFunc);
   };
+
+  ensurePinnedAddressesHydrated = async () => {
+    if (this.hasHydratedPinnedAddresses) {
+      return this.getState().pinnedAddresses;
+    }
+
+    return this.hydratePinnedAddressesInParallel();
+  };
+
+  refreshPinnedAddresses = () => this.hydratePinnedAddressesInParallel();
 
   fetchAccounts = async (options?: { force?: boolean }) => {
     return this.fetchAccountsInParallel(options);
@@ -176,38 +204,20 @@ class AccountStore extends BaseStore<AccountStoreState> {
     address: Account['address'];
     nextPinned?: boolean;
   }) => {
-    const allPinAddresses = preferenceService.getPinAddresses();
-    const nextPinned =
-      payload.nextPinned ??
-      !allPinAddresses.some(
-        item =>
-          isSameAddress(item.address, payload.address) &&
-          item.brandName === payload.brandName,
-      );
-
-    const nextAddresses = [...allPinAddresses];
-    const newItem = {
-      brandName: payload.brandName,
-      address: payload.address,
-    };
+    const allPinAddresses = await this.ensurePinnedAddressesHydrated();
+    const { nextPinned, nextAddresses } = updatePinnedAddressList(
+      allPinAddresses,
+      payload,
+    );
 
     if (nextPinned) {
-      nextAddresses.unshift(newItem);
-      preferenceService.updatePinAddresses(nextAddresses);
+      await updatePinnedAddresses(nextAddresses);
       matomoRequestEvent({
         category: 'Pin Address',
         action: 'PinAddress_Finish',
       });
     } else {
-      const index = nextAddresses.findIndex(
-        item =>
-          item.brandName === payload.brandName &&
-          isSameAddress(item.address, payload.address),
-      );
-      if (index > -1) {
-        nextAddresses.splice(index, 1);
-      }
-      preferenceService.updatePinAddresses(nextAddresses);
+      await updatePinnedAddresses(nextAddresses);
     }
 
     this.setPinnedAddresses(nextAddresses);
@@ -228,7 +238,9 @@ class AccountStore extends BaseStore<AccountStoreState> {
     ) {
       await deleteDBResourceForAddress(account.address);
       updateHistoryTimeSingleAddress(account.address, 0);
-      transactionHistoryService.clearSuccessAndFailList(account.address);
+      await transactionHistoryServiceApi.clearSuccessAndFailList(
+        account.address,
+      );
     }
   };
 
@@ -244,43 +256,44 @@ class AccountStore extends BaseStore<AccountStoreState> {
       );
     });
 
-    keyringService.on('newAccount', () => {
+    void bindKeyringEvent('newAccount', () => {
       invalidateFetchAllAccountsCache();
       this.fetchAccounts({ force: true });
-    });
+    }).catch(console.error);
 
-    keyringService.on('removedAccount', async account => {
+    void bindKeyringEvent('removedAccount', async account => {
+      const removedAccount = account as KeyringAccountWithAlias;
       invalidateFetchAllAccountsCache();
       await this.fetchAccounts({ force: true });
       accountEvents.emit('ACCOUNT_REMOVED', {
-        removedAccounts: [account],
+        removedAccounts: [removedAccount],
       });
       // Clean up backup reminder from preferenceService using basePublicKey
       // so all addresses from the same seed phrase are cleared together
-      if (account.type === KEYRING_TYPE.HdKeyring) {
+      if (removedAccount.type === KEYRING_TYPE.HdKeyring) {
         try {
           const info = await apiMnemonic.getMnemonicAddressInfo(
-            account.address,
+            removedAccount.address,
           );
           if (info?.basePublicKey) {
-            preferenceService.clearNeedsBackupReminder(info.basePublicKey);
+            await clearNeedsBackupReminder(info.basePublicKey);
           }
         } catch {
           // Silently ignore errors
         }
       }
 
-      await AccountInfoEntity.deleteByAccount(account);
+      await AccountInfoEntity.deleteByAccount(removedAccount);
       await this.fetchNewlyAddedAccounts();
-    });
+    }).catch(console.error);
 
-    keyringService.store.subscribe(state => {
+    void bindKeyringStore(state => {
       if (state.booted && state.vault) {
         this.scheduleFetchAccountsAfterHomePostStartupReady(
           'keyring_store_ready',
         );
       }
-    });
+    }).catch(console.error);
 
     accountEvents.on(
       'ACCOUNT_ADDED',
@@ -298,10 +311,7 @@ class AccountStore extends BaseStore<AccountStoreState> {
                   account.address,
                 );
                 if (info?.basePublicKey) {
-                  preferenceService.setNeedsBackupReminder(
-                    info.basePublicKey,
-                    true,
-                  );
+                  await setNeedsBackupReminder(info.basePublicKey, true);
                 }
               } catch {
                 // Silently ignore errors - account might not be from mnemonic

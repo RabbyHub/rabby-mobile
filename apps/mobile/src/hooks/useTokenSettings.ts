@@ -1,23 +1,24 @@
-import { preferenceService } from '@/core/services';
+import {
+  getUserTokenSettings,
+  getUserTokenSettingsSnapshot,
+  pinUserToken,
+  removePinnedUserToken,
+  type UserTokenSettings,
+} from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { filterCustomTestnetUserTokenSettings } from '@/utils/favoriteToken';
 
-type UserTokenSettingsState = ReturnType<
-  typeof preferenceService.getUserTokenSettingsSync
->;
+type UserTokenSettingsState = UserTokenSettings;
 
 export const getDisplayUserTokenSettingsSync = (): UserTokenSettingsState => {
-  return filterCustomTestnetUserTokenSettings(
-    preferenceService.getUserTokenSettingsSync(),
-  );
+  return filterCustomTestnetUserTokenSettings(getUserTokenSettingsSnapshot());
 };
 
 export const getDisplayUserTokenSettings =
   async (): Promise<UserTokenSettingsState> => {
-    return filterCustomTestnetUserTokenSettings(
-      await preferenceService.getUserTokenSettings(),
-    );
+    return filterCustomTestnetUserTokenSettings(await getUserTokenSettings());
   };
 
 const userTokenSettingsStore = zCreate<UserTokenSettingsState>(() => {
@@ -46,23 +47,21 @@ const fetchUserTokenSettings = async () => {
 };
 
 const pinToken = <T extends { id: string; chain: string }>(token: T) => {
-  preferenceService.pinToken({
+  // TODO: improve, can only update tokens about list on store
+  void pinUserToken({
     tokenId: token.id,
     chainId: token.chain,
-  });
-  // TODO: improve, can only update tokens about list on store
-  fetchUserTokenSettings();
+  }).then(fetchUserTokenSettings);
 };
 
 const removePinedToken = <T extends { id: string; chain: string }>(
   token: T,
 ) => {
-  preferenceService.removePinedToken({
+  // TODO: improve, can only update tokens about list on store
+  void removePinnedUserToken({
     tokenId: token.id,
     chainId: token.chain,
-  });
-  // TODO: improve, can only update tokens about list on store
-  fetchUserTokenSettings();
+  }).then(fetchUserTokenSettings);
 };
 
 export const useUserTokenSettings = () => {

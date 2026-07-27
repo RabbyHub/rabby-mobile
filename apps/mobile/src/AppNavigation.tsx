@@ -70,6 +70,7 @@ import {
   FloatingDiagnosticsPanel,
   FloatingKeyringRuntimePanel,
   FloatingOpenApiSummaryPanel,
+  FloatingStartupTaskSummaryPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
   GlobalSecurityTipStubModal,
@@ -92,13 +93,30 @@ import {
 } from '@/perfs/loadables/navigators';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
-import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { APP_TEST_PASSWORD, NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
-import { useHomeStartupReady } from './core/utils/homeStartupReady';
+import { useHomePostStartupReady } from './core/utils/homeStartupReady';
 import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
+import { setServiceRuntimeDiagnosticsContextProvider } from './core/serviceApi/serviceRuntimeDiagnostics';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
+const RegressionUnlockScreen = withRegressionScenario(UnlockScreen, {
+  screen: 'Unlock',
+  injectProps: context => ({
+    regressionScenario: {
+      runId: context.runId,
+      autoSubmit:
+        context.scenario === 'lock-unlock' &&
+        context.params.autoSubmit === 'true',
+      claimAutoSubmit: () => context.claimOnce('unlock-password-auto-submit'),
+      skipBiometricsEnrollmentPrompt: context.scenario === 'lock-unlock',
+      password: APP_TEST_PASSWORD,
+      report: context.report,
+    },
+  }),
+});
 
 const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
@@ -283,11 +301,11 @@ function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
 function useReadableAccountWarmupsOnHomeVisible({
   shouldWarmupReadableAccounts,
   hasVisibleAccounts,
-  homeStartupReady,
+  homePostStartupReady,
 }: {
   shouldWarmupReadableAccounts: boolean;
   hasVisibleAccounts: boolean;
-  homeStartupReady: boolean;
+  homePostStartupReady: boolean;
 }) {
   const startedRef = React.useRef(false);
 
@@ -296,7 +314,7 @@ function useReadableAccountWarmupsOnHomeVisible({
       startedRef.current ||
       !shouldWarmupReadableAccounts ||
       !hasVisibleAccounts ||
-      !homeStartupReady
+      !homePostStartupReady
     ) {
       return;
     }
@@ -306,7 +324,7 @@ function useReadableAccountWarmupsOnHomeVisible({
       startedRef.current = false;
       console.error('useReadableAccountWarmupsOnHomeVisible::error', error);
     });
-  }, [shouldWarmupReadableAccounts, hasVisibleAccounts, homeStartupReady]);
+  }, [shouldWarmupReadableAccounts, hasVisibleAccounts, homePostStartupReady]);
 }
 
 function AppNavigationDeferredGlobals({
@@ -362,6 +380,7 @@ function AppNavigationOverlayGlobals({
       {showDiagnostics && <FloatingDbSyncSummaryPanel />}
       {showDiagnostics && <FloatingKeyringRuntimePanel />}
       {showDiagnostics && <FloatingOpenApiSummaryPanel />}
+      {showDiagnostics && <FloatingStartupTaskSummaryPanel />}
       {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}
@@ -401,13 +420,21 @@ export default function AppNavigation() {
 
   const colors = useThemeColors();
 
+  React.useEffect(
+    () =>
+      setServiceRuntimeDiagnosticsContextProvider(() => ({
+        route: navigationRef.getCurrentRoute()?.name,
+      })),
+    [],
+  );
+
   const {
     isAppUnlocked,
     isUnlockSessionValid,
     hasVisibleAccounts,
     hasStoredKeyrings,
   } = useAppUnlocked();
-  const homeStartupReady = useHomeStartupReady();
+  const homePostStartupReady = useHomePostStartupReady();
   const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
 
   const initialRouteName = hasVisibleAccounts
@@ -424,7 +451,7 @@ export default function AppNavigation() {
   useReadableAccountWarmupsOnHomeVisible({
     shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
     hasVisibleAccounts,
-    homeStartupReady,
+    homePostStartupReady,
   });
 
   const onReady = useCallback<
@@ -492,7 +519,11 @@ export default function AppNavigation() {
                 <RootStack.Screen
                   name={RootNames.StackRoot}
                   component={HomeScreenNavigator}
-                  options={RootAnimOptions}
+                  options={{
+                    ...RootAnimOptions,
+                    // Hidden Home state updates should not compete with the pushed screen.
+                    freezeOnBlur: true,
+                  }}
                 />
                 <RootStack.Screen
                   name={RootNames.StackHomeNonTab}
@@ -505,7 +536,7 @@ export default function AppNavigation() {
                 />
                 <RootStack.Screen
                   name={RootNames.Unlock}
-                  component={UnlockScreen}
+                  component={RegressionUnlockScreen}
                   options={mergeScreenOptions({
                     title: '',
                     // another valid composition

@@ -1,11 +1,9 @@
 import { RcNextLeftCC } from '@/assets/icons/common';
-import {
-  NextSearchBar,
-  NextSearchBarMethods,
-} from '@/components2024/SearchBar';
+import type { NextSearchBarMethods } from '@/components2024/SearchBar';
+import { NextSearchBar } from '@/components2024/SearchBar';
 import { toast } from '@/components2024/Toast';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -27,8 +25,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { IS_IOS } from '@/core/native/utils';
 import { debounce } from 'lodash';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-export function DappsScreen(): JSX.Element {
+function DappsScreenContent(): JSX.Element {
   const {
     browserHistoryList,
     favoriteApps,
@@ -52,10 +51,10 @@ export function DappsScreen(): JSX.Element {
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, {
+      void openUrlAsDapp(url, {
         ...options,
         dappsWebViewFromRoute: RootNames.Dapps,
-      });
+      }).catch(console.error);
       // @ts-expect-error code has been expired due to biz changes, whole file could be removed later
       setBrowserHistory(safeGetOrigin(url));
       Keyboard.dismiss();
@@ -208,6 +207,8 @@ export function DappsScreen(): JSX.Element {
     </TouchableWithoutFeedback>
   );
 }
+
+export const DappsScreen = withBrowserDappServices(DappsScreenContent);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {

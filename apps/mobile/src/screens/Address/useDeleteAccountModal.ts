@@ -1,7 +1,8 @@
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apisLock } from '@/core/apis';
-import { keyringService } from '@/core/services';
-import { KeyringAccountWithAlias, useRemoveAccount } from '@/hooks/account';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useRemoveAccount } from '@/hooks/account';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -13,7 +14,7 @@ import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const getHdKeyringAccountCount = async (address: string) => {
-  const keyrings = await keyringService.getAllTypedVisibleAccounts();
+  const keyrings = await keyringServiceApi.getAllTypedVisibleAccounts();
   const keyring = keyrings.find(
     item =>
       item.type === KEYRING_TYPE.HdKeyring &&
@@ -30,7 +31,7 @@ export const useDeleteAccountModal = () => {
 
   const handleShouldGoStartPage = useMemoizedFn(async () => {
     const hasAccountsInKeyring =
-      (await keyringService.getCountOfAccountsInKeyring()) > 0;
+      (await keyringServiceApi.getCountOfAccountsInKeyring()) > 0;
     if (!hasAccountsInKeyring) {
       redirectToAddAddressEntry({
         action: 'resetTo',

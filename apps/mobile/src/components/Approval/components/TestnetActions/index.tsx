@@ -1,5 +1,5 @@
-import { Chain } from '@/constant/chains';
-import { AppColorsVariants } from '@/constant/theme';
+import type { Chain } from '@/constant/chains';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +39,7 @@ import Loading from '../TxComponents/Loading';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { getMessageStyles } from '../TextActions';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 export const TestnetActions = ({

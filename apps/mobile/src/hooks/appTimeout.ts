@@ -3,13 +3,10 @@ import * as apisAutoLock from '@/core/apis/autoLock';
 import * as apisLock from '@/core/apis/lock';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { unlockTimeEvent } from '@/core/apis/lock';
-import { preferenceService } from '@/core/services';
+import { setPreference } from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { atom, useAtom } from 'jotai';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -26,14 +23,21 @@ const autoLockStore = zCreate<AppTimeoutState>(() => {
   };
 });
 
-runIIFEFunc(() => {
+let appTimeoutAutoLockHydrationStarted = false;
+
+export function startAppTimeoutAutoLockHydration() {
+  if (appTimeoutAutoLockHydrationStarted) {
+    return;
+  }
+
+  appTimeoutAutoLockHydrationStarted = true;
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
 
   autoLockEvent.addListener('change', value => {
     autoLockStore.setState({ autoLockTime: value });
   });
-});
+}
 
 function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   autoLockStore.setState(prev => {
@@ -63,9 +67,9 @@ export function useAutoLockTime() {
 export const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
   setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
+  void setPreference({
     autoLockTime: minutes,
-  });
+  }).catch(console.error);
   apisAutoLock.refreshAutolockTimeout();
 };
 

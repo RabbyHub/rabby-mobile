@@ -3,8 +3,8 @@ import { setJSExceptionHandler } from 'react-native-exception-handler';
 import { logger } from '@/utils/logger';
 import './perfs/bundle-splitter-analysis';
 import './devtools/e2eBridge';
-import './databases/orm';
-import './core/services';
+import '@/devtools/regressionScenarios/entry';
+import './databases/register';
 import './core/utils/devServerSettings';
 import './core/config/online';
 

@@ -6,16 +6,18 @@ import {
   makeTokenSettingSets,
   tagTokenItemFavorite,
 } from '@/screens/Home/utils/token';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import type {
+  ITokenItem,
+  TokenSelectIndexRow,
+  TokenEntityId,
+} from '@/store/tokens';
 import useTokenList, {
   buildTokenEntityId,
-  ITokenItem,
   selectTokenSelectIndexResult,
-  TokenSelectIndexRow,
   tokenEntityResourceStore,
-  TokenEntityId,
   useTokenIndexStore,
 } from '@/store/tokens';
 
