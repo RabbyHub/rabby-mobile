@@ -2281,6 +2281,7 @@
       "clearPending": "清除本機待處理項",
       "touchId": "Touch ID",
       "autoLockTime": "自動鎖定時間",
+      "appLaunchLock": "啟動時鎖定",
       "lockWallet": "鎖定錢包",
       "themeMode": "主題模式",
       "aboutUs": "關於我們",

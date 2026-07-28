@@ -2358,6 +2358,7 @@
       "useDevicePassword": "Usar palavra-passe do dispositivo",
       "aboutUs": "Sobre nós",
       "autoLockTime": "Tempo de bloqueio automático",
+      "appLaunchLock": "Bloqueio ao iniciar",
       "lockWallet": "Bloquear carteira",
       "tou": "Termos de utilização",
       "touchId": "Touch ID",

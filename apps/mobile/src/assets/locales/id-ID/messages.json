@@ -2171,6 +2171,7 @@
       "currentVersion": "Versi Saat Ini",
       "clearPending": "Hapus Transaksi Tertunda Secara Lokal",
       "autoLockTime": "Waktu kunci otomatis",
+      "appLaunchLock": "Kunci saat Peluncuran",
       "lockWallet": "Kunci dompet",
       "policy": "Kebijakan Privasi",
       "enableWhitelist": "Aktifkan daftar putih untuk mengirim aset",

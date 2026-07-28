@@ -2122,6 +2122,7 @@
       "useDevicePassword": "Utiliser le mot de passe de l’appareil",
       "modifyRPCURL": "Modifier l'URL RPC",
       "autoLockTime": "Verrouillage automatique",
+      "appLaunchLock": "Verrouillage au démarrage",
       "lockWallet": "Verrouiller le portefeuille",
       "clearPending": "Effacer les transactions en attente localement",
       "aboutUs": "À propos de nous",
