@@ -3,7 +3,8 @@ import * as apisAutoLock from '@/core/apis/autoLock';
 import * as apisLock from '@/core/apis/lock';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { unlockTimeEvent } from '@/core/apis/lock';
-import { setPreference } from '@/core/serviceApi/preference';
+import { ensureServiceApiReady } from '@/core/serviceApi/createDeferredServiceApi';
+import { setPreferenceSync } from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
@@ -24,19 +25,26 @@ const autoLockStore = zCreate<AppTimeoutState>(() => {
 });
 
 let appTimeoutAutoLockHydrationStarted = false;
+let appTimeoutAutoLockHydrationPromise: Promise<void> | null = null;
 
 export function startAppTimeoutAutoLockHydration() {
   if (appTimeoutAutoLockHydrationStarted) {
-    return;
+    return appTimeoutAutoLockHydrationPromise || Promise.resolve();
   }
 
   appTimeoutAutoLockHydrationStarted = true;
-  const times = apisAutoLock.getPersistedAutoLockTimes();
-  setAutoLockMinutes(times.minutes);
-
   autoLockEvent.addListener('change', value => {
     autoLockStore.setState({ autoLockTime: value });
   });
+
+  appTimeoutAutoLockHydrationPromise = ensureServiceApiReady(
+    'preferenceService',
+  ).then(() => {
+    const times = apisAutoLock.getPersistedAutoLockTimes();
+    setAutoLockMinutes(times.minutes);
+  });
+
+  return appTimeoutAutoLockHydrationPromise;
 }
 
 function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
@@ -66,10 +74,10 @@ export function useAutoLockTime() {
 
 export const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
-  setAutoLockMinutes(minutes);
-  void setPreference({
+  setPreferenceSync({
     autoLockTime: minutes,
-  }).catch(console.error);
+  });
+  setAutoLockMinutes(minutes);
   apisAutoLock.refreshAutolockTimeout();
 };
 
@@ -86,7 +94,7 @@ unlockTimeAtom.onMount = setter => {
 };
 
 export function useLastUnlockedAuth() {
-  const [time, setTime] = useAtom(unlockTimeAtom);
+  const [time, _setTime] = useAtom(unlockTimeAtom);
 
   // const fetchLastUnlockTime = useCallback(() => {
   //   const value = apisLock.getUnlockTime();
