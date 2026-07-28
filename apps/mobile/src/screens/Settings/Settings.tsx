@@ -91,6 +91,7 @@ import {
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { AutoLockSettingLabel } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
+import { SwitchAppLaunchLock } from './components/SwitchAppLaunchLock';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import ThemeSelectorModal, {
@@ -553,6 +554,7 @@ function SettingsBlocks() {
   }, []);
 
   const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
+  const switchAppLaunchLockRef = useRef<SwitchToggleType>(null);
 
   const settingsBlocks: Record<string, SettingBlock> = (() => {
     return {
@@ -611,10 +613,11 @@ function SettingsBlocks() {
             rightTextNode: <AutoLockSettingLabel style={styles.rightText} />,
           },
           {
-            label: t('page.setting.lockWallet'),
-            icon: RcNewLock,
+            label: t('page.setting.appLaunchLock'),
+            icon: RcAutolock,
+            rightNode: <SwitchAppLaunchLock ref={switchAppLaunchLockRef} />,
             onPress: () => {
-              startLockWallet();
+              switchAppLaunchLockRef.current?.toggle();
             },
             visible: APP_FEATURE_SWITCH.customizePassword,
           },
@@ -793,6 +796,14 @@ function SettingsBlocks() {
       extra: {
         label: '',
         items: [
+          {
+            label: t('page.setting.lockWallet'),
+            icon: RcNewLock,
+            onPress: () => {
+              startLockWallet();
+            },
+            visible: APP_FEATURE_SWITCH.customizePassword,
+          },
           {
             key: 'clear-app-cache',
             render: () => <ClearAppCacheSettingItem />,

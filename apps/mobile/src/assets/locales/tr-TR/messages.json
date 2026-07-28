@@ -2172,6 +2172,7 @@
       "modifyRPCURL": "RPC URL'sunu Değiştir",
       "themeMode": "Tema Modu",
       "autoLockTime": "Otomatik kilit süresi",
+      "appLaunchLock": "Başlatmada Kilit",
       "lockWallet": "Cüzdanı kilitle",
       "currentLanguage": "Geçerli Dil",
       "aboutUs": "Hakkımızda",
