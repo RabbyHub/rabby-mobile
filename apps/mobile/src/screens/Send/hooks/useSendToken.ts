@@ -56,7 +56,6 @@ import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks
 import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useIsFocused, useRoute } from '@react-navigation/native';
-import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import {
   isAccountSupportMiniApproval,
@@ -72,7 +71,6 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import type { ExtractAtomValueType } from '@/utils/type';
 import { coerceNumber } from '@/utils/coerce';
 import {
   runOnJS,
@@ -137,73 +135,49 @@ function getDefaultChainToken() {
     currentToken: makeDefaultToken(),
   };
 }
-const sendTokenScreenChainTokenAtom = atom(getDefaultChainToken());
+type SendChainTokenState = ReturnType<typeof getDefaultChainToken>;
+
 export function getSendChainToken() {
-  const chainToken = jotaiStore.get(sendTokenScreenChainTokenAtom);
+  const { chainEnum, currentToken } = getSendTokenScreenState();
   const chainLists = getChainListFromAtom();
   const chainItem =
-    findChain({ enum: chainToken.chainEnum }, [
+    findChain({ enum: chainEnum }, [
       ...chainLists.mainnetList,
       ...chainLists.testnetList,
     ]) || null;
 
   return {
-    ...chainToken,
+    chainEnum,
+    currentToken,
     chainItem,
   };
 }
 
-const putChainToken = (
-  valOrFunc: UpdaterOrPartials<
-    ExtractAtomValueType<typeof sendTokenScreenChainTokenAtom>
-  >,
-) => {
-  return jotaiStore.set(sendTokenScreenChainTokenAtom, prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
-      strict: false,
-    });
-
-    const nextVal = {
-      ...prev,
-      ...newVal,
-    };
-
-    if (isEqual(prev, nextVal)) return prev;
-
-    return nextVal;
+const putChainToken = (valOrFunc: UpdaterOrPartials<SendChainTokenState>) => {
+  const screenState = getSendTokenScreenState();
+  const prev: SendChainTokenState = {
+    chainEnum: screenState.chainEnum,
+    currentToken: screenState.currentToken,
+  };
+  const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+    strict: false,
   });
+
+  const nextVal = {
+    ...prev,
+    ...newVal,
+  };
+  if (isEqual(prev, nextVal)) return prev;
+
+  putScreenState(nextVal);
+  return nextVal;
 };
 
-function setRouteParams(
-  valOrFunc: UpdaterOrPartials<
-    ExtractAtomValueType<typeof sendScreenParamsAtom>
-  >,
-) {
-  return jotaiStore.set(sendScreenParamsAtom, prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
-      strict: false,
-    });
-
-    const nextVal = { ...prev, ...newVal };
-    return isEqual(prev, nextVal) ? prev : nextVal;
-  });
-}
-
-const setChainEnum = (chain: CHAINS_ENUM) => {
-  setRouteParams(pre => ({
-    ...pre,
-    chainEnum: chain,
-  }));
+const setChainEnum = (chain: CHAINS_ENUM) =>
   putChainToken({ chainEnum: chain });
-};
 
-const setCurrentToken = (token: TokenItem) => {
-  setRouteParams(pre => ({
-    ...pre,
-    tokenId: token.id,
-  }));
+const setCurrentToken = (token: TokenItem) =>
   putChainToken({ currentToken: token /* chainEnum: token.chain */ });
-};
 
 export const apiSendToken = {
   putChainToken,
@@ -216,8 +190,11 @@ export const apiSendToken = {
 };
 
 export function useSendTokenScreenChainToken() {
-  const { chainEnum, currentToken } = useAtomValue(
-    sendTokenScreenChainTokenAtom,
+  const { chainEnum, currentToken } = useSendTokenScreenStateShallowSelector(
+    state => ({
+      chainEnum: state.chainEnum,
+      currentToken: state.currentToken,
+    }),
   );
 
   const chainItem =
@@ -244,6 +221,9 @@ export function useSendTokenScreenChainToken() {
   };
 }
 export type SendScreenState = {
+  chainEnum: SendChainTokenState['chainEnum'];
+  currentToken: SendChainTokenState['currentToken'];
+
   inited: boolean;
   initialTokenIdentityReady: boolean;
   initialTokenReady: boolean;
@@ -298,6 +278,8 @@ export type SendScreenState = {
   toAddrDesc: null | AddrDescResponse['desc'];
 };
 const DFLT_SEND_STATE: SendScreenState = {
+  ...getDefaultChainToken(),
+
   inited: false,
   initialTokenIdentityReady: false,
   initialTokenReady: false,
@@ -444,7 +426,6 @@ function markBalanceLoading(input: {
 
 function resetScreenState() {
   putScreenState({ ...DFLT_SEND_STATE });
-  jotaiStore.set(sendTokenScreenChainTokenAtom, getDefaultChainToken());
   jotaiStore.set(sendTokenFormValuesAtom, { ...DF_SEND_TOKEN_FORM });
   jotaiStore.set(sendTokenExternalPatchAtom, prev => ({
     nonce: prev.nonce,
@@ -1616,10 +1597,6 @@ export function useSendTokenForm({
             shouldCommit,
           });
         }
-        setRouteParams(pre => ({
-          ...pre,
-          tokenId: id,
-        }));
         putChainToken({ currentToken: { ...result, tokenId: id } });
         putScreenState(prev => ({
           agreeRequiredChecks: {
@@ -1881,11 +1858,6 @@ export function useSendTokenForm({
       chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
       currentToken: token,
     });
-    setRouteParams(pre => ({
-      ...pre,
-      chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
-      tokenId: token.id,
-    }));
     putScreenState({
       estimatedGas: 0,
     });
@@ -1964,11 +1936,6 @@ export function useSendTokenForm({
         ...getChainDefaultToken(val),
         cex_ids: [],
       } as TokenItem;
-      setRouteParams(pre => ({
-        ...pre,
-        chainEnum: val,
-        tokenId: defaultToken.id,
-      }));
 
       putChainToken({
         chainEnum: val,

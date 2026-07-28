@@ -1,10 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
-import { atom, useAtom } from 'jotai';
-import {
-  RootStackParamsList,
-  TransactionNavigatorParamList,
-} from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { TransactionNavigatorParamList } from '@/navigation-type';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
@@ -23,10 +17,12 @@ import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
 import { ellipsisAddress } from '@/utils/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-
-type HomeProps = NativeStackScreenProps<RootStackParamsList>;
-export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
-export const isSingleAddressAtom = atom<boolean>(false);
+type SendRouteParams = NonNullable<
+  TransactionNavigatorParamList[typeof RootNames.Send]
+>;
+type SendNFTRouteParams =
+  TransactionNavigatorParamList[typeof RootNames.SendNFT];
+type SendRouteIntent = SendRouteParams | SendNFTRouteParams;
 
 async function getWhitelistRecordsForSendRoute() {
   try {
@@ -68,16 +64,16 @@ async function findAccountWithoutBalanceForSendRoute(address: string): Promise<{
 }
 
 export const useSendRoutes = () => {
-  const [params, setParams] = useAtom(sendScreenParamsAtom);
-  const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
-
-  const hasNftParams = useCallback((mergedParams: { [key: string]: any }) => {
-    return !!mergedParams.nftItem;
-  }, []);
+  const hasNftParams = useCallback(
+    (params: SendRouteIntent): params is SendNFTRouteParams => {
+      return 'nftItem' in params;
+    },
+    [],
+  );
 
   const getTargetScreen = useCallback(
-    (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
-      const hasNft = hasNftParams(mergedParams);
+    (params: SendRouteIntent, isForSingleAddress: boolean) => {
+      const hasNft = hasNftParams(params);
       if (hasNft) {
         return RootNames.SendNFT;
       } else {
@@ -89,42 +85,37 @@ export const useSendRoutes = () => {
 
   /** @deprecated */
   const navigateToTargetScreen = useCallback(
-    (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
-      const targetScreen = getTargetScreen(mergedParams, isForSingleAddress);
+    (params: SendRouteIntent, isForSingleAddress: boolean) => {
+      const targetScreen = getTargetScreen(params, isForSingleAddress);
 
       naviPush(RootNames.StackTransaction, {
         screen: targetScreen,
-        params: mergedParams,
+        params,
       } as NavigatorScreenParams<TransactionNavigatorParamList>);
     },
     [getTargetScreen],
   );
 
   const navigateToSendScreen = useCallback(
-    (p?: { [key: string]: any }) => {
-      const mergedParams = { ...params, ...p };
-      navigateToTargetScreen(mergedParams, isSingleAddress);
+    (params: SendRouteIntent = {}, isForSingleAddress = true) => {
+      navigateToTargetScreen(params, isForSingleAddress);
     },
-    [params, isSingleAddress, navigateToTargetScreen],
+    [navigateToTargetScreen],
   );
 
   /** @deprecated */
   const navigateToSendPolyScreen = useCallback(
-    async (isForSingleAddress: boolean, p?: { [key: string]: any }) => {
+    async (isForSingleAddress: boolean, params: SendRouteIntent = {}) => {
       matomoRequestEvent({
         category: 'Send Usage',
         action: 'Send_Enter',
       });
-      setParams(p || {});
-      setIsSingleAddress(!!isForSingleAddress);
 
-      const mergedParams = { ...params, ...p };
-
-      if (p?.toAddress) {
+      if (params.toAddress) {
         const { inWhitelist, account, isMyImported } =
-          await findAccountWithoutBalanceForSendRoute(p.toAddress);
+          await findAccountWithoutBalanceForSendRoute(params.toAddress);
         if (inWhitelist || isMyImported) {
-          navigateToTargetScreen(mergedParams, isForSingleAddress);
+          navigateToTargetScreen(params, isForSingleAddress);
         } else {
           const id = createGlobalBottomSheetModal2024({
             name: MODAL_NAMES.CONFIRM_ADDRESS,
@@ -137,47 +128,29 @@ export const useSendRoutes = () => {
             },
             onConfirm: (acc, addressDesc) => {
               removeGlobalBottomSheetModal2024(id);
-              navigateToSendScreen({
-                ...p,
-                addressBrandName: acc.brandName,
-                addrDesc: addressDesc,
-                toAddress: acc.address,
-              });
+              navigateToSendScreen(
+                {
+                  ...params,
+                  addressBrandName: acc.brandName,
+                  addrDesc: addressDesc,
+                  toAddress: acc.address,
+                },
+                isForSingleAddress,
+              );
             },
           });
         }
         return;
       }
 
-      naviPush(
-        RootNames.StackTransaction,
-        !mergedParams.nftItem
-          ? {
-              screen: RootNames.Send,
-            }
-          : {
-              screen: RootNames.SendNFT,
-              params: {
-                nftItem: mergedParams.nftItem,
-                collectionName: mergedParams.collectionName,
-                fromAccount: mergedParams.fromAccount,
-              },
-            },
-      );
+      navigateToTargetScreen(params, isForSingleAddress);
     },
-    [
-      navigateToSendScreen,
-      params,
-      setIsSingleAddress,
-      setParams,
-      navigateToTargetScreen,
-    ],
+    [navigateToSendScreen, navigateToTargetScreen],
   );
 
   return {
     /** @deprecated */
     navigateToSendPolyScreen,
     navigateToSendScreen,
-    isSingleAddress,
   };
 };
