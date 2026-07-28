@@ -106,7 +106,6 @@ export const RecentUsedItem = ({
     ];
 
     return {
-      menuTitle: account.address,
       menuActions,
     };
   };
@@ -180,6 +179,7 @@ export const RecentUsedItem = ({
 
   return (
     <ContextMenuView
+      menuTitle={account.address}
       getMenuConfig={getMenuConfig}
       preViewBorderRadius={SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS}
       triggerProps={{ action: 'longPress' }}>

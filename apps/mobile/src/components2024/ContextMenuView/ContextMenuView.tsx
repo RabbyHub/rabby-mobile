@@ -31,14 +31,14 @@ export interface MenuAction {
 }
 
 export interface MenuConfig {
-  menuTitle?: string;
   menuActions: MenuAction[];
 }
 
 type Props = {
+  menuTitle?: string;
   /**
-   * Read menu state without subscribing the trigger or its ancestors to state
-   * used exclusively by menu actions.
+   * Read action state only when the native menu opens. This avoids subscribing
+   * the trigger and its ancestors to state used exclusively by menu actions.
    */
   getMenuConfig: () => MenuConfig;
   preViewBorderRadius?: number;
@@ -80,6 +80,7 @@ function renderMenuActions(config: MenuConfig) {
 
 export const ContextMenuView: React.FC<Props> = ({
   children,
+  menuTitle,
   getMenuConfig,
   loop = true,
   alignOffset = 5,
@@ -103,7 +104,10 @@ export const ContextMenuView: React.FC<Props> = ({
     });
 
   const needUseGdOnAndroid = IS_ANDROID && triggerProps?.action === 'longPress';
-  const menuConfig = getMenuConfig();
+  const getDynamicMenuChildren = useCallback(
+    () => renderMenuActions(getMenuConfig()),
+    [getMenuConfig],
+  );
 
   const previewTheme = IS_IOS_27_OR_ABOVE
     ? apisTheme.getColors2024()
@@ -144,14 +148,12 @@ export const ContextMenuView: React.FC<Props> = ({
       </ContextMenu.Trigger>
 
       <ContextMenu.Content
+        getChildren={getDynamicMenuChildren}
         loop={loop}
         alignOffset={alignOffset}
         avoidCollisions={avoidCollisions}
         collisionPadding={10}>
-        {menuConfig.menuTitle ? (
-          <ContextMenu.Label>{menuConfig.menuTitle}</ContextMenu.Label>
-        ) : null}
-        {renderMenuActions(menuConfig)}
+        {menuTitle ? <ContextMenu.Label>{menuTitle}</ContextMenu.Label> : null}
       </ContextMenu.Content>
     </ContextMenu.Root>
   );
