@@ -72,8 +72,6 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
-import { useAtomValue } from 'jotai';
-import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -101,6 +99,7 @@ import {
 } from './sendScreenSession';
 import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { getInitialDisplayToken } from './initialDisplayToken';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -187,19 +186,6 @@ function markSendScreenRenderPerf(
 }
 
 markSendScreenPerf('module_loaded');
-
-function getInitialDisplayToken(token: TokenItem): TokenItem | null {
-  const chain = findChainByServerID(token.chain);
-  if (chain && lowcaseSame(token.id, chain.nativeTokenAddress)) {
-    return makeTokenFromChain(chain);
-  }
-
-  if (token.optimized_symbol || token.display_symbol || token.symbol) {
-    return token;
-  }
-
-  return null;
-}
 
 const SendPendingTxItem = React.memo(function SendPendingTxItem({
   clearLocalPendingTxData,
@@ -554,10 +540,8 @@ function SendScreen({
   const hasClaimedSendScreenSessionRef = useRef(false);
 
   const { chainItem, currentToken } = useSendTokenScreenChainToken();
-  const routeParams = useAtomValue(sendScreenParamsAtom);
   markSendScreenRenderPerf(renderSeq, 'route_and_chain_hook_end', {
     hasNavParams: !!navParams,
-    hasRouteParams: !!routeParams,
     chain: chainItem?.serverId,
     tokenChain: currentToken.chain,
     tokenId: currentToken.id,
@@ -758,7 +742,6 @@ function SendScreen({
     const startedAt = Date.now();
     markSendScreenPerf('init_by_cache_start', {
       hasNavParams: !!navParams,
-      hasRouteParams: !!routeParams,
       hasCurrentAccount: !!currentAccount,
       isForMultipleAddress,
     });
@@ -795,37 +778,16 @@ function SendScreen({
       navParams?.chainEnum &&
       navParams?.tokenId
     ) {
-      const isManualChangeToken =
-        routeParams?.tokenId && routeParams?.chainEnum;
-      const target = findChainByEnum(
-        isManualChangeToken ? routeParams.chainEnum : navParams?.chainEnum,
-      );
+      const target = findChainByEnum(navParams.chainEnum);
 
       targetToken = {
         chain: target ? target?.serverId : currentToken.chain,
-        id: target
-          ? isManualChangeToken
-            ? routeParams.tokenId
-            : navParams?.tokenId
-          : currentToken.id,
+        id: target ? navParams.tokenId : currentToken.id,
         ...EMPTY_TOKEN_ITEM,
       };
       target && apiSendToken.setChainEnum(target.enum);
     } else {
-      const isManualChangeToken =
-        routeParams?.tokenId && routeParams?.chainEnum;
-      if (isManualChangeToken) {
-        const target = findChainByEnum(routeParams.chainEnum);
-        if (target) {
-          targetToken = {
-            chain: target.serverId,
-            id: routeParams.tokenId,
-            ...EMPTY_TOKEN_ITEM,
-          };
-        }
-      }
-
-      if (!targetToken && currentAccount?.address) {
+      if (currentAccount?.address) {
         const lastTokenStartedAt = Date.now();
         markSendScreenPerf('last_time_send_token_start');
         targetToken =
@@ -971,7 +933,6 @@ function SendScreen({
     });
   }, [
     navParams,
-    routeParams,
     currentAccount,
     fetchOrderedChainList,
     loadCurrentToken,
