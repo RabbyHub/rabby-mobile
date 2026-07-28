@@ -136,7 +136,9 @@ export type RegressionScenarioEventName =
   | 'fixture-removed'
   | 'auto-lock-armed'
   | 'auto-lock-observed'
-  | 'auto-lock-verified';
+  | 'auto-lock-verified'
+  | 'auto-lock-persistence-prepared'
+  | 'auto-lock-persistence-verified';
 
 export type RegressionScenarioEvent = {
   sequence: number;
