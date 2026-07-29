@@ -31,8 +31,8 @@ export const BrowserHistorySiteItem = ({
       <ContextMenuView
         triggerProps={{ action: 'longPress' }}
         preViewBorderRadius={20}
+        menuTitle={stringUtils.unPrefix(item.origin, 'https://')}
         getMenuConfig={() => ({
-          menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
           menuActions: [
             {
               title: 'Delete',

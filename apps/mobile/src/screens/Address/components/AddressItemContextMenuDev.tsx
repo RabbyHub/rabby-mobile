@@ -48,7 +48,6 @@ export const AddressItemContextMenuDev: React.FC<Props> = props => {
     );
 
     return {
-      menuTitle: account.address,
       menuActions: actions
         .map(key => menuActionDict[key])
         .filter(v => v) as MenuAction[],
@@ -57,6 +56,7 @@ export const AddressItemContextMenuDev: React.FC<Props> = props => {
 
   return (
     <ContextMenuView
+      menuTitle={account.address}
       getMenuConfig={getMenuConfig}
       preViewBorderRadius={preViewBorderRadius}
       triggerProps={{ action: 'longPress' }}>

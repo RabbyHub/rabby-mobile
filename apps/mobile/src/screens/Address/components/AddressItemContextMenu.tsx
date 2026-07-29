@@ -138,7 +138,6 @@ const AddressItemContextMenuInner: React.FC<
     );
 
     return {
-      menuTitle: account.address,
       menuActions: actions
         .map(key => menuActionDict[key])
         .filter(v => v) as MenuAction[],
@@ -147,6 +146,7 @@ const AddressItemContextMenuInner: React.FC<
 
   return (
     <ContextMenuView
+      menuTitle={account.address}
       getMenuConfig={getMenuConfig}
       preViewBorderRadius={preViewBorderRadius}
       triggerProps={{ action: 'longPress' }}>

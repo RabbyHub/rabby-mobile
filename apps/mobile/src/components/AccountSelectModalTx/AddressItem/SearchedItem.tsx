@@ -125,7 +125,6 @@ export const SearchedAddressItemInSheetModal = ({
     ];
 
     return {
-      menuTitle: account.address,
       menuActions,
     };
   };
@@ -261,6 +260,7 @@ export const SearchedAddressItemInSheetModal = ({
   }
   return (
     <ContextMenuView
+      menuTitle={account.address}
       getMenuConfig={getMenuConfig}
       preViewBorderRadius={SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS}
       triggerProps={{ action: 'longPress' }}>

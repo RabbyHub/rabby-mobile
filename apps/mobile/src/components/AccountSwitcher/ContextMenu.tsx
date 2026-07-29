@@ -47,13 +47,13 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
     ];
 
     return {
-      menuTitle: account.address,
       menuActions,
     };
   };
 
   return (
     <ContextMenuView
+      menuTitle={account.address}
       getMenuConfig={getMenuConfig}
       preViewBorderRadius={preViewBorderRadius}
       triggerProps={{ action: 'longPress' }}>

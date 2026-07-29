@@ -187,7 +187,6 @@ export const WhiteListItemInSheetModal = ({
     ];
 
     return {
-      menuTitle: account.address,
       menuActions: interactionDisabled
         ? menuActions.map(action => ({ ...action, disabled: true }))
         : menuActions,
@@ -337,6 +336,7 @@ export const WhiteListItemInSheetModal = ({
 
   const itemWithMenu = enableMenu ? (
     <ContextMenuView
+      menuTitle={account.address}
       getMenuConfig={getMenuConfig}
       preViewBorderRadius={SIZES.itemBorderRadius}
       triggerProps={{ action: 'longPress' }}>
