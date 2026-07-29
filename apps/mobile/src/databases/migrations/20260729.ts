@@ -81,6 +81,16 @@ export class UpdateHistoryRejudgeSmallTx1785297040800
       return;
     }
 
+    // upgrades from builds older than a6a7a5e99 have the table without the
+    // is_small_tx column (it is added by the post-migration schema sync), and
+    // their legacy rows were already wiped by UpdateHistoryTableRestart
+    const columns: { name: string }[] = await queryRunner.query(
+      `PRAGMA table_info('${historyTableName}')`,
+    );
+    if (!columns.some(c => c.name === 'is_small_tx')) {
+      return;
+    }
+
     const rows: {
       _db_id: string;
       tx_from_address: string | null;
