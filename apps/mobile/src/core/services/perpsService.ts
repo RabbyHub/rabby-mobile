@@ -34,6 +34,44 @@ export type ApproveSignatures = (SendApproveParams & {
   type: 'approveAgent' | 'approveBuilderFee';
 })[];
 
+export type PerpsViewMode = 'simple' | 'pro';
+
+export type PerpsProPreferences = {
+  version: number;
+  viewMode: PerpsViewMode;
+  [key: string]: unknown;
+};
+
+const PERPS_PRO_PREFERENCES_VERSION = 1;
+const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
+  version: PERPS_PRO_PREFERENCES_VERSION,
+  viewMode: 'simple',
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
+type ForwardCompatibleProPreferences = Record<string, unknown> & {
+  version: number;
+};
+
+const hasForwardCompatibleProPreferences = (
+  value: unknown,
+): value is ForwardCompatibleProPreferences =>
+  isRecord(value) &&
+  typeof value.version === 'number' &&
+  Number.isFinite(value.version) &&
+  value.version >= PERPS_PRO_PREFERENCES_VERSION;
+
+const normalizePerpsViewMode = (value: unknown): PerpsViewMode => {
+  if (!hasForwardCompatibleProPreferences(value)) {
+    return 'simple';
+  }
+  return value.viewMode === 'simple' || value.viewMode === 'pro'
+    ? value.viewMode
+    : 'simple';
+};
+
 export interface PerpsServiceStore {
   agentVaults: string; // encrypted JSON string of {[address: string]: string}
   agentPreferences: {
@@ -56,6 +94,7 @@ export interface PerpsServiceStore {
   favoriteMarkets: string[];
   selectedKlineInterval: CANDLE_MENU_KEY_V2;
   marginModeByCoin: Record<string, 'cross' | 'isolated'>;
+  proPreferences: PerpsProPreferences;
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -105,6 +144,7 @@ export class PerpsService {
           favoriteMarkets: [],
           selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
           marginModeByCoin: {},
+          proPreferences: DEFAULT_PERPS_PRO_PREFERENCES,
         },
       },
       {
@@ -180,6 +220,34 @@ export class PerpsService {
       ...this.store.marginModeByCoin,
       [coin]: mode,
     };
+  };
+
+  getPerpsViewMode = async (): Promise<PerpsViewMode> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return normalizePerpsViewMode(this.store.proPreferences);
+  };
+
+  setPerpsViewMode = async (viewMode: PerpsViewMode) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    const currentPreferences: unknown = this.store.proPreferences;
+
+    this.store.proPreferences = hasForwardCompatibleProPreferences(
+      currentPreferences,
+    )
+      ? {
+          ...currentPreferences,
+          viewMode,
+        }
+      : {
+          ...DEFAULT_PERPS_PRO_PREFERENCES,
+          viewMode,
+        };
   };
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
