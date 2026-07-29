@@ -1,5 +1,6 @@
 import { traceAndroidInstant } from './core/utils/androidTrace';
 import type { ReadableAccountStoreWarmupTarget } from './setup-readable-account-stores';
+import { setupRuntimeLoaders } from '@/startup/moduleLoading/setupRuntimeLoaders';
 import { observeStartupModuleLoad } from './startup/runtimeDiagnostics';
 
 type SetupBeforeRenderRuntime =
@@ -38,12 +39,7 @@ async function loadSetupBeforeRenderRuntime(_reason: string) {
       taskStage: 'homePostStartupReady',
       reason: _reason,
     },
-    () =>
-      __DEV__
-        ? Promise.resolve(
-            require('./setup-app-before-render.runtime') as SetupBeforeRenderRuntime,
-          )
-        : import('./setup-app-before-render.runtime'),
+    setupRuntimeLoaders.setupBeforeRender,
   )
     .then(runtime => {
       traceAndroidInstant('startup.load_setup_before_render_runtime.end', {
@@ -85,12 +81,7 @@ async function loadReadableAccountBootstrapRuntime(_reason: string) {
       taskStage: 'homePostStartupReady',
       reason: _reason,
     },
-    () =>
-      __DEV__
-        ? Promise.resolve(
-            require('./setup-readable-account-bootstrap-warmups') as ReadableAccountBootstrapRuntime,
-          )
-        : import('./setup-readable-account-bootstrap-warmups'),
+    setupRuntimeLoaders.readableAccountBootstrap,
   )
     .then(runtime => {
       traceAndroidInstant('startup.load_readable_account_bootstrap.end', {
@@ -132,12 +123,7 @@ async function loadReadableAccountStoresRuntime(_reason: string) {
       taskStage: 'homePostStartupIdle',
       reason: _reason,
     },
-    () =>
-      __DEV__
-        ? Promise.resolve(
-            require('./setup-readable-account-stores') as ReadableAccountStoresRuntime,
-          )
-        : import('./setup-readable-account-stores'),
+    setupRuntimeLoaders.readableAccountStores,
   )
     .then(runtime => {
       traceAndroidInstant('startup.load_readable_account_stores.end', {
