@@ -177,7 +177,9 @@ const TokenDetailContent = () => {
       if (!effectiveAccount?.address) {
         return;
       }
-      return refreshBaseTokenInfo();
+      return refreshBaseTokenInfo().finally(() => {
+        setManualBaseTokenRefreshing(false);
+      });
     },
     { wait: 200 },
   );
