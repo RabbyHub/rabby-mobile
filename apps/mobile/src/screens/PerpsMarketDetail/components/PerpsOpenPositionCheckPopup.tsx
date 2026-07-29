@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/components/Typography';
 import { MarketSlippage } from './MarketSlippage';
+import { PERPS_SLIPPAGE_DISPLAY_MIN } from '../slippageUtils';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -315,7 +316,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
           </View>
-          {orderType === 'market' && slippageReady && Number(tradeSize) > 0 ? (
+          {orderType === 'market' &&
+          slippageReady &&
+          Number(tradeSize) > 0 &&
+          slippage > PERPS_SLIPPAGE_DISPLAY_MIN ? (
             <View style={styles.list}>
               <MarketSlippage
                 slippage={slippage}

@@ -5,6 +5,7 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
+  PERPS_SLIPPAGE_DISPLAY_MIN,
   PERPS_SLIPPAGE_THRESHOLD,
   PERPS_SLIPPAGE_WARNING,
 } from '../slippageUtils';
@@ -20,7 +21,7 @@ export type MarketSlippageProps = {
   rowStyle?: StyleProp<ViewStyle>;
 };
 
-/** Est. Slippage row (value colored <1% neutral / 1%~5% amber / >=5% red) plus a switch-to-limit banner over threshold. */
+/** Est. Slippage row, only shown above 2% (value colored 2%~5% amber / >=5% red) plus a switch-to-limit banner over threshold. */
 export const MarketSlippage: React.FC<MarketSlippageProps> = ({
   slippage,
   onSwitchToLimit,
@@ -31,7 +32,7 @@ export const MarketSlippage: React.FC<MarketSlippageProps> = ({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  if (!visible) {
+  if (!visible || slippage <= PERPS_SLIPPAGE_DISPLAY_MIN) {
     return null;
   }
 
