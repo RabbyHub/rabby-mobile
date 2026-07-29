@@ -231,7 +231,6 @@ function BrowserScreenContent({ style }: BrowserScreenProps) {
                 searchTabId: '',
               });
             } else {
-              console.log('??? open tab', options);
               openTab(url, options);
             }
           }}
