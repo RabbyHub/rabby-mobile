@@ -230,6 +230,15 @@ export const RcWalletConnect = makeThemeIcon2024FromCC(
   }),
 );
 
+import { default as RcManageWalletCC } from './icon-manage-wallet-cc.svg';
+export const RcManageWallet = makeThemeIcon2024FromCC(
+  RcManageWalletCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);
+
 import { default as RcDataAnalysisCC } from './data-analysis-cc.svg';
 export const RcDataAnalysis = makeThemeIcon2024FromCC(
   RcDataAnalysisCC,
