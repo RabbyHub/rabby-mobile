@@ -1210,6 +1210,15 @@ const CACHE_TIME = HOME_REFRESH_INTERVAL;
 let hasStartedAddressBalanceLifecycle = false;
 let accountBalanceSelectionSnapshotGetter: AccountBalanceSelectionSnapshotGetter | null =
   null;
+// Home refresh and the deferred selection module can start at the same
+// post-startup milestone. Keep the refresh pending until registration wins.
+let resolveAccountBalanceSelectionSnapshotGetterReady: (() => void) | null =
+  null;
+const accountBalanceSelectionSnapshotGetterReady = new Promise<void>(
+  resolve => {
+    resolveAccountBalanceSelectionSnapshotGetterReady = resolve;
+  },
+);
 
 export function getSelectedBalanceAddressesSnapshot() {
   const state = balanceAccountsStore.getState();
@@ -1222,17 +1231,21 @@ export function setAccountBalanceSelectionSnapshotGetter(
   getter: AccountBalanceSelectionSnapshotGetter,
 ) {
   accountBalanceSelectionSnapshotGetter = getter;
+  resolveAccountBalanceSelectionSnapshotGetterReady?.();
+  resolveAccountBalanceSelectionSnapshotGetterReady = null;
 }
 
 async function getAccountBalanceSelectionSnapshot() {
   if (!accountBalanceSelectionSnapshotGetter) {
     if (__DEV__) {
-      console.warn('account balance selection snapshot getter is not ready');
+      console.warn(
+        'account balance selection snapshot getter is not ready; waiting for registration',
+      );
     }
-    return null;
+    await accountBalanceSelectionSnapshotGetterReady;
   }
 
-  return accountBalanceSelectionSnapshotGetter();
+  return accountBalanceSelectionSnapshotGetter!();
 }
 
 function getCachedHomeTop10Addresses() {
