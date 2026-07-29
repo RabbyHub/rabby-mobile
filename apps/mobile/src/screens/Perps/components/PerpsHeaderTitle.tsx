@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useMemo } from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
 import { PerpHistoryHeader } from './PerpHistoryHeader';
 import type { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
+import { PerpsModeSwitch } from '../../PerpsShared/components/PerpsModeSwitch';
 
 const HEADER_HEIGHT = 58;
 
@@ -24,8 +25,10 @@ const HEADER_HEIGHT = 58;
  */
 const PerpsHeaderContent: React.FC<{
   account?: Account | null;
+  isModeSwitching: boolean;
   localLoadingHistory: AccountHistoryItem[];
-}> = ({ account, localLoadingHistory }) => {
+  onSwitchToPro: () => void;
+}> = ({ account, isModeSwitching, localLoadingHistory, onSwitchToPro }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
   const [popupState, setPopupState] = usePerpsPopupState();
@@ -44,7 +47,15 @@ const PerpsHeaderContent: React.FC<{
         <View style={styles.headerLeft}>
           <HeaderBackPressable />
           <RcIconHyper />
-          <Text style={styles.title}>Perps</Text>
+          <PerpsModeSwitch
+            activeMode="simple"
+            disabled={isModeSwitching}
+            onSelectMode={viewMode => {
+              if (viewMode === 'pro') {
+                onSwitchToPro();
+              }
+            }}
+          />
         </View>
 
         {/* Right: account selector + history */}
@@ -90,25 +101,37 @@ const PerpsHeaderContent: React.FC<{
 
 export const PerpsNativeHeader: React.FC<{
   account?: Account | null;
+  isModeSwitching: boolean;
   localLoadingHistory: AccountHistoryItem[];
-}> = ({ account, localLoadingHistory }) => {
+  onSwitchToPro: () => void;
+}> = ({ account, isModeSwitching, localLoadingHistory, onSwitchToPro }) => {
   const { colors2024 } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
+      headerShown: true,
       // eslint-disable-next-line react/no-unstable-nested-components
       header: () => (
         <PerpsHeaderContent
           account={account}
+          isModeSwitching={isModeSwitching}
           localLoadingHistory={localLoadingHistory}
+          onSwitchToPro={onSwitchToPro}
         />
       ),
       headerStyle: {
         backgroundColor: colors2024['neutral-bg-1'],
       },
     });
-  }, [navigation, colors2024, account, localLoadingHistory]);
+  }, [
+    account,
+    colors2024,
+    isModeSwitching,
+    localLoadingHistory,
+    navigation,
+    onSwitchToPro,
+  ]);
 
   return null;
 };
@@ -130,13 +153,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  title: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
   },
   headerRight: {
     flexDirection: 'row',
