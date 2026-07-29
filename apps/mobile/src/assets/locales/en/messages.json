@@ -2323,7 +2323,9 @@
       "transactionNotification": "Txn notifications (Beta)",
       "dataAnalysis": "Data Analysis",
       "bugReportHistory": "Bug Report History",
-      "bugReportChat": "Share Feedback via Chat"
+      "bugReportChat": "Share Feedback via Chat",
+      "features": "Features",
+      "manageWallets": "Manage Wallets"
     },
     "settingModal": {
       "themeMode": {
@@ -3438,6 +3440,9 @@
       "unsupportedAccountType": "Not support this account type.",
       "unsupportedAccount": "Currently only private key and seed phrase addresses are supported.",
       "title": "Convert Dust"
+    },
+    "settings": {
+      "chooseWallet": "Choose a wallet to manage"
     }
   },
   "component": {

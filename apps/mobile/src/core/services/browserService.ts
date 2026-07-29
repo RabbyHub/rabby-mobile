@@ -37,6 +37,7 @@ export type Tab = {
   url: string;
   initialUrl: string;
   id: string;
+  key?: string;
   openTime: number;
   viewShot?: string;
   isTerminate?: boolean;
