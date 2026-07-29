@@ -1,5 +1,4 @@
 import { apisPerps } from '@/core/apis';
-import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import {
   fetchAllDexsClearinghouseStateHttp,
   fetchClearinghouseStateHttp,

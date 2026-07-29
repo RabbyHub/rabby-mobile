@@ -277,7 +277,48 @@ export const initialState: PerpsState = {
   categories: DEFAULT_TOKEN_CATEGORY,
 };
 
+const isSamePerpsAccountIdentity = (
+  prev: Account | null,
+  next: Account | null,
+): boolean => {
+  if (!prev || !next) {
+    return prev === next;
+  }
+  return isSameAddress(prev.address, next.address) && prev.type === next.type;
+};
+
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
+
+export type PerpsAccountRuntimeContext = Readonly<{
+  account: Account | null;
+  generation: number;
+  isInitialized: boolean;
+}>;
+
+let perpsAccountRuntimeGeneration = 0;
+
+// Zustand listeners run synchronously with setState. This epoch therefore
+// changes before a stale Runtime promise can resume in the microtask queue,
+// including during the Store -> React effect gap on account switch/logout.
+perpsStore.subscribe((state, previousState) => {
+  if (
+    !isSamePerpsAccountIdentity(
+      previousState.currentPerpsAccount,
+      state.currentPerpsAccount,
+    )
+  ) {
+    perpsAccountRuntimeGeneration += 1;
+  }
+});
+
+export const getPerpsAccountRuntimeContext = (): PerpsAccountRuntimeContext => {
+  const state = perpsStore.getState();
+  return {
+    account: state.currentPerpsAccount,
+    generation: perpsAccountRuntimeGeneration,
+    isInitialized: state.isInitialized,
+  };
+};
 
 type ActiveUserDataSubscription = {
   address: string;
@@ -464,9 +505,7 @@ export const getClearinghouseStateByMap = (address: string) => {
 };
 
 const isSamePerpsAccount = (prev: Account | null, next: Account): boolean =>
-  !!prev &&
-  isSameAddress(prev.address, next.address) &&
-  prev.type === next.type;
+  isSamePerpsAccountIdentity(prev, next);
 
 const setCurrentPerpsAccount = (payload: Account) => {
   setPerpsState(prev => {

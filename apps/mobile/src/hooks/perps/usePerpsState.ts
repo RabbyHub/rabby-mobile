@@ -18,7 +18,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { Abstraction, UserAbstraction } from '@rabby-wallet/hyperliquid-sdk';
 import { formatSpotState } from '@/utils/perps';
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
 import type { PositionAndOpenOrder } from './usePerpsStore';
@@ -28,7 +28,6 @@ import {
   getClearinghouseStateByMap,
   perpsStore,
   usePerpsStore,
-  waitForInitialWsData,
   fetchUserAbstraction,
   subscribeToUserData,
 } from './usePerpsStore';
@@ -42,8 +41,9 @@ import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { isUserCancelledSignature } from './perpsActionError';
+import { useIsFocused } from '@react-navigation/native';
+import { useEnsurePerpsRuntime } from './runtime/useEnsurePerpsRuntime';
 
-import { apisLock } from '@/core/apis';
 type SignActionType =
   | 'approveAgent'
   | 'approveBuilderFee'
@@ -58,6 +58,7 @@ interface SignAction {
 export const usePerpsState = () => {
   const [popupSate, setPopupState] = usePerpsPopupState();
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
   const {
     setApproveSignatures,
@@ -70,12 +71,10 @@ export const usePerpsState = () => {
     setAccountNeedApproveAgent,
     setAccountNeedApproveBuilderFee,
     setInitialized,
-    resetAccountState,
 
     // Effects
     loginPerpsAccount,
     fetchClearinghouseState,
-    fetchPerpPermission,
     refreshData,
     fetchMarketData,
     fetchPerpFee,
@@ -99,7 +98,6 @@ export const usePerpsState = () => {
     })),
   );
   const {
-    isInitialized,
     currentPerpsAccount,
     accountNeedApproveAgent,
     accountNeedApproveBuilderFee,
@@ -527,6 +525,33 @@ export const usePerpsState = () => {
     ],
   );
 
+  const legacyRuntimeContinuation = useMemo(
+    () => ({
+      selfSign: checkSelfSignBuilderFee,
+      lockedAgent: (agentAddress: string) => {
+        if (currentPerpsAccount) {
+          return checkAccountApproveStatus(currentPerpsAccount, agentAddress);
+        }
+      },
+      unlockedAgent: (agentAddress: string) => {
+        if (currentPerpsAccount) {
+          return ensureLoginApproveSign(currentPerpsAccount, agentAddress);
+        }
+      },
+    }),
+    [
+      checkAccountApproveStatus,
+      checkSelfSignBuilderFee,
+      currentPerpsAccount,
+      ensureLoginApproveSign,
+    ],
+  );
+
+  useEnsurePerpsRuntime({
+    legacyContinuation: legacyRuntimeContinuation,
+    legacyContinuationEnabled: isFocused,
+  });
+
   const isHandlingApproveStatus = useRef(false);
 
   const handleActionApproveStatus = useCallback(
@@ -616,78 +641,6 @@ export const usePerpsState = () => {
       setAccountNeedApproveBuilderFee,
     ],
   );
-
-  useEffect(() => {
-    if (isInitialized) {
-      return;
-    }
-
-    const initIsLogin = async () => {
-      try {
-        const initAccount = perpsState.currentPerpsAccount;
-        if (!initAccount) {
-          return false;
-        }
-        // self-sign passive init: configure signer (no unlock), pull data, only
-        // MARK builder-fee status. No signing here — unlock waits for a user
-        // action (placing an order / tapping approve).
-        if (apisPerps.isSelfSignPerpsAccount(initAccount.type)) {
-          await apisPerps.applyPerpsSigner(initAccount);
-          await loginPerpsAccount(initAccount);
-          await Promise.all([fetchMarketData(), waitForInitialWsData()]);
-          // lightweight builder-fee check only (not the agent-aware
-          // ensureLoginApproveSign); fire-and-forget — non-blocking UI hint.
-          checkSelfSignBuilderFee();
-          setInitialized(true);
-          return false;
-        }
-        if (!apisLock.isUnlocked()) {
-          const agentAddress = await apisPerps.getPerpsAgentAddress(
-            initAccount.address,
-          );
-          await loginPerpsAccount(initAccount);
-          await Promise.all([fetchMarketData(), waitForInitialWsData()]);
-          checkAccountApproveStatus(initAccount, agentAddress || '');
-          setInitialized(true);
-          return false;
-        }
-        const { vault, agentAddress } =
-          await apisPerps.getOrCreatePerpsAgentWallet(initAccount.address);
-        // 开始恢复登录态
-        apisPerps.initPerpsAgentAccount(
-          initAccount.address,
-          vault,
-          agentAddress,
-        );
-        await loginPerpsAccount(initAccount);
-
-        // checkIsNeedAutoLoginOut(initAccount.address, agentAddress);
-        ensureLoginApproveSign(initAccount, agentAddress);
-        // Run HTTP meta fetch and WS first-frame wait in parallel.
-        // waitForInitialWsData resolves on first push of both
-        // currentClearinghouseState and global asset ticker, or on timeout.
-        await Promise.all([fetchMarketData(), waitForInitialWsData()]);
-
-        setInitialized(true);
-        return true;
-      } catch (error) {
-        console.error('Failed to init Perps state:', error);
-      }
-    };
-
-    initIsLogin();
-  }, [
-    perpsState.currentPerpsAccount,
-    isInitialized,
-    loginPerpsAccount,
-    fetchMarketData,
-    ensureLoginApproveSign,
-    checkAccountApproveStatus,
-    setInitialized,
-    resetAccountState,
-    fetchPerpPermission,
-    checkSelfSignBuilderFee,
-  ]);
 
   const handleSetLaterApproveStatus = useCallback(
     (signActions: SignAction[]) => {
