@@ -608,6 +608,10 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     Home: 0,
   };
 
+  private readonly sceneRefreshGeneration: Record<BalanceScene, number> = {
+    Home: 0,
+  };
+
   private readonly lastTop10AddressesRef = {
     current: null as null | string[],
   };
@@ -734,6 +738,28 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     });
   }
 
+  private resetSceneAddrLoading(scene: BalanceScene) {
+    this.setState(prev => {
+      const sceneKeyPrefix = `${scene}-`;
+      const nextSceneAddrLoading = Object.fromEntries(
+        Object.entries(prev.sceneAddrLoading).filter(
+          ([key]) => !key.startsWith(sceneKeyPrefix),
+        ),
+      ) as Multi24hBalanceState['sceneAddrLoading'];
+
+      if (
+        Object.keys(nextSceneAddrLoading).length ===
+        Object.keys(prev.sceneAddrLoading).length
+      ) {
+        return prev;
+      }
+
+      return {
+        sceneAddrLoading: nextSceneAddrLoading,
+      };
+    });
+  }
+
   private commitSceneCombinedData<T extends BalanceScene>(scene: T) {
     const states = this.getState();
     const addresses = states.addresses[scene];
@@ -785,14 +811,27 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
 
   refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
     async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
+      const refreshGeneration = ++this.sceneRefreshGeneration[scene];
+      const isLatestRefresh = () =>
+        refreshGeneration === this.sceneRefreshGeneration[scene];
       let { addresses, force = false, reason } = options || {};
       if (!addresses?.length) {
         addresses = await getSelectedBalanceAddressesOrTop10Fallback();
+      }
+      if (!isLatestRefresh()) {
+        return;
       }
 
       const normalizedAddresses = normalizeAddressesForCompare(
         Array.isArray(addresses) ? addresses : [addresses],
       );
+      const lastTop10Addresses = this.lastTop10AddressesRef.current;
+      this.lastTop10AddressesRef.current = normalizedAddresses;
+      const lastTop10Changed = !isEqual(
+        normalizedAddresses,
+        lastTop10Addresses,
+      );
+      force = force || lastTop10Changed;
       const prevAddresses = this.getState().addresses[scene];
       const hasAddressSelectionChanged = !isEqual(
         normalizeAddressesForCompare(prevAddresses),
@@ -800,8 +839,12 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       );
 
       this.setSceneAddresses(scene, normalizedAddresses);
+      this.resetSceneAddrLoading(scene);
 
       const beforeReturn = () => {
+        if (!isLatestRefresh()) {
+          return;
+        }
         addressBalanceStore.computeTotalBalance(
           normalizedAddresses,
           balanceAccountsStore.getState().balance,
@@ -823,6 +866,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
             reason !== 'selection_changed' &&
             now - this.sceneLastLoadingRef[scene] < TEN_MINUTES
           ) {
+            this.setSceneLoading(scene, false);
             beforeReturn();
             return;
           }
@@ -851,6 +895,9 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         queue.clear();
         Array.from(nextCheckAddress).forEach(address => {
           queue.add(async () => {
+            if (!isLatestRefresh()) {
+              return;
+            }
             this.setSceneAddrLoading(scene, address, true);
             try {
               await balance24hStore.refreshAddress24hBalance(address, force, {
@@ -861,16 +908,22 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
             } catch (error) {
               console.error('Fetch curve error', error);
             } finally {
-              this.setSceneAddrLoading(scene, address, false);
+              if (isLatestRefresh()) {
+                this.setSceneAddrLoading(scene, address, false);
+              }
             }
           });
         });
 
         await this.waitQueueFinished(queue);
-        this.setSceneLoading(scene, false);
+        if (isLatestRefresh()) {
+          this.setSceneLoading(scene, false);
+        }
       } catch (error) {
         console.error('Fetch curve error', error);
-        this.setSceneLoading(scene, false);
+        if (isLatestRefresh()) {
+          this.setSceneLoading(scene, false);
+        }
       } finally {
         beforeReturn();
       }
@@ -903,22 +956,11 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       addresses ||
       (balanceAccounts && Object.keys(balanceAccounts).length
         ? Object.keys(balanceAccounts)
-        : await getSelectedBalanceAddressesOrTop10Fallback());
-
-    const lastTop10Addresses = this.lastTop10AddressesRef.current;
-    this.lastTop10AddressesRef.current =
-      normalizeAddressesForCompare(top10Addresses);
-    const lastTop10Changed = !isEqual(
-      this.lastTop10AddressesRef.current,
-      lastTop10Addresses,
-    );
-    const finalTop10Addresses = lastTop10Changed
-      ? this.lastTop10AddressesRef.current
-      : top10Addresses;
+        : undefined);
 
     return this.refreshCombinedDataForScene('Home', {
-      addresses: finalTop10Addresses,
-      force: force || lastTop10Changed,
+      addresses: top10Addresses,
+      force,
       reason,
     });
   };

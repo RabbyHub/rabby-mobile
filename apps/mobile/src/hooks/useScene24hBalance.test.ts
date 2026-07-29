@@ -1,5 +1,22 @@
 import type { AccountsBalanceState } from '../store/balance';
 
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+};
+
+const createDeferred = <T>(): Deferred<T> => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(nextResolve => {
+    resolve = nextResolve;
+  });
+
+  return {
+    promise,
+    resolve,
+  };
+};
+
 const flushPendingTimers = async () => {
   jest.runOnlyPendingTimers();
   await Promise.resolve();
@@ -8,6 +25,7 @@ const flushPendingTimers = async () => {
 describe('store/balance24h scene', () => {
   const mockComputeTotalBalance = jest.fn();
   const mockGetBalanceCacheAccounts = jest.fn();
+  const mockGetSelectedBalanceAddressesSnapshot = jest.fn();
   const mockGetTop10MyAccounts = jest.fn();
   const mockGetBalance24hCache = jest.fn();
   const mockFetch24hBalance = jest.fn();
@@ -86,6 +104,8 @@ describe('store/balance24h scene', () => {
           balance: mockGetBalanceCacheAccounts(),
         })),
       },
+      getSelectedBalanceAddressesSnapshot: () =>
+        mockGetSelectedBalanceAddressesSnapshot(),
       accountsBalanceEvents: {
         on: jest.fn(),
       },
@@ -101,6 +121,7 @@ describe('store/balance24h scene', () => {
     mockGetTop10MyAccounts.mockResolvedValue({
       top10Addresses: [],
     });
+    mockGetSelectedBalanceAddressesSnapshot.mockReturnValue([]);
     mockComputeTotalBalance.mockReturnValue({
       total: 123,
       totalEvm: 100,
@@ -211,5 +232,83 @@ describe('store/balance24h scene', () => {
         }),
       }),
     );
+  });
+
+  it('keeps the post-delete address set when an older fallback refresh resolves last', async () => {
+    const preDeleteAddresses = ['0xdeleted', '0xretained'];
+    const postDeleteAddresses = ['0xretained', '0xpromoted'];
+    const staleAddressLookup = createDeferred<{
+      top10Addresses: string[];
+    }>();
+    mockGetTop10MyAccounts.mockReturnValueOnce(staleAddressLookup.promise);
+    mockBalanceValueMap = {
+      '0xretained': {
+        evmBalance: 80,
+        totalBalance: 100,
+      },
+      '0xpromoted': {
+        evmBalance: 40,
+        totalBalance: 50,
+      },
+    };
+    mockGetBalanceCacheAccounts.mockReturnValue({
+      '0xretained': {
+        address: '0xretained',
+        balance: 100,
+        evmBalance: 80,
+      },
+      '0xpromoted': {
+        address: '0xpromoted',
+        balance: 50,
+        evmBalance: 40,
+      },
+    });
+    mockFetch24hBalance.mockImplementation(async (address: string) => {
+      const totalUsdValue = address === '0xretained' ? 90 : 40;
+
+      return {
+        total_usd_value: totalUsdValue,
+        data: {
+          total_usd_value: totalUsdValue,
+        },
+        updateTime: 1,
+      };
+    });
+
+    const staleRefresh =
+      scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
+        reason: 'manual_refresh',
+      });
+    await Promise.resolve();
+
+    await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
+      addresses: postDeleteAddresses,
+      reason: 'selection_changed',
+    });
+    await flushPendingTimers();
+
+    expect(
+      scene24hBalanceModule.scene24hBalanceStore.getState().addresses.Home,
+    ).toEqual([...postDeleteAddresses].sort());
+
+    staleAddressLookup.resolve({
+      top10Addresses: preDeleteAddresses,
+    });
+    await staleRefresh;
+    await flushPendingTimers();
+
+    const state = scene24hBalanceModule.scene24hBalanceStore.getState();
+    expect(state.addresses.Home).toEqual([...postDeleteAddresses].sort());
+    expect(state.sceneLoading.Home).toBe(false);
+    expect(state.sceneComputing.Home).toBe(false);
+    expect(state.combinedData.Home).toEqual(
+      expect.objectContaining({
+        rawNetWorth: 150,
+        rawChange: -10,
+        changePercent: '7.69%',
+        isLoss: true,
+      }),
+    );
+    expect(mockFetch24hBalance).not.toHaveBeenCalledWith('0xdeleted');
   });
 });
