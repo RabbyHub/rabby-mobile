@@ -48,10 +48,7 @@ jobs:
   release-build:
     name: android-release-build
     environment: Production
-    runs-on:
-      - self-hosted
-      - mobile
-      - Linux
+    runs-on: ubuntu-latest
     env:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
       RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE: '6144'
