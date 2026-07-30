@@ -158,6 +158,11 @@ export interface PreferenceStore {
    * Expire timestamp for the current unlock session. -1 means never expire.
    */
   unlockSessionExpireTime?: number;
+  /**
+   * Disable post-unlock session reuse on app launch. Existing full-unlock
+   * behavior remains unchanged.
+   */
+  appLaunchLock?: boolean;
   hiddenBalance?: boolean;
   isShowTestnet?: boolean;
   // themeMode?: DARK_MODE_TYPE;
@@ -285,6 +290,7 @@ export class PreferenceService extends StoreServiceBase<
         autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
         lastUnlockTime: 0,
         unlockSessionExpireTime: 0,
+        appLaunchLock: false,
         // themeMode: DARK_MODE_TYPE.light,
         addressSortStore: {
           ...defaultAddressSortStore,

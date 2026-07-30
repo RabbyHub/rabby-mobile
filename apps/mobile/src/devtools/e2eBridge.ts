@@ -5,10 +5,8 @@ import {
 } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
 import { runDevIIFEFunc } from '@/core/utils/store';
-import { jotaiStore } from '@/core/utils/reexports';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { sceneAccountInfoStore } from '@/hooks/sceneAccountInfoAtom';
-import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -629,10 +627,6 @@ const bridgeMethods = {
     }
 
     apiSendToken.resetScreenState();
-    jotaiStore.set(sendScreenParamsAtom, {
-      chainEnum: chain.enum,
-      tokenId,
-    });
     void switchSceneCurrentAccount('MakeTransactionAbout', fromAccount);
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.Send,

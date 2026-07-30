@@ -43,6 +43,7 @@ import type { ITokenItem } from '@/store/tokens';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { Text } from '@/components/Typography';
 import { isSameAccount } from '@/utils/isSameAccount';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -79,6 +80,7 @@ export type TokenSelectInst = {
 };
 
 const SHOW_CHAIN_FILTER_SCENES = ['swapFrom', 'bridgeFrom'];
+const EMPTY_TOKEN_LIST: ITokenItem[] = [];
 
 const TokenSelect = ({
   token,
@@ -158,6 +160,7 @@ const TokenSelect = ({
 
   const {
     visible: tokenSelectorVisible,
+    visibleRef: tokenSelectorVisibleRef,
     tokenSelectorModalRef,
     setTokenSelectorVisible,
   } = useTokenSelectorModalVisible({
@@ -170,6 +173,7 @@ const TokenSelect = ({
     tokens,
     tokenRows,
     checkIsExpireAndUpdate,
+    ensureInitialTokenLoad,
     loadToken,
     loadOnVisibleChanged,
     isLoading: isLoadingAllTokens,
@@ -181,6 +185,7 @@ const TokenSelect = ({
     keyword: queryConds.keyword,
     returnTokenObjects: shouldUseTokenObjects,
     skipEmptyChainInit: type === 'bridgeFrom',
+    deferInitialRemoteLoad: type === 'send',
   });
 
   useImperativeHandle(ref, () => ({
@@ -192,27 +197,50 @@ const TokenSelect = ({
 
   const hasHandledTokenSelectorVisibleRef = useRef(false);
 
-  // fetch tokens
-  useEffect(() => {
-    (async () => {
-      if (!tokenSelectorVisible) {
-        return;
-      }
-      if (!hasHandledTokenSelectorVisibleRef.current) {
-        hasHandledTokenSelectorVisibleRef.current = true;
-        return;
-      }
-      if (currentAccount?.address) {
-        loadToken(currentAccount.address);
-      } else {
-        checkIsExpireAndUpdate();
-      }
-    })();
+  const refreshVisibleTokenList = useCallback(() => {
+    if (currentAccount?.address) {
+      loadToken(currentAccount.address);
+      return;
+    }
+    checkIsExpireAndUpdate();
+  }, [checkIsExpireAndUpdate, currentAccount?.address, loadToken]);
+
+  const ensureVisibleTokenListLoaded = useCallback(() => {
+    if (currentAccount?.address) {
+      ensureInitialTokenLoad(currentAccount.address);
+      return;
+    }
+    checkIsExpireAndUpdate();
+  }, [checkIsExpireAndUpdate, currentAccount?.address, ensureInitialTokenLoad]);
+
+  const handleTokenSelectorOpened = useCallback(() => {
+    if (!hasHandledTokenSelectorVisibleRef.current) {
+      hasHandledTokenSelectorVisibleRef.current = true;
+      ensureInitialTokenLoad(currentAccount?.address);
+      return;
+    }
+    refreshVisibleTokenList();
   }, [
-    tokenSelectorVisible,
     currentAccount?.address,
-    loadToken,
-    checkIsExpireAndUpdate,
+    ensureInitialTokenLoad,
+    refreshVisibleTokenList,
+  ]);
+
+  // Refresh account/chain changes while open. Opening itself refreshes only
+  // after the native sheet animation completes via handleTokenSelectorOpened.
+  useEffect(() => {
+    if (
+      !tokenSelectorVisibleRef.current ||
+      !hasHandledTokenSelectorVisibleRef.current
+    ) {
+      return;
+    }
+    ensureVisibleTokenListLoaded();
+  }, [
+    currentAccount?.address,
+    ensureVisibleTokenListLoaded,
+    queryConds.chainServerId,
+    tokenSelectorVisibleRef,
   ]);
 
   const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
@@ -317,6 +345,15 @@ const TokenSelect = ({
     resetQueryConds();
     setTokenSelectorVisible(true);
   }, [resetQueryConds, setTokenSelectorVisible]);
+
+  useRegressionScenarioComponentAction(
+    'send-token-selector.open',
+    handleSelectToken,
+  );
+  useRegressionScenarioComponentAction(
+    'send-token-selector.close',
+    handleTokenSelectorClose,
+  );
 
   useEffect(() => {
     setQueryConds(prev =>
@@ -508,10 +545,9 @@ const TokenSelect = ({
         searchPlaceholder={searchPlaceholder}
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
-        unshiftList={[]}
         list={
           shouldUseTokenRows
-            ? []
+            ? EMPTY_TOKEN_LIST
             : selectedTab === 'testnet'
             ? testnetTokenList
             : unFoldTokenList
@@ -519,6 +555,7 @@ const TokenSelect = ({
         tokenRows={shouldUseTokenRows ? tokenRows : undefined}
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
+        onOpened={handleTokenSelectorOpened}
         onSearch={handleSearchTokens}
         isLoading={isCustomNetworkTab ? testnetTokenListLoading : isListLoading}
         showFavoriteFilter={!queryConds.keyword && !isCustomNetworkTab}

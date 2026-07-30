@@ -9,6 +9,7 @@ export const AddressEntry = ({
   onManage,
   manageAccessibilityLabel,
   showMarkIfNewlyAdded,
+  disableNavigate,
 }: {
   data: KeyringAccountWithAlias & {
     changPercent?: string;
@@ -20,6 +21,7 @@ export const AddressEntry = ({
   onSelect?: () => void;
   onManage?: () => void;
   manageAccessibilityLabel?: string;
+  disableNavigate?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -33,6 +35,7 @@ export const AddressEntry = ({
       onManage={onManage}
       manageAccessibilityLabel={manageAccessibilityLabel}
       isLoss={data.isLoss}
+      disableNavigate={disableNavigate}
     />
   );
 };

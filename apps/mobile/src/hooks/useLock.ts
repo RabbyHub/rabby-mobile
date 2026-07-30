@@ -57,12 +57,15 @@ setAppLock({
   isUnlockSessionValid: apisLock.isUnlockSessionValid(),
 });
 
-apisLock.unlockTimeEvent.addListener('updated', () => {
+function syncUnlockSessionValidity() {
   setAppLock(prev => ({
     ...prev,
     isUnlockSessionValid: apisLock.isUnlockSessionValid(),
   }));
-});
+}
+
+apisLock.unlockTimeEvent.addListener('updated', syncUnlockSessionValidity);
+apisLock.appLaunchLockEvent.addListener('changed', syncUnlockSessionValidity);
 
 function getIsAppUnlocked() {
   const state = zAppLockStore.getState();

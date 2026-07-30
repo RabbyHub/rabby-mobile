@@ -38,6 +38,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   slippage?: number;
   depthInsufficient?: boolean;
   slippageReady?: boolean;
+  /** Sticky visibility from useMarketSlippage: stays true once slippage exceeded the display threshold. */
+  shouldShowSlippage?: boolean;
   onSwitchToLimit?: () => void;
   summary: {
     coin: string;
@@ -67,6 +69,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   slippage = 0,
   depthInsufficient,
   slippageReady,
+  shouldShowSlippage,
   onSwitchToLimit,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -315,7 +318,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
           </View>
-          {orderType === 'market' && slippageReady && Number(tradeSize) > 0 ? (
+          {orderType === 'market' &&
+          slippageReady &&
+          Number(tradeSize) > 0 &&
+          shouldShowSlippage ? (
             <View style={styles.list}>
               <MarketSlippage
                 slippage={slippage}
