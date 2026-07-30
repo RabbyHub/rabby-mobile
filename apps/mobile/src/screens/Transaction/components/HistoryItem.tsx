@@ -208,7 +208,15 @@ export const HistoryItem = React.memo(
                     marginHorizontal: 4,
                   }}
                 />
-                <Text style={styles.describeText}>
+                <Text
+                  style={[
+                    styles.describeText,
+                    {
+                      flexShrink: 1,
+                      minWidth: 0,
+                    },
+                  ]}
+                  numberOfLines={1}>
                   {getAliasName(addr, { keepEmptyIfNotFound: true }) ||
                     ellipsisAddress(addr)}
                 </Text>
