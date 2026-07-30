@@ -295,14 +295,26 @@ export const browserApis = {
     setIsShowManagePopup(false);
   },
 
-  switchToTab: (tabId: string) => {
+  switchToTab: (
+    tabId: string,
+    options?: {
+      url: string;
+    },
+  ) => {
     browserApis.updateTab(tabId, {
       isTerminate: false,
       openTime: Date.now(),
-    }),
-      browserApis.updateBrowserTabs({
-        activeTabId: tabId,
-      });
+      ...(options?.url
+        ? {
+            initialUrl: options.url,
+            url: options.url,
+            key: uuid(),
+          }
+        : {}),
+    });
+    browserApis.updateBrowserTabs({
+      activeTabId: tabId,
+    });
     browserApis.setPartialBrowserState({
       isShowBrowser: true,
       isShowManage: false,
@@ -405,6 +417,7 @@ export const browserApis = {
       isDapp?: boolean;
       isNewTab?: boolean;
       isRemindOpen?: boolean;
+      isDirect?: boolean;
     },
   ) => {
     const { isNewTab = false } = options || {};
@@ -454,11 +467,16 @@ export const browserApis = {
     const sameOriginTab = isNewTab
       ? undefined
       : getDisplayedTabs().find(
-          item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+          item =>
+            safeGetOrigin(item.url || item.initialUrl) ===
+            targetOrigin?.toLowerCase(),
         );
 
     if (sameOriginTab && !isGoogle(targetOrigin)) {
-      browserApis.switchToTab(sameOriginTab.id);
+      browserApis.switchToTab(
+        sameOriginTab.id,
+        options?.isDirect ? { url } : undefined,
+      );
       return true;
     }
 

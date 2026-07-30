@@ -71,7 +71,7 @@ registerLaunchTask('appTimeoutAutoLockHydrate', async () => {
     'hooks/appTimeout',
     launchTaskLoaders.appTimeoutAutoLockHydrate,
   );
-  startAppTimeoutAutoLockHydration();
+  await startAppTimeoutAutoLockHydration();
 });
 
 registerLaunchTask('appSettingsAutoLockHydrate', async () => {

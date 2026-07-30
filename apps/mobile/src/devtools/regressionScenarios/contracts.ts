@@ -31,6 +31,8 @@ export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'sync-extension-password',
   'transaction-history',
   'gas-account-entry',
+  'send-entry-profile',
+  'send-token-selector-entry',
   'market-entry',
   'approvals-entry',
   'rabby-points-entry',
@@ -140,7 +142,9 @@ export type RegressionScenarioEventName =
   | 'fixture-removed'
   | 'auto-lock-armed'
   | 'auto-lock-observed'
-  | 'auto-lock-verified';
+  | 'auto-lock-verified'
+  | 'auto-lock-persistence-prepared'
+  | 'auto-lock-persistence-verified';
 
 export type RegressionScenarioEvent = {
   sequence: number;
