@@ -20,6 +20,7 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -1106,6 +1107,54 @@ const Swap = ({
   const checkGasFeeTooHighRef = useRef(true);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const handlePayAmountChange = useMemoizedFn((value: string) => {
+    if (directSignBtnRef.current?.isAuthInProgress()) {
+      return;
+    }
+    handleAmountChange(value);
+  });
+  const handlePayTokenChange = useMemoizedFn((token: TokenItem) => {
+    const chainItem = findChainByServerID(token.chain);
+    const normalSetChainToken = () => {
+      if (chainItem?.enum !== chain) {
+        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+        setReceiveToken(undefined);
+      }
+      setPayToken(token);
+    };
+
+    if (!isForMultipleAddress) {
+      normalSetChainToken();
+      return;
+    }
+
+    switchAccountOnSelectedToken({
+      token,
+      currentAccount,
+    });
+    normalSetChainToken();
+  });
+  const handleReceiveTokenChange = useMemoizedFn((token: TokenItem) => {
+    const chainItem = findChainByServerID(token.chain);
+    if (chainItem?.enum !== chain) {
+      switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+      setPayToken(undefined);
+    }
+    setReceiveToken(token);
+
+    if (token.low_credit_score) {
+      setLowCreditToken(token);
+      setLowCreditVisible(true);
+    }
+  });
+  const payTokenExcludes = useMemo(
+    () => (receiveToken?.id ? [receiveToken.id] : undefined),
+    [receiveToken?.id],
+  );
+  const receiveTokenExcludes = useMemo(
+    () => (payToken?.id ? [payToken.id] : undefined),
+    [payToken?.id],
+  );
 
   const onChangeCheckGasFeeTooHigh = useCallback((b: boolean) => {
     checkGasFeeTooHighRef.current = b;
@@ -2011,39 +2060,13 @@ const Swap = ({
                   slider={slider}
                   onChangeSlider={onChangeSlider}
                   value={payAmount}
-                  onValueChange={value => {
-                    if (directSignBtnRef.current?.isAuthInProgress()) {
-                      return;
-                    }
-                    handleAmountChange(value);
-                  }}
+                  onValueChange={handlePayAmountChange}
                   token={payToken}
-                  onTokenChange={token => {
-                    const chainItem = findChainByServerID(token.chain);
-                    const normalSetChainToken = () => {
-                      if (chainItem?.enum !== chain) {
-                        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                        setReceiveToken(undefined);
-                      }
-                      setPayToken(token);
-                    };
-
-                    if (!isForMultipleAddress) {
-                      normalSetChainToken();
-                    } else {
-                      switchAccountOnSelectedToken({
-                        token,
-                        currentAccount,
-                      });
-                      normalSetChainToken();
-                    }
-                  }}
+                  onTokenChange={handlePayTokenChange}
                   account={currentAccount}
                   chainId={chainServerId}
                   type={'from'}
-                  excludeTokens={
-                    receiveToken?.id ? [receiveToken?.id] : undefined
-                  }
+                  excludeTokens={payTokenExcludes}
                 />
               </View>
 
@@ -2051,19 +2074,7 @@ const Swap = ({
                 <SwapTokenItem
                   valueLoading={quoteLoading}
                   token={receiveToken}
-                  onTokenChange={token => {
-                    const chainItem = findChainByServerID(token.chain);
-                    if (chainItem?.enum !== chain) {
-                      switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                      setPayToken(undefined);
-                    }
-                    setReceiveToken(token);
-
-                    if (token?.low_credit_score) {
-                      setLowCreditToken(token);
-                      setLowCreditVisible(true);
-                    }
-                  }}
+                  onTokenChange={handleReceiveTokenChange}
                   value={
                     !activeProvider
                       ? ''
@@ -2078,7 +2089,7 @@ const Swap = ({
                   type={'to'}
                   currentQuote={activeProvider}
                   // placeholder={t('page.swap.search-by-name-address')}
-                  excludeTokens={payToken?.id ? [payToken?.id] : undefined}
+                  excludeTokens={receiveTokenExcludes}
                 />
               </View>
               <BridgeSwitchBtn

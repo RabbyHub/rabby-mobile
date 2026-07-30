@@ -42,8 +42,12 @@ import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
 
-import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
+import {
+  type TokenItemMaybeWithOwner,
+  useSwitchSceneAccountOnSelectedTokenWithOwner,
+} from '@/databases/hooks/token';
 import { CHAINS_ENUM } from '@debank/common';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import {
   ExternalSwapBridgeDappTips,
@@ -1549,6 +1553,52 @@ export const BridgeContent = ({
 
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+  const handleFromTokenChange = useMemoizedFn(
+    (token: TokenItem | TokenItemMaybeWithOwner) => {
+      const chainItem = findChainByServerID(token.chain);
+      const normalSetChainToken = () => {
+        if (chainItem?.enum !== fromChain) {
+          switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH);
+        }
+        handleAmountChange('');
+        setFromToken(token);
+      };
+
+      if (!isForMultipleAddress) {
+        normalSetChainToken();
+        return;
+      }
+
+      switchAccountOnSelectedToken({
+        token,
+        currentAccount,
+      });
+      normalSetChainToken();
+    },
+  );
+  const handleBridgeAmountChange = useMemoizedFn((value: string) => {
+    if (directSignBtnRef.current?.isAuthInProgress()) {
+      return;
+    }
+    handleAmountChange(value);
+  });
+  const handleToTokenChange = useMemoizedFn((token: TokenItem) => {
+    setToToken(token);
+  });
+  const handleFromChainChange = useMemoizedFn((chain: CHAINS_ENUM) => {
+    switchFromChain(chain);
+  });
+  const handleToChainChange = useMemoizedFn((chain: CHAINS_ENUM) => {
+    setToChain(chain);
+  });
+  const fromTokenExcludeChains = useMemo(
+    () => (toChain ? [toChain] : undefined),
+    [toChain],
+  );
+  const toTokenExcludeChains = useMemo(
+    () => (fromChain ? [fromChain] : undefined),
+    [fromChain],
+  );
 
   const showLoss = useMemo(() => {
     const impact = tokenPriceImpact(
@@ -1667,43 +1717,19 @@ export const BridgeContent = ({
                 clickMaxBtnCount={clickMaxBtnCount}
                 handleMax={handleMax}
                 onSliderScrollEnabledChange={setScrollEnabled}
-                onChangeToken={token => {
-                  const chainItem = findChainByServerID(token.chain);
-                  const normalSetChainToken = () => {
-                    if (chainItem?.enum !== fromChain) {
-                      switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                    }
-                    handleAmountChange('');
-                    setFromToken(token);
-                  };
-
-                  if (!isForMultipleAddress) {
-                    normalSetChainToken();
-                  } else {
-                    switchAccountOnSelectedToken({
-                      token,
-                      currentAccount,
-                    });
-                    normalSetChainToken();
-                  }
-                }}
-                onChangeChain={switchFromChain}
+                onChangeToken={handleFromTokenChange}
+                onChangeChain={handleFromChainChange}
                 value={amount}
-                onInputChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) {
-                    return;
-                  }
-                  handleAmountChange(value);
-                }}
-                excludeChains={toChain ? [toChain] : undefined}
+                onInputChange={handleBridgeAmountChange}
+                excludeChains={fromTokenExcludeChains}
               />
               <BridgeToken
                 type="to"
                 account={currentAccount}
                 chain={toChain}
                 token={toToken}
-                onChangeToken={setToToken}
-                onChangeChain={setToChain}
+                onChangeToken={handleToTokenChange}
+                onChangeChain={handleToChainChange}
                 fromChainId={
                   fromToken?.chain || findChainByEnum(fromChain)?.serverId
                 }
@@ -1714,7 +1740,7 @@ export const BridgeContent = ({
                     ? undefined
                     : selectedBridgeQuote?.to_token_amount
                 }
-                excludeChains={fromChain ? [fromChain] : undefined}
+                excludeChains={toTokenExcludeChains}
                 noQuote={noQuote}
               />
               <BridgeSwitchBtn
