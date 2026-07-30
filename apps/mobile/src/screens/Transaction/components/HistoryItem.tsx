@@ -198,7 +198,11 @@ export const HistoryItem = React.memo(
                   flexDirection: 'row',
                   alignItems: 'center',
                 }}>
-                <Text style={styles.describeText}>{ToText}</Text>
+                <Text
+                  style={[styles.describeText, { flexShrink: 0 }]}
+                  numberOfLines={1}>
+                  {ToText}
+                </Text>
                 <FastImage
                   source={{ uri: cexInfo.logo_url }}
                   style={{
