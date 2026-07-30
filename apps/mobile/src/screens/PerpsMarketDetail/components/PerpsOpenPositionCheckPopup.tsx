@@ -24,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/components/Typography';
 import { MarketSlippage } from './MarketSlippage';
-import { PERPS_SLIPPAGE_DISPLAY_MIN } from '../slippageUtils';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -39,6 +38,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   slippage?: number;
   depthInsufficient?: boolean;
   slippageReady?: boolean;
+  /** Sticky visibility from useMarketSlippage: stays true once slippage exceeded the display threshold. */
+  shouldShowSlippage?: boolean;
   onSwitchToLimit?: () => void;
   summary: {
     coin: string;
@@ -68,6 +69,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   slippage = 0,
   depthInsufficient,
   slippageReady,
+  shouldShowSlippage,
   onSwitchToLimit,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -319,7 +321,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           {orderType === 'market' &&
           slippageReady &&
           Number(tradeSize) > 0 &&
-          slippage > PERPS_SLIPPAGE_DISPLAY_MIN ? (
+          shouldShowSlippage ? (
             <View style={styles.list}>
               <MarketSlippage
                 slippage={slippage}

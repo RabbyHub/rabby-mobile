@@ -147,11 +147,26 @@ export const useProtocolConfig = () => {
               category: 'Rabby Perps',
               action: 'Perps_ManageToPosition',
             });
+            // 在详情页下方垫一层 Perps 首页，返回时先回到 Perps 首页
             return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market:
-                  item?._originPortfolio?.detail?.position_token?.symbol || '',
+              state: {
+                routes: [
+                  {
+                    name: RootNames.Perps,
+                    params: {
+                      dappId: 'hyperliquid',
+                      account,
+                    },
+                  },
+                  {
+                    name: RootNames.PerpsMarketDetail,
+                    params: {
+                      market:
+                        item?._originPortfolio?.detail?.position_token
+                          ?.symbol || '',
+                    },
+                  },
+                ],
               },
             });
           } else {
