@@ -23,7 +23,8 @@ export const NotMatterAddressDialog: React.FC<{
   onDone?: () => void;
   onBack?: () => void;
   showBackArrow?: boolean;
-}> = ({ onDone, onBack, showBackArrow = true }) => {
+  variant?: 'manage';
+}> = ({ onDone, onBack, showBackArrow = true, variant }) => {
   const { myNotTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
     useAccountInfo();
   const { bottom } = useSafeAreaInsets();
@@ -152,17 +153,18 @@ export const NotMatterAddressDialog: React.FC<{
         <View style={styles.itemGap}>
           <AddressItemEntry
             showMarkIfNewlyAdded
-            handleGoDetail={onDone}
+            handleGoDetail={variant === 'manage' ? gotoAddressDetail : onDone}
             account={item}
             isScrolling={isScrolling}
             useLongPressing={true}
-            onManage={gotoAddressDetail}
+            onManage={variant === 'manage' ? undefined : gotoAddressDetail}
             manageAccessibilityLabel={t('component.portfolios.manage')}
+            disableNavigate={variant === 'manage'}
           />
         </View>
       );
     },
-    [isScrolling, onDone, styles.itemGap, t],
+    [isScrolling, onDone, styles.itemGap, t, variant],
   );
 
   return (
