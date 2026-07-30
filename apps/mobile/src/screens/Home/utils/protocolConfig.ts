@@ -147,26 +147,22 @@ export const useProtocolConfig = () => {
               category: 'Rabby Perps',
               action: 'Perps_ManageToPosition',
             });
-            // 在详情页下方垫一层 Perps 首页，返回时先回到 Perps 首页
+            // Backing out of the detail page should land on Perps home first.
+            // Don't preset a multi-route nested state instead: the child
+            // navigator sets gestureEnabled: false, so iOS swipe-back falls to
+            // the root stack and pops the whole nested stack at once.
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Perps,
+              params: {
+                dappId: 'hyperliquid',
+                account,
+              },
+            });
             return navigation.push(RootNames.StackTransaction, {
-              state: {
-                routes: [
-                  {
-                    name: RootNames.Perps,
-                    params: {
-                      dappId: 'hyperliquid',
-                      account,
-                    },
-                  },
-                  {
-                    name: RootNames.PerpsMarketDetail,
-                    params: {
-                      market:
-                        item?._originPortfolio?.detail?.position_token
-                          ?.symbol || '',
-                    },
-                  },
-                ],
+              screen: RootNames.PerpsMarketDetail,
+              params: {
+                market:
+                  item?._originPortfolio?.detail?.position_token?.symbol || '',
               },
             });
           } else {
