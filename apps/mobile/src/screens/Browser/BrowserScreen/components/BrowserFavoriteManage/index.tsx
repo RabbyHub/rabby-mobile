@@ -97,7 +97,7 @@ export function BrowserFavoriteManage(): JSX.Element {
             }
           }}
           onOpenURL={(url, opts) => {
-            openTab(url, opts);
+            openTab(url, { ...opts, isDapp: true });
           }}
         />
       ) : null}
