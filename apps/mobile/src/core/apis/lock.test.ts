@@ -494,10 +494,59 @@ describe('core/apis/lock password and session utilities', () => {
     expect(getUnlockTime()).toBe(0);
   });
 
+  it('defaults app launch lock to off when the preference is unset', () => {
+    mockGetPreference.mockImplementation(key =>
+      key === 'appLaunchLock' ? undefined : Date.now(),
+    );
+    const { isAppLaunchLockEnabled, isUnlockSessionValid } = loadLockModule();
+
+    expect(isAppLaunchLockEnabled()).toBe(false);
+    expect(isUnlockSessionValid()).toBe(true);
+  });
+
+  it('disables post-unlock sessions when app launch lock is enabled', () => {
+    mockGetPreference.mockImplementation(key =>
+      key === 'appLaunchLock' ? false : Date.now(),
+    );
+    const { isAppLaunchLockEnabled, isUnlockSessionValid } = loadLockModule();
+
+    expect(isAppLaunchLockEnabled()).toBe(false);
+    expect(isUnlockSessionValid()).toBe(true);
+
+    mockGetPreference.mockImplementation(key =>
+      key === 'appLaunchLock' ? true : Date.now(),
+    );
+    expect(isAppLaunchLockEnabled()).toBe(true);
+    expect(isUnlockSessionValid()).toBe(false);
+  });
+
+  it('persists and broadcasts app launch lock preference changes', () => {
+    const { appLaunchLockEvent, setAppLaunchLockEnabled, unlockTimeEvent } =
+      loadLockModule();
+    const appLaunchLockUpdates: boolean[] = [];
+    const unlockTimeUpdates: number[] = [];
+    appLaunchLockEvent.on('changed', enabled =>
+      appLaunchLockUpdates.push(enabled),
+    );
+    unlockTimeEvent.on('updated', time => unlockTimeUpdates.push(time));
+
+    setAppLaunchLockEnabled(true);
+    expect(mockSetPreference).toHaveBeenCalledWith({ appLaunchLock: true });
+
+    setAppLaunchLockEnabled(false);
+    expect(mockSetPreference).toHaveBeenCalledWith({ appLaunchLock: false });
+    expect(appLaunchLockUpdates).toEqual([true, false]);
+    expect(unlockTimeUpdates).toEqual([]);
+  });
+
   it('hydrates unlock time lazily when preference service becomes ready after module load', () => {
     let preferenceReady = false;
-    mockGetPreference.mockImplementation(() =>
-      preferenceReady ? Date.now() : undefined,
+    mockGetPreference.mockImplementation(key =>
+      key === 'appLaunchLock'
+        ? false
+        : preferenceReady
+        ? Date.now()
+        : undefined,
     );
 
     const { getUnlockTime, isUnlockSessionValid } = loadLockModule();

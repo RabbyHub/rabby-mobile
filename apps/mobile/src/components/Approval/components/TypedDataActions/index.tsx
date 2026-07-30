@@ -109,11 +109,7 @@ const ActionItem = ({
           ...actionStyles.actionHeader,
           ...(isUnknown ? actionStyles.isUnknown : {}),
         }}>
-        <View
-          style={StyleSheet.flatten({
-            flexDirection: 'row',
-            alignItems: 'center',
-          })}>
+        <View style={actionStyles.leftContainer}>
           <Text
             style={StyleSheet.flatten({
               ...actionStyles.leftText,
