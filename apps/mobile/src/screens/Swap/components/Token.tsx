@@ -52,7 +52,6 @@ interface SwapTokenItemProps {
   inSufficient?: boolean;
   valueLoading?: boolean;
   currentQuote?: QuoteProvider;
-  finishedQuotes?: number;
   skeletonLoading?: boolean;
   disabled?: boolean;
 }
@@ -217,6 +216,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
           {isFrom ? (
             <TokenSelect
               ref={openTokenModalRef}
+              deferModalMount
               token={token}
               onTokenChange={onTokenSelect}
               accountInScreen={account}

@@ -12,7 +12,10 @@ import React, {
 import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
+import {
+  DeferredTokenSelectorSheetModal,
+  TokenSelectorSheetModal,
+} from '@/components/Token';
 import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
@@ -68,6 +71,7 @@ interface TokenSelectProps {
     | React.ReactNode;
   supportChains?: CHAINS_ENUM[];
   searchPlaceholder?: string;
+  deferModalMount?: boolean;
 }
 
 type QueryConditions = {
@@ -96,8 +100,12 @@ const TokenSelect = ({
   style,
   testID,
   accessibilityLabel,
+  deferModalMount = false,
   ref,
 }: TokenSelectProps & RNViewProps & { ref?: Ref<TokenSelectInst> }) => {
+  const TokenSelectorModal = deferModalMount
+    ? DeferredTokenSelectorSheetModal
+    : TokenSelectorSheetModal;
   const [_queryConds, setQueryConds] = useState<QueryConditions>({
     keyword: '',
     account: accountInScreen,
@@ -346,12 +354,14 @@ const TokenSelect = ({
     setTokenSelectorVisible(true);
   }, [resetQueryConds, setTokenSelectorVisible]);
 
+  const regressionSelectorActionPrefix =
+    type === 'send' ? 'send-token-selector' : `token-selector.${type}`;
   useRegressionScenarioComponentAction(
-    'send-token-selector.open',
+    `${regressionSelectorActionPrefix}.open`,
     handleSelectToken,
   );
   useRegressionScenarioComponentAction(
-    'send-token-selector.close',
+    `${regressionSelectorActionPrefix}.close`,
     handleTokenSelectorClose,
   );
 
@@ -541,7 +551,7 @@ const TokenSelect = ({
         </View>
       </TouchableOpacity>
 
-      <TokenSelectorSheetModal
+      <TokenSelectorModal
         searchPlaceholder={searchPlaceholder}
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}

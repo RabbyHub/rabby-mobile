@@ -12,7 +12,10 @@ import React, {
 import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
+import {
+  DeferredTokenSelectorSheetModal,
+  type TokenSelectorSheetModal,
+} from '@/components/Token';
 import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
@@ -44,6 +47,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { isAddress } from 'viem';
 import { Text } from '@/components/Typography';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -265,6 +269,15 @@ const SwapToTokenSelect = ({
     setTokenSelectorVisible(true);
   }, [resetQueryConds, setTokenSelectorVisible]);
 
+  useRegressionScenarioComponentAction(
+    'token-selector.swapTo.open',
+    handleSelectToken,
+  );
+  useRegressionScenarioComponentAction(
+    'token-selector.swapTo.close',
+    handleTokenSelectorClose,
+  );
+
   useEffect(() => {
     setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
   }, [chainId]);
@@ -397,7 +410,7 @@ const SwapToTokenSelect = ({
         </View>
       </TouchableOpacity>
 
-      <TokenSelectorSheetModal
+      <DeferredTokenSelectorSheetModal
         searchPlaceholder={searchPlaceholder}
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}

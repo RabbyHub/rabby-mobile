@@ -8,7 +8,7 @@ import React, {
 import { View, TouchableOpacity } from 'react-native';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
+import { DeferredTokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
@@ -30,6 +30,7 @@ import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSh
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { Text } from '@/components/Typography';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -166,17 +167,26 @@ const BridgeToTokenSelect = ({
     });
   }, []);
 
-  const handleTokenSelectorClose = () => {
+  const handleTokenSelectorClose = useCallback(() => {
     setTokenSelectorVisible(false);
 
     setQueryConds(prev => ({
       ...prev,
     }));
-  };
+  }, [setTokenSelectorVisible]);
 
-  const handleSelectToken = () => {
+  const handleSelectToken = useCallback(() => {
     setTokenSelectorVisible(true);
-  };
+  }, [setTokenSelectorVisible]);
+
+  useRegressionScenarioComponentAction(
+    'token-selector.bridgeTo.open',
+    handleSelectToken,
+  );
+  useRegressionScenarioComponentAction(
+    'token-selector.bridgeTo.close',
+    handleTokenSelectorClose,
+  );
 
   useEffect(() => {
     setQueryConds(prev => ({
@@ -264,7 +274,7 @@ const BridgeToTokenSelect = ({
         )}
       </TouchableOpacity>
 
-      <TokenSelectorSheetModal
+      <DeferredTokenSelectorSheetModal
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
         list={displayTokenList}
