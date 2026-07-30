@@ -711,7 +711,7 @@ async function openSwapBridge(
     activeTab: requestedTab,
   });
 
-  let activeTab = requestedTab;
+  let activeTab: 'swap' | 'bridge' = requestedTab;
   if (context.command.action === 'start') {
     const secondTab = requestedTab === 'swap' ? 'bridge' : 'swap';
     await runRegressionScenarioComponentAction(
