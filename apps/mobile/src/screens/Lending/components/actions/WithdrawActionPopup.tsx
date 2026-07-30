@@ -161,9 +161,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   );
 
   const withdrawAmount = useMemo(() => {
-    if (!userSummary.totalBorrowsUSD || userSummary.totalBorrowsUSD === '0') {
-      return Number(currentReserve.underlyingBalance || '0');
-    }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
