@@ -2,7 +2,8 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { isCached, preload } from 'react-native-bundle-splitter';
 
-const loadablesAreEager = true;
+const loadablesAreEager =
+  process.env.RABBY_MOBILE_MODULE_LOADING_MODE === 'eager';
 
 export const PRELOAD_SCREENS = {
   [RootNames.Settings]: 'SettingsScreen',
