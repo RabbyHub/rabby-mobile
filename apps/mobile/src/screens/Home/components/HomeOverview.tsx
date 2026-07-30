@@ -1149,6 +1149,20 @@ export const HomeOverview = React.memo(() => {
       }
       switch (key) {
         case MultiHomeFeatTitle.Send:
+          {
+            const cycleId = beginFeatureActivation(
+              'send',
+              'multi_home_send_press',
+            );
+            markFeatureActivation('send', 'context-ready', {
+              cycleId,
+              reason: 'multi_home_context_not_required',
+            });
+            markFeatureActivation('send', 'navigation-dispatched', {
+              cycleId,
+              reason: 'multi_home_navigation_push',
+            });
+          }
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.Send,

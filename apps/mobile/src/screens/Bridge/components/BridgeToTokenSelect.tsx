@@ -8,7 +8,7 @@ import React, {
 import { View, TouchableOpacity } from 'react-native';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
+import { DeferredTokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
@@ -274,7 +274,7 @@ const BridgeToTokenSelect = ({
         )}
       </TouchableOpacity>
 
-      <TokenSelectorSheetModal
+      <DeferredTokenSelectorSheetModal
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
         list={displayTokenList}

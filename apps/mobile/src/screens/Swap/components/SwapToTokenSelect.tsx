@@ -12,7 +12,10 @@ import React, {
 import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
+import {
+  DeferredTokenSelectorSheetModal,
+  type TokenSelectorSheetModal,
+} from '@/components/Token';
 import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
@@ -407,7 +410,7 @@ const SwapToTokenSelect = ({
         </View>
       </TouchableOpacity>
 
-      <TokenSelectorSheetModal
+      <DeferredTokenSelectorSheetModal
         searchPlaceholder={searchPlaceholder}
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}

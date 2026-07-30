@@ -101,6 +101,11 @@ import {
 } from './sendScreenSession';
 import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -461,6 +466,16 @@ const SendScreenBody = React.memo(function SendScreenBody({
 function SendScreen({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
+  const activationCycleId = ensureFeatureActivation(
+    'send',
+    'send_content_render_fallback',
+  );
+  markFeatureActivation('send', 'content-render-start', {
+    cycleId: activationCycleId,
+    reason: 'send_screen_render_started',
+  });
+  useFeatureActivationDiagnostics('send');
+
   const renderSeq = ++sendScreenRenderSeq;
   markSendScreenRenderPerf(renderSeq, 'render_start', {
     isForMultipleAddress,
@@ -1256,6 +1271,31 @@ const SendScreenWithWhitelist = withWhitelistService(SendScreen);
 const ForMultipleAddressWithWhitelist =
   withWhitelistService(ForMultipleAddress);
 
-export default Object.assign(SendScreenWithWhitelist, {
-  ForMultipleAddress: ForMultipleAddressWithWhitelist,
+function SendScreenRouteEntry(
+  props: React.ComponentProps<typeof SendScreenWithWhitelist>,
+) {
+  const cycleId = ensureFeatureActivation('send', 'send_route_render_fallback');
+  markFeatureActivation('send', 'route-render-start', {
+    cycleId,
+    reason: 'send_route_render_started',
+  });
+  return <SendScreenWithWhitelist {...props} />;
+}
+
+function ForMultipleAddressRouteEntry(
+  props: React.ComponentProps<typeof ForMultipleAddressWithWhitelist>,
+) {
+  const cycleId = ensureFeatureActivation(
+    'send',
+    'multi_send_route_render_fallback',
+  );
+  markFeatureActivation('send', 'route-render-start', {
+    cycleId,
+    reason: 'multi_send_route_render_started',
+  });
+  return <ForMultipleAddressWithWhitelist {...props} />;
+}
+
+export default Object.assign(SendScreenRouteEntry, {
+  ForMultipleAddress: ForMultipleAddressRouteEntry,
 });
