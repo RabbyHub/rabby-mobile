@@ -111,19 +111,25 @@ const AssetPositionItem = ({
         category: 'Rabby Perps',
         action: 'Perps_CardToPerps',
       });
-      // navigation.push(RootNames.StackTransaction, {
-      //   screen: RootNames.Perps,
-      //   params: {
-      //     dappId: 'hyperliquid',
-      //     account: item.account,
-      //   },
-      // })
       navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.PerpsMarketDetail,
-        params: {
-          market: coin,
-          fromSource: 'homePagePositionList',
-          showOpenPosition: false,
+        state: {
+          routes: [
+            {
+              name: RootNames.Perps,
+              params: {
+                dappId: 'hyperliquid',
+                account: item.account,
+              },
+            },
+            {
+              name: RootNames.PerpsMarketDetail,
+              params: {
+                market: coin,
+                fromSource: 'homePagePositionList',
+                showOpenPosition: false,
+              },
+            },
+          ],
         },
       });
     } catch (error) {

@@ -101,6 +101,7 @@ export const PerpsClosePositionPopup: React.FC<{
     slippage,
     depthInsufficient,
     isReady: slippageReady,
+    shouldShow: shouldShowSlippage,
   } = useMarketSlippage({
     coin,
     isBuy: direction === 'Short',
@@ -211,7 +212,9 @@ export const PerpsClosePositionPopup: React.FC<{
           </View>
           <MarketSlippage
             style={styles.slippageContainer}
-            visible={slippageReady && Number(positionSize) > 0}
+            visible={
+              slippageReady && Number(positionSize) > 0 && shouldShowSlippage
+            }
             slippage={slippage}
             depthInsufficient={depthInsufficient}
           />
