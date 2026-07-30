@@ -1,5 +1,6 @@
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { launchTaskLoaders } from '@/startup/moduleLoading/launchTaskLoaders';
 
 import { registerStartupPhaseTask } from './phaseRegistry';
 import {
@@ -50,7 +51,7 @@ registerLaunchTask('lockUnlockEventBridge', async () => {
   const { startLockUnlockEventBridge } = await loadLaunchModule(
     'lockUnlockEventBridge',
     'core/apis/lock',
-    () => import('@/core/apis/lock'),
+    launchTaskLoaders.lockUnlockEventBridge,
   );
   startLockUnlockEventBridge();
 });
@@ -59,7 +60,7 @@ registerLaunchTask('bootstrapI18nReady', async () => {
   const { startSubscribeLangChange } = await loadLaunchModule(
     'bootstrapI18nReady',
     'hooks/lang',
-    () => import('@/hooks/lang'),
+    launchTaskLoaders.bootstrapI18nReady,
   );
   startSubscribeLangChange();
 });
@@ -68,7 +69,7 @@ registerLaunchTask('appTimeoutAutoLockHydrate', async () => {
   const { startAppTimeoutAutoLockHydration } = await loadLaunchModule(
     'appTimeoutAutoLockHydrate',
     'hooks/appTimeout',
-    () => import('@/hooks/appTimeout'),
+    launchTaskLoaders.appTimeoutAutoLockHydrate,
   );
   startAppTimeoutAutoLockHydration();
 });
@@ -77,7 +78,7 @@ registerLaunchTask('appSettingsAutoLockHydrate', async () => {
   const { startAppSettingsAutoLockHydration } = await loadLaunchModule(
     'appSettingsAutoLockHydrate',
     'hooks/appSettings',
-    () => import('@/hooks/appSettings'),
+    launchTaskLoaders.appSettingsAutoLockHydrate,
   );
   startAppSettingsAutoLockHydration();
 });
@@ -87,7 +88,7 @@ registerLaunchTask('biometricsSystemAuthAvailability', async () => {
     await loadLaunchModule(
       'biometricsSystemAuthAvailability',
       'hooks/biometrics',
-      () => import('@/hooks/biometrics'),
+      launchTaskLoaders.biometricsSystemAuthAvailability,
     );
   startBiometricsSystemAuthAvailabilityHydration();
 });
@@ -96,7 +97,7 @@ registerLaunchTask('globalNetworkPolling', async () => {
   const { startGlobalNetworkPolling } = await loadLaunchModule(
     'globalNetworkPolling',
     'hooks/useGlobalStatus',
-    () => import('@/hooks/useGlobalStatus'),
+    launchTaskLoaders.globalNetworkPolling,
   );
   startGlobalNetworkPolling();
 });
@@ -105,7 +106,7 @@ registerLaunchTask('homePreSplashLocalStateWarmup', async () => {
   const { warmHomePreSplashLocalState } = await loadLaunchModule(
     'homePreSplashLocalStateWarmup',
     'setup/home-pre-splash-state',
-    () => import('@/setup-home-pre-splash-state'),
+    launchTaskLoaders.homePreSplashLocalStateWarmup,
   );
   warmHomePreSplashLocalState();
 });
@@ -114,7 +115,7 @@ registerLaunchTask('computationWorkerPrewarm', async () => {
   const { requestComputationThreadStart } = await loadLaunchModule(
     'computationWorkerPrewarm',
     'perfs/thread',
-    () => import('@/perfs/thread'),
+    launchTaskLoaders.computationWorkerPrewarm,
   );
   requestComputationThreadStart('startup_prewarm');
 });
@@ -123,7 +124,7 @@ registerLaunchTask('transactionWatchersStart', async () => {
   const { ensureServiceApiReady } = await loadLaunchModule(
     'transactionWatchersStart',
     'core/serviceApi/createDeferredServiceApi',
-    () => import('@/core/serviceApi/createDeferredServiceApi'),
+    launchTaskLoaders.transactionWatchersStart,
   );
   await Promise.all([
     ensureServiceApiReady('transactionWatcherService'),
@@ -135,7 +136,7 @@ registerLaunchTask('syncChainMetadataWarmup', async () => {
   const { ensureSyncChainServiceReady } = await loadLaunchModule(
     'syncChainMetadataWarmup',
     'core/serviceApi/syncChain',
-    () => import('@/core/serviceApi/syncChain'),
+    launchTaskLoaders.syncChainMetadataWarmup,
   );
   await ensureSyncChainServiceReady();
 });
