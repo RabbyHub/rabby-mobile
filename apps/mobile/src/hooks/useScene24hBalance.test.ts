@@ -38,6 +38,8 @@ describe('store/balance24h scene', () => {
       totalBalance: number;
     }
   >;
+  let mockSelectedAddresses: string[];
+  let mockHasResolvedSelection: boolean;
   let consoleErrorSpy: jest.SpyInstance;
 
   let scene24hBalanceModule: typeof import('../store/balance24h');
@@ -47,6 +49,8 @@ describe('store/balance24h scene', () => {
     jest.resetModules();
     jest.clearAllMocks();
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockSelectedAddresses = [];
+    mockHasResolvedSelection = false;
     mockBalanceValueMap = {
       '0xabc': {
         evmBalance: 100,
@@ -102,6 +106,8 @@ describe('store/balance24h scene', () => {
       balanceAccountsStore: {
         getState: jest.fn(() => ({
           balance: mockGetBalanceCacheAccounts(),
+          selectedAddresses: mockSelectedAddresses,
+          hasResolvedSelection: mockHasResolvedSelection,
         })),
       },
       getSelectedBalanceAddressesSnapshot: () =>
@@ -232,6 +238,108 @@ describe('store/balance24h scene', () => {
         }),
       }),
     );
+  });
+
+  it('does not let a stale caller replace the resolved post-delete selection', async () => {
+    const preDeleteAddresses = ['0xdeleted', '0xretained'];
+    const postDeleteAddresses = ['0xretained', '0xpromoted'];
+    mockHasResolvedSelection = true;
+    mockBalanceValueMap = {
+      '0xdeleted': {
+        evmBalance: 20,
+        totalBalance: 25,
+      },
+      '0xretained': {
+        evmBalance: 80,
+        totalBalance: 100,
+      },
+      '0xpromoted': {
+        evmBalance: 40,
+        totalBalance: 50,
+      },
+    };
+    mockGetBalanceCacheAccounts.mockReturnValue({
+      '0xdeleted': {
+        address: '0xdeleted',
+        balance: 25,
+        evmBalance: 20,
+      },
+      '0xretained': {
+        address: '0xretained',
+        balance: 100,
+        evmBalance: 80,
+      },
+      '0xpromoted': {
+        address: '0xpromoted',
+        balance: 50,
+        evmBalance: 40,
+      },
+    });
+    mockFetch24hBalance.mockImplementation(async (address: string) => {
+      const totalUsdValue =
+        address === '0xdeleted' ? 20 : address === '0xretained' ? 90 : 40;
+
+      return {
+        total_usd_value: totalUsdValue,
+        data: {
+          total_usd_value: totalUsdValue,
+        },
+        updateTime: 1,
+      };
+    });
+
+    mockSelectedAddresses = preDeleteAddresses;
+    await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
+      addresses: preDeleteAddresses,
+      reason: 'manual_refresh',
+    });
+    await flushPendingTimers();
+
+    mockSelectedAddresses = postDeleteAddresses;
+    await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
+      addresses: postDeleteAddresses,
+      reason: 'selection_changed',
+    });
+    await flushPendingTimers();
+
+    mockFetch24hBalance.mockClear();
+    await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
+      addresses: preDeleteAddresses,
+      reason: 'manual_refresh',
+    });
+    await flushPendingTimers();
+
+    const state = scene24hBalanceModule.scene24hBalanceStore.getState();
+    expect(state.addresses.Home).toEqual([...postDeleteAddresses].sort());
+    expect(state.sceneLoading.Home).toBe(false);
+    expect(state.sceneComputing.Home).toBe(false);
+    expect(state.combinedData.Home).toEqual(
+      expect.objectContaining({
+        rawNetWorth: 150,
+        rawChange: -10,
+        changePercent: '7.69%',
+        isLoss: true,
+      }),
+    );
+    expect(mockFetch24hBalance).not.toHaveBeenCalledWith('0xdeleted');
+  });
+
+  it('keeps an explicitly resolved empty selection after deleting the last address', async () => {
+    mockSelectedAddresses = [];
+    mockHasResolvedSelection = true;
+
+    await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
+      addresses: ['0xdeleted'],
+      reason: 'manual_refresh',
+    });
+    await flushPendingTimers();
+
+    const state = scene24hBalanceModule.scene24hBalanceStore.getState();
+    expect(state.addresses.Home).toEqual([]);
+    expect(state.sceneLoading.Home).toBe(false);
+    expect(state.sceneComputing.Home).toBe(false);
+    expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
+    expect(mockFetch24hBalance).not.toHaveBeenCalled();
   });
 
   it('keeps the post-delete address set when an older fallback refresh resolves last', async () => {
