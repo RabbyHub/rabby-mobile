@@ -815,7 +815,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       const isLatestRefresh = () =>
         refreshGeneration === this.sceneRefreshGeneration[scene];
       let { addresses, force = false, reason } = options || {};
-      if (addresses == null) {
+      if (!addresses?.length) {
         addresses = await getSelectedBalanceAddressesOrTop10Fallback();
       }
       if (!isLatestRefresh()) {
@@ -952,13 +952,11 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     balanceAccounts?: AccountsBalanceState['balance'];
     reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
   } = {}) => {
-    const selectionState = balanceAccountsStore.getState();
-    const top10Addresses = selectionState.hasResolvedSelection
-      ? selectionState.selectedAddresses
-      : addresses ||
-        (balanceAccounts && Object.keys(balanceAccounts).length
-          ? Object.keys(balanceAccounts)
-          : undefined);
+    const top10Addresses =
+      addresses ||
+      (balanceAccounts && Object.keys(balanceAccounts).length
+        ? Object.keys(balanceAccounts)
+        : undefined);
 
     return this.refreshCombinedDataForScene('Home', {
       addresses: top10Addresses,
