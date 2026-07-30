@@ -34,6 +34,8 @@ const SCENARIO_MODULE_LOADERS: Record<
   'sync-extension-password': () => import('./scenarios/focused'),
   'transaction-history': () => import('./scenarios/focused'),
   'gas-account-entry': () => import('./scenarios/focused'),
+  'send-entry-profile': () => import('./scenarios/focused'),
+  'send-token-selector-entry': () => import('./scenarios/focused'),
   'market-entry': () => import('./scenarios/focused'),
   'approvals-entry': () => import('./scenarios/focused'),
   'rabby-points-entry': () => import('./scenarios/focused'),

@@ -1,3 +1,5 @@
+import { shouldSuppressPerfCaptureConsoleNoise } from './perfCaptureConsole';
+
 type StartupPerfData = Record<string, unknown>;
 type NativeTraceGlobal = typeof globalThis & {
   nativeTraceBeginSection?: (
@@ -77,5 +79,7 @@ export function markStartupPerf(
   }
 
   traceInstant(scope, event, data);
-  console.info(`[RabbyStartupPerf:${scope}] ${event}`, data);
+  if (!shouldSuppressPerfCaptureConsoleNoise()) {
+    console.info(`[RabbyStartupPerf:${scope}] ${event}`, data);
+  }
 }
