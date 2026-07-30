@@ -248,9 +248,6 @@ const TokenSelect = ({
     () => userTokenSettings.pinedQueue,
     [userTokenSettings.pinedQueue],
   );
-  const favoriteTokenKeySet = useMemo(() => {
-    return new Set(pinedQueue?.map(x => `${x.chainId}:${x.tokenId}`));
-  }, [pinedQueue]);
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
@@ -580,7 +577,6 @@ const TokenSelect = ({
         showLpTokenSwitch={!queryConds.keyword && !isCustomNetworkTab}
         isLpTokenEnabled={effectiveIsLpTokenEnabled}
         onLpTokenChange={setIsLpTokenEnabled}
-        favoriteTokenKeySet={favoriteTokenKeySet}
         showCustomNetworkChainPreview={isCustomNetworkTab}
         customNetworkTop3Chains={customNetworkTop3Chains}
       />

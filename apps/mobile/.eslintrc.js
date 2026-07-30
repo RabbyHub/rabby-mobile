@@ -60,6 +60,26 @@ module.exports = {
             message:
               "Please import RNEUIText from '@/components/Typography' instead",
           },
+          {
+            name: '@rabby-wallet/zeego/context-menu',
+            message:
+              "Use ContextMenuView from '@/components2024/ContextMenuView/ContextMenuView' so menu actions are resolved at open time",
+          },
+          {
+            name: '@rabby-wallet/react-native-menu',
+            message:
+              "Use ContextMenuView from '@/components2024/ContextMenuView/ContextMenuView' instead of accessing the native context-menu package directly",
+          },
+          {
+            name: 'zeego/context-menu',
+            message:
+              "Use the Rabby ContextMenuView boundary instead of importing an unscoped context-menu runtime",
+          },
+          {
+            name: '@react-native-menu/menu',
+            message:
+              "Use the Rabby ContextMenuView boundary instead of importing an unscoped native menu runtime",
+          },
         ],
       },
     ],
