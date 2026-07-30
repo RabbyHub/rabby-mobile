@@ -340,9 +340,18 @@ export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
   };
 };
 
+export type AggregatedClearinghouseState = ClearinghouseState & {
+  // Unified accounts hold the full cross equity on the spot ledger, so
+  // spot total-hold alone misses the free cross margin.
+  crossAvailableAllDexs?: string;
+  // Per-dex breakdown of the above — each dex's free margin belongs to the
+  // dex's quote stablecoin, needed for per-coin display attribution.
+  crossAvailableByDex?: Record<string, string>;
+};
+
 export const formatAllDexsClearinghouseState = (
   allClearinghouseState: AllDexsClearinghouseState,
-): ClearinghouseState | null => {
+): AggregatedClearinghouseState | null => {
   if (!allClearinghouseState || !allClearinghouseState[0]) {
     return null;
   }
@@ -362,15 +371,25 @@ export const formatAllDexsClearinghouseState = (
   }, 0);
 
   let crossMaintenanceMarginUsed = 0;
+  let crossAvailableAllDexs = 0;
+  const crossAvailableByDex: Record<string, string> = {};
   // time = max across all dexes, not just hyper — otherwise a sub-dex-only
   // refresh wouldn't advance the aggregate timestamp and downstream
   // freshness guards would reject the update.
   let maxTime = 0;
-  for (const [, state] of allClearinghouseState) {
+  for (const [dexName, state] of allClearinghouseState) {
     if (!state) {
       continue;
     }
     crossMaintenanceMarginUsed += Number(state.crossMaintenanceMarginUsed || 0);
+    const crossFree =
+      Number(state.crossMarginSummary?.accountValue || 0) -
+      Number(state.crossMarginSummary?.totalMarginUsed || 0);
+    // clamped per dex: a deficit on one dex must not offset another
+    if (crossFree > 0) {
+      crossAvailableAllDexs += crossFree;
+      crossAvailableByDex[dexName] = crossFree.toString();
+    }
     if ((state.time ?? 0) > maxTime) {
       maxTime = state.time;
     }
@@ -378,6 +397,8 @@ export const formatAllDexsClearinghouseState = (
 
   return {
     assetPositions: assetPositions,
+    crossAvailableAllDexs: crossAvailableAllDexs.toString(),
+    crossAvailableByDex,
     crossMaintenanceMarginUsed: crossMaintenanceMarginUsed.toString(),
     crossMarginSummary: hyperDexState?.crossMarginSummary || {},
     marginSummary: {

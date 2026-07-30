@@ -3,7 +3,7 @@ import {
   UserAbstractionResp,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { useCallback, useMemo } from 'react';
-import { perpsStore } from './usePerpsStore';
+import { getDexQuoteAsset, perpsStore } from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getSpotBalanceKey } from '@/utils/perps';
 
@@ -13,6 +13,8 @@ export const usePerpsAccount = () => {
     perpsAccountValue,
     perpsWithdrawable,
     crossMaintenanceMarginUsed,
+    crossAvailableAllDexs,
+    crossAvailableByDex,
     spotAccountValue,
     spotAvailableToTrade,
     spotBalances,
@@ -26,6 +28,8 @@ export const usePerpsAccount = () => {
       perpsWithdrawable: s.currentClearinghouseState?.withdrawable,
       crossMaintenanceMarginUsed:
         s.currentClearinghouseState?.crossMaintenanceMarginUsed,
+      crossAvailableAllDexs: s.currentClearinghouseState?.crossAvailableAllDexs,
+      crossAvailableByDex: s.currentClearinghouseState?.crossAvailableByDex,
 
       spotAccountValue: s.spotState.accountValue,
       spotAvailableToTrade: s.spotState.availableToTrade,
@@ -52,9 +56,8 @@ export const usePerpsAccount = () => {
   }, [isUnifiedAccount, isPortfolioMargin]);
 
   // Portfolio margin needs the server-computed net free margin in USDC —
-  // simple stablecoin sums miss LTV-weighted collateral (HYPE/UBTC/...) and
-  // borrowed positions. unifiedAccount doesn't need this override; its
-  // collateral is already accurately captured by stablecoin totals.
+  // simple stablecoin sums miss LTV-weighted collateral and borrowed
+  // positions.
   const portfolioMarginAccountValue = useMemo(() => {
     if (!isPortfolioMargin) {
       return 0;
@@ -84,17 +87,44 @@ export const usePerpsAccount = () => {
     if (isPortfolioMargin) {
       return portfolioMarginAccountValue ?? 0;
     }
-    return (
-      Number(isSpotCollateralMode ? spotAvailableToTrade : perpsWithdrawable) ||
-      0
-    );
+    if (isSpotCollateralMode) {
+      return (
+        (Number(spotAvailableToTrade) || 0) +
+        (Number(crossAvailableAllDexs) || 0)
+      );
+    }
+    return Number(perpsWithdrawable) || 0;
   }, [
     isPortfolioMargin,
     portfolioMarginAccountValue,
     isSpotCollateralMode,
     spotAvailableToTrade,
+    crossAvailableAllDexs,
     perpsWithdrawable,
   ]);
+
+  // Per-coin display availability: each dex's free cross margin belongs to
+  // the dex's quote stablecoin. Only the home-card chips consume this —
+  // withdraw/swap keep reading spotBalancesMap (actual spot free, since held
+  // funds can't be withdrawn or swapped).
+  const displaySpotBalances = useMemo(() => {
+    // unified only: portfolioMargin's cross summary is LTV-weighted margin
+    // capacity, not spot-held cash, so the add-back would inflate its chips
+    if (!isUnifiedAccount || !spotBalances?.length) {
+      return spotBalances || [];
+    }
+    const extraByCoin: Record<string, number> = {};
+    for (const [dexId, free] of Object.entries(crossAvailableByDex || {})) {
+      const coin = getSpotBalanceKey(getDexQuoteAsset(dexId));
+      extraByCoin[coin] = (extraByCoin[coin] || 0) + (Number(free) || 0);
+    }
+    return spotBalances.map(b => {
+      const extra = extraByCoin[b.coin];
+      return extra
+        ? { ...b, available: String(Number(b.available) + extra) }
+        : b;
+    });
+  }, [isUnifiedAccount, spotBalances, crossAvailableByDex]);
 
   const getSpotBalance = useCallback(
     (coin: string) => {
@@ -129,7 +159,7 @@ export const usePerpsAccount = () => {
     crossMaintenanceMarginUsed,
     isUnifiedAccount,
     isPortfolioMargin,
-    spotBalances: isSpotCollateralMode ? spotBalances || [] : [],
+    spotBalances: isSpotCollateralMode ? displaySpotBalances : [],
     spotBalancesMap: isSpotCollateralMode ? spotBalancesMap || {} : {},
     getSpotBalance,
     getAvailableByAsset,

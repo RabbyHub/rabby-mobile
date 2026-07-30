@@ -99,11 +99,15 @@ export const PerpsAccountSelectorPopup: React.FC<{
                     item.address,
                   );
                   const formatted = formatSpotState(spotState);
+                  // same formula as usePerpsAccount.availableBalance
                   return {
                     address: item.address,
                     info: {
                       ...info,
-                      withdrawable: formatted.availableToTrade,
+                      withdrawable: String(
+                        (Number(formatted.availableToTrade) || 0) +
+                          (Number(info.crossAvailableAllDexs) || 0),
+                      ),
                     },
                   };
                 }

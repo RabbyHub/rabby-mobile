@@ -3,7 +3,60 @@
 jest.mock('@/core/apis/perps', () => ({ apisPerps: {} }));
 jest.mock('@/core/services', () => ({ perpsService: {} }));
 
-import { getPxDecimals } from './perps';
+import { formatAllDexsClearinghouseState, getPxDecimals } from './perps';
+import type { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
+
+const makeDexState = (
+  crossAccountValue: string,
+  crossTotalMarginUsed: string,
+  time = 1,
+): ClearinghouseState => ({
+  assetPositions: [],
+  crossMaintenanceMarginUsed: '0',
+  crossMarginSummary: {
+    accountValue: crossAccountValue,
+    totalMarginUsed: crossTotalMarginUsed,
+    totalNtlPos: '0',
+    totalRawUsd: '0',
+  },
+  marginSummary: {
+    accountValue: crossAccountValue,
+    totalMarginUsed: crossTotalMarginUsed,
+    totalNtlPos: '0',
+    totalRawUsd: '0',
+  },
+  time,
+  withdrawable: '0',
+});
+
+describe('formatAllDexsClearinghouseState — crossAvailableAllDexs', () => {
+  it('exposes free cross margin (equity − initial margin) of a single dex', () => {
+    // live-data replica: unified account maxed out at 20x — only dust is free
+    const result = formatAllDexsClearinghouseState([
+      ['', makeDexState('81.372299', '81.347258')],
+    ]);
+    expect(Number(result?.crossAvailableAllDexs)).toBeCloseTo(0.025041, 6);
+  });
+
+  it('sums across dexs, clamping each dex at 0 (independent collateral pools)', () => {
+    const result = formatAllDexsClearinghouseState([
+      ['', makeDexState('12.264989', '5.828955')],
+      // a deficit on one dex must not offset availability on another
+      ['xyz', makeDexState('3.0', '4.5')],
+    ]);
+    expect(Number(result?.crossAvailableAllDexs)).toBeCloseTo(6.436034, 6);
+    // per-dex breakdown for per-coin attribution: deficit dexs are omitted
+    expect(Number(result?.crossAvailableByDex?.[''])).toBeCloseTo(6.436034, 6);
+    expect(result?.crossAvailableByDex).not.toHaveProperty('xyz');
+  });
+
+  it('is 0 when no funds are committed to cross', () => {
+    const result = formatAllDexsClearinghouseState([
+      ['', makeDexState('0.0', '0.0')],
+    ]);
+    expect(result?.crossAvailableAllDexs).toBe('0');
+  });
+});
 
 describe('getPxDecimals', () => {
   // decimals = clamp(4 - floor(log10(0.95 * px)), 0, 6 - szDecimals)

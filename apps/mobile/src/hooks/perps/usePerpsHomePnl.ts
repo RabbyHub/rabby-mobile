@@ -24,19 +24,28 @@ export const usePerpsHomePnl = () => {
     })),
   );
   const { availableBalance } = usePerpsAccount();
+  const isUnifiedAccount =
+    userAbstraction === UserAbstractionResp.unifiedAccount;
   const isSpotCollateralMode =
-    userAbstraction === UserAbstractionResp.unifiedAccount ||
+    isUnifiedAccount ||
     userAbstraction === UserAbstractionResp.portfolioMargin;
   const hasResolvedPositionInfo = currentPerpsAccount
     ? isUserDataReady || isFetchAllDone
     : isFetchAllDone;
+  // unified availableBalance depends on both the spot and clearinghouse
+  // channels — showing it with only one loaded renders a too-low number.
+  // portfolioMargin reads the spot channel only, so it keeps the single wait.
   const hasResolvedAvailableBalance = currentPerpsAccount
     ? userAbstractionReady &&
-      (isSpotCollateralMode ? isSpotStateReady : isUserDataReady)
+      (isSpotCollateralMode
+        ? isSpotStateReady && (!isUnifiedAccount || isUserDataReady)
+        : isUserDataReady)
     : isFetchAllDone;
   const canShowResolvedZero = currentPerpsAccount
     ? userAbstractionReady &&
-      (isSpotCollateralMode ? isSpotStateReady : hasResolvedPositionInfo)
+      (isSpotCollateralMode
+        ? isSpotStateReady && (!isUnifiedAccount || hasResolvedPositionInfo)
+        : hasResolvedPositionInfo)
     : isFetchAllDone;
   const shouldShowResolvedZero =
     !!currentPerpsAccount && canShowResolvedZero && !homePositionPnl.show;

@@ -33,7 +33,9 @@ import {
   formatPositionPnl,
   formatSpotState,
   getPxDecimals,
+  getQuoteAssetFromMeta,
 } from '@/utils/perps';
+import type { AggregatedClearinghouseState } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { unionBy } from 'lodash';
@@ -115,6 +117,17 @@ let perpDexsCache: PerpDexsResponse | null = null;
 export const getDexByCoin = (coin: string): string =>
   perpsStore.getState().marketDataMap[coin]?.dexId ?? '';
 
+// Primary source for dex → quote mapping: marketData omits dexs whose coins
+// aren't in the DeBank top list, which would misattribute them to USDC
+// forever. Populated by fetchMarketData from the full meta universe.
+let dexQuoteAssetCache: Record<string, MarketData['quoteAsset']> = {};
+
+// Falls back to USDC (the dominant quote) when nothing has loaded yet.
+export const getDexQuoteAsset = (dexId: string): MarketData['quoteAsset'] =>
+  dexQuoteAssetCache[dexId] ??
+  perpsStore.getState().marketData.find(m => m.dexId === dexId)?.quoteAsset ??
+  'USDC';
+
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
   openOrders: OpenOrder[];
@@ -177,7 +190,7 @@ export type MarketDataStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
-  currentClearinghouseState: ClearinghouseState | null;
+  currentClearinghouseState: AggregatedClearinghouseState | null;
   spotState: {
     accountValue: string;
     availableToTrade: string;
@@ -189,7 +202,7 @@ export interface PerpsState {
   userAbstractionReady: boolean;
   openOrders: OpenOrder[];
   currentPerpsAccount: Account | null;
-  clearinghouseStateMap: Record<string, ClearinghouseState | null>;
+  clearinghouseStateMap: Record<string, AggregatedClearinghouseState | null>;
   isFetchAllDone: boolean; // init ClearinghouseStateMap has done
   accountNeedApproveAgent: boolean; // 账户是否需要重新approve agent
   accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
@@ -422,9 +435,30 @@ const setHomePositionPnl = (payload: {
   setPerpsState(prev => ({ ...prev, homePositionPnl: payload }));
 };
 
+// Reuse the previous Record reference when values are unchanged so
+// useShallow selectors can bail out — a fresh {} on every WS frame would
+// re-render every usePerpsAccount consumer on every tick.
+const stabilizeCrossAvailableByDex = (
+  prev: AggregatedClearinghouseState | null,
+  next: AggregatedClearinghouseState,
+) => {
+  const a = prev?.crossAvailableByDex;
+  const b = next.crossAvailableByDex;
+  if (!a || !b || a === b) {
+    return;
+  }
+  const keys = Object.keys(a);
+  if (
+    keys.length === Object.keys(b).length &&
+    keys.every(k => a[k] === b[k])
+  ) {
+    next.crossAvailableByDex = a;
+  }
+};
+
 const setClearinghouseStateMap = (payload: {
   address: string;
-  data: ClearinghouseState | null;
+  data: AggregatedClearinghouseState | null;
 }) => {
   const address = payload.address.toLowerCase();
   const { data } = payload;
@@ -445,6 +479,9 @@ const setClearinghouseStateMap = (payload: {
       isCurrentAccount &&
       (!prev.currentClearinghouseState ||
         (data.time ?? 0) >= (prev.currentClearinghouseState.time ?? 0));
+    if (shouldUpdateCurrentAccount) {
+      stabilizeCrossAvailableByDex(prev.currentClearinghouseState, data);
+    }
     return {
       ...prev,
       clearinghouseStateMap: { ...prev.clearinghouseStateMap, [address]: data },
@@ -738,6 +775,13 @@ const runFetchMarketData = async () => {
     effectivePerpDexs.forEach((dex, idx) => {
       dexIdMap[idx] = dex?.name ?? '';
     });
+
+    const nextDexQuoteAssets: Record<string, MarketData['quoteAsset']> = {};
+    allMetas.forEach((meta, idx) => {
+      nextDexQuoteAssets[dexIdMap[idx] ?? String(idx)] =
+        getQuoteAssetFromMeta(meta);
+    });
+    dexQuoteAssetCache = nextDexQuoteAssets;
 
     const marketData = formatMarkData(allMetas, topAssets, dexIdMap);
     if (marketData.length === 0) {
@@ -1544,6 +1588,7 @@ const flushAggregatedClearinghouseState = () => {
     ) {
       return prev;
     }
+    stabilizeCrossAvailableByDex(prev.currentClearinghouseState, aggregated);
     return {
       ...prev,
       currentClearinghouseState: aggregated,
