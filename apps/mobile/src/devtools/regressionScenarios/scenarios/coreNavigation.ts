@@ -23,6 +23,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
 import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
+import { createRegressionScenarioPerformanceProbe } from '../performance.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -99,17 +100,24 @@ function readBoundedScenarioInteger({
 async function activateSwapBridgeTabForPressure(
   context: RegressionScenarioExecutionContext,
   tab: 'swap' | 'bridge',
+  probe: ReturnType<typeof createRegressionScenarioPerformanceProbe>,
 ) {
   const actionStartedAt = Date.now();
-  await runRegressionScenarioComponentAction(
+  const actionTiming = await runRegressionScenarioComponentAction(
     context.command.runId,
     `swap-bridge.activate-${tab}`,
   );
+  probe.recordAction(`activate.${tab}`, actionTiming);
+  const assertionStartedAt = Date.now();
   await waitForScenarioAssertion(
     context,
     `swap-bridge-${tab}-active`,
     10_000,
     actionStartedAt,
+  );
+  probe.recordDuration(
+    `activate.${tab}.assertion`,
+    Date.now() - assertionStartedAt,
   );
 }
 
@@ -117,17 +125,20 @@ async function exerciseTokenSelectorForPressure(
   context: RegressionScenarioExecutionContext,
   selector: 'swapFrom' | 'swapTo' | 'bridgeFrom' | 'bridgeTo',
   settleMs: number,
+  probe: ReturnType<typeof createRegressionScenarioPerformanceProbe>,
 ) {
   const actionPrefix = `token-selector.${selector}`;
-  await runRegressionScenarioComponentAction(
+  const openTiming = await runRegressionScenarioComponentAction(
     context.command.runId,
     `${actionPrefix}.open`,
   );
+  probe.recordAction(`${selector}.open`, openTiming);
   await delay(settleMs);
-  await runRegressionScenarioComponentAction(
+  const closeTiming = await runRegressionScenarioComponentAction(
     context.command.runId,
     `${actionPrefix}.close`,
   );
+  probe.recordAction(`${selector}.close`, closeTiming);
   await delay(settleMs);
 }
 
@@ -160,31 +171,51 @@ async function runSwapBridgePressure(
     max: 2_000,
   });
   const startedAt = Date.now();
+  const probe = createRegressionScenarioPerformanceProbe();
+  const initialTab =
+    context.command.params.tab === 'bridge' ? 'bridge' : 'swap';
+  const pressureTabs =
+    initialTab === 'swap'
+      ? (['bridge', 'swap'] as const)
+      : (['swap', 'bridge'] as const);
 
-  for (let cycle = 1; cycle <= cycles; cycle += 1) {
-    for (const tab of ['swap', 'bridge'] as const) {
-      await activateSwapBridgeTabForPressure(context, tab);
-      for (
-        let selectorCycle = 0;
-        selectorCycle < selectorCycles;
-        selectorCycle += 1
-      ) {
-        await exerciseTokenSelectorForPressure(
-          context,
-          tab === 'swap' ? 'swapFrom' : 'bridgeFrom',
-          settleMs,
-        );
-        await exerciseTokenSelectorForPressure(
-          context,
-          tab === 'swap' ? 'swapTo' : 'bridgeTo',
-          settleMs,
-        );
+  try {
+    for (let cycle = 1; cycle <= cycles; cycle += 1) {
+      const cycleStartedAt = Date.now();
+      for (const tab of pressureTabs) {
+        await activateSwapBridgeTabForPressure(context, tab, probe);
+        for (
+          let selectorCycle = 0;
+          selectorCycle < selectorCycles;
+          selectorCycle += 1
+        ) {
+          await exerciseTokenSelectorForPressure(
+            context,
+            tab === 'swap' ? 'swapFrom' : 'bridgeFrom',
+            settleMs,
+            probe,
+          );
+          await exerciseTokenSelectorForPressure(
+            context,
+            tab === 'swap' ? 'swapTo' : 'bridgeTo',
+            settleMs,
+            probe,
+          );
+        }
       }
+      context.report('perf-mark', {
+        mark: 'swap-bridge-pressure-cycle',
+        cycle,
+        cycleDurationMs: Date.now() - cycleStartedAt,
+        elapsedMs: Date.now() - startedAt,
+      });
+      probe.recordDuration('pressure.cycle', Date.now() - cycleStartedAt);
     }
+  } finally {
     context.report('perf-mark', {
-      mark: 'swap-bridge-pressure-cycle',
-      cycle,
-      elapsedMs: Date.now() - startedAt,
+      mark: 'swap-bridge-pressure-summary',
+      fixedSettleMs: cycles * 2 * selectorCycles * 2 * 2 * settleMs,
+      ...probe.stop(),
     });
   }
 

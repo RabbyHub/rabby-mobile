@@ -216,6 +216,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
           {isFrom ? (
             <TokenSelect
               ref={openTokenModalRef}
+              deferModalMount
               token={token}
               onTokenChange={onTokenSelect}
               accountInScreen={account}

@@ -303,6 +303,7 @@ const BridgeToken = ({
               />
             ) : (
               <TokenSelect
+                deferModalMount
                 // fromChainId={fromChainId!}
                 // fromTokenId={fromTokenId!}
                 accountInScreen={account}
