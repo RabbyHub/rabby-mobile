@@ -2259,6 +2259,7 @@
       "useDevicePassword": "Usar contraseña del dispositivo",
       "policy": "Política de privacidad",
       "autoLockTime": "Tiempo de bloqueo automático",
+      "appLaunchLock": "Bloqueo al iniciar",
       "lockWallet": "Bloquear cartera",
       "enableWhitelist": "Habilitar la lista de permisos para el envío de activos",
       "currentVersion": "Versión actual",

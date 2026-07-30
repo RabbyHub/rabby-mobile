@@ -16,6 +16,10 @@ import {
   completeWalletCreation,
   prepareWalletCreation,
 } from '@/hooks/address/useSetupWallet';
+import {
+  onAutoLockTimeMsChange,
+  startAppTimeoutAutoLockHydration,
+} from '@/hooks/appTimeout';
 import { resetNavigationTo } from '@/hooks/navigation';
 import accountStore from '@/store/account';
 import { navigationRef } from '@/utils/navigation';
@@ -33,6 +37,7 @@ import {
 const AUTO_LOCK_CHECK_GRACE_MS = 30_000;
 const AUTO_LOCK_EARLY_TOLERANCE_MS = 7_000;
 const MAX_REGRESSION_AUTO_LOCK_MINUTES = 24 * 60;
+const MILLISECONDS_PER_MINUTE = 60 * 1000;
 const MIN_BACKUP_WORD_COUNT = 12;
 const ACCOUNT_VISIBILITY_TIMEOUT_MS = 8_000;
 
@@ -302,6 +307,13 @@ async function runWalletBackup(context: RegressionScenarioExecutionContext) {
 }
 
 async function runLockUnlock(context: RegressionScenarioExecutionContext) {
+  const persistencePhase =
+    context.command.params.autoLockPersistencePhase || '';
+  if (persistencePhase) {
+    await runAutoLockPersistencePhase(context, persistencePhase);
+    return;
+  }
+
   await context.waitForNavigation();
   await ensureScenarioWalletUnlocked();
 
@@ -350,6 +362,116 @@ async function runLockUnlock(context: RegressionScenarioExecutionContext) {
     ),
     route: navigationRef.getCurrentRoute()?.name || null,
   });
+}
+
+function readAutoLockMinutes(value: string | undefined, name: string) {
+  const minutes = Number(value);
+  if (
+    !Number.isInteger(minutes) ||
+    minutes < 1 ||
+    minutes > MAX_REGRESSION_AUTO_LOCK_MINUTES
+  ) {
+    throw new Error(
+      `${name} must be an integer between 1 and ${MAX_REGRESSION_AUTO_LOCK_MINUTES}`,
+    );
+  }
+  return minutes;
+}
+
+async function runAutoLockPersistencePhase(
+  context: RegressionScenarioExecutionContext,
+  phase: string,
+) {
+  if (phase !== 'prepare' && phase !== 'verify') {
+    throw new Error(
+      'autoLockPersistencePhase must be either prepare or verify',
+    );
+  }
+
+  await context.waitForNavigation();
+  await startAppTimeoutAutoLockHydration();
+
+  const configuredMinutes = readAutoLockMinutes(
+    context.command.params.autoLockMinutes,
+    'autoLockMinutes',
+  );
+
+  if (phase === 'prepare') {
+    const originalMinutes =
+      getPreferenceSnapshot('autoLockTime') ?? DEFAULT_AUTO_LOCK_MINUTES;
+    onAutoLockTimeMsChange(configuredMinutes * MILLISECONDS_PER_MINUTE);
+
+    const persistedMinutes =
+      getPreferenceSnapshot('autoLockTime') ?? DEFAULT_AUTO_LOCK_MINUTES;
+    const timerMinutes = apisAutoLock.getPersistedAutoLockTimes().minutes;
+    const passed =
+      persistedMinutes === configuredMinutes &&
+      timerMinutes === configuredMinutes;
+
+    context.report('auto-lock-persistence-prepared', {
+      configuredMinutes,
+      originalMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+    context.report('assertion', {
+      assertion: 'auto-lock-persistence-prepared',
+      configuredMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+
+    if (!passed) {
+      onAutoLockTimeMsChange(originalMinutes * MILLISECONDS_PER_MINUTE);
+      throw new Error(
+        `Unable to prepare persisted auto-lock value ${configuredMinutes}`,
+      );
+    }
+    return;
+  }
+
+  const restoreMinutes = readAutoLockMinutes(
+    context.command.params.restoreAutoLockMinutes,
+    'restoreAutoLockMinutes',
+  );
+  try {
+    const persistedMinutes =
+      getPreferenceSnapshot('autoLockTime') ?? DEFAULT_AUTO_LOCK_MINUTES;
+    const timerMinutes = apisAutoLock.getPersistedAutoLockTimes().minutes;
+    const passed =
+      persistedMinutes === configuredMinutes &&
+      timerMinutes === configuredMinutes;
+
+    context.report('auto-lock-persistence-verified', {
+      configuredMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+    context.report('assertion', {
+      assertion: 'auto-lock-persistence-after-restart',
+      configuredMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+
+    if (!passed) {
+      throw new Error(
+        `Auto-lock changed across restart: expected ${configuredMinutes}, ` +
+          `persisted=${persistedMinutes}, timer=${timerMinutes}`,
+      );
+    }
+  } finally {
+    onAutoLockTimeMsChange(restoreMinutes * MILLISECONDS_PER_MINUTE);
+    context.report('assertion', {
+      assertion: 'auto-lock-setting-restored',
+      restoredMinutes: restoreMinutes,
+      passed: getPreferenceSnapshot('autoLockTime') === restoreMinutes,
+    });
+  }
 }
 
 async function verifyTimedAutoLock(
