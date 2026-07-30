@@ -240,14 +240,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       return false;
     }
 
-    const receives = item.receives;
+    const transfers = [...(item.receives || []), ...(item.sends || [])];
 
-    if (!receives || !receives.length) {
+    if (!transfers.length) {
       return true;
     }
     let allUsd = 0;
 
-    for (const i of receives) {
+    for (const i of transfers) {
       const token = i.token;
       const tokenIsNft = i.token_id?.length === 32;
       if (tokenIsNft) {

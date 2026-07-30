@@ -98,6 +98,7 @@ export function ApprovalAddressListScreen(): JSX.Element {
         data={displayAccounts}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
+        contentContainerStyle={styles.listContent}
         renderItem={({ item, index }) => (
           <View
             key={`${item.address}-${item.type}-${item.brandName}-${index}`}
@@ -120,12 +121,15 @@ export function ApprovalAddressListScreen(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(() => ({
+const getStyle = createGetStyles2024(({ safeAreaInsets }) => ({
   root: {},
   listContainer: {
     flex: 1,
     paddingHorizontal: 20,
     gap: 12,
+  },
+  listContent: {
+    paddingBottom: Math.max(safeAreaInsets.bottom, 16),
   },
   itemGap: {
     marginBottom: 12,

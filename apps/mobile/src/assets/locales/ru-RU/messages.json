@@ -1965,6 +1965,7 @@
       "aboutUs": "О нас",
       "addCustomNetwork": "Добавить пользовательскую сеть",
       "autoLockTime": "Автоматическое время блокировки",
+      "appLaunchLock": "Блокировка при запуске",
       "lockWallet": "Заблокировать кошелёк",
       "clearPending": "Очистить ожидающее локально",
       "touchId": "Touch ID",

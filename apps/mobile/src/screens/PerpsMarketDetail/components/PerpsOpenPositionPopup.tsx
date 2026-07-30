@@ -222,6 +222,7 @@ export const PerpsOpenPositionPopup: React.FC<{
     slippage,
     depthInsufficient,
     isReady: slippageReady,
+    shouldShow: shouldShowSlippage,
   } = useMarketSlippage({
     coin,
     isBuy: direction === 'Long',
@@ -1078,6 +1079,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         slippage={slippage}
         depthInsufficient={depthInsufficient}
         slippageReady={slippageReady}
+        shouldShowSlippage={shouldShowSlippage}
         onSwitchToLimit={handleSwitchToLimit}
         onClose={() => {
           setIsReviewMode(false);
