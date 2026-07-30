@@ -64,6 +64,11 @@ import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
+import {
+  canProcessSignature,
+  isSignatureGasFeeTooHigh,
+  selectSignatureGuardFlags,
+} from '@/components2024/MiniSignV2/state/signatureGuardFlags';
 import { buildFingerprint } from '@/components2024/MiniSignV2/domain/ctx';
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
@@ -1100,10 +1105,12 @@ export const BridgeContent = ({
     autoResetGasStoreOnChainChange: true,
   });
 
-  const { ctx } = useSignatureStoreOf(instance);
-
-  const miniSignGasFeeTooHigh = !!ctx?.gasFeeTooHigh;
-  const canDirectSign = !ctx?.disabledProcess;
+  const signatureGuardFlags = useSignatureStoreOf(
+    instance,
+    selectSignatureGuardFlags,
+  );
+  const miniSignGasFeeTooHigh = isSignatureGasFeeTooHigh(signatureGuardFlags);
+  const canDirectSign = canProcessSignature(signatureGuardFlags);
 
   const [miniSignLoading, setMiniSignLoading] = useState(false);
   const shouldPauseMiniSignerEffects =
