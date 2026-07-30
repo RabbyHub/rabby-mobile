@@ -1944,7 +1944,12 @@
       "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
       "dataAnalysis": "Phân tích dữ liệu",
       "bugReportHistory": "Lịch sử báo cáo lỗi",
-      "bugReportChat": "Gửi phản hồi qua trò chuyện"
+      "bugReportChat": "Gửi phản hồi qua trò chuyện",
+      "features": "Tính năng",
+      "manageWallets": "Quản lý ví"
+    },
+    "settings": {
+      "chooseWallet": "Chọn một ví để quản lý"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
