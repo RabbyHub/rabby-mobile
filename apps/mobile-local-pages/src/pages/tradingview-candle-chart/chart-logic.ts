@@ -2,6 +2,7 @@ import {
   type CandleStick,
   type ChartColors,
   type ChartDescription,
+  type PerpsProChartConfig,
   type TPSLPriceLines,
 } from './types';
 import BigNumber from 'bignumber.js';
@@ -47,6 +48,128 @@ export function formatNumber(v: number): string {
     return (v / 1000).toFixed(2) + 'K';
   }
   return v.toFixed(2);
+}
+
+const normalizeSignedZero = (value: number) =>
+  Object.is(value, -0) ? 0 : value;
+
+export function formatProPrice(v: number, decimals: number): string {
+  if (!Number.isFinite(v)) {
+    return '--';
+  }
+  const safeDecimals = Number.isInteger(decimals)
+    ? Math.min(12, Math.max(0, decimals))
+    : 2;
+  return normalizeSignedZero(v).toFixed(safeDecimals);
+}
+
+export function formatProCompactNumber(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v) || v < 0) {
+    return '--';
+  }
+  const normalized = normalizeSignedZero(v);
+  if (normalized >= 1_000_000_000) {
+    return `${(normalized / 1_000_000_000).toFixed(2)}B`;
+  }
+  if (normalized >= 1_000_000) {
+    return `${(normalized / 1_000_000).toFixed(2)}M`;
+  }
+  if (normalized >= 1_000) {
+    return `${(normalized / 1_000).toFixed(2)}K`;
+  }
+  return normalized.toFixed(2);
+}
+
+export function formatProTooltipTime(
+  time: number,
+  interval: PerpsProChartConfig['interval'],
+): string {
+  const date = new Date(time * 1000);
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  if (interval === '1d' || interval === '1w' || interval === '1M') {
+    return `${year}-${month}-${day}`;
+  }
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${month}-${day} ${hours}:${minutes}`;
+}
+
+export type PerpsProTooltipMetrics = {
+  change: number | null;
+  changePercent: number | null;
+  isPositive: boolean;
+  rangePercent: number | null;
+};
+
+export function getPerpsProTooltipMetrics(
+  candle: Pick<CandleStick, 'open' | 'close' | 'high' | 'low'>,
+): PerpsProTooltipMetrics {
+  if (
+    !Number.isFinite(candle.open) ||
+    candle.open <= 0 ||
+    !Number.isFinite(candle.close) ||
+    !Number.isFinite(candle.high) ||
+    !Number.isFinite(candle.low)
+  ) {
+    return {
+      change: null,
+      changePercent: null,
+      isPositive: true,
+      rangePercent: null,
+    };
+  }
+  const change = normalizeSignedZero(candle.close - candle.open);
+  return {
+    change,
+    changePercent: normalizeSignedZero((change / candle.open) * 100),
+    isPositive: change >= 0,
+    rangePercent: normalizeSignedZero(
+      ((candle.high - candle.low) / candle.open) * 100,
+    ),
+  };
+}
+
+export type MovingAveragePoint = {
+  time: number;
+  value: number;
+};
+
+export function calculateSimpleMovingAverage(
+  data: ReadonlyArray<CandleStick>,
+  period: number,
+): MovingAveragePoint[] {
+  if (!Number.isInteger(period) || period <= 0 || data.length < period) {
+    return [];
+  }
+  const result: MovingAveragePoint[] = [];
+  let sum = 0;
+  for (let index = 0; index < data.length; index += 1) {
+    sum += data[index].close;
+    if (index >= period) {
+      sum -= data[index - period].close;
+    }
+    if (index >= period - 1) {
+      result.push({
+        time: data[index].time,
+        value: sum / period,
+      });
+    }
+  }
+  return result;
+}
+
+export function getInitialVisibleLogicalRange(
+  dataLength: number,
+  visibleBars: number,
+) {
+  const safeLength = Math.max(0, Math.floor(dataLength));
+  const safeVisibleBars = Math.max(1, Math.floor(visibleBars));
+  return {
+    from: Math.max(0, safeLength - safeVisibleBars),
+    to: safeLength,
+  };
 }
 
 const MONTHS = [
@@ -152,6 +275,9 @@ export interface ChartState {
   chart: any | null;
   candlestickSeries: any | null;
   volumeSeries: any | null;
+  maSeries: Record<7 | 25 | 99, any | null>;
+  crosshairMarkerSeries: any | null;
+  crosshairActive: boolean;
   isInitialDataLoad: boolean;
   lastDataKey: string | null;
   noTime: boolean;
@@ -166,6 +292,10 @@ export interface ChartState {
   };
   colors: ChartColors | null;
   description: ChartDescription | null;
+  proConfig: PerpsProChartConfig | null;
+  selectedPrice: number | null;
+  selectedTime: number | null;
+  selectedPointX: number | null;
   currentData: TradingViewCandlestickData[];
 }
 
@@ -174,6 +304,13 @@ export function createChartState(): ChartState {
     chart: null,
     candlestickSeries: null,
     volumeSeries: null,
+    maSeries: {
+      7: null,
+      25: null,
+      99: null,
+    },
+    crosshairMarkerSeries: null,
+    crosshairActive: false,
     isInitialDataLoad: true,
     lastDataKey: null,
     noTime: false,
@@ -188,6 +325,10 @@ export function createChartState(): ChartState {
     },
     colors: null,
     description: null,
+    proConfig: null,
+    selectedPrice: null,
+    selectedTime: null,
+    selectedPointX: null,
     currentData: [],
   };
 }
