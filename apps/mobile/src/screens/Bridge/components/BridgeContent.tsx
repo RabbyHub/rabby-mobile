@@ -1639,6 +1639,13 @@ export const BridgeContent = ({
   };
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const handleSlippageChange = useCallback(
+    (nextSlippage: string) => {
+      setSlippageChanged(true);
+      setSlippage(nextSlippage);
+    },
+    [setSlippage, setSlippageChanged],
+  );
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1752,10 +1759,7 @@ export const BridgeContent = ({
                   sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
                   slippage={slippageState}
                   displaySlippage={slippage}
-                  onSlippageChange={e => {
-                    setSlippageChanged(true);
-                    setSlippage(e);
-                  }}
+                  onSlippageChange={handleSlippageChange}
                   fromToken={fromToken}
                   toToken={toToken}
                   amount={amount || 0}
@@ -1801,10 +1805,7 @@ export const BridgeContent = ({
                       <BridgeSlippage
                         value={slippage}
                         displaySlippage={slippage}
-                        onChange={e => {
-                          setSlippageChanged(true);
-                          setSlippage(e);
-                        }}
+                        onChange={handleSlippageChange}
                         autoSlippage={autoSlippage}
                         isCustomSlippage={isCustomSlippage}
                         setAutoSlippage={setAutoSlippage}
