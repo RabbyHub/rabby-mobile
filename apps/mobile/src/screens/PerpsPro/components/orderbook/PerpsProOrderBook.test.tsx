@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 
@@ -209,5 +210,66 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('31.56')).toBeTruthy();
     expect(screen.getByText('31.33')).toBeTruthy();
     expect(screen.getByText('31.34')).toBeTruthy();
+  });
+
+  it('keeps both ask and bid amounts at two decimals independently of the tick', () => {
+    const book = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [
+        [{ n: 1, px: '1000', sz: '14080' }],
+        [{ n: 1, px: '2000', sz: '74950' }],
+      ],
+      time: 100,
+    });
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={book}
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+        selectedTickOption={{
+          displayPrice: 1000,
+          mantissa: null,
+          nSigFigs: 2,
+          priceDecimals: 0,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('14.08M')).toBeTruthy();
+    expect(screen.getByText('149.90M')).toBeTruthy();
+
+    const amountStyle = StyleSheet.flatten(
+      screen.getByText('149.90M').props.style,
+    );
+    expect(amountStyle.flexShrink).toBe(0);
+    expect(amountStyle.maxWidth).toBeUndefined();
+
+    const priceStyle = StyleSheet.flatten(
+      screen.getByText('2,000').props.style,
+    );
+    expect(priceStyle.flex).toBe(1);
+    expect(priceStyle.minWidth).toBe(0);
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={book}
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+        selectedTickOption={{
+          displayPrice: 1,
+          mantissa: null,
+          nSigFigs: 5,
+          priceDecimals: 2,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('14.08M')).toBeTruthy();
+    expect(screen.getByText('149.90M')).toBeTruthy();
+    expect(screen.getByText('2,000.00')).toBeTruthy();
   });
 });

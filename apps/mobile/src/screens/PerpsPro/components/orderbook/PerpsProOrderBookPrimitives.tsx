@@ -17,6 +17,7 @@ import {
 } from '../../utils/format';
 
 export const PERPS_PRO_ORDER_BOOK_ROW_HEIGHT = 20;
+const PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS = 2;
 
 export const PerpsProOrderBookModeIcon: React.FC<{
   mode: PerpsOrderBookMode;
@@ -73,11 +74,19 @@ export const PerpsProOrderBookRow: React.FC<{
       ) : null}
       <Text
         numberOfLines={1}
-        style={side === 'bid' ? styles.bidPrice : styles.askPrice}>
+        style={[
+          styles.bookPrice,
+          side === 'bid' ? styles.bidPrice : styles.askPrice,
+        ]}>
         {level ? formatPerpsProPrice(level.priceNumber, priceDecimals) : ''}
       </Text>
       <Text numberOfLines={1} style={styles.bookAmount}>
-        {level ? formatPerpsProCompactNumber(level.usdSize) : ''}
+        {level
+          ? formatPerpsProCompactNumber(
+              level.usdSize,
+              PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS,
+            )
+          : ''}
       </Text>
     </View>
   );
@@ -126,8 +135,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bookRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 4,
     height: PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
-    justifyContent: 'space-between',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -143,31 +152,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bidDepth: {
     backgroundColor: colors2024['green-light-1'],
   },
-  askPrice: {
-    color: colors2024['red-default'],
+  bookPrice: {
+    flex: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
-    maxWidth: '62%',
+    minWidth: 0,
     zIndex: 1,
+  },
+  askPrice: {
+    color: colors2024['red-default'],
   },
   bidPrice: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '400',
-    lineHeight: 16,
-    maxWidth: '62%',
-    zIndex: 1,
   },
   bookAmount: {
     color: colors2024['neutral-title-1'],
+    flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
-    maxWidth: '38%',
     textAlign: 'right',
     zIndex: 1,
   },

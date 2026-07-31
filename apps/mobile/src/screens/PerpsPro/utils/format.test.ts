@@ -11,6 +11,8 @@ describe('Perps Pro formatters', () => {
     expect(formatPerpsProCompactNumber(null)).toBe('-');
     expect(formatPerpsProCompactNumber(999)).toBe('999.00');
     expect(formatPerpsProCompactNumber(1_000)).toBe('1.00K');
+    expect(formatPerpsProCompactNumber(14_080_000)).toBe('14.08M');
+    expect(formatPerpsProCompactNumber(149_900_000)).toBe('149.90M');
     expect(formatPerpsProCompactNumber(1_500_000_000)).toBe('1.50B');
   });
 
