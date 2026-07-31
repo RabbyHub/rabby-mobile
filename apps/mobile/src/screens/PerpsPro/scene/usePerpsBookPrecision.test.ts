@@ -1,25 +1,11 @@
 import { act, renderHook } from '@testing-library/react-native';
 
-import { perpsServiceApi } from '@/core/serviceApi/perps';
-
 import type { PerpsTickOption } from '../model/orderBook';
+import {
+  getPerpsProSessionBookPrecision,
+  resetPerpsProMarketSessionForTests,
+} from '../session/perpsProMarketSession';
 import { usePerpsBookPrecision } from './usePerpsBookPrecision';
-
-jest.mock('@/core/serviceApi/perps', () => ({
-  perpsServiceApi: {
-    getPerpsBookPrecision: jest.fn(),
-    setPerpsBookPrecision: jest.fn(),
-  },
-}));
-
-const mockGetPrecision =
-  perpsServiceApi.getPerpsBookPrecision as jest.MockedFunction<
-    typeof perpsServiceApi.getPerpsBookPrecision
-  >;
-const mockSetPrecision =
-  perpsServiceApi.setPerpsBookPrecision as jest.MockedFunction<
-    typeof perpsServiceApi.setPerpsBookPrecision
-  >;
 
 const tickOptions: PerpsTickOption[] = [
   {
@@ -42,118 +28,122 @@ const tickOptions: PerpsTickOption[] = [
   },
 ];
 
-const deferred = <T>() => {
-  let resolve!: (value: T | PromiseLike<T>) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, reject, resolve };
-};
-
-const flushPromises = async () => {
-  await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-  });
-};
-
 describe('usePerpsBookPrecision', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockGetPrecision.mockResolvedValue({
-      mantissa: null,
-      nSigFigs: 5,
-    });
-    mockSetPrecision.mockResolvedValue(undefined);
+    resetPerpsProMarketSessionForTests();
   });
 
-  it('serializes rapid writes and rolls the latest failure back to the last persisted value', async () => {
-    const firstWrite = deferred<void>();
-    const secondWrite = deferred<void>();
-    const consoleError = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
-    mockSetPrecision
-      .mockReturnValueOnce(firstWrite.promise)
-      .mockReturnValueOnce(secondWrite.promise);
-
-    const hook = renderHook(() =>
-      usePerpsBookPrecision({
-        marketKey: 'native:BTC',
-        tickOptions,
-      }),
-    );
-    await flushPromises();
-
-    expect(hook.result.current.selectedTickOption).toBe(tickOptions[0]);
-
-    act(() => {
-      hook.result.current.selectTickOption(tickOptions[1]!);
-      hook.result.current.selectTickOption(tickOptions[2]!);
-    });
-    await flushPromises();
-
-    expect(hook.result.current.selectedTickOption).toBe(tickOptions[2]);
-    expect(mockSetPrecision).toHaveBeenCalledTimes(1);
-
-    firstWrite.resolve();
-    await flushPromises();
-
-    expect(mockSetPrecision).toHaveBeenCalledTimes(2);
-    expect(hook.result.current.selectedTickOption).toBe(tickOptions[2]);
-
-    secondWrite.reject(new Error('write failed'));
-    await flushPromises();
-
-    expect(hook.result.current.selectedTickOption).toBe(tickOptions[1]);
-    expect(hook.result.current.precision).toEqual({
-      mantissa: 2,
-      nSigFigs: 5,
-    });
-    consoleError.mockRestore();
+  afterEach(() => {
+    resetPerpsProMarketSessionForTests();
   });
 
-  it('ignores a pending write failure after the market changes', async () => {
-    const pendingWrite = deferred<void>();
-    const consoleError = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
-    mockGetPrecision
-      .mockResolvedValueOnce({
-        mantissa: null,
-        nSigFigs: 5,
-      })
-      .mockResolvedValueOnce({
-        mantissa: null,
-        nSigFigs: 4,
-      });
-    mockSetPrecision.mockReturnValueOnce(pendingWrite.promise);
-
+  it('remembers the selected precision independently for each market during the process session', () => {
     const hook = renderHook(
       ({ marketKey }: { marketKey: string }) =>
         usePerpsBookPrecision({
           marketKey,
           tickOptions,
         }),
-      { initialProps: { marketKey: 'native:BTC' } },
+      { initialProps: { marketKey: 'hyperliquid::BTC' } },
     );
-    await flushPromises();
+
+    expect(hook.result.current.selectedTickOption).toBe(tickOptions[0]);
 
     act(() => {
       hook.result.current.selectTickOption(tickOptions[1]!);
     });
-    await flushPromises();
+    expect(hook.result.current.selectedTickOption).toBe(tickOptions[1]);
 
-    hook.rerender({ marketKey: 'native:ETH' });
-    await flushPromises();
+    hook.rerender({ marketKey: 'hyperliquid::ETH' });
+    expect(hook.result.current.selectedTickOption).toBe(tickOptions[0]);
+
+    act(() => {
+      hook.result.current.selectTickOption(tickOptions[2]!);
+    });
     expect(hook.result.current.selectedTickOption).toBe(tickOptions[2]);
 
-    pendingWrite.reject(new Error('old market write failed'));
-    await flushPromises();
+    hook.rerender({ marketKey: 'hyperliquid::BTC' });
+    expect(hook.result.current.selectedTickOption).toBe(tickOptions[1]);
+
+    hook.unmount();
+    const restored = renderHook(() =>
+      usePerpsBookPrecision({
+        marketKey: 'hyperliquid::ETH',
+        tickOptions,
+      }),
+    );
+
+    expect(restored.result.current.selectedTickOption).toBe(tickOptions[2]);
+  });
+
+  it('falls back to the first legal tick without overwriting an unavailable preference', () => {
+    const hook = renderHook(
+      ({ options }: { options: PerpsTickOption[] }) =>
+        usePerpsBookPrecision({
+          marketKey: 'hyperliquid::BTC',
+          tickOptions: options,
+        }),
+      { initialProps: { options: tickOptions } },
+    );
+
+    act(() => {
+      hook.result.current.selectTickOption(tickOptions[1]!);
+    });
+    hook.rerender({ options: [tickOptions[2]!] });
 
     expect(hook.result.current.selectedTickOption).toBe(tickOptions[2]);
-    consoleError.mockRestore();
+    expect(getPerpsProSessionBookPrecision('hyperliquid::BTC')).toEqual({
+      mantissa: 2,
+      nSigFigs: 5,
+    });
+
+    hook.rerender({ options: tickOptions });
+    expect(hook.result.current.selectedTickOption).toBe(tickOptions[1]);
+  });
+
+  it('uses the finest legal tick again after a new process session starts', () => {
+    const firstSession = renderHook(() =>
+      usePerpsBookPrecision({
+        marketKey: 'hyperliquid::BTC',
+        tickOptions,
+      }),
+    );
+
+    act(() => {
+      firstSession.result.current.selectTickOption(tickOptions[2]!);
+    });
+    firstSession.unmount();
+    resetPerpsProMarketSessionForTests();
+
+    const nextSession = renderHook(() =>
+      usePerpsBookPrecision({
+        marketKey: 'hyperliquid::BTC',
+        tickOptions,
+      }),
+    );
+
+    expect(nextSession.result.current.selectedTickOption).toBe(tickOptions[0]);
+  });
+
+  it('ignores a precision that is not legal for the current market', () => {
+    const unavailableOption: PerpsTickOption = {
+      displayPrice: 0.5,
+      mantissa: 5,
+      nSigFigs: 5,
+      priceDecimals: 1,
+    };
+    const hook = renderHook(() =>
+      usePerpsBookPrecision({
+        marketKey: 'hyperliquid::BTC',
+        tickOptions,
+      }),
+    );
+
+    act(() => {
+      hook.result.current.selectTickOption(unavailableOption);
+    });
+
+    expect(hook.result.current.selectedTickOption).toBe(tickOptions[0]);
+    expect(getPerpsProSessionBookPrecision('hyperliquid::BTC')).toBeNull();
   });
 });

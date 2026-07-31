@@ -4,7 +4,6 @@ import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 import {
   PerpsService,
-  type PerpsBookPrecision,
   type PerpsProPreferences,
   type PerpsServiceStore,
 } from './perpsService';
@@ -166,7 +165,7 @@ describe('PerpsService Pro preferences', () => {
 
   it('reads a valid mode from a future schema without downgrading it', async () => {
     const futurePreferences = {
-      version: 3,
+      version: 4,
       viewMode: 'pro',
       futureFlag: 'preserve-me',
     } satisfies PerpsProPreferences;
@@ -184,7 +183,7 @@ describe('PerpsService Pro preferences', () => {
   it('preserves future schema fields when writing a new mode', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
-        version: 4,
+        version: 5,
         viewMode: 'simple',
         futureFlag: { enabled: true },
       },
@@ -195,13 +194,13 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 4,
+      version: 5,
       viewMode: 'pro',
       futureFlag: { enabled: true },
     });
   });
 
-  it('migrates a V1 schema to V2 without losing unknown fields on write', async () => {
+  it('migrates a V1 schema to V3 without losing unknown fields', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 1,
@@ -216,13 +215,13 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 2,
+      version: 3,
       viewMode: 'simple',
       legacyUnknown: 'preserve-me',
     });
   });
 
-  it('repairs an invalid schema to V2 only when the user writes a mode', async () => {
+  it('repairs an invalid schema to V3 only when the user writes a mode', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 0,
@@ -236,105 +235,31 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 2,
+      version: 3,
       viewMode: 'pro',
-      bookPrecisionByMarket: {},
     });
   });
 
-  it('persists precision independently for each market', async () => {
-    const { storage } = createMemoryStorage();
-    const firstService = createService(storage);
-    const btcPrecision: PerpsBookPrecision = {
-      nSigFigs: 5,
-      mantissa: 2,
-    };
-    const xyzPrecision: PerpsBookPrecision = {
-      nSigFigs: 3,
-      mantissa: null,
-    };
-
-    await firstService.setPerpsBookPrecision('hyperliquid::BTC', btcPrecision);
-    await firstService.setPerpsBookPrecision('xyz::xyz:AAPL', xyzPrecision);
-    jest.advanceTimersByTime(1000);
-
-    const rehydratedService = createService(storage);
-    await expect(
-      rehydratedService.getPerpsBookPrecision('hyperliquid::BTC'),
-    ).resolves.toEqual(btcPrecision);
-    await expect(
-      rehydratedService.getPerpsBookPrecision('xyz::xyz:AAPL'),
-    ).resolves.toEqual(xyzPrecision);
-    await expect(
-      rehydratedService.getPerpsBookPrecision('hyperliquid::ETH'),
-    ).resolves.toBeNull();
-  });
-
-  it.each([
-    { nSigFigs: 1, mantissa: null },
-    { nSigFigs: 4, mantissa: 2 },
-    { nSigFigs: 5, mantissa: 1 },
-    { nSigFigs: 5 },
-  ])('rejects invalid precision %#', async precision => {
-    const { storage } = createMemoryStorage();
-    const service = createService(storage);
-
-    await expect(
-      service.setPerpsBookPrecision(
-        'hyperliquid::BTC',
-        precision as PerpsBookPrecision,
-      ),
-    ).rejects.toThrow('Invalid Perps book precision');
-  });
-
-  it('preserves future fields and version when writing precision', async () => {
-    const { readPerpsStore, storage } = createMemoryStorage({
-      proPreferences: {
-        version: 7,
-        viewMode: 'pro',
-        bookPrecisionByMarket: {
-          'hyperliquid::BTC': { nSigFigs: 5, mantissa: null },
-        },
-        futureFlag: { enabled: true },
-      },
-    });
-    const service = createService(storage);
-
-    await service.setPerpsBookPrecision('xyz::xyz:AAPL', {
-      nSigFigs: 4,
-      mantissa: null,
-    });
-    jest.advanceTimersByTime(1000);
-
-    expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 7,
-      viewMode: 'pro',
-      bookPrecisionByMarket: {
-        'hyperliquid::BTC': { nSigFigs: 5, mantissa: null },
-        'xyz::xyz:AAPL': { nSigFigs: 4, mantissa: null },
-      },
-      futureFlag: { enabled: true },
-    });
-  });
-
-  it('ignores malformed persisted precision without rewriting it on read', async () => {
+  it('removes the legacy V2 book precision map without losing other fields', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 2,
         viewMode: 'pro',
         bookPrecisionByMarket: {
-          'hyperliquid::BTC': { nSigFigs: 4, mantissa: 2 },
+          'hyperliquid::BTC': { nSigFigs: 5, mantissa: null },
         },
+        legacyUnknown: { preserve: true },
       },
     });
     const service = createService(storage);
 
-    await expect(
-      service.getPerpsBookPrecision('hyperliquid::BTC'),
-    ).resolves.toBeNull();
+    await expect(service.getPerpsViewMode()).resolves.toBe('pro');
     jest.advanceTimersByTime(1000);
-    expect(readPerpsStore()?.proPreferences.bookPrecisionByMarket).toEqual({
-      'hyperliquid::BTC': { nSigFigs: 4, mantissa: 2 },
+
+    expect(readPerpsStore()?.proPreferences).toEqual({
+      version: 3,
+      viewMode: 'pro',
+      legacyUnknown: { preserve: true },
     });
   });
 

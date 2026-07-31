@@ -1,7 +1,7 @@
 import type { L2Book, WsLevel } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
-import type { PerpsBookPrecision } from '@/core/services/perpsService';
+import type { PerpsBookPrecision } from '@/hooks/perps/subscriptions/perpsBookTypes';
 
 export type PerpsTickOption = PerpsBookPrecision & {
   displayPrice: number;
@@ -142,9 +142,9 @@ export const isMatchingTickOption = (
 
 export const resolvePerpsTickOption = (
   options: PerpsTickOption[],
-  persisted: PerpsBookPrecision | null,
+  preferred: PerpsBookPrecision | null,
 ) =>
-  options.find(option => isMatchingTickOption(option, persisted)) ??
+  options.find(option => isMatchingTickOption(option, preferred)) ??
   options[0] ??
   null;
 

@@ -2,7 +2,8 @@ import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { apisPerps } from '@/core/apis/perps';
-import type { PerpsBookPrecision } from '@/core/services/perpsService';
+
+import type { PerpsBookPrecision } from './perpsBookTypes';
 
 export type PerpsRealtimeStatus =
   | 'idle'

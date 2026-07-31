@@ -41,24 +41,17 @@ export type ApproveSignatures = (SendApproveParams & {
 
 export type PerpsViewMode = 'simple' | 'pro';
 
-export type PerpsBookPrecision = {
-  nSigFigs: 2 | 3 | 4 | 5;
-  mantissa: 2 | 5 | null;
-};
-
 export type PerpsProPreferences = {
   version: number;
   viewMode: PerpsViewMode;
-  bookPrecisionByMarket?: Record<string, PerpsBookPrecision>;
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 2;
+const PERPS_PRO_PREFERENCES_VERSION = 3;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
 const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   version: PERPS_PRO_PREFERENCES_VERSION,
   viewMode: 'simple',
-  bookPrecisionByMarket: {},
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -85,24 +78,10 @@ const normalizePerpsViewMode = (value: unknown): PerpsViewMode => {
     : 'simple';
 };
 
-const normalizePerpsBookPrecision = (
-  value: unknown,
-): PerpsBookPrecision | null => {
-  if (!isRecord(value)) {
-    return null;
-  }
-  const nSigFigs = value.nSigFigs;
-  const mantissa = value.mantissa;
-  if (nSigFigs !== 2 && nSigFigs !== 3 && nSigFigs !== 4 && nSigFigs !== 5) {
-    return null;
-  }
-  if (nSigFigs !== 5 && mantissa != null) {
-    return null;
-  }
-  if (mantissa !== null && mantissa !== 2 && mantissa !== 5) {
-    return null;
-  }
-  return { nSigFigs, mantissa };
+const removeLegacyBookPrecision = (value: ReadableProPreferences) => {
+  const nextValue = { ...value };
+  delete nextValue.bookPrecisionByMarket;
+  return nextValue;
 };
 
 const getWritableProPreferences = (
@@ -111,12 +90,24 @@ const getWritableProPreferences = (
   if (!hasReadableProPreferences(value)) {
     return { ...DEFAULT_PERPS_PRO_PREFERENCES };
   }
+  const writableValue =
+    value.version < PERPS_PRO_PREFERENCES_VERSION
+      ? removeLegacyBookPrecision(value)
+      : value;
   return {
-    ...value,
+    ...writableValue,
     version: Math.max(value.version, PERPS_PRO_PREFERENCES_VERSION),
     viewMode: normalizePerpsViewMode(value),
   } as PerpsProPreferences & Record<string, unknown>;
 };
+
+const migrateLegacyProPreferences = (
+  value: unknown,
+): PerpsProPreferences | null =>
+  hasReadableProPreferences(value) &&
+  value.version < PERPS_PRO_PREFERENCES_VERSION
+    ? getWritableProPreferences(value)
+    : null;
 
 export interface PerpsServiceStore {
   agentVaults: string; // encrypted JSON string of {[address: string]: string}
@@ -199,6 +190,12 @@ export class PerpsService {
     );
     this.marketCacheStorage = options?.storageAdapter;
     this.memoryState.agentWallets = {};
+    const migratedProPreferences = migrateLegacyProPreferences(
+      this.store.proPreferences,
+    );
+    if (migratedProPreferences) {
+      this.store.proPreferences = migratedProPreferences;
+    }
   }
 
   getMarketDataCache = <TItem = unknown>() => {
@@ -286,52 +283,6 @@ export class PerpsService {
     this.store.proPreferences = {
       ...getWritableProPreferences(currentPreferences),
       viewMode,
-    };
-  };
-
-  getPerpsBookPrecision = async (
-    marketKey: string,
-  ): Promise<PerpsBookPrecision | null> => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    if (!marketKey || !hasReadableProPreferences(this.store.proPreferences)) {
-      return null;
-    }
-    const map = this.store.proPreferences.bookPrecisionByMarket;
-    if (!isRecord(map)) {
-      return null;
-    }
-    return normalizePerpsBookPrecision(map[marketKey]);
-  };
-
-  setPerpsBookPrecision = async (
-    marketKey: string,
-    precision: PerpsBookPrecision,
-  ) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    if (!marketKey) {
-      throw new Error('Perps market key is required');
-    }
-    const normalizedPrecision = normalizePerpsBookPrecision(precision);
-    if (!normalizedPrecision) {
-      throw new Error('Invalid Perps book precision');
-    }
-
-    const currentPreferences = getWritableProPreferences(
-      this.store.proPreferences,
-    );
-    const currentMap = isRecord(currentPreferences.bookPrecisionByMarket)
-      ? currentPreferences.bookPrecisionByMarket
-      : {};
-    this.store.proPreferences = {
-      ...currentPreferences,
-      bookPrecisionByMarket: {
-        ...currentMap,
-        [marketKey]: normalizedPrecision,
-      },
     };
   };
 

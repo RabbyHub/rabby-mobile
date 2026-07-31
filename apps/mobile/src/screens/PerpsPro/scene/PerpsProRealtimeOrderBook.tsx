@@ -1,4 +1,4 @@
-import type { PerpsBookPrecision } from '@/core/services/perpsService';
+import type { PerpsBookPrecision } from '@/hooks/perps/subscriptions/perpsBookTypes';
 import { usePerpsFastL2 } from '@/hooks/perps/subscriptions/usePerpsFastL2';
 import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import React, { useEffect, useMemo, useState } from 'react';
