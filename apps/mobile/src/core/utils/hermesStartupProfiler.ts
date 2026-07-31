@@ -19,6 +19,7 @@ const PROFILE_FILE_PREFIX = 'rabby-startup-profile';
 const TRACE_TAG_REACT = 1 << 13;
 
 let didStartStartupProfiler = false;
+let activeProfilerSession: HermesProfilerSessionState | null = null;
 
 type StartupProfilerGlobal = typeof globalThis & {
   __RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__?: number;
@@ -26,7 +27,36 @@ type StartupProfilerGlobal = typeof globalThis & {
   __RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__?: number;
 };
 
-const isStartupProfilerEnabled =
+type HermesProfilerSessionState = {
+  label: string;
+  startedAt: number;
+};
+
+export type HermesProfilerSessionResult = {
+  label: string;
+  startedAt: number;
+  endedAt: number;
+  durationMs: number;
+  profilePath?: string;
+  androidProfilePath?: string;
+  error?: string;
+};
+
+export type HermesProfilerSession = {
+  label: string;
+  startedAt: number;
+  stop: () => Promise<HermesProfilerSessionResult>;
+};
+
+type StartHermesProfilerSessionOptions = {
+  label: string;
+  expectedDurationMs: number;
+  filePrefix?: string;
+  includePlatformProfile?: boolean;
+  deferWorker?: boolean;
+};
+
+const isHermesProfilerEnabled =
   __DEV__ ||
   process.env.RABBY_MOBILE_BUILD_ENV !== 'production' ||
   process.env.buildchannel === 'selfhost-reg';
@@ -34,17 +64,18 @@ const isStartupProfilerEnabled =
 const shouldDeferWorkerDuringStartupProfile =
   process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER === 'true';
 
-function setStartupProfilerActiveUntil(activeUntil: number) {
+function setProfilerActiveUntil(activeUntil: number, deferWorker: boolean) {
   const profilerGlobal = globalThis as StartupProfilerGlobal;
 
   profilerGlobal.__RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__ = activeUntil;
-  profilerGlobal.__RABBY_STARTUP_PROFILER_DEFER_WORKER_UNTIL__ =
-    shouldDeferWorkerDuringStartupProfile ? activeUntil : 0;
+  profilerGlobal.__RABBY_STARTUP_PROFILER_DEFER_WORKER_UNTIL__ = deferWorker
+    ? activeUntil
+    : 0;
   profilerGlobal.__RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__ =
     activeUntil;
 }
 
-function traceStartupProfilerInstant(name: string) {
+function traceHermesProfilerInstant(name: string) {
   const traceGlobal = globalThis as typeof globalThis & {
     nativeTraceBeginSection?: (tag: number, name: string) => void;
     nativeTraceEndSection?: (tag: number) => void;
@@ -80,112 +111,208 @@ function getSentryProfilerModule(): SentryProfilerModule | null {
   return (NativeModules.RNSentry as SentryProfilerModule | undefined) || null;
 }
 
-async function persistStartupProfile(
+function sanitizeProfileFilePart(value: string) {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+async function persistHermesProfile(
   profile: string | undefined,
   androidProfile: unknown,
+  filePrefix: string,
 ) {
   if (!profile && !androidProfile) {
-    return;
+    return {};
   }
 
   const RNFS = await import('@rabby-wallet/react-native-fs');
   const baseDir = RNFS.default.ExternalDirectoryPath;
   if (!baseDir) {
-    console.info('[RabbyStartupProfiler] missing external directory');
-    return;
+    throw new Error('Missing external directory');
   }
 
   const timestamp = Date.now();
-  const basePath = `${baseDir}/${PROFILE_FILE_PREFIX}-${timestamp}`;
+  const safePrefix =
+    sanitizeProfileFilePart(filePrefix) || 'rabby-hermes-profile';
+  const basePath = `${baseDir}/${safePrefix}-${timestamp}`;
+  const result: Pick<
+    HermesProfilerSessionResult,
+    'profilePath' | 'androidProfilePath'
+  > = {};
 
   if (profile) {
-    await RNFS.default.writeFile(`${basePath}.cpuprofile`, profile, 'utf8');
-    console.info('[RabbyStartupProfiler] hermes_profile_saved', {
-      path: `${basePath}.cpuprofile`,
+    result.profilePath = `${basePath}.cpuprofile`;
+    await RNFS.default.writeFile(result.profilePath, profile, 'utf8');
+    console.info('[RabbyHermesProfiler] hermes_profile_saved', {
+      path: result.profilePath,
       bytes: profile.length,
     });
   }
 
   if (androidProfile) {
     const content = JSON.stringify(androidProfile);
-    await RNFS.default.writeFile(
-      `${basePath}.android-profile.json`,
-      content,
-      'utf8',
-    );
-    console.info('[RabbyStartupProfiler] android_profile_saved', {
-      path: `${basePath}.android-profile.json`,
+    result.androidProfilePath = `${basePath}.android-profile.json`;
+    await RNFS.default.writeFile(result.androidProfilePath, content, 'utf8');
+    console.info('[RabbyHermesProfiler] android_profile_saved', {
+      path: result.androidProfilePath,
       bytes: content.length,
     });
   }
+
+  return result;
+}
+
+export function isHermesProfilerSessionActive() {
+  return activeProfilerSession !== null;
+}
+
+export function startHermesProfilerSession({
+  label,
+  expectedDurationMs,
+  filePrefix = `rabby-hermes-profile-${label}`,
+  includePlatformProfile = true,
+  deferWorker = false,
+}: StartHermesProfilerSessionOptions): HermesProfilerSession | null {
+  if (
+    Platform.OS !== 'android' ||
+    !isHermesProfilerEnabled ||
+    activeProfilerSession
+  ) {
+    return null;
+  }
+
+  const sentryProfiler = getSentryProfilerModule();
+  if (typeof sentryProfiler?.startProfiling !== 'function') {
+    console.info('[RabbyHermesProfiler] sentry_profiler_unavailable', {
+      label,
+    });
+    return null;
+  }
+
+  const startedAt = Date.now();
+  const state: HermesProfilerSessionState = {
+    label,
+    startedAt,
+  };
+  const activeUntil =
+    startedAt +
+    Math.max(1000, expectedDurationMs) +
+    PROFILE_WORKER_DEFER_EXTRA_MS;
+
+  try {
+    traceHermesProfilerInstant(`js.hermes_profile.${label}.start`);
+    const started = sentryProfiler.startProfiling(includePlatformProfile);
+    if (started?.started === false) {
+      console.info('[RabbyHermesProfiler] start_error', {
+        label,
+        error: started.error || 'unknown',
+      });
+      return null;
+    }
+
+    activeProfilerSession = state;
+    setProfilerActiveUntil(activeUntil, deferWorker);
+  } catch (error) {
+    setProfilerActiveUntil(0, false);
+    console.info(
+      '[RabbyHermesProfiler] start_throw',
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+
+  let stopPromise: Promise<HermesProfilerSessionResult> | null = null;
+
+  return {
+    label,
+    startedAt,
+    stop() {
+      if (stopPromise) {
+        return stopPromise;
+      }
+
+      stopPromise = (async () => {
+        let profile: string | undefined;
+        let androidProfile: unknown;
+        let stopError: string | undefined;
+
+        try {
+          try {
+            traceHermesProfilerInstant(`js.hermes_profile.${label}.stop`);
+            const stopped = sentryProfiler.stopProfiling?.();
+            profile = stopped?.profile;
+            androidProfile =
+              stopped?.androidProfile || stopped?.nativeProfile || undefined;
+            stopError = stopped?.error;
+          } catch (error) {
+            stopError = error instanceof Error ? error.message : String(error);
+          }
+
+          const endedAt = Date.now();
+          const result: HermesProfilerSessionResult = {
+            label,
+            startedAt,
+            endedAt,
+            durationMs: endedAt - startedAt,
+            ...(stopError ? { error: stopError } : {}),
+          };
+
+          try {
+            Object.assign(
+              result,
+              await persistHermesProfile(profile, androidProfile, filePrefix),
+            );
+          } catch (error) {
+            result.error =
+              error instanceof Error ? error.message : String(error);
+          }
+
+          return result;
+        } finally {
+          if (activeProfilerSession === state) {
+            activeProfilerSession = null;
+          }
+          setProfilerActiveUntil(0, false);
+        }
+      })();
+
+      return stopPromise;
+    },
+  };
 }
 
 export function startHermesStartupProfiler() {
   if (
     didStartStartupProfiler ||
     Platform.OS !== 'android' ||
-    !isStartupProfilerEnabled
+    !isHermesProfilerEnabled
   ) {
     return;
   }
 
   didStartStartupProfiler = true;
-  setStartupProfilerActiveUntil(
-    Date.now() + PROFILE_WINDOW_MS + PROFILE_WORKER_DEFER_EXTRA_MS,
-  );
+  const session = startHermesProfilerSession({
+    label: 'startup',
+    expectedDurationMs: PROFILE_WINDOW_MS,
+    filePrefix: PROFILE_FILE_PREFIX,
+    includePlatformProfile: true,
+    deferWorker: shouldDeferWorkerDuringStartupProfile,
+  });
 
-  const sentryProfiler = getSentryProfilerModule();
-  if (typeof sentryProfiler?.startProfiling !== 'function') {
-    setStartupProfilerActiveUntil(0);
-    console.info('[RabbyStartupProfiler] sentry_profiler_unavailable');
+  console.info('[RabbyStartupProfiler] start', {
+    started: !!session,
+    deferWorker: shouldDeferWorkerDuringStartupProfile,
+  });
+  if (!session) {
     return;
   }
 
-  try {
-    traceStartupProfilerInstant('js.hermes_startup_profile.start');
-    const started = sentryProfiler.startProfiling(true);
-    console.info('[RabbyStartupProfiler] start', {
-      ...started,
-      deferWorker: shouldDeferWorkerDuringStartupProfile,
-    });
-    if (started?.started === false) {
-      setStartupProfilerActiveUntil(0);
-      return;
-    }
-
-    setTimeout(() => {
-      try {
-        traceStartupProfilerInstant('js.hermes_startup_profile.stop');
-        const stopped = sentryProfiler.stopProfiling?.();
-        setStartupProfilerActiveUntil(0);
-        if (stopped?.error) {
-          console.info('[RabbyStartupProfiler] stop_error', stopped.error);
-        }
-
-        persistStartupProfile(
-          stopped?.profile,
-          stopped?.androidProfile || stopped?.nativeProfile,
-        ).catch(error => {
-          console.info(
-            '[RabbyStartupProfiler] persist_error',
-            error instanceof Error ? error.message : String(error),
-          );
-        });
-      } catch (error) {
-        setStartupProfilerActiveUntil(0);
-        console.info(
-          '[RabbyStartupProfiler] stop_throw',
-          error instanceof Error ? error.message : String(error),
-        );
+  setTimeout(() => {
+    session.stop().then(result => {
+      if (result.error) {
+        console.info('[RabbyStartupProfiler] stop_error', result.error);
       }
-    }, PROFILE_WINDOW_MS);
-  } catch (error) {
-    setStartupProfilerActiveUntil(0);
-    console.info(
-      '[RabbyStartupProfiler] start_throw',
-      error instanceof Error ? error.message : String(error),
-    );
-  }
+    });
+  }, PROFILE_WINDOW_MS);
 }
 
 startHermesStartupProfiler();

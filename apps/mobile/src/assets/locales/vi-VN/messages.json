@@ -1927,6 +1927,7 @@
       "currentVersion": "Phiên bản hiện tại",
       "tou": "Điều Khoản Sử Dụng",
       "autoLockTime": "Thời gian tự động khóa",
+      "appLaunchLock": "Khóa khi khởi động",
       "lockWallet": "Khóa ví",
       "modifyRPCURL": "Chỉnh sửa URL RPC",
       "addCustomNetwork": "Thêm mạng tùy chỉnh",

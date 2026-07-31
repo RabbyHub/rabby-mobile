@@ -1159,6 +1159,7 @@ export default function DebtSwapModal({
               onFinished={() => handleSwap()}
               disabled={buttonDisabled || !!ctx?.disabledProcess}
               type="aave"
+              iconColor={colors2024['neutral-contrast']}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess

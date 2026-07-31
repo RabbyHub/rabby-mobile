@@ -2374,6 +2374,7 @@
       "currentVersion": "เวอร์ชันปัจจุบัน",
       "themeMode": "โหมดธีม",
       "autoLockTime": "ระยะเวลาล็อคอัตโนมัติ",
+      "appLaunchLock": "ล็อกเมื่อเปิดแอป",
       "lockWallet": "ล็อกวอลเล็ต",
       "feedback": "ข้อเสนอแนะ",
       "fingerPrint": "ลายนิ้วมือ",

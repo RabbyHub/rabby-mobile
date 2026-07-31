@@ -96,7 +96,7 @@ function BrowserScreenContent({ style }: BrowserScreenProps) {
       <>
         {tabs.map((tab, idx) => {
           const isActiveTab = activeTabId === tab.id;
-          const key = tab.id;
+          const key = tab.key || tab.id;
           const urlInfo = urlUtils.canoicalizeDappUrl(
             tab.initialUrl || tab.url,
           );
@@ -231,7 +231,7 @@ function BrowserScreenContent({ style }: BrowserScreenProps) {
                 searchTabId: '',
               });
             } else {
-              openTab(url);
+              openTab(url, options);
             }
           }}
         />

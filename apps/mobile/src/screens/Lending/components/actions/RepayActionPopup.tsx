@@ -815,9 +815,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           <DirectSignBtn
             ref={directSignBtnRef}
             type="aave"
-            iconColor={
-              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-            }
+            iconColor={colors2024['neutral-contrast']}
             loading={isLoading}
             loadingType="circle"
             key={`${amount}-${needApprove}`}

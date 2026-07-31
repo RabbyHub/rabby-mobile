@@ -80,6 +80,7 @@ interface AddressItemProps {
   showMarkIfNewlyAdded?: React.ComponentProps<
     typeof AddressItemInner2024
   >['showMarkIfNewlyAdded'];
+  disableNavigate?: boolean;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -95,6 +96,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     onManage,
     manageAccessibilityLabel,
     showMarkIfNewlyAdded,
+    disableNavigate,
   } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
@@ -109,8 +111,10 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
     onSelect?.();
     handleGoDetail?.();
-    apisSingleHome.navigateToSingleHome(account);
-  }, [account, onSelect, handleGoDetail]);
+    if (!disableNavigate) {
+      apisSingleHome.navigateToSingleHome(account);
+    }
+  }, [onSelect, handleGoDetail, disableNavigate, account]);
 
   const isCurrentAccount = React.useMemo(() => {
     return (

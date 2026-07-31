@@ -13,7 +13,9 @@ import { useCallback } from 'react';
 
 const isSameAddress = addressUtils.isSameAddress;
 
-export const useFindAddressByWhitelist = () => {
+export const useFindAddressByWhitelist = (hookOptions?: {
+  disableAutoFetch?: boolean;
+}) => {
   const {
     whitelist,
     whitelistRecords,
@@ -21,7 +23,7 @@ export const useFindAddressByWhitelist = () => {
     isAddrOnWhitelist,
     updateWhitelistOrder,
   } = useWhitelist({
-    disableAutoFetch: false,
+    disableAutoFetch: hookOptions?.disableAutoFetch,
   });
   const { accounts } = useAccounts({ disableAutoFetch: true });
 

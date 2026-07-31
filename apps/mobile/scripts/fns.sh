@@ -12,7 +12,8 @@ resolve_fns_script_path() {
 resolve_fns_script_dir() {
   local self_path
   self_path=$(resolve_fns_script_path)
-  cd "$( dirname "$self_path" )" && pwd
+  # -P: yarn (Berry) exports a Windows-style PWD which MSYS bash would echo back verbatim
+  cd "$( dirname "$self_path" )" && pwd -P
 }
 
 RABBY_FNS_SCRIPT_DIR=$(resolve_fns_script_dir)

@@ -587,6 +587,11 @@ const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
 }>();
 export const unlockTimeEvent = new UnlockTimeEvent();
 
+const { EventEmitter: AppLaunchLockEvent } = makeEEClass<{
+  changed: (enabled: boolean) => void;
+}>();
+export const appLaunchLockEvent = new AppLaunchLockEvent();
+
 function normalizeUnlockTime(time: unknown) {
   return typeof time === 'number' && Number.isFinite(time) && time > 0
     ? time
@@ -641,7 +646,21 @@ export function clearUnlockTime() {
   unlockTimeEvent.emit('updated', 0);
 }
 
+export function isAppLaunchLockEnabled() {
+  return getPreferenceSnapshot('appLaunchLock') ?? false;
+}
+
+export function setAppLaunchLockEnabled(enabled: boolean) {
+  setPreferenceSync({ appLaunchLock: enabled });
+  appLaunchLockEvent.emit('changed', enabled);
+}
+
 export function isUnlockSessionValid(now = Date.now()) {
+  // App Launch Lock only disables post-unlock session reuse, which is
+  // equivalent to treating any saved session as already expired. Full keyring
+  // unlock paths are unaffected.
+  if (isAppLaunchLockEnabled()) return false;
+
   const unlockTime = getUnlockTime();
   if (!unlockTime) return false;
   if (unlockTime > now) return false;

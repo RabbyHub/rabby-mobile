@@ -2104,6 +2104,7 @@
       "enableWhitelist": "자산 전송을 위한 허용 목록 활성화",
       "faceId": "Face ID",
       "autoLockTime": "자동 잠금 시간",
+      "appLaunchLock": "실행 시 잠금",
       "lockWallet": "지갑 잠금",
       "fingerPrint": "지문",
       "devicePassword": "기기 비밀번호",
