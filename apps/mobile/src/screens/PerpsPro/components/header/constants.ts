@@ -1,0 +1,1 @@
+export const PERPS_PRO_HEADER_HEIGHT = 56;
