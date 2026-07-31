@@ -124,6 +124,7 @@ import {
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { shouldClearConsumedSwapNavigationParams } from './navigationParams';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -569,11 +570,13 @@ const Swap = ({
         });
       }
     }
-    navigation.setParams({
-      ...navState,
-      isSwapToTokenDetail: false,
-      isFromSwap: false,
-    });
+    if (shouldClearConsumedSwapNavigationParams(navState)) {
+      navigation.setParams({
+        ...navState,
+        isSwapToTokenDetail: false,
+        isFromSwap: false,
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     navState?.chainEnum,
