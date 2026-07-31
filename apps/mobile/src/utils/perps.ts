@@ -172,6 +172,7 @@ export const formatMarkData = (
             topAsset.full_logo_url || getHyperliquidCoinLogoUrl(topAsset.name),
           category: topAsset.category || '',
           categoryId: topAsset.category_id || '',
+          brief: topAsset.brief || '',
         };
         return item;
       })
