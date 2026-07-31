@@ -2582,6 +2582,78 @@
     },
     "perps": {
       "title": "Perps",
+      "pro": {
+        "common": {
+          "loading": "Loading…",
+          "reconnecting": "Reconnecting…",
+          "unavailable": "Temporarily unavailable",
+          "retry": "Retry"
+        },
+        "marketSelector": {
+          "title": "Select Market",
+          "search": "Search",
+          "favorites": "Favorites",
+          "all": "All",
+          "name": "Name",
+          "volume": "Vol",
+          "loading": "Loading markets…",
+          "empty": "No markets found",
+          "select": "Select {{pair}}",
+          "addFavorite": "Add {{pair}} to favorites",
+          "removeFavorite": "Remove {{pair}} from favorites"
+        },
+        "funding": {
+          "title": "Funding Rate",
+          "summary": "Funding (1h) / Countdown",
+          "openDetails": "View funding details",
+          "interval": "Interval",
+          "previousRate": "Previous Funding Rate / Annualized",
+          "nextRate": "Next Funding Rate / Annualized",
+          "estimatedFee": "Est. Funding Fee",
+          "direction": "Direction",
+          "long": "Long",
+          "short": "Short",
+          "pays": "Pays",
+          "longPaysShort": "Long Pays Short",
+          "shortPaysLong": "Short Pays Long",
+          "noPayment": "No Payment",
+          "historyUnavailable": "Previous funding rate is temporarily unavailable.",
+          "explanation": "The funding rate applied at the next funding settlement. If the rate is positive, long position holders pay short position holders; if it is negative, short position holders pay long position holders."
+        },
+        "orderBook": {
+          "price": "Price",
+          "amount": "Amount",
+          "priceAggregation": "Price aggregation",
+          "viewBoth": "Both sides order book",
+          "viewAsks": "Asks order book",
+          "viewBids": "Bids order book"
+        },
+        "trade": {
+          "disabledFrame": "Trading controls are not available in this phase",
+          "isolated": "Isolated",
+          "market": "Market",
+          "amount": "Amount",
+          "available": "Available",
+          "reduceOnly": "Reduce Only",
+          "max": "Max",
+          "cost": "Cost",
+          "buyLong": "Buy/Long",
+          "sellShort": "Sell/Short"
+        },
+        "chart": {
+          "open": "Open chart"
+        },
+        "account": {
+          "disabledFrame": "Account actions are not available in this phase",
+          "account": "Account",
+          "positions": "Positions",
+          "openOrders": "Open Orders",
+          "totalValue": "Total Value",
+          "unrealizedPnl": "Unrealized PNL",
+          "deposit": "Deposit",
+          "withdraw": "Withdraw"
+        }
+      },
       "dappSelect": {
         "title": "Select Perps Provider"
       },
@@ -3702,7 +3774,10 @@
       "close": "Close",
       "chg": "Chg",
       "chgPercent": "%Chg",
-      "volume": "Volume"
+      "volume": "Volume",
+      "vol": "Vol",
+      "range": "Range",
+      "txn": "Txn"
     },
     "GlobalTipsPopup": {
       "btn": "I Got it"

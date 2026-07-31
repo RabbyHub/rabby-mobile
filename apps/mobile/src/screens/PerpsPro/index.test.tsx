@@ -5,8 +5,6 @@ import { PerpsProScreen } from './index';
 
 const mockSetOptions = jest.fn();
 
-jest.mock('@/assets2024/icons/perps/IconHyper.svg', () => 'MockIconHyper');
-
 jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -30,48 +28,30 @@ jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
 });
 
 jest.mock('@/hooks/navigation', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
   return {
-    HeaderBackPressable: () =>
-      ReactModule.createElement(View, { testID: 'back-button' }),
     useRabbyAppNavigation: () => ({
       setOptions: mockSetOptions,
     }),
   };
 });
 
-jest.mock('@/hooks/theme', () => ({
-  useTheme2024: () => ({
-    styles: {
-      backButton: {},
-      content: {},
-      header: {},
-      headerContent: {},
-      modeSwitch: {},
-    },
-  }),
-}));
-
-jest.mock('../PerpsShared/components/PerpsModeSwitch', () => {
+jest.mock('./scene/PerpsProScene', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
   return {
-    PerpsModeSwitch: ({
-      activeMode,
-      disabled,
-      onSelectMode,
+    PerpsProScene: ({
+      isModeSwitching,
+      onSwitchToSimple,
     }: {
-      activeMode: 'simple' | 'pro';
-      disabled?: boolean;
-      onSelectMode: (mode: 'simple' | 'pro') => void;
+      isModeSwitching: boolean;
+      onSwitchToSimple: () => void;
     }) =>
       ReactModule.createElement(Pressable, {
-        accessibilityLabel: activeMode,
-        accessibilityState: { disabled },
-        disabled,
-        onPress: () => onSelectMode('simple'),
-        testID: 'mode-switch',
+        accessibilityLabel: 'pro',
+        accessibilityState: { disabled: isModeSwitching },
+        disabled: isModeSwitching,
+        onPress: onSwitchToSimple,
+        testID: 'perps-pro-scene',
       }),
   };
 });
@@ -81,7 +61,7 @@ describe('PerpsProScreen', () => {
     jest.clearAllMocks();
   });
 
-  it('owns an in-page header and exposes only the Simple mode action', () => {
+  it('owns the navigation header and delegates the Simple action to its scene', () => {
     const onSwitchToSimple = jest.fn();
     const screen = render(
       <PerpsProScreen
@@ -96,12 +76,11 @@ describe('PerpsProScreen', () => {
     expect(
       screen.getByTestId('screen-container').props.accessibilityLabel,
     ).toBe('true:bg1');
-    expect(screen.getByTestId('back-button')).toBeOnTheScreen();
-    expect(screen.getByTestId('mode-switch').props.accessibilityLabel).toBe(
+    expect(screen.getByTestId('perps-pro-scene').props.accessibilityLabel).toBe(
       'pro',
     );
 
-    fireEvent.press(screen.getByTestId('mode-switch'));
+    fireEvent.press(screen.getByTestId('perps-pro-scene'));
     expect(onSwitchToSimple).toHaveBeenCalledTimes(1);
   });
 
@@ -110,8 +89,8 @@ describe('PerpsProScreen', () => {
       <PerpsProScreen isModeSwitching onSwitchToSimple={jest.fn()} />,
     );
 
-    expect(screen.getByTestId('mode-switch').props.accessibilityState).toEqual({
-      disabled: true,
-    });
+    expect(
+      screen.getByTestId('perps-pro-scene').props.accessibilityState,
+    ).toEqual({ disabled: true });
   });
 });
