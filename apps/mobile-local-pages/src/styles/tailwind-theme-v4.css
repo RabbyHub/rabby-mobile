@@ -51,6 +51,7 @@
   --color-light-neutral-secondary: rgba(154, 156, 169, 1);
   --color-light-neutral-info: rgba(197, 197, 207, 1);
   --color-light-neutral-InvertHighlight: rgba(255, 255, 255, 1);
+  --color-light-neutral-contrast: rgba(255, 255, 255, 1);
   --color-light-neutral-black: rgba(0, 0, 0, 1);
   --color-light-neutral-bg-gray: rgba(246, 247, 247, 1);
 
@@ -99,6 +100,7 @@
   --color-dark-neutral-secondary: rgba(113, 115, 128, 1);
   --color-dark-neutral-info: rgba(86, 87, 95, 1);
   --color-dark-neutral-InvertHighlight: rgba(255, 255, 255, 1);
+  --color-dark-neutral-contrast: rgba(0, 0, 0, 1);
   --color-dark-neutral-black: rgba(0, 0, 0, 1);
   --color-dark-neutral-bg-gray: rgba(19, 20, 22, 1);
 }
@@ -149,6 +151,7 @@
   --color-neutral-secondary: rgba(154, 156, 169, 1);
   --color-neutral-info: rgba(197, 197, 207, 1);
   --color-neutral-InvertHighlight: rgba(255, 255, 255, 1);
+  --color-neutral-contrast: rgba(255, 255, 255, 1);
   --color-neutral-black: rgba(0, 0, 0, 1);
   --color-neutral-bg-gray: rgba(246, 247, 247, 1);
 }
@@ -201,6 +204,7 @@
       --color-neutral-secondary: rgba(113, 115, 128, 1);
       --color-neutral-info: rgba(86, 87, 95, 1);
       --color-neutral-InvertHighlight: rgba(255, 255, 255, 1);
+      --color-neutral-contrast: rgba(0, 0, 0, 1);
       --color-neutral-black: rgba(0, 0, 0, 1);
       --color-neutral-bg-gray: rgba(19, 20, 22, 1);
     }

@@ -55,7 +55,7 @@ interface SwapTokenItemProps {
   skeletonLoading?: boolean;
   disabled?: boolean;
 }
-export const SwapTokenItem = (props: SwapTokenItemProps) => {
+const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   const {
     type,
     token,
@@ -318,6 +318,8 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     </Pressable>
   );
 };
+
+export const SwapTokenItem = React.memo(SwapTokenItemInner);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

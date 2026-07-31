@@ -144,6 +144,7 @@ async function exerciseTokenSelectorForPressure(
 
 async function runSwapBridgePressure(
   context: RegressionScenarioExecutionContext,
+  activeTab: 'swap' | 'bridge',
 ) {
   const cycles = readBoundedScenarioInteger({
     context,
@@ -172,10 +173,8 @@ async function runSwapBridgePressure(
   });
   const startedAt = Date.now();
   const probe = createRegressionScenarioPerformanceProbe();
-  const initialTab =
-    context.command.params.tab === 'bridge' ? 'bridge' : 'swap';
   const pressureTabs =
-    initialTab === 'swap'
+    activeTab === 'swap'
       ? (['bridge', 'swap'] as const)
       : (['swap', 'bridge'] as const);
 
@@ -698,7 +697,7 @@ async function openSwapBridge(
       'bridge-funded-dry-run-ready',
       90_000,
     );
-    await runSwapBridgePressure(context);
+    await runSwapBridgePressure(context, requestedTab);
     return;
   }
 
@@ -712,6 +711,7 @@ async function openSwapBridge(
     activeTab: requestedTab,
   });
 
+  let activeTab: 'swap' | 'bridge' = requestedTab;
   if (context.command.action === 'start') {
     const secondTab = requestedTab === 'swap' ? 'bridge' : 'swap';
     await runRegressionScenarioComponentAction(
@@ -728,8 +728,9 @@ async function openSwapBridge(
       passed: true,
       activeTab: secondTab,
     });
+    activeTab = secondTab;
   }
-  await runSwapBridgePressure(context);
+  await runSwapBridgePressure(context, activeTab);
 }
 
 async function openSwapFunded(

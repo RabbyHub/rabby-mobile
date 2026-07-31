@@ -89,8 +89,6 @@ const BridgeToTokenSelect = ({
     // The state update will be handled by handleTokenSelectorClose (via onCancel)
     // when the modal finishes closing, which avoids a race condition
     setTokenSelectorVisible(false, { noTriggerRerender: true });
-
-    setQueryConds(prev => ({ ...prev }));
   };
 
   const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
@@ -169,10 +167,6 @@ const BridgeToTokenSelect = ({
 
   const handleTokenSelectorClose = useCallback(() => {
     setTokenSelectorVisible(false);
-
-    setQueryConds(prev => ({
-      ...prev,
-    }));
   }, [setTokenSelectorVisible]);
 
   const handleSelectToken = useCallback(() => {

@@ -40,7 +40,7 @@ import {
 
 const hiddenSlider = false;
 
-const BridgeToken = ({
+const BridgeTokenInner = ({
   type = 'from',
   token,
   account,
@@ -355,6 +355,8 @@ const BridgeToken = ({
     </View>
   );
 };
+
+const BridgeToken = React.memo(BridgeTokenInner);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

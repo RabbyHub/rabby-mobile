@@ -469,7 +469,7 @@ export const useBridge = (
   }, []);
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
-  const aggregatorsList = useAggregatorsList(active);
+  const aggregatorsList = useAggregatorsList();
 
   const [bestQuoteId, setBestQuoteId] = useState<
     | {

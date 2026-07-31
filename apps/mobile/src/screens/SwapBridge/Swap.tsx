@@ -1,5 +1,4 @@
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { RootNames } from '@/constant/layout';
@@ -20,6 +19,7 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -42,7 +42,6 @@ import { QuoteList } from '../Swap/components/Quotes';
 import { TwpStepApproveModal } from '../Swap/components/TwoStepApproveModal';
 import {
   useDetectLoss,
-  usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
@@ -57,6 +56,10 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import {
+  SwapPendingTransactionsController,
+  type SwapPendingTransactionsControllerRef,
+} from '../Swap/components/SwapPendingTransactionsController';
 import { SwapTokenItem } from '../Swap/components/Token';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
@@ -78,10 +81,7 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import {
-  ApprovePendingTxItem,
-  PendingTxItem,
-} from '../Swap/components/PendingTxItem';
+import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
 import { last } from 'lodash';
 import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
@@ -124,6 +124,7 @@ import {
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { shouldClearConsumedSwapNavigationParams } from './navigationParams';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -253,33 +254,8 @@ const Swap = ({
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
 
   const { colors2024, styles } = useTheme2024({ getStyle });
-
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const {
-    runAsync: runFetchSwapPendingCount,
-    localPendingTxData,
-    clearLocalPendingTxData,
-    runFetchLocalPendingTx,
-    clearSwapHistoryRedDot,
-  } = usePollSwapPendingNumber(5000, sceneActive);
-
-  const headerRight = useCallback(
-    () => (
-      <SwapHeader
-        isForMultipleAddress={isForMultipleAddress}
-        clearSwapHistoryRedDot={clearSwapHistoryRedDot}
-      />
-    ),
-    [isForMultipleAddress, clearSwapHistoryRedDot],
-  );
-  useEffect(() => {
-    if (disableHeaderRight) {
-      return;
-    }
-    setNavigationOptions({
-      headerRight,
-    });
-  }, [disableHeaderRight, headerRight, setNavigationOptions]);
+  const pendingTransactionsRef =
+    useRef<SwapPendingTransactionsControllerRef>(null);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -594,11 +570,13 @@ const Swap = ({
         });
       }
     }
-    navigation.setParams({
-      ...navState,
-      isSwapToTokenDetail: false,
-      isFromSwap: false,
-    });
+    if (shouldClearConsumedSwapNavigationParams(navState)) {
+      navigation.setParams({
+        ...navState,
+        isSwapToTokenDetail: false,
+        isFromSwap: false,
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     navState?.chainEnum,
@@ -885,9 +863,9 @@ const Swap = ({
           addSwapTxHistoryObj,
         );
         handleAmountChange('');
-        runFetchLocalPendingTx();
+        pendingTransactionsRef.current?.refreshLocal();
         setTimeout(() => {
-          runFetchSwapPendingCount();
+          pendingTransactionsRef.current?.refreshRemote();
         }, 500);
       } catch (error) {
         console.error(error);
@@ -1106,6 +1084,54 @@ const Swap = ({
   const checkGasFeeTooHighRef = useRef(true);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const handlePayAmountChange = useMemoizedFn((value: string) => {
+    if (directSignBtnRef.current?.isAuthInProgress()) {
+      return;
+    }
+    handleAmountChange(value);
+  });
+  const handlePayTokenChange = useMemoizedFn((token: TokenItem) => {
+    const chainItem = findChainByServerID(token.chain);
+    const normalSetChainToken = () => {
+      if (chainItem?.enum !== chain) {
+        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+        setReceiveToken(undefined);
+      }
+      setPayToken(token);
+    };
+
+    if (!isForMultipleAddress) {
+      normalSetChainToken();
+      return;
+    }
+
+    switchAccountOnSelectedToken({
+      token,
+      currentAccount,
+    });
+    normalSetChainToken();
+  });
+  const handleReceiveTokenChange = useMemoizedFn((token: TokenItem) => {
+    const chainItem = findChainByServerID(token.chain);
+    if (chainItem?.enum !== chain) {
+      switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+      setPayToken(undefined);
+    }
+    setReceiveToken(token);
+
+    if (token.low_credit_score) {
+      setLowCreditToken(token);
+      setLowCreditVisible(true);
+    }
+  });
+  const payTokenExcludes = useMemo(
+    () => (receiveToken?.id ? [receiveToken.id] : undefined),
+    [receiveToken?.id],
+  );
+  const receiveTokenExcludes = useMemo(
+    () => (payToken?.id ? [payToken.id] : undefined),
+    [payToken?.id],
+  );
 
   const onChangeCheckGasFeeTooHigh = useCallback((b: boolean) => {
     checkGasFeeTooHighRef.current = b;
@@ -1261,9 +1287,9 @@ const Swap = ({
           }
           handleAmountChange('');
           setTimeout(() => {
-            runFetchSwapPendingCount();
+            pendingTransactionsRef.current?.refreshRemote();
           }, 1000);
-          runFetchLocalPendingTx();
+          pendingTransactionsRef.current?.refreshLocal();
           const marketTab = navState?.from?.scene
             ? getMarketTabActionPrefix(navState.from.scene)
             : null;
@@ -1860,12 +1886,6 @@ const Swap = ({
   );
 
   useEffect(() => {
-    if (sceneActive) {
-      refresh(e => e + 1);
-    }
-  }, [sceneActive, refresh]);
-
-  useEffect(() => {
     if (!sceneActive) {
       lowCreditInit.current = false;
     } else if (
@@ -2011,39 +2031,13 @@ const Swap = ({
                   slider={slider}
                   onChangeSlider={onChangeSlider}
                   value={payAmount}
-                  onValueChange={value => {
-                    if (directSignBtnRef.current?.isAuthInProgress()) {
-                      return;
-                    }
-                    handleAmountChange(value);
-                  }}
+                  onValueChange={handlePayAmountChange}
                   token={payToken}
-                  onTokenChange={token => {
-                    const chainItem = findChainByServerID(token.chain);
-                    const normalSetChainToken = () => {
-                      if (chainItem?.enum !== chain) {
-                        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                        setReceiveToken(undefined);
-                      }
-                      setPayToken(token);
-                    };
-
-                    if (!isForMultipleAddress) {
-                      normalSetChainToken();
-                    } else {
-                      switchAccountOnSelectedToken({
-                        token,
-                        currentAccount,
-                      });
-                      normalSetChainToken();
-                    }
-                  }}
+                  onTokenChange={handlePayTokenChange}
                   account={currentAccount}
                   chainId={chainServerId}
                   type={'from'}
-                  excludeTokens={
-                    receiveToken?.id ? [receiveToken?.id] : undefined
-                  }
+                  excludeTokens={payTokenExcludes}
                 />
               </View>
 
@@ -2051,19 +2045,7 @@ const Swap = ({
                 <SwapTokenItem
                   valueLoading={quoteLoading}
                   token={receiveToken}
-                  onTokenChange={token => {
-                    const chainItem = findChainByServerID(token.chain);
-                    if (chainItem?.enum !== chain) {
-                      switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                      setPayToken(undefined);
-                    }
-                    setReceiveToken(token);
-
-                    if (token?.low_credit_score) {
-                      setLowCreditToken(token);
-                      setLowCreditVisible(true);
-                    }
-                  }}
+                  onTokenChange={handleReceiveTokenChange}
                   value={
                     !activeProvider
                       ? ''
@@ -2078,7 +2060,7 @@ const Swap = ({
                   type={'to'}
                   currentQuote={activeProvider}
                   // placeholder={t('page.swap.search-by-name-address')}
-                  excludeTokens={payToken?.id ? [payToken?.id] : undefined}
+                  excludeTokens={receiveTokenExcludes}
                 />
               </View>
               <BridgeSwitchBtn
@@ -2172,15 +2154,13 @@ const Swap = ({
                 </View>
               )}
 
-            {!approveHash &&
-              Boolean(!isShowMoreVisible && localPendingTxData) && (
-                <PendingTxItem
-                  type="swap"
-                  isForMultipleAddress={isForMultipleAddress}
-                  data={localPendingTxData!}
-                  clearLocalPendingTxData={clearLocalPendingTxData}
-                />
-              )}
+            <SwapPendingTransactionsController
+              ref={pendingTransactionsRef}
+              disableHeaderRight={disableHeaderRight}
+              enabled={sceneActive}
+              isForMultipleAddress={isForMultipleAddress}
+              showPendingTransaction={!approveHash && !isShowMoreVisible}
+            />
 
             {!showRiskTips &&
             shouldTwoStepSwap &&
