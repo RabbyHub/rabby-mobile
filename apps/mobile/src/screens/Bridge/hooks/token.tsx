@@ -12,8 +12,6 @@ import {
   useRef,
   useState,
 } from 'react';
-// import { useAsyncFn, useDebounce } from 'react-use';
-import useAsync from 'react-use/lib/useAsync';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { stats } from '@/utils/stats';
@@ -54,6 +52,7 @@ import {
   getOrCreateBridgeAllowanceRequest,
   mergeBridgeQuoteBatch,
 } from '../utils/quoteResultBatch';
+import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
@@ -178,16 +177,20 @@ const useToken = (type: 'from' | 'to', active: boolean) => {
       [type],
     );
 
-  const { value, loading, error } = useAsync(async () => {
-    if (active && userAddress && token?.id && chain) {
-      const data = await openapi.getToken(
-        userAddress,
-        findChainByEnum(chain)!.serverId,
-        token.id,
-      );
-      return { ...data, tokenId: token.id };
-    }
-  }, [active, refreshId, userAddress, token?.id, chain]);
+  const { value, loading, error } = useSceneActiveAsync(
+    async () => {
+      if (userAddress && token?.id && chain) {
+        const data = await openapi.getToken(
+          userAddress,
+          findChainByEnum(chain)!.serverId,
+          token.id,
+        );
+        return { ...data, tokenId: token.id };
+      }
+    },
+    active,
+    [refreshId, userAddress, token?.id, chain],
+  );
 
   useDebounce(
     () => {
@@ -295,22 +298,26 @@ export const useBridge = (
   );
 
   const { value: isSameToken, loading: isSameTokenLoading } =
-    useAsync(async () => {
-      if (active && fromChain && fromToken?.id && toChain && toToken?.id) {
-        try {
-          const data = await openapi.isSameBridgeToken({
-            from_chain_id: findChainByEnum(fromChain)!.serverId,
-            from_token_id: fromToken?.id,
-            to_chain_id: findChainByEnum(toChain)!.serverId,
-            to_token_id: toToken?.id,
-          });
-          return data?.every(e => e.is_same);
-        } catch (error) {
-          return false;
+    useSceneActiveAsync(
+      async () => {
+        if (fromChain && fromToken?.id && toChain && toToken?.id) {
+          try {
+            const data = await openapi.isSameBridgeToken({
+              from_chain_id: findChainByEnum(fromChain)!.serverId,
+              from_token_id: fromToken?.id,
+              to_chain_id: findChainByEnum(toChain)!.serverId,
+              to_token_id: toToken?.id,
+            });
+            return data?.every(e => e.is_same);
+          } catch (error) {
+            return false;
+          }
         }
-      }
-      return false;
-    }, [active, fromChain, fromToken?.id, toChain, toToken?.id]);
+        return false;
+      },
+      active,
+      [fromChain, fromToken?.id, toChain, toToken?.id],
+    );
 
   useEffect(() => {
     if (active && !isSameTokenLoading && slippageObj.autoSlippage) {
@@ -508,35 +515,38 @@ export const useBridge = (
   );
 
   const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
-    useAsync(async () => {
-      if (!active || !currentAccount?.address || !isTempoBridgeChain) {
-        return null;
-      }
+    useSceneActiveAsync(
+      async () => {
+        if (!currentAccount?.address || !isTempoBridgeChain) {
+          return null;
+        }
 
-      return getGasTokenBalance({
-        account: currentAccount,
-        address: currentAccount.address,
-        chainId: chainInfo.id,
-      });
-    }, [
-      currentAccount,
-      currentAccount?.address,
-      active,
-      chainInfo.id,
-      isTempoBridgeChain,
-    ]);
-
-  const { value: gasList, loading: isGasMarketLoading } = useAsync(() => {
-    if (!active) {
-      return Promise.resolve(undefined);
-    }
-    return apiProvider.gasMarketV2(
-      {
-        chainId: chainInfo.serverId,
+        return getGasTokenBalance({
+          account: currentAccount,
+          address: currentAccount.address,
+          chainId: chainInfo.id,
+        });
       },
-      currentAccount!,
+      active,
+      [
+        currentAccount,
+        currentAccount?.address,
+        chainInfo.id,
+        isTempoBridgeChain,
+      ],
     );
-  }, [active, chainInfo?.serverId, currentAccount]);
+
+  const { value: gasList, loading: isGasMarketLoading } = useSceneActiveAsync(
+    () =>
+      apiProvider.gasMarketV2(
+        {
+          chainId: chainInfo.serverId,
+        },
+        currentAccount!,
+      ),
+    active,
+    [chainInfo.serverId, currentAccount],
+  );
 
   const [passGasPrice, setUseGasPrice] = useState(false);
   const isMaxRef = useRef(false);
