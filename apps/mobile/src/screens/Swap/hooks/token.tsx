@@ -15,7 +15,6 @@ import {
   useState,
 } from 'react';
 import { refreshIdAtom } from './atom';
-import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
@@ -57,6 +56,7 @@ import {
 } from './initialSelection';
 import { useSwapService } from '../swapServiceDependencies';
 import { mergeSwapQuoteBatch } from './quoteResultBatch';
+import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 
 export const enableInsufficientQuote = true;
 const FREE_TOKEN_PAIR_AUTO_SLIPPAGE = '0.1';
@@ -304,16 +304,20 @@ const useTokenInfo = ({
     (TokenItem & { tokenId?: string }) | undefined
   >(defaultToken);
 
-  const { value, loading, error } = useAsync(async () => {
-    if (enabled && userAddress && token?.id && chain) {
-      const data = await openapi.getToken(
-        userAddress,
-        findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
-        token.id,
-      );
-      return { ...data, tokenId: token.id };
-    }
-  }, [enabled, tokenRefreshId, userAddress, token?.id, chain]);
+  const { value, loading, error } = useSceneActiveAsync(
+    async () => {
+      if (userAddress && token?.id && chain) {
+        const data = await openapi.getToken(
+          userAddress,
+          findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
+          token.id,
+        );
+        return { ...data, tokenId: token.id };
+      }
+    },
+    enabled,
+    [tokenRefreshId, userAddress, token?.id, chain],
+  );
 
   useDebounce(
     () => {
@@ -747,24 +751,21 @@ export const useTokenPair = ({
   );
 
   const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
-    useAsync(async () => {
-      if (!active || !userAddress || !isTempoSwapChain) {
-        return null;
-      }
+    useSceneActiveAsync(
+      async () => {
+        if (!userAddress || !isTempoSwapChain) {
+          return null;
+        }
 
-      return getGasTokenBalance({
-        account,
-        address: userAddress,
-        chainId: chainInfo.id,
-      });
-    }, [
-      account,
+        return getGasTokenBalance({
+          account,
+          address: userAddress,
+          chainId: chainInfo.id,
+        });
+      },
       active,
-      userAddress,
-      chainInfo.id,
-      refreshId,
-      isTempoSwapChain,
-    ]);
+      [account, userAddress, chainInfo.id, refreshId, isTempoSwapChain],
+    );
 
   const payTokenIsTempoFeeToken = useMemo(() => {
     if (
@@ -792,17 +793,17 @@ export const useTokenPair = ({
     [chain],
   );
 
-  const { value: gasList, loading: isGasMarketLoading } = useAsync(() => {
-    if (!active) {
-      return Promise.resolve(undefined);
-    }
-    return apiProvider.gasMarketV2(
-      {
-        chainId: chainInfo.serverId,
-      },
-      account,
-    );
-  }, [account, active, chainInfo?.serverId]);
+  const { value: gasList, loading: isGasMarketLoading } = useSceneActiveAsync(
+    () =>
+      apiProvider.gasMarketV2(
+        {
+          chainId: chainInfo.serverId,
+        },
+        account,
+      ),
+    active,
+    [account, chainInfo.serverId],
+  );
 
   const normalGasPrice = useMemo(
     () => gasList?.find(e => e.level === 'normal')?.price,
@@ -1231,22 +1232,20 @@ export const useTokenPair = ({
     value: slippageValidInfo,
     // error: slippageValidError,
     loading: slippageValidLoading,
-  } = useAsync(async () => {
-    if (
-      active &&
-      chain &&
-      Number(slippage) &&
-      payToken?.id &&
-      receiveToken?.id
-    ) {
-      return validSlippage({
-        chain,
-        slippage,
-        payTokenId: payToken?.id,
-        receiveTokenId: receiveToken?.id,
-      });
-    }
-  }, [active, slippage, chain, payToken?.id, receiveToken?.id, refreshId]);
+  } = useSceneActiveAsync(
+    async () => {
+      if (chain && Number(slippage) && payToken?.id && receiveToken?.id) {
+        return validSlippage({
+          chain,
+          slippage,
+          payTokenId: payToken?.id,
+          receiveTokenId: receiveToken?.id,
+        });
+      }
+    },
+    active,
+    [slippage, chain, payToken?.id, receiveToken?.id, refreshId],
+  );
 
   const { setSwapSortIncludeGasFee } = useSwapSettings();
 
