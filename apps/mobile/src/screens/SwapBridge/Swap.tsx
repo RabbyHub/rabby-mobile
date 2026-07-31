@@ -1883,12 +1883,6 @@ const Swap = ({
   );
 
   useEffect(() => {
-    if (sceneActive) {
-      refresh(e => e + 1);
-    }
-  }, [sceneActive, refresh]);
-
-  useEffect(() => {
     if (!sceneActive) {
       lowCreditInit.current = false;
     } else if (

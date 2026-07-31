@@ -974,12 +974,6 @@ export const BridgeContent = ({
     manual: true,
   });
 
-  useEffect(() => {
-    if (sceneActive) {
-      refresh(e => e + 1);
-    }
-  }, [sceneActive, refresh]);
-
   const runBuildBridgeTxsRef = useRef<
     ReturnType<typeof runBuildTxs> | undefined
   >(undefined);
