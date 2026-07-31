@@ -6,7 +6,12 @@ import { bytesToHex, publicToAddress, hexToBytes } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
-import { CANDLE_MENU_KEY_V2 } from '@/constant/perps';
+import {
+  DEFAULT_PERPS_CANDLE_INTERVAL,
+  isPerpsCandleInterval,
+  normalizePerpsCandleInterval,
+  type PerpsCandleInterval,
+} from '@/constant/perps';
 import type { Account } from '@/types/account';
 
 type KeyringCrypto = {
@@ -133,7 +138,7 @@ export interface PerpsServiceStore {
     };
   };
   favoriteMarkets: string[];
-  selectedKlineInterval: CANDLE_MENU_KEY_V2;
+  selectedKlineInterval: PerpsCandleInterval;
   marginModeByCoin: Record<string, 'cross' | 'isolated'>;
   proPreferences: PerpsProPreferences;
 }
@@ -183,7 +188,7 @@ export class PerpsService {
           hasShownPerpsGuidePopup: false,
           hasClosedLearnMoreCard: false,
           favoriteMarkets: [],
-          selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+          selectedKlineInterval: DEFAULT_PERPS_CANDLE_INTERVAL,
           marginModeByCoin: {},
           proPreferences: DEFAULT_PERPS_PRO_PREFERENCES,
         },
@@ -372,9 +377,12 @@ export class PerpsService {
     return this.store.hasClosedLearnMoreCard;
   };
 
-  setSelectedKlineInterval = async (value: CANDLE_MENU_KEY_V2) => {
+  setSelectedKlineInterval = async (value: PerpsCandleInterval) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
+    }
+    if (!isPerpsCandleInterval(value)) {
+      throw new Error('Invalid Perps candle interval');
     }
     this.store.selectedKlineInterval = value;
   };
@@ -383,7 +391,12 @@ export class PerpsService {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
     }
-    return this.store.selectedKlineInterval;
+    const storedValue = this.store.selectedKlineInterval as unknown;
+    const normalizedValue = normalizePerpsCandleInterval(storedValue);
+    if (storedValue !== normalizedValue) {
+      this.store.selectedKlineInterval = normalizedValue;
+    }
+    return normalizedValue;
   };
 
   setSendApproveAfterDeposit = async (

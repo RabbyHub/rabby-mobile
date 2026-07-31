@@ -84,6 +84,61 @@ describe('PerpsService Pro preferences', () => {
   });
 
   it.each([
+    ['5M', '5m'],
+    ['15M', '15m'],
+    ['1H', '1h'],
+    ['4H', '4h'],
+    ['1D', '1d'],
+    ['1W', '1w'],
+  ])('migrates legacy Kline interval %s to %s', async (legacy, canonical) => {
+    const { readPerpsStore, storage } = createMemoryStorage({
+      selectedKlineInterval:
+        legacy as unknown as PerpsServiceStore['selectedKlineInterval'],
+    });
+    const service = createService(storage);
+
+    await expect(service.getSelectedKlineInterval()).resolves.toBe(canonical);
+    jest.advanceTimersByTime(1000);
+
+    expect(readPerpsStore()?.selectedKlineInterval).toBe(canonical);
+  });
+
+  it('preserves the case-sensitive natural-month interval', async () => {
+    const { readPerpsStore, storage } = createMemoryStorage();
+    const service = createService(storage);
+
+    await service.setSelectedKlineInterval('1M');
+    await expect(service.getSelectedKlineInterval()).resolves.toBe('1M');
+    jest.advanceTimersByTime(1000);
+
+    expect(readPerpsStore()?.selectedKlineInterval).toBe('1M');
+  });
+
+  it('repairs an unknown persisted Kline interval to the 15m default', async () => {
+    const { readPerpsStore, storage } = createMemoryStorage({
+      selectedKlineInterval:
+        'YTD' as unknown as PerpsServiceStore['selectedKlineInterval'],
+    });
+    const service = createService(storage);
+
+    await expect(service.getSelectedKlineInterval()).resolves.toBe('15m');
+    jest.advanceTimersByTime(1000);
+
+    expect(readPerpsStore()?.selectedKlineInterval).toBe('15m');
+  });
+
+  it('rejects an invalid Kline interval at the service boundary', async () => {
+    const { storage } = createMemoryStorage();
+    const service = createService(storage);
+
+    await expect(
+      service.setSelectedKlineInterval(
+        '1month' as unknown as PerpsServiceStore['selectedKlineInterval'],
+      ),
+    ).rejects.toThrow('Invalid Perps candle interval');
+  });
+
+  it.each([
     {
       label: 'a non-object preference',
       preferences: 'pro',

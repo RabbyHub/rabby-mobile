@@ -47,6 +47,10 @@ import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import {
+  toCanonicalPerpsCandleInterval,
+  toSimplePerpsCandleInterval,
+} from '@/hooks/perps/candles/interval';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
@@ -106,15 +110,19 @@ export const PerpsMarketDetailScreen = () => {
   const [selectedInterval, setSelectedIntervalState] =
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   useEffect(() => {
+    let active = true;
     apisPerps.getSelectedKlineInterval().then(v => {
-      if (v) {
-        setSelectedIntervalState(v);
+      if (active) {
+        setSelectedIntervalState(toSimplePerpsCandleInterval(v));
       }
     });
+    return () => {
+      active = false;
+    };
   }, []);
   const setSelectedInterval = useMemoizedFn((v: CANDLE_MENU_KEY_V2) => {
     setSelectedIntervalState(v);
-    apisPerps.setSelectedKlineInterval(v);
+    apisPerps.setSelectedKlineInterval(toCanonicalPerpsCandleInterval(v));
   });
   const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
   const coinNameRef = useRef(coin);
