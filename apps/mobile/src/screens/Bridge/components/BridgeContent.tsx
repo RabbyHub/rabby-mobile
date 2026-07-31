@@ -11,7 +11,6 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
-  usePollBridgePendingNumber,
   useQuoteVisible,
   useRefreshId,
   useSetQuoteVisible,
@@ -23,9 +22,6 @@ import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveMod
 import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import type { BridgeHeaderRef } from './BridgeHeader';
-import { BridgeHeader } from './BridgeHeader';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
@@ -100,6 +96,10 @@ import {
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { RootNames } from '@/constant/layout';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
+import {
+  BridgePendingTransactionsController,
+  type BridgePendingTransactionsControllerRef,
+} from './BridgePendingTransactionsController';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -328,19 +328,11 @@ export const BridgeContent = ({
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
-  const headerRef = useRef<BridgeHeaderRef>(null);
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const pendingTransactionsRef =
+    useRef<BridgePendingTransactionsControllerRef>(null);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
-
-  const {
-    runAsync: runFetchBridgePendingCount,
-    localPendingTxData,
-    runFetchLocalPendingTx,
-    clearLocalPendingTxData,
-    clearBridgeHistoryRedDot,
-  } = usePollBridgePendingNumber(10000, sceneActive);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -374,28 +366,6 @@ export const BridgeContent = ({
         typeof RootNames.SwapBridge | typeof RootNames.MultiSwapBridge
       >
     >();
-
-  const openHistory = useMemoizedFn(() => {
-    headerRef.current?.openHistory();
-  });
-
-  const Header = useCallback(
-    () => (
-      <BridgeHeader
-        ref={headerRef}
-        clearBridgeHistoryRedDot={clearBridgeHistoryRedDot}
-      />
-    ),
-    [clearBridgeHistoryRedDot],
-  );
-  useEffect(() => {
-    if (disableHeaderRight) {
-      return;
-    }
-    setNavigationOptions({
-      headerRight: Header,
-    });
-  }, [Header, disableHeaderRight, setNavigationOptions]);
 
   const {
     fromChain,
@@ -774,10 +744,10 @@ export const BridgeContent = ({
           },
           addBridgeTxHistoryObj,
         );
-        runFetchLocalPendingTx();
+        pendingTransactionsRef.current?.refreshLocal();
         handleAmountChange('');
         setTimeout(() => {
-          runFetchBridgePendingCount();
+          pendingTransactionsRef.current?.refreshRemote();
         }, 500);
       } catch (error) {
         toast.info((error as any)?.message || String(error));
@@ -1310,10 +1280,10 @@ export const BridgeContent = ({
         builtBridgeTxsKeyRef.current = '';
         prefetchedBridgeTxsKeyRef.current = '';
         mutateTxs([]);
-        runFetchLocalPendingTx();
+        pendingTransactionsRef.current?.refreshLocal();
         handleAmountChange('');
         setTimeout(() => {
-          runFetchBridgePendingCount();
+          pendingTransactionsRef.current?.refreshRemote();
         }, 500);
       } catch (error: any) {
         console.log('bridge mini sign error', error);
@@ -1693,6 +1663,11 @@ export const BridgeContent = ({
         {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
+        <BridgePendingTransactionsController
+          ref={pendingTransactionsRef}
+          disableHeaderRight={disableHeaderRight}
+          enabled={sceneActive}
+        />
         <KeyboardAwareScrollView
           style={styles.container}
           contentContainerStyle={{

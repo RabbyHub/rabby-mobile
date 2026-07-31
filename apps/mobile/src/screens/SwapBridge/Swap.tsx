@@ -1,5 +1,4 @@
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { RootNames } from '@/constant/layout';
@@ -43,7 +42,6 @@ import { QuoteList } from '../Swap/components/Quotes';
 import { TwpStepApproveModal } from '../Swap/components/TwoStepApproveModal';
 import {
   useDetectLoss,
-  usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
@@ -58,6 +56,10 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import {
+  SwapPendingTransactionsController,
+  type SwapPendingTransactionsControllerRef,
+} from '../Swap/components/SwapPendingTransactionsController';
 import { SwapTokenItem } from '../Swap/components/Token';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
@@ -79,10 +81,7 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import {
-  ApprovePendingTxItem,
-  PendingTxItem,
-} from '../Swap/components/PendingTxItem';
+import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
 import { last } from 'lodash';
 import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
@@ -254,33 +253,8 @@ const Swap = ({
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
 
   const { colors2024, styles } = useTheme2024({ getStyle });
-
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const {
-    runAsync: runFetchSwapPendingCount,
-    localPendingTxData,
-    clearLocalPendingTxData,
-    runFetchLocalPendingTx,
-    clearSwapHistoryRedDot,
-  } = usePollSwapPendingNumber(5000, sceneActive);
-
-  const headerRight = useCallback(
-    () => (
-      <SwapHeader
-        isForMultipleAddress={isForMultipleAddress}
-        clearSwapHistoryRedDot={clearSwapHistoryRedDot}
-      />
-    ),
-    [isForMultipleAddress, clearSwapHistoryRedDot],
-  );
-  useEffect(() => {
-    if (disableHeaderRight) {
-      return;
-    }
-    setNavigationOptions({
-      headerRight,
-    });
-  }, [disableHeaderRight, headerRight, setNavigationOptions]);
+  const pendingTransactionsRef =
+    useRef<SwapPendingTransactionsControllerRef>(null);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -886,9 +860,9 @@ const Swap = ({
           addSwapTxHistoryObj,
         );
         handleAmountChange('');
-        runFetchLocalPendingTx();
+        pendingTransactionsRef.current?.refreshLocal();
         setTimeout(() => {
-          runFetchSwapPendingCount();
+          pendingTransactionsRef.current?.refreshRemote();
         }, 500);
       } catch (error) {
         console.error(error);
@@ -1310,9 +1284,9 @@ const Swap = ({
           }
           handleAmountChange('');
           setTimeout(() => {
-            runFetchSwapPendingCount();
+            pendingTransactionsRef.current?.refreshRemote();
           }, 1000);
-          runFetchLocalPendingTx();
+          pendingTransactionsRef.current?.refreshLocal();
           const marketTab = navState?.from?.scene
             ? getMarketTabActionPrefix(navState.from.scene)
             : null;
@@ -2183,15 +2157,13 @@ const Swap = ({
                 </View>
               )}
 
-            {!approveHash &&
-              Boolean(!isShowMoreVisible && localPendingTxData) && (
-                <PendingTxItem
-                  type="swap"
-                  isForMultipleAddress={isForMultipleAddress}
-                  data={localPendingTxData!}
-                  clearLocalPendingTxData={clearLocalPendingTxData}
-                />
-              )}
+            <SwapPendingTransactionsController
+              ref={pendingTransactionsRef}
+              disableHeaderRight={disableHeaderRight}
+              enabled={sceneActive}
+              isForMultipleAddress={isForMultipleAddress}
+              showPendingTransaction={!approveHash && !isShowMoreVisible}
+            />
 
             {!showRiskTips &&
             shouldTwoStepSwap &&
