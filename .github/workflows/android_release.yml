@@ -28,15 +28,15 @@ on:
   workflow_call:
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
-        required: true
+        required: false
       RABBY_MOBILE_ANDROID_STORE_PASSWORD:
-        required: true
+        required: false
       RABBY_MOBILE_ANDROID_KEY_PASSWORD:
-        required: true
+        required: false
       RABBY_MOBILE_ANDROID_KEY_ALIAS:
-        required: true
+        required: false
       RABBY_MOBILE_KR_PWD:
-        required: true
+        required: false
 
 defaults:
   run:
