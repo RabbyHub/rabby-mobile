@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Reg Rabby Wallet</string>
+    <string name="app_name">Reg Chog Wallet</string>
     <string name="rabbygo_scheme">rabbygo-regression</string>
     <string name="rabbygo_httpdomain">go.rabby.io</string>
     <string name="rabbygo_pathprefix">/mobile-regression/</string>

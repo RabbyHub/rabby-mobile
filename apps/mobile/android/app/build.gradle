@@ -153,9 +153,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.debank.rabbymobile"
+    namespace "com.chog.wallet"
     defaultConfig {
-        applicationId "com.debank.rabbymobile"
+        applicationId "com.chog.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 100234

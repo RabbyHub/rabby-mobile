@@ -6,36 +6,21 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 project_dir="$(cd "$script_dir/../.." && pwd)"
 
 ensure_node_runtime() {
-  # If nvm is on PATH, attempt to install/use the version from .nvmrc.
   if command -v nvm >/dev/null 2>&1; then
-    echo "[prepare-mobile-build] nvm found on PATH, installing/using version from .nvmrc"
-    # `nvm install` reads .nvmrc if present; it will install the version and also switch to it.
-    if nvm install; then
-      # ensure the version is active
-      nvm use || true
-      return 0
-    else
-      echo "[prepare-mobile-build] nvm install failed, will try to fall back to system node" >&2
-    fi
+    nvm use
+    return 0
   fi
 
-  # If nvm script exists in common NVM_DIR, source it and try the same.
   local nvm_dir="${NVM_DIR:-$HOME/.nvm}"
   if [ -s "$nvm_dir/nvm.sh" ]; then
     # shellcheck source=/dev/null
     . "$nvm_dir/nvm.sh"
-    echo "[prepare-mobile-build] sourced nvm.sh from $nvm_dir, installing/using version from .nvmrc"
-    if nvm install; then
-      nvm use || true
-      return 0
-    else
-      echo "[prepare-mobile-build] nvm install after sourcing nvm.sh failed, will try to fall back to system node" >&2
-    fi
+    nvm use
+    return 0
   fi
 
-  # If nvm is not available or install failed, but node exists, use the system node.
   if command -v node >/dev/null 2>&1; then
-    echo "[prepare-mobile-build] using system node $(node -v) because nvm wasn't usable"
+    echo "[prepare-mobile-build] nvm not found, keep current node $(node -v)"
     return 0
   fi
 

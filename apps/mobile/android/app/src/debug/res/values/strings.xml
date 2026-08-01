@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Debug Rabby Wallet</string>
+    <string name="app_name">Debug Chog Wallet</string>
     <string name="rabbygo_scheme">rabbygo-debug</string>
     <string name="rabbygo_httpdomain">go.rabby.io</string>
     <string name="rabbygo_pathprefix">/mobile-debug/</string>

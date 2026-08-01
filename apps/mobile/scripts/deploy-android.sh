@@ -32,42 +32,6 @@ refresh_android_version_metadata() {
   version_bundle_name="$BUILD_DATE-${android_version_name}.${android_version_code}"
 }
 
-prepare_appstore_android_version_code() {
-  local package_name latest_version_code target_version_code
-
-  if ! resolve_google_play_service_account_json >/dev/null 2>&1; then
-    echo "[deploy-android] skip Google Play versionCode auto-bump because no service account credentials are available."
-    return 0
-  fi
-
-  package_name=$(resolve_google_play_package_name "") || {
-    echo "[deploy-android] skip Google Play versionCode auto-bump because package name could not be resolved."
-    return 0
-  }
-
-  latest_version_code=$(resolve_google_play_latest_version_code "$package_name" 2>/dev/null || true)
-  if [ -z "$latest_version_code" ]; then
-    echo "[deploy-android] skip Google Play versionCode auto-bump because latest Google Play versionCode could not be determined."
-    return 0
-  fi
-
-  if [ "$android_version_code" -gt "$latest_version_code" ]; then
-    echo "[deploy-android] Google Play versionCode preflight passed before build: local=$android_version_code latest=$latest_version_code"
-    return 0
-  fi
-
-  target_version_code=$((latest_version_code + 1))
-  echo "[deploy-android] local Android versionCode $android_version_code is not ahead of Google Play latest $latest_version_code; bumping local build number to at least $target_version_code before appstore build."
-
-  ./node_modules/.bin/react-native-version \
-    --never-amend \
-    --target android \
-    --set-build "$target_version_code" || return 1
-  refresh_android_version_metadata
-
-  echo "[deploy-android] Android versionCode prepared for appstore build: $android_version_code"
-}
-
 refresh_android_version_metadata
 
 version_bundle_suffix=""
@@ -76,13 +40,9 @@ deployment_local_dir="$script_dir/deployments/android"
 
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
-if [ "$buildchannel" == "appstore" ]; then
-  prepare_appstore_android_version_code || exit $?
-fi
 
 prepare_android_build_artifacts() {
   turbo_prepare_js_dependencies || return $?
-  turbo_prepare_ruby_bundle || return $?
 
   if turbo_build_enabled; then
     android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
@@ -113,60 +73,23 @@ prepare_android_build_artifacts() {
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   prepare_android_build_artifacts || return $?
-  if [ $RABBY_HOST_OS != "Windows" ]; then
-    if [ "$FAST_BUILD_ENABLED" = "true" ]; then
-      echo "[deploy-android] try to fast-build from template.apk."
-      echo "[deploy-android] fast build scope: ${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}"
-      CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/android.sh resign
-      if [ $? -eq 0 ]; then
-        echo "[deploy-android] APK fast-build succeeded."
-        android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
-        return ;
-      fi
-      echo "Failed to fast-build APK. Will build it again."
-      FAST_BUILD_ENABLED="false"
+  if [ "$FAST_BUILD_ENABLED" = "true" ]; then
+    echo "[deploy-android] try to fast-build from template.apk."
+    echo "[deploy-android] fast build scope: ${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}"
+    CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/android.sh resign
+    if [ $? -eq 0 ]; then
+      echo "[deploy-android] APK fast-build succeeded."
+      android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
+      return ;
     fi
-    echo "[deploy-android] build with fastlane."
-    turbo_restore_gradle_state
-    turbo_bundle_exec exec fastlane android selfhost
-    fastlane_status=$?
-    [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
-    return $fastlane_status
-  else
-    echo "[deploy-android] run build.sh script directly."
-    if [ $buildchannel == "selfhost" ]; then
-      sh $project_dir/android/build.sh buildApk
-    else
-      sh $project_dir/android/build.sh buildRegApk
-    fi
+    echo "Failed to fast-build APK. Will build it again."
+    FAST_BUILD_ENABLED="false"
   fi
-}
-
-build_appstore() {
-  export RABBY_MOBILE_BUILD_ENV="production";
-  if turbo_build_enabled; then
-    prepare_android_build_artifacts || return $?
+  echo "[deploy-android] build directly with gradle."
+  if [ $buildchannel == "selfhost" ]; then
+    sh $project_dir/android/build.sh buildApk
   else
-    ensure_inpage_bridge_assets || return $?
-    yarn &&
-      yarn check-nodeengines &&
-      yarn ../mobile-local-pages bundle:all &&
-      yarn link-assets &&
-      yarn buildworker:prod:android
-  fi
-
-  turbo_prepare_ruby_bundle || return $?
-
-  if [ $RABBY_HOST_OS != "Windows" ]; then
-    echo "[deploy-android] build with fastlane."
-    turbo_restore_gradle_state
-    turbo_bundle_exec exec fastlane android playstore
-    fastlane_status=$?
-    [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
-    return $fastlane_status
-  else
-    echo "[deploy-android] run build.sh script directly."
-    sh $project_dir/android/build.sh buildAppStore
+    sh $project_dir/android/build.sh buildRegApk
   fi
 }
 
@@ -192,38 +115,27 @@ done
 # ============ prepare changelogs :end ============== #
 
 echo "[deploy-android] start build..."
-if [ $buildchannel == "appstore" ]; then
-  google_play_warn_if_version_code_not_ahead "$android_version_code" "" "Android appstore build preflight"
-  version_bundle_suffix=".aab"
-  staging_dir_suffix="-appstore"
-  [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
-  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_appstore;
+version_bundle_suffix=".apk"
+staging_dir_suffix=""
+if [ $buildchannel == "selfhost-reg" ]; then
+  [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
+
+  android_export_target="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
+
+  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_selfhost;
 
   if [ ! -f $android_export_target ]; then
     echo "'$android_export_target' is not exist, maybe you need to run build.sh first?"
     exit 1
   fi
 else
-  version_bundle_suffix=".apk"
-  staging_dir_suffix=""
-  if [ $buildchannel == "selfhost-reg" ]; then
-    [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
+  android_export_target="$project_dir/android/app/build/outputs/apk/release/$android_version_code.apk"
 
-    android_export_target="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
+  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_selfhost;
 
-    [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_selfhost;
-
-    if [ ! -f $android_export_target ]; then
-      echo "'$android_export_target' is not exist, maybe you need to run build.sh first?"
-      exit 1
-    fi
-  else
-    android_export_target="$project_dir/android/app/build/outputs/apk/release/$android_version_code.apk"
-
-    if [ ! -f $android_export_target ]; then
-      echo "'$android_export_target' is not exist, maybe you need to download it from https://play.google.com/console/u/1/developers/bundle-explorer-selector to $android_export_target MANUALLY"
-      exit 1
-    fi
+  if [ ! -f $android_export_target ]; then
+    echo "'$android_export_target' is not exist, maybe you need to run build.sh first?"
+    exit 1
   fi
 fi
 
@@ -312,7 +224,6 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
 
   if [ "$buildchannel" == 'selfhost-reg' ]; then
     echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
@@ -324,13 +235,8 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   fi
 
   echo "";
-  if [ $buildchannel != "appstore" ]; then
-    echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
-    echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read"
-  else
-    echo "[deploy-android] open directory and upload to google play store "
-    echo "[deploy-android] you can find the .aab from $backup_s3_dir";
-  fi
+  echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
+  echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read"
 
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
