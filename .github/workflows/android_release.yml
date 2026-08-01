@@ -161,10 +161,10 @@ jobs:
           GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
 
-      # - name: Upload artifact
-      #   uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
-      #   with:
-      #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
-      #     path: |
-      #       ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-      #     retention-days: 7
+        - name: Upload artifact
+          uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+          with:
+            name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+            path: |
+              ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            retention-days: 7
