@@ -9,6 +9,7 @@ import type { HomeTabName as TabName } from '@/hooks/navigation';
 import { useMyAccounts } from '@/hooks/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { findAccountByPriority } from '@/utils/account';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
   const hasBeenFocusedRef = useRef(false);
@@ -53,7 +54,12 @@ export const useCheckIsExpireAndUpdate = ({
 }) => {
   const initRef = useRef(false);
   const { myTop10Addresses } = useAccountInfo();
-  const balanceAccounts = balanceAccountsStore(s => s.balance);
+  const balanceAccounts = useActivityStore(
+    balanceAccountsStore,
+    state => state.balance,
+    Object.is,
+    { storeLabel: 'home-multi-assets-balance-accounts' },
+  );
   const { checkIsExpireAndUpdate } = useLoadAssets();
   const triggerUpdate = useCallback(
     (force?: boolean) =>
