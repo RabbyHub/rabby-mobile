@@ -105,7 +105,7 @@ jobs:
 
           [ -z "$buildchannel" ] && export buildchannel=selfhost;
           [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
-          ./scripts/deploy-android.sh
+          bash ./scripts/deploy-android.sh
         env:
           FLATTEN_REFNAME: ${{ steps.actionvars.outputs.flatten_refname }}
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
