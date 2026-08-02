@@ -194,7 +194,7 @@
         "title1": "¿Qué es GasAccount?",
         "title2": "Cómo usar GasAccount",
         "title4": "¿Es seguro GasAccount?",
-        "desc3": "Rabby Wallet no cobra tarifas adicionales. Solo pagas el gas por tu transacción y una pequeña cantidad de gas por enviar ese gas de GasAccount a tu dirección.",
+        "desc3": "Chog Wallet no cobra tarifas adicionales. Solo pagas el gas por tu transacción y una pequeña cantidad de gas por enviar ese gas de GasAccount a tu dirección.",
         "desc2": "Añade fondos a tu GasAccount y úsalos para cualquier transacción. Al firmar, elige pagar el gas con tokens nativos o GasAccount; puedes cambiar en cualquier momento.",
         "desc4": "GasAccount no requiere aprobaciones ni permisos de contrato. Depositas en la dirección del GasAccount de Rabby, y Rabby envía gas a tu dirección cuando es necesario. Totalmente seguro por diseño.",
         "desc1": "GasAccount es una nueva forma de pagar las tarifas de gas. En lugar de usar tokens nativos en cada cadena, puedes usar una cuenta para cubrir el gas para todas tus direcciones en todas las cadenas. Simple, opcional y nunca te quedas sin gas."
@@ -317,7 +317,7 @@
       "alreadyHaveAddress": "Ya tengo una cartera",
       "sync": "Escanee para sincronizar la cartera de extensión Rabby",
       "createNewAddress": "Crear una cartera nueva",
-      "welcomeTitle": "Te damos la bienvenida a\nRabby Wallet",
+      "welcomeTitle": "Te damos la bienvenida a\nChog Wallet",
       "alreadyUseRabby": "Ya uso Rabby"
     },
     "transactions": {
@@ -573,7 +573,7 @@
       },
       "nftCollection": "Colección de NFT",
       "gasAccountForGas": "Usar USD de mi GasAccount para pagar el gas",
-      "sigCantDecode": "Esta firma no puede ser decodificada por Rabby Wallet",
+      "sigCantDecode": "Esta firma no puede ser decodificada por Chog Wallet",
       "contractCall": {
         "payNativeToken": "Pagar {{symbol}}",
         "operationABIDesc": "La operación se decodifica desde ABI",
@@ -756,7 +756,7 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "Cambiar al servicio Safe de Rabby",
-          "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Rabby Wallet para autorizar transacciones.</2>"
+          "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Chog Wallet para autorizar transacciones.</2>"
         }
       },
       "errorRetry": {
@@ -1281,8 +1281,8 @@
         "button": "Entendido",
         "wallet": "Cartera",
         "title": "Tarifa de Rabby",
-        "swapDesc": "Rabby Wallet siempre encontrará la mejor tarifa posible entre los principales agregadores y verificará la fiabilidad de sus ofertas. Rabby cobra una tarifa del <1>0,25%</1> (0 % para wrap), que se incluye automáticamente en la cotización.",
-        "bridgeDesc": "Rabby Wallet siempre encontrará la mejor tarifa posible entre los principales agregadores y verificará la fiabilidad de sus ofertas. Rabby cobra una tarifa del <1>0,25%</1>, que se incluye automáticamente en la cotización."
+        "swapDesc": "Chog Wallet siempre encontrará la mejor tarifa posible entre los principales agregadores y verificará la fiabilidad de sus ofertas. Rabby cobra una tarifa del <1>0,25%</1> (0 % para wrap), que se incluye automáticamente en la cotización.",
+        "bridgeDesc": "Chog Wallet siempre encontrará la mejor tarifa posible entre los principales agregadores y verificará la fiabilidad de sus ofertas. Rabby cobra una tarifa del <1>0,25%</1>, que se incluye automáticamente en la cotización."
       },
       "wrap-contract": "Contrato de wrap",
       "historyTitle": "Historial de Swap",
@@ -1300,7 +1300,7 @@
         "importAddress": "Importar Cartera",
         "selectAddMethod": "Seleccionar método para añadir",
         "seedPhraseOrPrivateKey": "Frase semilla o clave privada",
-        "restoreRabbyWallet": "Restaurar Rabby Wallet",
+        "restoreRabbyWallet": "Restaurar Chog Wallet",
         "moreOptions": "Más opciones"
       },
       "createNewAddress": {
@@ -1365,7 +1365,7 @@
         "importAddress": "Importar una cartera"
       },
       "rateModalTriggerOnHome": {
-        "description": "¿Cómo calificas a Rabby Wallet?"
+        "description": "¿Cómo calificas a Chog Wallet?"
       },
       "rateModal": {
         "feedbackSubmit": "Enviar",
@@ -1566,7 +1566,7 @@
         "chooseBackupMethodDesc": "Las copias de seguridad te permiten restaurar tu cartera si eliminas la aplicación o pierdes tu dispositivo.",
         "backupTips": "Asegúrate de que nadie mire tu pantalla mientras haces una copia de seguridad de la frase semilla",
         "backupRestoreUnlockDesc": "Utiliza la misma contraseña que estableciste para cifrar tus backups.",
-        "backupUnlockDesc": "Mantén tu contraseña segura para restaurar copias de seguridad. Rabby Wallet no la almacena y no puede recuperarla.",
+        "backupUnlockDesc": "Mantén tu contraseña segura para restaurar copias de seguridad. Chog Wallet no la almacena y no puede recuperarla.",
         "maxAccountCount": "Máximo 50 direcciones cada vez",
         "addMoreWalletTitle": "Añadir más carteras\ndesde esta frase"
       },
@@ -1719,7 +1719,7 @@
         "usePassword": "Cambiado a usar contraseña para desbloquear.",
         "enableBiometricAlert": {
           "yes": "Sí",
-          "content": "¿Deseas habilitar {{ bioType }} para desbloquear Rabby Wallet?",
+          "content": "¿Deseas habilitar {{ bioType }} para desbloquear Chog Wallet?",
           "title": "Habilitar {{ bioType }}",
           "no": "Cancelar"
         }
@@ -2092,7 +2092,7 @@
         "empty": "No se encontraron cadenas",
         "tips": {
           "added": "Ya has añadido esta cadena",
-          "supported": "Cadena ya integrada por Rabby Wallet"
+          "supported": "Cadena ya integrada por Chog Wallet"
         }
       },
       "signTx": {
@@ -2868,7 +2868,7 @@
         "feeTitle": "Tarifa",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "Cuando los usuarios realizan transacciones, se aplican tanto las <1>comisiones de trading</1> como las <2>comisiones de builder</2>.",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "Descuento por tiempo limitado en tarifas de trading",
         "amount": "Importe",
         "asset": "Activo",
@@ -3701,7 +3701,7 @@
     "assets": "activos",
     "Cancel": "Cancelar",
     "addButton": "Añadir",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "refresh": "Actualizar",
     "Paste": "Pegar",
     "Confirm": "Confirmar",
@@ -3807,10 +3807,10 @@
       "message": "Consulte cómo actualizar el firmware de Ledger desde el soporte de Ledger"
     },
     "permissions_alert": {
-      "message": "Rabby Wallet utiliza Bluetooth para conectarse a Ledger",
+      "message": "Chog Wallet utiliza Bluetooth para conectarse a Ledger",
       "cancel": "No permitir",
       "open_settings": "OK",
-      "title": "\"Rabby Wallet\" quiere usar Bluetooth"
+      "title": "\"Chog Wallet\" quiere usar Bluetooth"
     }
   },
   "background": {

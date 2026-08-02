@@ -37,7 +37,7 @@
       "createNewAddress": "Buat Dompet Baru",
       "alreadyHaveAddress": "Saya sudah memiliki dompet",
       "sync": "Pindai untuk Menyinkronkan Dompet Ekstensi Rabby",
-      "welcomeTitle": "Selamat datang di\nRabby Wallet",
+      "welcomeTitle": "Selamat datang di\nChog Wallet",
       "alreadyUseRabby": "Saya sudah menggunakan Rabby"
     },
     "transactions": {
@@ -182,7 +182,7 @@
         "selfHostConfirm": {
           "title": "Beralih ke Layanan Safe Rabby",
           "button": "OK",
-          "content": "API Safe tidak tersedia. Beralih ke layanan Safe yang diterapkan oleh Rabby untuk menjaga Safe Anda tetap berfungsi. <1></1><2>Semua penandatangan Safe harus menggunakan Rabby Wallet untuk mengotorisasi transaksi.</2>"
+          "content": "API Safe tidak tersedia. Beralih ke layanan Safe yang diterapkan oleh Rabby untuk menjaga Safe Anda tetap berfungsi. <1></1><2>Semua penandatangan Safe harus menggunakan Chog Wallet untuk mengotorisasi transaksi.</2>"
         }
       },
       "crossChain": {
@@ -399,7 +399,7 @@
       "addressNote": "Catatan alamat",
       "trustValue": "Nilai kepercayaan",
       "floorPrice": "Harga dasar",
-      "sigCantDecode": "Tanda tangan ini tidak dapat didekode oleh Rabby Wallet",
+      "sigCantDecode": "Tanda tangan ini tidak dapat didekode oleh Chog Wallet",
       "popularity": "Popularitas",
       "protocolTitle": "Protokol",
       "myMark": "Tanda saya",
@@ -902,8 +902,8 @@
       "rabbyFee": {
         "title": "Biaya Rabby",
         "wallet": "Dompet",
-        "bridgeDesc": "Rabby Wallet selalu menemukan kurs terbaik dari agregator terkemuka dan memverifikasi keandalan penawarannya. Rabby mengenakan biaya <1>0,25%</1> yang otomatis disertakan dalam penawaran.",
-        "swapDesc": "Rabby Wallet selalu menemukan kurs terbaik dari agregator terkemuka dan memverifikasi keandalan penawarannya. Rabby mengenakan biaya <1>0,25%</1> (0% untuk wrapping) yang otomatis disertakan dalam penawaran.",
+        "bridgeDesc": "Chog Wallet selalu menemukan kurs terbaik dari agregator terkemuka dan memverifikasi keandalan penawarannya. Rabby mengenakan biaya <1>0,25%</1> yang otomatis disertakan dalam penawaran.",
+        "swapDesc": "Chog Wallet selalu menemukan kurs terbaik dari agregator terkemuka dan memverifikasi keandalan penawarannya. Rabby mengenakan biaya <1>0,25%</1> (0% untuk wrapping) yang otomatis disertakan dalam penawaran.",
         "rate": "Tarif biaya",
         "button": "Mengerti"
       },
@@ -1214,7 +1214,7 @@
         "moreSafeTitle": "Impor Alamat Safe"
       },
       "rateModalTriggerOnHome": {
-        "description": "Bagaimana Anda menilai Rabby Wallet"
+        "description": "Bagaimana Anda menilai Chog Wallet"
       },
       "rateModal": {
         "feedbackSubmit": "Kirim",
@@ -1305,7 +1305,7 @@
         "backupSuccessICloud": "Dicadangkan ke iCloud",
         "backupRestoreUnlockDesc": "Gunakan kata sandi yang sama yang Anda atur untuk mengenkripsi cadangan Anda.",
         "backupRestoreButton": "Impor Kode Pemulihan",
-        "backupUnlockDesc": "Jaga kata sandi Anda tetap aman untuk memulihkan cadangan. Rabby Wallet tidak menyimpannya dan tidak bisa memulihkannya.",
+        "backupUnlockDesc": "Jaga kata sandi Anda tetap aman untuk memulihkan cadangan. Chog Wallet tidak menyimpannya dan tidak bisa memulihkannya.",
         "passwordMinTip": "Harus memiliki setidaknya 8 karakter",
         "backupUnlockButton": "Lanjutkan",
         "addMoreWalletTitle": "Tambahkan lebih banyak dompet\ndari frasa ini"
@@ -1780,7 +1780,7 @@
       "AddFromChainList": {
         "tips": {
           "added": "Anda sudah menambahkan rantai ini",
-          "supported": "Jaringan yang sudah terintegrasi oleh Rabby Wallet"
+          "supported": "Jaringan yang sudah terintegrasi oleh Chog Wallet"
         },
         "search": "Cari nama atau ID jaringan kustom",
         "empty": "Tidak ada rantai yang ditemukan",
@@ -2584,7 +2584,7 @@
         "perps": "Perps",
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
         "gotItBtn": "Saya mengerti",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "Diskon biaya trading untuk waktu terbatas",
         "feeTitle": "Biaya",
         "feeHyperliquid": "Hyperliquid",
@@ -3465,7 +3465,7 @@
         "title4": "Apakah GasAccount aman",
         "desc4": "GasAccount tidak memerlukan persetujuan atau izin kontrak. Anda menyetor ke alamat GasAccount Rabby, dan Rabby mengirimkan gas ke alamat Anda saat diperlukan. Sepenuhnya aman berdasarkan desain.",
         "desc2": "Tambahkan dana ke GasAccount Anda dan gunakan untuk transaksi apa pun. Saat menandatangani, pilih untuk membayar gas dengan token asli atau GasAccount, beralih kapan saja.",
-        "desc3": "Rabby Wallet tidak mengenakan biaya tambahan. Anda hanya membayar gas untuk transaksi Anda dan sejumlah kecil gas untuk mengirim gas tersebut dari GasAccount ke alamat Anda.",
+        "desc3": "Chog Wallet tidak mengenakan biaya tambahan. Anda hanya membayar gas untuk transaksi Anda dan sejumlah kecil gas untuk mengirim gas tersebut dari GasAccount ke alamat Anda.",
         "desc1": "GasAccount adalah cara baru untuk membayar biaya gas. Alih-alih menggunakan token asli di setiap rantai, Anda dapat menggunakan satu akun untuk menutupi biaya gas untuk semua alamat Anda di semua rantai. Sederhana, opsional, dan tidak pernah kehabisan gas."
       }
     },
@@ -3722,7 +3722,7 @@
     "WalletImported": "Dompet diimpor",
     "unknownNFT": "NFT Tidak Dikenal",
     "confirm": "Konfirmasi",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "Addresses": "Alamat",
     "unlimited": "tidak terbatas",
     "Price": "Harga",
@@ -3839,8 +3839,8 @@
     "permissions_alert": {
       "cancel": "Jangan Izinkan",
       "open_settings": "OK",
-      "message": "Rabby Wallet menggunakan akses bluetooth untuk menghubungkan Ledger",
-      "title": "\"Rabby Wallet\" Ingin Menggunakan Bluetooth"
+      "message": "Chog Wallet menggunakan akses bluetooth untuk menghubungkan Ledger",
+      "title": "\"Chog Wallet\" Ingin Menggunakan Bluetooth"
     },
     "update_firmware_alert": {
       "cancel": "Batalkan",

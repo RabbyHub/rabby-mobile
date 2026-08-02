@@ -100,9 +100,7 @@ export function HomeCenterArea() {
         if (hasCompletedTransaction && hasOfflineChainData) {
           blocks.offlineChainData = true;
         }
-        if (hasCompletedTransaction && !viewedScreenShotReportTip) {
-          blocks.tipScreenshot = true;
-        } else if (shouldShowRateGuideOnHome) {
+        if (shouldShowRateGuideOnHome) {
           blocks.rateGuideOnHome = true;
         }
       }

@@ -52,7 +52,7 @@
     "next": "Tiếp theo",
     "backButton": "Quay lại",
     "cancelButton": "Hủy",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "refresh": "Làm mới",
     "confirm": "Xác nhận",
     "unknownNFT": "NFT không xác định",
@@ -261,7 +261,7 @@
       "createNewAddress": "Tạo Ví Mới",
       "sync": "Quét để đồng bộ ví Rabby Extension",
       "alreadyUseRabby": "Tôi đang dùng Rabby",
-      "welcomeTitle": "Chào mừng đến với\nRabby Wallet"
+      "welcomeTitle": "Chào mừng đến với\nChog Wallet"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Nhập cụm từ khôi phục, phân cách từng từ bằng dấu cách"
@@ -589,7 +589,7 @@
       },
       "trustValueTitle": "Giá trị tin cậy",
       "markRemoved": "Đã xóa đánh dấu",
-      "sigCantDecode": "Chữ ký này không thể được giải mã bởi Rabby Wallet",
+      "sigCantDecode": "Chữ ký này không thể được giải mã bởi Chog Wallet",
       "myMarkWithContract": "Đánh dấu của tôi trên hợp đồng {{chainName}}",
       "assetOrder": {
         "title": "Lệnh giao dịch tài sản",
@@ -726,7 +726,7 @@
       },
       "safeTx": {
         "selfHostConfirm": {
-          "content": "Safe API không khả dụng. Chuyển sang dịch vụ Safe được triển khai bởi Rabby để giữ cho Safe của bạn hoạt động. <1></1><2>Tất cả người ký Safe phải sử dụng Rabby Wallet để ủy quyền giao dịch.</2>",
+          "content": "Safe API không khả dụng. Chuyển sang dịch vụ Safe được triển khai bởi Rabby để giữ cho Safe của bạn hoạt động. <1></1><2>Tất cả người ký Safe phải sử dụng Chog Wallet để ủy quyền giao dịch.</2>",
           "button": "OK",
           "title": "Chuyển sang dịch vụ Safe của Rabby"
         }
@@ -1000,8 +1000,8 @@
         "title": "Phí Rabby",
         "wallet": "Ví",
         "button": "Đã hiểu",
-        "swapDesc": "Rabby Wallet luôn tìm tỷ giá tốt nhất từ các trình tổng hợp hàng đầu và xác minh độ tin cậy của báo giá. Rabby thu phí <1>0.25%</1> (0% khi bọc token), được tự động tính vào báo giá.",
-        "bridgeDesc": "Rabby Wallet luôn tìm tỷ giá tốt nhất từ các trình tổng hợp hàng đầu và xác minh độ tin cậy của báo giá. Rabby thu phí <1>0.25%</1>, được tự động tính vào báo giá."
+        "swapDesc": "Chog Wallet luôn tìm tỷ giá tốt nhất từ các trình tổng hợp hàng đầu và xác minh độ tin cậy của báo giá. Rabby thu phí <1>0.25%</1> (0% khi bọc token), được tự động tính vào báo giá.",
+        "bridgeDesc": "Chog Wallet luôn tìm tỷ giá tốt nhất từ các trình tổng hợp hàng đầu và xác minh độ tin cậy của báo giá. Rabby thu phí <1>0.25%</1>, được tự động tính vào báo giá."
       },
       "hidden-no-quote-rates_one": "{{count}} tỷ giá không khả dụng",
       "search-by-name-address": "Tìm kiếm theo tên / địa chỉ",
@@ -1171,7 +1171,7 @@
         "importAddress": "Nhập ví",
         "selectAddMethod": "Chọn phương thức thêm",
         "seedPhraseOrPrivateKey": "Cụm từ khôi phục hoặc khóa riêng tư",
-        "restoreRabbyWallet": "Khôi phục Rabby Wallet",
+        "restoreRabbyWallet": "Khôi phục Chog Wallet",
         "moreOptions": "Thêm tùy chọn"
       },
       "importAddress": {
@@ -1221,7 +1221,7 @@
         "WriteSeedPhrase": "Đây là cụm từ khôi phục của bạn. Hãy ghi lại và cất giữ an toàn. Nếu làm mất hoặc chia sẻ cụm từ này, bạn có thể mất tài sản vĩnh viễn. Ở bước tiếp theo, bạn sẽ nhập lại cụm từ theo đúng thứ tự."
       },
       "rateModalTriggerOnHome": {
-        "description": "Bạn đánh giá thế nào về Rabby Wallet?"
+        "description": "Bạn đánh giá thế nào về Chog Wallet?"
       },
       "rateModal": {
         "feedbackSubmit": "Gửi",
@@ -1277,7 +1277,7 @@
           "yes": "Có",
           "title": "Bật {{ bioType }}",
           "no": "Hủy",
-          "content": "Bạn có muốn bật {{ bioType }} để mở khóa Rabby Wallet không?"
+          "content": "Bạn có muốn bật {{ bioType }} để mở khóa Chog Wallet không?"
         }
       },
       "password": {
@@ -1558,7 +1558,7 @@
         "backupUnlockTitle": "Mã hóa bằng mật khẩu ứng dụng",
         "passwordMinTip": "Phải có ít nhất 8 ký tự",
         "backupUploadToGDrive": "Đang sao lưu lên Google Drive...",
-        "backupUnlockDesc": "Hãy giữ an toàn mật khẩu dùng để khôi phục bản sao lưu. Rabby Wallet không lưu trữ và không thể khôi phục mật khẩu này.",
+        "backupUnlockDesc": "Hãy giữ an toàn mật khẩu dùng để khôi phục bản sao lưu. Chog Wallet không lưu trữ và không thể khôi phục mật khẩu này.",
         "chooseBackupMethodDesc": "Sao lưu cho phép bạn khôi phục ví của mình nếu bạn xóa ứng dụng hoặc mất thiết bị của mình.",
         "chooseBackupMethodTitle": "Chọn một phương pháp sao lưu",
         "addMoreWalletTitle": "Thêm ví khác\ntừ cụm từ này"
@@ -2165,7 +2165,7 @@
         "search": "Tìm kiếm tên mạng tùy chỉnh hoặc ID",
         "empty": "Không tìm thấy chuỗi nào",
         "tips": {
-          "supported": "Chuỗi này đã được Rabby Wallet tích hợp",
+          "supported": "Chuỗi này đã được Chog Wallet tích hợp",
           "added": "Bạn đã thêm chuỗi này rồi"
         }
       },
@@ -2706,7 +2706,7 @@
         "perps": "Perps",
         "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "Giảm phí giao dịch trong thời gian có hạn",
         "feeTitle": "Phí",
         "feeDesc": "Khi người dùng giao dịch, cả <1>phí giao dịch</1> và <2>phí builder</2> đều được áp dụng.",
@@ -3690,7 +3690,7 @@
         "title3": "GasAccount có phí bổ sung không",
         "title2": "Cách sử dụng Gas Account",
         "desc4": "GasAccount không yêu cầu phê duyệt hoặc quyền hợp đồng. Bạn gửi vào địa chỉ GasAccount của Rabby, và Rabby sẽ gửi gas đến địa chỉ của bạn khi cần. Hoàn toàn an toàn theo thiết kế.",
-        "desc3": "Rabby Wallet không tính phí bổ sung. Bạn chỉ phải trả phí gas cho giao dịch của mình và một khoản phí gas nhỏ để chuyển gas đó từ GasAccount đến địa chỉ của bạn.",
+        "desc3": "Chog Wallet không tính phí bổ sung. Bạn chỉ phải trả phí gas cho giao dịch của mình và một khoản phí gas nhỏ để chuyển gas đó từ GasAccount đến địa chỉ của bạn.",
         "desc2": "Nạp tiền vào GasAccount và dùng cho mọi giao dịch. Khi ký, bạn có thể chọn trả phí gas bằng token gốc hoặc GasAccount và chuyển đổi bất cứ lúc nào.",
         "desc1": "GasAccount là cách mới để thanh toán phí gas. Thay vì dùng token gốc trên từng chuỗi, bạn có thể dùng một tài khoản để trả gas cho mọi địa chỉ trên mọi chuỗi. Đơn giản, hoàn toàn tự nguyện và không lo hết gas."
       }
@@ -3810,10 +3810,10 @@
       "message": "Vui lòng bật Bluetooth để sử dụng tính năng này"
     },
     "permissions_alert": {
-      "title": "\"Rabby Wallet\" muốn sử dụng Bluetooth",
+      "title": "\"Chog Wallet\" muốn sử dụng Bluetooth",
       "cancel": "Không Cho Phép",
       "open_settings": "OK",
-      "message": "Rabby Wallet sử dụng kết nối bluetooth để kết nối Ledger"
+      "message": "Chog Wallet sử dụng kết nối bluetooth để kết nối Ledger"
     },
     "update_firmware_alert": {
       "update": "Cập nhật",

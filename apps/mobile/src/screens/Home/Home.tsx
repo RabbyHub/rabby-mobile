@@ -197,7 +197,7 @@ SingleAddressHome.Header = HomeHeader;
 const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   rootScreenContainer: {
     // paddingHorizontal: 16,
-    backgroundColor: colors2024['neutral-bg-gray'],
+    backgroundColor: '#FDF7D3',
   },
   bottomContainer: {
     width: '100%',
@@ -205,7 +205,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
       BOTTOM_BUTTON_TOP_OFFSET +
       BOTTOM_BUTTON_DOUBLE_HEIGHT +
       getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: '#FDF7D3',
     position: 'absolute',
     bottom: 0,
     left: 0,

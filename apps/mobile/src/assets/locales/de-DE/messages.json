@@ -56,7 +56,7 @@
     "nonce": "Nonce",
     "cancel": "Abbrechen",
     "pin": "Anheften",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "ok": "OK",
     "cancelButton": "Abbrechen",
     "assets": "Vermögenswerte",
@@ -321,7 +321,7 @@
         "title2": "So verwenden Sie GasAccount",
         "title4": "Ist GasAccount sicher?",
         "title3": "Hat GasAccount zusätzliche Gebühren?",
-        "desc3": "Rabby Wallet erhebt keine zusätzlichen Gebühren. Sie zahlen nur die Gasgebühren für Ihre Transaktion und einen kleinen Betrag an Gas, um dieses Gas von GasAccount an Ihre Adresse zu senden.",
+        "desc3": "Chog Wallet erhebt keine zusätzlichen Gebühren. Sie zahlen nur die Gasgebühren für Ihre Transaktion und einen kleinen Betrag an Gas, um dieses Gas von GasAccount an Ihre Adresse zu senden.",
         "desc4": "GasAccount erfordert keine Vertragsgenehmigungen oder -berechtigungen. Sie zahlen auf die GasAccount-Adresse von Rabby ein, und Rabby sendet Gas an Ihre Adresse, wenn es benötigt wird. Vollständig sicher durch Design.",
         "desc1": "GasAccount ist eine neue Möglichkeit, Gasgebühren zu bezahlen. Anstatt native Token auf jeder Kette zu verwenden, können Sie ein Konto nutzen, um die Gasgebühren für all Ihre Adressen auf allen Ketten zu decken. Einfach, optional und niemals ohne Gas.",
         "desc2": "Fügen Sie Ihrem GasAccount Gelder hinzu und verwenden Sie es für jede Transaktion. Wählen Sie beim Signieren, ob Sie die Gasgebühren mit nativen Token oder dem GasAccount bezahlen möchten, und wechseln Sie jederzeit."
@@ -526,7 +526,7 @@
       "alreadyHaveAddress": "Ich habe bereits eine Wallet",
       "createNewAddress": "Neue Wallet erstellen",
       "alreadyUseRabby": "Ich verwende bereits Rabby.",
-      "welcomeTitle": "Willkommen bei\nRabby Wallet"
+      "welcomeTitle": "Willkommen bei\nChog Wallet"
     },
     "importSuccess": {
       "addressCount": "{{count}} Adressen",
@@ -727,7 +727,7 @@
         "txToBeCanceled": "Transaktion, die storniert werden soll"
       },
       "contractAddress": "Vertragsadresse",
-      "sigCantDecode": "Diese Signatur kann vom Rabby Wallet nicht dekodiert werden.",
+      "sigCantDecode": "Diese Signatur kann vom Chog Wallet nicht dekodiert werden.",
       "send": {
         "cexAddress": "CEX-Adresse",
         "fromMyPrivateKey": "Aus meinem privaten Schlüssel",
@@ -894,7 +894,7 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "Zu Rabbys Safe-Service wechseln",
-          "content": "Safe API ist nicht verfügbar. Wechseln Sie zu dem von Rabby bereitgestellten Safe-Dienst, um Ihre Safe-Funktionen aufrechtzuerhalten. <1></1><2>Alle Safe-Unterzeichner müssen Rabby Wallet verwenden, um Transaktionen zu autorisieren.</2>"
+          "content": "Safe API ist nicht verfügbar. Wechseln Sie zu dem von Rabby bereitgestellten Safe-Dienst, um Ihre Safe-Funktionen aufrechtzuerhalten. <1></1><2>Alle Safe-Unterzeichner müssen Chog Wallet verwenden, um Transaktionen zu autorisieren.</2>"
         }
       },
       "errorRetry": {
@@ -1336,8 +1336,8 @@
         "rate": "Gebührensatz",
         "button": "Verstanden",
         "title": "Rabby-Gebühr",
-        "bridgeDesc": "Rabby Wallet findet immer den bestmöglichen Kurs von den führenden Aggregatoren und überprüft die Zuverlässigkeit ihrer Angebote. Rabby erhebt eine Gebühr von <1>0,25%</1>, die automatisch im Angebot enthalten ist.",
-        "swapDesc": "Rabby Wallet wird stets den bestmöglichen Kurs von den führenden Aggregatoren finden und die Zuverlässigkeit ihrer Angebote überprüfen. Rabby erhebt eine Gebühr von <1>0,25%</1> (0% für Wrapping), die automatisch im Angebot enthalten ist."
+        "bridgeDesc": "Chog Wallet findet immer den bestmöglichen Kurs von den führenden Aggregatoren und überprüft die Zuverlässigkeit ihrer Angebote. Rabby erhebt eine Gebühr von <1>0,25%</1>, die automatisch im Angebot enthalten ist.",
+        "swapDesc": "Chog Wallet wird stets den bestmöglichen Kurs von den führenden Aggregatoren finden und die Zuverlässigkeit ihrer Angebote überprüfen. Rabby erhebt eine Gebühr von <1>0,25%</1> (0% für Wrapping), die automatisch im Angebot enthalten ist."
       },
       "swapped": "Getauscht",
       "historyTitle": "Tauschhistorie",
@@ -1432,7 +1432,7 @@
         "createAddress": "Wallet erstellen",
         "selectAddMethod": "Methode zum Hinzufügen auswählen",
         "seedPhraseOrPrivateKey": "Seed-Phrase oder privater Schlüssel",
-        "restoreRabbyWallet": "Rabby Wallet wiederherstellen",
+        "restoreRabbyWallet": "Chog Wallet wiederherstellen",
         "moreOptions": "Weitere Optionen"
       },
       "createNewAddress": {
@@ -1482,7 +1482,7 @@
         "moreSafeTitle": "Safe-Adresse importieren"
       },
       "rateModalTriggerOnHome": {
-        "description": "Wie bewerten Sie Rabby Wallet?"
+        "description": "Wie bewerten Sie Chog Wallet?"
       },
       "rateModal": {
         "feedbackSubmit": "Einreichen",
@@ -1602,7 +1602,7 @@
         "enableBiometricAlert": {
           "title": "Aktivieren Sie {{ bioType }}",
           "no": "Abbrechen",
-          "content": "Möchten Sie {{ bioType }} aktivieren, um Rabby Wallet zu entsperren?",
+          "content": "Möchten Sie {{ bioType }} aktivieren, um Chog Wallet zu entsperren?",
           "yes": "Ja"
         }
       },
@@ -1753,7 +1753,7 @@
         "backupRestoreEmpty": "Keine Sicherungs-Seed-Phrase gefunden",
         "backupRestoreUnlockTitle": "Backup-Passwort eingeben",
         "backupRestoreDownloadTitle": "Seed-Phrase wird importiert...",
-        "backupUnlockDesc": "Bewahren Sie Ihr Passwort sicher auf, um Backups wiederherzustellen. Rabby Wallet speichert es nicht und kann es nicht wiederherstellen.",
+        "backupUnlockDesc": "Bewahren Sie Ihr Passwort sicher auf, um Backups wiederherzustellen. Chog Wallet speichert es nicht und kann es nicht wiederherstellen.",
         "backupRestoreTitle": "Gefundene Seed-Phrases: {{count}}",
         "createdSuccess": "Ihre Seed-Phrase wurde erstellt",
         "backupTips": "Stellen Sie sicher, dass niemand sonst Ihren Bildschirm beobachtet, wenn Sie die Seed-Phrase sichern.",
@@ -2498,7 +2498,7 @@
         "empty": "Keine Netzwerke gefunden",
         "tips": {
           "added": "Sie haben dieses Netzwerk bereits hinzugefügt",
-          "supported": "Netzwerk bereits in Rabby Wallet integriert"
+          "supported": "Netzwerk bereits in Chog Wallet integriert"
         }
       },
       "ConfirmModifyRpcModal": {
@@ -2972,7 +2972,7 @@
         "sizeTips": "Der Gesamtwert oder die Menge Ihres Handels, festgelegt durch Margin und Hebel.",
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Gebühr",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "Zeitlich begrenzter Rabatt auf Handelsgebühren",
         "feeDesc": "Wenn Benutzer Trades platzieren, gelten sowohl <1>Handelsgebühren</1> als auch <2>Builder-Gebühren</2>.",
         "amount": "Betrag",
@@ -3697,7 +3697,7 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "subtitle": "Willkommen zurück! 🎉\nWählen Sie eine Methode, um Ihre Wallet schnell wiederherzustellen.",
-        "title": "Stellen Sie Ihre Rabby Wallet wieder her",
+        "title": "Stellen Sie Ihre Chog Wallet wieder her",
         "subtitleInApp": "Wählen Sie unten eine Option, um Ihre Wallets schnell aus der Rabby-Erweiterung oder iCloud zu importieren."
       },
       "common": {
@@ -3834,8 +3834,8 @@
     "permissions_alert": {
       "cancel": "Nicht erlauben",
       "open_settings": "OK",
-      "title": "\"Rabby Wallet\" möchte Bluetooth verwenden",
-      "message": "Rabby Wallet verwendet Bluetooth-Zugriff, um Ledger zu verbinden"
+      "title": "\"Chog Wallet\" möchte Bluetooth verwenden",
+      "message": "Chog Wallet verwendet Bluetooth-Zugriff, um Ledger zu verbinden"
     },
     "powered_off_alert": {
       "title": "Bluetooth ist ausgeschaltet",

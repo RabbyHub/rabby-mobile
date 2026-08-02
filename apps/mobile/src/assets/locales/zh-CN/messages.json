@@ -67,7 +67,7 @@
     "Paste": "粘贴",
     "Cancel": "取消",
     "Price": "价格",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "nonce": "nonce",
     "appDescription": "您的 Ethereum 与 EVM 首选钱包",
     "next": "下一步",
@@ -352,7 +352,7 @@
       "gasLimitEmptyAlert": "请输入 Gas limit",
       "safeAddressNotSupportChain": "当前的 Safe 地址不支持 {{0}} 链",
       "addressTypeTitle": "地址类型",
-      "sigCantDecode": "此签名无法被 Rabby Wallet 解码",
+      "sigCantDecode": "此签名无法被 Chog Wallet 解码",
       "transferOwner": {
         "title": "转移资产所有权",
         "description": "描述"
@@ -563,7 +563,7 @@
       },
       "safeTx": {
         "selfHostConfirm": {
-          "content": "Safe API 无法使用。切换到由 Rabby 部署的 Safe 服务，以保持您的 Safe 功能正常。<1></1><2>所有 Safe 签署人必须使用 Rabby Wallet 来授权交易。</2>",
+          "content": "Safe API 无法使用。切换到由 Rabby 部署的 Safe 服务，以保持您的 Safe 功能正常。<1></1><2>所有 Safe 签署人必须使用 Chog Wallet 来授权交易。</2>",
           "button": "OK",
           "title": "切换到 Rabby 的 Safe 服务"
         }
@@ -1142,8 +1142,8 @@
         "rate": "费率",
         "wallet": "钱包",
         "title": "Rabby 费用",
-        "bridgeDesc": "Rabby Wallet 始终会从主流聚合器中寻找最佳汇率，并验证报价的可靠性。Rabby 收取 <1>0.25%</1> 的费用，该费用已自动计入报价。",
-        "swapDesc": "Rabby Wallet 始终会从主流聚合器中寻找最佳汇率，并验证报价的可靠性。Rabby 收取 <1>0.25%</1> 的费用（封装代币为 0%），该费用已自动计入报价。"
+        "bridgeDesc": "Chog Wallet 始终会从主流聚合器中寻找最佳汇率，并验证报价的可靠性。Rabby 收取 <1>0.25%</1> 的费用，该费用已自动计入报价。",
+        "swapDesc": "Chog Wallet 始终会从主流聚合器中寻找最佳汇率，并验证报价的可靠性。Rabby 收取 <1>0.25%</1> 的费用（封装代币为 0%），该费用已自动计入报价。"
       },
       "directlySwap": "通过智能合约直接封装 {{symbol}} 代币",
       "gas-fee-too-high": "Gas 费用过高",
@@ -1278,7 +1278,7 @@
         "moreOptions": "更多导入方式"
       },
       "rateModalTriggerOnHome": {
-        "description": "你如何评价 Rabby Wallet？"
+        "description": "你如何评价 Chog Wallet？"
       },
       "rateModal": {
         "confirmButtonTitleAndroid": "在 Google Play 上评分",
@@ -1352,7 +1352,7 @@
           "yes": "是",
           "title": "启用 {{ bioType }}",
           "no": "取消",
-          "content": "您是否想启用 {{ bioType }} 解锁 Rabby Wallet？"
+          "content": "您是否想启用 {{ bioType }} 解锁 Chog Wallet？"
         }
       },
       "password": {
@@ -1514,7 +1514,7 @@
         "createdSuccess": "您的助记词已创建",
         "maxAccountCount": "每次最多 50 个地址",
         "icloudBackup": "iCloud 备份",
-        "backupUnlockDesc": "请妥善保管您的密码以便恢复备份。Rabby Wallet 不会储存也无法恢复您的密码。",
+        "backupUnlockDesc": "请妥善保管您的密码以便恢复备份。Chog Wallet 不会储存也无法恢复您的密码。",
         "backupUnlockButton": "继续",
         "addMoreWalletTitle": "通过此助记词\n添加更多钱包"
       },
@@ -1891,7 +1891,7 @@
         "search": "搜索自定义网络名称或 ID",
         "tips": {
           "added": "您已经添加了此链",
-          "supported": "Rabby Wallet 已支持该链"
+          "supported": "Chog Wallet 已支持该链"
         }
       },
       "ConfirmModifyRpcModal": {
@@ -3702,7 +3702,7 @@
         "title4": "GasAccount安全吗",
         "title3": "GasAccount 是否有额外费用",
         "desc2": "向 GasAccount 充值后即可用于任意交易。签名时可以选择用原生代币或 GasAccount 支付 Gas，随时切换。",
-        "desc3": "Rabby Wallet 不收取额外费用。你只需支付交易本身的 Gas，以及从 GasAccount 向你的地址发送 Gas 所需的少量 Gas。",
+        "desc3": "Chog Wallet 不收取额外费用。你只需支付交易本身的 Gas，以及从 GasAccount 向你的地址发送 Gas 所需的少量 Gas。",
         "desc1": "GasAccount 是一种新的 Gas 费用支付方式。无需在每条链上都准备原生代币，只需一个账户，就能为所有链上的所有地址支付 Gas。简单、可选，也更不容易因为缺 Gas 卡住。",
         "desc4": "GasAccount 不需要合约授权或权限。你只需将资金存入 Rabby 的 GasAccount 地址，需要时 Rabby 会向你的地址发送 Gas，设计上更安全。"
       }
@@ -3805,8 +3805,8 @@
   },
   "bluetooth": {
     "permissions_alert": {
-      "title": "\"Rabby Wallet\" 想要使用蓝牙",
-      "message": "Rabby Wallet 使用蓝牙连接 Ledger",
+      "title": "\"Chog Wallet\" 想要使用蓝牙",
+      "message": "Chog Wallet 使用蓝牙连接 Ledger",
       "open_settings": "OK",
       "cancel": "不允许"
     },

@@ -14,7 +14,7 @@ type MutableSentryRuntimeOptions = {
 };
 
 function shouldSendToSentry() {
-  return !getUserBehaviorTrackingOptOut();
+  return false;
 }
 
 function dropWhenTrackingOptedOut<T>(event: T) {
@@ -30,7 +30,7 @@ function beforeSendSentryEvent(event: SentryEvent, hint?: SentryEventHint) {
 }
 
 function canInitializeSentry() {
-  return !__DEV__;
+  return false;
 }
 
 export function syncSentryUserBehaviorTrackingEnabled() {

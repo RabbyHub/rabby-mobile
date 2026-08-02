@@ -370,8 +370,6 @@ function AppNavigationOverlayGlobals({
 
   return (
     <>
-      <ScreenshotFeedbackHost />
-      <FeedbackHistoryHost />
       {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}

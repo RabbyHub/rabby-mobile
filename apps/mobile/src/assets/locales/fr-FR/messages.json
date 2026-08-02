@@ -47,7 +47,7 @@
       "alreadyHaveAddress": "J’ai déjà un portefeuille",
       "createNewAddress": "Créer un nouveau portefeuille",
       "alreadyUseRabby": "J'utilise déjà Rabby",
-      "welcomeTitle": "Bienvenue sur\nRabby Wallet"
+      "welcomeTitle": "Bienvenue sur\nChog Wallet"
     },
     "transactions": {
       "explain": {
@@ -285,7 +285,7 @@
         "minReceive": "Réception minimale",
         "notPaymentAddress": "Pas le portefeuille de paiement"
       },
-      "sigCantDecode": "Cette signature ne peut pas être décodée par Rabby Wallet.",
+      "sigCantDecode": "Cette signature ne peut pas être décodée par Chog Wallet.",
       "contractCall": {
         "title": "Appel de contrat",
         "operation": "Opération",
@@ -445,7 +445,7 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "Passer au service Safe de Rabby",
-          "content": "L'API Safe est indisponible. Passez au service Safe déployé par Rabby pour garder votre Safe fonctionnel. <1></1><2>Tous les signataires Safe doivent utiliser Rabby Wallet pour autoriser les transactions.</2>"
+          "content": "L'API Safe est indisponible. Passez au service Safe déployé par Rabby pour garder votre Safe fonctionnel. <1></1><2>Tous les signataires Safe doivent utiliser Chog Wallet pour autoriser les transactions.</2>"
         }
       },
       "errorRetry": {
@@ -895,8 +895,8 @@
         "title": "Frais Rabby",
         "button": "Compris",
         "rate": "Taux de frais",
-        "bridgeDesc": "Le Rabby Wallet trouvera toujours le meilleur taux possible auprès des principaux agrégateurs et vérifiera la fiabilité de leurs offres. Rabby prélève des frais de <1>0,25%</1>, qui sont automatiquement inclus dans le devis.",
-        "swapDesc": "Rabby Wallet trouvera toujours le meilleur taux possible auprès des principaux agrégateurs et vérifiera la fiabilité de leurs offres. Rabby prélève des frais de <1>0,25%</1> (0 % pour le wrap), automatiquement inclus dans le devis."
+        "bridgeDesc": "Le Chog Wallet trouvera toujours le meilleur taux possible auprès des principaux agrégateurs et vérifiera la fiabilité de leurs offres. Rabby prélève des frais de <1>0,25%</1>, qui sont automatiquement inclus dans le devis.",
+        "swapDesc": "Chog Wallet trouvera toujours le meilleur taux possible auprès des principaux agrégateurs et vérifiera la fiabilité de leurs offres. Rabby prélève des frais de <1>0,25%</1> (0 % pour le wrap), automatiquement inclus dans le devis."
       },
       "historyTitle": "Historique des swaps",
       "swapped": "Échangé",
@@ -1157,7 +1157,7 @@
         "moreSafeTitle": "Importer une adresse Safe"
       },
       "rateModalTriggerOnHome": {
-        "description": "Comment évaluez-vous Rabby Wallet ?"
+        "description": "Comment évaluez-vous Chog Wallet ?"
       },
       "rateModal": {
         "feedbackSubmit": "Soumettre",
@@ -1582,7 +1582,7 @@
         "backupRestoreDownloadTitle": "Importation de la phrase de récupération...",
         "backupRestoreEmpty": "Aucune phrase de récupération sauvegardée trouvée",
         "passwordMinTip": "Doit contenir au moins 8 caractères",
-        "backupUnlockDesc": "Gardez votre mot de passe en sécurité pour restaurer les sauvegardes. Rabby Wallet ne le stocke pas et ne peut pas le récupérer.",
+        "backupUnlockDesc": "Gardez votre mot de passe en sécurité pour restaurer les sauvegardes. Chog Wallet ne le stocke pas et ne peut pas le récupérer.",
         "backupUploadToICloud": "Sauvegarde vers iCloud...",
         "backupRestoreUnlockDesc": "Utilisez le même mot de passe que vous avez défini pour chiffrer vos sauvegardes.",
         "chooseBackupMethodDesc": "Les sauvegardes vous permettent de restaurer votre portefeuille si vous supprimez l'application ou perdez votre appareil.",
@@ -2087,7 +2087,7 @@
         "search": "Recherche par nom ou ID de réseau personnalisé",
         "title": "Ajout rapide depuis Chainlist",
         "tips": {
-          "supported": "Chaîne déjà intégrée par Rabby Wallet",
+          "supported": "Chaîne déjà intégrée par Chog Wallet",
           "added": "Vous avez déjà ajouté cette chaîne"
         },
         "empty": "Aucune chaîne trouvée"
@@ -2596,7 +2596,7 @@
         "sizeTips": "La valeur totale ou la quantité de votre trade, déterminée par la marge et l'effet de levier.",
         "feeTitle": "Frais",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "Réduction des frais de trading pour une durée limitée",
         "feeDesc": "Lorsque les utilisateurs passent des ordres, des <1>frais de trading</1> et des <2>frais de builder</2> s’appliquent.",
         "amount": "Montant",
@@ -3447,8 +3447,8 @@
     },
     "permissions_alert": {
       "cancel": "Ne pas autoriser",
-      "message": "Rabby Wallet utilise l'accès bluetooth pour connecter Ledger",
-      "title": "« Rabby Wallet » souhaite utiliser le Bluetooth",
+      "message": "Chog Wallet utilise l'accès bluetooth pour connecter Ledger",
+      "title": "« Chog Wallet » souhaite utiliser le Bluetooth",
       "open_settings": "OK"
     }
   },
@@ -3581,7 +3581,7 @@
         "title3": "GasAccount a-t-il des frais supplémentaires ?",
         "title4": "Est-ce que GasAccount est sûr ?",
         "title2": "Comment utiliser GasAccount",
-        "desc3": "Rabby Wallet ne facture aucun frais supplémentaire. Vous ne payez que le gas pour votre transaction et une petite quantité de gas pour envoyer ce gas de GasAccount à votre adresse.",
+        "desc3": "Chog Wallet ne facture aucun frais supplémentaire. Vous ne payez que le gas pour votre transaction et une petite quantité de gas pour envoyer ce gas de GasAccount à votre adresse.",
         "desc2": "Ajoutez des fonds à votre GasAccount et utilisez-le pour toute transaction. Lors de la signature, choisissez de payer le gas avec des tokens natifs ou GasAccount, changez à tout moment.",
         "desc4": "GasAccount ne nécessite aucune approbation de contrat ni aucune autorisation. Vous déposez des fonds à l’adresse GasAccount de Rabby, puis Rabby envoie du gas à votre adresse lorsque cela est nécessaire. Une conception entièrement sécurisée.",
         "desc1": "GasAccount est une nouvelle façon de payer les frais de gas. Au lieu d'utiliser des tokens natifs sur chaque chaîne, vous pouvez utiliser un compte pour couvrir les frais de gas pour toutes vos adresses sur toutes les chaînes. Simple, optionnel et jamais à court de gas."
@@ -3732,7 +3732,7 @@
     "WalletImported": "Portefeuille importé",
     "addButton": "Ajouter",
     "Balance": "Solde",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "Paste": "Coller",
     "closeButton": "Fermer",
     "cancel": "Annuler",

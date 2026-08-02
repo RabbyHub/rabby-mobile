@@ -194,7 +194,7 @@
         "title3": "A GasAccount cobra taxas adicionais?",
         "title2": "Como utilizar a GasAccount",
         "title1": "O que é a GasAccount?",
-        "desc3": "A Rabby Wallet não cobra taxas adicionais. Paga apenas o gas da sua transação e uma pequena quantidade de gas pelo envio desse gas da GasAccount para o seu endereço.",
+        "desc3": "A Chog Wallet não cobra taxas adicionais. Paga apenas o gas da sua transação e uma pequena quantidade de gas pelo envio desse gas da GasAccount para o seu endereço.",
         "desc1": "A GasAccount é uma nova forma de pagar taxas de gas. Em vez de utilizar tokens nativos em cada rede, pode usar uma única conta para pagar o gas de todos os seus endereços em todas as redes. Simples, opcional e sempre com gas disponível.",
         "desc2": "Adicione fundos à sua GasAccount e utilize-a em qualquer transação. Ao assinar, escolha pagar o gas com tokens nativos ou com a GasAccount; pode mudar a qualquer momento.",
         "desc4": "A GasAccount não exige aprovações nem permissões de contratos. Deposita fundos no endereço GasAccount da Rabby, e a Rabby envia gas para o seu endereço quando necessário. Uma solução totalmente segura desde a conceção."
@@ -317,7 +317,7 @@
     "assets": "ativos",
     "next": "Próximo",
     "copied": "Copiado",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "closeButton": "Fechar",
     "ok": "OK",
     "Price": "Preço",
@@ -423,7 +423,7 @@
       "sync": "Digitalize para sincronizar a carteira da extensão Rabby",
       "alreadyHaveAddress": "Já tenho uma carteira",
       "alreadyUseRabby": "Já utilizo a Rabby",
-      "welcomeTitle": "Bem-vindo à\nRabby Wallet"
+      "welcomeTitle": "Bem-vindo à\nChog Wallet"
     },
     "transactions": {
       "explain": {
@@ -835,7 +835,7 @@
         "title": "Aprovação de Token",
         "contractTrustValueTip": "Valor de confiança refere-se ao valor total dos ativos gastos por este contrato. Um valor de confiança baixo indica risco ou inatividade por 180 dias."
       },
-      "sigCantDecode": "Esta assinatura não pode ser descodificada pela Rabby Wallet",
+      "sigCantDecode": "Esta assinatura não pode ser descodificada pela Chog Wallet",
       "amount": "Montante",
       "no": "Não",
       "common": {
@@ -902,7 +902,7 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "Mudar para o serviço Safe da Rabby",
-          "content": "A API da Safe está indisponível. Mude para o serviço Safe implementado por Rabby para manter o seu Safe funcional. <1></1><2>Todos os signatários Safe devem usar a Rabby Wallet para autorizar transações.</2>"
+          "content": "A API da Safe está indisponível. Mude para o serviço Safe implementado por Rabby para manter o seu Safe funcional. <1></1><2>Todos os signatários Safe devem usar a Chog Wallet para autorizar transações.</2>"
         }
       },
       "errorRetry": {
@@ -1353,8 +1353,8 @@
         "wallet": "Carteira",
         "button": "Compreendi",
         "rate": "Taxa de comissão",
-        "bridgeDesc": "Rabby Wallet encontrará sempre a melhor taxa possível dos principais agregadores e verificará a fiabilidade das suas ofertas. Rabby cobra uma <1>taxa de 0,25%</1>, que está automaticamente incluída na cotação.",
-        "swapDesc": "A Rabby Wallet procurará sempre a melhor taxa possível dos principais agregadores e verificará a fiabilidade das suas ofertas. A Rabby cobra uma taxa de <1>0,25%</1> (0% para wrapping), que está automaticamente incluída na cotação."
+        "bridgeDesc": "Chog Wallet encontrará sempre a melhor taxa possível dos principais agregadores e verificará a fiabilidade das suas ofertas. Rabby cobra uma <1>taxa de 0,25%</1>, que está automaticamente incluída na cotação.",
+        "swapDesc": "A Chog Wallet procurará sempre a melhor taxa possível dos principais agregadores e verificará a fiabilidade das suas ofertas. A Rabby cobra uma taxa de <1>0,25%</1> (0% para wrapping), que está automaticamente incluída na cotação."
       },
       "historyTitle": "Histórico de Swap",
       "swapped": "Trocado",
@@ -1533,7 +1533,7 @@
         "moreSafeTitle": "Importar endereço Safe"
       },
       "rateModalTriggerOnHome": {
-        "description": "Como avalia a Rabby Wallet?"
+        "description": "Como avalia a Chog Wallet?"
       },
       "rateModal": {
         "feedbackSubmit": "Submeter",
@@ -1709,7 +1709,7 @@
         "backupRestoreUnlockTitle": "Introduza a palavra-passe da cópia de segurança",
         "backupRestoreLoadingText": "A procurar uma cópia de segurança da frase-semente...",
         "chooseBackupMethodDesc": "As cópias de segurança permitem restaurar a sua carteira se eliminar a aplicação ou perder o dispositivo.",
-        "backupUnlockDesc": "Guarde a sua palavra-passe em segurança para restaurar as cópias de segurança. A Rabby Wallet não a guarda nem a pode recuperar.",
+        "backupUnlockDesc": "Guarde a sua palavra-passe em segurança para restaurar as cópias de segurança. A Chog Wallet não a guarda nem a pode recuperar.",
         "backupTips": "Certifique-se de que ninguém está a ver o seu ecrã quando criar a cópia de segurança da frase-semente",
         "addMoreWalletTitle": "Adicionar mais carteiras\na partir desta frase"
       },
@@ -1804,7 +1804,7 @@
         "enableBiometricAlert": {
           "yes": "Sim",
           "no": "Cancelar",
-          "content": "Deseja ativar {{ bioType }} para desbloquear Rabby Wallet?",
+          "content": "Deseja ativar {{ bioType }} para desbloquear Chog Wallet?",
           "title": "Ativar {{ bioType }}"
         }
       },
@@ -2318,7 +2318,7 @@
         "empty": "Nenhuma rede encontrada",
         "tips": {
           "added": "Já adicionou esta rede",
-          "supported": "Rede já integrada pela Rabby Wallet"
+          "supported": "Rede já integrada pela Chog Wallet"
         }
       },
       "CustomTestnetForm": {
@@ -2950,7 +2950,7 @@
         "sizeTips": "O valor total ou a quantidade da sua negociação, definida pela margem e pela alavancagem.",
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Taxa",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "Desconto temporário nas taxas de negociação",
         "feeDesc": "Quando os utilizadores fazem operações, aplicam-se <1>taxas de negociação</1> e <2>taxas do builder</2>.",
         "amount": "Montante",
@@ -3832,9 +3832,9 @@
   },
   "bluetooth": {
     "permissions_alert": {
-      "title": "\"Rabby Wallet\" gostaria de utilizar o Bluetooth",
+      "title": "\"Chog Wallet\" gostaria de utilizar o Bluetooth",
       "open_settings": "OK",
-      "message": "A Rabby Wallet utiliza o acesso Bluetooth para ligar ao Ledger",
+      "message": "A Chog Wallet utiliza o acesso Bluetooth para ligar ao Ledger",
       "cancel": "Não permitir"
     },
     "update_firmware_alert": {

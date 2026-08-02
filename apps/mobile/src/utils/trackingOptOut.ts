@@ -46,5 +46,6 @@ export function setUserBehaviorTrackingOptOutCache(value: boolean) {
 }
 
 export function canTrackUserBehavior() {
-  return !getUserBehaviorTrackingOptOut();
+  // Telemetry / user-behavior tracking is permanently disabled for this build.
+  return false;
 }

@@ -306,7 +306,7 @@ const getStyles = createGetStyles2024(ctx => ({
     height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     flex: 1,
     paddingHorizontal: 37,
-    backgroundColor: ctx.colors2024['green-default'],
+    backgroundColor: '#D53F7E',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -314,7 +314,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 10,
   },
   blueAction: {
-    backgroundColor: ctx.colors2024['brand-default'],
+    backgroundColor: '#D53F7E',
   },
   disabledAction: {
     opacity: 0.6,
@@ -345,7 +345,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: ctx.colors2024['neutral-line'],
+    borderColor: '#D53F7E',
   },
   itemText: {
     marginLeft: 16,

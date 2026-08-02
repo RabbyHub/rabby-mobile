@@ -64,7 +64,7 @@
     "assets": "資產",
     "copied": "已複製",
     "pin": "置頂",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "cancel": "取消",
     "refresh": "重新整理",
     "Cancel": "取消",
@@ -190,10 +190,10 @@
   },
   "bluetooth": {
     "permissions_alert": {
-      "title": "\"Rabby Wallet\" 想要使用藍牙",
+      "title": "\"Chog Wallet\" 想要使用藍牙",
       "open_settings": "OK",
       "cancel": "不允許",
-      "message": "Rabby Wallet 使用藍牙連接 Ledger"
+      "message": "Chog Wallet 使用藍牙連接 Ledger"
     },
     "powered_off_alert": {
       "open_settings": "OK",
@@ -226,7 +226,7 @@
       "alreadyHaveAddress": "我已經擁有一個錢包",
       "createNewAddress": "建立新錢包",
       "alreadyUseRabby": "我已經在使用 Rabby",
-      "welcomeTitle": "歡迎來到\nRabby Wallet"
+      "welcomeTitle": "歡迎來到\nChog Wallet"
     },
     "transactions": {
       "explain": {
@@ -548,7 +548,7 @@
       },
       "gasLimitTitle": "Gas 上限",
       "markAsBlock": "標記為已封鎖",
-      "sigCantDecode": "此簽名無法被 Rabby Wallet 解碼",
+      "sigCantDecode": "此簽名無法被 Chog Wallet 解碼",
       "gasLimitEmptyAlert": "請輸入 Gas limit",
       "addressTypeTitle": "地址類型",
       "viewRaw": "檢視原始內容",
@@ -774,7 +774,7 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "切換到 Rabby 的 Safe 服務",
-          "content": "Safe API 無法使用。切換到由 Rabby 部署的 Safe 服務以保持您的 Safe 功能正常。<1></1><2>所有 Safe 簽署者必須使用 Rabby Wallet 授權交易。</2>"
+          "content": "Safe API 無法使用。切換到由 Rabby 部署的 Safe 服務以保持您的 Safe 功能正常。<1></1><2>所有 Safe 簽署者必須使用 Chog Wallet 授權交易。</2>"
         }
       },
       "errorRetry": {
@@ -1249,8 +1249,8 @@
         "button": "明白了",
         "wallet": "錢包",
         "title": "Rabby 費用",
-        "bridgeDesc": "Rabby Wallet 始終會從主流聚合器中尋找最佳匯率，並驗證報價的可靠性。Rabby 收取 <1>0.25%</1> 的費用，該費用已自動計入報價。",
-        "swapDesc": "Rabby Wallet 始終會從主流聚合器中尋找最佳匯率，並驗證報價的可靠性。Rabby 收取 <1>0.25%</1> 的費用（封裝代幣為 0%），該費用已自動計入報價。"
+        "bridgeDesc": "Chog Wallet 始終會從主流聚合器中尋找最佳匯率，並驗證報價的可靠性。Rabby 收取 <1>0.25%</1> 的費用，該費用已自動計入報價。",
+        "swapDesc": "Chog Wallet 始終會從主流聚合器中尋找最佳匯率，並驗證報價的可靠性。Rabby 收取 <1>0.25%</1> 的費用（封裝代幣為 0%），該費用已自動計入報價。"
       },
       "Completed": "完成",
       "historyTitle": "兌換記錄",
@@ -1287,7 +1287,7 @@
           "no": "取消",
           "title": "啟用 {{ bioType }}",
           "yes": "是",
-          "content": "您是否想啟用 {{ bioType }} 解鎖 Rabby Wallet？"
+          "content": "您是否想啟用 {{ bioType }} 解鎖 Chog Wallet？"
         }
       },
       "unlocking": "解鎖"
@@ -1377,7 +1377,7 @@
         "moreSafeTitle": "匯入 Safe 錢包"
       },
       "rateModalTriggerOnHome": {
-        "description": "您如何評價 Rabby Wallet？"
+        "description": "您如何評價 Chog Wallet？"
       },
       "rateModal": {
         "feedbackSubmit": "提交",
@@ -1652,7 +1652,7 @@
           "answer": "用於控制你資產的 12、18 或 24 個詞。"
         },
         "backupTips": "確保在備份助記詞時沒有其他人看到您的螢幕。",
-        "backupUnlockDesc": "請妥善保管您的密碼以便恢復備份。Rabby Wallet 不會儲存也無法恢復您的密碼。",
+        "backupUnlockDesc": "請妥善保管您的密碼以便恢復備份。Chog Wallet 不會儲存也無法恢復您的密碼。",
         "importQuestion3": "如果我沒有備份助記詞，當 App 被意外刪除、裝置遺失或需要重新安裝時，Rabby 無法幫我找回。",
         "backupRestoreUnlockDesc": "請輸入加密備份時設定的相同密碼。",
         "createdSuccess": "你的助記詞已建立",
@@ -2168,7 +2168,7 @@
         "search": "搜尋自訂網路名稱或 ID",
         "tips": {
           "added": "你已新增此鏈",
-          "supported": "Rabby Wallet 已支援該鏈"
+          "supported": "Chog Wallet 已支援該鏈"
         },
         "title": "快速從 Chainlist 新增"
       },
@@ -2765,7 +2765,7 @@
         "provider": "服務商",
         "gotItBtn": "我知道了",
         "sizeTips": "交易的總價值或數量，由保證金和槓桿決定。",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "限時交易手續費折扣",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "交易時會產生<1>交易手續費</1>和<2>建構者費用</2>。",
@@ -3732,7 +3732,7 @@
         "title2": "如何使用 GasAccount",
         "title3": "GasAccount 是否有額外費用",
         "title4": "GasAccount 安全嗎",
-        "desc3": "Rabby Wallet 不收取額外費用。你只需支付交易本身的 Gas，以及從 GasAccount 向你的地址發送 Gas 所需的少量 Gas。",
+        "desc3": "Chog Wallet 不收取額外費用。你只需支付交易本身的 Gas，以及從 GasAccount 向你的地址發送 Gas 所需的少量 Gas。",
         "desc4": "GasAccount 不需要合約授權或權限。你只需將資金存入 Rabby 的 GasAccount 地址，需要時 Rabby 會向你的地址發送 Gas，設計上更安全。",
         "desc1": "GasAccount 是一種新的 Gas 費用支付方式。無需在每條鏈上都準備原生代幣，只需一個帳戶，就能為所有鏈上的所有地址支付 Gas。簡單、可選，也更不容易因為缺 Gas 卡住。",
         "desc2": "向 GasAccount 入金後即可用於任意交易。簽名時可以選擇用原生代幣或 GasAccount 支付 Gas，隨時切換。"

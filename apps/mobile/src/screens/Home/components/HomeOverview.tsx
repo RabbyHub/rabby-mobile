@@ -549,6 +549,8 @@ const getStyle = createGetStyles2024(
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
+      borderWidth: 1,
+      borderColor: '#D53F7E',
       width: '48%', // default
       minWidth: 0,
       borderRadius: 16,
@@ -920,11 +922,6 @@ export const HomeOverview = React.memo(() => {
     () =>
       [
         {
-          key: MultiHomeFeatTitle.Swap,
-          title: t('page.home.services.swap'),
-          icon: RcIconSwapCC,
-        },
-        {
           key: MultiHomeFeatTitle.Send,
           title: t('page.home.services.send'),
           icon: RcIconSendCC,
@@ -935,57 +932,14 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconReceiveCC,
         },
         {
-          key: MultiHomeFeatTitle.Bridge,
-          title: t('page.home.services.bridge'),
-          icon: RcIconBridgeCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Perps,
-          title: t('page.home.services.perps'),
-          icon: RcIconPerps,
-        },
-        {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
-        },
-        {
-          key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasDeposit'),
-          icon: RcIconGasAccountCC,
-        },
-        {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistoryCC,
         },
         {
-          key: MultiHomeFeatTitle.Market,
-          title: t('page.home.services.market'),
-          icon: RcIconMarketCC,
-        },
-        {
           key: MultiHomeFeatTitle.Approvals,
           title: t('page.home.services.approvals'),
           icon: RcIconApprovalsCC,
-        },
-        // __DEV__ && {
-        //   title: MultiHomeFeatTitle.TEST_DAPP,
-        //   icon: RcIconDapps,
-        // },
-        // {
-        //   title: MultiHomeFeatTitle.Ecosystem,
-        //   icon: RcIconEcosystem,
-        // },
-        {
-          key: MultiHomeFeatTitle.Points,
-          title: t('page.rabbyPoints.title'),
-          icon: RcIconPointsCC,
-        },
-        {
-          key: MultiHomeFeatTitle.ConvertDust,
-          title: t('page.home.services.convertDust'),
-          icon: RcIconConvertDustCC,
         },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;

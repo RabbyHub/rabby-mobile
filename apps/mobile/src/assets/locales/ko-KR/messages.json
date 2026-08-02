@@ -140,7 +140,7 @@
       "alreadyHaveAddress": "저는 이미 지갑이 있습니다.",
       "sync": "Rabby 확장 지갑 동기화를 위해 스캔하세요",
       "createNewAddress": "새 지갑 만들기",
-      "welcomeTitle": "Rabby Wallet에 오신 것을 환영합니다",
+      "welcomeTitle": "Chog Wallet에 오신 것을 환영합니다",
       "alreadyUseRabby": "이미 Rabby를 사용 중입니다"
     },
     "importSeedPhrase": {
@@ -442,7 +442,7 @@
       "trustValueTitle": "신뢰도",
       "label": "레이블",
       "nftCollection": "NFT 컬렉션",
-      "sigCantDecode": "이 서명은 Rabby Wallet에서 디코딩할 수 없습니다.",
+      "sigCantDecode": "이 서명은 Chog Wallet에서 디코딩할 수 없습니다.",
       "swap": {
         "receiver": "수신자",
         "failLoadReceiveToken": "로드 실패",
@@ -644,7 +644,7 @@
         "selfHostConfirm": {
           "title": "Rabby의 안전 서비스로 전환하십시오.",
           "button": "OK",
-          "content": "Safe API를 사용할 수 없습니다. Safe 기능을 유지하려면 Rabby가 배포한 Safe 서비스를 사용하세요. <1></1><2>모든 Safe 서명자는 거래를 승인하기 위해 Rabby Wallet을 사용해야 합니다.</2>"
+          "content": "Safe API를 사용할 수 없습니다. Safe 기능을 유지하려면 Rabby가 배포한 Safe 서비스를 사용하세요. <1></1><2>모든 Safe 서명자는 거래를 승인하기 위해 Chog Wallet을 사용해야 합니다.</2>"
         }
       },
       "errorRetry": {
@@ -723,8 +723,8 @@
         "wallet": "지갑",
         "button": "이해했습니다",
         "title": "Rabby 수수료",
-        "bridgeDesc": "Rabby Wallet은 항상 최고의 애그리게이터에서 최상의 요율을 찾아 제공의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료를 부과하며, 이는 견적에 자동으로 포함됩니다.",
-        "swapDesc": "Rabby Wallet은 항상 최고의 애그리게이터에서 가능한 최상의 비율을 찾고 그들의 제안의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료(래핑의 경우 0%)를 부과하며, 이는 견적에 자동으로 포함됩니다."
+        "bridgeDesc": "Chog Wallet은 항상 최고의 애그리게이터에서 최상의 요율을 찾아 제공의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료를 부과하며, 이는 견적에 자동으로 포함됩니다.",
+        "swapDesc": "Chog Wallet은 항상 최고의 애그리게이터에서 가능한 최상의 비율을 찾고 그들의 제안의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료(래핑의 경우 0%)를 부과하며, 이는 견적에 자동으로 포함됩니다."
       },
       "swapped": "스왑 완료",
       "historyTitle": "스왑 기록",
@@ -1148,7 +1148,7 @@
         "moreSafeTitle": "Safe 주소 가져오기"
       },
       "rateModalTriggerOnHome": {
-        "description": "Rabby Wallet을 어떻게 평가하시나요?"
+        "description": "Chog Wallet을 어떻게 평가하시나요?"
       },
       "rateModal": {
         "confirmButtonTitleAndroid": "Google Play에서 평가하기",
@@ -1201,7 +1201,7 @@
           "yes": "예",
           "no": "취소",
           "title": "{{ bioType }} 활성화",
-          "content": "{{ bioType }}로 Rabby Wallet의 잠금을 해제하도록 설정하시겠습니까?"
+          "content": "{{ bioType }}로 Chog Wallet의 잠금을 해제하도록 설정하시겠습니까?"
         }
       },
       "btn": {
@@ -1867,7 +1867,7 @@
           "answer": "네, 휴대폰에 로컬로 저장되며 본인만 접근할 수 있습니다."
         },
         "importQuestion3": "시드 구문을 백업하지 않으면, 앱이 의도치 않게 삭제되거나, 기기를 분실하거나, 재설치가 필요한 경우 Rabby는 이를 복구할 수 없습니다.",
-        "backupUnlockDesc": "백업을 복구하려면 비밀번호를 안전하게 보관하세요. Rabby Wallet은 이를 저장하지 않으며 복구할 수 없습니다.",
+        "backupUnlockDesc": "백업을 복구하려면 비밀번호를 안전하게 보관하세요. Chog Wallet은 이를 저장하지 않으며 복구할 수 없습니다.",
         "backupRestoreUnlockDesc": "백업을 암호화할 때 설정했던 동일한 비밀번호를 사용하세요.",
         "backupUnlockPlaceholder": "비밀번호를 입력하여 확인하세요",
         "addMoreWalletTitle": "이 구문에서\n지갑 더 추가"
@@ -1951,7 +1951,7 @@
         "empty": "체인이 발견되지 않았습니다",
         "tips": {
           "added": "이미 이 체인을 추가했습니다.",
-          "supported": "체인은 이미 Rabby Wallet에 통합되었습니다."
+          "supported": "체인은 이미 Chog Wallet에 통합되었습니다."
         }
       },
       "addToken": {
@@ -3413,7 +3413,7 @@
     "Cancel": "취소",
     "backButton": "뒤로",
     "proceedButton": "진행하기",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "Balance": "잔액",
     "assets": "자산",
     "next": "다음",
@@ -3685,7 +3685,7 @@
         "title1": "GasAccount란 무엇인가요?",
         "title3": "GasAccount에 추가 수수료가 있나요?",
         "desc2": "GasAccount에 자금을 추가하고 모든 거래에 사용하세요. 서명할 때 네이티브 토큰 또는 GasAccount로 가스를 지불할지 선택할 수 있으며, 언제든지 전환이 가능합니다.",
-        "desc3": "Rabby Wallet은 추가 요금을 부과하지 않습니다. 거래에 대한 가스 요금과 GasAccount에서 귀하의 주소로 가스를 전송하는 데 필요한 소량의 가스 요금만 지불하면 됩니다.",
+        "desc3": "Chog Wallet은 추가 요금을 부과하지 않습니다. 거래에 대한 가스 요금과 GasAccount에서 귀하의 주소로 가스를 전송하는 데 필요한 소량의 가스 요금만 지불하면 됩니다.",
         "desc1": "GasAccount는 가스 요금을 지불하는 새로운 방법입니다. 각 체인에서 기본 토큰을 사용하는 대신, 모든 체인의 모든 주소에 대한 가스를 충당하기 위해 하나의 계정을 사용할 수 있습니다. 간단하고 선택적이며, 결코 가스 부족이 없습니다.",
         "title4": "GasAccount는 안전한가요?",
         "desc4": "GasAccount는 계약 승인이나 권한이 필요하지 않습니다. Rabby의 GasAccount 주소로 입금하면 필요할 때 Rabby가 사용자의 주소로 Gas를 전송합니다. 설계 단계부터 안전하게 만들어졌습니다."
@@ -3838,8 +3838,8 @@
       "message": "Ledger 지원에서 Ledger 펌웨어 업데이트 방법 확인"
     },
     "permissions_alert": {
-      "title": "\"Rabby Wallet\"이(가) 블루투스를 사용하려고 합니다",
-      "message": "Rabby Wallet은 블루투스 액세스를 사용하여 Ledger에 연결합니다.",
+      "title": "\"Chog Wallet\"이(가) 블루투스를 사용하려고 합니다",
+      "message": "Chog Wallet은 블루투스 액세스를 사용하여 Ledger에 연결합니다.",
       "open_settings": "OK",
       "cancel": "허용 안 함"
     },

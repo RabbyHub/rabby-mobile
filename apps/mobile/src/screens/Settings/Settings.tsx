@@ -734,32 +734,6 @@ function SettingsBlocks() {
             },
           },
           {
-            label: t('page.setting.screenshotReportSwitch'),
-            icon: RcScreenshotReport,
-            rightNode: (
-              <SwitchScreenshotToReport
-                onToggleSuccess={enabled => {
-                  trackSettingsScreenshotToBug(enabled).catch(error => {
-                    console.error('trackSettingsScreenshotToBug failed', error);
-                  });
-                }}
-              />
-            ),
-            onPress: () => {
-              handleScreenshotToBugToggle();
-            },
-            // disabled: disabledBiometrics,
-            visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
-          },
-          {
-            label: t('page.setting.bugReportChat'),
-            icon: RcBugReport,
-            onPress: () => {
-              toggleFeedbackHistoryVisible(true);
-            },
-            // visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
-          },
-          {
             label: t('page.setting.dataAnalysis'),
             icon: RcDataAnalysis,
             onPress: () => {

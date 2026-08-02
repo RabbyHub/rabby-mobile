@@ -38,7 +38,7 @@
       "sync": "Rabby Uzantı Cüzdanını Senkronize Etmek İçin Tara",
       "alreadyHaveAddress": "Zaten bir cüzdanım var",
       "alreadyUseRabby": "Zaten Rabby kullanıyorum.",
-      "welcomeTitle": "Rabby Wallet'a\nhoş geldiniz"
+      "welcomeTitle": "Chog Wallet'a\nhoş geldiniz"
     },
     "transactions": {
       "itemTitle": {
@@ -182,7 +182,7 @@
         "selfHostConfirm": {
           "button": "Tamam",
           "title": "Rabby'nin Safe Hizmetine Geç",
-          "content": "Safe API mevcut değil. Safe'inizi işlevsel tutmak için Rabby tarafından dağıtılan Safe hizmetine geçin. <1></1><2>Tüm Safe imzalayıcıları, işlemleri yetkilendirmek için Rabby Wallet kullanmalıdır.</2>"
+          "content": "Safe API mevcut değil. Safe'inizi işlevsel tutmak için Rabby tarafından dağıtılan Safe hizmetine geçin. <1></1><2>Tüm Safe imzalayıcıları, işlemleri yetkilendirmek için Chog Wallet kullanmalıdır.</2>"
         }
       },
       "crossChain": {
@@ -424,7 +424,7 @@
       "maxPriorityFeeDisabledAlert": "Lütfen önce gas fiyatını ayarlayın",
       "protocol": "Protokol",
       "addressSource": "Adres Kaynağı",
-      "sigCantDecode": "Bu imza Rabby Wallet tarafından çözülemez.",
+      "sigCantDecode": "Bu imza Chog Wallet tarafından çözülemez.",
       "errorRetry": {
         "InvalidTx": "Geçersiz işlem.",
         "gasLimitTooLow": "Gas limiti çok düşük",
@@ -902,8 +902,8 @@
       "rabbyFee": {
         "wallet": "Cüzdan",
         "title": "Rabby ücreti",
-        "bridgeDesc": "Rabby Wallet, önde gelen toplayıcılardan en iyi oranı bulur ve tekliflerin güvenilirliğini doğrular. Rabby, teklife otomatik olarak dahil edilen <1>%0,25</1> ücret alır.",
-        "swapDesc": "Rabby Wallet, en iyi agregatörlerden her zaman en iyi oranı bulacak ve tekliflerinin güvenilirliğini doğrulayacaktır. Rabby, teklifin içinde otomatik olarak dahil edilen <1>0,25%</1> bir ücret alır (sarılması için %0).",
+        "bridgeDesc": "Chog Wallet, önde gelen toplayıcılardan en iyi oranı bulur ve tekliflerin güvenilirliğini doğrular. Rabby, teklife otomatik olarak dahil edilen <1>%0,25</1> ücret alır.",
+        "swapDesc": "Chog Wallet, en iyi agregatörlerden her zaman en iyi oranı bulacak ve tekliflerinin güvenilirliğini doğrulayacaktır. Rabby, teklifin içinde otomatik olarak dahil edilen <1>0,25%</1> bir ücret alır (sarılması için %0).",
         "button": "Tamamdır",
         "rate": "Ücret oranı"
       },
@@ -1214,7 +1214,7 @@
         "moreSafeTitle": "Safe Adresini İçe Aktar"
       },
       "rateModalTriggerOnHome": {
-        "description": "Rabby Wallet'ı nasıl değerlendiriyorsunuz?"
+        "description": "Chog Wallet'ı nasıl değerlendiriyorsunuz?"
       },
       "rateModal": {
         "feedbackSubmit": "Gönder",
@@ -1307,7 +1307,7 @@
         "backupSuccessGDrive": "Google Drive'a Yedeklendi",
         "backupRestoreUnlockDesc": "Yedeklerinizi şifrelemek için ayarladığınız aynı şifreyi kullanın.",
         "passwordMinTip": "En az 8 karakter olmalıdır",
-        "backupUnlockDesc": "Şifrenizi yedekleri geri yüklemek için güvende tutun. Rabby Wallet bunu depolamaz ve geri alamaz.",
+        "backupUnlockDesc": "Şifrenizi yedekleri geri yüklemek için güvende tutun. Chog Wallet bunu depolamaz ve geri alamaz.",
         "addMoreWalletTitle": "Bu cümleden daha fazla cüzdan ekle"
       },
       "privateKey": {
@@ -1483,7 +1483,7 @@
         "enableBiometricAlert": {
           "yes": "Evet",
           "title": "{{ bioType }}'yi etkinleştir",
-          "content": "{{ bioType }}'yi Rabby Wallet'ı kilidini açmak için etkinleştirmek ister misiniz?",
+          "content": "{{ bioType }}'yi Chog Wallet'ı kilidini açmak için etkinleştirmek ister misiniz?",
           "no": "İptal et"
         },
         "failedAndTipTitle": "Kilid açma başarısız oldu",
@@ -1779,7 +1779,7 @@
       },
       "AddFromChainList": {
         "tips": {
-          "supported": "Rabby Wallet tarafından zaten entegre edilmiş zincir",
+          "supported": "Chog Wallet tarafından zaten entegre edilmiş zincir",
           "added": "Bu zinciri zaten eklediniz."
         },
         "empty": "Zincir bulunamadı",
@@ -3462,7 +3462,7 @@
         "title1": "GasAccount nedir",
         "title3": "GasAccount'ın ek ücretleri var mı?",
         "title4": "GasAccount güvenli mi?",
-        "desc3": "Rabby Wallet ek ücret talep etmez. Sadece işleminiz için gaz ücreti ve bu gazı GasAccount’tan adresinize göndermek için küçük bir gaz ücreti ödemeniz gerekir.",
+        "desc3": "Chog Wallet ek ücret talep etmez. Sadece işleminiz için gaz ücreti ve bu gazı GasAccount’tan adresinize göndermek için küçük bir gaz ücreti ödemeniz gerekir.",
         "title2": "Gas Account'ı nasıl kullanırım",
         "desc2": "Fonları GasAccount'unuza ekleyin ve bunu herhangi bir işlem için kullanın. İmza atarken, gaz ücretini yerel token'lar veya GasAccount ile ödemeyi seçin, herhangi bir zaman geçiş yapabilirsiniz.",
         "desc4": "GasAccount, herhangi bir sözleşme onayı veya iznine ihtiyaç duymadan çalışır. Rabby’nin GasAccount adresine para yatırırsınız ve ihtiyaç duyduğunuzda Rabby gazı adresinize gönderir. Tasarımı gereği tamamen güvenlidir.",
@@ -3715,7 +3715,7 @@
     "nonce": "nonce",
     "backButton": "Geri",
     "folded": "Daraltıldı",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "refresh": "Yenile",
     "Deleted": "Silindi",
     "WalletCreated": "Cüzdan oluşturuldu",
@@ -3839,8 +3839,8 @@
     "permissions_alert": {
       "cancel": "İzin Verme",
       "open_settings": "Tamam",
-      "message": "Rabby Wallet, Ledger ile bağlantı kurmak için bluetooth erişimi kullanır.",
-      "title": "\"Rabby Wallet\" Bluetooth Kullanmak İstiyor"
+      "message": "Chog Wallet, Ledger ile bağlantı kurmak için bluetooth erişimi kullanır.",
+      "title": "\"Chog Wallet\" Bluetooth Kullanmak İstiyor"
     },
     "update_firmware_alert": {
       "cancel": "İptal et",

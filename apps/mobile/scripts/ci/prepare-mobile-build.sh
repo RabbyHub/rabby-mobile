@@ -6,17 +6,30 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 project_dir="$(cd "$script_dir/../.." && pwd)"
 
 ensure_node_runtime() {
-  if command -v nvm >/dev/null 2>&1; then
-    nvm use
-    return 0
-  fi
-
   local nvm_dir="${NVM_DIR:-$HOME/.nvm}"
-  if [ -s "$nvm_dir/nvm.sh" ]; then
+
+  if ! command -v nvm >/dev/null 2>&1 && [ -s "$nvm_dir/nvm.sh" ]; then
     # shellcheck source=/dev/null
     . "$nvm_dir/nvm.sh"
-    nvm use
-    return 0
+  fi
+
+  if command -v nvm >/dev/null 2>&1; then
+    if nvm use >/dev/null 2>&1; then
+      return 0
+    fi
+
+    echo "[prepare-mobile-build] nvm doesn't have the version from .nvmrc installed; installing it now."
+    if nvm install; then
+      return 0
+    fi
+
+    if command -v node >/dev/null 2>&1; then
+      echo "[prepare-mobile-build] nvm install failed, keep current node $(node -v)"
+      return 0
+    fi
+
+    echo "[prepare-mobile-build] nvm install failed and no node runtime is available" >&2
+    return 1
   fi
 
   if command -v node >/dev/null 2>&1; then

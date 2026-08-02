@@ -89,7 +89,7 @@
       "createNewAddress": "新しいウォレットを作成",
       "sync": "Rabby拡張ウォレットを同期するにはスキャンしてください",
       "alreadyHaveAddress": "私はすでにウォレットを持っています",
-      "welcomeTitle": "Rabby Walletへ\nようこそ",
+      "welcomeTitle": "Chog Walletへ\nようこそ",
       "alreadyUseRabby": "Rabbyをすでに使っています"
     },
     "transactions": {
@@ -266,7 +266,7 @@
       "yes": "はい",
       "maxPriorityFeeDisabledAlert": "先にガス価格を設定してください。",
       "contract": "スマートコントラクト",
-      "sigCantDecode": "Rabby Walletではこの署名をデコードできません。",
+      "sigCantDecode": "Chog Walletではこの署名をデコードできません。",
       "contractPopularity": "{{1}}のNo.{{0}}",
       "contractAddress": "コントラクトアドレス",
       "viewRaw": "生データを見る",
@@ -487,7 +487,7 @@
       "safeTx": {
         "selfHostConfirm": {
           "title": "Rabby の Safe Service に切り替える",
-          "content": "Safe APIを利用できません。Safeを引き続き使用するには、Rabbyが提供するSafeサービスへ切り替えてください。<1></1><2>すべてのSafe署名者がRabby Walletでトランザクションを承認する必要があります。</2>",
+          "content": "Safe APIを利用できません。Safeを引き続き使用するには、Rabbyが提供するSafeサービスへ切り替えてください。<1></1><2>すべてのSafe署名者がChog Walletでトランザクションを承認する必要があります。</2>",
           "button": "OK"
         }
       },
@@ -897,8 +897,8 @@
         "wallet": "ウォレット",
         "title": "Rabby 手数料",
         "rate": "手数料レート",
-        "bridgeDesc": "Rabby Walletは常にトップアグリゲーターから可能な限り最良のレートを見つけ、そのオファーの信頼性を確認します。Rabbyは<1>0.25%</1>の手数料を請求し、これは見積もりに自動的に含まれます。",
-        "swapDesc": "Rabby Walletは常にトップアグリゲーターから最適なレートを見つけ、そのオファーの信頼性を確認します。Rabbyは<1>0.25%</1>の手数料（ラッピング時は0%）を請求し、この手数料は見積もりに自動的に含まれます。"
+        "bridgeDesc": "Chog Walletは常にトップアグリゲーターから可能な限り最良のレートを見つけ、そのオファーの信頼性を確認します。Rabbyは<1>0.25%</1>の手数料を請求し、これは見積もりに自動的に含まれます。",
+        "swapDesc": "Chog Walletは常にトップアグリゲーターから最適なレートを見つけ、そのオファーの信頼性を確認します。Rabbyは<1>0.25%</1>の手数料（ラッピング時は0%）を請求し、この手数料は見積もりに自動的に含まれます。"
       },
       "directlySwap": "スマートコントラクトで{{symbol}}トークンを直接ラッピングする",
       "historyTitle": "スワップ履歴",
@@ -1068,7 +1068,7 @@
         "moreSafeTitle": "Safeアドレスをインポート"
       },
       "rateModalTriggerOnHome": {
-        "description": "Rabby Walletの評価をお聞かせください"
+        "description": "Chog Walletの評価をお聞かせください"
       },
       "rateModal": {
         "feedbackSubmit": "送信",
@@ -1247,7 +1247,7 @@
           "title": "{{ bioType }} を有効にする",
           "no": "キャンセル",
           "yes": "はい",
-          "content": "{{ bioType }}でRabby Walletのロックを解除できるようにしますか？"
+          "content": "{{ bioType }}でChog Walletのロックを解除できるようにしますか？"
         }
       },
       "password": {
@@ -1382,7 +1382,7 @@
         "chooseBackupMethodDesc": "バックアップを使用すると、アプリを削除したりデバイスを紛失した場合にウォレットを復元できます。",
         "backupUploadToGDrive": "Google Driveにバックアップ中...",
         "backupTips": "シードフレーズをバックアップする際は、他の誰も画面を見ていないことを確認してください。",
-        "backupUnlockDesc": "バックアップを復元できるよう、パスワードは安全に保管してください。Rabby Walletでは保存も復元もできません。",
+        "backupUnlockDesc": "バックアップを復元できるよう、パスワードは安全に保管してください。Chog Walletでは保存も復元もできません。",
         "addMoreWalletTitle": "このシードフレーズから\nさらにウォレットを追加"
       },
       "privateKey": {
@@ -2018,7 +2018,7 @@
         "title": "Chainlistからすぐに追加",
         "tips": {
           "added": "このチェーンはすでに追加されています",
-          "supported": "Rabby Walletで対応済みのチェーン"
+          "supported": "Chog Walletで対応済みのチェーン"
         }
       },
       "ConfirmModifyRpcModal": {
@@ -2639,7 +2639,7 @@
         "provider": "プロバイダー",
         "feeTitle": "手数料",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "期間限定の取引手数料割引",
         "feeDesc": "取引を行う際は、\n<1>取引手数料</1>と<2>ビルダー手数料</2>が適用されます。",
         "amount": "金額",
@@ -3472,7 +3472,7 @@
     "nonce": "ノンス",
     "refresh": "更新",
     "assets": "資産",
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "copied": "コピーしました",
     "backButton": "戻る",
     "proceedButton": "続行",
@@ -3573,9 +3573,9 @@
       "message": "Bluetoothをオンにしてこの機能を使用してください。"
     },
     "permissions_alert": {
-      "title": "「Rabby Wallet」にBluetoothの使用を許可しますか？",
+      "title": "「Chog Wallet」にBluetoothの使用を許可しますか？",
       "cancel": "許可しない",
-      "message": "Rabby WalletはLedgerへ接続するためにBluetoothを使用します。",
+      "message": "Chog WalletはLedgerへ接続するためにBluetoothを使用します。",
       "open_settings": "OK"
     },
     "update_firmware_alert": {
@@ -3733,7 +3733,7 @@
         "title1": "GasAccountとは",
         "title4": "GasAccountは安全ですか？",
         "title2": "GasAccountの使い方",
-        "desc3": "Rabby Walletから追加手数料を請求することはありません。トランザクションのガス代と、GasAccountからアドレスへガス代を送るための少額のガス代のみ支払います。",
+        "desc3": "Chog Walletから追加手数料を請求することはありません。トランザクションのガス代と、GasAccountからアドレスへガス代を送るための少額のガス代のみ支払います。",
         "desc2": "GasAccountに資金を入金すると、あらゆるトランザクションに利用できます。署名時にネイティブトークンまたはGasAccountでの支払いを選べ、いつでも切り替えられます。",
         "desc4": "GasAccountでは、コントラクトの承認や権限付与は必要ありません。RabbyのGasAccountアドレスへ入金すると、必要なときにRabbyから利用中のアドレスへガス代が送られます。安全性を重視した設計です。",
         "desc1": "GasAccountは、ガス代を支払う新しい方法です。各チェーンのネイティブトークンを用意しなくても、1つのアカウントから、あらゆるチェーンにあるすべてのアドレスのガス代を支払えます。シンプルで任意に利用でき、ガス切れも防げます。"

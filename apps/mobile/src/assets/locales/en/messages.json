@@ -42,7 +42,7 @@
       "alreadyHaveAddress": "I already have a wallet",
       "goToHome": "Go to Home",
       "sync": "Scan to Sync Rabby Extension Wallet",
-      "welcomeTitle": "Welcome to\nRabby Wallet",
+      "welcomeTitle": "Welcome to\nChog Wallet",
       "alreadyUseRabby": "I already use Rabby"
     },
     "newUserOnboarding": {
@@ -235,7 +235,7 @@
       "safeTx": {
         "selfHostConfirm": {
           "title": "Switch to Rabby's Safe Service",
-          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Rabby Wallet to authorize transactions.</2>",
+          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Chog Wallet to authorize transactions.</2>",
           "button": "OK"
         }
       },
@@ -370,7 +370,7 @@
       "viewRaw": "View Raw",
       "chain": "Chain",
       "unknownActionType": "Unknown Action Type",
-      "sigCantDecode": "This signature can't be decoded by Rabby Wallet",
+      "sigCantDecode": "This signature can't be decoded by Chog Wallet",
       "nftCollection": "NFT Collection",
       "floorPrice": "Floor price",
       "contractAddress": "Contract address",
@@ -970,8 +970,8 @@
       "insufficient": "Insufficient Balance:",
       "rabbyFee": {
         "title": "Rabby fee",
-        "swapDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee (0% for wrapping), which is automatically included in the quote.",
-        "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee, which is automatically included in the quote.",
+        "swapDesc": "Chog Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee (0% for wrapping), which is automatically included in the quote.",
+        "bridgeDesc": "Chog Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee, which is automatically included in the quote.",
         "wallet": "Wallet",
         "rate": "Fee rate",
         "button": "Got it"
@@ -1266,7 +1266,7 @@
         "hardwareWallet": "Hardware Wallet",
         "selectAddMethod": "Select Add Method",
         "syncRabbyExtension": "Sync Rabby Extension",
-        "restoreRabbyWallet": "Restore Rabby Wallet",
+        "restoreRabbyWallet": "Restore Chog Wallet",
         "seedPhraseOrPrivateKey": "Seed phrase or private key",
         "moreOptions": "More options"
       },
@@ -1308,7 +1308,7 @@
         }
       },
       "rateModalTriggerOnHome": {
-        "description": "How do you rate Rabby Wallet"
+        "description": "How do you rate Chog Wallet"
       },
       "rateModal": {
         "descriptionIOS": "If you like Rabby, a quick rating on the App Store would mean a lot.",
@@ -1384,7 +1384,7 @@
         "googleDriveBackup": "Google Drive Backup",
         "manuallyBackup": "Manual Backup",
         "backupUnlockTitle": "Encrypt with App Password",
-        "backupUnlockDesc": "Keep your password safe to restore backups. Rabby Wallet doesn't store it and can't recover it.",
+        "backupUnlockDesc": "Keep your password safe to restore backups. Chog Wallet doesn't store it and can't recover it.",
         "backupUnlockPlaceholder": "Enter the Password to Confirm",
         "passwordMinTip": "Must be at least 8 characters",
         "backupUnlockButton": "Continue",
@@ -1562,7 +1562,7 @@
         "usePassword": "Switched to use password to unlock.",
         "enableBiometricAlert": {
           "title": "Enable {{ bioType }}",
-          "content": "Do you want to enable {{ bioType }} to Unlock Rabby Wallet？",
+          "content": "Do you want to enable {{ bioType }} to Unlock Chog Wallet？",
           "no": "Cancel",
           "yes": "Yes"
         }
@@ -1892,7 +1892,7 @@
         "empty": "No chains found",
         "tips": {
           "added": "You've already added this chain",
-          "supported": "Chain already integrated by Rabby Wallet"
+          "supported": "Chain already integrated by Chog Wallet"
         }
       },
       "signTx": {
@@ -2689,7 +2689,7 @@
         "feeTitle": "Fee",
         "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet",
+        "feeRabby": "Chog Wallet",
         "feeRabbyDiscount": "Limited-time trading fee discount"
       },
       "PerpsAutoCloseModal": {
@@ -3489,7 +3489,7 @@
         "title2": "How to use Gas Account",
         "desc2": "Add funds to your GasAccount and use it for any transaction. When signing, choose to pay gas with native tokens or GasAccount, switch anytime.",
         "title3": "Does GasAccount have extra fees",
-        "desc3": "Rabby Wallet charges no extra fees. You only pay the gas for your transaction and a small amount of gas for sending that gas from GasAccount to your address.",
+        "desc3": "Chog Wallet charges no extra fees. You only pay the gas for your transaction and a small amount of gas for sending that gas from GasAccount to your address.",
         "title4": "Is GasAccount safe",
         "desc4": "GasAccount requires no contract approvals or permissions. You deposit to Rabby’s GasAccount address, and Rabby sends gas to your address when needed. Fully secure by design."
       },
@@ -3741,7 +3741,7 @@
     }
   },
   "global": {
-    "appName": "Rabby Wallet",
+    "appName": "Chog Wallet",
     "appDescription": "Your go-to wallet for Ethereum and EVM",
     "copy": "Copy",
     "copiedSuccessfully": "Copied successfully",
@@ -3890,8 +3890,8 @@
       "cancel": "Don't Allow"
     },
     "permissions_alert": {
-      "title": "\"Rabby Wallet\" Would Like to Use Bluetooth",
-      "message": "Rabby Wallet uses bluetooth access to connect Ledger",
+      "title": "\"Chog Wallet\" Would Like to Use Bluetooth",
+      "message": "Chog Wallet uses bluetooth access to connect Ledger",
       "open_settings": "OK",
       "cancel": "Don't Allow"
     },
