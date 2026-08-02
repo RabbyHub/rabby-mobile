@@ -17,8 +17,6 @@ UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
 export RABBY_MOBILE_BUILD_ENV="regression";
 check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
 
 cd $project_dir;
 
@@ -76,7 +74,7 @@ build_selfhost() {
   if [ "$FAST_BUILD_ENABLED" = "true" ]; then
     echo "[deploy-android] try to fast-build from template.apk."
     echo "[deploy-android] fast build scope: ${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}"
-    CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/android.sh resign
+    CI="$CI" SKIP_YARN=true bash $script_dir/fast-build/android.sh resign
     if [ $? -eq 0 ]; then
       echo "[deploy-android] APK fast-build succeeded."
       android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
@@ -87,9 +85,9 @@ build_selfhost() {
   fi
   echo "[deploy-android] build directly with gradle."
   if [ $buildchannel == "selfhost" ]; then
-    sh $project_dir/android/build.sh buildApk
+    bash $project_dir/android/build.sh buildApk
   else
-    sh $project_dir/android/build.sh buildRegApk
+    bash $project_dir/android/build.sh buildRegApk
   fi
 }
 
@@ -158,23 +156,6 @@ if [ "$FAST_BUILD_ENABLED" = "true" ]; then
 fi
 version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
 
-staging_dirname=android-$version_bundle_name$staging_dir_suffix
-backup_s3_dir=$S3_ANDROID_BAK_DEPLOYMENT/$staging_dirname
-staging_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/$staging_dirname
-staging_cdn_baseurl=$cdn_deployment_urlbase/$staging_dirname
-
-release_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android
-release_cdn_baseurl=$cdn_deployment_urlbase/android
-staging_acl="authenticated-read"
-
-backup_name=$S3_ANDROID_BAK_DEPLOYMENT/android/$version_bundle_filename
-
-if [[ "$version_bundle_suffix" =~ .*\.apk ]]; then
-  apk_url="$staging_cdn_baseurl/$apk_name"
-else
-  apk_url=""
-fi
-
 cp $android_export_target $deployment_local_dir/$apk_name
 
 android_16kb_check_mode="${RABBY_MOBILE_ANDROID_16KB_CHECK:-warn}"
@@ -206,56 +187,13 @@ print_manual_upload_sentry_sourcemap() {
   fi
 }
 
-# only upload apk as template when it is not fast-built from a template
-if [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
-  template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
-  native_part_hash=$(collect_android_native_entries)
-  echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
-  aws s3 cp $android_export_target $template_apk_s3_dir/$native_part_hash.apk --acl public-read --content-type application/vnd.android.package-archive
-  echo "[deploy-android] finished setting apk, public url is: $cdn_deployment_urlbase/.templates/android/$native_part_hash.apk"
-fi
-
 echo ""
-echo "[deploy-android] start sync..."
-
-if [ "$REALLY_UPLOAD" == "true" ]; then
-  echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
-
-  if [ "$buildchannel" == 'selfhost-reg' ]; then
-    echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
-    [ -z "$CI" ] && echo "[deploy-android] open $apk_url to download"
-    aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps
-  else
-    echo "[deploy-android] will public as $apk_url"
-    aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
-  fi
-
-  echo "";
-  echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
-  echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read"
-
-  if [ ! -z $apk_url ]; then
-    echo "[deploy-android] publish as $apk_name, with version.json"
-
-    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT="$android_16kb_report_text" node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
-  fi
-fi
-
-[ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
+echo "[deploy-android] APK ready at: $deployment_local_dir/$apk_name"
+echo "[deploy-android] no remote upload is performed (AWS/S3 upload has been disabled for this build)."
 
 if [ -z $CI ]; then
-  echo "";
-  echo "[deploy-android] force fresh CDN:"
-  echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android*'\`"
-  echo ""
-
   print_manual_upload_sentry_sourcemap;
 fi
 
-echo "[deploy-android] finish sync."
-
+echo "[deploy-android] finished."
 # WIP: .well-known
