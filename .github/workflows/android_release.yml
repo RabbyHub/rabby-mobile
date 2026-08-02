@@ -11,36 +11,31 @@ on:
       buildchannel:
         description: 'Build Channel'
         required: true
-        default: 'appstore'
+        default: 'selfhost'
         type: choice
         options:
           - selfhost
-          - appstore
+          - selfhost-reg
       REALLY_UPLOAD:
         required: true
         type: boolean
         default: true
-      UPLOAD_TO_GOOGLE_PLAY_INTERNAL:
-        description: 'Upload the appstore AAB to Google Play internal track as a draft release'
-        required: true
-        type: boolean
-        default: false
   workflow_call:
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
-        required: true
+        required: false
       RABBY_MOBILE_ANDROID_STORE_PASSWORD:
-        required: true
+        required: false
       RABBY_MOBILE_ANDROID_KEY_PASSWORD:
-        required: true
+        required: false
       RABBY_MOBILE_ANDROID_KEY_ALIAS:
-        required: true
+        required: false
       RABBY_MOBILE_KR_PWD:
-        required: true
+        required: false
 
 defaults:
   run:
-    shell: bash -ieol pipefail {0}
+    shell: bash --noprofile --norc -eo pipefail {0}
 env:
   BUILD_TARGET_PLATFORM: android
 
@@ -94,13 +89,6 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: '[Android] Setup Ruby & Fastlane'
-        if: runner.os == 'Linux'
-        uses: heisenberg-2077/setup-ruby@ad02358aa4017fc234098879ef04707472008690 # master
-        with:
-          ruby-version: '3.3.6'
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-
       - name: Setup Java
         uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # v3
         with:
@@ -114,9 +102,8 @@ jobs:
         run: |
           cd apps/mobile;
           RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
-          bundle install;
 
-          [ -z $buildchannel ] && export buildchannel=appstore;
+          [ -z "$buildchannel" ] && export buildchannel=selfhost;
           [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
           ./scripts/deploy-android.sh
         env:
@@ -131,12 +118,10 @@ jobs:
           RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
-          MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
-          RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
           buildchannel: ${{ inputs.buildchannel }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
@@ -148,23 +133,9 @@ jobs:
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
 
-      - name: Upload appstore AAB to Google Play internal track
-        if: ${{ inputs.buildchannel == 'appstore' && inputs.REALLY_UPLOAD && inputs.UPLOAD_TO_GOOGLE_PLAY_INTERNAL }}
-        run: |
-          cd apps/mobile;
-          bash ./scripts/ci/upload-google-play-internal-track.sh
-        env:
-          RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
-          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
-          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
-          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
-          GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
-
-      # - name: Upload artifact
-      #   uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
-      #   with:
-      #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
-      #     path: |
-      #       ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-      #     retention-days: 7
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+          path: |
+              ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
