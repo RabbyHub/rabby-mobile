@@ -1735,12 +1735,6 @@ reset_builtin_assets() {
   #   cp $project_dir/assets/fonts/* $target
   # done
 
-  # iOS
-  local ios_target=$project_dir/ios/RabbyMobile/Resources/
-  echo "cleanup and copy fonts to $ios_target..."
-  rm -rf $ios_target && mkdir -p $ios_target;
-  cp $project_dir/assets/fonts/* $ios_target
-
   # Android
   mkdir -p $project_dir/android/app/src/main/assets/fonts && \
     rm -rf $project_dir/android/app/src/main/assets/fonts/*.ttf;
@@ -1803,15 +1797,6 @@ ensure_inpage_bridge_assets() {
 build_worker_if_not_exist() {
   local script_dir="$RABBY_FNS_SCRIPT_DIR"
   local project_dir=$(dirname $script_dir)
-
-  # ./assets/ios/threads/worker.thread.jsbundle
-  local ios_target=$project_dir/assets/ios/threads/worker.thread.jsbundle
-  if [ ! -f $ios_target ]; then
-    echo "[build_worker_if_not_exist] $ios_target not exist, building..."
-    yarn buildworker:prod:ios
-  else
-    echo "[build_worker_if_not_exist] $ios_target exist, skipped."
-  fi
 
   # ./android/app/src/main/assets/threads/worker.thread.bundle
   local android_target=$project_dir/android/app/src/main/assets/threads/worker.thread.bundle
