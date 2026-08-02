@@ -6,6 +6,8 @@ export android_export_dir="$project_dir/app/build/outputs/"
 
 cd $project_dir
 
+chmod +x ./gradlew
+
 ./gradlew clean -q
 
 BUILD_TYPE=$1
@@ -36,7 +38,7 @@ fi
 
 if [[ -f "$android_export_target" ]] ; then
     echo "\033[32;1mexport android success 🎉  🎉  🎉   \033[0m"
-    open $(dirname $android_export_target)
+    command -v open >/dev/null 2>&1 && open $(dirname $android_export_target)
 else
     echo "\033[31;1mexport android failed 😢 😢 😢     \033[0m"
     exit 1
