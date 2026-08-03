@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr edit:*),Bash(gh pr review:*),Bash(gh pr view:*)
+allowed-tools: Bash(gh pr diff:*),Bash(gh pr edit --add-reviewer:*),Bash(gh pr review --comment:*),Bash(gh pr view:*)
 description: Review a pull request
 ---
 
