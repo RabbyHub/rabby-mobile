@@ -2,13 +2,20 @@
 
 const assert = require('assert');
 const { Linter } = require('eslint');
+const typescriptParser = require('@typescript-eslint/parser');
 const noFloatingDeferredServiceApiCalls = require('../eslint-rules/no-floating-deferred-service-api-calls');
+const noPersistStoreDirectMutation = require('../eslint-rules/no-persist-store-direct-mutation');
 
 const linter = new Linter();
 linter.defineRule(
   'no-floating-deferred-service-api-calls',
   noFloatingDeferredServiceApiCalls,
 );
+linter.defineRule(
+  'no-persist-store-direct-mutation',
+  noPersistStoreDirectMutation,
+);
+linter.defineParser('@typescript-eslint/parser', typescriptParser);
 
 const config = {
   parserOptions: {
@@ -107,5 +114,97 @@ invalidCases.forEach((source, index) => {
 
 const unclassifiedMessages = verify(invalidCases[invalidCases.length - 1]);
 assert.strictEqual(unclassifiedMessages[0].messageId, 'unclassifiedMethod');
+
+const persistStoreConfig = {
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+  },
+  rules: {
+    'no-persist-store-direct-mutation': 'error',
+  },
+};
+
+function verifyPersistStore(source) {
+  return linter.verify(source, persistStoreConfig, 'fixture.ts');
+}
+
+const validPersistStoreCases = [
+  `
+    import { StoreServiceBase } from '@rabby-wallet/persist-store';
+    class Service extends StoreServiceBase {
+      read() { return this.store.value; }
+      write() { this.mutateStore(draft => { draft.value = 1; }); }
+    }
+  `,
+  `
+    import type { StorageSnapshot } from '@rabby-wallet/persist-store';
+    class UnrelatedService {
+      store = { value: 0 };
+      write() { this.store.value = 1; }
+    }
+  `,
+  `
+    service.store.value;
+  `,
+];
+
+const invalidPersistStoreCases = [
+  `
+    import { StoreServiceBase } from '@rabby-wallet/persist-store';
+    class Service extends StoreServiceBase {
+      write() { this.store.value = 1; }
+    }
+  `,
+  `
+    import { StoreServiceBase } from '@rabby-wallet/persist-store';
+    class Service extends StoreServiceBase {
+      write() { this.store.nested.value = 1; }
+    }
+  `,
+  `
+    import { StoreServiceBase } from '@rabby-wallet/persist-store';
+    class Service extends StoreServiceBase {
+      write() { this.store.items.push('item'); }
+    }
+  `,
+  `
+    import { StoreServiceBase } from '@rabby-wallet/persist-store';
+    class Service extends StoreServiceBase {
+      write() { delete this.store.value; }
+    }
+  `,
+  `
+    import { StoreServiceBase } from '@rabby-wallet/persist-store';
+    class Service extends StoreServiceBase {
+      write() { this.store.count++; }
+    }
+  `,
+  `
+    (service.store as any).value = 1;
+  `,
+  `
+    const snapshot = service.store as unknown as { value: number };
+  `,
+];
+
+validPersistStoreCases.forEach((source, index) => {
+  assert.deepStrictEqual(
+    verifyPersistStore(source),
+    [],
+    `expected valid persist-store case ${index + 1} to pass`,
+  );
+});
+
+invalidPersistStoreCases.forEach((source, index) => {
+  const messages = verifyPersistStore(source);
+  assert.strictEqual(
+    messages.length,
+    1,
+    `expected invalid persist-store case ${index + 1} to report once`,
+  );
+  assert.strictEqual(messages[0].ruleId, 'no-persist-store-direct-mutation');
+});
 
 console.log('service API ESLint rule tests passed');

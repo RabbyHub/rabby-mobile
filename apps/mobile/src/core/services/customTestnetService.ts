@@ -5,7 +5,8 @@ import {
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import { BigNumber } from 'bignumber.js';
-import { omit, sortBy } from 'lodash';
+import { sortBy } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import {
   Client,
   createClient,
@@ -25,8 +26,9 @@ import {
 import { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import axios from 'axios';
 // import { matomoRequestEvent } from '@/utils/analytics';
-import createPersistStore, {
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { updateChainStore } from '@/constant/chains';
 import { syncCustomTestnetStore } from '@/store/customTestnet';
@@ -70,15 +72,14 @@ async function reportCustomNetworkStatus(value: number) {
   });
 }
 
-export class CustomTestnetService {
-  store: CutsomTestnetServiceStore = {
-    customTestnet: {},
-    customTokenList: [],
-  };
-
+export class CustomTestnetService extends StoreServiceBase<
+  CutsomTestnetServiceStore,
+  APP_STORE_NAMES.customTestnet
+> {
   chains: Record<string, Client> = {};
 
   constructor(options?: StorageAdapaterOptions) {
+    super();
     this.init(options);
   }
 
@@ -89,19 +90,16 @@ export class CustomTestnetService {
   };
 
   init = (options?: StorageAdapaterOptions) => {
-    const storage = createPersistStore<CutsomTestnetServiceStore>(
+    this.initializePersistStore(
+      APP_STORE_NAMES.customTestnet,
       {
-        name: APP_STORE_NAMES.customTestnet,
-        template: {
-          customTestnet: {},
-          customTokenList: [],
-        },
+        customTestnet: {},
+        customTokenList: [],
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-    this.store = storage || this.store;
     Object.values(this.store.customTestnet).forEach(chain => {
       const client = createClientByChain(chain);
       this.chains[chain.id] = client;
@@ -173,10 +171,10 @@ export class CustomTestnetService {
       };
     }
 
-    this.store.customTestnet = {
-      ...this.store.customTestnet,
-      [chain.id]: createTestnetChain(chain),
-    };
+    const nextChain = createTestnetChain(chain);
+    this.mutateStore(draft => {
+      draft.customTestnet[chain.id] = nextChain;
+    });
     this.chains[chain.id] = createClientByChain(chain);
     this.syncChainList();
     this.syncStore();
@@ -184,13 +182,15 @@ export class CustomTestnetService {
     if (this.getList().length) {
       reportCustomNetworkStatus(this.getList().length);
     }
-    return this.store.customTestnet[chain.id];
+    return nextChain;
   };
 
   remove = (chainId: number) => {
-    this.store.customTestnet = omit(this.store.customTestnet, chainId);
-    this.store.customTokenList = this.store.customTokenList.filter(item => {
-      return item.chainId !== chainId;
+    this.mutateStore(draft => {
+      delete draft.customTestnet[chainId];
+      draft.customTokenList = draft.customTokenList.filter(item => {
+        return item.chainId !== chainId;
+      });
     });
     delete this.chains[chainId];
     this.syncChainList();
@@ -419,13 +419,17 @@ export class CustomTestnetService {
     if (this.hasToken(params)) {
       throw new Error('Token already added');
     }
-    this.store.customTokenList = [...this.store.customTokenList, params];
+    this.mutateStore(draft => {
+      draft.customTokenList.push(params);
+    });
     this.syncStore();
   };
 
   removeToken = (params: Pick<CustomTestnetTokenBase, 'chainId' | 'id'>) => {
-    this.store.customTokenList = this.store.customTokenList.filter(item => {
-      return !isSameTestnetToken(item, params);
+    this.mutateStore(draft => {
+      draft.customTokenList = draft.customTokenList.filter(item => {
+        return !isSameTestnetToken(item, params);
+      });
     });
     this.syncStore();
   };
@@ -558,7 +562,7 @@ export class CustomTestnetService {
       });
     });
     if (local) {
-      return local;
+      return cloneDeep(local);
     }
 
     // todo: multicall
@@ -603,7 +607,7 @@ export class CustomTestnetService {
         };
       },
     );
-    const list = this.store.customTokenList || [];
+    const list = cloneDeep(this.store.customTokenList || []);
     let tokenList = [...nativeTokenList, ...list];
     if (chainId) {
       tokenList = tokenList.filter(item => {
@@ -679,8 +683,8 @@ export class CustomTestnetService {
 
   syncStore = () => {
     syncCustomTestnetStore({
-      customTestnet: this.store.customTestnet,
-      customTokenList: this.store.customTokenList,
+      customTestnet: this.getStoreFieldSnapshot('customTestnet'),
+      customTokenList: this.getStoreFieldSnapshot('customTokenList'),
     });
   };
 }

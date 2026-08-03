@@ -8,8 +8,10 @@ import {
   ContractAddress,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import Engine from '@rabby-wallet/rabby-security-engine';
-import createPersistStore, {
+import cloneDeep from 'lodash/cloneDeep';
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { openapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
@@ -49,19 +51,10 @@ function getRuleConfigFromRules(rules: RuleConfig[]): UserRuleConfig[] {
   }));
 }
 
-export class SecurityEngineService {
-  store: SecurityEngineStore = {
-    userData: {
-      originBlacklist: [],
-      originWhitelist: [],
-      contractBlacklist: [],
-      contractWhitelist: [],
-      addressBlacklist: [],
-      addressWhitelist: [],
-    },
-    rules: [],
-  };
-
+export class SecurityEngineService extends StoreServiceBase<
+  SecurityEngineStore,
+  APP_STORE_NAMES.securityEngine
+> {
   rules: RuleConfig[] = [];
 
   engine: Engine | null = null;
@@ -69,6 +62,7 @@ export class SecurityEngineService {
   private storageOptions?: StorageAdapaterOptions;
 
   constructor(options?: StorageAdapaterOptions) {
+    super();
     this.storageOptions = options;
   }
 
@@ -80,55 +74,37 @@ export class SecurityEngineService {
       return this.initPromise;
     }
 
-    this.initPromise = Promise.resolve(
-      createPersistStore<SecurityEngineStore>(
-        {
-          name: APP_STORE_NAMES.securityEngine,
-          template: {
-            userData: {
-              originBlacklist: [],
-              originWhitelist: [],
-              contractBlacklist: [],
-              contractWhitelist: [],
-              addressBlacklist: [],
-              addressWhitelist: [],
-            },
-            rules: getRuleConfigFromRules(defaultRules),
-          },
+    this.initializePersistStore(
+      APP_STORE_NAMES.securityEngine,
+      {
+        userData: {
+          originBlacklist: [],
+          originWhitelist: [],
+          contractBlacklist: [],
+          contractWhitelist: [],
+          addressBlacklist: [],
+          addressWhitelist: [],
         },
-        {
-          storage: options.storageAdapter,
-        },
-      ),
-    )
-      .then(storage => {
-        this.rules = mergeRules(defaultRules, storage.rules);
-        this.store = storage || this.store;
-        this.store.rules = this.rules;
-        if (!this.store.userData.contractBlacklist) {
-          this.store.userData = {
-            ...this.store.userData,
-            contractBlacklist: [],
-          };
-        }
-        if (!this.store.userData.contractWhitelist) {
-          this.store.userData = {
-            ...this.store.userData,
-            contractWhitelist: [],
-          };
-        }
-        if (!this.store.userData.addressBlacklist) {
-          this.store.userData = {
-            ...this.store.userData,
-            addressBlacklist: [],
-          };
-        }
-        if (!this.store.userData.addressWhitelist) {
-          this.store.userData = {
-            ...this.store.userData,
-            addressWhitelist: [],
-          };
-        }
+        rules: getRuleConfigFromRules(defaultRules),
+      },
+      {
+        storageAdapter: options.storageAdapter,
+      },
+    );
+
+    this.initPromise = Promise.resolve()
+      .then(() => {
+        this.rules = mergeRules(
+          defaultRules,
+          this.getStoreFieldSnapshot('rules'),
+        );
+        this.mutateStore(draft => {
+          draft.rules = this.rules;
+          draft.userData.contractBlacklist ||= [];
+          draft.userData.contractWhitelist ||= [];
+          draft.userData.addressBlacklist ||= [];
+          draft.userData.addressWhitelist ||= [];
+        });
         this.engine = new Engine(this.rules, openapi);
       })
       .catch(error => {
@@ -143,37 +119,35 @@ export class SecurityEngineService {
     if (!this.engine) throw new Error('Security Engine not init');
     const results = await this.engine.run({
       ...actionData,
-      userData: this.store.userData,
+      userData: this.getStoreFieldSnapshot('userData'),
     });
     return results;
   };
 
   getRules = () => {
-    return this.rules;
+    return cloneDeep(this.rules);
   };
 
   getUserData = () => {
-    return this.store.userData;
+    return this.getStoreFieldSnapshot('userData');
   };
 
   updateUserData = (data: UserData) => {
-    this.store.userData = data;
+    this.mutateStore(draft => {
+      draft.userData = data;
+    });
   };
 
   getOriginWhitelist = () => {
-    return this.store.userData.originWhitelist;
+    return cloneDeep(this.store.userData.originWhitelist);
   };
 
   addOriginWhitelist = (origin: string) => {
     if (this.store.userData.originWhitelist.includes(origin)) return;
 
-    this.store.userData = {
-      ...this.store.userData,
-      originWhitelist: [
-        ...this.store.userData.originWhitelist,
-        origin.toLowerCase(),
-      ],
-    };
+    this.mutateStore(draft => {
+      draft.userData.originWhitelist.push(origin.toLowerCase());
+    });
   };
 
   removeOriginWhitelist = (origin: string) => {
@@ -181,16 +155,17 @@ export class SecurityEngineService {
       return;
     }
 
-    this.store.userData = {
-      ...this.store.userData,
-      originWhitelist: this.store.userData.originWhitelist.filter(item => {
-        return item.toLowerCase() !== origin.toLowerCase();
-      }),
-    };
+    this.mutateStore(draft => {
+      draft.userData.originWhitelist = draft.userData.originWhitelist.filter(
+        item => {
+          return item.toLowerCase() !== origin.toLowerCase();
+        },
+      );
+    });
   };
 
   getOriginBlacklist = () => {
-    return this.store.userData.originBlacklist;
+    return cloneDeep(this.store.userData.originBlacklist);
   };
 
   addContractBlacklist = (contract: ContractAddress) => {
@@ -203,16 +178,12 @@ export class SecurityEngineService {
     ) {
       return;
     }
-    this.store.userData = {
-      ...this.store.userData,
-      contractBlacklist: [
-        ...this.store.userData.contractBlacklist,
-        {
-          ...contract,
-          address: contract.address.toLowerCase(),
-        },
-      ],
-    };
+    this.mutateStore(draft => {
+      draft.userData.contractBlacklist.push({
+        ...contract,
+        address: contract.address.toLowerCase(),
+      });
+    });
   };
 
   addContractWhitelist = (contract: ContractAddress) => {
@@ -225,16 +196,12 @@ export class SecurityEngineService {
     ) {
       return;
     }
-    this.store.userData = {
-      ...this.store.userData,
-      contractWhitelist: [
-        ...this.store.userData.contractWhitelist,
-        {
-          ...contract,
-          address: contract.address.toLowerCase(),
-        },
-      ],
-    };
+    this.mutateStore(draft => {
+      draft.userData.contractWhitelist.push({
+        ...contract,
+        address: contract.address.toLowerCase(),
+      });
+    });
   };
 
   removeContractWhitelist = (contract: ContractAddress) => {
@@ -248,15 +215,15 @@ export class SecurityEngineService {
       return;
     }
 
-    this.store.userData = {
-      ...this.store.userData,
-      contractWhitelist: this.store.userData.contractWhitelist.filter(item => {
-        return !(
-          isSameAddress(item.address, contract.address) &&
-          item.chainId === contract.chainId
-        );
-      }),
-    };
+    this.mutateStore(draft => {
+      draft.userData.contractWhitelist =
+        draft.userData.contractWhitelist.filter(item => {
+          return !(
+            isSameAddress(item.address, contract.address) &&
+            item.chainId === contract.chainId
+          );
+        });
+    });
   };
 
   removeContractBlacklistFromAllChains = (contract: ContractAddress) => {
@@ -267,12 +234,12 @@ export class SecurityEngineService {
     ) {
       return;
     }
-    this.store.userData = {
-      ...this.store.userData,
-      contractBlacklist: this.store.userData.contractBlacklist.filter(item => {
-        return !isSameAddress(item.address, contract.address);
-      }),
-    };
+    this.mutateStore(draft => {
+      draft.userData.contractBlacklist =
+        draft.userData.contractBlacklist.filter(item => {
+          return !isSameAddress(item.address, contract.address);
+        });
+    });
   };
 
   removeContractBlacklist = (contract: ContractAddress) => {
@@ -286,27 +253,23 @@ export class SecurityEngineService {
       return;
     }
 
-    this.store.userData = {
-      ...this.store.userData,
-      contractBlacklist: this.store.userData.contractBlacklist.filter(item => {
-        return !(
-          isSameAddress(item.address, contract.address) &&
-          item.chainId === contract.chainId
-        );
-      }),
-    };
+    this.mutateStore(draft => {
+      draft.userData.contractBlacklist =
+        draft.userData.contractBlacklist.filter(item => {
+          return !(
+            isSameAddress(item.address, contract.address) &&
+            item.chainId === contract.chainId
+          );
+        });
+    });
   };
 
   addAddressWhitelist = (address: string) => {
     if (this.store.userData.addressWhitelist.includes(address)) return;
 
-    this.store.userData = {
-      ...this.store.userData,
-      addressWhitelist: [
-        ...this.store.userData.addressWhitelist,
-        address.toLowerCase(),
-      ],
-    };
+    this.mutateStore(draft => {
+      draft.userData.addressWhitelist.push(address.toLowerCase());
+    });
   };
 
   removeAddressWhitelist = (address: string) => {
@@ -314,24 +277,21 @@ export class SecurityEngineService {
       return;
     }
 
-    this.store.userData = {
-      ...this.store.userData,
-      addressWhitelist: this.store.userData.addressWhitelist.filter(item => {
-        return item.toLowerCase() !== address.toLowerCase();
-      }),
-    };
+    this.mutateStore(draft => {
+      draft.userData.addressWhitelist = draft.userData.addressWhitelist.filter(
+        item => {
+          return item.toLowerCase() !== address.toLowerCase();
+        },
+      );
+    });
   };
 
   addAddressBlacklist = (address: string) => {
     if (this.store.userData.addressBlacklist.includes(address)) return;
 
-    this.store.userData = {
-      ...this.store.userData,
-      addressBlacklist: [
-        ...this.store.userData.addressBlacklist,
-        address.toLowerCase(),
-      ],
-    };
+    this.mutateStore(draft => {
+      draft.userData.addressBlacklist.push(address.toLowerCase());
+    });
   };
 
   removeAddressBlacklist = (address: string) => {
@@ -339,24 +299,21 @@ export class SecurityEngineService {
       return;
     }
 
-    this.store.userData = {
-      ...this.store.userData,
-      addressBlacklist: this.store.userData.addressBlacklist.filter(item => {
-        return item.toLowerCase() !== address.toLowerCase();
-      }),
-    };
+    this.mutateStore(draft => {
+      draft.userData.addressBlacklist = draft.userData.addressBlacklist.filter(
+        item => {
+          return item.toLowerCase() !== address.toLowerCase();
+        },
+      );
+    });
   };
 
   addOriginBlacklist = (origin: string) => {
     if (this.store.userData.originBlacklist.includes(origin)) return;
 
-    this.store.userData = {
-      ...this.store.userData,
-      originBlacklist: [
-        ...this.store.userData.originBlacklist,
-        origin.toLowerCase(),
-      ],
-    };
+    this.mutateStore(draft => {
+      draft.userData.originBlacklist.push(origin.toLowerCase());
+    });
   };
 
   removeOriginBlacklist = (origin: string) => {
@@ -364,40 +321,33 @@ export class SecurityEngineService {
       return;
     }
 
-    this.store.userData = {
-      ...this.store.userData,
-      originBlacklist: this.store.userData.originBlacklist.filter(item => {
-        return item.toLowerCase() !== origin.toLowerCase();
-      }),
-    };
+    this.mutateStore(draft => {
+      draft.userData.originBlacklist = draft.userData.originBlacklist.filter(
+        item => {
+          return item.toLowerCase() !== origin.toLowerCase();
+        },
+      );
+    });
   };
 
   enableRule = (id: string) => {
-    this.store.rules = this.store.rules.map(rule => {
-      if (rule.id === id) {
-        return {
-          ...rule,
-          enable: true,
-        };
-      } else {
-        return rule;
+    this.mutateStore(draft => {
+      const rule = draft.rules.find(item => item.id === id);
+      if (rule) {
+        rule.enable = true;
       }
     });
-    this.reloadRules(this.store.rules);
+    this.reloadRules(this.getStoreFieldSnapshot('rules'));
   };
 
   disableRule = (id: string) => {
-    this.store.rules = this.store.rules.map(rule => {
-      if (rule.id === id) {
-        return {
-          ...rule,
-          enable: false,
-        };
-      } else {
-        return rule;
+    this.mutateStore(draft => {
+      const rule = draft.rules.find(item => item.id === id);
+      if (rule) {
+        rule.enable = false;
       }
     });
-    this.reloadRules(this.store.rules);
+    this.reloadRules(this.getStoreFieldSnapshot('rules'));
   };
 
   reloadRules = (rules: UserRuleConfig[]) => {

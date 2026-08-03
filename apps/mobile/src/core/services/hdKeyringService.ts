@@ -1,35 +1,40 @@
-import createPersistStore, {
+import cloneDeep from 'lodash/cloneDeep';
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import dayjs from 'dayjs';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export type Store = Record<string, number>;
 
-export class HDKeyringService {
-  store!: Store;
-
+export class HDKeyringService extends StoreServiceBase<
+  Store,
+  APP_STORE_NAMES.HDKeyRingLastAddAddrTime
+> {
   constructor(options?: StorageAdapaterOptions) {
+    super();
     this.init(options);
   }
 
   init = async (options?: StorageAdapaterOptions) => {
-    this.store = await createPersistStore<Store>(
+    await Promise.resolve();
+    this.initializePersistStore(
+      APP_STORE_NAMES.HDKeyRingLastAddAddrTime,
+      {},
       {
-        name: APP_STORE_NAMES.HDKeyRingLastAddAddrTime,
-        template: {},
-      },
-      {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
   };
 
   addUnixRecord = (basePublicKey: string) => {
-    this.store[basePublicKey] = dayjs().unix();
+    this.mutateStore(draft => {
+      draft[basePublicKey] = dayjs().unix();
+    });
   };
 
   getStore = () => {
-    return this.store;
+    return this.getStoreSnapshot();
   };
 }

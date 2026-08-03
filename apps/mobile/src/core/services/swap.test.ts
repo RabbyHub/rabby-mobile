@@ -19,13 +19,35 @@ const makeToken = (chain: string, id: string): TokenItem =>
 function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
   jest.resetModules();
 
-  const mockCreatePersistStore = jest.fn((config: { template: unknown }) => {
-    return persistedStore || config.template;
-  });
+  class MockStoreServiceBase {
+    store: SwapServiceStore;
+
+    constructor(_name: string, template: SwapServiceStore) {
+      this.store = {
+        ...template,
+        ...persistedStore,
+      };
+    }
+
+    protected mutateStore(recipe: (draft: SwapServiceStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as SwapServiceStore;
+    }
+
+    getStoreFieldSnapshot<K extends keyof SwapServiceStore>(key: K) {
+      const value = this.store[key];
+      return (
+        value === undefined ? value : JSON.parse(JSON.stringify(value))
+      ) as SwapServiceStore[K];
+    }
+  }
 
   jest.doMock('@rabby-wallet/persist-store', () => ({
-    __esModule: true,
-    default: (...args: unknown[]) => mockCreatePersistStore(...args),
+    StoreServiceBase: MockStoreServiceBase,
   }));
   jest.doMock('@rabby-wallet/rabby-swap', () => ({
     DEX_ENUM: {
@@ -81,9 +103,6 @@ function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
 
   return {
     SwapService,
-    mocks: {
-      mockCreatePersistStore,
-    },
   };
 }
 
@@ -107,7 +126,7 @@ describe('core/services/swap', () => {
 
     expect(service.getSelectedChain()).toBe(CHAINS_ENUM.ARBITRUM);
     expect(service.getSelectedFromToken()).toBeUndefined();
-    expect(service.getSelectedToToken()).toBe(arbToken);
+    expect(service.getSelectedToToken()).toEqual(arbToken);
   });
 
   it('clears cached selected tokens when selectedChain changes away from them', () => {
@@ -140,7 +159,7 @@ describe('core/services/swap', () => {
     service.setSelectedFromToken(arbToken);
     service.setSelectedToToken(arbToken);
 
-    expect(service.getSelectedFromToken()).toBe(arbToken);
-    expect(service.getSelectedToToken()).toBe(arbToken);
+    expect(service.getSelectedFromToken()).toEqual(arbToken);
+    expect(service.getSelectedToToken()).toEqual(arbToken);
   });
 });

@@ -9,6 +9,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'warn',
     'no-runtime-service-imports': 'error',
     'no-floating-deferred-service-api-calls': 'error',
+    'no-persist-store-direct-mutation': 'error',
     'import/no-cycle': [
       'warn',
       {
