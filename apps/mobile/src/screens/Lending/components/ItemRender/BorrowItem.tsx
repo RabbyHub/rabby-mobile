@@ -20,6 +20,7 @@ import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { formatTokenAmount } from '@/utils/number';
 import { Text } from '@/components/Typography';
 import { openLendingActionPopup } from '../../utils/actionPopup';
+import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 
 interface BorrowItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -114,16 +115,15 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   ]);
 
   const disableBorrowButton = useMemo(() => {
-    if (!reserve) {
-      return false;
-    }
-    // emode开启，但是不支持该池子借贷
-    const eModeBorrowDisabled =
-      !!userSummary?.userEmodeCategoryId &&
-      !reserve.reserve.eModes.find(
-        e => e.id === userSummary.userEmodeCategoryId && e.borrowingEnabled,
-      );
-    if (eModeBorrowDisabled) {
+    if (
+      !reserve ||
+      !userSummary ||
+      !assetCanBeBorrowedByUser(
+        reserve.reserve,
+        userSummary,
+        reserve.reserve.eModes,
+      )
+    ) {
       return true;
     }
     if (BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap)) {
@@ -133,11 +133,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
       !userSummary?.availableBorrowsUSD ||
       userSummary?.availableBorrowsUSD === '0'
     );
-  }, [
-    reserve,
-    userSummary?.availableBorrowsUSD,
-    userSummary?.userEmodeCategoryId,
-  ]);
+  }, [reserve, userSummary]);
 
   const handlePressBorrow = () => {
     if (!reserve || !userSummary) {
