@@ -243,6 +243,7 @@
     "typeorm": "^0.3.20",
     "use-count-up": "^3.0.1",
     "viem": "2.47.6",
+    "warden.rn": "2.1.0",
     "web3": "^4.3.0",
     "web3-eth-abi": "1.7.0",
     "web3-utils": "1.7.0",

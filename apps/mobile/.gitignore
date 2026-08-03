@@ -55,6 +55,7 @@ yarn-error.log
 
 # Bundle artifact
 *.jsbundle
+/Warden-RN/policy.json
 
 # Ruby / CocoaPods
 /**/Pods/
