@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Platform } from 'react-native';
-import { useMemoizedFn } from 'ahooks';
 import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import type { ContentMode } from 'react-native-webview/lib/WebViewTypes';
@@ -35,6 +34,7 @@ import { resolveValFromUpdater } from '@/core/utils/store';
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type TabsState = {
   tabs: Tab[];
@@ -239,7 +239,9 @@ function useDisplayedTabs() {
 }
 
 export function useHomeDisplayedTabs() {
-  const tabs = tabsStore(s => s.tabs);
+  const tabs = useActivityStore(tabsStore, state => state.tabs, Object.is, {
+    storeLabel: 'home-overview-browser-tabs',
+  });
 
   const homeDisplayedTabs = useMemo(
     () =>

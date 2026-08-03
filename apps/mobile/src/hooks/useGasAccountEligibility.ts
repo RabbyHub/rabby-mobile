@@ -8,6 +8,7 @@ import { makeAvoidParallelAsyncFunc, runDevIIFEFunc } from '@/core/utils/store';
 import * as apisAccount from '@/core/apis/account';
 import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 import { useShallow } from 'zustand/react/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 runDevIIFEFunc(() => {
   // mock haven't claimed gift
@@ -74,11 +75,14 @@ export const checkGasAccountAddressesEligibility = makeAvoidParallelAsyncFunc(
 );
 
 export const useGasAccountGiftEligibility = () => {
-  return gasAccountState(
-    s =>
-      s.currentEligibleAddress !== undefined &&
-      !s.gasAccountSig?.sig &&
-      !s.hasClaimedGift,
+  return useActivityStore(
+    gasAccountState,
+    state =>
+      state.currentEligibleAddress !== undefined &&
+      !state.gasAccountSig?.sig &&
+      !state.hasClaimedGift,
+    Object.is,
+    { storeLabel: 'home-gas-account-badge' },
   );
 };
 

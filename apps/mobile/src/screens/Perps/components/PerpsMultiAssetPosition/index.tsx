@@ -33,6 +33,7 @@ import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -351,11 +352,14 @@ const AssetPositionItem = ({
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
+  const { clearinghouseStateMap, marketDataMap } = useActivityStore(
+    perpsStore,
     useShallow(s => ({
       clearinghouseStateMap: s.clearinghouseStateMap,
       marketDataMap: s.marketDataMap,
     })),
+    Object.is,
+    { storeLabel: 'home-overview-perps-positions' },
   );
   const [selectedPositionKey, setSelectedPositionKey] = useState<{
     address: string;
