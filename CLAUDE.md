@@ -14,6 +14,8 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 ## Local Playbooks
 
 - For outbound Rabby Mobile pull-request code review, read `skills/rabby-mobile-code-review/SKILL.md`; use `skills/mobile-pr-ready-watch/SKILL.md` instead for making a PR ready or handling incoming review feedback.
+- Consider runtime performance for every Rabby Mobile change. For review, read `skills/rabby-mobile-performance-review/SKILL.md` and classify the impact even when no benchmark or public performance comment is needed.
+- For startup stages, module loading, lock/unlock routing, keyring readiness, visible/current account state, or first-Home readiness, read `skills/rabby-mobile-startup-governance/SKILL.md`. If safety or performance remains uncertain, request `@richardo2016x` review using the performance Review Skill's escalation rule.
 - For `apps/mobile` Google Play upload or Android store-release preflight work, read `apps/mobile/skills/google-play-release.md` and keep the public workflow centered on `./scripts/google-play.sh upload-internal-track`; keep private inspection/report helpers under `.codex`.
 - For `apps/mobile` debug export or local file sharing flows, read `apps/mobile/skills/file-share.md` and prefer `src/utils/shareLocalFile.ts` over screen-local platform branching.
 - For `apps/mobile` debug, probe, or migration-diagnostics screens, read `apps/mobile/skills/debug-pages.md` and keep the page focused on live state while moving instructions into help sheets and bulk actions into an actions sheet.
@@ -21,7 +23,7 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 - For `apps/mobile` i18n locale files or translation backfills, read `apps/mobile/skills/i18n-translation.md` and respect `__skip_translation` markers before adding missing keys.
 - For `apps/mobile` fixed bottom buttons, bottom-sheet footer buttons, modal action rows, or footer spacing, read `apps/mobile/skills/bottom-buttons.md` and reuse the shared constants from `src/constant/layout.ts`.
 - For `apps/mobile` code changes, read `apps/mobile/skills/import-cycles.md` and keep import-cycle detection, TypeScript typecheck, and Jest as the required self-validation set before handoff.
-- For `apps/mobile` store, hooks, or Home-path performance work, read `apps/mobile/skills/perf-hooks.md` before changing selector boundaries or exposing large store state to React consumers. It captures the local rules around scene-picked minimal state, scene-level derived data, and limiting render fan-out.
+- For `apps/mobile` stores, hooks, lists, Home-path logic, or mounted-but-inactive Screens, read `apps/mobile/skills/perf-hooks.md` before changing selector or subscription boundaries. Every Home change must be checked for render fan-out and inactive subscription work, including transitive shared-state changes outside `src/screens/Home/**`.
 
 ## Common Commands
 
