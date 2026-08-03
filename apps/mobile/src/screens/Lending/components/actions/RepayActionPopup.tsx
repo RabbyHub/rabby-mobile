@@ -211,7 +211,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     if (!targetPool) {
       return undefined;
     }
-    if (isAtTokenRepay) {
+    if (isAtTokenRepay && reserve.usageAsCollateralEnabledOnUser) {
       return calculateHFAfterRepayWithAToken({
         user: userSummary,
         amount,
