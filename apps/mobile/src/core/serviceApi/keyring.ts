@@ -1,6 +1,8 @@
 import type { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import type {
+  KeyringAuthTransition,
   KeyringInstance,
+  KeyringPasswordState,
   KeyringService,
 } from '@rabby-wallet/service-keyring';
 import {
@@ -155,6 +157,22 @@ export async function ensureKeyringRuntimeReadyForApi(label: string) {
 
 export function getKeyringMemStoreStateSnapshot() {
   return getRegisteredService('keyringService')?.memStore.getState();
+}
+
+export async function getKeyringPasswordState() {
+  return keyringServiceApi.getPasswordState();
+}
+
+export async function setKeyringPasswordState(
+  passwordState: KeyringPasswordState,
+) {
+  await keyringServiceApi.setPasswordState(passwordState);
+}
+
+export async function completeKeyringAuthTransition(
+  transition: KeyringAuthTransition,
+) {
+  return keyringServiceApi.completeAuthTransition(transition);
 }
 
 export async function submitKeyringPasswordForUnlock(
