@@ -39,6 +39,26 @@ interface CalculateHFAfterCollateralRepayProps {
   debt: string;
 }
 
+export const hasNonZeroEffectiveLtv = ({
+  baseLTVasCollateral,
+  isInEmode,
+  emodeEntry,
+  isEModeIsolated,
+}: {
+  baseLTVasCollateral: string;
+  isInEmode: boolean;
+  emodeEntry?: { collateralEnabled: boolean; ltvzeroEnabled: boolean };
+  isEModeIsolated: boolean;
+}) => {
+  if (!isInEmode) {
+    return baseLTVasCollateral !== '0';
+  }
+  if (emodeEntry?.collateralEnabled) {
+    return !emodeEntry.ltvzeroEnabled;
+  }
+  return !isEModeIsolated && baseLTVasCollateral !== '0';
+};
+
 export const effectUserAvailable = (
   user: FormatUserSummaryAndIncentivesResponse<
     ReserveDataHumanized & FormatReserveUSDResponse
