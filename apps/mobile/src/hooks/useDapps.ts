@@ -45,20 +45,28 @@ function replaceDappStoreFromService(service: DappService) {
   });
 }
 
+export function replaceDappStoreFieldSnapshot<K extends keyof DappStore>(
+  prev: DappStore,
+  k: K,
+  v: DappStore[K],
+) {
+  const { newVal, changed } = resolveValFromUpdater(prev[k], v as any, {
+    strict: true,
+  });
+
+  if (!changed) return prev;
+
+  return {
+    ...prev,
+    [k]: newVal,
+  };
+}
+
 function applyDappStoreUpdate<K extends keyof DappStore>(
   k: K,
   v: DappStore[K],
 ) {
-  dappServiceStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(prev[k], v as any, {
-      strict: true,
-    });
-
-    if (!changed) return prev;
-
-    prev[k] = { ...prev[k], ...newVal };
-    return { ...prev };
-  });
+  dappServiceStore.setState(prev => replaceDappStoreFieldSnapshot(prev, k, v));
 }
 
 function ensureDappStoreBinding() {
