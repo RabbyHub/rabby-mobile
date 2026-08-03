@@ -6,6 +6,7 @@ import { useLendingSummary } from '../hooks';
 import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { DisplayPoolReserveInfo } from '../type';
 import { useTranslation } from 'react-i18next';
+import { hasNonZeroEffectiveLtv } from '../utils/hfUtils';
 
 export enum ErrorType {
   DO_NOT_HAVE_SUPPLIES_IN_THIS_CURRENCY,
@@ -44,11 +45,12 @@ export const useCollateralWaring = ({
     const userEMode = reserveEModes.find(
       e => e.id === userSummary?.userEmodeCategoryId,
     );
-    const hasNonZeroLtv =
-      poolReserve.baseLTVasCollateral !== '0' ||
-      (!!userSummary?.userEmodeCategoryId &&
-        userEMode?.collateralEnabled &&
-        !userEMode?.ltvzeroEnabled);
+    const hasNonZeroLtv = hasNonZeroEffectiveLtv({
+      baseLTVasCollateral: poolReserve.baseLTVasCollateral,
+      isInEmode: !!userSummary?.userEmodeCategoryId,
+      emodeEntry: userEMode,
+      isEModeIsolated: !!userEMode?.eMode.isolated,
+    });
     const collateralEmodeCategories = reserveEModes.filter(
       e => e.collateralEnabled && !e.ltvzeroEnabled,
     );

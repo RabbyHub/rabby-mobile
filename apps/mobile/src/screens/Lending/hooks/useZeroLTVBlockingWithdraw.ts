@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useLendingISummary, useSelectedMarket } from '../hooks';
+import { hasNonZeroEffectiveLtv } from '../utils/hfUtils';
 
 export const useZeroLTVBlockingWithdraw = () => {
   const { iUserSummary: userSummary } = useLendingISummary();
@@ -16,9 +17,19 @@ export const useZeroLTVBlockingWithdraw = () => {
 
     const zeroLTVBlockingWithdraw: string[] = [];
     userSummary.userReservesData.forEach(userReserve => {
+      const emodeEntry = userReserve.reserve.eModes.find(
+        e => e.id === userSummary.userEmodeCategoryId,
+      );
+      const hasEffectiveLtv = hasNonZeroEffectiveLtv({
+        baseLTVasCollateral: userReserve.reserve.baseLTVasCollateral,
+        isInEmode: userSummary.userEmodeCategoryId !== 0,
+        emodeEntry,
+        isEModeIsolated: !!emodeEntry?.eMode.isolated,
+      });
+
       if (
         Number(userReserve.scaledATokenBalance) > 0 &&
-        userReserve.reserve.baseLTVasCollateral === '0' &&
+        !hasEffectiveLtv &&
         userReserve.usageAsCollateralEnabledOnUser &&
         userReserve.reserve.reserveLiquidationThreshold !== '0'
       ) {

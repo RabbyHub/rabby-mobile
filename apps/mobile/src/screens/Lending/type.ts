@@ -11,7 +11,9 @@ export interface IWalletBalance {
   amount: string;
 }
 
-export type DisplayPoolReserveInfo = ComputedUserReserve & {
+export type DisplayPoolReserveInfo = ComputedUserReserve<
+  ReserveDataHumanized & FormatReserveUSDResponse
+> & {
   walletBalance?: string;
   walletBalanceUSD?: string;
   chain: CHAINS_ENUM;

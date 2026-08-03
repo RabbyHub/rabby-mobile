@@ -33,6 +33,7 @@ import { parseUnits } from 'viem';
 import {
   calculateHFAfterRepay,
   calculateHFAfterRepayWithAToken,
+  hasNonZeroEffectiveLtv,
 } from '../../utils/hfUtils';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
@@ -211,7 +212,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     if (!targetPool) {
       return undefined;
     }
-    if (isAtTokenRepay) {
+    if (isAtTokenRepay && reserve.usageAsCollateralEnabledOnUser) {
       return calculateHFAfterRepayWithAToken({
         user: userSummary,
         amount,
@@ -904,6 +905,19 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           a.underlyingBalanceUSD,
         );
       });
+    const isLtvZeroCollateral = (
+      item: (typeof displayPoolReserves)[number],
+    ) => {
+      const emodeEntry = item.reserve.eModes.find(
+        e => e.id === userSummary.userEmodeCategoryId,
+      );
+      return !hasNonZeroEffectiveLtv({
+        baseLTVasCollateral: item.reserve.baseLTVasCollateral,
+        isInEmode: userSummary.userEmodeCategoryId !== 0,
+        emodeEntry,
+        isEModeIsolated: !!emodeEntry?.eMode.isolated,
+      });
+    };
     const hasLtvZeroCollateral = collateralTokens
       .filter(
         item =>
@@ -911,13 +925,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           item.underlyingBalance !== '0' &&
           item.usageAsCollateralEnabledOnUser,
       )
-      .some(item => item.reserve.baseLTVasCollateral === '0');
+      .some(isLtvZeroCollateral);
     // 如果有ltv 为 0的抵押物，必须优先还款
     const displayReserve = hasLtvZeroCollateral
-      ? collateralTokens.filter(
-          item => item.reserve.baseLTVasCollateral === '0',
-        )?.[0]
-      : collateralTokens?.[0];
+      ? collateralTokens.find(isLtvZeroCollateral)
+      : collateralTokens[0];
 
     const r = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(
@@ -946,6 +958,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     formattedPoolReservesAndIncentives,
     chainInfo?.id,
     reserve?.underlyingAsset,
+    userSummary,
   ]);
 
   const showSwitch = useMemo(() => {
