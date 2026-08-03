@@ -31,7 +31,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@rabby-wallet/base-utils": "^0.1.0",
+    "@rabby-wallet/base-utils": "workspace:^",
     "@types/lodash.clonedeep": "^4.5.9",
     "ethereumjs-util": "^7.1.5",
     "lodash.clonedeep": "^4.5.0",
