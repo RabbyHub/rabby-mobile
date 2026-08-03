@@ -2133,7 +2133,12 @@
       "searchCurrency": "통화 검색",
       "dataAnalysis": "데이터 분석",
       "bugReportHistory": "버그 신고 내역",
-      "bugReportChat": "채팅으로 피드백 보내기"
+      "bugReportChat": "채팅으로 피드백 보내기",
+      "features": "기능",
+      "manageWallets": "지갑 관리"
+    },
+    "settings": {
+      "chooseWallet": "관리할 지갑 선택"
     },
     "settingModal": {
       "themeMode": {

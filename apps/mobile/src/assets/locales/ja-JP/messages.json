@@ -2185,7 +2185,12 @@
       "screenshotReportSwitch": "スクリーンショットでバグを報告",
       "dataAnalysis": "データ分析",
       "bugReportHistory": "バグ報告履歴",
-      "bugReportChat": "チャットでフィードバックを送信"
+      "bugReportChat": "チャットでフィードバックを送信",
+      "features": "機能",
+      "manageWallets": "ウォレットを管理"
+    },
+    "settings": {
+      "chooseWallet": "管理するウォレットを選択"
     },
     "settingModal": {
       "themeMode": {
