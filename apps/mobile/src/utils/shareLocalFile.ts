@@ -11,6 +11,7 @@ export type ShareLocalFileOptions = {
   subject?: string;
   message?: string;
   cleanupPaths?: string[];
+  shouldShare?: () => boolean;
 };
 
 export type ShareLocalFileResult = {
@@ -29,10 +30,14 @@ export async function shareLocalFile({
   subject,
   message,
   cleanupPaths,
+  shouldShare,
 }: ShareLocalFileOptions): Promise<ShareLocalFileResult> {
   try {
     if (!(await RNFS.exists(path))) {
       throw new Error(`Share source file missing: ${path}`);
+    }
+    if (shouldShare && !shouldShare()) {
+      return { dismissed: true };
     }
 
     const fileName = name || getFileBaseName(path);

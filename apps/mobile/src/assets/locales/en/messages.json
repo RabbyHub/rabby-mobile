@@ -2325,7 +2325,8 @@
       "bugReportHistory": "Bug Report History",
       "bugReportChat": "Share Feedback via Chat",
       "features": "Features",
-      "manageWallets": "Manage Wallets"
+      "manageWallets": "Manage Wallets",
+      "dataMigration": "Wallet Data Migration"
     },
     "settingModal": {
       "themeMode": {
@@ -2383,6 +2384,36 @@
     },
     "eip7702": {
       "alert": "EIP-7702 is not supported yet"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Export wallet data",
+      "selectTitle": "Select addresses to export",
+      "selectDescription": "Select wallet addresses and transfer their encrypted data using a dynamic QR code.",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "disabled": {
+        "unsupported": "Sync not supported for {{type}} address",
+        "passphrase": "Sync not supported for {{type}} address with passphrase",
+        "slip39": "Sync not supported for {{type}} address with slip39"
+      },
+      "verifyTitle": "Verify Password",
+      "verifyDescription": "Verify your Rabby Mobile password before showing sensitive transfer data.",
+      "exportFailed": "Failed to prepare wallet data for export.",
+      "customPasswordRequired": "Set a custom wallet password before exporting data.",
+      "scanTitle": "Scan this dynamic QR code",
+      "scanDescription": "Open Rabby Extension and scan this dynamic QR code. Keep this screen visible until the transfer is complete.",
+      "selectedCount": "Selected addresses: {{count}}",
+      "editSelection": "Edit selection",
+      "securityTip": "The QR code and downloaded video contain sensitive encrypted data. Keep them private and delete them after use.",
+      "showQRCode": "Show QR code ({{count}})",
+      "downloadVideo": "Download QR code video",
+      "generatingVideo": "Generating video… {{progress}}%",
+      "videoFailed": "Failed to generate the QR code video.",
+      "selectVideo": "Upload QR code video",
+      "processingVideo": "Processing video…",
+      "invalidVideo": "Select a valid video file up to 200 MB.",
+      "incompleteVideo": "The video ended before all QR code data was read.",
+      "videoImportFailed": "Failed to read the QR code video. Try another video or scan the dynamic QR code."
     },
     "syncExtension": {
       "newUserVerify": "It will also serve as the default password for your Rabby Mobile",

@@ -441,6 +441,7 @@ export type SettingNavigatorParamList = {
   };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.WalletConnect]?: {};
+  [RootNames.SyncExtensionExport]?: {};
   [RootNames.SetPassword]?:
     | {
         actionAfterSetup: 'backScreen';

@@ -2200,7 +2200,8 @@
       "bugReportHistory": "Riwayat Laporan Bug",
       "bugReportChat": "Bagikan Umpan Balik melalui Obrolan",
       "features": "Fitur",
-      "manageWallets": "Kelola Dompet"
+      "manageWallets": "Kelola Dompet",
+      "dataMigration": "Migrasi Data Dompet"
     },
     "settings": {
       "chooseWallet": "Pilih dompet untuk dikelola"
@@ -2261,6 +2262,36 @@
     },
     "eip7702": {
       "alert": "EIP-7702 belum didukung."
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Ekspor data dompet",
+      "selectTitle": "Pilih alamat untuk diekspor",
+      "selectDescription": "Pilih alamat dompet dan transfer data terenkripsinya menggunakan kode QR dinamis.",
+      "selectAll": "Pilih Semua",
+      "deselectAll": "Batalkan Semua Pilihan",
+      "disabled": {
+        "unsupported": "Sinkronisasi tidak didukung untuk alamat {{type}}",
+        "passphrase": "Sinkronisasi tidak didukung untuk alamat {{type}} dengan frasa sandi",
+        "slip39": "Sinkronisasi tidak didukung untuk alamat {{type}} dengan SLIP-39"
+      },
+      "verifyTitle": "Verifikasi Kata Sandi",
+      "verifyDescription": "Verifikasi kata sandi Rabby Mobile Anda sebelum menampilkan data transfer sensitif.",
+      "exportFailed": "Gagal menyiapkan data dompet untuk diekspor.",
+      "customPasswordRequired": "Tetapkan kata sandi dompet khusus sebelum mengekspor data.",
+      "scanTitle": "Pindai kode QR dinamis ini",
+      "scanDescription": "Buka Rabby Extension dan pindai kode QR dinamis ini. Biarkan layar ini tetap terbuka hingga transfer selesai.",
+      "selectedCount": "Alamat dipilih: {{count}}",
+      "editSelection": "Ubah pilihan",
+      "securityTip": "Kode QR dan video yang diunduh berisi data sensitif terenkripsi. Jaga kerahasiaannya dan hapus setelah digunakan.",
+      "showQRCode": "Tampilkan kode QR ({{count}})",
+      "downloadVideo": "Unduh video kode QR",
+      "generatingVideo": "Membuat video… {{progress}}%",
+      "videoFailed": "Gagal membuat video kode QR.",
+      "selectVideo": "Unggah video kode QR",
+      "processingVideo": "Memproses video…",
+      "invalidVideo": "Pilih file video yang valid hingga 200 MB.",
+      "incompleteVideo": "Video berakhir sebelum semua data kode QR terbaca.",
+      "videoImportFailed": "Gagal membaca video kode QR. Coba video lain atau pindai kode QR dinamis."
     },
     "syncExtension": {
       "verifyWithPassword": "Verifikasi dengan Kata Sandi Ekstensi Rabby Anda",

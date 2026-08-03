@@ -5,6 +5,9 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
@@ -26,10 +29,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class RNHelpersModule extends SimplePackageSpec {
   public static final String NAME = "RNHelpers";
+  private static final String TAG = "RNHelpers";
+  private static final long SHARE_CACHE_RETENTION_MS = 6L * 60L * 60L * 1000L;
   private final ReactApplicationContext reactContext;
+  private final Handler shareCleanupHandler = new Handler(Looper.getMainLooper());
 
   public RNHelpersModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -164,13 +171,23 @@ public class RNHelpersModule extends SimplePackageSpec {
       return;
     }
 
-    File shareDir = new File(this.reactContext.getCacheDir(), "install/share");
-    if (!shareDir.exists() && !shareDir.mkdirs()) {
+    File shareRootDir = new File(this.reactContext.getCacheDir(), "install/share");
+    if (!shareRootDir.exists() && !shareRootDir.mkdirs()) {
       promise.reject("E_SHARE_CACHE_DIR", "Failed to prepare Android share cache directory");
       return;
     }
 
-    File stagedFile = new File(shareDir, sourceFile.getName());
+    cleanupExpiredShareSessions(shareRootDir);
+
+    // A distinct directory produces a distinct FileProvider URI for every share.
+    // Never overwrite a path that a previous recipient may still be allowed to read.
+    File shareSessionDir = new File(shareRootDir, UUID.randomUUID().toString());
+    if (!shareSessionDir.mkdirs()) {
+      promise.reject("E_SHARE_CACHE_DIR", "Failed to prepare Android share session directory");
+      return;
+    }
+
+    File stagedFile = new File(shareSessionDir, sourceFile.getName());
 
     try {
       copyFile(sourceFile, stagedFile);
@@ -201,24 +218,99 @@ public class RNHelpersModule extends SimplePackageSpec {
       List<ResolveInfo> resolvedActivities =
         this.reactContext.getPackageManager().queryIntentActivities(intent, 0);
       if (resolvedActivities == null || resolvedActivities.isEmpty()) {
+        deleteRecursively(shareSessionDir);
         promise.reject("E_SHARE_NO_TARGET", "No Android app can handle sharing this file");
         return;
-      }
-
-      for (ResolveInfo resolveInfo : resolvedActivities) {
-        this.reactContext.grantUriPermission(
-          resolveInfo.activityInfo.packageName,
-          uri,
-          Intent.FLAG_GRANT_READ_URI_PERMISSION
-        );
       }
 
       Intent chooserIntent = Intent.createChooser(intent, chooserTitle);
       chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
       this.reactContext.startActivity(chooserIntent);
+      scheduleShareCleanup(uri, shareSessionDir);
       promise.resolve(null);
     } catch (Exception error) {
+      deleteRecursively(shareSessionDir);
       promise.reject("E_SHARE_FILE", error);
+    }
+  }
+
+  private void scheduleShareCleanup(Uri uri, File shareSessionDir) {
+    shareCleanupHandler.postDelayed(
+      () -> {
+        try {
+          this.reactContext.revokeUriPermission(
+            uri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION
+          );
+        } catch (Exception error) {
+          Log.w(TAG, "Failed to revoke a shared-file URI permission", error);
+        }
+
+        deleteRecursively(shareSessionDir);
+      },
+      SHARE_CACHE_RETENTION_MS
+    );
+  }
+
+  private void cleanupExpiredShareSessions(File shareRootDir) {
+    File[] sessions = shareRootDir.listFiles();
+    if (sessions == null) {
+      return;
+    }
+
+    long expiredBefore = System.currentTimeMillis() - SHARE_CACHE_RETENTION_MS;
+    for (File session : sessions) {
+      // Older app versions staged files directly in the root and reused their
+      // URI. New shares only create per-session directories, so these legacy
+      // files can be revoked and removed immediately.
+      boolean isLegacyStagedFile = session.isFile();
+      boolean isExpiredSession =
+        session.isDirectory() && session.lastModified() < expiredBefore;
+      if (isLegacyStagedFile || isExpiredSession) {
+        revokeStagedFilePermissions(session);
+        deleteRecursively(session);
+      }
+    }
+  }
+
+  private void revokeStagedFilePermissions(File file) {
+    if (file.isDirectory()) {
+      File[] children = file.listFiles();
+      if (children != null) {
+        for (File child : children) {
+          revokeStagedFilePermissions(child);
+        }
+      }
+      return;
+    }
+
+    try {
+      Uri uri = FileProvider.getUriForFile(
+        this.reactContext,
+        this.reactContext.getPackageName() + ".provider",
+        file
+      );
+      this.reactContext.revokeUriPermission(
+        uri,
+        Intent.FLAG_GRANT_READ_URI_PERMISSION
+      );
+    } catch (Exception error) {
+      Log.w(TAG, "Failed to revoke an expired shared-file URI permission", error);
+    }
+  }
+
+  private void deleteRecursively(File file) {
+    if (file.isDirectory()) {
+      File[] children = file.listFiles();
+      if (children != null) {
+        for (File child : children) {
+          deleteRecursively(child);
+        }
+      }
+    }
+
+    if (file.exists() && !file.delete()) {
+      Log.w(TAG, "Failed to delete staged share file: " + file.getAbsolutePath());
     }
   }
 

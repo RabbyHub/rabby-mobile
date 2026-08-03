@@ -24,7 +24,7 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import { useScanner } from '@/screens/Scanner/ScannerScreen';
+import { useScanner } from '@/screens/Scanner/scannerState';
 import {
   createGlobalBottomSheetModal2024,
   globalBottomSheetModalAddListener2024,

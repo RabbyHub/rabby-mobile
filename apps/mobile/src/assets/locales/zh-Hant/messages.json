@@ -2304,7 +2304,8 @@
       "bugReportHistory": "問題回報記錄",
       "bugReportChat": "透過聊天分享回饋",
       "features": "功能",
-      "manageWallets": "管理錢包"
+      "manageWallets": "管理錢包",
+      "dataMigration": "錢包資料遷移"
     },
     "settings": {
       "chooseWallet": "選擇要管理的錢包"
@@ -2442,6 +2443,36 @@
       },
       "alreadyIn": "已在白名單中",
       "alreadyInYour": "已在您的白名單中"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "匯出錢包資料",
+      "selectTitle": "選擇要匯出的地址",
+      "selectDescription": "選擇錢包地址，並透過動態 QR 碼傳輸其加密資料。",
+      "selectAll": "選擇全部",
+      "deselectAll": "取消全選",
+      "disabled": {
+        "unsupported": "不支援同步 {{type}} 地址",
+        "passphrase": "不支援同步使用密碼短語的 {{type}} 地址",
+        "slip39": "不支援同步使用 SLIP-39 的 {{type}} 地址"
+      },
+      "verifyTitle": "驗證密碼",
+      "verifyDescription": "顯示敏感的遷移資料前，請驗證你的 Rabby Mobile 密碼。",
+      "exportFailed": "無法準備要匯出的錢包資料。",
+      "customPasswordRequired": "匯出資料前，請先設定自訂錢包密碼。",
+      "scanTitle": "掃描此動態 QR 碼",
+      "scanDescription": "開啟 Rabby 瀏覽器擴充功能並掃描此動態 QR 碼。遷移完成前請保持此頁面顯示。",
+      "selectedCount": "已選地址：{{count}} 個",
+      "editSelection": "編輯選擇",
+      "securityTip": "QR 碼和下載的影片包含敏感加密資料。請妥善保管，並在使用後刪除。",
+      "showQRCode": "顯示 QR 碼（{{count}}）",
+      "downloadVideo": "下載動態 QR 碼影片",
+      "generatingVideo": "正在產生影片… {{progress}}%",
+      "videoFailed": "無法產生動態 QR 碼影片。",
+      "selectVideo": "上載 QR 碼影片",
+      "processingVideo": "正在處理影片…",
+      "invalidVideo": "請選擇不超過 200 MB 的有效影片檔案。",
+      "incompleteVideo": "影片已結束，但尚未讀取完整的 QR 碼資料。",
+      "videoImportFailed": "無法讀取 QR 碼影片。請嘗試其他影片或掃描動態 QR 碼。"
     },
     "syncExtension": {
       "scanTips2": "掃描 QR 碼以開始同步",

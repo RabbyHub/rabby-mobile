@@ -11,7 +11,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
-import { useScanner } from '../Scanner/ScannerScreen';
+import { useScanner } from '../Scanner/scannerState';
 import { requestKeyring } from '@/core/apis/keyring';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';

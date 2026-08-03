@@ -610,6 +610,17 @@ function SettingsBlocks() {
             },
           },
           {
+            label: t('page.setting.dataMigration'),
+            icon: RcScreenRecord,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.SyncExtensionExport,
+                }),
+              );
+            },
+          },
+          {
             label: 'WalletConnect',
             icon: RcWalletConnect,
             onPress: () => {

@@ -2135,7 +2135,8 @@
       "bugReportHistory": "버그 신고 내역",
       "bugReportChat": "채팅으로 피드백 보내기",
       "features": "기능",
-      "manageWallets": "지갑 관리"
+      "manageWallets": "지갑 관리",
+      "dataMigration": "지갑 데이터 이전"
     },
     "settings": {
       "chooseWallet": "관리할 지갑 선택"
@@ -2262,6 +2263,36 @@
       },
       "alreadyInYour": "이미 화이트리스트에 있습니다.",
       "alreadyIn": "이미 화이트리스트에 있습니다."
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "지갑 데이터 내보내기",
+      "selectTitle": "내보낼 주소 선택",
+      "selectDescription": "지갑 주소를 선택하고 암호화된 데이터를 동적 QR 코드로 전송하세요.",
+      "selectAll": "모두 선택",
+      "deselectAll": "모두 선택 해제",
+      "disabled": {
+        "unsupported": "{{type}} 주소에 대한 동기화를 지원하지 않습니다.",
+        "passphrase": "{{type}} 주소에 대한 패스프레이즈를 사용한 동기화는 지원되지 않습니다.",
+        "slip39": "SLIP-39를 사용하는 {{type}} 주소는 동기화할 수 없습니다."
+      },
+      "verifyTitle": "비밀번호 확인",
+      "verifyDescription": "민감한 전송 데이터를 표시하기 전에 Rabby Mobile 비밀번호를 확인하세요.",
+      "exportFailed": "내보낼 지갑 데이터를 준비하지 못했습니다.",
+      "customPasswordRequired": "데이터를 내보내기 전에 사용자 지정 지갑 비밀번호를 설정하세요.",
+      "scanTitle": "이 동적 QR 코드 스캔",
+      "scanDescription": "Rabby Extension을 열고 이 동적 QR 코드를 스캔하세요. 전송이 완료될 때까지 이 화면을 계속 표시하세요.",
+      "selectedCount": "선택한 주소: {{count}}개",
+      "editSelection": "선택 항목 수정",
+      "securityTip": "QR 코드와 다운로드한 동영상에는 암호화된 민감한 데이터가 포함되어 있습니다. 비공개로 보관하고 사용 후 삭제하세요.",
+      "showQRCode": "QR 코드 표시 ({{count}})",
+      "downloadVideo": "QR 코드 동영상 다운로드",
+      "generatingVideo": "동영상 생성 중… {{progress}}%",
+      "videoFailed": "QR 코드 동영상을 생성하지 못했습니다.",
+      "selectVideo": "QR 코드 동영상 업로드",
+      "processingVideo": "동영상 처리 중…",
+      "invalidVideo": "200 MB 이하의 유효한 동영상 파일을 선택하세요.",
+      "incompleteVideo": "QR 코드 데이터를 모두 읽기 전에 동영상이 종료되었습니다.",
+      "videoImportFailed": "QR 코드 동영상을 읽지 못했습니다. 다른 동영상을 선택하거나 동적 QR 코드를 스캔하세요."
     },
     "syncExtension": {
       "scanTips2": "코드를 스캔하고 동기화를 시작하세요",

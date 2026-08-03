@@ -23,6 +23,13 @@ export const WalletConnectScreen = registerAppScreen<
   name: RootNames.WalletConnect,
 });
 
+export const SyncExtensionExportScreen = registerAppScreen<
+  typeof import('@/screens/SyncExtension/SyncExtensionExportScreen').default
+>({
+  loader: () => import('@/screens/SyncExtension/SyncExtensionExportScreen'),
+  name: RootNames.SyncExtensionExport,
+});
+
 export const ProviderControllerTester = registerAppScreen<
   typeof import('@/screens/ProviderControllerTester/ProviderControllerTester').default
 >({

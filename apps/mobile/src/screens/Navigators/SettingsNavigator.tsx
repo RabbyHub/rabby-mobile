@@ -8,6 +8,7 @@ import {
   ProviderControllerTester,
   SetPasswordScreen,
   SettingsScreen,
+  SyncExtensionExportScreen,
   WalletConnectScreen,
 } from '@/perfs/loadables/settingsNavigatorScreens';
 import { CustomTestnetScreen } from '../CustomTestnet';
@@ -87,6 +88,15 @@ export function SettingNavigator() {
             fontFamily: 'SF Pro Rounded',
           },
         })}
+      />
+      <SettingsStack.Screen
+        name={RootNames.SyncExtensionExport}
+        component={SyncExtensionExportScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: t('page.syncExtensionTransfer.exportTitle'),
+          },
+        ])}
       />
       <SettingsStack.Screen
         name={RootNames.CustomTestnet}

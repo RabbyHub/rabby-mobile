@@ -68,6 +68,30 @@ describe('mergeVault', () => {
       },
     ]);
   });
+
+  it('retains new private keys when one incoming keyring partially overlaps', () => {
+    const origin = [
+      {
+        type: KEYRING_TYPE.SimpleKeyring,
+        data: ['0x123'],
+      },
+    ];
+    const incoming = [
+      {
+        type: KEYRING_TYPE.SimpleKeyring,
+        data: ['0x123', '0x456'],
+      },
+    ];
+
+    expect(mergeVault(origin, incoming)).toStrictEqual([
+      { type: KEYRING_TYPE.SimpleKeyring, data: ['0x123'] },
+      { type: KEYRING_TYPE.SimpleKeyring, data: ['0x456'] },
+    ]);
+    expect(origin).toStrictEqual([
+      { type: KEYRING_TYPE.SimpleKeyring, data: ['0x123'] },
+    ]);
+  });
+
   it('should not merge HD keyring accounts with same address in different case', () => {
     const origin = [
       {

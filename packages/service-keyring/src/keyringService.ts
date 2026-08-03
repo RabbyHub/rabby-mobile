@@ -7,7 +7,11 @@
 /* eslint-disable jsdoc/require-description */
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  DisplayKeyring,
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -27,13 +31,25 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
-import { mergeVault } from './utils/mergeVault';
+import { filterKeyringData } from './utils/filterKeyringData';
+import { mergeSyncVault } from './utils/mergeSyncVault';
 import { passwordDecrypt, passwordEncrypt } from './utils/password';
 import { RNEventEmitter } from './utils/react-native-event';
 
 const UNENCRYPTED_IGNORE_KEYRING = [
   KEYRING_TYPE.SimpleKeyring,
   KEYRING_TYPE.HdKeyring,
+];
+
+const SYNC_KEYRING_TYPES: readonly KEYRING_TYPE[] = [
+  KEYRING_TYPE.HdKeyring,
+  KEYRING_TYPE.SimpleKeyring,
+  KEYRING_TYPE.OneKeyKeyring,
+  KEYRING_TYPE.LedgerKeyring,
+  KEYRING_TYPE.GnosisKeyring,
+  KEYRING_TYPE.KeystoneKeyring,
+  KEYRING_TYPE.WatchAddressKeyring,
+  KEYRING_TYPE.TrezorKeyring,
 ];
 
 type KeyringState = {
@@ -1093,6 +1109,148 @@ export class KeyringService extends RNEventEmitter {
         );
       }),
     );
+  }
+
+  /**
+   * Serialize and encrypt the selected accounts for Rabby wallet transfer.
+   * @param filteredAccounts - Accounts selected for transfer.
+   * @returns The browser-passworder vault and its exported account addresses.
+   */
+  async getSyncVault(
+    filteredAccounts: Pick<KeyringAccount, 'address' | 'type' | 'brandName'>[],
+  ) {
+    this.assertUnlocked();
+    await this.ensureKeyringRuntimeReady('get_sync_vault');
+
+    const password = this.#password;
+    if (!password || typeof password !== 'string') {
+      throw new Error('password can not be null');
+    }
+
+    const serializedKeyrings = await Promise.all(
+      this.keyrings.map(async keyring => ({
+        type: keyring.type,
+        data: await keyring.serialize(),
+        accounts: await keyring.getAccounts(),
+        keyring,
+      })),
+    );
+
+    const accounts: string[] = [];
+    const syncKeyringData = serializedKeyrings
+      .map(
+        ({
+          type,
+          data: serializedData,
+          accounts: keyringAccounts,
+          keyring,
+        }) => {
+          const selectedAccounts = filteredAccounts.filter(account =>
+            keyringAccounts.some(
+              address =>
+                account.type === type &&
+                addressUtils.isSameAddress(address, account.address),
+            ),
+          );
+
+          if (!selectedAccounts.length) {
+            return undefined;
+          }
+
+          let data = serializedData as Record<string, any> | string[];
+
+          if (type === KEYRING_TYPE.HdKeyring) {
+            if ((keyring as any).isSlip39 || (data as any).isSlip39) {
+              throw new Error('SLIP-39 mnemonic keyrings cannot be exported');
+            }
+            if (
+              (keyring as any).needPassphrase ||
+              (data as any).needPassphrase
+            ) {
+              throw new Error(
+                'Mnemonic keyrings with a passphrase cannot be exported',
+              );
+            }
+
+            data = {
+              mnemonic: (data as any).mnemonic,
+              accountDetails: (data as any).accountDetails,
+              publicKey: (data as any).publicKey,
+            };
+          }
+
+          if (
+            type === KEYRING_TYPE.KeystoneKeyring &&
+            selectedAccounts.some(
+              account =>
+                account.brandName !== HARDWARE_KEYRING_TYPES.Keystone.brandName,
+            )
+          ) {
+            throw new Error('Only Keystone accounts can be exported');
+          }
+
+          const currentAddresses = keyringAccounts.filter(address =>
+            selectedAccounts.some(account =>
+              addressUtils.isSameAddress(address, account.address),
+            ),
+          );
+          const currentData = filterKeyringData(data, currentAddresses);
+
+          accounts.push(...currentAddresses);
+          return { type, data: currentData } as KeyringSerializedData;
+        },
+      )
+      .filter(Boolean) as KeyringSerializedData[];
+
+    const vault = await passwordEncrypt({
+      data: syncKeyringData,
+      password,
+    });
+
+    return { vault, accounts };
+  }
+
+  /**
+   * Return HD export restrictions without persisting sensitive keyring flags
+   * in the public account snapshot.
+   * @returns Per-address HD export restriction flags.
+   */
+  async getSyncExportAccountRestrictions() {
+    this.assertUnlocked();
+    await this.ensureKeyringRuntimeReady('get_sync_export_restrictions');
+
+    const restrictions: {
+      address: string;
+      type: KEYRING_TYPE.HdKeyring;
+      isSlip39: boolean;
+      needPassphrase: boolean;
+    }[] = [];
+
+    for (const keyring of this.keyrings) {
+      if (keyring.type !== KEYRING_TYPE.HdKeyring) {
+        continue;
+      }
+
+      const [accounts, serializedData] = await Promise.all([
+        keyring.getAccounts(),
+        keyring.serialize(),
+      ]);
+      accounts.forEach(address => {
+        restrictions.push({
+          address,
+          type: KEYRING_TYPE.HdKeyring,
+          isSlip39: Boolean(
+            (keyring as any).isSlip39 || (serializedData as any)?.isSlip39,
+          ),
+          needPassphrase: Boolean(
+            (keyring as any).needPassphrase ||
+              (serializedData as any)?.needPassphrase,
+          ),
+        });
+      });
+    }
+
+    return restrictions;
   }
   /**
    * Unlock Keyrings
@@ -2591,19 +2749,19 @@ export class KeyringService extends RNEventEmitter {
   }
 
   /**
-   * Restore Keyring Helper
-   *
-   * Attempts to initialize a new keyring from the provided serialized payload.
-   * On success, returns the resulting keyring instance.
-   *
-   * @param serialized
-   * @param push
+   * Restore a serialized keyring into a temporary instance for validation.
+   * @param serialized - Keyring data to validate.
+   * @returns A validated keyring instance that is not added to runtime state.
    */
-  private async _restoreKeyringByKeyringSerializedData(
+  private async _createKeyringForValidation(
     serialized: KeyringSerializedData,
   ): Promise<any> {
     const { type, data } = serialized;
     const Keyring = this.getKeyringClassForType(type);
+    if (!Keyring) {
+      throw new Error(`Unsupported keyring type: ${type}`);
+    }
+
     const keyring =
       typeof this.onCreateKeyring === 'function'
         ? this.onCreateKeyring(Keyring)
@@ -2616,92 +2774,128 @@ export class KeyringService extends RNEventEmitter {
     return keyring;
   }
 
+  /**
+   * Replace all runtime keyrings from an already validated serialized vault.
+   * @param vault - Complete serialized vault to restore.
+   */
+  private async _replaceRuntimeKeyrings(vault: KeyringSerializedData[]) {
+    await this.clearKeyrings();
+    for (const item of vault) {
+      await this._restoreKeyring(item);
+    }
+    this.markKeyringRuntimeReady();
+  }
+
   async syncExtensionData(vault: KeyringSerializedData[]) {
-    if (!this.#password || typeof this.#password !== 'string') {
-      throw new Error('background.error.unlock');
+    this.assertUnlocked();
+
+    if (!Array.isArray(vault) || vault.length === 0 || vault.length > 1000) {
+      throw new Error('Invalid wallet transfer data');
     }
 
-    // restore mnemonic keyring
-    const newVault = vault.map(item => {
+    const incomingVault = vault.map(item => {
+      if (
+        !item ||
+        typeof item.type !== 'string' ||
+        !SYNC_KEYRING_TYPES.includes(item.type) ||
+        (!Array.isArray(item.data) &&
+          (!item.data || typeof item.data !== 'object'))
+      ) {
+        throw new Error('Unsupported wallet transfer data');
+      }
+
       if (item.type === KEYRING_TYPE.HdKeyring) {
+        const { accountDetails } = item.data;
         return {
           ...item,
           data: {
             ...item.data,
-            accounts: Object.keys(item.data.accountDetails),
+            accounts:
+              Array.isArray(item.data.accounts) && item.data.accounts.length
+                ? item.data.accounts
+                : Object.keys(accountDetails || {}),
           },
         };
       }
+
       return item;
     });
 
-    let oldKeyringSerializedData: KeyringSerializedData[] = [];
+    await this.ensureKeyringRuntimeReady('sync_extension_data');
 
-    const encryptedVault = this.store.getState().vault;
-    if (!encryptedVault) {
-      throw new Error('Cannot unlock without a previous vault');
+    const currentVault = await this.serializeKeyrings();
+    const currentStoreState = { ...this.store.getState() };
+    const currentAccounts = await this.getAllAddresses();
+    const addedAccounts: KeyringEventAccount[] = [];
+    const transferredAccounts: KeyringEventAccount[] = [];
+
+    for (const item of incomingVault) {
+      const keyring = await this._createKeyringForValidation(item);
+      const displayed = await this.displayForKeyring(keyring);
+
+      displayed.accounts.forEach(account => {
+        if (
+          !transferredAccounts.some(
+            current =>
+              current.type === item.type &&
+              addressUtils.isSameAddress(current.address, account.address),
+          )
+        ) {
+          transferredAccounts.push({
+            address: account.address,
+            brandName: account.brandName,
+            type: item.type,
+          });
+        }
+
+        const alreadyExists = currentAccounts.some(
+          current =>
+            current.type === item.type &&
+            addressUtils.isSameAddress(current.address, account.address),
+        );
+        const alreadyAdded = addedAccounts.some(
+          current =>
+            current.type === item.type &&
+            addressUtils.isSameAddress(current.address, account.address),
+        );
+
+        if (!alreadyExists && !alreadyAdded) {
+          addedAccounts.push({
+            address: account.address,
+            brandName: account.brandName,
+            type: item.type,
+          });
+        }
+      });
     }
 
-    oldKeyringSerializedData = (await this.encryptor.decrypt(
-      this.#password,
-      encryptedVault,
-    )) as KeyringSerializedData[];
+    const mergedVault = mergeSyncVault(currentVault, incomingVault);
 
-    const allAccounts = await this.getAllVisibleAccountsArray();
+    // Validate the complete result before replacing any in-memory keyring.
+    for (const item of mergedVault) {
+      await this._createKeyringForValidation(item);
+    }
 
-    const addedAccounts: KeyringEventAccount[] = [];
-
-    const newKeyrings: KeyringInstance[] = await Promise.all(
-      Array.from(newVault as any).map(
-        this._restoreKeyringByKeyringSerializedData.bind(this) as any,
-      ),
-    );
-
-    await Promise.all(
-      newKeyrings.map(keyring =>
-        this.displayForKeyring(keyring).then(newDisplayKeyring => {
-          const newAccounts = newDisplayKeyring.accounts;
-
-          newAccounts?.forEach(newAccount => {
-            const newAccountExist = allAccounts?.some(
-              existAddr =>
-                newAccount?.address?.toLowerCase() ===
-                  existAddr?.address?.toLowerCase() &&
-                keyring.type === (existAddr.type || existAddr.brandName),
-            );
-
-            if (!newAccountExist && newAccounts.length) {
-              addedAccounts.push({
-                ...newAccount,
-                type: keyring.type as KEYRING_TYPE,
-              });
-            }
-          });
-        }),
-      ),
-    );
-
-    await this.clearKeyrings();
-
-    const mergeKeyringSerializedData = mergeVault(
-      oldKeyringSerializedData,
-      newVault,
-    );
-
-    await Promise.all(
-      Array.from(mergeKeyringSerializedData).map(serialized =>
-        this._restoreKeyring(serialized),
-      ),
-    );
-    await this.persistAllKeyrings();
-
-    await this._updateMemStoreKeyrings();
+    try {
+      await this._replaceRuntimeKeyrings(mergedVault);
+      await this.persistAllKeyrings();
+      await this._updateMemStoreKeyrings();
+      this.fullUpdate();
+    } catch (error) {
+      // Restore both runtime state and the exact encrypted store snapshot. This
+      // does not depend on a second encryption succeeding during rollback.
+      this.store.updateState(currentStoreState);
+      await this._replaceRuntimeKeyrings(currentVault);
+      await this._updateMemStoreKeyrings();
+      this.fullUpdate();
+      throw error;
+    }
 
     addedAccounts.forEach(account => {
       this.emit('newAccount', account);
     });
 
-    return addedAccounts;
+    return { addedAccounts, transferredAccounts };
   }
 
   async encryptWithPassword(content: any) {

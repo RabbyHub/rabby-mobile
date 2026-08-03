@@ -2461,7 +2461,8 @@
       "bugReportHistory": "Fehlerbericht-Verlauf",
       "bugReportChat": "Feedback per Chat teilen",
       "features": "Funktionen",
-      "manageWallets": "Wallets verwalten"
+      "manageWallets": "Wallets verwalten",
+      "dataMigration": "Wallet-Datenmigration"
     },
     "settings": {
       "chooseWallet": "Wählen Sie eine Wallet zur Verwaltung aus"
@@ -2647,6 +2648,36 @@
       },
       "alreadyIn": "Bereits in der Zulassungsliste",
       "alreadyInYour": "Bereits in Ihrer Zulassungsliste"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Wallet-Daten exportieren",
+      "selectTitle": "Adressen zum Exportieren auswählen",
+      "selectDescription": "Wählen Sie Wallet-Adressen aus und übertragen Sie deren verschlüsselte Daten mithilfe eines dynamischen QR-Codes.",
+      "selectAll": "Alle auswählen",
+      "deselectAll": "Alle abwählen",
+      "disabled": {
+        "unsupported": "Synchronisierung für {{type}}-Adresse nicht unterstützt",
+        "passphrase": "Synchronisierung für {{type}}-Adresse mit Passphrase nicht unterstützt",
+        "slip39": "Synchronisierung für {{type}}-Adresse mit SLIP-39 nicht unterstützt"
+      },
+      "verifyTitle": "Passwort überprüfen",
+      "verifyDescription": "Bestätigen Sie Ihr Rabby-Mobile-Passwort, bevor vertrauliche Übertragungsdaten angezeigt werden.",
+      "exportFailed": "Die Wallet-Daten konnten nicht für den Export vorbereitet werden.",
+      "customPasswordRequired": "Legen Sie vor dem Datenexport ein eigenes Wallet-Passwort fest.",
+      "scanTitle": "Diesen dynamischen QR-Code scannen",
+      "scanDescription": "Öffnen Sie Rabby Extension und scannen Sie diesen dynamischen QR-Code. Lassen Sie diesen Bildschirm bis zum Abschluss der Übertragung geöffnet.",
+      "selectedCount": "Ausgewählte Adressen: {{count}}",
+      "editSelection": "Auswahl bearbeiten",
+      "securityTip": "Der QR-Code und das heruntergeladene Video enthalten vertrauliche verschlüsselte Daten. Bewahren Sie sie sicher auf und löschen Sie sie nach der Verwendung.",
+      "showQRCode": "QR-Code anzeigen ({{count}})",
+      "downloadVideo": "QR-Code-Video herunterladen",
+      "generatingVideo": "Video wird erstellt … {{progress}}%",
+      "videoFailed": "Das QR-Code-Video konnte nicht erstellt werden.",
+      "selectVideo": "QR-Code-Video hochladen",
+      "processingVideo": "Video wird verarbeitet …",
+      "invalidVideo": "Wählen Sie ein gültiges Video mit maximal 200 MB aus.",
+      "incompleteVideo": "Das Video endete, bevor alle QR-Code-Daten gelesen wurden.",
+      "videoImportFailed": "Das QR-Code-Video konnte nicht gelesen werden. Wählen Sie ein anderes Video oder scannen Sie den dynamischen QR-Code."
     },
     "syncExtension": {
       "syncingProgress": "Scannen ({{ percent }})",

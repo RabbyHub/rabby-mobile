@@ -2288,7 +2288,8 @@
       "bugReportHistory": "问题反馈记录",
       "bugReportChat": "通过聊天分享反馈",
       "features": "功能",
-      "manageWallets": "管理钱包"
+      "manageWallets": "管理钱包",
+      "dataMigration": "钱包数据迁移"
     },
     "settings": {
       "chooseWallet": "选择要管理的钱包"
@@ -2415,6 +2416,36 @@
       },
       "alreadyIn": "已在白名单中",
       "alreadyInYour": "已在您的白名单中"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "导出钱包数据",
+      "selectTitle": "选择要导出的地址",
+      "selectDescription": "选择钱包地址，并通过动态二维码传输其加密数据。",
+      "selectAll": "选择全部",
+      "deselectAll": "取消全选",
+      "disabled": {
+        "unsupported": "不支持同步 {{type}} 地址",
+        "passphrase": "不支持同步使用密码短语的 {{type}} 地址",
+        "slip39": "不支持同步使用 SLIP-39 的 {{type}} 地址"
+      },
+      "verifyTitle": "验证密码",
+      "verifyDescription": "显示敏感的迁移数据前，请验证您的 Rabby Mobile 密码。",
+      "exportFailed": "无法准备要导出的钱包数据。",
+      "customPasswordRequired": "导出数据前，请先设置自定义钱包密码。",
+      "scanTitle": "扫描此动态二维码",
+      "scanDescription": "打开 Rabby 浏览器扩展并扫描此动态二维码。迁移完成前请保持此页面显示。",
+      "selectedCount": "已选地址：{{count}} 个",
+      "editSelection": "编辑选择",
+      "securityTip": "二维码和下载的视频包含敏感的加密数据。请妥善保管，并在使用后删除。",
+      "showQRCode": "显示二维码（{{count}}）",
+      "downloadVideo": "下载动态二维码视频",
+      "generatingVideo": "正在生成视频… {{progress}}%",
+      "videoFailed": "动态二维码视频生成失败。",
+      "selectVideo": "上传二维码视频",
+      "processingVideo": "正在处理视频…",
+      "invalidVideo": "请选择不超过 200 MB 的有效视频文件。",
+      "incompleteVideo": "视频已结束，但尚未读取完整的二维码数据。",
+      "videoImportFailed": "无法读取二维码视频。请尝试其他视频或扫描动态二维码。"
     },
     "syncExtension": {
       "noNewAddr": "未找到可导入的新地址",

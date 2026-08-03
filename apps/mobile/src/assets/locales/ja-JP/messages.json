@@ -2187,7 +2187,8 @@
       "bugReportHistory": "バグ報告履歴",
       "bugReportChat": "チャットでフィードバックを送信",
       "features": "機能",
-      "manageWallets": "ウォレットを管理"
+      "manageWallets": "ウォレットを管理",
+      "dataMigration": "ウォレットデータの移行"
     },
     "settings": {
       "chooseWallet": "管理するウォレットを選択"
@@ -2314,6 +2315,36 @@
       },
       "alreadyIn": "ホワイトリストに既に登録済み",
       "alreadyInYour": "既にホワイトリストに追加されています"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "ウォレットデータをエクスポート",
+      "selectTitle": "エクスポートするアドレスを選択",
+      "selectDescription": "ウォレットアドレスを選択し、暗号化されたデータを動的QRコードで転送します。",
+      "selectAll": "すべて選択",
+      "deselectAll": "選択をすべて解除",
+      "disabled": {
+        "unsupported": "{{type}}アドレスのサポートされていない同期",
+        "passphrase": "パスフレーズを使用する{{type}}アドレスは同期できません",
+        "slip39": "SLIP-39を使用する{{type}}アドレスは同期できません"
+      },
+      "verifyTitle": "パスワードを確認してください",
+      "verifyDescription": "機密性の高い転送データを表示する前に、Rabby Mobileのパスワードを確認してください。",
+      "exportFailed": "エクスポートするウォレットデータを準備できませんでした。",
+      "customPasswordRequired": "データをエクスポートする前に、任意のウォレットパスワードを設定してください。",
+      "scanTitle": "この動的QRコードをスキャン",
+      "scanDescription": "Rabby Extensionを開いて、この動的QRコードをスキャンしてください。転送が完了するまで、この画面を表示したままにしてください。",
+      "selectedCount": "選択したアドレス：{{count}}件",
+      "editSelection": "選択を編集",
+      "securityTip": "QRコードとダウンロードした動画には、暗号化された機密データが含まれます。非公開で保管し、使用後は削除してください。",
+      "showQRCode": "QRコードを表示（{{count}}件）",
+      "downloadVideo": "QRコード動画をダウンロード",
+      "generatingVideo": "動画を生成中… {{progress}}%",
+      "videoFailed": "QRコード動画を生成できませんでした。",
+      "selectVideo": "QRコード動画をアップロード",
+      "processingVideo": "動画を処理中…",
+      "invalidVideo": "200 MB以下の有効な動画ファイルを選択してください。",
+      "incompleteVideo": "QRコードデータをすべて読み取る前に動画が終了しました。",
+      "videoImportFailed": "QRコード動画を読み取れませんでした。別の動画を選択するか、動的QRコードをスキャンしてください。"
     },
     "syncExtension": {
       "noNewAddr": "インポートできる新しいアドレスはありません",

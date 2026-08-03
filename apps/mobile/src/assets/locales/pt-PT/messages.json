@@ -2384,7 +2384,8 @@
       "bugReportHistory": "Histórico de relatórios de erro",
       "bugReportChat": "Partilhar feedback através do chat",
       "features": "Funcionalidades",
-      "manageWallets": "Gerir carteiras"
+      "manageWallets": "Gerir carteiras",
+      "dataMigration": "Migração de dados da carteira"
     },
     "settings": {
       "chooseWallet": "Escolha uma carteira para gerir"
@@ -2647,6 +2648,36 @@
       },
       "alreadyInYour": "Já está na sua lista de permissões",
       "alreadyIn": "Já está na lista de permissões"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Exportar dados da carteira",
+      "selectTitle": "Selecionar endereços para exportar",
+      "selectDescription": "Selecione endereços da carteira e transfira os respetivos dados encriptados através de um código QR dinâmico.",
+      "selectAll": "Selecionar tudo",
+      "deselectAll": "Desmarcar tudo",
+      "disabled": {
+        "unsupported": "A sincronização não é suportada para endereços {{type}}",
+        "passphrase": "A sincronização não é suportada para endereços {{type}} com palavra-passe adicional",
+        "slip39": "A sincronização não é suportada para endereços {{type}} com SLIP-39"
+      },
+      "verifyTitle": "Verificar Palavra-passe",
+      "verifyDescription": "Confirme a palavra-passe do Rabby Mobile antes de mostrar os dados confidenciais da transferência.",
+      "exportFailed": "Não foi possível preparar os dados da carteira para exportação.",
+      "customPasswordRequired": "Defina uma palavra-passe personalizada da carteira antes de exportar os dados.",
+      "scanTitle": "Digitalizar este código QR dinâmico",
+      "scanDescription": "Abra a Rabby Extension e digitalize este código QR dinâmico. Mantenha este ecrã visível até a transferência terminar.",
+      "selectedCount": "Endereços selecionados: {{count}}",
+      "editSelection": "Editar seleção",
+      "securityTip": "O código QR e o vídeo transferido contêm dados encriptados confidenciais. Mantenha-os privados e elimine-os após a utilização.",
+      "showQRCode": "Mostrar código QR ({{count}})",
+      "downloadVideo": "Transferir vídeo do código QR",
+      "generatingVideo": "A gerar vídeo… {{progress}}%",
+      "videoFailed": "Não foi possível gerar o vídeo do código QR.",
+      "selectVideo": "Carregar vídeo do código QR",
+      "processingVideo": "A processar vídeo…",
+      "invalidVideo": "Selecione um ficheiro de vídeo válido com um máximo de 200 MB.",
+      "incompleteVideo": "O vídeo terminou antes de todos os dados do código QR serem lidos.",
+      "videoImportFailed": "Não foi possível ler o vídeo do código QR. Experimente outro vídeo ou digitalize o código QR dinâmico."
     },
     "syncExtension": {
       "syncingProgress": "A digitalização ({{ percent }})",

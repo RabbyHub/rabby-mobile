@@ -8,7 +8,7 @@ import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
-import { useScanner } from '../Scanner/ScannerScreen';
+import { useScanner } from '../Scanner/scannerState';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   Keyboard,

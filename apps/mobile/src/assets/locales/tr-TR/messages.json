@@ -2200,7 +2200,8 @@
       "bugReportHistory": "Hata Raporu Geçmişi",
       "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş",
       "features": "Özellikler",
-      "manageWallets": "Cüzdanları Yönet"
+      "manageWallets": "Cüzdanları Yönet",
+      "dataMigration": "Cüzdan Verilerini Aktarma"
     },
     "settings": {
       "chooseWallet": "Yönetmek için bir cüzdan seçin"
@@ -2261,6 +2262,36 @@
     },
     "eip7702": {
       "alert": "EIP-7702 henüz desteklenmiyor."
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Cüzdan verilerini dışa aktar",
+      "selectTitle": "Dışa aktarılacak adresleri seç",
+      "selectDescription": "Cüzdan adreslerini seçin ve şifrelenmiş verilerini dinamik bir QR kodu kullanarak aktarın.",
+      "selectAll": "Tümünü Seç",
+      "deselectAll": "Tüm Seçimleri Kaldır",
+      "disabled": {
+        "unsupported": "{{type}} adresi için senkronizasyon desteklenmiyor",
+        "passphrase": "Ek parolalı {{type}} adreslerinde senkronizasyon desteklenmez",
+        "slip39": "SLIP-39 kullanan {{type}} adreslerinin senkronizasyonu desteklenmiyor"
+      },
+      "verifyTitle": "Şifreyi Doğrula",
+      "verifyDescription": "Hassas aktarım verilerini göstermeden önce Rabby Mobile şifrenizi doğrulayın.",
+      "exportFailed": "Cüzdan verileri dışa aktarma için hazırlanamadı.",
+      "customPasswordRequired": "Verileri dışa aktarmadan önce özel bir cüzdan şifresi belirleyin.",
+      "scanTitle": "Bu dinamik QR kodunu tarayın",
+      "scanDescription": "Rabby Extension’ı açın ve bu dinamik QR kodunu tarayın. Aktarım tamamlanana kadar bu ekranı açık tutun.",
+      "selectedCount": "Seçilen adresler: {{count}}",
+      "editSelection": "Seçimi düzenle",
+      "securityTip": "QR kodu ve indirilen video hassas şifrelenmiş veriler içerir. Bunları gizli tutun ve kullandıktan sonra silin.",
+      "showQRCode": "QR kodunu göster ({{count}})",
+      "downloadVideo": "QR kodu videosunu indir",
+      "generatingVideo": "Video oluşturuluyor… {{progress}}%",
+      "videoFailed": "QR kodu videosu oluşturulamadı.",
+      "selectVideo": "QR kodu videosu yükle",
+      "processingVideo": "Video işleniyor…",
+      "invalidVideo": "En fazla 200 MB boyutunda geçerli bir video dosyası seçin.",
+      "incompleteVideo": "Video, QR kodu verilerinin tamamı okunmadan sona erdi.",
+      "videoImportFailed": "QR kodu videosu okunamadı. Başka bir video deneyin veya dinamik QR kodunu tarayın."
     },
     "syncExtension": {
       "scanTips1": "Rabby Uzantısı'nda \"Mobile Sync\"a tıklayın",

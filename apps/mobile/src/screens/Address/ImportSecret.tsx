@@ -8,7 +8,7 @@ import React, {
 import { useTranslation, Trans } from 'react-i18next';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useScanner } from '../Scanner/ScannerScreen';
+import { useScanner } from '../Scanner/scannerState';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';

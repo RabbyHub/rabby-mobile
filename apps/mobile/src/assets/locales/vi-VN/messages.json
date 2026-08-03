@@ -1946,7 +1946,8 @@
       "bugReportHistory": "Lịch sử báo cáo lỗi",
       "bugReportChat": "Gửi phản hồi qua trò chuyện",
       "features": "Tính năng",
-      "manageWallets": "Quản lý ví"
+      "manageWallets": "Quản lý ví",
+      "dataMigration": "Di chuyển dữ liệu ví"
     },
     "settings": {
       "chooseWallet": "Chọn một ví để quản lý"
@@ -2382,6 +2383,36 @@
       },
       "alreadyIn": "Đã có trong danh sách cho phép",
       "alreadyInYour": "Đã có trong danh sách cho phép của bạn"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Xuất dữ liệu ví",
+      "selectTitle": "Chọn địa chỉ để xuất",
+      "selectDescription": "Chọn địa chỉ ví và truyền dữ liệu đã mã hóa bằng mã QR động.",
+      "selectAll": "Chọn tất cả",
+      "deselectAll": "Bỏ chọn tất cả",
+      "disabled": {
+        "unsupported": "Không hỗ trợ đồng bộ cho địa chỉ {{type}}",
+        "passphrase": "Không hỗ trợ đồng bộ cho địa chỉ {{type}} với cụm mật khẩu.",
+        "slip39": "Không hỗ trợ đồng bộ địa chỉ {{type}} dùng SLIP-39"
+      },
+      "verifyTitle": "Xác thực Mật khẩu",
+      "verifyDescription": "Xác minh mật khẩu Rabby Mobile trước khi hiển thị dữ liệu truyền nhạy cảm.",
+      "exportFailed": "Không thể chuẩn bị dữ liệu ví để xuất.",
+      "customPasswordRequired": "Đặt mật khẩu ví tùy chỉnh trước khi xuất dữ liệu.",
+      "scanTitle": "Quét mã QR động này",
+      "scanDescription": "Mở Rabby Extension và quét mã QR động này. Giữ màn hình này hiển thị cho đến khi quá trình truyền hoàn tất.",
+      "selectedCount": "Địa chỉ đã chọn: {{count}}",
+      "editSelection": "Chỉnh sửa lựa chọn",
+      "securityTip": "Mã QR và video đã tải xuống chứa dữ liệu nhạy cảm đã mã hóa. Hãy giữ riêng tư và xóa sau khi sử dụng.",
+      "showQRCode": "Hiển thị mã QR ({{count}})",
+      "downloadVideo": "Tải xuống video mã QR",
+      "generatingVideo": "Đang tạo video… {{progress}}%",
+      "videoFailed": "Không thể tạo video mã QR.",
+      "selectVideo": "Tải lên video mã QR",
+      "processingVideo": "Đang xử lý video…",
+      "invalidVideo": "Chọn tệp video hợp lệ, không quá 200 MB.",
+      "incompleteVideo": "Video đã kết thúc trước khi đọc xong toàn bộ dữ liệu mã QR.",
+      "videoImportFailed": "Không thể đọc video mã QR. Hãy thử video khác hoặc quét mã QR động."
     },
     "syncExtension": {
       "importedSuccessfully": "Đã nhập thành công!",

@@ -21,7 +21,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import { useScanner } from '../Scanner/ScannerScreen';
+import { useScanner } from '../Scanner/scannerState';
 import { ellipsisAddress } from '@/utils/address';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';

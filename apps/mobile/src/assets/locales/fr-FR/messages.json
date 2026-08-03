@@ -2144,7 +2144,8 @@
       "bugReportHistory": "Historique des rapports de bug",
       "bugReportChat": "Partager vos commentaires via le chat",
       "features": "Fonctionnalités",
-      "manageWallets": "Gérer les portefeuilles"
+      "manageWallets": "Gérer les portefeuilles",
+      "dataMigration": "Migration des données du portefeuille"
     },
     "settings": {
       "chooseWallet": "Choisissez un portefeuille à gérer"
@@ -2271,6 +2272,36 @@
       },
       "alreadyIn": "Déjà dans la liste d’autorisation",
       "alreadyInYour": "Déjà dans votre liste d’autorisation"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Exporter les données du portefeuille",
+      "selectTitle": "Sélectionner les adresses à exporter",
+      "selectDescription": "Sélectionnez des adresses de portefeuille et transférez leurs données chiffrées à l’aide d’un code QR dynamique.",
+      "selectAll": "Tout sélectionner",
+      "deselectAll": "Tout désélectionner",
+      "disabled": {
+        "unsupported": "La synchronisation n'est pas prise en charge pour les adresses {{type}}",
+        "passphrase": "La synchronisation n'est pas prise en charge pour les adresses {{type}} avec une passphrase",
+        "slip39": "La synchronisation n'est pas prise en charge pour les adresses {{type}} avec SLIP-39"
+      },
+      "verifyTitle": "Vérifier le mot de passe",
+      "verifyDescription": "Vérifiez votre mot de passe Rabby Mobile avant d’afficher les données de transfert sensibles.",
+      "exportFailed": "Impossible de préparer les données du portefeuille pour l’exportation.",
+      "customPasswordRequired": "Définissez un mot de passe de portefeuille personnalisé avant d’exporter les données.",
+      "scanTitle": "Scanner ce code QR dynamique",
+      "scanDescription": "Ouvrez Rabby Extension et scannez ce code QR dynamique. Gardez cet écran affiché jusqu’à la fin du transfert.",
+      "selectedCount": "Adresses sélectionnées : {{count}}",
+      "editSelection": "Modifier la sélection",
+      "securityTip": "Le code QR et la vidéo téléchargée contiennent des données chiffrées sensibles. Conservez-les à l’abri et supprimez-les après utilisation.",
+      "showQRCode": "Afficher le code QR ({{count}})",
+      "downloadVideo": "Télécharger la vidéo du code QR",
+      "generatingVideo": "Génération de la vidéo… {{progress}}%",
+      "videoFailed": "Impossible de générer la vidéo du code QR.",
+      "selectVideo": "Importer la vidéo du code QR",
+      "processingVideo": "Traitement de la vidéo…",
+      "invalidVideo": "Sélectionnez un fichier vidéo valide de 200 Mo maximum.",
+      "incompleteVideo": "La vidéo s’est terminée avant que toutes les données du code QR aient pu être lues.",
+      "videoImportFailed": "Impossible de lire la vidéo du code QR. Essayez une autre vidéo ou scannez le code QR dynamique."
     },
     "syncExtension": {
       "syncingProgress": "Analyse ({{ percent }})",

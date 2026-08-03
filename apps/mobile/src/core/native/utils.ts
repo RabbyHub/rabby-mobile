@@ -13,6 +13,41 @@ import type {
   NativeFileCapabilitySnapshot,
 } from './fileCapability';
 
+export type NativeQRCodeVideoMatrix = {
+  /** Row-major QR modules, bit-packed MSB first and base64 encoded. */
+  data: string;
+  size: number;
+};
+
+export type NativeCreateQRCodeVideoRequest = {
+  frames: NativeQRCodeVideoMatrix[];
+  outputPath: string;
+  size?: number;
+  frameDurationMs?: number;
+  bitRate?: number;
+  tailFrames?: number;
+  quietZoneModules?: number;
+  jobId?: string;
+};
+
+export type NativeDecodeQRCodesFromVideoRequest = {
+  uri: string;
+  sampleIntervalMs?: number;
+  maxDurationSeconds?: number;
+  maxDimension?: number;
+  jobId?: string;
+};
+
+export type NativePickedVideoFile = {
+  /** App-owned file URI that remains readable until cleanupPath is removed. */
+  uri: string;
+  /** Absolute app-cache path that the caller must remove after decoding. */
+  cleanupPath: string;
+  fileName: string;
+  fileSize: number;
+  type: string;
+};
+
 interface NativeModulesStatic {
   ReactNativeSecurity: /* NativeModule &  */ {
     blockScreen(): void;
@@ -72,6 +107,15 @@ interface NativeModulesStatic {
     listAccessibleVisualMedia?(
       options?: NativeAccessibleVisualMediaQueryOptions,
     ): Promise<NativeAccessibleVisualMediaList>;
+    pickVideoFile?(): Promise<NativePickedVideoFile | null>;
+    cancelVideoFilePicker?(): void;
+    createQRCodeVideo?(
+      request: NativeCreateQRCodeVideoRequest,
+    ): Promise<string>;
+    decodeQRCodesFromVideo?(
+      request: NativeDecodeQRCodesFromVideoRequest,
+    ): Promise<string[]>;
+    cancelQRCodeVideoJob?(jobId: string): void;
   };
   RNThread: NativeModule & {
     startThread(

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useScanner } from '../Scanner/ScannerScreen';
+import { useScanner } from '../Scanner/scannerState';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -39,6 +39,8 @@ import { Text } from '@/components/Typography';
 import { mergeWhitelistAddresses } from '@/utils/whitelist';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import type { RegressionScenarioEventName } from '@/devtools/regressionScenarios/contracts';
+import { parseSyncExtensionTransferPayload } from '@/utils/syncExtensionTransfer';
+import { filterSyncExtensionTransferMetadata } from '@/utils/syncExtensionTransferMetadata';
 
 export type SyncExtensionPasswordRegressionScenarioProps = {
   regressionScenario?: {
@@ -114,14 +116,16 @@ export const SyncExtensionPasswordScreen = ({
     !!_shouldSetupPassword && !shouldSetupPasswordLoading;
 
   const syncOther = async ({
-    allAccounts,
+    transferredAccounts,
     whitelist,
     alianNames,
     highligtedAddresses,
   }: {
-    allAccounts: Awaited<
-      ReturnType<typeof keyringServiceApi.getAllVisibleAccountsArray>
-    >;
+    transferredAccounts: Array<{
+      address: string;
+      brandName: string;
+      type: string;
+    }>;
     whitelist: string[];
     alianNames: { name: string; address: string }[];
     highligtedAddresses: {
@@ -129,10 +133,16 @@ export const SyncExtensionPasswordScreen = ({
       address: string;
     }[];
   }) => {
+    const safeMetadata = filterSyncExtensionTransferMetadata({
+      transferredAccounts,
+      whitelist,
+      alianNames,
+      highligtedAddresses,
+    });
     const currentWhitelist = await whitelistServiceApi.getWhitelist();
     const mergedWhitelist = mergeWhitelistAddresses(
       currentWhitelist,
-      whitelist,
+      safeMetadata.whitelist,
     );
     const didSyncWhitelist = mergedWhitelist.length !== currentWhitelist.length;
     const nextPinnedAddresses = [...getPinnedAddressSnapshot()];
@@ -143,45 +153,35 @@ export const SyncExtensionPasswordScreen = ({
       await setWhitelist(mergedWhitelist);
     }
 
-    for (const account of allAccounts) {
-      const isInPinned = highligtedAddresses.some(
-        pinned =>
-          isSameAddress(pinned.address, account.address) &&
-          pinned.brandName === account.brandName,
-      );
+    for (const pinned of safeMetadata.highligtedAddresses) {
       const isAlreadyPinned = nextPinnedAddresses.some(
-        pinned =>
-          isSameAddress(pinned.address, account.address) &&
-          pinned.brandName === account.brandName,
+        current =>
+          isSameAddress(current.address, pinned.address) &&
+          current.brandName === pinned.brandName,
       );
 
-      if (isInPinned && !isAlreadyPinned) {
+      if (!isAlreadyPinned) {
         await togglePinAddressAsync({
-          brandName: account.brandName,
-          address: account.address,
+          brandName: pinned.brandName,
+          address: pinned.address,
           nextPinned: true,
         });
         nextPinnedAddresses.unshift({
-          brandName: account.brandName,
-          address: account.address,
+          brandName: pinned.brandName,
+          address: pinned.address,
         });
         didSyncPinnedAddress = true;
       }
+    }
 
-      const aliasName = alianNames.find(alias =>
-        isSameAddress(alias.address, account.address),
-      )?.name;
-
-      if (aliasName) {
-        const currentAlias = getContactAliasSnapshot(account.address);
-
-        if (currentAlias?.alias !== aliasName) {
-          await contactServiceApi.updateAlias({
-            address: account.address,
-            name: aliasName,
-          });
-          didSyncAlias = true;
-        }
+    for (const alias of safeMetadata.alianNames) {
+      const currentAlias = getContactAliasSnapshot(alias.address);
+      if (currentAlias?.alias !== alias.name) {
+        await contactServiceApi.updateAlias({
+          address: alias.address,
+          name: alias.name,
+        });
+        didSyncAlias = true;
       }
     }
 
@@ -203,9 +203,11 @@ export const SyncExtensionPasswordScreen = ({
   const finishAccountSync = ({
     newAccounts,
   }: {
-    newAccounts: Awaited<
-      ReturnType<typeof keyringServiceApi.syncExtensionData>
-    >;
+    newAccounts: Array<{
+      address: string;
+      brandName: string;
+      type: string;
+    }>;
   }) => {
     clear();
     navigation.reset({
@@ -240,15 +242,7 @@ export const SyncExtensionPasswordScreen = ({
         whitelist,
         highligtedAddresses,
         alianNames,
-      } = JSON.parse(text) as {
-        vault: Object;
-        whitelist: string[];
-        alianNames: { name: string; address: string }[];
-        highligtedAddresses: {
-          brandName: string;
-          address: string;
-        }[];
-      };
+      } = parseSyncExtensionTransferPayload(text);
 
       if (!password) {
         setError(t('page.unlock.password.error'));
@@ -281,19 +275,17 @@ export const SyncExtensionPasswordScreen = ({
         return;
       }
 
-      const newAccounts = await keyringServiceApi.syncExtensionData(
-        vault as any,
-      );
-      const allAccounts = await keyringServiceApi.getAllVisibleAccountsArray();
+      const { addedAccounts, transferredAccounts } =
+        await keyringServiceApi.syncExtensionData(vault as any);
       const { didSyncMetadata } = await syncOther({
-        allAccounts,
+        transferredAccounts,
         whitelist,
         alianNames,
         highligtedAddresses,
       });
 
-      if (newAccounts.length) {
-        finishAccountSync({ newAccounts });
+      if (addedAccounts.length) {
+        finishAccountSync({ newAccounts: addedAccounts });
       } else if (didSyncMetadata) {
         finishMetadataOnlySync();
       } else {

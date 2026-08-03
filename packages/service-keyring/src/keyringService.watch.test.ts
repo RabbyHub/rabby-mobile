@@ -54,6 +54,7 @@ describe('keyringService support eth-keyring-watch', () => {
   let keyringService: KeyringService;
 
   const TEST_ADDR = '0x39b97205b9826f21fd39b535cf972c809e160e5f';
+  const TEST_ADDR_2 = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
   const TEST_HD_ADDR = '0x1111111111111111111111111111111111111111';
 
   class TestHdKeyring {
@@ -324,9 +325,9 @@ describe('keyringService support eth-keyring-watch', () => {
       } as any);
       await keyringService.setLocked();
 
-      await expect(keyringService.getAllVisibleAccountsArray()).resolves.toEqual(
-        [],
-      );
+      await expect(
+        keyringService.getAllVisibleAccountsArray(),
+      ).resolves.toEqual([]);
       expect(keyringService.hasPublicAccountSnapshot()).toBe(false);
     });
 
@@ -396,37 +397,194 @@ describe('keyringService support eth-keyring-watch', () => {
       );
     });
 
-    it('emits one newAccount signal after extension sync adds addresses', async () => {
-      await keyringService.persistAllKeyrings();
-
-      const sourceKeyringService = new KeyringService({
-        encryptor: mockEncryptor as any,
-      });
-      sourceKeyringService.loadStore({});
-      await sourceKeyringService.boot(password);
-      await sourceKeyringService.clearKeyrings();
-      const sourceKeyring = await sourceKeyringService.addNewKeyring(
-        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
-      );
-      sourceKeyring.setAccountToAdd(TEST_ADDR);
-      await sourceKeyringService.addNewAccount(sourceKeyring);
-      await sourceKeyringService.persistAllKeyrings();
+    it('returns transferred accounts and emits only newly added accounts', async () => {
+      await addWatchAddress(TEST_ADDR);
 
       const spy = sinon.spy();
       keyringService.on('newAccount', spy);
 
-      const addedAccounts = await keyringService.syncExtensionData(
-        sourceKeyringService.store.getState().vault as any,
-      );
+      const { addedAccounts, transferredAccounts } =
+        await keyringService.syncExtensionData([
+          {
+            type: KEYRING_TYPE.WatchAddressKeyring,
+            data: { accounts: [TEST_ADDR, TEST_ADDR_2] },
+          },
+        ]);
 
-      expect(addedAccounts).toEqual([
+      expect(addedAccounts).toStrictEqual([
         expect.objectContaining({
-          address: TEST_ADDR,
+          address: TEST_ADDR_2,
           brandName: KEYRING_TYPE.WatchAddressKeyring,
           type: KEYRING_TYPE.WatchAddressKeyring,
         }),
       ]);
+      expect(transferredAccounts).toStrictEqual([
+        expect.objectContaining({
+          address: TEST_ADDR,
+          type: KEYRING_TYPE.WatchAddressKeyring,
+        }),
+        expect.objectContaining({
+          address: TEST_ADDR_2,
+          type: KEYRING_TYPE.WatchAddressKeyring,
+        }),
+      ]);
       expect(spy.calledOnceWithExactly(addedAccounts[0])).toBe(true);
+
+      const accounts = await keyringService.getAllVisibleAccountsArray();
+      expect(accounts.map(account => account.address)).toStrictEqual([
+        TEST_ADDR,
+        TEST_ADDR_2,
+      ]);
+    });
+
+    it.each([
+      ['non-array payload', {} as any, 'Invalid wallet transfer data'],
+      ['empty payload', [], 'Invalid wallet transfer data'],
+      [
+        'oversized payload',
+        Array.from({ length: 1001 }, () => ({
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          data: { accounts: [] },
+        })),
+        'Invalid wallet transfer data',
+      ],
+      [
+        'missing keyring data',
+        [{ type: KEYRING_TYPE.WatchAddressKeyring, data: null }],
+        'Unsupported wallet transfer data',
+      ],
+      [
+        'unsupported keyring type',
+        [{ type: KEYRING_TYPE.WalletConnectKeyring, data: { accounts: [] } }],
+        'Unsupported wallet transfer data',
+      ],
+    ] as [string, any, string][])(
+      'rejects %s before mutating keyrings',
+      async (_name, payload, errorMessage) => {
+        const runtimeKeyrings = keyringService.keyrings;
+        const storedVault = keyringService.store.getState().vault;
+
+        await expect(keyringService.syncExtensionData(payload)).rejects.toThrow(
+          errorMessage,
+        );
+
+        expect(keyringService.keyrings).toBe(runtimeKeyrings);
+        expect(keyringService.store.getState().vault).toBe(storedVault);
+      },
+    );
+
+    it('fills HD accounts from accountDetails when the export omits accounts', async () => {
+      const service = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [TestHdKeyring as any],
+      });
+      service.loadStore({});
+      await service.boot(password);
+      await service.clearKeyrings();
+
+      const result = await service.syncExtensionData([
+        {
+          type: KEYRING_TYPE.HdKeyring,
+          data: {
+            mnemonic: walletOneSeedWords,
+            accountDetails: {
+              [TEST_HD_ADDR]: { index: 0 },
+            },
+          },
+        },
+      ]);
+
+      expect(result.addedAccounts).toStrictEqual([
+        expect.objectContaining({
+          address: TEST_HD_ADDR,
+          brandName: 'Rabby Wallet',
+          type: KEYRING_TYPE.HdKeyring,
+        }),
+      ]);
+      expect(result.transferredAccounts).toStrictEqual(result.addedAccounts);
+    });
+
+    it('validates the complete merged vault before mutating runtime state', async () => {
+      class MergeLimitedWatchKeyring {
+        static type = KEYRING_TYPE.WatchAddressKeyring;
+
+        type = KEYRING_TYPE.WatchAddressKeyring;
+
+        accounts: string[] = [];
+
+        async serialize() {
+          return { accounts: this.accounts };
+        }
+
+        async deserialize(data: { accounts?: string[] }) {
+          const accounts = data.accounts || [];
+          if (accounts.length > 1) {
+            throw new Error('merged vault is invalid');
+          }
+          this.accounts = accounts;
+        }
+
+        async getAccounts() {
+          return this.accounts;
+        }
+      }
+
+      const service = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [MergeLimitedWatchKeyring as any],
+      });
+      service.loadStore({});
+      await service.boot(password);
+      const currentKeyring = new MergeLimitedWatchKeyring();
+      await currentKeyring.deserialize({ accounts: [TEST_ADDR] });
+      service.keyrings = [currentKeyring as any];
+      await service.persistAllKeyrings();
+      const storedVault = service.store.getState().vault;
+      const spy = sinon.spy();
+      service.on('newAccount', spy);
+
+      await expect(
+        service.syncExtensionData([
+          {
+            type: KEYRING_TYPE.WatchAddressKeyring,
+            data: { accounts: [TEST_ADDR_2] },
+          },
+        ]),
+      ).rejects.toThrow('merged vault is invalid');
+
+      expect(service.keyrings).toStrictEqual([currentKeyring]);
+      expect(service.store.getState().vault).toBe(storedVault);
+      expect(spy.called).toBe(false);
+    });
+
+    it('rolls back runtime and persisted vault when mutation fails', async () => {
+      await addWatchAddress(TEST_ADDR);
+      const storedVault = keyringService.store.getState().vault;
+      const spy = sinon.spy();
+      keyringService.on('newAccount', spy);
+      sinon
+        .stub(keyringService, 'persistAllKeyrings')
+        .rejects(new Error('persist failed'));
+
+      await expect(
+        keyringService.syncExtensionData([
+          {
+            type: KEYRING_TYPE.WatchAddressKeyring,
+            data: { accounts: [TEST_ADDR_2] },
+          },
+        ]),
+      ).rejects.toThrow('persist failed');
+
+      expect(keyringService.store.getState().vault).toBe(storedVault);
+      expect(keyringService.isKeyringRuntimeReady()).toBe(true);
+      expect(spy.called).toBe(false);
+      const accounts = await keyringService.getAllVisibleAccountsArray();
+      expect(accounts).toStrictEqual([
+        expect.objectContaining({
+          address: TEST_ADDR,
+          type: KEYRING_TYPE.WatchAddressKeyring,
+        }),
+      ]);
     });
 
     it('rejects locked private key export', async () => {

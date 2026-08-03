@@ -18,6 +18,7 @@
 		018EF45A2EFC0FEE001A2361 /* RNUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 018EF4582EFC0FEE001A2361 /* RNUtils.m */; };
 		019A0D4430A1A110007F31A8 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019A0D4230A1A110007F31A8 /* Photos.framework */; };
 		019A0D4530A1A110007F31A8 /* PhotosUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019A0D4330A1A110007F31A8 /* PhotosUI.framework */; };
+		019A0D4730A1A110007F31A8 /* Vision.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019A0D4630A1A110007F31A8 /* Vision.framework */; };
 		01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */; };
 		01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */; };
 		01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE01E2C3889BB0033D12B /* ScreenShield.swift */; };
@@ -73,6 +74,7 @@
 		018EF4582EFC0FEE001A2361 /* RNUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNUtils.m; sourceTree = "<group>"; };
 		019A0D4230A1A110007F31A8 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		019A0D4330A1A110007F31A8 /* PhotosUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PhotosUI.framework; path = System/Library/Frameworks/PhotosUI.framework; sourceTree = SDKROOT; };
+		019A0D4630A1A110007F31A8 /* Vision.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Vision.framework; path = System/Library/Frameworks/Vision.framework; sourceTree = SDKROOT; };
 		01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+ImageEffects.m"; path = "RabbyMobile/UIImage+ImageEffects.m"; sourceTree = "<group>"; };
 		01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNScreenshotPrevent.m; path = RabbyMobile/RNScreenshotPrevent.m; sourceTree = "<group>"; };
 		01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNScreenshotPrevent.h; path = RabbyMobile/RNScreenshotPrevent.h; sourceTree = "<group>"; };
@@ -139,6 +141,7 @@
 			files = (
 				019A0D4430A1A110007F31A8 /* Photos.framework in Frameworks */,
 				019A0D4530A1A110007F31A8 /* PhotosUI.framework in Frameworks */,
+				019A0D4730A1A110007F31A8 /* Vision.framework in Frameworks */,
 				61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */,
 				AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */,
 			);
@@ -235,6 +238,7 @@
 			children = (
 				019A0D4230A1A110007F31A8 /* Photos.framework */,
 				019A0D4330A1A110007F31A8 /* PhotosUI.framework */,
+				019A0D4630A1A110007F31A8 /* Vision.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */,
 				B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */,

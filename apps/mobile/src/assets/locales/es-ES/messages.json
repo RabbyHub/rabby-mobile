@@ -2279,7 +2279,8 @@
       "bugReportHistory": "Historial de informes de errores",
       "bugReportChat": "Compartir comentarios por chat",
       "features": "Funciones",
-      "manageWallets": "Gestionar carteras"
+      "manageWallets": "Gestionar carteras",
+      "dataMigration": "Migración de datos de la cartera"
     },
     "settings": {
       "chooseWallet": "Selecciona una cartera para gestionarla"
@@ -2542,6 +2543,36 @@
       },
       "alreadyInYour": "Ya está en tu lista de permisos",
       "alreadyIn": "Ya está en la lista de permisos"
+    },
+    "syncExtensionTransfer": {
+      "exportTitle": "Exportar datos de la cartera",
+      "selectTitle": "Seleccionar direcciones para exportar",
+      "selectDescription": "Selecciona direcciones de la cartera y transfiere sus datos cifrados mediante un código QR dinámico.",
+      "selectAll": "Seleccionar todo",
+      "deselectAll": "Deseleccionar todo",
+      "disabled": {
+        "unsupported": "La sincronización no es compatible con direcciones {{type}}",
+        "passphrase": "La sincronización no es compatible con direcciones {{type}} que usan passphrase",
+        "slip39": "La sincronización no es compatible con direcciones {{type}} que usan SLIP-39"
+      },
+      "verifyTitle": "Verificar contraseña",
+      "verifyDescription": "Verifica tu contraseña de Rabby Mobile antes de mostrar los datos confidenciales de la transferencia.",
+      "exportFailed": "No se han podido preparar los datos de la cartera para exportarlos.",
+      "customPasswordRequired": "Define una contraseña personalizada para la cartera antes de exportar los datos.",
+      "scanTitle": "Escanea este código QR dinámico",
+      "scanDescription": "Abre Rabby Extension y escanea este código QR dinámico. Mantén esta pantalla visible hasta que se complete la transferencia.",
+      "selectedCount": "Direcciones seleccionadas: {{count}}",
+      "editSelection": "Editar selección",
+      "securityTip": "El código QR y el vídeo descargado contienen datos cifrados confidenciales. Mantenlos en privado y elimínalos después de usarlos.",
+      "showQRCode": "Mostrar código QR ({{count}})",
+      "downloadVideo": "Descargar vídeo del código QR",
+      "generatingVideo": "Generando vídeo… {{progress}}%",
+      "videoFailed": "No se ha podido generar el vídeo del código QR.",
+      "selectVideo": "Subir vídeo del código QR",
+      "processingVideo": "Procesando vídeo…",
+      "invalidVideo": "Selecciona un archivo de vídeo válido de hasta 200 MB.",
+      "incompleteVideo": "El vídeo ha terminado antes de que se leyeran todos los datos del código QR.",
+      "videoImportFailed": "No se ha podido leer el vídeo del código QR. Prueba con otro vídeo o escanea el código QR dinámico."
     },
     "syncExtension": {
       "verifyWithPassword": "Verifica con tu \ncontraseña de Rabby Extension",
