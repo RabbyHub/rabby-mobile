@@ -64,6 +64,7 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 import { IS_ANDROID } from '@/core/native/utils';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -105,9 +106,19 @@ const NFTListInner = () => {
     isFocusing,
   });
 
-  const isLoading = nftListStore(s => s.isLoading);
-  const nftsMap = nftListStore(s => s.nftsMap);
-  const batchGetNFTList = nftListStore(s => s.batchGetNFTList);
+  const isLoading = useActivityStore(
+    nftListStore,
+    state => state.isLoading,
+    Object.is,
+    { storeLabel: 'home-multi-assets-nft-loading' },
+  );
+  const nftsMap = useActivityStore(
+    nftListStore,
+    state => state.nftsMap,
+    Object.is,
+    { storeLabel: 'home-multi-assets-nft-list' },
+  );
+  const batchGetNFTList = nftListStore.getState().batchGetNFTList;
 
   const _rawNftList = useMemo(
     () => combinedNfts(nftsMap, myTop10Addresses),
