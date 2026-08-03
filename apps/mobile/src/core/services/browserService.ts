@@ -1,6 +1,6 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
-import { entries, last, sortBy, uniq, uniqBy } from 'lodash';
+import { cloneDeep, last, sortBy, uniqBy } from 'lodash';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -97,10 +97,6 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
 
     try {
       if (!this.store.config?.isMigrated) {
-        this.store.config = {
-          ...this.store.config,
-          isMigrated: true,
-        };
         const dappsStore = options?.storageAdapter?.getItem(
           APP_STORE_NAMES.dapps,
         );
@@ -135,7 +131,6 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
               };
             }
           });
-          this.store.browserBookmarks = browserBookmarks;
           Object.entries(historyMap || {}).forEach(([origin, item]) => {
             const dappInfo = dapps[origin];
             if (dapps[origin]) {
@@ -147,8 +142,14 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
               };
             }
           });
-          this.store.browserHistory = browserHistory;
         }
+        this.mutateStore(draft => {
+          draft.config.isMigrated = true;
+          if (dapps) {
+            draft.browserBookmarks = browserBookmarks;
+            draft.browserHistory = browserHistory;
+          }
+        });
       }
     } catch (e) {
       Sentry.captureException(e);
@@ -156,9 +157,7 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     }
 
     try {
-      const browserTabsStore = {
-        ...this.store.browserTabs,
-      };
+      const browserTabsStore = this.getStoreFieldSnapshot('browserTabs');
 
       const tabs: Tab[] = [];
       browserTabsStore.tabs.forEach(tab => {
@@ -176,21 +175,27 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         last(tabs)?.id ||
         '';
       browserTabsStore.tabs = tabs;
-      this.store.browserTabs = browserTabsStore;
+      this.mutateStore(draft => {
+        draft.browserTabs = browserTabsStore;
+      });
     } catch (e) {
       console.error(e);
       Sentry.captureException(e);
-      this.store.browserTabs = {
-        tabs: [],
-        activeTabId: '',
-      };
+      this.mutateStore(draft => {
+        draft.browserTabs = {
+          tabs: [],
+          activeTabId: '',
+        };
+      });
     }
 
     const bookmarkAdapter = createEntityAdapter<BrowserBookmarkItem>({
       selectId: item => item?.url,
       sortComparer: (a, b) => (a?.createdAt > b?.createdAt ? -1 : 1),
       onStateChange: newState => {
-        this.store.browserBookmarks = newState;
+        this.mutateStore(draft => {
+          draft.browserBookmarks = newState;
+        });
       },
     });
 
@@ -198,7 +203,9 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
       selectId: item => item?.url,
       sortComparer: (a, b) => (a?.createdAt > b?.createdAt ? -1 : 1),
       onStateChange: newState => {
-        this.store.browserHistory = newState;
+        this.mutateStore(draft => {
+          draft.browserHistory = newState;
+        });
       },
     });
 
@@ -231,14 +238,18 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
           };
         }
       });
-      this.store.browserBookmarks = res;
+      this.mutateStore(draft => {
+        draft.browserBookmarks = res;
+      });
     } catch (e) {
       console.error(e);
       Sentry.captureException(e);
-      this.store.browserBookmarks = {
-        ids: [],
-        entities: {},
-      };
+      this.mutateStore(draft => {
+        draft.browserBookmarks = {
+          ids: [],
+          entities: {},
+        };
+      });
     }
 
     try {
@@ -262,70 +273,79 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
           };
         }
       });
-      this.store.browserHistory = res;
+      this.mutateStore(draft => {
+        draft.browserHistory = res;
+      });
     } catch (e) {
       console.error(e);
       Sentry.captureException(e);
-      this.store.browserHistory = {
-        ids: [],
-        entities: {},
-      };
+      this.mutateStore(draft => {
+        draft.browserHistory = {
+          ids: [],
+          entities: {},
+        };
+      });
     }
 
     try {
       this.bookmark = createEntityTools(
         bookmarkAdapter,
-        this.store.browserBookmarks,
+        this.getStoreFieldSnapshot('browserBookmarks'),
       );
     } catch (e) {
       console.error(e);
       Sentry.captureException(e);
-      this.store.browserBookmarks = {
-        ids: [],
-        entities: {},
-      };
+      this.mutateStore(draft => {
+        draft.browserBookmarks = {
+          ids: [],
+          entities: {},
+        };
+      });
       this.bookmark = createEntityTools(
         bookmarkAdapter,
-        this.store.browserBookmarks,
+        this.getStoreFieldSnapshot('browserBookmarks'),
       );
     }
 
     try {
       this.history = createEntityTools(
         historyAdapter,
-        this.store.browserHistory,
+        this.getStoreFieldSnapshot('browserHistory'),
       );
     } catch (e) {
       console.error(e);
       Sentry.captureException(e);
-      this.store.browserHistory = {
-        ids: [],
-        entities: {},
-      };
+      this.mutateStore(draft => {
+        draft.browserHistory = {
+          ids: [],
+          entities: {},
+        };
+      });
       this.history = createEntityTools(
         historyAdapter,
-        this.store.browserHistory,
+        this.getStoreFieldSnapshot('browserHistory'),
       );
     }
   }
 
   clearBrowserData = () => {
     this.history.reset();
-    this.store.browserTabs = {
-      activeTabId: '',
-      tabs: [],
-    };
+    this.mutateStore(draft => {
+      draft.browserTabs = {
+        activeTabId: '',
+        tabs: [],
+      };
+    });
   };
 
   updateBrowserTabs = (payload: Partial<BrowserStore['browserTabs']>) => {
-    this.store.browserTabs = {
-      ...this.store.browserTabs,
-      ...payload,
-    };
+    this.mutateStore(draft => {
+      Object.assign(draft.browserTabs, payload);
+    });
   };
 
   getBrowserTabs = () => {
-    return this.store.browserTabs;
+    return this.getStoreFieldSnapshot('browserTabs');
   };
 
   /**
@@ -340,13 +360,10 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     createdAt?: number;
   }) {
     const origin = _origin.toLowerCase();
-    this.store.browserHistory = {
-      ...this.store.browserHistory,
-      [origin]: {
-        origin,
-        createdAt: createdAt || Date.now(),
-      },
-    };
+    this.history.upsertOne({
+      url: origin,
+      createdAt: createdAt || Date.now(),
+    });
   }
 
   /**
@@ -354,10 +371,7 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
    * @param param0
    */
   getHistoryList() {
-    return sortBy(
-      Object.values(this.store.browserHistory),
-      item => -item.createdAt,
-    );
+    return sortBy(this.history.selectors.selectAll(), item => -item.createdAt);
   }
 
   /**
@@ -365,7 +379,7 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
    * @param param0
    */
   getHistory(origin: string) {
-    return this.store.browserHistory[origin.toLowerCase()];
+    return this.history.selectors.selectById(origin.toLowerCase());
   }
 
   /**

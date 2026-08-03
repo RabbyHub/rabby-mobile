@@ -41,7 +41,7 @@ let disposeDappStoreBinding: (() => void) | null = null;
 
 function replaceDappStoreFromService(service: DappService) {
   dappServiceStore.setState({
-    dapps: { ...service.store.dapps },
+    dapps: service.getStoreFieldSnapshot('dapps'),
   });
 }
 
@@ -88,7 +88,7 @@ export function prepareDappStoreFromService(service: DappService) {
     return;
   }
 
-  disposeDappStoreBinding = service.setBeforeSetKV((k, v) => {
+  disposeDappStoreBinding = service.subscribeStoreFields((k, v) => {
     applyDappStoreUpdate(k, v as DappStore[typeof k]);
   });
 }
@@ -211,8 +211,9 @@ export function useDappAccountResolver() {
         accounts,
         transactions:
           dependencyState.status === 'ready'
-            ? dependencyState.services.transactionHistoryService.store
-                .transactions
+            ? dependencyState.services.transactionHistoryService.getStoreFieldSnapshot(
+                'transactions',
+              )
             : [],
       }),
     [dependencyState],

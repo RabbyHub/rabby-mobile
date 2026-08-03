@@ -1,5 +1,7 @@
-import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
-import createPersistStore from '@rabby-wallet/persist-store';
+import {
+  StoreServiceBase,
+  type StorageAdapaterOptions,
+} from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { CustomMarket } from '@/screens/Lending/config/market';
 
@@ -8,49 +10,40 @@ export interface LendingServiceStore {
   skipHealthFactorWarning: boolean;
 }
 
-export class LendingService {
-  private store?: LendingServiceStore;
-
+export class LendingService extends StoreServiceBase<
+  LendingServiceStore,
+  APP_STORE_NAMES.lending
+> {
   constructor(options: StorageAdapaterOptions) {
-    this.store = createPersistStore<LendingServiceStore>(
+    super(
+      APP_STORE_NAMES.lending,
       {
-        name: APP_STORE_NAMES.lending,
-        template: {
-          lastSelectedChain: CustomMarket.proto_mainnet_v3,
-          skipHealthFactorWarning: false,
-        },
+        lastSelectedChain: CustomMarket.proto_mainnet_v3,
+        skipHealthFactorWarning: false,
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
   }
 
   setLastSelectedChain = async (chainId: CustomMarket) => {
-    if (!this.store) {
-      throw new Error('LendingService not initialized');
-    }
-    this.store.lastSelectedChain = chainId;
+    this.mutateStore(draft => {
+      draft.lastSelectedChain = chainId;
+    });
   };
 
   getLastSelectedChain = () => {
-    if (!this.store) {
-      throw new Error('LendingService not initialized');
-    }
     return this.store.lastSelectedChain;
   };
 
   setSkipHealthFactorWarning = async (skip: boolean) => {
-    if (!this.store) {
-      throw new Error('LendingService not initialized');
-    }
-    this.store.skipHealthFactorWarning = skip;
+    this.mutateStore(draft => {
+      draft.skipHealthFactorWarning = skip;
+    });
   };
 
   getSkipHealthFactorWarning = () => {
-    if (!this.store) {
-      throw new Error('LendingService not initialized');
-    }
     return this.store.skipHealthFactorWarning;
   };
 }
