@@ -53,6 +53,8 @@ export function getTransactionHistoryRecentTxSnapshot(
 }
 
 const EMPTY_CUSTOM_TX_ITEM_MAP: Record<string, CustomTxItem> = {};
+const EMPTY_SEND_TX_HISTORY: TransactionHistoryService['store']['sendTxHistory'] =
+  [];
 
 export function getTransactionHistoryCustomTxItemMapSnapshot() {
   const service = getLoadedCoreService('transactionHistoryService');
@@ -60,6 +62,14 @@ export function getTransactionHistoryCustomTxItemMapSnapshot() {
     return EMPTY_CUSTOM_TX_ITEM_MAP;
   }
   return service.getCustomTxItemMap();
+}
+
+export function getTransactionHistorySendListSnapshot() {
+  const service = getLoadedCoreService('transactionHistoryService');
+  if (!service) {
+    return EMPTY_SEND_TX_HISTORY;
+  }
+  return service.store.sendTxHistory;
 }
 
 export async function getTransactionHistoryTransactions() {

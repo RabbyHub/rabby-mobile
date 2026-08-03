@@ -2281,6 +2281,7 @@
       "clearPending": "清除本機待處理項",
       "touchId": "Touch ID",
       "autoLockTime": "自動鎖定時間",
+      "appLaunchLock": "啟動時鎖定",
       "lockWallet": "鎖定錢包",
       "themeMode": "主題模式",
       "aboutUs": "關於我們",
@@ -2301,7 +2302,12 @@
       "screenshotReportSwitch": "截圖回報問題",
       "dataAnalysis": "資料分析",
       "bugReportHistory": "問題回報記錄",
-      "bugReportChat": "透過聊天分享回饋"
+      "bugReportChat": "透過聊天分享回饋",
+      "features": "功能",
+      "manageWallets": "管理錢包"
+    },
+    "settings": {
+      "chooseWallet": "選擇要管理的錢包"
     },
     "securityEngine": {
       "ignoreAlert": "忽略風險提示",

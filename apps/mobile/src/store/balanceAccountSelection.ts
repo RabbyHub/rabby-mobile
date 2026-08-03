@@ -13,9 +13,9 @@ import {
 import { traceAndroidInstant } from '@/core/utils/androidTrace';
 import type { Account, IPinAddress } from '@/types/account';
 import accountStore from './account';
-import {
+import addressBalanceStore, {
+  commitAccountBalanceSelectionSnapshot,
   type AccountBalanceSelectionSnapshot,
-  applyAccountBalanceSelectionSnapshot,
   setAccountBalanceSelectionSnapshotGetter,
   startProcessAddressBalanceEvents,
 } from './balance';
@@ -72,6 +72,7 @@ const accountBalanceSelectionLifecycleStateRef = {
   promise: null as Promise<void> | null,
   hasSubscribed: false,
   prevSelectionSignature: '',
+  syncGeneration: 0,
 };
 
 async function initAccountBalanceSelectionLifecycle() {
@@ -85,6 +86,8 @@ async function initAccountBalanceSelectionLifecycle() {
       accountState?: ReturnType<typeof accountStore.getState>;
       allowFetchFallback?: boolean;
     } = {}) => {
+      const syncGeneration =
+        ++accountBalanceSelectionLifecycleStateRef.syncGeneration;
       const canUseStoreSnapshot =
         accountState.hasFetchedAccounts || accountState.accounts.length > 0;
       if (!canUseStoreSnapshot && !allowFetchFallback) {
@@ -98,8 +101,29 @@ async function initAccountBalanceSelectionLifecycle() {
           )
         : await getMatteredAccountsSnapshot();
 
-      await applyAccountBalanceSelectionSnapshot(snapshot, {
-        hydrate: true,
+      if (
+        syncGeneration !==
+        accountBalanceSelectionLifecycleStateRef.syncGeneration
+      ) {
+        return;
+      }
+
+      commitAccountBalanceSelectionSnapshot(snapshot, {
+        source: 'accounts_changed',
+      });
+
+      await addressBalanceStore.hydrateCachedBalancesForAccounts(
+        snapshot.selectedAccounts,
+      );
+
+      if (
+        syncGeneration !==
+        accountBalanceSelectionLifecycleStateRef.syncGeneration
+      ) {
+        return;
+      }
+
+      commitAccountBalanceSelectionSnapshot(snapshot, {
         source: 'accounts_changed',
       });
     };

@@ -2104,6 +2104,7 @@
       "enableWhitelist": "자산 전송을 위한 허용 목록 활성화",
       "faceId": "Face ID",
       "autoLockTime": "자동 잠금 시간",
+      "appLaunchLock": "실행 시 잠금",
       "lockWallet": "지갑 잠금",
       "fingerPrint": "지문",
       "devicePassword": "기기 비밀번호",
@@ -2132,7 +2133,12 @@
       "searchCurrency": "통화 검색",
       "dataAnalysis": "데이터 분석",
       "bugReportHistory": "버그 신고 내역",
-      "bugReportChat": "채팅으로 피드백 보내기"
+      "bugReportChat": "채팅으로 피드백 보내기",
+      "features": "기능",
+      "manageWallets": "지갑 관리"
+    },
+    "settings": {
+      "chooseWallet": "관리할 지갑 선택"
     },
     "settingModal": {
       "themeMode": {

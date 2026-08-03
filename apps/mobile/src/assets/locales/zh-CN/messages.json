@@ -2268,6 +2268,7 @@
       "addCustomNetwork": "添加自定义网络",
       "enableWhitelist": "启用白名单以发送资产",
       "autoLockTime": "自动锁定时间",
+      "appLaunchLock": "启动时锁定",
       "lockWallet": "锁定钱包",
       "clearPending": "清除本地待处理事项",
       "clearPendingDesc2": "这不会改变您账户中的余额，也不需要您重新输入您的助记词。您所有的资产和账户信息都将保持安全。",
@@ -2285,7 +2286,12 @@
       "screenshotReportSwitch": "截图报告问题",
       "dataAnalysis": "数据分析",
       "bugReportHistory": "问题反馈记录",
-      "bugReportChat": "通过聊天分享反馈"
+      "bugReportChat": "通过聊天分享反馈",
+      "features": "功能",
+      "manageWallets": "管理钱包"
+    },
+    "settings": {
+      "chooseWallet": "选择要管理的钱包"
     },
     "settingModal": {
       "themeMode": {

@@ -13,11 +13,11 @@ export const TestnetChainLogo = ({
     name: string;
   }
 >) => {
-  const { isLight, colors2024 } = useTheme2024();
+  const { colors2024 } = useTheme2024();
   const xml = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='${
     colors2024['neutral-foot']
   }'></circle><text x='16' y='20' dominant-baseline='middle' text-anchor='middle' fill='${
-    isLight ? colors2024['neutral-InvertHighlight'] : 'black'
+    colors2024['neutral-contrast']
   }' font-size='12' line-height='12' font-weight='700'>${encodeURIComponent(
     name.substring(0, 3).replace(/\s/g, ''),
   )}</text></svg>`;

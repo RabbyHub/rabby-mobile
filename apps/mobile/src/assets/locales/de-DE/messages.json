@@ -2446,6 +2446,7 @@
       "clearPendingDesc1": "Dadurch werden alle Ihre ausstehenden Transaktionen gelöscht. Dies kann Ihnen helfen, das Problem zu lösen, dass in einigen Fällen der Zustand der Transaktion in Rabby nicht mit dem Zustand on-chain übereinstimmt.",
       "clearPendingDesc2": "Dadurch werden die Kontosalden nicht geändert oder Sie müssen Ihre Seed-Phrase nicht erneut eingeben. Alle Ihre Vermögenswerte und Kontoinformationen bleiben sicher.",
       "autoLockTime": "Automatische Sperrzeit",
+      "appLaunchLock": "Sperre beim Start",
       "lockWallet": "Wallet sperren",
       "currentLanguage": "Aktuelle Sprache",
       "appCache": "App-Cache löschen",
@@ -2458,7 +2459,12 @@
       "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
       "dataAnalysis": "Datenanalyse",
       "bugReportHistory": "Fehlerbericht-Verlauf",
-      "bugReportChat": "Feedback per Chat teilen"
+      "bugReportChat": "Feedback per Chat teilen",
+      "features": "Funktionen",
+      "manageWallets": "Wallets verwalten"
+    },
+    "settings": {
+      "chooseWallet": "Wählen Sie eine Wallet zur Verwaltung aus"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
