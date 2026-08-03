@@ -121,7 +121,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
     const eModeBorrowDisabled =
       !!userSummary?.userEmodeCategoryId &&
       !reserve.reserve.eModes.find(
-        e => e.id === userSummary.userEmodeCategoryId,
+        e => e.id === userSummary.userEmodeCategoryId && e.borrowingEnabled,
       );
     if (eModeBorrowDisabled) {
       return true;
