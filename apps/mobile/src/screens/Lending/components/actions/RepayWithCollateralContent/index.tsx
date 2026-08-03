@@ -51,7 +51,6 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { normalizeBN, valueToBigNumber } from '@aave/math-utils';
 import { approveToken } from '@/core/apis/approvals';
 import { getERC20Allowance } from '@/core/apis/provider';
-import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -133,8 +132,7 @@ export default function RepayWithCollateral({
     forScene: 'Lending',
   });
 
-  const { chainEnum, chainInfo, selectedMarketData, isMainnet } =
-    useSelectedMarket();
+  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { refresh } = useRefreshHistoryId();
 
@@ -588,39 +586,6 @@ export default function RepayWithCollateral({
       );
 
       if (actualNeedApprove) {
-        let shouldTwoStepApprove = false;
-        if (
-          isMainnet &&
-          isSameAddress(
-            selectedCollateralToken.underlyingAddress,
-            ETH_USDT_CONTRACT,
-          ) &&
-          Number(allowance) !== 0 &&
-          !new BigNumber(allowance || '0').gte(requiredAmount)
-        ) {
-          shouldTwoStepApprove = true;
-        }
-
-        // 如果需要两步approve，先执行0额度approve
-        if (shouldTwoStepApprove) {
-          const zeroApproveResult = await approveToken({
-            chainServerId: chainInfo.serverId,
-            id: aTokenAddress,
-            spender: selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
-            amount: 0,
-            account: currentAccount,
-            isBuild: true,
-          });
-
-          const zeroApproveTxBuilt = {
-            ...zeroApproveResult.params[0],
-            from: zeroApproveResult.params[0].from || currentAccount.address,
-            value: zeroApproveResult.params[0].value ?? '0x0',
-            chainId: zeroApproveResult.params[0].chainId || chainInfo.id,
-          };
-
-          txs.push(zeroApproveTxBuilt);
-        }
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: aTokenAddress,
@@ -694,7 +659,6 @@ export default function RepayWithCollateral({
     repayToken.underlyingAddress,
     debtBalance,
     collateralAmount,
-    isMainnet,
     currentHF,
     afterSwapInfo?.hfEffectOfFromAmount,
   ]);

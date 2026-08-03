@@ -2286,7 +2286,12 @@
       "screenshotReportSwitch": "截图报告问题",
       "dataAnalysis": "数据分析",
       "bugReportHistory": "问题反馈记录",
-      "bugReportChat": "通过聊天分享反馈"
+      "bugReportChat": "通过聊天分享反馈",
+      "features": "功能",
+      "manageWallets": "管理钱包"
+    },
+    "settings": {
+      "chooseWallet": "选择要管理的钱包"
     },
     "settingModal": {
       "themeMode": {
