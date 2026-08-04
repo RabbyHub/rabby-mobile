@@ -74,6 +74,10 @@ open class ResultHandlerInteractiveBiometric(
 
   /** Called when an unrecoverable error has been encountered and the operation is complete. */
   override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+    Log.w(
+      LOG_TAG,
+      "onAuthenticationError code=$errorCode msg=$errString operation=${context?.operation}"
+    )
     val error = CryptoFailedException("code: $errorCode, msg: $errString")
     when (context?.operation) {
       CryptoOperation.ENCRYPT -> onEncrypt(null, error)
@@ -85,6 +89,7 @@ open class ResultHandlerInteractiveBiometric(
 
   /** Called when a biometric is recognized. */
   override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+    Log.i(LOG_TAG, "onAuthenticationSucceeded operation=${context?.operation}")
     try {
       context ?: throw NullPointerException("Crypto context is not assigned yet.")
 
@@ -109,6 +114,7 @@ open class ResultHandlerInteractiveBiometric(
         null -> Log.e(LOG_TAG, "No operation context available")
       }
     } catch (fail: Throwable) {
+      Log.e(LOG_TAG, "onAuthenticationSucceeded failed operation=${context?.operation}", fail)
       when (context?.operation) {
         CryptoOperation.ENCRYPT -> onEncrypt(null, fail)
         CryptoOperation.DECRYPT -> onDecrypt(null, fail)
@@ -121,9 +127,15 @@ open class ResultHandlerInteractiveBiometric(
   /** Trigger interactive authentication. */
   open fun startAuthentication() {
     val activity = getCurrentActivity()
+    val isMainThread = Thread.currentThread() == Looper.getMainLooper().thread
+    Log.d(
+      LOG_TAG,
+      "startAuthentication operation=${context?.operation} thread=${Thread.currentThread().name} isMain=$isMainThread"
+    )
 
     // Code can be executed only from MAIN thread
-    if (Thread.currentThread() != Looper.getMainLooper().thread) {
+    if (!isMainThread) {
+      Log.d(LOG_TAG, "startAuthentication reposting to main thread")
       activity.runOnUiThread { startAuthentication() }
       waitResult()
       return
@@ -138,8 +150,10 @@ open class ResultHandlerInteractiveBiometric(
   }
 
   protected fun authenticateWithPrompt(activity: FragmentActivity): BiometricPrompt {
+    Log.d(LOG_TAG, "authenticateWithPrompt start activity=${activity.javaClass.simpleName}")
     val prompt = BiometricPrompt(activity, executor, this)
     prompt.authenticate(this.promptInfo)
+    Log.d(LOG_TAG, "authenticateWithPrompt called")
     return prompt
   }
 
