@@ -40,11 +40,13 @@ export type EmodeCategory = {
   ltv: string;
   liquidationThreshold: string;
   liquidationBonus: string;
+  isolated: boolean;
   assets: Array<{
     underlyingAsset: string;
     symbol: string;
     iconSymbol: string;
     collateral: boolean;
     borrowable: boolean;
+    ltvzero: boolean;
   }>;
 };

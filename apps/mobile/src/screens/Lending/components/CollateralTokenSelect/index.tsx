@@ -68,7 +68,8 @@ export default function CollateralTokenSelectModal({
                     displayPoolReserve.reserve.baseLTVasCollateral,
                   isInEmode: iUserSummary.userEmodeCategoryId !== 0,
                   emodeEntry,
-                  isEModeIsolated: !!emodeEntry?.eMode.isolated,
+                  isEModeIsolated:
+                    !!eModes[iUserSummary.userEmodeCategoryId]?.isolated,
                 }),
               isFrozen: !!(displayPoolReserve?.reserve as any)?.isFrozen,
               totalBorrowsUSD: displayPoolReserve?.totalBorrowsUSD,
@@ -93,6 +94,7 @@ export default function CollateralTokenSelectModal({
     marketKey,
     excludeTokenAddress,
     displayPoolReserves,
+    eModes,
   ]);
 
   const hasLtvZeroCollateral = useMemo(() => {

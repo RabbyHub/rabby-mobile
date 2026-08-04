@@ -88,6 +88,7 @@ import {
 } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { isUserCancelledError } from '../../utils/error';
+import { useMode } from '../../hooks/useMode';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -876,6 +877,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const { chainInfo, selectedMarketData } = useSelectedMarket();
   const { formattedPoolReservesAndIncentives, displayPoolReserves } =
     useLendingSummary();
+  const { eModes } = useMode();
   const repayToken = useMemo(() => {
     const r = formattedPoolReservesAndIncentives.find(item =>
       isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
@@ -915,7 +917,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         baseLTVasCollateral: item.reserve.baseLTVasCollateral,
         isInEmode: userSummary.userEmodeCategoryId !== 0,
         emodeEntry,
-        isEModeIsolated: !!emodeEntry?.eMode.isolated,
+        isEModeIsolated: !!eModes[userSummary.userEmodeCategoryId]?.isolated,
       });
     };
     const hasLtvZeroCollateral = collateralTokens
@@ -957,6 +959,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     displayPoolReserves,
     formattedPoolReservesAndIncentives,
     chainInfo?.id,
+    eModes,
     reserve?.underlyingAsset,
     userSummary,
   ]);

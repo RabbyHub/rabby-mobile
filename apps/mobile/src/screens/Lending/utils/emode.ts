@@ -24,23 +24,26 @@ export const formatEmodes = (reserves: FormattedReservesAndIncentives[]) => {
           ltv: e.eMode.ltv,
           liquidationThreshold: e.eMode.liquidationThreshold,
           liquidationBonus: e.eMode.liquidationBonus,
+          isolated: e.eMode.isolated,
           assets: [
             {
               underlyingAsset: r.underlyingAsset,
               symbol,
               iconSymbol,
-              collateral: e.collateralEnabled && r.baseLTVasCollateral !== '0',
+              collateral: e.collateralEnabled,
               borrowable: e.borrowingEnabled,
+              ltvzero: e.ltvzeroEnabled,
             },
           ],
         };
       } else {
-        eModes[e.id].assets.push({
+        eModes[e.id]?.assets.push({
           underlyingAsset: r.underlyingAsset,
           symbol,
           iconSymbol,
-          collateral: e.collateralEnabled && r.baseLTVasCollateral !== '0',
+          collateral: e.collateralEnabled,
           borrowable: e.borrowingEnabled,
+          ltvzero: e.ltvzeroEnabled,
         });
       }
     });
@@ -55,6 +58,7 @@ export const formatEmodes = (reserves: FormattedReservesAndIncentives[]) => {
       liquidationBonus: '0',
       liquidationThreshold: '0',
       ltv: '0',
+      isolated: false,
       assets: [],
     };
   }
