@@ -100,6 +100,7 @@ import {
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
+import { hasInsufficientSwapLiquidity } from '../../utils/swap';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -442,6 +443,12 @@ export default function DebtSwapModal({
 
   const { ctx } = useSignatureStoreOf(instance);
 
+  const isInsufficientLiquidity = hasInsufficientSwapLiquidity({
+    reserve: toReserve,
+    amount: toAmountAfterSlippage,
+    checkBorrowCap: true,
+  });
+
   const buildDebtSwapTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -451,7 +458,8 @@ export default function DebtSwapModal({
       !selectedMarketData?.addresses?.DEBT_SWITCH_ADAPTER ||
       !pools?.provider ||
       !toReserve ||
-      !fromReserve
+      !fromReserve ||
+      isInsufficientLiquidity
     ) {
       return [];
     }
@@ -562,6 +570,7 @@ export default function DebtSwapModal({
     swapRate.slippageBps,
     toReserve,
     toToken,
+    isInsufficientLiquidity,
   ]);
 
   useEffect(() => {
@@ -577,7 +586,8 @@ export default function DebtSwapModal({
         !toReserve ||
         !fromReserve ||
         !debouncedFromAmount ||
-        new BigNumber(debouncedFromAmount).lte(0)
+        new BigNumber(debouncedFromAmount).lte(0) ||
+        isInsufficientLiquidity
       ) {
         if (!cancelled) {
           setCurrentTxs([]);
@@ -611,6 +621,7 @@ export default function DebtSwapModal({
     swapRate.optimalRateData,
     toReserve,
     toToken,
+    isInsufficientLiquidity,
   ]);
 
   const { currentHF, isHFLow, isLiquidatable, afterSwapInfo } =
@@ -676,7 +687,8 @@ export default function DebtSwapModal({
     if (
       !currentAccount?.address ||
       !canShowDirectSubmit ||
-      !currentTxs?.length
+      !currentTxs?.length ||
+      isInsufficientLiquidity
     ) {
       closeMiniSigner();
       return;
@@ -691,12 +703,19 @@ export default function DebtSwapModal({
     closeMiniSigner,
     currentAccount?.address,
     currentTxs,
+    isInsufficientLiquidity,
     prefetchMiniSigner,
   ]);
 
   const handleSwap = useCallback(
     async (p?: { ignoreGasFee?: boolean; forceFullSign?: boolean }) => {
       if (!toToken || !fromAmount || !currentAccount) {
+        return;
+      }
+      if (isInsufficientLiquidity) {
+        toast.error(
+          t('page.Lending.repayWithCollateral.insufficientLiquidity'),
+        );
         return;
       }
       if (isExceedMaxLtvAfterSwap) {
@@ -813,6 +832,7 @@ export default function DebtSwapModal({
       openDirect,
       ctx?.gasFeeTooHigh,
       refresh,
+      isInsufficientLiquidity,
       isExceedMaxLtvAfterSwap,
       debouncedFromAmount,
       fromToken.usdPrice,
@@ -859,9 +879,17 @@ export default function DebtSwapModal({
       !canSwap ||
       (isRisky && !riskChecked) ||
       isLiquidatable ||
+      isInsufficientLiquidity ||
       isExceedMaxLtvAfterSwap
     );
-  }, [canSwap, isExceedMaxLtvAfterSwap, isLiquidatable, isRisky, riskChecked]);
+  }, [
+    canSwap,
+    isExceedMaxLtvAfterSwap,
+    isInsufficientLiquidity,
+    isLiquidatable,
+    isRisky,
+    riskChecked,
+  ]);
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1116,14 +1144,22 @@ export default function DebtSwapModal({
             {
               height:
                 bottomButtonAreaHeight +
-                (isLiquidatable || isExceedMaxLtvAfterSwap
+                (isLiquidatable ||
+                isExceedMaxLtvAfterSwap ||
+                isInsufficientLiquidity
                   ? BOTTOM_SIZE.TIPS
                   : isRisky
                   ? BOTTOM_SIZE.CHECKBOX
                   : 0),
             },
           ]}>
-          {isExceedMaxLtvAfterSwap ? (
+          {isInsufficientLiquidity ? (
+            <View style={styles.riskContainer}>
+              <Text style={styles.dangerWarningText}>
+                {t('page.Lending.repayWithCollateral.insufficientLiquidity')}
+              </Text>
+            </View>
+          ) : isExceedMaxLtvAfterSwap ? (
             <View style={styles.riskContainer}>
               <Text style={styles.dangerWarningText}>
                 {t('page.Lending.debtSwap.maxLtvWarning')}

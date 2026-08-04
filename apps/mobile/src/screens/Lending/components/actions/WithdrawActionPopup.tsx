@@ -85,6 +85,7 @@ import {
 } from '../../utils/withdrawApproval';
 import { isUserCancelledError } from '../../utils/error';
 import { ellipsisSymbol } from '../../utils/format';
+import { useMode } from '../../hooks/useMode';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -104,7 +105,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const [isChecked, setIsChecked] = useState(false);
   const { refresh } = useRefreshHistoryId();
   const { t } = useTranslation();
-  const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw();
+  const { eModes } = useMode();
+  const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw(eModes);
 
   const {
     displayPoolReserves,

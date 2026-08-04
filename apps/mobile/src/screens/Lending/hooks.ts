@@ -55,6 +55,8 @@ import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from './config/nativeToWrapper';
 import { useChainList } from '@/hooks/useChainList';
 import { ensureMainnetChainAvailable } from '@/core/serviceApi/syncChain';
+import { formatEmodes } from './utils/emode';
+import { getEmodeAdjustedReserves } from './utils/hfUtils';
 
 const marketAtom = atomByMMKV(
   APP_MMKV_WEAK_KEYS.LENDING_MARKET,
@@ -566,6 +568,14 @@ async function computeIUserSummary({
 
   const currentTimestamp = dayjs().unix();
   const userReservesArray = userReserves.userReserves;
+  const eModes = formatEmodes(
+    formattedReserves as FormattedReservesAndIncentives[],
+  );
+  const emodeAdjustedReserves = getEmodeAdjustedReserves(
+    formattedReserves,
+    userReserves.userEmodeCategoryId,
+    eModes,
+  );
 
   debugLendingPerf(
     '[perf] iUserSummaryAtom:: userReservesArray, formattedReserves',
@@ -576,7 +586,7 @@ async function computeIUserSummary({
         : 0,
     },
     userReservesArray,
-    formattedReserves,
+    emodeAdjustedReserves,
   );
 
   const startTime = Date.now();
@@ -588,7 +598,7 @@ async function computeIUserSummary({
     marketReferenceCurrencyDecimals:
       baseCurrencyData.marketReferenceCurrencyDecimals,
     userReserves: userReservesArray,
-    formattedReserves,
+    formattedReserves: emodeAdjustedReserves,
     userEmodeCategoryId: userReserves.userEmodeCategoryId,
     reserveIncentives: [],
     userIncentives: [],

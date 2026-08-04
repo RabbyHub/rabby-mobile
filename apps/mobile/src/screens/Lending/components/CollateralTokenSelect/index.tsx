@@ -18,7 +18,6 @@ import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { Text } from '@/components/Typography';
-import { getSupplyCapData } from '../../utils/supply';
 import { toast } from '@/components2024/Toast';
 import { hasNonZeroEffectiveLtv } from '../../utils/hfUtils';
 
@@ -58,9 +57,6 @@ export default function CollateralTokenSelectModal({
             );
             return {
               ...item,
-              supplyCapReached: displayPoolReserve
-                ? getSupplyCapData(displayPoolReserve).supplyCapReached
-                : false,
               hasNonZeroEffectiveLtv:
                 !displayPoolReserve ||
                 hasNonZeroEffectiveLtv({
@@ -68,7 +64,8 @@ export default function CollateralTokenSelectModal({
                     displayPoolReserve.reserve.baseLTVasCollateral,
                   isInEmode: iUserSummary.userEmodeCategoryId !== 0,
                   emodeEntry,
-                  isEModeIsolated: !!emodeEntry?.eMode.isolated,
+                  isEModeIsolated:
+                    !!eModes[iUserSummary.userEmodeCategoryId]?.isolated,
                 }),
               isFrozen: !!(displayPoolReserve?.reserve as any)?.isFrozen,
               totalBorrowsUSD: displayPoolReserve?.totalBorrowsUSD,
@@ -93,6 +90,7 @@ export default function CollateralTokenSelectModal({
     marketKey,
     excludeTokenAddress,
     displayPoolReserves,
+    eModes,
   ]);
 
   const hasLtvZeroCollateral = useMemo(() => {
@@ -191,14 +189,6 @@ export default function CollateralTokenSelectModal({
                 <AssetItem
                   token={item}
                   onPress={() => {
-                    if (item.supplyCapReached) {
-                      toast.info(
-                        t(
-                          'page.Lending.repayWithCollateral.insufficientLiquidity',
-                        ),
-                      );
-                      return;
-                    }
                     if (item.isFrozen) {
                       toast.info(
                         t('page.Lending.repayWithCollateral.frozenCollateral'),

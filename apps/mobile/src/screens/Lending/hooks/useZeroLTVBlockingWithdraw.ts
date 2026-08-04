@@ -1,8 +1,11 @@
 import { useMemo } from 'react';
 import { useLendingISummary, useSelectedMarket } from '../hooks';
 import { hasNonZeroEffectiveLtv } from '../utils/hfUtils';
+import type { EmodeCategory } from '../type';
 
-export const useZeroLTVBlockingWithdraw = () => {
+export const useZeroLTVBlockingWithdraw = (
+  eModes: Record<number, EmodeCategory>,
+) => {
   const { iUserSummary: userSummary } = useLendingISummary();
   const { selectedMarketData } = useSelectedMarket();
 
@@ -24,7 +27,7 @@ export const useZeroLTVBlockingWithdraw = () => {
         baseLTVasCollateral: userReserve.reserve.baseLTVasCollateral,
         isInEmode: userSummary.userEmodeCategoryId !== 0,
         emodeEntry,
-        isEModeIsolated: !!emodeEntry?.eMode.isolated,
+        isEModeIsolated: !!eModes[userSummary.userEmodeCategoryId]?.isolated,
       });
 
       if (
@@ -38,5 +41,5 @@ export const useZeroLTVBlockingWithdraw = () => {
     });
 
     return zeroLTVBlockingWithdraw;
-  }, [selectedMarketData?.v3, userSummary]);
+  }, [eModes, selectedMarketData?.v3, userSummary]);
 };

@@ -3234,7 +3234,8 @@
         "toggleCollateralWarning": "Disabling this asset as collateral will lower your Health Factor to a risky level for liquidation.",
         "checkbox": "I understand the alert and want to continue.",
         "emodeBlockWarning": "Disabling E-mode will lower your Health Factor to a risky level for liquidation.",
-        "blockEmodeWarning": "You can not disable E-Mode because that could cause liquidation. To exit E-Mode supply or repay borrowed positions."
+        "blockEmodeWarning": "You can not disable E-Mode because that could cause liquidation. To exit E-Mode supply or repay borrowed positions.",
+        "zeroLtvEmodeExitWarning": "Disable {{assets}} as collateral before exiting E-Mode because these assets have 0% LTV outside E-Mode."
       },
       "lqDescription": {
         "desc": "Liquidation value",
@@ -3348,6 +3349,7 @@
         },
         "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
         "insufficientLiquidity": "Insufficient liquidity.",
+        "flashLoanDisabled": "Position swaps are disabled for this asset due to security reasons.",
         "frozenCollateral": "This asset is frozen due to an Aave community decision.",
         "overview": {
           "title": "Transaction Overview",
