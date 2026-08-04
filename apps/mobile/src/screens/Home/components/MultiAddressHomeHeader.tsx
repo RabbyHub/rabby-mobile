@@ -102,25 +102,28 @@ function MultiPinnedAddressList({
   }, [addressListData?.length]);
 
   return (
-    <Animated.View
-      entering={PINNED_ADDRESS_LIST_ENTERING}
+    <View
       style={[
         styles.accountList,
         hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
       ]}>
-      {addressListData?.map(item => {
-        return (
-          <HomeAddressItem
-            hideType={hideType}
-            account={item}
-            updateTime={item.updateTime}
-            key={`${item.type}-${item.address}`}
-            isLoss={item.isLoss}
-            changePercent={item.changePercent}
-          />
-        );
-      })}
-    </Animated.View>
+      <Animated.View
+        entering={PINNED_ADDRESS_LIST_ENTERING}
+        style={styles.accountListContent}>
+        {addressListData?.map(item => {
+          return (
+            <HomeAddressItem
+              hideType={hideType}
+              account={item}
+              updateTime={item.updateTime}
+              key={`${item.type}-${item.address}`}
+              isLoss={item.isLoss}
+              changePercent={item.changePercent}
+            />
+          );
+        })}
+      </Animated.View>
+    </View>
   );
 }
 
@@ -356,11 +359,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     accountList: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 8,
       width: '100%',
       marginTop: 20,
       paddingHorizontal: 8,
       marginBottom: 12,
+    },
+    accountListContent: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      width: '100%',
     },
     addressOpacity: {
       opacity: 0.3,
