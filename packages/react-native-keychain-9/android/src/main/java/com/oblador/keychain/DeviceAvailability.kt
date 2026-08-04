@@ -19,17 +19,6 @@ object DeviceAvailability {
         BiometricManager.BIOMETRIC_SUCCESS
   }
 
-  fun isBiometricAuthAvailable(context: Context, allowWeakBiometrics: Boolean): Boolean {
-    val authenticators =
-        if (allowWeakBiometrics) {
-          BiometricManager.Authenticators.BIOMETRIC_WEAK
-        } else {
-          BiometricManager.Authenticators.BIOMETRIC_STRONG
-        }
-    return BiometricManager.from(context).canAuthenticate(authenticators) ==
-        BiometricManager.BIOMETRIC_SUCCESS
-  }
-
   fun isFingerprintAuthAvailable(context: Context): Boolean {
     return context.packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
   }

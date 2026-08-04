@@ -40,6 +40,19 @@ export type BaseOptions = {
   cloudSync?: boolean;
 };
 
+export type AndroidBiometricSecurityLevel = 'strong' | 'weak';
+
+export type AndroidBiometricSecurityLevelOption = {
+  /**
+   * Select the Android biometric authenticator class used for capability checks
+   * and Rabby's standalone system-auth prompt.
+   *
+   * @platform Android
+   * @default 'strong'
+   */
+  androidBiometricSecurityLevel?: AndroidBiometricSecurityLevel;
+};
+
 /** Base options for keychain functions. */
 export type SetOptions = {
   /** The access group to share keychain items between apps.
@@ -72,7 +85,8 @@ export type SetOptions = {
    */
   authenticationPrompt?: string | AuthenticationPrompt;
 } & BaseOptions &
-  AccessControlOption;
+  AccessControlOption &
+  AndroidBiometricSecurityLevelOption;
 
 /** Base options for keychain functions. */
 export type GetOptions = {
@@ -108,7 +122,14 @@ export type GetOptions = {
    */
   authenticationPrompt?: string | AuthenticationPrompt;
 } & BaseOptions &
-  AccessControlOption;
+  AccessControlOption &
+  AndroidBiometricSecurityLevelOption;
+
+export type SystemAuthenticationResult = {
+  success: boolean;
+  error?: string | null;
+  code?: number | null;
+};
 
 export type AccessControlOption = {
   /** The access control policy to use for the keychain item. */
