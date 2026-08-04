@@ -3349,6 +3349,7 @@
         },
         "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
         "insufficientLiquidity": "Insufficient liquidity.",
+        "flashLoanDisabled": "Position swaps are disabled for this asset due to security reasons.",
         "frozenCollateral": "This asset is frozen due to an Aave community decision.",
         "overview": {
           "title": "Transaction Overview",
