@@ -1,4 +1,5 @@
 import { EmodeCategory, UserSummary } from '../type';
+import { valueToBigNumber } from '@aave/math-utils';
 import { FormattedReservesAndIncentives } from './apy';
 import { fetchIconSymbolAndName } from './icon';
 
@@ -66,20 +67,56 @@ export const formatEmodes = (reserves: FormattedReservesAndIncentives[]) => {
   return eModes;
 };
 
-// An E-Mode category is available if the user has no borrow positions outside of the category
+// An E-Mode category is available if the user's borrows and collateral are
+// compatible with the target category.
 export function isEModeCategoryAvailable(
   user: UserSummary,
   eMode: EmodeCategory,
+  reserves: FormattedReservesAndIncentives[],
 ): boolean {
-  const borrowableReserves = eMode.assets
-    .filter(asset => asset.borrowable)
-    .map(asset => asset.underlyingAsset);
+  const borrowableReserves = new Set(
+    eMode.assets
+      .filter(asset => asset.borrowable)
+      .map(asset => asset.underlyingAsset),
+  );
 
   const hasIncompatiblePositions = user.userReservesData.some(
     userReserve =>
-      Number(userReserve.scaledVariableDebt) > 0 &&
-      !borrowableReserves.includes(userReserve.reserve.underlyingAsset),
+      valueToBigNumber(userReserve.scaledVariableDebt).gt(0) &&
+      !borrowableReserves.has(userReserve.reserve.underlyingAsset),
   );
 
-  return !hasIncompatiblePositions;
+  const reservesByAddress = new Map(
+    reserves.map(reserve => [reserve.underlyingAsset, reserve]),
+  );
+  const hasIncompatibleCollateral = user.userReservesData.some(userReserve => {
+    if (!userReserve.usageAsCollateralEnabledOnUser) {
+      return false;
+    }
+
+    const reserve = reservesByAddress.get(userReserve.reserve.underlyingAsset);
+    if (!reserve) {
+      return false;
+    }
+    const reserveTargetEmode = reserve.eModes.find(
+      entry => entry.id === eMode.id,
+    );
+
+    if (
+      reserveTargetEmode?.collateralEnabled &&
+      reserveTargetEmode.ltvzeroEnabled
+    ) {
+      return true;
+    }
+
+    if (!reserveTargetEmode?.collateralEnabled) {
+      return (
+        valueToBigNumber(reserve.baseLTVasCollateral).eq(0) || eMode.isolated
+      );
+    }
+
+    return false;
+  });
+
+  return !hasIncompatiblePositions && !hasIncompatibleCollateral;
 }
