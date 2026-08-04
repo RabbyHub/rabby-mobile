@@ -128,6 +128,26 @@ async function waitForCreatedAccountVisible(address: string) {
   };
 }
 
+async function assertHomeEntryReadyWithoutRestart(
+  context: RegressionScenarioExecutionContext,
+  source: 'wallet-create' | 'wallet-onboarding',
+) {
+  const { getHomeEntryReady } = await import(
+    '@/core/utils/homeStartupMilestones'
+  );
+  const passed = getHomeEntryReady();
+  context.report('assertion', {
+    assertion: 'fresh-wallet-home-entry-ready-without-restart',
+    passed,
+    source,
+  });
+  if (!passed) {
+    throw new Error(
+      `Fresh wallet ${source} did not release Home entry tasks before restart`,
+    );
+  }
+}
+
 async function prepareWalletFixture(
   context: RegressionScenarioExecutionContext,
 ) {
@@ -265,6 +285,9 @@ async function runWalletCreate(context: RegressionScenarioExecutionContext) {
 
   if (!visibility.runtimeVisible || !visibility.accountStoreVisible) {
     throw new Error('Created mnemonic wallet is not visible');
+  }
+  if (beforeAccounts.length === 0) {
+    await assertHomeEntryReadyWithoutRestart(context, 'wallet-create');
   }
 }
 
@@ -606,6 +629,7 @@ export async function executeRegressionScenario(
       passed: accounts.length > 0,
       visibleAccountCount: accounts.length,
     });
+    await assertHomeEntryReadyWithoutRestart(context, 'wallet-onboarding');
     return;
   }
 

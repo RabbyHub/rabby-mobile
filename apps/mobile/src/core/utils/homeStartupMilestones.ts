@@ -15,6 +15,12 @@ type RunAfterHomeMilestoneOptions = {
   label?: string;
 };
 
+type HomeEntryReadinessState = {
+  appUnlocked: boolean;
+  isUnlockSessionValid: boolean;
+  hasVisibleAccounts: boolean;
+};
+
 const milestones: Record<HomeStartupMilestone, HomeStartupMilestoneState> = {
   entryReady: {
     reached: false,
@@ -116,7 +122,25 @@ export function markHomeEntryReady(reason: string) {
   return markHomeMilestone('entryReady', reason);
 }
 
+export function markHomeEntryReadyIfEligible(
+  state: HomeEntryReadinessState,
+  reason: string,
+) {
+  if (
+    milestones.entryReady.reached ||
+    !state.hasVisibleAccounts ||
+    (!state.appUnlocked && !state.isUnlockSessionValid)
+  ) {
+    return false;
+  }
+
+  return markHomeEntryReady(reason);
+}
+
 export function markHomeContentReady(reason: string) {
+  if (!milestones.entryReady.reached) {
+    markHomeEntryReady('home_content_ready_implies_entry');
+  }
   return markHomeMilestone('contentReady', reason);
 }
 
