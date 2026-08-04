@@ -8,20 +8,23 @@ import { useTranslation } from 'react-i18next';
 
 interface BackupBadgeProps {
   onPress?: () => void;
+  style?: React.ComponentProps<typeof View>['style'];
 }
 
-export const BackupBadge: React.FC<BackupBadgeProps> = ({ onPress }) => {
+export const BackupBadge: React.FC<BackupBadgeProps> = ({ onPress, style }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const content = (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <WarningIcon
         width={18}
         height={18}
         color={colors2024['orange-default']}
       />
-      <Text style={styles.text}>{t('backupReminder.badge')}</Text>
+      <Text style={styles.text} numberOfLines={1}>
+        {t('backupReminder.badge')}
+      </Text>
     </View>
   );
 
