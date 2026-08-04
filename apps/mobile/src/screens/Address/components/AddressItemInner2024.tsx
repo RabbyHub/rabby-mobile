@@ -3,6 +3,7 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   KeyringAccountWithAlias,
+  useBackupReminder,
   useIsNewlyAddedAccount,
   usePinAddresses,
 } from '@/hooks/account';
@@ -15,6 +16,7 @@ import { Card } from '@/components2024/Card';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { Text } from '@/components/Typography';
+import { BackupBadge } from '@/components2024/AddressDetail/BackupBadge';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -93,6 +95,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: 500,
     lineHeight: 16,
   },
+  backupBadge: {
+    flexShrink: 0,
+  },
   balanceContainer: {
     flexDirection: 'row',
     gap: 4,
@@ -142,6 +147,7 @@ interface AddressItemProps {
   changePercent?: string;
   isLoss?: boolean;
   showMarkIfNewlyAdded?: boolean;
+  isShowBackupBadge?: boolean;
 }
 export const AddressItemInner2024 = ({
   account,
@@ -153,6 +159,7 @@ export const AddressItemInner2024 = ({
   changePercent,
   isLoss,
   showMarkIfNewlyAdded = false,
+  isShowBackupBadge = false,
 }: AddressItemProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
@@ -180,6 +187,10 @@ export const AddressItemInner2024 = ({
 
   const shouldShowNewMark =
     showMarkIfNewlyAdded && isNewlyAdded && account.evmBalance === 0;
+
+  const needsBackupReminder = useBackupReminder(
+    isShowBackupBadge ? account : null,
+  );
 
   return (
     <Card
@@ -209,7 +220,9 @@ export const AddressItemInner2024 = ({
                 <WalletName
                   style={StyleSheet.flatten([
                     styles.itemNameText,
-                    inlineArrow && styles.itemNameTextWithInlineArrow,
+                    inlineArrow || needsBackupReminder
+                      ? styles.itemNameTextWithInlineArrow
+                      : null,
                   ])}
                 />
                 {shouldShowNewMark && (
@@ -217,6 +230,9 @@ export const AddressItemInner2024 = ({
                     <Text style={styles.newMarkText}>New</Text>
                   </View>
                 )}
+                {needsBackupReminder ? (
+                  <BackupBadge style={styles.backupBadge} />
+                ) : null}
                 {inlineArrow && !hiddenArrow ? (
                   <ArrowCircleCC
                     width={16}
