@@ -1,5 +1,6 @@
 import { traceAndroidInstant } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
+import { shouldSuppressPerfCaptureConsoleNoise } from './perfCaptureConsole';
 
 export type FeatureActivationName =
   | 'swap'
@@ -140,14 +141,16 @@ function appendFeatureActivationEvent(
     stepMs: record.stepMs,
     reason: record.reason,
   });
-  console.info(`[FeatureActivation] ${cycle.feature}: ${event}`, {
-    cycleId: cycle.cycleId,
-    visitNumber: cycle.visitNumber,
-    elapsedMs: record.elapsedMs,
-    stepMs: record.stepMs,
-    reason: record.reason,
-    detail: record.detail,
-  });
+  if (!shouldSuppressPerfCaptureConsoleNoise()) {
+    console.info(`[FeatureActivation] ${cycle.feature}: ${event}`, {
+      cycleId: cycle.cycleId,
+      visitNumber: cycle.visitNumber,
+      elapsedMs: record.elapsedMs,
+      stepMs: record.stepMs,
+      reason: record.reason,
+      detail: record.detail,
+    });
+  }
 
   pruneRecords();
   publish();

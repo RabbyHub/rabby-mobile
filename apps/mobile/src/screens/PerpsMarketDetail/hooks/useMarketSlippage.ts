@@ -4,6 +4,7 @@ import {
   BookLevel,
   computeMarketSlippage,
   MarketSlippageResult,
+  PERPS_SLIPPAGE_DISPLAY_MIN,
 } from '../slippageUtils';
 
 type Book = {
@@ -23,6 +24,8 @@ export type UseMarketSlippageParams = {
 
 export type UseMarketSlippageResult = MarketSlippageResult & {
   isReady: boolean;
+  /** Sticky: true once slippage exceeded the display threshold; stays true until re-enabled (popup reopen etc.). */
+  shouldShow: boolean;
 };
 
 /** Subscribes to the L2 book for `coin` and estimates market fill slippage for a `size`-unit order. */
@@ -34,9 +37,11 @@ export const useMarketSlippage = ({
   enabled = true,
 }: UseMarketSlippageParams): UseMarketSlippageResult => {
   const [book, setBook] = useState<Book | null>(null);
+  const [everShown, setEverShown] = useState(false);
 
   useEffect(() => {
     setBook(null);
+    setEverShown(false);
     if (!enabled || !coin) {
       return;
     }
@@ -57,7 +62,7 @@ export const useMarketSlippage = ({
     return () => unsubscribe();
   }, [coin, enabled]);
 
-  return useMemo(() => {
+  const result = useMemo(() => {
     if (!book) {
       return {
         avgPx: 0,
@@ -72,4 +77,15 @@ export const useMarketSlippage = ({
       isReady: true,
     };
   }, [book, isBuy, size, markPrice]);
+
+  const overMin =
+    result.isReady && result.slippage > PERPS_SLIPPAGE_DISPLAY_MIN;
+
+  useEffect(() => {
+    if (overMin && !everShown) {
+      setEverShown(true);
+    }
+  }, [overMin, everShown]);
+
+  return { ...result, shouldShow: everShown || overMin };
 };

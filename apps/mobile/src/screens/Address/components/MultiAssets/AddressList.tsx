@@ -28,12 +28,14 @@ interface AddressListProps {
   onAddAddressPress?: () => void;
   onDone?: () => void;
   onMoreAddressListPress?: () => void;
+  variant?: 'manage';
 }
 const AddressList = ({
   showMarkIfNewlyAdded = true,
   onAddAddressPress,
   onDone,
   onMoreAddressListPress,
+  variant,
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -125,14 +127,15 @@ const AddressList = ({
           <AddressEntry
             showMarkIfNewlyAdded={showMarkIfNewlyAdded}
             data={item}
-            onSelect={onDone}
-            onManage={gotoAddressDetail}
+            onSelect={variant === 'manage' ? gotoAddressDetail : onDone}
+            onManage={variant === 'manage' ? undefined : gotoAddressDetail}
             manageAccessibilityLabel={t('component.portfolios.manage')}
+            disableNavigate={variant === 'manage'}
           />
         </View>
       );
     },
-    [styles.itemGap, onDone, showMarkIfNewlyAdded, t],
+    [styles.itemGap, showMarkIfNewlyAdded, variant, onDone, t],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
@@ -273,7 +276,11 @@ const AddressList = ({
 export const AddressListModal = ({
   onAddAddressPress,
   onDone,
-}: AddressListProps) => {
+  variant,
+  subTitle,
+}: AddressListProps & {
+  subTitle?: string;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [moreAddressList, setMoreAddressList] = useState(false);
@@ -283,16 +290,19 @@ export const AddressListModal = ({
       <NotMatterAddressDialog
         onDone={onDone}
         onBack={() => setMoreAddressList(false)}
+        variant={variant}
       />
     );
   }
   return (
     <AutoLockView as="View" style={styles.container}>
       <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
+      {subTitle ? <Text style={styles.subTitle}>{subTitle}</Text> : null}
 
       <AddressList
         onAddAddressPress={onAddAddressPress}
         onDone={onDone}
+        variant={variant}
         onMoreAddressListPress={() => setMoreAddressList(true)}
       />
     </AutoLockView>
@@ -314,6 +324,15 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-title-1'],
+  },
+  subTitle: {
+    marginTop: 7,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-secondary'],
   },
   footerGap: {
     height: 70,

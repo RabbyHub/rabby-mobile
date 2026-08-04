@@ -38,6 +38,7 @@ import {
   formatTokenAmountInput,
 } from '@/utils/number';
 import { formatSendUsdValueText } from './utils';
+import { Skeleton } from '@rneui/themed';
 
 const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
 const TOKEN_INPUT_REGEX = /^\d*(\.\d*)?$/;
@@ -524,6 +525,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
 export const BalanceSection = React.memo(function BalanceSection({
   style,
 }: RNViewProps) {
+  const { styles } = useTheme2024({ getStyle });
   const initialTokenIdentityReady = useSendTokenScreenStateSelector(
     state => state.initialTokenIdentityReady,
   );
@@ -555,7 +557,12 @@ export const BalanceSection = React.memo(function BalanceSection({
     !isReady ||
     !hasRenderedSyncedInitialTokenRef.current
   ) {
-    return null;
+    return (
+      <View style={style}>
+        <BalanceHeader balanceIssueValueText="" />
+        <Skeleton style={styles.amountSectionSkeleton} />
+      </View>
+    );
   }
 
   return (
@@ -593,6 +600,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     titleRightSpacer: {
       width: 197,
       height: 18,
+    },
+
+    amountSectionSkeleton: {
+      width: '100%',
+      height: 106,
+      borderRadius: 16,
     },
 
     issueBlock: {

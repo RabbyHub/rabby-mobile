@@ -1431,23 +1431,16 @@ function buildSelectedBalanceDerivedState(
   );
 }
 
-export async function applyAccountBalanceSelectionSnapshot(
+export function commitAccountBalanceSelectionSnapshot(
   {
     selectedAccounts,
     selectedAddresses,
     matteredAccountLength,
   }: AccountBalanceSelectionSnapshot,
   options: {
-    hydrate: boolean;
     source: AccountsBalanceChangeSource;
   },
 ) {
-  if (options.hydrate) {
-    await addressBalanceStore.hydrateCachedBalancesForAccounts(
-      selectedAccounts,
-    );
-  }
-
   const nextBalance = buildBalanceAccountsFromList(
     selectedAccounts,
     addressBalanceStore.getAddressValueMap(),
@@ -1469,6 +1462,22 @@ export async function applyAccountBalanceSelectionSnapshot(
   );
 
   return nextBalance;
+}
+
+export async function applyAccountBalanceSelectionSnapshot(
+  snapshot: AccountBalanceSelectionSnapshot,
+  options: {
+    hydrate: boolean;
+    source: AccountsBalanceChangeSource;
+  },
+) {
+  if (options.hydrate) {
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(
+      snapshot.selectedAccounts,
+    );
+  }
+
+  return commitAccountBalanceSelectionSnapshot(snapshot, options);
 }
 
 export const syncBalanceAccountStore = () => {

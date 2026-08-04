@@ -2122,6 +2122,7 @@
       "useDevicePassword": "Utiliser le mot de passe de l’appareil",
       "modifyRPCURL": "Modifier l'URL RPC",
       "autoLockTime": "Verrouillage automatique",
+      "appLaunchLock": "Verrouillage au démarrage",
       "lockWallet": "Verrouiller le portefeuille",
       "clearPending": "Effacer les transactions en attente localement",
       "aboutUs": "À propos de nous",
@@ -2141,7 +2142,12 @@
       "currency": "Monnaie",
       "dataAnalysis": "Analyse des données",
       "bugReportHistory": "Historique des rapports de bug",
-      "bugReportChat": "Partager vos commentaires via le chat"
+      "bugReportChat": "Partager vos commentaires via le chat",
+      "features": "Fonctionnalités",
+      "manageWallets": "Gérer les portefeuilles"
+    },
+    "settings": {
+      "chooseWallet": "Choisissez un portefeuille à gérer"
     },
     "settingModal": {
       "themeMode": {
