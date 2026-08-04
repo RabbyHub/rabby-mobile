@@ -14,9 +14,9 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 import AutoLockView from '@/components/AutoLockView';
-import WebView from 'react-native-webview';
 import { APP_UA_PARIALS } from '@/constant';
 import { checkShouldStartLoadingWithRequestForTrustedContent } from '@/components/WebView/utils';
+import BottomSheetWebView from '@/components/customized/BottomSheetWebView';
 
 export function useShowUserAgreementLikeModal() {
   const openedModalIdRef = React.useRef<string>('');
@@ -25,6 +25,9 @@ export function useShowUserAgreementLikeModal() {
       name: MODAL_NAMES.TIP_TERM_OF_USE,
       title: '',
       bottomSheetModalProps: {
+        rootViewType: 'View',
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
         onDismiss: () => {
           removeGlobalBottomSheetModal(openedModalIdRef.current);
           openedModalIdRef.current = '';
@@ -39,6 +42,9 @@ export function useShowUserAgreementLikeModal() {
       name: MODAL_NAMES.TIP_PRIVACY_POLICY,
       title: '',
       bottomSheetModalProps: {
+        rootViewType: 'View',
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
         onDismiss: () => {
           removeGlobalBottomSheetModal(openedModal2IdRef.current);
           openedModal2IdRef.current = '';
@@ -84,7 +90,7 @@ export function UserAgreementLikeModalInner({ uri }: { uri: string }) {
 
   return (
     <AutoLockView
-      as="BottomSheetView"
+      as="View"
       style={[styles.container, { paddingBottom: safeOffBottom }]}>
       <View style={styles.topContainer}>
         {/* <View style={styles.titleArea}>
@@ -92,7 +98,7 @@ export function UserAgreementLikeModalInner({ uri }: { uri: string }) {
           <Text style={styles.subTitle}>{remoteVersion.version}</Text>
         </View> */}
         <View style={[styles.bodyScrollerContainer]}>
-          <WebView
+          <BottomSheetWebView
             style={styles.webviewInst}
             cacheEnabled
             startInLoadingState
