@@ -6,10 +6,9 @@ import { View, type ViewStyle } from 'react-native';
 
 import {
   getPerpsOrderBookDepthPercent,
-  getPerpsOrderBookModeIconTones,
+  getPerpsOrderBookModeIconState,
   type PerpsOrderBookLevel,
   type PerpsOrderBookMode,
-  type PerpsOrderBookModeIconTone,
 } from '../../model/orderBook';
 import {
   formatPerpsProCompactNumber,
@@ -23,25 +22,31 @@ export const PerpsProOrderBookModeIcon: React.FC<{
   mode: PerpsOrderBookMode;
 }> = ({ mode }) => {
   const { styles } = useTheme2024({ getStyle });
-  const tones = getPerpsOrderBookModeIconTones(mode);
-  const getToneStyle = (tone: PerpsOrderBookModeIconTone) =>
-    tone === 'ask'
-      ? styles.modeAsk
-      : tone === 'bid'
-      ? styles.modeBid
-      : styles.modeNeutral;
+  const state = getPerpsOrderBookModeIconState(mode);
 
   return (
     <View style={styles.modeIcon}>
-      <View style={styles.modeGuide}>
-        {tones.left.map((tone, row) => (
-          <View key={row} style={[styles.modeGuideBar, getToneStyle(tone)]} />
+      <View style={styles.modeGuide} testID="perps-pro-order-book-mode-guide">
+        {state.left.map((_tone, row) => (
+          <View key={row} style={[styles.modeGuideBar, styles.modeNeutral]} />
         ))}
       </View>
-      <View style={styles.modeSides}>
-        {tones.right.map((tone, row) => (
-          <View key={row} style={[styles.modeSideBar, getToneStyle(tone)]} />
-        ))}
+      <View
+        style={[
+          styles.modeSides,
+          state.right === 'ask'
+            ? styles.modeAsk
+            : state.right === 'bid'
+            ? styles.modeBid
+            : null,
+        ]}
+        testID="perps-pro-order-book-mode-sides">
+        {state.right === 'split' ? (
+          <>
+            <View style={[styles.modeSideBar, styles.modeAsk]} />
+            <View style={[styles.modeSideBar, styles.modeBid]} />
+          </>
+        ) : null}
       </View>
     </View>
   );
@@ -113,6 +118,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 8,
   },
   modeSides: {
+    borderRadius: 1,
     gap: 2,
     height: 18,
     width: 8,

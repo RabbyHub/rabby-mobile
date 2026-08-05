@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsServerClockSample } from '../../model/funding';
+import { PERPS_PRO_MAIN_COLUMN_HEIGHT } from '../../model/layout';
 import type { PerpsProMarket } from '../../model/market';
 import {
   calculatePerpsBuyRatio,
@@ -29,6 +30,7 @@ import {
 } from '../../model/orderBook';
 import { formatPerpsProPrice } from '../../utils/format';
 import { PerpsProFundingSummary } from '../funding/PerpsProFundingSummary';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import {
   PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
   PerpsProOrderBookModeIcon,
@@ -40,7 +42,7 @@ import {
 } from './PerpsProOrderBookSkeleton';
 import { PerpsProPrecisionSheet } from './PerpsProPrecisionSheet';
 
-const ORDER_BOOK_BODY_HEIGHT = 314;
+const ORDER_BOOK_BODY_HEIGHT = 296;
 
 export const PerpsProOrderBook: React.FC<{
   book: ProcessedPerpsOrderBook;
@@ -128,13 +130,15 @@ export const PerpsProOrderBook: React.FC<{
     ));
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="perps-pro-order-book-column">
       <PerpsProFundingSummary
         market={market}
         onPress={onOpenFunding}
         serverClock={serverClock}
       />
-      <View style={styles.columnHeader}>
+      <View
+        style={styles.columnHeader}
+        testID="perps-pro-order-book-column-header">
         <Text style={styles.columnLabel}>
           {t('page.perps.pro.orderBook.price')}
           {'\n'}({market?.quoteAsset ?? '-'})
@@ -154,7 +158,9 @@ export const PerpsProOrderBook: React.FC<{
           <>
             {mode !== 'bids' ? renderRows('ask', visible.asks) : null}
             {mode === 'both' ? (
-              <View style={styles.midPrice}>
+              <View
+                style={styles.midPrice}
+                testID="perps-pro-order-book-mid-price">
                 <Text
                   numberOfLines={1}
                   style={
@@ -164,12 +170,14 @@ export const PerpsProOrderBook: React.FC<{
                   }>
                   {formatPerpsProPrice(latestTrade?.price, marketPriceDecimals)}
                 </Text>
-                <Text numberOfLines={1} style={styles.markPrice}>
+                <PerpsProDottedUnderlineText
+                  containerStyle={styles.markPriceUnderline}
+                  style={styles.markPrice}>
                   {formatPerpsProPrice(
                     market?.marketData.markPx,
                     marketPriceDecimals,
                   )}
-                </Text>
+                </PerpsProDottedUnderlineText>
               </View>
             ) : null}
             {mode !== 'asks' ? renderRows('bid', visible.bids) : null}
@@ -248,20 +256,21 @@ export const PerpsProOrderBook: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     gap: 8,
+    height: PERPS_PRO_MAIN_COLUMN_HEIGHT,
     minWidth: 0,
   },
   columnHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 32,
+    height: 26,
     justifyContent: 'space-between',
   },
   columnLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '400',
-    lineHeight: 16,
+    lineHeight: 12,
   },
   columnLabelRight: {
     textAlign: 'right',
@@ -271,9 +280,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   midPrice: {
-    height: 58,
+    gap: 2,
+    height: 48,
     justifyContent: 'center',
-    marginVertical: 8,
+    marginVertical: 4,
   },
   latestBuy: {
     color: colors2024['green-default'],
@@ -298,8 +308,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
     textAlign: 'center',
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
+  },
+  markPriceUnderline: {
+    alignSelf: 'center',
   },
   statusOverlay: {
     alignItems: 'center',

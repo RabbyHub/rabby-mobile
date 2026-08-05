@@ -52,6 +52,15 @@ jest.mock('../funding/PerpsProFundingSummary', () => {
   };
 });
 
+jest.mock('../common/PerpsProDottedUnderlineText', () => {
+  const ReactModule = require('react');
+  const { Text } = require('react-native');
+  return {
+    PerpsProDottedUnderlineText: ({ children, style }: any) =>
+      ReactModule.createElement(Text, { style }, children),
+  };
+});
+
 jest.mock('../loading/PerpsProSkeletonBlock', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -109,6 +118,21 @@ describe('PerpsProOrderBook display shell', () => {
     const view = render(<PerpsProOrderBook {...defaultProps} />);
 
     expect(screen.getByTestId('perps-pro-order-book')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-column').props.style,
+      ),
+    ).toMatchObject({ gap: 8, height: 416 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-column-header').props.style,
+      ),
+    ).toMatchObject({ height: 26 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book').props.style,
+      ),
+    ).toMatchObject({ height: 296 });
     expect(screen.getByTestId('perps-pro-order-book-skeleton')).toBeTruthy();
     expect(
       screen.getAllByTestId('perps-pro-skeleton-block').length,
@@ -174,6 +198,11 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('32')).toBeTruthy();
     expect(screen.getByText('31.33')).toBeTruthy();
     expect(screen.getByText('31.34')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-mid-price').props.style,
+      ),
+    ).toMatchObject({ gap: 2, height: 48, marginVertical: 4 });
 
     view.rerender(
       <PerpsProOrderBook

@@ -9,7 +9,7 @@ export type PerpsTickOption = PerpsBookPrecision & {
 };
 
 export type PerpsOrderBookMode = 'both' | 'asks' | 'bids';
-export type PerpsOrderBookModeIconTone = 'neutral' | 'ask' | 'bid';
+export type PerpsOrderBookModeIconRight = 'split' | 'ask' | 'bid';
 export type PerpsOrderBookRealtimeStatus =
   | 'idle'
   | 'loading'
@@ -30,25 +30,15 @@ export const getNextPerpsOrderBookMode = (mode: PerpsOrderBookMode) =>
       PERPS_ORDER_BOOK_MODE_ORDER.length
   ] ?? 'both';
 
-export const getPerpsOrderBookModeIconTones = (
+export const getPerpsOrderBookModeIconState = (
   mode: PerpsOrderBookMode,
 ): {
-  left: readonly [
-    PerpsOrderBookModeIconTone,
-    PerpsOrderBookModeIconTone,
-    PerpsOrderBookModeIconTone,
-  ];
-  right: readonly [PerpsOrderBookModeIconTone, PerpsOrderBookModeIconTone];
-} => {
-  // Product decision D-043 intentionally overrides the older single-side
-  // Figma color treatment while retaining its three-left/two-right geometry.
-  const leftTone =
-    mode === 'asks' ? 'ask' : mode === 'bids' ? 'bid' : 'neutral';
-  return {
-    left: [leftTone, leftTone, leftTone],
-    right: mode === 'both' ? ['ask', 'bid'] : ['neutral', 'neutral'],
-  };
-};
+  left: readonly ['neutral', 'neutral', 'neutral'];
+  right: PerpsOrderBookModeIconRight;
+} => ({
+  left: ['neutral', 'neutral', 'neutral'],
+  right: mode === 'both' ? 'split' : mode === 'asks' ? 'ask' : 'bid',
+});
 
 export const getPerpsOrderBookDisplayState = ({
   hasSnapshot,
@@ -206,7 +196,7 @@ export const processPerpsOrderBook = (
 
 export const getPerpsOrderBookRowCount = ({
   containerHeight,
-  middleHeight = 58,
+  middleHeight = 56,
   mode,
   rowHeight = 20,
 }: {
@@ -216,7 +206,7 @@ export const getPerpsOrderBookRowCount = ({
   rowHeight?: number;
 }) => {
   if (!Number.isFinite(containerHeight) || containerHeight <= 0) {
-    return mode === 'both' ? 6 : 15;
+    return mode === 'both' ? 6 : 14;
   }
   if (mode === 'both') {
     return Math.max(

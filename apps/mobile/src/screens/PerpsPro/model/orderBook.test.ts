@@ -6,7 +6,7 @@ import {
   getNextPerpsOrderBookMode,
   getPerpsOrderBookDisplayState,
   getPerpsOrderBookDepthPercent,
-  getPerpsOrderBookModeIconTones,
+  getPerpsOrderBookModeIconState,
   getPerpsOrderBookRowCount,
   getVisiblePerpsOrderBookMaxTotal,
   processPerpsOrderBook,
@@ -150,19 +150,22 @@ describe('Perps Pro order book model', () => {
   it('uses measured Figma row and middle heights', () => {
     expect(
       getPerpsOrderBookRowCount({
-        containerHeight: 314,
+        containerHeight: 296,
         mode: 'both',
       }),
     ).toBe(6);
     expect(
       getPerpsOrderBookRowCount({
-        containerHeight: 314,
+        containerHeight: 296,
         mode: 'asks',
       }),
-    ).toBe(15);
+    ).toBe(14);
     expect(
       getPerpsOrderBookRowCount({ containerHeight: 0, mode: 'both' }),
     ).toBe(6);
+    expect(
+      getPerpsOrderBookRowCount({ containerHeight: 0, mode: 'asks' }),
+    ).toBe(14);
   });
 
   it('cycles the single mobile display control in plugin control order', () => {
@@ -171,18 +174,18 @@ describe('Perps Pro order book model', () => {
     expect(getNextPerpsOrderBookMode('asks')).toBe('both');
   });
 
-  it('maps the five mode-icon cells to the approved mobile semantics', () => {
-    expect(getPerpsOrderBookModeIconTones('both')).toEqual({
+  it('keeps the three gray guide cells fixed and switches the right glyph', () => {
+    expect(getPerpsOrderBookModeIconState('both')).toEqual({
       left: ['neutral', 'neutral', 'neutral'],
-      right: ['ask', 'bid'],
+      right: 'split',
     });
-    expect(getPerpsOrderBookModeIconTones('asks')).toEqual({
-      left: ['ask', 'ask', 'ask'],
-      right: ['neutral', 'neutral'],
+    expect(getPerpsOrderBookModeIconState('asks')).toEqual({
+      left: ['neutral', 'neutral', 'neutral'],
+      right: 'ask',
     });
-    expect(getPerpsOrderBookModeIconTones('bids')).toEqual({
-      left: ['bid', 'bid', 'bid'],
-      right: ['neutral', 'neutral'],
+    expect(getPerpsOrderBookModeIconState('bids')).toEqual({
+      left: ['neutral', 'neutral', 'neutral'],
+      right: 'bid',
     });
   });
 
