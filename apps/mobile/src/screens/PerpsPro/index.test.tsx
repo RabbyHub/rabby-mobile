@@ -4,6 +4,14 @@ import React from 'react';
 import { PerpsProScreen } from './index';
 
 const mockSetOptions = jest.fn();
+const mockPush = jest.fn();
+
+jest.mock(
+  '@/screens/PerpsProHistory/repository/perpsProHistoryRepository',
+  () => ({
+    isPerpsProHistorySdkSupported: () => true,
+  }),
+);
 
 jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
   const ReactModule = require('react');
@@ -30,6 +38,7 @@ jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
 jest.mock('@/hooks/navigation', () => {
   return {
     useRabbyAppNavigation: () => ({
+      push: mockPush,
       setOptions: mockSetOptions,
     }),
   };
@@ -37,22 +46,36 @@ jest.mock('@/hooks/navigation', () => {
 
 jest.mock('./scene/PerpsProScene', () => {
   const ReactModule = require('react');
-  const { Pressable } = require('react-native');
+  const { Pressable, View } = require('react-native');
   return {
     PerpsProScene: ({
+      historyEnabled,
       isModeSwitching,
+      onOpenHistory,
       onSwitchToSimple,
     }: {
+      historyEnabled: boolean;
       isModeSwitching: boolean;
+      onOpenHistory: () => void;
       onSwitchToSimple: () => void;
     }) =>
-      ReactModule.createElement(Pressable, {
-        accessibilityLabel: 'pro',
-        accessibilityState: { disabled: isModeSwitching },
-        disabled: isModeSwitching,
-        onPress: onSwitchToSimple,
-        testID: 'perps-pro-scene',
-      }),
+      ReactModule.createElement(
+        View,
+        null,
+        ReactModule.createElement(Pressable, {
+          accessibilityLabel: 'pro',
+          accessibilityState: { disabled: isModeSwitching },
+          disabled: isModeSwitching,
+          onPress: onSwitchToSimple,
+          testID: 'perps-pro-scene',
+        }),
+        ReactModule.createElement(Pressable, {
+          accessibilityState: { disabled: !historyEnabled },
+          disabled: !historyEnabled,
+          onPress: onOpenHistory,
+          testID: 'perps-pro-history',
+        }),
+      ),
   };
 });
 
@@ -82,6 +105,11 @@ describe('PerpsProScreen', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-scene'));
     expect(onSwitchToSimple).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(screen.getByTestId('perps-pro-history'));
+    expect(mockPush).toHaveBeenCalledWith('StackTransaction', {
+      screen: 'PerpsProHistory',
+    });
   });
 
   it('disables the shared switch while the mode preference is saving', () => {

@@ -1,9 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 const mockUsePerpsProScene = jest.fn();
+const mockUsePerpsProInfoPanel = jest.fn();
 const mockMarketSelectorPresent = jest.fn();
 const mockOrderBookRender = jest.fn();
+const mockConfirmCancelAll = jest.fn();
+const mockConfirmCancelOrder = jest.fn();
+
+jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
+  useActiveAssetSubscription: () => ({
+    activeAssetData: null,
+    refreshActiveAssetData: jest.fn(async () => null),
+  }),
+}));
+
+jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -18,6 +35,7 @@ jest.mock('@/hooks/theme', () => ({
       },
     );
     return {
+      colors2024,
       styles: getStyle({ colors2024 }),
     };
   },
@@ -42,6 +60,49 @@ jest.mock('../components/account/PerpsProAccountSkeleton', () => {
   };
 });
 
+jest.mock('../components/account/PerpsProFundingOverlay', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProFundingOverlay: () =>
+      ReactModule.createElement(View, { testID: 'funding-overlay' }),
+  };
+});
+
+jest.mock('../components/positions/PerpsProPositionCard', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProPositionCard: () =>
+      ReactModule.createElement(View, { testID: 'position-card' }),
+  };
+});
+
+jest.mock('../components/positions/PerpsProLeverageSheet', () => ({
+  PerpsProLeverageSheet: () => null,
+}));
+
+jest.mock('../components/positions/PerpsProClosePositionSheet', () => ({
+  PerpsProClosePositionSheet: () => null,
+}));
+
+jest.mock('../components/positions/PerpsProCloseConfirmationSheet', () => ({
+  PerpsProCloseConfirmationSheet: () => null,
+}));
+
+jest.mock('../components/open-orders/PerpsProCancelConfirmationModal', () => ({
+  PerpsProCancelConfirmationModal: () => null,
+}));
+
+jest.mock('../components/open-orders/PerpsProOpenOrderCard', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProOpenOrderCard: () =>
+      ReactModule.createElement(View, { testID: 'open-order-card' }),
+  };
+});
+
 jest.mock('../components/chart/PerpsProKlineSheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -62,8 +123,9 @@ jest.mock('../components/header/PerpsProHeader', () => {
 
 jest.mock('../components/header/usePerpsProHeaderCollapse', () => ({
   usePerpsProHeaderCollapse: () => ({
-    headerHeight: 56,
     headerOpacity: 1,
+    headerTranslateY: 0,
+    marketTranslateY: 56,
     onScroll: jest.fn(),
   }),
 }));
@@ -83,6 +145,7 @@ jest.mock('../components/market/PerpsProMarketBar', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
   return {
+    PERPS_PRO_MARKET_BAR_HEIGHT: 40,
     PerpsProMarketBar: ({
       onOpenKline,
       onPress,
@@ -146,6 +209,42 @@ jest.mock('./usePerpsProScene', () => ({
   usePerpsProScene: mockUsePerpsProScene,
 }));
 
+jest.mock('./usePerpsProInfoPanel', () => ({
+  usePerpsProInfoPanel: mockUsePerpsProInfoPanel,
+}));
+
+jest.mock('./usePerpsProCancelOrders', () => ({
+  usePerpsProCancelOrders: () => ({
+    confirmation: null,
+    confirmCancellation: jest.fn(),
+    confirmCancelAll: mockConfirmCancelAll,
+    confirmCancelOrder: mockConfirmCancelOrder,
+    dismissConfirmation: jest.fn(),
+    isCancelAllPending: false,
+    isOrderPending: () => false,
+  }),
+}));
+
+jest.mock('./usePerpsProPositionActions', () => ({
+  usePerpsProPositionActions: () => ({
+    cancelCloseReview: jest.fn(),
+    closeCloseEditor: jest.fn(),
+    closeEditor: null,
+    closePending: false,
+    closeReview: null,
+    closeLeverageEditor: jest.fn(),
+    confirmClose: jest.fn(),
+    leverageEditor: null,
+    leveragePending: false,
+    openCloseEditor: jest.fn(),
+    openLeverageEditor: jest.fn(),
+    reviewClose: jest.fn(),
+    setSkipLimitConfirmation: jest.fn(),
+    skipLimitConfirmation: false,
+    updateLeverage: jest.fn(),
+  }),
+}));
+
 const { PerpsProScene } =
   require('./PerpsProScene') as typeof import('./PerpsProScene');
 
@@ -164,9 +263,30 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const createInfoState = (overrides: Record<string, unknown> = {}) => ({
+  account: { assets: [] },
+  accountIdentity: 'test-account',
+  accountState: 'loading',
+  activeInfoTab: 'account',
+  allOpenOrdersCount: 0,
+  allPositionsCount: 0,
+  hideOtherSymbols: false,
+  openOrderCategory: 'basic',
+  openOrderCommandCandidates: [],
+  openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
+  openOrders: [],
+  positions: [],
+  retryAccount: jest.fn(),
+  setActiveInfoTab: jest.fn(),
+  setHideOtherSymbols: jest.fn(),
+  setOpenOrderCategory: jest.fn(),
+  ...overrides,
+});
+
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUsePerpsProInfoPanel.mockReturnValue(createInfoState());
   });
 
   it('keeps the full skeleton while a ready catalogue resolves its market', () => {
@@ -185,11 +305,40 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.queryByText('page.perps.pro.common.unavailable')).toBeNull();
   });
 
+  it('keeps one fixed scroll owner and reserves stable overlay lead-in geometry', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const scroll = screen.getByTestId('perps-pro-scroll');
+    expect(scroll.props.stickyHeaderIndices).toEqual([]);
+    expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-scroll-lead-in').props.style,
+      ),
+    ).toMatchObject({ height: 96 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-overlay').props.style,
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        height: 40,
+        transform: [{ translateY: 56 }],
+      }),
+    );
+  });
+
   it('presents the prewarmed selector without rerendering the scene content', () => {
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
         currentMarket: {
+          canonicalCoin: 'BTC',
           marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
           quoteAsset: 'USDC',
         },
       }),
@@ -216,7 +365,9 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
         currentMarket: {
+          canonicalCoin: 'BTC',
           marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
           quoteAsset: 'USDC',
         },
         klineEnabled: true,
@@ -230,5 +381,27 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(screen.getByTestId('kline-sheet')).toBeTruthy();
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
+  });
+
+  it('closes the local funding overlay when the active account changes', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ accountIdentity: 'account-a', accountState: 'empty' }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByText('page.perps.pro.account.deposit'));
+    expect(screen.getByTestId('funding-overlay')).toBeTruthy();
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ accountIdentity: 'account-b', accountState: 'empty' }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.queryByTestId('funding-overlay')).toBeNull();
   });
 });

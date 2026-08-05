@@ -1,8 +1,10 @@
 import {
+  getPerpsProHeaderGeometry,
   getNextPerpsProHeaderScrollState,
   PERPS_PRO_HEADER_SCROLL_THRESHOLD,
   type PerpsProHeaderScrollState,
 } from './usePerpsProHeaderCollapse';
+import { PERPS_PRO_HEADER_HEIGHT } from './constants';
 
 const initialState = (): PerpsProHeaderScrollState => ({
   accumulatedDelta: 0,
@@ -56,5 +58,53 @@ describe('Perps Pro collapsible header', () => {
     };
     expect(getNextPerpsProHeaderScrollState(hidden, 0)).toEqual(initialState());
     expect(getNextPerpsProHeaderScrollState(hidden, Number.NaN)).toBe(hidden);
+  });
+
+  it('keeps the header bottom and market top adjacent without moving the scroll owner', () => {
+    for (const [offset, visibilityProgress] of [
+      [0, 0],
+      [10, 0],
+      [30, 0.5],
+      [PERPS_PRO_HEADER_HEIGHT, 0],
+      [200, 1],
+    ]) {
+      const geometry = getPerpsProHeaderGeometry(offset, visibilityProgress);
+      expect(geometry.headerTranslateY + PERPS_PRO_HEADER_HEIGHT).toBeCloseTo(
+        geometry.marketTranslateY,
+      );
+      expect(geometry.headerOpacity).toBeGreaterThanOrEqual(0);
+      expect(geometry.headerOpacity).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('naturally collapses while hidden and restores both overlays without changing offset', () => {
+    expect(getPerpsProHeaderGeometry(20, 0)).toEqual({
+      headerOpacity: 1 - 20 / PERPS_PRO_HEADER_HEIGHT,
+      headerTranslateY: -20,
+      marketTranslateY: PERPS_PRO_HEADER_HEIGHT - 20,
+    });
+    expect(getPerpsProHeaderGeometry(200, 0)).toEqual({
+      headerOpacity: 0,
+      headerTranslateY: -PERPS_PRO_HEADER_HEIGHT,
+      marketTranslateY: 0,
+    });
+    expect(getPerpsProHeaderGeometry(200, 1)).toEqual({
+      headerOpacity: 1,
+      headerTranslateY: 0,
+      marketTranslateY: PERPS_PRO_HEADER_HEIGHT,
+    });
+  });
+
+  it('does not reverse a slow monotonic gesture after the threshold transition', () => {
+    let state = initialState();
+    for (const offset of [2, 4, 6, 8, 10, 12, 14, 16]) {
+      state = getNextPerpsProHeaderScrollState(state, offset);
+    }
+    expect(state.visible).toBe(false);
+
+    for (const offset of [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4]) {
+      state = getNextPerpsProHeaderScrollState(state, offset);
+    }
+    expect(state.visible).toBe(true);
   });
 });

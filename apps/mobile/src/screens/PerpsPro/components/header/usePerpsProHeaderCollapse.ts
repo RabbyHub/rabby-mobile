@@ -18,6 +18,31 @@ export type PerpsProHeaderScrollState = {
   visible: boolean;
 };
 
+export interface PerpsProHeaderGeometry {
+  headerOpacity: number;
+  headerTranslateY: number;
+  marketTranslateY: number;
+}
+
+export const getPerpsProHeaderGeometry = (
+  rawOffset: number,
+  rawVisibilityProgress: number,
+): PerpsProHeaderGeometry => {
+  const offset = Number.isFinite(rawOffset)
+    ? Math.min(Math.max(rawOffset, 0), PERPS_PRO_HEADER_HEIGHT)
+    : 0;
+  const visibilityProgress = Number.isFinite(rawVisibilityProgress)
+    ? Math.min(Math.max(rawVisibilityProgress, 0), 1)
+    : 1;
+  const hiddenDistance = offset * (1 - visibilityProgress);
+
+  return {
+    headerOpacity: 1 - hiddenDistance / PERPS_PRO_HEADER_HEIGHT,
+    headerTranslateY: hiddenDistance === 0 ? 0 : -hiddenDistance,
+    marketTranslateY: PERPS_PRO_HEADER_HEIGHT - hiddenDistance,
+  };
+};
+
 export const getNextPerpsProHeaderScrollState = (
   state: PerpsProHeaderScrollState,
   rawOffset: number,
@@ -66,6 +91,7 @@ export const getNextPerpsProHeaderScrollState = (
 
 export const usePerpsProHeaderCollapse = () => {
   const animation = useRef(new Animated.Value(1)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
   const scrollStateRef = useRef<PerpsProHeaderScrollState>({
     accumulatedDelta: 0,
     lastOffset: 0,
@@ -85,13 +111,13 @@ export const usePerpsProHeaderCollapse = () => {
         duration: PERPS_PRO_HEADER_ANIMATION_MS,
         easing: Easing.out(Easing.cubic),
         toValue: visible ? 1 : 0,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
     },
     [animation],
   );
 
-  const onScroll = useCallback(
+  const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const current = scrollStateRef.current;
       const next = getNextPerpsProHeaderScrollState(
@@ -106,26 +132,58 @@ export const usePerpsProHeaderCollapse = () => {
     [setHeaderVisible],
   );
 
-  const headerHeight = useMemo(
+  const onScroll = useMemo(
     () =>
-      animation.interpolate({
-        inputRange: [0, 1],
+      Animated.event(
+        [
+          {
+            nativeEvent: {
+              contentOffset: { y: scrollY },
+            },
+          },
+        ],
+        {
+          listener: handleScroll,
+          useNativeDriver: true,
+        },
+      ),
+    [handleScroll, scrollY],
+  );
+  const clampedScrollY = useMemo(
+    () =>
+      scrollY.interpolate({
+        extrapolate: 'clamp',
+        inputRange: [0, PERPS_PRO_HEADER_HEIGHT],
         outputRange: [0, PERPS_PRO_HEADER_HEIGHT],
       }),
-    [animation],
+    [scrollY],
+  );
+  const hiddenDistance = useMemo(
+    () => Animated.multiply(clampedScrollY, Animated.subtract(1, animation)),
+    [animation, clampedScrollY],
+  );
+  const headerTranslateY = useMemo(
+    () => Animated.multiply(hiddenDistance, -1),
+    [hiddenDistance],
+  );
+  const marketTranslateY = useMemo(
+    () => Animated.subtract(PERPS_PRO_HEADER_HEIGHT, hiddenDistance),
+    [hiddenDistance],
   );
   const headerOpacity = useMemo(
     () =>
-      animation.interpolate({
-        inputRange: [0, 0.45, 1],
-        outputRange: [0, 0, 1],
+      hiddenDistance.interpolate({
+        extrapolate: 'clamp',
+        inputRange: [0, PERPS_PRO_HEADER_HEIGHT],
+        outputRange: [1, 0],
       }),
-    [animation],
+    [hiddenDistance],
   );
 
   return {
-    headerHeight,
     headerOpacity,
+    headerTranslateY,
+    marketTranslateY,
     onScroll,
   };
 };
