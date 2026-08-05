@@ -2,6 +2,7 @@ import {
   buildHome24hProjection,
   buildHomeBalanceProjection,
   createInitialHomeAccountProjection,
+  isHomeProjectionWaitingForValue,
   reduceHomeAccountProjection,
   type HomeProjectionResourceFlow,
 } from './model';
@@ -19,6 +20,7 @@ function resolveAccounts(
     hasResolvedSelection: true,
     matteredAccountLength: addresses.length,
     hasResolvedMatteredAccountLength: true,
+    hasFetchedAccounts: true,
     isFetchingAccounts: false,
   });
 }
@@ -41,6 +43,7 @@ describe('home portfolio projection model', () => {
       hasResolvedSelection: false,
       matteredAccountLength: 0,
       hasResolvedMatteredAccountLength: false,
+      hasFetchedAccounts: false,
       isFetchingAccounts: true,
     });
     const empty = resolveAccounts([], unresolved);
@@ -70,6 +73,7 @@ describe('home portfolio projection model', () => {
         hasResolvedSelection: false,
         matteredAccountLength: 1,
         hasResolvedMatteredAccountLength: false,
+        hasFetchedAccounts: false,
         isFetchingAccounts: true,
       },
     );
@@ -82,6 +86,27 @@ describe('home portfolio projection model', () => {
     expect(balance).toMatchObject({
       availability: 'partial',
       value: { totalBalance: 10 },
+    });
+  });
+
+  it('resolves an empty account context after account fetching completes', () => {
+    const projection = reduceHomeAccountProjection(
+      createInitialHomeAccountProjection(),
+      {
+        selectedAddresses: [],
+        hasResolvedSelection: false,
+        matteredAccountLength: 0,
+        hasResolvedMatteredAccountLength: false,
+        hasFetchedAccounts: true,
+        isFetchingAccounts: false,
+      },
+    );
+
+    expect(projection).toMatchObject({
+      availability: 'empty',
+      hasResolvedSelection: false,
+      hasResolvedAccountContext: true,
+      hasFetchedAccounts: true,
     });
   });
 
@@ -284,6 +309,9 @@ describe('home portfolio projection model', () => {
         isActive: true,
       },
     });
+    expect(isHomeProjectionWaitingForValue(projection.availability)).toBe(
+      false,
+    );
   });
 
   it('aggregates activity from current and historical resources', () => {

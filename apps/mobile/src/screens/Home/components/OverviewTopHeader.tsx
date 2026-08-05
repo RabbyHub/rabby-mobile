@@ -54,6 +54,17 @@ import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
+import {
+  isHomeProjectionWaitingForValue,
+  useHome24hProjection,
+  useHomeBalanceProjection,
+} from '@/store/homePortfolio';
+
+const EMPTY_CHANGE_DATA = {
+  rawChange: 0,
+  changePercent: '',
+  isLoss: false,
+};
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -63,23 +74,36 @@ const handleSwitchToTokenTab = (index: number) => {
 export function TabsTopHeader(): JSX.Element {
   const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
 
-  const {
-    totalBalance,
-    showBalanceLoadingWithoutLocal,
-    showChangeLoadingWithoutLocal,
-    isAnyRemoteRefreshing,
-    isChangeAnyLoading,
-    changeData,
-  } = useHomePortfolioStore(
+  const { balanceAvailability, totalBalance, balanceActivity } =
+    useHomeBalanceProjection(
+      useShallow(state => ({
+        balanceAvailability: state.availability,
+        totalBalance: state.value?.totalBalance || 0,
+        balanceActivity: state.activity,
+      })),
+    );
+  const { changeAvailability, changeData, changeActivity } =
+    useHome24hProjection(
+      useShallow(state => ({
+        changeAvailability: state.availability,
+        changeData: state.value || EMPTY_CHANGE_DATA,
+        changeActivity: state.activity,
+      })),
+    );
+  const isCurveFetchingRemote = useHomePortfolioStore(
     useShallow(state => ({
-      totalBalance: state.totalBalance,
-      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
-      isAnyRemoteRefreshing: state.isAnyRemoteRefreshing,
-      isChangeAnyLoading: state.isChangeAnyLoading,
-      changeData: state.changeData,
+      isCurveFetchingRemote: state.isCurveFetchingRemote,
     })),
-  );
+  ).isCurveFetchingRemote;
+  const showBalanceLoadingWithoutLocal =
+    isHomeProjectionWaitingForValue(balanceAvailability);
+  const showChangeLoadingWithoutLocal =
+    isHomeProjectionWaitingForValue(changeAvailability);
+  const isAnyRemoteRefreshing =
+    balanceActivity.isFetchingRemote ||
+    changeActivity.isFetchingRemote ||
+    isCurveFetchingRemote;
+  const isChangeAnyLoading = changeActivity.isActive;
   const data = changeData;
   const scene24hLoading = isChangeAnyLoading;
 

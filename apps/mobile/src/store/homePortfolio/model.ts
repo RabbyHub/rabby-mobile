@@ -25,6 +25,8 @@ export type HomeAccountProjection = {
   selectionSignature: string;
   selectionGeneration: number;
   hasResolvedSelection: boolean;
+  hasResolvedAccountContext: boolean;
+  hasFetchedAccounts: boolean;
   matteredAccountLength: number;
   isPendingMatteredAccountLength: boolean;
   activity: HomeProjectionActivity;
@@ -68,6 +70,7 @@ export type HomeAccountProjectionInput = {
   hasResolvedSelection: boolean;
   matteredAccountLength: number;
   hasResolvedMatteredAccountLength: boolean;
+  hasFetchedAccounts: boolean;
   isFetchingAccounts: boolean;
 };
 
@@ -119,6 +122,12 @@ export function normalizeHomeProjectionAddresses(addresses: string[]) {
 
 export function getHomeSelectionSignature(addresses: string[]) {
   return normalizeHomeProjectionAddresses(addresses).join('|');
+}
+
+export function isHomeProjectionWaitingForValue(
+  availability: HomeProjectionAvailability,
+) {
+  return availability === 'unresolved' || availability === 'loading';
 }
 
 function buildProjectionActivity(
@@ -218,6 +227,8 @@ export function createInitialHomeAccountProjection(): HomeAccountProjection {
     selectionSignature: '',
     selectionGeneration: 0,
     hasResolvedSelection: false,
+    hasResolvedAccountContext: false,
+    hasFetchedAccounts: false,
     matteredAccountLength: 0,
     isPendingMatteredAccountLength: true,
     activity: EMPTY_ACTIVITY,
@@ -234,12 +245,15 @@ export function reduceHomeAccountProjection(
     selectionSignature === previous.selectionSignature
       ? previous.selectionGeneration
       : previous.selectionGeneration + 1;
-  const availability: HomeProjectionAvailability = input.hasResolvedSelection
-    ? addresses.length
+  const hasResolvedAccountContext =
+    input.hasResolvedSelection ||
+    (input.hasFetchedAccounts && !input.isFetchingAccounts);
+  const availability: HomeProjectionAvailability = addresses.length
+    ? input.hasResolvedSelection
       ? 'ready'
-      : 'empty'
-    : addresses.length
-    ? 'partial'
+      : 'partial'
+    : hasResolvedAccountContext
+    ? 'empty'
     : 'unresolved';
   const activity: HomeProjectionActivity = {
     ...EMPTY_ACTIVITY,
@@ -252,6 +266,8 @@ export function reduceHomeAccountProjection(
     selectionSignature,
     selectionGeneration,
     hasResolvedSelection: input.hasResolvedSelection,
+    hasResolvedAccountContext,
+    hasFetchedAccounts: input.hasFetchedAccounts,
     matteredAccountLength: input.matteredAccountLength,
     isPendingMatteredAccountLength: !input.hasResolvedMatteredAccountLength,
     activity,
@@ -262,6 +278,8 @@ export function reduceHomeAccountProjection(
     previous.selectionSignature === next.selectionSignature &&
     previous.selectionGeneration === next.selectionGeneration &&
     previous.hasResolvedSelection === next.hasResolvedSelection &&
+    previous.hasResolvedAccountContext === next.hasResolvedAccountContext &&
+    previous.hasFetchedAccounts === next.hasFetchedAccounts &&
     previous.matteredAccountLength === next.matteredAccountLength &&
     previous.isPendingMatteredAccountLength ===
       next.isPendingMatteredAccountLength &&

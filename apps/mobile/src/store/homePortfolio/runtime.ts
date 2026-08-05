@@ -92,6 +92,7 @@ function syncHomeAccountProjection() {
       hasResolvedMatteredAccountLength:
         balanceState.hasResolvedMatteredAccountLength ||
         canUseFetchedAccountLength,
+      hasFetchedAccounts: accountsState.hasFetchedAccounts,
       isFetchingAccounts: accountsState.isFetchingAccounts,
     }),
   );
@@ -155,7 +156,7 @@ export function ensureHomeProjectionLifecycle() {
   hasStartedHomeProjectionLifecycle = true;
 
   balanceAccountsStore.subscribe(syncSelectionDependentProjections);
-  accountStore.subscribe(syncHomeAccountProjection);
+  accountStore.subscribe(syncSelectionDependentProjections);
   addressBalanceStore.subscribe(() => {
     syncHomeBalanceProjection();
     syncHome24hProjection();
