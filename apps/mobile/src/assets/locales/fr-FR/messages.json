@@ -2142,7 +2142,12 @@
       "currency": "Monnaie",
       "dataAnalysis": "Analyse des données",
       "bugReportHistory": "Historique des rapports de bug",
-      "bugReportChat": "Partager vos commentaires via le chat"
+      "bugReportChat": "Partager vos commentaires via le chat",
+      "features": "Fonctionnalités",
+      "manageWallets": "Gérer les portefeuilles"
+    },
+    "settings": {
+      "chooseWallet": "Choisissez un portefeuille à gérer"
     },
     "settingModal": {
       "themeMode": {

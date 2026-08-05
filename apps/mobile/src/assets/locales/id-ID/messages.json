@@ -2198,7 +2198,12 @@
       "currency": "Mata Uang",
       "dataAnalysis": "Analisis Data",
       "bugReportHistory": "Riwayat Laporan Bug",
-      "bugReportChat": "Bagikan Umpan Balik melalui Obrolan"
+      "bugReportChat": "Bagikan Umpan Balik melalui Obrolan",
+      "features": "Fitur",
+      "manageWallets": "Kelola Dompet"
+    },
+    "settings": {
+      "chooseWallet": "Pilih dompet untuk dikelola"
     },
     "settingModal": {
       "themeMode": {

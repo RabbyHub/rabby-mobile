@@ -2382,7 +2382,12 @@
       "screenshotReportSwitch": "Captura de ecrã para comunicar um erro",
       "dataAnalysis": "Análise de dados",
       "bugReportHistory": "Histórico de relatórios de erro",
-      "bugReportChat": "Partilhar feedback através do chat"
+      "bugReportChat": "Partilhar feedback através do chat",
+      "features": "Funcionalidades",
+      "manageWallets": "Gerir carteiras"
+    },
+    "settings": {
+      "chooseWallet": "Escolha uma carteira para gerir"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
