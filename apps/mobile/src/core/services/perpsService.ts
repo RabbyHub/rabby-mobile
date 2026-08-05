@@ -40,18 +40,23 @@ export type ApproveSignatures = (SendApproveParams & {
 })[];
 
 export type PerpsViewMode = 'simple' | 'pro';
+export type PerpsProInfoTab = 'account' | 'positions' | 'openOrders';
 
 export type PerpsProPreferences = {
   version: number;
   viewMode: PerpsViewMode;
+  activeInfoTab: PerpsProInfoTab;
+  skipLimitCloseDoubleConfirmation: boolean;
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 3;
+const PERPS_PRO_PREFERENCES_VERSION = 5;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
 const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   version: PERPS_PRO_PREFERENCES_VERSION,
   viewMode: 'simple',
+  activeInfoTab: 'account',
+  skipLimitCloseDoubleConfirmation: false,
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -78,6 +83,21 @@ const normalizePerpsViewMode = (value: unknown): PerpsViewMode => {
     : 'simple';
 };
 
+const normalizePerpsProInfoTab = (value: unknown): PerpsProInfoTab => {
+  if (!hasReadableProPreferences(value)) {
+    return 'account';
+  }
+  return value.activeInfoTab === 'account' ||
+    value.activeInfoTab === 'positions' ||
+    value.activeInfoTab === 'openOrders'
+    ? value.activeInfoTab
+    : 'account';
+};
+
+const normalizeSkipLimitCloseDoubleConfirmation = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.skipLimitCloseDoubleConfirmation === true;
+
 const removeLegacyBookPrecision = (value: ReadableProPreferences) => {
   const nextValue = { ...value };
   delete nextValue.bookPrecisionByMarket;
@@ -98,6 +118,9 @@ const getWritableProPreferences = (
     ...writableValue,
     version: Math.max(value.version, PERPS_PRO_PREFERENCES_VERSION),
     viewMode: normalizePerpsViewMode(value),
+    activeInfoTab: normalizePerpsProInfoTab(value),
+    skipLimitCloseDoubleConfirmation:
+      normalizeSkipLimitCloseDoubleConfirmation(value),
   } as PerpsProPreferences & Record<string, unknown>;
 };
 
@@ -283,6 +306,42 @@ export class PerpsService {
     this.store.proPreferences = {
       ...getWritableProPreferences(currentPreferences),
       viewMode,
+    };
+  };
+
+  getPerpsProInfoTab = async (): Promise<PerpsProInfoTab> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return normalizePerpsProInfoTab(this.store.proPreferences);
+  };
+
+  setPerpsProInfoTab = async (activeInfoTab: PerpsProInfoTab) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    this.store.proPreferences = {
+      ...getWritableProPreferences(this.store.proPreferences),
+      activeInfoTab,
+    };
+  };
+
+  getSkipPerpsProLimitCloseConfirmation = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipLimitCloseDoubleConfirmation(this.store.proPreferences);
+  };
+
+  setSkipPerpsProLimitCloseConfirmation = async (value: boolean) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.proPreferences = {
+      ...getWritableProPreferences(this.store.proPreferences),
+      skipLimitCloseDoubleConfirmation: value === true,
     };
   };
 

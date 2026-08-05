@@ -12,7 +12,9 @@ const clone = <T>(value: T): T =>
   value === undefined ? value : JSON.parse(JSON.stringify(value));
 
 const createMemoryStorage = (
-  initialPerpsStore?: Partial<PerpsServiceStore>,
+  initialPerpsStore?: Omit<Partial<PerpsServiceStore>, 'proPreferences'> & {
+    proPreferences?: unknown;
+  },
 ) => {
   const values = new Map<string, unknown>();
   if (initialPerpsStore) {
@@ -67,6 +69,10 @@ describe('PerpsService Pro preferences', () => {
     const service = createService(storage);
 
     await expect(service.getPerpsViewMode()).resolves.toBe('simple');
+    await expect(service.getPerpsProInfoTab()).resolves.toBe('account');
+    await expect(service.getSkipPerpsProLimitCloseConfirmation()).resolves.toBe(
+      false,
+    );
   });
 
   it('round-trips the selected mode through the real persisted store', async () => {
@@ -165,8 +171,11 @@ describe('PerpsService Pro preferences', () => {
 
   it('reads a valid mode from a future schema without downgrading it', async () => {
     const futurePreferences = {
-      version: 4,
+      version: 6,
       viewMode: 'pro',
+      activeInfoTab: 'positions',
+      skipLimitCloseDoubleConfirmation: true,
+      sizeUnit: 'base',
       futureFlag: 'preserve-me',
     } satisfies PerpsProPreferences;
     const { readPerpsStore, storage } = createMemoryStorage({
@@ -175,6 +184,7 @@ describe('PerpsService Pro preferences', () => {
     const service = createService(storage);
 
     await expect(service.getPerpsViewMode()).resolves.toBe('pro');
+    await expect(service.getPerpsProInfoTab()).resolves.toBe('positions');
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual(futurePreferences);
@@ -183,8 +193,11 @@ describe('PerpsService Pro preferences', () => {
   it('preserves future schema fields when writing a new mode', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
-        version: 5,
+        version: 6,
         viewMode: 'simple',
+        activeInfoTab: 'openOrders',
+        skipLimitCloseDoubleConfirmation: false,
+        sizeUnit: 'base',
         futureFlag: { enabled: true },
       },
     });
@@ -194,13 +207,16 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 5,
+      version: 6,
       viewMode: 'pro',
+      activeInfoTab: 'openOrders',
+      skipLimitCloseDoubleConfirmation: false,
+      sizeUnit: 'base',
       futureFlag: { enabled: true },
     });
   });
 
-  it('migrates a V1 schema to V3 without losing unknown fields', async () => {
+  it('migrates a V1 schema to V5 without losing unknown fields', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 1,
@@ -215,13 +231,15 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 3,
+      version: 5,
       viewMode: 'simple',
+      activeInfoTab: 'account',
+      skipLimitCloseDoubleConfirmation: false,
       legacyUnknown: 'preserve-me',
     });
   });
 
-  it('repairs an invalid schema to V3 only when the user writes a mode', async () => {
+  it('repairs an invalid schema to V5 only when the user writes a mode', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 0,
@@ -235,8 +253,10 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 3,
+      version: 5,
       viewMode: 'pro',
+      activeInfoTab: 'account',
+      skipLimitCloseDoubleConfirmation: false,
     });
   });
 
@@ -257,9 +277,69 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 3,
+      version: 5,
       viewMode: 'pro',
+      activeInfoTab: 'account',
+      skipLimitCloseDoubleConfirmation: false,
       legacyUnknown: { preserve: true },
+    });
+  });
+
+  it('round-trips the active info tab', async () => {
+    const { readPerpsStore, storage } = createMemoryStorage();
+    const service = createService(storage);
+
+    await service.setPerpsProInfoTab('openOrders');
+
+    await expect(service.getPerpsProInfoTab()).resolves.toBe('openOrders');
+    jest.advanceTimersByTime(1000);
+
+    expect(readPerpsStore()?.proPreferences).toEqual({
+      version: 5,
+      viewMode: 'simple',
+      activeInfoTab: 'openOrders',
+      skipLimitCloseDoubleConfirmation: false,
+    });
+  });
+
+  it('normalizes an invalid V3 tab during the V5 migration', async () => {
+    const { readPerpsStore, storage } = createMemoryStorage({
+      proPreferences: {
+        version: 3,
+        viewMode: 'pro',
+        activeInfoTab: 'history',
+        unknown: true,
+      } as unknown as PerpsProPreferences,
+    });
+    const service = createService(storage);
+
+    await expect(service.getPerpsProInfoTab()).resolves.toBe('account');
+    jest.advanceTimersByTime(1000);
+
+    expect(readPerpsStore()?.proPreferences).toEqual({
+      version: 5,
+      viewMode: 'pro',
+      activeInfoTab: 'account',
+      skipLimitCloseDoubleConfirmation: false,
+      unknown: true,
+    });
+  });
+
+  it('round-trips the device-level Limit close confirmation preference', async () => {
+    const { readPerpsStore, storage } = createMemoryStorage();
+    const service = createService(storage);
+
+    await service.setSkipPerpsProLimitCloseConfirmation(true);
+    await expect(service.getSkipPerpsProLimitCloseConfirmation()).resolves.toBe(
+      true,
+    );
+    jest.advanceTimersByTime(1000);
+
+    expect(readPerpsStore()?.proPreferences).toEqual({
+      version: 5,
+      viewMode: 'simple',
+      activeInfoTab: 'account',
+      skipLimitCloseDoubleConfirmation: true,
     });
   });
 
@@ -268,8 +348,14 @@ describe('PerpsService Pro preferences', () => {
     const service = createService(storage);
 
     await service.setPerpsViewMode('pro');
+    await service.setPerpsProInfoTab('positions');
+    await service.setSkipPerpsProLimitCloseConfirmation(true);
     await service.resetStore();
 
     await expect(service.getPerpsViewMode()).resolves.toBe('pro');
+    await expect(service.getPerpsProInfoTab()).resolves.toBe('positions');
+    await expect(service.getSkipPerpsProLimitCloseConfirmation()).resolves.toBe(
+      true,
+    );
   });
 });
