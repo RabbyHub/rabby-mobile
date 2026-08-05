@@ -13,8 +13,6 @@ import { Text } from '@/components/Typography';
 import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
-import { PerpHistoryHeader } from './PerpHistoryHeader';
-import type { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 import { PerpsModeSwitch } from '../../PerpsShared/components/PerpsModeSwitch';
 
 const HEADER_HEIGHT = 58;
@@ -26,9 +24,8 @@ const HEADER_HEIGHT = 58;
 const PerpsHeaderContent: React.FC<{
   account?: Account | null;
   isModeSwitching: boolean;
-  localLoadingHistory: AccountHistoryItem[];
   onSwitchToPro: () => void;
-}> = ({ account, isModeSwitching, localLoadingHistory, onSwitchToPro }) => {
+}> = ({ account, isModeSwitching, onSwitchToPro }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
   const [popupState, setPopupState] = usePerpsPopupState();
@@ -58,7 +55,7 @@ const PerpsHeaderContent: React.FC<{
           />
         </View>
 
-        {/* Right: account selector + history */}
+        {/* Right: account selector */}
         <View style={styles.headerRight}>
           {account ? (
             <View style={styles.accountSelectorContainer}>
@@ -92,7 +89,6 @@ const PerpsHeaderContent: React.FC<{
               </TouchableOpacity>
             </View>
           ) : null}
-          <PerpHistoryHeader localLoadingHistory={localLoadingHistory} />
         </View>
       </View>
     </View>
@@ -102,9 +98,8 @@ const PerpsHeaderContent: React.FC<{
 export const PerpsNativeHeader: React.FC<{
   account?: Account | null;
   isModeSwitching: boolean;
-  localLoadingHistory: AccountHistoryItem[];
   onSwitchToPro: () => void;
-}> = ({ account, isModeSwitching, localLoadingHistory, onSwitchToPro }) => {
+}> = ({ account, isModeSwitching, onSwitchToPro }) => {
   const { colors2024 } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
 
@@ -116,7 +111,6 @@ export const PerpsNativeHeader: React.FC<{
         <PerpsHeaderContent
           account={account}
           isModeSwitching={isModeSwitching}
-          localLoadingHistory={localLoadingHistory}
           onSwitchToPro={onSwitchToPro}
         />
       ),
@@ -124,14 +118,7 @@ export const PerpsNativeHeader: React.FC<{
         backgroundColor: colors2024['neutral-bg-1'],
       },
     });
-  }, [
-    account,
-    colors2024,
-    isModeSwitching,
-    localLoadingHistory,
-    navigation,
-    onSwitchToPro,
-  ]);
+  }, [account, colors2024, isModeSwitching, navigation, onSwitchToPro]);
 
   return null;
 };

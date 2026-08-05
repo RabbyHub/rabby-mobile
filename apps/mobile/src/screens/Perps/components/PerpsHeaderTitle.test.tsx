@@ -71,15 +71,6 @@ jest.mock('../hooks/usePerpsPopupState', () => ({
   usePerpsPopupState: () => [{ isShowLoginPopup: false }, jest.fn()],
 }));
 
-jest.mock('./PerpHistoryHeader', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return {
-    PerpHistoryHeader: () =>
-      ReactModule.createElement(View, { testID: 'history-entry' }),
-  };
-});
-
 jest.mock('../../PerpsShared/components/PerpsModeSwitch', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
@@ -114,7 +105,6 @@ describe('PerpsNativeHeader', () => {
       <PerpsNativeHeader
         account={null}
         isModeSwitching={false}
-        localLoadingHistory={[]}
         onSwitchToPro={onSwitchToPro}
       />,
     );
@@ -129,7 +119,7 @@ describe('PerpsNativeHeader', () => {
 
     const header = render(options.header());
     expect(header.getByTestId('back-button')).toBeOnTheScreen();
-    expect(header.getByTestId('history-entry')).toBeOnTheScreen();
+    expect(header.queryByTestId('history-entry')).toBeNull();
     expect(header.getByTestId('mode-switch').props.accessibilityLabel).toBe(
       'simple',
     );

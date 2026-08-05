@@ -79,8 +79,6 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     fetchMarketData,
     perpFee,
 
-    localLoadingHistory,
-
     handleActionApproveStatus,
     handleSafeSetReference,
     setInitialized,
@@ -257,7 +255,6 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
         )}
         <PerpsNativeHeader
           account={currentPerpsAccount}
-          localLoadingHistory={localLoadingHistory}
           isModeSwitching={isModeSwitching}
           onSwitchToPro={onSwitchToPro}
         />
