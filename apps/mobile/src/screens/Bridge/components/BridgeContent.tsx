@@ -107,6 +107,12 @@ export interface BridgeFormSnapshot {
   amountMode?: FormAmountMode;
 }
 
+type TransactionQuoteRefreshLockPhase =
+  | 'idle'
+  | 'authenticating'
+  | 'confirming'
+  | 'submitting';
+
 function BridgeActivationDataProbe({
   currentAddress,
   fromChainReady,
@@ -409,8 +415,8 @@ export const BridgeContent = ({
     setAutoSlippage,
     setIsCustomSlippage,
 
-    clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setQuoteRefreshLocked,
     setReloadTxRefreshPaused,
 
     gasList,
@@ -604,6 +610,21 @@ export const BridgeContent = ({
     },
     [setQuotePollingPauseReason],
   );
+  const transactionQuoteRefreshLockPhaseRef =
+    useRef<TransactionQuoteRefreshLockPhase>('idle');
+  const lockTransactionQuoteRefresh = useCallback(
+    (phase: Exclude<TransactionQuoteRefreshLockPhase, 'idle'>) => {
+      transactionQuoteRefreshLockPhaseRef.current = phase;
+      setQuoteRefreshLocked(true);
+      setQuotePollingPauseReason('transaction-submit', true);
+    },
+    [setQuotePollingPauseReason, setQuoteRefreshLocked],
+  );
+  const unlockTransactionQuoteRefresh = useCallback(() => {
+    transactionQuoteRefreshLockPhaseRef.current = 'idle';
+    setQuoteRefreshLocked(false);
+    setQuotePollingPauseReason('transaction-submit', false);
+  }, [setQuotePollingPauseReason, setQuoteRefreshLocked]);
 
   useEffect(() => {
     setQuotePollingPauseReason('scene-inactive', !sceneActive);
@@ -1161,6 +1182,7 @@ export const BridgeContent = ({
       const snapshot = formValuesRef.current.getSnapshot();
 
       if (!snapshot) {
+        unlockTransactionQuoteRefresh();
         toast.info(t('page.bridge.formChangedAmount'));
         return;
       }
@@ -1172,6 +1194,7 @@ export const BridgeContent = ({
 
       // If amount changed during authentication, close modal and alert user
       if (comparison.isChanged) {
+        unlockTransactionQuoteRefresh();
         formValuesRef.current.clear();
         closeMiniSigner();
         Alert.alert(
@@ -1206,16 +1229,17 @@ export const BridgeContent = ({
     //   return;
     // }
 
+    if (canUseMiniTx && canShowDirectSubmit && miniSignLoading) {
+      return;
+    }
+    lockTransactionQuoteRefresh('submitting');
+
     if (canUseMiniTx && canShowDirectSubmit) {
       try {
-        if (miniSignLoading) {
-          return;
-        }
         setReloadTxRefreshPaused(true);
         setMiniSignLoading(true);
         setFetchingBridgeQuote(true);
 
-        clearExpiredTimer();
         if (buildBridgeTxsTimerRef.current) {
           clearTimeout(buildBridgeTxsTimerRef.current);
           buildBridgeTxsTimerRef.current = null;
@@ -1302,11 +1326,16 @@ export const BridgeContent = ({
         setReloadTxRefreshPaused(false);
         setMiniSignLoading(false);
         setFetchingBridgeQuote(false);
+        unlockTransactionQuoteRefresh();
       }
       return;
     }
 
-    gotoBridge();
+    try {
+      await gotoBridge();
+    } finally {
+      unlockTransactionQuoteRefresh();
+    }
   });
 
   const amountAvailable = useMemo(() => Number(amount) > 0, [amount]);
@@ -1632,6 +1661,7 @@ export const BridgeContent = ({
       return;
     }
     if (selectedBridgeQuote?.shouldTwoStepApprove) {
+      lockTransactionQuoteRefresh('confirming');
       setTwoStepApproveModalVisible(true);
       return;
     }
@@ -1871,15 +1901,22 @@ export const BridgeContent = ({
                   type={'primary'}
                   syncUnlockTime
                   onBeforeAuth={() => {
-                    clearExpiredTimer();
+                    lockTransactionQuoteRefresh('authenticating');
                     formValuesRef.current.save(buildFormSnapshot());
                   }}
                   onCancel={() => {
                     formValuesRef.current.clear();
+                    unlockTransactionQuoteRefresh();
                     refresh(e => e + 1);
                   }}
                   onAuthModalDismiss={() => {
                     formValuesRef.current.clear();
+                    if (
+                      transactionQuoteRefreshLockPhaseRef.current ===
+                      'authenticating'
+                    ) {
+                      unlockTransactionQuoteRefresh();
+                    }
                   }}
                   account={currentAccount}
                   showHardWalletProcess
@@ -1908,6 +1945,7 @@ export const BridgeContent = ({
           open={twoStepApproveModalVisible}
           onCancel={() => {
             setTwoStepApproveModalVisible(false);
+            unlockTransactionQuoteRefresh();
           }}
           onConfirm={() => handleBridge({ ignoreGasFee: riskChecked })}
         />

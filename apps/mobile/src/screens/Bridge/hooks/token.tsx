@@ -274,6 +274,8 @@ export const useBridge = (
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
+  // Polling pause stops the next timer; this lock also freezes in-flight results.
+  const quoteRefreshLockedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(
@@ -401,7 +403,7 @@ export const useBridge = (
   const runScheduledQuoteRefresh = useCallback(() => {
     expiredTimer.current = undefined;
 
-    if (autoQuoteRefreshPausedRef.current) {
+    if (autoQuoteRefreshPausedRef.current || quoteRefreshLockedRef.current) {
       return;
     }
 
@@ -473,6 +475,10 @@ export const useBridge = (
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
     reloadTxRefreshPausedRef.current = paused;
+  }, []);
+
+  const setQuoteRefreshLocked = useCallback((locked: boolean) => {
+    quoteRefreshLockedRef.current = locked;
   }, []);
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
@@ -757,7 +763,7 @@ export const useBridge = (
       cancelAnimationFrame(quoteFlushFrameRef.current);
       quoteFlushFrameRef.current = null;
     }
-    if (id !== fetchIdRef.current) {
+    if (id !== fetchIdRef.current || quoteRefreshLockedRef.current) {
       pendingQuoteUpdatesRef.current.clear();
       return;
     }
@@ -771,7 +777,11 @@ export const useBridge = (
 
   const scheduleQuoteUpdates = useCallback(
     (id: number, quotes: SelectedBridgeQuote[]) => {
-      if (!quotes.length || id !== fetchIdRef.current) {
+      if (
+        !quotes.length ||
+        id !== fetchIdRef.current ||
+        quoteRefreshLockedRef.current
+      ) {
         return;
       }
 
@@ -794,9 +804,10 @@ export const useBridge = (
   const [quoteRequestId, setQuoteRequestId] = useState(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
-      if (!active) {
+      if (!active || quoteRefreshLockedRef.current) {
         return;
       }
+
       fetchIdRef.current += 1;
       const currentFetchId = fetchIdRef.current;
       setQuoteRequestId(currentFetchId);
@@ -823,7 +834,10 @@ export const useBridge = (
         const getQuoteWithApproval = async (
           quote: Omit<BridgeQuote, 'tx'>,
         ): Promise<SelectedBridgeQuote | undefined> => {
-          if (currentFetchId !== fetchIdRef.current) {
+          if (
+            currentFetchId !== fetchIdRef.current ||
+            quoteRefreshLockedRef.current
+          ) {
             return;
           }
 
@@ -920,6 +934,10 @@ export const useBridge = (
                 }
               });
 
+              if (quoteRefreshLockedRef.current) {
+                return;
+              }
+
               if (alternativeToken) {
                 if (
                   data &&
@@ -987,7 +1005,10 @@ export const useBridge = (
             !!quote.bridge.name,
         );
 
-        if (currentFetchId === fetchIdRef.current) {
+        if (
+          currentFetchId === fetchIdRef.current &&
+          !quoteRefreshLockedRef.current
+        ) {
           flushPendingQuoteUpdates(currentFetchId);
           setPending(false);
 
@@ -1124,7 +1145,7 @@ export const useBridge = (
   const bridgeQuoteRequestFinished = !hasPendingBridgeQuote;
 
   useEffect(() => {
-    if (!active || !toToken?.id) {
+    if (!active || !toToken?.id || quoteRefreshLockedRef.current) {
       return;
     }
 
@@ -1415,6 +1436,7 @@ export const useBridge = (
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          quoteRefreshLockedRef.current ||
           reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
@@ -1495,6 +1517,7 @@ export const useBridge = (
 
     setSelectedBridgeQuote,
     setAutoQuoteRefreshPaused,
+    setQuoteRefreshLocked,
     setReloadTxRefreshPaused,
     ...slippageObj,
 

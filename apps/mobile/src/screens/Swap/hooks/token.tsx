@@ -452,6 +452,8 @@ export const useTokenPair = ({
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
+  // Polling pause stops the next timer; this lock also freezes in-flight results.
+  const quoteRefreshLockedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
   const enableRefreshRef = useRef(false);
 
@@ -470,7 +472,7 @@ export const useTokenPair = ({
   const runScheduledQuoteRefresh = useCallback(() => {
     expiredTimer.current = undefined;
 
-    if (autoQuoteRefreshPausedRef.current) {
+    if (autoQuoteRefreshPausedRef.current || quoteRefreshLockedRef.current) {
       return;
     }
 
@@ -536,6 +538,10 @@ export const useTokenPair = ({
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
     reloadTxRefreshPausedRef.current = paused;
+  }, []);
+
+  const setQuoteRefreshLocked = useCallback((locked: boolean) => {
+    quoteRefreshLockedRef.current = locked;
   }, []);
 
   useEffect(() => {
@@ -951,7 +957,7 @@ export const useTokenPair = ({
 
   const flushPendingQuoteUpdates = useCallback((id: number) => {
     quoteFlushFrameRef.current = null;
-    if (id !== fetchIdRef.current) {
+    if (id !== fetchIdRef.current || quoteRefreshLockedRef.current) {
       pendingQuoteUpdatesRef.current.clear();
       return;
     }
@@ -977,7 +983,7 @@ export const useTokenPair = ({
 
   const setQuote = useCallback(
     (id: number) => (quote: TDexQuoteData) => {
-      if (id === fetchIdRef.current) {
+      if (id === fetchIdRef.current && !quoteRefreshLockedRef.current) {
         pendingQuoteUpdatesRef.current.set(quote.name, quote);
         schedulePendingQuoteFlush(id);
       }
@@ -997,7 +1003,11 @@ export const useTokenPair = ({
 
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
-      if (canRunQuoteRequest && !isDraggingSlider) {
+      if (
+        canRunQuoteRequest &&
+        !isDraggingSlider &&
+        !quoteRefreshLockedRef.current
+      ) {
         setTokenRefreshId(e => e + 1);
         const limit = rateLimitRef.current?.checkRateLimit();
         setRateLimit(!!limit);
@@ -1009,7 +1019,10 @@ export const useTokenPair = ({
         let realSlippage = slippage;
         if (autoSlippage && isFreeTokenPair) {
           realSlippage = autoSlippageValue;
-          if (currentFetchId === fetchIdRef.current) {
+          if (
+            currentFetchId === fetchIdRef.current &&
+            !quoteRefreshLockedRef.current
+          ) {
             setAutoSuggestSlippage(realSlippage);
           }
         } else if (autoSlippage) {
@@ -1032,7 +1045,10 @@ export const useTokenPair = ({
                   .times(100)
                   .toFixed()
               : slippage || '0.1';
-            if (currentFetchId === fetchIdRef.current) {
+            if (
+              currentFetchId === fetchIdRef.current &&
+              !quoteRefreshLockedRef.current
+            ) {
               setAutoSuggestSlippage(realSlippage);
             }
           } catch (error) {
@@ -1060,7 +1076,10 @@ export const useTokenPair = ({
       onFinally(params) {
         // wait for progress animation finish
         setTimeout(() => {
-          if (params[0] === fetchIdRef.current) {
+          if (
+            params[0] === fetchIdRef.current &&
+            !quoteRefreshLockedRef.current
+          ) {
             flushPendingQuoteUpdates(params[0]);
             setQuoteRequestFinished(true);
             setQuoteLoading(false);
@@ -1095,9 +1114,10 @@ export const useTokenPair = ({
   );
 
   useLayoutEffect(() => {
-    if (!active) {
+    if (!active || quoteRefreshLockedRef.current) {
       return;
     }
+
     fetchIdRef.current += 1;
     cancelPendingQuoteFlush();
     setQuoteRequestId(fetchIdRef.current);
@@ -1134,7 +1154,11 @@ export const useTokenPair = ({
   const canUpdateActiveProvider = canRunQuoteRequest;
 
   useEffect(() => {
-    if (!receiveToken?.id || !canUpdateActiveProvider) {
+    if (
+      !receiveToken?.id ||
+      !canUpdateActiveProvider ||
+      quoteRefreshLockedRef.current
+    ) {
       return;
     }
 
@@ -1440,6 +1464,7 @@ export const useTokenPair = ({
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          quoteRefreshLockedRef.current ||
           reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
@@ -1534,6 +1559,7 @@ export const useTokenPair = ({
 
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setQuoteRefreshLocked,
     setReloadTxRefreshPaused,
 
     autoSuggestSlippage,
