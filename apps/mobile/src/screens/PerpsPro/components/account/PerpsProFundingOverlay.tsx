@@ -1,0 +1,54 @@
+import type { PerpsQuoteAsset } from '@/constant/perps';
+import { usePerpsFundingActions } from '@/hooks/perps/funding/usePerpsFundingActions';
+import { PerpsDepositPopup } from '@/screens/Perps/components/PerpsDepositPopup';
+import { PerpsSpotSwapPopup } from '@/screens/Perps/components/PerpsSpotSwapPopup';
+import { PerpsWithdrawPopup } from '@/screens/Perps/components/PerpsWithdrawPopup';
+import React from 'react';
+
+export type PerpsProFundingMode = 'deposit' | 'withdraw' | 'swap';
+
+export const PerpsProFundingOverlay: React.FC<{
+  mode: PerpsProFundingMode;
+  onClose: () => void;
+  onOpenDeposit: () => void;
+  targetAsset: PerpsQuoteAsset;
+}> = ({ mode, onClose, onOpenDeposit, targetAsset }) => {
+  const {
+    currentPerpsAccount,
+    handleDeposit,
+    handleStableCoinOrder,
+    handleWithdraw,
+  } = usePerpsFundingActions();
+
+  if (mode === 'deposit') {
+    return (
+      <PerpsDepositPopup
+        account={currentPerpsAccount}
+        onClose={onClose}
+        onDeposit={handleDeposit}
+        visible
+      />
+    );
+  }
+
+  if (mode === 'withdraw') {
+    return (
+      <PerpsWithdrawPopup
+        onClose={onClose}
+        onWithdraw={handleWithdraw}
+        visible
+      />
+    );
+  }
+
+  return (
+    <PerpsSpotSwapPopup
+      disableSwitch
+      onClose={onClose}
+      onDepositPress={onOpenDeposit}
+      onSpotOrder={handleStableCoinOrder}
+      targetAsset={targetAsset}
+      visible
+    />
+  );
+};

@@ -258,6 +258,13 @@ export const PERPS_MINI_USD_VALUE = 10; // $10
 
 export type PerpsQuoteAsset = 'USDC' | 'USDT' | 'USDH' | 'USDE';
 
+export const PERPS_QUOTE_ASSET_FULL_NAME: Record<PerpsQuoteAsset, string> = {
+  USDC: ARB_USDC_TOKEN_ITEM.name,
+  USDE: HYPE_USDE_TOKEN_ITEM.name,
+  USDH: HYPE_USDH_TOKEN_ITEM.name,
+  USDT: HYPE_USDT_TOKEN_ITEM.name,
+};
+
 export const COLLATERAL_TOKEN_TO_QUOTE: Record<number, PerpsQuoteAsset> = {
   0: 'USDC',
   268: 'USDT',

@@ -69,3 +69,48 @@ export const formatPerpsProSignedUsd = (
   const sign = value > 0 ? '+' : value < 0 ? '-' : '';
   return `${sign}$${Math.abs(value).toFixed(decimals)}`;
 };
+
+export const formatPerpsProDecimal = (
+  value: number | string | null | undefined,
+  decimals = 2,
+) => {
+  if (value == null || value === '') {
+    return '-';
+  }
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return '-';
+  }
+  return withThousandsSeparators(number.toFixed(decimals));
+};
+
+export const formatPerpsProUsdValue = (
+  value: number | string | null | undefined,
+  options: { decimals?: number; signed?: boolean } = {},
+) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return '-';
+  }
+  const decimals = options.decimals ?? 2;
+  const sign = options.signed && number > 0 ? '+' : number < 0 ? '-' : '';
+  return `${sign}$${withThousandsSeparators(
+    Math.abs(number).toFixed(decimals),
+  )}`;
+};
+
+export const formatPerpsProTime = (timestamp: number | null | undefined) => {
+  if (!timestamp || !Number.isFinite(timestamp)) {
+    return '-';
+  }
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+  const pad = (value: number) => value.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate(),
+  )} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
+    date.getSeconds(),
+  )}`;
+};

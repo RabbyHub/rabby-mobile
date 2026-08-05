@@ -14,6 +14,7 @@ import type {
   ClearinghouseState,
   SpotClearinghouseState,
   OpenOrder,
+  WsFastAssetCtxs,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import type { Account } from '@/types/account';
@@ -326,6 +327,56 @@ export const calcAccountValueByAllDexs = (
   }, 0);
 };
 
+export interface PerDexClearinghouseSummary {
+  accountValue: string;
+  crossAccountValue: string;
+  crossMaintenanceMarginUsed: string;
+  time: number;
+  withdrawable: string;
+}
+
+export type AggregatedClearinghouseState = ClearinghouseState & {
+  crossMaintByDex: Record<string, string>;
+  perDexSummaries: Record<string, PerDexClearinghouseSummary>;
+};
+
+export interface RawSpotBalance {
+  coin: string;
+  token: number;
+  total: string;
+  hold: string;
+  available: string;
+  entryNtl: string;
+  spotHold?: string;
+  ltv?: string;
+  borrowed?: string;
+  supplied?: string;
+}
+
+export const mergeFastAssetCtxs = (
+  previous: WsFastAssetCtxs,
+  delta: WsFastAssetCtxs,
+): WsFastAssetCtxs => {
+  let next = previous;
+  for (const key of Object.keys(delta)) {
+    const incoming = delta[key];
+    if (!incoming) {
+      continue;
+    }
+    const current = previous[key];
+    const markPx = incoming.markPx ?? current?.markPx;
+    const midPx = incoming.midPx ?? current?.midPx;
+    if (current?.markPx === markPx && current?.midPx === midPx) {
+      continue;
+    }
+    if (next === previous) {
+      next = { ...previous };
+    }
+    next[key] = { markPx, midPx };
+  }
+  return next;
+};
+
 export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
   return {
     pnl: Number(
@@ -343,7 +394,7 @@ export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
 
 export const formatAllDexsClearinghouseState = (
   allClearinghouseState: AllDexsClearinghouseState,
-): ClearinghouseState | null => {
+): AggregatedClearinghouseState | null => {
   if (!allClearinghouseState || !allClearinghouseState[0]) {
     return null;
   }
@@ -353,25 +404,49 @@ export const formatAllDexsClearinghouseState = (
   const hyperDexState =
     allClearinghouseState.find(([name]) => name === '')?.[1] ??
     allClearinghouseState[0][1];
+  if (!hyperDexState) {
+    return null;
+  }
 
   const assetPositions = allClearinghouseState
     .map(item => item[1]?.assetPositions || [])
     .flat();
 
-  const withdrawable = allClearinghouseState.reduce((acc, item) => {
-    return acc + Number(item[1]?.withdrawable || 0);
-  }, 0);
+  const withdrawable = allClearinghouseState.reduce(
+    (acc, item) => acc.plus(item[1]?.withdrawable || 0),
+    new BigNumber(0),
+  );
+  const accountValue = allClearinghouseState.reduce(
+    (acc, item) => acc.plus(item[1]?.marginSummary?.accountValue || 0),
+    new BigNumber(0),
+  );
 
-  let crossMaintenanceMarginUsed = 0;
+  let crossMaintenanceMarginUsed = new BigNumber(0);
+  let crossAccountValue = new BigNumber(0);
+  const crossMaintByDex: Record<string, string> = {};
+  const perDexSummaries: Record<string, PerDexClearinghouseSummary> = {};
   // time = max across all dexes, not just hyper — otherwise a sub-dex-only
   // refresh wouldn't advance the aggregate timestamp and downstream
   // freshness guards would reject the update.
   let maxTime = 0;
-  for (const [, state] of allClearinghouseState) {
+  for (const [dexName, state] of allClearinghouseState) {
     if (!state) {
       continue;
     }
-    crossMaintenanceMarginUsed += Number(state.crossMaintenanceMarginUsed || 0);
+    const dexCrossMaintenance = state.crossMaintenanceMarginUsed || '0';
+    crossMaintByDex[dexName] = dexCrossMaintenance;
+    crossMaintenanceMarginUsed =
+      crossMaintenanceMarginUsed.plus(dexCrossMaintenance);
+    crossAccountValue = crossAccountValue.plus(
+      state.crossMarginSummary?.accountValue || 0,
+    );
+    perDexSummaries[dexName] = {
+      accountValue: state.marginSummary?.accountValue || '0',
+      crossAccountValue: state.crossMarginSummary?.accountValue || '0',
+      crossMaintenanceMarginUsed: dexCrossMaintenance,
+      time: state.time ?? 0,
+      withdrawable: state.withdrawable || '0',
+    };
     if ((state.time ?? 0) > maxTime) {
       maxTime = state.time;
     }
@@ -380,10 +455,15 @@ export const formatAllDexsClearinghouseState = (
   return {
     assetPositions: assetPositions,
     crossMaintenanceMarginUsed: crossMaintenanceMarginUsed.toString(),
-    crossMarginSummary: hyperDexState?.crossMarginSummary || {},
+    crossMaintByDex,
+    perDexSummaries,
+    crossMarginSummary: {
+      ...hyperDexState.crossMarginSummary,
+      accountValue: crossAccountValue.toString(),
+    },
     marginSummary: {
       ...hyperDexState.marginSummary,
-      accountValue: calcAccountValueByAllDexs(allClearinghouseState).toString(),
+      accountValue: accountValue.toString(),
     },
     time: maxTime,
     withdrawable: withdrawable.toString(),
@@ -492,6 +572,13 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
   )
     ? spotState.tokenToAvailableAfterMaintenance ?? null
     : null;
+  const portfolioMarginEnabled = spotState?.portfolioMarginEnabled;
+  const portfolioMarginRatio = spotState?.portfolioMarginRatio;
+  const tokenToPortfolioBorrowRatio = Array.isArray(
+    spotState?.tokenToPortfolioBorrowRatio,
+  )
+    ? spotState.tokenToPortfolioBorrowRatio
+    : undefined;
 
   if (!spotState || !spotState.balances || spotState.balances.length === 0) {
     return {
@@ -499,8 +586,36 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
       availableToTrade: '0',
       balances: [],
       balancesMap: {},
+      rawBalances: [] as RawSpotBalance[],
+      rawBalancesMap: {} as Record<string, RawSpotBalance>,
+      rawBalancesByToken: {} as Record<number, RawSpotBalance>,
       tokenToAvailableAfterMaintenance,
+      portfolioMarginEnabled,
+      portfolioMarginRatio,
+      tokenToPortfolioBorrowRatio,
     };
+  }
+
+  const rawBalances: RawSpotBalance[] = spotState.balances.map(balance => ({
+    coin: balance.coin,
+    token: balance.token,
+    total: balance.total || '0',
+    hold: balance.hold || '0',
+    available: new BigNumber(balance.total || '0')
+      .minus(balance.hold || '0')
+      .toString(),
+    entryNtl: balance.entryNtl || '0',
+    spotHold: balance.spotHold,
+    ltv: balance.ltv,
+    borrowed: balance.borrowed,
+    supplied: balance.supplied,
+  }));
+
+  const rawBalancesMap: Record<string, RawSpotBalance> = {};
+  const rawBalancesByToken: Record<number, RawSpotBalance> = {};
+  for (const balance of rawBalances) {
+    rawBalancesMap[balance.coin] = balance;
+    rawBalancesByToken[balance.token] = balance;
   }
 
   // Only extract the 4 stablecoins we support, filter by token ID
@@ -508,18 +623,15 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
     Object.keys(COLLATERAL_TOKEN_TO_QUOTE).map(Number),
   );
 
-  const balances = spotState.balances
+  const balances = rawBalances
     .filter(b => STABLECOIN_TOKEN_IDS.has(b.token))
     .map(b => {
-      const available = new BigNumber(b.total || '0')
-        .minus(b.hold || '0')
-        .toString();
       return {
         coin: b.coin,
         token: b.token,
         total: b.total || '0',
         hold: b.hold || '0',
-        available,
+        available: b.available,
       };
     });
 
@@ -543,7 +655,13 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
     availableToTrade: totalAvailable,
     balances,
     balancesMap,
+    rawBalances,
+    rawBalancesMap,
+    rawBalancesByToken,
     tokenToAvailableAfterMaintenance,
+    portfolioMarginEnabled,
+    portfolioMarginRatio,
+    tokenToPortfolioBorrowRatio,
   };
 };
 

@@ -1,9 +1,12 @@
 import {
   formatPerpsProCompactNumber,
+  formatPerpsProDecimal,
   formatPerpsProFundingRate,
   formatPerpsProPercent,
   formatPerpsProPrice,
   formatPerpsProSignedUsd,
+  formatPerpsProTime,
+  formatPerpsProUsdValue,
 } from './format';
 
 describe('Perps Pro formatters', () => {
@@ -32,5 +35,21 @@ describe('Perps Pro formatters', () => {
     expect(formatPerpsProSignedUsd(1.25, 2)).toBe('+$1.25');
     expect(formatPerpsProSignedUsd(-1.25, 2)).toBe('-$1.25');
     expect(formatPerpsProSignedUsd(null)).toBe('-');
+  });
+
+  it('formats account and row values without compacting them', () => {
+    expect(formatPerpsProDecimal('12345.6')).toBe('12,345.60');
+    expect(formatPerpsProDecimal(null)).toBe('-');
+    expect(formatPerpsProDecimal('')).toBe('-');
+    expect(formatPerpsProUsdValue('-12345.6', { signed: true })).toBe(
+      '-$12,345.60',
+    );
+    expect(formatPerpsProUsdValue('12', { signed: true })).toBe('+$12.00');
+  });
+
+  it('formats timestamps deterministically in local time', () => {
+    const timestamp = new Date(2026, 7, 3, 9, 5, 7).getTime();
+    expect(formatPerpsProTime(timestamp)).toBe('2026-08-03 09:05:07');
+    expect(formatPerpsProTime(undefined)).toBe('-');
   });
 });

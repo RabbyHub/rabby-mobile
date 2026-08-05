@@ -9,6 +9,7 @@ import type {
   MarginSummary,
   OpenOrder,
   PerpDexsResponse,
+  SpotMeta,
   UserNonFundingLedgerUpdates,
   WsFastAssetCtxs,
   WsFill,
@@ -33,6 +34,9 @@ import {
   formatPositionPnl,
   formatSpotState,
   getPxDecimals,
+  mergeFastAssetCtxs,
+  type AggregatedClearinghouseState,
+  type RawSpotBalance,
 } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
@@ -177,19 +181,28 @@ export type MarketDataStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
-  currentClearinghouseState: ClearinghouseState | null;
+  currentClearinghouseState: AggregatedClearinghouseState | null;
   spotState: {
     accountValue: string;
     availableToTrade: string;
     balances: SpotBalance[];
     balancesMap: Record<string, SpotBalance>;
+    rawBalances: RawSpotBalance[];
+    rawBalancesMap: Record<string, RawSpotBalance>;
+    rawBalancesByToken: Record<number, RawSpotBalance>;
     tokenToAvailableAfterMaintenance: [number, string][] | null;
+    portfolioMarginEnabled?: boolean;
+    portfolioMarginRatio?: string;
+    tokenToPortfolioBorrowRatio?: [number, string][];
   };
+  spotMeta: SpotMeta | null;
+  spotMetaStatus: MarketDataStatus;
+  spotAssetCtxs: WsFastAssetCtxs;
   userAbstraction: UserAbstractionResp;
   userAbstractionReady: boolean;
   openOrders: OpenOrder[];
   currentPerpsAccount: Account | null;
-  clearinghouseStateMap: Record<string, ClearinghouseState | null>;
+  clearinghouseStateMap: Record<string, AggregatedClearinghouseState | null>;
   isFetchAllDone: boolean; // init ClearinghouseStateMap has done
   accountNeedApproveAgent: boolean; // 账户是否需要重新approve agent
   accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
@@ -241,8 +254,17 @@ export const initialState: PerpsState = {
     availableToTrade: '0',
     balances: [],
     balancesMap: {},
+    rawBalances: [],
+    rawBalancesMap: {},
+    rawBalancesByToken: {},
     tokenToAvailableAfterMaintenance: null,
+    portfolioMarginEnabled: undefined,
+    portfolioMarginRatio: undefined,
+    tokenToPortfolioBorrowRatio: undefined,
   },
+  spotMeta: null,
+  spotMetaStatus: 'idle',
+  spotAssetCtxs: {},
   userAbstraction: UserAbstractionResp.default,
   userAbstractionReady: false,
   hasPermission: true,
@@ -331,6 +353,7 @@ let homeSpotSubscription: {
 } | null = null;
 let marketSnapshotUnsubscribe: (() => void) | null = null;
 let fastMarketUnsubscribe: (() => void) | null = null;
+let fastMarketSubscriptionGeneration = 0;
 
 const canReuseUserDataSubscription = (address: string) =>
   !!activeUserDataSubscription &&
@@ -465,7 +488,7 @@ const setHomePositionPnl = (payload: {
 
 const setClearinghouseStateMap = (payload: {
   address: string;
-  data: ClearinghouseState | null;
+  data: AggregatedClearinghouseState | null;
 }) => {
   const address = payload.address.toLowerCase();
   const { data } = payload;
@@ -507,16 +530,37 @@ export const getClearinghouseStateByMap = (address: string) => {
 const isSamePerpsAccount = (prev: Account | null, next: Account): boolean =>
   isSamePerpsAccountIdentity(prev, next);
 
+const isCurrentPerpsAccountAddress = (address: string) => {
+  const currentAddress = perpsStore.getState().currentPerpsAccount?.address;
+  return !!currentAddress && isSameAddress(currentAddress, address);
+};
+
 const setCurrentPerpsAccount = (payload: Account) => {
   setPerpsState(prev => {
     const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, payload);
+    const cachedClearinghouseState = sameAccount
+      ? prev.currentClearinghouseState
+      : prev.clearinghouseStateMap[payload.address.toLowerCase()] ?? null;
     return {
       ...prev,
       currentPerpsAccount: payload,
       isLogin: !!payload,
-      isUserDataReady: sameAccount ? prev.isUserDataReady : false,
+      currentClearinghouseState: cachedClearinghouseState,
+      homePositionPnl: cachedClearinghouseState
+        ? formatPositionPnl(cachedClearinghouseState)
+        : initialState.homePositionPnl,
+      isUserDataReady: sameAccount
+        ? prev.isUserDataReady
+        : !!cachedClearinghouseState,
       isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
       userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
+      spotState: sameAccount ? prev.spotState : initialState.spotState,
+      openOrders: sameAccount ? prev.openOrders : [],
+      userAbstraction: sameAccount
+        ? prev.userAbstraction
+        : UserAbstractionResp.default,
+      userAccountHistory: sameAccount ? prev.userAccountHistory : [],
+      localLoadingHistory: sameAccount ? prev.localLoadingHistory : [],
       // Fills are merged (not overwritten) on WS snapshots, so a stale
       // account's list must be cleared explicitly on switch.
       userFills: sameAccount ? prev.userFills : [],
@@ -549,6 +593,8 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     isSpotStateReady: false,
     userAbstractionReady: false,
     currentClearinghouseState: null,
+    spotState: initialState.spotState,
+    openOrders: [],
     homePositionPnl: pnl,
     accountNeedApproveAgent: false,
     accountNeedApproveBuilderFee: false,
@@ -635,6 +681,53 @@ async function withRetry<T>(
 // Single-flight: concurrent callers await the same in-flight fetch, so an
 // awaited fetchMarketData() resolves only when data is loaded.
 let marketDataPromise: Promise<void> | null = null;
+let spotMetaPromise: Promise<SpotMeta | null> | null = null;
+
+export const fetchSpotMeta = (force = false): Promise<SpotMeta | null> => {
+  const current = perpsStore.getState();
+  if (!force && current.spotMetaStatus === 'success' && current.spotMeta) {
+    return Promise.resolve(current.spotMeta);
+  }
+  if (spotMetaPromise) {
+    return spotMetaPromise;
+  }
+
+  setPerpsState(prev => ({
+    ...prev,
+    spotMetaStatus: 'loading',
+  }));
+  const sdk = apisPerps.getPerpsSDK();
+  spotMetaPromise = sdk.info
+    .getSpotMeta()
+    .then(spotMeta => {
+      if (
+        !spotMeta ||
+        !Array.isArray(spotMeta.tokens) ||
+        !Array.isArray(spotMeta.universe)
+      ) {
+        throw new Error('Invalid spot meta response');
+      }
+      setPerpsState(prev => ({
+        ...prev,
+        spotMeta,
+        spotMetaStatus: 'success',
+      }));
+      return spotMeta;
+    })
+    .catch(error => {
+      console.error('[perpsSpotMeta] fetch failed', error);
+      setPerpsState(prev => ({
+        ...prev,
+        spotMetaStatus: 'error',
+      }));
+      return null;
+    })
+    .finally(() => {
+      spotMetaPromise = null;
+    });
+
+  return spotMetaPromise;
+};
 
 // The boot-time fetch races network/VPN readiness and can fail before any
 // screen is around to retry it. Reschedule from the store itself: first retry
@@ -1054,18 +1147,21 @@ const resetAccountState = () => {
     isSpotStateReady: false,
     userAbstractionReady: false,
     currentClearinghouseState: null,
+    spotState: initialState.spotState,
+    openOrders: [],
   }));
 };
 
 const fetchUserFillHistory = async () => {
   const sdk = apisPerps.getPerpsSDK();
   const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
+  if (!expectedAddress) {
+    return;
+  }
   try {
     const res = await sdk.info.getUserFills();
     // Account switched during the await — drop the response.
-    if (
-      perpsStore.getState().currentPerpsAccount?.address !== expectedAddress
-    ) {
+    if (!isCurrentPerpsAccountAddress(expectedAddress)) {
       return;
     }
     setPerpsState(prev => ({
@@ -1189,18 +1285,23 @@ const mapLedgerUpdatesToHistory = (
 
 const fetchUserNonFundingLedgerUpdates = async () => {
   const sdk = apisPerps.getPerpsSDK();
+  const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
+  if (!expectedAddress) {
+    return;
+  }
   try {
     const res = await sdk.info.getUserNonFundingLedgerUpdates();
-    const state = perpsStore.getState();
-    const list = mapLedgerUpdatesToHistory(
-      res,
-      state.currentPerpsAccount?.address,
-    );
+    if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+      return;
+    }
+    const list = mapLedgerUpdatesToHistory(res, expectedAddress);
 
-    setPerpsState(prev => ({
-      ...prev,
-      userAccountHistory: list,
-    }));
+    setPerpsState(prev =>
+      prev.currentPerpsAccount &&
+      isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
+        ? { ...prev, userAccountHistory: list }
+        : prev,
+    );
   } catch (error) {
     console.error('Failed to fetch user non-funding ledger updates:', error);
   }
@@ -1296,8 +1397,8 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
 // Overlay fresh markPx/midPx from fastAssetCtxs onto perp marketData (by coin
 // name). This feed supersedes the throttled allDexsAssetCtxs for PRICES only;
 // other ctx fields still come from allDexsAssetCtxs. Spot coins in the combined
-// feed match no perp name and are ignored (mobile has no spot). Same ref when
-// unchanged so the map rebuild + re-render is skipped.
+// feed match no perp name here and are retained separately in spotAssetCtxs.
+// Same ref when unchanged so the map rebuild + re-render is skipped.
 const overlayFastCtxsToMarketData = (
   list: MarketData[],
   fastCtxs: WsFastAssetCtxs,
@@ -1325,25 +1426,36 @@ const overlayFastCtxsToMarketData = (
   return changed ? next : list;
 };
 
-const updateMarketDataByFastCtxs = (payload: WsFastAssetCtxs) => {
+const updateMarketDataByFastCtxs = (
+  payload: WsFastAssetCtxs,
+  replaceSpotSnapshot = false,
+) => {
   if (!payload) {
     return;
   }
   setPerpsState(prev => {
-    if (prev.marketData.length === 0) {
-      return prev;
-    }
+    const nextSpotAssetCtxs = mergeFastAssetCtxs(
+      replaceSpotSnapshot ? {} : prev.spotAssetCtxs,
+      payload,
+    );
     const nextMarketData = overlayFastCtxsToMarketData(
       prev.marketData,
       payload,
     );
-    if (nextMarketData === prev.marketData) {
+    if (
+      nextMarketData === prev.marketData &&
+      nextSpotAssetCtxs === prev.spotAssetCtxs
+    ) {
       return prev;
     }
     return {
       ...prev,
+      spotAssetCtxs: nextSpotAssetCtxs,
       marketData: nextMarketData,
-      marketDataMap: buildMarketDataMap(nextMarketData),
+      marketDataMap:
+        nextMarketData === prev.marketData
+          ? prev.marketDataMap
+          : buildMarketDataMap(nextMarketData),
     };
   });
 };
@@ -1369,13 +1481,21 @@ const startMarketSnapshotSubscription = () => {
   return true;
 };
 
+let hasFastMarketSnapshot = false;
+
 const startFastMarketSubscription = () => {
   if (fastMarketUnsubscribe) {
     return false;
   }
+  const generation = ++fastMarketSubscriptionGeneration;
   const sdk = apisPerps.getPerpsSDK();
   const { unsubscribe } = sdk.ws.subscribeToFastAssetCtxs(data => {
-    updateMarketDataByFastCtxs(data);
+    if (generation !== fastMarketSubscriptionGeneration) {
+      return;
+    }
+    const replaceSpotSnapshot = !hasFastMarketSnapshot;
+    hasFastMarketSnapshot = true;
+    updateMarketDataByFastCtxs(data, replaceSpotSnapshot);
   });
   fastMarketUnsubscribe = unsubscribe;
   traceStartupDiagnostic('perps', 'market_fast_registered');
@@ -1396,6 +1516,8 @@ const stopMarketSubscriptions = () => {
   ].filter((unsubscribe): unsubscribe is () => void => !!unsubscribe);
   marketSnapshotUnsubscribe = null;
   fastMarketUnsubscribe = null;
+  fastMarketSubscriptionGeneration += 1;
+  hasFastMarketSnapshot = false;
   subscriptions.forEach(unsubscribe => {
     try {
       unsubscribe();
@@ -1437,7 +1559,11 @@ export const subscribeToUserData = (account: Account) => {
       // Cache is the single source of truth — both WS and HTTP funnel
       // through here, time-guarded per dex. Rebuild + commit aggregate via
       // the shared flush so the React state write also gets the guard.
+      let touched = false;
       for (const [dexName, state] of clearinghouseStates) {
+        if (!isCurrentPerpsAccountAddress(address)) {
+          return;
+        }
         if (!state) {
           continue;
         }
@@ -1446,28 +1572,44 @@ export const subscribeToUserData = (account: Account) => {
           continue;
         }
         dexClearinghouseStatesCache.set(dexName, state);
+        touched = true;
       }
-      flushAggregatedClearinghouseState();
+      if (touched) {
+        flushAggregatedClearinghouseState(address);
+      }
     });
 
   const { unsubscribe: unsubscribeSpotState } = sdk.ws.subscribeToSpotState(
     data => {
       const { spotState, user } = data;
-      if (!isSameAddress(user, address) || !spotState) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address) ||
+        !spotState
+      ) {
         return;
       }
-      setPerpsState(prev => ({
-        ...prev,
-        spotState: formatSpotState(spotState),
-        isSpotStateReady: true,
-      }));
+      setPerpsState(prev =>
+        prev.currentPerpsAccount &&
+        isSameAddress(prev.currentPerpsAccount.address, address)
+          ? {
+              ...prev,
+              spotState: formatSpotState(spotState),
+              isSpotStateReady: true,
+            }
+          : prev,
+      );
     },
   );
 
   const { unsubscribe: unsubscribeOpenOrders } = sdk.ws.subscribeToOpenOrders(
     data => {
       const { orders, user } = data;
-      if (!isSameAddress(user, address) || !orders) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address) ||
+        !orders
+      ) {
         return;
       }
       // Bucket by dex so a single-dex HTTP refresh can overwrite just its
@@ -1488,7 +1630,12 @@ export const subscribeToUserData = (account: Account) => {
         dexOpenOrdersCache.set(dexName, list);
       }
 
-      setPerpsState(prev => ({ ...prev, openOrders: orders }));
+      setPerpsState(prev =>
+        prev.currentPerpsAccount &&
+        isSameAddress(prev.currentPerpsAccount.address, address)
+          ? { ...prev, openOrders: orders }
+          : prev,
+      );
     },
   );
 
@@ -1497,7 +1644,10 @@ export const subscribeToUserData = (account: Account) => {
       // Only process data when app is active
       console.log('User fills update:', data.fills.length);
       const { fills, isSnapshot, user } = data;
-      if (!isSameAddress(user, address)) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address)
+      ) {
         return;
       }
 
@@ -1512,7 +1662,10 @@ export const subscribeToUserData = (account: Account) => {
   const { unsubscribe: unsubscribeUserNonFundingLedgerUpdates } =
     sdk.ws.subscribeToUserNonFundingLedgerUpdates(data => {
       const { nonFundingLedgerUpdates, user, isSnapshot } = data;
-      if (!isSameAddress(user, address)) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address)
+      ) {
         return;
       }
 
@@ -1559,7 +1712,7 @@ const fetchAndCacheClearinghouseForDex = async (
     return false;
   }
   // Account switched during the await — drop the response.
-  if (perpsStore.getState().currentPerpsAccount?.address !== expectedAddress) {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
     return false;
   }
   const prevDex = dexClearinghouseStatesCache.get(dex);
@@ -1570,7 +1723,10 @@ const fetchAndCacheClearinghouseForDex = async (
   return true;
 };
 
-const flushAggregatedClearinghouseState = () => {
+const flushAggregatedClearinghouseState = (expectedAddress: string) => {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+    return;
+  }
   const entries = Array.from(dexClearinghouseStatesCache.entries());
   const aggregated = formatAllDexsClearinghouseState(entries);
   if (!aggregated) {
@@ -1578,11 +1734,14 @@ const flushAggregatedClearinghouseState = () => {
   }
   setPerpsState(prev => {
     if (
-      prev.currentClearinghouseState &&
-      (aggregated.time ?? 0) <= (prev.currentClearinghouseState.time ?? 0)
+      !prev.currentPerpsAccount ||
+      !isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
     ) {
       return prev;
     }
+    // Freshness is guarded per dex before each cache write. Aggregate time is
+    // only the maximum diagnostic timestamp: one dex can legitimately advance
+    // while another dex keeps that maximum unchanged.
     return {
       ...prev,
       currentClearinghouseState: aggregated,
@@ -1599,7 +1758,7 @@ export const fetchClearinghouseStateHttp = async (dex: string) => {
   }
   const touched = await fetchAndCacheClearinghouseForDex(dex, account.address);
   if (touched) {
-    flushAggregatedClearinghouseState();
+    flushAggregatedClearinghouseState(account.address);
   }
 };
 
@@ -1618,16 +1777,24 @@ const fetchAndCacheOpenOrdersForDex = async (
     console.error('[fetchPositionOpenOrdersHttp] failed', dex, e);
     return false;
   }
-  if (perpsStore.getState().currentPerpsAccount?.address !== expectedAddress) {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
     return false;
   }
   dexOpenOrdersCache.set(dex, orders);
   return true;
 };
 
-const flushAggregatedOpenOrders = () => {
+const flushAggregatedOpenOrders = (expectedAddress: string) => {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+    return;
+  }
   const flattened = Array.from(dexOpenOrdersCache.values()).flat();
-  setPerpsState(prev => ({ ...prev, openOrders: flattened }));
+  setPerpsState(prev =>
+    prev.currentPerpsAccount &&
+    isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
+      ? { ...prev, openOrders: flattened }
+      : prev,
+  );
 };
 
 // No server-side time guard for openOrders: callers fire this after the
@@ -1639,7 +1806,7 @@ export const fetchPositionOpenOrdersHttp = async (dex: string) => {
   }
   const touched = await fetchAndCacheOpenOrdersForDex(dex, account.address);
   if (touched) {
-    flushAggregatedOpenOrders();
+    flushAggregatedOpenOrders(account.address);
   }
 };
 
@@ -1658,7 +1825,7 @@ export const fetchPositionOpenOrdersHttpForDexes = async (dexes: string[]) => {
     unique.map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
   );
   if (results.some(Boolean)) {
-    flushAggregatedOpenOrders();
+    flushAggregatedOpenOrders(address);
   }
 };
 
@@ -1683,7 +1850,7 @@ export const fetchAllDexsClearinghouseStateHttp = async () => {
     ),
   );
   if (results.some(Boolean)) {
-    flushAggregatedClearinghouseState();
+    flushAggregatedClearinghouseState(address);
   }
 };
 
@@ -1697,7 +1864,7 @@ export const fetchAllDexsPositionOpenOrdersHttp = async () => {
     collectAllDexes().map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
   );
   if (results.some(Boolean)) {
-    flushAggregatedOpenOrders();
+    flushAggregatedOpenOrders(address);
   }
 };
 
@@ -1972,6 +2139,8 @@ export const usePerpsStore = () => {
           ? prev.isUserDataReady
           : !!seededClearinghouseState,
         isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
+        spotState: sameAccount ? prev.spotState : initialState.spotState,
+        openOrders: sameAccount ? prev.openOrders : [],
         userAbstraction: sameAccount
           ? prev.userAbstraction
           : UserAbstractionResp.default,
@@ -2084,6 +2253,7 @@ export const usePerpsStore = () => {
     fetchUserHistoricalOrders,
     refreshData,
     fetchMarketData,
+    fetchSpotMeta,
     fetchPerpFee,
   };
 };

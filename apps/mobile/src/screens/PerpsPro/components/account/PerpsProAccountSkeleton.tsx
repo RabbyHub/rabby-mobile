@@ -1,59 +1,73 @@
-import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
-import { useTranslation } from 'react-i18next';
+
+import { PerpsProSkeletonBlock } from '../loading/PerpsProSkeletonBlock';
 
 export const PerpsProAccountSkeleton: React.FC = React.memo(() => {
   const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
 
   return (
     <View
-      accessibilityLabel={t('page.perps.pro.account.disabledFrame')}
-      accessibilityState={{ disabled: true }}
-      style={styles.container}>
-      <View style={styles.tabs}>
-        <View style={styles.activeTab}>
-          <Text style={styles.activeTabText}>
-            {t('page.perps.pro.account.account')}
-          </Text>
-          <View style={styles.activeIndicator} />
-        </View>
-        <Text style={styles.tabText}>
-          {t('page.perps.pro.account.positions')}
-        </Text>
-        <Text style={styles.tabText}>
-          {t('page.perps.pro.account.openOrders')}
-        </Text>
-      </View>
+      accessibilityRole="progressbar"
+      accessibilityState={{ busy: true }}
+      style={styles.container}
+      testID="perps-pro-account-skeleton">
       <View style={styles.card}>
         <View style={styles.summary}>
-          <View>
-            <Text style={styles.label}>
-              {t('page.perps.pro.account.totalValue')}
-            </Text>
-            <Text style={styles.value}>-</Text>
+          <View style={styles.summaryColumn}>
+            <PerpsProSkeletonBlock
+              height={12}
+              style={styles.rounded}
+              width={112}
+            />
+            <PerpsProSkeletonBlock
+              height={24}
+              style={styles.rounded}
+              width={132}
+            />
           </View>
-          <View style={styles.rightSummary}>
-            <Text style={styles.label}>
-              {t('page.perps.pro.account.unrealizedPnl')}
-            </Text>
-            <Text style={styles.value}>-</Text>
+          <View style={styles.summaryColumnRight}>
+            <PerpsProSkeletonBlock
+              height={12}
+              style={styles.rounded}
+              width={88}
+            />
+            <PerpsProSkeletonBlock
+              height={20}
+              style={styles.rounded}
+              width={96}
+            />
           </View>
         </View>
+        <View style={styles.metrics}>
+          {[0, 1, 2].map(item => (
+            <View key={item} style={styles.metric}>
+              <PerpsProSkeletonBlock
+                height={10}
+                style={styles.rounded}
+                width={72}
+              />
+              <PerpsProSkeletonBlock
+                height={16}
+                style={styles.rounded}
+                width={84}
+              />
+            </View>
+          ))}
+        </View>
         <View style={styles.actions}>
-          <View style={styles.action}>
-            <Text style={styles.actionText}>
-              {t('page.perps.pro.account.deposit')}
-            </Text>
-          </View>
-          <View style={styles.action}>
-            <Text style={styles.actionText}>
-              {t('page.perps.pro.account.withdraw')}
-            </Text>
-          </View>
+          <PerpsProSkeletonBlock
+            height={36}
+            style={styles.action}
+            width="48%"
+          />
+          <PerpsProSkeletonBlock
+            height={36}
+            style={styles.action}
+            width="48%"
+          />
         </View>
       </View>
     </View>
@@ -64,95 +78,49 @@ PerpsProAccountSkeleton.displayName = 'PerpsProAccountSkeleton';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginTop: 16,
-    paddingBottom: 32,
-  },
-  tabs: {
-    alignItems: 'center',
-    borderBottomColor: colors2024['neutral-line'],
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    height: 34,
+    backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-  },
-  activeTab: {
-    alignItems: 'center',
-    height: '100%',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    position: 'relative',
-  },
-  activeTabText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-  activeIndicator: {
-    backgroundColor: colors2024['neutral-title-1'],
-    bottom: 0,
-    height: 2,
-    left: 8,
-    position: 'absolute',
-    right: 8,
-  },
-  tabText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    paddingHorizontal: 8,
+    paddingVertical: 16,
   },
   card: {
     backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['neutral-bg-5'],
+    borderColor: colors2024['neutral-line'],
     borderRadius: 12,
     borderWidth: 1,
-    marginHorizontal: 16,
-    marginTop: 16,
     padding: 12,
   },
   summary: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  rightSummary: {
+  summaryColumn: {
+    gap: 8,
+  },
+  summaryColumnRight: {
     alignItems: 'flex-end',
+    gap: 8,
   },
-  label: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  value: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  actions: {
+  metrics: {
+    borderTopColor: colors2024['neutral-line'],
+    borderTopWidth: 1,
     flexDirection: 'row',
     gap: 8,
     marginTop: 16,
+    paddingTop: 12,
+  },
+  metric: {
+    flex: 1,
+    gap: 6,
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
   },
   action: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 8,
-    flex: 1,
-    height: 32,
-    justifyContent: 'center',
   },
-  actionText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+  rounded: {
+    borderRadius: 5,
   },
 }));
