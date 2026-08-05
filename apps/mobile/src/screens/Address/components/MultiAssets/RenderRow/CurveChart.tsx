@@ -27,7 +27,7 @@ import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
 import { E2E_ID } from '@/constant/e2e';
 import Svg, { Path } from 'react-native-svg';
 import { refreshDayCurve } from '@/store/curve24h';
-import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { usePausedDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
@@ -150,6 +150,7 @@ export const MultiChart = memo(function MultiChart({
     isPendingMatteredAccountLength,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
+    isChangeAnyLoading,
     isCurveAnyAddrLoading,
   } = useHomePortfolioStore(
     useShallow(state => ({
@@ -160,6 +161,7 @@ export const MultiChart = memo(function MultiChart({
       isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
       showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
+      isChangeAnyLoading: state.isChangeAnyLoading,
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
     })),
   );
@@ -197,6 +199,7 @@ export const MultiChart = memo(function MultiChart({
             }
             showBalanceLoadingWithoutLocal={showBalanceLoading}
             showChangeLoadingWithoutLocal={showChangeLoading}
+            isChangeAnyLoading={isChangeAnyLoading}
             onPressNetWorth={onPressNetWorth}
             onPressWalletList={onPressWalletList}
           />
@@ -223,6 +226,7 @@ interface IHeaderProps {
   isMatteredAccountCountPending: boolean;
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
+  isChangeAnyLoading: boolean;
   onPressNetWorth?: () => void;
   onPressWalletList?: () => void;
 }
@@ -231,24 +235,37 @@ const ChartHeader = React.memo(
     rawNetWorth,
     rawChange,
     changePercent: _changePercent,
-    isLoss,
+    isLoss: _isLoss,
     hideType,
     data: _data,
     matteredAccountCount,
     isMatteredAccountCountPending,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
+    isChangeAnyLoading,
     onPressNetWorth,
     onPressWalletList,
   }: IHeaderProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const { currentIndex } = LineChart.useChart();
     const { currency } = useCurrency();
-    const debouncedRawChange = useDebouncedValue(rawChange, 300);
+    const changeSnapshot = useMemo(
+      () => ({
+        rawChange,
+        changePercent: _changePercent,
+        isLoss: _isLoss,
+      }),
+      [_changePercent, _isLoss, rawChange],
+    );
+    const displayedChange = usePausedDebouncedValue(
+      changeSnapshot,
+      isChangeAnyLoading,
+      300,
+    );
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
     }, [showBalanceLoadingWithoutLocal]);
-    const changePercent = useDebouncedValue(_changePercent, 300);
+    const changePercent = displayedChange.changePercent;
     const showChangeLoading =
       showNetWorthLoading || showChangeLoadingWithoutLocal;
     const displayMatteredAccountCount =
@@ -262,10 +279,10 @@ const ChartHeader = React.memo(
       }).text;
     }, [currency, rawNetWorth]);
     const change = useMemo(() => {
-      return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+      return formatCurrencyValueParts(Math.abs(displayedChange.rawChange), {
         currency,
       }).text;
-    }, [currency, debouncedRawChange]);
+    }, [currency, displayedChange.rawChange]);
 
     const data = useMemo(() => {
       return (
@@ -298,15 +315,22 @@ const ChartHeader = React.memo(
         ? data?.[currentIndex.value]?.changePercent ?? changePercent
         : changePercent;
       const formatLoss = isActiveIndexData
-        ? data?.[currentIndex.value]?.isLoss ?? isLoss
-        : isLoss;
+        ? data?.[currentIndex.value]?.isLoss ?? displayedChange.isLoss
+        : displayedChange.isLoss;
       if (!formatChangePercent) {
         return '';
       }
       return `${formatLoss ? '-' : '+'}${formatChangePercent}(${
         formatLoss ? '-' : '+'
       }${formatChangeValue})`;
-    }, [data, currentIndex.value, change, changePercent, isLoss, hideType]);
+    }, [
+      data,
+      currentIndex.value,
+      change,
+      changePercent,
+      displayedChange.isLoss,
+      hideType,
+    ]);
 
     const dateTime = useDerivedValue(() => {
       return (
@@ -346,9 +370,18 @@ const ChartHeader = React.memo(
       return {
         ...styles.changePercent,
         display: 'flex',
-        color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
+        color: displayedChange.isLoss
+          ? colors2024['red-default']
+          : colors2024['green-default'],
       };
-    }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
+    }, [
+      displayedChange.isLoss,
+      data,
+      currentIndex,
+      colors2024,
+      styles,
+      hideType,
+    ]);
 
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
@@ -366,7 +399,7 @@ const ChartHeader = React.memo(
       return {
         stroke: colors2024['neutral-secondary'],
       };
-    }, [isLoss, data, currentIndex, colors2024, hideType]);
+    }, [data, currentIndex, colors2024, hideType]);
 
     const arrowRotation = useDerivedValue(() => {
       return withTiming(svIsFoldMultiChart.value ? 90 : -90, {
