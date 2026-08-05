@@ -679,8 +679,10 @@ const MiniSignTxV2 = ({
             ) : null}
             <View style={{ paddingBottom: 10 }}>
               <SignMainnetGasSelectorHeader
-                fixedMode
-                defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
+                fixedMode={!isGasAccountTopUpFlow}
+                defaultFixedModeOnCurrentChain={
+                  !isGasAccountTopUpFlow && fixedModeOnCurrentChain
+                }
                 tx={txs[0]!}
                 gasAccountCost={gasAccountCost}
                 noCustomRPC={noCustomRPC}
