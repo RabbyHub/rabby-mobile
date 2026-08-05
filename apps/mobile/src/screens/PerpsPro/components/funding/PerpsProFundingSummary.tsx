@@ -13,6 +13,7 @@ import {
 } from '../../model/funding';
 import type { PerpsProMarket } from '../../model/market';
 import { formatPerpsProFundingRate } from '../../utils/format';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 
 const FundingCountdown = React.memo(
   ({ serverClock }: { serverClock: PerpsServerClockSample | null }) => {
@@ -58,9 +59,9 @@ export const PerpsProFundingSummary: React.FC<{
       disabled={!market}
       onPress={onPress}
       style={styles.container}>
-      <Text numberOfLines={1} style={styles.label}>
+      <PerpsProDottedUnderlineText style={styles.label}>
         {t('page.perps.pro.funding.summary')}
-      </Text>
+      </PerpsProDottedUnderlineText>
       <View style={styles.valueLine}>
         <Text style={styles.rate}>
           {formatPerpsProFundingRate(market?.marketData.funding)}
@@ -83,8 +84,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
   },
   valueLine: {
     alignItems: 'center',

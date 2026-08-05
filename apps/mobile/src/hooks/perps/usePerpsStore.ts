@@ -60,13 +60,14 @@ import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
 import { mergeUserFills, reconcileHttpFills } from './userFills';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import type { PerpsMaintenanceMarginTier } from '@/utils/perpsMargin';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
 
 // Meta-only marketData snapshot: ticker fields are blanked (stale prices must
 // never render as current). Bump the version on MarketData shape changes.
-const MARKET_DATA_CACHE_VERSION = 1;
+const MARKET_DATA_CACHE_VERSION = 2;
 const MARKET_DATA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const EMPTY_MARKET_TICKER = {
   dayBaseVlm: '0',
@@ -92,6 +93,7 @@ const toCachedMarketData = (item: MarketData): MarketData => ({
   maxLeverage: item.maxLeverage,
   minLeverage: item.minLeverage,
   maxUsdValueSize: item.maxUsdValueSize,
+  maintenanceMarginTiers: item.maintenanceMarginTiers,
   szDecimals: item.szDecimals,
   pxDecimals: item.pxDecimals,
   onlyIsolated: item.onlyIsolated,
@@ -137,6 +139,7 @@ export interface MarketData {
   maxLeverage: number;
   minLeverage: number;
   maxUsdValueSize: string;
+  maintenanceMarginTiers: PerpsMaintenanceMarginTier[];
   szDecimals: number;
   pxDecimals: number;
   onlyIsolated?: boolean;
@@ -157,6 +160,10 @@ export interface MarketData {
 }
 
 export type MarketDataMap = Record<string, MarketData>;
+export type MaintenanceMarginTiersByCoin = Record<
+  string,
+  PerpsMaintenanceMarginTier[]
+>;
 
 export interface AccountHistoryItem {
   time: number;
@@ -208,6 +215,7 @@ export interface PerpsState {
   accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
+  maintenanceMarginTiersByCoin: MaintenanceMarginTiersByCoin;
   marketDataStatus: MarketDataStatus;
   categories: PerpTopTokenCategory[];
   hasPermission: boolean;
@@ -244,6 +252,14 @@ const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
   }, {} as MarketDataMap);
 };
 
+const buildMaintenanceMarginTiersByCoin = (
+  list: MarketData[],
+): MaintenanceMarginTiersByCoin =>
+  list.reduce((result, market) => {
+    result[market.name] = market.maintenanceMarginTiers;
+    return result;
+  }, {} as MaintenanceMarginTiersByCoin);
+
 export const initialState: PerpsState = {
   // positionAndOpenOrders: [],
   openOrders: [],
@@ -274,6 +290,7 @@ export const initialState: PerpsState = {
   accountNeedApproveAgent: false,
   accountNeedApproveBuilderFee: false,
   marketData: [],
+  maintenanceMarginTiersByCoin: {},
   userAccountHistory: [],
   localLoadingHistory: [],
   marketDataMap: {},
@@ -643,6 +660,7 @@ const setMarketData = (
   setPerpsState(prev => ({
     ...prev,
     categories,
+    maintenanceMarginTiersByCoin: buildMaintenanceMarginTiersByCoin(list),
     marketData: list,
     marketDataMap: buildMarketDataMap(list),
   }));
@@ -2283,6 +2301,7 @@ const hydrateMarketDataCache = async () => {
         : cache.list;
       return {
         ...prev,
+        maintenanceMarginTiersByCoin: buildMaintenanceMarginTiersByCoin(list),
         marketData: list,
         marketDataMap: buildMarketDataMap(list),
       };

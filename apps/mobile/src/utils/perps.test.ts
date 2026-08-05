@@ -3,7 +3,10 @@
 jest.mock('@/core/apis/perps', () => ({ apisPerps: {} }));
 jest.mock('@/core/services', () => ({ perpsService: {} }));
 
-import { getPxDecimals } from './perps';
+import type { Meta } from '@rabby-wallet/hyperliquid-sdk';
+import type { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
+
+import { formatMarkData, getPxDecimals } from './perps';
 
 describe('getPxDecimals', () => {
   // decimals = clamp(4 - floor(log10(0.95 * px)), 0, 6 - szDecimals)
@@ -67,6 +70,158 @@ describe('getPxDecimals', () => {
 
     it('coerces a runtime-undefined szDecimals to 0 (defensive ?? path)', () => {
       expect(getPxDecimals(undefined as unknown as number, 100)).toBe(3);
+    });
+  });
+});
+
+describe('formatMarkData maintenance rules', () => {
+  it('links each market to its complete normalized margin table', () => {
+    const meta: Meta = {
+      collateralToken: 0,
+      marginTables: [
+        [
+          51,
+          {
+            description: 'tiered 10x',
+            marginTiers: [
+              { lowerBound: '0', maxLeverage: 10 },
+              { lowerBound: '3000000', maxLeverage: 5 },
+            ],
+          },
+        ],
+      ],
+      universe: [
+        {
+          marginTableId: 51,
+          maxLeverage: 10,
+          name: 'BTC',
+          szDecimals: 5,
+        },
+      ],
+    };
+    const topAsset = {
+      category: '',
+      category_id: '',
+      dex_id: '',
+      display_name: 'BTC/USDC',
+      full_logo_url: '',
+      name: 'BTC',
+      token_id: 0,
+    } as unknown as PerpTopTokenV3;
+
+    expect(formatMarkData([meta], [topAsset], { 0: '' })[0]).toMatchObject({
+      maintenanceMarginTiers: [
+        {
+          lowerBound: '0',
+          maintenanceDeduction: '0',
+          maintenanceMarginRate: '0.05',
+          maxLeverage: 10,
+        },
+        {
+          lowerBound: '3000000',
+          maintenanceDeduction: '150000',
+          maintenanceMarginRate: '0.1',
+          maxLeverage: 5,
+        },
+      ],
+    });
+    expect(
+      formatMarkData([{ ...meta, marginTables: [] }], [topAsset], { 0: '' })[0],
+    ).toMatchObject({ maintenanceMarginTiers: [] });
+  });
+
+  it('materializes protocol-defined implicit tables below ID 50 and fails closed on inconsistent metadata', () => {
+    const topAsset = {
+      category: '',
+      category_id: '',
+      dex_id: '',
+      display_name: 'CL/USDC',
+      full_logo_url: '',
+      name: 'xyz:CL',
+      token_id: 0,
+    } as unknown as PerpTopTokenV3;
+    const implicitMeta: Meta = {
+      collateralToken: 0,
+      marginTables: [],
+      universe: [
+        {
+          marginTableId: 20,
+          maxLeverage: 20,
+          name: 'xyz:CL',
+          szDecimals: 2,
+        },
+      ],
+    };
+
+    expect(
+      formatMarkData([implicitMeta], [topAsset], { 0: '' })[0],
+    ).toMatchObject({
+      maintenanceMarginTiers: [
+        {
+          lowerBound: '0',
+          maintenanceDeduction: '0',
+          maintenanceMarginRate: '0.025',
+          maxLeverage: 20,
+        },
+      ],
+    });
+    expect(
+      formatMarkData(
+        [
+          {
+            ...implicitMeta,
+            universe: [
+              {
+                ...implicitMeta.universe[0],
+                maxLeverage: 10,
+              },
+            ],
+          },
+        ],
+        [topAsset],
+        { 0: '' },
+      )[0],
+    ).toMatchObject({ maintenanceMarginTiers: [] });
+  });
+
+  it('keeps an explicit table authoritative even when its ID is below 50', () => {
+    const meta: Meta = {
+      collateralToken: 0,
+      marginTables: [
+        [
+          20,
+          {
+            description: 'explicit 5x',
+            marginTiers: [{ lowerBound: '0', maxLeverage: 5 }],
+          },
+        ],
+      ],
+      universe: [
+        {
+          marginTableId: 20,
+          maxLeverage: 20,
+          name: 'xyz:CL',
+          szDecimals: 2,
+        },
+      ],
+    };
+    const topAsset = {
+      category: '',
+      category_id: '',
+      dex_id: '',
+      display_name: 'CL/USDC',
+      full_logo_url: '',
+      name: 'xyz:CL',
+      token_id: 0,
+    } as unknown as PerpTopTokenV3;
+
+    expect(formatMarkData([meta], [topAsset], { 0: '' })[0]).toMatchObject({
+      maintenanceMarginTiers: [
+        {
+          maintenanceMarginRate: '0.1',
+          maxLeverage: 5,
+        },
+      ],
     });
   });
 });

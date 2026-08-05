@@ -23,6 +23,7 @@ import { apisPerps } from '@/core/apis/perps';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import type { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
+import { buildPerpsMaintenanceMarginTiers } from './perpsMargin';
 
 // Hyperliquid price-axis precision, ported from the official app bundle:
 // decimals = clamp(4 - floor(log10(0.95 * px)), 0, cap) — i.e. 5
@@ -141,8 +142,24 @@ export const formatMarkData = (
           return null;
         }
 
-        const table = marginTableMap[hlDataAsset.marginTableId];
-        const tiers = table?.marginTiers || [];
+        const marginTableId = Number(hlDataAsset.marginTableId);
+        const assetMaxLeverage = Number(hlDataAsset.maxLeverage);
+        const table = Number.isFinite(marginTableId)
+          ? marginTableMap[marginTableId]
+          : undefined;
+        const implicitSingleTier =
+          !table &&
+          Number.isInteger(marginTableId) &&
+          marginTableId > 0 &&
+          marginTableId < 50 &&
+          Number.isFinite(assetMaxLeverage) &&
+          assetMaxLeverage === marginTableId
+            ? [{ lowerBound: '0', maxLeverage: marginTableId }]
+            : [];
+        // Hyperliquid reserves table IDs below 50 for a complete single-tier
+        // table whose max leverage equals the ID. Explicit tables always win;
+        // inconsistent implicit metadata fails closed instead of guessing.
+        const tiers = table?.marginTiers || implicitSingleTier;
         const firstTier = tiers[0];
         const nextTier = tiers[1];
 
@@ -157,6 +174,7 @@ export const formatMarkData = (
           displayName: topAsset.display_name || topAsset.name,
           minLeverage: 1,
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
+          maintenanceMarginTiers: buildPerpsMaintenanceMarginTiers(tiers),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
           onlyIsolated: hlDataAsset.onlyIsolated,
           pxDecimals: getPxDecimals(Number(hlDataAsset.szDecimals ?? 0)),
