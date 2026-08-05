@@ -6,7 +6,12 @@ import { bytesToHex, publicToAddress, hexToBytes } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
-import { CANDLE_MENU_KEY_V2 } from '@/constant/perps';
+import {
+  DEFAULT_PERPS_CANDLE_INTERVAL,
+  isPerpsCandleInterval,
+  normalizePerpsCandleInterval,
+  type PerpsCandleInterval,
+} from '@/constant/perps';
 import type { Account } from '@/types/account';
 
 type KeyringCrypto = {
@@ -34,6 +39,99 @@ export type ApproveSignatures = (SendApproveParams & {
   type: 'approveAgent' | 'approveBuilderFee';
 })[];
 
+export type PerpsViewMode = 'simple' | 'pro';
+export type PerpsProInfoTab = 'account' | 'positions' | 'openOrders';
+
+export type PerpsProPreferences = {
+  version: number;
+  viewMode: PerpsViewMode;
+  activeInfoTab: PerpsProInfoTab;
+  skipLimitCloseDoubleConfirmation: boolean;
+  [key: string]: unknown;
+};
+
+const PERPS_PRO_PREFERENCES_VERSION = 5;
+const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
+const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
+  version: PERPS_PRO_PREFERENCES_VERSION,
+  viewMode: 'simple',
+  activeInfoTab: 'account',
+  skipLimitCloseDoubleConfirmation: false,
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
+type ReadableProPreferences = Record<string, unknown> & {
+  version: number;
+};
+
+const hasReadableProPreferences = (
+  value: unknown,
+): value is ReadableProPreferences =>
+  isRecord(value) &&
+  typeof value.version === 'number' &&
+  Number.isFinite(value.version) &&
+  value.version >= MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION;
+
+const normalizePerpsViewMode = (value: unknown): PerpsViewMode => {
+  if (!hasReadableProPreferences(value)) {
+    return 'simple';
+  }
+  return value.viewMode === 'simple' || value.viewMode === 'pro'
+    ? value.viewMode
+    : 'simple';
+};
+
+const normalizePerpsProInfoTab = (value: unknown): PerpsProInfoTab => {
+  if (!hasReadableProPreferences(value)) {
+    return 'account';
+  }
+  return value.activeInfoTab === 'account' ||
+    value.activeInfoTab === 'positions' ||
+    value.activeInfoTab === 'openOrders'
+    ? value.activeInfoTab
+    : 'account';
+};
+
+const normalizeSkipLimitCloseDoubleConfirmation = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.skipLimitCloseDoubleConfirmation === true;
+
+const removeLegacyBookPrecision = (value: ReadableProPreferences) => {
+  const nextValue = { ...value };
+  delete nextValue.bookPrecisionByMarket;
+  return nextValue;
+};
+
+const getWritableProPreferences = (
+  value: unknown,
+): PerpsProPreferences & Record<string, unknown> => {
+  if (!hasReadableProPreferences(value)) {
+    return { ...DEFAULT_PERPS_PRO_PREFERENCES };
+  }
+  const writableValue =
+    value.version < PERPS_PRO_PREFERENCES_VERSION
+      ? removeLegacyBookPrecision(value)
+      : value;
+  return {
+    ...writableValue,
+    version: Math.max(value.version, PERPS_PRO_PREFERENCES_VERSION),
+    viewMode: normalizePerpsViewMode(value),
+    activeInfoTab: normalizePerpsProInfoTab(value),
+    skipLimitCloseDoubleConfirmation:
+      normalizeSkipLimitCloseDoubleConfirmation(value),
+  } as PerpsProPreferences & Record<string, unknown>;
+};
+
+const migrateLegacyProPreferences = (
+  value: unknown,
+): PerpsProPreferences | null =>
+  hasReadableProPreferences(value) &&
+  value.version < PERPS_PRO_PREFERENCES_VERSION
+    ? getWritableProPreferences(value)
+    : null;
+
 export interface PerpsServiceStore {
   agentVaults: string; // encrypted JSON string of {[address: string]: string}
   agentPreferences: {
@@ -54,8 +152,9 @@ export interface PerpsServiceStore {
     };
   };
   favoriteMarkets: string[];
-  selectedKlineInterval: CANDLE_MENU_KEY_V2;
+  selectedKlineInterval: PerpsCandleInterval;
   marginModeByCoin: Record<string, 'cross' | 'isolated'>;
+  proPreferences: PerpsProPreferences;
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -103,8 +202,9 @@ export class PerpsService {
           hasShownPerpsGuidePopup: false,
           hasClosedLearnMoreCard: false,
           favoriteMarkets: [],
-          selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+          selectedKlineInterval: DEFAULT_PERPS_CANDLE_INTERVAL,
           marginModeByCoin: {},
+          proPreferences: DEFAULT_PERPS_PRO_PREFERENCES,
         },
       },
       {
@@ -113,6 +213,12 @@ export class PerpsService {
     );
     this.marketCacheStorage = options?.storageAdapter;
     this.memoryState.agentWallets = {};
+    const migratedProPreferences = migrateLegacyProPreferences(
+      this.store.proPreferences,
+    );
+    if (migratedProPreferences) {
+      this.store.proPreferences = migratedProPreferences;
+    }
   }
 
   getMarketDataCache = <TItem = unknown>() => {
@@ -182,6 +288,63 @@ export class PerpsService {
     };
   };
 
+  getPerpsViewMode = async (): Promise<PerpsViewMode> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return normalizePerpsViewMode(this.store.proPreferences);
+  };
+
+  setPerpsViewMode = async (viewMode: PerpsViewMode) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    const currentPreferences: unknown = this.store.proPreferences;
+
+    this.store.proPreferences = {
+      ...getWritableProPreferences(currentPreferences),
+      viewMode,
+    };
+  };
+
+  getPerpsProInfoTab = async (): Promise<PerpsProInfoTab> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return normalizePerpsProInfoTab(this.store.proPreferences);
+  };
+
+  setPerpsProInfoTab = async (activeInfoTab: PerpsProInfoTab) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    this.store.proPreferences = {
+      ...getWritableProPreferences(this.store.proPreferences),
+      activeInfoTab,
+    };
+  };
+
+  getSkipPerpsProLimitCloseConfirmation = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipLimitCloseDoubleConfirmation(this.store.proPreferences);
+  };
+
+  setSkipPerpsProLimitCloseConfirmation = async (value: boolean) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.proPreferences = {
+      ...getWritableProPreferences(this.store.proPreferences),
+      skipLimitCloseDoubleConfirmation: value === true,
+    };
+  };
+
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
@@ -224,9 +387,12 @@ export class PerpsService {
     return this.store.hasClosedLearnMoreCard;
   };
 
-  setSelectedKlineInterval = async (value: CANDLE_MENU_KEY_V2) => {
+  setSelectedKlineInterval = async (value: PerpsCandleInterval) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
+    }
+    if (!isPerpsCandleInterval(value)) {
+      throw new Error('Invalid Perps candle interval');
     }
     this.store.selectedKlineInterval = value;
   };
@@ -235,7 +401,12 @@ export class PerpsService {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
     }
-    return this.store.selectedKlineInterval;
+    const storedValue = this.store.selectedKlineInterval as unknown;
+    const normalizedValue = normalizePerpsCandleInterval(storedValue);
+    if (storedValue !== normalizedValue) {
+      this.store.selectedKlineInterval = normalizedValue;
+    }
+    return normalizedValue;
   };
 
   setSendApproveAfterDeposit = async (

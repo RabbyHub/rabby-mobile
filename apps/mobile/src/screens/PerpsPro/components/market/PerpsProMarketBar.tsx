@@ -1,0 +1,152 @@
+import RcCandlestick from '@/assets2024/icons/perps/PerpsProCandlestick.svg';
+import RcMarketCaret from '@/assets2024/icons/perps/PerpsProMarketCaret.svg';
+import RcMore from '@/assets2024/icons/perps/PerpsProMore.svg';
+import { Text } from '@/components/Typography';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import { Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import type { PerpsProMarket } from '../../model/market';
+import { formatPerpsProPercent } from '../../utils/format';
+
+export const PERPS_PRO_MARKET_BAR_HEIGHT = 40;
+
+export const PerpsProMarketBar: React.FC<{
+  market: PerpsProMarket | null;
+  onOpenKline: () => void;
+  onPress: () => void;
+}> = React.memo(({ market, onOpenKline, onPress }) => {
+  const { colors2024, styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const changeStyle =
+    market?.change24h == null
+      ? styles.muted
+      : market.change24h >= 0
+      ? styles.up
+      : styles.down;
+
+  return (
+    <View style={styles.container}>
+      <Pressable
+        accessibilityLabel={t('page.perps.pro.marketSelector.title')}
+        accessibilityRole="button"
+        disabled={!market}
+        onPress={onPress}
+        style={styles.marketPressable}
+        testID="perps-pro-market-selector-trigger">
+        <Text numberOfLines={1} style={styles.pair}>
+          {market?.displayPair ?? '-'}
+        </Text>
+        {market?.sourceTag ? (
+          <Text numberOfLines={1} style={styles.source}>
+            {market.sourceTag.toUpperCase()}
+          </Text>
+        ) : null}
+        <Text style={changeStyle}>
+          {formatPerpsProPercent(market?.change24h)}
+        </Text>
+        <RcMarketCaret
+          color={colors2024['neutral-title-1']}
+          height={18}
+          width={18}
+        />
+      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityLabel={t('page.perps.pro.chart.open')}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !market }}
+          disabled={!market}
+          hitSlop={6}
+          onPress={onOpenKline}
+          style={styles.actionIcon}
+          testID="perps-pro-kline-trigger">
+          <RcCandlestick
+            color={colors2024['neutral-title-1']}
+            height={20}
+            width={14}
+          />
+        </Pressable>
+        <View accessibilityState={{ disabled: true }} style={styles.actionIcon}>
+          <RcMore color={colors2024['neutral-title-1']} height={4} width={18} />
+        </View>
+      </View>
+    </View>
+  );
+});
+
+PerpsProMarketBar.displayName = 'PerpsProMarketBar';
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopColor: colors2024['neutral-line'],
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    height: PERPS_PRO_MARKET_BAR_HEIGHT,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  marketPressable: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 4,
+    height: '100%',
+  },
+  pair: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  source: {
+    backgroundColor: colors2024['neutral-bg-5'],
+    borderRadius: 4,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+    maxWidth: 52,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  up: {
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  down: {
+    color: colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  muted: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  actions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 8,
+  },
+  actionIcon: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+}));

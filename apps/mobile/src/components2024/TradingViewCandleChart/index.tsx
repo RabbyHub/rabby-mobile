@@ -29,8 +29,10 @@ import {
 interface ChartProps {
   height: number;
   onChartReady?: () => void;
+  onChartError?: () => void;
   style?: StyleProp<ViewStyle>;
   backGroundColor?: string;
+  variant?: 'perps-pro';
 }
 
 interface TPSLPriceLines {
@@ -41,6 +43,7 @@ interface TPSLPriceLines {
 }
 
 export interface TradingViewChartRef {
+  clearCrosshair: () => void;
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
@@ -55,6 +58,10 @@ const formatCandleItem = (candle: CandleStick) => {
     low: candle.low,
     close: candle.close,
     volume: candle.volume,
+    ...(candle.trades !== undefined ? { trades: candle.trades ?? null } : {}),
+    ...(candle.quoteTurnover !== undefined
+      ? { quoteTurnover: candle.quoteTurnover ?? null }
+      : {}),
   };
   // Validate all values are valid numbers (volume is optional for aggregated candles like weekly)
   const isValid =
@@ -92,7 +99,9 @@ const TradingViewCandleChart = ({
   style,
   height,
   onChartReady,
+  onChartError,
   backGroundColor,
+  variant,
   ref,
 }: ChartProps & { ref?: Ref<TradingViewChartRef> }) => {
   const localWebViewRef = useRef<LocalWebViewType>(null);
@@ -106,24 +115,45 @@ const TradingViewCandleChart = ({
     () => ({
       background:
         backGroundColor ||
-        (isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2']),
+        (variant === 'perps-pro'
+          ? colors2024['neutral-bg-1']
+          : isLight
+          ? colors2024['neutral-bg-1']
+          : colors2024['neutral-bg-2']),
       text: colors2024['neutral-title-1'],
       border: colors2024['neutral-bg-5'],
       secondaryText: colors2024['neutral-secondary'],
-      greenLineColor: 'rgba(42, 187, 127, 1)',
-      redLineColor: 'rgba(227, 73, 53, 1)',
+      greenLineColor:
+        variant === 'perps-pro'
+          ? colors2024['green-default']
+          : 'rgba(42, 187, 127, 1)',
+      redLineColor:
+        variant === 'perps-pro'
+          ? colors2024['red-default']
+          : 'rgba(227, 73, 53, 1)',
       highPriceLineColor: colors2024['neutral-body'],
       lowPriceLineColor: colors2024['neutral-body'],
       emptyPrimary: colors2024['brand-light-1'],
       emptySecondary: colors2024['brand-light-2'],
       emptyStroke: colors2024['brand-disable'],
+      ma: {
+        7: colors2024['orange-default'],
+        25: colors2024['red-default'],
+        99: colors2024['brand-default'],
+      },
       tooltip: {
-        bg: isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+        bg:
+          variant === 'perps-pro'
+            ? colors2024['neutral-bg-1']
+            : isLight
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-2'],
+        border: colors2024['neutral-line'],
         title: colors2024['neutral-body'],
         value: colors2024['neutral-title-1'],
       },
     }),
-    [backGroundColor, colors2024, isLight],
+    [backGroundColor, colors2024, isLight, variant],
   );
 
   // Chart description labels
@@ -141,6 +171,9 @@ const TradingViewCandleChart = ({
       chg: t('component.kline.chg'),
       chgPercent: t('component.kline.chgPercent'),
       volume: t('component.kline.volume'),
+      vol: t('component.kline.vol'),
+      range: t('component.kline.range'),
+      txn: t('component.kline.txn'),
       empty: t('page.tokenDetail.marketInfo.empty'),
     }),
     [t],
@@ -193,9 +226,10 @@ const TradingViewCandleChart = ({
       const errorDescription =
         event.nativeEvent?.description || 'WebView error occurred';
       setWebViewError(errorDescription);
+      onChartError?.();
       console.error('WebView error:', event.nativeEvent);
     },
-    [],
+    [onChartError],
   );
 
   // Imperative API
@@ -217,6 +251,7 @@ const TradingViewCandleChart = ({
           showVolume: data.showVolume ?? false,
           fitContent: data.fitContent ?? false,
           noTime: data.noTime ?? false,
+          ...(data.proConfig ? { proConfig: data.proConfig } : {}),
         },
       });
     },
@@ -260,7 +295,20 @@ const TradingViewCandleChart = ({
     [isChartReady],
   );
 
+  const handleClearCrosshair = useCallback(() => {
+    if (!isChartReady || !localWebViewRef.current) {
+      return;
+    }
+    localWebViewRef.current.sendMessage?.({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: {
+        type: 'CLEAR_CROSSHAIR',
+      },
+    });
+  }, [isChartReady]);
+
   useImperativeHandle(ref, () => ({
+    clearCrosshair: handleClearCrosshair,
     setData: handleSetData,
     updateCandleData: handleUpdateCandleData,
     updateTPSLPriceLines: handleUpdateTPSLPriceLines,
@@ -291,6 +339,17 @@ const TradingViewCandleChart = ({
   }, []);
 
   if (webViewError) {
+    if (variant === 'perps-pro') {
+      return (
+        <View
+          style={[
+            styles.container,
+            style,
+            { height, width: '100%', minHeight: height },
+          ]}
+        />
+      );
+    }
     return (
       <View style={{ height }}>
         <Text>Chart Error: {webViewError}</Text>
@@ -326,6 +385,9 @@ const TradingViewCandleChart = ({
           'component.kline.chg': t('component.kline.chg'),
           'component.kline.chgPercent': t('component.kline.chgPercent'),
           'component.kline.volume': t('component.kline.volume'),
+          'component.kline.vol': t('component.kline.vol'),
+          'component.kline.range': t('component.kline.range'),
+          'component.kline.txn': t('component.kline.txn'),
           'component.kline.empty': t('page.tokenDetail.marketInfo.empty'),
         }}
       />

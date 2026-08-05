@@ -403,10 +403,14 @@ export type TransactionNavigatorParamList = {
     account?: KeyringAccountWithAlias;
     fromName?: string;
     dappId?: string;
+    market?: string;
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
     coin?: string;
+  };
+  [RootNames.PerpsProHistory]?: {
+    initialTab?: 'orders' | 'trade' | 'transaction' | 'funding';
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;

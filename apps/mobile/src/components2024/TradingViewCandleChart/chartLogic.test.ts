@@ -1,0 +1,147 @@
+jest.mock(
+  'lightweight-charts/standalone',
+  () => ({
+    createSeriesMarkers: jest.fn(),
+  }),
+  { virtual: true },
+);
+
+const {
+  calculateSimpleMovingAverage,
+  formatProCompactNumber,
+  formatProPrice,
+  formatProTooltipTime,
+  getInitialVisibleLogicalRange,
+  getPerpsProTooltipMetrics,
+} =
+  require('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic') as typeof import('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic');
+
+const candle = (time: number, close: number) => ({
+  close,
+  high: close + 2,
+  low: close - 2,
+  open: close - 1,
+  quoteTurnover: null,
+  time,
+  trades: 1,
+  volume: 2,
+});
+
+describe('Perps Pro local chart calculations', () => {
+  it('calculates close SMA only after a complete window', () => {
+    const candles = [1, 2, 3, 4, 5].map((close, index) => candle(index, close));
+
+    expect(calculateSimpleMovingAverage(candles, 7)).toEqual([]);
+    expect(calculateSimpleMovingAverage(candles, 3)).toEqual([
+      { time: 2, value: 2 },
+      { time: 3, value: 3 },
+      { time: 4, value: 4 },
+    ]);
+    expect(
+      calculateSimpleMovingAverage([...candles, candle(5, 8)], 3).at(-1),
+    ).toEqual({ time: 5, value: 17 / 3 });
+  });
+
+  it.each([7, 25, 99] as const)(
+    'calculates every approved MA(%s) period and replaces the realtime tail',
+    period => {
+      const candles = Array.from({ length: 100 }, (_, index) =>
+        candle(index, index + 1),
+      );
+      const points = calculateSimpleMovingAverage(candles, period);
+
+      expect(points).toHaveLength(candles.length - period + 1);
+      expect(points[0]).toEqual({
+        time: period - 1,
+        value: (period + 1) / 2,
+      });
+
+      const updatedCandles = [...candles.slice(0, -1), candle(99, 200)];
+      expect(
+        calculateSimpleMovingAverage(updatedCandles, period).at(-1),
+      ).toEqual({
+        time: 99,
+        value:
+          points.at(-1)!.value + (updatedCandles.at(-1)!.close - 100) / period,
+      });
+    },
+  );
+
+  it('calculates change and range safely with zero classified as green', () => {
+    expect(
+      getPerpsProTooltipMetrics({
+        close: 110,
+        high: 120,
+        low: 90,
+        open: 100,
+      }),
+    ).toEqual({
+      change: 10,
+      changePercent: 10,
+      isPositive: true,
+      rangePercent: 30,
+    });
+    expect(
+      getPerpsProTooltipMetrics({
+        close: 100,
+        high: 100,
+        low: 100,
+        open: 100,
+      }),
+    ).toMatchObject({
+      change: 0,
+      changePercent: 0,
+      isPositive: true,
+      rangePercent: 0,
+    });
+    expect(
+      getPerpsProTooltipMetrics({
+        close: 1,
+        high: 1,
+        low: 1,
+        open: 0,
+      }),
+    ).toEqual({
+      change: null,
+      changePercent: null,
+      isPositive: true,
+      rangePercent: null,
+    });
+  });
+
+  it('formats approved price precision and compact units', () => {
+    expect(formatProPrice(12.6, 0)).toBe('13');
+    expect(formatProPrice(-0, 2)).toBe('0.00');
+    expect(formatProCompactNumber(1_250)).toBe('1.25K');
+    expect(formatProCompactNumber(2_500_000)).toBe('2.50M');
+    expect(formatProCompactNumber(3_750_000_000)).toBe('3.75B');
+    expect(formatProCompactNumber(null)).toBe('--');
+  });
+
+  it('uses device-local time and the approved day-level format', () => {
+    const time = Date.UTC(2026, 6, 30, 1, 2) / 1000;
+    const localDate = new Date(time * 1000);
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const hours = String(localDate.getHours()).padStart(2, '0');
+    const minutes = String(localDate.getMinutes()).padStart(2, '0');
+    const year = String(localDate.getFullYear());
+
+    expect(formatProTooltipTime(time, '15m')).toBe(
+      `${month}-${day} ${hours}:${minutes}`,
+    );
+    expect(formatProTooltipTime(time, '1d')).toBe(`${year}-${month}-${day}`);
+    expect(formatProTooltipTime(time, '1M')).toBe(`${year}-${month}-${day}`);
+  });
+
+  it('opens the initial logical range on at most the latest 40 candles', () => {
+    expect(getInitialVisibleLogicalRange(500, 40)).toEqual({
+      from: 460,
+      to: 500,
+    });
+    expect(getInitialVisibleLogicalRange(12, 40)).toEqual({
+      from: 0,
+      to: 12,
+    });
+  });
+});

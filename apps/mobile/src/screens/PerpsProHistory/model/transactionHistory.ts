@@ -1,0 +1,166 @@
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import BigNumber from 'bignumber.js';
+
+import type {
+  PerpsProLedgerFact,
+  PerpsProTransactionHistoryRow,
+} from '../types';
+
+export type PerpsProTransactionExclusionReason =
+  | 'ambiguousDirection'
+  | 'excludedType'
+  | 'invalidAmount'
+  | 'spotOnly';
+
+export type PerpsProTransactionMappingResult =
+  | { row: PerpsProTransactionHistoryRow; exclusionReason?: never }
+  | { exclusionReason: PerpsProTransactionExclusionReason; row: null };
+
+export type PerpsProTransactionDiagnostics = {
+  excludedByReason: Record<PerpsProTransactionExclusionReason, number>;
+  visible: number;
+};
+
+const safeSameAddress = (left?: string, right?: string) =>
+  !!left && !!right && isSameAddress(left, right);
+
+const resolveAmount = (delta: PerpsProLedgerFact['delta']) => {
+  const rawAmount = delta.amount ?? delta.usdc ?? delta.usdcValue;
+  const value = new BigNumber(rawAmount ?? Number.NaN);
+  if (!value.isFinite()) {
+    return null;
+  }
+  return {
+    amount: value.absoluteValue().toString(),
+    asset: delta.amount != null && delta.token ? delta.token : 'USDC',
+  };
+};
+
+const isExplicitSpotDex = (dex?: string) =>
+  dex?.trim().toLowerCase() === 'spot';
+
+const resolveEndpointDirection = ({
+  currentAddress,
+  destination,
+  source,
+}: {
+  currentAddress: string;
+  destination?: string;
+  source?: string;
+}): 'deposit' | 'withdraw' | null => {
+  const isSource = safeSameAddress(source, currentAddress);
+  const isDestination = safeSameAddress(destination, currentAddress);
+  if (isSource === isDestination) {
+    return null;
+  }
+  return isDestination ? 'deposit' : 'withdraw';
+};
+
+export const getPerpsProTransactionHistoryKey = (fact: PerpsProLedgerFact) => {
+  const { delta } = fact;
+  return [
+    fact.time,
+    fact.hash,
+    delta.type,
+    delta.source ?? delta.user ?? '',
+    delta.destination ?? '',
+    delta.token ?? 'USDC',
+    delta.amount ?? delta.usdc ?? delta.usdcValue ?? '',
+    delta.toPerp == null ? '' : String(delta.toPerp),
+  ].join(':');
+};
+
+export const mapPerpsProTransactionHistoryFact = (
+  fact: PerpsProLedgerFact,
+  currentAddress: string,
+): PerpsProTransactionMappingResult => {
+  const { delta } = fact;
+  let direction: 'deposit' | 'withdraw' | null = null;
+
+  switch (delta.type) {
+    case 'deposit':
+      direction = 'deposit';
+      break;
+    case 'withdraw':
+      direction = 'withdraw';
+      break;
+    case 'accountClassTransfer':
+      if (typeof delta.toPerp !== 'boolean') {
+        return { exclusionReason: 'ambiguousDirection', row: null };
+      }
+      direction = delta.toPerp ? 'deposit' : 'withdraw';
+      break;
+    case 'internalTransfer':
+    case 'subAccountTransfer':
+      direction = resolveEndpointDirection({
+        currentAddress,
+        destination: delta.destination,
+        source: delta.source ?? delta.user,
+      });
+      break;
+    case 'send': {
+      direction = resolveEndpointDirection({
+        currentAddress,
+        destination: delta.destination,
+        source: delta.source ?? delta.user,
+      });
+      if (
+        (direction === 'deposit' && isExplicitSpotDex(delta.destinationDex)) ||
+        (direction === 'withdraw' && isExplicitSpotDex(delta.sourceDex))
+      ) {
+        return { exclusionReason: 'spotOnly', row: null };
+      }
+      break;
+    }
+    case 'spotTransfer':
+    case 'spotGenesis':
+      return { exclusionReason: 'spotOnly', row: null };
+    default:
+      return { exclusionReason: 'excludedType', row: null };
+  }
+
+  if (!direction) {
+    return { exclusionReason: 'ambiguousDirection', row: null };
+  }
+
+  const value = resolveAmount(delta);
+  if (!value) {
+    return { exclusionReason: 'invalidAmount', row: null };
+  }
+
+  return {
+    row: {
+      ...value,
+      direction,
+      hash: fact.hash,
+      key: getPerpsProTransactionHistoryKey(fact),
+      kind: 'transaction',
+      rawType: delta.type,
+      time: fact.time,
+    },
+  };
+};
+
+export const summarizePerpsProTransactionHistoryFacts = (
+  facts: readonly PerpsProLedgerFact[],
+  currentAddress: string,
+): PerpsProTransactionDiagnostics => {
+  const diagnostics: PerpsProTransactionDiagnostics = {
+    excludedByReason: {
+      ambiguousDirection: 0,
+      excludedType: 0,
+      invalidAmount: 0,
+      spotOnly: 0,
+    },
+    visible: 0,
+  };
+  facts.forEach(fact => {
+    const result = mapPerpsProTransactionHistoryFact(fact, currentAddress);
+    if (result.row) {
+      diagnostics.visible += 1;
+      return;
+    }
+    diagnostics.excludedByReason[result.exclusionReason] += 1;
+  });
+  return diagnostics;
+};

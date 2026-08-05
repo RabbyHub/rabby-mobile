@@ -3,7 +3,10 @@ import '../../imports';
 import {
   createChart as LcCreateChart,
   CandlestickSeries,
+  CrosshairMode,
   HistogramSeries,
+  LineSeries,
+  TrackingModeExitMode,
   // type CandlestickData,
 } from 'lightweight-charts/standalone';
 // import BigNumber from 'bignumber.js';
@@ -14,15 +17,23 @@ import { getRuntimeInfo, postMessageToRN } from '../../utils/webview-runtime';
 import {
   type ChartColors,
   type ChartDescription,
+  type CandleStick,
+  type PerpsProChartConfig,
   type TPSLPriceLines,
 } from './types';
 import {
   createChartState,
   updateTPSLPriceLines as updateTPSLPriceLinesLogic,
   updatePriceLines,
+  calculateSimpleMovingAverage,
   formatPrice,
   formatNumber,
+  formatProCompactNumber,
+  formatProPrice,
+  formatProTooltipTime,
   formatTime,
+  getInitialVisibleLogicalRange,
+  getPerpsProTooltipMetrics,
 } from './chart-logic';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
 
@@ -45,8 +56,14 @@ function getChartColors(
     emptyPrimary: colors2024['brand-light-1'],
     emptySecondary: colors2024['brand-light-2'],
     emptyStroke: colors2024['brand-disable'],
+    ma: {
+      7: colors2024['orange-default'],
+      25: colors2024['red-default'],
+      99: colors2024['brand-default'],
+    },
     tooltip: {
       bg: isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+      border: colors2024['neutral-line'],
       title: colors2024['neutral-body'],
       value: colors2024['neutral-title-1'],
     },
@@ -67,6 +84,9 @@ const defaultDescription: ChartDescription = {
   chg: 'Chg',
   chgPercent: 'Chg%',
   volume: 'Volume',
+  vol: 'Vol',
+  range: 'Range',
+  txn: 'Txn',
   empty: 'No Data',
 };
 
@@ -206,6 +226,23 @@ chartState.description = { ...defaultDescription };
 const containerEl = document.getElementById('container') as HTMLDivElement;
 containerEl.style.position = 'relative';
 
+const maLegend = document.createElement('div');
+maLegend.style.position = 'absolute';
+maLegend.style.left = '8px';
+maLegend.style.right = '52px';
+maLegend.style.top = '2px';
+maLegend.style.display = 'none';
+maLegend.style.alignItems = 'center';
+maLegend.style.gap = '8px';
+maLegend.style.pointerEvents = 'none';
+maLegend.style.fontFamily =
+  '"SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+maLegend.style.fontSize = '9px';
+maLegend.style.lineHeight = '12px';
+maLegend.style.whiteSpace = 'nowrap';
+maLegend.style.zIndex = '14';
+containerEl.appendChild(maLegend);
+
 let hasRenderableData = false;
 type OverlayState = 'loading' | 'empty' | 'hidden';
 
@@ -329,6 +366,7 @@ function clearChartData() {
   chartState.isInitialDataLoad = true;
   chartState.lastDataKey = null;
   chartState.currentExtremes = null;
+  clearPerpsProCrosshair();
 
   if (chartState.clearMarkers) {
     chartState.clearMarkers.setMarkers([]);
@@ -347,6 +385,10 @@ function clearChartData() {
   if (chartState.volumeSeries) {
     chartState.volumeSeries.setData([]);
   }
+
+  Object.values(chartState.maSeries).forEach(series => {
+    series?.setData([]);
+  });
 }
 
 // Create tooltip element
@@ -364,10 +406,385 @@ tooltip.style.zIndex = '1000';
 containerEl.appendChild(tooltip);
 chartState.tooltip = tooltip;
 
+function getCandleAtTime(time: number): CandleStick | null {
+  const candle =
+    chartState.currentData.find(item => Number(item.time) === time) ?? null;
+  if (!candle || typeof candle.time !== 'number') {
+    return null;
+  }
+
+  return {
+    close: candle.close,
+    high: candle.high,
+    low: candle.low,
+    open: candle.open,
+    quoteTurnover: candle.quoteTurnover,
+    time: candle.time,
+    trades: candle.trades,
+    volume: candle.volume,
+  };
+}
+
+function getMovingAverageValueAtTime(period: 7 | 25 | 99, time: number) {
+  const point = calculateSimpleMovingAverage(
+    chartState.currentData.map(item => ({
+      close: item.close,
+      high: item.high,
+      low: item.low,
+      open: item.open,
+      quoteTurnover: item.quoteTurnover,
+      time: Number(item.time),
+      trades: item.trades,
+      volume: item.volume,
+    })),
+    period,
+  ).find(item => item.time === time);
+  return point?.value ?? null;
+}
+
+function updateMaLegend(time?: number) {
+  const config = chartState.proConfig;
+  const colors = chartState.colors;
+  if (!config || !colors || chartState.currentData.length === 0) {
+    maLegend.style.display = 'none';
+    return;
+  }
+  const targetTime =
+    time ??
+    Number(chartState.currentData[chartState.currentData.length - 1].time);
+  maLegend.innerHTML = config.maPeriods
+    .map(period => {
+      const value = getMovingAverageValueAtTime(period, targetTime);
+      return `<span style="color: ${colors.ma[period]};">MA(${period}): ${
+        value == null ? '--' : formatProPrice(value, config.priceDecimals)
+      }</span>`;
+    })
+    .join('');
+  maLegend.style.display = 'flex';
+}
+
+function clearPerpsProCrosshair() {
+  const shouldClearNativeCrosshair =
+    chartState.proConfig != null ||
+    chartState.crosshairActive ||
+    chartState.crosshairMarkerSeries != null;
+
+  chartState.crosshairActive = false;
+  chartState.selectedPointX = null;
+  chartState.selectedPrice = null;
+  chartState.selectedTime = null;
+
+  if (shouldClearNativeCrosshair) {
+    chartState.chart?.clearCrosshairPosition();
+  }
+  clearPerpsProCrosshairMarker();
+  if (chartState.tooltip) {
+    chartState.tooltip.style.display = 'none';
+  }
+  updateMaLegend();
+}
+
+type PerpsProCrosshairEvent = {
+  point?: { x: number; y: number } | null;
+  time?: unknown;
+};
+
+function getPerpsProCrosshairSelection(param: PerpsProCrosshairEvent) {
+  const point = param.point;
+  const time = Number(param.time);
+  if (
+    !point ||
+    !Number.isFinite(point.x) ||
+    !Number.isFinite(point.y) ||
+    !Number.isFinite(time) ||
+    !chartState.candlestickSeries
+  ) {
+    return null;
+  }
+  const price = chartState.candlestickSeries.coordinateToPrice(point.y);
+  if (price == null || !Number.isFinite(price)) {
+    return null;
+  }
+  return {
+    pointX: point.x,
+    price,
+    time,
+  };
+}
+
+type PerpsProCrosshairSelection = NonNullable<
+  ReturnType<typeof getPerpsProCrosshairSelection>
+>;
+
+let crosshairMarkerFrameId: number | null = null;
+let pendingCrosshairMarker: { time: number; price: number } | null = null;
+let renderedCrosshairMarkerKey: string | null = null;
+let isWritingCrosshairMarker = false;
+
+function getCrosshairMarkerKey(time: number, price: number) {
+  return `${time}:${price}`;
+}
+
+function cancelPendingPerpsProCrosshairMarker() {
+  if (crosshairMarkerFrameId != null) {
+    window.cancelAnimationFrame(crosshairMarkerFrameId);
+    crosshairMarkerFrameId = null;
+  }
+  pendingCrosshairMarker = null;
+}
+
+function clearPerpsProCrosshairMarker() {
+  const hasRenderedMarker = renderedCrosshairMarkerKey != null;
+  cancelPendingPerpsProCrosshairMarker();
+  renderedCrosshairMarkerKey = null;
+  if (
+    !hasRenderedMarker ||
+    !chartState.crosshairMarkerSeries ||
+    isWritingCrosshairMarker
+  ) {
+    return;
+  }
+
+  isWritingCrosshairMarker = true;
+  try {
+    chartState.crosshairMarkerSeries.setData([]);
+  } finally {
+    isWritingCrosshairMarker = false;
+  }
+}
+
+function schedulePerpsProCrosshairMarker(time: number, price: number) {
+  const markerKey = getCrosshairMarkerKey(time, price);
+  if (
+    markerKey === renderedCrosshairMarkerKey &&
+    crosshairMarkerFrameId == null
+  ) {
+    return;
+  }
+
+  pendingCrosshairMarker = { time, price };
+  if (crosshairMarkerFrameId != null) {
+    return;
+  }
+
+  crosshairMarkerFrameId = window.requestAnimationFrame(() => {
+    crosshairMarkerFrameId = null;
+    const marker = pendingCrosshairMarker;
+    pendingCrosshairMarker = null;
+    if (
+      !marker ||
+      !chartState.crosshairActive ||
+      chartState.selectedTime !== marker.time ||
+      chartState.selectedPrice !== marker.price
+    ) {
+      return;
+    }
+
+    const nextMarkerKey = getCrosshairMarkerKey(marker.time, marker.price);
+    if (nextMarkerKey === renderedCrosshairMarkerKey) {
+      return;
+    }
+
+    isWritingCrosshairMarker = true;
+    try {
+      const markerSeries = ensurePerpsProCrosshairMarkerSeries();
+      if (!markerSeries) {
+        return;
+      }
+      renderedCrosshairMarkerKey = nextMarkerKey;
+      markerSeries.setData([{ time: marker.time, value: marker.price }]);
+    } finally {
+      isWritingCrosshairMarker = false;
+    }
+  });
+}
+
+function hidePerpsProCrosshairSelection() {
+  // In OnNextTap mode, Lightweight Charts clears its native crosshair before
+  // publishing the exit tap. Keep the interaction active so that click clears
+  // it instead of pinning it again.
+  chartState.selectedPointX = null;
+  chartState.selectedPrice = null;
+  chartState.selectedTime = null;
+  clearPerpsProCrosshairMarker();
+  if (chartState.tooltip) {
+    chartState.tooltip.style.display = 'none';
+  }
+  updateMaLegend();
+}
+
+function applyPerpsProCrosshairSelection(
+  selection: PerpsProCrosshairSelection,
+  candle: CandleStick,
+) {
+  chartState.crosshairActive = true;
+  chartState.selectedPointX = selection.pointX;
+  chartState.selectedPrice = selection.price;
+  chartState.selectedTime = selection.time;
+  updateMaLegend(selection.time);
+  renderPerpsProTooltip(candle, selection.pointX);
+  schedulePerpsProCrosshairMarker(selection.time, selection.price);
+}
+
+function handlePerpsProChartClick(param: PerpsProCrosshairEvent) {
+  if (!chartState.proConfig) {
+    return;
+  }
+  if (chartState.crosshairActive) {
+    clearPerpsProCrosshair();
+    return;
+  }
+
+  const selection = getPerpsProCrosshairSelection(param);
+  const candle = selection ? getCandleAtTime(selection.time) : null;
+  if (
+    !selection ||
+    !candle ||
+    !chartState.chart ||
+    !chartState.candlestickSeries
+  ) {
+    return;
+  }
+
+  applyPerpsProCrosshairSelection(selection, candle);
+  chartState.chart.setCrosshairPosition(
+    selection.price,
+    selection.time,
+    chartState.candlestickSeries,
+  );
+}
+
+function createProTooltipRow(
+  label: string,
+  value: string,
+  valueColor: string,
+  isLast = false,
+) {
+  return `<div style="display:flex;justify-content:space-between;gap:8px;${
+    isLast ? '' : 'margin-bottom:2px;'
+  }"><span style="color:${
+    chartState.colors?.tooltip.title
+  };">${label}:</span><span style="color:${valueColor};font-weight:600;text-align:right;">${value}</span></div>`;
+}
+
+function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
+  const tooltipEl = chartState.tooltip;
+  const colors = chartState.colors;
+  const description = chartState.description;
+  const config = chartState.proConfig;
+  if (!tooltipEl || !colors || !description || !config) {
+    return;
+  }
+  const metrics = getPerpsProTooltipMetrics(candle);
+  const directionalColor = metrics.isPositive
+    ? colors.greenLineColor
+    : colors.redLineColor;
+  const change =
+    metrics.change == null
+      ? '--'
+      : `${metrics.change > 0 ? '+' : ''}${formatProPrice(
+          metrics.change,
+          config.priceDecimals,
+        )}`;
+  const changePercent =
+    metrics.changePercent == null
+      ? '--'
+      : `${metrics.changePercent > 0 ? '+' : ''}${metrics.changePercent.toFixed(
+          2,
+        )}%`;
+  const range =
+    metrics.rangePercent == null ? '--' : `${metrics.rangePercent.toFixed(2)}%`;
+
+  tooltipEl.style.padding = '6px';
+  tooltipEl.style.borderRadius = '6px';
+  tooltipEl.style.border = `1px solid ${colors.tooltip.border}`;
+  tooltipEl.style.fontSize = '10px';
+  tooltipEl.style.lineHeight = '12px';
+  tooltipEl.style.minWidth = '112px';
+  tooltipEl.style.maxWidth = '132px';
+  tooltipEl.innerHTML = [
+    createProTooltipRow(
+      description.time,
+      formatProTooltipTime(candle.time, config.interval),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.open,
+      formatProPrice(candle.open, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.high,
+      formatProPrice(candle.high, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.low,
+      formatProPrice(candle.low, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.close,
+      formatProPrice(candle.close, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(description.chg, change, directionalColor),
+    createProTooltipRow(
+      description.chgPercent,
+      changePercent,
+      directionalColor,
+    ),
+    createProTooltipRow(description.range, range, colors.tooltip.value),
+    createProTooltipRow(
+      description.vol,
+      formatProCompactNumber(candle.volume),
+      colors.tooltip.value,
+      true,
+    ),
+  ].join('');
+
+  const containerRect = containerEl.getBoundingClientRect();
+  const isLeftSide = pointX < containerRect.width / 2;
+  tooltipEl.style.top = '16px';
+  if (isLeftSide) {
+    tooltipEl.style.right = '8px';
+    tooltipEl.style.left = 'auto';
+  } else {
+    tooltipEl.style.left = '8px';
+    tooltipEl.style.right = 'auto';
+  }
+  tooltipEl.style.display = 'block';
+}
+
+function updatePerpsProTooltip(param: PerpsProCrosshairEvent) {
+  const tooltipEl = chartState.tooltip;
+  if (!tooltipEl || isWritingCrosshairMarker) {
+    return;
+  }
+
+  const selection = getPerpsProCrosshairSelection(param);
+  if (!selection) {
+    hidePerpsProCrosshairSelection();
+    return;
+  }
+  const candle = getCandleAtTime(selection.time);
+  if (!candle) {
+    hidePerpsProCrosshairSelection();
+    return;
+  }
+
+  applyPerpsProCrosshairSelection(selection, candle);
+}
+
 // Update tooltip content
 function updateTooltipContent(param: any) {
   if (!chartState.tooltip || !chartState.colors || !chartState.description)
     return;
+
+  if (chartState.proConfig) {
+    updatePerpsProTooltip(param);
+    return;
+  }
 
   const tooltipEl = chartState.tooltip;
   const point = param.point;
@@ -657,6 +1074,14 @@ function createChart() {
   chartState.chart.subscribeCrosshairMove((param: any) => {
     updateTooltipContent(param);
   });
+  chartState.chart.subscribeClick((param: PerpsProCrosshairEvent) => {
+    handlePerpsProChartClick(param);
+  });
+  chartState.chart.subscribeDblClick(() => {
+    if (chartState.proConfig && chartState.crosshairActive) {
+      clearPerpsProCrosshair();
+    }
+  });
 
   // Subscribe to visible range change
   let updateTimeout: number | null = null;
@@ -676,6 +1101,32 @@ function createChart() {
   });
 }
 
+function applyPerpsProChartOptions(config: PerpsProChartConfig) {
+  if (!chartState.chart) {
+    return;
+  }
+  chartState.chart.applyOptions({
+    crosshair: {
+      mode: CrosshairMode.Normal,
+    },
+    localization: {
+      priceFormatter: (value: number) =>
+        formatProPrice(value, config.priceDecimals),
+      timeFormatter: (time: number) =>
+        formatProTooltipTime(time, config.interval),
+    },
+    trackingMode: {
+      exitMode: TrackingModeExitMode.OnNextTap,
+    },
+    rightPriceScale: {
+      scaleMargins: {
+        top: 0.12,
+        bottom: 0.16,
+      },
+    },
+  });
+}
+
 // Create candlestick series
 function createCandlestickSeries() {
   if (!chartState.chart) return null;
@@ -685,6 +1136,7 @@ function createCandlestickSeries() {
   }
 
   const colors = chartState.colors || getChartColors();
+  const priceDecimals = chartState.proConfig?.priceDecimals;
 
   chartState.candlestickSeries = chartState.chart.addSeries(CandlestickSeries, {
     upColor: colors.greenLineColor,
@@ -700,7 +1152,12 @@ function createCandlestickSeries() {
     priceLineStyle: 2,
     priceFormat: {
       type: 'price',
-      minMove: 0.0000001,
+      ...(priceDecimals == null
+        ? { minMove: 0.0000001 }
+        : {
+            minMove: 10 ** -priceDecimals,
+            precision: priceDecimals,
+          }),
     },
   });
 
@@ -725,6 +1182,68 @@ function createVolumeSeries() {
   return chartState.volumeSeries;
 }
 
+function ensurePerpsProCrosshairMarkerSeries() {
+  if (!chartState.chart || !chartState.proConfig) {
+    return null;
+  }
+  if (!chartState.crosshairMarkerSeries) {
+    const markerColor = chartState.colors?.text ?? getChartColors().text;
+    chartState.crosshairMarkerSeries = chartState.chart.addSeries(LineSeries, {
+      color: markerColor,
+      crosshairMarkerBackgroundColor: markerColor,
+      crosshairMarkerBorderColor: markerColor,
+      crosshairMarkerBorderWidth: 0,
+      crosshairMarkerRadius: 2.5,
+      crosshairMarkerVisible: true,
+      lastValueVisible: false,
+      lineVisible: false,
+      pointMarkersVisible: false,
+      priceLineVisible: false,
+    });
+  }
+  return chartState.crosshairMarkerSeries;
+}
+
+function ensureMovingAverageSeries() {
+  if (!chartState.chart || !chartState.colors || !chartState.proConfig) {
+    return;
+  }
+  chartState.proConfig.maPeriods.forEach(period => {
+    if (!chartState.maSeries[period]) {
+      chartState.maSeries[period] = chartState.chart.addSeries(LineSeries, {
+        color: chartState.colors!.ma[period],
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        lineWidth: 1,
+        priceLineVisible: false,
+      });
+    }
+  });
+}
+
+function updateMovingAverageSeries() {
+  if (!chartState.proConfig) {
+    return;
+  }
+  ensureMovingAverageSeries();
+  const candles = chartState.currentData.map(item => ({
+    close: item.close,
+    high: item.high,
+    low: item.low,
+    open: item.open,
+    quoteTurnover: item.quoteTurnover,
+    time: Number(item.time),
+    trades: item.trades,
+    volume: item.volume,
+  }));
+  chartState.proConfig.maPeriods.forEach(period => {
+    chartState.maSeries[period]?.setData(
+      calculateSimpleMovingAverage(candles, period),
+    );
+  });
+  updateMaLegend(chartState.selectedTime ?? undefined);
+}
+
 // Handle SET_CANDLESTICK_DATA message
 function handleSetCandlestickData(
   message: Omit<
@@ -735,8 +1254,14 @@ function handleSetCandlestickData(
   >,
 ) {
   chartState.noTime = !!message.noTime;
+  clearPerpsProCrosshair();
+  chartState.proConfig = message.proConfig ?? null;
 
   if (!chartState.chart) return;
+
+  if (chartState.proConfig) {
+    applyPerpsProChartOptions(chartState.proConfig);
+  }
 
   if (!message.data?.length) {
     hasRenderableData = false;
@@ -754,6 +1279,7 @@ function handleSetCandlestickData(
     setOverlayState('hidden');
     chartState.currentData = message.data;
     chartState.candlestickSeries.setData(message.data);
+    updateMovingAverageSeries();
 
     const currentDataKey = message.source + '_' + (message.data?.length || 0);
     const shouldAutoscale =
@@ -779,7 +1305,9 @@ function handleSetCandlestickData(
         })),
       );
       chartState.candlestickSeries.priceScale().applyOptions({
-        scaleMargins: { top: 0, bottom: 0.1 },
+        scaleMargins: chartState.proConfig
+          ? { top: 0.12, bottom: 0.16 }
+          : { top: 0, bottom: 0.1 },
       });
       chartState.volumeSeries
         .priceScale()
@@ -787,10 +1315,21 @@ function handleSetCandlestickData(
       updatePriceLines(chartState);
     }
 
-    if (message.fitContent) {
+    if (chartState.proConfig) {
+      chartState.chart
+        .timeScale()
+        .setVisibleLogicalRange(
+          getInitialVisibleLogicalRange(
+            message.data.length,
+            chartState.proConfig.initialVisibleBars,
+          ),
+        );
+    } else if (message.fitContent) {
       chartState.chart.timeScale().fitContent();
     }
-    chartState.chart.timeScale().scrollToRealTime();
+    if (!chartState.proConfig) {
+      chartState.chart.timeScale().scrollToRealTime();
+    }
   }
 }
 
@@ -800,6 +1339,35 @@ function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
   hasRenderableData = true;
   setOverlayState('hidden');
   chartState.candlestickSeries.update(data);
+  const currentData = new Map(
+    chartState.currentData.map(item => [Number(item.time), item]),
+  );
+  currentData.set(Number(data.time), data);
+  chartState.currentData = Array.from(currentData.values()).sort(
+    (a, b) => Number(a.time) - Number(b.time),
+  );
+
+  if (chartState.proConfig) {
+    if (chartState.volumeSeries) {
+      const colors = chartState.colors || getChartColors();
+      chartState.volumeSeries.update({
+        color:
+          data.close >= data.open ? colors.greenLineColor : colors.redLineColor,
+        time: data.time,
+        value: data.volume ?? 0,
+      });
+    }
+    updateMovingAverageSeries();
+    if (chartState.selectedTime === Number(data.time)) {
+      const selectedCandle = getCandleAtTime(Number(data.time));
+      if (selectedCandle) {
+        renderPerpsProTooltip(
+          selectedCandle,
+          chartState.selectedPointX ?? window.innerWidth / 2,
+        );
+      }
+    }
+  }
 }
 
 // Handle UPDATE_TPSL_PRICE_LINES message
@@ -830,7 +1398,19 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
 
   if (chartState.tooltip) {
     chartState.tooltip.style.background = colors.tooltip.bg;
+    chartState.tooltip.style.borderColor = colors.tooltip.border;
   }
+  ([7, 25, 99] as const).forEach(period => {
+    chartState.maSeries[period]?.applyOptions({
+      color: colors.ma[period],
+    });
+  });
+  chartState.crosshairMarkerSeries?.applyOptions({
+    color: colors.text,
+    crosshairMarkerBackgroundColor: colors.text,
+    crosshairMarkerBorderColor: colors.text,
+  });
+  updateMaLegend(chartState.selectedTime ?? undefined);
 
   containerEl.style.background = colors.background;
   document.body.style.background = colors.background;
@@ -864,6 +1444,9 @@ function handleMessage(event: CustomEvent) {
           defaultDescription.chgPercent,
         volume:
           i18nTexts?.['component.kline.volume'] || defaultDescription.volume,
+        vol: i18nTexts?.['component.kline.vol'] || defaultDescription.vol,
+        range: i18nTexts?.['component.kline.range'] || defaultDescription.range,
+        txn: i18nTexts?.['component.kline.txn'] || defaultDescription.txn,
         empty: i18nTexts?.['component.kline.empty'] || defaultDescription.empty,
       };
       handleUpdateTheme(colors, description);
@@ -880,6 +1463,7 @@ function handleMessage(event: CustomEvent) {
             showVolume: tvMessage.showVolume,
             fitContent: tvMessage.fitContent,
             noTime: tvMessage.noTime,
+            proConfig: tvMessage.proConfig,
           });
           break;
         case 'UPDATE_CANDLESTICK_DATA':
@@ -887,6 +1471,11 @@ function handleMessage(event: CustomEvent) {
           break;
         case 'UPDATE_TPSL_PRICE_LINES':
           handleUpdateTPSLPriceLines(tvMessage.data);
+          break;
+        case 'CLEAR_CROSSHAIR':
+          if (chartState.proConfig) {
+            clearPerpsProCrosshair();
+          }
           break;
         case 'UPDATE_THEME':
           handleUpdateTheme(tvMessage.colors, tvMessage.description);
@@ -937,6 +1526,7 @@ function init() {
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
+  cancelPendingPerpsProCrosshairMarker();
   window.removeEventListener('messageFromRN', handleMessage as EventListener);
   window.removeEventListener('resize', handleResize);
   if (chartState.chart) {

@@ -30,6 +30,8 @@ export const MODAL_GATE_IDS = {
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
   perpsGuideEntry: 'perps-guide-entry',
   perpsAutoClose: 'perps-auto-close',
+  perpsProCancelConfirmation: 'perps-pro-cancel-confirmation',
+  perpsProCloseConfirmation: 'perps-pro-close-confirmation',
   swapLowCredit: 'swap-low-credit',
   swapTokenInfo: 'swap-token-info',
   gnosisSameMessage: 'gnosis-same-message',

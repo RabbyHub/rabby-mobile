@@ -171,6 +171,52 @@ export enum CANDLE_MENU_KEY_V2 {
   ONE_WEEK = '1W',
 }
 
+export const PERPS_CANDLE_INTERVALS = [
+  '1m',
+  '5m',
+  '15m',
+  '30m',
+  '1h',
+  '4h',
+  '8h',
+  '12h',
+  '1d',
+  '1w',
+  '1M',
+] as const;
+
+export type PerpsCandleInterval = (typeof PERPS_CANDLE_INTERVALS)[number];
+
+export const DEFAULT_PERPS_CANDLE_INTERVAL: PerpsCandleInterval = '15m';
+
+const PERPS_CANDLE_INTERVAL_SET = new Set<string>(PERPS_CANDLE_INTERVALS);
+
+const LEGACY_PERPS_CANDLE_INTERVALS: Record<string, PerpsCandleInterval> = {
+  '1H': '1h',
+  '1D': '1d',
+  '1W': '1w',
+  '4H': '4h',
+  '5M': '5m',
+  '15M': '15m',
+};
+
+export const isPerpsCandleInterval = (
+  value: unknown,
+): value is PerpsCandleInterval =>
+  typeof value === 'string' && PERPS_CANDLE_INTERVAL_SET.has(value);
+
+export const normalizePerpsCandleInterval = (
+  value: unknown,
+): PerpsCandleInterval => {
+  if (isPerpsCandleInterval(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && LEGACY_PERPS_CANDLE_INTERVALS[value]) {
+    return LEGACY_PERPS_CANDLE_INTERVALS[value];
+  }
+  return DEFAULT_PERPS_CANDLE_INTERVAL;
+};
+
 import DEFAULT_TOP_ASSET_JSON from './PerpsTopAsset.json';
 import DEFAULT_TOKEN_CATEGORY_JSON from './PerpsTokenCategory.json';
 export const DEFAULT_TOP_ASSET = DEFAULT_TOP_ASSET_JSON as PerpTopTokenV3[];
@@ -211,6 +257,13 @@ export enum PERPS_POSITION_RISK_LEVEL {
 export const PERPS_MINI_USD_VALUE = 10; // $10
 
 export type PerpsQuoteAsset = 'USDC' | 'USDT' | 'USDH' | 'USDE';
+
+export const PERPS_QUOTE_ASSET_FULL_NAME: Record<PerpsQuoteAsset, string> = {
+  USDC: ARB_USDC_TOKEN_ITEM.name,
+  USDE: HYPE_USDE_TOKEN_ITEM.name,
+  USDH: HYPE_USDH_TOKEN_ITEM.name,
+  USDT: HYPE_USDT_TOKEN_ITEM.name,
+};
 
 export const COLLATERAL_TOKEN_TO_QUOTE: Record<number, PerpsQuoteAsset> = {
   0: 'USDC',

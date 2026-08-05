@@ -1,0 +1,580 @@
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useIsFocused } from '@react-navigation/native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import { showToast } from '@/hooks/perps/showToast';
+import {
+  getPerpsAccountRuntimeContext,
+  perpsStore,
+} from '@/hooks/perps/usePerpsStore';
+
+import { mergePerpsProHistoryRows } from '../model/historyModel';
+import { mapPerpsProHistoryRawRows } from '../model/historyRows';
+import { isPerpsProHistorySdkSupported } from '../repository/perpsProHistoryRepository';
+import type {
+  PerpsProHistoryRow,
+  PerpsProHistoryTab,
+  PerpsProHistoryTabState,
+} from '../types';
+import {
+  createPerpsProHistoryState,
+  getPerpsProHistoryOldestTime,
+  getPerpsProHistoryRowsStatus,
+  getPerpsProHistoryTabLimit,
+  makePerpsProHistoryEarlierWindow,
+  PERPS_PRO_HISTORY_TABS,
+  type PerpsProHistoryControllerState,
+  type UpdatePerpsProHistoryTabState,
+} from './perpsProHistoryControllerState';
+import {
+  loadEarlierPerpsProHistoryBatch,
+  loadLatestPerpsProHistoryBatch,
+} from './perpsProHistoryRequests';
+import { usePerpsProHistorySubscriptions } from './usePerpsProHistorySubscriptions';
+
+type RequestToken = Readonly<{
+  accountAddress: string;
+  accountGeneration: number;
+  sequence: number;
+  tab: PerpsProHistoryTab;
+}>;
+
+export const usePerpsProHistoryController = (
+  initialTab: PerpsProHistoryTab = 'orders',
+) => {
+  const { t } = useTranslation();
+  const isFocused = useIsFocused();
+  const currentAccount = perpsStore(state => state.currentPerpsAccount);
+  const isRuntimeInitialized = perpsStore(state => state.isInitialized);
+  const [appState, setAppState] = useState<AppStateStatus>(
+    AppState.currentState,
+  );
+  const [activeTab, setActiveTabState] =
+    useState<PerpsProHistoryTab>(initialTab);
+  const [historyState, setHistoryState] =
+    useState<PerpsProHistoryControllerState>(createPerpsProHistoryState);
+  const stateRef = useRef(historyState);
+  const requestSequencesRef = useRef<Record<PerpsProHistoryTab, number>>({
+    funding: 0,
+    orders: 0,
+    trade: 0,
+    transaction: 0,
+  });
+  const inFlightRequestsRef = useRef<Record<PerpsProHistoryTab, boolean>>({
+    funding: false,
+    orders: false,
+    trade: false,
+    transaction: false,
+  });
+  const accountIdentityRef = useRef<string | null>(null);
+  const sdkSupported = useMemo(isPerpsProHistorySdkSupported, []);
+  const accountAddress = currentAccount?.address ?? null;
+  const accountIdentity = currentAccount
+    ? `${currentAccount.address.toLowerCase()}::${currentAccount.type}`
+    : null;
+  const accountGeneration = getPerpsAccountRuntimeContext().generation;
+  const refreshFailedMessage = t('page.perps.pro.history.refreshFailed');
+  const enabled =
+    isFocused &&
+    appState === 'active' &&
+    !!accountAddress &&
+    isRuntimeInitialized &&
+    sdkSupported;
+  const guardRef = useRef({
+    accountAddress,
+    accountGeneration,
+    activeTab,
+    enabled,
+  });
+  guardRef.current = {
+    accountAddress,
+    accountGeneration,
+    activeTab,
+    enabled,
+  };
+
+  useEffect(() => {
+    stateRef.current = historyState;
+  }, [historyState]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => subscription.remove();
+  }, []);
+
+  const invalidateTab = useCallback((tab: PerpsProHistoryTab) => {
+    requestSequencesRef.current[tab] += 1;
+    inFlightRequestsRef.current[tab] = false;
+  }, []);
+
+  const invalidateAll = useCallback(() => {
+    PERPS_PRO_HISTORY_TABS.forEach(tab => {
+      requestSequencesRef.current[tab] += 1;
+      inFlightRequestsRef.current[tab] = false;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (accountIdentityRef.current === null) {
+      accountIdentityRef.current = accountIdentity;
+      return;
+    }
+    if (accountIdentityRef.current === accountIdentity) {
+      return;
+    }
+    accountIdentityRef.current = accountIdentity;
+    invalidateAll();
+    const nextState = createPerpsProHistoryState();
+    stateRef.current = nextState;
+    setHistoryState(nextState);
+  }, [accountIdentity, invalidateAll]);
+
+  useEffect(() => {
+    if (enabled) {
+      return;
+    }
+    invalidateAll();
+    setHistoryState(previous => {
+      const next = { ...previous };
+      let changed = false;
+      PERPS_PRO_HISTORY_TABS.forEach(tab => {
+        const tabState = previous[tab];
+        const status = tabState.status === 'loading' ? 'idle' : tabState.status;
+        if (
+          status !== tabState.status ||
+          tabState.refreshing ||
+          tabState.loadingEarlier
+        ) {
+          changed = true;
+          next[tab] = {
+            ...tabState,
+            loadingEarlier: false,
+            refreshing: false,
+            status,
+          };
+        }
+      });
+      if (!changed) {
+        return previous;
+      }
+      stateRef.current = next;
+      return next;
+    });
+  }, [enabled, invalidateAll]);
+
+  const updateTabState = useCallback<UpdatePerpsProHistoryTabState>(
+    (tab, updater) => {
+      setHistoryState(previous => {
+        const next = {
+          ...previous,
+          [tab]: updater(previous[tab]),
+        };
+        stateRef.current = next;
+        return next;
+      });
+    },
+    [],
+  );
+
+  const beginRequest = useCallback(
+    (tab: PerpsProHistoryTab): RequestToken | null => {
+      const guard = guardRef.current;
+      if (
+        !guard.enabled ||
+        !guard.accountAddress ||
+        inFlightRequestsRef.current[tab]
+      ) {
+        return null;
+      }
+      const sequence = requestSequencesRef.current[tab] + 1;
+      requestSequencesRef.current[tab] = sequence;
+      inFlightRequestsRef.current[tab] = true;
+      return {
+        accountAddress: guard.accountAddress,
+        accountGeneration: guard.accountGeneration,
+        sequence,
+        tab,
+      };
+    },
+    [],
+  );
+
+  const finishRequest = useCallback((token: RequestToken) => {
+    if (requestSequencesRef.current[token.tab] === token.sequence) {
+      inFlightRequestsRef.current[token.tab] = false;
+    }
+  }, []);
+
+  const isRequestCurrent = useCallback((token: RequestToken) => {
+    const guard = guardRef.current;
+    return (
+      guard.enabled &&
+      guard.activeTab === token.tab &&
+      guard.accountGeneration === token.accountGeneration &&
+      !!guard.accountAddress &&
+      isSameAddress(guard.accountAddress, token.accountAddress) &&
+      requestSequencesRef.current[token.tab] === token.sequence
+    );
+  }, []);
+
+  const isSubscriptionCurrent = useCallback(
+    (
+      tab: PerpsProHistoryTab,
+      subscribedAddress: string,
+      subscribedGeneration: number,
+    ) => {
+      const guard = guardRef.current;
+      return (
+        guard.enabled &&
+        guard.activeTab === tab &&
+        guard.accountGeneration === subscribedGeneration &&
+        !!guard.accountAddress &&
+        isSameAddress(guard.accountAddress, subscribedAddress)
+      );
+    },
+    [],
+  );
+
+  const mapRawRows = useCallback(
+    (
+      tab: PerpsProHistoryTab,
+      rawItems: unknown[],
+      address: string,
+    ): PerpsProHistoryRow[] =>
+      mapPerpsProHistoryRawRows(
+        tab,
+        rawItems,
+        address,
+        perpsStore.getState().marketDataMap,
+      ),
+    [],
+  );
+
+  const mergeBatch = useCallback(
+    (
+      tab: PerpsProHistoryTab,
+      rawItems: unknown[],
+      address: string,
+      previous: PerpsProHistoryTabState,
+    ) =>
+      mergePerpsProHistoryRows(
+        mapRawRows(tab, rawItems, address),
+        previous.rows,
+        getPerpsProHistoryTabLimit(tab),
+      ),
+    [mapRawRows],
+  );
+
+  const loadInitial = useCallback(
+    async (tab: PerpsProHistoryTab) => {
+      const token = beginRequest(tab);
+      if (!token) {
+        return;
+      }
+      updateTabState(tab, previous => ({
+        ...previous,
+        error: undefined,
+        status: 'loading',
+      }));
+
+      try {
+        const batch = await loadLatestPerpsProHistoryBatch({
+          accountAddress: token.accountAddress,
+          now: Date.now(),
+          tab,
+        });
+        if (!isRequestCurrent(token)) {
+          return;
+        }
+        updateTabState(tab, previous => {
+          const rows = mergeBatch(
+            tab,
+            batch.rawItems,
+            token.accountAddress,
+            previous,
+          );
+          return {
+            ...previous,
+            coveredWindow: batch.coveredWindow,
+            error: undefined,
+            hasEarlier:
+              batch.hasEarlier && rows.length < getPerpsProHistoryTabLimit(tab),
+            oldestLoadedTime: getPerpsProHistoryOldestTime(rows),
+            rows,
+            status: getPerpsProHistoryRowsStatus(rows),
+          };
+        });
+      } catch (error) {
+        if (!isRequestCurrent(token)) {
+          return;
+        }
+        updateTabState(tab, previous => ({
+          ...previous,
+          error: error instanceof Error ? error.message : String(error),
+          status: 'error',
+        }));
+      } finally {
+        finishRequest(token);
+      }
+    },
+    [beginRequest, finishRequest, isRequestCurrent, mergeBatch, updateTabState],
+  );
+
+  const refresh = useCallback(async () => {
+    const tab = guardRef.current.activeTab;
+    const current = stateRef.current[tab];
+    if (current.refreshing || current.loadingEarlier) {
+      return;
+    }
+    if (current.rows.length === 0) {
+      await loadInitial(tab);
+      return;
+    }
+    const token = beginRequest(tab);
+    if (!token) {
+      return;
+    }
+    updateTabState(tab, previous => ({
+      ...previous,
+      refreshError: undefined,
+      refreshing: true,
+    }));
+
+    try {
+      const batch = await loadLatestPerpsProHistoryBatch({
+        accountAddress: token.accountAddress,
+        now: Date.now(),
+        tab,
+      });
+      if (!isRequestCurrent(token)) {
+        return;
+      }
+      updateTabState(tab, previous => {
+        const rows = mergeBatch(
+          tab,
+          batch.rawItems,
+          token.accountAddress,
+          previous,
+        );
+        const coveredWindow = batch.coveredWindow
+          ? {
+              endTime: batch.coveredWindow.endTime,
+              startTime: Math.min(
+                previous.coveredWindow?.startTime ??
+                  batch.coveredWindow.startTime,
+                batch.coveredWindow.startTime,
+              ),
+            }
+          : previous.coveredWindow;
+        return {
+          ...previous,
+          coveredWindow,
+          hasEarlier:
+            previous.hasEarlier ||
+            (batch.hasEarlier && rows.length < getPerpsProHistoryTabLimit(tab)),
+          oldestLoadedTime: getPerpsProHistoryOldestTime(rows),
+          refreshError: undefined,
+          refreshing: false,
+          rows,
+          status: getPerpsProHistoryRowsStatus(rows),
+        };
+      });
+    } catch (error) {
+      if (!isRequestCurrent(token)) {
+        return;
+      }
+      updateTabState(tab, previous => ({
+        ...previous,
+        refreshError: error instanceof Error ? error.message : String(error),
+        refreshing: false,
+      }));
+      showToast(refreshFailedMessage, 'error');
+    } finally {
+      finishRequest(token);
+    }
+  }, [
+    beginRequest,
+    finishRequest,
+    isRequestCurrent,
+    loadInitial,
+    mergeBatch,
+    refreshFailedMessage,
+    updateTabState,
+  ]);
+
+  const loadEarlier = useCallback(async () => {
+    const tab = guardRef.current.activeTab;
+    const current = stateRef.current[tab];
+    if (
+      tab === 'orders' ||
+      !current.hasEarlier ||
+      current.loadingEarlier ||
+      current.refreshing
+    ) {
+      return;
+    }
+    const window = makePerpsProHistoryEarlierWindow(current);
+    if (!window) {
+      return;
+    }
+    const remaining = getPerpsProHistoryTabLimit(tab) - current.rows.length;
+    if (remaining <= 0) {
+      updateTabState(tab, previous => ({
+        ...previous,
+        hasEarlier: false,
+      }));
+      return;
+    }
+    const token = beginRequest(tab);
+    if (!token) {
+      return;
+    }
+    updateTabState(tab, previous => ({
+      ...previous,
+      loadEarlierError: undefined,
+      loadingEarlier: true,
+    }));
+
+    try {
+      const batch = await loadEarlierPerpsProHistoryBatch({
+        accountAddress: token.accountAddress,
+        limit: remaining,
+        tab,
+        window,
+      });
+      if (!isRequestCurrent(token)) {
+        return;
+      }
+      updateTabState(tab, previous => {
+        const rows = mergeBatch(
+          tab,
+          batch.rawItems,
+          token.accountAddress,
+          previous,
+        );
+        return {
+          ...previous,
+          coveredWindow: {
+            endTime: previous.coveredWindow?.endTime ?? batch.window.endTime,
+            startTime: batch.window.startTime,
+          },
+          hasEarlier:
+            batch.rawItems.length > 0 &&
+            rows.length < getPerpsProHistoryTabLimit(tab),
+          loadEarlierError: undefined,
+          loadingEarlier: false,
+          oldestLoadedTime: getPerpsProHistoryOldestTime(rows),
+          rows,
+          status: getPerpsProHistoryRowsStatus(rows),
+        };
+      });
+    } catch (error) {
+      if (!isRequestCurrent(token)) {
+        return;
+      }
+      updateTabState(tab, previous => ({
+        ...previous,
+        loadEarlierError:
+          error instanceof Error ? error.message : String(error),
+        loadingEarlier: false,
+      }));
+    } finally {
+      finishRequest(token);
+    }
+  }, [
+    beginRequest,
+    finishRequest,
+    isRequestCurrent,
+    mergeBatch,
+    updateTabState,
+  ]);
+
+  const setActiveTab = useCallback(
+    (nextTab: PerpsProHistoryTab) => {
+      const currentTab = guardRef.current.activeTab;
+      if (nextTab === currentTab) {
+        return;
+      }
+      invalidateTab(currentTab);
+      updateTabState(currentTab, previous => ({
+        ...previous,
+        loadingEarlier: false,
+        refreshing: false,
+        status: previous.status === 'loading' ? 'idle' : previous.status,
+      }));
+      setActiveTabState(nextTab);
+    },
+    [invalidateTab, updateTabState],
+  );
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    if (stateRef.current[activeTab].status === 'idle') {
+      loadInitial(activeTab);
+      return;
+    }
+    refresh();
+  }, [
+    accountGeneration,
+    accountIdentity,
+    activeTab,
+    enabled,
+    loadInitial,
+    refresh,
+  ]);
+
+  useEffect(() => {
+    if (
+      !isFocused ||
+      appState !== 'active' ||
+      !accountAddress ||
+      !isRuntimeInitialized ||
+      sdkSupported
+    ) {
+      return;
+    }
+    updateTabState(activeTab, previous =>
+      previous.status === 'idle'
+        ? {
+            ...previous,
+            error: 'Perps history SDK capability is unavailable',
+            status: 'error',
+          }
+        : previous,
+    );
+  }, [
+    accountAddress,
+    activeTab,
+    appState,
+    isFocused,
+    isRuntimeInitialized,
+    sdkSupported,
+    updateTabState,
+  ]);
+
+  usePerpsProHistorySubscriptions({
+    accountAddress,
+    accountGeneration,
+    activeTab,
+    enabled,
+    isSubscriptionCurrent,
+    mapRawRows,
+    updateTabState,
+  });
+
+  return {
+    activeTab,
+    loadEarlier,
+    refresh,
+    sdkSupported,
+    setActiveTab,
+    state: historyState,
+    tabState: historyState[activeTab],
+  };
+};
+
+export { createPerpsProHistoryState } from './perpsProHistoryControllerState';
