@@ -2459,7 +2459,12 @@
       "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
       "dataAnalysis": "Datenanalyse",
       "bugReportHistory": "Fehlerbericht-Verlauf",
-      "bugReportChat": "Feedback per Chat teilen"
+      "bugReportChat": "Feedback per Chat teilen",
+      "features": "Funktionen",
+      "manageWallets": "Wallets verwalten"
+    },
+    "settings": {
+      "chooseWallet": "Wählen Sie eine Wallet zur Verwaltung aus"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",

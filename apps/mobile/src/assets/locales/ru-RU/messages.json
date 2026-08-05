@@ -1988,7 +1988,12 @@
       "searchCurrency": "Поиск валюты",
       "dataAnalysis": "Анализ данных",
       "bugReportHistory": "История отчетов об ошибках",
-      "bugReportChat": "Поделиться отзывом в чате"
+      "bugReportChat": "Поделиться отзывом в чате",
+      "features": "Функции",
+      "manageWallets": "Управление кошельками"
+    },
+    "settings": {
+      "chooseWallet": "Выберите кошелёк для управления"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
