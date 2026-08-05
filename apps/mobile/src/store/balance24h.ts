@@ -29,6 +29,7 @@ import {
   setBalance24hCache,
 } from '@/utils/24hBalanceCache';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import { computeBalanceChange } from '@/core/utils/balanceChange';
 
 export type Address24hBalanceValue = IBalance24hData['data'] & {
   updateTime: IBalance24hData['updateTime'];
@@ -1218,9 +1219,11 @@ export function computeCombined24hBalanceData(input: {
   }, 0);
   const canShowCurrentBalance = availableCurrentAddresses.length > 0;
   const canShowChange = comparableAddresses.length > 0;
-  const assetsChange = canShowChange
-    ? totalComparableEvmBalance - total24hBalance
-    : 0;
+  const balanceChange = computeBalanceChange(
+    totalComparableEvmBalance,
+    total24hBalance,
+  );
+  const assetsChange = canShowChange ? balanceChange.assetsChange : 0;
   const rawNetWorth = canShowCurrentBalance ? totalCurrentBalance : 0;
 
   return {
@@ -1229,11 +1232,7 @@ export function computeCombined24hBalanceData(input: {
     netWorth: formatSmallUsdValue(totalCurrentBalance || 0),
     rawChange: assetsChange,
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
-    changePercent: canShowChange
-      ? total24hBalance !== 0
-        ? `${Math.abs((assetsChange * 100) / total24hBalance).toFixed(2)}%`
-        : `${totalComparableEvmBalance === 0 ? '0' : '100.00'}%`
-      : '',
+    changePercent: canShowChange ? balanceChange.changePercent : '',
     isLoss: canShowChange ? assetsChange < 0 : false,
     isEmptyAssets:
       canShowCurrentBalance &&

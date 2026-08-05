@@ -1,3 +1,5 @@
+import { computeBalanceChange } from '@/core/utils/balanceChange';
+
 export type HomeProjectionAvailability =
   | 'unresolved'
   | 'loading'
@@ -121,7 +123,7 @@ export function normalizeHomeProjectionAddresses(addresses: string[]) {
 }
 
 export function getHomeSelectionSignature(addresses: string[]) {
-  return normalizeHomeProjectionAddresses(addresses).join('|');
+  return normalizeHomeProjectionAddresses(addresses).sort().join('|');
 }
 
 export function isHomeProjectionWaitingForValue(
@@ -130,7 +132,7 @@ export function isHomeProjectionWaitingForValue(
   return availability === 'unresolved' || availability === 'loading';
 }
 
-function buildProjectionActivity(
+export function buildHomeProjectionActivity(
   addresses: string[],
   flowMaps: Array<
     Record<string, HomeProjectionResourceFlow | undefined> | undefined
@@ -200,14 +202,17 @@ function getProjectionAvailability(input: {
   return 'ready';
 }
 
-function areListsEqual(left: string[], right: string[]) {
+export function areHomeProjectionAddressListsEqual(
+  left: string[],
+  right: string[],
+) {
   return (
     left.length === right.length &&
     left.every((item, index) => item === right[index])
   );
 }
 
-function areActivitiesEqual(
+export function areHomeProjectionActivitiesEqual(
   left: HomeProjectionActivity,
   right: HomeProjectionActivity,
 ) {
@@ -216,7 +221,10 @@ function areActivitiesEqual(
     left.isFetchingRemote === right.isFetchingRemote &&
     left.isComputing === right.isComputing &&
     left.isActive === right.isActive &&
-    areListsEqual(left.activeAddresses, right.activeAddresses)
+    areHomeProjectionAddressListsEqual(
+      left.activeAddresses,
+      right.activeAddresses,
+    )
   );
 }
 
@@ -240,7 +248,7 @@ export function reduceHomeAccountProjection(
   input: HomeAccountProjectionInput,
 ): HomeAccountProjection {
   const addresses = normalizeHomeProjectionAddresses(input.selectedAddresses);
-  const selectionSignature = addresses.join('|');
+  const selectionSignature = getHomeSelectionSignature(addresses);
   const selectionGeneration =
     selectionSignature === previous.selectionSignature
       ? previous.selectionGeneration
@@ -283,7 +291,7 @@ export function reduceHomeAccountProjection(
     previous.matteredAccountLength === next.matteredAccountLength &&
     previous.isPendingMatteredAccountLength ===
       next.isPendingMatteredAccountLength &&
-    areActivitiesEqual(previous.activity, next.activity)
+    areHomeProjectionActivitiesEqual(previous.activity, next.activity)
   ) {
     return previous;
   }
@@ -326,7 +334,7 @@ export function buildHomeBalanceProjection(
     sourceAddresses,
     missingAddresses,
     value,
-    activity: buildProjectionActivity(account.addresses, [input.flowMap]),
+    activity: buildHomeProjectionActivity(account.addresses, [input.flowMap]),
   };
 }
 
@@ -342,28 +350,25 @@ export function buildHome24hProjection(
   const missingAddresses = account.addresses.filter(
     address => !sourceAddresses.includes(address),
   );
-  let value: Home24hChangeValue | undefined;
-
-  if (sourceAddresses.length) {
-    const currentEvmBalance = sourceAddresses.reduce((total, address) => {
-      return total + (input.currentBalanceMap[address]?.evmBalance || 0);
-    }, 0);
-    const previousEvmBalance = sourceAddresses.reduce((total, address) => {
-      return total + (input.previousBalanceMap[address]?.total_usd_value || 0);
-    }, 0);
-    const rawChange = currentEvmBalance - previousEvmBalance;
-
-    value = {
-      rawChange,
-      changePercent:
-        previousEvmBalance !== 0
-          ? `${Math.abs((rawChange * 100) / previousEvmBalance).toFixed(2)}%`
-          : `${currentEvmBalance === 0 ? '0' : '100.00'}%`,
-      isLoss: rawChange < 0,
-      currentEvmBalance,
-      previousEvmBalance,
-    };
-  }
+  const currentEvmBalance = sourceAddresses.reduce((total, address) => {
+    return total + (input.currentBalanceMap[address]?.evmBalance || 0);
+  }, 0);
+  const previousEvmBalance = sourceAddresses.reduce((total, address) => {
+    return total + (input.previousBalanceMap[address]?.total_usd_value || 0);
+  }, 0);
+  const balanceChange = computeBalanceChange(
+    currentEvmBalance,
+    previousEvmBalance,
+  );
+  const value: Home24hChangeValue | undefined = sourceAddresses.length
+    ? {
+        rawChange: balanceChange.assetsChange,
+        changePercent: balanceChange.changePercent,
+        isLoss: balanceChange.assetsChange < 0,
+        currentEvmBalance,
+        previousEvmBalance,
+      }
+    : undefined;
 
   return {
     availability: getProjectionAvailability({
@@ -376,7 +381,7 @@ export function buildHome24hProjection(
     sourceAddresses,
     missingAddresses,
     value,
-    activity: buildProjectionActivity(
+    activity: buildHomeProjectionActivity(
       account.addresses,
       [input.currentFlowMap, input.previousFlowMap],
       input.isComputing,
@@ -392,11 +397,17 @@ export function areHomeBalanceProjectionsEqual(
     previous.availability === next.availability &&
     previous.selectionSignature === next.selectionSignature &&
     previous.selectionGeneration === next.selectionGeneration &&
-    areListsEqual(previous.sourceAddresses, next.sourceAddresses) &&
-    areListsEqual(previous.missingAddresses, next.missingAddresses) &&
+    areHomeProjectionAddressListsEqual(
+      previous.sourceAddresses,
+      next.sourceAddresses,
+    ) &&
+    areHomeProjectionAddressListsEqual(
+      previous.missingAddresses,
+      next.missingAddresses,
+    ) &&
     previous.value?.evmBalance === next.value?.evmBalance &&
     previous.value?.totalBalance === next.value?.totalBalance &&
-    areActivitiesEqual(previous.activity, next.activity)
+    areHomeProjectionActivitiesEqual(previous.activity, next.activity)
   );
 }
 
@@ -408,13 +419,19 @@ export function areHome24hProjectionsEqual(
     previous.availability === next.availability &&
     previous.selectionSignature === next.selectionSignature &&
     previous.selectionGeneration === next.selectionGeneration &&
-    areListsEqual(previous.sourceAddresses, next.sourceAddresses) &&
-    areListsEqual(previous.missingAddresses, next.missingAddresses) &&
+    areHomeProjectionAddressListsEqual(
+      previous.sourceAddresses,
+      next.sourceAddresses,
+    ) &&
+    areHomeProjectionAddressListsEqual(
+      previous.missingAddresses,
+      next.missingAddresses,
+    ) &&
     previous.value?.rawChange === next.value?.rawChange &&
     previous.value?.changePercent === next.value?.changePercent &&
     previous.value?.isLoss === next.value?.isLoss &&
     previous.value?.currentEvmBalance === next.value?.currentEvmBalance &&
     previous.value?.previousEvmBalance === next.value?.previousEvmBalance &&
-    areActivitiesEqual(previous.activity, next.activity)
+    areHomeProjectionActivitiesEqual(previous.activity, next.activity)
   );
 }

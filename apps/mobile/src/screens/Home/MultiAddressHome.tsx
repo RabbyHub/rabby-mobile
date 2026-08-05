@@ -43,10 +43,8 @@ import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { markHomeContentReady } from '@/core/utils/homeStartupMilestones';
 import {
-  isHomeProjectionWaitingForValue,
   useHome24hProjection,
-  useHomeAccountProjection,
-  useHomeBalanceProjection,
+  useHomeContentReadinessProjection,
 } from '@/store/homePortfolio';
 
 let hasStartedInitReadableAccountStoresIdleWarmup = false;
@@ -202,17 +200,9 @@ function HomeStartupReadyScheduler() {
 
 function HomeContentReadyScheduler() {
   const homePostStartupReady = useHomePostStartupReady();
-  const hasResolvedAccountContext = useHomeAccountProjection(
-    state => state.hasResolvedAccountContext,
+  const hasSettledFirstContent = useHomeContentReadinessProjection(
+    state => state.isReady,
   );
-  const balanceAvailability = useHomeBalanceProjection(
-    state => state.availability,
-  );
-  const changeAvailability = useHome24hProjection(state => state.availability);
-  const hasSettledFirstContent =
-    hasResolvedAccountContext &&
-    !isHomeProjectionWaitingForValue(balanceAvailability) &&
-    !isHomeProjectionWaitingForValue(changeAvailability);
 
   useEffect(() => {
     if (!homePostStartupReady || !hasSettledFirstContent) {

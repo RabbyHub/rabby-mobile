@@ -49,7 +49,6 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
@@ -58,6 +57,7 @@ import {
   isHomeProjectionWaitingForValue,
   useHome24hProjection,
   useHomeBalanceProjection,
+  useHomeRefreshProjection,
 } from '@/store/homePortfolio';
 
 const EMPTY_CHANGE_DATA = {
@@ -74,14 +74,12 @@ const handleSwitchToTokenTab = (index: number) => {
 export function TabsTopHeader(): JSX.Element {
   const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
 
-  const { balanceAvailability, totalBalance, balanceActivity } =
-    useHomeBalanceProjection(
-      useShallow(state => ({
-        balanceAvailability: state.availability,
-        totalBalance: state.value?.totalBalance || 0,
-        balanceActivity: state.activity,
-      })),
-    );
+  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
+    useShallow(state => ({
+      balanceAvailability: state.availability,
+      totalBalance: state.value?.totalBalance || 0,
+    })),
+  );
   const { changeAvailability, changeData, changeActivity } =
     useHome24hProjection(
       useShallow(state => ({
@@ -90,19 +88,13 @@ export function TabsTopHeader(): JSX.Element {
         changeActivity: state.activity,
       })),
     );
-  const isCurveFetchingRemote = useHomePortfolioStore(
-    useShallow(state => ({
-      isCurveFetchingRemote: state.isCurveFetchingRemote,
-    })),
-  ).isCurveFetchingRemote;
+  const isAnyRemoteRefreshing = useHomeRefreshProjection(
+    state => state.isAnyRemoteRefreshing,
+  );
   const showBalanceLoadingWithoutLocal =
     isHomeProjectionWaitingForValue(balanceAvailability);
   const showChangeLoadingWithoutLocal =
     isHomeProjectionWaitingForValue(changeAvailability);
-  const isAnyRemoteRefreshing =
-    balanceActivity.isFetchingRemote ||
-    changeActivity.isFetchingRemote ||
-    isCurveFetchingRemote;
   const isChangeAnyLoading = changeActivity.isActive;
   const data = changeData;
   const scene24hLoading = isChangeAnyLoading;

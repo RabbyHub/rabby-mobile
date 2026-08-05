@@ -3,7 +3,13 @@ import { zCreate } from '@/core/utils/reexports';
 import accountStore from '@/store/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { balance24hStore, scene24hBalanceStore } from '@/store/balance24h';
+import { addressCurve24hStore, sceneCurve24hStore } from '@/store/curve24h';
 import type { ResourceFlowState } from '@/store/_resourceBase';
+import {
+  areHomeCurveProjectionsEqual,
+  buildHomeCurveProjection,
+  type HomeCurveProjection,
+} from './curve';
 import {
   areHome24hProjectionsEqual,
   areHomeBalanceProjectionsEqual,
@@ -17,6 +23,24 @@ import {
   type HomeBalanceProjection,
   type HomeProjectionResourceFlow,
 } from './model';
+import {
+  createInitialHomeContentReadinessProjection,
+  reduceHomeContentReadinessProjection,
+  type HomeContentReadinessProjection,
+} from './readiness';
+import {
+  areHomeRefreshProjectionsEqual,
+  buildHomeRefreshProjection,
+  type HomeRefreshProjection,
+} from './refresh';
+
+const EMPTY_ACTIVITY = {
+  isHydrating: false,
+  isFetchingRemote: false,
+  isComputing: false,
+  isActive: false,
+  activeAddresses: [],
+};
 
 const EMPTY_BALANCE_PROJECTION: HomeBalanceProjection = {
   availability: 'unresolved',
@@ -24,13 +48,7 @@ const EMPTY_BALANCE_PROJECTION: HomeBalanceProjection = {
   selectionGeneration: 0,
   sourceAddresses: [],
   missingAddresses: [],
-  activity: {
-    isHydrating: false,
-    isFetchingRemote: false,
-    isComputing: false,
-    isActive: false,
-    activeAddresses: [],
-  },
+  activity: EMPTY_ACTIVITY,
 };
 
 const EMPTY_24H_PROJECTION: Home24hProjection = {
@@ -39,13 +57,25 @@ const EMPTY_24H_PROJECTION: Home24hProjection = {
   selectionGeneration: 0,
   sourceAddresses: [],
   missingAddresses: [],
-  activity: {
-    isHydrating: false,
-    isFetchingRemote: false,
-    isComputing: false,
-    isActive: false,
-    activeAddresses: [],
-  },
+  activity: EMPTY_ACTIVITY,
+};
+
+const EMPTY_CURVE_PROJECTION: HomeCurveProjection = {
+  availability: 'unresolved',
+  selectionSignature: '',
+  selectionGeneration: 0,
+  sourceAddresses: [],
+  missingAddresses: [],
+  activity: EMPTY_ACTIVITY,
+};
+
+const EMPTY_REFRESH_PROJECTION: HomeRefreshProjection = {
+  selectionSignature: '',
+  selectionGeneration: 0,
+  isBalanceFetchingRemote: false,
+  is24hChangeFetchingRemote: false,
+  isCurveFetchingRemote: false,
+  isAnyRemoteRefreshing: false,
 };
 
 const homeAccountProjectionStore = zCreate<HomeAccountProjection>(() =>
@@ -57,6 +87,16 @@ const homeBalanceProjectionStore = zCreate<HomeBalanceProjection>(
 const home24hProjectionStore = zCreate<Home24hProjection>(
   () => EMPTY_24H_PROJECTION,
 );
+const homeCurveProjectionStore = zCreate<HomeCurveProjection>(
+  () => EMPTY_CURVE_PROJECTION,
+);
+const homeRefreshProjectionStore = zCreate<HomeRefreshProjection>(
+  () => EMPTY_REFRESH_PROJECTION,
+);
+const homeContentReadinessProjectionStore =
+  zCreate<HomeContentReadinessProjection>(() =>
+    createInitialHomeContentReadinessProjection(),
+  );
 
 function toProjectionFlow(flow: ResourceFlowState) {
   return {
@@ -120,18 +160,38 @@ function syncHome24hProjection() {
   const isCurrentSelectionComputing =
     getHomeSelectionSignature(sceneState.addresses.Home) ===
       account.selectionSignature && sceneState.sceneComputing.Home;
+  const currentFlowMap = buildFlowMap(
+    account.addresses,
+    addressBalanceStore.getAddressFlowState,
+  );
+  const previousFlowMap = buildFlowMap(
+    account.addresses,
+    balance24hStore.getAddress24hBalanceFlowState,
+  );
+
+  if (
+    getHomeSelectionSignature(sceneState.addresses.Home) ===
+    account.selectionSignature
+  ) {
+    account.addresses.forEach(address => {
+      if (
+        sceneState.sceneLoading.Home ||
+        sceneState.sceneAddrLoading[`Home-${address}`]
+      ) {
+        previousFlowMap[address] = {
+          ...previousFlowMap[address],
+          isFetchingRemote: true,
+        };
+      }
+    });
+  }
+
   const next = buildHome24hProjection({
     account,
     currentBalanceMap: addressBalanceStore.getAddressValueMap(),
     previousBalanceMap: balance24hStore.getAddress24hBalanceMap(),
-    currentFlowMap: buildFlowMap(
-      account.addresses,
-      addressBalanceStore.getAddressFlowState,
-    ),
-    previousFlowMap: buildFlowMap(
-      account.addresses,
-      balance24hStore.getAddress24hBalanceFlowState,
-    ),
+    currentFlowMap,
+    previousFlowMap,
     isComputing: isCurrentSelectionComputing,
   });
 
@@ -140,10 +200,60 @@ function syncHome24hProjection() {
   );
 }
 
+function syncHomeCurveProjection() {
+  const account = homeAccountProjectionStore.getState();
+  const sceneState = sceneCurve24hStore.getState();
+  const next = buildHomeCurveProjection({
+    account,
+    sceneAddresses: sceneState.addresses.Home,
+    list: sceneState.combinedData.Home.list,
+    curveValueMap: addressCurve24hStore.getAddressCurveMap(),
+    flowMap: buildFlowMap(
+      account.addresses,
+      addressCurve24hStore.getAddressCurveFlowState,
+    ),
+    isSceneLoading: sceneState.sceneLoading.Home,
+    isSceneComputing: sceneState.sceneComputing.Home,
+  });
+
+  homeCurveProjectionStore.setState(previous =>
+    areHomeCurveProjectionsEqual(previous, next) ? previous : next,
+  );
+}
+
+function syncHomeRefreshProjection() {
+  const next = buildHomeRefreshProjection({
+    balance: homeBalanceProjectionStore.getState(),
+    change24h: home24hProjectionStore.getState(),
+    curve: homeCurveProjectionStore.getState(),
+  });
+
+  homeRefreshProjectionStore.setState(previous =>
+    areHomeRefreshProjectionsEqual(previous, next) ? previous : next,
+  );
+}
+
+function syncHomeContentReadinessProjection() {
+  homeContentReadinessProjectionStore.setState(previous =>
+    reduceHomeContentReadinessProjection(previous, {
+      account: homeAccountProjectionStore.getState(),
+      balance: homeBalanceProjectionStore.getState(),
+      change24h: home24hProjectionStore.getState(),
+    }),
+  );
+}
+
+function syncProjectionCoordinators() {
+  syncHomeRefreshProjection();
+  syncHomeContentReadinessProjection();
+}
+
 function syncSelectionDependentProjections() {
   syncHomeAccountProjection();
   syncHomeBalanceProjection();
   syncHome24hProjection();
+  syncHomeCurveProjection();
+  syncProjectionCoordinators();
 }
 
 let hasStartedHomeProjectionLifecycle = false;
@@ -160,9 +270,24 @@ export function ensureHomeProjectionLifecycle() {
   addressBalanceStore.subscribe(() => {
     syncHomeBalanceProjection();
     syncHome24hProjection();
+    syncProjectionCoordinators();
   });
-  balance24hStore.subscribe(syncHome24hProjection);
-  scene24hBalanceStore.subscribe(syncHome24hProjection);
+  balance24hStore.subscribe(() => {
+    syncHome24hProjection();
+    syncProjectionCoordinators();
+  });
+  scene24hBalanceStore.subscribe(() => {
+    syncHome24hProjection();
+    syncProjectionCoordinators();
+  });
+  addressCurve24hStore.subscribe(() => {
+    syncHomeCurveProjection();
+    syncHomeRefreshProjection();
+  });
+  sceneCurve24hStore.subscribe(() => {
+    syncHomeCurveProjection();
+    syncHomeRefreshProjection();
+  });
 
   syncSelectionDependentProjections();
 }
@@ -188,6 +313,27 @@ export function useHome24hProjection<T>(
   return home24hProjectionStore(selector);
 }
 
+export function useHomeCurveProjection<T>(
+  selector: (state: HomeCurveProjection) => T,
+) {
+  ensureHomeProjectionLifecycle();
+  return homeCurveProjectionStore(selector);
+}
+
+export function useHomeRefreshProjection<T>(
+  selector: (state: HomeRefreshProjection) => T,
+) {
+  ensureHomeProjectionLifecycle();
+  return homeRefreshProjectionStore(selector);
+}
+
+export function useHomeContentReadinessProjection<T>(
+  selector: (state: HomeContentReadinessProjection) => T,
+) {
+  ensureHomeProjectionLifecycle();
+  return homeContentReadinessProjectionStore(selector);
+}
+
 export function getHomeAccountProjection() {
   ensureHomeProjectionLifecycle();
   return homeAccountProjectionStore.getState();
@@ -201,4 +347,19 @@ export function getHomeBalanceProjection() {
 export function getHome24hProjection() {
   ensureHomeProjectionLifecycle();
   return home24hProjectionStore.getState();
+}
+
+export function getHomeCurveProjection() {
+  ensureHomeProjectionLifecycle();
+  return homeCurveProjectionStore.getState();
+}
+
+export function getHomeRefreshProjection() {
+  ensureHomeProjectionLifecycle();
+  return homeRefreshProjectionStore.getState();
+}
+
+export function getHomeContentReadinessProjection() {
+  ensureHomeProjectionLifecycle();
+  return homeContentReadinessProjectionStore.getState();
 }

@@ -32,7 +32,6 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
-import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
@@ -41,6 +40,7 @@ import {
   useHome24hProjection,
   useHomeAccountProjection,
   useHomeBalanceProjection,
+  useHomeCurveProjection,
 } from '@/store/homePortfolio';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -154,10 +154,10 @@ export const MultiChart = memo(function MultiChart({
   onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-  const { curveList, isCurveAnyAddrLoading } = useHomePortfolioStore(
+  const { curveAvailability, curveList } = useHomeCurveProjection(
     useShallow(state => ({
-      curveList: state.curveList,
-      isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
+      curveAvailability: state.availability,
+      curveList: state.value?.list || [],
     })),
   );
   const { matteredAccountLength, isPendingMatteredAccountLength } =
@@ -188,7 +188,8 @@ export const MultiChart = memo(function MultiChart({
     !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
   const showChangeLoading =
     !startupReady || isHomeProjectionWaitingForValue(changeAvailability);
-  const isCurveLoading = !startupReady || isCurveAnyAddrLoading;
+  const isCurveLoading =
+    !startupReady || isHomeProjectionWaitingForValue(curveAvailability);
 
   return (
     <View
