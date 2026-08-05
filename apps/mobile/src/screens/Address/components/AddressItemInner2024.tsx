@@ -16,7 +16,7 @@ import { Card } from '@/components2024/Card';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { Text } from '@/components/Typography';
-import { BackupBadge } from '@/components2024/AddressDetail/BackupBadge';
+import { useTranslation } from 'react-i18next';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -42,7 +42,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginRight: 20,
   },
   rootItemWithInlineArrow: {
-    marginRight: 47,
+    marginRight: 36,
   },
   item: {
     flexDirection: 'row',
@@ -96,7 +96,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 16,
   },
   backupBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
     flexShrink: 0,
+    borderRadius: 4,
+    backgroundColor: colors2024['orange-light-1'],
+  },
+  backupBadgeText: {
+    color: colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 11,
+    fontStyle: 'normal',
+    fontWeight: 500,
+    lineHeight: 16,
   },
   balanceContainer: {
     flexDirection: 'row',
@@ -162,6 +174,7 @@ export const AddressItemInner2024 = ({
   isShowBackupBadge = false,
 }: AddressItemProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -231,7 +244,11 @@ export const AddressItemInner2024 = ({
                   </View>
                 )}
                 {needsBackupReminder ? (
-                  <BackupBadge style={styles.backupBadge} />
+                  <View style={styles.backupBadge}>
+                    <Text style={styles.backupBadgeText} numberOfLines={1}>
+                      {t('backupReminder.badge')}
+                    </Text>
+                  </View>
                 ) : null}
                 {inlineArrow && !hiddenArrow ? (
                   <ArrowCircleCC
