@@ -2,7 +2,6 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import {
   DELETE_AGENT_EMPTY_ADDRESS,
   HYPE_EVM_BRIDGE_ADDRESS,
-  HYPE_EVM_BRIDGE_ADDRESS_MAP,
   HYPE_SEND_ASSET_TOKEN,
   HYPE_SEND_ASSET_TOKEN_MAP,
   PERPS_AGENT_NAME,
@@ -43,6 +42,9 @@ import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { isUserCancelledSignature } from './perpsActionError';
 import { useIsFocused } from '@react-navigation/native';
 import { useEnsurePerpsRuntime } from './runtime/useEnsurePerpsRuntime';
+import { executePerpsWithdraw } from './funding/perpsWithdraw';
+import { isSamePerpsFundingAccount } from './funding/accountGuard';
+import { ensurePerpsActionApproval } from './actions/perpsActionApproval';
 
 type SignActionType =
   | 'approveAgent'
@@ -552,67 +554,14 @@ export const usePerpsState = () => {
     legacyContinuationEnabled: isFocused,
   });
 
-  const isHandlingApproveStatus = useRef(false);
-
   const handleActionApproveStatus = useCallback(
     async (options?: { isHideToast?: boolean }) => {
       try {
-        if (isHandlingApproveStatus.current) {
-          return;
-        }
-        isHandlingApproveStatus.current = true;
-
         if (!currentPerpsAccount) {
           throw new Error('No currentPerpsAccount');
         }
-
-        const signActions: SignAction[] = [];
-        const sdk = apisPerps.getPerpsSDK();
-
-        // Configure signing identity. self-sign installs externalSign and needs
-        // no approveAgent; agent wallets keep the vault + approveAgent flow.
-        const signer = await apisPerps.applyPerpsSigner(currentPerpsAccount);
-
-        if (
-          !signer.isSelfSign &&
-          (accountNeedApproveAgent || signer.isCreate)
-        ) {
-          signActions.push({
-            action: sdk.exchange?.prepareApproveAgent(),
-            type: 'approveAgent',
-            signature: '',
-          });
-        }
-
-        if (accountNeedApproveBuilderFee) {
-          await sleep(10);
-          signActions.push({
-            action: sdk.exchange?.prepareApproveBuilderFee({
-              builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-            }),
-            type: 'approveBuilderFee',
-            signature: '',
-          });
-        }
-
-        if (signActions.length === 0) {
-          if (signer.isSelfSign && accountNeedApproveAgent) {
-            setAccountNeedApproveAgent(false);
-          }
-          isHandlingApproveStatus.current = false;
-          return;
-        }
-
-        await executeSignatures(signActions, currentPerpsAccount);
-
-        try {
-          await handleDirectApprove(signActions);
-        } catch (error) {}
-        setAccountNeedApproveAgent(false);
-        setAccountNeedApproveBuilderFee(false);
-        isHandlingApproveStatus.current = false;
+        await ensurePerpsActionApproval(currentPerpsAccount);
       } catch (error) {
-        isHandlingApproveStatus.current = false;
         console.error('Failed to handle action approve status:', error);
         // todo fixme maybe no need show toast in prod
         if (!options?.isHideToast) {
@@ -631,15 +580,7 @@ export const usePerpsState = () => {
         throw error;
       }
     },
-    [
-      accountNeedApproveAgent,
-      accountNeedApproveBuilderFee,
-      currentPerpsAccount,
-      executeSignatures,
-      handleDirectApprove,
-      setAccountNeedApproveAgent,
-      setAccountNeedApproveBuilderFee,
-    ],
+    [currentPerpsAccount],
   );
 
   const handleSetLaterApproveStatus = useCallback(
@@ -812,121 +753,18 @@ export const usePerpsState = () => {
       isUnifiedAccount = false,
       targetAsset: keyof typeof HYPE_SEND_ASSET_TOKEN_MAP = 'USDC',
     ): Promise<boolean> => {
-      try {
-        const sdk = apisPerps.getPerpsSDK();
-
-        if (!currentPerpsAccount) {
-          throw new Error('No currentPerpsAccount address');
-        }
-
-        if (!sdk.exchange) {
-          throw new Error('Hyperliquid no exchange client');
-        }
-
-        if (
-          targetAsset !== 'USDC' &&
-          targetAsset !== 'USDT' &&
-          targetAsset !== 'USDH' &&
-          targetAsset !== 'USDE'
-        ) {
-          throw new Error(`Invalid target asset, targetAsset: ${targetAsset}`);
-        }
-
-        // HYPE withdraw goes through `send` ledger update whose server-
-        // side timestamp can be a few dozen ms earlier than the client
-        // clock, leaving the time-based pending filter unable to clear
-        // it. Backdate by 1s to absorb the drift (matches the desktop
-        // deposit handler's `Date.now() - 1000` trick).
-        const time = Date.now() - 1000;
-        const useMiniApprovalSign =
-          currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
-          currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.LEDGER;
-        const tokenId = HYPE_SEND_ASSET_TOKEN_MAP[targetAsset];
-        const hyperDestination = HYPE_EVM_BRIDGE_ADDRESS_MAP[targetAsset];
-
-        const action = isHypeWithdraw
-          ? sdk.exchange.prepareSendAsset({
-              destination: hyperDestination,
-              amount: amount.toString(),
-              token: tokenId,
-              sourceDex: isUnifiedAccount ? 'spot' : '',
-              destinationDex: 'spot',
-            })
-          : sdk.exchange.prepareWithdraw({
-              amount: amount.toString(),
-              destination: currentPerpsAccount.address,
-            });
-
-        let signature = '';
-        if (
-          currentPerpsAccount.type === KEYRING_CLASS.PRIVATE_KEY ||
-          currentPerpsAccount.type === KEYRING_CLASS.MNEMONIC
-        ) {
-          signature = await apisKeyring.signTypedData(
-            currentPerpsAccount.type,
-            currentPerpsAccount.address.toLowerCase(),
-            action as any,
-            { version: 'V4' },
-          );
-        } else if (useMiniApprovalSign) {
-          try {
-            const result = await miniSignTypedData({
-              txs: [
-                {
-                  data: action,
-                  from: currentPerpsAccount.address,
-                  version: 'V4',
-                },
-              ],
-              account: currentPerpsAccount,
-            });
-            signature = result[0].txHash;
-          } catch (error) {
-            throw 'Withdraw failed';
-          }
-        } else {
-          signature = await sendRequest({
-            data: {
-              method: 'eth_signTypedDataV4',
-              params: [currentPerpsAccount.address, JSON.stringify(action)],
-            },
-            session: INTERNAL_REQUEST_SESSION,
-            account: currentPerpsAccount,
-          });
-        }
-
-        const res = isHypeWithdraw
-          ? await sdk.exchange.sendSendAsset({
-              action: action.message as any,
-              nonce: action.nonce || 0,
-              signature: signature as string,
-            })
-          : await sdk.exchange.sendWithdraw({
-              action: action.message as any,
-              nonce: action.nonce || 0,
-              signature: signature as string,
-            });
-
-        setLocalLoadingHistory(
-          [
-            {
-              time,
-              hash: res.hash || '',
-              type: 'withdraw',
-              status: 'pending',
-              usdValue: isHypeWithdraw
-                ? amount.toString()
-                : (+amount - 1).toString(),
-            },
-          ],
-          false,
-        );
-        return true;
-      } catch (error: any) {
-        console.error('Failed to withdraw:', error);
-        showToast(error.message || 'Withdraw failed', 'error');
-        return false;
-      }
+      return executePerpsWithdraw({
+        account: currentPerpsAccount,
+        amount,
+        isAccountCurrent: expectedAccount => {
+          const activeAccount = perpsStore.getState().currentPerpsAccount;
+          return isSamePerpsFundingAccount(activeAccount, expectedAccount);
+        },
+        isHypeWithdraw,
+        isSpotCollateralMode: isUnifiedAccount,
+        targetAsset,
+        setLocalLoadingHistory,
+      });
     },
   );
 

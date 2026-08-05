@@ -5,8 +5,9 @@ import {
   setAccountNeedApproveBuilderFee,
 } from '@/hooks/perps/usePerpsStore';
 import { showToast } from '@/hooks/perps/showToast';
-import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 import * as Sentry from '@sentry/react-native';
+
+import { isPerpsActionUserCancelled } from './actions/actionError';
 
 // Returns true when the error came from an expired agent. Side-effect: toast +
 // flips `accountNeedApproveAgent`. Callers should treat true as "stop retrying".
@@ -58,7 +59,7 @@ export const judgeIsBuilderFeeNeedApprove = (errorMessage: string): boolean => {
 //   - hardware mini-sign rethrows the string 'Canceled' (executeSignatures)
 //   - local-wallet unlock / biometrics throw WalletUnlockCancelledError
 export function isUserCancelledSignature(error: unknown): boolean {
-  return error === 'Canceled' || isWalletUnlockCancelled(error);
+  return isPerpsActionUserCancelled(error);
 }
 
 type RunPerpsActionConfig<T> = {
