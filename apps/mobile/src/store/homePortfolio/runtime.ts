@@ -33,6 +33,10 @@ import {
   buildHomeRefreshProjection,
   type HomeRefreshProjection,
 } from './refresh';
+import {
+  createHomeProjectionScheduler,
+  type HomeProjectionSyncPlan,
+} from './scheduler';
 
 const EMPTY_ACTIVITY = {
   isHydrating: false,
@@ -248,13 +252,25 @@ function syncProjectionCoordinators() {
   syncHomeContentReadinessProjection();
 }
 
-function syncSelectionDependentProjections() {
-  syncHomeAccountProjection();
-  syncHomeBalanceProjection();
-  syncHome24hProjection();
-  syncHomeCurveProjection();
+function flushHomeProjectionSyncPlan(plan: HomeProjectionSyncPlan) {
+  if (plan.account) {
+    syncHomeAccountProjection();
+  }
+  if (plan.balance) {
+    syncHomeBalanceProjection();
+  }
+  if (plan.change24h) {
+    syncHome24hProjection();
+  }
+  if (plan.curve) {
+    syncHomeCurveProjection();
+  }
   syncProjectionCoordinators();
 }
+
+const homeProjectionScheduler = createHomeProjectionScheduler({
+  onFlush: flushHomeProjectionSyncPlan,
+});
 
 let hasStartedHomeProjectionLifecycle = false;
 
@@ -265,31 +281,29 @@ export function ensureHomeProjectionLifecycle() {
 
   hasStartedHomeProjectionLifecycle = true;
 
-  balanceAccountsStore.subscribe(syncSelectionDependentProjections);
-  accountStore.subscribe(syncSelectionDependentProjections);
+  balanceAccountsStore.subscribe(() => {
+    homeProjectionScheduler.schedule('account');
+  });
+  accountStore.subscribe(() => {
+    homeProjectionScheduler.schedule('account');
+  });
   addressBalanceStore.subscribe(() => {
-    syncHomeBalanceProjection();
-    syncHome24hProjection();
-    syncProjectionCoordinators();
+    homeProjectionScheduler.schedule('balance', 'change24h');
   });
   balance24hStore.subscribe(() => {
-    syncHome24hProjection();
-    syncProjectionCoordinators();
+    homeProjectionScheduler.schedule('change24h');
   });
   scene24hBalanceStore.subscribe(() => {
-    syncHome24hProjection();
-    syncProjectionCoordinators();
+    homeProjectionScheduler.schedule('change24h');
   });
   addressCurve24hStore.subscribe(() => {
-    syncHomeCurveProjection();
-    syncHomeRefreshProjection();
+    homeProjectionScheduler.schedule('curve');
   });
   sceneCurve24hStore.subscribe(() => {
-    syncHomeCurveProjection();
-    syncHomeRefreshProjection();
+    homeProjectionScheduler.schedule('curve');
   });
 
-  syncSelectionDependentProjections();
+  homeProjectionScheduler.flushNow('account');
 }
 
 export function useHomeAccountProjection<T>(
