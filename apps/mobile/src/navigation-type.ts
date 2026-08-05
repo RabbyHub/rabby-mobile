@@ -409,6 +409,9 @@ export type TransactionNavigatorParamList = {
   [RootNames.PerpsHistory]?: {
     coin?: string;
   };
+  [RootNames.PerpsProHistory]?: {
+    initialTab?: 'orders' | 'trade' | 'transaction' | 'funding';
+  };
   [RootNames.PerpsMarketDetail]: {
     market: string;
     fromSource?:

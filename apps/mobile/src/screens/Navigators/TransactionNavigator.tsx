@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import { PerpsProHistoryScreen } from '../PerpsProHistory';
 import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
@@ -416,6 +417,23 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: t('page.perpsHistory.title'),
           // ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.PerpsProHistory}
+        component={PerpsProHistoryScreen}
+        options={mergeScreenOptions({
+          title: t('page.perps.pro.history.title'),
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,

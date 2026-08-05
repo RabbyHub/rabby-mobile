@@ -59,6 +59,7 @@ import type {
 import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
 import { mergeUserFills, reconcileHttpFills } from './userFills';
+import { publishPerpsProHistoryEvent } from './history/perpsHistoryEvents';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import type { PerpsMaintenanceMarginTier } from '@/utils/perpsMargin';
 
@@ -1674,6 +1675,12 @@ export const subscribeToUserData = (account: Account) => {
         isSnapshot: isSnapshot || false,
         user,
       });
+      publishPerpsProHistoryEvent({
+        accountAddress: user,
+        isSnapshot: isSnapshot || false,
+        items: fills,
+        kind: 'fills',
+      });
     },
   );
 
@@ -1690,6 +1697,12 @@ export const subscribeToUserData = (account: Account) => {
       setUserNonFundingLedgerUpdates({
         list: nonFundingLedgerUpdates,
         isSnapshot: isSnapshot || false,
+      });
+      publishPerpsProHistoryEvent({
+        accountAddress: user,
+        isSnapshot: isSnapshot || false,
+        items: nonFundingLedgerUpdates,
+        kind: 'ledger',
       });
     });
 
