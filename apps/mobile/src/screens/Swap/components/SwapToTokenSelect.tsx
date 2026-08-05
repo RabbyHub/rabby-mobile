@@ -18,7 +18,6 @@ import {
 } from '@/components/Token';
 import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
-import useAsync from 'react-use/lib/useAsync';
 import {
   getTokenSymbol,
   scamTokenFilter,
@@ -45,6 +44,10 @@ import type { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import type { ITokenItem } from '@/store/tokens';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import {
+  makeTokenListRequestKey,
+  useTokenListAsyncResource,
+} from '@/components/Token/hooks/useTokenListAsyncResource';
 import { isAddress } from 'viem';
 import { Text } from '@/components/Typography';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
@@ -109,7 +112,11 @@ const SwapToTokenSelect = ({
     useState<FavoriteFilterType>('all');
 
   const [_, setLongPressToken] = useLongPressTokenAtom();
-  const queryConds = useDebouncedValue(_queryConds, 250);
+  const debouncedKeyword = useDebouncedValue(_queryConds.keyword, 250);
+  const queryConds = useMemo(
+    () => ({ ..._queryConds, keyword: debouncedKeyword }),
+    [_queryConds, debouncedKeyword],
+  );
   const currentAccount = queryConds.account;
 
   const {
@@ -126,66 +133,74 @@ const SwapToTokenSelect = ({
   }));
 
   const currentAddress = currentAccount?.address;
-  // swap token list
-  const { value: swapTokenList, loading: swapTokenListLoading } =
-    useAsync(async () => {
-      if (!currentAddress || !tokenSelectorVisible) {
-        return [];
-      }
-      if (queryConds.keyword) {
-        const _list = await openapi.searchTokensV2({
-          q: queryConds.keyword,
-          chain_id: queryConds.chainServerId || '',
-        });
-        const list = isAddress(queryConds.keyword, { strict: false })
-          ? _list
-          : _list.filter(scamTokenFilter);
-        let localAmounts: Array<{
-          chain: string;
-          tokenId: string;
-          amount: number;
-        }> = [];
-        if (list.length > 0) {
-          const tokenList = list.map(t => ({
-            chain: t.chain,
-            tokenId: t.id,
-          }));
-          try {
-            localAmounts = await TokenItemEntity.getTokenListAmount({
-              owner_addr: [currentAddress],
-              tokenList,
-            });
-          } catch (error) {
-            console.error('Failed to get local token amounts:', error);
-          }
-        }
-
-        const amountMap = new Map<string, number>();
-        localAmounts.forEach(item => {
-          const key = `${item.chain}-${item.tokenId}`;
-          amountMap.set(key, item.amount);
-        });
-        return list.map(item =>
-          tokenItemToITokenItem(
-            {
-              ...item,
-              amount: amountMap.get(`${item.chain}-${item.id}`) || 0,
-            },
-            '',
-          ),
-        );
-      }
-      const list = await openapi.getSwapTokenList(
+  const tokenListRequestKey = useMemo(
+    () =>
+      makeTokenListRequestKey([
         currentAddress,
-        queryConds.chainServerId ? queryConds.chainServerId : undefined,
+        queryConds.chainServerId,
+        queryConds.keyword,
+      ]),
+    [currentAddress, queryConds.chainServerId, queryConds.keyword],
+  );
+  const loadSwapTokenList = useCallback(async () => {
+    if (!currentAddress) {
+      return [];
+    }
+    if (queryConds.keyword) {
+      const _list = await openapi.searchTokensV2({
+        q: queryConds.keyword,
+        chain_id: queryConds.chainServerId || '',
+      });
+      const list = isAddress(queryConds.keyword, { strict: false })
+        ? _list
+        : _list.filter(scamTokenFilter);
+      let localAmounts: Array<{
+        chain: string;
+        tokenId: string;
+        amount: number;
+      }> = [];
+      if (list.length > 0) {
+        const tokenList = list.map(t => ({
+          chain: t.chain,
+          tokenId: t.id,
+        }));
+        try {
+          localAmounts = await TokenItemEntity.getTokenListAmount({
+            owner_addr: [currentAddress],
+            tokenList,
+          });
+        } catch (error) {
+          console.error('Failed to get local token amounts:', error);
+        }
+      }
+
+      const amountMap = new Map<string, number>();
+      localAmounts.forEach(item => {
+        const key = `${item.chain}-${item.tokenId}`;
+        amountMap.set(key, item.amount);
+      });
+      return list.map(item =>
+        tokenItemToITokenItem(
+          {
+            ...item,
+            amount: amountMap.get(`${item.chain}-${item.id}`) || 0,
+          },
+          '',
+        ),
       );
-      return list.map(item => tokenItemToITokenItem(item, ''));
-    }, [
-      queryConds.chainServerId,
+    }
+    const list = await openapi.getSwapTokenList(
       currentAddress,
-      tokenSelectorVisible,
-      queryConds.keyword,
-    ]);
+      queryConds.chainServerId ? queryConds.chainServerId : undefined,
+    );
+    return list.map(item => tokenItemToITokenItem(item, ''));
+  }, [currentAddress, queryConds.chainServerId, queryConds.keyword]);
+  const { data: swapTokenList, isLoading: swapTokenListLoading } =
+    useTokenListAsyncResource({
+      enabled: Boolean(currentAddress && tokenSelectorVisible),
+      requestKey: tokenListRequestKey,
+      load: loadSwapTokenList,
+    });
 
   const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
   const pinedQueue = useMemo(
@@ -205,6 +220,7 @@ const SwapToTokenSelect = ({
       focus: favoriteFilterValue === 'favorite',
       address: currentAddress,
       chainId,
+      pinnedTokens: pinedQueue,
     });
 
   const isListLoading = useMemo(() => {

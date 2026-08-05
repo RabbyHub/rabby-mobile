@@ -265,6 +265,7 @@ const TokenSelect = ({
       focus: effectiveFavoriteFilterValue === 'favorite',
       address: currentAccount?.address,
       chainId: queryConds.chainServerId,
+      pinnedTokens: pinedQueue,
     });
 
   const isListLoading = useMemo(() => {
