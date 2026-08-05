@@ -436,6 +436,8 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
+  // Polling pause stops the next timer; this lock also freezes in-flight results.
+  const quoteRefreshLockedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
   const enableRefreshRef = useRef(false);
 
@@ -454,7 +456,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const runScheduledQuoteRefresh = useCallback(() => {
     expiredTimer.current = undefined;
 
-    if (autoQuoteRefreshPausedRef.current) {
+    if (autoQuoteRefreshPausedRef.current || quoteRefreshLockedRef.current) {
       return;
     }
 
@@ -520,6 +522,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
     reloadTxRefreshPausedRef.current = paused;
+  }, []);
+
+  const setQuoteRefreshLocked = useCallback((locked: boolean) => {
+    quoteRefreshLockedRef.current = locked;
   }, []);
 
   useEffect(() => {
@@ -912,7 +918,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const setQuote = useCallback(
     (id: number) => (quote: TDexQuoteData) => {
-      if (id === fetchIdRef.current) {
+      if (id === fetchIdRef.current && !quoteRefreshLockedRef.current) {
         setQuotesList(e => {
           const index = e.findIndex(q => q.name === quote.name);
           const v: TDexQuoteData = { ...quote, loading: false };
@@ -941,7 +947,11 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
-      if (canRunQuoteRequest && !isDraggingSlider) {
+      if (
+        canRunQuoteRequest &&
+        !isDraggingSlider &&
+        !quoteRefreshLockedRef.current
+      ) {
         setTokenRefreshId(e => e + 1);
         const limit = rateLimitRef.current?.checkRateLimit();
         setRateLimit(!!limit);
@@ -953,7 +963,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         let realSlippage = slippage;
         if (autoSlippage && isFreeTokenPair) {
           realSlippage = autoSlippageValue;
-          if (currentFetchId === fetchIdRef.current) {
+          if (
+            currentFetchId === fetchIdRef.current &&
+            !quoteRefreshLockedRef.current
+          ) {
             setAutoSuggestSlippage(realSlippage);
           }
         } else if (autoSlippage) {
@@ -976,7 +989,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
                   .times(100)
                   .toFixed()
               : slippage || '0.1';
-            if (currentFetchId === fetchIdRef.current) {
+            if (
+              currentFetchId === fetchIdRef.current &&
+              !quoteRefreshLockedRef.current
+            ) {
               setAutoSuggestSlippage(realSlippage);
             }
           } catch (error) {
@@ -994,7 +1010,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
           fee: feeRate,
           setQuote: setQuote(currentFetchId),
           onFinishedQuote: () => {
-            if (currentFetchId === fetchIdRef.current) {
+            if (
+              currentFetchId === fetchIdRef.current &&
+              !quoteRefreshLockedRef.current
+            ) {
               setFinishedQuotes(e => e + 1);
             }
           },
@@ -1008,7 +1027,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       onFinally(params) {
         // wait for progress animation finish
         setTimeout(() => {
-          if (params[0] === fetchIdRef.current) {
+          if (
+            params[0] === fetchIdRef.current &&
+            !quoteRefreshLockedRef.current
+          ) {
             setQuoteRequestFinished(true);
             setQuoteLoading(false);
             setShowMoreVisible(true);
@@ -1024,6 +1046,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   });
 
   useLayoutEffect(() => {
+    if (quoteRefreshLockedRef.current) {
+      return;
+    }
+
     fetchIdRef.current += 1;
     setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
@@ -1058,7 +1084,11 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const canUpdateActiveProvider = canRunQuoteRequest;
 
   useEffect(() => {
-    if (!receiveToken?.id || !canUpdateActiveProvider) {
+    if (
+      !receiveToken?.id ||
+      !canUpdateActiveProvider ||
+      quoteRefreshLockedRef.current
+    ) {
       return;
     }
 
@@ -1354,6 +1384,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          quoteRefreshLockedRef.current ||
           reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
@@ -1446,6 +1477,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setQuoteRefreshLocked,
     setReloadTxRefreshPaused,
 
     finishedQuotes,

@@ -134,6 +134,12 @@ const BUILD_SWAP_TXS_DEBOUNCE_MS = 500;
 const DEFAULT_REGRESSION_TARGET_USD = '0.1';
 const DEFAULT_REGRESSION_MAX_TOTAL_USD = '1';
 
+type TransactionQuoteRefreshLockPhase =
+  | 'idle'
+  | 'authenticating'
+  | 'confirming'
+  | 'submitting';
+
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<
     TransactionNavigatorParamList,
@@ -338,8 +344,8 @@ const Swap = ({
     setLowCreditVisible,
 
     swapUseSlider,
-    clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setQuoteRefreshLocked,
     setReloadTxRefreshPaused,
     finishedQuotes,
     inSufficientCanGetQuote,
@@ -390,6 +396,21 @@ const Swap = ({
     },
     [setQuotePollingPauseReason],
   );
+  const transactionQuoteRefreshLockPhaseRef =
+    useRef<TransactionQuoteRefreshLockPhase>('idle');
+  const lockTransactionQuoteRefresh = useCallback(
+    (phase: Exclude<TransactionQuoteRefreshLockPhase, 'idle'>) => {
+      transactionQuoteRefreshLockPhaseRef.current = phase;
+      setQuoteRefreshLocked(true);
+      setQuotePollingPauseReason('transaction-submit', true);
+    },
+    [setQuotePollingPauseReason, setQuoteRefreshLocked],
+  );
+  const unlockTransactionQuoteRefresh = useCallback(() => {
+    transactionQuoteRefreshLockPhaseRef.current = 'idle';
+    setQuoteRefreshLocked(false);
+    setQuotePollingPauseReason('transaction-submit', false);
+  }, [setQuotePollingPauseReason, setQuoteRefreshLocked]);
 
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
@@ -1085,6 +1106,7 @@ const Swap = ({
       const snapshot = formValuesRef.current.getSnapshot();
 
       if (!snapshot) {
+        unlockTransactionQuoteRefresh();
         toast.info(t('page.bridge.formChangedAmount'));
         return;
       }
@@ -1096,6 +1118,7 @@ const Swap = ({
 
       // If amount changed during authentication, close modal and alert user
       if (comparison.isChanged) {
+        unlockTransactionQuoteRefresh();
         formValuesRef.current.clear();
         closeMiniSigner();
         Alert.alert(
@@ -1119,6 +1142,7 @@ const Swap = ({
     if (isSubmitting) {
       return;
     }
+    lockTransactionQuoteRefresh('submitting');
     if (receiveToken) {
       setRecentSwapToToken(receiveToken);
     }
@@ -1159,7 +1183,6 @@ const Swap = ({
 
         let txHash = '';
 
-        clearExpiredTimer();
         setMiniSignLoading(true);
 
         const res = await openDirect({
@@ -1294,9 +1317,14 @@ const Swap = ({
         setReloadTxRefreshPaused(false);
         setIsSubmitting(false);
         setMiniSignLoading(false);
+        unlockTransactionQuoteRefresh();
       }
     } else {
-      gotoSwap();
+      try {
+        await gotoSwap();
+      } finally {
+        unlockTransactionQuoteRefresh();
+      }
     }
     void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
@@ -2218,15 +2246,22 @@ const Swap = ({
                   type={'primary'}
                   syncUnlockTime
                   onBeforeAuth={() => {
-                    clearExpiredTimer();
+                    lockTransactionQuoteRefresh('authenticating');
                     formValuesRef.current.save(buildFormSnapshot());
                   }}
                   onCancel={() => {
                     formValuesRef.current.clear();
+                    unlockTransactionQuoteRefresh();
                     refresh(e => e + 1);
                   }}
                   onAuthModalDismiss={() => {
                     formValuesRef.current.clear();
+                    if (
+                      transactionQuoteRefreshLockPhaseRef.current ===
+                      'authenticating'
+                    ) {
+                      unlockTransactionQuoteRefresh();
+                    }
                   }}
                   account={currentAccount}
                   showHardWalletProcess
@@ -2249,6 +2284,7 @@ const Swap = ({
                       return;
                     }
                     if (activeProvider?.shouldTwoStepApprove) {
+                      lockTransactionQuoteRefresh('confirming');
                       setTwoStepApproveModalVisible(true);
                       return;
                     }
@@ -2272,6 +2308,7 @@ const Swap = ({
           open={twoStepApproveModalVisible}
           onCancel={() => {
             setTwoStepApproveModalVisible(false);
+            unlockTransactionQuoteRefresh();
           }}
           onConfirm={() => handleSwap({ ignoreGasFee: riskChecked })}
         />

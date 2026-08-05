@@ -256,6 +256,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
+  // Polling pause stops the next timer; this lock also freezes in-flight results.
+  const quoteRefreshLockedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(
@@ -451,7 +453,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const runScheduledQuoteRefresh = useCallback(() => {
     expiredTimer.current = undefined;
 
-    if (autoQuoteRefreshPausedRef.current) {
+    if (autoQuoteRefreshPausedRef.current || quoteRefreshLockedRef.current) {
       return;
     }
 
@@ -523,6 +525,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
     reloadTxRefreshPausedRef.current = paused;
+  }, []);
+
+  const setQuoteRefreshLocked = useCallback((locked: boolean) => {
+    quoteRefreshLockedRef.current = locked;
   }, []);
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
@@ -787,6 +793,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const [quoteRequestId, setQuoteRequestId] = useState(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
+      if (quoteRefreshLockedRef.current) {
+        return;
+      }
+
       fetchIdRef.current += 1;
       const currentFetchId = fetchIdRef.current;
       setQuoteRequestId(currentFetchId);
@@ -812,7 +822,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         const getQuoteWithApproval = async (
           quote: Omit<BridgeQuote, 'tx'>,
         ): Promise<SelectedBridgeQuote | undefined> => {
-          if (currentFetchId !== fetchIdRef.current) {
+          if (
+            currentFetchId !== fetchIdRef.current ||
+            quoteRefreshLockedRef.current
+          ) {
             return;
           }
 
@@ -855,7 +868,11 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         };
 
         const upsertQuotes = (quotes: SelectedBridgeQuote[]) => {
-          if (!quotes.length || currentFetchId !== fetchIdRef.current) {
+          if (
+            !quotes.length ||
+            currentFetchId !== fetchIdRef.current ||
+            quoteRefreshLockedRef.current
+          ) {
             return;
           }
 
@@ -914,6 +931,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                   });
                 }
               });
+
+              if (quoteRefreshLockedRef.current) {
+                return;
+              }
 
               if (alternativeToken) {
                 if (
@@ -981,7 +1002,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
             !!quote.bridge.name,
         );
 
-        if (currentFetchId === fetchIdRef.current) {
+        if (
+          currentFetchId === fetchIdRef.current &&
+          !quoteRefreshLockedRef.current
+        ) {
           setPending(false);
 
           if (data.length < 1) {
@@ -1092,7 +1116,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const bridgeQuoteRequestFinished = !hasPendingBridgeQuote;
 
   useEffect(() => {
-    if (!toToken?.id) {
+    if (!toToken?.id || quoteRefreshLockedRef.current) {
       return;
     }
 
@@ -1280,6 +1304,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          quoteRefreshLockedRef.current ||
           reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
@@ -1359,6 +1384,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
     setSelectedBridgeQuote,
     setAutoQuoteRefreshPaused,
+    setQuoteRefreshLocked,
     setReloadTxRefreshPaused,
     ...slippageObj,
 
