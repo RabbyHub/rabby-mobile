@@ -2,7 +2,11 @@ import {
   createInitialHomeAccountProjection,
   reduceHomeAccountProjection,
 } from './model';
-import { buildHomeCurveProjection } from './curve';
+import {
+  buildHomeCurveProjection,
+  EMPTY_HOME_CURVE_LIST,
+  getHomeCurveProjectionList,
+} from './curve';
 
 const ADDRESS_A = '0xaaa';
 const ADDRESS_B = '0xbbb';
@@ -50,6 +54,10 @@ describe('home curve projection', () => {
       sourceAddresses: [],
       missingAddresses: [ADDRESS_B],
     });
+    expect(getHomeCurveProjectionList(projection)).toBe(EMPTY_HOME_CURVE_LIST);
+    expect(getHomeCurveProjectionList(projection)).toBe(
+      getHomeCurveProjectionList(projection),
+    );
   });
 
   it('publishes a settled curve only for the matching selection', () => {

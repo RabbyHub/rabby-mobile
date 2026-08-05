@@ -36,6 +36,8 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 import {
+  EMPTY_HOME_CURVE_LIST,
+  getHomeCurveProjectionList,
   isHomeProjectionWaitingForValue,
   useHome24hProjection,
   useHomeAccountProjection,
@@ -157,7 +159,7 @@ export const MultiChart = memo(function MultiChart({
   const { curveAvailability, curveList } = useHomeCurveProjection(
     useShallow(state => ({
       curveAvailability: state.availability,
-      curveList: state.value?.list || [],
+      curveList: getHomeCurveProjectionList(state),
     })),
   );
   const { matteredAccountLength, isPendingMatteredAccountLength } =
@@ -183,7 +185,7 @@ export const MultiChart = memo(function MultiChart({
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const chartsData = startupReady ? curveList : [];
+  const chartsData = startupReady ? curveList : EMPTY_HOME_CURVE_LIST;
   const showBalanceLoading =
     !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
   const showChangeLoading =

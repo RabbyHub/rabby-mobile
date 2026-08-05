@@ -22,6 +22,14 @@ export type HomeCurveProjection = {
   activity: HomeProjectionActivity;
 };
 
+export const EMPTY_HOME_CURVE_LIST: CurvePoint[] = [];
+
+export function getHomeCurveProjectionList(
+  projection: HomeCurveProjection,
+): CurvePoint[] {
+  return projection.value?.list ?? EMPTY_HOME_CURVE_LIST;
+}
+
 export type HomeCurveProjectionInput = {
   account: HomeAccountProjection;
   sceneAddresses: string[];
