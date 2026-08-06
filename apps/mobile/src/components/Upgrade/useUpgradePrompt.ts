@@ -21,12 +21,13 @@ const upgradePromptStore = zCreate(() => ({
 // 忽略状态只和当前提示的版本号关联，新版本仍会再次提示。
 function hasDismissedVersion(version: string) {
   const { lastDismissedVersion } = upgradePromptReceiptStore.getState();
-  return lastDismissedVersion === version;
+  // return lastDismissedVersion === version;
+  return false;
 }
 
 // 版本请求已处于统一的 Home 启动后空闲阶段，这里直接决定是否展示。
 export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
-  if (!info.couldUpgrade || hasDismissedVersion(info.version)) return;
+  // if (!info.couldUpgrade || hasDismissedVersion(info.version)) return;
 
   showUpgradePrompt(info.version);
 }
