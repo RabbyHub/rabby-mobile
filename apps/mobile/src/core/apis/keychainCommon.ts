@@ -1409,10 +1409,7 @@ export function createBusinessKeychainApi({
       service: DEFAULT_BASE_OPTIONS.service,
     });
     await resetTrustedVaultKeyString();
-
-    if (result) {
-      setAuthenticationType(KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD);
-    }
+    setAuthenticationType(KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD);
 
     return result;
   }
