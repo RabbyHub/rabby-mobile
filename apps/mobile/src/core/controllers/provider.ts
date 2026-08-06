@@ -603,6 +603,9 @@ class ProviderController extends BaseController {
     const chain = findChain({
       serverId: chainServerId,
     })!;
+    if (!chain?.isTestnet && method === 'eth_sendRawTransaction') {
+      customRPCServiceApi.probeBestRPC(chainServerId).catch(() => undefined);
+    }
     if (!chain?.isTestnet) {
       if (await customRPCServiceApi.hasCustomRPC(chain.enum)) {
         const promise = customRPCServiceApi
@@ -978,6 +981,12 @@ class ProviderController extends BaseController {
     const { explain: cacheExplain, rawTx, action } = approvingTx;
 
     const chainItem = findChainByEnum(chain);
+
+    if (chainItem && !chainItem.isTestnet) {
+      customRPCServiceApi
+        .probeBestRPC(chainItem.serverId)
+        .catch(() => undefined);
+    }
 
     const statsData: StatsData = {
       signed: false,
