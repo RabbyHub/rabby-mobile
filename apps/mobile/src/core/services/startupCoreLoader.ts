@@ -93,7 +93,7 @@ export function loadStartupCoreServices() {
   const contactService = new ContactBookService({
     storageAdapter: appStorage,
   });
-  contactService.setBeforeSetKV((key, value) => {
+  contactService.subscribeStoreFields((key, value) => {
     if (key === 'aliases') {
       perfEvents.emit('CONTACTS_ALIASES_UPDATE', {
         nextState: value as unknown as ContactBookStore['aliases'],
@@ -143,7 +143,7 @@ export function loadStartupCoreServices() {
       );
     }
   }
-  preferenceService.setBeforeSetKV((key, value) => {
+  preferenceService.subscribeStoreFields((key, value) => {
     if (key === USER_BEHAVIOR_TRACKING_OPT_OUT_KEY) {
       setUserBehaviorTrackingOptOutCache(value !== false);
       void import('@/utils/analytics')

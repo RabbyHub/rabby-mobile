@@ -3,6 +3,17 @@ import * as sinon from 'sinon';
 import type { StorageAdapater } from './storageAdapter';
 import { StoreServiceBase } from './StoreServiceBase';
 
+class TestStoreService extends StoreServiceBase<
+  { enabled: boolean },
+  'settings'
+> {
+  setEnabled(enabled: boolean) {
+    this.mutateStore(draft => {
+      draft.enabled = enabled;
+    });
+  }
+}
+
 describe('StoreServiceBase', () => {
   afterEach(() => {
     sinon.restore();
@@ -16,13 +27,13 @@ describe('StoreServiceBase', () => {
       clearAll: sinon.stub(),
       flushToDisk: sinon.stub(),
     };
-    const service = new StoreServiceBase(
+    const service = new TestStoreService(
       'settings',
       { enabled: false },
       { storageAdapter: storage },
     );
 
-    service.store.enabled = true;
+    service.setEnabled(true);
     service.persistStoreImmediately();
 
     expect(

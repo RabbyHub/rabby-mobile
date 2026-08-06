@@ -1,64 +1,127 @@
-import { FieldNilable } from "@rabby-wallet/base-utils";
-import type { Primitive, StorageAdapaterOptions, StorageItemTpl } from "./storageAdapter";
-import createPersistStore from "./createPersistStore";
+import type { Draft } from 'mutative';
+import cloneDeep from 'lodash.clonedeep';
+
+import type { FieldNilable } from '@rabby-wallet/base-utils';
+
+import createPersistStore, {
+  type PersistStoreChange,
+  type PersistStoreController,
+  type PersistStoreListener,
+} from './createPersistStore';
+import type {
+  StorageAdapaterOptions,
+  StorageItemTpl,
+  StorageSnapshot,
+} from './storageAdapter';
 
 export class StoreServiceBase<
   StoreType extends StorageItemTpl = StorageItemTpl,
-  StoreName extends string = string
+  StoreName extends string = string,
 > {
-  private _storeName: StoreName;
-  public get storeName () { return this._storeName; }
+  private _storeName?: StoreName;
+  public get storeName(): StoreName {
+    if (!this._storeName) {
+      throw new Error('[persist-store] Store service is not initialized.');
+    }
 
-  private _storageAdapter?: StorageAdapaterOptions<StoreType>['storageAdapter'];
+    return this._storeName;
+  }
 
-  protected _store: StoreType;
-  public get store () { return this._store; }
+  private _persistStore?: PersistStoreController<StoreType>;
+  public get store(): StorageSnapshot<StoreType> {
+    return this.getPersistStore().getSnapshot();
+  }
 
-  constructor(storeName: StoreName, tpl: StoreType, options: StorageAdapaterOptions<StoreType>) {
+  public getStoreSnapshot(): StoreType {
+    return cloneDeep(this.store) as StoreType;
+  }
+
+  public getStoreFieldSnapshot<K extends keyof StoreType>(
+    key: K,
+  ): StoreType[K] {
+    return cloneDeep(this.store[key]) as StoreType[K];
+  }
+
+  constructor(
+    storeName?: StoreName,
+    tpl?: StoreType,
+    options: StorageAdapaterOptions<StoreType> = {},
+  ) {
+    if (storeName !== undefined && tpl !== undefined) {
+      this.initializePersistStore(storeName, tpl, options);
+    }
+  }
+
+  protected initializePersistStore(
+    storeName: StoreName,
+    tpl: StoreType,
+    options: StorageAdapaterOptions<StoreType> = {},
+  ) {
     this._storeName = storeName;
-    this._storageAdapter = options.storageAdapter;
-    this._store = createPersistStore<StoreType>(
+    this._persistStore = createPersistStore<StoreType>(
       {
         name: storeName,
         template: tpl,
       },
       {
         storage: options.storageAdapter,
-        beforeSetKV: this.onBeforeSetKV.bind(this),
+        beforePersist: options.beforePersist,
       },
     );
+
+    return this._persistStore.getSnapshot();
+  }
+
+  private getPersistStore() {
+    if (!this._persistStore) {
+      throw new Error('[persist-store] Store service is not initialized.');
+    }
+
+    return this._persistStore;
+  }
+
+  protected mutateStore(recipe: (draft: Draft<StoreType>) => void) {
+    return this.getPersistStore().update(recipe);
+  }
+
+  public subscribeStore(listener: PersistStoreListener<StoreType>) {
+    return this.getPersistStore().subscribe(listener);
+  }
+
+  public subscribeStoreField<
+    K extends Extract<keyof StoreType, string | number>,
+  >(
+    key: K,
+    listener: (
+      value: StorageSnapshot<StoreType>[K],
+      previousValue: StorageSnapshot<StoreType>[K],
+      change: PersistStoreChange<StoreType>,
+    ) => void,
+  ) {
+    return this.getPersistStore().subscribeField(key, listener);
+  }
+
+  public subscribeStoreFields(
+    listener: <K extends keyof StoreType>(
+      key: K,
+      value: FieldNilable<StoreType>[K],
+    ) => void,
+  ) {
+    return this.subscribeStore(change => {
+      change.changedKeys.forEach(key => {
+        listener(
+          key,
+          cloneDeep(change.state[key]) as FieldNilable<StoreType>[typeof key],
+        );
+      });
+    });
+  }
+
+  public flushStore() {
+    this.getPersistStore().flushNow();
   }
 
   public persistStoreImmediately() {
-    if (!this._storageAdapter) {
-      return;
-    }
-
-    this._storageAdapter.setItem(this._storeName, this._store);
-    this._storageAdapter.flushToDisk?.();
-  }
-
-  protected onBeforeSetKV<K extends keyof StoreType>(k: K, value: FieldNilable<StoreType>[K]) {
-    try {
-      this?._beforeSetKV?.(k, value);
-    } catch (error) {
-      console.error(`[StoreServiceBase::${this._storeName}] onBeforeSetKV error`, error);
-    }
-  }
-  private _beforeSetKV?: (<K extends keyof StoreType>(k: K, value: FieldNilable<StoreType>[K]) => void) | null;
-  public setBeforeSetKV(
-    _beforeSetKV: <K extends keyof StoreType>(k: K, value: FieldNilable<StoreType>[K]) => void,
-    retsDisposeFuncs: Function[] = [],
-  ) {
-    this._beforeSetKV = _beforeSetKV;
-
-    // dispose
-    const dispose = () => {
-      this._beforeSetKV = null;
-    };
-
-    retsDisposeFuncs.push(dispose);
-
-    return dispose;
+    this.flushStore();
   }
 }

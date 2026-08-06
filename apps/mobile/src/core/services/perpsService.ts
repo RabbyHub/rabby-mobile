@@ -1,5 +1,8 @@
-import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
-import createPersistStore from '@rabby-wallet/persist-store';
+import cloneDeep from 'lodash/cloneDeep';
+import {
+  StoreServiceBase,
+  type StorageAdapaterOptions,
+} from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 
 import { bytesToHex, publicToAddress, hexToBytes } from '@ethereumjs/util';
@@ -72,8 +75,10 @@ export interface PerpsMarketDataCache<TItem = unknown> {
   list: TItem[];
 }
 
-export class PerpsService {
-  private store?: PerpsServiceStore;
+export class PerpsService extends StoreServiceBase<
+  PerpsServiceStore,
+  APP_STORE_NAMES.perps
+> {
   // ~150KB write-once/read-once blob: bypasses createPersistStore (boot-time
   // clone + rewrite) and must own its own key — the perps store proxy
   // rewrites its whole object and would clobber foreign fields.
@@ -88,29 +93,25 @@ export class PerpsService {
   constructor(
     options: StorageAdapaterOptions & { keyringCrypto: KeyringCrypto },
   ) {
-    this.keyringCrypto = options.keyringCrypto;
-    this.store = createPersistStore<PerpsServiceStore>(
+    super(
+      APP_STORE_NAMES.perps,
       {
-        name: APP_STORE_NAMES.perps,
-        template: {
-          agentVaults: '',
-          agentPreferences: {},
-          currentAccount: null,
-          inviteConfig: {},
-          // no clear account , just cache for last used
-          lastUsedAccount: null,
-          hasDoneNewUserProcess: false,
-          hasShownPerpsGuidePopup: false,
-          hasClosedLearnMoreCard: false,
-          favoriteMarkets: [],
-          selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
-          marginModeByCoin: {},
-        },
+        agentVaults: '',
+        agentPreferences: {},
+        currentAccount: null,
+        inviteConfig: {},
+        // no clear account, just cache for last used
+        lastUsedAccount: null,
+        hasDoneNewUserProcess: false,
+        hasShownPerpsGuidePopup: false,
+        hasClosedLearnMoreCard: false,
+        favoriteMarkets: [],
+        selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+        marginModeByCoin: {},
       },
-      {
-        storage: options?.storageAdapter,
-      },
+      { storageAdapter: options?.storageAdapter },
     );
+    this.keyringCrypto = options.keyringCrypto;
     this.marketCacheStorage = options?.storageAdapter;
     this.memoryState.agentWallets = {};
   }
@@ -135,106 +136,75 @@ export class PerpsService {
   };
 
   getFavoriteMarkets = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    return this.store.favoriteMarkets || [];
+    return this.getStoreFieldSnapshot('favoriteMarkets') || [];
   };
 
   addFavoriteMarket = async (market: string) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     const normalizedMarket = market.toUpperCase();
     if (this.store.favoriteMarkets.includes(normalizedMarket)) {
       return;
     }
-    this.store.favoriteMarkets = [
-      ...this.store.favoriteMarkets,
-      normalizedMarket,
-    ];
+    this.mutateStore(draft => {
+      draft.favoriteMarkets.push(normalizedMarket);
+    });
   };
 
   removeFavoriteMarket = async (market: string) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     const normalizedMarket = market.toUpperCase();
-    this.store.favoriteMarkets = this.store.favoriteMarkets.filter(
-      m => m !== normalizedMarket,
-    );
+    this.mutateStore(draft => {
+      draft.favoriteMarkets = draft.favoriteMarkets.filter(
+        item => item !== normalizedMarket,
+      );
+    });
   };
 
   getMarginModeByCoin = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    return this.store.marginModeByCoin || {};
+    return cloneDeep(this.store.marginModeByCoin || {});
   };
 
   setMarginModeForCoin = async (coin: string, mode: 'cross' | 'isolated') => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    this.store.marginModeByCoin = {
-      ...this.store.marginModeByCoin,
-      [coin]: mode,
-    };
+    this.mutateStore(draft => {
+      draft.marginModeByCoin[coin] = mode;
+    });
   };
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    this.store.hasDoneNewUserProcess = hasDone;
+    this.mutateStore(draft => {
+      draft.hasDoneNewUserProcess = hasDone;
+    });
   };
 
   getHasDoneNewUserProcess = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     return this.store.hasDoneNewUserProcess;
   };
 
   setHasShownPerpsGuidePopup = async (value: boolean) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    this.store.hasShownPerpsGuidePopup = value;
+    this.mutateStore(draft => {
+      draft.hasShownPerpsGuidePopup = value;
+    });
   };
 
   getHasShownPerpsGuidePopup = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     return this.store.hasShownPerpsGuidePopup;
   };
 
   setHasClosedLearnMoreCard = async (value: boolean) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    this.store.hasClosedLearnMoreCard = value;
+    this.mutateStore(draft => {
+      draft.hasClosedLearnMoreCard = value;
+    });
   };
 
   getHasClosedLearnMoreCard = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     return this.store.hasClosedLearnMoreCard;
   };
 
   setSelectedKlineInterval = async (value: CANDLE_MENU_KEY_V2) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    this.store.selectedKlineInterval = value;
+    this.mutateStore(draft => {
+      draft.selectedKlineInterval = value;
+    });
   };
 
   getSelectedKlineInterval = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     return this.store.selectedKlineInterval;
   };
 
@@ -242,10 +212,6 @@ export class PerpsService {
     masterAddress: string,
     approveSignatures: ApproveSignatures,
   ) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-
     if (!masterAddress) {
       console.error('masterAddress is required');
       return;
@@ -254,17 +220,16 @@ export class PerpsService {
     const normalizedAddress = masterAddress.toLowerCase();
 
     // Update store preferences
-    const existingPreference = this.store.agentPreferences[
-      normalizedAddress
-    ] || {
-      agentAddress: '',
-      approveSignatures: [],
-    };
-
-    this.store.agentPreferences[normalizedAddress] = {
-      ...existingPreference,
-      approveSignatures,
-    };
+    this.mutateStore(draft => {
+      const existingPreference = draft.agentPreferences[normalizedAddress] || {
+        agentAddress: '',
+        approveSignatures: [],
+      };
+      draft.agentPreferences[normalizedAddress] = {
+        ...existingPreference,
+        approveSignatures,
+      };
+    });
 
     // Update memory state if wallet exists
     if (this.memoryState.agentWallets[normalizedAddress]) {
@@ -296,7 +261,7 @@ export class PerpsService {
   private safeDecryptAgentVaults = async (): Promise<{
     [address: string]: string;
   }> => {
-    if (!this.store?.agentVaults) {
+    if (!this.store.agentVaults) {
       return {};
     }
     try {
@@ -320,10 +285,10 @@ export class PerpsService {
         '[perpsService] failed to decrypt agentVaults while unlocked, resetting stale agent data',
         message,
       );
-      if (this.store) {
-        this.store.agentVaults = '';
-        this.store.agentPreferences = {};
-      }
+      this.mutateStore(draft => {
+        draft.agentVaults = '';
+        draft.agentPreferences = {};
+      });
       return {};
     }
   };
@@ -331,9 +296,6 @@ export class PerpsService {
   unlockAgentWallets = async () => {
     const unlockVersion = ++this.agentWalletUnlockVersion;
     const unlock = async () => {
-      if (!this.store) {
-        throw new Error('PerpsService not initialized');
-      }
       const agentWallets: PerpsServiceMemoryState['agentWallets'] = {};
 
       // Decrypt and load agent vaults
@@ -343,10 +305,12 @@ export class PerpsService {
         // Format data for memory state
         for (const masterAddress in vaultsMap) {
           const privateKey = vaultsMap[masterAddress] || '';
-          const preference = this.store.agentPreferences[masterAddress] || {
-            agentAddress: '',
-            approveSignatures: [],
-          };
+          const preference = cloneDeep(
+            this.store.agentPreferences[masterAddress] || {
+              agentAddress: '',
+              approveSignatures: [],
+            },
+          );
           agentWallets[masterAddress] = {
             vault: privateKey,
             preference: {
@@ -359,7 +323,7 @@ export class PerpsService {
               // different agents (→ approve one, sign with the other →
               // "agent does not exist").
               agentAddress: this.deriveAgentAddress(privateKey),
-              approveSignatures: preference.approveSignatures || [],
+              approveSignatures: [...(preference.approveSignatures || [])],
             },
           };
         }
@@ -402,9 +366,6 @@ export class PerpsService {
   };
 
   createAgentWallet = async (masterAddress: string) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     const vault = bytesToHex(getRandomBytesSync(32));
     const agentAddress = this.deriveAgentAddress(vault);
     await this.addAgentWallet(masterAddress, vault, {
@@ -419,10 +380,6 @@ export class PerpsService {
     vault: string,
     preference: AgentWalletInfo['preference'],
   ) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-
     const normalizedAddress = masterAddress.toLowerCase();
 
     this.memoryState.agentWallets = {
@@ -442,20 +399,16 @@ export class PerpsService {
     );
 
     // Update store
-    this.store.agentVaults = encryptedVaults;
-    this.store.agentPreferences = {
-      ...this.store.agentPreferences,
-      [normalizedAddress]: {
+    this.mutateStore(draft => {
+      draft.agentVaults = encryptedVaults;
+      draft.agentPreferences[normalizedAddress] = {
         agentAddress: preference.agentAddress,
         approveSignatures: preference.approveSignatures,
-      },
-    };
+      };
+    });
   };
 
   getAgentWallet = async (address: string) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
     if (this.memoryState.unlockPromise) {
       await this.memoryState.unlockPromise;
     }
@@ -469,10 +422,6 @@ export class PerpsService {
     address: string,
     preference: AgentWalletInfo['preference'],
   ) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-
     const normalizedAddress = address.toLowerCase();
     const existingPreference = this.store.agentPreferences[normalizedAddress];
 
@@ -480,13 +429,12 @@ export class PerpsService {
       throw new Error(`Agent wallet not found for address: ${address}`);
     }
 
-    this.store.agentPreferences = {
-      ...this.store.agentPreferences,
-      [normalizedAddress]: {
+    this.mutateStore(draft => {
+      draft.agentPreferences[normalizedAddress] = {
         agentAddress: preference.agentAddress,
         approveSignatures: preference.approveSignatures,
-      },
-    };
+      };
+    });
 
     if (this.memoryState.agentWallets[normalizedAddress]) {
       this.memoryState.agentWallets[normalizedAddress].preference = preference;
@@ -494,46 +442,31 @@ export class PerpsService {
   };
 
   setCurrentAccount = async (account: Account | null) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    if (account) {
-      this.store.lastUsedAccount = {
-        address: account?.address,
-        type: account?.type,
-        aliasName: account?.aliasName,
-        brandName: account?.brandName,
-      };
-      this.store.currentAccount = {
-        address: account.address,
-        type: account.type,
-        aliasName: account.aliasName,
-        brandName: account.brandName,
-      };
-    } else {
-      this.store.currentAccount = null;
-    }
+    this.mutateStore(draft => {
+      if (account) {
+        const storeAccount = {
+          address: account.address,
+          type: account.type,
+          aliasName: account.aliasName,
+          brandName: account.brandName,
+        };
+        draft.lastUsedAccount = { ...storeAccount };
+        draft.currentAccount = { ...storeAccount };
+      } else {
+        draft.currentAccount = null;
+      }
+    });
   };
 
   getLastUsedAccount = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    return this.store.lastUsedAccount;
+    return cloneDeep(this.store.lastUsedAccount);
   };
 
   getCurrentAccount = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    return this.store.currentAccount;
+    return cloneDeep(this.store.currentAccount);
   };
 
   removeAgentWallet = async (address: string) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-
     const normalizedAddress = address.toLowerCase();
 
     const vaultsMap = await this.safeDecryptAgentVaults();
@@ -544,10 +477,10 @@ export class PerpsService {
       vaultsMap,
     );
 
-    this.store.agentVaults = encryptedVaults;
-    const updatedPreferences = { ...this.store.agentPreferences };
-    delete updatedPreferences[normalizedAddress];
-    this.store.agentPreferences = updatedPreferences;
+    this.mutateStore(draft => {
+      draft.agentVaults = encryptedVaults;
+      delete draft.agentPreferences[normalizedAddress];
+    });
 
     const updatedMemoryWallets = { ...this.memoryState.agentWallets };
     delete updatedMemoryWallets[normalizedAddress];
@@ -555,19 +488,11 @@ export class PerpsService {
   };
 
   hasAgentWallet = (address: string) => {
-    if (!this.store) {
-      return false;
-    }
-
     const normalizedAddress = address.toLowerCase();
     return !!this.memoryState.agentWallets[normalizedAddress];
   };
 
   getAgentWalletPreference = (address: string) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-
     const normalizedAddress = address.toLowerCase();
     const preference = this.store.agentPreferences[normalizedAddress];
 
@@ -575,41 +500,37 @@ export class PerpsService {
       return null;
     }
 
-    return preference;
+    return cloneDeep(preference);
   };
 
   getInviteConfig = (address: string) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    return this.store.inviteConfig[address.toLowerCase()];
+    return cloneDeep(this.store.inviteConfig[address.toLowerCase()]);
   };
 
   setInviteConfig = (
     address: string,
     config: { lastConnectedAt?: number; lastInvitedAt?: number },
   ) => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    this.store.inviteConfig[address.toLowerCase()] = {
-      ...this.store.inviteConfig[address.toLowerCase()],
-      ...config,
-    };
+    this.mutateStore(draft => {
+      const key = address.toLowerCase();
+      draft.inviteConfig[key] = {
+        ...draft.inviteConfig[key],
+        ...config,
+      };
+    });
   };
 
   // only test use
   resetStore = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
-    this.store.agentVaults = '';
-    this.store.agentPreferences = {};
-    this.store.currentAccount = null;
-    this.store.lastUsedAccount = null;
-    this.store.hasShownPerpsGuidePopup = false;
-    this.store.hasClosedLearnMoreCard = false;
-    this.store.hasDoneNewUserProcess = false;
+    this.mutateStore(draft => {
+      draft.agentVaults = '';
+      draft.agentPreferences = {};
+      draft.currentAccount = null;
+      draft.lastUsedAccount = null;
+      draft.hasShownPerpsGuidePopup = false;
+      draft.hasClosedLearnMoreCard = false;
+      draft.hasDoneNewUserProcess = false;
+    });
     this.memoryState.agentWallets = {};
   };
 }

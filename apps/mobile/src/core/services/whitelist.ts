@@ -1,6 +1,9 @@
 import { addressUtils } from '@rabby-wallet/base-utils';
-import createPersistStore from '@rabby-wallet/persist-store';
-import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
+import cloneDeep from 'lodash/cloneDeep';
+import {
+  StorageAdapaterOptions,
+  StoreServiceBase,
+} from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import {
   addWhitelistRecord,
@@ -17,32 +20,27 @@ export type WhitelistStore = {
   whitelists: WhitelistRecord[];
 };
 
-export class WhitelistService {
-  store: WhitelistStore = {
-    enabled: true,
-    whitelists: [],
-  };
-
+export class WhitelistService extends StoreServiceBase<
+  WhitelistStore,
+  APP_STORE_NAMES.whitelist
+> {
   constructor(options?: StorageAdapaterOptions) {
-    const storage = createPersistStore<WhitelistStore>(
+    super(
+      APP_STORE_NAMES.whitelist,
       {
-        name: APP_STORE_NAMES.whitelist,
-        template: {
-          enabled: true,
-          whitelists: [],
-        },
+        enabled: true,
+        whitelists: [],
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-    this.store = storage || this.store;
-    if (!this.store.enabled) {
-      this.store.enabled = true;
-    }
-    this.store.whitelists = normalizeWhitelistRecords(
-      this.store.whitelists as unknown as Array<string | WhitelistRecord>,
-    );
+    this.mutateStore(draft => {
+      if (!draft.enabled) {
+        draft.enabled = true;
+      }
+      draft.whitelists = normalizeWhitelistRecords(draft.whitelists);
+    });
   }
 
   getWhitelist = () => {
@@ -50,29 +48,39 @@ export class WhitelistService {
   };
 
   getWhitelistRecords = () => {
-    return this.store.whitelists;
+    return this.getStoreFieldSnapshot('whitelists');
+  };
+
+  applyWhitelistMigration = (
+    records: ReadonlyArray<string | Readonly<WhitelistRecord>>,
+  ) => {
+    this.mutateStore(draft => {
+      draft.whitelists = normalizeWhitelistRecords([...records]);
+    });
   };
 
   enableWhitelist = () => {
-    this.store.enabled = true;
+    this.mutateStore(draft => {
+      draft.enabled = true;
+    });
   };
 
   disableWhiteList = () => {
-    this.store.enabled = false;
+    this.mutateStore(draft => {
+      draft.enabled = false;
+    });
   };
 
   setWhitelist = (addresses: string[]) => {
-    this.store.whitelists = syncWhitelistRecords(
-      this.store.whitelists,
-      addresses,
-    );
+    this.mutateStore(draft => {
+      draft.whitelists = syncWhitelistRecords(draft.whitelists, addresses);
+    });
   };
 
   updateWhitelistOrder = (addresses: string[]) => {
-    this.store.whitelists = reorderWhitelistRecords(
-      this.store.whitelists,
-      addresses,
-    );
+    this.mutateStore(draft => {
+      draft.whitelists = reorderWhitelistRecords(draft.whitelists, addresses);
+    });
   };
 
   removeWhitelist = (address: string) => {
@@ -81,9 +89,11 @@ export class WhitelistService {
     ) {
       return;
     }
-    this.store.whitelists = this.store.whitelists.filter(
-      item => !isSameAddress(item.address, address),
-    );
+    this.mutateStore(draft => {
+      draft.whitelists = draft.whitelists.filter(
+        item => !isSameAddress(item.address, address),
+      );
+    });
   };
 
   addWhitelist = (address: string) => {
@@ -91,7 +101,9 @@ export class WhitelistService {
       return;
     }
 
-    this.store.whitelists = addWhitelistRecord(this.store.whitelists, address);
+    this.mutateStore(draft => {
+      draft.whitelists = addWhitelistRecord(draft.whitelists, address);
+    });
   };
 
   isWhitelistEnabled = () => {

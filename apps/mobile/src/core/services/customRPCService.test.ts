@@ -1,8 +1,3 @@
-jest.mock('@rabby-wallet/persist-store', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
-
 jest.mock('@/utils/chain', () => ({
   findChainByEnum: jest.fn(),
 }));
@@ -21,21 +16,26 @@ jest.mock('@/constant', () => ({
 
 import { CustomRPCService } from './customRPCService';
 
+class TestCustomRPCService extends CustomRPCService {
+  setDefaultRPCForTest(chainServerId: string, rpcUrls: string[]) {
+    this.mutateStore(draft => {
+      draft.defaultRPC = {
+        [chainServerId]: {
+          chainId: chainServerId,
+          rpcUrl: rpcUrls,
+          txPushToRPC: true,
+        },
+      };
+    });
+  }
+}
+
 const createService = (
   chainServerId: string,
   rpcUrls: string[],
 ): CustomRPCService => {
-  const service = new CustomRPCService();
-  service.store = {
-    customRPC: {},
-    defaultRPC: {
-      [chainServerId]: {
-        chainId: chainServerId,
-        rpcUrl: rpcUrls,
-        txPushToRPC: true,
-      },
-    },
-  };
+  const service = new TestCustomRPCService();
+  service.setDefaultRPCForTest(chainServerId, rpcUrls);
   service.preferredRPC = {};
   service.rpcProbeTasks = {};
   service.rpcStatus = {};

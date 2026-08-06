@@ -1,7 +1,8 @@
 import { findChain, findChainByEnum, findChainByID } from '@/utils/chain';
 import { CHAINS_ENUM } from '@/constant/chains';
-import createPersistStore, {
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { openapi } from '../request';
 import i18n from '@/utils/i18n';
@@ -28,8 +29,10 @@ interface TransactionWatcherStore {
   pendingTx: Record<string, Transaction>;
 }
 
-export class TransactionWatcherService {
-  store!: TransactionWatcherStore;
+export class TransactionWatcherService extends StoreServiceBase<
+  TransactionWatcherStore,
+  APP_STORE_NAMES.transactions
+> {
   timers = {};
   transactionHistoryService: TransactionHistoryService;
   private started = false;
@@ -39,21 +42,15 @@ export class TransactionWatcherService {
       transactionHistoryService: TransactionHistoryService;
     },
   ) {
-    this.transactionHistoryService = options.transactionHistoryService;
-    this.store = createPersistStore<TransactionWatcherStore>(
-      {
-        name: APP_STORE_NAMES.transactions,
-        template: {
-          pendingTx: {},
-        },
-      },
-      {
-        storage: options?.storageAdapter,
-      },
+    super(
+      APP_STORE_NAMES.transactions,
+      { pendingTx: {} },
+      { storageAdapter: options?.storageAdapter },
     );
-    if (!this.store.pendingTx) {
-      this.store.pendingTx = {};
-    }
+    this.transactionHistoryService = options.transactionHistoryService;
+    this.mutateStore(draft => {
+      draft.pendingTx ||= {};
+    });
 
     // this._populateAvailableTxs();
   }
@@ -67,10 +64,9 @@ export class TransactionWatcherService {
     id: string,
     { hash, chain, nonce }: { hash: string; chain: CHAINS_ENUM; nonce: string },
   ) => {
-    this.store.pendingTx = {
-      ...this.store.pendingTx,
-      [id]: new Transaction(nonce, hash, chain),
-    };
+    this.mutateStore(draft => {
+      draft.pendingTx[id] = new Transaction(nonce, hash, chain);
+    });
 
     const chainItem = findChainByEnum(chain);
     if (!chainItem) {
@@ -209,33 +205,40 @@ export class TransactionWatcherService {
 
   _removeTx = (id: string) => {
     delete this.timers[id];
-    this.store.pendingTx = Object.entries(this.store.pendingTx).reduce(
-      (m, [k, v]) => {
-        if (k !== id && v) {
-          m[k] = v;
+    const [address, nonceStr, chain] = id.split('_');
+    const nonce = Number(nonceStr);
+    this.mutateStore(draft => {
+      Object.keys(draft.pendingTx).forEach(key => {
+        if (!draft.pendingTx[key]) {
+          delete draft.pendingTx[key];
+          return;
         }
-
-        return m;
-      },
-      {},
-    );
-    this._clearBefore(id);
+        const [keyAddress, keyNonceStr, keyChain] = key.split('_');
+        if (
+          key === id ||
+          (isSameAddress(keyAddress, address) &&
+            keyChain === chain &&
+            Number(keyNonceStr) <= nonce)
+        ) {
+          delete draft.pendingTx[key];
+        }
+      });
+    });
   };
 
   clearPendingTx = (address: string) => {
-    this.store.pendingTx = Object.entries(this.store.pendingTx).reduce(
-      (m, [key, v]) => {
-        // address_chain_nonce
-        const [kAddress] = key.split('_');
-        // keep pending txs of other addresses
-        if (!isSameAddress(address, kAddress) && v) {
-          m[key] = v;
+    this.mutateStore(draft => {
+      Object.keys(draft.pendingTx).forEach(key => {
+        if (!draft.pendingTx[key]) {
+          delete draft.pendingTx[key];
+          return;
         }
-
-        return m;
-      },
-      {},
-    );
+        const [keyAddress] = key.split('_');
+        if (isSameAddress(address, keyAddress)) {
+          delete draft.pendingTx[key];
+        }
+      });
+    });
   };
 
   removeLocalPendingTx = ({
@@ -247,50 +250,36 @@ export class TransactionWatcherService {
     chainId?: number;
     nonce?: number;
   }) => {
-    this.store.pendingTx = Object.entries(this.store.pendingTx).reduce(
-      (m, [key, v]) => {
-        // address_chain_nonce
-        const [kAddress, , _nonce] = key.split('_');
-        const chainItem = findChainByEnum(v.chain);
-        const isSameAddr = isSameAddress(address, kAddress);
-
+    this.mutateStore(draft => {
+      Object.entries(draft.pendingTx).forEach(([key, value]) => {
+        const [keyAddress, , keyNonce] = key.split('_');
+        const chainItem = findChainByEnum(value.chain);
         if (
-          isSameAddr &&
-          (chainId == null ? true : +chainId === chainItem?.id) &&
-          (nonce == null ? true : +_nonce === +nonce)
+          isSameAddress(address, keyAddress) &&
+          (chainId == null || +chainId === chainItem?.id) &&
+          (nonce == null || +keyNonce === +nonce)
         ) {
-          return m;
+          delete draft.pendingTx[key];
         }
-        // keep pending txs of other addresses
-        if (v) {
-          m[key] = v;
-        }
-
-        return m;
-      },
-      {},
-    );
+      });
+    });
   };
 
   _clearBefore = (id: string) => {
     const [address, nonceStr, chain] = id.split('_');
     const nonce = Number(nonceStr);
 
-    const pendingTx = { ...this.store.pendingTx };
-
-    for (const key in pendingTx) {
-      const [kAddress, kNonceStr, kChain] = key.split('_');
-
-      if (
-        isSameAddress(kAddress, address) &&
-        kChain === chain &&
-        Number(kNonceStr) <= nonce &&
-        pendingTx[key]
-      ) {
-        delete pendingTx[key];
-      }
-    }
-
-    this.store.pendingTx = pendingTx;
+    this.mutateStore(draft => {
+      Object.keys(draft.pendingTx).forEach(key => {
+        const [keyAddress, keyNonceStr, keyChain] = key.split('_');
+        if (
+          isSameAddress(keyAddress, address) &&
+          keyChain === chain &&
+          Number(keyNonceStr) <= nonce
+        ) {
+          delete draft.pendingTx[key];
+        }
+      });
+    });
   };
 }

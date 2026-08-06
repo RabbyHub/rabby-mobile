@@ -410,7 +410,7 @@ export function loadAutoConnectService() {
         dappService,
         getAccounts: () => keyringService.getAllVisibleAccountsArray(),
         getRecentTransactions: () =>
-          transactionHistoryService.store.transactions,
+          transactionHistoryService.getStoreFieldSnapshot('transactions'),
         getFallbackAccount: () => preferenceService.getFallbackAccount(),
       }),
     );
