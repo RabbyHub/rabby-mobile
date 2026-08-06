@@ -43,8 +43,8 @@ const SLIDER_THUMB_SIZE = 48;
 const SLIDER_INSET = 4;
 const SLIDER_COMPLETE_THRESHOLD = 0.82;
 const SLIDER_GRADIENT = ['#4056DD', '#2EECD3'];
-const LIGHT_GLASS_COLOR = 'rgba(255, 255, 255, 0.75)';
-const DARK_GLASS_COLOR = 'rgba(56, 59, 65, 0.75)';
+const LIGHT_GLASS_COLOR = 'rgba(255, 255, 255, 0.6)';
+const DARK_GLASS_COLOR = 'rgba(56, 59, 65, 0.5)';
 
 function SlideToUpdate({
   onComplete,
@@ -82,7 +82,9 @@ function SlideToUpdate({
     () =>
       Gesture.Pan()
         .onUpdate(event => {
-          if (completed.value) return;
+          if (completed.value) {
+            return;
+          }
           translateX.value = Math.max(
             0,
             Math.min(event.translationX, maxTranslateX.value),
@@ -98,7 +100,9 @@ function SlideToUpdate({
               maxTranslateX.value,
               { duration: 160 },
               finished => {
-                if (finished) runOnJS(onComplete)();
+                if (finished) {
+                  runOnJS(onComplete)();
+                }
               },
             );
             return;
@@ -195,15 +199,7 @@ export function UpgradePromptModal() {
         <View style={[styles.card, isDark && styles.cardDark]}>
           <BlurView
             blurAmount={12}
-            blurType={
-              Platform.OS === 'ios'
-                ? isDark
-                  ? 'ultraThinMaterialDark'
-                  : 'ultraThinMaterialLight'
-                : isDark
-                ? 'dark'
-                : 'light'
-            }
+            blurType={isDark ? 'dark' : 'light'}
             reducedTransparencyFallbackColor={
               isDark ? DARK_GLASS_COLOR : LIGHT_GLASS_COLOR
             }
@@ -236,7 +232,13 @@ export function UpgradePromptModal() {
           <View style={styles.changelogContainer}>
             <MarkdownInWebView
               markdown={remoteVersion.changelog}
-              htmlInnerStyle="html, body { background-color: transparent; }"
+              htmlInnerStyle={`
+                html, body { background-color: transparent; }
+                .md-wrapper, .md-wrapper * {
+                  font-family: 'SF Pro Rounded', ui-rounded, sans-serif !important;
+                  ${isDark ? 'color: #FFF !important;' : ''}
+                }
+              `}
               webviewStyle={styles.markdownWebView}
             />
           </View>
@@ -302,17 +304,17 @@ const styles = StyleSheet.create({
     marginHorizontal: CONTENT_HORIZONTAL_PADDING,
     height: 45,
     color: '#192945',
-    fontFamily: FontNames.sf_pro_rounded_bold,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     fontWeight: '700',
     lineHeight: 42,
   },
   titleDark: {
-    color: '#F7FAFC',
+    color: '#FFF',
   },
   changelogContainer: {
     height: 162,
-    marginTop: 24,
+    marginTop: 6,
     marginHorizontal: CONTENT_HORIZONTAL_PADDING,
     overflow: 'hidden',
   },
@@ -332,7 +334,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 10,
     color: '#C5C5CF',
-    fontFamily: FontNames.sf_pro_rounded_regular,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
@@ -367,13 +369,13 @@ const styles = StyleSheet.create({
   sliderLabel: {
     paddingLeft: 64,
     color: '#192945',
-    fontFamily: FontNames.sf_pro_rounded_bold,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontWeight: '700',
     lineHeight: 24,
   },
   sliderLabelDark: {
-    color: '#F7FAFC',
+    color: '#FFF',
   },
   sliderThumb: {
     position: 'absolute',
@@ -387,6 +389,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#192945',
   },
   sliderThumbDark: {
-    backgroundColor: '#F7FAFC',
+    backgroundColor: '#FFF',
   },
 });

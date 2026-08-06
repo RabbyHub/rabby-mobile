@@ -4,13 +4,14 @@ import { zCreate } from '@/core/utils/reexports';
 type UpgradePromptInfo = {
   version: string;
   couldUpgrade: boolean;
+  changelog: string;
 };
 
-// 按版本记录用户已忽略的更新，后续出现更高版本时仍可再次提示。
+// 按版本记录已经展示过的更新，后续出现更高版本时仍可再次提示。
 const upgradePromptReceiptStore = zustandByMMKV<{
-  lastDismissedVersion: string;
+  lastPromptedVersion: string;
 }>('@UpgradePromptReceiptMMKV', {
-  lastDismissedVersion: '',
+  lastPromptedVersion: '',
 });
 
 const upgradePromptStore = zCreate(() => ({
@@ -18,32 +19,29 @@ const upgradePromptStore = zCreate(() => ({
   version: '',
 }));
 
-// 忽略状态只和当前提示的版本号关联，新版本仍会再次提示。
-function hasDismissedVersion(version: string) {
-  const { lastDismissedVersion } = upgradePromptReceiptStore.getState();
-  // return lastDismissedVersion === version;
+// 展示记录只和当前提示的版本号关联，新版本仍会再次提示。
+function hasPromptedVersion(version: string) {
+  const { lastPromptedVersion } = upgradePromptReceiptStore.getState();
+  // return lastPromptedVersion === version;
   return false;
 }
 
 // 版本请求已处于统一的 Home 启动后空闲阶段，这里直接决定是否展示。
 export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
-  // if (!info.couldUpgrade || hasDismissedVersion(info.version)) return;
+  // if (!info.couldUpgrade || hasPromptedVersion(info.version)) return;
 
-  showUpgradePrompt(info.version);
+  showUpgradePrompt(info.version, info.changelog);
 }
 
-// 设置页主动检查更新时直接展示，不受自动提示的忽略记录限制。
-export function showUpgradePrompt(version: string) {
+// 设置页主动检查更新时不受忽略记录限制，但 changelog 为空时不展示。
+export function showUpgradePrompt(version: string, changelog: string) {
+  if (!changelog.trim()) return;
+
+  upgradePromptReceiptStore.setState({ lastPromptedVersion: version });
   upgradePromptStore.setState({ visible: true, version });
 }
 
-// 关闭时记录当前弹窗对应的版本，避免同一版本后续自动重复提示。
 export function dismissUpgradePrompt() {
-  const { version } = upgradePromptStore.getState();
-  if (version) {
-    upgradePromptReceiptStore.setState({ lastDismissedVersion: version });
-  }
-
   upgradePromptStore.setState({ visible: false, version: '' });
 }
 

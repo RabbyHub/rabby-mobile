@@ -80,7 +80,10 @@ const triggerCheckVersion = async (
           position: Toast.positions.BOTTOM,
         });
       } else {
-        showUpgradePrompt(result.finalRemoteInfo.version);
+        showUpgradePrompt(
+          result.finalRemoteInfo.version,
+          result.finalRemoteInfo.changelog,
+        );
       }
     })
     .catch(error => {
