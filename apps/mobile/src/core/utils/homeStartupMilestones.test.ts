@@ -15,6 +15,7 @@ import {
   getHomeEntryReady,
   markHomeContentReady,
   markHomeEntryReady,
+  markHomeEntryReadyIfEligible,
   resetHomeStartupMilestonesForTests,
   runAfterHomeContentReady,
   runAfterHomeEntryReady,
@@ -63,6 +64,75 @@ describe('home startup milestones', () => {
     markHomeContentReady('portfolio_content_settled');
     expect(callback).toHaveBeenCalledTimes(1);
     expect(getHomeContentReady()).toBe(true);
+  });
+
+  it('releases Home entry tasks when the first account appears without a restart', () => {
+    const persistedPositionTask = jest.fn();
+    const homePositionTask = jest.fn();
+
+    runAfterHomeEntryReady(persistedPositionTask);
+    runAfterHomeEntryReady(homePositionTask);
+
+    expect(
+      markHomeEntryReadyIfEligible(
+        {
+          appUnlocked: true,
+          isUnlockSessionValid: true,
+          hasVisibleAccounts: false,
+        },
+        'initial_bootstrap_without_accounts',
+      ),
+    ).toBe(false);
+    expect(persistedPositionTask).not.toHaveBeenCalled();
+    expect(homePositionTask).not.toHaveBeenCalled();
+
+    expect(
+      markHomeEntryReadyIfEligible(
+        {
+          appUnlocked: true,
+          isUnlockSessionValid: true,
+          hasVisibleAccounts: true,
+        },
+        'account_added_in_current_process',
+      ),
+    ).toBe(true);
+    expect(persistedPositionTask).toHaveBeenCalledTimes(1);
+    expect(homePositionTask).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps Home entry locked until account and authentication are both ready', () => {
+    expect(
+      markHomeEntryReadyIfEligible(
+        {
+          appUnlocked: false,
+          isUnlockSessionValid: false,
+          hasVisibleAccounts: true,
+        },
+        'account_added_while_locked',
+      ),
+    ).toBe(false);
+
+    expect(
+      markHomeEntryReadyIfEligible(
+        {
+          appUnlocked: false,
+          isUnlockSessionValid: true,
+          hasVisibleAccounts: true,
+        },
+        'unlock_session_ready_after_account_added',
+      ),
+    ).toBe(true);
+  });
+
+  it('preserves the phase hierarchy when content settles first', () => {
+    markHomeContentReady('portfolio_content_settled');
+
+    expect(getHomeEntryReady()).toBe(true);
+    expect(getHomeContentReady()).toBe(true);
+    expect(mockMarkStartupRuntimePhase.mock.calls).toEqual([
+      ['home', 'entry-ready', 'home_content_ready_implies_entry'],
+      ['home', 'content-ready', 'portfolio_content_settled'],
+    ]);
   });
 
   it('runs a content task registered after the milestone immediately', () => {

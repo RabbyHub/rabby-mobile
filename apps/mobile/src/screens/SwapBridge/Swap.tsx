@@ -1,5 +1,4 @@
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { RootNames } from '@/constant/layout';
@@ -20,12 +19,9 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { CompositeScreenProps } from '@react-navigation/native';
-import {
-  useIsFocused,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -39,7 +35,6 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import useMount from 'react-use/lib/useMount';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
 import { SwapHeader } from '../Swap/components/Header';
 import { LowCreditModal } from '../Swap/components/LowCreditModal';
@@ -47,7 +42,6 @@ import { QuoteList } from '../Swap/components/Quotes';
 import { TwpStepApproveModal } from '../Swap/components/TwoStepApproveModal';
 import {
   useDetectLoss,
-  usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
@@ -62,6 +56,10 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import {
+  SwapPendingTransactionsController,
+  type SwapPendingTransactionsControllerRef,
+} from '../Swap/components/SwapPendingTransactionsController';
 import { SwapTokenItem } from '../Swap/components/Token';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
@@ -83,10 +81,7 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import {
-  ApprovePendingTxItem,
-  PendingTxItem,
-} from '../Swap/components/PendingTxItem';
+import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
 import { last } from 'lodash';
 import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
@@ -99,6 +94,11 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
+import {
+  canProcessSignature,
+  isSignatureGasFeeTooHigh,
+  selectSignatureGuardFlags,
+} from '@/components2024/MiniSignV2/state/signatureGuardFlags';
 import { buildFingerprint } from '@/components2024/MiniSignV2/domain/ctx';
 import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
@@ -124,6 +124,7 @@ import {
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { shouldClearConsumedSwapNavigationParams } from './navigationParams';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -146,6 +147,7 @@ type SwapProps = PropsForAccountSwitchScreen<{
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
   diagnosticActive?: boolean;
+  sceneActive?: boolean;
 }>;
 
 function SwapActivationDataProbe({
@@ -224,6 +226,7 @@ const Swap = ({
   disableHeaderRight = false,
   disableAccountSwitcherModal = false,
   diagnosticActive = false,
+  sceneActive = true,
 }: SwapProps) => {
   /** Swap form snapshot for validation during auth */
   interface SwapFormSnapshot {
@@ -251,33 +254,8 @@ const Swap = ({
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
 
   const { colors2024, styles } = useTheme2024({ getStyle });
-
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const {
-    runAsync: runFetchSwapPendingCount,
-    localPendingTxData,
-    clearLocalPendingTxData,
-    runFetchLocalPendingTx,
-    clearSwapHistoryRedDot,
-  } = usePollSwapPendingNumber(5000);
-
-  const headerRight = useCallback(
-    () => (
-      <SwapHeader
-        isForMultipleAddress={isForMultipleAddress}
-        clearSwapHistoryRedDot={clearSwapHistoryRedDot}
-      />
-    ),
-    [isForMultipleAddress, clearSwapHistoryRedDot],
-  );
-  useEffect(() => {
-    if (disableHeaderRight) {
-      return;
-    }
-    setNavigationOptions({
-      headerRight,
-    });
-  }, [disableHeaderRight, headerRight, setNavigationOptions]);
+  const pendingTransactionsRef =
+    useRef<SwapPendingTransactionsControllerRef>(null);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -341,13 +319,13 @@ const Swap = ({
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
-    finishedQuotes,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
 
     autoSuggestSlippage,
   } = useTokenPair({
     account: currentAccount!,
+    active: sceneActive,
   });
   const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
   const setQuotePollingPauseReason = useCallback(
@@ -391,6 +369,10 @@ const Swap = ({
     [setQuotePollingPauseReason],
   );
 
+  useEffect(() => {
+    setQuotePollingPauseReason('scene-inactive', !sceneActive);
+  }, [sceneActive, setQuotePollingPauseReason]);
+
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
   }, [chain]);
@@ -411,7 +393,7 @@ const Swap = ({
     isSupportedChain,
     data: externalDapps,
     openTab: _openTab,
-  } = useExternalSwapBridgeDapps(chain, 'swap');
+  } = useExternalSwapBridgeDapps(chain, 'swap', sceneActive);
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
     const origin = safeGetOrigin(url);
@@ -445,10 +427,22 @@ const Swap = ({
     mutatePreferMEVGuarded(bool);
   });
 
-  const { data: originPreferMEVGuarded, mutate: mutatePreferMEVGuarded } =
-    useRequest(async () => {
+  const {
+    data: originPreferMEVGuarded,
+    mutate: mutatePreferMEVGuarded,
+    run: loadPreferMEVGuarded,
+  } = useRequest(
+    async () => {
       return swapServiceApi.getSwapPreferMEVGuarded();
-    });
+    },
+    { manual: true },
+  );
+
+  useEffect(() => {
+    if (sceneActive) {
+      loadPreferMEVGuarded();
+    }
+  }, [loadPreferMEVGuarded, sceneActive]);
 
   const preferMEVGuarded = useMemo(
     () => (chain === CHAINS_ENUM.ETH ? originPreferMEVGuarded : false),
@@ -470,7 +464,12 @@ const Swap = ({
     regressionScenario.scenario === 'swap-funded' &&
     isRegressionBroadcastRequested(regressionScenario.params);
 
-  useMount(() => {
+  const initialActivationHandledRef = useRef(false);
+  useEffect(() => {
+    if (!sceneActive || initialActivationHandledRef.current) {
+      return;
+    }
+    initialActivationHandledRef.current = true;
     void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
     ).catch(console.error);
@@ -489,7 +488,13 @@ const Swap = ({
       );
       return;
     }
-  });
+  }, [
+    navState?.chainEnum,
+    navState?.swapAgain,
+    navState?.swapTokenId,
+    sceneActive,
+    switchSwapAgain,
+  ]);
 
   const navigation = useNavigation<SwapRouteProps['navigation']>();
 
@@ -504,10 +509,12 @@ const Swap = ({
     autoResetGasStoreOnChainChange: true,
   });
 
-  const { ctx } = useSignatureStoreOf(instance);
-
-  const miniSignGasFeeTooHigh = !!ctx?.gasFeeTooHigh;
-  const canDirectSign = !ctx?.disabledProcess;
+  const signatureGuardFlags = useSignatureStoreOf(
+    instance,
+    selectSignatureGuardFlags,
+  );
+  const miniSignGasFeeTooHigh = isSignatureGasFeeTooHigh(signatureGuardFlags);
+  const canDirectSign = canProcessSignature(signatureGuardFlags);
 
   const miniSignGa = useMemo(
     () => ({
@@ -519,6 +526,9 @@ const Swap = ({
   );
 
   useEffect(() => {
+    if (!sceneActive) {
+      return;
+    }
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
 
@@ -560,21 +570,25 @@ const Swap = ({
         });
       }
     }
-    navigation.setParams({
-      ...navState,
-      isSwapToTokenDetail: false,
-      isFromSwap: false,
-    });
+    if (shouldClearConsumedSwapNavigationParams(navState)) {
+      navigation.setParams({
+        ...navState,
+        isSwapToTokenDetail: false,
+        isFromSwap: false,
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     navState?.chainEnum,
     navState?.isSwapToTokenDetail,
     navState?.tokenId,
     navState?.type,
+    sceneActive,
   ]);
 
   useEffect(() => {
     if (
+      !sceneActive ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'swap-funded'
     ) {
@@ -698,12 +712,14 @@ const Swap = ({
     payToken,
     receiveToken,
     regressionScenario,
+    sceneActive,
     setReceiveToken,
     switchChain,
   ]);
 
   useEffect(() => {
     if (
+      !sceneActive ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'swap-funded' ||
       regressionBroadcastRequested
@@ -751,6 +767,7 @@ const Swap = ({
     receiveToken,
     regressionScenario,
     regressionBroadcastRequested,
+    sceneActive,
   ]);
 
   const { safeOffBottom } = useSafeSizes();
@@ -846,9 +863,9 @@ const Swap = ({
           addSwapTxHistoryObj,
         );
         handleAmountChange('');
-        runFetchLocalPendingTx();
+        pendingTransactionsRef.current?.refreshLocal();
         setTimeout(() => {
-          runFetchSwapPendingCount();
+          pendingTransactionsRef.current?.refreshRemote();
         }, 500);
       } catch (error) {
         console.error(error);
@@ -1067,6 +1084,54 @@ const Swap = ({
   const checkGasFeeTooHighRef = useRef(true);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const handlePayAmountChange = useMemoizedFn((value: string) => {
+    if (directSignBtnRef.current?.isAuthInProgress()) {
+      return;
+    }
+    handleAmountChange(value);
+  });
+  const handlePayTokenChange = useMemoizedFn((token: TokenItem) => {
+    const chainItem = findChainByServerID(token.chain);
+    const normalSetChainToken = () => {
+      if (chainItem?.enum !== chain) {
+        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+        setReceiveToken(undefined);
+      }
+      setPayToken(token);
+    };
+
+    if (!isForMultipleAddress) {
+      normalSetChainToken();
+      return;
+    }
+
+    switchAccountOnSelectedToken({
+      token,
+      currentAccount,
+    });
+    normalSetChainToken();
+  });
+  const handleReceiveTokenChange = useMemoizedFn((token: TokenItem) => {
+    const chainItem = findChainByServerID(token.chain);
+    if (chainItem?.enum !== chain) {
+      switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+      setPayToken(undefined);
+    }
+    setReceiveToken(token);
+
+    if (token.low_credit_score) {
+      setLowCreditToken(token);
+      setLowCreditVisible(true);
+    }
+  });
+  const payTokenExcludes = useMemo(
+    () => (receiveToken?.id ? [receiveToken.id] : undefined),
+    [receiveToken?.id],
+  );
+  const receiveTokenExcludes = useMemo(
+    () => (payToken?.id ? [payToken.id] : undefined),
+    [payToken?.id],
+  );
 
   const onChangeCheckGasFeeTooHigh = useCallback((b: boolean) => {
     checkGasFeeTooHighRef.current = b;
@@ -1222,9 +1287,9 @@ const Swap = ({
           }
           handleAmountChange('');
           setTimeout(() => {
-            runFetchSwapPendingCount();
+            pendingTransactionsRef.current?.refreshRemote();
           }, 1000);
-          runFetchLocalPendingTx();
+          pendingTransactionsRef.current?.refreshLocal();
           const marketTab = navState?.from?.scene
             ? getMarketTabActionPrefix(navState.from.scene)
             : null;
@@ -1312,8 +1377,6 @@ const Swap = ({
   );
 
   const lowCreditInit = useRef(false);
-
-  const isFocused = useIsFocused();
 
   const swapBtnDisabled =
     quoteLoading ||
@@ -1506,6 +1569,7 @@ const Swap = ({
 
   useEffect(() => {
     if (
+      !sceneActive ||
       !regressionBroadcastRequested ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'swap-funded'
@@ -1623,6 +1687,7 @@ const Swap = ({
     regressionScenario,
     riskChecked,
     riskConfirmDisabled,
+    sceneActive,
     shouldTwoStepSwap,
     showRiskConfirm,
     slippageChanged,
@@ -1633,7 +1698,7 @@ const Swap = ({
     useMiniSignerEffectPause(miniSignLoading);
 
   useEffect(() => {
-    if (!isFocused) {
+    if (!sceneActive) {
       closeMiniSigner();
       return;
     }
@@ -1680,7 +1745,7 @@ const Swap = ({
     activeProviderBuildKey,
     activeProviderCanAutoPreExec,
     onChangeCheckGasFeeTooHigh,
-    isFocused,
+    sceneActive,
     canShowDirectSubmit,
     currentAccount?.address,
     currentTxs,
@@ -1715,7 +1780,7 @@ const Swap = ({
       }
     };
 
-    if (shouldPauseMiniSignerEffects()) {
+    if (!sceneActive || shouldPauseMiniSignerEffects()) {
       return clearBuildTimer;
     }
     if (
@@ -1808,6 +1873,7 @@ const Swap = ({
     mutateTxs,
     quoteRequestId,
     runBuildSwapTxsForKey,
+    sceneActive,
     shouldPauseMiniSignerEffects,
     swapBtnDisabled,
   ]);
@@ -1820,13 +1886,7 @@ const Swap = ({
   );
 
   useEffect(() => {
-    if (isFocused) {
-      refresh(e => e + 1);
-    }
-  }, [isFocused, refresh]);
-
-  useEffect(() => {
-    if (!isFocused) {
+    if (!sceneActive) {
       lowCreditInit.current = false;
     } else if (
       receiveToken &&
@@ -1842,7 +1902,7 @@ const Swap = ({
       lowCreditInit.current = true;
     }
   }, [
-    isFocused,
+    sceneActive,
     receiveToken,
     setLowCreditToken,
     setLowCreditVisible,
@@ -1971,39 +2031,13 @@ const Swap = ({
                   slider={slider}
                   onChangeSlider={onChangeSlider}
                   value={payAmount}
-                  onValueChange={value => {
-                    if (directSignBtnRef.current?.isAuthInProgress()) {
-                      return;
-                    }
-                    handleAmountChange(value);
-                  }}
+                  onValueChange={handlePayAmountChange}
                   token={payToken}
-                  onTokenChange={token => {
-                    const chainItem = findChainByServerID(token.chain);
-                    const normalSetChainToken = () => {
-                      if (chainItem?.enum !== chain) {
-                        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                        setReceiveToken(undefined);
-                      }
-                      setPayToken(token);
-                    };
-
-                    if (!isForMultipleAddress) {
-                      normalSetChainToken();
-                    } else {
-                      switchAccountOnSelectedToken({
-                        token,
-                        currentAccount,
-                      });
-                      normalSetChainToken();
-                    }
-                  }}
+                  onTokenChange={handlePayTokenChange}
                   account={currentAccount}
                   chainId={chainServerId}
                   type={'from'}
-                  excludeTokens={
-                    receiveToken?.id ? [receiveToken?.id] : undefined
-                  }
+                  excludeTokens={payTokenExcludes}
                 />
               </View>
 
@@ -2011,19 +2045,7 @@ const Swap = ({
                 <SwapTokenItem
                   valueLoading={quoteLoading}
                   token={receiveToken}
-                  onTokenChange={token => {
-                    const chainItem = findChainByServerID(token.chain);
-                    if (chainItem?.enum !== chain) {
-                      switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                      setPayToken(undefined);
-                    }
-                    setReceiveToken(token);
-
-                    if (token?.low_credit_score) {
-                      setLowCreditToken(token);
-                      setLowCreditVisible(true);
-                    }
-                  }}
+                  onTokenChange={handleReceiveTokenChange}
                   value={
                     !activeProvider
                       ? ''
@@ -2038,8 +2060,7 @@ const Swap = ({
                   type={'to'}
                   currentQuote={activeProvider}
                   // placeholder={t('page.swap.search-by-name-address')}
-                  excludeTokens={payToken?.id ? [payToken?.id] : undefined}
-                  finishedQuotes={finishedQuotes}
+                  excludeTokens={receiveTokenExcludes}
                 />
               </View>
               <BridgeSwitchBtn
@@ -2133,15 +2154,13 @@ const Swap = ({
                 </View>
               )}
 
-            {!approveHash &&
-              Boolean(!isShowMoreVisible && localPendingTxData) && (
-                <PendingTxItem
-                  type="swap"
-                  isForMultipleAddress={isForMultipleAddress}
-                  data={localPendingTxData!}
-                  clearLocalPendingTxData={clearLocalPendingTxData}
-                />
-              )}
+            <SwapPendingTransactionsController
+              ref={pendingTransactionsRef}
+              disableHeaderRight={disableHeaderRight}
+              enabled={sceneActive}
+              isForMultipleAddress={isForMultipleAddress}
+              showPendingTransaction={!approveHash && !isShowMoreVisible}
+            />
 
             {!showRiskTips &&
             shouldTwoStepSwap &&

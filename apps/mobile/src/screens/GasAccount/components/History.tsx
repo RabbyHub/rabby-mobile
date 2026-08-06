@@ -133,6 +133,7 @@ const HistoryItem = React.memo(function HistoryItem({
   return (
     <TouchableOpacity
       onPress={showGiftIcon ? onGiftIconPress : undefined}
+      activeOpacity={showGiftIcon ? 0.7 : 1}
       style={[
         styles.historyItem,
         borderT && styles.borderTop,

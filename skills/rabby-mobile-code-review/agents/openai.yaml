@@ -1,4 +1,4 @@
 interface:
   display_name: "Rabby Mobile Code Review"
-  short_description: "Review Rabby Mobile pull requests safely"
+  short_description: "Review mobile safety, correctness, and performance"
   default_prompt: "Use $rabby-mobile-code-review to review a Rabby Mobile pull request."

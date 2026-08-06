@@ -9272,7 +9272,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/base-utils@npm:^0.1.0, @rabby-wallet/base-utils@workspace:^, @rabby-wallet/base-utils@workspace:packages/base-utils":
+"@rabby-wallet/base-utils@workspace:^, @rabby-wallet/base-utils@workspace:packages/base-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/base-utils@workspace:packages/base-utils"
   dependencies:
@@ -9334,7 +9334,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
-    "@rabby-wallet/keyring-utils": "npm:^0.1.0"
+    "@rabby-wallet/keyring-utils": "workspace:^"
     "@safe-global/protocol-kit": "npm:5.0.3"
     "@safe-global/types-kit": "npm:1.0.4"
     "@types/jest": "npm:^27.4.1"
@@ -9475,12 +9475,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-keyring-watch@npm:*, @rabby-wallet/eth-keyring-watch@npm:^0.1.0, @rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch":
+"@rabby-wallet/eth-keyring-watch@workspace:^, @rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch"
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
-    "@rabby-wallet/keyring-utils": "npm:^0.1.0"
+    "@rabby-wallet/keyring-utils": "workspace:^"
     "@types/jest": "npm:^27.4.1"
     "@types/sinon": "npm:^9.0.10"
     deepmerge: "npm:^4.2.2"
@@ -9548,7 +9548,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/keyring-utils@npm:^0.1.0, @rabby-wallet/keyring-utils@workspace:^, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
+"@rabby-wallet/keyring-utils@workspace:^, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/keyring-utils@workspace:packages/keyring-utils"
   dependencies:
@@ -9642,12 +9642,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/persist-store@npm:^0.1.0, @rabby-wallet/persist-store@workspace:^, @rabby-wallet/persist-store@workspace:packages/persist-store":
+"@rabby-wallet/persist-store@workspace:^, @rabby-wallet/persist-store@workspace:packages/persist-store":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/persist-store@workspace:packages/persist-store"
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
-    "@rabby-wallet/base-utils": "npm:^0.1.0"
+    "@rabby-wallet/base-utils": "workspace:^"
     "@types/jest": "npm:^27.4.1"
     "@types/lodash.clonedeep": "npm:^4.5.9"
     "@types/node": "npm:^20.14.8"
@@ -9933,7 +9933,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/persist-store": "npm:^0.1.0"
+    "@rabby-wallet/persist-store": "workspace:^"
     "@types/jest": "npm:^27.4.1"
     "@types/node": "npm:^20.14.8"
     "@types/sinon": "npm:^9.0.10"
@@ -9958,7 +9958,7 @@ __metadata:
     "@metamask/browser-passworder": "npm:6.0.0"
     "@metamask/obs-store": "npm:^9.0.0"
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/eth-keyring-watch": "npm:^0.1.0"
+    "@rabby-wallet/eth-keyring-watch": "workspace:^"
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@types/jest": "npm:^27.4.1"
@@ -38796,7 +38796,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
-    "@rabby-wallet/eth-keyring-watch": "npm:*"
+    "@rabby-wallet/eth-keyring-watch": "workspace:^"
     "@rabby-wallet/eth-simple-keyring": "npm:5.1.2"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
     "@rabby-wallet/hyperliquid-sdk": "npm:1.1.15"

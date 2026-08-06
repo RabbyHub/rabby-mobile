@@ -120,4 +120,8 @@ export class StoreServiceBase<
   public flushStore() {
     this.getPersistStore().flushNow();
   }
+
+  public persistStoreImmediately() {
+    this.flushStore();
+  }
 }

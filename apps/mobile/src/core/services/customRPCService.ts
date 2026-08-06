@@ -94,6 +94,8 @@ export class CustomRPCService extends StoreServiceBase<
   RPCServiceStore,
   APP_STORE_NAMES.rpc
 > {
+  preferredRPC: Record<string, string> = {};
+  rpcProbeTasks: Partial<Record<string, Promise<void>>> = {};
   rpcStatus: Record<
     string,
     {
@@ -213,9 +215,14 @@ export class CustomRPCService extends StoreServiceBase<
     params: any;
   }) => {
     const isBESupported = this.supportedRpcMethodByBE(method);
-    const hostList = [
-      ...(this.store.defaultRPC?.[chainServerId]?.rpcUrl || []),
-    ];
+    const rpcUrls = [...(this.store.defaultRPC?.[chainServerId]?.rpcUrl || [])];
+    const preferredRPC = this.preferredRPC[chainServerId];
+    const hostList =
+      method !== 'eth_sendRawTransaction' &&
+      preferredRPC &&
+      rpcUrls.includes(preferredRPC)
+        ? [preferredRPC, ...rpcUrls.filter(url => url !== preferredRPC)]
+        : rpcUrls;
 
     if (isBESupported || !hostList?.length) {
       return openapi.ethRpc(chainServerId, {
@@ -232,6 +239,48 @@ export class CustomRPCService extends StoreServiceBase<
 
   getDefaultRPCByChainServerId = (chainServerId: string) => {
     return cloneDeep(this.store.defaultRPC?.[chainServerId]);
+  };
+
+  probeBestRPC = (chainServerId: string) => {
+    if (this.rpcProbeTasks[chainServerId]) {
+      return this.rpcProbeTasks[chainServerId];
+    }
+
+    const hostList = this.store.defaultRPC?.[chainServerId]?.rpcUrl || [];
+    if (hostList.length < 2) {
+      return Promise.resolve();
+    }
+
+    const probe = Promise.allSettled(
+      hostList.map(async url => ({
+        url,
+        blockNumber: BigInt(
+          await this.defaultRPCRequest(url, 'eth_blockNumber', []),
+        ),
+      })),
+    )
+      .then(results => {
+        const bestRPC = results.reduce<
+          { url: string; blockNumber: bigint } | undefined
+        >((best, result) => {
+          if (result.status === 'rejected') {
+            return best;
+          }
+          return !best || result.value.blockNumber > best.blockNumber
+            ? result.value
+            : best;
+        }, undefined);
+
+        if (bestRPC) {
+          this.preferredRPC[chainServerId] = bestRPC.url;
+        }
+      })
+      .finally(() => {
+        delete this.rpcProbeTasks[chainServerId];
+      });
+
+    this.rpcProbeTasks[chainServerId] = probe;
+    return probe;
   };
 
   supportedRpcMethodByBE = (method?: string) => {

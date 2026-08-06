@@ -81,6 +81,7 @@ interface AddressItemProps {
     typeof AddressItemInner2024
   >['showMarkIfNewlyAdded'];
   disableNavigate?: boolean;
+  isShowBackupBadge?: boolean;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -97,6 +98,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     manageAccessibilityLabel,
     showMarkIfNewlyAdded,
     disableNavigate,
+    isShowBackupBadge = false,
   } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
@@ -154,6 +156,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
             changePercent={changePercent}
             isLoss={isLoss}
             showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+            isShowBackupBadge={isShowBackupBadge}
           />
         </TouchableOpacity>
         {onManage ? (

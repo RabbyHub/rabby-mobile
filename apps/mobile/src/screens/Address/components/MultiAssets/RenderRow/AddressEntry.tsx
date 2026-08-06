@@ -10,6 +10,7 @@ export const AddressEntry = ({
   manageAccessibilityLabel,
   showMarkIfNewlyAdded,
   disableNavigate,
+  isShowBackupBadge,
 }: {
   data: KeyringAccountWithAlias & {
     changPercent?: string;
@@ -22,6 +23,7 @@ export const AddressEntry = ({
   onManage?: () => void;
   manageAccessibilityLabel?: string;
   disableNavigate?: boolean;
+  isShowBackupBadge?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -36,6 +38,7 @@ export const AddressEntry = ({
       manageAccessibilityLabel={manageAccessibilityLabel}
       isLoss={data.isLoss}
       disableNavigate={disableNavigate}
+      isShowBackupBadge={isShowBackupBadge}
     />
   );
 };
