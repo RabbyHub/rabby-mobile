@@ -36,6 +36,7 @@ export function markBootstrapAccountsAdded(accountCount: number) {
           ...previous,
           hasVisibleAccounts: true,
           hasStoredKeyrings: true,
+          accountState: 'available',
         },
   );
 

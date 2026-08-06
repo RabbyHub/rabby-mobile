@@ -221,6 +221,27 @@ describe('keyringService support eth-keyring-watch', () => {
       );
     });
 
+    it('preserves an authoritative empty snapshot after removing the last account', async () => {
+      await addWatchAddress();
+      await keyringService.removeAccount(
+        TEST_ADDR,
+        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
+      );
+      const persistedState = keyringService.store.getState();
+      const restoredService = new KeyringService({
+        encryptor: mockEncryptor as any,
+      });
+
+      restoredService.loadStore(persistedState);
+
+      expect(persistedState.publicAccountSnapshot?.accounts).toEqual([]);
+      expect(restoredService.hasPersistedPublicAccountSnapshot()).toBe(true);
+      expect(restoredService.hasPublicAccountSnapshot()).toBe(false);
+      await expect(
+        restoredService.getCountOfAccountsInKeyring(),
+      ).resolves.toBe(0);
+    });
+
     it('preserves locked sensitive vault data when updating password', async () => {
       const service = new KeyringService({
         encryptor: mockEncryptor as any,

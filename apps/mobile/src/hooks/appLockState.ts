@@ -1,6 +1,7 @@
 import type { PasswordStatus } from '@/core/apis/lock';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
+import type { WalletAccountState } from '@/core/utils/walletEntryState';
 import { create } from 'zustand';
 
 export type AppLockState = {
@@ -8,6 +9,7 @@ export type AppLockState = {
   isUnlockSessionValid: boolean;
   hasVisibleAccounts: boolean;
   hasStoredKeyrings: boolean;
+  accountState: WalletAccountState;
   pwdStatus: PasswordStatus;
 };
 
@@ -16,6 +18,7 @@ const zAppLockStore = create<AppLockState>(() => ({
   isUnlockSessionValid: false,
   hasVisibleAccounts: false,
   hasStoredKeyrings: false,
+  accountState: 'checking',
   pwdStatus: -1 as PasswordStatus,
 }));
 

@@ -14,6 +14,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import i18n from '@/utils/i18n';
+import { refreshAppLockAccountFlags } from '@/hooks/useLock';
 
 const getHdKeyringAccountCount = async (address: string) => {
   const keyrings = await keyringServiceApi.getAllTypedVisibleAccounts();
@@ -27,9 +28,8 @@ const getHdKeyringAccountCount = async (address: string) => {
 };
 
 const handleShouldGoStartPage = async () => {
-  const hasAccountsInKeyring =
-    (await keyringServiceApi.getCountOfAccountsInKeyring()) > 0;
-  if (!hasAccountsInKeyring) {
+  const { accountState } = await refreshAppLockAccountFlags();
+  if (accountState === 'empty') {
     redirectToAddAddressEntry({
       action: 'resetTo',
     });

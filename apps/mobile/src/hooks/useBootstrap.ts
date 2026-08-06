@@ -13,6 +13,7 @@ import {
   getAppLockStateSnapshot,
   getTriedUnlock,
   loadBootstrapAppLockState,
+  refreshAppLockAccountFlags,
   storeApiLock,
 } from './useLock';
 import { storeApisBiometrics } from './biometrics';
@@ -199,8 +200,8 @@ export function useInitializeAppOnTop() {
 
 export function subscribeUnlockToFetchAccounts() {
   perfEvents.subscribe('POST_UNLOCK_UI_READY', async () => {
-    const accountFlags = await getBootstrapAccountFlags();
-    if (!accountFlags.hasVisibleAccounts) {
+    const accountFlags = await refreshAppLockAccountFlags();
+    if (accountFlags.accountState === 'empty') {
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStarted,
       });
