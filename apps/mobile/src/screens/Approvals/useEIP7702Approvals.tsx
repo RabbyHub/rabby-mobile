@@ -12,19 +12,8 @@ import { getRecommendNonce } from '@/core/apis/provider';
 import { fromHex, zeroAddress } from 'viem';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { appIsProd } from '@/constant/env';
-
-export const EIP7702_REVOKE_SUPPORTED_CHAINS = [
-  CHAINS_ENUM.ETH,
-  CHAINS_ENUM.BSC,
-  CHAINS_ENUM.OP,
-  CHAINS_ENUM.BASE,
-  CHAINS_ENUM.ARBITRUM,
-  CHAINS_ENUM.SCRL,
-  CHAINS_ENUM.POLYGON,
-  'BERA' as CHAINS_ENUM,
-  'UNI' as CHAINS_ENUM,
-  'INK' as CHAINS_ENUM,
-] as CHAINS_ENUM[];
+import { getEIP7702RevokeSupportedChains } from '@/constant/eip7702';
+import { useMainnetChainList } from '@/hooks/useChainList';
 
 const EIP7702SupportedAccountType = [
   KEYRING_TYPE.SimpleKeyring,
@@ -107,12 +96,14 @@ export const useEIP7702ApprovalsQuery = ({
   account,
   refreshKey = 0,
   searchKeyword,
+  supportedChains,
 }: {
   isActive: boolean;
   chain?: CHAINS_ENUM;
   account?: Account | null;
   refreshKey?: number;
   searchKeyword?: string;
+  supportedChains: CHAINS_ENUM[];
 }) => {
   const { t } = useTranslation();
   const currentAccount = account;
@@ -130,10 +121,10 @@ export const useEIP7702ApprovalsQuery = ({
     }
     return await checkEIP7702Delegation(
       accountAddress,
-      EIP7702_REVOKE_SUPPORTED_CHAINS,
+      supportedChains,
       // wallet.requestETHRpc,
     );
-  }, [accountAddress, isActive, refreshKey]);
+  }, [accountAddress, isActive, refreshKey, supportedChains]);
 
   const effectiveSearchKeyword = searchKeyword ?? searchEIP7702Kw;
   const rawDelegationAddresses = useMemo(() => {
@@ -286,6 +277,7 @@ type EIP7702ApprovalsContextValue = {
   error?: Error;
   data: EIP7702Delegated[];
   totalCount: number;
+  supportedChains: CHAINS_ENUM[];
   isSupportedAccount: boolean;
   selectedRows: EIP7702Delegated[];
   toggleSelectedRow: (row: EIP7702Delegated) => void;
@@ -301,6 +293,7 @@ const EIP7702ApprovalsContext =
     error: undefined,
     data: [],
     totalCount: 0,
+    supportedChains: [],
     isSupportedAccount: false,
     selectedRows: [],
     toggleSelectedRow: () => {},
@@ -327,6 +320,11 @@ export function EIP7702ApprovalsProvider({
 }>) {
   const [refreshKey, setRefreshKey] = useState(0);
   const shouldQuery = isActive || prefetch;
+  const mainnetList = useMainnetChainList();
+  const supportedChains = useMemo(
+    () => getEIP7702RevokeSupportedChains(mainnetList),
+    [mainnetList],
+  );
 
   const {
     accountAddress,
@@ -342,6 +340,7 @@ export function EIP7702ApprovalsProvider({
     account,
     refreshKey,
     searchKeyword,
+    supportedChains,
   });
   const isSupportedAccount = useMemo(() => {
     if (!account?.type) {
@@ -403,6 +402,7 @@ export function EIP7702ApprovalsProvider({
       error: error as Error | undefined,
       data,
       totalCount,
+      supportedChains,
       isSupportedAccount,
       selectedRows,
       toggleSelectedRow,
@@ -416,6 +416,7 @@ export function EIP7702ApprovalsProvider({
       error,
       data,
       totalCount,
+      supportedChains,
       isSupportedAccount,
       selectedRows,
       toggleSelectedRow,
