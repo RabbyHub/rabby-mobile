@@ -23,7 +23,6 @@ import {
   scheduleHomeStartupReady,
   traceHomeStartupReady,
   useHomePostStartupReady,
-  useHomeStartupReady,
 } from '@/core/utils/homeStartupReady';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -39,11 +38,14 @@ import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
-import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
 import { storeApiAccounts } from '@/hooks/account';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { markHomeContentReady } from '@/core/utils/homeStartupMilestones';
+import {
+  useHome24hProjection,
+  useHomeContentReadinessProjection,
+} from '@/store/homePortfolio';
 
 let hasStartedInitReadableAccountStoresIdleWarmup = false;
 let hasStartedHomeSceneDerivedDataActivation = false;
@@ -198,18 +200,9 @@ function HomeStartupReadyScheduler() {
 
 function HomeContentReadyScheduler() {
   const homePostStartupReady = useHomePostStartupReady();
-  const hasSettledFirstContent = useHomePortfolioStore(state => {
-    const hasResolvedAccountContext =
-      state.hasResolvedSelection ||
-      (state.hasFetchedAccounts && !state.isFetchingAccounts);
-
-    return (
-      hasResolvedAccountContext &&
-      !state.isPendingDisplayAddresses &&
-      !state.showBalanceLoadingWithoutLocal &&
-      !state.showChangeLoadingWithoutLocal
-    );
-  });
+  const hasSettledFirstContent = useHomeContentReadinessProjection(
+    state => state.isReady,
+  );
 
   useEffect(() => {
     if (!homePostStartupReady || !hasSettledFirstContent) {
@@ -421,7 +414,7 @@ function MultiAddressHome(): JSX.Element {
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
-  const isLoss = useHomePortfolioStore(state => state.changeData.isLoss);
+  const isLoss = useHome24hProjection(state => !!state.value?.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });
 
   const trackGasAccountActive = useCallback(() => {

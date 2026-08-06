@@ -1475,7 +1475,7 @@ export const TokenSelectorSheetModal = ({
         </View>
         {(!isSwapTo || (query && !list.length)) && <>{customHeaderTitle}</>}
         <BottomSheetFlatList
-          contentInset={{ bottom: 30 }}
+          contentContainerStyle={styles.tokenListContent}
           keyboardShouldPersistTaps="handled"
           style={[styles.scrollView]}
           onScrollBeginDrag={() => Keyboard.dismiss()}
@@ -1677,6 +1677,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // marginHorizontal: 12,
       // borderRadius: 24,
       // paddingHorizontal: 16,
+    },
+    tokenListContent: {
+      paddingBottom: 30,
     },
     noTopBorder: {
       borderTopWidth: 0,

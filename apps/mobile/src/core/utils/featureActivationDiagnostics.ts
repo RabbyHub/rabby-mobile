@@ -3,6 +3,7 @@ import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 import { shouldSuppressPerfCaptureConsoleNoise } from './perfCaptureConsole';
 
 export type FeatureActivationName =
+  | 'send'
   | 'swap'
   | 'bridge'
   | 'single-address'
@@ -13,6 +14,8 @@ export type FeatureActivationEventName =
   | 'context-ready'
   | 'state-prepared'
   | 'navigation-dispatched'
+  | 'route-render-start'
+  | 'content-render-start'
   | 'mounted'
   | 'visible'
   | 'interactive'

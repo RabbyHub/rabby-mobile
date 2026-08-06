@@ -180,7 +180,16 @@ export const BottomBtns = ({
     if (!currentAccount) {
       return;
     }
+    const cycleId = beginFeatureActivation('send', 'home_send_press');
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    markFeatureActivation('send', 'context-ready', {
+      cycleId,
+      reason: 'scene_account_switched',
+    });
+    markFeatureActivation('send', 'navigation-dispatched', {
+      cycleId,
+      reason: 'home_navigation_push',
+    });
     navigateToSendPolyScreen(true);
   };
   const handleSwap = async () => {

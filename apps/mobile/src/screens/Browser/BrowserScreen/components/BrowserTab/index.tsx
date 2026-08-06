@@ -1142,6 +1142,7 @@ const getStyles = createGetStyles2024(ctx =>
       width: '100%',
       opacity: 0.99,
       overflow: 'hidden',
+      backgroundColor: 'transparent',
     },
     dappWebViewNavControl: {
       flexShrink: 0,

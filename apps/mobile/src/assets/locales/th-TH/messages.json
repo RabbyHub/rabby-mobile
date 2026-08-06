@@ -2398,7 +2398,12 @@
       "searchCurrency": "ค้นหาสกุลเงิน",
       "dataAnalysis": "การวิเคราะห์ข้อมูล",
       "bugReportHistory": "ประวัติรายงานบั๊ก",
-      "bugReportChat": "ส่งข้อเสนอแนะผ่านแชต"
+      "bugReportChat": "ส่งข้อเสนอแนะผ่านแชต",
+      "features": "ฟีเจอร์",
+      "manageWallets": "จัดการกระเป๋าเงิน"
+    },
+    "settings": {
+      "chooseWallet": "เลือกกระเป๋าเงินที่ต้องการจัดการ"
     },
     "settingModal": {
       "themeMode": {

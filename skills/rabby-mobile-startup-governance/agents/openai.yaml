@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rabby Mobile Startup Governance"
+  short_description: "Review startup, unlock, and account readiness"
+  default_prompt: "Use $rabby-mobile-startup-governance to review a Rabby Mobile startup-sensitive change."

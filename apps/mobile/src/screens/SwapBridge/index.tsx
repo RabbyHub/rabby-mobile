@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +23,14 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
+import {
+  useRegressionScenario,
+  useRegressionScenarioComponentAction,
+} from '@/devtools/regressionScenarios/react';
 
 import { Bridge } from './Bridge';
 import { BridgeHeader } from '../Bridge/components/BridgeHeader';
@@ -24,6 +38,11 @@ import Swap from './Swap';
 import { SwapHeader } from '../Swap/components/Header';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { withSwapService } from '../Swap/swapServiceDependencies';
+import { isSwapBridgeSceneActive } from './sceneActivation';
+import {
+  createInitialMountedSwapBridgeScenes,
+  mountSwapBridgeScene,
+} from './sceneMounting';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -162,12 +181,84 @@ function SwapBridgeScreenContent({
 }: SwapBridgeScreenProps) {
   const route = useRoute<SwapBridgeRoute>();
   const initialTab = useMemo(() => getInitialTab(route), [route]);
+  const didMarkContentRender = useRef(false);
+  if (!didMarkContentRender.current) {
+    didMarkContentRender.current = true;
+    const activationCycleId = ensureFeatureActivation(
+      initialTab,
+      'swap_bridge_content_render_fallback',
+    );
+    markFeatureActivation(initialTab, 'content-render-start', {
+      cycleId: activationCycleId,
+      reason: 'swap_bridge_content_render_started',
+    });
+  }
   const [activeTab, setActiveTab] = useState<SwapBridgeTab>(initialTab);
+  const [mountedScenes, setMountedScenes] = useState(() =>
+    createInitialMountedSwapBridgeScenes(initialTab),
+  );
   // Swap-again can leave an earlier SwapBridge route mounted. Shared scene
   // modals must have only one focused host.
   const isScreenFocused = useIsFocused();
   const { styles } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const regressionScenario = useRegressionScenario<'SwapBridge'>();
+
+  const activateTab = useCallback((tab: SwapBridgeTab) => {
+    setMountedScenes(current => mountSwapBridgeScene(current, tab));
+    setActiveTab(tab);
+  }, []);
+  const activateTabForRegression = useCallback(
+    async (tab: SwapBridgeTab) => {
+      activateTab(tab);
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    },
+    [activateTab],
+  );
+  const activateSwapForRegression = useCallback(
+    () => activateTabForRegression('swap'),
+    [activateTabForRegression],
+  );
+  const activateBridgeForRegression = useCallback(
+    () => activateTabForRegression('bridge'),
+    [activateTabForRegression],
+  );
+
+  useRegressionScenarioComponentAction(
+    'swap-bridge.activate-swap',
+    activateSwapForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'swap-bridge.activate-bridge',
+    activateBridgeForRegression,
+  );
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-bridge'
+    ) {
+      return;
+    }
+    regressionScenario.report('assertion', {
+      assertion: `swap-bridge-${activeTab}-active`,
+      passed: true,
+      activeTab,
+    });
+  }, [activeTab, regressionScenario]);
+
+  const swapSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'swap',
+    screenFocused: isScreenFocused,
+  });
+  const bridgeSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'bridge',
+    screenFocused: isScreenFocused,
+  });
 
   const handleTabPress = useCallback(
     (tab: SwapBridgeTab) => {
@@ -175,9 +266,9 @@ function SwapBridgeScreenContent({
         return;
       }
 
-      setActiveTab(tab);
+      activateTab(tab);
     },
-    [activeTab],
+    [activateTab, activeTab],
   );
 
   const renderHeader = useCallback(
@@ -207,54 +298,62 @@ function SwapBridgeScreenContent({
       {isScreenFocused && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
-      <View
-        pointerEvents={activeTab === 'swap' ? 'auto' : 'none'}
-        style={[
-          styles.tabScene,
-          activeTab !== 'swap' && styles.inactiveTabScene,
-        ]}>
-        {isForMultipleAddress ? (
-          <Swap.ForMultipleAddress
-            disableHeaderRight
-            disableAccountSwitcherModal
-            diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'swap'
-            }
-          />
-        ) : (
-          <Swap
-            disableHeaderRight
-            disableAccountSwitcherModal
-            diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'swap'
-            }
-          />
-        )}
-      </View>
-      <View
-        pointerEvents={activeTab === 'bridge' ? 'auto' : 'none'}
-        style={[
-          styles.tabScene,
-          activeTab !== 'bridge' && styles.inactiveTabScene,
-        ]}>
-        {isForMultipleAddress ? (
-          <Bridge.ForMultipleAddress
-            disableHeaderRight
-            disableAccountSwitcherModal
-            diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'bridge'
-            }
-          />
-        ) : (
-          <Bridge
-            disableHeaderRight
-            disableAccountSwitcherModal
-            diagnosticActive={
-              isNonProductionDiagnosticsEnabled && activeTab === 'bridge'
-            }
-          />
-        )}
-      </View>
+      {mountedScenes.swap ? (
+        <View
+          pointerEvents={activeTab === 'swap' ? 'auto' : 'none'}
+          style={[
+            styles.tabScene,
+            activeTab !== 'swap' && styles.inactiveTabScene,
+          ]}>
+          {isForMultipleAddress ? (
+            <Swap.ForMultipleAddress
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={swapSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && swapSceneActive
+              }
+            />
+          ) : (
+            <Swap
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={swapSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && swapSceneActive
+              }
+            />
+          )}
+        </View>
+      ) : null}
+      {mountedScenes.bridge ? (
+        <View
+          pointerEvents={activeTab === 'bridge' ? 'auto' : 'none'}
+          style={[
+            styles.tabScene,
+            activeTab !== 'bridge' && styles.inactiveTabScene,
+          ]}>
+          {isForMultipleAddress ? (
+            <Bridge.ForMultipleAddress
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={bridgeSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && bridgeSceneActive
+              }
+            />
+          ) : (
+            <Bridge
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={bridgeSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && bridgeSceneActive
+              }
+            />
+          )}
+        </View>
+      ) : null}
       <TokenInfoPopup />
     </View>
   );
@@ -264,11 +363,30 @@ const SwapBridgeScreenBase = withSwapService(SwapBridgeScreenContent, {
   fallback: <View />,
 });
 
-function ForMultipleAddress() {
-  return <SwapBridgeScreenBase isForMultipleAddress />;
+function SwapBridgeScreenRouteEntry(props: SwapBridgeScreenProps) {
+  const route = useRoute<SwapBridgeRoute>();
+  const initialTab = getInitialTab(route);
+  const didMarkRouteRender = useRef(false);
+  if (!didMarkRouteRender.current) {
+    didMarkRouteRender.current = true;
+    const cycleId = ensureFeatureActivation(
+      initialTab,
+      'swap_bridge_route_render_fallback',
+    );
+    markFeatureActivation(initialTab, 'route-render-start', {
+      cycleId,
+      reason: 'swap_bridge_route_render_started',
+    });
+  }
+
+  return <SwapBridgeScreenBase {...props} />;
 }
 
-const SwapBridgeScreen = Object.assign(SwapBridgeScreenBase, {
+function ForMultipleAddress() {
+  return <SwapBridgeScreenRouteEntry isForMultipleAddress />;
+}
+
+const SwapBridgeScreen = Object.assign(SwapBridgeScreenRouteEntry, {
   ForMultipleAddress,
 });
 

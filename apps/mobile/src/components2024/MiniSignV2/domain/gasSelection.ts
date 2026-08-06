@@ -6,6 +6,33 @@ export type LastGasSelection = {
   gasPrice?: number; // in wei
 };
 
+export function resolveStoredGasSelection({
+  gasLevel,
+  gasPrice,
+  fixedGasPrice,
+  ignoreStoredSelection = false,
+}: {
+  gasLevel: GasLevel['level'];
+  gasPrice?: number;
+  fixedGasPrice?: number;
+  ignoreStoredSelection?: boolean;
+}): LastGasSelection {
+  if (ignoreStoredSelection) {
+    return {
+      lastTimeSelect: 'gasLevel',
+      gasLevel: 'normal',
+    };
+  }
+
+  const resolvedGasLevel = fixedGasPrice !== undefined ? 'custom' : gasLevel;
+
+  return {
+    lastTimeSelect: resolvedGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
+    gasLevel: resolvedGasLevel,
+    gasPrice: fixedGasPrice ?? gasPrice,
+  };
+}
+
 export type GasSelectionFlags = {
   isSend?: boolean;
   isSwap?: boolean;

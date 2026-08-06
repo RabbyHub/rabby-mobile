@@ -323,6 +323,12 @@ describe('core/apis/lock password and session utilities', () => {
     expect(mockUpdatePassword).toHaveBeenCalledWith(
       'built-in-password',
       'new-password',
+      {
+        passwordState: {
+          version: 1,
+          origin: 'user',
+        },
+      },
     );
   });
 
@@ -354,6 +360,12 @@ describe('core/apis/lock password and session utilities', () => {
     expect(mockUpdatePassword).toHaveBeenCalledWith(
       'old-password',
       'new-password',
+      {
+        passwordState: {
+          version: 1,
+          origin: 'user',
+        },
+      },
     );
 
     await expect(clearCustomPassword('current-password')).resolves.toEqual({
@@ -362,6 +374,12 @@ describe('core/apis/lock password and session utilities', () => {
     expect(mockUpdatePassword).toHaveBeenCalledWith(
       'current-password',
       'built-in-password',
+      {
+        passwordState: {
+          version: 1,
+          origin: 'built-in',
+        },
+      },
     );
 
     mockVerifyPassword.mockRejectedValue(new Error('bad current password'));
@@ -397,6 +415,12 @@ describe('core/apis/lock password and session utilities', () => {
     expect(mockUpdatePassword).toHaveBeenCalledWith(
       'built-in-password',
       'new-password',
+      {
+        passwordState: {
+          version: 1,
+          origin: 'user',
+        },
+      },
     );
     expect(mockResetPassword).not.toHaveBeenCalled();
 
@@ -406,7 +430,12 @@ describe('core/apis/lock password and session utilities', () => {
     await expect(resetPasswordOnUI('empty-keyring-password')).resolves.toEqual({
       error: '',
     });
-    expect(mockResetPassword).toHaveBeenCalledWith('empty-keyring-password');
+    expect(mockResetPassword).toHaveBeenCalledWith('empty-keyring-password', {
+      passwordState: {
+        version: 1,
+        origin: 'user',
+      },
+    });
   });
 
   it('fails reset when accounts exist under a custom password', async () => {
