@@ -26,10 +26,12 @@ export function useAsyncInitializeChainList({
   supportChains,
   onChainInitializedAsync,
   account,
+  enabled = true,
 }: {
   supportChains?: Chain['enum'][];
   onChainInitializedAsync?: (firstEnum: CHAINS_ENUM) => void;
   account: Account;
+  enabled?: boolean;
 }) {
   const { matteredChainBalances } = useChainBalances();
 
@@ -52,7 +54,9 @@ export function useAsyncInitializeChainList({
   const [, setSpinner] = useState(0);
   const updateInitStage = useCallback(
     async (nextStage: Exclude<FetchDataStage, false>) => {
-      if (!nextStage) return;
+      if (!nextStage) {
+        return;
+      }
       fetchChainDataStageRef.current = nextStage;
       setSpinner(prev => prev + 1);
     },
@@ -64,7 +68,9 @@ export function useAsyncInitializeChainList({
   });
 
   const fetchDataOnce = useCallback(async () => {
-    if (fetchChainDataStageRef.current) return;
+    if (fetchChainDataStageRef.current) {
+      return;
+    }
     updateInitStage('fetching');
 
     getPreferenceSnapshot('pinnedChain');
@@ -73,8 +79,10 @@ export function useAsyncInitializeChainList({
   }, [updateInitStage, getMatteredChainBalance, account?.address]);
 
   useEffect(() => {
-    fetchDataOnce();
-  }, [fetchDataOnce]);
+    if (enabled) {
+      fetchDataOnce();
+    }
+  }, [enabled, fetchDataOnce]);
 
   const firstEnum = matteredList[0]?.enum;
 
@@ -89,12 +97,12 @@ export function useAsyncInitializeChainList({
   );
 
   useEffect(() => {
-    if (firstEnum && fetchChainDataStageRef.current === 'fetched') {
+    if (enabled && firstEnum && fetchChainDataStageRef.current === 'fetched') {
       updateInitStage('inited');
       chainRef.current = firstEnum;
       onChainInitializedAsync?.(firstEnum);
     }
-  }, [firstEnum, updateInitStage, onChainInitializedAsync]);
+  }, [enabled, firstEnum, updateInitStage, onChainInitializedAsync]);
 
   return {
     matteredList,

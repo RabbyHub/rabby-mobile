@@ -4,6 +4,10 @@ import BigNumber from 'bignumber.js';
 
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
+import {
+  getLatestStoreActivityScopeDiagnostics,
+  getStoreActivityDiagnosticsSnapshot,
+} from '@/core/state/storeActivityDiagnostics';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
@@ -22,6 +26,8 @@ import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
+import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
+import { createRegressionScenarioPerformanceProbe } from '../performance.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -36,11 +42,20 @@ const DEFAULT_FUNDED_TEST_CHAIN = CHAINS_ENUM.POLYGON;
 const DEFAULT_BRIDGE_TO_CHAIN = CHAINS_ENUM.ARBITRUM;
 const DEFAULT_TARGET_USD = '0.1';
 const DEFAULT_MAX_TOTAL_USD = '1';
+const MAX_SWAP_BRIDGE_PRESSURE_CYCLES = 20;
+const MAX_SELECTOR_PRESSURE_CYCLES = 5;
 const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
   1: 'home-assets-token-ready',
   2: 'home-assets-defi-ready',
   3: 'home-assets-nft-ready',
 };
+const HOME_TAB_ACTIVITY_SCOPE_LABELS = [
+  'home-multi-assets-overview',
+  'home-multi-assets-token',
+  'home-multi-assets-defi',
+  'home-multi-assets-nft',
+] as const;
+const HOME_TAB_ACTIVITY_VERIFICATION_TABS = [0, 1, 2, 3, 0] as const;
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -67,6 +82,161 @@ function readTargetUsd(context: RegressionScenarioExecutionContext) {
     throw new Error('targetUsd must not exceed maxTotalUsd');
   }
   return { targetUsd, maxTotalUsd };
+}
+
+function readBoundedScenarioInteger({
+  context,
+  key,
+  fallback,
+  min,
+  max,
+}: {
+  context: RegressionScenarioExecutionContext;
+  key: string;
+  fallback: number;
+  min: number;
+  max: number;
+}) {
+  const raw = context.command.params[key];
+  if (raw === undefined) {
+    return fallback;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+    throw new Error(`${key} must be an integer between ${min} and ${max}`);
+  }
+  return parsed;
+}
+
+async function activateSwapBridgeTabForPressure(
+  context: RegressionScenarioExecutionContext,
+  tab: 'swap' | 'bridge',
+  probe: ReturnType<typeof createRegressionScenarioPerformanceProbe>,
+) {
+  const actionStartedAt = Date.now();
+  const actionTiming = await runRegressionScenarioComponentAction(
+    context.command.runId,
+    `swap-bridge.activate-${tab}`,
+  );
+  probe.recordAction(`activate.${tab}`, actionTiming);
+  const assertionStartedAt = Date.now();
+  await waitForScenarioAssertion(
+    context,
+    `swap-bridge-${tab}-active`,
+    10_000,
+    actionStartedAt,
+  );
+  probe.recordDuration(
+    `activate.${tab}.assertion`,
+    Date.now() - assertionStartedAt,
+  );
+}
+
+async function exerciseTokenSelectorForPressure(
+  context: RegressionScenarioExecutionContext,
+  selector: 'swapFrom' | 'swapTo' | 'bridgeFrom' | 'bridgeTo',
+  settleMs: number,
+  probe: ReturnType<typeof createRegressionScenarioPerformanceProbe>,
+) {
+  const actionPrefix = `token-selector.${selector}`;
+  const openTiming = await runRegressionScenarioComponentAction(
+    context.command.runId,
+    `${actionPrefix}.open`,
+  );
+  probe.recordAction(`${selector}.open`, openTiming);
+  await delay(settleMs);
+  const closeTiming = await runRegressionScenarioComponentAction(
+    context.command.runId,
+    `${actionPrefix}.close`,
+  );
+  probe.recordAction(`${selector}.close`, closeTiming);
+  await delay(settleMs);
+}
+
+async function runSwapBridgePressure(
+  context: RegressionScenarioExecutionContext,
+  activeTab: 'swap' | 'bridge',
+) {
+  const cycles = readBoundedScenarioInteger({
+    context,
+    key: 'pressureCycles',
+    fallback: 0,
+    min: 0,
+    max: MAX_SWAP_BRIDGE_PRESSURE_CYCLES,
+  });
+  if (!cycles) {
+    return;
+  }
+
+  const selectorCycles = readBoundedScenarioInteger({
+    context,
+    key: 'selectorCycles',
+    fallback: 1,
+    min: 0,
+    max: MAX_SELECTOR_PRESSURE_CYCLES,
+  });
+  const settleMs = readBoundedScenarioInteger({
+    context,
+    key: 'pressureSettleMs',
+    fallback: 500,
+    min: 100,
+    max: 2_000,
+  });
+  const startedAt = Date.now();
+  const probe = createRegressionScenarioPerformanceProbe();
+  const pressureTabs =
+    activeTab === 'swap'
+      ? (['bridge', 'swap'] as const)
+      : (['swap', 'bridge'] as const);
+
+  try {
+    for (let cycle = 1; cycle <= cycles; cycle += 1) {
+      const cycleStartedAt = Date.now();
+      for (const tab of pressureTabs) {
+        await activateSwapBridgeTabForPressure(context, tab, probe);
+        for (
+          let selectorCycle = 0;
+          selectorCycle < selectorCycles;
+          selectorCycle += 1
+        ) {
+          await exerciseTokenSelectorForPressure(
+            context,
+            tab === 'swap' ? 'swapFrom' : 'bridgeFrom',
+            settleMs,
+            probe,
+          );
+          await exerciseTokenSelectorForPressure(
+            context,
+            tab === 'swap' ? 'swapTo' : 'bridgeTo',
+            settleMs,
+            probe,
+          );
+        }
+      }
+      context.report('perf-mark', {
+        mark: 'swap-bridge-pressure-cycle',
+        cycle,
+        cycleDurationMs: Date.now() - cycleStartedAt,
+        elapsedMs: Date.now() - startedAt,
+      });
+      probe.recordDuration('pressure.cycle', Date.now() - cycleStartedAt);
+    }
+  } finally {
+    context.report('perf-mark', {
+      mark: 'swap-bridge-pressure-summary',
+      fixedSettleMs: cycles * 2 * selectorCycles * 2 * 2 * settleMs,
+      ...probe.stop(),
+    });
+  }
+
+  context.report('assertion', {
+    assertion: 'swap-bridge-pressure-complete',
+    passed: true,
+    cycles,
+    selectorCycles,
+    settleMs,
+    elapsedMs: Date.now() - startedAt,
+  });
 }
 
 function readScenarioChain(context: RegressionScenarioExecutionContext) {
@@ -272,6 +442,99 @@ async function prepareScenario(context: RegressionScenarioExecutionContext) {
   };
 }
 
+async function waitForHomeTabIndex(tabIndex: number, timeoutMs = 10_000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (
+      apisHomeTabIndex.homeTabScrollerRef.current?.getCurrentIndex() ===
+      tabIndex
+    ) {
+      return;
+    }
+    await delay(50);
+  }
+
+  throw new Error(`Timed out waiting for Home tab index: ${tabIndex}`);
+}
+
+function summarizeHomeTabActivityScopes() {
+  const snapshot = getStoreActivityDiagnosticsSnapshot();
+  const scopes = HOME_TAB_ACTIVITY_SCOPE_LABELS.map(
+    getLatestStoreActivityScopeDiagnostics,
+  );
+
+  return {
+    enabled: snapshot.enabled,
+    scopes,
+    report: scopes.map((scope, index) => ({
+      label: HOME_TAB_ACTIVITY_SCOPE_LABELS[index],
+      mounted: !!scope,
+      active: scope?.active ?? false,
+      consumerCount:
+        scope?.stores.reduce((sum, store) => sum + store.consumerCount, 0) ?? 0,
+      sourceSubscriptionCount:
+        scope?.stores.filter(store => store.sourceSubscribed).length ?? 0,
+      catchUpCount:
+        scope?.stores.reduce((sum, store) => sum + store.catchUpCount, 0) ?? 0,
+    })),
+  };
+}
+
+async function assertHomeTabActivity(
+  context: RegressionScenarioExecutionContext,
+  tabIndex: (typeof HOME_TAB_ACTIVITY_VERIFICATION_TABS)[number],
+) {
+  const expectedActiveLabel = HOME_TAB_ACTIVITY_SCOPE_LABELS[tabIndex];
+  const startedAt = Date.now();
+  let latest = summarizeHomeTabActivityScopes();
+
+  while (Date.now() - startedAt < 10_000) {
+    latest = summarizeHomeTabActivityScopes();
+    const allScopesMounted = latest.scopes.every(Boolean);
+    const activityMatches = latest.scopes.every(scope => {
+      if (!scope) {
+        return false;
+      }
+      const shouldBeActive = scope.label === expectedActiveLabel;
+      if (scope.active !== shouldBeActive) {
+        return false;
+      }
+      if (!shouldBeActive) {
+        return scope.stores.every(store => !store.sourceSubscribed);
+      }
+
+      return (
+        scope.stores.some(store => store.sourceSubscribed) &&
+        scope.stores.every(
+          store => store.consumerCount === 0 || store.sourceSubscribed,
+        )
+      );
+    });
+
+    if (latest.enabled && allScopesMounted && activityMatches) {
+      context.report('assertion', {
+        assertion: 'home-tabs-store-activity',
+        passed: true,
+        tabIndex,
+        expectedActiveLabel,
+        scopes: latest.report,
+      });
+      return;
+    }
+    await delay(50);
+  }
+
+  context.report('assertion', {
+    assertion: 'home-tabs-store-activity',
+    passed: false,
+    tabIndex,
+    expectedActiveLabel,
+    scopes: latest.report,
+  });
+  throw new Error(`Home asset activity did not converge for tab ${tabIndex}`);
+}
+
 async function openHomeAssets(context: RegressionScenarioExecutionContext) {
   resetToHome();
   await context.waitForRoute(RootNames.Home);
@@ -282,6 +545,7 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     .filter(value => Number.isInteger(value) && value >= 0 && value <= 3);
   for (const tabIndex of requestedTabs) {
     apisHomeTabIndex.setTabIndex(tabIndex, true);
+    await waitForHomeTabIndex(tabIndex);
     context.report('assertion', {
       assertion: 'home-tab-selected',
       passed: navigationRef.getCurrentRoute()?.name === RootNames.Home,
@@ -294,6 +558,12 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     } else {
       await delay(350);
     }
+  }
+
+  for (const tabIndex of HOME_TAB_ACTIVITY_VERIFICATION_TABS) {
+    apisHomeTabIndex.setTabIndex(tabIndex, true);
+    await waitForHomeTabIndex(tabIndex);
+    await assertHomeTabActivity(context, tabIndex);
   }
 }
 
@@ -538,6 +808,7 @@ async function openSwapBridge(
       'bridge-funded-dry-run-ready',
       90_000,
     );
+    await runSwapBridgePressure(context, requestedTab);
     return;
   }
 
@@ -551,18 +822,26 @@ async function openSwapBridge(
     activeTab: requestedTab,
   });
 
+  let activeTab: 'swap' | 'bridge' = requestedTab;
   if (context.command.action === 'start') {
     const secondTab = requestedTab === 'swap' ? 'bridge' : 'swap';
-    pushNestedScreen(RootNames.StackTransaction, RootNames.SwapBridge, {
-      activeTab: secondTab,
-    });
-    await context.waitForRoute(RootNames.SwapBridge);
+    await runRegressionScenarioComponentAction(
+      context.command.runId,
+      `swap-bridge.activate-${secondTab}`,
+    );
+    await waitForScenarioAssertion(
+      context,
+      `swap-bridge-${secondTab}-active`,
+      10_000,
+    );
     context.report('assertion', {
       assertion: 'swap-bridge-second-tab-opened',
       passed: true,
       activeTab: secondTab,
     });
+    activeTab = secondTab;
   }
+  await runSwapBridgePressure(context, activeTab);
 }
 
 async function openSwapFunded(
@@ -618,12 +897,83 @@ async function openSwapFunded(
 async function openSettingsRestart(
   context: RegressionScenarioExecutionContext,
 ) {
+  if (context.command.params.authRecoveryFixture === 'post-keychain-reset') {
+    resetToHome();
+    await context.waitForRoute(RootNames.Home);
+
+    const [{ setKeyringPasswordState }, preferenceApi, keychainApi] =
+      await Promise.all([
+        import('@/core/serviceApi/keyring'),
+        import('@/core/serviceApi/preference'),
+        import('@/core/apis/keychain'),
+      ]);
+
+    if (keychainApi.isAuthenticatedByBiometrics()) {
+      throw new Error(
+        'post-keychain-reset fixture requires a non-biometric keychain entry',
+      );
+    }
+
+    await setKeyringPasswordState({
+      version: 1,
+      origin: 'user',
+      pendingAuthTransition: 'disable-biometrics',
+    });
+    await preferenceApi.setPasswordIsAutoGeneratedDurably(false);
+    context.report('assertion', {
+      assertion: 'biometric-auth-recovery-fixture-persisted',
+      fixture: 'post-keychain-reset',
+      passed: true,
+    });
+    return;
+  }
+
   pushNestedScreen(RootNames.StackSettings, RootNames.Settings);
   await context.waitForRoute(RootNames.Settings);
   context.report('assertion', {
     assertion: 'settings-opened',
     passed: true,
   });
+
+  if (parseScenarioBoolean(context.command.params.verifyAuthRecovery)) {
+    const [keyringApi, preferenceApi, keychainApi] = await Promise.all([
+      import('@/core/serviceApi/keyring'),
+      import('@/core/serviceApi/preference'),
+      import('@/core/apis/keychain'),
+    ]);
+    const deadline = Date.now() + 5_000;
+    let passwordState = await keyringApi.getKeyringPasswordState();
+    let passwordIsAutoGenerated =
+      await preferenceApi.getPasswordIsAutoGenerated();
+
+    while (
+      Date.now() < deadline &&
+      (passwordState?.pendingAuthTransition === 'disable-biometrics' ||
+        passwordIsAutoGenerated)
+    ) {
+      await delay(50);
+      passwordState = await keyringApi.getKeyringPasswordState();
+      passwordIsAutoGenerated =
+        await preferenceApi.getPasswordIsAutoGenerated();
+    }
+
+    const passed =
+      passwordState?.origin === 'user' &&
+      !passwordState.pendingAuthTransition &&
+      !passwordIsAutoGenerated &&
+      !keychainApi.isAuthenticatedByBiometrics();
+    context.report('assertion', {
+      assertion: 'biometric-auth-state-recovered',
+      passed,
+      passwordOrigin: passwordState?.origin || null,
+      pendingAuthTransition: passwordState?.pendingAuthTransition || null,
+      passwordIsAutoGenerated,
+      isBiometricAuthenticationType: keychainApi.isAuthenticatedByBiometrics(),
+    });
+    if (!passed) {
+      throw new Error('Biometric authentication state did not converge');
+    }
+  }
 
   if (parseScenarioBoolean(context.command.params.lockAfterOpen)) {
     const { apisLock } = await import('@/core/apis');

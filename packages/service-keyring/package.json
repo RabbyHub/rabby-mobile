@@ -37,7 +37,7 @@
     "@metamask/browser-passworder": "6.0.0",
     "@metamask/obs-store": "^9.0.0",
     "@rabby-wallet/base-utils": "workspace:^",
-    "@rabby-wallet/eth-keyring-watch": "^0.1.0",
+    "@rabby-wallet/eth-keyring-watch": "workspace:^",
     "@rabby-wallet/keyring-utils": "workspace:^",
     "@rabby-wallet/service-address": "workspace:^",
     "@types/readable-stream": "^4.0.10",

@@ -9,6 +9,7 @@ import { Chain } from '@debank/common';
 import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
 import { supportedChainToChain } from '@/isomorphic/chain';
 import { updateChainStore } from '@/constant/chains';
+import cloneDeep from 'lodash.clonedeep';
 
 type SyncChainServiceStore = {
   data: {
@@ -42,10 +43,14 @@ export class SyncChainService extends StoreServiceBase<
       },
     );
 
-    this.store.data.updatedAt = this.store.data.updatedAt || 0;
+    if (!this.store.data.updatedAt) {
+      this.mutateStore(draft => {
+        draft.data.updatedAt = 0;
+      });
+    }
     if (this.store.data.chains.length) {
       updateChainStore({
-        mainnetList: this.store.data.chains,
+        mainnetList: this.getStoreFieldSnapshot('data').chains,
       });
     }
     this.syncMainnetChainList();
@@ -85,10 +90,10 @@ export class SyncChainService extends StoreServiceBase<
       updateChainStore({
         mainnetList: list,
       });
-      this.store.data = {
-        chains: list,
-        updatedAt: Date.now(),
-      };
+      this.mutateStore(draft => {
+        draft.data.chains = list;
+        draft.data.updatedAt = Date.now();
+      });
     } catch (error) {
       console.error('fetch chain list error: ', error);
     }

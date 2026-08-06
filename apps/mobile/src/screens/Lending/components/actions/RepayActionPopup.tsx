@@ -33,6 +33,7 @@ import { parseUnits } from 'viem';
 import {
   calculateHFAfterRepay,
   calculateHFAfterRepayWithAToken,
+  hasNonZeroEffectiveLtv,
 } from '../../utils/hfUtils';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
@@ -87,6 +88,7 @@ import {
 } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { isUserCancelledError } from '../../utils/error';
+import { useMode } from '../../hooks/useMode';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -211,7 +213,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     if (!targetPool) {
       return undefined;
     }
-    if (isAtTokenRepay) {
+    if (isAtTokenRepay && reserve.usageAsCollateralEnabledOnUser) {
       return calculateHFAfterRepayWithAToken({
         user: userSummary,
         amount,
@@ -265,8 +267,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
       // 计算需要的额度（包含decimals）
       const requiredAmount = new BigNumber(amount)
+        .multipliedBy(_amount === '-1' ? REPAY_AMOUNT_MULTIPLIER : 1)
         .multipliedBy(10 ** reserve.reserve.decimals)
-        .toString();
+        .integerValue(BigNumber.ROUND_UP)
+        .toFixed(0);
 
       // 检查当前额度是否足够
       const isApproved = new BigNumber(allowance || '0').gte(requiredAmount);
@@ -276,6 +280,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       setNeedApprove(true); // 出错时默认需要approve
     }
   }, [
+    _amount,
     amount,
     currentAccount,
     isAtTokenRepay,
@@ -308,6 +313,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
       let actualNeedApprove = false;
       let allowance = '0';
+      let requiredAmount = '0';
       if (
         !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress) &&
         !isAtTokenRepay
@@ -320,9 +326,11 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           currentAccount,
         );
 
-        const requiredAmount = new BigNumber(amount)
+        requiredAmount = new BigNumber(amount)
+          .multipliedBy(_amount === '-1' ? REPAY_AMOUNT_MULTIPLIER : 1)
           .multipliedBy(10 ** reserve.reserve.decimals)
-          .toString();
+          .integerValue(BigNumber.ROUND_UP)
+          .toFixed(0);
 
         actualNeedApprove = !new BigNumber(allowance || '0').gte(
           requiredAmount,
@@ -331,16 +339,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
       // 如果需要approve，构建approve交易
       if (actualNeedApprove) {
-        const approveAmount = new BigNumber(amount)
-          .multipliedBy(_amount === '-1' ? REPAY_AMOUNT_MULTIPLIER : 1)
-          .multipliedBy(10 ** reserve.reserve.decimals)
-          .integerValue(BigNumber.ROUND_UP)
-          .toFixed(0);
-
-        const requiredAmount = new BigNumber(amount)
-          .multipliedBy(10 ** reserve.reserve.decimals)
-          .toString();
-
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
         if (
@@ -378,7 +376,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
           spender: selectedMarketData.addresses.LENDING_POOL,
-          amount: approveAmount,
+          amount: requiredAmount,
           account: currentAccount,
           isBuild: true,
         });
@@ -879,6 +877,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const { chainInfo, selectedMarketData } = useSelectedMarket();
   const { formattedPoolReservesAndIncentives, displayPoolReserves } =
     useLendingSummary();
+  const { eModes } = useMode();
   const repayToken = useMemo(() => {
     const r = formattedPoolReservesAndIncentives.find(item =>
       isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
@@ -908,6 +907,19 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           a.underlyingBalanceUSD,
         );
       });
+    const isLtvZeroCollateral = (
+      item: (typeof displayPoolReserves)[number],
+    ) => {
+      const emodeEntry = item.reserve.eModes.find(
+        e => e.id === userSummary.userEmodeCategoryId,
+      );
+      return !hasNonZeroEffectiveLtv({
+        baseLTVasCollateral: item.reserve.baseLTVasCollateral,
+        isInEmode: userSummary.userEmodeCategoryId !== 0,
+        emodeEntry,
+        isEModeIsolated: !!eModes[userSummary.userEmodeCategoryId]?.isolated,
+      });
+    };
     const hasLtvZeroCollateral = collateralTokens
       .filter(
         item =>
@@ -915,13 +927,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           item.underlyingBalance !== '0' &&
           item.usageAsCollateralEnabledOnUser,
       )
-      .some(item => item.reserve.baseLTVasCollateral === '0');
+      .some(isLtvZeroCollateral);
     // 如果有ltv 为 0的抵押物，必须优先还款
     const displayReserve = hasLtvZeroCollateral
-      ? collateralTokens.filter(
-          item => item.reserve.baseLTVasCollateral === '0',
-        )?.[0]
-      : collateralTokens?.[0];
+      ? collateralTokens.find(isLtvZeroCollateral)
+      : collateralTokens[0];
 
     const r = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(
@@ -949,7 +959,9 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     displayPoolReserves,
     formattedPoolReservesAndIncentives,
     chainInfo?.id,
+    eModes,
     reserve?.underlyingAsset,
+    userSummary,
   ]);
 
   const showSwitch = useMemo(() => {

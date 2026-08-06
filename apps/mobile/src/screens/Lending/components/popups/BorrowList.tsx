@@ -81,18 +81,6 @@ export const LendingBorrowListContent: React.FC<
         if (isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
           return false;
         }
-        if (item.variableBorrows && item.variableBorrows !== '0') {
-          return true;
-        }
-        // emode开启，但是不支持该池子借贷
-        const eModeBorrowDisabled =
-          !!iUserSummary?.userEmodeCategoryId &&
-          !item.reserve.eModes.find(
-            e => e.id === iUserSummary.userEmodeCategoryId,
-          );
-        if (eModeBorrowDisabled) {
-          return false;
-        }
         // 贷款上限
         //if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
         //  return false;

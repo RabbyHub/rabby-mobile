@@ -39,6 +39,8 @@ import { InteractionManager } from 'react-native';
 import { appServiceEvents } from '@/core/events/appServiceEvents';
 import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias } from '@/types/account';
 
@@ -272,6 +274,7 @@ export const storeApiAccounts = {
   },
   fetchAccounts: accountStore.fetchAccounts,
   removeAccount: accountStore.removeAccount,
+  togglePinAddressAsync: accountStore.togglePinAddressAsync,
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
@@ -318,8 +321,15 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 };
 
 export const usePinnedAccountList = () => {
-  const pinAddresses = useAccountStore(s => s.pinnedAddresses);
-  const accounts = useAccountStore(s => s.accounts);
+  const { pinAddresses, accounts } = useActivityStore(
+    accountStore.useStore,
+    useShallow(state => ({
+      pinAddresses: state.pinnedAddresses,
+      accounts: state.accounts,
+    })),
+    Object.is,
+    { storeLabel: 'home-pinned-accounts' },
+  );
 
   useEffect(() => {
     accountStore.ensurePinnedAddressesHydrated().catch(error => {
@@ -355,14 +365,21 @@ export const usePinnedAccountList = () => {
   const pinnedAddresses = useMemo(() => {
     return pinnedBaseAccounts.map(item => item.address.toLowerCase());
   }, [pinnedBaseAccounts]);
-  const balanceSnapshots =
-    addressBalanceStore.useAddressesSnapshot(pinnedAddresses);
+  const balanceValues = useActivityStore(
+    addressBalanceStore.useStore,
+    useShallow(state =>
+      pinnedAddresses.map(address => state.valueMap[address]),
+    ),
+    Object.is,
+    { storeLabel: 'home-pinned-account-balances' },
+  );
 
   const pinnedAccountList = useMemo(() => {
-    const balanceMap = balanceSnapshots.reduce(
-      (acc, snapshot) => {
-        if (snapshot.value) {
-          acc[snapshot.address] = snapshot.value;
+    const balanceMap = pinnedAddresses.reduce(
+      (acc, address, index) => {
+        const balance = balanceValues[index];
+        if (balance) {
+          acc[address] = balance;
         }
         return acc;
       },
@@ -380,11 +397,11 @@ export const usePinnedAccountList = () => {
 
       return {
         ...item,
-        balance: balance?.totalBalance || item.balance || 0,
-        evmBalance: balance?.evmBalance || item.evmBalance || 0,
+        balance: balance?.totalBalance ?? item.balance ?? 0,
+        evmBalance: balance?.evmBalance ?? item.evmBalance ?? 0,
       };
     });
-  }, [balanceSnapshots, pinnedBaseAccounts]);
+  }, [balanceValues, pinnedAddresses, pinnedBaseAccounts]);
 
   return pinnedAccountList;
 };

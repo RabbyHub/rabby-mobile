@@ -1,6 +1,8 @@
 import { INITIAL_OPENAPI_URL, isNonPublicProductionEnv } from '@/constant';
-import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
-import createPersistStore from '@rabby-wallet/persist-store';
+import {
+  StoreServiceBase,
+  type StorageAdapaterOptions,
+} from '@rabby-wallet/persist-store';
 import { v4 as uuidv4 } from 'uuid';
 import { APP_STORE_NAMES } from './storeConstant';
 import { appStorage } from './mmkv';
@@ -13,16 +15,12 @@ export type Store = {
   apiTime: number | null;
 };
 
-export class OpenApiStore {
+export class OpenApiStore extends StoreServiceBase<
+  Store,
+  APP_STORE_NAMES.openapi | APP_STORE_NAMES.notificationOpenapi
+> {
   private credentialsFrom?: OpenApiStore;
 
-  store: Store = {
-    api: {
-      host: INITIAL_OPENAPI_URL,
-    },
-    apiKey: null,
-    apiTime: null,
-  };
   constructor(
     options?: StorageAdapaterOptions & {
       name?: APP_STORE_NAMES.openapi | APP_STORE_NAMES.notificationOpenapi;
@@ -30,24 +28,18 @@ export class OpenApiStore {
     },
   ) {
     const { name = APP_STORE_NAMES.openapi, credentialsFrom } = options || {};
-    this.credentialsFrom = credentialsFrom;
-    const storage = createPersistStore<Store>(
+    super(
+      name,
       {
-        name: name,
-        template: {
-          api: {
-            host: INITIAL_OPENAPI_URL,
-          },
-          apiKey: null,
-          apiTime: null,
+        api: {
+          host: INITIAL_OPENAPI_URL,
         },
+        apiKey: null,
+        apiTime: null,
       },
-      {
-        storage: options?.storageAdapter,
-      },
+      { storageAdapter: options?.storageAdapter },
     );
-
-    this.store = storage || this.store;
+    this.credentialsFrom = credentialsFrom;
     if (!this.apiKey) {
       this.generateAPIKey();
     }
@@ -57,10 +49,9 @@ export class OpenApiStore {
   }
 
   set host(v: string) {
-    this.store.api = {
-      ...this.store.api,
-      host: v,
-    };
+    this.mutateStore(draft => {
+      draft.api.host = v;
+    });
   }
 
   get apiKey() {
@@ -77,7 +68,9 @@ export class OpenApiStore {
       return;
     }
 
-    this.store.apiKey = value;
+    this.mutateStore(draft => {
+      draft.apiKey = value;
+    });
   }
 
   get apiTime() {
@@ -94,7 +87,9 @@ export class OpenApiStore {
       return;
     }
 
-    this.store.apiTime = value;
+    this.mutateStore(draft => {
+      draft.apiTime = value;
+    });
   }
 
   generateAPIKey = () => {

@@ -1,6 +1,6 @@
 ---
 name: mobile-perf-hooks
-description: When editing store, hooks, or Home-path logic in `apps/mobile`, design APIs around scene-picked minimal state, reusable scene-level derived data, and controlled subscriptions instead of exposing large raw store state to React consumers.
+description: When editing stores, hooks, lists, Home-path logic, or mounted-but-inactive Screens in `apps/mobile`, design APIs around minimal state, update locality, reusable derived data, and activity-aware subscriptions instead of exposing broad raw state to React consumers.
 ---
 
 # Mobile Perf Hooks
@@ -11,7 +11,10 @@ When changes involve the areas below, design hooks, selectors, and store APIs wi
 - `src/hooks/**`
 - `src/screens/Home/**`
 
-The goal is not to make store state easier to grab. The goal is to keep subscription boundaries small, derived data stable, and render impact predictable.
+The goal is not to make store state easier to grab. The goal is to keep
+subscription boundaries small, place updates at the narrowest stable owner,
+pause React publication when a mounted scene is inactive, and keep render
+impact predictable.
 
 ## Core Principle
 
@@ -82,17 +85,25 @@ const summary = computeSummary(partA, partB, partC);
 
 If the second pattern shows up in several components, cost multiplies quickly.
 
-### 4. Let Containers Subscribe; Let Children Render
+### 4. Put Subscriptions At The Narrowest Stable Owner
 
-- Scene or page containers should own the main subscriptions.
-- Child components should usually receive:
-  - primitive props
-  - small stable view models
-  - already-derived results
-- Do not let sibling components reconnect to the same store inputs independently.
-- If header, overview, chart, and summary all depend on the same scene data, lift the subscription and pass results down.
+Choose the subscriber from the update pattern rather than applying one
+container-or-leaf rule everywhere.
 
-Prefer:
+- A scene container should subscribe once when several children consume the
+  same derived summary and should update together.
+- An independently changing row, card, badge, icon, or menu affordance should
+  subscribe at that leaf when lifting its state would rerender an unrelated
+  parent or list.
+- Long lists should keep identity in the list and let rows resolve mutable
+  data by stable ID where practical. Do not rebuild the full item payload just
+  because one item changed.
+- Do not make a parent subscribe to state used only by one child merely to
+  avoid another Hook call.
+- Do not let several siblings independently recompute the same expensive
+  scene summary.
+
+For shared summaries, prefer:
 
 ```tsx
 const summary = useSceneSummary(scene);
@@ -105,9 +116,36 @@ return (
 );
 ```
 
-Over letting each child subscribe and aggregate on its own.
+Over letting each child subscribe and aggregate the same inputs independently.
 
-### 5. Collapse Derived Computation Into One Pass
+For independent rows, prefer a stable ID plus a narrow row selector over
+passing a large mutable object through the parent list.
+
+### 5. Pause React Publication For Inactive Scenes
+
+A React Navigation Screen can remain mounted after it loses focus. Store and
+network updates behind it can still consume the JS thread and delay navigation
+elsewhere.
+
+- Use the established `ScreenStoreActivityProvider` or `StoreActivityProvider`
+  boundary and `useActivityStore` for expensive Screen-owned subscriptions.
+- Inactivity pauses Store notifications to React consumers; it must not stop
+  source Store updates, required network convergence, persistence, or business
+  side effects.
+- On reactivation, consumers must catch up once from the latest source
+  snapshot. Do not replay every intermediate hidden update.
+- Do not substitute route freezing or unmounting when notification gating is
+  sufficient; freezing and restoration have their own cost and semantics.
+- Hooks used both inside and outside an activity boundary must preserve the
+  established always-active fallback outside the boundary.
+- Keep critical global state active when correctness depends on observing
+  every transition rather than only the latest snapshot.
+
+For Home, audit the overview and all asset tabs. Position cards, balances,
+24-hour changes, badges, selectors, and hidden tab content can each retain a
+broad subscription even after the main list is optimized.
+
+### 6. Collapse Derived Computation Into One Pass
 
 - When multiple flags, counters, and totals come from the same input list, derive them in one pass whenever practical.
 - Avoid repeatedly scanning the same array in the same render path.
@@ -146,7 +184,7 @@ const derived = items.reduce(
 
 The exact syntax matters less than avoiding repeated work over the same inputs.
 
-### 6. Clean Up Residual Wide Subscriptions During Migrations
+### 7. Clean Up Residual Wide Subscriptions During Migrations
 
 - A slow scene is rarely caused by only one main hook.
 - Small widgets and side helpers can still keep update fan-out alive if they hold overly broad state.
@@ -161,7 +199,7 @@ The exact syntax matters less than avoiding repeated work over the same inputs.
 
 Do not optimize the main path while leaving broad side consumers untouched.
 
-### 7. Treat Account-Derived Work As Shared Work
+### 8. Treat Account-Derived Work As Shared Work
 
 - Account-related logic is not always the main bottleneck, but repeated account shaping is still repeated cost.
 - Sorting, filtering, top-N selection, and display-address shaping should not be recomputed independently in many consumers.
@@ -169,7 +207,7 @@ Do not optimize the main path while leaving broad side consumers untouched.
 
 The question is not whether a hook is allowed. The question is whether the same work is being repeated across the page.
 
-### 8. Design APIs To Prevent Misuse
+### 9. Design APIs To Prevent Misuse
 
 - Do not hand large raw state objects to callers in the name of flexibility.
 - If an API encourages this pattern:
@@ -192,13 +230,16 @@ Good APIs naturally steer callers toward:
 When adding a hook or changing store exposure, reason in this order:
 
 1. What does the scene need to show?
-2. What is the minimum state required for that scene?
-3. Can that state be picked at the selector layer first?
-4. Can the derived result be produced once at scene level?
-5. Can children consume the result without touching raw store state?
-6. Does this API encourage callers to grab a large object and split it themselves?
+2. Which values update together, and which update independently?
+3. What is the minimum state required by each update owner?
+4. Can shared derived state be produced once at scene level?
+5. Should independent rows/cards subscribe narrowly by ID?
+6. Can this Screen remain mounted while inactive, and should its React
+   notifications pause?
+7. Does this API encourage callers to grab a large object and split it
+   themselves?
 
-If the answer to step 6 is yes, redesign the API before accepting the pattern.
+If the answer to step 7 is yes, redesign the API before accepting the pattern.
 
 ## Self-Review Checklist
 
@@ -208,7 +249,11 @@ Before merging changes in this area, check:
 - Is this scene consuming only the state it actually needs?
 - Is the same scene-level derived result being recomputed in several consumers?
 - Can that derived result move into a scene selector or container?
-- Do child components actually need to subscribe to store state directly?
+- Is a parent subscribed only because one independent child needs the value?
+- Should a long-list row resolve mutable data from a stable ID?
+- Does a hidden-but-mounted Screen continue receiving Store notifications?
+- Does reactivation catch up from the latest snapshot without losing final
+  business state?
 - Are there residual broad subscribers still sitting in the same path?
 - Am I scanning the same inputs multiple times when one pass would do?
 - Does the API limit misuse, or does it encourage misuse?
@@ -217,11 +262,12 @@ Before merging changes in this area, check:
 
 Prefer this direction:
 
-1. define scene needs first
+1. define scene needs and update locality first
 2. pick minimal state at the selector layer
-3. derive once at scene level
-4. subscribe once at the container layer
-5. let children consume finalized results
+3. derive shared summaries once at scene level
+4. let independent children subscribe narrowly by stable identity
+5. pause React publication while an eligible mounted scene is inactive
+6. catch up from the latest snapshot when it becomes active
 
 Avoid this direction:
 

@@ -17,7 +17,7 @@ import {
   balance24hStore,
   useAddress24hChangeFlowState,
 } from '@/store/balance24h';
-import { computeCurveBalanceChange } from '@/store/curveShared';
+import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
 import { navigateDeprecated } from '@/utils/navigation';
 import { ellipsisAddress } from '@/utils/address';
 import {
@@ -250,17 +250,21 @@ export function useSingleHomeSelectData() {
       return selectData;
     }
 
-    const { assetsChange, changePercent } = computeCurveBalanceChange(
-      evmBalance,
-      balance24h.total_usd_value,
-    );
+    const change = buildPortfolioAddressChange({
+      currentEvmBalance: evmBalance,
+      previousEvmBalance: balance24h.total_usd_value,
+    });
+
+    if (!change) {
+      return selectData;
+    }
 
     return {
       ...selectData,
-      rawChange: assetsChange,
+      rawChange: change.rawChange,
       change: '',
-      changePercent,
-      isLoss: assetsChange < 0,
+      changePercent: change.changePercent,
+      isLoss: change.isLoss,
     };
   }, [balance24h?.total_usd_value, evmBalance, selectData]);
   const lastStableSelectDataRef = useRef(selectDataWithFallback);

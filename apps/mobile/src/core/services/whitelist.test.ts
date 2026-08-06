@@ -18,7 +18,6 @@ type WhitelistStore = {
 function loadWhitelistServiceModule(persistedStore?: WhitelistStore) {
   jest.resetModules();
 
-  const mockCreatePersistStore = jest.fn(() => persistedStore);
   const mockIsSameAddress = jest.fn(
     (left?: string, right?: string) =>
       (left || '').toLowerCase() === (right || '').toLowerCase(),
@@ -29,9 +28,32 @@ function loadWhitelistServiceModule(persistedStore?: WhitelistStore) {
       isSameAddress: (...args: unknown[]) => mockIsSameAddress(...args),
     },
   }));
+  class MockStoreServiceBase {
+    store: WhitelistStore;
+
+    constructor(_name: string, template: WhitelistStore) {
+      this.store = persistedStore || template;
+    }
+
+    protected mutateStore(recipe: (draft: WhitelistStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as WhitelistStore;
+    }
+
+    getStoreFieldSnapshot<K extends keyof WhitelistStore>(key: K) {
+      const value = this.store[key];
+      return (
+        value === undefined ? value : JSON.parse(JSON.stringify(value))
+      ) as WhitelistStore[K];
+    }
+  }
+
   jest.doMock('@rabby-wallet/persist-store', () => ({
-    __esModule: true,
-    default: (...args: unknown[]) => mockCreatePersistStore(...args),
+    StoreServiceBase: MockStoreServiceBase,
   }));
   jest.doMock('@/core/storage/storeConstant', () => ({
     APP_STORE_NAMES: {
@@ -45,7 +67,6 @@ function loadWhitelistServiceModule(persistedStore?: WhitelistStore) {
   return {
     WhitelistService,
     mocks: {
-      mockCreatePersistStore,
       mockIsSameAddress,
     },
   };

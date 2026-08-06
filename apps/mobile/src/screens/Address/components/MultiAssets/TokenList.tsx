@@ -47,9 +47,8 @@ import useTokenList, {
   TokenEntityId,
   TokenGroupResourceValue,
   tokenEntityResourceStore,
+  tokenGroupResourceStore,
   useTokenAssetsIndexStore,
-  useTokenEntity,
-  useTokenGroup,
   useTokenIndexStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
@@ -80,6 +79,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -105,10 +105,20 @@ const TokenResourceRow = React.memo(
     style?: ViewStyle;
     hideChainLogo?: boolean;
   }) => {
-    const token = useTokenEntity(
-      row.type === 'token' ? row.tokenId : undefined,
+    const tokenId = row.type === 'token' ? row.tokenId : undefined;
+    const groupId = row.type === 'group' ? row.groupId : undefined;
+    const token = useActivityStore(
+      tokenEntityResourceStore.useStore,
+      state => (tokenId ? state.valueMap[tokenId] : undefined),
+      Object.is,
+      { storeLabel: 'home-multi-assets-token-entities' },
     );
-    const group = useTokenGroup(row.type === 'group' ? row.groupId : undefined);
+    const group = useActivityStore(
+      tokenGroupResourceStore.useStore,
+      state => (groupId ? state.valueMap[groupId] : undefined),
+      Object.is,
+      { storeLabel: 'home-multi-assets-token-groups' },
+    );
     const data = row.type === 'group' ? group?.summary : token;
     const account =
       tokenDisplayMode === 'byAddress' && data
@@ -253,7 +263,12 @@ export const TokenList = () => {
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
 
-  const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
+  const tokenDisplayMode = useActivityStore(
+    useTokenList,
+    state => state.tokenDisplayMode,
+    Object.is,
+    { storeLabel: 'home-multi-assets-token-preferences' },
+  );
 
   const getAccountByAddress = useFindAccountByAddress();
   const {
@@ -313,7 +328,8 @@ export const TokenList = () => {
       );
   }, [myTop10Addresses]);
 
-  const tokenIds = useTokenIndexStore(
+  const tokenIds = useActivityStore(
+    useTokenIndexStore,
     useShallow(state => {
       if (!myTop10Addresses.length) {
         return EMPTY_TOKEN_ENTITY_IDS;
@@ -335,6 +351,8 @@ export const TokenList = () => {
       });
       return ids;
     }),
+    Object.is,
+    { storeLabel: 'home-multi-assets-token-index' },
   );
   useLayoutEffect(() => {
     useTokenAssetsIndexStore.getState().syncMultiAssetsResult({
@@ -353,19 +371,27 @@ export const TokenList = () => {
     scamTokenPreviewLogoUrls,
     foldCoreUsdValue,
     hasFoldTokens,
-  } = useTokenAssetsIndexStore(
+  } = useActivityStore(
+    useTokenAssetsIndexStore,
     useShallow(
       state =>
         state.multiAssetsResultByKey[multiAssetsKey] ||
         EMPTY_TOKEN_ASSETS_INDEX_RESULT,
     ),
+    Object.is,
+    { storeLabel: 'home-multi-assets-token-assets-index' },
   );
   const foldTokenUsdValue = useMemo(
     () => formatNetworth(foldCoreUsdValue),
     [foldCoreUsdValue],
   );
 
-  const isLoading = useTokenList(s => s.isLoading);
+  const isLoading = useActivityStore(
+    useTokenList,
+    state => state.isLoading,
+    Object.is,
+    { storeLabel: 'home-multi-assets-token-loading' },
+  );
   const hasDefaultTokenData =
     tokenRows.length + foldRows.length + scamRows.length > 0 || hasFoldTokens;
   const shouldHideCustomTestnetSectionsWhileLoading =

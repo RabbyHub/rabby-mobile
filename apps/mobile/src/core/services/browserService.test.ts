@@ -69,6 +69,22 @@ function loadBrowserServiceModule({
     ) {
       this.store = options.storageAdapter?.store || template;
     }
+
+    protected mutateStore(recipe: (draft: BrowserStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as BrowserStore;
+    }
+
+    getStoreFieldSnapshot<K extends keyof BrowserStore>(key: K) {
+      const value = this.store[key];
+      return (
+        value === undefined ? value : JSON.parse(JSON.stringify(value))
+      ) as BrowserStore[K];
+    }
   }
 
   jest.doMock('@rabby-wallet/persist-store', () => ({

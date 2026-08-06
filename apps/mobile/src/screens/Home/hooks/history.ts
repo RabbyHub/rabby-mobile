@@ -18,6 +18,8 @@ import {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from '@/store/balance';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 type HomeHistoryState = {
   pendingTxCount: number;
@@ -36,18 +38,33 @@ const homeHistoryStore = zCreate<HomeHistoryState>(() => ({
 }));
 
 export function useHomeHistoryStore() {
-  return {
-    pendingTxCount: homeHistoryStore(s => s.pendingTxCount),
-    historyCount: homeHistoryStore(s => s.historyCount),
-  };
+  return useActivityStore(
+    homeHistoryStore,
+    useShallow(state => ({
+      pendingTxCount: state.pendingTxCount,
+      historyCount: state.historyCount,
+    })),
+    Object.is,
+    { storeLabel: 'home-history-badges' },
+  );
 }
 
 export function useHomePendingTxCount() {
-  return homeHistoryStore(s => s.pendingTxCount);
+  return useActivityStore(
+    homeHistoryStore,
+    state => state.pendingTxCount,
+    Object.is,
+    { storeLabel: 'home-history-badges' },
+  );
 }
 
 export function useHomeHistoryCount() {
-  return homeHistoryStore(s => s.historyCount);
+  return useActivityStore(
+    homeHistoryStore,
+    state => state.historyCount,
+    Object.is,
+    { storeLabel: 'home-history-badges' },
+  );
 }
 
 function setHistoryCount(
