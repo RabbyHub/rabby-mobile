@@ -14,28 +14,54 @@ const upgradePromptReceiptStore = zustandByMMKV<{
   lastPromptedVersion: '',
 });
 
-const upgradePromptStore = zCreate(() => ({
+const upgradePromptStore = zCreate<{
+  visible: boolean;
+  version: string;
+  pendingInfo: UpgradePromptInfo | null;
+}>(() => ({
   visible: false,
   version: '',
+  pendingInfo: null,
 }));
 
 // 展示记录只和当前提示的版本号关联，新版本仍会再次提示。
 function hasPromptedVersion(version: string) {
   const { lastPromptedVersion } = upgradePromptReceiptStore.getState();
-  // return lastPromptedVersion === version;
-  return false;
+  return lastPromptedVersion === version;
 }
 
-// 版本请求已处于统一的 Home 启动后空闲阶段，这里直接决定是否展示。
+// 自动检查完成后先缓存，等待进入首页时再展示。
 export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
-  // if (!info.couldUpgrade || hasPromptedVersion(info.version)) return;
+  if (
+    !info.couldUpgrade ||
+    hasPromptedVersion(info.version) ||
+    !info.changelog.trim()
+  ) {
+    return;
+  }
 
-  showUpgradePrompt(info.version, info.changelog);
+  upgradePromptStore.setState({ pendingInfo: info });
+}
+
+export function showPendingAutoUpgradePrompt() {
+  const { pendingInfo } = upgradePromptStore.getState();
+  if (!pendingInfo) {
+    return;
+  }
+
+  upgradePromptStore.setState({ pendingInfo: null });
+  if (hasPromptedVersion(pendingInfo.version)) {
+    return;
+  }
+
+  showUpgradePrompt(pendingInfo.version, pendingInfo.changelog);
 }
 
 // 设置页主动检查更新时不受忽略记录限制，但 changelog 为空时不展示。
 export function showUpgradePrompt(version: string, changelog: string) {
-  if (!changelog.trim()) return;
+  if (!changelog.trim()) {
+    return;
+  }
 
   upgradePromptReceiptStore.setState({ lastPromptedVersion: version });
   upgradePromptStore.setState({ visible: true, version });
@@ -51,4 +77,8 @@ export function isUpgradePromptVisible() {
 
 export function useUpgradePromptVisible() {
   return upgradePromptStore(state => state.visible);
+}
+
+export function usePendingAutoUpgradePrompt() {
+  return upgradePromptStore(state => state.pendingInfo);
 }

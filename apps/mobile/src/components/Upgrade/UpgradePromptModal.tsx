@@ -30,11 +30,14 @@ import RcIconRightArrowCC from '@/assets/icons/common/arrow-right-cc.svg';
 import { useUpgradeInfo } from '@/hooks/version';
 import { useGetBinaryMode } from '@/hooks/theme';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
-import { FontNames } from '@/core/utils/fonts';
 import { APP_URLS } from '@/constant';
+import { RootNames } from '@/constant/layout';
 import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
+import { useCurrentRouteName } from '@/hooks/navigation';
 import {
   dismissUpgradePrompt,
+  showPendingAutoUpgradePrompt,
+  usePendingAutoUpgradePrompt,
   useUpgradePromptVisible,
 } from './useUpgradePrompt';
 
@@ -166,7 +169,15 @@ export function UpgradePromptModal() {
   const { t } = useTranslation();
   const isDark = useGetBinaryMode() === 'dark';
   const visible = useUpgradePromptVisible();
+  const pendingAutoPrompt = usePendingAutoUpgradePrompt();
+  const { currentRouteName } = useCurrentRouteName();
   const { remoteVersion } = useUpgradeInfo();
+
+  useEffect(() => {
+    if (currentRouteName === RootNames.Home && pendingAutoPrompt) {
+      showPendingAutoUpgradePrompt();
+    }
+  }, [currentRouteName, pendingAutoPrompt]);
 
   const handleUpdate = useCallback(async () => {
     dismissUpgradePrompt();
