@@ -2,11 +2,6 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 import { getVersion } from 'react-native-device-info';
 
 import Toast from 'react-native-root-toast';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 import { zustandByMMKV } from '@/core/storage/mmkv';
 
@@ -22,6 +17,11 @@ import { toast } from '@/components2024/Toast';
 import { useUnmountedRef } from './common/useMount';
 import { zCreate } from '@/core/utils/reexports';
 import { RefLikeObject } from '@/utils/type';
+import {
+  isUpgradePromptVisible,
+  requestAutoUpgradePrompt,
+  showUpgradePrompt,
+} from '@/components/Upgrade/useUpgradePrompt';
 
 const appLocalVersion = getVersion();
 
@@ -55,16 +55,20 @@ const loadRemoteVersion = async () => {
 };
 
 export function loadVersionInfoOnBootstrap() {
-  loadRemoteVersion().catch(error => {
-    console.error('Load remote version info failed', error);
-  });
+  loadRemoteVersion()
+    .then(result => {
+      requestAutoUpgradePrompt(result.finalRemoteInfo);
+    })
+    .catch(error => {
+      console.error('Load remote version info failed', error);
+    });
 }
 
 const openedModalIdRef: RefLikeObject<string> = { current: '' };
 const triggerCheckVersion = async (
   options?: Parameters<typeof getUpgradeInfo>[0],
 ) => {
-  if (openedModalIdRef.current) return;
+  if (openedModalIdRef.current || isUpgradePromptVisible()) return;
   openedModalIdRef.current = 'checking';
 
   return getUpgradeInfo(options)
@@ -76,25 +80,17 @@ const triggerCheckVersion = async (
           position: Toast.positions.BOTTOM,
         });
       } else {
-        openedModalIdRef.current = createGlobalBottomSheetModal({
-          name: MODAL_NAMES.TIP_UPGRADE,
-          title: 'New Version',
-          bottomSheetModalProps: {
-            onDismiss: () => {
-              removeGlobalBottomSheetModal(openedModalIdRef.current);
-              openedModalIdRef.current = '';
-            },
-          },
-        });
+        showUpgradePrompt(result.finalRemoteInfo.version);
       }
     })
     .catch(error => {
-      openedModalIdRef.current = '';
-
       console.error('Check version failed', error);
       toast.info('Check version failed', {
         position: Toast.positions.BOTTOM,
       });
+    })
+    .finally(() => {
+      openedModalIdRef.current = '';
     });
 };
 

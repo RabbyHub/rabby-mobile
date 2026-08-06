@@ -10,6 +10,7 @@ type ModalGateState = {
 export const MODAL_GATE_IDS = {
   screenshotFeedback: 'screenshot-feedback',
   rateGuide: 'rate-guide',
+  upgradePrompt: 'upgrade-prompt',
   swapModal: 'swap-modal',
   securityTip: 'security-tip',
   biometricsStub: 'biometrics-stub',
