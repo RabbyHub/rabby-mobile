@@ -1,5 +1,11 @@
 type RegressionScenarioComponentAction = () => void | Promise<void>;
 
+export type RegressionScenarioComponentActionTiming = Readonly<{
+  waitMs: number;
+  handlerMs: number;
+  totalMs: number;
+}>;
+
 const registeredActions = new Map<
   string,
   Map<string, RegressionScenarioComponentAction>
@@ -38,7 +44,11 @@ export async function runRegressionScenarioComponentAction(
   while (Date.now() - startedAt < timeoutMs) {
     const handler = registeredActions.get(runId)?.get(action);
     if (handler) {
-      const remainingMs = Math.max(1, timeoutMs - (Date.now() - startedAt));
+      const handlerStartedAt = Date.now();
+      const remainingMs = Math.max(
+        1,
+        timeoutMs - (handlerStartedAt - startedAt),
+      );
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       try {
         await Promise.race([
@@ -56,7 +66,12 @@ export async function runRegressionScenarioComponentAction(
           clearTimeout(timeoutId);
         }
       }
-      return;
+      const finishedAt = Date.now();
+      return {
+        waitMs: handlerStartedAt - startedAt,
+        handlerMs: finishedAt - handlerStartedAt,
+        totalMs: finishedAt - startedAt,
+      } satisfies RegressionScenarioComponentActionTiming;
     }
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }

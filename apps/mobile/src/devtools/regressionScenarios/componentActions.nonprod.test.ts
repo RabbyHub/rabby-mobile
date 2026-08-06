@@ -15,13 +15,16 @@ describe('regression scenario component actions', () => {
       },
     );
 
-    await runRegressionScenarioComponentAction(
+    const timing = await runRegressionScenarioComponentAction(
       'async-action-run',
       'async-action',
       100,
     );
 
     expect(completed).toBe(true);
+    expect(timing.waitMs).toBeGreaterThanOrEqual(0);
+    expect(timing.handlerMs).toBeGreaterThanOrEqual(10);
+    expect(timing.totalMs).toBe(timing.waitMs + timing.handlerMs);
     unregister();
   });
 

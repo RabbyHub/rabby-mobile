@@ -2277,7 +2277,12 @@
       "screenshotReportSwitch": "Captura de pantalla para informar un error",
       "dataAnalysis": "Análisis de datos",
       "bugReportHistory": "Historial de informes de errores",
-      "bugReportChat": "Compartir comentarios por chat"
+      "bugReportChat": "Compartir comentarios por chat",
+      "features": "Funciones",
+      "manageWallets": "Gestionar carteras"
+    },
+    "settings": {
+      "chooseWallet": "Selecciona una cartera para gestionarla"
     },
     "gasAccount": {
       "deposit": "Depósito",

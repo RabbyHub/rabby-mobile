@@ -49,6 +49,7 @@ type RabbyDevToolsBridgeMethodName =
   | 'ping'
   | 'getHomePortfolioSnapshot'
   | 'getSingleHomeSnapshot'
+  | 'getPortfolioConsistencySnapshot'
   | 'openSendScreen'
   | 'getSendScreenSnapshot'
   | 'clearWhitelistData'
@@ -61,6 +62,7 @@ interface RabbyDevToolsBridge {
   ping(): unknown;
   getHomePortfolioSnapshot(): unknown;
   getSingleHomeSnapshot(): unknown;
+  getPortfolioConsistencySnapshot(): unknown;
   openSendScreen(input: unknown): unknown;
   getSendScreenSnapshot(): unknown;
   clearWhitelistData(): unknown;

@@ -7,6 +7,7 @@ import type {
   GasSelectionOptions,
   SignerConfig,
 } from '@/components2024/MiniSignV2/domain/types';
+import { resolveStoredGasSelection } from '@/components2024/MiniSignV2/domain/gasSelection';
 import { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { registry } from '@/components2024/MiniSignV2/state/SignatureManagerRegistry';
 import type { Account } from '@/core/startupServices/preference';
@@ -157,11 +158,19 @@ export const useMiniSigner = ({
     [setMiniGasLevel, setMiniCustomPrice, setFixedCustomGas],
   );
 
-  const toSignerConfig = (cfg: SimpleSignConfig): SignerConfig => ({
-    account,
-    updateMiniGasStore,
-    ...cfg,
-  });
+  const toSignerConfig = (cfg: SimpleSignConfig): SignerConfig => {
+    const signerConfig: SignerConfig = {
+      account,
+      updateMiniGasStore,
+      ...cfg,
+    };
+
+    if (cfg.purpose === 'gasAccountTopUp') {
+      signerConfig.updateMiniGasStore = undefined;
+    }
+
+    return signerConfig;
+  };
 
   const toPartialSignerConfig = (
     cfg: Partial<SimpleSignConfig>,
@@ -179,16 +188,16 @@ export const useMiniSigner = ({
   });
 
   const buildGasSelection = useMemoizedFn(
-    (tx: Tx, incoming?: GasSelectionOptions): GasSelectionOptions => {
+    (
+      tx: Tx,
+      incoming?: GasSelectionOptions,
+      purpose?: SignerConfig['purpose'],
+    ): GasSelectionOptions => {
       if (incoming) return incoming;
 
       const { isSwap, isBridge, isSend, isSpeedUp, isCancel } =
         normalizeTxParams(tx);
       const chainId = tx.chainId;
-      const currentMiniSignGasLevel =
-        fixedCustomGas?.[chainId] !== undefined ? 'custom' : miniGasLevel;
-      const currentMiniCustomGas =
-        fixedCustomGas?.[chainId] ?? miniCustomPrice?.[chainId];
 
       return {
         flags: {
@@ -198,12 +207,12 @@ export const useMiniSigner = ({
           isSpeedUp,
           isCancel,
         },
-        lastSelection: {
-          lastTimeSelect:
-            currentMiniSignGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
-          gasLevel: currentMiniSignGasLevel,
-          gasPrice: currentMiniCustomGas,
-        },
+        lastSelection: resolveStoredGasSelection({
+          gasLevel: miniGasLevel,
+          gasPrice: miniCustomPrice?.[chainId],
+          fixedGasPrice: fixedCustomGas?.[chainId],
+          ignoreStoredSelection: purpose === 'gasAccountTopUp',
+        }),
       };
     },
   );
@@ -222,7 +231,7 @@ export const useMiniSigner = ({
       return {
         txs,
         signerConfig,
-        gasSelection: buildGasSelection(txs[0], cfg.gasSelection),
+        gasSelection: buildGasSelection(txs[0], cfg.gasSelection, cfg.purpose),
       };
     },
   );

@@ -396,8 +396,8 @@ export const usePinnedAccountList = () => {
 
       return {
         ...item,
-        balance: balance?.totalBalance || item.balance || 0,
-        evmBalance: balance?.evmBalance || item.evmBalance || 0,
+        balance: balance?.totalBalance ?? item.balance ?? 0,
+        evmBalance: balance?.evmBalance ?? item.evmBalance ?? 0,
       };
     });
   }, [balanceValues, pinnedAddresses, pinnedBaseAccounts]);
