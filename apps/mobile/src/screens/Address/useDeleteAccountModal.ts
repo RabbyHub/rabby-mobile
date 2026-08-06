@@ -6,7 +6,6 @@ import {
   type KeyringAccountWithAlias,
 } from '@/hooks/account';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
-import { refreshHomeBalanceAfterAccountMutation } from '@/store/homeBalanceRefresh';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useCallback } from 'react';
@@ -97,12 +96,6 @@ export const useDeleteAccountModal = () => {
             return;
           }
           await storeApiAccounts.removeAccount(account);
-          void refreshHomeBalanceAfterAccountMutation().catch(error => {
-            console.error(
-              '[useDeleteAccountModal] failed to refresh Home balance after deleting account',
-              error,
-            );
-          });
           await handleShouldGoStartPage();
           onFinished?.();
         },

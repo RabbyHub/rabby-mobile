@@ -14,6 +14,8 @@ import {
   setTestnetAddressBalanceCache,
 } from '@/utils/testnetAddressBalanceCache';
 
+export { computeBalanceChange } from '@/core/utils/balanceChange';
+
 const getTotalBalanceCached = async (address: string, force?: boolean) => {
   const addresses = await keyringServiceApi.getAllAddresses();
   const filtered = addresses.filter(item =>
@@ -95,17 +97,3 @@ export const getAddressCacheBalance = async (
 ) => {
   return getAddressCacheBalanceSync(address, isTestnet);
 };
-
-export function computeBalanceChange(realtimeValue: number, baseValue: number) {
-  const assetsChange = realtimeValue - baseValue;
-
-  const changePercent =
-    baseValue !== 0
-      ? `${Math.abs((assetsChange * 100) / baseValue).toFixed(2)}%`
-      : `${realtimeValue === 0 ? '0' : '100.00'}%`;
-
-  return {
-    assetsChange,
-    changePercent,
-  };
-}
