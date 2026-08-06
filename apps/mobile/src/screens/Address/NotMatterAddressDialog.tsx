@@ -24,7 +24,8 @@ export const NotMatterAddressDialog: React.FC<{
   onBack?: () => void;
   showBackArrow?: boolean;
   variant?: 'manage';
-}> = ({ onDone, onBack, showBackArrow = true, variant }) => {
+  isShowBackupBadge?: boolean;
+}> = ({ onDone, onBack, showBackArrow = true, variant, isShowBackupBadge }) => {
   const { myNotTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
     useAccountInfo();
   const { bottom } = useSafeAreaInsets();
@@ -160,11 +161,12 @@ export const NotMatterAddressDialog: React.FC<{
             onManage={variant === 'manage' ? undefined : gotoAddressDetail}
             manageAccessibilityLabel={t('component.portfolios.manage')}
             disableNavigate={variant === 'manage'}
+            isShowBackupBadge={isShowBackupBadge}
           />
         </View>
       );
     },
-    [isScrolling, onDone, styles.itemGap, t, variant],
+    [isScrolling, isShowBackupBadge, onDone, styles.itemGap, t, variant],
   );
 
   return (

@@ -296,6 +296,7 @@ export const AddressListModal = ({
         onDone={onDone}
         onBack={() => setMoreAddressList(false)}
         variant={variant}
+        isShowBackupBadge
       />
     );
   }
