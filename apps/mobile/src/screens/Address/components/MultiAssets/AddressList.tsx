@@ -131,6 +131,7 @@ const AddressList = ({
             onManage={variant === 'manage' ? undefined : gotoAddressDetail}
             manageAccessibilityLabel={t('component.portfolios.manage')}
             disableNavigate={variant === 'manage'}
+            isShowBackupBadge
           />
         </View>
       );
