@@ -94,7 +94,7 @@ const onIndexChange = (idx: number) => {
   scheduleReadableAccountStoreWarmupForTab(idx);
 };
 
-const HomeAssetTabActivityBoundary = ({
+const HomeTabActivityBoundary = ({
   children,
   name,
 }: {
@@ -170,23 +170,25 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
           key={TabName.overview}
           name={TabName.overview}
           label={() => null}>
-          <HomeOverview />
+          <HomeTabActivityBoundary name={TabName.overview}>
+            <HomeOverview />
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
 
         <Tabs.Tab key={TabName.token} name={TabName.token} label={() => null}>
-          <HomeAssetTabActivityBoundary name={TabName.token}>
+          <HomeTabActivityBoundary name={TabName.token}>
             <TokenList />
-          </HomeAssetTabActivityBoundary>
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
         <Tabs.Tab key={TabName.defi} name={TabName.defi} label={() => null}>
-          <HomeAssetTabActivityBoundary name={TabName.defi}>
+          <HomeTabActivityBoundary name={TabName.defi}>
             <ProtocolList />
-          </HomeAssetTabActivityBoundary>
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
         <Tabs.Tab key={TabName.nft} name={TabName.nft} label={() => null}>
-          <HomeAssetTabActivityBoundary name={TabName.nft}>
+          <HomeTabActivityBoundary name={TabName.nft}>
             <NFTList />
-          </HomeAssetTabActivityBoundary>
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
       </MultiAssetsContainer>
     </View>

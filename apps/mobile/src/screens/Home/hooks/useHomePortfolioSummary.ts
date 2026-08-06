@@ -11,6 +11,7 @@ import {
 import { makeDefaultSelectData } from '@/store/curveShared';
 import { sceneCurve24hStore } from '@/store/curve24h';
 import { useShallow } from 'zustand/react/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 type HomeChangeData = Pick<
@@ -380,7 +381,9 @@ export function useHomePortfolioStore<T>(
 ) {
   ensureHomePortfolioLifecycle();
 
-  return homePortfolioStore(selector);
+  return useActivityStore(homePortfolioStore, selector, Object.is, {
+    storeLabel: 'home-portfolio-summary',
+  });
 }
 
 export function useHomePortfolioSummary() {

@@ -45,12 +45,13 @@ const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
   2: 'home-assets-defi-ready',
   3: 'home-assets-nft-ready',
 };
-const HOME_ASSET_ACTIVITY_SCOPE_LABELS = [
+const HOME_TAB_ACTIVITY_SCOPE_LABELS = [
+  'home-multi-assets-overview',
   'home-multi-assets-token',
   'home-multi-assets-defi',
   'home-multi-assets-nft',
 ] as const;
-const HOME_ASSET_ACTIVITY_VERIFICATION_TABS = [0, 1, 2, 3, 0] as const;
+const HOME_TAB_ACTIVITY_VERIFICATION_TABS = [0, 1, 2, 3, 0] as const;
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -298,9 +299,9 @@ async function waitForHomeTabIndex(tabIndex: number, timeoutMs = 10_000) {
   throw new Error(`Timed out waiting for Home tab index: ${tabIndex}`);
 }
 
-function summarizeHomeAssetActivityScopes() {
+function summarizeHomeTabActivityScopes() {
   const snapshot = getStoreActivityDiagnosticsSnapshot();
-  const scopes = HOME_ASSET_ACTIVITY_SCOPE_LABELS.map(
+  const scopes = HOME_TAB_ACTIVITY_SCOPE_LABELS.map(
     getLatestStoreActivityScopeDiagnostics,
   );
 
@@ -308,7 +309,7 @@ function summarizeHomeAssetActivityScopes() {
     enabled: snapshot.enabled,
     scopes,
     report: scopes.map((scope, index) => ({
-      label: HOME_ASSET_ACTIVITY_SCOPE_LABELS[index],
+      label: HOME_TAB_ACTIVITY_SCOPE_LABELS[index],
       mounted: !!scope,
       active: scope?.active ?? false,
       consumerCount:
@@ -321,17 +322,16 @@ function summarizeHomeAssetActivityScopes() {
   };
 }
 
-async function assertHomeAssetActivity(
+async function assertHomeTabActivity(
   context: RegressionScenarioExecutionContext,
-  tabIndex: (typeof HOME_ASSET_ACTIVITY_VERIFICATION_TABS)[number],
+  tabIndex: (typeof HOME_TAB_ACTIVITY_VERIFICATION_TABS)[number],
 ) {
-  const expectedActiveLabel =
-    tabIndex === 0 ? null : HOME_ASSET_ACTIVITY_SCOPE_LABELS[tabIndex - 1];
+  const expectedActiveLabel = HOME_TAB_ACTIVITY_SCOPE_LABELS[tabIndex];
   const startedAt = Date.now();
-  let latest = summarizeHomeAssetActivityScopes();
+  let latest = summarizeHomeTabActivityScopes();
 
   while (Date.now() - startedAt < 10_000) {
-    latest = summarizeHomeAssetActivityScopes();
+    latest = summarizeHomeTabActivityScopes();
     const allScopesMounted = latest.scopes.every(Boolean);
     const activityMatches = latest.scopes.every(scope => {
       if (!scope) {
@@ -355,7 +355,7 @@ async function assertHomeAssetActivity(
 
     if (latest.enabled && allScopesMounted && activityMatches) {
       context.report('assertion', {
-        assertion: 'home-assets-store-activity',
+        assertion: 'home-tabs-store-activity',
         passed: true,
         tabIndex,
         expectedActiveLabel,
@@ -367,7 +367,7 @@ async function assertHomeAssetActivity(
   }
 
   context.report('assertion', {
-    assertion: 'home-assets-store-activity',
+    assertion: 'home-tabs-store-activity',
     passed: false,
     tabIndex,
     expectedActiveLabel,
@@ -401,10 +401,10 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     }
   }
 
-  for (const tabIndex of HOME_ASSET_ACTIVITY_VERIFICATION_TABS) {
+  for (const tabIndex of HOME_TAB_ACTIVITY_VERIFICATION_TABS) {
     apisHomeTabIndex.setTabIndex(tabIndex, true);
     await waitForHomeTabIndex(tabIndex);
-    await assertHomeAssetActivity(context, tabIndex);
+    await assertHomeTabActivity(context, tabIndex);
   }
 }
 
