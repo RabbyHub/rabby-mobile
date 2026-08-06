@@ -27,18 +27,19 @@ const upgradePromptStore = zCreate<{
 // 展示记录只和当前提示的版本号关联，新版本仍会再次提示。
 function hasPromptedVersion(version: string) {
   const { lastPromptedVersion } = upgradePromptReceiptStore.getState();
-  return lastPromptedVersion === version;
+  // return lastPromptedVersion === version;
+  return false;
 }
 
 // 自动检查完成后先缓存，等待进入首页时再展示。
 export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
-  if (
-    !info.couldUpgrade ||
-    hasPromptedVersion(info.version) ||
-    !info.changelog.trim()
-  ) {
-    return;
-  }
+  // if (
+  //   !info.couldUpgrade ||
+  //   hasPromptedVersion(info.version) ||
+  //   !info.changelog.trim()
+  // ) {
+  //   return;
+  // }
 
   upgradePromptStore.setState({ pendingInfo: info });
 }
