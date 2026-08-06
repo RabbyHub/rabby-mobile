@@ -44,6 +44,7 @@ import type { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
 import type { ITokenItem } from '@/store/tokens';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import { resolveFavoriteTokenOwnerAddress } from '@/components/Token/hooks/favoriteResource';
 import { Text } from '@/components/Typography';
 import { isSameAccount } from '@/utils/isSameAccount';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
@@ -260,7 +261,10 @@ const TokenSelect = ({
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
       focus: effectiveFavoriteFilterValue === 'favorite',
-      address: currentAccount?.address,
+      address: resolveFavoriteTokenOwnerAddress(
+        currentAccount?.address,
+        accountInScreen?.address,
+      ),
       chainId: queryConds.chainServerId,
       pinnedTokens: pinedQueue,
     });

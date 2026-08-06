@@ -195,12 +195,15 @@ const SwapToTokenSelect = ({
     );
     return list.map(item => tokenItemToITokenItem(item, ''));
   }, [currentAddress, queryConds.chainServerId, queryConds.keyword]);
-  const { data: swapTokenList, isLoading: swapTokenListLoading } =
-    useTokenListAsyncResource({
-      enabled: Boolean(currentAddress && tokenSelectorVisible),
-      requestKey: tokenListRequestKey,
-      load: loadSwapTokenList,
-    });
+  const {
+    data: swapTokenList,
+    isLoading: swapTokenListLoading,
+    isSettled: isSwapTokenListSettled,
+  } = useTokenListAsyncResource({
+    enabled: Boolean(currentAddress && tokenSelectorVisible),
+    requestKey: tokenListRequestKey,
+    load: loadSwapTokenList,
+  });
 
   const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
   const pinedQueue = useMemo(
@@ -226,8 +229,15 @@ const SwapToTokenSelect = ({
   const isListLoading = useMemo(() => {
     return favoriteFilterValue === 'favorite'
       ? favoriteTokensLoading
-      : swapTokenListLoading;
-  }, [favoriteFilterValue, favoriteTokensLoading, swapTokenListLoading]);
+      : Boolean(currentAddress) &&
+          (swapTokenListLoading || !isSwapTokenListSettled);
+  }, [
+    currentAddress,
+    favoriteFilterValue,
+    favoriteTokensLoading,
+    isSwapTokenListSettled,
+    swapTokenListLoading,
+  ]);
 
   const handleSearchTokens = useCallback<
     React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']

@@ -97,11 +97,17 @@ export const selectTokenListResource = <T>(
   requestKey: string,
 ) => {
   const isCurrentRequest = state.requestKey === requestKey;
+  const isSettled =
+    isCurrentRequest &&
+    (state.status === 'ready' ||
+      state.status === 'refreshing' ||
+      state.status === 'error');
   return {
     data: isCurrentRequest ? state.data : (EMPTY_TOKEN_LIST as T[]),
     error: isCurrentRequest ? state.error : null,
     isLoading: enabled && (!isCurrentRequest || state.status === 'loading'),
     isRefreshing: enabled && isCurrentRequest && state.status === 'refreshing',
+    isSettled,
     status: isCurrentRequest ? state.status : ('idle' as const),
   };
 };
