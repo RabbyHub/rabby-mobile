@@ -1319,6 +1319,11 @@
         "feedbackSubmit": "Submit",
         "feedbackSuccess": "Thank you for your feedback"
       },
+      "upgradeModal": {
+        "title": "What’s New",
+        "slideToUpdate": "Slide to update",
+        "close": "Close"
+      },
       "homeCenterTipScreenshot": {
         "title": "Tips",
         "description": "Take a screenshot anytime to quickly report a bug"
