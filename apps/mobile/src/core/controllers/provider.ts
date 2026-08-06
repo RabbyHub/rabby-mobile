@@ -1411,7 +1411,7 @@ class ProviderController extends BaseController {
             );
 
             if (defaultRPC?.txPushToRPC && !isGasLess && !isGasAccount) {
-              let fePushedFailed = false;
+              let fePushedError: any = null;
 
               const rawTx = isTempoTx
                 ? tempoSerializedRawTx
@@ -1449,7 +1449,8 @@ class ProviderController extends BaseController {
                   console.log('ignore BE error', error);
                 });
               } catch (fePushError) {
-                fePushedFailed = true;
+                fePushedError =
+                  fePushError ?? new Error('Frontend RPC push failed');
                 const urls =
                   await customRPCServiceApi.getDefaultRPCByChainServerId(
                     chainServerId,
@@ -1464,10 +1465,18 @@ class ProviderController extends BaseController {
                       : String(fePushError),
                 };
               }
-              if (fePushedFailed) {
+              if (fePushedError) {
                 adoptBE7702Params();
-                const res = await openapi.submitTxV2(params);
-                hash = res?.tx_id;
+                try {
+                  const res = await openapi.submitTxV2(params);
+                  hash = res?.tx_id;
+                } catch (bePushError) {
+                  // both pushes failed: surface the RPC error, it's closer to the node
+                  console.log('BE push failed after FE push failed', {
+                    bePushError,
+                  });
+                  throw fePushedError;
+                }
               }
             } else {
               adoptBE7702Params();
