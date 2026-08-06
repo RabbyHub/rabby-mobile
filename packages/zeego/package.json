@@ -1,0 +1,44 @@
+{
+  "name": "@rabby-wallet/zeego",
+  "version": "1.10.0-rabby.0",
+  "private": true,
+  "description": "Logical UI primitives, made for screens.",
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "homepage": "https://github.com/nandorojo/zeeg#readme",
+  "bugs": {
+    "url": "https://github.com/nandorojo/zeego/issues"
+  },
+  "repository": "https://github.com/nandorojo/zeego",
+  "license": "MIT",
+  "author": "Fernando Rojo <frojo@sas.upenn.edu> (https://twitter.com/fernandotherojo)",
+  "sideEffects": false,
+  "main": "./src/index.tsx",
+  "module": "./src/index.tsx",
+  "source": "./src/index.tsx",
+  "react-native": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "files": [
+    "src",
+    "context-menu",
+    "dropdown-menu",
+    "menu"
+  ],
+  "dependencies": {
+    "@radix-ui/react-context-menu": "^2.0.1",
+    "@radix-ui/react-dropdown-menu": "^2.0.1",
+    "sf-symbols-typescript": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@rabby-wallet/react-native-ios-context-menu": "*",
+    "@rabby-wallet/react-native-menu": "*",
+    "react": "*",
+    "react-native": "*"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}

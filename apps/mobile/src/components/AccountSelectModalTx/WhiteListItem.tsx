@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { apisTheme, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import {
@@ -14,15 +14,15 @@ import {
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   ContextMenuView,
-  MenuAction,
+  type MenuAction,
+  type MenuConfig,
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC } from '@/assets/icons/send';
-import { useWhitelist } from '@/hooks/whitelist';
+import { removeWhitelist } from '@/hooks/whitelist';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
-import { useTranslation } from 'react-i18next';
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { aliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
@@ -38,6 +38,7 @@ import DragHandleSVG from '@/assets2024/icons/whitelist/drag-handle.svg';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Sortable, { useItemContext } from 'react-native-sortables';
 import { SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS } from './layout';
+import i18n from '@/utils/i18n';
 
 const SIZES = {
   dragHandleW: 60,
@@ -114,11 +115,6 @@ export const WhiteListItemInSheetModal = ({
   const handleDragHandleTouchesEnd = React.useCallback(() => {
     setIsPressing(false);
   }, []);
-  const { removeWhitelist } = useWhitelist({
-    disableAutoFetch: true,
-  });
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { t } = useTranslation();
   const showCexInfo = useMemo(() => {
     return cexInfo?.id && cexInfo.is_deposit;
   }, [cexInfo?.id, cexInfo?.is_deposit]);
@@ -128,8 +124,6 @@ export const WhiteListItemInSheetModal = ({
       handleDragHandleTouchesEnd();
     }
   }, [handleDragHandleTouchesEnd, interactionDisabled]);
-
-  const editAliasName = useAliasNameEditModal();
 
   useLayoutEffect(() => {
     if (cexInfo) {
@@ -142,10 +136,11 @@ export const WhiteListItemInSheetModal = ({
     });
   }, [account.address, cexInfo]);
 
-  const menuActions = React.useMemo(() => {
-    return [
+  const getMenuConfig = (): MenuConfig => {
+    const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+    const menuActions: MenuAction[] = [
       {
-        title: t('page.whitelist.copyAddress'),
+        title: i18n.t('page.whitelist.copyAddress'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
@@ -157,20 +152,20 @@ export const WhiteListItemInSheetModal = ({
         },
       },
       {
-        title: t('page.addressDetail.addressListScreen.edit'),
+        title: i18n.t('page.addressDetail.addressListScreen.edit'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
         androidIconName: 'ic_rabby_menu_edit',
         key: 'edit',
         action() {
-          editAliasName.show(account);
+          aliasNameEditModal.show(account);
         },
       },
       ...(inWhiteList
         ? [
             {
-              title: t('page.whitelist.removeWhitelist'),
+              title: i18n.t('page.whitelist.removeWhitelist'),
               icon: isDarkTheme
                 ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_remove_whitelist_dark.png')
                 : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_remove_whitelist.png'),
@@ -182,13 +177,21 @@ export const WhiteListItemInSheetModal = ({
                   enableVibrateFallback: true,
                   ignoreAndroidSystemSettings: false,
                 });
-                removeWhitelist(account.address);
+                removeWhitelist(account.address).catch(error => {
+                  console.error('Remove whitelist address failed:', error);
+                });
               },
             },
           ]
         : []),
-    ] as MenuAction[];
-  }, [account, editAliasName, inWhiteList, isDarkTheme, removeWhitelist, t]);
+    ];
+
+    return {
+      menuActions: interactionDisabled
+        ? menuActions.map(action => ({ ...action, disabled: true }))
+        : menuActions,
+    };
+  };
 
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
@@ -295,10 +298,6 @@ export const WhiteListItemInSheetModal = ({
       styles.menuPressing,
   ]);
 
-  const effectiveMenuActions = interactionDisabled
-    ? menuActions.map(action => ({ ...action, disabled: true }))
-    : menuActions;
-
   const pressableItem = (
     <AddressItemShadowView
       disableShadow={isActiveDragging}
@@ -337,10 +336,8 @@ export const WhiteListItemInSheetModal = ({
 
   const itemWithMenu = enableMenu ? (
     <ContextMenuView
-      menuConfig={{
-        menuTitle: account.address,
-        menuActions: effectiveMenuActions,
-      }}
+      menuTitle={account.address}
+      getMenuConfig={getMenuConfig}
       preViewBorderRadius={SIZES.itemBorderRadius}
       triggerProps={{ action: 'longPress' }}>
       {pressableItem}
