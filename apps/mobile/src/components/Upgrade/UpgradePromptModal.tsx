@@ -25,8 +25,9 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { MarkdownInWebView } from '@/components/Markdown/InWebView';
-import { RcIconCloseCC } from '@/assets2024/icons/rateModal';
-import RcIconRightArrowCC from '@/assets/icons/common/arrow-right-cc.svg';
+import RcUpgradeClose from '@/assets/icons/upgrade/close.svg';
+import RcUpgradeSliderThumbLight from '@/assets/icons/upgrade/slider-thumb-light.svg';
+import RcUpgradeSliderThumbDark from '@/assets/icons/upgrade/slider-thumb-dark.svg';
 import { useUpgradeInfo } from '@/hooks/version';
 import { useGetBinaryMode } from '@/hooks/theme';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
@@ -148,17 +149,12 @@ function SlideToUpdate({
         />
       </Animated.View>
       <GestureDetector gesture={gesture}>
-        <Animated.View
-          style={[
-            styles.sliderThumb,
-            isDark && styles.sliderThumbDark,
-            thumbStyle,
-          ]}>
-          <RcIconRightArrowCC
-            width={20}
-            height={20}
-            color={isDark ? '#000000' : '#FFFFFF'}
-          />
+        <Animated.View style={[styles.sliderThumb, thumbStyle]}>
+          {isDark ? (
+            <RcUpgradeSliderThumbDark width={48} height={48} />
+          ) : (
+            <RcUpgradeSliderThumbLight width={48} height={48} />
+          )}
         </Animated.View>
       </GestureDetector>
     </View>
@@ -236,10 +232,10 @@ export function UpgradePromptModal() {
             hitSlop={10}
             onPress={dismissUpgradePrompt}
             style={styles.closeButton}>
-            <RcIconCloseCC
-              width={16}
-              height={16}
-              color={isDark ? '#717380' : '#68758D'}
+            <RcUpgradeClose
+              width={13}
+              height={13}
+              color={isDark ? '#717380' : '#6A7587'}
             />
           </Pressable>
 
@@ -406,9 +402,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: SLIDER_THUMB_SIZE / 2,
-    backgroundColor: '#192945',
-  },
-  sliderThumbDark: {
-    backgroundColor: '#FFF',
   },
 });
