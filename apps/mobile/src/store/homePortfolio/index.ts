@@ -1,3 +1,4 @@
+export * from './consistency';
 export * from './curve';
 export * from './model';
 export * from './readiness';

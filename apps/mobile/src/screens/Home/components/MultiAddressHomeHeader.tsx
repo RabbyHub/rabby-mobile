@@ -26,8 +26,8 @@ import {
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import { computeBalanceChange } from '@/core/apis/balance';
 import { balance24hStore } from '@/store/balance24h';
+import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
 import Animated, { Easing, FadeInUp } from 'react-native-reanimated';
 
 const PINNED_ADDRESS_LIST_ENTERING = FadeInUp.duration(460).easing(
@@ -69,21 +69,18 @@ function MultiPinnedAddressList({
       pinnedAccountList.map(item => {
         const lcAddr = item.address.toLowerCase();
         const address24hBalanceData = multi24hBalance[lcAddr];
-        const canShowChange =
-          !!address24hBalanceData && typeof item.evmBalance === 'number';
-        const total_usd_value = address24hBalanceData?.total_usd_value || 0;
-        const { assetsChange, changePercent } = computeBalanceChange(
-          item.evmBalance || 0,
-          total_usd_value,
-        );
+        const change = buildPortfolioAddressChange({
+          currentEvmBalance: item.evmBalance,
+          previousEvmBalance: address24hBalanceData?.total_usd_value,
+        });
 
         return {
           ...item,
           updateTime: address24hBalanceData?.updateTime,
-          balance: item.balance || 0,
-          evmBalance: item.evmBalance || 0,
-          changePercent: canShowChange ? changePercent : undefined,
-          isLoss: canShowChange ? assetsChange < 0 : undefined,
+          balance: item.balance ?? 0,
+          evmBalance: item.evmBalance ?? 0,
+          changePercent: change?.changePercent,
+          isLoss: change?.isLoss,
         };
       }),
       item => -(item.balance || 0),

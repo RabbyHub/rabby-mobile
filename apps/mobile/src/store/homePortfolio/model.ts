@@ -1,4 +1,7 @@
-import { computeBalanceChange } from '@/core/utils/balanceChange';
+import {
+  buildPortfolioAddressChange,
+  buildPortfolioAggregateChange,
+} from './consistency';
 
 export type HomeProjectionAvailability =
   | 'unresolved'
@@ -342,33 +345,22 @@ export function buildHome24hProjection(
   input: Home24hProjectionInput,
 ): Home24hProjection {
   const { account } = input;
-  const sourceAddresses = account.addresses.filter(address => {
-    return !!(
-      input.currentBalanceMap[address] && input.previousBalanceMap[address]
-    );
-  });
+  const addressChanges = account.addresses.reduce((result, address) => {
+    result[address] = buildPortfolioAddressChange({
+      currentEvmBalance: input.currentBalanceMap[address]?.evmBalance,
+      previousEvmBalance: input.previousBalanceMap[address]?.total_usd_value,
+    });
+    return result;
+  }, {} as Record<string, ReturnType<typeof buildPortfolioAddressChange>>);
+  const sourceAddresses = account.addresses.filter(
+    address => !!addressChanges[address],
+  );
   const missingAddresses = account.addresses.filter(
     address => !sourceAddresses.includes(address),
   );
-  const currentEvmBalance = sourceAddresses.reduce((total, address) => {
-    return total + (input.currentBalanceMap[address]?.evmBalance || 0);
-  }, 0);
-  const previousEvmBalance = sourceAddresses.reduce((total, address) => {
-    return total + (input.previousBalanceMap[address]?.total_usd_value || 0);
-  }, 0);
-  const balanceChange = computeBalanceChange(
-    currentEvmBalance,
-    previousEvmBalance,
+  const value: Home24hChangeValue | undefined = buildPortfolioAggregateChange(
+    sourceAddresses.map(address => addressChanges[address]),
   );
-  const value: Home24hChangeValue | undefined = sourceAddresses.length
-    ? {
-        rawChange: balanceChange.assetsChange,
-        changePercent: balanceChange.changePercent,
-        isLoss: balanceChange.assetsChange < 0,
-        currentEvmBalance,
-        previousEvmBalance,
-      }
-    : undefined;
 
   return {
     availability: getProjectionAvailability({
