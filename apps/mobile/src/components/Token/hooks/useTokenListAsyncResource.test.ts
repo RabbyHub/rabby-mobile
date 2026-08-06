@@ -1,6 +1,7 @@
 import {
   beginTokenListRequest,
   createTokenListResourceState,
+  failTokenListRequest,
   LatestAsyncRequest,
   resolveTokenListRequest,
   selectTokenListResource,
@@ -13,7 +14,16 @@ describe('token list async resource', () => {
 
     expect(selected.data).toEqual([]);
     expect(selected.isLoading).toBe(true);
+    expect(selected.isSettled).toBe(false);
     expect(selected.status).toBe('idle');
+  });
+
+  it('does not treat a deliberately deferred request as an empty result', () => {
+    const state = createTokenListResourceState<string>();
+    const selected = selectTokenListResource(state, false, 'first');
+
+    expect(selected.isLoading).toBe(false);
+    expect(selected.isSettled).toBe(false);
   });
 
   it('keeps ready data visible while refreshing the same request', () => {
@@ -24,6 +34,20 @@ describe('token list async resource', () => {
     expect(selected.data).toEqual(['cached']);
     expect(selected.isLoading).toBe(false);
     expect(selected.isRefreshing).toBe(true);
+    expect(selected.isSettled).toBe(true);
+  });
+
+  it('treats a failed current request as settled', () => {
+    const loading = beginTokenListRequest(
+      createTokenListResourceState<string>(),
+      'failed',
+    );
+    const failed = failTokenListRequest(loading, 'failed', new Error('failed'));
+    const selected = selectTokenListResource(failed, true, 'failed');
+
+    expect(selected.isLoading).toBe(false);
+    expect(selected.isSettled).toBe(true);
+    expect(selected.status).toBe('error');
   });
 
   it('does not expose data belonging to a previous request identity', () => {

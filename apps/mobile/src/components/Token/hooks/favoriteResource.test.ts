@@ -6,6 +6,7 @@ import {
   createFavoriteTokenCache,
   getScopedPinnedTokens,
   loadFavoriteTokenResource,
+  resolveFavoriteTokenOwnerAddress,
 } from './favoriteResource';
 
 const makePinnedToken = (tokenId: string, chainId = 'ETH'): IManageToken => ({
@@ -89,5 +90,14 @@ describe('favorite token resource', () => {
     );
 
     expect(scoped).toEqual([makePinnedToken('0xAAA')]);
+  });
+
+  it('keeps the screen account as favorite owner after clearing the list account filter', () => {
+    expect(resolveFavoriteTokenOwnerAddress(undefined, '0xScreenAccount')).toBe(
+      '0xScreenAccount',
+    );
+    expect(
+      resolveFavoriteTokenOwnerAddress('0xFilteredAccount', '0xScreenAccount'),
+    ).toBe('0xFilteredAccount');
   });
 });

@@ -21,6 +21,11 @@ export const EMPTY_FAVORITE_TOKENS: ITokenItem[] = [];
 export const normalizeFavoriteTokenPart = (value?: string) =>
   value?.toLowerCase() || '';
 
+export const resolveFavoriteTokenOwnerAddress = (
+  filterAddress?: string,
+  screenAddress?: string,
+) => filterAddress || screenAddress;
+
 export const makeFavoriteTokenKey = (token: {
   chainId?: string;
   tokenId?: string;

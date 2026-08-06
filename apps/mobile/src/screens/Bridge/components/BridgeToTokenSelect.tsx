@@ -135,12 +135,15 @@ const BridgeToTokenSelect = ({
     });
     return list?.token_list || [];
   }, [address, chainId, fromChainId, fromTokenId, queryConds.keyword]);
-  const { data: tokenList, isLoading: tokenListLoading } =
-    useTokenListAsyncResource({
-      enabled: Boolean(fromChainId && chainId),
-      requestKey: tokenListRequestKey,
-      load: loadTokenList,
-    });
+  const {
+    data: tokenList,
+    isLoading: tokenListLoading,
+    isSettled: isTokenListSettled,
+  } = useTokenListAsyncResource({
+    enabled: Boolean(fromChainId && chainId),
+    requestKey: tokenListRequestKey,
+    load: loadTokenList,
+  });
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
@@ -178,8 +181,16 @@ const BridgeToTokenSelect = ({
   const isListLoading = useMemo(() => {
     return favoriteFilterValue === 'favorite'
       ? favoriteTokensLoading
-      : tokenListLoading;
-  }, [favoriteFilterValue, favoriteTokensLoading, tokenListLoading]);
+      : Boolean(fromChainId && chainId) &&
+          (tokenListLoading || !isTokenListSettled);
+  }, [
+    chainId,
+    favoriteFilterValue,
+    favoriteTokensLoading,
+    fromChainId,
+    isTokenListSettled,
+    tokenListLoading,
+  ]);
 
   const handleSearchTokens = React.useCallback(async keyword => {
     setQueryConds({
