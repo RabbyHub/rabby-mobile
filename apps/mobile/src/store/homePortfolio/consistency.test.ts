@@ -89,6 +89,40 @@ describe('portfolio consumer consistency', () => {
     expect(projection.value).toEqual(expected);
   });
 
+  it('deduplicates the same Home address before aggregating balances', () => {
+    const account = selectHomeAddresses([
+      ADDRESS_A,
+      ADDRESS_A.toUpperCase(),
+      ADDRESS_B,
+    ]);
+    const balance = buildHomeBalanceProjection({
+      account,
+      valueMap: {
+        [ADDRESS_A]: { totalBalance: 130, evmBalance: 120 },
+        [ADDRESS_B]: { totalBalance: 75, evmBalance: 70 },
+      },
+    });
+    const change = buildHome24hProjection({
+      account,
+      currentBalanceMap: {
+        [ADDRESS_A]: { totalBalance: 130, evmBalance: 120 },
+        [ADDRESS_B]: { totalBalance: 75, evmBalance: 70 },
+      },
+      previousBalanceMap: {
+        [ADDRESS_A]: { total_usd_value: 100 },
+        [ADDRESS_B]: { total_usd_value: 80 },
+      },
+    });
+
+    expect(account.addresses).toEqual([ADDRESS_A, ADDRESS_B]);
+    expect(balance.value).toEqual({ totalBalance: 205, evmBalance: 190 });
+    expect(change.value).toMatchObject({
+      currentEvmBalance: 190,
+      previousEvmBalance: 180,
+      rawChange: 10,
+    });
+  });
+
   it('keeps account-list and single-address values equal when 24h data exists', () => {
     const current = { totalBalance: 130, evmBalance: 120 };
     const previousEvmBalance = 100;
