@@ -7,7 +7,11 @@ import {
   View,
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, {
   runOnJS,
@@ -127,6 +131,11 @@ function SlideToUpdate({
     <View
       style={[styles.sliderTrack, isDark && styles.sliderTrackDark]}
       onLayout={handleLayout}>
+      <Text
+        style={[styles.sliderLabel, isDark && styles.sliderLabelDark]}
+        selectable={false}>
+        {t('page.nextComponent.upgradeModal.slideToUpdate')}
+      </Text>
       <Animated.View style={[styles.sliderProgressClip, progressStyle]}>
         <LinearGradient
           colors={SLIDER_GRADIENT}
@@ -135,11 +144,6 @@ function SlideToUpdate({
           style={styles.sliderGradient}
         />
       </Animated.View>
-      <Text
-        style={[styles.sliderLabel, isDark && styles.sliderLabelDark]}
-        selectable={false}>
-        {t('page.nextComponent.upgradeModal.slideToUpdate')}
-      </Text>
       <GestureDetector gesture={gesture}>
         <Animated.View
           style={[
@@ -195,7 +199,12 @@ export function UpgradePromptModal() {
       animationType="fade"
       statusBarTranslucent
       onRequestClose={dismissUpgradePrompt}>
-      <View style={styles.overlay}>
+      <GestureHandlerRootView style={styles.overlay}>
+        <Pressable
+          accessible={false}
+          onPress={dismissUpgradePrompt}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={[styles.card, isDark && styles.cardDark]}>
           <BlurView
             blurAmount={12}
@@ -257,7 +266,7 @@ export function UpgradePromptModal() {
             v{remoteVersion.version}
           </Text>
         </View>
-      </View>
+      </GestureHandlerRootView>
     </TrackedModal>
   );
 }
