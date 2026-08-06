@@ -55,6 +55,9 @@ type KeyringServiceWithUnlockOptions = KeyringService & {
   ) => ReturnType<KeyringService['submitPassword']>;
   refreshMemStoreKeyrings?: () => Promise<unknown>;
 };
+type KeyringServiceWithPersistedPublicAccountSnapshot = KeyringService & {
+  hasPersistedPublicAccountSnapshot: () => boolean;
+};
 export const keyringServiceApi = createDeferredServiceApi<
   'keyringService',
   KeyringServiceApiContract
@@ -94,6 +97,14 @@ export function isKeyringRuntimeReadySnapshot() {
 export function hasKeyringPublicAccountSnapshot() {
   return (
     getRegisteredService('keyringService')?.hasPublicAccountSnapshot() || false
+  );
+}
+
+export async function hasPersistedKeyringPublicAccountSnapshot() {
+  return callCoreService('keyringService', service =>
+    (
+      service as KeyringServiceWithPersistedPublicAccountSnapshot
+    ).hasPersistedPublicAccountSnapshot(),
   );
 }
 

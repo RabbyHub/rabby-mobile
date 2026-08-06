@@ -1752,7 +1752,7 @@ export class KeyringService extends RNEventEmitter {
       })
       .filter(Boolean) as PublicAccountSnapshotItem[];
 
-    if (!accounts.length) {
+    if (raw.accounts.length > 0 && !accounts.length) {
       return undefined;
     }
 
@@ -1774,6 +1774,14 @@ export class KeyringService extends RNEventEmitter {
   hasPublicAccountSnapshot() {
     return this.isPublicAccountSnapshotValid(
       this.getPublicAccountSnapshotFromStore(),
+    );
+  }
+  hasPersistedPublicAccountSnapshot() {
+    const snapshot = this.getPublicAccountSnapshotFromStore();
+    return (
+      !!snapshot &&
+      snapshot.version === PUBLIC_ACCOUNT_SNAPSHOT_VERSION &&
+      Array.isArray(snapshot.accounts)
     );
   }
   getPublicAccountSnapshotAccounts() {

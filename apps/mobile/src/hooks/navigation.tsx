@@ -70,6 +70,7 @@ import { switchSceneCurrentAccount } from './accountsSwitcher';
 import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
 import { makeMutable, runOnJS } from 'react-native-reanimated';
 import PQueue from 'p-queue';
+import { resolveWalletEntryDestination } from '@/core/utils/walletEntryState';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -616,13 +617,26 @@ export class UnlockUIManager {
         navigationRouteStore.getState().currentRouteName !== RootNames.Unlock
       )
         return;
-      if (hasUnlockOnce) {
-        resetNavigationTo(navigation, 'Home');
-        unlockUIState.finishedUnlockResetNav = true;
-        return;
+      let hasVisibleAccounts: boolean | null = null;
+      try {
+        hasVisibleAccounts = await apisAccount.hasVisibleAccounts();
+      } catch (error) {
+        console.error(
+          'UnlockUIManager.resetNavOnUIUnlock::account-check-error',
+          error,
+        );
       }
-
-      resetNavigationTo(navigation, 'Home');
+      const destination = resolveWalletEntryDestination({
+        accountState:
+          hasVisibleAccounts === null
+            ? 'unknown'
+            : hasVisibleAccounts
+            ? 'available'
+            : 'empty',
+        isAppUnlocked: true,
+        isUnlockSessionValid: true,
+      });
+      resetNavigationTo(navigation, destination || 'Home');
       unlockUIState.finishedUnlockResetNav = true;
     };
     if (unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef) {

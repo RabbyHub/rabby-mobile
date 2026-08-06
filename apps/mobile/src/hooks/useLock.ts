@@ -4,6 +4,7 @@ import { AppState, Platform } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
+  hasPersistedKeyringPublicAccountSnapshot,
   isKeyringUnlockedSnapshot,
   keyringServiceApi,
 } from '@/core/serviceApi/keyring';
@@ -27,6 +28,10 @@ import {
   resolveValFromUpdater,
 } from '@/core/utils/store';
 import type { RefLikeObject } from '@/utils/type';
+import {
+  resolveWalletAccountState,
+  type WalletAccountState,
+} from '@/core/utils/walletEntryState';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -36,6 +41,7 @@ type AppLockState = {
   isUnlockSessionValid: boolean;
   hasVisibleAccounts: boolean;
   hasStoredKeyrings: boolean;
+  accountState: WalletAccountState;
   pwdStatus: PasswordStatus;
 };
 const zAppLockStore = zCreate<AppLockState>((set, get) => {
@@ -44,6 +50,7 @@ const zAppLockStore = zCreate<AppLockState>((set, get) => {
     isUnlockSessionValid: apisLock.isUnlockSessionValid(),
     hasVisibleAccounts: false,
     hasStoredKeyrings: false,
+    accountState: 'checking',
     pwdStatus: PasswordStatus.Unknown,
   };
 });
@@ -90,6 +97,7 @@ export function useAppUnlocked() {
     isUnlockSessionValid: zAppLockStore(state => state.isUnlockSessionValid),
     hasVisibleAccounts: zAppLockStore(state => state.hasVisibleAccounts),
     hasStoredKeyrings: zAppLockStore(state => state.hasStoredKeyrings),
+    accountState: zAppLockStore(state => state.accountState),
     getIsAppUnlocked,
     setAppLock,
   };
@@ -121,24 +129,45 @@ export function usePasswordStatus() {
 }
 
 export async function getBootstrapAccountFlags() {
-  const visibleAccountsCount =
-    await keyringServiceApi.getCountOfAccountsInKeyring();
+  const [
+    visibleAccountsCount,
+    hasVault,
+    hasEncryptedKeyringData,
+    hasUnencryptedKeyringData,
+    hasPersistedAccountSnapshot,
+  ] = await Promise.all([
+    keyringServiceApi.getCountOfAccountsInKeyring(),
+    keyringServiceApi.hasVault(),
+    keyringServiceApi.hasEncryptedKeyringData(),
+    keyringServiceApi.hasUnencryptedKeyringData(),
+    hasPersistedKeyringPublicAccountSnapshot(),
+  ]);
   const hasVisibleAccounts = visibleAccountsCount > 0;
-  const [hasVault, hasEncryptedKeyringData, hasUnencryptedKeyringData] =
-    await Promise.all([
-      keyringServiceApi.hasVault(),
-      keyringServiceApi.hasEncryptedKeyringData(),
-      keyringServiceApi.hasUnencryptedKeyringData(),
-    ]);
+  const hasStoredKeyrings =
+    hasVisibleAccounts ||
+    hasVault ||
+    hasEncryptedKeyringData ||
+    hasUnencryptedKeyringData;
 
   return {
     hasVisibleAccounts,
-    hasStoredKeyrings:
-      hasVisibleAccounts ||
-      hasVault ||
-      hasEncryptedKeyringData ||
-      hasUnencryptedKeyringData,
+    hasStoredKeyrings,
+    accountState: resolveWalletAccountState({
+      hasVisibleAccounts,
+      hasStoredKeyrings,
+      hasPersistedAccountSnapshot,
+      isKeyringUnlocked: isKeyringUnlockedSnapshot(),
+    }),
   };
+}
+
+export async function refreshAppLockAccountFlags() {
+  const accountFlags = await getBootstrapAccountFlags();
+  setAppLock(prev => ({
+    ...prev,
+    ...accountFlags,
+  }));
+  return accountFlags;
 }
 
 export const loadBootstrapAppLockState = async () => {
