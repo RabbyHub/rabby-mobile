@@ -26,6 +26,15 @@ function loadMetamaskModeServiceModule(initialStore?: MetamaskModeStore) {
     ) {
       this.store = options.storageAdapter?.store || template;
     }
+
+    protected mutateStore(recipe: (draft: MetamaskModeStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as MetamaskModeStore;
+    }
   }
 
   jest.doMock('@rabby-wallet/persist-store', () => ({
@@ -107,7 +116,7 @@ describe('core/services/metamaskModeService', () => {
       storageAdapter: storageAdapter as never,
     });
     activeMetamaskTimers.push(service.timer);
-    service.store.data.updatedAt = 0;
+    jest.setSystemTime(new Date(now + 26 * 60 * 1000));
 
     await service.syncMetamaskModeList();
 
@@ -116,7 +125,7 @@ describe('core/services/metamaskModeService', () => {
     );
     expect(service.store.data).toEqual({
       sites: ['next.example'],
-      updatedAt: now,
+      updatedAt: now + 26 * 60 * 1000,
     });
   });
 });

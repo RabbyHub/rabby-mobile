@@ -14,6 +14,7 @@ import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 // const approvalStatusAtom = atom<ApprovalStatus[]>([]);
 const approvalStatusStore = zCreate<ApprovalStatus[]>(() => []);
@@ -230,7 +231,12 @@ async function refreshApprovalAlertCountsForAccounts(
 }
 
 export function useApprovalAlertTotal() {
-  return approvalsAlertStore(s => s.total);
+  return useActivityStore(
+    approvalsAlertStore,
+    state => state.total,
+    Object.is,
+    { storeLabel: 'home-approval-badge' },
+  );
 }
 
 export function triggerApprovalAlertCounts(cacheTime: number) {

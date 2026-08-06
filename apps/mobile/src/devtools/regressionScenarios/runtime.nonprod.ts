@@ -1,5 +1,4 @@
 import { isNonPublicProductionEnv } from '@/constant';
-import { shouldSuppressPerfCaptureConsoleNoise } from '@/core/utils/perfCaptureConsole';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 
 import {
@@ -54,10 +53,6 @@ function logScenarioResult(
   message: string,
   data?: Record<string, unknown>,
 ) {
-  if (level === 'info' && shouldSuppressPerfCaptureConsoleNoise()) {
-    return;
-  }
-
   const logger = console[level] || console.log;
   logger(
     '[RabbyRegressionScenario]',

@@ -43,6 +43,7 @@ const babelTransformEnvironmentKeys = [
   'RABBY_MOBILE_E2E_SILENT_LOGS',
   'RABBY_MOBILE_FE_SERVICE_URL',
   'RABBY_MOBILE_KR_PWD',
+  'RABBY_MOBILE_MODULE_LOADING_MODE',
   'RABBY_MOBILE_WALLETCONNECT_PROJECT_ID',
   'WITH_ROZENITE',
   'buildchannel',
@@ -84,8 +85,13 @@ const nodeModulesRoots = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
-const resolveMobileReactModule = moduleName => {
-  if (moduleName !== 'react' && !moduleName.startsWith('react/')) {
+const resolveMobileReactRuntimeModule = moduleName => {
+  const isReactModule =
+    moduleName === 'react' || moduleName.startsWith('react/');
+  const isReactNativeModule =
+    moduleName === 'react-native' || moduleName.startsWith('react-native/');
+
+  if (!isReactModule && !isReactNativeModule) {
     return undefined;
   }
 
@@ -357,10 +363,11 @@ const config = {
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
     resolveRequest: (context, moduleName, platform) => {
-      const mobileReactModule = resolveMobileReactModule(moduleName);
-      if (mobileReactModule) {
+      const mobileReactRuntimeModule =
+        resolveMobileReactRuntimeModule(moduleName);
+      if (mobileReactRuntimeModule) {
         return {
-          filePath: mobileReactModule,
+          filePath: mobileReactRuntimeModule,
           type: 'sourceFile',
         };
       }

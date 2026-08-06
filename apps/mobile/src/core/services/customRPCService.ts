@@ -1,7 +1,9 @@
 import { CHAINS_ENUM } from '@debank/common';
 import { findChainByEnum } from '@/utils/chain';
-import createPersistStore, {
+import cloneDeep from 'lodash/cloneDeep';
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import axios from 'axios';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
@@ -88,12 +90,10 @@ const fetchDefaultRpc = async () => {
   return data.rpcs as RPCDefaultItem[];
 };
 
-export class CustomRPCService {
-  store: RPCServiceStore = {
-    customRPC: {},
-    defaultRPC: {},
-    defaultRPCLastUpdateAt: 0,
-  };
+export class CustomRPCService extends StoreServiceBase<
+  RPCServiceStore,
+  APP_STORE_NAMES.rpc
+> {
   preferredRPC: Record<string, string> = {};
   rpcProbeTasks: Partial<Record<string, Promise<void>>> = {};
   rpcStatus: Record<
@@ -104,39 +104,30 @@ export class CustomRPCService {
     }
   > = {};
   constructor(options?: StorageAdapaterOptions) {
+    super();
     this.init(options);
   }
 
   init = (options?: StorageAdapaterOptions) => {
-    const storage = createPersistStore<RPCServiceStore>(
+    this.initializePersistStore(
+      APP_STORE_NAMES.rpc,
       {
-        name: APP_STORE_NAMES.rpc,
-        template: {
-          customRPC: {},
-          defaultRPC: {},
-          defaultRPCLastUpdateAt: 0,
-        },
+        customRPC: {},
+        defaultRPC: {},
+        defaultRPCLastUpdateAt: 0,
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-    this.store = storage || this.store;
 
-    {
-      // remove unsupported chain
-      let changed = false;
-      Object.keys({ ...this.store.customRPC }).forEach(chainEnum => {
+    this.mutateStore(draft => {
+      Object.keys(draft.customRPC).forEach(chainEnum => {
         if (!findChainByEnum(chainEnum)) {
-          changed = true;
-          delete this.store.customRPC[chainEnum];
+          delete draft.customRPC[chainEnum];
         }
       });
-
-      if (changed) {
-        this.store.customRPC = { ...this.store.customRPC };
-      }
-    }
+    });
 
     this.syncDefaultRPC();
   };
@@ -146,7 +137,9 @@ export class CustomRPCService {
   };
 
   setDefaultRPCLastUpdateAt = (timestamp: number) => {
-    this.store.defaultRPCLastUpdateAt = timestamp;
+    this.mutateStore(draft => {
+      draft.defaultRPCLastUpdateAt = timestamp;
+    });
   };
 
   syncDefaultRPC = async (ignoreLastUpdateAt = true) => {
@@ -169,7 +162,6 @@ export class CustomRPCService {
           : (await openapi.getDefaultRPCs())?.rpcs;
         if (data.length) {
           console.log('Default RPCs updated successfully.');
-          this.setDefaultRPCLastUpdateAt(Date.now());
           const defaultRPC: Record<string, RPCDefaultItem> = data?.reduce(
             (acc, item) => {
               acc[item.chainId] = item;
@@ -178,7 +170,10 @@ export class CustomRPCService {
             },
             {} as Record<string, RPCDefaultItem>,
           );
-          this.store.defaultRPC = defaultRPC;
+          this.mutateStore(draft => {
+            draft.defaultRPCLastUpdateAt = Date.now();
+            draft.defaultRPC = defaultRPC;
+          });
         }
       }
     } catch (error) {
@@ -220,7 +215,7 @@ export class CustomRPCService {
     params: any;
   }) => {
     const isBESupported = this.supportedRpcMethodByBE(method);
-    const rpcUrls = this.store.defaultRPC?.[chainServerId]?.rpcUrl || [];
+    const rpcUrls = [...(this.store.defaultRPC?.[chainServerId]?.rpcUrl || [])];
     const preferredRPC = this.preferredRPC[chainServerId];
     const hostList =
       method !== 'eth_sendRawTransaction' &&
@@ -243,7 +238,7 @@ export class CustomRPCService {
   };
 
   getDefaultRPCByChainServerId = (chainServerId: string) => {
-    return this.store.defaultRPC?.[chainServerId];
+    return cloneDeep(this.store.defaultRPC?.[chainServerId]);
   };
 
   probeBestRPC = (chainServerId: string) => {
@@ -297,7 +292,9 @@ export class CustomRPCService {
     method: string,
     params: any[],
   ) => {
-    const hostList = this?.store?.defaultRPC?.[chainServerId]?.rpcUrl || [];
+    const hostList = [
+      ...(this.store.defaultRPC?.[chainServerId]?.rpcUrl || []),
+    ];
     if (!hostList.length) {
       throw new Error(`No available rpc for ${chainServerId}`);
     }
@@ -311,7 +308,9 @@ export class CustomRPCService {
     method: string,
     params: any[],
   ) => {
-    const hostList = this?.store?.defaultRPC?.[chainServerId]?.rpcUrl || [];
+    const hostList = [
+      ...(this.store.defaultRPC?.[chainServerId]?.rpcUrl || []),
+    ];
     if (!hostList.length) {
       throw new Error(`No available rpc for ${chainServerId}`);
     }
@@ -322,7 +321,7 @@ export class CustomRPCService {
   };
 
   getDefaultRPC = (chainServerId: string) => {
-    return this.store.defaultRPC?.[chainServerId];
+    return cloneDeep(this.store.defaultRPC?.[chainServerId]);
   };
 
   hasCustomRPC = (chain: CHAINS_ENUM) => {
@@ -331,7 +330,7 @@ export class CustomRPCService {
   };
 
   getRPCByChain = (chain: CHAINS_ENUM) => {
-    return this.store.customRPC[chain];
+    return cloneDeep(this.store.customRPC[chain]);
   };
 
   getAllRPC = () => {
@@ -349,29 +348,27 @@ export class CustomRPCService {
           url,
           enable: true,
         };
-    this.store.customRPC = {
-      ...this.store.customRPC,
-      [chain]: rpcItem,
-    };
+    this.mutateStore(draft => {
+      draft.customRPC[chain] = rpcItem;
+    });
     if (this.rpcStatus[chain]) {
       delete this.rpcStatus[chain];
     }
   };
 
   setRPCEnable = (chain: CHAINS_ENUM, enable: boolean) => {
-    this.store.customRPC = {
-      ...this.store.customRPC,
-      [chain]: {
-        ...this.store.customRPC[chain],
+    this.mutateStore(draft => {
+      draft.customRPC[chain] = {
+        ...draft.customRPC[chain],
         enable,
-      },
-    };
+      };
+    });
   };
 
   removeCustomRPC = (chain: CHAINS_ENUM) => {
-    const map = this.store.customRPC;
-    delete map[chain];
-    this.store.customRPC = { ...map };
+    this.mutateStore(draft => {
+      delete draft.customRPC[chain];
+    });
     if (this.rpcStatus[chain]) {
       delete this.rpcStatus[chain];
     }

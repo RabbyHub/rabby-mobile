@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@rabby-wallet/gnosis-sdk": "1.4.9",
-    "@rabby-wallet/keyring-utils": "^0.1.0",
+    "@rabby-wallet/keyring-utils": "workspace:^",
     "@safe-global/protocol-kit": "5.0.3",
     "@safe-global/types-kit": "1.0.4",
     "bignumber.js": "9.1.2",

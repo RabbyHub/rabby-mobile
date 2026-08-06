@@ -36,12 +36,27 @@ const UNENCRYPTED_IGNORE_KEYRING = [
   KEYRING_TYPE.HdKeyring,
 ];
 
+export type KeyringPasswordOrigin = 'built-in' | 'auto-generated' | 'user';
+
+export type KeyringAuthTransition = 'disable-biometrics';
+
+export type KeyringPasswordState = {
+  version: 1;
+  origin: KeyringPasswordOrigin;
+  pendingAuthTransition?: KeyringAuthTransition;
+};
+
+export type KeyringPasswordUpdateOptions = {
+  passwordState?: KeyringPasswordState;
+};
+
 type KeyringState = {
   booted?: string;
   vault?: string;
   unencryptedKeyringData?: KeyringSerializedData[];
   publicAccountSnapshot?: PublicAccountSnapshot;
   hasEncryptedKeyringData: boolean;
+  passwordState?: KeyringPasswordState;
 };
 
 type MemStoreState = {
@@ -93,6 +108,21 @@ type PublicAccountSnapshot = {
  *   reminders.
  */
 const PUBLIC_ACCOUNT_SNAPSHOT_VERSION = 4;
+
+function normalizeKeyringPasswordState(
+  value: KeyringPasswordState | undefined,
+): KeyringPasswordState | undefined {
+  if (
+    value?.version !== 1 ||
+    !['built-in', 'auto-generated', 'user'].includes(value.origin) ||
+    (value.pendingAuthTransition !== undefined &&
+      value.pendingAuthTransition !== 'disable-biometrics')
+  ) {
+    return undefined;
+  }
+
+  return value;
+}
 
 const isSensitiveKeyringType = (type: string) =>
   UNENCRYPTED_IGNORE_KEYRING.includes(type as any);
@@ -297,15 +327,22 @@ export class KeyringService extends RNEventEmitter {
         initState.publicAccountSnapshot,
       ),
       hasEncryptedKeyringData: initState.hasEncryptedKeyringData || false,
+      passwordState: normalizeKeyringPasswordState(initState.passwordState),
     });
   }
-  private async _setupBoot(password: string) {
+  private async _setupBoot(
+    password: string,
+    passwordState?: KeyringPasswordState,
+  ) {
     this.#password = password;
     const encryptBooted = await this.encryptor.encrypt(password, 'true');
-    this.store.updateState({ booted: encryptBooted });
+    this.store.updateState({
+      booted: encryptBooted,
+      ...(passwordState ? { passwordState } : null),
+    });
   }
-  async boot(password: string) {
-    await this._setupBoot(password);
+  async boot(password: string, options: KeyringPasswordUpdateOptions = {}) {
+    await this._setupBoot(password, options.passwordState);
     this.memStore.updateState({
       isUnlocked: true,
       keyringRuntimeReady: true,
@@ -314,7 +351,11 @@ export class KeyringService extends RNEventEmitter {
     });
   }
   // TODO: add strict check for newPassword in logic layer too.
-  async updatePassword(oldPassword: string, newPassword: string) {
+  async updatePassword(
+    oldPassword: string,
+    newPassword: string,
+    options: KeyringPasswordUpdateOptions = {},
+  ) {
     await this.verifyPassword(oldPassword);
     const wasUnlocked = this.isUnlocked();
 
@@ -325,9 +366,10 @@ export class KeyringService extends RNEventEmitter {
     const restoredVaultIntoRuntime =
       await this.ensureVaultLoadedForPasswordUpdate(oldPassword);
 
-    // reboot it
-    await this._setupBoot(newPassword);
-    await this.persistAllKeyrings();
+    await this.persistPasswordAndAllKeyrings(
+      newPassword,
+      options.passwordState,
+    );
 
     if (!wasUnlocked) {
       await this.restoreLockedRuntimeAfterPasswordUpdate();
@@ -366,21 +408,21 @@ export class KeyringService extends RNEventEmitter {
    * @description on no keyrings stored, force reset password
    * @param newPassword
    */
-  async resetPassword(newPassword: string) {
+  async resetPassword(
+    newPassword: string,
+    options: KeyringPasswordUpdateOptions = {},
+  ) {
     if (await this.getCountOfAccountsInKeyring()) {
       throw new Error(
         "You're trying to overwrite password on existing keyrings.",
       );
     }
 
-    await this._setupBoot(newPassword);
-
     this.keyrings = [];
-    try {
-      await this.persistAllKeyrings();
-    } catch (error) {
-      console.error(error);
-    }
+    await this.persistPasswordAndAllKeyrings(
+      newPassword,
+      options.passwordState,
+    );
     this.memStore.updateState({ keyrings: [] });
 
     // TODO: forgot password
@@ -412,8 +454,32 @@ export class KeyringService extends RNEventEmitter {
       this.keyrings = [];
       await this.persistAllKeyrings();
       this.memStore.updateState({ keyrings: [] });
-      this.store.updateState({ vault: undefined, booted: undefined });
+      this.store.updateState({
+        vault: undefined,
+        booted: undefined,
+        passwordState: undefined,
+      });
     }
+  }
+  getPasswordState() {
+    return this.store.getState().passwordState;
+  }
+  setPasswordState(passwordState: KeyringPasswordState) {
+    this.store.updateState({ passwordState });
+  }
+  completeAuthTransition(transition: KeyringAuthTransition) {
+    const current = this.getPasswordState();
+    if (!current || current.pendingAuthTransition !== transition) {
+      return false;
+    }
+
+    this.store.updateState({
+      passwordState: {
+        ...current,
+        pendingAuthTransition: undefined,
+      },
+    });
+    return true;
   }
   isBooted() {
     return Boolean(this.store.getState().booted);
@@ -2110,6 +2176,36 @@ export class KeyringService extends RNEventEmitter {
     this.memStore.updateState({ isUnlocked: false });
     this.keyrings = [];
     await this.restoreUnencryptedKeyrings();
+  }
+  private async persistPasswordAndAllKeyrings(
+    password: string,
+    passwordState?: KeyringPasswordState,
+  ) {
+    if (this.isUnlocked() && !this.isKeyringRuntimeReady()) {
+      await this.ensureKeyringRuntimeReady('persist_password_and_keyrings');
+    }
+
+    const serializedKeyrings = await this.serializeKeyrings();
+    const hasEncryptedKeyringData =
+      this.hasEncryptedKeyrings(serializedKeyrings);
+    const unencryptedKeyringData =
+      this.getUnencryptedKeyringData(serializedKeyrings);
+    const publicAccountSnapshot =
+      await this.buildPublicAccountSnapshotFromRuntime();
+    const [booted, vault] = await Promise.all([
+      this.encryptor.encrypt(password, 'true'),
+      this.encryptor.encrypt(password, serializedKeyrings as unknown as Buffer),
+    ]);
+
+    this.#password = password;
+    this.store.updateState({
+      booted,
+      vault,
+      unencryptedKeyringData,
+      publicAccountSnapshot,
+      hasEncryptedKeyringData,
+      ...(passwordState ? { passwordState } : null),
+    });
   }
   async persistUnencryptedKeyrings(
     changedTypes: string[] = [],

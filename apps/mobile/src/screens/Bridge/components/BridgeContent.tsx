@@ -11,7 +11,6 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
-  usePollBridgePendingNumber,
   useQuoteVisible,
   useRefreshId,
   useSetQuoteVisible,
@@ -23,16 +22,13 @@ import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveMod
 import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import type { BridgeHeaderRef } from './BridgeHeader';
-import { BridgeHeader } from './BridgeHeader';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components2024/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { useIsFocused, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
@@ -42,8 +38,12 @@ import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
 
-import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
+import {
+  type TokenItemMaybeWithOwner,
+  useSwitchSceneAccountOnSelectedTokenWithOwner,
+} from '@/databases/hooks/token';
 import { CHAINS_ENUM } from '@debank/common';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import {
   ExternalSwapBridgeDappTips,
@@ -64,6 +64,11 @@ import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
+import {
+  canProcessSignature,
+  isSignatureGasFeeTooHigh,
+  selectSignatureGuardFlags,
+} from '@/components2024/MiniSignV2/state/signatureGuardFlags';
 import { buildFingerprint } from '@/components2024/MiniSignV2/domain/ctx';
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
@@ -91,6 +96,10 @@ import {
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { RootNames } from '@/constant/layout';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
+import {
+  BridgePendingTransactionsController,
+  type BridgePendingTransactionsControllerRef,
+} from './BridgePendingTransactionsController';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -308,28 +317,22 @@ export const BridgeContent = ({
   disableHeaderRight = false,
   disableAccountSwitcherModal = false,
   diagnosticActive = false,
+  sceneActive = true,
 }: {
   isForMultipleAddress?: boolean;
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
   diagnosticActive?: boolean;
+  sceneActive?: boolean;
 }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
-  const headerRef = useRef<BridgeHeaderRef>(null);
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const pendingTransactionsRef =
+    useRef<BridgePendingTransactionsControllerRef>(null);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
-
-  const {
-    runAsync: runFetchBridgePendingCount,
-    localPendingTxData,
-    runFetchLocalPendingTx,
-    clearLocalPendingTxData,
-    clearBridgeHistoryRedDot,
-  } = usePollBridgePendingNumber();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -363,28 +366,6 @@ export const BridgeContent = ({
         typeof RootNames.SwapBridge | typeof RootNames.MultiSwapBridge
       >
     >();
-
-  const openHistory = useMemoizedFn(() => {
-    headerRef.current?.openHistory();
-  });
-
-  const Header = useCallback(
-    () => (
-      <BridgeHeader
-        ref={headerRef}
-        clearBridgeHistoryRedDot={clearBridgeHistoryRedDot}
-      />
-    ),
-    [clearBridgeHistoryRedDot],
-  );
-  useEffect(() => {
-    if (disableHeaderRight) {
-      return;
-    }
-    setNavigationOptions({
-      headerRight: Header,
-    });
-  }, [Header, disableHeaderRight, setNavigationOptions]);
 
   const {
     fromChain,
@@ -442,7 +423,7 @@ export const BridgeContent = ({
     quoteBlockedByClosedMarket,
     slider,
     onChangeSlider,
-  } = useBridge(isForMultipleAddress);
+  } = useBridge(isForMultipleAddress, { active: sceneActive });
 
   const isRegressionBridgePairMatched = useMemo(() => {
     const params = route.params;
@@ -482,6 +463,7 @@ export const BridgeContent = ({
 
   useEffect(() => {
     if (
+      !sceneActive ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'swap-bridge' ||
       regressionScenario.params.tab !== 'bridge' ||
@@ -577,6 +559,7 @@ export const BridgeContent = ({
     handleAmountChange,
     isRegressionBridgePairMatched,
     regressionScenario,
+    sceneActive,
     toToken,
   ]);
 
@@ -622,6 +605,10 @@ export const BridgeContent = ({
     [setQuotePollingPauseReason],
   );
 
+  useEffect(() => {
+    setQuotePollingPauseReason('scene-inactive', !sceneActive);
+  }, [sceneActive, setQuotePollingPauseReason]);
+
   const chains = useMemo(
     () => [toChain, fromChain].filter(e => !!e) as CHAINS_ENUM[],
     [toChain, fromChain],
@@ -632,7 +619,7 @@ export const BridgeContent = ({
     data: externalDapps,
     loading: externalDappsLoading,
     openTab: _openTab,
-  } = useExternalSwapBridgeDapps(chains, 'bridge');
+  } = useExternalSwapBridgeDapps(chains, 'bridge', sceneActive);
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
     const origin = safeGetOrigin(url);
@@ -757,10 +744,10 @@ export const BridgeContent = ({
           },
           addBridgeTxHistoryObj,
         );
-        runFetchLocalPendingTx();
+        pendingTransactionsRef.current?.refreshLocal();
         handleAmountChange('');
         setTimeout(() => {
-          runFetchBridgePendingCount();
+          pendingTransactionsRef.current?.refreshRemote();
         }, 500);
       } catch (error) {
         toast.info((error as any)?.message || String(error));
@@ -987,14 +974,6 @@ export const BridgeContent = ({
     manual: true,
   });
 
-  const isFocused = useIsFocused();
-
-  useEffect(() => {
-    if (isFocused) {
-      refresh(e => e + 1);
-    }
-  }, [isFocused, refresh]);
-
   const runBuildBridgeTxsRef = useRef<
     ReturnType<typeof runBuildTxs> | undefined
   >(undefined);
@@ -1094,10 +1073,12 @@ export const BridgeContent = ({
     autoResetGasStoreOnChainChange: true,
   });
 
-  const { ctx } = useSignatureStoreOf(instance);
-
-  const miniSignGasFeeTooHigh = !!ctx?.gasFeeTooHigh;
-  const canDirectSign = !ctx?.disabledProcess;
+  const signatureGuardFlags = useSignatureStoreOf(
+    instance,
+    selectSignatureGuardFlags,
+  );
+  const miniSignGasFeeTooHigh = isSignatureGasFeeTooHigh(signatureGuardFlags);
+  const canDirectSign = canProcessSignature(signatureGuardFlags);
 
   const [miniSignLoading, setMiniSignLoading] = useState(false);
   const shouldPauseMiniSignerEffects =
@@ -1114,7 +1095,7 @@ export const BridgeContent = ({
   );
 
   useEffect(() => {
-    if (!isFocused) {
+    if (!sceneActive) {
       closeMiniSigner();
       return;
     }
@@ -1159,7 +1140,7 @@ export const BridgeContent = ({
     canShowDirectSubmit,
     closeMiniSigner,
     currentAccount?.address,
-    isFocused,
+    sceneActive,
     miniSignGa,
     prefetchMiniSigner,
     selectedBridgeQuoteBuildKey,
@@ -1293,10 +1274,10 @@ export const BridgeContent = ({
         builtBridgeTxsKeyRef.current = '';
         prefetchedBridgeTxsKeyRef.current = '';
         mutateTxs([]);
-        runFetchLocalPendingTx();
+        pendingTransactionsRef.current?.refreshLocal();
         handleAmountChange('');
         setTimeout(() => {
-          runFetchBridgePendingCount();
+          pendingTransactionsRef.current?.refreshRemote();
         }, 500);
       } catch (error: any) {
         console.log('bridge mini sign error', error);
@@ -1352,6 +1333,7 @@ export const BridgeContent = ({
 
   useEffect(() => {
     if (
+      !sceneActive ||
       !regressionScenario.active ||
       regressionScenario.scenario !== 'swap-bridge' ||
       regressionScenario.params.tab !== 'bridge' ||
@@ -1391,6 +1373,7 @@ export const BridgeContent = ({
     quoteList?.length,
     quoteLoading,
     regressionScenario,
+    sceneActive,
     selectedBridgeQuote,
     toToken,
   ]);
@@ -1403,7 +1386,7 @@ export const BridgeContent = ({
       }
     };
 
-    if (shouldPauseMiniSignerEffects()) {
+    if (!sceneActive || shouldPauseMiniSignerEffects()) {
       return clearBuildTimer;
     }
     if (
@@ -1503,6 +1486,7 @@ export const BridgeContent = ({
     selectedBridgeQuoteBuildKey,
     selectedBridgeQuoteCanAutoPreExec,
     selectedBridgeQuoteIsManualQuote,
+    sceneActive,
     shouldPauseMiniSignerEffects,
   ]);
 
@@ -1533,6 +1517,52 @@ export const BridgeContent = ({
 
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+  const handleFromTokenChange = useMemoizedFn(
+    (token: TokenItem | TokenItemMaybeWithOwner) => {
+      const chainItem = findChainByServerID(token.chain);
+      const normalSetChainToken = () => {
+        if (chainItem?.enum !== fromChain) {
+          switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH);
+        }
+        handleAmountChange('');
+        setFromToken(token);
+      };
+
+      if (!isForMultipleAddress) {
+        normalSetChainToken();
+        return;
+      }
+
+      switchAccountOnSelectedToken({
+        token,
+        currentAccount,
+      });
+      normalSetChainToken();
+    },
+  );
+  const handleBridgeAmountChange = useMemoizedFn((value: string) => {
+    if (directSignBtnRef.current?.isAuthInProgress()) {
+      return;
+    }
+    handleAmountChange(value);
+  });
+  const handleToTokenChange = useMemoizedFn((token: TokenItem) => {
+    setToToken(token);
+  });
+  const handleFromChainChange = useMemoizedFn((chain: CHAINS_ENUM) => {
+    switchFromChain(chain);
+  });
+  const handleToChainChange = useMemoizedFn((chain: CHAINS_ENUM) => {
+    setToChain(chain);
+  });
+  const fromTokenExcludeChains = useMemo(
+    () => (toChain ? [toChain] : undefined),
+    [toChain],
+  );
+  const toTokenExcludeChains = useMemo(
+    () => (fromChain ? [fromChain] : undefined),
+    [fromChain],
+  );
 
   const showLoss = useMemo(() => {
     const impact = tokenPriceImpact(
@@ -1609,6 +1639,13 @@ export const BridgeContent = ({
   };
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const handleSlippageChange = useCallback(
+    (nextSlippage: string) => {
+      setSlippageChanged(true);
+      setSlippage(nextSlippage);
+    },
+    [setSlippage, setSlippageChanged],
+  );
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1627,6 +1664,11 @@ export const BridgeContent = ({
         {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
+        <BridgePendingTransactionsController
+          ref={pendingTransactionsRef}
+          disableHeaderRight={disableHeaderRight}
+          enabled={sceneActive}
+        />
         <KeyboardAwareScrollView
           style={styles.container}
           contentContainerStyle={{
@@ -1651,43 +1693,19 @@ export const BridgeContent = ({
                 clickMaxBtnCount={clickMaxBtnCount}
                 handleMax={handleMax}
                 onSliderScrollEnabledChange={setScrollEnabled}
-                onChangeToken={token => {
-                  const chainItem = findChainByServerID(token.chain);
-                  const normalSetChainToken = () => {
-                    if (chainItem?.enum !== fromChain) {
-                      switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                    }
-                    handleAmountChange('');
-                    setFromToken(token);
-                  };
-
-                  if (!isForMultipleAddress) {
-                    normalSetChainToken();
-                  } else {
-                    switchAccountOnSelectedToken({
-                      token,
-                      currentAccount,
-                    });
-                    normalSetChainToken();
-                  }
-                }}
-                onChangeChain={switchFromChain}
+                onChangeToken={handleFromTokenChange}
+                onChangeChain={handleFromChainChange}
                 value={amount}
-                onInputChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) {
-                    return;
-                  }
-                  handleAmountChange(value);
-                }}
-                excludeChains={toChain ? [toChain] : undefined}
+                onInputChange={handleBridgeAmountChange}
+                excludeChains={fromTokenExcludeChains}
               />
               <BridgeToken
                 type="to"
                 account={currentAccount}
                 chain={toChain}
                 token={toToken}
-                onChangeToken={setToToken}
-                onChangeChain={setToChain}
+                onChangeToken={handleToTokenChange}
+                onChangeChain={handleToChainChange}
                 fromChainId={
                   fromToken?.chain || findChainByEnum(fromChain)?.serverId
                 }
@@ -1698,7 +1716,7 @@ export const BridgeContent = ({
                     ? undefined
                     : selectedBridgeQuote?.to_token_amount
                 }
-                excludeChains={fromChain ? [fromChain] : undefined}
+                excludeChains={toTokenExcludeChains}
                 noQuote={noQuote}
               />
               <BridgeSwitchBtn
@@ -1741,10 +1759,7 @@ export const BridgeContent = ({
                   sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
                   slippage={slippageState}
                   displaySlippage={slippage}
-                  onSlippageChange={e => {
-                    setSlippageChanged(true);
-                    setSlippage(e);
-                  }}
+                  onSlippageChange={handleSlippageChange}
                   fromToken={fromToken}
                   toToken={toToken}
                   amount={amount || 0}
@@ -1790,10 +1805,7 @@ export const BridgeContent = ({
                       <BridgeSlippage
                         value={slippage}
                         displaySlippage={slippage}
-                        onChange={e => {
-                          setSlippageChanged(true);
-                          setSlippage(e);
-                        }}
+                        onChange={handleSlippageChange}
                         autoSlippage={autoSlippage}
                         isCustomSlippage={isCustomSlippage}
                         setAutoSlippage={setAutoSlippage}

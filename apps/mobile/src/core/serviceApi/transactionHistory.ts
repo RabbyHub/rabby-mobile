@@ -1,6 +1,7 @@
 import type { TransactionHistoryService } from '@/core/services/transactionHistory';
 import type {
   CustomTxItem,
+  SendTxHistoryItem,
   TransactionGroup,
 } from '@/core/services/transactionHistory';
 import {
@@ -53,8 +54,7 @@ export function getTransactionHistoryRecentTxSnapshot(
 }
 
 const EMPTY_CUSTOM_TX_ITEM_MAP: Record<string, CustomTxItem> = {};
-const EMPTY_SEND_TX_HISTORY: TransactionHistoryService['store']['sendTxHistory'] =
-  [];
+const EMPTY_SEND_TX_HISTORY: SendTxHistoryItem[] = [];
 
 export function getTransactionHistoryCustomTxItemMapSnapshot() {
   const service = getLoadedCoreService('transactionHistoryService');
@@ -69,13 +69,12 @@ export function getTransactionHistorySendListSnapshot() {
   if (!service) {
     return EMPTY_SEND_TX_HISTORY;
   }
-  return service.store.sendTxHistory;
+  return service.getStoreFieldSnapshot('sendTxHistory');
 }
 
 export async function getTransactionHistoryTransactions() {
-  return callCoreService(
-    'transactionHistoryService',
-    service => service.store.transactions,
+  return callCoreService('transactionHistoryService', service =>
+    service.getStoreFieldSnapshot('transactions'),
   );
 }
 
