@@ -6,6 +6,7 @@ import { useCallback, useMemo } from 'react';
 import { perpsStore } from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getSpotBalanceKey } from '@/utils/perps';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const usePerpsAccount = () => {
   const {
@@ -18,7 +19,8 @@ export const usePerpsAccount = () => {
     spotBalances,
     spotBalancesMap,
     tokenToAvailableAfterMaintenance,
-  } = perpsStore(
+  } = useActivityStore(
+    perpsStore,
     useShallow(s => ({
       userAbstraction: s.userAbstraction,
       perpsAccountValue:
@@ -34,6 +36,8 @@ export const usePerpsAccount = () => {
       tokenToAvailableAfterMaintenance:
         s.spotState.tokenToAvailableAfterMaintenance,
     })),
+    Object.is,
+    { storeLabel: 'perps-account' },
   );
 
   const isUnifiedAccount = useMemo(() => {

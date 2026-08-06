@@ -2,6 +2,7 @@ import { perpsStore } from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const usePerpsHomePnl = () => {
   const {
@@ -12,7 +13,8 @@ export const usePerpsHomePnl = () => {
     isUserDataReady,
     userAbstraction,
     userAbstractionReady,
-  } = perpsStore(
+  } = useActivityStore(
+    perpsStore,
     useShallow(s => ({
       currentPerpsAccount: s.currentPerpsAccount,
       homePositionPnl: s.homePositionPnl,
@@ -22,6 +24,8 @@ export const usePerpsHomePnl = () => {
       userAbstraction: s.userAbstraction,
       userAbstractionReady: s.userAbstractionReady,
     })),
+    Object.is,
+    { storeLabel: 'home-overview-perps-pnl' },
   );
   const { availableBalance } = usePerpsAccount();
   const isSpotCollateralMode =

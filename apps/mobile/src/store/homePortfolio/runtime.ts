@@ -1,5 +1,6 @@
 import { filterMyAccounts } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import accountStore from '@/store/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { balance24hStore, scene24hBalanceStore } from '@/store/balance24h';
@@ -310,42 +311,57 @@ export function useHomeAccountProjection<T>(
   selector: (state: HomeAccountProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return homeAccountProjectionStore(selector);
+  return useActivityStore(homeAccountProjectionStore, selector, Object.is, {
+    storeLabel: 'home-account-projection',
+  });
 }
 
 export function useHomeBalanceProjection<T>(
   selector: (state: HomeBalanceProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return homeBalanceProjectionStore(selector);
+  return useActivityStore(homeBalanceProjectionStore, selector, Object.is, {
+    storeLabel: 'home-balance-projection',
+  });
 }
 
 export function useHome24hProjection<T>(
   selector: (state: Home24hProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return home24hProjectionStore(selector);
+  return useActivityStore(home24hProjectionStore, selector, Object.is, {
+    storeLabel: 'home-24h-projection',
+  });
 }
 
 export function useHomeCurveProjection<T>(
   selector: (state: HomeCurveProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return homeCurveProjectionStore(selector);
+  return useActivityStore(homeCurveProjectionStore, selector, Object.is, {
+    storeLabel: 'home-curve-projection',
+  });
 }
 
 export function useHomeRefreshProjection<T>(
   selector: (state: HomeRefreshProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return homeRefreshProjectionStore(selector);
+  return useActivityStore(homeRefreshProjectionStore, selector, Object.is, {
+    storeLabel: 'home-refresh-projection',
+  });
 }
 
 export function useHomeContentReadinessProjection<T>(
   selector: (state: HomeContentReadinessProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return homeContentReadinessProjectionStore(selector);
+  return useActivityStore(
+    homeContentReadinessProjectionStore,
+    selector,
+    Object.is,
+    { storeLabel: 'home-content-readiness-projection' },
+  );
 }
 
 export function getHomeAccountProjection() {

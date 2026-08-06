@@ -4,6 +4,10 @@ import BigNumber from 'bignumber.js';
 
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
+import {
+  getLatestStoreActivityScopeDiagnostics,
+  getStoreActivityDiagnosticsSnapshot,
+} from '@/core/state/storeActivityDiagnostics';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
@@ -45,6 +49,13 @@ const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
   2: 'home-assets-defi-ready',
   3: 'home-assets-nft-ready',
 };
+const HOME_TAB_ACTIVITY_SCOPE_LABELS = [
+  'home-multi-assets-overview',
+  'home-multi-assets-token',
+  'home-multi-assets-defi',
+  'home-multi-assets-nft',
+] as const;
+const HOME_TAB_ACTIVITY_VERIFICATION_TABS = [0, 1, 2, 3, 0] as const;
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -431,6 +442,99 @@ async function prepareScenario(context: RegressionScenarioExecutionContext) {
   };
 }
 
+async function waitForHomeTabIndex(tabIndex: number, timeoutMs = 10_000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (
+      apisHomeTabIndex.homeTabScrollerRef.current?.getCurrentIndex() ===
+      tabIndex
+    ) {
+      return;
+    }
+    await delay(50);
+  }
+
+  throw new Error(`Timed out waiting for Home tab index: ${tabIndex}`);
+}
+
+function summarizeHomeTabActivityScopes() {
+  const snapshot = getStoreActivityDiagnosticsSnapshot();
+  const scopes = HOME_TAB_ACTIVITY_SCOPE_LABELS.map(
+    getLatestStoreActivityScopeDiagnostics,
+  );
+
+  return {
+    enabled: snapshot.enabled,
+    scopes,
+    report: scopes.map((scope, index) => ({
+      label: HOME_TAB_ACTIVITY_SCOPE_LABELS[index],
+      mounted: !!scope,
+      active: scope?.active ?? false,
+      consumerCount:
+        scope?.stores.reduce((sum, store) => sum + store.consumerCount, 0) ?? 0,
+      sourceSubscriptionCount:
+        scope?.stores.filter(store => store.sourceSubscribed).length ?? 0,
+      catchUpCount:
+        scope?.stores.reduce((sum, store) => sum + store.catchUpCount, 0) ?? 0,
+    })),
+  };
+}
+
+async function assertHomeTabActivity(
+  context: RegressionScenarioExecutionContext,
+  tabIndex: (typeof HOME_TAB_ACTIVITY_VERIFICATION_TABS)[number],
+) {
+  const expectedActiveLabel = HOME_TAB_ACTIVITY_SCOPE_LABELS[tabIndex];
+  const startedAt = Date.now();
+  let latest = summarizeHomeTabActivityScopes();
+
+  while (Date.now() - startedAt < 10_000) {
+    latest = summarizeHomeTabActivityScopes();
+    const allScopesMounted = latest.scopes.every(Boolean);
+    const activityMatches = latest.scopes.every(scope => {
+      if (!scope) {
+        return false;
+      }
+      const shouldBeActive = scope.label === expectedActiveLabel;
+      if (scope.active !== shouldBeActive) {
+        return false;
+      }
+      if (!shouldBeActive) {
+        return scope.stores.every(store => !store.sourceSubscribed);
+      }
+
+      return (
+        scope.stores.some(store => store.sourceSubscribed) &&
+        scope.stores.every(
+          store => store.consumerCount === 0 || store.sourceSubscribed,
+        )
+      );
+    });
+
+    if (latest.enabled && allScopesMounted && activityMatches) {
+      context.report('assertion', {
+        assertion: 'home-tabs-store-activity',
+        passed: true,
+        tabIndex,
+        expectedActiveLabel,
+        scopes: latest.report,
+      });
+      return;
+    }
+    await delay(50);
+  }
+
+  context.report('assertion', {
+    assertion: 'home-tabs-store-activity',
+    passed: false,
+    tabIndex,
+    expectedActiveLabel,
+    scopes: latest.report,
+  });
+  throw new Error(`Home asset activity did not converge for tab ${tabIndex}`);
+}
+
 async function openHomeAssets(context: RegressionScenarioExecutionContext) {
   resetToHome();
   await context.waitForRoute(RootNames.Home);
@@ -441,6 +545,7 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     .filter(value => Number.isInteger(value) && value >= 0 && value <= 3);
   for (const tabIndex of requestedTabs) {
     apisHomeTabIndex.setTabIndex(tabIndex, true);
+    await waitForHomeTabIndex(tabIndex);
     context.report('assertion', {
       assertion: 'home-tab-selected',
       passed: navigationRef.getCurrentRoute()?.name === RootNames.Home,
@@ -453,6 +558,12 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     } else {
       await delay(350);
     }
+  }
+
+  for (const tabIndex of HOME_TAB_ACTIVITY_VERIFICATION_TABS) {
+    apisHomeTabIndex.setTabIndex(tabIndex, true);
+    await waitForHomeTabIndex(tabIndex);
+    await assertHomeTabActivity(context, tabIndex);
   }
 }
 

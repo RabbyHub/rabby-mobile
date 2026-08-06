@@ -29,6 +29,8 @@ import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGloba
 import { balance24hStore } from '@/store/balance24h';
 import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
 import Animated, { Easing, FadeInUp } from 'react-native-reanimated';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const PINNED_ADDRESS_LIST_ENTERING = FadeInUp.duration(460).easing(
   Easing.out(Easing.cubic),
@@ -45,14 +47,21 @@ function MultiPinnedAddressList({
   const pinnedAddresses = useMemo(() => {
     return pinnedAccountList.map(item => item.address.toLowerCase());
   }, [pinnedAccountList]);
-  const balance24hSnapshots =
-    balance24hStore.useAddresses24hBalanceSnapshots(pinnedAddresses);
+  const balance24hValues = useActivityStore(
+    balance24hStore.useStore,
+    useShallow(state =>
+      pinnedAddresses.map(address => state.valueMap[address]),
+    ),
+    Object.is,
+    { storeLabel: 'home-pinned-account-24h-balances' },
+  );
 
   const addressListData = useMemo(() => {
-    const multi24hBalance = balance24hSnapshots.reduce(
-      (acc, snapshot) => {
-        if (snapshot.value) {
-          acc[snapshot.address] = snapshot.value;
+    const multi24hBalance = pinnedAddresses.reduce(
+      (acc, address, index) => {
+        const balance24h = balance24hValues[index];
+        if (balance24h) {
+          acc[address] = balance24h;
         }
         return acc;
       },
@@ -85,7 +94,7 @@ function MultiPinnedAddressList({
       }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [balance24hSnapshots, pinnedAccountList]);
+  }, [balance24hValues, pinnedAccountList, pinnedAddresses]);
 
   useEffect(() => {
     if (!addressListData?.length) {

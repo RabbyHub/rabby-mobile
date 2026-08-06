@@ -55,6 +55,7 @@ import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from './config/nativeToWrapper';
 import { useChainList } from '@/hooks/useChainList';
 import { ensureMainnetChainAvailable } from '@/core/serviceApi/syncChain';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { formatEmodes } from './utils/emode';
 import { getEmodeAdjustedReserves } from './utils/hfUtils';
 
@@ -1294,7 +1295,8 @@ export function useHasUserSummary() {
 }
 export function useLendingHF() {
   const { lendingDataKey } = useCurrentLendingDataKey();
-  const lendingHf = computedInfoState(
+  const lendingHf = useActivityStore(
+    computedInfoState,
     useShallow(s => {
       const state: IndexedComputedInfo = getComputedInfoByKey(lendingDataKey);
       if (!state.iUserSummary) {
@@ -1305,6 +1307,8 @@ export function useLendingHF() {
         netWorthUSD: state.iUserSummary?.netWorthUSD || '0',
       };
     }),
+    Object.is,
+    { storeLabel: 'home-lending-health-factor' },
   );
 
   return {
