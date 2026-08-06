@@ -81,6 +81,7 @@ import {
 import { naviPush } from '@/utils/navigation';
 import { isUserCancelledError } from '../../utils/error';
 import { ellipsisSymbol } from '../../utils/format';
+import { useMode } from '../../hooks/useMode';
 
 type SupplyActionPopupProps = PopupDetailProps & {
   onBeforeSwapNavigate?: () => void;
@@ -113,6 +114,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
+  const { eModes } = useMode();
   const { t } = useTranslation();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
@@ -190,11 +192,13 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       BigNumber(amount).multipliedBy(
         targetPool.formattedPriceInMarketReferenceCurrency,
       ),
+      eModes,
     ).toString();
   }, [
     amount,
     currentReserve.chain,
     currentReserve.underlyingAsset,
+    eModes,
     formattedPoolReservesAndIncentives,
     userSummary,
   ]);
