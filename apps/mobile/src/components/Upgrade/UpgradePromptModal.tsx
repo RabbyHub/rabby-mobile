@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   changelogContainer: {
-    height: 162,
+    height: 222,
     marginTop: 6,
     marginHorizontal: CONTENT_HORIZONTAL_PADDING,
     overflow: 'hidden',
