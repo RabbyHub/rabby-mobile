@@ -34,6 +34,13 @@ Replace only the explicit module-loading or process boundary with a typed,
 deterministic catalog. Assert both the manual-unlock and valid-session paths,
 and prove post-Home and on-demand work cannot run early.
 
+When startup correctness depends on app state, run the production headless
+bootstrap seam instead of recreating its decisions in a test-only Store. Use
+the real app-lock Store, render gate, and Home milestones while substituting
+only lock/keychain and security-chain I/O. The integration runner executes each
+cold-start path in a separate Jest process so process-wide state cannot leak
+between manual-unlock and valid-session scenarios.
+
 Run:
 
 ```bash

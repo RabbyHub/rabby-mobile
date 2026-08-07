@@ -40,6 +40,9 @@ Examples:
 - The real launch task manifest advances through launch, either Home entry path,
   Home readiness, content readiness, and on-demand activation while typed
   module loaders replace native/process boundaries.
+- The production headless app-state bootstrap waits for lock and security-chain
+  I/O, mutates the real lock Store, and publishes the real render gate and Home
+  entry milestone for manual-unlock and valid-session cold starts.
 
 An App-startup integration test in this lane is not a native App launch. It
 must execute the production orchestration primitives and task metadata, but it
@@ -48,6 +51,13 @@ most native modules. Keep the explicit `launchTaskLoaders` contract as the
 boundary, use an isolated phase registry, and retain the real scheduler,
 milestones, Service Registry, and Store publication. Native owner-module
 behavior remains a Hermes device-integration responsibility.
+
+Cold-start tests that touch process-wide Stores or milestones must not simulate
+a new launch with `jest.resetModules()`. Declare deterministic scenarios in one
+test module and let `apps/mobile/scripts/run-integration-tests.cjs` invoke each
+scenario in a fresh Jest process by test-name filtering. Do not select the
+scenario from a transformed source environment variable: Babel/Jest transform
+caches can otherwise preserve the first scenario's value.
 
 When a test needs a boundary fake, keep it stateful enough to preserve the external contract. A mock that returns one hard-coded value cannot prove persistence, cancellation, or event ordering.
 
@@ -104,7 +114,8 @@ It performs:
 
 1. immutable dependency installation;
 2. an AST-based integration boundary check;
-3. serial JS integration tests.
+3. serial JS integration tests;
+4. isolated manual-unlock and valid-session app-state cold starts.
 
 The workflow intentionally does not start an emulator. Device integration and E2E remain separate because they require signed artifacts, fixtures, devices, and richer evidence.
 
