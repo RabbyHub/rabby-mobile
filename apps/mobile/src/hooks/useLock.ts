@@ -27,6 +27,7 @@ import {
   resolveValFromUpdater,
 } from '@/core/utils/store';
 import type { RefLikeObject } from '@/utils/type';
+import { recordAuthReadinessDiagnostic } from '@/core/utils/authReadinessDiagnostics';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -107,6 +108,18 @@ export function useIsPostUnlockLockedSession() {
 export function getPwdStatus() {
   const state = zAppLockStore.getState();
   return state.pwdStatus;
+}
+
+export function getPasswordStatusDiagnosticLabel(status: PasswordStatus) {
+  switch (status) {
+    case PasswordStatus.UseBuiltIn:
+      return 'built-in' as const;
+    case PasswordStatus.Custom:
+      return 'custom' as const;
+    case PasswordStatus.Unknown:
+    default:
+      return 'unknown' as const;
+  }
 }
 
 export function usePasswordStatus() {
@@ -193,20 +206,50 @@ const isLoadingRef: RefLikeObject<boolean> = { current: false };
 export const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
   // if (isLoadingRef.current) return;
   isLoadingRef.current = true;
+  const initialState = getAppLockStateSnapshot();
+  const operationId = recordAuthReadinessDiagnostic('lock-fetch-started', {
+    appUnlocked: initialState.appUnlocked,
+    hasStoredKeyrings: initialState.hasStoredKeyrings,
+    hasVisibleAccounts: initialState.hasVisibleAccounts,
+    isUnlockSessionValid: initialState.isUnlockSessionValid,
+    pwdStatus: getPasswordStatusDiagnosticLabel(initialState.pwdStatus),
+  });
 
   try {
     const response = await apisLock.getRabbyLockInfo();
+    recordAuthReadinessDiagnostic('lock-native-state-resolved', {
+      operationId,
+      pwdStatus: getPasswordStatusDiagnosticLabel(response.pwdStatus),
+    });
     const accountFlags = await getBootstrapAccountFlags();
+    recordAuthReadinessDiagnostic('lock-account-flags-resolved', {
+      operationId,
+      hasStoredKeyrings: accountFlags.hasStoredKeyrings,
+      hasVisibleAccounts: accountFlags.hasVisibleAccounts,
+    });
 
-    setAppLock({
+    const nextState = {
       appUnlocked: isKeyringUnlockedSnapshot(),
       isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       ...accountFlags,
       pwdStatus: response.pwdStatus,
+    };
+    setAppLock(nextState);
+    recordAuthReadinessDiagnostic('lock-store-committed', {
+      operationId,
+      appUnlocked: nextState.appUnlocked,
+      hasStoredKeyrings: nextState.hasStoredKeyrings,
+      hasVisibleAccounts: nextState.hasVisibleAccounts,
+      isUnlockSessionValid: nextState.isUnlockSessionValid,
+      pwdStatus: getPasswordStatusDiagnosticLabel(nextState.pwdStatus),
     });
 
     return response;
   } catch (error) {
+    recordAuthReadinessDiagnostic('lock-fetch-failed', {
+      operationId,
+      errorName: error instanceof Error ? error.name : 'unknown',
+    });
     console.error(error);
   } finally {
     isLoadingRef.current = false;
