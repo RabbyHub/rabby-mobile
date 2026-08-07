@@ -10,6 +10,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import {
   getAppLockStateSnapshot,
   getPasswordStatusDiagnosticLabel,
+  storeApiLock,
   useLoadLockInfo,
   usePasswordStatus,
 } from '@/hooks/useLock';
@@ -38,6 +39,7 @@ import { useRefState } from '@/hooks/common/useRefState';
 import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
+import { reconcileAuthTypeSelection } from './authType';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
 import { Text } from '@/components/Typography';
@@ -293,6 +295,12 @@ export const AuthenticationModal = ({
     AuthState['authType']
   >(coerceAuthType(availableAuthTypes[0], availableAuthTypes));
   const hasRecordedMountRef = React.useRef(false);
+
+  React.useEffect(() => {
+    setCurrentAuthType(current =>
+      reconcileAuthTypeSelection(current, availableAuthTypes),
+    );
+  }, [availableAuthTypes]);
 
   React.useEffect(() => {
     const pwdStatusLabel = getPasswordStatusDiagnosticLabel(pwdStatus);
@@ -619,6 +627,15 @@ AuthenticationModal.show = async (
     authReadinessDiagnosticId,
     nativeIsUseCustomPwd: lockInfo.isUseCustomPwd,
     nativePwdStatus: getPasswordStatusDiagnosticLabel(lockInfo.pwdStatus),
+    variant: 'legacy',
+  });
+  storeApiLock.setAppLock(current => ({
+    ...current,
+    pwdStatus: lockInfo.pwdStatus,
+  }));
+  recordAuthReadinessDiagnostic('auth-modal-lock-store-synchronized', {
+    authReadinessDiagnosticId,
+    pwdStatus: getPasswordStatusDiagnosticLabel(lockInfo.pwdStatus),
     variant: 'legacy',
   });
   if (!lockInfo.isUseCustomPwd) {

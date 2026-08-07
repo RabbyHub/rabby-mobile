@@ -31,6 +31,7 @@ export type AuthReadinessDiagnosticEventName =
   | 'lock-fetch-failed'
   | 'auth-modal-show-requested'
   | 'auth-modal-native-state-resolved'
+  | 'auth-modal-lock-store-synchronized'
   | 'auth-modal-mounted'
   | 'auth-modal-state-changed'
   | 'auth-modal-confirmed';
