@@ -1,0 +1,49 @@
+---
+name: rabby-mobile-testing
+description: Use when choosing, writing, reviewing, or reorganizing Rabby Mobile tests; deciding between unit, JS integration, Hermes device integration, and E2E coverage; defining mock boundaries; or adding test-related CI.
+---
+
+# Rabby Mobile Testing
+
+Choose the narrowest test layer that can detect the intended regression without replacing the behavior under test with mocks. Read [references/test-classification.md](references/test-classification.md) before adding or reclassifying coverage.
+
+## Quick Decision
+
+| Question                                                              | Test layer                |
+| --------------------------------------------------------------------- | ------------------------- |
+| Is one pure module or reducer enough?                                 | Unit                      |
+| Must real internal Stores, Providers, Hooks, or Services cooperate?   | JS integration            |
+| Must Hermes, MMKV, SQLite, a native bridge, or app lifecycle be real? | Hermes device integration |
+| Must the complete user journey and package behavior be proven?        | E2E                       |
+
+Do not promote a test merely because it renders React. A component test that mocks its internal Store and Service is still a unit/component test.
+
+## JS Integration Contract
+
+- Name files `*.integration.test.ts` or `*.integration.test.tsx` under `apps/mobile/src`.
+- Compose real repository Stores, Providers, Hooks, Services, registries, and coordinators.
+- Mock only true process boundaries such as network, time, keychain, filesystem, device APIs, and navigation when navigation itself is not under test.
+- Assert visible output, emitted events, persisted state, or public Store/Service results. Avoid assertions on private implementation calls.
+- Clean up subscriptions and unregister shared Service loaders in `finally` or test cleanup.
+- Keep the lane serial because the mobile app has process-wide registries and singleton state.
+
+Run:
+
+```bash
+yarn workspace rabby-mobile test:integration:boundaries
+yarn workspace rabby-mobile test:integration
+```
+
+The boundary check rejects repository-internal Jest mocks and alternate module lifecycles such as `jest.resetModules()`.
+
+## Device And E2E Coverage
+
+When Node Jest cannot represent the risk, use the real non-production app boundary. Read [../mobile-testable-component-boundaries/SKILL.md](../mobile-testable-component-boundaries/SKILL.md) before adding typed actions, lifecycle observations, or deep-link orchestration.
+
+Do not turn Hermes device integration into coordinate-heavy E2E when a typed action can invoke the same production handler. Keep full E2E for complete journeys, package upgrade behavior, signing, network integration, and cross-Screen outcomes.
+
+## Handoff
+
+- State which layer was added and why lower layers were insufficient.
+- Report both integration commands and any device/E2E scenarios run.
+- If a true native boundary remains mocked, name the residual risk explicitly.

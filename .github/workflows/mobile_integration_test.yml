@@ -1,0 +1,68 @@
+name: Mobile Integration Tests
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/mobile_integration_test.yml'
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - 'skills/rabby-mobile-testing/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.yarnrc.yml'
+  pull_request:
+    branches: [develop]
+    paths:
+      - '.github/workflows/mobile_integration_test.yml'
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - 'skills/rabby-mobile-testing/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.yarnrc.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+concurrency:
+  group: mobile-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile_integration:
+    name: apps/mobile integration
+    permissions:
+      actions: read
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Validate integration test boundaries
+        run: yarn workspace rabby-mobile test:integration:boundaries
+
+      - name: Run mobile integration tests
+        run: yarn workspace rabby-mobile test:integration
