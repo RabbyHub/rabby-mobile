@@ -6,6 +6,27 @@ Classify a test by the highest boundary it proves, not by the tool it uses. RNTL
 
 Choose the cheapest layer that still includes the dependency whose drift could cause the bug.
 
+## Evidence Authority And Escalation
+
+For the same product claim, evidence is authoritative in this order:
+
+1. complete App behavior on a physical device;
+2. real Hermes-engine behavior;
+3. Node/JS integration behavior;
+4. isolated unit/component behavior.
+
+Use the lowest layer that can deterministically guard the intended contract,
+but settle disagreements in favor of the higher-fidelity layer. If a real
+device fails while Hermes or Node passes, the product remains failed and the
+lower test has demonstrated a coverage gap. If Hermes fails while Node passes,
+the Node result does not prove engine compatibility. Fix the implementation or
+strengthen the lower test; never dismiss the higher-layer result as noise
+without independent evidence.
+
+Higher fidelity and faster diagnosis are different properties. Node tests are
+often better at naming the exact broken contract, while real-device evidence is
+the final authority on whether the App works. Record both when they disagree.
+
 ## Unit And Component Tests
 
 Use unit/component tests for a pure function, reducer, selector, formatting rule, isolated Hook, or one component contract.
@@ -42,7 +63,9 @@ Examples:
   module loaders replace native/process boundaries.
 - The production headless app-state bootstrap waits for lock and security-chain
   I/O, mutates the real lock Store, and publishes the real render gate and Home
-  entry milestone for manual-unlock and valid-session cold starts.
+  entry milestone for valid-session, manual-unlock, no-account, and degraded
+  cold starts. Runtime account addition uses the same production state
+  transition as the account event.
 
 An App-startup integration test in this lane is not a native App launch. It
 must execute the production orchestration primitives and task metadata, but it
@@ -115,7 +138,9 @@ It performs:
 1. immutable dependency installation;
 2. an AST-based integration boundary check;
 3. serial JS integration tests;
-4. isolated manual-unlock and valid-session app-state cold starts.
+4. isolated app-state cold starts for valid-session, manual-unlock,
+   no-account, auto-unlock failure, and security-chain failure, including the
+   runtime account-add convergence path.
 
 The workflow intentionally does not start an emulator. Device integration and E2E remain separate because they require signed artifacts, fixtures, devices, and richer evidence.
 

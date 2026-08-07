@@ -38,7 +38,10 @@ import {
   setAppCouldRender,
   useAppCouldRenderState,
 } from '@/startup/appBootstrapState';
-import { runAppStateBootstrap } from '@/startup/appStateBootstrap';
+import {
+  markBootstrapAccountsAdded,
+  runAppStateBootstrap,
+} from '@/startup/appStateBootstrap';
 
 const syncCustomTestChainList = () => {
   customTestnetServiceApi.syncChainList().catch(e => {
@@ -169,22 +172,7 @@ export function useInitializeAppOnTop() {
     const accountAddedSubscription = accountEvents.subscribe(
       'ACCOUNT_ADDED',
       ({ accounts }) => {
-        if (accounts.length === 0) {
-          return;
-        }
-        storeApiLock.setAppLock(prev =>
-          prev.hasVisibleAccounts && prev.hasStoredKeyrings
-            ? prev
-            : {
-                ...prev,
-                hasVisibleAccounts: true,
-                hasStoredKeyrings: true,
-              },
-        );
-        markHomeEntryReadyIfEligible(
-          getAppLockStateSnapshot(),
-          'account_added_in_current_process',
-        );
+        markBootstrapAccountsAdded(accounts.length);
       },
     );
 

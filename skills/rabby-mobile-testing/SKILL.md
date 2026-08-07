@@ -7,6 +7,28 @@ description: Use when choosing, writing, reviewing, or reorganizing Rabby Mobile
 
 Choose the narrowest test layer that can detect the intended regression without replacing the behavior under test with mocks. Read [references/test-classification.md](references/test-classification.md) before adding or reclassifying coverage.
 
+## Evidence Priority
+
+When two layers make claims about the same behavior, use this authority order:
+
+1. a complete real-device App scenario;
+2. a real Hermes runtime scenario;
+3. a Node/JS integration test;
+4. a unit or component test.
+
+This is an evidence hierarchy, not a reason to run every change only at the
+most expensive layer. Lower layers remain the fastest way to localize a fault
+and protect a deterministic contract. However, a passing lower-layer test can
+never overrule a failure above it. Treat that disagreement as a missing or
+incorrect lower-layer assertion, preserve the higher-fidelity failure, and add
+coverage at the narrowest layer that can reproduce it.
+
+Classify by the boundary actually exercised. A typed scenario running in a
+real App on a physical device may count as real-device evidence; invoking the
+Hermes engine without the native lifecycle, storage, navigation host, and
+visible product result counts only as Hermes evidence. Never describe a Node
+bootstrap integration test as a verified App launch.
+
 ## Quick Decision
 
 | Question                                                              | Test layer                |
@@ -39,7 +61,9 @@ bootstrap seam instead of recreating its decisions in a test-only Store. Use
 the real app-lock Store, render gate, and Home milestones while substituting
 only lock/keychain and security-chain I/O. The integration runner executes each
 cold-start path in a separate Jest process so process-wide state cannot leak
-between manual-unlock and valid-session scenarios.
+between valid-session, manual-unlock, failure, and no-account scenarios. A
+runtime account-add scenario should continue from the real no-account bootstrap
+state and exercise the same production transition used by the account event.
 
 Run:
 

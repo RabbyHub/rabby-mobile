@@ -9,7 +9,13 @@ const coldStartTest = path.join(
   mobileRoot,
   'src/startup/appStateBootstrap.coldStart.integration.test.ts',
 );
-const coldStartScenarios = ['manual-unlock', 'valid-session'];
+const coldStartScenarios = [
+  'manual-unlock',
+  'valid-session',
+  'no-account',
+  'auto-unlock-failure',
+  'security-chain-failure',
+];
 const forwardedJestArgs = process.argv.slice(2);
 
 function runJest(args, extraEnv = {}) {

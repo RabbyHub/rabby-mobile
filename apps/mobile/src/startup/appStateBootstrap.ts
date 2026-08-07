@@ -1,5 +1,6 @@
 import {
   getAppLockStateSnapshot,
+  storeApiLock,
   type AppLockState,
 } from '@/hooks/appLockState';
 import { markHomeEntryReadyIfEligible } from '@/core/utils/homeStartupMilestones';
@@ -22,6 +23,27 @@ type AppStateBootstrapSettledResult = {
 export type AppStateBootstrapResult = AppStateBootstrapSettledResult & {
   homeEntryReady: boolean;
 };
+
+export function markBootstrapAccountsAdded(accountCount: number) {
+  if (accountCount <= 0) {
+    return false;
+  }
+
+  storeApiLock.setAppLock(previous =>
+    previous.hasVisibleAccounts && previous.hasStoredKeyrings
+      ? previous
+      : {
+          ...previous,
+          hasVisibleAccounts: true,
+          hasStoredKeyrings: true,
+        },
+  );
+
+  return markHomeEntryReadyIfEligible(
+    getAppLockStateSnapshot(),
+    'account_added_in_current_process',
+  );
+}
 
 function callAsPromise<T>(call: () => T | Promise<T>) {
   try {
