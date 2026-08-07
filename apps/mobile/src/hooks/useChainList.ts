@@ -40,3 +40,5 @@ export const useChainList = () => {
     ...chainList,
   };
 };
+
+export const useMainnetChainList = () => chainListStore(s => s.mainnetList);

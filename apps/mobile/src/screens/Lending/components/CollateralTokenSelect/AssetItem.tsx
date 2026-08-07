@@ -17,7 +17,7 @@ const AssetItem = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const isZeroBorrowed = token.balance === '0';
-  const disabled = !!token.supplyCapReached || token.isFrozen;
+  const disabled = token.isFrozen;
   return (
     <TouchableOpacity
       style={[styles.item, disabled && styles.itemDisabled]}

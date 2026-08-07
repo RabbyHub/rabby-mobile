@@ -1,5 +1,6 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, type ReactNode } from 'react';
 import { InteractionManager, View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -13,13 +14,14 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
 import { NFTList } from './NFTList';
 import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
+import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 
 export const TAB_HEADER_FULL_HEIGHT =
   HOME_TOP_HEADER_SIZES.headerHeight +
@@ -92,6 +94,25 @@ const onIndexChange = (idx: number) => {
   scheduleReadableAccountStoreWarmupForTab(idx);
 };
 
+const HomeTabActivityBoundary = ({
+  children,
+  name,
+}: {
+  children: ReactNode;
+  name: HomeTabName;
+}) => {
+  const focusedTab = useFocusedTab();
+  const isScreenFocused = useIsFocused();
+
+  return (
+    <StoreActivityBoundary
+      active={isScreenFocused && focusedTab === name}
+      label={`home-multi-assets-${name}`}>
+      {children}
+    </StoreActivityBoundary>
+  );
+};
+
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -149,17 +170,25 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
           key={TabName.overview}
           name={TabName.overview}
           label={() => null}>
-          <HomeOverview />
+          <HomeTabActivityBoundary name={TabName.overview}>
+            <HomeOverview />
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
 
         <Tabs.Tab key={TabName.token} name={TabName.token} label={() => null}>
-          <TokenList />
+          <HomeTabActivityBoundary name={TabName.token}>
+            <TokenList />
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
         <Tabs.Tab key={TabName.defi} name={TabName.defi} label={() => null}>
-          <ProtocolList />
+          <HomeTabActivityBoundary name={TabName.defi}>
+            <ProtocolList />
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
         <Tabs.Tab key={TabName.nft} name={TabName.nft} label={() => null}>
-          <NFTList />
+          <HomeTabActivityBoundary name={TabName.nft}>
+            <NFTList />
+          </HomeTabActivityBoundary>
         </Tabs.Tab>
       </MultiAssetsContainer>
     </View>

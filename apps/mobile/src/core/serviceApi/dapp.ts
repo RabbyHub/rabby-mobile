@@ -90,6 +90,6 @@ export async function bindDappStoreListener(
   ) => void,
 ) {
   const service = await waitForCoreService('dappService');
-  listener('dapps', service.store.dapps);
-  return service.setBeforeSetKV(listener);
+  listener('dapps', service.getStoreFieldSnapshot('dapps'));
+  return service.subscribeStoreFields(listener);
 }

@@ -32,10 +32,18 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
-import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import {
+  EMPTY_HOME_CURVE_LIST,
+  getHomeCurveProjectionList,
+  isHomeProjectionWaitingForValue,
+  useHome24hProjection,
+  useHomeAccountProjection,
+  useHomeBalanceProjection,
+  useHomeCurveProjection,
+} from '@/store/homePortfolio';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -44,6 +52,12 @@ const CHART_HORIZONTAL_INSET = 66;
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
 const NETWORTH_FIT_LEN = 9;
+
+const EMPTY_CHANGE_DATA = {
+  rawChange: 0,
+  changePercent: '',
+  isLoss: false,
+};
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -142,35 +156,42 @@ export const MultiChart = memo(function MultiChart({
   onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-  const {
-    curveList,
-    changeData,
-    totalBalance,
-    matteredAccountLength,
-    isPendingMatteredAccountLength,
-    showBalanceLoadingWithoutLocal,
-    showChangeLoadingWithoutLocal,
-    isCurveAnyAddrLoading,
-  } = useHomePortfolioStore(
+  const { curveAvailability, curveList } = useHomeCurveProjection(
     useShallow(state => ({
-      curveList: state.curveList,
-      changeData: state.changeData,
-      totalBalance: state.totalBalance,
-      matteredAccountLength: state.matteredAccountLength,
-      isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
-      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
-      isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
+      curveAvailability: state.availability,
+      curveList: getHomeCurveProjectionList(state),
+    })),
+  );
+  const { matteredAccountLength, isPendingMatteredAccountLength } =
+    useHomeAccountProjection(
+      useShallow(state => ({
+        matteredAccountLength: state.matteredAccountLength,
+        isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
+      })),
+    );
+  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
+    useShallow(state => ({
+      balanceAvailability: state.availability,
+      totalBalance: state.value?.totalBalance || 0,
+    })),
+  );
+  const { changeAvailability, changeData } = useHome24hProjection(
+    useShallow(state => ({
+      changeAvailability: state.availability,
+      changeData: state.value || EMPTY_CHANGE_DATA,
     })),
   );
   const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const chartsData = startupReady ? curveList : [];
-  const showBalanceLoading = !startupReady || showBalanceLoadingWithoutLocal;
-  const showChangeLoading = !startupReady || showChangeLoadingWithoutLocal;
-  const isCurveLoading = !startupReady || isCurveAnyAddrLoading;
+  const chartsData = startupReady ? curveList : EMPTY_HOME_CURVE_LIST;
+  const showBalanceLoading =
+    !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
+  const showChangeLoading =
+    !startupReady || isHomeProjectionWaitingForValue(changeAvailability);
+  const isCurveLoading =
+    !startupReady || isHomeProjectionWaitingForValue(curveAvailability);
 
   return (
     <View

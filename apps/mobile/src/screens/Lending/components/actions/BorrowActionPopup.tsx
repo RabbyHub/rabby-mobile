@@ -71,6 +71,7 @@ import {
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -112,6 +113,15 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       !userSummary?.totalLiquidityUSD || userSummary.totalLiquidityUSD === '0'
     );
   }, [userSummary?.totalLiquidityUSD]);
+  const canBorrow = useMemo(
+    () =>
+      assetCanBeBorrowedByUser(
+        reserve.reserve,
+        userSummary,
+        reserve.reserve.eModes,
+      ),
+    [reserve.reserve, userSummary],
+  );
 
   const afterHF = useMemo(() => {
     if (hasNoSupply || !amount || isZeroAmount(amount)) {
@@ -153,7 +163,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       !amount ||
       isZeroAmount(amount) ||
       !currentAccount?.address ||
-      hasNoSupply
+      hasNoSupply ||
+      !canBorrow
     ) {
       setTxs([]);
       return;
@@ -200,6 +211,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     amount,
+    canBorrow,
     chainInfo,
     currentAccount?.address,
     formattedPoolReservesAndIncentives,
@@ -369,6 +381,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     if (
       currentAccount?.address &&
       canShowDirectSubmit &&
+      canBorrow &&
       amount &&
       !isZeroAmount(amount)
     ) {
@@ -379,6 +392,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     canShowDirectSubmit,
+    canBorrow,
     currentAccount?.address,
     amount,
     txs,
@@ -393,6 +407,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [reserve?.reserve?.totalDebt, reserve?.reserve?.borrowCap]);
 
   const errorMessage = useMemo(() => {
+    if (!canBorrow) {
+      return t('page.Lending.borrowDetail.borrowingUnavailable');
+    }
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
       return undefined;
     }
@@ -416,7 +433,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       return t('page.Lending.borrowDetail.almostReachedError');
     }
     return undefined;
-  }, [reserve.reserve.borrowCap, reserve.reserve.totalDebt, t]);
+  }, [canBorrow, reserve.reserve.borrowCap, reserve.reserve.totalDebt, t]);
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -470,6 +487,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
           {canShowDirectSubmit &&
             !hasNoSupply &&
+            canBorrow &&
             !!amount &&
             !isZeroAmount(amount) && (
               <View style={styles.gasPreContainer}>
@@ -539,6 +557,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               onFinished={() => handleBorrow()}
               disabled={
                 hasNoSupply ||
+                !canBorrow ||
                 !amount ||
                 isZeroAmount(amount) ||
                 !txs.length ||
@@ -568,6 +587,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               loading={isLoading}
               disabled={
                 hasNoSupply ||
+                !canBorrow ||
                 !amount ||
                 isZeroAmount(amount) ||
                 !txs.length ||

@@ -6,6 +6,7 @@ import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import { initApis } from '@/core/apis/init';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { apisLock, apisPerps } from '@/core/apis';
+import { accountEvents } from '@/core/apis/account';
 import { loadSecurityChain } from './global';
 import {
   getBootstrapAccountFlags,
@@ -35,7 +36,7 @@ import {
   nextAndroidTraceCookie,
   traceAndroidInstant,
 } from '@/core/utils/androidTrace';
-import { markHomeEntryReady } from '@/core/utils/homeStartupMilestones';
+import { markHomeEntryReadyIfEligible } from '@/core/utils/homeStartupMilestones';
 
 const syncCustomTestChainList = () => {
   customTestnetServiceApi.syncChainList().catch(e => {
@@ -105,9 +106,10 @@ export function useInitializeAppOnTop() {
         appUnlocked: true,
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       }));
-      if (getAppLockStateSnapshot().hasVisibleAccounts) {
-        markHomeEntryReady('wallet_auth_unlocked');
-      }
+      markHomeEntryReadyIfEligible(
+        getAppLockStateSnapshot(),
+        'wallet_auth_unlocked',
+      );
       traceAndroidInstant('global_task.wallet_auth_unlocked.end', {
         source: 'useBootstrap',
       });
@@ -174,11 +176,33 @@ export function useInitializeAppOnTop() {
       'lock',
       onLock,
     );
+    const accountAddedSubscription = accountEvents.subscribe(
+      'ACCOUNT_ADDED',
+      ({ accounts }) => {
+        if (accounts.length === 0) {
+          return;
+        }
+        storeApiLock.setAppLock(prev =>
+          prev.hasVisibleAccounts && prev.hasStoredKeyrings
+            ? prev
+            : {
+                ...prev,
+                hasVisibleAccounts: true,
+                hasStoredKeyrings: true,
+              },
+        );
+        markHomeEntryReadyIfEligible(
+          getAppLockStateSnapshot(),
+          'account_added_in_current_process',
+        );
+      },
+    );
 
     return () => {
       sub.remove();
       subUIReady.remove();
       removeLockListener();
+      accountAddedSubscription.remove();
     };
   }, []);
 
@@ -326,17 +350,12 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           unlockStatus: unlockResult?.status ?? 'deferred',
           shouldWaitAutoUnlock,
         });
-        const appLockState = getAppLockStateSnapshot();
-        if (
-          appLockState.hasVisibleAccounts &&
-          (appLockState.appUnlocked || appLockState.isUnlockSessionValid)
-        ) {
-          markHomeEntryReady(
-            shouldWaitAutoUnlock
-              ? 'bootstrap_auto_unlock_ready'
-              : 'bootstrap_session_ready',
-          );
-        }
+        markHomeEntryReadyIfEligible(
+          getAppLockStateSnapshot(),
+          shouldWaitAutoUnlock
+            ? 'bootstrap_auto_unlock_ready'
+            : 'bootstrap_session_ready',
+        );
         setBootstrap({ couldRender: true });
 
         if (shouldWaitAutoUnlock) {

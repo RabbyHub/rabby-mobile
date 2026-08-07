@@ -17,8 +17,11 @@ import AutoLockView from '@/components/AutoLockView';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { balance24hStore } from '@/store/balance24h';
-import { computeBalanceChange } from '@/core/apis/balance';
 import addressBalanceStore from '@/store/balance';
+import {
+  buildPortfolioAddressChange,
+  resolvePortfolioAddressBalance,
+} from '@/store/homePortfolio/consistency';
 import { Text } from '@/components/Typography';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
@@ -85,24 +88,25 @@ const AddressList = ({
 
     return myTop10Accounts
       .map(item => {
-        const account = balanceMap[item.address.toLowerCase()];
-        const canShowChange = !!account;
-
-        const balance = account?.totalBalance || item.balance || 0;
-        const evmBalance = account?.evmBalance || item.evmBalance || 0;
-
-        const changeData = multi24hBalance[item.address.toLowerCase()];
-        const startValue = changeData?.total_usd_value || 0;
-        const { changePercent, assetsChange } = computeBalanceChange(
-          evmBalance,
-          startValue,
-        );
+        const address = item.address.toLowerCase();
+        const account = balanceMap[address];
+        const resolvedBalance = resolvePortfolioAddressBalance({
+          resource: account,
+          fallback: {
+            totalBalance: item.balance,
+            evmBalance: item.evmBalance,
+          },
+        });
+        const change = buildPortfolioAddressChange({
+          currentEvmBalance: account?.evmBalance,
+          previousEvmBalance: multi24hBalance[address]?.total_usd_value,
+        });
         return {
           ...item,
-          balance,
-          evmBalance,
-          changPercent: changeData && canShowChange ? changePercent : undefined,
-          isLoss: changeData && canShowChange ? assetsChange < 0 : undefined,
+          balance: resolvedBalance.totalBalance,
+          evmBalance: resolvedBalance.evmBalance,
+          changPercent: change?.changePercent,
+          isLoss: change?.isLoss,
         };
       })
       .sort((a, b) => b.balance - a.balance);
@@ -131,6 +135,7 @@ const AddressList = ({
             onManage={variant === 'manage' ? undefined : gotoAddressDetail}
             manageAccessibilityLabel={t('component.portfolios.manage')}
             disableNavigate={variant === 'manage'}
+            isShowBackupBadge
           />
         </View>
       );
@@ -291,6 +296,7 @@ export const AddressListModal = ({
         onDone={onDone}
         onBack={() => setMoreAddressList(false)}
         variant={variant}
+        isShowBackupBadge
       />
     );
   }

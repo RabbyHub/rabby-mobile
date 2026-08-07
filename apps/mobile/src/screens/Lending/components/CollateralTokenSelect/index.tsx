@@ -18,8 +18,8 @@ import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { Text } from '@/components/Typography';
-import { getSupplyCapData } from '../../utils/supply';
 import { toast } from '@/components2024/Toast';
+import { hasNonZeroEffectiveLtv } from '../../utils/hfUtils';
 
 export type EModeCategoryDisplay = EmodeCategory & {
   available: boolean; // indicates if the user can enter this category
@@ -52,13 +52,21 @@ export default function CollateralTokenSelectModal({
             const displayPoolReserve = displayPoolReserves.find(
               x => x.underlyingAsset === item.underlyingAddress,
             );
+            const emodeEntry = displayPoolReserve?.reserve.eModes.find(
+              e => e.id === iUserSummary.userEmodeCategoryId,
+            );
             return {
               ...item,
-              supplyCapReached: displayPoolReserve
-                ? getSupplyCapData(displayPoolReserve).supplyCapReached
-                : false,
-              baseLTVasCollateral:
-                displayPoolReserve?.reserve.baseLTVasCollateral,
+              hasNonZeroEffectiveLtv:
+                !displayPoolReserve ||
+                hasNonZeroEffectiveLtv({
+                  baseLTVasCollateral:
+                    displayPoolReserve.reserve.baseLTVasCollateral,
+                  isInEmode: iUserSummary.userEmodeCategoryId !== 0,
+                  emodeEntry,
+                  isEModeIsolated:
+                    !!eModes[iUserSummary.userEmodeCategoryId]?.isolated,
+                }),
               isFrozen: !!(displayPoolReserve?.reserve as any)?.isFrozen,
               totalBorrowsUSD: displayPoolReserve?.totalBorrowsUSD,
               walletBalanceUSD: displayPoolReserve?.walletBalanceUSD,
@@ -82,6 +90,7 @@ export default function CollateralTokenSelectModal({
     marketKey,
     excludeTokenAddress,
     displayPoolReserves,
+    eModes,
   ]);
 
   const hasLtvZeroCollateral = useMemo(() => {
@@ -92,13 +101,13 @@ export default function CollateralTokenSelectModal({
           item.balance !== '0' &&
           item.usageAsCollateralEnabled,
       )
-      .some(item => item.baseLTVasCollateral === '0');
+      .some(item => !item.hasNonZeroEffectiveLtv);
   }, [tokenToDisplay]);
 
   const formatData = useMemo(() => {
     // 如果有ltv 为 0的抵押物，必须优先还款
     return hasLtvZeroCollateral
-      ? tokenToDisplay.filter(item => item.baseLTVasCollateral === '0')
+      ? tokenToDisplay.filter(item => !item.hasNonZeroEffectiveLtv)
       : tokenToDisplay;
   }, [hasLtvZeroCollateral, tokenToDisplay]);
 
@@ -180,14 +189,6 @@ export default function CollateralTokenSelectModal({
                 <AssetItem
                   token={item}
                   onPress={() => {
-                    if (item.supplyCapReached) {
-                      toast.info(
-                        t(
-                          'page.Lending.repayWithCollateral.insufficientLiquidity',
-                        ),
-                      );
-                      return;
-                    }
                     if (item.isFrozen) {
                       toast.info(
                         t('page.Lending.repayWithCollateral.frozenCollateral'),

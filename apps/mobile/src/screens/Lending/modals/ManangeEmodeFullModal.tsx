@@ -39,13 +39,14 @@ import {
 } from '../hooks';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { CheckBoxRect } from '@/components2024/CheckBox';
-import { formatUserSummary } from '@aave/math-utils';
+import { formatUserSummary, valueToBigNumber } from '@aave/math-utils';
 import dayjs from 'dayjs';
 import {
   HF_BLOCK_THRESHOLD,
   HF_RISK_CHECKBOX_THRESHOLD,
 } from '../utils/constant';
 import { isEModeCategoryAvailable } from '../utils/emode';
+import { getEmodeAdjustedReserves } from '../utils/hfUtils';
 import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -90,11 +91,25 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   }, [emodeEnabled]);
 
   const isTargetCategoryAvailable = useMemo(() => {
+    if (wantDisableEmode) {
+      return true;
+    }
     const targetCategory = eModes[selectedCategoryId];
-    return iUserSummary
-      ? isEModeCategoryAvailable(iUserSummary, targetCategory)
-      : false;
-  }, [eModes, iUserSummary, selectedCategoryId]);
+    if (!iUserSummary || !targetCategory) {
+      return false;
+    }
+    return isEModeCategoryAvailable(
+      iUserSummary,
+      targetCategory,
+      formattedPoolReservesAndIncentives || [],
+    );
+  }, [
+    eModes,
+    formattedPoolReservesAndIncentives,
+    iUserSummary,
+    selectedCategoryId,
+    wantDisableEmode,
+  ]);
 
   const hasChangeCategory = useMemo(() => {
     return selectedCategoryId !== emodeCategoryId || wantDisableEmode;
@@ -115,27 +130,56 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
   const { ctx } = useSignatureStoreOf(instance);
 
+  const targetEmodeId = wantDisableEmode ? 0 : selectedCategoryId || 0;
   const newSummary = useMemo(() => {
     return formatUserSummary({
       currentTimestamp: dayjs().unix(),
       userReserves: userReserves?.userReserves || [],
-      formattedReserves: formattedPoolReservesAndIncentives || [],
-      userEmodeCategoryId: wantDisableEmode ? 0 : selectedCategoryId || 0,
+      formattedReserves: getEmodeAdjustedReserves(
+        formattedPoolReservesAndIncentives || [],
+        targetEmodeId,
+        eModes,
+      ),
+      userEmodeCategoryId: targetEmodeId,
       marketReferenceCurrencyDecimals:
         reserves?.baseCurrencyData?.marketReferenceCurrencyDecimals || 0,
       marketReferencePriceInUsd:
         reserves?.baseCurrencyData?.marketReferenceCurrencyPriceInUsd || 0,
     });
   }, [
-    wantDisableEmode,
+    eModes,
     formattedPoolReservesAndIncentives,
     reserves?.baseCurrencyData?.marketReferenceCurrencyDecimals,
     reserves?.baseCurrencyData?.marketReferenceCurrencyPriceInUsd,
-    selectedCategoryId,
+    targetEmodeId,
     userReserves?.userReserves,
   ]);
 
+  const zeroLtvCollateralSymbols = useMemo(() => {
+    if (!wantDisableEmode || !iUserSummary) {
+      return [];
+    }
+
+    return iUserSummary.userReservesData
+      .filter(
+        userReserve =>
+          valueToBigNumber(userReserve.scaledATokenBalance).gt(0) &&
+          userReserve.usageAsCollateralEnabledOnUser &&
+          valueToBigNumber(userReserve.reserve.baseLTVasCollateral).eq(0),
+      )
+      .map(userReserve => userReserve.reserve.symbol);
+  }, [iUserSummary, wantDisableEmode]);
+
   const { isRisky, isBlock, desc } = useMemo(() => {
+    if (zeroLtvCollateralSymbols.length > 0) {
+      return {
+        isRisky: true,
+        isBlock: true,
+        desc: t('page.Lending.risk.zeroLtvEmodeExitWarning', {
+          assets: zeroLtvCollateralSymbols.join(', '),
+        }),
+      };
+    }
     if (Number(newSummary?.healthFactor || '0') <= 0 || !hasChangeCategory) {
       return {
         isRisky: false,
@@ -156,7 +200,12 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
         ? t('page.Lending.risk.emodeBlockWarning')
         : '',
     };
-  }, [hasChangeCategory, newSummary?.healthFactor, t]);
+  }, [
+    hasChangeCategory,
+    newSummary?.healthFactor,
+    t,
+    zeroLtvCollateralSymbols,
+  ]);
 
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),

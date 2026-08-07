@@ -12,7 +12,10 @@ import React, {
 import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
+import {
+  DeferredTokenSelectorSheetModal,
+  TokenSelectorSheetModal,
+} from '@/components/Token';
 import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
@@ -41,6 +44,7 @@ import type { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
 import type { ITokenItem } from '@/store/tokens';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import { resolveFavoriteTokenOwnerAddress } from '@/components/Token/hooks/favoriteResource';
 import { Text } from '@/components/Typography';
 import { isSameAccount } from '@/utils/isSameAccount';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
@@ -68,6 +72,7 @@ interface TokenSelectProps {
     | React.ReactNode;
   supportChains?: CHAINS_ENUM[];
   searchPlaceholder?: string;
+  deferModalMount?: boolean;
 }
 
 type QueryConditions = {
@@ -96,8 +101,12 @@ const TokenSelect = ({
   style,
   testID,
   accessibilityLabel,
+  deferModalMount = false,
   ref,
 }: TokenSelectProps & RNViewProps & { ref?: Ref<TokenSelectInst> }) => {
+  const TokenSelectorModal = deferModalMount
+    ? DeferredTokenSelectorSheetModal
+    : TokenSelectorSheetModal;
   const [_queryConds, setQueryConds] = useState<QueryConditions>({
     keyword: '',
     account: accountInScreen,
@@ -248,15 +257,16 @@ const TokenSelect = ({
     () => userTokenSettings.pinedQueue,
     [userTokenSettings.pinedQueue],
   );
-  const favoriteTokenKeySet = useMemo(() => {
-    return new Set(pinedQueue?.map(x => `${x.chainId}:${x.tokenId}`));
-  }, [pinedQueue]);
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
       focus: effectiveFavoriteFilterValue === 'favorite',
-      address: currentAccount?.address,
+      address: resolveFavoriteTokenOwnerAddress(
+        currentAccount?.address,
+        accountInScreen?.address,
+      ),
       chainId: queryConds.chainServerId,
+      pinnedTokens: pinedQueue,
     });
 
   const isListLoading = useMemo(() => {
@@ -349,12 +359,14 @@ const TokenSelect = ({
     setTokenSelectorVisible(true);
   }, [resetQueryConds, setTokenSelectorVisible]);
 
+  const regressionSelectorActionPrefix =
+    type === 'send' ? 'send-token-selector' : `token-selector.${type}`;
   useRegressionScenarioComponentAction(
-    'send-token-selector.open',
+    `${regressionSelectorActionPrefix}.open`,
     handleSelectToken,
   );
   useRegressionScenarioComponentAction(
-    'send-token-selector.close',
+    `${regressionSelectorActionPrefix}.close`,
     handleTokenSelectorClose,
   );
 
@@ -544,7 +556,7 @@ const TokenSelect = ({
         </View>
       </TouchableOpacity>
 
-      <TokenSelectorSheetModal
+      <TokenSelectorModal
         searchPlaceholder={searchPlaceholder}
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
@@ -580,7 +592,6 @@ const TokenSelect = ({
         showLpTokenSwitch={!queryConds.keyword && !isCustomNetworkTab}
         isLpTokenEnabled={effectiveIsLpTokenEnabled}
         onLpTokenChange={setIsLpTokenEnabled}
-        favoriteTokenKeySet={favoriteTokenKeySet}
         showCustomNetworkChainPreview={isCustomNetworkTab}
         customNetworkTop3Chains={customNetworkTop3Chains}
       />

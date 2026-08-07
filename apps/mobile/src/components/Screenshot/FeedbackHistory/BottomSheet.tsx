@@ -826,6 +826,7 @@ function FeedbackMessageItem({
         ]}>
         {!!message.content && (
           <Text
+            selectable
             style={[
               styles.messageText,
               isSupport ? styles.supportMessageText : styles.userMessageText,

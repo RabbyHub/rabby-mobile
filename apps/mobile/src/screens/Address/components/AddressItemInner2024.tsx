@@ -3,6 +3,7 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   KeyringAccountWithAlias,
+  useBackupReminder,
   useIsNewlyAddedAccount,
   usePinAddresses,
 } from '@/hooks/account';
@@ -15,6 +16,7 @@ import { Card } from '@/components2024/Card';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { Text } from '@/components/Typography';
+import { useTranslation } from 'react-i18next';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -40,7 +42,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginRight: 20,
   },
   rootItemWithInlineArrow: {
-    marginRight: 47,
+    marginRight: 36,
   },
   item: {
     flexDirection: 'row',
@@ -89,6 +91,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: 500,
+    lineHeight: 16,
+  },
+  backupBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    flexShrink: 0,
+    borderRadius: 4,
+    backgroundColor: colors2024['orange-light-1'],
+  },
+  backupBadgeText: {
+    color: colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 11,
     fontStyle: 'normal',
     fontWeight: 500,
     lineHeight: 16,
@@ -142,6 +159,7 @@ interface AddressItemProps {
   changePercent?: string;
   isLoss?: boolean;
   showMarkIfNewlyAdded?: boolean;
+  isShowBackupBadge?: boolean;
 }
 export const AddressItemInner2024 = ({
   account,
@@ -153,8 +171,10 @@ export const AddressItemInner2024 = ({
   changePercent,
   isLoss,
   showMarkIfNewlyAdded = false,
+  isShowBackupBadge = false,
 }: AddressItemProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -180,6 +200,10 @@ export const AddressItemInner2024 = ({
 
   const shouldShowNewMark =
     showMarkIfNewlyAdded && isNewlyAdded && account.evmBalance === 0;
+
+  const needsBackupReminder = useBackupReminder(
+    isShowBackupBadge ? account : null,
+  );
 
   return (
     <Card
@@ -209,7 +233,9 @@ export const AddressItemInner2024 = ({
                 <WalletName
                   style={StyleSheet.flatten([
                     styles.itemNameText,
-                    inlineArrow && styles.itemNameTextWithInlineArrow,
+                    inlineArrow || needsBackupReminder
+                      ? styles.itemNameTextWithInlineArrow
+                      : null,
                   ])}
                 />
                 {shouldShowNewMark && (
@@ -217,6 +243,13 @@ export const AddressItemInner2024 = ({
                     <Text style={styles.newMarkText}>New</Text>
                   </View>
                 )}
+                {needsBackupReminder ? (
+                  <View style={styles.backupBadge}>
+                    <Text style={styles.backupBadgeText} numberOfLines={1}>
+                      {t('backupReminder.badge')}
+                    </Text>
+                  </View>
+                ) : null}
                 {inlineArrow && !hiddenArrow ? (
                   <ArrowCircleCC
                     width={16}

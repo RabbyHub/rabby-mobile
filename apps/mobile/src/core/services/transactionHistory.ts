@@ -1,6 +1,8 @@
-import createPersistStore, {
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
+import type { Draft } from 'mutative';
 import {
   BridgeHistory,
   ExplainTxResponse,
@@ -14,7 +16,7 @@ import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx, getRpcTxReceipt } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortBy, minBy, maxBy, uniqBy, flatten } from 'lodash';
+import { sortBy, minBy, maxBy, uniqBy, flatten, cloneDeep } from 'lodash';
 import { openapi, testOpenapi } from '../request';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -185,12 +187,47 @@ interface TxHistoryStore {
   customTxItemsMap: Record<string, CustomTxItem>; // key is address-chain-txId
 }
 
+const removeFeaturePendingFromDraft = (
+  draft: Draft<TxHistoryStore>,
+  localItem: TransactionHistoryItem,
+) => {
+  draft.swapTxHistory = draft.swapTxHistory.filter(
+    tx =>
+      !(
+        isSameAddress(localItem.address, tx.address) &&
+        tx.status === 'pending' &&
+        localItem.chainId === tx.chainId &&
+        localItem?.hash === tx.hash
+      ),
+  );
+  draft.sendTxHistory = draft.sendTxHistory.filter(
+    tx =>
+      !(
+        isSameAddress(localItem.address, tx.address) &&
+        tx.status === 'pending' &&
+        localItem.chainId === tx.chainId &&
+        localItem?.hash === tx.hash
+      ),
+  );
+  draft.bridgeTxHistory = draft.bridgeTxHistory.filter(
+    tx =>
+      !(
+        isSameAddress(localItem.address, tx.address) &&
+        tx.status !== 'allSuccess' &&
+        localItem.chainId === tx.fromChainId &&
+        localItem?.hash === tx.hash
+      ),
+  );
+};
+
 // TODO
-export class TransactionHistoryService {
+export class TransactionHistoryService extends StoreServiceBase<
+  TxHistoryStore,
+  APP_STORE_NAMES.txHistory
+> {
   /**
    * @description notice, always set store.transactions by calling `_setStoreTransaction`
    */
-  store!: TxHistoryStore;
   preferenceService?: import('../startupServices/preference').PreferenceService;
 
   private _signingTxList: TransactionSigningItem[] = [];
@@ -201,80 +238,58 @@ export class TransactionHistoryService {
       preferenceService: import('../startupServices/preference').PreferenceService;
     },
   ) {
-    this.preferenceService = options?.preferenceService;
-    this.store = createPersistStore<TxHistoryStore>(
+    super(
+      APP_STORE_NAMES.txHistory,
       {
-        name: APP_STORE_NAMES.txHistory,
-        template: {
-          transactions: [],
-          swapTxHistory: [],
-          bridgeTxHistory: [],
-          approveSwapTxHistory: [],
-          approveBridgeTxHistory: [],
-          successList: [],
-          failList: [],
-          isNeedFetchTxHistory: {},
-          clearSuccessAndFailListTs: new Date().getTime(),
-          clearSuccessAndFailListTsObj: {},
-          lendingSuccessHistoryList: [],
-          customTxItemsMap: {},
-        },
+        transactions: [],
+        swapTxHistory: [],
+        sendTxHistory: [],
+        bridgeTxHistory: [],
+        approveSwapTxHistory: [],
+        approveBridgeTxHistory: [],
+        successList: [],
+        failList: [],
+        isNeedFetchTxHistory: {},
+        clearSuccessAndFailListTs: new Date().getTime(),
+        clearSuccessAndFailListTsObj: {},
+        lendingSuccessHistoryList: [],
+        customTxItemsMap: {},
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-    if (!Array.isArray(this.store.transactions)) {
-      this.store.transactions = [];
-    }
+    this.preferenceService = options?.preferenceService;
 
-    if (!Array.isArray(this.store.successList)) {
-      this.store.successList = [];
-    }
-
-    if (!Array.isArray(this.store.failList)) {
-      this.store.failList = [];
-    }
-
-    if (!Array.isArray(this.store.swapTxHistory)) {
-      this.store.swapTxHistory = [];
-    }
-
-    if (!Array.isArray(this.store.sendTxHistory)) {
-      this.store.sendTxHistory = [];
-    }
-
-    if (!Array.isArray(this.store.bridgeTxHistory)) {
-      this.store.bridgeTxHistory = [];
-    }
-
-    if (!Array.isArray(this.store.approveSwapTxHistory)) {
-      this.store.approveSwapTxHistory = [];
-    }
-
-    if (!Array.isArray(this.store.approveBridgeTxHistory)) {
-      this.store.approveBridgeTxHistory = [];
-    }
-
-    if (typeof this.store.isNeedFetchTxHistory !== 'object') {
-      this.store.isNeedFetchTxHistory = {};
-    }
-
-    if (typeof this.store.clearSuccessAndFailListTs !== 'number') {
-      this.store.clearSuccessAndFailListTs = new Date().getTime();
-    }
-
-    if (typeof this.store.clearSuccessAndFailListTsObj !== 'object') {
-      this.store.clearSuccessAndFailListTsObj = {};
-    }
-
-    if (!Array.isArray(this.store.lendingSuccessHistoryList)) {
-      this.store.lendingSuccessHistoryList = [];
-    }
-
-    if (typeof this.store.customTxItemsMap !== 'object') {
-      this.store.customTxItemsMap = {};
-    }
+    this.mutateStore(draft => {
+      if (!Array.isArray(draft.transactions)) draft.transactions = [];
+      if (!Array.isArray(draft.successList)) draft.successList = [];
+      if (!Array.isArray(draft.failList)) draft.failList = [];
+      if (!Array.isArray(draft.swapTxHistory)) draft.swapTxHistory = [];
+      if (!Array.isArray(draft.sendTxHistory)) draft.sendTxHistory = [];
+      if (!Array.isArray(draft.bridgeTxHistory)) draft.bridgeTxHistory = [];
+      if (!Array.isArray(draft.approveSwapTxHistory)) {
+        draft.approveSwapTxHistory = [];
+      }
+      if (!Array.isArray(draft.approveBridgeTxHistory)) {
+        draft.approveBridgeTxHistory = [];
+      }
+      if (typeof draft.isNeedFetchTxHistory !== 'object') {
+        draft.isNeedFetchTxHistory = {};
+      }
+      if (typeof draft.clearSuccessAndFailListTs !== 'number') {
+        draft.clearSuccessAndFailListTs = new Date().getTime();
+      }
+      if (typeof draft.clearSuccessAndFailListTsObj !== 'object') {
+        draft.clearSuccessAndFailListTsObj = {};
+      }
+      if (!Array.isArray(draft.lendingSuccessHistoryList)) {
+        draft.lendingSuccessHistoryList = [];
+      }
+      if (typeof draft.customTxItemsMap !== 'object') {
+        draft.customTxItemsMap = {};
+      }
+    });
 
     this.init();
 
@@ -290,9 +305,13 @@ export class TransactionHistoryService {
   }
 
   setStore = (
-    recipe: (draft: TransactionHistoryItem[]) => TransactionHistoryItem[],
+    recipe: (
+      draft: Draft<TransactionHistoryItem>[],
+    ) => Draft<TransactionHistoryItem>[],
   ) => {
-    this.store.transactions = recipe(this.store.transactions || []);
+    this.mutateStore(draft => {
+      draft.transactions = recipe(draft.transactions || []);
+    });
   };
 
   getPendingCount(address: string) {
@@ -310,33 +329,33 @@ export class TransactionHistoryService {
   }
 
   getStore() {
-    return this.store.approveSwapTxHistory;
+    return this.getStoreFieldSnapshot('approveSwapTxHistory');
   }
 
   getLendingSuccessHistoryList(address: string) {
     const list = this.store.lendingSuccessHistoryList.filter(item => {
       return item.startsWith(address.toLowerCase());
     });
-    return list;
+    return cloneDeep(list);
   }
 
   setLendingSuccessHistoryList(address: string, id: string) {
-    if (
-      !this.store.lendingSuccessHistoryList.includes(
-        `${address.toLowerCase()}-${id}`,
-      )
-    ) {
-      this.store.lendingSuccessHistoryList.push(
-        `${address.toLowerCase()}-${id}`,
-      );
-    }
+    this.mutateStore(draft => {
+      const item = `${address.toLowerCase()}-${id}`;
+      if (!draft.lendingSuccessHistoryList.includes(item)) {
+        draft.lendingSuccessHistoryList.push(item);
+      }
+    });
   }
 
   clearLendingSuccessHistoryList(address: string) {
-    this.store.lendingSuccessHistoryList =
-      this.store.lendingSuccessHistoryList.filter(item => {
-        return !item.startsWith(address.toLowerCase());
-      });
+    this.mutateStore(draft => {
+      draft.lendingSuccessHistoryList = draft.lendingSuccessHistoryList.filter(
+        item => {
+          return !item.startsWith(address.toLowerCase());
+        },
+      );
+    });
   }
 
   getSucceedCount(address?: string) {
@@ -345,19 +364,19 @@ export class TransactionHistoryService {
     ).length;
   }
   getSucceedList() {
-    return this.store.successList;
+    return [...this.store.successList];
   }
 
   setSucceedList(id: string) {
-    if (!this.store.successList.includes(id)) {
-      this.store.successList.push(id);
-    }
+    this.mutateStore(draft => {
+      if (!draft.successList.includes(id)) draft.successList.push(id);
+    });
   }
 
   setFailedList(id: string) {
-    if (!this.store.failList.includes(id)) {
-      this.store.failList.push(id);
-    }
+    this.mutateStore(draft => {
+      if (!draft.failList.includes(id)) draft.failList.push(id);
+    });
   }
 
   getFailedCount(address?: string) {
@@ -367,7 +386,7 @@ export class TransactionHistoryService {
   }
 
   getCustomTxItemMap() {
-    return this.store.customTxItemsMap;
+    return this.getStoreFieldSnapshot('customTxItemsMap');
   }
 
   setCustomTxItem(
@@ -377,10 +396,10 @@ export class TransactionHistoryService {
     item: CustomTxItem,
   ) {
     const serverId = findChain({ id: chainId })?.serverId;
-    this.store.customTxItemsMap = {
-      ...this.store.customTxItemsMap,
-      [`${address.toLowerCase()}-${serverId}-${txId}`]: item,
-    };
+    this.mutateStore(draft => {
+      draft.customTxItemsMap[`${address.toLowerCase()}-${serverId}-${txId}`] =
+        cloneDeep(item);
+    });
   }
 
   getClearSuccessAndFailListTs() {
@@ -388,51 +407,66 @@ export class TransactionHistoryService {
   }
 
   getClearSuccessAndFailListTsObj() {
-    return this.store.clearSuccessAndFailListTsObj;
+    return { ...this.store.clearSuccessAndFailListTsObj };
   }
 
   setNeedFetchTxHistory(address: string) {
     if (!this.store.isNeedFetchTxHistory[address]) {
       setTimeout(() => {
-        this.store.isNeedFetchTxHistory[address] = true;
+        this.mutateStore(draft => {
+          draft.isNeedFetchTxHistory[address] = true;
+        });
       }, 5000);
     }
   }
 
   addApproveSwapTokenTxHistory(tx: ApproveTokenTxHistoryItem) {
-    this.store.approveSwapTxHistory = [...this.store.approveSwapTxHistory, tx]
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 200);
+    this.mutateStore(draft => {
+      draft.approveSwapTxHistory = [
+        ...draft.approveSwapTxHistory,
+        cloneDeep(tx),
+      ]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 200);
+    });
   }
 
   addApproveBridgeTokenTxHistory(tx: ApproveTokenTxHistoryItem) {
-    this.store.approveBridgeTxHistory = [
-      ...this.store.approveBridgeTxHistory,
-      tx,
-    ]
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 200);
+    this.mutateStore(draft => {
+      draft.approveBridgeTxHistory = [
+        ...draft.approveBridgeTxHistory,
+        cloneDeep(tx),
+      ]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 200);
+    });
   }
 
   addSwapTxHistory(tx: SwapTxHistoryItem) {
-    this.store.swapTxHistory.push(tx);
-    this.store.swapTxHistory = this.store.swapTxHistory
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 200);
+    this.mutateStore(draft => {
+      draft.swapTxHistory.push(cloneDeep(tx));
+      draft.swapTxHistory = draft.swapTxHistory
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 200);
+    });
   }
 
   addSendTxHistory(tx: SendTxHistoryItem) {
-    this.store.sendTxHistory.push(tx);
-    this.store.sendTxHistory = this.store.sendTxHistory
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 500); // need use to show send history list
+    this.mutateStore(draft => {
+      draft.sendTxHistory.push(cloneDeep(tx));
+      draft.sendTxHistory = draft.sendTxHistory
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 500); // need use to show send history list
+    });
   }
 
   addBridgeTxHistory(tx: BridgeTxHistoryItem) {
-    this.store.bridgeTxHistory.push(tx);
-    this.store.bridgeTxHistory = this.store.bridgeTxHistory
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 200);
+    this.mutateStore(draft => {
+      draft.bridgeTxHistory.push(cloneDeep(tx));
+      draft.bridgeTxHistory = draft.bridgeTxHistory
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 200);
+    });
   }
 
   getRecentPendingTxHistory(
@@ -476,14 +510,6 @@ export class TransactionHistoryService {
     status: SwapTxHistoryItem['status'],
     completedTx: TransactionHistoryItem,
   ) {
-    const arr = [
-      this.store.swapTxHistory,
-      this.store.sendTxHistory,
-      this.store.bridgeTxHistory,
-      this.store.approveSwapTxHistory,
-      this.store.approveBridgeTxHistory,
-    ];
-
     const hashArr = txs.map(item => item.hash);
 
     eventBus.emit(EVENTS.INNER_HISTORY_ITEM_COMPLETE, {
@@ -491,48 +517,51 @@ export class TransactionHistoryService {
       chainId,
     });
 
-    arr.forEach(async history => {
-      const index = history.findIndex(
-        (
-          item:
-            | SwapTxHistoryItem
-            | SendTxHistoryItem
-            | BridgeTxHistoryItem
-            | ApproveTokenTxHistoryItem,
-        ) =>
-          ('fromChainId' in item ? item.fromChainId : item.chainId) ===
-            chainId && hashArr.includes(item.hash),
-      );
-      if (index > -1) {
-        if ('fromChainId' in history[index]) {
-          const completedHash = completedTx.hash;
-          // bridge tx
-          history[index].status =
-            status === 'success' ? 'fromSuccess' : 'fromFailed';
-          (history[index] as BridgeTxHistoryItem).fromTxCompleteTs = Date.now();
-          (history[index] as BridgeTxHistoryItem).acceleratedHash =
-            completedHash || history[index].hash;
+    const copyTradingActions: Array<'Buy' | 'Sell'> = [];
+    this.mutateStore(draft => {
+      const histories = [
+        draft.swapTxHistory,
+        draft.sendTxHistory,
+        draft.bridgeTxHistory,
+        draft.approveSwapTxHistory,
+        draft.approveBridgeTxHistory,
+      ];
+
+      histories.forEach(history => {
+        const item = history.find(candidate => {
+          const itemChainId =
+            'fromChainId' in candidate
+              ? candidate.fromChainId
+              : candidate.chainId;
+          return itemChainId === chainId && hashArr.includes(candidate.hash);
+        });
+        if (!item) return;
+
+        if ('fromChainId' in item) {
+          item.status = status === 'success' ? 'fromSuccess' : 'fromFailed';
+          item.fromTxCompleteTs = Date.now();
+          item.acceleratedHash = completedTx.hash || item.hash;
         } else {
-          history[index].status = status;
-          history[index].completedAt = Date.now();
+          item.status = status;
+          item.completedAt = Date.now();
         }
-        if (
-          'isFromCopyTrading' in history[index] &&
-          history[index].isFromCopyTrading
-        ) {
-          const isSell = history[index].copyTradingExtra?.type === 'Sell';
-          if (!isSell) {
-            // only buy insert buy item
-            // insertCopyTradingBuyItem(history[index]);
-          }
-          matomoRequestEvent({
-            category: 'CopyTrading',
-            action: isSell
-              ? 'CopyTrading_SellFinishSwap'
-              : 'CopyTrading_BuyFinishSwap',
-          });
+
+        if ('isFromCopyTrading' in item && item.isFromCopyTrading) {
+          copyTradingActions.push(
+            item.copyTradingExtra?.type === 'Sell' ? 'Sell' : 'Buy',
+          );
         }
-      }
+      });
+    });
+
+    copyTradingActions.forEach(copyTradingAction => {
+      matomoRequestEvent({
+        category: 'CopyTrading',
+        action:
+          copyTradingAction === 'Sell'
+            ? 'CopyTrading_SellFinishSwap'
+            : 'CopyTrading_BuyFinishSwap',
+      });
     });
   }
 
@@ -542,63 +571,64 @@ export class TransactionHistoryService {
     status: BridgeTxHistoryItem['status'],
     bridgeTx?: BridgeHistory,
   ) {
-    let changed = false;
-    this.store.bridgeTxHistory.forEach((item, index) => {
-      if (item.fromChainId === chainId && item.hash === from_tx_id) {
-        changed = true;
-        this.store.bridgeTxHistory[index].status = status;
-        this.store.bridgeTxHistory[index].completedAt = Date.now();
-        this.store.bridgeTxHistory[index].actualToToken =
-          bridgeTx?.to_actual_token;
-        this.store.bridgeTxHistory[index].actualToAmount =
-          bridgeTx?.actual?.receive_token_amount;
-      }
+    this.mutateStore(draft => {
+      draft.bridgeTxHistory.forEach(item => {
+        if (item.fromChainId !== chainId || item.hash !== from_tx_id) return;
+
+        item.status = status;
+        item.completedAt = Date.now();
+        item.actualToToken = cloneDeep(bridgeTx?.to_actual_token);
+        item.actualToAmount = bridgeTx?.actual?.receive_token_amount;
+      });
     });
-    if (changed) {
-      this.store.bridgeTxHistory = this.store.bridgeTxHistory;
-    }
   }
 
   getIsNeedFetchTxHistory(address: string) {
     const res = this.store.isNeedFetchTxHistory[address];
-    res && (this.store.isNeedFetchTxHistory[address] = false);
+    if (res) {
+      this.mutateStore(draft => {
+        draft.isNeedFetchTxHistory[address] = false;
+      });
+    }
     return res;
   }
 
   clearSuccessAndFailList(address?: string) {
-    if (address) {
-      this.store.successList = this.store.successList.filter(
-        item => !item.startsWith(address),
-      );
-      this.store.failList = this.store.failList.filter(
-        item => !item.startsWith(address),
-      );
-      this.store.clearSuccessAndFailListTsObj = {
-        ...this.store.clearSuccessAndFailListTsObj,
-        [address.toLowerCase()]: Date.now(),
-      };
-      return;
-    } else {
-      this.store.successList = [];
-      this.store.failList = [];
-      this.store.clearSuccessAndFailListTs = new Date().getTime();
-      Object.keys(this.store.clearSuccessAndFailListTsObj).map(
-        key => (this.store.clearSuccessAndFailListTsObj[key] = Date.now()),
-      );
-    }
+    this.mutateStore(draft => {
+      if (address) {
+        draft.successList = draft.successList.filter(
+          item => !item.startsWith(address),
+        );
+        draft.failList = draft.failList.filter(
+          item => !item.startsWith(address),
+        );
+        draft.clearSuccessAndFailListTsObj[address.toLowerCase()] = Date.now();
+        return;
+      }
+
+      draft.successList = [];
+      draft.failList = [];
+      draft.clearSuccessAndFailListTs = new Date().getTime();
+      Object.keys(draft.clearSuccessAndFailListTsObj).forEach(key => {
+        draft.clearSuccessAndFailListTsObj[key] = Date.now();
+      });
+    });
   }
 
   clearSuccessAndFailSingleId(id: string) {
-    const successIdx = this.store.successList.findIndex(item => item === id);
-    if (successIdx !== -1) {
-      this.store.successList.splice(successIdx, 1);
-      return true;
-    }
+    let removedFromSuccess = false;
+    this.mutateStore(draft => {
+      const successIdx = draft.successList.findIndex(item => item === id);
+      if (successIdx !== -1) {
+        draft.successList.splice(successIdx, 1);
+        removedFromSuccess = true;
+        return;
+      }
 
-    const failIdx = this.store.failList.findIndex(item => item === id);
-    if (failIdx !== -1) {
-      this.store.failList.splice(failIdx, 1);
-    }
+      const failIdx = draft.failList.findIndex(item => item === id);
+      if (failIdx !== -1) draft.failList.splice(failIdx, 1);
+    });
+    return removedFromSuccess || undefined;
   }
 
   getTransactionGroups(args?: {
@@ -609,7 +639,7 @@ export class TransactionHistoryService {
     const { address, chainId, nonce } = args || {};
     const groups: TransactionGroup[] = [];
 
-    this.store.transactions?.forEach(tx => {
+    this.getStoreFieldSnapshot('transactions').forEach(tx => {
       if (address != null && !isSameAddress(address, tx.address)) {
         return;
       }
@@ -923,7 +953,7 @@ export class TransactionHistoryService {
         this.updateTx(newTx);
         const id = tx.hash || tx.reqId;
         if (!success) {
-          id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
+          id && this.setFailedList(`${address.toLowerCase()}-${id}`);
         }
         if (
           target?.customActionInfo?.customAction ===
@@ -1176,79 +1206,50 @@ export class TransactionHistoryService {
     chainId: number;
     nonce: number;
   }) {
-    this.setStore(draft => {
-      const result = draft.filter(item => {
+    this.mutateStore(draft => {
+      draft.transactions = draft.transactions.filter(item => {
         const needClear =
           isSameAddress(address, item.address) &&
           item.chainId === chainId &&
           item.nonce < nonce &&
           item.isPending;
         if (needClear) {
-          this.removeFeatPendingByLocal(item);
+          removeFeaturePendingFromDraft(draft, cloneDeep(item));
         }
         return !needClear;
       });
-      if (result.length !== draft.length) {
-        return result;
-      }
-      return draft;
     });
   }
 
   clearPendingTransactions(address: string) {
-    this.setStore(draft => {
-      return draft.filter(item => {
+    this.mutateStore(draft => {
+      draft.transactions = draft.transactions.filter(item => {
         if (!isSameAddress(address, item.address)) {
           return true;
         }
         return !item.isPending;
       });
-    });
-    this.store.swapTxHistory = this.store.swapTxHistory.filter(item => {
-      return !(
-        isSameAddress(address, item.address) && item.status === 'pending'
+      draft.swapTxHistory = draft.swapTxHistory.filter(
+        item =>
+          !(isSameAddress(address, item.address) && item.status === 'pending'),
       );
-    });
-    this.store.sendTxHistory = this.store.sendTxHistory.filter(item => {
-      return !(
-        isSameAddress(address, item.address) && item.status === 'pending'
+      draft.sendTxHistory = draft.sendTxHistory.filter(
+        item =>
+          !(isSameAddress(address, item.address) && item.status === 'pending'),
       );
-    });
-    this.store.bridgeTxHistory = this.store.bridgeTxHistory.filter(item => {
-      return !(
-        isSameAddress(address, item.address) && item.status !== 'allSuccess'
+      draft.bridgeTxHistory = draft.bridgeTxHistory.filter(
+        item =>
+          !(
+            isSameAddress(address, item.address) && item.status !== 'allSuccess'
+          ),
       );
     });
   }
 
   removeFeatPendingByLocal(localItem: TransactionHistoryItem) {
-    this.store.swapTxHistory = this.store.swapTxHistory.filter(
-      tx =>
-        !(
-          isSameAddress(localItem.address, tx.address) &&
-          tx.status === 'pending' &&
-          localItem.chainId === tx.chainId &&
-          localItem?.hash === tx.hash
-        ),
-    );
-    this.store.sendTxHistory = this.store.sendTxHistory.filter(
-      tx =>
-        !(
-          isSameAddress(localItem.address, tx.address) &&
-          tx.status === 'pending' &&
-          localItem.chainId === tx.chainId &&
-          localItem?.hash === tx.hash
-        ),
-    );
-    this.store.bridgeTxHistory = this.store.bridgeTxHistory.filter(
-      tx =>
-        !(
-          isSameAddress(localItem.address, tx.address) &&
-          tx.status !== 'allSuccess' &&
-          localItem.chainId === tx.fromChainId &&
-          localItem?.hash === tx.hash
-        ),
-    );
+    this.mutateStore(draft => {
+      removeFeaturePendingFromDraft(draft, localItem);
+    });
   }
 
   removeLocalPendingTx({
@@ -1268,11 +1269,13 @@ export class TransactionHistoryService {
     if (!groups.length) {
       return;
     }
-    groups.forEach(
-      item => item.originTx && this.removeFeatPendingByLocal(item.originTx),
-    );
-    this.setStore(draft => {
-      return draft.filter(item => {
+    this.mutateStore(draft => {
+      groups.forEach(item => {
+        if (item.originTx) {
+          removeFeaturePendingFromDraft(draft, item.originTx);
+        }
+      });
+      draft.transactions = draft.transactions.filter(item => {
         return !groups.find(txGroup => {
           return (
             isSameAddress(txGroup.address, item.address) &&

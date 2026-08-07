@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
-import * as DropdownMenu from 'zeego/src/dropdown-menu';
+import * as DropdownMenu from '@rabby-wallet/zeego/dropdown-menu';
 import { Text } from '@/components/Typography';
 
 interface Props {

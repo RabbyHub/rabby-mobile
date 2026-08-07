@@ -9272,7 +9272,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/base-utils@npm:^0.1.0, @rabby-wallet/base-utils@workspace:^, @rabby-wallet/base-utils@workspace:packages/base-utils":
+"@rabby-wallet/base-utils@workspace:^, @rabby-wallet/base-utils@workspace:packages/base-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/base-utils@workspace:packages/base-utils"
   dependencies:
@@ -9334,7 +9334,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
-    "@rabby-wallet/keyring-utils": "npm:^0.1.0"
+    "@rabby-wallet/keyring-utils": "workspace:^"
     "@safe-global/protocol-kit": "npm:5.0.3"
     "@safe-global/types-kit": "npm:1.0.4"
     "@types/jest": "npm:^27.4.1"
@@ -9475,12 +9475,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-keyring-watch@npm:*, @rabby-wallet/eth-keyring-watch@npm:^0.1.0, @rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch":
+"@rabby-wallet/eth-keyring-watch@workspace:^, @rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch"
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
-    "@rabby-wallet/keyring-utils": "npm:^0.1.0"
+    "@rabby-wallet/keyring-utils": "workspace:^"
     "@types/jest": "npm:^27.4.1"
     "@types/sinon": "npm:^9.0.10"
     deepmerge: "npm:^4.2.2"
@@ -9548,7 +9548,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/keyring-utils@npm:^0.1.0, @rabby-wallet/keyring-utils@workspace:^, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
+"@rabby-wallet/keyring-utils@workspace:^, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/keyring-utils@workspace:packages/keyring-utils"
   dependencies:
@@ -9642,22 +9642,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/persist-store@npm:^0.1.0, @rabby-wallet/persist-store@workspace:^, @rabby-wallet/persist-store@workspace:packages/persist-store":
+"@rabby-wallet/persist-store@workspace:^, @rabby-wallet/persist-store@workspace:packages/persist-store":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/persist-store@workspace:packages/persist-store"
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
-    "@rabby-wallet/base-utils": "npm:^0.1.0"
+    "@rabby-wallet/base-utils": "workspace:^"
     "@types/jest": "npm:^27.4.1"
     "@types/lodash.clonedeep": "npm:^4.5.9"
     "@types/node": "npm:^20.14.8"
     "@types/sinon": "npm:^9.0.10"
-    "@vue/reactivity": "npm:^3.3.11"
-    debounce: "npm:^2.0.0"
     deepmerge: "npm:^4.2.2"
     ethereumjs-util: "npm:^7.1.5"
     jest: "npm:^27.5.1"
     lodash.clonedeep: "npm:^4.5.0"
+    mutative: "npm:^1.3.0"
     sinon: "npm:^9.2.4"
     ts-jest: "npm:^27.1.4"
     typedoc: "npm:^0.24.8"
@@ -9838,6 +9837,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/react-native-ios-context-menu@workspace:^, @rabby-wallet/react-native-ios-context-menu@workspace:packages/react-native-ios-context-menu":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-ios-context-menu@workspace:packages/react-native-ios-context-menu"
+  dependencies:
+    "@dominicstop/ts-event-emitter": "npm:^1.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/react-native-keychain-9@workspace:^, @rabby-wallet/react-native-keychain-9@workspace:packages/react-native-keychain-9":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/react-native-keychain-9@workspace:packages/react-native-keychain-9"
@@ -9847,6 +9857,15 @@ __metadata:
 "@rabby-wallet/react-native-keychain@workspace:^, @rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/react-native-menu@workspace:^, @rabby-wallet/react-native-menu@workspace:packages/react-native-menu":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-menu@workspace:packages/react-native-menu"
   peerDependencies:
     react: "*"
     react-native: "*"
@@ -9934,7 +9953,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/persist-store": "npm:^0.1.0"
+    "@rabby-wallet/persist-store": "workspace:^"
     "@types/jest": "npm:^27.4.1"
     "@types/node": "npm:^20.14.8"
     "@types/sinon": "npm:^9.0.10"
@@ -9959,7 +9978,7 @@ __metadata:
     "@metamask/browser-passworder": "npm:6.0.0"
     "@metamask/obs-store": "npm:^9.0.0"
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/eth-keyring-watch": "npm:^0.1.0"
+    "@rabby-wallet/eth-keyring-watch": "workspace:^"
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@types/jest": "npm:^27.4.1"
@@ -10029,6 +10048,21 @@ __metadata:
     typedoc: "npm:^0.23.15"
     typescript: "npm:5.7.3"
     webextension-polyfill: "npm:^0.10.0"
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/zeego@workspace:^, @rabby-wallet/zeego@workspace:packages/zeego":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/zeego@workspace:packages/zeego"
+  dependencies:
+    "@radix-ui/react-context-menu": "npm:^2.0.1"
+    "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
+    sf-symbols-typescript: "npm:^2.0.0"
+  peerDependencies:
+    "@rabby-wallet/react-native-ios-context-menu": "*"
+    "@rabby-wallet/react-native-menu": "*"
+    react: "*"
+    react-native: "*"
   languageName: unknown
   linkType: soft
 
@@ -11457,26 +11491,6 @@ __metadata:
     react: ">=16"
     react-native: ">=0.57"
   checksum: 10/71d7a6277a869beaed34497d5b92cba7405586fe19ad05c2e892e5e5843b664386080573f4cfaea1fb68ed77de94bf46c20958f4e58d1a5a716c3652d65815b9
-  languageName: node
-  linkType: hard
-
-"@react-native-menu/menu@npm:2.0.0":
-  version: 2.0.0
-  resolution: "@react-native-menu/menu@npm:2.0.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/547830a473b408cb5218298eb0e8892968ce9e2e7ff35eaef3a5e60985a19a0bd2d782bd010baed50d5f1b3beadca5ac24991a7df0b164e3d90865cd1792a2aa
-  languageName: node
-  linkType: hard
-
-"@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 2.0.0
-  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::version=2.0.0&hash=040b7f&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/f125ceef564b71174c9fa1da94094f6bc90328c9d222750ffdc0c63f6485baa1186e214cbfe54158417cfadcf301515b8ee4b3fe12db9e28d9d5e5febca64c9d
   languageName: node
   linkType: hard
 
@@ -17296,15 +17310,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/reactivity@npm:^3.3.11":
-  version: 3.4.8
-  resolution: "@vue/reactivity@npm:3.4.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40vue%2Freactivity%2F-%2Freactivity-3.4.8.tgz"
-  dependencies:
-    "@vue/shared": "npm:3.4.8"
-  checksum: 10/f315406ea6bb51b90e1efa630b4c152a1ec5ce056539c43a9b2ece23edfd1662df48d0d92bb7cd4e3ff4302fbb052b3190d6834b48e2d8706c0a2743cb48beb9
-  languageName: node
-  linkType: hard
-
 "@vue/shared@npm:3.4.8":
   version: 3.4.8
   resolution: "@vue/shared@npm:3.4.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40vue%2Fshared%2F-%2Fshared-3.4.8.tgz"
@@ -22974,13 +22979,6 @@ __metadata:
   version: 1.0.2
   resolution: "de-indent@npm:1.0.2"
   checksum: 10/30bf43744dca005f9252dbb34ed95dcb3c30dfe52bfed84973b89c29eccff04e27769f222a34c61a93354acf47457785e9032e6184be390ed1d324fb9ab3f427
-  languageName: node
-  linkType: hard
-
-"debounce@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "debounce@npm:2.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fdebounce%2F-%2Fdebounce-2.0.0.tgz"
-  checksum: 10/79d143e0b3c3d15f8ecaf5dd68ad087ed58b0eaf507ee005f9d5b503cafd03acccd69f5341788cca9c82574662da066b0efb1ed5c64282b2cca64fab65af4acf
   languageName: node
   linkType: hard
 
@@ -38813,7 +38811,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
-    "@rabby-wallet/eth-keyring-watch": "npm:*"
+    "@rabby-wallet/eth-keyring-watch": "workspace:^"
     "@rabby-wallet/eth-simple-keyring": "npm:5.1.2"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
     "@rabby-wallet/hyperliquid-sdk": "npm:1.1.15"
@@ -38828,11 +38826,14 @@ __metadata:
     "@rabby-wallet/rabby-swap": "npm:0.0.82"
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
+    "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
     "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
+    "@rabby-wallet/react-native-menu": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
+    "@rabby-wallet/zeego": "workspace:^"
     "@react-native-clipboard/clipboard": "npm:^1.13.0"
     "@react-native-community/blur": "npm:4.4.1"
     "@react-native-community/cli": "npm:20.0.0"
@@ -38847,7 +38848,6 @@ __metadata:
     "@react-native-firebase/messaging": "npm:18.8.0"
     "@react-native-google-signin/google-signin": "npm:13.2.0"
     "@react-native-masked-view/masked-view": "npm:^0.3.1"
-    "@react-native-menu/menu": "npm:2.0.0"
     "@react-native/babel-preset": "npm:0.81.6"
     "@react-native/eslint-config": "npm:0.81.6"
     "@react-native/metro-config": "npm:0.81.6"
@@ -38963,7 +38963,6 @@ __metadata:
     react-native-image-picker: "npm:8.2.1"
     react-native-inappbrowser-reborn: "npm:^3.7.0"
     react-native-indicators: "npm:^0.17.0"
-    react-native-ios-context-menu: "npm:1.15.3"
     react-native-keyboard-aware-scroll-view: "npm:^0.9.5"
     react-native-keyboard-controller: "npm:1.18.5"
     react-native-keychain: "patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch"
@@ -39017,7 +39016,6 @@ __metadata:
     web3-eth-abi: "npm:1.7.0"
     web3-utils: "npm:1.7.0"
     yup: "npm:^1.3.3"
-    zeego: "npm:1.10.0"
     zustand: "npm:5.0.9"
     zustand-mutative: "npm:1.3.1"
   languageName: unknown
@@ -39832,18 +39830,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/85931fcc873f155e52412d7e0f768575ce00701870ebf873fa9fbe46e2c42f696577fd5a536fa7027f096fe090dd89470ddfe22d7b644df65c3973c6c2985c29
-  languageName: node
-  linkType: hard
-
-"react-native-ios-context-menu@npm:1.15.3":
-  version: 1.15.3
-  resolution: "react-native-ios-context-menu@npm:1.15.3"
-  dependencies:
-    "@dominicstop/ts-event-emitter": "npm:^1.1.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/7d6cfb2cfb38d1e4c8fbc7a9dfcfbbd40dafda838187bacca99ef427bb1104e2ebdf8ef11a766dd2783f0b6dcb269b669e0dceccd95d940222f451d3d87abe0a
   languageName: node
   linkType: hard
 
@@ -48649,54 +48635,6 @@ __metadata:
     toposort: "npm:^2.0.2"
     type-fest: "npm:^2.19.0"
   checksum: 10/28c119896ca3649ed4007eba6eaef45cabbaea6a9e5148545a2e249f3973870369fb2976d45cd3b0f1324951ec48112bc1f533077c728216105c4b02ad82400b
-  languageName: node
-  linkType: hard
-
-"zeego@npm:1.10.0":
-  version: 1.10.0
-  resolution: "zeego@npm:1.10.0"
-  dependencies:
-    "@radix-ui/react-context-menu": "npm:^2.0.1"
-    "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
-    sf-symbols-typescript: "npm:^2.0.0"
-  peerDependencies:
-    "@react-native-menu/menu": "*"
-    react: "*"
-    react-native: "*"
-    react-native-ios-context-menu: ^2.3.2
-  checksum: 10/82ddd762e3db293b77ecb9970629c1a93f36ebb6219c79fe5c89b344c8de09438c43b92375d6735e23d1e4be4dc5e82d4287c4761576bd0f0405a99b5976639f
-  languageName: node
-  linkType: hard
-
-"zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=9bb0a3&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 1.10.0
-  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=515748&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    "@radix-ui/react-context-menu": "npm:^2.0.1"
-    "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
-    sf-symbols-typescript: "npm:^2.0.0"
-  peerDependencies:
-    "@react-native-menu/menu": "*"
-    react: "*"
-    react-native: "*"
-    react-native-ios-context-menu: ^2.3.2
-  checksum: 10/085ddf3599c192fbccdffdf4712424994838da99cf3144cc555bc647e92db404c9d162e5a0da9ed70b73d8fe1d52c0489fbf4f423355b2577e09a81b4b84c21d
-  languageName: node
-  linkType: hard
-
-"zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=9bb0a3&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 1.10.0
-  resolution: "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=515748&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::version=1.10.0&hash=2d6f92&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    "@radix-ui/react-context-menu": "npm:^2.0.1"
-    "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
-    sf-symbols-typescript: "npm:^2.0.0"
-  peerDependencies:
-    "@react-native-menu/menu": "*"
-    react: "*"
-    react-native: "*"
-    react-native-ios-context-menu: ^2.3.2
-  checksum: 10/fb80909cf6082990bf7168fab043b892eb8cda0fff7b668523be1721c3e288d290924f0d00fa269afa3cc09a851ce0e14fd7ddf74a5dae655ea3acb80615be76
   languageName: node
   linkType: hard
 
