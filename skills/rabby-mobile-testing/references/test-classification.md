@@ -93,6 +93,13 @@ Allowed boundary mocks are not automatically harmless. Network fakes must preser
 
 The dedicated `Mobile Integration Tests` workflow runs on relevant changes to `develop` and pull requests targeting `develop`.
 
+The job is pinned to the trusted `mobile-local` macOS self-hosted runner. It
+does not execute fork pull-request code on that machine. The persistent runner
+workspace retains Yarn downloads, install state, `node_modules`, and Jest
+transform output while cleaning other untracked files; `yarn install
+--immutable` remains responsible for reconciling those caches with the current
+lockfile.
+
 It performs:
 
 1. immutable dependency installation;

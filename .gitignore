@@ -11,6 +11,9 @@ folder-alias.json
 # eslint cache
 .eslintcache
 
+# persistent self-hosted CI caches
+.ci-cache/
+
 .DS_STORE
 .idea
 .vscfavoriterc
