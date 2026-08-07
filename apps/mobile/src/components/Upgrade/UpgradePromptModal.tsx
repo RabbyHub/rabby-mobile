@@ -51,7 +51,10 @@ const SLIDER_THUMB_SIZE = 48;
 const SLIDER_INSET = 4;
 const SLIDER_COMPLETE_THRESHOLD = 0.82;
 const SLIDER_GRADIENT = ['#4056DD', '#2EECD3'];
-const LIGHT_GLASS_COLOR = 'rgba(255, 255, 255, 0.6)';
+const LIGHT_GLASS_COLOR =
+  Platform.OS === 'android'
+    ? 'rgba(240, 240, 240, 0.6)'
+    : 'rgba(255, 255, 255, 0.6)';
 const DARK_GLASS_COLOR = 'rgba(56, 59, 65, 0.5)';
 
 function SlideToUpdate({
