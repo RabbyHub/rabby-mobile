@@ -27,6 +27,13 @@ Do not promote a test merely because it renders React. A component test that moc
 - Clean up subscriptions and unregister shared Service loaders in `finally` or test cleanup.
 - Keep the lane serial because the mobile app has process-wide registries and singleton state.
 
+For startup orchestration, do not mount the complete native `App` in Node just
+to claim broad coverage. Use the real launch task definitions, startup
+scheduler, phase registry, Home milestones, Service Registry, and Stores.
+Replace only the explicit module-loading or process boundary with a typed,
+deterministic catalog. Assert both the manual-unlock and valid-session paths,
+and prove post-Home and on-demand work cannot run early.
+
 Run:
 
 ```bash

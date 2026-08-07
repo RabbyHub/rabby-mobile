@@ -37,6 +37,17 @@ Examples:
 - A real Zustand Store publishes the latest state only after `ScreenStoreActivityProvider` receives focus again.
 - A registered Service loader becomes synchronously available to a typed HOC only after readiness completes.
 - A preference mutation flows through the real Store, persistence coordinator, and subscriber while only MMKV storage is replaced by a boundary fake.
+- The real launch task manifest advances through launch, either Home entry path,
+  Home readiness, content readiness, and on-demand activation while typed
+  module loaders replace native/process boundaries.
+
+An App-startup integration test in this lane is not a native App launch. It
+must execute the production orchestration primitives and task metadata, but it
+should not import the whole `App.tsx` tree when doing so would require replacing
+most native modules. Keep the explicit `launchTaskLoaders` contract as the
+boundary, use an isolated phase registry, and retain the real scheduler,
+milestones, Service Registry, and Store publication. Native owner-module
+behavior remains a Hermes device-integration responsibility.
 
 When a test needs a boundary fake, keep it stateful enough to preserve the external contract. A mock that returns one hard-coded value cannot prove persistence, cancellation, or event ordering.
 
