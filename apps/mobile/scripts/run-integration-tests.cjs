@@ -13,6 +13,7 @@ const coldStartScenarios = [
   'manual-unlock',
   'valid-session',
   'no-account',
+  'persisted-empty-wallet',
   'auto-unlock-failure',
   'security-chain-failure',
 ];

@@ -12,11 +12,16 @@ import {
   markBootstrapAccountsAdded,
   runAppStateBootstrap,
 } from './appStateBootstrap';
+import {
+  resolveWalletEntryDestination,
+  type WalletEntryDestination,
+} from '@/core/utils/walletEntryState';
 
 type BootstrapScenarioName =
   | 'manual-unlock'
   | 'valid-session'
   | 'no-account'
+  | 'persisted-empty-wallet'
   | 'auto-unlock-failure'
   | 'security-chain-failure';
 
@@ -32,12 +37,14 @@ type BootstrapScenario = {
     | 'isUnlockSessionValid'
     | 'hasVisibleAccounts'
     | 'hasStoredKeyrings'
+    | 'accountState'
   >;
   autoUnlockState?: Pick<AppLockState, 'appUnlocked' | 'isUnlockSessionValid'>;
   shouldWaitAutoUnlock: boolean;
   autoUnlockRejects?: boolean;
   securityChainRejects?: boolean;
   expectedHomeEntryReady: boolean;
+  expectedEntryDestination: WalletEntryDestination;
   addAccountAfterBootstrap?: boolean;
 };
 
@@ -48,6 +55,7 @@ const scenarios: Record<BootstrapScenarioName, BootstrapScenario> = {
       isUnlockSessionValid: false,
       hasVisibleAccounts: true,
       hasStoredKeyrings: true,
+      accountState: 'available',
     },
     autoUnlockState: {
       appUnlocked: true,
@@ -55,6 +63,7 @@ const scenarios: Record<BootstrapScenarioName, BootstrapScenario> = {
     },
     shouldWaitAutoUnlock: true,
     expectedHomeEntryReady: true,
+    expectedEntryDestination: 'Home',
   },
   'valid-session': {
     initialState: {
@@ -62,9 +71,11 @@ const scenarios: Record<BootstrapScenarioName, BootstrapScenario> = {
       isUnlockSessionValid: true,
       hasVisibleAccounts: true,
       hasStoredKeyrings: true,
+      accountState: 'available',
     },
     shouldWaitAutoUnlock: false,
     expectedHomeEntryReady: true,
+    expectedEntryDestination: 'Home',
   },
   'no-account': {
     initialState: {
@@ -72,10 +83,24 @@ const scenarios: Record<BootstrapScenarioName, BootstrapScenario> = {
       isUnlockSessionValid: false,
       hasVisibleAccounts: false,
       hasStoredKeyrings: false,
+      accountState: 'empty',
     },
     shouldWaitAutoUnlock: false,
     expectedHomeEntryReady: false,
+    expectedEntryDestination: 'GetStarted',
     addAccountAfterBootstrap: true,
+  },
+  'persisted-empty-wallet': {
+    initialState: {
+      appUnlocked: false,
+      isUnlockSessionValid: true,
+      hasVisibleAccounts: false,
+      hasStoredKeyrings: true,
+      accountState: 'empty',
+    },
+    shouldWaitAutoUnlock: false,
+    expectedHomeEntryReady: false,
+    expectedEntryDestination: 'GetStarted',
   },
   'auto-unlock-failure': {
     initialState: {
@@ -83,10 +108,12 @@ const scenarios: Record<BootstrapScenarioName, BootstrapScenario> = {
       isUnlockSessionValid: false,
       hasVisibleAccounts: true,
       hasStoredKeyrings: true,
+      accountState: 'available',
     },
     shouldWaitAutoUnlock: true,
     autoUnlockRejects: true,
     expectedHomeEntryReady: false,
+    expectedEntryDestination: 'Unlock',
   },
   'security-chain-failure': {
     initialState: {
@@ -94,10 +121,12 @@ const scenarios: Record<BootstrapScenarioName, BootstrapScenario> = {
       isUnlockSessionValid: true,
       hasVisibleAccounts: true,
       hasStoredKeyrings: true,
+      accountState: 'available',
     },
     shouldWaitAutoUnlock: false,
     securityChainRejects: true,
     expectedHomeEntryReady: true,
+    expectedEntryDestination: 'Home',
   },
 };
 
@@ -115,6 +144,15 @@ async function flushMicrotasks(rounds = 6) {
   }
 }
 
+function getCurrentEntryDestination() {
+  const lockState = getAppLockStateSnapshot();
+  return resolveWalletEntryDestination({
+    accountState: lockState.accountState,
+    isAppUnlocked: lockState.appUnlocked,
+    isUnlockSessionValid: lockState.isUnlockSessionValid,
+  });
+}
+
 describe.each(
   Object.entries(scenarios) as [BootstrapScenarioName, BootstrapScenario][],
 )('app-state cold start integration: %s', (_scenarioName, scenario) => {
@@ -129,6 +167,7 @@ describe.each(
 
     expect(getAppBootstrapStateSnapshot()).toEqual({ couldRender: false });
     expect(getHomeEntryReady()).toBe(false);
+    expect(getCurrentEntryDestination()).toBeNull();
 
     const bootstrapPromise = runAppStateBootstrap({
       loadInitialLockState: async () => {
@@ -202,6 +241,9 @@ describe.each(
       }),
     );
     expect(getHomeEntryReady()).toBe(scenario.expectedHomeEntryReady);
+    expect(getCurrentEntryDestination()).toBe(
+      scenario.expectedEntryDestination,
+    );
     expect(homeReadyCallbacks).toBe(scenario.expectedHomeEntryReady ? 1 : 0);
     expect(getAppBootstrapStateSnapshot()).toEqual({ couldRender: true });
 
@@ -218,6 +260,8 @@ describe.each(
       );
       expect(getHomeEntryReady()).toBe(true);
       expect(homeReadyCallbacks).toBe(1);
+      expect(getAppLockStateSnapshot().accountState).toBe('available');
+      expect(getCurrentEntryDestination()).toBe('Home');
     }
 
     cancelHomeReadySubscription();
