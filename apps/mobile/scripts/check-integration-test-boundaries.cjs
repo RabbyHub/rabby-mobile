@@ -78,8 +78,13 @@ function isInternalModule(moduleName, testFile, workspacePackageNames) {
     return true;
   }
 
-  if (workspacePackageNames.has(moduleName)) {
-    return true;
+  for (const packageName of workspacePackageNames) {
+    if (
+      moduleName === packageName ||
+      moduleName.startsWith(`${packageName}/`)
+    ) {
+      return true;
+    }
   }
 
   if (moduleName.startsWith('.')) {

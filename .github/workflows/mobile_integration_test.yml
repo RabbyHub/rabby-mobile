@@ -62,12 +62,7 @@ jobs:
         run: |
           git reset --hard HEAD
           git clean -ffdx \
-            -e node_modules \
-            -e 'apps/*/node_modules' \
-            -e 'packages/*/node_modules' \
             -e .yarn/cache \
-            -e .yarn/install-state.gz \
-            -e .yarn/unplugged \
             -e .ci-cache
 
       - name: Use runner Node.js
