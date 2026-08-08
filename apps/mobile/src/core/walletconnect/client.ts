@@ -12,7 +12,7 @@ import {
   clearWalletConnectProposal,
   storeWalletConnectProposal,
 } from './proposal';
-import { forgetWalletConnectAccountForTopic } from './accountSelection';
+import { forgetWalletConnectAccountForTopic } from './accountPersistence';
 import { clearWalletConnectDappRedirectPending } from './redirectState';
 import { handleWalletConnectSessionRequest } from './requestBridge';
 import { syncWalletConnectSessionsFromClient } from './sessions';
