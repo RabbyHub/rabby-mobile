@@ -1,8 +1,9 @@
 import type { StorageAdapater } from '@rabby-wallet/persist-store';
 
-// This integration test intentionally constructs the real business service.
+// These integration tests intentionally construct the real business services.
 /* eslint-disable no-runtime-service-imports */
 import { RabbyPointsService } from '@/core/services/rabbyPoints';
+import { WhitelistService } from '@/core/services/whitelist';
 /* eslint-enable no-runtime-service-imports */
 
 function createSerializedMemoryStorage() {
@@ -29,6 +30,9 @@ function createSerializedMemoryStorage() {
   return {
     storage,
     getWriteCount: () => writes.length,
+    seed: (key: string, value: unknown) => {
+      values.set(key, JSON.stringify(value));
+    },
   };
 }
 
@@ -85,5 +89,51 @@ describe('persisted business service lifecycle integration', () => {
     });
 
     unsubscribe();
+  });
+
+  it('normalizes legacy whitelist state and preserves the migrated records after reconstruction', async () => {
+    const { storage, getWriteCount, seed } = createSerializedMemoryStorage();
+    const firstAddress = '0xAaaA000000000000000000000000000000000001';
+    const secondAddress = '0xBbbB000000000000000000000000000000000002';
+    const thirdAddress = '0xCccC000000000000000000000000000000000003';
+
+    seed('whitelist', {
+      enabled: false,
+      whitelists: [
+        firstAddress,
+        { address: firstAddress.toLowerCase(), addedAt: 1 },
+        { address: secondAddress, addedAt: 2 },
+      ],
+    });
+
+    const firstService = new WhitelistService({ storageAdapter: storage });
+    expect(firstService.isWhitelistEnabled()).toBe(true);
+    expect(firstService.getWhitelistRecords()).toEqual([
+      { address: firstAddress.toLowerCase() },
+      { address: secondAddress.toLowerCase(), addedAt: 2 },
+    ]);
+
+    await flushMicrotasks();
+    const writesAfterMigration = getWriteCount();
+
+    firstService.addWhitelist(thirdAddress);
+    firstService.updateWhitelistOrder([
+      thirdAddress,
+      secondAddress,
+      firstAddress,
+    ]);
+    await flushMicrotasks();
+
+    expect(getWriteCount()).toBe(writesAfterMigration + 1);
+
+    const reconstructedService = new WhitelistService({
+      storageAdapter: storage,
+    });
+    expect(reconstructedService.isWhitelistEnabled()).toBe(true);
+    expect(reconstructedService.getWhitelistRecords()).toEqual([
+      expect.objectContaining({ address: thirdAddress.toLowerCase() }),
+      { address: secondAddress.toLowerCase(), addedAt: 2 },
+      { address: firstAddress.toLowerCase() },
+    ]);
   });
 });

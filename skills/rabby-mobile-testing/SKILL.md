@@ -40,6 +40,12 @@ bootstrap integration test as a verified App launch.
 
 Do not promote a test merely because it renders React. A component test that mocks its internal Store and Service is still a unit/component test.
 
+When reorganizing an existing mock-heavy suite, preserve focused diagnostic
+unit tests and add integration contracts for the repository-owned cooperation
+that those mocks replace. Follow the reclassification rules in
+[references/test-classification.md](references/test-classification.md); mock
+count alone is not a reason to delete a unit test.
+
 ## JS Integration Contract
 
 - Name files `*.integration.test.ts` or `*.integration.test.tsx` under `apps/mobile/src`.

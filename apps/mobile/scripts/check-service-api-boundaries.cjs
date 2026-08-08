@@ -29,6 +29,8 @@ const result = spawnSync(
       'no-runtime-service-imports': 'error',
       'no-floating-deferred-service-api-calls': 'error',
     }),
+    '--ignore-pattern',
+    '**/*.integration.test.*',
     '--ext',
     '.js,.jsx,.ts,.tsx',
   ],

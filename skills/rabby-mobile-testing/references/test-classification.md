@@ -40,6 +40,29 @@ Example: verify a token-filter helper returns the expected IDs for pinned and hi
 
 These tests are fast and diagnostic, but they do not prove that internal modules still agree on contracts, Providers are ordered correctly, or singleton lifecycles converge.
 
+### Reclassifying Mock-Heavy Tests
+
+Do not mechanically replace a mock-heavy unit test with one broad integration
+test. First separate its claims:
+
+- Keep unit coverage for branch matrices, error mapping, pure transformation,
+  and exact fan-out where the collaborators themselves are outside the claim.
+- Add JS integration coverage when the claim depends on repository-owned
+  Services, Stores, registries, persistence, subscriptions, or lifecycle
+  ordering agreeing with each other.
+- Prefer both layers when the unit test is the fastest fault locator but its
+  mocks could hide contract drift. The integration test should assert public
+  state, persisted output, or emitted behavior instead of repeating private
+  call-count assertions.
+- Move the claim to Hermes device integration when using the real dependency
+  requires MMKV, SQLite, a native bridge, navigation host, or App lifecycle.
+  Do not build a second internal runtime from mocks merely to keep the test in
+  Node.
+
+A high mock count is a review signal, not an automatic failure. The decisive
+question is whether the test replaces the same internal collaboration it
+claims to verify.
+
 ## JS And RNTL Integration Tests
 
 Use JS integration tests when a regression depends on cooperation among real internal modules but does not require a real native runtime.
@@ -52,6 +75,10 @@ Use JS integration tests when a regression depends on cooperation among real int
 - Use a string-literal module specifier for every boundary mock so CI can classify it statically.
 - Do not mock `@/` modules, relative repository modules, or workspace packages.
 - Do not use `jest.resetModules()` or `jest.isolateModules*()` to manufacture a second internal runtime.
+- Integration files may instantiate real Service implementations and registries;
+  the production Service API boundary scan excludes only
+  `*.integration.test.*`. The integration boundary checker independently
+  rejects repository-module mocks in those files.
 
 Examples:
 
@@ -128,10 +155,9 @@ The dedicated `Mobile Integration Tests` workflow runs on relevant changes to `d
 
 The job is pinned to the trusted `mobile-local` macOS self-hosted runner. It
 does not execute fork pull-request code on that machine. The persistent runner
-workspace retains Yarn downloads, install state, `node_modules`, and Jest
-transform output while cleaning other untracked files; `yarn install
---immutable` remains responsible for reconciling those caches with the current
-lockfile.
+workspace retains Yarn's download cache and the dedicated Jest transform
+cache while cleaning other untracked files; `yarn install --immutable`
+reconstructs and verifies dependency state against the current lockfile.
 
 It performs:
 
