@@ -1,100 +1,73 @@
+import { createHomeBalanceRefreshAfterAccountMutation } from './homeBalanceRefreshCoordinator';
+
 type Deferred<T> = {
   promise: Promise<T>;
   resolve: (value: T) => void;
 };
 
-const createDeferred = <T>(): Deferred<T> => {
+function createDeferred<T>(): Deferred<T> {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>(nextResolve => {
     resolve = nextResolve;
   });
+  return { promise, resolve };
+}
 
-  return {
-    promise,
-    resolve,
-  };
-};
+describe('createHomeBalanceRefreshAfterAccountMutation', () => {
+  it('resolves the address selection after current balance refresh', async () => {
+    const balanceRefresh = createDeferred<void>();
+    let selectedAddresses = ['0x1111', '0x2222'];
+    const refresh24hAssets = jest.fn().mockResolvedValue(undefined);
+    const refreshDayCurve = jest.fn().mockResolvedValue(undefined);
+    const refresh = createHomeBalanceRefreshAfterAccountMutation({
+      fetchCurrentBalance: () => balanceRefresh.promise,
+      getSelectedAddresses: () => selectedAddresses,
+      refresh24hAssets,
+      refreshDayCurve,
+    });
 
-describe('refreshHomeBalanceAfterAccountMutation', () => {
-  const mockFetchTotalBalance = jest.fn();
-  const mockRefresh24hAssets = jest.fn();
-  const mockRefreshDayCurve = jest.fn();
-  const selectedAddresses = ['0x1111', '0x2222'];
+    const refreshPromise = refresh();
+    selectedAddresses = ['0x1111'];
 
-  beforeEach(() => {
-    jest.resetModules();
-    jest.clearAllMocks();
+    expect(refresh24hAssets).not.toHaveBeenCalled();
+    expect(refreshDayCurve).not.toHaveBeenCalled();
 
-    jest.doMock('./balance', () => ({
-      __esModule: true,
-      default: {
-        fetchTotalBalance: (...args: unknown[]) =>
-          mockFetchTotalBalance(...args),
-      },
-      balanceAccountsStore: {
-        getState: () => ({
-          selectedAddresses,
-        }),
-      },
-    }));
-    jest.doMock('./balance24h', () => ({
-      scene24hBalanceStore: {
-        refresh24hAssets: (...args: unknown[]) => mockRefresh24hAssets(...args),
-      },
-    }));
-    jest.doMock('./curve24h', () => ({
-      refreshDayCurve: (...args: unknown[]) => mockRefreshDayCurve(...args),
-    }));
-  });
-
-  it('refreshes current balance before refreshing the resolved 24h selection', async () => {
-    const balanceRefresh = createDeferred<Record<string, unknown>>();
-    mockFetchTotalBalance.mockReturnValue(balanceRefresh.promise);
-    mockRefresh24hAssets.mockResolvedValue(undefined);
-    mockRefreshDayCurve.mockResolvedValue(undefined);
-
-    const { refreshHomeBalanceAfterAccountMutation } =
-      require('./homeBalanceRefresh') as typeof import('./homeBalanceRefresh');
-
-    const refreshPromise = refreshHomeBalanceAfterAccountMutation();
-
-    expect(mockFetchTotalBalance).toHaveBeenCalledWith('from_api');
-    expect(mockRefresh24hAssets).not.toHaveBeenCalled();
-    expect(mockRefreshDayCurve).not.toHaveBeenCalled();
-
-    balanceRefresh.resolve({});
+    balanceRefresh.resolve();
     await refreshPromise;
 
-    expect(mockRefresh24hAssets).toHaveBeenCalledWith({
-      addresses: selectedAddresses,
+    expect(refresh24hAssets).toHaveBeenCalledWith({
+      addresses: ['0x1111'],
       force: true,
       reason: 'manual_refresh',
     });
-    expect(mockRefreshDayCurve).toHaveBeenCalledWith({
-      addresses: selectedAddresses,
+    expect(refreshDayCurve).toHaveBeenCalledWith({
+      addresses: ['0x1111'],
       force: true,
       reason: 'manual_refresh',
     });
   });
 
-  it('coalesces overlapping post-mutation refreshes', async () => {
-    const balanceRefresh = createDeferred<Record<string, unknown>>();
-    mockFetchTotalBalance.mockReturnValue(balanceRefresh.promise);
-    mockRefresh24hAssets.mockResolvedValue(undefined);
-    mockRefreshDayCurve.mockResolvedValue(undefined);
+  it('coalesces overlapping refreshes', async () => {
+    const balanceRefresh = createDeferred<void>();
+    const fetchCurrentBalance = jest.fn(() => balanceRefresh.promise);
+    const refresh24hAssets = jest.fn().mockResolvedValue(undefined);
+    const refreshDayCurve = jest.fn().mockResolvedValue(undefined);
+    const refresh = createHomeBalanceRefreshAfterAccountMutation({
+      fetchCurrentBalance,
+      getSelectedAddresses: () => ['0x1111'],
+      refresh24hAssets,
+      refreshDayCurve,
+    });
 
-    const { refreshHomeBalanceAfterAccountMutation } =
-      require('./homeBalanceRefresh') as typeof import('./homeBalanceRefresh');
+    const firstRefresh = refresh();
+    const secondRefresh = refresh();
 
-    const firstRefresh = refreshHomeBalanceAfterAccountMutation();
-    const secondRefresh = refreshHomeBalanceAfterAccountMutation();
+    expect(fetchCurrentBalance).toHaveBeenCalledTimes(1);
 
-    expect(mockFetchTotalBalance).toHaveBeenCalledTimes(1);
-
-    balanceRefresh.resolve({});
+    balanceRefresh.resolve();
     await Promise.all([firstRefresh, secondRefresh]);
 
-    expect(mockRefresh24hAssets).toHaveBeenCalledTimes(1);
-    expect(mockRefreshDayCurve).toHaveBeenCalledTimes(1);
+    expect(refresh24hAssets).toHaveBeenCalledTimes(1);
+    expect(refreshDayCurve).toHaveBeenCalledTimes(1);
   });
 });
