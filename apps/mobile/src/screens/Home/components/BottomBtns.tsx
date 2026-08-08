@@ -35,10 +35,7 @@ import RcIconApprovalCC from '@/assets2024/singleHome/approvals-cc.svg';
 import RcIconQueueCC from '@/assets2024/singleHome/queue-cc.svg';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
-import {
-  beginFeatureActivation,
-  markFeatureActivation,
-} from '@/core/utils/featureActivationDiagnostics';
+import { enterSingleAddressTransactionFeature } from '../transactionFeatureEntry';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -112,23 +109,15 @@ export const BottomBtns = ({
       title: t('page.home.services.bridge'),
       Icon: RcIconBridge,
       onPress: async () => {
-        if (!currentAccount) {
-          return;
-        }
-        const cycleId = beginFeatureActivation('bridge', 'home_bridge_press');
-        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-        markFeatureActivation('bridge', 'context-ready', {
-          cycleId,
-          reason: 'scene_account_switched',
-        });
-        markFeatureActivation('bridge', 'navigation-dispatched', {
-          cycleId,
-          reason: 'home_navigation_push',
-        });
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.SwapBridge,
-          params: {
-            activeTab: 'bridge',
+        await enterSingleAddressTransactionFeature('bridge', currentAccount, {
+          switchSceneCurrentAccount: account =>
+            switchSceneCurrentAccount('MakeTransactionAbout', account),
+          navigateToSend: () => navigateToSendPolyScreen(true),
+          navigateToSwapBridge: activeTab => {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.SwapBridge,
+              params: { activeTab },
+            });
           },
         });
       },
@@ -177,39 +166,28 @@ export const BottomBtns = ({
       : []),
   ];
   const handleSend = async () => {
-    if (!currentAccount) {
-      return;
-    }
-    const cycleId = beginFeatureActivation('send', 'home_send_press');
-    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    markFeatureActivation('send', 'context-ready', {
-      cycleId,
-      reason: 'scene_account_switched',
+    await enterSingleAddressTransactionFeature('send', currentAccount, {
+      switchSceneCurrentAccount: account =>
+        switchSceneCurrentAccount('MakeTransactionAbout', account),
+      navigateToSend: () => navigateToSendPolyScreen(true),
+      navigateToSwapBridge: activeTab => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.SwapBridge,
+          params: { activeTab },
+        });
+      },
     });
-    markFeatureActivation('send', 'navigation-dispatched', {
-      cycleId,
-      reason: 'home_navigation_push',
-    });
-    navigateToSendPolyScreen(true);
   };
   const handleSwap = async () => {
-    if (!currentAccount) {
-      return;
-    }
-    const cycleId = beginFeatureActivation('swap', 'home_swap_press');
-    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    markFeatureActivation('swap', 'context-ready', {
-      cycleId,
-      reason: 'scene_account_switched',
-    });
-    markFeatureActivation('swap', 'navigation-dispatched', {
-      cycleId,
-      reason: 'home_navigation_push',
-    });
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.SwapBridge,
-      params: {
-        activeTab: 'swap',
+    await enterSingleAddressTransactionFeature('swap', currentAccount, {
+      switchSceneCurrentAccount: account =>
+        switchSceneCurrentAccount('MakeTransactionAbout', account),
+      navigateToSend: () => navigateToSendPolyScreen(true),
+      navigateToSwapBridge: activeTab => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.SwapBridge,
+          params: { activeTab },
+        });
       },
     });
   };

@@ -68,6 +68,7 @@ const keyring = {
   getKeyringVaultDebugStateSnapshot: 'startup-critical',
   getKeyringsByTypeSnapshot: 'startup-critical',
   getPublicAccountSnapshotAccounts: 'startup-critical',
+  hasPersistedKeyringPublicAccountSnapshot: 'startup-critical',
   hasKeyringInstanceSnapshot: 'startup-critical',
   hasKeyringPublicAccountSnapshot: 'startup-critical',
   isKeyringBootedSnapshot: 'startup-critical',

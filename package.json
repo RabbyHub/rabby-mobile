@@ -39,6 +39,7 @@
     "start": "cd apps/mobile && yarn start",
     "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
     "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
+    "test:integration": "yarn workspace rabby-mobile test:integration:ci",
     "test:mergeVault": "yarn workspace @rabby-wallet/service-keyring  test:mergeVault",
     "test:verbose": "yarn workspaces foreach --parallel --verbose run test:verbose",
     "update-readme-content": "ts-node scripts/update-readme-content.ts"

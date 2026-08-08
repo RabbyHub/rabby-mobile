@@ -25,6 +25,7 @@ import AutoLockView from './components/AutoLockView';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { useAppUnlocked } from './hooks/useLock';
+import { resolveWalletEntryDestination } from './core/utils/walletEntryState';
 
 import type {
   AccountNavigatorParamList,
@@ -432,18 +433,22 @@ export default function AppNavigation() {
     isAppUnlocked,
     isUnlockSessionValid,
     hasVisibleAccounts,
-    hasStoredKeyrings,
+    accountState,
   } = useAppUnlocked();
   const homePostStartupReady = useHomePostStartupReady();
-  const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
-
-  const initialRouteName = hasVisibleAccounts
-    ? canSkipInitialUnlock
+  const entryDestination = resolveWalletEntryDestination({
+    accountState,
+    isAppUnlocked,
+    isUnlockSessionValid,
+  });
+  const initialRouteName =
+    entryDestination === 'Home'
       ? RootNames.StackRoot
-      : RootNames.Unlock
-    : isAppUnlocked || !hasStoredKeyrings
-    ? RootNames.StackGetStarted
-    : RootNames.Unlock;
+      : entryDestination === 'Unlock'
+      ? RootNames.Unlock
+      : entryDestination === 'GetStarted'
+      ? RootNames.StackGetStarted
+      : undefined;
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
   const shouldRenderPostUnlockGlobals =

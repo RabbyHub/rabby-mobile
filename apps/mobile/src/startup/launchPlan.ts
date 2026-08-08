@@ -2,6 +2,7 @@ import './launchTasks';
 
 import { registerCoreServiceLoaderCatalog } from '@/core/serviceApi/serviceLoaderCatalog';
 import { advanceStartupPhase } from './phaseRegistry';
+import { createLaunchPhaseController } from './launchPhaseController';
 import { markStartupModuleLoaded } from './runtimeDiagnostics';
 import { startStartupPerformanceRecording } from './performance/recorder';
 
@@ -14,7 +15,9 @@ markStartupModuleLoaded({
   reason: 'static launch orchestration module',
 });
 
-export function startLaunchPhase(reason = 'app_mounted') {
-  startStartupPerformanceRecording(reason);
-  advanceStartupPhase('launch', reason);
-}
+const launchPhaseController = createLaunchPhaseController({
+  advanceStartupPhase,
+  startPerformanceRecording: startStartupPerformanceRecording,
+});
+
+export const startLaunchPhase = launchPhaseController.startLaunchPhase;
