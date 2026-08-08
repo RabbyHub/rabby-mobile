@@ -22,6 +22,7 @@ function createDeferred(): Deferred {
 function createHomeDataModel(initialAccounts: AccountAsset[]) {
   let accounts = initialAccounts;
   let selectedAddresses = initialAccounts.map(account => account.address);
+  let requestedAddresses: string[] | null = null;
   let currentBalance = 0;
   let change24hPercent: number | null = null;
   let curveAddresses: string[] = [];
@@ -32,11 +33,15 @@ function createHomeDataModel(initialAccounts: AccountAsset[]) {
     fetchCurrentBalance: async () => {
       events.push('balance:start');
       await balanceGate.promise;
-      selectedAddresses = accounts.map(account => account.address);
-      currentBalance = accounts.reduce(
-        (total, account) => total + account.balance,
-        0,
+      const availableAddresses = new Set(
+        accounts.map(account => account.address),
       );
+      selectedAddresses = (
+        requestedAddresses || [...availableAddresses]
+      ).filter(address => availableAddresses.has(address));
+      currentBalance = accounts
+        .filter(account => selectedAddresses.includes(account.address))
+        .reduce((total, account) => total + account.balance, 0);
       events.push('balance:published');
     },
     getSelectedAddresses: () => selectedAddresses,
@@ -68,6 +73,9 @@ function createHomeDataModel(initialAccounts: AccountAsset[]) {
     refresh,
     removeAccount(address: string) {
       accounts = accounts.filter(account => account.address !== address);
+    },
+    selectAddresses(addresses: string[]) {
+      requestedAddresses = [...addresses];
     },
     releaseBalanceRefresh: balanceGate.resolve,
     getSnapshot: () => ({
@@ -112,6 +120,33 @@ describe('Home account data convergence integration', () => {
         'balance:published',
         '24h:0x1111',
         'curve:0x1111',
+      ],
+    });
+  });
+
+  it('publishes one address epoch when selection changes during an overlapping refresh', async () => {
+    const model = createHomeDataModel([
+      { address: '0x1111', balance: 100, balance24hAgo: 80 },
+      { address: '0x2222', balance: 50, balance24hAgo: 40 },
+    ]);
+
+    const firstRefresh = model.refresh();
+    model.selectAddresses(['0x2222']);
+    const overlappingRefresh = model.refresh();
+
+    model.releaseBalanceRefresh();
+    await Promise.all([firstRefresh, overlappingRefresh]);
+
+    expect(model.getSnapshot()).toEqual({
+      currentBalance: 50,
+      change24hPercent: 25,
+      selectedAddresses: ['0x2222'],
+      curveAddresses: ['0x2222'],
+      events: [
+        'balance:start',
+        'balance:published',
+        '24h:0x2222',
+        'curve:0x2222',
       ],
     });
   });
