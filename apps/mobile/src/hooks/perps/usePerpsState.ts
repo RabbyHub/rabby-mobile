@@ -57,7 +57,9 @@ interface SignAction {
   signature: string;
 }
 
-export const usePerpsState = () => {
+export const usePerpsState = (
+  options: { legacyRuntimeContinuationEnabled?: boolean } = {},
+) => {
   const [popupSate, setPopupState] = usePerpsPopupState();
   const { t } = useTranslation();
   const isFocused = useIsFocused();
@@ -551,7 +553,8 @@ export const usePerpsState = () => {
 
   useEnsurePerpsRuntime({
     legacyContinuation: legacyRuntimeContinuation,
-    legacyContinuationEnabled: isFocused,
+    legacyContinuationEnabled:
+      options.legacyRuntimeContinuationEnabled ?? isFocused,
   });
 
   const handleActionApproveStatus = useCallback(

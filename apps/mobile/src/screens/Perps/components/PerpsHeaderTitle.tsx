@@ -1,19 +1,17 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useLayoutEffect, useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { apiContact } from '@/core/apis';
 import type { Account } from '@/core/startupServices/preference';
 import { ellipsisAddress } from '@/utils/address';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
-import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { Text } from '@/components/Typography';
 import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
 import { PerpsModeSwitch } from '../../PerpsShared/components/PerpsModeSwitch';
+import { PerpsAccountTrigger } from '../../PerpsShared/components/PerpsAccountTrigger';
 
 const HEADER_HEIGHT = 58;
 
@@ -26,7 +24,7 @@ const PerpsHeaderContent: React.FC<{
   isModeSwitching: boolean;
   onSwitchToPro: () => void;
 }> = ({ account, isModeSwitching, onSwitchToPro }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
   const [popupState, setPopupState] = usePerpsPopupState();
 
@@ -59,34 +57,16 @@ const PerpsHeaderContent: React.FC<{
         <View style={styles.headerRight}>
           {account ? (
             <View style={styles.accountSelectorContainer}>
-              <TouchableOpacity
-                style={styles.accountSelector}
+              <PerpsAccountTrigger
+                expanded={popupState.isShowLoginPopup}
+                label={alias || ellipsisAddress(account.address)}
                 onPress={() => {
                   setPopupState(prev => ({
                     ...prev,
                     isShowLoginPopup: !prev.isShowLoginPopup,
                   }));
-                }}>
-                <WalletIcon
-                  width={18}
-                  height={18}
-                  type={account.brandName}
-                  address={account.address}
-                />
-                <Text style={styles.accountName} numberOfLines={1}>
-                  {alias || ellipsisAddress(account?.address)}
-                </Text>
-                <CaretArrowIconCC
-                  dir="down"
-                  style={[
-                    popupState.isShowLoginPopup ? styles.reverseCaret : null,
-                  ]}
-                  width={14}
-                  height={14}
-                  bgColor={colors2024['neutral-bg-5']}
-                  lineColor={colors2024['neutral-title-1']}
-                />
-              </TouchableOpacity>
+                }}
+              />
             </View>
           ) : null}
         </View>
@@ -149,30 +129,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
   },
   accountSelectorContainer: {
+    alignItems: 'flex-end',
     flex: 1,
     justifyContent: 'flex-end',
-  },
-  accountSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginLeft: 'auto',
-  },
-  accountName: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    color: colors2024['neutral-foot'],
-    flexShrink: 1,
-  },
-  reverseCaret: {
-    transform: [{ rotate: '180deg' }],
   },
 }));

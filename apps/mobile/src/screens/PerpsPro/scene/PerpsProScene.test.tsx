@@ -135,6 +135,10 @@ jest.mock('../components/header/PerpsProHeader', () => {
   };
 });
 
+jest.mock('../components/header/PerpsProAccountSelectorLayer', () => ({
+  PerpsProAccountSelectorLayer: () => null,
+}));
+
 jest.mock('../components/header/usePerpsProHeaderCollapse', () => ({
   usePerpsProHeaderCollapse: () => ({
     headerOpacity: 1,

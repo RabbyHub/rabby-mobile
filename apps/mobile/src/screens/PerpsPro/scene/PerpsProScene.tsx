@@ -33,6 +33,7 @@ import {
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
 import { usePerpsProDismissKeyboard } from '../components/common/usePerpsProDismissKeyboard';
 import { PerpsProHeader } from '../components/header/PerpsProHeader';
+import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
 import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
@@ -523,6 +524,7 @@ export const PerpsProScene: React.FC<{
         onSelect={scene.selectMarket}
         ref={marketSelectorRef}
       />
+      <PerpsProAccountSelectorLayer />
       {klineMounted && scene.currentMarket ? (
         <PerpsProKlineSheet
           enabled={scene.klineEnabled && appState === 'active'}
