@@ -113,7 +113,7 @@ platform(biz_data[:platform])
 skip_certificate_matching(false)
 skip_provisioning_profiles(false)
 profile_name(profile_name) if profile_name
-git_basic_authorization(ENV["MATCH_GIT_BASIC_AUTHORIZATION"]) if ENV['MATCH_GIT_BASIC_AUTHORIZATION']
+# fastlane reads MATCH_GIT_BASIC_AUTHORIZATION directly from the environment.
+# Do not declare it here: Matchfile's detected-values table can print the value.
 # values: mac_installer_distribution, developer_id_installer
 # additional_cert_types([additional_cert_type]) if additional_cert_type
-
