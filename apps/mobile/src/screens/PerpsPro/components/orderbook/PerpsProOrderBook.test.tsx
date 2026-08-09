@@ -241,6 +241,51 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('31.34')).toBeTruthy();
   });
 
+  it('forwards the raw latest trade price only when explicit selection is enabled', () => {
+    const onSelectPrice = jest.fn();
+    const latestTrade = {
+      coin: 'BTC',
+      price: '31.3314',
+      side: 'buy' as const,
+      size: '1',
+      tid: 1,
+      time: 100,
+    };
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={latestTrade}
+        market={buildPerpsProMarket(marketData)}
+        onSelectPrice={onSelectPrice}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-order-book-latest-price'));
+    expect(onSelectPrice).toHaveBeenCalledWith('31.3314');
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={latestTrade}
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-order-book-latest-price'));
+    expect(onSelectPrice).toHaveBeenCalledTimes(1);
+  });
+
   it('grows to the measured trade height and retains the center block in single mode', () => {
     render(
       <PerpsProOrderBook

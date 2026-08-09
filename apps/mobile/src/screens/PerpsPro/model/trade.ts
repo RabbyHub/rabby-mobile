@@ -33,6 +33,13 @@ export interface PerpsProResolvedTradeAmount {
   quoteAmount: string;
 }
 
+export type PerpsProReduceOnlyAvailability = {
+  buyDisabled: boolean;
+  checkboxDisabled: boolean;
+  hasPosition: boolean;
+  sellDisabled: boolean;
+};
+
 export type PerpsProConditionalClassification = 'sl' | 'tp';
 
 const decimal = (value: unknown) => {
@@ -40,6 +47,30 @@ const decimal = (value: unknown) => {
     (value as string | number | null | undefined) ?? Number.NaN,
   );
   return result.isFinite() ? result : null;
+};
+
+export const getPerpsProReduceOnlyAvailability = ({
+  currentPositionSize,
+  isUserDataReady,
+  reduceOnly,
+}: {
+  currentPositionSize: string | null | undefined;
+  isUserDataReady: boolean;
+  reduceOnly: boolean;
+}): PerpsProReduceOnlyAvailability => {
+  const position = decimal(currentPositionSize);
+  const hasPosition = !!position && !position.isZero();
+  const canBuyToReduce =
+    isUserDataReady && hasPosition && !!position?.isNegative();
+  const canSellToReduce =
+    isUserDataReady && hasPosition && !!position?.isPositive();
+
+  return {
+    buyDisabled: reduceOnly && !canBuyToReduce,
+    checkboxDisabled: !isUserDataReady || !hasPosition,
+    hasPosition,
+    sellDisabled: reduceOnly && !canSellToReduce,
+  };
 };
 
 export const sanitizePerpsProDecimalInput = (

@@ -128,6 +128,12 @@ const controller = (
     patchForm: jest.fn(),
     pending: false,
     percentage: 0,
+    reduceOnlyAvailability: {
+      buyDisabled: false,
+      checkboxDisabled: false,
+      hasPosition: true,
+      sellDisabled: false,
+    },
     requestReview: jest.fn(),
     resolvedAmount: null,
     setAmount: jest.fn(),
@@ -361,5 +367,40 @@ describe('PerpsProTradeForm order matrix', () => {
       attachedTpSl: { ...attachedTpSl, enabled: false },
       reduceOnly: true,
     });
+  });
+
+  it('disables the unavailable Reduce Only direction and empty-position checkbox', () => {
+    const trade = controller({ reduceOnly: true });
+    trade.reduceOnlyAvailability = {
+      buyDisabled: true,
+      checkboxDisabled: false,
+      hasPosition: true,
+      sellDisabled: false,
+    };
+    const view = render(
+      <PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-trade-button-buy').props.accessibilityState
+        .disabled,
+    ).toBe(true);
+    expect(
+      screen.getByTestId('perps-pro-trade-button-sell').props.accessibilityState
+        .disabled,
+    ).toBe(false);
+
+    trade.reduceOnlyAvailability = {
+      buyDisabled: false,
+      checkboxDisabled: true,
+      hasPosition: false,
+      sellDisabled: false,
+    };
+    view.rerender(
+      <PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />,
+    );
+    expect(screen.getAllByRole('checkbox')[1].props.accessibilityState).toEqual(
+      expect.objectContaining({ disabled: true }),
+    );
   });
 });

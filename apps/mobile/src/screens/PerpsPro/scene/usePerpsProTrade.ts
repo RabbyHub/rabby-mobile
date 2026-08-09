@@ -59,6 +59,7 @@ import {
 import {
   createPerpsProTradeFormState,
   getPerpsProAmountInputDecimals,
+  getPerpsProReduceOnlyAvailability,
   getPerpsProTradeExecutionPrice,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
@@ -139,6 +140,7 @@ export const usePerpsProTrade = ({
         )?.position ?? null,
       hasOpenOrders:
         !!tradeCoin && state.openOrders.some(order => order.coin === tradeCoin),
+      isUserDataReady: state.isUserDataReady,
     })),
   );
   const [form, setForm] = useState(() =>
@@ -261,8 +263,8 @@ export const usePerpsProTrade = ({
       amount: '',
       attachedTpSl: clearPerpsProTpSlForMarketChange(current.attachedTpSl),
       bboEnabled: false,
-      conditionalLimitPrice: market?.marketData.markPx ?? '',
-      limitPrice: market?.marketData.markPx ?? '',
+      conditionalLimitPrice: '',
+      limitPrice: '',
       triggerPrice: '',
     }));
     setReview(null);
@@ -340,6 +342,20 @@ export const usePerpsProTrade = ({
       });
     },
     [market?.marketData.pxDecimals, patchForm],
+  );
+  const selectManualLimitPrice = useCallback(
+    (price: string, sourceMarketKey: string) => {
+      if (
+        !positive(price) ||
+        form.orderType !== 'limit' ||
+        form.bboEnabled ||
+        sourceMarketKey !== currentMarketKeyRef.current
+      ) {
+        return;
+      }
+      setPrice('limitPrice', price);
+    },
+    [form.bboEnabled, form.orderType, setPrice],
   );
   const setOrderType = useCallback(
     (orderType: PerpsProTradeOrderType) => {
@@ -485,6 +501,35 @@ export const usePerpsProTrade = ({
       }),
     [bboPrices, form.bboStrategy],
   );
+  const reduceOnlyAvailability = useMemo(
+    () =>
+      getPerpsProReduceOnlyAvailability({
+        currentPositionSize: currentPosition?.szi,
+        isUserDataReady: accountFacts.isUserDataReady,
+        reduceOnly: form.reduceOnly,
+      }),
+    [accountFacts.isUserDataReady, currentPosition?.szi, form.reduceOnly],
+  );
+
+  useEffect(() => {
+    if (
+      !accountFacts.isUserDataReady ||
+      !market?.marketKey ||
+      !form.reduceOnly ||
+      reduceOnlyAvailability.hasPosition
+    ) {
+      return;
+    }
+    setForm(current =>
+      current.reduceOnly ? { ...current, reduceOnly: false } : current,
+    );
+  }, [
+    accountFacts.isUserDataReady,
+    form.reduceOnly,
+    market?.marketKey,
+    reduceOnlyAvailability.hasPosition,
+  ]);
+
   const getSideExecutionPrice = useCallback(
     (side: PerpsProTradeSide) =>
       getPerpsProTradeExecutionPrice({
@@ -497,18 +542,26 @@ export const usePerpsProTrade = ({
   const getMaxBase = useCallback(
     (side: PerpsProTradeSide) => {
       if (form.reduceOnly) {
-        const positionSize = new BigNumber(currentPosition?.szi ?? 0);
-        const reduces =
-          (side === 'buy' && positionSize.lt(0)) ||
-          (side === 'sell' && positionSize.gt(0));
-        return reduces ? positionSize.abs() : new BigNumber(0);
+        const sideDisabled =
+          side === 'buy'
+            ? reduceOnlyAvailability.buyDisabled
+            : reduceOnlyAvailability.sellDisabled;
+        return sideDisabled
+          ? new BigNumber(0)
+          : new BigNumber(currentPosition?.szi ?? 0).abs();
       }
       return (
         positive(scopedActiveAssetData?.maxTradeSzs[side === 'buy' ? 0 : 1]) ??
         new BigNumber(0)
       );
     },
-    [currentPosition?.szi, form.reduceOnly, scopedActiveAssetData?.maxTradeSzs],
+    [
+      currentPosition?.szi,
+      form.reduceOnly,
+      reduceOnlyAvailability.buyDisabled,
+      reduceOnlyAvailability.sellDisabled,
+      scopedActiveAssetData?.maxTradeSzs,
+    ],
   );
   const getMaxDisplayAmount = useCallback(
     (side: PerpsProTradeSide) =>
@@ -740,12 +793,15 @@ export const usePerpsProTrade = ({
         const signedSize = positive(
           new BigNumber(currentPosition?.szi ?? 0).abs(),
         );
-        const reduces =
-          signedSize &&
-          ((new BigNumber(currentPosition?.szi ?? 0).gt(0) &&
-            side === 'sell') ||
-            (new BigNumber(currentPosition?.szi ?? 0).lt(0) && side === 'buy'));
-        if (!reduces || new BigNumber(command.baseSize).gt(signedSize!)) {
+        const sideDisabled =
+          side === 'buy'
+            ? reduceOnlyAvailability.buyDisabled
+            : reduceOnlyAvailability.sellDisabled;
+        if (
+          sideDisabled ||
+          !signedSize ||
+          new BigNumber(command.baseSize).gt(signedSize)
+        ) {
           throw new Error(t('page.perps.pro.trade.reduceOnlyUnavailable'));
         }
       }
@@ -828,6 +884,8 @@ export const usePerpsProTrade = ({
       leverage,
       marginMode,
       market,
+      reduceOnlyAvailability.buyDisabled,
+      reduceOnlyAvailability.sellDisabled,
       setTpSlSubmitErrors,
       t,
     ],
@@ -1266,6 +1324,7 @@ export const usePerpsProTrade = ({
     patchForm,
     pending,
     percentage,
+    reduceOnlyAvailability,
     requestReview,
     resolvedAmount,
     review,
@@ -1276,6 +1335,7 @@ export const usePerpsProTrade = ({
     setOrderType,
     setPercentage,
     setPrice,
+    selectManualLimitPrice,
     setSkipConfirmation,
     setTif: (tif: PerpsProTradeTif) => patchForm({ tif }),
     skipConfirmation,

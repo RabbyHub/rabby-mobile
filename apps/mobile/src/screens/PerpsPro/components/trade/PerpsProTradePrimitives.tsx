@@ -136,7 +136,8 @@ export const PerpsProTradeButton: React.FC<{
         styles.tradeButton,
         side === 'buy' ? styles.buyButton : styles.sellButton,
         disabled ? styles.disabled : null,
-      ]}>
+      ]}
+      testID={`perps-pro-trade-button-${side}`}>
       <Text style={styles.tradeButtonText}>{label}</Text>
     </Pressable>
   );

@@ -12,6 +12,7 @@ const mockPerpsState = {
     crossMarginSummary: { accountValue: '1000' },
   },
   currentPerpsAccount: mockAccount,
+  isUserDataReady: true,
   openOrders: [],
 };
 const mockGetSkipConfirmation = jest.fn(async () => true);
@@ -161,7 +162,71 @@ const activeAssetData = {
 };
 
 describe('usePerpsProTrade attached TP/SL execution integration', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPerpsState.isUserDataReady = true;
+  });
+
+  it('keeps Limit prices empty until an explicit current-market selection', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    expect(hook.result.current.form.limitPrice).toBe('');
+    expect(hook.result.current.form.conditionalLimitPrice).toBe('');
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.form.limitPrice).toBe('');
+
+    act(() =>
+      hook.result.current.selectManualLimitPrice('101.234', market.marketKey),
+    );
+    expect(hook.result.current.form.limitPrice).toBe('101.23');
+
+    act(() => hook.result.current.patchForm({ bboEnabled: true }));
+    act(() =>
+      hook.result.current.selectManualLimitPrice('99', market.marketKey),
+    );
+    expect(hook.result.current.form.limitPrice).toBe('101.23');
+  });
+
+  it('resets Reduce Only only after ready confirms no current position', () => {
+    mockPerpsState.isUserDataReady = false;
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.patchForm({ reduceOnly: true }));
+    expect(hook.result.current.form.reduceOnly).toBe(true);
+    expect(hook.result.current.reduceOnlyAvailability.checkboxDisabled).toBe(
+      true,
+    );
+
+    mockPerpsState.isUserDataReady = true;
+    hook.rerender(undefined);
+    expect(hook.result.current.form.reduceOnly).toBe(false);
+  });
 
   it('preserves a quote source through lossy base-unit round trips', () => {
     const roundingMarket = {
@@ -482,7 +547,8 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.setOrderType('conditional'));
     expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
     act(() => hook.result.current.patchForm({ reduceOnly: true }));
-    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBeNull();
+    expect(hook.result.current.form.reduceOnly).toBe(false);
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
   });
 
   it('does not carry an applied leverage override across accounts', async () => {

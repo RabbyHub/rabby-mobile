@@ -223,6 +223,7 @@ export const PerpsProTradeForm: React.FC<{
         <View style={styles.optionRow}>
           <PerpsProTradeCheckbox
             checked={form.reduceOnly}
+            disabled={controller.reduceOnlyAvailability.checkboxDisabled}
             label={t('page.perps.pro.trade.reduceOnly')}
             onPress={() => {
               const reduceOnly = !form.reduceOnly;
@@ -288,7 +289,12 @@ export const PerpsProTradeForm: React.FC<{
                 />
               </View>
               <PerpsProTradeButton
-                disabled={controller.pending}
+                disabled={
+                  controller.pending ||
+                  (side === 'buy'
+                    ? controller.reduceOnlyAvailability.buyDisabled
+                    : controller.reduceOnlyAvailability.sellDisabled)
+                }
                 label={t(
                   `page.perps.pro.trade.${
                     side === 'buy' ? 'buyLong' : 'sellShort'

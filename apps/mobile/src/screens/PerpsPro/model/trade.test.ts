@@ -1,5 +1,6 @@
 import {
   createPerpsProTradeFormState,
+  getPerpsProReduceOnlyAvailability,
   inferPerpsProConditionalClassification,
   isPerpsProTradeCombinationSupported,
   resolvePerpsProDisplayAmount,
@@ -8,6 +9,40 @@ import {
 } from './trade';
 
 describe('Perps Pro trade model', () => {
+  it.each([
+    [true, '2', false, true, false],
+    [true, '-2', false, false, true],
+    [true, '0', true, true, true],
+    [false, '-2', true, true, true],
+  ] as const)(
+    'derives Reduce Only availability for ready=%s and szi=%s',
+    (
+      isUserDataReady,
+      currentPositionSize,
+      checkboxDisabled,
+      buyDisabled,
+      sellDisabled,
+    ) => {
+      expect(
+        getPerpsProReduceOnlyAvailability({
+          currentPositionSize,
+          isUserDataReady,
+          reduceOnly: true,
+        }),
+      ).toMatchObject({ buyDisabled, checkboxDisabled, sellDisabled });
+    },
+  );
+
+  it('does not disable normal order directions without Reduce Only', () => {
+    expect(
+      getPerpsProReduceOnlyAvailability({
+        currentPositionSize: null,
+        isUserDataReady: true,
+        reduceOnly: false,
+      }),
+    ).toMatchObject({ buyDisabled: false, sellDisabled: false });
+  });
+
   it.each([
     [true, '101', 'sl'],
     [true, '99', 'tp'],

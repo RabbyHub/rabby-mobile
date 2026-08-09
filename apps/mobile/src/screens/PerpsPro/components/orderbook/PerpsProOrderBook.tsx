@@ -163,18 +163,28 @@ export const PerpsProOrderBook: React.FC<{
                 <View
                   style={[styles.midPrice, { height: layout.middleHeight }]}
                   testID="perps-pro-order-book-mid-price">
-                  <Text
-                    numberOfLines={1}
-                    style={
-                      latestTrade?.side === 'sell'
-                        ? styles.latestSell
-                        : styles.latestBuy
-                    }>
-                    {formatPerpsProPrice(
-                      latestTrade?.price,
-                      marketPriceDecimals,
-                    )}
-                  </Text>
+                  <Pressable
+                    accessibilityRole={
+                      latestTrade && onSelectPrice ? 'button' : undefined
+                    }
+                    disabled={!latestTrade || !onSelectPrice}
+                    onPress={() =>
+                      latestTrade && onSelectPrice?.(latestTrade.price)
+                    }
+                    testID="perps-pro-order-book-latest-price">
+                    <Text
+                      numberOfLines={1}
+                      style={
+                        latestTrade?.side === 'sell'
+                          ? styles.latestSell
+                          : styles.latestBuy
+                      }>
+                      {formatPerpsProPrice(
+                        latestTrade?.price,
+                        marketPriceDecimals,
+                      )}
+                    </Text>
+                  </Pressable>
                   <PerpsProDottedUnderlineText
                     containerStyle={styles.markPriceUnderline}
                     style={styles.markPrice}>
@@ -192,18 +202,28 @@ export const PerpsProOrderBook: React.FC<{
                 <View
                   style={[styles.midPrice, { height: layout.middleHeight }]}
                   testID="perps-pro-order-book-mid-price">
-                  <Text
-                    numberOfLines={1}
-                    style={
-                      latestTrade?.side === 'sell'
-                        ? styles.latestSell
-                        : styles.latestBuy
-                    }>
-                    {formatPerpsProPrice(
-                      latestTrade?.price,
-                      marketPriceDecimals,
-                    )}
-                  </Text>
+                  <Pressable
+                    accessibilityRole={
+                      latestTrade && onSelectPrice ? 'button' : undefined
+                    }
+                    disabled={!latestTrade || !onSelectPrice}
+                    onPress={() =>
+                      latestTrade && onSelectPrice?.(latestTrade.price)
+                    }
+                    testID="perps-pro-order-book-latest-price">
+                    <Text
+                      numberOfLines={1}
+                      style={
+                        latestTrade?.side === 'sell'
+                          ? styles.latestSell
+                          : styles.latestBuy
+                      }>
+                      {formatPerpsProPrice(
+                        latestTrade?.price,
+                        marketPriceDecimals,
+                      )}
+                    </Text>
+                  </Pressable>
                   <PerpsProDottedUnderlineText
                     containerStyle={styles.markPriceUnderline}
                     style={styles.markPrice}>
