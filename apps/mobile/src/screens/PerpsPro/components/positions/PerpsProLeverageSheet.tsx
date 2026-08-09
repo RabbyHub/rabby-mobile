@@ -3,12 +3,6 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
-  BOTTOM_BUTTON_TOP_OFFSET,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -17,6 +11,9 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
+
+// Figma 80481:14828 is a documented compact sheet action special case.
+const PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT = 36;
 
 export const PerpsProLeverageSheet: React.FC<{
   currentLeverage: number;
@@ -57,16 +54,17 @@ export const PerpsProLeverageSheet: React.FC<{
 
     return (
       <AppBottomSheetModal
+        enablePanDownToClose={!pending}
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
           linearGradientType: 'bg1',
         })}
         onDismiss={onClose}
-        snapPoints={[340]}>
+        snapPoints={[288]}>
         <BottomSheetView style={styles.sheetView}>
           <AutoLockView style={styles.container}>
-            <View style={styles.titleRow}>
+            <View style={styles.titleGroup}>
               <Text style={styles.title}>
                 {t('page.perps.pro.positions.adjustLeverage')}
               </Text>
@@ -81,7 +79,8 @@ export const PerpsProLeverageSheet: React.FC<{
                 accessibilityRole="button"
                 disabled={pending || value <= 1}
                 onPress={decrement}
-                style={styles.stepButton}>
+                style={styles.stepButton}
+                testID="perps-pro-leverage-decrement">
                 <View style={styles.minus} />
               </Pressable>
               <Text style={styles.value}>{value}x</Text>
@@ -89,7 +88,8 @@ export const PerpsProLeverageSheet: React.FC<{
                 accessibilityRole="button"
                 disabled={pending || value >= safeMax}
                 onPress={increment}
-                style={styles.stepButton}>
+                style={styles.stepButton}
+                testID="perps-pro-leverage-increment">
                 <View style={styles.plusHorizontal} />
                 <View style={styles.plusVertical} />
               </Pressable>
@@ -97,26 +97,26 @@ export const PerpsProLeverageSheet: React.FC<{
             <View style={styles.sliderSection}>
               <PerpsProSlider
                 disabled={pending}
+                hideMinimumPoint
                 maximumValue={safeMax}
                 minimumValue={1}
                 onValueChange={next => setValue(Math.round(next))}
+                pointCount={5}
                 step={1}
+                tone="neutral"
                 value={value}
               />
-              <View style={styles.sliderLabels}>
-                <Text style={styles.sliderLabel}>1x</Text>
-                <Text style={styles.sliderLabel}>{safeMax}x</Text>
-              </View>
             </View>
             <View style={styles.footer}>
               <Button
-                disabled={value === safeCurrent || pending}
-                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                disabled={pending}
+                height={PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT}
                 loading={pending}
                 onPress={() => onConfirm(value)}
                 title={t('global.confirm')}
-                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-                type="hyperliquid"
+                titleStyle={styles.buttonTitle}
+                testID="perps-pro-leverage-confirm"
+                type="primary"
               />
             </View>
           </AutoLockView>
@@ -134,88 +134,82 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   container: {
     height: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     paddingTop: 8,
   },
-  titleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  titleGroup: {
+    gap: 8,
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontFamily: 'SF Pro',
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 24,
+    lineHeight: 20,
   },
   maximum: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   inputRow: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-5'],
+    borderRadius: 6,
     flexDirection: 'row',
-    height: 56,
+    height: 40,
     justifyContent: 'space-between',
-    marginTop: 24,
+    marginTop: 16,
     paddingHorizontal: 8,
   },
   stepButton: {
     alignItems: 'center',
-    height: 40,
+    height: 24,
     justifyContent: 'center',
     position: 'relative',
-    width: 40,
+    width: 20,
   },
   minus: {
-    backgroundColor: colors2024['neutral-title-1'],
+    backgroundColor: colors2024['neutral-info'],
     borderRadius: 1,
-    height: 2,
-    width: 14,
+    height: 1.5,
+    width: 10,
   },
   plusHorizontal: {
-    backgroundColor: colors2024['neutral-title-1'],
+    backgroundColor: colors2024['neutral-info'],
     borderRadius: 1,
-    height: 2,
+    height: 1.5,
     position: 'absolute',
-    width: 14,
+    width: 10,
   },
   plusVertical: {
-    backgroundColor: colors2024['neutral-title-1'],
+    backgroundColor: colors2024['neutral-info'],
     borderRadius: 1,
-    height: 14,
+    height: 10,
     position: 'absolute',
-    width: 2,
+    width: 1.5,
   },
   value: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
+    flex: 1,
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    textAlign: 'center',
   },
   sliderSection: {
-    marginTop: 20,
-  },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  sliderLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
+    marginTop: 8,
   },
   footer: {
-    marginTop: 'auto',
-    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    marginTop: 32,
+    paddingBottom: Math.max(40, safeAreaInsets.bottom),
+  },
+  buttonTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
   },
 }));

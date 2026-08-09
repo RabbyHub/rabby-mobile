@@ -53,6 +53,16 @@ const createService = (storage: StorageAdapater) =>
     storageAdapter: storage,
   });
 
+const defaultTradePreferences = {
+  skipTradeConfirmationByOrderType: {
+    conditional: false,
+    limit: false,
+    market: false,
+  },
+  tradeAmountUnit: 'quote' as const,
+  tradeOrderType: 'market' as const,
+};
+
 describe('PerpsService Pro preferences', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -73,6 +83,8 @@ describe('PerpsService Pro preferences', () => {
     await expect(service.getSkipPerpsProLimitCloseConfirmation()).resolves.toBe(
       false,
     );
+    await expect(service.getPerpsProTradeAmountUnit()).resolves.toBe('quote');
+    await expect(service.getPerpsProTradeOrderType()).resolves.toBe('market');
   });
 
   it('round-trips the selected mode through the real persisted store', async () => {
@@ -86,6 +98,28 @@ describe('PerpsService Pro preferences', () => {
 
     const rehydratedService = createService(storage);
     await expect(rehydratedService.getPerpsViewMode()).resolves.toBe('pro');
+  });
+
+  it('round-trips Pro trade preferences without changing Position sizeUnit', async () => {
+    const { readPerpsStore, storage } = createMemoryStorage();
+    const service = createService(storage);
+
+    await service.setPerpsProTradeAmountUnit('base');
+    await service.setPerpsProTradeOrderType('conditional');
+    await service.setSkipPerpsProTradeConfirmation('conditional', true);
+    jest.advanceTimersByTime(1000);
+
+    const rehydratedService = createService(storage);
+    await expect(rehydratedService.getPerpsProTradeAmountUnit()).resolves.toBe(
+      'base',
+    );
+    await expect(rehydratedService.getPerpsProTradeOrderType()).resolves.toBe(
+      'conditional',
+    );
+    await expect(
+      rehydratedService.getSkipPerpsProTradeConfirmation('conditional'),
+    ).resolves.toBe(true);
+    expect(readPerpsStore()?.proPreferences).not.toHaveProperty('sizeUnit');
   });
 
   it.each([
@@ -171,10 +205,11 @@ describe('PerpsService Pro preferences', () => {
 
   it('reads a valid mode from a future schema without downgrading it', async () => {
     const futurePreferences = {
-      version: 6,
+      version: 7,
       viewMode: 'pro',
       activeInfoTab: 'positions',
       skipLimitCloseDoubleConfirmation: true,
+      ...defaultTradePreferences,
       sizeUnit: 'base',
       futureFlag: 'preserve-me',
     } satisfies PerpsProPreferences;
@@ -193,10 +228,11 @@ describe('PerpsService Pro preferences', () => {
   it('preserves future schema fields when writing a new mode', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
-        version: 6,
+        version: 7,
         viewMode: 'simple',
         activeInfoTab: 'openOrders',
         skipLimitCloseDoubleConfirmation: false,
+        ...defaultTradePreferences,
         sizeUnit: 'base',
         futureFlag: { enabled: true },
       },
@@ -207,16 +243,17 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 6,
+      version: 7,
       viewMode: 'pro',
       activeInfoTab: 'openOrders',
       skipLimitCloseDoubleConfirmation: false,
+      ...defaultTradePreferences,
       sizeUnit: 'base',
       futureFlag: { enabled: true },
     });
   });
 
-  it('migrates a V1 schema to V5 without losing unknown fields', async () => {
+  it('migrates a V1 schema to V6 without losing unknown fields', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 1,
@@ -231,15 +268,16 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 5,
+      version: 6,
       viewMode: 'simple',
       activeInfoTab: 'account',
       skipLimitCloseDoubleConfirmation: false,
+      ...defaultTradePreferences,
       legacyUnknown: 'preserve-me',
     });
   });
 
-  it('repairs an invalid schema to V5 only when the user writes a mode', async () => {
+  it('repairs an invalid schema to V6 only when the user writes a mode', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 0,
@@ -253,10 +291,11 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 5,
+      version: 6,
       viewMode: 'pro',
       activeInfoTab: 'account',
       skipLimitCloseDoubleConfirmation: false,
+      ...defaultTradePreferences,
     });
   });
 
@@ -277,10 +316,11 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 5,
+      version: 6,
       viewMode: 'pro',
       activeInfoTab: 'account',
       skipLimitCloseDoubleConfirmation: false,
+      ...defaultTradePreferences,
       legacyUnknown: { preserve: true },
     });
   });
@@ -295,14 +335,15 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 5,
+      version: 6,
       viewMode: 'simple',
       activeInfoTab: 'openOrders',
       skipLimitCloseDoubleConfirmation: false,
+      ...defaultTradePreferences,
     });
   });
 
-  it('normalizes an invalid V3 tab during the V5 migration', async () => {
+  it('normalizes an invalid V3 tab during the V6 migration', async () => {
     const { readPerpsStore, storage } = createMemoryStorage({
       proPreferences: {
         version: 3,
@@ -317,10 +358,11 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 5,
+      version: 6,
       viewMode: 'pro',
       activeInfoTab: 'account',
       skipLimitCloseDoubleConfirmation: false,
+      ...defaultTradePreferences,
       unknown: true,
     });
   });
@@ -336,10 +378,11 @@ describe('PerpsService Pro preferences', () => {
     jest.advanceTimersByTime(1000);
 
     expect(readPerpsStore()?.proPreferences).toEqual({
-      version: 5,
+      version: 6,
       viewMode: 'simple',
       activeInfoTab: 'account',
       skipLimitCloseDoubleConfirmation: true,
+      ...defaultTradePreferences,
     });
   });
 

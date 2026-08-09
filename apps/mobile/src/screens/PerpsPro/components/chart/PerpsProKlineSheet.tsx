@@ -200,7 +200,8 @@ export const PerpsProKlineSheet: React.FC<{
   enabled: boolean;
   market: PerpsProMarket;
   onClose: () => void;
-}> = ({ enabled, market, onClose }) => {
+  visible?: boolean;
+}> = ({ enabled, market, onClose, visible = true }) => {
   const { colors2024, styles: themedStyles } = useTheme2024({
     getStyle,
   });
@@ -219,8 +220,9 @@ export const PerpsProKlineSheet: React.FC<{
   );
 
   useEffect(() => {
-    modalRef.current?.present();
-  }, []);
+    if (visible) modalRef.current?.present();
+    else modalRef.current?.close();
+  }, [visible]);
 
   return (
     <AppBottomSheetModal

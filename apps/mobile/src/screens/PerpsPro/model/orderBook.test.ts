@@ -7,6 +7,7 @@ import {
   getPerpsOrderBookDisplayState,
   getPerpsOrderBookDepthPercent,
   getPerpsOrderBookModeIconState,
+  getPerpsOrderBookLayout,
   getPerpsOrderBookRowCount,
   getVisiblePerpsOrderBookMaxTotal,
   processPerpsOrderBook,
@@ -166,6 +167,21 @@ describe('Perps Pro order book model', () => {
     expect(
       getPerpsOrderBookRowCount({ containerHeight: 0, mode: 'asks' }),
     ).toBe(14);
+  });
+
+  it('turns extra column height into full rows before center padding', () => {
+    expect(
+      getPerpsOrderBookLayout({ containerHeight: 416, mode: 'both' }),
+    ).toEqual({ bodyHeight: 308, middleHeight: 60, rowCount: 6 });
+    expect(
+      getPerpsOrderBookLayout({ containerHeight: 476, mode: 'both' }),
+    ).toEqual({ bodyHeight: 368, middleHeight: 40, rowCount: 8 });
+    expect(
+      getPerpsOrderBookLayout({ containerHeight: 572, mode: 'both' }),
+    ).toEqual({ bodyHeight: 464, middleHeight: 56, rowCount: 10 });
+    expect(
+      getPerpsOrderBookLayout({ containerHeight: 416, mode: 'bids' }),
+    ).toEqual({ bodyHeight: 308, middleHeight: 44, rowCount: 13 });
   });
 
   it('cycles the single mobile display control in plugin control order', () => {

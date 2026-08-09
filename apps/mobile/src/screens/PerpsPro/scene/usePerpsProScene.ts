@@ -150,6 +150,7 @@ export const usePerpsProScene = () => {
 
   return {
     currentMarket,
+    executionActive: klineEnabled,
     isResolvingMarket,
     klineEnabled,
     marketDataStatus,

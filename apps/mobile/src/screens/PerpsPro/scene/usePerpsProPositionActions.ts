@@ -5,10 +5,6 @@ import {
   buildPerpsClosePositionCommand,
   executePerpsClosePosition,
 } from '@/hooks/perps/actions/closePosition';
-import {
-  buildPerpsUpdateLeverageCommand,
-  executePerpsUpdateLeverage,
-} from '@/hooks/perps/actions/updateLeverage';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
   judgeIsBuilderFeeNeedApprove,
@@ -25,6 +21,7 @@ import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
 } from '../model/positionAction';
+import type { PerpsProLeverageUpdateRequest } from './usePerpsProLeverageUpdate';
 
 interface LeverageEditorState {
   account: Account;
@@ -39,16 +36,19 @@ export interface PerpsProCloseEditorState {
 
 export const usePerpsProPositionActions = ({
   accountIdentity,
-  refreshActiveAssetData,
+  leveragePending,
+  updateLeverageRequest,
 }: {
   accountIdentity: string;
-  refreshActiveAssetData: () => Promise<unknown>;
+  leveragePending: boolean;
+  updateLeverageRequest: (
+    request: PerpsProLeverageUpdateRequest,
+  ) => Promise<boolean>;
 }) => {
   const { t } = useTranslation();
   const pendingRef = useRef(false);
   const [leverageEditor, setLeverageEditor] =
     useState<LeverageEditorState | null>(null);
-  const [leveragePending, setLeveragePending] = useState(false);
   const [closeEditor, setCloseEditor] =
     useState<PerpsProCloseEditorState | null>(null);
   const [closeReview, setCloseReview] = useState<PerpsProCloseDraft | null>(
@@ -60,7 +60,6 @@ export const usePerpsProPositionActions = ({
 
   useEffect(() => {
     setLeverageEditor(null);
-    setLeveragePending(false);
     setCloseEditor(null);
     setCloseReview(null);
     setClosePending(false);
@@ -69,12 +68,17 @@ export const usePerpsProPositionActions = ({
 
   const openLeverageEditor = useCallback(
     (position: PerpsPositionViewModel) => {
-      if (pendingRef.current) {
+      if (pendingRef.current || leveragePending) {
         return;
       }
       const account = perpsStore.getState().currentPerpsAccount;
       if (!account) {
-        showToast(t('page.perps.pro.positions.leverageUpdateFailed'), 'error');
+        showToast(
+          t('page.perps.pro.positions.leverageUpdateFailed', {
+            reason: t('page.perps.pro.common.unavailable'),
+          }),
+          'error',
+        );
         return;
       }
       setLeverageEditor({
@@ -82,94 +86,31 @@ export const usePerpsProPositionActions = ({
         position: { ...position },
       });
     },
-    [t],
+    [leveragePending, t],
   );
   const closeLeverageEditor = useCallback(() => {
-    if (!pendingRef.current) {
+    if (!pendingRef.current && !leveragePending) {
       setLeverageEditor(null);
     }
-  }, []);
+  }, [leveragePending]);
 
   const updateLeverage = useCallback(
     async (leverage: number) => {
-      if (!leverageEditor || pendingRef.current) {
-        return;
-      }
-      pendingRef.current = true;
-      setLeveragePending(true);
-      try {
-        const command = buildPerpsUpdateLeverageCommand({
-          account: leverageEditor.account,
-          coin: leverageEditor.position.coin,
-          isCross: leverageEditor.position.marginMode === 'cross',
-          leverage,
-          maxLeverage: leverageEditor.position.maxLeverage,
-        });
-        await ensurePerpsActionApproval(leverageEditor.account);
-        const result = await executePerpsUpdateLeverage(command);
-        if (result.failureReason === 'userCancelled') {
-          return;
-        }
-        if (result.kind === 'staleContext') {
-          showToast(
-            t('page.perps.pro.openOrders.cancelContextChanged'),
-            'error',
-          );
-          setLeverageEditor(null);
-          return;
-        }
-        if (result.kind !== 'success') {
-          if (
-            (result.error && (await judgeIsUserAgentIsExpired(result.error))) ||
-            judgeIsBuilderFeeNeedApprove(result.error || '')
-          ) {
-            return;
-          }
-          showToast(
-            t('page.perps.pro.positions.leverageUpdateFailed'),
-            'error',
-          );
-          Sentry.captureException(
-            new Error(`Perps Pro leverage update failed: ${result.error}`),
-          );
-          return;
-        }
-        if (result.refreshError) {
-          Sentry.captureException(
-            new Error(
-              `Perps Pro leverage refresh failed: ${result.refreshError}`,
-            ),
-          );
-        }
-        await refreshActiveAssetData().catch(error => {
-          Sentry.captureException(error, {
-            extra: { scene: 'Perps Pro active asset leverage refresh' },
-          });
-        });
-        showToast(t('page.perps.pro.positions.leverageUpdated'), 'success');
+      if (!leverageEditor || leveragePending) return;
+      const success = await updateLeverageRequest({
+        account: leverageEditor.account,
+        coin: leverageEditor.position.coin,
+        currentIsCross: leverageEditor.position.marginMode === 'cross',
+        currentLeverage: leverageEditor.position.leverage,
+        isCross: leverageEditor.position.marginMode === 'cross',
+        leverage,
+        maxLeverage: leverageEditor.position.maxLeverage,
+      });
+      if (success) {
         setLeverageEditor(null);
-      } catch (error) {
-        if (isPerpsActionUserCancelled(error)) {
-          return;
-        }
-        const message = error instanceof Error ? error.message : String(error);
-        if (
-          (await judgeIsUserAgentIsExpired(message)) ||
-          judgeIsBuilderFeeNeedApprove(message)
-        ) {
-          return;
-        }
-        showToast(t('page.perps.pro.positions.leverageUpdateFailed'), 'error');
-        Sentry.captureException(
-          error instanceof Error ? error : new Error(message),
-          { extra: { scene: 'Perps Pro leverage update' } },
-        );
-      } finally {
-        pendingRef.current = false;
-        setLeveragePending(false);
       }
     },
-    [leverageEditor, refreshActiveAssetData, t],
+    [leverageEditor, leveragePending, updateLeverageRequest],
   );
 
   const openCloseEditor = useCallback(

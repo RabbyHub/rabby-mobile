@@ -1,51 +1,88 @@
-import RcIconSwitchUnit from '@/assets/icons/swap/switch-cc.svg';
-import { Text } from '@/components/Typography';
+import RcIconAmountUnitArrow from '@/assets2024/icons/perps/PerpsProAmountUnitArrow.svg';
+import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
-import { View } from 'react-native';
-
-const AmountStepIcon: React.FC<{ type: 'minus' | 'plus' }> = ({ type }) => {
-  const { styles } = useTheme2024({ getStyle });
-
-  return (
-    <View style={styles.stepIcon} testID={`perps-pro-trade-amount-${type}`}>
-      <View style={styles.stepHorizontal} />
-      {type === 'plus' ? <View style={styles.stepVertical} /> : null}
-    </View>
-  );
-};
+import React, { useState } from 'react';
+import { Pressable, View } from 'react-native';
 
 export const PerpsProTradeAmountField: React.FC<{
   label: string;
-  quoteAsset: string;
-}> = React.memo(({ label, quoteAsset }) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
+  onChangeText?: (value: string) => void;
+  onBlur?: () => void;
+  onFocus?: () => void;
+  onToggleUnit?: () => void;
+  unit: string;
+  value?: string;
+}> = React.memo(
+  ({
+    label,
+    onBlur,
+    onChangeText,
+    onFocus,
+    onToggleUnit,
+    unit,
+    value = '',
+  }) => {
+    const { colors2024, styles } = useTheme2024({ getStyle });
+    const [focused, setFocused] = useState(false);
+    const showFloatingLabel = focused || !!value;
 
-  return (
-    <View style={styles.container} testID="perps-pro-trade-amount-field">
-      <View style={styles.amountArea}>
-        <AmountStepIcon type="minus" />
-        <Text numberOfLines={1} style={styles.label}>
-          {label}
-        </Text>
-        <AmountStepIcon type="plus" />
-      </View>
-      <View style={styles.unitArea} testID="perps-pro-trade-amount-unit">
-        <Text numberOfLines={1} style={styles.unit}>
-          {quoteAsset}
-        </Text>
-        <View style={styles.switchIcon}>
-          <RcIconSwitchUnit
-            color={colors2024['neutral-secondary']}
-            height={10}
-            width={10}
+    return (
+      <View style={styles.container} testID="perps-pro-trade-amount-field">
+        <View style={styles.amountArea}>
+          {showFloatingLabel ? (
+            <Text style={styles.floatingLabel}>{label}</Text>
+          ) : null}
+          <TextInput
+            accessibilityLabel={label}
+            keyboardType="decimal-pad"
+            maxFontSizeMultiplier={1.2}
+            multiline={false}
+            onBlur={() => {
+              setFocused(false);
+              onBlur?.();
+            }}
+            onChangeText={onChangeText}
+            onFocus={() => {
+              setFocused(true);
+              onFocus?.();
+            }}
+            placeholder={showFloatingLabel ? undefined : label}
+            placeholderTextColor={colors2024['neutral-info']}
+            style={[
+              styles.input,
+              showFloatingLabel ? styles.inputWithLabel : null,
+            ]}
+            value={value}
           />
         </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onToggleUnit}
+          style={styles.unitArea}
+          testID="perps-pro-trade-amount-unit">
+          <Text numberOfLines={1} style={styles.unit}>
+            {unit}
+          </Text>
+          <View pointerEvents="none" style={styles.switchIcon}>
+            <RcIconAmountUnitArrow
+              color={colors2024['neutral-secondary']}
+              height={4.5}
+              style={styles.switchArrowTop}
+              width={8}
+            />
+            <RcIconAmountUnitArrow
+              color={colors2024['neutral-secondary']}
+              height={4.5}
+              style={styles.switchArrowBottom}
+              width={8}
+            />
+          </View>
+        </Pressable>
       </View>
-    </View>
-  );
-});
+    );
+  },
+);
 
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
 
@@ -55,51 +92,45 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     flexDirection: 'row',
+    gap: 6,
     height: 40,
     overflow: 'hidden',
+    paddingHorizontal: 8,
   },
   amountArea: {
-    alignItems: 'center',
     flex: 1,
-    flexDirection: 'row',
-    gap: 2,
     height: '100%',
     minWidth: 0,
-    padding: 8,
-  },
-  stepIcon: {
-    height: 12,
-    overflow: 'hidden',
     position: 'relative',
-    width: 12,
   },
-  stepHorizontal: {
-    backgroundColor: colors2024['neutral-info'],
-    borderRadius: 1,
-    height: 1.5,
-    left: 1,
-    position: 'absolute',
-    top: 5.25,
-    width: 10,
-  },
-  stepVertical: {
-    backgroundColor: colors2024['neutral-info'],
-    borderRadius: 1,
-    height: 10,
-    left: 5.25,
-    position: 'absolute',
-    top: 1,
-    width: 1.5,
-  },
-  label: {
+  floatingLabel: {
     color: colors2024['neutral-info'],
-    flex: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 10,
+    fontWeight: '400',
+    left: 0,
+    lineHeight: 12,
+    position: 'absolute',
+    right: 0,
+    textAlign: 'center',
+    top: 4,
+  },
+  input: {
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
+    height: 40,
     lineHeight: 18,
-    minWidth: 0,
+    padding: 0,
     textAlign: 'center',
+  },
+  inputWithLabel: {
+    height: 18,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 16,
   },
   unitArea: {
     alignItems: 'center',
@@ -108,8 +139,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 2,
     height: 24,
-    paddingLeft: 6,
-    paddingRight: 4,
+    paddingLeft: 5,
     width: 52,
   },
   unit: {
@@ -123,7 +153,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   switchIcon: {
     height: 10,
-    transform: [{ rotate: '180deg' }],
+    position: 'relative',
     width: 10,
+  },
+  switchArrowTop: {
+    left: 1,
+    position: 'absolute',
+    top: 0,
+    transform: [{ rotate: '180deg' }],
+  },
+  switchArrowBottom: {
+    bottom: 0,
+    left: 1,
+    position: 'absolute',
   },
 }));

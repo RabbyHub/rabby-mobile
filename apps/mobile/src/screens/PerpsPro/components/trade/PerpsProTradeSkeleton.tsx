@@ -49,7 +49,7 @@ export const PerpsProTradeSkeleton: React.FC<{
         <PerpsProTradeSelect label={t('page.perps.pro.trade.market')} />
         <PerpsProTradeAmountField
           label={`${t('page.perps.pro.trade.amount')}(${quoteAsset})`}
-          quoteAsset={quoteAsset}
+          unit={quoteAsset}
         />
         <PerpsProTradeAmountSlider />
       </View>

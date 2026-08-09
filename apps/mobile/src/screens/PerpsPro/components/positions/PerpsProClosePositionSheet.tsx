@@ -18,6 +18,10 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
+import {
+  resolvePerpsProDisplayAmount,
+  type PerpsProTradeAmountUnit,
+} from '../../model/trade';
 import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
@@ -40,156 +44,178 @@ const calculateEstimatedPnl = (
 };
 
 export const PerpsProClosePositionSheet: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
   market: PerpsProCloseMarketSnapshot;
   onClose: () => void;
   onReview: (draft: PerpsProCloseDraft) => void;
   position: PerpsPositionViewModel;
   visible: boolean;
-}> = React.memo(({ market, onClose, onReview, position, visible }) => {
-  const modalRef = useRef<AppBottomSheetModal>(null);
-  const { colors2024, styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
-  const [percent, setPercent] = useState(100);
-  const [limitPrice, setLimitPrice] = useState(market.markPrice);
+}> = React.memo(
+  ({ amountUnit = 'quote', market, onClose, onReview, position, visible }) => {
+    const modalRef = useRef<AppBottomSheetModal>(null);
+    const { colors2024, styles } = useTheme2024({ getStyle });
+    const { t } = useTranslation();
+    const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
+    const [percent, setPercent] = useState(100);
+    const [limitPrice, setLimitPrice] = useState(market.markPrice);
 
-  useEffect(() => {
-    if (visible) {
-      setOrderType('market');
-      setPercent(100);
-      setLimitPrice(market.markPrice);
-      modalRef.current?.present();
-    } else {
-      modalRef.current?.close();
-    }
-  }, [market.markPrice, visible]);
+    useEffect(() => {
+      if (visible) {
+        setOrderType('market');
+        setPercent(100);
+        setLimitPrice(market.markPrice);
+        modalRef.current?.present();
+      } else {
+        modalRef.current?.close();
+      }
+    }, [market.markPrice, visible]);
 
-  const size = useMemo(
-    () =>
-      new BigNumber(position.baseSize)
-        .multipliedBy(percent)
-        .dividedBy(100)
-        .decimalPlaces(market.szDecimals, BigNumber.ROUND_DOWN)
-        .toFixed(),
-    [market.szDecimals, percent, position.baseSize],
-  );
-  const exitPrice = orderType === 'market' ? market.markPrice : limitPrice;
-  const estimatedPnl = calculateEstimatedPnl(position, exitPrice, size);
-  const valid =
-    new BigNumber(size).gt(0) &&
-    (orderType === 'market' || new BigNumber(limitPrice).gt(0));
+    const size = useMemo(
+      () =>
+        new BigNumber(position.baseSize)
+          .multipliedBy(percent)
+          .dividedBy(100)
+          .decimalPlaces(market.szDecimals, BigNumber.ROUND_DOWN)
+          .toFixed(),
+      [market.szDecimals, percent, position.baseSize],
+    );
+    const exitPrice = orderType === 'market' ? market.markPrice : limitPrice;
+    const displaySize = resolvePerpsProDisplayAmount({
+      amountUnit,
+      baseAmount: size,
+      price: exitPrice,
+    });
+    const positionDisplaySize = resolvePerpsProDisplayAmount({
+      amountUnit,
+      baseAmount: position.baseSize,
+      price: market.markPrice,
+    });
+    const displayUnit =
+      amountUnit === 'base' ? market.displayBase : market.quoteAsset;
+    const estimatedPnl = calculateEstimatedPnl(position, exitPrice, size);
+    const valid =
+      new BigNumber(size).gt(0) &&
+      (orderType === 'market' || new BigNumber(limitPrice).gt(0));
 
-  return (
-    <AppBottomSheetModal
-      ref={modalRef}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: 'bg1',
-      })}
-      onDismiss={onClose}
-      snapPoints={[500]}>
-      <BottomSheetView style={styles.sheetView}>
-        <AutoLockView style={styles.container}>
-          <Text style={styles.title}>
-            {t('page.perps.pro.positions.closePosition')}
-          </Text>
-          <View style={styles.segmented}>
-            {(['market', 'limit'] as const).map(type => (
-              <Pressable
-                key={type}
-                onPress={() => setOrderType(type)}
-                style={[
-                  styles.segment,
-                  orderType === type ? styles.segmentActive : null,
-                ]}>
-                <Text
-                  style={
-                    orderType === type
-                      ? styles.segmentTextActive
-                      : styles.segmentText
-                  }>
-                  {t(`page.perps.pro.positions.${type}`)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.fieldLabel}>
-              {t('page.perps.pro.positions.amount')}
+    return (
+      <AppBottomSheetModal
+        ref={modalRef}
+        {...makeBottomSheetProps({
+          colors: colors2024,
+          linearGradientType: 'bg1',
+        })}
+        onDismiss={onClose}
+        snapPoints={[500]}>
+        <BottomSheetView style={styles.sheetView}>
+          <AutoLockView style={styles.container}>
+            <Text style={styles.title}>
+              {t('page.perps.pro.positions.closePosition')}
             </Text>
-            <View style={styles.fieldValueRow}>
-              <Text style={styles.fieldValue}>
-                {formatPerpsProDecimal(size, market.szDecimals)}
-              </Text>
-              <Text style={styles.fieldUnit}>{market.displayBase}</Text>
+            <View style={styles.segmented}>
+              {(['market', 'limit'] as const).map(type => (
+                <Pressable
+                  key={type}
+                  onPress={() => setOrderType(type)}
+                  style={[
+                    styles.segment,
+                    orderType === type ? styles.segmentActive : null,
+                  ]}>
+                  <Text
+                    style={
+                      orderType === type
+                        ? styles.segmentTextActive
+                        : styles.segmentText
+                    }>
+                    {t(`page.perps.pro.positions.${type}`)}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-          </View>
-          {orderType === 'limit' ? (
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>
-                {t('page.perps.pro.positions.limitPrice')}
+                {t('page.perps.pro.positions.amount')}
               </Text>
               <View style={styles.fieldValueRow}>
-                <BottomSheetTextInput
-                  keyboardType="decimal-pad"
-                  onChangeText={setLimitPrice}
-                  style={styles.priceInput}
-                  value={limitPrice}
-                />
-                <Text style={styles.fieldUnit}>{market.quoteAsset}</Text>
+                <Text style={styles.fieldValue}>
+                  {formatPerpsProDecimal(
+                    displaySize,
+                    amountUnit === 'base' ? market.szDecimals : 2,
+                  )}
+                </Text>
+                <Text style={styles.fieldUnit}>{displayUnit}</Text>
               </View>
             </View>
-          ) : null}
-          <View style={styles.sliderRow}>
-            <PerpsProSlider
-              maximumValue={100}
-              minimumValue={1}
-              onValueChange={next => setPercent(Math.round(next))}
-              step={1}
-              value={percent}
-            />
-            <Text style={styles.percent}>{percent}%</Text>
-          </View>
-          <View style={styles.summary}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>
-                {t('page.perps.pro.positions.positionAmount')}
-              </Text>
-              <Text style={styles.summaryValue}>
-                {formatPerpsProDecimal(position.baseSize, market.szDecimals)}
-              </Text>
+            {orderType === 'limit' ? (
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>
+                  {t('page.perps.pro.positions.limitPrice')}
+                </Text>
+                <View style={styles.fieldValueRow}>
+                  <BottomSheetTextInput
+                    keyboardType="decimal-pad"
+                    onChangeText={setLimitPrice}
+                    style={styles.priceInput}
+                    value={limitPrice}
+                  />
+                  <Text style={styles.fieldUnit}>{market.quoteAsset}</Text>
+                </View>
+              </View>
+            ) : null}
+            <View style={styles.sliderRow}>
+              <PerpsProSlider
+                maximumValue={100}
+                minimumValue={1}
+                onValueChange={next => setPercent(Math.round(next))}
+                step={1}
+                value={percent}
+              />
+              <Text style={styles.percent}>{percent}%</Text>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>
-                {t('page.perps.pro.positions.estimatedPnl')}
-              </Text>
-              <Text style={styles.summaryValue}>
-                {formatPerpsProDecimal(estimatedPnl, 2)} {market.quoteAsset}
-              </Text>
+            <View style={styles.summary}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  {t('page.perps.pro.positions.positionAmount')}
+                </Text>
+                <Text style={styles.summaryValue}>
+                  {formatPerpsProDecimal(
+                    positionDisplaySize,
+                    amountUnit === 'base' ? market.szDecimals : 2,
+                  )}{' '}
+                  {displayUnit}
+                </Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  {t('page.perps.pro.positions.estimatedPnl')}
+                </Text>
+                <Text style={styles.summaryValue}>
+                  {formatPerpsProDecimal(estimatedPnl, 2)} {market.quoteAsset}
+                </Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.footer}>
-            <Button
-              disabled={!valid}
-              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              onPress={() =>
-                onReview({
-                  limitPrice: orderType === 'limit' ? limitPrice : null,
-                  orderType,
-                  percent,
-                  size,
-                })
-              }
-              title={t('global.confirm')}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-              type="hyperliquid"
-            />
-          </View>
-        </AutoLockView>
-      </BottomSheetView>
-    </AppBottomSheetModal>
-  );
-});
+            <View style={styles.footer}>
+              <Button
+                disabled={!valid}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                onPress={() =>
+                  onReview({
+                    limitPrice: orderType === 'limit' ? limitPrice : null,
+                    orderType,
+                    percent,
+                    size,
+                  })
+                }
+                title={t('global.confirm')}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                type="hyperliquid"
+              />
+            </View>
+          </AutoLockView>
+        </BottomSheetView>
+      </AppBottomSheetModal>
+    );
+  },
+);
 
 PerpsProClosePositionSheet.displayName = 'PerpsProClosePositionSheet';
 

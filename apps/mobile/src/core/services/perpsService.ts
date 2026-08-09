@@ -41,22 +41,34 @@ export type ApproveSignatures = (SendApproveParams & {
 
 export type PerpsViewMode = 'simple' | 'pro';
 export type PerpsProInfoTab = 'account' | 'positions' | 'openOrders';
+export type PerpsProTradeAmountUnit = 'base' | 'quote';
+export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
 
 export type PerpsProPreferences = {
   version: number;
   viewMode: PerpsViewMode;
   activeInfoTab: PerpsProInfoTab;
   skipLimitCloseDoubleConfirmation: boolean;
+  tradeAmountUnit: PerpsProTradeAmountUnit;
+  tradeOrderType: PerpsProTradeOrderType;
+  skipTradeConfirmationByOrderType: Record<PerpsProTradeOrderType, boolean>;
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 5;
+const PERPS_PRO_PREFERENCES_VERSION = 6;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
 const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   version: PERPS_PRO_PREFERENCES_VERSION,
   viewMode: 'simple',
   activeInfoTab: 'account',
   skipLimitCloseDoubleConfirmation: false,
+  tradeAmountUnit: 'quote',
+  tradeOrderType: 'market',
+  skipTradeConfirmationByOrderType: {
+    conditional: false,
+    limit: false,
+    market: false,
+  },
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -98,6 +110,38 @@ const normalizeSkipLimitCloseDoubleConfirmation = (value: unknown) =>
   hasReadableProPreferences(value) &&
   value.skipLimitCloseDoubleConfirmation === true;
 
+const normalizePerpsProTradeAmountUnit = (
+  value: unknown,
+): PerpsProTradeAmountUnit =>
+  hasReadableProPreferences(value) && value.tradeAmountUnit === 'base'
+    ? 'base'
+    : 'quote';
+
+const normalizePerpsProTradeOrderType = (
+  value: unknown,
+): PerpsProTradeOrderType =>
+  hasReadableProPreferences(value) &&
+  (value.tradeOrderType === 'market' ||
+    value.tradeOrderType === 'limit' ||
+    value.tradeOrderType === 'conditional')
+    ? value.tradeOrderType
+    : 'market';
+
+const normalizeSkipTradeConfirmationByOrderType = (
+  value: unknown,
+): Record<PerpsProTradeOrderType, boolean> => {
+  const source =
+    hasReadableProPreferences(value) &&
+    isRecord(value.skipTradeConfirmationByOrderType)
+      ? value.skipTradeConfirmationByOrderType
+      : {};
+  return {
+    conditional: source.conditional === true,
+    limit: source.limit === true,
+    market: source.market === true,
+  };
+};
+
 const removeLegacyBookPrecision = (value: ReadableProPreferences) => {
   const nextValue = { ...value };
   delete nextValue.bookPrecisionByMarket;
@@ -121,6 +165,10 @@ const getWritableProPreferences = (
     activeInfoTab: normalizePerpsProInfoTab(value),
     skipLimitCloseDoubleConfirmation:
       normalizeSkipLimitCloseDoubleConfirmation(value),
+    tradeAmountUnit: normalizePerpsProTradeAmountUnit(value),
+    tradeOrderType: normalizePerpsProTradeOrderType(value),
+    skipTradeConfirmationByOrderType:
+      normalizeSkipTradeConfirmationByOrderType(value),
   } as PerpsProPreferences & Record<string, unknown>;
 };
 
@@ -553,6 +601,59 @@ export class PerpsService {
     this.store.proPreferences = {
       ...getWritableProPreferences(this.store.proPreferences),
       skipLimitCloseDoubleConfirmation: value === true,
+    };
+  };
+
+  getPerpsProTradeAmountUnit = async (): Promise<PerpsProTradeAmountUnit> => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    return normalizePerpsProTradeAmountUnit(this.store.proPreferences);
+  };
+
+  setPerpsProTradeAmountUnit = async (value: PerpsProTradeAmountUnit) => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    this.store.proPreferences = {
+      ...getWritableProPreferences(this.store.proPreferences),
+      tradeAmountUnit: value === 'base' ? 'base' : 'quote',
+    };
+  };
+
+  getPerpsProTradeOrderType = async (): Promise<PerpsProTradeOrderType> => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    return normalizePerpsProTradeOrderType(this.store.proPreferences);
+  };
+
+  setPerpsProTradeOrderType = async (value: PerpsProTradeOrderType) => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    if (value !== 'market' && value !== 'limit' && value !== 'conditional') {
+      throw new Error('Invalid Perps Pro trade order type');
+    }
+    this.store.proPreferences = {
+      ...getWritableProPreferences(this.store.proPreferences),
+      tradeOrderType: value,
+    };
+  };
+
+  getSkipPerpsProTradeConfirmation = async (
+    orderType: PerpsProTradeOrderType,
+  ) => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    return normalizeSkipTradeConfirmationByOrderType(this.store.proPreferences)[
+      orderType
+    ];
+  };
+
+  setSkipPerpsProTradeConfirmation = async (
+    orderType: PerpsProTradeOrderType,
+    value: boolean,
+  ) => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    const current = getWritableProPreferences(this.store.proPreferences);
+    this.store.proPreferences = {
+      ...current,
+      skipTradeConfirmationByOrderType: {
+        ...normalizeSkipTradeConfirmationByOrderType(current),
+        [orderType]: value === true,
+      },
     };
   };
 
