@@ -2,17 +2,20 @@ import { act, render, renderHook, screen } from '@testing-library/react-native';
 import React from 'react';
 import { View } from 'react-native';
 
-const mockParentSetOptions = jest.fn();
+const mockSetOptions = jest.fn();
 const mockNavigation = {
-  getParent: () => ({ setOptions: mockParentSetOptions }),
+  setOptions: mockSetOptions,
 };
+const mockPlatformState = { isIOS: true };
 let mockRequestBack: (() => boolean) | null = null;
 let mockEdgeOnEnd:
   | ((event: { translationX: number; velocityX: number }) => void)
   | null = null;
 
 jest.mock('@/core/native/utils', () => ({
-  IS_IOS: true,
+  get IS_IOS() {
+    return mockPlatformState.isIOS;
+  },
 }));
 
 jest.mock('@/hooks/navigation', () => ({
@@ -47,6 +50,19 @@ jest.mock('react-native-gesture-handler', () => {
   };
 });
 
+jest.mock('react-native-screens', () => {
+  const ReactModule = require('react');
+  const { View: NativeView } = require('react-native');
+  return {
+    FullWindowOverlay: ({ children }: { children: React.ReactNode }) =>
+      ReactModule.createElement(
+        NativeView,
+        { testID: 'full-window-overlay' },
+        children,
+      ),
+  };
+});
+
 const {
   PerpsProMarketSelectorDismissProvider,
   PerpsProMarketSelectorGestureContainer,
@@ -58,11 +74,12 @@ const {
 describe('usePerpsProMarketSelectorDismiss', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPlatformState.isIOS = true;
     mockRequestBack = null;
     mockEdgeOnEnd = null;
   });
 
-  it('freezes open height, owns Back, and restores the parent gesture', () => {
+  it('freezes open height, owns Back, and restores the current screen gesture', () => {
     const dismiss = jest.fn();
     const { result, rerender, unmount } = renderHook(
       ({ windowHeight }) =>
@@ -76,7 +93,7 @@ describe('usePerpsProMarketSelectorDismiss', () => {
     act(() => {
       result.current.markPresent();
     });
-    expect(mockParentSetOptions).toHaveBeenLastCalledWith({
+    expect(mockSetOptions).toHaveBeenLastCalledWith({
       gestureEnabled: false,
     });
 
@@ -89,7 +106,7 @@ describe('usePerpsProMarketSelectorDismiss', () => {
       result.current.markDismissed();
     });
     rerender({ windowHeight: 512 });
-    expect(mockParentSetOptions).toHaveBeenLastCalledWith({
+    expect(mockSetOptions).toHaveBeenLastCalledWith({
       gestureEnabled: true,
     });
     expect(mockRequestBack?.()).toBe(true);
@@ -99,7 +116,7 @@ describe('usePerpsProMarketSelectorDismiss', () => {
       result.current.markPresent();
     });
     unmount();
-    expect(mockParentSetOptions).toHaveBeenLastCalledWith({
+    expect(mockSetOptions).toHaveBeenLastCalledWith({
       gestureEnabled: true,
     });
   });
@@ -114,6 +131,7 @@ describe('usePerpsProMarketSelectorDismiss', () => {
       </PerpsProMarketSelectorDismissProvider>,
     );
 
+    expect(screen.getByTestId('full-window-overlay')).toBeTruthy();
     expect(
       screen.getByTestId('perps-pro-market-selector-edge-gesture', {
         includeHiddenElements: true,
@@ -135,5 +153,29 @@ describe('usePerpsProMarketSelectorDismiss', () => {
       mockEdgeOnEnd?.({ translationX: 20, velocityX: 800 });
     });
     expect(dismiss).toHaveBeenCalledTimes(2);
+  });
+
+  it('adds no native container or edge target on Android', () => {
+    mockPlatformState.isIOS = false;
+    const dismiss = jest.fn();
+    const { toJSON } = render(
+      <PerpsProMarketSelectorDismissProvider onDismiss={dismiss}>
+        <PerpsProMarketSelectorGestureContainer>
+          <View testID="bottom-sheet-child" />
+        </PerpsProMarketSelectorGestureContainer>
+      </PerpsProMarketSelectorDismissProvider>,
+    );
+
+    expect(screen.queryByTestId('full-window-overlay')).toBeNull();
+    expect(
+      screen.queryByTestId('perps-pro-market-selector-edge-gesture', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    expect(toJSON()).toEqual(
+      expect.objectContaining({
+        props: expect.objectContaining({ testID: 'bottom-sheet-child' }),
+      }),
+    );
   });
 });

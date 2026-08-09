@@ -12,6 +12,7 @@ import React, {
 } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { FullWindowOverlay } from 'react-native-screens';
 
 const PERPS_PRO_MARKET_SELECTOR_EDGE_WIDTH = 24;
 const PERPS_PRO_MARKET_SELECTOR_DISMISS_DISTANCE = 64;
@@ -57,10 +58,14 @@ export const PerpsProMarketSelectorGestureContainer: React.FC<
     [dismiss],
   );
 
+  if (!IS_IOS) {
+    return <>{children}</>;
+  }
+
   return (
-    <View style={styles.container}>
+    <FullWindowOverlay>
       {children}
-      {IS_IOS && dismiss ? (
+      {dismiss ? (
         <GestureDetector gesture={edgeGesture}>
           <View
             accessibilityElementsHidden
@@ -70,7 +75,7 @@ export const PerpsProMarketSelectorGestureContainer: React.FC<
           />
         </GestureDetector>
       ) : null}
-    </View>
+    </FullWindowOverlay>
   );
 };
 
@@ -85,12 +90,12 @@ export const usePerpsProMarketSelectorDismiss = ({
   const isOpenRef = useRef(false);
   const frozenWindowHeightRef = useRef(windowHeight);
 
-  const setParentGestureEnabled = useCallback(
+  const setScreenGestureEnabled = useCallback(
     (gestureEnabled: boolean) => {
       if (!IS_IOS) {
         return;
       }
-      navigation.getParent()?.setOptions({ gestureEnabled });
+      navigation.setOptions({ gestureEnabled });
     },
     [navigation],
   );
@@ -101,16 +106,16 @@ export const usePerpsProMarketSelectorDismiss = ({
     }
     frozenWindowHeightRef.current = windowHeight;
     isOpenRef.current = true;
-    setParentGestureEnabled(false);
-  }, [setParentGestureEnabled, windowHeight]);
+    setScreenGestureEnabled(false);
+  }, [setScreenGestureEnabled, windowHeight]);
 
   const markDismissed = useCallback(() => {
     if (!isOpenRef.current) {
       return;
     }
     isOpenRef.current = false;
-    setParentGestureEnabled(true);
-  }, [setParentGestureEnabled]);
+    setScreenGestureEnabled(true);
+  }, [setScreenGestureEnabled]);
 
   const requestBack = useCallback(() => {
     if (!isOpenRef.current) {
@@ -126,10 +131,10 @@ export const usePerpsProMarketSelectorDismiss = ({
     () => () => {
       if (isOpenRef.current) {
         isOpenRef.current = false;
-        setParentGestureEnabled(true);
+        setScreenGestureEnabled(true);
       }
     },
-    [setParentGestureEnabled],
+    [setScreenGestureEnabled],
   );
 
   return {
@@ -142,9 +147,6 @@ export const usePerpsProMarketSelectorDismiss = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   edgeGestureTarget: {
     bottom: 0,
     left: 0,

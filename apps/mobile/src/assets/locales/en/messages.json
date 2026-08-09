@@ -2591,7 +2591,7 @@
         },
         "marketSelector": {
           "title": "Select Market",
-          "search": "Search",
+          "search": "Search Token",
           "favorites": "Favorites",
           "all": "All",
           "name": "Name",

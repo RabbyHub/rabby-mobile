@@ -317,7 +317,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
           colors: colors2024,
           linearGradientType: isLight ? 'bg0' : 'bg1',
         })}>
-        <View style={styles.sheet}>
+        <View style={styles.sheet} testID="perps-pro-market-selector-content">
           <PerpsProMarketSearchBar
             onChangeText={setQuery}
             onFocusChange={setInputFocused}
@@ -422,11 +422,11 @@ export const PerpsProMarketSelector = React.memo(
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheet: {
     flex: 1,
-    paddingTop: 8,
+    paddingTop: 0,
   },
   search: {
     marginHorizontal: 16,
-    marginTop: 18,
+    marginTop: 4,
   },
   tabs: {
     borderBottomColor: colors2024['neutral-line'],

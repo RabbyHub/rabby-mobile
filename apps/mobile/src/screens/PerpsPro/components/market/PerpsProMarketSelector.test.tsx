@@ -97,10 +97,14 @@ jest.mock('./PerpsProMarketSearchBar', () => {
         {
           onChangeText,
           onFocusChange,
+          placeholder,
+          style,
           value,
         }: {
           onChangeText: (value: string) => void;
           onFocusChange: (focused: boolean) => void;
+          placeholder: string;
+          style: object;
           value: string;
         },
         ref: React.Ref<unknown>,
@@ -117,7 +121,11 @@ jest.mock('./PerpsProMarketSearchBar', () => {
         ReactModule.useImperativeHandle(ref, () => ({ blur, focus }));
         return ReactModule.createElement(
           View,
-          null,
+          {
+            accessibilityLabel: placeholder,
+            style,
+            testID: 'perps-pro-market-search-container',
+          },
           ReactModule.createElement(TextInput, {
             onBlur: blur,
             onChangeText,
@@ -619,6 +627,25 @@ describe('PerpsProMarketSelector', () => {
     expect(modalProps.android_keyboardInputMode).toBe('adjustPan');
     expect(modalProps.backdropProps.pressBehavior).toBe('close');
 
+    const sheetStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-market-selector-content').props.style,
+    );
+    expect(sheetStyle).toEqual(
+      expect.objectContaining({
+        flex: 1,
+        paddingTop: 0,
+      }),
+    );
+    const searchStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-market-search-container').props.style,
+    );
+    expect(searchStyle).toEqual(
+      expect.objectContaining({
+        marginHorizontal: 16,
+        marginTop: 4,
+      }),
+    );
+
     const headerStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-column-header').props.style,
     );
@@ -791,5 +818,15 @@ describe('PerpsProMarketSelector', () => {
       expect(source).not.toContain('display: block');
       expect(source).toContain('fill="currentColor"');
     });
+  });
+
+  it('uses the approved English Search Token copy', () => {
+    const localePath = path.resolve(
+      __dirname,
+      '../../../../assets/locales/en/messages.json',
+    );
+    const messages = JSON.parse(fs.readFileSync(localePath, 'utf8'));
+
+    expect(messages.page.perps.pro.marketSelector.search).toBe('Search Token');
   });
 });
