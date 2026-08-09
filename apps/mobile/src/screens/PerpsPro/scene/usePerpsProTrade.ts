@@ -14,7 +14,11 @@ import {
   getPerpsAccountRuntimeContext,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
-import { calLiquidationPrice } from '@/utils/perps';
+import {
+  calLiquidationPrice,
+  isPerpsMarketIsolatedOnly,
+  normalizePerpsMarketMarginMode,
+} from '@/utils/perps';
 import * as Sentry from '@sentry/react-native';
 import type { L2Book, WsActiveAssetData } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
@@ -101,7 +105,7 @@ export const usePerpsProTrade = ({
   executionActive,
   leveragePending,
   market,
-  recommendedLeverage = null,
+  zeroAddressLeverageBaseline = null,
   refreshActiveAssetData,
   updateLeverageRequest,
 }: {
@@ -113,7 +117,7 @@ export const usePerpsProTrade = ({
   executionActive: boolean;
   leveragePending: boolean;
   market: PerpsProMarket | null;
-  recommendedLeverage?: PerpsProLeverageConfiguration | null;
+  zeroAddressLeverageBaseline?: PerpsProLeverageConfiguration | null;
   refreshActiveAssetData: () => Promise<unknown>;
   updateLeverageRequest: (
     request: PerpsProLeverageUpdateRequest,
@@ -204,17 +208,21 @@ export const usePerpsProTrade = ({
   const initialLeverageConfiguration = useMemo(
     () =>
       resolvePerpsProInitialLeverage({
+        marginModeConstraint: normalizePerpsMarketMarginMode(
+          market?.marketData.marginMode,
+          market?.marketData.onlyIsolated,
+        ),
         maxLeverage: market?.marketData.maxLeverage ?? 1,
-        onlyIsolated: market?.marketData.onlyIsolated ?? false,
         position: hasCurrentPosition ? currentPosition?.leverage : null,
-        recommended: recommendedLeverage,
+        zeroAddressBaseline: zeroAddressLeverageBaseline,
       }),
     [
       currentPosition?.leverage,
       hasCurrentPosition,
       market?.marketData.maxLeverage,
+      market?.marketData.marginMode,
       market?.marketData.onlyIsolated,
-      recommendedLeverage,
+      zeroAddressLeverageBaseline,
     ],
   );
 
@@ -392,13 +400,27 @@ export const usePerpsProTrade = ({
     market?.marketData.szDecimals,
   ]);
 
+  const marketMarginMode = market?.marketData.marginMode;
+  const marketOnlyIsolated = market?.marketData.onlyIsolated;
   const marginModeDisabledReason = useMemo(() => {
-    if (market?.marketData.onlyIsolated) return 'onlyIsolated' as const;
+    if (
+      isPerpsMarketIsolatedOnly({
+        marginMode: marketMarginMode,
+        onlyIsolated: marketOnlyIsolated,
+      })
+    ) {
+      return 'onlyIsolated' as const;
+    }
     if (new BigNumber(currentPosition?.szi ?? 0).abs().gt(0) || hasOpenOrders) {
       return 'existingExposure' as const;
     }
     return null;
-  }, [currentPosition, hasOpenOrders, market?.marketData.onlyIsolated]);
+  }, [
+    currentPosition?.szi,
+    hasOpenOrders,
+    marketMarginMode,
+    marketOnlyIsolated,
+  ]);
   const setMarginMode = useCallback(
     (next: 'cross' | 'isolated') => {
       if (next === marginMode) return;

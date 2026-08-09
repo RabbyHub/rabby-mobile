@@ -9,6 +9,8 @@ export const PERPS_SEND_ARB_USDC_ADDRESS =
 
 export const PERPS_AGENT_NAME = 'rabby-mobile';
 
+export type PerpsMarketMarginMode = 'normal' | 'noCross' | 'strictIsolated';
+
 export const ARB_USDC_TOKEN_ID = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
 
 export const ARB_USDC_TOKEN_SERVER_CHAIN = 'arb';

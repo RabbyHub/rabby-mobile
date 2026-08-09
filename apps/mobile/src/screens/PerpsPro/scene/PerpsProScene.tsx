@@ -76,7 +76,7 @@ import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
 import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
-import { usePerpsProRecommendedLeverage } from './usePerpsProRecommendedLeverage';
+import { usePerpsProZeroAddressLeverageBaseline } from './usePerpsProZeroAddressLeverageBaseline';
 import { usePerpsProTrade } from './usePerpsProTrade';
 
 type PerpsProSceneRow =
@@ -128,7 +128,7 @@ export const PerpsProScene: React.FC<{
     coin: scene.currentMarket?.canonicalCoin ?? '',
     enabled: scene.realtimeEnabled,
   });
-  const recommendedLeverage = usePerpsProRecommendedLeverage(
+  const zeroAddressLeverageBaseline = usePerpsProZeroAddressLeverageBaseline(
     scene.currentMarket?.canonicalCoin ?? '',
   );
   const trade = usePerpsProTrade({
@@ -140,7 +140,7 @@ export const PerpsProScene: React.FC<{
     executionActive: scene.executionActive && !isModeSwitching,
     leveragePending: leverageUpdate.pending,
     market: scene.currentMarket,
-    recommendedLeverage,
+    zeroAddressLeverageBaseline,
     refreshActiveAssetData: activeAsset.refreshActiveAssetData,
     updateLeverageRequest: leverageUpdate.update,
   });

@@ -8,9 +8,9 @@ import { useEffect, useState } from 'react';
 
 /**
  * Mirrors Hyperliquid's disconnected trade-form baseline without treating the
- * observed zero-address value as a protocol-level `recommendedLeverage` field.
+ * observed zero-address value as a protocol recommendation.
  */
-export const usePerpsProRecommendedLeverage = (coin: string) => {
+export const usePerpsProZeroAddressLeverageBaseline = (coin: string) => {
   const [data, setData] = useState<ActiveAssetData | null>(() =>
     coin
       ? readActiveAssetDataFromCache(coin, DELETE_AGENT_EMPTY_ADDRESS)

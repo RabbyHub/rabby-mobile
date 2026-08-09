@@ -1,3 +1,5 @@
+import type { PerpsMarketMarginMode } from '@/constant/perps';
+
 export type PerpsProLeverageConfiguration = {
   type: 'cross' | 'isolated';
   value: number;
@@ -21,24 +23,24 @@ const normalize = (
  * 3. the market maximum as the explicit last fallback.
  */
 export const resolvePerpsProInitialLeverage = ({
+  marginModeConstraint,
   maxLeverage,
-  onlyIsolated,
   position,
-  recommended,
+  zeroAddressBaseline,
 }: {
+  marginModeConstraint: PerpsMarketMarginMode;
   maxLeverage: number;
-  onlyIsolated: boolean;
   position?: PerpsProLeverageConfiguration | null;
-  recommended?: PerpsProLeverageConfiguration | null;
+  zeroAddressBaseline?: PerpsProLeverageConfiguration | null;
 }): PerpsProLeverageConfiguration => {
   const max = Math.max(1, Math.round(maxLeverage || 1));
   const selected = normalize(position, max) ??
-    normalize(recommended, max) ?? {
+    normalize(zeroAddressBaseline, max) ?? {
       type: 'isolated' as const,
       value: max,
     };
   return {
-    type: onlyIsolated ? 'isolated' : selected.type,
+    type: marginModeConstraint === 'normal' ? selected.type : 'isolated',
     value: selected.value,
   };
 };

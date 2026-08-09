@@ -2,7 +2,7 @@ import type {
   AllDexsClearinghouseState,
   MarketData,
 } from '@/hooks/perps/usePerpsStore';
-import type { PerpsQuoteAsset } from '@/constant/perps';
+import type { PerpsMarketMarginMode, PerpsQuoteAsset } from '@/constant/perps';
 import {
   PERPS_MAX_NTL_VALUE,
   COLLATERAL_TOKEN_TO_QUOTE,
@@ -88,6 +88,26 @@ export const getQuoteAssetFromMeta = (meta: Meta): PerpsQuoteAsset => {
   return COLLATERAL_TOKEN_TO_QUOTE[meta.collateralToken] ?? 'USDC';
 };
 
+export const normalizePerpsMarketMarginMode = (
+  marginMode: unknown,
+  onlyIsolated = false,
+): PerpsMarketMarginMode => {
+  if (
+    marginMode === 'normal' ||
+    marginMode === 'noCross' ||
+    marginMode === 'strictIsolated'
+  ) {
+    return marginMode;
+  }
+  return onlyIsolated ? 'noCross' : 'normal';
+};
+
+export const isPerpsMarketIsolatedOnly = ({
+  marginMode,
+  onlyIsolated,
+}: Pick<MarketData, 'marginMode' | 'onlyIsolated'>) =>
+  normalizePerpsMarketMarginMode(marginMode, onlyIsolated) !== 'normal';
+
 export const formatMarkData = (
   allMetas: Meta[],
   topAssets: PerpTopTokenV3[],
@@ -162,6 +182,10 @@ export const formatMarkData = (
         const tiers = table?.marginTiers || implicitSingleTier;
         const firstTier = tiers[0];
         const nextTier = tiers[1];
+        const marginMode = normalizePerpsMarketMarginMode(
+          hlDataAsset.marginMode,
+          hlDataAsset.onlyIsolated,
+        );
 
         const item: MarketData = {
           index,
@@ -176,7 +200,8 @@ export const formatMarkData = (
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
           maintenanceMarginTiers: buildPerpsMaintenanceMarginTiers(tiers),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
-          onlyIsolated: hlDataAsset.onlyIsolated,
+          marginMode,
+          onlyIsolated: marginMode !== 'normal',
           pxDecimals: getPxDecimals(Number(hlDataAsset.szDecimals ?? 0)),
           dayBaseVlm: '0',
           dayNtlVlm: '0',

@@ -75,6 +75,66 @@ describe('getPxDecimals', () => {
 });
 
 describe('formatMarkData maintenance rules', () => {
+  it.each([
+    ['normal', false],
+    ['noCross', true],
+    ['strictIsolated', true],
+  ] as const)(
+    'normalizes metadata marginMode=%s before the legacy flag',
+    (marginMode, onlyIsolated) => {
+      const meta: Meta = {
+        collateralToken: 0,
+        marginTables: [],
+        universe: [
+          {
+            marginMode,
+            maxLeverage: 10,
+            name: 'TEST',
+            onlyIsolated: !onlyIsolated,
+            szDecimals: 2,
+          },
+        ],
+      };
+      const topAsset = {
+        dex_id: '',
+        display_name: 'TEST/USDC',
+        name: 'TEST',
+        token_id: 0,
+      } as unknown as PerpTopTokenV3;
+
+      expect(formatMarkData([meta], [topAsset], { 0: '' })[0]).toMatchObject({
+        marginMode,
+        onlyIsolated,
+      });
+    },
+  );
+
+  it('falls back to legacy onlyIsolated when marginMode is missing', () => {
+    const meta: Meta = {
+      collateralToken: 0,
+      marginTables: [],
+      universe: [
+        {
+          maxLeverage: 10,
+          name: 'LEGACY',
+          onlyIsolated: true,
+          szDecimals: 2,
+        },
+      ],
+    };
+    const topAsset = {
+      dex_id: '',
+      display_name: 'LEGACY/USDC',
+      name: 'LEGACY',
+      token_id: 0,
+    } as unknown as PerpTopTokenV3;
+
+    expect(formatMarkData([meta], [topAsset], { 0: '' })[0]).toMatchObject({
+      marginMode: 'noCross',
+      onlyIsolated: true,
+    });
+  });
+
   it('links each market to its complete normalized margin table', () => {
     const meta: Meta = {
       collateralToken: 0,

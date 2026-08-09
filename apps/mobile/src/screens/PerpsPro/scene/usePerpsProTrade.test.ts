@@ -84,7 +84,17 @@ jest.mock('@/hooks/perps/runtime/perpsRuntimeState', () => ({
   }),
 }));
 
-jest.mock('@/utils/perps', () => ({ calLiquidationPrice: () => 50 }));
+jest.mock('@/utils/perps', () => ({
+  calLiquidationPrice: () => 50,
+  isPerpsMarketIsolatedOnly: ({ marginMode, onlyIsolated }: any) =>
+    marginMode === 'noCross' ||
+    marginMode === 'strictIsolated' ||
+    (!marginMode && !!onlyIsolated),
+  normalizePerpsMarketMarginMode: (
+    marginMode: unknown,
+    onlyIsolated: boolean,
+  ) => marginMode || (onlyIsolated ? 'noCross' : 'normal'),
+}));
 
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
 
@@ -382,8 +392,8 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.leverage).toBe(15);
   });
 
-  it('uses the recommended leverage for a new position and keeps Max as fallback', () => {
-    const recommended = renderHook(() =>
+  it('uses the zero-address baseline for a new position and keeps Max as fallback', () => {
+    const baseline = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
         bboBook: book,
@@ -393,7 +403,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         executionActive: true,
         leveragePending: false,
         market,
-        recommendedLeverage: { type: 'cross', value: 7 },
+        zeroAddressLeverageBaseline: { type: 'cross', value: 7 },
         refreshActiveAssetData: jest.fn(async () => undefined),
         updateLeverageRequest: jest.fn(async () => true),
       }),
@@ -413,12 +423,12 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       }),
     );
 
-    expect(recommended.result.current.leverage).toBe(7);
-    expect(recommended.result.current.marginMode).toBe('cross');
+    expect(baseline.result.current.leverage).toBe(7);
+    expect(baseline.result.current.marginMode).toBe('cross');
     expect(fallback.result.current.leverage).toBe(20);
   });
 
-  it('uses the existing position leverage before the recommendation', () => {
+  it('uses the existing position leverage before the zero-address baseline', () => {
     mockPerpsState.currentClearinghouseState.assetPositions.push({
       position: {
         coin: 'BTC',
@@ -436,7 +446,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         executionActive: true,
         leveragePending: false,
         market,
-        recommendedLeverage: { type: 'cross', value: 7 },
+        zeroAddressLeverageBaseline: { type: 'cross', value: 7 },
         refreshActiveAssetData: jest.fn(async () => undefined),
         updateLeverageRequest: jest.fn(async () => true),
       }),
@@ -458,7 +468,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         executionActive: true,
         leveragePending: false,
         market,
-        recommendedLeverage: { type: 'isolated', value: 10 },
+        zeroAddressLeverageBaseline: { type: 'isolated', value: 10 },
         refreshActiveAssetData: jest.fn(async () => undefined),
         updateLeverageRequest: jest.fn(async () => true),
       }),
@@ -486,7 +496,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         executionActive: true,
         leveragePending: false,
         market,
-        recommendedLeverage: { type: 'cross', value: 7 },
+        zeroAddressLeverageBaseline: { type: 'cross', value: 7 },
         refreshActiveAssetData: jest.fn(async () => undefined),
         updateLeverageRequest: jest.fn(async () => true),
       }),

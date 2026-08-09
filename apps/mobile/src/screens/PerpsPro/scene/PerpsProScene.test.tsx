@@ -264,8 +264,8 @@ jest.mock('./usePerpsProLeverageUpdate', () => ({
   }),
 }));
 
-jest.mock('./usePerpsProRecommendedLeverage', () => ({
-  usePerpsProRecommendedLeverage: () => null,
+jest.mock('./usePerpsProZeroAddressLeverageBaseline', () => ({
+  usePerpsProZeroAddressLeverageBaseline: () => null,
 }));
 
 jest.mock('./usePerpsProInfoPanel', () => ({
