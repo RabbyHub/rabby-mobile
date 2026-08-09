@@ -127,7 +127,7 @@ const resetStore = () => {
   );
 };
 
-describe('usePerpsProScene integration', () => {
+describe('usePerpsProScene component', () => {
   beforeEach(() => {
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,

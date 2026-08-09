@@ -1,65 +1,15 @@
 import type { Account } from '@/core/startupServices/preference';
 
-jest.mock('@/core/utils/startupScheduler', () => ({
-  runStartupTask: jest.fn(),
-  scheduleStartupTask: jest.fn(),
-}));
-
-jest.mock('@/core/utils/reexports', () => ({
-  zCreate: require('zustand').create,
-}));
-
-jest.mock('@/core/apis/perps', () => ({
-  apisPerps: {},
-}));
-
-jest.mock('@/core/request', () => ({
-  openapi: {},
-}));
-
-jest.mock('@/core/serviceApi/perps', () => ({
-  perpsServiceApi: {},
-}));
-
-jest.mock('@/utils/events', () => ({
-  EVENTS: {
-    PERPS: {
-      LOG_OUT: 'PERPS_LOG_OUT',
-    },
-  },
-  eventBus: {
-    emit: jest.fn(),
-    on: jest.fn(),
-    removeAllListeners: jest.fn(),
-  },
-}));
-
-jest.mock('@/utils/stats', () => ({
-  stats: {},
-}));
-
-jest.mock('@/utils/perps', () => ({
-  formatAllDexsClearinghouseState: jest.fn(),
-  formatMarkData: jest.fn(),
-  formatPositionPnl: jest.fn(() => ({
-    accountValue: 0,
-    pnl: 0,
-    show: false,
-    type: 'pnl',
-  })),
-  formatSpotState: jest.fn(),
-  getPxDecimals: jest.fn(() => 2),
-  mergeFastAssetCtxs: jest.fn(),
-}));
-
-const { getPerpsAccountRuntimeContext, initialState, perpsStore } =
-  require('../usePerpsStore') as typeof import('../usePerpsStore');
-const { ensurePerpsRuntime, resetPerpsRuntimeForTests } =
-  require('./ensurePerpsRuntime') as typeof import('./ensurePerpsRuntime');
-type PerpsRuntimeDependencies =
-  import('./ensurePerpsRuntime').PerpsRuntimeDependencies;
-const { getPerpsRuntimeIdentity, getPerpsRuntimeSnapshot } =
-  require('./perpsRuntimeState') as typeof import('./perpsRuntimeState');
+import {
+  ensurePerpsRuntime,
+  resetPerpsRuntimeForTests,
+  type PerpsRuntimeAccountContext,
+  type PerpsRuntimeDependencies,
+} from './ensurePerpsRuntime';
+import {
+  getPerpsRuntimeIdentity,
+  getPerpsRuntimeSnapshot,
+} from './perpsRuntimeState';
 
 const createDeferred = <T>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -76,52 +26,53 @@ const makeAccount = (address: string) =>
     type: 'PrivateKey',
   } as Account);
 
-const setAccount = (account: Account | null) => {
-  perpsStore.setState({
-    currentPerpsAccount: account,
-    isInitialized: false,
-    isLogin: !!account,
+describe('Perps Runtime state integration', () => {
+  let accountContext: PerpsRuntimeAccountContext;
+
+  const setAccount = (account: Account | null) => {
+    accountContext = {
+      account,
+      generation: accountContext.generation + 1,
+      isInitialized: false,
+    };
+  };
+
+  const createDependencies = (
+    overrides: Partial<PerpsRuntimeDependencies> = {},
+  ): PerpsRuntimeDependencies => ({
+    applyPerpsSigner: jest.fn(async () => undefined),
+    fetchMarketData: jest.fn(async () => undefined),
+    getOrCreatePerpsAgentWallet: jest.fn(async masterAddress => ({
+      agentAddress: `agent-${masterAddress}`,
+      vault: `vault-${masterAddress}`,
+    })),
+    getPerpsAccountRuntimeContext: () => accountContext,
+    getPerpsAgentAddress: jest.fn(async address => `agent-${address}`),
+    initPerpsAgentAccount: jest.fn(),
+    isSelfSignPerpsAccount: jest.fn(() => true),
+    isWalletUnlocked: jest.fn(() => true),
+    loginPerpsAccount: jest.fn(async () => undefined),
+    setInitialized: initialized => {
+      accountContext = { ...accountContext, isInitialized: initialized };
+    },
+    waitForInitialWsData: jest.fn(async () => undefined),
+    ...overrides,
   });
-};
 
-const createDependencies = (
-  overrides: Partial<PerpsRuntimeDependencies> = {},
-): PerpsRuntimeDependencies => ({
-  applyPerpsSigner: jest.fn(async () => undefined),
-  fetchMarketData: jest.fn(async () => undefined),
-  getOrCreatePerpsAgentWallet: jest.fn(async masterAddress => ({
-    agentAddress: `agent-${masterAddress}`,
-    vault: `vault-${masterAddress}`,
-  })),
-  getPerpsAccountRuntimeContext,
-  getPerpsAgentAddress: jest.fn(async address => `agent-${address}`),
-  initPerpsAgentAccount: jest.fn(),
-  isSelfSignPerpsAccount: jest.fn(() => true),
-  isWalletUnlocked: jest.fn(() => true),
-  loginPerpsAccount: jest.fn(async () => undefined),
-  setInitialized: initialized => {
-    perpsStore.setState({ isInitialized: initialized });
-  },
-  waitForInitialWsData: jest.fn(async () => undefined),
-  ...overrides,
-});
-
-const resetStore = () => {
-  perpsStore.setState({ ...initialState }, true);
-};
-
-describe('Perps Runtime and Store integration', () => {
   beforeEach(() => {
     resetPerpsRuntimeForTests();
-    resetStore();
+    accountContext = {
+      account: null,
+      generation: 0,
+      isInitialized: false,
+    };
   });
 
   afterEach(() => {
     resetPerpsRuntimeForTests();
-    resetStore();
   });
 
-  it('deduplicates concurrent initialization and commits readiness to the real Store', async () => {
+  it('deduplicates concurrent initialization and commits readiness once', async () => {
     const signer = createDeferred<void>();
     const account = makeAccount('0x0000000000000000000000000000000000000001');
     const applyPerpsSigner = jest.fn(async () => signer.promise);
@@ -143,7 +94,7 @@ describe('Perps Runtime and Store integration', () => {
     signer.resolve();
     await Promise.all(requests);
 
-    expect(perpsStore.getState().isInitialized).toBe(true);
+    expect(accountContext.isInitialized).toBe(true);
     expect(dependencies.loginPerpsAccount).toHaveBeenCalledTimes(1);
     expect(dependencies.fetchMarketData).toHaveBeenCalledTimes(1);
     expect(getPerpsRuntimeSnapshot()).toMatchObject({
@@ -152,7 +103,7 @@ describe('Perps Runtime and Store integration', () => {
     });
   });
 
-  it('rejects an old account generation before it can mutate the real Store', async () => {
+  it('rejects a stale account generation before it can commit readiness', async () => {
     const accountASigner = createDeferred<void>();
     const accountA = makeAccount('0x000000000000000000000000000000000000000a');
     const accountB = makeAccount('0x000000000000000000000000000000000000000b');
@@ -176,8 +127,8 @@ describe('Perps Runtime and Store integration', () => {
     accountASigner.resolve();
     await accountARequest;
 
-    expect(perpsStore.getState()).toMatchObject({
-      currentPerpsAccount: accountB,
+    expect(accountContext).toMatchObject({
+      account: accountB,
       isInitialized: false,
     });
     expect(dependencies.loginPerpsAccount).not.toHaveBeenCalled();
@@ -190,8 +141,8 @@ describe('Perps Runtime and Store integration', () => {
 
     expect(dependencies.loginPerpsAccount).toHaveBeenCalledTimes(1);
     expect(dependencies.loginPerpsAccount).toHaveBeenCalledWith(accountB);
-    expect(perpsStore.getState()).toMatchObject({
-      currentPerpsAccount: accountB,
+    expect(accountContext).toMatchObject({
+      account: accountB,
       isInitialized: true,
     });
     expect(getPerpsRuntimeSnapshot()).toMatchObject({

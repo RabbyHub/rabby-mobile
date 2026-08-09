@@ -264,7 +264,7 @@ const getLatestListProps = () =>
     mockBottomSheetFlatListProps.mock.calls.length - 1
   ][0];
 
-describe('PerpsProMarketSelector integration', () => {
+describe('PerpsProMarketSelector component', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
