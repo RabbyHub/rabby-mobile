@@ -2796,6 +2796,7 @@
           "size": "Size",
           "margin": "Margin",
           "marginRatio": "Margin Ratio",
+          "liquidationDistance": "Liq. Distance",
           "entry": "Entry Price",
           "mark": "Mark Price",
           "liquidation": "Liq. Price",

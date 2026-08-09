@@ -84,6 +84,18 @@ export const formatPerpsProDecimal = (
   return withThousandsSeparators(number.toFixed(decimals));
 };
 
+export const formatPerpsProSignedDecimal = (
+  value: number | string | null | undefined,
+  decimals = 2,
+) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return '-';
+  }
+  const sign = number > 0 ? '+' : '';
+  return `${sign}${withThousandsSeparators(number.toFixed(decimals))}`;
+};
+
 export const formatPerpsProUsdValue = (
   value: number | string | null | undefined,
   options: { decimals?: number; signed?: boolean } = {},

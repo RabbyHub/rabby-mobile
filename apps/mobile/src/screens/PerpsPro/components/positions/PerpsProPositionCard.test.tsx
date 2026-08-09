@@ -46,6 +46,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positions.entry': 'Entry Price',
         'page.perps.pro.positions.leverage': 'Leverage',
         'page.perps.pro.positions.liquidation': 'Liq. Price',
+        'page.perps.pro.positions.liquidationDistance': 'Liq. Distance',
         'page.perps.pro.positions.long': 'Long',
         'page.perps.pro.positions.margin': 'Margin',
         'page.perps.pro.positions.marginRatio': 'Margin Ratio',
@@ -119,7 +120,7 @@ describe('PerpsProPositionCard', () => {
     __resetPerpsProPositionSizeUnitSessionForTests();
   });
 
-  it('hides Margin Ratio for Cross and preserves every TP/SL entry', () => {
+  it('shows signed Liq. Distance for Cross and preserves every TP/SL entry', () => {
     render(
       <PerpsProPositionCard
         accountIdentity="account-a"
@@ -171,6 +172,8 @@ describe('PerpsProPositionCard', () => {
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.queryByText('Margin Ratio')).toBeNull();
     expect(screen.queryByText('2.50%')).toBeNull();
+    expect(screen.getByText('Liq. Distance')).toBeTruthy();
+    expect(screen.getByText('-23.81%(-25.00)')).toBeTruthy();
     expect(screen.getByText('TP/SL (3)')).toBeTruthy();
     expect(screen.getByText('120.00, 130.00')).toBeTruthy();
     expect(screen.getByText('90.00')).toBeTruthy();
@@ -212,6 +215,7 @@ describe('PerpsProPositionCard', () => {
 
     expect(screen.getByText('Margin Ratio')).toBeTruthy();
     expect(screen.getByText('20.14%')).toBeTruthy();
+    expect(screen.queryByText('Liq. Distance')).toBeNull();
     expect(screen.queryByText('TP/SL (0)')).toBeNull();
   });
 

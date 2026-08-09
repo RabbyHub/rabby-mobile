@@ -3,6 +3,7 @@ import { buildPerpsMaintenanceMarginTiers } from '@/utils/perpsMargin';
 
 import {
   buildPerpsPositions,
+  calculateSignedLiquidationDistance,
   collectPositionTpslOrders,
   filterPerpsPositionsForMarket,
   getPerpsPositionDisplaySize,
@@ -46,6 +47,28 @@ const makePosition = (overrides: Partial<AssetPosition['position']>) =>
   } as AssetPosition);
 
 describe('Perps Pro position model', () => {
+  it('calculates signed liquidation distance from mark to liquidation price', () => {
+    const long = calculateSignedLiquidationDistance({
+      liquidationPrice: '63000',
+      markPrice: '63812',
+    });
+    expect(long?.priceGap).toBe('-812');
+    expect(Number(long?.ratio)).toBeCloseTo((63000 - 63812) / 63812, 12);
+
+    expect(
+      calculateSignedLiquidationDistance({
+        liquidationPrice: '120',
+        markPrice: '105',
+      }),
+    ).toEqual({ priceGap: '15', ratio: '0.14285714285714285714' });
+    expect(
+      calculateSignedLiquidationDistance({
+        liquidationPrice: null,
+        markPrice: '105',
+      }),
+    ).toBeNull();
+  });
+
   it('derives direction, ROI, and isolated-only risk from position facts', () => {
     const maintenanceMarginTiersByCoin = {
       BTC: buildPerpsMaintenanceMarginTiers([
