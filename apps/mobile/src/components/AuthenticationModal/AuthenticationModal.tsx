@@ -29,7 +29,12 @@ import { Button } from '../Button';
 import { useRefState } from '@/hooks/common/useRefState';
 import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
-import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
+import {
+  BioAuthStage,
+  coerceAuthType,
+  filterAuthTypes,
+  useAuthTypeSelection,
+} from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
 import { Text } from '@/components/Typography';
@@ -272,9 +277,8 @@ export const AuthenticationModal = ({
     stage: BioAuthStage.idle,
     restCount: 0,
   });
-  const [currentAuthType, setCurrentAuthType] = React.useState<
-    AuthState['authType']
-  >(coerceAuthType(availableAuthTypes[0], availableAuthTypes));
+  const { currentAuthType, setCurrentAuthType } =
+    useAuthTypeSelection(availableAuthTypes);
 
   const handleSubmitForm = React.useCallback(async () => {
     if (hasCheckFailed) return;
@@ -370,6 +374,7 @@ export const AuthenticationModal = ({
     onFinished,
     onFinishedReturnBase,
     availableAuthTypes,
+    setCurrentAuthType,
   ]);
 
   const handleConfirm = useCallback(() => {

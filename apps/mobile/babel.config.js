@@ -25,7 +25,15 @@ module.exports = api => {
   const shouldStripConsole =
     inputBuildEnv === 'production' ||
     (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
-  const loadableImplExt = isDevTransform ? 'dev' : 'prod';
+  const moduleLoadingMode =
+    process.env.RABBY_MOBILE_MODULE_LOADING_MODE || 'lazy';
+  if (!['eager', 'lazy'].includes(moduleLoadingMode)) {
+    throw new Error(
+      `Unsupported RABBY_MOBILE_MODULE_LOADING_MODE: ${moduleLoadingMode}`,
+    );
+  }
+  const shouldInlineDevDynamicImports =
+    isDevTransform && moduleLoadingMode === 'lazy';
   const regressionScenarioImplExt =
     isDevTransform || resolvedBuildChannel === 'selfhost-reg'
       ? 'nonprod'
@@ -38,8 +46,10 @@ module.exports = api => {
       dotenvEnv: process.env.APP_ENV || '',
       callerName,
       isDevTransform,
+      moduleLoadingMode,
       regressionScenarioImplExt,
       shouldEnableRozenite,
+      shouldInlineDevDynamicImports,
     }),
   );
 
@@ -62,6 +72,7 @@ module.exports = api => {
           'process.env.RABBY_MOBILE_STRIP_CONSOLE': shouldStripConsole
             ? 'true'
             : 'false',
+          'process.env.RABBY_MOBILE_MODULE_LOADING_MODE': moduleLoadingMode,
           'process.env.WITH_ROZENITE': shouldEnableRozenite ? 'true' : 'false',
           'process.env.buildchannel': resolvedBuildChannel,
           'process.env.RABBY_MOBILE_FE_SERVICE_URL':
@@ -86,7 +97,10 @@ module.exports = api => {
             '^@/devtools/regressionScenarios/entry$': `./src/devtools/regressionScenarios/entry.${regressionScenarioImplExt}`,
             '^@/devtools/regressionScenarios/runtime$': `./src/devtools/regressionScenarios/runtime.${regressionScenarioImplExt}`,
             '^@/devtools/regressionScenarios/react$': `./src/devtools/regressionScenarios/react.${regressionScenarioImplExt}`,
-            ...(loadableAliases[loadableImplExt] || {}),
+            '^@/hooks/useFeatureActivationDiagnostics$': `./src/hooks/useFeatureActivationDiagnostics.${regressionScenarioImplExt}`,
+            '^@/startup/moduleLoading/launchTaskLoaders$': `./src/startup/moduleLoading/launchTaskLoaders.${moduleLoadingMode}`,
+            '^@/startup/moduleLoading/setupRuntimeLoaders$': `./src/startup/moduleLoading/setupRuntimeLoaders.${moduleLoadingMode}`,
+            ...(loadableAliases[moduleLoadingMode] || {}),
             '@': './src',
             'styled-components/native': 'styled-components/native',
             'styled-components': 'styled-components/native',
@@ -99,7 +113,9 @@ module.exports = api => {
       ['nativewind/babel', {}],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
-      ...(isJestTransform ? ['@babel/plugin-transform-dynamic-import'] : []),
+      ...(isJestTransform || shouldInlineDevDynamicImports
+        ? ['@babel/plugin-transform-dynamic-import']
+        : []),
       ['react-native-reanimated/plugin'],
     ],
     ...(shouldStripConsole

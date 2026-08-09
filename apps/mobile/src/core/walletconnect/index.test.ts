@@ -18,7 +18,7 @@ import {
   forgetWalletConnectAccountForTopic,
   rememberWalletConnectAccountForOrigin,
   rememberWalletConnectAccountForTopic,
-} from './accountSelection';
+} from './accountPersistence';
 
 const walletKit = {
   approveSession: jest.fn(),
@@ -44,7 +44,7 @@ jest.mock('./autoDisconnect', () => ({
   replaceWalletConnectSessionsForAutoDisconnect: jest.fn(),
 }));
 
-jest.mock('./accountSelection', () => ({
+jest.mock('./accountPersistence', () => ({
   forgetWalletConnectAccountForTopic: jest.fn(),
   getWalletConnectOriginFromUrl: jest.fn(() => 'https://example.com'),
   rememberWalletConnectAccountForOrigin: jest.fn(),

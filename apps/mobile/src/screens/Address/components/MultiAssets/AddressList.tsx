@@ -17,8 +17,11 @@ import AutoLockView from '@/components/AutoLockView';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { balance24hStore } from '@/store/balance24h';
-import { computeBalanceChange } from '@/core/apis/balance';
 import addressBalanceStore from '@/store/balance';
+import {
+  buildPortfolioAddressChange,
+  resolvePortfolioAddressBalance,
+} from '@/store/homePortfolio/consistency';
 import { Text } from '@/components/Typography';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
@@ -28,12 +31,14 @@ interface AddressListProps {
   onAddAddressPress?: () => void;
   onDone?: () => void;
   onMoreAddressListPress?: () => void;
+  variant?: 'manage';
 }
 const AddressList = ({
   showMarkIfNewlyAdded = true,
   onAddAddressPress,
   onDone,
   onMoreAddressListPress,
+  variant,
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -83,24 +88,25 @@ const AddressList = ({
 
     return myTop10Accounts
       .map(item => {
-        const account = balanceMap[item.address.toLowerCase()];
-        const canShowChange = !!account;
-
-        const balance = account?.totalBalance || item.balance || 0;
-        const evmBalance = account?.evmBalance || item.evmBalance || 0;
-
-        const changeData = multi24hBalance[item.address.toLowerCase()];
-        const startValue = changeData?.total_usd_value || 0;
-        const { changePercent, assetsChange } = computeBalanceChange(
-          evmBalance,
-          startValue,
-        );
+        const address = item.address.toLowerCase();
+        const account = balanceMap[address];
+        const resolvedBalance = resolvePortfolioAddressBalance({
+          resource: account,
+          fallback: {
+            totalBalance: item.balance,
+            evmBalance: item.evmBalance,
+          },
+        });
+        const change = buildPortfolioAddressChange({
+          currentEvmBalance: account?.evmBalance,
+          previousEvmBalance: multi24hBalance[address]?.total_usd_value,
+        });
         return {
           ...item,
-          balance,
-          evmBalance,
-          changPercent: changeData && canShowChange ? changePercent : undefined,
-          isLoss: changeData && canShowChange ? assetsChange < 0 : undefined,
+          balance: resolvedBalance.totalBalance,
+          evmBalance: resolvedBalance.evmBalance,
+          changPercent: change?.changePercent,
+          isLoss: change?.isLoss,
         };
       })
       .sort((a, b) => b.balance - a.balance);
@@ -125,14 +131,16 @@ const AddressList = ({
           <AddressEntry
             showMarkIfNewlyAdded={showMarkIfNewlyAdded}
             data={item}
-            onSelect={onDone}
-            onManage={gotoAddressDetail}
+            onSelect={variant === 'manage' ? gotoAddressDetail : onDone}
+            onManage={variant === 'manage' ? undefined : gotoAddressDetail}
             manageAccessibilityLabel={t('component.portfolios.manage')}
+            disableNavigate={variant === 'manage'}
+            isShowBackupBadge
           />
         </View>
       );
     },
-    [styles.itemGap, onDone, showMarkIfNewlyAdded, t],
+    [styles.itemGap, showMarkIfNewlyAdded, variant, onDone, t],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
@@ -273,7 +281,11 @@ const AddressList = ({
 export const AddressListModal = ({
   onAddAddressPress,
   onDone,
-}: AddressListProps) => {
+  variant,
+  subTitle,
+}: AddressListProps & {
+  subTitle?: string;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [moreAddressList, setMoreAddressList] = useState(false);
@@ -283,16 +295,20 @@ export const AddressListModal = ({
       <NotMatterAddressDialog
         onDone={onDone}
         onBack={() => setMoreAddressList(false)}
+        variant={variant}
+        isShowBackupBadge
       />
     );
   }
   return (
     <AutoLockView as="View" style={styles.container}>
       <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
+      {subTitle ? <Text style={styles.subTitle}>{subTitle}</Text> : null}
 
       <AddressList
         onAddAddressPress={onAddAddressPress}
         onDone={onDone}
+        variant={variant}
         onMoreAddressListPress={() => setMoreAddressList(true)}
       />
     </AutoLockView>
@@ -314,6 +330,15 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-title-1'],
+  },
+  subTitle: {
+    marginTop: 7,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-secondary'],
   },
   footerGap: {
     height: 70,

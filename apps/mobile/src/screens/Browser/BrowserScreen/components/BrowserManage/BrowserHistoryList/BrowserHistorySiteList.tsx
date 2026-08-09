@@ -7,8 +7,8 @@ import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { noop } from 'lodash';
 import React from 'react';
-import { SectionList, View } from 'react-native';
-import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
+import { View } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
 
 export const BrowserHistorySiteItem = ({
@@ -31,8 +31,8 @@ export const BrowserHistorySiteItem = ({
       <ContextMenuView
         triggerProps={{ action: 'longPress' }}
         preViewBorderRadius={20}
-        menuConfig={{
-          menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
+        menuTitle={stringUtils.unPrefix(item.origin, 'https://')}
+        getMenuConfig={() => ({
           menuActions: [
             {
               title: 'Delete',
@@ -44,7 +44,7 @@ export const BrowserHistorySiteItem = ({
               },
             },
           ],
-        }}>
+        })}>
         <TouchableOpacity
           onPress={() => {
             onPress?.(item);

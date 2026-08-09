@@ -26,9 +26,11 @@ import {
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import { computeBalanceChange } from '@/core/apis/balance';
 import { balance24hStore } from '@/store/balance24h';
+import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
 import Animated, { Easing, FadeInUp } from 'react-native-reanimated';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const PINNED_ADDRESS_LIST_ENTERING = FadeInUp.duration(460).easing(
   Easing.out(Easing.cubic),
@@ -45,14 +47,21 @@ function MultiPinnedAddressList({
   const pinnedAddresses = useMemo(() => {
     return pinnedAccountList.map(item => item.address.toLowerCase());
   }, [pinnedAccountList]);
-  const balance24hSnapshots =
-    balance24hStore.useAddresses24hBalanceSnapshots(pinnedAddresses);
+  const balance24hValues = useActivityStore(
+    balance24hStore.useStore,
+    useShallow(state =>
+      pinnedAddresses.map(address => state.valueMap[address]),
+    ),
+    Object.is,
+    { storeLabel: 'home-pinned-account-24h-balances' },
+  );
 
   const addressListData = useMemo(() => {
-    const multi24hBalance = balance24hSnapshots.reduce(
-      (acc, snapshot) => {
-        if (snapshot.value) {
-          acc[snapshot.address] = snapshot.value;
+    const multi24hBalance = pinnedAddresses.reduce(
+      (acc, address, index) => {
+        const balance24h = balance24hValues[index];
+        if (balance24h) {
+          acc[address] = balance24h;
         }
         return acc;
       },
@@ -69,26 +78,23 @@ function MultiPinnedAddressList({
       pinnedAccountList.map(item => {
         const lcAddr = item.address.toLowerCase();
         const address24hBalanceData = multi24hBalance[lcAddr];
-        const canShowChange =
-          !!address24hBalanceData && typeof item.evmBalance === 'number';
-        const total_usd_value = address24hBalanceData?.total_usd_value || 0;
-        const { assetsChange, changePercent } = computeBalanceChange(
-          item.evmBalance || 0,
-          total_usd_value,
-        );
+        const change = buildPortfolioAddressChange({
+          currentEvmBalance: item.evmBalance,
+          previousEvmBalance: address24hBalanceData?.total_usd_value,
+        });
 
         return {
           ...item,
           updateTime: address24hBalanceData?.updateTime,
-          balance: item.balance || 0,
-          evmBalance: item.evmBalance || 0,
-          changePercent: canShowChange ? changePercent : undefined,
-          isLoss: canShowChange ? assetsChange < 0 : undefined,
+          balance: item.balance ?? 0,
+          evmBalance: item.evmBalance ?? 0,
+          changePercent: change?.changePercent,
+          isLoss: change?.isLoss,
         };
       }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [balance24hSnapshots, pinnedAccountList]);
+  }, [balance24hValues, pinnedAccountList, pinnedAddresses]);
 
   useEffect(() => {
     if (!addressListData?.length) {
@@ -102,25 +108,28 @@ function MultiPinnedAddressList({
   }, [addressListData?.length]);
 
   return (
-    <Animated.View
-      entering={PINNED_ADDRESS_LIST_ENTERING}
+    <View
       style={[
         styles.accountList,
         hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
       ]}>
-      {addressListData?.map(item => {
-        return (
-          <HomeAddressItem
-            hideType={hideType}
-            account={item}
-            updateTime={item.updateTime}
-            key={`${item.type}-${item.address}`}
-            isLoss={item.isLoss}
-            changePercent={item.changePercent}
-          />
-        );
-      })}
-    </Animated.View>
+      <Animated.View
+        entering={PINNED_ADDRESS_LIST_ENTERING}
+        style={styles.accountListContent}>
+        {addressListData?.map(item => {
+          return (
+            <HomeAddressItem
+              hideType={hideType}
+              account={item}
+              updateTime={item.updateTime}
+              key={`${item.type}-${item.address}`}
+              isLoss={item.isLoss}
+              changePercent={item.changePercent}
+            />
+          );
+        })}
+      </Animated.View>
+    </View>
   );
 }
 
@@ -356,11 +365,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     accountList: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 8,
       width: '100%',
       marginTop: 20,
       paddingHorizontal: 8,
       marginBottom: 12,
+    },
+    accountListContent: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      width: '100%',
     },
     addressOpacity: {
       opacity: 0.3,

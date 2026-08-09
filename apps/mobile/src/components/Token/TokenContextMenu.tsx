@@ -1,23 +1,25 @@
 import {
   ContextMenuView,
-  MenuAction,
+  type MenuAction,
+  type MenuConfig,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { useGetBinaryMode } from '@/hooks/theme';
-import { keyBy } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { apisTheme } from '@/hooks/theme';
+import React from 'react';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { type TokenSelectType } from './TokenSelectorSheetModal';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Keyboard } from 'react-native';
 import { tokenItemToITokenItem } from '@/utils/token';
+import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
+import {
+  isUserTokenPinnedInMemory,
+  toggleUserTokenPinned,
+} from '@/hooks/useTokenSettings';
+import i18n from '@/utils/i18n';
 
 interface Props {
   token: TokenItem;
-  closeBottomSheet: () => void;
   children: React.ReactElement<any>;
   type?: TokenSelectType;
   needToTokenMarketInfo?: boolean;
@@ -27,32 +29,15 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   const { children, token, type, needToTokenMarketInfo, isCustomTestnetToken } =
     props;
 
-  const { userTokenSettings, pinToken, removePinedToken } =
-    useUserTokenSettings();
+  const handlePress = () => {
+    toggleUserTokenPinned(token);
+  };
 
-  // 获取当前账户地址
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
-
-  const isPined = useMemo(
-    () =>
-      userTokenSettings.pinedQueue.some(
-        pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
-      ),
-    [token.chain, token.id, userTokenSettings.pinedQueue],
-  );
-
-  const handlePress = useCallback(() => {
-    if (isPined) {
-      removePinedToken(token);
-    } else {
-      pinToken(token);
-    }
-  }, [isPined, pinToken, removePinedToken, token]);
-
-  const gotoTokenDetail = useCallback(() => {
+  const gotoTokenDetail = () => {
     Keyboard.dismiss();
+    const currentAccount = storeApiAccountsSwitcher.getSceneAccountInfo({
+      forScene: 'MakeTransactionAbout',
+    }).finalSceneCurrentAccount;
     if (needToTokenMarketInfo) {
       navigateDeprecated(RootNames.TokenMarketInfo, {
         token: tokenItemToITokenItem(token, ''),
@@ -69,72 +54,54 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       account: currentAccount,
       isCustomTestnetToken,
     });
-  }, [
-    currentAccount,
-    isCustomTestnetToken,
-    needToTokenMarketInfo,
-    token,
-    type,
-  ]);
+  };
 
-  const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const menuActionDict = React.useMemo(() => {
-    return keyBy(
-      [
-        {
-          title: isPined
-            ? t('page.tokenDetail.action.unfavorite')
-            : t('page.tokenDetail.action.favorite'),
-          icon: isPined
-            ? isDarkTheme
-              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
-              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
-            : isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
-          androidIconName: isPined
-            ? 'ic_rabby_menu_token_unfavorite'
-            : 'ic_rabby_menu_token_favorite',
-          key: 'favorite',
-          action() {
-            handlePress();
-          },
+  const getMenuConfig = (): MenuConfig => {
+    const isPinned = isUserTokenPinnedInMemory(token);
+    const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+    const menuActions: MenuAction[] = [
+      {
+        title: isPinned
+          ? i18n.t('page.tokenDetail.action.unfavorite')
+          : i18n.t('page.tokenDetail.action.favorite'),
+        icon: isPinned
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
+        androidIconName: isPinned
+          ? 'ic_rabby_menu_token_unfavorite'
+          : 'ic_rabby_menu_token_favorite',
+        key: 'favorite',
+        action() {
+          handlePress();
         },
-        {
-          title: t('component.TokenSelector.contextMenu.viewDetail'),
-          icon: isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-          key: 'detail',
-          androidIconName: 'ic_rabby_menu_more',
-          action() {
-            gotoTokenDetail();
-          },
+      },
+      {
+        title: i18n.t('component.TokenSelector.contextMenu.viewDetail'),
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+        key: 'detail',
+        androidIconName: 'ic_rabby_menu_more',
+        action() {
+          gotoTokenDetail();
         },
-      ] as MenuAction[],
-      item => item.key,
-    );
-  }, [isPined, t, isDarkTheme, handlePress, gotoTokenDetail]);
+      },
+    ];
 
-  const menuActions = React.useMemo(() => {
-    const menuKeys = isCustomTestnetToken
-      ? ['detail']
-      : (['favorite', 'detail'] as const);
-
-    return menuKeys
-      .map(key => {
-        return menuActionDict[key];
-      })
-      .filter(v => v);
-  }, [isCustomTestnetToken, menuActionDict]);
+    return {
+      menuActions: isCustomTestnetToken
+        ? menuActions.filter(action => action.key === 'detail')
+        : menuActions,
+    };
+  };
 
   return (
     <ContextMenuView
-      menuConfig={{
-        // menuTitle: null,
-        menuActions: menuActions,
-      }}
+      getMenuConfig={getMenuConfig}
       preViewBorderRadius={20}
       triggerProps={{ action: 'longPress' }}>
       {children}

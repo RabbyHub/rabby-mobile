@@ -1,6 +1,7 @@
 import {
   getTransactionHistoryListSnapshot,
   getTransactionHistoryRecentPendingSnapshot,
+  getTransactionHistorySendListSnapshot,
 } from '@/core/serviceApi/transactionHistory';
 import { useMyAccounts } from '@/hooks/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -12,16 +13,19 @@ import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
 import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
 import type { SendRequireData } from '@rabby-wallet/rabby-action';
-import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
+import { useInterval, useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import { atom, useAtom } from 'jotai';
-import { sortBy, unionBy } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { unionBy } from 'lodash';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Hex } from '@metamask/utils';
 import { isValidHexAddress } from '@metamask/utils';
 import { jotaiStore } from '@/core/utils/reexports';
 import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
+import { getPublicAccountSnapshotAccounts } from '@/core/serviceApi/keyring';
+import { useReducer } from 'react';
+import { hasRecentSuccessfulSendTo } from './recentSendRecipient';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -102,8 +106,10 @@ export type RecentHistoryItem = {
 };
 export const useRecentSend = ({
   useAllHistory,
+  ready = true,
 }: {
   useAllHistory?: boolean;
+  ready?: boolean;
 } = {}) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const { accounts } = useMyAccounts({
@@ -118,7 +124,8 @@ export const useRecentSend = ({
       return batchFetchLocalTx();
     },
     {
-      refreshDeps: [transactionHistoryReady],
+      ready: ready && transactionHistoryReady,
+      refreshDeps: [ready, transactionHistoryReady],
     },
   );
 
@@ -243,31 +250,29 @@ export function getRecentSendPendingTxData() {
   return jotaiStore.get(localPendingTxDataAtom);
 }
 
-export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
+export const useRecentSendPendingTx = (currentAccountAddress?: string) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
     localPendingTxDataAtom,
   );
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
 
   const clearLocalPendingTxData = useCallback(() => {
     setLocalPendingTxData(null);
   }, [setLocalPendingTxData]);
 
   const runFetchLocalPendingTx = useCallback(() => {
-    if (transactionHistoryReady && currentAccount?.address) {
+    if (transactionHistoryReady && currentAccountAddress) {
       const resTx = fetchLocalSendPendingTx(
-        currentAccount.address,
+        currentAccountAddress,
       ) as SendTxHistoryItem;
       setLocalPendingTxData(resTx);
     }
-  }, [currentAccount?.address, setLocalPendingTxData, transactionHistoryReady]);
+  }, [currentAccountAddress, setLocalPendingTxData, transactionHistoryReady]);
 
   useEffect(() => {
+    setLocalPendingTxData(null);
     runFetchLocalPendingTx();
-  }, [runFetchLocalPendingTx]);
+  }, [runFetchLocalPendingTx, setLocalPendingTxData]);
 
   useInterval(() => {
     if (localPendingTxData) {
@@ -288,16 +293,55 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   };
 };
 
-export function useRecentSendToHistoryFor(toAddress?: string) {
-  const { recentHistory, runAsync } = useRecentSend({ useAllHistory: true });
+export function useRecentSendToHistoryFor(
+  toAddress?: string,
+  currentAccountAddress?: string,
+) {
+  const ready = !!toAddress && isValidHexAddress(toAddress as Hex);
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
+  const [refreshVersion, refresh] = useReducer(version => version + 1, 0);
+  const sendHistorySnapshot = useMemo(
+    () => ({
+      history: transactionHistoryReady
+        ? getTransactionHistorySendListSnapshot()
+        : [],
+      refreshVersion,
+    }),
+    [refreshVersion, transactionHistoryReady],
+  );
+  const isRecentlySent = useMemo(() => {
+    if (!ready || !transactionHistoryReady || !toAddress) {
+      return false;
+    }
+
+    const visibleAddresses = getPublicAccountSnapshotAccounts().map(
+      account => account.address,
+    );
+    if (currentAccountAddress) {
+      visibleAddresses.push(currentAccountAddress);
+    }
+
+    return hasRecentSuccessfulSendTo({
+      history: sendHistorySnapshot.history,
+      fromAddresses: visibleAddresses,
+      toAddress,
+    });
+  }, [
+    currentAccountAddress,
+    ready,
+    sendHistorySnapshot,
+    toAddress,
+    transactionHistoryReady,
+  ]);
+  const reFetch = useCallback(() => {
+    if (ready) {
+      refresh();
+    }
+    return Promise.resolve([]);
+  }, [ready]);
 
   return {
-    recentHistory:
-      toAddress && isValidHexAddress(toAddress as Hex)
-        ? recentHistory.filter(
-            item => item.toAddress.toLowerCase() === toAddress.toLowerCase(),
-          )
-        : [],
-    reFetch: runAsync,
+    isRecentlySent,
+    reFetch,
   };
 }

@@ -7,8 +7,8 @@ import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { WhiteListItemInSheetModal } from './WhiteListItem';
 
 type MockContextMenuProps = {
-  menuConfig: {
-    menuActions: Array<{ key: string }>;
+  getMenuConfig: () => {
+    menuActions: Array<{ disabled?: boolean; key: string }>;
     menuTitle?: string;
   };
   preViewBorderRadius?: number;
@@ -137,7 +137,9 @@ jest.mock('@/hooks/theme', () => {
   };
 
   return {
-    useGetBinaryMode: () => 'light',
+    apisTheme: {
+      getBinaryMode: () => 'light',
+    },
     useTheme2024: ({ getStyle }: any = {}) => ({
       colors2024: colors,
       styles: getStyle?.getStyles?.(styleContext) ?? {},
@@ -146,11 +148,11 @@ jest.mock('@/hooks/theme', () => {
 });
 
 jest.mock('@/hooks/whitelist', () => ({
-  useWhitelist: () => ({ removeWhitelist: jest.fn() }),
+  removeWhitelist: jest.fn(),
 }));
 
 jest.mock('@/components2024/AliasNameEditModal/useAliasNameEditModal', () => ({
-  useAliasNameEditModal: () => ({ show: jest.fn() }),
+  aliasNameEditModal: { show: jest.fn() },
 }));
 
 jest.mock('@/databases/hooks/cex', () => ({
@@ -208,6 +210,13 @@ jest.mock('react-native-haptic-feedback', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+}));
+
+jest.mock('@/utils/i18n', () => ({
+  __esModule: true,
+  default: {
+    t: (key: string) => key,
+  },
 }));
 
 const account = {
@@ -270,7 +279,9 @@ describe('WhiteListItemInSheetModal sortable interactions', () => {
       }),
     );
     expect(
-      mockContextMenuProps?.menuConfig.menuActions.map(action => action.key),
+      mockContextMenuProps
+        ?.getMenuConfig()
+        .menuActions.map(action => action.key),
     ).toEqual(['copy', 'edit', 'remove']);
   });
 
@@ -322,6 +333,11 @@ describe('WhiteListItemInSheetModal sortable interactions', () => {
       />,
     );
     expect(mockCardStyle?.backgroundColor).toBe('brand-light-1');
+    expect(
+      mockContextMenuProps
+        ?.getMenuConfig()
+        .menuActions.every(action => action.disabled),
+    ).toBe(true);
   });
 
   it('clears the selected background when the drag handle touch is cancelled', () => {

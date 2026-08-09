@@ -221,6 +221,27 @@ describe('keyringService support eth-keyring-watch', () => {
       );
     });
 
+    it('preserves an authoritative empty snapshot after removing the last account', async () => {
+      await addWatchAddress();
+      await keyringService.removeAccount(
+        TEST_ADDR,
+        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
+      );
+      const persistedState = keyringService.store.getState();
+      const restoredService = new KeyringService({
+        encryptor: mockEncryptor as any,
+      });
+
+      restoredService.loadStore(persistedState);
+
+      expect(persistedState.publicAccountSnapshot?.accounts).toEqual([]);
+      expect(restoredService.hasPersistedPublicAccountSnapshot()).toBe(true);
+      expect(restoredService.hasPublicAccountSnapshot()).toBe(false);
+      await expect(
+        restoredService.getCountOfAccountsInKeyring(),
+      ).resolves.toBe(0);
+    });
+
     it('preserves locked sensitive vault data when updating password', async () => {
       const service = new KeyringService({
         encryptor: mockEncryptor as any,
@@ -250,6 +271,49 @@ describe('keyringService support eth-keyring-watch', () => {
           type: KEYRING_TYPE.HdKeyring,
         }),
       ]);
+    });
+
+    it('commits password ciphertext and auth metadata in one store update', async () => {
+      const atomicEncryptor = {
+        encrypt: async (currentPassword: string, value: unknown) =>
+          JSON.stringify({ password: currentPassword, value }),
+        decrypt: async (currentPassword: string, payload: string) => {
+          const parsed = JSON.parse(payload);
+          if (parsed.password !== currentPassword) {
+            throw new Error('incorrect password');
+          }
+          return parsed.value;
+        },
+      };
+      const service = new KeyringService({
+        encryptor: atomicEncryptor as any,
+      });
+      service.loadStore({});
+      await service.boot(password);
+      await service.clearKeyrings();
+
+      const updates: Array<ReturnType<typeof service.store.getState>> = [];
+      service.store.subscribe(state => updates.push(state));
+
+      await service.updatePassword(password, 'new-password', {
+        passwordState: {
+          version: 1,
+          origin: 'user',
+          pendingAuthTransition: 'disable-biometrics',
+        },
+      });
+
+      expect(updates).toHaveLength(1);
+      expect(JSON.parse(updates[0].booted || '').password).toBe('new-password');
+      expect(JSON.parse(updates[0].vault || '').password).toBe('new-password');
+      expect(updates[0].passwordState).toEqual({
+        version: 1,
+        origin: 'user',
+        pendingAuthTransition: 'disable-biometrics',
+      });
+
+      expect(service.completeAuthTransition('disable-biometrics')).toBe(true);
+      expect(service.completeAuthTransition('disable-biometrics')).toBe(false);
     });
 
     it('waits for deferred runtime restore when typed unencrypted keyring is not loaded', async () => {
@@ -324,9 +388,9 @@ describe('keyringService support eth-keyring-watch', () => {
       } as any);
       await keyringService.setLocked();
 
-      await expect(keyringService.getAllVisibleAccountsArray()).resolves.toEqual(
-        [],
-      );
+      await expect(
+        keyringService.getAllVisibleAccountsArray(),
+      ).resolves.toEqual([]);
       expect(keyringService.hasPublicAccountSnapshot()).toBe(false);
     });
 

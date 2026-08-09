@@ -12,7 +12,10 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import CategoryItem from './CategoryItem';
 import { EmodeCategory } from '../../type';
 import { useMode } from '../../hooks/useMode';
-import { useLendingISummary } from '../../hooks';
+import {
+  useFormattedPoolReservesAndIncentivesAtom,
+  useLendingISummary,
+} from '../../hooks';
 import { isEModeCategoryAvailable } from '../../utils/emode';
 import { Text } from '@/components/Typography';
 
@@ -31,6 +34,7 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { iUserSummary } = useLendingISummary();
+  const formattedPoolReserves = useFormattedPoolReservesAndIncentivesAtom();
   const { eModes } = useMode();
   const eModeCategories: Record<number, EModeCategoryDisplay> = useMemo(
     () =>
@@ -40,12 +44,16 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
           {
             ..._value,
             available: iUserSummary
-              ? isEModeCategoryAvailable(iUserSummary, _value)
+              ? isEModeCategoryAvailable(
+                  iUserSummary,
+                  _value,
+                  formattedPoolReserves,
+                )
               : false,
           },
         ]),
       ),
-    [eModes, iUserSummary],
+    [eModes, formattedPoolReserves, iUserSummary],
   );
   const sortedEModeCategories = useMemo(() => {
     return Object.values(eModeCategories)

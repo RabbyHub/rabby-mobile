@@ -4,6 +4,7 @@ import { AppState, Platform } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
+  hasPersistedKeyringPublicAccountSnapshot,
   isKeyringUnlockedSnapshot,
   keyringServiceApi,
 } from '@/core/serviceApi/keyring';
@@ -27,74 +28,52 @@ import {
   resolveValFromUpdater,
 } from '@/core/utils/store';
 import type { RefLikeObject } from '@/utils/type';
+import {
+  getAppLockStateSnapshot,
+  storeApiLock,
+  useAppLockState,
+} from './appLockState';
+import { resolveWalletAccountState } from '@/core/utils/walletEntryState';
+
+export { getAppLockStateSnapshot, storeApiLock } from './appLockState';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
 
-type AppLockState = {
-  appUnlocked: boolean;
-  isUnlockSessionValid: boolean;
-  hasVisibleAccounts: boolean;
-  hasStoredKeyrings: boolean;
-  pwdStatus: PasswordStatus;
-};
-const zAppLockStore = zCreate<AppLockState>((set, get) => {
-  return {
-    appUnlocked: false,
-    isUnlockSessionValid: apisLock.isUnlockSessionValid(),
-    hasVisibleAccounts: false,
-    hasStoredKeyrings: false,
-    pwdStatus: PasswordStatus.Unknown,
-  };
-});
-
-function setAppLock(valOrFunc: UpdaterOrPartials<AppLockState>) {
-  zAppLockStore.setState(prev => resolveValFromUpdater(prev, valOrFunc).newVal);
-}
 // iife
-setAppLock({
+storeApiLock.setAppLock({
   appUnlocked: isKeyringUnlockedSnapshot(),
   isUnlockSessionValid: apisLock.isUnlockSessionValid(),
 });
 
-apisLock.unlockTimeEvent.addListener('updated', () => {
-  setAppLock(prev => ({
+function syncUnlockSessionValidity() {
+  storeApiLock.setAppLock(prev => ({
     ...prev,
     isUnlockSessionValid: apisLock.isUnlockSessionValid(),
   }));
-});
-
-function getIsAppUnlocked() {
-  const state = zAppLockStore.getState();
-  return state.appUnlocked;
 }
 
-export function getAppLockStateSnapshot() {
-  return zAppLockStore.getState();
-}
-
-export const storeApiLock = {
-  setAppLock,
-  getIsAppUnlocked,
-};
+apisLock.unlockTimeEvent.addListener('updated', syncUnlockSessionValidity);
+apisLock.appLaunchLockEvent.addListener('changed', syncUnlockSessionValidity);
 
 export function useSetAppLock() {
-  return { setAppLock };
+  return { setAppLock: storeApiLock.setAppLock };
 }
 export function useAppUnlocked() {
   return {
-    isAppUnlocked: zAppLockStore(state => state.appUnlocked),
-    isUnlockSessionValid: zAppLockStore(state => state.isUnlockSessionValid),
-    hasVisibleAccounts: zAppLockStore(state => state.hasVisibleAccounts),
-    hasStoredKeyrings: zAppLockStore(state => state.hasStoredKeyrings),
-    getIsAppUnlocked,
-    setAppLock,
+    isAppUnlocked: useAppLockState(state => state.appUnlocked),
+    isUnlockSessionValid: useAppLockState(state => state.isUnlockSessionValid),
+    hasVisibleAccounts: useAppLockState(state => state.hasVisibleAccounts),
+    hasStoredKeyrings: useAppLockState(state => state.hasStoredKeyrings),
+    accountState: useAppLockState(state => state.accountState),
+    getIsAppUnlocked: storeApiLock.getIsAppUnlocked,
+    setAppLock: storeApiLock.setAppLock,
   };
 }
 
 export function useIsPostUnlockLockedSession() {
-  const appUnlocked = zAppLockStore(state => state.appUnlocked);
-  const isUnlockSessionValid = zAppLockStore(
+  const appUnlocked = useAppLockState(state => state.appUnlocked);
+  const isUnlockSessionValid = useAppLockState(
     state => state.isUnlockSessionValid,
   );
 
@@ -102,13 +81,12 @@ export function useIsPostUnlockLockedSession() {
 }
 
 export function getPwdStatus() {
-  const state = zAppLockStore.getState();
-  return state.pwdStatus;
+  return getAppLockStateSnapshot().pwdStatus;
 }
 
 export function usePasswordStatus() {
   // const { pwdStatus } = useAtomValue(appLockAtom);
-  const pwdStatus = zAppLockStore(state => state.pwdStatus);
+  const pwdStatus = useAppLockState(state => state.pwdStatus);
 
   return {
     pwdStatus,
@@ -118,24 +96,45 @@ export function usePasswordStatus() {
 }
 
 export async function getBootstrapAccountFlags() {
-  const visibleAccountsCount =
-    await keyringServiceApi.getCountOfAccountsInKeyring();
+  const [
+    visibleAccountsCount,
+    hasVault,
+    hasEncryptedKeyringData,
+    hasUnencryptedKeyringData,
+    hasPersistedAccountSnapshot,
+  ] = await Promise.all([
+    keyringServiceApi.getCountOfAccountsInKeyring(),
+    keyringServiceApi.hasVault(),
+    keyringServiceApi.hasEncryptedKeyringData(),
+    keyringServiceApi.hasUnencryptedKeyringData(),
+    hasPersistedKeyringPublicAccountSnapshot(),
+  ]);
   const hasVisibleAccounts = visibleAccountsCount > 0;
-  const [hasVault, hasEncryptedKeyringData, hasUnencryptedKeyringData] =
-    await Promise.all([
-      keyringServiceApi.hasVault(),
-      keyringServiceApi.hasEncryptedKeyringData(),
-      keyringServiceApi.hasUnencryptedKeyringData(),
-    ]);
+  const hasStoredKeyrings =
+    hasVisibleAccounts ||
+    hasVault ||
+    hasEncryptedKeyringData ||
+    hasUnencryptedKeyringData;
 
   return {
     hasVisibleAccounts,
-    hasStoredKeyrings:
-      hasVisibleAccounts ||
-      hasVault ||
-      hasEncryptedKeyringData ||
-      hasUnencryptedKeyringData,
+    hasStoredKeyrings,
+    accountState: resolveWalletAccountState({
+      hasVisibleAccounts,
+      hasStoredKeyrings,
+      hasPersistedAccountSnapshot,
+      isKeyringUnlocked: isKeyringUnlockedSnapshot(),
+    }),
   };
+}
+
+export async function refreshAppLockAccountFlags() {
+  const accountFlags = await getBootstrapAccountFlags();
+  storeApiLock.setAppLock(prev => ({
+    ...prev,
+    ...accountFlags,
+  }));
+  return accountFlags;
 }
 
 export const loadBootstrapAppLockState = async () => {
@@ -157,7 +156,7 @@ export const loadBootstrapAppLockState = async () => {
     pwdStatus: lockInfo.pwdStatus,
   };
 
-  setAppLock(nextState);
+  storeApiLock.setAppLock(nextState);
   return nextState;
 };
 
@@ -169,7 +168,7 @@ export const getTriedUnlock = async () => {
       if (!isKeyringUnlockedSnapshot() && apisLock.isUnlockSessionValid()) {
         apisAutoLock.refreshAutolockTimeout();
       }
-      setAppLock({
+      storeApiLock.setAppLock({
         appUnlocked: isKeyringUnlockedSnapshot(),
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
         ...accountFlags,
@@ -195,7 +194,7 @@ export const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
     const response = await apisLock.getRabbyLockInfo();
     const accountFlags = await getBootstrapAccountFlags();
 
-    setAppLock({
+    storeApiLock.setAppLock({
       appUnlocked: isKeyringUnlockedSnapshot(),
       isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       ...accountFlags,
@@ -215,7 +214,7 @@ export async function loadLockInfoOnBootstrap() {
 }
 
 export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
-  const appLock = zAppLockStore(
+  const appLock = useAppLockState(
     useShallow(state => ({
       appUnlocked: state.appUnlocked,
       isUnlockSessionValid: state.isUnlockSessionValid,

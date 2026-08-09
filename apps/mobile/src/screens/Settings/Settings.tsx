@@ -36,6 +36,7 @@ import {
   RcAutolock,
   RcDataAnalysis,
   RcBugReport,
+  RcManageWallet,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -91,6 +92,7 @@ import {
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { AutoLockSettingLabel } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
+import { SwitchAppLaunchLock } from './components/SwitchAppLaunchLock';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import ThemeSelectorModal, {
@@ -185,6 +187,12 @@ import {
 import { sleep } from '@/utils/async';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -412,7 +420,9 @@ function ClearAppCacheSettingItem() {
 }
 
 function SettingsBlocks() {
-  const { colors, styles } = useTheme2024({ getStyle: getStyles });
+  const { colors, styles, isLight, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
 
   const [isShowClearPendingPopup, setIsShowClearPendingPopup] = useState(false);
 
@@ -553,12 +563,52 @@ function SettingsBlocks() {
   }, []);
 
   const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
+  const switchAppLaunchLockRef = useRef<SwitchToggleType>(null);
+
+  const modalRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
+
+  const handleWalletsListPress = useCallback(() => {
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+    }
+
+    modalRef.current = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADDRESS_LiST,
+      variant: 'manage',
+      subTitle: t('page.settings.chooseWallet'),
+      onAddAddressPress: () => {
+        if (modalRef.current) {
+          removeGlobalBottomSheetModal2024(modalRef.current);
+        }
+        apiGlobalModal.showAddSelectMethodModal();
+      },
+      bottomSheetModalProps: {
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(modalRef.current);
+        modalRef.current = undefined;
+      },
+    });
+  }, [colors2024, isLight, t]);
 
   const settingsBlocks: Record<string, SettingBlock> = (() => {
     return {
-      settings: {
-        label: t('page.setting.screenTitle'),
+      features: {
+        label: t('page.setting.features'),
         items: [
+          {
+            label: t('page.setting.manageWallets'),
+            icon: RcManageWallet,
+            onPress: () => {
+              handleWalletsListPress();
+            },
+          },
           {
             label: 'WalletConnect',
             icon: RcWalletConnect,
@@ -570,6 +620,11 @@ function SettingsBlocks() {
               );
             },
           },
+        ],
+      },
+      settings: {
+        label: t('page.setting.screenTitle'),
+        items: [
           {
             label: biometricsComputed.systemAuthSettingsLabel,
             icon: isUsingDevicePasscodeForSettings
@@ -611,10 +666,11 @@ function SettingsBlocks() {
             rightTextNode: <AutoLockSettingLabel style={styles.rightText} />,
           },
           {
-            label: t('page.setting.lockWallet'),
-            icon: RcNewLock,
+            label: t('page.setting.appLaunchLock'),
+            icon: RcAutolock,
+            rightNode: <SwitchAppLaunchLock ref={switchAppLaunchLockRef} />,
             onPress: () => {
-              startLockWallet();
+              switchAppLaunchLockRef.current?.toggle();
             },
             visible: APP_FEATURE_SWITCH.customizePassword,
           },
@@ -754,13 +810,13 @@ function SettingsBlocks() {
             },
             onPress: triggerCheckVersion,
           },
-          {
-            label: t('page.setting.feedback'),
-            icon: RcFeedback,
-            onPress: () => {
-              Linking.openURL('https://discord.gg/AvYmaTjrBu');
-            },
-          },
+          // {
+          //   label: t('page.setting.feedback'),
+          //   icon: RcFeedback,
+          //   onPress: () => {
+          //     Linking.openURL('https://discord.gg/AvYmaTjrBu');
+          //   },
+          // },
           // TODO: in the future
           // {
           //   label: 'Support Chains',
@@ -793,6 +849,14 @@ function SettingsBlocks() {
       extra: {
         label: '',
         items: [
+          {
+            label: t('page.setting.lockWallet'),
+            icon: RcNewLock,
+            onPress: () => {
+              startLockWallet();
+            },
+            visible: APP_FEATURE_SWITCH.customizePassword,
+          },
           {
             key: 'clear-app-cache',
             render: () => <ClearAppCacheSettingItem />,

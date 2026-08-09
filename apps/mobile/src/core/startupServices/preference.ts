@@ -5,7 +5,7 @@ import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@/constant/chains';
-import createPersistStore, {
+import {
   StorageAdapaterOptions,
   StoreServiceBase,
 } from '@rabby-wallet/persist-store';
@@ -111,6 +111,9 @@ export interface addedToken {
 }
 
 export interface PreferenceStore {
+  /** Legacy fields removed during hydration. */
+  balanceMap?: unknown;
+  testnetBalanceMap?: unknown;
   currentAccount: Account | undefined | null;
   addressAvatarMap: {
     [address: string]: string;
@@ -158,6 +161,11 @@ export interface PreferenceStore {
    * Expire timestamp for the current unlock session. -1 means never expire.
    */
   unlockSessionExpireTime?: number;
+  /**
+   * Disable post-unlock session reuse on app launch. Existing full-unlock
+   * behavior remains unchanged.
+   */
+  appLaunchLock?: boolean;
   hiddenBalance?: boolean;
   isShowTestnet?: boolean;
   // themeMode?: DARK_MODE_TYPE;
@@ -217,6 +225,18 @@ export interface PreferenceStore {
   needsBackupReminderMap: Record<string, boolean>;
 }
 
+export type PreferenceTokenSettingsMigration = Partial<
+  Pick<
+    PreferenceStore,
+    | 'pinedQueue'
+    | 'foldTokens'
+    | 'unfoldTokens'
+    | 'includeDefiAndTokens'
+    | 'excludeDefiAndTokens'
+    | 'tokenManageSettingMap'
+  >
+>;
+
 export interface AddressSortStore {
   search: string;
   sortType: 'usd' | 'addressType' | 'alphabet';
@@ -241,10 +261,6 @@ export class PreferenceService extends StoreServiceBase<
   PreferenceStore,
   APP_STORE_NAMES.preference
 > {
-  [x: string]: any;
-  // store!: PreferenceStore;
-  // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
-
   private _allowedToNotifyAccountsChanged = false;
 
   private getAllVisibleAccountsArray: () => Promise<Account[]>;
@@ -285,6 +301,7 @@ export class PreferenceService extends StoreServiceBase<
         autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
         lastUnlockTime: 0,
         unlockSessionExpireTime: 0,
+        appLaunchLock: false,
         // themeMode: DARK_MODE_TYPE.light,
         addressSortStore: {
           ...defaultAddressSortStore,
@@ -325,19 +342,15 @@ export class PreferenceService extends StoreServiceBase<
     this.getAllVisibleAccountsArray =
       options.getAllVisibleAccountsArray || (() => Promise.resolve([]));
 
-    if ('balanceMap' in this.store) {
-      delete this.store.balanceMap;
-    }
-    if ('testnetBalanceMap' in this.store) {
-      delete this.store.testnetBalanceMap;
-    }
-    // reset current account if app not closed properly
-    if (this.store.tempCurrentAccount) {
-      this.store.currentAccount = this.store.tempCurrentAccount;
-    }
-    if (!this.store.safeSelfHostConfirm) {
-      this.store.safeSelfHostConfirm = {};
-    }
+    this.mutateStore(draft => {
+      delete draft.balanceMap;
+      delete draft.testnetBalanceMap;
+      // Reset current account if the app did not close cleanly.
+      if (draft.tempCurrentAccount) {
+        draft.currentAccount = draft.tempCurrentAccount;
+      }
+      draft.safeSelfHostConfirm ||= {};
+    });
     this._syncUserBehaviorTrackingOptOut(this.store.userBehaviorTrackingOptOut);
   }
 
@@ -349,7 +362,7 @@ export class PreferenceService extends StoreServiceBase<
   getPreferenceByKey<T extends keyof PreferenceStore>(
     key: T,
   ): PreferenceStore[T] {
-    return this.store[key];
+    return cloneDeep(this.store[key]) as PreferenceStore[T];
   }
 
   setPreferenceByKey<T extends keyof PreferenceStore>(
@@ -359,11 +372,15 @@ export class PreferenceService extends StoreServiceBase<
     if (key === USER_BEHAVIOR_TRACKING_OPT_OUT_KEY) {
       this._syncUserBehaviorTrackingOptOut(value !== false);
     }
-    this.store[key] = value;
+    this.mutateStore(draft => {
+      draft[key] = value;
+    });
   }
 
   setHasOpenCopyTrading = (value: boolean) => {
-    this.store.hasOpenCopyTrading = value;
+    this.mutateStore(draft => {
+      draft.hasOpenCopyTrading = value;
+    });
   };
 
   getHasOpenCopyTrading = () => {
@@ -375,23 +392,24 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   setTokenDisplayMode = (mode: TokenDisplayMode) => {
-    this.store.tokenDisplayMode = mode;
+    this.mutateStore(draft => {
+      draft.tokenDisplayMode = mode;
+    });
   };
 
   addAddressAvatar = (address: string, avatar: string) => {
     const key = address.toLowerCase();
-    this.store.addressAvatarMap = {
-      ...this.store.addressAvatarMap,
-      [key]: avatar,
-    };
+    this.mutateStore(draft => {
+      draft.addressAvatarMap[key] = avatar;
+    });
   };
 
   removeAddressAvatar = (address: string) => {
     const key = address.toLowerCase();
     if (key in this.store.addressAvatarMap) {
-      const map = this.store.addressAvatarMap;
-      delete map[key];
-      this.store.addressAvatarMap = map;
+      this.mutateStore(draft => {
+        delete draft.addressAvatarMap[key];
+      });
     }
   };
 
@@ -408,13 +426,10 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   setConfirmSafeSelfHost = (networkId: string) => {
-    if (!this.store.safeSelfHostConfirm) {
-      this.store.safeSelfHostConfirm = {
-        [networkId]: true,
-      };
-    } else {
-      this.store.safeSelfHostConfirm[networkId] = true;
-    }
+    this.mutateStore(draft => {
+      draft.safeSelfHostConfirm ||= {};
+      draft.safeSelfHostConfirm[networkId] = true;
+    });
   };
 
   /**
@@ -431,10 +446,9 @@ export class PreferenceService extends StoreServiceBase<
    * @param needsReminder - Whether the seed phrase needs backup reminder
    */
   setNeedsBackupReminder = (basePublicKey: string, needsReminder: boolean) => {
-    this.store.needsBackupReminderMap = {
-      ...this.store.needsBackupReminderMap,
-      [basePublicKey]: needsReminder,
-    };
+    this.mutateStore(draft => {
+      draft.needsBackupReminderMap[basePublicKey] = needsReminder;
+    });
     appServiceEvents.emit('backupReminderChanged', basePublicKey);
   };
 
@@ -445,9 +459,9 @@ export class PreferenceService extends StoreServiceBase<
    */
   clearNeedsBackupReminder = (basePublicKey: string) => {
     if (basePublicKey in this.store.needsBackupReminderMap) {
-      const map = { ...this.store.needsBackupReminderMap };
-      delete map[basePublicKey];
-      this.store.needsBackupReminderMap = map;
+      this.mutateStore(draft => {
+        delete draft.needsBackupReminderMap[basePublicKey];
+      });
       appServiceEvents.emit('backupReminderChanged', basePublicKey);
     }
   };
@@ -459,11 +473,19 @@ export class PreferenceService extends StoreServiceBase<
       return;
     }
 
-    this.store.tokenManageSettingMap = input;
+    this.mutateStore(draft => {
+      draft.tokenManageSettingMap = input;
+    });
     console.warn(
       '[preference::_dangerouslySetTokenManageSettingMap] written tokenManageSettingMap',
       input,
     );
+  }
+
+  applyTokenSettingsMigration(settings: PreferenceTokenSettingsMigration) {
+    this.mutateStore(draft => {
+      Object.assign(draft, settings);
+    });
   }
 
   /* eslint-disable no-dupe-class-members */
@@ -473,12 +495,14 @@ export class PreferenceService extends StoreServiceBase<
     if (!key || ['search', 'lastCurrent'].includes(key)) {
       this.resetAddressSortStoreExpiredValue();
     }
-    return key ? this.store[key as any] : this.store;
+    return key ? cloneDeep(this.store[key]) : cloneDeep(this.store);
   }
   /* enable-enable no-dupe-class-members */
 
   setPreference = (params: Partial<PreferenceStore>) => {
-    Object.assign(this.store, params);
+    this.mutateStore(draft => {
+      Object.assign(draft, params);
+    });
     if (typeof params.userBehaviorTrackingOptOut === 'boolean') {
       this._syncUserBehaviorTrackingOptOut(params.userBehaviorTrackingOptOut);
     }
@@ -490,7 +514,9 @@ export class PreferenceService extends StoreServiceBase<
 
   setUserBehaviorTrackingOptOut = (value: boolean) => {
     this._syncUserBehaviorTrackingOptOut(value);
-    this.store.userBehaviorTrackingOptOut = value;
+    this.mutateStore(draft => {
+      draft.userBehaviorTrackingOptOut = value;
+    });
   };
 
   getTokenApprovalChain = (address: string) => {
@@ -499,15 +525,16 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   setHasShowAsterPopup = (value: boolean) => {
-    this.store.hasShowAsterPopup = value;
+    this.mutateStore(draft => {
+      draft.hasShowAsterPopup = value;
+    });
   };
 
   setTokenApprovalChain = (address: string, chain: CHAINS_ENUM) => {
     const key = address.toLowerCase();
-    this.store.tokenApprovalChain = {
-      ...this.store.tokenApprovalChain,
-      [key]: chain,
-    };
+    this.mutateStore(draft => {
+      draft.tokenApprovalChain[key] = chain;
+    });
   };
 
   getNFTApprovalChain = (address: string) => {
@@ -517,23 +544,21 @@ export class PreferenceService extends StoreServiceBase<
 
   setNFTApprovalChain = (address: string, chain: CHAINS_ENUM) => {
     const key = address.toLowerCase();
-    this.store.nftApprovalChain = {
-      ...this.store.nftApprovalChain,
-      [key]: chain,
-    };
+    this.mutateStore(draft => {
+      draft.nftApprovalChain[key] = chain;
+    });
   };
 
   getLastTimeSendToken = (address: string) => {
     const key = address.toLowerCase();
-    return this.store.lastTimeSendToken[key];
+    return this.getStoreFieldSnapshot('lastTimeSendToken')[key];
   };
 
   setLastTimeSendToken = (address: string, token: TokenItem) => {
     const key = address.toLowerCase();
-    this.store.lastTimeSendToken = {
-      ...this.store.lastTimeSendToken,
-      [key]: token,
-    };
+    this.mutateStore(draft => {
+      draft.lastTimeSendToken[key] = token;
+    });
   };
 
   getLastSelectedGasTopUpChain = (address: string) => {
@@ -543,10 +568,10 @@ export class PreferenceService extends StoreServiceBase<
 
   setLastSelectedGasTopUpChain = (address: string, chain: CHAINS_ENUM) => {
     const key = address.toLowerCase();
-    this.store.lastSelectedGasTopUpChain = {
-      ...this.store?.lastSelectedGasTopUpChain,
-      [key]: chain,
-    };
+    this.mutateStore(draft => {
+      draft.lastSelectedGasTopUpChain ||= {};
+      draft.lastSelectedGasTopUpChain[key] = chain;
+    });
   };
 
   // getAcceptLanguages = async () => {
@@ -622,7 +647,9 @@ export class PreferenceService extends StoreServiceBase<
     account?: Account | null,
     options?: SetCurrentAccountOptions,
   ) => {
-    this.store.currentAccount = account ?? null;
+    this.mutateStore(draft => {
+      draft.currentAccount = account ?? null;
+    });
     if (account) {
       // this._notifyAccountsChanged(account, !!options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
@@ -642,14 +669,18 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   setLastUsedAccount = (account: Account) => {
-    this.store.lastUsedAccount = account;
+    this.mutateStore(draft => {
+      draft.lastUsedAccount = account;
+    });
   };
 
   activateLastUsedAccount = async (options?: SetCurrentAccountOptions) => {
     const prevAccount = this.getCurrentAccount();
 
     if (prevAccount) {
-      this.store.tempCurrentAccount = prevAccount;
+      this.mutateStore(draft => {
+        draft.tempCurrentAccount = prevAccount;
+      });
     }
 
     const account = await this.getLastUsedAccount();
@@ -671,7 +702,9 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   setLocale = (locale: string) => {
-    this.store.locale = locale;
+    this.mutateStore(draft => {
+      draft.locale = locale;
+    });
     i18n.changeLanguage(locale);
   };
 
@@ -684,22 +717,28 @@ export class PreferenceService extends StoreServiceBase<
   // };
 
   getPinAddresses = () => {
-    return (this.store.pinAddresses || []).filter(
-      item => !!item.brandName && !!item.address,
+    return cloneDeep(
+      (this.store.pinAddresses || []).filter(
+        item => !!item.brandName && !!item.address,
+      ),
     );
   };
   updatePinAddresses = (list: IPinAddress[]) => {
-    this.store.pinAddresses = list;
+    this.mutateStore(draft => {
+      draft.pinAddresses = list;
+    });
   };
 
   removePinAddress = (item: IPinAddress) => {
-    this.store.pinAddresses = this.store.pinAddresses.filter(
-      highlighted =>
-        !(
-          isSameAddress(highlighted.address, item.address) &&
-          highlighted.brandName === item.brandName
-        ),
-    );
+    this.mutateStore(draft => {
+      draft.pinAddresses = draft.pinAddresses.filter(
+        highlighted =>
+          !(
+            isSameAddress(highlighted.address, item.address) &&
+            highlighted.brandName === item.brandName
+          ),
+      );
+    });
   };
 
   getLastTimeGasSelection = (chainId: keyof GasCache): ChainGas | null => {
@@ -708,28 +747,24 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   updateLastTimeGasSelection = (chainId: keyof GasCache, gas: ChainGas) => {
-    if (gas.lastTimeSelect === 'gasPrice') {
-      this.store.gasCache = {
-        ...this.store.gasCache,
-        [chainId]: {
-          ...this.store.gasCache[chainId],
+    this.mutateStore(draft => {
+      if (gas.lastTimeSelect === 'gasPrice') {
+        draft.gasCache[chainId] = {
+          ...draft.gasCache[chainId],
           ...gas,
           expireAt: Date.now() + 3600000, // custom gasPrice will expire at 1h later
-        },
-      };
-    } else {
-      this.store.gasCache = {
-        ...this.store.gasCache,
-        [chainId]: {
-          ...this.store.gasCache[chainId],
+        };
+      } else {
+        draft.gasCache[chainId] = {
+          ...draft.gasCache[chainId],
           ...gas,
-        },
-      };
-    }
+        };
+      }
+    });
   };
 
   getCustomizedToken = () => {
-    return this.store.customizedToken || [];
+    return cloneDeep(this.store.customizedToken || []);
   };
   addCustomizedToken = (token: Token) => {
     if (
@@ -739,25 +774,27 @@ export class PreferenceService extends StoreServiceBase<
           item.chain === token.chain,
       )
     ) {
-      this.store.customizedToken = [
-        ...(this.store.customizedToken || []),
-        token,
-      ];
+      this.mutateStore(draft => {
+        draft.customizedToken ||= [];
+        draft.customizedToken.push(token);
+      });
       return token;
     }
     return null;
   };
   removeCustomizedToken = (token: Token) => {
-    this.store.customizedToken = this.store.customizedToken?.filter(
-      item =>
-        !(
-          isSameAddress(item.address, token.address) &&
-          item.chain === token.chain
-        ),
-    );
+    this.mutateStore(draft => {
+      draft.customizedToken = draft.customizedToken?.filter(
+        item =>
+          !(
+            isSameAddress(item.address, token.address) &&
+            item.chain === token.chain
+          ),
+      );
+    });
   };
   getBlockedToken = () => {
-    return this.store.blockedToken || [];
+    return cloneDeep(this.store.blockedToken || []);
   };
   addBlockedToken = (token: Token) => {
     if (
@@ -767,20 +804,25 @@ export class PreferenceService extends StoreServiceBase<
           item.chain === token.chain,
       )
     ) {
-      this.store.blockedToken = [...(this.store.blockedToken || []), token];
+      this.mutateStore(draft => {
+        draft.blockedToken ||= [];
+        draft.blockedToken.push(token);
+      });
     }
   };
   removeBlockedToken = (token: Token) => {
-    this.store.blockedToken = this.store.blockedToken?.filter(
-      item =>
-        !(
-          isSameAddress(item.address, token.address) &&
-          item.chain === token.chain
-        ),
-    );
+    this.mutateStore(draft => {
+      draft.blockedToken = draft.blockedToken?.filter(
+        item =>
+          !(
+            isSameAddress(item.address, token.address) &&
+            item.chain === token.chain
+          ),
+      );
+    });
   };
   getCollectionStarred = () => {
-    return this.store.collectionStarred || [];
+    return cloneDeep(this.store.collectionStarred || []);
   };
 
   getReportActionTs = (key: REPORT_TIMEOUT_ACTION_KEY) => {
@@ -810,12 +852,13 @@ export class PreferenceService extends StoreServiceBase<
   ) => {
     try {
       const ts = Date.now();
-      this.store.reportActionTsSet = {
-        ...this.store.reportActionTsSet,
-        [key]: ts,
-      };
-
       const beforeKey = this.store.currentReportActionStats;
+      this.mutateStore(draft => {
+        draft.reportActionTsSet[key] = ts;
+        if (key !== beforeKey) {
+          draft.currentReportActionStats = key;
+        }
+      });
       if (key === beforeKey) {
         return;
       }
@@ -830,15 +873,22 @@ export class PreferenceService extends StoreServiceBase<
             console.error('[PreferenceService] reportActionStats error', error);
           }
         });
-
-      this.store.currentReportActionStats = key;
     } catch (error) {
       console.error('[PreferenceService] setReportActionTs error', error);
     }
   };
 
   setPasswordIsAutoGenerated = (value: boolean) => {
-    this.store.passwordIsAutoGenerated = value;
+    this.mutateStore(draft => {
+      draft.passwordIsAutoGenerated = value;
+    });
+  };
+
+  setPasswordIsAutoGeneratedDurably = (value: boolean) => {
+    this.mutateStore(draft => {
+      draft.passwordIsAutoGenerated = value;
+    });
+    this.persistStoreImmediately();
   };
 
   addCollectionStarred = (token: Token) => {
@@ -849,50 +899,64 @@ export class PreferenceService extends StoreServiceBase<
           item.chain === token.chain,
       )
     ) {
-      this.store.collectionStarred = [
-        ...(this.store.collectionStarred || []),
-        token,
-      ];
+      this.mutateStore(draft => {
+        draft.collectionStarred ||= [];
+        draft.collectionStarred.push(token);
+      });
     }
   };
   removeCollectionStarred = (token: Token) => {
-    this.store.collectionStarred = this.store.collectionStarred?.filter(
-      item =>
-        !(
-          isSameAddress(item.address, token.address) &&
-          item.chain === token.chain
-        ),
-    );
+    this.mutateStore(draft => {
+      draft.collectionStarred = draft.collectionStarred?.filter(
+        item =>
+          !(
+            isSameAddress(item.address, token.address) &&
+            item.chain === token.chain
+          ),
+      );
+    });
   };
 
   getSendLogTime = () => {
     return this.store.sendLogTime || 0;
   };
   updateSendLogTime = (time: number) => {
-    this.store.sendLogTime = time;
+    this.mutateStore(draft => {
+      draft.sendLogTime = time;
+    });
   };
   getSendEnableTime = () => {
     return this.store.sendEnableTime || 0;
   };
   updateSendEnableTime = (time: number) => {
-    this.store.sendEnableTime = time;
+    this.mutateStore(draft => {
+      draft.sendEnableTime = time;
+    });
   };
 
   setAutoLockExpireTime = (time: number) => {
-    this.store.autoLockTime = time;
+    this.mutateStore(draft => {
+      draft.autoLockTime = time;
+    });
   };
   setHiddenBalance = (value: boolean) => {
-    this.store.hiddenBalance = value;
+    this.mutateStore(draft => {
+      draft.hiddenBalance = value;
+    });
   };
   getIsShowTestnet = () => {
     return this.store.isShowTestnet;
   };
   setIsShowTestnet = (value: boolean) => {
-    this.store.isShowTestnet = value;
+    this.mutateStore(draft => {
+      draft.isShowTestnet = value;
+    });
   };
 
   setWatchlistSkip = (value: boolean) => {
-    this.store.watchlistSkipV2 = value;
+    this.mutateStore(draft => {
+      draft.watchlistSkipV2 = value;
+    });
   };
 
   getWatchlistSkip = () => {
@@ -909,12 +973,11 @@ export class PreferenceService extends StoreServiceBase<
             .add(15, 'minute'),
         ))
     ) {
-      this.store.addressSortStore = {
-        ...this.store.addressSortStore,
-        search: '',
-        lastScrollOffset: undefined,
-        lastCurrentRecordTime: undefined,
-      };
+      this.mutateStore(draft => {
+        draft.addressSortStore.search = '';
+        draft.addressSortStore.lastScrollOffset = undefined;
+        draft.addressSortStore.lastCurrentRecordTime = undefined;
+      });
     }
   };
 
@@ -929,43 +992,40 @@ export class PreferenceService extends StoreServiceBase<
     key: K,
     value: AddressSortStore[K],
   ) => {
-    if (['search', 'lastCurrent'].includes(key)) {
-      this.store.addressSortStore = {
-        ...this.store.addressSortStore,
-        lastCurrentRecordTime: dayjs().unix(),
-      };
-    }
-    this.store.addressSortStore = {
-      ...this.store.addressSortStore,
-      [key]: value,
-    };
+    this.mutateStore(draft => {
+      if (['search', 'lastCurrent'].includes(key)) {
+        draft.addressSortStore.lastCurrentRecordTime = dayjs().unix();
+      }
+      draft.addressSortStore[key] = value;
+    });
   };
 
   getPinToken = () => {
-    return this.store.pinedQueue || [];
+    return this.getStoreFieldSnapshot('pinedQueue') || [];
   };
 
   /** =========toggle pinToken start =========== */
   pinToken = (token: IManageToken) => {
-    if (!this.store.pinedQueue) {
-      this.store.pinedQueue = [token];
-    }
-    const pinedQueue = this.store.pinedQueue;
+    const pinedQueue = this.store.pinedQueue || [];
     const exist = pinedQueue.find(
       item => item.chainId === token.chainId && item.tokenId === token.tokenId,
     );
     if (!exist) {
-      this.store.pinedQueue = [token, ...pinedQueue];
+      this.mutateStore(draft => {
+        draft.pinedQueue = [token, ...(draft.pinedQueue || [])];
+      });
       // this.manualUnFoldToken(token);
       reportMatomoWatchlistStarToken(token);
     }
   };
   removePinedToken = (token: IManageToken) => {
     if (this.store.pinedQueue?.length) {
-      this.store.pinedQueue = this.store.pinedQueue.filter(
-        item =>
-          item.chainId !== token.chainId || item.tokenId !== token.tokenId,
-      );
+      this.mutateStore(draft => {
+        draft.pinedQueue = draft.pinedQueue?.filter(
+          item =>
+            item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+        );
+      });
     }
   };
 
@@ -980,11 +1040,13 @@ export class PreferenceService extends StoreServiceBase<
       item => item.chainId === token.chainId && item.tokenId === token.tokenId,
     );
     if (!exist) {
-      this.store.foldTokens = [...preFoldedTokens, token];
-      this.store.unfoldTokens = preUnFoldedToken.filter(
-        item =>
-          item.chainId !== token.chainId || item.tokenId !== token.tokenId,
-      );
+      this.mutateStore(draft => {
+        draft.foldTokens = [...(draft.foldTokens || []), token];
+        draft.unfoldTokens = (draft.unfoldTokens || []).filter(
+          item =>
+            item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+        );
+      });
       // this.removePinedToken(token);
     }
   };
@@ -996,11 +1058,13 @@ export class PreferenceService extends StoreServiceBase<
       item => item.chainId === token.chainId && item.tokenId === token.tokenId,
     );
     if (!exist) {
-      this.store.unfoldTokens = [...preUnFoldedToken, token];
-      this.store.foldTokens = preFoldedTokens.filter(
-        item =>
-          item.chainId !== token.chainId || item.tokenId !== token.tokenId,
-      );
+      this.mutateStore(draft => {
+        draft.unfoldTokens = [...(draft.unfoldTokens || []), token];
+        draft.foldTokens = (draft.foldTokens || []).filter(
+          item =>
+            item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+        );
+      });
     }
   };
   /** =========toggle fold token end =========== */
@@ -1008,24 +1072,27 @@ export class PreferenceService extends StoreServiceBase<
   /** =========toggle include or exclude token start =========== */
   includeBalanceToken = (item: IDefiOrToken) => {
     const preIncludeDefiAndToken = this.store?.includeDefiAndTokens || [];
-    const preExcludeDefiAndToken = this.store?.excludeDefiAndTokens || [];
 
     const exist = preIncludeDefiAndToken.find(
       i =>
         i.chainid === item.chainid && i.id === item.id && i.type === item.type,
     );
     if (!exist) {
-      this.store.includeDefiAndTokens = [...preIncludeDefiAndToken, item];
-      this.store.excludeDefiAndTokens = preExcludeDefiAndToken.filter(
-        i =>
-          i.chainid !== item.chainid ||
-          i.id !== item.id ||
-          i.type !== item.type,
-      );
+      this.mutateStore(draft => {
+        draft.includeDefiAndTokens = [
+          ...(draft.includeDefiAndTokens || []),
+          item,
+        ];
+        draft.excludeDefiAndTokens = (draft.excludeDefiAndTokens || []).filter(
+          i =>
+            i.chainid !== item.chainid ||
+            i.id !== item.id ||
+            i.type !== item.type,
+        );
+      });
     }
   };
   excludeBalance = (item: IDefiOrToken) => {
-    const preIncludeDefiAndToken = this.store?.includeDefiAndTokens || [];
     const preExcludeDefiAndToken = this.store?.excludeDefiAndTokens || [];
 
     const exist = preExcludeDefiAndToken.find(
@@ -1033,13 +1100,18 @@ export class PreferenceService extends StoreServiceBase<
         i.chainid === item.chainid && i.id === item.id && i.type === item.type,
     );
     if (!exist) {
-      this.store.excludeDefiAndTokens = [...preExcludeDefiAndToken, item];
-      this.store.includeDefiAndTokens = preIncludeDefiAndToken.filter(
-        i =>
-          i.chainid !== item.chainid ||
-          i.id !== item.id ||
-          i.type !== item.type,
-      );
+      this.mutateStore(draft => {
+        draft.excludeDefiAndTokens = [
+          ...(draft.excludeDefiAndTokens || []),
+          item,
+        ];
+        draft.includeDefiAndTokens = (draft.includeDefiAndTokens || []).filter(
+          i =>
+            i.chainid !== item.chainid ||
+            i.id !== item.id ||
+            i.type !== item.type,
+        );
+      });
     }
   };
   /** =========toggle include or exclude token end =========== */
@@ -1052,10 +1124,12 @@ export class PreferenceService extends StoreServiceBase<
       item => item.chain === nft.chain && item.id === nft.chain,
     );
     if (!exist) {
-      this.store.foldNfts = [...preFoldedNfts, nft];
-      this.store.unFoldNfts = preUnFoldNfts.filter(
-        item => item.chain !== nft.chain || item.id !== nft.id,
-      );
+      this.mutateStore(draft => {
+        draft.foldNfts = [...(draft.foldNfts || []), nft];
+        draft.unFoldNfts = (draft.unFoldNfts || []).filter(
+          item => item.chain !== nft.chain || item.id !== nft.id,
+        );
+      });
     }
   };
   manualUnFoldNft = (nft: IManageNft) => {
@@ -1066,10 +1140,12 @@ export class PreferenceService extends StoreServiceBase<
       item => item.chain === nft.chain && item.id === nft.chain,
     );
     if (!exist) {
-      this.store.unFoldNfts = [...preUnFoldNfts, nft];
-      this.store.foldNfts = preFoldedNfts.filter(
-        item => item.chain !== nft.chain || item.id !== nft.id,
-      );
+      this.mutateStore(draft => {
+        draft.unFoldNfts = [...(draft.unFoldNfts || []), nft];
+        draft.foldNfts = (draft.foldNfts || []).filter(
+          item => item.chain !== nft.chain || item.id !== nft.id,
+        );
+      });
     }
   };
 
@@ -1078,8 +1154,12 @@ export class PreferenceService extends StoreServiceBase<
     const preUnFoldDefis = this.store.unFoldDefis || [];
     const exist = preFoldDefis.includes(defiId);
     if (!exist) {
-      this.store.foldDefis = [...preFoldDefis, defiId];
-      this.store.unFoldDefis = preUnFoldDefis.filter(item => item !== defiId);
+      this.mutateStore(draft => {
+        draft.foldDefis = [...(draft.foldDefis || []), defiId];
+        draft.unFoldDefis = (draft.unFoldDefis || []).filter(
+          item => item !== defiId,
+        );
+      });
     }
   };
 
@@ -1088,8 +1168,12 @@ export class PreferenceService extends StoreServiceBase<
     const preFoldDefis = this.store.foldDefis || [];
     const exist = preUnFoldDefis.includes(defiId);
     if (!exist) {
-      this.store.unFoldDefis = [...preUnFoldDefis, defiId];
-      this.store.foldDefis = preFoldDefis.filter(item => item !== defiId);
+      this.mutateStore(draft => {
+        draft.unFoldDefis = [...(draft.unFoldDefis || []), defiId];
+        draft.foldDefis = (draft.foldDefis || []).filter(
+          item => item !== defiId,
+        );
+      });
     }
   };
 
@@ -1104,7 +1188,7 @@ export class PreferenceService extends StoreServiceBase<
       unfoldTokens: [],
       includeDefiAndTokens: [],
       excludeDefiAndTokens: [],
-      pinedQueue: this.store.pinedQueue || [],
+      pinedQueue: this.getStoreFieldSnapshot('pinedQueue') || [],
       foldNfts: [],
       unfoldNfts: [],
       foldDefis: [],

@@ -20,18 +20,15 @@ import LinearGradient from 'react-native-linear-gradient';
 import { RcIconAddCircleBold } from '@/assets/icons/address';
 import RcArrowDown from '@/assets/icons/custom-testnet/IconArrowDown.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
-import {
-  ContextMenuView,
-  MenuAction,
-} from '@/components2024/ContextMenuView/ContextMenuView';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { Text } from '@/components/Typography';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { apisTheme, useTheme2024 } from '@/hooks/theme';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount } from '@/utils/number';
-import { useTranslation } from 'react-i18next';
+import i18n from '@/utils/i18n';
 
 import type {
   CustomTestnetAssetSectionData,
@@ -212,8 +209,6 @@ const CustomTestnetTokenRow = memo(
     onRemove?(token: ITokenItem): void | Promise<void>;
   }) => {
     const { styles } = useTheme2024({ getStyle });
-    const { t } = useTranslation();
-    const isDarkTheme = useGetBinaryMode() === 'dark';
     const handlePress = useCallback(() => {
       if (row.balanceLoading) {
         return;
@@ -224,26 +219,6 @@ const CustomTestnetTokenRow = memo(
       }
       onPress(row.token);
     }, [onGroupPress, onPress, row]);
-
-    const handleRemove = useCallback(() => {
-      Promise.resolve(onRemove?.(row.token)).catch(error => {
-        console.error('Remove custom testnet asset token failed:', error);
-      });
-    }, [onRemove, row.token]);
-
-    const removeActions = useMemo<MenuAction[]>(
-      () => [
-        {
-          title: t('page.addressDetail.addressListScreen.delete'),
-          icon: isDarkTheme ? MenuIcons.deleteDark : MenuIcons.delete,
-          key: 'delete',
-          androidIconName: 'ic_rabby_menu_delete',
-          destructive: true,
-          action: handleRemove,
-        },
-      ],
-      [handleRemove, isDarkTheme, t],
-    );
 
     const rowNode = (
       <TouchableOpacity
@@ -285,8 +260,27 @@ const CustomTestnetTokenRow = memo(
 
     return (
       <ContextMenuView
-        menuConfig={{
-          menuActions: removeActions,
+        getMenuConfig={() => {
+          const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+          return {
+            menuActions: [
+              {
+                title: i18n.t('page.addressDetail.addressListScreen.delete'),
+                icon: isDarkTheme ? MenuIcons.deleteDark : MenuIcons.delete,
+                key: 'delete',
+                androidIconName: 'ic_rabby_menu_delete',
+                destructive: true,
+                action() {
+                  Promise.resolve(onRemove(row.token)).catch(error => {
+                    console.error(
+                      'Remove custom testnet asset token failed:',
+                      error,
+                    );
+                  });
+                },
+              },
+            ],
+          };
         }}
         preViewBorderRadius={16}
         triggerProps={{ action: 'longPress' }}>

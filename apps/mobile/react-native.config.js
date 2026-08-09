@@ -10,12 +10,12 @@ module.exports = {
     // './assets/ios/builtin-pages'
   ],
   dependencies: {
-    'react-native-ios-context-menu': {
+    '@rabby-wallet/react-native-ios-context-menu': {
       platforms: {
         android: null,
       },
     },
-    '@react-native-menu/menu': {
+    '@rabby-wallet/react-native-menu': {
       platforms: {
         ios: null,
       },

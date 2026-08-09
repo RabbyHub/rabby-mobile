@@ -8,7 +8,7 @@ import type {
 } from './contracts';
 
 const MAX_IN_MEMORY_EVENTS = 300;
-const listeners = new Set<() => void>();
+const controlListeners = new Set<() => void>();
 const claimedActionKeys = new Set<string>();
 let sequence = 0;
 
@@ -22,8 +22,30 @@ let snapshot: RegressionScenarioRuntimeSnapshot = {
   lastError: null,
 };
 
-function emit() {
-  listeners.forEach(listener => listener());
+export type RegressionScenarioRuntimeControlSnapshot = Readonly<{
+  enabled: boolean;
+  command: RegressionScenarioCommand | null;
+}>;
+
+let controlSnapshot: RegressionScenarioRuntimeControlSnapshot = Object.freeze({
+  enabled: snapshot.enabled,
+  command: snapshot.command,
+});
+
+function publishControlSnapshotIfChanged() {
+  const command = snapshot.command || snapshot.session?.command || null;
+  if (
+    controlSnapshot.enabled === snapshot.enabled &&
+    controlSnapshot.command === command
+  ) {
+    return;
+  }
+
+  controlSnapshot = Object.freeze({
+    enabled: snapshot.enabled,
+    command,
+  });
+  controlListeners.forEach(listener => listener());
 }
 
 function updateSnapshot(
@@ -39,17 +61,32 @@ function updateSnapshot(
     ...nextPatch,
     revision: snapshot.revision + 1,
   };
-  emit();
+  publishControlSnapshotIfChanged();
+}
+
+function appendEvent(event: RegressionScenarioEvent) {
+  snapshot = {
+    ...snapshot,
+    events: Object.freeze(
+      [...snapshot.events, event].slice(-MAX_IN_MEMORY_EVENTS),
+    ),
+  };
 }
 
 export function getRegressionScenarioRuntimeSnapshot() {
   return snapshot;
 }
 
-export function subscribeRegressionScenarioRuntime(listener: () => void) {
-  listeners.add(listener);
+export function getRegressionScenarioRuntimeControlSnapshot() {
+  return controlSnapshot;
+}
+
+export function subscribeRegressionScenarioRuntimeControl(
+  listener: () => void,
+) {
+  controlListeners.add(listener);
   return () => {
-    listeners.delete(listener);
+    controlListeners.delete(listener);
   };
 }
 
@@ -131,8 +168,8 @@ export function reportRegressionScenarioEvent(
     data,
   });
 
-  updateSnapshot(prev => ({
-    events: Object.freeze([...prev.events, event].slice(-MAX_IN_MEMORY_EVENTS)),
-  }));
+  // Scenario assertions poll this in-memory journal directly. Event logging
+  // must not invalidate every React subscriber in the measured app surface.
+  appendEvent(event);
   return event;
 }

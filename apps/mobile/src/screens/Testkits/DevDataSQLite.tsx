@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -46,6 +46,7 @@ import {
   useSyncSchedulerSnapshot,
 } from '@/databases/sync/scheduler';
 import { useToggleShowDbSyncSummaryPanel } from '../Settings/components/FloatingDbSyncSummaryPanel';
+import type { NativeMemoryAppDataSourceContractResult } from '@/databases/nativeMemoryContract';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
   const { countdownTextStyles, countdownTextProps } = useRestCountDownLabel({
@@ -215,6 +216,30 @@ function DevSQLiteInfo() {
   const { sqliteInfo, getSqliteInfo, isLoading } = useSQLiteInfo({
     enableAutoFetch: true,
   });
+  const [nativeMemoryContract, setNativeMemoryContract] =
+    useState<NativeMemoryAppDataSourceContractResult>();
+  const [nativeMemoryContractError, setNativeMemoryContractError] =
+    useState<string>();
+  const [isNativeMemoryContractRunning, setIsNativeMemoryContractRunning] =
+    useState(false);
+
+  const runNativeMemoryContract = async () => {
+    setIsNativeMemoryContractRunning(true);
+    setNativeMemoryContract(undefined);
+    setNativeMemoryContractError(undefined);
+    try {
+      const { runNativeMemoryAppDataSourceContract } = await import(
+        '@/databases/nativeMemoryContract'
+      );
+      setNativeMemoryContract(await runNativeMemoryAppDataSourceContract());
+    } catch (error) {
+      setNativeMemoryContractError(
+        error instanceof Error ? error.message : String(error),
+      );
+    } finally {
+      setIsNativeMemoryContractRunning(false);
+    }
+  };
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -369,6 +394,31 @@ function DevSQLiteInfo() {
         containerStyle={[styles.rowWrapper, { marginBottom: 12 }]}
         onPress={() => getSqliteInfo()}
       />
+
+      <Button
+        title={
+          isNativeMemoryContractRunning
+            ? 'Running native memory contract...'
+            : 'Run native memory SQLite contract'
+        }
+        disabled={isNativeMemoryContractRunning}
+        height={48}
+        containerStyle={[styles.rowWrapper, { marginBottom: 12 }]}
+        onPress={runNativeMemoryContract}
+      />
+      <View
+        style={[styles.propertyDesc, { marginBottom: 12, flexWrap: 'wrap' }]}>
+        <DevSQLiteInfoItem
+          label="native_memory_contract"
+          value={
+            nativeMemoryContract
+              ? JSON.stringify(nativeMemoryContract)
+              : nativeMemoryContractError
+              ? `error: ${nativeMemoryContractError}`
+              : 'not run'
+          }
+        />
+      </View>
 
       <Button
         title={'Clear All SQLite and quit'}

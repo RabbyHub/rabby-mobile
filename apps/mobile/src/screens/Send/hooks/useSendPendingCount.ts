@@ -6,7 +6,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { unionBy } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { InteractionManager } from 'react-native';
 
 const pendingCountAtom = atom(0);
 const successTxListAtom = atom<string[]>([]);
@@ -28,8 +29,7 @@ export const usePollSendPendingCount = (params?: {
   isForMultipleAddress?: boolean;
   pollingInterval?: number;
 }) => {
-  const { isForMultipleAddress = false, pollingInterval = 10000 } =
-    params || {};
+  const { isForMultipleAddress = false } = params || {};
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -42,7 +42,7 @@ export const usePollSendPendingCount = (params?: {
     forScene: 'MakeTransactionAbout',
   });
 
-  const fetchPendingCount = async () => {
+  const fetchPendingCount = useCallback(async () => {
     let total = 0;
     const accountList = isForMultipleAddress ? unionAccounts : [currentAccount];
     for (let i = 0; i < accountList.length; i++) {
@@ -58,26 +58,33 @@ export const usePollSendPendingCount = (params?: {
       total += data.length || 0;
     }
     return total;
-  };
+  }, [currentAccount, isForMultipleAddress, unionAccounts]);
   const [, setCount] = useAtom(pendingCountAtom);
 
   const res = useRequest(fetchPendingCount, {
+    manual: true,
     onSuccess(v) {
-      setCount(v);
+      setCount(prev => (prev === v ? prev : v));
     },
-    refreshDeps: [isForMultipleAddress, currentAccount?.address],
   });
 
   const { runAsync } = res;
 
   useFocusEffect(
     useCallback(() => {
+      const initialRefreshTask = InteractionManager.runAfterInteractions(() => {
+        runAsync().catch(error => {
+          console.error('Failed to refresh Send pending count', error);
+        });
+      });
       const refresh = () => {
-        runAsync();
+        runAsync().catch(error => {
+          console.error('Failed to refresh Send pending count', error);
+        });
       };
-      refresh();
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);
       return () => {
+        initialRefreshTask.cancel();
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
       };
     }, [runAsync]),

@@ -14,6 +14,10 @@ const PROD_SNAPSHOT = Object.freeze<RegressionScenarioRuntimeSnapshot>({
   events: Object.freeze([]),
   lastError: null,
 });
+const PROD_CONTROL_SNAPSHOT = Object.freeze({
+  enabled: false,
+  command: null,
+});
 
 export function parseRegressionScenarioLink(): RegressionScenarioCommandParseResult {
   return { matched: false };
@@ -34,7 +38,13 @@ export function getRegressionScenarioRuntimeSnapshot() {
   return PROD_SNAPSHOT;
 }
 
-export function subscribeRegressionScenarioRuntime(_listener: () => void) {
+export function getRegressionScenarioRuntimeControlSnapshot() {
+  return PROD_CONTROL_SNAPSHOT;
+}
+
+export function subscribeRegressionScenarioRuntimeControl(
+  _listener: () => void,
+) {
   return () => {};
 }
 

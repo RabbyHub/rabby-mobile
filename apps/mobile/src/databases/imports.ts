@@ -8,6 +8,7 @@ import {
   resetAppDataSourceLoaderState,
 } from './registry';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import { initializeConfiguredDataSource } from './dataSourceLifecycle';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -22,45 +23,7 @@ export async function initializeAppDataSource(
   dbOptions?: DataSourceOptions,
 ) {
   if (dbOptions) {
-    const appDataSource = new DataSource({ ...dbOptions });
-
-    appDataSourceInitRef.current = appDataSource.initialize();
-    appDataSourceInitRef.current = appDataSourceInitRef.current.then(
-      async as => {
-        console.debug(
-          `[initializeAppDataSource] initialized, will runMigrations`,
-        );
-        await as
-          .runMigrations({
-            transaction: 'each',
-            fake: false,
-          })
-          .then(migrations => {
-            console.debug(
-              `[initializeAppDataSource] runMigrations finish: ${migrations.length}`,
-            );
-          })
-          .catch(error => {
-            console.error(
-              '[initializeAppDataSource] runMigrations error',
-              error,
-            );
-          });
-
-        try {
-          // don't drop database, if schema was changed, we need migrate rather than drop
-          await as.synchronize(false);
-        } catch (error) {
-          console.error('[initializeAppDataSource] error', error);
-          throw error;
-        }
-
-        // enable WAL mode
-        appDataSource.query('PRAGMA journal_mode=WAL');
-
-        return as;
-      },
-    );
+    appDataSourceInitRef.current = initializeConfiguredDataSource(dbOptions);
   } else if (!appDataSourceInitRef.current) {
     const startedAt = Date.now();
     traceStartupDiagnostic('db', 'app_data_source_loader_start', {

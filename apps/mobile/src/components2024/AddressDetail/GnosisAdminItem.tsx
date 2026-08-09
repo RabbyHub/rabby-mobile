@@ -1,7 +1,6 @@
 import { RcIconTagYou } from '@/assets/icons/address';
 import { NameAndAddress } from '@/components/NameAndAddress';
-import { AppColorsVariants } from '@/constant/theme';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import React, { useMemo } from 'react';
@@ -26,6 +25,7 @@ export const GnosisAdminItem = ({
     <View style={[styles.listItem, style]}>
       <View style={styles.listItemContent}>
         <NameAndAddress
+          style={styles.addressContainer}
           address={address}
           nameStyle={styles.aliasName}
           addressStyle={styles.address}
@@ -47,6 +47,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  addressContainer: {
+    flexShrink: 1,
+    minWidth: 0,
   },
   tag: {
     borderColor: colors2024['brand-default'],

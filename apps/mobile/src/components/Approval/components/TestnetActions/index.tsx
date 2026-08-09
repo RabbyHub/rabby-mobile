@@ -104,11 +104,7 @@ export const TestnetActions = ({
             ...styles.actionHeader,
             ...(isUnknown ? styles.isUnknown : {}),
           }}>
-          <View
-            style={StyleSheet.flatten({
-              flexDirection: 'row',
-              alignItems: 'center',
-            })}>
+          <View style={styles.leftContainer}>
             {isSpeedUp && (
               <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
                 <IconSpeedUp style={styles.speedUpIcon} />
@@ -212,12 +208,15 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      minWidth: 0,
     },
     leftText: {
       fontSize: 16,
       lineHeight: 18,
       color: colors['neutral-title-1'],
       fontWeight: '500',
+      flexShrink: 1,
+      minWidth: 0,
     },
     speedUpIcon: {
       width: 16,
@@ -235,6 +234,7 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 8,
       paddingHorizontal: 16,
       paddingVertical: 12,
     },

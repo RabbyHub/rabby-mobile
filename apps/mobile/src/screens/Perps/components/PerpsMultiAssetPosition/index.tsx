@@ -33,6 +33,7 @@ import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -111,13 +112,17 @@ const AssetPositionItem = ({
         category: 'Rabby Perps',
         action: 'Perps_CardToPerps',
       });
-      // navigation.push(RootNames.StackTransaction, {
-      //   screen: RootNames.Perps,
-      //   params: {
-      //     dappId: 'hyperliquid',
-      //     account: item.account,
-      //   },
-      // })
+      // Backing out of the detail page should land on Perps home first.
+      // Don't preset a multi-route nested state instead: the child navigator
+      // sets gestureEnabled: false, so iOS swipe-back falls to the root stack
+      // and pops the whole nested stack at once.
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.Perps,
+        params: {
+          dappId: 'hyperliquid',
+          account: item.account,
+        },
+      });
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.PerpsMarketDetail,
         params: {
@@ -347,11 +352,14 @@ const AssetPositionItem = ({
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
+  const { clearinghouseStateMap, marketDataMap } = useActivityStore(
+    perpsStore,
     useShallow(s => ({
       clearinghouseStateMap: s.clearinghouseStateMap,
       marketDataMap: s.marketDataMap,
     })),
+    Object.is,
+    { storeLabel: 'home-overview-perps-positions' },
   );
   const [selectedPositionKey, setSelectedPositionKey] = useState<{
     address: string;

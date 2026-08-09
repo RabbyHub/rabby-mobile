@@ -19,11 +19,12 @@ import {
 import {
   activateRegressionScenarioCommand,
   clearRegressionScenarioRuntime,
+  getRegressionScenarioRuntimeControlSnapshot,
   getRegressionScenarioRuntimeSnapshot,
   reportRegressionScenarioEvent as reportRegressionScenarioEventToStore,
   setRegressionScenarioRuntimeEnabled,
   setRegressionScenarioRuntimeStatus,
-  subscribeRegressionScenarioRuntime,
+  subscribeRegressionScenarioRuntimeControl,
 } from './runtimeStore';
 
 function makeSession(
@@ -120,12 +121,26 @@ export function handleRegressionScenarioCommand(
 
   if (command.action === 'status') {
     const state = getRegressionScenarioRuntimeSnapshot();
+    const includeEvents = command.params.includeEvents === 'true';
+    const requestedEventLimit = Number(command.params.eventLimit || 80);
+    const eventLimit = Number.isFinite(requestedEventLimit)
+      ? Math.min(Math.max(Math.round(requestedEventLimit), 1), 300)
+      : 80;
+    const currentRunId =
+      state.command?.runId || state.session?.command.runId || null;
     logScenarioResult('info', 'status', {
       enabled,
       status: state.status,
-      runId: state.command?.runId || state.session?.command.runId || null,
+      runId: currentRunId,
       scenario:
         state.command?.scenario || state.session?.command.scenario || null,
+      ...(includeEvents
+        ? {
+            events: state.events
+              .filter(event => !currentRunId || event.runId === currentRunId)
+              .slice(-eventLimit),
+          }
+        : {}),
     });
     return true;
   }
@@ -284,7 +299,8 @@ export function finishRegressionScenario(
 }
 
 export {
+  getRegressionScenarioRuntimeControlSnapshot,
   getRegressionScenarioRuntimeSnapshot,
   sanitizeLinkForLogging,
-  subscribeRegressionScenarioRuntime,
+  subscribeRegressionScenarioRuntimeControl,
 };

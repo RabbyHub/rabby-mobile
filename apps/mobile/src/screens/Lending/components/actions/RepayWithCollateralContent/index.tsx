@@ -51,7 +51,6 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { normalizeBN, valueToBigNumber } from '@aave/math-utils';
 import { approveToken } from '@/core/apis/approvals';
 import { getERC20Allowance } from '@/core/apis/provider';
-import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -104,6 +103,7 @@ import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 import RepayWithCollateralOverview from './Overview';
 import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
+import { hasInsufficientSwapLiquidity } from '../../../utils/swap';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
@@ -133,8 +133,7 @@ export default function RepayWithCollateral({
     forScene: 'Lending',
   });
 
-  const { chainEnum, chainInfo, selectedMarketData, isMainnet } =
-    useSelectedMarket();
+  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { refresh } = useRefreshHistoryId();
 
@@ -456,6 +455,18 @@ export default function RepayWithCollateral({
       repayAmount: debouncedRepayAmount,
     });
 
+  const useFlashLoan =
+    currentHF !== '-1' &&
+    valueToBigNumber(currentHF || 0)
+      .minus(valueToBigNumber(afterSwapInfo?.hfEffectOfFromAmount || 0))
+      .lt(LIQUIDATION_SAFETY_THRESHOLD);
+  const isInsufficientLiquidity = hasInsufficientSwapLiquidity({
+    reserve: collateralReserve,
+    amount: collateralAmountAfterSlippage,
+  });
+  const isFlashLoanDisabled =
+    useFlashLoan && !!collateralReserve && !collateralReserve.flashLoanEnabled;
+
   const buildRepayWithCollateralTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -468,7 +479,9 @@ export default function RepayWithCollateral({
       !collateralReserve ||
       !pools?.pool ||
       !chainInfo ||
-      collateralNotEnough
+      collateralNotEnough ||
+      isInsufficientLiquidity ||
+      isFlashLoanDisabled
     ) {
       return [];
     }
@@ -531,12 +544,6 @@ export default function RepayWithCollateral({
       swapRate.inputAmount ||
       swapRate.optimalRateData.srcAmount ||
       '0';
-    const useFlashLoan =
-      currentHF !== '-1' &&
-      valueToBigNumber(currentHF || 0)
-        .minus(valueToBigNumber(afterSwapInfo?.hfEffectOfFromAmount || 0))
-        .lt(LIQUIDATION_SAFETY_THRESHOLD);
-
     const repayWithCollateralParams = {
       fromUnderlyingAsset: selectedCollateralToken.underlyingAddress,
       fromATokenAddress: collateralReserve.aTokenAddress,
@@ -588,39 +595,6 @@ export default function RepayWithCollateral({
       );
 
       if (actualNeedApprove) {
-        let shouldTwoStepApprove = false;
-        if (
-          isMainnet &&
-          isSameAddress(
-            selectedCollateralToken.underlyingAddress,
-            ETH_USDT_CONTRACT,
-          ) &&
-          Number(allowance) !== 0 &&
-          !new BigNumber(allowance || '0').gte(requiredAmount)
-        ) {
-          shouldTwoStepApprove = true;
-        }
-
-        // 如果需要两步approve，先执行0额度approve
-        if (shouldTwoStepApprove) {
-          const zeroApproveResult = await approveToken({
-            chainServerId: chainInfo.serverId,
-            id: aTokenAddress,
-            spender: selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
-            amount: 0,
-            account: currentAccount,
-            isBuild: true,
-          });
-
-          const zeroApproveTxBuilt = {
-            ...zeroApproveResult.params[0],
-            from: zeroApproveResult.params[0].from || currentAccount.address,
-            value: zeroApproveResult.params[0].value ?? '0x0',
-            chainId: zeroApproveResult.params[0].chainId || chainInfo.id,
-          };
-
-          txs.push(zeroApproveTxBuilt);
-        }
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: aTokenAddress,
@@ -694,9 +668,9 @@ export default function RepayWithCollateral({
     repayToken.underlyingAddress,
     debtBalance,
     collateralAmount,
-    isMainnet,
-    currentHF,
-    afterSwapInfo?.hfEffectOfFromAmount,
+    useFlashLoan,
+    isInsufficientLiquidity,
+    isFlashLoanDisabled,
   ]);
 
   useEffect(() => {
@@ -713,7 +687,9 @@ export default function RepayWithCollateral({
         !collateralReserve ||
         !debouncedRepayAmount ||
         new BigNumber(debouncedRepayAmount).lte(0) ||
-        collateralNotEnough
+        collateralNotEnough ||
+        isInsufficientLiquidity ||
+        isFlashLoanDisabled
       ) {
         if (!cancelled) {
           setCurrentTxs([]);
@@ -748,6 +724,8 @@ export default function RepayWithCollateral({
     selectedCollateralToken,
     debouncedRepayAmount,
     collateralNotEnough,
+    isInsufficientLiquidity,
+    isFlashLoanDisabled,
   ]);
 
   useEffect(() => {
@@ -755,7 +733,9 @@ export default function RepayWithCollateral({
       !currentAccount?.address ||
       !canShowDirectSubmit ||
       !currentTxs?.length ||
-      collateralNotEnough
+      collateralNotEnough ||
+      isInsufficientLiquidity ||
+      isFlashLoanDisabled
     ) {
       closeMiniSigner();
       return;
@@ -771,6 +751,8 @@ export default function RepayWithCollateral({
     collateralNotEnough,
     currentAccount?.address,
     currentTxs,
+    isFlashLoanDisabled,
+    isInsufficientLiquidity,
     prefetchMiniSigner,
   ]);
 
@@ -781,6 +763,16 @@ export default function RepayWithCollateral({
         !debouncedRepayAmount ||
         !currentAccount
       ) {
+        return;
+      }
+      if (isFlashLoanDisabled) {
+        toast.error(t('page.Lending.repayWithCollateral.flashLoanDisabled'));
+        return;
+      }
+      if (isInsufficientLiquidity) {
+        toast.error(
+          t('page.Lending.repayWithCollateral.insufficientLiquidity'),
+        );
         return;
       }
 
@@ -899,6 +891,8 @@ export default function RepayWithCollateral({
       refresh,
       repayToken.usdPrice,
       source,
+      isFlashLoanDisabled,
+      isInsufficientLiquidity,
     ],
   );
 
@@ -944,9 +938,19 @@ export default function RepayWithCollateral({
       !canRepay ||
       (isRisky && !riskChecked) ||
       isLiquidatable ||
-      collateralNotEnough
+      collateralNotEnough ||
+      isInsufficientLiquidity ||
+      isFlashLoanDisabled
     );
-  }, [canRepay, collateralNotEnough, isLiquidatable, isRisky, riskChecked]);
+  }, [
+    canRepay,
+    collateralNotEnough,
+    isFlashLoanDisabled,
+    isInsufficientLiquidity,
+    isLiquidatable,
+    isRisky,
+    riskChecked,
+  ]);
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1173,17 +1177,24 @@ export default function RepayWithCollateral({
           {
             height:
               bottomButtonAreaHeight +
-              (isLiquidatable
+              (isLiquidatable || isFlashLoanDisabled || isInsufficientLiquidity
                 ? BOTTOM_SIZE.TIPS
                 : isRisky
                 ? BOTTOM_SIZE.CHECKBOX
                 : 0),
           },
         ]}>
-        {isLiquidatable || collateralNotEnough ? (
+        {isFlashLoanDisabled ||
+        isInsufficientLiquidity ||
+        isLiquidatable ||
+        collateralNotEnough ? (
           <View style={styles.riskContainer}>
             <Text style={styles.dangerWarningText}>
-              {collateralNotEnough
+              {isFlashLoanDisabled
+                ? t('page.Lending.repayWithCollateral.flashLoanDisabled')
+                : isInsufficientLiquidity
+                ? t('page.Lending.repayWithCollateral.insufficientLiquidity')
+                : collateralNotEnough
                 ? t('page.Lending.repayWithCollateral.collateralNotEnough')
                 : isLiquidatable
                 ? t('page.Lending.debtSwap.lpDangerWarning')
@@ -1214,9 +1225,7 @@ export default function RepayWithCollateral({
             onFinished={() => handleRepay()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="aave"
-            iconColor={
-              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-            }
+            iconColor={colors2024['neutral-contrast']}
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess

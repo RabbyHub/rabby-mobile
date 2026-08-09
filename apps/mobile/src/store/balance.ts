@@ -1207,9 +1207,14 @@ export const balanceAccountsStore = zCreate(
 export const accountsBalanceEvents = new AccountsBalanceEE();
 
 const CACHE_TIME = HOME_REFRESH_INTERVAL;
+const ACCOUNT_BALANCE_SELECTION_GETTER_WAIT_TIMEOUT_MS = 3000;
 let hasStartedAddressBalanceLifecycle = false;
 let accountBalanceSelectionSnapshotGetter: AccountBalanceSelectionSnapshotGetter | null =
   null;
+// Wait briefly for deferred selection registration, then fail open.
+let resolveAccountBalanceSelectionSnapshotGetterReady: (() => void) | null =
+  null;
+let accountBalanceSelectionSnapshotGetterReady: Promise<void> | null = null;
 
 export function getSelectedBalanceAddressesSnapshot() {
   const state = balanceAccountsStore.getState();
@@ -1222,6 +1227,8 @@ export function setAccountBalanceSelectionSnapshotGetter(
   getter: AccountBalanceSelectionSnapshotGetter,
 ) {
   accountBalanceSelectionSnapshotGetter = getter;
+  resolveAccountBalanceSelectionSnapshotGetterReady?.();
+  resolveAccountBalanceSelectionSnapshotGetterReady = null;
 }
 
 async function getAccountBalanceSelectionSnapshot() {
@@ -1229,10 +1236,17 @@ async function getAccountBalanceSelectionSnapshot() {
     if (__DEV__) {
       console.warn('account balance selection snapshot getter is not ready');
     }
-    return null;
+    accountBalanceSelectionSnapshotGetterReady ??= new Promise<void>(
+      resolve => {
+        resolveAccountBalanceSelectionSnapshotGetterReady = resolve;
+        setTimeout(resolve, ACCOUNT_BALANCE_SELECTION_GETTER_WAIT_TIMEOUT_MS);
+      },
+    );
+    await accountBalanceSelectionSnapshotGetterReady;
+    resolveAccountBalanceSelectionSnapshotGetterReady = null;
   }
 
-  return accountBalanceSelectionSnapshotGetter();
+  return accountBalanceSelectionSnapshotGetter?.() ?? null;
 }
 
 function getCachedHomeTop10Addresses() {
@@ -1418,23 +1432,16 @@ function buildSelectedBalanceDerivedState(
   );
 }
 
-export async function applyAccountBalanceSelectionSnapshot(
+export function commitAccountBalanceSelectionSnapshot(
   {
     selectedAccounts,
     selectedAddresses,
     matteredAccountLength,
   }: AccountBalanceSelectionSnapshot,
   options: {
-    hydrate: boolean;
     source: AccountsBalanceChangeSource;
   },
 ) {
-  if (options.hydrate) {
-    await addressBalanceStore.hydrateCachedBalancesForAccounts(
-      selectedAccounts,
-    );
-  }
-
   const nextBalance = buildBalanceAccountsFromList(
     selectedAccounts,
     addressBalanceStore.getAddressValueMap(),
@@ -1456,6 +1463,22 @@ export async function applyAccountBalanceSelectionSnapshot(
   );
 
   return nextBalance;
+}
+
+export async function applyAccountBalanceSelectionSnapshot(
+  snapshot: AccountBalanceSelectionSnapshot,
+  options: {
+    hydrate: boolean;
+    source: AccountsBalanceChangeSource;
+  },
+) {
+  if (options.hydrate) {
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(
+      snapshot.selectedAccounts,
+    );
+  }
+
+  return commitAccountBalanceSelectionSnapshot(snapshot, options);
 }
 
 export const syncBalanceAccountStore = () => {

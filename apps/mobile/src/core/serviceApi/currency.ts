@@ -52,7 +52,8 @@ function normalizeCurrencyStoreSnapshot(
 }
 
 export function getCurrencyStoreSnapshot() {
-  const registeredStore = getLoadedCoreService('currencyService')?.store;
+  const registeredStore =
+    getLoadedCoreService('currencyService')?.getStoreSnapshot();
   if (registeredStore) {
     return registeredStore;
   }
@@ -69,6 +70,6 @@ export async function bindCurrencyStoreListener(
   ) => void,
 ) {
   const service = await waitForCoreService('currencyService');
-  listener('data', service.store.data);
-  return service.setBeforeSetKV(listener);
+  listener('data', service.getStoreFieldSnapshot('data'));
+  return service.subscribeStoreFields(listener);
 }

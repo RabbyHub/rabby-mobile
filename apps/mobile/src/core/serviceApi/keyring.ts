@@ -1,6 +1,8 @@
 import type { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import type {
+  KeyringAuthTransition,
   KeyringInstance,
+  KeyringPasswordState,
   KeyringService,
 } from '@rabby-wallet/service-keyring';
 import {
@@ -55,6 +57,9 @@ type KeyringServiceWithUnlockOptions = KeyringService & {
   ) => ReturnType<KeyringService['submitPassword']>;
   refreshMemStoreKeyrings?: () => Promise<unknown>;
 };
+type KeyringServiceWithPersistedPublicAccountSnapshot = KeyringService & {
+  hasPersistedPublicAccountSnapshot: () => boolean;
+};
 export const keyringServiceApi = createDeferredServiceApi<
   'keyringService',
   KeyringServiceApiContract
@@ -94,6 +99,14 @@ export function isKeyringRuntimeReadySnapshot() {
 export function hasKeyringPublicAccountSnapshot() {
   return (
     getRegisteredService('keyringService')?.hasPublicAccountSnapshot() || false
+  );
+}
+
+export async function hasPersistedKeyringPublicAccountSnapshot() {
+  return callCoreService('keyringService', service =>
+    (
+      service as KeyringServiceWithPersistedPublicAccountSnapshot
+    ).hasPersistedPublicAccountSnapshot(),
   );
 }
 
@@ -155,6 +168,22 @@ export async function ensureKeyringRuntimeReadyForApi(label: string) {
 
 export function getKeyringMemStoreStateSnapshot() {
   return getRegisteredService('keyringService')?.memStore.getState();
+}
+
+export async function getKeyringPasswordState() {
+  return keyringServiceApi.getPasswordState();
+}
+
+export async function setKeyringPasswordState(
+  passwordState: KeyringPasswordState,
+) {
+  await keyringServiceApi.setPasswordState(passwordState);
+}
+
+export async function completeKeyringAuthTransition(
+  transition: KeyringAuthTransition,
+) {
+  return keyringServiceApi.completeAuthTransition(transition);
 }
 
 export async function submitKeyringPasswordForUnlock(

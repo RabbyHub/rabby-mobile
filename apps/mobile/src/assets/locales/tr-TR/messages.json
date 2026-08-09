@@ -2172,6 +2172,7 @@
       "modifyRPCURL": "RPC URL'sunu Değiştir",
       "themeMode": "Tema Modu",
       "autoLockTime": "Otomatik kilit süresi",
+      "appLaunchLock": "Başlatmada Kilit",
       "lockWallet": "Cüzdanı kilitle",
       "currentLanguage": "Geçerli Dil",
       "aboutUs": "Hakkımızda",
@@ -2197,7 +2198,12 @@
       "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
       "dataAnalysis": "Veri Analizi",
       "bugReportHistory": "Hata Raporu Geçmişi",
-      "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş"
+      "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş",
+      "features": "Özellikler",
+      "manageWallets": "Cüzdanları Yönet"
+    },
+    "settings": {
+      "chooseWallet": "Yönetmek için bir cüzdan seçin"
     },
     "settingModal": {
       "themeMode": {

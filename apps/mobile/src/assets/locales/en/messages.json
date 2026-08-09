@@ -1102,13 +1102,7 @@
         "search": "Search",
         "websites": "Websites",
         "tabs": {
-          "__skip_translation": [
-            "favorite",
-            "defi",
-            "dex",
-            "rwa",
-            "nft"
-          ],
+          "__skip_translation": ["favorite", "defi", "dex", "rwa", "nft"],
           "favorite": "Favorite",
           "all": "All",
           "defi": "DeFi",
@@ -1292,9 +1286,7 @@
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
-        "__skip_translation": [
-          "safe"
-        ],
+        "__skip_translation": ["safe"],
         "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
@@ -1829,10 +1821,7 @@
       "gnosisChainScrollDesc": "- This wallet was found deployed on {{count}} chains -"
     },
     "rabbyPoints": {
-      "__skip_translation": [
-        "titleWithStar",
-        "ClaimComing"
-      ],
+      "__skip_translation": ["titleWithStar", "ClaimComing"],
       "title": "Rabby Points",
       "titleWithStar": "Rabby Points ✨",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
@@ -2299,9 +2288,7 @@
       }
     },
     "setting": {
-      "__skip_translation": [
-        "transactionNotification"
-      ],
+      "__skip_translation": ["transactionNotification"],
       "screenTitle": "Settings",
       "enableWhitelist": "Enable whitelist for sending assets",
       "faceId": "Face ID",
@@ -2310,6 +2297,7 @@
       "devicePassword": "Device password",
       "useDevicePassword": "Use device password",
       "autoLockTime": "Auto lock time",
+      "appLaunchLock": "App Launch Lock",
       "lockWallet": "Lock Wallet",
       "addCustomNetwork": "Add Custom Network",
       "modifyRPCURL": "Modify RPC URL",
@@ -2335,7 +2323,9 @@
       "transactionNotification": "Txn notifications (Beta)",
       "dataAnalysis": "Data Analysis",
       "bugReportHistory": "Bug Report History",
-      "bugReportChat": "Share Feedback via Chat"
+      "bugReportChat": "Share Feedback via Chat",
+      "features": "Features",
+      "manageWallets": "Manage Wallets"
     },
     "settingModal": {
       "themeMode": {
@@ -3343,9 +3333,7 @@
           "mySupplies": "My supplies"
         },
         "item": {
-          "__skip_translation": [
-            "tvl"
-          ],
+          "__skip_translation": ["tvl"],
           "tvl": "TVL",
           "wrapperToken": "Wrapped token for {{name}}"
         }
@@ -3418,6 +3406,7 @@
         "approveAndBorrow": "Approve and Borrow",
         "noSupplyPrefix": "No supply: ",
         "noSupplyDesc": "To borrow, you need to supply assets as collateral.",
+        "borrowingUnavailable": "Borrowing is not available for this asset in the current mode.",
         "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
         "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
       },
@@ -3455,7 +3444,8 @@
         "toggleCollateralWarning": "Disabling this asset as collateral will lower your Health Factor to a risky level for liquidation.",
         "checkbox": "I understand the alert and want to continue.",
         "emodeBlockWarning": "Disabling E-mode will lower your Health Factor to a risky level for liquidation.",
-        "blockEmodeWarning": "You can not disable E-Mode because that could cause liquidation. To exit E-Mode supply or repay borrowed positions."
+        "blockEmodeWarning": "You can not disable E-Mode because that could cause liquidation. To exit E-Mode supply or repay borrowed positions.",
+        "zeroLtvEmodeExitWarning": "Disable {{assets}} as collateral before exiting E-Mode because these assets have 0% LTV outside E-Mode."
       },
       "lqDescription": {
         "desc": "Liquidation value",
@@ -3488,9 +3478,7 @@
         "zeroLtvCollateralTips": "You have following LTV = 0 collaterals and thus can only repay with these collaterals first according to collateral repay rules. "
       },
       "manageEmode": {
-        "__skip_translation": [
-          "emode"
-        ],
+        "__skip_translation": ["emode"],
         "emode": "E-Mode",
         "title": "Manage E-Mode",
         "disableTitle": "Disable",
@@ -3571,6 +3559,7 @@
         },
         "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
         "insufficientLiquidity": "Insufficient liquidity.",
+        "flashLoanDisabled": "Position swaps are disabled for this asset due to security reasons.",
         "frozenCollateral": "This asset is frozen due to an Aave community decision.",
         "overview": {
           "title": "Transaction Overview",
@@ -3664,6 +3653,9 @@
       "unsupportedAccountType": "Not support this account type.",
       "unsupportedAccount": "Currently only private key and seed phrase addresses are supported.",
       "title": "Convert Dust"
+    },
+    "settings": {
+      "chooseWallet": "Choose a wallet to manage"
     }
   },
   "component": {

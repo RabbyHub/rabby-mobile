@@ -75,11 +75,7 @@ const ActionItem = ({
           ...styles.actionHeader,
           ...(isUnknown ? styles.isUnknown : {}),
         }}>
-        <View
-          style={StyleSheet.flatten({
-            flexDirection: 'row',
-            alignItems: 'center',
-          })}>
+        <View style={styles.leftContainer}>
           {isSpeedUp && (
             <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
               <IconSpeedUp style={styles.speedUpIcon} />
