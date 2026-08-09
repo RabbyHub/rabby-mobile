@@ -1,5 +1,5 @@
 import './op-sqlite/setup';
 import { opSqliteTypeORMDriver } from './op-sqlite/typeorm';
+export { SQLiteDriverType } from './driverKind';
 
-export const SQLiteDriverType = 'op-sqlite' as 'RNSQLiteStorage' | 'op-sqlite';
 export const SQLite = opSqliteTypeORMDriver;

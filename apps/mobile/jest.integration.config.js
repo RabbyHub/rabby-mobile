@@ -8,6 +8,8 @@ module.exports = {
     ...baseConfig.moduleNameMapper,
     '^react$': '<rootDir>/node_modules/react',
     '^react-native$': '<rootDir>/node_modules/react-native',
+    '^typeorm/browser$': '<rootDir>/jest.integration.typeorm.js',
+    '^@op-engineering/op-sqlite$': '<rootDir>/jest.integration.op-sqlite.js',
     '^@rneui/base$': '<rootDir>/jest.integration.rneui.js',
     '^@rneui/themed$': '<rootDir>/jest.integration.rneui.js',
     '\\.svg$': '<rootDir>/jest.integration.svg.js',

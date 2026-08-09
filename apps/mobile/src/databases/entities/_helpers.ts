@@ -1,4 +1,4 @@
-import { SQLiteDriverType } from '@/core/databases/exports';
+import { SQLiteDriverType } from '@/core/databases/driverKind';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import BigNumber from 'bignumber.js';

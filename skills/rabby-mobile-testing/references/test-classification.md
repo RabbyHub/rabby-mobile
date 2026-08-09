@@ -93,6 +93,9 @@ Examples:
   entry milestone for valid-session, manual-unlock, no-account, and degraded
   cold starts. Runtime account addition uses the same production state
   transition as the account event.
+- The real TypeORM entity metadata, migration sequence, repositories,
+  constraints, and transactions run against Node's in-memory SQLite while only
+  the native driver boundary is substituted.
 
 An App-startup integration test in this lane is not a native App launch. It
 must execute the production orchestration primitives and task metadata, but it
@@ -110,6 +113,22 @@ scenario from a transformed source environment variable: Babel/Jest transform
 caches can otherwise preserve the first scenario's value.
 
 When a test needs a boundary fake, keep it stateful enough to preserve the external contract. A mock that returns one hard-coded value cannot prove persistence, cancellation, or event ordering.
+
+### SQLite Boundary
+
+Do not mock TypeORM repositories, migration results, or SQL rows when the claim
+is about repository-owned database behavior. Use the Node in-memory SQLite
+driver and the production DataSource lifecycle instead. This keeps CI fast and
+deterministic while detecting entity metadata drift, migration failures,
+constraint differences, transaction mistakes, and repository query changes.
+
+Classify that result as JS integration evidence. Node's SQLite implementation
+does not prove `@op-engineering/op-sqlite`, JSI/bridge behavior, a file-backed
+database, WAL and checkpoint behavior, concurrent native connections,
+force-stop durability, filesystem quirks, or device throughput. Run the
+non-production native in-memory contract on a physical device for driver-level
+compatibility, and run a real file-backed scenario whenever the product claim
+includes persistence, scheduling, lifecycle, or performance.
 
 ## Hermes Device Integration Tests
 
@@ -174,12 +193,13 @@ When a bug crosses a native boundary, add the deterministic JS integration cover
 
 ## Examples By Risk
 
-| Risk                                          | Minimum useful coverage   |
-| --------------------------------------------- | ------------------------- |
-| Formatting or pure filtering                  | Unit                      |
-| Store selector plus Provider publication      | JS integration            |
-| Service registration plus typed HOC readiness | JS integration            |
-| MMKV durability across force-stop             | Hermes device integration |
-| SQLite/native worker scheduling               | Hermes device integration |
-| Full Send/Swap transaction                    | E2E                       |
-| Released-package upgrade                      | E2E                       |
+| Risk                                          | Minimum useful coverage          |
+| --------------------------------------------- | -------------------------------- |
+| Formatting or pure filtering                  | Unit                             |
+| Store selector plus Provider publication      | JS integration                   |
+| Service registration plus typed HOC readiness | JS integration                   |
+| MMKV durability across force-stop             | Hermes device integration        |
+| TypeORM entity/migration/repository semantics | JS integration + device contract |
+| SQLite/native worker scheduling               | Hermes device integration        |
+| Full Send/Swap transaction                    | E2E                              |
+| Released-package upgrade                      | E2E                              |
