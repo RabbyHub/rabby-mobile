@@ -1,0 +1,353 @@
+import BigNumber from 'bignumber.js';
+
+export type PerpsProTpSlMode = 'pnl' | 'price' | 'roi';
+export type PerpsProTpSlLegKind = 'sl' | 'tp';
+
+export type PerpsProTpSlLegDraft = {
+  mode: PerpsProTpSlMode;
+  rawMagnitude: string;
+};
+
+export type PerpsProAttachedTpSlDraft = {
+  enabled: boolean;
+  sl: PerpsProTpSlLegDraft;
+  tp: PerpsProTpSlLegDraft;
+};
+
+export type PerpsProTpSlValidationErrorCode =
+  | 'atLeastOneRequired'
+  | 'bboUnsupported'
+  | 'conditionalUnsupported'
+  | 'invalidDirection'
+  | 'invalidInput'
+  | 'invalidOrderAmount'
+  | 'invalidTrigger'
+  | 'iocUnsupported'
+  | 'liquidationUnavailable'
+  | 'insufficientDepth'
+  | 'marketBookUnavailable'
+  | 'oppositePosition'
+  | 'outsideLiquidationRange'
+  | 'reduceOnlyUnsupported';
+
+export type PerpsProTpSlValidationError = {
+  code: PerpsProTpSlValidationErrorCode;
+  leg?: PerpsProTpSlLegKind;
+};
+
+export type PerpsProEvaluatedTpSlLeg = {
+  estimatedPnl: string;
+  estimatedRoi: string;
+  kind: PerpsProTpSlLegKind;
+  mode: PerpsProTpSlMode;
+  rawMagnitude: string;
+  triggerPrice: string;
+};
+
+export type PerpsProAttachedTpSlEvaluation = {
+  errors: PerpsProTpSlValidationError[];
+  expectedEntryPrice: string;
+  liquidationPrice: string | null;
+  normalizedBaseSize: string;
+  side: 'buy' | 'sell';
+  sl: PerpsProEvaluatedTpSlLeg | null;
+  tp: PerpsProEvaluatedTpSlLeg | null;
+};
+
+const decimal = (value: unknown) => {
+  const result = new BigNumber(
+    (value as string | number | null | undefined) ?? Number.NaN,
+  );
+  return result.isFinite() ? result : null;
+};
+
+const positive = (value: unknown) => {
+  const result = decimal(value);
+  return result?.gt(0) ? result : null;
+};
+
+export const createPerpsProAttachedTpSlDraft =
+  (): PerpsProAttachedTpSlDraft => ({
+    enabled: false,
+    sl: { mode: 'price', rawMagnitude: '' },
+    tp: { mode: 'price', rawMagnitude: '' },
+  });
+
+export const getPerpsProAttachedTpSlCompatibilityError = ({
+  bboEnabled,
+  orderType,
+  reduceOnly,
+  tif,
+}: {
+  bboEnabled: boolean;
+  orderType: 'conditional' | 'limit' | 'market';
+  reduceOnly: boolean;
+  tif: 'Alo' | 'Gtc' | 'Ioc';
+}): PerpsProTpSlValidationErrorCode | null => {
+  if (orderType === 'conditional') return 'conditionalUnsupported';
+  if (reduceOnly) return 'reduceOnlyUnsupported';
+  if (bboEnabled) return 'bboUnsupported';
+  if (orderType === 'limit' && tif === 'Ioc') return 'iocUnsupported';
+  return null;
+};
+
+export const hasPerpsProOppositePosition = ({
+  currentPositionSize,
+  side,
+}: {
+  currentPositionSize: string | null | undefined;
+  side: 'buy' | 'sell';
+}) => {
+  const position = decimal(currentPositionSize);
+  if (!position || position.isZero()) return false;
+  return side === 'buy' ? position.lt(0) : position.gt(0);
+};
+
+export const normalizePerpsProTpSlPrice = ({
+  price,
+  szDecimals,
+}: {
+  price: BigNumber;
+  szDecimals: number;
+}) => {
+  if (
+    !price.isFinite() ||
+    price.lte(0) ||
+    !Number.isSafeInteger(szDecimals) ||
+    szDecimals < 0
+  ) {
+    return null;
+  }
+  const significant = new BigNumber(price.toPrecision(5, BigNumber.ROUND_DOWN));
+  const normalized = significant.decimalPlaces(
+    Math.max(0, 6 - szDecimals),
+    BigNumber.ROUND_DOWN,
+  );
+  return normalized.gt(0) ? normalized.toFixed() : null;
+};
+
+export const previewPerpsProTpSlLeg = ({
+  baseSize,
+  draft,
+  expectedEntryPrice,
+  kind,
+  leverage,
+  side,
+  szDecimals,
+}: {
+  baseSize: string;
+  draft: PerpsProTpSlLegDraft;
+  expectedEntryPrice: string;
+  kind: PerpsProTpSlLegKind;
+  leverage: number;
+  side: 'buy' | 'sell';
+  szDecimals: number;
+}): PerpsProEvaluatedTpSlLeg | null => {
+  if (!draft.rawMagnitude.trim()) return null;
+  const raw = positive(draft.rawMagnitude);
+  const entry = positive(expectedEntryPrice);
+  const size = positive(baseSize);
+  const leverageValue = positive(leverage);
+  if (!raw || !entry || !size || !leverageValue) return null;
+
+  const isBuy = side === 'buy';
+  const signedTarget = kind === 'tp' ? raw : raw.negated();
+  let trigger: BigNumber;
+  if (draft.mode === 'price') {
+    trigger = raw;
+  } else if (draft.mode === 'pnl') {
+    trigger = isBuy
+      ? entry.plus(signedTarget.dividedBy(size))
+      : entry.minus(signedTarget.dividedBy(size));
+  } else {
+    const returnFraction = signedTarget.dividedBy(100).dividedBy(leverageValue);
+    trigger = isBuy
+      ? entry.multipliedBy(new BigNumber(1).plus(returnFraction))
+      : entry.multipliedBy(new BigNumber(1).minus(returnFraction));
+  }
+
+  const normalizedTrigger = normalizePerpsProTpSlPrice({
+    price: trigger,
+    szDecimals,
+  });
+  if (!normalizedTrigger) return null;
+  const normalized = new BigNumber(normalizedTrigger);
+  const pnl = (isBuy ? normalized.minus(entry) : entry.minus(normalized))
+    .multipliedBy(size)
+    .decimalPlaces(20, BigNumber.ROUND_DOWN);
+  const margin = entry.multipliedBy(size).dividedBy(leverageValue);
+  if (!margin.isFinite() || margin.lte(0)) return null;
+
+  return {
+    estimatedPnl: pnl.toFixed(),
+    estimatedRoi: pnl
+      .dividedBy(margin)
+      .multipliedBy(100)
+      .decimalPlaces(20, BigNumber.ROUND_DOWN)
+      .toFixed(),
+    kind,
+    mode: draft.mode,
+    rawMagnitude: draft.rawMagnitude,
+    triggerPrice: normalizedTrigger,
+  };
+};
+
+const validateDirection = ({
+  entry,
+  kind,
+  side,
+  trigger,
+}: {
+  entry: BigNumber;
+  kind: PerpsProTpSlLegKind;
+  side: 'buy' | 'sell';
+  trigger: BigNumber;
+}) => {
+  if (side === 'buy') {
+    return kind === 'tp' ? trigger.gt(entry) : trigger.lt(entry);
+  }
+  return kind === 'tp' ? trigger.lt(entry) : trigger.gt(entry);
+};
+
+export const evaluatePerpsProAttachedTpSl = ({
+  baseSize,
+  currentPositionSize,
+  draft,
+  expectedEntryPrice,
+  leverage,
+  liquidationPrice,
+  order,
+  side,
+  szDecimals,
+}: {
+  baseSize: string;
+  currentPositionSize?: string | null;
+  draft: PerpsProAttachedTpSlDraft;
+  expectedEntryPrice: string;
+  leverage: number;
+  liquidationPrice: string | null;
+  order: {
+    bboEnabled: boolean;
+    orderType: 'conditional' | 'limit' | 'market';
+    reduceOnly: boolean;
+    tif: 'Alo' | 'Gtc' | 'Ioc';
+  };
+  side: 'buy' | 'sell';
+  szDecimals: number;
+}): PerpsProAttachedTpSlEvaluation => {
+  const errors: PerpsProTpSlValidationError[] = [];
+  const compatibility = getPerpsProAttachedTpSlCompatibilityError(order);
+  if (compatibility) errors.push({ code: compatibility });
+  if (hasPerpsProOppositePosition({ currentPositionSize, side })) {
+    errors.push({ code: 'oppositePosition' });
+  }
+
+  const tp = previewPerpsProTpSlLeg({
+    baseSize,
+    draft: draft.tp,
+    expectedEntryPrice,
+    kind: 'tp',
+    leverage,
+    side,
+    szDecimals,
+  });
+  const sl = previewPerpsProTpSlLeg({
+    baseSize,
+    draft: draft.sl,
+    expectedEntryPrice,
+    kind: 'sl',
+    leverage,
+    side,
+    szDecimals,
+  });
+
+  if (!draft.tp.rawMagnitude.trim() && !draft.sl.rawMagnitude.trim()) {
+    errors.push({ code: 'atLeastOneRequired' });
+  }
+  if (draft.tp.rawMagnitude.trim() && !tp) {
+    errors.push({ code: 'invalidInput', leg: 'tp' });
+  }
+  if (draft.sl.rawMagnitude.trim() && !sl) {
+    errors.push({ code: 'invalidInput', leg: 'sl' });
+  }
+
+  const entry = positive(expectedEntryPrice);
+  (['tp', 'sl'] as const).forEach(kind => {
+    const leg = kind === 'tp' ? tp : sl;
+    if (!leg || !entry) return;
+    const trigger = positive(leg.triggerPrice);
+    if (!trigger) {
+      errors.push({ code: 'invalidTrigger', leg: kind });
+    } else if (!validateDirection({ entry, kind, side, trigger })) {
+      errors.push({ code: 'invalidDirection', leg: kind });
+    }
+  });
+
+  if (sl && entry) {
+    const trigger = positive(sl.triggerPrice);
+    const liquidation = positive(liquidationPrice);
+    if (!liquidation) {
+      errors.push({ code: 'liquidationUnavailable', leg: 'sl' });
+    } else if (
+      !trigger ||
+      (side === 'buy'
+        ? !trigger.gt(liquidation) || !trigger.lt(entry)
+        : !trigger.gt(entry) || !trigger.lt(liquidation))
+    ) {
+      errors.push({ code: 'outsideLiquidationRange', leg: 'sl' });
+    }
+  }
+
+  return {
+    errors,
+    expectedEntryPrice,
+    liquidationPrice,
+    normalizedBaseSize: baseSize,
+    side,
+    sl,
+    tp,
+  };
+};
+
+export const validatePerpsProFrozenAttachedTpSl = ({
+  attached,
+  expectedEntryPrice,
+  liquidationPrice,
+}: {
+  attached: Pick<PerpsProAttachedTpSlEvaluation, 'side' | 'sl' | 'tp'>;
+  expectedEntryPrice: string;
+  liquidationPrice: string | null;
+}): PerpsProTpSlValidationError[] => {
+  const errors: PerpsProTpSlValidationError[] = [];
+  const entry = positive(expectedEntryPrice);
+  if (!entry || (!attached.tp && !attached.sl)) {
+    return [{ code: 'invalidTrigger' }];
+  }
+  (['tp', 'sl'] as const).forEach(kind => {
+    const leg = attached[kind];
+    if (!leg) return;
+    const trigger = positive(leg.triggerPrice);
+    if (!trigger) {
+      errors.push({ code: 'invalidTrigger', leg: kind });
+      return;
+    }
+    if (!validateDirection({ entry, kind, side: attached.side, trigger })) {
+      errors.push({ code: 'invalidDirection', leg: kind });
+    }
+  });
+  if (attached.sl) {
+    const trigger = positive(attached.sl.triggerPrice);
+    const liquidation = positive(liquidationPrice);
+    if (!liquidation) {
+      errors.push({ code: 'liquidationUnavailable', leg: 'sl' });
+    } else if (
+      !trigger ||
+      (attached.side === 'buy'
+        ? !trigger.gt(liquidation) || !trigger.lt(entry)
+        : !trigger.gt(entry) || !trigger.lt(liquidation))
+    ) {
+      errors.push({ code: 'outsideLiquidationRange', leg: 'sl' });
+    }
+  }
+  return errors;
+};

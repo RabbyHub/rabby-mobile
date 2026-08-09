@@ -1,0 +1,142 @@
+import {
+  createPerpsProTradeFormState,
+  inferPerpsProConditionalClassification,
+  isPerpsProTradeCombinationSupported,
+  resolvePerpsProDisplayAmount,
+  resolvePerpsProTradeAmount,
+  sanitizePerpsProDecimalInput,
+} from './trade';
+
+describe('Perps Pro trade model', () => {
+  it.each([
+    [true, '101', 'sl'],
+    [true, '99', 'tp'],
+    [false, '99', 'sl'],
+    [false, '101', 'tp'],
+  ] as const)(
+    'infers conditional classification',
+    (isBuy, trigger, expected) => {
+      expect(
+        inferPerpsProConditionalClassification({
+          isBuy,
+          referencePrice: '100',
+          triggerPrice: trigger,
+        }),
+      ).toBe(expected);
+    },
+  );
+
+  it('rejects an equal conditional trigger', () => {
+    expect(
+      inferPerpsProConditionalClassification({
+        isBuy: true,
+        referencePrice: '100',
+        triggerPrice: '100',
+      }),
+    ).toBeNull();
+  });
+
+  it('converts quote amount to protocol base size with round-down precision', () => {
+    expect(
+      resolvePerpsProTradeAmount({
+        amount: '100',
+        amountUnit: 'quote',
+        price: '63000',
+        szDecimals: 5,
+      }),
+    ).toEqual({ baseSize: '0.00158', quoteAmount: '99.54' });
+  });
+
+  it('keeps base amount as canonical protocol size', () => {
+    expect(
+      resolvePerpsProTradeAmount({
+        amount: '0.001234',
+        amountUnit: 'base',
+        price: '63000',
+        szDecimals: 5,
+      }),
+    ).toEqual({ baseSize: '0.00123', quoteAmount: '77.49' });
+  });
+
+  it('keeps base display independent and requires a price only for quote display', () => {
+    expect(
+      resolvePerpsProDisplayAmount({
+        amountUnit: 'base',
+        baseAmount: '0.25',
+        price: null,
+      }),
+    ).toBe('0.25');
+    expect(
+      resolvePerpsProDisplayAmount({
+        amountUnit: 'quote',
+        baseAmount: '0.25',
+        price: '64000',
+      }),
+    ).toBe('16000');
+    expect(
+      resolvePerpsProDisplayAmount({
+        amountUnit: 'quote',
+        baseAmount: '0.25',
+        price: null,
+      }),
+    ).toBeNull();
+  });
+
+  it('sanitizes unsupported input without adding separators', () => {
+    expect(sanitizePerpsProDecimalInput('-01a.23.45e2', 3)).toBe('1.234');
+  });
+
+  it('only allows BBO with GTC', () => {
+    const form = {
+      ...createPerpsProTradeFormState({ orderType: 'limit' }),
+      bboEnabled: true,
+      tif: 'Ioc' as const,
+    };
+    expect(isPerpsProTradeCombinationSupported(form)).toBe(false);
+    expect(isPerpsProTradeCombinationSupported({ ...form, tif: 'Gtc' })).toBe(
+      true,
+    );
+    expect(
+      isPerpsProTradeCombinationSupported({
+        ...form,
+        attachedTpSl: {
+          ...form.attachedTpSl,
+          enabled: true,
+          tp: { mode: 'price', rawMagnitude: '101' },
+        },
+        tif: 'Gtc',
+      }),
+    ).toBe(false);
+  });
+
+  it('rejects attached TP/SL for Conditional, IOC and Reduce Only', () => {
+    const base = createPerpsProTradeFormState({ orderType: 'limit' });
+    const attachedTpSl = {
+      ...base.attachedTpSl,
+      enabled: true,
+      tp: { mode: 'price' as const, rawMagnitude: '101' },
+    };
+    expect(
+      isPerpsProTradeCombinationSupported({
+        ...base,
+        attachedTpSl,
+        tif: 'Ioc',
+      }),
+    ).toBe(false);
+    expect(
+      isPerpsProTradeCombinationSupported({
+        ...base,
+        attachedTpSl,
+        orderType: 'conditional',
+      }),
+    ).toBe(false);
+    expect(
+      isPerpsProTradeCombinationSupported({
+        ...base,
+        attachedTpSl,
+        orderType: 'market',
+        reduceOnly: true,
+      }),
+    ).toBe(false);
+  });
+});

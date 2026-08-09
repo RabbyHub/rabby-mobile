@@ -32,6 +32,7 @@ export const enum APP_STORE_NAMES {
 
   'perps' = 'perps',
   'perpsMarketCache' = 'perpsMarketCache',
+  'perpsAttachedTpSlJournal' = 'perpsAttachedTpSlJournal',
   'lending' = 'lending',
 
   'currency' = 'currency',

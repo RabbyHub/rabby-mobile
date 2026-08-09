@@ -14,8 +14,13 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   const mockGetLastUsedAccount = jest.fn();
   const mockGetSelectedKlineInterval = jest.fn();
   const mockGetSendApproveAfterDeposit = jest.fn();
+  const mockInitAccount = jest.fn();
+  const mockSetExternalSign = jest.fn();
+  const mockSignTypedData = jest.fn();
   const mockHyperliquidSDK = jest.fn().mockImplementation(params => ({
+    initAccount: mockInitAccount,
     params,
+    setExternalSign: mockSetExternalSign,
     ws: {
       disconnect: mockDisconnect,
     },
@@ -29,7 +34,14 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   const mockSetSendApproveAfterDeposit = jest.fn();
   const mockUpdateAgentWalletPreference = jest.fn();
 
+  class MockExternalSignUserCancelledError extends Error {
+    constructor() {
+      super('External signing cancelled');
+      this.name = 'ExternalSignUserCancelledError';
+    }
+  }
   jest.doMock('@rabby-wallet/hyperliquid-sdk', () => ({
+    ExternalSignUserCancelledError: MockExternalSignUserCancelledError,
     HyperliquidSDK: mockHyperliquidSDK,
   }));
   jest.doMock('@/core/apis/lock', () => ({
@@ -58,7 +70,7 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
     },
   }));
   jest.doMock('./keyring', () => ({
-    apisKeyring: { signTypedData: jest.fn() },
+    apisKeyring: { signTypedData: mockSignTypedData },
   }));
 
   const { apisPerps } = require('./perps') as typeof import('./perps');
@@ -70,7 +82,10 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
       mockDisconnect,
       mockGetAgentWallet,
       mockHyperliquidSDK,
+      mockInitAccount,
       mockIsUnlocked,
+      mockSetExternalSign,
+      mockSignTypedData,
     },
   };
 }
@@ -181,5 +196,34 @@ describe('core/apis/perps', () => {
     ).toBe(false);
     expect(apisPerps.isSelfSignPerpsAccount('WalletConnect')).toBe(false);
     expect(apisPerps.isSelfSignPerpsAccount(undefined)).toBe(false);
+  });
+
+  it('maps only explicit wallet-unlock cancellation to the SDK marker', async () => {
+    const { apisPerps, mocks } = loadPerpsModule();
+    await apisPerps.applyPerpsSigner({
+      address: '0xabc',
+      brandName: 'PrivateKey',
+      type: KEYRING_CLASS.PRIVATE_KEY,
+    });
+    const externalSign = mocks.mockSetExternalSign.mock.calls[0]?.[0] as (
+      data: unknown,
+    ) => Promise<string>;
+    const cancelled = new Error('Wallet unlock cancelled');
+    cancelled.name = 'WalletUnlockCancelledError';
+    mocks.mockSignTypedData.mockRejectedValueOnce(cancelled);
+
+    await expect(externalSign({ message: {} })).rejects.toMatchObject({
+      name: 'ExternalSignUserCancelledError',
+    });
+
+    const ordinary = new Error('hardware disconnected');
+    mocks.mockSignTypedData.mockRejectedValueOnce(ordinary);
+    await expect(externalSign({ message: {} })).rejects.toBe(ordinary);
+    expect(mocks.mockInitAccount).toHaveBeenCalledWith(
+      '0xabc',
+      undefined,
+      '0xabc',
+      expect.any(String),
+    );
   });
 });
