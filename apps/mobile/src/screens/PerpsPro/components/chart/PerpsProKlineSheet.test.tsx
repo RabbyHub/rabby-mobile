@@ -10,7 +10,6 @@ import React from 'react';
 import type { PerpsProMarket } from '../../model/market';
 
 const mockModalProps = jest.fn();
-const mockPresent = jest.fn();
 const mockClearCrosshair = jest.fn();
 const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
@@ -20,26 +19,7 @@ const mockToolbarProps = jest.fn();
 const mockUsePerpsProKline = jest.fn();
 
 let mockKlineState: Record<string, unknown>;
-
-jest.mock('@/components', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return {
-    AppBottomSheetModal: ReactModule.forwardRef(
-      (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
-        ReactModule.useImperativeHandle(ref, () => ({
-          present: mockPresent,
-        }));
-        mockModalProps(props);
-        return ReactModule.createElement(
-          View,
-          { testID: 'bottom-sheet' },
-          props.children,
-        );
-      },
-    ),
-  };
-});
+let mockLastDataDelivery: { identity: string; revision: number } | null;
 
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({ testSharedBottomSheetProp: true }),
@@ -51,20 +31,38 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
   return {
     __esModule: true,
     default: ReactModule.forwardRef(
-      (props: Record<string, () => void>, ref: React.Ref<unknown>) => {
+      (
+        props: {
+          onChartError?: () => void;
+          onChartReady?: () => void;
+          onDataApplied?: (data: {
+            identity: string;
+            revision: number;
+          }) => void;
+        },
+        ref: React.Ref<unknown>,
+      ) => {
         ReactModule.useEffect(() => {
           mockChartMount();
           return mockChartUnmount;
         }, []);
         ReactModule.useImperativeHandle(ref, () => ({
           clearCrosshair: mockClearCrosshair,
-          setData: mockSetData,
+          setData: (data: { identity: string; revision: number }) => {
+            mockSetData(data);
+            mockLastDataDelivery = {
+              identity: data.identity,
+              revision: data.revision,
+            };
+          },
           updateCandleData: mockUpdateCandleData,
           updateTPSLPriceLines: jest.fn(),
         }));
         return ReactModule.createElement(Pressable, {
           onLongPress: props.onChartError,
           onPress: props.onChartReady,
+          onPressOut: () =>
+            mockLastDataDelivery && props.onDataApplied?.(mockLastDataDelivery),
           testID: 'trading-view-chart',
         });
       },
@@ -95,6 +93,22 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
+    __esModule: true,
+    default: ReactModule.forwardRef(
+      (props: Record<string, unknown>, _ref: React.Ref<unknown>) => {
+        mockModalProps(props);
+        return ReactModule.createElement(
+          View,
+          { testID: 'bottom-sheet' },
+          props.children,
+        );
+      },
+    ),
+    BottomSheetBackdrop: (props: Record<string, unknown>) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'bottom-sheet-backdrop',
+      }),
     BottomSheetView: (props: Record<string, unknown>) =>
       ReactModule.createElement(
         View,
@@ -163,6 +177,7 @@ const createKlineState = (
 describe('PerpsProKlineSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLastDataDelivery = null;
     mockKlineState = createKlineState('loading');
     mockUsePerpsProKline.mockImplementation(() => mockKlineState);
   });
@@ -171,14 +186,14 @@ describe('PerpsProKlineSheet', () => {
     const onClose = jest.fn();
     render(<PerpsProKlineSheet enabled market={market} onClose={onClose} />);
 
-    expect(mockPresent).toHaveBeenCalledTimes(1);
     const props = mockModalProps.mock.calls.at(-1)?.[0];
     expect(props).toMatchObject({
-      backdropProps: { pressBehavior: 'close' },
+      animateOnMount: false,
       enableContentPanningGesture: false,
       enableDynamicSizing: false,
       enableHandlePanningGesture: true,
       enablePanDownToClose: true,
+      index: 0,
       snapPoints: [PERPS_PRO_KLINE_SHEET_HEIGHT],
       testSharedBottomSheetProp: true,
     });
@@ -198,8 +213,43 @@ describe('PerpsProKlineSheet', () => {
       width: 40,
     });
 
-    act(() => props.onDismiss());
+    const backdrop = props.backdropComponent({});
+    expect(backdrop.props).toMatchObject({
+      appearsOnIndex: 0,
+      disappearsOnIndex: -1,
+      pressBehavior: 'close',
+    });
+
+    act(() => props.onChange(-1));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('removes the retained sheet from hit testing while it is hidden', () => {
+    const view = render(
+      <PerpsProKlineSheet
+        enabled={false}
+        market={market}
+        onClose={jest.fn()}
+        visible={false}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
+    ).toBe('none');
+
+    view.rerender(
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={jest.fn()}
+        visible
+      />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
+    ).toBe('box-none');
   });
 
   it.each(['idle', 'loading', 'empty', 'stale', 'error'] as const)(
@@ -262,6 +312,7 @@ describe('PerpsProKlineSheet', () => {
       coin: 'BTC',
       fitContent: false,
       interval: '15m',
+      identity: 'BTC:15m',
       noTime: false,
       proConfig: {
         baseAsset: 'BTC',
@@ -272,8 +323,14 @@ describe('PerpsProKlineSheet', () => {
         quoteAsset: 'USDC',
         variant: 'perps-pro',
       },
+      revision: 1,
       showVolume: true,
     });
+    expect(screen.getByTestId('kline-overlay-skeleton')).toBeTruthy();
+    fireEvent(screen.getByTestId('trading-view-chart'), 'pressOut');
+    await waitFor(() =>
+      expect(screen.queryByTestId('kline-overlay-skeleton')).toBeNull(),
+    );
 
     mockKlineState = {
       ...mockKlineState,
@@ -345,6 +402,7 @@ describe('PerpsProKlineSheet', () => {
     );
     fireEvent.press(screen.getByTestId('trading-view-chart'));
     await waitFor(() => expect(mockSetData).toHaveBeenCalledTimes(1));
+    fireEvent(screen.getByTestId('trading-view-chart'), 'pressOut');
     expect(screen.queryByTestId('kline-overlay-skeleton')).toBeNull();
 
     mockKlineState = {
@@ -397,6 +455,7 @@ describe('PerpsProKlineSheet', () => {
       interval: '1h',
       proConfig: { interval: '1h' },
     });
+    fireEvent(screen.getByTestId('trading-view-chart'), 'pressOut');
     expect(screen.queryByTestId('kline-overlay-skeleton')).toBeNull();
 
     mockKlineState = {

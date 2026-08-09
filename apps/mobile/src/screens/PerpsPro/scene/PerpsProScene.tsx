@@ -155,7 +155,7 @@ export const PerpsProScene: React.FC<{
   const headerCollapse = usePerpsProHeaderCollapse();
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
-  const [klineMounted, setKlineMounted] = useState(false);
+  const [klineActivated, setKlineActivated] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState,
   );
@@ -179,7 +179,7 @@ export const PerpsProScene: React.FC<{
     return () => subscription.remove();
   }, []);
   const openKline = useCallback(() => {
-    setKlineMounted(true);
+    setKlineActivated(true);
     setKlineOpen(true);
   }, []);
   const closeKline = useCallback(() => setKlineOpen(false), []);
@@ -529,11 +529,14 @@ export const PerpsProScene: React.FC<{
         ref={marketSelectorRef}
       />
       <PerpsProAccountSelectorLayer />
-      {klineMounted && scene.currentMarket ? (
+      {scene.currentMarket ? (
         <PerpsProKlineSheet
-          enabled={scene.klineEnabled && appState === 'active'}
+          enabled={
+            klineActivated && scene.klineEnabled && appState === 'active'
+          }
           market={scene.currentMarket}
           onClose={closeKline}
+          preloadEnabled={scene.klineEnabled && appState === 'active'}
           visible={klineOpen}
         />
       ) : null}

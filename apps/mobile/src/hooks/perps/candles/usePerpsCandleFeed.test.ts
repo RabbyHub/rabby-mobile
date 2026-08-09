@@ -2,6 +2,7 @@ import type { Candle, CandleSnapshot } from '@rabby-wallet/hyperliquid-sdk';
 import { act, renderHook } from '@testing-library/react-native';
 
 import { usePerpsCandleFeed } from './usePerpsCandleFeed';
+import { resetPerpsCandleSourceSnapshotCacheForTests } from './sourceSnapshot';
 
 type EventName = 'open' | 'close' | 'reconnecting' | 'reconnectFailed';
 
@@ -74,6 +75,52 @@ describe('usePerpsCandleFeed', () => {
     mockListeners.clear();
     mockCandleCallbacks.length = 0;
     mockUnsubscribes.length = 0;
+    resetPerpsCandleSourceSnapshotCacheForTests();
+  });
+
+  it('shows a preloaded baseline while HTTP refresh and WS convergence run', async () => {
+    const request = deferred<CandleSnapshot>();
+    mockCandleSnapshot.mockReturnValueOnce(request.promise);
+    const hook = renderHook(() =>
+      usePerpsCandleFeed({
+        coin: 'BTC',
+        enabled: true,
+        initialSourceCandles: [
+          {
+            close: 12,
+            high: 13,
+            low: 9,
+            open: 10,
+            quoteTurnover: null,
+            time: 1000,
+            trades: 2,
+            volume: 3,
+          },
+        ],
+        interval: '15m',
+      }),
+    );
+
+    expect(hook.result.current).toMatchObject({
+      candles: [expect.objectContaining({ time: 1000 })],
+      status: 'ready',
+    });
+    act(() => {
+      mockCandleCallbacks[0]?.(rawCandle(2000, { c: '15', h: '15' }));
+    });
+    expect(hook.result.current.candles).toEqual([
+      expect.objectContaining({ time: 1000 }),
+    ]);
+
+    await act(async () => {
+      request.resolve([rawCandle(1000)]);
+      await request.promise;
+    });
+
+    expect(hook.result.current.candles).toEqual([
+      expect.objectContaining({ time: 1000 }),
+      expect.objectContaining({ close: 15, time: 2000 }),
+    ]);
   });
 
   it('buffers realtime candles before the HTTP baseline and lets WS win', async () => {

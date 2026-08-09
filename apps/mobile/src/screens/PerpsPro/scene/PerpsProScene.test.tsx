@@ -111,6 +111,7 @@ jest.mock('../components/chart/PerpsProKlineSheet', () => {
     PerpsProKlineSheet: (props: {
       enabled: boolean;
       onClose: () => void;
+      preloadEnabled: boolean;
       visible: boolean;
     }) => {
       mockKlineProps(props);
@@ -450,7 +451,7 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
   });
 
-  it('keeps K-line mounted after its first close for an instant reopen', () => {
+  it('prewarms K-line without WS and keeps the same host after close', () => {
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
         currentMarket: {
@@ -465,6 +466,13 @@ describe('PerpsProScene market loading states', () => {
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
+
+    expect(screen.getByTestId('kline-sheet')).toBeTruthy();
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: false,
+      preloadEnabled: true,
+      visible: false,
+    });
 
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
@@ -506,10 +514,16 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('kline-trigger'));
 
     act(() => onAppStateChange?.('background'));
-    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ enabled: false });
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: false,
+      preloadEnabled: false,
+    });
 
     act(() => onAppStateChange?.('active'));
-    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ enabled: true });
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      preloadEnabled: true,
+    });
   });
 
   it('closes the local funding overlay when the active account changes', () => {

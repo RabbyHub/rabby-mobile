@@ -6,6 +6,7 @@ import { CandlePeriod } from './type';
 
 const mockLocalWebViewProps = jest.fn();
 const mockSendMessage = jest.fn();
+const mockDataApplied = jest.fn();
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -62,12 +63,21 @@ jest.mock('react-i18next', () => ({
 const TradingViewCandleChart = require('./index')
   .default as typeof import('./index').default;
 
-const markChartReady = () => {
+const markChartReady = ({
+  supportsDataAppliedAck = true,
+}: {
+  supportsDataAppliedAck?: boolean;
+} = {}) => {
   const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
   act(() => {
     props.onMessage({
       nativeEvent: {
-        data: JSON.stringify({ type: 'CHART_READY' }),
+        data: JSON.stringify({
+          type: 'CHART_READY',
+          ...(supportsDataAppliedAck
+            ? { capabilities: { candleDataAppliedAck: true } }
+            : {}),
+        }),
       },
     });
   });
@@ -165,6 +175,118 @@ describe('TradingViewCandleChart protocol compatibility', () => {
       quoteTurnover: null,
       trades: 2,
     });
+  });
+
+  it('adds optional delivery identity and forwards only valid applied acknowledgements', () => {
+    const chartRef = React.createRef<TradingViewChartRef>();
+    render(
+      <TradingViewCandleChart
+        ref={chartRef}
+        height={184}
+        onDataApplied={mockDataApplied}
+        variant="perps-pro"
+      />,
+    );
+    markChartReady();
+
+    act(() => {
+      chartRef.current?.setData({
+        candles: [
+          {
+            close: 12,
+            high: 13,
+            low: 9,
+            open: 10,
+            time: 1800,
+          },
+        ],
+        coin: 'BTC',
+        identity: 'BTC:15m',
+        interval: '15m',
+        revision: 7,
+      });
+    });
+
+    expect(getLastSetDataMessage().data).toMatchObject({
+      identity: 'BTC:15m',
+      revision: 7,
+    });
+    expect(mockDataApplied).not.toHaveBeenCalled();
+    const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
+    act(() => {
+      props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'CANDLE_DATA_APPLIED',
+            identity: 'BTC:15m',
+            revision: 7,
+          }),
+        },
+      });
+      props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'CANDLE_DATA_APPLIED',
+            identity: 'BTC:15m',
+            revision: 'invalid',
+          }),
+        },
+      });
+    });
+
+    expect(mockDataApplied).toHaveBeenCalledTimes(1);
+    expect(mockDataApplied).toHaveBeenCalledWith({
+      identity: 'BTC:15m',
+      revision: 7,
+    });
+  });
+
+  it('falls back after dispatch when a legacy page does not declare applied acknowledgements', () => {
+    let applyFrame: Parameters<typeof requestAnimationFrame>[0] | undefined;
+    const requestFrameSpy = jest
+      .spyOn(global, 'requestAnimationFrame')
+      .mockImplementation(callback => {
+        applyFrame = callback;
+        return 1;
+      });
+    const chartRef = React.createRef<TradingViewChartRef>();
+    render(
+      <TradingViewCandleChart
+        ref={chartRef}
+        height={184}
+        onDataApplied={mockDataApplied}
+        variant="perps-pro"
+      />,
+    );
+    markChartReady({ supportsDataAppliedAck: false });
+
+    act(() => {
+      chartRef.current?.setData({
+        candles: [
+          {
+            close: 12,
+            high: 13,
+            low: 9,
+            open: 10,
+            time: 1800,
+          },
+        ],
+        coin: 'BTC',
+        identity: 'BTC:15m',
+        interval: '15m',
+        revision: 8,
+      });
+    });
+
+    expect(mockDataApplied).not.toHaveBeenCalled();
+    act(() => {
+      applyFrame?.(0);
+    });
+    expect(mockDataApplied).toHaveBeenCalledWith({
+      identity: 'BTC:15m',
+      revision: 8,
+    });
+    requestFrameSpy.mockRestore();
   });
 
   it('sends the additive clear-crosshair command only after the chart is ready', () => {

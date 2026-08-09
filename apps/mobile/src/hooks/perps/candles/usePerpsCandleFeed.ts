@@ -7,14 +7,11 @@ import { apisPerps } from '@/core/apis/perps';
 import {
   mergePerpsCandles,
   parsePerpsCandle,
-  parsePerpsCandles,
   selectPerpsDisplayCandles,
   type PerpsCandle,
 } from './candle';
-import {
-  getPerpsCandleHistoryStartTime,
-  getPerpsCandleSource,
-} from './interval';
+import { getPerpsCandleSource } from './interval';
+import { loadPerpsCandleSourceSnapshot } from './sourceSnapshot';
 
 export type PerpsCandleFeedStatus =
   | 'idle'
@@ -62,12 +59,16 @@ const toError = (error: unknown, fallback: string) =>
 export const usePerpsCandleFeed = ({
   coin,
   enabled,
+  initialSourceCandles,
   interval,
 }: {
   coin: string;
   enabled: boolean;
+  initialSourceCandles?: ReadonlyArray<PerpsCandle>;
   interval: PerpsCandleInterval;
 }) => {
+  const initialSourceCandlesRef = useRef(initialSourceCandles);
+  initialSourceCandlesRef.current = initialSourceCandles;
   const identity = createIdentity(enabled, coin, interval);
   const generationRef = useRef(0);
   const [snapshot, setSnapshot] = useState<PerpsCandleFeedSnapshot>({
@@ -112,9 +113,12 @@ export const usePerpsCandleFeed = ({
 
     const { sourceCandleCount, sourceInterval } =
       getPerpsCandleSource(interval);
-    let sourceCandles = new Map<number, PerpsCandle>();
+    let sourceCandles = limitCandleMap(
+      toCandleMap(initialSourceCandlesRef.current ?? []),
+      sourceCandleCount,
+    );
     let bufferedCandles = new Map<number, PerpsCandle>();
-    let baselineReady = false;
+    let baselineReady = sourceCandles.size > 0;
     let baselineRequest = 0;
     let waitingForReconnect = false;
     let unsubscribe = () => {};
@@ -157,28 +161,31 @@ export const usePerpsCandleFeed = ({
       });
     };
 
-    const loadBaseline = async () => {
+    const loadBaseline = async ({
+      preserveVisible = false,
+    }: {
+      preserveVisible?: boolean;
+    } = {}) => {
       const request = ++baselineRequest;
       baselineReady = false;
-      sourceCandles = new Map();
-      setNonReady('loading');
+      if (!preserveVisible) {
+        sourceCandles = new Map();
+        setNonReady('loading');
+      }
 
-      const endTime = Date.now();
-      const startTime = getPerpsCandleHistoryStartTime(interval, endTime);
       try {
-        const response = await sdk.info.candleSnapshot(
+        const response = await loadPerpsCandleSourceSnapshot({
           coin,
-          sourceInterval,
-          startTime,
-          endTime,
-        );
+          forceRefresh: true,
+          interval,
+        });
         if (!isCurrent() || request !== baselineRequest) {
           return;
         }
         sourceCandles = limitCandleMap(
           toCandleMap(
             mergePerpsCandles(
-              parsePerpsCandles(response),
+              response.candles,
               Array.from(bufferedCandles.values()),
             ),
           ),
@@ -191,11 +198,26 @@ export const usePerpsCandleFeed = ({
         if (!isCurrent() || request !== baselineRequest) {
           return;
         }
-        baselineReady = false;
-        setNonReady(
-          'error',
-          toError(error, 'Failed to load Perps candle snapshot'),
-        );
+        if (preserveVisible && sourceCandles.size > 0) {
+          sourceCandles = limitCandleMap(
+            toCandleMap(
+              mergePerpsCandles(
+                Array.from(sourceCandles.values()),
+                Array.from(bufferedCandles.values()),
+              ),
+            ),
+            sourceCandleCount,
+          );
+          bufferedCandles = new Map();
+          baselineReady = true;
+          commitSourceCandles('snapshot');
+        } else {
+          baselineReady = false;
+          setNonReady(
+            'error',
+            toError(error, 'Failed to load Perps candle snapshot'),
+          );
+        }
       }
     };
 
@@ -265,7 +287,11 @@ export const usePerpsCandleFeed = ({
         handleCandle,
       );
       unsubscribe = subscription.unsubscribe;
-      void loadBaseline();
+      const hasPreloadedBaseline = sourceCandles.size > 0;
+      if (hasPreloadedBaseline) {
+        commitSourceCandles('snapshot');
+      }
+      void loadBaseline({ preserveVisible: hasPreloadedBaseline });
     } catch (error) {
       setNonReady(
         'error',

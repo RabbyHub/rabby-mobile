@@ -1098,6 +1098,9 @@ function createChart() {
   postMessageToRN({
     type: 'CHART_READY',
     timestamp: new Date().toISOString(),
+    capabilities: {
+      candleDataAppliedAck: true,
+    },
   });
 }
 
@@ -1253,6 +1256,21 @@ function handleSetCandlestickData(
     'type'
   >,
 ) {
+  const acknowledgeAppliedData = () => {
+    if (
+      typeof message.identity !== 'string' ||
+      !Number.isInteger(message.revision)
+    ) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      postMessageToRN({
+        type: 'CANDLE_DATA_APPLIED',
+        identity: message.identity!,
+        revision: message.revision!,
+      });
+    });
+  };
   chartState.noTime = !!message.noTime;
   clearPerpsProCrosshair();
   chartState.proConfig = message.proConfig ?? null;
@@ -1267,6 +1285,7 @@ function handleSetCandlestickData(
     hasRenderableData = false;
     clearChartData();
     setOverlayState('empty');
+    acknowledgeAppliedData();
     return;
   }
 
@@ -1330,6 +1349,7 @@ function handleSetCandlestickData(
     if (!chartState.proConfig) {
       chartState.chart.timeScale().scrollToRealTime();
     }
+    acknowledgeAppliedData();
   }
 }
 
@@ -1463,6 +1483,8 @@ function handleMessage(event: CustomEvent) {
             showVolume: tvMessage.showVolume,
             fitContent: tvMessage.fitContent,
             noTime: tvMessage.noTime,
+            identity: tvMessage.identity,
+            revision: tvMessage.revision,
             proConfig: tvMessage.proConfig,
           });
           break;

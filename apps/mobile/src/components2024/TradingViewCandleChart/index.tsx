@@ -30,10 +30,16 @@ interface ChartProps {
   height: number;
   onChartReady?: () => void;
   onChartError?: () => void;
+  onDataApplied?: (data: CandleDataApplied) => void;
   style?: StyleProp<ViewStyle>;
   backGroundColor?: string;
   variant?: 'perps-pro';
 }
+
+export type CandleDataApplied = {
+  identity: string;
+  revision: number;
+};
 
 interface TPSLPriceLines {
   tpPrice?: number;
@@ -100,6 +106,7 @@ const TradingViewCandleChart = ({
   height,
   onChartReady,
   onChartError,
+  onDataApplied,
   backGroundColor,
   variant,
   ref,
@@ -108,7 +115,24 @@ const TradingViewCandleChart = ({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [webViewError, setWebViewError] = React.useState<string | null>(null);
   const [isChartReady, setIsChartReady] = React.useState(false);
+  const supportsDataAppliedAckRef = useRef(false);
+  const pendingLegacyAppliedFrameRef = useRef<number | null>(null);
   const { t } = useTranslation();
+
+  const cancelPendingLegacyApplied = useCallback(() => {
+    if (pendingLegacyAppliedFrameRef.current === null) {
+      return;
+    }
+    cancelAnimationFrame(pendingLegacyAppliedFrameRef.current);
+    pendingLegacyAppliedFrameRef.current = null;
+  }, []);
+
+  useEffect(
+    () => () => {
+      cancelPendingLegacyApplied();
+    },
+    [cancelPendingLegacyApplied],
+  );
 
   // Chart colors based on theme
   const chartColors = useMemo(
@@ -201,11 +225,26 @@ const TradingViewCandleChart = ({
 
         switch (message.type) {
           case 'CHART_READY':
+            cancelPendingLegacyApplied();
+            supportsDataAppliedAckRef.current =
+              message.capabilities?.candleDataAppliedAck === true;
             setIsChartReady(true);
             onChartReady?.();
             break;
           case 'ATTR_LOGO_CLICK':
             openExternalUrl('https://www.tradingview.com');
+            break;
+          case 'CANDLE_DATA_APPLIED':
+            if (
+              typeof message.identity === 'string' &&
+              Number.isInteger(message.revision)
+            ) {
+              cancelPendingLegacyApplied();
+              onDataApplied?.({
+                identity: message.identity,
+                revision: message.revision,
+              });
+            }
             break;
           default:
             break;
@@ -217,7 +256,7 @@ const TradingViewCandleChart = ({
         );
       }
     },
-    [onChartReady],
+    [cancelPendingLegacyApplied, onChartReady, onDataApplied],
   );
 
   // Handle WebView errors
@@ -225,11 +264,12 @@ const TradingViewCandleChart = ({
     (event: { nativeEvent?: { description?: string } }) => {
       const errorDescription =
         event.nativeEvent?.description || 'WebView error occurred';
+      cancelPendingLegacyApplied();
       setWebViewError(errorDescription);
       onChartError?.();
       console.error('WebView error:', event.nativeEvent);
     },
-    [onChartError],
+    [cancelPendingLegacyApplied, onChartError],
   );
 
   // Imperative API
@@ -251,11 +291,27 @@ const TradingViewCandleChart = ({
           showVolume: data.showVolume ?? false,
           fitContent: data.fitContent ?? false,
           noTime: data.noTime ?? false,
+          ...(data.identity !== undefined ? { identity: data.identity } : {}),
+          ...(data.revision !== undefined ? { revision: data.revision } : {}),
           ...(data.proConfig ? { proConfig: data.proConfig } : {}),
         },
       });
+
+      if (
+        typeof data.identity === 'string' &&
+        Number.isInteger(data.revision) &&
+        !supportsDataAppliedAckRef.current
+      ) {
+        cancelPendingLegacyApplied();
+        const identity = data.identity;
+        const revision = data.revision!;
+        pendingLegacyAppliedFrameRef.current = requestAnimationFrame(() => {
+          pendingLegacyAppliedFrameRef.current = null;
+          onDataApplied?.({ identity, revision });
+        });
+      }
     },
-    [isChartReady],
+    [cancelPendingLegacyApplied, isChartReady, onDataApplied],
   );
 
   const handleUpdateCandleData = useCallback(
@@ -329,6 +385,8 @@ const TradingViewCandleChart = ({
           nextAppState === 'active' &&
           Date.now() - backgroundTimestamp > 30000
         ) {
+          cancelPendingLegacyApplied();
+          supportsDataAppliedAckRef.current = false;
           setWebViewKey(k => k + 1);
           setIsChartReady(false);
         }
@@ -336,7 +394,7 @@ const TradingViewCandleChart = ({
       },
     );
     return () => subscription.remove();
-  }, []);
+  }, [cancelPendingLegacyApplied]);
 
   if (webViewError) {
     if (variant === 'perps-pro') {
