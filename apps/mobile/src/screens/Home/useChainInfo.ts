@@ -68,7 +68,12 @@ export function getComputedChainInfo() {
 }
 
 export function useTop3Chains() {
-  const top3Chains = chainStaticsStore(s => s.computedResult.top3Chains);
+  const top3Chains = useActivityStore(
+    chainStaticsStore,
+    state => state.computedResult.top3Chains,
+    Object.is,
+    { storeLabel: 'home-chain-stats' },
+  );
 
   return useCreationWithShallowCompare(() => top3Chains, [top3Chains]);
 }
@@ -84,7 +89,12 @@ export function getSelectChainItem() {
 }
 
 export function useSelectedChainItem() {
-  return otherStore(s => s.selectedChainItem);
+  return useActivityStore(
+    otherStore,
+    state => state.selectedChainItem,
+    Object.is,
+    { storeLabel: 'home-selected-chain' },
+  );
 }
 
 export function setSelectChainItem(

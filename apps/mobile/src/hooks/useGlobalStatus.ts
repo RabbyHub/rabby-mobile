@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
-import { useShallow } from 'zustand/react/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const PING_URL = 'https://app-api.rabby.io/ping';
 
@@ -64,7 +64,12 @@ export function startGlobalNetworkPolling() {
 }
 
 export const useGlobalStatus = () => {
-  const isDisConnect = networkStatusState(useShallow(s => s.isDisconnected));
+  const isDisConnect = useActivityStore(
+    networkStatusState,
+    state => state.isDisconnected,
+    Object.is,
+    { storeLabel: 'global-network-status' },
+  );
 
   return { isDisConnect };
 };

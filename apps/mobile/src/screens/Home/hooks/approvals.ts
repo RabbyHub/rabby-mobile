@@ -35,7 +35,12 @@ export function useApprovalAlert({
 }: {
   account: Account | null | undefined;
 }) {
-  const approvalState = approvalStatusStore(s => s);
+  const approvalState = useActivityStore(
+    approvalStatusStore,
+    state => state,
+    Object.is,
+    { storeLabel: 'single-address-approval-status' },
+  );
 
   const [, loadApprovalStatus] = useAsyncFn(async () => {
     if (
