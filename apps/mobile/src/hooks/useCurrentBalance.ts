@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import addressBalanceStore, { IBalanceData } from '@/store/balance';
+import addressBalanceStore, { type IBalanceData } from '@/store/balance';
+import { buildResourceFlowState } from '@/store/_resourceBase';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export type BalanceState = {
   balance: number | null;
@@ -70,15 +72,27 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
 );
 
 export function useIsLoadingBalance(address?: string) {
-  const { isLoadingWithoutValue } =
-    addressBalanceStore.useAddressFlowState(address);
+  const normalizedAddress = address?.toLowerCase() || '';
+  const meta = useActivityStore(
+    addressBalanceStore.useStore,
+    state => state.metaMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-balance' },
+  );
+  const { isLoadingWithoutValue } = buildResourceFlowState(meta);
   const balanceLoading = isLoadingWithoutValue;
 
   return { balanceLoading };
 }
 
 export function useAddressBalance(address?: string) {
-  const balanceData = addressBalanceStore.useAddressValue(address);
+  const normalizedAddress = address?.toLowerCase() || '';
+  const balanceData = useActivityStore(
+    addressBalanceStore.useStore,
+    state => state.valueMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-balance' },
+  );
   const balance = balanceData?.totalBalance ?? null;
   const evmBalance = balanceData?.evmBalance ?? null;
 

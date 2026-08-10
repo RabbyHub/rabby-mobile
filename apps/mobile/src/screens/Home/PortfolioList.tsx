@@ -33,6 +33,7 @@ import useProtocols, {
 import { useShallow } from 'zustand/react/shallow';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -73,14 +74,19 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const isScreenFocused = useIsFocused();
 
-  const loadingPortfolio = useProtocols(state => {
-    if (!lowerAddress) {
-      return false;
-    }
-    return !!state.isLoadingByAddress[lowerAddress];
-  });
+  const loadingPortfolio = useActivityStore(
+    useProtocols,
+    state => {
+      if (!lowerAddress) {
+        return false;
+      }
+      return !!state.isLoadingByAddress[lowerAddress];
+    },
+    Object.is,
+    { storeLabel: 'single-address-protocols' },
+  );
 
-  const updatePortfolio = useProtocols(state => state.getProtocols);
+  const updatePortfolio = useProtocols.getState().getProtocols;
 
   const singleProtocolsKey = useMemo(() => {
     if (!lowerAddress) {
@@ -89,17 +95,19 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     return getSingleProtocolsCacheKey(lowerAddress, selectedChain);
   }, [lowerAddress, selectedChain]);
 
-  const registerSingleProtocols = useProtocolListComputedStore(
-    state => state.registerSingleProtocols,
-  );
+  const registerSingleProtocols =
+    useProtocolListComputedStore.getState().registerSingleProtocols;
 
-  const _portfolios = useProtocolListComputedStore(
+  const _portfolios = useActivityStore(
+    useProtocolListComputedStore,
     useShallow(state =>
       singleProtocolsKey
         ? state.singleProtocolsCache[singleProtocolsKey] ||
           emptyCacheProtocolItem
         : emptyCacheProtocolItem,
     ),
+    Object.is,
+    { storeLabel: 'single-address-computed-protocols' },
   );
 
   const filteredPortfolios = useMemo(() => {

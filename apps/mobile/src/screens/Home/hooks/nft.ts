@@ -5,10 +5,11 @@ import { useSingleNftRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { CombineNFTItem } from './store';
+import type { CombineNFTItem } from './store';
 import { apisAddrChainStatics } from '../useChainInfo';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import nftListStore from '@/store/nfts';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const EMPTY_NFT_LIST: DisplayNftItem[] = [];
 
@@ -30,7 +31,8 @@ export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
   const normalizedAddr = addr?.toLowerCase();
-  const list = nftListStore(
+  const list = useActivityStore(
+    nftListStore,
     useCallback(
       s =>
         normalizedAddr
@@ -38,10 +40,14 @@ export const useQueryNft = (addr?: string, visible = true) => {
           : EMPTY_NFT_LIST,
       [normalizedAddr],
     ),
+    Object.is,
+    { storeLabel: 'single-address-nfts' },
   );
-  const getNFTListWithCache = nftListStore(s => s.getNFTListWithCache);
-  const batchLoadCacheNFT = nftListStore(s => s.batchLoadCacheNFT);
-  const refreshTagNftByStore = nftListStore(s => s.refreshTagNft);
+  const {
+    getNFTListWithCache,
+    batchLoadCacheNFT,
+    refreshTagNft: refreshTagNftByStore,
+  } = nftListStore.getState();
 
   const debouncedList = useDebouncedValue(list, 500);
   useEffect(() => {

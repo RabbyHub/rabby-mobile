@@ -16,6 +16,7 @@ import {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from '@/store/balance';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type ChainAssetsUnit = Record<string, BigNumber>;
 interface BaseInfo {
@@ -115,8 +116,11 @@ function setAddressChainInfo(
 export function useAddrChainLength(address?: string) {
   const addr = address?.toLowerCase();
   const chainLength =
-    addrChainStaticsStore(
+    useActivityStore(
+      addrChainStaticsStore,
       useShallow(s => (!addr ? 0 : s[addr]?.computedResult.chainLength || 0)),
+      Object.is,
+      { storeLabel: 'single-address-chain-stats' },
     ) || 0;
   return { chainLength };
 }
@@ -125,8 +129,11 @@ export function useAddrTop3Chains(address?: string) {
   const addr = address?.toLowerCase();
   const defaultValue = useMemo(() => [], []);
   const top3Chains =
-    addrChainStaticsStore(s =>
-      !addr ? defaultValue : s[addr]?.computedResult.top3Chains,
+    useActivityStore(
+      addrChainStaticsStore,
+      s => (!addr ? defaultValue : s[addr]?.computedResult.top3Chains),
+      Object.is,
+      { storeLabel: 'single-address-chain-stats' },
     ) || defaultValue;
   return { top3Chains };
 }

@@ -66,9 +66,7 @@ export const FullDefiRenderItem = ({
     return isAppChain(data?.chain || '');
   }, [data?.chain]);
 
-  const updateSpecificProtocol = useProtocols(
-    state => state.updateSpecificProtocol,
-  );
+  const updateSpecificProtocol = useProtocols.getState().updateSpecificProtocol;
 
   const { openTab } = useBrowser();
 

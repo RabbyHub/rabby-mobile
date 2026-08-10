@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, type ReactNode } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import { useIsFocused } from '@react-navigation/native';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 import { PortfolioList } from './PortfolioList';
@@ -21,8 +22,31 @@ import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 import { useCustomTestnetStore } from '@/store/customTestnet';
+import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const renderHeader = () => null;
+
+type SingleAddressTabName = 'tokens' | 'defi' | 'nft';
+
+const SingleAddressTabActivityBoundary = ({
+  children,
+  name,
+}: {
+  children: ReactNode;
+  name: SingleAddressTabName;
+}) => {
+  const focusedTab = useFocusedTab();
+  const isScreenFocused = useIsFocused();
+
+  return (
+    <StoreActivityBoundary
+      active={isScreenFocused && focusedTab === name}
+      label={`single-address-${name}`}>
+      {children}
+    </StoreActivityBoundary>
+  );
+};
 
 export const AssetContainer = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -76,8 +100,11 @@ export const AssetContainer = () => {
   // const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
   const { accountToShowReceiveTip } =
     useAccountHomeShowReceiveTip(currentAccount);
-  const customTestnetCount = useCustomTestnetStore(
+  const customTestnetCount = useActivityStore(
+    useCustomTestnetStore,
     state => Object.keys(state.customTestnet).length,
+    Object.is,
+    { storeLabel: 'single-address-custom-testnet' },
   );
 
   if (!currentAccount) {
@@ -102,6 +129,7 @@ export const AssetContainer = () => {
     <Tabs.Container
       containerStyle={styles.container}
       headerHeight={0}
+      lazy
       renderHeader={renderHeader}
       tabBarHeight={32}
       onTabChange={() => {
@@ -113,23 +141,29 @@ export const AssetContainer = () => {
       renderTabBar={DynamicCustomMaterialTabBar}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderLabel('Token')} name="tokens">
-        <TokenList
-          noAssetsOnAnyChain={noAssetsOnAnyChain}
-          onForeground={handleForegroundRefreshBalance}
-          onRefresh={handleRefresh}
-        />
+        <SingleAddressTabActivityBoundary name="tokens">
+          <TokenList
+            noAssetsOnAnyChain={noAssetsOnAnyChain}
+            onForeground={handleForegroundRefreshBalance}
+            onRefresh={handleRefresh}
+          />
+        </SingleAddressTabActivityBoundary>
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
-        <PortfolioList
-          onForeground={handleForegroundRefreshBalance}
-          onRefresh={handleRefresh}
-        />
+        <SingleAddressTabActivityBoundary name="defi">
+          <PortfolioList
+            onForeground={handleForegroundRefreshBalance}
+            onRefresh={handleRefresh}
+          />
+        </SingleAddressTabActivityBoundary>
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
-        <NFTList
-          onForeground={handleForegroundRefreshBalance}
-          onRefresh={handleRefresh}
-        />
+        <SingleAddressTabActivityBoundary name="nft">
+          <NFTList
+            onForeground={handleForegroundRefreshBalance}
+            onRefresh={handleRefresh}
+          />
+        </SingleAddressTabActivityBoundary>
       </Tabs.Tab>
     </Tabs.Container>
   );

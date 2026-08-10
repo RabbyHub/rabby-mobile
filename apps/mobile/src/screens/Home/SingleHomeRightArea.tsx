@@ -16,6 +16,7 @@ import { useSingleHomeAccount, apisSingleHome } from './hooks/singleHome';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { naviPush } from '@/utils/navigation';
 import { HeaderRightHistoryButton } from './components/HeaderRightHistoryButton';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const hitSlop = {
   top: 10,
@@ -45,7 +46,12 @@ export function setRefreshHistoryId(valOrFunc: UpdaterOrPartials<number>) {
 
 export function useRefreshHistoryId() {
   return {
-    refreshHistoryId: refreshHistoryIdState(s => s.refreshId),
+    refreshHistoryId: useActivityStore(
+      refreshHistoryIdState,
+      state => state.refreshId,
+      Object.is,
+      { storeLabel: 'single-address-history-refresh' },
+    ),
     setRefreshHistoryId,
   };
 }
@@ -97,7 +103,12 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
       : null;
   }, [currentAccount, tokenItem]);
 
-  const refreshId = refreshHistoryIdState(s => s.refreshId);
+  const refreshId = useActivityStore(
+    refreshHistoryIdState,
+    state => state.refreshId,
+    Object.is,
+    { storeLabel: 'single-address-history-refresh' },
+  );
   useEffect(() => {
     if (refreshId > 0) {
       void fetchHistory().catch(console.error);

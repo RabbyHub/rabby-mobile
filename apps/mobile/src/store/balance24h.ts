@@ -18,7 +18,10 @@ import { debounce, isEqual } from 'lodash';
 import PQueue from 'p-queue';
 import { useShallow } from 'zustand/react/shallow';
 import { BaseStore } from './_base';
-import type { ResourceFlowState } from './_resourceBase';
+import {
+  buildResourceFlowState,
+  type ResourceFlowState,
+} from './_resourceBase';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import addressBalanceStore, { type AddressBalanceSnapshot } from './balance';
@@ -30,6 +33,7 @@ import {
 } from '@/utils/24hBalanceCache';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { computeBalanceChange } from '@/core/utils/balanceChange';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export type Address24hBalanceValue = IBalance24hData['data'] & {
   updateTime: IBalance24hData['updateTime'];
@@ -457,7 +461,13 @@ export function useAddress24hChangeFlowState(
   },
 ) {
   const normalizedAddress = address?.toLowerCase() || '';
-  const flow = balance24hStore.useAddress24hBalanceFlowState(normalizedAddress);
+  const meta = useActivityStore(
+    balance24hStore.useStore,
+    state => state.metaMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-24h-balance' },
+  );
+  const flow = useMemo(() => buildResourceFlowState(meta), [meta]);
 
   return useMemo(() => {
     return buildAddress24hChangeFlowState(
