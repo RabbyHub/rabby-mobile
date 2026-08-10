@@ -35,6 +35,8 @@ import { APP_URLS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
 import { useCurrentRouteName } from '@/hooks/navigation';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import {
   dismissUpgradePrompt,
   showPendingAutoUpgradePrompt,
@@ -170,13 +172,20 @@ export function UpgradePromptModal() {
   const visible = useUpgradePromptVisible();
   const pendingAutoPrompt = usePendingAutoUpgradePrompt();
   const { currentRouteName } = useCurrentRouteName();
+  const isHomeDrawerExpanded = useValueFromSharedValue(
+    homeDrawerAnimateMutable.isExpanded,
+  );
   const { remoteVersion } = useUpgradeInfo();
 
   useEffect(() => {
-    if (currentRouteName === RootNames.Home && pendingAutoPrompt) {
+    if (
+      currentRouteName === RootNames.Home &&
+      !isHomeDrawerExpanded &&
+      pendingAutoPrompt
+    ) {
       showPendingAutoUpgradePrompt();
     }
-  }, [currentRouteName, pendingAutoPrompt]);
+  }, [currentRouteName, isHomeDrawerExpanded, pendingAutoPrompt]);
 
   const handleUpdate = useCallback(async () => {
     dismissUpgradePrompt();
