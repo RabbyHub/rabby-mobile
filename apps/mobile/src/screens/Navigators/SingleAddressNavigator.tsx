@@ -5,7 +5,12 @@ import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+
 const SingleAddressStack = createNativeStackNavigator();
+const RegressionSingleAddressHome = withRegressionScenario(SingleAddressHome, {
+  screen: 'SingleAddressHome',
+});
 
 export function SingleAddressNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
@@ -35,7 +40,7 @@ export function SingleAddressNavigator() {
       }}>
       <SingleAddressStack.Screen
         name={RootNames.SingleAddressHome}
-        component={SingleAddressHome}
+        component={RegressionSingleAddressHome}
         options={mergeScreenOptions({
           title: '',
           headerTitle: '',

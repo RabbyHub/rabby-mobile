@@ -1,8 +1,12 @@
-import React, { useCallback, useMemo, type ReactNode } from 'react';
+import React, { useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import {
+  Tabs,
+  useFocusedTab,
+  type CollapsibleRef,
+} from 'react-native-collapsible-tab-view';
 import { useIsFocused } from '@react-navigation/native';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
@@ -24,6 +28,7 @@ import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/
 import { useCustomTestnetStore } from '@/store/customTestnet';
 import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 const renderHeader = () => null;
 
@@ -50,6 +55,42 @@ const SingleAddressTabActivityBoundary = ({
 
 export const AssetContainer = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const tabsRef = useRef<CollapsibleRef<string>>(null);
+
+  const activateTabForRegression = useCallback(
+    async (name: SingleAddressTabName) => {
+      tabsRef.current?.jumpToTab(name);
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    },
+    [],
+  );
+  const activateTokensForRegression = useCallback(
+    () => activateTabForRegression('tokens'),
+    [activateTabForRegression],
+  );
+  const activateDefiForRegression = useCallback(
+    () => activateTabForRegression('defi'),
+    [activateTabForRegression],
+  );
+  const activateNftForRegression = useCallback(
+    () => activateTabForRegression('nft'),
+    [activateTabForRegression],
+  );
+
+  useRegressionScenarioComponentAction(
+    'single-address.activate-tokens',
+    activateTokensForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'single-address.activate-defi',
+    activateDefiForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'single-address.activate-nft',
+    activateNftForRegression,
+  );
 
   const { currentAccount } = useSingleHomeAccount();
   const currentAddress = currentAccount?.address ?? undefined;
@@ -127,6 +168,7 @@ export const AssetContainer = () => {
 
   return (
     <Tabs.Container
+      ref={tabsRef}
       containerStyle={styles.container}
       headerHeight={0}
       lazy
