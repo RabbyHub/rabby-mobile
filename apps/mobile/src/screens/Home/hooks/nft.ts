@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { DisplayNftItem } from '../types';
 import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useSingleNftRefresh } from './refresh';
@@ -58,8 +58,19 @@ export const useNftChainStaticsSync = (addr?: string) => {
 };
 
 export const useSingleNftListController = (addr?: string, visible = true) => {
-  const [isLoading, setIsLoading] = useState(true);
   const normalizedAddr = addr?.toLowerCase();
+  const isLoading = useActivityStore(
+    nftListStore,
+    useCallback(
+      state =>
+        normalizedAddr
+          ? state.singleLoadStatusByAddress[normalizedAddr] !== 'ready'
+          : false,
+      [normalizedAddr],
+    ),
+    Object.is,
+    { storeLabel: 'single-address-nft-load-status' },
+  );
   const {
     getNFTListWithCache,
     batchLoadCacheNFT,
@@ -69,16 +80,12 @@ export const useSingleNftListController = (addr?: string, visible = true) => {
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {
-        setIsLoading(false);
         return;
       }
-      setIsLoading(true);
       try {
         await getNFTListWithCache(addr, force);
       } catch (e) {
         console.error('ServiceErrorType.NFT', e);
-      } finally {
-        setIsLoading(false);
       }
     },
     [addr, getNFTListWithCache],

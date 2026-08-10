@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import type { ListRenderItem } from 'react-native';
 import { View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -129,7 +129,14 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       if (!lowerAddress) {
         return false;
       }
-      return !!state.isLoadingByAddress[lowerAddress];
+      const hasSnapshot = Object.prototype.hasOwnProperty.call(
+        state.protocolMap,
+        lowerAddress,
+      );
+      return (
+        !!state.isLoadingByAddress[lowerAddress] ||
+        (!state.hasLoadedByAddress[lowerAddress] && !hasSnapshot)
+      );
     },
     Object.is,
     { storeLabel: 'single-address-protocols' },
@@ -143,9 +150,6 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     }
     return getSingleProtocolsCacheKey(lowerAddress, selectedChain);
   }, [lowerAddress, selectedChain]);
-
-  const registerSingleProtocols =
-    useProtocolListComputedStore.getState().registerSingleProtocols;
 
   const protocolIndex = useActivityStore(
     useProtocolListComputedStore,
@@ -247,12 +251,6 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     updatePortfolio(lowerAddress);
   }, [lowerAddress, updatePortfolio]);
 
-  useEffect(() => {
-    if (isFocused) {
-      refreshPortfolioList();
-    }
-  }, [isFocused, refreshPortfolioList]);
-
   useAppForeground({
     enabled: isFocused,
     onForeground: () => {
@@ -263,13 +261,6 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       refreshPortfolioList();
     },
   });
-
-  useEffect(() => {
-    if (!lowerAddress) {
-      return;
-    }
-    registerSingleProtocols(lowerAddress, selectedChain);
-  }, [lowerAddress, selectedChain, registerSingleProtocols]);
 
   const renderItem = useCallback<ListRenderItem<PortfolioListItem>>(
     props => {

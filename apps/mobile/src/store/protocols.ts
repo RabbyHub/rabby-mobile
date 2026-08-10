@@ -40,6 +40,7 @@ interface ProtocolListState {
   protocolMap: ProtocolListMap;
   isLoading: boolean;
   isLoadingByAddress: Record<string, boolean>;
+  hasLoadedByAddress: Record<string, boolean>;
   initStore(): void;
   batchGetProtocols(addresses: string[], force?: boolean): Promise<void>;
   getProtocols(address: string, force?: boolean): Promise<void>;
@@ -399,6 +400,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
   protocolMap: {},
   isLoading: false,
   isLoadingByAddress: {},
+  hasLoadedByAddress: {},
   async initStore() {
     const startedAt = Date.now();
     markStartupPerf('protocolListStore', 'initStore_start');
@@ -520,6 +522,10 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         isLoadingByAddress: {
           ...state.isLoadingByAddress,
           [normalizedAddress]: false,
+        },
+        hasLoadedByAddress: {
+          ...state.hasLoadedByAddress,
+          [normalizedAddress]: true,
         },
       }));
     }

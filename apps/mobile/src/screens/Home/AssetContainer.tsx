@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useRef, type ReactNode } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -20,6 +26,7 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
   apisSingleHome,
   useSingleHomeAccount,
+  useSingleHomeChain,
   useSingleHomeHasNoData,
 } from './hooks/singleHome';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
@@ -29,6 +36,11 @@ import { useCustomTestnetStore } from '@/store/customTestnet';
 import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
+import {
+  scheduleSingleAddressAssetDataWarmup,
+  singleAddressAssetDataCoordinator,
+  type SingleAddressAssetDataTab,
+} from './singleAddressAssetDataWarmup';
 
 const renderHeader = () => null;
 
@@ -94,6 +106,30 @@ export const AssetContainer = () => {
 
   const { currentAccount } = useSingleHomeAccount();
   const currentAddress = currentAccount?.address ?? undefined;
+  const { selectedChain } = useSingleHomeChain();
+
+  useEffect(() => {
+    if (!currentAddress) {
+      return;
+    }
+
+    const input = {
+      address: currentAddress,
+      chainServerId: selectedChain,
+    };
+    singleAddressAssetDataCoordinator.prepare(input);
+    const warmupHandle = scheduleSingleAddressAssetDataWarmup(input);
+
+    return () => {
+      if (
+        warmupHandle &&
+        typeof warmupHandle === 'object' &&
+        'cancel' in warmupHandle
+      ) {
+        warmupHandle.cancel();
+      }
+    };
+  }, [currentAddress, selectedChain]);
 
   const { isDisConnect } = useGlobalStatus();
 
@@ -174,11 +210,25 @@ export const AssetContainer = () => {
       lazy
       renderHeader={renderHeader}
       tabBarHeight={32}
-      onTabChange={() => {
+      onTabChange={({ tabName }) => {
         setTimeout(() => {
           apisSingleHome.setFoldChart(true);
           // 延迟部分时间，避免tab下面layout计算和顶部高度变化重叠
         }, 150);
+
+        if (currentAddress && (tabName === 'defi' || tabName === 'nft')) {
+          singleAddressAssetDataCoordinator
+            .ensure(tabName as SingleAddressAssetDataTab, {
+              address: currentAddress,
+              chainServerId: selectedChain,
+            })
+            .catch(error => {
+              console.error(
+                `[SingleAddressAssetData] ${tabName} activation failed`,
+                error,
+              );
+            });
+        }
       }}
       renderTabBar={DynamicCustomMaterialTabBar}
       headerContainerStyle={styles.tabBarWrap}>

@@ -366,6 +366,17 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 3000,
     budgetMs: 16,
   }),
+  singleAddressAssetDataWarmup: defineStartupTask({
+    label: 'singleAddress.assetDataWarmup',
+    owner: 'single-address',
+    reason:
+      'warm DeFi and NFT data after single-address navigation settles without mounting their tab views',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 2500,
+    budgetMs: 16,
+  }),
   homeSceneDerivedDataActivation: defineStartupTask({
     label: 'home.sceneDerivedDataActivation',
     owner: 'home-assets',

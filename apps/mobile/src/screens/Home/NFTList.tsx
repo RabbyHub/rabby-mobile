@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { useCallback, useState, useMemo, useRef } from 'react';
 import type { ListRenderItem, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -177,25 +171,9 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
     { storeLabel: 'single-address-computed-nfts' },
   );
 
-  const registerSingleNfts =
-    useNftListComputedStore.getState().registerSingleNfts;
-
-  useEffect(() => {
-    if (!userAddr) {
-      return;
-    }
-    registerSingleNfts(userAddr, selectedChain);
-  }, [registerSingleNfts, selectedChain, userAddr]);
-
   const refreshNftList = useCallback(() => {
     reloadNftList?.();
   }, [reloadNftList]);
-
-  useEffect(() => {
-    if (isFocused) {
-      refreshNftList();
-    }
-  }, [isFocused, refreshNftList]);
 
   useAppForeground({
     enabled: isFocused,

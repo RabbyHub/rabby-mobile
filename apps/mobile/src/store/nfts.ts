@@ -458,6 +458,7 @@ export interface NFTListState {
   isLoading: boolean;
   isFirstFetch: boolean;
   shortCache: boolean;
+  singleLoadStatusByAddress: Record<string, 'loading' | 'ready'>;
   initStore(): Promise<void>;
   refreshTagNft(): void;
   updateNFTListByAddress(address: string, nfts: DisplayNftItem[]): void;
@@ -494,11 +495,14 @@ export interface NFTListState {
   }): Promise<void>;
 }
 
+const singleNftLoadRequests = new Map<string, Promise<void>>();
+
 const nftListStore = zCreate<NFTListState>((set, get) => ({
   nftsMap: {},
   isLoading: true,
   isFirstFetch: true,
   shortCache: true,
+  singleLoadStatusByAddress: {},
 
   async initStore() {
     const top10Addresses = getSelectedBalanceAddressesSnapshot();
@@ -619,13 +623,40 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     }
   },
 
-  async getNFTListWithCache(address, force, updateReturn) {
+  getNFTListWithCache(address, force, updateReturn) {
     if (!address) {
-      return;
+      return Promise.resolve();
     }
 
-    await get().batchLoadCacheNFT([address]);
-    await get().getNFTList(address, force, updateReturn);
+    const normalizedAddress = address.toLowerCase();
+    const activeRequest = singleNftLoadRequests.get(normalizedAddress);
+    if (activeRequest) {
+      return activeRequest;
+    }
+
+    set(state => ({
+      singleLoadStatusByAddress: {
+        ...state.singleLoadStatusByAddress,
+        [normalizedAddress]: 'loading',
+      },
+    }));
+
+    const request = (async () => {
+      try {
+        await get().batchLoadCacheNFT([normalizedAddress]);
+        await get().getNFTList(normalizedAddress, force, updateReturn);
+      } finally {
+        singleNftLoadRequests.delete(normalizedAddress);
+        set(state => ({
+          singleLoadStatusByAddress: {
+            ...state.singleLoadStatusByAddress,
+            [normalizedAddress]: 'ready',
+          },
+        }));
+      }
+    })();
+    singleNftLoadRequests.set(normalizedAddress, request);
+    return request;
   },
 
   async batchGetNFTList(force, options) {
