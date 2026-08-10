@@ -1,33 +1,15 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { DisplayNftItem } from '../types';
-import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
+import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useSingleNftRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import type { CombineNFTItem } from './store';
-import { apisAddrChainStatics } from '../useChainInfo';
-import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import nftListStore from '@/store/nfts';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const EMPTY_NFT_LIST: DisplayNftItem[] = [];
-
-export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
-  return nfts.map(i => {
-    const isFold = (() => {
-      if (!i.is_core) {
-        return true;
-      }
-      return false;
-    })();
-
-    return Object.assign(i, {
-      _isFold: isFold,
-      _isManualFold: false,
-    });
-  });
-};
 
 const useNftListForAddress = (addr?: string) => {
   const normalizedAddr = addr?.toLowerCase();
@@ -43,18 +25,6 @@ const useNftListForAddress = (addr?: string) => {
     Object.is,
     { storeLabel: 'single-address-nfts' },
   );
-};
-
-export const useNftChainStaticsSync = (addr?: string) => {
-  const list = useNftListForAddress(addr);
-  const debouncedList = useDebouncedValue(list, 500);
-
-  useEffect(() => {
-    if (!addr) {
-      return;
-    }
-    apisAddrChainStatics.updateNft(addr, debouncedList);
-  }, [addr, debouncedList]);
 };
 
 export const useSingleNftListController = (addr?: string, visible = true) => {
@@ -167,7 +137,6 @@ export const useSingleNftListController = (addr?: string, visible = true) => {
 export const useQueryNft = (addr?: string, visible = true) => {
   const list = useNftListForAddress(addr);
   const controller = useSingleNftListController(addr, visible);
-  useNftChainStaticsSync(addr);
 
   return {
     ...controller,

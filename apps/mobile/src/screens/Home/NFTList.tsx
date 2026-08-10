@@ -20,11 +20,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  NftItemWithCollection,
-  useNftChainStaticsSync,
-  useSingleNftListController,
-} from './hooks/nft';
+import { NftItemWithCollection, useSingleNftListController } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
 import {
@@ -65,13 +61,6 @@ type NftListItem =
   | {
       type: 'nft_header';
     };
-
-const NftChainStaticsSubscriber = React.memo(
-  ({ address }: { address?: string }) => {
-    useNftChainStaticsSync(address);
-    return null;
-  },
-);
 
 const NftResourceRow = React.memo(
   ({
@@ -365,7 +354,6 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
   );
   return (
     <View style={styles.container}>
-      <NftChainStaticsSubscriber address={userAddr} />
       <Tabs.FlatList
         data={dataList}
         keyExtractor={getNftListItemId}

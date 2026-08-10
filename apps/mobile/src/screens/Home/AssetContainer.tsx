@@ -21,7 +21,7 @@ import { TokenList } from './TokenList';
 import { NFTList } from './NFTList';
 import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
-import { useAddrChainLength } from './useChainInfo';
+import { apisAddrChainStatics, useAddrChainLength } from './useChainInfo';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
   apisSingleHome,
@@ -107,6 +107,12 @@ export const AssetContainer = () => {
   const { currentAccount } = useSingleHomeAccount();
   const currentAddress = currentAccount?.address ?? undefined;
   const { selectedChain } = useSingleHomeChain();
+
+  useEffect(() => {
+    if (currentAddress) {
+      apisAddrChainStatics.syncAddress(currentAddress);
+    }
+  }, [currentAddress]);
 
   useEffect(() => {
     if (!currentAddress) {

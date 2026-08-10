@@ -238,7 +238,7 @@ export const FullDefiRenderItem = ({
   ]);
 
   const portfolios = useMemo(() => {
-    return data._portfolios.sort((a, b) => b.netWorth - a.netWorth) || [];
+    return [...data._portfolios].sort((a, b) => b.netWorth - a.netWorth);
   }, [data]);
 
   if (!data || !account) {
