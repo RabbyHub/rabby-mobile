@@ -275,6 +275,8 @@ jobs:
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+          RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+          RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}
