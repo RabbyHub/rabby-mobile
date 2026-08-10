@@ -1,0 +1,41 @@
+name: Lark Notification Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      macos_machine_location:
+        required: true
+        type: choice
+        options:
+          - 'mobile'
+          - 'mobile-local'
+        default: 'mobile'
+
+jobs:
+  probe:
+    name: Probe notification on iOS runner
+    runs-on:
+      - self-hosted
+      - macOS
+      - ${{ inputs.macos_machine_location }}
+    env:
+      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
+      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+      RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB: ${{ secrets.LARK_CHAT_URL }}
+      RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB: ${{ secrets.LARK_CHAT_SECRET }}
+      GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      GIT_REF_NAME: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        with:
+          clean: false
+
+      - name: Diagnose interactive shell overrides
+        shell: bash -ieol pipefail {0}
+        run: node apps/mobile/scripts/ci/probe-lark-notification.js --diagnose-only
+
+      - name: Send with GitHub-injected credentials
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: node apps/mobile/scripts/ci/probe-lark-notification.js
