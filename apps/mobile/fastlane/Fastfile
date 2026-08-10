@@ -112,8 +112,8 @@ platform :ios do
     if ENV['RABBY_MOBILE_IOS_SKIP_MATCH'] == 'true'
       UI.important("Skipping fastlane match because RABBY_MOBILE_IOS_SKIP_MATCH=true")
     else
-      # Main App: RabbyMobile
-      match(
+      match_git_basic_authorization = ENV.fetch('RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION', '').strip
+      match_options = {
         type: opts[:type],
         app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
         profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
@@ -121,7 +121,14 @@ platform :ios do
         shallow_clone: true,
         verbose: false,
         force_for_new_devices: true,
-        clone_branch_directly: true)
+        clone_branch_directly: true
+      }
+      unless match_git_basic_authorization.empty?
+        match_options[:git_basic_authorization] = match_git_basic_authorization
+      end
+
+      # Main App: RabbyMobile
+      match(**match_options)
     end
 
     # # App Extension: RabbyMobileNotification
