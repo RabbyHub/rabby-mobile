@@ -219,9 +219,7 @@ jobs:
             else
               echo "Lark notification probe only runs on the macOS matrix job"
             fi
-            exit 0
-          fi
-
+          else
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
           bash ./scripts/ci/prepare-mobile-build.sh;
@@ -253,6 +251,7 @@ jobs:
 
             # # cleanup packager
             # ps axo pid,command | grep -E 'launchPackager\.command' | grep -v grep | awk '{print $1}' | xargs kill -9; > /dev/null 2>&1
+          fi
           fi
 
         env:
@@ -286,6 +285,8 @@ jobs:
           RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+          RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+          RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}
