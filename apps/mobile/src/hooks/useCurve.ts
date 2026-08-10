@@ -13,6 +13,10 @@ import {
 } from '@/store/curveShared';
 import { buildResourceFlowState } from '@/store/_resourceBase';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import {
+  getAddressCurveProjection,
+  type AddressCurveProjectionOptions,
+} from './addressCurveProjection';
 
 export {
   formChartData,
@@ -43,16 +47,9 @@ export function useIsLoadingCurve(address?: string) {
   };
 }
 
-type AddressCurveSelectOptions = {
-  realtimeNetWorth?: number | null;
-  staticBalance?: number | null;
-  baseUsdValue?: number | null;
-  type?: CurveDayType;
-};
-
 export function useAddressCurveSelectData(
   address?: string,
-  options?: AddressCurveSelectOptions,
+  options?: AddressCurveProjectionOptions,
 ) {
   const normalizedAddress = lcAddr(address);
   const curveList = useActivityStore(
@@ -63,18 +60,11 @@ export function useAddressCurveSelectData(
   );
 
   return useMemo(() => {
-    const normalizedCurveList = curveList ?? EMPTY_CURVE_LIST;
-
-    if (!normalizedCurveList.length) {
-      return makeDefaultSelectData();
-    }
-
-    return formChartData(normalizedCurveList, {
-      realtimeNetWorth: options?.realtimeNetWorth ?? 0,
-      realtimeTimestamp: Date.now(),
-      type: options?.type ?? CurveDayType.DAY,
-      staticBalance: options?.staticBalance ?? 0,
+    return getAddressCurveProjection(curveList, {
+      realtimeNetWorth: options?.realtimeNetWorth,
+      staticBalance: options?.staticBalance,
       baseUsdValue: options?.baseUsdValue,
+      type: options?.type,
     });
   }, [
     curveList,

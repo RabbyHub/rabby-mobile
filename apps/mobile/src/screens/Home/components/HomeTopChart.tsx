@@ -96,6 +96,7 @@ export const HomeTopChart = memo(function Chart({
   const {
     isLoadingChartData,
     balanceLoadingWithoutLocal,
+    changeLoading,
     selectData: data,
     balance,
     evmBalance,
@@ -197,7 +198,12 @@ export const HomeTopChart = memo(function Chart({
               LinearGradientComponent={LoadingLinear}
             />
           ) : (
-            <ChartHeader animOpacityStyle={animOpacityStyle} />
+            <ChartHeader
+              loading={balanceLoadingWithoutLocal}
+              changeLoading={changeLoading}
+              selectData={data}
+              balance={balance}
+            />
           )}
           <Animated.View style={[animOpacityStyle]}>
             {isOffline ||
@@ -235,20 +241,21 @@ export const HomeTopChart = memo(function Chart({
 });
 
 interface IHeaderProps {
-  animOpacityStyle: ReturnType<typeof useAnimatedStyle>;
+  loading: boolean;
+  changeLoading: boolean;
+  selectData: ReturnType<typeof useSingleHomeHomeTopChart>['selectData'];
+  balance: number | null;
 }
-const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
+const ChartHeader = ({
+  loading,
+  changeLoading,
+  selectData,
+  balance,
+}: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
   const { currency } = useCurrency();
-
-  const {
-    balanceLoadingWithoutLocal: loading,
-    changeLoading,
-    selectData,
-    balance,
-  } = useSingleHomeHomeTopChart();
 
   const rawNetWorth = balance || 0;
   const changePercent = selectData.changePercent;
