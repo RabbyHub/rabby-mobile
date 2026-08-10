@@ -4,6 +4,7 @@ import { isCached, preload } from 'react-native-bundle-splitter';
 
 const loadablesAreEager =
   process.env.RABBY_MOBILE_MODULE_LOADING_MODE === 'eager';
+const pendingNamedComponentPreloads = new Map<string, Promise<void>>();
 
 export const PRELOAD_SCREENS = {
   [RootNames.Settings]: 'SettingsScreen',
@@ -19,7 +20,24 @@ async function preloadNamedComponent(name?: string) {
     return;
   }
 
-  await preload().component(name);
+  const pendingPreload = pendingNamedComponentPreloads.get(name);
+  if (pendingPreload) {
+    await pendingPreload;
+    return;
+  }
+
+  const preloadPromise = Promise.resolve(preload().component(name)).then(
+    () => undefined,
+  );
+  pendingNamedComponentPreloads.set(name, preloadPromise);
+
+  try {
+    await preloadPromise;
+  } finally {
+    if (pendingNamedComponentPreloads.get(name) === preloadPromise) {
+      pendingNamedComponentPreloads.delete(name);
+    }
+  }
 }
 
 export async function preloadSettingsScreen() {

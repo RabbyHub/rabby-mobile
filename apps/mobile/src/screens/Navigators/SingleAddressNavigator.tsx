@@ -4,8 +4,8 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { scheduleSingleAddressTransactionNavigatorWarmup } from './singleAddressWarmup';
 
 const SingleAddressStack = createNativeStackNavigator();
 const RegressionSingleAddressHome = withRegressionScenario(SingleAddressHome, {
@@ -21,16 +21,17 @@ export function SingleAddressNavigator() {
   const renderHeader = useCallback(() => <SingleAddressHome.Header />, []);
 
   useLayoutEffect(() => {
-    const timer = setTimeout(() => {
-      preloadTransactionHotNavigator().catch(error => {
-        console.error(
-          'preloadTransactionHotNavigator::singleAddress::error',
-          error,
-        );
-      });
-    }, 300);
+    const warmupHandle = scheduleSingleAddressTransactionNavigatorWarmup();
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (
+        warmupHandle &&
+        typeof warmupHandle === 'object' &&
+        'cancel' in warmupHandle
+      ) {
+        warmupHandle.cancel();
+      }
+    };
   }, []);
 
   return (

@@ -355,6 +355,17 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 10000,
     budgetMs: 450,
   }),
+  singleAddressTransactionNavigatorWarmup: defineStartupTask({
+    label: 'singleAddress.transactionNavigatorWarmup',
+    owner: 'single-address',
+    reason:
+      'preload transaction routes after single-address entry interactions settle while preserving on-demand navigation',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 3000,
+    budgetMs: 16,
+  }),
   homeSceneDerivedDataActivation: defineStartupTask({
     label: 'home.sceneDerivedDataActivation',
     owner: 'home-assets',
