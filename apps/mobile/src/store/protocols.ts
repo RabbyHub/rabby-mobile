@@ -6,13 +6,27 @@ import {
   syncProtocolsForAddresses,
   syncSpecificProtocol,
 } from '@/databases/hooks/assets';
-import { getTop10MyAccounts } from '@/core/apis/account';
 import { formatAppChain } from '@/utils/appchain';
 import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
+import { ResourceBaseStore } from './_resourceBase';
+import type { ObservableResourceValueSource } from './_resourceFlow';
+import {
+  buildProtocolAssetsIndexResult,
+  buildProtocolEntityId,
+  type ProtocolAssetsIndexResult,
+  type ProtocolEntityId,
+} from './protocolAssetsIndex';
+
+export {
+  buildProtocolEntityId,
+  EMPTY_PROTOCOL_ASSETS_INDEX_RESULT,
+  type ProtocolAssetsIndexResult,
+  type ProtocolEntityId,
+} from './protocolAssetsIndex';
 
 export type {
   ICacheProtocolItem,
@@ -38,7 +52,7 @@ interface ProtocolListState {
 
 type ProtocolListComputedState = {
   multiProtocolsCache: Record<string, ICacheProtocolItem>;
-  singleProtocolsCache: Record<string, ICacheProtocolItem>;
+  singleProtocolsIndexCache: Record<string, ProtocolAssetsIndexResult>;
   registerMultiProtocols: (
     addresses: string[],
     chainServerId?: string,
@@ -47,6 +61,7 @@ type ProtocolListComputedState = {
 };
 
 const COMPUTED_CACHE_LIMIT = 10;
+const PROTOCOL_ENTITY_RESOURCE_FAMILY = 'protocol.entity';
 
 const normalizeAddresses = (addresses: string[]) =>
   addresses.map(address => address.toLowerCase());
@@ -64,8 +79,132 @@ export const getSingleProtocolsCacheKey = (
   chainServerId?: string,
 ) => `${address.toLowerCase()}::${chainServerId ?? ''}`;
 
+const getProtocolListFromProtocolMap = (protocolMap: ProtocolListMap) =>
+  Object.values(protocolMap).flat();
+
+const getChangedProtocolKeys = (
+  previousProtocol: IProtocolItem | undefined,
+  nextProtocol: IProtocolItem,
+) => {
+  if (!previousProtocol) {
+    return null;
+  }
+
+  const keys = new Set([
+    ...Object.keys(previousProtocol),
+    ...Object.keys(nextProtocol),
+  ] as Array<keyof IProtocolItem>);
+  const changedKeys: Array<keyof IProtocolItem> = [];
+
+  keys.forEach(key => {
+    if (!Object.is(previousProtocol[key], nextProtocol[key])) {
+      changedKeys.push(key);
+    }
+  });
+
+  return changedKeys;
+};
+
+class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
+  constructor() {
+    super(PROTOCOL_ENTITY_RESOURCE_FAMILY, { mutative: true });
+  }
+
+  syncFromProtocolMap = (
+    protocolMap: ProtocolListMap,
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    const protocols = getProtocolListFromProtocolMap(protocolMap);
+    const entries = new Map<ProtocolEntityId, IProtocolItem>();
+    protocols.forEach(protocol => {
+      entries.set(buildProtocolEntityId(protocol), protocol);
+    });
+
+    const now = Date.now();
+    const previous = this.getState();
+    const changedProtocols: Array<{
+      protocolId: ProtocolEntityId;
+      protocol: IProtocolItem;
+      changedKeys: Array<keyof IProtocolItem> | null;
+      meta: (typeof previous.metaMap)[string];
+    }> = [];
+
+    entries.forEach((protocol, protocolId) => {
+      const previousProtocol = previous.valueMap[protocolId];
+      const previousMeta = previous.metaMap[protocolId];
+      const changedKeys = getChangedProtocolKeys(previousProtocol, protocol);
+
+      if (!previousMeta || !previousProtocol || changedKeys?.length) {
+        changedProtocols.push({
+          protocolId,
+          protocol,
+          changedKeys,
+          meta: {
+            family: PROTOCOL_ENTITY_RESOURCE_FAMILY,
+            resourceKey: protocolId,
+            hasValue: true,
+            version: Math.max(previousMeta?.version || 0, 0) + 1,
+            sourceOfCurrentValue: source,
+            isHydrating: false,
+            isFetchingRemote: false,
+            persistStatus: previousMeta?.persistStatus || 'idle',
+            localTargets: previousMeta?.localTargets || [],
+            activeRemoteRequestId: undefined,
+            lastHydratedAt:
+              source === 'hydrate' ? now : previousMeta?.lastHydratedAt,
+            lastRemoteAt:
+              source === 'remote' ? now : previousMeta?.lastRemoteAt,
+            lastPersistAt: previousMeta?.lastPersistAt,
+            lastError: previousMeta?.lastError,
+          },
+        });
+      }
+    });
+
+    const removedProtocolIds = Array.from(
+      new Set([
+        ...Object.keys(previous.valueMap),
+        ...Object.keys(previous.metaMap),
+      ]),
+    ).filter(protocolId => !entries.has(protocolId as ProtocolEntityId));
+
+    if (!changedProtocols.length && !removedProtocolIds.length) {
+      return;
+    }
+
+    this.mutateState(draft => {
+      changedProtocols.forEach(
+        ({ protocolId, protocol, changedKeys, meta }) => {
+          const previousProtocol = draft.valueMap[protocolId];
+          if (!previousProtocol || !changedKeys) {
+            draft.valueMap[protocolId] = protocol;
+          } else {
+            changedKeys.forEach(key => {
+              if (Object.prototype.hasOwnProperty.call(protocol, key)) {
+                previousProtocol[key] = protocol[key] as never;
+              } else {
+                delete previousProtocol[key];
+              }
+            });
+          }
+          draft.metaMap[protocolId] = meta;
+        },
+      );
+
+      removedProtocolIds.forEach(protocolId => {
+        delete draft.valueMap[protocolId];
+        delete draft.metaMap[protocolId];
+      });
+    });
+  };
+}
+
+export const protocolEntityResourceStore = new ProtocolEntityResourceStore();
+
 const splitFoldAndUnfold = (list: IProtocolItem[]): ICacheProtocolItem => {
-  const sortedList = list.sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
+  const sortedList = list
+    .slice()
+    .sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
 
   const totalNetWorth = sortedList.reduce(
     (acc, curr) => acc + (Number(curr?.netWorth) || 0),
@@ -113,6 +252,17 @@ const computeSingleProtocols = (
 
   return splitFoldAndUnfold(filtered);
 };
+
+const computeSingleProtocolsIndex = (
+  protocolMap: ProtocolListMap,
+  address: string,
+  chainServerId?: string,
+  previousResult?: ProtocolAssetsIndexResult,
+) =>
+  buildProtocolAssetsIndexResult(
+    computeSingleProtocols(protocolMap, address, chainServerId),
+    previousResult,
+  );
 
 const computeMultiProtocols = (
   protocolMap: ProtocolListMap,
@@ -428,7 +578,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
 export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
   set => ({
     multiProtocolsCache: {},
-    singleProtocolsCache: {},
+    singleProtocolsIndexCache: {},
     registerMultiProtocols(addresses, chainServerId) {
       const key = getMultiProtocolsCacheKey(addresses, chainServerId);
       const removedKeys = touchCacheParams(
@@ -465,11 +615,17 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
         },
       );
       const protocolMap = useProtocolListStore.getState().protocolMap;
+      protocolEntityResourceStore.syncFromProtocolMap(protocolMap);
       set(state => ({
-        singleProtocolsCache: removeKeysFromCache(
+        singleProtocolsIndexCache: removeKeysFromCache(
           {
-            ...state.singleProtocolsCache,
-            [key]: computeSingleProtocols(protocolMap, address, chainServerId),
+            ...state.singleProtocolsIndexCache,
+            [key]: computeSingleProtocolsIndex(
+              protocolMap,
+              address,
+              chainServerId,
+              state.singleProtocolsIndexCache[key],
+            ),
           },
           removedKeys,
         ),
@@ -480,6 +636,10 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
 );
 
 const rebuildComputedCaches = (protocolMap: ProtocolListMap) => {
+  if (singleProtocolsCacheParams.size) {
+    protocolEntityResourceStore.syncFromProtocolMap(protocolMap);
+  }
+
   const multiProtocolsCache: Record<string, ICacheProtocolItem> = {};
   multiProtocolsCacheParams.forEach((params, key) => {
     multiProtocolsCache[key] = computeMultiProtocols(
@@ -489,22 +649,31 @@ const rebuildComputedCaches = (protocolMap: ProtocolListMap) => {
     );
   });
 
-  const singleProtocolsCache: Record<string, ICacheProtocolItem> = {};
+  const previousSingleProtocolsIndexCache =
+    useProtocolListComputedStore.getState().singleProtocolsIndexCache;
+  const singleProtocolsIndexCache: Record<string, ProtocolAssetsIndexResult> =
+    {};
   singleProtocolsCacheParams.forEach((params, key) => {
-    singleProtocolsCache[key] = computeSingleProtocols(
+    singleProtocolsIndexCache[key] = computeSingleProtocolsIndex(
       protocolMap,
       params.address.toLowerCase(),
       params.chainServerId,
+      previousSingleProtocolsIndexCache[key],
     );
   });
 
   useProtocolListComputedStore.setState({
     multiProtocolsCache,
-    singleProtocolsCache,
+    singleProtocolsIndexCache,
   });
 };
 
+let latestProtocolMap = useProtocolListStore.getState().protocolMap;
 useProtocolListStore.subscribe(state => {
+  if (state.protocolMap === latestProtocolMap) {
+    return;
+  }
+  latestProtocolMap = state.protocolMap;
   rebuildComputedCaches(state.protocolMap);
 });
 

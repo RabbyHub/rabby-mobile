@@ -1,9 +1,9 @@
-import React, { useCallback, useState, useEffect, useMemo, memo } from 'react';
-import { ListRenderItem, View } from 'react-native';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import type { ListRenderItem } from 'react-native';
+import { View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
-import { ActionItem } from './types';
 import { useTheme2024 } from '@/hooks/theme';
 
 import {
@@ -21,26 +21,75 @@ import {
 import { useIsFocused } from '@react-navigation/native';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
-import { getItemId } from './utils/listRenderId';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
-import { getAllDefiCount } from './utils/converAssets';
 import useProtocols, {
+  EMPTY_PROTOCOL_ASSETS_INDEX_RESULT,
   getSingleProtocolsCacheKey,
-  ICacheProtocolItem,
+  protocolEntityResourceStore,
+  type ProtocolEntityId,
   useProtocolListComputedStore,
 } from '@/store/protocols';
-import { useShallow } from 'zustand/react/shallow';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 
-const emptyCacheProtocolItem: ICacheProtocolItem = {
-  fold: [],
-  unFold: [],
+type PortfolioListItem =
+  | {
+      type: 'unfold_defi' | 'fold_defi';
+      protocolId: ProtocolEntityId;
+    }
+  | {
+      type: 'toggle_defi_fold';
+      data: string;
+    }
+  | {
+      type: 'empty-defi' | 'loading-defi-skeleton';
+      data: string;
+    };
+
+const ProtocolResourceRow = React.memo(
+  ({
+    protocolId,
+    account,
+    disableAction,
+    defaultExpand,
+  }: {
+    protocolId: ProtocolEntityId;
+    account?: KeyringAccountWithAlias | null;
+    disableAction: boolean;
+    defaultExpand: boolean;
+  }) => {
+    const protocol = useActivityStore(
+      protocolEntityResourceStore.useStore,
+      state => state.valueMap[protocolId],
+      Object.is,
+      { storeLabel: 'single-address-protocol-entities' },
+    );
+
+    if (!protocol) {
+      return <DefiItemLoader />;
+    }
+
+    return (
+      <FullDefiRenderItem
+        data={protocol}
+        showAccount={false}
+        disableAction={disableAction}
+        defaultExpand={defaultExpand}
+        account={account}
+      />
+    );
+  },
+);
+
+const getPortfolioListItemId = (item: PortfolioListItem) => {
+  if ('protocolId' in item) {
+    return `${item.type}/${item.protocolId}`;
+  }
+  return `${item.type}/${item.data}`;
 };
-
-const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
   onForeground?: () => void;
@@ -98,56 +147,46 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
   const registerSingleProtocols =
     useProtocolListComputedStore.getState().registerSingleProtocols;
 
-  const _portfolios = useActivityStore(
+  const protocolIndex = useActivityStore(
     useProtocolListComputedStore,
-    useShallow(state =>
+    state =>
       singleProtocolsKey
-        ? state.singleProtocolsCache[singleProtocolsKey] ||
-          emptyCacheProtocolItem
-        : emptyCacheProtocolItem,
-    ),
+        ? state.singleProtocolsIndexCache[singleProtocolsKey] ||
+          EMPTY_PROTOCOL_ASSETS_INDEX_RESULT
+        : EMPTY_PROTOCOL_ASSETS_INDEX_RESULT,
     Object.is,
     { storeLabel: 'single-address-computed-protocols' },
   );
 
-  const filteredPortfolios = useMemo(() => {
-    const foldList = _portfolios?.fold || [];
-    const unFoldList = _portfolios?.unFold || [];
-    const foldDeFiValue = getAllDefiCount(foldList);
-    return {
-      unFoldList,
-      foldList,
-      foldDeFiValue,
-    };
-  }, [_portfolios]);
-
   const {
-    data: portfolios,
+    data: visibleUnfoldProtocolIds,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(filteredPortfolios.unFoldList);
+  } = useLoadMoreData(protocolIndex.unFoldIds);
 
   const shouldDefaultExpand = useMemo(
-    () => filteredPortfolios.unFoldList.length <= 5,
-    [filteredPortfolios.unFoldList.length],
+    () => protocolIndex.unFoldIds.length <= 5,
+    [protocolIndex.unFoldIds.length],
   );
 
   const dataList = useMemo(() => {
-    const unFoldDefiList: ActionItem[] = portfolios.map(item => ({
-      type: 'unfold_defi',
-      data: item,
-    }));
+    const unFoldDefiList: PortfolioListItem[] = visibleUnfoldProtocolIds.map(
+      protocolId => ({
+        type: 'unfold_defi',
+        protocolId,
+      }),
+    );
 
-    const foldDeFiList: ActionItem[] = filteredPortfolios.foldList.map(
-      item => ({
+    const foldDeFiList: PortfolioListItem[] = protocolIndex.foldIds.map(
+      protocolId => ({
         type: 'fold_defi',
-        data: item,
+        protocolId,
       }),
     );
 
     const itemData: Array<{
       show: boolean;
-      data: ActionItem[];
+      data: PortfolioListItem[];
     }> = [
       {
         show: true,
@@ -158,14 +197,16 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
         data: [
           {
             type: 'toggle_defi_fold',
-            data: filteredPortfolios.foldDeFiValue,
+            data: protocolIndex.foldDeFiValue,
           },
           ...(foldDefi ? [] : foldDeFiList),
         ],
       },
       {
         show:
-          !!loadingPortfolio && !portfolios.length && !unFoldDefiList.length,
+          !!loadingPortfolio &&
+          !visibleUnfoldProtocolIds.length &&
+          !unFoldDefiList.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
@@ -174,7 +215,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       {
         show:
           !loadingPortfolio &&
-          portfolios.length === 0 &&
+          visibleUnfoldProtocolIds.length === 0 &&
           unFoldDefiList.length === 0,
         data: [
           {
@@ -191,12 +232,12 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       .map(item => item.data)
       .flat();
   }, [
-    filteredPortfolios.foldDeFiValue,
-    filteredPortfolios.foldList,
     foldDefi,
     loadingPortfolio,
-    portfolios,
+    protocolIndex.foldDeFiValue,
+    protocolIndex.foldIds,
     t,
+    visibleUnfoldProtocolIds,
   ]);
 
   const refreshPortfolioList = useCallback(() => {
@@ -230,16 +271,15 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     registerSingleProtocols(lowerAddress, selectedChain);
   }, [lowerAddress, selectedChain, registerSingleProtocols]);
 
-  const renderItem = useCallback<ListRenderItem<ActionItem>>(
+  const renderItem = useCallback<ListRenderItem<PortfolioListItem>>(
     props => {
       const { item: _data } = props;
-      const { type, data } = _data;
+      const { type } = _data;
       switch (type) {
         case 'unfold_defi':
           return (
-            <MemoFullDefiRenderItem
-              data={data}
-              showAccount={false}
+            <ProtocolResourceRow
+              protocolId={_data.protocolId}
               disableAction={loadingPortfolio}
               defaultExpand={shouldDefaultExpand}
               account={currentAccount}
@@ -249,16 +289,15 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
           return (
             <TokenRowSectionHeader
               style={styles.tokenSectionHeader}
-              str={data}
+              str={_data.data}
               fold={foldDefi}
               onPressFold={() => setFoldDefi(pre => !pre)}
             />
           );
         case 'fold_defi':
           return (
-            <MemoFullDefiRenderItem
-              data={data}
-              showAccount={false}
+            <ProtocolResourceRow
+              protocolId={_data.protocolId}
               disableAction={loadingPortfolio}
               defaultExpand={false}
               account={currentAccount}
@@ -268,7 +307,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
           return (
             <EmptyAssets
               style={styles.emptyAssets}
-              desc={data || ''}
+              desc={_data.data || ''}
               type={type}
             />
           );
@@ -318,7 +357,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     <View style={styles.container}>
       <Tabs.FlatList
         data={dataList}
-        keyExtractor={getItemId}
+        keyExtractor={getPortfolioListItemId}
         renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
@@ -362,7 +401,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
   );
 };
 
-const getStyles = createGetStyles2024(ctx => ({
+const getStyles = createGetStyles2024(_ctx => ({
   container: {
     flex: 1,
     paddingTop: 10,

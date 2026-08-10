@@ -5,12 +5,13 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { ListRenderItem, StyleSheet, View } from 'react-native';
+import type { ListRenderItem, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ActionItem, DisplayNftItem } from './types';
+import { DisplayNftItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -26,9 +27,9 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  varyNftListByFold,
   NftItemWithCollection,
-  useQueryNft,
+  useNftChainStaticsSync,
+  useSingleNftListController,
 } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
@@ -40,11 +41,95 @@ import {
 import { useIsFocused } from '@react-navigation/native';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
-import { getItemId } from './utils/listRenderId';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { Text } from '@/components/Typography';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import {
+  EMPTY_NFT_ASSETS_INDEX_RESULT,
+  getNftAssetsIndexRowKey,
+  getSingleNftsCacheKey,
+  nftCollectionResourceStore,
+  nftEntityResourceStore,
+  type NftAssetsIndexRow,
+  useNftListComputedStore,
+} from '@/store/nfts';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+
+type NftListItem =
+  | {
+      type: 'unfold_nft' | 'fold_nft';
+      row: NftAssetsIndexRow;
+    }
+  | {
+      type: 'toggle_nft_fold';
+    }
+  | {
+      type: 'empty-assets' | 'empty-nft' | 'loading-skeleton';
+      data: string;
+    }
+  | {
+      type: 'nft_header';
+    };
+
+const NftChainStaticsSubscriber = React.memo(
+  ({ address }: { address?: string }) => {
+    useNftChainStaticsSync(address);
+    return null;
+  },
+);
+
+const NftResourceRow = React.memo(
+  ({
+    row,
+    rowStyle,
+    loaderStyle,
+    onPress,
+  }: {
+    row: NftAssetsIndexRow;
+    rowStyle: ViewStyle;
+    loaderStyle: ViewStyle;
+    onPress: (item: NftItemWithCollection) => void;
+  }) => {
+    const nft = useActivityStore(
+      nftEntityResourceStore.useStore,
+      state => (row.type === 'nft' ? state.valueMap[row.nftId] : undefined),
+      Object.is,
+      { storeLabel: 'single-address-nft-entities' },
+    );
+    const collection = useActivityStore(
+      nftCollectionResourceStore.useStore,
+      state =>
+        row.type === 'collection'
+          ? state.valueMap[row.collectionId]
+          : undefined,
+      Object.is,
+      { storeLabel: 'single-address-nft-collections' },
+    );
+    const item = row.type === 'collection' ? collection : nft;
+
+    if (!item) {
+      return <ItemLoader style={loaderStyle} />;
+    }
+
+    return (
+      <NftRow
+        style={rowStyle}
+        logoSize={46}
+        chainLogoSize={18}
+        item={item}
+        onPress={() => onPress(item)}
+      />
+    );
+  },
+);
+
+const getNftListItemId = (item: NftListItem) => {
+  if ('row' in item) {
+    return `${item.type}/${getNftAssetsIndexRowKey(item.row)}`;
+  }
+  return `${item.type}/${'data' in item ? item.data : ''}`;
+};
 
 interface Props {
   onForeground?: () => void;
@@ -71,11 +156,36 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
   const isFocused = focusedTab === 'nft';
 
   const userAddr = currentAccount?.address?.toLowerCase();
-  const {
-    list: _rawNftList,
-    reload: reloadNftList,
-    isLoading: loadingNft,
-  } = useQueryNft(userAddr, false);
+  const { reload: reloadNftList, isLoading: loadingNft } =
+    useSingleNftListController(userAddr, false);
+
+  const singleNftsKey = useMemo(() => {
+    if (!userAddr) {
+      return null;
+    }
+    return getSingleNftsCacheKey(userAddr, selectedChain);
+  }, [selectedChain, userAddr]);
+
+  const nftIndex = useActivityStore(
+    useNftListComputedStore,
+    state =>
+      singleNftsKey
+        ? state.singleNftsIndexCache[singleNftsKey] ||
+          EMPTY_NFT_ASSETS_INDEX_RESULT
+        : EMPTY_NFT_ASSETS_INDEX_RESULT,
+    Object.is,
+    { storeLabel: 'single-address-computed-nfts' },
+  );
+
+  const registerSingleNfts =
+    useNftListComputedStore.getState().registerSingleNfts;
+
+  useEffect(() => {
+    if (!userAddr) {
+      return;
+    }
+    registerSingleNfts(userAddr, selectedChain);
+  }, [registerSingleNfts, selectedChain, userAddr]);
 
   const refreshNftList = useCallback(() => {
     reloadNftList?.();
@@ -98,32 +208,19 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
     },
   });
 
-  const nftList = useMemo(() => {
-    return _rawNftList.filter(item =>
-      selectedChain && item?.chain ? item.chain === selectedChain : true,
-    );
-  }, [_rawNftList, selectedChain]);
-
-  const { foldNftList, unFoldNftList } = useMemo(() => {
-    const result = varyNftListByFold<ActionItem>(
-      nftList,
-      (collection, item) => ({
-        type: item._isFold ? 'fold_nft' : 'unfold_nft',
-        data: collection,
-      }),
-      { forSingleAddress: true },
-    );
-
-    return {
-      foldNftList: result.foldList,
-      unFoldNftList: result.unFoldList,
-    };
-  }, [nftList]);
-
   const dataList = useMemo(() => {
+    const unFoldNftList: NftListItem[] = nftIndex.unFoldRows.map(row => ({
+      type: 'unfold_nft',
+      row,
+    }));
+    const foldNftList: NftListItem[] = nftIndex.foldRows.map(row => ({
+      type: 'fold_nft',
+      row,
+    }));
+    const nftRowCount = unFoldNftList.length + foldNftList.length;
     const itemData: Array<{
       show: boolean;
-      data: ActionItem[];
+      data: NftListItem[];
     }> = [
       {
         show: true,
@@ -134,14 +231,14 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
       },
       {
-        show: !!loadingNft && !nftList.length,
+        show: !!loadingNft && nftRowCount === 0,
         data: Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton',
           data: 'index-nft' + index.toString(),
         })),
       },
       {
-        show: !loadingNft && nftList.length === 0,
+        show: !loadingNft && nftRowCount === 0,
         data: [
           {
             type: 'empty-nft',
@@ -156,7 +253,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldNft, foldNftList, loadingNft, nftList.length, t, unFoldNftList]);
+  }, [foldNft, loadingNft, nftIndex.foldRows, nftIndex.unFoldRows, t]);
 
   const handlePressNft = useCallback(
     (item: NftItemWithCollection) => {
@@ -195,23 +292,25 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
     [colors2024, currentAccount],
   );
 
-  const renderItem = useCallback<ListRenderItem<ActionItem>>(
+  const nftRowStyle = useMemo(
+    () =>
+      StyleSheet.flatten([styles.renderItemWrapper, !isLight && styles.bg2]),
+    [isLight, styles.bg2, styles.renderItemWrapper],
+  );
+
+  const renderItem = useCallback<ListRenderItem<NftListItem>>(
     ({ item }) => {
-      const { type, data } = item;
+      const { type } = item;
       switch (type) {
         case 'unfold_nft':
         case 'fold_nft':
           return (
             <View style={styles.rowWrap}>
-              <NftRow
-                style={StyleSheet.flatten([
-                  styles.renderItemWrapper,
-                  !isLight && styles.bg2,
-                ])}
-                logoSize={46}
-                chainLogoSize={18}
-                item={data}
-                onPress={() => handlePressNft(data)}
+              <NftResourceRow
+                row={item.row}
+                rowStyle={nftRowStyle}
+                loaderStyle={styles.removeLeft}
+                onPress={handlePressNft}
               />
             </View>
           );
@@ -224,7 +323,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         case 'toggle_nft_fold':
           return (
             <TokenRowSectionHeader
-              str={'' + foldNftList.length}
+              str={'' + nftIndex.foldRows.length}
               fold={foldNft}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
@@ -237,7 +336,11 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         case 'empty-assets':
         case 'empty-nft':
           return (
-            <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
+            <EmptyAssets
+              style={styles.emptyAssets}
+              desc={item.data}
+              type={type}
+            />
           );
         case 'loading-skeleton':
           return (
@@ -249,7 +352,15 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
           return null;
       }
     },
-    [foldNft, foldNftList.length, handlePressNft, isLight, styles, t],
+    [
+      foldNft,
+      handlePressNft,
+      isLight,
+      nftIndex.foldRows.length,
+      nftRowStyle,
+      styles,
+      t,
+    ],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -276,9 +387,10 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
   );
   return (
     <View style={styles.container}>
+      <NftChainStaticsSubscriber address={userAddr} />
       <Tabs.FlatList
         data={dataList}
-        keyExtractor={getItemId}
+        keyExtractor={getNftListItemId}
         renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}

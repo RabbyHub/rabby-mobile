@@ -28,10 +28,10 @@ export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
     });
   });
 };
-export const useQueryNft = (addr?: string, visible = true) => {
-  const [isLoading, setIsLoading] = useState(true);
+
+const useNftListForAddress = (addr?: string) => {
   const normalizedAddr = addr?.toLowerCase();
-  const list = useActivityStore(
+  return useActivityStore(
     nftListStore,
     useCallback(
       s =>
@@ -43,19 +43,28 @@ export const useQueryNft = (addr?: string, visible = true) => {
     Object.is,
     { storeLabel: 'single-address-nfts' },
   );
+};
+
+export const useNftChainStaticsSync = (addr?: string) => {
+  const list = useNftListForAddress(addr);
+  const debouncedList = useDebouncedValue(list, 500);
+
+  useEffect(() => {
+    if (!addr) {
+      return;
+    }
+    apisAddrChainStatics.updateNft(addr, debouncedList);
+  }, [addr, debouncedList]);
+};
+
+export const useSingleNftListController = (addr?: string, visible = true) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const normalizedAddr = addr?.toLowerCase();
   const {
     getNFTListWithCache,
     batchLoadCacheNFT,
     refreshTagNft: refreshTagNftByStore,
   } = nftListStore.getState();
-
-  const debouncedList = useDebouncedValue(list, 500);
-  useEffect(() => {
-    if (!addr || !debouncedList) {
-      return;
-    }
-    apisAddrChainStatics.updateNft(addr, debouncedList);
-  }, [addr, debouncedList]);
 
   const fetchData = useCallback(
     async (force?: boolean) => {
@@ -110,15 +119,18 @@ export const useQueryNft = (addr?: string, visible = true) => {
         const currentUpdateCount =
           ctx.syncDetails.batchSize * ctx.syncDetails.round +
           ctx.syncDetails.count;
+        const currentListLength = normalizedAddr
+          ? nftListStore.getState().nftsMap[normalizedAddr]?.length || 0
+          : 0;
 
         if (
           currentUpdateCount >= ctx.syncDetails.total ||
-          currentUpdateCount > (list?.length || 0)
+          currentUpdateCount > currentListLength
         ) {
           debounceReloadNftList();
         }
       },
-      [addr, isLoading, list?.length, debounceReloadNftList],
+      [addr, debounceReloadNftList, isLoading, normalizedAddr],
     ),
   });
 
@@ -141,8 +153,18 @@ export const useQueryNft = (addr?: string, visible = true) => {
 
   return {
     isLoading,
-    list,
     reload: fetchData,
+  };
+};
+
+export const useQueryNft = (addr?: string, visible = true) => {
+  const list = useNftListForAddress(addr);
+  const controller = useSingleNftListController(addr, visible);
+  useNftChainStaticsSync(addr);
+
+  return {
+    ...controller,
+    list,
   };
 };
 
