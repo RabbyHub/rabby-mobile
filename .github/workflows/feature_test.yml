@@ -213,6 +213,12 @@ jobs:
       - name: Install and build
         run: |
           unset MATCH_GIT_BASIC_AUTHORIZATION
+          # The interactive self-hosted shell may inherit stale runner/profile values.
+          # Reassert the credentials supplied by this workflow before any build script runs.
+          export RABBY_MOBILE_LARK_CHAT_URL="$RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB"
+          export RABBY_MOBILE_LARK_CHAT_SECRET="$RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB"
+          export RABBY_ROBOT_LARK_APP_ID="$RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB"
+          export RABBY_ROBOT_LARK_APP_SECRET="$RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB"
           if [ "$SKIP_BUILD" = "true" ] && [ "$GHA_MOCK_BUILD_FAILED" = "true" ]; then
             if [ "$(uname -s)" = "Darwin" ]; then
               node apps/mobile/scripts/ci/probe-lark-notification.js
