@@ -213,6 +213,15 @@ jobs:
       - name: Install and build
         run: |
           unset MATCH_GIT_BASIC_AUTHORIZATION
+          if [ "$SKIP_BUILD" = "true" ] && [ "$GHA_MOCK_BUILD_FAILED" = "true" ]; then
+            if [ "$(uname -s)" = "Darwin" ]; then
+              node apps/mobile/scripts/ci/probe-lark-notification.js
+            else
+              echo "Lark notification probe only runs on the macOS matrix job"
+            fi
+            exit 0
+          fi
+
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
           bash ./scripts/ci/prepare-mobile-build.sh;
@@ -273,6 +282,8 @@ jobs:
           SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB: ${{ secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
