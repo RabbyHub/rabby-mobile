@@ -5,6 +5,7 @@ import React, {
   useRef,
   type ReactNode,
 } from 'react';
+import { View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -29,20 +30,33 @@ import {
   useSingleHomeChain,
   useSingleHomeHasNoData,
 } from './hooks/singleHome';
-import { apisAddressBalance } from '@/hooks/useCurrentBalance';
+import {
+  apisAddressBalance,
+  useAddressBalance,
+} from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
-import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 import { useCustomTestnetStore } from '@/store/customTestnet';
 import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
+import {
+  useRegressionScenario,
+  useRegressionScenarioAssertion,
+  useRegressionScenarioComponentAction,
+} from '@/devtools/regressionScenarios/react';
 import {
   scheduleSingleAddressAssetDataWarmup,
   singleAddressAssetDataCoordinator,
   type SingleAddressAssetDataTab,
 } from './singleAddressAssetDataWarmup';
+import { ItemLoader } from './components/Skeleton';
+import {
+  resolveSingleAddressAssetViewState,
+  shouldResolveSingleAddressNoAssets,
+  useSingleAddressNoAssetsDecision,
+} from './singleAddressNoAssetsDecision';
 
 const renderHeader = () => null;
+const NO_ASSETS_DECISION_SKELETONS = ['first', 'second', 'third'];
 
 type SingleAddressTabName = 'tokens' | 'defi' | 'nft';
 
@@ -68,6 +82,7 @@ const SingleAddressTabActivityBoundary = ({
 export const AssetContainer = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const tabsRef = useRef<CollapsibleRef<string>>(null);
+  const regressionScenario = useRegressionScenario<'SingleAddressHome'>();
 
   const activateTabForRegression = useCallback(
     async (name: SingleAddressTabName) => {
@@ -140,6 +155,7 @@ export const AssetContainer = () => {
   const { isDisConnect } = useGlobalStatus();
 
   const { chainLength } = useAddrChainLength(currentAddress);
+  const { evmBalance } = useAddressBalance(currentAddress);
 
   useRendererDetect({ name: 'Home::AssetContainer' });
 
@@ -180,21 +196,48 @@ export const AssetContainer = () => {
         <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
     [],
   );
-  // const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
-  const { accountToShowReceiveTip } =
-    useAccountHomeShowReceiveTip(currentAccount);
   const customTestnetCount = useActivityStore(
     useCustomTestnetStore,
     state => Object.keys(state.customTestnet).length,
     Object.is,
     { storeLabel: 'single-address-custom-testnet' },
   );
+  const knownEvmBalance =
+    evmBalance ??
+    (typeof currentAccount?.evmBalance === 'number'
+      ? currentAccount.evmBalance
+      : null);
+  const shouldResolveNoAssets = shouldResolveSingleAddressNoAssets({
+    account: currentAccount,
+    chainLength,
+    customTestnetCount,
+    evmBalance: knownEvmBalance,
+  });
+  const noAssetsDecision = useSingleAddressNoAssetsDecision({
+    account: currentAccount,
+    enabled: shouldResolveNoAssets,
+  });
+  const assetViewState = resolveSingleAddressAssetViewState({
+    hasCurrentAccount: !!currentAccount,
+    hasNetworkError: errorNotAssets,
+    shouldResolveNoAssets,
+    decision: noAssetsDecision,
+  });
 
-  if (!currentAccount) {
+  useRegressionScenarioAssertion(
+    'single-address-asset-view-settled',
+    regressionScenario.active &&
+      regressionScenario.scenario === 'single-address' &&
+      (assetViewState === 'assets' || assetViewState === 'receive')
+      ? { viewState: assetViewState }
+      : null,
+  );
+
+  if (assetViewState === 'none') {
     return null;
   }
 
-  if (errorNotAssets) {
+  if (assetViewState === 'network-error') {
     return (
       <NetWorkError
         hasError={isDisConnect}
@@ -204,8 +247,18 @@ export const AssetContainer = () => {
     );
   }
 
-  if (accountToShowReceiveTip && customTestnetCount === 0) {
-    return <ReceiveOnNoAssets account={accountToShowReceiveTip} />;
+  if (assetViewState === 'pending') {
+    return (
+      <View style={styles.noAssetsDecisionPending}>
+        {NO_ASSETS_DECISION_SKELETONS.map(key => (
+          <ItemLoader key={key} style={styles.noAssetsDecisionSkeleton} />
+        ))}
+      </View>
+    );
+  }
+
+  if (assetViewState === 'receive') {
+    return <ReceiveOnNoAssets account={noAssetsDecision.account} />;
   }
 
   return (
@@ -278,6 +331,16 @@ const getStyles = createGetStyles2024(ctx => ({
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
+  },
+  noAssetsDecisionPending: {
+    flex: 1,
+    width: '100%',
+    gap: 8,
+    paddingTop: 40,
+    paddingHorizontal: 16,
+  },
+  noAssetsDecisionSkeleton: {
+    marginLeft: 0,
   },
   netWorkError: {
     height: '100%',

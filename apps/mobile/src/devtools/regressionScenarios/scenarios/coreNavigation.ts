@@ -787,21 +787,46 @@ async function openSingleAddress(
     passed: true,
   });
 
+  const settledViewEvent = await waitForScenarioAssertion(
+    context,
+    'single-address-asset-view-settled',
+    15_000,
+  );
+  const viewState = settledViewEvent.data?.viewState;
+  if (viewState !== 'assets' && viewState !== 'receive') {
+    throw new Error(`Unexpected single-address asset view: ${viewState}`);
+  }
+
   const visitedTabScopeLabels: string[] = [];
-  for (const tab of SINGLE_ADDRESS_TAB_ACTIVITY) {
-    const timing = await runRegressionScenarioComponentAction(
-      context.command.runId,
-      tab.action,
-    );
-    visitedTabScopeLabels.push(tab.scopeLabel);
+  let expectedActiveTabLabel: string | null = null;
+  if (viewState === 'assets') {
+    for (const tab of SINGLE_ADDRESS_TAB_ACTIVITY) {
+      const timing = await runRegressionScenarioComponentAction(
+        context.command.runId,
+        tab.action,
+      );
+      visitedTabScopeLabels.push(tab.scopeLabel);
+      expectedActiveTabLabel = tab.scopeLabel;
+      await assertSingleAddressActivity(context, {
+        assertion: 'single-address-tab-store-activity',
+        screenActive: true,
+        expectedActiveTabLabel,
+        requiredTabScopeLabels: visitedTabScopeLabels,
+        details: {
+          tab: tab.name,
+          actionTiming: timing,
+          viewState,
+        },
+      });
+    }
+  } else {
     await assertSingleAddressActivity(context, {
-      assertion: 'single-address-tab-store-activity',
+      assertion: 'single-address-receive-store-activity',
       screenActive: true,
-      expectedActiveTabLabel: tab.scopeLabel,
+      expectedActiveTabLabel: null,
       requiredTabScopeLabels: visitedTabScopeLabels,
       details: {
-        tab: tab.name,
-        actionTiming: timing,
+        viewState,
       },
     });
   }
@@ -813,6 +838,7 @@ async function openSingleAddress(
     screenActive: false,
     expectedActiveTabLabel: null,
     requiredTabScopeLabels: visitedTabScopeLabels,
+    details: { viewState },
   });
 
   navigationRef.dispatch(StackActions.pop(1));
@@ -820,8 +846,9 @@ async function openSingleAddress(
   await assertSingleAddressActivity(context, {
     assertion: 'single-address-restored-store-activity',
     screenActive: true,
-    expectedActiveTabLabel: SINGLE_ADDRESS_TAB_ACTIVITY.at(-1)!.scopeLabel,
+    expectedActiveTabLabel,
     requiredTabScopeLabels: visitedTabScopeLabels,
+    details: { viewState },
   });
 }
 
