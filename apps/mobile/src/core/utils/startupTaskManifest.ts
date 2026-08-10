@@ -377,6 +377,17 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 2500,
     budgetMs: 16,
   }),
+  singleAddressHistoryBadgeWarmup: defineStartupTask({
+    label: 'singleAddress.historyBadgeWarmup',
+    owner: 'single-address',
+    reason:
+      'load the non-blocking history badge after single-address entry interactions settle',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 2500,
+    budgetMs: 12,
+  }),
   homeSceneDerivedDataActivation: defineStartupTask({
     label: 'home.sceneDerivedDataActivation',
     owner: 'home-assets',
