@@ -12,9 +12,12 @@ import React, {
 } from 'react';
 import {
   Animated,
+  AppState,
   Pressable,
   useWindowDimensions,
   View,
+  type AppStateStatus,
+  type LayoutChangeEvent,
   type ListRenderItem,
   type ViewStyle,
 } from 'react-native';
@@ -28,7 +31,9 @@ import {
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import { usePerpsProDismissKeyboard } from '../components/common/usePerpsProDismissKeyboard';
 import { PerpsProHeader } from '../components/header/PerpsProHeader';
+import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
 import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
@@ -52,9 +57,13 @@ import { PerpsProCloseConfirmationSheet } from '../components/positions/PerpsPro
 import { PerpsProClosePositionSheet } from '../components/positions/PerpsProClosePositionSheet';
 import { PerpsProLeverageSheet } from '../components/positions/PerpsProLeverageSheet';
 import { PerpsProPositionsControls } from '../components/positions/PerpsProPositionsControls';
-import { PerpsProTradeSkeleton } from '../components/trade/PerpsProTradeSkeleton';
+import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrderConfirmationSheet';
+import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
 import type { PerpsAccountAssetRow } from '../model/account';
-import { getPerpsProColumnLayout } from '../model/layout';
+import {
+  getPerpsProColumnLayout,
+  PERPS_PRO_MAIN_COLUMN_HEIGHT,
+} from '../model/layout';
 import type { PerpsOpenOrderViewModel } from '../model/openOrder';
 import type { PerpsPositionViewModel } from '../model/position';
 import { PerpsProRealtimeOrderBook } from './PerpsProRealtimeOrderBook';
@@ -64,7 +73,11 @@ import {
 } from './usePerpsProInfoPanel';
 import { usePerpsProScene } from './usePerpsProScene';
 import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
+import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
+import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
+import { usePerpsProZeroAddressLeverageBaseline } from './usePerpsProZeroAddressLeverageBaseline';
+import { usePerpsProTrade } from './usePerpsProTrade';
 
 type PerpsProSceneRow =
   | { key: 'trade'; type: 'trade' }
@@ -108,18 +121,49 @@ export const PerpsProScene: React.FC<{
     scene.currentMarket?.canonicalCoin ?? '',
     { enabled: scene.klineEnabled },
   );
+  const leverageUpdate = usePerpsProLeverageUpdate({
+    refreshActiveAssetData: activeAsset.refreshActiveAssetData,
+  });
+  const bboBook = usePerpsProBboBook({
+    coin: scene.currentMarket?.canonicalCoin ?? '',
+    enabled: scene.realtimeEnabled,
+  });
+  const zeroAddressLeverageBaseline = usePerpsProZeroAddressLeverageBaseline(
+    scene.currentMarket?.canonicalCoin ?? '',
+  );
+  const trade = usePerpsProTrade({
+    activeAssetData: activeAsset.activeAssetData,
+    bboBook: bboBook.book,
+    bboPrices: bboBook.prices,
+    bboSessionKey: bboBook.sessionKey,
+    bboStatus: bboBook.status,
+    executionActive: scene.executionActive && !isModeSwitching,
+    leveragePending: leverageUpdate.pending,
+    market: scene.currentMarket,
+    zeroAddressLeverageBaseline,
+    refreshActiveAssetData: activeAsset.refreshActiveAssetData,
+    updateLeverageRequest: leverageUpdate.update,
+  });
   const info = usePerpsProInfoPanel(scene.currentMarket?.canonicalCoin ?? '');
   const positionActions = usePerpsProPositionActions({
     accountIdentity: info.accountIdentity,
-    refreshActiveAssetData: activeAsset.refreshActiveAssetData,
+    leveragePending: leverageUpdate.pending,
+    updateLeverageRequest: leverageUpdate.update,
   });
   const cancelOrders = usePerpsProCancelOrders();
   const { setHideOtherSymbols } = info;
   const headerCollapse = usePerpsProHeaderCollapse();
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
+  const [klineActivated, setKlineActivated] = useState(false);
+  const [appState, setAppState] = useState<AppStateStatus>(
+    AppState.currentState,
+  );
   const [fundingOverlay, setFundingOverlay] =
     useState<FundingOverlayState | null>(null);
+  const [mainColumnHeight, setMainColumnHeight] = useState(
+    PERPS_PRO_MAIN_COLUMN_HEIGHT,
+  );
   const fundingAccountIdentityRef = useRef(info.accountIdentity);
 
   useEffect(() => {
@@ -129,7 +173,15 @@ export const PerpsProScene: React.FC<{
     fundingAccountIdentityRef.current = info.accountIdentity;
     setFundingOverlay(null);
   }, [info.accountIdentity]);
-  const openKline = useCallback(() => setKlineOpen(true), []);
+  const dismissKeyboardThen = usePerpsProDismissKeyboard();
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => subscription.remove();
+  }, []);
+  const openKline = useCallback(() => {
+    setKlineActivated(true);
+    setKlineOpen(true);
+  }, []);
   const closeKline = useCallback(() => setKlineOpen(false), []);
   const closeFundingOverlay = useCallback(() => setFundingOverlay(null), []);
   const openDeposit = useCallback(
@@ -148,8 +200,8 @@ export const PerpsProScene: React.FC<{
     setFundingOverlay({ mode: 'swap', targetAsset });
   }, []);
   const openMarketSelector = useCallback(
-    () => marketSelectorRef.current?.present(),
-    [],
+    () => dismissKeyboardThen(() => marketSelectorRef.current?.present()),
+    [dismissKeyboardThen],
   );
   const toggleHideOtherSymbols = useCallback(
     () => setHideOtherSymbols(value => !value),
@@ -168,6 +220,15 @@ export const PerpsProScene: React.FC<{
     [tradeWidth],
   );
   const columnsStyle = useMemo<ViewStyle>(() => ({ gap }), [gap]);
+  const updateMainColumnHeight = useCallback((event: LayoutChangeEvent) => {
+    const measured = Math.max(
+      PERPS_PRO_MAIN_COLUMN_HEIGHT,
+      Math.ceil(event.nativeEvent.layout.height),
+    );
+    setMainColumnHeight(current =>
+      Math.abs(current - measured) > 1 ? measured : current,
+    );
+  }, []);
   const isMarketLoading =
     !scene.currentMarket &&
     (scene.marketDataStatus === 'idle' ||
@@ -250,27 +311,31 @@ export const PerpsProScene: React.FC<{
               <View style={[styles.columns, columnsStyle]}>
                 <View style={orderBookColumnStyle}>
                   <PerpsProRealtimeOrderBook
+                    amountUnit={trade.amountUnit}
                     enabled={scene.realtimeEnabled}
+                    height={mainColumnHeight}
                     market={scene.currentMarket}
                     onSelectTickOption={scene.selectTickOption}
+                    onSelectPrice={
+                      trade.form.orderType === 'limit' && !trade.form.bboEnabled
+                        ? price =>
+                            trade.selectManualLimitPrice(
+                              price,
+                              scene.currentMarket!.marketKey,
+                            )
+                        : undefined
+                    }
                     precision={scene.precision}
                     selectedTickOption={scene.selectedTickOption}
                     tickOptions={scene.tickOptions}
                   />
                 </View>
-                <View style={tradeColumnStyle}>
-                  <PerpsProTradeSkeleton
-                    leverage={
-                      activeAsset.activeAssetData?.leverage.value ??
-                      scene.currentMarket.marketData.maxLeverage
-                    }
-                    marginMode={
-                      scene.currentMarket.marketData.onlyIsolated
-                        ? 'isolated'
-                        : activeAsset.activeAssetData?.leverage.type ??
-                          'isolated'
-                    }
-                    quoteAsset={scene.currentMarket.quoteAsset}
+                <View
+                  onLayout={updateMainColumnHeight}
+                  style={tradeColumnStyle}>
+                  <PerpsProTradeForm
+                    controller={trade}
+                    onDeposit={openDeposit}
                   />
                 </View>
               </View>
@@ -373,6 +438,7 @@ export const PerpsProScene: React.FC<{
         case 'open-order':
           return (
             <PerpsProOpenOrderCard
+              amountUnit={trade.amountUnit}
               cancelPending={cancelOrders.isOrderPending(item.order.oid)}
               onCancel={cancelOrders.confirmCancelOrder}
               order={item.order}
@@ -381,14 +447,13 @@ export const PerpsProScene: React.FC<{
       }
     },
     [
-      activeAsset.activeAssetData?.leverage.type,
-      activeAsset.activeAssetData?.leverage.value,
       columnsStyle,
       cancelOrders,
       gap,
       info,
       historyEnabled,
       isMarketLoading,
+      mainColumnHeight,
       onOpenHistory,
       openDeposit,
       openSwap,
@@ -403,6 +468,8 @@ export const PerpsProScene: React.FC<{
       toggleHideOtherSymbols,
       tradeColumnStyle,
       tradeWidth,
+      trade,
+      updateMainColumnHeight,
     ],
   );
 
@@ -461,11 +528,16 @@ export const PerpsProScene: React.FC<{
         onSelect={scene.selectMarket}
         ref={marketSelectorRef}
       />
-      {klineOpen && scene.currentMarket ? (
+      <PerpsProAccountSelectorLayer />
+      {scene.currentMarket ? (
         <PerpsProKlineSheet
-          enabled={scene.klineEnabled}
+          enabled={
+            klineActivated && scene.klineEnabled && appState === 'active'
+          }
           market={scene.currentMarket}
           onClose={closeKline}
+          preloadEnabled={scene.klineEnabled && appState === 'active'}
+          visible={klineOpen}
         />
       ) : null}
       {fundingOverlay ? (
@@ -486,11 +558,12 @@ export const PerpsProScene: React.FC<{
         maxLeverage={positionActions.leverageEditor?.position.maxLeverage ?? 1}
         onClose={positionActions.closeLeverageEditor}
         onConfirm={positionActions.updateLeverage}
-        pending={positionActions.leveragePending}
+        pending={leverageUpdate.pending}
         visible={!!positionActions.leverageEditor}
       />
       {positionActions.closeEditor ? (
         <PerpsProClosePositionSheet
+          amountUnit={trade.amountUnit}
           market={positionActions.closeEditor.market}
           onClose={positionActions.closeCloseEditor}
           onReview={positionActions.reviewClose}
@@ -500,6 +573,7 @@ export const PerpsProScene: React.FC<{
       ) : null}
       {positionActions.closeEditor && positionActions.closeReview ? (
         <PerpsProCloseConfirmationSheet
+          amountUnit={trade.amountUnit}
           draft={positionActions.closeReview}
           market={positionActions.closeEditor.market}
           onClose={positionActions.cancelCloseReview}
@@ -513,6 +587,19 @@ export const PerpsProScene: React.FC<{
           visible
         />
       ) : null}
+      <PerpsProOrderConfirmationSheet
+        amountUnit={trade.amountUnit}
+        command={trade.review}
+        estimatedLiquidation={trade.estimatedLiquidation}
+        leverage={trade.leverage}
+        marginMode={trade.marginMode}
+        market={trade.market}
+        onClose={trade.closeReview}
+        onConfirm={trade.confirmReview}
+        onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
+        pending={trade.pending}
+        skipConfirmation={trade.skipConfirmation}
+      />
     </>
   );
 };
@@ -555,6 +642,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: PERPS_PRO_SCENE_LEAD_IN_HEIGHT,
   },
   columns: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
     paddingHorizontal: 15,
     paddingTop: 8,

@@ -1,33 +1,83 @@
+import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import { Slider } from '@rneui/themed';
+import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
-const TRADE_SLIDER_POINT_COUNT = 5;
+const TRADE_SLIDER_POINTS = [0, 25, 50, 75, 100] as const;
 
-export const PerpsProTradeAmountSlider: React.FC = React.memo(() => {
+export const PerpsProTradeAmountSlider: React.FC<{
+  onChange?: (value: number) => void;
+  value?: number;
+}> = React.memo(({ onChange, value = 0 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const [dragging, setDragging] = useState(false);
+  const points = useMemo(() => [...TRADE_SLIDER_POINTS], []);
 
   return (
     <View
-      accessibilityState={{ disabled: true }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      accessibilityRole="adjustable"
+      accessibilityValue={{ max: 100, min: 0, now: value }}
+      accessible
+      onAccessibilityAction={event =>
+        onChange?.(
+          Math.max(
+            0,
+            Math.min(
+              100,
+              value + (event.nativeEvent.actionName === 'increment' ? 25 : -25),
+            ),
+          ),
+        )
+      }
       style={styles.container}
       testID="perps-pro-trade-amount-slider">
-      <View pointerEvents="none" style={styles.track} />
+      <View pointerEvents="none" style={styles.trackBase}>
+        <View style={[styles.activeTrack, { width: `${value}%` }]} />
+      </View>
+      <Slider
+        allowTouchTrack
+        maximumTrackTintColor="transparent"
+        maximumValue={100}
+        minimumTrackTintColor="transparent"
+        minimumValue={0}
+        onSlidingComplete={() => setDragging(false)}
+        onSlidingStart={() => setDragging(true)}
+        onValueChange={next => onChange?.(Math.round(next))}
+        step={1}
+        style={styles.slider}
+        thumbStyle={styles.thumb}
+        trackStyle={styles.track}
+        value={value}
+      />
       <View pointerEvents="none" style={styles.points}>
-        {Array.from({ length: TRADE_SLIDER_POINT_COUNT }, (_, index) => (
+        {points.map(point => (
           <View
-            key={index}
-            style={styles.point}
-            testID="perps-pro-trade-amount-slider-point"
-          />
+            key={point}
+            style={[styles.pointPosition, { left: `${point}%` }]}>
+            <View
+              style={[styles.point, point <= value ? styles.activePoint : null]}
+              testID="perps-pro-trade-amount-slider-point"
+            />
+          </View>
         ))}
       </View>
-      <View
-        pointerEvents="none"
-        style={styles.thumb}
-        testID="perps-pro-trade-amount-slider-thumb"
-      />
+      {dragging ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.tooltip,
+            {
+              left: `${value}%`,
+              transform: [{ translateX: (-36 * value) / 100 }],
+            },
+          ]}
+          testID="perps-pro-trade-amount-slider-tooltip">
+          <Text style={styles.tooltipText}>{Math.round(value)}%</Text>
+        </View>
+      ) : null}
     </View>
   );
 });
@@ -40,22 +90,38 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     width: '100%',
   },
+  slider: {
+    height: 24,
+    zIndex: 3,
+  },
   track: {
-    backgroundColor: colors2024['neutral-line'],
     borderRadius: 1,
     height: 1,
-    left: 0,
+  },
+  trackBase: {
+    backgroundColor: colors2024['neutral-line'],
+    height: 1,
+    left: 6.5,
+    overflow: 'hidden',
     position: 'absolute',
-    right: 0,
-    top: 13,
+    right: 6.5,
+    top: 11.5,
+    zIndex: 1,
+  },
+  activeTrack: {
+    backgroundColor: colors2024['neutral-title-1'],
+    height: 1,
   },
   points: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    left: 0,
+    left: 6.5,
     position: 'absolute',
-    right: 0,
-    top: 10,
+    right: 6.5,
+    top: 8.5,
+    zIndex: 2,
+  },
+  pointPosition: {
+    marginLeft: -3.5,
+    position: 'absolute',
   },
   point: {
     backgroundColor: colors2024['neutral-bg-1'],
@@ -65,15 +131,33 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 7,
     width: 7,
   },
+  activePoint: {
+    borderColor: colors2024['neutral-title-1'],
+  },
   thumb: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderColor: colors2024['neutral-title-1'],
     borderRadius: 6.5,
     borderWidth: 1,
     height: 13,
-    left: 0,
-    position: 'absolute',
-    top: 7,
     width: 13,
+  },
+  tooltip: {
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-title-1'],
+    borderRadius: 4,
+    height: 20,
+    justifyContent: 'center',
+    minWidth: 36,
+    paddingHorizontal: 4,
+    position: 'absolute',
+    top: -18,
+    zIndex: 4,
+  },
+  tooltipText: {
+    color: colors2024['neutral-bg-1'],
+    fontFamily: 'SF Pro',
+    fontSize: 10,
+    lineHeight: 12,
   },
 }));

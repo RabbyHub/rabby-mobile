@@ -6,22 +6,29 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { PerpsProFundingDetailSheet } from '../components/funding/PerpsProFundingDetailSheet';
 import { PerpsProOrderBook } from '../components/orderbook/PerpsProOrderBook';
 import type { PerpsProMarket } from '../model/market';
+import type { PerpsProTradeAmountUnit } from '../model/trade';
 import {
   processPerpsOrderBook,
   type PerpsTickOption,
 } from '../model/orderBook';
 
 export const PerpsProRealtimeOrderBook: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
   enabled: boolean;
+  height?: number;
   market: PerpsProMarket;
   onSelectTickOption: (option: PerpsTickOption) => void;
+  onSelectPrice?: (price: string) => void;
   precision: PerpsBookPrecision | null;
   selectedTickOption: PerpsTickOption | null;
   tickOptions: PerpsTickOption[];
 }> = ({
+  amountUnit = 'quote',
   enabled,
+  height,
   market,
   onSelectTickOption,
+  onSelectPrice,
   precision,
   selectedTickOption,
   tickOptions,
@@ -74,13 +81,16 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   return (
     <>
       <PerpsProOrderBook
+        amountUnit={amountUnit}
         book={processedBook}
         bookStatus={fastL2.status}
         hasBookSnapshot={fastL2.book != null}
+        height={height}
         latestTrade={latestTrade.trade}
         market={market}
         onOpenFunding={() => setFundingDetailOpen(true)}
         onSelectTickOption={onSelectTickOption}
+        onSelectPrice={onSelectPrice}
         selectedTickOption={selectedTickOption}
         serverClock={currentServerClock}
         tickOptions={tickOptions}

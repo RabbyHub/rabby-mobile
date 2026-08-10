@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { AppState, StyleSheet, type AppStateStatus } from 'react-native';
 
 const mockUsePerpsProScene = jest.fn();
 const mockUsePerpsProInfoPanel = jest.fn();
@@ -8,6 +8,7 @@ const mockMarketSelectorPresent = jest.fn();
 const mockOrderBookRender = jest.fn();
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
+const mockKlineProps = jest.fn();
 
 jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
   useActiveAssetSubscription: () => ({
@@ -105,12 +106,26 @@ jest.mock('../components/open-orders/PerpsProOpenOrderCard', () => {
 
 jest.mock('../components/chart/PerpsProKlineSheet', () => {
   const ReactModule = require('react');
-  const { View } = require('react-native');
+  const { Pressable } = require('react-native');
   return {
-    PerpsProKlineSheet: () =>
-      ReactModule.createElement(View, { testID: 'kline-sheet' }),
+    PerpsProKlineSheet: (props: {
+      enabled: boolean;
+      onClose: () => void;
+      preloadEnabled: boolean;
+      visible: boolean;
+    }) => {
+      mockKlineProps(props);
+      return ReactModule.createElement(Pressable, {
+        onPress: props.onClose,
+        testID: 'kline-sheet',
+      });
+    },
   };
 });
+
+jest.mock('../components/common/usePerpsProDismissKeyboard', () => ({
+  usePerpsProDismissKeyboard: () => (action: () => void) => action(),
+}));
 
 jest.mock('../components/header/PerpsProHeader', () => {
   const ReactModule = require('react');
@@ -120,6 +135,10 @@ jest.mock('../components/header/PerpsProHeader', () => {
       ReactModule.createElement(View, { testID: 'pro-header' }),
   };
 });
+
+jest.mock('../components/header/PerpsProAccountSelectorLayer', () => ({
+  PerpsProAccountSelectorLayer: () => null,
+}));
 
 jest.mock('../components/header/usePerpsProHeaderCollapse', () => ({
   usePerpsProHeaderCollapse: () => ({
@@ -183,14 +202,18 @@ jest.mock('../components/market/PerpsProMarketSelector', () => {
   };
 });
 
-jest.mock('../components/trade/PerpsProTradeSkeleton', () => {
+jest.mock('../components/trade/PerpsProTradeForm', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProTradeSkeleton: () =>
-      ReactModule.createElement(View, { testID: 'trade-skeleton' }),
+    PerpsProTradeForm: () =>
+      ReactModule.createElement(View, { testID: 'trade-form' }),
   };
 });
+
+jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
+  PerpsProOrderConfirmationSheet: () => null,
+}));
 
 jest.mock('./PerpsProRealtimeOrderBook', () => {
   const ReactModule = require('react');
@@ -207,6 +230,43 @@ jest.mock('./PerpsProRealtimeOrderBook', () => {
 
 jest.mock('./usePerpsProScene', () => ({
   usePerpsProScene: mockUsePerpsProScene,
+}));
+
+jest.mock('./usePerpsProBboBook', () => ({
+  usePerpsProBboBook: () => ({
+    book: null,
+    prices: { asks1: null, asks5: null, bids1: null, bids5: null },
+    sessionKey: null,
+    status: 'loading',
+  }),
+}));
+
+jest.mock('./usePerpsProTrade', () => ({
+  usePerpsProTrade: ({ market }: { market: unknown }) => ({
+    amountUnit: 'quote',
+    closeReview: jest.fn(),
+    confirmReview: jest.fn(),
+    form: { bboEnabled: false, orderType: 'market' },
+    leverage: 1,
+    marginMode: 'isolated',
+    market,
+    pending: false,
+    review: null,
+    setPrice: jest.fn(),
+    setSkipConfirmation: jest.fn(),
+    skipConfirmation: false,
+  }),
+}));
+
+jest.mock('./usePerpsProLeverageUpdate', () => ({
+  usePerpsProLeverageUpdate: () => ({
+    pending: false,
+    update: jest.fn(async () => true),
+  }),
+}));
+
+jest.mock('./usePerpsProZeroAddressLeverageBaseline', () => ({
+  usePerpsProZeroAddressLeverageBaseline: () => null,
 }));
 
 jest.mock('./usePerpsProInfoPanel', () => ({
@@ -286,7 +346,15 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => ({
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    Object.defineProperty(AppState, 'currentState', {
+      configurable: true,
+      value: 'active',
+    });
     mockUsePerpsProInfoPanel.mockReturnValue(createInfoState());
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('keeps the full skeleton while a ready catalogue resolves its market', () => {
@@ -381,6 +449,81 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(screen.getByTestId('kline-sheet')).toBeTruthy();
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
+  });
+
+  it('prewarms K-line without WS and keeps the same host after close', () => {
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        klineEnabled: true,
+      }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('kline-sheet')).toBeTruthy();
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: false,
+      preloadEnabled: true,
+      visible: false,
+    });
+
+    fireEvent.press(screen.getByTestId('kline-trigger'));
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      visible: true,
+    });
+
+    fireEvent.press(screen.getByTestId('kline-sheet'));
+    expect(screen.getByTestId('kline-sheet')).toBeTruthy();
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      visible: false,
+    });
+
+    fireEvent.press(screen.getByTestId('kline-trigger'));
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ visible: true });
+  });
+
+  it('stops the retained Candle Feed while the app is in background', () => {
+    let onAppStateChange: ((state: AppStateStatus) => void) | undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((event, cb) => {
+      if (event === 'change') onAppStateChange = cb;
+      return { remove: jest.fn() } as never;
+    });
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        klineEnabled: true,
+      }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    fireEvent.press(screen.getByTestId('kline-trigger'));
+
+    act(() => onAppStateChange?.('background'));
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: false,
+      preloadEnabled: false,
+    });
+
+    act(() => onAppStateChange?.('active'));
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      preloadEnabled: true,
+    });
   });
 
   it('closes the local funding overlay when the active account changes', () => {

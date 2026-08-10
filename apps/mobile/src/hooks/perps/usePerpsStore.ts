@@ -27,6 +27,7 @@ import {
   HYPE_EVM_BRIDGE_ADDRESS_MAP,
   HYPE_CORE_DEPOSIT_WALLET,
 } from '@/constant/perps';
+import type { PerpsMarketMarginMode } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 import {
   formatAllDexsClearinghouseState,
@@ -68,7 +69,7 @@ let perpsCategoryCache: PerpTopTokenCategory[] = [];
 
 // Meta-only marketData snapshot: ticker fields are blanked (stale prices must
 // never render as current). Bump the version on MarketData shape changes.
-const MARKET_DATA_CACHE_VERSION = 2;
+const MARKET_DATA_CACHE_VERSION = 3;
 const MARKET_DATA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const EMPTY_MARKET_TICKER = {
   dayBaseVlm: '0',
@@ -97,6 +98,7 @@ const toCachedMarketData = (item: MarketData): MarketData => ({
   maintenanceMarginTiers: item.maintenanceMarginTiers,
   szDecimals: item.szDecimals,
   pxDecimals: item.pxDecimals,
+  marginMode: item.marginMode,
   onlyIsolated: item.onlyIsolated,
   dexId: item.dexId,
   category: item.category,
@@ -143,6 +145,7 @@ export interface MarketData {
   maintenanceMarginTiers: PerpsMaintenanceMarginTier[];
   szDecimals: number;
   pxDecimals: number;
+  marginMode?: PerpsMarketMarginMode;
   onlyIsolated?: boolean;
   dayBaseVlm: string;
   dayNtlVlm: string;

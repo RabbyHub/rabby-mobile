@@ -235,3 +235,27 @@ export const calculateLiquidationDistance = ({
       : liquidation.minus(mark).dividedBy(mark);
   return distance.toString();
 };
+
+export type PerpsPositionSignedLiquidationDistance = {
+  priceGap: string;
+  ratio: string;
+};
+
+export const calculateSignedLiquidationDistance = ({
+  liquidationPrice,
+  markPrice,
+}: {
+  liquidationPrice: string | null;
+  markPrice: string | null;
+}): PerpsPositionSignedLiquidationDistance | null => {
+  const mark = validDecimal(markPrice);
+  const liquidation = validDecimal(liquidationPrice);
+  if (!mark || !liquidation || mark.lte(0) || liquidation.lte(0)) {
+    return null;
+  }
+  const priceGap = liquidation.minus(mark);
+  return {
+    priceGap: priceGap.toString(),
+    ratio: priceGap.dividedBy(mark).toString(),
+  };
+};

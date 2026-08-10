@@ -5,22 +5,18 @@ import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLates
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
-import {
-  LayoutChangeEvent,
-  Pressable,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { Pressable, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsServerClockSample } from '../../model/funding';
 import { PERPS_PRO_MAIN_COLUMN_HEIGHT } from '../../model/layout';
 import type { PerpsProMarket } from '../../model/market';
+import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import {
   calculatePerpsBuyRatio,
   getNextPerpsOrderBookMode,
   getPerpsOrderBookDisplayState,
-  getPerpsOrderBookRowCount,
+  getPerpsOrderBookLayout,
   getVisiblePerpsOrderBookMaxTotal,
   selectVisiblePerpsOrderBookRows,
   type PerpsOrderBookLevel,
@@ -32,7 +28,6 @@ import { formatPerpsProPrice } from '../../utils/format';
 import { PerpsProFundingSummary } from '../funding/PerpsProFundingSummary';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import {
-  PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
   PerpsProOrderBookModeIcon,
   PerpsProOrderBookRow,
 } from './PerpsProOrderBookPrimitives';
@@ -42,26 +37,30 @@ import {
 } from './PerpsProOrderBookSkeleton';
 import { PerpsProPrecisionSheet } from './PerpsProPrecisionSheet';
 
-const ORDER_BOOK_BODY_HEIGHT = 296;
-
 export const PerpsProOrderBook: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
   book: ProcessedPerpsOrderBook;
   bookStatus: PerpsRealtimeStatus;
   hasBookSnapshot: boolean;
+  height?: number;
   latestTrade: PerpsLatestTrade | null;
   market: PerpsProMarket | null;
   onOpenFunding: () => void;
+  onSelectPrice?: (price: string) => void;
   onSelectTickOption: (option: PerpsTickOption) => void;
   selectedTickOption: PerpsTickOption | null;
   serverClock: PerpsServerClockSample | null;
   tickOptions: PerpsTickOption[];
 }> = ({
+  amountUnit = 'quote',
   book,
   bookStatus,
   hasBookSnapshot,
+  height = PERPS_PRO_MAIN_COLUMN_HEIGHT,
   latestTrade,
   market,
   onOpenFunding,
+  onSelectPrice,
   onSelectTickOption,
   selectedTickOption,
   serverClock,
@@ -70,13 +69,12 @@ export const PerpsProOrderBook: React.FC<{
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [mode, setMode] = useState<PerpsOrderBookMode>('both');
-  const [bodyHeight, setBodyHeight] = useState(ORDER_BOOK_BODY_HEIGHT);
   const [precisionOpen, setPrecisionOpen] = useState(false);
-  const rowCount = getPerpsOrderBookRowCount({
-    containerHeight: bodyHeight,
+  const layout = getPerpsOrderBookLayout({
+    containerHeight: height,
     mode,
-    rowHeight: PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
   });
+  const rowCount = layout.rowCount;
   const visible = useMemo(
     () =>
       selectVisiblePerpsOrderBookRows({
@@ -111,135 +109,193 @@ export const PerpsProOrderBook: React.FC<{
     status: bookStatus,
   });
 
-  const updateBodyHeight = (event: LayoutChangeEvent) => {
-    const nextHeight = event.nativeEvent.layout.height;
-    if (Number.isFinite(nextHeight) && Math.abs(nextHeight - bodyHeight) > 1) {
-      setBodyHeight(nextHeight);
-    }
-  };
-
   const renderRows = (side: 'ask' | 'bid', rows: PerpsOrderBookLevel[]) =>
     Array.from({ length: rowCount }, (_, index) => (
       <PerpsProOrderBookRow
+        amountUnit={amountUnit}
         key={`${side}:${rows[index]?.price ?? index}`}
         level={rows[index]}
         maxTotal={maxVisibleTotal}
+        onSelectPrice={onSelectPrice}
         priceDecimals={orderBookPriceDecimals}
         side={side}
+        szDecimals={market?.marketData.szDecimals}
       />
     ));
 
   return (
-    <View style={styles.container} testID="perps-pro-order-book-column">
+    <View
+      style={[styles.container, { height }]}
+      testID="perps-pro-order-book-column">
       <PerpsProFundingSummary
         market={market}
         onPress={onOpenFunding}
         serverClock={serverClock}
       />
-      <View
-        style={styles.columnHeader}
-        testID="perps-pro-order-book-column-header">
-        <Text style={styles.columnLabel}>
-          {t('page.perps.pro.orderBook.price')}
-          {'\n'}({market?.quoteAsset ?? '-'})
-        </Text>
-        <Text style={[styles.columnLabel, styles.columnLabelRight]}>
-          {t('page.perps.pro.orderBook.amount')}
-          {'\n'}({market?.quoteAsset ?? '-'})
-        </Text>
-      </View>
-      <View
-        onLayout={updateBodyHeight}
-        style={styles.bookBody}
-        testID="perps-pro-order-book">
-        {displayState === 'skeleton' ? (
-          <PerpsProOrderBookBodySkeleton mode={mode} rowCount={rowCount} />
-        ) : displayState === 'content' ? (
-          <>
-            {mode !== 'bids' ? renderRows('ask', visible.asks) : null}
-            {mode === 'both' ? (
-              <View
-                style={styles.midPrice}
-                testID="perps-pro-order-book-mid-price">
-                <Text
-                  numberOfLines={1}
-                  style={
-                    latestTrade?.side === 'sell'
-                      ? styles.latestSell
-                      : styles.latestBuy
-                  }>
-                  {formatPerpsProPrice(latestTrade?.price, marketPriceDecimals)}
-                </Text>
-                <PerpsProDottedUnderlineText
-                  containerStyle={styles.markPriceUnderline}
-                  style={styles.markPrice}>
-                  {formatPerpsProPrice(
-                    market?.marketData.markPx,
-                    marketPriceDecimals,
-                  )}
-                </PerpsProDottedUnderlineText>
-              </View>
-            ) : null}
-            {mode !== 'asks' ? renderRows('bid', visible.bids) : null}
-          </>
-        ) : (
-          <View pointerEvents="none" style={styles.statusOverlay}>
-            <Text style={styles.statusText}>
-              {t('page.perps.pro.common.unavailable')}
-            </Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.ratioRow}>
-        {displayState === 'skeleton' ? (
-          <PerpsProOrderBookRatioSkeleton />
-        ) : (
-          <>
-            <Text style={styles.buyRatio}>{buyRatio.buy.toFixed(2)}%</Text>
-            <View style={styles.ratioTrack}>
-              {hasRatio ? (
-                <>
-                  <View style={[styles.buyRatioTrack, buyRatioTrackStyle]} />
-                  <View style={[styles.sellRatioTrack, sellRatioTrackStyle]} />
-                </>
-              ) : (
-                <View style={styles.emptyRatioTrack} />
-              )}
-            </View>
-            <Text style={styles.sellRatio}>{buyRatio.sell.toFixed(2)}%</Text>
-          </>
-        )}
-      </View>
-      <View style={styles.controls}>
-        <Pressable
-          accessibilityLabel={t('page.perps.pro.orderBook.priceAggregation')}
-          accessibilityRole="button"
-          disabled={!selectedTickOption || tickOptions.length === 0}
-          onPress={() => setPrecisionOpen(true)}
-          style={styles.precisionTrigger}>
-          <Text numberOfLines={1} style={styles.precisionTriggerText}>
-            {selectedTickOption
-              ? formatPerpsProPrice(
-                  selectedTickOption.displayPrice,
-                  selectedTickOption.priceDecimals,
-                )
-              : '-'}
+      <View style={styles.bookContent}>
+        <View
+          style={styles.columnHeader}
+          testID="perps-pro-order-book-column-header">
+          <Text style={styles.columnLabel}>
+            {t('page.perps.pro.orderBook.price')}
+            {'\n'}({market?.quoteAsset ?? '-'})
           </Text>
-          <View style={styles.precisionCaret}>
-            <RcPrecisionCaret
-              color={colors2024['neutral-foot']}
-              height={6}
-              width={8}
-            />
-          </View>
-        </Pressable>
-        <Pressable
-          accessibilityLabel={modeLabels[mode]}
-          accessibilityRole="button"
-          hitSlop={5}
-          onPress={() => setMode(getNextPerpsOrderBookMode(mode))}>
-          <PerpsProOrderBookModeIcon mode={mode} />
-        </Pressable>
+          <Text style={[styles.columnLabel, styles.columnLabelRight]}>
+            {t('page.perps.pro.orderBook.amount')}
+            {'\n'}(
+            {amountUnit === 'base'
+              ? market?.displayBase ?? '-'
+              : market?.quoteAsset ?? '-'}
+            )
+          </Text>
+        </View>
+        <View
+          style={[styles.bookBody, { height: layout.bodyHeight }]}
+          testID="perps-pro-order-book">
+          {displayState === 'skeleton' ? (
+            <PerpsProOrderBookBodySkeleton mode={mode} rowCount={rowCount} />
+          ) : displayState === 'content' ? (
+            <View style={styles.bookSections}>
+              {mode !== 'bids' ? (
+                <View>{renderRows('ask', visible.asks)}</View>
+              ) : null}
+              {mode !== 'asks' ? (
+                <View
+                  style={[styles.midPrice, { height: layout.middleHeight }]}
+                  testID="perps-pro-order-book-mid-price">
+                  <Pressable
+                    accessibilityRole={
+                      latestTrade && onSelectPrice ? 'button' : undefined
+                    }
+                    disabled={!latestTrade || !onSelectPrice}
+                    onPress={() =>
+                      latestTrade && onSelectPrice?.(latestTrade.price)
+                    }
+                    testID="perps-pro-order-book-latest-price">
+                    <Text
+                      numberOfLines={1}
+                      style={
+                        latestTrade?.side === 'sell'
+                          ? styles.latestSell
+                          : styles.latestBuy
+                      }>
+                      {formatPerpsProPrice(
+                        latestTrade?.price,
+                        marketPriceDecimals,
+                      )}
+                    </Text>
+                  </Pressable>
+                  <PerpsProDottedUnderlineText
+                    containerStyle={styles.markPriceUnderline}
+                    style={styles.markPrice}>
+                    {formatPerpsProPrice(
+                      market?.marketData.markPx,
+                      marketPriceDecimals,
+                    )}
+                  </PerpsProDottedUnderlineText>
+                </View>
+              ) : null}
+              {mode !== 'asks' ? (
+                <View>{renderRows('bid', visible.bids)}</View>
+              ) : null}
+              {mode === 'asks' ? (
+                <View
+                  style={[styles.midPrice, { height: layout.middleHeight }]}
+                  testID="perps-pro-order-book-mid-price">
+                  <Pressable
+                    accessibilityRole={
+                      latestTrade && onSelectPrice ? 'button' : undefined
+                    }
+                    disabled={!latestTrade || !onSelectPrice}
+                    onPress={() =>
+                      latestTrade && onSelectPrice?.(latestTrade.price)
+                    }
+                    testID="perps-pro-order-book-latest-price">
+                    <Text
+                      numberOfLines={1}
+                      style={
+                        latestTrade?.side === 'sell'
+                          ? styles.latestSell
+                          : styles.latestBuy
+                      }>
+                      {formatPerpsProPrice(
+                        latestTrade?.price,
+                        marketPriceDecimals,
+                      )}
+                    </Text>
+                  </Pressable>
+                  <PerpsProDottedUnderlineText
+                    containerStyle={styles.markPriceUnderline}
+                    style={styles.markPrice}>
+                    {formatPerpsProPrice(
+                      market?.marketData.markPx,
+                      marketPriceDecimals,
+                    )}
+                  </PerpsProDottedUnderlineText>
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            <View pointerEvents="none" style={styles.statusOverlay}>
+              <Text style={styles.statusText}>
+                {t('page.perps.pro.common.unavailable')}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.ratioRow}>
+          {displayState === 'skeleton' ? (
+            <PerpsProOrderBookRatioSkeleton />
+          ) : (
+            <>
+              <Text style={styles.buyRatio}>{buyRatio.buy.toFixed(2)}%</Text>
+              <View style={styles.ratioTrack}>
+                {hasRatio ? (
+                  <>
+                    <View style={[styles.buyRatioTrack, buyRatioTrackStyle]} />
+                    <View
+                      style={[styles.sellRatioTrack, sellRatioTrackStyle]}
+                    />
+                  </>
+                ) : (
+                  <View style={styles.emptyRatioTrack} />
+                )}
+              </View>
+              <Text style={styles.sellRatio}>{buyRatio.sell.toFixed(2)}%</Text>
+            </>
+          )}
+        </View>
+        <View style={styles.controls}>
+          <Pressable
+            accessibilityLabel={t('page.perps.pro.orderBook.priceAggregation')}
+            accessibilityRole="button"
+            disabled={!selectedTickOption || tickOptions.length === 0}
+            onPress={() => setPrecisionOpen(true)}
+            style={styles.precisionTrigger}>
+            <Text numberOfLines={1} style={styles.precisionTriggerText}>
+              {selectedTickOption
+                ? formatPerpsProPrice(
+                    selectedTickOption.displayPrice,
+                    selectedTickOption.priceDecimals,
+                  )
+                : '-'}
+            </Text>
+            <View style={styles.precisionCaret}>
+              <RcPrecisionCaret
+                color={colors2024['neutral-foot']}
+                height={6}
+                width={8}
+              />
+            </View>
+          </Pressable>
+          <Pressable
+            accessibilityLabel={modeLabels[mode]}
+            accessibilityRole="button"
+            hitSlop={5}
+            onPress={() => setMode(getNextPerpsOrderBookMode(mode))}>
+            <PerpsProOrderBookModeIcon mode={mode} />
+          </Pressable>
+        </View>
       </View>
       {precisionOpen ? (
         <PerpsProPrecisionSheet
@@ -256,8 +312,11 @@ export const PerpsProOrderBook: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     gap: 8,
-    height: PERPS_PRO_MAIN_COLUMN_HEIGHT,
     minWidth: 0,
+  },
+  bookContent: {
+    flex: 1,
+    gap: 4,
   },
   columnHeader: {
     alignItems: 'center',
@@ -276,14 +335,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'right',
   },
   bookBody: {
-    height: ORDER_BOOK_BODY_HEIGHT,
     position: 'relative',
+  },
+  bookSections: {
+    gap: 4,
   },
   midPrice: {
     gap: 2,
-    height: 48,
     justifyContent: 'center',
-    marginVertical: 4,
   },
   latestBuy: {
     color: colors2024['green-default'],

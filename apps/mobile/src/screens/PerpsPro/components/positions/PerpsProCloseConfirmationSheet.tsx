@@ -20,6 +20,10 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
+import {
+  resolvePerpsProDisplayAmount,
+  type PerpsProTradeAmountUnit,
+} from '../../model/trade';
 import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
@@ -27,6 +31,7 @@ import type {
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 
 export const PerpsProCloseConfirmationSheet: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
   draft: PerpsProCloseDraft;
   market: PerpsProCloseMarketSnapshot;
   onClose: () => void;
@@ -39,6 +44,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
 }> = React.memo(
   ({
     draft,
+    amountUnit = 'quote',
     market,
     onClose,
     onConfirm,
@@ -61,6 +67,13 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
     const isSell = position.direction === 'long';
     const price =
       draft.orderType === 'market' ? market.markPrice : draft.limitPrice;
+    const displayAmount = resolvePerpsProDisplayAmount({
+      amountUnit,
+      baseAmount: draft.size,
+      price,
+    });
+    const displayUnit =
+      amountUnit === 'base' ? market.displayBase : market.quoteAsset;
 
     return (
       <AppBottomSheetModal
@@ -103,7 +116,11 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                   {t('page.perps.pro.positions.amount')}
                 </Text>
                 <Text style={styles.detailValue}>
-                  {formatPerpsProDecimal(draft.size, market.szDecimals)}
+                  {formatPerpsProDecimal(
+                    displayAmount,
+                    amountUnit === 'base' ? market.szDecimals : 2,
+                  )}{' '}
+                  {displayUnit}
                 </Text>
               </View>
             </View>

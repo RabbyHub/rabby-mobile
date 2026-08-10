@@ -6,20 +6,24 @@ import { View } from 'react-native';
 
 export const PerpsProSlider: React.FC<{
   disabled?: boolean;
+  hideMinimumPoint?: boolean;
   maximumValue?: number;
   minimumValue?: number;
   onValueChange?: (value: number) => void;
   pointCount?: number;
   step?: number;
+  tone?: 'brand' | 'neutral';
   value: number;
 }> = React.memo(
   ({
     disabled = false,
+    hideMinimumPoint = false,
     maximumValue = 100,
     minimumValue = 0,
     onValueChange,
     pointCount = 7,
     step = 1,
+    tone = 'brand',
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
@@ -28,16 +32,25 @@ export const PerpsProSlider: React.FC<{
         Array.from({ length: Math.max(2, pointCount) }, (_, index) => index),
       [pointCount],
     );
+    const neutralProgress = useMemo(() => {
+      const range = maximumValue - minimumValue;
+      if (!Number.isFinite(range) || range <= 0) return 0;
+      return Math.max(0, Math.min(1, (value - minimumValue) / range));
+    }, [maximumValue, minimumValue, value]);
 
     return (
       <View style={styles.container}>
         <Slider
           allowTouchTrack={!disabled}
           disabled={disabled}
-          maximumTrackTintColor={colors2024['neutral-line']}
+          maximumTrackTintColor={
+            tone === 'neutral' ? 'transparent' : colors2024['neutral-line']
+          }
           maximumValue={maximumValue}
           minimumTrackTintColor={
-            disabled
+            tone === 'neutral'
+              ? 'transparent'
+              : disabled
               ? colors2024['neutral-secondary']
               : colors2024['brand-default']
           }
@@ -45,14 +58,61 @@ export const PerpsProSlider: React.FC<{
           onValueChange={onValueChange}
           step={step}
           style={styles.slider}
-          thumbStyle={disabled ? styles.disabledThumb : styles.thumb}
+          thumbStyle={
+            tone === 'neutral'
+              ? styles.invisibleThumb
+              : disabled
+              ? styles.disabledThumb
+              : styles.thumb
+          }
           trackStyle={styles.track}
           value={value}
         />
-        <View pointerEvents="none" style={styles.points}>
-          {points.map(point => (
-            <View key={point} style={styles.point} />
-          ))}
+        {tone === 'neutral' ? (
+          <>
+            <View
+              pointerEvents="none"
+              style={[
+                styles.neutralTrack,
+                disabled && styles.neutralTrackDisabled,
+              ]}
+              testID="perps-pro-slider-neutral-track"
+            />
+            <View
+              pointerEvents="none"
+              style={[
+                styles.neutralThumb,
+                disabled && styles.neutralThumbDisabled,
+                { left: `${neutralProgress * 100}%`, marginLeft: -6.5 },
+              ]}
+              testID="perps-pro-slider-neutral-thumb"
+            />
+          </>
+        ) : null}
+        <View
+          pointerEvents="none"
+          style={[styles.points, tone === 'neutral' && styles.neutralPoints]}>
+          {points.map((point, index) =>
+            hideMinimumPoint && index === 0 ? null : (
+              <View
+                key={point}
+                style={[
+                  styles.point,
+                  tone === 'neutral' && styles.neutralPoint,
+                  tone === 'neutral' && {
+                    left: `${(index * 100) / (points.length - 1)}%`,
+                    marginLeft: -3.5,
+                    position: 'absolute',
+                  },
+                ]}
+                testID={
+                  tone === 'neutral'
+                    ? 'perps-pro-slider-neutral-point'
+                    : undefined
+                }
+              />
+            ),
+          )}
         </View>
       </View>
     );
@@ -91,6 +151,36 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 13,
     width: 13,
   },
+  neutralThumb: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderColor: colors2024['neutral-title-1'],
+    borderRadius: 7,
+    borderWidth: 1,
+    height: 13,
+    position: 'absolute',
+    width: 13,
+    zIndex: 3,
+  },
+  neutralThumbDisabled: {
+    borderColor: colors2024['neutral-secondary'],
+  },
+  invisibleThumb: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    height: 13,
+    width: 13,
+  },
+  neutralTrack: {
+    backgroundColor: colors2024['neutral-title-1'],
+    height: 1,
+    left: 6.5,
+    position: 'absolute',
+    right: 6.5,
+    zIndex: 1,
+  },
+  neutralTrackDisabled: {
+    backgroundColor: colors2024['neutral-secondary'],
+  },
   points: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -107,5 +197,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     height: 4,
     width: 4,
+  },
+  neutralPoint: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderColor: colors2024['neutral-title-1'],
+    borderRadius: 3.5,
+    height: 7,
+    width: 7,
+  },
+  neutralPoints: {
+    left: 6.5,
+    right: 6.5,
   },
 }));

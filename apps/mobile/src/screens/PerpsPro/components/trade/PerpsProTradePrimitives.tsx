@@ -1,20 +1,28 @@
 import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
+import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
+import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, type ViewStyle } from 'react-native';
+import { Pressable, View, type ViewStyle } from 'react-native';
 
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 
 export const PerpsProTradeSelect: React.FC<{
   label: string;
+  disabled?: boolean;
+  onPress?: () => void;
   showCaret?: boolean;
   style?: ViewStyle;
-}> = React.memo(({ label, showCaret = true, style }) => {
+}> = React.memo(({ disabled, label, onPress, showCaret = true, style }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   return (
-    <View style={[styles.select, style]}>
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.select, disabled ? styles.disabled : null, style]}>
       <Text numberOfLines={1} style={styles.selectText}>
         {label}
       </Text>
@@ -27,7 +35,7 @@ export const PerpsProTradeSelect: React.FC<{
           />
         </View>
       ) : null}
-    </View>
+    </Pressable>
   );
 });
 
@@ -36,62 +44,102 @@ PerpsProTradeSelect.displayName = 'PerpsProTradeSelect';
 export const PerpsProTradeSummaryRow: React.FC<{
   dottedLabel?: boolean;
   label: string;
+  onPressValue?: () => void;
   trailing?: React.ReactNode;
   value: string;
-}> = React.memo(({ dottedLabel = false, label, trailing, value }) => {
-  const { styles } = useTheme2024({ getStyle });
-  return (
-    <View style={styles.summaryRow}>
-      {dottedLabel ? (
-        <PerpsProDottedUnderlineText style={styles.summaryLabel}>
-          {label}
-        </PerpsProDottedUnderlineText>
-      ) : (
-        <Text numberOfLines={1} style={styles.summaryLabel}>
-          {label}
-        </Text>
-      )}
-      <View style={styles.summaryValueGroup}>
-        <Text numberOfLines={1} style={styles.summaryValue}>
-          {value}
-        </Text>
-        {trailing}
-      </View>
-    </View>
-  );
-});
-
-PerpsProTradeSummaryRow.displayName = 'PerpsProTradeSummaryRow';
-
-export const PerpsProTradeCheckbox: React.FC<{ label: string }> = React.memo(
-  ({ label }) => {
+  valueTestID?: string;
+}> = React.memo(
+  ({
+    dottedLabel = false,
+    label,
+    onPressValue,
+    trailing,
+    value,
+    valueTestID,
+  }) => {
     const { styles } = useTheme2024({ getStyle });
+    const ValueContainer = onPressValue ? Pressable : View;
     return (
-      <View style={styles.checkboxRow}>
-        <View style={styles.checkbox} />
-        <PerpsProDottedUnderlineText style={styles.checkboxLabel}>
-          {label}
-        </PerpsProDottedUnderlineText>
+      <View style={styles.summaryRow}>
+        {dottedLabel ? (
+          <PerpsProDottedUnderlineText style={styles.summaryLabel}>
+            {label}
+          </PerpsProDottedUnderlineText>
+        ) : (
+          <Text numberOfLines={1} style={styles.summaryLabel}>
+            {label}
+          </Text>
+        )}
+        <ValueContainer
+          accessibilityRole={onPressValue ? 'button' : undefined}
+          hitSlop={onPressValue ? 8 : undefined}
+          onPress={onPressValue}
+          style={styles.summaryValueGroup}
+          testID={valueTestID}>
+          <Text numberOfLines={1} style={styles.summaryValue}>
+            {value}
+          </Text>
+          {trailing}
+        </ValueContainer>
       </View>
     );
   },
 );
 
+PerpsProTradeSummaryRow.displayName = 'PerpsProTradeSummaryRow';
+
+export const PerpsProTradeCheckbox: React.FC<{
+  checked?: boolean;
+  disabled?: boolean;
+  label: string;
+  onPress?: () => void;
+}> = React.memo(({ checked = false, disabled, label, onPress }) => {
+  const { colors2024, styles } = useTheme2024({ getStyle });
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.checkboxRow, disabled ? styles.disabled : null]}>
+      {checked ? (
+        <RcIconCheckboxFilled height={16} width={16} />
+      ) : (
+        <RcIconCheckboxEmpty
+          color={colors2024['neutral-secondary']}
+          height={16}
+          width={16}
+        />
+      )}
+      <PerpsProDottedUnderlineText style={styles.checkboxLabel}>
+        {label}
+      </PerpsProDottedUnderlineText>
+    </Pressable>
+  );
+});
+
 PerpsProTradeCheckbox.displayName = 'PerpsProTradeCheckbox';
 
 export const PerpsProTradeButton: React.FC<{
   label: string;
+  disabled?: boolean;
+  onPress?: () => void;
   side: 'buy' | 'sell';
-}> = React.memo(({ label, side }) => {
+}> = React.memo(({ disabled, label, onPress, side }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
-    <View
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={onPress}
       style={[
         styles.tradeButton,
         side === 'buy' ? styles.buyButton : styles.sellButton,
-      ]}>
+        disabled ? styles.disabled : null,
+      ]}
+      testID={`perps-pro-trade-button-${side}`}>
       <Text style={styles.tradeButtonText}>{label}</Text>
-    </View>
+    </Pressable>
   );
 });
 
@@ -120,6 +168,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   caret: {
     marginLeft: 4,
     transform: [{ rotate: '180deg' }],
+  },
+  disabled: {
+    opacity: 0.5,
   },
   summaryRow: {
     alignItems: 'center',
@@ -158,13 +209,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 4,
     height: 20,
-  },
-  checkbox: {
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 4,
-    borderWidth: 1,
-    height: 20,
-    width: 20,
   },
   checkboxLabel: {
     color: colors2024['neutral-body'],

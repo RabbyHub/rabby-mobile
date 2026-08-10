@@ -89,6 +89,7 @@ describe('PerpsProOpenOrderCard', () => {
     const onCancel = jest.fn();
     render(
       <PerpsProOpenOrderCard
+        amountUnit="base"
         cancelPending={false}
         onCancel={onCancel}
         order={order()}
@@ -199,6 +200,20 @@ describe('PerpsProOpenOrderCard', () => {
     expect(
       screen.queryByTestId('perps-pro-order-progress-conditional:BTC:2'),
     ).toBeNull();
+  });
+
+  it('uses the shared quote unit for Basic Filled and Amount', () => {
+    render(
+      <PerpsProOpenOrderCard
+        amountUnit="quote"
+        cancelPending={false}
+        onCancel={jest.fn()}
+        order={order()}
+      />,
+    );
+
+    expect(screen.getByText('Filled / Amount (USDC)')).toBeTruthy();
+    expect(screen.getByText('100.00 / 200.00')).toBeTruthy();
   });
 
   it('keeps integer text separate from the unrounded sell progress width', () => {

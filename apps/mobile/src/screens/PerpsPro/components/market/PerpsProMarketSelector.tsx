@@ -3,7 +3,6 @@ import RcSortArrowUp from '@/assets2024/icons/perps/PerpsProSortArrowUp.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { NextSearchBar } from '@/components2024/SearchBar';
 import {
   addFavoriteMarket,
   perpsStore,
@@ -23,7 +22,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Pressable, useWindowDimensions, View } from 'react-native';
+import { Keyboard, Pressable, useWindowDimensions, View } from 'react-native';
 import { ScrollView as GestureHandlerScrollView } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,6 +50,15 @@ import {
   PerpsProMarketList,
   type PerpsProMarketListHandle,
 } from './PerpsProMarketList';
+import {
+  PerpsProMarketSearchBar,
+  type PerpsProMarketSearchBarHandle,
+} from './PerpsProMarketSearchBar';
+import {
+  PerpsProMarketSelectorDismissProvider,
+  PerpsProMarketSelectorGestureContainer,
+  usePerpsProMarketSelectorDismiss,
+} from './usePerpsProMarketSelectorDismiss';
 
 const PerpsProSortIcon: React.FC<{
   active: boolean;
@@ -119,8 +127,10 @@ const PerpsProMarketSelectorComponent = forwardRef<
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const listRef = useRef<PerpsProMarketListHandle>(null);
+  const searchRef = useRef<PerpsProMarketSearchBarHandle>(null);
   const projectionRef = useRef(EMPTY_PERPS_PRO_MARKET_SELECTOR_PROJECTION);
   const [query, setQuery] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   const [activeTab, setActiveTab] = useState<PerpsProMarketTab>('all');
   const [sort, setSort] = useState(() => {
     const initialSort = getPerpsProMarketSession();
@@ -147,17 +157,37 @@ const PerpsProMarketSelectorComponent = forwardRef<
       buildVisiblePerpsProCategoriesFromIds(categories, projection.categoryIds),
     [categories, projection.categoryIds],
   );
+  const favoriteSet = useMemo(
+    () => new Set(favoriteMarkets.map(item => item.toUpperCase())),
+    [favoriteMarkets],
+  );
+  const hasVisibleFavorites = useMemo(() => {
+    for (const record of projection.recordsByKey.values()) {
+      if (favoriteSet.has(record.canonicalCoin.toUpperCase())) {
+        return true;
+      }
+    }
+    return false;
+  }, [favoriteSet, projection.recordsByKey]);
   const tabs = useMemo(
     () => [
-      {
-        id: 'favorites',
-        label: t('page.perps.pro.marketSelector.favorites'),
-      },
+      ...(hasVisibleFavorites
+        ? [
+            {
+              id: 'favorites',
+              label: t('page.perps.pro.marketSelector.favorites'),
+            },
+          ]
+        : []),
       { id: 'all', label: t('page.perps.pro.marketSelector.all') },
       ...visibleCategories,
     ],
-    [t, visibleCategories],
+    [hasVisibleFavorites, t, visibleCategories],
   );
+  const validTabIds = useMemo(() => new Set(tabs.map(tab => tab.id)), [tabs]);
+  const resolvedActiveTab = validTabIds.has(activeTab) ? activeTab : 'all';
+  const isSearchMode = inputFocused || !!query.trim();
+  const effectiveTab = isSearchMode ? 'all' : resolvedActiveTab;
   const visibleSlotOrders = useMemo(
     () =>
       buildPerpsProMarketSlotOrders(
@@ -165,12 +195,12 @@ const PerpsProMarketSelectorComponent = forwardRef<
           orders: projection.orders,
           recordsByKey: projection.recordsByKey,
         },
-        activeTab,
+        effectiveTab,
         favoriteMarkets,
         query,
       ),
     [
-      activeTab,
+      effectiveTab,
       favoriteMarkets,
       projection.orders,
       projection.recordsByKey,
@@ -178,35 +208,58 @@ const PerpsProMarketSelectorComponent = forwardRef<
     ],
   );
   const visibleSlots = visibleSlotOrders[sort.field][sort.direction];
-  const favoriteSet = useMemo(
-    () => new Set(favoriteMarkets.map(item => item.toUpperCase())),
-    [favoriteMarkets],
-  );
+  const dismissSelector = useCallback(() => {
+    Keyboard.dismiss();
+    modalRef.current?.dismiss();
+  }, []);
+  const { markDismissed, markPresent, stableWindowHeight } =
+    usePerpsProMarketSelectorDismiss({
+      dismiss: dismissSelector,
+      windowHeight: height,
+    });
   const snapPoint = getPerpsProMarketSelectorSnapPoint({
     topInset: insets.top,
-    windowHeight: height,
+    windowHeight: stableWindowHeight,
   });
+  const backdropProps = useMemo(
+    () => ({ onPress: Keyboard.dismiss, pressBehavior: 'close' as const }),
+    [],
+  );
+
+  useEffect(() => {
+    if (resolvedActiveTab !== activeTab) {
+      setActiveTab(resolvedActiveTab);
+    }
+  }, [activeTab, resolvedActiveTab]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       listRef.current?.scrollToTopIfNeeded();
     });
     return () => cancelAnimationFrame(frame);
-  }, [activeTab, query, sort.direction, sort.field]);
+  }, [effectiveTab, query, sort.direction, sort.field]);
 
   useEffect(() => {
     setPerpsProSessionSort(sort.field, sort.direction);
   }, [sort.direction, sort.field]);
 
   const present = useCallback(() => {
-    modalRef.current?.present();
-  }, []);
+    if (!modalRef.current) {
+      return;
+    }
+    markPresent();
+    modalRef.current.present();
+  }, [markPresent]);
   useImperativeHandle(ref, () => ({ present }), [present]);
   const handleDismiss = useCallback(() => {
+    markDismissed();
+    Keyboard.dismiss();
+    searchRef.current?.blur();
     setQuery('');
+    setInputFocused(false);
     setActiveTab('all');
     onClose?.();
-  }, [onClose]);
+  }, [markDismissed, onClose]);
   const selectSort = useCallback((field: 'name' | 'volume') => {
     setSort(current =>
       getNextPerpsProSort(current.field, current.direction, field),
@@ -223,9 +276,9 @@ const PerpsProMarketSelectorComponent = forwardRef<
         return;
       }
       onSelect(market);
-      modalRef.current?.dismiss();
+      dismissSelector();
     },
-    [onSelect],
+    [dismissSelector, onSelect],
   );
   const toggleFavorite = useCallback((marketKey: string) => {
     const market = resolvePerpsProMarketFromLatestData(
@@ -247,102 +300,116 @@ const PerpsProMarketSelectorComponent = forwardRef<
     }
   }, []);
   return (
-    <AppBottomSheetModal
-      enableContentPanningGesture={false}
-      enableDynamicSizing={false}
-      onDismiss={handleDismiss}
-      ref={modalRef}
-      snapPoints={[snapPoint]}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: isLight ? 'bg0' : 'bg1',
-      })}>
-      <View style={styles.sheet}>
-        <NextSearchBar
-          as="BottomSheetTextInput"
-          noCancel
-          onChangeText={setQuery}
-          placeholder={t('page.perps.pro.marketSelector.search')}
-          style={styles.search}
-          value={query}
-        />
-        <GestureHandlerScrollView
-          contentContainerStyle={styles.tabsContent}
-          horizontal
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabs}>
-          {tabs.map(tab => {
-            const active = tab.id === activeTab;
-            return (
-              <Pressable
-                key={tab.id}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                onPress={() => setActiveTab(tab.id)}
-                style={styles.tab}>
-                <Text style={active ? styles.activeTabText : styles.tabText}>
-                  {tab.label}
-                </Text>
-                {active ? <View style={styles.activeTabIndicator} /> : null}
-              </Pressable>
-            );
-          })}
-        </GestureHandlerScrollView>
-        <View
-          style={styles.columnHeader}
-          testID="perps-pro-market-column-header">
-          <View style={styles.sortGroup}>
-            <BottomSheetTouchableOpacity
-              activeOpacity={1}
-              accessibilityLabel={t('page.perps.pro.marketSelector.name')}
-              accessibilityRole="button"
-              onPress={() => selectSort('name')}
-              style={styles.sortControl}
-              testID="perps-pro-market-sort-name">
-              <View style={styles.sortControlContent}>
-                <Text style={styles.columnText}>
-                  {t('page.perps.pro.marketSelector.name')}
-                </Text>
-                <PerpsProSortIcon
-                  active={sort.field === 'name'}
-                  direction={sort.direction}
-                />
-              </View>
-            </BottomSheetTouchableOpacity>
-            <View style={styles.sortSeparator} />
-            <BottomSheetTouchableOpacity
-              activeOpacity={1}
-              accessibilityLabel={t('page.perps.pro.marketSelector.volume')}
-              accessibilityRole="button"
-              onPress={() => selectSort('volume')}
-              style={styles.sortControl}
-              testID="perps-pro-market-sort-volume">
-              <View style={styles.sortControlContent}>
-                <Text style={styles.columnText}>
-                  {t('page.perps.pro.marketSelector.volume')}
-                </Text>
-                <PerpsProSortIcon
-                  active={sort.field === 'volume'}
-                  direction={sort.direction}
-                />
-              </View>
-            </BottomSheetTouchableOpacity>
+    <PerpsProMarketSelectorDismissProvider onDismiss={dismissSelector}>
+      <AppBottomSheetModal
+        android_keyboardInputMode="adjustPan"
+        backdropProps={backdropProps}
+        containerComponent={PerpsProMarketSelectorGestureContainer}
+        enableContentPanningGesture={false}
+        enableDynamicSizing={false}
+        enablePanDownToClose
+        keyboardBehavior="extend"
+        keyboardBlurBehavior="restore"
+        onDismiss={handleDismiss}
+        ref={modalRef}
+        snapPoints={[snapPoint]}
+        {...makeBottomSheetProps({
+          colors: colors2024,
+          linearGradientType: isLight ? 'bg0' : 'bg1',
+        })}>
+        <View style={styles.sheet} testID="perps-pro-market-selector-content">
+          <PerpsProMarketSearchBar
+            onChangeText={setQuery}
+            onFocusChange={setInputFocused}
+            placeholder={t('page.perps.pro.marketSelector.search')}
+            ref={searchRef}
+            style={styles.search}
+            value={query}
+          />
+          {!isSearchMode ? (
+            <GestureHandlerScrollView
+              contentContainerStyle={styles.tabsContent}
+              horizontal
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              style={styles.tabs}>
+              {tabs.map(tab => {
+                const active = tab.id === resolvedActiveTab;
+                return (
+                  <Pressable
+                    key={tab.id}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: active }}
+                    onPress={() => setActiveTab(tab.id)}
+                    style={styles.tab}>
+                    <Text
+                      style={active ? styles.activeTabText : styles.tabText}>
+                      {tab.label}
+                    </Text>
+                    {active ? <View style={styles.activeTabIndicator} /> : null}
+                  </Pressable>
+                );
+              })}
+            </GestureHandlerScrollView>
+          ) : null}
+          <View
+            style={[
+              styles.columnHeader,
+              isSearchMode ? styles.searchModeColumnHeader : null,
+            ]}
+            testID="perps-pro-market-column-header">
+            <View style={styles.sortGroup}>
+              <BottomSheetTouchableOpacity
+                activeOpacity={1}
+                accessibilityLabel={t('page.perps.pro.marketSelector.name')}
+                accessibilityRole="button"
+                onPress={() => selectSort('name')}
+                style={styles.sortControl}
+                testID="perps-pro-market-sort-name">
+                <View style={styles.sortControlContent}>
+                  <Text style={styles.columnText}>
+                    {t('page.perps.pro.marketSelector.name')}
+                  </Text>
+                  <PerpsProSortIcon
+                    active={sort.field === 'name'}
+                    direction={sort.direction}
+                  />
+                </View>
+              </BottomSheetTouchableOpacity>
+              <View style={styles.sortSeparator} />
+              <BottomSheetTouchableOpacity
+                activeOpacity={1}
+                accessibilityLabel={t('page.perps.pro.marketSelector.volume')}
+                accessibilityRole="button"
+                onPress={() => selectSort('volume')}
+                style={styles.sortControl}
+                testID="perps-pro-market-sort-volume">
+                <View style={styles.sortControlContent}>
+                  <Text style={styles.columnText}>
+                    {t('page.perps.pro.marketSelector.volume')}
+                  </Text>
+                  <PerpsProSortIcon
+                    active={sort.field === 'volume'}
+                    direction={sort.direction}
+                  />
+                </View>
+              </BottomSheetTouchableOpacity>
+            </View>
           </View>
+          <PerpsProMarketList
+            bottomInset={insets.bottom}
+            currentMarketKey={currentMarketKey}
+            data={visibleSlots}
+            favoriteSet={favoriteSet}
+            marketDataStatus={marketDataStatus}
+            onSelect={selectMarket}
+            onToggleFavorite={toggleFavorite}
+            ref={listRef}
+          />
         </View>
-        <PerpsProMarketList
-          bottomInset={insets.bottom}
-          currentMarketKey={currentMarketKey}
-          data={visibleSlots}
-          favoriteSet={favoriteSet}
-          marketDataStatus={marketDataStatus}
-          onSelect={selectMarket}
-          onToggleFavorite={toggleFavorite}
-          ref={listRef}
-        />
-      </View>
-    </AppBottomSheetModal>
+      </AppBottomSheetModal>
+    </PerpsProMarketSelectorDismissProvider>
   );
 });
 
@@ -355,11 +422,11 @@ export const PerpsProMarketSelector = React.memo(
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheet: {
     flex: 1,
-    paddingTop: 8,
+    paddingTop: 0,
   },
   search: {
     marginHorizontal: 16,
-    marginTop: 18,
+    marginTop: 4,
   },
   tabs: {
     borderBottomColor: colors2024['neutral-line'],
@@ -407,6 +474,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 46,
     paddingHorizontal: 12,
     paddingTop: 2,
+  },
+  searchModeColumnHeader: {
+    marginTop: 10,
   },
   sortGroup: {
     alignItems: 'flex-start',

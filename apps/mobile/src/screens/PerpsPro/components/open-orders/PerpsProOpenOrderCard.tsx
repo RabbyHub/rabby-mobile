@@ -7,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsOpenOrderViewModel } from '../../model/openOrder';
+import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import { usePerpsProMarketIdentity } from '../../scene/usePerpsProMarketIdentity';
 import {
   formatPerpsProDecimal,
@@ -57,10 +58,11 @@ const DisabledEdit: React.FC<{ label: string }> = ({ label }) => {
 };
 
 export const PerpsProOpenOrderCard: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
   cancelPending: boolean;
   onCancel: (order: PerpsOpenOrderViewModel) => void;
   order: PerpsOpenOrderViewModel;
-}> = React.memo(({ cancelPending, onCancel, order }) => {
+}> = React.memo(({ amountUnit = 'quote', cancelPending, onCancel, order }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const market = usePerpsProMarketIdentity(order.coin);
@@ -69,6 +71,10 @@ export const PerpsProOpenOrderCard: React.FC<{
     formatPerpsProDecimal(value, market.szDecimals);
   const displayQuoteAmount = (value: string | null) =>
     formatPerpsProDecimal(value, 2);
+  const amountLabel =
+    amountUnit === 'base' ? market.displayBase : market.quoteAsset;
+  const displayAmount = (base: string, quote: string | null) =>
+    amountUnit === 'base' ? displayBaseAmount(base) : displayQuoteAmount(quote);
   const executionPrice =
     order.executionPriceKind === 'market'
       ? t('page.perps.pro.openOrders.market')
@@ -147,11 +153,11 @@ export const PerpsProOpenOrderCard: React.FC<{
             <View style={styles.detailRow}>
               <Text style={styles.label}>
                 {t('page.perps.pro.openOrders.filled')} /{' '}
-                {t('page.perps.pro.openOrders.amount')} ({market.displayBase})
+                {t('page.perps.pro.openOrders.amount')} ({amountLabel})
               </Text>
               <Text style={styles.detailValue}>
-                {displayBaseAmount(order.filledSize)} /{' '}
-                {displayBaseAmount(order.amountBase)}
+                {displayAmount(order.filledSize, order.filledQuote)} /{' '}
+                {displayAmount(order.amountBase, order.amountQuote)}
               </Text>
             </View>
             <View style={styles.detailRow}>
@@ -168,10 +174,10 @@ export const PerpsProOpenOrderCard: React.FC<{
           <>
             <View style={styles.detailRow}>
               <Text style={styles.label}>
-                {t('page.perps.pro.openOrders.amount')} ({market.quoteAsset})
+                {t('page.perps.pro.openOrders.amount')} ({amountLabel})
               </Text>
               <Text style={styles.detailValue}>
-                {displayQuoteAmount(order.displayAmountQuote)}
+                {displayAmount(order.amountBase, order.displayAmountQuote)}
               </Text>
             </View>
             <View style={styles.detailRow}>

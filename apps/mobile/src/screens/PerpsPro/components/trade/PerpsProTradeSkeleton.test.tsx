@@ -14,6 +14,24 @@ jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
+jest.mock('@/assets2024/icons/perps/PerpsProAmountUnitArrow.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
 jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -22,6 +40,7 @@ jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
+  TextInput: require('react-native').TextInput,
 }));
 
 jest.mock('@/hooks/theme', () => ({
@@ -33,6 +52,17 @@ jest.mock('@/hooks/theme', () => ({
 
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
+}));
+
+jest.mock('@rneui/themed', () => ({
+  Slider: (props: object) => {
+    const ReactModule = require('react');
+    const { View } = require('react-native');
+    return ReactModule.createElement(View, {
+      ...props,
+      testID: 'rne-slider',
+    });
+  },
 }));
 
 jest.mock('react-i18next', () => ({
@@ -121,15 +151,12 @@ describe('PerpsProTradeSkeleton', () => {
       screen.getAllByTestId('perps-pro-trade-amount-slider-point'),
     ).toHaveLength(5);
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-trade-amount-slider-thumb').props.style,
-      ),
+      StyleSheet.flatten(screen.getByTestId('rne-slider').props.thumbStyle),
     ).toMatchObject({
       backgroundColor: 'neutral-bg-1',
       borderColor: 'neutral-title-1',
       borderWidth: 1,
       height: 13,
-      top: 7,
       width: 13,
     });
     expect(
@@ -139,16 +166,14 @@ describe('PerpsProTradeSkeleton', () => {
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-bg-1',
-      borderColor: 'neutral-line',
+      borderColor: 'neutral-title-1',
       borderWidth: 1,
       height: 7,
       width: 7,
     });
-    expect(
-      StyleSheet.flatten(screen.getByText('Amount(USDT)').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18, textAlign: 'center' });
-    expect(screen.getByTestId('perps-pro-trade-amount-minus')).toBeTruthy();
-    expect(screen.getByTestId('perps-pro-trade-amount-plus')).toBeTruthy();
+    expect(screen.getByLabelText('Amount(USDT)')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-trade-amount-minus')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-trade-amount-plus')).toBeNull();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-amount-unit').props.style,

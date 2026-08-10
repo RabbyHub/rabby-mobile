@@ -217,6 +217,44 @@ export const getPerpsOrderBookRowCount = ({
   return Math.max(1, Math.floor(containerHeight / rowHeight));
 };
 
+export type PerpsOrderBookLayout = {
+  bodyHeight: number;
+  middleHeight: number;
+  rowCount: number;
+};
+
+/**
+ * Figma layout contract: Funding is separated from the book by 8px, while the
+ * header/body/ratio/controls inside the book use 4px gaps. Extra height first
+ * becomes complete 20px rows; the remainder expands only the center price
+ * region, so the order-book and trade columns always finish on the same edge.
+ */
+export const getPerpsOrderBookLayout = ({
+  containerHeight,
+  mode,
+}: {
+  containerHeight: number;
+  mode: PerpsOrderBookMode;
+}): PerpsOrderBookLayout => {
+  const height = Number.isFinite(containerHeight)
+    ? Math.max(416, Math.ceil(containerHeight))
+    : 416;
+  const bodyHeight = height - 108;
+  if (mode === 'both') {
+    const rowCount = Math.max(1, Math.floor((bodyHeight - 48) / 40));
+    const middleHeight = Math.max(
+      40,
+      Math.min(60, bodyHeight - rowCount * 40 - 8),
+    );
+    return { bodyHeight, middleHeight, rowCount };
+  }
+  return {
+    bodyHeight,
+    middleHeight: 44,
+    rowCount: Math.max(1, Math.floor((bodyHeight - 48) / 20)),
+  };
+};
+
 export const selectVisiblePerpsOrderBookRows = ({
   book,
   mode,

@@ -84,6 +84,8 @@ type DuplexDefs = {
             showVolume?: boolean;
             fitContent?: boolean;
             noTime?: boolean;
+            identity?: string;
+            revision?: number;
             proConfig?: PerpsProChartConfig;
           }
         | {
@@ -154,6 +156,17 @@ type DuplexDefs = {
     post: {
       type: 'CHART_READY';
       timestamp: string;
+      capabilities?: {
+        candleDataAppliedAck?: boolean;
+      };
+    };
+    receive: never;
+  };
+  TradingView_CandleDataApplied: {
+    post: {
+      type: 'CANDLE_DATA_APPLIED';
+      identity: string;
+      revision: number;
     };
     receive: never;
   };

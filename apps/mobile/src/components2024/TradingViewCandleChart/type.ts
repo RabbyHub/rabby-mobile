@@ -31,6 +31,8 @@ export enum CandlePeriod {
 export interface CandleData {
   coin: string;
   interval: CandlePeriod | PerpsCandleInterval;
+  identity?: string;
+  revision?: number;
   showVolume?: boolean;
   fitContent?: boolean;
   noTime?: boolean;

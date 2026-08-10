@@ -142,7 +142,7 @@ describe('Perps Pro market selector projection', () => {
     expect(nameOnly.orders.volume.desc).toBe(initial.orders.volume.desc);
   });
 
-  it('filters every cached order without changing search, tab or favorite semantics', () => {
+  it('filters cached orders while making non-empty searches global', () => {
     const projection = reconcilePerpsProMarketSelectorProjection([
       createMarketData(0, {
         brief: 'Bitcoin',
@@ -180,8 +180,14 @@ describe('Perps Pro market selector projection', () => {
     );
     const search = buildPerpsProMarketSlotOrders(
       projection,
-      'all',
+      'crypto',
       [],
+      'apple',
+    );
+    const searchFromFavorites = buildPerpsProMarketSlotOrders(
+      projection,
+      'favorites',
+      ['BTC'],
       'apple',
     );
 
@@ -195,6 +201,9 @@ describe('Perps Pro market selector projection', () => {
     expect(search.volume.desc.map(slot => slot.marketKey)).toEqual([
       'xyz::xyz:AAPL',
     ]);
+    expect(searchFromFavorites.volume.desc.map(slot => slot.marketKey)).toEqual(
+      ['xyz::xyz:AAPL'],
+    );
   });
 
   it('resolves actions against the latest raw market instead of a cached row', () => {

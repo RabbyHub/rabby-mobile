@@ -2,7 +2,7 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, type ViewStyle } from 'react-native';
+import { Pressable, View, type ViewStyle } from 'react-native';
 
 import {
   getPerpsOrderBookDepthPercent,
@@ -14,6 +14,7 @@ import {
   formatPerpsProCompactNumber,
   formatPerpsProPrice,
 } from '../../utils/format';
+import type { PerpsProTradeAmountUnit } from '../../model/trade';
 
 export const PERPS_PRO_ORDER_BOOK_ROW_HEIGHT = 20;
 const PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS = 2;
@@ -53,11 +54,22 @@ export const PerpsProOrderBookModeIcon: React.FC<{
 };
 
 export const PerpsProOrderBookRow: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
   level?: PerpsOrderBookLevel;
   maxTotal: number;
+  onSelectPrice?: (price: string) => void;
   priceDecimals: number;
   side: 'ask' | 'bid';
-}> = ({ level, maxTotal, priceDecimals, side }) => {
+  szDecimals?: number;
+}> = ({
+  amountUnit = 'quote',
+  level,
+  maxTotal,
+  onSelectPrice,
+  priceDecimals,
+  side,
+  szDecimals = 2,
+}) => {
   const { styles } = useTheme2024({ getStyle });
   const depth = level ? getPerpsOrderBookDepthPercent(level, maxTotal) : 0;
   const depthStyle = useMemo<ViewStyle>(
@@ -66,7 +78,11 @@ export const PerpsProOrderBookRow: React.FC<{
   );
 
   return (
-    <View style={styles.bookRow}>
+    <Pressable
+      accessibilityRole={level && onSelectPrice ? 'button' : undefined}
+      disabled={!level || !onSelectPrice}
+      onPress={() => level && onSelectPrice?.(level.price)}
+      style={styles.bookRow}>
       {level ? (
         <View
           pointerEvents="none"
@@ -88,12 +104,14 @@ export const PerpsProOrderBookRow: React.FC<{
       <Text numberOfLines={1} style={styles.bookAmount}>
         {level
           ? formatPerpsProCompactNumber(
-              level.usdSize,
-              PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS,
+              amountUnit === 'base' ? level.size : level.usdSize,
+              amountUnit === 'base'
+                ? szDecimals
+                : PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS,
             )
           : ''}
       </Text>
-    </View>
+    </Pressable>
   );
 };
 

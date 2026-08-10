@@ -8,6 +8,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
+  calculateSignedLiquidationDistance,
   getPerpsPositionDisplaySize,
   type PerpsPositionViewModel,
 } from '../../model/position';
@@ -17,6 +18,7 @@ import {
   formatPerpsProDecimal,
   formatPerpsProPercent,
   formatPerpsProPrice,
+  formatPerpsProSignedDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 
@@ -75,6 +77,25 @@ export const PerpsProPositionCard: React.FC<{
     position.pnl,
     2,
   )}`;
+  const signedLiquidationDistance = React.useMemo(
+    () =>
+      position.marginMode === 'cross'
+        ? calculateSignedLiquidationDistance({
+            liquidationPrice: position.liquidationPrice,
+            markPrice: market.markPrice,
+          })
+        : null,
+    [market.markPrice, position.liquidationPrice, position.marginMode],
+  );
+  const displayLiquidationDistance = signedLiquidationDistance
+    ? `${formatPerpsProPercent(
+        Number(signedLiquidationDistance.ratio),
+        2,
+      )}(${formatPerpsProSignedDecimal(
+        signedLiquidationDistance.priceGap,
+        market.pxDecimals,
+      )})`
+    : '--';
   const pnlStyle =
     pnl > 0
       ? styles.positiveValue
@@ -202,7 +223,16 @@ export const PerpsProPositionCard: React.FC<{
                 )}
               </Text>
             </>
-          ) : null}
+          ) : (
+            <>
+              <PerpsProDottedUnderlineText
+                containerStyle={styles.rightDottedLabel}
+                style={styles.label}>
+                {t('page.perps.pro.positions.liquidationDistance')}
+              </PerpsProDottedUnderlineText>
+              <Text style={styles.value}>{displayLiquidationDistance}</Text>
+            </>
+          )}
         </View>
       </View>
 

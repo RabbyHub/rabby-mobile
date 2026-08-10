@@ -9,6 +9,8 @@ const mockDismiss = jest.fn();
 const mockBottomSheetModalProps = jest.fn();
 const mockMarketListProps = jest.fn();
 const mockScrollToTopIfNeeded = jest.fn();
+const mockMarkDismissed = jest.fn();
+const mockMarkPresent = jest.fn();
 
 jest.mock('@/assets2024/icons/perps/PerpsProSortArrowDown.svg', () => {
   const ReactModule = require('react');
@@ -83,6 +85,96 @@ jest.mock('@/components2024/SearchBar', () => {
         testID: 'market-search',
         value,
       }),
+  };
+});
+
+jest.mock('./PerpsProMarketSearchBar', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text, TextInput, View } = require('react-native');
+  return {
+    PerpsProMarketSearchBar: ReactModule.forwardRef(
+      (
+        {
+          onChangeText,
+          onFocusChange,
+          placeholder,
+          style,
+          value,
+        }: {
+          onChangeText: (value: string) => void;
+          onFocusChange: (focused: boolean) => void;
+          placeholder: string;
+          style: object;
+          value: string;
+        },
+        ref: React.Ref<unknown>,
+      ) => {
+        const [focused, setFocused] = ReactModule.useState(false);
+        const focus = () => {
+          setFocused(true);
+          onFocusChange(true);
+        };
+        const blur = () => {
+          setFocused(false);
+          onFocusChange(false);
+        };
+        ReactModule.useImperativeHandle(ref, () => ({ blur, focus }));
+        return ReactModule.createElement(
+          View,
+          {
+            accessibilityLabel: placeholder,
+            style,
+            testID: 'perps-pro-market-search-container',
+          },
+          ReactModule.createElement(TextInput, {
+            onBlur: blur,
+            onChangeText,
+            onFocus: focus,
+            testID: 'market-search',
+            value,
+          }),
+          focused
+            ? ReactModule.createElement(
+                Pressable,
+                {
+                  onPress: () => {
+                    onChangeText('');
+                    blur();
+                  },
+                  testID: 'market-search-cancel',
+                },
+                ReactModule.createElement(Text, null, 'Cancel'),
+              )
+            : null,
+        );
+      },
+    ),
+  };
+});
+
+jest.mock('./usePerpsProMarketSelectorDismiss', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProMarketSelectorDismissProvider: ({
+      children,
+    }: {
+      children: React.ReactNode;
+    }) => children,
+    PerpsProMarketSelectorGestureContainer: ({
+      children,
+    }: {
+      children: React.ReactNode;
+    }) => ReactModule.createElement(View, null, children),
+    usePerpsProMarketSelectorDismiss: ({
+      windowHeight,
+    }: {
+      windowHeight: number;
+    }) => ({
+      markDismissed: mockMarkDismissed,
+      markPresent: mockMarkPresent,
+      stableWindowHeight: windowHeight,
+    }),
   };
 });
 
@@ -183,6 +275,9 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
       state.marketDataMap = Object.fromEntries(
         marketData.map(item => [item.name, item]),
       );
+    },
+    __setFavoriteMarkets: (favoriteMarkets: string[]) => {
+      state.favoriteMarkets = favoriteMarkets;
     },
     addFavoriteMarket: jest.fn(),
     perpsStore,
@@ -296,12 +391,12 @@ const { resetPerpsProMarketSessionForTests } =
 type MarketData = import('@/hooks/perps/usePerpsStore').MarketData;
 type PerpsProMarketSelectorHandle =
   import('./PerpsProMarketSelector').PerpsProMarketSelectorHandle;
-const { __resetMarketData, __setMarketData } = jest.requireMock(
-  '@/hooks/perps/usePerpsStore',
-) as {
-  __resetMarketData: () => void;
-  __setMarketData: (marketData: MarketData[]) => void;
-};
+const { __resetMarketData, __setFavoriteMarkets, __setMarketData } =
+  jest.requireMock('@/hooks/perps/usePerpsStore') as {
+    __resetMarketData: () => void;
+    __setFavoriteMarkets: (favoriteMarkets: string[]) => void;
+    __setMarketData: (marketData: MarketData[]) => void;
+  };
 const { perpsStore: mockPerpsStore } = jest.requireMock(
   '@/hooks/perps/usePerpsStore',
 ) as {
@@ -364,6 +459,7 @@ describe('PerpsProMarketSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     __resetMarketData();
+    __setFavoriteMarkets([]);
     resetPerpsProMarketSessionForTests();
   });
 
@@ -389,6 +485,7 @@ describe('PerpsProMarketSelector', () => {
       selectorRef.current?.present();
     });
     expect(mockPresent).toHaveBeenCalledTimes(1);
+    expect(mockMarkPresent).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('market-selector-sheet')).toBeTruthy();
     expect(screen.getAllByTestId('sort-arrow-up')).toHaveLength(2);
     expect(screen.getAllByTestId('sort-arrow-down')).toHaveLength(2);
@@ -410,10 +507,12 @@ describe('PerpsProMarketSelector', () => {
     act(() => {
       modalProps.onDismiss();
     });
+    expect(mockMarkDismissed).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('resets transient query and tab state on dismiss without resetting sort', () => {
+    __setFavoriteMarkets(['BTC']);
     render(
       <PerpsProMarketSelector
         currentMarketKey={null}
@@ -423,12 +522,16 @@ describe('PerpsProMarketSelector', () => {
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-market-sort-name'));
-    fireEvent.changeText(screen.getByTestId('market-search'), 'eth');
     fireEvent.press(
       screen.getByText('page.perps.pro.marketSelector.favorites'),
     );
+    fireEvent(screen.getByTestId('market-search'), 'focus');
+    fireEvent.changeText(screen.getByTestId('market-search'), 'eth');
 
-    expect(screen.queryByTestId('market-row-BTCUSDC')).toBeNull();
+    expect(screen.queryByTestId('market-row-ETHUSDC')).toBeTruthy();
+    expect(
+      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+    ).toBeNull();
 
     const modalProps =
       mockBottomSheetModalProps.mock.calls[
@@ -448,6 +551,62 @@ describe('PerpsProMarketSelector', () => {
     ).toEqual(['BTCUSDC', 'ETHUSDC', 'SOLUSDC']);
   });
 
+  it('hides Favorites without an effective favorite and restores the prior tab after Cancel', () => {
+    const emptyFavoritesRender = render(
+      <PerpsProMarketSelector
+        currentMarketKey={null}
+        onClose={jest.fn()}
+        onSelect={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+    ).toBeNull();
+    emptyFavoritesRender.unmount();
+
+    __setFavoriteMarkets(['DELISTED']);
+    const staleFavoritesRender = render(
+      <PerpsProMarketSelector
+        currentMarketKey={null}
+        onClose={jest.fn()}
+        onSelect={jest.fn()}
+      />,
+    );
+    expect(
+      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+    ).toBeNull();
+    staleFavoritesRender.unmount();
+
+    __setFavoriteMarkets(['BTC']);
+    render(
+      <PerpsProMarketSelector
+        currentMarketKey={null}
+        onClose={jest.fn()}
+        onSelect={jest.fn()}
+      />,
+    );
+    fireEvent.press(
+      screen.getByText('page.perps.pro.marketSelector.favorites'),
+    );
+    fireEvent(screen.getByTestId('market-search'), 'focus');
+    fireEvent.changeText(screen.getByTestId('market-search'), 'eth');
+
+    expect(screen.queryByTestId('market-row-ETHUSDC')).toBeTruthy();
+    fireEvent.press(screen.getByTestId('market-search-cancel'));
+
+    const marketListProps =
+      mockMarketListProps.mock.calls[
+        mockMarketListProps.mock.calls.length - 1
+      ][0];
+    expect(
+      getRowsFromListProps(marketListProps).map(market => market.displayPair),
+    ).toEqual(['BTCUSDC']);
+    expect(
+      screen.getByText('page.perps.pro.marketSelector.favorites'),
+    ).toBeTruthy();
+  });
+
   it('matches the Figma header spacing and keeps 44pt gesture-aware sort targets', () => {
     render(
       <PerpsProMarketSelector
@@ -462,6 +621,30 @@ describe('PerpsProMarketSelector', () => {
         mockBottomSheetModalProps.mock.calls.length - 1
       ][0];
     expect(modalProps.enableContentPanningGesture).toBe(false);
+    expect(modalProps.enablePanDownToClose).toBe(true);
+    expect(modalProps.keyboardBehavior).toBe('extend');
+    expect(modalProps.keyboardBlurBehavior).toBe('restore');
+    expect(modalProps.android_keyboardInputMode).toBe('adjustPan');
+    expect(modalProps.backdropProps.pressBehavior).toBe('close');
+
+    const sheetStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-market-selector-content').props.style,
+    );
+    expect(sheetStyle).toEqual(
+      expect.objectContaining({
+        flex: 1,
+        paddingTop: 0,
+      }),
+    );
+    const searchStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-market-search-container').props.style,
+    );
+    expect(searchStyle).toEqual(
+      expect.objectContaining({
+        marginHorizontal: 16,
+        marginTop: 4,
+      }),
+    );
 
     const headerStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-column-header').props.style,
@@ -635,5 +818,15 @@ describe('PerpsProMarketSelector', () => {
       expect(source).not.toContain('display: block');
       expect(source).toContain('fill="currentColor"');
     });
+  });
+
+  it('uses the approved English Search Token copy', () => {
+    const localePath = path.resolve(
+      __dirname,
+      '../../../../assets/locales/en/messages.json',
+    );
+    const messages = JSON.parse(fs.readFileSync(localePath, 'utf8'));
+
+    expect(messages.page.perps.pro.marketSelector.search).toBe('Search Token');
   });
 });

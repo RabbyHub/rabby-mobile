@@ -337,6 +337,7 @@ export const buildPerpsProMarketSlotOrders = (
 
   projection.recordsByKey.forEach(record => {
     const matchesTab =
+      !!normalizedQuery ||
       tab === 'all' ||
       (tab === 'favorites'
         ? favoriteSet.has(record.canonicalCoinUpper)

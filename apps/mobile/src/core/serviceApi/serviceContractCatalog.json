@@ -65,6 +65,9 @@
     "keyringService": {
       "DEV_GET_UNENCRYPTED_KEYRING_DATA": "query"
     },
+    "perpsService": {
+      "upsertPerpsAttachedTpSlJournalEntry": "command"
+    },
     "securityEngineService": {
       "execute": "query"
     }
