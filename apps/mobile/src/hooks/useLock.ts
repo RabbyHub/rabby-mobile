@@ -29,44 +29,26 @@ import {
 } from '@/core/utils/store';
 import type { RefLikeObject } from '@/utils/type';
 import {
-  resolveWalletAccountState,
-  type WalletAccountState,
-} from '@/core/utils/walletEntryState';
+  getAppLockStateSnapshot,
+  storeApiLock,
+  useAppLockState,
+} from './appLockState';
+import { resolveWalletAccountState } from '@/core/utils/walletEntryState';
 import { recordAuthReadinessDiagnostic } from '@/core/utils/authReadinessDiagnostics';
+
+export { getAppLockStateSnapshot, storeApiLock } from './appLockState';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
 
-type AppLockState = {
-  appUnlocked: boolean;
-  isUnlockSessionValid: boolean;
-  hasVisibleAccounts: boolean;
-  hasStoredKeyrings: boolean;
-  accountState: WalletAccountState;
-  pwdStatus: PasswordStatus;
-};
-const zAppLockStore = zCreate<AppLockState>((set, get) => {
-  return {
-    appUnlocked: false,
-    isUnlockSessionValid: apisLock.isUnlockSessionValid(),
-    hasVisibleAccounts: false,
-    hasStoredKeyrings: false,
-    accountState: 'checking',
-    pwdStatus: PasswordStatus.Unknown,
-  };
-});
-
-function setAppLock(valOrFunc: UpdaterOrPartials<AppLockState>) {
-  zAppLockStore.setState(prev => resolveValFromUpdater(prev, valOrFunc).newVal);
-}
 // iife
-setAppLock({
+storeApiLock.setAppLock({
   appUnlocked: isKeyringUnlockedSnapshot(),
   isUnlockSessionValid: apisLock.isUnlockSessionValid(),
 });
 
 function syncUnlockSessionValidity() {
-  setAppLock(prev => ({
+  storeApiLock.setAppLock(prev => ({
     ...prev,
     isUnlockSessionValid: apisLock.isUnlockSessionValid(),
   }));
@@ -75,38 +57,24 @@ function syncUnlockSessionValidity() {
 apisLock.unlockTimeEvent.addListener('updated', syncUnlockSessionValidity);
 apisLock.appLaunchLockEvent.addListener('changed', syncUnlockSessionValidity);
 
-function getIsAppUnlocked() {
-  const state = zAppLockStore.getState();
-  return state.appUnlocked;
-}
-
-export function getAppLockStateSnapshot() {
-  return zAppLockStore.getState();
-}
-
-export const storeApiLock = {
-  setAppLock,
-  getIsAppUnlocked,
-};
-
 export function useSetAppLock() {
-  return { setAppLock };
+  return { setAppLock: storeApiLock.setAppLock };
 }
 export function useAppUnlocked() {
   return {
-    isAppUnlocked: zAppLockStore(state => state.appUnlocked),
-    isUnlockSessionValid: zAppLockStore(state => state.isUnlockSessionValid),
-    hasVisibleAccounts: zAppLockStore(state => state.hasVisibleAccounts),
-    hasStoredKeyrings: zAppLockStore(state => state.hasStoredKeyrings),
-    accountState: zAppLockStore(state => state.accountState),
-    getIsAppUnlocked,
-    setAppLock,
+    isAppUnlocked: useAppLockState(state => state.appUnlocked),
+    isUnlockSessionValid: useAppLockState(state => state.isUnlockSessionValid),
+    hasVisibleAccounts: useAppLockState(state => state.hasVisibleAccounts),
+    hasStoredKeyrings: useAppLockState(state => state.hasStoredKeyrings),
+    accountState: useAppLockState(state => state.accountState),
+    getIsAppUnlocked: storeApiLock.getIsAppUnlocked,
+    setAppLock: storeApiLock.setAppLock,
   };
 }
 
 export function useIsPostUnlockLockedSession() {
-  const appUnlocked = zAppLockStore(state => state.appUnlocked);
-  const isUnlockSessionValid = zAppLockStore(
+  const appUnlocked = useAppLockState(state => state.appUnlocked);
+  const isUnlockSessionValid = useAppLockState(
     state => state.isUnlockSessionValid,
   );
 
@@ -114,8 +82,7 @@ export function useIsPostUnlockLockedSession() {
 }
 
 export function getPwdStatus() {
-  const state = zAppLockStore.getState();
-  return state.pwdStatus;
+  return getAppLockStateSnapshot().pwdStatus;
 }
 
 export function getPasswordStatusDiagnosticLabel(status: PasswordStatus) {
@@ -132,7 +99,7 @@ export function getPasswordStatusDiagnosticLabel(status: PasswordStatus) {
 
 export function usePasswordStatus() {
   // const { pwdStatus } = useAtomValue(appLockAtom);
-  const pwdStatus = zAppLockStore(state => state.pwdStatus);
+  const pwdStatus = useAppLockState(state => state.pwdStatus);
 
   return {
     pwdStatus,
@@ -176,7 +143,7 @@ export async function getBootstrapAccountFlags() {
 
 export async function refreshAppLockAccountFlags() {
   const accountFlags = await getBootstrapAccountFlags();
-  setAppLock(prev => ({
+  storeApiLock.setAppLock(prev => ({
     ...prev,
     ...accountFlags,
   }));
@@ -202,7 +169,7 @@ export const loadBootstrapAppLockState = async () => {
     pwdStatus: lockInfo.pwdStatus,
   };
 
-  setAppLock(nextState);
+  storeApiLock.setAppLock(nextState);
   return nextState;
 };
 
@@ -214,7 +181,7 @@ export const getTriedUnlock = async () => {
       if (!isKeyringUnlockedSnapshot() && apisLock.isUnlockSessionValid()) {
         apisAutoLock.refreshAutolockTimeout();
       }
-      setAppLock({
+      storeApiLock.setAppLock({
         appUnlocked: isKeyringUnlockedSnapshot(),
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
         ...accountFlags,
@@ -263,7 +230,7 @@ export const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
       ...accountFlags,
       pwdStatus: response.pwdStatus,
     };
-    setAppLock(nextState);
+    storeApiLock.setAppLock(nextState);
     recordAuthReadinessDiagnostic('lock-store-committed', {
       operationId,
       appUnlocked: nextState.appUnlocked,
@@ -290,7 +257,7 @@ export async function loadLockInfoOnBootstrap() {
 }
 
 export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
-  const appLock = zAppLockStore(
+  const appLock = useAppLockState(
     useShallow(state => ({
       appUnlocked: state.appUnlocked,
       isUnlockSessionValid: state.isUnlockSessionValid,

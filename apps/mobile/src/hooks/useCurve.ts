@@ -11,6 +11,12 @@ import {
   formatSmallUsdValue,
   makeDefaultSelectData,
 } from '@/store/curveShared';
+import { buildResourceFlowState } from '@/store/_resourceBase';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import {
+  getAddressCurveProjection,
+  type AddressCurveProjectionOptions,
+} from './addressCurveProjection';
 
 export {
   formChartData,
@@ -27,39 +33,38 @@ function lcAddr(address?: string) {
 }
 
 export function useIsLoadingCurve(address?: string) {
-  const flow = addressCurve24hStore.useAddressCurveFlowState(address);
+  const normalizedAddress = lcAddr(address);
+  const meta = useActivityStore(
+    addressCurve24hStore.useStore,
+    state => state.metaMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-curve-24h' },
+  );
+  const flow = buildResourceFlowState(meta);
 
   return {
     isLoadingCurve: flow.isLoading,
   };
 }
 
-type AddressCurveSelectOptions = {
-  realtimeNetWorth?: number | null;
-  staticBalance?: number | null;
-  baseUsdValue?: number | null;
-  type?: CurveDayType;
-};
-
 export function useAddressCurveSelectData(
   address?: string,
-  options?: AddressCurveSelectOptions,
+  options?: AddressCurveProjectionOptions,
 ) {
-  const curveList = addressCurve24hStore.useAddressCurve(address);
+  const normalizedAddress = lcAddr(address);
+  const curveList = useActivityStore(
+    addressCurve24hStore.useStore,
+    state => state.valueMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-curve-24h' },
+  );
 
   return useMemo(() => {
-    const normalizedCurveList = curveList ?? EMPTY_CURVE_LIST;
-
-    if (!normalizedCurveList.length) {
-      return makeDefaultSelectData();
-    }
-
-    return formChartData(normalizedCurveList, {
-      realtimeNetWorth: options?.realtimeNetWorth ?? 0,
-      realtimeTimestamp: Date.now(),
-      type: options?.type ?? CurveDayType.DAY,
-      staticBalance: options?.staticBalance ?? 0,
+    return getAddressCurveProjection(curveList, {
+      realtimeNetWorth: options?.realtimeNetWorth,
+      staticBalance: options?.staticBalance,
       baseUsdValue: options?.baseUsdValue,
+      type: options?.type,
     });
   }, [
     curveList,

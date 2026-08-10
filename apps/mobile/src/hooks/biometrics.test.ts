@@ -114,6 +114,15 @@ describe('hooks/biometrics', () => {
       KEYCHAIN_AUTH_TYPES,
       RequestGenericPurpose,
       getAuthenticationType: jest.fn(() => currentAuthType),
+      getSupportedBiometryType: mockGetSupportedBiometryType,
+      isPasscodeAuthAvailable: mockIsPasscodeAuthAvailable,
+      getKeychainDebugState: mockGetKeychainDebugState,
+      getDefaultBiometricsAuthenticationType: jest.fn(
+        () => KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+      ),
+      setGenericPassword: mockSetGenericPassword,
+      requestGenericPassword: mockRequestGenericPassword,
+      resetGenericPassword: mockResetGenericPassword,
       isAuthenticatedByBiometrics: jest.fn(
         () => currentAuthenticatedByBiometrics,
       ),
@@ -121,21 +130,6 @@ describe('hooks/biometrics', () => {
         isCancelledByUser: false,
         sysMessage: '',
       })),
-    }));
-    jest.doMock('@/core/apis', () => ({
-      apisKeychain: {
-        KEYCHAIN_AUTH_TYPES,
-        RequestGenericPurpose,
-        getSupportedBiometryType: mockGetSupportedBiometryType,
-        isPasscodeAuthAvailable: mockIsPasscodeAuthAvailable,
-        getKeychainDebugState: mockGetKeychainDebugState,
-        getDefaultBiometricsAuthenticationType: jest.fn(
-          () => KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
-        ),
-        setGenericPassword: mockSetGenericPassword,
-        requestGenericPassword: mockRequestGenericPassword,
-        resetGenericPassword: mockResetGenericPassword,
-      },
     }));
     jest.doMock('@/core/apis/lock', () => ({
       ensureKeyringRuntimeReady: jest.fn(async () => undefined),

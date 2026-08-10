@@ -1,35 +1,32 @@
-import BigNumber from 'bignumber.js';
-import { isAppChain } from '@/screens/Home/utils/appchain';
-import { DisplayNftItem } from './types';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { assetsMapStore, computeAssetsApis } from './hooks/store';
-import tokenStore, { ITokenItem } from '@/store/tokens';
-import { debounce, isEqual } from 'lodash';
+import tokenStore from '@/store/tokens';
+import { debounce } from 'lodash';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { IProtocolItem } from '@/store/protocols';
 import useProtocolListStore from '@/store/protocols';
 import {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from '@/store/balance';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import {
+  applyAddressChainDomainUpdates,
+  computeChainDistribution,
+  computeNftChainAssets,
+  computePortfolioChainAssets,
+  computeTokenChainAssets,
+  getChangedAddressKeys,
+  makeSingleAddressChainInfo,
+  recomputeSingleAddressChainInfo,
+  type AddressChainDomainUpdate,
+  type SingleAddressChainInfo,
+} from './singleAddressChainDistribution';
 
-type ChainAssetsUnit = Record<string, BigNumber>;
-interface BaseInfo {
-  token: ChainAssetsUnit;
-  portfolio: ChainAssetsUnit;
-  nft: ChainAssetsUnit;
-}
-type FinalInfo = BaseInfo & {
-  computedResult: {
-    chainAssets: ChainListItem[];
-    chainLength: number;
-    top3Chains: string[];
-  };
-};
+type FinalInfo = SingleAddressChainInfo;
 const chainStaticsStore = zCreate<FinalInfo>(() => ({
   token: {},
   portfolio: {},
@@ -56,18 +53,18 @@ const debounceComputeChainList = debounce(() => {
   setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
 }, 100);
 
-assetsMapStore.subscribe(debounceComputeChainList);
-tokenStore.subscribe(debounceComputeChainList);
-useProtocolListStore.subscribe(debounceComputeChainList);
-balanceAccountsStore.subscribe(debounceComputeChainList);
-
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();
   return baseInfo.computedResult;
 }
 
 export function useTop3Chains() {
-  const top3Chains = chainStaticsStore(s => s.computedResult.top3Chains);
+  const top3Chains = useActivityStore(
+    chainStaticsStore,
+    state => state.computedResult.top3Chains,
+    Object.is,
+    { storeLabel: 'home-chain-stats' },
+  );
 
   return useCreationWithShallowCompare(() => top3Chains, [top3Chains]);
 }
@@ -83,7 +80,12 @@ export function getSelectChainItem() {
 }
 
 export function useSelectedChainItem() {
-  return otherStore(s => s.selectedChainItem);
+  return useActivityStore(
+    otherStore,
+    state => state.selectedChainItem,
+    Object.is,
+    { storeLabel: 'home-selected-chain' },
+  );
 }
 
 export function setSelectChainItem(
@@ -115,8 +117,11 @@ function setAddressChainInfo(
 export function useAddrChainLength(address?: string) {
   const addr = address?.toLowerCase();
   const chainLength =
-    addrChainStaticsStore(
+    useActivityStore(
+      addrChainStaticsStore,
       useShallow(s => (!addr ? 0 : s[addr]?.computedResult.chainLength || 0)),
+      Object.is,
+      { storeLabel: 'single-address-chain-stats' },
     ) || 0;
   return { chainLength };
 }
@@ -125,8 +130,11 @@ export function useAddrTop3Chains(address?: string) {
   const addr = address?.toLowerCase();
   const defaultValue = useMemo(() => [], []);
   const top3Chains =
-    addrChainStaticsStore(s =>
-      !addr ? defaultValue : s[addr]?.computedResult.top3Chains,
+    useActivityStore(
+      addrChainStaticsStore,
+      s => (!addr ? defaultValue : s[addr]?.computedResult.top3Chains),
+      Object.is,
+      { storeLabel: 'single-address-chain-stats' },
     ) || defaultValue;
   return { top3Chains };
 }
@@ -139,243 +147,174 @@ export function getAddrChainInfo(address: string) {
   );
 }
 
+function updateAddressChainDomains(updates: AddressChainDomainUpdate[]) {
+  if (!updates.length) {
+    return;
+  }
+  setAddressChainInfo(previousState =>
+    applyAddressChainDomainUpdates(previousState, updates),
+  );
+}
+
 export const apisAddrChainStatics = {
-  makeFinalInfo: (): FinalInfo => {
-    return {
-      token: {},
-      portfolio: {},
-      nft: {},
-      computedResult: {
-        chainAssets: [],
-        chainLength: 0,
-        top3Chains: [],
+  makeFinalInfo: makeSingleAddressChainInfo,
+  computeChainAssetsToken: computeTokenChainAssets,
+  computeChainAssetsPortfolio: computePortfolioChainAssets,
+  computeChainAssetsNft: computeNftChainAssets,
+  getComputedResultFromChainAssets: computeChainDistribution,
+  recomputeFinalInfoFromChainUnits: recomputeSingleAddressChainInfo,
+  updateToken: (
+    address: string,
+    tokens: Parameters<typeof computeTokenChainAssets>[0],
+  ) => {
+    updateAddressChainDomains([
+      {
+        address,
+        domain: 'token',
+        chainUnit: computeTokenChainAssets(tokens),
       },
-    };
+    ]);
   },
-  computeChainAssetsToken: (tokens: ITokenItem[]) => {
-    const chainUnit: ChainAssetsUnit = {};
-    tokens?.forEach(token => {
-      const chainId = token.chain;
-      if (!chainUnit[chainId]) {
-        chainUnit[chainId] = new BigNumber(0);
-      }
-      if (token.is_core) {
-        chainUnit[chainId] = chainUnit[chainId].plus(token.usd_value || 0);
-      }
-    });
-
-    return chainUnit;
+  updatePortfolio: (
+    address: string,
+    portfolios: Parameters<typeof computePortfolioChainAssets>[0],
+  ) => {
+    updateAddressChainDomains([
+      {
+        address,
+        domain: 'portfolio',
+        chainUnit: computePortfolioChainAssets(portfolios),
+      },
+    ]);
   },
-  updateToken: (addr: string, tokens: ITokenItem[]) => {
-    addr = addr.toLowerCase();
-    const prevFinalInfo =
-      addrChainStaticsStore.getState()[addr] ||
-      apisAddrChainStatics.makeFinalInfo();
-    const token = apisAddrChainStatics.computeChainAssetsToken(tokens);
-    // if (isEqual(prevFinalInfo.token, token)) return ;
-    prevFinalInfo.token = token;
-
-    const computed =
-      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
-    if (isEqual(prevFinalInfo.computedResult, computed)) return;
-
-    setAddressChainInfo(prev => {
-      return {
-        ...prev,
-        [addr]: { ...prevFinalInfo, computedResult: computed },
-      };
-    });
+  updateNft: (
+    address: string,
+    nftList: Parameters<typeof computeNftChainAssets>[0],
+  ) => {
+    updateAddressChainDomains([
+      {
+        address,
+        domain: 'nft',
+        chainUnit: computeNftChainAssets(nftList),
+      },
+    ]);
   },
-  computeChainAssetsPortfolio: (portfolios: IProtocolItem[]) => {
-    const chainUnit: ChainAssetsUnit = {};
-    portfolios?.forEach(portfolio => {
-      const chainId = portfolio.chain;
-      // ignore app chain percent
-      if (!chainId || isAppChain(chainId)) {
-        return;
-      }
-      if (!chainUnit[chainId]) {
-        chainUnit[chainId] = new BigNumber(0);
-      }
-      chainUnit[chainId] = chainUnit[chainId].plus(portfolio.netWorth || 0);
-    });
-
-    return chainUnit;
-  },
-  updatePortfolio: debounce((addr: string, _portfolios: IProtocolItem[]) => {
-    addr = addr.toLowerCase();
-    const prevFinalInfo =
-      addrChainStaticsStore.getState()[addr] ||
-      apisAddrChainStatics.makeFinalInfo();
-
-    const portfolio =
-      apisAddrChainStatics.computeChainAssetsPortfolio(_portfolios);
-    // if (isEqual(prevFinalInfo.portfolio, portfolio)) return ;
-
-    prevFinalInfo.portfolio = portfolio;
-    const computed =
-      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
-    if (isEqual(prevFinalInfo.computedResult, computed)) {
-      return;
-    }
-
-    setAddressChainInfo(prev => {
-      return {
-        ...prev,
-        [addr]: { ...prevFinalInfo, computedResult: computed },
-      };
-    });
-  }, 300),
-  computeChainAssetsNft: (nftList: DisplayNftItem[]) => {
-    const chainUnit: ChainAssetsUnit = {};
-    nftList?.forEach(nft => {
-      const chainId = nft.chain;
-      if (!chainUnit[chainId]) {
-        chainUnit[chainId] = new BigNumber(0);
-      }
-    });
-    return chainUnit;
-  },
-  updateNft: debounce((addr: string, nftList: DisplayNftItem[]) => {
-    addr = addr.toLowerCase();
-    const prevFinalInfo =
-      addrChainStaticsStore.getState()[addr] ||
-      apisAddrChainStatics.makeFinalInfo();
-    const combinedNfts = computeAssetsApis.memoNfts([addr], {
-      [addr]: nftList,
-    });
-
-    const nft = apisAddrChainStatics.computeChainAssetsNft(combinedNfts);
-    // if (isEqual(prevFinalInfo.nft, nft)) return ;
-
-    prevFinalInfo.nft = nft;
-    const computed =
-      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
-    if (isEqual(prevFinalInfo.computedResult, computed)) return;
-
-    setAddressChainInfo(prev => {
-      return {
-        ...prev,
-        [addr]: { ...prevFinalInfo, computedResult: computed },
-      };
-    });
-  }, 300),
-  getComputedResultFromChainAssets: (chainUnit: Record<string, BigNumber>) => {
-    const totalValue = Object.values(chainUnit).reduce(
-      (sum, total) => sum.plus(total),
-      new BigNumber(0),
-    );
-
-    const canDiv = totalValue.gt(0);
-    const chainAssetsArray = Object.entries(chainUnit).map(
-      ([chain, total]) => ({
-        chain,
-        total: total.toNumber(),
-        percentage: !canDiv
-          ? 0
-          : total.div(totalValue).multipliedBy(100).toNumber(),
-      }),
-    );
-
-    chainAssetsArray.sort((a, b) => b.total - a.total);
-
-    return {
-      chainAssets: chainAssetsArray,
-      chainLength: Object.keys(chainUnit).length,
-      top3Chains: chainAssetsArray.slice(0, 3).map(i => i.chain),
-    };
-  },
-  recomputeFinalInfoFromChainUnits: (finalInfo: BaseInfo) => {
-    const chainUnit: ChainAssetsUnit = {};
-
-    Object.entries(finalInfo.token || {}).forEach(([chainId, total]) => {
-      chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-      chainUnit[chainId] = chainUnit[chainId].plus(total);
-    });
-
-    Object.entries(finalInfo.portfolio || {}).forEach(([chainId, total]) => {
-      chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-      chainUnit[chainId] = chainUnit[chainId].plus(total);
-    });
-
-    Object.entries(finalInfo.nft || {}).forEach(([chainId, total]) => {
-      chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-      chainUnit[chainId] = chainUnit[chainId].plus(total);
-    });
-
-    const computedResult =
-      apisAddrChainStatics.getComputedResultFromChainAssets(chainUnit);
-
-    return computedResult;
+  syncAddress: (address: string) => {
+    const normalizedAddress = address.toLowerCase();
+    updateAddressChainDomains([
+      {
+        address: normalizedAddress,
+        domain: 'token',
+        chainUnit: computeTokenChainAssets(
+          tokenStore.getState().tokenListMap[normalizedAddress] || [],
+        ),
+      },
+      {
+        address: normalizedAddress,
+        domain: 'portfolio',
+        chainUnit: computePortfolioChainAssets(
+          useProtocolListStore.getState().protocolMap[normalizedAddress] || [],
+        ),
+      },
+      {
+        address: normalizedAddress,
+        domain: 'nft',
+        chainUnit: computeNftChainAssets(
+          assetsMapStore.getState().nftsMap[normalizedAddress] || [],
+        ),
+      },
+    ]);
   },
 };
 
 /* computation section :start */
 function computeChainsListV2(caredAddresses: string[]) {
-  const finalInfo = /* retFinalInfo ||  */ apisAddrChainStatics.makeFinalInfo();
-
-  const chainUnit: ChainAssetsUnit = {};
-
-  const assetsMap = assetsMapStore.getState();
+  const caredAddressSet = new Set(
+    caredAddresses.map(address => address.toLowerCase()),
+  );
   const tokenListMap = tokenStore.getState().tokenListMap;
-  const addrsInStore = Object.keys(tokenListMap);
-  addrsInStore.forEach(addr => {
-    apisAddrChainStatics.updateToken(addr, tokenListMap[addr]!);
-  });
-  const tokens = addrsInStore
-    .filter(key => caredAddresses.includes(key))
-    .map(key => tokenListMap[key] || [])
-    .flat()
-    .filter(token => token.is_core);
-  tokens?.forEach(token => {
-    const chainId = token.chain;
-    if (!finalInfo.token[chainId]) {
-      finalInfo.token[chainId] = new BigNumber(0);
-    }
-    finalInfo.token[chainId] = finalInfo.token[chainId].plus(
-      token.usd_value || 0,
-    );
-    chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-    chainUnit[chainId] = chainUnit[chainId].plus(token.usd_value || 0);
-  });
-
   const protocolList = useProtocolListStore.getState().protocolMap;
-  const protocolAddrInStore = Object.keys(protocolList);
-  protocolAddrInStore.forEach(addr => {
-    apisAddrChainStatics.updatePortfolio(addr, protocolList[addr] || []);
-  });
-  const portfolios = protocolAddrInStore
-    .filter(key => caredAddresses.includes(key))
-    .map(key => protocolList[key] || [])
-    .flat();
+  const nftListMap = assetsMapStore.getState().nftsMap;
+  const tokens = Object.entries(tokenListMap)
+    .filter(([address]) => caredAddressSet.has(address.toLowerCase()))
+    .flatMap(([, list]) => list || [])
+    .filter(token => token.is_core);
+  const portfolios = Object.entries(protocolList)
+    .filter(([address]) => caredAddressSet.has(address.toLowerCase()))
+    .flatMap(([, list]) => list || []);
+  const nfts = computeAssetsApis.memoNfts(caredAddresses, nftListMap);
+  const finalInfo = {
+    token: computeTokenChainAssets(tokens),
+    portfolio: computePortfolioChainAssets(portfolios),
+    nft: computeNftChainAssets(nfts),
+    computedResult: makeSingleAddressChainInfo().computedResult,
+  };
 
-  portfolios?.forEach(portfolio => {
-    const chainId = portfolio.chain;
-    // ignore app chain percent
-    if (!chainId || isAppChain(chainId)) {
-      return;
-    }
-    if (!finalInfo.portfolio[chainId]) {
-      finalInfo.portfolio[chainId] = new BigNumber(0);
-    }
-    finalInfo.portfolio[chainId] = finalInfo.portfolio[chainId].plus(
-      portfolio.netWorth || 0,
-    );
-    chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-    chainUnit[chainId] = chainUnit[chainId].plus(portfolio.netWorth || 0);
-  });
-
-  const nfts = computeAssetsApis.memoNfts(caredAddresses, assetsMap.nftsMap);
-  nfts?.forEach(nft => {
-    const chainId = nft.chain;
-    if (!finalInfo.nft[chainId]) {
-      finalInfo.nft[chainId] = new BigNumber(0);
-    }
-    chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-  });
-
-  finalInfo.computedResult =
-    apisAddrChainStatics.getComputedResultFromChainAssets(chainUnit);
-
-  return finalInfo;
+  return {
+    ...finalInfo,
+    computedResult: recomputeSingleAddressChainInfo(finalInfo),
+  };
 }
+
+let previousTokenListMap = tokenStore.getState().tokenListMap;
+let previousProtocolMap = useProtocolListStore.getState().protocolMap;
+let previousNftsMap = assetsMapStore.getState().nftsMap;
+
+tokenStore.subscribe(state => {
+  const nextTokenListMap = state.tokenListMap;
+  if (nextTokenListMap === previousTokenListMap) {
+    return;
+  }
+  const changedAddresses = getChangedAddressKeys(
+    previousTokenListMap,
+    nextTokenListMap,
+  );
+  previousTokenListMap = nextTokenListMap;
+  updateAddressChainDomains(
+    changedAddresses.map(address => ({
+      address,
+      domain: 'token',
+      chainUnit: computeTokenChainAssets(nextTokenListMap[address] || []),
+    })),
+  );
+  debounceComputeChainList();
+});
+
+useProtocolListStore.subscribe(state => {
+  const nextProtocolMap = state.protocolMap;
+  if (nextProtocolMap === previousProtocolMap) {
+    return;
+  }
+  const changedAddresses = getChangedAddressKeys(
+    previousProtocolMap,
+    nextProtocolMap,
+  );
+  previousProtocolMap = nextProtocolMap;
+  updateAddressChainDomains(
+    changedAddresses.map(address => ({
+      address,
+      domain: 'portfolio',
+      chainUnit: computePortfolioChainAssets(nextProtocolMap[address] || []),
+    })),
+  );
+  debounceComputeChainList();
+});
+
+assetsMapStore.subscribe(state => {
+  const nextNftsMap = state.nftsMap;
+  if (nextNftsMap === previousNftsMap) {
+    return;
+  }
+  const changedAddresses = getChangedAddressKeys(previousNftsMap, nextNftsMap);
+  previousNftsMap = nextNftsMap;
+  updateAddressChainDomains(
+    changedAddresses.map(address => ({
+      address,
+      domain: 'nft',
+      chainUnit: computeNftChainAssets(nextNftsMap[address] || []),
+    })),
+  );
+  debounceComputeChainList();
+});
+
+balanceAccountsStore.subscribe(debounceComputeChainList);

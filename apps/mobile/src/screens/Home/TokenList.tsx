@@ -45,8 +45,8 @@ import useTokenList, {
   getSingleAssetsCacheKey,
   ITokenItem,
   TokenEntityId,
+  tokenEntityResourceStore,
   useTokenAssetsIndexStore,
-  useTokenEntity,
   useTokenIndexStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
@@ -64,6 +64,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type TokenListItem =
   | {
@@ -111,7 +112,12 @@ const TokenResourceRow = React.memo(
     loaderStyle?: ViewStyle;
     onTokenPress(token: ITokenItem): void;
   }) => {
-    const token = useTokenEntity(tokenId);
+    const token = useActivityStore(
+      tokenEntityResourceStore.useStore,
+      state => state.valueMap[tokenId],
+      Object.is,
+      { storeLabel: 'single-address-token-entities' },
+    );
 
     if (!token) {
       return <ItemLoader style={loaderStyle} />;
@@ -445,13 +451,16 @@ export const TokenList = ({
       ]);
   }, [currentAddress]);
 
-  const tokenIds = useTokenIndexStore(
+  const tokenIds = useActivityStore(
+    useTokenIndexStore,
     useShallow(state => {
       if (!lowerAddress) {
         return EMPTY_TOKEN_ENTITY_IDS;
       }
       return state.addressTokenIds[lowerAddress] || EMPTY_TOKEN_ENTITY_IDS;
     }),
+    Object.is,
+    { storeLabel: 'single-address-token-index' },
   );
   const singleAssetsKey = useMemo(() => {
     if (!lowerAddress) {
@@ -483,20 +492,24 @@ export const TokenList = ({
     scamTokenPreviewLogoUrls,
     foldCoreUsdValue,
     hasFoldTokens,
-  } = useTokenAssetsIndexStore(
+  } = useActivityStore(
+    useTokenAssetsIndexStore,
     useShallow(
       state =>
         (singleAssetsKey
           ? state.singleAssetsResultByKey[singleAssetsKey]
           : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT,
     ),
+    Object.is,
+    { storeLabel: 'single-address-token-assets-index' },
   );
   const foldTokenUsdValue = useMemo(
     () => formatNetworth(foldCoreUsdValue),
     [foldCoreUsdValue],
   );
 
-  const { isLoading, isAllLoading } = useTokenList(
+  const { isLoading, isAllLoading } = useActivityStore(
+    useTokenList,
     useShallow(state => {
       if (!lowerAddress) {
         return {
@@ -510,6 +523,8 @@ export const TokenList = ({
         isAllLoading: !!loadingState?.allLoading,
       };
     }),
+    Object.is,
+    { storeLabel: 'single-address-token-list' },
   );
   const hasDefaultTokenData =
     unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length > 0;
@@ -521,7 +536,7 @@ export const TokenList = ({
     !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
-  const getTokenList = useTokenList(s => s.getTokenList);
+  const getTokenList = useTokenList.getState().getTokenList;
 
   const refreshTokenList = useCallback(() => {
     if (!currentAddress) {

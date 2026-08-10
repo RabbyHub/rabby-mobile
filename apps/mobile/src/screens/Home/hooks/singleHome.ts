@@ -26,6 +26,7 @@ import {
 } from '@/core/utils/featureActivationDiagnostics';
 import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type SingleHomeState = {
   currentAccount: Account | null;
@@ -169,16 +170,24 @@ export const apisSingleHome = {
 
 export function useSingleHomeAccount() {
   return {
-    currentAccount: singleHomeState(s => s.currentAccount),
+    currentAccount: useActivityStore(
+      singleHomeState,
+      state => state.currentAccount,
+      Object.is,
+      { storeLabel: 'single-home-state' },
+    ),
   };
 }
 
 export function useSingleHomeAccountAlias() {
-  const { address, brandName } = singleHomeState(
+  const { address, brandName } = useActivityStore(
+    singleHomeState,
     useShallow(s => ({
       address: s.currentAccount?.address,
       brandName: s.currentAccount?.brandName,
     })),
+    Object.is,
+    { storeLabel: 'single-home-state' },
   );
   const { adderssAlias, isDefaultAlias } = useAlias2(address || '', {
     autoFetch: true,
@@ -197,11 +206,14 @@ export function useSingleHomeAccountAlias() {
 }
 
 export function useSingleHomeAddress() {
-  const { currentAddress, lcAddress } = singleHomeState(
+  const { currentAddress, lcAddress } = useActivityStore(
+    singleHomeState,
     useShallow(s => ({
       currentAddress: s.currentAccount?.address,
       lcAddress: s.currentAccount?.address.toLowerCase() || '',
     })),
+    Object.is,
+    { storeLabel: 'single-home-state' },
   );
 
   return { currentAddress, lcAddress };
@@ -209,19 +221,35 @@ export function useSingleHomeAddress() {
 
 export function useSingleHomeChain() {
   return {
-    selectedChain: singleHomeState(s => s.selectedChain?.chain),
+    selectedChain: useActivityStore(
+      singleHomeState,
+      state => state.selectedChain?.chain,
+      Object.is,
+      { storeLabel: 'single-home-state' },
+    ),
   };
 }
 
 export function useHomeFoldChart() {
   return {
-    isFoldChart: singleHomeState(s => s.foldChart),
+    isFoldChart: useActivityStore(
+      singleHomeState,
+      state => state.foldChart,
+      Object.is,
+      { storeLabel: 'single-home-state' },
+    ),
   };
 }
 
 export function useSingleHomeHasNoData() {
   const { lcAddress } = useSingleHomeAddress();
-  const curveList = addressCurve24hStore.useAddressCurve(lcAddress) || [];
+  const curveList =
+    useActivityStore(
+      addressCurve24hStore.useStore,
+      state => state.valueMap[lcAddress],
+      Object.is,
+      { storeLabel: 'single-home-curve' },
+    ) || [];
   const { isLoadingCurve } = useIsLoadingCurve(lcAddress);
   const hasNoData = !curveList.length && !isLoadingCurve;
 
@@ -231,7 +259,12 @@ export function useSingleHomeHasNoData() {
 export function useSingleHomeSelectData() {
   const { lcAddress } = useSingleHomeAddress();
   const { evmBalance, balance } = useAddressBalance(lcAddress);
-  const { balance24h } = balance24hStore.useAddress24hBalance(lcAddress);
+  const balance24h = useActivityStore(
+    balance24hStore.useStore,
+    state => state.valueMap[lcAddress],
+    Object.is,
+    { storeLabel: 'single-home-24h-balance' },
+  );
   const { isLoadingCurve } = useIsLoadingCurve(lcAddress);
   const selectData = useAddressCurveSelectData(lcAddress, {
     realtimeNetWorth: evmBalance,

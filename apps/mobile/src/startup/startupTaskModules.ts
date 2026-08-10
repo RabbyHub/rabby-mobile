@@ -22,6 +22,7 @@ export const STARTUP_DEFERRED_TASK_MODULE_FILES = [
 
 export const STARTUP_ROUTE_OWNED_TASK_MODULE_FILES = [
   'src/screens/Address/components/MultiAssets/TabsMultiAssets.tsx',
+  'src/screens/Navigators/singleAddressWarmup.ts',
 ] as const;
 
 export const STARTUP_TASK_MODULE_FILES = [

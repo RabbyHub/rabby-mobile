@@ -22,6 +22,11 @@ export function useRegressionScenarioComponentAction(
   _handler: () => void | Promise<void>,
 ) {}
 
+export function useRegressionScenarioAssertion(
+  _assertion: string,
+  _data: Readonly<Record<string, unknown>> | null,
+) {}
+
 export function useRegressionScenarioRuntime(): RegressionScenarioRuntimeContext {
   return INACTIVE_REGRESSION_SCENARIO_CONTEXT;
 }

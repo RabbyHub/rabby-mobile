@@ -40,6 +40,7 @@ import {
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
 import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import { ScreenStoreActivityProvider } from '@/hooks/storeActivity/ScreenStoreActivityProvider';
 
 function SingleAddressActivationProbe({
   currentAddress,
@@ -68,7 +69,7 @@ function SingleAddressActivationProbe({
   return null;
 }
 
-function HomeHeader() {
+function HomeHeaderContent() {
   const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
 
   return (
@@ -84,6 +85,14 @@ function HomeHeader() {
         <SingleHomeRightArea />
       </View>
     </View>
+  );
+}
+
+function HomeHeader() {
+  return (
+    <ScreenStoreActivityProvider label="single-address-header">
+      <HomeHeaderContent />
+    </ScreenStoreActivityProvider>
   );
 }
 
@@ -121,7 +130,7 @@ const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
   },
 }));
 
-function SingleAddressHome(): JSX.Element {
+function SingleAddressHomeContent(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const backgroundOpacity = useSharedValue(1);
   const { topHeight } = useBgSize();
@@ -189,6 +198,14 @@ function SingleAddressHome(): JSX.Element {
         </View>
       </NormalScreenContainer2024>
     </HomeBackgroundOpacityProvider>
+  );
+}
+
+function SingleAddressHome(): JSX.Element {
+  return (
+    <ScreenStoreActivityProvider label="single-address">
+      <SingleAddressHomeContent />
+    </ScreenStoreActivityProvider>
   );
 }
 

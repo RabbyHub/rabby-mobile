@@ -66,9 +66,7 @@ export const FullDefiRenderItem = ({
     return isAppChain(data?.chain || '');
   }, [data?.chain]);
 
-  const updateSpecificProtocol = useProtocols(
-    state => state.updateSpecificProtocol,
-  );
+  const updateSpecificProtocol = useProtocols.getState().updateSpecificProtocol;
 
   const { openTab } = useBrowser();
 
@@ -240,7 +238,7 @@ export const FullDefiRenderItem = ({
   ]);
 
   const portfolios = useMemo(() => {
-    return data._portfolios.sort((a, b) => b.netWorth - a.netWorth) || [];
+    return [...data._portfolios].sort((a, b) => b.netWorth - a.netWorth);
   }, [data]);
 
   if (!data || !account) {

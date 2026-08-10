@@ -11,6 +11,7 @@ import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { formatCurrencyValueParts } from '@/utils/currency';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo } from 'react';
 
@@ -82,7 +83,12 @@ export function useCurrency() {
     scheduleCurrencyStoreBinding();
   }, []);
 
-  const currencyStore = currencyServiceStore(s => s.data);
+  const currencyStore = useActivityStore(
+    currencyServiceStore,
+    state => state.data,
+    Object.is,
+    { storeLabel: 'currency-service' },
+  );
 
   const currency = useMemo(() => {
     return (
