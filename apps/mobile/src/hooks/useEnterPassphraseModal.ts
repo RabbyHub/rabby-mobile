@@ -1,11 +1,9 @@
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import * as apiMnemonic from '@/core/apis/mnemonic';
+import i18n from '@/utils/i18n';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 export const useEnterPassphraseModal = (type: 'address' | 'publickey') => {
-  const { t } = useTranslation();
-
   const invoke = React.useCallback(
     async (value?: string) => {
       let passphrase: string | undefined = '';
@@ -24,10 +22,10 @@ export const useEnterPassphraseModal = (type: 'address' | 'publickey') => {
 
       // @ts-expect-error FIXME: fix this error type, maybe we should use `AuthenticationModal.show` instead
       await AuthenticationModal({
-        confirmText: t('global.confirm'),
-        cancelText: t('global.Cancel'),
-        placeholder: t('page.manageAddress.enterThePassphrase'),
-        title: t('page.manageAddress.enterPassphraseTitle'),
+        confirmText: i18n.t('global.confirm'),
+        cancelText: i18n.t('global.Cancel'),
+        placeholder: i18n.t('page.manageAddress.enterThePassphrase'),
+        title: i18n.t('page.manageAddress.enterPassphraseTitle'),
         async validationHandler(input) {
           passphrase = input;
 
@@ -38,7 +36,7 @@ export const useEnterPassphraseModal = (type: 'address' | 'publickey') => {
               passphrase,
             ))
           ) {
-            throw new Error(t('page.manageAddress.passphraseError'));
+            throw new Error(i18n.t('page.manageAddress.passphraseError'));
           }
           return;
         },
@@ -46,7 +44,7 @@ export const useEnterPassphraseModal = (type: 'address' | 'publickey') => {
 
       return passphrase;
     },
-    [t, type],
+    [type],
   );
 
   return invoke;

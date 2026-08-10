@@ -40,10 +40,9 @@ export class CurrencyService extends StoreServiceBase<
   }
 
   setStore(payload: Partial<CurrencyServiceStore['data']>) {
-    this.store.data = {
-      ...this.store.data,
-      ...payload,
-    };
+    this.mutateStore(draft => {
+      Object.assign(draft.data, payload);
+    });
   }
 
   syncCurrencyList = async (isForce?: boolean) => {
@@ -56,11 +55,10 @@ export class CurrencyService extends StoreServiceBase<
     try {
       const list = await openapi.getCurrencyList();
 
-      this.store.data = {
-        ...this.store.data,
-        currencyList: list,
-        updatedAt: Date.now(),
-      };
+      this.mutateStore(draft => {
+        draft.data.currencyList = list;
+        draft.data.updatedAt = Date.now();
+      });
     } catch (e) {
       console.error('fetch currency list error: ', e);
     }

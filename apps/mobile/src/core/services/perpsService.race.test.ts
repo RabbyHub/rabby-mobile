@@ -10,16 +10,45 @@
 // The fix derives the agent address from the vault key itself, so the pair can
 // never diverge regardless of what agentPreferences holds at read time.
 
-jest.mock('@rabby-wallet/persist-store', () => ({
-  __esModule: true,
-  default: (config: { template: Record<string, unknown> }) => ({
-    ...config.template,
-  }),
-}));
+jest.mock('@rabby-wallet/persist-store', () => {
+  class MockStoreServiceBase {
+    store: Record<string, unknown>;
+
+    constructor(_name: string, template: Record<string, unknown>) {
+      this.store = { ...template };
+    }
+
+    protected mutateStore(recipe: (draft: Record<string, unknown>) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as Record<string, unknown>;
+    }
+  }
+
+  return { StoreServiceBase: MockStoreServiceBase };
+});
 
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
 import { bytesToHex, publicToAddress, hexToBytes } from '@ethereumjs/util';
 import { PerpsService } from './perpsService';
+
+class TestPerpsService extends PerpsService {
+  setPersistedAgentState(
+    agentVaults: string,
+    agentPreferences: Record<
+      string,
+      { agentAddress: string; approveSignatures: [] }
+    >,
+  ) {
+    this.mutateStore(draft => {
+      draft.agentVaults = agentVaults;
+      draft.agentPreferences = agentPreferences;
+    });
+  }
+}
 
 const ADDR = '0xmaster';
 // A valid 32-byte private key (the agent's vault).
@@ -48,34 +77,27 @@ describe('perpsService unlockAgentWallets vault/preference pairing', () => {
       isUnlocked: () => true,
     };
 
-    const svc = new PerpsService({
-      storageAdapter: {},
+    const svc = new TestPerpsService({
       keyringCrypto,
-    } as any);
+    });
 
-    const store = (svc as any).store;
     // Initially consistent: agent A's vault + A's address.
-    store.agentVaults = 'ENCRYPTED_NONEMPTY';
-    store.agentPreferences = {
+    svc.setPersistedAgentState('ENCRYPTED_NONEMPTY', {
       [ADDR]: { agentAddress: A_ADDR, approveSignatures: [] },
-    };
+    });
 
     // unlockAgentWallets begins and AWAITS decryptWithPassword.
     svc.unlockAgentWallets();
-    const unlockPromise = (svc as any).memoryState
-      .unlockPromise as Promise<void>;
 
     // --- inside the decrypt await window ---
     // A concurrent createAgentWallet rewrites the preference to a NEW agent B.
-    store.agentPreferences = {
+    svc.setPersistedAgentState('ENCRYPTED_NONEMPTY', {
       [ADDR]: { agentAddress: B_ADDR, approveSignatures: [] },
-    };
+    });
 
     // decrypt resolves with the OLD snapshot (agent A's key).
     decrypt.resolve({ [ADDR]: A_KEY });
-    await unlockPromise;
-
-    const mem = (svc as any).memoryState.agentWallets[ADDR];
+    const mem = await svc.getAgentWallet(ADDR);
     // FIX: the address is derived from the vault key, so it matches A (not the
     // race-written B). vault and address stay on the same agent.
     expect(mem.vault).toBe(A_KEY);

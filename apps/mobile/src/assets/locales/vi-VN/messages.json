@@ -1927,6 +1927,7 @@
       "currentVersion": "Phiên bản hiện tại",
       "tou": "Điều Khoản Sử Dụng",
       "autoLockTime": "Thời gian tự động khóa",
+      "appLaunchLock": "Khóa khi khởi động",
       "lockWallet": "Khóa ví",
       "modifyRPCURL": "Chỉnh sửa URL RPC",
       "addCustomNetwork": "Thêm mạng tùy chỉnh",
@@ -1943,7 +1944,12 @@
       "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
       "dataAnalysis": "Phân tích dữ liệu",
       "bugReportHistory": "Lịch sử báo cáo lỗi",
-      "bugReportChat": "Gửi phản hồi qua trò chuyện"
+      "bugReportChat": "Gửi phản hồi qua trò chuyện",
+      "features": "Tính năng",
+      "manageWallets": "Quản lý ví"
+    },
+    "settings": {
+      "chooseWallet": "Chọn một ví để quản lý"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",

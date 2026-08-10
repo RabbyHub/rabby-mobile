@@ -1,224 +1,358 @@
-import * as sinon from 'sinon';
-import type { SinonStubbedInstance } from 'sinon';
-
+import type { StorageAdapater, StorageItemTpl } from './storageAdapter';
 import createPersistStore from './createPersistStore';
-import { type StorageAdapater, makeMemoryStorage } from './storageAdapter';
 
-interface StorageItemTpl {
-  [key: string]: any;
+type TestStore = {
+  count: number;
+  nested: {
+    value: string;
+    optional?: string;
+  };
+  items: string[];
+};
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function makeSerializingStorage(initial?: Record<string, StorageItemTpl>) {
+  const data = new Map<string, StorageItemTpl>();
+  Object.entries(initial || {}).forEach(([key, value]) => {
+    data.set(key, clone(value));
+  });
+
+  const writes: Array<{ key: string; value: StorageItemTpl }> = [];
+  let flushCount = 0;
+  const storage: StorageAdapater<Record<string, StorageItemTpl>> = {
+    getItem(key) {
+      const value = data.get(key);
+      return value === undefined ? null : clone(value);
+    },
+    setItem(key, value) {
+      const snapshot = clone(value as StorageItemTpl);
+      data.set(String(key), snapshot);
+      writes.push({ key: String(key), value: snapshot });
+    },
+    removeItem(key) {
+      data.delete(String(key));
+    },
+    clearAll() {
+      data.clear();
+    },
+    flushToDisk() {
+      flushCount += 1;
+    },
+  };
+
+  return {
+    storage,
+    writes,
+    getFlushCount: () => flushCount,
+    getItem: <T>(key: string) => clone(data.get(key) as T),
+  };
+}
+
+function makeStore(
+  storage = makeSerializingStorage(),
+  options: { enableDevMutationGuard?: boolean } = {},
+) {
+  const controller = createPersistStore<TestStore>(
+    {
+      name: 'testStore',
+      template: {
+        count: 0,
+        nested: { value: 'initial' },
+        items: [],
+      },
+    },
+    {
+      storage: storage.storage,
+      enableDevMutationGuard: options.enableDevMutationGuard,
+    },
+  );
+  return { controller, storage };
+}
+
+async function nextMicrotask() {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 describe('createPersistStore', () => {
-  let storageMock: SinonStubbedInstance<StorageAdapater<Record<string, StorageItemTpl>>>;
-  let getItemStub: sinon.SinonStub<[string], StorageItemTpl | null>;
-  let setItemStub: sinon.SinonStub<[keyof StorageItemTpl, any]>;
-  let removeItemStub: sinon.SinonStub<[keyof StorageItemTpl]>;
-  let clearAllStub: sinon.SinonStub<[]>;
+  it('hydrates storage over template defaults without sharing storage references', () => {
+    const storage = makeSerializingStorage({
+      testStore: {
+        count: 3,
+        nested: { value: 'stored' },
+        items: ['stored'],
+      },
+    });
+    const { controller } = makeStore(storage);
 
-  let memStorage: ReturnType<typeof makeMemoryStorage>;
-  let branchClock: sinon.SinonFakeTimers;
-
-  beforeEach(() => {
-    getItemStub = sinon.stub();
-    setItemStub = sinon.stub();
-    removeItemStub = sinon.stub();
-    clearAllStub = sinon.stub();
-
-    storageMock = {
-      getItem: getItemStub,
-      getAll: () => ({}),
-      setItem: setItemStub,
-      removeItem: removeItemStub,
-      clearAll: clearAllStub,
-    } as unknown as SinonStubbedInstance<StorageAdapater<Record<string, StorageItemTpl>>>;
-
-    memStorage?.clearAll();
-    memStorage = makeMemoryStorage();
-    branchClock = sinon.useFakeTimers();
+    expect(controller.getSnapshot()).toEqual({
+      count: 3,
+      nested: { value: 'stored' },
+      items: ['stored'],
+    });
+    expect(storage.writes).toHaveLength(0);
   });
 
-  afterEach(() => {
-    sinon.restore();
+  it('persists a newly initialized store immediately', () => {
+    const { controller, storage } = makeStore();
+
+    expect(controller.getSnapshot()).toEqual({
+      count: 0,
+      nested: { value: 'initial' },
+      items: [],
+    });
+    expect(storage.writes).toHaveLength(1);
   });
 
-  describe('shallow', () => {
-    it('should create a persistent store with default template', async () => {
-      const store = createPersistStore({ name: 'testStore' });
-      expect(store).toBeDefined();
-      expect(store).toEqual({});
+  it('tracks nested set, add, delete and array mutations as one transaction', async () => {
+    const storage = makeSerializingStorage({
+      testStore: {
+        count: 0,
+        nested: { value: 'initial' },
+        items: [],
+      },
+    });
+    const { controller } = makeStore(storage);
+
+    controller.update(draft => {
+      draft.nested.value = 'updated';
+      draft.nested.optional = 'added';
+      delete draft.nested.optional;
+      draft.items.push('first', 'second');
+      draft.items.splice(0, 1);
     });
 
-    it('should create a persistent store with a given template', async () => {
-      const template = { key: 'value' };
-      const store = createPersistStore({ name: 'testStore', template });
-      expect(store).toBeDefined();
-      expect(store).toEqual(template);
+    expect(controller.getSnapshot()).toEqual({
+      count: 0,
+      nested: { value: 'updated' },
+      items: ['second'],
     });
+    expect(storage.writes).toHaveLength(0);
 
-    it('should initialize the store from the storage if fromStorage flag is true', async () => {
-      const template: StorageItemTpl = { key: 'value' };
-      getItemStub.withArgs('testStore').returns(template);
-      const store = createPersistStore({ name: 'testStore', fromStorage: true }, { storage: storageMock });
-      expect(store).toBeDefined();
-      expect(store).toEqual(template);
-    });
+    await nextMicrotask();
 
-    it('should set and persist data to storage on property set', async () => {
-      const store = createPersistStore<{ key: string }>({ name: 'testStore', template: { key: null } });
-      expect(store.key).toEqual(null);
-
-      store.key = 'value';
-      expect(store.key).toEqual('value');
-    });
-
-    it('should delete property and persist data to storage on property delete', async () => {
-      const store = createPersistStore<Partial<{ key: string }>>({ name: 'testStore', template: { key: 'value' } });
-
-      expect(store.key).toEqual('value');
-
-      delete store.key;
-      expect(store.key).toEqual(undefined);
+    expect(storage.writes).toHaveLength(1);
+    expect(storage.getItem<TestStore>('testStore')).toEqual({
+      count: 0,
+      nested: { value: 'updated' },
+      items: ['second'],
     });
   });
 
-  describe('nested', () => {
-    it('should set and persist data to storage on property nested-set', async () => {
-      const store = createPersistStore<{ key: { a: string } }>({ name: 'testStore', template: { key: null } }, { storage: memStorage, persistDebounce: 500 });
-      expect(store.key).toEqual(null);
+  it('coalesces same-turn updates and only persists the latest revision', async () => {
+    const storage = makeSerializingStorage({
+      testStore: {
+        count: 0,
+        nested: { value: 'initial' },
+        items: [],
+      },
+    });
+    const { controller } = makeStore(storage);
 
-      store.key = { a: 'value' };
-      expect(store.key.a).toEqual('value');
-      branchClock.tick(500);
-      expect(memStorage.getItem('testStore')).toEqual({ key: { a: 'value' } });
-
-      store.key.a = 'value2';
-      expect(store.key.a).toEqual('value2');
-
-      branchClock.tick(500);
-      expect(memStorage.getItem('testStore')).toEqual({ key: { a: 'value2' } });
+    controller.update(draft => {
+      draft.count = 1;
+    });
+    controller.update(draft => {
+      draft.count = 2;
+    });
+    controller.update(draft => {
+      draft.count = 3;
     });
 
-    describe('should set and persist data to storage on property nested-add-property', () => {
-      it('add new key', async () => {
-        const store = createPersistStore<{ key: Record<string, any>, opt?: string }>({ name: 'testStore', template: { key: null } }, { storage: memStorage, persistDebounce: 500 });
-        expect(store.key).toEqual(null);
+    expect(storage.writes).toHaveLength(0);
+    await nextMicrotask();
 
-        store.opt = 'optvalue';
-        expect(store.opt).toEqual('optvalue');
-        expect(memStorage.getItem('testStore')).toEqual({ key: null });
-        branchClock.tick(500);
-        expect(memStorage.getItem('testStore')).toEqual({ key: null, opt: 'optvalue' });
-
-        delete store.opt;
-        expect(store.opt).toEqual(undefined);
-        branchClock.tick(500);
-        expect(memStorage.getItem('testStore')).toEqual({ key: null });
-      });
-
-      it('add nested new key', async () => {
-        const store = createPersistStore<{ key: Record<string, any> }>({ name: 'testStore', template: { key: null } }, { storage: memStorage, persistDebounce: 500 });
-        expect(store.key).toEqual(null);
-
-        store.key = {};
-        expect(store.key).toEqual({});
-        branchClock.tick(500);
-        expect(memStorage.getItem('testStore')).toEqual({ key: {} });
-
-        store.key.a = 'value2';
-        expect(store.key.a).toEqual('value2');
-
-        branchClock.tick(500);
-        expect(memStorage.getItem('testStore')).toEqual({ key: { a: 'value2' } });
-      });
-    });
-
-    it('should delete property and persist data to storage on property nested-delete', async () => {
-      const store = createPersistStore<{ key?: { a?: string } | null }>({ name: 'testStore', template: { key: { a: 'value' } } }, { storage: memStorage, persistDebounce: 500 });
-
-      expect(store.key!.a).toEqual('value');
-
-      delete store.key!.a;
-      expect(store.key!.a).toEqual(undefined);
-      branchClock.tick(500);
-      expect(memStorage.getItem('testStore')).toEqual({ key: { a: undefined } });
-
-      store.key = null;
-      expect(store.key).toEqual(null);
-      branchClock.tick(500);
-      expect(memStorage.getItem('testStore')).toEqual({ key: null });
-
-      delete store.key;
-      expect(store.key).toEqual(undefined);
-      branchClock.tick(500);
-      expect(memStorage.getItem('testStore')).toEqual({ key: undefined });
-    });
+    expect(storage.writes).toEqual([
+      {
+        key: 'testStore',
+        value: {
+          count: 3,
+          nested: { value: 'initial' },
+          items: [],
+        },
+      },
+    ]);
   });
 
-  ;[
-    undefined/* 1000 */,
-    2000,
-    3000,
-  ].forEach((debounceValue = 1000) => {
-    it(`[sinon | debounce: ${debounceValue}] should debounce ms the storage.setItem method when setting properties`, async () => {
-      const clock = sinon.useFakeTimers();
-      const store = createPersistStore({ name: 'testStore' }, { storage: storageMock, persistDebounce: debounceValue });
-      store.key = 'value';
-      clock.tick(debounceValue / 2);
-      store.key = 'value2';
-      sinon.assert.calledOnce(setItemStub);
-      clock.tick(debounceValue + 100);
-      store.key = 'value3';
-      sinon.assert.calledTwice(setItemStub);
+  it('does not notify or persist a no-op recipe', async () => {
+    const storage = makeSerializingStorage({
+      testStore: {
+        count: 0,
+        nested: { value: 'initial' },
+        items: [],
+      },
     });
+    const { controller } = makeStore(storage);
+    const listener = jest.fn();
+    controller.subscribe(listener);
 
-    it(`[memStore | debounce: ${debounceValue}] should debounce ms the storage.setItem method when setting properties`, async () => {
-      const clock = sinon.useFakeTimers();
-      const sinonMem = sinon.stub(memStorage);
-      const store = createPersistStore({ name: 'testStore' }, { storage: sinonMem, persistDebounce: debounceValue });
-      store.key = 'value';
-      clock.tick(debounceValue / 2);
-      store.key = 'value2';
-      sinon.assert.calledOnce(sinonMem.setItem);
-      clock.tick(debounceValue + 100);
-      store.key = 'value3';
-      sinon.assert.calledTwice(sinonMem.setItem);
-    });
+    controller.update(() => undefined);
+    await nextMicrotask();
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(storage.writes).toHaveLength(0);
   });
 
-  it('should return all items from storage adapter when getAll is called', async () => {
-    const storedData = { key1: 'value1', key2: 'value2' };
-    memStorage.setItem('testStore', storedData);
+  it('notifies subscribers after commit with paths and final state', () => {
+    const storage = makeSerializingStorage({
+      testStore: {
+        count: 0,
+        nested: { value: 'initial' },
+        items: [],
+      },
+    });
+    const { controller } = makeStore(storage);
+    const listener = jest.fn();
+    const fieldListener = jest.fn();
+    const dispose = controller.subscribe(listener);
+    controller.subscribeField('nested', fieldListener);
 
-    const store = createPersistStore<typeof storedData>({ name: 'testStore' }, { storage: memStorage });
-    expect(store).toEqual(storedData);
-  });
-
-  it('should call removeItem method on persistent store item removal', async () => {
-    const storedData = { key1: 'value1', key2: 'value2' };
-    memStorage.setItem('testStore', storedData);
-
-    const store = createPersistStore<Partial<typeof storedData>>({ name: 'testStore' }, { storage: memStorage });
-    delete store.key1;
-    expect(store).toEqual({ key2: 'value2' });
-  });
-
-  describe('branches', () => {
-    it('no store cache', async () => {
-      memStorage.clearAll();
-      memStorage.setItem('testStore2', { key: 'value2' });
-
-      const store = createPersistStore({ name: 'testStore', template: { key: 'value' }, fromStorage: true }, { storage: memStorage });
-
-      expect(store).toEqual({ key: 'value' });
+    controller.update(draft => {
+      draft.count = 1;
+      draft.nested.value = 'updated';
     });
 
-    it('with store cache but not use', async () => {
-      memStorage.clearAll();
-      memStorage.setItem('testStore2', { key: 'value2' });
+    expect(listener).toHaveBeenCalledTimes(1);
+    const change = listener.mock.calls[0][0];
+    expect(change.revision).toBe(1);
+    expect(change.previousState.count).toBe(0);
+    expect(change.state.count).toBe(1);
+    expect(change.changedKeys).toEqual(
+      expect.arrayContaining(['count', 'nested']),
+    );
+    expect(change.changedKeys).toHaveLength(2);
+    expect(change.changedPaths).toEqual(
+      expect.arrayContaining([['count'], ['nested', 'value']]),
+    );
+    expect(fieldListener).toHaveBeenCalledWith(
+      { value: 'updated' },
+      { value: 'initial' },
+      change,
+    );
 
-      const store = createPersistStore({ name: 'testStore', template: { key: 'value' }, fromStorage: false }, { storage: memStorage });
+    dispose();
+    controller.update(draft => {
+      draft.count = 2;
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
 
-      expect(store).toEqual({ key: 'value' });
+  it('flushes the latest state synchronously and invalidates scheduled work', async () => {
+    const storage = makeSerializingStorage({
+      testStore: {
+        count: 0,
+        nested: { value: 'initial' },
+        items: [],
+      },
+    });
+    const { controller } = makeStore(storage);
+
+    controller.update(draft => {
+      draft.count = 7;
+    });
+    controller.flushNow();
+
+    expect(storage.writes).toHaveLength(1);
+    expect(storage.getFlushCount()).toBe(1);
+    expect(storage.getItem<TestStore>('testStore').count).toBe(7);
+
+    await nextMicrotask();
+    expect(storage.writes).toHaveLength(1);
+  });
+
+  it('runs beforePersist once with the final coalesced snapshot', async () => {
+    const storage = makeSerializingStorage({
+      testStore: {
+        count: 0,
+        nested: { value: 'initial' },
+        items: [],
+      },
+    });
+    const beforePersist = jest.fn();
+    const controller = createPersistStore<TestStore>(
+      {
+        name: 'testStore',
+        template: {
+          count: 0,
+          nested: { value: 'initial' },
+          items: [],
+        },
+      },
+      { storage: storage.storage, beforePersist },
+    );
+
+    controller.update(draft => {
+      draft.count = 1;
+    });
+    controller.update(draft => {
+      draft.count = 2;
+    });
+    await nextMicrotask();
+
+    expect(beforePersist).toHaveBeenCalledTimes(1);
+    expect(beforePersist).toHaveBeenCalledWith(
+      expect.objectContaining({ count: 2 }),
+    );
+  });
+
+  it('throws on direct root, nested, delete and array mutation in dev guard mode', () => {
+    const { controller } = makeStore(makeSerializingStorage(), {
+      enableDevMutationGuard: true,
+    });
+    const snapshot = controller.getSnapshot();
+
+    expect(() => {
+      // @ts-expect-error runtime guard coverage
+      snapshot.count = 1;
+    }).toThrow('testStore.count');
+    expect(() => {
+      // @ts-expect-error runtime guard coverage
+      snapshot.nested.value = 'illegal';
+    }).toThrow('testStore.nested.value');
+    expect(() => {
+      // @ts-expect-error runtime guard coverage
+      delete snapshot.nested.value;
+    }).toThrow('testStore.nested.value');
+    expect(() => {
+      // @ts-expect-error runtime guard coverage
+      snapshot.items.push('illegal');
+    }).toThrow('testStore.items.push');
+  });
+
+  it('takes ownership of values assigned by callers', () => {
+    const external = {
+      nested: { value: 1 },
+      items: ['first'],
+    };
+    const controller = createPersistStore<{
+      payload?: typeof external;
+    }>(
+      {
+        name: 'ownership',
+        template: {},
+      },
+      { enableDevMutationGuard: true },
+    );
+
+    controller.update(draft => {
+      draft.payload = external;
+    });
+
+    expect(controller.getSnapshot().payload).toEqual(external);
+    expect(controller.getSnapshot().payload).not.toBe(external);
+    expect(controller.getSnapshot().payload?.nested).not.toBe(external.nested);
+    expect(Object.isFrozen(external)).toBe(false);
+    expect(Object.isFrozen(external.nested)).toBe(false);
+
+    external.nested.value = 2;
+    external.items.push('second');
+
+    expect(controller.getSnapshot().payload).toEqual({
+      nested: { value: 1 },
+      items: ['first'],
     });
   });
 });

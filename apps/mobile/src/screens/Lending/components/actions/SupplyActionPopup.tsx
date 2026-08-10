@@ -81,6 +81,7 @@ import {
 import { naviPush } from '@/utils/navigation';
 import { isUserCancelledError } from '../../utils/error';
 import { ellipsisSymbol } from '../../utils/format';
+import { useMode } from '../../hooks/useMode';
 
 type SupplyActionPopupProps = PopupDetailProps & {
   onBeforeSwapNavigate?: () => void;
@@ -92,7 +93,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   onClose,
   onBeforeSwapNavigate,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState(
     reserve.underlyingAsset,
@@ -113,6 +114,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
+  const { eModes } = useMode();
   const { t } = useTranslation();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
@@ -190,11 +192,13 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       BigNumber(amount).multipliedBy(
         targetPool.formattedPriceInMarketReferenceCurrency,
       ),
+      eModes,
     ).toString();
   }, [
     amount,
     currentReserve.chain,
     currentReserve.underlyingAsset,
+    eModes,
     formattedPoolReservesAndIncentives,
     userSummary,
   ]);
@@ -858,9 +862,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               type="aave"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
-              iconColor={
-                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-              }
+              iconColor={colors2024['neutral-contrast']}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess

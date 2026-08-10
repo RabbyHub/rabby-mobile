@@ -51,6 +51,7 @@ import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -92,18 +93,25 @@ export const ProtocolList = () => {
     return getMultiProtocolsCacheKey(myTop10Addresses, chain);
   }, [chain, myTop10Addresses]);
 
-  const registerMultiAssets = useProtocolListComputedStore(
-    s => s.registerMultiProtocols,
-  );
+  const registerMultiAssets =
+    useProtocolListComputedStore.getState().registerMultiProtocols;
 
-  const multiProtocols = useProtocolListComputedStore(
+  const multiProtocols = useActivityStore(
+    useProtocolListComputedStore,
     useShallow(
       state =>
         state.multiProtocolsCache[multiProtocolsKey] || emptyCacheProtocolItem,
     ),
+    Object.is,
+    { storeLabel: 'home-multi-assets-defi-computed-list' },
   );
 
-  const isLoading = useProtocols(state => state.isLoading);
+  const isLoading = useActivityStore(
+    useProtocols,
+    state => state.isLoading,
+    Object.is,
+    { storeLabel: 'home-multi-assets-defi-loading' },
+  );
 
   const { data: portfoliosData, loadMore: loadMorePortfolios } =
     useLoadMoreData(multiProtocols.unFold);

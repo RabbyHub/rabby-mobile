@@ -31,12 +31,11 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@rabby-wallet/base-utils": "^0.1.0",
+    "@rabby-wallet/base-utils": "workspace:^",
     "@types/lodash.clonedeep": "^4.5.9",
-    "@vue/reactivity": "^3.3.11",
-    "debounce": "^2.0.0",
     "ethereumjs-util": "^7.1.5",
-    "lodash.clonedeep": "^4.5.0"
+    "lodash.clonedeep": "^4.5.0",
+    "mutative": "^1.3.0"
   },
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",

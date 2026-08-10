@@ -198,7 +198,7 @@ export const useClearSwapHistoryRedDot = () => {
   }, [currentAccount?.address, setSwapHistoryRedDot]);
 };
 
-export const usePollSwapPendingNumber = (timer = 10000) => {
+export const usePollSwapPendingNumber = (timer = 10000, enabled = true) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [, setCount] = useAtom(swapPendingCountAtom);
   const [, setTxData] = useAtom(swapPendingTxDataAtom);
@@ -211,6 +211,9 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
   });
   const res = useRequest(
     async () => {
+      if (!enabled) {
+        return null;
+      }
       const account = currentAccount;
       if (!account?.address) {
         return null;
@@ -246,7 +249,7 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
       onSuccess(v) {
         setTxData(v);
       },
-      refreshDeps: [currentAccount],
+      refreshDeps: [currentAccount, enabled],
     },
   );
 
@@ -255,49 +258,59 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
   const { loading, error, data: value, runAsync } = res;
 
   const runFetchLocalPendingTx = useCallback(() => {
-    if (transactionHistoryReady && currentAccount?.address) {
+    if (enabled && transactionHistoryReady && currentAccount?.address) {
       const resTx = fetchLocalSwapPendingTx(currentAccount.address);
       setLocalPendingTxData(resTx);
     }
-  }, [currentAccount?.address, setLocalPendingTxData, transactionHistoryReady]);
+  }, [
+    currentAccount?.address,
+    enabled,
+    setLocalPendingTxData,
+    transactionHistoryReady,
+  ]);
 
   useEffect(() => {
     runFetchLocalPendingTx();
   }, [runFetchLocalPendingTx]);
 
-  useInterval(() => {
-    if (localPendingTxData) {
-      const refreshTx = fetchRefreshLocalData(
-        localPendingTxData,
-        'swap',
-      ) as SwapTxHistoryItem;
-      if (refreshTx) {
-        // if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
-        //   setLocalPendingTxData(null);
-        // } else {
-        setLocalPendingTxData(refreshTx);
-        setSwapHistoryRedDot(true);
-        // }
+  useInterval(
+    () => {
+      if (localPendingTxData) {
+        const refreshTx = fetchRefreshLocalData(
+          localPendingTxData,
+          'swap',
+        ) as SwapTxHistoryItem;
+        if (refreshTx) {
+          // if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
+          //   setLocalPendingTxData(null);
+          // } else {
+          setLocalPendingTxData(refreshTx);
+          setSwapHistoryRedDot(true);
+          // }
+        }
       }
-    }
-  }, 1000);
+    },
+    enabled ? 1000 : undefined,
+  );
 
   const clearLocalPendingTxData = () => {
     setLocalPendingTxData(null);
   };
 
   useEffect(() => {
-    if ((!loading && value !== undefined) || error) {
+    if (enabled && ((!loading && value !== undefined) || error)) {
       timerRef.current && clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         runAsync();
       }, timer);
+    } else if (!enabled) {
+      timerRef.current && clearTimeout(timerRef.current);
     }
 
     return () => {
       timerRef.current && clearTimeout(timerRef.current);
     };
-  }, [loading, value, error, timer, runAsync]);
+  }, [enabled, loading, value, error, timer, runAsync]);
 
   useEffect(() => {
     return () => {

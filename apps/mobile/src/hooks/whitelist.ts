@@ -149,7 +149,7 @@ export const isAddrInWhitelist = (
   );
 };
 
-const removeWhitelist = async (address: string) => {
+export const removeWhitelist = async (address: string) => {
   const revision = ++whitelistRevision;
   await whitelistServiceApi.removeWhitelist(address);
   removeCexId(address);

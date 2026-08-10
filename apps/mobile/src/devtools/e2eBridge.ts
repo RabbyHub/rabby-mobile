@@ -5,10 +5,8 @@ import {
 } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
 import { runDevIIFEFunc } from '@/core/utils/store';
-import { jotaiStore } from '@/core/utils/reexports';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { sceneAccountInfoStore } from '@/hooks/sceneAccountInfoAtom';
-import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -37,6 +35,20 @@ import { getIsFoldMultiChart } from '@/screens/Address/components/MultiAssets/Re
 import { getRecentSendPendingTxData } from '@/screens/Send/hooks/useRecentSend';
 import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { setWhitelist as setWhitelistState } from '@/hooks/whitelist';
+import {
+  filterMyAccounts,
+  filterOutTop10Accounts,
+  sortAccountList,
+} from '@/core/apis/account';
+import {
+  buildPortfolioAddressChange,
+  resolvePortfolioAddressBalance,
+} from '@/store/homePortfolio/consistency';
+import {
+  getHome24hProjection,
+  getHomeAccountProjection,
+  getHomeBalanceProjection,
+} from '@/store/homePortfolio/runtime';
 
 type DevtoolsMethod = (...args: any[]) => unknown;
 
@@ -500,6 +512,203 @@ function buildSingleHomeSnapshot() {
   };
 }
 
+function buildPortfolioConsistencyAddressResource(address: string) {
+  const normalizedAddress = normalizeAddress(address);
+  const balance = addressBalanceStore.getAddressValue(normalizedAddress);
+  const balance24h = balance24hStore.getAddress24hBalance(normalizedAddress);
+  const curve = addressCurve24hStore.getAddressCurve(normalizedAddress) || [];
+
+  return {
+    address: normalizedAddress,
+    balance: balance
+      ? {
+          totalBalance: balance.totalBalance,
+          evmBalance: balance.evmBalance,
+        }
+      : null,
+    balance24h: balance24h
+      ? {
+          totalUsdValue: balance24h.total_usd_value,
+          updateTime: balance24h.updateTime,
+        }
+      : null,
+    curve: {
+      pointCount: curve.length,
+      startEvmBalance: curve[0]?.usd_value ?? null,
+      endEvmBalance: curve[curve.length - 1]?.usd_value ?? null,
+    },
+    flow: {
+      balance: addressBalanceStore.getAddressFlowState(normalizedAddress),
+      balance24h:
+        balance24hStore.getAddress24hBalanceFlowState(normalizedAddress),
+      curve: addressCurve24hStore.getAddressCurveFlowState(normalizedAddress),
+    },
+  };
+}
+
+function buildPortfolioConsistencyAccountList() {
+  const accountState = accountStore.getState();
+  const sortedAccounts = sortAccountList(
+    filterMyAccounts(accountState.accounts),
+    {
+      highlightedAddresses: accountState.pinnedAddresses,
+    },
+  );
+  const { top10Accounts } = filterOutTop10Accounts(sortedAccounts, {
+    gatherSameAddress: false,
+  });
+  const rows = top10Accounts
+    .map(account => {
+      const address = normalizeAddress(account.address);
+      const balanceResource = addressBalanceStore.getAddressValue(address);
+      const balance = resolvePortfolioAddressBalance({
+        resource: balanceResource,
+        fallback: {
+          totalBalance: account.balance,
+          evmBalance: account.evmBalance,
+        },
+      });
+      const balance24h = balance24hStore.getAddress24hBalance(address);
+      const change = buildPortfolioAddressChange({
+        currentEvmBalance: balanceResource?.evmBalance,
+        previousEvmBalance: balance24h?.total_usd_value,
+      });
+
+      return {
+        identity: {
+          address,
+          type: account.type,
+          brandName: account.brandName,
+        },
+        accountSnapshot: {
+          totalBalance: account.balance ?? null,
+          evmBalance: account.evmBalance ?? null,
+        },
+        balance,
+        change24h: change ?? null,
+        changeSource: change?.source ?? 'missing',
+      };
+    })
+    .sort((left, right) => {
+      return right.balance.totalBalance - left.balance.totalBalance;
+    });
+  const identitiesByAddress = rows.reduce((result, row) => {
+    const { address } = row.identity;
+    result[address] ||= [];
+    result[address].push(row.identity);
+    return result;
+  }, {} as Record<string, Array<(typeof rows)[number]['identity']>>);
+
+  return {
+    rows,
+    duplicateAddressGroups: Object.entries(identitiesByAddress)
+      .filter(([, identities]) => identities.length > 1)
+      .map(([address, identities]) => ({ address, identities })),
+  };
+}
+
+function buildPortfolioConsistencySingleAddress() {
+  const currentAccount = apisSingleHome.getCurrentAccount();
+  const address = normalizeAddress(currentAccount?.address);
+
+  if (!currentAccount || !address) {
+    return {
+      currentAccount: null,
+      balance: null,
+      change24h: null,
+      changeSource: 'missing' as const,
+    };
+  }
+
+  const balance = addressBalanceStore.getAddressValue(address);
+  const balance24h = balance24hStore.getAddress24hBalance(address);
+  const curve = addressCurve24hStore.getAddressCurve(address) || [];
+  const change = buildPortfolioAddressChange({
+    currentEvmBalance: balance?.evmBalance,
+    previousEvmBalance: balance24h?.total_usd_value,
+    curveStartEvmBalance: curve[0]?.usd_value,
+    allowCurveFallback: true,
+  });
+
+  return {
+    currentAccount: {
+      address,
+      type: currentAccount.type,
+      brandName: currentAccount.brandName,
+    },
+    balance: balance
+      ? {
+          totalBalance: balance.totalBalance,
+          evmBalance: balance.evmBalance,
+          source: 'resource' as const,
+        }
+      : null,
+    change24h: change ?? null,
+    changeSource: change?.source ?? ('missing' as const),
+  };
+}
+
+function buildPortfolioConsistencySnapshot() {
+  const accountProjection = getHomeAccountProjection();
+  const balanceProjection = getHomeBalanceProjection();
+  const change24hProjection = getHome24hProjection();
+  const accountList = buildPortfolioConsistencyAccountList();
+  const singleAddress = buildPortfolioConsistencySingleAddress();
+  const addresses = normalizeAddresses([
+    ...accountProjection.addresses,
+    ...accountList.rows.map(row => row.identity.address),
+    singleAddress.currentAccount?.address || '',
+  ]);
+  const homeConsumer = {
+    selectionSignature: accountProjection.selectionSignature,
+    selectionGeneration: accountProjection.selectionGeneration,
+    balance: {
+      availability: balanceProjection.availability,
+      sourceAddresses: balanceProjection.sourceAddresses,
+      missingAddresses: balanceProjection.missingAddresses,
+      value: balanceProjection.value ?? null,
+      activity: balanceProjection.activity,
+    },
+    change24h: {
+      availability: change24hProjection.availability,
+      sourceAddresses: change24hProjection.sourceAddresses,
+      missingAddresses: change24hProjection.missingAddresses,
+      value: change24hProjection.value ?? null,
+      source: change24hProjection.value ? 'balance24h' : 'missing',
+      activity: change24hProjection.activity,
+    },
+  };
+
+  return {
+    version: 1,
+    capturedAt: Date.now(),
+    routeName: getLatestNavigationName() || null,
+    selection: accountProjection,
+    raw: {
+      addresses: addresses.map(buildPortfolioConsistencyAddressResource),
+    },
+    consumers: {
+      homeBalanceCard: homeConsumer,
+      homeHeader: {
+        ...homeConsumer,
+        balance: { ...homeConsumer.balance },
+        change24h: { ...homeConsumer.change24h },
+      },
+      accountList,
+      singleAddress,
+    },
+    semantics: {
+      homeBalanceCardAndHeader: 'identical',
+      accountListAndSingleAddress: 'identical-when-balance24h-baseline-exists',
+      singleAddressCurveFallback: 'allowed',
+      homeAggregation: 'unique-selected-addresses',
+      accountListMayRepeatAddressByBrand: true,
+      balanceValue: 'total-balance-including-appchain',
+      change24hValue: 'evm-balance-only',
+    },
+  };
+}
+
 const bridgeMethods = {
   ping() {
     return {
@@ -595,6 +804,9 @@ const bridgeMethods = {
   getSingleHomeSnapshot() {
     return buildSingleHomeSnapshot();
   },
+  getPortfolioConsistencySnapshot() {
+    return buildPortfolioConsistencySnapshot();
+  },
   openSendScreen(input?: {
     from?: {
       address?: string;
@@ -629,10 +841,6 @@ const bridgeMethods = {
     }
 
     apiSendToken.resetScreenState();
-    jotaiStore.set(sendScreenParamsAtom, {
-      chainEnum: chain.enum,
-      tokenId,
-    });
     void switchSceneCurrentAccount('MakeTransactionAbout', fromAccount);
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.Send,
@@ -715,6 +923,8 @@ runDevIIFEFunc(() => {
     ping: () => bridgeMethods.ping(),
     getHomePortfolioSnapshot: () => bridgeMethods.getHomePortfolioSnapshot(),
     getSingleHomeSnapshot: () => bridgeMethods.getSingleHomeSnapshot(),
+    getPortfolioConsistencySnapshot: () =>
+      bridgeMethods.getPortfolioConsistencySnapshot(),
     openSendScreen: input => bridgeMethods.openSendScreen(input as never),
     getSendScreenSnapshot: () => bridgeMethods.getSendScreenSnapshot(),
     clearWhitelistData: () => bridgeMethods.clearWhitelistData(),

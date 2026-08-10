@@ -58,6 +58,7 @@
     "customRPCService": {
       "defaultEthRPC": "query",
       "defaultRPCSubmitTxWithFallback": "command",
+      "probeBestRPC": "command",
       "request": "query",
       "requestCustomRPC": "query"
     },

@@ -38,6 +38,27 @@ import { traceAndroidInstant } from '../utils/androidTrace';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
 import { runAfterHomePostStartupReady } from '../utils/homeStartupReady';
 import { recordKeyringRuntimeConvergenceDiagnostic } from '../utils/startupDiagnostics';
+import type {
+  KeyringAuthTransition,
+  KeyringPasswordOrigin,
+} from '@rabby-wallet/service-keyring';
+
+export type WalletPasswordUpdateOptions = {
+  passwordOrigin?: KeyringPasswordOrigin;
+  pendingAuthTransition?: KeyringAuthTransition;
+};
+
+function getKeyringPasswordUpdateOptions(
+  options: WalletPasswordUpdateOptions = {},
+) {
+  return {
+    passwordState: {
+      version: 1 as const,
+      origin: options.passwordOrigin || ('user' as const),
+      pendingAuthTransition: options.pendingAuthTransition,
+    },
+  };
+}
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -173,7 +194,10 @@ export async function verifyPasswordOrUnlock(password: string) {
   notifyPostUnlockUIReady();
 }
 
-export async function setupWalletPassword(newPassword: string) {
+export async function setupWalletPassword(
+  newPassword: string,
+  options: WalletPasswordUpdateOptions = {},
+) {
   const result = getInitError(newPassword);
   if (result.error) return result;
 
@@ -188,7 +212,11 @@ export async function setupWalletPassword(newPassword: string) {
       console.log('r.error', r.error, RABBY_MOBILE_KR_PWD);
       throw new Error(ERRORS.CURRENT_IS_INCORRET);
     }
-    await keyringServiceApi.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
+    await keyringServiceApi.updatePassword(
+      RABBY_MOBILE_KR_PWD,
+      newPassword,
+      getKeyringPasswordUpdateOptions(options),
+    );
     await perpsServiceApi.resetStore();
   } catch (error: any) {
     result.error = error?.message || 'Failed to set password';
@@ -203,6 +231,7 @@ export async function setupWalletPassword(newPassword: string) {
 export async function updateWalletPassword(
   oldPassword: string,
   newPassword: string,
+  options: WalletPasswordUpdateOptions = {},
 ) {
   const result = getInitError(newPassword);
   if (result.error) return result;
@@ -216,7 +245,11 @@ export async function updateWalletPassword(
   }
 
   try {
-    await keyringServiceApi.updatePassword(oldPassword, newPassword);
+    await keyringServiceApi.updatePassword(
+      oldPassword,
+      newPassword,
+      getKeyringPasswordUpdateOptions(options),
+    );
     await perpsServiceApi.resetStore();
   } catch (error) {
     result.error = 'Failed to set password';
@@ -233,7 +266,10 @@ export async function shouldAskSetPassword() {
   return (await keyringServiceApi.getCountOfAccountsInKeyring()) === 0;
 }
 
-export async function resetPasswordOnUI(newPassword: string) {
+export async function resetPasswordOnUI(
+  newPassword: string,
+  options: WalletPasswordUpdateOptions = {},
+) {
   const result = getInitError(newPassword);
   if (result.error) return result;
 
@@ -244,7 +280,7 @@ export async function resetPasswordOnUI(newPassword: string) {
     if (hasAccountsInKeyring) {
       const lockInfo = await getRabbyLockInfo();
       if (!lockInfo.isUseCustomPwd) {
-        await setupWalletPassword(newPassword);
+        await setupWalletPassword(newPassword, options);
       } else {
         throw new Error(
           'Cannot reset password when using custom password and have rest accounts',
@@ -252,7 +288,10 @@ export async function resetPasswordOnUI(newPassword: string) {
       }
       // await updateWalletPassword(RABBY_MOBILE_KR_PWD, newPassword);
     } else {
-      await keyringServiceApi.resetPassword(newPassword);
+      await keyringServiceApi.resetPassword(
+        newPassword,
+        getKeyringPasswordUpdateOptions(options),
+      );
       await perpsServiceApi.resetStore();
     }
   } catch (error) {
@@ -302,6 +341,7 @@ export async function clearCustomPassword(currentPassword: string) {
     await keyringServiceApi.updatePassword(
       currentPassword,
       RABBY_MOBILE_KR_PWD,
+      getKeyringPasswordUpdateOptions({ passwordOrigin: 'built-in' }),
     );
     await perpsServiceApi.resetStore();
   } catch (error) {
@@ -346,7 +386,10 @@ async function tryAutoUnlockRabbyMobile() {
   }
 
   if (!isKeyringBootedSnapshot()) {
-    await keyringServiceApi.boot(RABBY_MOBILE_KR_PWD);
+    await keyringServiceApi.boot(
+      RABBY_MOBILE_KR_PWD,
+      getKeyringPasswordUpdateOptions({ passwordOrigin: 'built-in' }),
+    );
   }
   const lockInfo = await getRabbyLockInfo();
 
@@ -587,6 +630,11 @@ const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
 }>();
 export const unlockTimeEvent = new UnlockTimeEvent();
 
+const { EventEmitter: AppLaunchLockEvent } = makeEEClass<{
+  changed: (enabled: boolean) => void;
+}>();
+export const appLaunchLockEvent = new AppLaunchLockEvent();
+
 function normalizeUnlockTime(time: unknown) {
   return typeof time === 'number' && Number.isFinite(time) && time > 0
     ? time
@@ -641,7 +689,21 @@ export function clearUnlockTime() {
   unlockTimeEvent.emit('updated', 0);
 }
 
+export function isAppLaunchLockEnabled() {
+  return getPreferenceSnapshot('appLaunchLock') ?? false;
+}
+
+export function setAppLaunchLockEnabled(enabled: boolean) {
+  setPreferenceSync({ appLaunchLock: enabled });
+  appLaunchLockEvent.emit('changed', enabled);
+}
+
 export function isUnlockSessionValid(now = Date.now()) {
+  // App Launch Lock only disables post-unlock session reuse, which is
+  // equivalent to treating any saved session as already expired. Full keyring
+  // unlock paths are unaffected.
+  if (isAppLaunchLockEnabled()) return false;
+
   const unlockTime = getUnlockTime();
   if (!unlockTime) return false;
   if (unlockTime > now) return false;

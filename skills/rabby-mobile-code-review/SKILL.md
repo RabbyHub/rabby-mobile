@@ -1,6 +1,6 @@
 ---
 name: rabby-mobile-code-review
-description: Review Rabby Mobile pull requests for actionable correctness, wallet-safety, security, privacy, build, and supply-chain issues, and publish validated inline GitHub findings. Use for outbound review of a PR or its changed code; use mobile-pr-ready-watch instead to mark a PR ready, monitor incoming feedback, implement requested fixes, or resolve review threads.
+description: Review Rabby Mobile pull requests for actionable correctness, wallet-safety, security, privacy, performance, build, and supply-chain issues, and publish validated inline GitHub findings. Use for outbound review of a PR or its changed code; use mobile-pr-ready-watch instead to mark a PR ready, monitor incoming feedback, implement requested fixes, or resolve review threads.
 ---
 
 # Rabby Mobile Code Review
@@ -12,12 +12,44 @@ This skill authors outbound review findings. For making a PR ready, watching rev
 ## Review Workflow
 
 1. Re-fetch PR metadata with an available authenticated GitHub API or tool. Continue only when the PR is open and not a draft. Record the current head SHA.
-2. Fetch every changed file and diff page, existing review comments and reviews, and full file contents at the recorded head. Read `AGENTS.md`, `CLAUDE.md`, relevant repo-local playbooks, and touched package, native, build, and workflow configuration.
+2. Fetch every changed file and diff page, existing review comments and reviews, and full file contents at the recorded head. Read `AGENTS.md`, `CLAUDE.md`, `skills/rabby-mobile-performance-review/SKILL.md`, relevant specialist playbooks, and touched package, native, build, and workflow configuration.
 3. Build a changed-line map from the diff. Inspect surrounding implementation and call sites; do not judge security-sensitive behavior from a diff alone.
 4. Report only issues introduced or made newly reachable by the PR. Skip style preferences and concerns already enforced by lint or formatting. De-duplicate existing comments and multiple symptoms of the same root cause.
 5. Anchor every public finding inline to a valid changed diff line. Use the right side for additions and the left side for deletions. Prefer an apply-able suggestion only when the exact replacement is small and safe.
-6. Use `REQUEST_CHANGES` only for blocking wallet-safety, correctness, build, or data-loss defects. Use `COMMENT` for actionable non-blocking findings.
+6. Use `REQUEST_CHANGES` only for blocking wallet-safety, correctness, build,
+   data-loss, or demonstrated critical-path performance defects. Use `COMMENT`
+   for actionable non-blocking findings.
 7. Re-fetch the head SHA before posting. If it changed, discard stale findings and review the new head. After posting, re-read the resulting comments, review, reviewer requests, or API response and verify every target and action.
+
+## Performance Review Gate
+
+Every PR receives the impact classification in
+`skills/rabby-mobile-performance-review/SKILL.md`. This is an internal review
+step, not a requirement to benchmark every diff or post a clean-pass comment.
+
+Specialist review is mandatory when the change directly or transitively affects:
+
+- startup stages, module evaluation, lock/unlock routing, keyring runtime
+  readiness, visible/current account state, or first-Home readiness: read
+  `skills/rabby-mobile-startup-governance/SKILL.md`;
+- Home, stores, hooks, selectors, lists, render fan-out, or inactive mounted
+  Screens: read `apps/mobile/skills/perf-hooks.md`;
+- database write scheduling or persistence: read
+  `skills/db-sync-write-scheduler/SKILL.md`.
+
+Do not infer safety from the changed path alone. Shared services, stores,
+storage, package code, and native modules can affect startup or Home without
+living under those Screen directories.
+
+If startup/unlock/account-state or Home performance safety remains uncertain
+after inspecting code and available evidence:
+
+1. Request `richardo2016x` as a reviewer.
+2. Leave one concise inline note mentioning `@richardo2016x` on the most
+   relevant changed line and state the unresolved invariant or evidence needed.
+3. Do not duplicate the escalation across files.
+4. Follow the normal severity rules; uncertainty alone is not
+   `REQUEST_CHANGES` unless a concrete blocking defect is established.
 
 ## Public Review Rules
 

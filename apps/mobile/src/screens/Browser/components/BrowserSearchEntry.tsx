@@ -1,15 +1,11 @@
-import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
+import { browserApis, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BlurView, BlurViewProps } from '@react-native-community/blur';
-import { useMemoizedFn } from 'ahooks';
-import { useAtom } from 'jotai';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
-import { activeTabAtom } from '../BrowserScreen/components/BrowserManage';
 import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
 
 const isAndroid = Platform.OS === 'android';
@@ -173,47 +169,9 @@ const BlurViewOnlyIOSWrapper = ({
 };
 
 export const BrowserSearchEntry: React.FC = () => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const {
-    browserState,
-    setPartialBrowserState,
-    displayedTabs,
-    forceShowBrowser,
-    forceShowBrowserManage,
-    closeTab,
-    switchToTab,
-    openTab,
-    setBrowserState,
-  } = useBrowser();
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   const { homeDisplayedTabs: tabs } = useHomeDisplayedTabs();
-  const [, setActiveTab] = useAtom(activeTabAtom);
-
-  const { t } = useTranslation();
-  const handlePress = useMemoizedFn(() => {
-    setPartialBrowserState({
-      isShowBrowser: true,
-      isShowSearch: true,
-      searchText: '',
-      searchTabId: '',
-      trigger: 'home',
-    });
-    forceShowBrowser();
-  });
-
-  const handleTabPress = useMemoizedFn(() => {
-    if (!displayedTabs?.length) {
-      setActiveTab('favorites');
-    }
-    setPartialBrowserState({
-      isShowBrowser: false,
-      isShowSearch: false,
-      isShowManage: true,
-      searchText: '',
-      searchTabId: '',
-    });
-    forceShowBrowserManage();
-  });
 
   if (!tabs.length) {
     return null;
@@ -243,7 +201,7 @@ export const BrowserSearchEntry: React.FC = () => {
                     containerStyle={styles.tabItem}
                     tab={tab}
                     onPress={() => {
-                      switchToTab(tab.id);
+                      browserApis.switchToTab(tab.id);
                       const origin = safeGetOrigin(tab.url || tab.initialUrl);
                       if (origin) {
                         matomoRequestEvent({
@@ -254,7 +212,7 @@ export const BrowserSearchEntry: React.FC = () => {
                       }
                     }}
                     onPressClose={() => {
-                      closeTab(tab.id);
+                      browserApis.closeTab(tab.id);
                     }}
                   />
                 </View>

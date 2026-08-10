@@ -383,7 +383,11 @@ export const TransactionItem = ({
           if (cexInfo) {
             address = (
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.describeText}>{ToText}</Text>
+                <Text
+                  style={[styles.describeText, { flexShrink: 0 }]}
+                  numberOfLines={1}>
+                  {ToText}
+                </Text>
                 <FastImage
                   source={{ uri: cexInfo.logo_url }}
                   style={{
@@ -393,7 +397,15 @@ export const TransactionItem = ({
                     marginHorizontal: 4,
                   }}
                 />
-                <Text style={styles.describeText}>
+                <Text
+                  style={[
+                    styles.describeText,
+                    {
+                      flexShrink: 1,
+                      minWidth: 0,
+                    },
+                  ]}
+                  numberOfLines={1}>
                   {getAliasName(addr, {
                     keepEmptyIfNotFound: true,
                   }) || ellipsisAddress(addr)}
@@ -448,7 +460,9 @@ export const TransactionItem = ({
           isShowRPCStatus={true}
         />
         {typeof address === 'string' ? (
-          <Text style={styles.describeText}>{address}</Text>
+          <Text style={styles.describeText} numberOfLines={1}>
+            {address}
+          </Text>
         ) : (
           address
         )}

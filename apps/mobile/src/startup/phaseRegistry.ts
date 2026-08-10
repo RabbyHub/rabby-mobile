@@ -3,81 +3,107 @@ import { markStartupRuntimePhase } from './runtimeDiagnostics';
 
 export type StartupPhase = 'launch';
 
-type StartupPhaseTask = {
+export type StartupPhaseTask = {
   id: string;
   run: (reason: string) => void;
 };
 
-const phaseTasks: Record<StartupPhase, StartupPhaseTask[]> = {
-  launch: [],
-};
+export function createStartupPhaseRegistry() {
+  const phaseTasks: Record<StartupPhase, StartupPhaseTask[]> = {
+    launch: [],
+  };
 
-const registeredTaskIdsByPhase: Record<StartupPhase, Set<string>> = {
-  launch: new Set(),
-};
+  const registeredTaskIdsByPhase: Record<StartupPhase, Set<string>> = {
+    launch: new Set(),
+  };
 
-const advancedPhases: Record<StartupPhase, string | null> = {
-  launch: null,
-};
+  const advancedPhases: Record<StartupPhase, string | null> = {
+    launch: null,
+  };
 
-function runPhaseTask(
-  phase: StartupPhase,
-  task: StartupPhaseTask,
-  reason: string,
-) {
-  traceAndroidInstant('startup.phase_task.run', {
-    phase,
-    id: task.id,
-    reason,
-  });
-  task.run(reason);
-}
+  function runPhaseTask(
+    phase: StartupPhase,
+    task: StartupPhaseTask,
+    reason: string,
+  ) {
+    traceAndroidInstant('startup.phase_task.run', {
+      phase,
+      id: task.id,
+      reason,
+    });
+    task.run(reason);
+  }
 
-export function registerStartupPhaseTask(
-  phase: StartupPhase,
-  task: StartupPhaseTask,
-) {
-  const registeredIds = registeredTaskIdsByPhase[phase];
-  if (registeredIds.has(task.id)) {
-    traceAndroidInstant('startup.phase_task.register_skipped', {
+  function registerStartupPhaseTask(
+    phase: StartupPhase,
+    task: StartupPhaseTask,
+  ) {
+    const registeredIds = registeredTaskIdsByPhase[phase];
+    if (registeredIds.has(task.id)) {
+      traceAndroidInstant('startup.phase_task.register_skipped', {
+        phase,
+        id: task.id,
+      });
+      return;
+    }
+
+    registeredIds.add(task.id);
+    phaseTasks[phase].push(task);
+    traceAndroidInstant('startup.phase_task.register', {
       phase,
       id: task.id,
     });
-    return;
+
+    const advancedReason = advancedPhases[phase];
+    if (advancedReason) {
+      runPhaseTask(phase, task, advancedReason);
+    }
   }
 
-  registeredIds.add(task.id);
-  phaseTasks[phase].push(task);
-  traceAndroidInstant('startup.phase_task.register', {
-    phase,
-    id: task.id,
-  });
+  function advanceStartupPhase(phase: StartupPhase, reason = 'unknown') {
+    if (advancedPhases[phase]) {
+      traceAndroidInstant('startup.phase.advance_skipped', {
+        phase,
+        reason,
+        advancedReason: advancedPhases[phase],
+      });
+      return;
+    }
 
-  const advancedReason = advancedPhases[phase];
-  if (advancedReason) {
-    runPhaseTask(phase, task, advancedReason);
-  }
-}
-
-export function advanceStartupPhase(phase: StartupPhase, reason = 'unknown') {
-  if (advancedPhases[phase]) {
-    traceAndroidInstant('startup.phase.advance_skipped', {
+    advancedPhases[phase] = reason;
+    markStartupRuntimePhase('launch', 'phase-advanced', reason);
+    traceAndroidInstant('startup.phase.advance', {
       phase,
       reason,
-      advancedReason: advancedPhases[phase],
+      taskCount: phaseTasks[phase].length,
     });
-    return;
+
+    phaseTasks[phase].forEach(task => {
+      runPhaseTask(phase, task, reason);
+    });
   }
 
-  advancedPhases[phase] = reason;
-  markStartupRuntimePhase('launch', 'phase-advanced', reason);
-  traceAndroidInstant('startup.phase.advance', {
-    phase,
-    reason,
-    taskCount: phaseTasks[phase].length,
-  });
+  function getStartupPhaseSnapshot(phase: StartupPhase) {
+    return {
+      advancedReason: advancedPhases[phase],
+      registeredTaskIds: phaseTasks[phase].map(task => task.id),
+    };
+  }
 
-  phaseTasks[phase].forEach(task => {
-    runPhaseTask(phase, task, reason);
-  });
+  return {
+    advanceStartupPhase,
+    getStartupPhaseSnapshot,
+    registerStartupPhaseTask,
+  };
+}
+
+const startupPhaseRegistry = createStartupPhaseRegistry();
+
+export const registerStartupPhaseTask =
+  startupPhaseRegistry.registerStartupPhaseTask;
+
+export const advanceStartupPhase = startupPhaseRegistry.advanceStartupPhase;
+
+export function getStartupPhaseSnapshot(phase: StartupPhase) {
+  return startupPhaseRegistry.getStartupPhaseSnapshot(phase);
 }

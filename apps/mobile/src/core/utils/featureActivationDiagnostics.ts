@@ -1,7 +1,9 @@
 import { traceAndroidInstant } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
+import { shouldSuppressPerfCaptureConsoleNoise } from './perfCaptureConsole';
 
 export type FeatureActivationName =
+  | 'send'
   | 'swap'
   | 'bridge'
   | 'single-address'
@@ -12,6 +14,8 @@ export type FeatureActivationEventName =
   | 'context-ready'
   | 'state-prepared'
   | 'navigation-dispatched'
+  | 'route-render-start'
+  | 'content-render-start'
   | 'mounted'
   | 'visible'
   | 'interactive'
@@ -140,14 +144,16 @@ function appendFeatureActivationEvent(
     stepMs: record.stepMs,
     reason: record.reason,
   });
-  console.info(`[FeatureActivation] ${cycle.feature}: ${event}`, {
-    cycleId: cycle.cycleId,
-    visitNumber: cycle.visitNumber,
-    elapsedMs: record.elapsedMs,
-    stepMs: record.stepMs,
-    reason: record.reason,
-    detail: record.detail,
-  });
+  if (!shouldSuppressPerfCaptureConsoleNoise()) {
+    console.info(`[FeatureActivation] ${cycle.feature}: ${event}`, {
+      cycleId: cycle.cycleId,
+      visitNumber: cycle.visitNumber,
+      elapsedMs: record.elapsedMs,
+      stepMs: record.stepMs,
+      reason: record.reason,
+      detail: record.detail,
+    });
+  }
 
   pruneRecords();
   publish();

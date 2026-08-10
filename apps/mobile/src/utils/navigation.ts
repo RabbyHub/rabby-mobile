@@ -1,4 +1,5 @@
 import { RootNames } from '@/constant/layout';
+import { perfEvents } from '@/core/utils/perf';
 import { RootStackParamsList } from '@/navigation-type';
 import {
   CommonActions,
@@ -9,6 +10,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 export const navigationRef =
   createNavigationContainerRef<RootStackParamsList>();
+
+const resetRootAndClearCoveredComponents = (
+  state: Parameters<typeof navigationRef.resetRoot>[0],
+) => {
+  perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
+  navigationRef.resetRoot(state);
+};
 
 export function getReadyNavigationInstance() {
   return navigationRef.isReady() ? navigationRef.current : null;
@@ -132,7 +140,7 @@ export function redirectToAddAddressEntry(options?: {
       break;
     }
     case 'classical:resetTo': {
-      navigationRef.resetRoot({
+      resetRootAndClearCoveredComponents({
         index: 0,
         routes: [
           {
@@ -152,7 +160,7 @@ export function redirectToAddAddressEntry(options?: {
       });
       break;
     case 'resetTo':
-      navigationRef.resetRoot({
+      resetRootAndClearCoveredComponents({
         index: 0,
         routes: [
           {

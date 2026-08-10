@@ -5,10 +5,6 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
 import { appMMKV } from '../storage/mmkvInstances';
 
-function sleep(ms = 0) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 const BASE_URL = isNonPublicProductionEnv
   ? 'https://download.rabby.io/downloads/wallet-mobile-config-reg'
   : 'https://download.rabby.io/downloads/wallet-mobile-config';
@@ -113,12 +109,27 @@ export async function fetchConfigOnBootstrap() {
   return json as Partial<OnlineConfig> | undefined;
 }
 
-const firstFetchPromise = Promise.race([
-  fetchConfigOnBootstrap().catch(() => {
-    console.warn('Failed to fetch online config');
-  }),
-  sleep(5000),
-]);
+async function fetchFirstOnlineConfig() {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<void>(resolve => {
+    timeoutId = setTimeout(resolve, 5000);
+  });
+
+  try {
+    return await Promise.race([
+      fetchConfigOnBootstrap().catch(() => {
+        console.warn('Failed to fetch online config');
+      }),
+      timeoutPromise,
+    ]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+const firstFetchPromise = fetchFirstOnlineConfig();
 
 export function startSyncOnlineConfig() {
   firstFetchPromise;

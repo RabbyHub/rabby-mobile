@@ -62,7 +62,7 @@ export const fetchLocalBridgePendingTx = (address: string) => {
   ) as BridgeTxHistoryItem;
 };
 
-export const usePollBridgePendingNumber = (timer = 10000) => {
+export const usePollBridgePendingNumber = (timer = 10000, enabled = true) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [, setCount] = useAtom(pendingCountAtom);
   const [pendingTxData, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
@@ -88,11 +88,16 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
   }, [account?.address, clearTimer, setPendingTxData]);
 
   const runFetchLocalPendingTx = useCallback(() => {
-    if (transactionHistoryReady && account?.address) {
+    if (enabled && transactionHistoryReady && account?.address) {
       const resTx = fetchLocalBridgePendingTx(account.address);
       setLocalPendingTxData(resTx);
     }
-  }, [account?.address, setLocalPendingTxData, transactionHistoryReady]);
+  }, [
+    account?.address,
+    enabled,
+    setLocalPendingTxData,
+    transactionHistoryReady,
+  ]);
 
   useEffect(() => {
     runFetchLocalPendingTx();
@@ -100,6 +105,9 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
 
   const res = useRequest(
     async () => {
+      if (!enabled) {
+        return 0;
+      }
       if (!account?.address) {
         return 0;
       }
@@ -133,7 +141,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
       );
     },
     {
-      refreshDeps: [account?.address],
+      refreshDeps: [account?.address, enabled],
       onSuccess(v) {
         setCount(v);
       },
@@ -143,15 +151,17 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
   const { loading, error, data: value, runAsync } = res;
 
   useEffect(() => {
-    if ((!loading && value !== undefined) || error) {
+    if (enabled && ((!loading && value !== undefined) || error)) {
       clearTimer();
       timerRef.current = setTimeout(() => {
         runAsync();
       }, timer);
+    } else if (!enabled) {
+      clearTimer();
     }
 
     return clearTimer;
-  }, [loading, value, error, timer, runAsync, clearTimer]);
+  }, [enabled, loading, value, error, timer, runAsync, clearTimer]);
 
   useEffect(() => {
     return clearTimer;

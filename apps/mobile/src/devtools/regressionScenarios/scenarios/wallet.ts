@@ -16,6 +16,10 @@ import {
   completeWalletCreation,
   prepareWalletCreation,
 } from '@/hooks/address/useSetupWallet';
+import {
+  onAutoLockTimeMsChange,
+  startAppTimeoutAutoLockHydration,
+} from '@/hooks/appTimeout';
 import { resetNavigationTo } from '@/hooks/navigation';
 import accountStore from '@/store/account';
 import { navigationRef } from '@/utils/navigation';
@@ -33,8 +37,13 @@ import {
 const AUTO_LOCK_CHECK_GRACE_MS = 30_000;
 const AUTO_LOCK_EARLY_TOLERANCE_MS = 7_000;
 const MAX_REGRESSION_AUTO_LOCK_MINUTES = 24 * 60;
+const MILLISECONDS_PER_MINUTE = 60 * 1000;
 const MIN_BACKUP_WORD_COUNT = 12;
 const ACCOUNT_VISIBILITY_TIMEOUT_MS = 8_000;
+const HOME_SURFACE_ROUTES = new Set<string>([
+  RootNames.Home,
+  RootNames.SingleAddressHome,
+]);
 
 function isMnemonicAccount(
   account: Awaited<ReturnType<typeof getScenarioAccounts>>[number],
@@ -121,6 +130,40 @@ async function waitForCreatedAccountVisible(address: string) {
     ),
     elapsedMs: Date.now() - startedAt,
   };
+}
+
+async function waitForHomeSurface(timeoutMs = 15_000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const routeName = navigationRef.getCurrentRoute()?.name;
+    if (routeName && HOME_SURFACE_ROUTES.has(routeName)) {
+      return routeName;
+    }
+    await delay(50);
+  }
+
+  throw new Error('Timed out waiting for Home or SingleAddressHome');
+}
+
+async function assertHomeEntryReadyWithoutRestart(
+  context: RegressionScenarioExecutionContext,
+  source: 'wallet-create' | 'wallet-onboarding',
+) {
+  const { getHomeEntryReady } = await import(
+    '@/core/utils/homeStartupMilestones'
+  );
+  const passed = getHomeEntryReady();
+  context.report('assertion', {
+    assertion: 'fresh-wallet-home-entry-ready-without-restart',
+    passed,
+    source,
+  });
+  if (!passed) {
+    throw new Error(
+      `Fresh wallet ${source} did not release Home entry tasks before restart`,
+    );
+  }
 }
 
 async function prepareWalletFixture(
@@ -243,7 +286,7 @@ async function runWalletCreate(context: RegressionScenarioExecutionContext) {
   }
 
   resetToHome();
-  await context.waitForRoute(RootNames.Home);
+  await waitForHomeSurface();
   const visibility = await waitForCreatedAccountVisible(prepared.address);
   context.report('assertion', {
     assertion: 'mnemonic-wallet-created',
@@ -260,6 +303,9 @@ async function runWalletCreate(context: RegressionScenarioExecutionContext) {
 
   if (!visibility.runtimeVisible || !visibility.accountStoreVisible) {
     throw new Error('Created mnemonic wallet is not visible');
+  }
+  if (beforeAccounts.length === 0) {
+    await assertHomeEntryReadyWithoutRestart(context, 'wallet-create');
   }
 }
 
@@ -302,6 +348,13 @@ async function runWalletBackup(context: RegressionScenarioExecutionContext) {
 }
 
 async function runLockUnlock(context: RegressionScenarioExecutionContext) {
+  const persistencePhase =
+    context.command.params.autoLockPersistencePhase || '';
+  if (persistencePhase) {
+    await runAutoLockPersistencePhase(context, persistencePhase);
+    return;
+  }
+
   await context.waitForNavigation();
   await ensureScenarioWalletUnlocked();
 
@@ -350,6 +403,116 @@ async function runLockUnlock(context: RegressionScenarioExecutionContext) {
     ),
     route: navigationRef.getCurrentRoute()?.name || null,
   });
+}
+
+function readAutoLockMinutes(value: string | undefined, name: string) {
+  const minutes = Number(value);
+  if (
+    !Number.isInteger(minutes) ||
+    minutes < 1 ||
+    minutes > MAX_REGRESSION_AUTO_LOCK_MINUTES
+  ) {
+    throw new Error(
+      `${name} must be an integer between 1 and ${MAX_REGRESSION_AUTO_LOCK_MINUTES}`,
+    );
+  }
+  return minutes;
+}
+
+async function runAutoLockPersistencePhase(
+  context: RegressionScenarioExecutionContext,
+  phase: string,
+) {
+  if (phase !== 'prepare' && phase !== 'verify') {
+    throw new Error(
+      'autoLockPersistencePhase must be either prepare or verify',
+    );
+  }
+
+  await context.waitForNavigation();
+  await startAppTimeoutAutoLockHydration();
+
+  const configuredMinutes = readAutoLockMinutes(
+    context.command.params.autoLockMinutes,
+    'autoLockMinutes',
+  );
+
+  if (phase === 'prepare') {
+    const originalMinutes =
+      getPreferenceSnapshot('autoLockTime') ?? DEFAULT_AUTO_LOCK_MINUTES;
+    onAutoLockTimeMsChange(configuredMinutes * MILLISECONDS_PER_MINUTE);
+
+    const persistedMinutes =
+      getPreferenceSnapshot('autoLockTime') ?? DEFAULT_AUTO_LOCK_MINUTES;
+    const timerMinutes = apisAutoLock.getPersistedAutoLockTimes().minutes;
+    const passed =
+      persistedMinutes === configuredMinutes &&
+      timerMinutes === configuredMinutes;
+
+    context.report('auto-lock-persistence-prepared', {
+      configuredMinutes,
+      originalMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+    context.report('assertion', {
+      assertion: 'auto-lock-persistence-prepared',
+      configuredMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+
+    if (!passed) {
+      onAutoLockTimeMsChange(originalMinutes * MILLISECONDS_PER_MINUTE);
+      throw new Error(
+        `Unable to prepare persisted auto-lock value ${configuredMinutes}`,
+      );
+    }
+    return;
+  }
+
+  const restoreMinutes = readAutoLockMinutes(
+    context.command.params.restoreAutoLockMinutes,
+    'restoreAutoLockMinutes',
+  );
+  try {
+    const persistedMinutes =
+      getPreferenceSnapshot('autoLockTime') ?? DEFAULT_AUTO_LOCK_MINUTES;
+    const timerMinutes = apisAutoLock.getPersistedAutoLockTimes().minutes;
+    const passed =
+      persistedMinutes === configuredMinutes &&
+      timerMinutes === configuredMinutes;
+
+    context.report('auto-lock-persistence-verified', {
+      configuredMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+    context.report('assertion', {
+      assertion: 'auto-lock-persistence-after-restart',
+      configuredMinutes,
+      persistedMinutes,
+      timerMinutes,
+      passed,
+    });
+
+    if (!passed) {
+      throw new Error(
+        `Auto-lock changed across restart: expected ${configuredMinutes}, ` +
+          `persisted=${persistedMinutes}, timer=${timerMinutes}`,
+      );
+    }
+  } finally {
+    onAutoLockTimeMsChange(restoreMinutes * MILLISECONDS_PER_MINUTE);
+    context.report('assertion', {
+      assertion: 'auto-lock-setting-restored',
+      restoredMinutes: restoreMinutes,
+      passed: getPreferenceSnapshot('autoLockTime') === restoreMinutes,
+    });
+  }
 }
 
 async function verifyTimedAutoLock(
@@ -477,13 +640,14 @@ export async function executeRegressionScenario(
     }
     await context.waitForNavigation();
     resetToHome();
-    await context.waitForRoute(RootNames.Home);
+    await waitForHomeSurface();
     const accounts = await getScenarioAccounts({ force: true });
     context.report('assertion', {
       assertion: 'home-has-visible-accounts',
       passed: accounts.length > 0,
       visibleAccountCount: accounts.length,
     });
+    await assertHomeEntryReadyWithoutRestart(context, 'wallet-onboarding');
     return;
   }
 

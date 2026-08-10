@@ -7,7 +7,7 @@ import {
   forgetWalletConnectAccountForTopic,
   rememberWalletConnectAccountForOrigin,
   rememberWalletConnectAccountForTopic,
-} from './accountSelection';
+} from './accountPersistence';
 import {
   clearWalletConnectAutoDisconnectTopic,
   replaceWalletConnectSessionsForAutoDisconnect,

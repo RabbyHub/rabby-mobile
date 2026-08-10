@@ -11,6 +11,9 @@ folder-alias.json
 # eslint cache
 .eslintcache
 
+# persistent self-hosted CI caches
+.ci-cache/
+
 .DS_STORE
 .idea
 .vscfavoriterc
@@ -25,6 +28,8 @@ preview-build-message.txt
 /packages/*/android/.gradle/
 /packages/*/android/.settings/
 /packages/*/android/build/
+packages/*/android/.cxx/
+
 
 # yarn v3 (w/o zero-install)
 # See: https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored

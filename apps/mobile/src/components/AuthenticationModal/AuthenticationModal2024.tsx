@@ -22,7 +22,12 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
 import { useRefState } from '@/hooks/common/useRefState';
 import usePrevious from 'react-use/lib/usePrevious';
-import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
+import {
+  BioAuthStage,
+  coerceAuthType,
+  filterAuthTypes,
+  useAuthTypeSelection,
+} from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
 import { E2E_ID } from '@/constant/e2e';
@@ -284,17 +289,8 @@ export const AuthenticationModal2024 = ({
     restCount: 0,
   });
 
-  const defaultAuthType = useMemo(
-    () => coerceAuthType(availableAuthTypes[0], availableAuthTypes),
-    [availableAuthTypes],
-  );
-
-  const [currentAuthType, setCurrentAuthType] =
-    React.useState<AuthState['authType']>(defaultAuthType);
-
-  if (currentAuthType === 'none' && currentAuthType !== defaultAuthType) {
-    setCurrentAuthType(defaultAuthType);
-  }
+  const { currentAuthType, setCurrentAuthType } =
+    useAuthTypeSelection(availableAuthTypes);
 
   // Compute title and description based on current auth type
   const title = React.useMemo(() => {
@@ -391,6 +387,7 @@ export const AuthenticationModal2024 = ({
     onFinished,
     onFinishedReturnBase,
     availableAuthTypes,
+    setCurrentAuthType,
   ]);
 
   const handleConfirm = useCallback(() => {

@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import { Alert } from 'react-native';
+import { Alert, InteractionManager } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
@@ -19,16 +19,12 @@ import type {
   AddrDescResponse,
   GasLevel,
   NFTItem,
-  ProjectItem,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import type { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
-import { useWhitelist } from '@/hooks/whitelist';
-import { addressUtils } from '@rabby-wallet/base-utils';
-import { useContactAccounts } from '@/hooks/contact';
 import type { UIContactBookItem } from '@/core/apis/contact';
 import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { apiContact, apiProvider, apiToken } from '@/core/apis';
@@ -43,10 +39,7 @@ import { StackActions, useIsFocused } from '@react-navigation/native';
 import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
-  makeAccountObject,
 } from '@/utils/account';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
-import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
 import type { EventBusListeners } from '@/utils/events';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -64,11 +57,14 @@ import { useStore } from 'zustand';
 import { useShallow } from 'zustand/shallow';
 import { createStore } from 'zustand/vanilla';
 import type { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import type { TextInput } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { zMutative } from '@/core/utils/reexports';
 import { isEqual } from 'lodash';
+import {
+  useSendRecipientState,
+  type SendRecipientDerivedState,
+} from '@/screens/Send/hooks/useSendRecipientState';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -198,6 +194,10 @@ export function useSendNFTScreenStateShallowSelector<T>(
   return useStore(sendNFTScreenStateStore, shallowSelector);
 }
 
+export function getSendNFTScreenState() {
+  return sendNFTScreenStateStore.getState();
+}
+
 export function useSendNFTScreenStateActions() {
   return {
     putScreenState,
@@ -251,24 +251,21 @@ function shouldSyncSendNFTReactiveFormValues(
 }
 export function useSendNFTForm({
   toAddress,
-  toAddressBrandName,
   nftToken,
   currentAccount,
 }: {
   toAddress?: string;
-  toAddressBrandName?: string;
   nftToken?: NFTItem;
   currentAccount: Account;
 }) {
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
 
   const sendNFTEventsRef = useRef(new EventEmitter());
 
   const screenState = useSendNFTScreenStateShallowSelector(state => ({
     balanceError: state.balanceError,
-    contactInfo: state.contactInfo,
     isLoading: state.isLoading,
-    toAddrDesc: state.toAddrDesc,
   }));
   const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
 
@@ -468,11 +465,11 @@ export function useSendNFTForm({
           showContactInfo: true,
           contactInfo: { address: currentValues.to, name: aliasName },
         });
-      } else if (screenState.contactInfo) {
+      } else if (getSendNFTScreenState().contactInfo) {
         putScreenState({ contactInfo: null });
       }
     },
-    [patchFormValues, screenState.contactInfo, getLatestFormValues, t],
+    [patchFormValues, getLatestFormValues, t],
   );
 
   const submitForm = useMemoizedFn(async () => {
@@ -735,94 +732,13 @@ export function useSendNFTForm({
     // }
   });
 
-  const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
-  const { list: cexList } = useCexSupportList();
-
-  const {
-    whitelist,
-    enabled: whitelistEnabled,
-    findAccountWithoutBalance,
-  } = useFindAddressByWhitelist();
-  const { recentHistory: recentSendToHistory, reFetch } =
-    useRecentSendToHistoryFor(formValues.to);
-
-  useEffect(() => {
-    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
-      txDetail => {
-        if (isGasAccountDepositFlowActive()) {
-          return;
-        }
-        reFetch();
-        setTimeout(() => {
-          if (isGasAccountDepositFlowActive()) {
-            return;
-          }
-          reFetch();
-        }, 5000);
-      };
-    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
-
-    return () => {
-      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
-    };
-  }, [reFetch]);
-
-  const foundToAccountInfo = useMemo(() => {
-    return findAccountWithoutBalance(formValues.to, {
-      brandName: toAddressBrandName,
-    });
-  }, [formValues.to, toAddressBrandName, findAccountWithoutBalance]);
-  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
-  const toAccount = useMemo(() => {
-    return (
-      foundToAccountInfo?.account ||
-      makeAccountObject({
-        address: formValues.to,
-        brandName: toAddressBrandName,
-      })
-    );
-  }, [foundToAccountInfo?.account, formValues.to, toAddressBrandName]);
   const computed = useMemo(() => {
-    const toAddressInWhitelist = !!whitelist.find(item =>
-      addressUtils.isSameAddress(item, formValues.to),
-    );
-    const toAddressPositiveTips = {
-      hasPositiveTips:
-        toAddressIsRecentlySend ||
-        toAddressInWhitelist ||
-        !!foundToAccountInfo?.isMyImported,
-      inWhitelist: toAddressInWhitelist,
-      isRecentlySend: toAddressIsRecentlySend,
-      isMyImported: foundToAccountInfo?.isMyImported,
-    };
     return {
-      toAccount,
-      toAddressPositiveTips,
-      toAddressIsCex:
-        !!screenState.toAddrDesc?.cex?.id &&
-        !!screenState.toAddrDesc?.cex?.is_deposit,
-      toAddressInContactBook: isAddrOnContactBook(formValues.to),
-
-      toAddrCex: cexList.find(
-        item => item.id === screenState.toAddrDesc?.cex?.id,
-      ),
-
       canDirectSign:
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chainItem?.isTestnet,
     };
-  }, [
-    whitelist,
-    isAddrOnContactBook,
-    formValues.to,
-    toAccount,
-    foundToAccountInfo?.isMyImported,
-    toAddressIsRecentlySend,
-    screenState.toAddrDesc,
-    cexList,
-    currentAccount?.type,
-    chainItem?.isTestnet,
-  ]);
+  }, [currentAccount?.type, chainItem?.isTestnet]);
 
   const resetFormValues = useCallback(() => {
     cacheAmountRef.current = DFLT_SEND_STATE.cacheAmount;
@@ -832,23 +748,31 @@ export function useSendNFTForm({
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
-  const isFocused = useIsFocused();
   useEffect(() => {
     if (
+      isFocused &&
+      isValidAddress(formValues.to) &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
-      prefetchMiniSigner({
-        txs: [],
+      const task = InteractionManager.runAfterInteractions(() => {
+        prefetchMiniSigner({
+          txs: [],
+        });
       });
+
+      return () => {
+        task.cancel();
+      };
     }
   }, [
+    isFocused,
     prefetchMiniSigner,
     chainItem?.id,
     formValues.to,
     currentAccount?.type,
+    currentAccount?.address,
     chainItem?.isTestnet,
-    toAddress,
   ]);
 
   useEffect(() => {
@@ -901,21 +825,10 @@ export function useSendNFTForm({
     scrollViewStyle,
     scrollToBottom,
 
-    whitelist,
-    whitelistEnabled,
     computed,
     miniSignInstance,
   };
 }
-type FoundAccountResult = Awaited<
-  ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
->;
-type ToAddressPositiveTips = {
-  hasPositiveTips: boolean;
-  inWhitelist: boolean;
-  isRecentlySend: boolean;
-  isMyImported?: boolean;
-};
 type InternalContext = {
   computed: {
     account: Account | null;
@@ -929,10 +842,12 @@ type InternalContext = {
     // toAddressInWhitelist: boolean;
     // toAddressIsRecentlySend: boolean;
 
-    toAccount: FoundAccountResult['account'] | null;
+    toAccount: SendRecipientDerivedState['toAccount'];
     toAddressInContactBook: boolean;
-    toAddressPositiveTips: ToAddressPositiveTips | null;
-    toAddrCex: null | undefined | ProjectItem;
+    toAddressPositiveTips:
+      | SendRecipientDerivedState['toAddressPositiveTips']
+      | null;
+    toAddrCex: SendRecipientDerivedState['toAddrCex'];
   };
 
   events: EventEmitter;
@@ -1011,7 +926,29 @@ export function SendNFTInternalContextProvider({
   }
 
   React.useLayoutEffect(() => {
-    storeRef.current?.setState(value, true);
+    const store = storeRef.current;
+    if (!store) {
+      return;
+    }
+    const prev = store.getState();
+    store.setState(
+      {
+        ...value,
+        computed: {
+          ...value.computed,
+          whitelistEnabled: prev.computed.whitelistEnabled,
+          toAccount: prev.computed.toAccount,
+          toAddressInContactBook: prev.computed.toAddressInContactBook,
+          toAddressPositiveTips: prev.computed.toAddressPositiveTips,
+          toAddrCex: prev.computed.toAddrCex,
+        },
+        fns: {
+          ...value.fns,
+          fetchContactAccounts: prev.fns.fetchContactAccounts,
+        },
+      },
+      true,
+    );
   }, [value]);
 
   return React.createElement(
@@ -1063,6 +1000,71 @@ export function useSendNFTFormValuesShallowSelector<T>(
   );
   const shallowSelector = useShallow(selector);
   return useStore(formValuesStore, shallowSelector);
+}
+
+export function SendNFTRecipientController({
+  toAddressBrandName,
+}: {
+  toAddressBrandName?: string;
+}) {
+  const store = useSendNFTInternalStoreApi();
+  const { account } = useSendNFTInternalShallowSelector(ctx => ({
+    account: ctx.computed.account,
+  }));
+  const toAddress = useSendNFTFormValuesSelector(values => values.to);
+  const toAddrDesc = useSendNFTScreenStateSelector(state => state.toAddrDesc);
+  const { fetchContactAccounts, reFetch, state } = useSendRecipientState({
+    currentAccount: account,
+    toAddress,
+    toAddressBrandName,
+    toAddrDesc,
+  });
+
+  React.useLayoutEffect(() => {
+    const prev = store.getState();
+    store.setState(
+      {
+        ...prev,
+        computed: {
+          ...prev.computed,
+          ...state,
+        },
+        fns: {
+          ...prev.fns,
+          fetchContactAccounts,
+        },
+      },
+      true,
+    );
+  }, [fetchContactAccounts, state, store]);
+
+  React.useEffect(() => {
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] = () => {
+      if (isGasAccountDepositFlowActive()) {
+        return;
+      }
+      void reFetch();
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+      refreshTimer = setTimeout(() => {
+        if (!isGasAccountDepositFlowActive()) {
+          void reFetch();
+        }
+      }, 5000);
+    };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+    };
+  }, [reFetch]);
+
+  return null;
 }
 
 export function useSendNFTCanSubmit() {

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { isNonPublicProductionEnv } from '.';
+import { isNonPublicProductionEnv } from './index';
 import { getLatestOnlineConfig } from '@/core/config/online';
 export const TIME_SETTINGS: {
   key: string;

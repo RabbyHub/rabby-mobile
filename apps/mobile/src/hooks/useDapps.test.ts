@@ -1,4 +1,7 @@
-import { useDappAccountResolver } from './useDapps';
+import {
+  replaceDappStoreFieldSnapshot,
+  useDappAccountResolver,
+} from './useDapps';
 
 const mockGetDappAccount = jest.fn();
 const mockUseCoreServiceDependencies = jest.fn();
@@ -74,7 +77,7 @@ describe('useDappAccountResolver', () => {
       status: 'ready',
       services: {
         transactionHistoryService: {
-          store: { transactions },
+          getStoreFieldSnapshot: jest.fn(() => transactions),
         },
       },
     });
@@ -86,6 +89,30 @@ describe('useDappAccountResolver', () => {
       dappInfo,
       accounts,
       transactions,
+    });
+  });
+});
+
+describe('replaceDappStoreFieldSnapshot', () => {
+  it('removes stale entries when the service publishes a full snapshot', () => {
+    const previous = {
+      dapps: {
+        'https://keep.example': { origin: 'https://keep.example' },
+        'https://remove.example': { origin: 'https://remove.example' },
+      },
+    };
+
+    expect(
+      replaceDappStoreFieldSnapshot(previous as never, 'dapps', {
+        'https://keep.example': { origin: 'https://keep.example' },
+      } as never),
+    ).toEqual({
+      dapps: {
+        'https://keep.example': { origin: 'https://keep.example' },
+      },
+    });
+    expect(previous.dapps['https://remove.example']).toEqual({
+      origin: 'https://remove.example',
     });
   });
 });

@@ -2358,6 +2358,7 @@
       "useDevicePassword": "Usar palavra-passe do dispositivo",
       "aboutUs": "Sobre nós",
       "autoLockTime": "Tempo de bloqueio automático",
+      "appLaunchLock": "Bloqueio ao iniciar",
       "lockWallet": "Bloquear carteira",
       "tou": "Termos de utilização",
       "touchId": "Touch ID",
@@ -2381,7 +2382,12 @@
       "screenshotReportSwitch": "Captura de ecrã para comunicar um erro",
       "dataAnalysis": "Análise de dados",
       "bugReportHistory": "Histórico de relatórios de erro",
-      "bugReportChat": "Partilhar feedback através do chat"
+      "bugReportChat": "Partilhar feedback através do chat",
+      "features": "Funcionalidades",
+      "manageWallets": "Gerir carteiras"
+    },
+    "settings": {
+      "chooseWallet": "Escolha uma carteira para gerir"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {

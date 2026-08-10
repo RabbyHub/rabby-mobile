@@ -1465,4 +1465,4 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 }));
 
-export default BridgeShowMore;
+export default React.memo(BridgeShowMore);

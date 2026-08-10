@@ -35,6 +35,22 @@ function loadSyncChainServiceModule(initialStore?: SyncChainStore) {
     ) {
       this.store = options.storageAdapter?.store || template;
     }
+
+    protected mutateStore(recipe: (draft: SyncChainStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as SyncChainStore;
+    }
+
+    getStoreFieldSnapshot<K extends keyof SyncChainStore>(key: K) {
+      const value = this.store[key];
+      return (
+        value === undefined ? value : JSON.parse(JSON.stringify(value))
+      ) as SyncChainStore[K];
+    }
   }
 
   jest.doMock('@rabby-wallet/persist-store', () => ({

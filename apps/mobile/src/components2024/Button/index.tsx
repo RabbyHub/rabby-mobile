@@ -141,9 +141,7 @@ export const Button = ({
       },
       aave: {
         bg: isLight ? '#131416' : '#fff',
-        currentColor: isLight
-          ? colors2024['neutral-InvertHighlight']
-          : '#192945',
+        currentColor: colors2024['neutral-contrast'],
       },
     };
     return {
