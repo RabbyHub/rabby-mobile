@@ -212,6 +212,7 @@ jobs:
 
       - name: Install and build
         run: |
+          unset MATCH_GIT_BASIC_AUTHORIZATION
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
           bash ./scripts/ci/prepare-mobile-build.sh;
@@ -259,7 +260,7 @@ jobs:
           RABBY_MOBILE_FE_SERVICE_URL: ${{ vars.RABBY_MOBILE_FE_SERVICE_URL || vars.RABBY_MOBILE_PUSH_TEST_SERVER_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
+          RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}

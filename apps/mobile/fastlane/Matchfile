@@ -38,8 +38,9 @@ case ENV["TARGET"]
 end
 
 ## self-hosted certificates' storage repo for debank frontend group
-## use https:// if basic MATCH_GIT_BASIC_AUTHORIZATION environment variable setup
-if ENV['MATCH_GIT_BASIC_AUTHORIZATION']
+## use https when CI supplies the project-scoped authorization secret
+match_git_basic_authorization = ENV.fetch('RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION', '').strip
+if !match_git_basic_authorization.empty?
   git_url = "https://github.com/RabbyHub/opcode-apple-auto-certificates.git"
 else
   git_url = "git@github.com:RabbyHub/opcode-apple-auto-certificates.git"
@@ -113,7 +114,7 @@ platform(biz_data[:platform])
 skip_certificate_matching(false)
 skip_provisioning_profiles(false)
 profile_name(profile_name) if profile_name
-# fastlane reads MATCH_GIT_BASIC_AUTHORIZATION directly from the environment.
-# Do not declare it here: Matchfile's detected-values table can print the value.
+# Authentication is passed by Fastfile so Matchfile's detected-values table
+# never receives or prints the credential.
 # values: mac_installer_distribution, developer_id_installer
 # additional_cert_types([additional_cert_type]) if additional_cert_type
