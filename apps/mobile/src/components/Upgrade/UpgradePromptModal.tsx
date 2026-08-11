@@ -30,7 +30,7 @@ import RcUpgradeSliderThumbLight from '@/assets/icons/upgrade/slider-thumb-light
 import RcUpgradeSliderThumbDark from '@/assets/icons/upgrade/slider-thumb-dark.svg';
 import { useUpgradeInfo } from '@/hooks/version';
 import { useGetBinaryMode } from '@/hooks/theme';
-import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { MODAL_GATE_IDS, useVisibleBlockingModalIds } from '@/utils/modalGate';
 import { APP_URLS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
@@ -172,6 +172,10 @@ export function UpgradePromptModal() {
   const visible = useUpgradePromptVisible();
   const pendingAutoPrompt = usePendingAutoUpgradePrompt();
   const { currentRouteName } = useCurrentRouteName();
+  const visibleBlockingModalIds = useVisibleBlockingModalIds();
+  const hasOtherVisibleModal = visibleBlockingModalIds.some(
+    modalId => modalId !== MODAL_GATE_IDS.upgradePrompt,
+  );
   const isHomeDrawerExpanded = useValueFromSharedValue(
     homeDrawerAnimateMutable.isExpanded,
   );
@@ -181,11 +185,17 @@ export function UpgradePromptModal() {
     if (
       currentRouteName === RootNames.Home &&
       !isHomeDrawerExpanded &&
+      !hasOtherVisibleModal &&
       pendingAutoPrompt
     ) {
       showPendingAutoUpgradePrompt();
     }
-  }, [currentRouteName, isHomeDrawerExpanded, pendingAutoPrompt]);
+  }, [
+    currentRouteName,
+    hasOtherVisibleModal,
+    isHomeDrawerExpanded,
+    pendingAutoPrompt,
+  ]);
 
   const handleUpdate = useCallback(async () => {
     dismissUpgradePrompt();
