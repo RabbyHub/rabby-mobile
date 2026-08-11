@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
 import { PerpsProAccountSummary } from '../components/account/PerpsProAccountSummary';
+import { PerpsProTransferSheet } from '../components/account/PerpsProTransferSheet';
 import {
   PerpsProFundingOverlay,
   type PerpsProFundingMode,
@@ -81,6 +82,7 @@ import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
 import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
 import { usePerpsProTrade } from './usePerpsProTrade';
+import { usePerpsProTransfer } from './usePerpsProTransfer';
 
 type PerpsProSceneRow =
   | { key: 'trade'; type: 'trade' }
@@ -152,6 +154,7 @@ export const PerpsProScene: React.FC<{
   });
   const cancelOrders = usePerpsProCancelOrders();
   const closeAll = usePerpsProCloseAll(info.accountIdentity);
+  const transfer = usePerpsProTransfer(info.accountIdentity);
   const { setHideOtherSymbols } = info;
   const headerCollapse = usePerpsProHeaderCollapse();
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
@@ -420,7 +423,11 @@ export const PerpsProScene: React.FC<{
           );
         case 'account-asset':
           return (
-            <PerpsProAccountAssetRow asset={item.asset} onSwap={openSwap} />
+            <PerpsProAccountAssetRow
+              asset={item.asset}
+              onSwap={openSwap}
+              onTransfer={transfer.open}
+            />
           );
         case 'positions-controls':
           return (
@@ -493,6 +500,7 @@ export const PerpsProScene: React.FC<{
       tradeColumnStyle,
       tradeWidth,
       trade,
+      transfer.open,
       updateMainColumnHeight,
       updateTradeRowHeight,
     ],
@@ -590,6 +598,13 @@ export const PerpsProScene: React.FC<{
           targetAsset={fundingOverlay.targetAsset}
         />
       ) : null}
+      <PerpsProTransferSheet
+        available={transfer.editor?.available ?? '0'}
+        onClose={transfer.close}
+        onConfirm={transfer.confirm}
+        pending={transfer.pending}
+        visible={!!transfer.editor}
+      />
       <PerpsProCancelConfirmationModal
         confirmation={cancelOrders.confirmation}
         onCancel={cancelOrders.dismissConfirmation}

@@ -1,17 +1,13 @@
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import {
   HYPE_EVM_BRIDGE_ADDRESS_MAP,
   HYPE_SEND_ASSET_TOKEN_MAP,
 } from '@/constant/perps';
-import { apisKeyring } from '@/core/apis/keyring';
 import { apisPerps } from '@/core/apis/perps';
-import { sendRequest } from '@/core/apis/sendRequest';
 import type { Account } from '@/core/startupServices/preference';
-import { miniSignTypedData } from '@/hooks/useMiniSignTypedData';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 import { showToast } from '../showToast';
 import type { AccountHistoryItem } from '../usePerpsStore';
+import { signPerpsMasterTypedData } from './signPerpsMasterTypedData';
 import type { PerpsWithdrawTarget } from './types';
 
 type SetLocalLoadingHistory = (
@@ -62,9 +58,6 @@ export const executePerpsWithdraw = async ({
     // client clock. Backdating keeps the pending entry removable by the next
     // confirmed history event, matching the existing deposit path.
     const time = Date.now() - 1000;
-    const useMiniApprovalSign =
-      account.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
-      account.type === KEYRING_CLASS.HARDWARE.LEDGER;
     const tokenId = HYPE_SEND_ASSET_TOKEN_MAP[targetAsset];
     const hyperDestination = HYPE_EVM_BRIDGE_ADDRESS_MAP[targetAsset];
 
@@ -81,43 +74,11 @@ export const executePerpsWithdraw = async ({
           destination: account.address,
         });
 
-    let signature = '';
-    if (
-      account.type === KEYRING_CLASS.PRIVATE_KEY ||
-      account.type === KEYRING_CLASS.MNEMONIC
-    ) {
-      signature = await apisKeyring.signTypedData(
-        account.type,
-        account.address.toLowerCase(),
-        action as any,
-        { version: 'V4' },
-      );
-    } else if (useMiniApprovalSign) {
-      try {
-        const result = await miniSignTypedData({
-          txs: [
-            {
-              data: action,
-              from: account.address,
-              version: 'V4',
-            },
-          ],
-          account,
-        });
-        signature = result[0].txHash;
-      } catch (error) {
-        throw new Error('Withdraw failed');
-      }
-    } else {
-      signature = await sendRequest({
-        data: {
-          method: 'eth_signTypedDataV4',
-          params: [account.address, JSON.stringify(action)],
-        },
-        session: INTERNAL_REQUEST_SESSION,
-        account,
-      });
-    }
+    const signature = await signPerpsMasterTypedData({
+      account,
+      action,
+      miniSignError: new Error('Withdraw failed'),
+    });
 
     const res = isHypeWithdraw
       ? await sdk.exchange.sendSendAsset({

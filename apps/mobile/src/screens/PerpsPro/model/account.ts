@@ -64,7 +64,7 @@ export interface PerpsAccountMetric {
 }
 
 export interface PerpsAccountAssetRow {
-  action: 'none' | 'swap' | 'transfer-disabled';
+  action: 'none' | 'swap' | 'transfer';
   available: string;
   coin: PerpsQuoteAsset;
   fullName: string;
@@ -295,7 +295,7 @@ const buildAccountAssets = ({
   const rows: PerpsAccountAssetRow[] = [];
   const spotUsdc = spotState.rawBalancesByToken[0];
   rows.push({
-    action: 'transfer-disabled',
+    action: 'transfer',
     available: spotUsdc?.available || '0',
     coin: 'USDC',
     fullName: PERPS_QUOTE_ASSET_FULL_NAME.USDC,

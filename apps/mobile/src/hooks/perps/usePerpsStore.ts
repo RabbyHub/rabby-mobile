@@ -1785,15 +1785,49 @@ const flushAggregatedClearinghouseState = (expectedAddress: string) => {
   });
 };
 
-export const fetchClearinghouseStateHttp = async (dex: string) => {
+export const fetchClearinghouseStateHttp = async (
+  dex: string,
+  expectedAddress?: string,
+) => {
   const account = perpsStore.getState().currentPerpsAccount;
-  if (!account?.address) {
+  if (
+    !account?.address ||
+    (expectedAddress && !isSameAddress(account.address, expectedAddress))
+  ) {
     return;
   }
-  const touched = await fetchAndCacheClearinghouseForDex(dex, account.address);
+  const address = expectedAddress || account.address;
+  const touched = await fetchAndCacheClearinghouseForDex(dex, address);
   if (touched) {
-    flushAggregatedClearinghouseState(account.address);
+    flushAggregatedClearinghouseState(address);
   }
+};
+
+export const fetchSpotStateHttp = async (expectedAddress?: string) => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (
+    !account?.address ||
+    (expectedAddress && !isSameAddress(account.address, expectedAddress))
+  ) {
+    return;
+  }
+  const address = expectedAddress || account.address;
+  const spotState = await apisPerps
+    .getPerpsSDK()
+    .info.getSpotClearingHouseState(address);
+  if (!isCurrentPerpsAccountAddress(address)) {
+    return;
+  }
+  setPerpsState(prev =>
+    prev.currentPerpsAccount &&
+    isSameAddress(prev.currentPerpsAccount.address, address)
+      ? {
+          ...prev,
+          isSpotStateReady: true,
+          spotState: formatSpotState(spotState),
+        }
+      : prev,
+  );
 };
 
 const fetchAndCacheOpenOrdersForDex = async (

@@ -74,6 +74,10 @@ jest.mock('../components/account/PerpsProFundingOverlay', () => {
   };
 });
 
+jest.mock('../components/account/PerpsProTransferSheet', () => ({
+  PerpsProTransferSheet: () => null,
+}));
+
 jest.mock('../components/positions/PerpsProPositionCard', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -328,6 +332,16 @@ jest.mock('./usePerpsProCloseAll', () => ({
 
 jest.mock('./usePerpsProPositionActions', () => ({
   usePerpsProPositionActions: mockUsePerpsProPositionActions,
+}));
+
+jest.mock('./usePerpsProTransfer', () => ({
+  usePerpsProTransfer: () => ({
+    close: jest.fn(),
+    confirm: jest.fn(),
+    editor: null,
+    open: jest.fn(),
+    pending: false,
+  }),
 }));
 
 const { PerpsProScene } =

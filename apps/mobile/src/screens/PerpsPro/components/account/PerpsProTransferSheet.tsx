@@ -1,0 +1,189 @@
+import RcDirectionArrow from '@/assets2024/icons/perps/PerpsProTransferDirectionArrow.svg';
+import RcIconUSDC from '@/assets2024/icons/perps/IconUSDC.svg';
+import AutoLockView from '@/components/AutoLockView';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { Text } from '@/components/Typography';
+import { Button } from '@/components2024/Button';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import {
+  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
+} from '@/constant/layout';
+import { useTheme2024 } from '@/hooks/theme';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import BigNumber from 'bignumber.js';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import { formatPerpsProDecimal } from '../../utils/format';
+import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
+
+const SHORTCUTS = [0.25, 0.5, 0.75, 1] as const;
+
+const isUnsignedDecimalInput = (value: string) => /^\d*\.?\d*$/.test(value);
+
+export const PerpsProTransferSheet: React.FC<{
+  available: string;
+  onClose: () => void;
+  onConfirm: (amount: string) => void;
+  pending: boolean;
+  visible: boolean;
+}> = React.memo(({ available, onClose, onConfirm, pending, visible }) => {
+  const modalRef = useRef<AppBottomSheetModal>(null);
+  const [amount, setAmount] = useState('');
+  const { colors2024, styles } = useTheme2024({
+    getStyle: getPerpsProTransferSheetStyles,
+  });
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (visible) {
+      setAmount('');
+      modalRef.current?.present();
+    } else {
+      modalRef.current?.close();
+    }
+  }, [visible]);
+
+  const availableValue = useMemo(
+    () => new BigNumber(available || 0),
+    [available],
+  );
+  const amountValue = useMemo(() => new BigNumber(amount || 0), [amount]);
+  const hasAvailable = availableValue.isFinite() && availableValue.gt(0);
+  const valid =
+    amountValue.isFinite() &&
+    amountValue.gt(0) &&
+    hasAvailable &&
+    amountValue.lte(availableValue);
+
+  return (
+    <AppBottomSheetModal
+      ref={modalRef}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: 'bg1',
+      })}
+      backdropProps={{ pressBehavior: pending ? 'none' : 'close' }}
+      enableDynamicSizing={false}
+      enablePanDownToClose={!pending}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      onDismiss={() => {
+        if (!pending) onClose();
+      }}
+      snapPoints={[546]}>
+      <BottomSheetView style={styles.sheetView}>
+        <AutoLockView style={styles.container}>
+          <Text style={styles.title}>
+            {t('page.perps.pro.account.transfer')}
+          </Text>
+          <View style={styles.content}>
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>
+                {t('page.perps.pro.account.transfer')}
+              </Text>
+              <View style={styles.directionCard}>
+                <View style={styles.directionRow}>
+                  <Text style={styles.directionLabel}>{t('global.from')}</Text>
+                  <Text style={styles.directionValue}>
+                    {t('page.perps.pro.account.spot')}
+                  </Text>
+                </View>
+                <View style={styles.directionRow}>
+                  <Text style={styles.directionLabel}>{t('global.to')}</Text>
+                  <Text style={styles.directionValue}>
+                    {t('page.perps.pro.account.perps')}
+                  </Text>
+                </View>
+                <View pointerEvents="none" style={styles.directionIcon}>
+                  <RcDirectionArrow
+                    color={colors2024['neutral-secondary']}
+                    height={9.44115}
+                    width={13.0817}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.amountHeader}>
+                <Text style={styles.sectionLabel}>
+                  {t('page.perps.pro.account.amount')}
+                </Text>
+                <Text style={styles.balance}>{`${t(
+                  'page.perps.pro.account.balance',
+                )}:${formatPerpsProDecimal(available, 2)} USDC`}</Text>
+              </View>
+              <View style={styles.amountField}>
+                <BottomSheetTextInput
+                  accessibilityLabel={t('page.perps.pro.account.amount')}
+                  cursorColor={colors2024['brand-default']}
+                  editable={!pending}
+                  keyboardType="decimal-pad"
+                  onChangeText={value => {
+                    if (isUnsignedDecimalInput(value)) setAmount(value);
+                  }}
+                  placeholder="0"
+                  placeholderTextColor={colors2024['neutral-foot']}
+                  selectionColor={colors2024['brand-default']}
+                  style={styles.amountInput}
+                  testID="perps-pro-transfer-amount"
+                  value={amount}
+                />
+                <View style={styles.tokenPill}>
+                  <RcIconUSDC height={24} width={24} />
+                  <Text style={styles.tokenText}>USDC</Text>
+                </View>
+              </View>
+              <View style={styles.shortcuts}>
+                {SHORTCUTS.map(shortcut => (
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={pending || !hasAvailable}
+                    key={shortcut}
+                    onPress={() => {
+                      if (!availableValue.isFinite() || availableValue.lte(0)) {
+                        return;
+                      }
+                      setAmount(
+                        availableValue
+                          .multipliedBy(shortcut)
+                          .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                          .toFixed(),
+                      );
+                    }}
+                    style={[
+                      styles.shortcut,
+                      (pending || !hasAvailable) && styles.shortcutDisabled,
+                    ]}
+                    testID={`perps-pro-transfer-shortcut-${shortcut}`}>
+                    <Text style={styles.shortcutText}>
+                      {shortcut === 1
+                        ? t('page.perps.pro.account.max')
+                        : `${shortcut * 100}%`}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </View>
+          <View style={styles.footer}>
+            <Button
+              disabled={!valid || pending}
+              height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+              loading={pending}
+              onPress={() => onConfirm(amountValue.toFixed())}
+              title={t('global.confirm')}
+              titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+              type="primary"
+            />
+          </View>
+        </AutoLockView>
+      </BottomSheetView>
+    </AppBottomSheetModal>
+  );
+});
+
+PerpsProTransferSheet.displayName = 'PerpsProTransferSheet';

@@ -25,7 +25,8 @@ const ASSET_ICONS = {
 export const PerpsProAccountAssetRow: React.FC<{
   asset: PerpsAccountAssetRow;
   onSwap: (coin: PerpsAccountAssetRow['coin']) => void;
-}> = React.memo(({ asset, onSwap }) => {
+  onTransfer: (asset: PerpsAccountAssetRow) => void;
+}> = React.memo(({ asset, onSwap, onTransfer }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const AssetIcon = ASSET_ICONS[asset.coin];
@@ -72,14 +73,13 @@ export const PerpsProAccountAssetRow: React.FC<{
               {t('page.perps.pro.account.swap')}
             </Text>
           </Pressable>
-        ) : asset.action === 'transfer-disabled' ? (
+        ) : asset.action === 'transfer' ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: true }}
-            disabled
-            style={styles.disabledAssetAction}
-            testID="perps-pro-transfer-disabled">
-            <Text style={styles.disabledAssetActionText}>
+            onPress={() => onTransfer(asset)}
+            style={styles.assetAction}
+            testID="perps-pro-transfer">
+            <Text style={styles.assetActionText}>
               {t('page.perps.pro.account.transfer')}
             </Text>
           </Pressable>
@@ -175,22 +175,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   assetActionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  disabledAssetAction: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 6,
-    height: 26,
-    justifyContent: 'center',
-    opacity: 0.55,
-    width: 64,
-  },
-  disabledAssetActionText: {
-    color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',

@@ -392,7 +392,7 @@ describe('Perps Pro account facts', () => {
       { key: 'marginBalance', kind: 'usd', value: '150' },
     ]);
     expect(standard.assets[0]).toMatchObject({
-      action: 'transfer-disabled',
+      action: 'transfer',
       fullName: 'USD Coin',
       key: 'spot:USDC',
       ledger: 'spot',
