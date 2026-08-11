@@ -5,6 +5,25 @@ export type PerpsProLeverageConfiguration = {
   value: number;
 };
 
+export type PerpsProMarginModeDisabledReason =
+  | 'onlyIsolated'
+  | 'existingExposure';
+
+export const resolvePerpsProMarginModeDisabledReason = ({
+  hasOpenOrders,
+  hasPosition,
+  marginModeConstraint,
+}: {
+  hasOpenOrders: boolean;
+  hasPosition: boolean;
+  marginModeConstraint: PerpsMarketMarginMode;
+}): PerpsProMarginModeDisabledReason | null => {
+  if (marginModeConstraint !== 'normal') {
+    return 'onlyIsolated';
+  }
+  return hasPosition || hasOpenOrders ? 'existingExposure' : null;
+};
+
 const normalize = (
   leverage: PerpsProLeverageConfiguration | null | undefined,
   maxLeverage: number,

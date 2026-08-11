@@ -1,4 +1,7 @@
-import { resolvePerpsProInitialLeverage } from './leverage';
+import {
+  resolvePerpsProInitialLeverage,
+  resolvePerpsProMarginModeDisabledReason,
+} from './leverage';
 
 describe('resolvePerpsProInitialLeverage', () => {
   it('uses the existing position before the zero-address baseline', () => {
@@ -43,4 +46,43 @@ describe('resolvePerpsProInitialLeverage', () => {
       ).toEqual({ type: 'isolated', value: 10 });
     },
   );
+});
+
+describe('resolvePerpsProMarginModeDisabledReason', () => {
+  it.each(['noCross', 'strictIsolated'] as const)(
+    'reports only-isolated for the %s metadata constraint',
+    marginModeConstraint => {
+      expect(
+        resolvePerpsProMarginModeDisabledReason({
+          hasOpenOrders: false,
+          hasPosition: false,
+          marginModeConstraint,
+        }),
+      ).toBe('onlyIsolated');
+    },
+  );
+
+  it('reports existing exposure only for a normal market', () => {
+    expect(
+      resolvePerpsProMarginModeDisabledReason({
+        hasOpenOrders: false,
+        hasPosition: true,
+        marginModeConstraint: 'normal',
+      }),
+    ).toBe('existingExposure');
+    expect(
+      resolvePerpsProMarginModeDisabledReason({
+        hasOpenOrders: true,
+        hasPosition: false,
+        marginModeConstraint: 'normal',
+      }),
+    ).toBe('existingExposure');
+    expect(
+      resolvePerpsProMarginModeDisabledReason({
+        hasOpenOrders: false,
+        hasPosition: false,
+        marginModeConstraint: 'normal',
+      }),
+    ).toBeNull();
+  });
 });

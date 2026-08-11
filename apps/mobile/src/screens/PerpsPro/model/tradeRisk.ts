@@ -17,8 +17,7 @@ const positive = (value: unknown) => {
 export const resolvePerpsProProjectedTradeRisk = ({
   baseSize,
   calculateLiquidationPrice,
-  crossMarginAccountValue,
-  crossMaintenanceMarginUsed,
+  crossMarginAvailableAfterMaintenance,
   currentPosition,
   entryPrice,
   leverage,
@@ -37,8 +36,7 @@ export const resolvePerpsProProjectedTradeRisk = ({
     nationalValue: number,
     maxLeverage: number,
   ) => number;
-  crossMarginAccountValue: string;
-  crossMaintenanceMarginUsed: string;
+  crossMarginAvailableAfterMaintenance: string | null;
   currentPosition?: {
     entryPx?: string;
     marginUsed?: string;
@@ -85,7 +83,7 @@ export const resolvePerpsProProjectedTradeRisk = ({
   const projectedEntry = notional.dividedBy(projectedSize);
   const margin =
     marginMode === 'cross'
-      ? new BigNumber(crossMarginAccountValue).minus(crossMaintenanceMarginUsed)
+      ? new BigNumber(crossMarginAvailableAfterMaintenance ?? Number.NaN)
       : sameDirection
       ? new BigNumber(currentPosition?.marginUsed ?? 0).plus(
           orderSize.multipliedBy(entry).dividedBy(leverageValue),

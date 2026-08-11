@@ -1,5 +1,28 @@
 import { resolvePerpsProProjectedTradeRisk } from './tradeRisk';
 
+const calculateProtocolLiquidationPrice = (
+  price: number,
+  margin: number,
+  direction: 'Long' | 'Short',
+  positionSize: number,
+  notional: number,
+  maxLeverage: number,
+) => {
+  const maintenanceMarginRate = 1 / maxLeverage / 2;
+  const side = direction === 'Long' ? 1 : -1;
+  const marginAvailable = margin - notional * maintenanceMarginRate;
+  if (marginAvailable <= 0) {
+    return 0;
+  }
+  return Math.max(
+    price -
+      (side * marginAvailable) /
+        positionSize /
+        (1 - maintenanceMarginRate * side),
+    0,
+  );
+};
+
 const calculateLiquidationPrice = jest.fn(() => 70);
 const resolve = (
   overrides: Partial<
@@ -9,8 +32,7 @@ const resolve = (
   resolvePerpsProProjectedTradeRisk({
     baseSize: '2',
     calculateLiquidationPrice,
-    crossMarginAccountValue: '1000',
-    crossMaintenanceMarginUsed: '10',
+    crossMarginAvailableAfterMaintenance: '990',
     currentPosition: null,
     entryPrice: '100',
     leverage: 10,
@@ -72,6 +94,48 @@ describe('resolvePerpsProProjectedTradeRisk', () => {
     );
   });
 
+  it('reproduces the Unified NVDA 37% long and short liquidation prices', () => {
+    const facts = {
+      baseSize: '1.13',
+      calculateLiquidationPrice: calculateProtocolLiquidationPrice,
+      crossMarginAvailableAfterMaintenance: '35.08059422',
+      currentPosition: null,
+      entryPrice: '223.88',
+      leverage: 20,
+      marginMode: 'cross' as const,
+      markPrice: '223.88',
+      maxLeverage: 20,
+      pxDecimals: 2,
+    };
+    expect(
+      resolvePerpsProProjectedTradeRisk({ ...facts, side: 'buy' }),
+    ).toMatchObject({ liquidationPrice: '197.78', projectedSize: '1.13' });
+    expect(
+      resolvePerpsProProjectedTradeRisk({ ...facts, side: 'sell' }),
+    ).toMatchObject({ liquidationPrice: '248.71', projectedSize: '1.13' });
+  });
+
+  it('keeps the Unified NVDA 2% long without a positive price and the short finite', () => {
+    const facts = {
+      baseSize: '0.061',
+      calculateLiquidationPrice: calculateProtocolLiquidationPrice,
+      crossMarginAvailableAfterMaintenance: '35.08059422',
+      currentPosition: null,
+      entryPrice: '223.88',
+      leverage: 20,
+      marginMode: 'cross' as const,
+      markPrice: '223.88',
+      maxLeverage: 20,
+      pxDecimals: 2,
+    };
+    expect(
+      resolvePerpsProProjectedTradeRisk({ ...facts, side: 'buy' }),
+    ).toBeNull();
+    expect(
+      resolvePerpsProProjectedTradeRisk({ ...facts, side: 'sell' }),
+    ).toMatchObject({ liquidationPrice: '779.48', projectedSize: '0.061' });
+  });
+
   it('does not estimate liquidation when an opposite order only reduces', () => {
     expect(resolve({ currentPosition: { szi: '-3' } })).toBeNull();
     expect(calculateLiquidationPrice).not.toHaveBeenCalled();
@@ -95,8 +159,11 @@ describe('resolvePerpsProProjectedTradeRisk', () => {
   });
 
   it('fails closed when required risk inputs are unavailable', () => {
-    expect(resolve({ crossMarginAccountValue: '0', marginMode: 'cross' })).toBe(
-      null,
-    );
+    expect(
+      resolve({
+        crossMarginAvailableAfterMaintenance: null,
+        marginMode: 'cross',
+      }),
+    ).toBe(null);
   });
 });

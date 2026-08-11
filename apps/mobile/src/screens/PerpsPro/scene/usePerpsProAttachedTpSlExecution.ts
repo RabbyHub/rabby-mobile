@@ -19,6 +19,10 @@ import { estimatePerpsProMarketFill } from '../model/marketFillEstimate';
 import type { PerpsProMarket } from '../model/market';
 import { resolvePerpsProProjectedTradeRisk } from '../model/tradeRisk';
 import {
+  getPerpsProCollateralToken,
+  resolvePerpsProCrossMarginAvailableAfterMaintenance,
+} from '../model/tradeRiskAccount';
+import {
   executePerpsProAttachedTpSl,
   getPerpsProAttachedTpSlPositionIdentity,
   validatePerpsProAttachedTpSlCommand,
@@ -121,17 +125,34 @@ export const usePerpsProAttachedTpSlExecution = ({
         });
         entryPrice = estimate.ok ? estimate.estimate.expectedEntryPrice : null;
       }
+      const dexId = marketData?.dexId ?? command.parent.dexId;
+      const dexSummary =
+        state.currentClearinghouseState?.perDexSummaries?.[dexId];
+      const collateralToken = getPerpsProCollateralToken(
+        marketData?.quoteAsset,
+      );
+      const unifiedAvailableAfterMaintenance =
+        collateralToken == null
+          ? null
+          : state.spotState.tokenToAvailableAfterMaintenance?.find(
+              ([token]) => token === collateralToken,
+            )?.[1] ?? null;
+      const crossMarginAvailableAfterMaintenance =
+        resolvePerpsProCrossMarginAvailableAfterMaintenance({
+          accountFactsReady:
+            state.isUserDataReady && state.userAbstractionReady,
+          dexCrossAccountValue: dexSummary?.crossAccountValue ?? null,
+          dexCrossMaintenanceMarginUsed:
+            dexSummary?.crossMaintenanceMarginUsed ?? null,
+          unifiedAvailableAfterMaintenance,
+          userAbstraction: state.userAbstraction,
+        });
       const risk =
         entryPrice && marketData
           ? resolvePerpsProProjectedTradeRisk({
               baseSize: command.parent.baseSize,
               calculateLiquidationPrice: calLiquidationPrice,
-              crossMarginAccountValue:
-                state.currentClearinghouseState?.crossMarginSummary
-                  .accountValue ?? '0',
-              crossMaintenanceMarginUsed:
-                state.currentClearinghouseState?.crossMaintenanceMarginUsed ??
-                '0',
+              crossMarginAvailableAfterMaintenance,
               currentPosition,
               entryPrice,
               leverage: command.reviewFacts.leverage,

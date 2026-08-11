@@ -26,15 +26,27 @@ const state = {
     assetPositions: [],
     crossMaintenanceMarginUsed: '0',
     crossMarginSummary: { accountValue: '1000' },
+    perDexSummaries: {
+      '': {
+        crossAccountValue: '1000',
+        crossMaintenanceMarginUsed: '0',
+      },
+    },
   },
   currentPerpsAccount: account,
+  isUserDataReady: true,
   marketDataMap: {
     BTC: {
+      dexId: '',
       markPx: '100',
       maxLeverage: 50,
       pxDecimals: 2,
+      quoteAsset: 'USDC',
     },
   },
+  spotState: { tokenToAvailableAfterMaintenance: null },
+  userAbstraction: 'default',
+  userAbstractionReady: true,
 };
 
 jest.mock('@/core/serviceApi/perps', () => ({
