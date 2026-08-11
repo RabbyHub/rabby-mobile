@@ -36,7 +36,9 @@ const normalizeAddresses = (addresses: string[]) =>
 type CombinedNFTItem = DisplayNftItem & { address?: string };
 
 type NftListComputedState = {
+  multiNftsIndexCache: Record<string, NftAssetsIndexResult>;
   singleNftsIndexCache: Record<string, NftAssetsIndexResult>;
+  registerMultiNfts(addresses: string[], chainServerId?: string): string;
   registerSingleNfts(address: string, chainServerId?: string): string;
 };
 
@@ -48,6 +50,14 @@ export const getSingleNftsCacheKey = (
   address: string,
   chainServerId?: string,
 ) => `${address.toLowerCase()}::${chainServerId ?? ''}`;
+
+export const getMultiNftsCacheKey = (
+  addresses: string[],
+  chainServerId?: string,
+) =>
+  `multi::${normalizeAddresses(addresses).sort().join('|')}::${
+    chainServerId ?? ''
+  }`;
 
 const getNftEntityIdAddress = (nftId: string) => nftId.split(':', 1)[0];
 
@@ -289,8 +299,14 @@ const singleNftsCacheParams = new Map<
   string,
   { address: string; chainServerId?: string }
 >();
+const multiNftsCacheParams = new Map<
+  string,
+  { addresses: string[]; chainServerId?: string }
+>();
 const singleNftsCacheOrder: string[] = [];
+const multiNftsCacheOrder: string[] = [];
 const singleNftCollectionIds = new Map<string, Set<NftCollectionId>>();
+const multiNftCollectionIds = new Map<string, Set<NftCollectionId>>();
 
 const getSingleNftList = (
   nftsMap: Record<string, DisplayNftItem[]>,
@@ -303,13 +319,36 @@ const getSingleNftList = (
     : list;
 };
 
-const removeSingleNftsCacheKey = (key: string) => {
-  singleNftsCacheParams.delete(key);
-  const collectionIds = singleNftCollectionIds.get(key);
+const getMultiNftList = (
+  nftsMap: Record<string, DisplayNftItem[]>,
+  addresses: string[],
+  chainServerId?: string,
+) => {
+  const list = combinedNfts(nftsMap, addresses);
+  return chainServerId
+    ? list.filter(nft => !nft.chain || nft.chain === chainServerId)
+    : list;
+};
+
+const removeNftsCacheKey = <T>(
+  key: string,
+  params: Map<string, T>,
+  collectionIdsByKey: Map<string, Set<NftCollectionId>>,
+) => {
+  params.delete(key);
+  const collectionIds = collectionIdsByKey.get(key);
   if (collectionIds) {
     nftCollectionResourceStore.removeCollections(collectionIds);
-    singleNftCollectionIds.delete(key);
+    collectionIdsByKey.delete(key);
   }
+};
+
+const removeSingleNftsCacheKey = (key: string) => {
+  removeNftsCacheKey(key, singleNftsCacheParams, singleNftCollectionIds);
+};
+
+const removeMultiNftsCacheKey = (key: string) => {
+  removeNftsCacheKey(key, multiNftsCacheParams, multiNftCollectionIds);
 };
 
 const touchSingleNftsCache = (
@@ -329,6 +368,27 @@ const touchSingleNftsCache = (
   const removedKey = singleNftsCacheOrder.shift();
   if (removedKey) {
     removeSingleNftsCacheKey(removedKey);
+  }
+  return removedKey;
+};
+
+const touchMultiNftsCache = (
+  key: string,
+  params: { addresses: string[]; chainServerId?: string },
+) => {
+  multiNftsCacheParams.set(key, params);
+  const previousIndex = multiNftsCacheOrder.indexOf(key);
+  if (previousIndex > -1) {
+    multiNftsCacheOrder.splice(previousIndex, 1);
+  }
+  multiNftsCacheOrder.push(key);
+
+  if (multiNftsCacheOrder.length <= NFT_COMPUTED_CACHE_LIMIT) {
+    return undefined;
+  }
+  const removedKey = multiNftsCacheOrder.shift();
+  if (removedKey) {
+    removeMultiNftsCacheKey(removedKey);
   }
   return removedKey;
 };
@@ -384,8 +444,70 @@ const updateSingleNftsIndex = (
   }
 };
 
+const updateMultiNftsIndex = (
+  key: string,
+  nftsMap: Record<string, DisplayNftItem[]>,
+) => {
+  const params = multiNftsCacheParams.get(key);
+  if (!params) {
+    return;
+  }
+
+  const previousResult =
+    useNftListComputedStore.getState().multiNftsIndexCache[key];
+  const projection = buildNftAssetsIndexProjection(
+    getMultiNftList(nftsMap, params.addresses, params.chainServerId),
+    key,
+    previousResult,
+  );
+  const previousCollectionIds = multiNftCollectionIds.get(key) || new Set();
+  const nextCollectionIds = new Set(
+    projection.collections.map(item => item.collectionId),
+  );
+  const removedCollectionIds = Array.from(previousCollectionIds).filter(
+    collectionId => !nextCollectionIds.has(collectionId),
+  );
+
+  nftCollectionResourceStore.upsertCollections(projection.collections);
+  nftCollectionResourceStore.removeCollections(removedCollectionIds);
+  multiNftCollectionIds.set(key, nextCollectionIds);
+
+  if (previousResult !== projection.result) {
+    useNftListComputedStore.setState(state => ({
+      multiNftsIndexCache: {
+        ...state.multiNftsIndexCache,
+        [key]: projection.result,
+      },
+    }));
+  }
+};
+
 export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
+  multiNftsIndexCache: {},
   singleNftsIndexCache: {},
+  registerMultiNfts(addresses, chainServerId) {
+    const normalizedAddresses = normalizeAddresses(addresses);
+    const key = getMultiNftsCacheKey(normalizedAddresses, chainServerId);
+    const removedKey = touchMultiNftsCache(key, {
+      addresses: normalizedAddresses,
+      chainServerId,
+    });
+    const nftsMap = nftListStore.getState().nftsMap;
+    nftEntityResourceStore.syncAddressesFromNftsMap(
+      nftsMap,
+      normalizedAddresses,
+    );
+    updateMultiNftsIndex(key, nftsMap);
+
+    if (removedKey) {
+      set(state => {
+        const nextCache = { ...state.multiNftsIndexCache };
+        delete nextCache[removedKey];
+        return { multiNftsIndexCache: nextCache };
+      });
+    }
+    return key;
+  },
   registerSingleNfts(address, chainServerId) {
     const normalizedAddress = address.toLowerCase();
     const key = getSingleNftsCacheKey(normalizedAddress, chainServerId);
@@ -813,6 +935,9 @@ nftListStore.subscribe(state => {
     address =>
       Array.from(singleNftsCacheParams.values()).some(
         params => params.address === address,
+      ) ||
+      Array.from(multiNftsCacheParams.values()).some(params =>
+        params.addresses.includes(address),
       ),
   );
   if (!registeredChangedAddresses.length) {
@@ -826,6 +951,11 @@ nftListStore.subscribe(state => {
   singleNftsCacheParams.forEach((params, key) => {
     if (changedAddresses.has(params.address)) {
       updateSingleNftsIndex(key, state.nftsMap);
+    }
+  });
+  multiNftsCacheParams.forEach((params, key) => {
+    if (params.addresses.some(address => changedAddresses.has(address))) {
+      updateMultiNftsIndex(key, state.nftsMap);
     }
   });
 });
