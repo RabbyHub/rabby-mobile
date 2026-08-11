@@ -4,6 +4,8 @@ import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
 import {
   buildPerpsClosePositionCommand,
   executePerpsClosePosition,
+  isPerpsCloseMinimumNotionalError,
+  validatePerpsCloseAmount,
 } from '@/hooks/perps/actions/closePosition';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
@@ -17,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../model/position';
+import { buildPerpsProMarketDescriptor } from '../model/market';
 import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
@@ -56,14 +59,15 @@ export const usePerpsProPositionActions = ({
   );
   const [closePending, setClosePending] = useState(false);
   const [skipLimitConfirmation, setSkipLimitConfirmation] = useState(false);
-  const transitioningToReviewRef = useRef(false);
+  const showMinimumCloseAmountToast = useCallback(() => {
+    showToast(t('page.perps.pro.positions.minimumCloseAmount'), 'error');
+  }, [t]);
 
   useEffect(() => {
     setLeverageEditor(null);
     setCloseEditor(null);
     setCloseReview(null);
     setClosePending(false);
-    transitioningToReviewRef.current = false;
   }, [accountIdentity]);
 
   const openLeverageEditor = useCallback(
@@ -131,18 +135,17 @@ export const usePerpsProPositionActions = ({
         showToast(t('page.perps.pro.positions.closeFailed'), 'error');
         return;
       }
-      const displayBase =
-        (marketData.displayName || marketData.name).split(':').pop() ||
-        marketData.name;
+      const descriptor = buildPerpsProMarketDescriptor(marketData);
       const snapshot: PerpsProCloseEditorState = {
         account: { ...account },
         market: {
-          displayBase,
-          displayPair: `${displayBase}${marketData.quoteAsset}`,
+          displayBase: descriptor.displayBase,
+          displayPair: descriptor.displayPair,
           markPrice,
           midPrice,
           pxDecimals: marketData.pxDecimals,
           quoteAsset: marketData.quoteAsset,
+          sourceTag: descriptor.sourceTag,
           szDecimals: marketData.szDecimals,
         },
         position: { ...position },
@@ -171,15 +174,11 @@ export const usePerpsProPositionActions = ({
   );
 
   const closeCloseEditor = useCallback(() => {
-    if (transitioningToReviewRef.current) {
-      transitioningToReviewRef.current = false;
-      return;
-    }
-    if (!pendingRef.current) {
+    if (!pendingRef.current && !closeReview) {
       setCloseEditor(null);
       setCloseReview(null);
     }
-  }, []);
+  }, [closeReview]);
   const cancelCloseReview = useCallback(() => {
     if (!pendingRef.current) setCloseReview(null);
   }, []);
@@ -196,8 +195,9 @@ export const usePerpsProPositionActions = ({
           direction: closeEditor.position.direction,
           expectedPositionSize: closeEditor.position.baseSize,
           limitPrice: draft.limitPrice,
-          midPrice: closeEditor.market.midPrice,
+          midPrice: draft.midPrice,
           orderType: draft.orderType,
+          pxDecimals: closeEditor.market.pxDecimals,
           size: draft.size,
           szDecimals: closeEditor.market.szDecimals,
         });
@@ -215,6 +215,10 @@ export const usePerpsProPositionActions = ({
             (result.error && (await judgeIsUserAgentIsExpired(result.error))) ||
             judgeIsBuilderFeeNeedApprove(result.error || '')
           ) {
+            return;
+          }
+          if (result.failureReason === 'minimumNotional') {
+            showMinimumCloseAmountToast();
             return;
           }
           showToast(t('page.perps.pro.positions.closeFailed'), 'error');
@@ -240,6 +244,10 @@ export const usePerpsProPositionActions = ({
         ) {
           return;
         }
+        if (isPerpsCloseMinimumNotionalError(message)) {
+          showMinimumCloseAmountToast();
+          return;
+        }
         showToast(t('page.perps.pro.positions.closeFailed'), 'error');
         Sentry.captureException(
           error instanceof Error ? error : new Error(message),
@@ -250,19 +258,62 @@ export const usePerpsProPositionActions = ({
         setClosePending(false);
       }
     },
-    [closeEditor, t],
+    [closeEditor, showMinimumCloseAmountToast, t],
+  );
+
+  const freezeCloseDraft = useCallback(
+    (draft: PerpsProCloseDraft): PerpsProCloseDraft | null => {
+      if (!closeEditor) return null;
+      const marketData =
+        perpsStore.getState().marketDataMap[closeEditor.position.coin];
+      const markPrice = marketData?.markPx;
+      const midPrice = marketData?.midPx || markPrice;
+      if (!midPrice || (draft.orderType === 'market' && !markPrice)) {
+        showToast(t('page.perps.pro.positions.closeFailed'), 'error');
+        return null;
+      }
+      const amountValidation = validatePerpsCloseAmount({
+        expectedPositionSize: closeEditor.position.baseSize,
+        referencePrice:
+          draft.orderType === 'market'
+            ? midPrice
+            : draft.limitPrice || draft.referencePrice,
+        size: draft.size,
+      });
+      if (amountValidation.kind === 'invalid') {
+        if (amountValidation.reason === 'belowMinimumNotional') {
+          showMinimumCloseAmountToast();
+        } else {
+          showToast(t('page.perps.pro.positions.closeFailed'), 'error');
+        }
+        return null;
+      }
+      return {
+        ...draft,
+        midPrice,
+        referencePrice:
+          draft.orderType === 'market' ? markPrice || '' : draft.referencePrice,
+      };
+    },
+    [closeEditor, showMinimumCloseAmountToast, t],
   );
 
   const reviewClose = useCallback(
     (draft: PerpsProCloseDraft) => {
-      if (draft.orderType === 'limit' && skipLimitConfirmation) {
-        void executeClose(draft);
+      if (pendingRef.current || closeReview) {
         return;
       }
-      transitioningToReviewRef.current = true;
-      setCloseReview({ ...draft });
+      const frozenDraft = freezeCloseDraft(draft);
+      if (!frozenDraft) {
+        return;
+      }
+      if (frozenDraft.orderType === 'limit' && skipLimitConfirmation) {
+        void executeClose(frozenDraft);
+        return;
+      }
+      setCloseReview(frozenDraft);
     },
-    [executeClose, skipLimitConfirmation],
+    [closeReview, executeClose, freezeCloseDraft, skipLimitConfirmation],
   );
 
   const confirmClose = useCallback(() => {

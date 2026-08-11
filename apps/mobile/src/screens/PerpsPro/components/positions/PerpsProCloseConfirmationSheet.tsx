@@ -6,8 +6,8 @@ import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -20,15 +20,16 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import {
-  resolvePerpsProDisplayAmount,
-  type PerpsProTradeAmountUnit,
-} from '../../model/trade';
 import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
 } from '../../model/positionAction';
+import {
+  resolvePerpsProDisplayAmount,
+  type PerpsProTradeAmountUnit,
+} from '../../model/trade';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 
 export const PerpsProCloseConfirmationSheet: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
@@ -60,17 +61,18 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
     useRegisterBlockingModal(MODAL_GATE_IDS.perpsProCloseConfirmation, visible);
 
     useEffect(() => {
-      if (visible) modalRef.current?.present();
-      else modalRef.current?.close();
+      if (visible) {
+        modalRef.current?.present();
+      } else {
+        modalRef.current?.close();
+      }
     }, [visible]);
 
     const isSell = position.direction === 'long';
-    const price =
-      draft.orderType === 'market' ? market.markPrice : draft.limitPrice;
     const displayAmount = resolvePerpsProDisplayAmount({
       amountUnit,
       baseAmount: draft.size,
-      price,
+      price: draft.referencePrice,
     });
     const displayUnit =
       amountUnit === 'base' ? market.displayBase : market.quoteAsset;
@@ -82,24 +84,44 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
           colors: colors2024,
           linearGradientType: 'bg1',
         })}
+        backdropProps={{ pressBehavior: pending ? 'none' : 'close' }}
+        backgroundStyle={styles.background}
+        enablePanDownToClose={!pending}
+        handleIndicatorStyle={styles.handleIndicator}
+        handleStyle={styles.handle}
         onDismiss={onClose}
-        snapPoints={[430]}>
+        snapPoints={[draft.orderType === 'limit' ? 302 : 262]}
+        style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
           <AutoLockView style={styles.container}>
-            <Text style={styles.title}>
-              {t('page.perps.pro.positions.confirmClose')}
-            </Text>
-            <Text style={styles.symbol}>{market.displayPair}</Text>
-            <View style={styles.sideRow}>
-              <Text style={isSell ? styles.sell : styles.buy}>
-                {isSell
-                  ? t('page.perps.pro.openOrders.sell')
-                  : t('page.perps.pro.openOrders.buy')}
-              </Text>
-              <Text style={styles.direction}>
-                / {t(`page.perps.pro.positions.${position.direction}`)}
-              </Text>
+            <View style={styles.heading}>
+              <View style={styles.pairRow}>
+                <Text style={styles.pair}>{market.displayPair}</Text>
+                <PerpsProCloseMarketTag sourceTag={market.sourceTag} />
+              </View>
+              <View style={styles.sideRow}>
+                <View style={isSell ? styles.sellTag : styles.buyTag}>
+                  <Text style={isSell ? styles.sellTagText : styles.buyTagText}>
+                    {t(
+                      isSell
+                        ? 'page.perps.pro.openOrders.sell'
+                        : 'page.perps.pro.openOrders.buy',
+                    )}
+                  </Text>
+                </View>
+                <View style={isSell ? styles.shortTag : styles.longTag}>
+                  <Text
+                    style={isSell ? styles.shortTagText : styles.longTagText}>
+                    {t(
+                      isSell
+                        ? 'page.perps.pro.positions.short'
+                        : 'page.perps.pro.positions.long',
+                    )}
+                  </Text>
+                </View>
+              </View>
             </View>
+
             <View style={styles.details}>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>
@@ -107,8 +129,11 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 </Text>
                 <Text style={styles.detailValue}>
                   {draft.orderType === 'market'
-                    ? t('page.perps.pro.positions.market')
-                    : formatPerpsProPrice(price, market.pxDecimals)}
+                    ? t('page.perps.pro.positions.marketPrice')
+                    : `${formatPerpsProPrice(
+                        draft.limitPrice,
+                        market.pxDecimals,
+                      )} ${market.quoteAsset}`}
                 </Text>
               </View>
               <View style={styles.detailRow}>
@@ -124,6 +149,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 </Text>
               </View>
             </View>
+
             {draft.orderType === 'limit' ? (
               <Pressable
                 accessibilityRole="checkbox"
@@ -144,15 +170,16 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 </Text>
               </Pressable>
             ) : null}
+
             <View style={styles.footer}>
               <Button
                 disabled={pending}
-                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
                 loading={pending}
                 onPress={onConfirm}
-                title={t('page.perps.pro.positions.confirmClose')}
-                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-                type="hyperliquid"
+                title={t('global.confirm')}
+                titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+                type="primary"
               />
             </View>
           </AutoLockView>
@@ -165,79 +192,133 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
 PerpsProCloseConfirmationSheet.displayName = 'PerpsProCloseConfirmationSheet';
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  modal: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
+  },
+  background: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  handle: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    height: 40,
+    paddingBottom: 27,
+    paddingTop: 9,
+  },
+  handleIndicator: {
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 2,
+    height: 4,
+    width: 40,
+  },
   sheetView: { height: '100%' },
-  container: { height: '100%', paddingHorizontal: 20, paddingTop: 8 },
-  title: {
+  container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
+  heading: { gap: 8 },
+  pairRow: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+  pair: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 24,
-    textAlign: 'center',
+    lineHeight: 20,
   },
-  symbol: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '700',
-    lineHeight: 22,
-    marginTop: 24,
-    textAlign: 'center',
+  sideRow: { flexDirection: 'row', gap: 4 },
+  buyTag: {
+    backgroundColor: colors2024['green-light-1'],
+    borderColor: colors2024['green-light-2'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
   },
-  sideRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 6 },
-  sell: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+  sellTag: {
+    backgroundColor: colors2024['red-light-1'],
+    borderColor: colors2024['red-light-2'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
   },
-  buy: {
+  longTag: {
+    backgroundColor: colors2024['green-light-1'],
+    borderColor: colors2024['green-light-2'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  shortTag: {
+    backgroundColor: colors2024['red-light-1'],
+    borderColor: colors2024['red-light-2'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  buyTagText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 12,
   },
-  direction: {
-    color: colors2024['neutral-secondary'],
+  sellTagText: {
+    color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 12,
   },
-  details: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    gap: 12,
-    marginTop: 20,
-    padding: 12,
+  longTagText: {
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 12,
   },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  shortTagText: {
+    color: colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 12,
+  },
+  details: { marginTop: 16 },
+  detailRow: {
+    alignItems: 'center',
+    borderBottomColor: colors2024['neutral-line'],
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    height: 33,
+    justifyContent: 'space-between',
+  },
   detailLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    lineHeight: 16,
   },
   detailValue: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    lineHeight: 16,
   },
   checkboxRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 20,
+    gap: 4,
+    marginTop: 16,
   },
   checkboxText: {
     color: colors2024['neutral-title-1'],
     flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    lineHeight: 16,
   },
   footer: {
     marginTop: 'auto',

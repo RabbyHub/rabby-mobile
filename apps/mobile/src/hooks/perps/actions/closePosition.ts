@@ -1,4 +1,8 @@
-import { PERPS_BUILDER_INFO, PERPS_LIMIT_TIF_DEFAULT } from '@/constant/perps';
+import {
+  PERPS_BUILDER_INFO,
+  PERPS_LIMIT_TIF_DEFAULT,
+  PERPS_MINI_USD_VALUE,
+} from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 import type { Account } from '@/core/startupServices/preference';
 import {
@@ -28,7 +32,7 @@ export interface PerpsClosePositionCommand {
 
 export interface PerpsClosePositionResult {
   error?: string;
-  failureReason?: 'requestFailed' | 'userCancelled';
+  failureReason?: 'minimumNotional' | 'requestFailed' | 'userCancelled';
   kind: 'failed' | 'filled' | 'resting' | 'staleContext';
   oid?: number;
   refreshError?: string;
@@ -64,6 +68,59 @@ const decimal = (value: unknown) => {
   return result.isFinite() ? result : null;
 };
 
+export const PERPS_CLOSE_MINIMUM_NOTIONAL_ERROR =
+  'Perps close amount is below minimum notional';
+
+export type PerpsCloseAmountValidation =
+  | {
+      isFullClose: boolean;
+      kind: 'valid';
+      notional: string;
+    }
+  | {
+      kind: 'invalid';
+      reason: 'belowMinimumNotional' | 'invalidAmount';
+    };
+
+export const validatePerpsCloseAmount = ({
+  expectedPositionSize,
+  referencePrice,
+  size,
+}: {
+  expectedPositionSize: string;
+  referencePrice: string;
+  size: string;
+}): PerpsCloseAmountValidation => {
+  const expected = decimal(expectedPositionSize);
+  const requested = decimal(size);
+  const price = decimal(referencePrice);
+  if (
+    !expected ||
+    expected.lte(0) ||
+    !requested ||
+    requested.lte(0) ||
+    requested.gt(expected) ||
+    !price ||
+    price.lte(0)
+  ) {
+    return { kind: 'invalid', reason: 'invalidAmount' };
+  }
+  const isFullClose = requested.eq(expected);
+  const notional = requested.multipliedBy(price);
+  if (!isFullClose && notional.lt(PERPS_MINI_USD_VALUE)) {
+    return { kind: 'invalid', reason: 'belowMinimumNotional' };
+  }
+  return {
+    isFullClose,
+    kind: 'valid',
+    notional: notional.toFixed(),
+  };
+};
+
+export const isPerpsCloseMinimumNotionalError = (error: string) =>
+  error === PERPS_CLOSE_MINIMUM_NOTIONAL_ERROR ||
+  /order must have minimum value of \$10\.?/i.test(error);
+
 export const buildPerpsClosePositionCommand = ({
   account,
   coin,
@@ -73,9 +130,11 @@ export const buildPerpsClosePositionCommand = ({
   midPrice,
   orderType,
   size,
+  pxDecimals,
   szDecimals,
 }: Omit<PerpsClosePositionCommand, 'size' | 'type'> & {
   size: string;
+  pxDecimals: number;
   szDecimals: number;
 }): PerpsClosePositionCommand => {
   const normalizedCoin = coin.trim();
@@ -88,6 +147,8 @@ export const buildPerpsClosePositionCommand = ({
   if (
     !Number.isSafeInteger(szDecimals) ||
     szDecimals < 0 ||
+    !Number.isSafeInteger(pxDecimals) ||
+    pxDecimals < 0 ||
     !expected ||
     expected.lte(0) ||
     !requested ||
@@ -108,13 +169,34 @@ export const buildPerpsClosePositionCommand = ({
   if (orderType === 'limit' && (!normalizedLimit || normalizedLimit.lte(0))) {
     throw new Error('Invalid Perps limit price');
   }
+  const normalizedLimitPrice = normalizedLimit
+    ?.decimalPlaces(pxDecimals, BigNumber.ROUND_DOWN)
+    .toFixed();
+  if (
+    orderType === 'limit' &&
+    (!normalizedLimitPrice || new BigNumber(normalizedLimitPrice).lte(0))
+  ) {
+    throw new Error('Perps limit price is below price precision');
+  }
+  const amountValidation = validatePerpsCloseAmount({
+    expectedPositionSize: expected.toFixed(),
+    referencePrice:
+      orderType === 'limit' ? normalizedLimitPrice || '' : mid.toFixed(),
+    size: normalizedSize,
+  });
+  if (amountValidation.kind === 'invalid') {
+    throw new Error(
+      amountValidation.reason === 'belowMinimumNotional'
+        ? PERPS_CLOSE_MINIMUM_NOTIONAL_ERROR
+        : 'Invalid Perps close amount',
+    );
+  }
   return Object.freeze({
     account: Object.freeze({ address: account.address, type: account.type }),
     coin: normalizedCoin,
     direction,
     expectedPositionSize: expected.toFixed(),
-    limitPrice:
-      orderType === 'limit' ? normalizedLimit?.toFixed() ?? null : null,
+    limitPrice: orderType === 'limit' ? normalizedLimitPrice ?? null : null,
     midPrice: mid.toFixed(),
     orderType,
     size: normalizedSize,
@@ -229,7 +311,10 @@ export const executePerpsClosePosition = async (
       const dex = dependencies.resolveDex(command.coin);
       await (kind === 'filled'
         ? dependencies.refreshClearinghouse(dex)
-        : dependencies.refreshOpenOrders(dex));
+        : Promise.all([
+            dependencies.refreshClearinghouse(dex),
+            dependencies.refreshOpenOrders(dex),
+          ]));
     } catch (error) {
       refreshError = error instanceof Error ? error.message : String(error);
     }
@@ -247,10 +332,13 @@ export const executePerpsClosePosition = async (
       refreshError,
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
-      error: error instanceof Error ? error.message : String(error),
+      error: message,
       failureReason: isPerpsActionUserCancelled(error)
         ? 'userCancelled'
+        : isPerpsCloseMinimumNotionalError(message)
+        ? 'minimumNotional'
         : 'requestFailed',
       kind: 'failed',
     };

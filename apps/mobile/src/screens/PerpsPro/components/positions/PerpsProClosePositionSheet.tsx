@@ -1,16 +1,15 @@
+import RcOrderTypeSwitch from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
-  BOTTOM_BUTTON_TOP_OFFSET,
-  getBottomButtonBottomOffset,
+  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
 } from '@/constant/layout';
+import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -19,83 +18,259 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
+  resolvePerpsProCloseSize,
+  type PerpsProCloseDraft,
+  type PerpsProCloseMarketSnapshot,
+} from '../../model/positionAction';
+import {
+  getPerpsProAmountInputDecimals,
   resolvePerpsProDisplayAmount,
+  sanitizePerpsProDecimalInput,
   type PerpsProTradeAmountUnit,
 } from '../../model/trade';
-import type {
-  PerpsProCloseDraft,
-  PerpsProCloseMarketSnapshot,
-} from '../../model/positionAction';
-import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import { usePerpsProPositionMark } from '../../scene/usePerpsProPositionMark';
+import {
+  formatPerpsProDecimal,
+  formatPerpsProPrice,
+  formatPerpsProSignedDecimal,
+} from '../../utils/format';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { PerpsProSlider } from '../common/PerpsProSlider';
+import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
+import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
+import { getPerpsProClosePositionSheetStyles } from './PerpsProClosePositionSheet.styles';
+
+const EMPTY_AMOUNT_SELECTION = { end: 0, start: 0 } as const;
 
 const calculateEstimatedPnl = (
   position: PerpsPositionViewModel,
   exitPrice: string,
-  size: string,
+  size: string | null,
 ) => {
-  const entry = new BigNumber(position.entryPrice ?? NaN);
-  const exit = new BigNumber(exitPrice);
-  const amount = new BigNumber(size);
-  if (!entry.isFinite() || !exit.isFinite() || !amount.isFinite()) return null;
-  const delta =
-    position.direction === 'long' ? exit.minus(entry) : entry.minus(exit);
-  return delta.multipliedBy(amount).toString();
+  const entry = new BigNumber(position.entryPrice ?? Number.NaN);
+  const exit = new BigNumber(exitPrice || Number.NaN);
+  const amount = new BigNumber(size ?? Number.NaN);
+  if (
+    !entry.isFinite() ||
+    !exit.isFinite() ||
+    !amount.isFinite() ||
+    entry.lte(0) ||
+    exit.lte(0) ||
+    amount.lte(0)
+  ) {
+    return null;
+  }
+  return (position.direction === 'long' ? exit.minus(entry) : entry.minus(exit))
+    .multipliedBy(amount)
+    .toString();
 };
 
 export const PerpsProClosePositionSheet: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
+  coveredByReview?: boolean;
   market: PerpsProCloseMarketSnapshot;
   onClose: () => void;
   onReview: (draft: PerpsProCloseDraft) => void;
   position: PerpsPositionViewModel;
   visible: boolean;
 }> = React.memo(
-  ({ amountUnit = 'quote', market, onClose, onReview, position, visible }) => {
+  ({
+    amountUnit = 'quote',
+    coveredByReview = false,
+    market,
+    onClose,
+    onReview,
+    position,
+    visible,
+  }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
-    const { colors2024, styles } = useTheme2024({ getStyle });
+    const previousAmountUnitRef = useRef(amountUnit);
+    const { colors2024, styles } = useTheme2024({
+      getStyle: getPerpsProClosePositionSheetStyles,
+    });
     const { t } = useTranslation();
+    const dismissKeyboardThen = usePerpsProDismissKeyboard();
+    const openFieldExplanation = usePerpsProFieldExplanation();
+    const liveMarket = usePerpsProPositionMark(position.coin);
+    const latestTrade = usePerpsLatestTrade({
+      coin: position.coin,
+      enabled: visible && !coveredByReview,
+    });
     const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
+    const [inputSource, setInputSource] =
+      useState<PerpsProCloseDraft['inputSource']>('slider');
+    const inputSourceRef = useRef<PerpsProCloseDraft['inputSource']>('slider');
+    const discardNextSliderBackspaceChangeRef = useRef(false);
     const [percent, setPercent] = useState(100);
-    const [limitPrice, setLimitPrice] = useState(market.markPrice);
+    const [manualAmount, setManualAmount] = useState('');
+    const [limitPrice, setLimitPrice] = useState('');
+    const [limitPriceDirty, setLimitPriceDirty] = useState(false);
 
     useEffect(() => {
       if (visible) {
         setOrderType('market');
+        inputSourceRef.current = 'slider';
+        discardNextSliderBackspaceChangeRef.current = false;
+        setInputSource('slider');
         setPercent(100);
-        setLimitPrice(market.markPrice);
+        setManualAmount('');
+        setLimitPrice('');
+        setLimitPriceDirty(false);
         modalRef.current?.present();
       } else {
         modalRef.current?.close();
       }
-    }, [market.markPrice, visible]);
+    }, [position.key, visible]);
 
+    useEffect(() => {
+      if (
+        orderType === 'limit' &&
+        !limitPriceDirty &&
+        latestTrade.trade?.price
+      ) {
+        setLimitPrice(latestTrade.trade.price);
+      }
+    }, [latestTrade.trade?.price, limitPriceDirty, orderType]);
+
+    const markPrice = liveMarket.markPrice || market.markPrice;
+    const referencePrice =
+      orderType === 'market' ? markPrice || '' : limitPrice;
     const size = useMemo(
       () =>
-        new BigNumber(position.baseSize)
-          .multipliedBy(percent)
-          .dividedBy(100)
-          .decimalPlaces(market.szDecimals, BigNumber.ROUND_DOWN)
-          .toFixed(),
-      [market.szDecimals, percent, position.baseSize],
+        resolvePerpsProCloseSize({
+          amountUnit,
+          inputSource,
+          manualAmount,
+          percent,
+          positionSize: position.baseSize,
+          referencePrice,
+          szDecimals: market.szDecimals,
+        }),
+      [
+        amountUnit,
+        inputSource,
+        manualAmount,
+        market.szDecimals,
+        percent,
+        position.baseSize,
+        referencePrice,
+      ],
     );
-    const exitPrice = orderType === 'market' ? market.markPrice : limitPrice;
     const displaySize = resolvePerpsProDisplayAmount({
       amountUnit,
-      baseAmount: size,
-      price: exitPrice,
+      baseAmount: size || '',
+      price: referencePrice,
     });
     const positionDisplaySize = resolvePerpsProDisplayAmount({
       amountUnit,
       baseAmount: position.baseSize,
-      price: market.markPrice,
+      price: markPrice,
     });
     const displayUnit =
       amountUnit === 'base' ? market.displayBase : market.quoteAsset;
-    const estimatedPnl = calculateEstimatedPnl(position, exitPrice, size);
+    const displayDecimals = amountUnit === 'base' ? market.szDecimals : 2;
+    const estimatedPnl = calculateEstimatedPnl(position, referencePrice, size);
+    const estimatedPnlValue = Number(estimatedPnl);
+    const estimatedPnlStyle =
+      estimatedPnlValue > 0
+        ? styles.positiveValue
+        : estimatedPnlValue < 0
+        ? styles.negativeValue
+        : styles.summaryValue;
     const valid =
+      !!size &&
       new BigNumber(size).gt(0) &&
-      (orderType === 'market' || new BigNumber(limitPrice).gt(0));
+      !!referencePrice &&
+      new BigNumber(referencePrice).gt(0);
+
+    useEffect(() => {
+      const previousAmountUnit = previousAmountUnitRef.current;
+      previousAmountUnitRef.current = amountUnit;
+      if (previousAmountUnit === amountUnit || inputSource !== 'manual') {
+        return;
+      }
+      const previousSize = resolvePerpsProCloseSize({
+        amountUnit: previousAmountUnit,
+        inputSource: 'manual',
+        manualAmount,
+        percent,
+        positionSize: position.baseSize,
+        referencePrice,
+        szDecimals: market.szDecimals,
+      });
+      if (!previousSize) {
+        setManualAmount('');
+        return;
+      }
+      const nextAmount = resolvePerpsProDisplayAmount({
+        amountUnit,
+        baseAmount: previousSize,
+        price: referencePrice,
+      });
+      setManualAmount(
+        nextAmount
+          ? new BigNumber(nextAmount)
+              .decimalPlaces(
+                amountUnit === 'base' ? market.szDecimals : 2,
+                BigNumber.ROUND_DOWN,
+              )
+              .toFixed()
+          : '',
+      );
+    }, [
+      amountUnit,
+      inputSource,
+      manualAmount,
+      market.szDecimals,
+      percent,
+      position.baseSize,
+      referencePrice,
+    ]);
+
+    const selectLimit = () => {
+      setOrderType('limit');
+      if (!limitPriceDirty && latestTrade.trade?.price) {
+        setLimitPrice(latestTrade.trade.price);
+      }
+    };
+    const beginAmountEntry = (discardNextChange = false) => {
+      if (inputSourceRef.current !== 'slider') {
+        if (!discardNextChange) {
+          discardNextSliderBackspaceChangeRef.current = false;
+        }
+        return;
+      }
+      inputSourceRef.current = 'manual';
+      discardNextSliderBackspaceChangeRef.current = discardNextChange;
+      setInputSource('manual');
+      setManualAmount('');
+    };
+    const handleAmountChange = (value: string) => {
+      if (inputSourceRef.current === 'slider') {
+        beginAmountEntry();
+        return;
+      }
+      if (discardNextSliderBackspaceChangeRef.current) {
+        discardNextSliderBackspaceChangeRef.current = false;
+        return;
+      }
+      inputSourceRef.current = 'manual';
+      setInputSource('manual');
+      setManualAmount(
+        sanitizePerpsProDecimalInput(
+          value,
+          getPerpsProAmountInputDecimals({
+            amountUnit,
+            szDecimals: market.szDecimals,
+          }),
+        ),
+      );
+    };
+    const sliderDisplay = `${percent}% (≈${formatPerpsProDecimal(
+      displaySize,
+      displayDecimals,
+    )})`;
 
     return (
       <AppBottomSheetModal
@@ -104,110 +279,237 @@ export const PerpsProClosePositionSheet: React.FC<{
           colors: colors2024,
           linearGradientType: 'bg1',
         })}
+        backdropProps={{
+          pressBehavior: coveredByReview ? 'none' : 'close',
+        }}
+        backgroundStyle={styles.background}
+        enableDynamicSizing={false}
+        enablePanDownToClose={!coveredByReview}
+        handleIndicatorStyle={styles.handleIndicator}
+        handleStyle={styles.handle}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
         onDismiss={onClose}
-        snapPoints={[500]}>
+        snapPoints={[502]}
+        style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
           <AutoLockView style={styles.container}>
             <Text style={styles.title}>
               {t('page.perps.pro.positions.closePosition')}
             </Text>
-            <View style={styles.segmented}>
-              {(['market', 'limit'] as const).map(type => (
-                <Pressable
-                  key={type}
-                  onPress={() => setOrderType(type)}
-                  style={[
-                    styles.segment,
-                    orderType === type ? styles.segmentActive : null,
-                  ]}>
+            <View style={styles.positionHeader}>
+              <View style={styles.pairRow}>
+                <Text style={styles.pair}>{market.displayPair}</Text>
+                <PerpsProCloseMarketTag sourceTag={market.sourceTag} />
+                <View
+                  style={
+                    position.direction === 'long'
+                      ? styles.longTag
+                      : styles.shortTag
+                  }>
                   <Text
                     style={
-                      orderType === type
-                        ? styles.segmentTextActive
-                        : styles.segmentText
+                      position.direction === 'long'
+                        ? styles.longTagText
+                        : styles.shortTagText
                     }>
-                    {t(`page.perps.pro.positions.${type}`)}
+                    {t(`page.perps.pro.positions.${position.direction}`)}{' '}
+                    {position.leverage}x
                   </Text>
-                </Pressable>
-              ))}
-            </View>
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>
-                {t('page.perps.pro.positions.amount')}
-              </Text>
-              <View style={styles.fieldValueRow}>
-                <Text style={styles.fieldValue}>
-                  {formatPerpsProDecimal(
-                    displaySize,
-                    amountUnit === 'base' ? market.szDecimals : 2,
-                  )}
-                </Text>
-                <Text style={styles.fieldUnit}>{displayUnit}</Text>
-              </View>
-            </View>
-            {orderType === 'limit' ? (
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>
-                  {t('page.perps.pro.positions.limitPrice')}
-                </Text>
-                <View style={styles.fieldValueRow}>
-                  <BottomSheetTextInput
-                    keyboardType="decimal-pad"
-                    onChangeText={setLimitPrice}
-                    style={styles.priceInput}
-                    value={limitPrice}
-                  />
-                  <Text style={styles.fieldUnit}>{market.quoteAsset}</Text>
                 </View>
               </View>
-            ) : null}
-            <View style={styles.sliderRow}>
-              <PerpsProSlider
-                maximumValue={100}
-                minimumValue={1}
-                onValueChange={next => setPercent(Math.round(next))}
-                step={1}
-                value={percent}
-              />
-              <Text style={styles.percent}>{percent}%</Text>
-            </View>
-            <View style={styles.summary}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  {t('page.perps.pro.positions.positionAmount')}
+              <View style={styles.priceSummaryRow}>
+                <Text style={styles.priceSummaryLabel}>
+                  {`${t('page.perps.pro.positions.entry')} (${
+                    market.quoteAsset
+                  })`}
                 </Text>
-                <Text style={styles.summaryValue}>
-                  {formatPerpsProDecimal(
-                    positionDisplaySize,
-                    amountUnit === 'base' ? market.szDecimals : 2,
-                  )}{' '}
-                  {displayUnit}
+                <Text style={styles.priceSummaryValue}>
+                  {formatPerpsProPrice(position.entryPrice, market.pxDecimals)}
                 </Text>
               </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  {t('page.perps.pro.positions.estimatedPnl')}
+              <View style={styles.priceSummaryRow}>
+                <Text style={styles.priceSummaryLabel}>
+                  {`${t('page.perps.pro.positions.mark')} (${
+                    market.quoteAsset
+                  })`}
                 </Text>
-                <Text style={styles.summaryValue}>
-                  {formatPerpsProDecimal(estimatedPnl, 2)} {market.quoteAsset}
+                <Text style={styles.priceSummaryValue}>
+                  {formatPerpsProPrice(markPrice, market.pxDecimals)}
                 </Text>
               </View>
             </View>
+
+            <View style={styles.form}>
+              <View style={styles.orderRow}>
+                {orderType === 'market' ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={selectLimit}
+                    style={[styles.priceField, styles.disabledPriceField]}
+                    testID="perps-pro-close-market-price-field">
+                    <Text style={styles.centeredFieldText}>
+                      {t('page.perps.pro.positions.marketPrice')}
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <View style={styles.priceField}>
+                    <Text style={styles.floatingLabel}>
+                      {t('page.perps.pro.positions.price')}
+                    </Text>
+                    <BottomSheetTextInput
+                      accessibilityLabel={t('page.perps.pro.positions.price')}
+                      cursorColor={colors2024['brand-default']}
+                      keyboardType="decimal-pad"
+                      onChangeText={value => {
+                        setLimitPriceDirty(true);
+                        setLimitPrice(
+                          sanitizePerpsProDecimalInput(
+                            value,
+                            market.pxDecimals,
+                          ),
+                        );
+                      }}
+                      selectionColor={colors2024['brand-default']}
+                      style={styles.priceInput}
+                      value={limitPrice}
+                    />
+                    <Text pointerEvents="none" style={styles.priceUnit}>
+                      {market.quoteAsset}
+                    </Text>
+                  </View>
+                )}
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() =>
+                    orderType === 'market'
+                      ? selectLimit()
+                      : setOrderType('market')
+                  }
+                  style={styles.orderTypeField}>
+                  <Text style={styles.orderTypeText}>
+                    {t(`page.perps.pro.positions.${orderType}`)}
+                  </Text>
+                  <RcOrderTypeSwitch
+                    color={colors2024['neutral-secondary']}
+                    height={10}
+                    style={styles.orderTypeSwitch}
+                    width={10}
+                  />
+                </Pressable>
+              </View>
+
+              <View style={styles.amountGroup}>
+                <View style={styles.amountField}>
+                  <Text style={styles.floatingLabel}>
+                    {t('page.perps.pro.positions.amount')}
+                  </Text>
+                  <BottomSheetTextInput
+                    accessibilityLabel={t('page.perps.pro.positions.amount')}
+                    cursorColor={colors2024['brand-default']}
+                    keyboardType="decimal-pad"
+                    maxFontSizeMultiplier={1.2}
+                    multiline={false}
+                    numberOfLines={1}
+                    onChangeText={handleAmountChange}
+                    onFocus={() => beginAmountEntry()}
+                    onKeyPress={event => {
+                      if (
+                        event.nativeEvent.key === 'Backspace' &&
+                        inputSourceRef.current === 'slider'
+                      ) {
+                        beginAmountEntry(true);
+                      }
+                    }}
+                    onPressIn={() => beginAmountEntry()}
+                    scrollEnabled
+                    selection={
+                      inputSource === 'manual' && !manualAmount
+                        ? EMPTY_AMOUNT_SELECTION
+                        : undefined
+                    }
+                    selectionColor={colors2024['brand-default']}
+                    style={styles.amountInput}
+                    value={
+                      inputSource === 'slider' ? sliderDisplay : manualAmount
+                    }
+                  />
+                  <Text pointerEvents="none" style={styles.amountUnit}>
+                    {displayUnit}
+                  </Text>
+                </View>
+                <PerpsProSlider
+                  maximumValue={100}
+                  minimumValue={0}
+                  onValueChange={value => {
+                    inputSourceRef.current = 'slider';
+                    discardNextSliderBackspaceChangeRef.current = false;
+                    setInputSource('slider');
+                    setPercent(Math.round(value));
+                  }}
+                  pointCount={5}
+                  step={1}
+                  tone="neutral"
+                  value={inputSource === 'slider' ? percent : 0}
+                />
+              </View>
+
+              <View style={styles.summary}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>
+                    {t('page.perps.pro.positions.positionAmount')}
+                  </Text>
+                  <Text style={styles.summaryValue}>
+                    {formatPerpsProDecimal(
+                      positionDisplaySize,
+                      displayDecimals,
+                    )}{' '}
+                    {displayUnit}
+                  </Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <PerpsProDottedUnderlineText
+                    accessibilityLabel={t(
+                      'page.perps.pro.positions.estimatedPnl',
+                    )}
+                    onPress={() => openFieldExplanation('estimatedPnl')}
+                    style={styles.summaryLabel}>
+                    {t('page.perps.pro.positions.estimatedPnl')}
+                  </PerpsProDottedUnderlineText>
+                  <Text style={estimatedPnlStyle}>
+                    {formatPerpsProSignedDecimal(estimatedPnl, 2)}{' '}
+                    {market.quoteAsset}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
             <View style={styles.footer}>
               <Button
-                disabled={!valid}
-                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                onPress={() =>
-                  onReview({
-                    limitPrice: orderType === 'limit' ? limitPrice : null,
-                    orderType,
-                    percent,
-                    size,
-                  })
-                }
+                disabled={!valid || coveredByReview}
+                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                onPress={() => {
+                  if (!size || coveredByReview) {
+                    return;
+                  }
+                  if (orderType === 'limit') {
+                    setLimitPriceDirty(true);
+                  }
+                  dismissKeyboardThen(() =>
+                    onReview({
+                      inputSource,
+                      limitPrice: orderType === 'limit' ? limitPrice : null,
+                      midPrice: market.midPrice,
+                      orderType,
+                      percent,
+                      referencePrice,
+                      size,
+                    }),
+                  );
+                }}
                 title={t('global.confirm')}
-                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-                type="hyperliquid"
+                titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+                type="primary"
               />
             </View>
           </AutoLockView>
@@ -218,124 +520,3 @@ export const PerpsProClosePositionSheet: React.FC<{
 );
 
 PerpsProClosePositionSheet.displayName = 'PerpsProClosePositionSheet';
-
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  sheetView: { height: '100%' },
-  container: { height: '100%', paddingHorizontal: 20, paddingTop: 8 },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    textAlign: 'center',
-  },
-  segmented: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    flexDirection: 'row',
-    marginTop: 20,
-    padding: 2,
-  },
-  segment: {
-    alignItems: 'center',
-    borderRadius: 6,
-    flex: 1,
-    height: 32,
-    justifyContent: 'center',
-  },
-  segmentActive: { backgroundColor: colors2024['neutral-bg-1'] },
-  segmentText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  segmentTextActive: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  field: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  fieldLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  fieldValueRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  fieldValue: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-  },
-  priceInput: {
-    color: colors2024['neutral-title-1'],
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    marginRight: 8,
-    padding: 0,
-  },
-  fieldUnit: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  sliderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-  },
-  percent: {
-    color: colors2024['brand-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    minWidth: 40,
-    textAlign: 'right',
-  },
-  summary: { gap: 8, marginTop: 16 },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  summaryLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  summaryValue: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  footer: {
-    marginTop: 'auto',
-    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-  },
-}));

@@ -2878,15 +2878,17 @@
           "closePosition": "Close Position",
           "confirmClose": "Confirm Close",
           "market": "Market",
+          "marketPrice": "Market Price",
           "limit": "Limit",
           "amount": "Amount",
           "price": "Price",
           "limitPrice": "Limit Price",
           "positionAmount": "Position Amount",
           "estimatedPnl": "Estimated PNL",
-          "skipLimitConfirmation": "Don't show this confirmation again for Limit closes",
+          "skipLimitConfirmation": "Don't display double confirmation for Limit Order again.",
           "closeSubmitted": "Close order submitted",
           "closeFailed": "Failed to close position",
+          "minimumCloseAmount": "Minimum close amount is $10",
           "closeContextChanged": "Position or account changed. Please review again."
         },
         "openOrders": {

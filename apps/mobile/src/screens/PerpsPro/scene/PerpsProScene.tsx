@@ -567,7 +567,8 @@ export const PerpsProScene: React.FC<{
           onClose={positionActions.closeCloseEditor}
           onReview={positionActions.reviewClose}
           position={positionActions.closeEditor.position}
-          visible={!positionActions.closeReview}
+          coveredByReview={!!positionActions.closeReview}
+          visible
         />
       ) : null}
       {positionActions.closeEditor && positionActions.closeReview ? (

@@ -9,6 +9,8 @@ jest.mock('@/hooks/perps/usePerpsStore', () => ({
 import {
   buildPerpsClosePositionCommand,
   executePerpsClosePosition,
+  PERPS_CLOSE_MINIMUM_NOTIONAL_ERROR,
+  validatePerpsCloseAmount,
   type ClosePositionDependencies,
 } from './closePosition';
 
@@ -22,6 +24,7 @@ const command = () =>
     limitPrice: null,
     midPrice: '100',
     orderType: 'market',
+    pxDecimals: 2,
     size: '0.61729',
     szDecimals: 4,
   });
@@ -73,6 +76,7 @@ describe('Perps close position action', () => {
       limitPrice: '101',
       midPrice: '100',
       orderType: 'limit',
+      pxDecimals: 2,
       size: '2',
       szDecimals: 4,
     });
@@ -86,6 +90,78 @@ describe('Perps close position action', () => {
       expect.objectContaining({ isBuy: true, reduceOnly: true, tif: 'Gtc' }),
     );
     expect(deps.refreshOpenOrders).toHaveBeenCalled();
+    expect(deps.refreshClearinghouse).toHaveBeenCalled();
+  });
+
+  it('normalizes a limit price to the market price precision', () => {
+    const limit = buildPerpsClosePositionCommand({
+      account,
+      coin: 'BTC',
+      direction: 'long',
+      expectedPositionSize: '1',
+      limitPrice: '101.239',
+      midPrice: '100',
+      orderType: 'limit',
+      pxDecimals: 2,
+      size: '1',
+      szDecimals: 4,
+    });
+    expect(limit.limitPrice).toBe('101.23');
+  });
+
+  it('rejects a partial close below $10 after size normalization', () => {
+    expect(
+      validatePerpsCloseAmount({
+        expectedPositionSize: '1',
+        referencePrice: '100',
+        size: '0.0999',
+      }),
+    ).toEqual({ kind: 'invalid', reason: 'belowMinimumNotional' });
+    expect(() =>
+      buildPerpsClosePositionCommand({
+        account,
+        coin: 'BTC',
+        direction: 'long',
+        expectedPositionSize: '1',
+        limitPrice: null,
+        midPrice: '100',
+        orderType: 'market',
+        pxDecimals: 2,
+        size: '0.09999',
+        szDecimals: 4,
+      }),
+    ).toThrow(PERPS_CLOSE_MINIMUM_NOTIONAL_ERROR);
+  });
+
+  it('allows a full close below $10 without increasing its size', () => {
+    expect(
+      buildPerpsClosePositionCommand({
+        account,
+        coin: 'BTC',
+        direction: 'long',
+        expectedPositionSize: '0.05',
+        limitPrice: null,
+        midPrice: '100',
+        orderType: 'market',
+        pxDecimals: 2,
+        size: '0.05',
+        szDecimals: 4,
+      }).size,
+    ).toBe('0.05');
+  });
+
+  it('classifies the Hyperliquid minimum-notional rejection', async () => {
+    const deps = dependencies({
+      marketClose: jest.fn(async () => {
+        throw new Error('Order must have minimum value of $10.');
+      }),
+    });
+
+    await expect(executePerpsClosePosition(command(), deps)).resolves.toEqual({
+      error: 'Order must have minimum value of $10.',
+      failureReason: 'minimumNotional',
+      kind: 'failed',
+    });
   });
 
   it('rejects a changed position snapshot before submitting', async () => {

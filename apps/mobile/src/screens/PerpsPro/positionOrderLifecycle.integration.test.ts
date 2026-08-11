@@ -130,6 +130,7 @@ describe('Perps Pro position and order lifecycle integration', () => {
         limitPrice: orderType === 'limit' ? '60500' : null,
         midPrice: '60000',
         orderType,
+        pxDecimals: 2,
         size: position!.baseSize,
         szDecimals: 5,
       });

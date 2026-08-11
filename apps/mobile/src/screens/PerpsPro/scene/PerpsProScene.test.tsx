@@ -9,6 +9,9 @@ const mockOrderBookRender = jest.fn();
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockKlineProps = jest.fn();
+const mockUsePerpsProPositionActions = jest.fn();
+const mockClosePositionSheetProps = jest.fn();
+const mockCloseConfirmationSheetProps = jest.fn();
 
 jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
   useActiveAssetSubscription: () => ({
@@ -83,13 +86,31 @@ jest.mock('../components/positions/PerpsProLeverageSheet', () => ({
   PerpsProLeverageSheet: () => null,
 }));
 
-jest.mock('../components/positions/PerpsProClosePositionSheet', () => ({
-  PerpsProClosePositionSheet: () => null,
-}));
+jest.mock('../components/positions/PerpsProClosePositionSheet', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProClosePositionSheet: (props: object) => {
+      mockClosePositionSheetProps(props);
+      return ReactModule.createElement(View, {
+        testID: 'close-position-sheet',
+      });
+    },
+  };
+});
 
-jest.mock('../components/positions/PerpsProCloseConfirmationSheet', () => ({
-  PerpsProCloseConfirmationSheet: () => null,
-}));
+jest.mock('../components/positions/PerpsProCloseConfirmationSheet', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProCloseConfirmationSheet: (props: object) => {
+      mockCloseConfirmationSheetProps(props);
+      return ReactModule.createElement(View, {
+        testID: 'close-confirmation-sheet',
+      });
+    },
+  };
+});
 
 jest.mock('../components/open-orders/PerpsProCancelConfirmationModal', () => ({
   PerpsProCancelConfirmationModal: () => null,
@@ -287,23 +308,7 @@ jest.mock('./usePerpsProCancelOrders', () => ({
 }));
 
 jest.mock('./usePerpsProPositionActions', () => ({
-  usePerpsProPositionActions: () => ({
-    cancelCloseReview: jest.fn(),
-    closeCloseEditor: jest.fn(),
-    closeEditor: null,
-    closePending: false,
-    closeReview: null,
-    closeLeverageEditor: jest.fn(),
-    confirmClose: jest.fn(),
-    leverageEditor: null,
-    leveragePending: false,
-    openCloseEditor: jest.fn(),
-    openLeverageEditor: jest.fn(),
-    reviewClose: jest.fn(),
-    setSkipLimitConfirmation: jest.fn(),
-    skipLimitConfirmation: false,
-    updateLeverage: jest.fn(),
-  }),
+  usePerpsProPositionActions: mockUsePerpsProPositionActions,
 }));
 
 const { PerpsProScene } =
@@ -347,6 +352,27 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const createPositionActionsState = (
+  overrides: Record<string, unknown> = {},
+) => ({
+  cancelCloseReview: jest.fn(),
+  closeCloseEditor: jest.fn(),
+  closeEditor: null,
+  closePending: false,
+  closeReview: null,
+  closeLeverageEditor: jest.fn(),
+  confirmClose: jest.fn(),
+  leverageEditor: null,
+  leveragePending: false,
+  openCloseEditor: jest.fn(),
+  openLeverageEditor: jest.fn(),
+  reviewClose: jest.fn(),
+  setSkipLimitConfirmation: jest.fn(),
+  skipLimitConfirmation: false,
+  updateLeverage: jest.fn(),
+  ...overrides,
+});
+
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -355,6 +381,9 @@ describe('PerpsProScene market loading states', () => {
       value: 'active',
     });
     mockUsePerpsProInfoPanel.mockReturnValue(createInfoState());
+    mockUsePerpsProPositionActions.mockReturnValue(
+      createPositionActionsState(),
+    );
   });
 
   afterEach(() => {
@@ -375,6 +404,57 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('market-bar-skeleton')).toBeTruthy();
     expect(screen.getByTestId('scene-skeleton')).toBeTruthy();
     expect(screen.queryByText('page.perps.pro.common.unavailable')).toBeNull();
+  });
+
+  it('keeps the close editor mounted under the confirmation sheet', () => {
+    const closeEditor = {
+      account: { address: '0x1', type: 'watch' },
+      market: {
+        displayBase: 'BTC',
+        displayPair: 'BTCUSDC',
+        markPrice: '60000',
+        midPrice: '60000',
+        pxDecimals: 0,
+        quoteAsset: 'USDC',
+        sourceTag: 'xyz',
+        szDecimals: 4,
+      },
+      position: {
+        baseSize: '1',
+        coin: 'BTC',
+        direction: 'long',
+        key: 'BTC',
+        leverage: 5,
+      },
+    };
+    const closeReview = {
+      inputSource: 'slider',
+      limitPrice: null,
+      midPrice: '60000',
+      orderType: 'market',
+      percent: 100,
+      referencePrice: '60000',
+      size: '1',
+    };
+    mockUsePerpsProPositionActions.mockReturnValue(
+      createPositionActionsState({ closeEditor, closeReview }),
+    );
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('close-position-sheet')).toBeTruthy();
+    expect(screen.getByTestId('close-confirmation-sheet')).toBeTruthy();
+    expect(mockClosePositionSheetProps.mock.lastCall?.[0]).toMatchObject({
+      coveredByReview: true,
+      visible: true,
+    });
+    expect(mockCloseConfirmationSheetProps.mock.lastCall?.[0]).toMatchObject({
+      market: expect.objectContaining({ sourceTag: 'xyz' }),
+      visible: true,
+    });
   });
 
   it('keeps one fixed scroll owner and reserves stable overlay lead-in geometry', () => {
