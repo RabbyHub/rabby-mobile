@@ -38,6 +38,7 @@ import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccou
 import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
+import { createPerpsProInfoTabsTranslateY } from '../components/info/perpsProInfoTabsSticky';
 import {
   PerpsProMarketBarSkeleton,
   PerpsProSceneSkeleton,
@@ -164,6 +165,9 @@ export const PerpsProScene: React.FC<{
   const [mainColumnHeight, setMainColumnHeight] = useState(
     PERPS_PRO_MAIN_COLUMN_HEIGHT,
   );
+  const [tradeRowHeight, setTradeRowHeight] = useState(
+    PERPS_PRO_MAIN_COLUMN_HEIGHT + 8,
+  );
   const fundingAccountIdentityRef = useRef(info.accountIdentity);
 
   useEffect(() => {
@@ -229,6 +233,25 @@ export const PerpsProScene: React.FC<{
       Math.abs(current - measured) > 1 ? measured : current,
     );
   }, []);
+  const updateTradeRowHeight = useCallback((event: LayoutChangeEvent) => {
+    const measured = Math.ceil(event.nativeEvent.layout.height);
+    if (measured <= 0) {
+      return;
+    }
+    setTradeRowHeight(current =>
+      Math.abs(current - measured) > 1 ? measured : current,
+    );
+  }, []);
+  const infoTabsTranslateY = useMemo(
+    () =>
+      createPerpsProInfoTabsTranslateY({
+        anchorY: PERPS_PRO_SCENE_LEAD_IN_HEIGHT + tradeRowHeight,
+        marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
+        marketTranslateY: headerCollapse.marketTranslateY,
+        scrollY: headerCollapse.scrollY,
+      }),
+    [headerCollapse.marketTranslateY, headerCollapse.scrollY, tradeRowHeight],
+  );
   const isMarketLoading =
     !scene.currentMarket &&
     (scene.marketDataStatus === 'idle' ||
@@ -308,7 +331,9 @@ export const PerpsProScene: React.FC<{
         case 'trade':
           if (scene.currentMarket) {
             return (
-              <View style={[styles.columns, columnsStyle]}>
+              <View
+                onLayout={updateTradeRowHeight}
+                style={[styles.columns, columnsStyle]}>
                 <View style={orderBookColumnStyle}>
                   <PerpsProRealtimeOrderBook
                     amountUnit={trade.amountUnit}
@@ -343,15 +368,17 @@ export const PerpsProScene: React.FC<{
           }
           if (isMarketLoading) {
             return (
-              <PerpsProSceneSkeleton
-                gap={gap}
-                orderBookWidth={orderBookWidth}
-                tradeWidth={tradeWidth}
-              />
+              <View onLayout={updateTradeRowHeight}>
+                <PerpsProSceneSkeleton
+                  gap={gap}
+                  orderBookWidth={orderBookWidth}
+                  tradeWidth={tradeWidth}
+                />
+              </View>
             );
           }
           return (
-            <View style={styles.empty}>
+            <View onLayout={updateTradeRowHeight} style={styles.empty}>
               <Text style={styles.emptyText}>
                 {t('page.perps.pro.common.unavailable')}
               </Text>
@@ -370,15 +397,9 @@ export const PerpsProScene: React.FC<{
           );
         case 'info-tabs':
           return (
-            <PerpsProInfoTabs
-              activeTab={info.activeInfoTab}
-              historyEnabled={
-                historyEnabled && info.accountState !== 'noAccount'
-              }
-              onChange={tab => info.setActiveInfoTab(tab)}
-              onHistoryPress={onOpenHistory}
-              openOrdersCount={info.allOpenOrdersCount}
-              positionsCount={info.allPositionsCount}
+            <View
+              style={styles.infoTabsSpacer}
+              testID="perps-pro-info-tabs-spacer"
             />
           );
         case 'account-state':
@@ -456,10 +477,8 @@ export const PerpsProScene: React.FC<{
       closeAll.requestCloseAll,
       gap,
       info,
-      historyEnabled,
       isMarketLoading,
       mainColumnHeight,
-      onOpenHistory,
       openDeposit,
       openSwap,
       openWithdraw,
@@ -475,6 +494,7 @@ export const PerpsProScene: React.FC<{
       tradeWidth,
       trade,
       updateMainColumnHeight,
+      updateTradeRowHeight,
     ],
   );
 
@@ -526,6 +546,21 @@ export const PerpsProScene: React.FC<{
               onPress={openMarketSelector}
             />
           )}
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.infoTabsOverlay,
+            { transform: [{ translateY: infoTabsTranslateY }] },
+          ]}
+          testID="perps-pro-info-tabs-overlay">
+          <PerpsProInfoTabs
+            activeTab={info.activeInfoTab}
+            historyEnabled={historyEnabled && info.accountState !== 'noAccount'}
+            onChange={tab => info.setActiveInfoTab(tab)}
+            onHistoryPress={onOpenHistory}
+            openOrdersCount={info.allOpenOrdersCount}
+            positionsCount={info.allPositionsCount}
+          />
         </Animated.View>
       </View>
       <PerpsProMarketSelector
@@ -636,6 +671,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     top: 0,
     zIndex: 2,
   },
+  infoTabsOverlay: {
+    height: 34,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 1,
+  },
+  infoTabsSpacer: { height: 34 },
   scroll: {
     bottom: 0,
     left: 0,

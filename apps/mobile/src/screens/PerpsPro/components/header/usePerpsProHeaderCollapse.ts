@@ -185,5 +185,6 @@ export const usePerpsProHeaderCollapse = () => {
     headerTranslateY,
     marketTranslateY,
     onScroll,
+    scrollY,
   };
 };

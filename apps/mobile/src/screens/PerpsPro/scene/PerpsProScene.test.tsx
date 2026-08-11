@@ -172,12 +172,16 @@ jest.mock('../components/header/PerpsProAccountSelectorLayer', () => ({
 }));
 
 jest.mock('../components/header/usePerpsProHeaderCollapse', () => ({
-  usePerpsProHeaderCollapse: () => ({
-    headerOpacity: 1,
-    headerTranslateY: 0,
-    marketTranslateY: 56,
-    onScroll: jest.fn(),
-  }),
+  usePerpsProHeaderCollapse: () => {
+    const { Animated } = require('react-native');
+    return {
+      headerOpacity: 1,
+      headerTranslateY: 0,
+      marketTranslateY: 56,
+      onScroll: jest.fn(),
+      scrollY: new Animated.Value(0),
+    };
+  },
 }));
 
 jest.mock('../components/loading/PerpsProSceneSkeleton', () => {
@@ -497,6 +501,13 @@ describe('PerpsProScene market loading states', () => {
         transform: [{ translateY: 56 }],
       }),
     );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
+      ),
+    ).toMatchObject({ height: 34 });
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
+    expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
 
   it('presents the prewarmed selector without rerendering the scene content', () => {

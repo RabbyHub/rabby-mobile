@@ -88,20 +88,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
-    borderTopColor: colors2024['neutral-line'],
-    borderTopWidth: 1,
     flexDirection: 'row',
     gap: 12,
     height: 34,
-    marginTop: 16,
     paddingHorizontal: 15,
   },
   tab: {
     alignItems: 'center',
     height: '100%',
     justifyContent: 'center',
+    paddingHorizontal: 2,
     position: 'relative',
   },
   text: {
