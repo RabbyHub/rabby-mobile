@@ -2849,6 +2849,11 @@
         },
         "positions": {
           "closeAll": "Close All",
+          "closeAllConfirmTitle": "Confirm Close All Positions",
+          "closeAllConfirmMessage": "This will close all your positions and cancel their associated TP/SL orders.",
+          "closeAllSuccess": "All positions closed successfully",
+          "closeAllFailed": "Failed to close all positions",
+          "closeAllContextChanged": "Positions or account changed. Please try again.",
           "long": "Long",
           "short": "Short",
           "cross": "Cross",

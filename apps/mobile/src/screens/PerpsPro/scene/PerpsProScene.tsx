@@ -54,6 +54,7 @@ import { PerpsProOpenOrderCard } from '../components/open-orders/PerpsProOpenOrd
 import { PerpsProCancelConfirmationModal } from '../components/open-orders/PerpsProCancelConfirmationModal';
 import { PerpsProOpenOrdersControls } from '../components/open-orders/PerpsProOpenOrdersControls';
 import { PerpsProPositionCard } from '../components/positions/PerpsProPositionCard';
+import { PerpsProCloseAllConfirmationModal } from '../components/positions/PerpsProCloseAllConfirmationModal';
 import { PerpsProCloseConfirmationSheet } from '../components/positions/PerpsProCloseConfirmationSheet';
 import { PerpsProClosePositionSheet } from '../components/positions/PerpsProClosePositionSheet';
 import { PerpsProLeverageSheet } from '../components/positions/PerpsProLeverageSheet';
@@ -74,6 +75,7 @@ import {
 } from './usePerpsProInfoPanel';
 import { usePerpsProScene } from './usePerpsProScene';
 import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
+import { usePerpsProCloseAll } from './usePerpsProCloseAll';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
 import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
@@ -148,6 +150,7 @@ export const PerpsProScene: React.FC<{
     updateLeverageRequest: leverageUpdate.update,
   });
   const cancelOrders = usePerpsProCancelOrders();
+  const closeAll = usePerpsProCloseAll(info.accountIdentity);
   const { setHideOtherSymbols } = info;
   const headerCollapse = usePerpsProHeaderCollapse();
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
@@ -401,7 +404,10 @@ export const PerpsProScene: React.FC<{
         case 'positions-controls':
           return (
             <PerpsProPositionsControls
+              actionDisabled={info.allPositionsCount === 0}
+              actionPending={closeAll.pending}
               hideOtherSymbols={info.hideOtherSymbols}
+              onCloseAll={closeAll.requestCloseAll}
               onToggleHideOtherSymbols={toggleHideOtherSymbols}
             />
           );
@@ -446,6 +452,8 @@ export const PerpsProScene: React.FC<{
     [
       columnsStyle,
       cancelOrders,
+      closeAll.pending,
+      closeAll.requestCloseAll,
       gap,
       info,
       historyEnabled,
@@ -551,6 +559,11 @@ export const PerpsProScene: React.FC<{
         confirmation={cancelOrders.confirmation}
         onCancel={cancelOrders.dismissConfirmation}
         onConfirm={cancelOrders.confirmCancellation}
+      />
+      <PerpsProCloseAllConfirmationModal
+        confirmation={closeAll.confirmation}
+        onCancel={closeAll.dismissConfirmation}
+        onConfirm={closeAll.confirmCloseAll}
       />
       <PerpsProLeverageSheet
         currentLeverage={positionActions.leverageEditor?.position.leverage ?? 1}

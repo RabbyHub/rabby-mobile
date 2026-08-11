@@ -31,6 +31,7 @@ export const MODAL_GATE_IDS = {
   perpsGuideEntry: 'perps-guide-entry',
   perpsAutoClose: 'perps-auto-close',
   perpsProCancelConfirmation: 'perps-pro-cancel-confirmation',
+  perpsProCloseAllConfirmation: 'perps-pro-close-all-confirmation',
   perpsProCloseConfirmation: 'perps-pro-close-confirmation',
   perpsProFieldExplanation: 'perps-pro-field-explanation',
   swapLowCredit: 'swap-low-credit',

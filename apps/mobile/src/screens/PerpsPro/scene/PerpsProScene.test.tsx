@@ -8,6 +8,7 @@ const mockMarketSelectorPresent = jest.fn();
 const mockOrderBookRender = jest.fn();
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
+const mockRequestCloseAll = jest.fn();
 const mockKlineProps = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
@@ -111,6 +112,10 @@ jest.mock('../components/positions/PerpsProCloseConfirmationSheet', () => {
     },
   };
 });
+
+jest.mock('../components/positions/PerpsProCloseAllConfirmationModal', () => ({
+  PerpsProCloseAllConfirmationModal: () => null,
+}));
 
 jest.mock('../components/open-orders/PerpsProCancelConfirmationModal', () => ({
   PerpsProCancelConfirmationModal: () => null,
@@ -304,6 +309,16 @@ jest.mock('./usePerpsProCancelOrders', () => ({
     dismissConfirmation: jest.fn(),
     isCancelAllPending: false,
     isOrderPending: () => false,
+  }),
+}));
+
+jest.mock('./usePerpsProCloseAll', () => ({
+  usePerpsProCloseAll: () => ({
+    confirmation: null,
+    confirmCloseAll: jest.fn(),
+    dismissConfirmation: jest.fn(),
+    pending: false,
+    requestCloseAll: mockRequestCloseAll,
   }),
 }));
 
