@@ -1,7 +1,11 @@
 import type { PerpsBookPrecision } from '@/hooks/perps/subscriptions/perpsBookTypes';
 import { usePerpsFastL2 } from '@/hooks/perps/subscriptions/usePerpsFastL2';
-import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
-import React, { useEffect, useMemo, useState } from 'react';
+import {
+  usePerpsLatestTrade,
+  type PerpsLatestTrade,
+} from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
+import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { PerpsProFundingDetailSheet } from '../components/funding/PerpsProFundingDetailSheet';
 import { PerpsProOrderBook } from '../components/orderbook/PerpsProOrderBook';
@@ -11,6 +15,14 @@ import {
   processPerpsOrderBook,
   type PerpsTickOption,
 } from '../model/orderBook';
+
+export const PERPS_PRO_ORDER_BOOK_RECONNECT_GRACE_MS = 3000;
+
+type ReconnectDisplayCache = {
+  book: L2Book;
+  identity: string;
+  latestTrade: PerpsLatestTrade | null;
+};
 
 export const PerpsProRealtimeOrderBook: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
@@ -43,13 +55,106 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     coin: market.canonicalCoin,
     enabled,
   });
+  const reconnectCacheRef = useRef<ReconnectDisplayCache | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectGraceStartedRef = useRef(false);
+  const [reconnectCache, setReconnectCache] =
+    useState<ReconnectDisplayCache | null>(null);
+  const [reconnectCacheExpired, setReconnectCacheExpired] = useState(true);
+
+  useEffect(() => {
+    const clearReconnectTimer = () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    };
+    const clearReconnectCache = () => {
+      clearReconnectTimer();
+      reconnectCacheRef.current = null;
+      reconnectGraceStartedRef.current = false;
+      setReconnectCache(null);
+      setReconnectCacheExpired(true);
+    };
+
+    if (!enabled || fastL2.identity === 'disabled') {
+      clearReconnectCache();
+      return;
+    }
+
+    if (fastL2.book) {
+      clearReconnectTimer();
+      reconnectGraceStartedRef.current = false;
+      const nextCache = {
+        book: fastL2.book,
+        identity: fastL2.identity,
+        latestTrade:
+          latestTrade.trade ??
+          (reconnectCacheRef.current?.identity === fastL2.identity
+            ? reconnectCacheRef.current.latestTrade
+            : null),
+      };
+      reconnectCacheRef.current = nextCache;
+      setReconnectCache(nextCache);
+      setReconnectCacheExpired(false);
+      return;
+    }
+
+    const currentCache = reconnectCacheRef.current;
+    if (currentCache?.identity !== fastL2.identity) {
+      clearReconnectCache();
+      return;
+    }
+
+    if (latestTrade.trade) {
+      const nextCache = { ...currentCache, latestTrade: latestTrade.trade };
+      reconnectCacheRef.current = nextCache;
+      setReconnectCache(nextCache);
+    }
+
+    if (fastL2.status !== 'loading' && fastL2.status !== 'stale') {
+      clearReconnectCache();
+      return;
+    }
+
+    if (!reconnectGraceStartedRef.current) {
+      reconnectGraceStartedRef.current = true;
+      setReconnectCacheExpired(false);
+      reconnectTimerRef.current = setTimeout(() => {
+        reconnectTimerRef.current = null;
+        setReconnectCacheExpired(true);
+      }, PERPS_PRO_ORDER_BOOK_RECONNECT_GRACE_MS);
+    }
+  }, [enabled, fastL2.book, fastL2.identity, fastL2.status, latestTrade.trade]);
+
+  useEffect(
+    () => () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const usesReconnectCache =
+    !fastL2.book &&
+    !reconnectCacheExpired &&
+    reconnectCache?.identity === fastL2.identity &&
+    (fastL2.status === 'loading' || fastL2.status === 'stale');
+  const displayBook =
+    fastL2.book ??
+    (usesReconnectCache && reconnectCache ? reconnectCache.book : null);
+  const displayLatestTrade =
+    usesReconnectCache && reconnectCache
+      ? latestTrade.trade ?? reconnectCache.latestTrade
+      : latestTrade.trade;
   const processedBook = useMemo(
-    () => processPerpsOrderBook(fastL2.book),
-    [fastL2.book],
+    () => processPerpsOrderBook(displayBook),
+    [displayBook],
   );
   const serverTime = Math.max(
-    fastL2.book?.time ?? 0,
-    latestTrade.trade?.time ?? 0,
+    displayBook?.time ?? 0,
+    displayLatestTrade?.time ?? 0,
   );
   const [serverClock, setServerClock] = useState<{
     marketKey: string;
@@ -84,13 +189,13 @@ export const PerpsProRealtimeOrderBook: React.FC<{
         amountUnit={amountUnit}
         book={processedBook}
         bookStatus={fastL2.status}
-        hasBookSnapshot={fastL2.book != null}
+        hasBookSnapshot={displayBook != null}
         height={height}
-        latestTrade={latestTrade.trade}
+        latestTrade={displayLatestTrade}
         market={market}
         onOpenFunding={() => setFundingDetailOpen(true)}
         onSelectTickOption={onSelectTickOption}
-        onSelectPrice={onSelectPrice}
+        onSelectPrice={usesReconnectCache ? undefined : onSelectPrice}
         selectedTickOption={selectedTickOption}
         serverClock={currentServerClock}
         tickOptions={tickOptions}

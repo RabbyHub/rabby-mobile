@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+import { FontNames } from '@/core/utils/fonts';
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -17,7 +19,10 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-import { PerpsProOrderBookModeIcon } from './PerpsProOrderBookPrimitives';
+import {
+  PerpsProOrderBookModeIcon,
+  PerpsProOrderBookRow,
+} from './PerpsProOrderBookPrimitives';
 
 describe('PerpsProOrderBookModeIcon', () => {
   it.each([
@@ -59,5 +64,40 @@ describe('PerpsProOrderBookModeIcon', () => {
     expect(
       StyleSheet.flatten((sides.children[1] as any).props.style),
     ).toMatchObject({ backgroundColor: 'green-default' });
+  });
+});
+
+describe('PerpsProOrderBookRow', () => {
+  it('keeps the Figma row inset and shared platform font', () => {
+    render(
+      <PerpsProOrderBookRow
+        level={{
+          price: '100',
+          priceNumber: 100,
+          size: 2,
+          total: 2,
+          totalUsd: 200,
+          usdSize: 200,
+        }}
+        maxTotal={2}
+        priceDecimals={2}
+        side="bid"
+      />,
+    );
+
+    const price = screen.getByText('100.00');
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-row').props.style,
+      ),
+    ).toMatchObject({ gap: 4, padding: 2 });
+    expect(StyleSheet.flatten(price.props.style)).toMatchObject({
+      fontFamily: FontNames.sf_pro,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('200.00').props.style),
+    ).toMatchObject({
+      fontFamily: FontNames.sf_pro,
+    });
   });
 });

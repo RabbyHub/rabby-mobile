@@ -76,17 +76,29 @@ export const PerpsProSlider: React.FC<{
                 styles.neutralTrack,
                 disabled && styles.neutralTrackDisabled,
               ]}
-              testID="perps-pro-slider-neutral-track"
-            />
+              testID="perps-pro-slider-neutral-track">
+              <View
+                style={[
+                  styles.neutralTrackProgress,
+                  disabled && styles.neutralTrackProgressDisabled,
+                  { width: `${neutralProgress * 100}%` },
+                ]}
+                testID="perps-pro-slider-neutral-track-progress"
+              />
+            </View>
             <View
               pointerEvents="none"
-              style={[
-                styles.neutralThumb,
-                disabled && styles.neutralThumbDisabled,
-                { left: `${neutralProgress * 100}%`, marginLeft: -6.5 },
-              ]}
-              testID="perps-pro-slider-neutral-thumb"
-            />
+              style={styles.neutralThumbRail}
+              testID="perps-pro-slider-neutral-thumb-rail">
+              <View
+                style={[
+                  styles.neutralThumb,
+                  disabled && styles.neutralThumbDisabled,
+                  { left: `${neutralProgress * 100}%`, marginLeft: -6.5 },
+                ]}
+                testID="perps-pro-slider-neutral-thumb"
+              />
+            </View>
           </>
         ) : null}
         <View
@@ -99,6 +111,9 @@ export const PerpsProSlider: React.FC<{
                 style={[
                   styles.point,
                   tone === 'neutral' && styles.neutralPoint,
+                  tone === 'neutral' &&
+                    index / (points.length - 1) <= neutralProgress &&
+                    styles.neutralPointActive,
                   tone === 'neutral' && {
                     left: `${(index * 100) / (points.length - 1)}%`,
                     marginLeft: -3.5,
@@ -161,6 +176,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 13,
     zIndex: 3,
   },
+  neutralThumbRail: {
+    height: 13,
+    left: 6.5,
+    position: 'absolute',
+    right: 6.5,
+    top: 5.5,
+    zIndex: 3,
+  },
   neutralThumbDisabled: {
     borderColor: colors2024['neutral-secondary'],
   },
@@ -171,14 +194,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 13,
   },
   neutralTrack: {
-    backgroundColor: colors2024['neutral-title-1'],
+    backgroundColor: colors2024['neutral-line'],
     height: 1,
     left: 6.5,
+    overflow: 'hidden',
     position: 'absolute',
     right: 6.5,
     zIndex: 1,
   },
   neutralTrackDisabled: {
+    backgroundColor: colors2024['neutral-secondary'],
+  },
+  neutralTrackProgress: {
+    backgroundColor: colors2024['neutral-title-1'],
+    height: 1,
+  },
+  neutralTrackProgressDisabled: {
     backgroundColor: colors2024['neutral-secondary'],
   },
   points: {
@@ -200,10 +231,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   neutralPoint: {
     backgroundColor: colors2024['neutral-bg-1'],
-    borderColor: colors2024['neutral-title-1'],
+    borderColor: colors2024['neutral-line'],
     borderRadius: 3.5,
     height: 7,
     width: 7,
+  },
+  neutralPointActive: {
+    borderColor: colors2024['neutral-title-1'],
   },
   neutralPoints: {
     left: 6.5,

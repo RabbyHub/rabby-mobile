@@ -192,8 +192,10 @@ describe('usePerpsProScene component', () => {
     });
     expect(hook.result.current.currentMarket?.marketKey).toBe('xyz::xyz:AAPL');
 
-    act(() => {
-      hook.result.current.selectMarket(buildPerpsProMarket(btc));
+    await act(async () => {
+      expect(
+        await hook.result.current.selectMarket(buildPerpsProMarket(btc)),
+      ).toBe(true);
     });
 
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');

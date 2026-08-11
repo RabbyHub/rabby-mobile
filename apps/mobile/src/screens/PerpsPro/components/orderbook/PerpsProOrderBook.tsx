@@ -1,5 +1,6 @@
 import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
 import { Text } from '@/components/Typography';
+import { FontNames } from '@/core/utils/fonts';
 import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFastL2';
 import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
@@ -326,7 +327,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   columnLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     fontWeight: '400',
     lineHeight: 12,
@@ -346,7 +347,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   latestBuy: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
@@ -354,7 +355,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   latestSell: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
@@ -362,7 +363,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   markPrice: {
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -382,7 +383,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   statusText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     lineHeight: 14,
     textAlign: 'center',
@@ -406,7 +407,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   precisionTriggerText: {
     color: colors2024['neutral-title-1'],
     flex: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -422,14 +423,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buyRatio: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
   },
   sellRatio: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,

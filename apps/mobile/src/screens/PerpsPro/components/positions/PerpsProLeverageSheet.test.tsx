@@ -119,6 +119,9 @@ describe('PerpsProLeverageSheet', () => {
       pointCount: 5,
       tone: 'neutral',
     });
+    expect(
+      screen.getByTestId('leverage-slider').props.hideMinimumPoint,
+    ).toBeUndefined();
 
     fireEvent.press(screen.getByTestId('perps-pro-leverage-increment'));
     expect(screen.getByText('21x')).toBeTruthy();

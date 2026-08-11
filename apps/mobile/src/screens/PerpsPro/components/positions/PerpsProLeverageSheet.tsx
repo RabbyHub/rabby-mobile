@@ -97,7 +97,6 @@ export const PerpsProLeverageSheet: React.FC<{
             <View style={styles.sliderSection}>
               <PerpsProSlider
                 disabled={pending}
-                hideMinimumPoint
                 maximumValue={safeMax}
                 minimumValue={1}
                 onValueChange={next => setValue(Math.round(next))}

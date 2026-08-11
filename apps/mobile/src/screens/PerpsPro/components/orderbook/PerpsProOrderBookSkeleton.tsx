@@ -112,6 +112,7 @@ const styles = {
     flexDirection: 'row' as const,
     height: PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
     justifyContent: 'space-between' as const,
+    padding: 2,
   },
   value: {
     borderRadius: 4,

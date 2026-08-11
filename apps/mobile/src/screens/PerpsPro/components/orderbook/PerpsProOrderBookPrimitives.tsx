@@ -1,4 +1,5 @@
 import { Text } from '@/components/Typography';
+import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
@@ -82,7 +83,8 @@ export const PerpsProOrderBookRow: React.FC<{
       accessibilityRole={level && onSelectPrice ? 'button' : undefined}
       disabled={!level || !onSelectPrice}
       onPress={() => level && onSelectPrice?.(level.price)}
-      style={styles.bookRow}>
+      style={styles.bookRow}
+      testID="perps-pro-order-book-row">
       {level ? (
         <View
           pointerEvents="none"
@@ -162,6 +164,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     height: PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
     overflow: 'hidden',
+    padding: 2,
     position: 'relative',
   },
   depth: {
@@ -178,7 +181,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bookPrice: {
     flex: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
@@ -194,7 +197,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bookAmount: {
     color: colors2024['neutral-title-1'],
     flexShrink: 0,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
