@@ -1,4 +1,3 @@
-import { getTop10MyAccounts } from '@/core/apis/account';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
@@ -36,15 +35,29 @@ import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { uniqBy } from 'lodash';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
+import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('idle', () => {
-      resolve(null);
-    });
+const multiAddressTokenRequests = new LatestAsyncRequest();
+
+const buildTokenListMapFromEntities = (
+  addresses: string[],
+  tokens: TokenItemEntity[],
+) => {
+  const result = Object.fromEntries(
+    addresses.map(address => [address, [] as ITokenItem[]]),
+  );
+
+  tokens.forEach(token => {
+    const transformedToken = tokenItemEntityToTokenItem(token);
+    const address = transformedToken.owner_addr.toLowerCase();
+    if (result[address]) {
+      result[address].push(transformedToken);
+    }
   });
+
+  return result;
 };
 
 interface TokenListState {
@@ -1711,114 +1724,215 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
   },
 
   async batchGetTokenList(addresses: string[], force = false) {
+    const requestId = multiAddressTokenRequests.next();
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
+    const trace = beginAssetDataLoadDiagnostic(
+      'multi-address-token',
+      lowerAddresses.join('|'),
+      {
+        addressCount: lowerAddresses.length,
+        force,
+      },
+    );
+    const isCurrentRequest = () =>
+      multiAddressTokenRequests.isCurrent(requestId);
+
     if (!lowerAddresses.length) {
       set(() => ({ isLoading: true }));
       await new Promise(resolve => setTimeout(resolve, 0));
-      set(() => ({ tokenListMap: {}, isLoading: false }));
+      if (isCurrentRequest()) {
+        set(() => ({ tokenListMap: {}, isLoading: false }));
+      }
+      trace.finish({ path: 'empty-addresses' });
       return;
     }
-    if (!force) {
-      const isExpired = await isDataExpiredBatch(lowerAddresses);
-      if (!isExpired) {
-        const tokens = await TokenItemEntity.batchMultiAddressTokens(
+
+    try {
+      if (!force) {
+        const isExpired = await isDataExpiredBatch(lowerAddresses);
+        trace.mark('expiry-resolved', { isExpired });
+        if (!isCurrentRequest()) {
+          trace.finish({ path: 'stale-before-hydrate' });
+          return;
+        }
+        if (!isExpired) {
+          const tokens = await TokenItemEntity.batchMultiAddressTokens(
+            lowerAddresses,
+          );
+          const localTokenMap = buildTokenListMapFromEntities(
+            lowerAddresses,
+            tokens as TokenItemEntity[],
+          );
+          trace.mark('local-db-loaded', { itemCount: tokens.length });
+          if (!isCurrentRequest()) {
+            trace.finish({ path: 'stale-after-hydrate' });
+            return;
+          }
+          syncTokenRuntimeStoresFromTokenListMap(
+            localTokenMap,
+            lowerAddresses,
+            'hydrate',
+            {
+              markTokenListMapSynced: true,
+            },
+          );
+          set(() => ({ tokenListMap: localTokenMap, isLoading: false }));
+          trace.finish({ path: 'local-db', itemCount: tokens.length });
+          return;
+        }
+      }
+
+      if (isCurrentRequest()) {
+        set(() => ({ isLoading: true }));
+      }
+
+      const cacheTokenQueue = new PQueue({
+        concurrency: 5,
+      });
+      const cacheTokenMap: Record<string, ITokenItem[]> = {};
+      const cacheTokensPromise = Promise.allSettled(
+        lowerAddresses.map(address =>
+          cacheTokenQueue.add(async () => {
+            const list = await queryTokensCache(address);
+            cacheTokenMap[address] = filterInterfaceTokenList(
+              list.map(item => tokenItemToITokenItem(item, address)),
+            );
+          }),
+        ),
+      );
+
+      const currentTokenListMap = get().tokenListMap;
+      const hasMemorySnapshot = lowerAddresses.every(address =>
+        Object.prototype.hasOwnProperty.call(currentTokenListMap, address),
+      );
+      if (!force && !hasMemorySnapshot) {
+        const localTokens = await TokenItemEntity.batchMultiAddressTokens(
           lowerAddresses,
         );
-        const res: Record<string, ITokenItem[]> = {};
-        for (let i = 0; i < tokens.length; i++) {
-          const token = tokens[i] as TokenItemEntity;
-          const transformedToken = tokenItemEntityToTokenItem(token);
-          const key = transformedToken.owner_addr.toLowerCase();
-          if (res[key]) {
-            res[key].push(transformedToken);
-          } else {
-            res[key] = [transformedToken];
-          }
-        }
-        syncTokenRuntimeStoresFromTokenListMap(res, lowerAddresses, 'hydrate', {
-          markTokenListMapSynced: true,
+        trace.mark('stale-local-db-loaded', {
+          itemCount: localTokens.length,
         });
-        set(() => ({ tokenListMap: res, isLoading: false }));
+        if (isCurrentRequest()) {
+          const localTokenMap = buildTokenListMapFromEntities(
+            lowerAddresses,
+            localTokens as TokenItemEntity[],
+          );
+          syncTokenRuntimeStoresFromTokenListMap(
+            localTokenMap,
+            lowerAddresses,
+            'hydrate',
+            {
+              markTokenListMapSynced: true,
+            },
+          );
+          set(() => ({ tokenListMap: localTokenMap }));
+          trace.mark('stale-local-store-published', {
+            itemCount: localTokens.length,
+          });
+        }
+      } else {
+        trace.mark('memory-snapshot-retained', {
+          hasMemorySnapshot,
+        });
+      }
+
+      await cacheTokensPromise;
+      trace.mark('cache-responses-completed', {
+        itemCount: Object.values(cacheTokenMap).reduce(
+          (count, tokens) => count + tokens.length,
+          0,
+        ),
+      });
+      if (!isCurrentRequest()) {
+        trace.finish({ path: 'stale-after-cache' });
         return;
       }
-    }
-    set(() => ({ isLoading: true }));
-    const cacheTokenQueue = new PQueue({
-      concurrency: 5,
-    });
-    const cacheTokenMap: Record<string, ITokenItem[]> = {};
-    lowerAddresses.forEach(address => {
-      cacheTokenQueue.add(async () => {
-        const list = await queryTokensCache(address);
-        cacheTokenMap[address.toLowerCase()] = filterInterfaceTokenList(
-          list.map(item => tokenItemToITokenItem(item, address)),
+
+      const latestTokenListMap = get().tokenListMap;
+      const mergedCacheTokenMap = { ...latestTokenListMap };
+      lowerAddresses.forEach(address => {
+        const previousTokens = latestTokenListMap[address] || [];
+        const cacheTokens = cacheTokenMap[address] || [];
+        mergedCacheTokenMap[address] = replacePreviousCoreTokensWithCacheTokens(
+          previousTokens,
+          cacheTokens,
         );
       });
-    });
-    await waitQueueFinished(cacheTokenQueue);
-    const currentTokenListMap = get().tokenListMap;
-    const mergedCacheTokenMap = { ...currentTokenListMap };
-    lowerAddresses.forEach(address => {
-      const normalizedAddress = address.toLowerCase();
-      const previousTokens = currentTokenListMap[normalizedAddress] || [];
-      const cacheTokens = cacheTokenMap[normalizedAddress] || [];
-      mergedCacheTokenMap[normalizedAddress] =
-        replacePreviousCoreTokensWithCacheTokens(previousTokens, cacheTokens);
-    });
-    syncTokenRuntimeStoresFromTokenListMap(
-      mergedCacheTokenMap,
-      lowerAddresses,
-      'remote',
-      {
-        markTokenListMapSynced: true,
-      },
-    );
-    set(() => ({ tokenListMap: mergedCacheTokenMap }));
-    const realTimeTokenMap: Record<string, ITokenItem[]> = {};
-    const realTimeTokenQueue = new PQueue({
-      concurrency: 15,
-    });
-    await Promise.allSettled(
-      lowerAddresses.map(async address => {
-        const chains = await openapi.usedChainList(address);
-        const chainIdList = chains.map(item => item.id);
-        const res = await Promise.allSettled(
-          chainIdList.map(
-            async serverId =>
-              await realTimeTokenQueue.add(async () => {
-                const chainTokensRes = await requestOpenApiWithChainId(
-                  ({ openapi }) => openapi.listToken(address, serverId, true),
-                  {
-                    isTestnet: false,
-                  },
-                );
-                const tokenList = filterInterfaceTokenList(
-                  chainTokensRes.map(item =>
-                    tokenItemToITokenItem(item, address),
-                  ),
-                );
-                return tokenList;
-              }),
-          ),
-        );
-        const results = res
-          .map(result => (result.status === 'fulfilled' ? result.value : []))
-          .flat() as ITokenItem[];
-        realTimeTokenMap[address.toLowerCase()] = results;
-      }),
-    );
-    syncTokenRuntimeStoresFromTokenListMap(
-      realTimeTokenMap,
-      lowerAddresses,
-      'remote',
-      {
-        markTokenListMapSynced: true,
-      },
-    );
-    set(() => ({ tokenListMap: realTimeTokenMap, isLoading: false }));
-    syncRemoteTokensForAddresses(realTimeTokenMap);
+      syncTokenRuntimeStoresFromTokenListMap(
+        mergedCacheTokenMap,
+        lowerAddresses,
+        'remote',
+        {
+          markTokenListMapSynced: true,
+        },
+      );
+      set(() => ({ tokenListMap: mergedCacheTokenMap }));
+      trace.mark('cache-store-published');
+
+      const realTimeTokenMap: Record<string, ITokenItem[]> = {};
+      const realTimeTokenQueue = new PQueue({
+        concurrency: 15,
+      });
+      await Promise.allSettled(
+        lowerAddresses.map(async address => {
+          const chains = await openapi.usedChainList(address);
+          const chainIdList = chains.map(item => item.id);
+          const res = await Promise.allSettled(
+            chainIdList.map(
+              async serverId =>
+                await realTimeTokenQueue.add(async () => {
+                  const chainTokensRes = await requestOpenApiWithChainId(
+                    ({ openapi }) => openapi.listToken(address, serverId, true),
+                    {
+                      isTestnet: false,
+                    },
+                  );
+                  return filterInterfaceTokenList(
+                    chainTokensRes.map(item =>
+                      tokenItemToITokenItem(item, address),
+                    ),
+                  );
+                }),
+            ),
+          );
+          realTimeTokenMap[address] = res
+            .map(result => (result.status === 'fulfilled' ? result.value : []))
+            .flat() as ITokenItem[];
+        }),
+      );
+
+      syncRemoteTokensForAddresses(realTimeTokenMap);
+      trace.mark('remote-responses-completed', {
+        itemCount: Object.values(realTimeTokenMap).reduce(
+          (count, tokens) => count + tokens.length,
+          0,
+        ),
+      });
+      if (!isCurrentRequest()) {
+        trace.finish({ path: 'stale-after-remote' });
+        return;
+      }
+
+      syncTokenRuntimeStoresFromTokenListMap(
+        realTimeTokenMap,
+        lowerAddresses,
+        'remote',
+        {
+          markTokenListMapSynced: true,
+        },
+      );
+      set(() => ({ tokenListMap: realTimeTokenMap, isLoading: false }));
+      trace.finish({ path: 'cache-then-remote' });
+    } catch (error) {
+      trace.fail({ phase: 'load' });
+      throw error;
+    } finally {
+      if (isCurrentRequest() && get().isLoading) {
+        set(() => ({ isLoading: false }));
+      }
+    }
   },
 
   async getTokenList(address: string, force = false, chainServerId?: string) {
