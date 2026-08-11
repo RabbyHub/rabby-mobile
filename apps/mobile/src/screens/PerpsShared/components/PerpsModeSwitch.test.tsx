@@ -1,5 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { PerpsModeSwitch } from './PerpsModeSwitch';
 
@@ -13,6 +14,13 @@ jest.mock('@/hooks/theme', () => ({
     styles: {
       activeText: {},
       container: {},
+      extendedContainer: { flex: 1, height: 26, minWidth: 0 },
+      extendedProTarget: {
+        alignItems: 'flex-start',
+        flex: 1,
+        height: '100%',
+        justifyContent: 'center',
+      },
       inactiveText: {},
     },
   }),
@@ -67,5 +75,32 @@ describe('PerpsModeSwitch', () => {
 
     fireEvent.press(screen.getByTestId('perps-mode-simple'));
     expect(onSelectMode).not.toHaveBeenCalled();
+  });
+
+  it('lets only the Pro target own the remaining Simple Header corridor', () => {
+    const screen = render(
+      <PerpsModeSwitch
+        activeMode="simple"
+        extendProHitAreaRight
+        onSelectMode={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('perps-mode-simple').props.style).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-mode-switch').props.style),
+    ).toMatchObject({
+      flex: 1,
+      height: 26,
+      minWidth: 0,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-mode-pro').props.style),
+    ).toMatchObject({
+      alignItems: 'flex-start',
+      flex: 1,
+      height: '100%',
+      justifyContent: 'center',
+    });
   });
 });

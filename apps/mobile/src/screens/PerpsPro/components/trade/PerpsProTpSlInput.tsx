@@ -2,12 +2,14 @@ import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.sv
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTpSlMode } from '../../model/tpsl';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
+
+const NEGATIVE_PREFIX_SLOT_WIDTH = 9;
 
 export const PerpsProTpSlInput: React.FC<{
   error?: string | null;
@@ -38,12 +40,29 @@ export const PerpsProTpSlInput: React.FC<{
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const [focused, setFocused] = useState(false);
+    const [measuredValue, setMeasuredValue] = useState({
+      text: '',
+      width: 0,
+    });
     const modeLabel = t(
       `page.perps.pro.trade.${mode === 'roi' ? 'roiInput' : mode}`,
     );
     const unitLabel = mode === 'roi' ? '%' : quoteAsset;
     const showNegativePrefix = kind === 'sl' && mode !== 'price' && !!value;
     const showFloatingLabel = focused || !!value;
+    const measuredValueWidth =
+      measuredValue.text === value ? measuredValue.width : 0;
+    const handleValueLayout = useCallback(
+      (event: LayoutChangeEvent) => {
+        const nextWidth = event.nativeEvent.layout.width;
+        setMeasuredValue(current =>
+          current.text === value && current.width === nextWidth
+            ? current
+            : { text: value, width: nextWidth },
+        );
+      },
+      [value],
+    );
     return (
       <View style={styles.container}>
         <Text style={styles.legLabel}>{label}</Text>
@@ -65,7 +84,36 @@ export const PerpsProTpSlInput: React.FC<{
               </Text>
             )}
             {showNegativePrefix ? (
-              <Text style={styles.negativePrefix}>−</Text>
+              <>
+                <Text
+                  accessible={false}
+                  numberOfLines={1}
+                  onLayout={handleValueLayout}
+                  pointerEvents="none"
+                  style={styles.valueMeasure}
+                  testID={`perps-pro-tpsl-${kind}-value-measure`}>
+                  {value}
+                </Text>
+                <Text
+                  pointerEvents="none"
+                  style={[
+                    styles.negativePrefix,
+                    measuredValueWidth > 0
+                      ? {
+                          transform: [
+                            {
+                              translateX:
+                                -measuredValueWidth / 2 -
+                                NEGATIVE_PREFIX_SLOT_WIDTH / 2,
+                            },
+                          ],
+                        }
+                      : styles.unmeasuredNegativePrefix,
+                  ]}
+                  testID={`perps-pro-tpsl-${kind}-negative-prefix`}>
+                  −
+                </Text>
+              </>
             ) : null}
             <PerpsProDecimalTextInput
               accessibilityLabel={label}
@@ -195,16 +243,29 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     textAlignVertical: 'center',
   },
-  inputWithNegativePrefix: { paddingLeft: 9 },
+  inputWithNegativePrefix: { paddingLeft: NEGATIVE_PREFIX_SLOT_WIDTH },
+  valueMeasure: {
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '500',
+    left: 0,
+    lineHeight: 18,
+    opacity: 0,
+    position: 'absolute',
+    top: 0,
+  },
   negativePrefix: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro',
     fontSize: 14,
-    left: 0,
+    fontWeight: '500',
+    includeFontPadding: false,
+    left: '50%',
     lineHeight: 18,
     position: 'absolute',
     top: 18,
   },
+  unmeasuredNegativePrefix: { opacity: 0 },
   mode: {
     borderLeftColor: colors2024['neutral-line'],
     borderLeftWidth: 1,

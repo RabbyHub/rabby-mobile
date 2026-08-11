@@ -87,6 +87,9 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.trade.market': 'Market',
         'page.perps.pro.trade.marketDescription': 'Market description',
         'page.perps.pro.trade.orderType': 'Order Type',
+        'page.perps.pro.trade.gtcDescription': 'Good Till Cancel',
+        'page.perps.pro.trade.iocDescription': 'Immediate or Cancel',
+        'page.perps.pro.trade.aloDescription': 'Add Liquidity Only',
         'page.perps.pro.trade.pnl': 'PnL',
         'page.perps.pro.trade.price': 'Price',
         'page.perps.pro.trade.roi': 'ROI%',
@@ -97,6 +100,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.trade.tpSlRoiDescription':
           'Set TP/SL prices based on estimated ROI%',
         'page.perps.pro.trade.tpSlSettings': 'TP/SL Settings',
+        'page.perps.pro.trade.timeInForce': 'Time in Force',
       }[key] ?? key),
   }),
 }));
@@ -104,6 +108,7 @@ jest.mock('react-i18next', () => ({
 import { PerpsProBboSheet } from './PerpsProBboSheet';
 import { PerpsProMarginModeSheet } from './PerpsProMarginModeSheet';
 import { PerpsProOrderTypeSheet } from './PerpsProOrderTypeSheet';
+import { PerpsProTifSheet } from './PerpsProTifSheet';
 import { PerpsProTpSlModeSheet } from './PerpsProTpSlModeSheet';
 
 describe('Perps Pro trade selection sheets', () => {
@@ -265,5 +270,51 @@ describe('Perps Pro trade selection sheets', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-tpsl-mode-roi'));
     expect(onSelect).toHaveBeenCalledWith('roi');
+  });
+
+  it('matches the 304px Time in Force card contract', () => {
+    const onClose = jest.fn();
+    const onSelect = jest.fn();
+    render(
+      <PerpsProTifSheet
+        onClose={onClose}
+        onSelect={onSelect}
+        selected="Gtc"
+        visible
+      />,
+    );
+
+    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
+      304,
+    ]);
+    expect(
+      StyleSheet.flatten(screen.getByText('Time in Force').props.style),
+    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-pro-tif-gtc').props.style),
+    ).toMatchObject({
+      backgroundColor: '#192945',
+      borderColor: '#192945',
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    });
+    expect(screen.getByText('Good Till Cancel')).toBeTruthy();
+    expect(screen.getByText('Immediate or Cancel')).toBeTruthy();
+    expect(screen.getByText('Add Liquidity Only')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-tif-selected').props).toMatchObject({
+      color: '#58C669',
+      height: 26,
+      width: 26,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
+      ),
+    ).toMatchObject({ height: 4, width: 40 });
+
+    fireEvent.press(screen.getByTestId('perps-pro-tif-alo'));
+    expect(onSelect).toHaveBeenCalledWith('Alo');
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -25,7 +25,8 @@ export const PerpsProTradeBboField: React.FC<{
         style={styles.strategy}>
         <Text
           numberOfLines={1}
-          style={[styles.strategyText, strategyFontStyle]}>
+          style={[styles.strategyText, strategyFontStyle]}
+          testID="perps-pro-trade-bbo-strategy-label">
           {strategyLabel}
         </Text>
         <RcPrecisionCaret
@@ -65,19 +66,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     flexDirection: 'row',
     gap: 4,
-    justifyContent: 'center',
     minWidth: 0,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   strategyText: {
     color: colors2024['neutral-title-1'],
-    flexShrink: 1,
+    flex: 1,
     fontSize: 14,
     lineHeight: 18,
+    minWidth: 0,
     textAlign: 'center',
   },
   caret: {
+    flexShrink: 0,
     transform: [{ rotate: '180deg' }],
   },
   bbo: {

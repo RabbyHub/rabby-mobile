@@ -176,11 +176,16 @@ describe('PerpsProPositionCard', () => {
     expect(screen.getByText('-23.81%(-25.00)').props).toMatchObject({
       numberOfLines: 1,
     });
-    expect(screen.getByText('-23.81%(-25.00)').props.style).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ position: 'absolute', right: 0 }),
-      ]),
-    );
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
+        .style,
+    ).toMatchObject({
+      alignItems: 'flex-end',
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+    });
     expect(screen.getByText('TP/SL (3)')).toBeTruthy();
     expect(screen.getByText('120.00, 130.00')).toBeTruthy();
     expect(screen.getByText('90.00')).toBeTruthy();
@@ -194,6 +199,24 @@ describe('PerpsProPositionCard', () => {
     expect(
       screen.getByRole('button', { name: 'Leverage' }).props.accessibilityState,
     ).toEqual({ disabled: true });
+  });
+
+  it('gives a long Cross Liq. Distance the full metric row width', () => {
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({
+          liquidationPrice: '123456.78',
+          marginMode: 'cross',
+        })}
+      />,
+    );
+
+    expect(screen.getByText('+117477.89%(+123,351.78)')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
+        .style,
+    ).toMatchObject({ left: 0, right: 0 });
   });
 
   it('shows the current maintenance risk ratio for Isolated', () => {

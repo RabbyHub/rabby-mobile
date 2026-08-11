@@ -230,16 +230,21 @@ export const PerpsProPositionCard: React.FC<{
                 style={styles.label}>
                 {t('page.perps.pro.positions.liquidationDistance')}
               </PerpsProDottedUnderlineText>
-              <View style={styles.liquidationDistanceValueSlot}>
-                <Text
-                  numberOfLines={1}
-                  style={[styles.value, styles.liquidationDistanceValue]}>
-                  {displayLiquidationDistance}
-                </Text>
-              </View>
             </>
           )}
         </View>
+        {position.marginMode === 'cross' ? (
+          <View
+            pointerEvents="none"
+            style={styles.liquidationDistanceValueOverlay}
+            testID={`perps-pro-position-liquidation-distance-${position.key}`}>
+            <Text
+              numberOfLines={1}
+              style={[styles.value, styles.liquidationDistanceValue]}>
+              {displayLiquidationDistance}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.threeColumns}>
@@ -485,6 +490,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   threeColumns: {
     flexDirection: 'row',
     gap: 8,
+    position: 'relative',
   },
   firstColumn: {
     flexBasis: 0,
@@ -521,18 +527,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
     marginTop: 2,
   },
-  liquidationDistanceValueSlot: {
-    alignSelf: 'stretch',
-    height: 18,
-    marginTop: 2,
-    overflow: 'visible',
-    position: 'relative',
+  liquidationDistanceValueOverlay: {
+    alignItems: 'flex-end',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
   },
   liquidationDistanceValue: {
     marginTop: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
   },
   tpslRow: {
     alignItems: 'center',

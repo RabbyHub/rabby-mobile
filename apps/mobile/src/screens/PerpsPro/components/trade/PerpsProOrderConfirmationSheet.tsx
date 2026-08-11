@@ -135,7 +135,9 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
               </View>
             </View>
 
-            <View style={styles.details}>
+            <View
+              style={styles.details}
+              testID="perps-pro-order-confirmation-details">
               {isConditional ? (
                 <DetailRow
                   label={t('page.perps.pro.trade.triggerPrice')}
@@ -177,6 +179,14 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                       ).toFixed(2)}%)`
                     : '-'
                 }
+              />
+              <DetailRow
+                label={t('page.perps.pro.trade.confirmationReduceOnly')}
+                value={t(
+                  parent.reduceOnly
+                    ? 'page.perps.pro.trade.yes'
+                    : 'page.perps.pro.trade.no',
+                )}
               />
             </View>
 

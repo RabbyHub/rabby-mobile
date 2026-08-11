@@ -249,6 +249,38 @@ describe('PerpsProTpSlFields', () => {
     expect(tpSl.setMode).toHaveBeenCalledWith('sl', 'roi');
   });
 
+  it('centers the SL negative prefix together with the measured input value', () => {
+    render(
+      <PerpsProTpSlFields
+        controller={controller()}
+        draft={draft}
+        pxDecimals={2}
+        quoteAsset="USDC"
+      />,
+    );
+
+    fireEvent(screen.getByTestId('perps-pro-tpsl-sl-value-measure'), 'layout', {
+      nativeEvent: { layout: { width: 28 } },
+    });
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-tpsl-sl-negative-prefix').props.style,
+      ),
+    ).toMatchObject({
+      fontWeight: '500',
+      left: '50%',
+      lineHeight: 18,
+      top: 18,
+      transform: [{ translateX: -18.5 }],
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-tpsl-sl-input').props.style,
+      ),
+    ).toMatchObject({ paddingLeft: 9, textAlign: 'center' });
+  });
+
   it('shows a live dual-direction tooltip only for the focused valid leg', () => {
     const view = render(
       <PerpsProTpSlFields

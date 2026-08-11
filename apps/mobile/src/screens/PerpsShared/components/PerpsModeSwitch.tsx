@@ -8,6 +8,7 @@ import { Pressable, View } from 'react-native';
 export type PerpsModeSwitchProps = {
   activeMode: PerpsViewMode;
   disabled?: boolean;
+  extendProHitAreaRight?: boolean;
   onSelectMode: (viewMode: PerpsViewMode) => void;
 };
 
@@ -22,12 +23,18 @@ const MODE_OPTIONS: ReadonlyArray<{
 export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
   activeMode,
   disabled = false,
+  extendProHitAreaRight = false,
   onSelectMode,
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        extendProHitAreaRight ? styles.extendedContainer : null,
+      ]}
+      testID="perps-mode-switch">
       {MODE_OPTIONS.map(option => {
         const selected = option.value === activeMode;
         const optionDisabled = disabled || selected;
@@ -42,6 +49,11 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
             }}
             disabled={optionDisabled}
             onPress={() => onSelectMode(option.value)}
+            style={
+              option.value === 'pro' && extendProHitAreaRight
+                ? styles.extendedProTarget
+                : undefined
+            }
             testID={`perps-mode-${option.value}`}>
             <Text style={selected ? styles.activeText : styles.inactiveText}>
               {option.label}
@@ -58,6 +70,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  extendedContainer: {
+    flex: 1,
+    height: 26,
+    minWidth: 0,
+  },
+  extendedProTarget: {
+    alignItems: 'flex-start',
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
   },
   activeText: {
     fontFamily: 'SF Pro Rounded',

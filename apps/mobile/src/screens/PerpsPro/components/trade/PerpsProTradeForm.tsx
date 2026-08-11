@@ -19,8 +19,8 @@ import { PerpsProOrderTypeSheet } from './PerpsProOrderTypeSheet';
 import { PerpsProTradeAmountField } from './PerpsProTradeAmountField';
 import { PerpsProTradeAmountSlider } from './PerpsProTradeAmountSlider';
 import { PerpsProTradeBboField } from './PerpsProTradeBboField';
-import { PerpsProTradeOptionSheet } from './PerpsProTradeOptionSheet';
 import { PerpsProTradePriceField } from './PerpsProTradePriceField';
+import { PerpsProTifSheet } from './PerpsProTifSheet';
 import { PerpsProTpSlFields } from './PerpsProTpSlFields';
 import {
   PerpsProTradeButton,
@@ -330,28 +330,10 @@ export const PerpsProTradeForm: React.FC<{
         selected={controller.marginMode}
         visible={sheet === 'margin'}
       />
-      <PerpsProTradeOptionSheet<PerpsProTradeTif>
+      <PerpsProTifSheet
         onClose={() => setSheet(null)}
         onSelect={controller.setTif}
-        options={[
-          {
-            description: t('page.perps.pro.trade.gtcDescription'),
-            label: 'GTC',
-            value: 'Gtc',
-          },
-          {
-            description: t('page.perps.pro.trade.iocDescription'),
-            label: 'IOC',
-            value: 'Ioc',
-          },
-          {
-            description: t('page.perps.pro.trade.aloDescription'),
-            label: 'ALO',
-            value: 'Alo',
-          },
-        ]}
         selected={form.tif}
-        title={t('page.perps.pro.trade.timeInForce')}
         visible={sheet === 'tif'}
       />
       <PerpsProBboSheet

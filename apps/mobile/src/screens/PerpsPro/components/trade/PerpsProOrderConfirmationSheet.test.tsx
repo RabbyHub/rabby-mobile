@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text as NativeText } from 'react-native';
 
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
@@ -98,12 +98,15 @@ jest.mock('react-i18next', () => ({
     t: (key: string) =>
       ({
         'page.perps.pro.trade.buy': 'Buy',
+        'page.perps.pro.trade.confirmationReduceOnly': 'reduce only',
         'page.perps.pro.trade.long': 'Long',
         'page.perps.pro.trade.markPrice': 'Mark Price',
         'page.perps.pro.trade.market': 'Market',
         'page.perps.pro.trade.marketPrice': 'Market Price',
+        'page.perps.pro.trade.no': 'No',
         'page.perps.pro.trade.sell': 'Sell',
         'page.perps.pro.trade.short': 'Short',
+        'page.perps.pro.trade.yes': 'Yes',
       }[key] ??
       key.split('.').pop() ??
       key),
@@ -236,6 +239,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(screen.getByText('Isolated 10x')).toBeTruthy();
     expect(screen.getByText('Buy')).toBeTruthy();
     expect(screen.getByText('Long')).toBeTruthy();
+    expect(screen.getByText('No')).toBeTruthy();
     expect(screen.getByText('105.00 USDC')).toBeTruthy();
     expect(screen.getByText('55.00 USDC (-40.00%)')).toBeTruthy();
     expect(screen.getByText('Mark Price ≥ 110.00 USDC')).toBeTruthy();
@@ -276,6 +280,30 @@ describe('PerpsProOrderConfirmationSheet', () => {
 
     fireEvent.press(screen.getByRole('checkbox'));
     expect(onToggleSkip).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the reviewed Reduce Only value', () => {
+    renderSheet({ ...parent, reduceOnly: true });
+
+    expect(screen.getByText('reduce only')).toBeTruthy();
+    expect(screen.getByText('Yes')).toBeTruthy();
+
+    const detailTexts = screen
+      .getByTestId('perps-pro-order-confirmation-details')
+      .findAllByType(NativeText)
+      .map(node => node.props.children);
+    expect(detailTexts).toEqual([
+      'price',
+      '100.00 USDC',
+      'amount',
+      '100.00 USDC',
+      'Mark Price',
+      '105.00 USDC',
+      'estimatedLiquidationPrice',
+      '55.00 USDC (-40.00%)',
+      'reduce only',
+      'Yes',
+    ]);
   });
 
   it('renders Conditional Trigger Price and fixed Limit Price without Order Type', () => {

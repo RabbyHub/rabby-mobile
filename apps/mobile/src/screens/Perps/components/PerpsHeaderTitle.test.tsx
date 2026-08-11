@@ -1,5 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { PerpsNativeHeader } from './PerpsHeaderTitle';
 
@@ -50,9 +51,9 @@ jest.mock('@/hooks/theme', () => ({
       accountSelector: {},
       accountSelectorContainer: {},
       headerInner: {},
-      headerLeft: {},
+      headerLeft: { flex: 1, minWidth: 0 },
       headerOuter: {},
-      headerRight: {},
+      headerRight: { flexShrink: 0 },
       reverseCaret: {},
     },
   }),
@@ -78,16 +79,19 @@ jest.mock('../../PerpsShared/components/PerpsModeSwitch', () => {
     PerpsModeSwitch: ({
       activeMode,
       disabled,
+      extendProHitAreaRight,
       onSelectMode,
     }: {
       activeMode: 'simple' | 'pro';
       disabled?: boolean;
+      extendProHitAreaRight?: boolean;
       onSelectMode: (mode: 'simple' | 'pro') => void;
     }) =>
       ReactModule.createElement(Pressable, {
         accessibilityLabel: activeMode,
         accessibilityState: { disabled },
         disabled,
+        extendProHitAreaRight,
         onPress: () => onSelectMode('pro'),
         testID: 'mode-switch',
       }),
@@ -123,6 +127,19 @@ describe('PerpsNativeHeader', () => {
     expect(header.getByTestId('mode-switch').props.accessibilityLabel).toBe(
       'simple',
     );
+    expect(header.getByTestId('mode-switch').props.extendProHitAreaRight).toBe(
+      true,
+    );
+    expect(
+      StyleSheet.flatten(
+        header.getByTestId('perps-simple-header-left').props.style,
+      ),
+    ).toMatchObject({ flex: 1, minWidth: 0 });
+    expect(
+      StyleSheet.flatten(
+        header.getByTestId('perps-simple-header-right').props.style,
+      ),
+    ).toMatchObject({ flexShrink: 0 });
 
     fireEvent.press(header.getByTestId('mode-switch'));
     expect(onSwitchToPro).toHaveBeenCalledTimes(1);

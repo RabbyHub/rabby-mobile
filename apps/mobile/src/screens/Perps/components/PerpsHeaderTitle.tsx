@@ -39,12 +39,13 @@ const PerpsHeaderContent: React.FC<{
     <View style={[styles.headerOuter, { marginTop: top }]}>
       <View style={styles.headerInner}>
         {/* Left: back + icon + title */}
-        <View style={styles.headerLeft}>
+        <View style={styles.headerLeft} testID="perps-simple-header-left">
           <HeaderBackPressable />
           <RcIconHyper />
           <PerpsModeSwitch
             activeMode="simple"
             disabled={isModeSwitching}
+            extendProHitAreaRight
             onSelectMode={viewMode => {
               if (viewMode === 'pro') {
                 onSwitchToPro();
@@ -54,7 +55,7 @@ const PerpsHeaderContent: React.FC<{
         </View>
 
         {/* Right: account selector */}
-        <View style={styles.headerRight}>
+        <View style={styles.headerRight} testID="perps-simple-header-right">
           {account ? (
             <View style={styles.accountSelectorContainer}>
               <PerpsAccountTrigger
@@ -114,23 +115,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: 8,
   },
   headerLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    minWidth: 0,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flexShrink: 0,
     justifyContent: 'flex-end',
     gap: 12,
   },
   accountSelectorContainer: {
     alignItems: 'flex-end',
-    flex: 1,
     justifyContent: 'flex-end',
   },
 }));

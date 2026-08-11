@@ -84,12 +84,12 @@ jest.mock('../positions/PerpsProLeverageSheet', () => ({
   PerpsProLeverageSheet: () => null,
 }));
 
-jest.mock('./PerpsProTradeOptionSheet', () => ({
-  PerpsProTradeOptionSheet: () => null,
-}));
-
 jest.mock('./PerpsProBboSheet', () => ({
   PerpsProBboSheet: () => null,
+}));
+
+jest.mock('./PerpsProTifSheet', () => ({
+  PerpsProTifSheet: () => null,
 }));
 
 jest.mock('./PerpsProMarginModeSheet', () => ({
@@ -257,7 +257,15 @@ describe('PerpsProTradeForm order matrix', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-bbo-caret').props.style,
       ),
-    ).toMatchObject({ transform: [{ rotate: '180deg' }] });
+    ).toMatchObject({
+      flexShrink: 0,
+      transform: [{ rotate: '180deg' }],
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-bbo-strategy-label').props.style,
+      ),
+    ).toMatchObject({ flex: 1, minWidth: 0, textAlign: 'center' });
     expect(screen.getByTestId('perps-pro-trade-bbo-caret').props).toMatchObject(
       { height: 6, width: 8 },
     );
