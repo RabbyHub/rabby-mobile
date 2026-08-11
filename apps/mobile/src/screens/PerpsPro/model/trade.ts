@@ -34,10 +34,10 @@ export interface PerpsProResolvedTradeAmount {
 }
 
 export type PerpsProReduceOnlyAvailability = {
-  buyDisabled: boolean;
+  buyUnavailable: boolean;
   checkboxDisabled: boolean;
   hasPosition: boolean;
-  sellDisabled: boolean;
+  sellUnavailable: boolean;
 };
 
 export type PerpsProConditionalClassification = 'sl' | 'tp';
@@ -66,10 +66,10 @@ export const getPerpsProReduceOnlyAvailability = ({
     isUserDataReady && hasPosition && !!position?.isPositive();
 
   return {
-    buyDisabled: reduceOnly && !canBuyToReduce,
+    buyUnavailable: reduceOnly && !canBuyToReduce,
     checkboxDisabled: !isUserDataReady || !hasPosition,
     hasPosition,
-    sellDisabled: reduceOnly && !canSellToReduce,
+    sellUnavailable: reduceOnly && !canSellToReduce,
   };
 };
 

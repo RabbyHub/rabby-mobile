@@ -10,16 +10,32 @@ const mockPerpsState = {
     assetPositions: [],
     crossMaintenanceMarginUsed: '0',
     crossMarginSummary: { accountValue: '1000' },
+    perDexSummaries: {
+      '': {
+        crossAccountValue: '1000',
+        crossMaintenanceMarginUsed: '0',
+      },
+    },
   },
   currentPerpsAccount: mockAccount,
   isUserDataReady: true,
   openOrders: [],
+  spotState: {
+    tokenToAvailableAfterMaintenance: null as [number, string][] | null,
+  },
+  userAbstraction: 'default',
+  userAbstractionReady: true,
 };
-const mockGetSkipConfirmation = jest.fn(async () => true);
+const mockGetSkipConfirmation = jest.fn(async () => false);
 const mockSetSkipConfirmation = jest.fn(async () => undefined);
-const mockEnsureApproval = jest.fn(async () => undefined);
+const mockEnsureApproval = jest.fn(async (_account?: unknown) => undefined);
+const mockBuildUpdateLeverage = jest.fn((params: unknown) => params);
+const mockExecuteUpdateLeverage = jest.fn(async (_command?: unknown) => ({
+  kind: 'success' as const,
+}));
 const mockGetPerpsSdk = jest.fn();
 const mockShowToast = jest.fn();
+const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
 const mockExecuteAttached = jest.fn(async () => ({
   kind: 'fullAccepted' as const,
   reconciliationErrors: [],
@@ -27,13 +43,15 @@ const mockExecuteAttached = jest.fn(async () => ({
 }));
 
 jest.mock('@/core/apis/perps', () => ({
-  apisPerps: { getPerpsSDK: mockGetPerpsSdk },
+  apisPerps: { getPerpsSDK: (...args: unknown[]) => mockGetPerpsSdk(...args) },
 }));
 
 jest.mock('@/core/serviceApi/perps', () => ({
   perpsServiceApi: {
-    getSkipPerpsProTradeConfirmation: mockGetSkipConfirmation,
-    setSkipPerpsProTradeConfirmation: mockSetSkipConfirmation,
+    getSkipPerpsProTradeConfirmation: (...args: unknown[]) =>
+      mockGetSkipConfirmation(args[0]),
+    setSkipPerpsProTradeConfirmation: (...args: unknown[]) =>
+      mockSetSkipConfirmation(args[0], args[1]),
   },
 }));
 
@@ -42,12 +60,15 @@ jest.mock('@/hooks/perps/actions/actionError', () => ({
 }));
 
 jest.mock('@/hooks/perps/actions/perpsActionApproval', () => ({
-  ensurePerpsActionApproval: mockEnsureApproval,
+  ensurePerpsActionApproval: (...args: unknown[]) =>
+    mockEnsureApproval(args[0]),
 }));
 
 jest.mock('@/hooks/perps/actions/updateLeverage', () => ({
-  buildPerpsUpdateLeverageCommand: jest.fn(),
-  executePerpsUpdateLeverage: jest.fn(),
+  buildPerpsUpdateLeverageCommand: (...args: unknown[]) =>
+    mockBuildUpdateLeverage(args[0]),
+  executePerpsUpdateLeverage: (...args: unknown[]) =>
+    mockExecuteUpdateLeverage(args[0]),
 }));
 
 jest.mock('@/hooks/perps/showToast', () => ({
@@ -86,11 +107,7 @@ jest.mock('@/hooks/perps/runtime/perpsRuntimeState', () => ({
 }));
 
 jest.mock('@/utils/perps', () => ({
-  calLiquidationPrice: () => 50,
-  isPerpsMarketIsolatedOnly: ({ marginMode, onlyIsolated }: any) =>
-    marginMode === 'noCross' ||
-    marginMode === 'strictIsolated' ||
-    (!marginMode && !!onlyIsolated),
+  calLiquidationPrice: (...args: unknown[]) => mockCalLiquidationPrice(...args),
   normalizePerpsMarketMarginMode: (
     marginMode: unknown,
     onlyIsolated: boolean,
@@ -164,6 +181,20 @@ const activeAssetData = {
 describe('usePerpsProTrade attached TP/SL execution integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetSkipConfirmation.mockResolvedValue(false);
+    mockPerpsState.currentClearinghouseState.assetPositions.length = 0;
+    mockPerpsState.openOrders.length = 0;
+    mockPerpsState.spotState.tokenToAvailableAfterMaintenance = null;
+    mockPerpsState.userAbstraction = 'default';
+    mockPerpsState.userAbstractionReady = true;
+    mockGetPerpsSdk.mockReturnValue({
+      exchange: {
+        marketOrderOpen: jest.fn(async () => ({
+          response: { data: { statuses: [{ filled: { oid: 1 } }] } },
+          status: 'ok',
+        })),
+      },
+    });
     mockPerpsState.isUserDataReady = true;
   });
 
@@ -198,6 +229,80 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       hook.result.current.selectManualLimitPrice('99', market.marketKey),
     );
     expect(hook.result.current.form.limitPrice).toBe('101.23');
+  });
+
+  it('restores Amount and Slider independently for each order type', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setPercentage(100));
+    expect(hook.result.current.form.amount).toBe('100%');
+    expect(hook.result.current.percentage).toBe(100);
+
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.form.amount).toBe('');
+    expect(hook.result.current.percentage).toBe(0);
+
+    act(() => hook.result.current.setAmount('25'));
+    act(() => hook.result.current.patchForm({ bboEnabled: true }));
+    expect(hook.result.current.tpSl.disabled).toBe(true);
+
+    act(() => hook.result.current.setOrderType('market'));
+    expect(hook.result.current.form.amount).toBe('100%');
+    expect(hook.result.current.percentage).toBe(100);
+    expect(hook.result.current.tpSl.disabled).toBe(false);
+
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.form.amount).toBe('25');
+    expect(hook.result.current.percentage).toBe(0);
+    expect(hook.result.current.form.bboEnabled).toBe(true);
+    expect(hook.result.current.tpSl.disabled).toBe(true);
+  });
+
+  it('shows the Reduce Only direction error before generic Amount or Max errors', async () => {
+    mockPerpsState.currentClearinghouseState.assetPositions.push({
+      position: {
+        coin: 'BTC',
+        leverage: { type: 'isolated', value: 10 },
+        szi: '1',
+      },
+    } as never);
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.patchForm({ reduceOnly: true }));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.reduceOnlyUnavailable',
+      'error',
+    );
+    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+    expect(hook.result.current.review).toBeNull();
   });
 
   it('resets Reduce Only only after ready confirms no current position', () => {
@@ -270,6 +375,73 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.form.amount).toBe('200');
   });
 
+  it('atomically clears Slider percentage and Amount when switching units', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: {
+          asks1: '101',
+          asks5: null,
+          bids1: '99',
+          bids5: null,
+        },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setPercentage(50));
+    expect(hook.result.current.percentage).toBe(50);
+    expect(hook.result.current.form.amount).toBe('50%');
+
+    act(() => hook.result.current.toggleAmountUnit());
+    expect(hook.result.current.form.amountUnit).toBe('base');
+    expect(hook.result.current.percentage).toBe(0);
+    expect(hook.result.current.form.amount).toBe('');
+    expect(hook.result.current.resolvedAmount).toBeNull();
+  });
+
+  it('atomically exits Slider source when manual Amount entry begins', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: {
+          asks1: '101',
+          asks5: null,
+          bids1: '99',
+          bids5: null,
+        },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setPercentage(30));
+    expect(hook.result.current.form.amount).toBe('30%');
+
+    act(() => hook.result.current.beginAmountEntry());
+    expect(hook.result.current.percentage).toBe(0);
+    expect(hook.result.current.form.amount).toBe('');
+    expect(hook.result.current.resolvedAmount).toBeNull();
+    expect(hook.result.current.showAmountConversion).toBe(false);
+
+    act(() => hook.result.current.setAmount('12'));
+    act(() => hook.result.current.beginAmountEntry());
+    expect(hook.result.current.form.amount).toBe('12');
+  });
+
   it('freezes direction-specific L2 facts and delegates to the real execution boundary', async () => {
     const refreshActiveAssetData = jest.fn(async () => undefined);
     const hook = renderHook(() =>
@@ -311,7 +483,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       parent: { baseSize: '1', quoteAmount: '101', side: 'buy' },
       type: 'openOrderWithAttachedTpSl',
     });
-    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+    expect(mockGetSkipConfirmation).toHaveBeenCalledWith('market');
 
     await act(async () => hook.result.current.confirmReview());
     expect(hook.result.current.review).toBeNull();
@@ -332,6 +504,272 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       sl: { mode: 'price', rawMagnitude: '' },
       tp: { mode: 'price', rawMagnitude: '' },
     });
+  });
+
+  it('reports direction-specific TP validation through the field and toast', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('101'));
+    act(() => hook.result.current.tpSl.setRawMagnitude('tp', '90'));
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(hook.result.current.tpSl.submitErrors).toContainEqual({
+      code: 'invalidDirection',
+      leg: 'tp',
+    });
+    expect(hook.result.current.tpSl.submitContext).toEqual({
+      liquidationPrice: '50.00',
+      side: 'buy',
+    });
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.tpSlError.tpTriggerMoreThanOrderPrice',
+      'error',
+    );
+  });
+
+  it('reports a Long stop below liquidation with the Desktop-aligned toast', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('101'));
+    act(() => hook.result.current.tpSl.setRawMagnitude('sl', '40'));
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(hook.result.current.tpSl.submitErrors).toContainEqual({
+      code: 'outsideLiquidationRange',
+      leg: 'sl',
+    });
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.tpSlError.priceBelowLiquidation',
+      'error',
+    );
+  });
+
+  it('submits attached TP/SL Limit directly when Limit confirmation is disabled', async () => {
+    mockGetSkipConfirmation.mockResolvedValueOnce(true);
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('50'));
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setPrice('limitPrice', '100'));
+    act(() => hook.result.current.setAmount('100'));
+    act(() => hook.result.current.tpSl.setRawMagnitude('tp', '110'));
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(mockGetSkipConfirmation).toHaveBeenCalledWith('limit');
+    expect(mockExecuteAttached).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.review).toBeNull();
+    expect(mockSetSkipConfirmation).not.toHaveBeenCalled();
+    act(() => hook.result.current.setOrderType('market'));
+    expect(hook.result.current.form.amount).toBe('');
+  });
+
+  it('hides Slider conversion and resets Amount plus Slider on market change', () => {
+    const hook = renderHook(
+      ({ currentMarket }: { currentMarket: PerpsProMarket }) =>
+        usePerpsProTrade({
+          activeAssetData,
+          bboBook: book,
+          bboPrices: {
+            asks1: '101',
+            asks5: null,
+            bids1: '99',
+            bids5: null,
+          },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market: currentMarket,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      { initialProps: { currentMarket: market } },
+    );
+
+    act(() => hook.result.current.setAmount('100'));
+    expect(hook.result.current.showAmountConversion).toBe(true);
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setAmount('25'));
+    act(() => hook.result.current.setOrderType('market'));
+    expect(hook.result.current.form.amount).toBe('100');
+    act(() => hook.result.current.setPercentage(50));
+    expect(hook.result.current.percentage).toBe(50);
+    expect(hook.result.current.form.amount).toBe('50%');
+    expect(hook.result.current.showAmountConversion).toBe(false);
+
+    hook.rerender({
+      currentMarket: {
+        ...market,
+        canonicalCoin: 'ETH',
+        displayBase: 'ETH',
+        displayPair: 'ETHUSDC',
+        marketKey: 'hyperliquid::ETH',
+      },
+    });
+
+    expect(hook.result.current.percentage).toBe(0);
+    expect(hook.result.current.form.amount).toBe('');
+    expect(hook.result.current.resolvedAmount).toBeNull();
+    expect(hook.result.current.showAmountConversion).toBe(false);
+
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.form.amount).toBe('');
+    expect(hook.result.current.percentage).toBe(0);
+  });
+
+  it('rejects a Conditional review when the latest Mid changes classification', async () => {
+    const hook = renderHook(
+      ({ currentMarket }: { currentMarket: PerpsProMarket }) =>
+        usePerpsProTrade({
+          activeAssetData,
+          bboBook: book,
+          bboPrices: {
+            asks1: '101',
+            asks5: null,
+            bids1: '99',
+            bids5: null,
+          },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market: currentMarket,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      { initialProps: { currentMarket: market } },
+    );
+
+    act(() => hook.result.current.setOrderType('conditional'));
+    act(() => hook.result.current.setAmount('100'));
+    act(() => hook.result.current.setPrice('triggerPrice', '110'));
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review).toMatchObject({
+      execution: { kind: 'conditionalMarket', tpsl: 'sl' },
+    });
+
+    hook.rerender({
+      currentMarket: {
+        ...market,
+        marketData: { ...market.marketData, midPx: '120' },
+      },
+    });
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.contextChanged',
+      'error',
+    );
+    expect(mockGetPerpsSdk).not.toHaveBeenCalled();
+    expect(hook.result.current.review).toBeNull();
+  });
+
+  it('does not use Mark Price as a Conditional classification fallback', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market: {
+          ...market,
+          marketData: { ...market.marketData, midPx: '' },
+        },
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('conditional'));
+    act(() => hook.result.current.setAmount('100'));
+    act(() => hook.result.current.setPrice('triggerPrice', '110'));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(hook.result.current.review).toBeNull();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.contextChanged',
+      'error',
+    );
+  });
+
+  it('executes ordinary Review with its frozen margin mode and leverage', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('100'));
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review).toMatchObject({
+      reviewFacts: {
+        generatedAt: expect.any(Number),
+        leverage: 20,
+        marginMode: 'isolated',
+        markPrice: '100',
+        midPrice: '100',
+      },
+    });
+    act(() => hook.result.current.setMarginMode('cross'));
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockBuildUpdateLeverage).toHaveBeenCalledWith(
+      expect.objectContaining({ isCross: false, leverage: 20 }),
+    );
   });
 
   it('fails an attached Market review when full L2 coverage is unavailable', async () => {
@@ -493,6 +931,82 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(fallback.result.current.leverage).toBe(20);
   });
 
+  it('never renders the prior market configuration under a new market scope', () => {
+    const frames: Array<{
+      coin: string | undefined;
+      leverage: number;
+      marginMode: 'cross' | 'isolated';
+    }> = [];
+    const suiMarket = {
+      ...market,
+      canonicalCoin: 'SUI',
+      displayBase: 'SUI',
+      displayPair: 'SUIUSDC',
+      marketData: { ...market.marketData, maxLeverage: 10 },
+      marketKey: 'hyperliquid::SUI',
+    };
+    const hook = renderHook(
+      ({
+        currentMarket,
+        zeroAddressLeverageBaseline,
+      }: {
+        currentMarket: PerpsProMarket;
+        zeroAddressLeverageBaseline: {
+          type: 'cross' | 'isolated';
+          value: number;
+        };
+      }) => {
+        const controller = usePerpsProTrade({
+          activeAssetData,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market: currentMarket,
+          zeroAddressLeverageBaseline,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        });
+        frames.push({
+          coin: controller.market?.canonicalCoin,
+          leverage: controller.leverage,
+          marginMode: controller.marginMode,
+        });
+        return controller;
+      },
+      {
+        initialProps: {
+          currentMarket: market,
+          zeroAddressLeverageBaseline: {
+            type: 'isolated' as const,
+            value: 7,
+          },
+        },
+      },
+    );
+
+    expect(hook.result.current.marginMode).toBe('isolated');
+    hook.rerender({
+      currentMarket: suiMarket,
+      zeroAddressLeverageBaseline: { type: 'cross', value: 10 },
+    });
+
+    expect(frames.filter(frame => frame.coin === 'SUI')).toEqual(
+      expect.arrayContaining([
+        { coin: 'SUI', leverage: 10, marginMode: 'cross' },
+      ]),
+    );
+    expect(
+      frames.some(
+        frame =>
+          frame.coin === 'SUI' &&
+          (frame.leverage !== 10 || frame.marginMode !== 'cross'),
+      ),
+    ).toBe(false);
+  });
+
   it('uses the existing position leverage before the zero-address baseline', () => {
     mockPerpsState.currentClearinghouseState.assetPositions.push({
       position: {
@@ -522,7 +1036,145 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     mockPerpsState.currentClearinghouseState.assetPositions.length = 0;
   });
 
-  it('shows live liquidation only for a valid non-reduce amount', () => {
+  it('shows an isolated-only reason instead of the exposure toast', () => {
+    const isolatedOnlyMarket = {
+      ...market,
+      canonicalCoin: 'xyz:KIOXIA',
+      marketData: {
+        ...market.marketData,
+        dexId: 'xyz',
+        marginMode: 'noCross' as const,
+        onlyIsolated: true,
+      },
+      marketKey: 'xyz::xyz:KIOXIA',
+    };
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: null,
+        bboBook: null,
+        bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
+        bboSessionKey: null,
+        bboStatus: 'idle',
+        executionActive: true,
+        leveragePending: false,
+        market: isolatedOnlyMarket,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    expect(hook.result.current.marginMode).toBe('isolated');
+    act(() => hook.result.current.setMarginMode('cross'));
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.onlyIsolatedMargin',
+      'error',
+    );
+    expect(hook.result.current.marginMode).toBe('isolated');
+  });
+
+  it('keeps the position/open-order toast for an existing exposure', () => {
+    mockPerpsState.currentClearinghouseState.assetPositions.push({
+      position: {
+        coin: 'BTC',
+        leverage: { type: 'cross', value: 10 },
+        szi: '1',
+      },
+    } as never);
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    expect(hook.result.current.marginMode).toBe('cross');
+    act(() => hook.result.current.setMarginMode('isolated'));
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.marginModeUnavailable',
+      'error',
+    );
+    expect(hook.result.current.marginMode).toBe('cross');
+  });
+
+  it('uses Unified available-after-maintenance for NVDA Cross risk', () => {
+    mockPerpsState.userAbstraction = 'unifiedAccount';
+    mockPerpsState.spotState.tokenToAvailableAfterMaintenance = [
+      [0, '35.08059422'],
+    ];
+    const nvdaMarket = {
+      ...market,
+      canonicalCoin: 'xyz:NVDA',
+      displayBase: 'NVDA',
+      displayPair: 'NVDAUSDC',
+      marketData: {
+        ...market.marketData,
+        dexId: 'xyz',
+        markPx: '223.88',
+        midPx: '223.88',
+        szDecimals: 3,
+      },
+      marketKey: 'xyz::xyz:NVDA',
+    };
+    const nvdaBook = {
+      ...book,
+      coin: 'xyz:NVDA',
+      levels: [
+        [{ n: 1, px: '223.87', sz: '10' }],
+        [{ n: 1, px: '223.89', sz: '10' }],
+      ],
+    } as L2Book;
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: {
+          ...activeAssetData,
+          availableToTrade: ['34.211138', '34.211138'],
+          coin: 'xyz:NVDA',
+          leverage: { type: 'cross', value: 20 },
+          markPx: '223.88',
+          maxTradeSzs: ['3.056', '3.056'],
+        },
+        bboBook: nvdaBook,
+        bboPrices: {
+          asks1: '223.89',
+          asks5: null,
+          bids1: '223.87',
+          bids5: null,
+        },
+        bboSessionKey: 'xyz:NVDA:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market: nvdaMarket,
+        zeroAddressLeverageBaseline: { type: 'cross', value: 20 },
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('conditional'));
+    act(() => hook.result.current.setPercentage(37));
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
+      '50.00',
+    );
+    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
+      223.88,
+      35.08059422,
+      'Long',
+      1.13,
+      252.9844,
+      20,
+    );
+  });
+
+  it('uses live Mark for Conditional Market liquidation before Trigger Price input', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -540,15 +1192,18 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
 
     expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBeNull();
-    act(() => hook.result.current.setAmount('100'));
+    act(() => hook.result.current.setOrderType('conditional'));
+    act(() => hook.result.current.setPercentage(50));
+    expect(hook.result.current.form.triggerPrice).toBe('');
+    expect(hook.result.current.form.amount).toBe('50%');
     expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
       '50.00',
     );
-    act(() => hook.result.current.setOrderType('conditional'));
-    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
-    act(() => hook.result.current.patchForm({ reduceOnly: true }));
-    expect(hook.result.current.form.reduceOnly).toBe(false);
-    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
+
+    act(() => hook.result.current.setPrice('triggerPrice', '110'));
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
+      '50.00',
+    );
   });
 
   it('does not carry an applied leverage override across accounts', async () => {

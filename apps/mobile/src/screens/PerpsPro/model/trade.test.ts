@@ -20,8 +20,8 @@ describe('Perps Pro trade model', () => {
       isUserDataReady,
       currentPositionSize,
       checkboxDisabled,
-      buyDisabled,
-      sellDisabled,
+      buyUnavailable,
+      sellUnavailable,
     ) => {
       expect(
         getPerpsProReduceOnlyAvailability({
@@ -29,7 +29,11 @@ describe('Perps Pro trade model', () => {
           isUserDataReady,
           reduceOnly: true,
         }),
-      ).toMatchObject({ buyDisabled, checkboxDisabled, sellDisabled });
+      ).toMatchObject({
+        buyUnavailable,
+        checkboxDisabled,
+        sellUnavailable,
+      });
     },
   );
 
@@ -40,7 +44,7 @@ describe('Perps Pro trade model', () => {
         isUserDataReady: true,
         reduceOnly: false,
       }),
-    ).toMatchObject({ buyDisabled: false, sellDisabled: false });
+    ).toMatchObject({ buyUnavailable: false, sellUnavailable: false });
   });
 
   it.each([

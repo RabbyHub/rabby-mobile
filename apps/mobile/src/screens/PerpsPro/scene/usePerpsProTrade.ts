@@ -16,7 +16,6 @@ import {
 } from '@/hooks/perps/usePerpsStore';
 import {
   calLiquidationPrice,
-  isPerpsMarketIsolatedOnly,
   normalizePerpsMarketMarginMode,
 } from '@/utils/perps';
 import * as Sentry from '@sentry/react-native';
@@ -40,16 +39,23 @@ import type { PerpsProBboPrices } from '../model/bbo';
 import { resolvePerpsProBboPrice } from '../model/bbo';
 import {
   resolvePerpsProInitialLeverage,
+  resolvePerpsProMarginModeDisabledReason,
   type PerpsProLeverageConfiguration,
 } from '../model/leverage';
 import { estimatePerpsProMarketFill } from '../model/marketFillEstimate';
 import type { PerpsProMarket } from '../model/market';
+import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import {
   createPerpsProTradeAmountDraft,
   getPerpsProTradeAmountDraftDisplay,
   repricePerpsProTradeAmountDraft,
   updatePerpsProTradeAmountDraft,
 } from '../model/tradeAmountDraft';
+import {
+  createPerpsProTradeOrderTypeAmountDrafts,
+  getPerpsProTradeOrderTypeAmountDisplay,
+  type PerpsProTradeAmountSource,
+} from '../model/tradeOrderTypeDraft';
 import {
   createPerpsProAttachedTpSlDraft,
   evaluatePerpsProAttachedTpSl,
@@ -61,9 +67,11 @@ import {
   getPerpsProAmountInputDecimals,
   getPerpsProReduceOnlyAvailability,
   getPerpsProTradeExecutionPrice,
+  inferPerpsProConditionalClassification,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
   type PerpsProConditionalExecution,
+  type PerpsProTradeAmountUnit,
   type PerpsProTradeOrderType,
   type PerpsProTradeSide,
   type PerpsProTradeTif,
@@ -75,6 +83,15 @@ import {
   resolvePerpsProTradeProjection,
 } from '../model/tradeProjection';
 import { resolvePerpsProProjectedTradeRisk } from '../model/tradeRisk';
+import {
+  getPerpsProCollateralToken,
+  resolvePerpsProCrossMarginAvailableAfterMaintenance,
+} from '../model/tradeRiskAccount';
+import { formatPerpsProPrice } from '../utils/format';
+import {
+  getPerpsProTpSlErrorText,
+  type PerpsProTpSlErrorContext,
+} from '../utils/tpSlError';
 import {
   clearPerpsProTpSlForMarketChange,
   usePerpsProTpSl,
@@ -89,9 +106,6 @@ const positive = (value: unknown) => {
   );
   return result.isFinite() && result.gt(0) ? result : null;
 };
-
-const tpSlErrorKey = ({ code }: PerpsProTpSlValidationError): string =>
-  `page.perps.pro.trade.tpSlError.${code}`;
 
 const getReviewParent = (
   review: PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand,
@@ -125,23 +139,47 @@ export const usePerpsProTrade = ({
   ) => Promise<boolean>;
 }) => {
   const { t } = useTranslation();
+  const tpSlErrorText = useCallback(
+    (error: PerpsProTpSlValidationError, context: PerpsProTpSlErrorContext) =>
+      getPerpsProTpSlErrorText({
+        context,
+        error,
+        t: (key, options) => t(key, options),
+      }),
+    [t],
+  );
   const preferences = usePerpsProTradePreferences();
   const tradeCoin = market?.canonicalCoin ?? '';
+  const tradeDexId = market?.marketData.dexId ?? '';
+  const collateralToken = getPerpsProCollateralToken(market?.quoteAsset);
   const accountFacts = perpsStore(
-    useShallow(state => ({
-      account: state.currentPerpsAccount,
-      crossMaintenanceMarginUsed:
-        state.currentClearinghouseState?.crossMaintenanceMarginUsed ?? '0',
-      crossMarginAccountValue:
-        state.currentClearinghouseState?.crossMarginSummary.accountValue ?? '0',
-      currentPosition:
-        state.currentClearinghouseState?.assetPositions.find(
-          item => item.position.coin === tradeCoin,
-        )?.position ?? null,
-      hasOpenOrders:
-        !!tradeCoin && state.openOrders.some(order => order.coin === tradeCoin),
-      isUserDataReady: state.isUserDataReady,
-    })),
+    useShallow(state => {
+      const dexSummary =
+        state.currentClearinghouseState?.perDexSummaries?.[tradeDexId];
+      const unifiedAvailableAfterMaintenance =
+        collateralToken == null
+          ? null
+          : state.spotState.tokenToAvailableAfterMaintenance?.find(
+              ([token]) => token === collateralToken,
+            )?.[1] ?? null;
+      return {
+        account: state.currentPerpsAccount,
+        currentPosition:
+          state.currentClearinghouseState?.assetPositions.find(
+            item => item.position.coin === tradeCoin,
+          )?.position ?? null,
+        dexCrossAccountValue: dexSummary?.crossAccountValue ?? null,
+        dexCrossMaintenanceMarginUsed:
+          dexSummary?.crossMaintenanceMarginUsed ?? null,
+        hasOpenOrders:
+          !!tradeCoin &&
+          state.openOrders.some(order => order.coin === tradeCoin),
+        isUserDataReady: state.isUserDataReady,
+        unifiedAvailableAfterMaintenance,
+        userAbstraction: state.userAbstraction,
+        userAbstractionReady: state.userAbstractionReady,
+      };
+    }),
   );
   const [form, setForm] = useState(() =>
     createPerpsProTradeFormState({
@@ -149,20 +187,32 @@ export const usePerpsProTrade = ({
       orderType: preferences.orderType,
     }),
   );
-  const [marginMode, setMarginModeState] = useState<'cross' | 'isolated'>(
-    'isolated',
-  );
-  const [leverage, setLeverageState] = useState(1);
+  const formRef = useRef(form);
+  formRef.current = form;
+  const [leverageConfigurationState, setLeverageConfigurationState] = useState<
+    PerpsProLeverageConfiguration & { scopeKey: string | null }
+  >({
+    scopeKey: null,
+    type: 'isolated',
+    value: 1,
+  });
   const [review, setReview] = useState<
     PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand | null
   >(null);
   const [pending, setPending] = useState(false);
   const [skipConfirmation, setSkipConfirmation] = useState(false);
-  const [amountSource, setAmountSource] = useState<'manual' | 'slider'>(
-    'manual',
-  );
+  const [amountSource, setAmountSource] =
+    useState<PerpsProTradeAmountSource>('manual');
   const [percentage, setPercentageState] = useState(0);
+  const amountSourceRef = useRef<PerpsProTradeAmountSource>('manual');
+  const percentageRef = useRef(0);
   const amountDraftRef = useRef(createPerpsProTradeAmountDraft());
+  const amountDraftsByOrderTypeRef = useRef(
+    createPerpsProTradeOrderTypeAmountDrafts(),
+  );
+  amountSourceRef.current = amountSource;
+  percentageRef.current = percentage;
+  const formRevisionRef = useRef(0);
   const pendingRef = useRef(false);
   const dirtyConfigurationRef = useRef(false);
   const appliedConfigurationRef = useRef<{
@@ -174,9 +224,13 @@ export const usePerpsProTrade = ({
   const marketKeyRef = useRef<string | null>(null);
   const configurationAccountIdentityRef = useRef<string | null>(null);
   const currentMarketKeyRef = useRef<string | null>(market?.marketKey ?? null);
+  const currentMidPriceRef = useRef<string | null>(
+    market?.marketData.midPx || null,
+  );
   const currentBboSessionKeyRef = useRef<string | null>(bboSessionKey);
   const currentBboStatusRef = useRef(bboStatus);
   currentMarketKeyRef.current = market?.marketKey ?? null;
+  currentMidPriceRef.current = market?.marketData.midPx || null;
   currentBboSessionKeyRef.current = bboSessionKey;
   currentBboStatusRef.current = bboStatus;
 
@@ -207,13 +261,14 @@ export const usePerpsProTrade = ({
   const currentPositionSize = new BigNumber(currentPosition?.szi ?? 0);
   const hasCurrentPosition =
     currentPositionSize.isFinite() && currentPositionSize.abs().gt(0);
+  const marginModeConstraint = normalizePerpsMarketMarginMode(
+    market?.marketData.marginMode,
+    market?.marketData.onlyIsolated,
+  );
   const initialLeverageConfiguration = useMemo(
     () =>
       resolvePerpsProInitialLeverage({
-        marginModeConstraint: normalizePerpsMarketMarginMode(
-          market?.marketData.marginMode,
-          market?.marketData.onlyIsolated,
-        ),
+        marginModeConstraint,
         maxLeverage: market?.marketData.maxLeverage ?? 1,
         position: hasCurrentPosition ? currentPosition?.leverage : null,
         zeroAddressBaseline: zeroAddressLeverageBaseline,
@@ -222,9 +277,54 @@ export const usePerpsProTrade = ({
       currentPosition?.leverage,
       hasCurrentPosition,
       market?.marketData.maxLeverage,
-      market?.marketData.marginMode,
-      market?.marketData.onlyIsolated,
+      marginModeConstraint,
       zeroAddressLeverageBaseline,
+    ],
+  );
+  const leverageConfigurationScopeKey = market
+    ? `${accountIdentity ?? 'disconnected'}\u0000${market.marketKey}`
+    : null;
+  const leverageConfiguration =
+    leverageConfigurationState.scopeKey === leverageConfigurationScopeKey
+      ? leverageConfigurationState
+      : {
+          ...initialLeverageConfiguration,
+          scopeKey: leverageConfigurationScopeKey,
+        };
+  const marginMode = leverageConfiguration.type;
+  const leverage = leverageConfiguration.value;
+  const applyLeverageConfiguration = useCallback(
+    (configuration: PerpsProLeverageConfiguration, scopeKey: string | null) => {
+      setLeverageConfigurationState(current =>
+        current.scopeKey === scopeKey &&
+        current.type === configuration.type &&
+        current.value === configuration.value
+          ? current
+          : { ...configuration, scopeKey },
+      );
+    },
+    [],
+  );
+
+  const crossMarginAvailableAfterMaintenance = useMemo(
+    () =>
+      resolvePerpsProCrossMarginAvailableAfterMaintenance({
+        accountFactsReady:
+          accountFacts.isUserDataReady && accountFacts.userAbstractionReady,
+        dexCrossAccountValue: accountFacts.dexCrossAccountValue,
+        dexCrossMaintenanceMarginUsed:
+          accountFacts.dexCrossMaintenanceMarginUsed,
+        unifiedAvailableAfterMaintenance:
+          accountFacts.unifiedAvailableAfterMaintenance,
+        userAbstraction: accountFacts.userAbstraction,
+      }),
+    [
+      accountFacts.dexCrossAccountValue,
+      accountFacts.dexCrossMaintenanceMarginUsed,
+      accountFacts.isUserDataReady,
+      accountFacts.unifiedAvailableAfterMaintenance,
+      accountFacts.userAbstraction,
+      accountFacts.userAbstractionReady,
     ],
   );
 
@@ -233,21 +333,17 @@ export const usePerpsProTrade = ({
     configurationAccountIdentityRef.current = accountIdentity;
     appliedConfigurationRef.current = null;
     dirtyConfigurationRef.current = false;
-    setMarginModeState(initialLeverageConfiguration.type);
-    setLeverageState(initialLeverageConfiguration.value);
+    applyLeverageConfiguration(
+      initialLeverageConfiguration,
+      leverageConfigurationScopeKey,
+    );
     setReview(null);
-  }, [accountIdentity, initialLeverageConfiguration]);
-
-  useEffect(() => {
-    if (!preferences.hydrated) return;
-    setForm(current => ({
-      ...current,
-      amountUnit: preferences.amountUnit,
-      orderType: preferences.orderType,
-    }));
-    setAmountSource('manual');
-    setPercentageState(0);
-  }, [preferences.amountUnit, preferences.hydrated, preferences.orderType]);
+  }, [
+    accountIdentity,
+    applyLeverageConfiguration,
+    initialLeverageConfiguration,
+    leverageConfigurationScopeKey,
+  ]);
 
   useEffect(() => {
     const marketKey = market?.marketKey ?? null;
@@ -255,20 +351,38 @@ export const usePerpsProTrade = ({
     marketKeyRef.current = marketKey;
     appliedConfigurationRef.current = null;
     dirtyConfigurationRef.current = false;
-    setMarginModeState(initialLeverageConfiguration.type);
-    setLeverageState(initialLeverageConfiguration.value);
+    applyLeverageConfiguration(
+      initialLeverageConfiguration,
+      leverageConfigurationScopeKey,
+    );
+    amountDraftsByOrderTypeRef.current =
+      createPerpsProTradeOrderTypeAmountDrafts();
     amountDraftRef.current = createPerpsProTradeAmountDraft();
-    setForm(current => ({
-      ...current,
-      amount: '',
-      attachedTpSl: clearPerpsProTpSlForMarketChange(current.attachedTpSl),
-      bboEnabled: false,
-      conditionalLimitPrice: '',
-      limitPrice: '',
-      triggerPrice: '',
-    }));
+    amountSourceRef.current = 'manual';
+    percentageRef.current = 0;
+    setAmountSource('manual');
+    setPercentageState(0);
+    formRevisionRef.current += 1;
+    setForm(current => {
+      const next = {
+        ...current,
+        amount: '',
+        attachedTpSl: clearPerpsProTpSlForMarketChange(current.attachedTpSl),
+        bboEnabled: false,
+        conditionalLimitPrice: '',
+        limitPrice: '',
+        triggerPrice: '',
+      };
+      formRef.current = next;
+      return next;
+    });
     setReview(null);
-  }, [initialLeverageConfiguration, market]);
+  }, [
+    applyLeverageConfiguration,
+    initialLeverageConfiguration,
+    leverageConfigurationScopeKey,
+    market,
+  ]);
 
   useEffect(() => {
     const applied = appliedConfigurationRef.current;
@@ -280,15 +394,26 @@ export const usePerpsProTrade = ({
       return;
     }
     if (dirtyConfigurationRef.current || !market) return;
-    setMarginModeState(initialLeverageConfiguration.type);
-    setLeverageState(initialLeverageConfiguration.value);
-  }, [accountIdentity, initialLeverageConfiguration, market]);
+    applyLeverageConfiguration(
+      initialLeverageConfiguration,
+      leverageConfigurationScopeKey,
+    );
+  }, [
+    accountIdentity,
+    applyLeverageConfiguration,
+    initialLeverageConfiguration,
+    leverageConfigurationScopeKey,
+    market,
+  ]);
 
-  const patchForm = useCallback(
-    (patch: Partial<typeof form>) =>
-      setForm(current => ({ ...current, ...patch })),
-    [],
-  );
+  const patchForm = useCallback((patch: Partial<typeof form>) => {
+    formRevisionRef.current += 1;
+    setForm(current => {
+      const next = { ...current, ...patch };
+      formRef.current = next;
+      return next;
+    });
+  }, []);
   const marketPrice =
     market?.marketData.midPx || market?.marketData.markPx || '';
   const displayReferencePrice = getPerpsProTradeDisplayReferencePrice({
@@ -301,7 +426,6 @@ export const usePerpsProTrade = ({
   });
   const setAmount = useCallback(
     (value: string) => {
-      if (!/^\d*\.?\d*$/u.test(value)) return;
       const amount = sanitizePerpsProDecimalInput(value, amountDecimals);
       amountDraftRef.current = updatePerpsProTradeAmountDraft({
         amount,
@@ -309,6 +433,8 @@ export const usePerpsProTrade = ({
         price: displayReferencePrice,
         szDecimals: market?.marketData.szDecimals ?? 0,
       });
+      amountSourceRef.current = 'manual';
+      percentageRef.current = 0;
       setAmountSource('manual');
       setPercentageState(0);
       patchForm({ amount });
@@ -324,6 +450,8 @@ export const usePerpsProTrade = ({
   const beginAmountEntry = useCallback(() => {
     if (amountSource !== 'slider') return;
     amountDraftRef.current = createPerpsProTradeAmountDraft();
+    amountSourceRef.current = 'manual';
+    percentageRef.current = 0;
     setAmountSource('manual');
     setPercentageState(0);
     patchForm({ amount: '' });
@@ -333,7 +461,6 @@ export const usePerpsProTrade = ({
       field: 'conditionalLimitPrice' | 'limitPrice' | 'triggerPrice',
       value: string,
     ) => {
-      if (!/^\d*\.?\d*$/u.test(value)) return;
       patchForm({
         [field]: sanitizePerpsProDecimalInput(
           value,
@@ -357,28 +484,103 @@ export const usePerpsProTrade = ({
     },
     [form.bboEnabled, form.orderType, setPrice],
   );
+  const applyOrderType = useCallback((orderType: PerpsProTradeOrderType) => {
+    const currentForm = formRef.current;
+    if (currentForm.orderType === orderType) return;
+
+    amountDraftsByOrderTypeRef.current[currentForm.orderType] = {
+      amountDraft: amountDraftRef.current,
+      amountSource: amountSourceRef.current,
+      percentage: percentageRef.current,
+    };
+    const nextAmount = amountDraftsByOrderTypeRef.current[orderType];
+    const nextForm = {
+      ...currentForm,
+      amount: getPerpsProTradeOrderTypeAmountDisplay({
+        amountUnit: currentForm.amountUnit,
+        draft: nextAmount,
+      }),
+      orderType,
+    };
+
+    amountDraftRef.current = nextAmount.amountDraft;
+    amountSourceRef.current = nextAmount.amountSource;
+    percentageRef.current = nextAmount.percentage;
+    formRef.current = nextForm;
+    formRevisionRef.current += 1;
+    setAmountSource(nextAmount.amountSource);
+    setPercentageState(nextAmount.percentage);
+    setForm(nextForm);
+  }, []);
+  const applyAmountUnit = useCallback((amountUnit: PerpsProTradeAmountUnit) => {
+    const currentForm = formRef.current;
+    if (currentForm.amountUnit === amountUnit) return;
+
+    if (amountSourceRef.current === 'slider') {
+      amountDraftRef.current = createPerpsProTradeAmountDraft();
+      amountSourceRef.current = 'manual';
+      percentageRef.current = 0;
+      setAmountSource('manual');
+      setPercentageState(0);
+    }
+    const nextForm = {
+      ...currentForm,
+      amount:
+        amountSourceRef.current === 'manual'
+          ? getPerpsProTradeAmountDraftDisplay(
+              amountDraftRef.current,
+              amountUnit,
+            )
+          : '',
+      amountUnit,
+    };
+    formRef.current = nextForm;
+    formRevisionRef.current += 1;
+    setForm(nextForm);
+  }, []);
   const setOrderType = useCallback(
     (orderType: PerpsProTradeOrderType) => {
-      patchForm({ orderType });
+      applyOrderType(orderType);
       void preferences.setOrderType(orderType);
     },
-    [patchForm, preferences],
+    [applyOrderType, preferences],
   );
+
+  useEffect(() => {
+    if (!preferences.hydrated) return;
+    applyOrderType(preferences.orderType);
+    applyAmountUnit(preferences.amountUnit);
+  }, [
+    applyAmountUnit,
+    applyOrderType,
+    preferences.amountUnit,
+    preferences.hydrated,
+    preferences.orderType,
+  ]);
+
   const toggleAmountUnit = useCallback(() => {
     const next = form.amountUnit === 'quote' ? 'base' : 'quote';
-    let nextAmount = amountSource === 'slider' ? `${percentage}%` : '';
-    if (amountSource === 'manual') {
+    if (amountSource === 'slider') {
+      amountDraftRef.current = createPerpsProTradeAmountDraft();
+      amountSourceRef.current = 'manual';
+      percentageRef.current = 0;
+      setAmountSource('manual');
+      setPercentageState(0);
+      patchForm({ amount: '', amountUnit: next });
+    } else {
       amountDraftRef.current = repricePerpsProTradeAmountDraft({
         draft: amountDraftRef.current,
         price: displayReferencePrice,
         szDecimals: market?.marketData.szDecimals ?? 0,
       });
-      nextAmount = getPerpsProTradeAmountDraftDisplay(
-        amountDraftRef.current,
-        next,
-      );
+      patchForm({
+        amount: getPerpsProTradeAmountDraftDisplay(
+          amountDraftRef.current,
+          next,
+        ),
+        amountUnit: next,
+      });
     }
-    patchForm({ amount: nextAmount, amountUnit: next });
     void preferences.setAmountUnit(next);
   }, [
     amountSource,
@@ -386,7 +588,6 @@ export const usePerpsProTrade = ({
     form.amountUnit,
     market?.marketData.szDecimals,
     patchForm,
-    percentage,
     preferences,
   ]);
 
@@ -404,11 +605,12 @@ export const usePerpsProTrade = ({
       nextDraft,
       form.amountUnit,
     );
-    setForm(current =>
-      current.amount === nextAmount
-        ? current
-        : { ...current, amount: nextAmount },
-    );
+    setForm(current => {
+      if (current.amount === nextAmount) return current;
+      const next = { ...current, amount: nextAmount };
+      formRef.current = next;
+      return next;
+    });
   }, [
     amountSource,
     displayReferencePrice,
@@ -416,38 +618,43 @@ export const usePerpsProTrade = ({
     market?.marketData.szDecimals,
   ]);
 
-  const marketMarginMode = market?.marketData.marginMode;
-  const marketOnlyIsolated = market?.marketData.onlyIsolated;
-  const marginModeDisabledReason = useMemo(() => {
-    if (
-      isPerpsMarketIsolatedOnly({
-        marginMode: marketMarginMode,
-        onlyIsolated: marketOnlyIsolated,
-      })
-    ) {
-      return 'onlyIsolated' as const;
-    }
-    if (new BigNumber(currentPosition?.szi ?? 0).abs().gt(0) || hasOpenOrders) {
-      return 'existingExposure' as const;
-    }
-    return null;
-  }, [
-    currentPosition?.szi,
-    hasOpenOrders,
-    marketMarginMode,
-    marketOnlyIsolated,
-  ]);
+  const marginModeDisabledReason = useMemo(
+    () =>
+      resolvePerpsProMarginModeDisabledReason({
+        hasOpenOrders,
+        hasPosition: hasCurrentPosition,
+        marginModeConstraint,
+      }),
+    [hasCurrentPosition, hasOpenOrders, marginModeConstraint],
+  );
   const setMarginMode = useCallback(
     (next: 'cross' | 'isolated') => {
       if (next === marginMode) return;
       if (marginModeDisabledReason) {
-        showToast(t('page.perps.pro.trade.marginModeUnavailable'), 'error');
+        showToast(
+          t(
+            marginModeDisabledReason === 'onlyIsolated'
+              ? 'page.perps.pro.trade.onlyIsolatedMargin'
+              : 'page.perps.pro.trade.marginModeUnavailable',
+          ),
+          'error',
+        );
         return;
       }
       dirtyConfigurationRef.current = true;
-      setMarginModeState(next);
+      setLeverageConfigurationState({
+        scopeKey: leverageConfigurationScopeKey,
+        type: next,
+        value: leverage,
+      });
     },
-    [marginMode, marginModeDisabledReason, t],
+    [
+      leverage,
+      leverageConfigurationScopeKey,
+      marginMode,
+      marginModeDisabledReason,
+      t,
+    ],
   );
   const confirmLeverage = useCallback(
     async (next: number) => {
@@ -470,7 +677,11 @@ export const usePerpsProTrade = ({
         maxLeverage: max,
       });
       if (!success) return false;
-      setLeverageState(normalized);
+      setLeverageConfigurationState({
+        scopeKey: leverageConfigurationScopeKey,
+        type: marginMode,
+        value: normalized,
+      });
       appliedConfigurationRef.current = {
         accountIdentity,
         leverage: normalized,
@@ -484,6 +695,7 @@ export const usePerpsProTrade = ({
       accountFacts.account,
       accountIdentity,
       leveragePending,
+      leverageConfigurationScopeKey,
       marginMode,
       market,
       scopedActiveAssetData?.leverage.type,
@@ -542,11 +754,11 @@ export const usePerpsProTrade = ({
   const getMaxBase = useCallback(
     (side: PerpsProTradeSide) => {
       if (form.reduceOnly) {
-        const sideDisabled =
+        const sideUnavailable =
           side === 'buy'
-            ? reduceOnlyAvailability.buyDisabled
-            : reduceOnlyAvailability.sellDisabled;
-        return sideDisabled
+            ? reduceOnlyAvailability.buyUnavailable
+            : reduceOnlyAvailability.sellUnavailable;
+        return sideUnavailable
           ? new BigNumber(0)
           : new BigNumber(currentPosition?.szi ?? 0).abs();
       }
@@ -558,8 +770,8 @@ export const usePerpsProTrade = ({
     [
       currentPosition?.szi,
       form.reduceOnly,
-      reduceOnlyAvailability.buyDisabled,
-      reduceOnlyAvailability.sellDisabled,
+      reduceOnlyAvailability.buyUnavailable,
+      reduceOnlyAvailability.sellUnavailable,
       scopedActiveAssetData?.maxTradeSzs,
     ],
   );
@@ -609,7 +821,13 @@ export const usePerpsProTrade = ({
   const setPercentage = useCallback(
     (percent: number) => {
       const next = Math.max(0, Math.min(100, percent));
-      setAmountSource(next === 0 ? 'manual' : 'slider');
+      const nextSource = next === 0 ? 'manual' : 'slider';
+      if (next === 0) {
+        amountDraftRef.current = createPerpsProTradeAmountDraft();
+      }
+      amountSourceRef.current = nextSource;
+      percentageRef.current = next;
+      setAmountSource(nextSource);
       setPercentageState(next);
       patchForm({ amount: next === 0 ? '' : `${next}%` });
     },
@@ -633,7 +851,11 @@ export const usePerpsProTrade = ({
 
   const getTpSlPreviewFacts = useCallback(
     (side: PerpsProTradeSide) => {
-      if (!market || form.orderType === 'conditional' || form.bboEnabled) {
+      if (
+        !market ||
+        form.orderType === 'conditional' ||
+        (form.orderType === 'limit' && form.bboEnabled)
+      ) {
         return null;
       }
       const commandForm = getCommandForm(side);
@@ -705,10 +927,43 @@ export const usePerpsProTrade = ({
       if (!accountFacts.account || !market) {
         throw new Error(t('page.perps.pro.trade.accountRequired'));
       }
+      const reduceOnlyDirectionUnavailable =
+        side === 'buy'
+          ? reduceOnlyAvailability.buyUnavailable
+          : reduceOnlyAvailability.sellUnavailable;
+      if (form.reduceOnly && reduceOnlyDirectionUnavailable) {
+        throw new Error(t('page.perps.pro.trade.reduceOnlyUnavailable'));
+      }
       const commandForm = getCommandForm(side);
       const hasAttached = commandForm.attachedTpSl.enabled;
+      const liveMidPrice = market.marketData.midPx;
+      if (commandForm.orderType === 'conditional' && !positive(liveMidPrice)) {
+        throw new Error(t('page.perps.pro.trade.contextChanged'));
+      }
       let expectedEntryPrice =
-        market.marketData.midPx || market.marketData.markPx;
+        commandForm.orderType === 'conditional'
+          ? liveMidPrice
+          : liveMidPrice || market.marketData.markPx;
+      if (!positive(expectedEntryPrice)) {
+        throw new Error(t('page.perps.pro.trade.contextChanged'));
+      }
+      const generatedAt = Date.now();
+      const reviewFacts: PerpsProOrderReviewFacts = Object.freeze({
+        amountUnit: form.amountUnit,
+        displayBase: market.displayBase,
+        displayPair: market.displayPair,
+        formRevision: formRevisionRef.current,
+        generatedAt,
+        leverage,
+        marginMode,
+        markPrice: market.marketData.markPx,
+        maxLeverage: market.marketData.maxLeverage,
+        midPrice: liveMidPrice,
+        pxDecimals: market.marketData.pxDecimals,
+        quoteAsset: market.quoteAsset,
+        sourceTag: market.sourceTag ?? null,
+        szDecimals: market.marketData.szDecimals,
+      });
       let marketSnapshot:
         | Omit<
             PerpsProAttachedTpSlCommand['marketSnapshot'],
@@ -736,8 +991,9 @@ export const usePerpsProTrade = ({
                 ? ('invalidOrderAmount' as const)
                 : ('marketBookUnavailable' as const),
           };
-          setTpSlSubmitErrors([error]);
-          throw new Error(t(tpSlErrorKey(error)));
+          const errorContext = { liquidationPrice: null, side };
+          setTpSlSubmitErrors([error], errorContext);
+          throw new Error(tpSlErrorText(error, errorContext));
         }
         expectedEntryPrice = estimate.estimate.expectedEntryPrice;
         marketSnapshot = {
@@ -755,8 +1011,9 @@ export const usePerpsProTrade = ({
           bboBook.time <= 0
         ) {
           const error = { code: 'marketBookUnavailable' as const };
-          setTpSlSubmitErrors([error]);
-          throw new Error(t(tpSlErrorKey(error)));
+          const errorContext = { liquidationPrice: null, side };
+          setTpSlSubmitErrors([error], errorContext);
+          throw new Error(tpSlErrorText(error, errorContext));
         }
         marketSnapshot = {
           bookTime: bboBook.time,
@@ -782,28 +1039,21 @@ export const usePerpsProTrade = ({
         marketKey: market.marketKey,
         marketPrice: expectedEntryPrice,
         maxUsdValueSize: market.marketData.maxUsdValueSize,
+        reviewFacts,
         side,
         szDecimals: market.marketData.szDecimals,
       });
-      const maxBase = getMaxBase(side);
-      if (!maxBase.gt(0) || new BigNumber(command.baseSize).gt(maxBase)) {
-        throw new Error(t('page.perps.pro.trade.insufficientBalance'));
-      }
       if (form.reduceOnly) {
         const signedSize = positive(
           new BigNumber(currentPosition?.szi ?? 0).abs(),
         );
-        const sideDisabled =
-          side === 'buy'
-            ? reduceOnlyAvailability.buyDisabled
-            : reduceOnlyAvailability.sellDisabled;
-        if (
-          sideDisabled ||
-          !signedSize ||
-          new BigNumber(command.baseSize).gt(signedSize)
-        ) {
+        if (!signedSize || new BigNumber(command.baseSize).gt(signedSize)) {
           throw new Error(t('page.perps.pro.trade.reduceOnlyUnavailable'));
         }
+      }
+      const maxBase = getMaxBase(side);
+      if (!maxBase.gt(0) || new BigNumber(command.baseSize).gt(maxBase)) {
+        throw new Error(t('page.perps.pro.trade.insufficientBalance'));
       }
       if (!hasAttached) {
         setTpSlSubmitErrors([]);
@@ -815,8 +1065,7 @@ export const usePerpsProTrade = ({
       const risk = resolvePerpsProProjectedTradeRisk({
         baseSize: command.baseSize,
         calculateLiquidationPrice: calLiquidationPrice,
-        crossMarginAccountValue: accountFacts.crossMarginAccountValue,
-        crossMaintenanceMarginUsed: accountFacts.crossMaintenanceMarginUsed,
+        crossMarginAvailableAfterMaintenance,
         currentPosition,
         entryPrice: expectedEntryPrice,
         leverage,
@@ -837,9 +1086,18 @@ export const usePerpsProTrade = ({
         side,
         szDecimals: market.marketData.szDecimals,
       });
-      setTpSlSubmitErrors(evaluation.errors);
+      const errorContext = {
+        liquidationPrice: risk?.liquidationPrice
+          ? formatPerpsProPrice(
+              risk.liquidationPrice,
+              market.marketData.pxDecimals,
+            )
+          : null,
+        side,
+      };
+      setTpSlSubmitErrors(evaluation.errors, errorContext);
       if (evaluation.errors.length > 0) {
-        throw new Error(t(tpSlErrorKey(evaluation.errors[0])));
+        throw new Error(tpSlErrorText(evaluation.errors[0], errorContext));
       }
       if (!marketSnapshot) {
         throw new Error(t('page.perps.pro.trade.contextChanged'));
@@ -850,11 +1108,14 @@ export const usePerpsProTrade = ({
         attached: evaluation,
         displayBase: market.displayBase,
         displayPair: market.displayPair,
+        formRevision: reviewFacts.formRevision,
+        generatedAt: reviewFacts.generatedAt,
         leverage,
         liquidationGap: risk?.gap ?? null,
         marginMode,
         markPrice: market.marketData.markPx,
         maxLeverage: market.marketData.maxLeverage,
+        midPrice: reviewFacts.midPrice,
         marketSnapshot: {
           ...marketSnapshot,
           normalizedBaseSize: command.baseSize,
@@ -864,19 +1125,19 @@ export const usePerpsProTrade = ({
         pxDecimals: market.marketData.pxDecimals,
         quoteAsset: market.quoteAsset,
         runtime: getPerpsRuntimeSnapshot(),
+        sourceTag: reviewFacts.sourceTag,
         szDecimals: market.marketData.szDecimals,
       });
     },
     [
       accountFacts.account,
-      accountFacts.crossMaintenanceMarginUsed,
-      accountFacts.crossMarginAccountValue,
       bboBook,
       bboPrices.asks1,
       bboPrices.bids1,
       bboSessionKey,
       bboStatus,
       currentPosition,
+      crossMarginAvailableAfterMaintenance,
       form,
       getBboPrice,
       getCommandForm,
@@ -884,10 +1145,11 @@ export const usePerpsProTrade = ({
       leverage,
       marginMode,
       market,
-      reduceOnlyAvailability.buyDisabled,
-      reduceOnlyAvailability.sellDisabled,
+      reduceOnlyAvailability.buyUnavailable,
+      reduceOnlyAvailability.sellUnavailable,
       setTpSlSubmitErrors,
       t,
+      tpSlErrorText,
     ],
   );
 
@@ -900,10 +1162,36 @@ export const usePerpsProTrade = ({
         !market
       )
         return;
+      const desired = command.reviewFacts;
+      if (!desired) {
+        showToast(t('page.perps.pro.trade.contextChanged'), 'error');
+        setReview(null);
+        return;
+      }
+      const isConditionalClassificationCurrent = () => {
+        if (
+          command.execution.kind !== 'conditionalLimit' &&
+          command.execution.kind !== 'conditionalMarket'
+        ) {
+          return true;
+        }
+        const latestMid = currentMidPriceRef.current;
+        if (!positive(latestMid)) return false;
+        return (
+          inferPerpsProConditionalClassification({
+            isBuy: command.side === 'buy',
+            referencePrice: latestMid ?? '',
+            triggerPrice: command.execution.triggerPrice,
+          }) === command.execution.tpsl
+        );
+      };
       const isSceneCurrent = () =>
         currentMarketKeyRef.current === command.marketKey &&
+        accountIdentity === getPerpsRuntimeIdentity(command.account) &&
+        formRevisionRef.current === desired.formRevision &&
         (!command.bboSessionKey ||
-          currentBboSessionKeyRef.current === command.bboSessionKey);
+          currentBboSessionKeyRef.current === command.bboSessionKey) &&
+        isConditionalClassificationCurrent();
       if (!isSceneCurrent()) {
         showToast(t('page.perps.pro.trade.contextChanged'), 'error');
         setReview(null);
@@ -921,21 +1209,21 @@ export const usePerpsProTrade = ({
         const activeLeverage = scopedActiveAssetData?.leverage;
         const appliedConfiguration = appliedConfigurationRef.current;
         if (
-          (activeLeverage?.type !== marginMode ||
-            activeLeverage?.value !== leverage) &&
+          (activeLeverage?.type !== desired.marginMode ||
+            activeLeverage?.value !== desired.leverage) &&
           !(
-            appliedConfiguration?.marketKey === market.marketKey &&
+            appliedConfiguration?.marketKey === command.marketKey &&
             appliedConfiguration.accountIdentity === accountIdentity &&
-            appliedConfiguration.marginMode === marginMode &&
-            appliedConfiguration.leverage === leverage
+            appliedConfiguration.marginMode === desired.marginMode &&
+            appliedConfiguration.leverage === desired.leverage
           )
         ) {
           const leverageCommand = buildPerpsUpdateLeverageCommand({
-            account: accountFacts.account,
-            coin: market.canonicalCoin,
-            isCross: marginMode === 'cross',
-            leverage,
-            maxLeverage: market.marketData.maxLeverage,
+            account: command.account,
+            coin: command.coin,
+            isCross: desired.marginMode === 'cross',
+            leverage: desired.leverage,
+            maxLeverage: desired.maxLeverage,
           });
           const leverageResult = await executePerpsUpdateLeverage(
             leverageCommand,
@@ -950,9 +1238,9 @@ export const usePerpsProTrade = ({
           }
           appliedConfigurationRef.current = {
             accountIdentity,
-            leverage,
-            marginMode,
-            marketKey: market.marketKey,
+            leverage: desired.leverage,
+            marginMode: desired.marginMode,
+            marketKey: command.marketKey,
           };
         }
         const result = await executePerpsProOpenOrder(
@@ -980,7 +1268,11 @@ export const usePerpsProTrade = ({
           ),
           'success',
         );
+        amountDraftsByOrderTypeRef.current =
+          createPerpsProTradeOrderTypeAmountDrafts();
         amountDraftRef.current = createPerpsProTradeAmountDraft();
+        amountSourceRef.current = 'manual';
+        percentageRef.current = 0;
         patchForm({ amount: '' });
         setAmountSource('manual');
         setPercentageState(0);
@@ -1007,42 +1299,12 @@ export const usePerpsProTrade = ({
     [
       accountFacts.account,
       accountIdentity,
-      leverage,
-      marginMode,
       market,
       patchForm,
       refreshActiveAssetData,
       scopedActiveAssetData?.leverage,
       t,
     ],
-  );
-
-  const requestReview = useCallback(
-    async (side: PerpsProTradeSide) => {
-      try {
-        const command = buildReview(side);
-        if (command.type === 'openOrderWithAttachedTpSl') {
-          setSkipConfirmation(false);
-          setReview(command);
-          return;
-        }
-        const skip = await perpsServiceApi.getSkipPerpsProTradeConfirmation(
-          form.orderType,
-        );
-        setSkipConfirmation(skip);
-        if (skip) {
-          await execute(command);
-        } else {
-          setReview(command);
-        }
-      } catch (error) {
-        showToast(
-          error instanceof Error ? error.message : String(error),
-          'error',
-        );
-      }
-    },
-    [buildReview, execute, form.orderType],
   );
 
   const ensureAttachedLeverage = useCallback(
@@ -1092,15 +1354,19 @@ export const usePerpsProTrade = ({
     [scopedActiveAssetData?.leverage],
   );
 
-  const confirmReview = useCallback(async () => {
-    if (!review) return;
-    if (review.type === 'openOrderWithAttachedTpSl') {
+  const executeAttachedReview = useCallback(
+    async (command: PerpsProAttachedTpSlCommand) => {
       if (pendingRef.current) return;
+      if (formRevisionRef.current !== command.reviewFacts.formRevision) {
+        showToast(t('page.perps.pro.trade.contextChanged'), 'error');
+        setReview(null);
+        return;
+      }
       pendingRef.current = true;
       setPending(true);
       try {
         const result = await executeAttachedTpSl(
-          review,
+          command,
           ensureAttachedLeverage,
         );
         if (result.kind === 'userCancelled') return;
@@ -1151,7 +1417,11 @@ export const usePerpsProTrade = ({
           ),
           'success',
         );
+        amountDraftsByOrderTypeRef.current =
+          createPerpsProTradeOrderTypeAmountDrafts();
         amountDraftRef.current = createPerpsProTradeAmountDraft();
+        amountSourceRef.current = 'manual';
+        percentageRef.current = 0;
         patchForm({
           amount: '',
           attachedTpSl: createPerpsProAttachedTpSlDraft(),
@@ -1160,31 +1430,67 @@ export const usePerpsProTrade = ({
         setPercentageState(0);
         dirtyConfigurationRef.current = false;
         setReview(null);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        showToast(message || t('page.perps.pro.trade.orderFailed'), 'error');
+        Sentry.captureException(
+          error instanceof Error ? error : new Error(message),
+          { extra: { scene: 'Perps Pro attached TP/SL order' } },
+        );
       } finally {
         pendingRef.current = false;
         setPending(false);
       }
-      return;
-    }
+    },
+    [ensureAttachedLeverage, executeAttachedTpSl, patchForm, t],
+  );
+
+  const submitReview = useCallback(
+    async (command: PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand) =>
+      command.type === 'openOrderWithAttachedTpSl'
+        ? executeAttachedReview(command)
+        : execute(command),
+    [execute, executeAttachedReview],
+  );
+
+  const requestReview = useCallback(
+    async (side: PerpsProTradeSide) => {
+      try {
+        const command = buildReview(side);
+        const orderType = getReviewParent(command).orderType;
+        const skip = await perpsServiceApi.getSkipPerpsProTradeConfirmation(
+          orderType,
+        );
+        setSkipConfirmation(skip);
+        if (skip) {
+          await submitReview(command);
+        } else {
+          setReview(command);
+        }
+      } catch (error) {
+        showToast(
+          error instanceof Error ? error.message : String(error),
+          'error',
+        );
+      }
+    },
+    [buildReview, submitReview],
+  );
+
+  const confirmReview = useCallback(async () => {
+    if (!review) return;
     if (skipConfirmation) {
+      const orderType = getReviewParent(review).orderType;
       perpsServiceApi
-        .setSkipPerpsProTradeConfirmation(review.orderType, true)
+        .setSkipPerpsProTradeConfirmation(orderType, true)
         .catch(error => {
           Sentry.captureException(error, {
             extra: { scene: 'Perps Pro trade confirmation preference' },
           });
         });
     }
-    await execute(review);
-  }, [
-    ensureAttachedLeverage,
-    executeAttachedTpSl,
-    execute,
-    patchForm,
-    review,
-    skipConfirmation,
-    t,
-  ]);
+    await submitReview(review);
+  }, [review, skipConfirmation, submitReview]);
 
   const availableQuote = scopedActiveAssetData
     ? BigNumber.min(
@@ -1214,6 +1520,8 @@ export const usePerpsProTrade = ({
           price: displayReferencePrice,
           szDecimals: market?.marketData.szDecimals ?? 0,
         });
+  const showAmountConversion =
+    amountSource === 'manual' && resolvedAmount != null;
   const getEstimatedLiquidationPrice = useCallback(
     (side: PerpsProTradeSide) => {
       if (!resolvedAmount || form.reduceOnly || !market) return null;
@@ -1221,14 +1529,13 @@ export const usePerpsProTrade = ({
       const entryPrice =
         form.orderType === 'conditional' &&
         form.conditionalExecution === 'market'
-          ? form.triggerPrice
+          ? market.marketData.markPx
           : getSideExecutionPrice(side);
       if (!projection || !entryPrice) return '--';
       const risk = resolvePerpsProProjectedTradeRisk({
         baseSize: projection.baseSize,
         calculateLiquidationPrice: calLiquidationPrice,
-        crossMarginAccountValue: accountFacts.crossMarginAccountValue,
-        crossMaintenanceMarginUsed: accountFacts.crossMaintenanceMarginUsed,
+        crossMarginAvailableAfterMaintenance,
         currentPosition,
         entryPrice,
         leverage,
@@ -1241,13 +1548,11 @@ export const usePerpsProTrade = ({
       return risk?.liquidationPrice ?? '--';
     },
     [
-      accountFacts.crossMaintenanceMarginUsed,
-      accountFacts.crossMarginAccountValue,
       currentPosition,
+      crossMarginAvailableAfterMaintenance,
       form.conditionalExecution,
       form.orderType,
       form.reduceOnly,
-      form.triggerPrice,
       getSideExecutionPrice,
       getSideProjection,
       leverage,
@@ -1258,50 +1563,37 @@ export const usePerpsProTrade = ({
   );
   const estimatedLiquidation = useMemo(() => {
     if (!review || !market) return null;
-    if (review.type === 'openOrderWithAttachedTpSl') {
-      return review.reviewFacts.liquidationPrice != null &&
-        review.reviewFacts.liquidationGap != null
-        ? {
-            gap: review.reviewFacts.liquidationGap,
-            price: review.reviewFacts.liquidationPrice,
-          }
-        : null;
-    }
     const parent = getReviewParent(review);
+    const reviewFacts = review.reviewFacts;
+    if (!reviewFacts) return null;
     if (parent.reduceOnly) return null;
     const entryPrice =
-      parent.execution.kind === 'limit' ||
-      parent.execution.kind === 'conditionalLimit'
+      review.type === 'openOrderWithAttachedTpSl'
+        ? review.attached.expectedEntryPrice
+        : parent.execution.kind === 'limit' ||
+          parent.execution.kind === 'conditionalLimit'
         ? parent.execution.limitPrice
         : parent.execution.kind === 'conditionalMarket'
-        ? parent.execution.triggerPrice
-        : market.marketData.markPx;
+        ? market.marketData.markPx
+        : parent.execution.midPrice;
     const risk = resolvePerpsProProjectedTradeRisk({
       baseSize: parent.baseSize,
       calculateLiquidationPrice: calLiquidationPrice,
-      crossMarginAccountValue: accountFacts.crossMarginAccountValue,
-      crossMaintenanceMarginUsed: accountFacts.crossMaintenanceMarginUsed,
+      crossMarginAvailableAfterMaintenance,
       currentPosition,
       entryPrice,
-      leverage,
-      marginMode,
+      leverage: reviewFacts.leverage,
+      marginMode: reviewFacts.marginMode,
       markPrice: market.marketData.markPx,
-      maxLeverage: market.marketData.maxLeverage,
-      pxDecimals: market.marketData.pxDecimals,
+      maxLeverage: reviewFacts.maxLeverage,
+      pxDecimals: reviewFacts.pxDecimals,
       side: parent.side,
     });
     return risk ? { gap: risk.gap, price: risk.liquidationPrice } : null;
-  }, [
-    accountFacts.crossMaintenanceMarginUsed,
-    accountFacts.crossMarginAccountValue,
-    currentPosition,
-    leverage,
-    marginMode,
-    market,
-    review,
-  ]);
+  }, [currentPosition, crossMarginAvailableAfterMaintenance, market, review]);
 
   return {
+    amountDecimals,
     amountUnit: form.amountUnit,
     amountUnitLabel,
     attachedTpSlExecutionEnabled: hasPerpsProAttachedTpSlExecutionCapability(),
@@ -1327,6 +1619,7 @@ export const usePerpsProTrade = ({
     reduceOnlyAvailability,
     requestReview,
     resolvedAmount,
+    showAmountConversion,
     review,
     setAmount,
     setConditionalExecution: (value: PerpsProConditionalExecution) =>
