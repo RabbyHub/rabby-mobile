@@ -311,4 +311,23 @@ describe('Perps Pro focused subscriptions', () => {
       trade: expect.objectContaining({ tid: 3 }),
     });
   });
+
+  it('shares one SDK trades subscription across consumers of the same coin', () => {
+    const first = renderHook(() =>
+      usePerpsLatestTrade({ coin: 'BTC', enabled: true }),
+    );
+    const second = renderHook(() =>
+      usePerpsLatestTrade({ coin: 'BTC', enabled: true }),
+    );
+
+    expect(mockWs.subscribeToTrades).toHaveBeenCalledTimes(1);
+    act(() => mockTradeCallbacks[0]?.([trade({ tid: 7, time: 7 })]));
+    expect(first.result.current.trade?.tid).toBe(7);
+    expect(second.result.current.trade?.tid).toBe(7);
+
+    first.unmount();
+    expect(mockTradeUnsubscribes[0]).not.toHaveBeenCalled();
+    second.unmount();
+    expect(mockTradeUnsubscribes[0]).toHaveBeenCalledTimes(1);
+  });
 });
