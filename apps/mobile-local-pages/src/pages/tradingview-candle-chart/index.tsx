@@ -29,6 +29,8 @@ import {
   formatPrice,
   formatNumber,
   formatProCompactNumber,
+  formatPerpsProCrosshairChange,
+  formatPerpsProCrosshairPrice,
   formatProPrice,
   formatProTooltipTime,
   formatTime,
@@ -66,6 +68,10 @@ function getChartColors(
       border: colors2024['neutral-line'],
       title: colors2024['neutral-body'],
       value: colors2024['neutral-title-1'],
+    },
+    crosshairLabel: {
+      background: colors2024['neutral-black'],
+      text: colors2024['neutral-InvertHighlight'],
     },
   };
 }
@@ -406,6 +412,70 @@ tooltip.style.zIndex = '1000';
 containerEl.appendChild(tooltip);
 chartState.tooltip = tooltip;
 
+const proCrosshairLabel = document.createElement('div');
+proCrosshairLabel.style.position = 'absolute';
+proCrosshairLabel.style.right = '0';
+proCrosshairLabel.style.display = 'none';
+proCrosshairLabel.style.boxSizing = 'border-box';
+proCrosshairLabel.style.width = '66px';
+proCrosshairLabel.style.minHeight = '42px';
+proCrosshairLabel.style.padding = '4px 6px';
+proCrosshairLabel.style.borderRadius = '6px';
+proCrosshairLabel.style.pointerEvents = 'none';
+proCrosshairLabel.style.fontFamily =
+  '"SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+proCrosshairLabel.style.fontSize = '12px';
+proCrosshairLabel.style.fontWeight = '500';
+proCrosshairLabel.style.lineHeight = '16px';
+proCrosshairLabel.style.textAlign = 'right';
+proCrosshairLabel.style.whiteSpace = 'nowrap';
+proCrosshairLabel.style.zIndex = '15';
+containerEl.appendChild(proCrosshairLabel);
+
+function hidePerpsProCrosshairLabel() {
+  proCrosshairLabel.style.display = 'none';
+}
+
+function renderPerpsProCrosshairLabel(price: number, pointY: number) {
+  const config = chartState.proConfig;
+  const colors = chartState.colors;
+  if (
+    !config ||
+    !colors ||
+    !Number.isFinite(price) ||
+    !Number.isFinite(pointY)
+  ) {
+    hidePerpsProCrosshairLabel();
+    return;
+  }
+  const priceRow = document.createElement('div');
+  priceRow.textContent = formatPerpsProCrosshairPrice(
+    price,
+    config.priceDecimals,
+  );
+  const change = formatPerpsProCrosshairChange(
+    price,
+    chartState.proReferencePrice,
+  );
+  proCrosshairLabel.replaceChildren(priceRow);
+  if (change) {
+    const changeRow = document.createElement('div');
+    changeRow.style.marginTop = '2px';
+    changeRow.textContent = change;
+    proCrosshairLabel.appendChild(changeRow);
+  }
+  proCrosshairLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairLabel.style.color = colors.crosshairLabel.text;
+  const labelHeight = change ? 42 : 24;
+  const maxTop = Math.max(0, containerEl.clientHeight - labelHeight);
+  proCrosshairLabel.style.top = `${Math.max(
+    0,
+    Math.min(maxTop, pointY - labelHeight / 2),
+  )}px`;
+  proCrosshairLabel.style.minHeight = `${labelHeight}px`;
+  proCrosshairLabel.style.display = 'block';
+}
+
 function getCandleAtTime(time: number): CandleStick | null {
   const candle =
     chartState.currentData.find(item => Number(item.time) === time) ?? null;
@@ -471,6 +541,7 @@ function clearPerpsProCrosshair() {
 
   chartState.crosshairActive = false;
   chartState.selectedPointX = null;
+  chartState.selectedPointY = null;
   chartState.selectedPrice = null;
   chartState.selectedTime = null;
 
@@ -481,6 +552,7 @@ function clearPerpsProCrosshair() {
   if (chartState.tooltip) {
     chartState.tooltip.style.display = 'none';
   }
+  hidePerpsProCrosshairLabel();
   updateMaLegend();
 }
 
@@ -507,6 +579,7 @@ function getPerpsProCrosshairSelection(param: PerpsProCrosshairEvent) {
   }
   return {
     pointX: point.x,
+    pointY: point.y,
     price,
     time,
   };
@@ -604,12 +677,14 @@ function hidePerpsProCrosshairSelection() {
   // publishing the exit tap. Keep the interaction active so that click clears
   // it instead of pinning it again.
   chartState.selectedPointX = null;
+  chartState.selectedPointY = null;
   chartState.selectedPrice = null;
   chartState.selectedTime = null;
   clearPerpsProCrosshairMarker();
   if (chartState.tooltip) {
     chartState.tooltip.style.display = 'none';
   }
+  hidePerpsProCrosshairLabel();
   updateMaLegend();
 }
 
@@ -619,10 +694,12 @@ function applyPerpsProCrosshairSelection(
 ) {
   chartState.crosshairActive = true;
   chartState.selectedPointX = selection.pointX;
+  chartState.selectedPointY = selection.pointY;
   chartState.selectedPrice = selection.price;
   chartState.selectedTime = selection.time;
   updateMaLegend(selection.time);
   renderPerpsProTooltip(candle, selection.pointX);
+  renderPerpsProCrosshairLabel(selection.price, selection.pointY);
   schedulePerpsProCrosshairMarker(selection.time, selection.price);
 }
 
@@ -1111,6 +1188,9 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   chartState.chart.applyOptions({
     crosshair: {
       mode: CrosshairMode.Normal,
+      horzLine: {
+        labelVisible: false,
+      },
     },
     localization: {
       priceFormatter: (value: number) =>
@@ -1396,6 +1476,22 @@ function handleUpdateTPSLPriceLines(data: TPSLPriceLines) {
   updateTPSLPriceLinesLogic(chartState, data);
 }
 
+function handleUpdatePerpsProReferencePrice(price: string | null) {
+  const parsed = Number(price);
+  chartState.proReferencePrice =
+    price != null && Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  if (
+    chartState.crosshairActive &&
+    chartState.selectedPrice != null &&
+    chartState.selectedPointY != null
+  ) {
+    renderPerpsProCrosshairLabel(
+      chartState.selectedPrice,
+      chartState.selectedPointY,
+    );
+  }
+}
+
 // Handle UPDATE_THEME message
 function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
   chartState.colors = colors;
@@ -1420,6 +1516,8 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
     chartState.tooltip.style.background = colors.tooltip.bg;
     chartState.tooltip.style.borderColor = colors.tooltip.border;
   }
+  proCrosshairLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairLabel.style.color = colors.crosshairLabel.text;
   ([7, 25, 99] as const).forEach(period => {
     chartState.maSeries[period]?.applyOptions({
       color: colors.ma[period],
@@ -1498,6 +1596,9 @@ function handleMessage(event: CustomEvent) {
           if (chartState.proConfig) {
             clearPerpsProCrosshair();
           }
+          break;
+        case 'UPDATE_PERPS_PRO_REFERENCE_PRICE':
+          handleUpdatePerpsProReferencePrice(tvMessage.price);
           break;
         case 'UPDATE_THEME':
           handleUpdateTheme(tvMessage.colors, tvMessage.description);

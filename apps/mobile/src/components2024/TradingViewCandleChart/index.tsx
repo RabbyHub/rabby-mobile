@@ -53,6 +53,7 @@ export interface TradingViewChartRef {
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
+  updatePerpsProReferencePrice: (price: string | null) => void;
 }
 
 const formatCandleItem = (candle: CandleStick) => {
@@ -175,6 +176,10 @@ const TradingViewCandleChart = ({
         border: colors2024['neutral-line'],
         title: colors2024['neutral-body'],
         value: colors2024['neutral-title-1'],
+      },
+      crosshairLabel: {
+        background: colors2024['neutral-black'],
+        text: colors2024['neutral-InvertHighlight'],
       },
     }),
     [backGroundColor, colors2024, isLight, variant],
@@ -363,11 +368,28 @@ const TradingViewCandleChart = ({
     });
   }, [isChartReady]);
 
+  const handleUpdatePerpsProReferencePrice = useCallback(
+    (price: string | null) => {
+      if (!isChartReady || !localWebViewRef.current) {
+        return;
+      }
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
+          type: 'UPDATE_PERPS_PRO_REFERENCE_PRICE',
+          price,
+        },
+      });
+    },
+    [isChartReady],
+  );
+
   useImperativeHandle(ref, () => ({
     clearCrosshair: handleClearCrosshair,
     setData: handleSetData,
     updateCandleData: handleUpdateCandleData,
     updateTPSLPriceLines: handleUpdateTPSLPriceLines,
+    updatePerpsProReferencePrice: handleUpdatePerpsProReferencePrice,
   }));
 
   // Remount WebView when app returns to foreground after being background for 30+ seconds

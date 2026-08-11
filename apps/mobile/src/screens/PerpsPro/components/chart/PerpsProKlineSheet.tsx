@@ -212,6 +212,15 @@ const PerpsProKlineChart: React.FC<{
     lastClearedIdentityRef.current = feed.identity;
   }, [feed.identity, isIntervalSwitchLoading]);
 
+  useEffect(() => {
+    if (readyVersion === 0 || chartFailed) {
+      return;
+    }
+    chartRef.current?.updatePerpsProReferencePrice(
+      market.marketData.prevDayPx || null,
+    );
+  }, [chartFailed, market.marketData.prevDayPx, readyVersion]);
+
   const showSkeleton =
     chartFailed ||
     readyVersion === 0 ||

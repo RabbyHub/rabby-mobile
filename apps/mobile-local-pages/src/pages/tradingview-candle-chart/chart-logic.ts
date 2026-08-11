@@ -63,6 +63,37 @@ export function formatProPrice(v: number, decimals: number): string {
   return normalizeSignedZero(v).toFixed(safeDecimals);
 }
 
+export function formatPerpsProCrosshairPrice(
+  price: number,
+  decimals: number,
+): string {
+  const formatted = formatProPrice(price, decimals);
+  if (formatted === '--') {
+    return formatted;
+  }
+  const [integer = '', fraction] = formatted.split('.');
+  const groupedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/gu, ',');
+  return fraction == null ? groupedInteger : `${groupedInteger}.${fraction}`;
+}
+
+export function formatPerpsProCrosshairChange(
+  price: number,
+  referencePrice: number | null,
+): string | null {
+  if (
+    !Number.isFinite(price) ||
+    referencePrice == null ||
+    !Number.isFinite(referencePrice) ||
+    referencePrice <= 0
+  ) {
+    return null;
+  }
+  const change = normalizeSignedZero(
+    ((price - referencePrice) / referencePrice) * 100,
+  );
+  return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+}
+
 export function formatProCompactNumber(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v) || v < 0) {
     return '--';
@@ -296,6 +327,8 @@ export interface ChartState {
   selectedPrice: number | null;
   selectedTime: number | null;
   selectedPointX: number | null;
+  selectedPointY: number | null;
+  proReferencePrice: number | null;
   currentData: TradingViewCandlestickData[];
 }
 
@@ -329,6 +362,8 @@ export function createChartState(): ChartState {
     selectedPrice: null,
     selectedTime: null,
     selectedPointX: null,
+    selectedPointY: null,
+    proReferencePrice: null,
     currentData: [],
   };
 }

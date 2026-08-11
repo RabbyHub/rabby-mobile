@@ -105,6 +105,10 @@ type DuplexDefs = {
             type: 'CLEAR_CROSSHAIR';
           }
         | {
+            type: 'UPDATE_PERPS_PRO_REFERENCE_PRICE';
+            price: string | null;
+          }
+        | {
             type: 'UPDATE_THEME';
             colors: {
               background: string;
@@ -128,6 +132,10 @@ type DuplexDefs = {
                 border: string;
                 title: string;
                 value: string;
+              };
+              crosshairLabel: {
+                background: string;
+                text: string;
               };
             };
             description: {

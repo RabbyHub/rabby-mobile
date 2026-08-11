@@ -53,6 +53,10 @@ export interface ChartColors {
     title: string;
     value: string;
   };
+  crosshairLabel: {
+    background: string;
+    text: string;
+  };
 }
 
 export interface ChartDescription {

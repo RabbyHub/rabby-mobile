@@ -15,6 +15,7 @@ const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
 const mockSetData = jest.fn();
 const mockUpdateCandleData = jest.fn();
+const mockUpdatePerpsProReferencePrice = jest.fn();
 const mockToolbarProps = jest.fn();
 const mockUsePerpsProKline = jest.fn();
 
@@ -56,6 +57,7 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
             };
           },
           updateCandleData: mockUpdateCandleData,
+          updatePerpsProReferencePrice: mockUpdatePerpsProReferencePrice,
           updateTPSLPriceLines: jest.fn(),
         }));
         return ReactModule.createElement(Pressable, {
@@ -153,6 +155,7 @@ const market = {
   displayBase: 'BTC',
   marketKey: 'hyperliquid::BTC',
   marketData: {
+    prevDayPx: '59000',
     pxDecimals: 0,
   },
   quoteAsset: 'USDC',
@@ -294,6 +297,10 @@ describe('PerpsProKlineSheet', () => {
 
     expect(screen.getByTestId('kline-overlay-skeleton')).toBeTruthy();
     fireEvent.press(screen.getByTestId('trading-view-chart'));
+
+    await waitFor(() =>
+      expect(mockUpdatePerpsProReferencePrice).toHaveBeenCalledWith('59000'),
+    );
 
     await waitFor(() => expect(mockSetData).toHaveBeenCalledTimes(1));
     expect(mockSetData).toHaveBeenCalledWith({
