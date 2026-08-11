@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
@@ -76,8 +76,10 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => ({
   PerpsProDottedUnderlineText: require('react-native').Text,
 }));
 
+const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
+
 jest.mock('../common/usePerpsProDismissKeyboard', () => ({
-  usePerpsProDismissKeyboard: () => (action: () => void) => action(),
+  usePerpsProDismissKeyboard: () => mockDismissKeyboardThen,
 }));
 
 jest.mock('../positions/PerpsProLeverageSheet', () => ({
@@ -181,6 +183,11 @@ const controller = (
   } as unknown as PerpsProTradeController);
 
 describe('PerpsProTradeForm order matrix', () => {
+  beforeEach(() => {
+    mockDismissKeyboardThen.mockReset();
+    mockDismissKeyboardThen.mockImplementation(action => action());
+  });
+
   it('uses the shared selector font and the isolated stylistic I', () => {
     render(
       <PerpsProTradeForm controller={controller()} onDeposit={jest.fn()} />,
@@ -492,6 +499,37 @@ describe('PerpsProTradeForm order matrix', () => {
         screen.getByTestId('perps-pro-trade-button-buy').props.style,
       ),
     ).toMatchObject({ height: 40 });
+  });
+
+  it('waits for keyboard dismissal before requesting Buy or Sell review', () => {
+    const trade = controller();
+    let pendingAction: (() => void) | null = null;
+    mockDismissKeyboardThen.mockImplementation(action => {
+      pendingAction = action;
+    });
+    render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(mockDismissKeyboardThen).toHaveBeenCalledTimes(1);
+    expect(trade.requestReview).not.toHaveBeenCalled();
+
+    act(() => {
+      pendingAction?.();
+    });
+    expect(trade.requestReview).toHaveBeenCalledTimes(1);
+    expect(trade.requestReview).toHaveBeenLastCalledWith('buy');
+
+    pendingAction = null;
+    trade.requestReview.mockClear();
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-sell'));
+    expect(mockDismissKeyboardThen).toHaveBeenCalledTimes(2);
+    expect(trade.requestReview).not.toHaveBeenCalled();
+
+    act(() => {
+      pendingAction?.();
+    });
+    expect(trade.requestReview).toHaveBeenCalledTimes(1);
+    expect(trade.requestReview).toHaveBeenLastCalledWith('sell');
   });
 
   it('makes the Available value and USDC text part of the Deposit target', () => {

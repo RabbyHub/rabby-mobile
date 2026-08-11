@@ -305,7 +305,9 @@ export const PerpsProTradeForm: React.FC<{
                     side === 'buy' ? 'buyLong' : 'sellShort'
                   }`,
                 )}
-                onPress={() => void controller.requestReview(side)}
+                onPress={() =>
+                  dismissKeyboardThen(() => controller.requestReview(side))
+                }
                 side={side}
                 subtitle={
                   sliderAmount == null
