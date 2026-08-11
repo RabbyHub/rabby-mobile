@@ -133,4 +133,73 @@ describe('usePerpsProTpSl', () => {
       tp: { mode: 'roi', rawMagnitude: '' },
     });
   });
+
+  it('clears only the switched leg and does not reinterpret its raw value', () => {
+    const onChange = jest.fn();
+    const hook = renderHook(() =>
+      usePerpsProTpSl({
+        draft: {
+          enabled: true,
+          sl: { mode: 'pnl', rawMagnitude: '20' },
+          tp: { mode: 'price', rawMagnitude: '100' },
+        },
+        leverage: 10,
+        onChange,
+        order,
+        pxDecimals: 2,
+        previewFacts: { buy: null, sell: null },
+        szDecimals: 2,
+      }),
+    );
+
+    act(() => hook.result.current.setMode('tp', 'roi'));
+
+    expect(onChange).toHaveBeenCalledWith({
+      enabled: true,
+      sl: { mode: 'pnl', rawMagnitude: '20' },
+      tp: { mode: 'roi', rawMagnitude: '' },
+    });
+  });
+
+  it('preserves the raw value when the selected mode does not change', () => {
+    const onChange = jest.fn();
+    const hook = renderHook(() =>
+      usePerpsProTpSl({
+        draft: {
+          enabled: true,
+          sl: { mode: 'pnl', rawMagnitude: '20' },
+          tp: { mode: 'price', rawMagnitude: '100' },
+        },
+        leverage: 10,
+        onChange,
+        order,
+        pxDecimals: 2,
+        previewFacts: { buy: null, sell: null },
+        szDecimals: 2,
+      }),
+    );
+
+    act(() => hook.result.current.setMode('tp', 'price'));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps the leg focused when its value is cleared while editing', () => {
+    const hook = renderHook(() =>
+      usePerpsProTpSl({
+        draft: createPerpsProAttachedTpSlDraft(),
+        leverage: 10,
+        onChange: jest.fn(),
+        order,
+        pxDecimals: 2,
+        previewFacts: { buy: null, sell: null },
+        szDecimals: 2,
+      }),
+    );
+
+    act(() => hook.result.current.setFocusedLeg('tp'));
+    act(() => hook.result.current.setRawMagnitude('tp', ''));
+
+    expect(hook.result.current.focusedLeg).toBe('tp');
+  });
 });

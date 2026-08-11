@@ -2,12 +2,29 @@ import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.sv
 import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
+import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+
+export const getPerpsProTradeSelectFontStyle = (
+  platform: typeof Platform.OS,
+): TextStyle =>
+  platform === 'android'
+    ? { fontFamily: 'SF-Pro-Rounded-Medium' }
+    : { fontFamily: 'SF Pro', fontWeight: '500' };
+
+const tradeSelectFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
 
 export const PerpsProTradeSelect: React.FC<{
   label: string;
@@ -15,29 +32,34 @@ export const PerpsProTradeSelect: React.FC<{
   onPress?: () => void;
   showCaret?: boolean;
   style?: ViewStyle;
-}> = React.memo(({ disabled, label, onPress, showCaret = true, style }) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
-  return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.select, disabled ? styles.disabled : null, style]}>
-      <Text numberOfLines={1} style={styles.selectText}>
-        {label}
-      </Text>
-      {showCaret ? (
-        <View style={styles.caret} testID="perps-pro-trade-select-caret">
-          <RcPrecisionCaret
-            color={colors2024['neutral-secondary']}
-            height={6}
-            width={8}
-          />
-        </View>
-      ) : null}
-    </Pressable>
-  );
-});
+  textStyle?: StyleProp<TextStyle>;
+}> = React.memo(
+  ({ disabled, label, onPress, showCaret = true, style, textStyle }) => {
+    const { colors2024, styles } = useTheme2024({ getStyle });
+    return (
+      <Pressable
+        accessibilityRole="button"
+        disabled={disabled}
+        onPress={onPress}
+        style={[styles.select, disabled ? styles.disabled : null, style]}>
+        <Text
+          numberOfLines={1}
+          style={[styles.selectText, tradeSelectFontStyle, textStyle]}>
+          {label}
+        </Text>
+        {showCaret ? (
+          <View style={styles.caret} testID="perps-pro-trade-select-caret">
+            <RcPrecisionCaret
+              color={colors2024['neutral-secondary']}
+              height={6}
+              width={8}
+            />
+          </View>
+        ) : null}
+      </Pressable>
+    );
+  },
+);
 
 PerpsProTradeSelect.displayName = 'PerpsProTradeSelect';
 
@@ -103,12 +125,17 @@ export const PerpsProTradeCheckbox: React.FC<{
       onPress={onPress}
       style={[styles.checkboxRow, disabled ? styles.disabled : null]}>
       {checked ? (
-        <RcIconCheckboxFilled height={16} width={16} />
+        <RcIconCheckboxFilled
+          height={20}
+          testID="perps-pro-trade-checkbox-icon"
+          width={20}
+        />
       ) : (
         <RcIconCheckboxEmpty
           color={colors2024['neutral-secondary']}
-          height={16}
-          width={16}
+          height={20}
+          testID="perps-pro-trade-checkbox-icon"
+          width={20}
         />
       )}
       <PerpsProDottedUnderlineText style={styles.checkboxLabel}>
@@ -158,7 +185,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   selectText: {
     color: colors2024['neutral-title-1'],
     flex: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

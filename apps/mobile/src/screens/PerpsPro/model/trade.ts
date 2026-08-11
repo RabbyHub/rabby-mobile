@@ -77,7 +77,7 @@ export const sanitizePerpsProDecimalInput = (
   value: string,
   maxDecimals: number,
 ) => {
-  const normalized = value.replace(/[^\d.]/g, '');
+  const normalized = value.replace(/,/g, '.').replace(/[^\d.]/g, '');
   const [integer = '', ...fractionParts] = normalized.split('.');
   const fraction = fractionParts.join('').slice(0, Math.max(0, maxDecimals));
   const hasDecimal = normalized.includes('.') && maxDecimals > 0;

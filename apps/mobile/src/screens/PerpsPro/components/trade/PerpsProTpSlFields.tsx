@@ -8,12 +8,13 @@ import { useTranslation } from 'react-i18next';
 import type {
   PerpsProAttachedTpSlDraft,
   PerpsProTpSlLegKind,
-  PerpsProTpSlMode,
 } from '../../model/tpsl';
 import type { PerpsProTpSlController } from '../../scene/usePerpsProTpSl';
+import { getPerpsProTpSlErrorText } from '../../utils/tpSlError';
+import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { PerpsProTpSlInput } from './PerpsProTpSlInput';
+import { PerpsProTpSlModeSheet } from './PerpsProTpSlModeSheet';
 import { PerpsProTpSlTooltip } from './PerpsProTpSlTooltip';
-import { PerpsProTradeOptionSheet } from './PerpsProTradeOptionSheet';
 import { PerpsProTradeCheckbox } from './PerpsProTradePrimitives';
 
 export const PerpsProTpSlFields: React.FC<{
@@ -24,17 +25,8 @@ export const PerpsProTpSlFields: React.FC<{
 }> = React.memo(({ controller, draft, pxDecimals, quoteAsset }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const dismissKeyboardThen = usePerpsProDismissKeyboard();
   const [modeSheet, setModeSheet] = useState<PerpsProTpSlLegKind | null>(null);
-  const modeOptions = useMemo<
-    Array<{ label: string; value: PerpsProTpSlMode }>
-  >(
-    () => [
-      { label: t('page.perps.pro.trade.price'), value: 'price' },
-      { label: t('page.perps.pro.trade.pnl'), value: 'pnl' },
-      { label: t('page.perps.pro.trade.roi'), value: 'roi' },
-    ],
-    [t],
-  );
   const errors = useMemo(
     () => ({
       common: controller.submitErrors.find(error => !error.leg),
@@ -51,10 +43,15 @@ export const PerpsProTpSlFields: React.FC<{
     draft.enabled &&
     focused != null &&
     !!draft[focused].rawMagnitude &&
-    buyPreview != null &&
-    sellPreview != null;
+    (buyPreview != null || sellPreview != null);
   const errorText = (error: (typeof controller.submitErrors)[number] | null) =>
-    error ? t(`page.perps.pro.trade.tpSlError.${error.code}`) : null;
+    error
+      ? getPerpsProTpSlErrorText({
+          context: controller.submitContext,
+          error,
+          t: (key, options) => t(key, options),
+        })
+      : null;
 
   return (
     <View style={styles.container} testID="perps-pro-tpsl-fields">
@@ -65,37 +62,58 @@ export const PerpsProTpSlFields: React.FC<{
         onPress={() => controller.setEnabled(!draft.enabled)}
       />
       {draft.enabled ? (
-        <View style={styles.fields}>
-          {tooltipVisible && focusedMode && buyPreview && sellPreview ? (
-            <PerpsProTpSlTooltip
-              buy={buyPreview}
-              mode={focusedMode}
-              pxDecimals={pxDecimals}
-              quoteAsset={quoteAsset}
-              sell={sellPreview}
-            />
-          ) : null}
-          <View style={styles.row}>
+        <View style={styles.fields} testID="perps-pro-tpsl-inputs">
+          <View
+            style={[styles.leg, focused === 'tp' ? styles.activeLeg : null]}>
+            {tooltipVisible && focused === 'tp' && focusedMode ? (
+              <PerpsProTpSlTooltip
+                buy={buyPreview}
+                mode={focusedMode}
+                pxDecimals={pxDecimals}
+                sell={sellPreview}
+              />
+            ) : null}
             <PerpsProTpSlInput
               error={errorText(errors.tp ?? null)}
               kind="tp"
               label={t('page.perps.pro.trade.takeProfit')}
+              maxDecimals={draft.tp.mode === 'price' ? pxDecimals : 8}
               mode={draft.tp.mode}
               onBlur={() => controller.setFocusedLeg(null)}
               onChangeText={value => controller.setRawMagnitude('tp', value)}
               onFocus={() => controller.setFocusedLeg('tp')}
-              onPressMode={() => setModeSheet('tp')}
+              onPressMode={() => {
+                controller.setFocusedLeg(null);
+                dismissKeyboardThen(() => setModeSheet('tp'));
+              }}
+              quoteAsset={quoteAsset}
               value={draft.tp.rawMagnitude}
             />
+          </View>
+          <View
+            style={[styles.leg, focused === 'sl' ? styles.activeLeg : null]}>
+            {tooltipVisible && focused === 'sl' && focusedMode ? (
+              <PerpsProTpSlTooltip
+                buy={buyPreview}
+                mode={focusedMode}
+                pxDecimals={pxDecimals}
+                sell={sellPreview}
+              />
+            ) : null}
             <PerpsProTpSlInput
               error={errorText(errors.sl ?? null)}
               kind="sl"
               label={t('page.perps.pro.trade.stopLoss')}
+              maxDecimals={draft.sl.mode === 'price' ? pxDecimals : 8}
               mode={draft.sl.mode}
               onBlur={() => controller.setFocusedLeg(null)}
               onChangeText={value => controller.setRawMagnitude('sl', value)}
               onFocus={() => controller.setFocusedLeg('sl')}
-              onPressMode={() => setModeSheet('sl')}
+              onPressMode={() => {
+                controller.setFocusedLeg(null);
+                dismissKeyboardThen(() => setModeSheet('sl'));
+              }}
+              quoteAsset={quoteAsset}
               value={draft.sl.rawMagnitude}
             />
           </View>
@@ -104,14 +122,12 @@ export const PerpsProTpSlFields: React.FC<{
           ) : null}
         </View>
       ) : null}
-      <PerpsProTradeOptionSheet<PerpsProTpSlMode>
+      <PerpsProTpSlModeSheet
         onClose={() => setModeSheet(null)}
         onSelect={mode => {
           if (modeSheet) controller.setMode(modeSheet, mode);
         }}
-        options={modeOptions}
         selected={modeSheet ? draft[modeSheet].mode : 'price'}
-        title={t('page.perps.pro.trade.tpSlSettings')}
         visible={modeSheet != null}
       />
     </View>
@@ -121,9 +137,10 @@ export const PerpsProTpSlFields: React.FC<{
 PerpsProTpSlFields.displayName = 'PerpsProTpSlFields';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: { gap: 6 },
-  fields: { position: 'relative' },
-  row: { flexDirection: 'row', gap: 6 },
+  container: { gap: 8 },
+  fields: { gap: 16, position: 'relative' },
+  leg: { position: 'relative', zIndex: 1 },
+  activeLeg: { zIndex: 4 },
   commonError: {
     color: colors2024['red-default'],
     fontFamily: 'SF Pro',

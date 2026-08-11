@@ -1,24 +1,32 @@
 import RcIconAmountUnitArrow from '@/assets2024/icons/perps/PerpsProAmountUnitArrow.svg';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
+
+const noop = () => undefined;
+
 export const PerpsProTradeAmountField: React.FC<{
   label: string;
+  maxDecimals: number;
   onChangeText?: (value: string) => void;
   onBlur?: () => void;
   onFocus?: () => void;
+  onPressIn?: () => void;
   onToggleUnit?: () => void;
   unit: string;
   value?: string;
 }> = React.memo(
   ({
     label,
+    maxDecimals,
     onBlur,
     onChangeText,
     onFocus,
+    onPressIn,
     onToggleUnit,
     unit,
     value = '',
@@ -31,28 +39,34 @@ export const PerpsProTradeAmountField: React.FC<{
       <View style={styles.container} testID="perps-pro-trade-amount-field">
         <View style={styles.amountArea}>
           {showFloatingLabel ? (
-            <Text style={styles.floatingLabel}>{label}</Text>
-          ) : null}
-          <TextInput
+            <Text style={styles.floatingLabel} testID="perps-pro-amount-label">
+              {label}
+            </Text>
+          ) : (
+            <Text
+              pointerEvents="none"
+              style={styles.centeredPlaceholder}
+              testID="perps-pro-amount-placeholder">
+              {label}
+            </Text>
+          )}
+          <PerpsProDecimalTextInput
             accessibilityLabel={label}
-            keyboardType="decimal-pad"
+            cursorColor={colors2024['brand-default']}
             maxFontSizeMultiplier={1.2}
-            multiline={false}
+            maxDecimals={maxDecimals}
             onBlur={() => {
               setFocused(false);
               onBlur?.();
             }}
-            onChangeText={onChangeText}
+            onChangeText={onChangeText ?? noop}
             onFocus={() => {
               setFocused(true);
               onFocus?.();
             }}
-            placeholder={showFloatingLabel ? undefined : label}
-            placeholderTextColor={colors2024['neutral-info']}
-            style={[
-              styles.input,
-              showFloatingLabel ? styles.inputWithLabel : null,
-            ]}
+            onPressIn={onPressIn}
+            selectionColor={colors2024['brand-default']}
+            style={styles.input}
             value={value}
           />
         </View>
@@ -115,22 +129,31 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     top: 4,
   },
+  centeredPlaceholder: {
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    left: 0,
+    lineHeight: 18,
+    position: 'absolute',
+    right: 0,
+    textAlign: 'center',
+    top: 11,
+  },
   input: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     height: 40,
+    includeFontPadding: false,
     lineHeight: 18,
-    padding: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 12,
     textAlign: 'center',
-  },
-  inputWithLabel: {
-    height: 18,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 16,
+    textAlignVertical: 'center',
   },
   unitArea: {
     alignItems: 'center',

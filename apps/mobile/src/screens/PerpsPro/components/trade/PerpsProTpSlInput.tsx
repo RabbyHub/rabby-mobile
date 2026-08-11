@@ -1,4 +1,5 @@
-import { Text, TextInput } from '@/components/Typography';
+import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
+import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
@@ -6,49 +7,71 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTpSlMode } from '../../model/tpsl';
+import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 
 export const PerpsProTpSlInput: React.FC<{
   error?: string | null;
   kind: 'sl' | 'tp';
   label: string;
+  maxDecimals: number;
   mode: PerpsProTpSlMode;
   onBlur: () => void;
   onChangeText: (value: string) => void;
   onFocus: () => void;
   onPressMode: () => void;
+  quoteAsset: string;
   value: string;
 }> = React.memo(
   ({
     error,
     kind,
     label,
+    maxDecimals,
     mode,
     onBlur,
     onChangeText,
     onFocus,
     onPressMode,
+    quoteAsset,
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const [focused, setFocused] = useState(false);
-    const modeLabel = t(`page.perps.pro.trade.${mode}`);
+    const modeLabel = t(
+      `page.perps.pro.trade.${mode === 'roi' ? 'roiInput' : mode}`,
+    );
+    const unitLabel = mode === 'roi' ? '%' : quoteAsset;
     const showNegativePrefix = kind === 'sl' && mode !== 'price' && !!value;
     const showFloatingLabel = focused || !!value;
     return (
       <View style={styles.container}>
         <Text style={styles.legLabel}>{label}</Text>
-        <View style={[styles.field, error ? styles.fieldError : null]}>
+        <View style={styles.field} testID={`perps-pro-tpsl-${kind}-field`}>
           <View style={styles.inputArea}>
             {showFloatingLabel ? (
-              <Text style={styles.floatingLabel}>{modeLabel}</Text>
-            ) : null}
+              <Text
+                pointerEvents="none"
+                style={styles.floatingLabel}
+                testID={`perps-pro-tpsl-${kind}-label`}>
+                {modeLabel}
+              </Text>
+            ) : (
+              <Text
+                pointerEvents="none"
+                style={styles.centeredPlaceholder}
+                testID={`perps-pro-tpsl-${kind}-placeholder`}>
+                {modeLabel}
+              </Text>
+            )}
             {showNegativePrefix ? (
               <Text style={styles.negativePrefix}>−</Text>
             ) : null}
-            <TextInput
+            <PerpsProDecimalTextInput
               accessibilityLabel={label}
-              keyboardType="decimal-pad"
+              cursorColor={colors2024['brand-default']}
+              maxFontSizeMultiplier={1.2}
+              maxDecimals={maxDecimals}
               onBlur={() => {
                 setFocused(false);
                 onBlur();
@@ -58,11 +81,9 @@ export const PerpsProTpSlInput: React.FC<{
                 setFocused(true);
                 onFocus();
               }}
-              placeholder={showFloatingLabel ? undefined : modeLabel}
-              placeholderTextColor={colors2024['neutral-info']}
+              selectionColor={colors2024['brand-default']}
               style={[
                 styles.input,
-                showFloatingLabel ? styles.inputWithLabel : null,
                 showNegativePrefix ? styles.inputWithNegativePrefix : null,
               ]}
               testID={`perps-pro-tpsl-${kind}-input`}
@@ -75,11 +96,29 @@ export const PerpsProTpSlInput: React.FC<{
             onPress={onPressMode}
             style={styles.mode}
             testID={`perps-pro-tpsl-${kind}-mode`}>
-            <Text numberOfLines={1} style={styles.modeText}>
-              {modeLabel}
-            </Text>
-            <Text style={styles.caret}>⌄</Text>
+            <View
+              style={styles.modeContent}
+              testID={`perps-pro-tpsl-${kind}-mode-content`}>
+              <Text
+                numberOfLines={1}
+                style={styles.modeText}
+                testID={`perps-pro-tpsl-${kind}-unit`}>
+                {unitLabel}
+              </Text>
+              <View
+                style={styles.caret}
+                testID={`perps-pro-tpsl-${kind}-caret`}>
+                <RcPrecisionCaret
+                  color={colors2024['neutral-secondary']}
+                  height={6}
+                  width={8}
+                />
+              </View>
+            </View>
           </Pressable>
+          {error ? (
+            <View pointerEvents="none" style={styles.fieldError} />
+          ) : null}
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
@@ -90,76 +129,111 @@ export const PerpsProTpSlInput: React.FC<{
 PerpsProTpSlInput.displayName = 'PerpsProTpSlInput';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: { flex: 1, gap: 3, minWidth: 0 },
+  container: { gap: 4, minWidth: 0 },
   legLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 12,
+    lineHeight: 16,
   },
   field: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
-    borderColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
-    borderWidth: 1,
     flexDirection: 'row',
+    gap: 6,
     height: 40,
     overflow: 'hidden',
+    paddingHorizontal: 8,
   },
-  fieldError: { borderColor: colors2024['red-default'] },
+  fieldError: {
+    borderColor: colors2024['red-default'],
+    borderRadius: 6,
+    borderWidth: 1,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   inputArea: { flex: 1, height: '100%', minWidth: 0, position: 'relative' },
   floatingLabel: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 9,
-    left: 6,
-    lineHeight: 11,
+    fontFamily: 'SF Pro',
+    fontSize: 10,
+    fontWeight: '500',
+    left: 0,
+    lineHeight: 12,
     position: 'absolute',
-    right: 2,
+    right: 0,
+    textAlign: 'center',
     top: 4,
+  },
+  centeredPlaceholder: {
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '500',
+    left: 0,
+    lineHeight: 18,
+    position: 'absolute',
+    right: 0,
+    textAlign: 'center',
+    top: 11,
   },
   input: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
+    fontFamily: 'SF Pro',
+    fontSize: 14,
     fontWeight: '500',
-    height: 38,
-    lineHeight: 17,
-    padding: 0,
-    paddingHorizontal: 6,
+    height: 40,
+    includeFontPadding: false,
+    lineHeight: 18,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 12,
+    textAlign: 'center',
+    textAlignVertical: 'center',
   },
-  inputWithLabel: { paddingTop: 11 },
-  inputWithNegativePrefix: { paddingLeft: 15 },
+  inputWithNegativePrefix: { paddingLeft: 9 },
   negativePrefix: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
-    left: 6,
-    lineHeight: 17,
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    left: 0,
+    lineHeight: 18,
     position: 'absolute',
-    top: 17,
+    top: 18,
   },
   mode: {
-    alignItems: 'center',
     borderLeftColor: colors2024['neutral-line'],
     borderLeftWidth: 1,
+    height: 24,
+    width: 52,
+  },
+  modeContent: {
+    alignItems: 'center',
     flexDirection: 'row',
     gap: 2,
-    height: 24,
-    paddingHorizontal: 5,
+    height: 16,
+    left: 6,
+    position: 'absolute',
+    top: 4,
+    width: 44,
   },
   modeText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 10,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
     fontWeight: '500',
-    lineHeight: 13,
+    lineHeight: 16,
+    textAlign: 'center',
+    width: 34,
   },
   caret: {
-    color: colors2024['neutral-secondary'],
-    fontSize: 9,
-    lineHeight: 12,
+    height: 6,
+    transform: [{ rotate: '180deg' }],
+    width: 8,
   },
   error: {
     color: colors2024['red-default'],

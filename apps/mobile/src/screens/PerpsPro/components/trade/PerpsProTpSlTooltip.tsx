@@ -1,3 +1,4 @@
+import RcTooltipTail from '@/assets2024/icons/perps/PerpsProTpSlTooltipTail.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -9,42 +10,72 @@ import type {
   PerpsProEvaluatedTpSlLeg,
   PerpsProTpSlMode,
 } from '../../model/tpsl';
-import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
-
-const signed = (value: string) => {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return '-';
-  return `${number > 0 ? '+' : ''}${formatPerpsProDecimal(number, 2)}`;
-};
+import {
+  formatPerpsProPrice,
+  formatPerpsProSignedDecimal,
+} from '../../utils/format';
 
 export const PerpsProTpSlTooltip: React.FC<{
-  buy: PerpsProEvaluatedTpSlLeg;
+  buy: PerpsProEvaluatedTpSlLeg | null;
   mode: PerpsProTpSlMode;
   pxDecimals: number;
-  quoteAsset: string;
-  sell: PerpsProEvaluatedTpSlLeg;
-}> = React.memo(({ buy, mode, pxDecimals, quoteAsset, sell }) => {
-  const { styles } = useTheme2024({ getStyle });
+  sell: PerpsProEvaluatedTpSlLeg | null;
+}> = React.memo(({ buy, mode, pxDecimals, sell }) => {
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const value = (leg: PerpsProEvaluatedTpSlLeg) =>
     mode === 'price'
-      ? `${signed(leg.estimatedPnl)} ${quoteAsset} / ${signed(
-          leg.estimatedRoi,
-        )}%`
-      : `${formatPerpsProPrice(leg.triggerPrice, pxDecimals)} ${quoteAsset}`;
+      ? `${formatPerpsProSignedDecimal(
+          leg.estimatedPnl,
+          2,
+        )}(${formatPerpsProSignedDecimal(leg.estimatedRoi, 2)}%)`
+      : formatPerpsProPrice(leg.triggerPrice, pxDecimals);
+  const labelKeys =
+    mode === 'price'
+      ? (['buyProfit', 'sellProfit'] as const)
+      : (['buyTrigger', 'sellTrigger'] as const);
+  const singleDirection = buy == null || sell == null;
   return (
-    <View style={styles.tooltip} testID="perps-pro-tpsl-tooltip">
-      <View style={styles.row}>
-        <Text style={styles.label}>{t('page.perps.pro.trade.buyLong')}</Text>
-        <Text numberOfLines={1} style={styles.value}>
-          {value(buy)}
-        </Text>
+    <View
+      pointerEvents="none"
+      style={[
+        styles.tooltip,
+        mode === 'price' ? styles.priceTooltip : styles.triggerTooltip,
+        singleDirection ? styles.singleDirectionTooltip : null,
+      ]}
+      testID="perps-pro-tpsl-tooltip">
+      <View
+        style={[
+          styles.body,
+          singleDirection ? styles.singleDirectionBody : null,
+        ]}
+        testID="perps-pro-tpsl-tooltip-body">
+        {buy ? (
+          <Text numberOfLines={1} style={styles.line}>
+            {t(`page.perps.pro.trade.${labelKeys[0]}`)}{' '}
+            <Text style={styles.buyValue}>{value(buy)}</Text>
+          </Text>
+        ) : null}
+        {sell ? (
+          <Text numberOfLines={1} style={styles.line}>
+            {t(`page.perps.pro.trade.${labelKeys[1]}`)}{' '}
+            <Text style={styles.sellValue}>{value(sell)}</Text>
+          </Text>
+        ) : null}
       </View>
-      <View style={styles.row}>
-        <Text style={styles.label}>{t('page.perps.pro.trade.sellShort')}</Text>
-        <Text numberOfLines={1} style={styles.value}>
-          {value(sell)}
-        </Text>
+      <View
+        style={[
+          styles.tail,
+          mode === 'price' ? styles.priceTail : styles.triggerTail,
+          singleDirection ? styles.singleDirectionTail : null,
+        ]}
+        testID="perps-pro-tpsl-tooltip-tail">
+        <RcTooltipTail
+          color={colors2024['neutral-black']}
+          height={8}
+          style={styles.tailIcon}
+          width={12}
+        />
       </View>
     </View>
   );
@@ -54,31 +85,41 @@ PerpsProTpSlTooltip.displayName = 'PerpsProTpSlTooltip';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tooltip: {
-    backgroundColor: colors2024['neutral-title-1'],
-    borderRadius: 6,
-    bottom: 47,
-    gap: 3,
     left: 0,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
     position: 'absolute',
-    right: 0,
+    top: -27,
     zIndex: 4,
   },
-  row: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  label: {
-    color: colors2024['neutral-bg-1'],
+  priceTooltip: { width: 206 },
+  triggerTooltip: { width: 139 },
+  singleDirectionTooltip: { top: -11 },
+  body: {
+    backgroundColor: colors2024['neutral-black'],
+    borderRadius: 6,
+    gap: 0,
+    height: 40,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  singleDirectionBody: { height: 24 },
+  line: {
+    color: colors2024['neutral-title-2'],
     fontFamily: 'SF Pro',
-    fontSize: 9,
-    lineHeight: 12,
+    fontSize: 12,
+    lineHeight: 16,
   },
-  value: {
-    color: colors2024['neutral-bg-1'],
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 9,
-    fontWeight: '500',
-    lineHeight: 12,
-    textAlign: 'right',
+  buyValue: { color: colors2024['red-default'] },
+  sellValue: { color: colors2024['green-default'] },
+  tail: {
+    alignItems: 'center',
+    height: 11,
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 36,
+    width: 16,
   },
+  priceTail: { left: 67 },
+  triggerTail: { left: 33 },
+  singleDirectionTail: { top: 20 },
+  tailIcon: { transform: [{ rotate: '180deg' }] },
 }));

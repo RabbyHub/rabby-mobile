@@ -26,6 +26,7 @@ export type PerpsProTpSlValidationErrorCode =
   | 'liquidationUnavailable'
   | 'insufficientDepth'
   | 'marketBookUnavailable'
+  | 'nonPositiveTrigger'
   | 'oppositePosition'
   | 'outsideLiquidationRange'
   | 'reduceOnlyUnsupported';
@@ -86,7 +87,7 @@ export const getPerpsProAttachedTpSlCompatibilityError = ({
 }): PerpsProTpSlValidationErrorCode | null => {
   if (orderType === 'conditional') return 'conditionalUnsupported';
   if (reduceOnly) return 'reduceOnlyUnsupported';
-  if (bboEnabled) return 'bboUnsupported';
+  if (orderType === 'limit' && bboEnabled) return 'bboUnsupported';
   if (orderType === 'limit' && tif === 'Ioc') return 'iocUnsupported';
   return null;
 };
@@ -126,7 +127,17 @@ export const normalizePerpsProTpSlPrice = ({
   return normalized.gt(0) ? normalized.toFixed() : null;
 };
 
-export const previewPerpsProTpSlLeg = ({
+type PerpsProTpSlLegCalculation =
+  | {
+      leg: PerpsProEvaluatedTpSlLeg;
+      status: 'ok';
+    }
+  | {
+      leg: null;
+      status: 'empty' | 'invalidInput' | 'nonPositiveTrigger';
+    };
+
+const calculatePerpsProTpSlLeg = ({
   baseSize,
   draft,
   expectedEntryPrice,
@@ -142,13 +153,15 @@ export const previewPerpsProTpSlLeg = ({
   leverage: number;
   side: 'buy' | 'sell';
   szDecimals: number;
-}): PerpsProEvaluatedTpSlLeg | null => {
-  if (!draft.rawMagnitude.trim()) return null;
+}): PerpsProTpSlLegCalculation => {
+  if (!draft.rawMagnitude.trim()) return { leg: null, status: 'empty' };
   const raw = positive(draft.rawMagnitude);
   const entry = positive(expectedEntryPrice);
   const size = positive(baseSize);
   const leverageValue = positive(leverage);
-  if (!raw || !entry || !size || !leverageValue) return null;
+  if (!raw || !entry || !size || !leverageValue) {
+    return { leg: null, status: 'invalidInput' };
+  }
 
   const isBuy = side === 'buy';
   const signedTarget = kind === 'tp' ? raw : raw.negated();
@@ -165,32 +178,47 @@ export const previewPerpsProTpSlLeg = ({
       ? entry.multipliedBy(new BigNumber(1).plus(returnFraction))
       : entry.multipliedBy(new BigNumber(1).minus(returnFraction));
   }
+  if (!trigger.isFinite()) {
+    return { leg: null, status: 'invalidInput' };
+  }
+  if (draft.mode !== 'price' && trigger.lte(0)) {
+    return { leg: null, status: 'nonPositiveTrigger' };
+  }
 
   const normalizedTrigger = normalizePerpsProTpSlPrice({
     price: trigger,
     szDecimals,
   });
-  if (!normalizedTrigger) return null;
+  if (!normalizedTrigger) return { leg: null, status: 'invalidInput' };
   const normalized = new BigNumber(normalizedTrigger);
   const pnl = (isBuy ? normalized.minus(entry) : entry.minus(normalized))
     .multipliedBy(size)
     .decimalPlaces(20, BigNumber.ROUND_DOWN);
   const margin = entry.multipliedBy(size).dividedBy(leverageValue);
-  if (!margin.isFinite() || margin.lte(0)) return null;
+  if (!margin.isFinite() || margin.lte(0)) {
+    return { leg: null, status: 'invalidInput' };
+  }
 
   return {
-    estimatedPnl: pnl.toFixed(),
-    estimatedRoi: pnl
-      .dividedBy(margin)
-      .multipliedBy(100)
-      .decimalPlaces(20, BigNumber.ROUND_DOWN)
-      .toFixed(),
-    kind,
-    mode: draft.mode,
-    rawMagnitude: draft.rawMagnitude,
-    triggerPrice: normalizedTrigger,
+    leg: {
+      estimatedPnl: pnl.toFixed(),
+      estimatedRoi: pnl
+        .dividedBy(margin)
+        .multipliedBy(100)
+        .decimalPlaces(20, BigNumber.ROUND_DOWN)
+        .toFixed(),
+      kind,
+      mode: draft.mode,
+      rawMagnitude: draft.rawMagnitude,
+      triggerPrice: normalizedTrigger,
+    },
+    status: 'ok',
   };
 };
+
+export const previewPerpsProTpSlLeg = (
+  input: Parameters<typeof calculatePerpsProTpSlLeg>[0],
+): PerpsProEvaluatedTpSlLeg | null => calculatePerpsProTpSlLeg(input).leg;
 
 const validateDirection = ({
   entry,
@@ -242,7 +270,7 @@ export const evaluatePerpsProAttachedTpSl = ({
     errors.push({ code: 'oppositePosition' });
   }
 
-  const tp = previewPerpsProTpSlLeg({
+  const tpCalculation = calculatePerpsProTpSlLeg({
     baseSize,
     draft: draft.tp,
     expectedEntryPrice,
@@ -251,7 +279,7 @@ export const evaluatePerpsProAttachedTpSl = ({
     side,
     szDecimals,
   });
-  const sl = previewPerpsProTpSlLeg({
+  const slCalculation = calculatePerpsProTpSlLeg({
     baseSize,
     draft: draft.sl,
     expectedEntryPrice,
@@ -260,16 +288,25 @@ export const evaluatePerpsProAttachedTpSl = ({
     side,
     szDecimals,
   });
+  const tp = tpCalculation.leg;
+  const sl = slCalculation.leg;
 
   if (!draft.tp.rawMagnitude.trim() && !draft.sl.rawMagnitude.trim()) {
     errors.push({ code: 'atLeastOneRequired' });
   }
-  if (draft.tp.rawMagnitude.trim() && !tp) {
-    errors.push({ code: 'invalidInput', leg: 'tp' });
-  }
-  if (draft.sl.rawMagnitude.trim() && !sl) {
-    errors.push({ code: 'invalidInput', leg: 'sl' });
-  }
+  (['tp', 'sl'] as const).forEach(kind => {
+    const calculation = kind === 'tp' ? tpCalculation : slCalculation;
+    if (calculation.status === 'empty' || calculation.status === 'ok') {
+      return;
+    }
+    errors.push({
+      code:
+        calculation.status === 'nonPositiveTrigger'
+          ? 'nonPositiveTrigger'
+          : 'invalidInput',
+      leg: kind,
+    });
+  });
 
   const entry = positive(expectedEntryPrice);
   (['tp', 'sl'] as const).forEach(kind => {

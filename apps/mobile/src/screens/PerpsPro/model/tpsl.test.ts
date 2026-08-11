@@ -80,6 +80,22 @@ describe('Perps Pro TP/SL model', () => {
     ).toMatchObject({ estimatedPnl: '-20', estimatedRoi: '-100' });
   });
 
+  it('keeps the positive-side preview when a high ROI makes the opposite trigger non-positive', () => {
+    const input = {
+      baseSize: '2',
+      draft: { mode: 'roi' as const, rawMagnitude: '10000' },
+      expectedEntryPrice: '224.83',
+      kind: 'tp' as const,
+      leverage: 20,
+      szDecimals: 2,
+    };
+
+    expect(previewPerpsProTpSlLeg({ ...input, side: 'buy' })).toMatchObject({
+      triggerPrice: '1348.9',
+    });
+    expect(previewPerpsProTpSlLeg({ ...input, side: 'sell' })).toBeNull();
+  });
+
   it('requires at least one leg only at evaluation time', () => {
     expect(
       evaluate({
@@ -92,10 +108,24 @@ describe('Perps Pro TP/SL model', () => {
     ).toContainEqual({ code: 'atLeastOneRequired' });
   });
 
+  it('distinguishes a derived non-positive trigger from malformed input', () => {
+    expect(
+      evaluate({
+        draft: {
+          enabled: true,
+          sl: { mode: 'price', rawMagnitude: '' },
+          tp: { mode: 'pnl', rawMagnitude: '300' },
+        },
+        side: 'sell',
+      }).errors,
+    ).toContainEqual({ code: 'nonPositiveTrigger', leg: 'tp' });
+  });
+
   it.each([
     ['conditional', 'Gtc', false, false, 'conditionalUnsupported'],
     ['limit', 'Ioc', false, false, 'iocUnsupported'],
     ['limit', 'Gtc', true, false, 'bboUnsupported'],
+    ['market', 'Gtc', true, false, null],
     ['market', 'Gtc', false, true, 'reduceOnlyUnsupported'],
   ] as const)(
     'rejects incompatible %s order state',

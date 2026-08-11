@@ -119,6 +119,7 @@ describe('Perps Pro trade model', () => {
 
   it('sanitizes unsupported input without adding separators', () => {
     expect(sanitizePerpsProDecimalInput('-01a.23.45e2', 3)).toBe('1.234');
+    expect(sanitizePerpsProDecimalInput('01,23', 2)).toBe('1.23');
   });
 
   it('only allows BBO with GTC', () => {

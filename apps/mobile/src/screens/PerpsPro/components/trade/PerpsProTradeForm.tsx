@@ -8,14 +8,12 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProBboStrategy } from '../../model/bbo';
-import type {
-  PerpsProConditionalExecution,
-  PerpsProTradeTif,
-} from '../../model/trade';
+import type { PerpsProTradeTif } from '../../model/trade';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { PerpsProLeverageSheet } from '../positions/PerpsProLeverageSheet';
+import { PerpsProBboSheet } from './PerpsProBboSheet';
 import { PerpsProMarginModeSheet } from './PerpsProMarginModeSheet';
 import { PerpsProOrderTypeSheet } from './PerpsProOrderTypeSheet';
 import { PerpsProTradeAmountField } from './PerpsProTradeAmountField';
@@ -31,14 +29,7 @@ import {
   PerpsProTradeSummaryRow,
 } from './PerpsProTradePrimitives';
 
-type Sheet =
-  | 'bbo'
-  | 'conditionalExecution'
-  | 'leverage'
-  | 'margin'
-  | 'orderType'
-  | 'tif'
-  | null;
+type Sheet = 'bbo' | 'leverage' | 'margin' | 'orderType' | 'tif' | null;
 
 const bboLabels: Record<PerpsProBboStrategy, string> = {
   cp1: 'Counterparty 1',
@@ -46,6 +37,9 @@ const bboLabels: Record<PerpsProBboStrategy, string> = {
   q1: 'Queue 1',
   q5: 'Queue 5',
 };
+const bboOptions = (Object.keys(bboLabels) as PerpsProBboStrategy[]).map(
+  value => ({ label: bboLabels[value], value }),
+);
 const tifLabels: Record<PerpsProTradeTif, string> = {
   Alo: 'ALO',
   Gtc: 'GTC',
@@ -97,6 +91,11 @@ export const PerpsProTradeForm: React.FC<{
             }}
             showCaret={false}
             style={styles.flexItem}
+            textStyle={
+              controller.marginMode === 'isolated'
+                ? styles.isolatedSelectText
+                : undefined
+            }
           />
           <PerpsProTradeSelect
             label={`${controller.leverage}x`}
@@ -119,6 +118,7 @@ export const PerpsProTradeForm: React.FC<{
           ) : (
             <PerpsProTradePriceField
               label={`${t('page.perps.pro.trade.price')}(${quoteAsset})`}
+              maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('limitPrice', value)}
               onPressSuffix={
                 form.attachedTpSl.enabled
@@ -136,7 +136,8 @@ export const PerpsProTradeForm: React.FC<{
         {form.orderType === 'conditional' ? (
           <>
             <PerpsProTradePriceField
-              label={`${t('page.perps.pro.trade.stopPrice')}(${quoteAsset})`}
+              label={`${t('page.perps.pro.trade.triggerPrice')}(${quoteAsset})`}
+              maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('triggerPrice', value)}
               value={form.triggerPrice}
             />
@@ -147,10 +148,15 @@ export const PerpsProTradeForm: React.FC<{
                   ? `${t('page.perps.pro.trade.price')}(${quoteAsset})`
                   : t('page.perps.pro.trade.marketPrice')
               }
+              maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value =>
                 controller.setPrice('conditionalLimitPrice', value)
               }
-              onPressSuffix={() => openSheet('conditionalExecution')}
+              onPressSuffix={() =>
+                controller.setConditionalExecution(
+                  form.conditionalExecution === 'limit' ? 'market' : 'limit',
+                )
+              }
               suffix={
                 form.conditionalExecution === 'limit'
                   ? t('page.perps.pro.trade.limit')
@@ -161,18 +167,21 @@ export const PerpsProTradeForm: React.FC<{
                   ? form.conditionalLimitPrice
                   : ''
               }
+              variant="conditionalExecution"
             />
           </>
         ) : null}
         <PerpsProTradeAmountField
           label={amountLabel}
+          maxDecimals={controller.amountDecimals}
           onChangeText={controller.setAmount}
           onFocus={controller.beginAmountEntry}
+          onPressIn={controller.beginAmountEntry}
           onToggleUnit={controller.toggleAmountUnit}
           unit={controller.amountUnitLabel}
           value={form.amount}
         />
-        {controller.resolvedAmount ? (
+        {controller.showAmountConversion && controller.resolvedAmount ? (
           <Text style={styles.convertedAmount}>
             ≈{' '}
             {form.amountUnit === 'quote'
@@ -289,12 +298,7 @@ export const PerpsProTradeForm: React.FC<{
                 />
               </View>
               <PerpsProTradeButton
-                disabled={
-                  controller.pending ||
-                  (side === 'buy'
-                    ? controller.reduceOnlyAvailability.buyDisabled
-                    : controller.reduceOnlyAvailability.sellDisabled)
-                }
+                disabled={controller.pending}
                 label={t(
                   `page.perps.pro.trade.${
                     side === 'buy' ? 'buyLong' : 'sellShort'
@@ -350,28 +354,14 @@ export const PerpsProTradeForm: React.FC<{
         title={t('page.perps.pro.trade.timeInForce')}
         visible={sheet === 'tif'}
       />
-      <PerpsProTradeOptionSheet<PerpsProBboStrategy>
+      <PerpsProBboSheet
         onClose={() => setSheet(null)}
         onSelect={bboStrategy =>
           controller.patchForm({ bboStrategy, bboEnabled: true, tif: 'Gtc' })
         }
-        options={(Object.keys(bboLabels) as PerpsProBboStrategy[]).map(
-          value => ({ label: bboLabels[value], value }),
-        )}
+        options={bboOptions}
         selected={form.bboStrategy}
-        title="BBO"
         visible={sheet === 'bbo'}
-      />
-      <PerpsProTradeOptionSheet<PerpsProConditionalExecution>
-        onClose={() => setSheet(null)}
-        onSelect={controller.setConditionalExecution}
-        options={[
-          { label: t('page.perps.pro.trade.market'), value: 'market' },
-          { label: t('page.perps.pro.trade.limit'), value: 'limit' },
-        ]}
-        selected={form.conditionalExecution}
-        title={t('page.perps.pro.trade.executionType')}
-        visible={sheet === 'conditionalExecution'}
       />
       <PerpsProLeverageSheet
         currentLeverage={controller.leverage}
@@ -396,6 +386,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputGroup: { gap: 8 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
+  isolatedSelectText: { fontVariant: ['stylistic-six'] as const },
   optionsGroup: { gap: 8 },
   convertedAmount: {
     color: colors2024['neutral-secondary'],

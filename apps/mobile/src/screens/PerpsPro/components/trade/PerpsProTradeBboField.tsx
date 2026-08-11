@@ -3,7 +3,11 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+
+import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
+
+const strategyFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
 
 export const PerpsProTradeBboField: React.FC<{
   onPressStrategy: () => void;
@@ -19,12 +23,15 @@ export const PerpsProTradeBboField: React.FC<{
         accessibilityRole="button"
         onPress={onPressStrategy}
         style={styles.strategy}>
-        <Text numberOfLines={1} style={styles.strategyText}>
+        <Text
+          numberOfLines={1}
+          style={[styles.strategyText, strategyFontStyle]}>
           {strategyLabel}
         </Text>
         <RcPrecisionCaret
           color={colors2024['neutral-secondary']}
           height={6}
+          style={styles.caret}
           testID="perps-pro-trade-bbo-caret"
           width={8}
         />
@@ -35,7 +42,7 @@ export const PerpsProTradeBboField: React.FC<{
         onPress={onPressToggle}
         style={styles.bbo}
         testID="perps-pro-trade-price-suffix-BBO">
-        <Text style={styles.bboText}>BBO</Text>
+        <Text style={[styles.bboText, strategyFontStyle]}>BBO</Text>
       </Pressable>
     </View>
   );
@@ -66,11 +73,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   strategyText: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
     fontSize: 14,
-    fontWeight: '500',
     lineHeight: 18,
     textAlign: 'center',
+  },
+  caret: {
+    transform: [{ rotate: '180deg' }],
   },
   bbo: {
     alignItems: 'center',
@@ -86,9 +94,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bboText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
     fontSize: 14,
-    fontWeight: '500',
     lineHeight: 18,
     textAlign: 'center',
   },

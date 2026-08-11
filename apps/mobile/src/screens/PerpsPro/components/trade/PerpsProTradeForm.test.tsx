@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 jest.mock('@/assets/icons/swap/switch-cc.svg', () => {
   const ReactModule = require('react');
@@ -33,6 +33,12 @@ jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
 });
 
 jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/assets2024/icons/perps/PerpsProTpSlTooltipTail.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -82,6 +88,10 @@ jest.mock('./PerpsProTradeOptionSheet', () => ({
   PerpsProTradeOptionSheet: () => null,
 }));
 
+jest.mock('./PerpsProBboSheet', () => ({
+  PerpsProBboSheet: () => null,
+}));
+
 jest.mock('./PerpsProMarginModeSheet', () => ({
   PerpsProMarginModeSheet: () => null,
 }));
@@ -90,9 +100,14 @@ jest.mock('./PerpsProOrderTypeSheet', () => ({
   PerpsProOrderTypeSheet: () => null,
 }));
 
+jest.mock('./PerpsProTpSlModeSheet', () => ({
+  PerpsProTpSlModeSheet: () => null,
+}));
+
 import { createPerpsProTradeFormState } from '../../model/trade';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PerpsProTradeForm } from './PerpsProTradeForm';
+import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
 
 const market = {
   canonicalCoin: 'BTC',
@@ -112,6 +127,7 @@ const controller = (
 ) =>
   ({
     attachedTpSlExecutionEnabled: true,
+    amountDecimals: 2,
     amountUnitLabel: 'USDC',
     availableQuote: '1000',
     beginAmountEntry: jest.fn(),
@@ -129,13 +145,14 @@ const controller = (
     pending: false,
     percentage: 0,
     reduceOnlyAvailability: {
-      buyDisabled: false,
+      buyUnavailable: false,
       checkboxDisabled: false,
       hasPosition: true,
-      sellDisabled: false,
+      sellUnavailable: false,
     },
     requestReview: jest.fn(),
     resolvedAmount: null,
+    showAmountConversion: false,
     setAmount: jest.fn(),
     setConditionalExecution: jest.fn(),
     setLeverage: jest.fn(),
@@ -160,11 +177,43 @@ const controller = (
       setMode: jest.fn(),
       setRawMagnitude: jest.fn(),
       setSubmitErrors: jest.fn(),
+      submitContext: { liquidationPrice: null, side: null },
       submitErrors: [],
     },
   } as unknown as PerpsProTradeController);
 
 describe('PerpsProTradeForm order matrix', () => {
+  it('uses the shared selector font and the isolated stylistic I', () => {
+    render(
+      <PerpsProTradeForm controller={controller()} onDeposit={jest.fn()} />,
+    );
+
+    const sharedFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
+    const isolatedStyle = StyleSheet.flatten(
+      screen.getByText('isolated').props.style,
+    );
+    const leverageStyle = StyleSheet.flatten(
+      screen.getByText('25x').props.style,
+    );
+
+    expect(isolatedStyle).toMatchObject({
+      ...sharedFontStyle,
+      fontVariant: ['stylistic-six'],
+    });
+    expect(leverageStyle).toMatchObject(sharedFontStyle);
+    expect(isolatedStyle.fontFamily).toBe(leverageStyle.fontFamily);
+  });
+
+  it('uses an Android bundled font whose ss06 changes the isolated glyph', () => {
+    expect(getPerpsProTradeSelectFontStyle('android')).toEqual({
+      fontFamily: 'SF-Pro-Rounded-Medium',
+    });
+    expect(getPerpsProTradeSelectFontStyle('ios')).toEqual({
+      fontFamily: 'SF Pro',
+      fontWeight: '500',
+    });
+  });
+
   it('keeps Market free of Price, BBO and TIF controls', () => {
     render(
       <PerpsProTradeForm controller={controller()} onDeposit={jest.fn()} />,
@@ -199,7 +248,16 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByTestId('perps-pro-trade-tif-trigger')).toBeNull();
     expect(
       StyleSheet.flatten(screen.getByText('Counterparty 1').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18 });
+    ).toMatchObject({
+      ...getPerpsProTradeSelectFontStyle(Platform.OS),
+      fontSize: 14,
+      lineHeight: 18,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-bbo-caret').props.style,
+      ),
+    ).toMatchObject({ transform: [{ rotate: '180deg' }] });
     expect(screen.getByTestId('perps-pro-trade-bbo-caret').props).toMatchObject(
       { height: 6, width: 8 },
     );
@@ -211,7 +269,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByText('price')).toBeNull();
   });
 
-  it('uses a smaller one-line Price placeholder and exposes no Tick buttons', () => {
+  it('keeps the Limit Price native input stable behind a 12px overlay', () => {
     render(
       <PerpsProTradeForm
         controller={controller({ orderType: 'limit' })}
@@ -219,28 +277,66 @@ describe('PerpsProTradeForm order matrix', () => {
       />,
     );
     const price = screen.getByLabelText('price(USDC)');
+    const initialInputStyle = StyleSheet.flatten(price.props.style);
+    const placeholder = screen.getByTestId('perps-pro-trade-price-placeholder');
 
-    expect(StyleSheet.flatten(price.props.style)?.fontSize).toBe(12);
+    expect(price.props.placeholder).toBeUndefined();
+    expect(StyleSheet.flatten(placeholder.props.style)?.fontSize).toBe(12);
     expect(price.props.multiline).toBe(false);
     expect(screen.queryByLabelText('Decrease price(USDC)')).toBeNull();
     expect(screen.queryByLabelText('Increase price(USDC)')).toBeNull();
 
     fireEvent(price, 'focus');
     expect(
-      StyleSheet.flatten(screen.getByLabelText('price(USDC)').props.style)
-        ?.fontSize,
-    ).toBe(14);
+      screen.queryByTestId('perps-pro-trade-price-placeholder'),
+    ).toBeNull();
+    expect(screen.getByTestId('perps-pro-trade-price-label')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('price(USDC)').props.style),
+    ).toEqual(initialInputStyle);
   });
 
-  it('allows only Market or manual Limit execution inside Conditional', () => {
-    const view = render(
+  it('keeps Conditional Trigger and Limit Price geometry stable on focus', () => {
+    render(
       <PerpsProTradeForm
         controller={controller({
+          conditionalExecution: 'limit',
           orderType: 'conditional',
-          triggerPrice: '64000',
         })}
         onDeposit={jest.fn()}
       />,
+    );
+    const trigger = screen.getByLabelText('triggerPrice(USDC)');
+    const limit = screen.getByLabelText('price(USDC)');
+    const triggerStyle = StyleSheet.flatten(trigger.props.style);
+    const limitStyle = StyleSheet.flatten(limit.props.style);
+
+    expect(trigger.props.placeholder).toBeUndefined();
+    expect(limit.props.placeholder).toBeUndefined();
+    expect(
+      screen.getAllByTestId('perps-pro-trade-price-placeholder'),
+    ).toHaveLength(2);
+
+    fireEvent(trigger, 'focus');
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText('triggerPrice(USDC)').props.style,
+      ),
+    ).toEqual(triggerStyle);
+    fireEvent(trigger, 'blur');
+    fireEvent(limit, 'focus');
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('price(USDC)').props.style),
+    ).toEqual(limitStyle);
+  });
+
+  it('allows only Market or manual Limit execution inside Conditional', () => {
+    const trade = controller({
+      orderType: 'conditional',
+      triggerPrice: '64000',
+    });
+    const view = render(
+      <PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />,
     );
 
     expect(screen.getAllByTestId('perps-pro-trade-price-field')).toHaveLength(
@@ -251,15 +347,37 @@ describe('PerpsProTradeForm order matrix', () => {
     ).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-trade-price-suffix-BBO')).toBeNull();
     expect(screen.queryByTestId('perps-pro-trade-tif-trigger')).toBeNull();
+    expect(screen.getByLabelText('triggerPrice(USDC)')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-conditional-execution-value').props
+          .style,
+      ),
+    ).toMatchObject({ opacity: 0.5 });
+    expect(
+      StyleSheet.flatten(screen.getByText('market').props.style),
+    ).toMatchObject({
+      ...getPerpsProTradeSelectFontStyle(Platform.OS),
+      fontSize: 10,
+      lineHeight: 12,
+    });
+    expect(
+      screen.getByTestId('perps-pro-trade-conditional-execution-switch'),
+    ).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-price-suffix-market'));
+    expect(trade.setConditionalExecution).toHaveBeenCalledWith('limit');
 
     view.rerender(
       <PerpsProTradeForm
-        controller={controller({
-          conditionalExecution: 'limit',
-          conditionalLimitPrice: '64100',
-          orderType: 'conditional',
-          triggerPrice: '64000',
-        })}
+        controller={{
+          ...trade,
+          form: {
+            ...trade.form,
+            conditionalExecution: 'limit',
+            conditionalLimitPrice: '64100',
+          },
+        }}
         onDeposit={jest.fn()}
       />,
     );
@@ -267,6 +385,15 @@ describe('PerpsProTradeForm order matrix', () => {
       screen.getByTestId('perps-pro-trade-price-suffix-limit'),
     ).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-trade-price-suffix-BBO')).toBeNull();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-conditional-execution-value').props
+          .style,
+      ).opacity,
+    ).toBeUndefined();
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-price-suffix-limit'));
+    expect(trade.setConditionalExecution).toHaveBeenLastCalledWith('market');
   });
 
   it('routes the Amount unit control to the shared unit toggle', () => {
@@ -277,25 +404,35 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.toggleAmountUnit).toHaveBeenCalledTimes(1);
   });
 
-  it('uses focus as part of the Amount floating-label state', () => {
-    render(
-      <PerpsProTradeForm controller={controller()} onDeposit={jest.fn()} />,
-    );
+  it('keeps the Amount native input geometry stable while moving its visual label', () => {
+    const trade = controller();
+    render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
     const amountInput = screen.getByLabelText('amount(USDC)');
+    const initialInputStyle = StyleSheet.flatten(amountInput.props.style);
 
-    expect(amountInput.props.placeholder).toBe('amount(USDC)');
+    expect(amountInput.props.placeholder).toBeUndefined();
+    expect(screen.getByTestId('perps-pro-amount-placeholder')).toBeTruthy();
     fireEvent(amountInput, 'focus');
     expect(screen.getByLabelText('amount(USDC)').props.multiline).toBe(false);
+    expect(screen.queryByTestId('perps-pro-amount-placeholder')).toBeNull();
+    expect(screen.getByTestId('perps-pro-amount-label')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByLabelText('amount(USDC)').props.style),
-    ).toMatchObject({ height: 18, top: 16 });
-    expect(
-      screen.getByLabelText('amount(USDC)').props.placeholder,
-    ).toBeUndefined();
+    ).toEqual(initialInputStyle);
     fireEvent(screen.getByLabelText('amount(USDC)'), 'blur');
-    expect(screen.getByLabelText('amount(USDC)').props.placeholder).toBe(
-      'amount(USDC)',
-    );
+    expect(screen.getByTestId('perps-pro-amount-placeholder')).toBeTruthy();
+  });
+
+  it('begins manual Amount entry on press even when the input is already focused', () => {
+    const trade = controller({ amount: '30%' });
+    render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
+    const amountInput = screen.getByLabelText('amount(USDC)');
+
+    fireEvent(amountInput, 'focus');
+    trade.beginAmountEntry.mockClear();
+    fireEvent(amountInput, 'pressIn');
+
+    expect(trade.beginAmountEntry).toHaveBeenCalledTimes(1);
   });
 
   it('renders liquidation for both sides and preserves unavailable as --', () => {
@@ -309,6 +446,25 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.getAllByText('liquidationPrice')).toHaveLength(2);
     expect(screen.getByText('50000.00 USDC')).toBeTruthy();
     expect(screen.getByText('--')).toBeTruthy();
+  });
+
+  it('shows converted Amount only for manual input, not Slider input', () => {
+    const trade = controller() as any;
+    trade.resolvedAmount = { baseSize: '1', quoteAmount: '63000' };
+    trade.showAmountConversion = true;
+    const view = render(
+      <PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />,
+    );
+
+    expect(screen.getByText('≈ 1.00000 BTC')).toBeTruthy();
+
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{ ...trade, showAmountConversion: false }}
+        onDeposit={jest.fn()}
+      />,
+    );
+    expect(screen.queryByText('≈ 1.00000 BTC')).toBeNull();
   });
 
   it('makes the Available value and USDC text part of the Deposit target', () => {
@@ -369,13 +525,13 @@ describe('PerpsProTradeForm order matrix', () => {
     });
   });
 
-  it('disables the unavailable Reduce Only direction and empty-position checkbox', () => {
+  it('keeps Reduce Only directions clickable while disabling an empty-position checkbox', () => {
     const trade = controller({ reduceOnly: true });
     trade.reduceOnlyAvailability = {
-      buyDisabled: true,
+      buyUnavailable: true,
       checkboxDisabled: false,
       hasPosition: true,
-      sellDisabled: false,
+      sellUnavailable: false,
     };
     const view = render(
       <PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />,
@@ -384,17 +540,19 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(
       screen.getByTestId('perps-pro-trade-button-buy').props.accessibilityState
         .disabled,
-    ).toBe(true);
+    ).toBe(false);
     expect(
       screen.getByTestId('perps-pro-trade-button-sell').props.accessibilityState
         .disabled,
     ).toBe(false);
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(trade.requestReview).toHaveBeenCalledWith('buy');
 
     trade.reduceOnlyAvailability = {
-      buyDisabled: false,
+      buyUnavailable: false,
       checkboxDisabled: true,
       hasPosition: false,
-      sellDisabled: false,
+      sellUnavailable: false,
     };
     view.rerender(
       <PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />,

@@ -49,6 +49,7 @@ export const PerpsProTradeSkeleton: React.FC<{
         <PerpsProTradeSelect label={t('page.perps.pro.trade.market')} />
         <PerpsProTradeAmountField
           label={`${t('page.perps.pro.trade.amount')}(${quoteAsset})`}
+          maxDecimals={2}
           unit={quoteAsset}
         />
         <PerpsProTradeAmountSlider />
