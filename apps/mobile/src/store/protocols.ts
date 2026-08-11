@@ -14,6 +14,8 @@ import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
+import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import {
   buildProtocolAssetsIndexResult,
   buildProtocolEntityId,
@@ -63,6 +65,7 @@ type ProtocolListComputedState = {
 
 const COMPUTED_CACHE_LIMIT = 10;
 const PROTOCOL_ENTITY_RESOURCE_FAMILY = 'protocol.entity';
+const multiAddressProtocolRequests = new LatestAsyncRequest();
 
 const normalizeAddresses = (addresses: string[]) =>
   addresses.map(address => address.toLowerCase());
@@ -407,7 +410,7 @@ const mergeProtocolMaps = (
   return merged;
 };
 
-export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
+export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
   protocolMap: {},
   isLoading: false,
   isLoadingByAddress: {},
@@ -443,46 +446,133 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     });
   },
   async batchGetProtocols(addresses, force = false) {
+    const requestId = multiAddressProtocolRequests.next();
+    const isCurrentRequest = () =>
+      multiAddressProtocolRequests.isCurrent(requestId);
     if (!addresses.length) {
       set(() => ({ isLoading: true }));
       await new Promise(resolve => setTimeout(resolve, 0));
-      set(() => ({ protocolMap: {}, isLoading: false }));
+      if (isCurrentRequest()) {
+        set(() => ({ protocolMap: {}, isLoading: false }));
+      }
       return;
     }
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
+    const trace = beginAssetDataLoadDiagnostic(
+      'multi-address-protocol',
+      lowerAddresses.join('|'),
+      {
+        addressCount: lowerAddresses.length,
+        force,
+      },
+    );
 
-    if (!force) {
-      const isExpired = await isDataExpiredBatch(lowerAddresses);
-      if (!isExpired) {
-        const [protocolMap, appChainMap] = await Promise.all([
+    try {
+      if (!force) {
+        const isExpired = await isDataExpiredBatch(lowerAddresses);
+        trace.mark('expiry-resolved', { isExpired });
+        if (!isCurrentRequest()) {
+          trace.finish({ path: 'stale-before-hydrate' });
+          return;
+        }
+        if (!isExpired) {
+          const [protocolMap, appChainMap] = await Promise.all([
+            ProtocolItemEntity.getDefaultProtocolsByAddresses(lowerAddresses),
+            buildAppChainProtocolMap(lowerAddresses),
+          ]);
+          trace.mark('local-db-loaded', {
+            itemCount: Object.values(protocolMap).reduce(
+              (count, protocols) => count + protocols.length,
+              0,
+            ),
+          });
+          if (!isCurrentRequest()) {
+            trace.finish({ path: 'stale-after-hydrate' });
+            return;
+          }
+          const mergedProtocolMap = mergeProtocolMaps(protocolMap, appChainMap);
+          set(() => ({
+            protocolMap: mergedProtocolMap,
+            isLoading: false,
+          }));
+          reportLendingUserStatusOnce({
+            addresses: lowerAddresses,
+            protocolMap,
+          });
+          trace.finish({ path: 'local-db' });
+          return;
+        }
+      }
+
+      if (isCurrentRequest()) {
+        set(() => ({ isLoading: true }));
+      }
+
+      const remoteProtocolsPromise = syncProtocolsForAddresses(
+        lowerAddresses,
+        force,
+      ).then(
+        result => ({ status: 'fulfilled' as const, result }),
+        error => ({ status: 'rejected' as const, error }),
+      );
+      const currentProtocolMap = get().protocolMap;
+      const hasMemorySnapshot = lowerAddresses.every(address =>
+        Object.prototype.hasOwnProperty.call(currentProtocolMap, address),
+      );
+
+      if (!force && !hasMemorySnapshot) {
+        const [localProtocolMap, appChainMap] = await Promise.all([
           ProtocolItemEntity.getDefaultProtocolsByAddresses(lowerAddresses),
           buildAppChainProtocolMap(lowerAddresses),
         ]);
-        set(() => ({
-          protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
-          isLoading: false,
-        }));
-        reportLendingUserStatusOnce({
-          addresses: lowerAddresses,
-          protocolMap,
+        trace.mark('stale-local-db-loaded', {
+          itemCount: Object.values(localProtocolMap).reduce(
+            (count, protocols) => count + protocols.length,
+            0,
+          ),
         });
-        // cache击中，不用走下面流程了
+        if (isCurrentRequest()) {
+          set(() => ({
+            protocolMap: mergeProtocolMaps(localProtocolMap, appChainMap),
+          }));
+          trace.mark('stale-local-store-published');
+        }
+      } else {
+        trace.mark('memory-snapshot-retained', {
+          hasMemorySnapshot,
+        });
+      }
+
+      const remoteProtocols = await remoteProtocolsPromise;
+      if (remoteProtocols.status === 'rejected') {
+        throw remoteProtocols.error;
+      }
+      const resultMap = remoteProtocols.result;
+      trace.mark('remote-response-completed', {
+        itemCount: Object.values(resultMap).reduce(
+          (count, protocols) => count + protocols.length,
+          0,
+        ),
+      });
+      if (!isCurrentRequest()) {
+        trace.finish({ path: 'stale-after-remote' });
         return;
       }
-    }
-
-    set(() => ({ isLoading: true }));
-    try {
-      const resultMap = await syncProtocolsForAddresses(lowerAddresses, force);
       set(() => ({ protocolMap: resultMap }));
       reportLendingUserStatusOnce({
         addresses: lowerAddresses,
         protocolMap: resultMap,
       });
+      trace.finish({ path: 'local-then-remote' });
+    } catch (error) {
+      trace.fail({ phase: 'load' });
+      throw error;
     } finally {
-      set(() => ({ isLoading: false }));
+      if (isCurrentRequest()) {
+        set(() => ({ isLoading: false }));
+      }
     }
   },
   async getProtocols(address, force = false) {

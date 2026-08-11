@@ -72,6 +72,11 @@ import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 
+const NFT_LIST_INITIAL_RENDER_COUNT = 10;
+const NFT_LIST_RENDER_BATCH_SIZE = 8;
+const NFT_LIST_WINDOW_SIZE = 7;
+const NFT_LIST_BATCHING_PERIOD_MS = 32;
+
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
@@ -530,10 +535,11 @@ const NFTListInner = () => {
             : dataList
         }
         renderItem={renderItem}
-        initialNumToRender={15}
-        windowSize={15}
+        initialNumToRender={NFT_LIST_INITIAL_RENDER_COUNT}
+        windowSize={NFT_LIST_WINDOW_SIZE}
         key={isFocused ? 'nft-focused' : 'nft-unfocused'}
-        maxToRenderPerBatch={15}
+        maxToRenderPerBatch={NFT_LIST_RENDER_BATCH_SIZE}
+        updateCellsBatchingPeriod={NFT_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={

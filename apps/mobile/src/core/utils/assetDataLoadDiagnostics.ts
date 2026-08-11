@@ -3,7 +3,10 @@ import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 export type AssetDataLoadDiagnosticDomain =
   | 'single-address-token'
   | 'single-address-nft'
-  | 'single-address-warmup';
+  | 'single-address-warmup'
+  | 'multi-address-token'
+  | 'multi-address-protocol'
+  | 'multi-address-nft';
 
 type AssetDataLoadDiagnosticValue = string | number | boolean | null;
 
