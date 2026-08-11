@@ -21,13 +21,6 @@ jest.mock('@/assets2024/icons/perps/PerpsProMarketCaret.svg', () => {
     ReactModule.createElement(View, { ...props, testID: 'market-caret' });
 });
 
-jest.mock('@/assets2024/icons/perps/PerpsProMore.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) =>
-    ReactModule.createElement(View, { ...props, testID: 'more-icon' });
-});
-
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -83,6 +76,11 @@ describe('PerpsProMarketBar', () => {
     expect(
       screen.getByTestId('perps-pro-kline-trigger').props.accessibilityLabel,
     ).toBe('page.perps.pro.chart.open');
+    expect(
+      React.Children.count(
+        screen.getByTestId('perps-pro-market-actions').props.children,
+      ),
+    ).toBe(1);
   });
 
   it('disables the K-line action when no market is resolved', () => {

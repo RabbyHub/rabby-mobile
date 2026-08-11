@@ -173,7 +173,14 @@ describe('PerpsProPositionCard', () => {
     expect(screen.queryByText('Margin Ratio')).toBeNull();
     expect(screen.queryByText('2.50%')).toBeNull();
     expect(screen.getByText('Liq. Distance')).toBeTruthy();
-    expect(screen.getByText('-23.81%(-25.00)')).toBeTruthy();
+    expect(screen.getByText('-23.81%(-25.00)').props).toMatchObject({
+      numberOfLines: 1,
+    });
+    expect(screen.getByText('-23.81%(-25.00)').props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ position: 'absolute', right: 0 }),
+      ]),
+    );
     expect(screen.getByText('TP/SL (3)')).toBeTruthy();
     expect(screen.getByText('120.00, 130.00')).toBeTruthy();
     expect(screen.getByText('90.00')).toBeTruthy();

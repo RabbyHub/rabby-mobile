@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
@@ -21,14 +22,18 @@ jest.mock('@/components/customized/BottomSheet', () => {
   return {
     AppBottomSheetModal: ReactModule.forwardRef(
       (
-        { children }: { children: React.ReactNode },
+        { children, ...props }: { children: React.ReactNode },
         ref: React.Ref<unknown>,
       ) => {
         ReactModule.useImperativeHandle(ref, () => ({
           close: jest.fn(),
           present: jest.fn(),
         }));
-        return ReactModule.createElement(View, null, children);
+        return ReactModule.createElement(View, {
+          ...props,
+          children,
+          testID: 'confirmation-sheet',
+        });
       },
     ),
   };
@@ -42,10 +47,25 @@ jest.mock('@/components2024/Button', () => {
   const ReactModule = require('react');
   const { Pressable, Text } = require('react-native');
   return {
-    Button: ({ onPress, title }: { onPress: () => void; title: string }) =>
+    Button: ({
+      height,
+      onPress,
+      title,
+      type,
+    }: {
+      height: number;
+      onPress: () => void;
+      title: string;
+      type: string;
+    }) =>
       ReactModule.createElement(
         Pressable,
-        { accessibilityRole: 'button', onPress },
+        {
+          accessibilityRole: 'button',
+          accessibilityValue: { text: `${height}:${type}` },
+          onPress,
+          testID: 'confirm-button',
+        },
         ReactModule.createElement(Text, null, title),
       ),
   };
@@ -53,13 +73,6 @@ jest.mock('@/components2024/Button', () => {
 
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({}),
-}));
-
-jest.mock('@/constant/layout', () => ({
-  BOTTOM_BUTTON_SINGLE_HEIGHT: 52,
-  BOTTOM_BUTTON_TITLE_STYLE: {},
-  BOTTOM_BUTTON_TOP_OFFSET: 12,
-  getBottomButtonBottomOffset: () => 20,
 }));
 
 jest.mock('@/hooks/theme', () => ({
@@ -81,13 +94,44 @@ jest.mock('@gorhom/bottom-sheet', () => ({
 }));
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key.split('.').pop() || key }),
+  useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'page.perps.pro.trade.buy': 'Buy',
+        'page.perps.pro.trade.long': 'Long',
+        'page.perps.pro.trade.markPrice': 'Mark Price',
+        'page.perps.pro.trade.market': 'Market',
+        'page.perps.pro.trade.marketPrice': 'Market Price',
+        'page.perps.pro.trade.sell': 'Sell',
+        'page.perps.pro.trade.short': 'Short',
+      }[key] ??
+      key.split('.').pop() ??
+      key),
+  }),
 }));
 
 import type { PerpsProOpenOrderCommand } from '../../actions/openOrder';
 import type { PerpsProAttachedTpSlCommand } from '../../actions/openOrderWithAttachedTpSl';
 import type { PerpsProMarket } from '../../model/market';
+import type { PerpsProOrderReviewFacts } from '../../model/orderReview';
 import { PerpsProOrderConfirmationSheet } from './PerpsProOrderConfirmationSheet';
+
+const reviewFacts: PerpsProOrderReviewFacts = {
+  amountUnit: 'quote',
+  displayBase: 'BTC',
+  displayPair: 'BTCUSDC',
+  formRevision: 1,
+  generatedAt: 1,
+  leverage: 10,
+  marginMode: 'isolated',
+  markPrice: '100',
+  maxLeverage: 20,
+  midPrice: '100',
+  pxDecimals: 2,
+  quoteAsset: 'USDC',
+  sourceTag: 'xyz',
+  szDecimals: 2,
+};
 
 const parent: PerpsProOpenOrderCommand = {
   account: { address: '0x1', type: 'watch' },
@@ -99,6 +143,7 @@ const parent: PerpsProOpenOrderCommand = {
   orderType: 'limit',
   quoteAmount: '100',
   reduceOnly: false,
+  reviewFacts,
   side: 'buy',
   type: 'openOrder',
 };
@@ -144,19 +189,10 @@ const attached: PerpsProAttachedTpSlCommand = {
   parentFingerprint: 'parent-1',
   positionIdentity: { entryPx: '', marginUsed: '', szi: '0' },
   reviewFacts: {
-    amountUnit: 'quote',
-    displayBase: 'BTC',
-    displayPair: 'BTCUSDC',
+    ...reviewFacts,
     expectedEntryPrice: '100',
-    leverage: 10,
     liquidationGap: -0.5,
     liquidationPrice: '50',
-    marginMode: 'isolated',
-    markPrice: '100',
-    maxLeverage: 20,
-    pxDecimals: 2,
-    quoteAsset: 'USDC',
-    szDecimals: 2,
   },
   runtimeGeneration: 1,
   runtimeIdentity: '0x1::watch',
@@ -166,46 +202,98 @@ const attached: PerpsProAttachedTpSlCommand = {
 const market = {
   displayBase: 'BTC',
   displayPair: 'BTCUSDC',
-  marketData: { markPx: '100', pxDecimals: 2, szDecimals: 2 },
+  marketData: { markPx: '105', pxDecimals: 2, szDecimals: 2 },
+  marketKey: 'hyperliquid::BTC',
   quoteAsset: 'USDC',
 } as PerpsProMarket;
 
 const renderSheet = (
   command: PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand,
+  overrides: Partial<
+    React.ComponentProps<typeof PerpsProOrderConfirmationSheet>
+  > = {},
 ) =>
   render(
     <PerpsProOrderConfirmationSheet
-      amountUnit="quote"
       command={command}
-      estimatedLiquidation={{ gap: -0.5, price: '50' }}
-      leverage={10}
-      marginMode="isolated"
+      estimatedLiquidation={{ gap: -0.4, price: '55' }}
       market={market}
       onClose={jest.fn()}
       onConfirm={jest.fn()}
       onToggleSkip={jest.fn()}
       pending={false}
       skipConfirmation={false}
+      {...overrides}
     />,
   );
 
-describe('PerpsProOrderConfirmationSheet attached execution', () => {
-  it('uses frozen execution facts, PnL/ROI and a full-fill warning', () => {
+describe('PerpsProOrderConfirmationSheet', () => {
+  it('uses the Pro layout, live risk fields and Mark Price TP/SL conditions', () => {
     renderSheet(attached);
-    expect(screen.getByText('confirmAttachedTpSl')).toBeTruthy();
-    expect(screen.getByText('estimatedEntryPrice')).toBeTruthy();
-    expect(screen.getByText('estimatedTpPnlRoi')).toBeTruthy();
-    expect(screen.getByText('+10.00 USDC / +100.00%')).toBeTruthy();
-    expect(screen.getByText('-10.00 USDC / -100.00%')).toBeTruthy();
-    expect(screen.getByText('tpSlFullFillWarning')).toBeTruthy();
-    expect(screen.getByText('submitAttachedTpSl')).toBeTruthy();
-    expect(screen.queryByText('skipConfirmation')).toBeNull();
+
+    expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(screen.getByText('XYZ')).toBeTruthy();
+    expect(screen.getByText('Isolated 10x')).toBeTruthy();
+    expect(screen.getByText('Buy')).toBeTruthy();
+    expect(screen.getByText('Long')).toBeTruthy();
+    expect(screen.getByText('105.00 USDC')).toBeTruthy();
+    expect(screen.getByText('55.00 USDC (-40.00%)')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≥ 110.00 USDC')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≤ 90.00 USDC')).toBeTruthy();
+    expect(screen.getByText('skipConfirmation')).toBeTruthy();
+    expect(screen.queryByText('confirmAttachedTpSl')).toBeNull();
+    expect(screen.queryByText('tpSlFullFillWarning')).toBeNull();
+    expect(screen.queryByText('estimatedTpPnlRoi')).toBeNull();
+    expect(
+      screen.getByTestId('confirmation-sheet').props.enableDynamicSizing,
+    ).toBe(true);
+    expect(
+      screen.getByTestId('confirmation-sheet').props.snapPoints,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
+      ),
+    ).toMatchObject({ paddingBottom: 40, paddingTop: 12 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
+      ).marginTop,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('confirmation-sheet').props.handleIndicatorStyle,
+      ),
+    ).toMatchObject({ height: 4, width: 40 });
+    expect(
+      screen.getByTestId('confirm-button').props.accessibilityValue,
+    ).toEqual({ text: '36:primary' });
   });
 
-  it('keeps the existing confirmation preference for an ordinary order', () => {
-    renderSheet(parent);
-    expect(screen.getByText('confirmOrder')).toBeTruthy();
-    expect(screen.getByText('skipConfirmation')).toBeTruthy();
-    expect(screen.queryByText('submitAttachedTpSl')).toBeNull();
+  it('keeps attached TP/SL on the same per-type skip preference control', () => {
+    const onToggleSkip = jest.fn();
+    renderSheet(attached, { onToggleSkip });
+
+    fireEvent.press(screen.getByRole('checkbox'));
+    expect(onToggleSkip).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders Conditional Trigger Price and fixed Limit Price without Order Type', () => {
+    renderSheet({
+      ...parent,
+      execution: {
+        kind: 'conditionalLimit',
+        limitPrice: '102',
+        referencePrice: '100',
+        tpsl: 'tp',
+        triggerPrice: '110',
+      },
+      orderType: 'conditional',
+    });
+
+    expect(screen.getByText('triggerPrice')).toBeTruthy();
+    expect(screen.getByText('110.00 USDC')).toBeTruthy();
+    expect(screen.getByText('102.00 USDC')).toBeTruthy();
+    expect(screen.queryByText('orderType')).toBeNull();
   });
 });

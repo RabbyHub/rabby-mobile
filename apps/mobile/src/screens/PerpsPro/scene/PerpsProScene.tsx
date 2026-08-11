@@ -588,11 +588,8 @@ export const PerpsProScene: React.FC<{
         />
       ) : null}
       <PerpsProOrderConfirmationSheet
-        amountUnit={trade.amountUnit}
         command={trade.review}
         estimatedLiquidation={trade.estimatedLiquidation}
-        leverage={trade.leverage}
-        marginMode={trade.marginMode}
         market={trade.market}
         onClose={trade.closeReview}
         onConfirm={trade.confirmReview}

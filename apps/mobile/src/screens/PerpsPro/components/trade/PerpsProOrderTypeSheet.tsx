@@ -20,7 +20,7 @@ export const PerpsProOrderTypeSheet: React.FC<{
   visible: boolean;
 }> = React.memo(({ onClose, onSelect, selected, visible }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { colors2024, isLight, styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -57,8 +57,12 @@ export const PerpsProOrderTypeSheet: React.FC<{
       snapPoints={[326]}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isLight ? 'bg0' : 'bg1',
-      })}>
+        linearGradientType: 'bg1',
+      })}
+      backgroundStyle={styles.background}
+      handleIndicatorStyle={styles.handleIndicator}
+      handleStyle={styles.handle}
+      style={styles.modal}>
       <BottomSheetView style={styles.sheet}>
         <View style={styles.content}>
           <View style={styles.titleRow}>
@@ -121,6 +125,28 @@ export const PerpsProOrderTypeSheet: React.FC<{
 PerpsProOrderTypeSheet.displayName = 'PerpsProOrderTypeSheet';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  modal: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
+  },
+  background: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  handle: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    height: 40,
+    paddingBottom: 19,
+    paddingTop: 17,
+  },
+  handleIndicator: {
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 2,
+    height: 4,
+    width: 40,
+  },
   sheet: { height: '100%' },
   content: {
     height: '100%',

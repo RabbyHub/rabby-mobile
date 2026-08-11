@@ -1,6 +1,5 @@
 import RcCandlestick from '@/assets2024/icons/perps/PerpsProCandlestick.svg';
 import RcMarketCaret from '@/assets2024/icons/perps/PerpsProMarketCaret.svg';
-import RcMore from '@/assets2024/icons/perps/PerpsProMore.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -53,7 +52,7 @@ export const PerpsProMarketBar: React.FC<{
           width={18}
         />
       </Pressable>
-      <View style={styles.actions}>
+      <View style={styles.actions} testID="perps-pro-market-actions">
         <Pressable
           accessibilityLabel={t('page.perps.pro.chart.open')}
           accessibilityRole="button"
@@ -69,9 +68,6 @@ export const PerpsProMarketBar: React.FC<{
             width={14}
           />
         </Pressable>
-        <View accessibilityState={{ disabled: true }} style={styles.actionIcon}>
-          <RcMore color={colors2024['neutral-title-1']} height={4} width={18} />
-        </View>
       </View>
     </View>
   );

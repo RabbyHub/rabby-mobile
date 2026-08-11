@@ -11,6 +11,7 @@ import {
 } from '@/hooks/perps/usePerpsStore';
 import BigNumber from 'bignumber.js';
 
+import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import {
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
@@ -48,6 +49,7 @@ export interface PerpsProOpenOrderCommand {
   orderType: PerpsProTradeFormState['orderType'];
   quoteAmount: string;
   reduceOnly: boolean;
+  reviewFacts?: PerpsProOrderReviewFacts;
   side: PerpsProTradeSide;
   type: 'openOrder';
 }
@@ -79,6 +81,7 @@ export const buildPerpsProOpenOrderCommand = ({
   marketKey,
   marketPrice,
   maxUsdValueSize,
+  reviewFacts,
   side,
   szDecimals,
 }: {
@@ -93,6 +96,7 @@ export const buildPerpsProOpenOrderCommand = ({
   marketKey: string;
   marketPrice: string;
   maxUsdValueSize?: string;
+  reviewFacts?: PerpsProOrderReviewFacts;
   side: PerpsProTradeSide;
   szDecimals: number;
 }): PerpsProOpenOrderCommand => {
@@ -205,6 +209,7 @@ export const buildPerpsProOpenOrderCommand = ({
     orderType: form.orderType,
     quoteAmount: amount.quoteAmount,
     reduceOnly: form.reduceOnly,
+    reviewFacts: reviewFacts ? Object.freeze({ ...reviewFacts }) : undefined,
     side,
     type: 'openOrder' as const,
   });

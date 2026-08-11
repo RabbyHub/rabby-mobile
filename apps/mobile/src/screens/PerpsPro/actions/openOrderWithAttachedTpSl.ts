@@ -22,6 +22,7 @@ import {
 } from '@/hooks/perps/runtime/perpsRuntimeState';
 
 import { estimatePerpsProMarketFill } from '../model/marketFillEstimate';
+import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import type { PerpsProTradeAmountUnit } from '../model/trade';
 import {
   validatePerpsProFrozenAttachedTpSl,
@@ -49,20 +50,10 @@ export type PerpsProAttachedTpSlMarketSnapshot = {
   sessionKey: string;
 };
 
-export type PerpsProAttachedTpSlReviewFacts = {
-  amountUnit: PerpsProTradeAmountUnit;
-  displayBase: string;
-  displayPair: string;
+export type PerpsProAttachedTpSlReviewFacts = PerpsProOrderReviewFacts & {
   expectedEntryPrice: string;
-  leverage: number;
   liquidationGap: number | null;
   liquidationPrice: string | null;
-  marginMode: 'cross' | 'isolated';
-  markPrice: string;
-  maxLeverage: number;
-  pxDecimals: number;
-  quoteAsset: string;
-  szDecimals: number;
 };
 
 type PerpsProAttachedTpSlParentCommand = Omit<
@@ -181,17 +172,21 @@ export const buildPerpsProAttachedTpSlCommand = ({
   attached,
   displayBase,
   displayPair,
+  formRevision = 0,
+  generatedAt = Date.now(),
   leverage,
   liquidationGap,
   marginMode,
   markPrice,
   maxLeverage,
+  midPrice = markPrice,
   marketSnapshot,
   parent,
   position,
   pxDecimals,
   quoteAsset,
   runtime,
+  sourceTag = null,
   szDecimals,
   uuid = uuidV4,
 }: {
@@ -200,17 +195,21 @@ export const buildPerpsProAttachedTpSlCommand = ({
   attached: PerpsProAttachedTpSlEvaluation;
   displayBase: string;
   displayPair: string;
+  formRevision?: number;
+  generatedAt?: number;
   leverage: number;
   liquidationGap: number | null;
   marginMode: 'cross' | 'isolated';
   markPrice: string;
   maxLeverage: number;
+  midPrice?: string;
   marketSnapshot: PerpsProAttachedTpSlMarketSnapshot;
   parent: PerpsProOpenOrderCommand;
   position?: { entryPx?: string; marginUsed?: string; szi?: string } | null;
   pxDecimals: number;
   quoteAsset: string;
   runtime: PerpsRuntimeSnapshot;
+  sourceTag?: string | null;
   szDecimals: number;
   uuid?: () => string;
 }): PerpsProAttachedTpSlCommand => {
@@ -264,14 +263,18 @@ export const buildPerpsProAttachedTpSlCommand = ({
       displayBase,
       displayPair,
       expectedEntryPrice: attached.expectedEntryPrice,
+      formRevision,
+      generatedAt,
       leverage,
       liquidationGap,
       liquidationPrice: attached.liquidationPrice,
       marginMode,
       markPrice,
       maxLeverage,
+      midPrice,
       pxDecimals,
       quoteAsset,
+      sourceTag,
       szDecimals,
     }),
     runtimeGeneration: runtime.generation,

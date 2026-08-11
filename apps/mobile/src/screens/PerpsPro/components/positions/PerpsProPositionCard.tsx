@@ -230,7 +230,13 @@ export const PerpsProPositionCard: React.FC<{
                 style={styles.label}>
                 {t('page.perps.pro.positions.liquidationDistance')}
               </PerpsProDottedUnderlineText>
-              <Text style={styles.value}>{displayLiquidationDistance}</Text>
+              <View style={styles.liquidationDistanceValueSlot}>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.value, styles.liquidationDistanceValue]}>
+                  {displayLiquidationDistance}
+                </Text>
+              </View>
             </>
           )}
         </View>
@@ -514,6 +520,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
     marginTop: 2,
+  },
+  liquidationDistanceValueSlot: {
+    alignSelf: 'stretch',
+    height: 18,
+    marginTop: 2,
+    overflow: 'visible',
+    position: 'relative',
+  },
+  liquidationDistanceValue: {
+    marginTop: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   tpslRow: {
     alignItems: 'center',
