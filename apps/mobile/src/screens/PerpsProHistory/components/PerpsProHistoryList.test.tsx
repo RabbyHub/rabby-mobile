@@ -47,6 +47,7 @@ describe('PerpsProHistoryList', () => {
   it('renders the approved local skeleton and per-tab empty state', () => {
     const view = render(
       <PerpsProHistoryList
+        amountUnit="base"
         onLoadEarlier={jest.fn()}
         onRefresh={jest.fn()}
         onRetry={jest.fn()}
@@ -58,6 +59,7 @@ describe('PerpsProHistoryList', () => {
 
     view.rerender(
       <PerpsProHistoryList
+        amountUnit="base"
         onLoadEarlier={jest.fn()}
         onRefresh={jest.fn()}
         onRetry={jest.fn()}
@@ -74,6 +76,7 @@ describe('PerpsProHistoryList', () => {
     const onRetry = jest.fn();
     render(
       <PerpsProHistoryList
+        amountUnit="base"
         onLoadEarlier={jest.fn()}
         onRefresh={jest.fn()}
         onRetry={onRetry}
@@ -89,6 +92,7 @@ describe('PerpsProHistoryList', () => {
     const onLoadEarlier = jest.fn();
     const view = render(
       <PerpsProHistoryList
+        amountUnit="base"
         onLoadEarlier={onLoadEarlier}
         onRefresh={jest.fn()}
         onRetry={jest.fn()}
@@ -107,6 +111,7 @@ describe('PerpsProHistoryList', () => {
 
     view.rerender(
       <PerpsProHistoryList
+        amountUnit="base"
         onLoadEarlier={onLoadEarlier}
         onRefresh={jest.fn()}
         onRetry={jest.fn()}
@@ -131,6 +136,7 @@ describe('PerpsProHistoryList', () => {
     const onLoadEarlier = jest.fn();
     const view = render(
       <PerpsProHistoryList
+        amountUnit="base"
         onLoadEarlier={onLoadEarlier}
         onRefresh={jest.fn()}
         onRetry={jest.fn()}
@@ -147,6 +153,7 @@ describe('PerpsProHistoryList', () => {
 
     view.rerender(
       <PerpsProHistoryList
+        amountUnit="base"
         onLoadEarlier={onLoadEarlier}
         onRefresh={jest.fn()}
         onRetry={jest.fn()}

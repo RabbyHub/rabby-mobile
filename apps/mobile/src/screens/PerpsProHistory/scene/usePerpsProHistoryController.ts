@@ -1,10 +1,12 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { showToast } from '@/hooks/perps/showToast';
+import { mergeUserFills, reconcileHttpFills } from '@/hooks/perps/userFills';
 import {
   getPerpsAccountRuntimeContext,
   perpsStore,
@@ -12,6 +14,10 @@ import {
 
 import { mergePerpsProHistoryRows } from '../model/historyModel';
 import { mapPerpsProHistoryRawRows } from '../model/historyRows';
+import {
+  applyPerpsProOrderExecution,
+  buildPerpsProOrderExecutionIndex,
+} from '../model/orderExecution';
 import { isPerpsProHistorySdkSupported } from '../repository/perpsProHistoryRepository';
 import type {
   PerpsProHistoryRow,
@@ -69,6 +75,8 @@ export const usePerpsProHistoryController = (
     transaction: false,
   });
   const accountIdentityRef = useRef<string | null>(null);
+  const orderFillsRef = useRef<WsFill[]>([]);
+  const orderExecutionIndexRef = useRef(buildPerpsProOrderExecutionIndex([]));
   const sdkSupported = useMemo(isPerpsProHistorySdkSupported, []);
   const accountAddress = currentAccount?.address ?? null;
   const accountIdentity = currentAccount
@@ -125,6 +133,8 @@ export const usePerpsProHistoryController = (
       return;
     }
     accountIdentityRef.current = accountIdentity;
+    orderFillsRef.current = [];
+    orderExecutionIndexRef.current = buildPerpsProOrderExecutionIndex([]);
     invalidateAll();
     const nextState = createPerpsProHistoryState();
     stateRef.current = nextState;
@@ -248,8 +258,37 @@ export const usePerpsProHistoryController = (
         rawItems,
         address,
         perpsStore.getState().marketDataMap,
+        orderExecutionIndexRef.current,
       ),
     [],
+  );
+
+  const rememberOrderFills = useCallback(
+    (fills: WsFill[], isSnapshot: boolean) => {
+      orderFillsRef.current = isSnapshot
+        ? reconcileHttpFills(fills, orderFillsRef.current)
+        : mergeUserFills(fills, orderFillsRef.current);
+      orderExecutionIndexRef.current = buildPerpsProOrderExecutionIndex(
+        orderFillsRef.current,
+      );
+      return orderExecutionIndexRef.current;
+    },
+    [],
+  );
+
+  const handleOrderFills = useCallback(
+    (fills: WsFill[], isSnapshot: boolean) => {
+      const executionIndex = rememberOrderFills(fills, isSnapshot);
+      updateTabState('orders', previous => ({
+        ...previous,
+        rows: previous.rows.map(row =>
+          row.kind === 'orders'
+            ? applyPerpsProOrderExecution(row, executionIndex)
+            : row,
+        ),
+      }));
+    },
+    [rememberOrderFills, updateTabState],
   );
 
   const mergeBatch = useCallback(
@@ -288,6 +327,9 @@ export const usePerpsProHistoryController = (
         if (!isRequestCurrent(token)) {
           return;
         }
+        if (tab === 'orders' && batch.orderFills) {
+          rememberOrderFills(batch.orderFills, true);
+        }
         updateTabState(tab, previous => {
           const rows = mergeBatch(
             tab,
@@ -319,7 +361,14 @@ export const usePerpsProHistoryController = (
         finishRequest(token);
       }
     },
-    [beginRequest, finishRequest, isRequestCurrent, mergeBatch, updateTabState],
+    [
+      beginRequest,
+      finishRequest,
+      isRequestCurrent,
+      mergeBatch,
+      rememberOrderFills,
+      updateTabState,
+    ],
   );
 
   const refresh = useCallback(async () => {
@@ -350,6 +399,9 @@ export const usePerpsProHistoryController = (
       });
       if (!isRequestCurrent(token)) {
         return;
+      }
+      if (tab === 'orders' && batch.orderFills) {
+        rememberOrderFills(batch.orderFills, true);
       }
       updateTabState(tab, previous => {
         const rows = mergeBatch(
@@ -400,6 +452,7 @@ export const usePerpsProHistoryController = (
     isRequestCurrent,
     loadInitial,
     mergeBatch,
+    rememberOrderFills,
     refreshFailedMessage,
     updateTabState,
   ]);
@@ -563,6 +616,7 @@ export const usePerpsProHistoryController = (
     enabled,
     isSubscriptionCurrent,
     mapRawRows,
+    onOrderFills: handleOrderFills,
     updateTabState,
   });
 

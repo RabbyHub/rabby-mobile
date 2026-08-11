@@ -215,6 +215,14 @@ const loadLatestBoundedWindow = async <Item>(
 
 const getOrderKey = (fact: PerpsProHistoryOrderFact) =>
   `${fact.order.oid}:${fact.status}:${fact.statusTimestamp}`;
+const normalizeLatestFills = (fills: readonly WsFill[]) =>
+  [...fills]
+    .sort(
+      (left, right) =>
+        right.time - left.time ||
+        getFillKey(left).localeCompare(getFillKey(right)),
+    )
+    .slice(0, PERPS_PRO_HISTORY_TRADE_INITIAL_LIMIT);
 const getFundingKey = (fact: PerpsProFundingFact) =>
   fact.hash ||
   `${fact.time}:${fact.coin}:${fact.szi}:${fact.usdc}:${fact.fundingRate}`;
@@ -261,13 +269,14 @@ export const createPerpsProHistoryRepository = (
     const result = await dependencies
       .getInfoClient()
       .getUserFills(address, true);
-    return [...result]
-      .sort(
-        (left, right) =>
-          right.time - left.time ||
-          getFillKey(left).localeCompare(getFillKey(right)),
-      )
-      .slice(0, PERPS_PRO_HISTORY_TRADE_INITIAL_LIMIT);
+    return normalizeLatestFills(result);
+  },
+
+  fetchOrderFills: async (address: string) => {
+    const result = await dependencies
+      .getInfoClient()
+      .getUserFills(address, true);
+    return normalizeLatestFills(result);
   },
 
   fetchTradesWindow: async (

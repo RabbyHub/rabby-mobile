@@ -24,7 +24,7 @@ export const resolvePerpsProHistoryMarket = (
       logoUrl: null,
       pxDecimals: null,
       quoteAsset: 'USDC',
-      sourceTag: coin.includes(':') ? coin.split(':')[0] || null : null,
+      sourceTag: coin.includes(':') ? coin.split(':')[0] || 'Perp' : 'Perp',
       szDecimals: null,
     };
   }
@@ -37,7 +37,7 @@ export const resolvePerpsProHistoryMarket = (
     logoUrl: marketData.logoUrl || null,
     pxDecimals: marketData.pxDecimals,
     quoteAsset: descriptor.quoteAsset,
-    sourceTag: descriptor.sourceTag,
+    sourceTag: descriptor.sourceTag || 'Perp',
     szDecimals: marketData.szDecimals,
   };
 };

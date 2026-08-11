@@ -7,6 +7,7 @@ import { AppState } from 'react-native';
 
 const mockFetchOrders = jest.fn();
 const mockFetchLatestTrades = jest.fn();
+const mockFetchOrderFills = jest.fn();
 const mockFetchTradesWindow = jest.fn();
 const mockFetchTransactionsWindow = jest.fn();
 const mockFetchFundingWindow = jest.fn();
@@ -71,6 +72,7 @@ jest.mock('../repository/perpsProHistoryRepository', () => ({
   perpsProHistoryRepository: {
     fetchFundingWindow: (...args: unknown[]) => mockFetchFundingWindow(...args),
     fetchLatestTrades: (...args: unknown[]) => mockFetchLatestTrades(...args),
+    fetchOrderFills: (...args: unknown[]) => mockFetchOrderFills(...args),
     fetchOrders: (...args: unknown[]) => mockFetchOrders(...args),
     fetchTradesWindow: (...args: unknown[]) => mockFetchTradesWindow(...args),
     fetchTransactionsWindow: (...args: unknown[]) =>
@@ -140,6 +142,7 @@ describe('usePerpsProHistoryController', () => {
     } as ReturnType<typeof AppState.addEventListener>);
     mockFetchOrders.mockResolvedValue([]);
     mockFetchLatestTrades.mockResolvedValue([]);
+    mockFetchOrderFills.mockResolvedValue([]);
     mockFetchTransactionsWindow.mockReset();
     mockFetchFundingWindow.mockReset();
   });
@@ -156,6 +159,30 @@ describe('usePerpsProHistoryController', () => {
     );
     expect(hook.result.current.activeTab).toBe('orders');
     expect(hook.result.current.tabState.hasEarlier).toBe(false);
+  });
+
+  it('associates complete fills with Orders and keeps fill updates live', async () => {
+    mockFetchOrders.mockResolvedValueOnce([makeOrder()]);
+    mockFetchOrderFills.mockResolvedValueOnce([]);
+    const hook = renderHook(() => usePerpsProHistoryController());
+    await waitFor(() =>
+      expect(hook.result.current.tabState.rows[0]).toMatchObject({
+        executionPrice: null,
+      }),
+    );
+
+    act(() => {
+      mockHistoryListener?.({
+        accountAddress: mockPerpsState.currentPerpsAccount.address,
+        isSnapshot: false,
+        items: [makeFill({ px: '49000', sz: '1', time: 99 })],
+        kind: 'fills',
+      });
+    });
+
+    expect(hook.result.current.tabState.rows[0]).toMatchObject({
+      executionPrice: '49000',
+    });
   });
 
   it('drops a late Orders response after switching to Trade', async () => {

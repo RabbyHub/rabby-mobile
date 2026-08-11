@@ -8,6 +8,7 @@ import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
+import { usePerpsProTradeAmountUnit } from '../PerpsPro/scene/usePerpsProTradePreferences';
 import { PerpsProHistoryList } from './components/PerpsProHistoryList';
 import { PerpsProHistoryTabs } from './components/PerpsProHistoryTabs';
 import { usePerpsProHistoryController } from './scene/usePerpsProHistoryController';
@@ -21,6 +22,7 @@ const isHistoryTab = (value: unknown): value is PerpsProHistoryTab =>
 
 export const PerpsProHistoryScreen = () => {
   useEnsurePerpsRuntime();
+  const amountUnit = usePerpsProTradeAmountUnit();
   const { styles } = useTheme2024({ getStyle });
   const route =
     useRoute<
@@ -43,6 +45,7 @@ export const PerpsProHistoryScreen = () => {
         />
         <View style={styles.list}>
           <PerpsProHistoryList
+            amountUnit={amountUnit}
             onLoadEarlier={history.loadEarlier}
             onRefresh={history.refresh}
             onRetry={() => history.refresh()}

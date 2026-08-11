@@ -1,3 +1,5 @@
+import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
+
 import {
   PERPS_PRO_HISTORY_CASHFLOW_INITIAL_LIMIT,
   PERPS_PRO_HISTORY_TRADE_INITIAL_LIMIT,
@@ -11,6 +13,7 @@ type PerpsProHistoryRepository = typeof perpsProHistoryRepository;
 export type PerpsProHistoryBatch = {
   coveredWindow?: PerpsProHistoryWindow;
   hasEarlier: boolean;
+  orderFills?: WsFill[];
   rawItems: unknown[];
 };
 
@@ -39,9 +42,14 @@ export const loadLatestPerpsProHistoryBatch = async ({
   tab: PerpsProHistoryTab;
 }): Promise<PerpsProHistoryBatch> => {
   if (tab === 'orders') {
+    const [rawItems, orderFills] = await Promise.all([
+      repository.fetchOrders(accountAddress),
+      repository.fetchOrderFills(accountAddress).catch(() => []),
+    ]);
     return {
       hasEarlier: false,
-      rawItems: await repository.fetchOrders(accountAddress),
+      orderFills,
+      rawItems,
     };
   }
   if (tab === 'trade') {

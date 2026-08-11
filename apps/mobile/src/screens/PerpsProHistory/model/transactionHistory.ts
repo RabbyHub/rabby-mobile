@@ -39,6 +39,36 @@ const resolveAmount = (delta: PerpsProLedgerFact['delta']) => {
 const isExplicitSpotDex = (dex?: string) =>
   dex?.trim().toLowerCase() === 'spot';
 
+const isDefaultPerpsDex = (dex?: string) => !dex?.trim();
+
+const resolveSameAccountSendDirection = ({
+  currentAddress,
+  destination,
+  destinationDex,
+  source,
+  sourceDex,
+}: {
+  currentAddress: string;
+  destination?: string;
+  destinationDex?: string;
+  source?: string;
+  sourceDex?: string;
+}): 'deposit' | 'withdraw' | null => {
+  if (
+    !safeSameAddress(source, currentAddress) ||
+    !safeSameAddress(destination, currentAddress)
+  ) {
+    return null;
+  }
+  if (isExplicitSpotDex(sourceDex) && isDefaultPerpsDex(destinationDex)) {
+    return 'deposit';
+  }
+  if (isDefaultPerpsDex(sourceDex) && isExplicitSpotDex(destinationDex)) {
+    return 'withdraw';
+  }
+  return null;
+};
+
 const resolveEndpointDirection = ({
   currentAddress,
   destination,
@@ -99,11 +129,20 @@ export const mapPerpsProTransactionHistoryFact = (
       });
       break;
     case 'send': {
-      direction = resolveEndpointDirection({
-        currentAddress,
-        destination: delta.destination,
-        source: delta.source ?? delta.user,
-      });
+      const source = delta.source ?? delta.user;
+      direction =
+        resolveSameAccountSendDirection({
+          currentAddress,
+          destination: delta.destination,
+          destinationDex: delta.destinationDex,
+          source,
+          sourceDex: delta.sourceDex,
+        }) ||
+        resolveEndpointDirection({
+          currentAddress,
+          destination: delta.destination,
+          source,
+        });
       if (
         (direction === 'deposit' && isExplicitSpotDex(delta.destinationDex)) ||
         (direction === 'withdraw' && isExplicitSpotDex(delta.sourceDex))

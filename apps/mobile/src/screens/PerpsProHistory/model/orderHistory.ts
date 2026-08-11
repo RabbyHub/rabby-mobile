@@ -8,6 +8,10 @@ import type {
   PerpsProOrderHistoryRow,
 } from '../types';
 import { resolvePerpsProHistoryMarket } from './historyModel';
+import {
+  applyPerpsProOrderExecution,
+  type PerpsProOrderExecutionIndex,
+} from './orderExecution';
 
 const positiveDecimalOrNull = (value: unknown) => {
   const decimal = new BigNumber((value as string | number | undefined) ?? 0);
@@ -28,6 +32,7 @@ export const getPerpsProOrderHistoryKey = (fact: PerpsProHistoryOrderFact) =>
 export const mapPerpsProOrderHistoryFact = (
   fact: PerpsProHistoryOrderFact,
   marketDataMap: Readonly<Record<string, MarketData | undefined>>,
+  executionIndex: PerpsProOrderExecutionIndex = new Map(),
 ): PerpsProOrderHistoryRow => {
   const { order } = fact;
   const originalSize = nonNegativeDecimalOrNull(order.origSz);
@@ -43,30 +48,34 @@ export const mapPerpsProOrderHistoryFact = (
   const price = isMarket ? null : positiveDecimalOrNull(order.limitPx);
   const filledSize = progress?.filledSize ?? null;
 
-  return {
-    amountBase: originalSize?.toString() ?? null,
-    amountQuote:
-      price && originalSize
-        ? originalSize.multipliedBy(price).toString()
-        : null,
-    displayAmountUnit: isMarket ? 'base' : 'quote',
-    filledBase: filledSize,
-    filledQuote:
-      price && filledSize != null
-        ? new BigNumber(filledSize).multipliedBy(price).toString()
-        : null,
-    key: getPerpsProOrderHistoryKey(fact),
-    kind: 'orders',
-    market: resolvePerpsProHistoryMarket(order.coin, marketDataMap),
-    oid: order.oid,
-    orderType: order.orderType || 'Unknown',
-    price: price?.toString() ?? null,
-    priceKind: isMarket ? 'market' : 'limit',
-    reduceOnly: order.reduceOnly,
-    remainingBase: remainingSize?.toString() ?? null,
-    side: order.side === 'B' ? 'buy' : 'sell',
-    status: fact.status || 'unknown',
-    tif: order.tif || null,
-    time: fact.statusTimestamp,
-  };
+  return applyPerpsProOrderExecution(
+    {
+      amountBase: originalSize?.toString() ?? null,
+      amountQuote:
+        price && originalSize
+          ? originalSize.multipliedBy(price).toString()
+          : null,
+      executionPrice: null,
+      filledBase: filledSize,
+      filledQuote:
+        price && filledSize != null
+          ? new BigNumber(filledSize).multipliedBy(price).toString()
+          : null,
+      key: getPerpsProOrderHistoryKey(fact),
+      kind: 'orders',
+      isTrigger: order.isTrigger,
+      market: resolvePerpsProHistoryMarket(order.coin, marketDataMap),
+      oid: order.oid,
+      orderType: order.orderType || 'Unknown',
+      price: price?.toString() ?? null,
+      priceKind: isMarket ? 'market' : 'limit',
+      reduceOnly: order.reduceOnly,
+      remainingBase: remainingSize?.toString() ?? null,
+      side: order.side === 'B' ? 'buy' : 'sell',
+      status: fact.status || 'unknown',
+      tif: order.tif || null,
+      time: fact.statusTimestamp,
+    },
+    executionIndex,
+  );
 };

@@ -436,8 +436,8 @@ export default function TransactionNavigator() {
           title: t('page.perps.pro.history.title'),
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
+            fontSize: 18,
+            fontWeight: '700',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },

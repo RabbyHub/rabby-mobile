@@ -1,5 +1,6 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type {
+  WsFill,
   WsUserFunding,
   WsUserHistoricalOrders,
 } from '@rabby-wallet/hyperliquid-sdk';
@@ -61,6 +62,7 @@ export const usePerpsProHistorySubscriptions = ({
   enabled,
   isSubscriptionCurrent,
   mapRawRows,
+  onOrderFills,
   updateTabState,
 }: {
   accountAddress: string | null;
@@ -73,6 +75,7 @@ export const usePerpsProHistorySubscriptions = ({
     subscribedGeneration: number,
   ) => boolean;
   mapRawRows: MapRawRows;
+  onOrderFills: (fills: WsFill[], isSnapshot: boolean) => void;
   updateTabState: UpdatePerpsProHistoryTabState;
 }) => {
   useEffect(() => {
@@ -80,6 +83,16 @@ export const usePerpsProHistorySubscriptions = ({
       return;
     }
     const handleRawEvent = (event: PerpsProHistoryRawEvent) => {
+      if (activeTab === 'orders') {
+        if (
+          event.kind === 'fills' &&
+          isSubscriptionCurrent('orders', accountAddress, accountGeneration) &&
+          isSameAddress(event.accountAddress, accountAddress)
+        ) {
+          onOrderFills(event.items, event.isSnapshot);
+        }
+        return;
+      }
       const tab: PerpsProHistoryTab =
         event.kind === 'fills' ? 'trade' : 'transaction';
       if (
@@ -100,7 +113,8 @@ export const usePerpsProHistorySubscriptions = ({
       return subscribePerpsProHistoryEvents(handleRawEvent);
     }
     if (activeTab === 'orders') {
-      return perpsProHistoryRepository.subscribeOrders(
+      const unsubscribeEvents = subscribePerpsProHistoryEvents(handleRawEvent);
+      const unsubscribeOrders = perpsProHistoryRepository.subscribeOrders(
         (payload: WsUserHistoricalOrders) => {
           if (
             !isSubscriptionCurrent(
@@ -119,6 +133,10 @@ export const usePerpsProHistorySubscriptions = ({
           );
         },
       );
+      return () => {
+        unsubscribeEvents();
+        unsubscribeOrders();
+      };
     }
     return perpsProHistoryRepository.subscribeFunding(
       (payload: WsUserFunding) => {
@@ -161,6 +179,7 @@ export const usePerpsProHistorySubscriptions = ({
     enabled,
     isSubscriptionCurrent,
     mapRawRows,
+    onOrderFills,
     updateTabState,
   ]);
 };

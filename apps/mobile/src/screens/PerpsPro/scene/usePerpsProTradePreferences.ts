@@ -114,6 +114,20 @@ const controller = createPerpsProTradePreferencesController({
   setOrderType: value => perpsServiceApi.setPerpsProTradeOrderType(value),
 });
 
+const getAmountUnitSnapshot = () => controller.getSnapshot().amountUnit;
+
+export const usePerpsProTradeAmountUnit = () => {
+  const amountUnit = useSyncExternalStore(
+    controller.subscribe,
+    getAmountUnitSnapshot,
+    getAmountUnitSnapshot,
+  );
+  useEffect(() => {
+    void controller.hydrate();
+  }, []);
+  return amountUnit;
+};
+
 export const usePerpsProTradePreferences = () => {
   const snapshot = useSyncExternalStore(
     controller.subscribe,

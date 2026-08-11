@@ -2818,12 +2818,12 @@
           "coin": "Coin"
         },
         "history": {
-          "title": "History",
+          "title": "My trades",
           "tabs": {
             "orders": "Orders History",
             "trade": "Trade History",
             "transaction": "Transaction History",
-            "funding": "Funding History"
+            "funding": "Funding Fee"
           },
           "empty": {
             "orders": "No orders history",
@@ -2837,8 +2837,10 @@
             "filled": "Filled",
             "price": "Price",
             "fee": "Fee",
-            "netRealizedPnl": "Net Realized PNL",
-            "funding": "Funding"
+            "realizedPnl": "Realized PNL",
+            "reduceOnly": "Reduce Only",
+            "status": "Status",
+            "symbol": "Symbol"
           },
           "buy": "Buy",
           "sell": "Sell",
@@ -2847,6 +2849,8 @@
           "withdraw": "Withdraw",
           "long": "Long",
           "short": "Short",
+          "true": "True",
+          "perpetual": "Perpetual",
           "loadFailed": "History is temporarily unavailable",
           "refreshFailed": "Failed to refresh history",
           "loadingMore": "Loading more history"

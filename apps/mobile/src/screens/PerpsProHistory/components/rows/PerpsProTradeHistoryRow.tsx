@@ -1,0 +1,64 @@
+import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
+import {
+  formatPerpsProDecimal,
+  formatPerpsProPrice,
+} from '@/screens/PerpsPro/utils/format';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { PerpsProTradeHistoryRow } from '../../types';
+import { formatPerpsProHistoryAmount } from '../historyRowFormatters';
+import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
+
+export const PerpsProTradeHistoryRowView: React.FC<{
+  amountUnit: PerpsProTradeAmountUnit;
+  row: PerpsProTradeHistoryRow;
+}> = ({ amountUnit, row }) => {
+  const { t } = useTranslation();
+  const isBase = amountUnit === 'base';
+  const unit = isBase ? row.market.displayBase : row.market.quoteAsset;
+  const filled = isBase ? row.filledBase : row.filledQuote;
+  const decimals = isBase ? row.market.szDecimals ?? 8 : 2;
+  const filledValue = isBase
+    ? formatPerpsProHistoryAmount(filled, decimals)
+    : formatPerpsProDecimal(filled, 2);
+  const sideLabel =
+    row.side === 'buy'
+      ? t('page.perps.pro.history.buy')
+      : t('page.perps.pro.history.sell');
+  const sideTone = row.side === 'buy' ? 'positive' : 'negative';
+
+  return (
+    <PerpsProHistoryRowLayout
+      badges={[{ label: sideLabel, tone: sideTone }]}
+      details={[
+        {
+          label: t('page.perps.pro.history.fields.price'),
+          value: formatPerpsProPrice(
+            row.price,
+            row.market.pxDecimals ?? undefined,
+          ),
+        },
+        {
+          label: `${t('page.perps.pro.history.fields.filled')} (${unit})`,
+          value: filledValue,
+        },
+        {
+          label: `${t('page.perps.pro.history.fields.fee')} (${row.feeToken})`,
+          value: formatPerpsProDecimal(row.fee, 8),
+        },
+        {
+          label: `${t('page.perps.pro.history.fields.realizedPnl')} (${
+            row.market.quoteAsset
+          })`,
+          value: formatPerpsProDecimal(row.netRealizedPnl, 8),
+        },
+      ]}
+      showArrow
+      sourceTag={row.market.sourceTag || 'Perp'}
+      testID={`perps-pro-history-trade-${row.key}`}
+      time={row.time}
+      title={row.market.displayPair}
+    />
+  );
+};

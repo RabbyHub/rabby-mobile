@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/Typography';
+import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -26,17 +27,18 @@ import {
 } from './PerpsProHistoryState';
 
 export const PerpsProHistoryList: React.FC<{
+  amountUnit: PerpsProTradeAmountUnit;
   onLoadEarlier: () => void;
   onRefresh: () => void;
   onRetry: () => void;
   state: PerpsProHistoryTabState;
   tab: PerpsProHistoryTab;
-}> = ({ onLoadEarlier, onRefresh, onRetry, state, tab }) => {
+}> = ({ amountUnit, onLoadEarlier, onRefresh, onRetry, state, tab }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
-    ({ item }) => <PerpsProHistoryRowView row={item} />,
-    [],
+    ({ item }) => <PerpsProHistoryRowView amountUnit={amountUnit} row={item} />,
+    [amountUnit],
   );
   const handleEndReached = useCallback(() => {
     if (
@@ -71,6 +73,7 @@ export const PerpsProHistoryList: React.FC<{
         state.rows.length === 0 ? styles.emptyContent : styles.content
       }
       data={state.rows}
+      extraData={amountUnit}
       initialNumToRender={10}
       keyExtractor={item => item.key}
       ListEmptyComponent={<PerpsProHistoryEmpty tab={tab} />}

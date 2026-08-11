@@ -8,6 +8,7 @@ import type {
 } from '../types';
 import { mapPerpsProFundingHistoryFact } from './fundingHistory';
 import { mapPerpsProOrderHistoryFact } from './orderHistory';
+import type { PerpsProOrderExecutionIndex } from './orderExecution';
 import { mapPerpsProTradeHistoryFact } from './tradeHistory';
 import { mapPerpsProTransactionHistoryFact } from './transactionHistory';
 
@@ -16,12 +17,15 @@ export const mapPerpsProHistoryRawRows = (
   rawItems: unknown[],
   address: string,
   marketDataMap: Readonly<Record<string, MarketData | undefined>>,
+  orderExecutionIndex: PerpsProOrderExecutionIndex = new Map(),
 ): PerpsProHistoryRow[] => {
   switch (tab) {
     case 'orders':
       return (
         rawItems as Parameters<typeof mapPerpsProOrderHistoryFact>[0][]
-      ).map(item => mapPerpsProOrderHistoryFact(item, marketDataMap));
+      ).map(item =>
+        mapPerpsProOrderHistoryFact(item, marketDataMap, orderExecutionIndex),
+      );
     case 'trade':
       return (
         rawItems as Parameters<typeof mapPerpsProTradeHistoryFact>[0][]

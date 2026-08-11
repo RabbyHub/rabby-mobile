@@ -1,8 +1,14 @@
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  View,
+  type LayoutChangeEvent,
+  type LayoutRectangle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProHistoryTab } from '../types';
@@ -13,6 +19,35 @@ const TABS: PerpsProHistoryTab[] = [
   'transaction',
   'funding',
 ];
+const TAB_HORIZONTAL_PADDING = 15;
+type PerpsProHistoryTabFrames = Partial<
+  Record<PerpsProHistoryTab, LayoutRectangle>
+>;
+
+export const updatePerpsProHistoryTabFrame = (
+  tab: PerpsProHistoryTab,
+  event: LayoutChangeEvent,
+  setTabFrames: React.Dispatch<React.SetStateAction<PerpsProHistoryTabFrames>>,
+) => {
+  const { x, y, width, height } = event.nativeEvent.layout;
+  const frame: LayoutRectangle = { x, y, width, height };
+
+  setTabFrames(previous => {
+    const current = previous[tab];
+    if (
+      current?.x === x &&
+      current.y === y &&
+      current.width === width &&
+      current.height === height
+    ) {
+      return previous;
+    }
+    return {
+      ...previous,
+      [tab]: frame,
+    };
+  });
+};
 
 export const PerpsProHistoryTabs: React.FC<{
   activeTab: PerpsProHistoryTab;
@@ -20,11 +55,39 @@ export const PerpsProHistoryTabs: React.FC<{
 }> = React.memo(({ activeTab, onChange }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const scrollRef = useRef<ScrollView>(null);
+  const [tabFrames, setTabFrames] = useState<PerpsProHistoryTabFrames>({});
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [contentWidth, setContentWidth] = useState(0);
+
+  const scrollActiveTabIntoView = useCallback(
+    (animated: boolean) => {
+      const frame = tabFrames[activeTab];
+      if (!frame || viewportWidth <= 0 || contentWidth <= viewportWidth) {
+        return;
+      }
+      const maximumOffset = contentWidth - viewportWidth;
+      const centeredOffset =
+        frame.x + TAB_HORIZONTAL_PADDING - (viewportWidth - frame.width) / 2;
+      scrollRef.current?.scrollTo({
+        animated,
+        x: Math.max(0, Math.min(maximumOffset, centeredOffset)),
+      });
+    },
+    [activeTab, contentWidth, tabFrames, viewportWidth],
+  );
+
+  useEffect(() => {
+    scrollActiveTabIntoView(false);
+  }, [scrollActiveTabIntoView]);
 
   return (
     <ScrollView
       contentContainerStyle={styles.content}
       horizontal
+      onContentSizeChange={width => setContentWidth(width)}
+      onLayout={event => setViewportWidth(event.nativeEvent.layout.width)}
+      ref={scrollRef}
       showsHorizontalScrollIndicator={false}
       style={styles.scroll}>
       <View accessibilityRole="tablist" style={styles.tabs}>
@@ -35,7 +98,12 @@ export const PerpsProHistoryTabs: React.FC<{
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               key={tab}
-              onPress={() => onChange(tab)}
+              onLayout={event =>
+                updatePerpsProHistoryTabFrame(tab, event, setTabFrames)
+              }
+              onPress={() => {
+                onChange(tab);
+              }}
               style={styles.tab}
               testID={`perps-pro-history-tab-${tab}`}>
               <Text style={selected ? styles.activeText : styles.text}>
@@ -60,18 +128,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   content: {
     minWidth: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: TAB_HORIZONTAL_PADDING,
   },
   tabs: {
     alignItems: 'stretch',
     flexDirection: 'row',
-    gap: 24,
-    height: 48,
+    gap: 12,
+    height: 34,
   },
   tab: {
     alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 54,
+    justifyContent: 'flex-start',
+    paddingBottom: 1,
+    paddingHorizontal: 2,
+    paddingTop: 8,
     position: 'relative',
   },
   text: {
@@ -84,11 +154,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 18,
   },
   indicator: {
-    backgroundColor: colors2024['blue-default'],
+    backgroundColor: colors2024['neutral-title-1'],
     bottom: 0,
     height: 2,
     left: 0,

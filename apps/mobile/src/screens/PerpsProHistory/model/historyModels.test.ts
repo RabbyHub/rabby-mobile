@@ -9,6 +9,7 @@ import {
   getPerpsProOrderHistoryKey,
   mapPerpsProOrderHistoryFact,
 } from './orderHistory';
+import { buildPerpsProOrderExecutionIndex } from './orderExecution';
 import { mapPerpsProTradeHistoryFact } from './tradeHistory';
 import {
   mapPerpsProTransactionHistoryFact,
@@ -85,7 +86,7 @@ describe('Perps Pro history models', () => {
     expect(mapPerpsProOrderHistoryFact(filled, {})).toMatchObject({
       amountBase: '2',
       amountQuote: '100000',
-      displayAmountUnit: 'quote',
+      executionPrice: null,
       filledBase: '1.5',
       filledQuote: '75000',
       side: 'buy',
@@ -110,7 +111,7 @@ describe('Perps Pro history models', () => {
       ).toMatchObject({
         amountBase: '2',
         amountQuote: null,
-        displayAmountUnit: 'base',
+        executionPrice: null,
         filledBase: '1.5',
         filledQuote: null,
         market: {
@@ -138,11 +139,32 @@ describe('Perps Pro history models', () => {
     ).toMatchObject({
       amountBase: null,
       amountQuote: null,
-      displayAmountUnit: 'base',
+      executionPrice: null,
       filledBase: null,
       filledQuote: null,
       remainingBase: null,
     });
+  });
+
+  it('only exposes an order VWAP when fills fully cover the lifecycle row', () => {
+    const completeIndex = buildPerpsProOrderExecutionIndex([
+      makeFill({ coin: 'BTC', oid: 7, px: '49000', sz: '0.5', time: 95 }),
+      makeFill({ coin: 'BTC', oid: 7, px: '51000', sz: '1', time: 99 }),
+      makeFill({ coin: 'BTC', oid: 7, px: '100000', sz: '1', time: 101 }),
+    ]);
+    expect(
+      mapPerpsProOrderHistoryFact(makeOrder(), {}, completeIndex),
+    ).toMatchObject({
+      executionPrice: '50333.33333333333333333333',
+      filledBase: '1.5',
+    });
+
+    const incompleteIndex = buildPerpsProOrderExecutionIndex([
+      makeFill({ coin: 'BTC', oid: 7, px: '49000', sz: '0.5', time: 95 }),
+    ]);
+    expect(
+      mapPerpsProOrderHistoryFact(makeOrder(), {}, incompleteIndex),
+    ).toMatchObject({ executionPrice: null });
   });
 
   it('calculates quote fill and net realized PNL without losing fee rebates', () => {
@@ -218,6 +240,45 @@ describe('Perps Pro history models', () => {
         ACCOUNT,
       ),
     ).toEqual({ exclusionReason: 'spotOnly', row: null });
+    expect(
+      mapPerpsProTransactionHistoryFact(
+        makeLedger({
+          destination: ACCOUNT,
+          destinationDex: '',
+          sourceDex: 'spot',
+          type: 'send',
+          usdcValue: '2.5',
+          user: ACCOUNT,
+        }),
+        ACCOUNT,
+      ).row,
+    ).toMatchObject({ amount: '2.5', direction: 'deposit' });
+    expect(
+      mapPerpsProTransactionHistoryFact(
+        makeLedger({
+          destination: ACCOUNT,
+          destinationDex: 'spot',
+          sourceDex: '',
+          type: 'send',
+          usdcValue: '1.5',
+          user: ACCOUNT,
+        }),
+        ACCOUNT,
+      ).row,
+    ).toMatchObject({ amount: '1.5', direction: 'withdraw' });
+    expect(
+      mapPerpsProTransactionHistoryFact(
+        makeLedger({
+          destination: ACCOUNT,
+          destinationDex: '',
+          sourceDex: '',
+          type: 'send',
+          usdcValue: '1',
+          user: ACCOUNT,
+        }),
+        ACCOUNT,
+      ),
+    ).toEqual({ exclusionReason: 'ambiguousDirection', row: null });
     expect(
       mapPerpsProTransactionHistoryFact(
         makeLedger({ amount: '1', token: 'HYPE', type: 'spotTransfer' }),

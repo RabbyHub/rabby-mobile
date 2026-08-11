@@ -31,9 +31,10 @@ export type PerpsProHistoryMarket = Readonly<{
 export interface PerpsProOrderHistoryRow {
   amountBase: string | null;
   amountQuote: string | null;
-  displayAmountUnit: 'base' | 'quote';
+  executionPrice: string | null;
   filledBase: string | null;
   filledQuote: string | null;
+  isTrigger: boolean;
   key: string;
   kind: 'orders';
   market: PerpsProHistoryMarket;
