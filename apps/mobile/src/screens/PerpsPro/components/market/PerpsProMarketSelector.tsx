@@ -97,7 +97,10 @@ export type PerpsProMarketSelectorHandle = {
 type PerpsProMarketSelectorProps = {
   currentMarketKey: string | null;
   onClose?: () => void;
-  onSelect: (market: PerpsProMarket) => void;
+  onPrefetch?: (coin: string) => void;
+  onSelect: (
+    market: PerpsProMarket,
+  ) => boolean | void | Promise<boolean | void>;
 };
 
 const createProjectionSelector = () => {
@@ -120,7 +123,7 @@ const createProjectionSelector = () => {
 const PerpsProMarketSelectorComponent = forwardRef<
   PerpsProMarketSelectorHandle,
   PerpsProMarketSelectorProps
->(({ currentMarketKey, onClose, onSelect }, ref) => {
+>(({ currentMarketKey, onClose, onPrefetch, onSelect }, ref) => {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { colors2024, isLight, styles } = useTheme2024({ getStyle });
@@ -129,6 +132,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
   const listRef = useRef<PerpsProMarketListHandle>(null);
   const searchRef = useRef<PerpsProMarketSearchBarHandle>(null);
   const projectionRef = useRef(EMPTY_PERPS_PRO_MARKET_SELECTOR_PROJECTION);
+  const selectionRequestRef = useRef(0);
   const [query, setQuery] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [activeTab, setActiveTab] = useState<PerpsProMarketTab>('all');
@@ -252,6 +256,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
   }, [markPresent]);
   useImperativeHandle(ref, () => ({ present }), [present]);
   const handleDismiss = useCallback(() => {
+    selectionRequestRef.current += 1;
     markDismissed();
     Keyboard.dismiss();
     searchRef.current?.blur();
@@ -275,8 +280,25 @@ const PerpsProMarketSelectorComponent = forwardRef<
       if (!market) {
         return;
       }
-      onSelect(market);
-      dismissSelector();
+      const request = ++selectionRequestRef.current;
+      const result = onSelect(market);
+      if (result && typeof result === 'object' && 'then' in result) {
+        void Promise.resolve(result).then(
+          committed => {
+            if (
+              request === selectionRequestRef.current &&
+              committed !== false
+            ) {
+              dismissSelector();
+            }
+          },
+          () => undefined,
+        );
+        return;
+      }
+      if (result !== false) {
+        dismissSelector();
+      }
     },
     [dismissSelector, onSelect],
   );
@@ -403,6 +425,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
             data={visibleSlots}
             favoriteSet={favoriteSet}
             marketDataStatus={marketDataStatus}
+            onPrefetch={onPrefetch}
             onSelect={selectMarket}
             onToggleFavorite={toggleFavorite}
             ref={listRef}

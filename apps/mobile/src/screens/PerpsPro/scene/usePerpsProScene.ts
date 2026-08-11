@@ -14,12 +14,18 @@ import {
   buildPerpsProMarkets,
   type PerpsProMarket,
 } from '../model/market';
+import type { PerpsProLeverageConfiguration } from '../model/leverage';
 import { getPerpTickOptions } from '../model/orderBook';
 import { resolveInitialPerpsProMarket } from '../model/resolveInitialMarket';
 import {
   getPerpsProMarketSession,
   setPerpsProSessionMarket,
 } from '../session/perpsProMarketSession';
+import {
+  prefetchPerpsProZeroAddressLeverageBaseline,
+  preparePerpsProZeroAddressLeverageBaseline,
+  readPerpsProZeroAddressLeverageBaseline,
+} from './perpsProZeroAddressLeverageBaseline';
 import { usePerpsBookPrecision } from './usePerpsBookPrecision';
 
 const getStaticMarketSignature = (market: {
@@ -43,6 +49,11 @@ const getStaticMarketSignature = (market: {
     market.brief ?? '',
   ].join('|');
 
+type PreparedMarketSelection = {
+  marketKey: string;
+  zeroAddressLeverageBaseline: PerpsProLeverageConfiguration | null;
+};
+
 export const usePerpsProScene = () => {
   const route =
     useRoute<
@@ -54,9 +65,11 @@ export const usePerpsProScene = () => {
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState,
   );
-  const [marketKey, setMarketKey] = useState<string | null>(
-    () => getPerpsProMarketSession().marketKey,
-  );
+  const [marketSelection, setMarketSelection] =
+    useState<PreparedMarketSelection | null>(null);
+  const marketSelectionRef = useRef<PreparedMarketSelection | null>(null);
+  const marketSelectionSequenceRef = useRef(0);
+  const pendingMarketKeyRef = useRef<string | null>(null);
   const navigationMarketRef = useRef(route.params?.market);
   const navigationMarketConsumedRef = useRef(false);
 
@@ -72,9 +85,89 @@ export const usePerpsProScene = () => {
       : [];
   }, [marketCatalogueSignature]);
 
+  const catalogueRef = useRef(catalogue);
+  catalogueRef.current = catalogue;
+  const synchronousMarketSelection =
+    useMemo<PreparedMarketSelection | null>(() => {
+      if (marketSelection || catalogue.length === 0) {
+        return null;
+      }
+      const resolved = resolveInitialPerpsProMarket({
+        markets: catalogue,
+        navigationMarket: navigationMarketConsumedRef.current
+          ? undefined
+          : navigationMarketRef.current,
+        sessionMarketKey: getPerpsProMarketSession().marketKey,
+      });
+      if (!resolved) {
+        return null;
+      }
+      const zeroAddressLeverageBaseline =
+        readPerpsProZeroAddressLeverageBaseline(resolved.canonicalCoin);
+      return zeroAddressLeverageBaseline
+        ? { marketKey: resolved.marketKey, zeroAddressLeverageBaseline }
+        : null;
+    }, [catalogue, marketSelection]);
+  const effectiveMarketSelection =
+    marketSelection ?? synchronousMarketSelection;
+  if (!marketSelectionRef.current && effectiveMarketSelection) {
+    marketSelectionRef.current = effectiveMarketSelection;
+  }
+
+  const selectMarket = useCallback(async (market: PerpsProMarket) => {
+    if (marketSelectionRef.current?.marketKey === market.marketKey) {
+      marketSelectionSequenceRef.current += 1;
+      pendingMarketKeyRef.current = null;
+      return true;
+    }
+    const sequence = ++marketSelectionSequenceRef.current;
+    pendingMarketKeyRef.current = market.marketKey;
+    const zeroAddressLeverageBaseline =
+      await preparePerpsProZeroAddressLeverageBaseline(market.canonicalCoin);
+    if (sequence !== marketSelectionSequenceRef.current) {
+      return false;
+    }
+    if (
+      !catalogueRef.current.some(item => item.marketKey === market.marketKey)
+    ) {
+      pendingMarketKeyRef.current = null;
+      return false;
+    }
+
+    const nextSelection = {
+      marketKey: market.marketKey,
+      zeroAddressLeverageBaseline,
+    };
+    pendingMarketKeyRef.current = null;
+    marketSelectionRef.current = nextSelection;
+    setMarketSelection(nextSelection);
+    setPerpsProSessionMarket(market.marketKey);
+    return true;
+  }, []);
+
+  const cancelPendingMarketSelection = useCallback(() => {
+    marketSelectionSequenceRef.current += 1;
+    pendingMarketKeyRef.current = null;
+  }, []);
+
+  const prefetchMarket = useCallback((coin: string) => {
+    prefetchPerpsProZeroAddressLeverageBaseline(coin);
+  }, []);
+
+  useEffect(() => {
+    if (marketSelection || !synchronousMarketSelection) {
+      return;
+    }
+    marketSelectionRef.current = synchronousMarketSelection;
+    setMarketSelection(synchronousMarketSelection);
+    setPerpsProSessionMarket(synchronousMarketSelection.marketKey);
+  }, [marketSelection, synchronousMarketSelection]);
+
   useEffect(() => {
     if (catalogue.length === 0) {
-      setMarketKey(null);
+      cancelPendingMarketSelection();
+      marketSelectionRef.current = null;
+      setMarketSelection(null);
       return;
     }
     const resolved = resolveInitialPerpsProMarket({
@@ -82,14 +175,28 @@ export const usePerpsProScene = () => {
       navigationMarket: navigationMarketConsumedRef.current
         ? undefined
         : navigationMarketRef.current,
-      sessionMarketKey: marketKey ?? getPerpsProMarketSession().marketKey,
+      sessionMarketKey:
+        pendingMarketKeyRef.current ??
+        marketSelectionRef.current?.marketKey ??
+        getPerpsProMarketSession().marketKey,
     });
     navigationMarketConsumedRef.current = true;
-    if (resolved && resolved.marketKey !== marketKey) {
-      setMarketKey(resolved.marketKey);
-      setPerpsProSessionMarket(resolved.marketKey);
+    if (
+      resolved &&
+      resolved.marketKey !== marketSelectionRef.current?.marketKey &&
+      resolved.marketKey !== pendingMarketKeyRef.current
+    ) {
+      void selectMarket(resolved);
     }
-  }, [catalogue, marketKey]);
+  }, [cancelPendingMarketSelection, catalogue, selectMarket]);
+
+  useEffect(
+    () => () => {
+      marketSelectionSequenceRef.current += 1;
+      pendingMarketKeyRef.current = null;
+    },
+    [],
+  );
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
@@ -97,8 +204,11 @@ export const usePerpsProScene = () => {
   }, []);
 
   const catalogueMarket = useMemo(
-    () => catalogue.find(item => item.marketKey === marketKey) ?? null,
-    [catalogue, marketKey],
+    () =>
+      catalogue.find(
+        item => item.marketKey === effectiveMarketSelection?.marketKey,
+      ) ?? null,
+    [catalogue, effectiveMarketSelection?.marketKey],
   );
   const isResolvingMarket = catalogue.length > 0 && catalogueMarket == null;
   const canonicalCoin = catalogueMarket?.canonicalCoin ?? '';
@@ -140,26 +250,29 @@ export const usePerpsProScene = () => {
     !!currentMarket;
   const subscriptionsEnabled = klineEnabled && !!selectedTickOption;
 
-  const selectMarket = useCallback((market: PerpsProMarket) => {
-    setMarketKey(market.marketKey);
-    setPerpsProSessionMarket(market.marketKey);
-  }, []);
   const retryMarketData = useCallback(() => {
     fetchMarketData();
   }, [fetchMarketData]);
 
   return {
+    cancelPendingMarketSelection,
     currentMarket,
     executionActive: klineEnabled,
     isResolvingMarket,
     klineEnabled,
     marketDataStatus,
     precision,
+    prefetchMarket,
     realtimeEnabled: subscriptionsEnabled,
     retryMarketData,
     selectMarket,
     selectTickOption,
     selectedTickOption,
     tickOptions,
+    zeroAddressLeverageBaseline:
+      effectiveMarketSelection &&
+      currentMarket?.marketKey === effectiveMarketSelection.marketKey
+        ? effectiveMarketSelection.zeroAddressLeverageBaseline
+        : null,
   };
 };

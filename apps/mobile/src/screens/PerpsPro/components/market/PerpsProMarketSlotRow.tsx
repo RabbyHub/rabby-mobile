@@ -1,5 +1,5 @@
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { buildPerpsProMarketKey } from '../../model/market';
@@ -10,6 +10,7 @@ type PerpsProMarketSlotRowProps = {
   canonicalCoin: string;
   favorite: boolean;
   marketKey: string;
+  onPrefetch?: (coin: string) => void;
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
   selected: boolean;
@@ -19,6 +20,7 @@ const PerpsProMarketSlotRowComponent: React.FC<PerpsProMarketSlotRowProps> = ({
   canonicalCoin,
   favorite,
   marketKey,
+  onPrefetch,
   onSelect,
   onToggleFavorite,
   selected,
@@ -38,6 +40,13 @@ const PerpsProMarketSlotRowComponent: React.FC<PerpsProMarketSlotRowProps> = ({
     }
     return buildPerpsProMarketRowModel(source);
   }, [marketKey, source]);
+  const prefetch = useCallback(() => {
+    onPrefetch?.(canonicalCoin);
+  }, [canonicalCoin, onPrefetch]);
+
+  useEffect(() => {
+    prefetch();
+  }, [prefetch]);
 
   if (!model) {
     return null;
@@ -47,6 +56,7 @@ const PerpsProMarketSlotRowComponent: React.FC<PerpsProMarketSlotRowProps> = ({
     <PerpsProMarketRow
       favorite={favorite}
       model={model}
+      onPrefetch={prefetch}
       onSelect={onSelect}
       onToggleFavorite={onToggleFavorite}
       selected={selected}

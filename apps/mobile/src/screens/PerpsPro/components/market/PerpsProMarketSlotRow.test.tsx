@@ -78,11 +78,16 @@ const { __getInitialMarketDataMap, __setMarketDataMap } = jest.requireMock(
   __setMarketDataMap: (marketDataMap: MarketDataMap) => void;
 };
 
-const renderSlotRow = (canonicalCoin: string, marketKey: string) => (
+const renderSlotRow = (
+  canonicalCoin: string,
+  marketKey: string,
+  onPrefetch?: (coin: string) => void,
+) => (
   <PerpsProMarketSlotRow
     canonicalCoin={canonicalCoin}
     favorite={false}
     marketKey={marketKey}
+    onPrefetch={onPrefetch}
     onSelect={jest.fn()}
     onToggleFavorite={jest.fn()}
     selected={false}
@@ -135,5 +140,16 @@ describe('PerpsProMarketSlotRow', () => {
     rerender(renderSlotRow('BETA', 'hyperliquid::BETA'));
 
     expect(screen.getByText('hyperliquid::BETA:80')).toBeTruthy();
+  });
+
+  it('prefetches each mounted business identity before it can be selected', () => {
+    const onPrefetch = jest.fn();
+    const { rerender } = render(
+      renderSlotRow('ALPHA', 'hyperliquid::ALPHA', onPrefetch),
+    );
+    expect(onPrefetch).toHaveBeenCalledWith('ALPHA');
+
+    rerender(renderSlotRow('BETA', 'hyperliquid::BETA', onPrefetch));
+    expect(onPrefetch).toHaveBeenCalledWith('BETA');
   });
 });

@@ -265,10 +265,6 @@ jest.mock('./usePerpsProLeverageUpdate', () => ({
   }),
 }));
 
-jest.mock('./usePerpsProZeroAddressLeverageBaseline', () => ({
-  usePerpsProZeroAddressLeverageBaseline: () => null,
-}));
-
 jest.mock('./usePerpsProInfoPanel', () => ({
   usePerpsProInfoPanel: mockUsePerpsProInfoPanel,
 }));
@@ -309,17 +305,20 @@ const { PerpsProScene } =
   require('./PerpsProScene') as typeof import('./PerpsProScene');
 
 const createSceneState = (overrides: Record<string, unknown> = {}) => ({
+  cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
   isResolvingMarket: false,
   klineEnabled: false,
   marketDataStatus: 'success',
   precision: null,
+  prefetchMarket: jest.fn(),
   realtimeEnabled: false,
   retryMarketData: jest.fn(),
   selectMarket: jest.fn(),
   selectTickOption: jest.fn(),
   selectedTickOption: null,
   tickOptions: [],
+  zeroAddressLeverageBaseline: null,
   ...overrides,
 });
 

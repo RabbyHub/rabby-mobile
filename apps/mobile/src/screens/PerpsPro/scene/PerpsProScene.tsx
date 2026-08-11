@@ -76,7 +76,6 @@ import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
 import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
-import { usePerpsProZeroAddressLeverageBaseline } from './usePerpsProZeroAddressLeverageBaseline';
 import { usePerpsProTrade } from './usePerpsProTrade';
 
 type PerpsProSceneRow =
@@ -128,9 +127,6 @@ export const PerpsProScene: React.FC<{
     coin: scene.currentMarket?.canonicalCoin ?? '',
     enabled: scene.realtimeEnabled,
   });
-  const zeroAddressLeverageBaseline = usePerpsProZeroAddressLeverageBaseline(
-    scene.currentMarket?.canonicalCoin ?? '',
-  );
   const trade = usePerpsProTrade({
     activeAssetData: activeAsset.activeAssetData,
     bboBook: bboBook.book,
@@ -140,7 +136,7 @@ export const PerpsProScene: React.FC<{
     executionActive: scene.executionActive && !isModeSwitching,
     leveragePending: leverageUpdate.pending,
     market: scene.currentMarket,
-    zeroAddressLeverageBaseline,
+    zeroAddressLeverageBaseline: scene.zeroAddressLeverageBaseline,
     refreshActiveAssetData: activeAsset.refreshActiveAssetData,
     updateLeverageRequest: leverageUpdate.update,
   });
@@ -525,6 +521,8 @@ export const PerpsProScene: React.FC<{
       </View>
       <PerpsProMarketSelector
         currentMarketKey={scene.currentMarket?.marketKey ?? null}
+        onClose={scene.cancelPendingMarketSelection}
+        onPrefetch={scene.prefetchMarket}
         onSelect={scene.selectMarket}
         ref={marketSelectorRef}
       />

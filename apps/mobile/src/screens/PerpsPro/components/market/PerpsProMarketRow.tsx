@@ -18,6 +18,7 @@ import { PerpsProMarketLogo } from './PerpsProMarketLogo';
 type PerpsProMarketRowProps = {
   favorite: boolean;
   model: PerpsProMarketRowModel;
+  onPrefetch?: () => void;
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
   selected: boolean;
@@ -26,6 +27,7 @@ type PerpsProMarketRowProps = {
 const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
   favorite,
   model,
+  onPrefetch,
   onSelect,
   onToggleFavorite,
   selected,
@@ -44,7 +46,8 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
       : styles.changeDown;
   const captureSelectIdentity = useCallback(() => {
     selectPressMarketKeyRef.current = model.marketKey;
-  }, [model.marketKey]);
+    onPrefetch?.();
+  }, [model.marketKey, onPrefetch]);
   const captureFavoriteIdentity = useCallback(() => {
     favoritePressMarketKeyRef.current = model.marketKey;
   }, [model.marketKey]);

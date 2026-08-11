@@ -6,8 +6,10 @@ import { PerpsOriginScreen } from './index';
 const mockSetOptions = jest.fn();
 const mockSetViewMode = jest.fn(async () => true);
 const mockUseEnsurePerpsRuntime = jest.fn();
+const mockPrefetchBaseline = jest.fn();
 let mockRuntimeMounts = 0;
 let mockRuntimeUnmounts = 0;
+let mockMarketDataStatus: 'idle' | 'success' = 'idle';
 let mockViewModeState = {
   hydrated: false,
   viewMode: 'simple' as 'simple' | 'pro',
@@ -20,6 +22,35 @@ jest.mock('@/hooks/navigation', () => ({
   useRabbyAppNavigation: () => ({
     setOptions: mockSetOptions,
   }),
+}));
+
+jest.mock('@react-navigation/native', () => ({
+  useRoute: () => ({ params: undefined }),
+}));
+
+jest.mock('@/hooks/perps/usePerpsStore', () => {
+  const state = { marketData: [{}] };
+  const perpsStore = (selector: (value: object) => unknown) =>
+    selector({ ...state, marketDataStatus: mockMarketDataStatus });
+  perpsStore.getState = () => state;
+  return { perpsStore };
+});
+
+jest.mock('../PerpsPro/model/market', () => ({
+  buildPerpsProMarkets: () => [{ canonicalCoin: 'SUI' }],
+}));
+
+jest.mock('../PerpsPro/model/resolveInitialMarket', () => ({
+  resolveInitialPerpsProMarket: () => ({ canonicalCoin: 'SUI' }),
+}));
+
+jest.mock('../PerpsPro/session/perpsProMarketSession', () => ({
+  getPerpsProMarketSession: () => ({ marketKey: 'hyperliquid::SUI' }),
+}));
+
+jest.mock('../PerpsPro/scene/perpsProZeroAddressLeverageBaseline', () => ({
+  prefetchPerpsProZeroAddressLeverageBaseline: (...args: unknown[]) =>
+    mockPrefetchBaseline(...args),
 }));
 
 jest.mock('@/hooks/perps/runtime/useEnsurePerpsRuntime', () => ({
@@ -96,6 +127,7 @@ describe('PerpsOriginScreen', () => {
     jest.clearAllMocks();
     mockRuntimeMounts = 0;
     mockRuntimeUnmounts = 0;
+    mockMarketDataStatus = 'idle';
     mockViewModeState = {
       hydrated: false,
       viewMode: 'simple',
@@ -114,6 +146,19 @@ describe('PerpsOriginScreen', () => {
       headerShown: false,
     });
     expect(mockRuntimeMounts).toBe(1);
+  });
+
+  it('prewarms the saved Pro market while the Simple scene is visible', () => {
+    mockMarketDataStatus = 'success';
+    mockViewModeState = {
+      ...mockViewModeState,
+      hydrated: true,
+      viewMode: 'simple',
+    };
+
+    render(<PerpsOriginScreen />);
+
+    expect(mockPrefetchBaseline).toHaveBeenCalledWith('SUI');
   });
 
   it('switches mutually exclusive scenes without remounting the route Runtime', () => {

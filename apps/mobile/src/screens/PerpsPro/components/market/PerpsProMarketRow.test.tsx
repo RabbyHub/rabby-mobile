@@ -114,11 +114,13 @@ describe('PerpsProMarketRow', () => {
       }),
     );
     const onSelect = jest.fn();
+    const onPrefetch = jest.fn();
     const onToggleFavorite = jest.fn();
     const { rerender } = render(
       <PerpsProMarketRow
         favorite={false}
         model={first}
+        onPrefetch={onPrefetch}
         onSelect={onSelect}
         onToggleFavorite={onToggleFavorite}
         selected={false}
@@ -139,6 +141,7 @@ describe('PerpsProMarketRow', () => {
       <PerpsProMarketRow
         favorite
         model={second}
+        onPrefetch={onPrefetch}
         onSelect={onSelect}
         onToggleFavorite={onToggleFavorite}
         selected
@@ -158,6 +161,11 @@ describe('PerpsProMarketRow', () => {
         .props.accessibilityState,
     ).toEqual({ selected: true });
 
+    fireEvent(
+      screen.getByLabelText('page.perps.pro.marketSelector.select:BETAUSDC'),
+      'pressIn',
+    );
+    expect(onPrefetch).toHaveBeenCalledTimes(1);
     fireEvent.press(
       screen.getByLabelText('page.perps.pro.marketSelector.select:BETAUSDC'),
     );

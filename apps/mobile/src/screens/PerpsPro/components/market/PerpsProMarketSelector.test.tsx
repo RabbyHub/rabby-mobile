@@ -511,6 +511,52 @@ describe('PerpsProMarketSelector', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the selector open until an asynchronous market preparation commits', async () => {
+    let resolveSelection!: (value: boolean) => void;
+    const onSelect = jest.fn(
+      () =>
+        new Promise<boolean>(resolve => {
+          resolveSelection = resolve;
+        }),
+    );
+    render(
+      <PerpsProMarketSelector
+        currentMarketKey="hyperliquid::BTC"
+        onSelect={onSelect}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('market-row-ETHUSDC'));
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ canonicalCoin: 'ETH' }),
+    );
+    expect(mockDismiss).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveSelection(true);
+      await Promise.resolve();
+    });
+    expect(mockDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards bounded visible-row prefetch through the market list', () => {
+    const onPrefetch = jest.fn();
+    render(
+      <PerpsProMarketSelector
+        currentMarketKey={null}
+        onPrefetch={onPrefetch}
+        onSelect={jest.fn()}
+      />,
+    );
+
+    const marketListProps =
+      mockMarketListProps.mock.calls[
+        mockMarketListProps.mock.calls.length - 1
+      ][0];
+    marketListProps.onPrefetch('SUI');
+    expect(onPrefetch).toHaveBeenCalledWith('SUI');
+  });
+
   it('resets transient query and tab state on dismiss without resetting sort', () => {
     __setFavoriteMarkets(['BTC']);
     render(

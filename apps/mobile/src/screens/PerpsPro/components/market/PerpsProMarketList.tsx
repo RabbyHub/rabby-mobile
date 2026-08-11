@@ -42,6 +42,7 @@ type PerpsProMarketListProps = {
   data: readonly PerpsProMarketSlot[];
   favoriteSet: ReadonlySet<string>;
   marketDataStatus: MarketDataStatus;
+  onPrefetch?: (coin: string) => void;
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
 };
@@ -57,6 +58,7 @@ const PerpsProMarketListComponent = forwardRef<
       data,
       favoriteSet,
       marketDataStatus,
+      onPrefetch,
       onSelect,
       onToggleFavorite,
     },
@@ -116,6 +118,7 @@ const PerpsProMarketListComponent = forwardRef<
               canonicalCoin={item.canonicalCoin}
               favorite={favoriteSet.has(item.canonicalCoin.toUpperCase())}
               marketKey={item.marketKey}
+              onPrefetch={onPrefetch}
               onSelect={onSelect}
               onToggleFavorite={onToggleFavorite}
               selected={selected}
@@ -126,6 +129,7 @@ const PerpsProMarketListComponent = forwardRef<
       [
         currentMarketKey,
         favoriteSet,
+        onPrefetch,
         onSelect,
         onToggleFavorite,
         styles.selectedMarket,
