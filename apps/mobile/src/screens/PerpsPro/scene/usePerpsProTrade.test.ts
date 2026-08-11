@@ -553,7 +553,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     });
   });
 
-  it('reports direction-specific TP validation through the field and toast', async () => {
+  it('reports direction-specific TP validation through toast only', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -574,21 +574,14 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.tpSl.setEnabled(true));
     await act(async () => hook.result.current.requestReview('buy'));
 
-    expect(hook.result.current.tpSl.submitErrors).toContainEqual({
-      code: 'invalidDirection',
-      leg: 'tp',
-    });
-    expect(hook.result.current.tpSl.submitContext).toEqual({
-      liquidationPrice: '50.00',
-      side: 'buy',
-    });
+    expect(hook.result.current.tpSl).not.toHaveProperty('submitErrors');
     expect(mockShowToast).toHaveBeenCalledWith(
       'page.perps.pro.trade.tpSlError.tpTriggerMoreThanOrderPrice',
       'error',
     );
   });
 
-  it('reports a Long stop below liquidation with the Desktop-aligned toast', async () => {
+  it('allows a Long stop below estimated liquidation and keeps the estimate for review', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -609,14 +602,16 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.tpSl.setEnabled(true));
     await act(async () => hook.result.current.requestReview('buy'));
 
-    expect(hook.result.current.tpSl.submitErrors).toContainEqual({
-      code: 'outsideLiquidationRange',
-      leg: 'sl',
+    expect(hook.result.current.tpSl).not.toHaveProperty('submitErrors');
+    expect(mockShowToast).not.toHaveBeenCalled();
+    expect(hook.result.current.review).toMatchObject({
+      attached: {
+        liquidationPrice: '50.00',
+        sl: { triggerPrice: '40' },
+      },
+      reviewFacts: { liquidationPrice: '50.00' },
+      type: 'openOrderWithAttachedTpSl',
     });
-    expect(mockShowToast).toHaveBeenCalledWith(
-      'page.perps.pro.trade.tpSlError.priceBelowLiquidation',
-      'error',
-    );
   });
 
   it('submits attached TP/SL Limit directly when Limit confirmation is disabled', async () => {
@@ -923,9 +918,11 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     await act(async () => hook.result.current.requestReview('buy'));
 
     expect(hook.result.current.review).toBeNull();
-    expect(hook.result.current.tpSl.submitErrors).toEqual([
-      { code: 'insufficientDepth' },
-    ]);
+    expect(hook.result.current.tpSl).not.toHaveProperty('submitErrors');
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.tpSlError.insufficientDepth',
+      'error',
+    );
     expect(mockEnsureApproval).not.toHaveBeenCalled();
   });
 

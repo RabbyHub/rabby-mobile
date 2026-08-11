@@ -177,9 +177,6 @@ const controller = (
       setFocusedLeg: jest.fn(),
       setMode: jest.fn(),
       setRawMagnitude: jest.fn(),
-      setSubmitErrors: jest.fn(),
-      submitContext: { liquidationPrice: null, side: null },
-      submitErrors: [],
     },
   } as unknown as PerpsProTradeController);
 

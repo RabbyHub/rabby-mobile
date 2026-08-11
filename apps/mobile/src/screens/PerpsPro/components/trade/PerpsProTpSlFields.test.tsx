@@ -104,9 +104,6 @@ const controller = (overrides: Partial<PerpsProTpSlController> = {}) =>
     setFocusedLeg: jest.fn(),
     setMode: jest.fn(),
     setRawMagnitude: jest.fn(),
-    setSubmitErrors: jest.fn(),
-    submitContext: { liquidationPrice: null, side: null },
-    submitErrors: [],
     ...overrides,
   } as PerpsProTpSlController);
 
@@ -375,17 +372,15 @@ describe('PerpsProTpSlFields', () => {
     expect(screen.queryByTestId('perps-pro-tpsl-tooltip')).toBeNull();
   });
 
-  it('renders structured submit errors at the owning leg', () => {
+  it('does not reserve inline error UI beside either TP/SL leg', () => {
     render(
       <PerpsProTpSlFields
-        controller={controller({
-          submitErrors: [{ code: 'outsideLiquidationRange', leg: 'sl' }],
-        })}
+        controller={controller()}
         draft={draft}
         pxDecimals={2}
         quoteAsset="USDC"
       />,
     );
-    expect(screen.getByText('outsideLiquidationRange')).toBeTruthy();
+    expect(screen.queryByText('outsideLiquidationRange')).toBeNull();
   });
 });

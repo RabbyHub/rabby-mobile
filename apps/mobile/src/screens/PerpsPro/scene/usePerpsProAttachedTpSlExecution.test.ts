@@ -97,8 +97,6 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
   };
 });
 
-jest.mock('@/utils/perps', () => ({ calLiquidationPrice: () => 50 }));
-
 jest.mock('../actions/openOrderWithAttachedTpSl', () => ({
   executePerpsProAttachedTpSl: (...args: unknown[]) => mockExecute(...args),
   getPerpsProAttachedTpSlPositionIdentity: () => ({
@@ -224,6 +222,11 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     expect(mockRefreshOpenOrders).toHaveBeenCalledWith('');
     expect(mockRefreshClearinghouse).toHaveBeenCalledWith('');
     expect(refreshActiveAssetData).toHaveBeenCalledTimes(1);
+    expect(
+      mockValidate.mock.calls.every(
+        ([, context]) => !('liquidationPrice' in context),
+      ),
+    ).toBe(true);
   });
 
   it('stops on explicit approval cancellation without dispatching', async () => {

@@ -142,7 +142,6 @@ const guardContext = (
   bookStatus: 'ready',
   coin: 'BTC',
   dexId: '',
-  liquidationPrice: '50',
   marketKey: 'BTC:USDC',
   maxBaseSize: '10',
   positionIdentity: getPerpsProAttachedTpSlPositionIdentity(null),
@@ -281,6 +280,26 @@ describe('Perps Pro attached TP/SL command and executor', () => {
         guardContext({ maxBaseSize: '1.99' }),
       ),
     ).toMatchObject({ ok: false, reason: 'availableToTrade' });
+  });
+
+  it('keeps liquidation as review metadata without using it as a submission guard', () => {
+    const belowLiquidation = build({
+      attached: attached({ liquidationPrice: '95' }),
+    });
+    const unavailableLiquidation = build({
+      attached: attached({ liquidationPrice: null }),
+    });
+
+    expect(belowLiquidation.reviewFacts.liquidationPrice).toBe('95');
+    expect(
+      validatePerpsProAttachedTpSlCommand(belowLiquidation, guardContext()),
+    ).toEqual({ ok: true });
+    expect(
+      validatePerpsProAttachedTpSlCommand(
+        unavailableLiquidation,
+        guardContext(),
+      ),
+    ).toEqual({ ok: true });
   });
 
   it('submits one Market normalTpsl batch and persists accepted leg evidence', async () => {

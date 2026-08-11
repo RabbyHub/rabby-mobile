@@ -23,12 +23,10 @@ export type PerpsProTpSlValidationErrorCode =
   | 'invalidOrderAmount'
   | 'invalidTrigger'
   | 'iocUnsupported'
-  | 'liquidationUnavailable'
   | 'insufficientDepth'
   | 'marketBookUnavailable'
   | 'nonPositiveTrigger'
   | 'oppositePosition'
-  | 'outsideLiquidationRange'
   | 'reduceOnlyUnsupported';
 
 export type PerpsProTpSlValidationError = {
@@ -320,21 +318,6 @@ export const evaluatePerpsProAttachedTpSl = ({
     }
   });
 
-  if (sl && entry) {
-    const trigger = positive(sl.triggerPrice);
-    const liquidation = positive(liquidationPrice);
-    if (!liquidation) {
-      errors.push({ code: 'liquidationUnavailable', leg: 'sl' });
-    } else if (
-      !trigger ||
-      (side === 'buy'
-        ? !trigger.gt(liquidation) || !trigger.lt(entry)
-        : !trigger.gt(entry) || !trigger.lt(liquidation))
-    ) {
-      errors.push({ code: 'outsideLiquidationRange', leg: 'sl' });
-    }
-  }
-
   return {
     errors,
     expectedEntryPrice,
@@ -349,11 +332,9 @@ export const evaluatePerpsProAttachedTpSl = ({
 export const validatePerpsProFrozenAttachedTpSl = ({
   attached,
   expectedEntryPrice,
-  liquidationPrice,
 }: {
   attached: Pick<PerpsProAttachedTpSlEvaluation, 'side' | 'sl' | 'tp'>;
   expectedEntryPrice: string;
-  liquidationPrice: string | null;
 }): PerpsProTpSlValidationError[] => {
   const errors: PerpsProTpSlValidationError[] = [];
   const entry = positive(expectedEntryPrice);
@@ -372,19 +353,5 @@ export const validatePerpsProFrozenAttachedTpSl = ({
       errors.push({ code: 'invalidDirection', leg: kind });
     }
   });
-  if (attached.sl) {
-    const trigger = positive(attached.sl.triggerPrice);
-    const liquidation = positive(liquidationPrice);
-    if (!liquidation) {
-      errors.push({ code: 'liquidationUnavailable', leg: 'sl' });
-    } else if (
-      !trigger ||
-      (attached.side === 'buy'
-        ? !trigger.gt(liquidation) || !trigger.lt(entry)
-        : !trigger.gt(entry) || !trigger.lt(liquidation))
-    ) {
-      errors.push({ code: 'outsideLiquidationRange', leg: 'sl' });
-    }
-  }
   return errors;
 };

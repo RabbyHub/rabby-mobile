@@ -89,7 +89,6 @@ export type PerpsProAttachedTpSlGuardContext = {
   bookStatus: 'error' | 'idle' | 'loading' | 'ready' | 'stale';
   coin: string;
   dexId: string;
-  liquidationPrice: string | null;
   marketKey: string | null;
   maxBaseSize: string | null;
   positionIdentity: PerpsProAttachedTpSlPositionIdentity;
@@ -405,7 +404,6 @@ export const validatePerpsProAttachedTpSlCommand = (
   const errors = validatePerpsProFrozenAttachedTpSl({
     attached: command.attached,
     expectedEntryPrice,
-    liquidationPrice: context.liquidationPrice,
   });
   return errors.length > 0
     ? { ok: false, reason: errors[0]?.code ?? 'attachedTpSl' }

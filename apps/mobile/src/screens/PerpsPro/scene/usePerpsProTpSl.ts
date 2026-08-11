@@ -7,10 +7,8 @@ import {
   type PerpsProEvaluatedTpSlLeg,
   type PerpsProTpSlLegKind,
   type PerpsProTpSlMode,
-  type PerpsProTpSlValidationError,
 } from '../model/tpsl';
 import { sanitizePerpsProDecimalInput } from '../model/trade';
-import type { PerpsProTpSlErrorContext } from '../utils/tpSlError';
 
 export type PerpsProTpSlPreviewFacts = {
   baseSize: string;
@@ -23,13 +21,6 @@ export type PerpsProTpSlDirectionPreview = {
 };
 
 const emptyPreview: PerpsProTpSlDirectionPreview = { sl: null, tp: null };
-
-export type PerpsProTpSlSubmitContext = PerpsProTpSlErrorContext;
-
-const emptySubmitContext: PerpsProTpSlSubmitContext = {
-  liquidationPrice: null,
-  side: null,
-};
 
 export const clearPerpsProTpSlForMarketChange = (
   draft: PerpsProAttachedTpSlDraft,
@@ -64,21 +55,6 @@ export const usePerpsProTpSl = ({
   const [focusedLeg, setFocusedLeg] = useState<PerpsProTpSlLegKind | null>(
     null,
   );
-  const [submitErrors, setSubmitErrorsState] = useState<
-    PerpsProTpSlValidationError[]
-  >([]);
-  const [submitContext, setSubmitContext] =
-    useState<PerpsProTpSlSubmitContext>(emptySubmitContext);
-  const setSubmitErrors = useCallback(
-    (
-      errors: PerpsProTpSlValidationError[],
-      context: PerpsProTpSlSubmitContext = emptySubmitContext,
-    ) => {
-      setSubmitErrorsState(errors);
-      setSubmitContext(context);
-    },
-    [],
-  );
   const compatibilityError = getPerpsProAttachedTpSlCompatibilityError(order);
 
   useEffect(() => {
@@ -91,10 +67,9 @@ export const usePerpsProTpSl = ({
     (enabled: boolean) => {
       if (enabled && compatibilityError) return;
       onChange({ ...draft, enabled });
-      setSubmitErrors([]);
       if (!enabled) setFocusedLeg(null);
     },
-    [compatibilityError, draft, onChange, setSubmitErrors],
+    [compatibilityError, draft, onChange],
   );
 
   const setMode = useCallback(
@@ -105,9 +80,8 @@ export const usePerpsProTpSl = ({
           [kind]: { mode, rawMagnitude: '' },
         });
       }
-      setSubmitErrors([]);
     },
-    [draft, onChange, setSubmitErrors],
+    [draft, onChange],
   );
 
   const setRawMagnitude = useCallback(
@@ -120,9 +94,8 @@ export const usePerpsProTpSl = ({
           rawMagnitude: sanitizePerpsProDecimalInput(value, maxDecimals),
         },
       });
-      setSubmitErrors([]);
     },
-    [draft, onChange, pxDecimals, setSubmitErrors],
+    [draft, onChange, pxDecimals],
   );
 
   const previews = useMemo(() => {
@@ -156,8 +129,7 @@ export const usePerpsProTpSl = ({
   const clearForMarketChange = useCallback(() => {
     onChange(clearPerpsProTpSlForMarketChange(draft));
     setFocusedLeg(null);
-    setSubmitErrors([]);
-  }, [draft, onChange, setSubmitErrors]);
+  }, [draft, onChange]);
 
   return {
     clearForMarketChange,
@@ -169,9 +141,6 @@ export const usePerpsProTpSl = ({
     setFocusedLeg,
     setMode,
     setRawMagnitude,
-    setSubmitErrors,
-    submitContext,
-    submitErrors,
   };
 };
 

@@ -12,16 +12,9 @@ import {
   getPerpsAccountRuntimeContext,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
-import { calLiquidationPrice } from '@/utils/perps';
 
 import type { PerpsAttachedTpSlJournalEntry } from '@/core/services/perpsService';
-import { estimatePerpsProMarketFill } from '../model/marketFillEstimate';
 import type { PerpsProMarket } from '../model/market';
-import { resolvePerpsProProjectedTradeRisk } from '../model/tradeRisk';
-import {
-  getPerpsProCollateralToken,
-  resolvePerpsProCrossMarginAvailableAfterMaintenance,
-} from '../model/tradeRiskAccount';
 import {
   executePerpsProAttachedTpSl,
   getPerpsProAttachedTpSlPositionIdentity,
@@ -103,66 +96,10 @@ export const usePerpsProAttachedTpSlExecution = ({
     ): PerpsProAttachedTpSlGuardContext => {
       const latest = latestRef.current;
       const state = perpsStore.getState();
-      const marketData = state.marketDataMap[command.parent.coin];
       const currentPosition =
         state.currentClearinghouseState?.assetPositions.find(
           item => item.position.coin === command.parent.coin,
         )?.position ?? null;
-      let entryPrice: string | null =
-        command.parent.execution.kind === 'limit'
-          ? command.parent.execution.limitPrice
-          : null;
-      if (command.parent.execution.kind === 'market') {
-        const estimate = estimatePerpsProMarketFill({
-          amount: command.parent.baseSize,
-          amountUnit: 'base',
-          book: latest.bboBook,
-          coin: command.parent.coin,
-          sessionKey: latest.bboSessionKey,
-          side: command.parent.side,
-          status: latest.bboStatus,
-          szDecimals: command.reviewFacts.szDecimals,
-        });
-        entryPrice = estimate.ok ? estimate.estimate.expectedEntryPrice : null;
-      }
-      const dexId = marketData?.dexId ?? command.parent.dexId;
-      const dexSummary =
-        state.currentClearinghouseState?.perDexSummaries?.[dexId];
-      const collateralToken = getPerpsProCollateralToken(
-        marketData?.quoteAsset,
-      );
-      const unifiedAvailableAfterMaintenance =
-        collateralToken == null
-          ? null
-          : state.spotState.tokenToAvailableAfterMaintenance?.find(
-              ([token]) => token === collateralToken,
-            )?.[1] ?? null;
-      const crossMarginAvailableAfterMaintenance =
-        resolvePerpsProCrossMarginAvailableAfterMaintenance({
-          accountFactsReady:
-            state.isUserDataReady && state.userAbstractionReady,
-          dexCrossAccountValue: dexSummary?.crossAccountValue ?? null,
-          dexCrossMaintenanceMarginUsed:
-            dexSummary?.crossMaintenanceMarginUsed ?? null,
-          unifiedAvailableAfterMaintenance,
-          userAbstraction: state.userAbstraction,
-        });
-      const risk =
-        entryPrice && marketData
-          ? resolvePerpsProProjectedTradeRisk({
-              baseSize: command.parent.baseSize,
-              calculateLiquidationPrice: calLiquidationPrice,
-              crossMarginAvailableAfterMaintenance,
-              currentPosition,
-              entryPrice,
-              leverage: command.reviewFacts.leverage,
-              marginMode: command.reviewFacts.marginMode,
-              markPrice: marketData.markPx,
-              maxLeverage: marketData.maxLeverage,
-              pxDecimals: marketData.pxDecimals,
-              side: command.parent.side,
-            })
-          : null;
       return {
         accountRuntime: getPerpsAccountRuntimeContext(),
         active: latest.active,
@@ -171,7 +108,6 @@ export const usePerpsProAttachedTpSlExecution = ({
         bookStatus: latest.bboStatus,
         coin: latest.market?.canonicalCoin ?? '',
         dexId: latest.market?.marketData.dexId ?? '',
-        liquidationPrice: risk?.liquidationPrice ?? null,
         marketKey: latest.market?.marketKey ?? null,
         maxBaseSize:
           latest.activeAssetData?.maxTradeSzs[

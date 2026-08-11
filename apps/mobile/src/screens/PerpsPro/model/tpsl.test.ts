@@ -141,48 +141,30 @@ describe('Perps Pro TP/SL model', () => {
     },
   );
 
-  it('enforces the strict Long liquidation interval', () => {
-    expect(evaluate().errors).toEqual([]);
-    expect(
-      evaluate({
-        draft: {
-          enabled: true,
-          sl: { mode: 'price', rawMagnitude: '50' },
-          tp: { mode: 'price', rawMagnitude: '' },
-        },
-      }).errors,
-    ).toContainEqual({ code: 'outsideLiquidationRange', leg: 'sl' });
-  });
+  it.each([
+    ['buy', '90', '95'],
+    ['buy', '50', '50'],
+    ['sell', '150', '150'],
+    ['sell', '160', '150'],
+  ] as const)(
+    'allows a %s stop at or beyond the estimated liquidation price',
+    (side, stopLoss, liquidationPrice) => {
+      expect(
+        evaluate({
+          draft: {
+            enabled: true,
+            sl: { mode: 'price', rawMagnitude: stopLoss },
+            tp: { mode: 'price', rawMagnitude: '' },
+          },
+          liquidationPrice,
+          side,
+        }).errors,
+      ).toEqual([]);
+    },
+  );
 
-  it('enforces the strict Short liquidation interval', () => {
-    expect(
-      evaluate({
-        draft: {
-          enabled: true,
-          sl: { mode: 'price', rawMagnitude: '110' },
-          tp: { mode: 'price', rawMagnitude: '90' },
-        },
-        liquidationPrice: '150',
-        side: 'sell',
-      }).errors,
-    ).toEqual([]);
-  });
-
-  it('blocks only a present SL when liquidation is unavailable', () => {
-    expect(evaluate({ liquidationPrice: null }).errors).toContainEqual({
-      code: 'liquidationUnavailable',
-      leg: 'sl',
-    });
-    expect(
-      evaluate({
-        draft: {
-          enabled: true,
-          sl: { mode: 'price', rawMagnitude: '' },
-          tp: { mode: 'price', rawMagnitude: '110' },
-        },
-        liquidationPrice: null,
-      }).errors,
-    ).toEqual([]);
+  it('allows a present SL when estimated liquidation is unavailable', () => {
+    expect(evaluate({ liquidationPrice: null }).errors).toEqual([]);
   });
 
   it('blocks attached TP/SL for any opposite position', () => {
@@ -192,27 +174,24 @@ describe('Perps Pro TP/SL model', () => {
   });
 
   it('revalidates frozen triggers without deriving new PnL/ROI prices', () => {
-    const attached = evaluate();
+    const attached = evaluate({ liquidationPrice: '95' });
     expect(
       validatePerpsProFrozenAttachedTpSl({
         attached,
         expectedEntryPrice: '100',
-        liquidationPrice: '50',
       }),
     ).toEqual([]);
     expect(
       validatePerpsProFrozenAttachedTpSl({
         attached,
         expectedEntryPrice: '111',
-        liquidationPrice: '50',
       }),
     ).toContainEqual({ code: 'invalidDirection', leg: 'tp' });
     expect(
       validatePerpsProFrozenAttachedTpSl({
         attached,
-        expectedEntryPrice: '100',
-        liquidationPrice: '95',
+        expectedEntryPrice: '80',
       }),
-    ).toContainEqual({ code: 'outsideLiquidationRange', leg: 'sl' });
+    ).toContainEqual({ code: 'invalidDirection', leg: 'sl' });
   });
 });

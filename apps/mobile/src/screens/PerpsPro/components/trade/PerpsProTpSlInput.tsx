@@ -12,7 +12,6 @@ import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 const NEGATIVE_PREFIX_SLOT_WIDTH = 9;
 
 export const PerpsProTpSlInput: React.FC<{
-  error?: string | null;
   kind: 'sl' | 'tp';
   label: string;
   maxDecimals: number;
@@ -25,7 +24,6 @@ export const PerpsProTpSlInput: React.FC<{
   value: string;
 }> = React.memo(
   ({
-    error,
     kind,
     label,
     maxDecimals,
@@ -164,11 +162,7 @@ export const PerpsProTpSlInput: React.FC<{
               </View>
             </View>
           </Pressable>
-          {error ? (
-            <View pointerEvents="none" style={styles.fieldError} />
-          ) : null}
         </View>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
     );
   },
@@ -193,16 +187,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 40,
     overflow: 'hidden',
     paddingHorizontal: 8,
-  },
-  fieldError: {
-    borderColor: colors2024['red-default'],
-    borderRadius: 6,
-    borderWidth: 1,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
   },
   inputArea: { flex: 1, height: '100%', minWidth: 0, position: 'relative' },
   floatingLabel: {
@@ -295,11 +279,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 6,
     transform: [{ rotate: '180deg' }],
     width: 8,
-  },
-  error: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 9,
-    lineHeight: 12,
   },
 }));

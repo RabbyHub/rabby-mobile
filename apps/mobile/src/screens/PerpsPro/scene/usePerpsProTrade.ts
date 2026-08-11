@@ -88,7 +88,6 @@ import {
   getPerpsProCollateralToken,
   resolvePerpsProCrossMarginAvailableAfterMaintenance,
 } from '../model/tradeRiskAccount';
-import { formatPerpsProPrice } from '../utils/format';
 import {
   getPerpsProTpSlErrorText,
   type PerpsProTpSlErrorContext,
@@ -988,8 +987,6 @@ export const usePerpsProTrade = ({
     pxDecimals: market?.marketData.pxDecimals ?? 2,
     szDecimals: market?.marketData.szDecimals ?? 0,
   });
-  const setTpSlSubmitErrors = tpSl.setSubmitErrors;
-
   const buildReview = useCallback(
     (side: PerpsProTradeSide) => {
       if (!accountFacts.account || !market) {
@@ -1071,8 +1068,7 @@ export const usePerpsProTrade = ({
                 ? ('invalidOrderAmount' as const)
                 : ('marketBookUnavailable' as const),
           };
-          const errorContext = { liquidationPrice: null, side };
-          setTpSlSubmitErrors([error], errorContext);
+          const errorContext = { side };
           throw new Error(tpSlErrorText(error, errorContext));
         }
         expectedEntryPrice = estimate.estimate.expectedEntryPrice;
@@ -1091,8 +1087,7 @@ export const usePerpsProTrade = ({
           bboBook.time <= 0
         ) {
           const error = { code: 'marketBookUnavailable' as const };
-          const errorContext = { liquidationPrice: null, side };
-          setTpSlSubmitErrors([error], errorContext);
+          const errorContext = { side };
           throw new Error(tpSlErrorText(error, errorContext));
         }
         marketSnapshot = {
@@ -1143,7 +1138,6 @@ export const usePerpsProTrade = ({
         throw new Error(t('page.perps.pro.trade.insufficientBalance'));
       }
       if (!hasAttached) {
-        setTpSlSubmitErrors([]);
         return command;
       }
       if (command.execution.kind === 'limit') {
@@ -1173,16 +1167,7 @@ export const usePerpsProTrade = ({
         side,
         szDecimals: market.marketData.szDecimals,
       });
-      const errorContext = {
-        liquidationPrice: risk?.liquidationPrice
-          ? formatPerpsProPrice(
-              risk.liquidationPrice,
-              market.marketData.pxDecimals,
-            )
-          : null,
-        side,
-      };
-      setTpSlSubmitErrors(evaluation.errors, errorContext);
+      const errorContext = { side };
       if (evaluation.errors.length > 0) {
         throw new Error(tpSlErrorText(evaluation.errors[0], errorContext));
       }
@@ -1235,7 +1220,6 @@ export const usePerpsProTrade = ({
       market,
       reduceOnlyAvailability.buyUnavailable,
       reduceOnlyAvailability.sellUnavailable,
-      setTpSlSubmitErrors,
       t,
       tpSlErrorText,
     ],
