@@ -136,6 +136,7 @@ const controller = (
     getCostDisplayAmount: jest.fn(() => '0'),
     getEstimatedLiquidationPrice: jest.fn(() => null),
     getMaxDisplayAmount: jest.fn(() => '1000'),
+    getSliderButtonDisplayAmount: jest.fn(() => null),
     leverage: 25,
     leveragePending: false,
     marginMode: 'isolated',
@@ -473,6 +474,27 @@ describe('PerpsProTradeForm order matrix', () => {
       />,
     );
     expect(screen.queryByText('≈ 1.00000 BTC')).toBeNull();
+  });
+
+  it('shows direction-specific Slider amounts in the selected unit', () => {
+    const trade = controller({ amountUnit: 'base' }) as any;
+    trade.amountUnitLabel = 'BTC';
+    trade.getSliderButtonDisplayAmount = jest.fn((side: 'buy' | 'sell') =>
+      side === 'buy' ? '1.23456' : '0',
+    );
+    render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
+
+    expect(
+      screen.getByTestId('perps-pro-trade-button-buy-amount').props.children,
+    ).toBe('≈1.23456 BTC');
+    expect(
+      screen.getByTestId('perps-pro-trade-button-sell-amount').props.children,
+    ).toBe('≈0.00000 BTC');
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-button-buy').props.style,
+      ),
+    ).toMatchObject({ height: 40 });
   });
 
   it('makes the Available value and USDC text part of the Deposit target', () => {

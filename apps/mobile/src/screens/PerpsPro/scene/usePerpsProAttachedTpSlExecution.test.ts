@@ -121,7 +121,7 @@ const command = {
     baseSize: '1',
     coin: 'BTC',
     dexId: '',
-    execution: { kind: 'market', midPrice: '101' },
+    execution: { kind: 'market', slippageReferenceMidPrice: '100' },
     marketKey: 'BTC:USDC',
     side: 'buy',
   },

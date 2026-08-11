@@ -22,7 +22,7 @@ import {
 const parent = (
   execution: PerpsProOpenOrderCommand['execution'] = {
     kind: 'market',
-    midPrice: '101',
+    slippageReferenceMidPrice: '100',
   },
 ): PerpsProOpenOrderCommand =>
   Object.freeze({
@@ -297,7 +297,7 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     expect(setup.marketOrder).toHaveBeenCalledWith(
       expect.objectContaining({
         cloids: command.cloids,
-        midPx: '101',
+        midPx: '100',
         size: '2',
         slTriggerPx: '90',
         tpTriggerPx: '110',

@@ -43,6 +43,7 @@ import {
   type PerpsProLeverageConfiguration,
 } from '../model/leverage';
 import { estimatePerpsProMarketFill } from '../model/marketFillEstimate';
+import { resolvePerpsProMarketOrderProjection } from '../model/marketOrderProjection';
 import type { PerpsProMarket } from '../model/market';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import {
@@ -814,9 +815,76 @@ export const usePerpsProTrade = ({
       percentage,
     ],
   );
+  const getSliderButtonDisplayAmount = useCallback(
+    (side: PerpsProTradeSide) => {
+      if (amountSource !== 'slider' || percentage <= 0) {
+        return null;
+      }
+      if (!getMaxBase(side).gt(0)) {
+        return '0';
+      }
+      const resolved = resolvePerpsProSliderAmount({
+        maxBase: getMaxBase(side).toFixed(),
+        percentage,
+        price: displayReferencePrice,
+        szDecimals: market?.marketData.szDecimals ?? 0,
+      });
+      if (!resolved) {
+        return positive(displayReferencePrice) ? '0' : null;
+      }
+      return form.amountUnit === 'base'
+        ? resolved.baseSize
+        : resolved.quoteAmount;
+    },
+    [
+      amountSource,
+      displayReferencePrice,
+      form.amountUnit,
+      getMaxBase,
+      market?.marketData.szDecimals,
+      percentage,
+    ],
+  );
+  const getSideMarketOrderProjection = useCallback(
+    (side: PerpsProTradeSide) => {
+      if (!market || form.orderType !== 'market') return null;
+      const projection = getSideProjection(side);
+      if (!projection) return null;
+      return resolvePerpsProMarketOrderProjection({
+        baseSize: projection.baseSize,
+        book: bboBook,
+        coin: market.canonicalCoin,
+        midPrice: market.marketData.midPx,
+        sessionKey: bboSessionKey,
+        side,
+        status: bboStatus,
+        szDecimals: market.marketData.szDecimals,
+      });
+    },
+    [
+      bboBook,
+      bboSessionKey,
+      bboStatus,
+      form.orderType,
+      getSideProjection,
+      market,
+    ],
+  );
   const getCostDisplayAmount = useCallback(
-    (side: PerpsProTradeSide) => getSideProjection(side)?.costQuote ?? '0',
-    [getSideProjection],
+    (side: PerpsProTradeSide) => {
+      const projection = getSideProjection(side);
+      if (!projection) return '0';
+      const marketProjection = getSideMarketOrderProjection(side);
+      if (marketProjection?.source !== 'fullL2') return projection.costQuote;
+      const netNewBase = positive(projection.netNewBaseSize);
+      return netNewBase
+        ? netNewBase
+            .multipliedBy(marketProjection.estimatedEntryPrice)
+            .dividedBy(Math.max(1, leverage))
+            .toFixed(2)
+        : '0';
+    },
+    [getSideMarketOrderProjection, getSideProjection, leverage],
   );
   const setPercentage = useCallback(
     (percent: number) => {
@@ -937,9 +1005,17 @@ export const usePerpsProTrade = ({
       const commandForm = getCommandForm(side);
       const hasAttached = commandForm.attachedTpSl.enabled;
       const liveMidPrice = market.marketData.midPx;
-      if (commandForm.orderType === 'conditional' && !positive(liveMidPrice)) {
+      if (
+        (commandForm.orderType === 'market' ||
+          commandForm.orderType === 'conditional') &&
+        !positive(liveMidPrice)
+      ) {
         throw new Error(t('page.perps.pro.trade.contextChanged'));
       }
+      const plainMarketProjection =
+        commandForm.orderType === 'market' && !hasAttached
+          ? getSideMarketOrderProjection(side)
+          : null;
       let expectedEntryPrice =
         commandForm.orderType === 'conditional'
           ? liveMidPrice
@@ -957,6 +1033,10 @@ export const usePerpsProTrade = ({
         leverage,
         marginMode,
         markPrice: market.marketData.markPx,
+        marketFillRiskEntryPrice:
+          plainMarketProjection?.source === 'fullL2'
+            ? plainMarketProjection.estimatedEntryPrice
+            : null,
         maxLeverage: market.marketData.maxLeverage,
         midPrice: liveMidPrice,
         pxDecimals: market.marketData.pxDecimals,
@@ -1029,6 +1109,10 @@ export const usePerpsProTrade = ({
         : commandForm;
       const command = buildPerpsProOpenOrderCommand({
         account: accountFacts.account,
+        amountReferencePrice:
+          hasAttached && commandForm.orderType === 'market'
+            ? expectedEntryPrice
+            : undefined,
         bboPrice: getBboPrice(side),
         bboSessionKey,
         bestAsk: bboPrices.asks1,
@@ -1037,7 +1121,10 @@ export const usePerpsProTrade = ({
         dexId: market.marketData.dexId,
         form: parentForm,
         marketKey: market.marketKey,
-        marketPrice: expectedEntryPrice,
+        marketPrice:
+          commandForm.orderType === 'market'
+            ? liveMidPrice
+            : expectedEntryPrice,
         maxUsdValueSize: market.marketData.maxUsdValueSize,
         reviewFacts,
         side,
@@ -1142,6 +1229,7 @@ export const usePerpsProTrade = ({
       getBboPrice,
       getCommandForm,
       getMaxBase,
+      getSideMarketOrderProjection,
       leverage,
       marginMode,
       market,
@@ -1530,6 +1618,8 @@ export const usePerpsProTrade = ({
         form.orderType === 'conditional' &&
         form.conditionalExecution === 'market'
           ? market.marketData.markPx
+          : form.orderType === 'market'
+          ? getSideMarketOrderProjection(side)?.estimatedEntryPrice
           : getSideExecutionPrice(side);
       if (!projection || !entryPrice) return '--';
       const risk = resolvePerpsProProjectedTradeRisk({
@@ -1554,6 +1644,7 @@ export const usePerpsProTrade = ({
       form.orderType,
       form.reduceOnly,
       getSideExecutionPrice,
+      getSideMarketOrderProjection,
       getSideProjection,
       leverage,
       marginMode,
@@ -1575,7 +1666,8 @@ export const usePerpsProTrade = ({
         ? parent.execution.limitPrice
         : parent.execution.kind === 'conditionalMarket'
         ? market.marketData.markPx
-        : parent.execution.midPrice;
+        : reviewFacts.marketFillRiskEntryPrice;
+    if (!entryPrice) return null;
     const risk = resolvePerpsProProjectedTradeRisk({
       baseSize: parent.baseSize,
       calculateLiquidationPrice: calLiquidationPrice,
@@ -1607,6 +1699,7 @@ export const usePerpsProTrade = ({
     getCostDisplayAmount,
     getEstimatedLiquidationPrice,
     getMaxDisplayAmount,
+    getSliderButtonDisplayAmount,
     estimatedLiquidation,
     leverage,
     leveragePending,

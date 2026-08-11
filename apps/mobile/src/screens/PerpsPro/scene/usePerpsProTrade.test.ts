@@ -271,6 +271,45 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.tpSl.disabled).toBe(true);
   });
 
+  it('projects Slider button amounts per side and zeros the unavailable Reduce Only side', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: {
+          ...activeAssetData,
+          maxTradeSzs: ['8', '4'],
+        },
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setPercentage(50));
+    expect(hook.result.current.getSliderButtonDisplayAmount('buy')).toBe('400');
+    expect(hook.result.current.getSliderButtonDisplayAmount('sell')).toBe(
+      '200',
+    );
+
+    mockPerpsState.currentClearinghouseState.assetPositions.push({
+      position: {
+        coin: 'BTC',
+        leverage: { type: 'isolated', value: 10 },
+        szi: '1',
+      },
+    } as never);
+    hook.rerender(undefined);
+    act(() => hook.result.current.patchForm({ reduceOnly: true }));
+
+    expect(hook.result.current.getSliderButtonDisplayAmount('buy')).toBe('0');
+    expect(hook.result.current.getSliderButtonDisplayAmount('sell')).toBe('50');
+  });
+
   it('shows the Reduce Only direction error before generic Amount or Max errors', async () => {
     mockPerpsState.currentClearinghouseState.assetPositions.push({
       position: {
@@ -480,7 +519,15 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         tp: { triggerPrice: '110' },
       },
       marketSnapshot: { bookTime: 123, sessionKey: 'BTC:1' },
-      parent: { baseSize: '1', quoteAmount: '101', side: 'buy' },
+      parent: {
+        baseSize: '1',
+        execution: {
+          kind: 'market',
+          slippageReferenceMidPrice: '100',
+        },
+        quoteAmount: '101',
+        side: 'buy',
+      },
       type: 'openOrderWithAttachedTpSl',
     });
     expect(mockGetSkipConfirmation).toHaveBeenCalledWith('market');
@@ -761,6 +808,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         leverage: 20,
         marginMode: 'isolated',
         markPrice: '100',
+        marketFillRiskEntryPrice: '101',
         midPrice: '100',
       },
     });
@@ -770,6 +818,83 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(mockBuildUpdateLeverage).toHaveBeenCalledWith(
       expect.objectContaining({ isCross: false, leverage: 20 }),
     );
+  });
+
+  it('uses directional full-L2 VWAP for ordinary Market risk and cost', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('100'));
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
+      '50.00',
+    );
+    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
+      101,
+      5.05,
+      'Long',
+      1,
+      101,
+      20,
+    );
+    expect(hook.result.current.getCostDisplayAmount('buy')).toBe('5.05');
+
+    expect(hook.result.current.getEstimatedLiquidationPrice('sell')).toBe(
+      '50.00',
+    );
+    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
+      99,
+      4.95,
+      'Short',
+      1,
+      99,
+      20,
+    );
+    expect(hook.result.current.getCostDisplayAmount('sell')).toBe('4.95');
+  });
+
+  it('allows ordinary Market submission with Mid while L2 risk fails closed', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: null,
+        bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
+        bboSessionKey: null,
+        bboStatus: 'loading',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('100'));
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
+    expect(hook.result.current.getCostDisplayAmount('buy')).toBe('5.00');
+
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review).toMatchObject({
+      baseSize: '1',
+      execution: {
+        kind: 'market',
+        slippageReferenceMidPrice: '100',
+      },
+      quoteAmount: '100',
+      reviewFacts: { marketFillRiskEntryPrice: null },
+    });
+    expect(hook.result.current.estimatedLiquidation).toBeNull();
   });
 
   it('fails an attached Market review when full L2 coverage is unavailable', async () => {

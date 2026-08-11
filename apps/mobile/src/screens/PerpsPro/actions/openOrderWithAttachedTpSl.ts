@@ -270,6 +270,10 @@ export const buildPerpsProAttachedTpSlCommand = ({
       liquidationPrice: attached.liquidationPrice,
       marginMode,
       markPrice,
+      marketFillRiskEntryPrice:
+        attachedParent.execution.kind === 'market'
+          ? attached.expectedEntryPrice
+          : null,
       maxLeverage,
       midPrice,
       pxDecimals,
@@ -511,7 +515,7 @@ export const executePerpsProAttachedTpSl = async (
       command.parent.execution.kind === 'market'
         ? await dependencies.marketOrder({
             ...common,
-            midPx: command.marketSnapshot.expectedEntryPrice,
+            midPx: command.parent.execution.slippageReferenceMidPrice,
           })
         : await dependencies.limitOrder({
             ...common,

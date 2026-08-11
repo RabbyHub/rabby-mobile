@@ -128,6 +128,7 @@ const reviewFacts: PerpsProOrderReviewFacts = {
   leverage: 10,
   marginMode: 'isolated',
   markPrice: '100',
+  marketFillRiskEntryPrice: null,
   maxLeverage: 20,
   midPrice: '100',
   pxDecimals: 2,

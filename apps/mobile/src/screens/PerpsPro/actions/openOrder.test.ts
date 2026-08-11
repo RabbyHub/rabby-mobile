@@ -68,10 +68,40 @@ describe('Perps Pro open order action', () => {
   it('builds a protocol base-size market command', () => {
     expect(build()).toMatchObject({
       baseSize: '0.001',
-      execution: { kind: 'market', midPrice: '63000' },
+      execution: {
+        kind: 'market',
+        slippageReferenceMidPrice: '63000',
+      },
       orderType: 'market',
       quoteAmount: '63',
     });
+  });
+
+  it('keeps Market amount conversion separate from the SDK Mid anchor', () => {
+    const command = buildPerpsProOpenOrderCommand({
+      account,
+      amountReferencePrice: '509.31304347826086956522',
+      bboPrice: null,
+      coin: 'xyz:MSFT',
+      dexId: 'xyz',
+      form: {
+        ...createPerpsProTradeFormState(),
+        amount: '12',
+      },
+      marketKey: 'xyz::xyz:MSFT',
+      marketPrice: '509.21',
+      side: 'buy',
+      szDecimals: 3,
+    });
+
+    expect(command).toMatchObject({
+      baseSize: '0.023',
+      execution: {
+        kind: 'market',
+        slippageReferenceMidPrice: '509.21',
+      },
+    });
+    expect(Number(command.quoteAmount)).toBeCloseTo(11.7142, 8);
   });
 
   it('maps conditional limit without a TIF field', () => {
@@ -252,7 +282,7 @@ describe('Perps Pro open order action', () => {
       oid: 1,
     });
     expect(deps.marketOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ size: '0.001' }),
+      expect.objectContaining({ midPx: '63000', size: '0.001' }),
     );
     expect(deps.refreshClearinghouse).toHaveBeenCalledWith('');
   });

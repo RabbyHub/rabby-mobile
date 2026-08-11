@@ -22,7 +22,7 @@ import {
 } from '../model/trade';
 
 export type PerpsProOpenOrderExecution =
-  | { kind: 'market'; midPrice: string }
+  | { kind: 'market'; slippageReferenceMidPrice: string }
   | { kind: 'limit'; limitPrice: string; tif: 'Alo' | 'Gtc' | 'Ioc' }
   | {
       kind: 'conditionalMarket';
@@ -71,6 +71,7 @@ const decimal = (value: unknown) => {
 
 export const buildPerpsProOpenOrderCommand = ({
   account,
+  amountReferencePrice,
   bboPrice,
   bboSessionKey,
   coin,
@@ -86,6 +87,7 @@ export const buildPerpsProOpenOrderCommand = ({
   szDecimals,
 }: {
   account: Pick<Account, 'address' | 'type'>;
+  amountReferencePrice?: string;
   bboPrice: string | null;
   bboSessionKey?: string | null;
   bestAsk?: string | null;
@@ -124,7 +126,7 @@ export const buildPerpsProOpenOrderCommand = ({
   const amount = resolvePerpsProTradeAmount({
     amount: form.amount,
     amountUnit: form.amountUnit,
-    price: executionPrice,
+    price: amountReferencePrice ?? executionPrice,
     szDecimals,
   });
   if (!amount) {
@@ -140,7 +142,10 @@ export const buildPerpsProOpenOrderCommand = ({
   const isBuy = side === 'buy';
   let execution: PerpsProOpenOrderExecution;
   if (form.orderType === 'market') {
-    execution = { kind: 'market', midPrice: marketPrice };
+    execution = {
+      kind: 'market',
+      slippageReferenceMidPrice: marketPrice,
+    };
   } else if (form.orderType === 'limit') {
     const limit = decimal(executionPrice);
     const ask = decimal(bestAsk);
@@ -184,7 +189,7 @@ export const buildPerpsProOpenOrderCommand = ({
           };
   }
   const priceValues = [
-    execution.kind === 'market' ? execution.midPrice : null,
+    execution.kind === 'market' ? execution.slippageReferenceMidPrice : null,
     execution.kind === 'limit' ? execution.limitPrice : null,
     execution.kind === 'conditionalLimit' ? execution.limitPrice : null,
     execution.kind === 'conditionalLimit' ||
@@ -330,7 +335,7 @@ export const executePerpsProOpenOrder = async (
       command.execution.kind === 'market'
         ? await dependencies.marketOrder({
             ...common,
-            midPx: command.execution.midPrice,
+            midPx: command.execution.slippageReferenceMidPrice,
           })
         : command.execution.kind === 'limit'
         ? await dependencies.limitOrder({

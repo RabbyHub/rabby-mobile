@@ -86,6 +86,17 @@ describe('Perps Pro trade model', () => {
     ).toEqual({ baseSize: '0.00158', quoteAmount: '99.54' });
   });
 
+  it('preserves the current MSFT 12 USDC canonical amount behavior', () => {
+    expect(
+      resolvePerpsProTradeAmount({
+        amount: '12',
+        amountUnit: 'quote',
+        price: '509.21',
+        szDecimals: 3,
+      }),
+    ).toEqual({ baseSize: '0.023', quoteAmount: '11.71183' });
+  });
+
   it('keeps base amount as canonical protocol size', () => {
     expect(
       resolvePerpsProTradeAmount({

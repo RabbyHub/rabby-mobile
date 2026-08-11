@@ -152,7 +152,8 @@ export const PerpsProTradeButton: React.FC<{
   disabled?: boolean;
   onPress?: () => void;
   side: 'buy' | 'sell';
-}> = React.memo(({ disabled, label, onPress, side }) => {
+  subtitle?: string;
+}> = React.memo(({ disabled, label, onPress, side, subtitle }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <Pressable
@@ -161,11 +162,28 @@ export const PerpsProTradeButton: React.FC<{
       onPress={onPress}
       style={[
         styles.tradeButton,
+        subtitle ? styles.tradeButtonWithSubtitle : null,
         side === 'buy' ? styles.buyButton : styles.sellButton,
         disabled ? styles.disabled : null,
       ]}
       testID={`perps-pro-trade-button-${side}`}>
-      <Text style={styles.tradeButtonText}>{label}</Text>
+      <View style={styles.tradeButtonCopy}>
+        <Text
+          style={[
+            styles.tradeButtonText,
+            subtitle ? styles.tradeButtonTextWithSubtitle : null,
+          ]}>
+          {label}
+        </Text>
+        {subtitle ? (
+          <Text
+            numberOfLines={1}
+            style={styles.tradeButtonSubtitle}
+            testID={`perps-pro-trade-button-${side}-amount`}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
     </Pressable>
   );
 });
@@ -250,6 +268,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 34,
     justifyContent: 'center',
   },
+  tradeButtonWithSubtitle: { height: 40 },
+  tradeButtonCopy: { alignItems: 'center', gap: 2 },
   buyButton: {
     backgroundColor: colors2024['green-default'],
   },
@@ -262,5 +282,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
+  },
+  tradeButtonTextWithSubtitle: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontFamily: 'SF Pro',
+  },
+  tradeButtonSubtitle: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontFamily: 'SF Pro',
+    fontSize: 10,
+    fontWeight: '400',
   },
 }));

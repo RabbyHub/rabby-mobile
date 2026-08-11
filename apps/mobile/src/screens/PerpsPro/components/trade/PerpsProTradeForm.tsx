@@ -265,6 +265,7 @@ export const PerpsProTradeForm: React.FC<{
         {(['buy', 'sell'] as const).map(side => {
           const liquidationPrice =
             controller.getEstimatedLiquidationPrice(side);
+          const sliderAmount = controller.getSliderButtonDisplayAmount(side);
           return (
             <View key={side} style={styles.orderGroup}>
               <View style={styles.orderSummary}>
@@ -306,6 +307,16 @@ export const PerpsProTradeForm: React.FC<{
                 )}
                 onPress={() => void controller.requestReview(side)}
                 side={side}
+                subtitle={
+                  sliderAmount == null
+                    ? undefined
+                    : `≈${formatPerpsProDecimal(
+                        sliderAmount,
+                        form.amountUnit === 'base'
+                          ? market?.marketData.szDecimals
+                          : 2,
+                      )} ${controller.amountUnitLabel}`
+                }
               />
             </View>
           );

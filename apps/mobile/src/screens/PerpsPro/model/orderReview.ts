@@ -9,6 +9,7 @@ export type PerpsProOrderReviewFacts = Readonly<{
   leverage: number;
   marginMode: 'cross' | 'isolated';
   markPrice: string;
+  marketFillRiskEntryPrice: string | null;
   maxLeverage: number;
   midPrice: string;
   pxDecimals: number;
