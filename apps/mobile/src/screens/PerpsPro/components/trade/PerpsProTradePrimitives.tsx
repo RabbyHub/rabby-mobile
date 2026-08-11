@@ -15,7 +15,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import type { PerpsProFieldExplanationKey } from '../../model/fieldExplanation';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 export const getPerpsProTradeSelectFontStyle = (
   platform: typeof Platform.OS,
@@ -65,6 +67,7 @@ PerpsProTradeSelect.displayName = 'PerpsProTradeSelect';
 
 export const PerpsProTradeSummaryRow: React.FC<{
   dottedLabel?: boolean;
+  explanationKey?: PerpsProFieldExplanationKey;
   label: string;
   onPressValue?: () => void;
   trailing?: React.ReactNode;
@@ -73,6 +76,7 @@ export const PerpsProTradeSummaryRow: React.FC<{
 }> = React.memo(
   ({
     dottedLabel = false,
+    explanationKey,
     label,
     onPressValue,
     trailing,
@@ -80,11 +84,19 @@ export const PerpsProTradeSummaryRow: React.FC<{
     valueTestID,
   }) => {
     const { styles } = useTheme2024({ getStyle });
+    const openFieldExplanation = usePerpsProFieldExplanation();
     const ValueContainer = onPressValue ? Pressable : View;
     return (
       <View style={styles.summaryRow}>
         {dottedLabel ? (
-          <PerpsProDottedUnderlineText style={styles.summaryLabel}>
+          <PerpsProDottedUnderlineText
+            accessibilityLabel={label}
+            onPress={
+              explanationKey
+                ? () => openFieldExplanation(explanationKey)
+                : undefined
+            }
+            style={styles.summaryLabel}>
             {label}
           </PerpsProDottedUnderlineText>
         ) : (
@@ -113,37 +125,53 @@ PerpsProTradeSummaryRow.displayName = 'PerpsProTradeSummaryRow';
 export const PerpsProTradeCheckbox: React.FC<{
   checked?: boolean;
   disabled?: boolean;
+  explanationKey?: PerpsProFieldExplanationKey;
   label: string;
   onPress?: () => void;
-}> = React.memo(({ checked = false, disabled, label, onPress }) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
-  return (
-    <Pressable
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.checkboxRow, disabled ? styles.disabled : null]}>
-      {checked ? (
-        <RcIconCheckboxFilled
-          height={20}
-          testID="perps-pro-trade-checkbox-icon"
-          width={20}
-        />
-      ) : (
-        <RcIconCheckboxEmpty
-          color={colors2024['neutral-secondary']}
-          height={20}
-          testID="perps-pro-trade-checkbox-icon"
-          width={20}
-        />
-      )}
-      <PerpsProDottedUnderlineText style={styles.checkboxLabel}>
-        {label}
-      </PerpsProDottedUnderlineText>
-    </Pressable>
-  );
-});
+}> = React.memo(
+  ({ checked = false, disabled, explanationKey, label, onPress }) => {
+    const { colors2024, styles } = useTheme2024({ getStyle });
+    const openFieldExplanation = usePerpsProFieldExplanation();
+    return (
+      <View style={styles.checkboxRow}>
+        <Pressable
+          accessibilityLabel={label}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked, disabled }}
+          disabled={disabled}
+          hitSlop={{ bottom: 8, left: 8, right: 0, top: 8 }}
+          onPress={onPress}
+          style={disabled ? styles.disabled : undefined}
+          testID={`perps-pro-trade-checkbox-${label}`}>
+          {checked ? (
+            <RcIconCheckboxFilled
+              height={20}
+              testID="perps-pro-trade-checkbox-icon"
+              width={20}
+            />
+          ) : (
+            <RcIconCheckboxEmpty
+              color={colors2024['neutral-secondary']}
+              height={20}
+              testID="perps-pro-trade-checkbox-icon"
+              width={20}
+            />
+          )}
+        </Pressable>
+        <PerpsProDottedUnderlineText
+          accessibilityLabel={label}
+          onPress={
+            explanationKey
+              ? () => openFieldExplanation(explanationKey)
+              : undefined
+          }
+          style={styles.checkboxLabel}>
+          {label}
+        </PerpsProDottedUnderlineText>
+      </View>
+    );
+  },
+);
 
 PerpsProTradeCheckbox.displayName = 'PerpsProTradeCheckbox';
 

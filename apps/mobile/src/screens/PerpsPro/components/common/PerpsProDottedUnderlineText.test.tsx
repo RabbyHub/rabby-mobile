@@ -57,4 +57,23 @@ describe('PerpsProDottedUnderlineText', () => {
       y2: 1 - StyleSheet.hairlineWidth / 2,
     });
   });
+
+  it('only exposes button semantics when an explanation action is supplied', () => {
+    const onPress = jest.fn();
+    const view = render(
+      <PerpsProDottedUnderlineText
+        accessibilityLabel="PNL explanation"
+        onPress={onPress}>
+        PNL
+      </PerpsProDottedUnderlineText>,
+    );
+
+    fireEvent.press(screen.getByRole('button'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <PerpsProDottedUnderlineText>Funding</PerpsProDottedUnderlineText>,
+    );
+    expect(screen.queryByRole('button')).toBeNull();
+  });
 });

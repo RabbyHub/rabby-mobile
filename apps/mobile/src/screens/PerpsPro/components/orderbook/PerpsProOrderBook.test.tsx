@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+const mockOpenFieldExplanation = jest.fn();
+
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 
 import { buildPerpsProMarket } from '../../model/market';
@@ -54,12 +56,27 @@ jest.mock('../funding/PerpsProFundingSummary', () => {
 
 jest.mock('../common/PerpsProDottedUnderlineText', () => {
   const ReactModule = require('react');
-  const { Text } = require('react-native');
+  const { Pressable, Text } = require('react-native');
   return {
-    PerpsProDottedUnderlineText: ({ children, style }: any) =>
-      ReactModule.createElement(Text, { style }, children),
+    PerpsProDottedUnderlineText: ({
+      accessibilityLabel,
+      children,
+      onPress,
+      style,
+    }: any) =>
+      onPress
+        ? ReactModule.createElement(
+            Pressable,
+            { accessibilityLabel, accessibilityRole: 'button', onPress },
+            ReactModule.createElement(Text, { style }, children),
+          )
+        : ReactModule.createElement(Text, { style }, children),
   };
 });
+
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
+}));
 
 jest.mock('../loading/PerpsProSkeletonBlock', () => {
   const ReactModule = require('react');
@@ -114,6 +131,9 @@ const marketData: MarketData = {
 };
 
 describe('PerpsProOrderBook display shell', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   it('keeps the fixed body mounted while display state changes', () => {
     const view = render(<PerpsProOrderBook {...defaultProps} />);
 
@@ -203,6 +223,10 @@ describe('PerpsProOrderBook display shell', () => {
         screen.getByTestId('perps-pro-order-book-mid-price').props.style,
       ),
     ).toMatchObject({ gap: 2, height: 60 });
+    fireEvent.press(
+      screen.getByLabelText('page.perps.pro.fieldExplanations.markPrice.title'),
+    );
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('markPrice');
 
     view.rerender(
       <PerpsProOrderBook

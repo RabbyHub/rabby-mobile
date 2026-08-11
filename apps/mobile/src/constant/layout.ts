@@ -12,6 +12,7 @@ export const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 export const BOTTOM_BUTTON_TOP_OFFSET = 12;
 export const BOTTOM_BUTTON_GAP = 12;
 export const BOTTOM_BUTTON_SINGLE_HEIGHT = 52;
+export const BOTTOM_BUTTON_COMPACT_HEIGHT = 36;
 export const BOTTOM_BUTTON_DOUBLE_HEIGHT = 48;
 export const BOTTOM_BUTTON_TEXT_SIZE = 18;
 export const BOTTOM_BUTTON_TEXT_LINE_HEIGHT = 22;
@@ -19,6 +20,11 @@ export const BOTTOM_BUTTON_TITLE_STYLE = {
   fontSize: BOTTOM_BUTTON_TEXT_SIZE,
   lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   fontWeight: '700',
+} as const;
+export const BOTTOM_BUTTON_COMPACT_TITLE_STYLE = {
+  fontSize: 16,
+  lineHeight: 20,
+  fontWeight: '500',
 } as const;
 export const BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE = {
   fontSize: BOTTOM_BUTTON_TEXT_SIZE,

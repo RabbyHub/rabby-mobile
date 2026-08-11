@@ -38,13 +38,13 @@ describe('Perps Pro layout model', () => {
     });
 
     expect(oneOption).toEqual({
-      bottomPadding: 16,
-      contentHeight: 138,
+      bottomPadding: 48,
+      contentHeight: 136,
       scrollEnabled: false,
       snapPoint: 150,
     });
     expect(sixOptions).toEqual({
-      bottomPadding: 34,
+      bottomPadding: 48,
       contentHeight: 376,
       scrollEnabled: false,
       snapPoint: 376,
@@ -60,8 +60,8 @@ describe('Perps Pro layout model', () => {
         windowHeight: 568,
       }),
     ).toEqual({
-      bottomPadding: 34,
-      contentHeight: 640,
+      bottomPadding: 48,
+      contentHeight: 664,
       scrollEnabled: true,
       snapPoint: 420,
     });

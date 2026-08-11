@@ -21,6 +21,7 @@ import {
   formatPerpsProSignedDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 const SIZE_UNIT_HIT_SLOP = {
   bottom: 14,
@@ -60,6 +61,7 @@ export const PerpsProPositionCard: React.FC<{
 }> = React.memo(({ accountIdentity, onClose, onEditLeverage, position }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const openFieldExplanation = usePerpsProFieldExplanation();
   const market = usePerpsProPositionMark(position.coin);
   const { toggle: toggleSizeUnit, unit: sizeUnit } =
     usePerpsProPositionSizeUnit(accountIdentity, position.key);
@@ -159,14 +161,19 @@ export const PerpsProPositionCard: React.FC<{
 
       <View style={styles.pnlRow}>
         <View style={styles.pairedMetric}>
-          <PerpsProDottedUnderlineText style={styles.label}>
+          <PerpsProDottedUnderlineText
+            accessibilityLabel={t('page.perps.pro.positions.pnl')}
+            onPress={() => openFieldExplanation('pnl')}
+            style={styles.label}>
             {t('page.perps.pro.positions.pnl')} ({market.quoteAsset})
           </PerpsProDottedUnderlineText>
           <Text style={pnlStyle}>{displayPnl}</Text>
         </View>
         <View style={styles.pairedMetricRight}>
           <PerpsProDottedUnderlineText
+            accessibilityLabel={t('page.perps.pro.positions.roi')}
             containerStyle={styles.rightDottedLabel}
+            onPress={() => openFieldExplanation('roi')}
             style={styles.label}>
             {t('page.perps.pro.positions.roi')}
           </PerpsProDottedUnderlineText>
@@ -209,7 +216,9 @@ export const PerpsProPositionCard: React.FC<{
           {position.marginMode === 'isolated' ? (
             <>
               <PerpsProDottedUnderlineText
+                accessibilityLabel={t('page.perps.pro.positions.marginRatio')}
                 containerStyle={styles.rightDottedLabel}
+                onPress={() => openFieldExplanation('marginRatio')}
                 style={styles.label}>
                 {t('page.perps.pro.positions.marginRatio')}
               </PerpsProDottedUnderlineText>
@@ -226,7 +235,11 @@ export const PerpsProPositionCard: React.FC<{
           ) : (
             <>
               <PerpsProDottedUnderlineText
+                accessibilityLabel={t(
+                  'page.perps.pro.positions.liquidationDistance',
+                )}
                 containerStyle={styles.rightDottedLabel}
+                onPress={() => openFieldExplanation('liquidationDistance')}
                 style={styles.label}>
                 {t('page.perps.pro.positions.liquidationDistance')}
               </PerpsProDottedUnderlineText>
@@ -266,7 +279,9 @@ export const PerpsProPositionCard: React.FC<{
         </View>
         <View style={styles.thirdColumn}>
           <PerpsProDottedUnderlineText
+            accessibilityLabel={t('page.perps.pro.positions.liquidation')}
             containerStyle={styles.rightDottedLabel}
+            onPress={() => openFieldExplanation('liquidationPrice')}
             style={styles.label}>
             {t('page.perps.pro.positions.liquidation')} ({market.quoteAsset})
           </PerpsProDottedUnderlineText>

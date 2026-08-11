@@ -4,6 +4,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
+  Pressable,
   View,
   type LayoutChangeEvent,
   type StyleProp,
@@ -20,9 +21,12 @@ const UNDERLINE_Y = UNDERLINE_CANVAS_HEIGHT - UNDERLINE_STROKE_WIDTH / 2;
 
 interface PerpsProDottedUnderlineTextProps {
   children: React.ReactNode;
+  accessibilityLabel?: string;
   containerStyle?: StyleProp<ViewStyle>;
   numberOfLines?: number;
+  onPress?: () => void;
   style?: StyleProp<TextStyle>;
+  testID?: string;
 }
 
 /**
@@ -32,7 +36,15 @@ interface PerpsProDottedUnderlineTextProps {
  */
 export const PerpsProDottedUnderlineText: React.FC<
   PerpsProDottedUnderlineTextProps
-> = ({ children, containerStyle, numberOfLines = 1, style }) => {
+> = ({
+  accessibilityLabel,
+  children,
+  containerStyle,
+  numberOfLines = 1,
+  onPress,
+  style,
+  testID,
+}) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const [textWidth, setTextWidth] = useState(0);
   const textColor =
@@ -46,8 +58,8 @@ export const PerpsProDottedUnderlineText: React.FC<
     );
   }, []);
 
-  return (
-    <View style={[styles.container, containerStyle]}>
+  const content = (
+    <>
       <Text
         numberOfLines={numberOfLines}
         onLayout={handleTextLayout}
@@ -73,6 +85,21 @@ export const PerpsProDottedUnderlineText: React.FC<
           </Svg>
         </View>
       ) : null}
+    </>
+  );
+
+  return onPress ? (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[styles.container, containerStyle]}
+      testID={testID}>
+      {content}
+    </Pressable>
+  ) : (
+    <View style={[styles.container, containerStyle]} testID={testID}>
+      {content}
     </View>
   );
 };

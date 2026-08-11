@@ -39,6 +39,7 @@ export const PerpsProTpSlFields: React.FC<{
       <PerpsProTradeCheckbox
         checked={draft.enabled}
         disabled={controller.disabled}
+        explanationKey="tpSl"
         label="TP/SL"
         onPress={() => controller.setEnabled(!draft.enabled)}
       />

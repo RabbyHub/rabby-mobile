@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
+const mockOpenFieldExplanation = jest.fn();
+
 jest.mock('@/assets2024/icons/perps/IconPerpEdit.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -15,12 +17,27 @@ jest.mock('@/assets/icons/swap/switch-cc.svg', () => {
 
 jest.mock('../common/PerpsProDottedUnderlineText', () => {
   const ReactModule = require('react');
-  const { Text } = require('react-native');
+  const { Pressable, Text } = require('react-native');
   return {
-    PerpsProDottedUnderlineText: ({ children, style }: any) =>
-      ReactModule.createElement(Text, { style }, children),
+    PerpsProDottedUnderlineText: ({
+      accessibilityLabel,
+      children,
+      onPress,
+      style,
+    }: any) =>
+      onPress
+        ? ReactModule.createElement(
+            Pressable,
+            { accessibilityLabel, accessibilityRole: 'button', onPress },
+            ReactModule.createElement(Text, { style }, children),
+          )
+        : ReactModule.createElement(Text, { style }, children),
   };
 });
+
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
+}));
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -117,7 +134,36 @@ const triggerOrder = (
 
 describe('PerpsProPositionCard', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     __resetPerpsProPositionSizeUnitSessionForTests();
+  });
+
+  it('maps every position dotted label to its approved explanation', () => {
+    const view = render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+
+    for (const [label, key] of [
+      ['PNL', 'pnl'],
+      ['ROI', 'roi'],
+      ['Liq. Distance', 'liquidationDistance'],
+      ['Liq. Price', 'liquidationPrice'],
+    ] as const) {
+      fireEvent.press(screen.getByLabelText(label));
+      expect(mockOpenFieldExplanation).toHaveBeenLastCalledWith(key);
+    }
+
+    view.rerender(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'isolated' })}
+      />,
+    );
+    fireEvent.press(screen.getByLabelText('Margin Ratio'));
+    expect(mockOpenFieldExplanation).toHaveBeenLastCalledWith('marginRatio');
   });
 
   it('shows signed Liq. Distance for Cross and preserves every TP/SL entry', () => {

@@ -127,6 +127,11 @@ jest.mock('../components/common/usePerpsProDismissKeyboard', () => ({
   usePerpsProDismissKeyboard: () => (action: () => void) => action(),
 }));
 
+jest.mock('../components/common/PerpsProFieldExplanationProvider', () => ({
+  PerpsProFieldExplanationProvider: ({ children }: { children: unknown }) =>
+    children,
+}));
+
 jest.mock('../components/header/PerpsProHeader', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

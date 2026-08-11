@@ -28,6 +28,7 @@ import {
 import { formatPerpsProPrice } from '../../utils/format';
 import { PerpsProFundingSummary } from '../funding/PerpsProFundingSummary';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import {
   PerpsProOrderBookModeIcon,
   PerpsProOrderBookRow,
@@ -69,6 +70,7 @@ export const PerpsProOrderBook: React.FC<{
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const openFieldExplanation = usePerpsProFieldExplanation();
   const [mode, setMode] = useState<PerpsOrderBookMode>('both');
   const [precisionOpen, setPrecisionOpen] = useState(false);
   const layout = getPerpsOrderBookLayout({
@@ -187,7 +189,11 @@ export const PerpsProOrderBook: React.FC<{
                     </Text>
                   </Pressable>
                   <PerpsProDottedUnderlineText
+                    accessibilityLabel={t(
+                      'page.perps.pro.fieldExplanations.markPrice.title',
+                    )}
                     containerStyle={styles.markPriceUnderline}
+                    onPress={() => openFieldExplanation('markPrice')}
                     style={styles.markPrice}>
                     {formatPerpsProPrice(
                       market?.marketData.markPx,
@@ -226,7 +232,11 @@ export const PerpsProOrderBook: React.FC<{
                     </Text>
                   </Pressable>
                   <PerpsProDottedUnderlineText
+                    accessibilityLabel={t(
+                      'page.perps.pro.fieldExplanations.markPrice.title',
+                    )}
                     containerStyle={styles.markPriceUnderline}
+                    onPress={() => openFieldExplanation('markPrice')}
                     style={styles.markPrice}>
                     {formatPerpsProPrice(
                       market?.marketData.markPx,

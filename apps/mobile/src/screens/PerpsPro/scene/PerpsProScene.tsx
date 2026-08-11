@@ -31,6 +31,7 @@ import {
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import { usePerpsProDismissKeyboard } from '../components/common/usePerpsProDismissKeyboard';
 import { PerpsProHeader } from '../components/header/PerpsProHeader';
 import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
@@ -470,7 +471,7 @@ export const PerpsProScene: React.FC<{
   );
 
   return (
-    <>
+    <PerpsProFieldExplanationProvider>
       <View style={styles.container}>
         <Animated.FlatList
           ListHeaderComponent={renderScrollLeadIn}
@@ -595,7 +596,7 @@ export const PerpsProScene: React.FC<{
         pending={trade.pending}
         skipConfirmation={trade.skipConfirmation}
       />
-    </>
+    </PerpsProFieldExplanationProvider>
   );
 };
 

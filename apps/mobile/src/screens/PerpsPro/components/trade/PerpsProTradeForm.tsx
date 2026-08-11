@@ -233,6 +233,7 @@ export const PerpsProTradeForm: React.FC<{
           <PerpsProTradeCheckbox
             checked={form.reduceOnly}
             disabled={controller.reduceOnlyAvailability.checkboxDisabled}
+            explanationKey="reduceOnly"
             label={t('page.perps.pro.trade.reduceOnly')}
             onPress={() => {
               const reduceOnly = !form.reduceOnly;
@@ -272,6 +273,7 @@ export const PerpsProTradeForm: React.FC<{
                 {liquidationPrice != null ? (
                   <PerpsProTradeSummaryRow
                     dottedLabel
+                    explanationKey="estimatedLiquidationPrice"
                     label={t('page.perps.pro.trade.liquidationPrice')}
                     value={
                       liquidationPrice === '--'
@@ -291,6 +293,7 @@ export const PerpsProTradeForm: React.FC<{
                 />
                 <PerpsProTradeSummaryRow
                   dottedLabel
+                  explanationKey="cost"
                   label={t('page.perps.pro.trade.cost')}
                   value={`${formatPerpsProDecimal(
                     controller.getCostDisplayAmount(side),

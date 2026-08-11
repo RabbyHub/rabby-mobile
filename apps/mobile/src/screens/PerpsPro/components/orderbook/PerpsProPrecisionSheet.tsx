@@ -1,3 +1,4 @@
+import RcOptionCheck from '@/assets2024/icons/perps/PerpsProOptionCheck.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -6,7 +7,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Pressable, useWindowDimensions, type ViewStyle } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getPerpsProPrecisionSheetLayout } from '../../model/layout';
@@ -19,11 +19,10 @@ export const PerpsProPrecisionSheet: React.FC<{
   options: PerpsTickOption[];
   selected: PerpsTickOption | null;
 }> = ({ onClose, onSelect, options, selected }) => {
-  const { colors2024, isLight, styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { t } = useTranslation();
   const sheetLayout = getPerpsProPrecisionSheetLayout({
     bottomInset: insets.bottom,
     optionCount: options.length,
@@ -47,15 +46,17 @@ export const PerpsProPrecisionSheet: React.FC<{
       snapPoints={[sheetLayout.snapPoint]}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isLight ? 'bg0' : 'bg1',
-      })}>
+        linearGradientType: 'bg1',
+      })}
+      backgroundStyle={styles.background}
+      handleIndicatorStyle={styles.handleIndicator}
+      handleStyle={styles.handle}
+      style={styles.modal}>
       <BottomSheetScrollView
         contentContainerStyle={[styles.sheetContent, contentContainerStyle]}
         scrollEnabled={sheetLayout.scrollEnabled}
-        showsVerticalScrollIndicator={sheetLayout.scrollEnabled}>
-        <Text style={styles.title}>
-          {t('page.perps.pro.orderBook.priceAggregation')}
-        </Text>
+        showsVerticalScrollIndicator={false}
+        testID="perps-pro-precision-options">
         {options.map(option => {
           const active =
             option.nSigFigs === selected?.nSigFigs &&
@@ -69,11 +70,21 @@ export const PerpsProPrecisionSheet: React.FC<{
                 onSelect(option);
                 onClose();
               }}
-              style={styles.option}>
+              style={styles.option}
+              testID={`perps-pro-precision-${option.nSigFigs}-${
+                option.mantissa ?? 'null'
+              }`}>
               <Text style={styles.optionText}>
                 {formatPerpsProPrice(option.displayPrice, option.priceDecimals)}
               </Text>
-              {active ? <Text style={styles.check}>✓</Text> : null}
+              {active ? (
+                <RcOptionCheck
+                  color={colors2024['green-default']}
+                  height={24}
+                  testID="perps-pro-precision-selected"
+                  width={24}
+                />
+              ) : null}
             </Pressable>
           );
         })}
@@ -83,37 +94,49 @@ export const PerpsProPrecisionSheet: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  sheetContent: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
+  modal: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
   },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '700',
-    lineHeight: 24,
-    marginBottom: 10,
-    textAlign: 'center',
+  background: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  handle: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    height: 40,
+    paddingBottom: 27,
+    paddingTop: 9,
+  },
+  handleIndicator: {
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 2,
+    height: 4,
+    width: 40,
+  },
+  sheetContent: {
+    gap: 8,
+    paddingHorizontal: 15,
+    paddingTop: 8,
   },
   option: {
     alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 12,
     flexDirection: 'row',
-    height: 44,
+    gap: 12,
     justifyContent: 'space-between',
+    minHeight: 40,
+    overflow: 'hidden',
+    paddingVertical: 8,
   },
   optionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
-    lineHeight: 20,
-  },
-  check: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
   },
 }));
