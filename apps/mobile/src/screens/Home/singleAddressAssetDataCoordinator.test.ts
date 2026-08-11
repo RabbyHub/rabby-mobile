@@ -17,7 +17,8 @@ function createDeferred() {
 function createDependencies() {
   return {
     loadDefi: jest.fn<Promise<void>, [string]>(() => Promise.resolve()),
-    loadNft: jest.fn<Promise<void>, [string]>(() => Promise.resolve()),
+    loadNftCache: jest.fn<Promise<void>, [string]>(() => Promise.resolve()),
+    loadNftRemote: jest.fn<Promise<void>, [string]>(() => Promise.resolve()),
     registerDefi: jest.fn<void, [string, string | undefined]>(),
     registerNft: jest.fn<void, [string, string | undefined]>(),
   };
@@ -39,13 +40,16 @@ describe('singleAddressAssetDataCoordinator', () => {
       'eth',
     );
     expect(dependencies.loadDefi).not.toHaveBeenCalled();
-    expect(dependencies.loadNft).not.toHaveBeenCalled();
+    expect(dependencies.loadNftCache).not.toHaveBeenCalled();
+    expect(dependencies.loadNftRemote).not.toHaveBeenCalled();
   });
 
-  it('warms DeFi before NFT so idle work does not start both domains together', async () => {
+  it('hydrates the NFT cache beside DeFi but keeps NFT remote work serialized', async () => {
     const dependencies = createDependencies();
     const defi = createDeferred();
+    const nftCache = createDeferred();
     dependencies.loadDefi.mockReturnValue(defi.promise);
+    dependencies.loadNftCache.mockReturnValue(nftCache.promise);
     const coordinator = createSingleAddressAssetDataCoordinator(dependencies);
 
     const warmup = coordinator.warm({
@@ -55,12 +59,17 @@ describe('singleAddressAssetDataCoordinator', () => {
     await Promise.resolve();
 
     expect(dependencies.loadDefi).toHaveBeenCalledTimes(1);
-    expect(dependencies.loadNft).not.toHaveBeenCalled();
+    expect(dependencies.loadNftCache).toHaveBeenCalledTimes(1);
+    expect(dependencies.loadNftRemote).not.toHaveBeenCalled();
 
     defi.resolve();
+    await Promise.resolve();
+    expect(dependencies.loadNftRemote).not.toHaveBeenCalled();
+
+    nftCache.resolve();
     await warmup;
 
-    expect(dependencies.loadNft).toHaveBeenCalledTimes(1);
+    expect(dependencies.loadNftRemote).toHaveBeenCalledTimes(1);
   });
 
   it('deduplicates concurrent requests for the same address and domain', async () => {
@@ -91,11 +100,13 @@ describe('singleAddressAssetDataCoordinator', () => {
     await coordinator.ensure('nft', { address: ADDRESS });
     now += 99;
     await coordinator.ensure('nft', { address: ADDRESS });
-    expect(dependencies.loadNft).toHaveBeenCalledTimes(1);
+    expect(dependencies.loadNftCache).toHaveBeenCalledTimes(1);
+    expect(dependencies.loadNftRemote).toHaveBeenCalledTimes(1);
 
     now += 1;
     await coordinator.ensure('nft', { address: ADDRESS });
-    expect(dependencies.loadNft).toHaveBeenCalledTimes(2);
+    expect(dependencies.loadNftCache).toHaveBeenCalledTimes(2);
+    expect(dependencies.loadNftRemote).toHaveBeenCalledTimes(2);
   });
 
   it('allows an immediate retry after a failed warmup', async () => {

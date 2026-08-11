@@ -17,6 +17,7 @@ import {
   type NftCollectionResourceValue,
   type NftEntityId,
 } from './nftAssetsIndex';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 
 export {
   EMPTY_NFT_ASSETS_INDEX_RESULT,
@@ -479,7 +480,9 @@ export interface NFTListState {
     address: string,
     force?: boolean,
     updateReturn?: boolean,
+    options?: { skipCache?: boolean },
   ): Promise<void>;
+  hydrateSingleNftCache(address: string): Promise<void>;
   batchGetNFTList(
     force?: boolean,
     options?: {
@@ -496,6 +499,7 @@ export interface NFTListState {
 }
 
 const singleNftLoadRequests = new Map<string, Promise<void>>();
+const singleNftCacheLoadRequests = new Map<string, Promise<void>>();
 
 const nftListStore = zCreate<NFTListState>((set, get) => ({
   nftsMap: {},
@@ -623,14 +627,58 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     }
   },
 
-  getNFTListWithCache(address, force, updateReturn) {
+  hydrateSingleNftCache(address) {
     if (!address) {
       return Promise.resolve();
     }
 
     const normalizedAddress = address.toLowerCase();
+    const activeRequest = singleNftCacheLoadRequests.get(normalizedAddress);
+    if (activeRequest) {
+      return activeRequest;
+    }
+
+    const trace = beginAssetDataLoadDiagnostic(
+      'single-address-nft',
+      normalizedAddress,
+      { stage: 'local-cache' },
+    );
+    const request = get()
+      .batchLoadCacheNFT([normalizedAddress])
+      .then(() => {
+        trace.mark('cache-store-published', {
+          itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+        });
+        trace.finish({ path: 'local-cache' });
+      })
+      .catch(error => {
+        trace.fail({ phase: 'local-cache' });
+        throw error;
+      })
+      .finally(() => {
+        singleNftCacheLoadRequests.delete(normalizedAddress);
+      });
+    singleNftCacheLoadRequests.set(normalizedAddress, request);
+    return request;
+  },
+
+  getNFTListWithCache(address, force, updateReturn, options) {
+    if (!address) {
+      return Promise.resolve();
+    }
+
+    const normalizedAddress = address.toLowerCase();
+    const trace = beginAssetDataLoadDiagnostic(
+      'single-address-nft',
+      normalizedAddress,
+      {
+        force: !!force,
+        updateReturn: !!updateReturn,
+      },
+    );
     const activeRequest = singleNftLoadRequests.get(normalizedAddress);
     if (activeRequest) {
+      trace.finish({ path: 'joined-active-request' });
       return activeRequest;
     }
 
@@ -643,8 +691,24 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
 
     const request = (async () => {
       try {
-        await get().batchLoadCacheNFT([normalizedAddress]);
+        if (!options?.skipCache) {
+          await get().hydrateSingleNftCache(normalizedAddress);
+          trace.mark('cache-store-published', {
+            itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+          });
+        } else {
+          trace.mark('cache-preloaded', {
+            itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+          });
+        }
         await get().getNFTList(normalizedAddress, force, updateReturn);
+        trace.mark('remote-store-published', {
+          itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+        });
+        trace.finish({ path: 'cache-then-remote' });
+      } catch (error) {
+        trace.fail({ phase: 'load' });
+        throw error;
       } finally {
         singleNftLoadRequests.delete(normalizedAddress);
         set(state => ({

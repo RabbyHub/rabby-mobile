@@ -7,7 +7,8 @@ export type SingleAddressAssetDataInput = {
 
 type SingleAddressAssetDataCoordinatorDependencies = {
   loadDefi: (address: string) => Promise<void>;
-  loadNft: (address: string) => Promise<void>;
+  loadNftCache: (address: string) => Promise<void>;
+  loadNftRemote: (address: string) => Promise<void>;
   registerDefi: (address: string, chainServerId?: string) => void;
   registerNft: (address: string, chainServerId?: string) => void;
   now?: () => number;
@@ -16,12 +17,15 @@ type SingleAddressAssetDataCoordinatorDependencies = {
 
 const DEFAULT_REUSE_MS = 10_000;
 
-const getRequestKey = (tab: SingleAddressAssetDataTab, address: string) =>
-  `${tab}:${address.toLowerCase()}`;
+const getRequestKey = (
+  tab: SingleAddressAssetDataTab | 'nft-cache',
+  address: string,
+) => `${tab}:${address.toLowerCase()}`;
 
 export function createSingleAddressAssetDataCoordinator({
   loadDefi,
-  loadNft,
+  loadNftCache,
+  loadNftRemote,
   registerDefi,
   registerNft,
   now = Date.now,
@@ -29,6 +33,43 @@ export function createSingleAddressAssetDataCoordinator({
 }: SingleAddressAssetDataCoordinatorDependencies) {
   const inFlight = new Map<string, Promise<void>>();
   const completedAt = new Map<string, number>();
+
+  const ensureNftCache = ({ address }: SingleAddressAssetDataInput) => {
+    const normalizedAddress = address.toLowerCase();
+    const key = getRequestKey('nft-cache', normalizedAddress);
+    const activeRequest = inFlight.get(key);
+    if (activeRequest) {
+      return activeRequest;
+    }
+
+    const previousCompletedAt = completedAt.get(key);
+    if (
+      previousCompletedAt !== undefined &&
+      now() - previousCompletedAt < reuseMs
+    ) {
+      return Promise.resolve();
+    }
+
+    const request = Promise.resolve().then(() =>
+      loadNftCache(normalizedAddress),
+    );
+    inFlight.set(key, request);
+
+    return request.then(
+      () => {
+        if (inFlight.get(key) === request) {
+          inFlight.delete(key);
+          completedAt.set(key, now());
+        }
+      },
+      error => {
+        if (inFlight.get(key) === request) {
+          inFlight.delete(key);
+        }
+        throw error;
+      },
+    );
+  };
 
   const prepare = ({ address, chainServerId }: SingleAddressAssetDataInput) => {
     const normalizedAddress = address.toLowerCase();
@@ -61,9 +102,14 @@ export function createSingleAddressAssetDataCoordinator({
       registerNft(normalizedAddress, chainServerId);
     }
 
-    const request = Promise.resolve().then(() =>
-      tab === 'defi' ? loadDefi(normalizedAddress) : loadNft(normalizedAddress),
-    );
+    const request = Promise.resolve().then(async () => {
+      if (tab === 'defi') {
+        await loadDefi(normalizedAddress);
+        return;
+      }
+      await ensureNftCache({ address: normalizedAddress, chainServerId });
+      await loadNftRemote(normalizedAddress);
+    });
     inFlight.set(key, request);
 
     return request.then(
@@ -84,7 +130,15 @@ export function createSingleAddressAssetDataCoordinator({
 
   const warm = async (input: SingleAddressAssetDataInput) => {
     prepare(input);
+    const nftCacheResult = ensureNftCache(input).then(
+      () => ({ error: null }),
+      error => ({ error }),
+    );
     await ensure('defi', input);
+    const { error: nftCacheError } = await nftCacheResult;
+    if (nftCacheError) {
+      throw nftCacheError;
+    }
     await ensure('nft', input);
   };
 

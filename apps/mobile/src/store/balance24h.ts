@@ -326,7 +326,14 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   };
 
   refreshAddress24hBalance = makeSWRKeyAsyncFunc(
-    async (address: string, force = false, trace?: Balance24hTraceContext) => {
+    async (
+      address: string,
+      force = false,
+      trace?: Balance24hTraceContext,
+      options?: {
+        cacheAlreadyHydrated?: boolean;
+      },
+    ) => {
       const lowerAddress = this.normalizeAddress(address);
       if (!lowerAddress) {
         return undefined;
@@ -336,7 +343,9 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
       let requestId: string | undefined;
 
       try {
-        const cacheData = this.hydrateAddress24hBalanceFromCache(lowerAddress);
+        const cacheData = options?.cacheAlreadyHydrated
+          ? getBalance24hCache(lowerAddress)
+          : this.hydrateAddress24hBalanceFromCache(lowerAddress);
 
         if (cacheData?.data && !force && !cacheData.isExpired) {
           return {
@@ -864,11 +873,18 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
           queue.add(async () => {
             this.setSceneAddrLoading(scene, address, true);
             try {
-              await balance24hStore.refreshAddress24hBalance(address, force, {
-                scene,
-                requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
-                endpoint: 'openapi.get24hTotalBalance',
-              });
+              await balance24hStore.refreshAddress24hBalance(
+                address,
+                force,
+                {
+                  scene,
+                  requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
+                  endpoint: 'openapi.get24hTotalBalance',
+                },
+                {
+                  cacheAlreadyHydrated: true,
+                },
+              );
             } catch (error) {
               console.error('Fetch curve error', error);
             } finally {

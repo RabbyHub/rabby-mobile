@@ -6,6 +6,7 @@ import {
   createSingleAddressAssetDataCoordinator,
   type SingleAddressAssetDataInput,
 } from './singleAddressAssetDataCoordinator';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 
 export type {
   SingleAddressAssetDataInput,
@@ -15,7 +16,12 @@ export type {
 export const singleAddressAssetDataCoordinator =
   createSingleAddressAssetDataCoordinator({
     loadDefi: address => useProtocols.getState().getProtocols(address),
-    loadNft: address => nftListStore.getState().getNFTListWithCache(address),
+    loadNftCache: address =>
+      nftListStore.getState().hydrateSingleNftCache(address),
+    loadNftRemote: address =>
+      nftListStore
+        .getState()
+        .getNFTListWithCache(address, false, false, { skipCache: true }),
     registerDefi: (address, chainServerId) => {
       useProtocolListComputedStore
         .getState()
@@ -31,8 +37,22 @@ export const singleAddressAssetDataCoordinator =
 export function scheduleSingleAddressAssetDataWarmup(
   input: SingleAddressAssetDataInput,
 ) {
-  return scheduleStartupTask(
-    () => singleAddressAssetDataCoordinator.warm(input),
-    STARTUP_TASKS.singleAddressAssetDataWarmup,
+  const trace = beginAssetDataLoadDiagnostic(
+    'single-address-warmup',
+    input.address,
+    {
+      chainServerId: input.chainServerId || null,
+    },
   );
+  trace.mark('scheduled');
+  return scheduleStartupTask(async () => {
+    trace.mark('task-started');
+    try {
+      await singleAddressAssetDataCoordinator.warm(input);
+      trace.finish();
+    } catch (error) {
+      trace.fail({ phase: 'warm' });
+      throw error;
+    }
+  }, STARTUP_TASKS.singleAddressAssetDataWarmup);
 }
