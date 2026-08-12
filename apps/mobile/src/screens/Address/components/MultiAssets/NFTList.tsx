@@ -70,6 +70,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
@@ -192,6 +193,11 @@ const NFTListInner = () => {
 
   const getAccountByAddress = useFindAccountByAddress();
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
+
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
 
   const { nftRefresh } = useTriggerTagAssets();
   useOnNftRefresh();

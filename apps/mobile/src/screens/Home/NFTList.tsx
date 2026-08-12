@@ -57,6 +57,7 @@ import {
   useRegressionScenarioComponentAction,
 } from '@/devtools/regressionScenarios/react';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 type NftListItem =
   | NftAssetsIndexRow
@@ -146,6 +147,11 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
 
   const focusedTab = useFocusedTab();
   const isFocused = focusedTab === 'nft';
+
+  useScrollToTopOnChainChange({
+    chain: selectedChain,
+    isCurrentTab: isFocused,
+  });
 
   const userAddr = currentAccount?.address?.toLowerCase();
   const { reload: reloadNftList, isLoading: loadingNft } =
