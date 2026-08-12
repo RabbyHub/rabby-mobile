@@ -1,11 +1,10 @@
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { apisAccount } from '@/core/apis';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useRequest } from 'ahooks';
 import { isEqual } from 'lodash';
 import type { UpdaterOrPartials } from '@/core/utils/store';
@@ -13,6 +12,7 @@ import { resolveValFromUpdater } from '@/core/utils/store';
 import { zCreate } from '@/core/utils/reexports';
 import type { ITokenItem } from '@/store/tokens';
 import { perfEvents } from '@/core/utils/perf';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type AccountSwitcherState = {
   /**
@@ -176,7 +176,12 @@ const fetchTokensByAddresses = (addrs: string[], count = 5) => {
 };
 
 function useTopTokensByAccount() {
-  const addressTop5Tokens = accountSwitchStore(s => s.top5Tokens);
+  const addressTop5Tokens = useActivityStore(
+    accountSwitchStore,
+    state => state.top5Tokens,
+    Object.is,
+    { storeLabel: 'account-switcher-top-tokens' },
+  );
 
   return { addressTop5Tokens };
 }
