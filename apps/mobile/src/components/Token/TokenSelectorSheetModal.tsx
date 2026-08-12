@@ -120,6 +120,7 @@ import { Text } from '@/components/Typography';
 import { useIsUserTokenPinned } from '@/hooks/useTokenSettings';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
+import { getTokenSelectorActivityState } from './tokenSelectorActivity';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'SwapBridge'>,
@@ -1294,13 +1295,6 @@ const TokenSelectorSheetModalContent = ({
       showLpTokenSwitch,
     ]);
 
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
-    useCallback(() => {
-      onCancel();
-      return !visible;
-    }, [onCancel, visible]),
-  );
-
   const top3Chains = useMemo(() => {
     if (!visible) {
       return [];
@@ -1318,8 +1312,6 @@ const TokenSelectorSheetModalContent = ({
     }
     return [];
   }, [list, tokenRows, type, visible]);
-
-  useFocusEffect(onHardwareBackHandler);
 
   return (
     <AppBottomSheetModal
@@ -1560,22 +1552,47 @@ const TokenSelectorSheetModalContent = ({
 
 export const TokenSelectorSheetModal = ({
   visible,
+  onCancel,
   ...props
 }: TokenSelectorSheetModalProps) => {
   const [activityVisible, setActivityVisible] = useState(visible);
+  const activityVisibleRef = useRef(visible);
+
+  const handleActivityVisibleChange = useCallback((nextVisible: boolean) => {
+    activityVisibleRef.current = nextVisible;
+    setActivityVisible(nextVisible);
+  }, []);
 
   useLayoutEffect(() => {
-    setActivityVisible(visible);
-  }, [visible]);
+    handleActivityVisibleChange(visible);
+  }, [handleActivityVisibleChange, visible]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      const { shouldHandleAndroidBack } = getTokenSelectorActivityState({
+        controlledVisible: visible,
+        sheetVisible: activityVisibleRef.current,
+      });
+      if (shouldHandleAndroidBack) {
+        onCancel();
+      }
+      return !shouldHandleAndroidBack;
+    }, [onCancel, visible]),
+  );
+  useFocusEffect(onHardwareBackHandler);
+
+  const { renderActive } = getTokenSelectorActivityState({
+    controlledVisible: visible,
+    sheetVisible: activityVisible,
+  });
 
   return (
-    <RenderActivityBoundary
-      active={activityVisible}
-      label="token-selector-modal">
+    <RenderActivityBoundary active={renderActive} label="token-selector-modal">
       <TokenSelectorSheetModalContent
         {...props}
         visible={visible}
-        onActivityVisibleChange={setActivityVisible}
+        onCancel={onCancel}
+        onActivityVisibleChange={handleActivityVisibleChange}
       />
     </RenderActivityBoundary>
   );
