@@ -70,25 +70,4 @@ describe('token list async resource', () => {
     requests.invalidate();
     expect(requests.isCurrent(second)).toBe(false);
   });
-
-  it('does not cancel active work until a reserved request starts', () => {
-    const requests = new LatestAsyncRequest();
-    const active = requests.next();
-    const cachedOnly = requests.reserve();
-
-    expect(requests.isCurrent(active)).toBe(true);
-    expect(requests.isCurrent(cachedOnly)).toBe(false);
-
-    expect(requests.activate(cachedOnly)).toBe(true);
-    expect(requests.isCurrent(active)).toBe(false);
-  });
-
-  it('does not activate an older reservation over newer work', () => {
-    const requests = new LatestAsyncRequest();
-    const older = requests.reserve();
-    const newer = requests.next();
-
-    expect(requests.activate(older)).toBe(false);
-    expect(requests.isCurrent(newer)).toBe(true);
-  });
 });

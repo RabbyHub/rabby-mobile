@@ -1,33 +1,16 @@
 export class LatestAsyncRequest {
-  private issuedSequence = 0;
-
-  private activeSequence = 0;
-
-  reserve() {
-    this.issuedSequence += 1;
-    return this.issuedSequence;
-  }
-
-  activate(requestId: number) {
-    if (requestId > this.activeSequence) {
-      this.activeSequence = requestId;
-    }
-
-    return this.isCurrent(requestId);
-  }
+  private sequence = 0;
 
   next() {
-    const requestId = this.reserve();
-    this.activate(requestId);
-    return requestId;
+    this.sequence += 1;
+    return this.sequence;
   }
 
   invalidate() {
-    const requestId = this.reserve();
-    this.activeSequence = requestId;
+    this.sequence += 1;
   }
 
   isCurrent(requestId: number) {
-    return requestId === this.activeSequence;
+    return requestId === this.sequence;
   }
 }

@@ -634,7 +634,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     });
   },
   async batchGetProtocols(addresses, force = false) {
-    const requestId = multiAddressProtocolRequests.reserve();
+    const requestId = multiAddressProtocolRequests.next();
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
@@ -646,7 +646,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
         ? protocolAddressRequests.getCurrentAddresses(addressRequest)
         : [];
     if (!lowerAddresses.length) {
-      multiAddressProtocolRequests.activate(requestId);
       set(() => ({ isLoading: true }));
       await new Promise(resolve => setTimeout(resolve, 0));
       if (isCurrentRequest()) {
@@ -691,7 +690,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
       }
 
       if (
-        !multiAddressProtocolRequests.activate(requestId) ||
+        !isCurrentRequest() ||
         !protocolAddressRequests.activate(addressRequest).length
       ) {
         trace.finish({ path: 'stale-before-remote' });

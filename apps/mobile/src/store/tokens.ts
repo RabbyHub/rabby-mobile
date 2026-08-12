@@ -2141,7 +2141,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
   },
 
   async batchGetTokenList(addresses: string[], force = false) {
-    const requestId = multiAddressTokenRequests.reserve();
+    const requestId = multiAddressTokenRequests.next();
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
@@ -2162,7 +2162,6 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         : [];
 
     if (!lowerAddresses.length) {
-      multiAddressTokenRequests.activate(requestId);
       set(() => ({ isLoading: true }));
       await new Promise(resolve => setTimeout(resolve, 0));
       if (isCurrentRequest()) {
@@ -2190,7 +2189,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       }
 
       if (
-        !multiAddressTokenRequests.activate(requestId) ||
+        !isCurrentRequest() ||
         !tokenAddressRequests.activate(addressRequest).length
       ) {
         trace.finish({ path: 'stale-before-remote' });
