@@ -22,6 +22,11 @@ import {
   type ProtocolAssetsIndexResult,
   type ProtocolEntityId,
 } from './protocolAssetsIndex';
+import {
+  completeAddressListSnapshots,
+  createAddressListSnapshotHydrator,
+  mergeAddressListSnapshots,
+} from './_addressListSnapshot';
 
 export {
   buildProtocolEntityId,
@@ -410,6 +415,36 @@ const mergeProtocolMaps = (
   return merged;
 };
 
+const loadProtocolSnapshots = async (
+  addresses: string[],
+): Promise<ProtocolListMap> => {
+  const normalizedAddresses = Array.from(
+    new Set(normalizeAddresses(addresses)),
+  );
+  const [protocolMap, appChainMap] = await Promise.all([
+    ProtocolItemEntity.getDefaultProtocolsByAddresses(normalizedAddresses),
+    buildAppChainProtocolMap(normalizedAddresses),
+  ]);
+
+  return completeAddressListSnapshots(
+    normalizedAddresses,
+    mergeProtocolMaps(protocolMap, appChainMap),
+  );
+};
+
+const protocolCacheHydrator = createAddressListSnapshotHydrator<IProtocolItem>({
+  load: loadProtocolSnapshots,
+  apply: (snapshots, addresses) => {
+    const nextProtocolMap = mergeAddressListSnapshots(
+      useProtocolListStore.getState().protocolMap,
+      addresses,
+      snapshots,
+    );
+    protocolEntityResourceStore.syncFromProtocolMap(nextProtocolMap, 'hydrate');
+    useProtocolListStore.setState({ protocolMap: nextProtocolMap });
+  },
+});
+
 export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
   protocolMap: {},
   isLoading: false,
@@ -427,19 +462,11 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     });
 
     const loadStartedAt = Date.now();
-    const [protocolMap, appChainMap] = await Promise.all([
-      ProtocolItemEntity.getDefaultProtocolsByAddresses(top10Addresses),
-      buildAppChainProtocolMap(top10Addresses),
-    ]);
+    await protocolCacheHydrator.hydrate(top10Addresses);
     markStartupPerf('protocolListStore', 'load_cache_end', {
       elapsedMs: Date.now() - loadStartedAt,
       count: top10Addresses.length,
     });
-
-    // 写入 Store
-    set(() => ({
-      protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
-    }));
     markStartupPerf('protocolListStore', 'initStore_end', {
       elapsedMs: Date.now() - startedAt,
       count: top10Addresses.length,
@@ -478,13 +505,11 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           return;
         }
         if (!isExpired) {
-          const [protocolMap, appChainMap] = await Promise.all([
-            ProtocolItemEntity.getDefaultProtocolsByAddresses(lowerAddresses),
-            buildAppChainProtocolMap(lowerAddresses),
-          ]);
+          await protocolCacheHydrator.hydrate(lowerAddresses);
+          const protocolMap = get().protocolMap;
           trace.mark('local-db-loaded', {
-            itemCount: Object.values(protocolMap).reduce(
-              (count, protocols) => count + protocols.length,
+            itemCount: lowerAddresses.reduce(
+              (count, address) => count + (protocolMap[address]?.length || 0),
               0,
             ),
           });
@@ -492,11 +517,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
             trace.finish({ path: 'stale-after-hydrate' });
             return;
           }
-          const mergedProtocolMap = mergeProtocolMaps(protocolMap, appChainMap);
-          set(() => ({
-            protocolMap: mergedProtocolMap,
-            isLoading: false,
-          }));
+          set(() => ({ isLoading: false }));
           reportLendingUserStatusOnce({
             addresses: lowerAddresses,
             protocolMap,
@@ -523,20 +544,16 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
       );
 
       if (!force && !hasMemorySnapshot) {
-        const [localProtocolMap, appChainMap] = await Promise.all([
-          ProtocolItemEntity.getDefaultProtocolsByAddresses(lowerAddresses),
-          buildAppChainProtocolMap(lowerAddresses),
-        ]);
+        await protocolCacheHydrator.hydrate(lowerAddresses);
+        const localProtocolMap = get().protocolMap;
         trace.mark('stale-local-db-loaded', {
-          itemCount: Object.values(localProtocolMap).reduce(
-            (count, protocols) => count + protocols.length,
+          itemCount: lowerAddresses.reduce(
+            (count, address) =>
+              count + (localProtocolMap[address]?.length || 0),
             0,
           ),
         });
         if (isCurrentRequest()) {
-          set(() => ({
-            protocolMap: mergeProtocolMaps(localProtocolMap, appChainMap),
-          }));
           trace.mark('stale-local-store-published');
         }
       } else {
@@ -560,7 +577,17 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
         trace.finish({ path: 'stale-after-remote' });
         return;
       }
-      set(() => ({ protocolMap: resultMap }));
+      const nextProtocolMap = mergeAddressListSnapshots(
+        get().protocolMap,
+        lowerAddresses,
+        resultMap,
+      );
+      protocolEntityResourceStore.syncFromProtocolMap(
+        nextProtocolMap,
+        'remote',
+      );
+      protocolCacheHydrator.invalidate(lowerAddresses);
+      set(() => ({ protocolMap: nextProtocolMap }));
       reportLendingUserStatusOnce({
         addresses: lowerAddresses,
         protocolMap: resultMap,
