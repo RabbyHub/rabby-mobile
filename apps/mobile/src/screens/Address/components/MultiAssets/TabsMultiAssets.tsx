@@ -115,6 +115,7 @@ const HomeTabActivityBoundary = ({
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const isScreenFocused = useIsFocused();
 
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {
@@ -134,7 +135,11 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
 
   return (
     <View style={styles.container}>
-      <TabsTopHeader />
+      <RenderActivityBoundary
+        active={isScreenFocused}
+        label="home-multi-assets-header">
+        <TabsTopHeader />
+      </RenderActivityBoundary>
       <HomeCustomMaterialTabBar />
       <MultiAssetsContainer
         ref={homeTabScrollerRef}

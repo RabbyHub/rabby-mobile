@@ -31,6 +31,7 @@ import { ScreenPanelScanner } from './modalScreens/ScanQrcode';
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
 import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 function getDefaultScreenStates(): {
   isScanning: boolean;
@@ -403,60 +404,70 @@ export function SheetModalSelectAccountSend({
             paddingBottom: safeSizes.containerPb,
           },
         ]}>
-        <AccountSelectModalProvider value={providerValues}>
-          <View style={styles.modalHeader}>
-            <View style={[styles.headerIconPlaceholder, styles.navBack]}>
-              {!!providerValues.computed.canNavBack && (
-                <Pressable
-                  disabled={!providerValues.computed.canNavBack}
-                  onPress={onPressNavBack}>
-                  <RcIconNavLeft
-                    color={screenStyles.title?.color}
-                    width={24}
-                    height={24}
-                  />
-                </Pressable>
-              )}
+        <RenderActivityBoundary
+          active={!!visible}
+          label={`send-account-selector-${type}`}>
+          <AccountSelectModalProvider value={providerValues}>
+            <View style={styles.modalHeader}>
+              <View style={[styles.headerIconPlaceholder, styles.navBack]}>
+                {!!providerValues.computed.canNavBack && (
+                  <Pressable
+                    disabled={!providerValues.computed.canNavBack}
+                    onPress={onPressNavBack}>
+                    <RcIconNavLeft
+                      color={screenStyles.title?.color}
+                      width={24}
+                      height={24}
+                    />
+                  </Pressable>
+                )}
+              </View>
+              <Text style={[styles.title, screenStyles.title]}>
+                {modalTitle}
+              </Text>
+              <View style={[styles.headerIconPlaceholder, styles.rightIcon]}>
+                {!!providerValues.computed.needShowHistory && (
+                  <Pressable
+                    disabled={!providerValues.computed.needShowHistory}
+                    onPress={() => {
+                      touchedFeedback();
+                      fnNavTo('select-from-history');
+                    }}>
+                    <RcIconHistory width={24} height={24} />
+                  </Pressable>
+                )}
+              </View>
             </View>
-            <Text style={[styles.title, screenStyles.title]}>{modalTitle}</Text>
-            <View style={[styles.headerIconPlaceholder, styles.rightIcon]}>
-              {!!providerValues.computed.needShowHistory && (
-                <Pressable
-                  disabled={!providerValues.computed.needShowHistory}
-                  onPress={() => {
-                    touchedFeedback();
-                    fnNavTo('select-from-history');
-                  }}>
-                  <RcIconHistory width={24} height={24} />
-                </Pressable>
+            <View style={styles.mainContainer}>
+              {currentScreen === 'default' && (
+                <AccountsPanelInSheetModal
+                  parentVisible={!!visible}
+                  scene="SendTo"
+                />
               )}
+              {currentScreen === 'enter-addr' && (
+                <ScreenPanelEnterAddress
+                  onCleanupInput={() => {
+                    fnNavTo('default');
+                  }}
+                  newValue={
+                    screenStates.nextInitValues['enter-addr'].inputValue
+                  }
+                />
+              )}
+              {currentScreen === 'add-new-whitelist-addr' && (
+                <ScreenAddNewWhitelistAddress
+                  newValue={
+                    screenStates.nextInitValues['add-new-whitelist-addr']
+                  }
+                />
+              )}
+              {currentScreen === 'select-from-history' && <ScreenSentHistory />}
+              {currentScreen === 'view-sent-tx' && <ScreenHistoryLocalDetail />}
+              {currentScreen === 'scan-qr-code' && <ScreenPanelScanner />}
             </View>
-          </View>
-          <View style={styles.mainContainer}>
-            {currentScreen === 'default' && (
-              <AccountsPanelInSheetModal
-                parentVisible={!!visible}
-                scene="SendTo"
-              />
-            )}
-            {currentScreen === 'enter-addr' && (
-              <ScreenPanelEnterAddress
-                onCleanupInput={() => {
-                  fnNavTo('default');
-                }}
-                newValue={screenStates.nextInitValues['enter-addr'].inputValue}
-              />
-            )}
-            {currentScreen === 'add-new-whitelist-addr' && (
-              <ScreenAddNewWhitelistAddress
-                newValue={screenStates.nextInitValues['add-new-whitelist-addr']}
-              />
-            )}
-            {currentScreen === 'select-from-history' && <ScreenSentHistory />}
-            {currentScreen === 'view-sent-tx' && <ScreenHistoryLocalDetail />}
-            {currentScreen === 'scan-qr-code' && <ScreenPanelScanner />}
-          </View>
-        </AccountSelectModalProvider>
+          </AccountSelectModalProvider>
+        </RenderActivityBoundary>
       </AutoLockView>
     </AppBottomSheetModal>
   );
