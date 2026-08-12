@@ -1,4 +1,7 @@
-import type { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  Collection,
+  CollectionList,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 import type { DisplayNftItem } from '@/types/assets';
 
@@ -25,9 +28,12 @@ export type NftAssetsIndexRow =
       collectionId: NftCollectionId;
     };
 
-export type NftCollectionResourceValue = CollectionList & {
-  address?: string;
-};
+export type NftCollectionResourceValue = Collection &
+  Partial<Omit<CollectionList, keyof Collection | 'chain' | 'nft_list'>> & {
+    chain: string;
+    nft_list: DisplayNftItem[];
+    address?: string;
+  };
 
 export type NftAssetsIndexResult = {
   rows: NftAssetsIndexRow[];
@@ -67,13 +73,33 @@ export const buildNftEntityId = (
   ].join(':') as NftEntityId;
 
 const buildNftCollectionId = (
-  collection: NftCollectionResourceValue,
+  collection: Pick<NftCollectionResourceValue, 'address' | 'chain' | 'id'>,
 ): NftCollectionId =>
   [
     collection.address?.toLowerCase() || '',
     collection.chain?.toLowerCase() || '',
     collection.id?.toLowerCase() || '',
   ].join('::') as NftCollectionId;
+
+export const createNftCollectionResourceValue = (
+  item: CombinedNftItem,
+  address: string,
+  nftList: DisplayNftItem[],
+): NftCollectionResourceValue => {
+  const collection = item.collection;
+  if (!collection) {
+    throw new Error('NFT collection is required');
+  }
+  const collectionListFields = collection as Collection &
+    Partial<CollectionList>;
+
+  return {
+    ...collectionListFields,
+    address,
+    chain: collectionListFields.chain || item.chain || '',
+    nft_list: nftList,
+  };
+};
 
 export const getNftAssetsIndexRowKey = (row: NftAssetsIndexRow) => {
   if (row.type === 'collection') {
@@ -142,8 +168,12 @@ const buildRows = (
 
     const collectionAddress = item.address || getNftOwnerAddress(item);
     const collectionId = buildNftCollectionId({
-      ...item.collection,
       address: collectionAddress,
+      chain:
+        (item.collection as Collection & Partial<CollectionList>).chain ||
+        item.chain ||
+        '',
+      id: item.collection.id,
     });
     const existingCollection = collectionMap.get(collectionId);
     if (existingCollection) {
@@ -151,11 +181,11 @@ const buildRows = (
       return;
     }
 
-    const collection = {
-      ...item.collection,
-      address: collectionAddress,
-      nft_list: [{ ...item, collection: null }],
-    } as unknown as NftCollectionResourceValue;
+    const collection = createNftCollectionResourceValue(
+      item,
+      collectionAddress,
+      [{ ...item, collection: null }],
+    );
     collectionMap.set(collectionId, collection);
     collections.push({ collectionId, value: collection });
     candidates.push({

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { DisplayNftItem } from '../types';
-import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import type { CombineNFTItem } from './store';
 import nftListStore from '@/store/nfts';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import type { NftCollectionResourceValue } from '@/store/nftAssetsIndex';
 
 const EMPTY_NFT_LIST: DisplayNftItem[] = [];
 
@@ -125,7 +125,4 @@ export const useQueryNft = (addr?: string, visible = true) => {
   };
 };
 
-type CombineCollectionList = CollectionList & {
-  address?: string;
-};
-export type NftItemWithCollection = CombineNFTItem | CombineCollectionList;
+export type NftItemWithCollection = CombineNFTItem | NftCollectionResourceValue;

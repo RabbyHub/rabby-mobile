@@ -47,4 +47,25 @@ describe('LatestAddressRequest', () => {
     expect(requests.activate(older)).toEqual([]);
     expect(requests.isCurrent(newer, '0xA')).toBe(true);
   });
+
+  it('allows a reserved cache result unless newer remote work supersedes it', () => {
+    const requests = new LatestAddressRequest();
+    const cache = requests.reserve(['0xA']);
+
+    expect(requests.isSuperseded(cache, '0xA')).toBe(false);
+
+    const remote = requests.begin(['0xA']);
+    expect(requests.isSuperseded(cache, '0xA')).toBe(true);
+    expect(requests.isSuperseded(remote, '0xA')).toBe(false);
+  });
+
+  it('preserves invocation order when addresses become available later', () => {
+    const requests = new LatestAddressRequest();
+    const earlierRevision = requests.issueRevision();
+    const newer = requests.begin(['0xA']);
+    const earlier = requests.reserveAtRevision(['0xA'], earlierRevision);
+
+    expect(requests.activate(earlier)).toEqual([]);
+    expect(requests.isCurrent(newer, '0xA')).toBe(true);
+  });
 });

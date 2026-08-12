@@ -17,15 +17,27 @@ export class LatestAddressRequest {
     return `${address.toLowerCase()}::${source}`;
   }
 
-  reserve(addresses: string[], source = 'full'): LatestAddressRequestTicket {
+  issueRevision() {
+    this.sequence += 1;
+    return this.sequence;
+  }
+
+  reserveAtRevision(
+    addresses: string[],
+    revision: number,
+    source = 'full',
+  ): LatestAddressRequestTicket {
     const revisionByAddress = new Map<string, number>();
 
     normalizeAddresses(addresses).forEach(address => {
-      const revision = ++this.sequence;
       revisionByAddress.set(address, revision);
     });
 
     return { source, revisionByAddress };
+  }
+
+  reserve(addresses: string[], source = 'full'): LatestAddressRequestTicket {
+    return this.reserveAtRevision(addresses, this.issueRevision(), source);
   }
 
   activate(ticket: LatestAddressRequestTicket) {
@@ -54,6 +66,19 @@ export class LatestAddressRequest {
       revision !== undefined &&
       this.revisionByKey.get(this.getKey(normalizedAddress, ticket.source)) ===
         revision
+    );
+  }
+
+  isSuperseded(ticket: LatestAddressRequestTicket, address: string) {
+    const normalizedAddress = address.toLowerCase();
+    const revision = ticket.revisionByAddress.get(normalizedAddress);
+    if (revision === undefined) {
+      return true;
+    }
+
+    return (
+      (this.revisionByKey.get(this.getKey(normalizedAddress, ticket.source)) ||
+        0) > revision
     );
   }
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncRemoteProtocol } from '@/databases/sync/assets';
 import { batchQueryNFTSnapshotWithLocalCache } from '@/databases/hooks/nft';
+import type { NftSnapshotLoadOptions } from '@/databases/hooks/nft';
 import {
   batchLoadProjects,
   loadPortfolioSnapshot,
@@ -232,6 +233,7 @@ export const syncNFTs = async (
   address: string,
   force?: boolean,
   onlySync?: boolean,
+  options?: NftSnapshotLoadOptions,
 ) => {
   return batchQueryNFTSnapshotWithLocalCache(
     {
@@ -241,5 +243,6 @@ export const syncNFTs = async (
     },
     force,
     onlySync,
+    options,
   );
 };

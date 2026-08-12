@@ -87,4 +87,45 @@ describe('NFT snapshot loading', () => {
     ).rejects.toThrow('network failed');
     expect(mockedSyncRemoteNFTs).not.toHaveBeenCalled();
   });
+
+  it('lets a caller reject remote work before network requests start', async () => {
+    mockedNftEntity.isExpired.mockResolvedValue(true);
+    const beforeRemote = jest.fn(() => false);
+
+    await expect(
+      batchQueryNFTSnapshotWithLocalCache(
+        { id: '0xabc', isAll: true, sortByCredit: true },
+        false,
+        true,
+        { beforeRemote },
+      ),
+    ).resolves.toEqual({ status: 'superseded' });
+    expect(beforeRemote).toHaveBeenCalledTimes(1);
+    expect(mockedOpenapi.listNFT).not.toHaveBeenCalled();
+    expect(mockedOpenapi.collectionList).not.toHaveBeenCalled();
+  });
+
+  it('returns remote data without persisting when commit is deferred', async () => {
+    const remoteNft = { id: 'remote' };
+    mockedNftEntity.isExpired.mockResolvedValue(true);
+    mockedOpenapi.listNFT.mockResolvedValue([remoteNft] as never);
+    mockedOpenapi.collectionList.mockResolvedValue([]);
+
+    const result = await batchQueryNFTSnapshotWithLocalCache(
+      { id: '0xabc', isAll: true, sortByCredit: true },
+      false,
+      true,
+      { deferPersistence: true },
+    );
+
+    expect(result.status).toBe('snapshot');
+    if (result.status !== 'snapshot') {
+      throw new Error('Expected an NFT snapshot');
+    }
+    expect(result.remoteNfts).toEqual(result.nfts);
+    expect(result.nfts).toEqual([
+      expect.objectContaining({ id: remoteNft.id }),
+    ]);
+    expect(mockedSyncRemoteNFTs).not.toHaveBeenCalled();
+  });
 });

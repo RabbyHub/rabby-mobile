@@ -81,6 +81,9 @@ describe('nft asset index', () => {
     expect(projection.result.rows).toHaveLength(1);
     expect(projection.result.rows[0]?.type).toBe('collection');
     expect(projection.collections[0]?.value.nft_list).toHaveLength(2);
+    expect(
+      projection.collections[0]?.value.nft_list.map(item => item.id),
+    ).toEqual(['one', 'two']);
   });
 
   it('keeps the same collection separate across owners', () => {
