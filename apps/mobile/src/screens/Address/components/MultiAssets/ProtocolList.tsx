@@ -52,6 +52,7 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -86,6 +87,11 @@ export const ProtocolList = () => {
   const [foldDefi, setFoldDefi] = useState(true);
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
+
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 

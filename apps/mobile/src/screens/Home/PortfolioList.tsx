@@ -33,6 +33,7 @@ import useProtocols, {
 import { useShallow } from 'zustand/react/shallow';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -67,6 +68,11 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     const currentFocused = focusedTab === 'defi';
     return currentFocused;
   }, [focusedTab]);
+
+  useScrollToTopOnChainChange({
+    chain: selectedChain,
+    isCurrentTab: isFocused,
+  });
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [foldDefi, setFoldDefi] = useState(true);
