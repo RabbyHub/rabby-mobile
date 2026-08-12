@@ -1,4 +1,5 @@
 const mockAppStateListeners = new Set<(state: string) => void>();
+const mockCaptureException = jest.fn();
 const mockAppState = {
   isAvailable: true,
   currentState: 'active',
@@ -57,6 +58,10 @@ jest.mock('@/core/apis/sendRequest', () => ({
 
 jest.mock('@/core/apis/readOnlyRpc', () => ({
   requestReadOnlyETHRpc: jest.fn(),
+}));
+
+jest.mock('@sentry/react-native', () => ({
+  captureException: (...args: unknown[]) => mockCaptureException(...args),
 }));
 
 jest.mock('react-native', () => ({
@@ -158,6 +163,7 @@ const readOnlyRpcCases: Array<[string, unknown[]]> = [
 
 describe('walletconnect request bridge', () => {
   beforeEach(() => {
+    mockCaptureException.mockClear();
     jest.mocked(sendRequest).mockReset();
     jest.mocked(requestReadOnlyETHRpc).mockReset();
     walletKit.getActiveSessions.mockClear();
@@ -454,12 +460,31 @@ describe('walletconnect request bridge', () => {
     });
 
     expect(sendRequest).not.toHaveBeenCalled();
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Unsupported WalletConnect method requested',
+      }),
+      {
+        tags: {
+          scene: 'walletconnect_request',
+          source: 'walletconnect',
+        },
+        extra: {
+          dappName: 'Example dapp',
+          dappOrigin: 'https://example.com',
+          appScheme: '',
+          method: 'wallet_addEthereumChain',
+          chainId: 'eip155:1',
+        },
+      },
+    );
     expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
       topic: 'topic-1',
       response: {
         id: 1,
         jsonrpc: '2.0',
         error: expect.objectContaining({
+          code: -32601,
           message:
             'WalletConnect method is not supported: wallet_addEthereumChain',
         }),
