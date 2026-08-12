@@ -906,8 +906,14 @@ const loadTaggedNfts = async (
   updateReturn?: boolean,
 ) => {
   try {
-    const nfts = await syncNFTs(address, force, updateReturn ? false : !force);
-    return nfts.length ? (nfts as DisplayNftItem[]) : null;
+    const result = await syncNFTs(
+      address,
+      force,
+      updateReturn ? false : !force,
+    );
+    return result.status === 'snapshot'
+      ? (result.nfts as DisplayNftItem[])
+      : null;
   } catch (error) {
     console.error('ServiceErrorType.NFT', error);
     return null;
@@ -1014,7 +1020,7 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     }
 
     const nfts = await loadTaggedNfts(address, force, updateReturn);
-    if (nfts) {
+    if (nfts !== null) {
       get().updateNFTListByAddress(address, nfts);
     }
   },
@@ -1176,7 +1182,7 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
           force,
           options?.updateReturn,
         );
-        if (nfts && isCurrentRequest()) {
+        if (nfts !== null && isCurrentRequest()) {
           get().updateNFTListByAddress(address, nfts);
           trace.mark('remote-address-published', {
             itemCount: nfts.length,

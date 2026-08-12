@@ -7,7 +7,7 @@ import {
   syncRemoteProtocol,
   syncRemoteProtocolsForAddresses,
 } from '@/databases/sync/assets';
-import { batchQueryNFTsWithLocalCache } from '@/databases/hooks/nft';
+import { batchQueryNFTSnapshotWithLocalCache } from '@/databases/hooks/nft';
 import {
   batchLoadProjects,
   loadPortfolioSnapshot,
@@ -214,19 +214,13 @@ export const syncNFTs = async (
   force?: boolean,
   onlySync?: boolean,
 ) => {
-  try {
-    const nfts = await batchQueryNFTsWithLocalCache(
-      {
-        id: address,
-        isAll: true,
-        sortByCredit: true,
-      },
-      force,
-      onlySync,
-    );
-    return nfts;
-  } catch (e) {
-    console.error(e);
-    return [];
-  }
+  return batchQueryNFTSnapshotWithLocalCache(
+    {
+      id: address,
+      isAll: true,
+      sortByCredit: true,
+    },
+    force,
+    onlySync,
+  );
 };

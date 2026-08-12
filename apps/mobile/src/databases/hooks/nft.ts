@@ -4,11 +4,15 @@ import { syncRemoteNFTs } from '@/databases/sync/assets';
 import { isValidCollection } from '@/utils/collections';
 import type { Collection, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
-export const batchQueryNFTsWithLocalCache = async (
+export type NftSnapshotLoadResult =
+  | { status: 'snapshot'; nfts: NFTItem[] }
+  | { status: 'unchanged' };
+
+export const batchQueryNFTSnapshotWithLocalCache = async (
   params: { id: string; isAll?: boolean; sortByCredit?: boolean },
   force?: boolean,
   onlySync?: boolean,
-): Promise<NFTItem[]> => {
+): Promise<NftSnapshotLoadResult> => {
   const { id, isAll, sortByCredit } = params;
   if (isAll && sortByCredit) {
     const isExpired = await NFTItemEntity.isExpired(id);
@@ -32,10 +36,31 @@ export const batchQueryNFTsWithLocalCache = async (
           return isValidCollection(n.collection);
         });
       syncRemoteNFTs(id, [...nftsWithCollection]);
-      return nftsWithCollection;
-    } else {
-      return onlySync ? [] : NFTItemEntity.batchQueryNFTs(id);
+      return { status: 'snapshot', nfts: nftsWithCollection };
     }
+    if (onlySync) {
+      return { status: 'unchanged' };
+    }
+    return {
+      status: 'snapshot',
+      nfts: await NFTItemEntity.batchQueryNFTs(id),
+    };
   }
-  return openapi.listNFT(id, isAll, sortByCredit);
+  return {
+    status: 'snapshot',
+    nfts: await openapi.listNFT(id, isAll, sortByCredit),
+  };
+};
+
+export const batchQueryNFTsWithLocalCache = async (
+  params: { id: string; isAll?: boolean; sortByCredit?: boolean },
+  force?: boolean,
+  onlySync?: boolean,
+): Promise<NFTItem[]> => {
+  const result = await batchQueryNFTSnapshotWithLocalCache(
+    params,
+    force,
+    onlySync,
+  );
+  return result.status === 'snapshot' ? result.nfts : [];
 };
