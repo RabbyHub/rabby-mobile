@@ -110,28 +110,28 @@ export const apisSingleHome = {
       cycleId,
       reason: 'single_home_account_preset',
     });
-    requestAnimationFrame(() => {
-      const { replace } = options || {};
-      markFeatureActivation('single-address', 'navigation-dispatched', {
-        cycleId,
-        reason: replace ? 'replace_after_frame' : 'navigate_after_frame',
-      });
-      if (replace) {
-        resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {
-            account: account,
-          },
-        });
-      } else {
-        navigateDeprecated(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {
-            account: account,
-          },
-        });
-      }
+    const { replace } = options || {};
+    markFeatureActivation('single-address', 'navigation-dispatched', {
+      cycleId,
+      reason: replace
+        ? 'replace_after_state_preset'
+        : 'navigate_after_state_preset',
     });
+    if (replace) {
+      resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
+        screen: RootNames.SingleAddressHome,
+        params: {
+          account: account,
+        },
+      });
+    } else {
+      navigateDeprecated(RootNames.SingleAddressStack, {
+        screen: RootNames.SingleAddressHome,
+        params: {
+          account: account,
+        },
+      });
+    }
   },
   clearCurrentAccount: () => {
     singleHomeState.setState(prev => ({

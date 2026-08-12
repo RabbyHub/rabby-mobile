@@ -1,5 +1,6 @@
 import { isNonPublicProductionEnv } from '@/constant';
 import { getRenderActivityAuditDiagnosticsSnapshot } from '@/core/state/renderActivityAudit';
+import { getFeatureActivationDiagnosticsSnapshot } from '@/core/utils/featureActivationDiagnostics';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 
 import {
@@ -125,6 +126,8 @@ export function handleRegressionScenarioCommand(
     const includeEvents = command.params.includeEvents === 'true';
     const includeRenderActivityAudit =
       command.params.includeRenderActivityAudit === 'true';
+    const includeFeatureActivation =
+      command.params.includeFeatureActivation === 'true';
     const requestedRenderActivityEventLimit = Number(
       command.params.renderActivityEventLimit || 10,
     );
@@ -159,6 +162,11 @@ export function handleRegressionScenarioCommand(
               violationsOnly:
                 command.params.renderActivityViolationsOnly === 'true',
             }),
+          }
+        : {}),
+      ...(includeFeatureActivation
+        ? {
+            featureActivation: getFeatureActivationDiagnosticsSnapshot(),
           }
         : {}),
     });
