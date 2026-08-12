@@ -2,10 +2,14 @@ import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { AppChainEntity } from '@/databases/entities/appchain';
 import {
-  syncProtocols,
-  syncProtocolsForAddresses,
+  loadProtocols,
+  loadProtocolsForAddresses,
   syncSpecificProtocol,
 } from '@/databases/hooks/assets';
+import {
+  syncRemoteProtocols,
+  syncRemoteProtocolsForAddresses,
+} from '@/databases/sync/assets';
 import { formatAppChain } from '@/utils/appchain';
 import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
@@ -16,6 +20,7 @@ import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
+import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
   buildProtocolAssetsIndexResult,
   buildProtocolEntityId,
@@ -75,6 +80,7 @@ type ProtocolListComputedState = {
 const COMPUTED_CACHE_LIMIT = 10;
 const PROTOCOL_ENTITY_RESOURCE_FAMILY = 'protocol.entity';
 const multiAddressProtocolRequests = new LatestAsyncRequest();
+const protocolAddressRequests = new LatestAddressRequest();
 
 const normalizeAddresses = (addresses: string[]) =>
   addresses.map(address => address.toLowerCase());
@@ -628,10 +634,19 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     });
   },
   async batchGetProtocols(addresses, force = false) {
-    const requestId = multiAddressProtocolRequests.next();
+    const requestId = multiAddressProtocolRequests.reserve();
+    const lowerAddresses = Array.from(
+      new Set(addresses.map(item => item.toLowerCase())),
+    );
+    const addressRequest = protocolAddressRequests.reserve(lowerAddresses);
     const isCurrentRequest = () =>
       multiAddressProtocolRequests.isCurrent(requestId);
-    if (!addresses.length) {
+    const getCurrentAddresses = () =>
+      isCurrentRequest()
+        ? protocolAddressRequests.getCurrentAddresses(addressRequest)
+        : [];
+    if (!lowerAddresses.length) {
+      multiAddressProtocolRequests.activate(requestId);
       set(() => ({ isLoading: true }));
       await new Promise(resolve => setTimeout(resolve, 0));
       if (isCurrentRequest()) {
@@ -639,9 +654,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
       }
       return;
     }
-    const lowerAddresses = Array.from(
-      new Set(addresses.map(item => item.toLowerCase())),
-    );
     const trace = beginAssetDataLoadDiagnostic(
       'multi-address-protocol',
       lowerAddresses.join('|'),
@@ -655,12 +667,13 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
       if (!force) {
         const isExpired = await isDataExpiredBatch(lowerAddresses);
         trace.mark('expiry-resolved', { isExpired });
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-before-hydrate' });
-          return;
-        }
         if (!isExpired) {
-          await protocolCacheHydrator.hydrate(lowerAddresses);
+          const hasMemorySnapshot = lowerAddresses.every(address =>
+            Object.prototype.hasOwnProperty.call(get().protocolMap, address),
+          );
+          if (!hasMemorySnapshot) {
+            await protocolCacheHydrator.hydrate(lowerAddresses);
+          }
           const protocolMap = get().protocolMap;
           trace.mark('local-db-loaded', {
             itemCount: lowerAddresses.reduce(
@@ -668,11 +681,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
               0,
             ),
           });
-          if (!isCurrentRequest()) {
-            trace.finish({ path: 'stale-after-hydrate' });
-            return;
-          }
-          set(() => ({ isLoading: false }));
           reportLendingUserStatusOnce({
             addresses: lowerAddresses,
             protocolMap,
@@ -682,11 +690,17 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
         }
       }
 
-      if (isCurrentRequest()) {
-        set(() => ({ isLoading: true }));
+      if (
+        !multiAddressProtocolRequests.activate(requestId) ||
+        !protocolAddressRequests.activate(addressRequest).length
+      ) {
+        trace.finish({ path: 'stale-before-remote' });
+        return;
       }
+      protocolCacheHydrator.invalidate(lowerAddresses);
+      set(() => ({ isLoading: true }));
 
-      const remoteProtocolsPromise = syncProtocolsForAddresses(
+      const remoteProtocolsPromise = loadProtocolsForAddresses(
         lowerAddresses,
         force,
       ).then(
@@ -721,31 +735,44 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
       if (remoteProtocols.status === 'rejected') {
         throw remoteProtocols.error;
       }
-      const resultMap = remoteProtocols.result;
+      const { protocolMap: resultMap, remoteProtocolMap } =
+        remoteProtocols.result;
       trace.mark('remote-response-completed', {
         itemCount: Object.values(resultMap).reduce(
           (count, protocols) => count + protocols.length,
           0,
         ),
       });
-      if (!isCurrentRequest()) {
+      const currentAddresses = getCurrentAddresses();
+      if (!currentAddresses.length) {
         trace.finish({ path: 'stale-after-remote' });
         return;
       }
+      const applicableProtocolMap = Object.fromEntries(
+        currentAddresses.map(address => [address, resultMap[address] || []]),
+      );
+      const applicableRemoteProtocolMap = Object.fromEntries(
+        currentAddresses
+          .filter(address =>
+            Object.prototype.hasOwnProperty.call(remoteProtocolMap, address),
+          )
+          .map(address => [address, remoteProtocolMap[address]]),
+      );
       const nextProtocolMap = mergeAddressListSnapshots(
         get().protocolMap,
-        lowerAddresses,
-        resultMap,
+        currentAddresses,
+        applicableProtocolMap,
       );
       protocolEntityResourceStore.syncFromProtocolMap(
         nextProtocolMap,
         'remote',
       );
-      protocolCacheHydrator.invalidate(lowerAddresses);
+      protocolCacheHydrator.invalidate(currentAddresses);
       set(() => ({ protocolMap: nextProtocolMap }));
+      void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
       reportLendingUserStatusOnce({
-        addresses: lowerAddresses,
-        protocolMap: resultMap,
+        addresses: currentAddresses,
+        protocolMap: applicableProtocolMap,
       });
       trace.finish({ path: 'local-then-remote' });
     } catch (error) {
@@ -763,54 +790,73 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     }
 
     const normalizedAddress = address.toLowerCase();
-
-    set(state => ({
-      isLoadingByAddress: {
-        ...state.isLoadingByAddress,
-        [normalizedAddress]: true,
-      },
-    }));
+    const addressRequest = protocolAddressRequests.reserve([normalizedAddress]);
+    const isCurrentRequest = () =>
+      protocolAddressRequests.isCurrent(addressRequest, normalizedAddress);
 
     try {
       if (!force) {
         const isExpired = await isDataExpired(normalizedAddress);
         if (!isExpired) {
-          const [cacheProtocols, appChainProtocols] = await Promise.all([
-            ProtocolItemEntity.batchQueryProtocols(normalizedAddress),
-            buildAppChainProtocolMap([normalizedAddress]),
-          ]);
+          const hasMemorySnapshot = Object.prototype.hasOwnProperty.call(
+            get().protocolMap,
+            normalizedAddress,
+          );
+          if (!hasMemorySnapshot) {
+            await protocolCacheHydrator.hydrate([normalizedAddress]);
+          }
           set(state => ({
-            protocolMap: {
-              ...state.protocolMap,
-              [normalizedAddress]: [
-                ...cacheProtocols,
-                ...(appChainProtocols[normalizedAddress] || []),
-              ],
+            hasLoadedByAddress: {
+              ...state.hasLoadedByAddress,
+              [normalizedAddress]: true,
             },
           }));
           return;
         }
       }
 
-      // 内部通过给db的非阻塞action，所以下面的同步store是先行的
-      const protocols = await syncProtocols(normalizedAddress, force);
-      set(state => ({
-        protocolMap: {
-          ...state.protocolMap,
-          [normalizedAddress]: protocols,
-        },
-      }));
-    } finally {
+      if (!protocolAddressRequests.activate(addressRequest).length) {
+        return;
+      }
+      protocolCacheHydrator.invalidate([normalizedAddress]);
       set(state => ({
         isLoadingByAddress: {
           ...state.isLoadingByAddress,
-          [normalizedAddress]: false,
-        },
-        hasLoadedByAddress: {
-          ...state.hasLoadedByAddress,
           [normalizedAddress]: true,
         },
       }));
+
+      const result = await loadProtocols(normalizedAddress, force);
+      if (!isCurrentRequest()) {
+        return;
+      }
+      const nextProtocolMap = {
+        ...get().protocolMap,
+        [normalizedAddress]: result.protocols,
+      };
+      protocolEntityResourceStore.syncFromProtocolMap(
+        nextProtocolMap,
+        'remote',
+      );
+      set(state => ({
+        protocolMap: nextProtocolMap,
+      }));
+      if (result.remoteProtocols) {
+        void syncRemoteProtocols(normalizedAddress, result.remoteProtocols);
+      }
+    } finally {
+      if (isCurrentRequest()) {
+        set(state => ({
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            [normalizedAddress]: false,
+          },
+          hasLoadedByAddress: {
+            ...state.hasLoadedByAddress,
+            [normalizedAddress]: true,
+          },
+        }));
+      }
     }
   },
   //更新特定的仓位，类似之前的updateSpecificProtocol
