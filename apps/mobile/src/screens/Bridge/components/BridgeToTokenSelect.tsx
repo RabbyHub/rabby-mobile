@@ -84,13 +84,17 @@ const BridgeToTokenSelect = ({
   });
   const [_favoriteFilterValue, setFavoriteFilterValue] =
     useState<FavoriteFilterType>('all');
+  const hasSearchKeyword = useMemo(
+    () => queryConds.keyword.trim().length > 0,
+    [queryConds.keyword],
+  );
 
   const favoriteFilterValue = useMemo(() => {
-    if (queryConds.keyword?.trim().length > 0) {
+    if (hasSearchKeyword) {
       return 'all';
     }
     return _favoriteFilterValue;
-  }, [_favoriteFilterValue, queryConds.keyword]);
+  }, [_favoriteFilterValue, hasSearchKeyword]);
 
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
@@ -320,7 +324,7 @@ const BridgeToTokenSelect = ({
         disableSort
         // filterAccount={account}
         hideChainFilter={true}
-        showFavoriteFilter={!queryConds.keyword}
+        showFavoriteFilter={!hasSearchKeyword}
         favoriteFilterValue={favoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         selectToken={token}
