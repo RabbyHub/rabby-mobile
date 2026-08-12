@@ -818,6 +818,27 @@ export const TokenList = ({
     [t],
   );
 
+  const handleLpTokenChange = useCallback(
+    (nextEnabled: boolean) => {
+      if (lowerAddress) {
+        const nextKey = getSingleAssetsCacheKey(
+          lowerAddress,
+          selectedChain,
+          nextEnabled,
+        );
+        // Avoid committing an empty cache fallback before the target mode is ready.
+        useTokenAssetsIndexStore.getState().syncSingleAssetsResult({
+          key: nextKey,
+          tokenIds,
+          chainServerId: selectedChain,
+          isLpTokenEnabled: nextEnabled,
+        });
+      }
+      setIsLpTokenEnabled(nextEnabled);
+    },
+    [lowerAddress, selectedChain, tokenIds],
+  );
+
   const handleToggleTokenFold = useCallback(() => {
     applyTokenFoldState(!foldHideList);
   }, [applyTokenFoldState, foldHideList]);
@@ -873,7 +894,7 @@ export const TokenList = ({
     () => (
       <TokenFoldSectionHeader
         isEnabled={isLpTokenEnabled}
-        onValueChange={setIsLpTokenEnabled}
+        onValueChange={handleLpTokenChange}
         fold={foldHideList}
         str={foldTokenUsdValue}
         style={styles.sectionHeader}
@@ -885,6 +906,7 @@ export const TokenList = ({
       foldHeaderButtonStyle,
       foldHideList,
       foldTokenUsdValue,
+      handleLpTokenChange,
       handleToggleTokenFold,
       isLpTokenEnabled,
       styles.sectionHeader,
