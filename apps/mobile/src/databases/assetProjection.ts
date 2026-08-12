@@ -188,7 +188,7 @@ export async function restoreLatestAssetProjection(
   const snapshotRepository = source.getRepository(
     AssetProjectionSnapshotEntity,
   );
-  const snapshot = await snapshotRepository.findOne({
+  const snapshots = await snapshotRepository.find({
     where: {
       projection_key: projectionKey,
       rule_version: ruleVersion,
@@ -196,66 +196,68 @@ export async function restoreLatestAssetProjection(
       ...(options.scene ? { scene: options.scene } : {}),
     },
     order: { generation: 'DESC' },
+    take: ASSET_PROJECTION_GENERATIONS_TO_KEEP,
   });
-  if (!snapshot) {
-    return null;
+
+  for (const snapshot of snapshots) {
+    const [items, groupItems] = await Promise.all([
+      source.getRepository(AssetProjectionItemEntity).find({
+        where: {
+          projection_key: projectionKey,
+          generation: snapshot.generation,
+        },
+        order: { position: 'ASC' },
+      }),
+      source.getRepository(AssetProjectionGroupItemEntity).find({
+        where: {
+          projection_key: projectionKey,
+          generation: snapshot.generation,
+        },
+        order: { group_id: 'ASC', position: 'ASC' },
+      }),
+    ]);
+    if (
+      items.length !== snapshot.item_count ||
+      groupItems.length !== snapshot.group_item_count
+    ) {
+      continue;
+    }
+
+    const metadata = parseMetadata(snapshot.metadata_json);
+    if (!metadata) {
+      continue;
+    }
+
+    const membersByGroup = new Map<string, string[]>();
+    groupItems.forEach(item => {
+      const members = membersByGroup.get(item.group_id) || [];
+      members.push(item.member_id);
+      membersByGroup.set(item.group_id, members);
+    });
+    const groupOrder = items
+      .filter(item => ['token-group', 'nft-collection'].includes(item.row_type))
+      .map(item => item.row_id);
+    const remainingGroupIds = Array.from(membersByGroup.keys()).filter(
+      groupId => !groupOrder.includes(groupId),
+    );
+
+    return {
+      projectionKey,
+      generation: snapshot.generation,
+      kind: snapshot.projection_kind,
+      scene: snapshot.scene,
+      ruleVersion: snapshot.rule_version,
+      rows: items.map(item => ({ type: item.row_type, id: item.row_id })),
+      groups: [...groupOrder, ...remainingGroupIds].map(groupId => ({
+        id: groupId,
+        memberIds: membersByGroup.get(groupId) || [],
+      })),
+      metadata,
+      committedAt: snapshot.committed_at,
+    };
   }
 
-  const [items, groupItems] = await Promise.all([
-    source.getRepository(AssetProjectionItemEntity).find({
-      where: {
-        projection_key: projectionKey,
-        generation: snapshot.generation,
-      },
-      order: { position: 'ASC' },
-    }),
-    source.getRepository(AssetProjectionGroupItemEntity).find({
-      where: {
-        projection_key: projectionKey,
-        generation: snapshot.generation,
-      },
-      order: { group_id: 'ASC', position: 'ASC' },
-    }),
-  ]);
-  if (
-    items.length !== snapshot.item_count ||
-    groupItems.length !== snapshot.group_item_count
-  ) {
-    return null;
-  }
-
-  const metadata = parseMetadata(snapshot.metadata_json);
-  if (!metadata) {
-    return null;
-  }
-
-  const membersByGroup = new Map<string, string[]>();
-  groupItems.forEach(item => {
-    const members = membersByGroup.get(item.group_id) || [];
-    members.push(item.member_id);
-    membersByGroup.set(item.group_id, members);
-  });
-  const groupOrder = items
-    .filter(item => ['token-group', 'nft-collection'].includes(item.row_type))
-    .map(item => item.row_id);
-  const remainingGroupIds = Array.from(membersByGroup.keys()).filter(
-    groupId => !groupOrder.includes(groupId),
-  );
-
-  return {
-    projectionKey,
-    generation: snapshot.generation,
-    kind: snapshot.projection_kind,
-    scene: snapshot.scene,
-    ruleVersion: snapshot.rule_version,
-    rows: items.map(item => ({ type: item.row_type, id: item.row_id })),
-    groups: [...groupOrder, ...remainingGroupIds].map(groupId => ({
-      id: groupId,
-      memberIds: membersByGroup.get(groupId) || [],
-    })),
-    metadata,
-    committedAt: snapshot.committed_at,
-  };
+  return null;
 }
 
 export async function cleanupAssetProjectionGenerations(

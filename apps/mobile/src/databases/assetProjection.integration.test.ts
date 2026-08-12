@@ -5,6 +5,7 @@ import {
   cleanupAssetProjectionGenerations,
   persistAssetProjection,
   restoreLatestAssetProjection,
+  type PersistAssetProjectionInput,
 } from './assetProjection';
 import {
   AssetProjectionGroupItemEntity,
@@ -14,6 +15,99 @@ import {
 
 const PROJECTION_KEY = 'token::single-address::0x1::all';
 
+const roundTripCases: Array<{
+  name: string;
+  input: PersistAssetProjectionInput;
+}> = [
+  {
+    name: 'single-address Token',
+    input: {
+      projectionKey: 'token::single::matrix',
+      kind: 'token',
+      scene: 'single-address',
+      rows: [
+        { type: 'token', id: 'token-a' },
+        { type: 'token', id: 'token-b' },
+      ],
+      metadata: { hasLpTokens: false, tokenDisplayMode: 'byAddress' },
+    },
+  },
+  {
+    name: 'multi-address Token with an aggregation group',
+    input: {
+      projectionKey: 'token::multi::matrix',
+      kind: 'token',
+      scene: 'multi-address',
+      rows: [
+        { type: 'token-group', id: 'token-group-a' },
+        { type: 'token', id: 'token-c' },
+      ],
+      groups: [
+        {
+          id: 'token-group-a',
+          memberIds: ['token-a', 'token-b'],
+        },
+      ],
+      metadata: { hasLpTokens: true, tokenDisplayMode: 'byAsset' },
+    },
+  },
+  {
+    name: 'single-address DeFi',
+    input: {
+      projectionKey: 'protocol::single::matrix',
+      kind: 'protocol',
+      scene: 'single-address',
+      rows: [
+        { type: 'protocol', id: 'protocol-a' },
+        { type: 'protocol', id: 'protocol-b' },
+      ],
+    },
+  },
+  {
+    name: 'multi-address DeFi',
+    input: {
+      projectionKey: 'protocol::multi::matrix',
+      kind: 'protocol',
+      scene: 'multi-address',
+      rows: [
+        { type: 'protocol', id: 'protocol-c' },
+        { type: 'protocol', id: 'protocol-a' },
+      ],
+    },
+  },
+  {
+    name: 'single-address NFT with a collection',
+    input: {
+      projectionKey: 'nft::single::matrix',
+      kind: 'nft',
+      scene: 'single-address',
+      rows: [
+        { type: 'nft-collection', id: 'collection-a' },
+        { type: 'nft', id: 'nft-c' },
+      ],
+      groups: [{ id: 'collection-a', memberIds: ['nft-a', 'nft-b'] }],
+    },
+  },
+  {
+    name: 'multi-address NFT with owner-isolated collections',
+    input: {
+      projectionKey: 'nft::multi::matrix',
+      kind: 'nft',
+      scene: 'multi-address',
+      rows: [
+        { type: 'nft', id: '0xbbb:nft-c' },
+        { type: 'nft-collection', id: '0xaaa:collection-a' },
+      ],
+      groups: [
+        {
+          id: '0xaaa:collection-a',
+          memberIds: ['0xaaa:nft-a', '0xaaa:nft-b'],
+        },
+      ],
+    },
+  },
+];
+
 describe('asset projection persistence', () => {
   let dataSource: DataSource | undefined;
 
@@ -22,6 +116,93 @@ describe('asset projection persistence', () => {
       await dataSource.destroy();
     }
     dataSource = undefined;
+  });
+
+  it.each(roundTripCases)('round-trips $name exactly', async ({ input }) => {
+    dataSource = await createMemoryAppDataSource();
+
+    const persisted = await persistAssetProjection(input, dataSource);
+    const restored = await restoreLatestAssetProjection(
+      input.projectionKey,
+      { kind: input.kind, scene: input.scene },
+      dataSource,
+    );
+
+    expect(persisted.generation).toBe(1);
+    expect(restored).toMatchObject({
+      projectionKey: input.projectionKey,
+      generation: 1,
+      kind: input.kind,
+      scene: input.scene,
+      rows: input.rows,
+      groups: input.groups || [],
+      metadata: input.metadata || {},
+    });
+  });
+
+  it('round-trips a valid empty projection', async () => {
+    dataSource = await createMemoryAppDataSource();
+    await persistAssetProjection(
+      {
+        projectionKey: 'token::single::empty',
+        kind: 'token',
+        scene: 'single-address',
+        rows: [],
+        metadata: { state: 'empty' },
+      },
+      dataSource,
+    );
+
+    await expect(
+      restoreLatestAssetProjection(
+        'token::single::empty',
+        { kind: 'token', scene: 'single-address' },
+        dataSource,
+      ),
+    ).resolves.toMatchObject({
+      rows: [],
+      groups: [],
+      metadata: { state: 'empty' },
+    });
+  });
+
+  it('keeps single-address and multi-address ordering independent', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const sharedRuntimeKey = 'same-runtime-key';
+    const singleKey = `single:${sharedRuntimeKey}`;
+    const multiKey = `multi:${sharedRuntimeKey}`;
+
+    await persistAssetProjection(
+      {
+        projectionKey: singleKey,
+        kind: 'token',
+        scene: 'single-address',
+        rows: [
+          { type: 'token', id: 'shared-a' },
+          { type: 'token', id: 'shared-b' },
+        ],
+      },
+      dataSource,
+    );
+    await persistAssetProjection(
+      {
+        projectionKey: multiKey,
+        kind: 'token',
+        scene: 'multi-address',
+        rows: [
+          { type: 'token', id: 'shared-b' },
+          { type: 'token', id: 'shared-a' },
+        ],
+      },
+      dataSource,
+    );
+
+    const [single, multi] = await Promise.all([
+      restoreLatestAssetProjection(singleKey, {}, dataSource),
+      restoreLatestAssetProjection(multiKey, {}, dataSource),
+    ]);
+    expect(single?.rows.map(row => row.id)).toEqual(['shared-a', 'shared-b']);
+    expect(multi?.rows.map(row => row.id)).toEqual(['shared-b', 'shared-a']);
   });
 
   it('round-trips ordered rows, group members, and metadata', async () => {
@@ -146,5 +327,42 @@ describe('asset projection persistence', () => {
     await expect(
       restoreLatestAssetProjection(PROJECTION_KEY, {}, dataSource),
     ).resolves.toBeNull();
+  });
+
+  it('falls back to the previous complete generation', async () => {
+    dataSource = await createMemoryAppDataSource();
+    await persistAssetProjection(
+      {
+        projectionKey: PROJECTION_KEY,
+        kind: 'token',
+        scene: 'single-address',
+        rows: [{ type: 'token', id: 'stable-token' }],
+      },
+      dataSource,
+    );
+    await persistAssetProjection(
+      {
+        projectionKey: PROJECTION_KEY,
+        kind: 'token',
+        scene: 'single-address',
+        rows: [
+          { type: 'token', id: 'new-token-a' },
+          { type: 'token', id: 'new-token-b' },
+        ],
+      },
+      dataSource,
+    );
+    await dataSource.getRepository(AssetProjectionItemEntity).delete({
+      projection_key: PROJECTION_KEY,
+      generation: 2,
+      position: 1,
+    });
+
+    await expect(
+      restoreLatestAssetProjection(PROJECTION_KEY, {}, dataSource),
+    ).resolves.toMatchObject({
+      generation: 1,
+      rows: [{ type: 'token', id: 'stable-token' }],
+    });
   });
 });

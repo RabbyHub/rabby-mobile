@@ -1,5 +1,3 @@
-import { DatabaseSync } from 'node:sqlite';
-
 type DriverRow = Record<string, unknown>;
 type DriverRows = DriverRow[] & {
   item(index: number): DriverRow | undefined;
@@ -17,6 +15,34 @@ type ExecuteSql = (
   success?: (result: DriverQueryResult) => void,
   failure?: (error: Error) => void,
 ) => Promise<DriverQueryResult>;
+
+type NodeSqliteStatement = {
+  all(
+    ...parameters: Array<null | number | bigint | string | Uint8Array>
+  ): DriverRow[];
+  columns(): unknown[];
+  run(...parameters: Array<null | number | bigint | string | Uint8Array>): {
+    changes: number | bigint;
+    lastInsertRowid: number | bigint;
+  };
+};
+
+type NodeSqliteDatabase = {
+  close(): void;
+  exec(sql: string): void;
+  prepare(sql: string): NodeSqliteStatement;
+};
+
+type NodeSqliteModule = {
+  DatabaseSync: new (path: string) => NodeSqliteDatabase;
+};
+
+const loadNodeSqlite = async () => {
+  // Keep the Node-only integration driver compatible with the repository's
+  // older @types/node while using the runtime-provided node:sqlite module.
+  const moduleName: string = 'node:sqlite';
+  return (await import(moduleName)) as NodeSqliteModule;
+};
 
 function normalizeParameter(parameter: unknown) {
   if (parameter === undefined) {
@@ -43,7 +69,7 @@ function makeRows(rows: DriverRow[]): DriverRows {
   return driverRows;
 }
 
-function createQueryExecutor(database: DatabaseSync): ExecuteSql {
+function createQueryExecutor(database: NodeSqliteDatabase): ExecuteSql {
   return async (sql, parameters = [], success, failure) => {
     try {
       const statement = database.prepare(sql);
@@ -92,6 +118,7 @@ export const nodeMemorySqliteTypeormDriver = {
     onFailure?: (error: Error) => void,
   ) => {
     try {
+      const { DatabaseSync } = await loadNodeSqlite();
       const database = new DatabaseSync(':memory:');
       const executeSql = createQueryExecutor(database);
       const connection = {
