@@ -8,6 +8,7 @@ const makeNft = (
   id: string,
   options?: {
     collectionId?: string;
+    chain?: string;
     fold?: boolean;
     ownerAddress?: string;
     creditScore?: number;
@@ -17,7 +18,7 @@ const makeNft = (
     id,
     inner_id: `${id}-inner`,
     owner_addr: options?.ownerAddress || '0xABC',
-    chain: 'eth',
+    chain: options?.chain || 'eth',
     name: id,
     amount: 1,
     collection_id: options?.collectionId,
@@ -25,7 +26,7 @@ const makeNft = (
       ? {
           id: options.collectionId,
           name: `collection-${options.collectionId}`,
-          chain: 'eth',
+          chain: options?.chain || 'eth',
           credit_score: options.creditScore || 0,
           nft_list: [],
         }
@@ -104,6 +105,33 @@ describe('nft asset index', () => {
     ]);
   });
 
+  it('normalizes collection identity before grouping members', () => {
+    const projection = buildNftAssetsIndexProjection(
+      [
+        makeNft('one', {
+          collectionId: 'Collection',
+          chain: 'ETH',
+          ownerAddress: '0xABC',
+        }),
+        makeNft('two', {
+          collectionId: 'collection',
+          chain: 'eth',
+          ownerAddress: '0xabc',
+        }),
+      ],
+      '0xabc::eth',
+    );
+
+    expect(projection.result.rows).toEqual([
+      {
+        type: 'collection',
+        collectionId: '0xabc::eth::collection',
+      },
+    ]);
+    expect(projection.collections).toHaveLength(1);
+    expect(projection.collections[0]?.value.nft_list).toHaveLength(2);
+  });
+
   it('does not hide rows based on the legacy fold flag', () => {
     const projection = buildNftAssetsIndexProjection(
       [makeNft('visible'), makeNft('hidden', { fold: true })],
@@ -130,6 +158,52 @@ describe('nft asset index', () => {
       type: 'collection',
       collectionId: '0xabc::eth::high',
     });
+  });
+
+  it('preserves the previous row order when credit scores tie', () => {
+    const first = buildNftAssetsIndexProjection(
+      [
+        makeNft('first', { collectionId: 'first', creditScore: 10 }),
+        makeNft('second', { collectionId: 'second', creditScore: 5 }),
+      ],
+      '0xabc::eth',
+    );
+    const second = buildNftAssetsIndexProjection(
+      [
+        makeNft('second', { collectionId: 'second', creditScore: 10 }),
+        makeNft('first', { collectionId: 'first', creditScore: 10 }),
+      ],
+      '0xabc::eth',
+      first.result,
+    );
+
+    expect(second.result.rows).toEqual(first.result.rows);
+    expect(second.result).toBe(first.result);
+  });
+
+  it('sorts collection members deterministically by normalized entity id', () => {
+    const first = buildNftAssetsIndexProjection(
+      [
+        makeNft('zeta', { collectionId: 'collection' }),
+        makeNft('alpha', { collectionId: 'collection' }),
+      ],
+      '0xabc::eth',
+    );
+    const second = buildNftAssetsIndexProjection(
+      [
+        makeNft('alpha', { collectionId: 'collection' }),
+        makeNft('zeta', { collectionId: 'collection' }),
+      ],
+      '0xabc::eth',
+    );
+
+    const ids = (projection: typeof first) =>
+      projection.collections[0]?.value.nft_list.map(buildNftEntityId);
+    expect(ids(first)).toEqual(ids(second));
+    expect(ids(first)).toEqual([
+      '0xabc:eth:collection:alpha:alpha-inner',
+      '0xabc:eth:collection:zeta:zeta-inner',
+    ]);
   });
 
   it('reuses row arrays and the result when ids and ordering are unchanged', () => {

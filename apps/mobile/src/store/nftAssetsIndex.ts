@@ -127,7 +127,7 @@ const buildRows = (
     stableKey: string;
   }> = [];
   const collections: NftAssetsIndexProjection['collections'] = [];
-  const collectionMap = new Map<string, NftCollectionResourceValue>();
+  const collectionMap = new Map<NftCollectionId, NftCollectionResourceValue>();
 
   nfts.forEach(item => {
     if (!item.collection_id || !item.collection) {
@@ -140,10 +140,12 @@ const buildRows = (
       return;
     }
 
-    const collectionKey = `${getNftOwnerAddress(item)}-${item.chain}-${
-      item.collection.id
-    }`;
-    const existingCollection = collectionMap.get(collectionKey);
+    const collectionAddress = item.address || getNftOwnerAddress(item);
+    const collectionId = buildNftCollectionId({
+      ...item.collection,
+      address: collectionAddress,
+    });
+    const existingCollection = collectionMap.get(collectionId);
     if (existingCollection) {
       existingCollection.nft_list.push({ ...item, collection: null });
       return;
@@ -151,11 +153,10 @@ const buildRows = (
 
     const collection = {
       ...item.collection,
-      address: item.address || getNftOwnerAddress(item),
+      address: collectionAddress,
       nft_list: [{ ...item, collection: null }],
     } as unknown as NftCollectionResourceValue;
-    const collectionId = buildNftCollectionId(collection);
-    collectionMap.set(collectionKey, collection);
+    collectionMap.set(collectionId, collection);
     collections.push({ collectionId, value: collection });
     candidates.push({
       row: { type: 'collection', collectionId },
