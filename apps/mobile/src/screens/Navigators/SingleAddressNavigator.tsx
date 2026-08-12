@@ -19,7 +19,13 @@ import { withScreenRenderActivityAudit } from '@/hooks/storeActivity/withScreenR
 import { SingleAddressHomeScreen } from '@/perfs/loadables/singleAddressScreens';
 import { SingleAddressLoadingScreen } from '@/perfs/loadables/SingleAddressLoadingScreen';
 import { SingleAddressHeader } from '../Home/SingleAddressHeader';
-import { IS_IOS } from '@/core/native/utils';
+import {
+  useSingleHomeAccount,
+  useSingleHomeChain,
+} from '../Home/hooks/singleHome';
+import { prepareSingleAddressTokenAssetsProjection } from '@/store/tokens';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
+import { singleAddressNoAssetsDecisionCoordinator } from '../Home/singleAddressNoAssetsDecisionResource';
 
 const SingleAddressStack = createNativeStackNavigator();
 
@@ -31,10 +37,25 @@ type OpeningTransitionEvent = {
 
 function SingleAddressRouteScreen() {
   const navigation = useNavigation();
-  const [contentReady, setContentReady] = useState(!IS_IOS);
+  const { currentAccount } = useSingleHomeAccount();
+  const { selectedChain } = useSingleHomeChain();
+  const [contentReady, setContentReady] = useState(false);
 
   useEffect(() => {
-    if (!IS_IOS) {
+    if (!currentAccount) {
+      return;
+    }
+
+    apisAddressBalance.triggerUpdate({
+      address: currentAccount.address,
+      force: true,
+      fromScene: 'SingleAddressHome',
+    });
+    singleAddressNoAssetsDecisionCoordinator.prepare(currentAccount);
+  }, [currentAccount]);
+
+  useEffect(() => {
+    if (contentReady) {
       return;
     }
 
@@ -46,6 +67,12 @@ function SingleAddressRouteScreen() {
         return;
       }
       revealed = true;
+      if (currentAccount?.address) {
+        prepareSingleAddressTokenAssetsProjection({
+          address: currentAccount.address,
+          chainServerId: selectedChain,
+        });
+      }
       setContentReady(true);
     };
 
@@ -65,7 +92,7 @@ function SingleAddressRouteScreen() {
         clearTimeout(fallbackTimer);
       }
     };
-  }, [navigation]);
+  }, [contentReady, currentAccount?.address, navigation, selectedChain]);
 
   return contentReady ? (
     <SingleAddressHomeScreen />

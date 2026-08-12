@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import addressBalanceStore, { type IBalanceData } from '@/store/balance';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
@@ -99,6 +100,28 @@ export function useAddressBalance(address?: string) {
   const evmBalance = balanceData?.evmBalance ?? null;
 
   return { balance, evmBalance };
+}
+
+export function useAddressBalanceSnapshot(address?: string) {
+  const normalizedAddress = address?.toLowerCase() || '';
+
+  return useActivityStore(
+    addressBalanceStore.useStore,
+    useShallow(state => {
+      const balanceData = state.valueMap[normalizedAddress];
+      const meta = state.metaMap[normalizedAddress];
+
+      return {
+        balance: balanceData?.totalBalance ?? null,
+        evmBalance: balanceData?.evmBalance ?? null,
+        hasValue: !!meta?.hasValue,
+        isLoading: !!meta?.isHydrating || !!meta?.isFetchingRemote,
+        hasError: !!meta?.lastError && meta.lastError.phase !== 'persist',
+      };
+    }),
+    Object.is,
+    { storeLabel: 'address-balance-flow' },
+  );
 }
 
 function mapBalanceState(
