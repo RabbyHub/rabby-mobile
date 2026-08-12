@@ -6,12 +6,20 @@ jest.mock('@/core/apis/account', () => ({
 jest.mock('@/core/apis/tokenCache', () => ({
   queryTokensCache: jest.fn(async () => []),
 }));
-jest.mock('@/core/request', () => ({ openapi: {} }));
+jest.mock('@/core/request', () => ({
+  openapi: {
+    usedChainList: jest.fn(async () => [{ id: 'eth' }]),
+  },
+}));
 jest.mock('@/store/balance', () => ({
   getSelectedBalanceAddressesSnapshot: jest.fn(() => []),
 }));
 jest.mock('@/databases/entities/tokenitem', () => ({
-  TokenItemEntity: {},
+  TokenItemEntity: {
+    batchMultiAddressTokens: jest.fn(async () => []),
+    batchQueryNoCoreTokens: jest.fn(async () => []),
+    isExpired: jest.fn(async () => true),
+  },
 }));
 jest.mock('@/databases/sync/assets', () => ({
   syncRemoteTokens: jest.fn(),
@@ -50,11 +58,44 @@ import {
   useTokenAssetsIndexStore,
   useTokenIndexStore,
 } from './tokens';
+import tokenListStore from './tokens';
+import { requestOpenApiWithChainId } from '@/utils/openapi';
+import {
+  syncRemoteTokens,
+  syncRemoteTokensForAddresses,
+} from '@/databases/sync/assets';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
 const SECOND_ADDRESS = '0xDeF0';
 const NORMALIZED_SECOND_ADDRESS = SECOND_ADDRESS.toLowerCase();
+const mockedRequestOpenApiWithChainId = jest.mocked(requestOpenApiWithChainId);
+const mockedSyncRemoteTokens = jest.mocked(syncRemoteTokens);
+const mockedSyncRemoteTokensForAddresses = jest.mocked(
+  syncRemoteTokensForAddresses,
+);
+const mockedTokenItemEntity = jest.mocked(TokenItemEntity);
+
+const deferred = <T>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+};
+
+const waitFor = async (predicate: () => boolean) => {
+  for (let index = 0; index < 20; index += 1) {
+    if (predicate()) {
+      return;
+    }
+    await Promise.resolve();
+  }
+  throw new Error('condition was not reached');
+};
 
 const createToken = (
   id: string,
@@ -89,6 +130,7 @@ const replaceAddressTokens = (tokens: ITokenItem[]) => {
 
 describe('single-address token assets projection', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     useTokenAssetsIndexStore.setState({
       singleAssetsConfigByKey: {},
       singleAssetsResultByKey: {},
@@ -102,6 +144,11 @@ describe('single-address token assets projection', () => {
       addressTokenIds: {},
       addressVersions: {},
       tokenStaticMap: {},
+    });
+    tokenListStore.setState({
+      tokenListMap: {},
+      isLoading: false,
+      isLoadingByAddress: {},
     });
   });
 
@@ -532,5 +579,130 @@ describe('single-address token assets projection', () => {
     expect(tokenGroupResourceStore.getMeta(firstRow.groupId)?.version).toBe(
       previousVersion,
     );
+  });
+
+  it('does not let a late multi-address response overwrite a newer single-address response', async () => {
+    const cached = createToken('cached', { usd_value: 1 });
+    const stale = createToken('stale', { usd_value: 2 });
+    const latest = createToken('latest', { usd_value: 3 });
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+    });
+    const pendingStale = deferred<ITokenItem[]>();
+    mockedRequestOpenApiWithChainId
+      .mockImplementationOnce(() => pendingStale.promise)
+      .mockResolvedValueOnce([latest]);
+
+    const staleRequest = tokenListStore
+      .getState()
+      .batchGetTokenList([ADDRESS], true);
+    await waitFor(
+      () => mockedRequestOpenApiWithChainId.mock.calls.length === 1,
+    );
+    await tokenListStore.getState().getTokenList(ADDRESS, true);
+    pendingStale.resolve([stale]);
+    await staleRequest;
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      latest,
+    ]);
+    expect(mockedSyncRemoteTokens).toHaveBeenCalledWith(NORMALIZED_ADDRESS, [
+      latest,
+    ]);
+    expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+  });
+
+  it('does not cancel an active remote refresh when a newer call only reads fresh memory', async () => {
+    const cached = createToken('cached', { usd_value: 1 });
+    const refreshed = createToken('refreshed', { usd_value: 2 });
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+    });
+    mockedTokenItemEntity.isExpired
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    const pendingRefresh = deferred<ITokenItem[]>();
+    mockedRequestOpenApiWithChainId.mockReturnValueOnce(pendingRefresh.promise);
+
+    const remoteRefresh = tokenListStore.getState().getTokenList(ADDRESS, true);
+    await waitFor(
+      () => mockedRequestOpenApiWithChainId.mock.calls.length === 1,
+    );
+
+    await tokenListStore.getState().getTokenList(ADDRESS, false);
+    pendingRefresh.resolve([refreshed]);
+    await remoteRefresh;
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      refreshed,
+    ]);
+    expect(mockedSyncRemoteTokens).toHaveBeenCalledWith(NORMALIZED_ADDRESS, [
+      refreshed,
+    ]);
+  });
+
+  it('does not let an older local hydration overwrite a remote refresh', async () => {
+    const stale = createToken('stale', { usd_value: 1 });
+    const refreshed = createToken('refreshed', { usd_value: 2 });
+    mockedTokenItemEntity.isExpired
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    const pendingHydration = deferred<ITokenItem[]>();
+    mockedTokenItemEntity.batchMultiAddressTokens.mockReturnValueOnce(
+      pendingHydration.promise as never,
+    );
+    mockedRequestOpenApiWithChainId.mockResolvedValueOnce([refreshed]);
+
+    const hydration = tokenListStore.getState().getTokenList(ADDRESS, false);
+    await waitFor(
+      () => mockedTokenItemEntity.batchMultiAddressTokens.mock.calls.length > 0,
+    );
+    await tokenListStore.getState().getTokenList(ADDRESS, true);
+    pendingHydration.resolve([stale]);
+    await hydration;
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      refreshed,
+    ]);
+  });
+
+  it('retains a usable token snapshot when a remote chain request fails', async () => {
+    const cached = createToken('cached', { usd_value: 1 });
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+    });
+    mockedRequestOpenApiWithChainId.mockRejectedValue(
+      new Error('network failed'),
+    );
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    await tokenListStore.getState().getTokenList(ADDRESS, true);
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      cached,
+    ]);
+    expect(mockedSyncRemoteTokens).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(
+      'ServiceErrorType.Token',
+      expect.any(Error),
+    );
+    consoleError.mockRestore();
+  });
+
+  it('publishes and persists a successful empty token snapshot', async () => {
+    const cached = createToken('cached', { usd_value: 1 });
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+    });
+    mockedRequestOpenApiWithChainId.mockResolvedValue([]);
+
+    await tokenListStore.getState().getTokenList(ADDRESS, true);
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual(
+      [],
+    );
+    expect(mockedSyncRemoteTokens).toHaveBeenCalledWith(NORMALIZED_ADDRESS, []);
   });
 });

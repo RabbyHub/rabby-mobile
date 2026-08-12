@@ -36,6 +36,7 @@ import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { uniqBy } from 'lodash';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
+import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
   createAddressListSnapshotHydrator,
   mergeAddressListSnapshots,
@@ -49,6 +50,7 @@ import {
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
 const multiAddressTokenRequests = new LatestAsyncRequest();
+const tokenAddressRequests = new LatestAddressRequest();
 
 const buildTokenListMapFromEntities = (
   addresses: string[],
@@ -2139,10 +2141,11 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
   },
 
   async batchGetTokenList(addresses: string[], force = false) {
-    const requestId = multiAddressTokenRequests.next();
+    const requestId = multiAddressTokenRequests.reserve();
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
+    const addressRequest = tokenAddressRequests.reserve(lowerAddresses);
     const trace = beginAssetDataLoadDiagnostic(
       'multi-address-token',
       lowerAddresses.join('|'),
@@ -2153,8 +2156,13 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     );
     const isCurrentRequest = () =>
       multiAddressTokenRequests.isCurrent(requestId);
+    const getCurrentAddresses = () =>
+      isCurrentRequest()
+        ? tokenAddressRequests.getCurrentAddresses(addressRequest)
+        : [];
 
     if (!lowerAddresses.length) {
+      multiAddressTokenRequests.activate(requestId);
       set(() => ({ isLoading: true }));
       await new Promise(resolve => setTimeout(resolve, 0));
       if (isCurrentRequest()) {
@@ -2168,10 +2176,6 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       if (!force) {
         const isExpired = await isDataExpiredBatch(lowerAddresses);
         trace.mark('expiry-resolved', { isExpired });
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-before-hydrate' });
-          return;
-        }
         if (!isExpired) {
           await tokenCacheHydrator.hydrate(lowerAddresses);
           const itemCount = lowerAddresses.reduce(
@@ -2180,15 +2184,19 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             0,
           );
           trace.mark('local-db-loaded', { itemCount });
-          if (!isCurrentRequest()) {
-            trace.finish({ path: 'stale-after-hydrate' });
-            return;
-          }
-          set(() => ({ isLoading: false }));
           trace.finish({ path: 'local-db', itemCount });
           return;
         }
       }
+
+      if (
+        !multiAddressTokenRequests.activate(requestId) ||
+        !tokenAddressRequests.activate(addressRequest).length
+      ) {
+        trace.finish({ path: 'stale-before-remote' });
+        return;
+      }
+      tokenCacheHydrator.invalidate(lowerAddresses);
 
       if (isCurrentRequest()) {
         set(() => ({ isLoading: true }));
@@ -2198,6 +2206,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         concurrency: 5,
       });
       const cacheTokenMap: Record<string, ITokenItem[]> = {};
+      const cacheSucceededAddresses = new Set<string>();
       const cacheTokensPromise = Promise.allSettled(
         lowerAddresses.map(address =>
           cacheTokenQueue.add(async () => {
@@ -2205,6 +2214,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             cacheTokenMap[address] = filterInterfaceTokenList(
               list.map(item => tokenItemToITokenItem(item, address)),
             );
+            cacheSucceededAddresses.add(address);
           }),
         ),
       );
@@ -2223,7 +2233,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         trace.mark('stale-local-db-loaded', {
           itemCount: localItemCount,
         });
-        if (isCurrentRequest()) {
+        if (getCurrentAddresses().length) {
           trace.mark('stale-local-store-published', {
             itemCount: localItemCount,
           });
@@ -2241,32 +2251,41 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           0,
         ),
       });
-      if (!isCurrentRequest()) {
+      const currentAddressesAfterCache = getCurrentAddresses();
+      if (!currentAddressesAfterCache.length) {
         trace.finish({ path: 'stale-after-cache' });
         return;
       }
-
       const latestTokenListMap = get().tokenListMap;
-      const mergedCacheTokenMap = { ...latestTokenListMap };
-      lowerAddresses.forEach(address => {
-        const previousTokens = latestTokenListMap[address] || [];
-        const cacheTokens = cacheTokenMap[address] || [];
-        mergedCacheTokenMap[address] = replacePreviousCoreTokensWithCacheTokens(
-          previousTokens,
-          cacheTokens,
-        );
-      });
-      syncTokenRuntimeStoresFromTokenListMap(
-        mergedCacheTokenMap,
-        lowerAddresses,
-        'remote',
-        {
-          markTokenListMapSynced: true,
-        },
+      const cacheApplicableAddresses = currentAddressesAfterCache.filter(
+        address =>
+          cacheSucceededAddresses.has(address) &&
+          !Object.prototype.hasOwnProperty.call(latestTokenListMap, address),
       );
-      tokenCacheHydrator.invalidate(lowerAddresses);
-      set(() => ({ tokenListMap: mergedCacheTokenMap }));
-      trace.mark('cache-store-published');
+
+      if (cacheApplicableAddresses.length) {
+        const mergedCacheTokenMap = { ...latestTokenListMap };
+        cacheApplicableAddresses.forEach(address => {
+          mergedCacheTokenMap[address] = cacheTokenMap[address] || [];
+        });
+        syncTokenRuntimeStoresFromTokenListMap(
+          mergedCacheTokenMap,
+          cacheApplicableAddresses,
+          'remote',
+          {
+            markTokenListMapSynced: true,
+          },
+        );
+        tokenCacheHydrator.invalidate(cacheApplicableAddresses);
+        set(() => ({ tokenListMap: mergedCacheTokenMap }));
+        trace.mark('cache-store-published', {
+          addressCount: cacheApplicableAddresses.length,
+        });
+      } else {
+        trace.mark('cache-store-skipped', {
+          reason: 'memory-snapshot-retained',
+        });
+      }
 
       const realTimeTokenMap: Record<string, ITokenItem[]> = {};
       const realTimeTokenQueue = new PQueue({
@@ -2294,39 +2313,52 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                 }),
             ),
           );
+          const failed = res.find(result => result.status === 'rejected');
+          if (failed?.status === 'rejected') {
+            throw failed.reason;
+          }
           realTimeTokenMap[address] = res
             .map(result => (result.status === 'fulfilled' ? result.value : []))
             .flat() as ITokenItem[];
         }),
       );
 
-      syncRemoteTokensForAddresses(realTimeTokenMap);
+      const remoteApplicableAddresses = getCurrentAddresses().filter(address =>
+        Object.prototype.hasOwnProperty.call(realTimeTokenMap, address),
+      );
+      const applicableRealTimeTokenMap = Object.fromEntries(
+        remoteApplicableAddresses.map(address => [
+          address,
+          realTimeTokenMap[address] || [],
+        ]),
+      );
       trace.mark('remote-responses-completed', {
-        itemCount: Object.values(realTimeTokenMap).reduce(
+        itemCount: Object.values(applicableRealTimeTokenMap).reduce(
           (count, tokens) => count + tokens.length,
           0,
         ),
       });
-      if (!isCurrentRequest()) {
+      if (!remoteApplicableAddresses.length) {
         trace.finish({ path: 'stale-after-remote' });
         return;
       }
 
       const nextTokenListMap = mergeAddressListSnapshots(
         get().tokenListMap,
-        lowerAddresses,
-        realTimeTokenMap,
+        remoteApplicableAddresses,
+        applicableRealTimeTokenMap,
       );
       syncTokenRuntimeStoresFromTokenListMap(
         nextTokenListMap,
-        lowerAddresses,
+        remoteApplicableAddresses,
         'remote',
         {
           markTokenListMapSynced: true,
         },
       );
-      tokenCacheHydrator.invalidate(lowerAddresses);
+      tokenCacheHydrator.invalidate(remoteApplicableAddresses);
       set(() => ({ tokenListMap: nextTokenListMap, isLoading: false }));
+      void syncRemoteTokensForAddresses(applicableRealTimeTokenMap);
       trace.finish({ path: 'cache-then-remote' });
     } catch (error) {
       trace.fail({ phase: 'load' });
@@ -2340,6 +2372,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
   async getTokenList(address: string, force = false, chainServerId?: string) {
     const normalizedAddress = address.toLowerCase();
+    const addressRequest = tokenAddressRequests.reserve([normalizedAddress]);
+    const isCurrentRequest = () =>
+      tokenAddressRequests.isCurrent(addressRequest, normalizedAddress);
     const trace = beginAssetDataLoadDiagnostic(
       'single-address-token',
       normalizedAddress,
@@ -2366,14 +2401,16 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
     // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
     const isRefreshingWithValidLocalTokens =
-      hasCurrentAddressTokens && (!isExpired || !!targetChainServerId);
+      hasCurrentAddressTokens && (force || !isExpired || !!targetChainServerId);
 
     /**
      * 阶段一： 校验有效期，有效期内直接用本地数据
      */
     if (!force && !isExpired) {
       try {
-        await tokenCacheHydrator.hydrate([normalizedAddress]);
+        if (!hasCurrentAddressSnapshot) {
+          await tokenCacheHydrator.hydrate([normalizedAddress]);
+        }
         const itemCount = get().tokenListMap[normalizedAddress]?.length || 0;
         trace.mark('local-db-loaded', { itemCount });
         trace.mark('local-store-published', { itemCount });
@@ -2384,6 +2421,12 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         throw error;
       }
     }
+
+    if (!tokenAddressRequests.activate(addressRequest).length) {
+      trace.finish({ path: 'stale-before-remote' });
+      return;
+    }
+    tokenCacheHydrator.invalidate([normalizedAddress]);
 
     set(state => ({
       isLoadingByAddress: {
@@ -2402,6 +2445,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       if (shouldHydrateStaleLocalTokens) {
         try {
           await tokenCacheHydrator.hydrate([normalizedAddress]);
+          if (!isCurrentRequest()) {
+            trace.finish({ path: 'stale-after-hydrate' });
+            return;
+          }
           const localTokens = get().tokenListMap[normalizedAddress] || [];
           trace.mark('stale-local-db-loaded', {
             itemCount: localTokens.length,
@@ -2439,6 +2486,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         });
       } else {
         const cacheList = await cacheListPromise!;
+        if (!isCurrentRequest()) {
+          trace.finish({ path: 'stale-after-cache' });
+          return;
+        }
         trace.mark('cache-response', { itemCount: cacheList.length });
         const cacheTokens = filterInterfaceTokenList(
           cacheList.map(item => tokenItemToITokenItem(item, address)),
@@ -2452,6 +2503,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         if (!previousTokens.some(token => !token.is_core)) {
           const noCoreDBTokensList =
             await TokenItemEntity.batchQueryNoCoreTokens(normalizedAddress);
+          if (!isCurrentRequest()) {
+            trace.finish({ path: 'stale-after-non-core-cache' });
+            return;
+          }
           noCoreDBTokens = filterInterfaceTokenList(
             noCoreDBTokensList.map(tokenItemEntityToTokenItem),
           );
@@ -2502,6 +2557,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         const chains = await openapi.usedChainList(address);
         chainIdList = chains.map(item => item.id);
       }
+      if (!isCurrentRequest()) {
+        trace.finish({ path: 'stale-after-chains' });
+        return;
+      }
       trace.mark('remote-chains-resolved', {
         chainCount: chainIdList.length,
       });
@@ -2527,10 +2586,20 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             }),
         ),
       );
+      const failed = res.find(result => result.status === 'rejected');
+      if (failed?.status === 'rejected') {
+        trace.fail({ phase: 'remote-chain' });
+        console.error('ServiceErrorType.Token', failed.reason);
+        return;
+      }
       const results = res
         .map(result => (result.status === 'fulfilled' ? result.value : []))
         .flat() as ITokenItem[];
       trace.mark('remote-token-responses', { itemCount: results.length });
+      if (!isCurrentRequest()) {
+        trace.finish({ path: 'stale-after-remote' });
+        return;
+      }
 
       if (targetChainServerId) {
         const currentState = get();
@@ -2573,7 +2642,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         set(() => ({
           tokenListMap: nextTokenListMap,
         }));
-        syncRemoteTokens(normalizedAddress, results);
+        void syncRemoteTokens(normalizedAddress, results);
       }
       trace.mark('remote-store-published', { itemCount: results.length });
       trace.finish({ path: 'remote' });
@@ -2581,12 +2650,14 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       trace.fail({ phase: 'refresh' });
       throw error;
     } finally {
-      set(state => ({
-        isLoadingByAddress: {
-          ...state.isLoadingByAddress,
-          [normalizedAddress]: { loading: false, allLoading: false },
-        },
-      }));
+      if (isCurrentRequest()) {
+        set(state => ({
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            [normalizedAddress]: { loading: false, allLoading: false },
+          },
+        }));
+      }
     }
   },
 }));
