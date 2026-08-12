@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  memo,
-} from 'react';
+import React, { useCallback, useState, useEffect, useMemo, memo } from 'react';
 import { ListRenderItem, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
@@ -100,19 +93,14 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     state => state.registerSingleProtocols,
   );
 
-  const { protocolsResult: _portfolios, isProtocolsResultReady } =
-    useProtocolListComputedStore(
-      useShallow(state => {
-        const result = singleProtocolsKey
-          ? state.singleProtocolsCache[singleProtocolsKey]
-          : undefined;
-        return {
-          protocolsResult: result || emptyCacheProtocolItem,
-          isProtocolsResultReady: !singleProtocolsKey || !!result,
-        };
-      }),
-    );
-  const isProtocolListPending = loadingPortfolio || !isProtocolsResultReady;
+  const _portfolios = useProtocolListComputedStore(
+    useShallow(state =>
+      singleProtocolsKey
+        ? state.singleProtocolsCache[singleProtocolsKey] ||
+          emptyCacheProtocolItem
+        : emptyCacheProtocolItem,
+    ),
+  );
 
   const filteredPortfolios = useMemo(() => {
     const foldList = _portfolios?.fold || [];
@@ -169,7 +157,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       },
       {
         show:
-          isProtocolListPending && !portfolios.length && !unFoldDefiList.length,
+          !!loadingPortfolio && !portfolios.length && !unFoldDefiList.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
@@ -177,7 +165,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       },
       {
         show:
-          !isProtocolListPending &&
+          !loadingPortfolio &&
           portfolios.length === 0 &&
           unFoldDefiList.length === 0,
         data: [
@@ -198,7 +186,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     filteredPortfolios.foldDeFiValue,
     filteredPortfolios.foldList,
     foldDefi,
-    isProtocolListPending,
+    loadingPortfolio,
     portfolios,
     t,
   ]);
@@ -227,17 +215,12 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     },
   });
 
-  useLayoutEffect(() => {
-    if (!lowerAddress || isProtocolsResultReady) {
+  useEffect(() => {
+    if (!lowerAddress) {
       return;
     }
     registerSingleProtocols(lowerAddress, selectedChain);
-  }, [
-    isProtocolsResultReady,
-    lowerAddress,
-    selectedChain,
-    registerSingleProtocols,
-  ]);
+  }, [lowerAddress, selectedChain, registerSingleProtocols]);
 
   const renderItem = useCallback<ListRenderItem<ActionItem>>(
     props => {

@@ -364,18 +364,6 @@ export const TokenList = () => {
     });
   }, [chain, isLpTokenEnabled, multiAssetsKey, tokenDisplayMode, tokenIds]);
 
-  const { assetsResult, isAssetsResultReady } = useActivityStore(
-    useTokenAssetsIndexStore,
-    useShallow(state => {
-      const result = state.multiAssetsResultByKey[multiAssetsKey];
-      return {
-        assetsResult: result || EMPTY_TOKEN_ASSETS_INDEX_RESULT,
-        isAssetsResultReady: !!result,
-      };
-    }),
-    Object.is,
-    { storeLabel: 'home-multi-assets-token-assets-index' },
-  );
   const {
     unFoldRows: tokenRows,
     foldRows,
@@ -383,7 +371,16 @@ export const TokenList = () => {
     scamTokenPreviewLogoUrls,
     foldCoreUsdValue,
     hasFoldTokens,
-  } = assetsResult;
+  } = useActivityStore(
+    useTokenAssetsIndexStore,
+    useShallow(
+      state =>
+        state.multiAssetsResultByKey[multiAssetsKey] ||
+        EMPTY_TOKEN_ASSETS_INDEX_RESULT,
+    ),
+    Object.is,
+    { storeLabel: 'home-multi-assets-token-assets-index' },
+  );
   const foldTokenUsdValue = useMemo(
     () => formatNetworth(foldCoreUsdValue),
     [foldCoreUsdValue],
@@ -395,11 +392,10 @@ export const TokenList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-token-loading' },
   );
-  const isTokenListPending = isLoading || !isAssetsResultReady;
   const hasDefaultTokenData =
     tokenRows.length + foldRows.length + scamRows.length > 0 || hasFoldTokens;
   const shouldHideCustomTestnetSectionsWhileLoading =
-    isTokenListPending && !hasDefaultTokenData;
+    isLoading && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     !shouldHideCustomTestnetSectionsWhileLoading
@@ -425,7 +421,7 @@ export const TokenList = () => {
 
   const hasNoAssets =
     tokenRows.length + foldRows.length + scamRows.length === 0 &&
-    !isTokenListPending &&
+    !isLoading &&
     !hasFoldTokens &&
     isFocused;
 
@@ -460,7 +456,7 @@ export const TokenList = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      isTokenListPending
+      isLoading
     ) {
       return;
     }
@@ -501,7 +497,7 @@ export const TokenList = () => {
     hasFoldTokens,
     hasNoAssets,
     isFocused,
-    isTokenListPending,
+    isLoading,
     isLpTokenEnabled,
     multiAssetsKey,
     myTop10Addresses.length,
@@ -736,7 +732,7 @@ export const TokenList = () => {
     //tokenRows.length + foldRows.length + scamRows.length > 0;
     const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
 
-    if (isTokenListPending && hasNoTokenItems) {
+    if (isLoading && hasNoTokenItems) {
       items.push(
         ...Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton' as const,
@@ -802,7 +798,7 @@ export const TokenList = () => {
     visibleCustomTestnetSections,
     hasFoldTokens,
     isLpTokenEnabled,
-    isTokenListPending,
+    isLoading,
     hasNoAssets,
     foldHideList,
     t,
