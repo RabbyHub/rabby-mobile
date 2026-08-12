@@ -82,8 +82,15 @@ const BridgeToTokenSelect = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  const [favoriteFilterValue, setFavoriteFilterValue] =
+  const [_favoriteFilterValue, setFavoriteFilterValue] =
     useState<FavoriteFilterType>('all');
+
+  const favoriteFilterValue = useMemo(() => {
+    if (queryConds.keyword?.trim().length > 0) {
+      return 'all';
+    }
+    return _favoriteFilterValue;
+  }, [_favoriteFilterValue, queryConds.keyword]);
 
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
@@ -313,7 +320,7 @@ const BridgeToTokenSelect = ({
         disableSort
         // filterAccount={account}
         hideChainFilter={true}
-        showFavoriteFilter
+        showFavoriteFilter={!queryConds.keyword}
         favoriteFilterValue={favoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         selectToken={token}

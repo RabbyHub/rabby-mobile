@@ -108,7 +108,7 @@ const SwapToTokenSelect = ({
     chainServerId: chainId,
   });
 
-  const [favoriteFilterValue, setFavoriteFilterValue] =
+  const [_favoriteFilterValue, setFavoriteFilterValue] =
     useState<FavoriteFilterType>('all');
 
   const [_, setLongPressToken] = useLongPressTokenAtom();
@@ -118,6 +118,13 @@ const SwapToTokenSelect = ({
     [_queryConds, debouncedKeyword],
   );
   const currentAccount = queryConds.account;
+
+  const favoriteFilterValue = useMemo(() => {
+    if (queryConds.keyword?.trim().length > 0) {
+      return 'all';
+    }
+    return _favoriteFilterValue;
+  }, [_favoriteFilterValue, queryConds.keyword]);
 
   const {
     visible: tokenSelectorVisible,
@@ -446,7 +453,7 @@ const SwapToTokenSelect = ({
         onCancel={handleTokenSelectorClose}
         onSearch={handleSearchTokens}
         isLoading={isListLoading}
-        showFavoriteFilter
+        showFavoriteFilter={!queryConds.keyword}
         favoriteFilterValue={favoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         type="swapTo"
