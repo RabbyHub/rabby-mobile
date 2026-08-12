@@ -2,8 +2,9 @@ import type { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { DataSource } from 'typeorm/browser';
 
 import { createMemoryAppDataSource } from '../../test-support/database/createMemoryAppDataSource';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from './constant';
 import { NFTItemEntity } from './entities/nftItem';
-import { RepairNftCollectionId1786566001000 } from './migrations/20260813_nft';
+import { ReplaceNftCacheTable1786566001000 } from './migrations/20260813_nft';
 
 const OWNER_ADDRESS = '0x0000000000000000000000000000000000000001';
 const COLLECTION_ID = 'eth:collection-1';
@@ -40,24 +41,32 @@ describe('NFT collection id persistence', () => {
     expect(entity.collection_id).not.toBe(CONTRACT_ID);
   });
 
-  it('repairs collection ids already persisted by older builds', async () => {
+  it('drops the polluted legacy cache instead of migrating ambiguous rows', async () => {
     dataSource = await createMemoryAppDataSource();
-    const entity = new NFTItemEntity();
-    NFTItemEntity.fillEntity(entity, OWNER_ADDRESS, createNft());
-    entity.collection_id = CONTRACT_ID;
-    await dataSource.getRepository(NFTItemEntity).save(entity);
+    const legacyTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_nftitem_legacy}`;
+    await dataSource.query(
+      `CREATE TABLE IF NOT EXISTS "${legacyTable}" (_db_id TEXT PRIMARY KEY, collection_id TEXT)`,
+    );
+    await dataSource.query(
+      `INSERT INTO "${legacyTable}" (_db_id, collection_id) VALUES (?, ?)`,
+      ['legacy-nft', CONTRACT_ID],
+    );
 
     const queryRunner = dataSource.createQueryRunner();
     try {
-      await new RepairNftCollectionId1786566001000().up(queryRunner);
+      await new ReplaceNftCacheTable1786566001000().up(queryRunner);
     } finally {
       await queryRunner.release();
     }
 
     await expect(
-      dataSource
-        .getRepository(NFTItemEntity)
-        .findOneByOrFail({ _db_id: entity._db_id }),
-    ).resolves.toMatchObject({ collection_id: COLLECTION_ID });
+      dataSource.query(
+        `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`,
+        [legacyTable],
+      ),
+    ).resolves.toEqual([]);
+    expect(dataSource.getRepository(NFTItemEntity).metadata.tableName).toBe(
+      `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_nftitem}`,
+    );
   });
 });

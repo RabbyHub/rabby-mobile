@@ -27,6 +27,10 @@ import {
   createAddressListSnapshotHydrator,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
+import {
+  restoreAssetProjection,
+  scheduleAssetProjectionPersistence,
+} from './assetProjectionPersistence';
 
 export {
   buildProtocolEntityId,
@@ -119,11 +123,11 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
     super(PROTOCOL_ENTITY_RESOURCE_FAMILY, { mutative: true });
   }
 
-  syncFromProtocolMap = (
-    protocolMap: ProtocolListMap,
+  upsertProtocols = (
+    protocols: IProtocolItem[],
     source: ObservableResourceValueSource = 'remote',
+    options?: { pruneMissing?: boolean },
   ) => {
-    const protocols = getProtocolListFromProtocolMap(protocolMap);
     const entries = new Map<ProtocolEntityId, IProtocolItem>();
     protocols.forEach(protocol => {
       entries.set(buildProtocolEntityId(protocol), protocol);
@@ -170,12 +174,14 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
       }
     });
 
-    const removedProtocolIds = Array.from(
-      new Set([
-        ...Object.keys(previous.valueMap),
-        ...Object.keys(previous.metaMap),
-      ]),
-    ).filter(protocolId => !entries.has(protocolId as ProtocolEntityId));
+    const removedProtocolIds = options?.pruneMissing
+      ? Array.from(
+          new Set([
+            ...Object.keys(previous.valueMap),
+            ...Object.keys(previous.metaMap),
+          ]),
+        ).filter(protocolId => !entries.has(protocolId as ProtocolEntityId))
+      : [];
 
     if (!changedProtocols.length && !removedProtocolIds.length) {
       return;
@@ -204,6 +210,15 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
         delete draft.valueMap[protocolId];
         delete draft.metaMap[protocolId];
       });
+    });
+  };
+
+  syncFromProtocolMap = (
+    protocolMap: ProtocolListMap,
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    this.upsertProtocols(getProtocolListFromProtocolMap(protocolMap), source, {
+      pruneMissing: true,
     });
   };
 }
@@ -293,6 +308,182 @@ const singleProtocolsCacheParams = new Map<
 
 const multiProtocolsCacheOrder: string[] = [];
 const singleProtocolsCacheOrder: string[] = [];
+
+type ProtocolProjectionScene = 'single-address' | 'multi-address';
+
+const scheduleProtocolProjectionPersistence = (
+  key: string,
+  scene: ProtocolProjectionScene,
+  result: ProtocolAssetsIndexResult,
+) => {
+  const params =
+    scene === 'single-address'
+      ? singleProtocolsCacheParams.get(key)
+      : multiProtocolsCacheParams.get(key);
+  const addresses = params
+    ? 'address' in params
+      ? [params.address]
+      : params.addresses
+    : [];
+  const sourceMap = useProtocolListStore.getState().protocolMap;
+  const isSourceSnapshotReady =
+    addresses.length > 0 &&
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(sourceMap, address.toLowerCase()),
+    );
+  if (!result.protocolIds.length && !isSourceSnapshotReady) {
+    return;
+  }
+  scheduleAssetProjectionPersistence({
+    runtimeKey: key,
+    kind: 'protocol',
+    scene,
+    rows: result.protocolIds.map(protocolId => ({
+      type: 'protocol',
+      id: protocolId,
+    })),
+  });
+};
+
+const protocolProjectionRestoreRequests = new Map<string, Promise<void>>();
+
+const restoreProtocolProjectionIfEmpty = (
+  key: string,
+  scene: ProtocolProjectionScene,
+) => {
+  const requestKey = `${scene}:${key}`;
+  if (protocolProjectionRestoreRequests.has(requestKey)) {
+    return;
+  }
+  const params =
+    scene === 'single-address'
+      ? singleProtocolsCacheParams.get(key)
+      : multiProtocolsCacheParams.get(key);
+  if (!params) {
+    return;
+  }
+
+  const startedResult =
+    scene === 'single-address'
+      ? useProtocolListComputedStore.getState().singleProtocolsIndexCache[key]
+      : useProtocolListComputedStore.getState().multiProtocolsIndexCache[key];
+  if (startedResult?.protocolIds.length) {
+    return;
+  }
+  const startedSourceMap = useProtocolListStore.getState().protocolMap;
+  const addresses = 'address' in params ? [params.address] : params.addresses;
+  if (
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(
+        startedSourceMap,
+        address.toLowerCase(),
+      ),
+    )
+  ) {
+    return;
+  }
+
+  const request = (async () => {
+    const restored = await restoreAssetProjection({
+      runtimeKey: key,
+      kind: 'protocol',
+      scene,
+    });
+    if (!restored) {
+      return;
+    }
+    const requiredProtocolIds = new Set<ProtocolEntityId>();
+    for (const row of restored.rows) {
+      if (row.type !== 'protocol') {
+        return;
+      }
+      requiredProtocolIds.add(row.id as ProtocolEntityId);
+    }
+
+    if (requiredProtocolIds.size) {
+      const cachedProtocolMap = await loadProtocolSnapshots(addresses);
+      const latestParamsBeforeHydrate =
+        scene === 'single-address'
+          ? singleProtocolsCacheParams.get(key)
+          : multiProtocolsCacheParams.get(key);
+      const stateBeforeHydrate = useProtocolListComputedStore.getState();
+      const resultBeforeHydrate =
+        scene === 'single-address'
+          ? stateBeforeHydrate.singleProtocolsIndexCache[key]
+          : stateBeforeHydrate.multiProtocolsIndexCache[key];
+      if (
+        latestParamsBeforeHydrate !== params ||
+        resultBeforeHydrate !== startedResult ||
+        useProtocolListStore.getState().protocolMap !== startedSourceMap
+      ) {
+        return;
+      }
+      const missingProtocols = getProtocolListFromProtocolMap(
+        cachedProtocolMap,
+      ).filter(protocol => {
+        const protocolId = buildProtocolEntityId(protocol);
+        return (
+          requiredProtocolIds.has(protocolId) &&
+          !protocolEntityResourceStore.getValue(protocolId)
+        );
+      });
+      protocolEntityResourceStore.upsertProtocols(missingProtocols, 'hydrate');
+    }
+
+    const protocolIds: ProtocolEntityId[] = [];
+    for (const row of restored.rows) {
+      if (row.type !== 'protocol') {
+        return;
+      }
+      const protocolId = row.id as ProtocolEntityId;
+      if (!protocolEntityResourceStore.getValue(protocolId)) {
+        return;
+      }
+      protocolIds.push(protocolId);
+    }
+
+    const latestParams =
+      scene === 'single-address'
+        ? singleProtocolsCacheParams.get(key)
+        : multiProtocolsCacheParams.get(key);
+    const state = useProtocolListComputedStore.getState();
+    const currentResult =
+      scene === 'single-address'
+        ? state.singleProtocolsIndexCache[key]
+        : state.multiProtocolsIndexCache[key];
+    if (
+      latestParams !== params ||
+      currentResult !== startedResult ||
+      useProtocolListStore.getState().protocolMap !== startedSourceMap
+    ) {
+      return;
+    }
+
+    const result = { protocolIds };
+    useProtocolListComputedStore.setState(current =>
+      scene === 'single-address'
+        ? {
+            singleProtocolsIndexCache: {
+              ...current.singleProtocolsIndexCache,
+              [key]: result,
+            },
+          }
+        : {
+            multiProtocolsIndexCache: {
+              ...current.multiProtocolsIndexCache,
+              [key]: result,
+            },
+          },
+    );
+  })()
+    .catch(error => {
+      console.error('[protocolProjection] restore failed', error);
+    })
+    .finally(() => {
+      protocolProjectionRestoreRequests.delete(requestKey);
+    });
+  protocolProjectionRestoreRequests.set(requestKey, request);
+};
 
 const removeKeysFromCache = <T extends Record<string, unknown>>(
   cache: T,
@@ -693,20 +884,27 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
       );
       const protocolMap = useProtocolListStore.getState().protocolMap;
       protocolEntityResourceStore.syncFromProtocolMap(protocolMap);
+      const previousState = useProtocolListComputedStore.getState();
+      const previousResult = previousState.multiProtocolsIndexCache[key];
+      const nextResult = computeMultiProtocolsIndex(
+        protocolMap,
+        addresses,
+        chainServerId,
+        previousResult,
+      );
       set(state => ({
         multiProtocolsIndexCache: removeKeysFromCache(
           {
             ...state.multiProtocolsIndexCache,
-            [key]: computeMultiProtocolsIndex(
-              protocolMap,
-              addresses,
-              chainServerId,
-              state.multiProtocolsIndexCache[key],
-            ),
+            [key]: nextResult,
           },
           removedKeys,
         ),
       }));
+      scheduleProtocolProjectionPersistence(key, 'multi-address', nextResult);
+      if (!nextResult.protocolIds.length) {
+        restoreProtocolProjectionIfEmpty(key, 'multi-address');
+      }
       return key;
     },
     registerSingleProtocols(address, chainServerId) {
@@ -723,20 +921,27 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
       );
       const protocolMap = useProtocolListStore.getState().protocolMap;
       protocolEntityResourceStore.syncFromProtocolMap(protocolMap);
+      const previousState = useProtocolListComputedStore.getState();
+      const previousResult = previousState.singleProtocolsIndexCache[key];
+      const nextResult = computeSingleProtocolsIndex(
+        protocolMap,
+        address,
+        chainServerId,
+        previousResult,
+      );
       set(state => ({
         singleProtocolsIndexCache: removeKeysFromCache(
           {
             ...state.singleProtocolsIndexCache,
-            [key]: computeSingleProtocolsIndex(
-              protocolMap,
-              address,
-              chainServerId,
-              state.singleProtocolsIndexCache[key],
-            ),
+            [key]: nextResult,
           },
           removedKeys,
         ),
       }));
+      scheduleProtocolProjectionPersistence(key, 'single-address', nextResult);
+      if (!nextResult.protocolIds.length) {
+        restoreProtocolProjectionIfEmpty(key, 'single-address');
+      }
       return key;
     },
   }),
@@ -773,6 +978,18 @@ const rebuildComputedCaches = (protocolMap: ProtocolListMap) => {
   useProtocolListComputedStore.setState({
     multiProtocolsIndexCache,
     singleProtocolsIndexCache,
+  });
+  Object.entries(multiProtocolsIndexCache).forEach(([key, result]) => {
+    scheduleProtocolProjectionPersistence(key, 'multi-address', result);
+    if (!result.protocolIds.length) {
+      restoreProtocolProjectionIfEmpty(key, 'multi-address');
+    }
+  });
+  Object.entries(singleProtocolsIndexCache).forEach(([key, result]) => {
+    scheduleProtocolProjectionPersistence(key, 'single-address', result);
+    if (!result.protocolIds.length) {
+      restoreProtocolProjectionIfEmpty(key, 'single-address');
+    }
   });
 };
 

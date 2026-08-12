@@ -9,13 +9,20 @@ import type { ObservableResourceValueSource } from './_resourceFlow';
 import {
   buildNftAssetsIndexProjection,
   buildNftEntityId,
+  type CombinedNftItem,
   type NftAssetsIndexResult,
+  type NftAssetsIndexRow,
   type NftCollectionId,
   type NftCollectionResourceValue,
   type NftEntityId,
 } from './nftAssetsIndex';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
+import type { RestoredAssetProjection } from '@/databases/assetProjection';
+import {
+  restoreAssetProjection,
+  scheduleAssetProjectionPersistence,
+} from './assetProjectionPersistence';
 
 export {
   EMPTY_NFT_ASSETS_INDEX_RESULT,
@@ -30,8 +37,6 @@ export {
 
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
-
-type CombinedNFTItem = DisplayNftItem & { address?: string };
 
 type NftListComputedState = {
   multiNftsIndexCache: Record<string, NftAssetsIndexResult>;
@@ -60,8 +65,8 @@ export const getMultiNftsCacheKey = (
 const getNftEntityIdAddress = (nftId: string) => nftId.split(':', 1)[0];
 
 const getChangedNftKeys = (
-  previousNft: DisplayNftItem | undefined,
-  nextNft: DisplayNftItem,
+  previousNft: CombinedNftItem | undefined,
+  nextNft: CombinedNftItem,
 ) => {
   if (!previousNft) {
     return null;
@@ -70,8 +75,8 @@ const getChangedNftKeys = (
   const keys = new Set([
     ...Object.keys(previousNft),
     ...Object.keys(nextNft),
-  ] as Array<keyof DisplayNftItem>);
-  const changedKeys: Array<keyof DisplayNftItem> = [];
+  ] as Array<keyof CombinedNftItem>);
+  const changedKeys: Array<keyof CombinedNftItem> = [];
 
   keys.forEach(key => {
     if (!Object.is(previousNft[key], nextNft[key])) {
@@ -82,34 +87,27 @@ const getChangedNftKeys = (
   return changedKeys;
 };
 
-class NftEntityResourceStore extends ResourceBaseStore<DisplayNftItem> {
+class NftEntityResourceStore extends ResourceBaseStore<CombinedNftItem> {
   constructor() {
     super(NFT_ENTITY_RESOURCE_FAMILY, { mutative: true });
   }
 
-  syncAddressesFromNftsMap = (
-    nftsMap: Record<string, DisplayNftItem[]>,
-    addresses: string[],
+  upsertNfts = (
+    nfts: CombinedNftItem[],
     source: ObservableResourceValueSource = 'remote',
+    options?: { pruneMissingAddresses?: Set<string> },
   ) => {
-    const addressSet = new Set(normalizeAddresses(addresses));
-    if (!addressSet.size) {
-      return;
-    }
-
-    const entries = new Map<NftEntityId, DisplayNftItem>();
-    addressSet.forEach(address => {
-      (nftsMap[address] || []).forEach(nft => {
-        entries.set(buildNftEntityId(nft), nft);
-      });
+    const entries = new Map<NftEntityId, CombinedNftItem>();
+    nfts.forEach(nft => {
+      entries.set(buildNftEntityId(nft), nft);
     });
 
     const now = Date.now();
     const previous = this.getState();
     const changedNfts: Array<{
       nftId: NftEntityId;
-      nft: DisplayNftItem;
-      changedKeys: Array<keyof DisplayNftItem> | null;
+      nft: CombinedNftItem;
+      changedKeys: Array<keyof CombinedNftItem> | null;
       meta: (typeof previous.metaMap)[string];
     }> = [];
 
@@ -145,6 +143,7 @@ class NftEntityResourceStore extends ResourceBaseStore<DisplayNftItem> {
       }
     });
 
+    const pruneMissingAddresses = options?.pruneMissingAddresses;
     const removedNftIds = Array.from(
       new Set([
         ...Object.keys(previous.valueMap),
@@ -152,7 +151,7 @@ class NftEntityResourceStore extends ResourceBaseStore<DisplayNftItem> {
       ]),
     ).filter(
       nftId =>
-        addressSet.has(getNftEntityIdAddress(nftId)) &&
+        pruneMissingAddresses?.has(getNftEntityIdAddress(nftId)) &&
         !entries.has(nftId as NftEntityId),
     );
 
@@ -182,6 +181,26 @@ class NftEntityResourceStore extends ResourceBaseStore<DisplayNftItem> {
         delete draft.metaMap[nftId];
       });
     });
+  };
+
+  syncAddressesFromNftsMap = (
+    nftsMap: Record<string, DisplayNftItem[]>,
+    addresses: string[],
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    const addressSet = new Set(normalizeAddresses(addresses));
+    if (!addressSet.size) {
+      return;
+    }
+
+    const nfts = Array.from(addressSet).flatMap(address =>
+      (nftsMap[address] || []).map(nft => ({
+        ...nft,
+        address,
+        owner_addr: address,
+      })),
+    );
+    this.upsertNfts(nfts, source, { pruneMissingAddresses: addressSet });
   };
 }
 
@@ -312,9 +331,14 @@ const getSingleNftList = (
   chainServerId?: string,
 ) => {
   const list = nftsMap[address.toLowerCase()] || [];
+  const ownedList: CombinedNftItem[] = list.map(nft => ({
+    ...nft,
+    address: address.toLowerCase(),
+    owner_addr: address.toLowerCase(),
+  }));
   return chainServerId
-    ? list.filter(nft => !nft.chain || nft.chain === chainServerId)
-    : list;
+    ? ownedList.filter(nft => !nft.chain || nft.chain === chainServerId)
+    : ownedList;
 };
 
 const getMultiNftList = (
@@ -403,6 +427,272 @@ const computeSingleNftsIndex = (
     previousResult,
   );
 
+type NftProjectionScene = 'single-address' | 'multi-address';
+
+const scheduleNftProjectionPersistence = (
+  key: string,
+  scene: NftProjectionScene,
+  result: NftAssetsIndexResult,
+) => {
+  const params =
+    scene === 'single-address'
+      ? singleNftsCacheParams.get(key)
+      : multiNftsCacheParams.get(key);
+  const addresses = params
+    ? 'address' in params
+      ? [params.address]
+      : params.addresses
+    : [];
+  const sourceMap = nftListStore.getState().nftsMap;
+  const isSourceSnapshotReady =
+    addresses.length > 0 &&
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(sourceMap, address.toLowerCase()),
+    );
+  if (!result.rows.length && !isSourceSnapshotReady) {
+    return;
+  }
+  const groups = result.rows.flatMap(row => {
+    if (row.type !== 'collection') {
+      return [];
+    }
+    const collection = nftCollectionResourceStore.getValue(row.collectionId);
+    return collection
+      ? [
+          {
+            id: row.collectionId,
+            memberIds: collection.nft_list.map(buildNftEntityId),
+          },
+        ]
+      : [];
+  });
+  const collectionRowCount = result.rows.filter(
+    row => row.type === 'collection',
+  ).length;
+  if (groups.length !== collectionRowCount) {
+    return;
+  }
+
+  scheduleAssetProjectionPersistence({
+    runtimeKey: key,
+    kind: 'nft',
+    scene,
+    rows: result.rows.map(row =>
+      row.type === 'collection'
+        ? { type: 'nft-collection', id: row.collectionId }
+        : { type: 'nft', id: row.nftId },
+    ),
+    groups,
+  });
+};
+
+const buildRestoredNftProjection = (
+  restored: RestoredAssetProjection,
+): {
+  result: NftAssetsIndexResult;
+  collections: Array<{
+    collectionId: NftCollectionId;
+    value: NftCollectionResourceValue;
+  }>;
+} | null => {
+  const groupMembers = new Map(
+    restored.groups.map(group => [group.id, group.memberIds]),
+  );
+  const rows: NftAssetsIndexRow[] = [];
+  const collections: Array<{
+    collectionId: NftCollectionId;
+    value: NftCollectionResourceValue;
+  }> = [];
+
+  for (const row of restored.rows) {
+    if (row.type === 'nft') {
+      const nftId = row.id as NftEntityId;
+      if (!nftEntityResourceStore.getValue(nftId)) {
+        return null;
+      }
+      rows.push({ type: 'nft', nftId });
+      continue;
+    }
+    if (row.type !== 'nft-collection') {
+      return null;
+    }
+
+    const collectionId = row.id as NftCollectionId;
+    const memberIds = (groupMembers.get(collectionId) || []).map(
+      id => id as NftEntityId,
+    );
+    const members = memberIds.map(id => nftEntityResourceStore.getValue(id));
+    if (!memberIds.length || members.some(member => !member)) {
+      return null;
+    }
+    const concreteMembers = members as CombinedNftItem[];
+    const first = concreteMembers[0];
+    if (!first?.collection) {
+      return null;
+    }
+    collections.push({
+      collectionId,
+      value: {
+        ...first.collection,
+        address: first.address || first.owner_addr,
+        nft_list: concreteMembers.map(nft => ({
+          ...nft,
+          collection: null,
+        })),
+      } as unknown as NftCollectionResourceValue,
+    });
+    rows.push({ type: 'collection', collectionId });
+  }
+
+  return { result: { rows }, collections };
+};
+
+const nftProjectionRestoreRequests = new Map<string, Promise<void>>();
+
+const restoreNftProjectionIfEmpty = (
+  key: string,
+  scene: NftProjectionScene,
+) => {
+  const requestKey = `${scene}:${key}`;
+  if (nftProjectionRestoreRequests.has(requestKey)) {
+    return;
+  }
+  const params =
+    scene === 'single-address'
+      ? singleNftsCacheParams.get(key)
+      : multiNftsCacheParams.get(key);
+  if (!params) {
+    return;
+  }
+
+  const startedResult =
+    scene === 'single-address'
+      ? useNftListComputedStore.getState().singleNftsIndexCache[key]
+      : useNftListComputedStore.getState().multiNftsIndexCache[key];
+  if (startedResult?.rows.length) {
+    return;
+  }
+  const startedSourceMap = nftListStore.getState().nftsMap;
+  const addresses = 'address' in params ? [params.address] : params.addresses;
+  if (
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(
+        startedSourceMap,
+        address.toLowerCase(),
+      ),
+    )
+  ) {
+    return;
+  }
+
+  const request = (async () => {
+    const restored = await restoreAssetProjection({
+      runtimeKey: key,
+      kind: 'nft',
+      scene,
+    });
+    if (!restored) {
+      return;
+    }
+
+    const requiredNftIds = new Set<NftEntityId>();
+    restored.rows.forEach(row => {
+      if (row.type === 'nft') {
+        requiredNftIds.add(row.id as NftEntityId);
+      }
+    });
+    restored.groups.forEach(group => {
+      group.memberIds.forEach(id => requiredNftIds.add(id as NftEntityId));
+    });
+    if (requiredNftIds.size) {
+      const cachedNfts = await NFTItemEntity.batchMultAddressNFTs(addresses);
+      const latestParamsBeforeHydrate =
+        scene === 'single-address'
+          ? singleNftsCacheParams.get(key)
+          : multiNftsCacheParams.get(key);
+      const stateBeforeHydrate = useNftListComputedStore.getState();
+      const resultBeforeHydrate =
+        scene === 'single-address'
+          ? stateBeforeHydrate.singleNftsIndexCache[key]
+          : stateBeforeHydrate.multiNftsIndexCache[key];
+      if (
+        latestParamsBeforeHydrate !== params ||
+        resultBeforeHydrate !== startedResult ||
+        nftListStore.getState().nftsMap !== startedSourceMap
+      ) {
+        return;
+      }
+      const missingNfts = cachedNfts
+        .map(nft => ({
+          ...nft,
+          address: nft.owner_addr.toLowerCase(),
+          owner_addr: nft.owner_addr.toLowerCase(),
+        }))
+        .filter(nft => {
+          const nftId = buildNftEntityId(nft);
+          return (
+            requiredNftIds.has(nftId) && !nftEntityResourceStore.getValue(nftId)
+          );
+        }) as CombinedNftItem[];
+      nftEntityResourceStore.upsertNfts(missingNfts, 'hydrate');
+    }
+
+    const projection = buildRestoredNftProjection(restored);
+    if (!projection) {
+      return;
+    }
+
+    const latestParams =
+      scene === 'single-address'
+        ? singleNftsCacheParams.get(key)
+        : multiNftsCacheParams.get(key);
+    const state = useNftListComputedStore.getState();
+    const currentResult =
+      scene === 'single-address'
+        ? state.singleNftsIndexCache[key]
+        : state.multiNftsIndexCache[key];
+    if (
+      latestParams !== params ||
+      currentResult !== startedResult ||
+      nftListStore.getState().nftsMap !== startedSourceMap
+    ) {
+      return;
+    }
+
+    nftCollectionResourceStore.upsertCollections(
+      projection.collections,
+      'hydrate',
+    );
+    const collectionIds = new Set(
+      projection.collections.map(collection => collection.collectionId),
+    );
+    if (scene === 'single-address') {
+      singleNftCollectionIds.set(key, collectionIds);
+      useNftListComputedStore.setState(current => ({
+        singleNftsIndexCache: {
+          ...current.singleNftsIndexCache,
+          [key]: projection.result,
+        },
+      }));
+    } else {
+      multiNftCollectionIds.set(key, collectionIds);
+      useNftListComputedStore.setState(current => ({
+        multiNftsIndexCache: {
+          ...current.multiNftsIndexCache,
+          [key]: projection.result,
+        },
+      }));
+    }
+  })()
+    .catch(error => {
+      console.error('[nftProjection] restore failed', error);
+    })
+    .finally(() => {
+      nftProjectionRestoreRequests.delete(requestKey);
+    });
+  nftProjectionRestoreRequests.set(requestKey, request);
+};
+
 const updateSingleNftsIndex = (
   key: string,
   nftsMap: Record<string, DisplayNftItem[]>,
@@ -439,6 +729,10 @@ const updateSingleNftsIndex = (
         [key]: projection.result,
       },
     }));
+  }
+  scheduleNftProjectionPersistence(key, 'single-address', projection.result);
+  if (!projection.result.rows.length) {
+    restoreNftProjectionIfEmpty(key, 'single-address');
   }
 };
 
@@ -477,6 +771,10 @@ const updateMultiNftsIndex = (
         [key]: projection.result,
       },
     }));
+  }
+  scheduleNftProjectionPersistence(key, 'multi-address', projection.result);
+  if (!projection.result.rows.length) {
+    restoreNftProjectionIfEmpty(key, 'multi-address');
   }
 };
 
@@ -533,8 +831,8 @@ export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
 export const combinedNfts = (
   nftsMap: Record<string, DisplayNftItem[]>,
   caredAddresses: string[],
-): CombinedNFTItem[] => {
-  const nfts: CombinedNFTItem[] = [];
+): CombinedNftItem[] => {
+  const nfts: CombinedNftItem[] = [];
   caredAddresses.forEach(address => {
     const lowerAddr = address.toLowerCase();
     const nftList = nftsMap[lowerAddr] || nftsMap[address] || [];
@@ -546,6 +844,7 @@ export const combinedNfts = (
       nfts.push({
         ...nft,
         address: lowerAddr,
+        owner_addr: lowerAddr,
       });
     });
   });

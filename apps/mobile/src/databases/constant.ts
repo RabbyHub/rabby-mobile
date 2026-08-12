@@ -11,7 +11,8 @@ export const ORM_TABLE_NAMES = {
   cache_cex: 'cache_cex',
 
   cache_tokenitem: 'cache_tokenitem',
-  cache_nftitem: 'cache_nftitem',
+  cache_nftitem_legacy: 'cache_nftitem',
+  cache_nftitem: 'cache_nftitem_20260813',
   cache_historyitem: 'cache_historyitem',
   cache_local_historyitem: 'cache_local_historyitem',
 

@@ -40,6 +40,34 @@ describe('nft asset index', () => {
     ).toBe('0xabc:eth:collection:one:one-inner');
   });
 
+  it('keeps the same NFT identity isolated across owners', () => {
+    const first = buildNftEntityId(
+      makeNft('one', { collectionId: 'collection', ownerAddress: '0xAAA' }),
+    );
+    const second = buildNftEntityId(
+      makeNft('one', { collectionId: 'collection', ownerAddress: '0xBBB' }),
+    );
+
+    expect(first).not.toBe(second);
+    expect(first.startsWith('0xaaa:')).toBe(true);
+    expect(second.startsWith('0xbbb:')).toBe(true);
+  });
+
+  it('uses the injected address when legacy NFT values omit owner_addr', () => {
+    const nft = makeNft('one', { collectionId: 'collection' }) as unknown as {
+      owner_addr?: string;
+      address?: string;
+      chain: string;
+      id: string;
+      inner_id: string;
+      collection_id: string;
+    };
+    delete nft.owner_addr;
+    nft.address = '0xDEF';
+
+    expect(buildNftEntityId(nft)).toBe('0xdef:eth:collection:one:one-inner');
+  });
+
   it('groups collection members into one row', () => {
     const projection = buildNftAssetsIndexProjection(
       [

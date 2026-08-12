@@ -40,6 +40,11 @@ import {
   createAddressListSnapshotHydrator,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
+import type { RestoredAssetProjection } from '@/databases/assetProjection';
+import {
+  restoreAssetProjection,
+  scheduleAssetProjectionPersistence,
+} from './assetProjectionPersistence';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1310,8 +1315,10 @@ type TokenAssetsIndexStoreState = {
   }): void;
   ensureSingleAssetsResult(input: SingleTokenAssetsProjectionInput): string;
   syncSingleAssetsResultsForAddresses(addresses: string[]): void;
+  syncMultiAssetsResultsForAddresses(addresses: string[]): void;
   syncMultiAssetsResult(input: {
     key: string;
+    addresses: string[];
     tokenIds: TokenEntityId[];
     chainServerId?: string;
     isLpTokenEnabled?: boolean;
@@ -1330,10 +1337,303 @@ type SingleTokenAssetsIndexConfig = {
 
 type MultiTokenAssetsIndexConfig = {
   key: string;
+  addresses: string[];
   tokenIds: TokenEntityId[];
   chainServerId?: string;
   isLpTokenEnabled?: boolean;
   tokenDisplayMode?: TokenDisplayMode;
+};
+
+type TokenProjectionScene = 'single-address' | 'multi-address';
+
+const scheduleTokenAssetsProjectionPersistence = (
+  key: string,
+  scene: TokenProjectionScene,
+  result: TokenAssetsIndexResult,
+  tokenDisplayMode: TokenDisplayMode = 'byAddress',
+) => {
+  const state = useTokenAssetsIndexStore.getState();
+  const config =
+    scene === 'single-address'
+      ? state.singleAssetsConfigByKey[key]
+      : state.multiAssetsConfigByKey[key];
+  const addresses = config
+    ? 'address' in config
+      ? [config.address]
+      : config.addresses
+    : [];
+  const sourceMap = tokenListStore.getState().tokenListMap;
+  const isSourceSnapshotReady =
+    addresses.length > 0 &&
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(
+        sourceMap,
+        normalizeAddress(address),
+      ),
+    );
+  if (!result.rows.length && !isSourceSnapshotReady) {
+    return;
+  }
+
+  const groups = result.rows.flatMap(row => {
+    if (row.type !== 'group') {
+      return [];
+    }
+    const group = tokenGroupResourceStore.getValue(row.groupId);
+    return group
+      ? [{ id: row.groupId, memberIds: [...group.memberTokenIds] }]
+      : [];
+  });
+  const groupRowCount = result.rows.filter(row => row.type === 'group').length;
+  if (groups.length !== groupRowCount) {
+    return;
+  }
+
+  scheduleAssetProjectionPersistence({
+    runtimeKey: key,
+    kind: 'token',
+    scene,
+    rows: result.rows.map(row =>
+      row.type === 'group'
+        ? { type: 'token-group', id: row.groupId }
+        : { type: 'token', id: row.tokenId },
+    ),
+    groups,
+    metadata: {
+      hasLpTokens: result.hasLpTokens,
+      tokenDisplayMode,
+    },
+  });
+};
+
+const buildRestoredTokenAssetsIndexResult = (
+  restored: RestoredAssetProjection,
+  tokenDisplayMode: TokenDisplayMode,
+): TokenAssetsIndexResult | null => {
+  const groupMembers = new Map(
+    restored.groups.map(group => [group.id, group.memberIds]),
+  );
+  const rows: TokenAssetsIndexRow[] = [];
+  const tokenIds: TokenEntityId[] = [];
+  const groups: Array<{
+    groupId: TokenGroupId;
+    value: TokenGroupResourceValue;
+  }> = [];
+
+  for (const row of restored.rows) {
+    if (row.type === 'token') {
+      const tokenId = row.id as TokenEntityId;
+      if (!tokenEntityResourceStore.getValue(tokenId)) {
+        return null;
+      }
+      rows.push({ type: 'token', tokenId });
+      tokenIds.push(tokenId);
+      continue;
+    }
+
+    if (row.type !== 'token-group') {
+      return null;
+    }
+    const groupId = row.id as TokenGroupId;
+    const memberTokenIds = (groupMembers.get(groupId) || []).map(
+      memberId => memberId as TokenEntityId,
+    );
+    const memberTokens = memberTokenIds.map(tokenId =>
+      tokenEntityResourceStore.getValue(tokenId),
+    );
+    if (!memberTokenIds.length || memberTokens.some(token => !token)) {
+      return null;
+    }
+    const [summary] = aggregateTokens(
+      memberTokens as ITokenItem[],
+      tokenDisplayMode,
+    );
+    if (!summary) {
+      return null;
+    }
+    const primaryTokenId = buildTokenEntityId(summary);
+    groups.push({
+      groupId,
+      value: {
+        groupKey: summary.groupKey,
+        primaryTokenId,
+        memberTokenIds,
+        summary: stripTokenRuntimeGroupFields(summary),
+      },
+    });
+    rows.push({ type: 'group', groupId });
+    tokenIds.push(primaryTokenId);
+  }
+
+  tokenGroupResourceStore.upsertGroups(groups, 'hydrate');
+  return {
+    rows,
+    tokenIds,
+    hasLpTokens: restored.metadata.hasLpTokens === true,
+  };
+};
+
+const tokenProjectionRestoreRequests = new Map<string, Promise<void>>();
+
+const restoreTokenAssetsProjectionIfEmpty = (
+  key: string,
+  scene: TokenProjectionScene,
+) => {
+  const requestKey = `${scene}:${key}`;
+  if (tokenProjectionRestoreRequests.has(requestKey)) {
+    return;
+  }
+
+  const startedState = useTokenAssetsIndexStore.getState();
+  const startedResult =
+    scene === 'single-address'
+      ? startedState.singleAssetsResultByKey[key]
+      : startedState.multiAssetsResultByKey[key];
+  const startedConfig =
+    scene === 'single-address'
+      ? startedState.singleAssetsConfigByKey[key]
+      : startedState.multiAssetsConfigByKey[key];
+  if (!startedConfig || startedResult?.rows.length) {
+    return;
+  }
+  const startedSourceMap = tokenListStore.getState().tokenListMap;
+  const addresses =
+    'address' in startedConfig
+      ? [startedConfig.address]
+      : startedConfig.addresses;
+  if (
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(
+        startedSourceMap,
+        normalizeAddress(address),
+      ),
+    )
+  ) {
+    return;
+  }
+
+  const request = (async () => {
+    const restored = await restoreAssetProjection({
+      runtimeKey: key,
+      kind: 'token',
+      scene,
+    });
+    if (!restored) {
+      return;
+    }
+
+    const beforeHydrate = useTokenAssetsIndexStore.getState();
+    const beforeHydrateResult =
+      scene === 'single-address'
+        ? beforeHydrate.singleAssetsResultByKey[key]
+        : beforeHydrate.multiAssetsResultByKey[key];
+    const beforeHydrateConfig =
+      scene === 'single-address'
+        ? beforeHydrate.singleAssetsConfigByKey[key]
+        : beforeHydrate.multiAssetsConfigByKey[key];
+    if (
+      beforeHydrateConfig !== startedConfig ||
+      beforeHydrateResult !== startedResult ||
+      tokenListStore.getState().tokenListMap !== startedSourceMap
+    ) {
+      return;
+    }
+
+    const requiredTokenIds = new Set<TokenEntityId>();
+    restored.rows.forEach(row => {
+      if (row.type === 'token') {
+        requiredTokenIds.add(row.id as TokenEntityId);
+      }
+    });
+    restored.groups.forEach(group => {
+      group.memberIds.forEach(id => requiredTokenIds.add(id as TokenEntityId));
+    });
+    const ownerAddresses = Array.from(
+      new Set(
+        Array.from(requiredTokenIds)
+          .map(getTokenEntityIdAddress)
+          .filter(Boolean),
+      ),
+    );
+    if (requiredTokenIds.size && !ownerAddresses.length) {
+      return;
+    }
+    if (ownerAddresses.length) {
+      const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
+        ownerAddresses,
+      );
+      const latestBeforeEntityPublish = useTokenAssetsIndexStore.getState();
+      const latestBeforeEntityResult =
+        scene === 'single-address'
+          ? latestBeforeEntityPublish.singleAssetsResultByKey[key]
+          : latestBeforeEntityPublish.multiAssetsResultByKey[key];
+      const latestBeforeEntityConfig =
+        scene === 'single-address'
+          ? latestBeforeEntityPublish.singleAssetsConfigByKey[key]
+          : latestBeforeEntityPublish.multiAssetsConfigByKey[key];
+      if (
+        latestBeforeEntityConfig !== startedConfig ||
+        latestBeforeEntityResult !== startedResult ||
+        tokenListStore.getState().tokenListMap !== startedSourceMap
+      ) {
+        return;
+      }
+      const missingTokens = cachedTokens
+        .map(token => tokenItemEntityToTokenItem(token))
+        .filter(token => {
+          const tokenId = buildTokenEntityId(token);
+          return (
+            requiredTokenIds.has(tokenId) &&
+            !tokenEntityResourceStore.getValue(tokenId)
+          );
+        });
+      tokenEntityResourceStore.upsertTokens(missingTokens, 'hydrate');
+    }
+
+    const result = buildRestoredTokenAssetsIndexResult(
+      restored,
+      scene === 'multi-address'
+        ? (startedConfig as MultiTokenAssetsIndexConfig).tokenDisplayMode ||
+            'byAddress'
+        : 'byAddress',
+    );
+    if (!result) {
+      return;
+    }
+
+    const latest = useTokenAssetsIndexStore.getState();
+    const latestResult =
+      scene === 'single-address'
+        ? latest.singleAssetsResultByKey[key]
+        : latest.multiAssetsResultByKey[key];
+    const latestConfig =
+      scene === 'single-address'
+        ? latest.singleAssetsConfigByKey[key]
+        : latest.multiAssetsConfigByKey[key];
+    if (
+      latestConfig !== startedConfig ||
+      latestResult !== startedResult ||
+      tokenListStore.getState().tokenListMap !== startedSourceMap
+    ) {
+      return;
+    }
+
+    useTokenAssetsIndexStore.setState(draft => {
+      if (scene === 'single-address') {
+        draft.singleAssetsResultByKey[key] = result;
+      } else {
+        draft.multiAssetsResultByKey[key] = result;
+      }
+    });
+  })()
+    .catch(error => {
+      console.error('[tokenProjection] restore failed', error);
+    })
+    .finally(() => {
+      tokenProjectionRestoreRequests.delete(requestKey);
+    });
+
+  tokenProjectionRestoreRequests.set(requestKey, request);
 };
 
 const hasTokenAssetsConfigToken = (
@@ -1354,7 +1654,8 @@ const isMultiTokenAssetsIndexConfigSame = (
   previousConfig: MultiTokenAssetsIndexConfig | undefined,
   nextConfig: MultiTokenAssetsIndexConfig,
 ) =>
-  previousConfig?.tokenIds === nextConfig.tokenIds &&
+  previousConfig?.addresses === nextConfig.addresses &&
+  previousConfig.tokenIds === nextConfig.tokenIds &&
   previousConfig.chainServerId === nextConfig.chainServerId &&
   previousConfig.isLpTokenEnabled === nextConfig.isLpTokenEnabled &&
   previousConfig.tokenDisplayMode === nextConfig.tokenDisplayMode;
@@ -1393,6 +1694,14 @@ export const useTokenAssetsIndexStore = zCreate(
       );
 
       if (isConfigSame && previousResult === nextResult) {
+        scheduleTokenAssetsProjectionPersistence(
+          key,
+          'single-address',
+          nextResult,
+        );
+        if (!nextResult.rows.length) {
+          restoreTokenAssetsProjectionIfEmpty(key, 'single-address');
+        }
         return;
       }
 
@@ -1402,6 +1711,14 @@ export const useTokenAssetsIndexStore = zCreate(
         }
         draft.singleAssetsResultByKey[key] = nextResult;
       });
+      scheduleTokenAssetsProjectionPersistence(
+        key,
+        'single-address',
+        nextResult,
+      );
+      if (!nextResult.rows.length) {
+        restoreTokenAssetsProjectionIfEmpty(key, 'single-address');
+      }
     },
     ensureSingleAssetsResult({ address, chainServerId, isLpTokenEnabled }) {
       const normalizedAddress = normalizeAddress(address);
@@ -1446,6 +1763,7 @@ export const useTokenAssetsIndexStore = zCreate(
       const tokenIndexState = useTokenIndexStore.getState();
       const configUpdates: Record<string, SingleTokenAssetsIndexConfig> = {};
       const resultUpdates: Record<string, TokenAssetsIndexResult> = {};
+      const projectionResults: Record<string, TokenAssetsIndexResult> = {};
 
       Object.values(state.singleAssetsConfigByKey).forEach(config => {
         if (!normalizedAddresses.has(config.address)) {
@@ -1473,26 +1791,66 @@ export const useTokenAssetsIndexStore = zCreate(
         if (previousResult !== nextResult) {
           resultUpdates[config.key] = nextResult;
         }
+        projectionResults[config.key] = nextResult;
       });
 
       if (
-        !Object.keys(configUpdates).length &&
-        !Object.keys(resultUpdates).length
+        Object.keys(configUpdates).length ||
+        Object.keys(resultUpdates).length
       ) {
+        set(draft => {
+          Object.entries(configUpdates).forEach(([key, config]) => {
+            draft.singleAssetsConfigByKey[key] = config;
+          });
+          Object.entries(resultUpdates).forEach(([key, result]) => {
+            draft.singleAssetsResultByKey[key] = result;
+          });
+        });
+      }
+      Object.entries(projectionResults).forEach(([key, result]) => {
+        scheduleTokenAssetsProjectionPersistence(key, 'single-address', result);
+        if (!result.rows.length) {
+          restoreTokenAssetsProjectionIfEmpty(key, 'single-address');
+        }
+      });
+    },
+    syncMultiAssetsResultsForAddresses(addresses) {
+      const normalizedAddresses = normalizeAddressSet(addresses);
+      if (!normalizedAddresses.size) {
         return;
       }
 
-      set(draft => {
-        Object.entries(configUpdates).forEach(([key, config]) => {
-          draft.singleAssetsConfigByKey[key] = config;
-        });
-        Object.entries(resultUpdates).forEach(([key, result]) => {
-          draft.singleAssetsResultByKey[key] = result;
+      const state = get();
+      const tokenIndexState = useTokenIndexStore.getState();
+      Object.values(state.multiAssetsConfigByKey).forEach(config => {
+        if (
+          !config.addresses.some(address =>
+            normalizedAddresses.has(normalizeAddress(address)),
+          )
+        ) {
+          return;
+        }
+        const seen = new Set<TokenEntityId>();
+        const tokenIds = config.addresses.flatMap(address =>
+          (
+            tokenIndexState.addressTokenIds[normalizeAddress(address)] || []
+          ).filter(tokenId => {
+            if (seen.has(tokenId)) {
+              return false;
+            }
+            seen.add(tokenId);
+            return true;
+          }),
+        );
+        get().syncMultiAssetsResult({
+          ...config,
+          tokenIds,
         });
       });
     },
     syncMultiAssetsResult({
       key,
+      addresses,
       tokenIds,
       chainServerId,
       isLpTokenEnabled,
@@ -1500,6 +1858,7 @@ export const useTokenAssetsIndexStore = zCreate(
     }) {
       const nextConfig = {
         key,
+        addresses,
         tokenIds,
         chainServerId,
         isLpTokenEnabled,
@@ -1521,6 +1880,15 @@ export const useTokenAssetsIndexStore = zCreate(
       );
 
       if (isConfigSame && previousResult === nextResult) {
+        scheduleTokenAssetsProjectionPersistence(
+          key,
+          'multi-address',
+          nextResult,
+          tokenDisplayMode,
+        );
+        if (!nextResult.rows.length) {
+          restoreTokenAssetsProjectionIfEmpty(key, 'multi-address');
+        }
         return;
       }
 
@@ -1530,6 +1898,15 @@ export const useTokenAssetsIndexStore = zCreate(
         }
         draft.multiAssetsResultByKey[key] = nextResult;
       });
+      scheduleTokenAssetsProjectionPersistence(
+        key,
+        'multi-address',
+        nextResult,
+        tokenDisplayMode,
+      );
+      if (!nextResult.rows.length) {
+        restoreTokenAssetsProjectionIfEmpty(key, 'multi-address');
+      }
     },
     syncChangedTokenAssetsResults(tokenIds) {
       if (!tokenIds.length) {
@@ -1594,6 +1971,18 @@ export const useTokenAssetsIndexStore = zCreate(
           draft.multiAssetsResultByKey[key] = result;
         });
       });
+      Object.entries(singleResultUpdates).forEach(([key, result]) => {
+        scheduleTokenAssetsProjectionPersistence(key, 'single-address', result);
+      });
+      Object.entries(multiResultUpdates).forEach(([key, result]) => {
+        const config = state.multiAssetsConfigByKey[key];
+        scheduleTokenAssetsProjectionPersistence(
+          key,
+          'multi-address',
+          result,
+          config?.tokenDisplayMode,
+        );
+      });
     },
   })),
 );
@@ -1633,6 +2022,9 @@ useTokenIndexStore.subscribe(state => {
   useTokenAssetsIndexStore
     .getState()
     .syncSingleAssetsResultsForAddresses(changedAddresses);
+  useTokenAssetsIndexStore
+    .getState()
+    .syncMultiAssetsResultsForAddresses(changedAddresses);
 });
 
 let lastTokenListMapSyncedToRuntime: TokenListState['tokenListMap'] | undefined;
@@ -2264,14 +2656,46 @@ const getTokenListMapChangedAddresses = (
   return changedAddresses;
 };
 
+const persistKnownTokenProjectionsForAddresses = (
+  changedAddresses: Set<string>,
+) => {
+  const state = useTokenAssetsIndexStore.getState();
+  Object.values(state.singleAssetsConfigByKey).forEach(config => {
+    if (!changedAddresses.has(config.address)) {
+      return;
+    }
+    const result = state.singleAssetsResultByKey[config.key];
+    if (result) {
+      scheduleTokenAssetsProjectionPersistence(
+        config.key,
+        'single-address',
+        result,
+      );
+    }
+  });
+  Object.values(state.multiAssetsConfigByKey).forEach(config => {
+    if (
+      !config.addresses.some(address =>
+        changedAddresses.has(normalizeAddress(address)),
+      )
+    ) {
+      return;
+    }
+    const result = state.multiAssetsResultByKey[config.key];
+    if (result) {
+      scheduleTokenAssetsProjectionPersistence(
+        config.key,
+        'multi-address',
+        result,
+        config.tokenDisplayMode,
+      );
+    }
+  });
+};
+
 let lastComputedTokenListMap = tokenListStore.getState().tokenListMap;
 tokenListStore.subscribe(state => {
   if (state.tokenListMap === lastComputedTokenListMap) {
-    return;
-  }
-  if (state.tokenListMap === lastTokenListMapSyncedToRuntime) {
-    lastComputedTokenListMap = state.tokenListMap;
-    lastTokenListMapSyncedToRuntime = undefined;
     return;
   }
   const previousTokenListMap = lastComputedTokenListMap;
@@ -2280,6 +2704,11 @@ tokenListStore.subscribe(state => {
     state.tokenListMap,
   );
   lastComputedTokenListMap = state.tokenListMap;
+  if (state.tokenListMap === lastTokenListMapSyncedToRuntime) {
+    lastTokenListMapSyncedToRuntime = undefined;
+    persistKnownTokenProjectionsForAddresses(changedAddresses);
+    return;
+  }
   if (!changedAddresses.size) {
     return;
   }
@@ -2290,6 +2719,7 @@ tokenListStore.subscribe(state => {
   useTokenIndexStore
     .getState()
     .syncFromTokenListMap(state.tokenListMap, Array.from(changedAddresses));
+  persistKnownTokenProjectionsForAddresses(changedAddresses);
 });
 
 tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {

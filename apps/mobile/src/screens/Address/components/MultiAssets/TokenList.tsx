@@ -321,12 +321,20 @@ export const TokenList = () => {
   useLayoutEffect(() => {
     useTokenAssetsIndexStore.getState().syncMultiAssetsResult({
       key: multiAssetsKey,
+      addresses: myTop10Addresses,
       tokenIds,
       chainServerId: chain,
       isLpTokenEnabled,
       tokenDisplayMode,
     });
-  }, [chain, isLpTokenEnabled, multiAssetsKey, tokenDisplayMode, tokenIds]);
+  }, [
+    chain,
+    isLpTokenEnabled,
+    multiAssetsKey,
+    myTop10Addresses,
+    tokenDisplayMode,
+    tokenIds,
+  ]);
 
   const { rows: tokenRows, hasLpTokens } = useActivityStore(
     useTokenAssetsIndexStore,

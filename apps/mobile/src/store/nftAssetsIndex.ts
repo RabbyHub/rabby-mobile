@@ -2,7 +2,10 @@ import type { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 
 import type { DisplayNftItem } from '@/types/assets';
 
-export type CombinedNftItem = DisplayNftItem & { address?: string };
+export type CombinedNftItem = DisplayNftItem & {
+  address?: string;
+  owner_addr?: string;
+};
 
 export type NftEntityId = string & {
   readonly __nftEntityId: unique symbol;

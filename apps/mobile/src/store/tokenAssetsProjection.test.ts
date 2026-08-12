@@ -17,6 +17,10 @@ jest.mock('@/databases/sync/assets', () => ({
   syncRemoteTokens: jest.fn(),
   syncRemoteTokensForAddresses: jest.fn(),
 }));
+jest.mock('./assetProjectionPersistence', () => ({
+  restoreAssetProjection: jest.fn(async () => null),
+  scheduleAssetProjectionPersistence: jest.fn(),
+}));
 jest.mock('@/utils/openapi', () => ({
   requestOpenApiWithChainId: jest.fn(),
 }));
