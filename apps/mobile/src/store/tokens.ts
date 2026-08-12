@@ -36,6 +36,10 @@ import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { uniqBy } from 'lodash';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
+import {
+  createAddressListSnapshotHydrator,
+  mergeAddressListSnapshots,
+} from './_addressListSnapshot';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1835,6 +1839,32 @@ const syncTokenRuntimeStoresFromTokenListMap = (
   }
 };
 
+const tokenCacheHydrator = createAddressListSnapshotHydrator<ITokenItem>({
+  load: async addresses => {
+    const tokens = await TokenItemEntity.batchMultiAddressTokens(addresses);
+    return buildTokenListMapFromEntities(
+      addresses,
+      tokens as TokenItemEntity[],
+    );
+  },
+  apply: (snapshots, addresses) => {
+    const nextTokenListMap = mergeAddressListSnapshots(
+      tokenListStore.getState().tokenListMap,
+      addresses,
+      snapshots,
+    );
+    syncTokenRuntimeStoresFromTokenListMap(
+      nextTokenListMap,
+      addresses,
+      'hydrate',
+      {
+        markTokenListMapSynced: true,
+      },
+    );
+    tokenListStore.setState({ tokenListMap: nextTokenListMap });
+  },
+});
+
 const tokenListStore = zCreate<TokenListState>((set, get) => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
@@ -1862,9 +1892,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
     const loadStartedAt = Date.now();
-    const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
-      lowerAddresses,
-    );
+    await tokenCacheHydrator.hydrate(lowerAddresses);
+    const tokenMap = get().tokenListMap;
     markStartupPerf('tokenListStore', 'load_cache_end', {
       elapsedMs: Date.now() - loadStartedAt,
       count: lowerAddresses.length,
@@ -1874,16 +1903,6 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       ),
     });
 
-    // 写入 Store
-    syncTokenRuntimeStoresFromTokenListMap(
-      tokenMap,
-      lowerAddresses,
-      'hydrate',
-      {
-        markTokenListMapSynced: true,
-      },
-    );
-    set(() => ({ tokenListMap: tokenMap }));
     markStartupPerf('tokenListStore', 'initStore_end', {
       elapsedMs: Date.now() - startedAt,
       count: lowerAddresses.length,
@@ -1925,28 +1944,19 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           return;
         }
         if (!isExpired) {
-          const tokens = await TokenItemEntity.batchMultiAddressTokens(
-            lowerAddresses,
+          await tokenCacheHydrator.hydrate(lowerAddresses);
+          const itemCount = lowerAddresses.reduce(
+            (count, address) =>
+              count + (get().tokenListMap[address]?.length || 0),
+            0,
           );
-          const localTokenMap = buildTokenListMapFromEntities(
-            lowerAddresses,
-            tokens as TokenItemEntity[],
-          );
-          trace.mark('local-db-loaded', { itemCount: tokens.length });
+          trace.mark('local-db-loaded', { itemCount });
           if (!isCurrentRequest()) {
             trace.finish({ path: 'stale-after-hydrate' });
             return;
           }
-          syncTokenRuntimeStoresFromTokenListMap(
-            localTokenMap,
-            lowerAddresses,
-            'hydrate',
-            {
-              markTokenListMapSynced: true,
-            },
-          );
-          set(() => ({ tokenListMap: localTokenMap, isLoading: false }));
-          trace.finish({ path: 'local-db', itemCount: tokens.length });
+          set(() => ({ isLoading: false }));
+          trace.finish({ path: 'local-db', itemCount });
           return;
         }
       }
@@ -1975,28 +1985,18 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         Object.prototype.hasOwnProperty.call(currentTokenListMap, address),
       );
       if (!force && !hasMemorySnapshot) {
-        const localTokens = await TokenItemEntity.batchMultiAddressTokens(
-          lowerAddresses,
+        await tokenCacheHydrator.hydrate(lowerAddresses);
+        const localItemCount = lowerAddresses.reduce(
+          (count, address) =>
+            count + (get().tokenListMap[address]?.length || 0),
+          0,
         );
         trace.mark('stale-local-db-loaded', {
-          itemCount: localTokens.length,
+          itemCount: localItemCount,
         });
         if (isCurrentRequest()) {
-          const localTokenMap = buildTokenListMapFromEntities(
-            lowerAddresses,
-            localTokens as TokenItemEntity[],
-          );
-          syncTokenRuntimeStoresFromTokenListMap(
-            localTokenMap,
-            lowerAddresses,
-            'hydrate',
-            {
-              markTokenListMapSynced: true,
-            },
-          );
-          set(() => ({ tokenListMap: localTokenMap }));
           trace.mark('stale-local-store-published', {
-            itemCount: localTokens.length,
+            itemCount: localItemCount,
           });
         }
       } else {
@@ -2035,6 +2035,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           markTokenListMapSynced: true,
         },
       );
+      tokenCacheHydrator.invalidate(lowerAddresses);
       set(() => ({ tokenListMap: mergedCacheTokenMap }));
       trace.mark('cache-store-published');
 
@@ -2082,15 +2083,21 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         return;
       }
 
-      syncTokenRuntimeStoresFromTokenListMap(
+      const nextTokenListMap = mergeAddressListSnapshots(
+        get().tokenListMap,
+        lowerAddresses,
         realTimeTokenMap,
+      );
+      syncTokenRuntimeStoresFromTokenListMap(
+        nextTokenListMap,
         lowerAddresses,
         'remote',
         {
           markTokenListMapSynced: true,
         },
       );
-      set(() => ({ tokenListMap: realTimeTokenMap, isLoading: false }));
+      tokenCacheHydrator.invalidate(lowerAddresses);
+      set(() => ({ tokenListMap: nextTokenListMap, isLoading: false }));
       trace.finish({ path: 'cache-then-remote' });
     } catch (error) {
       trace.fail({ phase: 'load' });
@@ -2122,6 +2129,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     }
     const currentStateTokens = get().tokenListMap[normalizedAddress] || [];
     const hasCurrentAddressTokens = currentStateTokens.length > 0;
+    const hasCurrentAddressSnapshot = Object.prototype.hasOwnProperty.call(
+      get().tokenListMap,
+      normalizedAddress,
+    );
     const targetChainServerId = chainServerId || undefined;
 
     // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
@@ -2133,25 +2144,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
      */
     if (!force && !isExpired) {
       try {
-        const tokens = (await TokenItemEntity.batchQueryTokens(
-          normalizedAddress,
-        )) as TokenItemEntity[];
-        trace.mark('local-db-loaded', { itemCount: tokens.length });
-        const res = tokens.map(tokenItemEntityToTokenItem);
-        const nextTokenListMap = {
-          ...get().tokenListMap,
-          [normalizedAddress]: res,
-        };
-        syncTokenRuntimeStoresFromTokenListMap(
-          nextTokenListMap,
-          [normalizedAddress],
-          'hydrate',
-          {
-            markTokenListMapSynced: true,
-          },
-        );
-        set(() => ({ tokenListMap: nextTokenListMap }));
-        trace.mark('local-store-published', { itemCount: res.length });
+        await tokenCacheHydrator.hydrate([normalizedAddress]);
+        const itemCount = get().tokenListMap[normalizedAddress]?.length || 0;
+        trace.mark('local-db-loaded', { itemCount });
+        trace.mark('local-store-published', { itemCount });
         trace.finish({ path: 'local-db' });
         return;
       } catch (error) {
@@ -2169,38 +2165,21 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
     try {
       const shouldHydrateStaleLocalTokens =
-        !force && isExpired && !hasCurrentAddressTokens;
+        !force && isExpired && !hasCurrentAddressSnapshot;
       const cacheListPromise = isRefreshingWithValidLocalTokens
         ? null
         : queryTokensCache(address);
 
       if (shouldHydrateStaleLocalTokens) {
         try {
-          const localTokenEntities = await TokenItemEntity.batchQueryTokens(
-            normalizedAddress,
-          );
+          await tokenCacheHydrator.hydrate([normalizedAddress]);
+          const localTokens = get().tokenListMap[normalizedAddress] || [];
           trace.mark('stale-local-db-loaded', {
-            itemCount: localTokenEntities.length,
+            itemCount: localTokens.length,
           });
 
-          if (localTokenEntities.length > 0) {
-            const localTokens = localTokenEntities.map(
-              tokenItemEntityToTokenItem,
-            );
-            const nextTokenListMap = {
-              ...get().tokenListMap,
-              [normalizedAddress]: localTokens,
-            };
-            syncTokenRuntimeStoresFromTokenListMap(
-              nextTokenListMap,
-              [normalizedAddress],
-              'hydrate',
-              {
-                markTokenListMapSynced: true,
-              },
-            );
+          if (localTokens.length > 0) {
             set(state => ({
-              tokenListMap: nextTokenListMap,
               isLoadingByAddress: {
                 ...state.isLoadingByAddress,
                 [normalizedAddress]: { loading: false, allLoading: true },
@@ -2269,6 +2248,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             markTokenListMapSynced: true,
           },
         );
+        tokenCacheHydrator.invalidate([normalizedAddress]);
         set(state => ({
           tokenListMap: nextTokenListMap,
           isLoadingByAddress: {
@@ -2343,6 +2323,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             markTokenListMapSynced: true,
           },
         );
+        tokenCacheHydrator.invalidate([normalizedAddress]);
         set(() => ({
           tokenListMap: nextTokenListMap,
         }));
@@ -2359,6 +2340,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             markTokenListMapSynced: true,
           },
         );
+        tokenCacheHydrator.invalidate([normalizedAddress]);
         set(() => ({
           tokenListMap: nextTokenListMap,
         }));
@@ -2421,6 +2403,7 @@ const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
       markTokenListMapSynced: true,
     },
   );
+  tokenCacheHydrator.invalidate([normalizedAddress]);
   tokenListStore.setState({
     tokenListMap: nextTokenListMap,
   });
