@@ -289,6 +289,9 @@ class AddressCurve24hStore extends ResourceBaseStore<AddressCurveValue> {
       address: string,
       force = false,
       trace?: AddressCurveTraceContext,
+      options?: {
+        cacheAlreadyHydrated?: boolean;
+      },
     ) => {
       const lowerAddress = normalizeAddress(address);
       if (!lowerAddress) {
@@ -299,7 +302,9 @@ class AddressCurve24hStore extends ResourceBaseStore<AddressCurveValue> {
       let requestId: string | undefined;
 
       try {
-        const cacheData = this.hydrateAddressCurveFromCache(lowerAddress);
+        const cacheData = options?.cacheAlreadyHydrated
+          ? getCurveCache(lowerAddress)
+          : this.hydrateAddressCurveFromCache(lowerAddress);
 
         if (cacheData?.data?.length && !force && !cacheData.isExpired) {
           return normalizeCurveData(cacheData.data);
@@ -391,8 +396,6 @@ class AddressCurve24hStore extends ResourceBaseStore<AddressCurveValue> {
       trace?: AddressCurveTraceContext;
     },
   ) => {
-    this.hydrateAddressCurveFromCache(address);
-
     return this.refreshAddressCurve(
       address,
       options?.force ?? true,
@@ -564,11 +567,18 @@ class SceneCurve24hStore extends BaseStore<SceneCurveState> {
       normalized.forEach(address => {
         queue.add(async () => {
           try {
-            await addressCurve24hStore.refreshAddressCurve(address, force, {
-              scene,
-              requester: 'SceneCurve24hStore.refreshSceneDayCurve',
-              endpoint: 'openapi.getNetCurve',
-            });
+            await addressCurve24hStore.refreshAddressCurve(
+              address,
+              force,
+              {
+                scene,
+                requester: 'SceneCurve24hStore.refreshSceneDayCurve',
+                endpoint: 'openapi.getNetCurve',
+              },
+              {
+                cacheAlreadyHydrated: true,
+              },
+            );
           } catch (error) {
             console.error('refreshSceneDayCurve error', error);
           }

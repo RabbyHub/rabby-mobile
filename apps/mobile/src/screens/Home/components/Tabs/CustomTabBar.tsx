@@ -40,7 +40,7 @@ function SideChainSelector({
   const { top3Chains } = useAddrTop3Chains(currentAddress);
   return (
     <ChainSelector
-      key={top3Chains.sort().join(',')}
+      key={top3Chains.join(',')}
       top3Chains={top3Chains}
       onChainClick={onChainClick}
       chainServerId={chain}

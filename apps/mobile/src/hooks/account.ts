@@ -137,19 +137,24 @@ export function useBackupReminder(account: KeyringAccount | null | undefined) {
   const brandName = account?.brandName;
   const hdPathBasePublicKey = account?.hdPathBasePublicKey;
   const publicKey = account?.publicKey;
-  const storedPublicKey = useAccountStore(s => {
-    if (!address || type !== KEYRING_TYPE.HdKeyring) {
-      return null;
-    }
+  const storedPublicKey = useActivityStore(
+    accountStore.useStore,
+    state => {
+      if (!address || type !== KEYRING_TYPE.HdKeyring) {
+        return null;
+      }
 
-    const storedAccount = s.accounts.find(
-      item =>
-        isSameAddress(item.address, address) &&
-        item.type === type &&
-        (!brandName || item.brandName === brandName),
-    );
-    return getBackupReminderKey(storedAccount);
-  });
+      const storedAccount = state.accounts.find(
+        item =>
+          isSameAddress(item.address, address) &&
+          item.type === type &&
+          (!brandName || item.brandName === brandName),
+      );
+      return getBackupReminderKey(storedAccount);
+    },
+    Object.is,
+    { storeLabel: 'account-backup-reminder' },
+  );
 
   useEffect(() => {
     let cancelled = false;

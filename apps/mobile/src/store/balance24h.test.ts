@@ -192,4 +192,39 @@ describe('store/balance24h', () => {
       hasValue: true,
     });
   });
+
+  it('does not repeat hydration when the caller already applied the cache', async () => {
+    mockGetBalance24hCache.mockReturnValue({
+      data: { total_usd_value: 34 },
+      updateTime: 456,
+      isExpired: true,
+    });
+    mockFetch24hBalance.mockResolvedValue({
+      data: { total_usd_value: 56 },
+      updateTime: 789,
+    });
+    const hydrateSpy = jest.spyOn(
+      balance24hModule.balance24hStore,
+      'hydrateAddress24hBalanceFromCache',
+    );
+
+    balance24hModule.balance24hStore.hydrateAddress24hBalanceFromCache(
+      '0xABCD',
+    );
+    await balance24hModule.balance24hStore.refreshAddress24hBalance(
+      '0xABCD',
+      false,
+      undefined,
+      { cacheAlreadyHydrated: true },
+    );
+
+    expect(hydrateSpy).toHaveBeenCalledTimes(1);
+    expect(mockFetch24hBalance).toHaveBeenCalledTimes(1);
+    expect(
+      balance24hModule.balance24hStore.getAddress24hBalance('0xabcd'),
+    ).toMatchObject({
+      total_usd_value: 56,
+      updateTime: 789,
+    });
+  });
 });

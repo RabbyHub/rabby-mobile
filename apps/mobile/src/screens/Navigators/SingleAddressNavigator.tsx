@@ -4,8 +4,13 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { scheduleSingleAddressTransactionNavigatorWarmup } from './singleAddressWarmup';
+
 const SingleAddressStack = createNativeStackNavigator();
+const RegressionSingleAddressHome = withRegressionScenario(SingleAddressHome, {
+  screen: 'SingleAddressHome',
+});
 
 export function SingleAddressNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
@@ -16,16 +21,17 @@ export function SingleAddressNavigator() {
   const renderHeader = useCallback(() => <SingleAddressHome.Header />, []);
 
   useLayoutEffect(() => {
-    const timer = setTimeout(() => {
-      preloadTransactionHotNavigator().catch(error => {
-        console.error(
-          'preloadTransactionHotNavigator::singleAddress::error',
-          error,
-        );
-      });
-    }, 300);
+    const warmupHandle = scheduleSingleAddressTransactionNavigatorWarmup();
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (
+        warmupHandle &&
+        typeof warmupHandle === 'object' &&
+        'cancel' in warmupHandle
+      ) {
+        warmupHandle.cancel();
+      }
+    };
   }, []);
 
   return (
@@ -35,7 +41,7 @@ export function SingleAddressNavigator() {
       }}>
       <SingleAddressStack.Screen
         name={RootNames.SingleAddressHome}
-        component={SingleAddressHome}
+        component={RegressionSingleAddressHome}
         options={mergeScreenOptions({
           title: '',
           headerTitle: '',
