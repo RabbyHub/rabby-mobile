@@ -18,6 +18,7 @@ import { bridgeQuoteScore } from '../utils/bridgeQuote';
 import { QuoteLoading } from './loading';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Text } from '@/components/Typography';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {
@@ -248,7 +249,9 @@ export const QuoteList = (props: QuotesProps) => {
           </Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Quotes {...props} loading={props.loading} />
+          <RenderActivityBoundary active={visible} label="bridge-quotes-modal">
+            <Quotes {...props} loading={props.loading} />
+          </RenderActivityBoundary>
           <View style={{ height: 20 }} />
         </View>
       </View>

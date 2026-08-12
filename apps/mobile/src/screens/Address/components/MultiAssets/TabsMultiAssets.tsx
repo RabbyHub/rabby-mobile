@@ -21,7 +21,7 @@ import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
-import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 export const TAB_HEADER_FULL_HEIGHT =
   HOME_TOP_HEADER_SIZES.headerHeight +
@@ -105,11 +105,11 @@ const HomeTabActivityBoundary = ({
   const isScreenFocused = useIsFocused();
 
   return (
-    <StoreActivityBoundary
+    <RenderActivityBoundary
       active={isScreenFocused && focusedTab === name}
       label={`home-multi-assets-${name}`}>
       {children}
-    </StoreActivityBoundary>
+    </RenderActivityBoundary>
   );
 };
 
