@@ -232,6 +232,12 @@ export const getSingleAssetsCacheKey = (
     isLpTokenEnabled ? '1' : '0'
   }`;
 
+export type SingleTokenAssetsProjectionInput = {
+  address: string;
+  chainServerId?: string;
+  isLpTokenEnabled?: boolean;
+};
+
 export type TokenEntityId = string & {
   readonly __tokenEntityId: unique symbol;
 };
@@ -358,9 +364,21 @@ const getTokenListFromTokenMap = (
 ) => Object.values(tokenListMap).flat();
 
 class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
+  private readonly tokenChangeListeners = new Set<
+    (tokenIds: TokenEntityId[]) => void
+  >();
+
   constructor() {
     super(TOKEN_ENTITY_RESOURCE_FAMILY, { mutative: true });
   }
+
+  subscribeTokenChanges = (listener: (tokenIds: TokenEntityId[]) => void) => {
+    this.tokenChangeListeners.add(listener);
+
+    return () => {
+      this.tokenChangeListeners.delete(listener);
+    };
+  };
 
   upsertTokens = (
     tokens: ITokenItem[],
@@ -466,6 +484,12 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
         delete draft.metaMap[tokenId];
       });
     });
+
+    const changedTokenIds = [
+      ...changedTokens.map(({ tokenId }) => tokenId),
+      ...removedTokenIds.map(tokenId => tokenId as TokenEntityId),
+    ];
+    this.tokenChangeListeners.forEach(listener => listener(changedTokenIds));
   };
 
   syncFromTokenListMap = (
@@ -1446,10 +1470,13 @@ type TokenAssetsIndexStoreState = {
   multiAssetsConfigByKey: Record<string, MultiTokenAssetsIndexConfig>;
   syncSingleAssetsResult(input: {
     key: string;
+    address: string;
     tokenIds: TokenEntityId[];
     chainServerId?: string;
     isLpTokenEnabled?: boolean;
   }): void;
+  ensureSingleAssetsResult(input: SingleTokenAssetsProjectionInput): string;
+  syncSingleAssetsResultsForAddresses(addresses: string[]): void;
   syncMultiAssetsResult(input: {
     key: string;
     tokenIds: TokenEntityId[];
@@ -1462,12 +1489,17 @@ type TokenAssetsIndexStoreState = {
 
 type SingleTokenAssetsIndexConfig = {
   key: string;
+  address: string;
   tokenIds: TokenEntityId[];
   chainServerId?: string;
   isLpTokenEnabled?: boolean;
 };
 
-type MultiTokenAssetsIndexConfig = SingleTokenAssetsIndexConfig & {
+type MultiTokenAssetsIndexConfig = {
+  key: string;
+  tokenIds: TokenEntityId[];
+  chainServerId?: string;
+  isLpTokenEnabled?: boolean;
   tokenDisplayMode?: TokenDisplayMode;
 };
 
@@ -1480,7 +1512,8 @@ const isSingleTokenAssetsIndexConfigSame = (
   previousConfig: SingleTokenAssetsIndexConfig | undefined,
   nextConfig: SingleTokenAssetsIndexConfig,
 ) =>
-  previousConfig?.tokenIds === nextConfig.tokenIds &&
+  previousConfig?.address === nextConfig.address &&
+  previousConfig.tokenIds === nextConfig.tokenIds &&
   previousConfig.chainServerId === nextConfig.chainServerId &&
   previousConfig.isLpTokenEnabled === nextConfig.isLpTokenEnabled;
 
@@ -1488,8 +1521,10 @@ const isMultiTokenAssetsIndexConfigSame = (
   previousConfig: MultiTokenAssetsIndexConfig | undefined,
   nextConfig: MultiTokenAssetsIndexConfig,
 ) =>
-  isSingleTokenAssetsIndexConfigSame(previousConfig, nextConfig) &&
-  previousConfig?.tokenDisplayMode === nextConfig.tokenDisplayMode;
+  previousConfig?.tokenIds === nextConfig.tokenIds &&
+  previousConfig.chainServerId === nextConfig.chainServerId &&
+  previousConfig.isLpTokenEnabled === nextConfig.isLpTokenEnabled &&
+  previousConfig.tokenDisplayMode === nextConfig.tokenDisplayMode;
 
 export const useTokenAssetsIndexStore = zCreate(
   zMutative<TokenAssetsIndexStoreState>((set, get) => ({
@@ -1497,9 +1532,16 @@ export const useTokenAssetsIndexStore = zCreate(
     multiAssetsResultByKey: {},
     singleAssetsConfigByKey: {},
     multiAssetsConfigByKey: {},
-    syncSingleAssetsResult({ key, tokenIds, chainServerId, isLpTokenEnabled }) {
+    syncSingleAssetsResult({
+      key,
+      address,
+      tokenIds,
+      chainServerId,
+      isLpTokenEnabled,
+    }) {
       const nextConfig = {
         key,
+        address: normalizeAddress(address),
         tokenIds,
         chainServerId,
         isLpTokenEnabled,
@@ -1526,6 +1568,94 @@ export const useTokenAssetsIndexStore = zCreate(
           draft.singleAssetsConfigByKey[key] = nextConfig;
         }
         draft.singleAssetsResultByKey[key] = nextResult;
+      });
+    },
+    ensureSingleAssetsResult({ address, chainServerId, isLpTokenEnabled }) {
+      const normalizedAddress = normalizeAddress(address);
+      const key = getSingleAssetsCacheKey(
+        normalizedAddress,
+        chainServerId,
+        isLpTokenEnabled,
+      );
+      const tokenIds =
+        useTokenIndexStore.getState().addressTokenIds[normalizedAddress] ||
+        EMPTY_TOKEN_ENTITY_IDS;
+      const nextConfig = {
+        key,
+        address: normalizedAddress,
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
+      };
+      const state = get();
+
+      if (
+        state.singleAssetsResultByKey[key] &&
+        isSingleTokenAssetsIndexConfigSame(
+          state.singleAssetsConfigByKey[key],
+          nextConfig,
+        )
+      ) {
+        return key;
+      }
+
+      get().syncSingleAssetsResult(nextConfig);
+
+      return key;
+    },
+    syncSingleAssetsResultsForAddresses(addresses) {
+      const normalizedAddresses = normalizeAddressSet(addresses);
+      if (!normalizedAddresses.size) {
+        return;
+      }
+
+      const state = get();
+      const tokenIndexState = useTokenIndexStore.getState();
+      const configUpdates: Record<string, SingleTokenAssetsIndexConfig> = {};
+      const resultUpdates: Record<string, TokenAssetsIndexResult> = {};
+
+      Object.values(state.singleAssetsConfigByKey).forEach(config => {
+        if (!normalizedAddresses.has(config.address)) {
+          return;
+        }
+
+        const tokenIds =
+          tokenIndexState.addressTokenIds[config.address] ||
+          EMPTY_TOKEN_ENTITY_IDS;
+        const nextConfig = {
+          ...config,
+          tokenIds,
+        };
+        const previousResult = state.singleAssetsResultByKey[config.key];
+        const nextResult = buildSingleAssetsIndexFromTokenIds(
+          tokenIds,
+          config.chainServerId,
+          config.isLpTokenEnabled,
+          previousResult,
+        );
+
+        if (!isSingleTokenAssetsIndexConfigSame(config, nextConfig)) {
+          configUpdates[config.key] = nextConfig;
+        }
+        if (previousResult !== nextResult) {
+          resultUpdates[config.key] = nextResult;
+        }
+      });
+
+      if (
+        !Object.keys(configUpdates).length &&
+        !Object.keys(resultUpdates).length
+      ) {
+        return;
+      }
+
+      set(draft => {
+        Object.entries(configUpdates).forEach(([key, config]) => {
+          draft.singleAssetsConfigByKey[key] = config;
+        });
+        Object.entries(resultUpdates).forEach(([key, result]) => {
+          draft.singleAssetsResultByKey[key] = result;
+        });
       });
     },
     syncMultiAssetsResult({
@@ -1634,6 +1764,43 @@ export const useTokenAssetsIndexStore = zCreate(
     },
   })),
 );
+
+export const prepareSingleAddressTokenAssetsProjection = (
+  input: SingleTokenAssetsProjectionInput,
+) => useTokenAssetsIndexStore.getState().ensureSingleAssetsResult(input);
+
+const getChangedTokenIndexAddresses = (
+  previousVersions: TokenIndexState['addressVersions'],
+  nextVersions: TokenIndexState['addressVersions'],
+) => {
+  const changedAddresses = new Set([
+    ...Object.keys(previousVersions),
+    ...Object.keys(nextVersions),
+  ]);
+
+  return Array.from(changedAddresses).filter(
+    address => previousVersions[address] !== nextVersions[address],
+  );
+};
+
+let lastTokenIndexAddressVersions =
+  useTokenIndexStore.getState().addressVersions;
+useTokenIndexStore.subscribe(state => {
+  if (state.addressVersions === lastTokenIndexAddressVersions) {
+    return;
+  }
+
+  const previousVersions = lastTokenIndexAddressVersions;
+  lastTokenIndexAddressVersions = state.addressVersions;
+  const changedAddresses = getChangedTokenIndexAddresses(
+    previousVersions,
+    state.addressVersions,
+  );
+
+  useTokenAssetsIndexStore
+    .getState()
+    .syncSingleAssetsResultsForAddresses(changedAddresses);
+});
 
 let lastTokenListMapSyncedToRuntime: TokenListState['tokenListMap'] | undefined;
 
@@ -2313,38 +2480,7 @@ tokenListStore.subscribe(state => {
     .syncFromTokenListMap(state.tokenListMap, Array.from(changedAddresses));
 });
 
-const getChangedTokenEntityIdsFromMetaMap = (
-  previousMetaMap: ReturnType<typeof tokenEntityResourceStore.getMetaMap>,
-  nextMetaMap: ReturnType<typeof tokenEntityResourceStore.getMetaMap>,
-) => {
-  const changedTokenIds: TokenEntityId[] = [];
-  const tokenIds = new Set([
-    ...Object.keys(previousMetaMap),
-    ...Object.keys(nextMetaMap),
-  ]);
-
-  tokenIds.forEach(tokenId => {
-    if (previousMetaMap[tokenId]?.version !== nextMetaMap[tokenId]?.version) {
-      changedTokenIds.push(tokenId as TokenEntityId);
-    }
-  });
-
-  return changedTokenIds;
-};
-
-let lastTokenEntityMetaMap = tokenEntityResourceStore.getMetaMap();
-tokenEntityResourceStore.subscribe(state => {
-  if (state.metaMap === lastTokenEntityMetaMap) {
-    return;
-  }
-
-  const previousMetaMap = lastTokenEntityMetaMap;
-  lastTokenEntityMetaMap = state.metaMap;
-  const changedTokenIds = getChangedTokenEntityIdsFromMetaMap(
-    previousMetaMap,
-    state.metaMap,
-  );
-
+tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {
   useTokenAssetsIndexStore
     .getState()
     .syncChangedTokenAssetsResults(changedTokenIds);

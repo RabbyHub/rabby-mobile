@@ -1,14 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 
-import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import type { KeyringAccountWithAlias } from '@/types/account';
-import { getShowReceiveAddressTip } from '@/screens/Address/components/MultiAssets/hooks';
 import { withTimeoutFallback } from '@/utils/async';
 
+export type SingleAddressNoAssetsEvidence = {
+  appChainHasBalance: boolean;
+  borned: boolean;
+  hasCustomTestnet: boolean;
+};
+
 export type SingleAddressNoAssetsDecision = {
-  account: KeyringAccountWithAlias | null;
   status: 'idle' | 'pending' | 'ready' | 'failed';
+  evidence: SingleAddressNoAssetsEvidence | null;
 };
 
 export type SingleAddressAssetViewState =
@@ -18,47 +21,48 @@ export type SingleAddressAssetViewState =
   | 'receive'
   | 'assets';
 
-type DecisionState = SingleAddressNoAssetsDecision & {
-  key: string | null;
-};
-
 type ResolveSingleAddressAssetViewStateParams = {
-  hasCurrentAccount: boolean;
-  hasNetworkError: boolean;
-  shouldResolveNoAssets: boolean;
-  decision: SingleAddressNoAssetsDecision;
-};
-
-type ShouldResolveSingleAddressNoAssetsParams = {
   account?: KeyringAccountWithAlias | null;
+  hasNetworkError: boolean;
   chainLength: number;
   customTestnetCount: number;
+  balance?: number | null;
   evmBalance?: number | null;
+  balanceFlow: {
+    hasValue: boolean;
+    isLoading: boolean;
+    hasError: boolean;
+  };
+  noAssetsDecision: SingleAddressNoAssetsDecision;
 };
 
-type NoAssetsDecisionDependencies = {
-  getReceiveTip: typeof getShowReceiveAddressTip;
-  getCustomTestnetList: () => Promise<readonly unknown[]>;
+type SingleAddressNoAssetsDecisionPublisher = {
+  publish(key: string, state: SingleAddressNoAssetsDecision): void;
+};
+
+type SingleAddressNoAssetsDecisionDependencies = {
+  loadEvidence(
+    account: KeyringAccountWithAlias,
+  ): Promise<SingleAddressNoAssetsEvidence>;
+  publisher: SingleAddressNoAssetsDecisionPublisher;
   timeoutMs?: number;
+};
+
+type SingleAddressNoAssetsEvidenceSources = {
+  loadAppChains(
+    address: string,
+  ): Promise<readonly { netWorth: number }[] | void>;
+  loadAddressBorned(address: string): Promise<boolean>;
+  loadHasCustomTestnet(): Promise<boolean>;
 };
 
 const NO_ASSETS_DECISION_TIMEOUT_MS = 5000;
 
-const INITIAL_DECISION_STATE: DecisionState = {
-  key: null,
-  account: null,
-  status: 'idle',
-};
-
-const defaultDependencies: NoAssetsDecisionDependencies = {
-  getReceiveTip: getShowReceiveAddressTip,
-  getCustomTestnetList: () => customTestnetServiceApi.getList(),
-};
-
-const inFlightDecisions = new Map<
-  string,
-  Promise<KeyringAccountWithAlias | null>
->();
+export const IDLE_SINGLE_ADDRESS_NO_ASSETS_DECISION: SingleAddressNoAssetsDecision =
+  {
+    status: 'idle',
+    evidence: null,
+  };
 
 export function isSingleAddressReceiveTipAccount(
   account: KeyringAccountWithAlias,
@@ -66,179 +70,158 @@ export function isSingleAddressReceiveTipAccount(
   return CORE_KEYRING_TYPES.includes(account.type);
 }
 
-export function shouldResolveSingleAddressNoAssets({
-  account,
-  chainLength,
-  customTestnetCount,
-  evmBalance,
-}: ShouldResolveSingleAddressNoAssetsParams) {
-  if (!account || !isSingleAddressReceiveTipAccount(account)) {
-    return false;
-  }
-
-  if (chainLength > 0 || customTestnetCount > 0) {
-    return false;
-  }
-
-  return !(typeof evmBalance === 'number' && evmBalance > 0);
-}
-
-export function resolveSingleAddressAssetViewState({
-  hasCurrentAccount,
-  hasNetworkError,
-  shouldResolveNoAssets,
-  decision,
-}: ResolveSingleAddressAssetViewStateParams): SingleAddressAssetViewState {
-  if (!hasCurrentAccount) {
-    return 'none';
-  }
-  if (hasNetworkError) {
-    return 'network-error';
-  }
-  if (!shouldResolveNoAssets) {
-    return 'assets';
-  }
-  if (decision.status === 'idle' || decision.status === 'pending') {
-    return 'pending';
-  }
-  if (decision.status === 'ready' && decision.account) {
-    return 'receive';
-  }
-  return 'assets';
-}
-
-export async function loadSingleAddressNoAssetsDecision(
+export function hasKnownPositiveSingleAddressBalance(
   account: KeyringAccountWithAlias,
-  dependencies: NoAssetsDecisionDependencies = defaultDependencies,
 ) {
-  const evidence = await withTimeoutFallback(
-    Promise.all([
-      dependencies.getReceiveTip({
-        caredAccount: account,
-        isForSingle: true,
-      }),
-      dependencies.getCustomTestnetList(),
-    ]),
-    dependencies.timeoutMs ?? NO_ASSETS_DECISION_TIMEOUT_MS,
-    null,
+  return (
+    (typeof account.balance === 'number' && account.balance > 0) ||
+    (typeof account.evmBalance === 'number' && account.evmBalance > 0)
   );
-
-  if (!evidence) {
-    return null;
-  }
-
-  const [receiveTip, customTestnetList] = evidence;
-
-  if (
-    !receiveTip?.targetAccount ||
-    receiveTip.evmBalance !== 0 ||
-    receiveTip.borned ||
-    receiveTip.appChainHasBalance ||
-    customTestnetList.length > 0
-  ) {
-    return null;
-  }
-
-  return receiveTip.targetAccount;
 }
 
-function getDecisionKey(account: KeyringAccountWithAlias) {
+export function getSingleAddressNoAssetsDecisionKey(
+  account: KeyringAccountWithAlias,
+) {
   return `${account.address.toLowerCase()}:${account.type}:${
     account.brandName
   }`;
 }
 
-function getInFlightDecision(key: string, account: KeyringAccountWithAlias) {
-  const activeDecision = inFlightDecisions.get(key);
-  if (activeDecision) {
-    return activeDecision;
-  }
+export function createSingleAddressNoAssetsDecisionCoordinator({
+  loadEvidence,
+  publisher,
+  timeoutMs = NO_ASSETS_DECISION_TIMEOUT_MS,
+}: SingleAddressNoAssetsDecisionDependencies) {
+  const inFlightDecisions = new Map<string, Promise<void>>();
 
-  const decision = loadSingleAddressNoAssetsDecision(account);
-  inFlightDecisions.set(key, decision);
-  decision.then(
-    () => {
-      if (inFlightDecisions.get(key) === decision) {
-        inFlightDecisions.delete(key);
-      }
-    },
-    () => {
-      if (inFlightDecisions.get(key) === decision) {
-        inFlightDecisions.delete(key);
-      }
-    },
-  );
-  return decision;
+  const prepare = (
+    account: KeyringAccountWithAlias,
+    options?: { ignoreAccountBalance?: boolean },
+  ) => {
+    if (!isSingleAddressReceiveTipAccount(account)) {
+      return Promise.resolve();
+    }
+    if (
+      !options?.ignoreAccountBalance &&
+      hasKnownPositiveSingleAddressBalance(account)
+    ) {
+      return Promise.resolve();
+    }
+
+    const key = getSingleAddressNoAssetsDecisionKey(account);
+    const activeDecision = inFlightDecisions.get(key);
+    if (activeDecision) {
+      return activeDecision;
+    }
+
+    publisher.publish(key, { status: 'pending', evidence: null });
+    const request = withTimeoutFallback(
+      Promise.resolve().then(() => loadEvidence(account)),
+      timeoutMs,
+      null,
+    )
+      .then(evidence => {
+        publisher.publish(
+          key,
+          evidence
+            ? { status: 'ready', evidence }
+            : { status: 'failed', evidence: null },
+        );
+      })
+      .catch(() => {
+        publisher.publish(key, { status: 'failed', evidence: null });
+      })
+      .finally(() => {
+        if (inFlightDecisions.get(key) === request) {
+          inFlightDecisions.delete(key);
+        }
+      });
+
+    inFlightDecisions.set(key, request);
+    return request;
+  };
+
+  return { prepare };
 }
 
-export function useSingleAddressNoAssetsDecision({
+export async function collectSingleAddressNoAssetsEvidence(
+  account: KeyringAccountWithAlias,
+  sources: SingleAddressNoAssetsEvidenceSources,
+): Promise<SingleAddressNoAssetsEvidence> {
+  const [appChains, borned, hasCustomTestnet] = await Promise.all([
+    sources.loadAppChains(account.address),
+    sources.loadAddressBorned(account.address),
+    sources.loadHasCustomTestnet(),
+  ]);
+
+  if (!appChains) {
+    throw new Error('Failed to resolve AppChain assets');
+  }
+
+  return {
+    appChainHasBalance: appChains.some(chain => chain.netWorth > 0),
+    borned,
+    hasCustomTestnet,
+  };
+}
+
+export function resolveSingleAddressAssetViewState({
   account,
-  enabled,
-}: {
-  account?: KeyringAccountWithAlias | null;
-  enabled: boolean;
-}): SingleAddressNoAssetsDecision {
-  const accountRef = useRef(account);
-  accountRef.current = account;
-  const decisionKey = enabled && account ? getDecisionKey(account) : null;
-  const [state, setState] = useState<DecisionState>(INITIAL_DECISION_STATE);
-
-  useEffect(() => {
-    if (!decisionKey) {
-      setState(INITIAL_DECISION_STATE);
-      return;
-    }
-
-    const accountSnapshot = accountRef.current;
-    if (!accountSnapshot) {
-      return;
-    }
-
-    let active = true;
-    setState({
-      key: decisionKey,
-      account: null,
-      status: 'pending',
-    });
-    getInFlightDecision(decisionKey, accountSnapshot).then(
-      resolvedAccount => {
-        if (!active) {
-          return;
-        }
-        setState({
-          key: decisionKey,
-          account: resolvedAccount,
-          status: 'ready',
-        });
-      },
-      () => {
-        if (!active) {
-          return;
-        }
-        setState({
-          key: decisionKey,
-          account: null,
-          status: 'failed',
-        });
-      },
-    );
-
-    return () => {
-      active = false;
-    };
-  }, [decisionKey]);
-
-  if (!decisionKey) {
-    return {
-      account: null,
-      status: 'idle',
-    };
+  hasNetworkError,
+  chainLength,
+  customTestnetCount,
+  balance,
+  evmBalance,
+  balanceFlow,
+  noAssetsDecision,
+}: ResolveSingleAddressAssetViewStateParams): SingleAddressAssetViewState {
+  if (!account) {
+    return 'none';
   }
-  if (state.key !== decisionKey) {
-    return {
-      account: null,
-      status: 'pending',
-    };
+  if (hasNetworkError) {
+    return 'network-error';
   }
-  return state;
+  if (!isSingleAddressReceiveTipAccount(account)) {
+    return 'assets';
+  }
+  if (chainLength > 0 || customTestnetCount > 0) {
+    return 'assets';
+  }
+
+  const knownBalance = balance ?? account.balance;
+  const knownEvmBalance = evmBalance ?? account.evmBalance;
+  if (
+    (typeof knownBalance === 'number' && knownBalance > 0) ||
+    (typeof knownEvmBalance === 'number' && knownEvmBalance > 0)
+  ) {
+    return 'assets';
+  }
+
+  if (!balanceFlow.hasValue) {
+    return !balanceFlow.isLoading && balanceFlow.hasError
+      ? 'assets'
+      : 'pending';
+  }
+  if (balance !== 0 || evmBalance !== 0) {
+    return 'assets';
+  }
+  if (balanceFlow.isLoading) {
+    return 'pending';
+  }
+  if (balanceFlow.hasError) {
+    return 'assets';
+  }
+
+  if (noAssetsDecision.status === 'failed') {
+    return 'assets';
+  }
+  if (noAssetsDecision.status !== 'ready' || !noAssetsDecision.evidence) {
+    return 'pending';
+  }
+
+  const { appChainHasBalance, borned, hasCustomTestnet } =
+    noAssetsDecision.evidence;
+  return !appChainHasBalance && !borned && !hasCustomTestnet
+    ? 'receive'
+    : 'assets';
 }

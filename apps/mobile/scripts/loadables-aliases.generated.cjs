@@ -16,6 +16,8 @@ module.exports = {
     '@/perfs/loadables/screens': './src/perfs/loadables/screens.eager',
     '@/perfs/loadables/settingsNavigatorScreens':
       './src/perfs/loadables/settingsNavigatorScreens.eager',
+    '@/perfs/loadables/singleAddressScreens':
+      './src/perfs/loadables/singleAddressScreens.eager',
     '@/perfs/loadables/testkitsNavigatorScreens':
       './src/perfs/loadables/testkitsNavigatorScreens.eager',
   },
@@ -32,6 +34,8 @@ module.exports = {
     '@/perfs/loadables/screens': './src/perfs/loadables/screens.lazy',
     '@/perfs/loadables/settingsNavigatorScreens':
       './src/perfs/loadables/settingsNavigatorScreens.lazy',
+    '@/perfs/loadables/singleAddressScreens':
+      './src/perfs/loadables/singleAddressScreens.lazy',
     '@/perfs/loadables/testkitsNavigatorScreens':
       './src/perfs/loadables/testkitsNavigatorScreens.lazy',
   },
