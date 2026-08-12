@@ -118,13 +118,17 @@ const SwapToTokenSelect = ({
     [_queryConds, debouncedKeyword],
   );
   const currentAccount = queryConds.account;
+  const hasSearchKeyword = useMemo(
+    () => queryConds.keyword.trim().length > 0,
+    [queryConds.keyword],
+  );
 
   const favoriteFilterValue = useMemo(() => {
-    if (queryConds.keyword?.trim().length > 0) {
+    if (hasSearchKeyword) {
       return 'all';
     }
     return _favoriteFilterValue;
-  }, [_favoriteFilterValue, queryConds.keyword]);
+  }, [_favoriteFilterValue, hasSearchKeyword]);
 
   const {
     visible: tokenSelectorVisible,
@@ -453,7 +457,7 @@ const SwapToTokenSelect = ({
         onCancel={handleTokenSelectorClose}
         onSearch={handleSearchTokens}
         isLoading={isListLoading}
-        showFavoriteFilter={!queryConds.keyword}
+        showFavoriteFilter={!hasSearchKeyword}
         favoriteFilterValue={favoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         type="swapTo"
