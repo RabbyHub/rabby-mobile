@@ -17,6 +17,10 @@ export const ORM_TABLE_NAMES = {
 
   cache_portocolitem: 'cache_portocolitem',
   cache_appchain: 'cache_appchain',
+
+  projection_snapshot: 'projection_snapshot',
+  projection_item: 'projection_item',
+  projection_group_item: 'projection_group_item',
 } as const;
 
 // @see https://github.com/boltcode-js/react-native-sqlite-storage?tab=readme-ov-file#opening-a-database

@@ -12,6 +12,7 @@ import { CleanupTables1768475805228 } from './20260115';
 import { ClearTokenItemForNullablePrice24hChange1773132444267 } from './20260306';
 import { UpdateTokenItemAddMarketMeta1774318632186 } from './20260323';
 import { UpdateHistoryRejudgeSmallTx1785297040800 } from './20260729';
+import { CreateAssetProjectionTables1786566000000 } from './20260813';
 
 export function getMigrations() {
   return [
@@ -29,5 +30,6 @@ export function getMigrations() {
     ClearTokenItemForNullablePrice24hChange1773132444267,
     UpdateTokenItemAddMarketMeta1774318632186,
     UpdateHistoryRejudgeSmallTx1785297040800,
+    CreateAssetProjectionTables1786566000000,
   ];
 }
