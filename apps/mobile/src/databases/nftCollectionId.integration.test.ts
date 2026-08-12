@@ -19,7 +19,15 @@ const createNft = () =>
     collection_id: COLLECTION_ID,
     collection: {
       chain: 'eth',
+      credit_score: 88,
       id: 'collection-1',
+      native_token: {
+        decimals: 18,
+        id: 'eth',
+        price: 3000,
+        symbol: 'ETH',
+      },
+      receive_addr_count: 7,
     },
   } as unknown as NFTItem);
 
@@ -39,6 +47,30 @@ describe('NFT collection id persistence', () => {
 
     expect(entity.collection_id).toBe(COLLECTION_ID);
     expect(entity.collection_id).not.toBe(CONTRACT_ID);
+  });
+
+  it('round-trips collection ordering and display metadata through SQLite', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const entity = new NFTItemEntity();
+    NFTItemEntity.fillEntity(entity, OWNER_ADDRESS, createNft());
+
+    await dataSource.getRepository(NFTItemEntity).save(entity);
+    const restored = await dataSource
+      .getRepository(NFTItemEntity)
+      .findOneByOrFail({ _db_id: entity._db_id });
+    const collection = JSON.parse(restored.collection);
+
+    expect(collection).toEqual(
+      expect.objectContaining({
+        chain: 'eth',
+        credit_score: 88,
+        id: 'collection-1',
+        receive_addr_count: 7,
+      }),
+    );
+    expect(collection.native_token).toEqual(
+      expect.objectContaining({ symbol: 'ETH' }),
+    );
   });
 
   it('drops the polluted legacy cache instead of migrating ambiguous rows', async () => {

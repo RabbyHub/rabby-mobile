@@ -64,7 +64,11 @@ import {
   syncRemoteProtocolsForAddresses,
 } from '@/databases/sync/assets';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
-import useProtocolListStore from './protocols';
+import useProtocolListStore, {
+  buildProtocolEntityId,
+  protocolEntityResourceStore,
+  useProtocolListComputedStore,
+} from './protocols';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -266,6 +270,62 @@ describe('protocol list request freshness', () => {
     expect(mockedSyncRemoteProtocols).toHaveBeenCalledWith(
       NORMALIZED_ADDRESS,
       [],
+    );
+  });
+
+  it('shares protocol entities while keeping scene projections independent', () => {
+    const secondAddress = '0xDef0';
+    const normalizedSecondAddress = secondAddress.toLowerCase();
+    const first = createProtocol('aave', 20);
+    const second = {
+      ...createProtocol('curve', 30),
+      owner_addr: normalizedSecondAddress,
+    };
+    useProtocolListStore.setState({
+      protocolMap: {
+        [NORMALIZED_ADDRESS]: [first],
+        [normalizedSecondAddress]: [second],
+      },
+    });
+
+    const singleKey = useProtocolListComputedStore
+      .getState()
+      .registerSingleProtocols(ADDRESS);
+    const multiKey = useProtocolListComputedStore
+      .getState()
+      .registerMultiProtocols([ADDRESS, secondAddress]);
+    const firstId = buildProtocolEntityId(first);
+    const secondId = buildProtocolEntityId(second);
+
+    expect(
+      useProtocolListComputedStore.getState().singleProtocolsIndexCache[
+        singleKey
+      ]?.protocolIds,
+    ).toEqual([firstId]);
+    expect(
+      useProtocolListComputedStore.getState().multiProtocolsIndexCache[multiKey]
+        ?.protocolIds,
+    ).toEqual([secondId, firstId]);
+
+    const updatedFirst = { ...first, netWorth: 40 };
+    useProtocolListStore.setState({
+      protocolMap: {
+        [NORMALIZED_ADDRESS]: [updatedFirst],
+        [normalizedSecondAddress]: [second],
+      },
+    });
+
+    const computed = useProtocolListComputedStore.getState();
+    expect(computed.singleProtocolsIndexCache[singleKey]?.protocolIds).toEqual([
+      firstId,
+    ]);
+    expect(computed.multiProtocolsIndexCache[multiKey]?.protocolIds).toEqual([
+      firstId,
+      secondId,
+    ]);
+    expect(protocolEntityResourceStore.getValue(firstId)?.netWorth).toBe(40);
+    expect(computed.singleProtocolsIndexCache[singleKey]?.protocolIds[0]).toBe(
+      computed.multiProtocolsIndexCache[multiKey]?.protocolIds[0],
     );
   });
 });
