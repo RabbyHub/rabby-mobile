@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -41,13 +40,12 @@ import {
 } from './hooks/singleHome';
 import useTokenList, {
   EMPTY_TOKEN_ASSETS_INDEX_RESULT,
-  EMPTY_TOKEN_ENTITY_IDS,
   getSingleAssetsCacheKey,
   ITokenItem,
+  prepareSingleAddressTokenAssetsProjection,
   TokenEntityId,
   tokenEntityResourceStore,
   useTokenAssetsIndexStore,
-  useTokenIndexStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
@@ -461,28 +459,6 @@ export const TokenList = ({
     !selectedChain &&
     !isLpTokenEnabled;
 
-  useEffect(() => {
-    if (!currentAddress) {
-      return;
-    }
-    useTokenIndexStore
-      .getState()
-      .syncFromTokenListMap(useTokenList.getState().tokenListMap, [
-        currentAddress,
-      ]);
-  }, [currentAddress]);
-
-  const tokenIds = useActivityStore(
-    useTokenIndexStore,
-    useShallow(state => {
-      if (!lowerAddress) {
-        return EMPTY_TOKEN_ENTITY_IDS;
-      }
-      return state.addressTokenIds[lowerAddress] || EMPTY_TOKEN_ENTITY_IDS;
-    }),
-    Object.is,
-    { storeLabel: 'single-address-token-index' },
-  );
   const singleAssetsKey = useMemo(() => {
     if (!lowerAddress) {
       return null;
@@ -494,17 +470,15 @@ export const TokenList = ({
     );
   }, [isLpTokenEnabled, lowerAddress, selectedChain]);
 
-  useLayoutEffect(() => {
-    if (!singleAssetsKey) {
-      return;
-    }
-    useTokenAssetsIndexStore.getState().syncSingleAssetsResult({
-      key: singleAssetsKey,
-      tokenIds,
-      chainServerId: selectedChain,
-      isLpTokenEnabled,
-    });
-  }, [isLpTokenEnabled, selectedChain, singleAssetsKey, tokenIds]);
+  const isTokenProjectionReady = useActivityStore(
+    useTokenAssetsIndexStore,
+    state =>
+      !!singleAssetsKey &&
+      !!state.singleAssetsConfigByKey[singleAssetsKey] &&
+      !!state.singleAssetsResultByKey[singleAssetsKey],
+    Object.is,
+    { storeLabel: 'single-address-token-assets-index-readiness' },
+  );
 
   const {
     unFoldTokenIds,
@@ -548,8 +522,10 @@ export const TokenList = ({
   );
   const hasDefaultTokenData =
     unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length > 0;
+  const isTokenProjectionLoading = !!singleAssetsKey && !isTokenProjectionReady;
   const shouldHideCustomTestnetSectionsWhileLoading =
-    (isLoading || isAllLoading) && !hasDefaultTokenData;
+    (isLoading || isAllLoading || isTokenProjectionLoading) &&
+    !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     hasRequestedTokenList &&
@@ -559,11 +535,12 @@ export const TokenList = ({
   const hasVisibleTokenContent =
     hasDefaultTokenData || visibleCustomTestnetSections.length > 0;
   const isTokenContentReady =
-    hasVisibleTokenContent ||
-    (hasRequestedTokenList &&
-      isTokenListRequestSettled &&
-      !isLoading &&
-      !isAllLoading);
+    isTokenProjectionReady &&
+    (hasVisibleTokenContent ||
+      (hasRequestedTokenList &&
+        isTokenListRequestSettled &&
+        !isLoading &&
+        !isAllLoading));
   const getTokenList = useTokenList.getState().getTokenList;
 
   const refreshTokenList = useCallback(() => {
@@ -626,7 +603,7 @@ export const TokenList = ({
       foldScam,
       hasFoldTokens,
       isLpTokenEnabled,
-      isLoading,
+      isLoading: isLoading || isTokenProjectionLoading,
       isAllLoading,
       noAnyAssets,
       emptyAssetsText,
@@ -641,6 +618,7 @@ export const TokenList = ({
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
+    isTokenProjectionLoading,
     noAnyAssets,
     scamTokenIds,
     scamTokenPreviewLogoUrls,
@@ -818,33 +796,23 @@ export const TokenList = ({
     [t],
   );
 
-  const handleLpTokenChange = useCallback(
-    (nextEnabled: boolean) => {
-      if (lowerAddress) {
-        const nextKey = getSingleAssetsCacheKey(
-          lowerAddress,
-          selectedChain,
-          nextEnabled,
-        );
-        const assetsIndexState = useTokenAssetsIndexStore.getState();
-        if (!assetsIndexState.singleAssetsResultByKey[nextKey]) {
-          // Only fill a cold target cache to avoid the first empty-list frame.
-          assetsIndexState.syncSingleAssetsResult({
-            key: nextKey,
-            tokenIds,
-            chainServerId: selectedChain,
-            isLpTokenEnabled: nextEnabled,
-          });
-        }
-      }
-      setIsLpTokenEnabled(nextEnabled);
-    },
-    [lowerAddress, selectedChain, tokenIds],
-  );
-
   const handleToggleTokenFold = useCallback(() => {
     applyTokenFoldState(!foldHideList);
   }, [applyTokenFoldState, foldHideList]);
+
+  const handleLpTokenEnabledChange = useCallback(
+    (nextEnabled: boolean) => {
+      if (currentAddress) {
+        prepareSingleAddressTokenAssetsProjection({
+          address: currentAddress,
+          chainServerId: selectedChain,
+          isLpTokenEnabled: nextEnabled,
+        });
+      }
+      setIsLpTokenEnabled(nextEnabled);
+    },
+    [currentAddress, selectedChain],
+  );
 
   const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
@@ -897,7 +865,7 @@ export const TokenList = ({
     () => (
       <TokenFoldSectionHeader
         isEnabled={isLpTokenEnabled}
-        onValueChange={handleLpTokenChange}
+        onValueChange={handleLpTokenEnabledChange}
         fold={foldHideList}
         str={foldTokenUsdValue}
         style={styles.sectionHeader}
@@ -909,8 +877,8 @@ export const TokenList = ({
       foldHeaderButtonStyle,
       foldHideList,
       foldTokenUsdValue,
-      handleLpTokenChange,
       handleToggleTokenFold,
+      handleLpTokenEnabledChange,
       isLpTokenEnabled,
       styles.sectionHeader,
     ],
