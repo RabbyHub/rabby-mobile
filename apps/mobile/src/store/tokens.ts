@@ -43,8 +43,10 @@ import {
 } from './_addressListSnapshot';
 import type { RestoredAssetProjection } from '@/databases/assetProjection';
 import {
+  isAssetProjectionPersistenceActive,
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
+  subscribeAssetProjectionDatabaseCommits,
 } from './assetProjectionPersistence';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
@@ -1489,6 +1491,15 @@ const restoreTokenAssetsProjectionIfEmpty = (
   key: string,
   scene: TokenProjectionScene,
 ) => {
+  if (
+    isAssetProjectionPersistenceActive({
+      runtimeKey: key,
+      kind: 'token',
+      scene,
+    })
+  ) {
+    return;
+  }
   const requestKey = `${scene}:${key}`;
   if (tokenProjectionRestoreRequests.has(requestKey)) {
     return;
@@ -1645,6 +1656,16 @@ const restoreTokenAssetsProjectionIfEmpty = (
 
   tokenProjectionRestoreRequests.set(requestKey, request);
 };
+
+subscribeAssetProjectionDatabaseCommits(() => {
+  const state = useTokenAssetsIndexStore.getState();
+  Object.keys(state.singleAssetsConfigByKey).forEach(key => {
+    restoreTokenAssetsProjectionIfEmpty(key, 'single-address');
+  });
+  Object.keys(state.multiAssetsConfigByKey).forEach(key => {
+    restoreTokenAssetsProjectionIfEmpty(key, 'multi-address');
+  });
+});
 
 const hasTokenAssetsConfigToken = (
   tokenIds: TokenEntityId[],

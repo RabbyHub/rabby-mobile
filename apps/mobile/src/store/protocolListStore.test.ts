@@ -48,8 +48,10 @@ jest.mock('@/core/utils/assetDataLoadDiagnostics', () => ({
   })),
 }));
 jest.mock('./assetProjectionPersistence', () => ({
+  isAssetProjectionPersistenceActive: jest.fn(() => false),
   restoreAssetProjection: jest.fn(async () => null),
   scheduleAssetProjectionPersistence: jest.fn(),
+  subscribeAssetProjectionDatabaseCommits: jest.fn(),
 }));
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),

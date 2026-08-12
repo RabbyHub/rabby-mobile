@@ -28,8 +28,10 @@ jest.mock('@/core/utils/assetDataLoadDiagnostics', () => ({
   })),
 }));
 jest.mock('./assetProjectionPersistence', () => ({
+  isAssetProjectionPersistenceActive: jest.fn(() => false),
   restoreAssetProjection: jest.fn(async () => null),
   scheduleAssetProjectionPersistence: jest.fn(),
+  subscribeAssetProjectionDatabaseCommits: jest.fn(),
 }));
 
 import { syncNFTs } from '@/databases/hooks/assets';

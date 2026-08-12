@@ -31,7 +31,12 @@ import {
 } from '@/databases/assetProjection';
 import { registerSyncAbortHandler } from '@/databases/sync/abort';
 import { submitSyncTask } from '@/databases/sync/scheduler';
-import { scheduleAssetProjectionPersistence } from './assetProjectionPersistence';
+import { OPSQLiteEvents } from '@/core/databases/op-sqlite/events';
+import {
+  isAssetProjectionPersistenceActive,
+  scheduleAssetProjectionPersistence,
+  subscribeAssetProjectionDatabaseCommits,
+} from './assetProjectionPersistence';
 
 const mockedPersist = jest.mocked(persistAssetProjection);
 const mockedCleanup = jest.mocked(cleanupAssetProjectionGenerations);
@@ -78,6 +83,7 @@ describe('asset projection write scheduling', () => {
 
     const first = scheduleAssetProjectionPersistence(input);
     expect(first).toBeDefined();
+    expect(isAssetProjectionPersistenceActive(input)).toBe(true);
     expect(scheduleAssetProjectionPersistence(input)).toBeUndefined();
     expect(mockedSubmit).toHaveBeenCalledTimes(1);
 
@@ -86,9 +92,27 @@ describe('asset projection write scheduling', () => {
     expect(finishPersist).toBeDefined();
     finishPersist?.();
     await first?.promise;
+    await Promise.resolve();
+    expect(isAssetProjectionPersistenceActive(input)).toBe(false);
 
     expect(scheduleAssetProjectionPersistence(input)).toBeUndefined();
     expect(mockedSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('only forwards committed projection snapshots', () => {
+    const listener = jest.fn();
+    const subscription = subscribeAssetProjectionDatabaseCommits(listener);
+
+    OPSQLiteEvents.emit('DATABASE_COMMITTED', {
+      tables: ['rabby_projection_item'],
+    });
+    expect(listener).not.toHaveBeenCalled();
+
+    OPSQLiteEvents.emit('DATABASE_COMMITTED', {
+      tables: ['rabby_projection_item', 'rabby_projection_snapshot'],
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+    subscription.remove();
   });
 
   it('allows the same projection after a database reset abort', async () => {

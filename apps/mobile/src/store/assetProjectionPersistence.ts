@@ -1,4 +1,5 @@
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import { OPSQLiteEvents } from '@/core/databases/op-sqlite/events';
 import {
   ASSET_PROJECTION_GENERATIONS_TO_KEEP,
   cleanupAssetProjectionGenerations,
@@ -6,6 +7,7 @@ import {
   restoreLatestAssetProjection,
   type PersistAssetProjectionInput,
 } from '@/databases/assetProjection';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '@/databases/constant';
 import { AssetProjectionSnapshotEntity } from '@/databases/entities/assetProjection';
 import { registerSyncAbortHandler } from '@/databases/sync/abort';
 import {
@@ -29,6 +31,7 @@ export type ScheduledAssetProjectionInput = Omit<
 const activeProjectionControllers = new Map<string, AbortController>();
 const activeProjectionFingerprints = new Map<string, string>();
 const persistedProjectionFingerprints = new Map<string, string>();
+const projectionSnapshotTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_snapshot}`;
 
 const buildProjectionFingerprint = (input: ScheduledAssetProjectionInput) =>
   JSON.stringify({
@@ -146,3 +149,14 @@ export const restoreAssetProjection = async (
     scene: identity.scene,
   });
 };
+
+export const isAssetProjectionPersistenceActive = (
+  identity: AssetProjectionIdentity,
+) => activeProjectionControllers.has(buildAssetProjectionStorageKey(identity));
+
+export const subscribeAssetProjectionDatabaseCommits = (listener: () => void) =>
+  OPSQLiteEvents.subscribe('DATABASE_COMMITTED', ({ tables }) => {
+    if (tables.includes(projectionSnapshotTable)) {
+      listener();
+    }
+  });

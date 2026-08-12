@@ -33,8 +33,10 @@ import {
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
 import {
+  isAssetProjectionPersistenceActive,
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
+  subscribeAssetProjectionDatabaseCommits,
 } from './assetProjectionPersistence';
 
 export {
@@ -354,6 +356,15 @@ const restoreProtocolProjectionIfEmpty = (
   key: string,
   scene: ProtocolProjectionScene,
 ) => {
+  if (
+    isAssetProjectionPersistenceActive({
+      runtimeKey: key,
+      kind: 'protocol',
+      scene,
+    })
+  ) {
+    return;
+  }
   const requestKey = `${scene}:${key}`;
   if (protocolProjectionRestoreRequests.has(requestKey)) {
     return;
@@ -487,6 +498,15 @@ const restoreProtocolProjectionIfEmpty = (
     });
   protocolProjectionRestoreRequests.set(requestKey, request);
 };
+
+subscribeAssetProjectionDatabaseCommits(() => {
+  singleProtocolsCacheParams.forEach((_params, key) => {
+    restoreProtocolProjectionIfEmpty(key, 'single-address');
+  });
+  multiProtocolsCacheParams.forEach((_params, key) => {
+    restoreProtocolProjectionIfEmpty(key, 'multi-address');
+  });
+});
 
 const removeKeysFromCache = <T extends Record<string, unknown>>(
   cache: T,

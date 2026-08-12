@@ -32,8 +32,10 @@ import {
 } from './_addressListSnapshot';
 import type { RestoredAssetProjection } from '@/databases/assetProjection';
 import {
+  isAssetProjectionPersistenceActive,
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
+  subscribeAssetProjectionDatabaseCommits,
 } from './assetProjectionPersistence';
 
 export {
@@ -566,6 +568,15 @@ const restoreNftProjectionIfEmpty = (
   key: string,
   scene: NftProjectionScene,
 ) => {
+  if (
+    isAssetProjectionPersistenceActive({
+      runtimeKey: key,
+      kind: 'nft',
+      scene,
+    })
+  ) {
+    return;
+  }
   const requestKey = `${scene}:${key}`;
   if (nftProjectionRestoreRequests.has(requestKey)) {
     return;
@@ -705,6 +716,15 @@ const restoreNftProjectionIfEmpty = (
     });
   nftProjectionRestoreRequests.set(requestKey, request);
 };
+
+subscribeAssetProjectionDatabaseCommits(() => {
+  singleNftsCacheParams.forEach((_params, key) => {
+    restoreNftProjectionIfEmpty(key, 'single-address');
+  });
+  multiNftsCacheParams.forEach((_params, key) => {
+    restoreNftProjectionIfEmpty(key, 'multi-address');
+  });
+});
 
 const updateSingleNftsIndex = (
   key: string,
