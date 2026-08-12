@@ -914,10 +914,6 @@ const getStyles = createGetStyles2024(() => ({
   lastRowWrap: {
     marginBottom: 12,
   },
-  foldRowWrap: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
-    marginBottom: 8,
-  },
   customTestnetSection: {
     marginBottom: 8,
   },
