@@ -23,6 +23,16 @@ export const buildProtocolEntityId = (
     protocol.id.toLowerCase(),
   ].join(':') as ProtocolEntityId;
 
+const sortProtocolsByNetWorth = (protocols: ICacheProtocolItem) =>
+  protocols
+    .map((protocol, sourceIndex) => ({ protocol, sourceIndex }))
+    .sort(
+      (left, right) =>
+        (right.protocol.netWorth || 0) - (left.protocol.netWorth || 0) ||
+        left.sourceIndex - right.sourceIndex,
+    )
+    .map(item => item.protocol);
+
 const buildStableProtocolIds = (
   protocols: IProtocolItem[],
   previousIds?: ProtocolEntityId[],
@@ -56,8 +66,9 @@ export const buildProtocolAssetsIndexResult = (
   result: ICacheProtocolItem,
   previousResult?: ProtocolAssetsIndexResult,
 ): ProtocolAssetsIndexResult => {
+  const sortedResult = sortProtocolsByNetWorth(result);
   const protocolIds = buildStableProtocolIds(
-    result,
+    sortedResult,
     previousResult?.protocolIds,
   );
 

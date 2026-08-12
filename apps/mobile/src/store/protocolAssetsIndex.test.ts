@@ -8,6 +8,7 @@ const makeProtocol = (
   id: string,
   netWorth: number,
   portfolioValue = netWorth,
+  overrides: Partial<IProtocolItem> = {},
 ): IProtocolItem => ({
   id,
   name: id,
@@ -22,6 +23,7 @@ const makeProtocol = (
       _originPortfolio: {} as never,
     },
   ],
+  ...overrides,
 });
 
 describe('protocol asset index', () => {
@@ -58,17 +60,49 @@ describe('protocol asset index', () => {
     expect(second.protocolIds).toBe(first.protocolIds);
   });
 
-  it('changes the list identity when row order changes', () => {
+  it('orders protocols by net worth regardless of source order', () => {
     const first = buildProtocolAssetsIndexResult([
       makeProtocol('aave', 10),
       makeProtocol('curve', 5),
     ]);
     const second = buildProtocolAssetsIndexResult(
-      [makeProtocol('curve', 5), makeProtocol('aave', 10)],
+      [makeProtocol('curve', 15), makeProtocol('aave', 10)],
       first,
     );
 
     expect(second.protocolIds).not.toBe(first.protocolIds);
     expect(second.protocolIds).toEqual(['0xabc:eth:curve', '0xabc:eth:aave']);
+  });
+
+  it('preserves source order for equal net worth values', () => {
+    const result = buildProtocolAssetsIndexResult([
+      makeProtocol('second', 10),
+      makeProtocol('first', 10),
+    ]);
+
+    expect(result.protocolIds).toEqual(['0xabc:eth:second', '0xabc:eth:first']);
+  });
+
+  it('keeps equal protocols isolated across owners', () => {
+    const result = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10, 10, { owner_addr: '0xAAA' }),
+      makeProtocol('aave', 20, 20, { owner_addr: '0xBBB' }),
+    ]);
+
+    expect(result.protocolIds).toEqual(['0xbbb:eth:aave', '0xaaa:eth:aave']);
+  });
+
+  it('keeps regular and AppChain protocols in the same ordered projection', () => {
+    const result = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 30),
+      makeProtocol('app', 50, 50, {
+        chain: 'RABBY_APP_CHAIN_app',
+      }),
+    ]);
+
+    expect(result.protocolIds).toEqual([
+      '0xabc:rabby_app_chain_app:app',
+      '0xabc:eth:aave',
+    ]);
   });
 });

@@ -225,9 +225,6 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
 
 export const protocolEntityResourceStore = new ProtocolEntityResourceStore();
 
-const sortProtocols = (list: IProtocolItem[]): ICacheProtocolItem =>
-  list.slice().sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
-
 const computeSingleProtocols = (
   protocolMap: ProtocolListMap,
   address: string,
@@ -244,7 +241,7 @@ const computeSingleProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  return sortProtocols(filtered);
+  return filtered;
 };
 
 const computeSingleProtocolsIndex = (
@@ -276,7 +273,7 @@ const computeMultiProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  return sortProtocols(filtered);
+  return filtered;
 };
 
 const computeMultiProtocolsIndex = (

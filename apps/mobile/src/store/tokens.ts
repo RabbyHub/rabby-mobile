@@ -500,7 +500,15 @@ class TokenGroupResourceStore extends ResourceBaseStore<TokenGroupResourceValue>
     groups.forEach(({ groupId, value }) => {
       const prevValue = prev.valueMap[groupId];
       const prevMeta = prev.metaMap[groupId];
-      const isValueChanged = prevValue !== value;
+      const isValueChanged =
+        !prevValue ||
+        prevValue.groupKey !== value.groupKey ||
+        prevValue.primaryTokenId !== value.primaryTokenId ||
+        prevValue.memberTokenIds.length !== value.memberTokenIds.length ||
+        prevValue.memberTokenIds.some(
+          (tokenId, index) => tokenId !== value.memberTokenIds[index],
+        ) ||
+        !!getChangedTokenKeys(prevValue.summary, value.summary)?.length;
 
       if (!prevMeta || isValueChanged) {
         changedGroups.push({
