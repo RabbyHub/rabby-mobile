@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { DisplayNftItem } from '../types';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
-import { useSingleNftRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -41,11 +40,7 @@ export const useSingleNftListController = (addr?: string, visible = true) => {
     Object.is,
     { storeLabel: 'single-address-nft-load-status' },
   );
-  const {
-    getNFTListWithCache,
-    batchLoadCacheNFT,
-    refreshTagNft: refreshTagNftByStore,
-  } = nftListStore.getState();
+  const { getNFTListWithCache, batchLoadCacheNFT } = nftListStore.getState();
 
   const fetchData = useCallback(
     async (force?: boolean) => {
@@ -71,10 +66,6 @@ export const useSingleNftListController = (addr?: string, visible = true) => {
       console.error('nft batchLocalData error', e);
     }
   }, [addr, batchLoadCacheNFT]);
-
-  const refreshTagNft = useCallback(async () => {
-    refreshTagNftByStore();
-  }, [refreshTagNftByStore]);
 
   const debounceReloadNftList = useMemo(
     () => debounce(batchLocalData, 2000),
@@ -111,16 +102,6 @@ export const useSingleNftListController = (addr?: string, visible = true) => {
     ),
   });
 
-  useSingleNftRefresh({
-    onRefresh: refreshTagNft,
-  });
-  // useEffect(() => {
-  //   if (singleNFTNonce > 0) {
-  //     refreshTagNft();
-  //     setSingleNFTNonce(0);
-  //   }
-  // }, [refreshTagNft, setSingleNFTNonce, singleNFTNonce]);
-
   useEffect(() => {
     if (addr && visible) {
       fetchData();
@@ -148,43 +129,3 @@ type CombineCollectionList = CollectionList & {
   address?: string;
 };
 export type NftItemWithCollection = CombineNFTItem | CombineCollectionList;
-
-export function varyNftListByFold<T extends any>(
-  nftList: CombineNFTItem[],
-  mapperItem: (collection: NftItemWithCollection, item: CombineNFTItem) => T,
-  options?: {
-    forSingleAddress: boolean;
-  },
-) {
-  const { forSingleAddress = false } = options || {};
-
-  const retValues = {
-    foldList: [] as T[],
-    unFoldList: [] as T[],
-  };
-
-  const collectionMap: Record<string, CombineCollectionList> = {};
-  nftList.forEach(item => {
-    const targetList = item._isFold ? retValues.foldList : retValues.unFoldList;
-    if (!item.collection_id || !item.collection) {
-      targetList.push(mapperItem(item, item));
-      return;
-    }
-    const key = `${forSingleAddress ? '' : item.address}-${item.chain}-${
-      item.collection?.id
-    }`;
-    if (collectionMap[key]) {
-      collectionMap[key].nft_list.push({ ...item, collection: null });
-    } else {
-      const newCollection: CombineCollectionList = {
-        ...item.collection,
-        address: item.address,
-        nft_list: [{ ...item, collection: null }],
-      } as unknown as CombineCollectionList;
-      collectionMap[key] = newCollection;
-      targetList.push(mapperItem(newCollection, item));
-    }
-  });
-
-  return retValues;
-}

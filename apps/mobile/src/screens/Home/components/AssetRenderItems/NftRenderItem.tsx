@@ -8,10 +8,8 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
 import { memo } from 'react';
-import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { NftItemWithCollection } from '../../hooks/nft';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { DisplayNftItem } from '../../types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
 import { Text } from '@/components/Typography';
@@ -22,7 +20,6 @@ export const NftRow = memo(
     onPress,
     style,
     logoSize = 40,
-    hideFoldTag,
     account,
     chainLogoSize = 16,
   }: {
@@ -31,7 +28,6 @@ export const NftRow = memo(
     style?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
-    hideFoldTag?: boolean;
     account?: KeyringAccountWithAlias;
     onPress: () => void;
   }) => {
@@ -43,10 +39,6 @@ export const NftRow = memo(
     const isSvgURL = isCollection
       ? item.logo_url?.endsWith('.svg')
       : (item as NFTItem)?.content?.endsWith('.svg');
-    const _isManualFold = isCollection
-      ? item.nft_list.every((i: DisplayNftItem) => i._isManualFold)
-      : (item as DisplayNftItem)._isManualFold;
-
     return (
       <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
         <View style={styles.main}>
@@ -98,18 +90,11 @@ export const NftRow = memo(
               ) : null}
             </View>
           </View>
-          <View
-            style={[
-              styles.projectNameBox,
-              _isManualFold && {
-                marginRight: 55,
-              },
-            ]}>
+          <View style={styles.projectNameBox}>
             <View style={styles.nameBox}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={styles.name}>
                 {item.name}
               </Text>
-              {!hideFoldTag && _isManualFold && <TextBadge type="folded" />}
             </View>
             {account ? <AccountOverview account={account} /> : null}
           </View>

@@ -32,54 +32,43 @@ describe('protocol asset index', () => {
   });
 
   it('reuses the complete result when only source object identities change', () => {
-    const first = buildProtocolAssetsIndexResult({
-      unFold: [makeProtocol('aave', 10)],
-      fold: [makeProtocol('curve', 1)],
-    });
+    const first = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10),
+      makeProtocol('curve', 1),
+    ]);
     const second = buildProtocolAssetsIndexResult(
-      {
-        unFold: [makeProtocol('aave', 10)],
-        fold: [makeProtocol('curve', 1)],
-      },
+      [makeProtocol('aave', 10), makeProtocol('curve', 1)],
       first,
     );
 
     expect(second).toBe(first);
   });
 
-  it('keeps id arrays stable when only the folded value changes', () => {
-    const first = buildProtocolAssetsIndexResult({
-      unFold: [makeProtocol('aave', 10)],
-      fold: [makeProtocol('curve', 1)],
-    });
+  it('keeps the id array stable when entity values change without reordering', () => {
+    const first = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10),
+      makeProtocol('curve', 1),
+    ]);
     const second = buildProtocolAssetsIndexResult(
-      {
-        unFold: [makeProtocol('aave', 10)],
-        fold: [makeProtocol('curve', 2)],
-      },
+      [makeProtocol('aave', 11), makeProtocol('curve', 2)],
       first,
     );
 
-    expect(second).not.toBe(first);
-    expect(second.unFoldIds).toBe(first.unFoldIds);
-    expect(second.foldIds).toBe(first.foldIds);
-    expect(second.foldDeFiValue).not.toBe(first.foldDeFiValue);
+    expect(second).toBe(first);
+    expect(second.protocolIds).toBe(first.protocolIds);
   });
 
   it('changes the list identity when row order changes', () => {
-    const first = buildProtocolAssetsIndexResult({
-      unFold: [makeProtocol('aave', 10), makeProtocol('curve', 5)],
-      fold: [],
-    });
+    const first = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10),
+      makeProtocol('curve', 5),
+    ]);
     const second = buildProtocolAssetsIndexResult(
-      {
-        unFold: [makeProtocol('curve', 5), makeProtocol('aave', 10)],
-        fold: [],
-      },
+      [makeProtocol('curve', 5), makeProtocol('aave', 10)],
       first,
     );
 
-    expect(second.unFoldIds).not.toBe(first.unFoldIds);
-    expect(second.unFoldIds).toEqual(['0xabc:eth:curve', '0xabc:eth:aave']);
+    expect(second.protocolIds).not.toBe(first.protocolIds);
+    expect(second.protocolIds).toEqual(['0xabc:eth:curve', '0xabc:eth:aave']);
   });
 });

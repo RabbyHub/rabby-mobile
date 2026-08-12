@@ -8,10 +8,8 @@ import { DB } from '@op-engineering/op-sqlite';
 export type AssetsRefresthState = {
   singleTokenNonce: number;
   singleDeFiNonce: number;
-  singleNFTNonce: number;
   tokenNonce: number;
   deFiNonce: number;
-  nftNonce: number;
 };
 export type EventBusListeners = {
   [EVENTS.TX_COMPLETED]: (txDetail: {

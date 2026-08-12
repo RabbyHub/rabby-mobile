@@ -3,9 +3,6 @@ import { zCreate } from '@/core/utils/reexports';
 import { syncNFTs } from '@/databases/hooks/assets';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import type { DisplayNftItem } from '@/types/assets';
-import { eventBus, EventBusListeners } from '@/utils/events';
-import { useCallback, useEffect } from 'react';
-import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
@@ -533,35 +530,14 @@ export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
   },
 }));
 
-const tagNfts = (nfts: DisplayNftItem[]) => {
-  return nfts.map(i => {
-    const collection = i.collection as CollectionList | null | undefined;
-    const isFold = !i.collection?.is_core || collection?.is_hidden;
-    return {
-      ...i,
-      _isFold: isFold,
-      _isManualFold: false,
-    };
-  });
-};
-
 export const combinedNfts = (
   nftsMap: Record<string, DisplayNftItem[]>,
   caredAddresses: string[],
 ): CombinedNFTItem[] => {
   const nfts: CombinedNFTItem[] = [];
-  const lowerAddresses = new Set(
-    Object.keys(nftsMap).map(i => i.toLowerCase()) || [],
-  );
-  const caredAddressesSet = new Set(caredAddresses.map(i => i.toLowerCase()));
-
-  Object.entries(nftsMap).forEach(([address, nftList]) => {
+  caredAddresses.forEach(address => {
     const lowerAddr = address.toLowerCase();
-    if (!lowerAddresses.has(lowerAddr) || !caredAddressesSet.has(lowerAddr)) {
-      return;
-    }
-
-    lowerAddresses.delete(lowerAddr);
+    const nftList = nftsMap[lowerAddr] || nftsMap[address] || [];
     nftList?.forEach(nft => {
       const key = nft.id;
       if (!key) {
@@ -569,7 +545,7 @@ export const combinedNfts = (
       }
       nfts.push({
         ...nft,
-        address,
+        address: lowerAddr,
       });
     });
   });
@@ -584,7 +560,6 @@ export interface NFTListState {
   shortCache: boolean;
   singleLoadStatusByAddress: Record<string, 'loading' | 'ready'>;
   initStore(): Promise<void>;
-  refreshTagNft(): void;
   updateNFTListByAddress(address: string, nfts: DisplayNftItem[]): void;
   clearUnusedNFTs(addresses: string[]): void;
   batchLoadCacheNFT(
@@ -633,7 +608,7 @@ const loadTaggedNfts = async (
 ) => {
   try {
     const nfts = await syncNFTs(address, force, updateReturn ? false : !force);
-    return nfts.length ? tagNfts(nfts as DisplayNftItem[]) : null;
+    return nfts.length ? (nfts as DisplayNftItem[]) : null;
   } catch (error) {
     console.error('ServiceErrorType.NFT', error);
     return null;
@@ -660,20 +635,6 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     }
 
     await get().batchLoadCacheNFT(top10Addresses);
-  },
-
-  refreshTagNft() {
-    set(state => {
-      const updatedNftsMap: Record<string, DisplayNftItem[]> = {};
-      Object.entries(state.nftsMap).forEach(([address, nfts]) => {
-        updatedNftsMap[address] = tagNfts([...(nfts || [])]);
-      });
-
-      return {
-        ...state,
-        nftsMap: updatedNftsMap,
-      };
-    });
   },
 
   updateNFTListByAddress(address, nfts) {
@@ -738,7 +699,7 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
       const merged = { ...state.nftsMap };
 
       lowerAddresses.forEach(address => {
-        merged[address] = tagNfts(groupedMap[address] || []);
+        merged[address] = groupedMap[address] || [];
       });
 
       return {
@@ -1038,28 +999,6 @@ export function getAssetsMapDirectly(type: 'nfts') {
   }
 
   return nftListStore.getState().nftsMap;
-}
-
-export function useOnNftRefresh() {
-  const refreshTagNft = useCallback(async () => {
-    nftListStore.getState().refreshTagNft();
-  }, []);
-
-  useEffect(() => {
-    const onRequestRefreshAssets: EventBusListeners['EVENT_REFRESH_ASSET'] =
-      type => {
-        if (type !== 'nftNonce') {
-          return;
-        }
-        refreshTagNft();
-      };
-
-    eventBus.on('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
-
-    return () => {
-      eventBus.off('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
-    };
-  }, [refreshTagNft]);
 }
 
 export default nftListStore;

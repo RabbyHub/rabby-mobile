@@ -28,9 +28,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
-import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import {
-  TokenRowSectionLpTokenHeader,
+  TokenRowLpTokenHeader,
   TokenRowV2,
 } from './components/AssetRenderItems';
 import {
@@ -47,7 +46,6 @@ import useTokenList, {
   tokenEntityResourceStore,
   useTokenAssetsIndexStore,
 } from '@/store/tokens';
-import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { CustomTestnetAssetSection } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAssetSection';
@@ -66,17 +64,16 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   useRegressionScenario,
   useRegressionScenarioAssertion,
-  useRegressionScenarioComponentAction,
 } from '@/devtools/regressionScenarios/react';
 import { IS_ANDROID } from '@/core/native/utils';
 
 type TokenListItem =
   | {
-      type: 'unfold_token' | 'fold_token';
+      type: 'token';
       tokenId: TokenEntityId;
     }
   | {
-      type: 'toggle_token_fold';
+      type: 'lp_token_toggle';
     }
   | {
       type: 'custom_testnet_assets';
@@ -84,13 +81,6 @@ type TokenListItem =
     }
   | {
       type: 'custom_testnet_divider';
-    }
-  | {
-      type: 'scam_token';
-      data: {
-        total: number;
-        logoUrls: string[];
-      };
     }
   | {
       type: 'empty-token';
@@ -140,38 +130,6 @@ const TokenResourceRow = React.memo(
   },
 );
 
-const TokenFoldSectionHeader = React.memo(
-  ({
-    isEnabled,
-    onValueChange,
-    fold,
-    str,
-    style,
-    buttonStyle,
-    onPressFold,
-  }: {
-    isEnabled: boolean;
-    onValueChange: (value: boolean) => void;
-    fold: boolean;
-    str: string;
-    style: ViewStyle;
-    buttonStyle: ViewStyle;
-    onPressFold: () => void;
-  }) => {
-    return (
-      <TokenRowSectionLpTokenHeader
-        isEnabled={isEnabled}
-        onValueChange={onValueChange}
-        fold={fold}
-        style={style}
-        buttonStyle={buttonStyle}
-        str={str}
-        onPressFold={onPressFold}
-      />
-    );
-  },
-);
-
 interface Props {
   noAssetsOnAnyChain: boolean;
   onForeground?: () => void;
@@ -187,13 +145,8 @@ const TOKEN_LIST_BATCHING_PERIOD_MS = 32;
 const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
 
 type BuildTokenListItemsParams = {
-  unFoldTokenIds: TokenEntityId[];
-  foldTokenIds: TokenEntityId[];
-  scamTokenIds: TokenEntityId[];
-  scamTokenPreviewLogoUrls: string[];
-  foldHideList: boolean;
-  foldScam: boolean;
-  hasFoldTokens: boolean;
+  tokenIds: TokenEntityId[];
+  hasLpTokens: boolean;
   isLpTokenEnabled: boolean;
   isLoading: boolean;
   isAllLoading: boolean;
@@ -221,59 +174,10 @@ const appendCustomTestnetItems = (
 const appendTokenItems = (
   items: TokenListItem[],
   tokenIds: TokenEntityId[],
-  type: 'unfold_token' | 'fold_token',
 ) => {
   tokenIds.forEach(tokenId => {
-    items.push({ type, tokenId });
+    items.push({ type: 'token', tokenId });
   });
-};
-
-const appendScamTokenItems = (
-  items: TokenListItem[],
-  {
-    scamTokenIds,
-    scamTokenPreviewLogoUrls,
-    foldScam,
-  }: Pick<
-    BuildTokenListItemsParams,
-    'scamTokenIds' | 'scamTokenPreviewLogoUrls' | 'foldScam'
-  >,
-) => {
-  if (scamTokenIds.length === 0) {
-    return;
-  }
-
-  if (foldScam) {
-    items.push({
-      type: 'scam_token',
-      data: {
-        total: scamTokenIds.length,
-        logoUrls: scamTokenPreviewLogoUrls,
-      },
-    });
-    return;
-  }
-
-  appendTokenItems(items, scamTokenIds, 'fold_token');
-};
-
-const appendFoldSectionItems = (
-  items: TokenListItem[],
-  params: BuildTokenListItemsParams,
-) => {
-  if (!params.hasFoldTokens && !params.isLpTokenEnabled) {
-    return;
-  }
-
-  items.push({ type: 'toggle_token_fold' });
-
-  if (params.foldHideList) {
-    return;
-  }
-
-  appendTokenItems(items, params.foldTokenIds, 'fold_token');
-  appendScamTokenItems(items, params);
-  appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
 };
 
 const appendLoadingSkeletonItems = (
@@ -293,7 +197,7 @@ const appendLoadingSkeletonItems = (
   const shouldShowLpLoading =
     params.isAllLoading &&
     params.isLpTokenEnabled &&
-    params.foldTokenIds.length === 0;
+    params.tokenIds.length === 0;
 
   if (!shouldShowInitialLoading && !shouldShowLpLoading) {
     return;
@@ -311,11 +215,7 @@ const appendEmptyAssetsItem = (
   items: TokenListItem[],
   params: BuildTokenListItemsParams,
 ) => {
-  const hasNoTokenItems =
-    params.unFoldTokenIds.length +
-      params.foldTokenIds.length +
-      params.scamTokenIds.length ===
-      0 && !params.hasFoldTokens;
+  const hasNoTokenItems = params.tokenIds.length === 0;
 
   if (
     params.isLoading ||
@@ -344,24 +244,20 @@ const appendEmptyAssetsItem = (
 const buildTokenListItems = (params: BuildTokenListItemsParams) => {
   const items: TokenListItem[] = [];
 
-  appendTokenItems(items, params.unFoldTokenIds, 'unfold_token');
-  appendFoldSectionItems(items, params);
+  appendTokenItems(items, params.tokenIds);
+  if (params.hasLpTokens || params.isLpTokenEnabled) {
+    items.push({ type: 'lp_token_toggle' });
+  }
   appendLoadingSkeletonItems(items, params);
   appendEmptyAssetsItem(items, params);
-
-  if (!params.hasFoldTokens) {
-    appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
-  }
+  appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
 
   return items;
 };
 
 const getTokenListItemKey = (item: TokenListItem) => {
-  if (item.type === 'unfold_token' || item.type === 'fold_token') {
-    return `${item.type}-${item.tokenId}`;
-  }
-  if (item.type === 'scam_token') {
-    return `scam-token-${item.data.total}`;
+  if (item.type === 'token') {
+    return `token-${item.tokenId}`;
   }
   if (item.type === 'custom_testnet_assets') {
     return `custom-testnet-assets-${item.data.chain.id}`;
@@ -390,8 +286,6 @@ export const TokenList = ({
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
 
-  const [foldHideList, setFoldHideList] = useState(true);
-  const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
@@ -474,14 +368,7 @@ export const TokenList = ({
     { storeLabel: 'single-address-token-assets-index-readiness' },
   );
 
-  const {
-    unFoldTokenIds,
-    foldTokenIds,
-    scamTokenIds,
-    scamTokenPreviewLogoUrls,
-    foldCoreUsdValue,
-    hasFoldTokens,
-  } = useActivityStore(
+  const { tokenIds, hasLpTokens } = useActivityStore(
     useTokenAssetsIndexStore,
     useShallow(
       state =>
@@ -491,10 +378,6 @@ export const TokenList = ({
     ),
     Object.is,
     { storeLabel: 'single-address-token-assets-index' },
-  );
-  const foldTokenUsdValue = useMemo(
-    () => formatNetworth(foldCoreUsdValue),
-    [foldCoreUsdValue],
   );
   const { isLoading, isAllLoading } = useActivityStore(
     useTokenList,
@@ -514,8 +397,7 @@ export const TokenList = ({
     Object.is,
     { storeLabel: 'single-address-token-list' },
   );
-  const hasDefaultTokenData =
-    unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length > 0;
+  const hasDefaultTokenData = tokenIds.length > 0;
   const isTokenProjectionLoading = !!singleAssetsKey && !isTokenProjectionReady;
   const shouldHideCustomTestnetSectionsWhileLoading =
     (isLoading || isAllLoading || isTokenProjectionLoading) &&
@@ -589,13 +471,8 @@ export const TokenList = ({
 
   const dataList = useMemo(() => {
     return buildTokenListItems({
-      unFoldTokenIds,
-      foldTokenIds,
-      scamTokenIds,
-      scamTokenPreviewLogoUrls,
-      foldHideList,
-      foldScam,
-      hasFoldTokens,
+      tokenIds,
+      hasLpTokens,
       isLpTokenEnabled,
       isLoading: isLoading || isTokenProjectionLoading,
       isAllLoading,
@@ -605,18 +482,13 @@ export const TokenList = ({
     });
   }, [
     emptyAssetsText,
-    foldHideList,
-    foldScam,
-    hasFoldTokens,
-    foldTokenIds,
+    hasLpTokens,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
     isTokenProjectionLoading,
     noAnyAssets,
-    scamTokenIds,
-    scamTokenPreviewLogoUrls,
-    unFoldTokenIds,
+    tokenIds,
     visibleCustomTestnetSections,
   ]);
 
@@ -627,47 +499,11 @@ export const TokenList = ({
   const isSingleAddressRegression =
     regressionScenario.active &&
     regressionScenario.scenario === 'single-address';
-  const [preparedRegressionRunId, setPreparedRegressionRunId] = useState<
-    string | null
-  >(null);
   const [readyRegressionRunId, setReadyRegressionRunId] = useState<
     string | null
   >(null);
-  const applyTokenFoldState = useCallback((nextFolded: boolean) => {
-    if (nextFolded) {
-      setFoldScam(true);
-      setIsLpTokenEnabled(false);
-    }
-    setFoldHideList(nextFolded);
-  }, []);
-  const expandTokensForRegression = useCallback(async () => {
-    applyTokenFoldState(false);
-    await new Promise<void>(resolve => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-    });
-  }, [applyTokenFoldState]);
-  useRegressionScenarioComponentAction(
-    'single-address.expand-tokens',
-    expandTokensForRegression,
-  );
-  const collapseTokensForRegression = useCallback(async () => {
-    setPreparedRegressionRunId(regressionRunId);
-    applyTokenFoldState(true);
-    await new Promise<void>(resolve => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-    });
-  }, [applyTokenFoldState, regressionRunId]);
-  useRegressionScenarioComponentAction(
-    'single-address.collapse-tokens',
-    collapseTokensForRegression,
-  );
   useEffect(() => {
-    if (
-      !isSingleAddressRegression ||
-      preparedRegressionRunId !== regressionRunId ||
-      !isFocused ||
-      !isTokenContentReady
-    ) {
+    if (!isSingleAddressRegression || !isFocused || !isTokenContentReady) {
       setReadyRegressionRunId(null);
       return;
     }
@@ -677,14 +513,11 @@ export const TokenList = ({
     }, 350);
     return () => clearTimeout(timer);
   }, [
-    foldTokenIds.length,
     isFocused,
     isSingleAddressRegression,
     isTokenContentReady,
-    preparedRegressionRunId,
     regressionRunId,
-    scamTokenIds.length,
-    unFoldTokenIds.length,
+    tokenIds.length,
   ]);
   useRegressionScenarioAssertion(
     'single-address-tokens-ready',
@@ -694,22 +527,8 @@ export const TokenList = ({
       isTokenContentReady
       ? {
           backgroundRefreshing: isLoading || isAllLoading,
-          foldTokenCount: foldTokenIds.length,
           requestSettled: isTokenListRequestSettled,
-          scamTokenCount: scamTokenIds.length,
-          unfoldedTokenCount: unFoldTokenIds.length,
-        }
-      : null,
-  );
-  useRegressionScenarioAssertion(
-    'single-address-tokens-expanded',
-    isSingleAddressRegression &&
-      preparedRegressionRunId === regressionRunId &&
-      !foldHideList
-      ? {
-          foldTokenCount: foldTokenIds.length,
-          scamTokenCount: scamTokenIds.length,
-          visibleListItemCount: dataList.length,
+          tokenCount: tokenIds.length,
         }
       : null,
   );
@@ -720,10 +539,6 @@ export const TokenList = ({
     () =>
       StyleSheet.flatten([styles.renderItemWrapper, !isLight && styles.bg2]),
     [isLight, styles.bg2, styles.renderItemWrapper],
-  );
-  const foldHeaderButtonStyle = useMemo(
-    () => StyleSheet.flatten([styles.buttonHeader, !isLight && styles.bg2]),
-    [isLight, styles.bg2, styles.buttonHeader],
   );
 
   const handleOpenTokenDetail = useCallback(
@@ -790,10 +605,6 @@ export const TokenList = ({
     [t],
   );
 
-  const handleToggleTokenFold = useCallback(() => {
-    applyTokenFoldState(!foldHideList);
-  }, [applyTokenFoldState, foldHideList]);
-
   const handleLpTokenEnabledChange = useCallback(
     (nextEnabled: boolean) => {
       if (currentAddress) {
@@ -826,7 +637,7 @@ export const TokenList = ({
   }, [currentAddress, getTokenList, onRefresh]);
 
   const renderTokenItem = useCallback(
-    (item: Extract<TokenListItem, { type: 'unfold_token' | 'fold_token' }>) => (
+    (item: Extract<TokenListItem, { type: 'token' }>) => (
       <View style={styles.rowWrap}>
         <TokenResourceRow
           tokenId={item.tokenId}
@@ -839,43 +650,15 @@ export const TokenList = ({
     [handleOpenTokenDetail, styles.removeLeft, styles.rowWrap, tokenRowStyle],
   );
 
-  const renderScamTokenItem = useCallback(
-    (item: Extract<TokenListItem, { type: 'scam_token' }>) => (
-      <View style={styles.rowWrap}>
-        <ScamTokenHeader
-          total={item.data.total}
-          logoUrls={item.data.logoUrls}
-          style={tokenRowStyle}
-          onPress={() => {
-            setFoldScam(false);
-          }}
-        />
-      </View>
-    ),
-    [styles.rowWrap, tokenRowStyle],
-  );
-
-  const renderFoldHeaderItem = useCallback(
+  const renderLpHeaderItem = useCallback(
     () => (
-      <TokenFoldSectionHeader
+      <TokenRowLpTokenHeader
         isEnabled={isLpTokenEnabled}
         onValueChange={handleLpTokenEnabledChange}
-        fold={foldHideList}
-        str={foldTokenUsdValue}
         style={styles.sectionHeader}
-        buttonStyle={foldHeaderButtonStyle}
-        onPressFold={handleToggleTokenFold}
       />
     ),
-    [
-      foldHeaderButtonStyle,
-      foldHideList,
-      foldTokenUsdValue,
-      handleToggleTokenFold,
-      handleLpTokenEnabledChange,
-      isLpTokenEnabled,
-      styles.sectionHeader,
-    ],
+    [handleLpTokenEnabledChange, isLpTokenEnabled, styles.sectionHeader],
   );
 
   const renderCustomTestnetSectionItem = useCallback(
@@ -936,13 +719,10 @@ export const TokenList = ({
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(
     ({ item }) => {
       switch (item.type) {
-        case 'unfold_token':
-        case 'fold_token':
+        case 'token':
           return renderTokenItem(item);
-        case 'scam_token':
-          return renderScamTokenItem(item);
-        case 'toggle_token_fold':
-          return renderFoldHeaderItem();
+        case 'lp_token_toggle':
+          return renderLpHeaderItem();
         case 'custom_testnet_assets':
           return renderCustomTestnetSectionItem(item);
         case 'custom_testnet_divider':
@@ -967,8 +747,7 @@ export const TokenList = ({
     [
       renderCustomTestnetSectionItem,
       renderEmptyItem,
-      renderFoldHeaderItem,
-      renderScamTokenItem,
+      renderLpHeaderItem,
       renderTokenItem,
       styles.removeLeft,
       styles.rowWrap,
@@ -1060,9 +839,6 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
     // paddingRight: 8,
     height: ASSETS_SECTION_HEADER,
-  },
-  buttonHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   customTestnetSectionWrap: {
     paddingHorizontal: 12,

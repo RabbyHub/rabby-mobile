@@ -109,7 +109,7 @@ describe('single-address token assets projection', () => {
     expect(state.singleAssetsConfigByKey[key]?.address).toBe(
       NORMALIZED_ADDRESS,
     );
-    expect(state.singleAssetsResultByKey[key]?.unFoldTokenIds).toEqual([
+    expect(state.singleAssetsResultByKey[key]?.tokenIds).toEqual([
       buildTokenEntityId(eth),
     ]);
   });
@@ -124,13 +124,13 @@ describe('single-address token assets projection', () => {
 
     expect(
       useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]
-        ?.unFoldTokenIds,
+        ?.tokenIds,
     ).toEqual([buildTokenEntityId(first), buildTokenEntityId(second)]);
 
     replaceAddressTokens([second]);
     expect(
       useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]
-        ?.unFoldTokenIds,
+        ?.tokenIds,
     ).toEqual([buildTokenEntityId(second)]);
   });
 
@@ -149,10 +149,10 @@ describe('single-address token assets projection', () => {
     });
     const state = useTokenAssetsIndexStore.getState();
 
-    expect(state.singleAssetsResultByKey[ethKey]?.unFoldTokenIds).toEqual([
+    expect(state.singleAssetsResultByKey[ethKey]?.tokenIds).toEqual([
       buildTokenEntityId(eth),
     ]);
-    expect(state.singleAssetsResultByKey[arbKey]?.unFoldTokenIds).toEqual([
+    expect(state.singleAssetsResultByKey[arbKey]?.tokenIds).toEqual([
       buildTokenEntityId(arb),
     ]);
   });
@@ -175,12 +175,13 @@ describe('single-address token assets projection', () => {
     });
     const state = useTokenAssetsIndexStore.getState();
 
-    expect(
-      state.singleAssetsResultByKey[defaultKey]?.foldTokenIds,
-    ).not.toContain(buildTokenEntityId(lp));
-    expect(state.singleAssetsResultByKey[lpKey]?.foldTokenIds).toContain(
+    expect(state.singleAssetsResultByKey[defaultKey]?.tokenIds).toEqual([
+      buildTokenEntityId(core),
+    ]);
+    expect(state.singleAssetsResultByKey[lpKey]?.tokenIds).toEqual([
+      buildTokenEntityId(core),
       buildTokenEntityId(lp),
-    );
+    ]);
   });
 
   it('publishes all registered projection updates in one store notification', () => {
@@ -230,11 +231,30 @@ describe('single-address token assets projection', () => {
     expect(config?.tokenIds).toContain(tokenId);
     expect(
       useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]
-        ?.unFoldTokenIds,
-    ).toEqual([]);
+        ?.tokenIds,
+    ).toEqual([tokenId]);
+  });
+
+  it('keeps low-value eligible tokens but excludes explicit risk tokens', () => {
+    const eligible = createToken('eligible', {
+      is_core: null,
+      usd_value: 0,
+    });
+    const unverified = createToken('unverified', {
+      is_verified: false,
+      usd_value: 100,
+    });
+    const suspicious = createToken('suspicious', {
+      is_suspicious: true,
+      usd_value: 100,
+    });
+    replaceAddressTokens([eligible, unverified, suspicious]);
+
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+
     expect(
       useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]
-        ?.scamTokenIds,
-    ).toEqual([tokenId]);
+        ?.tokenIds,
+    ).toEqual([buildTokenEntityId(eligible)]);
   });
 });

@@ -78,11 +78,7 @@ const buildConvertDustTokenIds = ({
     chainServerId,
     false,
   );
-  const dustTokenIds = [
-    ...assetsIndex.unFoldTokenIds,
-    ...assetsIndex.foldTokenIds,
-    ...assetsIndex.scamTokenIds,
-  ].filter(tokenId => {
+  const dustTokenIds = assetsIndex.tokenIds.filter(tokenId => {
     const token = tokenEntityResourceStore.getValue(tokenId);
     if (!token) {
       return false;

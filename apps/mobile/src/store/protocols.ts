@@ -76,7 +76,7 @@ const normalizeAddresses = (addresses: string[]) =>
   addresses.map(address => address.toLowerCase());
 
 const getAddressesKey = (addresses: string[]) =>
-  normalizeAddresses(addresses).slice().sort().join('|');
+  normalizeAddresses(addresses).join('|');
 
 export const getMultiProtocolsCacheKey = (
   addresses: string[],
@@ -210,35 +210,8 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
 
 export const protocolEntityResourceStore = new ProtocolEntityResourceStore();
 
-const splitFoldAndUnfold = (list: IProtocolItem[]): ICacheProtocolItem => {
-  const sortedList = list
-    .slice()
-    .sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
-
-  const totalNetWorth = sortedList.reduce(
-    (acc, curr) => acc + (Number(curr?.netWorth) || 0),
-    0,
-  );
-  const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
-  const thresholdIndex = sortedList
-    ? sortedList.findIndex(m => (Number(m?.netWorth) || 0) < threshold)
-    : -1;
-  const hasExpandSwitch =
-    sortedList.length > 3 &&
-    thresholdIndex > -1 &&
-    thresholdIndex <= sortedList.length - 4;
-
-  const isFold = (p: IProtocolItem) => {
-    if (hasExpandSwitch && (p?.netWorth || 0) < threshold) {
-      return true;
-    }
-    return false;
-  };
-  return {
-    fold: sortedList.filter(isFold),
-    unFold: sortedList.filter(p => !isFold(p)),
-  };
-};
+const sortProtocols = (list: IProtocolItem[]): ICacheProtocolItem =>
+  list.slice().sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
 
 const computeSingleProtocols = (
   protocolMap: ProtocolListMap,
@@ -246,10 +219,7 @@ const computeSingleProtocols = (
   chainServerId?: string,
 ): ICacheProtocolItem => {
   if (!address) {
-    return {
-      fold: [],
-      unFold: [],
-    };
+    return [];
   }
 
   const normalizedAddress = address.toLowerCase();
@@ -259,7 +229,7 @@ const computeSingleProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  return splitFoldAndUnfold(filtered);
+  return sortProtocols(filtered);
 };
 
 const computeSingleProtocolsIndex = (
@@ -279,10 +249,7 @@ const computeMultiProtocols = (
   chainServerId?: string,
 ): ICacheProtocolItem => {
   if (!addresses.length) {
-    return {
-      fold: [],
-      unFold: [],
-    };
+    return [];
   }
 
   const normalizedAddresses = normalizeAddresses(addresses);
@@ -294,7 +261,7 @@ const computeMultiProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  return splitFoldAndUnfold(filtered);
+  return sortProtocols(filtered);
 };
 
 const computeMultiProtocolsIndex = (

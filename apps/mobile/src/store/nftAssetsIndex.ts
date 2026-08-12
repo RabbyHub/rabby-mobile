@@ -27,8 +27,7 @@ export type NftCollectionResourceValue = CollectionList & {
 };
 
 export type NftAssetsIndexResult = {
-  unFoldRows: NftAssetsIndexRow[];
-  foldRows: NftAssetsIndexRow[];
+  rows: NftAssetsIndexRow[];
 };
 
 export type NftAssetsIndexProjection = {
@@ -42,8 +41,7 @@ export type NftAssetsIndexProjection = {
 const EMPTY_NFT_ASSETS_INDEX_ROWS: NftAssetsIndexRow[] = [];
 
 export const EMPTY_NFT_ASSETS_INDEX_RESULT: NftAssetsIndexResult = {
-  unFoldRows: EMPTY_NFT_ASSETS_INDEX_ROWS,
-  foldRows: EMPTY_NFT_ASSETS_INDEX_ROWS,
+  rows: EMPTY_NFT_ASSETS_INDEX_ROWS,
 };
 
 const getNftOwnerAddress = (nft: { owner_addr?: string; address?: string }) =>
@@ -66,13 +64,9 @@ export const buildNftEntityId = (
   ].join(':') as NftEntityId;
 
 const buildNftCollectionId = (
-  listKey: string,
-  section: 'unfold' | 'fold',
   collection: NftCollectionResourceValue,
 ): NftCollectionId =>
   [
-    listKey,
-    section,
     collection.address?.toLowerCase() || '',
     collection.chain?.toLowerCase() || '',
     collection.id?.toLowerCase() || '',
@@ -122,18 +116,23 @@ const stabilizeRows = (
 
 const buildRows = (
   nfts: CombinedNftItem[],
-  section: 'unfold' | 'fold',
-  listKey: string,
+  previousRows?: NftAssetsIndexRow[],
 ) => {
-  const rows: NftAssetsIndexRow[] = [];
+  const candidates: Array<{
+    row: NftAssetsIndexRow;
+    creditScore: number;
+    stableKey: string;
+  }> = [];
   const collections: NftAssetsIndexProjection['collections'] = [];
   const collectionMap = new Map<string, NftCollectionResourceValue>();
 
   nfts.forEach(item => {
     if (!item.collection_id || !item.collection) {
-      rows.push({
-        type: 'nft',
-        nftId: buildNftEntityId(item),
+      const nftId = buildNftEntityId(item);
+      candidates.push({
+        row: { type: 'nft', nftId },
+        creditScore: 0,
+        stableKey: `nft:${nftId}`,
       });
       return;
     }
@@ -152,44 +151,58 @@ const buildRows = (
       address: item.address || getNftOwnerAddress(item),
       nft_list: [{ ...item, collection: null }],
     } as unknown as NftCollectionResourceValue;
-    const collectionId = buildNftCollectionId(listKey, section, collection);
+    const collectionId = buildNftCollectionId(collection);
     collectionMap.set(collectionKey, collection);
     collections.push({ collectionId, value: collection });
-    rows.push({ type: 'collection', collectionId });
+    candidates.push({
+      row: { type: 'collection', collectionId },
+      creditScore: Number(collection.credit_score) || 0,
+      stableKey: `collection:${collectionId}`,
+    });
   });
 
-  return { rows, collections };
+  collections.forEach(({ value }) => {
+    value.nft_list.sort((a, b) =>
+      buildNftEntityId(a).localeCompare(buildNftEntityId(b)),
+    );
+  });
+
+  const previousPosition = new Map(
+    (previousRows || []).map((row, index) => [
+      getNftAssetsIndexRowKey(row),
+      index,
+    ]),
+  );
+  candidates.sort((a, b) => {
+    const scoreDelta = b.creditScore - a.creditScore;
+    if (scoreDelta) {
+      return scoreDelta;
+    }
+    const aPosition = previousPosition.get(getNftAssetsIndexRowKey(a.row));
+    const bPosition = previousPosition.get(getNftAssetsIndexRowKey(b.row));
+    if (aPosition !== undefined || bPosition !== undefined) {
+      return (
+        (aPosition ?? Number.MAX_SAFE_INTEGER) -
+        (bPosition ?? Number.MAX_SAFE_INTEGER)
+      );
+    }
+    return a.stableKey.localeCompare(b.stableKey);
+  });
+
+  return { rows: candidates.map(candidate => candidate.row), collections };
 };
 
 export const buildNftAssetsIndexProjection = (
   nfts: CombinedNftItem[],
-  listKey: string,
+  _listKey: string,
   previousResult?: NftAssetsIndexResult,
 ): NftAssetsIndexProjection => {
-  const foldNfts: CombinedNftItem[] = [];
-  const unFoldNfts: CombinedNftItem[] = [];
-
-  nfts.forEach(item => {
-    if (item._isFold) {
-      foldNfts.push(item);
-    } else {
-      unFoldNfts.push(item);
-    }
-  });
-
-  const unFold = buildRows(unFoldNfts, 'unfold', listKey);
-  const fold = buildRows(foldNfts, 'fold', listKey);
-  const unFoldRows = stabilizeRows(unFold.rows, previousResult?.unFoldRows);
-  const foldRows = stabilizeRows(fold.rows, previousResult?.foldRows);
-  const result =
-    previousResult &&
-    previousResult.unFoldRows === unFoldRows &&
-    previousResult.foldRows === foldRows
-      ? previousResult
-      : { unFoldRows, foldRows };
+  const projection = buildRows(nfts, previousResult?.rows);
+  const rows = stabilizeRows(projection.rows, previousResult?.rows);
+  const result = previousResult?.rows === rows ? previousResult : { rows };
 
   return {
     result,
-    collections: [...unFold.collections, ...fold.collections],
+    collections: projection.collections,
   };
 };

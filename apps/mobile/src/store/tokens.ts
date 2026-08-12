@@ -85,58 +85,6 @@ interface TokenListState {
   setTokenDisplayMode(mode: TokenDisplayMode): void;
 }
 
-function getMultiAssetsFoldResultFromParts({
-  nonScamTokens,
-  coreTokens,
-  totalValue,
-}: {
-  nonScamTokens: ITokenItem[];
-  coreTokens: ITokenItem[];
-  totalValue: number;
-}) {
-  const listLength = coreTokens.length || 0;
-  const threshold = Math.min((totalValue || 0) / 100, 1000);
-  const thresholdIndex = coreTokens
-    ? coreTokens.findIndex(token => (token.usd_value || 0) < threshold)
-    : -1;
-  const hasExpandSwitch =
-    listLength > 3 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
-
-  const sortedTokens = nonScamTokens
-    .slice()
-    .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
-
-  const unfoldedTokens: ITokenItem[] = [];
-  const foldedTokens: ITokenItem[] = [];
-  sortedTokens.forEach(token => {
-    const shouldUnfold =
-      !hasExpandSwitch || (token.usd_value || 0) >= threshold;
-    if (shouldUnfold && token.is_core) {
-      unfoldedTokens.push(token);
-    } else {
-      foldedTokens.push(token);
-    }
-  });
-
-  const unfoldedTokensLimited = unfoldedTokens.slice(0, 20);
-  const foldedTokensFromLimited = unfoldedTokens.slice(20).concat(foldedTokens);
-  const sortedFoldedTokens = foldedTokensFromLimited.slice().sort((a, b) => {
-    const aValue = a.usd_value || 0;
-    const bValue = b.usd_value || 0;
-    const aRank = a.is_core ? (aValue > 0 ? 0 : 2) : 1;
-    const bRank = b.is_core ? (bValue > 0 ? 0 : 2) : 1;
-    if (aRank !== bRank) {
-      return aRank - bRank;
-    }
-    return bValue - aValue;
-  });
-
-  return {
-    unfoldedTokens: unfoldedTokensLimited,
-    foldedTokens: sortedFoldedTokens,
-  };
-}
-
 const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
   if (a.is_core && !b.is_core) {
     return -1;
@@ -284,15 +232,9 @@ export type TokenStaticIndexItem = {
 };
 
 export type TokenAssetsIndexResult = {
-  unFoldRows: TokenAssetsIndexRow[];
-  foldRows: TokenAssetsIndexRow[];
-  scamRows: TokenAssetsIndexRow[];
-  unFoldTokenIds: TokenEntityId[];
-  foldTokenIds: TokenEntityId[];
-  scamTokenIds: TokenEntityId[];
-  scamTokenPreviewLogoUrls: string[];
-  foldCoreUsdValue: number;
-  hasFoldTokens: boolean;
+  rows: TokenAssetsIndexRow[];
+  tokenIds: TokenEntityId[];
+  hasLpTokens: boolean;
 };
 
 export type TokenGroupResourceValue = {
@@ -307,18 +249,11 @@ const TOKEN_GROUP_RESOURCE_FAMILY = 'token.group';
 export const EMPTY_TOKEN_ENTITY_IDS: TokenEntityId[] = [];
 const EMPTY_TOKEN_ASSETS_INDEX_ROWS: TokenAssetsIndexRow[] = [];
 const EMPTY_TOKEN_SELECT_INDEX_ROWS: TokenSelectIndexRow[] = [];
-const EMPTY_STRING_LIST: string[] = [];
 
 export const EMPTY_TOKEN_ASSETS_INDEX_RESULT: TokenAssetsIndexResult = {
-  unFoldRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
-  foldRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
-  scamRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
-  unFoldTokenIds: EMPTY_TOKEN_ENTITY_IDS,
-  foldTokenIds: EMPTY_TOKEN_ENTITY_IDS,
-  scamTokenIds: EMPTY_TOKEN_ENTITY_IDS,
-  scamTokenPreviewLogoUrls: EMPTY_STRING_LIST,
-  foldCoreUsdValue: 0,
-  hasFoldTokens: false,
+  rows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  tokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  hasLpTokens: false,
 };
 
 const EMPTY_TOKEN_SELECT_INDEX_RESULT: TokenSelectIndexResult = {
@@ -640,11 +575,10 @@ const stripTokenRuntimeGroupFields = (token: ITokenItem): ITokenItem => {
 
 const buildTokenGroupId = (
   listKey: string,
-  section: 'unfold' | 'fold' | 'scam',
   token: ITokenItem,
 ): TokenGroupId => {
   const groupKey = getTokenRuntimeGroupKey(token) || buildTokenEntityId(token);
-  return `${listKey}::${section}::${groupKey}` as TokenGroupId;
+  return `${listKey}::${groupKey}` as TokenGroupId;
 };
 
 const buildStableTokenEntityIds = (
@@ -694,27 +628,6 @@ const buildStableTokenEntityIdList = (
   });
 
   return nextIds || previousIds!;
-};
-
-const buildStableStringList = (list: string[], previousList?: string[]) => {
-  if (!list.length) {
-    return previousList?.length ? EMPTY_STRING_LIST : previousList || [];
-  }
-
-  const canReusePrevious = previousList?.length === list.length;
-  let nextList: string[] | undefined = canReusePrevious ? undefined : [];
-
-  list.forEach((item, index) => {
-    if (canReusePrevious && !nextList) {
-      if (previousList![index] === item) {
-        return;
-      }
-      nextList = previousList!.slice(0, index);
-    }
-    nextList!.push(item);
-  });
-
-  return nextList || previousList!;
 };
 
 const buildTokenStaticIndexItem = (token: ITokenItem): TokenStaticIndexItem => {
@@ -1121,7 +1034,6 @@ const isTokenAssetsIndexRowSame = (
 
 const buildTokenAssetsIndexRows = (
   tokens: ITokenItem[],
-  section: 'unfold' | 'fold' | 'scam',
   listKey?: string,
   previousRows?: TokenAssetsIndexRow[],
 ) => {
@@ -1144,7 +1056,7 @@ const buildTokenAssetsIndexRows = (
     const groupItems = getTokenRuntimeGroupItems(token);
 
     if (listKey && groupItems?.length) {
-      const groupId = buildTokenGroupId(listKey, section, token);
+      const groupId = buildTokenGroupId(listKey, token);
       const memberTokenIds = groupItems.map(buildTokenEntityId);
       groups.push({
         groupId,
@@ -1200,63 +1112,26 @@ const buildTokenAssetsIndexResult = (
   listKey?: string,
   previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
-  const unFoldRows = buildTokenAssetsIndexRows(
-    result.unFoldTokens,
-    'unfold',
+  const rows = buildTokenAssetsIndexRows(
+    result.tokens,
     listKey,
-    previousResult?.unFoldRows,
-  );
-  const foldRows = buildTokenAssetsIndexRows(
-    result.foldTokens,
-    'fold',
-    listKey,
-    previousResult?.foldRows,
-  );
-  const scamRows = buildTokenAssetsIndexRows(
-    result.scamTokens,
-    'scam',
-    listKey,
-    previousResult?.scamRows,
+    previousResult?.rows,
   );
 
   const nextResult = {
-    unFoldRows,
-    foldRows,
-    scamRows,
-    unFoldTokenIds: buildStableTokenEntityIds(
-      result.unFoldTokens,
-      previousResult?.unFoldTokenIds,
+    rows,
+    tokenIds: buildStableTokenEntityIds(
+      result.tokens,
+      previousResult?.tokenIds,
     ),
-    foldTokenIds: buildStableTokenEntityIds(
-      result.foldTokens,
-      previousResult?.foldTokenIds,
-    ),
-    scamTokenIds: buildStableTokenEntityIds(
-      result.scamTokens,
-      previousResult?.scamTokenIds,
-    ),
-    scamTokenPreviewLogoUrls: buildStableStringList(
-      result.scamTokens.slice(0, 3).map(token => token.logo_url),
-      previousResult?.scamTokenPreviewLogoUrls,
-    ),
-    foldCoreUsdValue: result.foldTokens
-      .filter(token => token.is_core)
-      .reduce((total, token) => total + (token.usd_value || 0), 0),
-    hasFoldTokens: result.hasFoldTokens,
+    hasLpTokens: result.hasLpTokens,
   };
 
   if (
     previousResult &&
-    previousResult.unFoldRows === nextResult.unFoldRows &&
-    previousResult.foldRows === nextResult.foldRows &&
-    previousResult.scamRows === nextResult.scamRows &&
-    previousResult.unFoldTokenIds === nextResult.unFoldTokenIds &&
-    previousResult.foldTokenIds === nextResult.foldTokenIds &&
-    previousResult.scamTokenIds === nextResult.scamTokenIds &&
-    previousResult.scamTokenPreviewLogoUrls ===
-      nextResult.scamTokenPreviewLogoUrls &&
-    previousResult.foldCoreUsdValue === nextResult.foldCoreUsdValue &&
-    previousResult.hasFoldTokens === nextResult.hasFoldTokens
+    previousResult.rows === nextResult.rows &&
+    previousResult.tokenIds === nextResult.tokenIds &&
+    previousResult.hasLpTokens === nextResult.hasLpTokens
   ) {
     return previousResult;
   }
@@ -1327,49 +1202,23 @@ const computeMultiAssetsFromTokens = (
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
-  const scamTokens: ITokenItem[] = [];
-  const nonScamTokens: ITokenItem[] = [];
-  tokens.forEach(token => {
-    const usdValue = token.usd_value || 0;
-    const isLowValueToken = token.is_core === null && usdValue === 0;
-    const isScam = token.is_verified === false || token.is_suspicious;
-    if (!isScam) {
-      if (isLowValueToken) {
-        scamTokens.push(token);
-      } else {
-        nonScamTokens.push(token);
-      }
-    }
-  });
-  const displayMode = tokenDisplayMode || 'byAddress';
-  const aggregatedNonScamTokens =
-    displayMode === 'byAddress'
-      ? nonScamTokens
-      : aggregateTokens(nonScamTokens, displayMode);
-  const aggregatedScamTokens =
-    displayMode === 'byAddress'
-      ? scamTokens
-      : aggregateTokens(scamTokens, displayMode);
-  const coreTokens = aggregatedNonScamTokens.filter(token => token.is_core);
-  const totalValue = coreTokens.reduce(
-    (sum, token) => sum + (token.usd_value || 0),
-    0,
+  const visibleTokens = tokens.filter(token =>
+    isLpTokenEnabled
+      ? includeLpTokensFilter(token)
+      : lpTokenFilter(token, false),
   );
-
-  const { foldedTokens, unfoldedTokens } = getMultiAssetsFoldResultFromParts({
-    nonScamTokens: aggregatedNonScamTokens,
-    coreTokens,
-    totalValue,
-  });
+  const displayMode = tokenDisplayMode || 'byAddress';
+  const aggregatedTokens =
+    displayMode === 'byAddress'
+      ? visibleTokens
+      : aggregateTokens(visibleTokens, displayMode);
 
   return {
-    unFoldTokens: unfoldedTokens,
-    hasFoldTokens:
-      foldedTokens.some(includeLpTokensFilter) ||
-      aggregatedScamTokens.some(includeLpTokensFilter),
-    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-    scamTokens: aggregatedScamTokens.filter(i =>
-      lpTokenFilter(i, isLpTokenEnabled),
+    tokens: aggregatedTokens
+      .slice()
+      .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0)),
+    hasLpTokens: tokens.some(
+      token => includeLpTokensFilter(token) && !lpTokenFilter(token, false),
     ),
   };
 };
@@ -1407,42 +1256,22 @@ const computeSingleAssetsFromTokens = (
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
 ): TokenAssetsResult => {
-  const scamTokens: ITokenItem[] = [];
-  const nonScamTokens: ITokenItem[] = [];
-  const coreTokens: ITokenItem[] = [];
-  let totalValue = 0;
-  tokens.forEach(token => {
-    if (chainServerId && token.chain !== chainServerId) {
-      return;
-    }
-    const usdValue = token.usd_value || 0;
-    const isZeroCore = token.is_core && usdValue === 0;
-    const isScam =
-      token.is_verified === false ||
-      (usdValue === 0 && !isZeroCore) ||
-      token.is_suspicious;
-    if (isScam) {
-      scamTokens.push(token);
-    } else {
-      nonScamTokens.push(token);
-    }
-    if (!isScam && token.is_core) {
-      coreTokens.push(token);
-      totalValue += usdValue;
-    }
-  });
-  const { foldedTokens, unfoldedTokens } = getMultiAssetsFoldResultFromParts({
-    nonScamTokens,
-    coreTokens,
-    totalValue,
-  });
   return {
-    unFoldTokens: unfoldedTokens,
-    hasFoldTokens:
-      foldedTokens.some(includeLpTokensFilter) ||
-      scamTokens.some(includeLpTokensFilter),
-    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-    scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+    tokens: tokens
+      .filter(token => !chainServerId || token.chain === chainServerId)
+      .filter(token =>
+        isLpTokenEnabled
+          ? includeLpTokensFilter(token)
+          : lpTokenFilter(token, false),
+      )
+      .slice()
+      .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0)),
+    hasLpTokens: tokens.some(
+      token =>
+        (!chainServerId || token.chain === chainServerId) &&
+        includeLpTokensFilter(token) &&
+        !lpTokenFilter(token, false),
+    ),
   };
 };
 

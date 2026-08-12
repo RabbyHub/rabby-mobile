@@ -10,6 +10,7 @@ const makeNft = (
     collectionId?: string;
     fold?: boolean;
     ownerAddress?: string;
+    creditScore?: number;
   },
 ): DisplayNftItem =>
   ({
@@ -25,6 +26,7 @@ const makeNft = (
           id: options.collectionId,
           name: `collection-${options.collectionId}`,
           chain: 'eth',
+          credit_score: options.creditScore || 0,
           nft_list: [],
         }
       : null,
@@ -47,8 +49,8 @@ describe('nft asset index', () => {
       '0xabc::eth',
     );
 
-    expect(projection.result.unFoldRows).toHaveLength(1);
-    expect(projection.result.unFoldRows[0]?.type).toBe('collection');
+    expect(projection.result.rows).toHaveLength(1);
+    expect(projection.result.rows[0]?.type).toBe('collection');
     expect(projection.collections[0]?.value.nft_list).toHaveLength(2);
   });
 
@@ -67,21 +69,39 @@ describe('nft asset index', () => {
       'multi::0xaaa|0xbbb::eth',
     );
 
-    expect(projection.result.unFoldRows).toHaveLength(2);
+    expect(projection.result.rows).toHaveLength(2);
     expect(projection.collections.map(item => item.value.address)).toEqual([
       '0xaaa',
       '0xbbb',
     ]);
   });
 
-  it('keeps folded and unfolded rows independent', () => {
+  it('does not hide rows based on the legacy fold flag', () => {
     const projection = buildNftAssetsIndexProjection(
       [makeNft('visible'), makeNft('hidden', { fold: true })],
       '0xabc::eth',
     );
 
-    expect(projection.result.unFoldRows).toHaveLength(1);
-    expect(projection.result.foldRows).toHaveLength(1);
+    expect(projection.result.rows).toHaveLength(2);
+  });
+
+  it('sorts collection rows by credit score', () => {
+    const projection = buildNftAssetsIndexProjection(
+      [
+        makeNft('low', { collectionId: 'low', creditScore: 1 }),
+        makeNft('high', { collectionId: 'high', creditScore: 100 }),
+      ],
+      '0xabc::eth',
+    );
+
+    expect(projection.collections.map(item => item.value.id)).toEqual([
+      'low',
+      'high',
+    ]);
+    expect(projection.result.rows[0]).toEqual({
+      type: 'collection',
+      collectionId: '0xabc::eth::high',
+    });
   });
 
   it('reuses row arrays and the result when ids and ordering are unchanged', () => {
@@ -96,6 +116,6 @@ describe('nft asset index', () => {
     );
 
     expect(second.result).toBe(first.result);
-    expect(second.result.unFoldRows).toBe(first.result.unFoldRows);
+    expect(second.result.rows).toBe(first.result.rows);
   });
 });

@@ -11,7 +11,6 @@ import {
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
-import { getSingleAddressChainProjectionDiagnosticsSnapshot } from '@/screens/Home/singleAddressChainDiagnostics';
 import { getAssetDataLoadDiagnosticsSnapshot } from '@/core/utils/assetDataLoadDiagnostics';
 import {
   apiSendToken,
@@ -83,18 +82,12 @@ const SINGLE_ADDRESS_TAB_ACTIVITY = [
     scopeLabel: 'single-address-nft',
   },
 ] as const;
-const SINGLE_ADDRESS_EXPAND_ACTIONS = {
+const SINGLE_ADDRESS_ASSET_READY_ASSERTIONS = {
   tokens: {
-    collapseAction: 'single-address.collapse-tokens',
-    action: 'single-address.expand-tokens',
     readyAssertion: 'single-address-tokens-ready',
-    assertion: 'single-address-tokens-expanded',
   },
   nft: {
-    collapseAction: 'single-address.collapse-nfts',
-    action: 'single-address.expand-nfts',
     readyAssertion: 'single-address-nfts-ready',
-    assertion: 'single-address-nfts-expanded',
   },
 } as const;
 const SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS = [
@@ -704,75 +697,6 @@ function summarizeSingleAddressActivityScopes() {
   };
 }
 
-type SingleAddressActivitySummary = ReturnType<
-  typeof summarizeSingleAddressActivityScopes
->;
-
-function diffSingleAddressStoreActivity(
-  before: SingleAddressActivitySummary,
-  after: SingleAddressActivitySummary,
-) {
-  const previousByKey = new Map<
-    string,
-    NonNullable<
-      SingleAddressActivitySummary['scopes'][number]
-    >['stores'][number]
-  >();
-  before.scopes.forEach((scope, scopeIndex) => {
-    const scopeLabel = SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS[scopeIndex];
-    scope?.stores.forEach(store => {
-      previousByKey.set(`${scopeLabel}/${store.label}`, store);
-    });
-  });
-
-  return after.scopes
-    .flatMap((scope, scopeIndex) => {
-      const scopeLabel = SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS[scopeIndex];
-      return (scope?.stores || []).map(store => {
-        const key = `${scopeLabel}/${store.label}`;
-        const previous = previousByKey.get(key);
-        return {
-          scope: scopeLabel,
-          store: store.label,
-          consumerDelta: store.consumerCount - (previous?.consumerCount || 0),
-          sourceNotificationDelta:
-            store.sourceNotificationCount -
-            (previous?.sourceNotificationCount || 0),
-          publishedNotificationDelta:
-            store.publishedNotificationCount -
-            (previous?.publishedNotificationCount || 0),
-          catchUpDelta: store.catchUpCount - (previous?.catchUpCount || 0),
-        };
-      });
-    })
-    .filter(
-      store =>
-        store.consumerDelta !== 0 ||
-        store.sourceNotificationDelta !== 0 ||
-        store.publishedNotificationDelta !== 0 ||
-        store.catchUpDelta !== 0,
-    );
-}
-
-function getSingleAddressChainProjectionCursor() {
-  const records = getSingleAddressChainProjectionDiagnosticsSnapshot().records;
-  return records[records.length - 1]?.id || 0;
-}
-
-function getSingleAddressChainProjectionRecordsAfter(cursor: number) {
-  return getSingleAddressChainProjectionDiagnosticsSnapshot()
-    .records.filter(record => record.id > cursor)
-    .map(record => ({
-      source: record.source,
-      addressCount: record.addressCount,
-      inputCount: record.inputCount,
-      changed: record.changed,
-      projectionMs: Math.round(record.projectionMs * 10) / 10,
-      publishMs: Math.round(record.publishMs * 10) / 10,
-      totalMs: Math.round(record.totalMs * 10) / 10,
-    }));
-}
-
 function getAssetDataLoadDiagnosticsCursor() {
   const records = getAssetDataLoadDiagnosticsSnapshot().records;
   return records[records.length - 1]?.id || 0;
@@ -955,18 +879,11 @@ async function openSingleAddress(
         });
 
         if (tab.name !== 'defi') {
-          const expandConfig = SINGLE_ADDRESS_EXPAND_ACTIONS[tab.name];
-          probe.markPhase(`collapse-${tab.name}`);
-          const collapseTiming = await runRegressionScenarioComponentAction(
-            context.command.runId,
-            expandConfig.collapseAction,
-            15_000,
-          );
-          probe.recordAction(`collapse-${tab.name}`, collapseTiming);
+          const readyConfig = SINGLE_ADDRESS_ASSET_READY_ASSERTIONS[tab.name];
           probe.markPhase(`wait-${tab.name}-content-ready`);
           const readyEvent = await waitForScenarioAssertion(
             context,
-            expandConfig.readyAssertion,
+            readyConfig.readyAssertion,
             30_000,
           );
           probe.recordDuration(
@@ -979,50 +896,6 @@ async function openSingleAddress(
             ...readyEvent.data,
           });
         }
-
-        if (tab.name === 'defi') {
-          continue;
-        }
-        const expandConfig = SINGLE_ADDRESS_EXPAND_ACTIONS[tab.name];
-        const expandStartedAt = Date.now();
-        const expandProbe = createRegressionScenarioPerformanceProbe();
-        const activityBeforeExpand = summarizeSingleAddressActivityScopes();
-        const chainProjectionCursor = getSingleAddressChainProjectionCursor();
-        probe.markPhase(`expand-${tab.name}`);
-        const expandTiming = await runRegressionScenarioComponentAction(
-          context.command.runId,
-          expandConfig.action,
-          15_000,
-        );
-        probe.recordAction(`expand-${tab.name}`, expandTiming);
-        probe.markPhase(`wait-${tab.name}-expanded`);
-        const expandedEvent = await waitForScenarioAssertion(
-          context,
-          expandConfig.assertion,
-          15_000,
-          expandStartedAt,
-        );
-        probe.recordDuration(
-          `expand-${tab.name}-settled`,
-          Date.now() - expandStartedAt,
-        );
-        context.report('perf-mark', {
-          mark: `single-address-${tab.name}-expand-performance`,
-          ...expandProbe.stop(),
-          storeActivityDelta: diffSingleAddressStoreActivity(
-            activityBeforeExpand,
-            summarizeSingleAddressActivityScopes(),
-          ),
-          chainProjections: getSingleAddressChainProjectionRecordsAfter(
-            chainProjectionCursor,
-          ),
-        });
-        context.report('assertion', {
-          assertion: `single-address-${tab.name}-expand-complete`,
-          passed: true,
-          actionTiming: expandTiming,
-          ...expandedEvent.data,
-        });
       }
     } else {
       await assertSingleAddressActivity(context, {

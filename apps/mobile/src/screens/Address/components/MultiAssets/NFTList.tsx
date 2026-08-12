@@ -8,21 +8,13 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_SECTION_HEADER,
-  RootNames,
-} from '@/constant/layout';
+import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  NftRow,
-  TokenRowSectionHeader,
-} from '@/screens/Home/components/AssetRenderItems';
+import { NftRow } from '@/screens/Home/components/AssetRenderItems';
 import { DisplayNftItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { GestureDetector } from 'react-native-gesture-handler';
 import {
   pulldownRefreshSizes,
@@ -58,7 +50,6 @@ import nftListStore, {
   nftEntityResourceStore,
   type NftAssetsIndexRow,
   useNftListComputedStore,
-  useOnNftRefresh,
 } from '@/store/nfts';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import {
@@ -88,9 +79,6 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
 
 type NftListItem =
   | NftAssetsIndexRow
-  | {
-      type: 'toggle_nft_fold';
-    }
   | {
       type: 'empty-nft' | 'loading-skeleton';
       data: string;
@@ -188,13 +176,9 @@ const NFTListInner = () => {
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
 
-  const [foldNft, setFoldNft] = useState(true);
-
   const getAccountByAddress = useFindAccountByAddress();
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
 
-  const { nftRefresh } = useTriggerTagAssets();
-  useOnNftRefresh();
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
     isFocusing,
@@ -219,7 +203,7 @@ const NFTListInner = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-nft-computed-index' },
   );
-  const nftRowCount = nftIndex.unFoldRows.length + nftIndex.foldRows.length;
+  const nftRowCount = nftIndex.rows.length;
 
   const dataList = useMemo(() => {
     const itemData: Array<{
@@ -228,14 +212,7 @@ const NFTListInner = () => {
     }> = [
       {
         show: true,
-        data: nftIndex.unFoldRows,
-      },
-      {
-        show: !!nftIndex.foldRows.length,
-        data: [
-          { type: 'toggle_nft_fold' },
-          ...(foldNft ? [] : nftIndex.foldRows),
-        ],
+        data: nftIndex.rows,
       },
       {
         show: !!isLoading && nftRowCount === 0,
@@ -260,14 +237,7 @@ const NFTListInner = () => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [
-    foldNft,
-    isLoading,
-    nftIndex.foldRows,
-    nftIndex.unFoldRows,
-    nftRowCount,
-    t,
-  ]);
+  }, [isLoading, nftIndex.rows, nftRowCount, t]);
 
   const hasNotAssets = useMemo(() => {
     return nftRowCount === 0 && !isLoading && isFocused;
@@ -310,14 +280,12 @@ const NFTListInner = () => {
       return;
     }
 
-    const visibleCount = nftIndex.unFoldRows.length;
-    const foldedCount = nftIndex.foldRows.length;
+    const visibleCount = nftIndex.rows.length;
     const readyKey = [
       regressionScenarioRunId,
       myTop10Addresses.join(','),
       chain || 'all',
       visibleCount,
-      foldedCount,
     ].join(':');
     if (lastReadyReportKeyRef.current === readyKey) {
       return;
@@ -327,15 +295,13 @@ const NFTListInner = () => {
     regressionScenarioReport('assertion', {
       assertion: 'home-assets-nft-ready',
       passed: true,
-      state: visibleCount + foldedCount > 0 ? 'data' : 'empty-nft',
+      state: visibleCount > 0 ? 'data' : 'empty-nft',
       accountCount: myTop10Addresses.length,
       visibleCount,
-      foldedCount,
       selectedChain: chain || null,
     });
   }, [
     chain,
-    nftIndex.foldRows.length,
     isFocused,
     isLoading,
     myTop10Addresses,
@@ -344,7 +310,7 @@ const NFTListInner = () => {
     regressionScenarioReport,
     regressionScenarioRunId,
     scenarioReadyCheckTick,
-    nftIndex.unFoldRows.length,
+    nftIndex.rows.length,
   ]);
 
   useEffect(() => {
@@ -418,19 +384,6 @@ const NFTListInner = () => {
               />
             </View>
           );
-        case 'toggle_nft_fold':
-          return (
-            <TokenRowSectionHeader
-              str={'' + nftIndex.foldRows.length}
-              fold={foldNft}
-              style={styles.sectionHeader}
-              buttonStyle={StyleSheet.flatten([
-                styles.buttonHeader,
-                !isLight && styles.bg2,
-              ])}
-              onPressFold={() => setFoldNft(pre => !pre)}
-            />
-          );
         case 'empty-nft':
           return (
             <EmptyAssets
@@ -445,22 +398,12 @@ const NFTListInner = () => {
           return null;
       }
     },
-    [
-      foldNft,
-      nftIndex.foldRows.length,
-      getAccountByAddress,
-      handlePressNft,
-      isLight,
-      styles,
-    ],
+    [getAccountByAddress, handlePressNft, isLight, styles],
   );
 
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
-    const nftListRefresh = Promise.all([
-      batchGetNFTList(true, {}),
-      nftRefresh(),
-    ]);
+    const nftListRefresh = batchGetNFTList(true, {});
 
     withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);
@@ -471,7 +414,7 @@ const NFTListInner = () => {
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [batchGetNFTList, triggerUpdate, nftRefresh]);
+  }, [batchGetNFTList, triggerUpdate]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
@@ -601,17 +544,6 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 12,
     paddingBottom: 48,
   },
-  sectionHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    height: ASSETS_SECTION_HEADER,
-    color: ctx.colors2024['neutral-secondary'],
-    paddingLeft: 0,
-    paddingRight: 0,
-    backgroundColor: 'transparent',
-  },
   emptyAssets: {
     marginHorizontal: 0,
   },
@@ -623,11 +555,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  buttonHeader: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
   },
   removeLeft: {
     marginLeft: 0,
