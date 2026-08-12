@@ -95,11 +95,16 @@ function presetSingHomeAccount(account: Account) {
   });
 }
 export const apisSingleHome = {
-  navigateToSingleHome: (account: Account, options?: { replace?: boolean }) => {
-    const cycleId = beginFeatureActivation(
-      'single-address',
-      'single_address_navigation_requested',
-    );
+  navigateToSingleHome: (
+    account: Account,
+    options?: { replace?: boolean; activationCycleId?: number },
+  ) => {
+    const cycleId =
+      options?.activationCycleId ||
+      beginFeatureActivation(
+        'single-address',
+        'single_address_navigation_requested',
+      );
     presetSingHomeAccount(account);
     markFeatureActivation('single-address', 'state-prepared', {
       cycleId,

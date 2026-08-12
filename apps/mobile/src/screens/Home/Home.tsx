@@ -131,6 +131,14 @@ const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
 }));
 
 function SingleAddressHomeContent(): JSX.Element {
+  const activationCycleId = ensureFeatureActivation(
+    'single-address',
+    'single_address_content_render_fallback',
+  );
+  markFeatureActivation('single-address', 'content-render-start', {
+    cycleId: activationCycleId,
+    reason: 'single_address_home_content_render',
+  });
   const { styles } = useTheme2024({ getStyle: getStyles });
   const backgroundOpacity = useSharedValue(1);
   const { topHeight } = useBgSize();

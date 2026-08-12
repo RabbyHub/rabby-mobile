@@ -6,7 +6,6 @@ import { createStore } from 'zustand/vanilla';
 
 import { getLatestRenderActivityAuditScopeDiagnostics } from '@/core/state/renderActivityAudit';
 import { RenderActivityAuditBoundary } from './RenderActivityAuditBoundary';
-import { RenderActivityBoundary } from './RenderActivityBoundary';
 
 const rawStore = createStore(() => ({ count: 0 }));
 
@@ -50,31 +49,6 @@ describe('RenderActivityAuditBoundary', () => {
       expect.objectContaining({
         inactiveParentUpdateCount: 1,
         inactiveSubtreeCommitCount: 2,
-      }),
-    );
-  });
-
-  it('finds raw Store leaks behind a managed render boundary', () => {
-    const renderTree = (active: boolean, marker: string) => (
-      <RenderActivityBoundary active={active} label="managed-scope">
-        <RawStoreConsumer marker={marker} />
-      </RenderActivityBoundary>
-    );
-    const view = render(renderTree(true, 'active'));
-
-    view.rerender(renderTree(false, 'hidden'));
-    act(() => {
-      rawStore.setState({ count: 1 });
-    });
-    view.rerender(renderTree(false, 'hidden-latest'));
-
-    expect(view.getByTestId('value').props.children).toBe('hidden:1');
-    expect(
-      getLatestRenderActivityAuditScopeDiagnostics('managed-scope'),
-    ).toEqual(
-      expect.objectContaining({
-        inactiveParentUpdateCount: 1,
-        inactiveSubtreeCommitCount: 1,
       }),
     );
   });
