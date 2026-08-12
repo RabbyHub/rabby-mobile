@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -96,15 +97,19 @@ export const ProtocolList = () => {
   const registerMultiAssets =
     useProtocolListComputedStore.getState().registerMultiProtocols;
 
-  const multiProtocols = useActivityStore(
-    useProtocolListComputedStore,
-    useShallow(
-      state =>
-        state.multiProtocolsCache[multiProtocolsKey] || emptyCacheProtocolItem,
-    ),
-    Object.is,
-    { storeLabel: 'home-multi-assets-defi-computed-list' },
-  );
+  const { protocolsResult: multiProtocols, isProtocolsResultReady } =
+    useActivityStore(
+      useProtocolListComputedStore,
+      useShallow(state => {
+        const result = state.multiProtocolsCache[multiProtocolsKey];
+        return {
+          protocolsResult: result || emptyCacheProtocolItem,
+          isProtocolsResultReady: !!result,
+        };
+      }),
+      Object.is,
+      { storeLabel: 'home-multi-assets-defi-computed-list' },
+    );
 
   const isLoading = useActivityStore(
     useProtocols,
@@ -112,6 +117,7 @@ export const ProtocolList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-defi-loading' },
   );
+  const isProtocolListPending = isLoading || !isProtocolsResultReady;
 
   const { data: portfoliosData, loadMore: loadMorePortfolios } =
     useLoadMoreData(multiProtocols.unFold);
@@ -154,7 +160,7 @@ export const ProtocolList = () => {
       },
       {
         show:
-          !!isLoading &&
+          isProtocolListPending &&
           !multiProtocols.unFold.length &&
           !multiProtocols.fold.length,
         data: Array.from({ length: 2 }, (_, index) => ({
@@ -164,7 +170,7 @@ export const ProtocolList = () => {
       },
       {
         show:
-          !isLoading &&
+          !isProtocolListPending &&
           multiProtocols.unFold.length === 0 &&
           multiProtocols.fold.length === 0,
         data: [
@@ -183,7 +189,7 @@ export const ProtocolList = () => {
       .flat();
   }, [
     foldDefi,
-    isLoading,
+    isProtocolListPending,
     t,
     multiProtocols.fold,
     multiProtocols.unFold.length,
@@ -194,13 +200,13 @@ export const ProtocolList = () => {
     return (
       multiProtocols.unFold.length === 0 &&
       multiProtocols.fold.length === 0 &&
-      !isLoading &&
+      !isProtocolListPending &&
       isFocused
     );
   }, [
     multiProtocols.fold.length,
     multiProtocols.unFold.length,
-    isLoading,
+    isProtocolListPending,
     isFocused,
   ]);
 
@@ -235,7 +241,7 @@ export const ProtocolList = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      isLoading
+      isProtocolListPending
     ) {
       return;
     }
@@ -265,7 +271,7 @@ export const ProtocolList = () => {
   }, [
     chain,
     isFocused,
-    isLoading,
+    isProtocolListPending,
     multiProtocols.fold.length,
     multiProtocols.unFold.length,
     multiProtocolsKey,
@@ -277,9 +283,12 @@ export const ProtocolList = () => {
     scenarioReadyCheckTick,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (isProtocolsResultReady) {
+      return;
+    }
     registerMultiAssets(myTop10Addresses, chain);
-  }, [myTop10Addresses, chain, registerMultiAssets]);
+  }, [chain, isProtocolsResultReady, myTop10Addresses, registerMultiAssets]);
 
   useEffect(() => {
     batchGetProtocols(myTop10Addresses);

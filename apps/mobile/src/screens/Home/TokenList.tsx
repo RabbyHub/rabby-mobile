@@ -476,6 +476,17 @@ export const TokenList = ({
     });
   }, [isLpTokenEnabled, selectedChain, singleAssetsKey, tokenIds]);
 
+  const { assetsResult, isAssetsResultReady } = useTokenAssetsIndexStore(
+    useShallow(state => {
+      const result = singleAssetsKey
+        ? state.singleAssetsResultByKey[singleAssetsKey]
+        : undefined;
+      return {
+        assetsResult: result || EMPTY_TOKEN_ASSETS_INDEX_RESULT,
+        isAssetsResultReady: !singleAssetsKey || !!result,
+      };
+    }),
+  );
   const {
     unFoldTokenIds,
     foldTokenIds,
@@ -483,14 +494,7 @@ export const TokenList = ({
     scamTokenPreviewLogoUrls,
     foldCoreUsdValue,
     hasFoldTokens,
-  } = useTokenAssetsIndexStore(
-    useShallow(
-      state =>
-        (singleAssetsKey
-          ? state.singleAssetsResultByKey[singleAssetsKey]
-          : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT,
-    ),
-  );
+  } = assetsResult;
   const foldTokenUsdValue = useMemo(
     () => formatNetworth(foldCoreUsdValue),
     [foldCoreUsdValue],
@@ -513,8 +517,9 @@ export const TokenList = ({
   );
   const hasDefaultTokenData =
     unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length > 0;
+  const isTokenListPending = isLoading || isAllLoading || !isAssetsResultReady;
   const shouldHideCustomTestnetSectionsWhileLoading =
-    (isLoading || isAllLoading) && !hasDefaultTokenData;
+    isTokenListPending && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     hasRequestedTokenList &&
@@ -569,7 +574,7 @@ export const TokenList = ({
       foldScam,
       hasFoldTokens,
       isLpTokenEnabled,
-      isLoading,
+      isLoading: isLoading || !isAssetsResultReady,
       isAllLoading,
       noAnyAssets,
       emptyAssetsText,
@@ -582,6 +587,7 @@ export const TokenList = ({
     foldTokenIds,
     hasFoldTokens,
     isAllLoading,
+    isAssetsResultReady,
     isLoading,
     isLpTokenEnabled,
     noAnyAssets,
