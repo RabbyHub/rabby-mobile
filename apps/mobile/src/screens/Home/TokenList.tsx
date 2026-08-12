@@ -826,13 +826,16 @@ export const TokenList = ({
           selectedChain,
           nextEnabled,
         );
-        // Avoid committing an empty cache fallback before the target mode is ready.
-        useTokenAssetsIndexStore.getState().syncSingleAssetsResult({
-          key: nextKey,
-          tokenIds,
-          chainServerId: selectedChain,
-          isLpTokenEnabled: nextEnabled,
-        });
+        const assetsIndexState = useTokenAssetsIndexStore.getState();
+        if (!assetsIndexState.singleAssetsResultByKey[nextKey]) {
+          // Only fill a cold target cache to avoid the first empty-list frame.
+          assetsIndexState.syncSingleAssetsResult({
+            key: nextKey,
+            tokenIds,
+            chainServerId: selectedChain,
+            isLpTokenEnabled: nextEnabled,
+          });
+        }
       }
       setIsLpTokenEnabled(nextEnabled);
     },
