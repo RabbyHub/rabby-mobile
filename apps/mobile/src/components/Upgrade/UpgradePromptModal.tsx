@@ -34,7 +34,11 @@ import { MODAL_GATE_IDS, useVisibleBlockingModalIds } from '@/utils/modalGate';
 import { APP_URLS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
-import { useCurrentRouteName } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName as TabName,
+  useCurrentRouteName,
+} from '@/hooks/navigation';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import {
@@ -179,11 +183,13 @@ export function UpgradePromptModal() {
   const isHomeDrawerExpanded = useValueFromSharedValue(
     homeDrawerAnimateMutable.isExpanded,
   );
+  const homeTabName = useValueFromSharedValue(apisHomeTabIndex.svTabName);
   const { remoteVersion } = useUpgradeInfo();
 
   useEffect(() => {
     if (
       currentRouteName === RootNames.Home &&
+      homeTabName === TabName.overview &&
       !isHomeDrawerExpanded &&
       !hasOtherVisibleModal &&
       pendingAutoPrompt
@@ -193,6 +199,7 @@ export function UpgradePromptModal() {
   }, [
     currentRouteName,
     hasOtherVisibleModal,
+    homeTabName,
     isHomeDrawerExpanded,
     pendingAutoPrompt,
   ]);
