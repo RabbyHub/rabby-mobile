@@ -703,6 +703,30 @@ export const TokenList = () => {
     setFoldHideList(pre => !pre);
   }, [foldHideList]);
 
+  const handleLpTokenChange = useCallback(
+    (nextEnabled: boolean) => {
+      const nextKey = getMultiAssetsCacheKey(
+        myTop10Addresses,
+        chain,
+        nextEnabled,
+        tokenDisplayMode,
+      );
+      const assetsIndexState = useTokenAssetsIndexStore.getState();
+      if (!assetsIndexState.multiAssetsResultByKey[nextKey]) {
+        // Only fill a cold target cache to avoid the first empty-list frame.
+        assetsIndexState.syncMultiAssetsResult({
+          key: nextKey,
+          tokenIds,
+          chainServerId: chain,
+          isLpTokenEnabled: nextEnabled,
+          tokenDisplayMode,
+        });
+      }
+      setIsLpTokenEnabled(nextEnabled);
+    },
+    [chain, myTop10Addresses, tokenDisplayMode, tokenIds],
+  );
+
   // const ListRenderFooter = useCallback(() => {
   //   return hasMorePortfolios ? (
   //     <MemoizedDefiItemLoader style={[styles.loadingMore]} />
@@ -854,7 +878,7 @@ export const TokenList = () => {
               str={foldTokenUsdValue}
               onPressFold={handleToggleTokenFold}
               isEnabled={isLpTokenEnabled}
-              onValueChange={setIsLpTokenEnabled}
+              onValueChange={handleLpTokenChange}
             />
           );
         case 'custom_testnet_assets':
@@ -917,6 +941,7 @@ export const TokenList = () => {
       renderCustomTestnetAccount,
       handleTokenPress,
       handleToggleTokenFold,
+      handleLpTokenChange,
       isLpTokenEnabled,
       loadCustomTestnetToken,
       loadCustomTestnetTokens,
