@@ -36,7 +36,7 @@ import {
 } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useCustomTestnetStore } from '@/store/customTestnet';
-import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   useRegressionScenario,
@@ -71,11 +71,11 @@ const SingleAddressTabActivityBoundary = ({
   const isScreenFocused = useIsFocused();
 
   return (
-    <StoreActivityBoundary
+    <RenderActivityBoundary
       active={isScreenFocused && focusedTab === name}
       label={`single-address-${name}`}>
       {children}
-    </StoreActivityBoundary>
+    </RenderActivityBoundary>
   );
 };
 
