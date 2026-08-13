@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { buildApprovedNamespaces } from '@walletconnect/utils';
 import type { ProposalTypes, SessionTypes } from '@walletconnect/types';
 import type { CHAINS_ENUM } from '@/constant/chains';
@@ -10,6 +11,7 @@ import {
 import {
   accountToCaip10,
   chainToCaip2,
+  getRequiredMethodsFromProposal,
   getRequestedChainsFromProposal,
   getRequestedMethodsFromProposal,
   getUnsupportedRequiredChainsFromProposal,
@@ -20,6 +22,7 @@ import {
 } from './chainAccount';
 import { addWalletConnectLog } from './debugLog';
 import { setWalletConnectDebugState } from './state';
+import { getWalletConnectTelemetrySource } from './telemetry';
 import type {
   WalletConnectPairingSource,
   WalletConnectProposalViewModel,
@@ -83,6 +86,26 @@ export function storeWalletConnectProposal(input: {
   pendingProposals.set(input.id, pending);
 
   const proposal = buildProposalViewModel(pending);
+  if (proposal.unsupportedRequiredMethods.length) {
+    const telemetrySource = getWalletConnectTelemetrySource({
+      url: proposal.proposer.url,
+      nativeRedirect: proposal.proposer.redirectNative,
+    });
+    Sentry.captureException(
+      new Error('Unsupported WalletConnect required methods tolerated'),
+      {
+        tags: {
+          scene: 'walletconnect_proposal',
+          source: proposal.source,
+        },
+        extra: {
+          dappName: proposal.proposer.name,
+          ...telemetrySource,
+          methods: proposal.unsupportedRequiredMethods,
+        },
+      },
+    );
+  }
   setWalletConnectDebugState(prev => ({
     ...prev,
     pairing: {
@@ -157,7 +180,12 @@ export function buildApprovedNamespacesForAccount(input: {
     supportedNamespaces: {
       [WALLETCONNECT_NAMESPACE]: {
         chains: getWalletConnectSupportedChains(),
-        methods: WALLETCONNECT_SUPPORTED_METHODS,
+        methods: Array.from(
+          new Set([
+            ...WALLETCONNECT_SUPPORTED_METHODS,
+            ...getRequiredMethodsFromProposal(input.proposal),
+          ]),
+        ),
         events: WALLETCONNECT_SUPPORTED_EVENTS,
         accounts: getWalletConnectAccounts(input.account),
       },

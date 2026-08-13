@@ -1,5 +1,14 @@
 import type { Account } from '@/types/account';
-import { buildApprovedNamespacesForAccount } from './proposal';
+import {
+  buildApprovedNamespacesForAccount,
+  storeWalletConnectProposal,
+} from './proposal';
+
+const mockCaptureException = jest.fn();
+
+jest.mock('@sentry/react-native', () => ({
+  captureException: (...args: unknown[]) => mockCaptureException(...args),
+}));
 
 jest.mock('./debugLog', () => ({
   addWalletConnectLog: jest.fn(),
@@ -7,6 +16,10 @@ jest.mock('./debugLog', () => ({
 
 jest.mock('./state', () => ({
   setWalletConnectDebugState: jest.fn(),
+}));
+
+jest.mock('./uiEvents', () => ({
+  emitWalletConnectUiEvent: jest.fn(),
 }));
 
 jest.mock('@/constant/chains', () => ({
@@ -35,6 +48,10 @@ jest.mock('@/utils/chain', () => ({
 }));
 
 describe('walletconnect proposal approval', () => {
+  beforeEach(() => {
+    mockCaptureException.mockClear();
+  });
+
   it('builds approved eip155 namespaces for the selected account', () => {
     const account = {
       address: '0x1111111111111111111111111111111111111111',
@@ -58,6 +75,73 @@ describe('walletconnect proposal approval', () => {
     expect(namespaces.eip155.methods).toContain('personal_sign');
     expect(namespaces.eip155.accounts).toContain(
       'eip155:1:0x1111111111111111111111111111111111111111',
+    );
+  });
+
+  it('tolerates unsupported required methods and reports their source', () => {
+    const account = {
+      address: '0x1111111111111111111111111111111111111111',
+      type: 'Simple Key Pair',
+      brandName: 'Rabby',
+    } as Account;
+    const proposal = {
+      proposer: {
+        metadata: {
+          name: 'Example dapp',
+          description: '',
+          url: 'https://example.com/connect?token=secret',
+          icons: [],
+          redirect: {
+            native: 'example://walletconnect?token=secret',
+          },
+        },
+      },
+      requiredNamespaces: {
+        eip155: {
+          chains: ['eip155:1'],
+          methods: [
+            'personal_sign',
+            'wallet_addEthereumChain',
+            'dapp_nonstandardMethod',
+          ],
+          events: ['accountsChanged'],
+        },
+      },
+      optionalNamespaces: {},
+    };
+
+    storeWalletConnectProposal({
+      id: 1,
+      proposal,
+      source: 'deeplink',
+    });
+    const namespaces = buildApprovedNamespacesForAccount({
+      account,
+      proposal,
+    });
+
+    expect(namespaces.eip155.methods).toEqual(
+      expect.arrayContaining([
+        'wallet_addEthereumChain',
+        'dapp_nonstandardMethod',
+      ]),
+    );
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Unsupported WalletConnect required methods tolerated',
+      }),
+      {
+        tags: {
+          scene: 'walletconnect_proposal',
+          source: 'deeplink',
+        },
+        extra: {
+          dappName: 'Example dapp',
+          dappOrigin: 'https://example.com',
+          appScheme: 'example:',
+          methods: ['wallet_addEthereumChain', 'dapp_nonstandardMethod'],
+        },
+      },
     );
   });
 
