@@ -18,7 +18,6 @@ import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
@@ -112,12 +111,6 @@ interface RepayWithCollateralProps {
   source?: string;
 }
 
-const BOTTOM_SIZE = {
-  BUTTON: 12 + BOTTOM_BUTTON_SINGLE_HEIGHT,
-  CHECKBOX: 40,
-  TIPS: 80,
-};
-
 export default function RepayWithCollateral({
   repayToken,
   defaultCollateralToken,
@@ -126,9 +119,6 @@ export default function RepayWithCollateral({
 }: RepayWithCollateralProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  const bottomButtonAreaHeight =
-    BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(bottom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -952,6 +942,35 @@ export default function RepayWithCollateral({
     riskChecked,
   ]);
 
+  const activeBottomWarning = useMemo(() => {
+    const warningConfigs = [
+      {
+        enabled: isFlashLoanDisabled,
+        text: t('page.Lending.repayWithCollateral.flashLoanDisabled'),
+      },
+      {
+        enabled: isInsufficientLiquidity,
+        text: t('page.Lending.repayWithCollateral.insufficientLiquidity'),
+      },
+      {
+        enabled: collateralNotEnough,
+        text: t('page.Lending.repayWithCollateral.collateralNotEnough'),
+      },
+      {
+        enabled: isLiquidatable,
+        text: t('page.Lending.debtSwap.lpDangerWarning'),
+      },
+    ];
+
+    return warningConfigs.find(item => item.enabled) || null;
+  }, [
+    collateralNotEnough,
+    isFlashLoanDisabled,
+    isInsufficientLiquidity,
+    isLiquidatable,
+    t,
+  ]);
+
   return (
     <SignatureInstanceProvider instance={instance}>
       <BottomSheetScrollView
@@ -1171,34 +1190,11 @@ export default function RepayWithCollateral({
         )}
       </BottomSheetScrollView>
 
-      <View
-        style={[
-          styles.buttonContainer,
-          {
-            height:
-              bottomButtonAreaHeight +
-              (isLiquidatable || isFlashLoanDisabled || isInsufficientLiquidity
-                ? BOTTOM_SIZE.TIPS
-                : isRisky
-                ? BOTTOM_SIZE.CHECKBOX
-                : 0),
-          },
-        ]}>
-        {isFlashLoanDisabled ||
-        isInsufficientLiquidity ||
-        isLiquidatable ||
-        collateralNotEnough ? (
+      <View style={[styles.buttonContainer]}>
+        {activeBottomWarning ? (
           <View style={styles.riskContainer}>
             <Text style={styles.dangerWarningText}>
-              {isFlashLoanDisabled
-                ? t('page.Lending.repayWithCollateral.flashLoanDisabled')
-                : isInsufficientLiquidity
-                ? t('page.Lending.repayWithCollateral.insufficientLiquidity')
-                : collateralNotEnough
-                ? t('page.Lending.repayWithCollateral.collateralNotEnough')
-                : isLiquidatable
-                ? t('page.Lending.debtSwap.lpDangerWarning')
-                : ''}
+              {activeBottomWarning.text}
             </Text>
           </View>
         ) : isRisky ? (
@@ -1435,9 +1431,8 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   buttonContainer: {
     position: 'absolute',
     bottom: 0,
-    height:
-      BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(safeAreaInsets.bottom),
     paddingTop: 12,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -1458,15 +1453,18 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 8,
     gap: 8,
   },
   warningText: {
+    flexShrink: 1,
     fontSize: 12,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },
   dangerWarningText: {
+    flexShrink: 1,
     fontSize: 13,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',

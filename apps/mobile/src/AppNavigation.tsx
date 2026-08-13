@@ -80,6 +80,7 @@ import {
   InnerDappWebViewPreloadEntry,
   QrCodeModal,
   ToggleCollateralModal,
+  UpgradePromptModal,
   WalletConnectModalHost,
   WideScreenDebugPanel,
 } from '@/perfs/loadables/appNavigationGlobals';
@@ -377,6 +378,7 @@ function AppNavigationOverlayGlobals({
 
       {/** @warning put all business stub components before this modal */}
       {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
+      {postUnlockGlobalsEnabled && <UpgradePromptModal />}
       {showDiagnostics && <FloatingDiagnosticsPanel />}
       {showDiagnostics && <FloatingDbSyncSummaryPanel />}
       {showDiagnostics && <FloatingKeyringRuntimePanel />}
