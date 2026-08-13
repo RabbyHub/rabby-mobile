@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleProp, ViewStyle } from 'react-native';
 import WebView from 'react-native-webview';
 
 import MarkdownIt from 'markdown-it';
@@ -88,10 +88,12 @@ export function MarkdownInWebView({
   markdown,
   markdownit = dMarkdownit,
   htmlInnerStyle,
+  webviewStyle,
 }: React.PropsWithoutRef<{
   markdown: string;
   markdownit?: MarkdownIt;
   htmlInnerStyle?: string;
+  webviewStyle?: StyleProp<ViewStyle>;
 }>) {
   const { styles, colors } = useThemeStyles(getStyles);
 
@@ -117,7 +119,7 @@ export function MarkdownInWebView({
 
   return (
     <WebView
-      style={styles.webview}
+      style={[styles.webview, webviewStyle]}
       originWhitelist={['*']}
       source={{
         baseUrl: '',

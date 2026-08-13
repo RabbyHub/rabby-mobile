@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { zCreate } from '@/core/utils/reexports';
 import { runDevIIFEFunc } from '@/core/utils/store';
@@ -10,6 +11,7 @@ type ModalGateState = {
 export const MODAL_GATE_IDS = {
   screenshotFeedback: 'screenshot-feedback',
   rateGuide: 'rate-guide',
+  upgradePrompt: 'upgrade-prompt',
   swapModal: 'swap-modal',
   securityTip: 'security-tip',
   biometricsStub: 'biometrics-stub',
@@ -90,7 +92,9 @@ export function hasVisibleBlockingModal(options?: { excludeIds?: string[] }) {
 }
 
 export function useVisibleBlockingModalIds() {
-  return modalGateStore(s => Object.keys(s.blockingModalCountMap).sort());
+  return modalGateStore(
+    useShallow(s => Object.keys(s.blockingModalCountMap).sort()),
+  );
 }
 
 export type ModalGateDebugSnapshot = {
