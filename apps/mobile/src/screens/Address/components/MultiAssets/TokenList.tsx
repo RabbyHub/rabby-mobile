@@ -82,6 +82,7 @@ import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
 import { formatNetworth } from '@/utils/math';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -259,6 +260,11 @@ export const TokenList = () => {
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
+
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
 
   const isScreenFocused = useIsFocused();
 

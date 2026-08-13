@@ -51,6 +51,7 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -138,6 +139,11 @@ export const ProtocolList = () => {
   const chain = selectedChainItem?.chain;
   const [showAllProtocols, setShowAllProtocols] = useState(false);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
+
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 

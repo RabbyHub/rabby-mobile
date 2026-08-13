@@ -19,6 +19,7 @@ import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { naviPushWithUnderlay } from '@/utils/navigation';
 
 export { isAave3Portfolio, keyToMarketKey, marketKeyToProtocolId };
 
@@ -148,23 +149,27 @@ export const useProtocolConfig = () => {
               action: 'Perps_ManageToPosition',
             });
             // Backing out of the detail page should land on Perps home first.
-            // Don't preset a multi-route nested state instead: the child
-            // navigator sets gestureEnabled: false, so iOS swipe-back falls to
-            // the root stack and pops the whole nested stack at once.
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Perps,
-              params: {
-                dappId: 'hyperliquid',
-                account,
+            return naviPushWithUnderlay(
+              RootNames.StackTransaction,
+              {
+                screen: RootNames.PerpsMarketDetail,
+                params: {
+                  market:
+                    item?._originPortfolio?.detail?.position_token?.symbol ||
+                    '',
+                },
               },
-            });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market:
-                  item?._originPortfolio?.detail?.position_token?.symbol || '',
+              {
+                name: RootNames.StackTransaction,
+                params: {
+                  screen: RootNames.Perps,
+                  params: {
+                    dappId: 'hyperliquid',
+                    account,
+                  },
+                },
               },
-            });
+            );
           } else {
             matomoRequestEvent({
               category: 'Rabby Perps',
