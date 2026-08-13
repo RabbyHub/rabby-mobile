@@ -80,12 +80,17 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionLpTokenHeader);
 
 const MemoizedItemLoader = React.memo(ItemLoader);
+const TOKEN_LIST_INITIAL_RENDER_COUNT = 8;
+const TOKEN_LIST_RENDER_BATCH_SIZE = 6;
+const TOKEN_LIST_WINDOW_SIZE = 7;
+const TOKEN_LIST_BATCHING_PERIOD_MS = 32;
 
 const TokenResourceRow = React.memo(
   ({
@@ -1008,6 +1013,11 @@ export const TokenList = () => {
         data={dataList}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
+        initialNumToRender={TOKEN_LIST_INITIAL_RENDER_COUNT}
+        windowSize={TOKEN_LIST_WINDOW_SIZE}
+        maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
+        updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
+        removeClippedSubviews={IS_ANDROID}
       />
     </GestureDetector>
   );

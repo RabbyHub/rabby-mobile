@@ -12,8 +12,13 @@ import {
 } from '@/perfs/loadables/settingsNavigatorScreens';
 import { CustomTestnetScreen } from '../CustomTestnet';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
+import { withScreenRenderActivityAudit } from '@/hooks/storeActivity/withScreenRenderActivityAudit';
 
 const SettingsStack = createNativeStackNavigator();
+const AuditedSettingsScreen = withScreenRenderActivityAudit(
+  SettingsScreen,
+  'settings-screen',
+);
 
 export function SettingNavigator() {
   const { t } = useTranslation();
@@ -38,7 +43,7 @@ export function SettingNavigator() {
       })}>
       <SettingsStack.Screen
         name={RootNames.Settings}
-        component={SettingsScreen}
+        component={AuditedSettingsScreen}
         options={mergeScreenOptions2024([
           {
             headerTitle: () => (

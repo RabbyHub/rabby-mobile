@@ -15,6 +15,7 @@ export type FeatureActivationEventName =
   | 'state-prepared'
   | 'navigation-dispatched'
   | 'route-render-start'
+  | 'route-shell-mounted'
   | 'content-render-start'
   | 'mounted'
   | 'visible'

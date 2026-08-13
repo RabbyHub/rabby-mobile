@@ -89,10 +89,10 @@ import {
   DappsNavigator,
   HomeNonTabNavigator,
   SettingNavigator,
-  SingleAddressNavigator,
   TestkitsNavigator,
   TransactionNavigator,
 } from '@/perfs/loadables/navigators';
+import { SingleAddressNavigator } from '@/screens/Navigators/SingleAddressNavigator';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { APP_TEST_PASSWORD, NEED_DEVSETTINGBLOCKS } from './constant';

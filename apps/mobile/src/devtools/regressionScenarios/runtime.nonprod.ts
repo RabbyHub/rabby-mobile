@@ -1,4 +1,6 @@
 import { isNonPublicProductionEnv } from '@/constant';
+import { getRenderActivityAuditDiagnosticsSnapshot } from '@/core/state/renderActivityAudit';
+import { getFeatureActivationDiagnosticsSnapshot } from '@/core/utils/featureActivationDiagnostics';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import { getAuthReadinessDiagnosticsSnapshot } from '@/core/utils/authReadinessDiagnostics';
 
@@ -123,6 +125,18 @@ export function handleRegressionScenarioCommand(
   if (command.action === 'status') {
     const state = getRegressionScenarioRuntimeSnapshot();
     const includeEvents = command.params.includeEvents === 'true';
+    const includeRenderActivityAudit =
+      command.params.includeRenderActivityAudit === 'true';
+    const includeFeatureActivation =
+      command.params.includeFeatureActivation === 'true';
+    const requestedRenderActivityEventLimit = Number(
+      command.params.renderActivityEventLimit || 10,
+    );
+    const renderActivityEventLimit = Number.isFinite(
+      requestedRenderActivityEventLimit,
+    )
+      ? Math.min(Math.max(Math.round(requestedRenderActivityEventLimit), 0), 40)
+      : 10;
     const requestedEventLimit = Number(command.params.eventLimit || 80);
     const eventLimit = Number.isFinite(requestedEventLimit)
       ? Math.min(Math.max(Math.round(requestedEventLimit), 1), 300)
@@ -149,6 +163,20 @@ export function handleRegressionScenarioCommand(
             events: state.events
               .filter(event => !currentRunId || event.runId === currentRunId)
               .slice(-eventLimit),
+          }
+        : {}),
+      ...(includeRenderActivityAudit
+        ? {
+            renderActivityAudit: getRenderActivityAuditDiagnosticsSnapshot({
+              eventLimit: renderActivityEventLimit,
+              violationsOnly:
+                command.params.renderActivityViolationsOnly === 'true',
+            }),
+          }
+        : {}),
+      ...(includeFeatureActivation
+        ? {
+            featureActivation: getFeatureActivationDiagnosticsSnapshot(),
           }
         : {}),
       ...(includeAuthReadiness

@@ -186,6 +186,34 @@ export function useRegressionScenarioComponentAction(
   }, [action, runId]);
 }
 
+export function useRegressionScenarioAssertion(
+  assertion: string,
+  data: Readonly<Record<string, unknown>> | null,
+) {
+  const context = useContext(ScenarioContext);
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const runId = context.active ? context.runId : null;
+  const enabled = data !== null;
+
+  useEffect(() => {
+    if (
+      !context.active ||
+      context.runId !== runId ||
+      !enabled ||
+      !context.claimOnce(assertion)
+    ) {
+      return;
+    }
+
+    context.report('assertion', {
+      ...(dataRef.current || {}),
+      assertion,
+      passed: true,
+    });
+  }, [assertion, context, enabled, runId]);
+}
+
 export function useRegressionScenarioRuntime(): RegressionScenarioRuntimeContext {
   const snapshot = useRuntimeSnapshot();
   const command = snapshot.command;

@@ -10,6 +10,7 @@ import { perfEvents } from '@/core/utils/perf';
 import type { AddressAliasItem } from '@rabby-wallet/service-address';
 import { useShallow } from 'zustand/react/shallow';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const useAlias = (address?: string) => {
   const [name, setName] = useState<string>('');
@@ -91,7 +92,8 @@ export function useAlias2(
   },
 ) {
   const { autoFetch = false, FETCH_AFTER_UPDATE = false } = options || {};
-  const { adderssAlias, isDefaultAlias } = addressAliasStore(
+  const { adderssAlias, isDefaultAlias } = useActivityStore(
+    addressAliasStore,
     useShallow(s => {
       const lcAddr = address.toLowerCase();
       const item = s.aliasesMap[lcAddr];
@@ -104,6 +106,8 @@ export function useAlias2(
               addressUtils.ellipsis(address, 6).toLowerCase(),
       };
     }),
+    Object.is,
+    { storeLabel: 'address-alias' },
   );
 
   const fetchAlias = useCallback(() => {

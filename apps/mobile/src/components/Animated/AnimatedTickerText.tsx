@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import {
   StyleProp,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
 import Animated, {
   SharedValue,
   Easing,
+  runOnJS,
   useAnimatedProps,
   useDerivedValue,
   useAnimatedReaction,
@@ -20,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { AnimateableText, AnimatedText } from '@/components/Typography';
 import { getFontSizeByLength } from '@/utils/fontSize';
+import { getRequiredTickerColumnCount } from './AnimatedTickerText.utils';
 
 type AnimatedStringValue = {
   value: string;
@@ -413,6 +415,28 @@ const AnimatedTickerText = ({
   fontSizeByLength,
   animateWidth = true,
 }: AnimatedTickerTextProps) => {
+  const [columnCount, setColumnCount] = useState(() =>
+    getRequiredTickerColumnCount(value.value || '', maxLength),
+  );
+  const expandColumns = useCallback((nextColumnCount: number) => {
+    setColumnCount(currentColumnCount =>
+      Math.max(currentColumnCount, nextColumnCount),
+    );
+  }, []);
+
+  useAnimatedReaction(
+    () => getRequiredTickerColumnCount(value.value || '', maxLength),
+    (nextColumnCount, previousColumnCount) => {
+      if (
+        previousColumnCount === null ||
+        nextColumnCount > previousColumnCount
+      ) {
+        runOnJS(expandColumns)(nextColumnCount);
+      }
+    },
+    [expandColumns, maxLength],
+  );
+
   const textState = useDerivedValue(() => {
     const text = value.value || '';
 
@@ -440,8 +464,12 @@ const AnimatedTickerText = ({
   });
 
   const columns = React.useMemo(
-    () => Array.from({ length: maxLength }, (_, index) => index),
-    [maxLength],
+    () =>
+      Array.from(
+        { length: Math.min(columnCount, maxLength) },
+        (_, index) => index,
+      ),
+    [columnCount, maxLength],
   );
   const initialFontSize = getTextFontSize(value.value || '', fontSizeByLength);
 
