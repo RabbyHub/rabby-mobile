@@ -209,7 +209,6 @@ export async function setupWalletPassword(
   try {
     const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);
     if (r.error) {
-      console.log('r.error', r.error, RABBY_MOBILE_KR_PWD);
       throw new Error(ERRORS.CURRENT_IS_INCORRET);
     }
     await keyringServiceApi.updatePassword(
@@ -377,14 +376,6 @@ export async function getRabbyLockInfo() {
 }
 
 async function tryAutoUnlockRabbyMobile() {
-  // // leave here for debugging
-  if (__DEV__) {
-    console.debug(
-      'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
-      RABBY_MOBILE_KR_PWD,
-    );
-  }
-
   if (!isKeyringBootedSnapshot()) {
     await keyringServiceApi.boot(
       RABBY_MOBILE_KR_PWD,
