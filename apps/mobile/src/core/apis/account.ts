@@ -10,7 +10,6 @@ import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Platform } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
 import {
   getContactAliasMapSnapshot,
@@ -35,7 +34,6 @@ import type {
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 import BigNumber from 'bignumber.js';
-import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { logger } from '@/utils/logger';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
 import { markStartupPerf } from '../utils/startupPerfMarks';
@@ -589,14 +587,5 @@ export const getTop50PrivateKeyAccounts = makeAvoidParallelAsyncFunc(
   },
 );
 
-export type PerfAccountEventBusListeners = {
-  ACCOUNT_ADDED: (ctx: {
-    accounts: KeyringEventAccount[];
-    scene?: 'privateKey' | 'memonics' | 'hardware' | 'syncExtension';
-    needsBackupReminder?: boolean;
-  }) => void;
-  ACCOUNT_REMOVED: (ctx: { removedAccounts: KeyringEventAccount[] }) => void;
-};
-const { EventEmitter: AccountEE } =
-  makeJsEEClass<PerfAccountEventBusListeners>();
-export const accountEvents = new AccountEE();
+export type { PerfAccountEventBusListeners } from './accountEventBus';
+export { accountEvents } from './accountEventBus';
