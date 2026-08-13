@@ -39,12 +39,10 @@ import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAss
 import { HomeTabName as TabName } from '@/hooks/navigation';
 import useTokenList, {
   EMPTY_TOKEN_ASSETS_INDEX_RESULT,
-  EMPTY_TOKEN_ENTITY_IDS,
   getMultiAssetsCacheKey,
   getTokenAssetsIndexRowKey,
   ITokenItem,
   TokenAssetsIndexRow,
-  TokenEntityId,
   TokenGroupResourceValue,
   tokenEntityResourceStore,
   tokenGroupResourceStore,
@@ -302,42 +300,14 @@ export const TokenList = () => {
       );
   }, [myTop10Addresses]);
 
-  const tokenIds = useActivityStore(
-    useTokenIndexStore,
-    useShallow(state => {
-      if (!myTop10Addresses.length) {
-        return EMPTY_TOKEN_ENTITY_IDS;
-      }
-
-      const ids: TokenEntityId[] = [];
-      const seen = new Set<TokenEntityId>();
-      myTop10Addresses.forEach(address => {
-        const addressTokenIds =
-          state.addressTokenIds[address.toLowerCase()] ||
-          EMPTY_TOKEN_ENTITY_IDS;
-        addressTokenIds.forEach(tokenId => {
-          if (seen.has(tokenId)) {
-            return;
-          }
-          seen.add(tokenId);
-          ids.push(tokenId);
-        });
-      });
-      return ids;
-    }),
-    Object.is,
-    { storeLabel: 'home-multi-assets-token-index' },
-  );
   useLayoutEffect(() => {
-    useTokenAssetsIndexStore.getState().syncMultiAssetsResult({
-      key: multiAssetsKey,
+    useTokenAssetsIndexStore.getState().ensureMultiAssetsResult({
       addresses: myTop10Addresses,
-      tokenIds,
       chainServerId: chain,
       isLpTokenEnabled: false,
       tokenDisplayMode,
     });
-  }, [chain, multiAssetsKey, myTop10Addresses, tokenDisplayMode, tokenIds]);
+  }, [chain, multiAssetsKey, myTop10Addresses, tokenDisplayMode]);
 
   const tokenProjectionMetadata = useActivityStore(
     useTokenAssetsIndexStore,

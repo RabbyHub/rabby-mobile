@@ -516,6 +516,8 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
   private readonly tokenChangeListeners = new Set<
     (tokenIds: TokenEntityId[]) => void
   >();
+  // Projection validation can check one address revision without scanning its tokens.
+  private readonly addressVersions = new Map<string, number>();
 
   constructor() {
     super(TOKEN_ENTITY_RESOURCE_FAMILY, { mutative: true });
@@ -528,6 +530,9 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
       this.tokenChangeListeners.delete(listener);
     };
   };
+
+  getAddressVersion = (address: string) =>
+    this.addressVersions.get(normalizeAddress(address)) || 0;
 
   upsertTokens = (
     tokens: ITokenItem[],
@@ -638,6 +643,12 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
       ...changedTokens.map(({ tokenId }) => tokenId),
       ...removedTokenIds.map(tokenId => tokenId as TokenEntityId),
     ];
+    new Set(changedTokenIds.map(getTokenEntityIdAddress)).forEach(address => {
+      this.addressVersions.set(
+        address,
+        (this.addressVersions.get(address) || 0) + 1,
+      );
+    });
     this.tokenChangeListeners.forEach(listener => listener(changedTokenIds));
   };
 
@@ -1179,12 +1190,25 @@ const getTokenSelectIndexCacheKey = ({
     keyword?.toLowerCase() ?? ''
   }::${isLpTokenEnabled ? '1' : '0'}`;
 
-const getTokenSelectIndexAddressVersionKey = (
+const getTokenIndexAddressVersionKey = (
   state: Pick<TokenIndexState, 'addressVersions'>,
   addresses: string[],
 ) =>
   normalizeAddresses(addresses)
     .map(address => `${address}:${state.addressVersions[address] || 0}`)
+    .join('|');
+
+const getMultiTokenAssetsSourceVersionKey = (
+  state: Pick<TokenIndexState, 'addressVersions'>,
+  addresses: string[],
+) =>
+  normalizeAddresses(addresses)
+    .map(
+      address =>
+        `${address}:${
+          state.addressVersions[address] || 0
+        }:${tokenEntityResourceStore.getAddressVersion(address)}`,
+    )
     .join('|');
 
 const tokenSelectIndexResultCache: Record<
@@ -1233,10 +1257,7 @@ export const selectTokenSelectIndexResult = (
     keyword,
     isLpTokenEnabled,
   });
-  const addressVersionKey = getTokenSelectIndexAddressVersionKey(
-    state,
-    addresses,
-  );
+  const addressVersionKey = getTokenIndexAddressVersionKey(state, addresses);
   const cached = tokenSelectIndexResultCache[cacheKey];
 
   if (cached?.addressVersionKey === addressVersionKey) {
@@ -1725,6 +1746,7 @@ type MultiTokenAssetsIndexConfig = {
   key: string;
   addresses: string[];
   tokenIds: TokenEntityId[];
+  sourceVersionKey: string;
   chainServerId?: string;
   isLpTokenEnabled?: boolean;
   tokenDisplayMode?: TokenDisplayMode;
@@ -2196,15 +2218,51 @@ const isSingleTokenAssetsIndexConfigSame = (
   previousConfig.chainServerId === nextConfig.chainServerId &&
   previousConfig.isLpTokenEnabled === nextConfig.isLpTokenEnabled;
 
-const isMultiTokenAssetsIndexConfigSame = (
-  previousConfig: MultiTokenAssetsIndexConfig | undefined,
-  nextConfig: MultiTokenAssetsIndexConfig,
+const areTokenEntityIdListsSame = (
+  previousTokenIds: TokenEntityId[],
+  nextTokenIds: TokenEntityId[],
 ) =>
-  previousConfig?.addresses === nextConfig.addresses &&
-  previousConfig.tokenIds === nextConfig.tokenIds &&
+  previousTokenIds === nextTokenIds ||
+  (previousTokenIds.length === nextTokenIds.length &&
+    previousTokenIds.every(
+      (tokenId, index) => tokenId === nextTokenIds[index],
+    ));
+
+const areOrderedAddressListsSame = (
+  previousAddresses: string[],
+  nextAddresses: string[],
+) =>
+  previousAddresses === nextAddresses ||
+  (previousAddresses.length === nextAddresses.length &&
+    previousAddresses.every(
+      (address, index) =>
+        normalizeAddress(address) === normalizeAddress(nextAddresses[index]!),
+    ));
+
+const isMultiTokenAssetsIndexSourceSame = (
+  previousConfig: MultiTokenAssetsIndexConfig | undefined,
+  nextConfig: Omit<MultiTokenAssetsIndexConfig, 'tokenIds'>,
+) =>
+  previousConfig?.key === nextConfig.key &&
+  areOrderedAddressListsSame(previousConfig.addresses, nextConfig.addresses) &&
+  previousConfig.sourceVersionKey === nextConfig.sourceVersionKey &&
   previousConfig.chainServerId === nextConfig.chainServerId &&
   previousConfig.isLpTokenEnabled === nextConfig.isLpTokenEnabled &&
   previousConfig.tokenDisplayMode === nextConfig.tokenDisplayMode;
+
+const isMultiTokenAssetsIndexConfigSame = (
+  previousConfig: MultiTokenAssetsIndexConfig | undefined,
+  nextConfig: MultiTokenAssetsIndexConfig,
+) => {
+  if (!previousConfig) {
+    return false;
+  }
+
+  return (
+    isMultiTokenAssetsIndexSourceSame(previousConfig, nextConfig) &&
+    areTokenEntityIdListsSame(previousConfig.tokenIds, nextConfig.tokenIds)
+  );
+};
 
 export const useTokenAssetsIndexStore = zCreate(
   zMutative<TokenAssetsIndexStoreState>((set, get) => ({
@@ -2305,18 +2363,44 @@ export const useTokenAssetsIndexStore = zCreate(
       isLpTokenEnabled,
       tokenDisplayMode,
     }) {
+      const normalizedAddresses = normalizeAddresses(addresses);
       const key = getMultiAssetsCacheKey(
-        addresses,
+        normalizedAddresses,
         chainServerId,
         isLpTokenEnabled,
         tokenDisplayMode,
       );
       const tokenIndexState = useTokenIndexStore.getState();
+      const sourceVersionKey = getMultiTokenAssetsSourceVersionKey(
+        tokenIndexState,
+        normalizedAddresses,
+      );
+      const sourceConfig = {
+        key,
+        addresses: normalizedAddresses,
+        sourceVersionKey,
+        chainServerId,
+        isLpTokenEnabled,
+        tokenDisplayMode,
+      };
+      const state = get();
+
+      // Registered projections are refreshed synchronously on entity changes;
+      // this source key covers membership changes and makes mode reuse O(addresses).
+      if (
+        state.multiAssetsResultByKey[key] &&
+        isMultiTokenAssetsIndexSourceSame(
+          state.multiAssetsConfigByKey[key],
+          sourceConfig,
+        )
+      ) {
+        return key;
+      }
+
       const seen = new Set<TokenEntityId>();
-      const tokenIds = addresses.flatMap(address =>
+      const tokenIds = normalizedAddresses.flatMap(address =>
         (
-          tokenIndexState.addressTokenIds[normalizeAddress(address)] ||
-          EMPTY_TOKEN_ENTITY_IDS
+          tokenIndexState.addressTokenIds[address] || EMPTY_TOKEN_ENTITY_IDS
         ).filter(tokenId => {
           if (seen.has(tokenId)) {
             return false;
@@ -2326,24 +2410,9 @@ export const useTokenAssetsIndexStore = zCreate(
         }),
       );
       const nextConfig = {
-        key,
-        addresses,
+        ...sourceConfig,
         tokenIds,
-        chainServerId,
-        isLpTokenEnabled,
-        tokenDisplayMode,
       };
-      const state = get();
-
-      if (
-        state.multiAssetsResultByKey[key] &&
-        isMultiTokenAssetsIndexConfigSame(
-          state.multiAssetsConfigByKey[key],
-          nextConfig,
-        )
-      ) {
-        return key;
-      }
 
       get().syncMultiAssetsResult(nextConfig);
 
@@ -2452,16 +2521,30 @@ export const useTokenAssetsIndexStore = zCreate(
       isLpTokenEnabled,
       tokenDisplayMode,
     }) {
+      const normalizedAddresses = normalizeAddresses(addresses);
       const nextConfig = {
         key,
-        addresses,
+        addresses: normalizedAddresses,
         tokenIds,
+        sourceVersionKey: getMultiTokenAssetsSourceVersionKey(
+          useTokenIndexStore.getState(),
+          normalizedAddresses,
+        ),
         chainServerId,
         isLpTokenEnabled,
         tokenDisplayMode,
       };
       const previousConfig = get().multiAssetsConfigByKey[key];
       const previousResult = get().multiAssetsResultByKey[key];
+      const isConfigSame = isMultiTokenAssetsIndexConfigSame(
+        previousConfig,
+        nextConfig,
+      );
+
+      if (isConfigSame && previousResult) {
+        return;
+      }
+
       const nextResult = buildMultiAssetsIndexFromTokenIds(
         tokenIds,
         chainServerId,
@@ -2470,23 +2553,6 @@ export const useTokenAssetsIndexStore = zCreate(
         key,
         previousResult,
       );
-      const isConfigSame = isMultiTokenAssetsIndexConfigSame(
-        previousConfig,
-        nextConfig,
-      );
-
-      if (isConfigSame && previousResult === nextResult) {
-        scheduleTokenAssetsProjectionPersistence(
-          key,
-          'multi-address',
-          nextResult,
-          tokenDisplayMode,
-        );
-        if (!nextResult.rows.length) {
-          restoreTokenAssetsProjectionIfEmpty(key, 'multi-address');
-        }
-        return;
-      }
 
       set(draft => {
         if (!isConfigSame) {
@@ -2513,6 +2579,9 @@ export const useTokenAssetsIndexStore = zCreate(
       const state = get();
       const singleResultUpdates: Record<string, TokenAssetsIndexResult> = {};
       const multiResultUpdates: Record<string, TokenAssetsIndexResult> = {};
+      const multiConfigUpdates: Record<string, MultiTokenAssetsIndexConfig> =
+        {};
+      const tokenIndexState = useTokenIndexStore.getState();
 
       Object.values(state.singleAssetsConfigByKey).forEach(config => {
         if (!hasTokenAssetsConfigToken(config.tokenIds, changedTokenIdSet)) {
@@ -2550,11 +2619,22 @@ export const useTokenAssetsIndexStore = zCreate(
         if (previousResult !== nextResult) {
           multiResultUpdates[config.key] = nextResult;
         }
+        const sourceVersionKey = getMultiTokenAssetsSourceVersionKey(
+          tokenIndexState,
+          config.addresses,
+        );
+        if (config.sourceVersionKey !== sourceVersionKey) {
+          multiConfigUpdates[config.key] = {
+            ...config,
+            sourceVersionKey,
+          };
+        }
       });
 
       if (
         !Object.keys(singleResultUpdates).length &&
-        !Object.keys(multiResultUpdates).length
+        !Object.keys(multiResultUpdates).length &&
+        !Object.keys(multiConfigUpdates).length
       ) {
         return;
       }
@@ -2565,6 +2645,9 @@ export const useTokenAssetsIndexStore = zCreate(
         });
         Object.entries(multiResultUpdates).forEach(([key, result]) => {
           draft.multiAssetsResultByKey[key] = result;
+        });
+        Object.entries(multiConfigUpdates).forEach(([key, config]) => {
+          draft.multiAssetsConfigByKey[key] = config;
         });
       });
       Object.entries(singleResultUpdates).forEach(([key, result]) => {

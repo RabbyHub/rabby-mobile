@@ -291,6 +291,125 @@ describe('single-address token assets projection', () => {
     expect(result?.additionalTokenCount).toBe(1);
   });
 
+  it('reuses a current display-mode projection without rebuilding its rows', () => {
+    const first = createToken('shared', {
+      owner_addr: NORMALIZED_ADDRESS,
+      usd_value: 20,
+    });
+    const second = createToken('shared', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      usd_value: 30,
+    });
+    tokenEntityResourceStore.upsertTokens([first, second], 'remote', {
+      pruneMissing: true,
+    });
+    useTokenIndexStore
+      .getState()
+      .syncAddressTokens(NORMALIZED_ADDRESS, [first]);
+    useTokenIndexStore
+      .getState()
+      .syncAddressTokens(NORMALIZED_SECOND_ADDRESS, [second]);
+
+    const addresses = [ADDRESS, SECOND_ADDRESS];
+    const byAssetKey = prepareMultiAddressTokenAssetsProjection({
+      addresses,
+      tokenDisplayMode: 'byAsset',
+    });
+    const initialResult =
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[byAssetKey];
+    prepareMultiAddressTokenAssetsProjection({
+      addresses,
+      tokenDisplayMode: 'byAddress',
+    });
+
+    const getValueSpy = jest.spyOn(tokenEntityResourceStore, 'getValue');
+    mockedScheduleAssetProjectionPersistence.mockClear();
+    try {
+      const reusedKey = prepareMultiAddressTokenAssetsProjection({
+        addresses: [ADDRESS.toUpperCase(), SECOND_ADDRESS.toUpperCase()],
+        tokenDisplayMode: 'byAsset',
+      });
+
+      expect(reusedKey).toBe(byAssetKey);
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[reusedKey],
+      ).toBe(initialResult);
+      expect(getValueSpy).not.toHaveBeenCalled();
+      expect(mockedScheduleAssetProjectionPersistence).not.toHaveBeenCalled();
+    } finally {
+      getValueSpy.mockRestore();
+    }
+  });
+
+  it('refreshes cached display modes before they can be reused', () => {
+    const first = createToken('shared', {
+      owner_addr: NORMALIZED_ADDRESS,
+      usd_value: 20,
+    });
+    const second = createToken('shared', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      usd_value: 30,
+    });
+    tokenEntityResourceStore.upsertTokens([first, second], 'remote', {
+      pruneMissing: true,
+    });
+    useTokenIndexStore
+      .getState()
+      .syncAddressTokens(NORMALIZED_ADDRESS, [first]);
+    useTokenIndexStore
+      .getState()
+      .syncAddressTokens(NORMALIZED_SECOND_ADDRESS, [second]);
+
+    const addresses = [ADDRESS, SECOND_ADDRESS];
+    const byAssetKey = prepareMultiAddressTokenAssetsProjection({
+      addresses,
+      tokenDisplayMode: 'byAsset',
+    });
+    const initialResult =
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[byAssetKey];
+    prepareMultiAddressTokenAssetsProjection({
+      addresses,
+      tokenDisplayMode: 'byAddress',
+    });
+
+    tokenEntityResourceStore.upsertTokens(
+      [
+        createToken('shared', {
+          owner_addr: NORMALIZED_ADDRESS,
+          usd_value: 40,
+        }),
+      ],
+      'remote',
+    );
+
+    const refreshedResult =
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[byAssetKey];
+    expect(refreshedResult).not.toBe(initialResult);
+    const refreshedRow = refreshedResult?.rows[0];
+    expect(refreshedRow?.type).toBe('group');
+    if (refreshedRow?.type !== 'group') {
+      throw new Error('expected an aggregated token row');
+    }
+    expect(
+      tokenGroupResourceStore.getValue(refreshedRow.groupId)?.summary.usd_value,
+    ).toBe(70);
+
+    const getValueSpy = jest.spyOn(tokenEntityResourceStore, 'getValue');
+    try {
+      prepareMultiAddressTokenAssetsProjection({
+        addresses: [...addresses],
+        tokenDisplayMode: 'byAsset',
+      });
+
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[byAssetKey],
+      ).toBe(refreshedResult);
+      expect(getValueSpy).not.toHaveBeenCalled();
+    } finally {
+      getValueSpy.mockRestore();
+    }
+  });
+
   it('builds default and LP segments in one projection', () => {
     const core = createToken('core', { usd_value: 20 });
     const lp = createToken('lp', {
