@@ -12,11 +12,19 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadHomeShortcutNavigators } from '@/perfs/preloads';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { withScreenRenderActivityAudit } from '@/hooks/storeActivity/withScreenRenderActivityAudit';
 
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
-const RegressionMultiAddressHome = withRegressionScenario(MultiAddressHome, {
-  screen: 'Home',
-});
+const AuditedMultiAddressHome = withScreenRenderActivityAudit(
+  MultiAddressHome,
+  'home-screen',
+);
+const RegressionMultiAddressHome = withRegressionScenario(
+  AuditedMultiAddressHome,
+  {
+    screen: 'Home',
+  },
+);
 
 const TabBarComponent = () => null;
 

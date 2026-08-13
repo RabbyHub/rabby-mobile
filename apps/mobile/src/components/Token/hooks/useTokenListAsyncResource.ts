@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
+
+export { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 
 export type TokenListResourceStatus =
   | 'idle'
@@ -21,23 +24,6 @@ type UseTokenListAsyncResourceOptions<T> = {
 };
 
 const EMPTY_TOKEN_LIST: never[] = [];
-
-export class LatestAsyncRequest {
-  private sequence = 0;
-
-  next() {
-    this.sequence += 1;
-    return this.sequence;
-  }
-
-  invalidate() {
-    this.sequence += 1;
-  }
-
-  isCurrent(requestId: number) {
-    return requestId === this.sequence;
-  }
-}
 
 export const makeTokenListRequestKey = (
   parts: ReadonlyArray<string | null | undefined>,

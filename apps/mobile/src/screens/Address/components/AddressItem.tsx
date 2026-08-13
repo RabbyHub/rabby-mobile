@@ -19,6 +19,7 @@ import { AddressItemInner2024 } from './AddressItemInner2024';
 import { AddressItemShadowView } from './AddressItemShadowView';
 import { isTabsSwiping } from './MultiAssets/hooks';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
+import { beginFeatureActivation } from '@/core/utils/featureActivationDiagnostics';
 
 const { isSameAddress } = addressUtils;
 
@@ -107,6 +108,10 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     if (isTabsSwiping.value) {
       return;
     }
+    const activationCycleId = beginFeatureActivation(
+      'single-address',
+      'address_list_item_pressed',
+    );
     trigger('impactLight', {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
@@ -114,7 +119,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     onSelect?.();
     handleGoDetail?.();
     if (!disableNavigate) {
-      apisSingleHome.navigateToSingleHome(account);
+      apisSingleHome.navigateToSingleHome(account, { activationCycleId });
     }
   }, [onSelect, handleGoDetail, disableNavigate, account]);
 

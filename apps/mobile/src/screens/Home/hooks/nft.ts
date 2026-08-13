@@ -1,36 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { DisplayNftItem } from '../types';
-import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
+import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useSingleNftRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { CombineNFTItem } from './store';
-import { apisAddrChainStatics } from '../useChainInfo';
-import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import type { CombineNFTItem } from './store';
 import nftListStore from '@/store/nfts';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const EMPTY_NFT_LIST: DisplayNftItem[] = [];
 
-export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
-  return nfts.map(i => {
-    const isFold = (() => {
-      if (!i.is_core) {
-        return true;
-      }
-      return false;
-    })();
-
-    return Object.assign(i, {
-      _isFold: isFold,
-      _isManualFold: false,
-    });
-  });
-};
-export const useQueryNft = (addr?: string, visible = true) => {
-  const [isLoading, setIsLoading] = useState(true);
+const useNftListForAddress = (addr?: string) => {
   const normalizedAddr = addr?.toLowerCase();
-  const list = nftListStore(
+  return useActivityStore(
+    nftListStore,
     useCallback(
       s =>
         normalizedAddr
@@ -38,32 +22,40 @@ export const useQueryNft = (addr?: string, visible = true) => {
           : EMPTY_NFT_LIST,
       [normalizedAddr],
     ),
+    Object.is,
+    { storeLabel: 'single-address-nfts' },
   );
-  const getNFTListWithCache = nftListStore(s => s.getNFTListWithCache);
-  const batchLoadCacheNFT = nftListStore(s => s.batchLoadCacheNFT);
-  const refreshTagNftByStore = nftListStore(s => s.refreshTagNft);
+};
 
-  const debouncedList = useDebouncedValue(list, 500);
-  useEffect(() => {
-    if (!addr || !debouncedList) {
-      return;
-    }
-    apisAddrChainStatics.updateNft(addr, debouncedList);
-  }, [addr, debouncedList]);
+export const useSingleNftListController = (addr?: string, visible = true) => {
+  const normalizedAddr = addr?.toLowerCase();
+  const isLoading = useActivityStore(
+    nftListStore,
+    useCallback(
+      state =>
+        normalizedAddr
+          ? state.singleLoadStatusByAddress[normalizedAddr] !== 'ready'
+          : false,
+      [normalizedAddr],
+    ),
+    Object.is,
+    { storeLabel: 'single-address-nft-load-status' },
+  );
+  const {
+    getNFTListWithCache,
+    batchLoadCacheNFT,
+    refreshTagNft: refreshTagNftByStore,
+  } = nftListStore.getState();
 
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {
-        setIsLoading(false);
         return;
       }
-      setIsLoading(true);
       try {
         await getNFTListWithCache(addr, force);
       } catch (e) {
         console.error('ServiceErrorType.NFT', e);
-      } finally {
-        setIsLoading(false);
       }
     },
     [addr, getNFTListWithCache],
@@ -104,15 +96,18 @@ export const useQueryNft = (addr?: string, visible = true) => {
         const currentUpdateCount =
           ctx.syncDetails.batchSize * ctx.syncDetails.round +
           ctx.syncDetails.count;
+        const currentListLength = normalizedAddr
+          ? nftListStore.getState().nftsMap[normalizedAddr]?.length || 0
+          : 0;
 
         if (
           currentUpdateCount >= ctx.syncDetails.total ||
-          currentUpdateCount > (list?.length || 0)
+          currentUpdateCount > currentListLength
         ) {
           debounceReloadNftList();
         }
       },
-      [addr, isLoading, list?.length, debounceReloadNftList],
+      [addr, debounceReloadNftList, isLoading, normalizedAddr],
     ),
   });
 
@@ -135,8 +130,17 @@ export const useQueryNft = (addr?: string, visible = true) => {
 
   return {
     isLoading,
-    list,
     reload: fetchData,
+  };
+};
+
+export const useQueryNft = (addr?: string, visible = true) => {
+  const list = useNftListForAddress(addr);
+  const controller = useSingleNftListController(addr, visible);
+
+  return {
+    ...controller,
+    list,
   };
 };
 

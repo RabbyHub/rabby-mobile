@@ -13,6 +13,7 @@ import {
   getAppLockStateSnapshot,
   getTriedUnlock,
   loadBootstrapAppLockState,
+  refreshAppLockAccountFlags,
   storeApiLock,
 } from './useLock';
 import { storeApisBiometrics } from './biometrics';
@@ -20,9 +21,6 @@ import { apisPerpsStore } from './perps/usePerpsStore';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
 import type { RefLikeObject } from '@/utils/type';
-import { zCreate } from '@/core/utils/reexports';
-import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater } from '@/core/utils/store';
 import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
@@ -37,24 +35,20 @@ import {
   traceAndroidInstant,
 } from '@/core/utils/androidTrace';
 import { markHomeEntryReadyIfEligible } from '@/core/utils/homeStartupMilestones';
+import {
+  setAppCouldRender,
+  useAppCouldRenderState,
+} from '@/startup/appBootstrapState';
+import {
+  markBootstrapAccountsAdded,
+  runAppStateBootstrap,
+} from '@/startup/appStateBootstrap';
 
 const syncCustomTestChainList = () => {
   customTestnetServiceApi.syncChainList().catch(e => {
     console.error(e);
   });
 };
-
-type BootStrapState = {
-  couldRender: boolean;
-};
-const zBootstrapStore = zCreate<BootStrapState>(() => ({
-  couldRender: false,
-}));
-function setBootstrap(valOrFunc: UpdaterOrPartials<BootStrapState>) {
-  zBootstrapStore.setState(
-    prev => resolveValFromUpdater(prev, valOrFunc).newVal,
-  );
-}
 
 const WEBVIEW_BEFORE_CONTENT_LOADED_BUILTIN_SCRIPT_IDS = [
   'rabby-jsbridge-harden',
@@ -179,22 +173,7 @@ export function useInitializeAppOnTop() {
     const accountAddedSubscription = accountEvents.subscribe(
       'ACCOUNT_ADDED',
       ({ accounts }) => {
-        if (accounts.length === 0) {
-          return;
-        }
-        storeApiLock.setAppLock(prev =>
-          prev.hasVisibleAccounts && prev.hasStoredKeyrings
-            ? prev
-            : {
-                ...prev,
-                hasVisibleAccounts: true,
-                hasStoredKeyrings: true,
-              },
-        );
-        markHomeEntryReadyIfEligible(
-          getAppLockStateSnapshot(),
-          'account_added_in_current_process',
-        );
+        markBootstrapAccountsAdded(accounts.length);
       },
     );
 
@@ -221,8 +200,8 @@ export function useInitializeAppOnTop() {
 
 export function subscribeUnlockToFetchAccounts() {
   perfEvents.subscribe('POST_UNLOCK_UI_READY', async () => {
-    const accountFlags = await getBootstrapAccountFlags();
-    if (!accountFlags.hasVisibleAccounts) {
+    const accountFlags = await refreshAppLockAccountFlags();
+    if (accountFlags.accountState === 'empty') {
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStarted,
       });
@@ -235,7 +214,7 @@ export async function loadJavaScriptBeforeContentLoadedOnBoot() {
 }
 
 export function useJavaScriptBeforeContentLoaded() {
-  const entryScriptWeb3Loaded = zBootstrapStore(s => !!s.couldRender);
+  const entryScriptWeb3Loaded = useAppCouldRenderState();
 
   return {
     entryScriptWeb3Loaded,
@@ -300,65 +279,44 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
       'bootstrap.loadBootstrapAppLockState',
       lockStateTraceCookie,
     );
-    const lockStatePromise = loadBootstrapAppLockState().finally(() => {
-      endAndroidAsyncTrace(
-        'bootstrap.loadBootstrapAppLockState',
-        lockStateTraceCookie,
-      );
-    });
-    const didTraceSecurityChain = beginAndroidTraceSection(
-      'bootstrap.loadSecurityChain',
-    );
-    let securityChainResult:
-      | ReturnType<typeof loadSecurityChain>
-      | Promise<never>;
-    try {
-      securityChainResult = loadSecurityChain({ rabbitCode });
-    } catch (error) {
-      securityChainResult = Promise.reject(error);
-    } finally {
-      if (didTraceSecurityChain) {
-        endAndroidTraceSection();
-      }
-    }
-
-    Promise.allSettled([lockStatePromise, securityChainResult])
-      .then(async ([_initialLockResult, _securityChain]) => {
-        const initialLockState =
-          _initialLockResult.status === 'fulfilled'
-            ? _initialLockResult.value
-            : null;
-        const shouldWaitAutoUnlock =
-          _initialLockResult.status !== 'fulfilled' ||
-          (!initialLockState?.appUnlocked &&
-            !initialLockState?.isUnlockSessionValid);
-        const unlockResult = shouldWaitAutoUnlock
-          ? await Promise.allSettled([getTriedUnlock()]).then(
-              ([result]) => result,
-            )
-          : null;
-
+    runAppStateBootstrap({
+      loadInitialLockState: () =>
+        loadBootstrapAppLockState().finally(() => {
+          endAndroidAsyncTrace(
+            'bootstrap.loadBootstrapAppLockState',
+            lockStateTraceCookie,
+          );
+        }),
+      loadSecurityChain: () => {
+        const didTraceSecurityChain = beginAndroidTraceSection(
+          'bootstrap.loadSecurityChain',
+        );
+        try {
+          return loadSecurityChain({ rabbitCode });
+        } finally {
+          if (didTraceSecurityChain) {
+            endAndroidTraceSection();
+          }
+        }
+      },
+      tryAutoUnlock: getTriedUnlock,
+      onReady: result => {
         console.debug('useBootstrapApp::sucess', {
-          initialLockStatus: _initialLockResult.status,
-          securityChainStatus: _securityChain.status,
-          unlockStatus: unlockResult?.status ?? 'deferred',
-          shouldWaitAutoUnlock,
+          initialLockStatus: result.initialLockStatus,
+          securityChainStatus: result.securityChainStatus,
+          unlockStatus: result.unlockStatus,
+          shouldWaitAutoUnlock: result.shouldWaitAutoUnlock,
         });
         traceAndroidInstant('bootstrap.couldRender.set_true', {
-          initialLockStatus: _initialLockResult.status,
-          securityChainStatus: _securityChain.status,
-          unlockStatus: unlockResult?.status ?? 'deferred',
-          shouldWaitAutoUnlock,
+          initialLockStatus: result.initialLockStatus,
+          securityChainStatus: result.securityChainStatus,
+          unlockStatus: result.unlockStatus,
+          shouldWaitAutoUnlock: result.shouldWaitAutoUnlock,
         });
-        markHomeEntryReadyIfEligible(
-          getAppLockStateSnapshot(),
-          shouldWaitAutoUnlock
-            ? 'bootstrap_auto_unlock_ready'
-            : 'bootstrap_session_ready',
-        );
-        setBootstrap({ couldRender: true });
-
-        if (shouldWaitAutoUnlock) {
+      },
+    })
+      .then(result => {
+        if (result.shouldWaitAutoUnlock) {
           setTimeout(() => {
             storeApisBiometrics.fetchBiometrics().catch(error => {
               console.error('fetchBiometrics::postRender::error', error);
@@ -371,7 +329,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
       .catch(err => {
         startedLoadRef.current = false;
         console.error('useBootstrapApp::error', err);
-        setBootstrap({ couldRender: false });
+        setAppCouldRender(false);
       })
       .finally(() => {
         endAndroidAsyncTrace('bootstrap.useBootstrapApp', bootstrapTraceCookie);
@@ -380,7 +338,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
 }
 
 export function useAppCouldRender() {
-  const couldRender = zBootstrapStore(s => s.couldRender);
+  const couldRender = useAppCouldRenderState();
 
   return {
     couldRender,

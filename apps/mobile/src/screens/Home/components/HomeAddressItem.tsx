@@ -19,6 +19,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { apisSingleHome } from '../hooks/singleHome';
 import { Text } from '@/components/Typography';
 import { formatSmallCurrencyValue } from '@/hooks/useCurve';
+import { beginFeatureActivation } from '@/core/utils/featureActivationDiagnostics';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -58,6 +59,10 @@ export const HomeAddressItem: React.FC<{
         style={StyleSheet.flatten([style])}
         delayLongPress={200} // long press delay
         onPress={() => {
+          const activationCycleId = beginFeatureActivation(
+            'single-address',
+            'home_address_card_pressed',
+          );
           trigger('impactLight', {
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
@@ -66,7 +71,7 @@ export const HomeAddressItem: React.FC<{
             category: 'Pin Address',
             action: 'PinAddress_ClickView',
           });
-          apisSingleHome.navigateToSingleHome(account);
+          apisSingleHome.navigateToSingleHome(account, { activationCycleId });
         }}
         onLongPress={() => {
           // setIsPressing(true);

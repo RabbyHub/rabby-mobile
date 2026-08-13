@@ -1,3 +1,5 @@
+import type { LaunchTaskLoaderCatalog } from './launchTaskContracts';
+
 export const launchTaskLoaders = {
   appSettingsAutoLockHydrate: () => import('@/hooks/appSettings'),
   appTimeoutAutoLockHydrate: () => import('@/hooks/appTimeout'),
@@ -10,4 +12,4 @@ export const launchTaskLoaders = {
   syncChainMetadataWarmup: () => import('@/core/serviceApi/syncChain'),
   transactionWatchersStart: () =>
     import('@/core/serviceApi/createDeferredServiceApi'),
-} as const;
+} as const satisfies LaunchTaskLoaderCatalog;

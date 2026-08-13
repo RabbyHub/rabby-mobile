@@ -100,8 +100,11 @@ jest.mock('./sessions', () => ({
   getWalletConnectSession: jest.fn(() => session),
   getWalletConnectSessionOrigin: jest.fn(() => 'https://example.com'),
   isWalletConnectMethodApproved: jest.fn(() => true),
-  resolveWalletConnectAccount: jest.fn(() => account),
   syncWalletConnectSessionsFromClient: jest.fn(),
+}));
+
+jest.mock('./sessionAccountResolution', () => ({
+  resolveWalletConnectAccount: jest.fn(() => account),
 }));
 
 const { sendRequest } =
@@ -119,7 +122,7 @@ const { getWalletConnectSession } =
 const { isWalletConnectMethodApproved } =
   require('./sessions') as typeof import('./sessions');
 const { resolveWalletConnectAccount } =
-  require('./sessions') as typeof import('./sessions');
+  require('./sessionAccountResolution') as typeof import('./sessionAccountResolution');
 
 function makeEvent(method: string, params: unknown[] = []) {
   return {

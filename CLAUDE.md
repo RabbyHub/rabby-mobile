@@ -22,7 +22,8 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 - For `apps/mobile` keychain patching or upgrade work, read `apps/mobile/skills/keychain-upgrade.md` before changing Android fallback behavior, authentication policy, or package wiring.
 - For `apps/mobile` i18n locale files or translation backfills, read `apps/mobile/skills/i18n-translation.md` and respect `__skip_translation` markers before adding missing keys.
 - For `apps/mobile` fixed bottom buttons, bottom-sheet footer buttons, modal action rows, or footer spacing, read `apps/mobile/skills/bottom-buttons.md` and reuse the shared constants from `src/constant/layout.ts`.
-- For `apps/mobile` code changes, read `apps/mobile/skills/import-cycles.md` and keep import-cycle detection, TypeScript typecheck, and Jest as the required self-validation set before handoff.
+- For Rabby Mobile test selection, implementation, review, or reclassification, read `skills/rabby-mobile-testing/SKILL.md` before choosing unit, JS integration, Hermes device integration, or E2E coverage.
+- For `apps/mobile` code changes, read `apps/mobile/skills/import-cycles.md` and keep import-cycle detection, TypeScript typecheck, unit/component Jest, and JS integration Jest as the required self-validation set before handoff.
 - For `apps/mobile` stores, hooks, lists, Home-path logic, or mounted-but-inactive Screens, read `apps/mobile/skills/perf-hooks.md` before changing selector or subscription boundaries. Every Home change must be checked for render fan-out and inactive subscription work, including transitive shared-state changes outside `src/screens/Home/**`.
 
 ## Common Commands
@@ -69,8 +70,11 @@ yarn typecheck
 yarn lint:cycles
 yarn lint:cycles:eslint
 
-# Jest tests
+# Jest unit and component tests
 yarn test --runInBand
+
+# Jest/RNTL integration tests with real internal modules
+yarn test:integration:ci
 
 # Build web worker
 yarn buildworker
@@ -199,7 +203,7 @@ yarn link-assets
 - Pre-push hook runs `yarn lint`
 - Lint-staged runs on commit for staged files
 - Main branch is `develop`
-- For `apps/mobile` code changes, run the import-cycle suite (`yarn workspace rabby-mobile lint:cycles`, `yarn workspace rabby-mobile lint:cycles:eslint`), `yarn workspace rabby-mobile typecheck`, and `yarn workspace rabby-mobile test --runInBand` before handoff. If one is intentionally skipped, state the reason.
+- For `apps/mobile` code changes, run the import-cycle suite (`yarn workspace rabby-mobile lint:cycles`, `yarn workspace rabby-mobile lint:cycles:eslint`), `yarn workspace rabby-mobile typecheck`, `yarn workspace rabby-mobile test --runInBand`, and `yarn workspace rabby-mobile test:integration:ci` before handoff. If one is intentionally skipped, state the reason.
 
 ## File Organization
 
