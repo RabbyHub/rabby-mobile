@@ -149,17 +149,6 @@ export const useProtocolConfig = () => {
               action: 'Perps_ManageToPosition',
             });
             // Backing out of the detail page should land on Perps home first.
-            // Don't preset a multi-route nested state instead: the child
-            // navigator sets gestureEnabled: false, so iOS swipe-back falls to
-            // the root stack and pops the whole nested stack at once.
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Perps,
-              params: {
-                dappId: 'hyperliquid',
-                account,
-              },
-            });
-            // Backing out of the detail page should land on Perps home first.
             return naviPushWithUnderlay(
               RootNames.StackTransaction,
               {
