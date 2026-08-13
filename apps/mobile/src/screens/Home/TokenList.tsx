@@ -64,6 +64,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 type TokenListItem =
   | {
@@ -392,6 +393,11 @@ export const TokenList = ({
     return focusedTab === 'tokens';
   }, [focusedTab]);
 
+  useScrollToTopOnChainChange({
+    chain: selectedChain,
+    isCurrentTab: isFocused,
+  });
+
   const closeCustomTestnetAddTokenModal = useCallback(() => {
     const modalId = customTestnetAddTokenModalIdRef.current;
     if (!modalId) {
@@ -667,6 +673,30 @@ export const TokenList = ({
     [t],
   );
 
+  const handleLpTokenChange = useCallback(
+    (nextEnabled: boolean) => {
+      if (lowerAddress) {
+        const nextKey = getSingleAssetsCacheKey(
+          lowerAddress,
+          selectedChain,
+          nextEnabled,
+        );
+        const assetsIndexState = useTokenAssetsIndexStore.getState();
+        if (!assetsIndexState.singleAssetsResultByKey[nextKey]) {
+          // Only fill a cold target cache to avoid the first empty-list frame.
+          assetsIndexState.syncSingleAssetsResult({
+            key: nextKey,
+            tokenIds,
+            chainServerId: selectedChain,
+            isLpTokenEnabled: nextEnabled,
+          });
+        }
+      }
+      setIsLpTokenEnabled(nextEnabled);
+    },
+    [lowerAddress, selectedChain, tokenIds],
+  );
+
   const handleToggleTokenFold = useCallback(() => {
     if (!foldHideList) {
       setFoldScam(true);
@@ -726,7 +756,7 @@ export const TokenList = ({
     () => (
       <TokenFoldSectionHeader
         isEnabled={isLpTokenEnabled}
-        onValueChange={setIsLpTokenEnabled}
+        onValueChange={handleLpTokenChange}
         fold={foldHideList}
         str={foldTokenUsdValue}
         style={styles.sectionHeader}
@@ -738,6 +768,7 @@ export const TokenList = ({
       foldHeaderButtonStyle,
       foldHideList,
       foldTokenUsdValue,
+      handleLpTokenChange,
       handleToggleTokenFold,
       isLpTokenEnabled,
       styles.sectionHeader,
