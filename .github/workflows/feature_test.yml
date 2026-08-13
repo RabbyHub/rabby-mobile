@@ -213,6 +213,12 @@ jobs:
       - name: Install and build
         run: |
           unset MATCH_GIT_BASIC_AUTHORIZATION
+          # The interactive self-hosted shell may inherit stale runner/profile values.
+          # Reassert the credentials supplied by this workflow before any build script runs.
+          export RABBY_MOBILE_LARK_CHAT_URL="$RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB"
+          export RABBY_MOBILE_LARK_CHAT_SECRET="$RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB"
+          export RABBY_ROBOT_LARK_APP_ID="$RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB"
+          export RABBY_ROBOT_LARK_APP_SECRET="$RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB"
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
           bash ./scripts/ci/prepare-mobile-build.sh;
@@ -273,8 +279,12 @@ jobs:
           SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB: ${{ secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+          RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+          RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}
