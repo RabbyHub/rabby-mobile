@@ -111,7 +111,7 @@ export const TokenDetailBottomBtns = ({
 
         await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
         setIsFromBack(false);
-        navigation.navigateDeprecated(RootNames.StackTransaction, {
+        navigation.push(RootNames.StackTransaction, {
           screen: RootNames.SwapBridge,
           params: {
             activeTab: 'bridge',
@@ -144,7 +144,7 @@ export const TokenDetailBottomBtns = ({
 
     await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     setIsFromBack(false);
-    navigation.navigateDeprecated(RootNames.StackTransaction, {
+    navigation.push(RootNames.StackTransaction, {
       screen: RootNames.SwapBridge,
       params: {
         activeTab: 'swap',
