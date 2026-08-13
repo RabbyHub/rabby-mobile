@@ -187,6 +187,12 @@ export function UpgradePromptModal() {
   const { remoteVersion } = useUpgradeInfo();
 
   useEffect(() => {
+    return () => {
+      dismissUpgradePrompt();
+    };
+  }, []);
+
+  useEffect(() => {
     if (
       currentRouteName === RootNames.Home &&
       homeTabName === TabName.overview &&
