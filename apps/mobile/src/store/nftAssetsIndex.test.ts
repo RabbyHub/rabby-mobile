@@ -9,12 +9,13 @@ const makeNft = (
   options?: {
     collectionId?: string;
     fold?: boolean;
+    ownerAddress?: string;
   },
 ): DisplayNftItem =>
   ({
     id,
     inner_id: `${id}-inner`,
-    owner_addr: '0xABC',
+    owner_addr: options?.ownerAddress || '0xABC',
     chain: 'eth',
     name: id,
     amount: 1,
@@ -49,6 +50,28 @@ describe('nft asset index', () => {
     expect(projection.result.unFoldRows).toHaveLength(1);
     expect(projection.result.unFoldRows[0]?.type).toBe('collection');
     expect(projection.collections[0]?.value.nft_list).toHaveLength(2);
+  });
+
+  it('keeps the same collection separate across owners', () => {
+    const projection = buildNftAssetsIndexProjection(
+      [
+        makeNft('one', {
+          collectionId: 'collection',
+          ownerAddress: '0xAAA',
+        }),
+        makeNft('two', {
+          collectionId: 'collection',
+          ownerAddress: '0xBBB',
+        }),
+      ],
+      'multi::0xaaa|0xbbb::eth',
+    );
+
+    expect(projection.result.unFoldRows).toHaveLength(2);
+    expect(projection.collections.map(item => item.value.address)).toEqual([
+      '0xaaa',
+      '0xbbb',
+    ]);
   });
 
   it('keeps folded and unfolded rows independent', () => {
