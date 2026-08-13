@@ -38,16 +38,6 @@ export const TransactionNavigator = registerAppScreen<
   name: RootNames.StackTransaction,
 });
 
-export const SingleAddressNavigator = registerAppScreen<
-  typeof import('@/screens/Navigators/SingleAddressNavigator').SingleAddressNavigator
->({
-  loader: () =>
-    import('@/screens/Navigators/SingleAddressNavigator').then(m => ({
-      default: m.SingleAddressNavigator,
-    })),
-  name: RootNames.SingleAddressStack,
-});
-
 export const DappsNavigator = registerAppScreen<
   typeof import('@/screens/Navigators/DappsNavigator').DappsNavigator
 >({

@@ -3,7 +3,7 @@ import type { SQLBatchTuple, Scalar } from '@op-engineering/op-sqlite';
 
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
-import { resolveDriverAndConnectionFromRepo } from '@/core/databases/op-sqlite/typeorm';
+import { resolveDriverAndConnectionFromRepo } from '@/core/databases/typeormConnection';
 import { getOnlineConfig } from '@/core/config/online';
 import { logger } from '@/utils/logger';
 import { isNonPublicProductionEnv } from '@/constant';

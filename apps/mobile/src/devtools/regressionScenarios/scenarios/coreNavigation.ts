@@ -11,6 +11,8 @@ import {
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
+import { getSingleAddressChainProjectionDiagnosticsSnapshot } from '@/screens/Home/singleAddressChainDiagnostics';
+import { getAssetDataLoadDiagnosticsSnapshot } from '@/core/utils/assetDataLoadDiagnostics';
 import {
   apiSendToken,
   requestSendTokenFormPatch,
@@ -21,13 +23,17 @@ import {
   preferenceServiceApi,
 } from '@/core/serviceApi/preference';
 import tokenStore from '@/store/tokens';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { findChain, findChainByEnum, makeTokenFromChain } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
 import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
-import { createRegressionScenarioPerformanceProbe } from '../performance.nonprod';
+import {
+  compactRegressionScenarioPerformanceSummary,
+  createRegressionScenarioPerformanceProbe,
+} from '../performance.nonprod';
 import {
   delay,
   ensureScenarioWalletUnlocked,
@@ -56,6 +62,45 @@ const HOME_TAB_ACTIVITY_SCOPE_LABELS = [
   'home-multi-assets-nft',
 ] as const;
 const HOME_TAB_ACTIVITY_VERIFICATION_TABS = [0, 1, 2, 3, 0] as const;
+const SINGLE_ADDRESS_SCREEN_ACTIVITY_SCOPE_LABELS = [
+  'single-address',
+  'single-address-header',
+] as const;
+const SINGLE_ADDRESS_TAB_ACTIVITY = [
+  {
+    name: 'tokens',
+    action: 'single-address.activate-tokens',
+    scopeLabel: 'single-address-tokens',
+  },
+  {
+    name: 'defi',
+    action: 'single-address.activate-defi',
+    scopeLabel: 'single-address-defi',
+  },
+  {
+    name: 'nft',
+    action: 'single-address.activate-nft',
+    scopeLabel: 'single-address-nft',
+  },
+] as const;
+const SINGLE_ADDRESS_EXPAND_ACTIONS = {
+  tokens: {
+    collapseAction: 'single-address.collapse-tokens',
+    action: 'single-address.expand-tokens',
+    readyAssertion: 'single-address-tokens-ready',
+    assertion: 'single-address-tokens-expanded',
+  },
+  nft: {
+    collapseAction: 'single-address.collapse-nfts',
+    action: 'single-address.expand-nfts',
+    readyAssertion: 'single-address-nfts-ready',
+    assertion: 'single-address-nfts-expanded',
+  },
+} as const;
+const SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS = [
+  ...SINGLE_ADDRESS_SCREEN_ACTIVITY_SCOPE_LABELS,
+  ...SINGLE_ADDRESS_TAB_ACTIVITY.map(tab => tab.scopeLabel),
+] as const;
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -621,16 +666,411 @@ async function switchCurrentAddress(
   }
 }
 
+function summarizeSingleAddressActivityScopes() {
+  const snapshot = getStoreActivityDiagnosticsSnapshot();
+  const scopes = SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS.map(
+    getLatestStoreActivityScopeDiagnostics,
+  );
+
+  return {
+    enabled: snapshot.enabled,
+    scopes,
+    report: scopes.map((scope, index) => ({
+      label: SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS[index],
+      mounted: !!scope,
+      active: scope?.active ?? false,
+      consumerCount:
+        scope?.stores.reduce((sum, store) => sum + store.consumerCount, 0) ?? 0,
+      sourceSubscriptionCount:
+        scope?.stores.filter(store => store.sourceSubscribed).length ?? 0,
+      sourceSubscribeCount:
+        scope?.stores.reduce(
+          (sum, store) => sum + store.sourceSubscribeCount,
+          0,
+        ) ?? 0,
+      sourceNotificationCount:
+        scope?.stores.reduce(
+          (sum, store) => sum + store.sourceNotificationCount,
+          0,
+        ) ?? 0,
+      publishedNotificationCount:
+        scope?.stores.reduce(
+          (sum, store) => sum + store.publishedNotificationCount,
+          0,
+        ) ?? 0,
+      catchUpCount:
+        scope?.stores.reduce((sum, store) => sum + store.catchUpCount, 0) ?? 0,
+    })),
+  };
+}
+
+type SingleAddressActivitySummary = ReturnType<
+  typeof summarizeSingleAddressActivityScopes
+>;
+
+function diffSingleAddressStoreActivity(
+  before: SingleAddressActivitySummary,
+  after: SingleAddressActivitySummary,
+) {
+  const previousByKey = new Map<
+    string,
+    NonNullable<
+      SingleAddressActivitySummary['scopes'][number]
+    >['stores'][number]
+  >();
+  before.scopes.forEach((scope, scopeIndex) => {
+    const scopeLabel = SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS[scopeIndex];
+    scope?.stores.forEach(store => {
+      previousByKey.set(`${scopeLabel}/${store.label}`, store);
+    });
+  });
+
+  return after.scopes
+    .flatMap((scope, scopeIndex) => {
+      const scopeLabel = SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS[scopeIndex];
+      return (scope?.stores || []).map(store => {
+        const key = `${scopeLabel}/${store.label}`;
+        const previous = previousByKey.get(key);
+        return {
+          scope: scopeLabel,
+          store: store.label,
+          consumerDelta: store.consumerCount - (previous?.consumerCount || 0),
+          sourceNotificationDelta:
+            store.sourceNotificationCount -
+            (previous?.sourceNotificationCount || 0),
+          publishedNotificationDelta:
+            store.publishedNotificationCount -
+            (previous?.publishedNotificationCount || 0),
+          catchUpDelta: store.catchUpCount - (previous?.catchUpCount || 0),
+        };
+      });
+    })
+    .filter(
+      store =>
+        store.consumerDelta !== 0 ||
+        store.sourceNotificationDelta !== 0 ||
+        store.publishedNotificationDelta !== 0 ||
+        store.catchUpDelta !== 0,
+    );
+}
+
+function getSingleAddressChainProjectionCursor() {
+  const records = getSingleAddressChainProjectionDiagnosticsSnapshot().records;
+  return records[records.length - 1]?.id || 0;
+}
+
+function getSingleAddressChainProjectionRecordsAfter(cursor: number) {
+  return getSingleAddressChainProjectionDiagnosticsSnapshot()
+    .records.filter(record => record.id > cursor)
+    .map(record => ({
+      source: record.source,
+      addressCount: record.addressCount,
+      inputCount: record.inputCount,
+      changed: record.changed,
+      projectionMs: Math.round(record.projectionMs * 10) / 10,
+      publishMs: Math.round(record.publishMs * 10) / 10,
+      totalMs: Math.round(record.totalMs * 10) / 10,
+    }));
+}
+
+function getAssetDataLoadDiagnosticsCursor() {
+  const records = getAssetDataLoadDiagnosticsSnapshot().records;
+  return records[records.length - 1]?.id || 0;
+}
+
+function getAssetDataLoadRecordsAfter(
+  cursor: number,
+  address: string,
+  navigationStartedAt: number,
+) {
+  const normalizedAddress = address.toLowerCase();
+  return getAssetDataLoadDiagnosticsSnapshot()
+    .records.filter(
+      record =>
+        record.id > cursor &&
+        record.address.toLowerCase() === normalizedAddress,
+    )
+    .map(record => ({
+      domain: record.domain,
+      requestId: record.requestId,
+      phase: record.phase,
+      sinceNavigationMs: record.timestamp - navigationStartedAt,
+      elapsedMs: record.elapsedMs,
+      deltaMs: record.deltaMs,
+      details: record.details,
+    }));
+}
+
+async function assertSingleAddressActivity(
+  context: RegressionScenarioExecutionContext,
+  options: {
+    assertion: string;
+    screenActive: boolean;
+    expectedActiveTabLabel: string | null;
+    requiredTabScopeLabels: readonly string[];
+    details?: Record<string, unknown>;
+  },
+) {
+  const requiredScopeLabels = new Set<string>([
+    ...SINGLE_ADDRESS_SCREEN_ACTIVITY_SCOPE_LABELS,
+    ...options.requiredTabScopeLabels,
+  ]);
+  const expectedActiveLabels = new Set<string>(
+    options.screenActive
+      ? [
+          ...SINGLE_ADDRESS_SCREEN_ACTIVITY_SCOPE_LABELS,
+          ...(options.expectedActiveTabLabel
+            ? [options.expectedActiveTabLabel]
+            : []),
+        ]
+      : [],
+  );
+  const sourceRequiredLabels = options.screenActive
+    ? ['single-address', options.expectedActiveTabLabel].filter(
+        (label): label is string => !!label,
+      )
+    : [];
+  const startedAt = Date.now();
+  let latest = summarizeSingleAddressActivityScopes();
+
+  while (Date.now() - startedAt < 10_000) {
+    latest = summarizeSingleAddressActivityScopes();
+    const allRequiredScopesMounted = latest.scopes.every((scope, index) => {
+      const label = SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS[index];
+      return !requiredScopeLabels.has(label) || !!scope;
+    });
+    const activityMatches = latest.scopes.every((scope, index) => {
+      if (!scope) {
+        return true;
+      }
+      const label = SINGLE_ADDRESS_ACTIVITY_SCOPE_LABELS[index];
+      const shouldBeActive = expectedActiveLabels.has(label);
+      if (scope.active !== shouldBeActive) {
+        return false;
+      }
+      if (!shouldBeActive) {
+        return scope.stores.every(store => !store.sourceSubscribed);
+      }
+      return scope.stores.every(
+        store => store.consumerCount === 0 || store.sourceSubscribed,
+      );
+    });
+    const activeSourcesPresent = sourceRequiredLabels.every(label =>
+      getLatestStoreActivityScopeDiagnostics(label)?.stores.some(
+        store => store.consumerCount > 0 && store.sourceSubscribed,
+      ),
+    );
+
+    if (
+      latest.enabled &&
+      allRequiredScopesMounted &&
+      activityMatches &&
+      activeSourcesPresent
+    ) {
+      context.report('assertion', {
+        assertion: options.assertion,
+        passed: true,
+        screenActive: options.screenActive,
+        expectedActiveTabLabel: options.expectedActiveTabLabel,
+        scopes: latest.report,
+        ...options.details,
+      });
+      return;
+    }
+    await delay(50);
+  }
+
+  context.report('assertion', {
+    assertion: options.assertion,
+    passed: false,
+    screenActive: options.screenActive,
+    expectedActiveTabLabel: options.expectedActiveTabLabel,
+    scopes: latest.report,
+    ...options.details,
+  });
+  throw new Error(
+    `Single-address store activity did not converge for ${options.assertion}`,
+  );
+}
+
 async function openSingleAddress(
   context: RegressionScenarioExecutionContext,
   account: Awaited<ReturnType<typeof getScenarioAccounts>>[number],
 ) {
-  apisSingleHome.navigateToSingleHome(account);
-  await context.waitForRoute(RootNames.SingleAddressHome);
-  context.report('assertion', {
-    assertion: 'single-address-opened',
-    passed: true,
-  });
+  resetToHome();
+  await context.waitForRoute(RootNames.Home);
+
+  const probe = createRegressionScenarioPerformanceProbe();
+  const navigationStartedAt = Date.now();
+  const assetDataLoadCursor = getAssetDataLoadDiagnosticsCursor();
+  probe.markPhase('navigate-to-single-address');
+  try {
+    apisSingleHome.navigateToSingleHome(account);
+    await context.waitForRoute(RootNames.SingleAddressHome);
+    probe.recordDuration('navigate-to-route', Date.now() - navigationStartedAt);
+    context.report('assertion', {
+      assertion: 'single-address-opened',
+      passed: true,
+      account: formatSafeAddress(account.address),
+    });
+
+    probe.markPhase('wait-for-asset-view');
+    const settledViewEvent = await waitForScenarioAssertion(
+      context,
+      'single-address-asset-view-settled',
+      15_000,
+    );
+    probe.recordDuration(
+      'navigate-to-view-settled',
+      Date.now() - navigationStartedAt,
+    );
+    const viewState = settledViewEvent.data?.viewState;
+    if (viewState !== 'assets' && viewState !== 'receive') {
+      throw new Error(`Unexpected single-address asset view: ${viewState}`);
+    }
+
+    const visitedTabScopeLabels: string[] = [];
+    let expectedActiveTabLabel: string | null = null;
+    if (viewState === 'assets') {
+      for (const tab of SINGLE_ADDRESS_TAB_ACTIVITY) {
+        probe.markPhase(`activate-${tab.name}`);
+        const timing = await runRegressionScenarioComponentAction(
+          context.command.runId,
+          tab.action,
+        );
+        probe.recordAction(`activate-${tab.name}`, timing);
+        visitedTabScopeLabels.push(tab.scopeLabel);
+        expectedActiveTabLabel = tab.scopeLabel;
+        probe.markPhase(`verify-${tab.name}-store-activity`);
+        await assertSingleAddressActivity(context, {
+          assertion: 'single-address-tab-store-activity',
+          screenActive: true,
+          expectedActiveTabLabel,
+          requiredTabScopeLabels: visitedTabScopeLabels,
+          details: {
+            tab: tab.name,
+            actionTiming: timing,
+            viewState,
+          },
+        });
+
+        if (tab.name !== 'defi') {
+          const expandConfig = SINGLE_ADDRESS_EXPAND_ACTIONS[tab.name];
+          probe.markPhase(`collapse-${tab.name}`);
+          const collapseTiming = await runRegressionScenarioComponentAction(
+            context.command.runId,
+            expandConfig.collapseAction,
+            15_000,
+          );
+          probe.recordAction(`collapse-${tab.name}`, collapseTiming);
+          probe.markPhase(`wait-${tab.name}-content-ready`);
+          const readyEvent = await waitForScenarioAssertion(
+            context,
+            expandConfig.readyAssertion,
+            30_000,
+          );
+          probe.recordDuration(
+            `${tab.name}-data-ready-from-navigation`,
+            Date.now() - navigationStartedAt,
+          );
+          context.report('assertion', {
+            assertion: `single-address-${tab.name}-data-ready`,
+            passed: true,
+            ...readyEvent.data,
+          });
+        }
+
+        if (tab.name === 'defi') {
+          continue;
+        }
+        const expandConfig = SINGLE_ADDRESS_EXPAND_ACTIONS[tab.name];
+        const expandStartedAt = Date.now();
+        const expandProbe = createRegressionScenarioPerformanceProbe();
+        const activityBeforeExpand = summarizeSingleAddressActivityScopes();
+        const chainProjectionCursor = getSingleAddressChainProjectionCursor();
+        probe.markPhase(`expand-${tab.name}`);
+        const expandTiming = await runRegressionScenarioComponentAction(
+          context.command.runId,
+          expandConfig.action,
+          15_000,
+        );
+        probe.recordAction(`expand-${tab.name}`, expandTiming);
+        probe.markPhase(`wait-${tab.name}-expanded`);
+        const expandedEvent = await waitForScenarioAssertion(
+          context,
+          expandConfig.assertion,
+          15_000,
+          expandStartedAt,
+        );
+        probe.recordDuration(
+          `expand-${tab.name}-settled`,
+          Date.now() - expandStartedAt,
+        );
+        context.report('perf-mark', {
+          mark: `single-address-${tab.name}-expand-performance`,
+          ...expandProbe.stop(),
+          storeActivityDelta: diffSingleAddressStoreActivity(
+            activityBeforeExpand,
+            summarizeSingleAddressActivityScopes(),
+          ),
+          chainProjections: getSingleAddressChainProjectionRecordsAfter(
+            chainProjectionCursor,
+          ),
+        });
+        context.report('assertion', {
+          assertion: `single-address-${tab.name}-expand-complete`,
+          passed: true,
+          actionTiming: expandTiming,
+          ...expandedEvent.data,
+        });
+      }
+    } else {
+      await assertSingleAddressActivity(context, {
+        assertion: 'single-address-receive-store-activity',
+        screenActive: true,
+        expectedActiveTabLabel: null,
+        requiredTabScopeLabels: visitedTabScopeLabels,
+        details: {
+          viewState,
+        },
+      });
+    }
+
+    probe.markPhase('hide-single-address');
+    pushNestedScreen(RootNames.StackSettings, RootNames.Settings);
+    await context.waitForRoute(RootNames.Settings);
+    await assertSingleAddressActivity(context, {
+      assertion: 'single-address-hidden-store-activity',
+      screenActive: false,
+      expectedActiveTabLabel: null,
+      requiredTabScopeLabels: visitedTabScopeLabels,
+      details: { viewState },
+    });
+
+    probe.markPhase('restore-single-address');
+    navigationRef.dispatch(StackActions.pop(1));
+    await context.waitForRoute(RootNames.SingleAddressHome);
+    await assertSingleAddressActivity(context, {
+      assertion: 'single-address-restored-store-activity',
+      screenActive: true,
+      expectedActiveTabLabel,
+      requiredTabScopeLabels: visitedTabScopeLabels,
+      details: { viewState },
+    });
+  } finally {
+    probe.markPhase('complete');
+    const performanceSummary = probe.stop();
+    context.report('perf-mark', {
+      mark: 'single-address-performance-summary',
+      account: formatSafeAddress(account.address),
+      assetDataLoads: getAssetDataLoadRecordsAfter(
+        assetDataLoadCursor,
+        account.address,
+        navigationStartedAt,
+      ),
+      ...compactRegressionScenarioPerformanceSummary(performanceSummary),
+    });
+  }
 }
 
 async function openTokenDetail(
@@ -1016,9 +1456,54 @@ export async function executeRegressionScenario(
     case 'home-assets':
       await openHomeAssets(context);
       break;
-    case 'single-address':
-      await openSingleAddress(context, account);
+    case 'single-address': {
+      const singleAddressAccount = selectScenarioAccount(
+        accounts,
+        context.command.params.accountSuffix,
+      );
+      if (
+        parseScenarioBoolean(
+          context.command.params.clearTokenMemoryBeforeNavigation,
+        )
+      ) {
+        const normalizedAddress = singleAddressAccount.address.toLowerCase();
+        const state = tokenStore.getState();
+        const nextTokenListMap = { ...state.tokenListMap };
+        const nextLoadingByAddress = { ...state.isLoadingByAddress };
+        delete nextTokenListMap[normalizedAddress];
+        delete nextLoadingByAddress[normalizedAddress];
+        tokenStore.setState({
+          tokenListMap: nextTokenListMap,
+          isLoadingByAddress: nextLoadingByAddress,
+        });
+        context.report('assertion', {
+          assertion: 'single-address-token-memory-cleared',
+          passed:
+            tokenStore.getState().tokenListMap[normalizedAddress] === undefined,
+          account: formatSafeAddress(singleAddressAccount.address),
+        });
+      }
+      if (
+        parseScenarioBoolean(
+          context.command.params.expireTokenCacheBeforeNavigation,
+        )
+      ) {
+        await TokenItemEntity.willExpired(singleAddressAccount.address);
+        const cacheExpired = await TokenItemEntity.isExpired(
+          singleAddressAccount.address,
+        );
+        context.report('assertion', {
+          assertion: 'single-address-token-cache-expired',
+          passed: cacheExpired,
+          account: formatSafeAddress(singleAddressAccount.address),
+        });
+        if (!cacheExpired) {
+          throw new Error('Single-address token cache did not expire');
+        }
+      }
+      await openSingleAddress(context, singleAddressAccount);
       break;
+    }
     case 'token-detail':
       await openTokenDetail(context, account);
       break;

@@ -355,6 +355,39 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 10000,
     budgetMs: 450,
   }),
+  singleAddressTransactionNavigatorWarmup: defineStartupTask({
+    label: 'singleAddress.transactionNavigatorWarmup',
+    owner: 'single-address',
+    reason:
+      'preload transaction routes after single-address entry interactions settle while preserving on-demand navigation',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 3000,
+    budgetMs: 16,
+  }),
+  singleAddressAssetDataWarmup: defineStartupTask({
+    label: 'singleAddress.assetDataWarmup',
+    owner: 'single-address',
+    reason:
+      'warm DeFi and NFT data after single-address navigation settles without mounting their tab views',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 2500,
+    budgetMs: 16,
+  }),
+  singleAddressHistoryBadgeWarmup: defineStartupTask({
+    label: 'singleAddress.historyBadgeWarmup',
+    owner: 'single-address',
+    reason:
+      'load the non-blocking history badge after single-address entry interactions settle',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 2500,
+    budgetMs: 12,
+  }),
   homeSceneDerivedDataActivation: defineStartupTask({
     label: 'home.sceneDerivedDataActivation',
     owner: 'home-assets',

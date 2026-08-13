@@ -19,9 +19,9 @@ import {
   getWalletConnectSession,
   getWalletConnectSessionOrigin,
   isWalletConnectMethodApproved,
-  resolveWalletConnectAccount,
   syncWalletConnectSessionsFromClient,
 } from './sessions';
+import { resolveWalletConnectAccount } from './sessionAccountResolution';
 import { getWalletConnectTelemetrySource } from './telemetry';
 import {
   WALLETCONNECT_READ_ONLY_RPC_METHODS,

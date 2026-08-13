@@ -1442,10 +1442,8 @@ const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
 
   const handlePress = useCallback(() => {
     console.debug('[perf] touched menu', el.key);
-    requestAnimationFrame(() => {
-      markVisited();
-      onPress(el.key);
-    });
+    onPress(el.key);
+    markVisited();
     matomoRequestEvent({
       category: 'Click_Services',
       action: `Click_${el.key}`,

@@ -96,6 +96,7 @@ export const HomeTopChart = memo(function Chart({
   const {
     isLoadingChartData,
     balanceLoadingWithoutLocal,
+    changeLoading,
     selectData: data,
     balance,
     evmBalance,
@@ -197,37 +198,44 @@ export const HomeTopChart = memo(function Chart({
               LinearGradientComponent={LoadingLinear}
             />
           ) : (
-            <ChartHeader animOpacityStyle={animOpacityStyle} />
+            <ChartHeader
+              loading={balanceLoadingWithoutLocal}
+              changeLoading={changeLoading}
+              selectData={data}
+              balance={balance}
+            />
           )}
-          <Animated.View style={[animOpacityStyle]}>
-            {isOffline ||
-            isNoAssets ||
-            !chartData.length ? null : !isLoadingChartData ? (
-              <LineChart
-                height={104}
-                width={ScreenWidth - 32}
-                shape={d3Shape.curveCatmullRom}
-                style={styles.chart}>
-                <LineChart.Path
-                  showInactivePath={false}
-                  color={pathColor}
-                  width={2}>
-                  <LineChart.Gradient color={pathColor} />
-                </LineChart.Path>
-                <LineChart.CursorLine color={colors['neutral-line']} />
-                <LineChart.CursorCrosshair
-                  color={pathColor}
-                  outerSize={12}
-                  size={8}
+          {!fold ? (
+            <Animated.View style={[animOpacityStyle]}>
+              {isOffline ||
+              isNoAssets ||
+              !chartData.length ? null : !isLoadingChartData ? (
+                <LineChart
+                  height={104}
+                  width={ScreenWidth - 32}
+                  shape={d3Shape.curveCatmullRom}
+                  style={styles.chart}>
+                  <LineChart.Path
+                    showInactivePath={false}
+                    color={pathColor}
+                    width={2}>
+                    <LineChart.Gradient color={pathColor} />
+                  </LineChart.Path>
+                  <LineChart.CursorLine color={colors['neutral-line']} />
+                  <LineChart.CursorCrosshair
+                    color={pathColor}
+                    outerSize={12}
+                    size={8}
+                  />
+                </LineChart>
+              ) : (
+                <CurveLoader
+                  {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
+                  style={styles.loading}
                 />
-              </LineChart>
-            ) : (
-              <CurveLoader
-                {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
-                style={styles.loading}
-              />
-            )}
-          </Animated.View>
+              )}
+            </Animated.View>
+          ) : null}
         </LineChart.Provider>
       </View>
     </Animated.View>
@@ -235,20 +243,21 @@ export const HomeTopChart = memo(function Chart({
 });
 
 interface IHeaderProps {
-  animOpacityStyle: ReturnType<typeof useAnimatedStyle>;
+  loading: boolean;
+  changeLoading: boolean;
+  selectData: ReturnType<typeof useSingleHomeHomeTopChart>['selectData'];
+  balance: number | null;
 }
-const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
+const ChartHeader = ({
+  loading,
+  changeLoading,
+  selectData,
+  balance,
+}: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
   const { currency } = useCurrency();
-
-  const {
-    balanceLoadingWithoutLocal: loading,
-    changeLoading,
-    selectData,
-    balance,
-  } = useSingleHomeHomeTopChart();
 
   const rawNetWorth = balance || 0;
   const changePercent = selectData.changePercent;

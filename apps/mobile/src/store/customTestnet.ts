@@ -9,6 +9,7 @@ import type {
   CustomTestnetTokenBase,
   TestnetChain,
 } from '@/types/customTestnet';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type CustomTestnetSnapshot = {
   customTestnet: Record<string, TestnetChain>;
@@ -92,8 +93,18 @@ export const getCustomTestnetAssetSections = (
 export const useCustomTestnetAssetSectionsData = (
   ownerAddresses = EMPTY_OWNER_ADDRESSES,
 ) => {
-  const customTestnet = useCustomTestnetStore(state => state.customTestnet);
-  const customTokenList = useCustomTestnetStore(state => state.customTokenList);
+  const customTestnet = useActivityStore(
+    useCustomTestnetStore,
+    state => state.customTestnet,
+    Object.is,
+    { storeLabel: 'custom-testnet-assets' },
+  );
+  const customTokenList = useActivityStore(
+    useCustomTestnetStore,
+    state => state.customTokenList,
+    Object.is,
+    { storeLabel: 'custom-testnet-assets' },
+  );
 
   return useMemo(
     () =>
