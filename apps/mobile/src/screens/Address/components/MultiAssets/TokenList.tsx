@@ -20,12 +20,13 @@ import { useShallow } from 'zustand/shallow';
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  TokenRowLpTokenHeader,
+  TokenRowSectionLpTokenHeader,
   TokenRowV2,
 } from '@/screens/Home/components/AssetRenderItems';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
+import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { GestureDetector } from 'react-native-gesture-handler';
 import {
   createGlobalBottomSheetModal2024,
@@ -42,6 +43,7 @@ import useTokenList, {
   getMultiAssetsCacheKey,
   getTokenAssetsIndexRowKey,
   ITokenItem,
+  prepareMultiAddressTokenAssetsProjection,
   TokenAssetsIndexRow,
   TokenEntityId,
   TokenGroupResourceValue,
@@ -79,9 +81,11 @@ import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
+import { formatNetworth } from '@/utils/math';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
-const MemoizedTokenRowLpTokenHeader = React.memo(TokenRowLpTokenHeader);
+const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
+const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionLpTokenHeader);
 
 const MemoizedItemLoader = React.memo(ItemLoader);
 const TOKEN_LIST_INITIAL_RENDER_COUNT = 8;
@@ -157,14 +161,23 @@ const TokenResourceRow = React.memo(
   },
 );
 
+type TokenRowListItem = {
+  type: 'default-token' | 'additional-token' | 'low-value-token';
+  row: TokenAssetsIndexRow;
+  isLast?: boolean;
+};
+
 type TokenListItem =
+  | TokenRowListItem
   | {
-      type: 'token';
-      row: TokenAssetsIndexRow;
-      isLast?: boolean;
+      type: 'additional_token_toggle';
     }
   | {
-      type: 'lp_token_toggle';
+      type: 'low_value_tokens';
+      data: {
+        total: number;
+        logoUrls: string[];
+      };
     }
   | {
       type: 'custom_testnet_assets';
@@ -221,6 +234,8 @@ export const TokenList = () => {
     return selectedChainItem?.chain;
   }, [selectedChainItem?.chain]);
 
+  const [showAllTokens, setShowAllTokens] = useState(false);
+  const [showLowValueTokens, setShowLowValueTokens] = useState(false);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
   const customTestnetAddTokenModalIdRef = useRef<ReturnType<
@@ -336,7 +351,16 @@ export const TokenList = () => {
     tokenIds,
   ]);
 
-  const { rows: tokenRows, hasLpTokens } = useActivityStore(
+  const {
+    rows: tokenRows,
+    defaultVisibleTokenCount,
+    additionalTokenCount,
+    lowValueTokenCount,
+    additionalCoreUsdValue,
+    lowValueTokenPreviewLogoUrls,
+    hasAdditionalTokens,
+    hasLpTokens,
+  } = useActivityStore(
     useTokenAssetsIndexStore,
     useShallow(
       state =>
@@ -346,6 +370,10 @@ export const TokenList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-token-assets-index' },
   );
+  const additionalTokenUsdValue = useMemo(
+    () => formatNetworth(additionalCoreUsdValue),
+    [additionalCoreUsdValue],
+  );
 
   const isLoading = useActivityStore(
     useTokenList,
@@ -353,7 +381,7 @@ export const TokenList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-token-loading' },
   );
-  const hasDefaultTokenData = tokenRows.length > 0;
+  const hasDefaultTokenData = tokenRows.length > 0 || hasLpTokens;
   const shouldHideCustomTestnetSectionsWhileLoading =
     isLoading && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
@@ -379,7 +407,8 @@ export const TokenList = () => {
     onForeground: handleForeground,
   });
 
-  const hasNoAssets = tokenRows.length === 0 && !isLoading && isFocused;
+  const hasNoAssets =
+    tokenRows.length === 0 && !hasLpTokens && !isLoading && isFocused;
 
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
@@ -662,10 +691,34 @@ export const TokenList = () => {
     }
   }, [myTop10Addresses, triggerUpdate]);
 
+  const handleLpTokenEnabledChange = useCallback(
+    (nextEnabled: boolean) => {
+      if (myTop10Addresses.length) {
+        prepareMultiAddressTokenAssetsProjection({
+          addresses: myTop10Addresses,
+          chainServerId: chain,
+          isLpTokenEnabled: nextEnabled,
+          tokenDisplayMode,
+        });
+      }
+      setIsLpTokenEnabled(nextEnabled);
+    },
+    [chain, myTop10Addresses, tokenDisplayMode],
+  );
+
+  const handleToggleAdditionalTokens = useCallback(() => {
+    if (showAllTokens) {
+      setShowLowValueTokens(false);
+      handleLpTokenEnabledChange(false);
+    }
+    setShowAllTokens(visible => !visible);
+  }, [handleLpTokenEnabledChange, showAllTokens]);
+
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
     const hasNoTokenItems =
-      tokenRows.length + visibleCustomTestnetSections.length === 0;
+      tokenRows.length + visibleCustomTestnetSections.length === 0 &&
+      !hasLpTokens;
 
     if (isLoading && hasNoTokenItems) {
       items.push(
@@ -686,34 +739,82 @@ export const TokenList = () => {
       });
     }
 
-    tokenRows.forEach((row, index) => {
+    const additionalEnd = defaultVisibleTokenCount + additionalTokenCount;
+    const defaultRows = tokenRows.slice(0, defaultVisibleTokenCount);
+    const additionalRows = tokenRows.slice(
+      defaultVisibleTokenCount,
+      additionalEnd,
+    );
+    const lowValueRows = tokenRows.slice(additionalEnd);
+    defaultRows.forEach((row, index) => {
       items.push({
-        type: 'token',
+        type: 'default-token',
         row,
-        isLast: index === tokenRows.length - 1,
+        isLast: index === defaultRows.length - 1,
       });
     });
 
-    if (hasLpTokens || isLpTokenEnabled) {
-      items.push({ type: 'lp_token_toggle' });
+    const hasAdditionalSection = hasAdditionalTokens || isLpTokenEnabled;
+    if (hasAdditionalSection) {
+      items.push({ type: 'additional_token_toggle' });
     }
-    appendCustomTestnetItems(items, visibleCustomTestnetSections);
+    if (hasAdditionalSection && showAllTokens) {
+      additionalRows.forEach((row, index, rows) => {
+        items.push({
+          type: 'additional-token',
+          row,
+          isLast: index === rows.length - 1,
+        });
+      });
+      if (lowValueTokenCount > 0) {
+        if (showLowValueTokens) {
+          lowValueRows.forEach((row, index, rows) => {
+            items.push({
+              type: 'low-value-token',
+              row,
+              isLast: index === rows.length - 1,
+            });
+          });
+        } else {
+          items.push({
+            type: 'low_value_tokens',
+            data: {
+              total: lowValueTokenCount,
+              logoUrls: lowValueTokenPreviewLogoUrls,
+            },
+          });
+        }
+      }
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+    }
+    if (!hasAdditionalSection) {
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+    }
 
     return items;
   }, [
     tokenRows,
+    additionalTokenCount,
+    defaultVisibleTokenCount,
     visibleCustomTestnetSections,
+    hasAdditionalTokens,
     hasLpTokens,
     isLpTokenEnabled,
     isLoading,
     hasNoAssets,
+    lowValueTokenCount,
+    lowValueTokenPreviewLogoUrls,
+    showAllTokens,
+    showLowValueTokens,
     t,
   ]);
 
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(
     ({ item }) => {
       switch (item.type) {
-        case 'token': {
+        case 'default-token':
+        case 'additional-token':
+        case 'low-value-token': {
           return (
             <View
               style={[styles.rowWrap, item.isLast ? styles.lastRowWrap : null]}>
@@ -729,13 +830,27 @@ export const TokenList = () => {
             </View>
           );
         }
-        case 'lp_token_toggle':
+        case 'additional_token_toggle':
           return (
-            <MemoizedTokenRowLpTokenHeader
+            <MemoizedTokenRowSectionHeader
               style={styles.tokenSectionHeader}
+              fold={!showAllTokens}
+              str={additionalTokenUsdValue}
+              onPressFold={handleToggleAdditionalTokens}
               isEnabled={isLpTokenEnabled}
-              onValueChange={setIsLpTokenEnabled}
+              onValueChange={handleLpTokenEnabledChange}
             />
+          );
+        case 'low_value_tokens':
+          return (
+            <View style={styles.rowWrap}>
+              <MemoizedScamTokenHeader
+                total={item.data.total}
+                logoUrls={item.data.logoUrls}
+                style={{ ...styles.renderItemWrapper, flexGrow: 0 }}
+                onPress={() => setShowLowValueTokens(true)}
+              />
+            </View>
           );
         case 'custom_testnet_assets':
           return (
@@ -782,16 +897,24 @@ export const TokenList = () => {
       handleCustomTestnetTokenGroupPress,
       renderCustomTestnetAccount,
       handleTokenPress,
+      handleLpTokenEnabledChange,
+      handleToggleAdditionalTokens,
+      additionalTokenUsdValue,
       isLpTokenEnabled,
       loadCustomTestnetToken,
       loadCustomTestnetTokens,
       styles,
+      showAllTokens,
       t,
     ],
   );
 
   const keyExtractor = useCallback((item: TokenListItem) => {
-    if (item.type === 'token') {
+    if (
+      item.type === 'default-token' ||
+      item.type === 'additional-token' ||
+      item.type === 'low-value-token'
+    ) {
       return `token-${getTokenAssetsIndexRowKey(item.row)}`;
     }
     if (item.type === 'custom_testnet_assets') {
@@ -881,6 +1004,7 @@ export const TokenList = () => {
         maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
       />
     </GestureDetector>
   );

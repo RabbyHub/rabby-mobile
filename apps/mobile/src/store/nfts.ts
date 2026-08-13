@@ -497,6 +497,9 @@ const scheduleNftProjectionPersistence = (
         : { type: 'nft', id: row.nftId },
     ),
     groups,
+    metadata: {
+      defaultVisibleRowCount: result.defaultVisibleRowCount,
+    },
   });
 };
 
@@ -559,7 +562,23 @@ const buildRestoredNftProjection = (
     rows.push({ type: 'collection', collectionId });
   }
 
-  return { result: { rows }, collections };
+  const defaultVisibleRowCount = restored.metadata.defaultVisibleRowCount;
+  if (
+    typeof defaultVisibleRowCount !== 'number' ||
+    !Number.isInteger(defaultVisibleRowCount) ||
+    defaultVisibleRowCount < 0 ||
+    defaultVisibleRowCount > rows.length
+  ) {
+    return null;
+  }
+
+  return {
+    result: {
+      rows,
+      defaultVisibleRowCount,
+    },
+    collections,
+  };
 };
 
 const nftProjectionRestoreRequests = new Map<string, Promise<void>>();

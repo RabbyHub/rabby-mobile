@@ -9,9 +9,10 @@ const makeNft = (
   options?: {
     collectionId?: string;
     chain?: string;
-    fold?: boolean;
     ownerAddress?: string;
     creditScore?: number;
+    isCore?: boolean;
+    isHidden?: boolean;
   },
 ): DisplayNftItem =>
   ({
@@ -28,10 +29,11 @@ const makeNft = (
           name: `collection-${options.collectionId}`,
           chain: options?.chain || 'eth',
           credit_score: options.creditScore || 0,
+          is_core: options.isCore ?? true,
+          is_hidden: options.isHidden,
           nft_list: [],
         }
       : null,
-    _isFold: options?.fold,
   } as unknown as DisplayNftItem);
 
 describe('nft asset index', () => {
@@ -135,13 +137,48 @@ describe('nft asset index', () => {
     expect(projection.collections[0]?.value.nft_list).toHaveLength(2);
   });
 
-  it('does not hide rows based on the legacy fold flag', () => {
+  it('keeps non-core and hidden collections behind the default boundary', () => {
     const projection = buildNftAssetsIndexProjection(
-      [makeNft('visible'), makeNft('hidden', { fold: true })],
+      [
+        makeNft('visible', { collectionId: 'visible' }),
+        makeNft('non-core', {
+          collectionId: 'non-core',
+          isCore: false,
+        }),
+        makeNft('hidden', {
+          collectionId: 'hidden',
+          isHidden: true,
+        }),
+      ],
       '0xabc::eth',
     );
 
-    expect(projection.result.rows).toHaveLength(2);
+    expect(projection.result.rows).toEqual([
+      {
+        type: 'collection',
+        collectionId: '0xabc::eth::visible',
+      },
+      {
+        type: 'collection',
+        collectionId: '0xabc::eth::hidden',
+      },
+      {
+        type: 'collection',
+        collectionId: '0xabc::eth::non-core',
+      },
+    ]);
+    expect(projection.result.defaultVisibleRowCount).toBe(1);
+    expect(projection.collections).toHaveLength(3);
+  });
+
+  it('keeps standalone NFTs in the folded section', () => {
+    const projection = buildNftAssetsIndexProjection(
+      [makeNft('standalone')],
+      '0xabc::eth',
+    );
+
+    expect(projection.result.rows).toHaveLength(1);
+    expect(projection.result.defaultVisibleRowCount).toBe(0);
   });
 
   it('sorts collection rows by credit score', () => {
@@ -211,11 +248,17 @@ describe('nft asset index', () => {
 
   it('reuses row arrays and the result when ids and ordering are unchanged', () => {
     const first = buildNftAssetsIndexProjection(
-      [makeNft('one'), makeNft('two', { collectionId: 'collection' })],
+      [
+        makeNft('one', { collectionId: 'one' }),
+        makeNft('two', { collectionId: 'collection' }),
+      ],
       '0xabc::eth',
     );
     const second = buildNftAssetsIndexProjection(
-      [makeNft('one'), makeNft('two', { collectionId: 'collection' })],
+      [
+        makeNft('one', { collectionId: 'one' }),
+        makeNft('two', { collectionId: 'collection' }),
+      ],
       '0xabc::eth',
       first.result,
     );

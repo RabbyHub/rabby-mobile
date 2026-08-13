@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/shallow';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { openapi } from '@/core/request';
 import useTokenList, {
-  buildSingleAssetsIndexFromTokenIds,
+  buildSingleAssetsEligibleTokenIdsFromTokenIds,
   EMPTY_TOKEN_ENTITY_IDS,
   ITokenItem,
   TokenEntityId,
@@ -73,12 +73,11 @@ const buildConvertDustTokenIds = ({
   threshold: number;
   previousTokenIds?: TokenEntityId[];
 }) => {
-  const assetsIndex = buildSingleAssetsIndexFromTokenIds(
+  const eligibleTokenIds = buildSingleAssetsEligibleTokenIdsFromTokenIds(
     tokenIds,
     chainServerId,
-    false,
   );
-  const dustTokenIds = assetsIndex.tokenIds.filter(tokenId => {
+  const dustTokenIds = eligibleTokenIds.filter(tokenId => {
     const token = tokenEntityResourceStore.getValue(tokenId);
     if (!token) {
       return false;

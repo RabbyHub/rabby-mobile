@@ -1,4 +1,7 @@
+import BigNumber from 'bignumber.js';
+
 import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
+import { formatNetworth } from '@/utils/math';
 
 export type ProtocolEntityId = string & {
   readonly __protocolEntityId: unique symbol;
@@ -6,12 +9,16 @@ export type ProtocolEntityId = string & {
 
 export type ProtocolAssetsIndexResult = {
   protocolIds: ProtocolEntityId[];
+  defaultVisibleProtocolCount: number;
+  foldedProtocolUsdValue: string;
 };
 
 const EMPTY_PROTOCOL_ENTITY_IDS: ProtocolEntityId[] = [];
 
 export const EMPTY_PROTOCOL_ASSETS_INDEX_RESULT: ProtocolAssetsIndexResult = {
   protocolIds: EMPTY_PROTOCOL_ENTITY_IDS,
+  defaultVisibleProtocolCount: 0,
+  foldedProtocolUsdValue: '',
 };
 
 export const buildProtocolEntityId = (
@@ -32,6 +39,66 @@ const sortProtocolsByNetWorth = (protocols: ICacheProtocolItem) =>
         left.sourceIndex - right.sourceIndex,
     )
     .map(item => item.protocol);
+
+const partitionProtocols = (protocols: ICacheProtocolItem) => {
+  const sortedProtocols = sortProtocolsByNetWorth(protocols);
+  const totalNetWorth = sortedProtocols.reduce(
+    (total, protocol) => total + (Number(protocol.netWorth) || 0),
+    0,
+  );
+  const threshold = Math.min(totalNetWorth / 1000, 1000);
+  const thresholdIndex = sortedProtocols.findIndex(
+    protocol => (Number(protocol.netWorth) || 0) < threshold,
+  );
+  const hasDefaultLimit =
+    sortedProtocols.length > 3 &&
+    thresholdIndex > -1 &&
+    thresholdIndex <= sortedProtocols.length - 4;
+
+  if (!hasDefaultLimit) {
+    return {
+      orderedProtocols: sortedProtocols,
+      defaultVisibleProtocolCount: sortedProtocols.length,
+      foldedProtocols: [] as IProtocolItem[],
+    };
+  }
+
+  const defaultVisibleProtocols = sortedProtocols.filter(
+    protocol => (Number(protocol.netWorth) || 0) >= threshold,
+  );
+  const foldedProtocols = sortedProtocols.filter(
+    protocol => (Number(protocol.netWorth) || 0) < threshold,
+  );
+
+  return {
+    orderedProtocols: defaultVisibleProtocols.concat(foldedProtocols),
+    defaultVisibleProtocolCount: defaultVisibleProtocols.length,
+    foldedProtocols,
+  };
+};
+
+const getFoldedProtocolUsdValue = (protocols: IProtocolItem[]) =>
+  protocols.length
+    ? formatNetworth(
+        protocols
+          .reduce(
+            (total, protocol) =>
+              total.plus(
+                protocol._portfolios.reduce(
+                  (protocolTotal, portfolio) =>
+                    protocolTotal.plus(
+                      BigNumber.max(portfolio._sumTokenRealUsdValue || 0, 0),
+                    ),
+                  new BigNumber(0),
+                ),
+              ),
+            new BigNumber(0),
+          )
+          .toNumber(),
+        false,
+        '$',
+      )
+    : '';
 
 const buildStableProtocolIds = (
   protocols: IProtocolItem[],
@@ -66,15 +133,26 @@ export const buildProtocolAssetsIndexResult = (
   result: ICacheProtocolItem,
   previousResult?: ProtocolAssetsIndexResult,
 ): ProtocolAssetsIndexResult => {
-  const sortedResult = sortProtocolsByNetWorth(result);
+  const { orderedProtocols, defaultVisibleProtocolCount, foldedProtocols } =
+    partitionProtocols(result);
   const protocolIds = buildStableProtocolIds(
-    sortedResult,
+    orderedProtocols,
     previousResult?.protocolIds,
   );
+  const foldedProtocolUsdValue = getFoldedProtocolUsdValue(foldedProtocols);
 
-  if (previousResult?.protocolIds === protocolIds) {
+  if (
+    previousResult?.protocolIds === protocolIds &&
+    previousResult.defaultVisibleProtocolCount ===
+      defaultVisibleProtocolCount &&
+    previousResult.foldedProtocolUsdValue === foldedProtocolUsdValue
+  ) {
     return previousResult;
   }
 
-  return { protocolIds };
+  return {
+    protocolIds,
+    defaultVisibleProtocolCount,
+    foldedProtocolUsdValue,
+  };
 };

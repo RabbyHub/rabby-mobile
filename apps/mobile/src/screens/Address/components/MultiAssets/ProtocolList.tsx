@@ -10,7 +10,10 @@ import type { ListRenderItem, ViewStyle } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { FullDefiRenderItem } from '@/screens/Home/components/AssetRenderItems';
+import {
+  FullDefiRenderItem,
+  TokenRowSectionHeader,
+} from '@/screens/Home/components/AssetRenderItems';
 import { createGetStyles2024 } from '@/utils/styles';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
@@ -58,8 +61,12 @@ const { batchGetProtocols } = useProtocols.getState();
 
 type ProtocolListItem =
   | {
-      type: 'defi';
+      type: 'visible-defi' | 'folded-defi';
       protocolId: ProtocolEntityId;
+    }
+  | {
+      type: 'toggle-defi';
+      data: string;
     }
   | {
       type: 'empty-defi' | 'loading-defi-skeleton';
@@ -129,6 +136,7 @@ export const ProtocolList = () => {
   const { myTop10Addresses } = useAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
+  const [showAllProtocols, setShowAllProtocols] = useState(false);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
@@ -159,17 +167,23 @@ export const ProtocolList = () => {
   );
 
   const shouldDefaultExpand = useMemo(
-    () => protocolIndex.protocolIds.length <= 5,
-    [protocolIndex.protocolIds.length],
+    () => protocolIndex.defaultVisibleProtocolCount <= 5,
+    [protocolIndex.defaultVisibleProtocolCount],
   );
 
   const portfolioListData = useMemo(() => {
-    const defiList: ProtocolListItem[] = protocolIndex.protocolIds.map(
-      protocolId => ({
-        type: 'defi',
+    const visibleDefiList: ProtocolListItem[] = protocolIndex.protocolIds
+      .slice(0, protocolIndex.defaultVisibleProtocolCount)
+      .map(protocolId => ({
+        type: 'visible-defi',
         protocolId,
-      }),
-    );
+      }));
+    const foldedDefiList: ProtocolListItem[] = protocolIndex.protocolIds
+      .slice(protocolIndex.defaultVisibleProtocolCount)
+      .map(protocolId => ({
+        type: 'folded-defi',
+        protocolId,
+      }));
 
     const itemData: Array<{
       show: boolean;
@@ -177,7 +191,17 @@ export const ProtocolList = () => {
     }> = [
       {
         show: true,
-        data: defiList,
+        data: visibleDefiList,
+      },
+      {
+        show: foldedDefiList.length > 0,
+        data: [
+          {
+            type: 'toggle-defi',
+            data: protocolIndex.foldedProtocolUsdValue,
+          },
+          ...(showAllProtocols ? foldedDefiList : []),
+        ],
       },
       {
         show: !!isLoading && !protocolIndex.protocolIds.length,
@@ -202,7 +226,7 @@ export const ProtocolList = () => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [isLoading, protocolIndex.protocolIds, t]);
+  }, [isLoading, protocolIndex, showAllProtocols, t]);
 
   const hasNotAssets = useMemo(() => {
     return protocolIndex.protocolIds.length === 0 && !isLoading && isFocused;
@@ -244,7 +268,7 @@ export const ProtocolList = () => {
       return;
     }
 
-    const visibleCount = protocolIndex.protocolIds.length;
+    const visibleCount = protocolIndex.defaultVisibleProtocolCount;
     const readyKey = [
       regressionScenarioRunId,
       multiProtocolsKey,
@@ -267,7 +291,7 @@ export const ProtocolList = () => {
     chain,
     isFocused,
     isLoading,
-    protocolIndex.protocolIds.length,
+    protocolIndex.defaultVisibleProtocolCount,
     multiProtocolsKey,
     myTop10Addresses.length,
     regressionScenarioActive,
@@ -302,7 +326,7 @@ export const ProtocolList = () => {
     ({ item }) => {
       const { type } = item;
       switch (type) {
-        case 'defi':
+        case 'visible-defi':
           return (
             <ProtocolResourceRow
               protocolId={item.protocolId}
@@ -310,6 +334,25 @@ export const ProtocolList = () => {
               style={styles.fullDefi}
               disableAction={isLoading}
               defaultExpand={shouldDefaultExpand}
+            />
+          );
+        case 'toggle-defi':
+          return (
+            <TokenRowSectionHeader
+              style={styles.tokenSectionHeader}
+              str={item.data}
+              fold={!showAllProtocols}
+              onPressFold={() => setShowAllProtocols(visible => !visible)}
+            />
+          );
+        case 'folded-defi':
+          return (
+            <ProtocolResourceRow
+              protocolId={item.protocolId}
+              getAccountByAddress={getAccountByAddress}
+              style={styles.fullDefi}
+              disableAction={isLoading}
+              defaultExpand={false}
             />
           );
         case 'empty-defi':
@@ -332,7 +375,9 @@ export const ProtocolList = () => {
       styles.fullDefi,
       getAccountByAddress,
       isLoading,
+      showAllProtocols,
       shouldDefaultExpand,
+      styles.tokenSectionHeader,
     ],
   );
 
@@ -412,6 +457,7 @@ export const ProtocolList = () => {
         maxToRenderPerBatch={8}
         updateCellsBatchingPeriod={32}
         removeClippedSubviews={IS_ANDROID}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <>
@@ -468,5 +514,10 @@ const getStyles = createGetStyles2024(() => ({
   fullDefi: {
     marginHorizontal: 0,
     // marginTop: 8,
+  },
+  tokenSectionHeader: {
+    paddingLeft: 0,
+    paddingRight: 0,
+    backgroundColor: 'transparent',
   },
 }));

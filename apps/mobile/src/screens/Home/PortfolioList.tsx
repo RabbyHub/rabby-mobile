@@ -6,7 +6,10 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { FullDefiRenderItem } from './components/AssetRenderItems';
+import {
+  FullDefiRenderItem,
+  TokenRowSectionHeader,
+} from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from './components/Skeleton';
@@ -33,8 +36,12 @@ import type { KeyringAccountWithAlias } from '@/hooks/account';
 
 type PortfolioListItem =
   | {
-      type: 'defi';
+      type: 'visible-defi' | 'folded-defi';
       protocolId: ProtocolEntityId;
+    }
+  | {
+      type: 'toggle-defi';
+      data: string;
     }
   | {
       type: 'empty-defi' | 'loading-defi-skeleton';
@@ -111,6 +118,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
   }, [focusedTab]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const [showAllProtocols, setShowAllProtocols] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const isScreenFocused = useIsFocused();
 
@@ -154,17 +162,23 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
   );
 
   const shouldDefaultExpand = useMemo(
-    () => protocolIndex.protocolIds.length <= 5,
-    [protocolIndex.protocolIds.length],
+    () => protocolIndex.defaultVisibleProtocolCount <= 5,
+    [protocolIndex.defaultVisibleProtocolCount],
   );
 
   const dataList = useMemo(() => {
-    const defiList: PortfolioListItem[] = protocolIndex.protocolIds.map(
-      protocolId => ({
-        type: 'defi',
+    const visibleDefiList: PortfolioListItem[] = protocolIndex.protocolIds
+      .slice(0, protocolIndex.defaultVisibleProtocolCount)
+      .map(protocolId => ({
+        type: 'visible-defi',
         protocolId,
-      }),
-    );
+      }));
+    const foldedDefiList: PortfolioListItem[] = protocolIndex.protocolIds
+      .slice(protocolIndex.defaultVisibleProtocolCount)
+      .map(protocolId => ({
+        type: 'folded-defi',
+        protocolId,
+      }));
 
     const itemData: Array<{
       show: boolean;
@@ -172,17 +186,27 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     }> = [
       {
         show: true,
-        data: defiList,
+        data: visibleDefiList,
       },
       {
-        show: !!loadingPortfolio && !defiList.length,
+        show: foldedDefiList.length > 0,
+        data: [
+          {
+            type: 'toggle-defi',
+            data: protocolIndex.foldedProtocolUsdValue,
+          },
+          ...(showAllProtocols ? foldedDefiList : []),
+        ],
+      },
+      {
+        show: !!loadingPortfolio && !protocolIndex.protocolIds.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
         })),
       },
       {
-        show: !loadingPortfolio && defiList.length === 0,
+        show: !loadingPortfolio && protocolIndex.protocolIds.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -197,7 +221,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [loadingPortfolio, protocolIndex.protocolIds, t]);
+  }, [loadingPortfolio, protocolIndex, showAllProtocols, t]);
 
   const refreshPortfolioList = useCallback(() => {
     if (!lowerAddress) {
@@ -222,12 +246,30 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       const { item: _data } = props;
       const { type } = _data;
       switch (type) {
-        case 'defi':
+        case 'visible-defi':
           return (
             <ProtocolResourceRow
               protocolId={_data.protocolId}
               disableAction={loadingPortfolio}
               defaultExpand={shouldDefaultExpand}
+              account={currentAccount}
+            />
+          );
+        case 'toggle-defi':
+          return (
+            <TokenRowSectionHeader
+              style={styles.tokenSectionHeader}
+              str={_data.data}
+              fold={!showAllProtocols}
+              onPressFold={() => setShowAllProtocols(visible => !visible)}
+            />
+          );
+        case 'folded-defi':
+          return (
+            <ProtocolResourceRow
+              protocolId={_data.protocolId}
+              disableAction={loadingPortfolio}
+              defaultExpand={false}
               account={currentAccount}
             />
           );
@@ -245,7 +287,14 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
           return null;
       }
     },
-    [currentAccount, loadingPortfolio, shouldDefaultExpand, styles.emptyAssets],
+    [
+      currentAccount,
+      loadingPortfolio,
+      showAllProtocols,
+      shouldDefaultExpand,
+      styles.emptyAssets,
+      styles.tokenSectionHeader,
+    ],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -285,6 +334,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
         windowSize={4}
         maxToRenderPerBatch={15}
         removeClippedSubviews
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
@@ -334,5 +384,8 @@ const getStyles = createGetStyles2024(_ctx => ({
   },
   defiLoading: {
     marginTop: 16,
+  },
+  tokenSectionHeader: {
+    backgroundColor: 'transparent',
   },
 }));

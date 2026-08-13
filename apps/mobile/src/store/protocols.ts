@@ -347,6 +347,10 @@ const scheduleProtocolProjectionPersistence = (
       type: 'protocol',
       id: protocolId,
     })),
+    metadata: {
+      defaultVisibleProtocolCount: result.defaultVisibleProtocolCount,
+      foldedProtocolUsdValue: result.foldedProtocolUsdValue,
+    },
   });
 };
 
@@ -473,7 +477,24 @@ const restoreProtocolProjectionIfEmpty = (
       return;
     }
 
-    const result = { protocolIds };
+    const defaultVisibleProtocolCount =
+      restored.metadata.defaultVisibleProtocolCount;
+    const foldedProtocolUsdValue = restored.metadata.foldedProtocolUsdValue;
+    if (
+      typeof defaultVisibleProtocolCount !== 'number' ||
+      !Number.isInteger(defaultVisibleProtocolCount) ||
+      defaultVisibleProtocolCount < 0 ||
+      defaultVisibleProtocolCount > protocolIds.length ||
+      typeof foldedProtocolUsdValue !== 'string'
+    ) {
+      return;
+    }
+
+    const result: ProtocolAssetsIndexResult = {
+      protocolIds,
+      defaultVisibleProtocolCount,
+      foldedProtocolUsdValue,
+    };
     useProtocolListComputedStore.setState(current =>
       scene === 'single-address'
         ? {

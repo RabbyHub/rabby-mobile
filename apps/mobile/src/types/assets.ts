@@ -95,6 +95,12 @@ export interface ITokenItem {
 
 export type TokenAssetsResult = {
   tokens: ITokenItem[];
+  defaultVisibleTokenCount: number;
+  additionalTokenCount: number;
+  lowValueTokenCount: number;
+  additionalCoreUsdValue: number;
+  lowValueTokenPreviewLogoUrls: string[];
+  hasAdditionalTokens: boolean;
   hasLpTokens: boolean;
 };
 

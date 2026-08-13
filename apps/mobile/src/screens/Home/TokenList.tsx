@@ -28,8 +28,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
+import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import {
-  TokenRowLpTokenHeader,
+  TokenRowSectionLpTokenHeader,
   TokenRowV2,
 } from './components/AssetRenderItems';
 import {
@@ -66,14 +67,24 @@ import {
   useRegressionScenarioAssertion,
 } from '@/devtools/regressionScenarios/react';
 import { IS_ANDROID } from '@/core/native/utils';
+import { formatNetworth } from '@/utils/math';
+
+type TokenRowListItem = {
+  type: 'default-token' | 'additional-token' | 'low-value-token';
+  tokenId: TokenEntityId;
+};
 
 type TokenListItem =
+  | TokenRowListItem
   | {
-      type: 'token';
-      tokenId: TokenEntityId;
+      type: 'additional_token_toggle';
     }
   | {
-      type: 'lp_token_toggle';
+      type: 'low_value_tokens';
+      data: {
+        total: number;
+        logoUrls: string[];
+      };
     }
   | {
       type: 'custom_testnet_assets';
@@ -146,8 +157,15 @@ const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
 
 type BuildTokenListItemsParams = {
   tokenIds: TokenEntityId[];
+  defaultVisibleTokenCount: number;
+  additionalTokenCount: number;
+  lowValueTokenCount: number;
+  lowValueTokenPreviewLogoUrls: string[];
+  hasAdditionalTokens: boolean;
   hasLpTokens: boolean;
   isLpTokenEnabled: boolean;
+  showAllTokens: boolean;
+  showLowValueTokens: boolean;
   isLoading: boolean;
   isAllLoading: boolean;
   noAnyAssets: boolean;
@@ -174,9 +192,10 @@ const appendCustomTestnetItems = (
 const appendTokenItems = (
   items: TokenListItem[],
   tokenIds: TokenEntityId[],
+  type: TokenRowListItem['type'],
 ) => {
   tokenIds.forEach(tokenId => {
-    items.push({ type: 'token', tokenId });
+    items.push({ type, tokenId });
   });
 };
 
@@ -197,7 +216,7 @@ const appendLoadingSkeletonItems = (
   const shouldShowLpLoading =
     params.isAllLoading &&
     params.isLpTokenEnabled &&
-    params.tokenIds.length === 0;
+    params.tokenIds.length === params.defaultVisibleTokenCount;
 
   if (!shouldShowInitialLoading && !shouldShowLpLoading) {
     return;
@@ -215,7 +234,7 @@ const appendEmptyAssetsItem = (
   items: TokenListItem[],
   params: BuildTokenListItemsParams,
 ) => {
-  const hasNoTokenItems = params.tokenIds.length === 0;
+  const hasNoTokenItems = params.tokenIds.length === 0 && !params.hasLpTokens;
 
   if (
     params.isLoading ||
@@ -243,20 +262,56 @@ const appendEmptyAssetsItem = (
 
 const buildTokenListItems = (params: BuildTokenListItemsParams) => {
   const items: TokenListItem[] = [];
+  const hasAdditionalSection =
+    params.hasAdditionalTokens || params.isLpTokenEnabled;
+  const additionalEnd =
+    params.defaultVisibleTokenCount + params.additionalTokenCount;
+  const defaultTokenIds = params.tokenIds.slice(
+    0,
+    params.defaultVisibleTokenCount,
+  );
+  const additionalTokenIds = params.tokenIds.slice(
+    params.defaultVisibleTokenCount,
+    additionalEnd,
+  );
+  const lowValueTokenIds = params.tokenIds.slice(additionalEnd);
 
-  appendTokenItems(items, params.tokenIds);
-  if (params.hasLpTokens || params.isLpTokenEnabled) {
-    items.push({ type: 'lp_token_toggle' });
+  appendTokenItems(items, defaultTokenIds, 'default-token');
+  if (hasAdditionalSection) {
+    items.push({ type: 'additional_token_toggle' });
+  }
+  if (hasAdditionalSection && params.showAllTokens) {
+    appendTokenItems(items, additionalTokenIds, 'additional-token');
+    if (params.lowValueTokenCount > 0) {
+      if (params.showLowValueTokens) {
+        appendTokenItems(items, lowValueTokenIds, 'low-value-token');
+      } else {
+        items.push({
+          type: 'low_value_tokens',
+          data: {
+            total: params.lowValueTokenCount,
+            logoUrls: params.lowValueTokenPreviewLogoUrls,
+          },
+        });
+      }
+    }
+    appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
   }
   appendLoadingSkeletonItems(items, params);
   appendEmptyAssetsItem(items, params);
-  appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
+  if (!hasAdditionalSection) {
+    appendCustomTestnetItems(items, params.visibleCustomTestnetSections);
+  }
 
   return items;
 };
 
 const getTokenListItemKey = (item: TokenListItem) => {
-  if (item.type === 'token') {
+  if (
+    item.type === 'default-token' ||
+    item.type === 'additional-token' ||
+    item.type === 'low-value-token'
+  ) {
     return `token-${item.tokenId}`;
   }
   if (item.type === 'custom_testnet_assets') {
@@ -270,6 +325,9 @@ const getTokenListItemKey = (item: TokenListItem) => {
   }
   if (item.type === 'empty-assets') {
     return `empty-assets-${item.data}`;
+  }
+  if (item.type === 'low_value_tokens') {
+    return `low-value-tokens-${item.data.total}`;
   }
   return item.type;
 };
@@ -286,6 +344,8 @@ export const TokenList = ({
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
 
+  const [showAllTokens, setShowAllTokens] = useState(false);
+  const [showLowValueTokens, setShowLowValueTokens] = useState(false);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
@@ -368,7 +428,16 @@ export const TokenList = ({
     { storeLabel: 'single-address-token-assets-index-readiness' },
   );
 
-  const { tokenIds, hasLpTokens } = useActivityStore(
+  const {
+    tokenIds,
+    defaultVisibleTokenCount,
+    additionalTokenCount,
+    lowValueTokenCount,
+    additionalCoreUsdValue,
+    lowValueTokenPreviewLogoUrls,
+    hasAdditionalTokens,
+    hasLpTokens,
+  } = useActivityStore(
     useTokenAssetsIndexStore,
     useShallow(
       state =>
@@ -378,6 +447,10 @@ export const TokenList = ({
     ),
     Object.is,
     { storeLabel: 'single-address-token-assets-index' },
+  );
+  const additionalTokenUsdValue = useMemo(
+    () => formatNetworth(additionalCoreUsdValue),
+    [additionalCoreUsdValue],
   );
   const { isLoading, isAllLoading } = useActivityStore(
     useTokenList,
@@ -397,7 +470,7 @@ export const TokenList = ({
     Object.is,
     { storeLabel: 'single-address-token-list' },
   );
-  const hasDefaultTokenData = tokenIds.length > 0;
+  const hasDefaultTokenData = tokenIds.length > 0 || hasLpTokens;
   const isTokenProjectionLoading = !!singleAssetsKey && !isTokenProjectionReady;
   const shouldHideCustomTestnetSectionsWhileLoading =
     (isLoading || isAllLoading || isTokenProjectionLoading) &&
@@ -472,8 +545,15 @@ export const TokenList = ({
   const dataList = useMemo(() => {
     return buildTokenListItems({
       tokenIds,
+      defaultVisibleTokenCount,
+      additionalTokenCount,
+      lowValueTokenCount,
+      lowValueTokenPreviewLogoUrls,
+      hasAdditionalTokens,
       hasLpTokens,
       isLpTokenEnabled,
+      showAllTokens,
+      showLowValueTokens,
       isLoading: isLoading || isTokenProjectionLoading,
       isAllLoading,
       noAnyAssets,
@@ -482,12 +562,19 @@ export const TokenList = ({
     });
   }, [
     emptyAssetsText,
+    additionalTokenCount,
+    defaultVisibleTokenCount,
+    hasAdditionalTokens,
     hasLpTokens,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
+    lowValueTokenCount,
+    lowValueTokenPreviewLogoUrls,
     isTokenProjectionLoading,
     noAnyAssets,
+    showAllTokens,
+    showLowValueTokens,
     tokenIds,
     visibleCustomTestnetSections,
   ]);
@@ -539,6 +626,10 @@ export const TokenList = ({
     () =>
       StyleSheet.flatten([styles.renderItemWrapper, !isLight && styles.bg2]),
     [isLight, styles.bg2, styles.renderItemWrapper],
+  );
+  const additionalHeaderButtonStyle = useMemo(
+    () => StyleSheet.flatten([styles.buttonHeader, !isLight && styles.bg2]),
+    [isLight, styles.bg2, styles.buttonHeader],
   );
 
   const handleOpenTokenDetail = useCallback(
@@ -619,6 +710,14 @@ export const TokenList = ({
     [currentAddress, selectedChain],
   );
 
+  const handleToggleAdditionalTokens = useCallback(() => {
+    if (showAllTokens) {
+      setShowLowValueTokens(false);
+      handleLpTokenEnabledChange(false);
+    }
+    setShowAllTokens(visible => !visible);
+  }, [handleLpTokenEnabledChange, showAllTokens]);
+
   const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
       return;
@@ -637,7 +736,7 @@ export const TokenList = ({
   }, [currentAddress, getTokenList, onRefresh]);
 
   const renderTokenItem = useCallback(
-    (item: Extract<TokenListItem, { type: 'token' }>) => (
+    (item: TokenRowListItem) => (
       <View style={styles.rowWrap}>
         <TokenResourceRow
           tokenId={item.tokenId}
@@ -650,15 +749,41 @@ export const TokenList = ({
     [handleOpenTokenDetail, styles.removeLeft, styles.rowWrap, tokenRowStyle],
   );
 
-  const renderLpHeaderItem = useCallback(
+  const renderAdditionalHeaderItem = useCallback(
     () => (
-      <TokenRowLpTokenHeader
+      <TokenRowSectionLpTokenHeader
         isEnabled={isLpTokenEnabled}
         onValueChange={handleLpTokenEnabledChange}
+        fold={!showAllTokens}
+        str={additionalTokenUsdValue}
+        onPressFold={handleToggleAdditionalTokens}
         style={styles.sectionHeader}
+        buttonStyle={additionalHeaderButtonStyle}
       />
     ),
-    [handleLpTokenEnabledChange, isLpTokenEnabled, styles.sectionHeader],
+    [
+      additionalTokenUsdValue,
+      additionalHeaderButtonStyle,
+      handleLpTokenEnabledChange,
+      handleToggleAdditionalTokens,
+      isLpTokenEnabled,
+      showAllTokens,
+      styles.sectionHeader,
+    ],
+  );
+
+  const renderLowValueTokenItem = useCallback(
+    (item: Extract<TokenListItem, { type: 'low_value_tokens' }>) => (
+      <View style={styles.rowWrap}>
+        <ScamTokenHeader
+          total={item.data.total}
+          logoUrls={item.data.logoUrls}
+          style={tokenRowStyle}
+          onPress={() => setShowLowValueTokens(true)}
+        />
+      </View>
+    ),
+    [styles.rowWrap, tokenRowStyle],
   );
 
   const renderCustomTestnetSectionItem = useCallback(
@@ -719,10 +844,14 @@ export const TokenList = ({
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(
     ({ item }) => {
       switch (item.type) {
-        case 'token':
+        case 'default-token':
+        case 'additional-token':
+        case 'low-value-token':
           return renderTokenItem(item);
-        case 'lp_token_toggle':
-          return renderLpHeaderItem();
+        case 'additional_token_toggle':
+          return renderAdditionalHeaderItem();
+        case 'low_value_tokens':
+          return renderLowValueTokenItem(item);
         case 'custom_testnet_assets':
           return renderCustomTestnetSectionItem(item);
         case 'custom_testnet_divider':
@@ -747,7 +876,8 @@ export const TokenList = ({
     [
       renderCustomTestnetSectionItem,
       renderEmptyItem,
-      renderLpHeaderItem,
+      renderAdditionalHeaderItem,
+      renderLowValueTokenItem,
       renderTokenItem,
       styles.removeLeft,
       styles.rowWrap,
@@ -791,6 +921,7 @@ export const TokenList = ({
         maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={showScrollIndicator}
@@ -839,6 +970,9 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
     // paddingRight: 8,
     height: ASSETS_SECTION_HEADER,
+  },
+  buttonHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   customTestnetSectionWrap: {
     paddingHorizontal: 12,

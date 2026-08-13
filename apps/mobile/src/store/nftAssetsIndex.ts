@@ -37,6 +37,7 @@ export type NftCollectionResourceValue = Collection &
 
 export type NftAssetsIndexResult = {
   rows: NftAssetsIndexRow[];
+  defaultVisibleRowCount: number;
 };
 
 export type NftAssetsIndexProjection = {
@@ -51,6 +52,7 @@ const EMPTY_NFT_ASSETS_INDEX_ROWS: NftAssetsIndexRow[] = [];
 
 export const EMPTY_NFT_ASSETS_INDEX_RESULT: NftAssetsIndexResult = {
   rows: EMPTY_NFT_ASSETS_INDEX_ROWS,
+  defaultVisibleRowCount: 0,
 };
 
 const getNftOwnerAddress = (nft: { owner_addr?: string; address?: string }) =>
@@ -151,17 +153,20 @@ const buildRows = (
     row: NftAssetsIndexRow;
     creditScore: number;
     stableKey: string;
+    defaultVisible: boolean;
   }> = [];
   const collections: NftAssetsIndexProjection['collections'] = [];
   const collectionMap = new Map<NftCollectionId, NftCollectionResourceValue>();
 
   nfts.forEach(item => {
     if (!item.collection_id || !item.collection) {
+      const collection = item.collection as CollectionList | null | undefined;
       const nftId = buildNftEntityId(item);
       candidates.push({
         row: { type: 'nft', nftId },
-        creditScore: 0,
+        creditScore: Number(collection?.credit_score) || 0,
         stableKey: `nft:${nftId}`,
+        defaultVisible: !!collection?.is_core && !collection.is_hidden,
       });
       return;
     }
@@ -192,6 +197,7 @@ const buildRows = (
       row: { type: 'collection', collectionId },
       creditScore: Number(collection.credit_score) || 0,
       stableKey: `collection:${collectionId}`,
+      defaultVisible: !!collection.is_core && !collection.is_hidden,
     });
   });
 
@@ -208,6 +214,9 @@ const buildRows = (
     ]),
   );
   candidates.sort((a, b) => {
+    if (a.defaultVisible !== b.defaultVisible) {
+      return a.defaultVisible ? -1 : 1;
+    }
     const scoreDelta = b.creditScore - a.creditScore;
     if (scoreDelta) {
       return scoreDelta;
@@ -223,7 +232,13 @@ const buildRows = (
     return a.stableKey.localeCompare(b.stableKey);
   });
 
-  return { rows: candidates.map(candidate => candidate.row), collections };
+  return {
+    rows: candidates.map(candidate => candidate.row),
+    defaultVisibleRowCount: candidates.filter(
+      candidate => candidate.defaultVisible,
+    ).length,
+    collections,
+  };
 };
 
 export const buildNftAssetsIndexProjection = (
@@ -233,7 +248,14 @@ export const buildNftAssetsIndexProjection = (
 ): NftAssetsIndexProjection => {
   const projection = buildRows(nfts, previousResult?.rows);
   const rows = stabilizeRows(projection.rows, previousResult?.rows);
-  const result = previousResult?.rows === rows ? previousResult : { rows };
+  const result =
+    previousResult?.rows === rows &&
+    previousResult.defaultVisibleRowCount === projection.defaultVisibleRowCount
+      ? previousResult
+      : {
+          rows,
+          defaultVisibleRowCount: projection.defaultVisibleRowCount,
+        };
 
   return {
     result,

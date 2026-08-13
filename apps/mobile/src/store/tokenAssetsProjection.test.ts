@@ -51,9 +51,12 @@ jest.mock('react-native-haptic-feedback', () => ({
 
 import {
   buildMultiAssetsIndexFromTokenIds,
+  buildSingleAssetsEligibleTokenIdsFromTokenIds,
+  buildSingleAssetsIndexFromTokenIds,
   buildTokenEntityId,
   getMultiAssetsCacheKey,
   getSingleAssetsCacheKey,
+  prepareMultiAddressTokenAssetsProjection,
   prepareSingleAddressTokenAssetsProjection,
   tokenEntityResourceStore,
   tokenGroupResourceStore,
@@ -236,10 +239,42 @@ describe('single-address token assets projection', () => {
     expect(state.singleAssetsResultByKey[defaultKey]?.tokenIds).toEqual([
       buildTokenEntityId(core),
     ]);
+    expect(state.singleAssetsResultByKey[defaultKey]?.hasLpTokens).toBe(true);
     expect(state.singleAssetsResultByKey[lpKey]?.tokenIds).toEqual([
       buildTokenEntityId(core),
       buildTokenEntityId(lp),
     ]);
+    expect(state.singleAssetsResultByKey[lpKey]?.defaultVisibleTokenCount).toBe(
+      1,
+    );
+  });
+
+  it('prepares a multi-address LP projection before consumers switch keys', () => {
+    const core = createToken('core', { usd_value: 20 });
+    const lp = createToken('lp', {
+      is_core: null,
+      protocol_id: 'protocol',
+      usd_value: 10,
+    });
+    replaceAddressTokens([core, lp]);
+
+    const lpKey = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      isLpTokenEnabled: true,
+      tokenDisplayMode: 'byAddress',
+    });
+    const result =
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[lpKey];
+
+    expect(lpKey).toBe(
+      getMultiAssetsCacheKey([ADDRESS], undefined, true, 'byAddress'),
+    );
+    expect(result?.tokenIds).toEqual([
+      buildTokenEntityId(core),
+      buildTokenEntityId(lp),
+    ]);
+    expect(result?.defaultVisibleTokenCount).toBe(1);
+    expect(result?.additionalTokenCount).toBe(1);
   });
 
   it('publishes all registered projection updates in one store notification', () => {
@@ -291,10 +326,18 @@ describe('single-address token assets projection', () => {
       useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]
         ?.tokenIds,
     ).toEqual([tokenId]);
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key],
+    ).toMatchObject({
+      defaultVisibleTokenCount: 0,
+      additionalTokenCount: 0,
+      lowValueTokenCount: 1,
+      hasAdditionalTokens: true,
+    });
   });
 
-  it('keeps low-value eligible tokens but excludes explicit risk tokens', () => {
-    const eligible = createToken('eligible', {
+  it('separates eligible low-value tokens and excludes explicit risk tokens', () => {
+    const lowValueNonCore = createToken('low-value-non-core', {
       is_core: null,
       usd_value: 0,
     });
@@ -306,14 +349,22 @@ describe('single-address token assets projection', () => {
       is_suspicious: true,
       usd_value: 100,
     });
-    replaceAddressTokens([eligible, unverified, suspicious]);
+    replaceAddressTokens([lowValueNonCore, unverified, suspicious]);
 
     const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
 
     expect(
       useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]
         ?.tokenIds,
-    ).toEqual([buildTokenEntityId(eligible)]);
+    ).toEqual([buildTokenEntityId(lowValueNonCore)]);
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key],
+    ).toMatchObject({
+      defaultVisibleTokenCount: 0,
+      additionalTokenCount: 0,
+      lowValueTokenCount: 1,
+      hasAdditionalTokens: true,
+    });
   });
 
   it('shares entities while keeping single and multi scene ordering independent', () => {
@@ -498,7 +549,7 @@ describe('single-address token assets projection', () => {
     ).toEqual([buildTokenEntityId(eth), buildTokenEntityId(arb)]);
   });
 
-  it('applies chain and LP filters without dropping eligible low-value rows', () => {
+  it('applies chain filtering and only adds LP rows when the LP switch is enabled', () => {
     const eth = createToken('eth', { chain: 'eth', usd_value: 0 });
     const arb = createToken('arb', { chain: 'arb', usd_value: 50 });
     const lp = createToken('lp', {
@@ -516,12 +567,81 @@ describe('single-address token assets projection', () => {
       buildMultiAssetsIndexFromTokenIds(ids, 'eth', false, 'byAddress')
         .tokenIds,
     ).toEqual([buildTokenEntityId(eth)]);
-    expect(
-      buildMultiAssetsIndexFromTokenIds(ids, 'eth', true, 'byAddress').tokenIds,
-    ).toEqual([buildTokenEntityId(lp), buildTokenEntityId(eth)]);
+    const lpResult = buildMultiAssetsIndexFromTokenIds(
+      ids,
+      'eth',
+      true,
+      'byAddress',
+    );
+    expect(lpResult.tokenIds).toEqual([
+      buildTokenEntityId(eth),
+      buildTokenEntityId(lp),
+    ]);
+    expect(lpResult.defaultVisibleTokenCount).toBe(1);
   });
 
-  it('keeps every eligible token instead of truncating the projection', () => {
+  it('keeps high-value non-core rows out of the default visible segment', () => {
+    const core = createToken('core-usdc', { usd_value: 363 });
+    const nonCore = createToken('moon-dex', {
+      is_core: null,
+      usd_value: 11_856,
+    });
+    tokenEntityResourceStore.upsertTokens([nonCore, core], 'remote', {
+      pruneMissing: true,
+    });
+
+    const result = buildMultiAssetsIndexFromTokenIds(
+      [buildTokenEntityId(nonCore), buildTokenEntityId(core)],
+      undefined,
+      false,
+      'byAddress',
+    );
+
+    expect(result.tokenIds).toEqual([
+      buildTokenEntityId(core),
+      buildTokenEntityId(nonCore),
+    ]);
+    expect(result).toMatchObject({
+      defaultVisibleTokenCount: 1,
+      additionalTokenCount: 1,
+      lowValueTokenCount: 0,
+      hasAdditionalTokens: true,
+    });
+  });
+
+  it('keeps the baseline threshold-based default visible segment', () => {
+    const values = [1000, 100, 0.5, 0.4, 0.3, 0.2];
+    const tokens = values.map((usdValue, index) =>
+      createToken(`token-${index}`, { usd_value: usdValue }),
+    );
+    tokenEntityResourceStore.upsertTokens(tokens, 'remote', {
+      pruneMissing: true,
+    });
+
+    const result = buildMultiAssetsIndexFromTokenIds(
+      tokens.map(buildTokenEntityId),
+      undefined,
+      false,
+      'byAddress',
+    );
+
+    expect(result.tokenIds).toEqual(tokens.map(buildTokenEntityId));
+    expect(result).toMatchObject({
+      defaultVisibleTokenCount: 2,
+      additionalTokenCount: 4,
+      lowValueTokenCount: 0,
+      hasAdditionalTokens: true,
+    });
+
+    const singleResult = buildSingleAssetsIndexFromTokenIds(
+      tokens.map(buildTokenEntityId),
+    );
+    expect(singleResult.tokenIds).toEqual(tokens.map(buildTokenEntityId));
+    expect(singleResult.defaultVisibleTokenCount).toBe(2);
+    expect(singleResult.additionalTokenCount).toBe(4);
+  });
+
+  it('limits the default visible segment to 20 rows', () => {
     const tokens = Array.from({ length: 25 }, (_, index) =>
       createToken(`token-${index}`, { usd_value: 25 - index }),
     );
@@ -537,6 +657,76 @@ describe('single-address token assets projection', () => {
     );
 
     expect(result.rows).toHaveLength(25);
+    expect(result.defaultVisibleTokenCount).toBe(20);
+    expect(result.additionalTokenCount).toBe(5);
+    expect(result.hasAdditionalTokens).toBe(true);
+  });
+
+  it('keeps hidden core rows out when LP rows are enabled', () => {
+    const coreTokens = Array.from({ length: 21 }, (_, index) =>
+      createToken(`core-${index}`, { usd_value: 21 - index }),
+    );
+    const lp = createToken('lp', {
+      is_core: null,
+      protocol_id: 'curve',
+      usd_value: 100,
+    });
+    const ordinaryHiddenToken = createToken('ordinary-hidden', {
+      is_core: null,
+      usd_value: 99,
+    });
+    tokenEntityResourceStore.upsertTokens(
+      [...coreTokens, ordinaryHiddenToken, lp],
+      'remote',
+      {
+        pruneMissing: true,
+      },
+    );
+
+    const result = buildMultiAssetsIndexFromTokenIds(
+      [...coreTokens, ordinaryHiddenToken, lp].map(buildTokenEntityId),
+      undefined,
+      true,
+      'byAddress',
+    );
+
+    expect(result.defaultVisibleTokenCount).toBe(20);
+    expect(result.tokenIds).toEqual([
+      ...coreTokens.slice(0, 20).map(buildTokenEntityId),
+      buildTokenEntityId(lp),
+    ]);
+  });
+
+  it('keeps hidden default-mode rows available to non-UI consumers', () => {
+    const coreTokens = Array.from({ length: 21 }, (_, index) =>
+      createToken(`core-${index}`, { usd_value: 21 - index }),
+    );
+    const hiddenNonCore = createToken('hidden-non-core', {
+      is_core: null,
+      usd_value: 0.5,
+    });
+    const lp = createToken('lp', {
+      is_core: null,
+      protocol_id: 'curve',
+      usd_value: 0.4,
+    });
+    const risk = createToken('risk', {
+      is_verified: false,
+      usd_value: 0.3,
+    });
+    const tokens = [...coreTokens, hiddenNonCore, lp, risk];
+    tokenEntityResourceStore.upsertTokens(tokens, 'remote', {
+      pruneMissing: true,
+    });
+
+    expect(
+      buildSingleAssetsEligibleTokenIdsFromTokenIds(
+        tokens.map(buildTokenEntityId),
+      ),
+    ).toEqual([
+      ...coreTokens.map(buildTokenEntityId),
+      buildTokenEntityId(hiddenNonCore),
+    ]);
   });
 
   it('does not publish a new group version when aggregate data is unchanged', () => {

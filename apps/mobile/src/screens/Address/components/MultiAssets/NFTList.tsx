@@ -8,9 +8,16 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
+import {
+  ASSETS_ITEM_HEIGHT_NEW,
+  ASSETS_SECTION_HEADER,
+  RootNames,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { NftRow } from '@/screens/Home/components/AssetRenderItems';
+import {
+  NftRow,
+  TokenRowSectionHeader,
+} from '@/screens/Home/components/AssetRenderItems';
 import { DisplayNftItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
@@ -82,6 +89,9 @@ type NftListItem =
   | {
       type: 'empty-nft' | 'loading-skeleton';
       data: string;
+    }
+  | {
+      type: 'toggle-nft';
     };
 
 const NftResourceRow = React.memo(
@@ -172,6 +182,7 @@ const NFTListInner = () => {
     ? regressionScenario.report
     : null;
   const { myTop10Addresses } = useAccountInfo();
+  const [showAllNfts, setShowAllNfts] = useState(false);
 
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
@@ -206,13 +217,19 @@ const NFTListInner = () => {
   const nftRowCount = nftIndex.rows.length;
 
   const dataList = useMemo(() => {
+    const defaultRows = nftIndex.rows.slice(0, nftIndex.defaultVisibleRowCount);
+    const foldedRows = nftIndex.rows.slice(nftIndex.defaultVisibleRowCount);
     const itemData: Array<{
       show: boolean;
       data: NftListItem[];
     }> = [
       {
         show: true,
-        data: nftIndex.rows,
+        data: defaultRows,
+      },
+      {
+        show: foldedRows.length > 0,
+        data: [{ type: 'toggle-nft' }, ...(showAllNfts ? foldedRows : [])],
       },
       {
         show: !!isLoading && nftRowCount === 0,
@@ -237,7 +254,7 @@ const NFTListInner = () => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [isLoading, nftIndex.rows, nftRowCount, t]);
+  }, [isLoading, nftIndex, nftRowCount, showAllNfts, t]);
 
   const hasNotAssets = useMemo(() => {
     return nftRowCount === 0 && !isLoading && isFocused;
@@ -384,6 +401,21 @@ const NFTListInner = () => {
               />
             </View>
           );
+        case 'toggle-nft':
+          return (
+            <TokenRowSectionHeader
+              str={String(
+                nftIndex.rows.length - nftIndex.defaultVisibleRowCount,
+              )}
+              fold={!showAllNfts}
+              style={styles.sectionHeader}
+              buttonStyle={StyleSheet.flatten([
+                styles.buttonHeader,
+                !isLight && styles.bg2,
+              ])}
+              onPressFold={() => setShowAllNfts(visible => !visible)}
+            />
+          );
         case 'empty-nft':
           return (
             <EmptyAssets
@@ -398,7 +430,14 @@ const NFTListInner = () => {
           return null;
       }
     },
-    [getAccountByAddress, handlePressNft, isLight, styles],
+    [
+      getAccountByAddress,
+      handlePressNft,
+      isLight,
+      nftIndex,
+      showAllNfts,
+      styles,
+    ],
   );
 
   const onRefresh = useCallback(async () => {
@@ -484,6 +523,7 @@ const NFTListInner = () => {
         maxToRenderPerBatch={NFT_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={NFT_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <RefreshPlaceholderIOS
@@ -543,6 +583,17 @@ const getStyles = createGetStyles2024(ctx => ({
   list: {
     paddingHorizontal: 12,
     paddingBottom: 48,
+  },
+  sectionHeader: {
+    height: ASSETS_SECTION_HEADER,
+    paddingLeft: 0,
+    paddingRight: 0,
+    backgroundColor: 'transparent',
+  },
+  buttonHeader: {
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
   },
   emptyAssets: {
     marginHorizontal: 0,

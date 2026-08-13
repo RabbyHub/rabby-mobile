@@ -105,4 +105,30 @@ describe('protocol asset index', () => {
       '0xabc:eth:aave',
     ]);
   });
+
+  it('keeps the baseline threshold-based default protocol subset', () => {
+    const protocols = [1000, 100, 0.5, 0.4, 0.3, 0.2].map((netWorth, index) =>
+      makeProtocol(`protocol-${index}`, netWorth),
+    );
+
+    const result = buildProtocolAssetsIndexResult(protocols);
+
+    expect(
+      result.protocolIds.slice(0, result.defaultVisibleProtocolCount),
+    ).toEqual(['0xabc:eth:protocol-0', '0xabc:eth:protocol-1']);
+    expect(result.protocolIds).toHaveLength(protocols.length);
+    expect(result.defaultVisibleProtocolCount).toBe(2);
+    expect(result.foldedProtocolUsdValue).not.toBe('');
+  });
+
+  it('keeps all protocols when fewer than four rows fall below the threshold', () => {
+    const protocols = [1000, 100, 10, 0.5, 0.4, 0.3].map((netWorth, index) =>
+      makeProtocol(`protocol-${index}`, netWorth),
+    );
+
+    const result = buildProtocolAssetsIndexResult(protocols);
+    expect(result.protocolIds).toHaveLength(protocols.length);
+    expect(result.defaultVisibleProtocolCount).toBe(protocols.length);
+    expect(result.foldedProtocolUsdValue).toBe('');
+  });
 });

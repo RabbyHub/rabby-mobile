@@ -9,6 +9,7 @@ import {
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import {
   commonTokenFilter,
+  defaultTokenFilter,
   includeLpTokensFilter,
   lpTokenFilter,
 } from '@/utils/lpToken';
@@ -93,6 +94,127 @@ interface TokenListState {
   ): Promise<void>;
   setTokenDisplayMode(mode: TokenDisplayMode): void;
 }
+
+const partitionDefaultTokenProjection = ({
+  defaultProjectionCandidates,
+  coreTokens,
+  totalValue,
+}: {
+  defaultProjectionCandidates: ITokenItem[];
+  coreTokens: ITokenItem[];
+  totalValue: number;
+}) => {
+  const threshold = Math.min((totalValue || 0) / 100, 1000);
+  const thresholdIndex = coreTokens.findIndex(
+    token => (token.usd_value || 0) < threshold,
+  );
+  const hasDefaultLimit =
+    coreTokens.length > 3 &&
+    thresholdIndex > -1 &&
+    thresholdIndex <= coreTokens.length - 4;
+
+  const sortedTokens = defaultProjectionCandidates
+    .slice()
+    .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
+  const defaultTokens: ITokenItem[] = [];
+  const hiddenTokens: ITokenItem[] = [];
+
+  sortedTokens.forEach(token => {
+    const isDefaultVisible =
+      !!token.is_core &&
+      (!hasDefaultLimit || (token.usd_value || 0) >= threshold);
+    (isDefaultVisible ? defaultTokens : hiddenTokens).push(token);
+  });
+
+  const visibleTokens = defaultTokens.slice(0, 20);
+  const remainingTokens = defaultTokens
+    .slice(20)
+    .concat(hiddenTokens)
+    .sort((a, b) => {
+      const aValue = a.usd_value || 0;
+      const bValue = b.usd_value || 0;
+      const aRank = a.is_core ? (aValue > 0 ? 0 : 2) : 1;
+      const bRank = b.is_core ? (bValue > 0 ? 0 : 2) : 1;
+      return aRank === bRank ? bValue - aValue : aRank - bRank;
+    });
+
+  return { visibleTokens, remainingTokens };
+};
+
+const buildDefaultTokenProjectionSections = (
+  defaultProjectionCandidates: ITokenItem[],
+  deferredCandidates: ITokenItem[],
+) => {
+  const coreTokens = defaultProjectionCandidates.filter(token => token.is_core);
+  const totalValue = coreTokens.reduce(
+    (sum, token) => sum + (token.usd_value || 0),
+    0,
+  );
+  const { visibleTokens, remainingTokens } = partitionDefaultTokenProjection({
+    defaultProjectionCandidates,
+    coreTokens,
+    totalValue,
+  });
+  const defaultAdditionalTokens = remainingTokens.filter(defaultTokenFilter);
+  const defaultLowValueTokens = deferredCandidates.filter(defaultTokenFilter);
+  const lpAdditionalTokens = remainingTokens.filter(
+    token => includeLpTokensFilter(token) && !lpTokenFilter(token, false),
+  );
+  const lpLowValueTokens = deferredCandidates.filter(
+    token => includeLpTokensFilter(token) && !lpTokenFilter(token, false),
+  );
+
+  return {
+    defaultVisibleTokens: visibleTokens,
+    defaultAdditionalTokens,
+    defaultLowValueTokens,
+    lpAdditionalTokens,
+    lpLowValueTokens,
+  };
+};
+
+const buildVisibleTokenAssetsResult = (
+  defaultProjectionCandidates: ITokenItem[],
+  deferredCandidates: ITokenItem[],
+  isLpTokenEnabled?: boolean,
+): TokenAssetsResult => {
+  const {
+    defaultVisibleTokens,
+    defaultAdditionalTokens,
+    defaultLowValueTokens,
+    lpAdditionalTokens,
+    lpLowValueTokens,
+  } = buildDefaultTokenProjectionSections(
+    defaultProjectionCandidates,
+    deferredCandidates,
+  );
+  const additionalTokens = isLpTokenEnabled
+    ? lpAdditionalTokens
+    : defaultAdditionalTokens;
+  const lowValueTokens = isLpTokenEnabled
+    ? lpLowValueTokens
+    : defaultLowValueTokens;
+  const hasLpTokens = lpAdditionalTokens.length + lpLowValueTokens.length > 0;
+
+  return {
+    tokens: defaultVisibleTokens.concat(additionalTokens, lowValueTokens),
+    defaultVisibleTokenCount: defaultVisibleTokens.length,
+    additionalTokenCount: additionalTokens.length,
+    lowValueTokenCount: lowValueTokens.length,
+    additionalCoreUsdValue: defaultAdditionalTokens.reduce(
+      (total, token) =>
+        token.is_core ? total + (token.usd_value || 0) : total,
+      0,
+    ),
+    lowValueTokenPreviewLogoUrls: lowValueTokens
+      .slice(0, 3)
+      .map(token => token.logo_url),
+    hasAdditionalTokens:
+      defaultAdditionalTokens.length + defaultLowValueTokens.length > 0 ||
+      hasLpTokens,
+    hasLpTokens,
+  };
+};
 
 const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
   if (a.is_core && !b.is_core) {
@@ -199,6 +321,13 @@ export type SingleTokenAssetsProjectionInput = {
   isLpTokenEnabled?: boolean;
 };
 
+export type MultiTokenAssetsProjectionInput = {
+  addresses: string[];
+  chainServerId?: string;
+  isLpTokenEnabled?: boolean;
+  tokenDisplayMode?: TokenDisplayMode;
+};
+
 export type TokenEntityId = string & {
   readonly __tokenEntityId: unique symbol;
 };
@@ -243,6 +372,12 @@ export type TokenStaticIndexItem = {
 export type TokenAssetsIndexResult = {
   rows: TokenAssetsIndexRow[];
   tokenIds: TokenEntityId[];
+  defaultVisibleTokenCount: number;
+  additionalTokenCount: number;
+  lowValueTokenCount: number;
+  additionalCoreUsdValue: number;
+  lowValueTokenPreviewLogoUrls: string[];
+  hasAdditionalTokens: boolean;
   hasLpTokens: boolean;
 };
 
@@ -256,12 +391,19 @@ export type TokenGroupResourceValue = {
 const TOKEN_ENTITY_RESOURCE_FAMILY = 'token.entity';
 const TOKEN_GROUP_RESOURCE_FAMILY = 'token.group';
 export const EMPTY_TOKEN_ENTITY_IDS: TokenEntityId[] = [];
+const EMPTY_STRING_LIST: string[] = [];
 const EMPTY_TOKEN_ASSETS_INDEX_ROWS: TokenAssetsIndexRow[] = [];
 const EMPTY_TOKEN_SELECT_INDEX_ROWS: TokenSelectIndexRow[] = [];
 
 export const EMPTY_TOKEN_ASSETS_INDEX_RESULT: TokenAssetsIndexResult = {
   rows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
   tokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  defaultVisibleTokenCount: 0,
+  additionalTokenCount: 0,
+  lowValueTokenCount: 0,
+  additionalCoreUsdValue: 0,
+  lowValueTokenPreviewLogoUrls: EMPTY_STRING_LIST,
+  hasAdditionalTokens: false,
   hasLpTokens: false,
 };
 
@@ -621,6 +763,27 @@ const buildStableTokenEntityIds = (
   });
 
   return nextIds || previousIds!;
+};
+
+const buildStableStringList = (list: string[], previousList?: string[]) => {
+  if (!list.length) {
+    return previousList?.length ? EMPTY_STRING_LIST : previousList || [];
+  }
+
+  const canReusePrevious = previousList?.length === list.length;
+  let nextList: string[] | undefined = canReusePrevious ? undefined : [];
+
+  list.forEach((item, index) => {
+    if (canReusePrevious && !nextList) {
+      if (previousList![index] === item) {
+        return;
+      }
+      nextList = previousList!.slice(0, index);
+    }
+    nextList!.push(item);
+  });
+
+  return nextList || previousList!;
 };
 
 const buildStableTokenEntityIdList = (
@@ -1141,6 +1304,15 @@ const buildTokenAssetsIndexResult = (
       result.tokens,
       previousResult?.tokenIds,
     ),
+    defaultVisibleTokenCount: result.defaultVisibleTokenCount,
+    additionalTokenCount: result.additionalTokenCount,
+    lowValueTokenCount: result.lowValueTokenCount,
+    additionalCoreUsdValue: result.additionalCoreUsdValue,
+    lowValueTokenPreviewLogoUrls: buildStableStringList(
+      result.lowValueTokenPreviewLogoUrls,
+      previousResult?.lowValueTokenPreviewLogoUrls,
+    ),
+    hasAdditionalTokens: result.hasAdditionalTokens,
     hasLpTokens: result.hasLpTokens,
   };
 
@@ -1148,6 +1320,15 @@ const buildTokenAssetsIndexResult = (
     previousResult &&
     previousResult.rows === nextResult.rows &&
     previousResult.tokenIds === nextResult.tokenIds &&
+    previousResult.defaultVisibleTokenCount ===
+      nextResult.defaultVisibleTokenCount &&
+    previousResult.additionalTokenCount === nextResult.additionalTokenCount &&
+    previousResult.lowValueTokenCount === nextResult.lowValueTokenCount &&
+    previousResult.additionalCoreUsdValue ===
+      nextResult.additionalCoreUsdValue &&
+    previousResult.lowValueTokenPreviewLogoUrls ===
+      nextResult.lowValueTokenPreviewLogoUrls &&
+    previousResult.hasAdditionalTokens === nextResult.hasAdditionalTokens &&
     previousResult.hasLpTokens === nextResult.hasLpTokens
   ) {
     return previousResult;
@@ -1219,25 +1400,31 @@ const computeMultiAssetsFromTokens = (
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
-  const visibleTokens = tokens.filter(token =>
-    isLpTokenEnabled
-      ? includeLpTokensFilter(token)
-      : lpTokenFilter(token, false),
-  );
+  const lowValueTokens: ITokenItem[] = [];
+  const nonRiskTokens = tokens.filter(token => {
+    const usdValue = token.usd_value || 0;
+    const isLowValueToken = token.is_core === null && usdValue === 0;
+    const isRiskToken = token.is_verified === false || token.is_suspicious;
+    if (!isRiskToken && isLowValueToken) {
+      lowValueTokens.push(token);
+    }
+    return !isRiskToken && !isLowValueToken;
+  });
   const displayMode = tokenDisplayMode || 'byAddress';
-  const aggregatedTokens =
+  const aggregatedNonRiskTokens =
     displayMode === 'byAddress'
-      ? visibleTokens
-      : aggregateTokens(visibleTokens, displayMode);
+      ? nonRiskTokens
+      : aggregateTokens(nonRiskTokens, displayMode);
+  const aggregatedLowValueTokens =
+    displayMode === 'byAddress'
+      ? lowValueTokens
+      : aggregateTokens(lowValueTokens, displayMode);
 
-  return {
-    tokens: aggregatedTokens
-      .slice()
-      .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0)),
-    hasLpTokens: tokens.some(
-      token => includeLpTokensFilter(token) && !lpTokenFilter(token, false),
-    ),
-  };
+  return buildVisibleTokenAssetsResult(
+    aggregatedNonRiskTokens,
+    aggregatedLowValueTokens,
+    isLpTokenEnabled,
+  );
 };
 
 export const buildMultiAssetsIndexFromTokenIds = (
@@ -1268,28 +1455,66 @@ export const buildMultiAssetsIndexFromTokenIds = (
   );
 };
 
+const partitionSingleAssetsTokens = (
+  tokens: ITokenItem[],
+  chainServerId?: string,
+) => {
+  const filteredTokens = tokens.filter(
+    token => !chainServerId || token.chain === chainServerId,
+  );
+  const deferredCandidates: ITokenItem[] = [];
+  const defaultProjectionCandidates = filteredTokens.filter(token => {
+    const usdValue = token.usd_value || 0;
+    const isZeroCore = !!token.is_core && usdValue === 0;
+    const shouldDefer =
+      token.is_verified === false ||
+      (usdValue === 0 && !isZeroCore) ||
+      token.is_suspicious;
+    if (shouldDefer) {
+      deferredCandidates.push(token);
+    }
+    return !shouldDefer;
+  });
+
+  return { defaultProjectionCandidates, deferredCandidates };
+};
+
 const computeSingleAssetsFromTokens = (
   tokens: ITokenItem[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
 ): TokenAssetsResult => {
-  return {
-    tokens: tokens
-      .filter(token => !chainServerId || token.chain === chainServerId)
-      .filter(token =>
-        isLpTokenEnabled
-          ? includeLpTokensFilter(token)
-          : lpTokenFilter(token, false),
-      )
-      .slice()
-      .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0)),
-    hasLpTokens: tokens.some(
-      token =>
-        (!chainServerId || token.chain === chainServerId) &&
-        includeLpTokensFilter(token) &&
-        !lpTokenFilter(token, false),
-    ),
-  };
+  const { defaultProjectionCandidates, deferredCandidates } =
+    partitionSingleAssetsTokens(tokens, chainServerId);
+
+  return buildVisibleTokenAssetsResult(
+    defaultProjectionCandidates,
+    deferredCandidates,
+    isLpTokenEnabled,
+  );
+};
+
+export const buildSingleAssetsEligibleTokenIdsFromTokenIds = (
+  tokenIds: TokenEntityId[],
+  chainServerId?: string,
+) => {
+  const tokens = tokenIds
+    .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
+    .filter((token): token is ITokenItem => !!token);
+  const { defaultProjectionCandidates, deferredCandidates } =
+    partitionSingleAssetsTokens(tokens, chainServerId);
+  const {
+    defaultVisibleTokens,
+    defaultAdditionalTokens,
+    defaultLowValueTokens,
+  } = buildDefaultTokenProjectionSections(
+    defaultProjectionCandidates,
+    deferredCandidates,
+  );
+
+  return defaultVisibleTokens
+    .concat(defaultAdditionalTokens, defaultLowValueTokens)
+    .map(buildTokenEntityId);
 };
 
 export const buildSingleAssetsIndexFromTokenIds = (
@@ -1326,6 +1551,7 @@ type TokenAssetsIndexStoreState = {
     isLpTokenEnabled?: boolean;
   }): void;
   ensureSingleAssetsResult(input: SingleTokenAssetsProjectionInput): string;
+  ensureMultiAssetsResult(input: MultiTokenAssetsProjectionInput): string;
   syncSingleAssetsResultsForAddresses(addresses: string[]): void;
   syncMultiAssetsResultsForAddresses(addresses: string[]): void;
   syncMultiAssetsResult(input: {
@@ -1412,6 +1638,11 @@ const scheduleTokenAssetsProjectionPersistence = (
     ),
     groups,
     metadata: {
+      defaultVisibleTokenCount: result.defaultVisibleTokenCount,
+      additionalTokenCount: result.additionalTokenCount,
+      lowValueTokenCount: result.lowValueTokenCount,
+      additionalCoreUsdValue: result.additionalCoreUsdValue,
+      hasAdditionalTokens: result.hasAdditionalTokens,
       hasLpTokens: result.hasLpTokens,
       tokenDisplayMode,
     },
@@ -1478,10 +1709,53 @@ const buildRestoredTokenAssetsIndexResult = (
   }
 
   tokenGroupResourceStore.upsertGroups(groups, 'hydrate');
+  const defaultVisibleTokenCount =
+    typeof restored.metadata.defaultVisibleTokenCount === 'number'
+      ? restored.metadata.defaultVisibleTokenCount
+      : -1;
+  const additionalTokenCount =
+    typeof restored.metadata.additionalTokenCount === 'number'
+      ? restored.metadata.additionalTokenCount
+      : -1;
+  const lowValueTokenCount =
+    typeof restored.metadata.lowValueTokenCount === 'number'
+      ? restored.metadata.lowValueTokenCount
+      : -1;
+  const additionalCoreUsdValue =
+    typeof restored.metadata.additionalCoreUsdValue === 'number'
+      ? restored.metadata.additionalCoreUsdValue
+      : Number.NaN;
+  const hasAdditionalTokens = restored.metadata.hasAdditionalTokens;
+  const hasLpTokens = restored.metadata.hasLpTokens;
+  if (
+    !Number.isInteger(defaultVisibleTokenCount) ||
+    defaultVisibleTokenCount < 0 ||
+    !Number.isInteger(additionalTokenCount) ||
+    additionalTokenCount < 0 ||
+    !Number.isInteger(lowValueTokenCount) ||
+    lowValueTokenCount < 0 ||
+    defaultVisibleTokenCount + additionalTokenCount + lowValueTokenCount !==
+      rows.length ||
+    !Number.isFinite(additionalCoreUsdValue) ||
+    typeof hasAdditionalTokens !== 'boolean' ||
+    typeof hasLpTokens !== 'boolean'
+  ) {
+    return null;
+  }
+  const lowValueStart = defaultVisibleTokenCount + additionalTokenCount;
+  const lowValueTokenPreviewLogoUrls = tokenIds
+    .slice(lowValueStart, lowValueStart + 3)
+    .map(tokenId => tokenEntityResourceStore.getValue(tokenId)?.logo_url || '');
   return {
     rows,
     tokenIds,
-    hasLpTokens: restored.metadata.hasLpTokens === true,
+    defaultVisibleTokenCount,
+    additionalTokenCount,
+    lowValueTokenCount,
+    additionalCoreUsdValue,
+    lowValueTokenPreviewLogoUrls,
+    hasAdditionalTokens,
+    hasLpTokens,
   };
 };
 
@@ -1784,6 +2058,56 @@ export const useTokenAssetsIndexStore = zCreate(
 
       return key;
     },
+    ensureMultiAssetsResult({
+      addresses,
+      chainServerId,
+      isLpTokenEnabled,
+      tokenDisplayMode,
+    }) {
+      const key = getMultiAssetsCacheKey(
+        addresses,
+        chainServerId,
+        isLpTokenEnabled,
+        tokenDisplayMode,
+      );
+      const tokenIndexState = useTokenIndexStore.getState();
+      const seen = new Set<TokenEntityId>();
+      const tokenIds = addresses.flatMap(address =>
+        (
+          tokenIndexState.addressTokenIds[normalizeAddress(address)] ||
+          EMPTY_TOKEN_ENTITY_IDS
+        ).filter(tokenId => {
+          if (seen.has(tokenId)) {
+            return false;
+          }
+          seen.add(tokenId);
+          return true;
+        }),
+      );
+      const nextConfig = {
+        key,
+        addresses,
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
+        tokenDisplayMode,
+      };
+      const state = get();
+
+      if (
+        state.multiAssetsResultByKey[key] &&
+        isMultiTokenAssetsIndexConfigSame(
+          state.multiAssetsConfigByKey[key],
+          nextConfig,
+        )
+      ) {
+        return key;
+      }
+
+      get().syncMultiAssetsResult(nextConfig);
+
+      return key;
+    },
     syncSingleAssetsResultsForAddresses(addresses) {
       const normalizedAddresses = normalizeAddressSet(addresses);
       if (!normalizedAddresses.size) {
@@ -2021,6 +2345,10 @@ export const useTokenAssetsIndexStore = zCreate(
 export const prepareSingleAddressTokenAssetsProjection = (
   input: SingleTokenAssetsProjectionInput,
 ) => useTokenAssetsIndexStore.getState().ensureSingleAssetsResult(input);
+
+export const prepareMultiAddressTokenAssetsProjection = (
+  input: MultiTokenAssetsProjectionInput,
+) => useTokenAssetsIndexStore.getState().ensureMultiAssetsResult(input);
 
 const getChangedTokenIndexAddresses = (
   previousVersions: TokenIndexState['addressVersions'],

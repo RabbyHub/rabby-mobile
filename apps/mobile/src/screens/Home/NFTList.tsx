@@ -19,7 +19,7 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { NftRow } from './components/AssetRenderItems';
+import { NftRow, TokenRowSectionHeader } from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import {
   createGlobalBottomSheetModal2024,
@@ -65,6 +65,9 @@ type NftListItem =
     }
   | {
       type: 'nft_header';
+    }
+  | {
+      type: 'toggle-nft';
     };
 
 const NftResourceRow = React.memo(
@@ -135,6 +138,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
 
   const { selectedChain } = useSingleHomeChain();
 
+  const [showAllNfts, setShowAllNfts] = useState(false);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const isScreenFocused = useIsFocused();
@@ -182,13 +186,19 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
   });
 
   const dataList = useMemo(() => {
+    const defaultRows = nftIndex.rows.slice(0, nftIndex.defaultVisibleRowCount);
+    const foldedRows = nftIndex.rows.slice(nftIndex.defaultVisibleRowCount);
     const itemData: Array<{
       show: boolean;
       data: NftListItem[];
     }> = [
       {
         show: true,
-        data: nftIndex.rows,
+        data: defaultRows,
+      },
+      {
+        show: foldedRows.length > 0,
+        data: [{ type: 'toggle-nft' }, ...(showAllNfts ? foldedRows : [])],
       },
       {
         show: !!loadingNft && nftRowCount === 0,
@@ -213,7 +223,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [loadingNft, nftIndex.rows, nftRowCount, t]);
+  }, [loadingNft, nftIndex, nftRowCount, showAllNfts, t]);
 
   const regressionScenario = useRegressionScenario<'SingleAddressHome'>();
   const regressionRunId = regressionScenario.active
@@ -320,6 +330,21 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
               {t('page.singleHome.sectionHeader.Nft')}
             </Text>
           );
+        case 'toggle-nft':
+          return (
+            <TokenRowSectionHeader
+              str={String(
+                nftIndex.rows.length - nftIndex.defaultVisibleRowCount,
+              )}
+              fold={!showAllNfts}
+              style={styles.sectionHeader}
+              buttonStyle={StyleSheet.flatten([
+                styles.buttonHeader,
+                !isLight && styles.bg2,
+              ])}
+              onPressFold={() => setShowAllNfts(visible => !visible)}
+            />
+          );
         case 'empty-assets':
         case 'empty-nft':
           return (
@@ -339,7 +364,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
           return null;
       }
     },
-    [handlePressNft, nftRowStyle, styles, t],
+    [handlePressNft, isLight, nftIndex, nftRowStyle, showAllNfts, styles, t],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -374,6 +399,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         windowSize={15}
         maxToRenderPerBatch={15}
         removeClippedSubviews={IS_ANDROID}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
@@ -448,6 +474,13 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  sectionHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-gray'],
+    height: ASSETS_SECTION_HEADER,
+  },
+  buttonHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   symbol: {
     fontSize: 16,

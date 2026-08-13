@@ -596,27 +596,6 @@ export const TokenRowSectionLpTokenHeader = memo(
   },
 );
 
-export const TokenRowLpTokenHeader = memo(
-  ({
-    isEnabled,
-    onValueChange,
-    style,
-  }: {
-    isEnabled: boolean;
-    onValueChange: (value: boolean) => void;
-    style?: ViewStyle;
-  }) => {
-    const { styles } = useTheme2024({ getStyle: getStyles });
-
-    return (
-      <View style={[styles.tokenSectionHeader, style]}>
-        <View />
-        <LpTokenSwitch isEnabled={isEnabled} onValueChange={onValueChange} />
-      </View>
-    );
-  },
-);
-
 const TOKEN_ROW_BORDER_RADIUS = 14;
 
 const getStyles = createGetStyles2024(ctx => ({

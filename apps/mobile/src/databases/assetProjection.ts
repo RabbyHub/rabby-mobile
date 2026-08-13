@@ -10,7 +10,7 @@ import {
 } from './entities/assetProjection';
 import { prepareAppDataSource } from './imports';
 
-export const ASSET_PROJECTION_RULE_VERSION = 1;
+export const ASSET_PROJECTION_RULE_VERSION = 3;
 export const ASSET_PROJECTION_GENERATIONS_TO_KEEP = 3;
 
 export type AssetProjectionRow = {
