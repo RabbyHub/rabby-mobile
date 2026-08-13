@@ -48,14 +48,20 @@ jobs:
       - mobile-local
     timeout-minutes: 20
     env:
-      JEST_CACHE_DIRECTORY: ${{ runner.temp }}/rabby-mobile-integration-jest
       NODE_OPTIONS: '--max_old_space_size=4096'
-      YARN_CACHE_FOLDER: ${{ runner.temp }}/rabby-mobile-integration-yarn
       YARN_ENABLE_HARDENED_MODE: '0'
 
     steps:
       - name: Prepare isolated checkout
-        run: rm -rf "$GITHUB_WORKSPACE/.ci-source"
+        run: |
+          rm -rf "$GITHUB_WORKSPACE/.ci-source"
+          mkdir -p \
+            "$RUNNER_TEMP/rabby-mobile-integration-jest" \
+            "$RUNNER_TEMP/rabby-mobile-integration-yarn"
+          {
+            echo "JEST_CACHE_DIRECTORY=$RUNNER_TEMP/rabby-mobile-integration-jest"
+            echo "YARN_CACHE_FOLDER=$RUNNER_TEMP/rabby-mobile-integration-yarn"
+          } >> "$GITHUB_ENV"
 
       - name: Checkout git repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
