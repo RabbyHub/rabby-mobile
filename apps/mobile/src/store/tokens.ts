@@ -2877,6 +2877,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       }
 
       const realTimeTokenMap: Record<string, ITokenItem[]> = {};
+      const completeRealTimeTokenMap: Record<string, ITokenItem[]> = {};
       const realTimeTokenQueue = new PQueue({
         concurrency: 15,
       });
@@ -2885,9 +2886,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           const chains = await openapi.usedChainList(address);
           const chainIdList = chains.map(item => item.id);
           const res = await Promise.allSettled(
-            chainIdList.map(
-              async serverId =>
-                await realTimeTokenQueue.add(async () => {
+            chainIdList.map(async serverId => {
+              const tokens =
+                (await realTimeTokenQueue.add(async () => {
                   const chainTokensRes = await requestOpenApiWithChainId(
                     ({ openapi }) => openapi.listToken(address, serverId, true),
                     {
@@ -2899,16 +2900,41 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                       tokenItemToITokenItem(item, address),
                     ),
                   );
-                }),
-            ),
+                })) || [];
+              return { serverId, tokens };
+            }),
           );
-          const failed = res.find(result => result.status === 'rejected');
-          if (failed?.status === 'rejected') {
-            throw failed.reason;
+
+          const fulfilledChainSnapshots = res.flatMap(result =>
+            result.status === 'fulfilled' ? [result.value] : [],
+          );
+          const hasFailedChain = res.some(
+            result => result.status === 'rejected',
+          );
+
+          // A chain failure must not invalidate the other chains of this
+          // address. Keep the last usable snapshot for failed chains and only
+          // mark the address fresh when every requested chain succeeded.
+          if (!fulfilledChainSnapshots.length && hasFailedChain) {
+            return;
           }
-          realTimeTokenMap[address] = res
-            .map(result => (result.status === 'fulfilled' ? result.value : []))
-            .flat() as ITokenItem[];
+
+          const nextTokens = hasFailedChain
+            ? fulfilledChainSnapshots.reduce(
+                (tokens, snapshot) =>
+                  replaceTokensByChain(
+                    tokens,
+                    snapshot.tokens,
+                    snapshot.serverId,
+                  ),
+                get().tokenListMap[address] || [],
+              )
+            : fulfilledChainSnapshots.flatMap(snapshot => snapshot.tokens);
+
+          realTimeTokenMap[address] = nextTokens;
+          if (!hasFailedChain) {
+            completeRealTimeTokenMap[address] = nextTokens;
+          }
         }),
       );
 
@@ -2947,7 +2973,19 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       );
       tokenCacheHydrator.invalidate(remoteApplicableAddresses);
       set(() => ({ tokenListMap: nextTokenListMap, isLoading: false }));
-      void syncRemoteTokensForAddresses(applicableRealTimeTokenMap);
+      const completeApplicableRealTimeTokenMap = Object.fromEntries(
+        remoteApplicableAddresses.flatMap(address =>
+          Object.prototype.hasOwnProperty.call(
+            completeRealTimeTokenMap,
+            address,
+          )
+            ? [[address, completeRealTimeTokenMap[address] || []]]
+            : [],
+        ),
+      );
+      if (Object.keys(completeApplicableRealTimeTokenMap).length) {
+        void syncRemoteTokensForAddresses(completeApplicableRealTimeTokenMap);
+      }
       trace.finish({ path: 'cache-then-remote' });
     } catch (error) {
       trace.fail({ phase: 'load' });

@@ -825,13 +825,13 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
   }, []);
   const ListRenderSectionSeparator = useCallback(
     ({
-      leadingItem,
+      leadingSection,
       trailingSection,
     }: {
-      leadingItem?: TokenListItem;
+      leadingSection?: unknown;
       trailingSection?: unknown;
     }) => {
-      return leadingItem && trailingSection ? (
+      return leadingSection && trailingSection ? (
         <View style={{ height: SPACING_HEIGHT }} />
       ) : null;
     },

@@ -64,6 +64,7 @@ import {
   useTokenIndexStore,
 } from './tokens';
 import tokenListStore from './tokens';
+import { openapi } from '@/core/request';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import {
   syncRemoteTokens,
@@ -77,6 +78,7 @@ const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
 const SECOND_ADDRESS = '0xDeF0';
 const NORMALIZED_SECOND_ADDRESS = SECOND_ADDRESS.toLowerCase();
 const mockedRequestOpenApiWithChainId = jest.mocked(requestOpenApiWithChainId);
+const mockedUsedChainList = jest.mocked(openapi.usedChainList);
 const mockedSyncRemoteTokens = jest.mocked(syncRemoteTokens);
 const mockedSyncRemoteTokensForAddresses = jest.mocked(
   syncRemoteTokensForAddresses,
@@ -130,6 +132,13 @@ const createToken = (
   ...overrides,
 });
 
+const createHttpError = (status: number) =>
+  Object.assign(new Error(`HTTP ${status}`), {
+    response: {
+      status,
+    },
+  });
+
 const replaceAddressTokens = (tokens: ITokenItem[]) => {
   tokenEntityResourceStore.upsertTokens(tokens, 'remote', {
     pruneMissingAddresses: new Set([NORMALIZED_ADDRESS]),
@@ -140,6 +149,7 @@ const replaceAddressTokens = (tokens: ITokenItem[]) => {
 describe('single-address token assets projection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedUsedChainList.mockResolvedValue([{ id: 'eth' }] as never);
     useTokenAssetsIndexStore.setState({
       singleAssetsConfigByKey: {},
       singleAssetsResultByKey: {},
@@ -926,6 +936,118 @@ describe('single-address token assets projection', () => {
       latest,
     ]);
     expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+  });
+
+  it('keeps failed-chain data while publishing successful LP chain data', async () => {
+    const cachedArbitrumToken = createToken('cached-arbitrum', {
+      chain: 'arb',
+      usd_value: 4,
+    });
+    const freshLpToken = createToken('fresh-lp', {
+      chain: 'eth',
+      is_core: false,
+      protocol_id: 'curve',
+      usd_value: 3,
+    });
+    tokenListStore.setState({
+      tokenListMap: {
+        [NORMALIZED_ADDRESS]: [cachedArbitrumToken],
+      },
+    });
+    mockedUsedChainList.mockResolvedValueOnce([
+      { id: 'eth' },
+      { id: 'arb' },
+    ] as never);
+    mockedRequestOpenApiWithChainId
+      .mockResolvedValueOnce([freshLpToken])
+      .mockRejectedValueOnce(new Error('arb request failed'));
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      cachedArbitrumToken,
+      freshLpToken,
+    ]);
+    expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+
+    const projectionKey = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    const projection =
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[projectionKey];
+    expect(projection?.segments.additionalLp.tokenIds).toEqual([
+      buildTokenEntityId(freshLpToken),
+    ]);
+    expect(mockedUsedChainList).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the previous snapshot when chain discovery is rate limited', async () => {
+    const cached = createToken('cached', {
+      chain: 'eth',
+      usd_value: 2,
+    });
+    tokenListStore.setState({
+      tokenListMap: {
+        [NORMALIZED_ADDRESS]: [cached],
+      },
+    });
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429) as never);
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(mockedUsedChainList).toHaveBeenCalledTimes(1);
+    expect(mockedRequestOpenApiWithChainId).not.toHaveBeenCalled();
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      cached,
+    ]);
+    expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+  });
+
+  it('keeps other address indexes when a single address refresh completes', async () => {
+    const firstAddressToken = createToken('first-before', {
+      owner_addr: NORMALIZED_ADDRESS,
+      usd_value: 2,
+    });
+    const secondAddressToken = createToken('second', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      usd_value: 3,
+    });
+    const refreshedFirstAddressToken = createToken('first-after', {
+      owner_addr: NORMALIZED_ADDRESS,
+      usd_value: 4,
+    });
+    tokenListStore.setState({
+      tokenListMap: {
+        [NORMALIZED_ADDRESS]: [firstAddressToken],
+        [NORMALIZED_SECOND_ADDRESS]: [secondAddressToken],
+      },
+    });
+    mockedRequestOpenApiWithChainId.mockResolvedValueOnce([
+      refreshedFirstAddressToken,
+    ]);
+
+    await tokenListStore.getState().getTokenList(ADDRESS, true);
+
+    expect(
+      tokenListStore.getState().tokenListMap[NORMALIZED_SECOND_ADDRESS],
+    ).toEqual([secondAddressToken]);
+    expect(
+      useTokenIndexStore.getState().addressTokenIds[NORMALIZED_SECOND_ADDRESS],
+    ).toEqual([buildTokenEntityId(secondAddressToken)]);
+
+    const projectionKey = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS, SECOND_ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    const projection =
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[projectionKey];
+    expect(projection?.tokenIds).toEqual(
+      expect.arrayContaining([
+        buildTokenEntityId(refreshedFirstAddressToken),
+        buildTokenEntityId(secondAddressToken),
+      ]),
+    );
   });
 
   it('does not cancel an active remote refresh when a newer call only reads fresh memory', async () => {
