@@ -101,14 +101,6 @@ function getProposalOrigin(proposal: WalletConnectProposalViewModel) {
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
-function formatUnsupportedCapability(
-  t: Translate,
-  count: number,
-  label: 'chain' | 'method',
-) {
-  return t(`page.walletConnect.unsupportedCapability.${label}`, { count });
-}
-
 function getWalletConnectBlockText(
   proposal: WalletConnectProposalViewModel,
   t: Translate,
@@ -117,39 +109,16 @@ function getWalletConnectBlockText(
     return proposal.error;
   }
 
-  const unsupported: string[] = [];
-  if (proposal.unsupportedRequiredChains.length) {
-    const text = formatUnsupportedCapability(
-      t,
-      proposal.unsupportedRequiredChains.length,
-      'chain',
-    );
-    unsupported.push(
-      `${text} (${proposal.unsupportedRequiredChains.join(', ')})`,
-    );
-  }
-  if (proposal.unsupportedRequiredMethods.length) {
-    const text = formatUnsupportedCapability(
-      t,
-      proposal.unsupportedRequiredMethods.length,
-      'method',
-    );
-    unsupported.push(
-      `${text} (${proposal.unsupportedRequiredMethods.join(', ')})`,
-    );
+  if (!proposal.unsupportedRequiredChains.length) {
+    return '';
   }
 
-  return unsupported.length
-    ? t('page.walletConnect.unsupportedRequiredRequest', {
-        capabilities:
-          unsupported.length === 1
-            ? unsupported[0]
-            : t('page.walletConnect.unsupportedCapabilityList', {
-                first: unsupported[0],
-                second: unsupported[1],
-              }),
-      })
-    : '';
+  const text = t('page.walletConnect.unsupportedCapability.chain', {
+    count: proposal.unsupportedRequiredChains.length,
+  });
+  return t('page.walletConnect.unsupportedRequiredRequest', {
+    capabilities: `${text} (${proposal.unsupportedRequiredChains.join(', ')})`,
+  });
 }
 
 export function WalletConnectPairingLoading() {
@@ -361,7 +330,6 @@ export function WalletConnectConnectSheet({
     let text = '';
     let forbiddenCount = 0;
     let safeCount = 0;
-    let warningCount = 0;
     let dangerCount = 0;
     let needProcessCount = 0;
     let cancelBtnText = t('global.Cancel') || 'Cancel';
@@ -380,9 +348,7 @@ export function WalletConnectConnectSheet({
         !processedRules.includes(result.id)
       ) {
         needProcessCount++;
-        if (result.level === Level.WARNING) {
-          warningCount++;
-        } else if (result.level === Level.DANGER) {
+        if (result.level === Level.DANGER) {
           dangerCount++;
         }
       }
