@@ -24,6 +24,7 @@ import { apisTheme, useTheme2024 } from '@/hooks/theme';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { EndBg, useHomeBackgroundOpacity } from '../BgComponents';
 import { createGetStyles2024 } from '@/utils/styles';
+import { prepareSingleAddressTokenAssetsProjection } from '@/store/tokens';
 
 const disableInnerIndicator = {
   height: 0,
@@ -83,50 +84,63 @@ const CustomMaterialTabBarContent = (props: MaterialTabBarProps<string>) => {
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
   >(undefined);
-  const handleOnChainClick = useCallback((clear: boolean) => {
-    if (clear) {
-      apisSingleHome.setSelectChainItem(null);
-      return;
-    }
-
-    if (chainSelectModalRef.current) {
-      removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-      chainSelectModalRef.current = undefined;
-    }
+  const updateSelectedChain = useCallback((chain: ChainListItem | null) => {
     const currentAddress = apisSingleHome.getCurrentAddress();
-    const { isLight, colors2024 } = apisTheme.getColors2024();
-    chainSelectModalRef.current = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
-      value: apisSingleHome.getSelectedChainItem() || undefined,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        rootViewType: 'View',
-        handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
-        },
-      },
-      chainList: !currentAddress
-        ? []
-        : getAddrChainInfo(currentAddress).computedResult.chainAssets,
-      titleText: i18next.t('page.receiveAddressList.selectChainTitle'),
-      onChange: (v: ChainListItem) => {
-        apisSingleHome.setSelectChainItem(v);
-        if (chainSelectModalRef.current) {
-          removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-          chainSelectModalRef.current = undefined;
-        }
-      },
-      onClose: () => {
-        if (chainSelectModalRef.current) {
-          removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-          chainSelectModalRef.current = undefined;
-        }
-      },
-    });
+    if (currentAddress) {
+      prepareSingleAddressTokenAssetsProjection({
+        address: currentAddress,
+        chainServerId: chain?.chain,
+      });
+    }
+    apisSingleHome.setSelectChainItem(chain);
   }, []);
+  const handleOnChainClick = useCallback(
+    (clear: boolean) => {
+      if (clear) {
+        updateSelectedChain(null);
+        return;
+      }
+
+      if (chainSelectModalRef.current) {
+        removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+        chainSelectModalRef.current = undefined;
+      }
+      const currentAddress = apisSingleHome.getCurrentAddress();
+      const { isLight, colors2024 } = apisTheme.getColors2024();
+      chainSelectModalRef.current = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
+        value: apisSingleHome.getSelectedChainItem() || undefined,
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          rootViewType: 'View',
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+        chainList: !currentAddress
+          ? []
+          : getAddrChainInfo(currentAddress).computedResult.chainAssets,
+        titleText: i18next.t('page.receiveAddressList.selectChainTitle'),
+        onChange: (v: ChainListItem) => {
+          updateSelectedChain(v);
+          if (chainSelectModalRef.current) {
+            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+            chainSelectModalRef.current = undefined;
+          }
+        },
+        onClose: () => {
+          if (chainSelectModalRef.current) {
+            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+            chainSelectModalRef.current = undefined;
+          }
+        },
+      });
+    },
+    [updateSelectedChain],
+  );
 
   return (
     <View

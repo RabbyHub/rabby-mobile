@@ -138,7 +138,9 @@ const buildRows = (
       return;
     }
 
-    const collectionKey = `${item.chain}-${item.collection.id}`;
+    const collectionKey = `${getNftOwnerAddress(item)}-${item.chain}-${
+      item.collection.id
+    }`;
     const existingCollection = collectionMap.get(collectionKey);
     if (existingCollection) {
       existingCollection.nft_list.push({ ...item, collection: null });

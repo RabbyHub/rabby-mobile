@@ -30,11 +30,15 @@ import RcUpgradeSliderThumbLight from '@/assets/icons/upgrade/slider-thumb-light
 import RcUpgradeSliderThumbDark from '@/assets/icons/upgrade/slider-thumb-dark.svg';
 import { useUpgradeInfo } from '@/hooks/version';
 import { useGetBinaryMode } from '@/hooks/theme';
-import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { MODAL_GATE_IDS, useVisibleBlockingModalIds } from '@/utils/modalGate';
 import { APP_URLS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
-import { useCurrentRouteName } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName as TabName,
+  useCurrentRouteName,
+} from '@/hooks/navigation';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import {
@@ -172,20 +176,33 @@ export function UpgradePromptModal() {
   const visible = useUpgradePromptVisible();
   const pendingAutoPrompt = usePendingAutoUpgradePrompt();
   const { currentRouteName } = useCurrentRouteName();
+  const visibleBlockingModalIds = useVisibleBlockingModalIds();
+  const hasOtherVisibleModal = visibleBlockingModalIds.some(
+    modalId => modalId !== MODAL_GATE_IDS.upgradePrompt,
+  );
   const isHomeDrawerExpanded = useValueFromSharedValue(
     homeDrawerAnimateMutable.isExpanded,
   );
+  const homeTabName = useValueFromSharedValue(apisHomeTabIndex.svTabName);
   const { remoteVersion } = useUpgradeInfo();
 
   useEffect(() => {
     if (
       currentRouteName === RootNames.Home &&
+      homeTabName === TabName.overview &&
       !isHomeDrawerExpanded &&
+      !hasOtherVisibleModal &&
       pendingAutoPrompt
     ) {
       showPendingAutoUpgradePrompt();
     }
-  }, [currentRouteName, isHomeDrawerExpanded, pendingAutoPrompt]);
+  }, [
+    currentRouteName,
+    hasOtherVisibleModal,
+    homeTabName,
+    isHomeDrawerExpanded,
+    pendingAutoPrompt,
+  ]);
 
   const handleUpdate = useCallback(async () => {
     dismissUpgradePrompt();

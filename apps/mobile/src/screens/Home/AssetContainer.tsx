@@ -32,11 +32,11 @@ import {
 } from './hooks/singleHome';
 import {
   apisAddressBalance,
-  useAddressBalance,
+  useAddressBalanceSnapshot,
 } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useCustomTestnetStore } from '@/store/customTestnet';
-import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   useRegressionScenario,
@@ -50,10 +50,14 @@ import {
 } from './singleAddressAssetDataWarmup';
 import { ItemLoader } from './components/Skeleton';
 import {
+  getSingleAddressNoAssetsDecisionKey,
+  hasKnownPositiveSingleAddressBalance,
   resolveSingleAddressAssetViewState,
-  shouldResolveSingleAddressNoAssets,
-  useSingleAddressNoAssetsDecision,
 } from './singleAddressNoAssetsDecision';
+import {
+  singleAddressNoAssetsDecisionCoordinator,
+  useSingleAddressNoAssetsDecision,
+} from './singleAddressNoAssetsDecisionResource';
 
 const renderHeader = () => null;
 const NO_ASSETS_DECISION_SKELETONS = ['first', 'second', 'third'];
@@ -71,17 +75,18 @@ const SingleAddressTabActivityBoundary = ({
   const isScreenFocused = useIsFocused();
 
   return (
-    <StoreActivityBoundary
+    <RenderActivityBoundary
       active={isScreenFocused && focusedTab === name}
       label={`single-address-${name}`}>
       {children}
-    </StoreActivityBoundary>
+    </RenderActivityBoundary>
   );
 };
 
 export const AssetContainer = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const tabsRef = useRef<CollapsibleRef<string>>(null);
+  const forcedNoAssetsEvidenceKeyRef = useRef<string | null>(null);
   const regressionScenario = useRegressionScenario<'SingleAddressHome'>();
 
   const activateTabForRegression = useCallback(
@@ -155,7 +160,8 @@ export const AssetContainer = () => {
   const { isDisConnect } = useGlobalStatus();
 
   const { chainLength } = useAddrChainLength(currentAddress);
-  const { evmBalance } = useAddressBalance(currentAddress);
+  const balanceSnapshot = useAddressBalanceSnapshot(currentAddress);
+  const noAssetsDecision = useSingleAddressNoAssetsDecision(currentAccount);
 
   useRendererDetect({ name: 'Home::AssetContainer' });
 
@@ -202,26 +208,60 @@ export const AssetContainer = () => {
     Object.is,
     { storeLabel: 'single-address-custom-testnet' },
   );
-  const knownEvmBalance =
-    evmBalance ??
-    (typeof currentAccount?.evmBalance === 'number'
-      ? currentAccount.evmBalance
-      : null);
-  const shouldResolveNoAssets = shouldResolveSingleAddressNoAssets({
+
+  useEffect(() => {
+    const hasFreshPositiveBalance =
+      (typeof balanceSnapshot.balance === 'number' &&
+        balanceSnapshot.balance > 0) ||
+      (typeof balanceSnapshot.evmBalance === 'number' &&
+        balanceSnapshot.evmBalance > 0);
+    if (hasFreshPositiveBalance) {
+      forcedNoAssetsEvidenceKeyRef.current = null;
+      return;
+    }
+
+    if (
+      !currentAccount ||
+      !hasKnownPositiveSingleAddressBalance(currentAccount) ||
+      chainLength > 0 ||
+      customTestnetCount > 0 ||
+      !balanceSnapshot.hasValue ||
+      balanceSnapshot.isLoading ||
+      balanceSnapshot.hasError ||
+      balanceSnapshot.balance !== 0 ||
+      balanceSnapshot.evmBalance !== 0
+    ) {
+      return;
+    }
+
+    const decisionKey = getSingleAddressNoAssetsDecisionKey(currentAccount);
+    if (forcedNoAssetsEvidenceKeyRef.current === decisionKey) {
+      return;
+    }
+    forcedNoAssetsEvidenceKeyRef.current = decisionKey;
+    singleAddressNoAssetsDecisionCoordinator.prepare(currentAccount, {
+      ignoreAccountBalance: true,
+    });
+  }, [
+    balanceSnapshot.balance,
+    balanceSnapshot.evmBalance,
+    balanceSnapshot.hasError,
+    balanceSnapshot.hasValue,
+    balanceSnapshot.isLoading,
+    chainLength,
+    currentAccount,
+    customTestnetCount,
+  ]);
+
+  const assetViewState = resolveSingleAddressAssetViewState({
     account: currentAccount,
+    hasNetworkError: errorNotAssets,
     chainLength,
     customTestnetCount,
-    evmBalance: knownEvmBalance,
-  });
-  const noAssetsDecision = useSingleAddressNoAssetsDecision({
-    account: currentAccount,
-    enabled: shouldResolveNoAssets,
-  });
-  const assetViewState = resolveSingleAddressAssetViewState({
-    hasCurrentAccount: !!currentAccount,
-    hasNetworkError: errorNotAssets,
-    shouldResolveNoAssets,
-    decision: noAssetsDecision,
+    balance: balanceSnapshot.balance,
+    evmBalance: balanceSnapshot.evmBalance,
+    balanceFlow: balanceSnapshot,
+    noAssetsDecision,
   });
 
   useRegressionScenarioAssertion(
@@ -258,7 +298,7 @@ export const AssetContainer = () => {
   }
 
   if (assetViewState === 'receive') {
-    return <ReceiveOnNoAssets account={noAssetsDecision.account} />;
+    return <ReceiveOnNoAssets account={currentAccount} />;
   }
 
   return (

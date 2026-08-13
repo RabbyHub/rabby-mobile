@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ListRenderItem, ViewStyle } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -13,22 +14,20 @@ import {
   FullDefiRenderItem,
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
-import { ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import { GestureDetector } from 'react-native-gesture-handler';
-import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import useLoadMoreData from './hooks/useLoadMoreData';
 import { HomeTabName as TabName } from '@/hooks/navigation';
 import { ListRenderSeparator } from './RenderRow/Common';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
-import { getAllDefiCount } from '@/screens/Home/utils/converAssets';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import useProtocols, {
+  EMPTY_PROTOCOL_ASSETS_INDEX_RESULT,
   getMultiProtocolsCacheKey,
-  ICacheProtocolItem,
+  protocolEntityResourceStore,
+  type ProtocolEntityId,
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
@@ -52,11 +51,7 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-
-const emptyCacheProtocolItem: ICacheProtocolItem = {
-  fold: [],
-  unFold: [],
-};
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -64,6 +59,65 @@ const MemoizedEmptyAssets = React.memo(EmptyAssets);
 export const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
 const { batchGetProtocols } = useProtocols.getState();
+
+type ProtocolListItem =
+  | {
+      type: 'unfold_defi' | 'fold_defi';
+      protocolId: ProtocolEntityId;
+    }
+  | {
+      type: 'toggle_defi_fold';
+      data: string;
+    }
+  | {
+      type: 'empty-defi' | 'loading-defi-skeleton';
+      data: string;
+    };
+
+const ProtocolResourceRow = React.memo(
+  ({
+    protocolId,
+    getAccountByAddress,
+    style,
+    disableAction,
+    defaultExpand,
+  }: {
+    protocolId: ProtocolEntityId;
+    getAccountByAddress(address: string): KeyringAccountWithAlias | undefined;
+    style: ViewStyle;
+    disableAction: boolean;
+    defaultExpand: boolean;
+  }) => {
+    const protocol = useActivityStore(
+      protocolEntityResourceStore.useStore,
+      state => state.valueMap[protocolId],
+      Object.is,
+      { storeLabel: 'home-multi-assets-defi-entities' },
+    );
+
+    if (!protocol) {
+      return <MemoizedDefiItemLoader />;
+    }
+
+    return (
+      <MemoizedFullDefiRenderItem
+        data={protocol}
+        showAccount
+        style={style}
+        disableAction={disableAction}
+        defaultExpand={defaultExpand}
+        account={getAccountByAddress(protocol.owner_addr)}
+      />
+    );
+  },
+);
+
+const getProtocolListItemId = (item: ProtocolListItem) => {
+  if ('protocolId' in item) {
+    return `${item.type}/${item.protocolId}`;
+  }
+  return `${item.type}/${item.data}`;
+};
 
 export const ProtocolList = () => {
   const { t } = useTranslation();
@@ -86,6 +140,11 @@ export const ProtocolList = () => {
   const [foldDefi, setFoldDefi] = useState(true);
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
+
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
@@ -96,14 +155,15 @@ export const ProtocolList = () => {
   const registerMultiAssets =
     useProtocolListComputedStore.getState().registerMultiProtocols;
 
-  const multiProtocols = useActivityStore(
+  const protocolIndex = useActivityStore(
     useProtocolListComputedStore,
     useShallow(
       state =>
-        state.multiProtocolsCache[multiProtocolsKey] || emptyCacheProtocolItem,
+        state.multiProtocolsIndexCache[multiProtocolsKey] ||
+        EMPTY_PROTOCOL_ASSETS_INDEX_RESULT,
     ),
     Object.is,
-    { storeLabel: 'home-multi-assets-defi-computed-list' },
+    { storeLabel: 'home-multi-assets-defi-computed-index' },
   );
 
   const isLoading = useActivityStore(
@@ -113,41 +173,39 @@ export const ProtocolList = () => {
     { storeLabel: 'home-multi-assets-defi-loading' },
   );
 
-  const { data: portfoliosData, loadMore: loadMorePortfolios } =
-    useLoadMoreData(multiProtocols.unFold);
-
   const shouldDefaultExpand = useMemo(
-    () => multiProtocols.unFold.length <= 5,
-    [multiProtocols.unFold.length],
+    () => protocolIndex.unFoldIds.length <= 5,
+    [protocolIndex.unFoldIds.length],
   );
 
   const portfolioListData = useMemo(() => {
-    const foldDeFiList: ActionItem[] = multiProtocols.fold.map(item => ({
-      type: 'fold_defi',
-      data: item,
-    }));
-
-    const foldDeFiValue = getAllDefiCount(multiProtocols.fold);
+    const unfoldDeFiList: ProtocolListItem[] = protocolIndex.unFoldIds.map(
+      protocolId => ({
+        type: 'unfold_defi',
+        protocolId,
+      }),
+    );
+    const foldDeFiList: ProtocolListItem[] = protocolIndex.foldIds.map(
+      protocolId => ({
+        type: 'fold_defi',
+        protocolId,
+      }),
+    );
 
     const itemData: Array<{
       show: boolean;
-      data: ActionItem[];
+      data: ProtocolListItem[];
     }> = [
       {
         show: true,
-        data: [
-          ...portfoliosData.map(item => ({
-            type: 'unfold_defi' as const,
-            data: item,
-          })),
-        ],
+        data: unfoldDeFiList,
       },
       {
         show: !!foldDeFiList.length,
         data: [
           {
             type: 'toggle_defi_fold',
-            data: foldDeFiValue,
+            data: protocolIndex.foldDeFiValue,
           },
           ...(foldDefi ? [] : foldDeFiList),
         ],
@@ -155,8 +213,8 @@ export const ProtocolList = () => {
       {
         show:
           !!isLoading &&
-          !multiProtocols.unFold.length &&
-          !multiProtocols.fold.length,
+          !protocolIndex.unFoldIds.length &&
+          !protocolIndex.foldIds.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: index.toString(),
@@ -165,8 +223,8 @@ export const ProtocolList = () => {
       {
         show:
           !isLoading &&
-          multiProtocols.unFold.length === 0 &&
-          multiProtocols.fold.length === 0,
+          protocolIndex.unFoldIds.length === 0 &&
+          protocolIndex.foldIds.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -184,22 +242,22 @@ export const ProtocolList = () => {
   }, [
     foldDefi,
     isLoading,
+    protocolIndex.foldDeFiValue,
+    protocolIndex.foldIds,
+    protocolIndex.unFoldIds,
     t,
-    multiProtocols.fold,
-    multiProtocols.unFold.length,
-    portfoliosData,
   ]);
 
   const hasNotAssets = useMemo(() => {
     return (
-      multiProtocols.unFold.length === 0 &&
-      multiProtocols.fold.length === 0 &&
+      protocolIndex.unFoldIds.length === 0 &&
+      protocolIndex.foldIds.length === 0 &&
       !isLoading &&
       isFocused
     );
   }, [
-    multiProtocols.fold.length,
-    multiProtocols.unFold.length,
+    protocolIndex.foldIds.length,
+    protocolIndex.unFoldIds.length,
     isLoading,
     isFocused,
   ]);
@@ -240,8 +298,8 @@ export const ProtocolList = () => {
       return;
     }
 
-    const visibleCount = multiProtocols.unFold.length;
-    const foldedCount = multiProtocols.fold.length;
+    const visibleCount = protocolIndex.unFoldIds.length;
+    const foldedCount = protocolIndex.foldIds.length;
     const readyKey = [
       regressionScenarioRunId,
       multiProtocolsKey,
@@ -266,8 +324,8 @@ export const ProtocolList = () => {
     chain,
     isFocused,
     isLoading,
-    multiProtocols.fold.length,
-    multiProtocols.unFold.length,
+    protocolIndex.foldIds.length,
+    protocolIndex.unFoldIds.length,
     multiProtocolsKey,
     myTop10Addresses.length,
     regressionScenarioActive,
@@ -298,31 +356,26 @@ export const ProtocolList = () => {
     onForeground: handleForeground,
   });
 
-  const renderItem = useCallback(
+  const renderItem = useCallback<ListRenderItem<ProtocolListItem>>(
     ({ item }) => {
-      const { type, data } = item as ActionItem;
+      const { type } = item;
       switch (type) {
         case 'unfold_defi':
         case 'fold_defi':
           return (
-            <MemoizedFullDefiRenderItem
-              data={data}
-              showAccount
+            <ProtocolResourceRow
+              protocolId={item.protocolId}
+              getAccountByAddress={getAccountByAddress}
               style={styles.fullDefi}
               disableAction={isLoading}
               defaultExpand={type === 'fold_defi' ? false : shouldDefaultExpand}
-              account={
-                getAccountByAddress(
-                  data?.owner_addr,
-                ) as unknown as KeyringAccountWithAlias
-              }
             />
           );
         case 'toggle_defi_fold':
           return (
             <TokenRowSectionHeader
               style={styles.tokenSectionHeader}
-              str={data}
+              str={item.data}
               fold={foldDefi}
               onPressFold={() => setFoldDefi(pre => !pre)}
             />
@@ -331,7 +384,7 @@ export const ProtocolList = () => {
           return (
             <MemoizedEmptyAssets
               style={styles.emptyAssets}
-              desc={data}
+              desc={item.data}
               type={type}
             />
           );
@@ -409,7 +462,7 @@ export const ProtocolList = () => {
   return (
     <GestureDetector gesture={panGestureRef.current}>
       <TabsFlatList
-        keyExtractor={getItemId}
+        keyExtractor={getProtocolListItemId}
         data={
           hasNotAssets
             ? [
@@ -424,9 +477,10 @@ export const ProtocolList = () => {
         }
         key={isFocused ? 'defi-focused' : 'defi-unfocused'}
         renderItem={renderItem}
-        initialNumToRender={15}
+        initialNumToRender={10}
         windowSize={5}
-        maxToRenderPerBatch={15}
+        maxToRenderPerBatch={8}
+        updateCellsBatchingPeriod={32}
         removeClippedSubviews={IS_ANDROID}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
@@ -448,8 +502,6 @@ export const ProtocolList = () => {
           styles.list,
           pulldownRefreshReturns.scrollableStyle.list,
         ]}
-        onEndReached={loadMorePortfolios}
-        onEndReachedThreshold={0.5}
         bounces={false}
         overScrollMode={'never'}
         scrollEventThrottle={16}

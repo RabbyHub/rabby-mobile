@@ -25,6 +25,11 @@ import {
   type AddressChainDomainUpdate,
   type SingleAddressChainInfo,
 } from './singleAddressChainDistribution';
+import {
+  nowForSingleAddressChainProjection,
+  recordSingleAddressChainProjection,
+  type SingleAddressChainProjectionSource,
+} from './singleAddressChainDiagnostics';
 
 type FinalInfo = SingleAddressChainInfo;
 const chainStaticsStore = zCreate<FinalInfo>(() => ({
@@ -149,11 +154,40 @@ export function getAddrChainInfo(address: string) {
 
 function updateAddressChainDomains(updates: AddressChainDomainUpdate[]) {
   if (!updates.length) {
-    return;
+    return false;
   }
-  setAddressChainInfo(previousState =>
-    applyAddressChainDomainUpdates(previousState, updates),
-  );
+  let changed = false;
+  setAddressChainInfo(previousState => {
+    const nextState = applyAddressChainDomainUpdates(previousState, updates);
+    changed = nextState !== previousState;
+    return nextState;
+  });
+  return changed;
+}
+
+function projectAddressChainDomains(options: {
+  source: SingleAddressChainProjectionSource;
+  addresses: string[];
+  inputCount: number;
+  makeUpdates: () => AddressChainDomainUpdate[];
+}) {
+  const startedAt = nowForSingleAddressChainProjection();
+  const updates = options.makeUpdates();
+  const projectedAt = nowForSingleAddressChainProjection();
+  const changed = updateAddressChainDomains(updates);
+  const publishedAt = nowForSingleAddressChainProjection();
+
+  recordSingleAddressChainProjection({
+    source: options.source,
+    addressCount: options.addresses.length,
+    inputCount: options.inputCount,
+    changed,
+    projectionMs: projectedAt - startedAt,
+    publishMs: publishedAt - projectedAt,
+    totalMs: publishedAt - startedAt,
+  });
+
+  return changed;
 }
 
 export const apisAddrChainStatics = {
@@ -201,29 +235,32 @@ export const apisAddrChainStatics = {
   },
   syncAddress: (address: string) => {
     const normalizedAddress = address.toLowerCase();
-    updateAddressChainDomains([
-      {
-        address: normalizedAddress,
-        domain: 'token',
-        chainUnit: computeTokenChainAssets(
-          tokenStore.getState().tokenListMap[normalizedAddress] || [],
-        ),
-      },
-      {
-        address: normalizedAddress,
-        domain: 'portfolio',
-        chainUnit: computePortfolioChainAssets(
-          useProtocolListStore.getState().protocolMap[normalizedAddress] || [],
-        ),
-      },
-      {
-        address: normalizedAddress,
-        domain: 'nft',
-        chainUnit: computeNftChainAssets(
-          assetsMapStore.getState().nftsMap[normalizedAddress] || [],
-        ),
-      },
-    ]);
+    const tokens = tokenStore.getState().tokenListMap[normalizedAddress] || [];
+    const portfolios =
+      useProtocolListStore.getState().protocolMap[normalizedAddress] || [];
+    const nfts = assetsMapStore.getState().nftsMap[normalizedAddress] || [];
+    projectAddressChainDomains({
+      source: 'sync-address',
+      addresses: [normalizedAddress],
+      inputCount: tokens.length + portfolios.length + nfts.length,
+      makeUpdates: () => [
+        {
+          address: normalizedAddress,
+          domain: 'token',
+          chainUnit: computeTokenChainAssets(tokens),
+        },
+        {
+          address: normalizedAddress,
+          domain: 'portfolio',
+          chainUnit: computePortfolioChainAssets(portfolios),
+        },
+        {
+          address: normalizedAddress,
+          domain: 'nft',
+          chainUnit: computeNftChainAssets(nfts),
+        },
+      ],
+    });
   },
 };
 
@@ -270,13 +307,20 @@ tokenStore.subscribe(state => {
     nextTokenListMap,
   );
   previousTokenListMap = nextTokenListMap;
-  updateAddressChainDomains(
-    changedAddresses.map(address => ({
-      address,
-      domain: 'token',
-      chainUnit: computeTokenChainAssets(nextTokenListMap[address] || []),
-    })),
-  );
+  projectAddressChainDomains({
+    source: 'token-store',
+    addresses: changedAddresses,
+    inputCount: changedAddresses.reduce(
+      (total, address) => total + (nextTokenListMap[address]?.length || 0),
+      0,
+    ),
+    makeUpdates: () =>
+      changedAddresses.map(address => ({
+        address,
+        domain: 'token',
+        chainUnit: computeTokenChainAssets(nextTokenListMap[address] || []),
+      })),
+  });
   debounceComputeChainList();
 });
 
@@ -290,13 +334,20 @@ useProtocolListStore.subscribe(state => {
     nextProtocolMap,
   );
   previousProtocolMap = nextProtocolMap;
-  updateAddressChainDomains(
-    changedAddresses.map(address => ({
-      address,
-      domain: 'portfolio',
-      chainUnit: computePortfolioChainAssets(nextProtocolMap[address] || []),
-    })),
-  );
+  projectAddressChainDomains({
+    source: 'protocol-store',
+    addresses: changedAddresses,
+    inputCount: changedAddresses.reduce(
+      (total, address) => total + (nextProtocolMap[address]?.length || 0),
+      0,
+    ),
+    makeUpdates: () =>
+      changedAddresses.map(address => ({
+        address,
+        domain: 'portfolio',
+        chainUnit: computePortfolioChainAssets(nextProtocolMap[address] || []),
+      })),
+  });
   debounceComputeChainList();
 });
 
@@ -307,13 +358,20 @@ assetsMapStore.subscribe(state => {
   }
   const changedAddresses = getChangedAddressKeys(previousNftsMap, nextNftsMap);
   previousNftsMap = nextNftsMap;
-  updateAddressChainDomains(
-    changedAddresses.map(address => ({
-      address,
-      domain: 'nft',
-      chainUnit: computeNftChainAssets(nextNftsMap[address] || []),
-    })),
-  );
+  projectAddressChainDomains({
+    source: 'nft-store',
+    addresses: changedAddresses,
+    inputCount: changedAddresses.reduce(
+      (total, address) => total + (nextNftsMap[address]?.length || 0),
+      0,
+    ),
+    makeUpdates: () =>
+      changedAddresses.map(address => ({
+        address,
+        domain: 'nft',
+        chainUnit: computeNftChainAssets(nextNftsMap[address] || []),
+      })),
+  });
   debounceComputeChainList();
 });
 

@@ -11,7 +11,6 @@ import {
   formatSmallUsdValue,
   makeDefaultSelectData,
 } from '@/store/curveShared';
-import { buildResourceFlowState } from '@/store/_resourceBase';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   getAddressCurveProjection,
@@ -34,16 +33,18 @@ function lcAddr(address?: string) {
 
 export function useIsLoadingCurve(address?: string) {
   const normalizedAddress = lcAddr(address);
-  const meta = useActivityStore(
+  const isLoadingCurve = useActivityStore(
     addressCurve24hStore.useStore,
-    state => state.metaMap[normalizedAddress],
+    state => {
+      const meta = state.metaMap[normalizedAddress];
+      return !!meta?.isHydrating || !!meta?.isFetchingRemote;
+    },
     Object.is,
     { storeLabel: 'address-curve-24h' },
   );
-  const flow = buildResourceFlowState(meta);
 
   return {
-    isLoadingCurve: flow.isLoading,
+    isLoadingCurve,
   };
 }
 

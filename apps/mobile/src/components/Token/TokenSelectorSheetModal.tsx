@@ -6,6 +6,7 @@ import React, {
   useState,
   useRef,
   useImperativeHandle,
+  useLayoutEffect,
   type Ref,
 } from 'react';
 import type { ListRenderItem } from 'react-native';
@@ -99,7 +100,6 @@ import {
   buildTokenEntityId,
   getTokenSelectIndexRowKey,
   tokenEntityResourceStore,
-  useTokenEntity,
 } from '@/store/tokens';
 import {
   clearTokenSelectorRenderProbeActiveTokens,
@@ -118,6 +118,9 @@ import { isNumber } from 'lodash';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
 import { useIsUserTokenPinned } from '@/hooks/useTokenSettings';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
+import { getTokenSelectorActivityState } from './tokenSelectorActivity';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'SwapBridge'>,
@@ -150,7 +153,13 @@ type TokenSelectorTokenRowProps = {
 
 const TokenSelectorTokenRow = React.memo(
   ({ item, children, showRenderProbe }: TokenSelectorTokenRowProps) => {
-    const resourceToken = useTokenEntity(item.row?.tokenId);
+    const resourceToken = useActivityStore(
+      tokenEntityResourceStore.useStore,
+      state =>
+        item.row?.tokenId ? state.valueMap[item.row.tokenId] : undefined,
+      Object.is,
+      { storeLabel: 'token-selector-token-entities' },
+    );
     const token = item.data || resourceToken;
     const tokenId =
       item.row?.tokenId || (item.data && buildTokenEntityId(item.data));
@@ -404,7 +413,20 @@ export function useTokenSelectorModalVisible(options?: {
 export type TokenSelectorSheetModalInst = {
   toggleShow: (nextShown: SheetModalShowType) => void;
 };
-export const TokenSelectorSheetModal = ({
+
+type TokenSelectorSheetModalProps = RNViewProps &
+  TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> };
+
+type TokenSelectorSheetModalContentProps = TokenSelectorSheetModalProps & {
+  onActivityVisibleChange(visible: boolean): void;
+};
+
+const isActiveSheetCommand = (command: SheetModalShowType) =>
+  command === true ||
+  command === 'collapse' ||
+  (typeof command === 'number' && command >= 0);
+
+const TokenSelectorSheetModalContent = ({
   visible,
   list = [],
   tokenRows,
@@ -435,11 +457,20 @@ export const TokenSelectorSheetModal = ({
   onLpTokenChange: _onLpTokenChange,
   showCustomNetworkChainPreview = false,
   customNetworkTop3Chains,
+  onActivityVisibleChange,
   ref,
-}: RNViewProps &
-  TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> }) => {
-  const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
-    useSheetModal();
+}: TokenSelectorSheetModalContentProps) => {
+  const {
+    sheetModalRef: tokenSelectorModalRef,
+    toggleShowSheetModal: toggleNativeSheetModal,
+  } = useSheetModal();
+  const toggleShowSheetModal = useCallback(
+    (command: SheetModalShowType) => {
+      onActivityVisibleChange(isActiveSheetCommand(command));
+      return toggleNativeSheetModal(command);
+    },
+    [onActivityVisibleChange, toggleNativeSheetModal],
+  );
   const isSheetMountedRef = useRef(false);
   const listRef = useRef<BottomSheetFlatListMethods>(null);
   const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
@@ -456,6 +487,7 @@ export const TokenSelectorSheetModal = ({
       return {
         toggleShow: nextShown => {
           if (nextShown === true) {
+            onActivityVisibleChange(true);
             if (isSheetMountedRef.current) {
               tokenSelectorModalRef.current?.snapToIndex(0);
             } else {
@@ -472,15 +504,16 @@ export const TokenSelectorSheetModal = ({
         },
       };
     },
-    [toggleShowSheetModal, tokenSelectorModalRef],
+    [onActivityVisibleChange, toggleShowSheetModal, tokenSelectorModalRef],
   );
 
   useFocusEffect(
     useCallback(
       () => () => {
+        onActivityVisibleChange(false);
         tokenSelectorModalRef.current?.destroy();
       },
-      [tokenSelectorModalRef],
+      [onActivityVisibleChange, tokenSelectorModalRef],
     ),
   );
 
@@ -563,7 +596,7 @@ export const TokenSelectorSheetModal = ({
     visible &&
     isFocused
   ) {
-    toggleShowSheetModal('destroy');
+    toggleNativeSheetModal('destroy');
   }
 
   const currentRoute = getLatestNavigationName();
@@ -1262,13 +1295,6 @@ export const TokenSelectorSheetModal = ({
       showLpTokenSwitch,
     ]);
 
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
-    useCallback(() => {
-      onCancel();
-      return !visible;
-    }, [onCancel, visible]),
-  );
-
   const top3Chains = useMemo(() => {
     if (!visible) {
       return [];
@@ -1287,8 +1313,6 @@ export const TokenSelectorSheetModal = ({
     return [];
   }, [list, tokenRows, type, visible]);
 
-  useFocusEffect(onHardwareBackHandler);
-
   return (
     <AppBottomSheetModal
       ref={tokenSelectorModalRef}
@@ -1297,12 +1321,15 @@ export const TokenSelectorSheetModal = ({
       enableDismissOnClose={false}
       onDismiss={() => {
         isSheetMountedRef.current = false;
+        onActivityVisibleChange(false);
       }}
       onChange={idx => {
         if (idx < 0) {
+          onActivityVisibleChange(false);
           onCancel();
           return;
         }
+        onActivityVisibleChange(true);
         onOpened?.();
       }}
       {...{
@@ -1520,6 +1547,54 @@ export const TokenSelectorSheetModal = ({
         />
       </AutoLockView>
     </AppBottomSheetModal>
+  );
+};
+
+export const TokenSelectorSheetModal = ({
+  visible,
+  onCancel,
+  ...props
+}: TokenSelectorSheetModalProps) => {
+  const [activityVisible, setActivityVisible] = useState(visible);
+  const activityVisibleRef = useRef(visible);
+
+  const handleActivityVisibleChange = useCallback((nextVisible: boolean) => {
+    activityVisibleRef.current = nextVisible;
+    setActivityVisible(nextVisible);
+  }, []);
+
+  useLayoutEffect(() => {
+    handleActivityVisibleChange(visible);
+  }, [handleActivityVisibleChange, visible]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      const { shouldHandleAndroidBack } = getTokenSelectorActivityState({
+        controlledVisible: visible,
+        sheetVisible: activityVisibleRef.current,
+      });
+      if (shouldHandleAndroidBack) {
+        onCancel();
+      }
+      return !shouldHandleAndroidBack;
+    }, [onCancel, visible]),
+  );
+  useFocusEffect(onHardwareBackHandler);
+
+  const { renderActive } = getTokenSelectorActivityState({
+    controlledVisible: visible,
+    sheetVisible: activityVisible,
+  });
+
+  return (
+    <RenderActivityBoundary active={renderActive} label="token-selector-modal">
+      <TokenSelectorSheetModalContent
+        {...props}
+        visible={visible}
+        onCancel={onCancel}
+        onActivityVisibleChange={handleActivityVisibleChange}
+      />
+    </RenderActivityBoundary>
   );
 };
 

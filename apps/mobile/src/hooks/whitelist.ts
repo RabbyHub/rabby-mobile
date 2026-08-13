@@ -17,6 +17,7 @@ import {
   type WhitelistRecord,
 } from '@/utils/whitelist';
 import type { WhitelistService } from '@/core/services/whitelist';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const { isSameAddress } = addressUtils;
 
@@ -204,7 +205,12 @@ const init = async () => {
 };
 
 export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
-  const { whitelist, whitelistAddresses, enable } = whitelistStore(s => s);
+  const { whitelist, whitelistAddresses, enable } = useActivityStore(
+    whitelistStore,
+    state => state,
+    Object.is,
+    { storeLabel: 'whitelist' },
+  );
   const { t } = useTranslation();
 
   const addWhitelist = React.useCallback(

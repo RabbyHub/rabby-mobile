@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -41,13 +40,12 @@ import {
 } from './hooks/singleHome';
 import useTokenList, {
   EMPTY_TOKEN_ASSETS_INDEX_RESULT,
-  EMPTY_TOKEN_ENTITY_IDS,
   getSingleAssetsCacheKey,
   ITokenItem,
+  prepareSingleAddressTokenAssetsProjection,
   TokenEntityId,
   tokenEntityResourceStore,
   useTokenAssetsIndexStore,
-  useTokenIndexStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
@@ -65,6 +63,13 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import {
+  useRegressionScenario,
+  useRegressionScenarioAssertion,
+  useRegressionScenarioComponentAction,
+} from '@/devtools/regressionScenarios/react';
+import { IS_ANDROID } from '@/core/native/utils';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 type TokenListItem =
   | {
@@ -176,6 +181,10 @@ interface Props {
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 const TOKEN_LOADING_SKELETON_COUNT = 5;
+const TOKEN_LIST_INITIAL_RENDER_COUNT = 8;
+const TOKEN_LIST_RENDER_BATCH_SIZE = 6;
+const TOKEN_LIST_WINDOW_SIZE = 7;
+const TOKEN_LIST_BATCHING_PERIOD_MS = 32;
 const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
 
 type BuildTokenListItemsParams = {
@@ -388,6 +397,9 @@ export const TokenList = ({
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
   const [hasRequestedTokenList, setHasRequestedTokenList] = useState(false);
+  const [isTokenListRequestSettled, setIsTokenListRequestSettled] =
+    useState(false);
+  const tokenListRequestIdRef = useRef(0);
   const customTestnetAddTokenModalIdRef = useRef<ReturnType<
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
@@ -397,6 +409,11 @@ export const TokenList = ({
   const isFocused = useMemo(() => {
     return focusedTab === 'tokens';
   }, [focusedTab]);
+
+  useScrollToTopOnChainChange({
+    chain: selectedChain,
+    isCurrentTab: isFocused,
+  });
 
   const closeCustomTestnetAddTokenModal = useCallback(() => {
     const modalId = customTestnetAddTokenModalIdRef.current;
@@ -426,7 +443,9 @@ export const TokenList = ({
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();
   useEffect(() => {
+    tokenListRequestIdRef.current += 1;
     setHasRequestedTokenList(false);
+    setIsTokenListRequestSettled(false);
   }, [lowerAddress]);
 
   const {
@@ -440,28 +459,6 @@ export const TokenList = ({
     !selectedChain &&
     !isLpTokenEnabled;
 
-  useEffect(() => {
-    if (!currentAddress) {
-      return;
-    }
-    useTokenIndexStore
-      .getState()
-      .syncFromTokenListMap(useTokenList.getState().tokenListMap, [
-        currentAddress,
-      ]);
-  }, [currentAddress]);
-
-  const tokenIds = useActivityStore(
-    useTokenIndexStore,
-    useShallow(state => {
-      if (!lowerAddress) {
-        return EMPTY_TOKEN_ENTITY_IDS;
-      }
-      return state.addressTokenIds[lowerAddress] || EMPTY_TOKEN_ENTITY_IDS;
-    }),
-    Object.is,
-    { storeLabel: 'single-address-token-index' },
-  );
   const singleAssetsKey = useMemo(() => {
     if (!lowerAddress) {
       return null;
@@ -473,17 +470,15 @@ export const TokenList = ({
     );
   }, [isLpTokenEnabled, lowerAddress, selectedChain]);
 
-  useLayoutEffect(() => {
-    if (!singleAssetsKey) {
-      return;
-    }
-    useTokenAssetsIndexStore.getState().syncSingleAssetsResult({
-      key: singleAssetsKey,
-      tokenIds,
-      chainServerId: selectedChain,
-      isLpTokenEnabled,
-    });
-  }, [isLpTokenEnabled, selectedChain, singleAssetsKey, tokenIds]);
+  const isTokenProjectionReady = useActivityStore(
+    useTokenAssetsIndexStore,
+    state =>
+      !!singleAssetsKey &&
+      !!state.singleAssetsConfigByKey[singleAssetsKey] &&
+      !!state.singleAssetsResultByKey[singleAssetsKey],
+    Object.is,
+    { storeLabel: 'single-address-token-assets-index-readiness' },
+  );
 
   const {
     unFoldTokenIds,
@@ -507,7 +502,6 @@ export const TokenList = ({
     () => formatNetworth(foldCoreUsdValue),
     [foldCoreUsdValue],
   );
-
   const { isLoading, isAllLoading } = useActivityStore(
     useTokenList,
     useShallow(state => {
@@ -528,22 +522,47 @@ export const TokenList = ({
   );
   const hasDefaultTokenData =
     unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length > 0;
+  const isTokenProjectionLoading = !!singleAssetsKey && !isTokenProjectionReady;
   const shouldHideCustomTestnetSectionsWhileLoading =
-    (isLoading || isAllLoading) && !hasDefaultTokenData;
+    (isLoading || isAllLoading || isTokenProjectionLoading) &&
+    !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     hasRequestedTokenList &&
     !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
+  const hasVisibleTokenContent =
+    hasDefaultTokenData || visibleCustomTestnetSections.length > 0;
+  const isTokenContentReady =
+    isTokenProjectionReady &&
+    (hasVisibleTokenContent ||
+      (hasRequestedTokenList &&
+        isTokenListRequestSettled &&
+        !isLoading &&
+        !isAllLoading));
   const getTokenList = useTokenList.getState().getTokenList;
 
   const refreshTokenList = useCallback(() => {
     if (!currentAddress) {
       return;
     }
+    const requestId = tokenListRequestIdRef.current + 1;
+    tokenListRequestIdRef.current = requestId;
     setHasRequestedTokenList(true);
-    getTokenList(currentAddress);
+    setIsTokenListRequestSettled(false);
+    void getTokenList(currentAddress).then(
+      () => {
+        if (tokenListRequestIdRef.current === requestId) {
+          setIsTokenListRequestSettled(true);
+        }
+      },
+      () => {
+        if (tokenListRequestIdRef.current === requestId) {
+          setIsTokenListRequestSettled(true);
+        }
+      },
+    );
   }, [currentAddress, getTokenList]);
 
   useEffect(() => {
@@ -584,7 +603,7 @@ export const TokenList = ({
       foldScam,
       hasFoldTokens,
       isLpTokenEnabled,
-      isLoading,
+      isLoading: isLoading || isTokenProjectionLoading,
       isAllLoading,
       noAnyAssets,
       emptyAssetsText,
@@ -594,17 +613,112 @@ export const TokenList = ({
     emptyAssetsText,
     foldHideList,
     foldScam,
-    foldTokenIds,
     hasFoldTokens,
+    foldTokenIds,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
+    isTokenProjectionLoading,
     noAnyAssets,
     scamTokenIds,
     scamTokenPreviewLogoUrls,
     unFoldTokenIds,
     visibleCustomTestnetSections,
   ]);
+
+  const regressionScenario = useRegressionScenario<'SingleAddressHome'>();
+  const regressionRunId = regressionScenario.active
+    ? regressionScenario.runId
+    : null;
+  const isSingleAddressRegression =
+    regressionScenario.active &&
+    regressionScenario.scenario === 'single-address';
+  const [preparedRegressionRunId, setPreparedRegressionRunId] = useState<
+    string | null
+  >(null);
+  const [readyRegressionRunId, setReadyRegressionRunId] = useState<
+    string | null
+  >(null);
+  const applyTokenFoldState = useCallback((nextFolded: boolean) => {
+    if (nextFolded) {
+      setFoldScam(true);
+      setIsLpTokenEnabled(false);
+    }
+    setFoldHideList(nextFolded);
+  }, []);
+  const expandTokensForRegression = useCallback(async () => {
+    applyTokenFoldState(false);
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+  }, [applyTokenFoldState]);
+  useRegressionScenarioComponentAction(
+    'single-address.expand-tokens',
+    expandTokensForRegression,
+  );
+  const collapseTokensForRegression = useCallback(async () => {
+    setPreparedRegressionRunId(regressionRunId);
+    applyTokenFoldState(true);
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+  }, [applyTokenFoldState, regressionRunId]);
+  useRegressionScenarioComponentAction(
+    'single-address.collapse-tokens',
+    collapseTokensForRegression,
+  );
+  useEffect(() => {
+    if (
+      !isSingleAddressRegression ||
+      preparedRegressionRunId !== regressionRunId ||
+      !isFocused ||
+      !isTokenContentReady
+    ) {
+      setReadyRegressionRunId(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setReadyRegressionRunId(regressionRunId);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [
+    foldTokenIds.length,
+    isFocused,
+    isSingleAddressRegression,
+    isTokenContentReady,
+    preparedRegressionRunId,
+    regressionRunId,
+    scamTokenIds.length,
+    unFoldTokenIds.length,
+  ]);
+  useRegressionScenarioAssertion(
+    'single-address-tokens-ready',
+    isSingleAddressRegression &&
+      readyRegressionRunId === regressionRunId &&
+      isFocused &&
+      isTokenContentReady
+      ? {
+          backgroundRefreshing: isLoading || isAllLoading,
+          foldTokenCount: foldTokenIds.length,
+          requestSettled: isTokenListRequestSettled,
+          scamTokenCount: scamTokenIds.length,
+          unfoldedTokenCount: unFoldTokenIds.length,
+        }
+      : null,
+  );
+  useRegressionScenarioAssertion(
+    'single-address-tokens-expanded',
+    isSingleAddressRegression &&
+      preparedRegressionRunId === regressionRunId &&
+      !foldHideList
+      ? {
+          foldTokenCount: foldTokenIds.length,
+          scamTokenCount: scamTokenIds.length,
+          visibleListItemCount: dataList.length,
+        }
+      : null,
+  );
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
@@ -683,12 +797,22 @@ export const TokenList = ({
   );
 
   const handleToggleTokenFold = useCallback(() => {
-    if (!foldHideList) {
-      setFoldScam(true);
-      setIsLpTokenEnabled(false);
-    }
-    setFoldHideList(pre => !pre);
-  }, [foldHideList]);
+    applyTokenFoldState(!foldHideList);
+  }, [applyTokenFoldState, foldHideList]);
+
+  const handleLpTokenEnabledChange = useCallback(
+    (nextEnabled: boolean) => {
+      if (currentAddress) {
+        prepareSingleAddressTokenAssetsProjection({
+          address: currentAddress,
+          chainServerId: selectedChain,
+          isLpTokenEnabled: nextEnabled,
+        });
+      }
+      setIsLpTokenEnabled(nextEnabled);
+    },
+    [currentAddress, selectedChain],
+  );
 
   const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
@@ -741,7 +865,7 @@ export const TokenList = ({
     () => (
       <TokenFoldSectionHeader
         isEnabled={isLpTokenEnabled}
-        onValueChange={setIsLpTokenEnabled}
+        onValueChange={handleLpTokenEnabledChange}
         fold={foldHideList}
         str={foldTokenUsdValue}
         style={styles.sectionHeader}
@@ -754,6 +878,7 @@ export const TokenList = ({
       foldHideList,
       foldTokenUsdValue,
       handleToggleTokenFold,
+      handleLpTokenEnabledChange,
       isLpTokenEnabled,
       styles.sectionHeader,
     ],
@@ -858,17 +983,6 @@ export const TokenList = ({
   );
 
   const keyExtractor = useCallback(getTokenListItemKey, []);
-  const listExtraData = useMemo(
-    () => ({
-      foldHideList,
-      foldScam,
-      foldTokenIds,
-      isLpTokenEnabled,
-      scamTokenIds,
-    }),
-    [foldHideList, foldScam, foldTokenIds, isLpTokenEnabled, scamTokenIds],
-  );
-
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
   }, []);
@@ -897,9 +1011,13 @@ export const TokenList = ({
     <View style={styles.container}>
       <Tabs.FlatList
         data={dataList}
-        extraData={listExtraData}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
+        initialNumToRender={TOKEN_LIST_INITIAL_RENDER_COUNT}
+        windowSize={TOKEN_LIST_WINDOW_SIZE}
+        maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
+        updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
+        removeClippedSubviews={IS_ANDROID}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={showScrollIndicator}
