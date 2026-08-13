@@ -19,6 +19,7 @@ import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { naviPushWithUnderlay } from '@/utils/navigation';
 
 export { isAave3Portfolio, keyToMarketKey, marketKeyToProtocolId };
 
@@ -158,13 +159,28 @@ export const useProtocolConfig = () => {
                 account,
               },
             });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market:
-                  item?._originPortfolio?.detail?.position_token?.symbol || '',
+            // Backing out of the detail page should land on Perps home first.
+            return naviPushWithUnderlay(
+              RootNames.StackTransaction,
+              {
+                screen: RootNames.PerpsMarketDetail,
+                params: {
+                  market:
+                    item?._originPortfolio?.detail?.position_token?.symbol ||
+                    '',
+                },
               },
-            });
+              {
+                name: RootNames.StackTransaction,
+                params: {
+                  screen: RootNames.Perps,
+                  params: {
+                    dappId: 'hyperliquid',
+                    account,
+                  },
+                },
+              },
+            );
           } else {
             matomoRequestEvent({
               category: 'Rabby Perps',
