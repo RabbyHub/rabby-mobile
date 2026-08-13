@@ -44,8 +44,8 @@ describe('utils/walletUnlock', () => {
         BIOMETRICS: 1,
         BIOMETRICS_OR_PASSCODE: 4,
       },
-      isAuthenticatedByBiometrics: jest.fn(() => isAuthenticatedByBiometrics),
       getAuthenticationType: jest.fn(() => authType),
+      isAuthenticatedByBiometrics: jest.fn(() => isAuthenticatedByBiometrics),
       getSupportedBiometryType: mockGetSupportedBiometryType,
       isPasscodeAuthAvailable: mockIsPasscodeAuthAvailable,
       requestGenericPassword: mockRequestGenericPassword,
@@ -141,6 +141,8 @@ describe('utils/walletUnlock', () => {
     expect(mockRequestGenericPassword).toHaveBeenCalledWith(
       expect.objectContaining({
         purpose: 11,
+        walletUnlockDiagnosticsAttemptId:
+          expect.stringMatching(/^wallet-unlock-/),
       }),
     );
     expect(mockVerifyPasswordOrUnlock).toHaveBeenCalledWith('plain-password');
