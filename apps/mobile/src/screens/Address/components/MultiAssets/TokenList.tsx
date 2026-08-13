@@ -81,6 +81,7 @@ import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -285,6 +286,11 @@ export const TokenList = () => {
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
+
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
 
   const isScreenFocused = useIsFocused();
 
@@ -702,6 +708,30 @@ export const TokenList = () => {
     setFoldHideList(pre => !pre);
   }, [foldHideList]);
 
+  const handleLpTokenChange = useCallback(
+    (nextEnabled: boolean) => {
+      const nextKey = getMultiAssetsCacheKey(
+        myTop10Addresses,
+        chain,
+        nextEnabled,
+        tokenDisplayMode,
+      );
+      const assetsIndexState = useTokenAssetsIndexStore.getState();
+      if (!assetsIndexState.multiAssetsResultByKey[nextKey]) {
+        // Only fill a cold target cache to avoid the first empty-list frame.
+        assetsIndexState.syncMultiAssetsResult({
+          key: nextKey,
+          tokenIds,
+          chainServerId: chain,
+          isLpTokenEnabled: nextEnabled,
+          tokenDisplayMode,
+        });
+      }
+      setIsLpTokenEnabled(nextEnabled);
+    },
+    [chain, myTop10Addresses, tokenDisplayMode, tokenIds],
+  );
+
   // const ListRenderFooter = useCallback(() => {
   //   return hasMorePortfolios ? (
   //     <MemoizedDefiItemLoader style={[styles.loadingMore]} />
@@ -853,7 +883,7 @@ export const TokenList = () => {
               str={foldTokenUsdValue}
               onPressFold={handleToggleTokenFold}
               isEnabled={isLpTokenEnabled}
-              onValueChange={setIsLpTokenEnabled}
+              onValueChange={handleLpTokenChange}
             />
           );
         case 'custom_testnet_assets':
@@ -916,6 +946,7 @@ export const TokenList = () => {
       renderCustomTestnetAccount,
       handleTokenPress,
       handleToggleTokenFold,
+      handleLpTokenChange,
       isLpTokenEnabled,
       loadCustomTestnetToken,
       loadCustomTestnetTokens,

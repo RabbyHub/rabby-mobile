@@ -48,9 +48,15 @@ export const usePerpsAccount = () => {
     return userAbstraction === UserAbstractionResp.portfolioMargin;
   }, [userAbstraction]);
 
-  // unifiedAccount and portfolioMargin both keep collateral on the spot side
-  // (perps clearinghouse `marginSummary.accountValue` reads as "0" for them).
+  // unifiedAccount and portfolioMargin both keep collateral on the spot side.
   // Route both modes through the spot-derived account value.
+  //
+  // Perps `marginSummary.accountValue` only reads "0" here while no position is
+  // open; it is `totalRawUsd + Σ signed position value`, and these modes borrow
+  // against spot instead of transferring, so `totalRawUsd` goes negative. Once a
+  // position is open it mirrors USDC that the spot `total` already counts — it is
+  // NOT extra equity, so never add it to the spot value. Verified 2026-08-11:
+  // Hyperliquid's own Total Equity equals the spot assets alone.
   const isSpotCollateralMode = useMemo(() => {
     return isUnifiedAccount || isPortfolioMargin;
   }, [isUnifiedAccount, isPortfolioMargin]);

@@ -1874,16 +1874,28 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       ),
     });
 
-    // 写入 Store
-    syncTokenRuntimeStoresFromTokenListMap(
-      tokenMap,
-      lowerAddresses,
-      'hydrate',
-      {
-        markTokenListMapSynced: true,
-      },
+    // 只 hydrate 当前 Store 中尚未有数据的地址，避免延迟完成的冷备数据
+    // 覆盖页面已经获取到的完整 token 列表。
+    const currentTokenListMap = get().tokenListMap;
+    const addressesToHydrate = lowerAddresses.filter(
+      address =>
+        !currentTokenListMap[address]?.length && !!tokenMap[address]?.length,
     );
-    set(() => ({ tokenListMap: tokenMap }));
+    if (addressesToHydrate.length) {
+      const nextTokenListMap = { ...currentTokenListMap };
+      addressesToHydrate.forEach(address => {
+        nextTokenListMap[address] = tokenMap[address] || [];
+      });
+      syncTokenRuntimeStoresFromTokenListMap(
+        nextTokenListMap,
+        addressesToHydrate,
+        'hydrate',
+        {
+          markTokenListMapSynced: true,
+        },
+      );
+      set(() => ({ tokenListMap: nextTokenListMap }));
+    }
     markStartupPerf('tokenListStore', 'initStore_end', {
       elapsedMs: Date.now() - startedAt,
       count: lowerAddresses.length,

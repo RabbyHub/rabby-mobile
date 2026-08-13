@@ -69,6 +69,7 @@ import {
   useRegressionScenarioComponentAction,
 } from '@/devtools/regressionScenarios/react';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 type TokenListItem =
   | {
@@ -408,6 +409,11 @@ export const TokenList = ({
   const isFocused = useMemo(() => {
     return focusedTab === 'tokens';
   }, [focusedTab]);
+
+  useScrollToTopOnChainChange({
+    chain: selectedChain,
+    isCurrentTab: isFocused,
+  });
 
   const closeCustomTestnetAddTokenModal = useCallback(() => {
     const modalId = customTestnetAddTokenModalIdRef.current;

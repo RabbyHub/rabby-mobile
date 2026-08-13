@@ -71,6 +71,7 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
 const NFT_LIST_RENDER_BATCH_SIZE = 8;
@@ -192,6 +193,11 @@ const NFTListInner = () => {
 
   const getAccountByAddress = useFindAccountByAddress();
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
+
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
 
   const { nftRefresh } = useTriggerTagAssets();
   useOnNftRefresh();

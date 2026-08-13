@@ -41,6 +41,7 @@ import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { Text } from '@/components/Typography';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import {
   EMPTY_NFT_ASSETS_INDEX_RESULT,
   getNftAssetsIndexRowKey,
@@ -146,6 +147,11 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
 
   const focusedTab = useFocusedTab();
   const isFocused = focusedTab === 'nft';
+
+  useScrollToTopOnChainChange({
+    chain: selectedChain,
+    isCurrentTab: isFocused,
+  });
 
   const userAddr = currentAccount?.address?.toLowerCase();
   const { reload: reloadNftList, isLoading: loadingNft } =

@@ -34,6 +34,7 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 
 type PortfolioListItem =
   | {
@@ -117,6 +118,11 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     const currentFocused = focusedTab === 'defi';
     return currentFocused;
   }, [focusedTab]);
+
+  useScrollToTopOnChainChange({
+    chain: selectedChain,
+    isCurrentTab: isFocused,
+  });
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [foldDefi, setFoldDefi] = useState(true);

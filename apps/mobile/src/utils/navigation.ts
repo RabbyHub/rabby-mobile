@@ -6,6 +6,7 @@ import {
   StackActions,
   createNavigationContainerRef,
 } from '@react-navigation/native';
+import type { NavigationState, PartialState } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 export const navigationRef =
@@ -80,6 +81,54 @@ export const naviPush: NativeStackScreenProps<RootStackParamsList>['navigation']
       // You can ignore this, or add these actions to a queue you can call later
     }
   };
+
+/**
+ * Push a root-stack screen, then silently insert `underlay` beneath it so
+ * backing out (header back or iOS swipe) lands on the underlay first.
+ *
+ * The underlay is inserted one frame later because pushing both screens in
+ * one commit briefly flashes the underlay before the top screen appears,
+ * and presetting a nested multi-route state breaks iOS swipe-back (child
+ * navigators disable gestureEnabled, so the root stack handles the gesture
+ * and pops the whole nested stack at once).
+ */
+export function naviPushWithUnderlay<
+  RouteName extends keyof RootStackParamsList,
+  UnderlayName extends keyof RootStackParamsList,
+>(
+  name: RouteName,
+  params: RootStackParamsList[RouteName],
+  underlay: { name: UnderlayName; params?: RootStackParamsList[UnderlayName] },
+) {
+  if (!navigationRef.isReady()) {
+    __DEV__ &&
+      console.warn('[naviPushWithUnderlay] navigationRef is not ready');
+    return;
+  }
+  navigationRef.dispatch(StackActions.push(name, params));
+  requestAnimationFrame(() => {
+    if (!navigationRef.isReady()) {
+      return;
+    }
+    const state = navigationRef.getRootState();
+    const top = state.routes[state.routes.length - 1];
+    if (top?.name !== name) {
+      return;
+    }
+    // Mixing the existing full routes with a key-less partial route is valid
+    // at runtime (reset rehydrates the payload, keeping existing keys and
+    // generating the missing one), but ResetState can't express the mix.
+    const routes = [
+      ...state.routes.slice(0, -1),
+      { name: underlay.name, params: underlay.params },
+      top,
+    ] as PartialState<NavigationState>['routes'];
+    navigationRef.dispatch({
+      ...CommonActions.reset({ index: routes.length - 1, routes }),
+      target: state.key,
+    });
+  });
+}
 
 export const naviReplace: NativeStackScreenProps<RootStackParamsList>['navigation']['replace'] =
   ((name: any, pramas?: object) => {
