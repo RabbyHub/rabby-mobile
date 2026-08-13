@@ -5,6 +5,13 @@ type WalletUnlockRequester = () => Promise<void>;
 
 let walletUnlockRequester: WalletUnlockRequester | null = null;
 
+/**
+ * Kept in sync with WALLET_LOCKED_ERROR_PREFIX in
+ * `@rabby-wallet/service-keyring`. Duplicated rather than imported so this
+ * guard stays free of the keyring package (see the UI-free note below).
+ */
+const WALLET_LOCKED_ERROR_PREFIX = 'background.error.unlock';
+
 // Keep core APIs depending on this UI-free guard instead of the unlock modal module.
 export function setWalletUnlockRequester(requester: WalletUnlockRequester) {
   walletUnlockRequester = requester;
@@ -17,7 +24,7 @@ export async function ensureWalletUnlocked() {
   }
 
   if (!walletUnlockRequester) {
-    throw new Error('background.error.unlock');
+    throw new Error(`${WALLET_LOCKED_ERROR_PREFIX}:no_unlock_requester`);
   }
 
   await walletUnlockRequester();
@@ -25,7 +32,18 @@ export async function ensureWalletUnlocked() {
 }
 
 export function isWalletUnlockRequired(error: unknown) {
-  return (error as Error | undefined)?.message === 'background.error.unlock';
+  const message = (error as Error | undefined)?.message;
+  if (typeof message !== 'string') {
+    return false;
+  }
+
+  // Guards append `:<source>` to the sentinel so Sentry can tell them apart;
+  // the bare form still ships from older builds and from any site not yet
+  // migrated, so both shapes must match.
+  return (
+    message === WALLET_LOCKED_ERROR_PREFIX ||
+    message.startsWith(`${WALLET_LOCKED_ERROR_PREFIX}:`)
+  );
 }
 
 export function isSensitiveKeyringType(type?: string) {

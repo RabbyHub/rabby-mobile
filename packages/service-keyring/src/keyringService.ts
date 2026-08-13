@@ -127,6 +127,29 @@ function normalizeKeyringPasswordState(
 const isSensitiveKeyringType = (type: string) =>
   UNENCRYPTED_IGNORE_KEYRING.includes(type as any);
 
+export const WALLET_LOCKED_ERROR_PREFIX = 'background.error.unlock';
+
+/**
+ * Every lock guard used to throw the bare sentinel message, so Sentry grouped
+ * all of them into one issue and the stack alone could not tell which guard
+ * fired — `ensureKeyringRuntimeReady` is reachable from six different call
+ * sites that share an identical frame sequence.
+ *
+ * The sentinel stays as a PREFIX so `isWalletUnlockRequired` and the existing
+ * `toThrow('background.error.unlock')` assertions keep matching; the suffix
+ * gives each site its own fingerprint. `unlockSource` carries the same value
+ * as a property for consumers that would rather read it than parse the message.
+ *
+ * @param source - identifier of the guard that rejected, e.g. `assert_unlocked`
+ */
+function walletLockedError(source: string) {
+  const error = new Error(
+    `${WALLET_LOCKED_ERROR_PREFIX}:${source}`,
+  ) as Error & { unlockSource: string };
+  error.unlockSource = source;
+  return error;
+}
+
 export type KeyringServiceOptions = {
   encryptor?: EncryptorAdapter;
   keyringClasses?: (typeof KeyringIntf)[];
@@ -1477,7 +1500,8 @@ export class KeyringService extends RNEventEmitter {
 
   async ensureKeyringRuntimeReady(reason = 'unknown') {
     if (!this.isUnlocked()) {
-      throw new Error('background.error.unlock');
+      this.traceKeyringPerf('ensure_keyring_runtime_ready_locked', { reason });
+      throw walletLockedError(`ensure_keyring_runtime_ready.${reason}`);
     }
 
     if (this.isKeyringRuntimeReady()) {
@@ -2072,7 +2096,7 @@ export class KeyringService extends RNEventEmitter {
   // }
   assertUnlocked() {
     if (!this.isUnlocked()) {
-      throw new Error('background.error.unlock');
+      throw walletLockedError('assert_unlocked');
     }
   }
   private assertCanPersistKeyringMutation(keyring: { type: string }) {
@@ -2081,7 +2105,7 @@ export class KeyringService extends RNEventEmitter {
     }
 
     if (!this.#password || typeof this.#password !== 'string') {
-      throw new Error('background.error.unlock');
+      throw walletLockedError('persist_keyring_mutation');
     }
   }
   // private _updateIndexIfHdKeyring(keyring: KeyringInstance) {
@@ -2558,7 +2582,7 @@ export class KeyringService extends RNEventEmitter {
 
   async generatePreMnemonic(): Promise<string> {
     if (!this.#password) {
-      throw new Error('background.error.unlock');
+      throw walletLockedError('generate_pre_mnemonic');
     }
     const mnemonic = this.generateMnemonic();
     const preMnemonics = await this.encryptor.encrypt(this.#password, mnemonic);
@@ -2577,7 +2601,7 @@ export class KeyringService extends RNEventEmitter {
     }
 
     if (!this.#password) {
-      throw new Error('background.error.unlock');
+      throw walletLockedError('get_pre_mnemonics');
     }
 
     return await this.encryptor.decrypt(
@@ -2714,7 +2738,7 @@ export class KeyringService extends RNEventEmitter {
 
   async syncExtensionData(vault: KeyringSerializedData[]) {
     if (!this.#password || typeof this.#password !== 'string') {
-      throw new Error('background.error.unlock');
+      throw walletLockedError('sync_extension_data');
     }
 
     // restore mnemonic keyring

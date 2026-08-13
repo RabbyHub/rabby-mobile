@@ -52,6 +52,34 @@ describe('utils/walletUnlockGuard', () => {
     expect(isWalletUnlockRequired(new Error('other'))).toBe(false);
   });
 
+  it('recognises source-tagged sentinels so Sentry can separate the guards', async () => {
+    const { ensureWalletUnlocked, isWalletUnlockRequired } =
+      loadWalletUnlockGuardModule(false);
+
+    // The message carries the throwing guard so the six call sites that share
+    // an identical stack no longer collapse into one Sentry issue.
+    await expect(ensureWalletUnlocked()).rejects.toThrow(
+      'background.error.unlock:no_unlock_requester',
+    );
+
+    expect(
+      isWalletUnlockRequired(
+        new Error('background.error.unlock:no_unlock_requester'),
+      ),
+    ).toBe(true);
+    expect(
+      isWalletUnlockRequired(
+        new Error(
+          'background.error.unlock:ensure_keyring_runtime_ready.wallet_unlock_guard',
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      isWalletUnlockRequired(new Error('background.error.unlocked.elsewhere')),
+    ).toBe(false);
+    expect(isWalletUnlockRequired(undefined)).toBe(false);
+  });
+
   it('delegates to the registered requester when locked', async () => {
     const { ensureWalletUnlocked, setWalletUnlockRequester } =
       loadWalletUnlockGuardModule(false);
