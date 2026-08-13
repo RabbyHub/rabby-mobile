@@ -25,6 +25,7 @@ import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarket
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
+import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
 import {
@@ -45,6 +46,9 @@ import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
+import { IS_IOS } from '@/core/native/utils';
 
 export const PerpsOriginScreen = () => {
   const tracedReadyRef = useRef(false);
@@ -55,6 +59,11 @@ export const PerpsOriginScreen = () => {
   const { bottom } = useSafeAreaInsets();
 
   const navigation = useRabbyAppNavigation();
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Perps'>
+    >();
+  const fromSource = route.params?.fromSource;
 
   const {
     positionAndOpenOrders,
@@ -102,6 +111,43 @@ export const PerpsOriginScreen = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
+
+  // Entering a position from the home page lands on the market detail page with
+  // this screen pushed underneath, so the guide is shown when leaving this
+  // screen back to the home page, not when leaving the detail page.
+  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
+  // Pre-fetch guide popup status on mount, then use synchronously in beforeRemove
+  const hasShownGuideRef = useRef(true);
+  useEffect(() => {
+    if (IS_IOS || fromSource !== 'homePagePositionList') {
+      return;
+    }
+    perpsServiceApi
+      .getHasShownPerpsGuidePopup()
+      .then(hasShown => {
+        hasShownGuideRef.current = hasShown;
+      })
+      .catch(error => {
+        console.error('[Perps] read guide popup state failed', error);
+      });
+  }, [fromSource]);
+
+  // Intercept back navigation to show guide popup for homePagePositionList users
+  // iOS: native-stack's swipe-back gesture ignores e.preventDefault() visually
+  // but keeps the route in the stack, causing subsequent pushes to be blocked.
+  useEffect(() => {
+    if (IS_IOS || fromSource !== 'homePagePositionList') {
+      return;
+    }
+    const unsubscribe = navigation.addListener('beforeRemove', e => {
+      if (hasShownGuideRef.current) {
+        return;
+      }
+      e.preventDefault();
+      setShowGuideEntryPopup(true);
+    });
+    return unsubscribe;
+  }, [navigation, fromSource]);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
     const success = await login(v);
@@ -382,6 +428,17 @@ export const PerpsOriginScreen = () => {
         onCloseRiskPopup={handleCloseRiskPopup}
         isShowInvite={isShowInvite}
         setIsShowInvite={setIsShowInvite}
+      />
+      <PerpsGuideEntryPopup
+        visible={showGuideEntryPopup}
+        onClose={() => {
+          perpsServiceApi.setHasShownPerpsGuidePopup(true).catch(error => {
+            console.error('[Perps] persist guide popup state failed', error);
+          });
+          setShowGuideEntryPopup(false);
+          hasShownGuideRef.current = true;
+          navigation.goBack();
+        }}
       />
     </>
   );
