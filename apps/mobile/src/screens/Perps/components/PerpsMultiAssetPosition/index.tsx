@@ -27,7 +27,7 @@ import { calculateDistanceToLiquidation } from '../PerpsPositionSection/utils';
 import { useMemoizedFn } from 'ahooks';
 import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup';
 import { RootNames } from '@/constant/layout';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { naviPushWithUnderlay } from '@/utils/navigation';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
@@ -85,7 +85,6 @@ const AssetPositionItem = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const navigation = useRabbyAppNavigation();
   const logoUrl = item.logoUrl;
   const coin = item.assetPositions.position.coin;
   const leverageType = item.assetPositions.position.leverage.type || 'isolated';
@@ -113,28 +112,32 @@ const AssetPositionItem = ({
         action: 'Perps_CardToPerps',
       });
       // Backing out of the detail page should land on Perps home first.
-      // Don't preset a multi-route nested state instead: the child navigator
-      // sets gestureEnabled: false, so iOS swipe-back falls to the root stack
-      // and pops the whole nested stack at once.
-      navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.Perps,
-        params: {
-          dappId: 'hyperliquid',
-          account: item.account,
+      naviPushWithUnderlay(
+        RootNames.StackTransaction,
+        {
+          screen: RootNames.PerpsMarketDetail,
+          params: {
+            market: coin,
+            fromSource: 'homePagePositionList',
+            showOpenPosition: false,
+          },
         },
-      });
-      navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.PerpsMarketDetail,
-        params: {
-          market: coin,
-          fromSource: 'homePagePositionList',
-          showOpenPosition: false,
+        {
+          name: RootNames.StackTransaction,
+          params: {
+            screen: RootNames.Perps,
+            params: {
+              dappId: 'hyperliquid',
+              account: item.account,
+              fromSource: 'homePagePositionList',
+            },
+          },
         },
-      });
+      );
     } catch (error) {
       console.error('Failed to navigate to Perps screen:', error);
     }
-  }, [item, navigation, coin]);
+  }, [item, coin]);
 
   return (
     <TouchableOpacity style={styles.card} onPress={handleHyperliquidPress}>
