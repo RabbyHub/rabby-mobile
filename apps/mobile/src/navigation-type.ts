@@ -403,6 +403,8 @@ export type TransactionNavigatorParamList = {
     account?: KeyringAccountWithAlias;
     fromName?: string;
     dappId?: string;
+    /** set when this screen is the underlay pushed beneath the market detail page */
+    fromSource?: 'homePagePositionList';
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {

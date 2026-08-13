@@ -129,6 +129,7 @@ const AssetPositionItem = ({
             params: {
               dappId: 'hyperliquid',
               account: item.account,
+              fromSource: 'homePagePositionList',
             },
           },
         },

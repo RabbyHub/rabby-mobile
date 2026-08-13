@@ -8,7 +8,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
-import { IS_IOS } from '@/core/native/utils';
 import React, {
   useCallback,
   useEffect,
@@ -55,7 +54,6 @@ import { stats } from '@/utils/stats';
 import { getStatsReportSide, isLimitOrder } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
-import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
@@ -116,39 +114,10 @@ export const PerpsMarketDetailScreen = () => {
     setSelectedIntervalState(v);
     apisPerps.setSelectedKlineInterval(v);
   });
-  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
   const coinNameRef = useRef(coin);
   useEffect(() => {
     coinNameRef.current = coin;
   }, [coin]);
-
-  // Pre-fetch guide popup status on mount, then use synchronously in beforeRemove
-  const hasShownGuideRef = useRef(true);
-  useEffect(() => {
-    if (IS_IOS || fromSource !== 'homePagePositionList') {
-      return;
-    }
-    apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
-      hasShownGuideRef.current = hasShown;
-    });
-  }, [fromSource]);
-
-  // Intercept back navigation to show guide popup for homePagePositionList users
-  // iOS: native-stack's swipe-back gesture ignores e.preventDefault() visually
-  // but keeps the route in the stack, causing subsequent pushes to be blocked.
-  useEffect(() => {
-    if (IS_IOS || fromSource !== 'homePagePositionList') {
-      return;
-    }
-    const unsubscribe = navigation.addListener('beforeRemove', e => {
-      if (hasShownGuideRef.current) {
-        return;
-      }
-      e.preventDefault();
-      setShowGuideEntryPopup(true);
-    });
-    return unsubscribe;
-  }, [navigation, fromSource]);
 
   // useEffect(() => {
   //   const needDepositFirst =
@@ -823,15 +792,6 @@ export const PerpsMarketDetailScreen = () => {
         />
       ) : null}
 
-      <PerpsGuideEntryPopup
-        visible={showGuideEntryPopup}
-        onClose={() => {
-          apisPerps.setHasShownPerpsGuidePopup(true);
-          setShowGuideEntryPopup(false);
-          hasShownGuideRef.current = true;
-          navigation.goBack();
-        }}
-      />
       <EnableUnifiedAccountPopup
         visible={isShowEnableUnifiedPopup}
         onClose={() => setIsShowEnableUnifiedPopup(false)}
