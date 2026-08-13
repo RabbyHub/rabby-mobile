@@ -1,5 +1,6 @@
 import { isNonPublicProductionEnv } from '@/constant';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
+import { getAuthReadinessDiagnosticsSnapshot } from '@/core/utils/authReadinessDiagnostics';
 
 import {
   getRegressionConfigureEnabled,
@@ -128,6 +129,15 @@ export function handleRegressionScenarioCommand(
       : 80;
     const currentRunId =
       state.command?.runId || state.session?.command.runId || null;
+    const includeAuthReadiness = command.params.includeAuthReadiness === 'true';
+    const requestedAuthReadinessEventLimit = Number(
+      command.params.authReadinessEventLimit || 160,
+    );
+    const authReadinessEventLimit = Number.isFinite(
+      requestedAuthReadinessEventLimit,
+    )
+      ? Math.min(Math.max(Math.round(requestedAuthReadinessEventLimit), 1), 160)
+      : 160;
     logScenarioResult('info', 'status', {
       enabled,
       status: state.status,
@@ -139,6 +149,13 @@ export function handleRegressionScenarioCommand(
             events: state.events
               .filter(event => !currentRunId || event.runId === currentRunId)
               .slice(-eventLimit),
+          }
+        : {}),
+      ...(includeAuthReadiness
+        ? {
+            authReadiness: getAuthReadinessDiagnosticsSnapshot({
+              eventLimit: authReadinessEventLimit,
+            }),
           }
         : {}),
     });
