@@ -25,6 +25,7 @@ import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 
 const MARKETS_HIDDEN_FROM_SELECTOR = new Set<CustomMarket>([
+  CustomMarket.proto_sonic_v3,
   CustomMarket.proto_soneium_v3,
   CustomMarket.proto_scroll_v3,
   CustomMarket.proto_zksync_v3,

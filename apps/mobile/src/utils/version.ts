@@ -174,10 +174,10 @@ export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
 
   try {
     finalRemoteInfo.changelog = await Promise.allSettled([
-      await fetch(`${RES_BASE_URL}/${finalRemoteInfo.version}.md`),
+      fetch(`${RES_BASE_URL}/${finalRemoteInfo.version}.md`),
       isProductionChannel
         ? Promise.resolve('')
-        : await fetch(`${PROD_RES_BASE_URL}/${finalRemoteInfo.version}.md`),
+        : fetch(`${PROD_RES_BASE_URL}/${finalRemoteInfo.version}.md`),
     ])
       .then(([channelMdRes, prodMdRes]) => {
         const channelMd =

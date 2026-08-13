@@ -212,6 +212,7 @@ jobs:
 
       - name: Install and build
         run: |
+          unset MATCH_GIT_BASIC_AUTHORIZATION
           # The interactive self-hosted shell may inherit stale runner/profile values.
           # Reassert the credentials supplied by this workflow before any build script runs.
           export RABBY_MOBILE_LARK_CHAT_URL="$RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB"
@@ -265,6 +266,7 @@ jobs:
           RABBY_MOBILE_FE_SERVICE_URL: ${{ vars.RABBY_MOBILE_FE_SERVICE_URL || vars.RABBY_MOBILE_PUSH_TEST_SERVER_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
+          RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
