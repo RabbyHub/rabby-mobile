@@ -52,6 +52,19 @@ import {
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
+type TokenAssetsProjectionSourceSections = {
+  primary: ITokenItem[];
+  additionalDefault: ITokenItem[];
+  additionalLp: ITokenItem[];
+  lowValueDefault: ITokenItem[];
+  lowValueLp: ITokenItem[];
+};
+
+type TokenAssetsProjectionResult = TokenAssetsResult & {
+  sourceSections: TokenAssetsProjectionSourceSections;
+  lpLowValueTokenPreviewLogoUrls: string[];
+};
+
 const multiAddressTokenRequests = new LatestAsyncRequest();
 const tokenAddressRequests = new LatestAddressRequest();
 
@@ -177,7 +190,7 @@ const buildVisibleTokenAssetsResult = (
   defaultProjectionCandidates: ITokenItem[],
   deferredCandidates: ITokenItem[],
   isLpTokenEnabled?: boolean,
-): TokenAssetsResult => {
+): TokenAssetsProjectionResult => {
   const {
     defaultVisibleTokens,
     defaultAdditionalTokens,
@@ -198,6 +211,13 @@ const buildVisibleTokenAssetsResult = (
 
   return {
     tokens: defaultVisibleTokens.concat(additionalTokens, lowValueTokens),
+    sourceSections: {
+      primary: defaultVisibleTokens,
+      additionalDefault: defaultAdditionalTokens,
+      additionalLp: lpAdditionalTokens,
+      lowValueDefault: defaultLowValueTokens,
+      lowValueLp: lpLowValueTokens,
+    },
     defaultVisibleTokenCount: defaultVisibleTokens.length,
     additionalTokenCount: additionalTokens.length,
     lowValueTokenCount: lowValueTokens.length,
@@ -207,6 +227,9 @@ const buildVisibleTokenAssetsResult = (
       0,
     ),
     lowValueTokenPreviewLogoUrls: lowValueTokens
+      .slice(0, 3)
+      .map(token => token.logo_url),
+    lpLowValueTokenPreviewLogoUrls: lpLowValueTokens
       .slice(0, 3)
       .map(token => token.logo_url),
     hasAdditionalTokens:
@@ -377,9 +400,32 @@ export type TokenAssetsIndexResult = {
   lowValueTokenCount: number;
   additionalCoreUsdValue: number;
   lowValueTokenPreviewLogoUrls: string[];
+  lpLowValueTokenPreviewLogoUrls: string[];
   hasAdditionalTokens: boolean;
   hasLpTokens: boolean;
+  segments: TokenAssetsIndexSegments;
 };
+
+export type TokenAssetsIndexSegment = {
+  rows: TokenAssetsIndexRow[];
+  tokenIds: TokenEntityId[];
+};
+
+export type TokenAssetsIndexSegments = {
+  primary: TokenAssetsIndexSegment;
+  additionalDefault: TokenAssetsIndexSegment;
+  additionalLp: TokenAssetsIndexSegment;
+  lowValueDefault: TokenAssetsIndexSegment;
+  lowValueLp: TokenAssetsIndexSegment;
+};
+
+const TOKEN_ASSETS_INDEX_SEGMENT_KEYS: Array<keyof TokenAssetsIndexSegments> = [
+  'primary',
+  'additionalDefault',
+  'additionalLp',
+  'lowValueDefault',
+  'lowValueLp',
+];
 
 export type TokenGroupResourceValue = {
   groupKey: string;
@@ -394,6 +440,17 @@ export const EMPTY_TOKEN_ENTITY_IDS: TokenEntityId[] = [];
 const EMPTY_STRING_LIST: string[] = [];
 const EMPTY_TOKEN_ASSETS_INDEX_ROWS: TokenAssetsIndexRow[] = [];
 const EMPTY_TOKEN_SELECT_INDEX_ROWS: TokenSelectIndexRow[] = [];
+const EMPTY_TOKEN_ASSETS_INDEX_SEGMENT: TokenAssetsIndexSegment = {
+  rows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  tokenIds: EMPTY_TOKEN_ENTITY_IDS,
+};
+export const EMPTY_TOKEN_ASSETS_INDEX_SEGMENTS: TokenAssetsIndexSegments = {
+  primary: EMPTY_TOKEN_ASSETS_INDEX_SEGMENT,
+  additionalDefault: EMPTY_TOKEN_ASSETS_INDEX_SEGMENT,
+  additionalLp: EMPTY_TOKEN_ASSETS_INDEX_SEGMENT,
+  lowValueDefault: EMPTY_TOKEN_ASSETS_INDEX_SEGMENT,
+  lowValueLp: EMPTY_TOKEN_ASSETS_INDEX_SEGMENT,
+};
 
 export const EMPTY_TOKEN_ASSETS_INDEX_RESULT: TokenAssetsIndexResult = {
   rows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
@@ -403,8 +460,10 @@ export const EMPTY_TOKEN_ASSETS_INDEX_RESULT: TokenAssetsIndexResult = {
   lowValueTokenCount: 0,
   additionalCoreUsdValue: 0,
   lowValueTokenPreviewLogoUrls: EMPTY_STRING_LIST,
+  lpLowValueTokenPreviewLogoUrls: EMPTY_STRING_LIST,
   hasAdditionalTokens: false,
   hasLpTokens: false,
+  segments: EMPTY_TOKEN_ASSETS_INDEX_SEGMENTS,
 };
 
 const EMPTY_TOKEN_SELECT_INDEX_RESULT: TokenSelectIndexResult = {
@@ -1287,8 +1346,84 @@ const buildTokenAssetsIndexRows = (
   return nextRows || previousRows!;
 };
 
+const buildTokenAssetsIndexSegment = (
+  tokens: ITokenItem[],
+  listKey: string | undefined,
+  segmentKey: keyof TokenAssetsIndexSegments,
+  previousSegment?: TokenAssetsIndexSegment,
+): TokenAssetsIndexSegment => {
+  const rows = buildTokenAssetsIndexRows(
+    tokens,
+    listKey ? `${listKey}::${segmentKey}` : undefined,
+    previousSegment?.rows,
+  );
+  const tokenIds = buildStableTokenEntityIds(tokens, previousSegment?.tokenIds);
+
+  if (
+    previousSegment &&
+    previousSegment.rows === rows &&
+    previousSegment.tokenIds === tokenIds
+  ) {
+    return previousSegment;
+  }
+
+  return { rows, tokenIds };
+};
+
+const buildTokenAssetsIndexSegments = (
+  sourceSections: TokenAssetsProjectionSourceSections,
+  listKey: string | undefined,
+  previousSegments?: TokenAssetsIndexSegments,
+): TokenAssetsIndexSegments => {
+  const segments: TokenAssetsIndexSegments = {
+    primary: buildTokenAssetsIndexSegment(
+      sourceSections.primary,
+      listKey,
+      'primary',
+      previousSegments?.primary,
+    ),
+    additionalDefault: buildTokenAssetsIndexSegment(
+      sourceSections.additionalDefault,
+      listKey,
+      'additionalDefault',
+      previousSegments?.additionalDefault,
+    ),
+    additionalLp: buildTokenAssetsIndexSegment(
+      sourceSections.additionalLp,
+      listKey,
+      'additionalLp',
+      previousSegments?.additionalLp,
+    ),
+    lowValueDefault: buildTokenAssetsIndexSegment(
+      sourceSections.lowValueDefault,
+      listKey,
+      'lowValueDefault',
+      previousSegments?.lowValueDefault,
+    ),
+    lowValueLp: buildTokenAssetsIndexSegment(
+      sourceSections.lowValueLp,
+      listKey,
+      'lowValueLp',
+      previousSegments?.lowValueLp,
+    ),
+  };
+
+  if (
+    previousSegments &&
+    previousSegments.primary === segments.primary &&
+    previousSegments.additionalDefault === segments.additionalDefault &&
+    previousSegments.additionalLp === segments.additionalLp &&
+    previousSegments.lowValueDefault === segments.lowValueDefault &&
+    previousSegments.lowValueLp === segments.lowValueLp
+  ) {
+    return previousSegments;
+  }
+
+  return segments;
+};
+
 const buildTokenAssetsIndexResult = (
-  result: TokenAssetsResult,
+  result: TokenAssetsProjectionResult,
   listKey?: string,
   previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
@@ -1296,6 +1431,11 @@ const buildTokenAssetsIndexResult = (
     result.tokens,
     listKey,
     previousResult?.rows,
+  );
+  const segments = buildTokenAssetsIndexSegments(
+    result.sourceSections,
+    listKey,
+    previousResult?.segments,
   );
 
   const nextResult = {
@@ -1312,8 +1452,13 @@ const buildTokenAssetsIndexResult = (
       result.lowValueTokenPreviewLogoUrls,
       previousResult?.lowValueTokenPreviewLogoUrls,
     ),
+    lpLowValueTokenPreviewLogoUrls: buildStableStringList(
+      result.lpLowValueTokenPreviewLogoUrls,
+      previousResult?.lpLowValueTokenPreviewLogoUrls,
+    ),
     hasAdditionalTokens: result.hasAdditionalTokens,
     hasLpTokens: result.hasLpTokens,
+    segments,
   };
 
   if (
@@ -1328,8 +1473,11 @@ const buildTokenAssetsIndexResult = (
       nextResult.additionalCoreUsdValue &&
     previousResult.lowValueTokenPreviewLogoUrls ===
       nextResult.lowValueTokenPreviewLogoUrls &&
+    previousResult.lpLowValueTokenPreviewLogoUrls ===
+      nextResult.lpLowValueTokenPreviewLogoUrls &&
     previousResult.hasAdditionalTokens === nextResult.hasAdditionalTokens &&
-    previousResult.hasLpTokens === nextResult.hasLpTokens
+    previousResult.hasLpTokens === nextResult.hasLpTokens &&
+    previousResult.segments === nextResult.segments
   ) {
     return previousResult;
   }
@@ -1396,7 +1544,7 @@ const computeMultiAssetsFromTokens = (
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
   tokenDisplayMode?: TokenDisplayMode,
-): TokenAssetsResult => {
+): TokenAssetsProjectionResult => {
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
@@ -1483,7 +1631,7 @@ const computeSingleAssetsFromTokens = (
   tokens: ITokenItem[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
-): TokenAssetsResult => {
+): TokenAssetsProjectionResult => {
   const { defaultProjectionCandidates, deferredCandidates } =
     partitionSingleAssetsTokens(tokens, chainServerId);
 
@@ -1583,6 +1731,7 @@ type MultiTokenAssetsIndexConfig = {
 };
 
 type TokenProjectionScene = 'single-address' | 'multi-address';
+const TOKEN_ASSET_PROJECTION_RULE_VERSION = 4;
 
 const scheduleTokenAssetsProjectionPersistence = (
   key: string,
@@ -1613,7 +1762,10 @@ const scheduleTokenAssetsProjectionPersistence = (
     return;
   }
 
-  const groups = result.rows.flatMap(row => {
+  const persistedRows = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.flatMap(
+    segmentKey => result.segments[segmentKey].rows,
+  );
+  const groups = persistedRows.flatMap(row => {
     if (row.type !== 'group') {
       return [];
     }
@@ -1622,16 +1774,21 @@ const scheduleTokenAssetsProjectionPersistence = (
       ? [{ id: row.groupId, memberIds: [...group.memberTokenIds] }]
       : [];
   });
-  const groupRowCount = result.rows.filter(row => row.type === 'group').length;
+  const groupRowCount = persistedRows.filter(
+    row => row.type === 'group',
+  ).length;
   if (groups.length !== groupRowCount) {
     return;
   }
+
+  const selectedSegmentMode = config?.isLpTokenEnabled ? 'lp' : 'default';
 
   scheduleAssetProjectionPersistence({
     runtimeKey: key,
     kind: 'token',
     scene,
-    rows: result.rows.map(row =>
+    ruleVersion: TOKEN_ASSET_PROJECTION_RULE_VERSION,
+    rows: persistedRows.map(row =>
       row.type === 'group'
         ? { type: 'token-group', id: row.groupId }
         : { type: 'token', id: row.tokenId },
@@ -1645,6 +1802,13 @@ const scheduleTokenAssetsProjectionPersistence = (
       hasAdditionalTokens: result.hasAdditionalTokens,
       hasLpTokens: result.hasLpTokens,
       tokenDisplayMode,
+      selectedSegmentMode,
+      segmentRowCounts: Object.fromEntries(
+        TOKEN_ASSETS_INDEX_SEGMENT_KEYS.map(segmentKey => [
+          segmentKey,
+          result.segments[segmentKey].rows.length,
+        ]),
+      ),
     },
   });
 };
@@ -1727,35 +1891,107 @@ const buildRestoredTokenAssetsIndexResult = (
       : Number.NaN;
   const hasAdditionalTokens = restored.metadata.hasAdditionalTokens;
   const hasLpTokens = restored.metadata.hasLpTokens;
+  const selectedSegmentMode = restored.metadata.selectedSegmentMode;
+  const rawSegmentRowCounts = restored.metadata.segmentRowCounts;
+  const segmentRowCounts =
+    rawSegmentRowCounts &&
+    typeof rawSegmentRowCounts === 'object' &&
+    !Array.isArray(rawSegmentRowCounts)
+      ? (rawSegmentRowCounts as Record<string, unknown>)
+      : null;
+  const parsedSegmentRowCounts = segmentRowCounts
+    ? TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce<
+        Partial<Record<keyof TokenAssetsIndexSegments, number>>
+      >((counts, segmentKey) => {
+        const count = segmentRowCounts[segmentKey];
+        if (Number.isInteger(count) && (count as number) >= 0) {
+          counts[segmentKey] = count as number;
+        }
+        return counts;
+      }, {})
+    : null;
+  const hasCompleteSegmentRowCounts = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.every(
+    segmentKey => Number.isInteger(parsedSegmentRowCounts?.[segmentKey]),
+  );
+  const persistedRowCount = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce(
+    (count, segmentKey) => count + (parsedSegmentRowCounts?.[segmentKey] || 0),
+    0,
+  );
+  const selectedAdditionalTokenCount =
+    selectedSegmentMode === 'lp'
+      ? parsedSegmentRowCounts?.additionalLp
+      : parsedSegmentRowCounts?.additionalDefault;
+  const selectedLowValueTokenCount =
+    selectedSegmentMode === 'lp'
+      ? parsedSegmentRowCounts?.lowValueLp
+      : parsedSegmentRowCounts?.lowValueDefault;
   if (
+    !hasCompleteSegmentRowCounts ||
+    persistedRowCount !== rows.length ||
+    (selectedSegmentMode !== 'default' && selectedSegmentMode !== 'lp') ||
     !Number.isInteger(defaultVisibleTokenCount) ||
     defaultVisibleTokenCount < 0 ||
     !Number.isInteger(additionalTokenCount) ||
     additionalTokenCount < 0 ||
     !Number.isInteger(lowValueTokenCount) ||
     lowValueTokenCount < 0 ||
-    defaultVisibleTokenCount + additionalTokenCount + lowValueTokenCount !==
-      rows.length ||
+    defaultVisibleTokenCount !== parsedSegmentRowCounts?.primary ||
+    additionalTokenCount !== selectedAdditionalTokenCount ||
+    lowValueTokenCount !== selectedLowValueTokenCount ||
     !Number.isFinite(additionalCoreUsdValue) ||
     typeof hasAdditionalTokens !== 'boolean' ||
     typeof hasLpTokens !== 'boolean'
   ) {
     return null;
   }
-  const lowValueStart = defaultVisibleTokenCount + additionalTokenCount;
-  const lowValueTokenPreviewLogoUrls = tokenIds
-    .slice(lowValueStart, lowValueStart + 3)
+  let segmentStart = 0;
+  const segments = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce(
+    (result, segmentKey) => {
+      const count = parsedSegmentRowCounts![segmentKey]!;
+      const segmentEnd = segmentStart + count;
+      result[segmentKey] = {
+        rows: rows.slice(segmentStart, segmentEnd),
+        tokenIds: tokenIds.slice(segmentStart, segmentEnd),
+      };
+      segmentStart = segmentEnd;
+      return result;
+    },
+    {} as TokenAssetsIndexSegments,
+  );
+  const selectedAdditionalSegment =
+    selectedSegmentMode === 'lp'
+      ? segments.additionalLp
+      : segments.additionalDefault;
+  const selectedLowValueSegment =
+    selectedSegmentMode === 'lp'
+      ? segments.lowValueLp
+      : segments.lowValueDefault;
+  const selectedRows = segments.primary.rows.concat(
+    selectedAdditionalSegment.rows,
+    selectedLowValueSegment.rows,
+  );
+  const selectedTokenIds = segments.primary.tokenIds.concat(
+    selectedAdditionalSegment.tokenIds,
+    selectedLowValueSegment.tokenIds,
+  );
+  const lowValueTokenPreviewLogoUrls = segments.lowValueDefault.tokenIds
+    .slice(0, 3)
+    .map(tokenId => tokenEntityResourceStore.getValue(tokenId)?.logo_url || '');
+  const lpLowValueTokenPreviewLogoUrls = segments.lowValueLp.tokenIds
+    .slice(0, 3)
     .map(tokenId => tokenEntityResourceStore.getValue(tokenId)?.logo_url || '');
   return {
-    rows,
-    tokenIds,
+    rows: selectedRows,
+    tokenIds: selectedTokenIds,
     defaultVisibleTokenCount,
     additionalTokenCount,
     lowValueTokenCount,
     additionalCoreUsdValue,
     lowValueTokenPreviewLogoUrls,
+    lpLowValueTokenPreviewLogoUrls,
     hasAdditionalTokens,
     hasLpTokens,
+    segments,
   };
 };
 
@@ -1808,11 +2044,16 @@ const restoreTokenAssetsProjectionIfEmpty = (
   }
 
   const request = (async () => {
-    const restored = await restoreAssetProjection({
-      runtimeKey: key,
-      kind: 'token',
-      scene,
-    });
+    const restored = await restoreAssetProjection(
+      {
+        runtimeKey: key,
+        kind: 'token',
+        scene,
+      },
+      {
+        ruleVersion: TOKEN_ASSET_PROJECTION_RULE_VERSION,
+      },
+    );
     if (!restored) {
       return;
     }

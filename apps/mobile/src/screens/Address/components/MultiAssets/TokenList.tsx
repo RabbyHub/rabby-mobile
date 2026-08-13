@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ListRenderItem,
+  type SectionListRenderItem,
   View,
   Dimensions,
   ViewStyle,
@@ -43,7 +43,6 @@ import useTokenList, {
   getMultiAssetsCacheKey,
   getTokenAssetsIndexRowKey,
   ITokenItem,
-  prepareMultiAddressTokenAssetsProjection,
   TokenAssetsIndexRow,
   TokenEntityId,
   TokenGroupResourceValue,
@@ -58,7 +57,7 @@ import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
-import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import { TabsSectionList } from '@/components/customized/react-native-collapsible-tab-view/SectionList';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
@@ -83,6 +82,12 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
 import { formatNetworth } from '@/utils/math';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import {
+  TokenProjectionSectionList,
+  type TokenProjectionSection,
+  type TokenProjectionSectionItem,
+  type TokenProjectionSectionSpec,
+} from '@/screens/Home/components/TokenProjectionSectionList';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -162,14 +167,7 @@ const TokenResourceRow = React.memo(
   },
 );
 
-type TokenRowListItem = {
-  type: 'default-token' | 'additional-token' | 'low-value-token';
-  row: TokenAssetsIndexRow;
-  isLast?: boolean;
-};
-
-type TokenListItem =
-  | TokenRowListItem
+type TokenListExtraItem =
   | {
       type: 'additional_token_toggle';
     }
@@ -196,24 +194,20 @@ type TokenListItem =
       data: string;
     };
 
+type TokenListItem = TokenProjectionSectionItem<TokenListExtraItem>;
+
 const { batchGetTokenList } = useTokenList.getState();
 const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
-
-const appendCustomTestnetItems = (
-  items: TokenListItem[],
-  sections: CustomTestnetAssetSectionData[],
-) => {
-  if (!sections.length) {
-    return;
-  }
-  items.push({ type: 'custom_testnet_divider' });
-  sections.forEach(section => {
-    items.push({
-      type: 'custom_testnet_assets',
-      data: section,
-    });
-  });
-};
+const ADDITIONAL_TOGGLE_ITEMS: TokenListExtraItem[] = [
+  { type: 'additional_token_toggle' },
+];
+const LOADING_ITEMS: TokenListExtraItem[] = Array.from(
+  { length: 5 },
+  (_, index) => ({
+    type: 'loading-skeleton',
+    data: `index-token-${index.toString()}`,
+  }),
+);
 
 export const TokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -295,13 +289,8 @@ export const TokenList = () => {
 
   const multiAssetsKey = useMemo(
     () =>
-      getMultiAssetsCacheKey(
-        myTop10Addresses,
-        chain,
-        isLpTokenEnabled,
-        tokenDisplayMode,
-      ),
-    [myTop10Addresses, chain, isLpTokenEnabled, tokenDisplayMode],
+      getMultiAssetsCacheKey(myTop10Addresses, chain, false, tokenDisplayMode),
+    [myTop10Addresses, chain, tokenDisplayMode],
   );
 
   useEffect(() => {
@@ -345,37 +334,60 @@ export const TokenList = () => {
       addresses: myTop10Addresses,
       tokenIds,
       chainServerId: chain,
-      isLpTokenEnabled,
+      isLpTokenEnabled: false,
       tokenDisplayMode,
     });
-  }, [
-    chain,
-    isLpTokenEnabled,
-    multiAssetsKey,
-    myTop10Addresses,
-    tokenDisplayMode,
-    tokenIds,
-  ]);
+  }, [chain, multiAssetsKey, myTop10Addresses, tokenDisplayMode, tokenIds]);
 
-  const {
-    rows: tokenRows,
-    defaultVisibleTokenCount,
-    additionalTokenCount,
-    lowValueTokenCount,
-    additionalCoreUsdValue,
-    lowValueTokenPreviewLogoUrls,
-    hasAdditionalTokens,
-    hasLpTokens,
-  } = useActivityStore(
+  const tokenProjectionMetadata = useActivityStore(
     useTokenAssetsIndexStore,
-    useShallow(
-      state =>
+    useShallow(state => {
+      const result =
         state.multiAssetsResultByKey[multiAssetsKey] ||
-        EMPTY_TOKEN_ASSETS_INDEX_RESULT,
-    ),
+        EMPTY_TOKEN_ASSETS_INDEX_RESULT;
+      return {
+        additionalCoreUsdValue: result.additionalCoreUsdValue,
+        lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
+        lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
+        hasAdditionalTokens: result.hasAdditionalTokens,
+        hasLpTokens: result.hasLpTokens,
+        primaryTokenCount: result.segments.primary.tokenIds.length,
+        additionalDefaultTokenCount:
+          result.segments.additionalDefault.tokenIds.length,
+        additionalLpTokenCount: result.segments.additionalLp.tokenIds.length,
+        lowValueDefaultTokenCount:
+          result.segments.lowValueDefault.tokenIds.length,
+        lowValueLpTokenCount: result.segments.lowValueLp.tokenIds.length,
+      };
+    }),
     Object.is,
     { storeLabel: 'home-multi-assets-token-assets-index' },
   );
+  const {
+    additionalCoreUsdValue,
+    lowValueTokenPreviewLogoUrls,
+    lpLowValueTokenPreviewLogoUrls,
+    hasAdditionalTokens,
+    hasLpTokens,
+    primaryTokenCount,
+    additionalDefaultTokenCount,
+    additionalLpTokenCount,
+    lowValueDefaultTokenCount,
+    lowValueLpTokenCount,
+  } = tokenProjectionMetadata;
+  const selectedAdditionalTokenCount = isLpTokenEnabled
+    ? additionalLpTokenCount
+    : additionalDefaultTokenCount;
+  const selectedLowValueTokenCount = isLpTokenEnabled
+    ? lowValueLpTokenCount
+    : lowValueDefaultTokenCount;
+  const selectedLowValueTokenPreviewLogoUrls = isLpTokenEnabled
+    ? lpLowValueTokenPreviewLogoUrls
+    : lowValueTokenPreviewLogoUrls;
+  const projectedTokenCount =
+    primaryTokenCount +
+    selectedAdditionalTokenCount +
+    selectedLowValueTokenCount;
   const additionalTokenUsdValue = useMemo(
     () => formatNetworth(additionalCoreUsdValue),
     [additionalCoreUsdValue],
@@ -387,7 +399,7 @@ export const TokenList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-token-loading' },
   );
-  const hasDefaultTokenData = tokenRows.length > 0 || hasLpTokens;
+  const hasDefaultTokenData = projectedTokenCount > 0 || hasLpTokens;
   const shouldHideCustomTestnetSectionsWhileLoading =
     isLoading && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
@@ -414,7 +426,7 @@ export const TokenList = () => {
   });
 
   const hasNoAssets =
-    tokenRows.length === 0 && !hasLpTokens && !isLoading && isFocused;
+    projectedTokenCount === 0 && !hasLpTokens && !isLoading && isFocused;
 
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
@@ -452,7 +464,7 @@ export const TokenList = () => {
       return;
     }
 
-    const tokenCount = tokenRows.length;
+    const tokenCount = projectedTokenCount;
     const customTestnetSectionCount = visibleCustomTestnetSections.length;
     const readyKey = [
       regressionScenarioRunId,
@@ -497,7 +509,7 @@ export const TokenList = () => {
     regressionScenarioRunId,
     scenarioReadyCheckTick,
     tokenDisplayMode,
-    tokenRows.length,
+    projectedTokenCount,
     visibleCustomTestnetSections.length,
   ]);
 
@@ -697,20 +709,9 @@ export const TokenList = () => {
     }
   }, [myTop10Addresses, triggerUpdate]);
 
-  const handleLpTokenEnabledChange = useCallback(
-    (nextEnabled: boolean) => {
-      if (myTop10Addresses.length) {
-        prepareMultiAddressTokenAssetsProjection({
-          addresses: myTop10Addresses,
-          chainServerId: chain,
-          isLpTokenEnabled: nextEnabled,
-          tokenDisplayMode,
-        });
-      }
-      setIsLpTokenEnabled(nextEnabled);
-    },
-    [chain, myTop10Addresses, tokenDisplayMode],
-  );
+  const handleLpTokenEnabledChange = useCallback((nextEnabled: boolean) => {
+    setIsLpTokenEnabled(nextEnabled);
+  }, []);
 
   const handleToggleAdditionalTokens = useCallback(() => {
     if (showAllTokens) {
@@ -720,112 +721,118 @@ export const TokenList = () => {
     setShowAllTokens(visible => !visible);
   }, [handleLpTokenEnabledChange, showAllTokens]);
 
-  const dataList = useMemo(() => {
-    const items: TokenListItem[] = [];
+  const emptyAssetsText = useMemo(
+    () =>
+      t('page.singleHome.sectionHeader.NoData', {
+        name: t('page.singleHome.sectionHeader.Token'),
+      }),
+    [t],
+  );
+  const emptyItems = useMemo<TokenListExtraItem[]>(
+    () => [{ type: 'empty-assets', data: emptyAssetsText }],
+    [emptyAssetsText],
+  );
+  const lowValueSummaryItems = useMemo<TokenListExtraItem[]>(
+    () => [
+      {
+        type: 'low_value_tokens',
+        data: {
+          total: selectedLowValueTokenCount,
+          logoUrls: selectedLowValueTokenPreviewLogoUrls,
+        },
+      },
+    ],
+    [selectedLowValueTokenCount, selectedLowValueTokenPreviewLogoUrls],
+  );
+  const customTestnetItems = useMemo<TokenListExtraItem[]>(() => {
+    if (!visibleCustomTestnetSections.length) {
+      return [];
+    }
+    return [
+      { type: 'custom_testnet_divider' },
+      ...visibleCustomTestnetSections.map(data => ({
+        type: 'custom_testnet_assets' as const,
+        data,
+      })),
+    ];
+  }, [visibleCustomTestnetSections]);
+  const additionalSegmentKey = isLpTokenEnabled
+    ? ('additionalLp' as const)
+    : ('additionalDefault' as const);
+  const lowValueSegmentKey = isLpTokenEnabled
+    ? ('lowValueLp' as const)
+    : ('lowValueDefault' as const);
+  const hasAdditionalSection = hasAdditionalTokens || isLpTokenEnabled;
+  const sectionSpecs = useMemo<
+    TokenProjectionSectionSpec<TokenListExtraItem>[]
+  >(() => {
+    const specs: TokenProjectionSectionSpec<TokenListExtraItem>[] = [];
     const hasNoTokenItems =
-      tokenRows.length + visibleCustomTestnetSections.length === 0 &&
+      projectedTokenCount + visibleCustomTestnetSections.length === 0 &&
       !hasLpTokens;
 
     if (isLoading && hasNoTokenItems) {
-      items.push(
-        ...Array.from({ length: 5 }, (_, index) => ({
-          type: 'loading-skeleton' as const,
-          data: `index-token-${index.toString()}`,
-        })),
-      );
-      return items;
+      return [{ key: 'loading', data: LOADING_ITEMS }];
     }
 
     if (hasNoAssets) {
-      items.push({
-        type: 'empty-assets',
-        data: t('page.singleHome.sectionHeader.NoData', {
-          name: t('page.singleHome.sectionHeader.Token'),
-        }),
-      });
+      specs.push({ key: 'empty', data: emptyItems });
     }
 
-    const additionalEnd = defaultVisibleTokenCount + additionalTokenCount;
-    const defaultRows = tokenRows.slice(0, defaultVisibleTokenCount);
-    const additionalRows = tokenRows.slice(
-      defaultVisibleTokenCount,
-      additionalEnd,
-    );
-    const lowValueRows = tokenRows.slice(additionalEnd);
-    defaultRows.forEach((row, index) => {
-      items.push({
-        type: 'default-token',
-        row,
-        isLast: index === defaultRows.length - 1,
-      });
-    });
-
-    const hasAdditionalSection = hasAdditionalTokens || isLpTokenEnabled;
+    specs.push({ key: 'primary', segmentKey: 'primary' });
     if (hasAdditionalSection) {
-      items.push({ type: 'additional_token_toggle' });
+      specs.push({ key: 'additional-toggle', data: ADDITIONAL_TOGGLE_ITEMS });
     }
     if (hasAdditionalSection && showAllTokens) {
-      additionalRows.forEach((row, index, rows) => {
-        items.push({
-          type: 'additional-token',
-          row,
-          isLast: index === rows.length - 1,
-        });
-      });
-      if (lowValueTokenCount > 0) {
-        if (showLowValueTokens) {
-          lowValueRows.forEach((row, index, rows) => {
-            items.push({
-              type: 'low-value-token',
-              row,
-              isLast: index === rows.length - 1,
-            });
-          });
-        } else {
-          items.push({
-            type: 'low_value_tokens',
-            data: {
-              total: lowValueTokenCount,
-              logoUrls: lowValueTokenPreviewLogoUrls,
-            },
-          });
-        }
+      specs.push({ key: 'additional', segmentKey: additionalSegmentKey });
+      if (selectedLowValueTokenCount > 0) {
+        specs.push(
+          showLowValueTokens
+            ? { key: 'low-value', segmentKey: lowValueSegmentKey }
+            : { key: 'low-value-summary', data: lowValueSummaryItems },
+        );
       }
-      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+      if (customTestnetItems.length) {
+        specs.push({ key: 'custom-testnet', data: customTestnetItems });
+      }
     }
-    if (!hasAdditionalSection) {
-      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+    if (!hasAdditionalSection && customTestnetItems.length) {
+      specs.push({ key: 'custom-testnet', data: customTestnetItems });
     }
 
-    return items;
+    return specs;
   }, [
-    tokenRows,
-    additionalTokenCount,
-    defaultVisibleTokenCount,
-    visibleCustomTestnetSections,
-    hasAdditionalTokens,
+    additionalSegmentKey,
+    customTestnetItems,
+    emptyItems,
     hasLpTokens,
-    isLpTokenEnabled,
+    hasAdditionalSection,
     isLoading,
     hasNoAssets,
-    lowValueTokenCount,
-    lowValueTokenPreviewLogoUrls,
+    lowValueSegmentKey,
+    lowValueSummaryItems,
+    projectedTokenCount,
+    selectedLowValueTokenCount,
     showAllTokens,
     showLowValueTokens,
-    t,
+    visibleCustomTestnetSections.length,
   ]);
 
-  const renderItem = useCallback<ListRenderItem<TokenListItem>>(
-    ({ item }) => {
+  const renderItem = useCallback<
+    SectionListRenderItem<
+      TokenListItem,
+      TokenProjectionSection<TokenListExtraItem>
+    >
+  >(
+    ({ item, index, section }) => {
       switch (item.type) {
-        case 'default-token':
-        case 'additional-token':
-        case 'low-value-token': {
+        case 'token':
+        case 'group': {
+          const isLast = index === section.data.length - 1;
           return (
-            <View
-              style={[styles.rowWrap, item.isLast ? styles.lastRowWrap : null]}>
+            <View style={[styles.rowWrap, isLast ? styles.lastRowWrap : null]}>
               <TokenResourceRow
-                row={item.row}
+                row={item}
                 tokenDisplayMode={tokenDisplayMode}
                 getAccountByAddress={getAccountByAddress}
                 onTokenPress={handleTokenPress}
@@ -916,12 +923,8 @@ export const TokenList = () => {
   );
 
   const keyExtractor = useCallback((item: TokenListItem) => {
-    if (
-      item.type === 'default-token' ||
-      item.type === 'additional-token' ||
-      item.type === 'low-value-token'
-    ) {
-      return `token-${getTokenAssetsIndexRowKey(item.row)}`;
+    if (item.type === 'token' || item.type === 'group') {
+      return `token-${getTokenAssetsIndexRowKey(item)}`;
     }
     if (item.type === 'custom_testnet_assets') {
       return `custom-testnet-assets-${item.data.chain.id}`;
@@ -972,7 +975,12 @@ export const TokenList = () => {
 
   return (
     <GestureDetector gesture={panGestureRef.current}>
-      <TabsFlatList
+      <TokenProjectionSectionList
+        projectionKey={multiAssetsKey}
+        scene="multi-address"
+        sectionSpecs={sectionSpecs}
+        ListComponent={TabsSectionList}
+        storeLabel="home-multi-assets-token-section-list"
         style={[
           styles.container,
           pulldownRefreshReturns.scrollableStyle.container,
@@ -1002,9 +1010,9 @@ export const TokenList = () => {
             />
           ),
         })}
-        data={dataList}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
+        stickySectionHeadersEnabled={false}
         initialNumToRender={TOKEN_LIST_INITIAL_RENDER_COUNT}
         windowSize={TOKEN_LIST_WINDOW_SIZE}
         maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}

@@ -70,6 +70,7 @@ import {
   syncRemoteTokensForAddresses,
 } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { scheduleAssetProjectionPersistence } from './assetProjectionPersistence';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -81,6 +82,9 @@ const mockedSyncRemoteTokensForAddresses = jest.mocked(
   syncRemoteTokensForAddresses,
 );
 const mockedTokenItemEntity = jest.mocked(TokenItemEntity);
+const mockedScheduleAssetProjectionPersistence = jest.mocked(
+  scheduleAssetProjectionPersistence,
+);
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -275,6 +279,126 @@ describe('single-address token assets projection', () => {
     ]);
     expect(result?.defaultVisibleTokenCount).toBe(1);
     expect(result?.additionalTokenCount).toBe(1);
+  });
+
+  it('builds default and LP segments in one projection', () => {
+    const core = createToken('core', { usd_value: 20 });
+    const lp = createToken('lp', {
+      is_core: null,
+      protocol_id: 'protocol',
+      usd_value: 10,
+    });
+    tokenEntityResourceStore.upsertTokens([core, lp], 'remote', {
+      pruneMissing: true,
+    });
+
+    const result = buildSingleAssetsIndexFromTokenIds(
+      [core, lp].map(buildTokenEntityId),
+    );
+
+    expect(result.segments.primary.tokenIds).toEqual([
+      buildTokenEntityId(core),
+    ]);
+    expect(result.segments.additionalDefault.tokenIds).toEqual([]);
+    expect(result.segments.additionalLp.tokenIds).toEqual([
+      buildTokenEntityId(lp),
+    ]);
+  });
+
+  it('persists every segment with explicit restore boundaries', () => {
+    const core = createToken('core', { usd_value: 20 });
+    const lp = createToken('lp', {
+      is_core: null,
+      protocol_id: 'protocol',
+      usd_value: 10,
+    });
+    replaceAddressTokens([core, lp]);
+
+    prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+
+    expect(mockedScheduleAssetProjectionPersistence).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        ruleVersion: 4,
+        rows: [
+          { type: 'token', id: buildTokenEntityId(core) },
+          { type: 'token', id: buildTokenEntityId(lp) },
+        ],
+        metadata: expect.objectContaining({
+          selectedSegmentMode: 'default',
+          segmentRowCounts: {
+            primary: 1,
+            additionalDefault: 0,
+            additionalLp: 1,
+            lowValueDefault: 0,
+            lowValueLp: 0,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('keeps unaffected segment references stable when an LP row is added', () => {
+    const core = createToken('core', { usd_value: 20 });
+    tokenEntityResourceStore.upsertTokens([core], 'remote', {
+      pruneMissing: true,
+    });
+    const previous = buildSingleAssetsIndexFromTokenIds([
+      buildTokenEntityId(core),
+    ]);
+    const lp = createToken('lp', {
+      is_core: null,
+      protocol_id: 'protocol',
+      usd_value: 10,
+    });
+    tokenEntityResourceStore.upsertTokens([lp], 'remote');
+
+    const next = buildSingleAssetsIndexFromTokenIds(
+      [core, lp].map(buildTokenEntityId),
+      undefined,
+      false,
+      previous,
+    );
+
+    expect(next.segments.primary).toBe(previous.segments.primary);
+    expect(next.segments.additionalDefault).toBe(
+      previous.segments.additionalDefault,
+    );
+    expect(next.segments.lowValueDefault).toBe(
+      previous.segments.lowValueDefault,
+    );
+    expect(next.segments.lowValueLp).toBe(previous.segments.lowValueLp);
+    expect(next.segments.additionalLp).not.toBe(previous.segments.additionalLp);
+    expect(next.segments.additionalLp.tokenIds).toEqual([
+      buildTokenEntityId(lp),
+    ]);
+  });
+
+  it('keeps segment references stable when entity values change in place', () => {
+    const token = createToken('token', { usd_value: 20 });
+    tokenEntityResourceStore.upsertTokens([token], 'remote', {
+      pruneMissing: true,
+    });
+    const tokenId = buildTokenEntityId(token);
+    const previous = buildSingleAssetsIndexFromTokenIds([tokenId]);
+
+    tokenEntityResourceStore.upsertTokens(
+      [createToken('token', { price: 2, usd_value: 20 })],
+      'remote',
+    );
+    const next = buildSingleAssetsIndexFromTokenIds(
+      [tokenId],
+      undefined,
+      false,
+      previous,
+    );
+
+    expect(next.segments).toBe(previous.segments);
+    expect(next.segments.primary).toBe(previous.segments.primary);
+    expect(next.segments.primary.rows).toBe(previous.segments.primary.rows);
+    expect(next.segments.primary.tokenIds).toBe(
+      previous.segments.primary.tokenIds,
+    );
+    expect(tokenEntityResourceStore.getValue(tokenId)?.price).toBe(2);
   });
 
   it('publishes all registered projection updates in one store notification', () => {

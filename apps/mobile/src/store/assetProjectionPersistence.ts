@@ -142,11 +142,13 @@ export const scheduleAssetProjectionPersistence = (
 
 export const restoreAssetProjection = async (
   identity: AssetProjectionIdentity,
+  options: { ruleVersion?: number } = {},
 ) => {
   const projectionKey = buildAssetProjectionStorageKey(identity);
   return restoreLatestAssetProjection(projectionKey, {
     kind: identity.kind,
     scene: identity.scene,
+    ruleVersion: options.ruleVersion,
   });
 };
 
