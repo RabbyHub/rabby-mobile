@@ -39,6 +39,7 @@ import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetN
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
+import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 import { getPerpsProClosePositionSheetStyles } from './PerpsProClosePositionSheet.styles';
 
@@ -109,6 +110,14 @@ export const PerpsProClosePositionSheet: React.FC<{
     const inputSourceRef = useRef<PerpsProCloseDraft['inputSource']>('slider');
     const discardNextSliderBackspaceChangeRef = useRef(false);
     const [percent, setPercent] = useState(100);
+    const sliderValue = inputSource === 'slider' ? percent : 0;
+    const sliderHaptics = usePerpsProSliderHaptics({
+      disabled: !visible || coveredByReview,
+      maximumValue: 100,
+      minimumValue: 0,
+      step: 1,
+      value: sliderValue,
+    });
     const [manualAmount, setManualAmount] = useState('');
     const [limitPrice, setLimitPrice] = useState('');
     const [limitPriceDirty, setLimitPriceDirty] = useState(false);
@@ -447,16 +456,20 @@ export const PerpsProClosePositionSheet: React.FC<{
                 <PerpsProSlider
                   maximumValue={100}
                   minimumValue={0}
+                  onSlidingComplete={sliderHaptics.onSlidingComplete}
+                  onSlidingStart={sliderHaptics.onSlidingStart}
                   onValueChange={value => {
+                    const roundedValue = Math.round(value);
+                    sliderHaptics.onValueChange(roundedValue);
                     inputSourceRef.current = 'slider';
                     discardNextSliderBackspaceChangeRef.current = false;
                     setInputSource('slider');
-                    setPercent(Math.round(value));
+                    setPercent(roundedValue);
                   }}
                   pointCount={5}
                   step={1}
                   tone="neutral"
-                  value={inputSource === 'slider' ? percent : 0}
+                  value={sliderValue}
                 />
               </View>
 

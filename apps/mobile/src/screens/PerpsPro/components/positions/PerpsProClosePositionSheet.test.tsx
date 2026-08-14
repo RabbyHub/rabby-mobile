@@ -8,6 +8,10 @@ import React from 'react';
 
 const mockOpenFieldExplanation = jest.fn();
 const mockUsePerpsLatestTrade = jest.fn();
+const mockSliderHapticComplete = jest.fn();
+const mockSliderHapticStart = jest.fn();
+const mockSliderHapticValueChange = jest.fn();
+const mockUseSliderHaptics = jest.fn();
 let mockLatestTradePrice = '60001';
 
 jest.mock('@/assets2024/icons/perps/icon-switch-mode.svg', () => {
@@ -132,6 +136,17 @@ jest.mock('../common/PerpsProFieldExplanationContext', () => ({
 
 jest.mock('../common/usePerpsProDismissKeyboard', () => ({
   usePerpsProDismissKeyboard: () => (action: () => void) => action(),
+}));
+
+jest.mock('../common/usePerpsProSliderHaptics', () => ({
+  usePerpsProSliderHaptics: (options: object) => {
+    mockUseSliderHaptics(options);
+    return {
+      onSlidingComplete: mockSliderHapticComplete,
+      onSlidingStart: mockSliderHapticStart,
+      onValueChange: mockSliderHapticValueChange,
+    };
+  },
 }));
 
 jest.mock('../common/PerpsProSlider', () => {
@@ -293,6 +308,35 @@ describe('PerpsProClosePositionSheet', () => {
     );
   });
 
+  it('wires the percentage slider lifecycle to local step haptics', () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    const slider = screen.getByTestId('close-position-slider');
+    fireEvent(slider, 'slidingStart', 100);
+    fireEvent(slider, 'valueChange', 99);
+    fireEvent(slider, 'slidingComplete', 99);
+
+    expect(mockSliderHapticStart).toHaveBeenCalledWith(100);
+    expect(mockSliderHapticValueChange).toHaveBeenCalledWith(99);
+    expect(mockSliderHapticComplete).toHaveBeenCalledTimes(1);
+    expect(mockUseSliderHaptics).toHaveBeenCalledWith({
+      disabled: false,
+      maximumValue: 100,
+      minimumValue: 0,
+      step: 1,
+      value: expect.any(Number),
+    });
+  });
+
   it('clears a focused slider value when Backspace starts manual editing', () => {
     render(
       <PerpsProClosePositionSheet
@@ -366,6 +410,9 @@ describe('PerpsProClosePositionSheet', () => {
     expect(
       screen.getByTestId('close-confirm-button').props.accessibilityState,
     ).toEqual(expect.objectContaining({ disabled: true }));
+    expect(mockUseSliderHaptics).toHaveBeenCalledWith(
+      expect.objectContaining({ disabled: true }),
+    );
   });
 
   it('freezes the reviewed Limit price while the confirmation covers the editor', async () => {
