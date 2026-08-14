@@ -23,6 +23,8 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
+
 export type PerpsProMarketSearchBarHandle = {
   blur: () => void;
   focus: () => void;
@@ -109,7 +111,11 @@ const PerpsProMarketSearchBarComponent = forwardRef<
             onFocus={handleFocus}
             ref={inputRef}
             returnKeyType="done"
-            selection={focused && !value ? EMPTY_SELECTION : undefined}
+            selection={
+              focused && !value
+                ? resolvePerpsProEmptyInputSelection()
+                : undefined
+            }
             selectionColor={colors2024['brand-default']}
             spellCheck={false}
             style={styles.input}
@@ -178,8 +184,6 @@ PerpsProMarketSearchBarComponent.displayName = 'PerpsProMarketSearchBar';
 export const PerpsProMarketSearchBar = React.memo(
   PerpsProMarketSearchBarComponent,
 );
-
-const EMPTY_SELECTION = { end: 0, start: 0 } as const;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

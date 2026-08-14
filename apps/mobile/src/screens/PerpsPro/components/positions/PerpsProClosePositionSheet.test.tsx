@@ -287,10 +287,7 @@ describe('PerpsProClosePositionSheet', () => {
       }),
     );
     fireEvent(amount, 'focus');
-    expect(screen.getByLabelText('Amount').props.selection).toEqual({
-      end: 0,
-      start: 0,
-    });
+    expect(screen.getByLabelText('Amount').props.selection).toBeUndefined();
     fireEvent(screen.getByTestId('close-position-slider'), 'valueChange', 50);
     expect(screen.getByLabelText('Amount').props.value).toBe('50% (≈0.5000)');
     fireEvent(screen.getByLabelText('Amount'), 'pressIn');

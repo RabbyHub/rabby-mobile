@@ -7,9 +7,9 @@ import type {
 } from 'react-native';
 
 import { sanitizePerpsProDecimalInput } from '../../model/trade';
+import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
 
 const UNRESTRICTED_TEXT_INPUT_MAX_LENGTH = 2147483647;
-const EMPTY_INPUT_SELECTION = { end: 0, start: 0 } as const;
 
 type PerpsProDecimalTextInputProps = Omit<
   TextInputProps,
@@ -62,19 +62,32 @@ export const PerpsProDecimalTextInput = React.memo(
       const [shouldForceCursorAtEnd, setShouldForceCursorAtEnd] =
         useState(false);
 
+      const releaseForcedCursor = useCallback(() => {
+        if (!shouldForceCursorAtEndRef.current) {
+          return;
+        }
+        shouldForceCursorAtEndRef.current = false;
+        setShouldForceCursorAtEnd(false);
+      }, []);
+
       useLayoutEffect(() => {
+        if (value.length === 0) {
+          releaseForcedCursor();
+        }
         setInputValue(current => (current === value ? current : value));
-      }, [value]);
+      }, [releaseForcedCursor, value]);
 
       const handleSelectionChange = useCallback(
         (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
           const inputEnd = inputValue.length;
-          const nextSelection = shouldForceCursorAtEndRef.current
+          const shouldKeepCursorAtEnd =
+            shouldForceCursorAtEndRef.current && inputEnd > 0;
+          const nextSelection = shouldKeepCursorAtEnd
             ? { end: inputEnd, start: inputEnd }
             : event.nativeEvent.selection;
 
           if (
-            shouldForceCursorAtEndRef.current &&
+            shouldKeepCursorAtEnd &&
             (event.nativeEvent.selection.start !== inputEnd ||
               event.nativeEvent.selection.end !== inputEnd)
           ) {
@@ -91,14 +104,6 @@ export const PerpsProDecimalTextInput = React.memo(
         },
         [inputValue.length],
       );
-
-      const releaseForcedCursor = useCallback(() => {
-        if (!shouldForceCursorAtEndRef.current) {
-          return;
-        }
-        shouldForceCursorAtEndRef.current = false;
-        setShouldForceCursorAtEnd(false);
-      }, []);
 
       const handleChangeText = useCallback(
         (nextValue: string) => {
@@ -132,7 +137,7 @@ export const PerpsProDecimalTextInput = React.memo(
 
       const handleFocus = useCallback<NonNullable<TextInputProps['onFocus']>>(
         event => {
-          if (focusCursorAtEnd) {
+          if (focusCursorAtEnd && inputValue.length > 0) {
             const end = inputValue.length;
             const endSelection = { end, start: end };
             shouldForceCursorAtEndRef.current = true;
@@ -142,10 +147,12 @@ export const PerpsProDecimalTextInput = React.memo(
             inputRef.current?.setNativeProps?.({
               selection: endSelection,
             });
+          } else {
+            releaseForcedCursor();
           }
           onFocus?.(event);
         },
-        [focusCursorAtEnd, inputValue.length, onFocus],
+        [focusCursorAtEnd, inputValue.length, onFocus, releaseForcedCursor],
       );
 
       const handleBlur = useCallback<NonNullable<TextInputProps['onBlur']>>(
@@ -190,11 +197,12 @@ export const PerpsProDecimalTextInput = React.memo(
         onFocus: handleFocus,
         onSelectionChange: handleSelectionChange,
         scrollEnabled: true,
-        selection: shouldForceCursorAtEnd
-          ? { end: inputValue.length, start: inputValue.length }
-          : inputValue.length === 0
-          ? EMPTY_INPUT_SELECTION
-          : undefined,
+        selection:
+          shouldForceCursorAtEnd && inputValue.length > 0
+            ? { end: inputValue.length, start: inputValue.length }
+            : inputValue.length === 0
+            ? resolvePerpsProEmptyInputSelection()
+            : undefined,
         value: inputValue,
       };
 

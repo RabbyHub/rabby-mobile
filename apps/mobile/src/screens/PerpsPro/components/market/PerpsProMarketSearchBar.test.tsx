@@ -146,7 +146,7 @@ describe('PerpsProMarketSearchBar', () => {
     expect(
       screen.getByTestId('perps-pro-market-search-active-placeholder'),
     ).toBeTruthy();
-    expect(getLatestInputProps().selection).toEqual({ end: 0, start: 0 });
+    expect(getLatestInputProps().selection).toBeUndefined();
     expect(StyleSheet.flatten(getLatestInputProps().style)).toEqual(
       restingInputStyle,
     );

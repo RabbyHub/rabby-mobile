@@ -37,7 +37,7 @@ describe('PerpsProDecimalTextInput', () => {
     mockSetNativeProps.mockClear();
   });
 
-  it('anchors only an empty value at position zero', () => {
+  it('leaves an empty iOS value under native selection ownership', () => {
     const { rerender } = render(
       <PerpsProDecimalTextInput
         maxDecimals={2}
@@ -47,10 +47,7 @@ describe('PerpsProDecimalTextInput', () => {
       />,
     );
 
-    expect(screen.getByTestId('decimal-input').props.selection).toEqual({
-      end: 0,
-      start: 0,
-    });
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
 
     rerender(
       <PerpsProDecimalTextInput
@@ -62,6 +59,89 @@ describe('PerpsProDecimalTextInput', () => {
     );
 
     expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+  });
+
+  it('does not force an empty focusCursorAtEnd value to position zero', () => {
+    render(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        maxDecimals={0}
+        onChangeText={jest.fn()}
+        testID="decimal-input"
+        value=""
+      />,
+    );
+
+    fireEvent(screen.getByTestId('decimal-input'), 'focus', {
+      nativeEvent: {},
+    });
+
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+    expect(mockSetNativeProps).not.toHaveBeenCalledWith({
+      selection: { end: 0, start: 0 },
+    });
+  });
+
+  it('keeps sequential iOS input under native selection ownership', () => {
+    const onChangeText = jest.fn();
+    render(
+      <PerpsProDecimalTextInput
+        maxDecimals={2}
+        onChangeText={onChangeText}
+        testID="decimal-input"
+        value=""
+      />,
+    );
+
+    const input = screen.getByTestId('decimal-input');
+    fireEvent.changeText(input, '1');
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { end: 1, start: 1 } },
+    });
+    fireEvent.changeText(input, '12');
+
+    expect(onChangeText.mock.calls).toEqual([['1'], ['12']]);
+    expect(screen.getByTestId('decimal-input').props.value).toBe('12');
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+    expect(mockSetNativeProps).not.toHaveBeenCalledWith({
+      selection: { end: 0, start: 0 },
+    });
+  });
+
+  it('releases a forced end cursor when an external value becomes empty', () => {
+    const { rerender } = render(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        maxDecimals={0}
+        onChangeText={jest.fn()}
+        testID="decimal-input"
+        value="20"
+      />,
+    );
+
+    fireEvent(screen.getByTestId('decimal-input'), 'focus', {
+      nativeEvent: {},
+    });
+
+    rerender(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        maxDecimals={0}
+        onChangeText={jest.fn()}
+        testID="decimal-input"
+        value=""
+      />,
+    );
+
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+
+    fireEvent(screen.getByTestId('decimal-input'), 'selectionChange', {
+      nativeEvent: { selection: { end: 0, start: 0 } },
+    });
+
+    expect(mockSetNativeProps).not.toHaveBeenLastCalledWith({
+      selection: { end: 0, start: 0 },
+    });
   });
 
   it('normalizes unsupported characters before publishing the value', () => {

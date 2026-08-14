@@ -35,6 +35,7 @@ import {
   formatPerpsProSignedDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { PerpsProSlider } from '../common/PerpsProSlider';
@@ -42,8 +43,6 @@ import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 import { getPerpsProClosePositionSheetStyles } from './PerpsProClosePositionSheet.styles';
-
-const EMPTY_AMOUNT_SELECTION = { end: 0, start: 0 } as const;
 
 const calculateEstimatedPnl = (
   position: PerpsPositionViewModel,
@@ -440,7 +439,7 @@ export const PerpsProClosePositionSheet: React.FC<{
                     scrollEnabled
                     selection={
                       inputSource === 'manual' && !manualAmount
-                        ? EMPTY_AMOUNT_SELECTION
+                        ? resolvePerpsProEmptyInputSelection()
                         : undefined
                     }
                     selectionColor={colors2024['brand-default']}
