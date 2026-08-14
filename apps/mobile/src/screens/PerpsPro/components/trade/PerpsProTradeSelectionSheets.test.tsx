@@ -113,11 +113,12 @@ import { PerpsProTpSlModeSheet } from './PerpsProTpSlModeSheet';
 
 describe('Perps Pro trade selection sheets', () => {
   it('matches the 372px Margin Mode card contract', () => {
+    const onClose = jest.fn();
     const onSelect = jest.fn();
     render(
       <PerpsProMarginModeSheet
         marketName="BTC"
-        onClose={jest.fn()}
+        onClose={onClose}
         onSelect={onSelect}
         selected="cross"
         visible
@@ -127,6 +128,37 @@ describe('Perps Pro trade selection sheets', () => {
     expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
       372,
     ]);
+    expect(
+      StyleSheet.flatten(screen.getByTestId('selection-sheet').props.style),
+    ).toMatchObject({
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      overflow: 'hidden',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('selection-sheet').props.backgroundStyle,
+      ),
+    ).toMatchObject({
+      backgroundColor: '#192945',
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('selection-sheet').props.handleStyle,
+      ),
+    ).toMatchObject({
+      backgroundColor: '#192945',
+      height: 40,
+      paddingBottom: 19,
+      paddingTop: 17,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
+      ),
+    ).toMatchObject({ borderRadius: 2, height: 4, width: 40 });
     expect(screen.getByText('BTC Margin Mode')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('Cross').props.style),
@@ -134,10 +166,58 @@ describe('Perps Pro trade selection sheets', () => {
     expect(
       StyleSheet.flatten(screen.getByText('Cross description').props.style),
     ).toMatchObject({ fontSize: 12, lineHeight: 16 });
-    expect(screen.getByTestId('perps-pro-margin-mode-selected')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-margin-mode-cross').props
+        .accessibilityState,
+    ).toEqual({ checked: true, disabled: false });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-margin-mode-cross').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: '#192945',
+      borderColor: '#192945',
+    });
+    expect(screen.queryByTestId('perps-pro-margin-mode-selected')).toBeNull();
 
     fireEvent.press(screen.getByTestId('perps-pro-margin-mode-isolated'));
     expect(onSelect).toHaveBeenCalledWith('isolated');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps Margin Mode selection visible without rendering a check icon', () => {
+    render(
+      <PerpsProMarginModeSheet
+        marketName="BTC"
+        onClose={jest.fn()}
+        onSelect={jest.fn()}
+        selected="isolated"
+        visible
+      />,
+    );
+
+    const isolatedCopy = screen.getByTestId(
+      'perps-pro-margin-mode-isolated-copy',
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-margin-mode-isolated').props.style,
+      ),
+    ).toMatchObject({ flexDirection: 'column' });
+    expect(StyleSheet.flatten(isolatedCopy.props.style)).toMatchObject({
+      alignSelf: 'stretch',
+      gap: 4,
+    });
+    expect(
+      screen.getByTestId('perps-pro-margin-mode-isolated').props
+        .accessibilityState,
+    ).toEqual({ checked: true, disabled: false });
+    expect(
+      screen.getByTestId('perps-pro-margin-mode-cross').props
+        .accessibilityState,
+    ).toEqual({ checked: false, disabled: false });
+    expect(screen.queryByTestId('perps-pro-margin-mode-selected')).toBeNull();
+    expect(screen.getByText('Isolated description')).toBeTruthy();
   });
 
   it('matches the 326px Order Type icon-list contract', () => {

@@ -1,4 +1,3 @@
-import RcOptionCheck from '@/assets2024/icons/perps/PerpsProOptionCheck.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -30,7 +29,7 @@ export const PerpsProMarginModeSheet: React.FC<{
     visible,
   }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
-    const { colors2024, isLight, styles } = useTheme2024({ getStyle });
+    const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     usePerpsProSheetNavigationRegistration({
       active: visible,
@@ -66,8 +65,12 @@ export const PerpsProMarginModeSheet: React.FC<{
         snapPoints={[372]}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: isLight ? 'bg0' : 'bg1',
-        })}>
+          linearGradientType: 'bg1',
+        })}
+        backgroundStyle={styles.background}
+        handleIndicatorStyle={styles.handleIndicator}
+        handleStyle={styles.handle}
+        style={styles.modal}>
         <BottomSheetView style={styles.sheet}>
           <View style={styles.content}>
             <Text style={styles.title}>
@@ -93,22 +96,14 @@ export const PerpsProMarginModeSheet: React.FC<{
                       disabled ? styles.disabled : null,
                     ]}
                     testID={`perps-pro-margin-mode-${option.value}`}>
-                    <View style={styles.copy}>
+                    <View
+                      style={styles.copy}
+                      testID={`perps-pro-margin-mode-${option.value}-copy`}>
                       <Text style={styles.label}>{option.label}</Text>
                       <Text style={styles.description}>
                         {option.description}
                       </Text>
                     </View>
-                    {active ? (
-                      <View style={styles.check}>
-                        <RcOptionCheck
-                          color={colors2024['green-default']}
-                          height={24}
-                          testID="perps-pro-margin-mode-selected"
-                          width={24}
-                        />
-                      </View>
-                    ) : null}
                   </Pressable>
                 );
               })}
@@ -123,6 +118,28 @@ export const PerpsProMarginModeSheet: React.FC<{
 PerpsProMarginModeSheet.displayName = 'PerpsProMarginModeSheet';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  modal: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
+  },
+  background: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  handle: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    height: 40,
+    paddingBottom: 19,
+    paddingTop: 17,
+  },
+  handleIndicator: {
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 2,
+    height: 4,
+    width: 40,
+  },
   sheet: { height: '100%' },
   content: {
     height: '100%',
@@ -138,10 +155,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   options: { gap: 8, marginTop: 16 },
   option: {
-    alignItems: 'flex-start',
     borderRadius: 12,
     borderWidth: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
+    overflow: 'hidden',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -154,7 +171,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-info'],
   },
   disabled: { opacity: 0.45 },
-  copy: { flex: 1, gap: 4, minWidth: 0 },
+  copy: { alignSelf: 'stretch', gap: 4 },
   label: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro',
@@ -167,12 +184,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
-  },
-  check: {
-    alignItems: 'center',
-    height: 26,
-    justifyContent: 'center',
-    marginLeft: 8,
-    width: 26,
   },
 }));
