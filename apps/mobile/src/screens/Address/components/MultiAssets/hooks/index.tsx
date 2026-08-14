@@ -1,5 +1,6 @@
 import {
   accountEvents,
+  filterAssetTopAccounts,
   filterOutTop10Accounts,
   isDirectlySignableAccount,
   isHardwareAccount,
@@ -30,17 +31,16 @@ export function useAccountInfo() {
     disableAutoFetch: true,
   });
 
-  const myAccounts = useCreationWithShallowCompare(
-    () => filterMyAccounts(accounts),
+  const assetAccounts = useCreationWithShallowCompare(
+    () => filterAssetTopAccounts(accounts),
     [accounts],
   );
-
-  const sortedList = useSortAddressList(myAccounts);
+  const sortedList = useSortAddressList(assetAccounts);
   const {
     myTop10Accounts,
     myTop10Addresses,
     myTop10Records,
-    myNotTop10Accounts,
+    notTop10Accounts,
   } = useCreationWithShallowCompare(() => {
     const {
       top10Accounts: myTop10Accounts,
@@ -53,7 +53,7 @@ export function useAccountInfo() {
       myTop10Accounts,
       myTop10Addresses,
       myTop10Records,
-      myNotTop10Accounts,
+      notTop10Accounts: myNotTop10Accounts,
     };
   }, [sortedList]);
 
@@ -62,27 +62,46 @@ export function useAccountInfo() {
     myTop10Addresses,
   );
 
-  const { hasWatchAddress, hasSafeAddress, gnosisAccounts, watchAccounts } =
+  const { hasWatchAddress, hasSafeAddress } =
     useCreationWithShallowCompare(() => {
       const ret = {
         hasWatchAddress: false,
         hasSafeAddress: false,
-        gnosisAccounts: [] as KeyringAccountWithAlias[],
-        watchAccounts: [] as KeyringAccountWithAlias[],
       };
 
       accounts.forEach(account => {
         if (account.type === KEYRING_CLASS.WATCH) {
           ret.hasWatchAddress = true;
-          ret.watchAccounts.push(account);
         } else if (account.type === KEYRING_CLASS.GNOSIS) {
           ret.hasSafeAddress = true;
-          ret.gnosisAccounts.push(account);
         }
       });
 
       return ret;
     }, [accounts]);
+
+  const { myNotTop10Accounts, gnosisAccounts, watchAccounts } =
+    useCreationWithShallowCompare(() => {
+      const myAccounts: KeyringAccountWithAlias[] = [];
+      const safeAccounts: KeyringAccountWithAlias[] = [];
+      const watchOnlyAccounts: KeyringAccountWithAlias[] = [];
+
+      notTop10Accounts.forEach(account => {
+        if (account.type === KEYRING_CLASS.GNOSIS) {
+          safeAccounts.push(account);
+        } else if (account.type === KEYRING_CLASS.WATCH) {
+          watchOnlyAccounts.push(account);
+        } else {
+          myAccounts.push(account);
+        }
+      });
+
+      return {
+        myNotTop10Accounts: myAccounts,
+        gnosisAccounts: safeAccounts,
+        watchAccounts: watchOnlyAccounts,
+      };
+    }, [notTop10Accounts]);
 
   const notMatteredAccounts = useCreationWithShallowCompare(() => {
     return [...myNotTop10Accounts, ...gnosisAccounts, ...watchAccounts];
@@ -101,7 +120,7 @@ export function useAccountInfo() {
     hasSafeAddress,
     fetchAccounts,
     rawAllAccounts: accounts,
-    matteredAccountCount: filterMyAccounts(sortedList).length,
+    matteredAccountCount: sortedList.length,
   };
 }
 

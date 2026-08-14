@@ -1,7 +1,7 @@
 import { unionBy } from 'lodash';
 
 import {
-  filterMyAccounts,
+  filterAssetTopAccounts,
   filterOutTop10Accounts,
   getAccountList,
   sortAccountList,
@@ -37,8 +37,10 @@ function pickSelectedAccountsFromSortedAccounts(sortedAccounts: Account[]) {
 }
 
 async function getMatteredAccountsSnapshot(): Promise<AccountBalanceSelectionSnapshot> {
-  const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-  return buildMatteredAccountsSnapshotFromSortedAccounts(sortedAccounts);
+  const { sortedAccounts } = await getAccountList({ filter: 'all' });
+  return buildMatteredAccountsSnapshotFromSortedAccounts(
+    filterAssetTopAccounts(sortedAccounts),
+  );
 }
 
 function buildMatteredAccountsSnapshotFromSortedAccounts(
@@ -59,7 +61,7 @@ function buildMatteredAccountsSnapshotFromStoreAccounts(
   accounts: Account[],
   pinnedAddresses: IPinAddress[],
 ) {
-  const sortedAccounts = sortAccountList(filterMyAccounts(accounts), {
+  const sortedAccounts = sortAccountList(filterAssetTopAccounts(accounts), {
     highlightedAddresses: pinnedAddresses,
   });
 

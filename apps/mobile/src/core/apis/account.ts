@@ -37,6 +37,7 @@ import BigNumber from 'bignumber.js';
 import { logger } from '@/utils/logger';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
 import { markStartupPerf } from '../utils/startupPerfMarks';
+import { getIncludeAllAccountTypesInAssetTop10 } from '@/core/utils/assetTop10AccountTypeSetting';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -357,6 +358,16 @@ export const filterMyAccounts = <
   return accounts.filter(isMyAccount);
 };
 
+export const filterAssetTopAccounts = <
+  T extends KeyringAccount | KeyringAccountWithAlias,
+>(
+  accounts: T[],
+) => {
+  return getIncludeAllAccountTypesInAssetTop10()
+    ? accounts
+    : filterMyAccounts(accounts);
+};
+
 export function isDirectlySignableAccount(
   account: KeyringAccount | KeyringAccountWithAlias,
 ) {
@@ -533,11 +544,11 @@ export const getTopMyAccounts = makeAvoidParallelAsyncFunc(
     const { topCount, gatherSameAddress, sortBy } =
       normalizeTopAccountsOptions(options);
     const { sortedAccounts } = await getAccountList({
-      filter: 'onlyMine',
+      filter: 'all',
       sortBy,
     });
 
-    return filterOutTopAccounts(sortedAccounts, {
+    return filterOutTopAccounts(filterAssetTopAccounts(sortedAccounts), {
       topCount,
       gatherSameAddress,
     });
