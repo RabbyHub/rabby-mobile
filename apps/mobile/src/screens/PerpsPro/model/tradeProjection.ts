@@ -31,6 +31,30 @@ export const getPerpsProTradeDisplayReferencePrice = ({
     : marketPrice;
 };
 
+export const getPerpsProMaxDisplayReferencePrice = ({
+  bboPrice,
+  form,
+  marketPrice,
+}: {
+  bboPrice: string | null;
+  form: PerpsProTradeFormState;
+  marketPrice: string;
+}) => {
+  if (form.orderType === 'market') {
+    return marketPrice;
+  }
+  if (form.orderType === 'limit') {
+    if (form.bboEnabled) {
+      return bboPrice;
+    }
+    return positive(form.limitPrice)?.toFixed() ?? marketPrice;
+  }
+  if (form.conditionalExecution === 'market') {
+    return marketPrice;
+  }
+  return positive(form.conditionalLimitPrice)?.toFixed() ?? marketPrice;
+};
+
 export const getPerpsProNetNewBaseSize = ({
   baseSize,
   currentPositionSize,
@@ -163,16 +187,16 @@ export const resolvePerpsProTradeProjection = ({
 
 export const getPerpsProMaxDisplayAmount = ({
   amountUnit,
-  executionPrice,
   maxBase,
+  referencePrice,
 }: {
   amountUnit: PerpsProTradeAmountUnit;
-  executionPrice: string | null;
   maxBase: string;
+  referencePrice: string | null;
 }) => {
   const maximum = positive(maxBase);
   if (!maximum) return '0';
   if (amountUnit === 'base') return maximum.toFixed();
-  const price = positive(executionPrice);
+  const price = positive(referencePrice);
   return price ? maximum.multipliedBy(price).toFixed(2) : '0';
 };

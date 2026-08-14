@@ -50,7 +50,9 @@ const account = {
 };
 
 describe('usePerpsProLeverageUpdate', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('updates once, refreshes both server projections and emits one Toast', async () => {
     const refreshActiveAssetData = jest.fn(async () => undefined);

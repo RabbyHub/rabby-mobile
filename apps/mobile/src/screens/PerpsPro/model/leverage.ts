@@ -38,15 +38,18 @@ const normalize = (
 /**
  * Trade-form leverage source order:
  * 1. an existing position's authoritative configuration;
- * 2. Hyperliquid's zero-address Active Asset baseline;
- * 3. the market maximum as the explicit last fallback.
+ * 2. the current account's Active Asset configuration;
+ * 3. Hyperliquid's zero-address Active Asset baseline;
+ * 4. the market maximum as the explicit last fallback.
  */
 export const resolvePerpsProInitialLeverage = ({
+  accountConfiguration,
   marginModeConstraint,
   maxLeverage,
   position,
   zeroAddressBaseline,
 }: {
+  accountConfiguration?: PerpsProLeverageConfiguration | null;
   marginModeConstraint: PerpsMarketMarginMode;
   maxLeverage: number;
   position?: PerpsProLeverageConfiguration | null;
@@ -54,6 +57,7 @@ export const resolvePerpsProInitialLeverage = ({
 }): PerpsProLeverageConfiguration => {
   const max = Math.max(1, Math.round(maxLeverage || 1));
   const selected = normalize(position, max) ??
+    normalize(accountConfiguration, max) ??
     normalize(zeroAddressBaseline, max) ?? {
       type: 'isolated' as const,
       value: max,

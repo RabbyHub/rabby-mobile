@@ -19,7 +19,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../model/position';
-import { buildPerpsProMarketDescriptor } from '../model/market';
+import {
+  buildPerpsProMarketDescriptor,
+  buildPerpsProMarketKey,
+} from '../model/market';
 import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
@@ -28,6 +31,7 @@ import type { PerpsProLeverageUpdateRequest } from './usePerpsProLeverageUpdate'
 
 interface LeverageEditorState {
   account: Account;
+  marketKey: string;
   position: PerpsPositionViewModel;
 }
 
@@ -76,6 +80,7 @@ export const usePerpsProPositionActions = ({
         return;
       }
       const account = perpsStore.getState().currentPerpsAccount;
+      const marketData = perpsStore.getState().marketDataMap[position.coin];
       if (!account) {
         showToast(
           t('page.perps.pro.positions.leverageUpdateFailed', {
@@ -87,6 +92,9 @@ export const usePerpsProPositionActions = ({
       }
       setLeverageEditor({
         account: { ...account },
+        marketKey: marketData
+          ? buildPerpsProMarketDescriptor(marketData).marketKey
+          : buildPerpsProMarketKey('', position.coin),
         position: { ...position },
       });
     },

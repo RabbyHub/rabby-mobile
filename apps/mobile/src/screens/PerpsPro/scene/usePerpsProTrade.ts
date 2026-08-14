@@ -79,6 +79,7 @@ import {
 } from '../model/trade';
 import {
   getPerpsProMaxDisplayAmount,
+  getPerpsProMaxDisplayReferencePrice,
   getPerpsProTradeDisplayReferencePrice,
   resolvePerpsProSliderAmount,
   resolvePerpsProTradeProjection,
@@ -111,7 +112,26 @@ const getReviewParent = (
   review: PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand,
 ) => (review.type === 'openOrderWithAttachedTpSl' ? review.parent : review);
 
+const getMatchingActiveAssetLeverage = (
+  data: unknown,
+  coin: string,
+  address: string,
+): PerpsProLeverageConfiguration | null => {
+  const activeAsset = data as Partial<WsActiveAssetData> | null;
+  const leverage = activeAsset?.leverage;
+  if (
+    activeAsset?.coin !== coin ||
+    activeAsset.user?.toLowerCase() !== address.toLowerCase() ||
+    (leverage?.type !== 'cross' && leverage?.type !== 'isolated') ||
+    !Number.isFinite(leverage.value)
+  ) {
+    return null;
+  }
+  return leverage;
+};
+
 export const usePerpsProTrade = ({
+  accountLeverageConfiguration = null,
   activeAssetData,
   bboBook,
   bboPrices,
@@ -124,6 +144,7 @@ export const usePerpsProTrade = ({
   refreshActiveAssetData,
   updateLeverageRequest,
 }: {
+  accountLeverageConfiguration?: PerpsProLeverageConfiguration | null;
   activeAssetData: WsActiveAssetData | null;
   bboBook: L2Book | null;
   bboPrices: PerpsProBboPrices;
@@ -174,6 +195,7 @@ export const usePerpsProTrade = ({
         hasOpenOrders:
           !!tradeCoin &&
           state.openOrders.some(order => order.coin === tradeCoin),
+        hasPermission: state.hasPermission,
         isUserDataReady: state.isUserDataReady,
         unifiedAvailableAfterMaintenance,
         userAbstraction: state.userAbstraction,
@@ -265,15 +287,19 @@ export const usePerpsProTrade = ({
     market?.marketData.marginMode,
     market?.marketData.onlyIsolated,
   );
+  const currentAccountLeverageConfiguration =
+    scopedActiveAssetData?.leverage ?? accountLeverageConfiguration;
   const initialLeverageConfiguration = useMemo(
     () =>
       resolvePerpsProInitialLeverage({
+        accountConfiguration: currentAccountLeverageConfiguration,
         marginModeConstraint,
         maxLeverage: market?.marketData.maxLeverage ?? 1,
         position: hasCurrentPosition ? currentPosition?.leverage : null,
         zeroAddressBaseline: zeroAddressLeverageBaseline,
       }),
     [
+      currentAccountLeverageConfiguration,
       currentPosition?.leverage,
       hasCurrentPosition,
       market?.marketData.maxLeverage,
@@ -391,7 +417,16 @@ export const usePerpsProTrade = ({
       applied.accountIdentity === accountIdentity &&
       applied.marketKey === market?.marketKey
     ) {
-      return;
+      const authoritativeConfigurationReady =
+        hasCurrentPosition || !!currentAccountLeverageConfiguration;
+      if (
+        !authoritativeConfigurationReady ||
+        applied.marginMode !== initialLeverageConfiguration.type ||
+        applied.leverage !== initialLeverageConfiguration.value
+      ) {
+        return;
+      }
+      appliedConfigurationRef.current = null;
     }
     if (dirtyConfigurationRef.current || !market) return;
     applyLeverageConfiguration(
@@ -401,6 +436,8 @@ export const usePerpsProTrade = ({
   }, [
     accountIdentity,
     applyLeverageConfiguration,
+    currentAccountLeverageConfiguration,
+    hasCurrentPosition,
     initialLeverageConfiguration,
     leverageConfigurationScopeKey,
     market,
@@ -416,6 +453,10 @@ export const usePerpsProTrade = ({
   }, []);
   const marketPrice =
     market?.marketData.midPx || market?.marketData.markPx || '';
+  const maxDisplayMarketPrice =
+    positive(market?.marketData.midPx)?.toFixed() ??
+    positive(market?.marketData.markPx)?.toFixed() ??
+    '';
   const displayReferencePrice = getPerpsProTradeDisplayReferencePrice({
     form,
     marketPrice,
@@ -670,8 +711,8 @@ export const usePerpsProTrade = ({
       const success = await updateLeverageRequest({
         account: accountFacts.account,
         coin: market.canonicalCoin,
-        currentIsCross: scopedActiveAssetData?.leverage.type === 'cross',
-        currentLeverage: scopedActiveAssetData?.leverage.value ?? 0,
+        currentIsCross: currentAccountLeverageConfiguration?.type === 'cross',
+        currentLeverage: currentAccountLeverageConfiguration?.value ?? 0,
         isCross: marginMode === 'cross',
         leverage: normalized,
         maxLeverage: max,
@@ -694,12 +735,11 @@ export const usePerpsProTrade = ({
     [
       accountFacts.account,
       accountIdentity,
+      currentAccountLeverageConfiguration,
       leveragePending,
       leverageConfigurationScopeKey,
       marginMode,
       market,
-      scopedActiveAssetData?.leverage.type,
-      scopedActiveAssetData?.leverage.value,
       updateLeverageRequest,
     ],
   );
@@ -779,10 +819,14 @@ export const usePerpsProTrade = ({
     (side: PerpsProTradeSide) =>
       getPerpsProMaxDisplayAmount({
         amountUnit: form.amountUnit,
-        executionPrice: getSideExecutionPrice(side),
         maxBase: getMaxBase(side).toFixed(),
+        referencePrice: getPerpsProMaxDisplayReferencePrice({
+          bboPrice: getBboPrice(side),
+          form,
+          marketPrice: maxDisplayMarketPrice,
+        }),
       }),
-    [form.amountUnit, getMaxBase, getSideExecutionPrice],
+    [form, getBboPrice, getMaxBase, maxDisplayMarketPrice],
   );
   const getSideProjection = useCallback(
     (side: PerpsProTradeSide) =>
@@ -1225,6 +1269,71 @@ export const usePerpsProTrade = ({
     ],
   );
 
+  const resolveLeverageExecutionReadiness = useCallback(
+    async ({
+      address,
+      coin,
+      desired,
+      expectedAccountIdentity,
+      marketKey,
+    }: {
+      address: string;
+      coin: string;
+      desired: PerpsProOrderReviewFacts;
+      expectedAccountIdentity: string;
+      marketKey: string;
+    }) => {
+      const appliedConfiguration = appliedConfigurationRef.current;
+      const appliedMatches =
+        appliedConfiguration?.marketKey === marketKey &&
+        appliedConfiguration.accountIdentity === expectedAccountIdentity &&
+        appliedConfiguration.marginMode === desired.marginMode &&
+        appliedConfiguration.leverage === desired.leverage;
+      const evaluate = (
+        activeLeverage: PerpsProLeverageConfiguration,
+      ): 'aligned' | 'contextChanged' | 'needsUpdate' => {
+        if (
+          activeLeverage.type === desired.marginMode &&
+          activeLeverage.value === desired.leverage
+        ) {
+          return 'aligned';
+        }
+        if (appliedMatches) {
+          return 'aligned';
+        }
+        return dirtyConfigurationRef.current ? 'needsUpdate' : 'contextChanged';
+      };
+
+      if (currentAccountLeverageConfiguration) {
+        return evaluate(currentAccountLeverageConfiguration);
+      }
+      if (appliedMatches) {
+        return 'aligned' as const;
+      }
+      if (dirtyConfigurationRef.current) {
+        return 'needsUpdate' as const;
+      }
+
+      try {
+        const refreshed = await refreshActiveAssetData();
+        const refreshedLeverage = getMatchingActiveAssetLeverage(
+          refreshed,
+          coin,
+          address,
+        );
+        return refreshedLeverage
+          ? evaluate(refreshedLeverage)
+          : ('contextChanged' as const);
+      } catch (error) {
+        Sentry.captureException(error, {
+          extra: { scene: 'Perps Pro leverage execution preflight' },
+        });
+        return 'contextChanged' as const;
+      }
+    },
+    [currentAccountLeverageConfiguration, refreshActiveAssetData],
+  );
+
   const execute = useCallback(
     async (command: PerpsProOpenOrderCommand) => {
       if (
@@ -1234,6 +1343,11 @@ export const usePerpsProTrade = ({
         !market
       )
         return;
+      if (!perpsStore.getState().hasPermission) {
+        showToast(t('page.perps.regionNotSupport'), 'error');
+        setReview(null);
+        return;
+      }
       const desired = command.reviewFacts;
       if (!desired) {
         showToast(t('page.perps.pro.trade.contextChanged'), 'error');
@@ -1273,23 +1387,29 @@ export const usePerpsProTrade = ({
       setPending(true);
       try {
         await ensurePerpsActionApproval(accountFacts.account);
+        if (!perpsStore.getState().hasPermission) {
+          showToast(t('page.perps.regionNotSupport'), 'error');
+          setReview(null);
+          return;
+        }
         if (!isSceneCurrent()) {
           showToast(t('page.perps.pro.trade.contextChanged'), 'error');
           setReview(null);
           return;
         }
-        const activeLeverage = scopedActiveAssetData?.leverage;
-        const appliedConfiguration = appliedConfigurationRef.current;
-        if (
-          (activeLeverage?.type !== desired.marginMode ||
-            activeLeverage?.value !== desired.leverage) &&
-          !(
-            appliedConfiguration?.marketKey === command.marketKey &&
-            appliedConfiguration.accountIdentity === accountIdentity &&
-            appliedConfiguration.marginMode === desired.marginMode &&
-            appliedConfiguration.leverage === desired.leverage
-          )
-        ) {
+        const leverageReadiness = await resolveLeverageExecutionReadiness({
+          address: command.account.address,
+          coin: command.coin,
+          desired,
+          expectedAccountIdentity: accountIdentity,
+          marketKey: command.marketKey,
+        });
+        if (leverageReadiness === 'contextChanged') {
+          showToast(t('page.perps.pro.trade.contextChanged'), 'error');
+          setReview(null);
+          return;
+        }
+        if (leverageReadiness === 'needsUpdate') {
           const leverageCommand = buildPerpsUpdateLeverageCommand({
             account: command.account,
             coin: command.coin,
@@ -1321,6 +1441,11 @@ export const usePerpsProTrade = ({
           isSceneCurrent,
         );
         if (result.failureReason === 'userCancelled') return;
+        if (result.failureReason === 'regionRestricted') {
+          showToast(t('page.perps.regionNotSupport'), 'error');
+          setReview(null);
+          return;
+        }
         if (result.kind === 'staleContext') {
           showToast(t('page.perps.pro.trade.contextChanged'), 'error');
           setReview(null);
@@ -1374,7 +1499,7 @@ export const usePerpsProTrade = ({
       market,
       patchForm,
       refreshActiveAssetData,
-      scopedActiveAssetData?.leverage,
+      resolveLeverageExecutionReadiness,
       t,
     ],
   );
@@ -1385,21 +1510,18 @@ export const usePerpsProTrade = ({
       const commandAccountIdentity = getPerpsRuntimeIdentity(
         command.parent.account,
       );
-      const activeLeverage = scopedActiveAssetData?.leverage;
-      const appliedConfiguration = appliedConfigurationRef.current;
-      if (
-        activeLeverage?.type === desired.marginMode &&
-        activeLeverage?.value === desired.leverage
-      ) {
+      const leverageReadiness = await resolveLeverageExecutionReadiness({
+        address: command.parent.account.address,
+        coin: command.parent.coin,
+        desired,
+        expectedAccountIdentity: commandAccountIdentity,
+        marketKey: command.parent.marketKey,
+      });
+      if (leverageReadiness === 'aligned') {
         return 'success' as const;
       }
-      if (
-        appliedConfiguration?.marketKey === command.parent.marketKey &&
-        appliedConfiguration.accountIdentity === commandAccountIdentity &&
-        appliedConfiguration.marginMode === desired.marginMode &&
-        appliedConfiguration.leverage === desired.leverage
-      ) {
-        return 'success' as const;
+      if (leverageReadiness === 'contextChanged') {
+        return 'staleContext' as const;
       }
       const leverageCommand = buildPerpsUpdateLeverageCommand({
         account: command.parent.account,
@@ -1423,12 +1545,17 @@ export const usePerpsProTrade = ({
         ? ('userCancelled' as const)
         : ('failed' as const);
     },
-    [scopedActiveAssetData?.leverage],
+    [resolveLeverageExecutionReadiness],
   );
 
   const executeAttachedReview = useCallback(
     async (command: PerpsProAttachedTpSlCommand) => {
       if (pendingRef.current) return;
+      if (!perpsStore.getState().hasPermission) {
+        showToast(t('page.perps.regionNotSupport'), 'error');
+        setReview(null);
+        return;
+      }
       if (formRevisionRef.current !== command.reviewFacts.formRevision) {
         showToast(t('page.perps.pro.trade.contextChanged'), 'error');
         setReview(null);
@@ -1443,7 +1570,14 @@ export const usePerpsProTrade = ({
         );
         if (result.kind === 'userCancelled') return;
         if (result.kind === 'staleContext') {
-          showToast(t('page.perps.pro.trade.contextChanged'), 'error');
+          showToast(
+            t(
+              result.reason === 'regionRestricted'
+                ? 'page.perps.regionNotSupport'
+                : 'page.perps.pro.trade.contextChanged',
+            ),
+            'error',
+          );
           setReview(null);
           return;
         }
@@ -1528,11 +1662,19 @@ export const usePerpsProTrade = ({
   const requestReview = useCallback(
     async (side: PerpsProTradeSide) => {
       try {
+        if (!perpsStore.getState().hasPermission) {
+          showToast(t('page.perps.regionNotSupport'), 'error');
+          return;
+        }
         const command = buildReview(side);
         const orderType = getReviewParent(command).orderType;
         const skip = await perpsServiceApi.getSkipPerpsProTradeConfirmation(
           orderType,
         );
+        if (!perpsStore.getState().hasPermission) {
+          showToast(t('page.perps.regionNotSupport'), 'error');
+          return;
+        }
         setSkipConfirmation(skip);
         if (skip) {
           await submitReview(command);
@@ -1546,11 +1688,16 @@ export const usePerpsProTrade = ({
         );
       }
     },
-    [buildReview, submitReview],
+    [buildReview, submitReview, t],
   );
 
   const confirmReview = useCallback(async () => {
     if (!review) return;
+    if (!perpsStore.getState().hasPermission) {
+      showToast(t('page.perps.regionNotSupport'), 'error');
+      setReview(null);
+      return;
+    }
     if (skipConfirmation) {
       const orderType = getReviewParent(review).orderType;
       perpsServiceApi
@@ -1562,7 +1709,7 @@ export const usePerpsProTrade = ({
         });
     }
     await submitReview(review);
-  }, [review, skipConfirmation, submitReview]);
+  }, [review, skipConfirmation, submitReview, t]);
 
   const availableQuote = scopedActiveAssetData
     ? BigNumber.min(
@@ -1679,6 +1826,7 @@ export const usePerpsProTrade = ({
     confirmLeverage,
     confirmReview,
     form,
+    hasPermission: accountFacts.hasPermission,
     getBboPrice,
     getCostDisplayAmount,
     getEstimatedLiquidationPrice,

@@ -13,6 +13,16 @@ const mockKlineProps = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
+let mockTradeHasPermission = true;
+
+jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsRegionAlert: () =>
+      ReactModule.createElement(View, { testID: 'perps-region-alert' }),
+  };
+});
 
 jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
   useActiveAssetSubscription: () => ({
@@ -310,6 +320,7 @@ jest.mock('./usePerpsProTrade', () => ({
     closeReview: jest.fn(),
     confirmReview: jest.fn(),
     form: { bboEnabled: false, orderType: 'market' },
+    hasPermission: mockTradeHasPermission,
     leverage: 1,
     marginMode: 'isolated',
     market,
@@ -372,6 +383,7 @@ const { PerpsProScene } =
   require('./PerpsProScene') as typeof import('./PerpsProScene');
 
 const createSceneState = (overrides: Record<string, unknown> = {}) => ({
+  accountLeverageConfiguration: null,
   cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
   isResolvingMarket: false,
@@ -433,6 +445,7 @@ const createPositionActionsState = (
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockTradeHasPermission = true;
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
       value: 'active',
@@ -587,6 +600,28 @@ describe('PerpsProScene market loading states', () => {
     expect(mockOrderBookRender).toHaveBeenCalledTimes(
       orderBookRendersBeforeOpen,
     );
+  });
+
+  it('places the region alert in the scrolling Trade row above both columns', () => {
+    mockTradeHasPermission = false;
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('perps-region-alert')).toBeTruthy();
+    expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
+    expect(screen.getByTestId('trade-form')).toBeTruthy();
   });
 
   it('opens the K-line sheet from its dedicated market action', () => {

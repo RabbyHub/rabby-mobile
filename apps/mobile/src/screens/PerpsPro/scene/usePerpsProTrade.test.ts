@@ -18,6 +18,7 @@ const mockPerpsState = {
     },
   },
   currentPerpsAccount: mockAccount,
+  hasPermission: true,
   isUserDataReady: true,
   openOrders: [],
   spotState: {
@@ -183,6 +184,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     jest.clearAllMocks();
     mockGetSkipConfirmation.mockResolvedValue(false);
     mockPerpsState.currentClearinghouseState.assetPositions.length = 0;
+    mockPerpsState.hasPermission = true;
     mockPerpsState.openOrders.length = 0;
     mockPerpsState.spotState.tokenToAvailableAfterMaintenance = null;
     mockPerpsState.userAbstraction = 'default';
@@ -229,6 +231,62 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       hook.result.current.selectManualLimitPrice('99', market.marketKey),
     );
     expect(hook.result.current.form.limitPrice).toBe('101.23');
+  });
+
+  it('keeps quote Max available before manual Limit prices are entered', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.form.limitPrice).toBe('');
+    expect(hook.result.current.getMaxDisplayAmount('buy')).toBe('1000.00');
+
+    act(() => hook.result.current.patchForm({ limitPrice: '95' }));
+    expect(hook.result.current.getMaxDisplayAmount('buy')).toBe('950.00');
+
+    act(() => hook.result.current.setOrderType('conditional'));
+    act(() => hook.result.current.setConditionalExecution('limit'));
+    expect(hook.result.current.form.conditionalLimitPrice).toBe('');
+    expect(hook.result.current.getMaxDisplayAmount('buy')).toBe('1000.00');
+
+    act(() => hook.result.current.patchForm({ conditionalLimitPrice: '96' }));
+    expect(hook.result.current.getMaxDisplayAmount('buy')).toBe('960.00');
+  });
+
+  it('falls back from missing mid to mark for quote Max display only', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market: {
+          ...market,
+          marketData: { ...market.marketData, markPx: '95', midPx: '' },
+        },
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.getMaxDisplayAmount('buy')).toBe('950.00');
+    expect(hook.result.current.form.limitPrice).toBe('');
   });
 
   it('restores Amount and Slider independently for each order type', () => {
@@ -553,6 +611,77 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     });
   });
 
+  it('blocks the right Trade Form with the shared region message', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: {
+          asks1: '101',
+          asks5: null,
+          bids1: '99',
+          bids5: null,
+        },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+    act(() => hook.result.current.setAmount('100'));
+    mockPerpsState.hasPermission = false;
+
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(hook.result.current.review).toBeNull();
+    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+    expect(mockEnsureApproval).not.toHaveBeenCalled();
+    expect(mockGetPerpsSdk).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.regionNotSupport',
+      'error',
+    );
+  });
+
+  it('rechecks region permission when an existing review is confirmed', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: {
+          asks1: '101',
+          asks5: null,
+          bids1: '99',
+          bids5: null,
+        },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+    act(() => hook.result.current.setAmount('100'));
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review).not.toBeNull();
+    mockPerpsState.hasPermission = false;
+
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(hook.result.current.review).toBeNull();
+    expect(mockEnsureApproval).not.toHaveBeenCalled();
+    expect(mockGetPerpsSdk).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenLastCalledWith(
+      'page.perps.regionNotSupport',
+      'error',
+    );
+  });
+
   it('reports direction-specific TP validation through toast only', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
@@ -800,7 +929,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.review).toMatchObject({
       reviewFacts: {
         generatedAt: expect.any(Number),
-        leverage: 20,
+        leverage: 10,
         marginMode: 'isolated',
         markPrice: '100',
         marketFillRiskEntryPrice: '101',
@@ -810,9 +939,87 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.setMarginMode('cross'));
     await act(async () => hook.result.current.confirmReview());
 
-    expect(mockBuildUpdateLeverage).toHaveBeenCalledWith(
-      expect.objectContaining({ isCross: false, leverage: 20 }),
+    expect(mockBuildUpdateLeverage).not.toHaveBeenCalled();
+  });
+
+  it('invalidates a fallback Review when preflight recovers the user configuration', async () => {
+    const refreshActiveAssetData = jest.fn(async () => ({
+      ...activeAssetData,
+      leverage: { type: 'isolated', value: 4 },
+    }));
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: {
+          ...activeAssetData,
+          leverage: undefined,
+        } as never,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        zeroAddressLeverageBaseline: { type: 'cross', value: 7 },
+        refreshActiveAssetData,
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
     );
+
+    act(() => hook.result.current.setAmount('100'));
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review?.reviewFacts).toMatchObject({
+      leverage: 7,
+      marginMode: 'cross',
+    });
+
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(refreshActiveAssetData).toHaveBeenCalledTimes(1);
+    expect(mockBuildUpdateLeverage).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.contextChanged',
+      'error',
+    );
+    expect(hook.result.current.review).toBeNull();
+  });
+
+  it('invalidates an old Review instead of overwriting a newer server configuration', async () => {
+    const hook = renderHook(
+      ({ data }: { data: typeof activeAssetData }) =>
+        usePerpsProTrade({
+          activeAssetData: data,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      { initialProps: { data: activeAssetData } },
+    );
+
+    act(() => hook.result.current.setAmount('100'));
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review?.reviewFacts.leverage).toBe(10);
+
+    hook.rerender({
+      data: {
+        ...activeAssetData,
+        leverage: { type: 'isolated' as const, value: 4 },
+      },
+    });
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockBuildUpdateLeverage).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.contextChanged',
+      'error',
+    );
+    expect(hook.result.current.review).toBeNull();
   });
 
   it('uses directional full-L2 VWAP for ordinary Market risk and cost', () => {
@@ -837,26 +1044,26 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
     expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
       101,
-      5.05,
+      10.1,
       'Long',
       1,
       101,
       20,
     );
-    expect(hook.result.current.getCostDisplayAmount('buy')).toBe('5.05');
+    expect(hook.result.current.getCostDisplayAmount('buy')).toBe('10.10');
 
     expect(hook.result.current.getEstimatedLiquidationPrice('sell')).toBe(
       '50.00',
     );
     expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
       99,
-      4.95,
+      9.9,
       'Short',
       1,
       99,
       20,
     );
-    expect(hook.result.current.getCostDisplayAmount('sell')).toBe('4.95');
+    expect(hook.result.current.getCostDisplayAmount('sell')).toBe('9.90');
   });
 
   it('allows ordinary Market submission with Mid while L2 risk fails closed', async () => {
@@ -877,7 +1084,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     act(() => hook.result.current.setAmount('100'));
     expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
-    expect(hook.result.current.getCostDisplayAmount('buy')).toBe('5.00');
+    expect(hook.result.current.getCostDisplayAmount('buy')).toBe('10.00');
 
     await act(async () => hook.result.current.requestReview('buy'));
     expect(hook.result.current.review).toMatchObject({
@@ -1017,7 +1224,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.leverage).toBe(15);
   });
 
-  it('uses the zero-address baseline for a new position and keeps Max as fallback', () => {
+  it('uses current-account Active Asset before zero-address and keeps Max as fallback', () => {
     const baseline = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -1035,7 +1242,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
     const fallback = renderHook(() =>
       usePerpsProTrade({
-        activeAssetData,
+        activeAssetData: null,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
         bboSessionKey: 'BTC:1',
@@ -1048,8 +1255,8 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       }),
     );
 
-    expect(baseline.result.current.leverage).toBe(7);
-    expect(baseline.result.current.marginMode).toBe('cross');
+    expect(baseline.result.current.leverage).toBe(10);
+    expect(baseline.result.current.marginMode).toBe('isolated');
     expect(fallback.result.current.leverage).toBe(20);
   });
 
@@ -1127,6 +1334,45 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
           (frame.leverage !== 10 || frame.marginMode !== 'cross'),
       ),
     ).toBe(false);
+  });
+
+  it('returns to the current server configuration instead of a process-session copy', async () => {
+    const suiMarket = {
+      ...market,
+      canonicalCoin: 'SUI',
+      displayBase: 'SUI',
+      displayPair: 'SUIUSDC',
+      marketData: { ...market.marketData, maxLeverage: 10 },
+      marketKey: 'hyperliquid::SUI',
+    };
+    const hook = renderHook(
+      ({ currentMarket }: { currentMarket: PerpsProMarket }) =>
+        usePerpsProTrade({
+          activeAssetData,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market: currentMarket,
+          zeroAddressLeverageBaseline: { type: 'isolated', value: 7 },
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      { initialProps: { currentMarket: market } },
+    );
+
+    await act(async () => {
+      expect(await hook.result.current.confirmLeverage(15)).toBe(true);
+    });
+    expect(hook.result.current.leverage).toBe(15);
+
+    hook.rerender({ currentMarket: suiMarket });
+    expect(hook.result.current.leverage).toBe(7);
+
+    hook.rerender({ currentMarket: market });
+    expect(hook.result.current.leverage).toBe(10);
   });
 
   it('uses the existing position leverage before the zero-address baseline', () => {

@@ -5,6 +5,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { RootNames } from '@/constant/layout';
+import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
 import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
@@ -23,7 +24,8 @@ import {
 } from '../session/perpsProMarketSession';
 import {
   prefetchPerpsProZeroAddressLeverageBaseline,
-  preparePerpsProZeroAddressLeverageBaseline,
+  preparePerpsProLeverageSources,
+  readPerpsProAccountLeverageConfiguration,
   readPerpsProZeroAddressLeverageBaseline,
 } from './perpsProZeroAddressLeverageBaseline';
 import { usePerpsBookPrecision } from './usePerpsBookPrecision';
@@ -50,6 +52,8 @@ const getStaticMarketSignature = (market: {
   ].join('|');
 
 type PreparedMarketSelection = {
+  accountIdentity: string | null;
+  accountLeverageConfiguration: PerpsProLeverageConfiguration | null;
   marketKey: string;
   zeroAddressLeverageBaseline: PerpsProLeverageConfiguration | null;
 };
@@ -62,6 +66,14 @@ export const usePerpsProScene = () => {
   const isFocused = useIsFocused();
   const runtime = usePerpsRuntimeStatus();
   const { fetchMarketData } = usePerpsStore();
+  const accountIdentity = perpsStore(state =>
+    state.currentPerpsAccount
+      ? getPerpsRuntimeIdentity(state.currentPerpsAccount)
+      : null,
+  );
+  const accountAddress = perpsStore(
+    state => state.currentPerpsAccount?.address ?? null,
+  );
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState,
   );
@@ -69,7 +81,10 @@ export const usePerpsProScene = () => {
     useState<PreparedMarketSelection | null>(null);
   const marketSelectionRef = useRef<PreparedMarketSelection | null>(null);
   const marketSelectionSequenceRef = useRef(0);
-  const pendingMarketKeyRef = useRef<string | null>(null);
+  const pendingMarketSelectionRef = useRef<{
+    accountIdentity: string | null;
+    marketKey: string;
+  } | null>(null);
   const navigationMarketRef = useRef(route.params?.market);
   const navigationMarketConsumedRef = useRef(false);
 
@@ -89,7 +104,10 @@ export const usePerpsProScene = () => {
   catalogueRef.current = catalogue;
   const synchronousMarketSelection =
     useMemo<PreparedMarketSelection | null>(() => {
-      if (marketSelection || catalogue.length === 0) {
+      if (
+        marketSelection?.accountIdentity === accountIdentity ||
+        catalogue.length === 0
+      ) {
         return null;
       }
       const resolved = resolveInitialPerpsProMarket({
@@ -104,41 +122,83 @@ export const usePerpsProScene = () => {
       }
       const zeroAddressLeverageBaseline =
         readPerpsProZeroAddressLeverageBaseline(resolved.canonicalCoin);
-      return zeroAddressLeverageBaseline
-        ? { marketKey: resolved.marketKey, zeroAddressLeverageBaseline }
+      const accountLeverageConfiguration = accountAddress
+        ? readPerpsProAccountLeverageConfiguration(
+            resolved.canonicalCoin,
+            accountAddress,
+          )
         : null;
-    }, [catalogue, marketSelection]);
+      if (
+        (accountAddress && !accountLeverageConfiguration) ||
+        (!accountAddress && !zeroAddressLeverageBaseline)
+      ) {
+        return null;
+      }
+      return {
+        accountIdentity,
+        accountLeverageConfiguration,
+        marketKey: resolved.marketKey,
+        zeroAddressLeverageBaseline,
+      };
+    }, [accountAddress, accountIdentity, catalogue, marketSelection]);
   const effectiveMarketSelection =
-    marketSelection ?? synchronousMarketSelection;
-  if (!marketSelectionRef.current && effectiveMarketSelection) {
+    marketSelection?.accountIdentity === accountIdentity
+      ? marketSelection
+      : synchronousMarketSelection;
+  if (
+    effectiveMarketSelection &&
+    marketSelectionRef.current?.accountIdentity !== accountIdentity
+  ) {
     marketSelectionRef.current = effectiveMarketSelection;
   }
 
   const selectMarket = useCallback(async (market: PerpsProMarket) => {
-    if (marketSelectionRef.current?.marketKey === market.marketKey) {
+    const selectedAccount = perpsStore.getState().currentPerpsAccount;
+    const selectedAccountIdentity = selectedAccount
+      ? getPerpsRuntimeIdentity(selectedAccount)
+      : null;
+    if (
+      marketSelectionRef.current?.marketKey === market.marketKey &&
+      marketSelectionRef.current.accountIdentity === selectedAccountIdentity
+    ) {
       marketSelectionSequenceRef.current += 1;
-      pendingMarketKeyRef.current = null;
+      pendingMarketSelectionRef.current = null;
       return true;
     }
     const sequence = ++marketSelectionSequenceRef.current;
-    pendingMarketKeyRef.current = market.marketKey;
-    const zeroAddressLeverageBaseline =
-      await preparePerpsProZeroAddressLeverageBaseline(market.canonicalCoin);
+    pendingMarketSelectionRef.current = {
+      accountIdentity: selectedAccountIdentity,
+      marketKey: market.marketKey,
+    };
+    const { accountLeverageConfiguration, zeroAddressLeverageBaseline } =
+      await preparePerpsProLeverageSources(
+        market.canonicalCoin,
+        selectedAccount?.address,
+      );
     if (sequence !== marketSelectionSequenceRef.current) {
+      return false;
+    }
+    const liveAccount = perpsStore.getState().currentPerpsAccount;
+    const liveAccountIdentity = liveAccount
+      ? getPerpsRuntimeIdentity(liveAccount)
+      : null;
+    if (liveAccountIdentity !== selectedAccountIdentity) {
       return false;
     }
     if (
       !catalogueRef.current.some(item => item.marketKey === market.marketKey)
     ) {
-      pendingMarketKeyRef.current = null;
+      pendingMarketSelectionRef.current = null;
       return false;
     }
 
     const nextSelection = {
+      accountIdentity: selectedAccountIdentity,
+      accountLeverageConfiguration,
       marketKey: market.marketKey,
       zeroAddressLeverageBaseline,
     };
-    pendingMarketKeyRef.current = null;
+    pendingMarketSelectionRef.current = null;
     marketSelectionRef.current = nextSelection;
     setMarketSelection(nextSelection);
     setPerpsProSessionMarket(market.marketKey);
@@ -147,7 +207,7 @@ export const usePerpsProScene = () => {
 
   const cancelPendingMarketSelection = useCallback(() => {
     marketSelectionSequenceRef.current += 1;
-    pendingMarketKeyRef.current = null;
+    pendingMarketSelectionRef.current = null;
   }, []);
 
   const prefetchMarket = useCallback((coin: string) => {
@@ -155,13 +215,16 @@ export const usePerpsProScene = () => {
   }, []);
 
   useEffect(() => {
-    if (marketSelection || !synchronousMarketSelection) {
+    if (
+      marketSelection?.accountIdentity === accountIdentity ||
+      !synchronousMarketSelection
+    ) {
       return;
     }
     marketSelectionRef.current = synchronousMarketSelection;
     setMarketSelection(synchronousMarketSelection);
     setPerpsProSessionMarket(synchronousMarketSelection.marketKey);
-  }, [marketSelection, synchronousMarketSelection]);
+  }, [accountIdentity, marketSelection, synchronousMarketSelection]);
 
   useEffect(() => {
     if (catalogue.length === 0) {
@@ -176,24 +239,26 @@ export const usePerpsProScene = () => {
         ? undefined
         : navigationMarketRef.current,
       sessionMarketKey:
-        pendingMarketKeyRef.current ??
+        pendingMarketSelectionRef.current?.marketKey ??
         marketSelectionRef.current?.marketKey ??
         getPerpsProMarketSession().marketKey,
     });
     navigationMarketConsumedRef.current = true;
     if (
       resolved &&
-      resolved.marketKey !== marketSelectionRef.current?.marketKey &&
-      resolved.marketKey !== pendingMarketKeyRef.current
+      (resolved.marketKey !== marketSelectionRef.current?.marketKey ||
+        accountIdentity !== marketSelectionRef.current?.accountIdentity) &&
+      (resolved.marketKey !== pendingMarketSelectionRef.current?.marketKey ||
+        accountIdentity !== pendingMarketSelectionRef.current?.accountIdentity)
     ) {
       void selectMarket(resolved);
     }
-  }, [cancelPendingMarketSelection, catalogue, selectMarket]);
+  }, [accountIdentity, cancelPendingMarketSelection, catalogue, selectMarket]);
 
   useEffect(
     () => () => {
       marketSelectionSequenceRef.current += 1;
-      pendingMarketKeyRef.current = null;
+      pendingMarketSelectionRef.current = null;
     },
     [],
   );
@@ -255,6 +320,12 @@ export const usePerpsProScene = () => {
   }, [fetchMarketData]);
 
   return {
+    accountLeverageConfiguration:
+      effectiveMarketSelection &&
+      currentMarket?.marketKey === effectiveMarketSelection.marketKey &&
+      effectiveMarketSelection.accountIdentity === accountIdentity
+        ? effectiveMarketSelection.accountLeverageConfiguration
+        : null,
     cancelPendingMarketSelection,
     currentMarket,
     executionActive: klineEnabled,

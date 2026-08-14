@@ -19,9 +19,29 @@ let activePrefetchCount = 0;
 
 const getMatchingLeverage = (
   coin: string,
+  address: string,
   data: ActiveAssetData | null,
 ): PerpsProLeverageConfiguration | null =>
-  data?.coin === coin ? data.leverage : null;
+  data?.coin === coin && data.user?.toLowerCase() === address.toLowerCase()
+    ? data.leverage
+    : null;
+
+export type PerpsProPreparedLeverageSources = {
+  accountLeverageConfiguration: PerpsProLeverageConfiguration | null;
+  zeroAddressLeverageBaseline: PerpsProLeverageConfiguration | null;
+};
+
+export const readPerpsProAccountLeverageConfiguration = (
+  coin: string,
+  address: string,
+): PerpsProLeverageConfiguration | null =>
+  coin && address
+    ? getMatchingLeverage(
+        coin,
+        address,
+        readActiveAssetDataFromCache(coin, address),
+      )
+    : null;
 
 export const readPerpsProZeroAddressLeverageBaseline = (
   coin: string,
@@ -29,6 +49,7 @@ export const readPerpsProZeroAddressLeverageBaseline = (
   coin
     ? getMatchingLeverage(
         coin,
+        DELETE_AGENT_EMPTY_ADDRESS,
         readActiveAssetDataFromCache(coin, DELETE_AGENT_EMPTY_ADDRESS),
       )
     : null;
@@ -80,6 +101,7 @@ type TimedFetchResult =
 
 const fetchWithinDeadline = (
   coin: string,
+  address: string,
   timeoutMs: number,
 ): Promise<TimedFetchResult> =>
   new Promise(resolve => {
@@ -94,11 +116,71 @@ const fetchWithinDeadline = (
     };
     const timeoutId = setTimeout(() => finish({ kind: 'timeout' }), timeoutMs);
 
-    void fetchActiveAssetDataWithCache(coin, DELETE_AGENT_EMPTY_ADDRESS).then(
+    void fetchActiveAssetDataWithCache(coin, address).then(
       data => finish({ data, kind: 'settled' }),
       () => finish({ data: null, kind: 'settled' }),
     );
   });
+
+const prepareLeverageConfigurationWithinDeadline = async (
+  coin: string,
+  address: string,
+  deadline: number,
+): Promise<PerpsProLeverageConfiguration | null> => {
+  const read = () => readPerpsProAccountLeverageConfiguration(coin, address);
+  const cached = read();
+  if (cached) {
+    return cached;
+  }
+
+  for (let attempt = 0; attempt < PREPARE_MAX_ATTEMPTS; attempt += 1) {
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) {
+      break;
+    }
+    const result = await fetchWithinDeadline(coin, address, remainingMs);
+    if (result.kind === 'timeout') {
+      break;
+    }
+    // The shared fetcher may return an expired entry when its network request
+    // fails. Only a fresh cache write proves that this attempt produced a
+    // usable configuration for a newly visible account-market scope.
+    const leverage = read();
+    if (leverage) {
+      return leverage;
+    }
+  }
+
+  return read();
+};
+
+export const preparePerpsProLeverageSources = async (
+  coin: string,
+  address?: string | null,
+): Promise<PerpsProPreparedLeverageSources> => {
+  if (!coin) {
+    return {
+      accountLeverageConfiguration: null,
+      zeroAddressLeverageBaseline: null,
+    };
+  }
+  const deadline = Date.now() + PREPARE_TIMEOUT_MS;
+  const [accountLeverageConfiguration, zeroAddressLeverageBaseline] =
+    await Promise.all([
+      address
+        ? prepareLeverageConfigurationWithinDeadline(coin, address, deadline)
+        : Promise.resolve(null),
+      prepareLeverageConfigurationWithinDeadline(
+        coin,
+        DELETE_AGENT_EMPTY_ADDRESS,
+        deadline,
+      ),
+    ]);
+  return {
+    accountLeverageConfiguration,
+    zeroAddressLeverageBaseline,
+  };
+};
 
 /**
  * Resolves one immutable initial configuration before a market becomes
@@ -111,29 +193,9 @@ export const preparePerpsProZeroAddressLeverageBaseline = async (
   if (!coin) {
     return null;
   }
-  const cached = readPerpsProZeroAddressLeverageBaseline(coin);
-  if (cached) {
-    return cached;
-  }
-
-  const deadline = Date.now() + PREPARE_TIMEOUT_MS;
-  for (let attempt = 0; attempt < PREPARE_MAX_ATTEMPTS; attempt += 1) {
-    const remainingMs = deadline - Date.now();
-    if (remainingMs <= 0) {
-      break;
-    }
-    const result = await fetchWithinDeadline(coin, remainingMs);
-    if (result.kind === 'timeout') {
-      break;
-    }
-    // The shared fetcher may return an expired entry when its network request
-    // fails. Only a fresh cache write proves that this attempt produced a
-    // usable baseline for a newly visible market.
-    const leverage = readPerpsProZeroAddressLeverageBaseline(coin);
-    if (leverage) {
-      return leverage;
-    }
-  }
-
-  return readPerpsProZeroAddressLeverageBaseline(coin);
+  return prepareLeverageConfigurationWithinDeadline(
+    coin,
+    DELETE_AGENT_EMPTY_ADDRESS,
+    Date.now() + PREPARE_TIMEOUT_MS,
+  );
 };

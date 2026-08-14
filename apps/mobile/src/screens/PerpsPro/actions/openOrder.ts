@@ -56,7 +56,7 @@ export interface PerpsProOpenOrderCommand {
 
 export interface PerpsProOpenOrderResult {
   error?: string;
-  failureReason?: 'requestFailed' | 'userCancelled';
+  failureReason?: 'regionRestricted' | 'requestFailed' | 'userCancelled';
   kind: 'failed' | 'filled' | 'resting' | 'staleContext' | 'unknownOutcome';
   oid?: number;
   refreshError?: string;
@@ -242,6 +242,7 @@ export interface PerpsProOpenOrderDependencies {
   }) => Promise<unknown>;
   getCurrentAccount: () => Pick<Account, 'address' | 'type'> | null;
   getCurrentDex: (coin: string) => string;
+  hasPermission: () => boolean;
   limitOrder: (params: {
     builder: typeof PERPS_BUILDER_INFO;
     coin: string;
@@ -274,6 +275,7 @@ const defaultDependencies: PerpsProOpenOrderDependencies = {
   conditionalMarket: params => getExchange().placeTPSlMarketOrder(params),
   getCurrentAccount: () => perpsStore.getState().currentPerpsAccount,
   getCurrentDex: coin => getDexByCoin(coin),
+  hasPermission: () => perpsStore.getState().hasPermission,
   limitOrder: params => getExchange().limitOrderOpen(params),
   marketOrder: params => getExchange().marketOrderOpen(params),
   refreshClearinghouse: dex => fetchClearinghouseStateHttp(dex),
@@ -320,6 +322,9 @@ export const executePerpsProOpenOrder = async (
       kind: 'failed',
     };
   }
+  if (!dependencies.hasPermission()) {
+    return { failureReason: 'regionRestricted', kind: 'failed' };
+  }
   if (!isContextCurrent(command, dependencies, sceneGuard)) {
     return { kind: 'staleContext' };
   }
@@ -331,6 +336,9 @@ export const executePerpsProOpenOrder = async (
       reduceOnly: command.reduceOnly,
       size: command.baseSize,
     };
+    if (!dependencies.hasPermission()) {
+      return { failureReason: 'regionRestricted', kind: 'failed' };
+    }
     const response =
       command.execution.kind === 'market'
         ? await dependencies.marketOrder({

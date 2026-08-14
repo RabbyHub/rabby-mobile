@@ -9,6 +9,7 @@ describe('resolvePerpsProInitialLeverage', () => {
       resolvePerpsProInitialLeverage({
         marginModeConstraint: 'normal',
         maxLeverage: 40,
+        accountConfiguration: { type: 'cross', value: 12 },
         position: { type: 'isolated', value: 7 },
         zeroAddressBaseline: { type: 'cross', value: 20 },
       }),
@@ -23,6 +24,26 @@ describe('resolvePerpsProInitialLeverage', () => {
         zeroAddressBaseline: { type: 'cross', value: 20 },
       }),
     ).toEqual({ type: 'cross', value: 20 });
+  });
+
+  it('uses the current account after position but before the zero-address baseline', () => {
+    expect(
+      resolvePerpsProInitialLeverage({
+        marginModeConstraint: 'normal',
+        maxLeverage: 40,
+        accountConfiguration: { type: 'isolated', value: 12 },
+        zeroAddressBaseline: { type: 'cross', value: 20 },
+      }),
+    ).toEqual({ type: 'isolated', value: 12 });
+    expect(
+      resolvePerpsProInitialLeverage({
+        marginModeConstraint: 'normal',
+        maxLeverage: 40,
+        position: { type: 'cross', value: 7 },
+        accountConfiguration: { type: 'isolated', value: 12 },
+        zeroAddressBaseline: { type: 'isolated', value: 20 },
+      }),
+    ).toEqual({ type: 'cross', value: 7 });
   });
 
   it('retains max leverage as the final fallback', () => {

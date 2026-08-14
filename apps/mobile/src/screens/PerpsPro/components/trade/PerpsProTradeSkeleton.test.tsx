@@ -178,7 +178,15 @@ describe('PerpsProTradeSkeleton', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-amount-unit').props.style,
       ),
-    ).toMatchObject({ borderLeftWidth: 1, height: 24, width: 52 });
+    ).toMatchObject({
+      borderLeftWidth: 1,
+      height: 24,
+      paddingLeft: 3,
+      width: 52,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('USDT').props.style),
+    ).toMatchObject({ fontSize: 12, lineHeight: 16, width: 36 });
   });
 
   it('adds the Available action and dotted explanatory labels', () => {

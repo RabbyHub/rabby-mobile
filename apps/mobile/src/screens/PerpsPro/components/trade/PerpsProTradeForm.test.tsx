@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Keyboard, Platform, StyleSheet } from 'react-native';
 
 jest.mock('@/assets/icons/swap/switch-cc.svg', () => {
   const ReactModule = require('react');
@@ -457,7 +457,7 @@ describe('PerpsProTradeForm order matrix', () => {
     render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
 
     expect(screen.getAllByText('liquidationPrice')).toHaveLength(2);
-    expect(screen.getByText('50000.00 USDC')).toBeTruthy();
+    expect(screen.getByText('50,000.00 USDC')).toBeTruthy();
     expect(screen.getByText('--')).toBeTruthy();
   });
 
@@ -554,7 +554,10 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByText('⌄')).toBeNull();
   });
 
-  it('forwards continuous Slider changes and keeps five visual points', () => {
+  it('dismisses Amount focus when Slider interaction takes ownership', () => {
+    const dismiss = jest
+      .spyOn(Keyboard, 'dismiss')
+      .mockImplementation(() => undefined);
     const trade = controller();
     render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
     const slider = screen.getByTestId('rne-slider');
@@ -564,7 +567,9 @@ describe('PerpsProTradeForm order matrix', () => {
     ).toHaveLength(5);
     fireEvent(slider, 'valueChange', 42.6);
     expect(trade.setPercentage).toHaveBeenCalledWith(43);
+    expect(dismiss).not.toHaveBeenCalled();
     fireEvent(slider, 'slidingStart');
+    expect(dismiss).toHaveBeenCalledTimes(1);
     expect(
       screen.getByTestId('perps-pro-trade-amount-slider-tooltip'),
     ).toBeTruthy();
@@ -572,6 +577,15 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(
       screen.queryByTestId('perps-pro-trade-amount-slider-tooltip'),
     ).toBeNull();
+
+    fireEvent(
+      screen.getByTestId('perps-pro-trade-amount-slider'),
+      'accessibilityAction',
+      { nativeEvent: { actionName: 'increment' } },
+    );
+    expect(dismiss).toHaveBeenCalledTimes(2);
+    expect(trade.setPercentage).toHaveBeenLastCalledWith(25);
+    dismiss.mockRestore();
   });
 
   it('disables TP/SL for Reduce Only without clearing either leg draft', () => {
