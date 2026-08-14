@@ -60,7 +60,8 @@ const PerpsProKlineChart: React.FC<{
   feed: PerpsCandleFeedSnapshot;
   interval: PerpsCandleInterval;
   market: PerpsProMarket;
-}> = ({ feed, interval, market }) => {
+  visible: boolean;
+}> = ({ feed, interval, market, visible }) => {
   const chartRef = useRef<TradingViewChartRef>(null);
   const lastSentRef = useRef<{
     identity: string;
@@ -108,7 +109,6 @@ const PerpsProKlineChart: React.FC<{
       priceDecimals,
     ],
   );
-
   const handleChartReady = useCallback(() => {
     setChartFailed(false);
     setReadyVersion(version => version + 1);
@@ -213,13 +213,11 @@ const PerpsProKlineChart: React.FC<{
   }, [feed.identity, isIntervalSwitchLoading]);
 
   useEffect(() => {
-    if (readyVersion === 0 || chartFailed) {
+    if (visible) {
       return;
     }
-    chartRef.current?.updatePerpsProReferencePrice(
-      market.marketData.prevDayPx || null,
-    );
-  }, [chartFailed, market.marketData.prevDayPx, readyVersion]);
+    chartRef.current?.clearCrosshair();
+  }, [visible]);
 
   const showSkeleton =
     chartFailed ||
@@ -338,6 +336,7 @@ export const PerpsProKlineSheet: React.FC<{
             feed={kline.feed}
             interval={kline.interval}
             market={market}
+            visible={visible}
           />
           <View style={themedStyles.footer} />
         </BottomSheetView>

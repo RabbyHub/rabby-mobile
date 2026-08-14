@@ -105,10 +105,6 @@ type DuplexDefs = {
             type: 'CLEAR_CROSSHAIR';
           }
         | {
-            type: 'UPDATE_PERPS_PRO_REFERENCE_PRICE';
-            price: string | null;
-          }
-        | {
             type: 'UPDATE_THEME';
             colors: {
               background: string;

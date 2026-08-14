@@ -321,7 +321,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     });
   });
 
-  it('sends the Perps Pro reference price only after the chart is ready', () => {
+  it('does not expose the retired Perps Pro reference-price bridge', () => {
     const chartRef = React.createRef<TradingViewChartRef>();
     render(
       <TradingViewCandleChart
@@ -331,21 +331,6 @@ describe('TradingViewCandleChart protocol compatibility', () => {
       />,
     );
 
-    act(() => chartRef.current?.updatePerpsProReferencePrice('60000'));
-    expect(
-      mockSendMessage.mock.calls.some(
-        call => call[0].data?.type === 'UPDATE_PERPS_PRO_REFERENCE_PRICE',
-      ),
-    ).toBe(false);
-
-    markChartReady();
-    act(() => chartRef.current?.updatePerpsProReferencePrice('60000'));
-    expect(mockSendMessage).toHaveBeenCalledWith({
-      type: 'TRADINGVIEW_MESSAGE',
-      data: {
-        type: 'UPDATE_PERPS_PRO_REFERENCE_PRICE',
-        price: '60000',
-      },
-    });
+    expect(chartRef.current).not.toHaveProperty('updatePerpsProReferencePrice');
   });
 });
