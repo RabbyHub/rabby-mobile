@@ -242,7 +242,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     ]);
   });
 
-  it('keeps the right-aligned Unfilled column intrinsic so long content extends left', () => {
+  it('keeps the right-aligned Unfilled column single-line so long content extends left', () => {
     render(
       <PerpsProPositionTpSlSheet
         amountUnit="base"
@@ -271,20 +271,33 @@ describe('PerpsProPositionTpSlSheet', () => {
         screen.getByTestId('perps-pro-position-tpsl-order-2-unfilled').props
           .style,
       ),
-    ).toMatchObject({ overflow: 'visible', position: 'relative' });
-    expect(label.props.numberOfLines).toBeUndefined();
-    expect(value.props.numberOfLines).toBeUndefined();
+    ).toMatchObject({
+      flex: 103,
+      flexDirection: 'row',
+      height: 36,
+      minWidth: 0,
+      overflow: 'visible',
+      position: 'relative',
+    });
+    expect(label.props.children).toBe('Unfilled Amt (BTC)');
+    expect(label.props.numberOfLines).toBe(1);
+    expect(label.props.ellipsizeMode).toBeUndefined();
+    expect(value.props.children).toBe('0.800(80.00%)');
+    expect(value.props.numberOfLines).toBe(1);
+    expect(value.props.ellipsizeMode).toBeUndefined();
     expect(StyleSheet.flatten(label.props.style)).toMatchObject({
       flexShrink: 0,
       position: 'absolute',
       right: 0,
       textAlign: 'right',
+      top: 0,
     });
     expect(StyleSheet.flatten(value.props.style)).toMatchObject({
       flexShrink: 0,
       position: 'absolute',
       right: 0,
       textAlign: 'right',
+      top: 20,
     });
   });
 
