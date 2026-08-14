@@ -519,8 +519,20 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 34 });
-    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
+    ).toMatchObject({ height: 50 });
+    const infoTabsOverlayStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
+    );
+    expect(infoTabsOverlayStyle).toEqual(
+      expect.objectContaining({ height: 34 }),
+    );
+    const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
+    expect(
+      typeof infoTabsTranslateY === 'number'
+        ? infoTabsTranslateY
+        : infoTabsTranslateY.__getValue(),
+    ).toBe(536);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
 
