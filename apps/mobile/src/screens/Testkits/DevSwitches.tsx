@@ -124,6 +124,10 @@ import { useAppLogFileSwitch } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
 import { useAndroidWeakFaceBiometricsRegressionSwitch } from '@/core/apis/androidBiometricsRegression';
 import { storeApisBiometrics } from '@/hooks/biometrics';
+import {
+  getIncludeAllAccountTypesInAssetTop10,
+  setIncludeAllAccountTypesInAssetTop10,
+} from '@/core/utils/assetTop10AccountTypeSetting';
 
 export const makeNoop = () => () => {};
 
@@ -1618,6 +1622,58 @@ function DevSwitchPerpsWatchAddress() {
   );
 }
 
+function DevSwitchAssetTop10AccountTypes() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const [includeAllAccountTypes, setIncludeAllAccountTypes] = useState(
+    getIncludeAllAccountTypesInAssetTop10,
+  );
+
+  const updateIncludeAllAccountTypes = useCallback((enabled: boolean) => {
+    setIncludeAllAccountTypes(setIncludeAllAccountTypesInAssetTop10(enabled));
+  }, []);
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Asset Top10 Account Types
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          updateIncludeAllAccountTypes(!includeAllAccountTypes);
+        }}>
+        <AppSwitch2024
+          value={includeAllAccountTypes}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={updateIncludeAllAccountTypes}
+        />
+        <Text style={styles.switchLabel}>
+          {includeAllAccountTypes
+            ? 'Include Watch, Safe, and WalletConnect in asset Top10'
+            : 'Exclude Watch, Safe, and WalletConnect (default)'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Development/regression builds only. Restart the app after changing this
+        switch. Balance/AppChain refresh, 24h, Curve, Token, DeFi, NFT, History,
+        and Perps will use the resulting Top10 addresses.
+      </Text>
+    </View>
+  );
+}
+
 function DevSwitchRegressionScenarioE2E() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { screenE2EEnabled, setScreenE2EEnabled } = useScreenE2EEnabled();
@@ -1849,6 +1905,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Home Notifications</Text>
         <DevTestHomeCenterArea />
+
+        <Text style={styles.areaTitle}>Home Assets</Text>
+        <DevSwitchAssetTop10AccountTypes />
 
         <Text style={styles.areaTitle}>Batch Revoke</Text>
         <DevSwitchBatchRevoke />

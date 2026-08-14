@@ -54,7 +54,8 @@ import Animated, {
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { currencyServiceApi } from '@/core/serviceApi/currency';
-import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
+import { filterAssetTopAccounts } from '@/core/apis/account';
+import { storeApiAccounts, useAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import addressBalanceStore, {
@@ -686,8 +687,12 @@ function HomeOverviewPostStartupGate({
 // Deliberately outside the startup gates: every ms this waits behind
 // postReady is added to the position card's blank time.
 function HomeOverviewPerpsPositionSubscription() {
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
+  const { accounts } = useAccounts();
+  const assetAccounts = useMemo(
+    () => filterAssetTopAccounts(accounts),
+    [accounts],
+  );
+  const sortedAccounts = useSortAddressList(assetAccounts);
 
   useSubscribePosition(sortedAccounts);
 
