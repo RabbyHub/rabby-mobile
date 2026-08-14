@@ -66,12 +66,16 @@ const order = (
   category: 'basic',
   coin: 'BTC',
   displayAmountQuote: '200',
+  editKind: 'basicLimit',
   executionPrice: '100',
   executionPriceKind: 'limit',
   filledQuote: '100',
   filledRatio: '0.5',
   filledSize: '1',
   key: 'basic:BTC:1',
+  isPositionTpsl: false,
+  isTopLevel: true,
+  isTrigger: false,
   oid: 1,
   orderType: 'Limit',
   reduceOnly: false,
@@ -80,6 +84,7 @@ const order = (
   tif: 'Gtc',
   timestamp: 1_700_000_000_000,
   triggerCondition: null,
+  triggerKind: null,
   triggerPrice: null,
   ...overrides,
 });
@@ -291,5 +296,34 @@ describe('PerpsProOpenOrderCard', () => {
     expect(screen.getByText('Amount (USDC)')).toBeTruthy();
     expect(screen.getByText('-')).toBeTruthy();
     expect(screen.queryByText('0.00')).toBeNull();
+  });
+
+  it('only invokes the edit callback for an eligible enabled order', () => {
+    const onEdit = jest.fn();
+    const { rerender } = render(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        editEnabled
+        onCancel={jest.fn()}
+        onEdit={onEdit}
+        order={order()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ oid: 1 }));
+
+    rerender(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        editEnabled
+        onCancel={jest.fn()}
+        onEdit={onEdit}
+        order={order({ editKind: null })}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Edit' }).props.accessibilityState,
+    ).toMatchObject({ disabled: true });
   });
 });

@@ -2,6 +2,8 @@ import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
 export type PerpsOpenOrderCategory = 'basic' | 'conditional' | 'unsupported';
+export type PerpsOpenOrderEditKind = 'basicLimit' | 'partialTpSlMarket';
+export type PerpsOpenOrderTriggerKind = 'stopLoss' | 'takeProfit';
 
 export interface PerpsOpenOrderProgress {
   filledRatio: string;
@@ -16,10 +18,14 @@ export interface PerpsOpenOrderViewModel {
   displayAmountQuote: string | null;
   executionPrice: string | null;
   executionPriceKind: 'limit' | 'market';
+  editKind: PerpsOpenOrderEditKind | null;
   filledRatio: string;
   filledQuote: string;
   filledSize: string;
   key: string;
+  isPositionTpsl: boolean;
+  isTopLevel: boolean;
+  isTrigger: boolean;
   oid: number;
   orderType: string;
   reduceOnly: boolean;
@@ -28,6 +34,7 @@ export interface PerpsOpenOrderViewModel {
   tif: string | null;
   timestamp: number;
   triggerCondition: string | null;
+  triggerKind: PerpsOpenOrderTriggerKind | null;
   triggerPrice: string | null;
 }
 
@@ -39,6 +46,54 @@ const decimal = (value: unknown): BigNumber => {
 const positiveDecimalOrNull = (value: unknown): string | null => {
   const result = decimal(value);
   return result.gt(0) ? result.toString() : null;
+};
+
+const resolveTriggerKind = (
+  order: OpenOrder,
+): PerpsOpenOrderTriggerKind | null => {
+  const orderType = String(order.orderType || '').toLowerCase();
+  if (orderType === 'take profit market') {
+    return 'takeProfit';
+  }
+  if (orderType === 'stop market') {
+    return 'stopLoss';
+  }
+  return null;
+};
+
+const resolveEditKind = ({
+  category,
+  hasChildren,
+  isTopLevel,
+  order,
+}: {
+  category: PerpsOpenOrderCategory;
+  hasChildren: boolean;
+  isTopLevel: boolean;
+  order: OpenOrder;
+}): PerpsOpenOrderEditKind | null => {
+  if (!isTopLevel || hasChildren || !positiveDecimalOrNull(order.sz)) {
+    return null;
+  }
+  if (
+    category === 'basic' &&
+    order.orderType === 'Limit' &&
+    (order.tif === 'Gtc' || order.tif === 'Alo') &&
+    !!positiveDecimalOrNull(order.limitPx)
+  ) {
+    return 'basicLimit';
+  }
+  if (
+    category === 'conditional' &&
+    order.isTrigger &&
+    !order.isPositionTpsl &&
+    order.reduceOnly &&
+    !!positiveDecimalOrNull(order.triggerPx) &&
+    !!resolveTriggerKind(order)
+  ) {
+    return 'partialTpSlMarket';
+  }
+  return null;
 };
 
 const calculateDisplayAmountQuote = ({
@@ -105,8 +160,10 @@ export const calculateOpenOrderProgress = ({
 
 export const buildPerpsOpenOrderViewModel = (
   order: OpenOrder,
+  context: { isTopLevel?: boolean } = {},
 ): PerpsOpenOrderViewModel => {
   const category = classifyPerpsOpenOrder(order);
+  const isTopLevel = context.isTopLevel !== false;
   const progress = calculateOpenOrderProgress({
     originalSize: order.origSz,
     remainingSize: order.sz,
@@ -134,12 +191,21 @@ export const buildPerpsOpenOrderViewModel = (
     }),
     executionPrice: isMarket ? null : limitPrice,
     executionPriceKind,
+    editKind: resolveEditKind({
+      category,
+      hasChildren: !!order.children?.length,
+      isTopLevel,
+      order,
+    }),
     filledRatio: progress.filledRatio,
     filledQuote: limitPrice
       ? decimal(progress.filledSize).multipliedBy(limitPrice).toString()
       : '0',
     filledSize: progress.filledSize,
     key: `${category}:${order.coin}:${order.oid}`,
+    isPositionTpsl: order.isPositionTpsl,
+    isTopLevel,
+    isTrigger: order.isTrigger,
     oid: order.oid,
     orderType: order.orderType,
     reduceOnly: order.reduceOnly,
@@ -149,23 +215,30 @@ export const buildPerpsOpenOrderViewModel = (
     timestamp: order.timestamp,
     triggerCondition:
       category === 'conditional' ? order.triggerCondition || null : null,
+    triggerKind: category === 'conditional' ? resolveTriggerKind(order) : null,
     triggerPrice,
   };
+};
+
+type FlattenedOpenOrder = {
+  isTopLevel: boolean;
+  order: OpenOrder;
 };
 
 const flattenOpenOrders = (
   orders: OpenOrder[],
   seen = new Set<number>(),
-): OpenOrder[] => {
-  const result: OpenOrder[] = [];
+  isTopLevel = true,
+): FlattenedOpenOrder[] => {
+  const result: FlattenedOpenOrder[] = [];
   for (const order of orders) {
     if (seen.has(order.oid)) {
       continue;
     }
     seen.add(order.oid);
-    result.push(order);
+    result.push({ isTopLevel, order });
     if (order.children?.length) {
-      result.push(...flattenOpenOrders(order.children, seen));
+      result.push(...flattenOpenOrders(order.children, seen, false));
     }
   }
   return result;
@@ -189,7 +262,9 @@ export const buildPerpsOpenOrders = (
   orders: OpenOrder[],
 ): PerpsOpenOrderViewModel[] =>
   sortPerpsOpenOrders(
-    flattenOpenOrders(orders).map(buildPerpsOpenOrderViewModel),
+    flattenOpenOrders(orders).map(({ isTopLevel, order }) =>
+      buildPerpsOpenOrderViewModel(order, { isTopLevel }),
+    ),
   );
 
 export const getPerpsOpenOrderCounts = (orders: PerpsOpenOrderViewModel[]) => ({

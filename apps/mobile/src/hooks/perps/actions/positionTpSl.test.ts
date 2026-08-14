@@ -145,6 +145,66 @@ describe('Perps position TP/SL action', () => {
     expect(deps.refresh).toHaveBeenCalledWith('');
   });
 
+  it('rejects a direct Open Orders edit when the expected trigger fingerprint changed', async () => {
+    const deps = dependencies({
+      getLiveOpenOrders: jest.fn(() => [openOrder({ triggerPx: '111' })]),
+    });
+    const value = command({
+      legs: [
+        {
+          expectedOrder: {
+            execution: 'market',
+            remainingSize: '0.5',
+            side: 'A',
+            triggerPrice: '110',
+          },
+          kind: 'takeProfit',
+          replaceOid: 7,
+          size: '0.4',
+          triggerPrice: '112',
+        },
+      ],
+    });
+
+    await expect(executePerpsPositionTpSl(value, deps)).resolves.toEqual({
+      kind: 'staleContext',
+      legs: [],
+    });
+    expect(deps.cancelOrder).not.toHaveBeenCalled();
+    expect(deps.placePartial).not.toHaveBeenCalled();
+  });
+
+  it('matches a replacement fingerprint by coin and oid across markets', async () => {
+    const deps = dependencies({
+      getLiveOpenOrders: jest.fn(() => [
+        openOrder({ coin: 'ETH', triggerPx: '999' }),
+        openOrder(),
+      ]),
+    });
+    const value = command({
+      legs: [
+        {
+          expectedOrder: {
+            execution: 'market',
+            remainingSize: '0.5',
+            side: 'A',
+            triggerPrice: '110',
+          },
+          kind: 'takeProfit',
+          replaceOid: 7,
+          size: '0.4',
+          triggerPrice: '112',
+        },
+      ],
+    });
+
+    await expect(executePerpsPositionTpSl(value, deps)).resolves.toMatchObject({
+      kind: 'success',
+      legs: [{ cancel: 'success', create: 'success' }],
+    });
+    expect(deps.cancelOrder).toHaveBeenCalledTimes(1);
+  });
+
   it('creates TP and SL as independent partial triggers even when combined coverage exceeds 100%', async () => {
     const deps = dependencies({ getLiveOpenOrders: jest.fn(() => []) });
     const value = command({

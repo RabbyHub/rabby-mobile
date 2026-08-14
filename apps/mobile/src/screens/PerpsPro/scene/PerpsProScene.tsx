@@ -64,6 +64,9 @@ import {
   type PerpsProMarketSelectorHandle,
 } from '../components/market/PerpsProMarketSelector';
 import { PerpsProOpenOrderCard } from '../components/open-orders/PerpsProOpenOrderCard';
+import { PerpsProBasicOrderEditSheet } from '../components/open-orders/PerpsProBasicOrderEditSheet';
+import { PerpsProConditionalOrderEditSheet } from '../components/open-orders/PerpsProConditionalOrderEditSheet';
+import { PerpsProOpenOrderEditConfirmationSheet } from '../components/open-orders/PerpsProOpenOrderEditConfirmationSheet';
 import { PerpsProCancelConfirmationModal } from '../components/open-orders/PerpsProCancelConfirmationModal';
 import { PerpsProOpenOrdersControls } from '../components/open-orders/PerpsProOpenOrdersControls';
 import { PerpsProPositionCard } from '../components/positions/PerpsProPositionCard';
@@ -82,6 +85,7 @@ import {
   PERPS_PRO_MAIN_COLUMN_HEIGHT,
 } from '../model/layout';
 import type { PerpsOpenOrderViewModel } from '../model/openOrder';
+import { isMatchingPartialTpSlPosition } from '../model/openOrderEdit';
 import type { PerpsPositionViewModel } from '../model/position';
 import { PerpsProRealtimeOrderBook } from './PerpsProRealtimeOrderBook';
 import {
@@ -90,6 +94,7 @@ import {
 } from './usePerpsProInfoPanel';
 import { usePerpsProScene } from './usePerpsProScene';
 import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
+import { usePerpsProOpenOrderEdit } from './usePerpsProOpenOrderEdit';
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
@@ -173,6 +178,11 @@ export const PerpsProScene: React.FC<{
     trade.amountUnit,
   );
   const cancelOrders = usePerpsProCancelOrders();
+  const openOrderEdit = usePerpsProOpenOrderEdit(
+    info.accountIdentity,
+    trade.amountUnit,
+  );
+  const openOpenOrderEdit = openOrderEdit.open;
   const closeAll = usePerpsProCloseAll(info.accountIdentity);
   const transfer = usePerpsProTransfer(info.accountIdentity);
   const { setHideOtherSymbols } = info;
@@ -350,6 +360,10 @@ export const PerpsProScene: React.FC<{
     info.openOrders,
     info.positions,
   ]);
+  const positionsByCoin = useMemo(
+    () => new Map(info.positions.map(position => [position.coin, position])),
+    [info.positions],
+  );
 
   const renderItem = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
@@ -492,15 +506,22 @@ export const PerpsProScene: React.FC<{
               onToggleHideOtherSymbols={toggleHideOtherSymbols}
             />
           );
-        case 'open-order':
+        case 'open-order': {
+          const editPosition = positionsByCoin.get(item.order.coin) ?? null;
           return (
             <PerpsProOpenOrderCard
               amountUnit={trade.amountUnit}
               cancelPending={cancelOrders.isOrderPending(item.order.oid)}
+              editEnabled={
+                item.order.editKind === 'basicLimit' ||
+                isMatchingPartialTpSlPosition(item.order, editPosition)
+              }
               onCancel={cancelOrders.confirmCancelOrder}
+              onEdit={order => openOpenOrderEdit(order, editPosition)}
               order={item.order}
             />
           );
+        }
       }
     },
     [
@@ -521,6 +542,8 @@ export const PerpsProScene: React.FC<{
       positionActions.openLeverageEditor,
       positionActions.openCloseEditor,
       positionTpSl.open,
+      openOpenOrderEdit,
+      positionsByCoin,
       styles,
       t,
       toggleHideOtherSymbols,
@@ -646,6 +669,39 @@ export const PerpsProScene: React.FC<{
         onCancel={cancelOrders.dismissConfirmation}
         onConfirm={cancelOrders.confirmCancellation}
       />
+      {openOrderEdit.editor?.category === 'basic' ? (
+        <PerpsProBasicOrderEditSheet
+          coveredByReview={!!openOrderEdit.review}
+          editor={openOrderEdit.editor}
+          onClose={openOrderEdit.close}
+          onReview={openOrderEdit.requestBasicReview}
+          visible
+        />
+      ) : null}
+      {openOrderEdit.editor?.category === 'conditional' ? (
+        <PerpsProConditionalOrderEditSheet
+          coveredByReview={!!openOrderEdit.review}
+          editor={openOrderEdit.editor}
+          onClose={openOrderEdit.close}
+          onReview={openOrderEdit.requestConditionalReview}
+          position={
+            positionsByCoin.get(openOrderEdit.editor.order.coin) ??
+            openOrderEdit.editor.position
+          }
+          visible
+        />
+      ) : null}
+      {openOrderEdit.editor ? (
+        <PerpsProOpenOrderEditConfirmationSheet
+          editor={openOrderEdit.editor}
+          onClose={openOrderEdit.closeReview}
+          onConfirm={openOrderEdit.confirm}
+          onToggleSkipConfirmation={openOrderEdit.toggleSkipConfirmation}
+          pending={openOrderEdit.pending}
+          review={openOrderEdit.review}
+          skipConfirmation={openOrderEdit.skipConfirmation}
+        />
+      ) : null}
       <PerpsProCloseAllConfirmationModal
         confirmation={closeAll.confirmation}
         onCancel={closeAll.dismissConfirmation}

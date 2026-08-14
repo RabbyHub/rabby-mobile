@@ -154,4 +154,62 @@ describe('Perps Pro open order model', () => {
     expect(limitOrder.displayAmountQuote).toBe('67');
     expect(marketOrder.displayAmountQuote).toBeNull();
   });
+
+  it('only enables the two approved top-level edit shapes', () => {
+    const [basic, partial, full, opening, conditionalLimit, parent, child] =
+      buildPerpsOpenOrders([
+        makeOrder({ oid: 1 }),
+        makeOrder({
+          isTrigger: true,
+          oid: 2,
+          orderType: 'Take Profit Market',
+          reduceOnly: true,
+          side: 'A',
+          triggerPx: '60000',
+        }),
+        makeOrder({
+          isPositionTpsl: true,
+          isTrigger: true,
+          oid: 3,
+          orderType: 'Stop Market',
+          reduceOnly: true,
+          sz: '0',
+          triggerPx: '40000',
+        }),
+        makeOrder({
+          isTrigger: true,
+          oid: 4,
+          orderType: 'Stop Market',
+          reduceOnly: false,
+          triggerPx: '40000',
+        }),
+        makeOrder({
+          isTrigger: true,
+          oid: 5,
+          orderType: 'Stop Limit',
+          reduceOnly: true,
+          triggerPx: '40000',
+        }),
+        makeOrder({
+          children: [
+            makeOrder({
+              isTrigger: true,
+              oid: 7,
+              orderType: 'Take Profit Market',
+              reduceOnly: true,
+              triggerPx: '60000',
+            }),
+          ],
+          oid: 6,
+        }),
+      ]).sort((left, right) => left.oid - right.oid);
+
+    expect(basic.editKind).toBe('basicLimit');
+    expect(partial.editKind).toBe('partialTpSlMarket');
+    expect(full.editKind).toBeNull();
+    expect(opening.editKind).toBeNull();
+    expect(conditionalLimit.editKind).toBeNull();
+    expect(parent.editKind).toBeNull();
+    expect(child).toMatchObject({ editKind: null, isTopLevel: false });
+  });
 });
