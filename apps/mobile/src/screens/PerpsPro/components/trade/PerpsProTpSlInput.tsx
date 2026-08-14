@@ -261,10 +261,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 2,
     height: 16,
-    left: 6,
+    left: 4,
     position: 'absolute',
     top: 4,
-    width: 44,
+    width: 46,
   },
   modeText: {
     color: colors2024['neutral-title-1'],
@@ -273,7 +273,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
     textAlign: 'center',
-    width: 34,
+    width: 36,
   },
   caret: {
     height: 6,
