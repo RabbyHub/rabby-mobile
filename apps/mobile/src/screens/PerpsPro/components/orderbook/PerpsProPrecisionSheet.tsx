@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPerpsProPrecisionSheetLayout } from '../../model/layout';
 import type { PerpsTickOption } from '../../model/orderBook';
 import { formatPerpsProPrice } from '../../utils/format';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 export const PerpsProPrecisionSheet: React.FC<{
   onClose: () => void;
@@ -33,6 +34,7 @@ export const PerpsProPrecisionSheet: React.FC<{
     () => ({ paddingBottom: sheetLayout.bottomPadding }),
     [sheetLayout.bottomPadding],
   );
+  usePerpsProSheetNavigationRegistration({ active: true, dismiss: onClose });
 
   useEffect(() => {
     modalRef.current?.present();

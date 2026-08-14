@@ -16,6 +16,7 @@ import type { PerpsProOpenOrderCommand } from '../../actions/openOrder';
 import type { PerpsProAttachedTpSlCommand } from '../../actions/openOrderWithAttachedTpSl';
 import type { PerpsProMarket } from '../../model/market';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 // Figma 80430:12847 defines a compact 36px Pro confirmation action.
 const PERPS_PRO_ORDER_CONFIRM_HEIGHT = 36;
@@ -45,6 +46,11 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    usePerpsProSheetNavigationRegistration({
+      active: !!command,
+      dismiss: onClose,
+      dismissible: !pending,
+    });
 
     useEffect(() => {
       if (command) modalRef.current?.present();

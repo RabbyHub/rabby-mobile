@@ -27,6 +27,7 @@ import {
   formatPerpsProFundingRate,
   formatPerpsProSignedUsd,
 } from '../../utils/format';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 type FundingHistoryState = {
   error: Error | null;
@@ -56,6 +57,7 @@ export const PerpsProFundingDetailSheet: React.FC<{
   const { colors2024, isLight, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
+  usePerpsProSheetNavigationRegistration({ active: true, dismiss: onClose });
   const historyEndTimeRef = useRef(
     getEstimatedPerpsServerTime(serverClock, Date.now()) ?? Date.now(),
   );

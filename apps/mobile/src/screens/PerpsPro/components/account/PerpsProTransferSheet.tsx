@@ -17,6 +17,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { formatPerpsProDecimal } from '../../utils/format';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
 
 const SHORTCUTS = [0.25, 0.5, 0.75, 1] as const;
@@ -36,6 +37,11 @@ export const PerpsProTransferSheet: React.FC<{
     getStyle: getPerpsProTransferSheetStyles,
   });
   const { t } = useTranslation();
+  usePerpsProSheetNavigationRegistration({
+    active: visible,
+    dismiss: onClose,
+    dismissible: !pending,
+  });
 
   useEffect(() => {
     if (visible) {

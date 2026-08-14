@@ -21,6 +21,30 @@ jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
   }),
 }));
 
+jest.mock('@/hooks/navigation', () => ({
+  useRabbyAppNavigation: () => ({ setOptions: jest.fn() }),
+}));
+
+jest.mock('@/hooks/useAppGesture', () => ({
+  useHandleBackPressClosable: jest.fn(),
+}));
+
+jest.mock('react-native-screens', () => ({
+  FullWindowOverlay: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock('react-native-gesture-handler', () => {
+  const gesture: Record<string, jest.Mock> = {};
+  gesture.activeOffsetX = jest.fn(() => gesture);
+  gesture.failOffsetY = jest.fn(() => gesture);
+  gesture.runOnJS = jest.fn(() => gesture);
+  gesture.onEnd = jest.fn(() => gesture);
+  return {
+    Gesture: { Pan: () => gesture },
+    GestureDetector: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
 jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

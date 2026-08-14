@@ -9,6 +9,8 @@ import React, { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
+
 type MarginMode = 'cross' | 'isolated';
 
 export const PerpsProMarginModeSheet: React.FC<{
@@ -30,6 +32,10 @@ export const PerpsProMarginModeSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, isLight, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    usePerpsProSheetNavigationRegistration({
+      active: visible,
+      dismiss: onClose,
+    });
 
     useEffect(() => {
       if (visible) modalRef.current?.present();
