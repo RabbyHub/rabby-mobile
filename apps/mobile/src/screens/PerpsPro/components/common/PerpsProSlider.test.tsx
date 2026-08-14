@@ -104,4 +104,24 @@ describe('PerpsProSlider neutral design', () => {
       borderColor: 'neutral-line',
     });
   });
+
+  it('forwards optional gesture lifecycle callbacks without enabling behavior by default', () => {
+    const onSlidingComplete = jest.fn();
+    const onSlidingStart = jest.fn();
+    const onValueChange = jest.fn();
+    render(
+      <PerpsProSlider
+        onSlidingComplete={onSlidingComplete}
+        onSlidingStart={onSlidingStart}
+        onValueChange={onValueChange}
+        value={20}
+      />,
+    );
+
+    expect(screen.getByTestId('slider-input').props).toMatchObject({
+      onSlidingComplete,
+      onSlidingStart,
+      onValueChange,
+    });
+  });
 });

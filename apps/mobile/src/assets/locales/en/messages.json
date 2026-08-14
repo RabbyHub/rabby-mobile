@@ -2884,6 +2884,7 @@
           "leverage": "Leverage",
           "adjustLeverage": "Adjust Leverage",
           "upToLeverage": "Up To {{leverage}}x",
+          "invalidLeverage": "Invalid leverage",
           "leverageUpdated": "Leverage changed to {{leverage}}x",
           "leverageUpdateFailed": "Cannot Change Leverage: {{reason}}",
           "marginAction": "Margin",

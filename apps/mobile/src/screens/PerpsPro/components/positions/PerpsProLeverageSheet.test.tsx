@@ -1,5 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { Keyboard } from 'react-native';
+
+const mockShowToast = jest.fn();
+const mockSliderHapticComplete = jest.fn();
+const mockSliderHapticStart = jest.fn();
+const mockSliderHapticValueChange = jest.fn();
+const mockUseSliderHaptics = jest.fn();
+const mockBottomSheetInputBlur = jest.fn();
+const mockBottomSheetInputFocus = jest.fn();
+const mockBottomSheetInputSetNativeProps = jest.fn();
+const mockKeyboardDismiss = jest
+  .spyOn(Keyboard, 'dismiss')
+  .mockImplementation(jest.fn());
 
 jest.mock('@/components/AutoLockView', () => require('react-native').View);
 
@@ -28,6 +41,11 @@ jest.mock('@/components/customized/BottomSheet', () => {
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
+  TextInput: require('react-native').TextInput,
+}));
+
+jest.mock('@/hooks/perps/showToast', () => ({
+  showToast: (...args: unknown[]) => mockShowToast(...args),
 }));
 
 jest.mock('@/components2024/Button', () => ({
@@ -67,9 +85,25 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-jest.mock('@gorhom/bottom-sheet', () => ({
-  BottomSheetView: require('react-native').View,
-}));
+jest.mock('@gorhom/bottom-sheet', () => {
+  const ReactModule = require('react');
+  return {
+    BottomSheetTextInput: ReactModule.forwardRef(
+      (props: object, ref: React.Ref<unknown>) => {
+        ReactModule.useImperativeHandle(ref, () => ({
+          blur: mockBottomSheetInputBlur,
+          focus: mockBottomSheetInputFocus,
+          setNativeProps: mockBottomSheetInputSetNativeProps,
+        }));
+        return ReactModule.createElement(require('react-native').TextInput, {
+          ...props,
+          testBottomSheetInputHost: true,
+        });
+      },
+    ),
+    BottomSheetView: require('react-native').View,
+  };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -78,6 +112,8 @@ jest.mock('react-i18next', () => ({
         ? 'Adjust Leverage'
         : key.endsWith('upToLeverage')
         ? `Up To ${params?.leverage}x`
+        : key.endsWith('invalidLeverage')
+        ? 'Invalid leverage'
         : 'Confirm',
   }),
 }));
@@ -93,9 +129,24 @@ jest.mock('../common/PerpsProSlider', () => ({
   },
 }));
 
+jest.mock('../common/usePerpsProSliderHaptics', () => ({
+  usePerpsProSliderHaptics: (options: object) => {
+    mockUseSliderHaptics(options);
+    return {
+      onSlidingComplete: mockSliderHapticComplete,
+      onSlidingStart: mockSliderHapticStart,
+      onValueChange: mockSliderHapticValueChange,
+    };
+  },
+}));
+
 import { PerpsProLeverageSheet } from './PerpsProLeverageSheet';
 
 describe('PerpsProLeverageSheet', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('matches the compact Figma contract and confirms the draft value', () => {
     const onConfirm = jest.fn();
     render(
@@ -112,26 +163,129 @@ describe('PerpsProLeverageSheet', () => {
     expect(screen.getByTestId('leverage-sheet').props.snapPoints).toEqual([
       288,
     ]);
+    expect(screen.getByTestId('leverage-sheet').props).toMatchObject({
+      android_keyboardInputMode: 'adjustPan',
+      enableDynamicSizing: false,
+      keyboardBehavior: 'interactive',
+      keyboardBlurBehavior: 'restore',
+    });
     expect(screen.getByText('Adjust Leverage')).toBeTruthy();
     expect(screen.getByText('Up To 40x')).toBeTruthy();
-    expect(screen.getByText('20x')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
+      '20',
+    );
+    expect(
+      screen.getByTestId('perps-pro-leverage-input').props
+        .testBottomSheetInputHost,
+    ).toBe(true);
+    expect(screen.getByText('x').props.pointerEvents).toBe('none');
+    fireEvent(screen.getByTestId('perps-pro-leverage-input'), 'focus', {
+      nativeEvent: {},
+    });
+    expect(
+      screen.getByTestId('perps-pro-leverage-input').props.selection,
+    ).toEqual({ end: 2, start: 2 });
     expect(screen.getByTestId('leverage-slider').props).toMatchObject({
       pointCount: 5,
       tone: 'neutral',
+    });
+    expect(mockUseSliderHaptics).toHaveBeenCalledWith({
+      disabled: false,
+      maximumValue: 40,
+      minimumValue: 1,
+      step: 1,
+      value: 20,
     });
     expect(
       screen.getByTestId('leverage-slider').props.hideMinimumPoint,
     ).toBeUndefined();
 
+    fireEvent(screen.getByTestId('leverage-slider'), 'slidingStart', 20);
+    fireEvent(screen.getByTestId('leverage-slider'), 'valueChange', 30);
+    fireEvent(screen.getByTestId('leverage-slider'), 'slidingComplete', 30);
+    expect(mockSliderHapticStart).toHaveBeenCalledWith(20);
+    expect(mockSliderHapticValueChange).toHaveBeenCalledWith(30);
+    expect(mockSliderHapticComplete).toHaveBeenCalledTimes(1);
+
     fireEvent.press(screen.getByTestId('perps-pro-leverage-increment'));
-    expect(screen.getByText('21x')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
+      '31',
+    );
     fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
-    expect(onConfirm).toHaveBeenCalledWith(21);
+    expect(onConfirm).toHaveBeenCalledWith(31);
     expect(screen.getByTestId('perps-pro-leverage-confirm').props.height).toBe(
       36,
     );
     expect(screen.getByTestId('perps-pro-leverage-confirm').props.type).toBe(
       'primary',
     );
+  });
+
+  it('blurs the leverage input before the slider handles a touch', () => {
+    render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={jest.fn()}
+        pending={false}
+        visible
+      />,
+    );
+
+    expect(
+      screen
+        .getByTestId('perps-pro-leverage-slider-section')
+        .props.onStartShouldSetResponderCapture({ nativeEvent: {} }),
+    ).toBe(false);
+
+    expect(mockBottomSheetInputBlur).toHaveBeenCalledTimes(1);
+    expect(mockKeyboardDismiss).toHaveBeenCalledTimes(1);
+    expect(mockSliderHapticStart).not.toHaveBeenCalled();
+    expect(mockSliderHapticValueChange).not.toHaveBeenCalled();
+  });
+
+  it('clamps values above the market maximum while rejecting illegal characters', () => {
+    render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={jest.fn()}
+        pending={false}
+        visible
+      />,
+    );
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-leverage-input'),
+      '-a401',
+    );
+
+    expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
+      '40',
+    );
+  });
+
+  it.each(['', '0'])('treats %p as invalid and closes the sheet', draft => {
+    const onClose = jest.fn();
+    const onConfirm = jest.fn();
+    render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={onClose}
+        onConfirm={onConfirm}
+        pending={false}
+        visible
+      />,
+    );
+
+    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), draft);
+    fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
+
+    expect(mockShowToast).toHaveBeenCalledWith('Invalid leverage', 'error');
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 });
