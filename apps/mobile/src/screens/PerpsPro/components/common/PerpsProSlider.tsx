@@ -9,6 +9,8 @@ export const PerpsProSlider: React.FC<{
   hideMinimumPoint?: boolean;
   maximumValue?: number;
   minimumValue?: number;
+  onSlidingComplete?: (value: number) => void;
+  onSlidingStart?: (value: number) => void;
   onValueChange?: (value: number) => void;
   pointCount?: number;
   step?: number;
@@ -20,6 +22,8 @@ export const PerpsProSlider: React.FC<{
     hideMinimumPoint = false,
     maximumValue = 100,
     minimumValue = 0,
+    onSlidingComplete,
+    onSlidingStart,
     onValueChange,
     pointCount = 7,
     step = 1,
@@ -55,6 +59,8 @@ export const PerpsProSlider: React.FC<{
               : colors2024['brand-default']
           }
           minimumValue={minimumValue}
+          onSlidingComplete={onSlidingComplete}
+          onSlidingStart={onSlidingStart}
           onValueChange={onValueChange}
           step={step}
           style={styles.slider}

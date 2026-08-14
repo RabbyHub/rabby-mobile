@@ -1,20 +1,38 @@
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { showToast } from '@/hooks/perps/showToast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
+import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
+import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
 // Figma 80481:14828 is a documented compact sheet action special case.
 const PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT = 36;
+
+const PerpsProLeverageBottomSheetTextInput = React.forwardRef<
+  TextInput,
+  React.ComponentProps<typeof TextInput>
+>((props, forwardedRef) => (
+  <BottomSheetTextInput
+    {...props}
+    ref={
+      forwardedRef as React.Ref<React.ElementRef<typeof BottomSheetTextInput>>
+    }
+  />
+));
+
+PerpsProLeverageBottomSheetTextInput.displayName =
+  'PerpsProLeverageBottomSheetTextInput';
 
 export const PerpsProLeverageSheet: React.FC<{
   currentLeverage: number;
@@ -26,23 +44,24 @@ export const PerpsProLeverageSheet: React.FC<{
 }> = React.memo(
   ({ currentLeverage, maxLeverage, onClose, onConfirm, pending, visible }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
+    const inputRef = useRef<TextInput>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
-    usePerpsProSheetNavigationRegistration({
-      active: visible,
-      dismiss: onClose,
-      dismissible: !pending,
-    });
     const safeMax = Math.max(1, Math.floor(maxLeverage));
     const safeCurrent = Math.min(
       safeMax,
       Math.max(1, Math.round(currentLeverage)),
     );
-    const [value, setValue] = useState(safeCurrent);
+    const [draft, setDraft] = useState(String(safeCurrent));
+    usePerpsProSheetNavigationRegistration({
+      active: visible,
+      dismiss: onClose,
+      dismissible: !pending,
+    });
 
     useEffect(() => {
       if (visible) {
-        setValue(safeCurrent);
+        setDraft(String(safeCurrent));
         modalRef.current?.present();
       } else {
         modalRef.current?.close();
@@ -50,17 +69,59 @@ export const PerpsProLeverageSheet: React.FC<{
     }, [safeCurrent, visible]);
 
     const decrement = useCallback(
-      () => setValue(current => Math.max(1, current - 1)),
+      () =>
+        setDraft(current => String(Math.max(1, (Number(current) || 1) - 1))),
       [],
     );
     const increment = useCallback(
-      () => setValue(current => Math.min(safeMax, current + 1)),
+      () =>
+        setDraft(current =>
+          String(Math.min(safeMax, Math.max(0, Number(current) || 0) + 1)),
+        ),
       [safeMax],
     );
+    const normalizeLeverageInput = useCallback(
+      (value: string) =>
+        value && Number(value) > safeMax ? String(safeMax) : value,
+      [safeMax],
+    );
+    const numericDraft = Number(draft);
+    const sliderValue =
+      Number.isFinite(numericDraft) && numericDraft > 0
+        ? Math.min(safeMax, numericDraft)
+        : 1;
+    const sliderHaptics = usePerpsProSliderHaptics({
+      disabled: pending,
+      maximumValue: safeMax,
+      minimumValue: 1,
+      step: 1,
+      value: sliderValue,
+    });
+    const confirm = useCallback(() => {
+      const numericValue = Number(draft);
+      if (!draft || !Number.isFinite(numericValue) || numericValue <= 0) {
+        showToast(t('page.perps.pro.positions.invalidLeverage'), 'error');
+        onClose();
+        return;
+      }
+      onConfirm(Math.min(safeMax, Math.round(numericValue)));
+    }, [draft, onClose, onConfirm, safeMax, t]);
+    const dismissLeverageInput = useCallback(() => {
+      inputRef.current?.blur();
+      Keyboard.dismiss();
+    }, []);
+    const handleSliderTouchCapture = useCallback(() => {
+      dismissLeverageInput();
+      return false;
+    }, [dismissLeverageInput]);
 
     return (
       <AppBottomSheetModal
+        android_keyboardInputMode="adjustPan"
+        enableDynamicSizing={false}
         enablePanDownToClose={!pending}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
@@ -83,16 +144,45 @@ export const PerpsProLeverageSheet: React.FC<{
             <View style={styles.inputRow}>
               <Pressable
                 accessibilityRole="button"
-                disabled={pending || value <= 1}
+                disabled={pending || numericDraft <= 1}
                 onPress={decrement}
                 style={styles.stepButton}
                 testID="perps-pro-leverage-decrement">
                 <View style={styles.minus} />
               </Pressable>
-              <Text style={styles.value}>{value}x</Text>
+              <Pressable
+                accessible={false}
+                onPress={() => inputRef.current?.focus()}
+                style={styles.valueEditor}>
+                <PerpsProDecimalTextInput
+                  accessibilityLabel={t(
+                    'page.perps.pro.positions.adjustLeverage',
+                  )}
+                  cursorColor={colors2024['brand-default']}
+                  editable={!pending}
+                  focusCursorAtEnd
+                  inputComponent={PerpsProLeverageBottomSheetTextInput}
+                  inputMode="numeric"
+                  keyboardType="number-pad"
+                  maxDecimals={0}
+                  normalizeValue={normalizeLeverageInput}
+                  onChangeText={setDraft}
+                  ref={inputRef}
+                  selectionColor={colors2024['brand-default']}
+                  style={[
+                    styles.valueInput,
+                    { width: Math.max(12, draft.length * 9) },
+                  ]}
+                  testID="perps-pro-leverage-input"
+                  value={draft}
+                />
+                <Text pointerEvents="none" style={styles.valueSuffix}>
+                  x
+                </Text>
+              </Pressable>
               <Pressable
                 accessibilityRole="button"
-                disabled={pending || value >= safeMax}
+                disabled={pending || numericDraft >= safeMax}
                 onPress={increment}
                 style={styles.stepButton}
                 testID="perps-pro-leverage-increment">
@@ -100,16 +190,25 @@ export const PerpsProLeverageSheet: React.FC<{
                 <View style={styles.plusVertical} />
               </Pressable>
             </View>
-            <View style={styles.sliderSection}>
+            <View
+              onStartShouldSetResponderCapture={handleSliderTouchCapture}
+              style={styles.sliderSection}
+              testID="perps-pro-leverage-slider-section">
               <PerpsProSlider
                 disabled={pending}
                 maximumValue={safeMax}
                 minimumValue={1}
-                onValueChange={next => setValue(Math.round(next))}
+                onSlidingComplete={sliderHaptics.onSlidingComplete}
+                onSlidingStart={sliderHaptics.onSlidingStart}
+                onValueChange={next => {
+                  const roundedNext = Math.round(next);
+                  sliderHaptics.onValueChange(roundedNext);
+                  setDraft(String(roundedNext));
+                }}
                 pointCount={5}
                 step={1}
                 tone="neutral"
-                value={value}
+                value={sliderValue}
               />
             </View>
             <View style={styles.footer}>
@@ -117,7 +216,7 @@ export const PerpsProLeverageSheet: React.FC<{
                 disabled={pending}
                 height={PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT}
                 loading={pending}
-                onPress={() => onConfirm(value)}
+                onPress={confirm}
                 title={t('global.confirm')}
                 titleStyle={styles.buttonTitle}
                 testID="perps-pro-leverage-confirm"
@@ -196,14 +295,29 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     position: 'absolute',
     width: 1.5,
   },
-  value: {
-    color: colors2024['neutral-title-1'],
+  valueEditor: {
+    alignItems: 'center',
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  valueInput: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '500',
+    height: 24,
+    lineHeight: 18,
+    margin: 0,
+    padding: 0,
+    textAlign: 'right',
+  },
+  valueSuffix: {
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
-    textAlign: 'center',
   },
   sliderSection: {
     marginTop: 8,
