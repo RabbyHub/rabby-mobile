@@ -52,19 +52,21 @@ export type PerpsProPreferences = {
   viewMode: PerpsViewMode;
   activeInfoTab: PerpsProInfoTab;
   skipLimitCloseDoubleConfirmation: boolean;
+  skipPositionTpSlDoubleConfirmation: boolean;
   tradeAmountUnit: PerpsProTradeAmountUnit;
   tradeOrderType: PerpsProTradeOrderType;
   skipTradeConfirmationByOrderType: Record<PerpsProTradeOrderType, boolean>;
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 6;
+const PERPS_PRO_PREFERENCES_VERSION = 7;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
 const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   version: PERPS_PRO_PREFERENCES_VERSION,
   viewMode: 'simple',
   activeInfoTab: 'account',
   skipLimitCloseDoubleConfirmation: false,
+  skipPositionTpSlDoubleConfirmation: false,
   tradeAmountUnit: 'quote',
   tradeOrderType: 'market',
   skipTradeConfirmationByOrderType: {
@@ -112,6 +114,10 @@ const normalizePerpsProInfoTab = (value: unknown): PerpsProInfoTab => {
 const normalizeSkipLimitCloseDoubleConfirmation = (value: unknown) =>
   hasReadableProPreferences(value) &&
   value.skipLimitCloseDoubleConfirmation === true;
+
+const normalizeSkipPositionTpSlDoubleConfirmation = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.skipPositionTpSlDoubleConfirmation === true;
 
 const normalizePerpsProTradeAmountUnit = (
   value: unknown,
@@ -168,6 +174,8 @@ const getWritableProPreferences = (
     activeInfoTab: normalizePerpsProInfoTab(value),
     skipLimitCloseDoubleConfirmation:
       normalizeSkipLimitCloseDoubleConfirmation(value),
+    skipPositionTpSlDoubleConfirmation:
+      normalizeSkipPositionTpSlDoubleConfirmation(value),
     tradeAmountUnit: normalizePerpsProTradeAmountUnit(value),
     tradeOrderType: normalizePerpsProTradeOrderType(value),
     skipTradeConfirmationByOrderType:
@@ -584,6 +592,25 @@ export class PerpsService extends StoreServiceBase<
       draft.proPreferences = {
         ...getWritableProPreferences(currentPreferences),
         skipLimitCloseDoubleConfirmation: value === true,
+      };
+    });
+  };
+
+  getSkipPerpsProPositionTpSlConfirmation = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipPositionTpSlDoubleConfirmation(
+      this.store.proPreferences,
+    );
+  };
+
+  setSkipPerpsProPositionTpSlConfirmation = async (value: boolean) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        skipPositionTpSlDoubleConfirmation: value === true,
       };
     });
   };

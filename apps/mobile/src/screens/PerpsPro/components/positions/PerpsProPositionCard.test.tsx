@@ -69,6 +69,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positions.marginRatio': 'Margin Ratio',
         'page.perps.pro.positions.mark': 'Mark Price',
         'page.perps.pro.positions.pnl': 'PNL',
+        'page.perps.pro.positions.positionTpsl': 'Position TP/SL',
         'page.perps.pro.positions.roi': 'ROI',
         'page.perps.pro.positions.size': 'Size',
         'page.perps.pro.positions.stopLossShort': 'SL',
@@ -93,10 +94,8 @@ jest.mock('../../scene/usePerpsProPositionMark', () => ({
 
 import { PerpsProPositionCard } from './PerpsProPositionCard';
 import { __resetPerpsProPositionSizeUnitSessionForTests } from '../../scene/positionSizeUnitSession';
-import type {
-  PerpsPositionTpslViewModel,
-  PerpsPositionViewModel,
-} from '../../model/position';
+import type { PerpsPositionViewModel } from '../../model/position';
+import type { PerpsPositionTpSlOrderViewModel } from '../../model/positionTpSl';
 
 const createPosition = (
   overrides: Partial<PerpsPositionViewModel> = {},
@@ -120,13 +119,18 @@ const createPosition = (
 });
 
 const triggerOrder = (
-  kind: PerpsPositionTpslViewModel['kind'],
+  kind: PerpsPositionTpSlOrderViewModel['kind'],
   oid: number,
   triggerPrice: string,
-): PerpsPositionTpslViewModel => ({
+  scope: PerpsPositionTpSlOrderViewModel['scope'] = 'partial',
+): PerpsPositionTpSlOrderViewModel => ({
+  execution: 'market',
   key: `${kind}-${oid}`,
   kind,
   oid,
+  originalSize: '0.01',
+  remainingSize: scope === 'position' ? '0' : '0.01',
+  scope,
   side: 'A',
   timestamp: oid,
   triggerPrice,
@@ -166,7 +170,7 @@ describe('PerpsProPositionCard', () => {
     expect(mockOpenFieldExplanation).toHaveBeenLastCalledWith('marginRatio');
   });
 
-  it('shows signed Liq. Distance for Cross and preserves every TP/SL entry', () => {
+  it('shows signed Liq. Distance and the nearest partial TP/SL to Mark', () => {
     render(
       <PerpsProPositionCard
         accountIdentity="account-a"
@@ -187,25 +191,37 @@ describe('PerpsProPositionCard', () => {
           roiRatio: '0.2',
           tpslOrders: [
             {
+              execution: 'market',
               key: 'tp-1',
               kind: 'takeProfit',
               oid: 1,
+              originalSize: '1',
+              remainingSize: '1',
+              scope: 'partial',
               side: 'A',
               timestamp: 3,
               triggerPrice: '120',
             },
             {
+              execution: 'market',
               key: 'tp-2',
               kind: 'takeProfit',
               oid: 2,
+              originalSize: '1',
+              remainingSize: '1',
+              scope: 'partial',
               side: 'A',
               timestamp: 2,
               triggerPrice: '130',
             },
             {
+              execution: 'market',
               key: 'sl-1',
               kind: 'stopLoss',
               oid: 3,
+              originalSize: '1',
+              remainingSize: '1',
+              scope: 'partial',
               side: 'A',
               timestamp: 1,
               triggerPrice: '90',
@@ -232,8 +248,9 @@ describe('PerpsProPositionCard', () => {
       position: 'absolute',
       right: 0,
     });
-    expect(screen.getByText('TP/SL (3)')).toBeTruthy();
-    expect(screen.getByText('120.00, 130.00')).toBeTruthy();
+    expect(screen.getByText('TP/SL(3)')).toBeTruthy();
+    expect(screen.getByText('120.00')).toBeTruthy();
+    expect(screen.queryByText('130.00')).toBeNull();
     expect(screen.getByText('90.00')).toBeTruthy();
     expect(screen.queryByText('TP 120.00')).toBeNull();
     expect(
@@ -292,7 +309,7 @@ describe('PerpsProPositionCard', () => {
     expect(screen.getByText('Margin Ratio')).toBeTruthy();
     expect(screen.getByText('20.14%')).toBeTruthy();
     expect(screen.queryByText('Liq. Distance')).toBeNull();
-    expect(screen.queryByText('TP/SL (0)')).toBeNull();
+    expect(screen.queryByText('TP/SL(0)')).toBeNull();
   });
 
   it.each([
@@ -318,13 +335,77 @@ describe('PerpsProPositionCard', () => {
       />,
     );
 
-    expect(screen.getByText('TP/SL (1)')).toBeTruthy();
+    expect(screen.getByText('TP/SL(1)')).toBeTruthy();
     expect(
       screen.getByText(`${Number(testCase.price).toFixed(2)}`),
     ).toBeTruthy();
     expect(screen.getByText('--').props.style).toMatchObject({
       color: testCase.missingColor,
     });
+  });
+
+  it('routes a partial-only card edit and the bottom action to TP/SL', () => {
+    const onEditTpSl = jest.fn();
+    const value = createPosition({
+      tpslOrders: [triggerOrder('takeProfit', 1, '120')],
+    });
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onEditTpSl={onEditTpSl}
+        position={value}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-edit-BTC'));
+    expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'partial');
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-action-BTC'));
+    expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'partial');
+  });
+
+  it('routes the bottom action to TP/SL when the card has no orders', () => {
+    const onEditTpSl = jest.fn();
+    const value = createPosition({ tpslOrders: [] });
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onEditTpSl={onEditTpSl}
+        position={value}
+      />,
+    );
+
+    expect(screen.queryByTestId('perps-pro-position-tpsl-edit-BTC')).toBeNull();
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-action-BTC'));
+    expect(onEditTpSl).toHaveBeenCalledWith(value, 'partial');
+  });
+
+  it('shows Position TP/SL prices and only the partial count for mixed orders', () => {
+    const onEditTpSl = jest.fn();
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onEditTpSl={onEditTpSl}
+        position={createPosition({
+          tpslOrders: [
+            triggerOrder('takeProfit', 1, '120', 'position'),
+            triggerOrder('stopLoss', 2, '90', 'position'),
+            triggerOrder('takeProfit', 3, '115'),
+            triggerOrder('stopLoss', 4, '95'),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Position TP/SL')).toBeTruthy();
+    expect(screen.getByText('TP/SL(2)')).toBeTruthy();
+    expect(screen.getByText('120.00')).toBeTruthy();
+    expect(screen.getByText('90.00')).toBeTruthy();
+    expect(screen.queryByText('115.00')).toBeNull();
+    fireEvent.press(screen.getByLabelText('TP/SL'));
+    expect(onEditTpSl).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'BTC' }),
+      'position',
+    );
   });
 
   it('remembers each position unit only for the current app process', () => {

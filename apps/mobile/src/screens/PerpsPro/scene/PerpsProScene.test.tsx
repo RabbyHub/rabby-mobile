@@ -11,6 +11,7 @@ const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
 const mockKlineProps = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
+const mockUsePerpsProPositionTpSl = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
 let mockTradeHasPermission = true;
@@ -123,6 +124,15 @@ jest.mock('../components/positions/PerpsProPositionCard', () => {
 
 jest.mock('../components/positions/PerpsProLeverageSheet', () => ({
   PerpsProLeverageSheet: () => null,
+}));
+
+jest.mock(
+  '../components/positions/PerpsProPositionTpSlConfirmationSheet',
+  () => ({ PerpsProPositionTpSlConfirmationSheet: () => null }),
+);
+
+jest.mock('../components/positions/PerpsProPositionTpSlSheet', () => ({
+  PerpsProPositionTpSlSheet: () => null,
 }));
 
 jest.mock('../components/positions/PerpsProClosePositionSheet', () => {
@@ -369,6 +379,10 @@ jest.mock('./usePerpsProPositionActions', () => ({
   usePerpsProPositionActions: mockUsePerpsProPositionActions,
 }));
 
+jest.mock('./usePerpsProPositionTpSl', () => ({
+  usePerpsProPositionTpSl: mockUsePerpsProPositionTpSl,
+}));
+
 jest.mock('./usePerpsProTransfer', () => ({
   usePerpsProTransfer: () => ({
     close: jest.fn(),
@@ -454,6 +468,19 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProPositionActions.mockReturnValue(
       createPositionActionsState(),
     );
+    mockUsePerpsProPositionTpSl.mockReturnValue({
+      cancelOrder: jest.fn(),
+      cancelingOids: [],
+      confirmedCancelledOids: [],
+      close: jest.fn(),
+      closeReview: jest.fn(),
+      confirm: jest.fn(),
+      editor: null,
+      open: jest.fn(),
+      pending: false,
+      requestReview: jest.fn(),
+      review: null,
+    });
   });
 
   afterEach(() => {
@@ -474,6 +501,10 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('market-bar-skeleton')).toBeTruthy();
     expect(screen.getByTestId('scene-skeleton')).toBeTruthy();
     expect(screen.queryByText('page.perps.pro.common.unavailable')).toBeNull();
+    expect(mockUsePerpsProPositionTpSl).toHaveBeenCalledWith(
+      'test-account',
+      'quote',
+    );
   });
 
   it('keeps the close editor mounted under the confirmation sheet', () => {

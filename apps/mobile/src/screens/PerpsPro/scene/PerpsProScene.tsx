@@ -71,6 +71,8 @@ import { PerpsProCloseAllConfirmationModal } from '../components/positions/Perps
 import { PerpsProCloseConfirmationSheet } from '../components/positions/PerpsProCloseConfirmationSheet';
 import { PerpsProClosePositionSheet } from '../components/positions/PerpsProClosePositionSheet';
 import { PerpsProLeverageSheet } from '../components/positions/PerpsProLeverageSheet';
+import { PerpsProPositionTpSlConfirmationSheet } from '../components/positions/PerpsProPositionTpSlConfirmationSheet';
+import { PerpsProPositionTpSlSheet } from '../components/positions/PerpsProPositionTpSlSheet';
 import { PerpsProPositionsControls } from '../components/positions/PerpsProPositionsControls';
 import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrderConfirmationSheet';
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
@@ -91,6 +93,7 @@ import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
+import { usePerpsProPositionTpSl } from './usePerpsProPositionTpSl';
 import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
@@ -165,6 +168,10 @@ export const PerpsProScene: React.FC<{
     leveragePending: leverageUpdate.pending,
     updateLeverageRequest: leverageUpdate.update,
   });
+  const positionTpSl = usePerpsProPositionTpSl(
+    info.accountIdentity,
+    trade.amountUnit,
+  );
   const cancelOrders = usePerpsProCancelOrders();
   const closeAll = usePerpsProCloseAll(info.accountIdentity);
   const transfer = usePerpsProTransfer(info.accountIdentity);
@@ -463,6 +470,7 @@ export const PerpsProScene: React.FC<{
               accountIdentity={info.accountIdentity}
               onClose={positionActions.openCloseEditor}
               onEditLeverage={positionActions.openLeverageEditor}
+              onEditTpSl={positionTpSl.open}
               position={item.position}
             />
           );
@@ -512,6 +520,7 @@ export const PerpsProScene: React.FC<{
       scene,
       positionActions.openLeverageEditor,
       positionActions.openCloseEditor,
+      positionTpSl.open,
       styles,
       t,
       toggleHideOtherSymbols,
@@ -650,6 +659,44 @@ export const PerpsProScene: React.FC<{
         pending={leverageUpdate.pending}
         visible={!!positionActions.leverageEditor}
       />
+      {positionTpSl.editor ? (
+        <PerpsProPositionTpSlSheet
+          amountUnit={positionTpSl.editor.amountUnit}
+          cancelingOids={positionTpSl.cancelingOids}
+          confirmedCancelledOids={positionTpSl.confirmedCancelledOids}
+          coveredByReview={!!positionTpSl.review}
+          defaultTab={positionTpSl.editor.defaultTab}
+          market={positionTpSl.editor.market}
+          onCancelOrder={positionTpSl.cancelOrder}
+          onClose={positionTpSl.close}
+          onReview={positionTpSl.requestReview}
+          pending={positionTpSl.pending}
+          position={
+            info.positions.find(
+              position => position.key === positionTpSl.editor?.position.key,
+            ) ?? positionTpSl.editor.position
+          }
+          settlement={positionTpSl.settlement}
+          visible
+        />
+      ) : null}
+      {positionTpSl.editor ? (
+        <PerpsProPositionTpSlConfirmationSheet
+          amountUnit={positionTpSl.editor.amountUnit}
+          market={positionTpSl.editor.market}
+          onClose={positionTpSl.closeReview}
+          onConfirm={positionTpSl.confirm}
+          onToggleSkipConfirmation={positionTpSl.toggleSkipConfirmation}
+          pending={positionTpSl.pending}
+          position={
+            info.positions.find(
+              position => position.key === positionTpSl.editor?.position.key,
+            ) ?? positionTpSl.editor.position
+          }
+          review={positionTpSl.review}
+          skipConfirmation={positionTpSl.skipConfirmation}
+        />
+      ) : null}
       {positionActions.closeEditor ? (
         <PerpsProClosePositionSheet
           amountUnit={trade.amountUnit}

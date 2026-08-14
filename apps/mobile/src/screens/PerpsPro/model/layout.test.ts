@@ -1,6 +1,8 @@
 import {
   getPerpsProColumnLayout,
   getPerpsProMarketSelectorSnapPoint,
+  getPerpsProPositionTpSlFormMinimumHeight,
+  getPerpsProPositionTpSlSnapPoint,
   getPerpsProPrecisionSheetLayout,
 } from './layout';
 
@@ -86,5 +88,50 @@ describe('Perps Pro layout model', () => {
         windowHeight: 852,
       }),
     ).toBe(716);
+  });
+
+  it('uses the Figma list and form top offsets for Position TP/SL', () => {
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page: 'list',
+        topInset: 47,
+        windowHeight: 852,
+      }),
+    ).toBe(732);
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page: 'form',
+        topInset: 47,
+        windowHeight: 852,
+      }),
+    ).toBe(714);
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page: 'form',
+        topInset: 150,
+        windowHeight: 852,
+      }),
+    ).toBe(686);
+  });
+
+  it('reserves the exact remaining 714px sheet height for every TP/SL form presentation', () => {
+    expect(
+      getPerpsProPositionTpSlFormMinimumHeight({
+        presentation: 'subpage',
+        snapPoint: 714,
+      }),
+    ).toBe(504);
+    expect(
+      getPerpsProPositionTpSlFormMinimumHeight({
+        presentation: 'tab',
+        snapPoint: 714,
+      }),
+    ).toBe(482);
+    expect(
+      getPerpsProPositionTpSlFormMinimumHeight({
+        presentation: 'inline-empty',
+        snapPoint: 714,
+      }),
+    ).toBe(478);
   });
 });

@@ -6,18 +6,12 @@ import {
   type PerpsMaintenanceMarginTier,
 } from '@/utils/perpsMargin';
 
+import {
+  collectActivePositionTpSlOrders,
+  type PerpsPositionTpSlOrderViewModel,
+} from './positionTpSl';
+
 export type PerpsPositionDirection = 'long' | 'short';
-export type PerpsPositionTpslKind = 'takeProfit' | 'stopLoss' | 'unknown';
-
-export interface PerpsPositionTpslViewModel {
-  key: string;
-  kind: PerpsPositionTpslKind;
-  oid: number;
-  side: OpenOrder['side'];
-  timestamp: number;
-  triggerPrice: string | null;
-}
-
 export interface PerpsPositionViewModel {
   baseSize: string;
   coin: string;
@@ -33,7 +27,7 @@ export interface PerpsPositionViewModel {
   pnl: string;
   quoteSize: string;
   roiRatio: string;
-  tpslOrders: PerpsPositionTpslViewModel[];
+  tpslOrders: PerpsPositionTpSlOrderViewModel[];
 }
 
 const validDecimal = (value: unknown): BigNumber | null => {
@@ -46,81 +40,11 @@ const normalizedOptionalDecimal = (value: unknown): string | null => {
   return result && !result.isZero() ? result.toString() : null;
 };
 
-const resolveTpslKind = (order: OpenOrder): PerpsPositionTpslKind => {
-  const orderType = order.orderType.toLowerCase();
-  if (orderType.includes('take profit')) {
-    return 'takeProfit';
-  }
-  if (orderType.includes('stop')) {
-    return 'stopLoss';
-  }
-  return 'unknown';
-};
-
-const flattenOrders = (
-  orders: OpenOrder[],
-  seen = new Set<number>(),
-): OpenOrder[] => {
-  const result: OpenOrder[] = [];
-  for (const order of orders) {
-    if (seen.has(order.oid)) {
-      continue;
-    }
-    seen.add(order.oid);
-    result.push(order);
-    if (order.children?.length) {
-      result.push(...flattenOrders(order.children, seen));
-    }
-  }
-  return result;
-};
-
-const TPSL_KIND_ORDER: Record<PerpsPositionTpslKind, number> = {
-  takeProfit: 0,
-  stopLoss: 1,
-  unknown: 2,
-};
-
 export const collectPositionTpslOrders = (
   coin: string,
   openOrders: OpenOrder[],
-): PerpsPositionTpslViewModel[] =>
-  flattenOrders(openOrders)
-    .filter(
-      order =>
-        order.coin === coin &&
-        order.reduceOnly &&
-        order.isTrigger &&
-        order.isPositionTpsl,
-    )
-    .map(order => {
-      const kind = resolveTpslKind(order);
-      return {
-        key: `${coin}:${order.oid}`,
-        kind,
-        oid: order.oid,
-        side: order.side,
-        timestamp: order.timestamp,
-        triggerPrice: normalizedOptionalDecimal(order.triggerPx),
-      };
-    })
-    .sort((left, right) => {
-      const typeOrder =
-        TPSL_KIND_ORDER[left.kind] - TPSL_KIND_ORDER[right.kind];
-      if (typeOrder !== 0) {
-        return typeOrder;
-      }
-      const leftPrice = validDecimal(left.triggerPrice) ?? new BigNumber(0);
-      const rightPrice = validDecimal(right.triggerPrice) ?? new BigNumber(0);
-      const priceOrder = leftPrice.comparedTo(rightPrice);
-      if (priceOrder !== 0) {
-        return priceOrder;
-      }
-      if (left.timestamp !== right.timestamp) {
-        return right.timestamp - left.timestamp;
-      }
-      return left.oid - right.oid;
-    });
+): PerpsPositionTpSlOrderViewModel[] =>
+  collectActivePositionTpSlOrders(coin, openOrders);
 
 export const buildPerpsPositionViewModel = (
   assetPosition: AssetPosition,
