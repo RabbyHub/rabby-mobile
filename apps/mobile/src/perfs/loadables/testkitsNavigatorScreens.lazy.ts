@@ -1,5 +1,6 @@
 import { registerAppScreen } from '@/perfs/apis';
 import { TESTKITS_PRELOAD_SCREENS } from '@/perfs/preloads';
+import { RootNames } from '@/constant/layout';
 
 export const DevUIAnimatedTextAndView = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
@@ -111,6 +112,13 @@ export const DevDataKeyringVault = registerAppScreen<
 >({
   loader: () => import('@/screens/Testkits/DevDataKeyringVault'),
   name: TESTKITS_PRELOAD_SCREENS.DevDataKeyringVault,
+});
+
+export const LocalDataViewer = registerAppScreen<
+  typeof import('@/devtools/localDataViewer/screen').default
+>({
+  loader: () => import('@/devtools/localDataViewer/screen'),
+  name: RootNames.LocalDataViewer,
 });
 
 export const DevDataContactService = registerAppScreen<

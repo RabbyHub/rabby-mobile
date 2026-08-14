@@ -12,6 +12,7 @@ import {
   DevDataSQLite,
   DevDataKeychain,
   DevDataKeyringVault,
+  LocalDataViewer,
   DevDataWhitelist,
   DevPerf,
   DevSwitches,
@@ -136,6 +137,17 @@ export function TestkitsNavigator() {
             headerShown: true,
             headerTitle: 'Keyring Vault',
             title: 'Keyring Vault',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.LocalDataViewer}
+        component={LocalDataViewer}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Local Data',
+            title: 'Local Data',
           },
         ])}
       />

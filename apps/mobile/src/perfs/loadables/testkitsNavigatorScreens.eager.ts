@@ -18,6 +18,7 @@ export { default as DevCapabilityFile } from '@/screens/Testkits/DevCapabilityFi
 export { default as DevDataSQLite } from '@/screens/Testkits/DevDataSQLite';
 export { default as DevDataKeychain } from '@/screens/Testkits/DevDataKeychain';
 export { default as DevDataKeyringVault } from '@/screens/Testkits/DevDataKeyringVault';
+export { default as LocalDataViewer } from '@/devtools/localDataViewer/screen';
 export { default as DevDataContactService } from '@/screens/Testkits/DevDataContactService';
 export { default as DevDataWhitelist } from '@/screens/Testkits/DevDataWhitelist';
 export { default as DevSwitches } from '@/screens/Testkits/DevSwitches';

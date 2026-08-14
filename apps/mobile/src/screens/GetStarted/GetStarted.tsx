@@ -41,6 +41,7 @@ import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.sv
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { WelcomeLocalDataLink } from '@/devtools/localDataViewer/react';
 
 import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
 import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
@@ -281,6 +282,8 @@ function NewUserGetStartedScreen() {
                 onPress={handleGoToHome}
               />
             )}
+
+            {isNonPublicProductionEnv && <WelcomeLocalDataLink />}
 
             {isNonPublicProductionEnv && (
               <TouchableText

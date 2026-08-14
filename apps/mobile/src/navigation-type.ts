@@ -183,6 +183,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevDataSQLite]?: {};
   [RootNames.DevDataKeychain]?: {};
   [RootNames.DevDataKeyringVault]?: {};
+  [RootNames.LocalDataViewer]?: {};
   [RootNames.DevDataContactService]?: {};
   [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};

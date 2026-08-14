@@ -97,6 +97,8 @@ module.exports = api => {
             '^@/devtools/regressionScenarios/entry$': `./src/devtools/regressionScenarios/entry.${regressionScenarioImplExt}`,
             '^@/devtools/regressionScenarios/runtime$': `./src/devtools/regressionScenarios/runtime.${regressionScenarioImplExt}`,
             '^@/devtools/regressionScenarios/react$': `./src/devtools/regressionScenarios/react.${regressionScenarioImplExt}`,
+            '^@/devtools/localDataViewer/react$': `./src/devtools/localDataViewer/react.${regressionScenarioImplExt}`,
+            '^@/devtools/localDataViewer/screen$': `./src/devtools/localDataViewer/screen.${regressionScenarioImplExt}`,
             '^@/hooks/useFeatureActivationDiagnostics$': `./src/hooks/useFeatureActivationDiagnostics.${regressionScenarioImplExt}`,
             '^@/startup/moduleLoading/launchTaskLoaders$': `./src/startup/moduleLoading/launchTaskLoaders.${moduleLoadingMode}`,
             '^@/startup/moduleLoading/setupRuntimeLoaders$': `./src/startup/moduleLoading/setupRuntimeLoaders.${moduleLoadingMode}`,
