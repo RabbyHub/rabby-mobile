@@ -1,5 +1,6 @@
-import RcAccountCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
+import RcAccountCaret from '@/assets2024/icons/perps/PerpsHeaderAccountCaret.svg';
 import { Text } from '@/components/Typography';
+import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -23,11 +24,7 @@ export const PerpsAccountTrigger: React.FC<{
         {label}
       </Text>
       <View style={[styles.caret, expanded ? styles.expandedCaret : null]}>
-        <RcAccountCaret
-          color={colors2024['neutral-title-1']}
-          height={8}
-          width={10}
-        />
+        <RcAccountCaret color={colors2024['neutral-foot']} />
       </View>
     </Pressable>
   );
@@ -43,7 +40,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 6,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 4,
+    gap: 2,
     height: 26,
     maxWidth: 108,
     paddingHorizontal: 6,
@@ -51,13 +48,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   label: {
     color: colors2024['neutral-foot'],
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '400',
+    includeFontPadding: false,
     lineHeight: 18,
   },
   caret: {
+    alignItems: 'center',
+    height: 8,
+    justifyContent: 'center',
     transform: [{ rotate: '180deg' }],
+    width: 10,
   },
   expandedCaret: {
     transform: [{ rotate: '0deg' }],

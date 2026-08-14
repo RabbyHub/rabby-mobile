@@ -4,6 +4,7 @@ import {
   PERPS_PRO_HEADER_SCROLL_THRESHOLD,
   type PerpsProHeaderScrollState,
 } from './usePerpsProHeaderCollapse';
+import { PERPS_HEADER_HEIGHT } from '../../../PerpsShared/constants';
 import { PERPS_PRO_HEADER_HEIGHT } from './constants';
 
 const initialState = (): PerpsProHeaderScrollState => ({
@@ -13,6 +14,10 @@ const initialState = (): PerpsProHeaderScrollState => ({
 });
 
 describe('Perps Pro collapsible header', () => {
+  it('derives the collapse geometry from the shared mode header height', () => {
+    expect(PERPS_PRO_HEADER_HEIGHT).toBe(PERPS_HEADER_HEIGHT);
+  });
+
   it('hides only after cumulative upward content movement reaches threshold', () => {
     const beforeThreshold = getNextPerpsProHeaderScrollState(
       initialState(),

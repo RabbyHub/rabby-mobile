@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+import { FontNames } from '@/core/utils/fonts';
 import { PerpsModeSwitch } from './PerpsModeSwitch';
 
 jest.mock('@/components/Typography', () => {
@@ -10,20 +11,14 @@ jest.mock('@/components/Typography', () => {
 });
 
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: () => ({
-    styles: {
-      activeText: {},
-      container: {},
-      extendedContainer: { flex: 1, height: 26, minWidth: 0 },
-      extendedProTarget: {
-        alignItems: 'flex-start',
-        flex: 1,
-        height: '100%',
-        justifyContent: 'center',
-      },
-      inactiveText: {},
-    },
-  }),
+  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+    return { styles: getStyle({ colors2024 }) };
+  },
+}));
+
+jest.mock('@/utils/styles', () => ({
+  createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
 describe('PerpsModeSwitch', () => {
@@ -44,6 +39,24 @@ describe('PerpsModeSwitch', () => {
     ).toEqual({
       disabled: false,
       selected: false,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Perps').props.style),
+    ).toMatchObject({
+      fontFamily: FontNames.sf_pro,
+      fontSize: 18,
+      fontWeight: '700',
+      includeFontPadding: false,
+      lineHeight: 22,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Pro').props.style),
+    ).toMatchObject({
+      fontFamily: FontNames.sf_pro,
+      fontSize: 14,
+      fontWeight: '500',
+      includeFontPadding: false,
+      lineHeight: 18,
     });
 
     fireEvent.press(screen.getByTestId('perps-mode-simple'));

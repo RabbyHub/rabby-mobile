@@ -1,5 +1,6 @@
 import { Text } from '@/components/Typography';
 import type { PerpsViewMode } from '@/core/services/perpsService';
+import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -83,17 +84,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   activeText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
+    fontFamily: FontNames.sf_pro,
+    fontSize: 18,
+    fontWeight: '700',
+    includeFontPadding: false,
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
   },
   inactiveText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontFamily: FontNames.sf_pro,
+    fontSize: 14,
     fontWeight: '500',
+    includeFontPadding: false,
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
   },
 }));

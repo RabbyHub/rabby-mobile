@@ -27,12 +27,10 @@ export const PerpsOriginScreen = () => {
   const marketDataStatus = perpsStore(state => state.marketDataStatus);
 
   useLayoutEffect(() => {
-    if (!hydrated) {
-      navigation.setOptions({
-        headerShown: false,
-      });
-    }
-  }, [hydrated, navigation]);
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (!hydrated || viewMode !== 'simple' || marketDataStatus !== 'success') {

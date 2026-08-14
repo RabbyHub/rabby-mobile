@@ -84,7 +84,7 @@ describe('PerpsProScreen', () => {
     jest.clearAllMocks();
   });
 
-  it('owns the navigation header and delegates the Simple action to its scene', () => {
+  it('delegates mode and History actions while the outer route owns the header', () => {
     const onSwitchToSimple = jest.fn();
     const screen = render(
       <PerpsProScreen
@@ -93,9 +93,7 @@ describe('PerpsProScreen', () => {
       />,
     );
 
-    expect(mockSetOptions).toHaveBeenCalledWith({
-      headerShown: false,
-    });
+    expect(mockSetOptions).not.toHaveBeenCalled();
     expect(
       screen.getByTestId('screen-container').props.accessibilityLabel,
     ).toBe('true:bg1');

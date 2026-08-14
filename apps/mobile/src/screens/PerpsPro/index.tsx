@@ -2,7 +2,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { isPerpsProHistorySdkSupported } from '@/screens/PerpsProHistory/repository/perpsProHistoryRepository';
-import React, { useCallback, useLayoutEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { PerpsProScene } from './scene/PerpsProScene';
 
@@ -25,12 +25,6 @@ export const PerpsProScreen: React.FC<PerpsProScreenProps> = ({
       screen: RootNames.PerpsProHistory,
     });
   }, [historyEnabled, navigation]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
 
   return (
     <NormalScreenContainer2024 noHeader type="bg1">

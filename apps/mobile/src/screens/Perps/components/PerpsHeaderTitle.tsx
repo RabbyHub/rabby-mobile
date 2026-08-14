@@ -1,138 +1,58 @@
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useLayoutEffect, useMemo } from 'react';
-import { View } from 'react-native';
-
 import { apiContact } from '@/core/apis';
 import type { Account } from '@/core/startupServices/preference';
-import { ellipsisAddress } from '@/utils/address';
+import type { PerpsViewMode } from '@/core/services/perpsService';
+import React, { useCallback, useMemo } from 'react';
+
+import { PerpsHeader } from '../../PerpsShared/components/PerpsHeader';
+import { resolvePerpsHeaderAccountLabel } from '../../PerpsShared/utils/resolvePerpsHeaderAccountLabel';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
-import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
-import { PerpsModeSwitch } from '../../PerpsShared/components/PerpsModeSwitch';
-import { PerpsAccountTrigger } from '../../PerpsShared/components/PerpsAccountTrigger';
 
-const HEADER_HEIGHT = 58;
-
-/**
- * Extracted as a standalone component so React Navigation
- * re-renders it on prop changes instead of stale closures.
- */
-const PerpsHeaderContent: React.FC<{
+export const PerpsSimpleHeader: React.FC<{
   account?: Account | null;
   isModeSwitching: boolean;
   onSwitchToPro: () => void;
-}> = ({ account, isModeSwitching, onSwitchToPro }) => {
-  const { styles } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
+}> = React.memo(({ account, isModeSwitching, onSwitchToPro }) => {
   const [popupState, setPopupState] = usePerpsPopupState();
 
-  const alias = useMemo(() => {
+  const contactAlias = useMemo(() => {
     if (!account?.address) {
-      return;
+      return null;
     }
-    return apiContact.getAliasName(account?.address);
+    return apiContact.getAliasName(account.address);
   }, [account?.address]);
 
-  return (
-    <View style={[styles.headerOuter, { marginTop: top }]}>
-      <View style={styles.headerInner}>
-        {/* Left: back + icon + title */}
-        <View style={styles.headerLeft} testID="perps-simple-header-left">
-          <HeaderBackPressable />
-          <RcIconHyper />
-          <PerpsModeSwitch
-            activeMode="simple"
-            disabled={isModeSwitching}
-            extendProHitAreaRight
-            onSelectMode={viewMode => {
-              if (viewMode === 'pro') {
-                onSwitchToPro();
-              }
-            }}
-          />
-        </View>
-
-        {/* Right: account selector */}
-        <View style={styles.headerRight} testID="perps-simple-header-right">
-          {account ? (
-            <View style={styles.accountSelectorContainer}>
-              <PerpsAccountTrigger
-                expanded={popupState.isShowLoginPopup}
-                label={alias || ellipsisAddress(account.address)}
-                onPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowLoginPopup: !prev.isShowLoginPopup,
-                  }));
-                }}
-              />
-            </View>
-          ) : null}
-        </View>
-      </View>
-    </View>
+  const accountLabel = useMemo(
+    () => resolvePerpsHeaderAccountLabel(account, contactAlias),
+    [account, contactAlias],
   );
-};
 
-export const PerpsNativeHeader: React.FC<{
-  account?: Account | null;
-  isModeSwitching: boolean;
-  onSwitchToPro: () => void;
-}> = ({ account, isModeSwitching, onSwitchToPro }) => {
-  const { colors2024 } = useTheme2024({ getStyle });
-  const navigation = useRabbyAppNavigation();
+  const handleSelectMode = useCallback(
+    (viewMode: PerpsViewMode) => {
+      if (viewMode === 'pro') {
+        onSwitchToPro();
+      }
+    },
+    [onSwitchToPro],
+  );
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      // eslint-disable-next-line react/no-unstable-nested-components
-      header: () => (
-        <PerpsHeaderContent
-          account={account}
-          isModeSwitching={isModeSwitching}
-          onSwitchToPro={onSwitchToPro}
-        />
-      ),
-      headerStyle: {
-        backgroundColor: colors2024['neutral-bg-1'],
-      },
-    });
-  }, [account, colors2024, isModeSwitching, navigation, onSwitchToPro]);
+  const handlePressAccount = useCallback(() => {
+    setPopupState(current => ({
+      ...current,
+      isShowLoginPopup: !current.isShowLoginPopup,
+    }));
+  }, [setPopupState]);
 
-  return null;
-};
+  return (
+    <PerpsHeader
+      accountExpanded={popupState.isShowLoginPopup}
+      accountLabel={accountLabel}
+      activeMode="simple"
+      extendProHitAreaRight
+      isModeSwitching={isModeSwitching}
+      onPressAccount={account ? handlePressAccount : undefined}
+      onSelectMode={handleSelectMode}
+    />
+  );
+});
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  headerOuter: {
-    height: HEADER_HEIGHT,
-    paddingHorizontal: 12,
-    paddingRight: 16,
-    paddingVertical: 10,
-  },
-  headerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  headerLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minWidth: 0,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 0,
-    justifyContent: 'flex-end',
-    gap: 12,
-  },
-  accountSelectorContainer: {
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-  },
-}));
+PerpsSimpleHeader.displayName = 'PerpsSimpleHeader';
