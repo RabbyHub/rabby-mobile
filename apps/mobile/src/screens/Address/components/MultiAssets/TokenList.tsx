@@ -373,7 +373,10 @@ export const TokenList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-token-loading' },
   );
-  const hasDefaultTokenData = projectedTokenCount > 0 || hasLpTokens;
+  // LP availability only controls the additional-token selector. Until the
+  // currently selected segments contain rows, the list still has no visible
+  // data and must remain in its loading/empty state.
+  const hasDefaultTokenData = projectedTokenCount > 0;
   const tokenProjectionViewState = resolveAssetProjectionViewState({
     availability: tokenProjectionAvailability,
     hasData: hasDefaultTokenData,
@@ -404,6 +407,48 @@ export const TokenList = () => {
   });
 
   const hasNoAssets = tokenProjectionViewState === 'empty' && isFocused;
+
+  const lastScenarioViewStateKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'home-assets' ||
+      !regressionScenarioRunId ||
+      !regressionScenarioReport ||
+      !isFocused
+    ) {
+      return;
+    }
+
+    const stateKey = [
+      regressionScenarioRunId,
+      tokenProjectionViewState,
+      projectedTokenCount,
+      tokenProjectionAvailability,
+    ].join(':');
+    if (lastScenarioViewStateKeyRef.current === stateKey) {
+      return;
+    }
+    lastScenarioViewStateKeyRef.current = stateKey;
+    regressionScenarioReport('assertion', {
+      assertion: 'home-assets-token-view-state',
+      passed: true,
+      state: tokenProjectionViewState,
+      availability: tokenProjectionAvailability,
+      tokenCount: projectedTokenCount,
+      hasLpTokens,
+    });
+  }, [
+    hasLpTokens,
+    isFocused,
+    projectedTokenCount,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioReport,
+    regressionScenarioRunId,
+    tokenProjectionAvailability,
+    tokenProjectionViewState,
+  ]);
 
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
@@ -745,8 +790,7 @@ export const TokenList = () => {
   >(() => {
     const specs: TokenProjectionSectionSpec<TokenListExtraItem>[] = [];
     const hasNoTokenItems =
-      projectedTokenCount + visibleCustomTestnetSections.length === 0 &&
-      !hasLpTokens;
+      projectedTokenCount + visibleCustomTestnetSections.length === 0;
 
     if (tokenProjectionViewState === 'loading' && hasNoTokenItems) {
       return [{ key: 'loading', data: LOADING_ITEMS }];
@@ -782,7 +826,6 @@ export const TokenList = () => {
     additionalSegmentKey,
     customTestnetItems,
     emptyItems,
-    hasLpTokens,
     hasAdditionalSection,
     tokenProjectionViewState,
     hasNoAssets,

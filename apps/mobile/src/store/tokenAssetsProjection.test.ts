@@ -174,6 +174,41 @@ describe('single-address token assets projection', () => {
     });
   });
 
+  it('publishes one index update for a multi-address token batch', () => {
+    const first = createToken('first', {
+      owner_addr: NORMALIZED_ADDRESS,
+      usd_value: 2,
+    });
+    const second = createToken('second', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      usd_value: 3,
+    });
+    const listener = jest.fn();
+    const unsubscribe = useTokenIndexStore.subscribe(listener);
+
+    try {
+      useTokenIndexStore.getState().syncFromTokenListMap(
+        {
+          [NORMALIZED_ADDRESS]: [first],
+          [NORMALIZED_SECOND_ADDRESS]: [second],
+        },
+        [NORMALIZED_ADDRESS, NORMALIZED_SECOND_ADDRESS],
+      );
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(useTokenIndexStore.getState().addressTokenIds).toEqual({
+        [NORMALIZED_ADDRESS]: [buildTokenEntityId(first)],
+        [NORMALIZED_SECOND_ADDRESS]: [buildTokenEntityId(second)],
+      });
+      expect(useTokenIndexStore.getState().addressVersions).toEqual({
+        [NORMALIZED_ADDRESS]: 1,
+        [NORMALIZED_SECOND_ADDRESS]: 1,
+      });
+    } finally {
+      unsubscribe();
+    }
+  });
+
   it('prepares the first projection from an existing token snapshot', () => {
     const eth = createToken('eth-token', { usd_value: 20 });
     replaceAddressTokens([eth]);

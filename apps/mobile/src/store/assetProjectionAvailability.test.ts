@@ -79,4 +79,17 @@ describe('asset projection availability', () => {
       }),
     ).toBe('empty');
   });
+
+  it('does not treat hidden asset variants as visible projection data', () => {
+    const hasHiddenLpTokens = true;
+    const visibleProjectedTokenCount = 0;
+
+    expect(hasHiddenLpTokens).toBe(true);
+    expect(
+      resolveAssetProjectionViewState({
+        availability: 'restoring',
+        hasData: visibleProjectedTokenCount > 0,
+      }),
+    ).toBe('loading');
+  });
 });

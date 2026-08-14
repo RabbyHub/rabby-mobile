@@ -951,57 +951,71 @@ export const useTokenIndexStore = zCreate(
     tokenStaticMap: {},
     syncAddressTokens(address, tokens) {
       const normalizedAddress = normalizeAddress(address);
-      const nextTokenIds = buildStableTokenEntityIds(
-        sortByUsdValueDesc(tokens),
-        get().addressTokenIds[normalizedAddress],
-      );
-      const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
-      const nextStaticTokenIds = new Set(
-        nextStaticItems.map(item => item.tokenId),
-      );
-
-      set(draft => {
-        let didChange = false;
-        if (draft.addressTokenIds[normalizedAddress] !== nextTokenIds) {
-          draft.addressTokenIds[normalizedAddress] = nextTokenIds;
-          didChange = true;
-        }
-
-        nextStaticItems.forEach(item => {
-          if (
-            !isTokenStaticIndexItemSame(
-              draft.tokenStaticMap[item.tokenId],
-              item,
-            )
-          ) {
-            draft.tokenStaticMap[item.tokenId] = item;
-            didChange = true;
-          }
-        });
-
-        Object.keys(draft.tokenStaticMap).forEach(tokenId => {
-          if (
-            getTokenEntityIdAddress(tokenId) === normalizedAddress &&
-            !nextStaticTokenIds.has(tokenId as TokenEntityId)
-          ) {
-            delete draft.tokenStaticMap[tokenId];
-            didChange = true;
-          }
-        });
-
-        if (didChange) {
-          draft.addressVersions[normalizedAddress] =
-            (draft.addressVersions[normalizedAddress] || 0) + 1;
-        }
-      });
+      get().syncFromTokenListMap({ [normalizedAddress]: tokens }, [
+        normalizedAddress,
+      ]);
     },
     syncFromTokenListMap(tokenListMap, addresses) {
       const addressSet = addresses
         ? normalizeAddressSet(addresses)
         : new Set(Object.keys(tokenListMap).map(normalizeAddress));
 
-      addressSet.forEach(address => {
-        get().syncAddressTokens(address, tokenListMap[address] || []);
+      const currentState = get();
+      const updates = Array.from(addressSet).map(address => {
+        const tokens = tokenListMap[address] || [];
+        const nextTokenIds = buildStableTokenEntityIds(
+          sortByUsdValueDesc(tokens),
+          currentState.addressTokenIds[address],
+        );
+        const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
+
+        return {
+          address,
+          nextTokenIds,
+          nextStaticItems,
+          nextStaticTokenIds: new Set(
+            nextStaticItems.map(item => item.tokenId),
+          ),
+        };
+      });
+
+      set(draft => {
+        updates.forEach(
+          ({ address, nextTokenIds, nextStaticItems, nextStaticTokenIds }) => {
+            let didChange = false;
+            if (draft.addressTokenIds[address] !== nextTokenIds) {
+              draft.addressTokenIds[address] = nextTokenIds;
+              didChange = true;
+            }
+
+            nextStaticItems.forEach(item => {
+              if (
+                !isTokenStaticIndexItemSame(
+                  draft.tokenStaticMap[item.tokenId],
+                  item,
+                )
+              ) {
+                draft.tokenStaticMap[item.tokenId] = item;
+                didChange = true;
+              }
+            });
+
+            Object.keys(draft.tokenStaticMap).forEach(tokenId => {
+              if (
+                getTokenEntityIdAddress(tokenId) === address &&
+                !nextStaticTokenIds.has(tokenId as TokenEntityId)
+              ) {
+                delete draft.tokenStaticMap[tokenId];
+                didChange = true;
+              }
+            });
+
+            if (didChange) {
+              draft.addressVersions[address] =
+                (draft.addressVersions[address] || 0) + 1;
+            }
+          },
+        );
       });
     },
   })),
@@ -2849,11 +2863,20 @@ const syncTokenRuntimeStoresFromTokenListMap = (
   },
 ) => {
   const normalizedAddresses = Array.from(normalizeAddressSet(addresses));
+  const trace = beginAssetDataLoadDiagnostic(
+    'token-runtime-sync',
+    normalizedAddresses.join('|'),
+    {
+      addressCount: normalizedAddresses.length,
+      source,
+    },
+  );
 
   if (!normalizedAddresses.length) {
     if (options?.markTokenListMapSynced) {
       lastTokenListMapSyncedToRuntime = tokenListMap;
     }
+    trace.finish({ path: 'empty-addresses' });
     return;
   }
 
@@ -2862,13 +2885,21 @@ const syncTokenRuntimeStoresFromTokenListMap = (
     normalizedAddresses,
     source,
   );
+  trace.mark('entity-resources-synced', {
+    tokenCount: normalizedAddresses.reduce(
+      (count, address) => count + (tokenListMap[address]?.length || 0),
+      0,
+    ),
+  });
   useTokenIndexStore
     .getState()
     .syncFromTokenListMap(tokenListMap, normalizedAddresses);
+  trace.mark('index-and-projections-synced');
 
   if (options?.markTokenListMapSynced) {
     lastTokenListMapSyncedToRuntime = tokenListMap;
   }
+  trace.finish();
 };
 
 const tokenCacheHydrator = createAddressListSnapshotHydrator<ITokenItem>({
