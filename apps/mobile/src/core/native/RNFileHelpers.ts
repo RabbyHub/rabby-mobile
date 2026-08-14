@@ -9,7 +9,6 @@ import type {
 const { RNFileHelpers: nativeModule } = resolveNativeModule('RNFileHelpers');
 
 const RNFileHelpers = Object.freeze({
-  ...nativeModule,
   getFileCapabilitySnapshot:
     nativeModule.getFileCapabilitySnapshot ||
     ((): Promise<NativeFileCapabilitySnapshot> =>
