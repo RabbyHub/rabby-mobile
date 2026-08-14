@@ -30,10 +30,7 @@ export const PerpsProTpSlFields: React.FC<{
   const buyPreview = focused ? controller.previews.buy[focused] : null;
   const sellPreview = focused ? controller.previews.sell[focused] : null;
   const tooltipVisible =
-    draft.enabled &&
-    focused != null &&
-    !!draft[focused].rawMagnitude &&
-    (buyPreview != null || sellPreview != null);
+    draft.enabled && focused != null && !!draft[focused].rawMagnitude;
   return (
     <View style={styles.container} testID="perps-pro-tpsl-fields">
       <PerpsProTradeCheckbox
