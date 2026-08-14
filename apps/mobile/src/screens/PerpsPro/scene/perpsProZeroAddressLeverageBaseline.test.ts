@@ -14,17 +14,23 @@ jest.mock('@/hooks/perps/useActiveAssetDataCache', () => ({
 
 import {
   prefetchPerpsProZeroAddressLeverageBaseline,
+  preparePerpsProLeverageSources,
   preparePerpsProZeroAddressLeverageBaseline,
+  readPerpsProAccountLeverageConfiguration,
   readPerpsProZeroAddressLeverageBaseline,
 } from './perpsProZeroAddressLeverageBaseline';
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+const USER_ADDRESS = '0x341a1fBD51825E5a107DB54cCb3166DeBA145479';
 const activeAssetData = (
+  user: string,
   coin: string,
   type: 'cross' | 'isolated',
   value: number,
 ) => ({
   coin,
   leverage: { type, value },
+  user,
 });
 
 describe('Perps Pro zero-address leverage baseline', () => {
@@ -36,7 +42,7 @@ describe('Perps Pro zero-address leverage baseline', () => {
 
   it('returns a matching cache entry synchronously without a request', async () => {
     mockReadActiveAssetDataFromCache.mockReturnValue(
-      activeAssetData('SUI', 'cross', 10),
+      activeAssetData(ZERO_ADDRESS, 'SUI', 'cross', 10),
     );
 
     expect(readPerpsProZeroAddressLeverageBaseline('SUI')).toEqual({
@@ -50,7 +56,7 @@ describe('Perps Pro zero-address leverage baseline', () => {
   });
 
   it('retries until a quickly settled request writes a fresh cache entry', async () => {
-    const baseline = activeAssetData('SUI', 'cross', 10);
+    const baseline = activeAssetData(ZERO_ADDRESS, 'SUI', 'cross', 10);
     mockFetchActiveAssetDataWithCache
       // The shared fetcher can return expired data after a network failure;
       // without a fresh cache write it is not a prepared market baseline.
@@ -77,6 +83,51 @@ describe('Perps Pro zero-address leverage baseline', () => {
 
     await expect(pending).resolves.toBeNull();
     expect(mockFetchActiveAssetDataWithCache).toHaveBeenCalledTimes(1);
+  });
+
+  it('prepares current-account and zero-address sources within one deadline', async () => {
+    const accountData = activeAssetData(USER_ADDRESS, 'SOL', 'isolated', 4);
+    const zeroData = activeAssetData(ZERO_ADDRESS, 'SOL', 'cross', 20);
+    const fetchedByAddress = new Map<
+      string,
+      ReturnType<typeof activeAssetData>
+    >();
+    mockReadActiveAssetDataFromCache.mockImplementation(
+      (_cachedCoin: string, cachedAddress: string) =>
+        fetchedByAddress.get(cachedAddress) ?? null,
+    );
+    mockFetchActiveAssetDataWithCache.mockImplementation(
+      async (_coin: string, address: string) => {
+        const data = address === USER_ADDRESS ? accountData : zeroData;
+        fetchedByAddress.set(address, data);
+        return data;
+      },
+    );
+
+    await expect(
+      preparePerpsProLeverageSources('SOL', USER_ADDRESS),
+    ).resolves.toEqual({
+      accountLeverageConfiguration: { type: 'isolated', value: 4 },
+      zeroAddressLeverageBaseline: { type: 'cross', value: 20 },
+    });
+    expect(mockFetchActiveAssetDataWithCache).toHaveBeenCalledWith(
+      'SOL',
+      USER_ADDRESS,
+    );
+    expect(mockFetchActiveAssetDataWithCache).toHaveBeenCalledWith(
+      'SOL',
+      ZERO_ADDRESS,
+    );
+  });
+
+  it('rejects cached data whose user does not match the requested account', () => {
+    mockReadActiveAssetDataFromCache.mockReturnValue(
+      activeAssetData(ZERO_ADDRESS, 'SOL', 'cross', 20),
+    );
+
+    expect(
+      readPerpsProAccountLeverageConfiguration('SOL', USER_ADDRESS),
+    ).toBeNull();
   });
 
   it('limits visible-row prefetch fan-out to four concurrent requests', async () => {

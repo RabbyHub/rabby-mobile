@@ -30,7 +30,7 @@ export type PerpsProAttachedTpSlFinalOutcome = {
   kind: PerpsProAttachedTpSlResult['kind'];
   reconciliationErrors: string[];
   refreshErrors: string[];
-  reason?: 'unresolvedSubmission';
+  reason?: 'regionRestricted' | 'unresolvedSubmission';
 };
 
 export type EnsurePerpsProAttachedTpSlLeverage = (
@@ -108,6 +108,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         bookStatus: latest.bboStatus,
         coin: latest.market?.canonicalCoin ?? '',
         dexId: latest.market?.marketData.dexId ?? '',
+        hasPermission: state.hasPermission,
         marketKey: latest.market?.marketKey ?? null,
         maxBaseSize:
           latest.activeAssetData?.maxTradeSzs[
@@ -217,7 +218,21 @@ export const usePerpsProAttachedTpSlExecution = ({
       const empty = { reconciliationErrors: [], refreshErrors: [] };
       const guard = () =>
         validatePerpsProAttachedTpSlCommand(command, getGuardContext(command));
-      if (!guard().ok) return { ...empty, kind: 'staleContext' };
+      const guardFailure = () => {
+        const result = guard();
+        return result.ok
+          ? null
+          : {
+              ...empty,
+              kind: 'staleContext' as const,
+              reason:
+                result.reason === 'regionRestricted'
+                  ? ('regionRestricted' as const)
+                  : undefined,
+            };
+      };
+      const initialGuardFailure = guardFailure();
+      if (initialGuardFailure) return initialGuardFailure;
       try {
         const account = getPerpsAccountRuntimeContext().account;
         if (
@@ -227,7 +242,8 @@ export const usePerpsProAttachedTpSlExecution = ({
           return { ...empty, kind: 'staleContext' };
         }
         await ensurePerpsActionApproval(account);
-        if (!guard().ok) return { ...empty, kind: 'staleContext' };
+        const postApprovalGuardFailure = guardFailure();
+        if (postApprovalGuardFailure) return postApprovalGuardFailure;
         const leverageResult = await ensureLeverage(command);
         if (leverageResult !== 'success') {
           return {
@@ -240,7 +256,8 @@ export const usePerpsProAttachedTpSlExecution = ({
                 : 'requestFailed',
           };
         }
-        if (!guard().ok) return { ...empty, kind: 'staleContext' };
+        const postLeverageGuardFailure = guardFailure();
+        if (postLeverageGuardFailure) return postLeverageGuardFailure;
         const result = await executePerpsProAttachedTpSl(command, () =>
           getGuardContext(command),
         );
@@ -254,7 +271,13 @@ export const usePerpsProAttachedTpSlExecution = ({
             ...empty,
             error: 'error' in result ? result.error : undefined,
             kind: result.kind,
-            reason: result.kind === 'requestFailed' ? result.reason : undefined,
+            reason:
+              result.kind === 'requestFailed'
+                ? result.reason
+                : result.kind === 'staleContext' &&
+                  result.reason === 'regionRestricted'
+                ? 'regionRestricted'
+                : undefined,
           };
         }
         const entry = (

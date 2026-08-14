@@ -51,6 +51,7 @@ const dependencies = (
   })),
   getCurrentAccount: () => account,
   getCurrentDex: () => '',
+  hasPermission: () => true,
   limitOrder: jest.fn(async () => ({
     status: 'ok',
     response: { data: { statuses: [{ resting: { oid: 1 } }] } },
@@ -293,6 +294,17 @@ describe('Perps Pro open order action', () => {
       kind: 'staleContext',
     });
     expect(deps.marketOrder).not.toHaveBeenCalled();
+  });
+
+  it('blocks a region-restricted Trade Form before the SDK call', async () => {
+    const deps = dependencies({ hasPermission: () => false });
+
+    await expect(executePerpsProOpenOrder(build(), deps)).resolves.toEqual({
+      failureReason: 'regionRestricted',
+      kind: 'failed',
+    });
+    expect(deps.marketOrder).not.toHaveBeenCalled();
+    expect(deps.refreshClearinghouse).not.toHaveBeenCalled();
   });
 
   it('blocks a stale BBO scene before the SDK call', async () => {

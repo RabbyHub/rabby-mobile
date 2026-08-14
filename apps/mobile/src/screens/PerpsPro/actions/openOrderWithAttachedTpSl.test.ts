@@ -142,6 +142,7 @@ const guardContext = (
   bookStatus: 'ready',
   coin: 'BTC',
   dexId: '',
+  hasPermission: true,
   marketKey: 'BTC:USDC',
   maxBaseSize: '10',
   positionIdentity: getPerpsProAttachedTpSlPositionIdentity(null),
@@ -280,6 +281,38 @@ describe('Perps Pro attached TP/SL command and executor', () => {
         guardContext({ maxBaseSize: '1.99' }),
       ),
     ).toMatchObject({ ok: false, reason: 'availableToTrade' });
+  });
+
+  it('fails closed for a region-restricted parent order', () => {
+    expect(
+      validatePerpsProAttachedTpSlCommand(
+        build(),
+        guardContext({ hasPermission: false }),
+      ),
+    ).toEqual({ ok: false, reason: 'regionRestricted' });
+  });
+
+  it('removes prepared state if permission changes before SDK dispatch', async () => {
+    const command = build();
+    const setup = createDependencies(command);
+    let guardCalls = 0;
+    setup.dependencies.getGuardContext = () => ({
+      ...guardContext(),
+      hasPermission: guardCalls++ === 0,
+    });
+
+    await expect(
+      executePerpsProAttachedTpSl(
+        command,
+        setup.dependencies.getGuardContext,
+        setup.dependencies,
+      ),
+    ).resolves.toEqual({
+      kind: 'staleContext',
+      reason: 'regionRestricted',
+    });
+    expect(setup.marketOrder).not.toHaveBeenCalled();
+    expect(setup.getEntries()).toEqual([]);
   });
 
   it('keeps liquidation as review metadata without using it as a submission guard', () => {

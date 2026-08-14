@@ -2,6 +2,7 @@ import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import { useTheme2024 } from '@/hooks/theme';
 import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
+import { PerpsRegionAlert } from '@/screens/Perps/components/PerpsRegionAlert';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
@@ -145,6 +146,7 @@ export const PerpsProScene: React.FC<{
     enabled: scene.realtimeEnabled,
   });
   const trade = usePerpsProTrade({
+    accountLeverageConfiguration: scene.accountLeverageConfiguration,
     activeAssetData: activeAsset.activeAssetData,
     bboBook: bboBook.book,
     bboPrices: bboBook.prices,
@@ -348,37 +350,39 @@ export const PerpsProScene: React.FC<{
         case 'trade':
           if (scene.currentMarket) {
             return (
-              <View
-                onLayout={updateTradeRowHeight}
-                style={[styles.columns, columnsStyle]}>
-                <View style={orderBookColumnStyle}>
-                  <PerpsProRealtimeOrderBook
-                    amountUnit={trade.amountUnit}
-                    enabled={scene.realtimeEnabled}
-                    height={mainColumnHeight}
-                    market={scene.currentMarket}
-                    onSelectTickOption={scene.selectTickOption}
-                    onSelectPrice={
-                      trade.form.orderType === 'limit' && !trade.form.bboEnabled
-                        ? price =>
-                            trade.selectManualLimitPrice(
-                              price,
-                              scene.currentMarket!.marketKey,
-                            )
-                        : undefined
-                    }
-                    precision={scene.precision}
-                    selectedTickOption={scene.selectedTickOption}
-                    tickOptions={scene.tickOptions}
-                  />
-                </View>
-                <View
-                  onLayout={updateMainColumnHeight}
-                  style={tradeColumnStyle}>
-                  <PerpsProTradeForm
-                    controller={trade}
-                    onDeposit={openDeposit}
-                  />
+              <View onLayout={updateTradeRowHeight}>
+                {!trade.hasPermission ? <PerpsRegionAlert /> : null}
+                <View style={[styles.columns, columnsStyle]}>
+                  <View style={orderBookColumnStyle}>
+                    <PerpsProRealtimeOrderBook
+                      amountUnit={trade.amountUnit}
+                      enabled={scene.realtimeEnabled}
+                      height={mainColumnHeight}
+                      market={scene.currentMarket}
+                      onSelectTickOption={scene.selectTickOption}
+                      onSelectPrice={
+                        trade.form.orderType === 'limit' &&
+                        !trade.form.bboEnabled
+                          ? price =>
+                              trade.selectManualLimitPrice(
+                                price,
+                                scene.currentMarket!.marketKey,
+                              )
+                          : undefined
+                      }
+                      precision={scene.precision}
+                      selectedTickOption={scene.selectedTickOption}
+                      tickOptions={scene.tickOptions}
+                    />
+                  </View>
+                  <View
+                    onLayout={updateMainColumnHeight}
+                    style={tradeColumnStyle}>
+                    <PerpsProTradeForm
+                      controller={trade}
+                      onDeposit={openDeposit}
+                    />
+                  </View>
                 </View>
               </View>
             );

@@ -278,7 +278,10 @@ export const PerpsProTradeForm: React.FC<{
                     value={
                       liquidationPrice === '--'
                         ? '--'
-                        : `${liquidationPrice} ${quoteAsset}`
+                        : `${formatPerpsProDecimal(
+                            liquidationPrice,
+                            market?.marketData.pxDecimals ?? 2,
+                          )} ${quoteAsset}`
                     }
                   />
                 ) : null}

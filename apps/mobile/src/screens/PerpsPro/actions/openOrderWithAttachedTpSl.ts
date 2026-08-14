@@ -89,6 +89,7 @@ export type PerpsProAttachedTpSlGuardContext = {
   bookStatus: 'error' | 'idle' | 'loading' | 'ready' | 'stale';
   coin: string;
   dexId: string;
+  hasPermission: boolean;
   marketKey: string | null;
   maxBaseSize: string | null;
   positionIdentity: PerpsProAttachedTpSlPositionIdentity;
@@ -313,6 +314,9 @@ export const validatePerpsProAttachedTpSlCommand = (
     !Object.isFrozen(command.reviewFacts)
   ) {
     return { ok: false, reason: 'commandIdentity' };
+  }
+  if (!context.hasPermission) {
+    return { ok: false, reason: 'regionRestricted' };
   }
   if (
     !context.active ||

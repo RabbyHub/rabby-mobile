@@ -1,5 +1,7 @@
 import { createPerpsProTradeFormState } from './trade';
 import {
+  getPerpsProMaxDisplayAmount,
+  getPerpsProMaxDisplayReferencePrice,
   getPerpsProNetNewBaseSize,
   getPerpsProTradeDisplayReferencePrice,
   resolvePerpsProTradeProjection,
@@ -22,6 +24,78 @@ describe('Perps Pro trade projection', () => {
         marketPrice: '100',
       }),
     ).toBe('100');
+  });
+
+  it('uses live market only as the empty manual Limit Max fallback', () => {
+    const limitForm = createPerpsProTradeFormState({ orderType: 'limit' });
+
+    expect(
+      getPerpsProMaxDisplayReferencePrice({
+        bboPrice: '101',
+        form: limitForm,
+        marketPrice: '100',
+      }),
+    ).toBe('100');
+    expect(
+      getPerpsProMaxDisplayReferencePrice({
+        bboPrice: '101',
+        form: { ...limitForm, limitPrice: '95' },
+        marketPrice: '100',
+      }),
+    ).toBe('95');
+    expect(
+      getPerpsProMaxDisplayReferencePrice({
+        bboPrice: '101',
+        form: { ...limitForm, bboEnabled: true },
+        marketPrice: '100',
+      }),
+    ).toBe('101');
+  });
+
+  it('uses live market only as the empty Conditional Limit Max fallback', () => {
+    const conditionalForm = {
+      ...createPerpsProTradeFormState({ orderType: 'conditional' }),
+      conditionalExecution: 'limit' as const,
+    };
+
+    expect(
+      getPerpsProMaxDisplayReferencePrice({
+        bboPrice: null,
+        form: conditionalForm,
+        marketPrice: '100',
+      }),
+    ).toBe('100');
+    expect(
+      getPerpsProMaxDisplayReferencePrice({
+        bboPrice: null,
+        form: { ...conditionalForm, conditionalLimitPrice: '96' },
+        marketPrice: '100',
+      }),
+    ).toBe('96');
+  });
+
+  it('converts quote Max with its display reference and fails closed without it', () => {
+    expect(
+      getPerpsProMaxDisplayAmount({
+        amountUnit: 'quote',
+        maxBase: '10',
+        referencePrice: '100',
+      }),
+    ).toBe('1000.00');
+    expect(
+      getPerpsProMaxDisplayAmount({
+        amountUnit: 'quote',
+        maxBase: '10',
+        referencePrice: null,
+      }),
+    ).toBe('0');
+    expect(
+      getPerpsProMaxDisplayAmount({
+        amountUnit: 'base',
+        maxBase: '10',
+        referencePrice: null,
+      }),
+    ).toBe('10');
   });
 
   it('uses mid for the entered quote but direction BBO for Cost', () => {

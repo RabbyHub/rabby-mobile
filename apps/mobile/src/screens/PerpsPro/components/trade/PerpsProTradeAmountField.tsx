@@ -162,7 +162,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 2,
     height: 24,
-    paddingLeft: 5,
+    paddingLeft: 3,
     width: 52,
   },
   unit: {
@@ -172,7 +172,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
     textAlign: 'center',
-    width: 34,
+    width: 36,
   },
   switchIcon: {
     height: 10,

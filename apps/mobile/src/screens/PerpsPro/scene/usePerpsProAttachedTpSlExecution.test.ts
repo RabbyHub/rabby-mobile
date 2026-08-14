@@ -34,6 +34,7 @@ const state = {
     },
   },
   currentPerpsAccount: account,
+  hasPermission: true,
   isUserDataReady: true,
   marketDataMap: {
     BTC: {
@@ -183,6 +184,7 @@ const renderExecution = () => {
 describe('usePerpsProAttachedTpSlExecution', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    state.hasPermission = true;
     mockGetJournal.mockResolvedValue([journal]);
     mockExecute.mockResolvedValue({ kind: 'fullAccepted' });
     mockReconcile.mockResolvedValue({
@@ -239,6 +241,30 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     });
 
     expect(result!).toMatchObject({ kind: 'userCancelled' });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it('stops before approval and leverage when Trade is region restricted', async () => {
+    state.hasPermission = false;
+    mockValidate.mockImplementationOnce((_command, context) =>
+      context.hasPermission
+        ? { ok: true as const }
+        : { ok: false as const, reason: 'regionRestricted' },
+    );
+    const ensureLeverage = jest.fn();
+    const { hook } = renderExecution();
+
+    let result: Awaited<ReturnType<typeof hook.result.current.execute>>;
+    await act(async () => {
+      result = await hook.result.current.execute(command, ensureLeverage);
+    });
+
+    expect(result!).toMatchObject({
+      kind: 'staleContext',
+      reason: 'regionRestricted',
+    });
+    expect(mockEnsureApproval).not.toHaveBeenCalled();
+    expect(ensureLeverage).not.toHaveBeenCalled();
     expect(mockExecute).not.toHaveBeenCalled();
   });
 

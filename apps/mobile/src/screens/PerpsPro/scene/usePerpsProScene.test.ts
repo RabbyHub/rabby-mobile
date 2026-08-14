@@ -1,8 +1,9 @@
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
-const mockPrepareBaseline = jest.fn();
+const mockPrepareSources = jest.fn();
 const mockPrefetchBaseline = jest.fn();
+const mockReadAccountLeverage = jest.fn();
 const mockReadBaseline = jest.fn();
 const mockSetSessionMarket = jest.fn();
 
@@ -33,6 +34,7 @@ const btc = createMarketData('BTC', 40);
 const sui = createMarketData('SUI', 10);
 const eth = createMarketData('ETH', 25);
 const mockPerpsState = {
+  currentPerpsAccount: null as { address: string; type: string } | null,
   marketData: [btc, sui, eth],
   marketDataMap: { BTC: btc, ETH: eth, SUI: sui },
   marketDataStatus: 'ready' as const,
@@ -70,8 +72,10 @@ jest.mock('../session/perpsProMarketSession', () => ({
 jest.mock('./perpsProZeroAddressLeverageBaseline', () => ({
   prefetchPerpsProZeroAddressLeverageBaseline: (...args: unknown[]) =>
     mockPrefetchBaseline(...args),
-  preparePerpsProZeroAddressLeverageBaseline: (...args: unknown[]) =>
-    mockPrepareBaseline(...args),
+  preparePerpsProLeverageSources: (...args: unknown[]) =>
+    mockPrepareSources(...args),
+  readPerpsProAccountLeverageConfiguration: (...args: unknown[]) =>
+    mockReadAccountLeverage(...args),
   readPerpsProZeroAddressLeverageBaseline: (...args: unknown[]) =>
     mockReadBaseline(...args),
 }));
@@ -95,11 +99,26 @@ const deferred = <T>() => {
   return { promise, resolve };
 };
 
+const preparedSources = (
+  zeroAddressLeverageBaseline: {
+    type: 'cross' | 'isolated';
+    value: number;
+  } | null,
+  accountLeverageConfiguration: {
+    type: 'cross' | 'isolated';
+    value: number;
+  } | null = null,
+) => ({ accountLeverageConfiguration, zeroAddressLeverageBaseline });
+
 describe('usePerpsProScene prepared market selection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPerpsState.currentPerpsAccount = null;
+    mockReadAccountLeverage.mockReturnValue(null);
     mockReadBaseline.mockReturnValue(null);
-    mockPrepareBaseline.mockResolvedValue({ type: 'cross', value: 20 });
+    mockPrepareSources.mockResolvedValue(
+      preparedSources({ type: 'cross', value: 20 }),
+    );
   });
 
   it('uses a prefetched initial baseline in the first visible market frame', () => {
@@ -111,18 +130,90 @@ describe('usePerpsProScene prepared market selection', () => {
       type: 'cross',
       value: 20,
     });
-    expect(mockPrepareBaseline).not.toHaveBeenCalled();
+    expect(mockPrepareSources).not.toHaveBeenCalled();
+  });
+
+  it('uses a cached current-account configuration in the first visible frame', () => {
+    mockPerpsState.currentPerpsAccount = {
+      address: '0x341a1fBD51825E5a107DB54cCb3166DeBA145479',
+      type: 'WatchAddressKeyring',
+    };
+    mockReadAccountLeverage.mockReturnValue({
+      type: 'isolated',
+      value: 4,
+    });
+    mockReadBaseline.mockReturnValue({ type: 'cross', value: 20 });
+
+    const hook = renderHook(() => usePerpsProScene());
+
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+    expect(hook.result.current.accountLeverageConfiguration).toEqual({
+      type: 'isolated',
+      value: 4,
+    });
+    expect(hook.result.current.zeroAddressLeverageBaseline).toEqual({
+      type: 'cross',
+      value: 20,
+    });
+    expect(mockPrepareSources).not.toHaveBeenCalled();
+  });
+
+  it('re-prepares the visible market when the account changes', async () => {
+    const firstAccount = {
+      address: '0x341a1fBD51825E5a107DB54cCb3166DeBA145479',
+      type: 'WatchAddressKeyring',
+    };
+    const secondAccount = {
+      address: '0x1111111111111111111111111111111111111111',
+      type: 'WatchAddressKeyring',
+    };
+    mockPerpsState.currentPerpsAccount = firstAccount;
+    mockReadAccountLeverage.mockReturnValue({
+      type: 'isolated',
+      value: 4,
+    });
+    mockReadBaseline.mockReturnValue({ type: 'cross', value: 20 });
+    const hook = renderHook(() => usePerpsProScene());
+    expect(hook.result.current.accountLeverageConfiguration?.value).toBe(4);
+
+    const secondSources = deferred<ReturnType<typeof preparedSources>>();
+    mockReadAccountLeverage.mockReturnValue(null);
+    mockPrepareSources.mockReturnValueOnce(secondSources.promise);
+    mockPerpsState.currentPerpsAccount = secondAccount;
+    hook.rerender(undefined);
+
+    expect(hook.result.current.currentMarket).toBeNull();
+    expect(hook.result.current.accountLeverageConfiguration).toBeNull();
+    await waitFor(() =>
+      expect(mockPrepareSources).toHaveBeenCalledWith(
+        'BTC',
+        secondAccount.address,
+      ),
+    );
+
+    act(() =>
+      secondSources.resolve(
+        preparedSources(
+          { type: 'cross', value: 20 },
+          { type: 'isolated', value: 7 },
+        ),
+      ),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.accountLeverageConfiguration?.value).toBe(7),
+    );
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
   });
 
   it('does not expose the initial market before its baseline snapshot resolves', async () => {
-    const initial = deferred<{ type: 'cross'; value: number } | null>();
-    mockPrepareBaseline.mockReturnValueOnce(initial.promise);
+    const initial = deferred<ReturnType<typeof preparedSources>>();
+    mockPrepareSources.mockReturnValueOnce(initial.promise);
     const hook = renderHook(() => usePerpsProScene());
 
     expect(hook.result.current.currentMarket).toBeNull();
     expect(hook.result.current.isResolvingMarket).toBe(true);
 
-    act(() => initial.resolve({ type: 'cross', value: 20 }));
+    act(() => initial.resolve(preparedSources({ type: 'cross', value: 20 })));
     await waitFor(() =>
       expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
     );
@@ -138,8 +229,8 @@ describe('usePerpsProScene prepared market selection', () => {
       expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
     );
 
-    const target = deferred<{ type: 'cross'; value: number } | null>();
-    mockPrepareBaseline.mockReturnValueOnce(target.promise);
+    const target = deferred<ReturnType<typeof preparedSources>>();
+    mockPrepareSources.mockReturnValueOnce(target.promise);
     let selection!: Promise<boolean>;
     act(() => {
       selection = hook.result.current.selectMarket(buildPerpsProMarket(sui));
@@ -152,7 +243,7 @@ describe('usePerpsProScene prepared market selection', () => {
     });
 
     await act(async () => {
-      target.resolve({ type: 'cross', value: 10 });
+      target.resolve(preparedSources({ type: 'cross', value: 10 }));
       expect(await selection).toBe(true);
     });
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('SUI');
@@ -167,9 +258,9 @@ describe('usePerpsProScene prepared market selection', () => {
     await waitFor(() =>
       expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
     );
-    const first = deferred<{ type: 'cross'; value: number } | null>();
-    const second = deferred<{ type: 'isolated'; value: number } | null>();
-    mockPrepareBaseline
+    const first = deferred<ReturnType<typeof preparedSources>>();
+    const second = deferred<ReturnType<typeof preparedSources>>();
+    mockPrepareSources
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise);
 
@@ -180,13 +271,13 @@ describe('usePerpsProScene prepared market selection', () => {
       buildPerpsProMarket(eth),
     );
     await act(async () => {
-      first.resolve({ type: 'cross', value: 10 });
+      first.resolve(preparedSources({ type: 'cross', value: 10 }));
       await expect(firstSelection).resolves.toBe(false);
     });
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
 
     await act(async () => {
-      second.resolve({ type: 'isolated', value: 12 });
+      second.resolve(preparedSources({ type: 'isolated', value: 12 }));
       expect(await secondSelection).toBe(true);
     });
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('ETH');
@@ -195,8 +286,8 @@ describe('usePerpsProScene prepared market selection', () => {
       value: 12,
     });
 
-    const pending = deferred<{ type: 'cross'; value: number } | null>();
-    mockPrepareBaseline.mockReturnValueOnce(pending.promise);
+    const pending = deferred<ReturnType<typeof preparedSources>>();
+    mockPrepareSources.mockReturnValueOnce(pending.promise);
     const pendingSelection = hook.result.current.selectMarket(
       buildPerpsProMarket(sui),
     );
@@ -204,7 +295,7 @@ describe('usePerpsProScene prepared market selection', () => {
       hook.result.current.selectMarket(buildPerpsProMarket(eth)),
     ).resolves.toBe(true);
     await act(async () => {
-      pending.resolve({ type: 'cross', value: 10 });
+      pending.resolve(preparedSources({ type: 'cross', value: 10 }));
       await expect(pendingSelection).resolves.toBe(false);
     });
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('ETH');
@@ -215,15 +306,15 @@ describe('usePerpsProScene prepared market selection', () => {
     await waitFor(() =>
       expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
     );
-    const target = deferred<{ type: 'cross'; value: number } | null>();
-    mockPrepareBaseline.mockReturnValueOnce(target.promise);
+    const target = deferred<ReturnType<typeof preparedSources>>();
+    mockPrepareSources.mockReturnValueOnce(target.promise);
     const selection = hook.result.current.selectMarket(
       buildPerpsProMarket(sui),
     );
 
     act(() => hook.result.current.cancelPendingMarketSelection());
     await act(async () => {
-      target.resolve({ type: 'cross', value: 10 });
+      target.resolve(preparedSources({ type: 'cross', value: 10 }));
       await expect(selection).resolves.toBe(false);
     });
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
@@ -234,7 +325,7 @@ describe('usePerpsProScene prepared market selection', () => {
     await waitFor(() =>
       expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
     );
-    mockPrepareBaseline.mockResolvedValueOnce(null);
+    mockPrepareSources.mockResolvedValueOnce(preparedSources(null));
 
     await act(async () => {
       expect(
