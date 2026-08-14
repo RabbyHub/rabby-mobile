@@ -128,7 +128,7 @@ const controller = (overrides: Partial<PerpsProTpSlController> = {}) =>
   } as PerpsProTpSlController);
 
 describe('PerpsProTpSlFields', () => {
-  it('matches the expanded TP/SL spacing and input geometry', () => {
+  it('widens the quote unit while preserving the expanded TP/SL geometry', () => {
     render(
       <PerpsProTpSlFields
         controller={controller()}
@@ -165,10 +165,10 @@ describe('PerpsProTpSlFields', () => {
     ).toMatchObject({
       gap: 2,
       height: 16,
-      left: 6,
+      left: 4,
       position: 'absolute',
       top: 4,
-      width: 44,
+      width: 46,
     });
     expect(
       StyleSheet.flatten(
@@ -178,6 +178,11 @@ describe('PerpsProTpSlFields', () => {
     expect(screen.getByTestId('perps-pro-tpsl-tp-unit').props.children).toBe(
       'USDC',
     );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-tpsl-tp-unit').props.style,
+      ),
+    ).toMatchObject({ fontSize: 12, lineHeight: 16, width: 36 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-tpsl-tp-label').props.style,
