@@ -261,7 +261,7 @@ const OrderMetric: React.FC<{
       ]}
       testID={testID}>
       <Text
-        numberOfLines={textAlign === 'right' ? undefined : 1}
+        numberOfLines={1}
         style={[
           styles.orderMetricLabel,
           textAlign === 'right' && styles.orderMetricRightLabel,
@@ -270,7 +270,7 @@ const OrderMetric: React.FC<{
         {label}
       </Text>
       <Text
-        numberOfLines={textAlign === 'right' ? undefined : 1}
+        numberOfLines={1}
         style={[
           tone === 'positive'
             ? styles.positiveMetricValue
@@ -360,6 +360,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   orderMetric: { height: 36, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
+    // Keep auto-width absolute Text in Yoga's MaxContent measurement mode.
+    flexDirection: 'row',
     overflow: 'visible',
     position: 'relative',
   },
