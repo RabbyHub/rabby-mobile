@@ -3,7 +3,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Slider } from '@rneui/themed';
 import React, { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Keyboard, View } from 'react-native';
+
+import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 
 const TRADE_SLIDER_POINTS = [0, 25, 50, 75, 100] as const;
 
@@ -14,6 +16,13 @@ export const PerpsProTradeAmountSlider: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const [dragging, setDragging] = useState(false);
   const points = useMemo(() => [...TRADE_SLIDER_POINTS], []);
+  const sliderHaptics = usePerpsProSliderHaptics({
+    disabled: !onChange,
+    maximumValue: 100,
+    minimumValue: 0,
+    step: 1,
+    value,
+  });
 
   return (
     <View
@@ -21,7 +30,8 @@ export const PerpsProTradeAmountSlider: React.FC<{
       accessibilityRole="adjustable"
       accessibilityValue={{ max: 100, min: 0, now: value }}
       accessible
-      onAccessibilityAction={event =>
+      onAccessibilityAction={event => {
+        Keyboard.dismiss();
         onChange?.(
           Math.max(
             0,
@@ -30,8 +40,8 @@ export const PerpsProTradeAmountSlider: React.FC<{
               value + (event.nativeEvent.actionName === 'increment' ? 25 : -25),
             ),
           ),
-        )
-      }
+        );
+      }}
       style={styles.container}
       testID="perps-pro-trade-amount-slider">
       <View pointerEvents="none" style={styles.trackBase}>
@@ -43,9 +53,20 @@ export const PerpsProTradeAmountSlider: React.FC<{
         maximumValue={100}
         minimumTrackTintColor="transparent"
         minimumValue={0}
-        onSlidingComplete={() => setDragging(false)}
-        onSlidingStart={() => setDragging(true)}
-        onValueChange={next => onChange?.(Math.round(next))}
+        onSlidingComplete={() => {
+          sliderHaptics.onSlidingComplete();
+          setDragging(false);
+        }}
+        onSlidingStart={next => {
+          sliderHaptics.onSlidingStart(next);
+          Keyboard.dismiss();
+          setDragging(true);
+        }}
+        onValueChange={next => {
+          const roundedNext = Math.round(next);
+          sliderHaptics.onValueChange(roundedNext);
+          onChange?.(roundedNext);
+        }}
         step={1}
         style={styles.slider}
         thumbStyle={styles.thumb}
