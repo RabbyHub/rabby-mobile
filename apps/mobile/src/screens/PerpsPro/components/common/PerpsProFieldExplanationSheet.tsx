@@ -21,6 +21,7 @@ import {
   PERPS_PRO_FIELD_EXPLANATIONS,
   type PerpsProFieldExplanationKey,
 } from '../../model/fieldExplanation';
+import { usePerpsProSheetNavigationRegistration } from './perpsProSheetNavigationRegistry';
 
 export const PerpsProFieldExplanationSheet: React.FC<{
   explanationKey: PerpsProFieldExplanationKey;
@@ -30,6 +31,10 @@ export const PerpsProFieldExplanationSheet: React.FC<{
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const explanation = PERPS_PRO_FIELD_EXPLANATIONS[explanationKey];
+  usePerpsProSheetNavigationRegistration({
+    active: true,
+    dismiss: onDismiss,
+  });
 
   useRegisterBlockingModal(MODAL_GATE_IDS.perpsProFieldExplanation, true);
 

@@ -10,6 +10,7 @@ import React, { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 
 import type { PerpsProBboStrategy } from '../../model/bbo';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 export interface PerpsProBboOption {
   label: string;
@@ -25,6 +26,10 @@ export const PerpsProBboSheet: React.FC<{
 }> = React.memo(({ onClose, onSelect, options, selected, visible }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { colors2024, styles } = useTheme2024({ getStyle });
+  usePerpsProSheetNavigationRegistration({
+    active: visible,
+    dismiss: onClose,
+  });
 
   useEffect(() => {
     if (visible) modalRef.current?.present();

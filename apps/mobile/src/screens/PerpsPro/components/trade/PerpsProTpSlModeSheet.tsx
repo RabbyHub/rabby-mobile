@@ -10,6 +10,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTpSlMode } from '../../model/tpsl';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 export const PerpsProTpSlModeSheet: React.FC<{
   onClose: () => void;
@@ -19,6 +20,10 @@ export const PerpsProTpSlModeSheet: React.FC<{
 }> = React.memo(({ onClose, onSelect, selected, visible }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { colors2024, styles } = useTheme2024({ getStyle });
+  usePerpsProSheetNavigationRegistration({
+    active: visible,
+    dismiss: onClose,
+  });
   const { t } = useTranslation();
 
   useEffect(() => {

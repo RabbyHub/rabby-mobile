@@ -35,6 +35,7 @@ import {
   formatPerpsProSignedDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
@@ -90,6 +91,11 @@ export const PerpsProClosePositionSheet: React.FC<{
       getStyle: getPerpsProClosePositionSheetStyles,
     });
     const { t } = useTranslation();
+    usePerpsProSheetNavigationRegistration({
+      active: visible,
+      dismiss: onClose,
+      dismissible: !coveredByReview,
+    });
     const dismissKeyboardThen = usePerpsProDismissKeyboard();
     const openFieldExplanation = usePerpsProFieldExplanation();
     const liveMarket = usePerpsProPositionMark(position.coin);

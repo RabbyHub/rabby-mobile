@@ -11,6 +11,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTradeOrderType } from '../../model/trade';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { PerpsProOrderTypeIcon } from './PerpsProOrderTypeIcon';
 
 export const PerpsProOrderTypeSheet: React.FC<{
@@ -21,6 +22,10 @@ export const PerpsProOrderTypeSheet: React.FC<{
 }> = React.memo(({ onClose, onSelect, selected, visible }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { colors2024, styles } = useTheme2024({ getStyle });
+  usePerpsProSheetNavigationRegistration({
+    active: visible,
+    dismiss: onClose,
+  });
   const { t } = useTranslation();
 
   useEffect(() => {

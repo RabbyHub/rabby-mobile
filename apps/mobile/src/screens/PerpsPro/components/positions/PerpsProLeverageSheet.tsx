@@ -11,6 +11,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 // Figma 80481:14828 is a documented compact sheet action special case.
 const PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT = 36;
@@ -27,6 +28,11 @@ export const PerpsProLeverageSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    usePerpsProSheetNavigationRegistration({
+      active: visible,
+      dismiss: onClose,
+      dismissible: !pending,
+    });
     const safeMax = Math.max(1, Math.floor(maxLeverage));
     const safeCurrent = Math.min(
       safeMax,

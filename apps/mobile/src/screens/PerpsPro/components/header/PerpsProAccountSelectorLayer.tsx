@@ -7,6 +7,8 @@ import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
+
 /**
  * Keeps the existing account-login workflow intact while isolating its broad
  * legacy adapter subscriptions from the high-frequency Pro scene.
@@ -33,6 +35,10 @@ const PerpsProAccountSelectorController: React.FC = () => {
   const confirmDeleteAgent = useMemoizedFn(() => {
     void handleDeleteAgent();
     closeDeleteAgent();
+  });
+  usePerpsProSheetNavigationRegistration({
+    active: popupState.isShowLoginPopup,
+    dismiss: closeLogin,
   });
 
   return (

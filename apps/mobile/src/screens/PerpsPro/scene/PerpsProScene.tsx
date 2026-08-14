@@ -33,6 +33,11 @@ import {
 } from '../components/account/PerpsProFundingOverlay';
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
+import {
+  PerpsProSheetGlobalEdgeTarget,
+  PerpsProSheetNavigationBoundary,
+  usePerpsProSheetNavigationHost,
+} from '../components/common/PerpsProSheetNavigationGuard';
 import { usePerpsProDismissKeyboard } from '../components/common/usePerpsProDismissKeyboard';
 import { PerpsProHeader } from '../components/header/PerpsProHeader';
 import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
@@ -125,6 +130,7 @@ export const PerpsProScene: React.FC<{
 }) => {
   const { width } = useWindowDimensions();
   const { styles } = useTheme2024({ getStyle });
+  usePerpsProSheetNavigationHost();
   const { t } = useTranslation();
   const scene = usePerpsProScene();
   const activeAsset = useActiveAssetSubscription(
@@ -588,23 +594,32 @@ export const PerpsProScene: React.FC<{
       />
       <PerpsProAccountSelectorLayer />
       {scene.currentMarket ? (
-        <PerpsProKlineSheet
-          enabled={
-            klineActivated && scene.klineEnabled && appState === 'active'
-          }
-          market={scene.currentMarket}
-          onClose={closeKline}
-          preloadEnabled={scene.klineEnabled && appState === 'active'}
-          visible={klineOpen}
-        />
+        <PerpsProSheetNavigationBoundary
+          active={klineOpen}
+          dismiss={closeKline}>
+          <PerpsProKlineSheet
+            enabled={
+              klineActivated && scene.klineEnabled && appState === 'active'
+            }
+            market={scene.currentMarket}
+            onClose={closeKline}
+            preloadEnabled={scene.klineEnabled && appState === 'active'}
+            visible={klineOpen}
+          />
+        </PerpsProSheetNavigationBoundary>
       ) : null}
       {fundingOverlay ? (
-        <PerpsProFundingOverlay
-          mode={fundingOverlay.mode}
-          onClose={closeFundingOverlay}
-          onOpenDeposit={openDepositFromFunding}
-          targetAsset={fundingOverlay.targetAsset}
-        />
+        <PerpsProSheetNavigationBoundary
+          active
+          dismiss={closeFundingOverlay}
+          edgeDismissible={false}>
+          <PerpsProFundingOverlay
+            mode={fundingOverlay.mode}
+            onClose={closeFundingOverlay}
+            onOpenDeposit={openDepositFromFunding}
+            targetAsset={fundingOverlay.targetAsset}
+          />
+        </PerpsProSheetNavigationBoundary>
       ) : null}
       <PerpsProTransferSheet
         available={transfer.editor?.available ?? '0'}
@@ -668,6 +683,7 @@ export const PerpsProScene: React.FC<{
         pending={trade.pending}
         skipConfirmation={trade.skipConfirmation}
       />
+      <PerpsProSheetGlobalEdgeTarget />
     </PerpsProFieldExplanationProvider>
   );
 };

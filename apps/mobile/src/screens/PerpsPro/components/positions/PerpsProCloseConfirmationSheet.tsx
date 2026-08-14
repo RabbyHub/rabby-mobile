@@ -29,6 +29,7 @@ import {
   type PerpsProTradeAmountUnit,
 } from '../../model/trade';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 
 export const PerpsProCloseConfirmationSheet: React.FC<{
@@ -58,6 +59,11 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    usePerpsProSheetNavigationRegistration({
+      active: visible,
+      dismiss: onClose,
+      dismissible: !pending,
+    });
     useRegisterBlockingModal(MODAL_GATE_IDS.perpsProCloseConfirmation, visible);
 
     useEffect(() => {
