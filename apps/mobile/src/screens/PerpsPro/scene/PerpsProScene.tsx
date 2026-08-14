@@ -39,7 +39,12 @@ import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccou
 import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
-import { createPerpsProInfoTabsTranslateY } from '../components/info/perpsProInfoTabsSticky';
+import {
+  createPerpsProInfoTabsTranslateY,
+  getPerpsProInfoTabsNaturalAnchor,
+  PERPS_PRO_INFO_TABS_HEIGHT,
+  PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
+} from '../components/info/perpsProInfoTabsSticky';
 import {
   PerpsProMarketBarSkeleton,
   PerpsProSceneSkeleton,
@@ -248,7 +253,10 @@ export const PerpsProScene: React.FC<{
   const infoTabsTranslateY = useMemo(
     () =>
       createPerpsProInfoTabsTranslateY({
-        anchorY: PERPS_PRO_SCENE_LEAD_IN_HEIGHT + tradeRowHeight,
+        anchorY: getPerpsProInfoTabsNaturalAnchor({
+          leadInHeight: PERPS_PRO_SCENE_LEAD_IN_HEIGHT,
+          tradeRowHeight,
+        }),
         marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
         marketTranslateY: headerCollapse.marketTranslateY,
         scrollY: headerCollapse.scrollY,
@@ -687,14 +695,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 2,
   },
   infoTabsOverlay: {
-    height: 34,
+    height: PERPS_PRO_INFO_TABS_HEIGHT,
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
     zIndex: 1,
   },
-  infoTabsSpacer: { height: 34 },
+  infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
   scroll: {
     bottom: 0,
     left: 0,

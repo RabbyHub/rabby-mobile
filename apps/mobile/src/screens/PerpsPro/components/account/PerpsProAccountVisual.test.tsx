@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 jest.mock('@/assets2024/icons/perps/IconUSDC.svg', () => {
   const ReactModule = require('react');
@@ -86,6 +87,48 @@ describe('Perps Pro account visual contract', () => {
     expect(screen.queryByText('Cross Margin Ratio')).toBeNull();
   });
 
+  it('keeps the design summary and action geometry', () => {
+    render(
+      <PerpsProAccountSummary
+        account={account}
+        onDeposit={jest.fn()}
+        onWithdraw={jest.fn()}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-account-summary').props.style,
+      ),
+    ).toMatchObject({
+      gap: 16,
+      marginHorizontal: 15,
+      marginTop: 16,
+      padding: 12,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('Total Value').parent?.parent?.props.style,
+      ),
+    ).toMatchObject({ gap: 4 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('Unrealized PNL').parent?.parent?.props.style,
+      ),
+    ).toMatchObject({ alignItems: 'flex-end', gap: 4 });
+
+    const buttons = screen.getAllByRole('button');
+    expect(StyleSheet.flatten(buttons[0].props.style)).toMatchObject({
+      height: 34,
+    });
+    expect(StyleSheet.flatten(buttons[1].props.style)).toMatchObject({
+      height: 34,
+    });
+    const actionRow = screen.getByTestId('perps-pro-account-summary')
+      .children[1] as { props: { style?: object } };
+    expect(StyleSheet.flatten(actionRow.props.style)).toMatchObject({ gap: 8 });
+  });
+
   it('exposes Transfer only for the actionable standard Spot USDC row', () => {
     const onTransfer = jest.fn();
     render(
@@ -98,5 +141,27 @@ describe('Perps Pro account visual contract', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-transfer'));
     expect(onTransfer).toHaveBeenCalledWith(spotUsdc);
+  });
+
+  it('keeps the 8px asset rhythm outside the 92px row', () => {
+    render(
+      <PerpsProAccountAssetRow
+        asset={spotUsdc}
+        onSwap={jest.fn()}
+        onTransfer={jest.fn()}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-asset-spot:USDC').props.style,
+      ),
+    ).toMatchObject({
+      gap: 12,
+      marginHorizontal: 15,
+      marginTop: 8,
+      minHeight: 92,
+      paddingVertical: 8,
+    });
   });
 });

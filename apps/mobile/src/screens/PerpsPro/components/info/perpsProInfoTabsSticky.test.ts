@@ -2,10 +2,22 @@ import { Animated } from 'react-native';
 
 import {
   createPerpsProInfoTabsTranslateY,
+  getPerpsProInfoTabsNaturalAnchor,
   getPerpsProInfoTabsTop,
+  PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
 } from './perpsProInfoTabsSticky';
 
 describe('Perps Pro info tabs sticky geometry', () => {
+  it('preserves the 16px natural gap after the trade row', () => {
+    expect(
+      getPerpsProInfoTabsNaturalAnchor({
+        leadInHeight: 96,
+        tradeRowHeight: 424,
+      }),
+    ).toBe(536);
+    expect(PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT).toBe(50);
+  });
+
   it('follows its list anchor until it reaches the moving Market bottom', () => {
     expect(
       getPerpsProInfoTabsTop({

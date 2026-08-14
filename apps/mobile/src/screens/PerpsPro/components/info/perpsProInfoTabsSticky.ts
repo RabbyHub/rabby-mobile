@@ -2,6 +2,19 @@ import { Animated } from 'react-native';
 
 const ABSOLUTE_INTERPOLATION_BOUND = 100_000;
 
+export const PERPS_PRO_INFO_TABS_HEIGHT = 34;
+export const PERPS_PRO_INFO_SECTION_TOP_GAP = 16;
+export const PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT =
+  PERPS_PRO_INFO_SECTION_TOP_GAP + PERPS_PRO_INFO_TABS_HEIGHT;
+
+export const getPerpsProInfoTabsNaturalAnchor = ({
+  leadInHeight,
+  tradeRowHeight,
+}: {
+  leadInHeight: number;
+  tradeRowHeight: number;
+}) => leadInHeight + tradeRowHeight + PERPS_PRO_INFO_SECTION_TOP_GAP;
+
 export const getPerpsProInfoTabsTop = ({
   anchorY,
   marketTranslateY,

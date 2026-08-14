@@ -23,7 +23,7 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
     return (
       <View style={styles.container} testID="perps-pro-account-summary">
         <View style={styles.summary}>
-          <View>
+          <View style={styles.summaryColumn}>
             <Text style={styles.label}>
               {t('page.perps.pro.account.totalValue')}
             </Text>
@@ -31,7 +31,7 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
               {formatPerpsProUsdValue(account.primaryValue)}
             </Text>
           </View>
-          <View style={styles.pnlColumn}>
+          <View style={[styles.summaryColumn, styles.pnlColumn]}>
             <Text style={styles.label}>
               {t('page.perps.pro.account.unrealizedPnl')}
             </Text>
@@ -88,6 +88,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  summaryColumn: {
+    gap: 4,
+  },
   pnlColumn: {
     alignItems: 'flex-end',
   },
@@ -128,14 +131,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   primaryAction: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 6,
     flex: 1,
-    height: 32,
+    height: 34,
     justifyContent: 'center',
   },
   primaryActionText: {
@@ -150,7 +153,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 6,
     flex: 1,
-    height: 32,
+    height: 34,
     justifyContent: 'center',
   },
   secondaryActionText: {

@@ -100,7 +100,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     justifyContent: 'center',
     marginHorizontal: 15,
-    minHeight: 100,
+    marginTop: 8,
+    minHeight: 92,
     paddingVertical: 8,
   },
   assetMain: {

@@ -7,6 +7,8 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
+
 interface PerpsProInfoTabsProps {
   activeTab: PerpsProInfoTab;
   historyEnabled: boolean;
@@ -92,7 +94,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 12,
-    height: 34,
+    height: PERPS_PRO_INFO_TABS_HEIGHT,
     paddingHorizontal: 15,
   },
   tab: {
