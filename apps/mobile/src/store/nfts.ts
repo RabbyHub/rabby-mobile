@@ -37,6 +37,15 @@ import {
   scheduleAssetProjectionPersistence,
   subscribeAssetProjectionDatabaseCommits,
 } from './assetProjectionPersistence';
+import {
+  getAssetSourceReadinessChangedAddresses,
+  hasConfirmedAssetProjectionSources,
+  markAssetSourceSnapshotsReady,
+  retainAssetSourceSnapshotReadiness,
+  resolveAssetProjectionAvailability,
+  type AssetProjectionAvailability,
+  type AssetSourceSnapshotReadiness,
+} from './assetProjectionAvailability';
 
 export {
   EMPTY_NFT_ASSETS_INDEX_RESULT,
@@ -55,6 +64,8 @@ const normalizeAddresses = (addresses: string[]) =>
 type NftListComputedState = {
   multiNftsIndexCache: Record<string, NftAssetsIndexResult>;
   singleNftsIndexCache: Record<string, NftAssetsIndexResult>;
+  multiNftsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
+  singleNftsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
   registerMultiNfts(addresses: string[], chainServerId?: string): string;
   registerSingleNfts(address: string, chainServerId?: string): string;
 };
@@ -443,6 +454,32 @@ const computeSingleNftsIndex = (
 
 type NftProjectionScene = 'single-address' | 'multi-address';
 
+const getNftProjectionAvailability = (
+  params:
+    | { address: string; chainServerId?: string }
+    | { addresses: string[]; chainServerId?: string }
+    | undefined,
+  result: NftAssetsIndexResult | undefined,
+  isRestoring = false,
+) => {
+  const addresses = params
+    ? 'address' in params
+      ? [params.address]
+      : params.addresses
+    : [];
+  return resolveAssetProjectionAvailability({
+    hasProjection: !!params && !!result,
+    hasData: !!result?.rows.length,
+    hasCompleteSource:
+      !!params &&
+      hasConfirmedAssetProjectionSources(
+        addresses,
+        nftListStore.getState().sourceSnapshotReadyByAddress,
+      ),
+    isRestoring,
+  });
+};
+
 const scheduleNftProjectionPersistence = (
   key: string,
   scene: NftProjectionScene,
@@ -452,17 +489,14 @@ const scheduleNftProjectionPersistence = (
     scene === 'single-address'
       ? singleNftsCacheParams.get(key)
       : multiNftsCacheParams.get(key);
-  const addresses = params
-    ? 'address' in params
-      ? [params.address]
-      : params.addresses
-    : [];
-  const sourceMap = nftListStore.getState().nftsMap;
-  const isSourceSnapshotReady =
-    addresses.length > 0 &&
-    addresses.every(address =>
-      Object.prototype.hasOwnProperty.call(sourceMap, address.toLowerCase()),
-    );
+  if (!params) {
+    return;
+  }
+  const addresses = 'address' in params ? [params.address] : params.addresses;
+  const isSourceSnapshotReady = hasConfirmedAssetProjectionSources(
+    addresses,
+    nftListStore.getState().sourceSnapshotReadyByAddress,
+  );
   if (!result.rows.length && !isSourceSnapshotReady) {
     return;
   }
@@ -628,6 +662,22 @@ const restoreNftProjectionIfEmpty = (
     return;
   }
 
+  useNftListComputedStore.setState(current =>
+    scene === 'single-address'
+      ? {
+          singleNftsAvailabilityByKey: {
+            ...current.singleNftsAvailabilityByKey,
+            [key]: 'restoring',
+          },
+        }
+      : {
+          multiNftsAvailabilityByKey: {
+            ...current.multiNftsAvailabilityByKey,
+            [key]: 'restoring',
+          },
+        },
+  );
+
   const request = (async () => {
     const restored = await restoreAssetProjection({
       runtimeKey: key,
@@ -716,6 +766,10 @@ const restoreNftProjectionIfEmpty = (
           ...current.singleNftsIndexCache,
           [key]: projection.result,
         },
+        singleNftsAvailabilityByKey: {
+          ...current.singleNftsAvailabilityByKey,
+          [key]: 'ready',
+        },
       }));
     } else {
       multiNftCollectionIds.set(key, collectionIds);
@@ -723,6 +777,10 @@ const restoreNftProjectionIfEmpty = (
         multiNftsIndexCache: {
           ...current.multiNftsIndexCache,
           [key]: projection.result,
+        },
+        multiNftsAvailabilityByKey: {
+          ...current.multiNftsAvailabilityByKey,
+          [key]: 'ready',
         },
       }));
     }
@@ -732,6 +790,41 @@ const restoreNftProjectionIfEmpty = (
     })
     .finally(() => {
       nftProjectionRestoreRequests.delete(requestKey);
+      const state = useNftListComputedStore.getState();
+      const availability =
+        scene === 'single-address'
+          ? state.singleNftsAvailabilityByKey[key]
+          : state.multiNftsAvailabilityByKey[key];
+      if (availability !== 'restoring') {
+        return;
+      }
+      const latestParams =
+        scene === 'single-address'
+          ? singleNftsCacheParams.get(key)
+          : multiNftsCacheParams.get(key);
+      const result =
+        scene === 'single-address'
+          ? state.singleNftsIndexCache[key]
+          : state.multiNftsIndexCache[key];
+      const nextAvailability = getNftProjectionAvailability(
+        latestParams,
+        result,
+      );
+      useNftListComputedStore.setState(current =>
+        scene === 'single-address'
+          ? {
+              singleNftsAvailabilityByKey: {
+                ...current.singleNftsAvailabilityByKey,
+                [key]: nextAvailability,
+              },
+            }
+          : {
+              multiNftsAvailabilityByKey: {
+                ...current.multiNftsAvailabilityByKey,
+                [key]: nextAvailability,
+              },
+            },
+      );
     });
   nftProjectionRestoreRequests.set(requestKey, request);
 };
@@ -780,7 +873,27 @@ const updateSingleNftsIndex = (
         ...state.singleNftsIndexCache,
         [key]: projection.result,
       },
+      singleNftsAvailabilityByKey: {
+        ...state.singleNftsAvailabilityByKey,
+        [key]: getNftProjectionAvailability(params, projection.result),
+      },
     }));
+  } else {
+    const availability = getNftProjectionAvailability(
+      params,
+      projection.result,
+    );
+    if (
+      useNftListComputedStore.getState().singleNftsAvailabilityByKey[key] !==
+      availability
+    ) {
+      useNftListComputedStore.setState(state => ({
+        singleNftsAvailabilityByKey: {
+          ...state.singleNftsAvailabilityByKey,
+          [key]: availability,
+        },
+      }));
+    }
   }
   scheduleNftProjectionPersistence(key, 'single-address', projection.result);
   if (!projection.result.rows.length) {
@@ -822,7 +935,27 @@ const updateMultiNftsIndex = (
         ...state.multiNftsIndexCache,
         [key]: projection.result,
       },
+      multiNftsAvailabilityByKey: {
+        ...state.multiNftsAvailabilityByKey,
+        [key]: getNftProjectionAvailability(params, projection.result),
+      },
     }));
+  } else {
+    const availability = getNftProjectionAvailability(
+      params,
+      projection.result,
+    );
+    if (
+      useNftListComputedStore.getState().multiNftsAvailabilityByKey[key] !==
+      availability
+    ) {
+      useNftListComputedStore.setState(state => ({
+        multiNftsAvailabilityByKey: {
+          ...state.multiNftsAvailabilityByKey,
+          [key]: availability,
+        },
+      }));
+    }
   }
   scheduleNftProjectionPersistence(key, 'multi-address', projection.result);
   if (!projection.result.rows.length) {
@@ -833,6 +966,8 @@ const updateMultiNftsIndex = (
 export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
   multiNftsIndexCache: {},
   singleNftsIndexCache: {},
+  multiNftsAvailabilityByKey: {},
+  singleNftsAvailabilityByKey: {},
   registerMultiNfts(addresses, chainServerId) {
     const normalizedAddresses = normalizeAddresses(addresses);
     const key = getMultiNftsCacheKey(normalizedAddresses, chainServerId);
@@ -850,8 +985,13 @@ export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
     if (removedKey) {
       set(state => {
         const nextCache = { ...state.multiNftsIndexCache };
+        const nextAvailability = { ...state.multiNftsAvailabilityByKey };
         delete nextCache[removedKey];
-        return { multiNftsIndexCache: nextCache };
+        delete nextAvailability[removedKey];
+        return {
+          multiNftsIndexCache: nextCache,
+          multiNftsAvailabilityByKey: nextAvailability,
+        };
       });
     }
     return key;
@@ -872,8 +1012,13 @@ export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
     if (removedKey) {
       set(state => {
         const nextCache = { ...state.singleNftsIndexCache };
+        const nextAvailability = { ...state.singleNftsAvailabilityByKey };
         delete nextCache[removedKey];
-        return { singleNftsIndexCache: nextCache };
+        delete nextAvailability[removedKey];
+        return {
+          singleNftsIndexCache: nextCache,
+          singleNftsAvailabilityByKey: nextAvailability,
+        };
       });
     }
     return key;
@@ -906,12 +1051,17 @@ export const combinedNfts = (
 
 export interface NFTListState {
   nftsMap: Record<string, DisplayNftItem[]>;
+  sourceSnapshotReadyByAddress: AssetSourceSnapshotReadiness;
   isLoading: boolean;
   isFirstFetch: boolean;
   shortCache: boolean;
   singleLoadStatusByAddress: Record<string, 'loading' | 'ready'>;
   initStore(): Promise<void>;
-  updateNFTListByAddress(address: string, nfts: DisplayNftItem[]): void;
+  updateNFTListByAddress(
+    address: string,
+    nfts: DisplayNftItem[],
+    options?: { sourceSnapshotReady?: boolean },
+  ): void;
   clearUnusedNFTs(addresses: string[]): void;
   batchLoadCacheNFT(
     addresses: string[],
@@ -1028,6 +1178,25 @@ const publishNftSnapshot = (
   ticket: LatestAddressRequestTicket,
   result: TaggedNftLoadResult,
 ) => {
+  const normalizedAddress = address.toLowerCase();
+  if (result.status === 'unchanged') {
+    if (
+      nftAddressRequests.isSuperseded(ticket, normalizedAddress) ||
+      !Object.prototype.hasOwnProperty.call(
+        nftListStore.getState().nftsMap,
+        normalizedAddress,
+      )
+    ) {
+      return false;
+    }
+    nftListStore.setState(state => ({
+      sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+        state.sourceSnapshotReadyByAddress,
+        [normalizedAddress],
+      ),
+    }));
+    return true;
+  }
   if (
     result.status !== 'snapshot' ||
     !canApplyNftSnapshot(address, ticket, result)
@@ -1035,10 +1204,11 @@ const publishNftSnapshot = (
     return false;
   }
 
-  const normalizedAddress = address.toLowerCase();
   const nfts = result.nfts as DisplayNftItem[];
   nftCacheHydrator.invalidate([normalizedAddress]);
-  nftListStore.getState().updateNFTListByAddress(normalizedAddress, nfts);
+  nftListStore.getState().updateNFTListByAddress(normalizedAddress, nfts, {
+    sourceSnapshotReady: true,
+  });
   if (result.remoteNfts !== undefined) {
     syncRemoteNFTs(normalizedAddress, result.remoteNfts).catch(error => {
       console.error('[nft] background persistence failed', error);
@@ -1059,6 +1229,7 @@ const loadAndPublishNfts = async (
 
 const nftListStore = zCreate<NFTListState>((set, get) => ({
   nftsMap: {},
+  sourceSnapshotReadyByAddress: {},
   isLoading: true,
   isFirstFetch: true,
   shortCache: true,
@@ -1070,6 +1241,7 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
       set(state => ({
         ...state,
         nftsMap: {},
+        sourceSnapshotReadyByAddress: {},
         isLoading: false,
         isFirstFetch: false,
       }));
@@ -1079,7 +1251,7 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     await get().batchLoadCacheNFT(top10Addresses);
   },
 
-  updateNFTListByAddress(address, nfts) {
+  updateNFTListByAddress(address, nfts, options) {
     const lowerAddress = address.toLowerCase();
     nftCacheHydrator.invalidate([lowerAddress]);
     set(state => ({
@@ -1088,12 +1260,18 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
         ...state.nftsMap,
         [lowerAddress]: nfts,
       },
+      sourceSnapshotReadyByAddress: options?.sourceSnapshotReady
+        ? markAssetSourceSnapshotsReady(state.sourceSnapshotReadyByAddress, [
+            lowerAddress,
+          ])
+        : state.sourceSnapshotReadyByAddress,
     }));
   },
 
   clearUnusedNFTs(addresses) {
     const cared = new Set(normalizeAddresses(addresses));
-    const prevMap = get().nftsMap;
+    const currentState = get();
+    const prevMap = currentState.nftsMap;
     let hasChanged = false;
     const nextMap = { ...prevMap };
 
@@ -1104,10 +1282,18 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
       }
     });
 
-    if (hasChanged) {
+    const nextReadiness = retainAssetSourceSnapshotReadiness(
+      currentState.sourceSnapshotReadyByAddress,
+      addresses,
+    );
+    if (
+      hasChanged ||
+      nextReadiness !== currentState.sourceSnapshotReadyByAddress
+    ) {
       set(state => ({
         ...state,
         nftsMap: nextMap,
+        sourceSnapshotReadyByAddress: nextReadiness,
       }));
     }
   },
@@ -1433,9 +1619,68 @@ const getNftsMapChangedAddresses = (
   return changedAddresses;
 };
 
+const refreshNftProjectionAvailabilityForAddresses = (
+  changedAddresses: Set<string>,
+) => {
+  const state = useNftListComputedStore.getState();
+  let singleNftsAvailabilityByKey = state.singleNftsAvailabilityByKey;
+  let multiNftsAvailabilityByKey = state.multiNftsAvailabilityByKey;
+
+  singleNftsCacheParams.forEach((params, key) => {
+    if (!changedAddresses.has(params.address)) {
+      return;
+    }
+    const result = state.singleNftsIndexCache[key];
+    if (!result) {
+      return;
+    }
+    const availability = getNftProjectionAvailability(params, result);
+    if (singleNftsAvailabilityByKey[key] !== availability) {
+      if (singleNftsAvailabilityByKey === state.singleNftsAvailabilityByKey) {
+        singleNftsAvailabilityByKey = { ...singleNftsAvailabilityByKey };
+      }
+      singleNftsAvailabilityByKey[key] = availability;
+    }
+    scheduleNftProjectionPersistence(key, 'single-address', result);
+  });
+
+  multiNftsCacheParams.forEach((params, key) => {
+    if (!params.addresses.some(address => changedAddresses.has(address))) {
+      return;
+    }
+    const result = state.multiNftsIndexCache[key];
+    if (!result) {
+      return;
+    }
+    const availability = getNftProjectionAvailability(params, result);
+    if (multiNftsAvailabilityByKey[key] !== availability) {
+      if (multiNftsAvailabilityByKey === state.multiNftsAvailabilityByKey) {
+        multiNftsAvailabilityByKey = { ...multiNftsAvailabilityByKey };
+      }
+      multiNftsAvailabilityByKey[key] = availability;
+    }
+    scheduleNftProjectionPersistence(key, 'multi-address', result);
+  });
+
+  if (
+    singleNftsAvailabilityByKey !== state.singleNftsAvailabilityByKey ||
+    multiNftsAvailabilityByKey !== state.multiNftsAvailabilityByKey
+  ) {
+    useNftListComputedStore.setState({
+      singleNftsAvailabilityByKey,
+      multiNftsAvailabilityByKey,
+    });
+  }
+};
+
 let latestNftsMap = nftListStore.getState().nftsMap;
+let latestNftSourceSnapshotReadiness =
+  nftListStore.getState().sourceSnapshotReadyByAddress;
 nftListStore.subscribe(state => {
-  if (state.nftsMap === latestNftsMap) {
+  if (
+    state.nftsMap === latestNftsMap &&
+    state.sourceSnapshotReadyByAddress === latestNftSourceSnapshotReadiness
+  ) {
     return;
   }
 
@@ -1443,11 +1688,17 @@ nftListStore.subscribe(state => {
     latestNftsMap,
     state.nftsMap,
   );
+  const readinessChangedAddresses = getAssetSourceReadinessChangedAddresses(
+    latestNftSourceSnapshotReadiness,
+    state.sourceSnapshotReadyByAddress,
+  );
+  const readinessOnlyChangedAddresses = new Set(
+    Array.from(readinessChangedAddresses).filter(
+      address => !changedAddresses.has(address),
+    ),
+  );
   latestNftsMap = state.nftsMap;
-  if (!changedAddresses.size) {
-    return;
-  }
-
+  latestNftSourceSnapshotReadiness = state.sourceSnapshotReadyByAddress;
   const registeredChangedAddresses = Array.from(changedAddresses).filter(
     address =>
       Array.from(singleNftsCacheParams.values()).some(
@@ -1457,24 +1708,25 @@ nftListStore.subscribe(state => {
         params.addresses.includes(address),
       ),
   );
-  if (!registeredChangedAddresses.length) {
-    return;
+  if (registeredChangedAddresses.length) {
+    nftEntityResourceStore.syncAddressesFromNftsMap(
+      state.nftsMap,
+      registeredChangedAddresses,
+    );
+    singleNftsCacheParams.forEach((params, key) => {
+      if (changedAddresses.has(params.address)) {
+        updateSingleNftsIndex(key, state.nftsMap);
+      }
+    });
+    multiNftsCacheParams.forEach((params, key) => {
+      if (params.addresses.some(address => changedAddresses.has(address))) {
+        updateMultiNftsIndex(key, state.nftsMap);
+      }
+    });
   }
-
-  nftEntityResourceStore.syncAddressesFromNftsMap(
-    state.nftsMap,
-    registeredChangedAddresses,
-  );
-  singleNftsCacheParams.forEach((params, key) => {
-    if (changedAddresses.has(params.address)) {
-      updateSingleNftsIndex(key, state.nftsMap);
-    }
-  });
-  multiNftsCacheParams.forEach((params, key) => {
-    if (params.addresses.some(address => changedAddresses.has(address))) {
-      updateMultiNftsIndex(key, state.nftsMap);
-    }
-  });
+  if (readinessOnlyChangedAddresses.size) {
+    refreshNftProjectionAvailabilityForAddresses(readinessOnlyChangedAddresses);
+  }
 });
 
 export function getAssetsMapDirectly(type: 'nfts') {

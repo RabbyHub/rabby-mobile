@@ -153,8 +153,10 @@ describe('single-address token assets projection', () => {
     useTokenAssetsIndexStore.setState({
       singleAssetsConfigByKey: {},
       singleAssetsResultByKey: {},
+      singleAssetsAvailabilityByKey: {},
       multiAssetsConfigByKey: {},
       multiAssetsResultByKey: {},
+      multiAssetsAvailabilityByKey: {},
     });
     tokenEntityResourceStore.upsertTokens([], 'remote', {
       pruneMissing: true,
@@ -166,6 +168,7 @@ describe('single-address token assets projection', () => {
     });
     tokenListStore.setState({
       tokenListMap: {},
+      sourceSnapshotReadyByAddress: {},
       isLoading: false,
       isLoadingByAddress: {},
     });
@@ -187,6 +190,36 @@ describe('single-address token assets projection', () => {
     expect(state.singleAssetsResultByKey[key]?.tokenIds).toEqual([
       buildTokenEntityId(eth),
     ]);
+    expect(state.singleAssetsAvailabilityByKey[key]).toBe('ready');
+  });
+
+  it('marks an explicit empty token snapshot as a ready empty projection', () => {
+    replaceAddressTokens([]);
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsAvailabilityByKey[key],
+    ).not.toBe('ready');
+    expect(mockedScheduleAssetProjectionPersistence).not.toHaveBeenCalled();
+
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]?.rows,
+    ).toEqual([]);
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsAvailabilityByKey[key],
+    ).toBe('ready');
+    expect(mockedScheduleAssetProjectionPersistence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeKey: key,
+        rows: [],
+        scene: 'single-address',
+      }),
+    );
   });
 
   it('keeps a registered projection current when address token ids change', () => {

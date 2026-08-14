@@ -70,6 +70,8 @@ import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useShallow } from 'zustand/react/shallow';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
 const NFT_LIST_RENDER_BATCH_SIZE = 8;
@@ -213,14 +215,24 @@ const NFTListInner = () => {
     () => getMultiNftsCacheKey(myTop10Addresses, chain),
     [chain, myTop10Addresses],
   );
-  const nftIndex = useActivityStore(
+  const nftProjection = useActivityStore(
     useNftListComputedStore,
-    state =>
-      state.multiNftsIndexCache[multiNftsKey] || EMPTY_NFT_ASSETS_INDEX_RESULT,
+    useShallow(state => ({
+      result:
+        state.multiNftsIndexCache[multiNftsKey] ||
+        EMPTY_NFT_ASSETS_INDEX_RESULT,
+      availability:
+        state.multiNftsAvailabilityByKey[multiNftsKey] || 'unresolved',
+    })),
     Object.is,
     { storeLabel: 'home-multi-assets-nft-computed-index' },
   );
+  const nftIndex = nftProjection.result;
   const nftRowCount = nftIndex.rows.length;
+  const nftProjectionViewState = resolveAssetProjectionViewState({
+    availability: nftProjection.availability,
+    hasData: nftRowCount > 0,
+  });
 
   const dataList = useMemo(() => {
     const defaultRows = nftIndex.rows.slice(0, nftIndex.defaultVisibleRowCount);
@@ -238,14 +250,14 @@ const NFTListInner = () => {
         data: [{ type: 'toggle-nft' }, ...(showAllNfts ? foldedRows : [])],
       },
       {
-        show: !!isLoading && nftRowCount === 0,
+        show: nftProjectionViewState === 'loading',
         data: Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton',
           data: 'index-nft' + index.toString(),
         })),
       },
       {
-        show: !isLoading && nftRowCount === 0,
+        show: nftProjectionViewState === 'empty',
         data: [
           {
             type: 'empty-nft',
@@ -260,11 +272,11 @@ const NFTListInner = () => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [isLoading, nftIndex, nftRowCount, showAllNfts, t]);
+  }, [nftIndex, nftProjectionViewState, showAllNfts, t]);
 
   const hasNotAssets = useMemo(() => {
-    return nftRowCount === 0 && !isLoading && isFocused;
-  }, [nftRowCount, isLoading, isFocused]);
+    return nftProjectionViewState === 'empty' && isFocused;
+  }, [nftProjectionViewState, isFocused]);
 
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
@@ -298,7 +310,7 @@ const NFTListInner = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      isLoading
+      nftProjectionViewState === 'loading'
     ) {
       return;
     }
@@ -326,7 +338,7 @@ const NFTListInner = () => {
   }, [
     chain,
     isFocused,
-    isLoading,
+    nftProjectionViewState,
     myTop10Addresses,
     regressionScenarioActive,
     regressionScenarioId,

@@ -71,6 +71,7 @@ import useProtocolListStore, {
   protocolEntityResourceStore,
   useProtocolListComputedStore,
 } from './protocols';
+import { scheduleAssetProjectionPersistence } from './assetProjectionPersistence';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -82,6 +83,9 @@ const mockedSyncRemoteProtocolsForAddresses = jest.mocked(
   syncRemoteProtocolsForAddresses,
 );
 const mockedProtocolItemEntity = jest.mocked(ProtocolItemEntity);
+const mockedScheduleAssetProjectionPersistence = jest.mocked(
+  scheduleAssetProjectionPersistence,
+);
 
 const createProtocol = (id: string, netWorth: number): IProtocolItem =>
   ({
@@ -124,11 +128,18 @@ const waitFor = async (predicate: () => boolean) => {
 describe('protocol list request freshness', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useProtocolListComputedStore.setState({
+      multiProtocolsIndexCache: {},
+      singleProtocolsIndexCache: {},
+      multiProtocolsAvailabilityByKey: {},
+      singleProtocolsAvailabilityByKey: {},
+    });
     useProtocolListStore.setState({
       hasLoadedByAddress: {},
       isLoading: false,
       isLoadingByAddress: {},
       protocolMap: {},
+      sourceSnapshotReadyByAddress: {},
     });
   });
 
@@ -328,6 +339,45 @@ describe('protocol list request freshness', () => {
     expect(protocolEntityResourceStore.getValue(firstId)?.netWorth).toBe(40);
     expect(computed.singleProtocolsIndexCache[singleKey]?.protocolIds[0]).toBe(
       computed.multiProtocolsIndexCache[multiKey]?.protocolIds[0],
+    );
+  });
+
+  it('marks an explicit empty protocol snapshot as a ready projection', () => {
+    useProtocolListStore.setState({
+      protocolMap: { [NORMALIZED_ADDRESS]: [] },
+      sourceSnapshotReadyByAddress: {},
+    });
+
+    const key = useProtocolListComputedStore
+      .getState()
+      .registerMultiProtocols([ADDRESS]);
+
+    expect(
+      useProtocolListComputedStore.getState().multiProtocolsIndexCache[key]
+        ?.protocolIds,
+    ).toEqual([]);
+    expect(
+      useProtocolListComputedStore.getState().multiProtocolsAvailabilityByKey[
+        key
+      ],
+    ).toBe('unresolved');
+    expect(mockedScheduleAssetProjectionPersistence).not.toHaveBeenCalled();
+
+    useProtocolListStore.setState({
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+    });
+
+    expect(
+      useProtocolListComputedStore.getState().multiProtocolsAvailabilityByKey[
+        key
+      ],
+    ).toBe('ready');
+    expect(mockedScheduleAssetProjectionPersistence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeKey: key,
+        rows: [],
+        scene: 'multi-address',
+      }),
     );
   });
 });

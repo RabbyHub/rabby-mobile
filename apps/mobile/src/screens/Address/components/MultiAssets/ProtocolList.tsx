@@ -52,6 +52,7 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -154,16 +155,20 @@ export const ProtocolList = () => {
   const registerMultiAssets =
     useProtocolListComputedStore.getState().registerMultiProtocols;
 
-  const protocolIndex = useActivityStore(
+  const protocolProjection = useActivityStore(
     useProtocolListComputedStore,
-    useShallow(
-      state =>
+    useShallow(state => ({
+      result:
         state.multiProtocolsIndexCache[multiProtocolsKey] ||
         EMPTY_PROTOCOL_ASSETS_INDEX_RESULT,
-    ),
+      availability:
+        state.multiProtocolsAvailabilityByKey[multiProtocolsKey] ||
+        'unresolved',
+    })),
     Object.is,
     { storeLabel: 'home-multi-assets-defi-computed-index' },
   );
+  const protocolIndex = protocolProjection.result;
 
   const isLoading = useActivityStore(
     useProtocols,
@@ -171,6 +176,10 @@ export const ProtocolList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-defi-loading' },
   );
+  const protocolProjectionViewState = resolveAssetProjectionViewState({
+    availability: protocolProjection.availability,
+    hasData: protocolIndex.protocolIds.length > 0,
+  });
 
   const shouldDefaultExpand = useMemo(
     () => protocolIndex.defaultVisibleProtocolCount <= 5,
@@ -210,14 +219,14 @@ export const ProtocolList = () => {
         ],
       },
       {
-        show: !!isLoading && !protocolIndex.protocolIds.length,
+        show: protocolProjectionViewState === 'loading',
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: index.toString(),
         })),
       },
       {
-        show: !isLoading && protocolIndex.protocolIds.length === 0,
+        show: protocolProjectionViewState === 'empty',
         data: [
           {
             type: 'empty-defi',
@@ -232,11 +241,11 @@ export const ProtocolList = () => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [isLoading, protocolIndex, showAllProtocols, t]);
+  }, [protocolIndex, protocolProjectionViewState, showAllProtocols, t]);
 
   const hasNotAssets = useMemo(() => {
-    return protocolIndex.protocolIds.length === 0 && !isLoading && isFocused;
-  }, [protocolIndex.protocolIds.length, isLoading, isFocused]);
+    return protocolProjectionViewState === 'empty' && isFocused;
+  }, [protocolProjectionViewState, isFocused]);
 
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
@@ -269,7 +278,7 @@ export const ProtocolList = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      isLoading
+      protocolProjectionViewState === 'loading'
     ) {
       return;
     }
@@ -296,7 +305,7 @@ export const ProtocolList = () => {
   }, [
     chain,
     isFocused,
-    isLoading,
+    protocolProjectionViewState,
     protocolIndex.defaultVisibleProtocolCount,
     multiProtocolsKey,
     myTop10Addresses.length,

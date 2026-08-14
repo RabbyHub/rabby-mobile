@@ -86,6 +86,7 @@ import {
   type TokenProjectionSectionItem,
   type TokenProjectionSectionSpec,
 } from '@/screens/Home/components/TokenProjectionSectionList';
+import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -316,6 +317,8 @@ export const TokenList = () => {
         state.multiAssetsResultByKey[multiAssetsKey] ||
         EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
+        availability:
+          state.multiAssetsAvailabilityByKey[multiAssetsKey] || 'unresolved',
         additionalCoreUsdValue: result.additionalCoreUsdValue,
         lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
         lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
@@ -334,6 +337,7 @@ export const TokenList = () => {
     { storeLabel: 'home-multi-assets-token-assets-index' },
   );
   const {
+    availability: tokenProjectionAvailability,
     additionalCoreUsdValue,
     lowValueTokenPreviewLogoUrls,
     lpLowValueTokenPreviewLogoUrls,
@@ -370,8 +374,12 @@ export const TokenList = () => {
     { storeLabel: 'home-multi-assets-token-loading' },
   );
   const hasDefaultTokenData = projectedTokenCount > 0 || hasLpTokens;
+  const tokenProjectionViewState = resolveAssetProjectionViewState({
+    availability: tokenProjectionAvailability,
+    hasData: hasDefaultTokenData,
+  });
   const shouldHideCustomTestnetSectionsWhileLoading =
-    isLoading && !hasDefaultTokenData;
+    tokenProjectionViewState === 'loading';
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     !shouldHideCustomTestnetSectionsWhileLoading
@@ -395,8 +403,7 @@ export const TokenList = () => {
     onForeground: handleForeground,
   });
 
-  const hasNoAssets =
-    projectedTokenCount === 0 && !hasLpTokens && !isLoading && isFocused;
+  const hasNoAssets = tokenProjectionViewState === 'empty' && isFocused;
 
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
@@ -429,7 +436,7 @@ export const TokenList = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      isLoading
+      tokenProjectionViewState === 'loading'
     ) {
       return;
     }
@@ -469,7 +476,7 @@ export const TokenList = () => {
     hasLpTokens,
     hasNoAssets,
     isFocused,
-    isLoading,
+    tokenProjectionViewState,
     isLpTokenEnabled,
     multiAssetsKey,
     myTop10Addresses.length,
@@ -741,7 +748,7 @@ export const TokenList = () => {
       projectedTokenCount + visibleCustomTestnetSections.length === 0 &&
       !hasLpTokens;
 
-    if (isLoading && hasNoTokenItems) {
+    if (tokenProjectionViewState === 'loading' && hasNoTokenItems) {
       return [{ key: 'loading', data: LOADING_ITEMS }];
     }
 
@@ -777,7 +784,7 @@ export const TokenList = () => {
     emptyItems,
     hasLpTokens,
     hasAdditionalSection,
-    isLoading,
+    tokenProjectionViewState,
     hasNoAssets,
     lowValueSegmentKey,
     lowValueSummaryItems,

@@ -43,10 +43,14 @@ import nftListStore, {
   nftEntityResourceStore,
   useNftListComputedStore,
 } from './nfts';
+import { scheduleAssetProjectionPersistence } from './assetProjectionPersistence';
 
 const mockedSyncNFTs = jest.mocked(syncNFTs);
 const mockedNftEntity = jest.mocked(NFTItemEntity);
 const mockedSyncRemoteNFTs = jest.mocked(syncRemoteNFTs);
+const mockedScheduleAssetProjectionPersistence = jest.mocked(
+  scheduleAssetProjectionPersistence,
+);
 const ADDRESS = '0xabc';
 const cachedNft = {
   id: 'cached',
@@ -96,14 +100,18 @@ describe('NFT list refresh semantics', () => {
     mockedNftEntity.batchMultAddressNFTs.mockResolvedValue([]);
     mockedSyncRemoteNFTs.mockReset();
     mockedSyncRemoteNFTs.mockResolvedValue(undefined);
+    mockedScheduleAssetProjectionPersistence.mockClear();
     clearResourceStore(nftEntityResourceStore);
     clearResourceStore(nftCollectionResourceStore);
     useNftListComputedStore.setState({
       multiNftsIndexCache: {},
       singleNftsIndexCache: {},
+      multiNftsAvailabilityByKey: {},
+      singleNftsAvailabilityByKey: {},
     });
     nftListStore.setState({
       nftsMap: { [ADDRESS]: [cachedNft] },
+      sourceSnapshotReadyByAddress: { [ADDRESS]: true },
       isLoading: false,
       isFirstFetch: false,
       shortCache: false,
@@ -360,6 +368,8 @@ describe('NFT list refresh semantics', () => {
       { type: 'nft', nftId: firstId },
       { type: 'nft', nftId: secondId },
     ]);
+    expect(before.singleNftsAvailabilityByKey[singleKey]).toBe('ready');
+    expect(before.multiNftsAvailabilityByKey[multiKey]).toBe('ready');
 
     nftListStore
       .getState()
@@ -379,6 +389,39 @@ describe('NFT list refresh semantics', () => {
       after.multiNftsIndexCache[multiKey]?.rows[0]?.type === 'nft'
         ? after.multiNftsIndexCache[multiKey]?.rows[0].nftId
         : undefined,
+    );
+  });
+
+  it('marks an explicit empty NFT snapshot as a ready projection', () => {
+    nftListStore.setState({
+      nftsMap: { [ADDRESS]: [] },
+      sourceSnapshotReadyByAddress: {},
+    });
+    mockedScheduleAssetProjectionPersistence.mockClear();
+
+    const key = useNftListComputedStore.getState().registerMultiNfts([ADDRESS]);
+
+    expect(
+      useNftListComputedStore.getState().multiNftsIndexCache[key]?.rows,
+    ).toEqual([]);
+    expect(
+      useNftListComputedStore.getState().multiNftsAvailabilityByKey[key],
+    ).toBe('unresolved');
+    expect(mockedScheduleAssetProjectionPersistence).not.toHaveBeenCalled();
+
+    nftListStore.setState({
+      sourceSnapshotReadyByAddress: { [ADDRESS]: true },
+    });
+
+    expect(
+      useNftListComputedStore.getState().multiNftsAvailabilityByKey[key],
+    ).toBe('ready');
+    expect(mockedScheduleAssetProjectionPersistence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeKey: key,
+        rows: [],
+        scene: 'multi-address',
+      }),
     );
   });
 });
