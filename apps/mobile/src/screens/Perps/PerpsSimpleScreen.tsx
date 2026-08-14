@@ -26,7 +26,7 @@ import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
+import { PerpsSimpleHeader } from './components/PerpsHeaderTitle';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
@@ -245,7 +245,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
 
   return (
     <>
-      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+      <NormalScreenContainer2024 noHeader type={isLight ? 'bg0' : 'bg1'}>
         {!isLight && (
           <ImageBackground
             source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
@@ -253,7 +253,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
             style={[styles.topBg, { width: screenWidth, height: screenWidth }]}
           />
         )}
-        <PerpsNativeHeader
+        <PerpsSimpleHeader
           account={currentPerpsAccount}
           isModeSwitching={isModeSwitching}
           onSwitchToPro={onSwitchToPro}

@@ -4,6 +4,7 @@ import React from 'react';
 import { PerpsOriginScreen } from './index';
 
 const mockSetOptions = jest.fn();
+const mockNavigation = { setOptions: mockSetOptions };
 const mockSetViewMode = jest.fn(async () => true);
 const mockUseEnsurePerpsRuntime = jest.fn();
 const mockPrefetchBaseline = jest.fn();
@@ -19,9 +20,7 @@ let mockViewModeState = {
 };
 
 jest.mock('@/hooks/navigation', () => ({
-  useRabbyAppNavigation: () => ({
-    setOptions: mockSetOptions,
-  }),
+  useRabbyAppNavigation: () => mockNavigation,
 }));
 
 jest.mock('@react-navigation/native', () => ({
@@ -137,7 +136,7 @@ describe('PerpsOriginScreen', () => {
     };
   });
 
-  it('keeps both scenes unmounted and hides the native header during hydration', () => {
+  it('keeps both scenes unmounted and owns a permanently hidden native header', () => {
     const screen = render(<PerpsOriginScreen />);
 
     expect(screen.queryByTestId('simple-scene')).toBeNull();
@@ -145,6 +144,7 @@ describe('PerpsOriginScreen', () => {
     expect(mockSetOptions).toHaveBeenCalledWith({
       headerShown: false,
     });
+    expect(mockSetOptions).toHaveBeenCalledTimes(1);
     expect(mockRuntimeMounts).toBe(1);
   });
 
@@ -159,6 +159,9 @@ describe('PerpsOriginScreen', () => {
     render(<PerpsOriginScreen />);
 
     expect(mockPrefetchBaseline).toHaveBeenCalledWith('SUI');
+    expect(mockSetOptions).toHaveBeenCalledWith({
+      headerShown: false,
+    });
   });
 
   it('switches mutually exclusive scenes without remounting the route Runtime', () => {
@@ -185,6 +188,7 @@ describe('PerpsOriginScreen', () => {
     expect(screen.getByTestId('pro-scene')).toBeOnTheScreen();
     expect(mockRuntimeMounts).toBe(1);
     expect(mockRuntimeUnmounts).toBe(0);
+    expect(mockSetOptions).toHaveBeenCalledTimes(1);
 
     fireEvent.press(screen.getByTestId('switch-to-simple'));
     expect(mockSetViewMode).toHaveBeenCalledWith('simple');

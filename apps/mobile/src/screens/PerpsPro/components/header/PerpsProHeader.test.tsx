@@ -1,10 +1,14 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
-import { PerpsSimpleHeader } from './PerpsHeaderTitle';
+import { PerpsProHeader } from './PerpsProHeader';
 
 const mockGetAliasName = jest.fn();
 const mockSetPopupState = jest.fn();
+let mockAccount = {
+  address: '0x1234567890123456789012345678901234567890',
+  aliasName: '',
+};
 
 jest.mock('@/core/apis', () => ({
   apiContact: {
@@ -12,11 +16,16 @@ jest.mock('@/core/apis', () => ({
   },
 }));
 
-jest.mock('../hooks/usePerpsPopupState', () => ({
+jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  perpsStore: (selector: (state: object) => unknown) =>
+    selector({ currentPerpsAccount: mockAccount }),
+}));
+
+jest.mock('../../../Perps/hooks/usePerpsPopupState', () => ({
   usePerpsPopupState: () => [{ isShowLoginPopup: false }, mockSetPopupState],
 }));
 
-jest.mock('../../PerpsShared/components/PerpsHeader', () => {
+jest.mock('../../../PerpsShared/components/PerpsHeader', () => {
   const ReactModule = require('react');
   const { Pressable, View } = require('react-native');
   return {
@@ -42,8 +51,8 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
           testID: 'shared-header',
         },
         ReactModule.createElement(Pressable, {
-          onPress: () => onSelectMode('pro'),
-          testID: 'switch-to-pro',
+          onPress: () => onSelectMode('simple'),
+          testID: 'switch-to-simple',
         }),
         onPressAccount
           ? ReactModule.createElement(Pressable, {
@@ -55,55 +64,32 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
   };
 });
 
-describe('PerpsSimpleHeader', () => {
+describe('PerpsProHeader', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('renders the shared page header and preserves the Simple mode corridor', () => {
-    const onSwitchToPro = jest.fn();
-    const screen = render(
-      <PerpsSimpleHeader
-        account={{
-          address: '0x1234567890123456789012345678901234567890',
-          aliasName: 'Wallet alias',
-          brandName: 'Rabby',
-          type: 'WatchAddressKeyring',
-        }}
-        isModeSwitching={false}
-        onSwitchToPro={onSwitchToPro}
-      />,
-    );
-
-    expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
-      'simple:true:Wallet alias',
-    );
-    expect(mockGetAliasName).toHaveBeenCalledWith(
-      '0x1234567890123456789012345678901234567890',
-    );
-
-    fireEvent.press(screen.getByTestId('switch-to-pro'));
-    expect(onSwitchToPro).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the existing popup owner and uses Contact alias as fallback', () => {
+    mockAccount = {
+      address: '0x1234567890123456789012345678901234567890',
+      aliasName: '',
+    };
     mockGetAliasName.mockReturnValue('Contact alias');
+  });
+
+  it('keeps the narrow account owner and renders the shared Pro header', () => {
+    const onSwitchToSimple = jest.fn();
     const screen = render(
-      <PerpsSimpleHeader
-        account={{
-          address: '0x1234567890123456789012345678901234567890',
-          aliasName: '',
-          brandName: 'Rabby',
-          type: 'WatchAddressKeyring',
-        }}
+      <PerpsProHeader
         isModeSwitching={false}
-        onSwitchToPro={jest.fn()}
+        onSwitchToSimple={onSwitchToSimple}
       />,
     );
 
     expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
-      'simple:true:Contact alias',
+      'pro:undefined:Contact alias',
     );
+    expect(mockGetAliasName).toHaveBeenCalledWith(mockAccount.address);
+
+    fireEvent.press(screen.getByTestId('switch-to-simple'));
+    expect(onSwitchToSimple).toHaveBeenCalledTimes(1);
 
     fireEvent.press(screen.getByTestId('account-trigger'));
     expect(mockSetPopupState).toHaveBeenCalledTimes(1);
@@ -112,5 +98,16 @@ describe('PerpsSimpleHeader', () => {
       isShowLoginPopup: true,
       untouched: true,
     });
+  });
+
+  it('prefers the account alias so mode changes cannot alter its width source', () => {
+    mockAccount = { ...mockAccount, aliasName: 'Wallet alias' };
+    const screen = render(
+      <PerpsProHeader isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
+      'pro:undefined:Wallet alias',
+    );
   });
 });
