@@ -126,7 +126,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
 >(({ currentMarketKey, onClose, onPrefetch, onSelect }, ref) => {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { colors2024, isLight, styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const listRef = useRef<PerpsProMarketListHandle>(null);
@@ -337,7 +337,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
         snapPoints={[snapPoint]}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: isLight ? 'bg0' : 'bg1',
+          linearGradientType: 'bg1',
         })}>
         <View style={styles.sheet} testID="perps-pro-market-selector-content">
           <PerpsProMarketSearchBar
@@ -375,50 +375,49 @@ const PerpsProMarketSelectorComponent = forwardRef<
               })}
             </GestureHandlerScrollView>
           ) : null}
-          <View
-            style={[
-              styles.columnHeader,
-              isSearchMode ? styles.searchModeColumnHeader : null,
-            ]}
-            testID="perps-pro-market-column-header">
-            <View style={styles.sortGroup}>
-              <BottomSheetTouchableOpacity
-                activeOpacity={1}
-                accessibilityLabel={t('page.perps.pro.marketSelector.name')}
-                accessibilityRole="button"
-                onPress={() => selectSort('name')}
-                style={styles.sortControl}
-                testID="perps-pro-market-sort-name">
-                <View style={styles.sortControlContent}>
-                  <Text style={styles.columnText}>
-                    {t('page.perps.pro.marketSelector.name')}
-                  </Text>
-                  <PerpsProSortIcon
-                    active={sort.field === 'name'}
-                    direction={sort.direction}
-                  />
-                </View>
-              </BottomSheetTouchableOpacity>
-              <View style={styles.sortSeparator} />
-              <BottomSheetTouchableOpacity
-                activeOpacity={1}
-                accessibilityLabel={t('page.perps.pro.marketSelector.volume')}
-                accessibilityRole="button"
-                onPress={() => selectSort('volume')}
-                style={styles.sortControl}
-                testID="perps-pro-market-sort-volume">
-                <View style={styles.sortControlContent}>
-                  <Text style={styles.columnText}>
-                    {t('page.perps.pro.marketSelector.volume')}
-                  </Text>
-                  <PerpsProSortIcon
-                    active={sort.field === 'volume'}
-                    direction={sort.direction}
-                  />
-                </View>
-              </BottomSheetTouchableOpacity>
+          {!isSearchMode ? (
+            <View
+              style={styles.columnHeader}
+              testID="perps-pro-market-column-header">
+              <View style={styles.sortGroup}>
+                <BottomSheetTouchableOpacity
+                  activeOpacity={1}
+                  accessibilityLabel={t('page.perps.pro.marketSelector.name')}
+                  accessibilityRole="button"
+                  onPress={() => selectSort('name')}
+                  style={styles.sortControl}
+                  testID="perps-pro-market-sort-name">
+                  <View style={styles.sortControlContent}>
+                    <Text style={styles.columnText}>
+                      {t('page.perps.pro.marketSelector.name')}
+                    </Text>
+                    <PerpsProSortIcon
+                      active={sort.field === 'name'}
+                      direction={sort.direction}
+                    />
+                  </View>
+                </BottomSheetTouchableOpacity>
+                <View style={styles.sortSeparator} />
+                <BottomSheetTouchableOpacity
+                  activeOpacity={1}
+                  accessibilityLabel={t('page.perps.pro.marketSelector.volume')}
+                  accessibilityRole="button"
+                  onPress={() => selectSort('volume')}
+                  style={styles.sortControl}
+                  testID="perps-pro-market-sort-volume">
+                  <View style={styles.sortControlContent}>
+                    <Text style={styles.columnText}>
+                      {t('page.perps.pro.marketSelector.volume')}
+                    </Text>
+                    <PerpsProSortIcon
+                      active={sort.field === 'volume'}
+                      direction={sort.direction}
+                    />
+                  </View>
+                </BottomSheetTouchableOpacity>
+              </View>
             </View>
-          </View>
+          ) : null}
           <PerpsProMarketList
             bottomInset={insets.bottom}
             currentMarketKey={currentMarketKey}
@@ -429,6 +428,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
             onSelect={selectMarket}
             onToggleFavorite={toggleFavorite}
             ref={listRef}
+            searchMode={isSearchMode}
           />
         </View>
       </AppBottomSheetModal>
@@ -448,7 +448,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 0,
   },
   search: {
-    marginHorizontal: 16,
+    marginLeft: 15,
+    marginRight: 15,
     marginTop: 4,
   },
   tabs: {
@@ -497,9 +498,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 46,
     paddingHorizontal: 12,
     paddingTop: 2,
-  },
-  searchModeColumnHeader: {
-    marginTop: 10,
   },
   sortGroup: {
     alignItems: 'flex-start',

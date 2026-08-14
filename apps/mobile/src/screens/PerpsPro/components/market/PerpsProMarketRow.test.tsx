@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 jest.mock('@/assets/icons/dapp/icon-star-full.svg', () => {
   const ReactModule = require('react');
@@ -28,11 +29,14 @@ jest.mock('./PerpsProMarketLogo', () => {
     PerpsProMarketLogo: ({
       logoUrl,
       marketKey,
+      ...props
     }: {
       logoUrl: string;
       marketKey: string;
+      [key: string]: unknown;
     }) =>
       ReactModule.createElement(View, {
+        ...props,
         accessibilityLabel: `${marketKey}:${logoUrl}`,
         testID: 'market-logo',
       }),
@@ -104,6 +108,100 @@ const createMarketData = (
 });
 
 describe('PerpsProMarketRow', () => {
+  it('matches the approved 56px row geometry and typography', () => {
+    const model = buildPerpsProMarketRowModel(
+      createMarketData('xyz:ALPHA', {
+        brief: 'Alpha',
+        dexId: 'xyz',
+        displayName: 'ALPHA',
+      }),
+    );
+    render(
+      <PerpsProMarketRow
+        favorite={false}
+        model={model}
+        onSelect={jest.fn()}
+        onToggleFavorite={jest.fn()}
+        selected={false}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText('page.perps.pro.marketSelector.select:ALPHAUSDC')
+          .props.style,
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        alignItems: 'flex-start',
+        height: 56,
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+      }),
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText(
+          'page.perps.pro.marketSelector.addFavorite:ALPHAUSDC',
+        ).props.style,
+      ),
+    ).toEqual(
+      expect.objectContaining({ height: 24, marginRight: 6, width: 16 }),
+    );
+    expect(screen.getByTestId('favorite-empty').props).toEqual(
+      expect.objectContaining({ height: 16, width: 16 }),
+    );
+    expect(screen.getByTestId('market-logo').props).toEqual(
+      expect.objectContaining({ size: 24 }),
+    );
+    expect(
+      StyleSheet.flatten(screen.getByTestId('market-logo').props.style),
+    ).toEqual(
+      expect.objectContaining({ borderRadius: 12, height: 24, width: 24 }),
+    );
+    expect(screen.getByText('ALPHAUSDC').props.style).toEqual(
+      expect.objectContaining({
+        fontFamily: 'SF Pro',
+        fontSize: 16,
+        fontWeight: '500',
+        lineHeight: 20,
+      }),
+    );
+    expect(screen.getByText('120.00').props.style).toEqual(
+      expect.objectContaining({
+        fontFamily: 'SF Pro',
+        fontSize: 16,
+        fontWeight: '500',
+        lineHeight: 20,
+      }),
+    );
+    expect(screen.getByText('XYZ').props.style).toEqual(
+      expect.objectContaining({
+        borderRadius: 2,
+        borderWidth: 0.5,
+        fontSize: 10,
+        fontWeight: '500',
+        height: 14,
+        lineHeight: 12,
+        paddingHorizontal: 4,
+      }),
+    );
+    expect(screen.getByText('Alpha').props.style).toEqual(
+      expect.objectContaining({
+        fontSize: 12,
+        fontWeight: '400',
+        lineHeight: 16,
+      }),
+    );
+    expect(screen.getByText('+20.00%').props.style).toEqual(
+      expect.objectContaining({
+        fontSize: 12,
+        fontWeight: '500',
+        lineHeight: 16,
+      }),
+    );
+  });
+
   it('updates every market-bound field and handler when business identity changes', () => {
     const first = buildPerpsProMarketRowModel(createMarketData('ALPHA'));
     const second = buildPerpsProMarketRowModel(

@@ -1,7 +1,10 @@
-import {
-  NextSearchBar,
-  type NextSearchBarMethods,
-} from '@/components2024/SearchBar';
+import RcNextCloseCircleDark from '@/assets/icons/common/next-close-circle-dark.svg';
+import RcNextCloseCircle from '@/assets/icons/common/next-close-circle.svg';
+import RcNextSearchCC from '@/assets/icons/common/next-search-cc.svg';
+import { Text } from '@/components/Typography';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, {
   forwardRef,
   useCallback,
@@ -10,17 +13,20 @@ import React, {
   useState,
 } from 'react';
 import {
+  Keyboard,
   Pressable,
   StyleSheet,
+  TouchableOpacity,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-export type PerpsProMarketSearchBarHandle = Pick<
-  NextSearchBarMethods,
-  'blur' | 'focus'
->;
+export type PerpsProMarketSearchBarHandle = {
+  blur: () => void;
+  focus: () => void;
+};
 
 type PerpsProMarketSearchBarProps = {
   onChangeText: (value: string) => void;
@@ -34,7 +40,9 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   PerpsProMarketSearchBarHandle,
   PerpsProMarketSearchBarProps
 >(({ onChangeText, onFocusChange, placeholder, style, value }, ref) => {
-  const inputRef = useRef<NextSearchBarMethods>(null);
+  const { colors2024, isLight, styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const inputRef = useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
   const [focused, setFocused] = useState(false);
   const isResting = !focused && !value;
 
@@ -57,6 +65,11 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   }, [onFocusChange]);
   const handleCancel = useCallback(() => {
     onChangeText('');
+    inputRef.current?.blur();
+    Keyboard.dismiss();
+  }, [onChangeText]);
+  const handleClear = useCallback(() => {
+    onChangeText('');
   }, [onChangeText]);
   const focusInput = useCallback(() => {
     inputRef.current?.focus();
@@ -64,30 +77,97 @@ const PerpsProMarketSearchBarComponent = forwardRef<
 
   return (
     <View style={[styles.container, style]}>
-      <NextSearchBar
-        as="BottomSheetTextInput"
-        inputContainerStyle={
-          isResting ? styles.restingInputContainer : undefined
-        }
-        inputStyle={[styles.input, isResting ? styles.restingInput : undefined]}
-        onBlur={handleBlur}
-        onCancel={handleCancel}
-        onChangeText={onChangeText}
-        onFocus={handleFocus}
-        placeholder={placeholder}
-        ref={inputRef}
-        returnKeyType="done"
-        testID="market-search"
-        value={value}
-      />
-      {isResting ? (
-        <Pressable
-          accessibilityLabel={placeholder}
-          accessibilityRole="button"
-          onPress={focusInput}
-          style={StyleSheet.absoluteFill}
-          testID="perps-pro-market-search-focus-mask"
+      <View
+        style={[
+          styles.inputContainer,
+          isResting ? styles.restingInputContainer : null,
+        ]}
+        testID="perps-pro-market-search-input-container">
+        <RcNextSearchCC
+          color={colors2024['neutral-secondary']}
+          height={16}
+          style={isResting ? styles.hiddenInputContent : undefined}
+          width={16}
         />
+        <View style={styles.inputArea}>
+          {!isResting && !value ? (
+            <Text
+              pointerEvents="none"
+              style={styles.activePlaceholder}
+              testID="perps-pro-market-search-active-placeholder">
+              {placeholder}
+            </Text>
+          ) : null}
+          <BottomSheetTextInput
+            accessibilityLabel={placeholder}
+            accessible={!isResting}
+            allowFontScaling={false}
+            autoCorrect={false}
+            cursorColor={colors2024['brand-default']}
+            onBlur={handleBlur}
+            onChangeText={onChangeText}
+            onFocus={handleFocus}
+            ref={inputRef}
+            returnKeyType="done"
+            selection={focused && !value ? EMPTY_SELECTION : undefined}
+            selectionColor={colors2024['brand-default']}
+            spellCheck={false}
+            style={styles.input}
+            testID="market-search"
+            value={value}
+          />
+        </View>
+        {!isResting && value ? (
+          <TouchableOpacity
+            accessibilityLabel="Clear search"
+            accessibilityRole="button"
+            activeOpacity={1}
+            hitSlop={8}
+            onPress={handleClear}
+            testID="market-search-clear">
+            {isLight ? (
+              <RcNextCloseCircle
+                height={16}
+                testID="perps-pro-market-search-clear-light"
+                width={16}
+              />
+            ) : (
+              <RcNextCloseCircleDark
+                height={16}
+                testID="perps-pro-market-search-clear-dark"
+                width={16}
+              />
+            )}
+          </TouchableOpacity>
+        ) : null}
+        {isResting ? (
+          <Pressable
+            accessibilityLabel={placeholder}
+            accessibilityRole="button"
+            onPress={focusInput}
+            style={StyleSheet.absoluteFill}
+            testID="perps-pro-market-search-focus-mask">
+            <View pointerEvents="none" style={styles.restingContent}>
+              <RcNextSearchCC
+                color={colors2024['neutral-secondary']}
+                height={16}
+                width={16}
+              />
+              <Text style={styles.placeholder}>{placeholder}</Text>
+            </View>
+          </Pressable>
+        ) : null}
+      </View>
+      {!isResting ? (
+        <Pressable
+          accessibilityLabel={t('global.Cancel')}
+          accessibilityRole="button"
+          hitSlop={{ bottom: 5, top: 5 }}
+          onPress={handleCancel}
+          style={styles.cancel}
+          testID="market-search-cancel">
+          <Text style={styles.cancelText}>{t('global.Cancel')}</Text>
+        </Pressable>
       ) : null}
     </View>
   );
@@ -99,17 +179,90 @@ export const PerpsProMarketSearchBar = React.memo(
   PerpsProMarketSearchBarComponent,
 );
 
-const styles = StyleSheet.create({
+const EMPTY_SELECTION = { end: 0, start: 0 } as const;
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    height: 34,
+  },
+  inputContainer: {
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-0'],
+    borderRadius: 6,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    height: 34,
+    overflow: 'hidden',
+    paddingHorizontal: 12,
+  },
+  restingInputContainer: {
+    marginRight: 1,
+  },
+  hiddenInputContent: {
+    opacity: 0,
+  },
+  inputArea: {
+    flex: 1,
+    height: 18,
+    minWidth: 0,
     position: 'relative',
   },
   input: {
-    lineHeight: 20,
+    bottom: 0,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '700',
+    height: 18,
+    includeFontPadding: false,
+    lineHeight: 18,
+    left: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    position: 'absolute',
+    right: 0,
+    textAlignVertical: 'center',
+    top: 0,
   },
-  restingInput: {
-    flex: 0,
+  activePlaceholder: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '400',
+    left: 2,
+    lineHeight: 18,
+    position: 'absolute',
+    top: 0,
   },
-  restingInputContainer: {
+  restingContent: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
     justifyContent: 'center',
   },
-});
+  placeholder: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  cancel: {
+    alignItems: 'center',
+    height: 34,
+    justifyContent: 'center',
+    width: 46,
+  },
+  cancelText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+}));

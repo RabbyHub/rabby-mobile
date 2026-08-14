@@ -5,6 +5,19 @@ const mockBottomSheetFlatListProps = jest.fn();
 const mockRowMount = jest.fn();
 const mockRowUnmount = jest.fn();
 const mockScrollToOffset = jest.fn();
+let mockIsLight = true;
+
+jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -19,6 +32,7 @@ jest.mock('@/hooks/theme', () => ({
       },
     );
     return {
+      isLight: mockIsLight,
       styles: getStyle({ colors2024 }),
     };
   },
@@ -137,16 +151,20 @@ const slots = slotOrders.name.asc;
 const renderMarketList = (
   data: typeof slots,
   ref?: React.Ref<PerpsProMarketListHandle>,
+  searchMode = false,
+  marketDataStatus: import('@/hooks/perps/usePerpsStore').MarketDataStatus = 'success',
+  currentMarketKey: string | null = null,
 ) => (
   <PerpsProMarketList
     bottomInset={0}
-    currentMarketKey={null}
+    currentMarketKey={currentMarketKey}
     data={data}
     favoriteSet={new Set()}
-    marketDataStatus="success"
+    marketDataStatus={marketDataStatus}
     onSelect={jest.fn()}
     onToggleFavorite={jest.fn()}
     ref={ref}
+    searchMode={searchMode}
   />
 );
 
@@ -154,6 +172,7 @@ describe('PerpsProMarketList', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
+    mockIsLight = true;
   });
 
   afterEach(() => {
@@ -177,8 +196,8 @@ describe('PerpsProMarketList', () => {
     expect(props.windowSize).toBe(3);
     expect(props.getItemLayout(slots, 17)).toEqual({
       index: 17,
-      length: 70,
-      offset: 1190,
+      length: 60,
+      offset: 1020,
     });
     expect(props.keyExtractor(slots[17], 17)).toBe('slot:17');
     expect(props).not.toHaveProperty('focusHook');
@@ -187,9 +206,12 @@ describe('PerpsProMarketList', () => {
     expect(props).not.toHaveProperty('onScroll');
     expect(props).not.toHaveProperty('renderScrollComponent');
 
-    const mountedRows = screen.getAllByTestId(/perps-pro-market-row-/);
+    const mountedRows = screen.getAllByTestId(/perps-pro-market-row-MARKET/);
     expect(mountedRows.length).toBeGreaterThan(0);
     expect(mountedRows.length).toBeLessThanOrEqual(10);
+    expect(
+      screen.getAllByTestId('perps-pro-market-row-separator')[0].props.style,
+    ).toEqual({ height: 4 });
   });
 
   it('preserves physical rows across 20 independent full-catalog reversals', () => {
@@ -204,11 +226,49 @@ describe('PerpsProMarketList', () => {
       });
 
       expect(
-        screen.getAllByTestId(/perps-pro-market-row-/).length,
+        screen.getAllByTestId(/perps-pro-market-row-MARKET/).length,
       ).toBeLessThanOrEqual(10);
       expect(mockRowMount).toHaveBeenCalledTimes(initialMountCount);
       expect(mockRowUnmount).not.toHaveBeenCalled();
     }
+  });
+
+  it('keeps current-market selection semantic without a persistent visual wrapper', () => {
+    const { rerender } = render(
+      renderMarketList(slots, undefined, false, 'success', slots[0].marketKey),
+    );
+    const renderCapturedRow = (index: number) => {
+      const props =
+        mockBottomSheetFlatListProps.mock.calls[
+          mockBottomSheetFlatListProps.mock.calls.length - 1
+        ][0];
+      return props.renderItem({
+        index,
+        item: slots[index],
+        separators: {
+          highlight: jest.fn(),
+          unhighlight: jest.fn(),
+          updateProps: jest.fn(),
+        },
+      });
+    };
+
+    const initialSelectedRow = renderCapturedRow(0);
+    expect(initialSelectedRow.props.marketKey).toBe(slots[0].marketKey);
+    expect(initialSelectedRow.props.selected).toBe(true);
+    expect(initialSelectedRow.props.style).toBeUndefined();
+
+    rerender(
+      renderMarketList(slots, undefined, false, 'success', slots[1].marketKey),
+    );
+
+    const previousRow = renderCapturedRow(0);
+    const nextSelectedRow = renderCapturedRow(1);
+    expect(previousRow.props.selected).toBe(false);
+    expect(previousRow.props.style).toBeUndefined();
+    expect(nextSelectedRow.props.marketKey).toBe(slots[1].marketKey);
+    expect(nextSelectedRow.props.selected).toBe(true);
+    expect(nextSelectedRow.props.style).toBeUndefined();
   });
 
   it('rebinds retained slots and only unmounts trailing slots when filtering', () => {
@@ -240,7 +300,7 @@ describe('PerpsProMarketList', () => {
       {
         nativeEvent: {
           contentSize: {
-            height: 70 * slots.length,
+            height: 60 * slots.length,
             width: 320,
           },
           contentOffset: {
@@ -266,5 +326,50 @@ describe('PerpsProMarketList', () => {
 
     expect(listRef.current?.scrollToTopIfNeeded()).toBe(false);
     expect(mockScrollToOffset).toHaveBeenCalledTimes(1);
+  });
+
+  it('matches the search result inset and the approved light empty state', () => {
+    render(renderMarketList([], undefined, true));
+
+    const props =
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0];
+    expect(props.contentContainerStyle).toEqual(
+      expect.arrayContaining([expect.objectContaining({ paddingTop: 16 })]),
+    );
+    expect(
+      screen.getByTestId('perps-pro-market-search-empty-light').props,
+    ).toEqual(expect.objectContaining({ height: 126, width: 163 }));
+    expect(
+      screen.getByTestId('perps-pro-market-search-empty').props.style,
+    ).toEqual(expect.objectContaining({ paddingTop: 64 }));
+    expect(
+      screen.getByText('page.perps.pro.marketSelector.empty').props.style,
+    ).toEqual(
+      expect.objectContaining({
+        color: 'neutral-info',
+        fontFamily: 'SF Pro',
+        fontSize: 14,
+        fontWeight: '400',
+        lineHeight: 18,
+        marginTop: 12,
+      }),
+    );
+  });
+
+  it('uses the dark empty asset and preserves the loading state contract', () => {
+    mockIsLight = false;
+    const darkRender = render(renderMarketList([], undefined, true));
+    expect(
+      screen.getByTestId('perps-pro-market-search-empty-dark'),
+    ).toBeTruthy();
+    darkRender.unmount();
+
+    render(renderMarketList([], undefined, true, 'loading'));
+    expect(screen.queryByTestId('perps-pro-market-search-empty')).toBeNull();
+    expect(
+      screen.getByText('page.perps.pro.marketSelector.loading'),
+    ).toBeTruthy();
   });
 });

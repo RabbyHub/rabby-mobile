@@ -469,12 +469,12 @@ describe('PerpsProMarketSelector component', () => {
       {
         nativeEvent: {
           contentSize: {
-            height: 70 * 296,
+            height: 60 * 296,
             width: 320,
           },
           contentOffset: {
             x: 0,
-            y: 70 * 120,
+            y: 60 * 120,
           },
           layoutMeasurement: {
             height: 560,
@@ -521,6 +521,9 @@ describe('PerpsProMarketSelector component', () => {
       screen.queryByText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     expect(screen.queryByText('page.perps.pro.marketSelector.all')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-market-column-header')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-market-sort-name')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-market-sort-volume')).toBeNull();
     expect(getLatestListProps().data).toHaveLength(1);
 
     act(() => {
@@ -533,6 +536,7 @@ describe('PerpsProMarketSelector component', () => {
     expect(
       screen.getByText('page.perps.pro.marketSelector.favorites'),
     ).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
 
     fireEvent.press(
       screen.getByLabelText(
