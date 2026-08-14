@@ -122,6 +122,7 @@ export const PerpsProHistoryList: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
     paddingBottom: 24,
+    paddingTop: 16,
   },
   emptyContent: {
     flexGrow: 1,

@@ -17,6 +17,17 @@ const PERPS_PRO_SHEET_MIN_TOP_OFFSET = 24;
 const PERPS_PRO_SHEET_TOP_SAFE_GAP = 16;
 const PERPS_PRO_MARKET_SELECTOR_DESIGN_TOP = 120;
 const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
+const PERPS_PRO_POSITION_TPSL_LIST_DESIGN_TOP = 120;
+const PERPS_PRO_POSITION_TPSL_FORM_DESIGN_TOP = 138;
+const PERPS_PRO_POSITION_TPSL_MIN_HEIGHT = 320;
+const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT = 170;
+const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 192;
+const PERPS_PRO_POSITION_TPSL_INLINE_EMPTY_CHROME_HEIGHT = 196;
+
+export type PerpsProPositionTpSlFormPresentation =
+  | 'inline-empty'
+  | 'subpage'
+  | 'tab';
 
 export type PerpsProColumnLayout = {
   contentWidth: number;
@@ -141,5 +152,57 @@ export const getPerpsProMarketSelectorSnapPoint = ({
       Math.min(PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT, safeWindowHeight),
       safeWindowHeight - topOffset,
     ),
+  );
+};
+
+export const getPerpsProPositionTpSlSnapPoint = ({
+  page,
+  topInset,
+  windowHeight,
+}: {
+  page: 'form' | 'list';
+  topInset: number;
+  windowHeight: number;
+}) => {
+  const safeTopInset = Number.isFinite(topInset) && topInset > 0 ? topInset : 0;
+  const safeWindowHeight =
+    Number.isFinite(windowHeight) && windowHeight > 0 ? windowHeight : 0;
+  const designTop =
+    page === 'list'
+      ? PERPS_PRO_POSITION_TPSL_LIST_DESIGN_TOP
+      : PERPS_PRO_POSITION_TPSL_FORM_DESIGN_TOP;
+  const topOffset = Math.max(
+    designTop,
+    safeTopInset + PERPS_PRO_SHEET_TOP_SAFE_GAP,
+  );
+
+  return Math.min(
+    safeWindowHeight,
+    Math.max(
+      Math.min(PERPS_PRO_POSITION_TPSL_MIN_HEIGHT, safeWindowHeight),
+      safeWindowHeight - topOffset,
+    ),
+  );
+};
+
+export const getPerpsProPositionTpSlFormMinimumHeight = ({
+  presentation,
+  snapPoint,
+}: {
+  presentation: PerpsProPositionTpSlFormPresentation;
+  snapPoint: number;
+}) => {
+  const safeSnapPoint =
+    Number.isFinite(snapPoint) && snapPoint > 0 ? snapPoint : 0;
+  const chromeHeight =
+    presentation === 'subpage'
+      ? PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT
+      : presentation === 'inline-empty'
+      ? PERPS_PRO_POSITION_TPSL_INLINE_EMPTY_CHROME_HEIGHT
+      : PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT;
+
+  return Math.max(
+    0,
+    safeSnapPoint - PERPS_PRO_BOTTOM_SHEET_HANDLE_HEIGHT - chromeHeight,
   );
 };

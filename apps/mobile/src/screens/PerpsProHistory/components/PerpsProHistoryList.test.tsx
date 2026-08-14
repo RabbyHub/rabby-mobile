@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -86,6 +87,29 @@ describe('PerpsProHistoryList', () => {
     );
     fireEvent.press(screen.getByText('page.perps.pro.common.retry'));
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the first populated row 16px below the divider', () => {
+    render(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        state={makeState({
+          rows: [{ key: 'row-1' } as never],
+          status: 'ready',
+        })}
+        tab="trade"
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-history-list-trade').props
+          .contentContainerStyle,
+      ),
+    ).toMatchObject({ paddingBottom: 24, paddingTop: 16 });
   });
 
   it('loads earlier automatically at the end and keeps Retry explicit', () => {

@@ -124,7 +124,7 @@ describe('Perps Pro position model', () => {
     });
   });
 
-  it('collects every current TP/SL including nested children in stable order', () => {
+  it('collects active position and fixed-size TP/SL but excludes nested pending children', () => {
     const orders = [
       makeOrder({ oid: 3, orderType: 'Stop Market', triggerPx: '50000' }),
       makeOrder({
@@ -142,9 +142,7 @@ describe('Perps Pro position model', () => {
     ];
 
     expect(collectPositionTpslOrders('BTC', orders)).toEqual([
-      expect.objectContaining({ kind: 'takeProfit', oid: 2 }),
-      expect.objectContaining({ kind: 'takeProfit', oid: 1 }),
-      expect.objectContaining({ kind: 'stopLoss', oid: 3 }),
+      expect.objectContaining({ kind: 'stopLoss', oid: 3, scope: 'position' }),
     ]);
   });
 
