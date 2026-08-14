@@ -60,7 +60,10 @@ export function formatProPrice(v: number, decimals: number): string {
   const safeDecimals = Number.isInteger(decimals)
     ? Math.min(12, Math.max(0, decimals))
     : 2;
-  return normalizeSignedZero(v).toFixed(safeDecimals);
+  const formatted = normalizeSignedZero(v).toFixed(safeDecimals);
+  const [integer = '', fraction] = formatted.split('.');
+  const groupedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/gu, ',');
+  return fraction == null ? groupedInteger : `${groupedInteger}.${fraction}`;
 }
 
 export function formatPerpsProCrosshairPrice(
@@ -71,27 +74,58 @@ export function formatPerpsProCrosshairPrice(
   if (formatted === '--') {
     return formatted;
   }
-  const [integer = '', fraction] = formatted.split('.');
-  const groupedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/gu, ',');
-  return fraction == null ? groupedInteger : `${groupedInteger}.${fraction}`;
+  return formatted;
 }
 
 export function formatPerpsProCrosshairChange(
   price: number,
-  referencePrice: number | null,
+  latestPrice: number | null,
 ): string | null {
   if (
     !Number.isFinite(price) ||
-    referencePrice == null ||
-    !Number.isFinite(referencePrice) ||
-    referencePrice <= 0
+    latestPrice == null ||
+    !Number.isFinite(latestPrice) ||
+    latestPrice <= 0
   ) {
     return null;
   }
   const change = normalizeSignedZero(
-    ((price - referencePrice) / referencePrice) * 100,
+    ((price - latestPrice) / latestPrice) * 100,
   );
-  return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+  const roundedChange = normalizeSignedZero(Number(change.toFixed(2)));
+  return `${roundedChange >= 0 ? '+' : ''}${roundedChange.toFixed(2)}%`;
+}
+
+export function getPerpsProLatestCandleClose(
+  data: ReadonlyArray<Pick<CandleStick, 'close'>>,
+): number | null {
+  const latestClose = data[data.length - 1]?.close;
+  return latestClose != null && Number.isFinite(latestClose) && latestClose > 0
+    ? latestClose
+    : null;
+}
+
+const PERPS_PRO_PRICE_SCALE_WIDTH = 66;
+const PERPS_PRO_TOOLTIP_GAP = 8;
+const PERPS_PRO_TOOLTIP_EDGE_INSET = 8;
+
+export type PerpsProTooltipPlacement = {
+  left: number | null;
+  right: number | null;
+};
+
+export function getPerpsProTooltipPlacement(
+  pointX: number,
+  containerWidth: number,
+): PerpsProTooltipPlacement {
+  const plotWidth = Math.max(0, containerWidth - PERPS_PRO_PRICE_SCALE_WIDTH);
+  const placeOnRight = pointX < plotWidth / 2;
+  return placeOnRight
+    ? {
+        left: null,
+        right: PERPS_PRO_PRICE_SCALE_WIDTH + PERPS_PRO_TOOLTIP_GAP,
+      }
+    : { left: PERPS_PRO_TOOLTIP_EDGE_INSET, right: null };
 }
 
 export function formatProCompactNumber(v: number | null | undefined): string {
@@ -327,8 +361,6 @@ export interface ChartState {
   selectedPrice: number | null;
   selectedTime: number | null;
   selectedPointX: number | null;
-  selectedPointY: number | null;
-  proReferencePrice: number | null;
   currentData: TradingViewCandlestickData[];
 }
 
@@ -362,8 +394,6 @@ export function createChartState(): ChartState {
     selectedPrice: null,
     selectedTime: null,
     selectedPointX: null,
-    selectedPointY: null,
-    proReferencePrice: null,
     currentData: [],
   };
 }

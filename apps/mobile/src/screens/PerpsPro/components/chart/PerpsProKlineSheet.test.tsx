@@ -15,7 +15,6 @@ const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
 const mockSetData = jest.fn();
 const mockUpdateCandleData = jest.fn();
-const mockUpdatePerpsProReferencePrice = jest.fn();
 const mockToolbarProps = jest.fn();
 const mockUsePerpsProKline = jest.fn();
 
@@ -57,7 +56,6 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
             };
           },
           updateCandleData: mockUpdateCandleData,
-          updatePerpsProReferencePrice: mockUpdatePerpsProReferencePrice,
           updateTPSLPriceLines: jest.fn(),
         }));
         return ReactModule.createElement(Pressable, {
@@ -155,7 +153,6 @@ const market = {
   displayBase: 'BTC',
   marketKey: 'hyperliquid::BTC',
   marketData: {
-    prevDayPx: '59000',
     pxDecimals: 0,
   },
   quoteAsset: 'USDC',
@@ -230,19 +227,6 @@ describe('PerpsProKlineSheet', () => {
   it('removes the retained sheet from hit testing while it is hidden', () => {
     const view = render(
       <PerpsProKlineSheet
-        enabled={false}
-        market={market}
-        onClose={jest.fn()}
-        visible={false}
-      />,
-    );
-
-    expect(
-      screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
-    ).toBe('none');
-
-    view.rerender(
-      <PerpsProKlineSheet
         enabled
         market={market}
         onClose={jest.fn()}
@@ -253,6 +237,21 @@ describe('PerpsProKlineSheet', () => {
     expect(
       screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
     ).toBe('box-none');
+    expect(mockClearCrosshair).not.toHaveBeenCalled();
+
+    view.rerender(
+      <PerpsProKlineSheet
+        enabled={false}
+        market={market}
+        onClose={jest.fn()}
+        visible={false}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
+    ).toBe('none');
+    expect(mockClearCrosshair).toHaveBeenCalledTimes(1);
   });
 
   it.each(['idle', 'loading', 'empty', 'stale', 'error'] as const)(
@@ -297,10 +296,6 @@ describe('PerpsProKlineSheet', () => {
 
     expect(screen.getByTestId('kline-overlay-skeleton')).toBeTruthy();
     fireEvent.press(screen.getByTestId('trading-view-chart'));
-
-    await waitFor(() =>
-      expect(mockUpdatePerpsProReferencePrice).toHaveBeenCalledWith('59000'),
-    );
 
     await waitFor(() => expect(mockSetData).toHaveBeenCalledTimes(1));
     expect(mockSetData).toHaveBeenCalledWith({

@@ -8,10 +8,14 @@ jest.mock(
 
 const {
   calculateSimpleMovingAverage,
+  formatPerpsProCrosshairChange,
+  formatPerpsProCrosshairPrice,
   formatProCompactNumber,
   formatProPrice,
   formatProTooltipTime,
   getInitialVisibleLogicalRange,
+  getPerpsProLatestCandleClose,
+  getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
 } =
   require('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic') as typeof import('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic');
@@ -112,11 +116,51 @@ describe('Perps Pro local chart calculations', () => {
   it('formats approved price precision and compact units', () => {
     expect(formatProPrice(12.6, 0)).toBe('13');
     expect(formatProPrice(-0, 2)).toBe('0.00');
+    expect(formatProPrice(66107.71, 2)).toBe('66,107.71');
+    expect(formatProPrice(-66107.71, 2)).toBe('-66,107.71');
     expect(formatProCompactNumber(1_250)).toBe('1.25K');
     expect(formatProCompactNumber(2_500_000)).toBe('2.50M');
     expect(formatProCompactNumber(3_750_000_000)).toBe('3.75B');
     expect(formatProCompactNumber(null)).toBe('--');
   });
+
+  it('formats the crosshair ordinate and change against the latest price', () => {
+    expect(formatPerpsProCrosshairPrice(66107.71, 2)).toBe('66,107.71');
+    expect(formatPerpsProCrosshairChange(105, 100)).toBe('+5.00%');
+    expect(formatPerpsProCrosshairChange(95, 100)).toBe('-5.00%');
+    expect(formatPerpsProCrosshairChange(100, 100)).toBe('+0.00%');
+    expect(formatPerpsProCrosshairChange(99.999999, 100)).toBe('+0.00%');
+  });
+
+  it('fails closed when the newest candle cannot provide a latest price', () => {
+    expect(getPerpsProLatestCandleClose([{ close: 100 }, { close: 120 }])).toBe(
+      120,
+    );
+    expect(
+      getPerpsProLatestCandleClose([{ close: 100 }, { close: Number.NaN }]),
+    ).toBeNull();
+    expect(
+      getPerpsProLatestCandleClose([{ close: 100 }, { close: 0 }]),
+    ).toBeNull();
+    expect(getPerpsProLatestCandleClose([])).toBeNull();
+    expect(formatPerpsProCrosshairChange(100, null)).toBeNull();
+    expect(formatPerpsProCrosshairChange(100, 0)).toBeNull();
+  });
+
+  it.each([320, 360, 393, 430])(
+    'keeps the Pro tooltip outside the right price scale at %spx',
+    width => {
+      const plotWidth = width - 66;
+      expect(getPerpsProTooltipPlacement(plotWidth / 2 - 1, width)).toEqual({
+        left: null,
+        right: 74,
+      });
+      expect(getPerpsProTooltipPlacement(plotWidth / 2, width)).toEqual({
+        left: 8,
+        right: null,
+      });
+    },
+  );
 
   it('uses device-local time and the approved day-level format', () => {
     const time = Date.UTC(2026, 6, 30, 1, 2) / 1000;

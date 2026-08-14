@@ -35,6 +35,8 @@ import {
   formatProTooltipTime,
   formatTime,
   getInitialVisibleLogicalRange,
+  getPerpsProLatestCandleClose,
+  getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
 } from './chart-logic';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
@@ -432,37 +434,64 @@ proCrosshairLabel.style.whiteSpace = 'nowrap';
 proCrosshairLabel.style.zIndex = '15';
 containerEl.appendChild(proCrosshairLabel);
 
+let proCrosshairLabelRows: {
+  change: HTMLDivElement;
+  price: HTMLDivElement;
+} | null = null;
+
+function ensurePerpsProCrosshairLabelRows() {
+  if (!chartState.proConfig) {
+    return null;
+  }
+  if (proCrosshairLabelRows) {
+    return proCrosshairLabelRows;
+  }
+  const price = document.createElement('div');
+  const change = document.createElement('div');
+  change.style.marginTop = '2px';
+  proCrosshairLabel.appendChild(price);
+  proCrosshairLabel.appendChild(change);
+  proCrosshairLabelRows = { change, price };
+  return proCrosshairLabelRows;
+}
+
 function hidePerpsProCrosshairLabel() {
   proCrosshairLabel.style.display = 'none';
 }
 
-function renderPerpsProCrosshairLabel(price: number, pointY: number) {
+function renderPerpsProCrosshairLabel(price: number) {
   const config = chartState.proConfig;
   const colors = chartState.colors;
+  const pointY = chartState.candlestickSeries?.priceToCoordinate(price);
   if (
     !config ||
     !colors ||
     !Number.isFinite(price) ||
+    pointY == null ||
     !Number.isFinite(pointY)
   ) {
     hidePerpsProCrosshairLabel();
     return;
   }
-  const priceRow = document.createElement('div');
-  priceRow.textContent = formatPerpsProCrosshairPrice(
+  const rows = ensurePerpsProCrosshairLabelRows();
+  if (!rows) {
+    hidePerpsProCrosshairLabel();
+    return;
+  }
+  rows.price.textContent = formatPerpsProCrosshairPrice(
     price,
     config.priceDecimals,
   );
   const change = formatPerpsProCrosshairChange(
     price,
-    chartState.proReferencePrice,
+    getPerpsProLatestCandleClose(chartState.currentData),
   );
-  proCrosshairLabel.replaceChildren(priceRow);
   if (change) {
-    const changeRow = document.createElement('div');
-    changeRow.style.marginTop = '2px';
-    changeRow.textContent = change;
-    proCrosshairLabel.appendChild(changeRow);
+    rows.change.textContent = change;
+    rows.change.style.display = 'block';
+  } else {
+    rows.change.textContent = '';
+    rows.change.style.display = 'none';
   }
   proCrosshairLabel.style.background = colors.crosshairLabel.background;
   proCrosshairLabel.style.color = colors.crosshairLabel.text;
@@ -474,6 +503,34 @@ function renderPerpsProCrosshairLabel(price: number, pointY: number) {
   )}px`;
   proCrosshairLabel.style.minHeight = `${labelHeight}px`;
   proCrosshairLabel.style.display = 'block';
+}
+
+let proCrosshairLabelFrameId: number | null = null;
+
+function cancelPendingPerpsProCrosshairLabelRender() {
+  if (proCrosshairLabelFrameId == null) {
+    return;
+  }
+  window.cancelAnimationFrame(proCrosshairLabelFrameId);
+  proCrosshairLabelFrameId = null;
+}
+
+function schedulePerpsProCrosshairLabelRender() {
+  if (
+    !chartState.proConfig ||
+    !chartState.crosshairActive ||
+    chartState.selectedPrice == null ||
+    proCrosshairLabelFrameId != null
+  ) {
+    return;
+  }
+  proCrosshairLabelFrameId = window.requestAnimationFrame(() => {
+    proCrosshairLabelFrameId = null;
+    if (!chartState.crosshairActive || chartState.selectedPrice == null) {
+      return;
+    }
+    renderPerpsProCrosshairLabel(chartState.selectedPrice);
+  });
 }
 
 function getCandleAtTime(time: number): CandleStick | null {
@@ -541,9 +598,9 @@ function clearPerpsProCrosshair() {
 
   chartState.crosshairActive = false;
   chartState.selectedPointX = null;
-  chartState.selectedPointY = null;
   chartState.selectedPrice = null;
   chartState.selectedTime = null;
+  cancelPendingPerpsProCrosshairLabelRender();
 
   if (shouldClearNativeCrosshair) {
     chartState.chart?.clearCrosshairPosition();
@@ -579,7 +636,6 @@ function getPerpsProCrosshairSelection(param: PerpsProCrosshairEvent) {
   }
   return {
     pointX: point.x,
-    pointY: point.y,
     price,
     time,
   };
@@ -677,9 +733,9 @@ function hidePerpsProCrosshairSelection() {
   // publishing the exit tap. Keep the interaction active so that click clears
   // it instead of pinning it again.
   chartState.selectedPointX = null;
-  chartState.selectedPointY = null;
   chartState.selectedPrice = null;
   chartState.selectedTime = null;
+  cancelPendingPerpsProCrosshairLabelRender();
   clearPerpsProCrosshairMarker();
   if (chartState.tooltip) {
     chartState.tooltip.style.display = 'none';
@@ -694,12 +750,11 @@ function applyPerpsProCrosshairSelection(
 ) {
   chartState.crosshairActive = true;
   chartState.selectedPointX = selection.pointX;
-  chartState.selectedPointY = selection.pointY;
   chartState.selectedPrice = selection.price;
   chartState.selectedTime = selection.time;
   updateMaLegend(selection.time);
   renderPerpsProTooltip(candle, selection.pointX);
-  renderPerpsProCrosshairLabel(selection.price, selection.pointY);
+  renderPerpsProCrosshairLabel(selection.price);
   schedulePerpsProCrosshairMarker(selection.time, selection.price);
 }
 
@@ -821,15 +876,12 @@ function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
   ].join('');
 
   const containerRect = containerEl.getBoundingClientRect();
-  const isLeftSide = pointX < containerRect.width / 2;
+  const placement = getPerpsProTooltipPlacement(pointX, containerRect.width);
   tooltipEl.style.top = '16px';
-  if (isLeftSide) {
-    tooltipEl.style.right = '8px';
-    tooltipEl.style.left = 'auto';
-  } else {
-    tooltipEl.style.left = '8px';
-    tooltipEl.style.right = 'auto';
-  }
+  tooltipEl.style.left =
+    placement.left == null ? 'auto' : `${placement.left}px`;
+  tooltipEl.style.right =
+    placement.right == null ? 'auto' : `${placement.right}px`;
   tooltipEl.style.display = 'block';
 }
 
@@ -1163,6 +1215,7 @@ function createChart() {
   // Subscribe to visible range change
   let updateTimeout: number | null = null;
   chartState.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+    schedulePerpsProCrosshairLabelRender();
     if (updateTimeout) {
       clearTimeout(updateTimeout);
     }
@@ -1458,6 +1511,7 @@ function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
       });
     }
     updateMovingAverageSeries();
+    schedulePerpsProCrosshairLabelRender();
     if (chartState.selectedTime === Number(data.time)) {
       const selectedCandle = getCandleAtTime(Number(data.time));
       if (selectedCandle) {
@@ -1474,22 +1528,6 @@ function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
 function handleUpdateTPSLPriceLines(data: TPSLPriceLines) {
   if (!chartState.chart || !chartState.candlestickSeries || !data) return;
   updateTPSLPriceLinesLogic(chartState, data);
-}
-
-function handleUpdatePerpsProReferencePrice(price: string | null) {
-  const parsed = Number(price);
-  chartState.proReferencePrice =
-    price != null && Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-  if (
-    chartState.crosshairActive &&
-    chartState.selectedPrice != null &&
-    chartState.selectedPointY != null
-  ) {
-    renderPerpsProCrosshairLabel(
-      chartState.selectedPrice,
-      chartState.selectedPointY,
-    );
-  }
 }
 
 // Handle UPDATE_THEME message
@@ -1597,9 +1635,6 @@ function handleMessage(event: CustomEvent) {
             clearPerpsProCrosshair();
           }
           break;
-        case 'UPDATE_PERPS_PRO_REFERENCE_PRICE':
-          handleUpdatePerpsProReferencePrice(tvMessage.price);
-          break;
         case 'UPDATE_THEME':
           handleUpdateTheme(tvMessage.colors, tvMessage.description);
           break;
@@ -1621,6 +1656,7 @@ function handleResize() {
         width: window.innerWidth,
         height: window.innerHeight,
       });
+      schedulePerpsProCrosshairLabelRender();
     }
   }, 100);
 }

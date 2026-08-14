@@ -53,7 +53,6 @@ export interface TradingViewChartRef {
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
-  updatePerpsProReferencePrice: (price: string | null) => void;
 }
 
 const formatCandleItem = (candle: CandleStick) => {
@@ -368,28 +367,11 @@ const TradingViewCandleChart = ({
     });
   }, [isChartReady]);
 
-  const handleUpdatePerpsProReferencePrice = useCallback(
-    (price: string | null) => {
-      if (!isChartReady || !localWebViewRef.current) {
-        return;
-      }
-      localWebViewRef.current.sendMessage?.({
-        type: 'TRADINGVIEW_MESSAGE',
-        data: {
-          type: 'UPDATE_PERPS_PRO_REFERENCE_PRICE',
-          price,
-        },
-      });
-    },
-    [isChartReady],
-  );
-
   useImperativeHandle(ref, () => ({
     clearCrosshair: handleClearCrosshair,
     setData: handleSetData,
     updateCandleData: handleUpdateCandleData,
     updateTPSLPriceLines: handleUpdateTPSLPriceLines,
-    updatePerpsProReferencePrice: handleUpdatePerpsProReferencePrice,
   }));
 
   // Remount WebView when app returns to foreground after being background for 30+ seconds
