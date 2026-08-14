@@ -11,6 +11,7 @@ const mockMarketListProps = jest.fn();
 const mockScrollToTopIfNeeded = jest.fn();
 const mockMarkDismissed = jest.fn();
 const mockMarkPresent = jest.fn();
+const mockMakeBottomSheetProps = jest.fn(() => ({}));
 
 jest.mock('@/assets2024/icons/perps/PerpsProSortArrowDown.svg', () => {
   const ReactModule = require('react');
@@ -66,7 +67,7 @@ jest.mock('@/components/Typography', () => ({
 }));
 
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
+  makeBottomSheetProps: (props: object) => mockMakeBottomSheetProps(props),
 }));
 
 jest.mock('@/components2024/SearchBar', () => {
@@ -568,16 +569,32 @@ describe('PerpsProMarketSelector', () => {
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-market-sort-name'));
+    fireEvent.press(screen.getByTestId('perps-pro-market-sort-name'));
     fireEvent.press(
       screen.getByText('page.perps.pro.marketSelector.favorites'),
     );
     fireEvent(screen.getByTestId('market-search'), 'focus');
+    expect(
+      getRowsFromListProps(
+        mockMarketListProps.mock.calls[
+          mockMarketListProps.mock.calls.length - 1
+        ][0],
+      ).map(market => market.displayPair),
+    ).toEqual(['SOLUSDC', 'ETHUSDC', 'BTCUSDC']);
     fireEvent.changeText(screen.getByTestId('market-search'), 'eth');
 
     expect(screen.queryByTestId('market-row-ETHUSDC')).toBeTruthy();
     expect(
       screen.queryByText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
+    expect(screen.queryByTestId('perps-pro-market-column-header')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-market-sort-name')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-market-sort-volume')).toBeNull();
+    expect(
+      mockMarketListProps.mock.calls[
+        mockMarketListProps.mock.calls.length - 1
+      ][0].searchMode,
+    ).toBe(true);
 
     const modalProps =
       mockBottomSheetModalProps.mock.calls[
@@ -594,7 +611,9 @@ describe('PerpsProMarketSelector', () => {
       ][0];
     expect(
       getRowsFromListProps(marketListProps).map(market => market.displayPair),
-    ).toEqual(['BTCUSDC', 'ETHUSDC', 'SOLUSDC']);
+    ).toEqual(['SOLUSDC', 'ETHUSDC', 'BTCUSDC']);
+    expect(marketListProps.searchMode).toBe(false);
+    expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
   });
 
   it('hides Favorites without an effective favorite and restores the prior tab after Cancel', () => {
@@ -651,6 +670,8 @@ describe('PerpsProMarketSelector', () => {
     expect(
       screen.getByText('page.perps.pro.marketSelector.favorites'),
     ).toBeTruthy();
+    expect(marketListProps.searchMode).toBe(false);
+    expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
   });
 
   it('matches the Figma header spacing and keeps 44pt gesture-aware sort targets', () => {
@@ -672,6 +693,9 @@ describe('PerpsProMarketSelector', () => {
     expect(modalProps.keyboardBlurBehavior).toBe('restore');
     expect(modalProps.android_keyboardInputMode).toBe('adjustPan');
     expect(modalProps.backdropProps.pressBehavior).toBe('close');
+    expect(mockMakeBottomSheetProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ linearGradientType: 'bg1' }),
+    );
 
     const sheetStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-selector-content').props.style,
@@ -687,7 +711,8 @@ describe('PerpsProMarketSelector', () => {
     );
     expect(searchStyle).toEqual(
       expect.objectContaining({
-        marginHorizontal: 16,
+        marginLeft: 15,
+        marginRight: 15,
         marginTop: 4,
       }),
     );
@@ -866,13 +891,13 @@ describe('PerpsProMarketSelector', () => {
     });
   });
 
-  it('uses the approved English Search Token copy', () => {
+  it('uses the approved English Search copy', () => {
     const localePath = path.resolve(
       __dirname,
       '../../../../assets/locales/en/messages.json',
     );
     const messages = JSON.parse(fs.readFileSync(localePath, 'utf8'));
 
-    expect(messages.page.perps.pro.marketSelector.search).toBe('Search Token');
+    expect(messages.page.perps.pro.marketSelector.search).toBe('Search');
   });
 });

@@ -14,6 +14,7 @@ import {
   formatPerpsProPrice,
 } from '../../utils/format';
 import { PerpsProMarketLogo } from './PerpsProMarketLogo';
+import { PERPS_PRO_MARKET_ROW_HEIGHT } from './marketLayout';
 
 type PerpsProMarketRowProps = {
   favorite: boolean;
@@ -97,16 +98,16 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
         onPressIn={captureFavoriteIdentity}
         style={styles.star}>
         {favorite ? (
-          <RcStarFull height={20} width={20} />
+          <RcStarFull height={16} width={16} />
         ) : (
-          <RcStar height={20} width={20} />
+          <RcStar height={16} width={16} />
         )}
       </TouchableOpacity>
       <PerpsProMarketLogo
         isLight={isLight}
         logoUrl={model.logoUrl}
         marketKey={model.marketKey}
-        size={46}
+        size={24}
         style={styles.logo}
       />
       <View style={styles.marketContent}>
@@ -137,7 +138,7 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
               {formatPerpsProCompactNumber(model.volume24h)}
             </Text>
           </View>
-          <Text style={changeStyle}>
+          <Text numberOfLines={1} style={changeStyle}>
             {formatPerpsProPercent(model.change24h)}
           </Text>
         </View>
@@ -160,27 +161,28 @@ PerpsProMarketRow.displayName = 'PerpsProMarketRow';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketRow: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    height: 70,
-    paddingLeft: 4,
-    paddingRight: 8,
+    height: PERPS_PRO_MARKET_ROW_HEIGHT,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
   },
   star: {
     alignItems: 'center',
-    height: 20,
+    height: 24,
     justifyContent: 'center',
     marginRight: 6,
-    width: 20,
+    width: 16,
   },
   logo: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 23,
-    height: 46,
-    width: 46,
+    backgroundColor: colors2024['neutral-bg-0'],
+    borderRadius: 12,
+    height: 24,
+    width: 24,
   },
   marketContent: {
     flex: 1,
+    height: 40,
     marginLeft: 8,
     minWidth: 0,
   },
@@ -193,36 +195,38 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   subtitle: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 18,
+    height: 16,
     justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: 2,
   },
   marketNameLine: {
     alignItems: 'center',
     flexShrink: 1,
     flexDirection: 'row',
-    gap: 2,
+    gap: 4,
     minWidth: 0,
   },
   marketName: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 20,
   },
   sourceTag: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 4,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    backgroundColor: colors2024['neutral-bg-0'],
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro',
+    fontSize: 10,
     fontWeight: '500',
-    lineHeight: 16,
+    height: 14,
+    lineHeight: 12,
     maxWidth: 52,
     paddingHorizontal: 4,
-    paddingVertical: 1,
   },
   marketMeta: {
     alignItems: 'center',
@@ -234,9 +238,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketMetaText: {
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '400',
     lineHeight: 16,
   },
   marketMetaDivider: {
@@ -247,33 +251,33 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketPrice: {
     color: colors2024['neutral-title-1'],
     marginLeft: 8,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 20,
   },
   changeUp: {
     color: colors2024['green-default'],
     marginLeft: 8,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 16,
   },
   changeDown: {
     color: colors2024['red-default'],
     marginLeft: 8,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 16,
   },
   changeMuted: {
     color: colors2024['neutral-secondary'],
     marginLeft: 8,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 16,
   },
 }));
