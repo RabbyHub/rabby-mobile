@@ -129,7 +129,11 @@ if (__DEV__) {
  * @see https://github.com/killserver/react-native-screenshot-prevent/issues/17
  */
 const RNScreenshotPrevent = Object.freeze({
-  ...nativeModule,
+  togglePreventScreenshot: nativeModule.togglePreventScreenshot,
+  setAppSwitcherBlurEnabled: nativeModule.setAppSwitcherBlurEnabled,
+  iosIsBeingCaptured: nativeModule.iosIsBeingCaptured,
+  iosProtectFromScreenRecording: nativeModule.iosProtectFromScreenRecording,
+  iosUnprotectFromScreenRecording: nativeModule.iosUnprotectFromScreenRecording,
   onPreventScreenshotChanged,
   // iosToggleBlurView(bool: boolean) {
   //   nativeModule.iosToggleBlurView(!!bool);
@@ -161,6 +165,7 @@ const RNScreenshotPrevent = Object.freeze({
     // }
     return nativeModule.startScreenCaptureDetection();
   },
+  stopScreenCaptureDetection: nativeModule.stopScreenCaptureDetection,
   scanScreenshotDirectory: (
     ...params: Parameters<typeof nativeModule.scanScreenshotDirectory>
   ) => {
