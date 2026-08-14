@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -89,6 +89,26 @@ const evaluated = (kind: 'sl' | 'tp', triggerPrice: string) => ({
   rawMagnitude: draft[kind].rawMagnitude,
   triggerPrice,
 });
+
+const LONG_DECIMAL = '999999999999999999999';
+
+const textLayoutEvent = (...widths: number[]) => ({
+  nativeEvent: { lines: widths.map(width => ({ width })) },
+});
+
+const tooltipWidth = () =>
+  StyleSheet.flatten(screen.getByTestId('perps-pro-tpsl-tooltip').props.style)
+    .width;
+
+const tooltipMeasure = () =>
+  screen.getByTestId('perps-pro-tpsl-tooltip-measure', {
+    includeHiddenElements: true,
+  });
+
+const queryTooltipMeasure = () =>
+  screen.queryByTestId('perps-pro-tpsl-tooltip-measure', {
+    includeHiddenElements: true,
+  });
 
 const controller = (overrides: Partial<PerpsProTpSlController> = {}) =>
   ({
@@ -313,11 +333,11 @@ describe('PerpsProTpSlFields', () => {
   });
 
   it.each([
-    ['buy', evaluated('tp', '110'), null, /buyProfit/, /sellProfit/],
-    ['sell', null, evaluated('tp', '90'), /sellProfit/, /buyProfit/],
+    ['buy', evaluated('tp', '110'), null],
+    ['sell', null, evaluated('tp', '90')],
   ] as const)(
-    'keeps a one-line tooltip when only the %s preview is valid',
-    (_side, buy, sell, visibleLabel, hiddenLabel) => {
+    'keeps both Price tooltip rows when only the %s preview is valid',
+    (_side, buy, sell) => {
       render(
         <PerpsProTpSlFields
           controller={controller({
@@ -337,23 +357,24 @@ describe('PerpsProTpSlFields', () => {
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-tpsl-tooltip').props.style,
         ),
-      ).toMatchObject({ top: -11, width: 206 });
+      ).toMatchObject({ top: -27, width: 206 });
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-tpsl-tooltip-body').props.style,
         ),
-      ).toMatchObject({ height: 24 });
+      ).toMatchObject({ height: 40 });
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-tpsl-tooltip-tail').props.style,
         ),
-      ).toMatchObject({ top: 20 });
-      expect(screen.getByText(visibleLabel)).toBeTruthy();
-      expect(screen.queryByText(hiddenLabel)).toBeNull();
+      ).toMatchObject({ top: 36 });
+      expect(screen.getByText(/buyProfit/)).toBeTruthy();
+      expect(screen.getByText(/sellProfit/)).toBeTruthy();
+      expect(screen.getByText('-- / --')).toBeTruthy();
     },
   );
 
-  it('hides the tooltip when neither direction has a valid preview', () => {
+  it('shows both Price placeholders when neither direction has a valid preview', () => {
     render(
       <PerpsProTpSlFields
         controller={controller({
@@ -369,7 +390,217 @@ describe('PerpsProTpSlFields', () => {
       />,
     );
 
-    expect(screen.queryByTestId('perps-pro-tpsl-tooltip')).toBeNull();
+    expect(screen.getByTestId('perps-pro-tpsl-tooltip')).toBeTruthy();
+    expect(screen.getByText(/buyProfit/)).toBeTruthy();
+    expect(screen.getByText(/sellProfit/)).toBeTruthy();
+    expect(screen.getAllByText('-- / --')).toHaveLength(2);
+  });
+
+  it('uses -- for an unavailable Trigger preview', () => {
+    render(
+      <PerpsProTpSlFields
+        controller={controller({
+          focusedLeg: 'sl',
+          previews: {
+            buy: { sl: evaluated('sl', '90'), tp: evaluated('tp', '110') },
+            sell: { sl: null, tp: evaluated('tp', '90') },
+          },
+        })}
+        draft={draft}
+        pxDecimals={2}
+        quoteAsset="USDC"
+      />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-tpsl-tooltip-buy-line'),
+    ).toHaveTextContent('buyTrigger 90.00');
+    expect(
+      screen.getByTestId('perps-pro-tpsl-tooltip-sell-line'),
+    ).toHaveTextContent('sellTrigger --');
+  });
+
+  it.each(['pnl', 'roi'] as const)(
+    'grows and locks the %s Trigger tooltip at the Price width',
+    mode => {
+      const fields = (rawMagnitude: string, triggerPrice: string) => (
+        <PerpsProTpSlFields
+          controller={controller({
+            focusedLeg: 'sl',
+            previews: {
+              buy: {
+                sl: evaluated('sl', triggerPrice),
+                tp: evaluated('tp', '110'),
+              },
+              sell: {
+                sl: evaluated('sl', `1${triggerPrice}`),
+                tp: evaluated('tp', '90'),
+              },
+            },
+          })}
+          draft={{
+            ...draft,
+            sl: { mode, rawMagnitude },
+          }}
+          pxDecimals={2}
+          quoteAsset="USDC"
+        />
+      );
+      const view = render(fields('1', '12345678.12'));
+
+      const tooltipStyle = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-tpsl-tooltip').props.style,
+      );
+      expect(tooltipStyle).toMatchObject({
+        maxWidth: 206,
+        minWidth: 139,
+        top: -27,
+      });
+      expect(tooltipStyle.width).toBe(139);
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-tpsl-tooltip-tail').props.style,
+        ),
+      ).toMatchObject({
+        left: '50%',
+        top: 36,
+        transform: [{ translateX: -36 }],
+      });
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-buy-line'),
+      ).toHaveTextContent('buyTrigger 12,345,678.12');
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-sell-line'),
+      ).toHaveTextContent('sellTrigger 112,345,678.12');
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-buy-line').props
+          .numberOfLines,
+      ).toBe(1);
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-sell-line').props
+          .numberOfLines,
+      ).toBe(1);
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-buy-line').props
+          .ellipsizeMode,
+      ).toBe('tail');
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-sell-line').props
+          .ellipsizeMode,
+      ).toBe('tail');
+
+      const staleMeasureHandler = tooltipMeasure().props.onTextLayout;
+      fireEvent(tooltipMeasure(), 'textLayout', textLayoutEvent(145, 160));
+      expect(tooltipWidth()).toBe(176);
+
+      view.rerender(fields('10', '123456789.12'));
+      act(() => staleMeasureHandler(textLayoutEvent(190, 190)));
+      expect(tooltipWidth()).toBe(176);
+
+      fireEvent(tooltipMeasure(), 'textLayout', textLayoutEvent(181, 189.2));
+      expect(tooltipWidth()).toBe(206);
+      expect(queryTooltipMeasure()).toBeNull();
+
+      view.rerender(fields('100', LONG_DECIMAL));
+      expect(tooltipWidth()).toBe(206);
+      expect(queryTooltipMeasure()).toBeNull();
+
+      view.rerender(fields('', LONG_DECIMAL));
+      expect(screen.queryByTestId('perps-pro-tpsl-tooltip')).toBeNull();
+      view.rerender(fields('1', '90'));
+      expect(tooltipWidth()).toBe(139);
+      expect(tooltipMeasure()).toBeTruthy();
+    },
+  );
+
+  it.each(['pnl', 'roi'] as const)(
+    'keeps the %s Trigger value in fixed-point notation after reaching max width',
+    mode => {
+      render(
+        <PerpsProTpSlFields
+          controller={controller({
+            focusedLeg: 'sl',
+            previews: {
+              buy: {
+                sl: evaluated('sl', LONG_DECIMAL),
+                tp: evaluated('tp', '110'),
+              },
+              sell: {
+                sl: evaluated('sl', `1${LONG_DECIMAL}`),
+                tp: evaluated('tp', '90'),
+              },
+            },
+          })}
+          draft={{ ...draft, sl: { ...draft.sl, mode } }}
+          pxDecimals={2}
+          quoteAsset="USDC"
+        />,
+      );
+
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-buy-line'),
+      ).toHaveTextContent('buyTrigger 999,999,999,999,999,999,999.00');
+      expect(
+        screen.getByTestId('perps-pro-tpsl-tooltip-sell-line'),
+      ).toHaveTextContent('sellTrigger 1,999,999,999,999,999,999,999.00');
+      expect(screen.queryByText(/e\+/i)).toBeNull();
+      fireEvent(tooltipMeasure(), 'textLayout', textLayoutEvent(250, 300));
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-tpsl-tooltip').props.style,
+        ),
+      ).toMatchObject({ maxWidth: 206, minWidth: 139, width: 206 });
+      expect(queryTooltipMeasure()).toBeNull();
+    },
+  );
+
+  it('keeps Price profit values in fixed-point notation and aligned to the same tail anchor', () => {
+    const largePriceLeg = {
+      ...evaluated('tp', '110'),
+      estimatedPnl: LONG_DECIMAL,
+      estimatedRoi: `1${LONG_DECIMAL}`,
+    };
+    render(
+      <PerpsProTpSlFields
+        controller={controller({
+          focusedLeg: 'tp',
+          previews: {
+            buy: { sl: evaluated('sl', '90'), tp: largePriceLeg },
+            sell: { sl: evaluated('sl', '110'), tp: largePriceLeg },
+          },
+        })}
+        draft={draft}
+        pxDecimals={2}
+        quoteAsset="USDC"
+      />,
+    );
+
+    expect(
+      screen.getAllByText(
+        /\+999,999,999,999,999,999,999\.00\(\+1,999,999,999,999,999,999,999\.00%\)/,
+      ),
+    ).toHaveLength(2);
+    expect(screen.queryByText(/e\+/i)).toBeNull();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-tpsl-tooltip').props.style,
+      ),
+    ).toMatchObject({ left: 0, width: 206 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-tpsl-tooltip-tail').props.style,
+      ),
+    ).toMatchObject({
+      left: '50%',
+      transform: [{ translateX: -36 }],
+    });
+    expect(
+      screen.getByTestId('perps-pro-tpsl-tooltip-buy-line').props.ellipsizeMode,
+    ).toBe('tail');
+    expect(
+      screen.getByTestId('perps-pro-tpsl-tooltip-sell-line').props
+        .ellipsizeMode,
+    ).toBe('tail');
   });
 
   it('does not reserve inline error UI beside either TP/SL leg', () => {
