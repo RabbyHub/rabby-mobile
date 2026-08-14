@@ -39,17 +39,26 @@ const CancelButton: React.FC<{
   );
 };
 
-const DisabledEdit: React.FC<{ label: string }> = ({ label }) => {
+const EditButton: React.FC<{
+  enabled: boolean;
+  label: string;
+  onPress: () => void;
+}> = ({ enabled, label, onPress }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      accessibilityState={{ disabled: true }}
-      disabled
+      accessibilityState={{ disabled: !enabled }}
+      disabled={!enabled}
+      onPress={onPress}
       style={styles.editIcon}>
       <RcIconEdit
-        color={colors2024['neutral-secondary']}
+        color={
+          enabled
+            ? colors2024['neutral-title-1']
+            : colors2024['neutral-secondary']
+        }
         height={16}
         width={16}
       />
@@ -60,159 +69,180 @@ const DisabledEdit: React.FC<{ label: string }> = ({ label }) => {
 export const PerpsProOpenOrderCard: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
   cancelPending: boolean;
+  editEnabled?: boolean;
   onCancel: (order: PerpsOpenOrderViewModel) => void;
+  onEdit?: (order: PerpsOpenOrderViewModel) => void;
   order: PerpsOpenOrderViewModel;
-}> = React.memo(({ amountUnit = 'quote', cancelPending, onCancel, order }) => {
-  const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  const market = usePerpsProMarketIdentity(order.coin);
-  const isBuy = order.side === 'buy';
-  const displayBaseAmount = (value: string) =>
-    formatPerpsProDecimal(value, market.szDecimals);
-  const displayQuoteAmount = (value: string | null) =>
-    formatPerpsProDecimal(value, 2);
-  const amountLabel =
-    amountUnit === 'base' ? market.displayBase : market.quoteAsset;
-  const displayAmount = (base: string, quote: string | null) =>
-    amountUnit === 'base' ? displayBaseAmount(base) : displayQuoteAmount(quote);
-  const executionPrice =
-    order.executionPriceKind === 'market'
-      ? t('page.perps.pro.openOrders.market')
-      : formatPerpsProPrice(order.executionPrice, market.pxDecimals);
-  const numericFilledRatio = Number(order.filledRatio);
-  const filledRatio = Number.isFinite(numericFilledRatio)
-    ? Math.max(0, Math.min(numericFilledRatio, 1))
-    : 0;
-  const progressWidth = `${filledRatio * 100}%` as `${number}%`;
+}> = React.memo(
+  ({
+    amountUnit = 'quote',
+    cancelPending,
+    editEnabled = false,
+    onCancel,
+    onEdit = () => undefined,
+    order,
+  }) => {
+    const { styles } = useTheme2024({ getStyle });
+    const { t } = useTranslation();
+    const market = usePerpsProMarketIdentity(order.coin);
+    const isBuy = order.side === 'buy';
+    const displayBaseAmount = (value: string) =>
+      formatPerpsProDecimal(value, market.szDecimals);
+    const displayQuoteAmount = (value: string | null) =>
+      formatPerpsProDecimal(value, 2);
+    const amountLabel =
+      amountUnit === 'base' ? market.displayBase : market.quoteAsset;
+    const displayAmount = (base: string, quote: string | null) =>
+      amountUnit === 'base'
+        ? displayBaseAmount(base)
+        : displayQuoteAmount(quote);
+    const executionPrice =
+      order.executionPriceKind === 'market'
+        ? t('page.perps.pro.openOrders.market')
+        : formatPerpsProPrice(order.executionPrice, market.pxDecimals);
+    const numericFilledRatio = Number(order.filledRatio);
+    const filledRatio = Number.isFinite(numericFilledRatio)
+      ? Math.max(0, Math.min(numericFilledRatio, 1))
+      : 0;
+    const progressWidth = `${filledRatio * 100}%` as `${number}%`;
 
-  return (
-    <View style={styles.row} testID={`perps-pro-order-${order.key}`}>
-      <View style={styles.header}>
-        <View style={styles.identity}>
-          <View style={styles.titleRow}>
-            <Text numberOfLines={1} style={styles.coin}>
-              {market.displayPair}
-            </Text>
-            {market.sourceTag ? (
-              <View style={styles.sourceTag}>
-                <Text style={styles.sourceText}>
-                  {market.sourceTag.toUpperCase()}
+    return (
+      <View style={styles.row} testID={`perps-pro-order-${order.key}`}>
+        <View style={styles.header}>
+          <View style={styles.identity}>
+            <View style={styles.titleRow}>
+              <Text numberOfLines={1} style={styles.coin}>
+                {market.displayPair}
+              </Text>
+              {market.sourceTag ? (
+                <View style={styles.sourceTag}>
+                  <Text style={styles.sourceText}>
+                    {market.sourceTag.toUpperCase()}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.metaRow}>
+              <View style={isBuy ? styles.buyTag : styles.sellTag}>
+                <Text style={isBuy ? styles.buyText : styles.sellText}>
+                  {order.orderType}
                 </Text>
+              </View>
+              <View style={isBuy ? styles.buyTag : styles.sellTag}>
+                <Text style={isBuy ? styles.buyText : styles.sellText}>
+                  {isBuy
+                    ? t('page.perps.pro.openOrders.buy')
+                    : t('page.perps.pro.openOrders.sell')}
+                </Text>
+              </View>
+              <Text style={styles.time}>
+                {formatPerpsProTime(order.timestamp)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.headerActions}>
+            {order.category === 'basic' ? (
+              <View
+                style={styles.progress}
+                testID={`perps-pro-order-progress-${order.key}`}>
+                <Text style={styles.progressText}>
+                  {formatPerpsProPercent(filledRatio, 0, false)}
+                </Text>
+                <View
+                  style={styles.progressTrack}
+                  testID={`perps-pro-order-progress-track-${order.key}`}>
+                  <View
+                    style={[
+                      isBuy ? styles.buyProgress : styles.sellProgress,
+                      { width: progressWidth },
+                    ]}
+                    testID={`perps-pro-order-progress-fill-${order.key}`}
+                  />
+                </View>
               </View>
             ) : null}
-          </View>
-          <View style={styles.metaRow}>
-            <View style={isBuy ? styles.buyTag : styles.sellTag}>
-              <Text style={isBuy ? styles.buyText : styles.sellText}>
-                {order.orderType}
-              </Text>
-            </View>
-            <View style={isBuy ? styles.buyTag : styles.sellTag}>
-              <Text style={isBuy ? styles.buyText : styles.sellText}>
-                {isBuy
-                  ? t('page.perps.pro.openOrders.buy')
-                  : t('page.perps.pro.openOrders.sell')}
-              </Text>
-            </View>
-            <Text style={styles.time}>
-              {formatPerpsProTime(order.timestamp)}
-            </Text>
+            <CancelButton
+              onPress={() => onCancel(order)}
+              pending={cancelPending}
+            />
           </View>
         </View>
-        <View style={styles.headerActions}>
-          {order.category === 'basic' ? (
-            <View
-              style={styles.progress}
-              testID={`perps-pro-order-progress-${order.key}`}>
-              <Text style={styles.progressText}>
-                {formatPerpsProPercent(filledRatio, 0, false)}
-              </Text>
-              <View
-                style={styles.progressTrack}
-                testID={`perps-pro-order-progress-track-${order.key}`}>
-                <View
-                  style={[
-                    isBuy ? styles.buyProgress : styles.sellProgress,
-                    { width: progressWidth },
-                  ]}
-                  testID={`perps-pro-order-progress-fill-${order.key}`}
-                />
-              </View>
-            </View>
-          ) : null}
-          <CancelButton
-            onPress={() => onCancel(order)}
-            pending={cancelPending}
-          />
-        </View>
-      </View>
 
-      <View style={styles.details}>
-        {order.category === 'basic' ? (
-          <>
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>
-                {t('page.perps.pro.openOrders.filled')} /{' '}
-                {t('page.perps.pro.openOrders.amount')} ({amountLabel})
-              </Text>
-              <Text style={styles.detailValue}>
-                {displayAmount(order.filledSize, order.filledQuote)} /{' '}
-                {displayAmount(order.amountBase, order.amountQuote)}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>
-                {t('page.perps.pro.openOrders.price')}
-              </Text>
-              <View style={styles.editableValue}>
-                <Text style={styles.detailValue}>{executionPrice}</Text>
-                <DisabledEdit label={t('page.perps.pro.openOrders.edit')} />
-              </View>
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>
-                {t('page.perps.pro.openOrders.amount')} ({amountLabel})
-              </Text>
-              <Text style={styles.detailValue}>
-                {displayAmount(order.amountBase, order.displayAmountQuote)}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>
-                {t('page.perps.pro.openOrders.price')}
-              </Text>
-              <Text style={styles.detailValue}>{executionPrice}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>
-                {t('page.perps.pro.openOrders.conditions')}
-              </Text>
-              <View style={styles.editableValue}>
-                <Text style={styles.detailValue}>
-                  {order.triggerCondition || '-'}
+        <View style={styles.details}>
+          {order.category === 'basic' ? (
+            <>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.filled')} /{' '}
+                  {t('page.perps.pro.openOrders.amount')} ({amountLabel})
                 </Text>
-                <DisabledEdit label={t('page.perps.pro.openOrders.edit')} />
+                <Text style={styles.detailValue}>
+                  {displayAmount(order.filledSize, order.filledQuote)} /{' '}
+                  {displayAmount(order.amountBase, order.amountQuote)}
+                </Text>
               </View>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>
-                {t('page.perps.pro.openOrders.reduceOnly')}
-              </Text>
-              <Text style={styles.detailValue}>
-                {order.reduceOnly
-                  ? t('page.perps.pro.openOrders.yes')
-                  : t('page.perps.pro.openOrders.no')}
-              </Text>
-            </View>
-          </>
-        )}
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.price')}
+                </Text>
+                <View style={styles.editableValue}>
+                  <Text style={styles.detailValue}>{executionPrice}</Text>
+                  <EditButton
+                    enabled={editEnabled && !!order.editKind}
+                    label={t('page.perps.pro.openOrders.edit')}
+                    onPress={() => onEdit(order)}
+                  />
+                </View>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.amount')} ({amountLabel})
+                </Text>
+                <Text style={styles.detailValue}>
+                  {displayAmount(order.amountBase, order.displayAmountQuote)}
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.price')}
+                </Text>
+                <Text style={styles.detailValue}>{executionPrice}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.conditions')}
+                </Text>
+                <View style={styles.editableValue}>
+                  <Text style={styles.detailValue}>
+                    {order.triggerCondition || '-'}
+                  </Text>
+                  <EditButton
+                    enabled={editEnabled && !!order.editKind}
+                    label={t('page.perps.pro.openOrders.edit')}
+                    onPress={() => onEdit(order)}
+                  />
+                </View>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.reduceOnly')}
+                </Text>
+                <Text style={styles.detailValue}>
+                  {order.reduceOnly
+                    ? t('page.perps.pro.openOrders.yes')
+                    : t('page.perps.pro.openOrders.no')}
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
       </View>
-    </View>
-  );
-});
+    );
+  },
+);
 
 PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
 

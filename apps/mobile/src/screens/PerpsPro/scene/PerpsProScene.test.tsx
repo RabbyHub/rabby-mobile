@@ -12,6 +12,7 @@ const mockRequestCloseAll = jest.fn();
 const mockKlineProps = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
 const mockUsePerpsProPositionTpSl = jest.fn();
+const mockUsePerpsProOpenOrderEdit = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
 let mockTradeHasPermission = true;
@@ -168,6 +169,22 @@ jest.mock('../components/positions/PerpsProCloseAllConfirmationModal', () => ({
 jest.mock('../components/open-orders/PerpsProCancelConfirmationModal', () => ({
   PerpsProCancelConfirmationModal: () => null,
 }));
+
+jest.mock('../components/open-orders/PerpsProBasicOrderEditSheet', () => ({
+  PerpsProBasicOrderEditSheet: () => null,
+}));
+
+jest.mock(
+  '../components/open-orders/PerpsProConditionalOrderEditSheet',
+  () => ({
+    PerpsProConditionalOrderEditSheet: () => null,
+  }),
+);
+
+jest.mock(
+  '../components/open-orders/PerpsProOpenOrderEditConfirmationSheet',
+  () => ({ PerpsProOpenOrderEditConfirmationSheet: () => null }),
+);
 
 jest.mock('../components/open-orders/PerpsProOpenOrderCard', () => {
   const ReactModule = require('react');
@@ -365,6 +382,10 @@ jest.mock('./usePerpsProCancelOrders', () => ({
   }),
 }));
 
+jest.mock('./usePerpsProOpenOrderEdit', () => ({
+  usePerpsProOpenOrderEdit: mockUsePerpsProOpenOrderEdit,
+}));
+
 jest.mock('./usePerpsProCloseAll', () => ({
   usePerpsProCloseAll: () => ({
     confirmation: null,
@@ -480,6 +501,19 @@ describe('PerpsProScene market loading states', () => {
       pending: false,
       requestReview: jest.fn(),
       review: null,
+    });
+    mockUsePerpsProOpenOrderEdit.mockReturnValue({
+      close: jest.fn(),
+      closeReview: jest.fn(),
+      confirm: jest.fn(),
+      editor: null,
+      open: jest.fn(),
+      pending: false,
+      requestBasicReview: jest.fn(),
+      requestConditionalReview: jest.fn(),
+      review: null,
+      skipConfirmation: false,
+      toggleSkipConfirmation: jest.fn(),
     });
   });
 

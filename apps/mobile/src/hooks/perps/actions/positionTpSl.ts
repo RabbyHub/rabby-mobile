@@ -19,6 +19,12 @@ export type PerpsPositionTpSlCommandScope = 'partial' | 'position';
 export type PerpsPositionTpSlCommandKind = 'takeProfit' | 'stopLoss';
 
 export interface PerpsPositionTpSlCommandLeg {
+  expectedOrder?: {
+    execution: 'market';
+    remainingSize: string;
+    side: OpenOrder['side'];
+    triggerPrice: string;
+  };
   kind: PerpsPositionTpSlCommandKind;
   replaceOid: number | null;
   size: string | null;
@@ -137,6 +143,12 @@ export const buildPerpsPositionTpSlCommand = ({
   szDecimals,
 }: Omit<PerpsPositionTpSlCommand, 'legs' | 'type'> & {
   legs: readonly {
+    expectedOrder?: {
+      execution: 'market';
+      remainingSize: string;
+      side: OpenOrder['side'];
+      triggerPrice: string;
+    };
     kind: PerpsPositionTpSlCommandKind;
     replaceOid?: number | null;
     size?: string | null;
@@ -192,7 +204,38 @@ export const buildPerpsPositionTpSlCommand = ({
     ) {
       throw new Error('Invalid partial Position TP/SL amount');
     }
+    const expectedOrder = leg.expectedOrder
+      ? {
+          execution: 'market' as const,
+          remainingSize: normalizeSize(
+            leg.expectedOrder.remainingSize,
+            szDecimals,
+          ),
+          side: leg.expectedOrder.side,
+          triggerPrice: normalizePrice(
+            leg.expectedOrder.triggerPrice,
+            pxDecimals,
+          ),
+        }
+      : undefined;
+    if (
+      expectedOrder &&
+      (!expectedOrder.remainingSize ||
+        !expectedOrder.triggerPrice ||
+        (expectedOrder.side !== 'A' && expectedOrder.side !== 'B'))
+    ) {
+      throw new Error('Invalid expected Position TP/SL order');
+    }
     return Object.freeze({
+      ...(expectedOrder
+        ? {
+            expectedOrder: Object.freeze({
+              ...expectedOrder,
+              remainingSize: expectedOrder.remainingSize!,
+              triggerPrice: expectedOrder.triggerPrice!,
+            }),
+          }
+        : {}),
       kind: leg.kind,
       replaceOid,
       size,
@@ -309,16 +352,29 @@ const isExpectedReplaceOrder = (
   if (leg.replaceOid === null) {
     return true;
   }
-  const order = orders.find(item => item.oid === leg.replaceOid);
-  return (
+  const order = orders.find(
+    item => item.coin === command.coin && item.oid === leg.replaceOid,
+  );
+  const matchesBase =
     !!order &&
-    order.coin === command.coin &&
     order.reduceOnly &&
     order.isTrigger &&
     resolveOpenOrderKind(order) === leg.kind &&
     (command.scope === 'position'
       ? order.isPositionTpsl
-      : !order.isPositionTpsl && new BigNumber(order.sz).gt(0))
+      : !order.isPositionTpsl && new BigNumber(order.sz).gt(0));
+  if (!matchesBase || !order || !leg.expectedOrder) {
+    return matchesBase;
+  }
+  return (
+    order.side === leg.expectedOrder.side &&
+    String(order.orderType || '')
+      .toLowerCase()
+      .endsWith('market') &&
+    new BigNumber(order.sz || Number.NaN).eq(leg.expectedOrder.remainingSize) &&
+    new BigNumber(order.triggerPx || Number.NaN).eq(
+      leg.expectedOrder.triggerPrice,
+    )
   );
 };
 

@@ -46,6 +46,7 @@ export type PerpsViewMode = 'simple' | 'pro';
 export type PerpsProInfoTab = 'account' | 'positions' | 'openOrders';
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
 export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
+export type PerpsProOpenOrderEditCategory = 'basic' | 'conditional';
 
 export type PerpsProPreferences = {
   version: number;
@@ -53,13 +54,17 @@ export type PerpsProPreferences = {
   activeInfoTab: PerpsProInfoTab;
   skipLimitCloseDoubleConfirmation: boolean;
   skipPositionTpSlDoubleConfirmation: boolean;
+  skipOpenOrderEditConfirmationByCategory: Record<
+    PerpsProOpenOrderEditCategory,
+    boolean
+  >;
   tradeAmountUnit: PerpsProTradeAmountUnit;
   tradeOrderType: PerpsProTradeOrderType;
   skipTradeConfirmationByOrderType: Record<PerpsProTradeOrderType, boolean>;
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 7;
+const PERPS_PRO_PREFERENCES_VERSION = 8;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
 const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   version: PERPS_PRO_PREFERENCES_VERSION,
@@ -67,6 +72,10 @@ const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   activeInfoTab: 'account',
   skipLimitCloseDoubleConfirmation: false,
   skipPositionTpSlDoubleConfirmation: false,
+  skipOpenOrderEditConfirmationByCategory: {
+    basic: false,
+    conditional: false,
+  },
   tradeAmountUnit: 'quote',
   tradeOrderType: 'market',
   skipTradeConfirmationByOrderType: {
@@ -118,6 +127,20 @@ const normalizeSkipLimitCloseDoubleConfirmation = (value: unknown) =>
 const normalizeSkipPositionTpSlDoubleConfirmation = (value: unknown) =>
   hasReadableProPreferences(value) &&
   value.skipPositionTpSlDoubleConfirmation === true;
+
+const normalizeSkipOpenOrderEditConfirmationByCategory = (
+  value: unknown,
+): Record<PerpsProOpenOrderEditCategory, boolean> => {
+  const source =
+    hasReadableProPreferences(value) &&
+    isRecord(value.skipOpenOrderEditConfirmationByCategory)
+      ? value.skipOpenOrderEditConfirmationByCategory
+      : {};
+  return {
+    basic: source.basic === true,
+    conditional: source.conditional === true,
+  };
+};
 
 const normalizePerpsProTradeAmountUnit = (
   value: unknown,
@@ -176,6 +199,8 @@ const getWritableProPreferences = (
       normalizeSkipLimitCloseDoubleConfirmation(value),
     skipPositionTpSlDoubleConfirmation:
       normalizeSkipPositionTpSlDoubleConfirmation(value),
+    skipOpenOrderEditConfirmationByCategory:
+      normalizeSkipOpenOrderEditConfirmationByCategory(value),
     tradeAmountUnit: normalizePerpsProTradeAmountUnit(value),
     tradeOrderType: normalizePerpsProTradeOrderType(value),
     skipTradeConfirmationByOrderType:
@@ -611,6 +636,33 @@ export class PerpsService extends StoreServiceBase<
       draft.proPreferences = {
         ...getWritableProPreferences(currentPreferences),
         skipPositionTpSlDoubleConfirmation: value === true,
+      };
+    });
+  };
+
+  getSkipPerpsProOpenOrderEditConfirmation = async (
+    category: PerpsProOpenOrderEditCategory,
+  ) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipOpenOrderEditConfirmationByCategory(
+      this.store.proPreferences,
+    )[category];
+  };
+
+  setSkipPerpsProOpenOrderEditConfirmation = async (
+    category: PerpsProOpenOrderEditCategory,
+    value: boolean,
+  ) => {
+    const current = getWritableProPreferences(this.store.proPreferences);
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...current,
+        skipOpenOrderEditConfirmationByCategory: {
+          ...normalizeSkipOpenOrderEditConfirmationByCategory(current),
+          [category]: value === true,
+        },
       };
     });
   };
