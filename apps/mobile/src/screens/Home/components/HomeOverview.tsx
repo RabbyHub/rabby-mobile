@@ -1246,6 +1246,13 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
+          import('@/startup/deferredTasks/perpsProAffinityWarmup')
+            .then(({ startPerpsProHomeNavigationIntent }) =>
+              startPerpsProHomeNavigationIntent(),
+            )
+            .catch(error => {
+              console.error('[perpsProHomeIntent] start failed', error);
+            });
           apisPerps.setHasShownPerpsGuidePopup(true);
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,

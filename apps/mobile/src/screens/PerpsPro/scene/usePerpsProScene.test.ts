@@ -6,6 +6,9 @@ const mockPrefetchBaseline = jest.fn();
 const mockReadAccountLeverage = jest.fn();
 const mockReadBaseline = jest.fn();
 const mockSetSessionMarket = jest.fn();
+const mockCancelRealtimeIntent = jest.fn();
+const mockPrewarmRealtimeIntent = jest.fn(() => mockCancelRealtimeIntent);
+let mockSelectedTickOption: object | null = null;
 
 const createMarketData = (name: string, maxLeverage: number): MarketData => ({
   dayBaseVlm: '100',
@@ -80,11 +83,16 @@ jest.mock('./perpsProZeroAddressLeverageBaseline', () => ({
     mockReadBaseline(...args),
 }));
 
+jest.mock('./perpsProEntryIntent', () => ({
+  prewarmPerpsProRealtimeIntent: (...args: unknown[]) =>
+    mockPrewarmRealtimeIntent(...args),
+}));
+
 jest.mock('./usePerpsBookPrecision', () => ({
   usePerpsBookPrecision: () => ({
-    precision: null,
+    precision: mockSelectedTickOption ? { mantissa: null, nSigFigs: 5 } : null,
     selectTickOption: jest.fn(),
-    selectedTickOption: null,
+    selectedTickOption: mockSelectedTickOption,
   }),
 }));
 
@@ -114,11 +122,16 @@ describe('usePerpsProScene prepared market selection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPerpsState.currentPerpsAccount = null;
+    mockSelectedTickOption = null;
     mockReadAccountLeverage.mockReturnValue(null);
     mockReadBaseline.mockReturnValue(null);
     mockPrepareSources.mockResolvedValue(
       preparedSources({ type: 'cross', value: 20 }),
     );
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('uses a prefetched initial baseline in the first visible market frame', () => {
@@ -241,6 +254,10 @@ describe('usePerpsProScene prepared market selection', () => {
       type: 'cross',
       value: 20,
     });
+    expect(mockPrewarmRealtimeIntent).toHaveBeenCalledWith(
+      expect.objectContaining({ canonicalCoin: 'SUI' }),
+    );
+    expect(mockCancelRealtimeIntent).not.toHaveBeenCalled();
 
     await act(async () => {
       target.resolve(preparedSources({ type: 'cross', value: 10 }));
@@ -251,6 +268,7 @@ describe('usePerpsProScene prepared market selection', () => {
       type: 'cross',
       value: 10,
     });
+    expect(mockCancelRealtimeIntent).not.toHaveBeenCalled();
   });
 
   it('rejects a late selection when a newer market wins', async () => {
@@ -270,6 +288,7 @@ describe('usePerpsProScene prepared market selection', () => {
     const secondSelection = hook.result.current.selectMarket(
       buildPerpsProMarket(eth),
     );
+    expect(mockCancelRealtimeIntent).toHaveBeenCalledTimes(1);
     await act(async () => {
       first.resolve(preparedSources({ type: 'cross', value: 10 }));
       await expect(firstSelection).resolves.toBe(false);
@@ -313,11 +332,49 @@ describe('usePerpsProScene prepared market selection', () => {
     );
 
     act(() => hook.result.current.cancelPendingMarketSelection());
+    expect(mockCancelRealtimeIntent).toHaveBeenCalledTimes(1);
     await act(async () => {
       target.resolve(preparedSources({ type: 'cross', value: 10 }));
       await expect(selection).resolves.toBe(false);
     });
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+  });
+
+  it('cancels realtime intent when market preparation rejects', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const hook = renderHook(() => usePerpsProScene());
+    await waitFor(() =>
+      expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
+    );
+    mockPrepareSources.mockRejectedValueOnce(new Error('network failed'));
+
+    await expect(
+      hook.result.current.selectMarket(buildPerpsProMarket(sui)),
+    ).resolves.toBe(false);
+
+    expect(mockPrewarmRealtimeIntent).toHaveBeenCalledTimes(1);
+    expect(mockCancelRealtimeIntent).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+  });
+
+  it('continues the atomic market commit when speculative realtime prewarm throws', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockPrewarmRealtimeIntent.mockImplementationOnce(() => {
+      throw new Error('subscription unavailable');
+    });
+    const hook = renderHook(() => usePerpsProScene());
+    await waitFor(() =>
+      expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
+    );
+
+    await expect(
+      hook.result.current.selectMarket(buildPerpsProMarket(sui)),
+    ).resolves.toBe(true);
+
+    expect(mockPrepareSources).toHaveBeenCalledWith('SUI', undefined);
+    await waitFor(() =>
+      expect(hook.result.current.currentMarket?.canonicalCoin).toBe('SUI'),
+    );
   });
 
   it('freezes a committed fallback for the current market scope', async () => {
@@ -347,5 +404,6 @@ describe('usePerpsProScene prepared market selection', () => {
     );
     act(() => hook.result.current.prefetchMarket('SUI'));
     expect(mockPrefetchBaseline).toHaveBeenCalledWith('SUI');
+    expect(mockPrewarmRealtimeIntent).not.toHaveBeenCalled();
   });
 });

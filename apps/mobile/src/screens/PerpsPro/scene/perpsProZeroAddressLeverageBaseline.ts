@@ -31,6 +31,26 @@ export type PerpsProPreparedLeverageSources = {
   zeroAddressLeverageBaseline: PerpsProLeverageConfiguration | null;
 };
 
+/**
+ * Seeds the shared Active Asset cache once without the route-entry retry loop.
+ * This is suitable for post-Home idle work, where a failed speculative request
+ * must not fan out or become a readiness owner.
+ */
+export const prefetchPerpsProLeverageSources = async (
+  coin: string,
+  address?: string | null,
+) => {
+  if (!coin) {
+    return;
+  }
+  await Promise.all([
+    address
+      ? fetchActiveAssetDataWithCache(coin, address)
+      : Promise.resolve(null),
+    fetchActiveAssetDataWithCache(coin, DELETE_AGENT_EMPTY_ADDRESS),
+  ]);
+};
+
 export const readPerpsProAccountLeverageConfiguration = (
   coin: string,
   address: string,

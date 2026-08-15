@@ -10,6 +10,8 @@ const mockRoute = {
 };
 let mockIsFocused = true;
 let mockRuntimeStatus = 'ready';
+const mockCancelRealtimeIntent = jest.fn();
+const mockPrewarmRealtimeIntent = jest.fn(() => mockCancelRealtimeIntent);
 
 jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => mockIsFocused,
@@ -78,6 +80,11 @@ jest.mock('@/hooks/perps/runtime/usePerpsRuntimeStatus', () => ({
   }),
 }));
 
+jest.mock('./perpsProEntryIntent', () => ({
+  prewarmPerpsProRealtimeIntent: (...args: unknown[]) =>
+    mockPrewarmRealtimeIntent(...args),
+}));
+
 const { initialState, perpsStore } =
   require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
 const { buildPerpsProMarket } =
@@ -129,6 +136,7 @@ const resetStore = () => {
 
 describe('usePerpsProScene component', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
       value: 'active',
@@ -198,6 +206,10 @@ describe('usePerpsProScene component', () => {
       ).toBe(true);
     });
 
+    expect(mockPrewarmRealtimeIntent).toHaveBeenCalledWith(
+      expect.objectContaining({ canonicalCoin: 'BTC' }),
+    );
+    expect(mockCancelRealtimeIntent).not.toHaveBeenCalled();
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
     expect(getPerpsProMarketSession().marketKey).toBe('hyperliquid::BTC');
 
