@@ -140,6 +140,7 @@ export const usePerpsProTrade = ({
   executionActive,
   leveragePending,
   market,
+  tradeConfigurationReady = true,
   zeroAddressLeverageBaseline = null,
   refreshActiveAssetData,
   updateLeverageRequest,
@@ -153,6 +154,7 @@ export const usePerpsProTrade = ({
   executionActive: boolean;
   leveragePending: boolean;
   market: PerpsProMarket | null;
+  tradeConfigurationReady?: boolean;
   zeroAddressLeverageBaseline?: PerpsProLeverageConfiguration | null;
   refreshActiveAssetData: () => Promise<unknown>;
   updateLeverageRequest: (
@@ -670,7 +672,12 @@ export const usePerpsProTrade = ({
   );
   const setMarginMode = useCallback(
     (next: 'cross' | 'isolated') => {
-      if (next === marginMode) return;
+      if (!tradeConfigurationReady) {
+        return;
+      }
+      if (next === marginMode) {
+        return;
+      }
       if (marginModeDisabledReason) {
         showToast(
           t(
@@ -695,6 +702,7 @@ export const usePerpsProTrade = ({
       marginMode,
       marginModeDisabledReason,
       t,
+      tradeConfigurationReady,
     ],
   );
   const confirmLeverage = useCallback(
@@ -703,9 +711,11 @@ export const usePerpsProTrade = ({
         !accountFacts.account ||
         !accountIdentity ||
         !market ||
-        leveragePending
-      )
+        leveragePending ||
+        !tradeConfigurationReady
+      ) {
         return false;
+      }
       const max = Math.max(1, market.marketData.maxLeverage);
       const normalized = Math.min(max, Math.max(1, Math.round(next)));
       const success = await updateLeverageRequest({
@@ -740,6 +750,7 @@ export const usePerpsProTrade = ({
       leverageConfigurationScopeKey,
       marginMode,
       market,
+      tradeConfigurationReady,
       updateLeverageRequest,
     ],
   );
@@ -1338,11 +1349,13 @@ export const usePerpsProTrade = ({
     async (command: PerpsProOpenOrderCommand) => {
       if (
         pendingRef.current ||
+        !tradeConfigurationReady ||
         !accountFacts.account ||
         !accountIdentity ||
         !market
-      )
+      ) {
         return;
+      }
       if (!perpsStore.getState().hasPermission) {
         showToast(t('page.perps.regionNotSupport'), 'error');
         setReview(null);
@@ -1501,6 +1514,7 @@ export const usePerpsProTrade = ({
       refreshActiveAssetData,
       resolveLeverageExecutionReadiness,
       t,
+      tradeConfigurationReady,
     ],
   );
 
@@ -1550,7 +1564,9 @@ export const usePerpsProTrade = ({
 
   const executeAttachedReview = useCallback(
     async (command: PerpsProAttachedTpSlCommand) => {
-      if (pendingRef.current) return;
+      if (pendingRef.current || !tradeConfigurationReady) {
+        return;
+      }
       if (!perpsStore.getState().hasPermission) {
         showToast(t('page.perps.regionNotSupport'), 'error');
         setReview(null);
@@ -1648,7 +1664,13 @@ export const usePerpsProTrade = ({
         setPending(false);
       }
     },
-    [ensureAttachedLeverage, executeAttachedTpSl, patchForm, t],
+    [
+      ensureAttachedLeverage,
+      executeAttachedTpSl,
+      patchForm,
+      t,
+      tradeConfigurationReady,
+    ],
   );
 
   const submitReview = useCallback(
@@ -1662,6 +1684,9 @@ export const usePerpsProTrade = ({
   const requestReview = useCallback(
     async (side: PerpsProTradeSide) => {
       try {
+        if (!tradeConfigurationReady) {
+          return;
+        }
         if (!perpsStore.getState().hasPermission) {
           showToast(t('page.perps.regionNotSupport'), 'error');
           return;
@@ -1688,11 +1713,13 @@ export const usePerpsProTrade = ({
         );
       }
     },
-    [buildReview, submitReview, t],
+    [buildReview, submitReview, t, tradeConfigurationReady],
   );
 
   const confirmReview = useCallback(async () => {
-    if (!review) return;
+    if (!review || !tradeConfigurationReady) {
+      return;
+    }
     if (!perpsStore.getState().hasPermission) {
       showToast(t('page.perps.regionNotSupport'), 'error');
       setReview(null);
@@ -1709,7 +1736,7 @@ export const usePerpsProTrade = ({
         });
     }
     await submitReview(review);
-  }, [review, skipConfirmation, submitReview, t]);
+  }, [review, skipConfirmation, submitReview, t, tradeConfigurationReady]);
 
   const availableQuote = scopedActiveAssetData
     ? BigNumber.min(
@@ -1859,6 +1886,7 @@ export const usePerpsProTrade = ({
     skipConfirmation,
     tpSl,
     toggleAmountUnit,
+    tradeConfigurationReady,
   };
 };
 

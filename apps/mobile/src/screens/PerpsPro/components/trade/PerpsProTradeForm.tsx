@@ -3,7 +3,7 @@ import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.sv
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -47,9 +47,10 @@ const tifLabels: Record<PerpsProTradeTif, string> = {
 };
 
 export const PerpsProTradeForm: React.FC<{
+  configurationReady?: boolean;
   controller: PerpsProTradeController;
   onDeposit: () => void;
-}> = React.memo(({ controller, onDeposit }) => {
+}> = React.memo(({ configurationReady = true, controller, onDeposit }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -59,24 +60,34 @@ export const PerpsProTradeForm: React.FC<{
       dismissKeyboardThen(() => setSheet(nextSheet)),
     [dismissKeyboardThen],
   );
+  useEffect(() => {
+    if (!configurationReady) {
+      setSheet(null);
+    }
+  }, [configurationReady]);
   const { form, market } = controller;
   const quoteAsset = market?.quoteAsset ?? '-';
   const amountLabel = `${t('page.perps.pro.trade.amount')}(${
     controller.amountUnitLabel
   })`;
   const orderTypeLabel = t(`page.perps.pro.trade.${form.orderType}`);
-  const marginLabel =
-    controller.marginMode === 'cross'
-      ? t('page.perps.pro.positions.cross')
-      : t('page.perps.pro.trade.isolated');
+  const marginLabel = !configurationReady
+    ? '--'
+    : controller.marginMode === 'cross'
+    ? t('page.perps.pro.positions.cross')
+    : t('page.perps.pro.trade.isolated');
   return (
     <View
-      pointerEvents={controller.pending ? 'none' : 'auto'}
+      accessibilityState={{ disabled: !configurationReady }}
+      pointerEvents={
+        controller.pending || !configurationReady ? 'none' : 'auto'
+      }
       style={styles.container}
       testID="perps-pro-trade-form">
       <View style={styles.inputGroup}>
         <View style={styles.doubleRow}>
           <PerpsProTradeSelect
+            disabled={!configurationReady}
             label={marginLabel}
             onPress={() => {
               dismissKeyboardThen(() => {
@@ -92,19 +103,21 @@ export const PerpsProTradeForm: React.FC<{
             showCaret={false}
             style={styles.flexItem}
             textStyle={
-              controller.marginMode === 'isolated'
+              configurationReady && controller.marginMode === 'isolated'
                 ? styles.isolatedSelectText
                 : undefined
             }
           />
           <PerpsProTradeSelect
-            label={`${controller.leverage}x`}
+            disabled={!configurationReady}
+            label={configurationReady ? `${controller.leverage}x` : '--'}
             onPress={() => openSheet('leverage')}
             showCaret={false}
             style={styles.flexItem}
           />
         </View>
         <PerpsProTradeSelect
+          disabled={!configurationReady}
           label={orderTypeLabel}
           onPress={() => openSheet('orderType')}
         />
@@ -117,6 +130,7 @@ export const PerpsProTradeForm: React.FC<{
             />
           ) : (
             <PerpsProTradePriceField
+              editable={configurationReady}
               label={`${t('page.perps.pro.trade.price')}(${quoteAsset})`}
               maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('limitPrice', value)}
@@ -136,13 +150,16 @@ export const PerpsProTradeForm: React.FC<{
         {form.orderType === 'conditional' ? (
           <>
             <PerpsProTradePriceField
+              editable={configurationReady}
               label={`${t('page.perps.pro.trade.triggerPrice')}(${quoteAsset})`}
               maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('triggerPrice', value)}
               value={form.triggerPrice}
             />
             <PerpsProTradePriceField
-              editable={form.conditionalExecution === 'limit'}
+              editable={
+                configurationReady && form.conditionalExecution === 'limit'
+              }
               label={
                 form.conditionalExecution === 'limit'
                   ? `${t('page.perps.pro.trade.price')}(${quoteAsset})`
@@ -196,17 +213,20 @@ export const PerpsProTradeForm: React.FC<{
           </Text>
         ) : null}
         <PerpsProTradeAmountSlider
-          onChange={controller.setPercentage}
+          onChange={configurationReady ? controller.setPercentage : undefined}
           value={controller.percentage}
         />
       </View>
       <View style={styles.optionsGroup}>
         <PerpsProTradeSummaryRow
           label={t('page.perps.pro.trade.available')}
-          onPressValue={() =>
-            dismissKeyboardThen(() => {
-              onDeposit();
-            })
+          onPressValue={
+            configurationReady
+              ? () =>
+                  dismissKeyboardThen(() => {
+                    onDeposit();
+                  })
+              : undefined
           }
           trailing={
             <RcIconAvailableAdd
@@ -215,10 +235,14 @@ export const PerpsProTradeForm: React.FC<{
               width={16}
             />
           }
-          value={`${formatPerpsProDecimal(
-            controller.availableQuote,
-            2,
-          )} ${quoteAsset}`}
+          value={
+            configurationReady
+              ? `${formatPerpsProDecimal(
+                  controller.availableQuote,
+                  2,
+                )} ${quoteAsset}`
+              : `-- ${quoteAsset}`
+          }
           valueTestID="perps-pro-trade-available-deposit"
         />
         {controller.attachedTpSlExecutionEnabled ? (
@@ -232,7 +256,10 @@ export const PerpsProTradeForm: React.FC<{
         <View style={styles.optionRow}>
           <PerpsProTradeCheckbox
             checked={form.reduceOnly}
-            disabled={controller.reduceOnlyAvailability.checkboxDisabled}
+            disabled={
+              !configurationReady ||
+              controller.reduceOnlyAvailability.checkboxDisabled
+            }
             explanationKey="reduceOnly"
             label={t('page.perps.pro.trade.reduceOnly')}
             onPress={() => {
@@ -247,6 +274,7 @@ export const PerpsProTradeForm: React.FC<{
           />
           {form.orderType === 'limit' && !form.bboEnabled ? (
             <Pressable
+              disabled={!configurationReady}
               onPress={() => openSheet('tif')}
               style={styles.tif}
               testID="perps-pro-trade-tif-trigger">
@@ -264,9 +292,16 @@ export const PerpsProTradeForm: React.FC<{
       </View>
       <View style={styles.orderGroups}>
         {(['buy', 'sell'] as const).map(side => {
-          const liquidationPrice =
+          const resolvedLiquidationPrice =
             controller.getEstimatedLiquidationPrice(side);
-          const sliderAmount = controller.getSliderButtonDisplayAmount(side);
+          const liquidationPrice = configurationReady
+            ? resolvedLiquidationPrice
+            : resolvedLiquidationPrice == null
+            ? null
+            : '--';
+          const sliderAmount = configurationReady
+            ? controller.getSliderButtonDisplayAmount(side)
+            : null;
           return (
             <View key={side} style={styles.orderGroup}>
               <View style={styles.orderSummary}>
@@ -287,25 +322,33 @@ export const PerpsProTradeForm: React.FC<{
                 ) : null}
                 <PerpsProTradeSummaryRow
                   label={t('page.perps.pro.trade.max')}
-                  value={`${formatPerpsProDecimal(
-                    controller.getMaxDisplayAmount(side),
-                    form.amountUnit === 'base'
-                      ? market?.marketData.szDecimals
-                      : 2,
-                  )} ${controller.amountUnitLabel}`}
+                  value={
+                    configurationReady
+                      ? `${formatPerpsProDecimal(
+                          controller.getMaxDisplayAmount(side),
+                          form.amountUnit === 'base'
+                            ? market?.marketData.szDecimals
+                            : 2,
+                        )} ${controller.amountUnitLabel}`
+                      : `-- ${controller.amountUnitLabel}`
+                  }
                 />
                 <PerpsProTradeSummaryRow
                   dottedLabel
                   explanationKey="cost"
                   label={t('page.perps.pro.trade.cost')}
-                  value={`${formatPerpsProDecimal(
-                    controller.getCostDisplayAmount(side),
-                    2,
-                  )} ${quoteAsset}`}
+                  value={
+                    configurationReady
+                      ? `${formatPerpsProDecimal(
+                          controller.getCostDisplayAmount(side),
+                          2,
+                        )} ${quoteAsset}`
+                      : `-- ${quoteAsset}`
+                  }
                 />
               </View>
               <PerpsProTradeButton
-                disabled={controller.pending}
+                disabled={controller.pending || !configurationReady}
                 label={t(
                   `page.perps.pro.trade.${
                     side === 'buy' ? 'buyLong' : 'sellShort'
@@ -335,7 +378,7 @@ export const PerpsProTradeForm: React.FC<{
         onClose={() => setSheet(null)}
         onSelect={controller.setOrderType}
         selected={form.orderType}
-        visible={sheet === 'orderType'}
+        visible={configurationReady && sheet === 'orderType'}
       />
       <PerpsProMarginModeSheet
         disabledValues={
@@ -347,13 +390,13 @@ export const PerpsProTradeForm: React.FC<{
         onClose={() => setSheet(null)}
         onSelect={controller.setMarginMode}
         selected={controller.marginMode}
-        visible={sheet === 'margin'}
+        visible={configurationReady && sheet === 'margin'}
       />
       <PerpsProTifSheet
         onClose={() => setSheet(null)}
         onSelect={controller.setTif}
         selected={form.tif}
-        visible={sheet === 'tif'}
+        visible={configurationReady && sheet === 'tif'}
       />
       <PerpsProBboSheet
         onClose={() => setSheet(null)}
@@ -362,7 +405,7 @@ export const PerpsProTradeForm: React.FC<{
         }
         options={bboOptions}
         selected={form.bboStrategy}
-        visible={sheet === 'bbo'}
+        visible={configurationReady && sheet === 'bbo'}
       />
       <PerpsProLeverageSheet
         currentLeverage={controller.leverage}
@@ -374,7 +417,7 @@ export const PerpsProTradeForm: React.FC<{
           }
         }}
         pending={controller.leveragePending}
-        visible={sheet === 'leverage'}
+        visible={configurationReady && sheet === 'leverage'}
       />
     </View>
   );

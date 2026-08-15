@@ -200,6 +200,37 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     mockPerpsState.isUserDataReady = true;
   });
 
+  it('fail-closes configuration changes and order review while the visible market is still preparing', async () => {
+    const updateLeverageRequest = jest.fn(async () => true);
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: false,
+        leveragePending: false,
+        market,
+        tradeConfigurationReady: false,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest,
+      }),
+    );
+
+    act(() => hook.result.current.setMarginMode('cross'));
+    expect(hook.result.current.marginMode).toBe('isolated');
+    await act(async () => {
+      await expect(hook.result.current.confirmLeverage(15)).resolves.toBe(
+        false,
+      );
+      await hook.result.current.requestReview('buy');
+    });
+    expect(updateLeverageRequest).not.toHaveBeenCalled();
+    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+    expect(hook.result.current.review).toBeNull();
+  });
+
   it('keeps Limit prices empty until an explicit current-market selection', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
