@@ -125,7 +125,7 @@ export const PerpsProTradeForm: React.FC<{
           form.bboEnabled ? (
             <PerpsProTradeBboField
               onPressStrategy={() => openSheet('bbo')}
-              onPressToggle={() => controller.patchForm({ bboEnabled: false })}
+              onPressToggle={controller.disableBbo}
               strategyLabel={bboLabels[form.bboStrategy]}
             />
           ) : (
@@ -137,10 +137,7 @@ export const PerpsProTradeForm: React.FC<{
               onPressSuffix={
                 form.attachedTpSl.enabled
                   ? undefined
-                  : () => {
-                      controller.patchForm({ bboEnabled: true, tif: 'Gtc' });
-                      openSheet('bbo');
-                    }
+                  : () => controller.enableBbo('cp1')
               }
               suffix="BBO"
               value={form.limitPrice}
@@ -400,9 +397,7 @@ export const PerpsProTradeForm: React.FC<{
       />
       <PerpsProBboSheet
         onClose={() => setSheet(null)}
-        onSelect={bboStrategy =>
-          controller.patchForm({ bboStrategy, bboEnabled: true, tif: 'Gtc' })
-        }
+        onSelect={controller.enableBbo}
         options={bboOptions}
         selected={form.bboStrategy}
         visible={configurationReady && sheet === 'bbo'}

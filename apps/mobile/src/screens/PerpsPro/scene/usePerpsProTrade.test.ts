@@ -42,6 +42,59 @@ const mockExecuteAttached = jest.fn(async () => ({
   reconciliationErrors: [],
   refreshErrors: [],
 }));
+type MockLatestTradeSnapshot = {
+  error: Error | null;
+  identity: string;
+  receivedAt: number | null;
+  revision: number;
+  status: 'loading' | 'ready';
+  trade: {
+    coin: string;
+    price: string;
+    side: 'buy' | 'sell';
+    size: string;
+    tid: number;
+    time: number;
+  } | null;
+};
+const mockLatestTradeListeners = new Map<
+  string,
+  Set<(snapshot: MockLatestTradeSnapshot) => void>
+>();
+const mockSubscribeToPerpsLatestTrade = jest.fn(
+  (coin: string, listener: (snapshot: MockLatestTradeSnapshot) => void) => {
+    const listeners = mockLatestTradeListeners.get(coin) ?? new Set();
+    listeners.add(listener);
+    mockLatestTradeListeners.set(coin, listeners);
+    listener({
+      error: null,
+      identity: coin,
+      receivedAt: null,
+      revision: 0,
+      status: 'loading',
+      trade: null,
+    });
+    return () => listeners.delete(listener);
+  },
+);
+const emitLatestTrade = (coin: string, price: string, tid = 1) => {
+  const snapshot: MockLatestTradeSnapshot = {
+    error: null,
+    identity: coin,
+    receivedAt: tid,
+    revision: tid,
+    status: 'ready',
+    trade: {
+      coin,
+      price,
+      side: 'buy',
+      size: '1',
+      tid,
+      time: tid,
+    },
+  };
+  mockLatestTradeListeners.get(coin)?.forEach(listener => listener(snapshot));
+};
 
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: { getPerpsSDK: (...args: unknown[]) => mockGetPerpsSdk(...args) },
@@ -74,6 +127,13 @@ jest.mock('@/hooks/perps/actions/updateLeverage', () => ({
 
 jest.mock('@/hooks/perps/showToast', () => ({
   showToast: (...args: unknown[]) => mockShowToast(...args),
+}));
+
+jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
+  subscribeToPerpsLatestTrade: (
+    coin: string,
+    listener: (snapshot: MockLatestTradeSnapshot) => void,
+  ) => mockSubscribeToPerpsLatestTrade(coin, listener),
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => {
@@ -182,6 +242,7 @@ const activeAssetData = {
 describe('usePerpsProTrade attached TP/SL execution integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLatestTradeListeners.clear();
     mockGetSkipConfirmation.mockResolvedValue(false);
     mockPerpsState.currentClearinghouseState.assetPositions.length = 0;
     mockPerpsState.hasPermission = true;
@@ -231,7 +292,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.review).toBeNull();
   });
 
-  it('keeps Limit prices empty until an explicit current-market selection', () => {
+  it('uses the latest trade for a new Limit session and keeps manual price only within that session', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -249,19 +310,59 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     expect(hook.result.current.form.limitPrice).toBe('');
     expect(hook.result.current.form.conditionalLimitPrice).toBe('');
+    act(() => emitLatestTrade('BTC', '100.129', 1));
     act(() => hook.result.current.setOrderType('limit'));
-    expect(hook.result.current.form.limitPrice).toBe('');
+    expect(hook.result.current.form.limitPrice).toBe('100.12');
 
     act(() =>
       hook.result.current.selectManualLimitPrice('101.234', market.marketKey),
     );
     expect(hook.result.current.form.limitPrice).toBe('101.23');
 
-    act(() => hook.result.current.patchForm({ bboEnabled: true }));
+    act(() => hook.result.current.enableBbo('cp1'));
     act(() =>
       hook.result.current.selectManualLimitPrice('99', market.marketKey),
     );
     expect(hook.result.current.form.limitPrice).toBe('101.23');
+
+    act(() => emitLatestTrade('BTC', '102.349', 2));
+    act(() => hook.result.current.disableBbo());
+    expect(hook.result.current.form.limitPrice).toBe('101.23');
+
+    act(() => hook.result.current.setOrderType('market'));
+    act(() => emitLatestTrade('BTC', '103.459', 3));
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.form.limitPrice).toBe('103.45');
+    expect(hook.result.current.form.bboEnabled).toBe(false);
+  });
+
+  it('uses the latest trade when BBO is disabled without a manual Limit price', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => emitLatestTrade('BTC', '100.129', 1));
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.enableBbo('q1'));
+    act(() => emitLatestTrade('BTC', '102.349', 2));
+    act(() => hook.result.current.disableBbo());
+
+    expect(hook.result.current.form).toMatchObject({
+      bboEnabled: false,
+      bboStrategy: 'q1',
+      limitPrice: '102.34',
+    });
   });
 
   it('keeps quote Max available before manual Limit prices are entered', () => {
@@ -356,8 +457,8 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.setOrderType('limit'));
     expect(hook.result.current.form.amount).toBe('25');
     expect(hook.result.current.percentage).toBe(0);
-    expect(hook.result.current.form.bboEnabled).toBe(true);
-    expect(hook.result.current.tpSl.disabled).toBe(true);
+    expect(hook.result.current.form.bboEnabled).toBe(false);
+    expect(hook.result.current.tpSl.disabled).toBe(false);
   });
 
   it('toasts during manual input only after the amount exceeds both side maxima', () => {

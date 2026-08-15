@@ -7,6 +7,10 @@ import {
 } from '@/hooks/perps/actions/updateLeverage';
 import { showToast } from '@/hooks/perps/showToast';
 import {
+  subscribeToPerpsLatestTrade,
+  type PerpsLatestTrade,
+} from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
+import {
   getPerpsRuntimeIdentity,
   getPerpsRuntimeSnapshot,
 } from '@/hooks/perps/runtime/perpsRuntimeState';
@@ -35,7 +39,7 @@ import {
   hasPerpsProAttachedTpSlExecutionCapability,
   type PerpsProAttachedTpSlCommand,
 } from '../actions/openOrderWithAttachedTpSl';
-import type { PerpsProBboPrices } from '../model/bbo';
+import type { PerpsProBboPrices, PerpsProBboStrategy } from '../model/bbo';
 import { resolvePerpsProBboPrice } from '../model/bbo';
 import {
   resolvePerpsProInitialLeverage,
@@ -236,6 +240,9 @@ export const usePerpsProTrade = ({
     createPerpsProTradeOrderTypeAmountDrafts(),
   );
   const amountOverflowToastActiveRef = useRef(false);
+  const latestTradeRef = useRef<PerpsLatestTrade | null>(null);
+  const limitManualPriceRef = useRef<string | null>(null);
+  const shouldAutoFillLimitPriceRef = useRef(form.orderType === 'limit');
   amountSourceRef.current = amountSource;
   percentageRef.current = percentage;
   const formRevisionRef = useRef(0);
@@ -390,7 +397,10 @@ export const usePerpsProTrade = ({
     amountDraftRef.current = createPerpsProTradeAmountDraft();
     amountOverflowToastActiveRef.current = false;
     amountSourceRef.current = 'manual';
+    latestTradeRef.current = null;
+    limitManualPriceRef.current = null;
     percentageRef.current = 0;
+    shouldAutoFillLimitPriceRef.current = formRef.current.orderType === 'limit';
     setAmountSource('manual');
     setPercentageState(0);
     formRevisionRef.current += 1;
@@ -475,12 +485,15 @@ export const usePerpsProTrade = ({
       field: 'conditionalLimitPrice' | 'limitPrice' | 'triggerPrice',
       value: string,
     ) => {
-      patchForm({
-        [field]: sanitizePerpsProDecimalInput(
-          value,
-          market?.marketData.pxDecimals ?? 2,
-        ),
-      });
+      const price = sanitizePerpsProDecimalInput(
+        value,
+        market?.marketData.pxDecimals ?? 2,
+      );
+      if (field === 'limitPrice') {
+        limitManualPriceRef.current = price || null;
+        shouldAutoFillLimitPriceRef.current = false;
+      }
+      patchForm({ [field]: price });
     },
     [market?.marketData.pxDecimals, patchForm],
   );
@@ -498,34 +511,53 @@ export const usePerpsProTrade = ({
     },
     [form.bboEnabled, form.orderType, setPrice],
   );
-  const applyOrderType = useCallback((orderType: PerpsProTradeOrderType) => {
-    const currentForm = formRef.current;
-    if (currentForm.orderType === orderType) return;
+  const applyOrderType = useCallback(
+    (orderType: PerpsProTradeOrderType) => {
+      const currentForm = formRef.current;
+      if (currentForm.orderType === orderType) return;
 
-    amountDraftsByOrderTypeRef.current[currentForm.orderType] = {
-      amountDraft: amountDraftRef.current,
-      amountSource: amountSourceRef.current,
-      percentage: percentageRef.current,
-    };
-    const nextAmount = amountDraftsByOrderTypeRef.current[orderType];
-    const nextForm = {
-      ...currentForm,
-      amount: getPerpsProTradeOrderTypeAmountDisplay({
-        amountUnit: currentForm.amountUnit,
-        draft: nextAmount,
-      }),
-      orderType,
-    };
+      amountDraftsByOrderTypeRef.current[currentForm.orderType] = {
+        amountDraft: amountDraftRef.current,
+        amountSource: amountSourceRef.current,
+        percentage: percentageRef.current,
+      };
+      const nextAmount = amountDraftsByOrderTypeRef.current[orderType];
+      const latestPrice = latestTradeRef.current
+        ? sanitizePerpsProDecimalInput(
+            latestTradeRef.current.price,
+            market?.marketData.pxDecimals ?? 2,
+          )
+        : '';
+      const nextForm = {
+        ...currentForm,
+        amount: getPerpsProTradeOrderTypeAmountDisplay({
+          amountUnit: currentForm.amountUnit,
+          draft: nextAmount,
+        }),
+        ...(orderType === 'limit'
+          ? {
+              bboEnabled: false,
+              limitPrice: latestPrice,
+            }
+          : {}),
+        orderType,
+      };
 
-    amountDraftRef.current = nextAmount.amountDraft;
-    amountSourceRef.current = nextAmount.amountSource;
-    percentageRef.current = nextAmount.percentage;
-    formRef.current = nextForm;
-    formRevisionRef.current += 1;
-    setAmountSource(nextAmount.amountSource);
-    setPercentageState(nextAmount.percentage);
-    setForm(nextForm);
-  }, []);
+      amountDraftRef.current = nextAmount.amountDraft;
+      amountOverflowToastActiveRef.current = false;
+      amountSourceRef.current = nextAmount.amountSource;
+      limitManualPriceRef.current = null;
+      percentageRef.current = nextAmount.percentage;
+      shouldAutoFillLimitPriceRef.current =
+        orderType === 'limit' && !latestPrice;
+      formRef.current = nextForm;
+      formRevisionRef.current += 1;
+      setAmountSource(nextAmount.amountSource);
+      setPercentageState(nextAmount.percentage);
+      setForm(nextForm);
+    },
+    [market?.marketData.pxDecimals],
+  );
   const applyAmountUnit = useCallback((amountUnit: PerpsProTradeAmountUnit) => {
     const currentForm = formRef.current;
     if (currentForm.amountUnit === amountUnit) return;
@@ -561,6 +593,60 @@ export const usePerpsProTrade = ({
     },
     [applyOrderType, preferences],
   );
+
+  useEffect(() => {
+    if (!executionActive || !tradeCoin) {
+      latestTradeRef.current = null;
+      return;
+    }
+    return subscribeToPerpsLatestTrade(tradeCoin, snapshot => {
+      if (snapshot.identity !== tradeCoin || !snapshot.trade) {
+        return;
+      }
+      latestTradeRef.current = snapshot.trade;
+      const currentForm = formRef.current;
+      if (
+        !shouldAutoFillLimitPriceRef.current ||
+        currentForm.orderType !== 'limit' ||
+        currentForm.bboEnabled ||
+        limitManualPriceRef.current
+      ) {
+        return;
+      }
+      const limitPrice = sanitizePerpsProDecimalInput(
+        snapshot.trade.price,
+        market?.marketData.pxDecimals ?? 2,
+      );
+      if (!positive(limitPrice)) {
+        return;
+      }
+      shouldAutoFillLimitPriceRef.current = false;
+      patchForm({ limitPrice });
+    });
+  }, [executionActive, market?.marketData.pxDecimals, patchForm, tradeCoin]);
+
+  const enableBbo = useCallback(
+    (bboStrategy: PerpsProBboStrategy) =>
+      patchForm({
+        bboStrategy,
+        bboEnabled: true,
+        tif: 'Gtc',
+      }),
+    [patchForm],
+  );
+  const disableBbo = useCallback(() => {
+    const currentForm = formRef.current;
+    if (currentForm.orderType !== 'limit') return;
+    const latestPrice = latestTradeRef.current
+      ? sanitizePerpsProDecimalInput(
+          latestTradeRef.current.price,
+          market?.marketData.pxDecimals ?? 2,
+        )
+      : '';
+    const limitPrice = limitManualPriceRef.current ?? latestPrice;
+    shouldAutoFillLimitPriceRef.current = !limitPrice;
+    patchForm({ bboEnabled: false, limitPrice });
+  }, [market?.marketData.pxDecimals, patchForm]);
 
   useEffect(() => {
     if (!preferences.hydrated) return;
@@ -1879,6 +1965,8 @@ export const usePerpsProTrade = ({
     closeReview: () => !pendingRef.current && setReview(null),
     confirmLeverage,
     confirmReview,
+    disableBbo,
+    enableBbo,
     form,
     hasPermission: accountFacts.hasPermission,
     getBboPrice,

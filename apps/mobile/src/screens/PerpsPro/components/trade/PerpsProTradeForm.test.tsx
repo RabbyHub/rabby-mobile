@@ -77,6 +77,7 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => ({
 }));
 
 const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
+const mockBboSheetProps = jest.fn();
 
 jest.mock('../common/usePerpsProDismissKeyboard', () => ({
   usePerpsProDismissKeyboard: () => mockDismissKeyboardThen,
@@ -86,9 +87,19 @@ jest.mock('../positions/PerpsProLeverageSheet', () => ({
   PerpsProLeverageSheet: () => null,
 }));
 
-jest.mock('./PerpsProBboSheet', () => ({
-  PerpsProBboSheet: () => null,
-}));
+jest.mock('./PerpsProBboSheet', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProBboSheet: (props: object) => {
+      mockBboSheetProps(props);
+      return ReactModule.createElement(View, {
+        ...props,
+        testID: 'bbo-sheet',
+      });
+    },
+  };
+});
 
 jest.mock('./PerpsProTifSheet', () => ({
   PerpsProTifSheet: () => null,
@@ -134,6 +145,8 @@ const controller = (
     availableQuote: '1000',
     beginAmountEntry: jest.fn(),
     confirmLeverage: jest.fn(async () => true),
+    disableBbo: jest.fn(),
+    enableBbo: jest.fn(),
     form: { ...createPerpsProTradeFormState(), ...formOverrides },
     getCostDisplayAmount: jest.fn(() => '0'),
     getEstimatedLiquidationPrice: jest.fn(() => null),
@@ -307,6 +320,46 @@ describe('PerpsProTradeForm order matrix', () => {
       ),
     ).toMatchObject({ borderRadius: 8, width: 60 });
     expect(screen.queryByText('price')).toBeNull();
+  });
+
+  it('enables Counterparty 1 without opening BBO until the strategy is pressed', () => {
+    const trade = controller({
+      bboStrategy: 'q5',
+      limitPrice: '63000',
+      orderType: 'limit',
+    });
+    const view = render(
+      <PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-price-suffix-BBO'));
+
+    expect(trade.enableBbo).toHaveBeenCalledTimes(1);
+    expect(trade.enableBbo).toHaveBeenCalledWith('cp1');
+    expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
+    expect(mockBboSheetProps.mock.lastCall?.[0].visible).toBe(false);
+
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          form: { ...trade.form, bboEnabled: true, bboStrategy: 'cp1' },
+        }}
+        onDeposit={jest.fn()}
+      />,
+    );
+    expect(screen.getByText('Counterparty 1')).toBeTruthy();
+    expect(mockBboSheetProps.mock.lastCall?.[0].visible).toBe(false);
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-price-suffix-BBO'));
+    expect(trade.disableBbo).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(screen.getByLabelText('Counterparty 1'));
+    expect(mockDismissKeyboardThen).toHaveBeenCalledTimes(1);
+    expect(mockBboSheetProps.mock.lastCall?.[0].visible).toBe(true);
+
+    act(() => mockBboSheetProps.mock.lastCall?.[0].onSelect('q5'));
+    expect(trade.enableBbo).toHaveBeenLastCalledWith('q5');
   });
 
   it('keeps the Limit Price native input stable behind a 12px overlay', () => {
