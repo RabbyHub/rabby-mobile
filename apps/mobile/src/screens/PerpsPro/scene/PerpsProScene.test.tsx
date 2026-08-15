@@ -6,6 +6,8 @@ const mockUsePerpsProScene = jest.fn();
 const mockUsePerpsProInfoPanel = jest.fn();
 const mockMarketSelectorPresent = jest.fn();
 const mockOrderBookRender = jest.fn();
+const mockOrderBookProps = jest.fn();
+const mockTradeFormProps = jest.fn();
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
@@ -306,8 +308,10 @@ jest.mock('../components/trade/PerpsProTradeForm', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProTradeForm: () =>
-      ReactModule.createElement(View, { testID: 'trade-form' }),
+    PerpsProTradeForm: (props: object) => {
+      mockTradeFormProps(props);
+      return ReactModule.createElement(View, { testID: 'trade-form' });
+    },
   };
 });
 
@@ -319,8 +323,9 @@ jest.mock('./PerpsProRealtimeOrderBook', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProRealtimeOrderBook: () => {
+    PerpsProRealtimeOrderBook: (props: object) => {
       mockOrderBookRender();
+      mockOrderBookProps(props);
       return ReactModule.createElement(View, {
         testID: 'realtime-order-book',
       });
@@ -421,17 +426,20 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   accountLeverageConfiguration: null,
   cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
+  executionActive: false,
   isResolvingMarket: false,
   klineEnabled: false,
   marketDataStatus: 'success',
   precision: null,
   prefetchMarket: jest.fn(),
+  orderBookSubscriptionEnabled: false,
   realtimeEnabled: false,
   retryMarketData: jest.fn(),
   selectMarket: jest.fn(),
   selectTickOption: jest.fn(),
   selectedTickOption: null,
   tickOptions: [],
+  tradeConfigurationReady: false,
   zeroAddressLeverageBaseline: null,
   ...overrides,
 });
@@ -539,6 +547,37 @@ describe('PerpsProScene market loading states', () => {
       'test-account',
       'quote',
     );
+  });
+
+  it('renders the order-book and static trade frame before account trade configuration is ready', () => {
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        orderBookSubscriptionEnabled: true,
+        realtimeEnabled: true,
+        tradeConfigurationReady: false,
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.queryByTestId('scene-skeleton')).toBeNull();
+    expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
+    expect(screen.getByTestId('trade-form')).toBeTruthy();
+    expect(mockOrderBookProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      publicationEnabled: true,
+    });
+    expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
+      configurationReady: false,
+    });
   });
 
   it('keeps the close editor mounted under the confirmation sheet', () => {

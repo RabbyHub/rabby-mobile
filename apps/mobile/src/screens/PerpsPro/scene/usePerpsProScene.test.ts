@@ -1,5 +1,6 @@
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 
 const mockPrepareSources = jest.fn();
 const mockPrefetchBaseline = jest.fn();
@@ -37,7 +38,9 @@ const btc = createMarketData('BTC', 40);
 const sui = createMarketData('SUI', 10);
 const eth = createMarketData('ETH', 25);
 const mockPerpsState = {
+  currentClearinghouseState: null,
   currentPerpsAccount: null as { address: string; type: string } | null,
+  isUserDataReady: false,
   marketData: [btc, sui, eth],
   marketDataMap: { BTC: btc, ETH: eth, SUI: sui },
   marketDataStatus: 'ready' as const,
@@ -122,6 +125,8 @@ describe('usePerpsProScene prepared market selection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPerpsState.currentPerpsAccount = null;
+    mockPerpsState.currentClearinghouseState = null;
+    mockPerpsState.isUserDataReady = false;
     mockSelectedTickOption = null;
     mockReadAccountLeverage.mockReturnValue(null);
     mockReadBaseline.mockReturnValue(null);
@@ -195,8 +200,9 @@ describe('usePerpsProScene prepared market selection', () => {
     mockPerpsState.currentPerpsAccount = secondAccount;
     hook.rerender(undefined);
 
-    expect(hook.result.current.currentMarket).toBeNull();
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
     expect(hook.result.current.accountLeverageConfiguration).toBeNull();
+    expect(hook.result.current.tradeConfigurationReady).toBe(false);
     await waitFor(() =>
       expect(mockPrepareSources).toHaveBeenCalledWith(
         'BTC',
@@ -216,30 +222,35 @@ describe('usePerpsProScene prepared market selection', () => {
       expect(hook.result.current.accountLeverageConfiguration?.value).toBe(7),
     );
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+    expect(hook.result.current.tradeConfigurationReady).toBe(true);
   });
 
-  it('does not expose the initial market before its baseline snapshot resolves', async () => {
+  it('exposes the initial market immediately but keeps trading disabled until its baseline resolves', async () => {
     const initial = deferred<ReturnType<typeof preparedSources>>();
     mockPrepareSources.mockReturnValueOnce(initial.promise);
     const hook = renderHook(() => usePerpsProScene());
 
-    expect(hook.result.current.currentMarket).toBeNull();
-    expect(hook.result.current.isResolvingMarket).toBe(true);
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+    expect(hook.result.current.isResolvingMarket).toBe(false);
+    expect(hook.result.current.tradeConfigurationReady).toBe(false);
 
     act(() => initial.resolve(preparedSources({ type: 'cross', value: 20 })));
     await waitFor(() =>
-      expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
+      expect(hook.result.current.zeroAddressLeverageBaseline).toEqual({
+        type: 'cross',
+        value: 20,
+      }),
     );
-    expect(hook.result.current.zeroAddressLeverageBaseline).toEqual({
-      type: 'cross',
-      value: 20,
-    });
+    expect(hook.result.current.tradeConfigurationReady).toBe(true);
   });
 
   it('keeps the old market visible and commits the new market with one baseline snapshot', async () => {
     const hook = renderHook(() => usePerpsProScene());
     await waitFor(() =>
-      expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
+      expect(hook.result.current.zeroAddressLeverageBaseline).toEqual({
+        type: 'cross',
+        value: 20,
+      }),
     );
 
     const target = deferred<ReturnType<typeof preparedSources>>();
@@ -405,5 +416,33 @@ describe('usePerpsProScene prepared market selection', () => {
     act(() => hook.result.current.prefetchMarket('SUI'));
     expect(mockPrefetchBaseline).toHaveBeenCalledWith('SUI');
     expect(mockPrewarmRealtimeIntent).not.toHaveBeenCalled();
+  });
+
+  it('keeps the logical order-book subscription across AppState background while pausing publication', async () => {
+    let onAppStateChange: ((state: AppStateStatus) => void) | undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((event, cb) => {
+      if (event === 'change') {
+        onAppStateChange = cb;
+      }
+      return { remove: jest.fn() } as never;
+    });
+    Object.defineProperty(AppState, 'currentState', {
+      configurable: true,
+      value: 'active',
+    });
+    mockSelectedTickOption = {};
+    mockReadBaseline.mockReturnValue({ type: 'cross', value: 20 });
+    const hook = renderHook(() => usePerpsProScene());
+
+    expect(hook.result.current.orderBookSubscriptionEnabled).toBe(true);
+    expect(hook.result.current.realtimeEnabled).toBe(true);
+
+    act(() => onAppStateChange?.('background'));
+    expect(hook.result.current.orderBookSubscriptionEnabled).toBe(true);
+    expect(hook.result.current.realtimeEnabled).toBe(false);
+
+    act(() => onAppStateChange?.('active'));
+    expect(hook.result.current.orderBookSubscriptionEnabled).toBe(true);
+    expect(hook.result.current.realtimeEnabled).toBe(true);
   });
 });

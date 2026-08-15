@@ -333,12 +333,27 @@ export const usePerpsProScene = () => {
     return () => subscription.remove();
   }, []);
 
-  const catalogueMarket = useMemo(
+  const preparedCatalogueMarket = useMemo(
     () =>
       catalogue.find(
         item => item.marketKey === effectiveMarketSelection?.marketKey,
       ) ?? null,
     [catalogue, effectiveMarketSelection?.marketKey],
+  );
+  const catalogueMarket = useMemo(
+    () =>
+      preparedCatalogueMarket ??
+      resolveInitialPerpsProMarket({
+        markets: catalogue,
+        navigationMarket: navigationMarketConsumedRef.current
+          ? undefined
+          : navigationMarketRef.current,
+        sessionMarketKey:
+          pendingMarketSelectionRef.current?.marketKey ??
+          marketSelectionRef.current?.marketKey ??
+          getPerpsProMarketSession().marketKey,
+      }),
+    [catalogue, preparedCatalogueMarket],
   );
   const isResolvingMarket = catalogue.length > 0 && catalogueMarket == null;
   const canonicalCoin = catalogueMarket?.canonicalCoin ?? '';
@@ -350,6 +365,23 @@ export const usePerpsProScene = () => {
       liveMarketData ? buildPerpsProMarket(liveMarketData) : catalogueMarket,
     [catalogueMarket, liveMarketData],
   );
+  const hasAuthoritativeCurrentPosition = perpsStore(state => {
+    if (!canonicalCoin || !state.isUserDataReady) {
+      return false;
+    }
+    const position = state.currentClearinghouseState?.assetPositions.find(
+      item => item.position.coin === canonicalCoin,
+    )?.position;
+    const size = Number(position?.szi ?? 0);
+    return Number.isFinite(size) && Math.abs(size) > 0;
+  });
+  const hasPreparedTradeConfiguration =
+    !!effectiveMarketSelection &&
+    effectiveMarketSelection.accountIdentity === accountIdentity &&
+    effectiveMarketSelection.marketKey === currentMarket?.marketKey;
+  const tradeConfigurationReady =
+    !!currentMarket &&
+    (hasAuthoritativeCurrentPosition || hasPreparedTradeConfiguration);
 
   const markPrice = Number(currentMarket?.marketData.markPx);
   const markMagnitude =
@@ -398,7 +430,7 @@ export const usePerpsProScene = () => {
         : null,
     cancelPendingMarketSelection,
     currentMarket,
-    executionActive: klineEnabled,
+    executionActive: klineEnabled && tradeConfigurationReady,
     isResolvingMarket,
     klineEnabled,
     marketDataStatus,
@@ -411,6 +443,7 @@ export const usePerpsProScene = () => {
     selectTickOption,
     selectedTickOption,
     tickOptions,
+    tradeConfigurationReady,
     zeroAddressLeverageBaseline:
       effectiveMarketSelection &&
       currentMarket?.marketKey === effectiveMarketSelection.marketKey

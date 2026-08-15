@@ -151,7 +151,7 @@ export const PerpsProScene: React.FC<{
   });
   const bboBook = usePerpsProBboBook({
     coin: scene.currentMarket?.canonicalCoin ?? '',
-    enabled: scene.realtimeEnabled,
+    enabled: scene.realtimeEnabled && scene.tradeConfigurationReady,
   });
   const trade = usePerpsProTrade({
     accountLeverageConfiguration: scene.accountLeverageConfiguration,
@@ -163,6 +163,7 @@ export const PerpsProScene: React.FC<{
     executionActive: scene.executionActive && !isModeSwitching,
     leveragePending: leverageUpdate.pending,
     market: scene.currentMarket,
+    tradeConfigurationReady: scene.tradeConfigurationReady,
     zeroAddressLeverageBaseline: scene.zeroAddressLeverageBaseline,
     refreshActiveAssetData: activeAsset.refreshActiveAssetData,
     updateLeverageRequest: leverageUpdate.update,
@@ -382,6 +383,7 @@ export const PerpsProScene: React.FC<{
                       market={scene.currentMarket}
                       onSelectTickOption={scene.selectTickOption}
                       onSelectPrice={
+                        scene.tradeConfigurationReady &&
                         trade.form.orderType === 'limit' &&
                         !trade.form.bboEnabled
                           ? price =>
@@ -401,6 +403,7 @@ export const PerpsProScene: React.FC<{
                     onLayout={updateMainColumnHeight}
                     style={tradeColumnStyle}>
                     <PerpsProTradeForm
+                      configurationReady={scene.tradeConfigurationReady}
                       controller={trade}
                       onDeposit={openDeposit}
                     />

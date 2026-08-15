@@ -188,6 +188,33 @@ describe('PerpsProTradeForm order matrix', () => {
     mockDismissKeyboardThen.mockImplementation(action => action());
   });
 
+  it('keeps the real form frame visible but fail-closed while configuration is preparing', () => {
+    const trade = controller();
+    render(
+      <PerpsProTradeForm
+        configurationReady={false}
+        controller={trade}
+        onDeposit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('perps-pro-trade-form').props).toMatchObject({
+      accessibilityState: { disabled: true },
+      pointerEvents: 'none',
+    });
+    expect(screen.getAllByText('--').length).toBeGreaterThanOrEqual(2);
+    expect(
+      screen.getByTestId('perps-pro-trade-button-buy').props.accessibilityState
+        .disabled,
+    ).toBe(true);
+    expect(
+      screen.getByTestId('perps-pro-trade-button-sell').props.accessibilityState
+        .disabled,
+    ).toBe(true);
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(trade.requestReview).not.toHaveBeenCalled();
+  });
+
   it('uses the shared selector font and the isolated stylistic I', () => {
     render(
       <PerpsProTradeForm controller={controller()} onDeposit={jest.fn()} />,
