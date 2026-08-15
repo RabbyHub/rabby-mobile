@@ -32,11 +32,13 @@ const assertConvergedWindow = (
 
 export const loadLatestPerpsProHistoryBatch = async ({
   accountAddress,
+  latestFills,
   now,
   repository = perpsProHistoryRepository,
   tab,
 }: {
   accountAddress: string;
+  latestFills?: Promise<WsFill[]>;
   now: number;
   repository?: PerpsProHistoryRepository;
   tab: PerpsProHistoryTab;
@@ -44,7 +46,9 @@ export const loadLatestPerpsProHistoryBatch = async ({
   if (tab === 'orders') {
     const [rawItems, orderFills] = await Promise.all([
       repository.fetchOrders(accountAddress),
-      repository.fetchOrderFills(accountAddress).catch(() => []),
+      (latestFills ?? repository.fetchOrderFills(accountAddress)).catch(
+        () => [],
+      ),
     ]);
     return {
       hasEarlier: false,
@@ -53,7 +57,8 @@ export const loadLatestPerpsProHistoryBatch = async ({
     };
   }
   if (tab === 'trade') {
-    const rawItems = await repository.fetchLatestTrades(accountAddress);
+    const rawItems = await (latestFills ??
+      repository.fetchLatestTrades(accountAddress));
     const oldest = rawItems.reduce(
       (value, item) => Math.min(value, item.time),
       now,

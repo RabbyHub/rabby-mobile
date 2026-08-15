@@ -9,8 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { usePerpsProTradeAmountUnit } from '../PerpsPro/scene/usePerpsProTradePreferences';
-import { PerpsProHistoryList } from './components/PerpsProHistoryList';
-import { PerpsProHistoryTabs } from './components/PerpsProHistoryTabs';
+import { PerpsProHistoryPager } from './components/PerpsProHistoryPager';
 import { usePerpsProHistoryController } from './scene/usePerpsProHistoryController';
 import type { PerpsProHistoryTab } from './types';
 
@@ -39,20 +38,14 @@ export const PerpsProHistoryScreen = () => {
   return (
     <NormalScreenContainer2024 type="bg1">
       <View style={styles.container}>
-        <PerpsProHistoryTabs
+        <PerpsProHistoryPager
           activeTab={history.activeTab}
+          amountUnit={amountUnit}
           onChange={history.setActiveTab}
+          onLoadEarlier={history.loadEarlier}
+          onRefresh={history.refresh}
+          state={history.state}
         />
-        <View style={styles.list}>
-          <PerpsProHistoryList
-            amountUnit={amountUnit}
-            onLoadEarlier={history.loadEarlier}
-            onRefresh={history.refresh}
-            onRetry={() => history.refresh()}
-            state={history.tabState}
-            tab={history.activeTab}
-          />
-        </View>
       </View>
     </NormalScreenContainer2024>
   );
@@ -60,9 +53,6 @@ export const PerpsProHistoryScreen = () => {
 
 const getStyle = createGetStyles2024(() => ({
   container: {
-    flex: 1,
-  },
-  list: {
     flex: 1,
   },
 }));

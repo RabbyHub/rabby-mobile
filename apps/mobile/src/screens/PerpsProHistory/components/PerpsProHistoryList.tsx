@@ -27,13 +27,22 @@ import {
 } from './PerpsProHistoryState';
 
 export const PerpsProHistoryList: React.FC<{
+  active?: boolean;
   amountUnit: PerpsProTradeAmountUnit;
   onLoadEarlier: () => void;
   onRefresh: () => void;
   onRetry: () => void;
   state: PerpsProHistoryTabState;
   tab: PerpsProHistoryTab;
-}> = ({ amountUnit, onLoadEarlier, onRefresh, onRetry, state, tab }) => {
+}> = ({
+  active = true,
+  amountUnit,
+  onLoadEarlier,
+  onRefresh,
+  onRetry,
+  state,
+  tab,
+}) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
@@ -42,6 +51,7 @@ export const PerpsProHistoryList: React.FC<{
   );
   const handleEndReached = useCallback(() => {
     if (
+      !active ||
       tab === 'orders' ||
       !state.hasEarlier ||
       state.loadingEarlier ||
@@ -52,6 +62,7 @@ export const PerpsProHistoryList: React.FC<{
     }
     onLoadEarlier();
   }, [
+    active,
     onLoadEarlier,
     state.hasEarlier,
     state.loadEarlierError,
@@ -107,12 +118,14 @@ export const PerpsProHistoryList: React.FC<{
       refreshControl={
         <RefreshControl
           colors={[colors2024['blue-default']]}
+          enabled={active}
           onRefresh={onRefresh}
           refreshing={state.refreshing}
           tintColor={colors2024['blue-default']}
         />
       }
       renderItem={renderItem}
+      scrollEnabled={active}
       showsVerticalScrollIndicator={false}
       testID={`perps-pro-history-list-${tab}`}
     />

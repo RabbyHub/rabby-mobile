@@ -18,7 +18,10 @@ import {
   applyPerpsProOrderExecution,
   buildPerpsProOrderExecutionIndex,
 } from '../model/orderExecution';
-import { isPerpsProHistorySdkSupported } from '../repository/perpsProHistoryRepository';
+import {
+  isPerpsProHistorySdkSupported,
+  perpsProHistoryRepository,
+} from '../repository/perpsProHistoryRepository';
 import type {
   PerpsProHistoryRow,
   PerpsProHistoryTab,
@@ -46,6 +49,8 @@ type RequestToken = Readonly<{
   sequence: number;
   tab: PerpsProHistoryTab;
 }>;
+
+type RefreshPresentation = 'background' | 'manual';
 
 export const usePerpsProHistoryController = (
   initialTab: PerpsProHistoryTab = 'orders',
@@ -110,11 +115,6 @@ export const usePerpsProHistoryController = (
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
-  }, []);
-
-  const invalidateTab = useCallback((tab: PerpsProHistoryTab) => {
-    requestSequencesRef.current[tab] += 1;
-    inFlightRequestsRef.current[tab] = false;
   }, []);
 
   const invalidateAll = useCallback(() => {
@@ -221,7 +221,6 @@ export const usePerpsProHistoryController = (
     const guard = guardRef.current;
     return (
       guard.enabled &&
-      guard.activeTab === token.tab &&
       guard.accountGeneration === token.accountGeneration &&
       !!guard.accountAddress &&
       isSameAddress(guard.accountAddress, token.accountAddress) &&
@@ -307,7 +306,7 @@ export const usePerpsProHistoryController = (
   );
 
   const loadInitial = useCallback(
-    async (tab: PerpsProHistoryTab) => {
+    async (tab: PerpsProHistoryTab, latestFills?: Promise<WsFill[]>) => {
       const token = beginRequest(tab);
       if (!token) {
         return;
@@ -321,6 +320,7 @@ export const usePerpsProHistoryController = (
       try {
         const batch = await loadLatestPerpsProHistoryBatch({
           accountAddress: token.accountAddress,
+          latestFills,
           now: Date.now(),
           tab,
         });
@@ -371,213 +371,232 @@ export const usePerpsProHistoryController = (
     ],
   );
 
-  const refresh = useCallback(async () => {
-    const tab = guardRef.current.activeTab;
-    const current = stateRef.current[tab];
-    if (current.refreshing || current.loadingEarlier) {
-      return;
-    }
-    if (current.rows.length === 0) {
-      await loadInitial(tab);
-      return;
-    }
-    const token = beginRequest(tab);
-    if (!token) {
-      return;
-    }
-    updateTabState(tab, previous => ({
-      ...previous,
-      refreshError: undefined,
-      refreshing: true,
-    }));
-
-    try {
-      const batch = await loadLatestPerpsProHistoryBatch({
-        accountAddress: token.accountAddress,
-        now: Date.now(),
-        tab,
-      });
-      if (!isRequestCurrent(token)) {
+  const refreshLatest = useCallback(
+    async (
+      tab: PerpsProHistoryTab,
+      latestFills?: Promise<WsFill[]>,
+      presentation: RefreshPresentation = 'manual',
+    ) => {
+      const current = stateRef.current[tab];
+      if (current.refreshing || current.loadingEarlier) {
         return;
       }
-      if (tab === 'orders' && batch.orderFills) {
-        rememberOrderFills(batch.orderFills, true);
+      if (current.status === 'idle' || current.status === 'error') {
+        await loadInitial(tab, latestFills);
+        return;
       }
-      updateTabState(tab, previous => {
-        const rows = mergeBatch(
-          tab,
-          batch.rawItems,
-          token.accountAddress,
-          previous,
-        );
-        const coveredWindow = batch.coveredWindow
-          ? {
-              endTime: batch.coveredWindow.endTime,
-              startTime: Math.min(
-                previous.coveredWindow?.startTime ??
-                  batch.coveredWindow.startTime,
-                batch.coveredWindow.startTime,
-              ),
-            }
-          : previous.coveredWindow;
-        return {
+      const token = beginRequest(tab);
+      if (!token) {
+        return;
+      }
+      if (presentation === 'manual') {
+        updateTabState(tab, previous => ({
           ...previous,
-          coveredWindow,
-          hasEarlier:
-            previous.hasEarlier ||
-            (batch.hasEarlier && rows.length < getPerpsProHistoryTabLimit(tab)),
-          oldestLoadedTime: getPerpsProHistoryOldestTime(rows),
           refreshError: undefined,
-          refreshing: false,
-          rows,
-          status: getPerpsProHistoryRowsStatus(rows),
-        };
-      });
-    } catch (error) {
-      if (!isRequestCurrent(token)) {
-        return;
+          refreshing: true,
+        }));
       }
-      updateTabState(tab, previous => ({
-        ...previous,
-        refreshError: error instanceof Error ? error.message : String(error),
-        refreshing: false,
-      }));
-      showToast(refreshFailedMessage, 'error');
-    } finally {
-      finishRequest(token);
-    }
-  }, [
-    beginRequest,
-    finishRequest,
-    isRequestCurrent,
-    loadInitial,
-    mergeBatch,
-    rememberOrderFills,
-    refreshFailedMessage,
-    updateTabState,
-  ]);
 
-  const loadEarlier = useCallback(async () => {
-    const tab = guardRef.current.activeTab;
-    const current = stateRef.current[tab];
-    if (
-      tab === 'orders' ||
-      !current.hasEarlier ||
-      current.loadingEarlier ||
-      current.refreshing
-    ) {
-      return;
-    }
-    const window = makePerpsProHistoryEarlierWindow(current);
-    if (!window) {
-      return;
-    }
-    const remaining = getPerpsProHistoryTabLimit(tab) - current.rows.length;
-    if (remaining <= 0) {
-      updateTabState(tab, previous => ({
-        ...previous,
-        hasEarlier: false,
-      }));
-      return;
-    }
-    const token = beginRequest(tab);
-    if (!token) {
-      return;
-    }
-    updateTabState(tab, previous => ({
-      ...previous,
-      loadEarlierError: undefined,
-      loadingEarlier: true,
-    }));
-
-    try {
-      const batch = await loadEarlierPerpsProHistoryBatch({
-        accountAddress: token.accountAddress,
-        limit: remaining,
-        tab,
-        window,
-      });
-      if (!isRequestCurrent(token)) {
-        return;
-      }
-      updateTabState(tab, previous => {
-        const rows = mergeBatch(
+      try {
+        const batch = await loadLatestPerpsProHistoryBatch({
+          accountAddress: token.accountAddress,
+          latestFills,
+          now: Date.now(),
           tab,
-          batch.rawItems,
-          token.accountAddress,
-          previous,
-        );
-        return {
+        });
+        if (!isRequestCurrent(token)) {
+          return;
+        }
+        if (tab === 'orders' && batch.orderFills) {
+          rememberOrderFills(batch.orderFills, true);
+        }
+        updateTabState(tab, previous => {
+          const rows = mergeBatch(
+            tab,
+            batch.rawItems,
+            token.accountAddress,
+            previous,
+          );
+          const coveredWindow = batch.coveredWindow
+            ? {
+                endTime: batch.coveredWindow.endTime,
+                startTime: Math.min(
+                  previous.coveredWindow?.startTime ??
+                    batch.coveredWindow.startTime,
+                  batch.coveredWindow.startTime,
+                ),
+              }
+            : previous.coveredWindow;
+          return {
+            ...previous,
+            coveredWindow,
+            hasEarlier:
+              previous.hasEarlier ||
+              (batch.hasEarlier &&
+                rows.length < getPerpsProHistoryTabLimit(tab)),
+            oldestLoadedTime: getPerpsProHistoryOldestTime(rows),
+            refreshError: undefined,
+            refreshing: false,
+            rows,
+            status: getPerpsProHistoryRowsStatus(rows),
+          };
+        });
+      } catch (error) {
+        if (!isRequestCurrent(token)) {
+          return;
+        }
+        updateTabState(tab, previous => ({
           ...previous,
-          coveredWindow: {
-            endTime: previous.coveredWindow?.endTime ?? batch.window.endTime,
-            startTime: batch.window.startTime,
-          },
-          hasEarlier:
-            batch.rawItems.length > 0 &&
-            rows.length < getPerpsProHistoryTabLimit(tab),
-          loadEarlierError: undefined,
-          loadingEarlier: false,
-          oldestLoadedTime: getPerpsProHistoryOldestTime(rows),
-          rows,
-          status: getPerpsProHistoryRowsStatus(rows),
-        };
-      });
-    } catch (error) {
-      if (!isRequestCurrent(token)) {
-        return;
+          refreshError: error instanceof Error ? error.message : String(error),
+          refreshing: false,
+        }));
+        showToast(refreshFailedMessage, 'error');
+      } finally {
+        finishRequest(token);
       }
-      updateTabState(tab, previous => ({
-        ...previous,
-        loadEarlierError:
-          error instanceof Error ? error.message : String(error),
-        loadingEarlier: false,
-      }));
-    } finally {
-      finishRequest(token);
-    }
-  }, [
-    beginRequest,
-    finishRequest,
-    isRequestCurrent,
-    mergeBatch,
-    updateTabState,
-  ]);
-
-  const setActiveTab = useCallback(
-    (nextTab: PerpsProHistoryTab) => {
-      const currentTab = guardRef.current.activeTab;
-      if (nextTab === currentTab) {
-        return;
-      }
-      invalidateTab(currentTab);
-      updateTabState(currentTab, previous => ({
-        ...previous,
-        loadingEarlier: false,
-        refreshing: false,
-        status: previous.status === 'loading' ? 'idle' : previous.status,
-      }));
-      setActiveTabState(nextTab);
     },
-    [invalidateTab, updateTabState],
+    [
+      beginRequest,
+      finishRequest,
+      isRequestCurrent,
+      loadInitial,
+      mergeBatch,
+      rememberOrderFills,
+      refreshFailedMessage,
+      updateTabState,
+    ],
   );
 
+  const refresh = useCallback(
+    (
+      tab: PerpsProHistoryTab = guardRef.current.activeTab,
+      latestFills?: Promise<WsFill[]>,
+    ) => refreshLatest(tab, latestFills, 'manual'),
+    [refreshLatest],
+  );
+
+  const loadEarlier = useCallback(
+    async (tab: PerpsProHistoryTab = guardRef.current.activeTab) => {
+      const current = stateRef.current[tab];
+      if (
+        tab === 'orders' ||
+        !current.hasEarlier ||
+        current.loadingEarlier ||
+        current.refreshing
+      ) {
+        return;
+      }
+      const window = makePerpsProHistoryEarlierWindow(current);
+      if (!window) {
+        return;
+      }
+      const remaining = getPerpsProHistoryTabLimit(tab) - current.rows.length;
+      if (remaining <= 0) {
+        updateTabState(tab, previous => ({
+          ...previous,
+          hasEarlier: false,
+        }));
+        return;
+      }
+      const token = beginRequest(tab);
+      if (!token) {
+        return;
+      }
+      updateTabState(tab, previous => ({
+        ...previous,
+        loadEarlierError: undefined,
+        loadingEarlier: true,
+      }));
+
+      try {
+        const batch = await loadEarlierPerpsProHistoryBatch({
+          accountAddress: token.accountAddress,
+          limit: remaining,
+          tab,
+          window,
+        });
+        if (!isRequestCurrent(token)) {
+          return;
+        }
+        updateTabState(tab, previous => {
+          const rows = mergeBatch(
+            tab,
+            batch.rawItems,
+            token.accountAddress,
+            previous,
+          );
+          return {
+            ...previous,
+            coveredWindow: {
+              endTime: previous.coveredWindow?.endTime ?? batch.window.endTime,
+              startTime: batch.window.startTime,
+            },
+            hasEarlier:
+              batch.rawItems.length > 0 &&
+              rows.length < getPerpsProHistoryTabLimit(tab),
+            loadEarlierError: undefined,
+            loadingEarlier: false,
+            oldestLoadedTime: getPerpsProHistoryOldestTime(rows),
+            rows,
+            status: getPerpsProHistoryRowsStatus(rows),
+          };
+        });
+      } catch (error) {
+        if (!isRequestCurrent(token)) {
+          return;
+        }
+        updateTabState(tab, previous => ({
+          ...previous,
+          loadEarlierError:
+            error instanceof Error ? error.message : String(error),
+          loadingEarlier: false,
+        }));
+      } finally {
+        finishRequest(token);
+      }
+    },
+    [beginRequest, finishRequest, isRequestCurrent, mergeBatch, updateTabState],
+  );
+
+  const setActiveTab = useCallback((nextTab: PerpsProHistoryTab) => {
+    const currentTab = guardRef.current.activeTab;
+    if (nextTab === currentTab) {
+      return;
+    }
+    setActiveTabState(nextTab);
+  }, []);
+
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !accountAddress) {
       return;
     }
-    if (stateRef.current[activeTab].status === 'idle') {
-      loadInitial(activeTab);
+    const idleTabs = PERPS_PRO_HISTORY_TABS.filter(
+      tab => stateRef.current[tab].status === 'idle',
+    );
+    if (idleTabs.length === 0) {
+      refreshLatest(activeTab, undefined, 'background');
       return;
     }
-    refresh();
+    const shouldLoadLatestFills = idleTabs.some(
+      tab => tab === 'orders' || tab === 'trade',
+    );
+    const latestFills = shouldLoadLatestFills
+      ? perpsProHistoryRepository.fetchLatestTrades(accountAddress)
+      : undefined;
+    idleTabs.forEach(tab => {
+      loadInitial(
+        tab,
+        tab === 'orders' || tab === 'trade' ? latestFills : undefined,
+      );
+    });
   }, [
     accountGeneration,
     accountIdentity,
+    accountAddress,
     activeTab,
     enabled,
     loadInitial,
-    refresh,
+    refreshLatest,
   ]);
 
   useEffect(() => {
