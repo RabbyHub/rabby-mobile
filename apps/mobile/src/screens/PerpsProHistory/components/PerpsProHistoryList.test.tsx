@@ -192,4 +192,24 @@ describe('PerpsProHistoryList', () => {
     );
     expect(onLoadEarlier).not.toHaveBeenCalled();
   });
+
+  it('does not paginate or scroll an adjacent preview page', () => {
+    const onLoadEarlier = jest.fn();
+    render(
+      <PerpsProHistoryList
+        active={false}
+        amountUnit="base"
+        onLoadEarlier={onLoadEarlier}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        state={makeState({ hasEarlier: true })}
+        tab="trade"
+      />,
+    );
+
+    const list = screen.getByTestId('perps-pro-history-list-trade');
+    expect(list.props.scrollEnabled).toBe(false);
+    fireEvent(list, 'endReached', { distanceFromEnd: 0 });
+    expect(onLoadEarlier).not.toHaveBeenCalled();
+  });
 });
