@@ -360,6 +360,42 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.tpSl.disabled).toBe(true);
   });
 
+  it('toasts during manual input only after the amount exceeds both side maxima', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: {
+          ...activeAssetData,
+          maxTradeSzs: ['5', '10'],
+        },
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('600'));
+    expect(mockShowToast).not.toHaveBeenCalled();
+
+    act(() => hook.result.current.setAmount('1000.01'));
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.insufficientBalance',
+      'error',
+    );
+
+    act(() => hook.result.current.setAmount('1000.02'));
+    expect(mockShowToast).toHaveBeenCalledTimes(1);
+
+    act(() => hook.result.current.setAmount('900'));
+    act(() => hook.result.current.setAmount('1001'));
+    expect(mockShowToast).toHaveBeenCalledTimes(2);
+  });
+
   it('projects Slider button amounts per side and zeros the unavailable Reduce Only side', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({

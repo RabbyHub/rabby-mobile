@@ -54,6 +54,10 @@ export const PerpsProLeverageSheet: React.FC<{
       Math.max(1, Math.round(currentLeverage)),
     );
     const [draft, setDraft] = useState(String(safeCurrent));
+    const valueInputWidth = Math.max(
+      28,
+      Math.max(draft.length, String(safeMax).length) * 9 + 8,
+    );
     usePerpsProSheetNavigationRegistration({
       active: visible,
       dismiss: onClose,
@@ -171,10 +175,7 @@ export const PerpsProLeverageSheet: React.FC<{
                   onChangeText={setDraft}
                   ref={inputRef}
                   selectionColor={colors2024['brand-default']}
-                  style={[
-                    styles.valueInput,
-                    { width: Math.max(12, draft.length * 9) },
-                  ]}
+                  style={[styles.valueInput, { width: valueInputWidth }]}
                   testID="perps-pro-leverage-input"
                   value={draft}
                 />
@@ -198,6 +199,7 @@ export const PerpsProLeverageSheet: React.FC<{
               testID="perps-pro-leverage-slider-section">
               <PerpsProSlider
                 disabled={pending}
+                dimWhenDisabled={false}
                 maximumValue={safeMax}
                 minimumValue={1}
                 onSlidingComplete={sliderHaptics.onSlidingComplete}

@@ -430,8 +430,8 @@ describe('PerpsProOrderBook display shell', () => {
       />,
     );
 
-    expect(screen.getByText('14.0800K')).toBeTruthy();
-    expect(screen.getByText('74.9500K')).toBeTruthy();
+    expect(screen.getByText('14.08K')).toBeTruthy();
+    expect(screen.getByText('74.95K')).toBeTruthy();
     expect(
       screen.getByText('page.perps.pro.orderBook.price\n(USDC)'),
     ).toBeTruthy();

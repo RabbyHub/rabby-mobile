@@ -2,6 +2,7 @@ import {
   createPerpsProTradeFormState,
   getPerpsProReduceOnlyAvailability,
   inferPerpsProConditionalClassification,
+  isPerpsProAmountAboveBothMax,
   isPerpsProTradeCombinationSupported,
   resolvePerpsProDisplayAmount,
   resolvePerpsProTradeAmount,
@@ -135,6 +136,37 @@ describe('Perps Pro trade model', () => {
   it('sanitizes unsupported input without adding separators', () => {
     expect(sanitizePerpsProDecimalInput('-01a.23.45e2', 3)).toBe('1.234');
     expect(sanitizePerpsProDecimalInput('01,23', 2)).toBe('1.23');
+  });
+
+  it('only reports a direction-neutral amount overflow above both side maxima', () => {
+    expect(
+      isPerpsProAmountAboveBothMax({
+        amount: '10.01',
+        buyMax: '10',
+        sellMax: '8',
+      }),
+    ).toBe(true);
+    expect(
+      isPerpsProAmountAboveBothMax({
+        amount: '9',
+        buyMax: '10',
+        sellMax: '8',
+      }),
+    ).toBe(false);
+    expect(
+      isPerpsProAmountAboveBothMax({
+        amount: '10',
+        buyMax: '10',
+        sellMax: '8',
+      }),
+    ).toBe(false);
+    expect(
+      isPerpsProAmountAboveBothMax({
+        amount: '',
+        buyMax: '10',
+        sellMax: '8',
+      }),
+    ).toBe(false);
   });
 
   it('only allows BBO with GTC', () => {

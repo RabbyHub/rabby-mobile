@@ -6,6 +6,7 @@ import { View } from 'react-native';
 
 export const PerpsProSlider: React.FC<{
   disabled?: boolean;
+  dimWhenDisabled?: boolean;
   hideMinimumPoint?: boolean;
   maximumValue?: number;
   minimumValue?: number;
@@ -19,6 +20,7 @@ export const PerpsProSlider: React.FC<{
 }> = React.memo(
   ({
     disabled = false,
+    dimWhenDisabled = true,
     hideMinimumPoint = false,
     maximumValue = 100,
     minimumValue = 0,
@@ -31,6 +33,7 @@ export const PerpsProSlider: React.FC<{
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
+    const showDisabledAppearance = disabled && dimWhenDisabled;
     const points = useMemo(
       () =>
         Array.from({ length: Math.max(2, pointCount) }, (_, index) => index),
@@ -54,7 +57,7 @@ export const PerpsProSlider: React.FC<{
           minimumTrackTintColor={
             tone === 'neutral'
               ? 'transparent'
-              : disabled
+              : showDisabledAppearance
               ? colors2024['neutral-secondary']
               : colors2024['brand-default']
           }
@@ -67,7 +70,7 @@ export const PerpsProSlider: React.FC<{
           thumbStyle={
             tone === 'neutral'
               ? styles.invisibleThumb
-              : disabled
+              : showDisabledAppearance
               ? styles.disabledThumb
               : styles.thumb
           }
@@ -80,13 +83,13 @@ export const PerpsProSlider: React.FC<{
               pointerEvents="none"
               style={[
                 styles.neutralTrack,
-                disabled && styles.neutralTrackDisabled,
+                showDisabledAppearance && styles.neutralTrackDisabled,
               ]}
               testID="perps-pro-slider-neutral-track">
               <View
                 style={[
                   styles.neutralTrackProgress,
-                  disabled && styles.neutralTrackProgressDisabled,
+                  showDisabledAppearance && styles.neutralTrackProgressDisabled,
                   { width: `${neutralProgress * 100}%` },
                 ]}
                 testID="perps-pro-slider-neutral-track-progress"
@@ -99,7 +102,7 @@ export const PerpsProSlider: React.FC<{
               <View
                 style={[
                   styles.neutralThumb,
-                  disabled && styles.neutralThumbDisabled,
+                  showDisabledAppearance && styles.neutralThumbDisabled,
                   { left: `${neutralProgress * 100}%`, marginLeft: -6.5 },
                 ]}
                 testID="perps-pro-slider-neutral-thumb"

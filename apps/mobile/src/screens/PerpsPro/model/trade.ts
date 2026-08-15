@@ -186,6 +186,27 @@ export const getPerpsProAmountInputDecimals = ({
   szDecimals: number;
 }) => (amountUnit === 'base' ? Math.max(0, szDecimals) : 2);
 
+export const isPerpsProAmountAboveBothMax = ({
+  amount,
+  buyMax,
+  sellMax,
+}: {
+  amount: string;
+  buyMax: string;
+  sellMax: string;
+}) => {
+  const amountValue = decimal(amount);
+  const buyMaxValue = decimal(buyMax);
+  const sellMaxValue = decimal(sellMax);
+  return !!(
+    amountValue?.gt(0) &&
+    buyMaxValue?.gte(0) &&
+    sellMaxValue?.gte(0) &&
+    amountValue.gt(buyMaxValue) &&
+    amountValue.gt(sellMaxValue)
+  );
+};
+
 export const isPerpsProTradeCombinationSupported = (
   form: PerpsProTradeFormState,
 ) => {
