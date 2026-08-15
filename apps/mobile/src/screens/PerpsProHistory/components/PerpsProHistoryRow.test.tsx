@@ -2,7 +2,7 @@ import type {
   UserHistoricalOrders,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Pressable } from 'react-native';
 
@@ -62,6 +62,7 @@ const makeOrder = (orderType: string): UserHistoricalOrders => ({
 });
 
 describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
+  const onShowFeeExplanation = jest.fn();
   const fill: WsFill = {
     closedPnl: '12.5',
     coin: 'BTC',
@@ -78,17 +79,62 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     time: 200,
   };
 
+  beforeEach(() => {
+    onShowFeeExplanation.mockClear();
+  });
+
   it('switches Trade Filled between base and quote without changing net PNL', () => {
     const row = mapPerpsProTradeHistoryFact(fill, {});
-    const view = render(<PerpsProHistoryRowView amountUnit="base" row={row} />);
+    const view = render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={row}
+      />,
+    );
     expect(screen.getByText('0.25')).toBeTruthy();
     expect(screen.getByText('0.50000000')).toBeTruthy();
     expect(screen.getByText('12.00000000')).toBeTruthy();
     expect(screen.getByText('2,000.0')).toBeTruthy();
 
-    view.rerender(<PerpsProHistoryRowView amountUnit="quote" row={row} />);
+    fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(false);
+    expect(screen.queryByText('Perp')).toBeNull();
+
+    view.rerender(
+      <PerpsProHistoryRowView
+        amountUnit="quote"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={row}
+      />,
+    );
     expect(screen.getByText('500.00')).toBeTruthy();
     expect(screen.getByText('12.00000000')).toBeTruthy();
+  });
+
+  it('opens the liquidation-specific Fee explanation for liquidation fills', () => {
+    const row = mapPerpsProTradeHistoryFact(
+      {
+        ...fill,
+        liquidation: {
+          liquidatedUser: '0x0000000000000000000000000000000000000001',
+          markPx: '2000',
+          method: 'market',
+        },
+      },
+      {},
+    );
+
+    render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={row}
+      />,
+    );
+    fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
+
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(true);
   });
 
   it('renders Transaction Type and signed Amount without a navigation arrow', () => {
@@ -103,13 +149,19 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     if (!result.row) {
       throw new Error('expected a transaction row');
     }
-    render(<PerpsProHistoryRowView amountUnit="base" row={result.row} />);
+    render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={result.row}
+      />,
+    );
     expect(screen.getByText('page.perps.pro.history.deposit')).toBeTruthy();
     expect(screen.getByText('+1.25000000')).toBeTruthy();
     expect(screen.queryByTestId('history-arrow')).toBeNull();
   });
 
-  it('renders Funding asset, side, perpetual symbol and signed amount', () => {
+  it('renders Funding asset, side, pair symbol and signed amount', () => {
     const row = mapPerpsProFundingHistoryFact(
       {
         coin: 'BTC',
@@ -120,12 +172,17 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
       },
       {},
     );
-    render(<PerpsProHistoryRowView amountUnit="base" row={row} />);
+    render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={row}
+      />,
+    );
     expect(screen.getByText('USDC')).toBeTruthy();
     expect(screen.getByText('page.perps.pro.history.long')).toBeTruthy();
-    expect(
-      screen.getByText('BTCUSDC page.perps.pro.history.perpetual'),
-    ).toBeTruthy();
+    expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(screen.queryByText(/perpetual/i)).toBeNull();
     expect(screen.getByText('-0.03313285')).toBeTruthy();
   });
 });
@@ -135,6 +192,7 @@ describe('PerpsProHistoryRowView Orders', () => {
     render(
       <PerpsProHistoryRowView
         amountUnit="quote"
+        onShowFeeExplanation={jest.fn()}
         row={mapPerpsProOrderHistoryFact(makeOrder('Limit'), {})}
       />,
     );
@@ -143,12 +201,14 @@ describe('PerpsProHistoryRowView Orders', () => {
     expect(screen.getByText('-- / 0.2000')).toBeTruthy();
     expect(screen.getByTestId('history-arrow')).toBeTruthy();
     expect(screen.UNSAFE_queryAllByType(Pressable)).toHaveLength(0);
+    expect(screen.queryByText('Perp')).toBeNull();
   });
 
   it('renders TP/SL Market Amount and Filled in base while Price remains Market', () => {
     render(
       <PerpsProHistoryRowView
         amountUnit="base"
+        onShowFeeExplanation={jest.fn()}
         row={mapPerpsProOrderHistoryFact(makeOrder('Take Profit Market'), {})}
       />,
     );
@@ -194,6 +254,7 @@ describe('PerpsProHistoryRowView Orders', () => {
     render(
       <PerpsProHistoryRowView
         amountUnit="quote"
+        onShowFeeExplanation={jest.fn()}
         row={mapPerpsProOrderHistoryFact(
           makeOrder('Take Profit Market'),
           {},
@@ -206,5 +267,24 @@ describe('PerpsProHistoryRowView Orders', () => {
     expect(
       screen.getByText('0.1933 / page.perps.pro.history.market'),
     ).toBeTruthy();
+  });
+
+  it('preserves a real HIP-3 source when market metadata is unavailable', () => {
+    render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={jest.fn()}
+        row={mapPerpsProOrderHistoryFact(
+          {
+            ...makeOrder('Limit'),
+            order: { ...makeOrder('Limit').order, coin: 'xyz:AAPL' },
+          },
+          {},
+        )}
+      />,
+    );
+
+    expect(screen.getByText('xyz')).toBeTruthy();
+    expect(screen.queryByText('Perp')).toBeNull();
   });
 });

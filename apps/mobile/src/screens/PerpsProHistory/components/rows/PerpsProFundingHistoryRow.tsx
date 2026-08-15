@@ -25,9 +25,7 @@ export const PerpsProFundingHistoryRowView: React.FC<{
       details={[
         {
           label: t('page.perps.pro.history.fields.symbol'),
-          value: `${row.market.displayPair} ${t(
-            'page.perps.pro.history.perpetual',
-          )}`,
+          value: row.market.displayPair,
         },
         {
           label: t('page.perps.pro.history.fields.amount'),

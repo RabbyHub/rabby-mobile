@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
+import { useShowPerpsTradeFeeExplanation } from '@/screens/PerpsShared/components/PerpsTradeFeeExplanation';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import type {
@@ -45,9 +46,16 @@ export const PerpsProHistoryList: React.FC<{
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation();
   const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
-    ({ item }) => <PerpsProHistoryRowView amountUnit={amountUnit} row={item} />,
-    [amountUnit],
+    ({ item }) => (
+      <PerpsProHistoryRowView
+        amountUnit={amountUnit}
+        onShowFeeExplanation={showTradeFeeExplanation}
+        row={item}
+      />
+    ),
+    [amountUnit, showTradeFeeExplanation],
   );
   const handleEndReached = useCallback(() => {
     if (

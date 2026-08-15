@@ -170,15 +170,23 @@ describe('Perps Pro history models', () => {
   it('calculates quote fill and net realized PNL without losing fee rebates', () => {
     expect(
       mapPerpsProTradeHistoryFact(
-        makeFill({ fee: '-0.25', feeToken: 'USDC' } as Partial<
-          WsFill & { feeToken?: string }
-        >),
+        makeFill({
+          fee: '-0.25',
+          feeToken: 'USDC',
+          liquidation: {
+            liquidatedUser: ACCOUNT,
+            markPx: '2000',
+            method: 'market',
+          },
+        }),
         {},
       ),
     ).toMatchObject({
       fee: '-0.25',
       feeToken: 'USDC',
       filledQuote: '500',
+      isLiquidation: true,
+      market: { sourceTag: null },
       netRealizedPnl: '12.75',
       side: 'sell',
     });
@@ -191,6 +199,18 @@ describe('Perps Pro history models', () => {
       {},
     );
     expect(buy.key).not.toBe(sell.key);
+  });
+
+  it('keeps a canonical HIP-3 source without market metadata', () => {
+    expect(
+      mapPerpsProTradeHistoryFact(makeFill({ coin: 'xyz:AAPL' }), {}),
+    ).toMatchObject({
+      market: {
+        displayBase: 'AAPL',
+        displayPair: 'AAPLUSDC',
+        sourceTag: 'xyz',
+      },
+    });
   });
 
   it('maps only transaction facts whose Perps direction is provable', () => {

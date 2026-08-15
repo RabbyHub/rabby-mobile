@@ -9,13 +9,20 @@ import { PerpsProTransactionHistoryRowView } from './rows/PerpsProTransactionHis
 
 export const PerpsProHistoryRowView: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
+  onShowFeeExplanation: (isLiquidation: boolean) => void;
   row: PerpsProHistoryRow;
-}> = React.memo(({ amountUnit, row }) => {
+}> = React.memo(({ amountUnit, onShowFeeExplanation, row }) => {
   switch (row.kind) {
     case 'orders':
       return <PerpsProOrderHistoryRowView amountUnit={amountUnit} row={row} />;
     case 'trade':
-      return <PerpsProTradeHistoryRowView amountUnit={amountUnit} row={row} />;
+      return (
+        <PerpsProTradeHistoryRowView
+          amountUnit={amountUnit}
+          onShowFeeExplanation={onShowFeeExplanation}
+          row={row}
+        />
+      );
     case 'transaction':
       return <PerpsProTransactionHistoryRowView row={row} />;
     case 'funding':

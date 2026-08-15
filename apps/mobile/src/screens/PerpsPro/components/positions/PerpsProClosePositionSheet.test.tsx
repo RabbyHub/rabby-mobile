@@ -262,6 +262,23 @@ describe('PerpsProClosePositionSheet', () => {
     );
   });
 
+  it('omits the source tag for native markets', () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={{ ...market, sourceTag: null }}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(screen.queryByText('Perp')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-close-market-tag')).toBeNull();
+  });
+
   it('switches to independent manual amount input without mutating slider percent', () => {
     const onReview = jest.fn();
     render(

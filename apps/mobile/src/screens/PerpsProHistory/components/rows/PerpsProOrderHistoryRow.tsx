@@ -85,7 +85,7 @@ export const PerpsProOrderHistoryRowView: React.FC<{
       ]}
       details={details}
       showArrow
-      sourceTag={row.market.sourceTag || 'Perp'}
+      sourceTag={row.market.sourceTag}
       testID={`perps-pro-history-order-${row.key}`}
       time={row.time}
       title={row.market.displayPair}
