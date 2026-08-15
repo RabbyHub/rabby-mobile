@@ -1,6 +1,10 @@
 import { makeRnEEClass, resolveNativeModule } from './utils';
+import NativeRNTimeChanged from './specs/NativeRNTimeChanged';
 
-const { RNTimeChanged: nativeModule } = resolveNativeModule('RNTimeChanged');
+const { RNTimeChanged: nativeModule } = resolveNativeModule(
+  'RNTimeChanged',
+  NativeRNTimeChanged,
+);
 
 type Listeners = {
   onTimeChanged: (ctx: {
@@ -31,6 +35,17 @@ function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
 function subscribeTimeChanged(fn: Listeners['onTimeChanged']) {
   const handler = makeDefaultHandler<'onTimeChanged'>(fn);
   if (handler) return handler;
+
+  const codegenEventEmitter = (
+    nativeModule as unknown as Record<string, unknown>
+  ).onTimeChanged;
+  if (typeof codegenEventEmitter === 'function') {
+    return (
+      codegenEventEmitter as (listener: Listeners['onTimeChanged']) => {
+        remove: () => void;
+      }
+    )(fn);
+  }
 
   return eventEmitter.addListener('onTimeChanged', fn);
 }

@@ -160,7 +160,7 @@ prepare_ios_native_deps() {
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] start build..."
-  build_adhoc;
+  build_adhoc || exit $?
   echo "[deploy-ios-adhoc] finish build."
 fi
 

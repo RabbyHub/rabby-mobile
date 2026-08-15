@@ -8,3 +8,4 @@ export { TestkitsNavigator } from '@/screens/Navigators/TestkitsNavigator';
 export { default as TransactionNavigator } from '@/screens/Navigators/TransactionNavigator';
 export { DappsNavigator } from '@/screens/Navigators/DappsNavigator';
 export { default as HomeNonTabNavigator } from '@/screens/Navigators/HomeNonTabNavigator';
+export { SingleAddressNavigator } from '@/screens/Navigators/SingleAddressNavigator';
