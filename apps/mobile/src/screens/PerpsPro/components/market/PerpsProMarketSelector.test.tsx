@@ -12,6 +12,25 @@ const mockScrollToTopIfNeeded = jest.fn();
 const mockMarkDismissed = jest.fn();
 const mockMarkPresent = jest.fn();
 const mockMakeBottomSheetProps = jest.fn(() => ({}));
+const mockPagerSetPage = jest.fn();
+const mockPagerSetPageWithoutAnimation = jest.fn();
+
+jest.mock('react-native-pager-view', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return ReactModule.forwardRef(
+    (
+      { children, ...props }: { children: React.ReactNode },
+      ref: React.Ref<unknown>,
+    ) => {
+      ReactModule.useImperativeHandle(ref, () => ({
+        setPage: mockPagerSetPage,
+        setPageWithoutAnimation: mockPagerSetPageWithoutAnimation,
+      }));
+      return ReactModule.createElement(View, props, children);
+    },
+  );
+});
 
 jest.mock('@/assets2024/icons/perps/PerpsProSortArrowDown.svg', () => {
   const ReactModule = require('react');
@@ -355,7 +374,7 @@ jest.mock('./PerpsProMarketList', () => {
         return ReactModule.createElement(
           View,
           {
-            testID: 'perps-pro-market-list',
+            testID: `perps-pro-market-list-${props.pageTab}`,
           },
           props.data.slice(0, 10).map(slot => {
             const { perpsStore } = require('@/hooks/perps/usePerpsStore');
@@ -456,9 +475,23 @@ const getRowsFromListProps = (props: {
     };
   });
 
+const getLatestMarketListProps = (pageTab: string = 'all') => {
+  const call = [...mockMarketListProps.mock.calls]
+    .reverse()
+    .find(([props]) => props.pageTab === pageTab);
+  if (!call) {
+    throw new Error(`Missing rendered ${pageTab} market list`);
+  }
+  return call[0];
+};
+
 describe('PerpsProMarketSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
+      callback(0);
+      return 1;
+    });
     __resetMarketData();
     __setFavoriteMarkets([]);
     resetPerpsProMarketSessionForTests();
@@ -512,6 +545,25 @@ describe('PerpsProMarketSelector', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('mounts adjacent tab content and commits native page selection', () => {
+    __setFavoriteMarkets(['BTC']);
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('perps-pro-market-list-all')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-market-list-favorites')).toBeTruthy();
+
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', {
+      nativeEvent: { position: 0 },
+    });
+
+    expect(
+      screen.getByTestId('perps-pro-market-tab-favorites').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
   it('keeps the selector open until an asynchronous market preparation commits', async () => {
     let resolveSelection!: (value: boolean) => void;
     const onSelect = jest.fn(
@@ -550,10 +602,7 @@ describe('PerpsProMarketSelector', () => {
       />,
     );
 
-    const marketListProps =
-      mockMarketListProps.mock.calls[
-        mockMarketListProps.mock.calls.length - 1
-      ][0];
+    const marketListProps = getLatestMarketListProps('all');
     marketListProps.onPrefetch('SUI');
     expect(onPrefetch).toHaveBeenCalledWith('SUI');
   });
@@ -605,10 +654,7 @@ describe('PerpsProMarketSelector', () => {
     });
 
     expect(screen.getByTestId('market-search').props.value).toBe('');
-    const marketListProps =
-      mockMarketListProps.mock.calls[
-        mockMarketListProps.mock.calls.length - 1
-      ][0];
+    const marketListProps = getLatestMarketListProps('all');
     expect(
       getRowsFromListProps(marketListProps).map(market => market.displayPair),
     ).toEqual(['SOLUSDC', 'ETHUSDC', 'BTCUSDC']);
@@ -660,10 +706,7 @@ describe('PerpsProMarketSelector', () => {
     expect(screen.queryByTestId('market-row-ETHUSDC')).toBeTruthy();
     fireEvent.press(screen.getByTestId('market-search-cancel'));
 
-    const marketListProps =
-      mockMarketListProps.mock.calls[
-        mockMarketListProps.mock.calls.length - 1
-      ][0];
+    const marketListProps = getLatestMarketListProps('favorites');
     expect(
       getRowsFromListProps(marketListProps).map(market => market.displayPair),
     ).toEqual(['BTCUSDC']);
@@ -785,10 +828,7 @@ describe('PerpsProMarketSelector', () => {
       volumeSortControl,
       volumeSortControl,
     ];
-    const initialVolumeDescSlots =
-      mockMarketListProps.mock.calls[
-        mockMarketListProps.mock.calls.length - 1
-      ][0].data;
+    const initialVolumeDescSlots = getLatestMarketListProps('all').data;
     let direction: 'asc' | 'desc' = 'desc';
     let field: 'name' | 'volume' = 'volume';
 
@@ -811,10 +851,7 @@ describe('PerpsProMarketSelector', () => {
       expect(mockMarketListProps.mock.calls.length).toBeGreaterThan(
         callsBeforePress,
       );
-      const marketListProps =
-        mockMarketListProps.mock.calls[
-          mockMarketListProps.mock.calls.length - 1
-        ][0];
+      const marketListProps = getLatestMarketListProps('all');
       const volumes = getRowsFromListProps(marketListProps).map(
         market => market.volume24h,
       );

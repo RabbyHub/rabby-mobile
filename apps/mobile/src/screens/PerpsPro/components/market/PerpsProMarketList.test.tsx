@@ -55,7 +55,6 @@ jest.mock('@gorhom/bottom-sheet', () => {
         }));
         return ReactModule.createElement(FlatList, {
           ...props,
-          testID: 'perps-pro-market-flat-list',
         });
       },
     ),
@@ -163,6 +162,7 @@ const renderMarketList = (
     marketDataStatus={marketDataStatus}
     onSelect={jest.fn()}
     onToggleFavorite={jest.fn()}
+    pageTab={searchMode ? 'search' : 'all'}
     ref={ref}
     searchMode={searchMode}
   />
@@ -295,7 +295,7 @@ describe('PerpsProMarketList', () => {
     expect(mockScrollToOffset).not.toHaveBeenCalled();
 
     fireEvent(
-      screen.getByTestId('perps-pro-market-flat-list'),
+      screen.getByTestId('perps-pro-market-flat-list-all'),
       'scrollEndDrag',
       {
         nativeEvent: {

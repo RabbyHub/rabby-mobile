@@ -22,8 +22,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Keyboard, Pressable, useWindowDimensions, View } from 'react-native';
-import { ScrollView as GestureHandlerScrollView } from 'react-native-gesture-handler';
+import { Keyboard, useWindowDimensions, View } from 'react-native';
+import PagerView, {
+  type PagerViewOnPageSelectedEvent,
+} from 'react-native-pager-view';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -50,6 +52,7 @@ import {
   PerpsProMarketList,
   type PerpsProMarketListHandle,
 } from './PerpsProMarketList';
+import { PerpsProMarketTabs } from './PerpsProMarketTabs';
 import {
   PerpsProMarketSearchBar,
   type PerpsProMarketSearchBarHandle,
@@ -129,7 +132,10 @@ const PerpsProMarketSelectorComponent = forwardRef<
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const listRef = useRef<PerpsProMarketListHandle>(null);
+  const pagerRef = useRef<PagerView>(null);
+  const listRefs = useRef(
+    new Map<PerpsProMarketTab | 'search', PerpsProMarketListHandle>(),
+  );
   const searchRef = useRef<PerpsProMarketSearchBarHandle>(null);
   const projectionRef = useRef(EMPTY_PERPS_PRO_MARKET_SELECTOR_PROJECTION);
   const selectionRequestRef = useRef(0);
@@ -191,27 +197,64 @@ const PerpsProMarketSelectorComponent = forwardRef<
   const validTabIds = useMemo(() => new Set(tabs.map(tab => tab.id)), [tabs]);
   const resolvedActiveTab = validTabIds.has(activeTab) ? activeTab : 'all';
   const isSearchMode = inputFocused || !!query.trim();
-  const effectiveTab = isSearchMode ? 'all' : resolvedActiveTab;
-  const visibleSlotOrders = useMemo(
+  const tabIdsKey = tabs.map(tab => tab.id).join('\u0000');
+  const activeTabIndex = Math.max(
+    0,
+    tabs.findIndex(tab => tab.id === resolvedActiveTab),
+  );
+  const preparedTabIds = useMemo(() => {
+    const tabIds = tabIdsKey.split('\u0000') as PerpsProMarketTab[];
+    const result = new Set<PerpsProMarketTab>();
+    for (
+      let index = Math.max(0, activeTabIndex - 1);
+      index <= Math.min(tabIds.length - 1, activeTabIndex + 1);
+      index += 1
+    ) {
+      const tabId = tabIds[index];
+      if (tabId) {
+        result.add(tabId);
+      }
+    }
+    return result;
+  }, [activeTabIndex, tabIdsKey]);
+  const searchSlotOrders = useMemo(
     () =>
       buildPerpsProMarketSlotOrders(
         {
           orders: projection.orders,
           recordsByKey: projection.recordsByKey,
         },
-        effectiveTab,
+        'all',
         favoriteMarkets,
         query,
       ),
-    [
-      effectiveTab,
-      favoriteMarkets,
-      projection.orders,
-      projection.recordsByKey,
-      query,
-    ],
+    [favoriteMarkets, projection.orders, projection.recordsByKey, query],
   );
-  const visibleSlots = visibleSlotOrders[sort.field][sort.direction];
+  const slotOrdersByPreparedTab = useMemo(() => {
+    const result = new Map<
+      PerpsProMarketTab,
+      ReturnType<typeof buildPerpsProMarketSlotOrders>
+    >();
+    preparedTabIds.forEach(tab => {
+      const slotOrders = buildPerpsProMarketSlotOrders(
+        {
+          orders: projection.orders,
+          recordsByKey: projection.recordsByKey,
+        },
+        tab,
+        favoriteMarkets,
+        '',
+      );
+      result.set(tab, slotOrders);
+    });
+    return result;
+  }, [
+    favoriteMarkets,
+    preparedTabIds,
+    projection.orders,
+    projection.recordsByKey,
+  ]);
+  const searchSlots = searchSlotOrders[sort.field][sort.direction];
   const dismissSelector = useCallback(() => {
     Keyboard.dismiss();
     modalRef.current?.dismiss();
@@ -238,10 +281,10 @@ const PerpsProMarketSelectorComponent = forwardRef<
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      listRef.current?.scrollToTopIfNeeded();
+      listRefs.current.forEach(list => list.scrollToTopIfNeeded());
     });
     return () => cancelAnimationFrame(frame);
-  }, [effectiveTab, query, sort.direction, sort.field]);
+  }, [query, resolvedActiveTab, sort.direction, sort.field]);
 
   useEffect(() => {
     setPerpsProSessionSort(sort.field, sort.direction);
@@ -321,6 +364,46 @@ const PerpsProMarketSelectorComponent = forwardRef<
       addFavoriteMarket(market.canonicalCoin);
     }
   }, []);
+  const setListRef = useCallback(
+    (
+      tab: PerpsProMarketTab | 'search',
+      handle: PerpsProMarketListHandle | null,
+    ) => {
+      if (handle) {
+        listRefs.current.set(tab, handle);
+      } else {
+        listRefs.current.delete(tab);
+      }
+    },
+    [],
+  );
+  const selectTab = useCallback(
+    (tab: PerpsProMarketTab) => {
+      const targetIndex = tabs.findIndex(item => item.id === tab);
+      if (targetIndex < 0 || targetIndex === activeTabIndex) {
+        return;
+      }
+      const distance = Math.abs(targetIndex - activeTabIndex);
+      setActiveTab(tab);
+      requestAnimationFrame(() => {
+        if (distance === 1) {
+          pagerRef.current?.setPage(targetIndex);
+        } else {
+          pagerRef.current?.setPageWithoutAnimation(targetIndex);
+        }
+      });
+    },
+    [activeTabIndex, tabs],
+  );
+  const handlePageSelected = useCallback(
+    (event: PagerViewOnPageSelectedEvent) => {
+      const selectedTab = tabs[event.nativeEvent.position];
+      if (selectedTab) {
+        setActiveTab(selectedTab.id);
+      }
+    },
+    [tabs],
+  );
   return (
     <PerpsProMarketSelectorDismissProvider onDismiss={dismissSelector}>
       <AppBottomSheetModal
@@ -349,31 +432,11 @@ const PerpsProMarketSelectorComponent = forwardRef<
             value={query}
           />
           {!isSearchMode ? (
-            <GestureHandlerScrollView
-              contentContainerStyle={styles.tabsContent}
-              horizontal
-              keyboardShouldPersistTaps="handled"
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              style={styles.tabs}>
-              {tabs.map(tab => {
-                const active = tab.id === resolvedActiveTab;
-                return (
-                  <Pressable
-                    key={tab.id}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: active }}
-                    onPress={() => setActiveTab(tab.id)}
-                    style={styles.tab}>
-                    <Text
-                      style={active ? styles.activeTabText : styles.tabText}>
-                      {tab.label}
-                    </Text>
-                    {active ? <View style={styles.activeTabIndicator} /> : null}
-                  </Pressable>
-                );
-              })}
-            </GestureHandlerScrollView>
+            <PerpsProMarketTabs
+              activeTab={resolvedActiveTab}
+              onChange={selectTab}
+              tabs={tabs}
+            />
           ) : null}
           {!isSearchMode ? (
             <View
@@ -418,18 +481,57 @@ const PerpsProMarketSelectorComponent = forwardRef<
               </View>
             </View>
           ) : null}
-          <PerpsProMarketList
-            bottomInset={insets.bottom}
-            currentMarketKey={currentMarketKey}
-            data={visibleSlots}
-            favoriteSet={favoriteSet}
-            marketDataStatus={marketDataStatus}
-            onPrefetch={onPrefetch}
-            onSelect={selectMarket}
-            onToggleFavorite={toggleFavorite}
-            ref={listRef}
-            searchMode={isSearchMode}
-          />
+          {isSearchMode ? (
+            <PerpsProMarketList
+              bottomInset={insets.bottom}
+              currentMarketKey={currentMarketKey}
+              data={searchSlots}
+              favoriteSet={favoriteSet}
+              marketDataStatus={marketDataStatus}
+              onPrefetch={onPrefetch}
+              onSelect={selectMarket}
+              onToggleFavorite={toggleFavorite}
+              pageTab="search"
+              ref={handle => setListRef('search', handle)}
+              searchMode
+            />
+          ) : (
+            <PagerView
+              initialPage={activeTabIndex}
+              key={tabIdsKey}
+              onPageSelected={handlePageSelected}
+              ref={pagerRef}
+              style={styles.pager}
+              testID="perps-pro-market-pager">
+              {tabs.map(tab => {
+                const slotOrders = slotOrdersByPreparedTab.get(tab.id);
+                const slots = slotOrders?.[sort.field][sort.direction];
+                return (
+                  <View
+                    collapsable={false}
+                    key={tab.id}
+                    style={styles.page}
+                    testID={`perps-pro-market-page-${tab.id}`}>
+                    {slots ? (
+                      <PerpsProMarketList
+                        bottomInset={insets.bottom}
+                        currentMarketKey={currentMarketKey}
+                        data={slots}
+                        favoriteSet={favoriteSet}
+                        marketDataStatus={marketDataStatus}
+                        onPrefetch={onPrefetch}
+                        onSelect={selectMarket}
+                        onToggleFavorite={toggleFavorite}
+                        pageTab={tab.id}
+                        ref={handle => setListRef(tab.id, handle)}
+                        searchMode={false}
+                      />
+                    ) : null}
+                  </View>
+                );
+              })}
+            </PagerView>
+          )}
         </View>
       </AppBottomSheetModal>
     </PerpsProMarketSelectorDismissProvider>
@@ -447,50 +549,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     paddingTop: 0,
   },
+  pager: {
+    flex: 1,
+  },
+  page: {
+    flex: 1,
+  },
   search: {
     marginLeft: 15,
     marginRight: 15,
     marginTop: 4,
-  },
-  tabs: {
-    borderBottomColor: colors2024['neutral-line'],
-    borderBottomWidth: 1,
-    flexGrow: 0,
-    marginTop: 10,
-  },
-  tabsContent: {
-    gap: 14,
-    paddingLeft: 16,
-    paddingRight: 20,
-  },
-  tab: {
-    alignItems: 'center',
-    height: 40,
-    paddingTop: 12,
-  },
-  tabText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  activeTabText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  activeTabIndicator: {
-    backgroundColor: colors2024['neutral-title-1'],
-    borderRadius: 2,
-    bottom: 0,
-    height: 4,
-    left: '50%',
-    marginLeft: -10,
-    position: 'absolute',
-    width: 20,
   },
   columnHeader: {
     alignItems: 'flex-start',
