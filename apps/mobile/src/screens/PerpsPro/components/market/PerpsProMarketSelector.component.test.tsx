@@ -1,10 +1,35 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
 import React from 'react';
 
 const mockBottomSheetFlatListProps = jest.fn();
 const mockPresent = jest.fn();
 const mockDismiss = jest.fn();
 const mockScrollToOffset = jest.fn();
+const mockPagerSetPage = jest.fn();
+const mockPagerSetPageWithoutAnimation = jest.fn();
+
+jest.mock('react-native-pager-view', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return ReactModule.forwardRef(
+    (
+      { children, ...props }: { children: React.ReactNode },
+      ref: React.Ref<unknown>,
+    ) => {
+      ReactModule.useImperativeHandle(ref, () => ({
+        setPage: mockPagerSetPage,
+        setPageWithoutAnimation: mockPagerSetPageWithoutAnimation,
+      }));
+      return ReactModule.createElement(View, props, children);
+    },
+  );
+});
 
 jest.mock('@/assets/icons/dapp/icon-star-full.svg', () => {
   const ReactModule = require('react');
@@ -296,7 +321,6 @@ jest.mock('@gorhom/bottom-sheet', () => {
         }));
         return ReactModule.createElement(FlatList, {
           ...props,
-          testID: 'perps-pro-market-flat-list',
         });
       },
     ),
@@ -362,10 +386,17 @@ const { __resetStore, __updateMarket, removeFavoriteMarket } = jest.requireMock(
   removeFavoriteMarket: jest.Mock;
 };
 
-const getLatestListProps = () =>
-  mockBottomSheetFlatListProps.mock.calls[
-    mockBottomSheetFlatListProps.mock.calls.length - 1
-  ][0];
+const getLatestListProps = (pageTab: string = 'all') => {
+  const call = [...mockBottomSheetFlatListProps.mock.calls]
+    .reverse()
+    .find(
+      ([props]) => props.testID === `perps-pro-market-flat-list-${pageTab}`,
+    );
+  if (!call) {
+    throw new Error(`Missing rendered ${pageTab} market list`);
+  }
+  return call[0];
+};
 
 describe('PerpsProMarketSelector component', () => {
   beforeEach(() => {
@@ -402,8 +433,9 @@ describe('PerpsProMarketSelector component', () => {
     expect(mockPresent).toHaveBeenCalledTimes(1);
     expect(getLatestListProps().data).toHaveLength(296);
     expect(
-      screen.getAllByLabelText(/page\.perps\.pro\.marketSelector\.select:/)
-        .length,
+      within(screen.getByTestId('perps-pro-market-page-all')).getAllByLabelText(
+        /page\.perps\.pro\.marketSelector\.select:/,
+      ).length,
     ).toBeLessThanOrEqual(10);
 
     const nameSortControl = screen.getByTestId('perps-pro-market-sort-name');
@@ -427,28 +459,30 @@ describe('PerpsProMarketSelector component', () => {
 
       expect(getLatestListProps().data).toHaveLength(296);
       expect(
-        screen.getAllByLabelText(/page\.perps\.pro\.marketSelector\.select:/)
-          .length,
+        within(
+          screen.getByTestId('perps-pro-market-page-all'),
+        ).getAllByLabelText(/page\.perps\.pro\.marketSelector\.select:/).length,
       ).toBeLessThanOrEqual(10);
     }
 
+    const allPage = within(screen.getByTestId('perps-pro-market-page-all'));
     expect(
-      screen.getByLabelText(
+      allPage.getByLabelText(
         'page.perps.pro.marketSelector.select:MARKET000USDC',
       ).props.accessibilityState,
     ).toEqual({ selected: true });
     expect(
-      screen.getByLabelText(
+      allPage.getByLabelText(
         'page.perps.pro.marketSelector.removeFavorite:MARKET000USDC',
       ),
     ).toBeTruthy();
     expect(
-      screen.getByLabelText(
+      allPage.getByLabelText(
         'hyperliquid::MARKET000:https://example.test/MARKET000.png',
       ),
     ).toBeTruthy();
-    expect(screen.getByText('100.00')).toBeTruthy();
-    expect(screen.getByText('+1.01%')).toBeTruthy();
+    expect(allPage.getByText('100.00')).toBeTruthy();
+    expect(allPage.getByText('+1.01%')).toBeTruthy();
 
     const listRenderCountBeforeMarkUpdate =
       mockBottomSheetFlatListProps.mock.calls.length;
@@ -460,11 +494,11 @@ describe('PerpsProMarketSelector component', () => {
       listRenderCountBeforeMarkUpdate,
     );
     expect(getLatestListProps().data).toBe(slotsBeforeMarkUpdate);
-    expect(screen.getByText('150.00')).toBeTruthy();
-    expect(screen.getByText('+51.52%')).toBeTruthy();
+    expect(allPage.getByText('150.00')).toBeTruthy();
+    expect(allPage.getByText('+51.52%')).toBeTruthy();
 
     fireEvent(
-      screen.getByTestId('perps-pro-market-flat-list'),
+      screen.getByTestId('perps-pro-market-flat-list-all'),
       'scrollEndDrag',
       {
         nativeEvent: {
@@ -502,16 +536,18 @@ describe('PerpsProMarketSelector component', () => {
     act(() => {
       jest.runOnlyPendingTimers();
     });
-    expect(getLatestListProps().data).toHaveLength(2);
+    expect(getLatestListProps('favorites').data).toHaveLength(2);
 
     fireEvent.press(
-      screen.getByLabelText(
+      within(
+        screen.getByTestId('perps-pro-market-page-favorites'),
+      ).getByLabelText(
         'page.perps.pro.marketSelector.removeFavorite:MARKET000USDC',
       ),
       { stopPropagation: jest.fn() },
     );
     expect(removeFavoriteMarket).toHaveBeenCalledWith('MARKET000');
-    expect(getLatestListProps().data).toHaveLength(1);
+    expect(getLatestListProps('favorites').data).toHaveLength(1);
 
     act(() => {
       fireEvent(screen.getByTestId('market-search'), 'focus');
@@ -524,7 +560,7 @@ describe('PerpsProMarketSelector component', () => {
     expect(screen.queryByTestId('perps-pro-market-column-header')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-name')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-volume')).toBeNull();
-    expect(getLatestListProps().data).toHaveLength(1);
+    expect(getLatestListProps('search').data).toHaveLength(1);
 
     act(() => {
       fireEvent.press(screen.getByTestId('market-search-cancel'));
@@ -532,14 +568,16 @@ describe('PerpsProMarketSelector component', () => {
     act(() => {
       jest.runOnlyPendingTimers();
     });
-    expect(getLatestListProps().data).toHaveLength(1);
+    expect(getLatestListProps('favorites').data).toHaveLength(1);
     expect(
       screen.getByText('page.perps.pro.marketSelector.favorites'),
     ).toBeTruthy();
     expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
 
     fireEvent.press(
-      screen.getByLabelText(
+      within(
+        screen.getByTestId('perps-pro-market-page-favorites'),
+      ).getByLabelText(
         'page.perps.pro.marketSelector.removeFavorite:MARKET001USDC',
       ),
       { stopPropagation: jest.fn() },
@@ -548,7 +586,7 @@ describe('PerpsProMarketSelector component', () => {
     expect(
       screen.queryByText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
-    expect(getLatestListProps().data).toHaveLength(296);
+    expect(getLatestListProps('all').data).toHaveLength(296);
 
     act(() => {
       fireEvent(screen.getByTestId('market-search'), 'focus');
@@ -557,7 +595,7 @@ describe('PerpsProMarketSelector component', () => {
     act(() => {
       jest.runOnlyPendingTimers();
     });
-    expect(getLatestListProps().data).toHaveLength(1);
+    expect(getLatestListProps('search').data).toHaveLength(1);
 
     fireEvent.press(
       screen.getByLabelText(

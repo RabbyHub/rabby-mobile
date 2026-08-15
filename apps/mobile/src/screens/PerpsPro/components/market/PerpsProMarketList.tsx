@@ -25,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProMarketSlot } from '../../model/marketSelectorProjection';
+import type { PerpsProMarketTab } from '../../model/market';
 import {
   PERPS_PRO_MARKET_ITEM_HEIGHT,
   PERPS_PRO_MARKET_ROW_GAP,
@@ -55,6 +56,7 @@ type PerpsProMarketListProps = {
   onPrefetch?: (coin: string) => void;
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
+  pageTab: PerpsProMarketTab | 'search';
   searchMode: boolean;
 };
 
@@ -72,6 +74,7 @@ const PerpsProMarketListComponent = forwardRef<
       onPrefetch,
       onSelect,
       onToggleFavorite,
+      pageTab,
       searchMode,
     },
     ref,
@@ -195,6 +198,7 @@ const PerpsProMarketListComponent = forwardRef<
         ref={listRef}
         renderItem={renderItem}
         style={styles.list}
+        testID={`perps-pro-market-flat-list-${pageTab}`}
         updateCellsBatchingPeriod={PERPS_PRO_MARKET_RENDER_BATCH_PERIOD}
         windowSize={PERPS_PRO_MARKET_WINDOW_SIZE}
       />
