@@ -92,6 +92,10 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
+jest.mock('@/hooks/lang', () => ({
+  useAppLanguage: () => ({ currentLanguage: 'en-US' }),
+}));
+
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({}),
 }));

@@ -18,6 +18,7 @@ describe('Perps Pro field explanations', () => {
         'reduceOnly',
         'roi',
         'tpSl',
+        'totalValue',
       ].sort(),
     );
   });
@@ -78,6 +79,11 @@ describe('Perps Pro field explanations', () => {
         title: 'TP/SL',
         description:
           'Places basic market TP/SL orders. For advanced features such as partial TP/SL, set TP/SL on an open position.',
+      },
+      totalValue: {
+        title: 'Total Value',
+        description:
+          'Portfolio Value includes the value of spot assets in your Unified Account.',
       },
     });
   });

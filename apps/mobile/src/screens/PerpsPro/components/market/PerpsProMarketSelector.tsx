@@ -10,6 +10,7 @@ import {
   type PerpsState,
 } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { useAppLanguage } from '@/hooks/lang';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TouchableOpacity as BottomSheetTouchableOpacity } from '@gorhom/bottom-sheet';
 import React, {
@@ -131,6 +132,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { colors2024, styles } = useTheme2024({ getStyle });
+  const { currentLanguage } = useAppLanguage();
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const pagerRef = useRef<PagerView>(null);
@@ -165,8 +167,12 @@ const PerpsProMarketSelectorComponent = forwardRef<
   }, [projection]);
   const visibleCategories = useMemo(
     () =>
-      buildVisiblePerpsProCategoriesFromIds(categories, projection.categoryIds),
-    [categories, projection.categoryIds],
+      buildVisiblePerpsProCategoriesFromIds(
+        categories,
+        projection.categoryIds,
+        currentLanguage,
+      ),
+    [categories, currentLanguage, projection.categoryIds],
   );
   const favoriteSet = useMemo(
     () => new Set(favoriteMarkets.map(item => item.toUpperCase())),

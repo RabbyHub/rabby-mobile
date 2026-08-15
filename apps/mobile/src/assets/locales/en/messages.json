@@ -2769,6 +2769,10 @@
           "estimatedPnl": {
             "title": "Estimated PNL",
             "description": "Estimated PNL represents the projected profit or loss from closing a position. The actual realized PNL may differ due to trading fees and variations in the execution price. This estimate is provided for reference only."
+          },
+          "totalValue": {
+            "title": "Total Value",
+            "description": "Portfolio Value includes the value of spot assets in your Unified Account."
           }
         },
         "chart": {
