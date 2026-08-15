@@ -67,9 +67,17 @@ export const PerpsProPositionCard: React.FC<{
     position: PerpsPositionViewModel,
     tab: 'partial' | 'position',
   ) => void;
+  onPressMarket?: (coin: string) => void;
   position: PerpsPositionViewModel;
 }> = React.memo(
-  ({ accountIdentity, onClose, onEditLeverage, onEditTpSl, position }) => {
+  ({
+    accountIdentity,
+    onClose,
+    onEditLeverage,
+    onEditTpSl,
+    onPressMarket,
+    position,
+  }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const openFieldExplanation = usePerpsProFieldExplanation();
@@ -143,9 +151,17 @@ export const PerpsProPositionCard: React.FC<{
               {isLong ? 'B' : 'S'}
             </Text>
           </View>
-          <Text numberOfLines={1} style={styles.coin}>
-            {market.displayPair}
-          </Text>
+          <Pressable
+            accessibilityLabel={market.displayPair}
+            accessibilityRole="button"
+            disabled={!onPressMarket}
+            onPress={() => onPressMarket?.(position.coin)}
+            style={styles.marketButton}
+            testID={`perps-pro-position-market-${position.key}`}>
+            <Text numberOfLines={1} style={styles.coin}>
+              {market.displayPair}
+            </Text>
+          </Pressable>
           <View style={isLong ? styles.longTag : styles.shortTag}>
             <Text style={isLong ? styles.longText : styles.shortText}>
               {isLong
@@ -438,6 +454,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     maxWidth: 140,
   },
+  marketButton: { flexShrink: 1, maxWidth: 140 },
   longTag: {
     backgroundColor: colors2024['green-light-1'],
     borderRadius: 4,

@@ -90,6 +90,21 @@ const order = (
 });
 
 describe('PerpsProOpenOrderCard', () => {
+  it('opens the market represented by the pair label', () => {
+    const onPressMarket = jest.fn();
+    render(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        onCancel={jest.fn()}
+        onPressMarket={onPressMarket}
+        order={order()}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-order-market-basic:BTC:1'));
+    expect(onPressMarket).toHaveBeenCalledWith('BTC');
+  });
+
   it('shows Basic progress in the base asset and an enabled cancel entry', () => {
     const onCancel = jest.fn();
     render(

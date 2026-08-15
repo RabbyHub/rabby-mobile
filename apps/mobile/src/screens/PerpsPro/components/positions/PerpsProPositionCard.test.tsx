@@ -142,6 +142,20 @@ describe('PerpsProPositionCard', () => {
     __resetPerpsProPositionSizeUnitSessionForTests();
   });
 
+  it('opens the card market', () => {
+    const onPressMarket = jest.fn();
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onPressMarket={onPressMarket}
+        position={createPosition()}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-position-market-BTC'));
+    expect(onPressMarket).toHaveBeenCalledWith('BTC');
+  });
+
   it('maps every position dotted label to its approved explanation', () => {
     const view = render(
       <PerpsProPositionCard
