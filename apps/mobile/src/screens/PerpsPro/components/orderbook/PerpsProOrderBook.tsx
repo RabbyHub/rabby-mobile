@@ -122,7 +122,6 @@ export const PerpsProOrderBook: React.FC<{
         onSelectPrice={onSelectPrice}
         priceDecimals={orderBookPriceDecimals}
         side={side}
-        szDecimals={market?.marketData.szDecimals}
       />
     ));
 

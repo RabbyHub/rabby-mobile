@@ -98,7 +98,7 @@ jest.mock('react-i18next', () => ({
     t: (key: string) =>
       ({
         'page.perps.pro.trade.buy': 'Buy',
-        'page.perps.pro.trade.confirmationReduceOnly': 'reduce only',
+        'page.perps.pro.trade.confirmationReduceOnly': 'Reduce Only',
         'page.perps.pro.trade.long': 'Long',
         'page.perps.pro.trade.markPrice': 'Mark Price',
         'page.perps.pro.trade.market': 'Market',
@@ -286,7 +286,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
   it('shows the reviewed Reduce Only value', () => {
     renderSheet({ ...parent, reduceOnly: true });
 
-    expect(screen.getByText('reduce only')).toBeTruthy();
+    expect(screen.getByText('Reduce Only')).toBeTruthy();
     expect(screen.getByText('Yes')).toBeTruthy();
 
     const detailTexts = screen
@@ -302,7 +302,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
       '105.00 USDC',
       'estimatedLiquidationPrice',
       '55.00 USDC (-40.00%)',
-      'reduce only',
+      'Reduce Only',
       'Yes',
     ]);
   });

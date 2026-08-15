@@ -61,7 +61,6 @@ export const PerpsProOrderBookRow: React.FC<{
   onSelectPrice?: (price: string) => void;
   priceDecimals: number;
   side: 'ask' | 'bid';
-  szDecimals?: number;
 }> = ({
   amountUnit = 'quote',
   level,
@@ -69,7 +68,6 @@ export const PerpsProOrderBookRow: React.FC<{
   onSelectPrice,
   priceDecimals,
   side,
-  szDecimals = 2,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const depth = level ? getPerpsOrderBookDepthPercent(level, maxTotal) : 0;
@@ -107,9 +105,7 @@ export const PerpsProOrderBookRow: React.FC<{
         {level
           ? formatPerpsProCompactNumber(
               amountUnit === 'base' ? level.size : level.usdSize,
-              amountUnit === 'base'
-                ? szDecimals
-                : PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS,
+              PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS,
             )
           : ''}
       </Text>

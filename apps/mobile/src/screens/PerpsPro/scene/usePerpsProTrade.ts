@@ -69,6 +69,7 @@ import {
   getPerpsProReduceOnlyAvailability,
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
+  isPerpsProAmountAboveBothMax,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
   type PerpsProConditionalExecution,
@@ -234,6 +235,7 @@ export const usePerpsProTrade = ({
   const amountDraftsByOrderTypeRef = useRef(
     createPerpsProTradeOrderTypeAmountDrafts(),
   );
+  const amountOverflowToastActiveRef = useRef(false);
   amountSourceRef.current = amountSource;
   percentageRef.current = percentage;
   const formRevisionRef = useRef(0);
@@ -386,6 +388,7 @@ export const usePerpsProTrade = ({
     amountDraftsByOrderTypeRef.current =
       createPerpsProTradeOrderTypeAmountDrafts();
     amountDraftRef.current = createPerpsProTradeAmountDraft();
+    amountOverflowToastActiveRef.current = false;
     amountSourceRef.current = 'manual';
     percentageRef.current = 0;
     setAmountSource('manual');
@@ -467,38 +470,6 @@ export const usePerpsProTrade = ({
     amountUnit: form.amountUnit,
     szDecimals: market?.marketData.szDecimals ?? 0,
   });
-  const setAmount = useCallback(
-    (value: string) => {
-      const amount = sanitizePerpsProDecimalInput(value, amountDecimals);
-      amountDraftRef.current = updatePerpsProTradeAmountDraft({
-        amount,
-        amountUnit: form.amountUnit,
-        price: displayReferencePrice,
-        szDecimals: market?.marketData.szDecimals ?? 0,
-      });
-      amountSourceRef.current = 'manual';
-      percentageRef.current = 0;
-      setAmountSource('manual');
-      setPercentageState(0);
-      patchForm({ amount });
-    },
-    [
-      amountDecimals,
-      displayReferencePrice,
-      form.amountUnit,
-      market?.marketData.szDecimals,
-      patchForm,
-    ],
-  );
-  const beginAmountEntry = useCallback(() => {
-    if (amountSource !== 'slider') return;
-    amountDraftRef.current = createPerpsProTradeAmountDraft();
-    amountSourceRef.current = 'manual';
-    percentageRef.current = 0;
-    setAmountSource('manual');
-    setPercentageState(0);
-    patchForm({ amount: '' });
-  }, [amountSource, patchForm]);
   const setPrice = useCallback(
     (
       field: 'conditionalLimitPrice' | 'limitPrice' | 'triggerPrice',
@@ -559,6 +530,8 @@ export const usePerpsProTrade = ({
     const currentForm = formRef.current;
     if (currentForm.amountUnit === amountUnit) return;
 
+    amountOverflowToastActiveRef.current = false;
+
     if (amountSourceRef.current === 'slider') {
       amountDraftRef.current = createPerpsProTradeAmountDraft();
       amountSourceRef.current = 'manual';
@@ -603,6 +576,7 @@ export const usePerpsProTrade = ({
 
   const toggleAmountUnit = useCallback(() => {
     const next = form.amountUnit === 'quote' ? 'base' : 'quote';
+    amountOverflowToastActiveRef.current = false;
     if (amountSource === 'slider') {
       amountDraftRef.current = createPerpsProTradeAmountDraft();
       amountSourceRef.current = 'manual';
@@ -839,6 +813,56 @@ export const usePerpsProTrade = ({
       }),
     [form, getBboPrice, getMaxBase, maxDisplayMarketPrice],
   );
+  const setAmount = useCallback(
+    (value: string) => {
+      const amount = sanitizePerpsProDecimalInput(value, amountDecimals);
+      amountDraftRef.current = updatePerpsProTradeAmountDraft({
+        amount,
+        amountUnit: form.amountUnit,
+        price: displayReferencePrice,
+        szDecimals: market?.marketData.szDecimals ?? 0,
+      });
+      amountSourceRef.current = 'manual';
+      percentageRef.current = 0;
+      setAmountSource('manual');
+      setPercentageState(0);
+      patchForm({ amount });
+
+      const amountAboveBothMax =
+        !form.reduceOnly &&
+        tradeConfigurationReady &&
+        isPerpsProAmountAboveBothMax({
+          amount,
+          buyMax: getMaxDisplayAmount('buy'),
+          sellMax: getMaxDisplayAmount('sell'),
+        });
+      if (amountAboveBothMax && !amountOverflowToastActiveRef.current) {
+        showToast(t('page.perps.pro.trade.insufficientBalance'), 'error');
+      }
+      amountOverflowToastActiveRef.current = amountAboveBothMax;
+    },
+    [
+      amountDecimals,
+      displayReferencePrice,
+      form.amountUnit,
+      form.reduceOnly,
+      getMaxDisplayAmount,
+      market?.marketData.szDecimals,
+      patchForm,
+      t,
+      tradeConfigurationReady,
+    ],
+  );
+  const beginAmountEntry = useCallback(() => {
+    if (amountSource !== 'slider') return;
+    amountDraftRef.current = createPerpsProTradeAmountDraft();
+    amountOverflowToastActiveRef.current = false;
+    amountSourceRef.current = 'manual';
+    percentageRef.current = 0;
+    setAmountSource('manual');
+    setPercentageState(0);
+    patchForm({ amount: '' });
+  }, [amountSource, patchForm]);
   const getSideProjection = useCallback(
     (side: PerpsProTradeSide) =>
       resolvePerpsProTradeProjection({
@@ -942,6 +966,7 @@ export const usePerpsProTrade = ({
   );
   const setPercentage = useCallback(
     (percent: number) => {
+      amountOverflowToastActiveRef.current = false;
       const next = Math.max(0, Math.min(100, percent));
       const nextSource = next === 0 ? 'manual' : 'slider';
       if (next === 0) {
@@ -1481,6 +1506,7 @@ export const usePerpsProTrade = ({
         amountDraftsByOrderTypeRef.current =
           createPerpsProTradeOrderTypeAmountDrafts();
         amountDraftRef.current = createPerpsProTradeAmountDraft();
+        amountOverflowToastActiveRef.current = false;
         amountSourceRef.current = 'manual';
         percentageRef.current = 0;
         patchForm({ amount: '' });
@@ -1642,6 +1668,7 @@ export const usePerpsProTrade = ({
         amountDraftsByOrderTypeRef.current =
           createPerpsProTradeOrderTypeAmountDrafts();
         amountDraftRef.current = createPerpsProTradeAmountDraft();
+        amountOverflowToastActiveRef.current = false;
         amountSourceRef.current = 'manual';
         percentageRef.current = 0;
         patchForm({

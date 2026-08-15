@@ -124,4 +124,61 @@ describe('PerpsProSlider neutral design', () => {
       onValueChange,
     });
   });
+
+  it('keeps the default disabled appearance for existing callers', () => {
+    render(<PerpsProSlider disabled tone="neutral" value={20} />);
+
+    expect(screen.getByTestId('slider-input').props).toMatchObject({
+      allowTouchTrack: false,
+      disabled: true,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-track').props.style,
+      ),
+    ).toMatchObject({ backgroundColor: 'neutral-secondary' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-track-progress').props
+          .style,
+      ),
+    ).toMatchObject({ backgroundColor: 'neutral-secondary' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-thumb').props.style,
+      ),
+    ).toMatchObject({ borderColor: 'neutral-secondary' });
+  });
+
+  it('can disable interaction without dimming the leverage slider colors', () => {
+    render(
+      <PerpsProSlider
+        disabled
+        dimWhenDisabled={false}
+        tone="neutral"
+        value={20}
+      />,
+    );
+
+    expect(screen.getByTestId('slider-input').props).toMatchObject({
+      allowTouchTrack: false,
+      disabled: true,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-track').props.style,
+      ),
+    ).toMatchObject({ backgroundColor: 'neutral-line' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-track-progress').props
+          .style,
+      ),
+    ).toMatchObject({ backgroundColor: 'neutral-title-1' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-thumb').props.style,
+      ),
+    ).toMatchObject({ borderColor: 'neutral-title-1' });
+  });
 });

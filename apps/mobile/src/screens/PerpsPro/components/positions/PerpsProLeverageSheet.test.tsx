@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 
 const mockShowToast = jest.fn();
 const mockSliderHapticComplete = jest.fn();
@@ -186,6 +186,7 @@ describe('PerpsProLeverageSheet', () => {
       screen.getByTestId('perps-pro-leverage-input').props.selection,
     ).toEqual({ end: 2, start: 2 });
     expect(screen.getByTestId('leverage-slider').props).toMatchObject({
+      dimWhenDisabled: false,
       pointCount: 5,
       tone: 'neutral',
     });
@@ -243,6 +244,52 @@ describe('PerpsProLeverageSheet', () => {
     expect(mockKeyboardDismiss).toHaveBeenCalledTimes(1);
     expect(mockSliderHapticStart).not.toHaveBeenCalled();
     expect(mockSliderHapticValueChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps the complete market maximum visible at the slider endpoint', () => {
+    const onConfirm = jest.fn();
+    render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={onConfirm}
+        pending={false}
+        visible
+      />,
+    );
+
+    fireEvent(screen.getByTestId('leverage-slider'), 'valueChange', 40);
+
+    const input = screen.getByTestId('perps-pro-leverage-input');
+    expect(input.props.value).toBe('40');
+    expect(StyleSheet.flatten(input.props.style).width).toBeGreaterThanOrEqual(
+      28,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
+    expect(onConfirm).toHaveBeenCalledWith(40);
+  });
+
+  it('locks the pending slider without changing its visual appearance', () => {
+    render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={jest.fn()}
+        pending
+        visible
+      />,
+    );
+
+    expect(screen.getByTestId('leverage-slider').props).toMatchObject({
+      dimWhenDisabled: false,
+      disabled: true,
+    });
+    expect(screen.getByTestId('perps-pro-leverage-confirm').props.loading).toBe(
+      true,
+    );
   });
 
   it('clamps values above the market maximum while rejecting illegal characters', () => {
