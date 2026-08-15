@@ -319,6 +319,11 @@ const subscribeLatestPerpsTrade = (
   };
 };
 
+export const subscribeToPerpsLatestTrade = (
+  coin: string,
+  listener: LatestTradeListener,
+) => subscribeLatestPerpsTrade(coin, listener);
+
 const readLatestTradeSnapshot = (coin: string): LatestTradeSnapshot => {
   const sdk = apisPerps.getPerpsSDK();
   const liveEntry = latestTradeRegistry.get(coin);

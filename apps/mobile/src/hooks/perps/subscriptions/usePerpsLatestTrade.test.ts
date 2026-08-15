@@ -31,6 +31,7 @@ jest.mock('@/core/apis/perps', () => ({
 import {
   prewarmPerpsLatestTrade,
   resetPerpsLatestTradeRegistryForTests,
+  subscribeToPerpsLatestTrade,
   usePerpsLatestTrade,
 } from './usePerpsLatestTrade';
 
@@ -77,6 +78,30 @@ describe('usePerpsLatestTrade shared registry', () => {
 
     cancelPrewarm();
     scene.unmount();
+    expect(mockUnsubscribers[0]).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares the same socket subscription with an imperative consumer', () => {
+    const listener = jest.fn();
+    const detach = subscribeToPerpsLatestTrade('BTC', listener);
+    const hook = renderHook(() =>
+      usePerpsLatestTrade({ coin: 'BTC', enabled: true }),
+    );
+
+    expect(mockWs.subscribeToTrades).toHaveBeenCalledTimes(1);
+    act(() => emitTrades([trade(4)]));
+    expect(listener).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        identity: 'BTC',
+        status: 'ready',
+        trade: expect.objectContaining({ tid: 4, time: 4 }),
+      }),
+    );
+    expect(hook.result.current.trade).toMatchObject({ tid: 4, time: 4 });
+
+    detach();
+    expect(mockUnsubscribers[0]).not.toHaveBeenCalled();
+    hook.unmount();
     expect(mockUnsubscribers[0]).toHaveBeenCalledTimes(1);
   });
 
