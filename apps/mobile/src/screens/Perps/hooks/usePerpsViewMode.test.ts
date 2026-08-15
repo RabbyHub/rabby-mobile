@@ -13,17 +13,23 @@ const createDeferred = <T>() => {
 };
 
 const createController = ({
-  getPerpsViewMode = jest.fn(async () => 'simple' as PerpsViewMode),
+  getPerpsViewModePreference = jest.fn(async () => ({
+    hasVisitedPro: false,
+    viewMode: 'simple' as PerpsViewMode,
+  })),
   setPerpsViewMode = jest.fn(async () => undefined),
 }: {
-  getPerpsViewMode?: jest.Mock<Promise<PerpsViewMode>, []>;
+  getPerpsViewModePreference?: jest.Mock<
+    Promise<{ hasVisitedPro: boolean; viewMode: PerpsViewMode }>,
+    []
+  >;
   setPerpsViewMode?: jest.Mock<Promise<unknown>, [PerpsViewMode]>;
 } = {}) => {
   const controller = createPerpsViewModeController({
-    getPerpsViewMode,
+    getPerpsViewModePreference,
     setPerpsViewMode,
   });
-  return { controller, getPerpsViewMode, setPerpsViewMode };
+  return { controller, getPerpsViewModePreference, setPerpsViewMode };
 };
 
 describe('Perps view mode controller', () => {
@@ -40,9 +46,12 @@ describe('Perps view mode controller', () => {
   });
 
   it('shares one hydration read and publishes one immutable snapshot', async () => {
-    const read = createDeferred<PerpsViewMode>();
-    const getPerpsViewMode = jest.fn(() => read.promise);
-    const { controller } = createController({ getPerpsViewMode });
+    const read = createDeferred<{
+      hasVisitedPro: boolean;
+      viewMode: PerpsViewMode;
+    }>();
+    const getPerpsViewModePreference = jest.fn(() => read.promise);
+    const { controller } = createController({ getPerpsViewModePreference });
     const listener = jest.fn();
     controller.subscribe(listener);
 
@@ -50,15 +59,16 @@ describe('Perps view mode controller', () => {
     const secondHydration = controller.hydrate();
 
     expect(firstHydration).toBe(secondHydration);
-    expect(getPerpsViewMode).not.toHaveBeenCalled();
+    expect(getPerpsViewModePreference).not.toHaveBeenCalled();
     await Promise.resolve();
-    expect(getPerpsViewMode).toHaveBeenCalledTimes(1);
+    expect(getPerpsViewModePreference).toHaveBeenCalledTimes(1);
 
-    read.resolve('pro');
+    read.resolve({ hasVisitedPro: true, viewMode: 'pro' });
     await firstHydration;
 
     expect(controller.getSnapshot()).toEqual({
       hydrated: true,
+      hasVisitedPro: true,
       viewMode: 'pro',
       savingMode: null,
       error: null,
@@ -66,22 +76,23 @@ describe('Perps view mode controller', () => {
     expect(listener).toHaveBeenCalledTimes(1);
 
     await controller.hydrate();
-    expect(getPerpsViewMode).toHaveBeenCalledTimes(1);
+    expect(getPerpsViewModePreference).toHaveBeenCalledTimes(1);
   });
 
   it('fails open to Simple after hydration rejection without writing', async () => {
     const error = new Error('read failed');
-    const getPerpsViewMode = jest.fn(async () => {
+    const getPerpsViewModePreference = jest.fn(async () => {
       throw error;
     });
     const { controller, setPerpsViewMode } = createController({
-      getPerpsViewMode,
+      getPerpsViewModePreference,
     });
 
     await controller.hydrate();
 
     expect(controller.getSnapshot()).toEqual({
       hydrated: true,
+      hasVisitedPro: false,
       viewMode: 'simple',
       savingMode: null,
       error,
@@ -110,6 +121,7 @@ describe('Perps view mode controller', () => {
     const savePromise = controller.setViewMode('pro');
     expect(controller.getSnapshot()).toEqual({
       hydrated: true,
+      hasVisitedPro: false,
       viewMode: 'simple',
       savingMode: 'pro',
       error: null,
@@ -121,6 +133,7 @@ describe('Perps view mode controller', () => {
     await expect(savePromise).resolves.toBe(true);
     expect(controller.getSnapshot()).toEqual({
       hydrated: true,
+      hasVisitedPro: true,
       viewMode: 'pro',
       savingMode: null,
       error: null,
@@ -158,6 +171,7 @@ describe('Perps view mode controller', () => {
     await expect(controller.setViewMode('pro')).resolves.toBe(false);
     expect(controller.getSnapshot()).toEqual({
       hydrated: true,
+      hasVisitedPro: false,
       viewMode: 'simple',
       savingMode: null,
       error,
@@ -170,6 +184,7 @@ describe('Perps view mode controller', () => {
     await expect(controller.setViewMode('pro')).resolves.toBe(true);
     expect(controller.getSnapshot()).toEqual({
       hydrated: true,
+      hasVisitedPro: true,
       viewMode: 'pro',
       savingMode: null,
       error: null,
@@ -177,14 +192,17 @@ describe('Perps view mode controller', () => {
   });
 
   it('hydrates before handling a mode request made by an early consumer', async () => {
-    const getPerpsViewMode = jest.fn(async () => 'simple' as const);
+    const getPerpsViewModePreference = jest.fn(async () => ({
+      hasVisitedPro: false,
+      viewMode: 'simple' as const,
+    }));
     const { controller, setPerpsViewMode } = createController({
-      getPerpsViewMode,
+      getPerpsViewModePreference,
     });
 
     await expect(controller.setViewMode('pro')).resolves.toBe(true);
 
-    expect(getPerpsViewMode).toHaveBeenCalledTimes(1);
+    expect(getPerpsViewModePreference).toHaveBeenCalledTimes(1);
     expect(setPerpsViewMode).toHaveBeenCalledWith('pro');
     expect(controller.getSnapshot().viewMode).toBe('pro');
   });

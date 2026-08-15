@@ -21,6 +21,10 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: () => 'New' }),
+}));
+
 describe('PerpsModeSwitch', () => {
   it('marks the active label selected and only invokes the inactive mode', () => {
     const onSelectMode = jest.fn();
@@ -134,5 +138,31 @@ describe('PerpsModeSwitch', () => {
 
     expect(onPressInMode).toHaveBeenCalledWith('pro');
     expect(onPressOutMode).toHaveBeenCalledWith('pro');
+  });
+
+  it('renders the Figma New badge without changing the Pro press target', () => {
+    const screen = render(
+      <PerpsModeSwitch
+        activeMode="simple"
+        extendProHitAreaRight
+        onSelectMode={jest.fn()}
+        showProNewBadge
+      />,
+    );
+
+    expect(screen.getByText('New')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-pro-new-badge').props.style),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderRadius: 4,
+      left: 16,
+      paddingHorizontal: 2,
+      position: 'absolute',
+      top: -10,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-mode-pro').props.style),
+    ).toMatchObject({ flex: 1, height: '100%' });
   });
 });

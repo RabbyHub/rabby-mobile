@@ -2573,6 +2573,9 @@
     "perps": {
       "title": "Perps",
       "pro": {
+        "mode": {
+          "new": "New"
+        },
         "common": {
           "loading": "Loading…",
           "reconnecting": "Reconnecting…",

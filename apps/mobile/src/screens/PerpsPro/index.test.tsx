@@ -50,18 +50,25 @@ jest.mock('./scene/PerpsProScene', () => {
   return {
     PerpsProScene: ({
       historyEnabled,
+      initialRegionAlertLayout,
       isModeSwitching,
       onOpenHistory,
       onSwitchToSimple,
     }: {
       historyEnabled: boolean;
+      initialRegionAlertLayout?: { height: number; width: number } | null;
       isModeSwitching: boolean;
       onOpenHistory: () => void;
       onSwitchToSimple: () => void;
     }) =>
       ReactModule.createElement(
         View,
-        null,
+        {
+          accessibilityLabel: initialRegionAlertLayout
+            ? `${initialRegionAlertLayout.width}:${initialRegionAlertLayout.height}`
+            : 'no-alert-layout',
+          testID: 'perps-pro-scene-wrapper',
+        },
         ReactModule.createElement(Pressable, {
           accessibilityLabel: 'pro',
           accessibilityState: { disabled: isModeSwitching },
@@ -88,6 +95,7 @@ describe('PerpsProScreen', () => {
     const onSwitchToSimple = jest.fn();
     const screen = render(
       <PerpsProScreen
+        initialRegionAlertLayout={{ height: 52, width: 361 }}
         isModeSwitching={false}
         onSwitchToSimple={onSwitchToSimple}
       />,
@@ -100,6 +108,9 @@ describe('PerpsProScreen', () => {
     expect(screen.getByTestId('perps-pro-scene').props.accessibilityLabel).toBe(
       'pro',
     );
+    expect(
+      screen.getByTestId('perps-pro-scene-wrapper').props.accessibilityLabel,
+    ).toBe('361:52');
 
     fireEvent.press(screen.getByTestId('perps-pro-scene'));
     expect(onSwitchToSimple).toHaveBeenCalledTimes(1);

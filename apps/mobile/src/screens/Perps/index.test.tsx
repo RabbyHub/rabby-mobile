@@ -15,6 +15,7 @@ let mockRuntimeUnmounts = 0;
 let mockMarketDataStatus: 'idle' | 'success' = 'idle';
 let mockViewModeState = {
   hydrated: false,
+  hasVisitedPro: false,
   viewMode: 'simple' as 'simple' | 'pro',
   savingMode: null as 'simple' | 'pro' | null,
   error: null as unknown,
@@ -86,17 +87,28 @@ jest.mock('./PerpsSimpleScreen', () => {
       isModeSwitching,
       onPressInPro,
       onPressOutPro,
+      onRegionAlertLayout,
       onSwitchToPro,
+      showProNewBadge,
     }: {
       isModeSwitching: boolean;
       onPressInPro?: () => void;
       onPressOutPro?: () => void;
+      onRegionAlertLayout?: (event: object) => void;
       onSwitchToPro: () => void;
+      showProNewBadge?: boolean;
     }) =>
       ReactModule.createElement(
         View,
-        { testID: 'simple-scene' },
+        {
+          accessibilityLabel: `new:${String(showProNewBadge)}`,
+          testID: 'simple-scene',
+        },
         ReactModule.createElement(Text, null, 'Simple scene'),
+        ReactModule.createElement(View, {
+          onLayout: onRegionAlertLayout,
+          testID: 'simple-region-alert',
+        }),
         ReactModule.createElement(Pressable, {
           accessibilityState: { disabled: isModeSwitching },
           disabled: isModeSwitching,
@@ -114,15 +126,22 @@ jest.mock('../PerpsPro', () => {
   const { Pressable, Text, View } = require('react-native');
   return {
     PerpsProScreen: ({
+      initialRegionAlertLayout,
       isModeSwitching,
       onSwitchToSimple,
     }: {
+      initialRegionAlertLayout?: { height: number; width: number } | null;
       isModeSwitching: boolean;
       onSwitchToSimple: () => void;
     }) =>
       ReactModule.createElement(
         View,
-        { testID: 'pro-scene' },
+        {
+          accessibilityLabel: initialRegionAlertLayout
+            ? `${initialRegionAlertLayout.width}:${initialRegionAlertLayout.height}`
+            : 'no-alert-layout',
+          testID: 'pro-scene',
+        },
         ReactModule.createElement(Text, null, 'Pro scene'),
         ReactModule.createElement(Pressable, {
           accessibilityState: { disabled: isModeSwitching },
@@ -142,6 +161,7 @@ describe('PerpsOriginScreen', () => {
     mockMarketDataStatus = 'idle';
     mockViewModeState = {
       hydrated: false,
+      hasVisitedPro: false,
       viewMode: 'simple',
       savingMode: null,
       error: null,
@@ -181,6 +201,27 @@ describe('PerpsOriginScreen', () => {
     });
   });
 
+  it('shows the New badge only before the persisted Pro visit', () => {
+    mockViewModeState = {
+      ...mockViewModeState,
+      hydrated: true,
+      hasVisitedPro: false,
+    };
+    const screen = render(<PerpsOriginScreen />);
+    expect(screen.getByTestId('simple-scene').props.accessibilityLabel).toBe(
+      'new:true',
+    );
+
+    mockViewModeState = {
+      ...mockViewModeState,
+      hasVisitedPro: true,
+    };
+    screen.rerender(<PerpsOriginScreen />);
+    expect(screen.getByTestId('simple-scene').props.accessibilityLabel).toBe(
+      'new:false',
+    );
+  });
+
   it('switches mutually exclusive scenes without remounting the route Runtime', () => {
     mockViewModeState = {
       ...mockViewModeState,
@@ -191,6 +232,10 @@ describe('PerpsOriginScreen', () => {
     expect(screen.getByTestId('simple-scene')).toBeOnTheScreen();
     expect(screen.queryByTestId('pro-scene')).toBeNull();
     expect(mockRuntimeMounts).toBe(1);
+
+    fireEvent(screen.getByTestId('simple-region-alert'), 'layout', {
+      nativeEvent: { layout: { height: 52, width: 361, x: 16, y: 56 } },
+    });
 
     fireEvent.press(screen.getByTestId('switch-to-pro'));
     expect(mockSetViewMode).toHaveBeenCalledWith('pro');
@@ -203,6 +248,9 @@ describe('PerpsOriginScreen', () => {
 
     expect(screen.queryByTestId('simple-scene')).toBeNull();
     expect(screen.getByTestId('pro-scene')).toBeOnTheScreen();
+    expect(screen.getByTestId('pro-scene').props.accessibilityLabel).toBe(
+      '361:52',
+    );
     expect(mockRuntimeMounts).toBe(1);
     expect(mockRuntimeUnmounts).toBe(0);
     expect(mockSetOptions).toHaveBeenCalledTimes(1);

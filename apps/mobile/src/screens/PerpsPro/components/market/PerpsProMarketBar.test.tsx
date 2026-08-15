@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import type { PerpsProMarket } from '../../model/market';
 import { PerpsProMarketBar } from './PerpsProMarketBar';
@@ -81,6 +82,18 @@ describe('PerpsProMarketBar', () => {
         screen.getByTestId('perps-pro-market-actions').props.children,
       ),
     ).toBe(1);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-bar').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'neutral-bg-1',
+      height: 40,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-pro-market-bar').props.style)
+        .borderTopWidth,
+    ).toBeUndefined();
   });
 
   it('disables the K-line action when no market is resolved', () => {

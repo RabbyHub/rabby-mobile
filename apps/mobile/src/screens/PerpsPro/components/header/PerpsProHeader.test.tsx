@@ -35,19 +35,21 @@ jest.mock('../../../PerpsShared/components/PerpsHeader', () => {
       extendProHitAreaRight,
       onPressAccount,
       onSelectMode,
+      showBottomDivider,
     }: {
       accountLabel?: string;
       activeMode: 'simple' | 'pro';
       extendProHitAreaRight?: boolean;
       onPressAccount?: () => void;
       onSelectMode: (mode: 'simple' | 'pro') => void;
+      showBottomDivider: boolean;
     }) =>
       ReactModule.createElement(
         View,
         {
           accessibilityLabel: `${activeMode}:${String(
             extendProHitAreaRight,
-          )}:${String(accountLabel)}`,
+          )}:${String(accountLabel)}:${String(showBottomDivider)}`,
           testID: 'shared-header',
         },
         ReactModule.createElement(Pressable, {
@@ -80,11 +82,12 @@ describe('PerpsProHeader', () => {
       <PerpsProHeader
         isModeSwitching={false}
         onSwitchToSimple={onSwitchToSimple}
+        showBottomDivider
       />,
     );
 
     expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
-      'pro:undefined:Contact alias',
+      'pro:undefined:Contact alias:true',
     );
     expect(mockGetAliasName).toHaveBeenCalledWith(mockAccount.address);
 
@@ -103,11 +106,15 @@ describe('PerpsProHeader', () => {
   it('prefers the account alias so mode changes cannot alter its width source', () => {
     mockAccount = { ...mockAccount, aliasName: 'Wallet alias' };
     const screen = render(
-      <PerpsProHeader isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      <PerpsProHeader
+        isModeSwitching={false}
+        onSwitchToSimple={jest.fn()}
+        showBottomDivider={false}
+      />,
     );
 
     expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
-      'pro:undefined:Wallet alias',
+      'pro:undefined:Wallet alias:false',
     );
   });
 });

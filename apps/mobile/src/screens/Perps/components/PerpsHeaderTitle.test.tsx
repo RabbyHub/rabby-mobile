@@ -28,6 +28,7 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
       onPressInMode,
       onPressOutMode,
       onSelectMode,
+      showBottomDivider,
     }: {
       accountLabel?: string;
       activeMode: 'simple' | 'pro';
@@ -36,13 +37,14 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
       onPressInMode?: (mode: 'simple' | 'pro') => void;
       onPressOutMode?: (mode: 'simple' | 'pro') => void;
       onSelectMode: (mode: 'simple' | 'pro') => void;
+      showBottomDivider: boolean;
     }) =>
       ReactModule.createElement(
         View,
         {
           accessibilityLabel: `${activeMode}:${String(
             extendProHitAreaRight,
-          )}:${String(accountLabel)}`,
+          )}:${String(accountLabel)}:${String(showBottomDivider)}`,
           testID: 'shared-header',
         },
         ReactModule.createElement(Pressable, {
@@ -86,7 +88,7 @@ describe('PerpsSimpleHeader', () => {
     );
 
     expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
-      'simple:true:Wallet alias',
+      'simple:true:Wallet alias:false',
     );
     expect(mockGetAliasName).toHaveBeenCalledWith(
       '0x1234567890123456789012345678901234567890',
@@ -116,7 +118,7 @@ describe('PerpsSimpleHeader', () => {
     );
 
     expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
-      'simple:true:Contact alias',
+      'simple:true:Contact alias:false',
     );
 
     fireEvent.press(screen.getByTestId('account-trigger'));

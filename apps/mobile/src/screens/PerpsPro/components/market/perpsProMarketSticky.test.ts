@@ -11,9 +11,9 @@ describe('Perps Pro Market sticky geometry', () => {
     expect(
       getPerpsProMarketNaturalAnchor({
         headerHeight: 56,
-        regionAlertExtent: 46,
+        regionAlertExtent: 38,
       }),
-    ).toBe(102);
+    ).toBe(94);
     expect(
       getPerpsProMarketNaturalAnchor({
         headerHeight: 56,
@@ -26,21 +26,21 @@ describe('Perps Pro Market sticky geometry', () => {
     expect(
       getPerpsProMarketTop({
         headerMarketTop: 56,
-        naturalAnchorY: 102,
+        naturalAnchorY: 94,
         scrollY: 20,
       }),
-    ).toBe(82);
+    ).toBe(74);
     expect(
       getPerpsProMarketTop({
         headerMarketTop: 56,
-        naturalAnchorY: 102,
+        naturalAnchorY: 94,
         scrollY: 80,
       }),
     ).toBe(56);
     expect(
       getPerpsProMarketTop({
         headerMarketTop: 0,
-        naturalAnchorY: 102,
+        naturalAnchorY: 94,
         scrollY: 120,
       }),
     ).toBe(0);
@@ -51,11 +51,11 @@ describe('Perps Pro Market sticky geometry', () => {
     const scrollY = new Animated.Value(20);
     const translateY = createPerpsProMarketTranslateY({
       headerMarketTranslateY,
-      naturalAnchorY: 102,
+      naturalAnchorY: 94,
       scrollY,
     });
 
-    expect((translateY as Animated.Value).__getValue()).toBe(82);
+    expect((translateY as Animated.Value).__getValue()).toBe(74);
     scrollY.setValue(80);
     expect((translateY as Animated.Value).__getValue()).toBe(56);
     headerMarketTranslateY.setValue(0);

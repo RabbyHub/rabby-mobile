@@ -2,16 +2,19 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { isPerpsProHistorySdkSupported } from '@/screens/PerpsProHistory/repository/perpsProHistoryRepository';
+import type { PerpsRegionAlertLayout } from '@/screens/Perps/components/PerpsRegionAlert';
 import React, { useCallback, useMemo } from 'react';
 
 import { PerpsProScene } from './scene/PerpsProScene';
 
 export type PerpsProScreenProps = {
+  initialRegionAlertLayout?: PerpsRegionAlertLayout | null;
   isModeSwitching: boolean;
   onSwitchToSimple: () => void;
 };
 
 export const PerpsProScreen: React.FC<PerpsProScreenProps> = ({
+  initialRegionAlertLayout = null,
   isModeSwitching,
   onSwitchToSimple,
 }) => {
@@ -30,6 +33,7 @@ export const PerpsProScreen: React.FC<PerpsProScreenProps> = ({
     <NormalScreenContainer2024 noHeader type="bg1">
       <PerpsProScene
         historyEnabled={historyEnabled}
+        initialRegionAlertLayout={initialRegionAlertLayout}
         isModeSwitching={isModeSwitching}
         onOpenHistory={openHistory}
         onSwitchToSimple={onSwitchToSimple}

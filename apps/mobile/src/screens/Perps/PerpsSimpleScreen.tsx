@@ -9,6 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
   View,
+  type LayoutChangeEvent,
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -50,14 +51,18 @@ export type PerpsSimpleScreenProps = {
   isModeSwitching: boolean;
   onPressInPro?: () => void;
   onPressOutPro?: () => void;
+  onRegionAlertLayout?: (event: LayoutChangeEvent) => void;
   onSwitchToPro: () => void;
+  showProNewBadge?: boolean;
 };
 
 export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
   isModeSwitching,
   onPressInPro,
   onPressOutPro,
+  onRegionAlertLayout,
   onSwitchToPro,
+  showProNewBadge = false,
 }) => {
   const tracedReadyRef = useRef(false);
   const { t } = useTranslation();
@@ -263,8 +268,11 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
           onPressInPro={onPressInPro}
           onPressOutPro={onPressOutPro}
           onSwitchToPro={onSwitchToPro}
+          showProNewBadge={showProNewBadge}
         />
-        {!hasPermission ? <PerpsRegionAlert /> : null}
+        {!hasPermission ? (
+          <PerpsRegionAlert onLayout={onRegionAlertLayout} />
+        ) : null}
         {!isInitialized ? (
           <PerpsSkeletonLoader />
         ) : (
