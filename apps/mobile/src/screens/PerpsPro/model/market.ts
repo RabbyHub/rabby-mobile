@@ -191,12 +191,16 @@ export const reconcilePerpsProMarkets = (
 export const buildVisiblePerpsProCategoriesFromIds = (
   categories: PerpTopTokenCategory[],
   presentIds: ReadonlySet<string>,
+  language?: string,
 ): PerpsProCategory[] => {
   return categories
     .filter(category => !category.is_disable && presentIds.has(category.id))
     .map(category => ({
       id: category.id,
-      label: category.name || category.id,
+      label:
+        (language ? category.translations?.[language] : undefined) ||
+        category.name ||
+        category.id,
       priority: Number.isFinite(category.priority)
         ? category.priority
         : Number.MAX_SAFE_INTEGER,
@@ -207,6 +211,7 @@ export const buildVisiblePerpsProCategoriesFromIds = (
 export const buildVisiblePerpsProCategories = (
   categories: PerpTopTokenCategory[],
   markets: PerpsProMarket[],
+  language?: string,
 ): PerpsProCategory[] =>
   buildVisiblePerpsProCategoriesFromIds(
     categories,
@@ -215,6 +220,7 @@ export const buildVisiblePerpsProCategories = (
         .map(item => item.marketData.categoryId)
         .filter((id): id is string => !!id),
     ),
+    language,
   );
 
 export const filterPerpsProMarketsByTab = (

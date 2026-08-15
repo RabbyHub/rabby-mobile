@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsAccountViewModel } from '../../model/account';
 import { formatPerpsProUsdValue } from '../../utils/format';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 interface PerpsProAccountSummaryProps {
   account: PerpsAccountViewModel;
@@ -18,15 +20,27 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
   React.memo(({ account, onDeposit, onWithdraw }) => {
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const openFieldExplanation = usePerpsProFieldExplanation();
     const pnl = Number(account.unrealizedPnl);
+    const totalValueLabel = t('page.perps.pro.account.totalValue');
 
     return (
       <View style={styles.container} testID="perps-pro-account-summary">
         <View style={styles.summary}>
           <View style={styles.summaryColumn}>
-            <Text style={styles.label}>
-              {t('page.perps.pro.account.totalValue')}
-            </Text>
+            {account.mode === 'unified' ? (
+              <PerpsProDottedUnderlineText
+                accessibilityLabel={t(
+                  'page.perps.pro.fieldExplanations.totalValue.title',
+                )}
+                onPress={() => openFieldExplanation('totalValue')}
+                style={styles.label}
+                testID="perps-pro-total-value-explanation">
+                {totalValueLabel}
+              </PerpsProDottedUnderlineText>
+            ) : (
+              <Text style={styles.label}>{totalValueLabel}</Text>
+            )}
             <Text style={styles.primaryValue}>
               {formatPerpsProUsdValue(account.primaryValue)}
             </Text>

@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+const mockOpenFieldExplanation = jest.fn();
+
 jest.mock('@/assets2024/icons/perps/IconUSDC.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -22,6 +24,29 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
+}));
+jest.mock('../common/PerpsProDottedUnderlineText', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text } = require('react-native');
+  return {
+    PerpsProDottedUnderlineText: ({
+      children,
+      onPress,
+      testID,
+    }: {
+      children: React.ReactNode;
+      onPress: () => void;
+      testID: string;
+    }) =>
+      ReactModule.createElement(
+        Pressable,
+        { onPress, testID },
+        ReactModule.createElement(Text, null, children),
+      ),
+  };
+});
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
@@ -72,6 +97,10 @@ const spotUsdc = {
 } satisfies PerpsAccountAssetRow;
 
 describe('Perps Pro account visual contract', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('shows only Total Value and Unrealized PNL in the summary for now', () => {
     render(
       <PerpsProAccountSummary
@@ -127,6 +156,30 @@ describe('Perps Pro account visual contract', () => {
     const actionRow = screen.getByTestId('perps-pro-account-summary')
       .children[1] as { props: { style?: object } };
     expect(StyleSheet.flatten(actionRow.props.style)).toMatchObject({ gap: 8 });
+  });
+
+  it('explains Total Value only for a Unified Account', () => {
+    const screen = render(
+      <PerpsProAccountSummary
+        account={{ ...account, mode: 'unified' }}
+        onDeposit={jest.fn()}
+        onWithdraw={jest.fn()}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-total-value-explanation'));
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('totalValue');
+
+    screen.rerender(
+      <PerpsProAccountSummary
+        account={account}
+        onDeposit={jest.fn()}
+        onWithdraw={jest.fn()}
+      />,
+    );
+    expect(
+      screen.queryByTestId('perps-pro-total-value-explanation'),
+    ).toBeNull();
   });
 
   it('exposes Transfer only for the actionable standard Spot USDC row', () => {

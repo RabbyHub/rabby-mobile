@@ -47,6 +47,10 @@ export const PERPS_PRO_FIELD_EXPLANATIONS = {
     descriptionKey: 'page.perps.pro.fieldExplanations.tpSl.description',
     titleKey: 'page.perps.pro.fieldExplanations.tpSl.title',
   },
+  totalValue: {
+    descriptionKey: 'page.perps.pro.fieldExplanations.totalValue.description',
+    titleKey: 'page.perps.pro.fieldExplanations.totalValue.title',
+  },
 } as const;
 
 export type PerpsProFieldExplanationKey =

@@ -179,6 +179,28 @@ describe('Perps Pro market model', () => {
     ]);
   });
 
+  it('uses backend translations for the active language with stable fallbacks', () => {
+    const markets = [
+      buildPerpsProMarket(createMarketData({ categoryId: 'crypto' })),
+    ];
+    const categories: PerpTopTokenCategory[] = [
+      {
+        id: 'crypto',
+        name: 'Crypto',
+        priority: 1,
+        is_disable: false,
+        translations: { 'zh-CN': '加密货币' },
+      },
+    ];
+
+    expect(
+      buildVisiblePerpsProCategories(categories, markets, 'zh-CN')[0]?.label,
+    ).toBe('加密货币');
+    expect(
+      buildVisiblePerpsProCategories(categories, markets, 'de')[0]?.label,
+    ).toBe('Crypto');
+  });
+
   it('filters favorites and categories without changing All ordering', () => {
     const btc = buildPerpsProMarket(createMarketData({ categoryId: 'crypto' }));
     const apple = buildPerpsProMarket(
