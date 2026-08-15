@@ -1,4 +1,5 @@
 import RcIconEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
+import RcManageMargin from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconSwitchUnit from '@/assets/icons/swap/switch-cc.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -67,6 +68,7 @@ export const PerpsProPositionCard: React.FC<{
     position: PerpsPositionViewModel,
     tab: 'partial' | 'position',
   ) => void;
+  onManageMargin?: (position: PerpsPositionViewModel) => void;
   onPressMarket?: (coin: string) => void;
   position: PerpsPositionViewModel;
 }> = React.memo(
@@ -75,6 +77,7 @@ export const PerpsProPositionCard: React.FC<{
     onClose,
     onEditLeverage,
     onEditTpSl,
+    onManageMargin,
     onPressMarket,
     position,
   }) => {
@@ -235,9 +238,28 @@ export const PerpsProPositionCard: React.FC<{
             <Text style={styles.label}>
               {t('page.perps.pro.positions.margin')} ({market.quoteAsset})
             </Text>
-            <Text style={styles.value}>
-              {formatPerpsProDecimal(position.margin, 2)}
-            </Text>
+            <View style={styles.marginValueRow}>
+              <Text style={styles.marginValue}>
+                {formatPerpsProDecimal(position.margin, 2)}
+              </Text>
+              {position.marginMode === 'isolated' && onManageMargin ? (
+                <Pressable
+                  accessibilityLabel={t(
+                    'page.perps.pro.positions.manageMargin',
+                  )}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => onManageMargin(position)}
+                  style={styles.marginButton}
+                  testID={`perps-pro-position-manage-margin-${position.key}`}>
+                  <RcManageMargin
+                    color={colors2024['neutral-body']}
+                    height={16}
+                    width={16}
+                  />
+                </Pressable>
+              ) : null}
+            </View>
           </View>
           <View style={styles.thirdColumn}>
             {position.marginMode === 'isolated' ? (
@@ -590,6 +612,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
     marginTop: 2,
+  },
+  marginValueRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 4,
+  },
+  marginValue: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  marginButton: {
+    alignItems: 'center',
+    height: 16,
+    justifyContent: 'center',
+    width: 16,
   },
   liquidationDistanceValueOverlay: {
     alignItems: 'flex-end',

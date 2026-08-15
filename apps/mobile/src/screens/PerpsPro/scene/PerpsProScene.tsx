@@ -75,6 +75,7 @@ import { PerpsProCloseAllConfirmationModal } from '../components/positions/Perps
 import { PerpsProCloseConfirmationSheet } from '../components/positions/PerpsProCloseConfirmationSheet';
 import { PerpsProClosePositionSheet } from '../components/positions/PerpsProClosePositionSheet';
 import { PerpsProLeverageSheet } from '../components/positions/PerpsProLeverageSheet';
+import { PerpsProManageMarginSheet } from '../components/positions/PerpsProManageMarginSheet';
 import { PerpsProPositionTpSlConfirmationSheet } from '../components/positions/PerpsProPositionTpSlConfirmationSheet';
 import { PerpsProPositionTpSlSheet } from '../components/positions/PerpsProPositionTpSlSheet';
 import { PerpsProPositionsControls } from '../components/positions/PerpsProPositionsControls';
@@ -101,6 +102,7 @@ import { usePerpsProBboBook } from './usePerpsProBboBook';
 import { usePerpsProPositionActions } from './usePerpsProPositionActions';
 import { usePerpsProPositionTpSl } from './usePerpsProPositionTpSl';
 import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
+import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
 
@@ -175,6 +177,7 @@ export const PerpsProScene: React.FC<{
     leveragePending: leverageUpdate.pending,
     updateLeverageRequest: leverageUpdate.update,
   });
+  const manageMargin = usePerpsProManageMargin();
   const positionTpSl = usePerpsProPositionTpSl(
     info.accountIdentity,
     trade.amountUnit,
@@ -502,6 +505,7 @@ export const PerpsProScene: React.FC<{
               onClose={positionActions.openCloseEditor}
               onEditLeverage={positionActions.openLeverageEditor}
               onEditTpSl={positionTpSl.open}
+              onManageMargin={manageMargin.open}
               onPressMarket={selectCardMarket}
               position={item.position}
             />
@@ -552,6 +556,7 @@ export const PerpsProScene: React.FC<{
       info,
       isMarketLoading,
       mainColumnHeight,
+      manageMargin.open,
       openDeposit,
       openSwap,
       openWithdraw,
@@ -736,6 +741,20 @@ export const PerpsProScene: React.FC<{
         pending={leverageUpdate.pending}
         visible={!!positionActions.leverageEditor}
       />
+      {manageMargin.editor && manageMargin.view ? (
+        <PerpsProManageMarginSheet
+          dirty={manageMargin.dirty}
+          draft={manageMargin.draft}
+          onBeginEditing={manageMargin.beginEditing}
+          onChangeDraft={manageMargin.changeDraft}
+          onClose={manageMargin.close}
+          onConfirm={manageMargin.confirm}
+          onSelectTarget={manageMargin.selectTarget}
+          pending={manageMargin.pending}
+          view={manageMargin.view}
+          visible
+        />
+      ) : null}
       {positionTpSl.editor ? (
         <PerpsProPositionTpSlSheet
           amountUnit={positionTpSl.editor.amountUnit}
