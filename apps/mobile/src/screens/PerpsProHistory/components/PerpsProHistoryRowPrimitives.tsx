@@ -1,6 +1,7 @@
 import ArrowRight from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
 import { formatPerpsProTime } from '@/screens/PerpsPro/utils/format';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -10,6 +11,8 @@ import type { PerpsProHistoryTone } from './historyRowFormatters';
 
 export type PerpsProHistoryDetail = Readonly<{
   label: string;
+  labelAccessibilityLabel?: string;
+  onLabelPress?: () => void;
   tone?: PerpsProHistoryTone;
   value: string;
 }>;
@@ -98,7 +101,19 @@ export const PerpsProHistoryRowLayout: React.FC<{
       <View style={styles.details}>
         {details.map((detail, index) => (
           <View key={`${detail.label}:${index}`} style={styles.detailRow}>
-            <Text style={styles.label}>{detail.label}</Text>
+            {detail.onLabelPress ? (
+              <PerpsProDottedUnderlineText
+                accessibilityLabel={
+                  detail.labelAccessibilityLabel ?? detail.label
+                }
+                onPress={detail.onLabelPress}
+                style={styles.label}
+                testID={`perps-pro-history-detail-action-${index}`}>
+                {detail.label}
+              </PerpsProDottedUnderlineText>
+            ) : (
+              <Text style={styles.label}>{detail.label}</Text>
+            )}
             <Text
               numberOfLines={2}
               style={valueStyles[detail.tone ?? 'neutral']}>

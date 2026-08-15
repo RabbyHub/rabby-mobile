@@ -2857,7 +2857,6 @@
           "long": "Long",
           "short": "Short",
           "true": "True",
-          "perpetual": "Perpetual",
           "loadFailed": "History is temporarily unavailable",
           "refreshFailed": "Failed to refresh history",
           "loadingMore": "Loading more history"

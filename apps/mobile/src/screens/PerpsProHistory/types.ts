@@ -57,6 +57,7 @@ export interface PerpsProTradeHistoryRow {
   filledBase: string;
   filledQuote: string;
   hash: string;
+  isLiquidation: boolean;
   key: string;
   kind: 'trade';
   market: PerpsProHistoryMarket;

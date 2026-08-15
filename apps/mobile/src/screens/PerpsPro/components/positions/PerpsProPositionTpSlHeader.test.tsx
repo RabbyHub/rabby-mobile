@@ -18,10 +18,6 @@ jest.mock('@/utils/styles', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key.split('.').at(-1) }),
 }));
-jest.mock('./PerpsProCloseMarketTag', () => ({
-  PerpsProCloseMarketTag: () => null,
-}));
-
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
   PerpsProPositionTpSlHeader,
@@ -73,6 +69,7 @@ describe('PerpsProPositionTpSlHeader', () => {
       ),
     ).toMatchObject({ gap: 8, marginTop: 16 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(screen.getByText('XYZ')).toBeTruthy();
     expect(screen.getByText('100.00')).toBeTruthy();
     expect(screen.getByText('101.25')).toBeTruthy();
     expect(screen.queryByText('99.00')).toBeNull();
@@ -120,6 +117,22 @@ describe('PerpsProPositionTpSlHeader', () => {
       ),
     ).toMatchObject({ marginTop: 12 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(screen.getByText('XYZ')).toBeTruthy();
     expect(screen.getByText('long 10x')).toBeTruthy();
+  });
+
+  it('omits the source tag for native markets', () => {
+    render(
+      <PerpsProPositionTpSlHeader
+        markPrice="101.25"
+        market={{ ...market, sourceTag: null }}
+        position={position}
+        variant="summary"
+      />,
+    );
+
+    expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(screen.queryByText('Perp')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-close-market-tag')).toBeNull();
   });
 });

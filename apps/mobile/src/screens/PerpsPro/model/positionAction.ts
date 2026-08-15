@@ -25,7 +25,7 @@ export interface PerpsProCloseDraft {
 
 export const resolvePerpsProCloseMarketSourceTag = (
   sourceTag: string | null | undefined,
-) => sourceTag?.trim().toUpperCase() || 'Perp';
+) => sourceTag?.trim().toUpperCase() || null;
 
 const positive = (value: string) => {
   const result = new BigNumber(value || Number.NaN);

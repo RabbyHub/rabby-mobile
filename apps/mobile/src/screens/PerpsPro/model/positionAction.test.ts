@@ -48,9 +48,10 @@ describe('Perps Pro close amount', () => {
 });
 
 describe('Perps Pro close market source tag', () => {
-  it('normalizes the market source and only falls back for missing values', () => {
+  it('normalizes real market sources and omits missing values', () => {
     expect(resolvePerpsProCloseMarketSourceTag(' xyz ')).toBe('XYZ');
-    expect(resolvePerpsProCloseMarketSourceTag('')).toBe('Perp');
-    expect(resolvePerpsProCloseMarketSourceTag(null)).toBe('Perp');
+    expect(resolvePerpsProCloseMarketSourceTag('')).toBeNull();
+    expect(resolvePerpsProCloseMarketSourceTag('   ')).toBeNull();
+    expect(resolvePerpsProCloseMarketSourceTag(null)).toBeNull();
   });
 });

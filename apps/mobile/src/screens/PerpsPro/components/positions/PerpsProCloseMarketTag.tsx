@@ -10,12 +10,15 @@ export const PerpsProCloseMarketTag: React.FC<{
   sourceTag: string | null | undefined;
 }> = React.memo(({ sourceTag }) => {
   const { styles } = useTheme2024({ getStyle });
+  const label = resolvePerpsProCloseMarketSourceTag(sourceTag);
+
+  if (!label) {
+    return null;
+  }
 
   return (
     <View style={styles.tag} testID="perps-pro-close-market-tag">
-      <Text style={styles.text}>
-        {resolvePerpsProCloseMarketSourceTag(sourceTag)}
-      </Text>
+      <Text style={styles.text}>{label}</Text>
     </View>
   );
 });

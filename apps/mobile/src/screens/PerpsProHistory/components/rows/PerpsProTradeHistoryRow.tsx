@@ -12,8 +12,9 @@ import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
 
 export const PerpsProTradeHistoryRowView: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
+  onShowFeeExplanation: (isLiquidation: boolean) => void;
   row: PerpsProTradeHistoryRow;
-}> = ({ amountUnit, row }) => {
+}> = ({ amountUnit, onShowFeeExplanation, row }) => {
   const { t } = useTranslation();
   const isBase = amountUnit === 'base';
   const unit = isBase ? row.market.displayBase : row.market.quoteAsset;
@@ -45,6 +46,8 @@ export const PerpsProTradeHistoryRowView: React.FC<{
         },
         {
           label: `${t('page.perps.pro.history.fields.fee')} (${row.feeToken})`,
+          labelAccessibilityLabel: t('page.perps.historyDetail.feeTitle'),
+          onLabelPress: () => onShowFeeExplanation(row.isLiquidation),
           value: formatPerpsProDecimal(row.fee, 8),
         },
         {
@@ -55,7 +58,7 @@ export const PerpsProTradeHistoryRowView: React.FC<{
         },
       ]}
       showArrow
-      sourceTag={row.market.sourceTag || 'Perp'}
+      sourceTag={row.market.sourceTag}
       testID={`perps-pro-history-trade-${row.key}`}
       time={row.time}
       title={row.market.displayPair}

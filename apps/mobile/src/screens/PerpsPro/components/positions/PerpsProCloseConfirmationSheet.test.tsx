@@ -137,7 +137,8 @@ describe('PerpsProCloseConfirmationSheet', () => {
     expect(screen.getByText('Short')).toBeTruthy();
     expect(screen.getByText('61,000 USDC')).toBeTruthy();
     expect(screen.getByText('0.5000 BTC')).toBeTruthy();
-    expect(screen.getByText('Perp')).toBeTruthy();
+    expect(screen.queryByText('Perp')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-close-market-tag')).toBeNull();
     expect(screen.getByTestId('close-confirmation-button').props.type).toBe(
       'primary',
     );

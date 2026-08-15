@@ -29,6 +29,7 @@ export const mapPerpsProTradeHistoryFact = (
     filledBase: size.toString(),
     filledQuote: price.multipliedBy(size).toString(),
     hash: fill.hash,
+    isLiquidation: Boolean(fill.liquidation),
     key: getFillKey(fill),
     kind: 'trade',
     market: resolvePerpsProHistoryMarket(fill.coin, marketDataMap),
