@@ -245,6 +245,79 @@ describe('Perps Pro open order edit sheets', () => {
     ).toBe('50.00');
   });
 
+  it('keeps the Basic Bottom Sheet inputs under native cursor ownership', () => {
+    render(
+      <PerpsProBasicOrderEditSheet
+        coveredByReview={false}
+        editor={basicEditor}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        visible
+      />,
+    );
+    const priceInput = screen.getByLabelText('page.perps.pro.openOrders.price');
+
+    expect(priceInput.props.selection).toBeUndefined();
+    fireEvent(priceInput, 'focus', { nativeEvent: {} });
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.selection,
+    ).toBeUndefined();
+
+    fireEvent.changeText(priceInput, '1001');
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.value,
+    ).toBe('1001');
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.selection,
+    ).toBeUndefined();
+
+    fireEvent.changeText(
+      screen.getByLabelText('page.perps.pro.openOrders.price'),
+      '100',
+    );
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.value,
+    ).toBe('100');
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.selection,
+    ).toBeUndefined();
+  });
+
+  it('keeps Price independent while reprojecting only an untouched quote Amount', () => {
+    render(
+      <PerpsProBasicOrderEditSheet
+        coveredByReview={false}
+        editor={basicEditor}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        visible
+      />,
+    );
+
+    fireEvent.changeText(
+      screen.getByLabelText('page.perps.pro.openOrders.price'),
+      '120',
+    );
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
+    ).toBe('60.00');
+
+    fireEvent.changeText(
+      screen.getByLabelText('page.perps.pro.openOrders.amount'),
+      '55',
+    );
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.value,
+    ).toBe('120');
+    fireEvent.changeText(
+      screen.getByLabelText('page.perps.pro.openOrders.price'),
+      '130',
+    );
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
+    ).toBe('55');
+  });
+
   it('locks the Conditional editor to 534px with the exact remaining coverage', () => {
     render(
       <PerpsProConditionalOrderEditSheet

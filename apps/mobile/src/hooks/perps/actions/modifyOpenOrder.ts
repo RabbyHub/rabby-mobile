@@ -38,7 +38,13 @@ export type PerpsModifyOpenOrderCommand = {
 export type PerpsModifyOpenOrderResult = {
   error?: string;
   failureReason?: 'regionRestricted' | 'requestFailed' | 'userCancelled';
-  kind: 'failed' | 'filled' | 'resting' | 'staleContext' | 'unknownOutcome';
+  kind:
+    | 'failed'
+    | 'filled'
+    | 'resting'
+    | 'staleContext'
+    | 'unknownOutcome'
+    | 'updated';
   oid?: number;
   refreshError?: string;
 };
@@ -209,6 +215,97 @@ const isUnknownOutcomeError = (error: unknown) => {
   );
 };
 
+type ParsedModifyOrderResponse =
+  | { kind: 'failed'; error: string }
+  | { kind: 'filled' | 'resting'; oid?: number }
+  | { kind: 'unknownOutcome'; error: string }
+  | { kind: 'updated' };
+
+const parseModifyOrderResponse = (
+  response: unknown,
+): ParsedModifyOrderResponse => {
+  const payload = response as {
+    response?:
+      | string
+      | {
+          data?: { statuses?: unknown[] };
+          type?: unknown;
+        };
+    status?: unknown;
+  };
+  if (payload?.status !== 'ok') {
+    return {
+      error:
+        typeof payload?.response === 'string' && payload.response
+          ? payload.response
+          : 'Hyperliquid rejected order modification',
+      kind: 'failed',
+    };
+  }
+  if (
+    payload.response &&
+    typeof payload.response === 'object' &&
+    payload.response.type === 'default'
+  ) {
+    return { kind: 'updated' };
+  }
+  const status =
+    payload.response && typeof payload.response === 'object'
+      ? (payload.response.data?.statuses?.[0] as
+          | {
+              error?: unknown;
+              filled?: { oid?: unknown };
+              resting?: { oid?: unknown };
+            }
+          | undefined)
+      : undefined;
+  if (typeof status?.error === 'string' && status.error) {
+    return { error: status.error, kind: 'failed' };
+  }
+  if (status?.filled) {
+    return {
+      kind: 'filled',
+      oid:
+        typeof status.filled.oid === 'number' ? status.filled.oid : undefined,
+    };
+  }
+  if (status?.resting) {
+    return {
+      kind: 'resting',
+      oid:
+        typeof status.resting.oid === 'number' ? status.resting.oid : undefined,
+    };
+  }
+  return {
+    error: 'Missing Hyperliquid order modification outcome',
+    kind: 'unknownOutcome',
+  };
+};
+
+const refreshModifyOrderFacts = async ({
+  command,
+  dependencies,
+  refreshClearinghouse,
+}: {
+  command: PerpsModifyOpenOrderCommand;
+  dependencies: PerpsModifyOpenOrderDependencies;
+  refreshClearinghouse: boolean;
+}) => {
+  try {
+    if (refreshClearinghouse) {
+      await Promise.all([
+        dependencies.refreshClearinghouse(command.dexId),
+        dependencies.refreshOpenOrders(command.dexId),
+      ]);
+    } else {
+      await dependencies.refreshOpenOrders(command.dexId);
+    }
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+};
+
 export const executePerpsModifyOpenOrder = async (
   command: PerpsModifyOpenOrderCommand,
   dependencies: PerpsModifyOpenOrderDependencies = defaultDependencies,
@@ -243,43 +340,26 @@ export const executePerpsModifyOpenOrder = async (
       reduceOnly: command.expected.reduceOnly,
       sz: command.replacement.baseSize,
     });
-    const payload = response as {
-      response?: { data?: { statuses?: unknown[] } };
-      status?: unknown;
-    };
-    const status = payload.response?.data?.statuses?.[0] as
-      | {
-          error?: string;
-          filled?: { oid?: number };
-          resting?: { oid?: number };
-        }
-      | undefined;
-    if (payload.status !== 'ok' || status?.error) {
-      throw new Error(
-        status?.error || 'Hyperliquid rejected order modification',
-      );
-    }
+    const outcome = parseModifyOrderResponse(response);
     if (!hasBaseContext(command, dependencies, sceneGuard)) {
       return { kind: 'staleContext' };
     }
-    const kind = status?.filled ? 'filled' : status?.resting ? 'resting' : null;
-    if (!kind) {
-      throw new Error('Missing Hyperliquid order status');
+    if (outcome.kind === 'failed') {
+      return { ...outcome, failureReason: 'requestFailed' };
     }
-    let refreshError: string | undefined;
-    try {
-      await (kind === 'filled'
-        ? Promise.all([
-            dependencies.refreshClearinghouse(command.dexId),
-            dependencies.refreshOpenOrders(command.dexId),
-          ])
-        : dependencies.refreshOpenOrders(command.dexId));
-    } catch (error) {
-      refreshError = error instanceof Error ? error.message : String(error);
+    const refreshError = await refreshModifyOrderFacts({
+      command,
+      dependencies,
+      refreshClearinghouse:
+        outcome.kind === 'filled' ||
+        outcome.kind === 'unknownOutcome' ||
+        outcome.kind === 'updated',
+    });
+    if (outcome.kind === 'unknownOutcome') {
+      return { ...outcome, refreshError };
     }
     return {
-      kind,
-      oid: kind === 'filled' ? status?.filled?.oid : status?.resting?.oid,
+      ...outcome,
       refreshError,
     };
   } catch (error) {

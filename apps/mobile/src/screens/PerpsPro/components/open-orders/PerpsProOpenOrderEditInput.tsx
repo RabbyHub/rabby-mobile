@@ -64,7 +64,6 @@ export const PerpsProOpenOrderEditInput: React.FC<{
         <PerpsProDecimalTextInput
           accessibilityLabel={accessibilityLabel}
           cursorColor={colors2024['brand-default']}
-          focusCursorAtEnd
           inputComponent={OpenOrderBottomSheetTextInput}
           maxDecimals={maxDecimals}
           onChangeText={onChangeText}

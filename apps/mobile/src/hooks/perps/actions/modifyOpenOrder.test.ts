@@ -65,7 +65,7 @@ const dependencies = (
   getLiveOpenOrders: () => [liveOrder],
   hasPermission: () => true,
   modifyOrder: jest.fn(async () => ({
-    response: { data: { statuses: [{ resting: { oid: 7 } }] } },
+    response: { type: 'default' },
     status: 'ok',
   })),
   refreshClearinghouse: jest.fn(),
@@ -88,10 +88,10 @@ describe('Perps modify open order action', () => {
     });
   });
 
-  it('preserves side, Reduce Only and TIF in the SDK replacement', async () => {
+  it('accepts the modify default response and preserves replacement fields', async () => {
     const deps = dependencies();
     await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
-      { kind: 'resting', oid: 7, refreshError: undefined },
+      { kind: 'updated', refreshError: undefined },
     );
     expect(deps.modifyOrder).toHaveBeenCalledWith({
       coin: 'BTC',
@@ -102,6 +102,21 @@ describe('Perps modify open order action', () => {
       reduceOnly: true,
       sz: '0.00345',
     });
+    expect(deps.refreshOpenOrders).toHaveBeenCalledWith('');
+    expect(deps.refreshClearinghouse).toHaveBeenCalledWith('');
+  });
+
+  it('retains compatibility with a legacy resting order response', async () => {
+    const deps = dependencies({
+      modifyOrder: jest.fn(async () => ({
+        response: { data: { statuses: [{ resting: { oid: 7 } }] } },
+        status: 'ok',
+      })),
+    });
+
+    await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
+      { kind: 'resting', oid: 7, refreshError: undefined },
+    );
     expect(deps.refreshOpenOrders).toHaveBeenCalledWith('');
     expect(deps.refreshClearinghouse).not.toHaveBeenCalled();
   });
@@ -125,7 +140,7 @@ describe('Perps modify open order action', () => {
     });
 
     await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
-      { kind: 'resting', oid: 7, refreshError: undefined },
+      { kind: 'updated', refreshError: undefined },
     );
     expect(deps.modifyOrder).toHaveBeenCalledTimes(1);
   });
@@ -139,6 +154,48 @@ describe('Perps modify open order action', () => {
     });
     await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
       { kind: 'filled', oid: 7, refreshError: undefined },
+    );
+    expect(deps.refreshClearinghouse).toHaveBeenCalledWith('');
+    expect(deps.refreshOpenOrders).toHaveBeenCalledWith('');
+  });
+
+  it('returns the explicit Hyperliquid rejection message', async () => {
+    const deps = dependencies({
+      modifyOrder: jest.fn(async () => ({
+        response: {
+          data: {
+            statuses: [{ error: 'Order must have minimum value of $10.' }],
+          },
+          type: 'order',
+        },
+        status: 'ok',
+      })),
+    });
+
+    await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
+      {
+        error: 'Order must have minimum value of $10.',
+        failureReason: 'requestFailed',
+        kind: 'failed',
+      },
+    );
+    expect(deps.refreshOpenOrders).not.toHaveBeenCalled();
+  });
+
+  it('treats an unrecognized successful envelope as unknown after refresh', async () => {
+    const deps = dependencies({
+      modifyOrder: jest.fn(async () => ({
+        response: { type: 'future-response' },
+        status: 'ok',
+      })),
+    });
+
+    await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
+      {
+        error: 'Missing Hyperliquid order modification outcome',
+        kind: 'unknownOutcome',
+        refreshError: undefined,
+      },
     );
     expect(deps.refreshClearinghouse).toHaveBeenCalledWith('');
     expect(deps.refreshOpenOrders).toHaveBeenCalledWith('');

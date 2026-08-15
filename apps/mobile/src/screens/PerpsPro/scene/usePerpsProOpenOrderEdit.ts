@@ -76,6 +76,9 @@ const getLivePosition = (coin: string) => {
   };
 };
 
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error || '');
+
 export const usePerpsProOpenOrderEdit = (
   accountIdentity: string,
   tradeAmountUnit: PerpsProTradeAmountUnit,
@@ -214,6 +217,11 @@ export const usePerpsProOpenOrderEdit = (
             reviewSnapshot.command,
           );
           if (result.failureReason === 'userCancelled') return;
+          if (result.failureReason === 'regionRestricted') {
+            showToast(t('page.perps.regionNotSupport'), 'error');
+            setReview(null);
+            return;
+          }
           if (result.kind === 'staleContext') {
             showToast(
               t('page.perps.pro.openOrders.editContextChanged'),
@@ -229,7 +237,11 @@ export const usePerpsProOpenOrderEdit = (
               ),
             );
           }
-          if (result.kind === 'filled' || result.kind === 'resting') {
+          if (
+            result.kind === 'filled' ||
+            result.kind === 'resting' ||
+            result.kind === 'updated'
+          ) {
             showToast(t('page.perps.pro.openOrders.editSubmitted'), 'success');
             finish();
             return;
@@ -240,7 +252,10 @@ export const usePerpsProOpenOrderEdit = (
             return;
           }
           if (await handleKnownActionError(result.error || '')) return;
-          showToast(t('page.perps.pro.openOrders.editFailed'), 'error');
+          showToast(
+            result.error || t('page.perps.pro.openOrders.editFailed'),
+            'error',
+          );
           setReview(null);
           return;
         }
@@ -270,19 +285,22 @@ export const usePerpsProOpenOrderEdit = (
         const replacedButNotCreated = result.legs.some(
           leg => leg.cancel === 'success' && leg.create !== 'success',
         );
+        const message = result.legs.find(leg => leg.error)?.error || '';
+        if (await handleKnownActionError(message)) {
+          if (hasMutation) finish();
+          return;
+        }
         showToast(
-          t(
-            replacedButNotCreated
-              ? 'page.perps.pro.openOrders.editReplaceFailedAfterCancel'
-              : result.kind === 'partial'
-              ? 'page.perps.pro.openOrders.editPartial'
-              : 'page.perps.pro.openOrders.editFailed',
-          ),
+          hasMutation
+            ? t(
+                replacedButNotCreated
+                  ? 'page.perps.pro.openOrders.editReplaceFailedAfterCancel'
+                  : 'page.perps.pro.openOrders.editPartial',
+              )
+            : message || t('page.perps.pro.openOrders.editFailed'),
           'error',
         );
         if (hasMutation) finish();
-        const message = result.legs.find(leg => leg.error)?.error || '';
-        if (await handleKnownActionError(message)) return;
         Sentry.captureException(
           new Error(
             `Conditional open order edit failed: ${JSON.stringify(result)}`,
@@ -291,9 +309,12 @@ export const usePerpsProOpenOrderEdit = (
         if (!hasMutation) setReview(null);
       } catch (error) {
         if (isPerpsActionUserCancelled(error)) return;
-        const message = error instanceof Error ? error.message : String(error);
+        const message = getErrorMessage(error);
         if (await handleKnownActionError(message)) return;
-        showToast(t('page.perps.pro.openOrders.editFailed'), 'error');
+        showToast(
+          message || t('page.perps.pro.openOrders.editFailed'),
+          'error',
+        );
         Sentry.captureException(
           error instanceof Error ? error : new Error(message),
           { extra: { scene: 'Perps Pro open order edit' } },
@@ -387,8 +408,17 @@ export const usePerpsProOpenOrderEdit = (
           throw new Error('Open order edit is unchanged');
         }
         await stageReview(editor, { category: 'basic', command });
-      } catch {
-        showToast(t('page.perps.pro.openOrders.invalidEdit'), 'error');
+      } catch (error) {
+        const message = getErrorMessage(error);
+        showToast(
+          message === 'Invalid edit amount'
+            ? t('page.perps.pro.trade.tpSlError.invalidOrderAmount')
+            : message === 'Open order edit is unchanged' ||
+              message === 'Invalid open order modification'
+            ? t('page.perps.pro.openOrders.invalidEdit')
+            : message || t('page.perps.pro.openOrders.invalidEdit'),
+          'error',
+        );
       } finally {
         reviewRequestRef.current = false;
       }

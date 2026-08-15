@@ -137,7 +137,7 @@ describe('usePerpsProOpenOrderEdit', () => {
     mockEnsureApproval.mockResolvedValue(undefined);
     mockGetSkip.mockResolvedValue(false);
     mockSetSkip.mockResolvedValue(undefined);
-    mockExecuteModify.mockResolvedValue({ kind: 'resting', oid: 1 });
+    mockExecuteModify.mockResolvedValue({ kind: 'updated' });
     mockExecutePositionTpSl.mockResolvedValue({
       kind: 'success',
       legs: [{ cancel: 'success', create: 'success' }],
@@ -230,6 +230,78 @@ describe('usePerpsProOpenOrderEdit', () => {
     expect(mockExecuteModify).toHaveBeenCalledTimes(1);
   });
 
+  it('finishes a Basic edit after one accepted confirmation', async () => {
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    act(() => hook.result.current.open(basicOrder));
+    await act(async () => {
+      await hook.result.current.requestBasicReview({
+        amount: '0.5',
+        amountTouched: false,
+        price: '120',
+      });
+    });
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockExecuteModify).toHaveBeenCalledTimes(1);
+    expect(mockShowToast).toHaveBeenCalledTimes(1);
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.openOrders.editSubmitted',
+      'success',
+    );
+    expect(hook.result.current.editor).toBeNull();
+    expect(hook.result.current.review).toBeNull();
+  });
+
+  it('surfaces the same explicit server rejection used by normal orders', async () => {
+    mockExecuteModify.mockResolvedValue({
+      error: 'Order must have minimum value of $10.',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    act(() => hook.result.current.open(basicOrder));
+    await act(async () => {
+      await hook.result.current.requestBasicReview({
+        amount: '0.5',
+        amountTouched: false,
+        price: '120',
+      });
+    });
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockShowToast).toHaveBeenCalledTimes(1);
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'Order must have minimum value of $10.',
+      'error',
+    );
+    expect(hook.result.current.editor).not.toBeNull();
+    expect(hook.result.current.review).toBeNull();
+  });
+
+  it('surfaces the normal-order minimum Amount validation message', async () => {
+    mockBuildModify.mockImplementationOnce(() => {
+      throw new Error('Minimum amount is 10');
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    act(() => hook.result.current.open(basicOrder));
+    await act(async () => {
+      await hook.result.current.requestBasicReview({
+        amount: '0.01',
+        amountTouched: true,
+        price: '120',
+      });
+    });
+
+    expect(mockShowToast).toHaveBeenCalledWith('Minimum amount is 10', 'error');
+    expect(hook.result.current.review).toBeNull();
+  });
+
   it('freezes the approved top-level Partial TP/SL fingerprint', async () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
@@ -310,5 +382,34 @@ describe('usePerpsProOpenOrderEdit', () => {
     );
     expect(hook.result.current.editor).toBeNull();
     expect(hook.result.current.review).toBeNull();
+  });
+
+  it('shows one explicit Conditional error when no mutation occurred', async () => {
+    mockExecutePositionTpSl.mockResolvedValue({
+      failureReason: 'requestFailed',
+      kind: 'failed',
+      legs: [
+        {
+          cancel: 'failed',
+          create: 'notAttempted',
+          error: 'Invalid TP/SL price.',
+          kind: 'takeProfit',
+        },
+      ],
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    act(() => hook.result.current.open(conditionalOrder, position));
+    await act(async () => {
+      await hook.result.current.requestConditionalReview({
+        baseSize: '0.4',
+        triggerPrice: '112',
+      });
+    });
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockShowToast).toHaveBeenCalledTimes(1);
+    expect(mockShowToast).toHaveBeenCalledWith('Invalid TP/SL price.', 'error');
   });
 });
