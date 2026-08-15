@@ -72,6 +72,7 @@ export const PerpsProOpenOrderCard: React.FC<{
   editEnabled?: boolean;
   onCancel: (order: PerpsOpenOrderViewModel) => void;
   onEdit?: (order: PerpsOpenOrderViewModel) => void;
+  onPressMarket?: (coin: string) => void;
   order: PerpsOpenOrderViewModel;
 }> = React.memo(
   ({
@@ -80,6 +81,7 @@ export const PerpsProOpenOrderCard: React.FC<{
     editEnabled = false,
     onCancel,
     onEdit = () => undefined,
+    onPressMarket,
     order,
   }) => {
     const { styles } = useTheme2024({ getStyle });
@@ -111,9 +113,17 @@ export const PerpsProOpenOrderCard: React.FC<{
         <View style={styles.header}>
           <View style={styles.identity}>
             <View style={styles.titleRow}>
-              <Text numberOfLines={1} style={styles.coin}>
-                {market.displayPair}
-              </Text>
+              <Pressable
+                accessibilityLabel={market.displayPair}
+                accessibilityRole="button"
+                disabled={!onPressMarket}
+                onPress={() => onPressMarket?.(order.coin)}
+                style={styles.marketButton}
+                testID={`perps-pro-order-market-${order.key}`}>
+                <Text numberOfLines={1} style={styles.coin}>
+                  {market.displayPair}
+                </Text>
+              </Pressable>
               {market.sourceTag ? (
                 <View style={styles.sourceTag}>
                   <Text style={styles.sourceText}>
@@ -276,6 +286,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 20,
   },
+  marketButton: { flexShrink: 1 },
   sourceTag: {
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 4,

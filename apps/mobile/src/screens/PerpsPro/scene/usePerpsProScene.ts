@@ -263,6 +263,18 @@ export const usePerpsProScene = () => {
     [prepareMarketSelection],
   );
 
+  const selectMarketByCoin = useCallback(
+    (coin: string) => {
+      const market = catalogueRef.current.find(
+        item => item.canonicalCoin === coin,
+      );
+      return market
+        ? prepareMarketSelection(market, true)
+        : Promise.resolve(false);
+    },
+    [prepareMarketSelection],
+  );
+
   const cancelPendingMarketSelection = useCallback(() => {
     marketSelectionSequenceRef.current += 1;
     pendingMarketSelectionRef.current = null;
@@ -440,6 +452,7 @@ export const usePerpsProScene = () => {
     realtimeEnabled: subscriptionsEnabled,
     retryMarketData,
     selectMarket,
+    selectMarketByCoin,
     selectTickOption,
     selectedTickOption,
     tickOptions,

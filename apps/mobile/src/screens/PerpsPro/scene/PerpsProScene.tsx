@@ -22,6 +22,7 @@ import {
   useWindowDimensions,
   View,
   type AppStateStatus,
+  type FlatList,
   type LayoutChangeEvent,
   type ListRenderItem,
   type ViewStyle,
@@ -218,6 +219,7 @@ export const PerpsProScene: React.FC<{
   const { setHideOtherSymbols } = info;
   const headerCollapse = usePerpsProHeaderCollapse();
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
+  const scrollRef = useRef<FlatList<PerpsProSceneRow>>(null);
   const [klineOpen, setKlineOpen] = useState(false);
   const [klineActivated, setKlineActivated] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(
@@ -272,6 +274,17 @@ export const PerpsProScene: React.FC<{
   const openMarketSelector = useCallback(
     () => dismissKeyboardThen(() => marketSelectorRef.current?.present()),
     [dismissKeyboardThen],
+  );
+  const selectMarketByCoin = scene.selectMarketByCoin;
+  const selectCardMarket = useCallback(
+    async (coin: string) => {
+      const selected = await selectMarketByCoin(coin);
+      if (selected) {
+        scrollRef.current?.scrollToOffset({ animated: true, offset: 0 });
+      }
+      return selected;
+    },
+    [selectMarketByCoin],
   );
   const toggleHideOtherSymbols = useCallback(
     () => setHideOtherSymbols(value => !value),
@@ -620,6 +633,7 @@ export const PerpsProScene: React.FC<{
               onClose={positionActions.openCloseEditor}
               onEditLeverage={positionActions.openLeverageEditor}
               onEditTpSl={positionTpSl.open}
+              onPressMarket={selectCardMarket}
               position={item.position}
             />
           );
@@ -653,6 +667,7 @@ export const PerpsProScene: React.FC<{
               }
               onCancel={cancelOrders.confirmCancelOrder}
               onEdit={order => openOpenOrderEdit(order, editPosition)}
+              onPressMarket={selectCardMarket}
               order={item.order}
             />
           );
@@ -679,6 +694,7 @@ export const PerpsProScene: React.FC<{
       positionTpSl.open,
       openOpenOrderEdit,
       positionsByCoin,
+      selectCardMarket,
       styles,
       t,
       toggleHideOtherSymbols,
@@ -706,6 +722,7 @@ export const PerpsProScene: React.FC<{
           keyboardShouldPersistTaps="handled"
           onLayout={updateScrollViewportHeight}
           onScroll={headerCollapse.onScroll}
+          ref={scrollRef}
           renderItem={renderItem}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}

@@ -418,6 +418,24 @@ describe('usePerpsProScene prepared market selection', () => {
     expect(mockPrewarmRealtimeIntent).not.toHaveBeenCalled();
   });
 
+  it('resolves card coin selection through the canonical atomic market path', async () => {
+    const hook = renderHook(() => usePerpsProScene());
+    await waitFor(() =>
+      expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
+    );
+
+    await act(async () => {
+      await expect(hook.result.current.selectMarketByCoin('SUI')).resolves.toBe(
+        true,
+      );
+    });
+    expect(mockPrepareSources).toHaveBeenLastCalledWith('SUI', undefined);
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('SUI');
+    await expect(
+      hook.result.current.selectMarketByCoin('UNKNOWN'),
+    ).resolves.toBe(false);
+  });
+
   it('keeps the logical order-book subscription across AppState background while pausing publication', async () => {
     let onAppStateChange: ((state: AppStateStatus) => void) | undefined;
     jest.spyOn(AppState, 'addEventListener').mockImplementation((event, cb) => {

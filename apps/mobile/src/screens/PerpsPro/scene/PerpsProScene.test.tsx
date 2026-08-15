@@ -447,6 +447,7 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   realtimeEnabled: false,
   retryMarketData: jest.fn(),
   selectMarket: jest.fn(),
+  selectMarketByCoin: jest.fn(async () => true),
   selectTickOption: jest.fn(),
   selectedTickOption: null,
   tickOptions: [],
