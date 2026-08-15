@@ -4,6 +4,7 @@ import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
@@ -15,6 +16,7 @@ import { prefetchPerpsProZeroAddressLeverageBaseline } from '../PerpsPro/scene/p
 import { prewarmPerpsProEntryIntent } from '../PerpsPro/scene/perpsProEntryIntent';
 import { usePerpsViewMode } from './hooks/usePerpsViewMode';
 import { PerpsSimpleScreen } from './PerpsSimpleScreen';
+import type { PerpsRegionAlertLayout } from './components/PerpsRegionAlert';
 
 export const PerpsOriginScreen = () => {
   useEnsurePerpsRuntime();
@@ -24,10 +26,12 @@ export const PerpsOriginScreen = () => {
     useRoute<
       RouteProp<TransactionNavigatorParamList, typeof RootNames.Perps>
     >();
-  const { hydrated, savingMode, setViewMode, viewMode } = usePerpsViewMode();
+  const { hasVisitedPro, hydrated, savingMode, setViewMode, viewMode } =
+    usePerpsViewMode();
   const marketDataStatus = perpsStore(state => state.marketDataStatus);
   const proIntentCancelRef = useRef<(() => void) | null>(null);
   const proIntentCommittedRef = useRef(false);
+  const regionAlertLayoutRef = useRef<PerpsRegionAlertLayout | null>(null);
   const proIntentCancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -116,6 +120,15 @@ export const PerpsOriginScreen = () => {
     setViewMode('simple');
   }, [cancelProIntent, setViewMode]);
 
+  const captureRegionAlertLayout = useCallback((event: LayoutChangeEvent) => {
+    const height = Math.ceil(event.nativeEvent.layout.height);
+    const width = Math.ceil(event.nativeEvent.layout.width);
+    if (height <= 0 || width <= 0) {
+      return;
+    }
+    regionAlertLayoutRef.current = { height, width };
+  }, []);
+
   if (!hydrated) {
     return null;
   }
@@ -123,6 +136,7 @@ export const PerpsOriginScreen = () => {
   if (viewMode === 'pro') {
     return (
       <PerpsProScreen
+        initialRegionAlertLayout={regionAlertLayoutRef.current}
         isModeSwitching={savingMode !== null}
         onSwitchToSimple={switchToSimple}
       />
@@ -134,7 +148,9 @@ export const PerpsOriginScreen = () => {
       isModeSwitching={savingMode !== null}
       onPressInPro={handlePressInPro}
       onPressOutPro={handlePressOutPro}
+      onRegionAlertLayout={captureRegionAlertLayout}
       onSwitchToPro={switchToPro}
+      showProNewBadge={!hasVisitedPro}
     />
   );
 };

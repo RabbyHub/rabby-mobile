@@ -1,6 +1,11 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { AppState, StyleSheet, type AppStateStatus } from 'react-native';
+import {
+  AppState,
+  Dimensions,
+  StyleSheet,
+  type AppStateStatus,
+} from 'react-native';
 
 const mockUsePerpsProScene = jest.fn();
 const mockUsePerpsProInfoPanel = jest.fn();
@@ -23,8 +28,12 @@ jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsRegionAlert: () =>
-      ReactModule.createElement(View, { testID: 'perps-region-alert' }),
+    PERPS_REGION_ALERT_HORIZONTAL_MARGIN: 16,
+    PerpsRegionAlert: (props: object) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'perps-region-alert',
+      }),
   };
 });
 
@@ -229,8 +238,8 @@ jest.mock('../components/header/PerpsProHeader', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProHeader: () =>
-      ReactModule.createElement(View, { testID: 'pro-header' }),
+    PerpsProHeader: (props: object) =>
+      ReactModule.createElement(View, { ...props, testID: 'pro-header' }),
   };
 });
 
@@ -239,6 +248,8 @@ jest.mock('../components/header/PerpsProAccountSelectorLayer', () => ({
 }));
 
 jest.mock('../components/header/usePerpsProHeaderCollapse', () => ({
+  getPerpsProMinimumScrollContentHeight: (viewportHeight: number) =>
+    viewportHeight + 56,
   usePerpsProHeaderCollapse: () => {
     const { Animated } = require('react-native');
     return {
@@ -641,6 +652,15 @@ describe('PerpsProScene market loading states', () => {
     const scroll = screen.getByTestId('perps-pro-scroll');
     expect(scroll.props.stickyHeaderIndices).toEqual([]);
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
+    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
+    fireEvent(scroll, 'layout', {
+      nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
+      ),
+    ).toMatchObject({ minHeight: 756 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-header-lead-in-spacer').props.style,
@@ -726,7 +746,14 @@ describe('PerpsProScene market loading states', () => {
     );
 
     render(
-      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      <PerpsProScene
+        initialRegionAlertLayout={{
+          height: 52,
+          width: Dimensions.get('window').width - 32,
+        }}
+        isModeSwitching={false}
+        onSwitchToSimple={jest.fn()}
+      />,
     );
 
     expect(
@@ -736,10 +763,60 @@ describe('PerpsProScene market loading states', () => {
     ).toBeTruthy();
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
+    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(
+      false,
+    );
 
-    fireEvent(screen.getByTestId('perps-pro-region-alert-slot'), 'layout', {
-      nativeEvent: { layout: { height: 64, width: 393, x: 0, y: 56 } },
+    expect(screen.getByTestId('perps-region-alert').props.bottomSpacing).toBe(
+      4,
+    );
+    const getMarketTranslateY = () => {
+      const marketOverlayStyle = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-overlay').props.style,
+      );
+      const marketTranslateY = marketOverlayStyle?.transform?.[0]
+        ?.translateY as unknown as number | { __getValue: () => number };
+      return typeof marketTranslateY === 'number'
+        ? marketTranslateY
+        : marketTranslateY.__getValue();
+    };
+    expect(getMarketTranslateY()).toBe(112);
+
+    fireEvent(screen.getByTestId('perps-region-alert'), 'layout', {
+      nativeEvent: {
+        layout: {
+          height: 52,
+          width: Dimensions.get('window').width - 32,
+          x: 16,
+          y: 56,
+        },
+      },
     });
+    expect(getMarketTranslateY()).toBe(112);
+  });
+
+  it('uses the account restriction before the current market resolves', () => {
+    mockTradeHasPermission = false;
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({ isResolvingMarket: true }),
+    );
+
+    render(
+      <PerpsProScene
+        initialRegionAlertLayout={{
+          height: 34,
+          width: Dimensions.get('window').width - 32,
+        }}
+        isModeSwitching={false}
+        onSwitchToSimple={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
+    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(
+      false,
+    );
+    expect(screen.getByTestId('market-bar-skeleton')).toBeOnTheScreen();
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
@@ -749,7 +826,58 @@ describe('PerpsProScene market loading states', () => {
       typeof marketTranslateY === 'number'
         ? marketTranslateY
         : marketTranslateY.__getValue(),
-    ).toBe(120);
+    ).toBe(94);
+  });
+
+  it('waits for the restricted alert measurement before painting positioned overlays', () => {
+    mockTradeHasPermission = false;
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
+    expect(screen.queryByTestId('perps-pro-market-overlay')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-info-tabs-overlay')).toBeNull();
+
+    fireEvent(screen.getByTestId('perps-region-alert'), 'layout', {
+      nativeEvent: {
+        layout: {
+          height: 52,
+          width: Dimensions.get('window').width - 32,
+          x: 16,
+          y: 56,
+        },
+      },
+    });
+
+    const marketOverlayStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-market-overlay').props.style,
+    );
+    const marketTranslateY = marketOverlayStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
+    expect(
+      typeof marketTranslateY === 'number'
+        ? marketTranslateY
+        : marketTranslateY.__getValue(),
+    ).toBe(112);
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
+  });
+
+  it('rejects a cached restricted alert measurement from another width', () => {
+    mockTradeHasPermission = false;
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+
+    render(
+      <PerpsProScene
+        initialRegionAlertLayout={{ height: 52, width: 100 }}
+        isModeSwitching={false}
+        onSwitchToSimple={jest.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId('perps-pro-market-overlay')).toBeNull();
   });
 
   it('opens the K-line sheet from its dedicated market action', () => {

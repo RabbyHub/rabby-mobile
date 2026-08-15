@@ -1,16 +1,20 @@
-import type { PerpsViewMode } from '@/core/services/perpsService';
+import type {
+  PerpsViewMode,
+  PerpsViewModePreference,
+} from '@/core/services/perpsService';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 
 export type PerpsViewModeSnapshot = Readonly<{
   hydrated: boolean;
+  hasVisitedPro: boolean;
   viewMode: PerpsViewMode;
   savingMode: PerpsViewMode | null;
   error: unknown | null;
 }>;
 
 type PerpsViewModeDependencies = {
-  getPerpsViewMode: () => Promise<PerpsViewMode>;
+  getPerpsViewModePreference: () => Promise<PerpsViewModePreference>;
   setPerpsViewMode: (viewMode: PerpsViewMode) => Promise<unknown>;
 };
 
@@ -25,6 +29,7 @@ export type PerpsViewModeController = {
 
 const INITIAL_PERPS_VIEW_MODE_SNAPSHOT: PerpsViewModeSnapshot = {
   hydrated: false,
+  hasVisitedPro: false,
   viewMode: 'simple',
   savingMode: null,
   error: null,
@@ -67,11 +72,12 @@ export const createPerpsViewModeController = (
     }
 
     const currentPromise = Promise.resolve()
-      .then(() => dependencies.getPerpsViewMode())
-      .then(viewMode => {
+      .then(() => dependencies.getPerpsViewModePreference())
+      .then(preference => {
         publish({
           hydrated: true,
-          viewMode: viewMode === 'pro' ? 'pro' : 'simple',
+          hasVisitedPro: preference.hasVisitedPro === true,
+          viewMode: preference.viewMode === 'pro' ? 'pro' : 'simple',
           savingMode: null,
           error: null,
         });
@@ -80,6 +86,7 @@ export const createPerpsViewModeController = (
         console.error('[perpsViewMode] hydrate failed', error);
         publish({
           hydrated: true,
+          hasVisitedPro: false,
           viewMode: 'simple',
           savingMode: null,
           error,
@@ -116,6 +123,7 @@ export const createPerpsViewModeController = (
       .then(() => {
         publish({
           hydrated: true,
+          hasVisitedPro: snapshot.hasVisitedPro || viewMode === 'pro',
           viewMode,
           savingMode: null,
           error: null,
@@ -126,6 +134,7 @@ export const createPerpsViewModeController = (
         console.error('[perpsViewMode] save failed', error);
         publish({
           hydrated: true,
+          hasVisitedPro: snapshot.hasVisitedPro,
           viewMode: previousMode,
           savingMode: null,
           error,
@@ -160,7 +169,8 @@ export const createPerpsViewModeController = (
 };
 
 const perpsViewModeController = createPerpsViewModeController({
-  getPerpsViewMode: () => perpsServiceApi.getPerpsViewMode(),
+  getPerpsViewModePreference: () =>
+    perpsServiceApi.getPerpsViewModePreference(),
   setPerpsViewMode: viewMode => perpsServiceApi.setPerpsViewMode(viewMode),
 });
 

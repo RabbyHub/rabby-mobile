@@ -1,19 +1,41 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View } from 'react-native';
+import { View, type LayoutChangeEvent } from 'react-native';
 
 import { RcIconWarningCC } from '@/assets2024/icons/common';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 
-export const PerpsRegionAlert: React.FC<{}> = ({}) => {
+export const PERPS_REGION_ALERT_DEFAULT_BOTTOM_SPACING = 12;
+export const PERPS_REGION_ALERT_HORIZONTAL_MARGIN = 16;
+
+export type PerpsRegionAlertLayout = {
+  height: number;
+  width: number;
+};
+
+export const PerpsRegionAlert: React.FC<{
+  bottomSpacing?: number;
+  onLayout?: (event: LayoutChangeEvent) => void;
+}> = ({
+  bottomSpacing = PERPS_REGION_ALERT_DEFAULT_BOTTOM_SPACING,
+  onLayout,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   return (
-    <View style={styles.container}>
-      <RcIconWarningCC color={colors2024['orange-default']} />
+    <View
+      onLayout={onLayout}
+      style={[styles.container, { marginBottom: bottomSpacing }]}
+      testID="perps-region-alert">
+      <RcIconWarningCC
+        color={colors2024['orange-default']}
+        height={18}
+        style={styles.icon}
+        width={18}
+      />
       <Text style={styles.text}>{t('page.perps.regionNotSupport')}</Text>
     </View>
   );
@@ -21,7 +43,6 @@ export const PerpsRegionAlert: React.FC<{}> = ({}) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginBottom: 12,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -30,13 +51,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['orange-light-1'],
     borderRadius: 8,
     justifyContent: 'center',
-    marginHorizontal: 16,
+    marginHorizontal: PERPS_REGION_ALERT_HORIZONTAL_MARGIN,
+  },
+  icon: {
+    flexShrink: 0,
   },
   text: {
+    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
+    minWidth: 0,
     color: colors2024['orange-default'],
   },
 }));

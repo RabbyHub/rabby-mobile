@@ -73,20 +73,21 @@ describe('PerpsHeader', () => {
         onPressInMode={onPressInMode}
         onPressOutMode={onPressOutMode}
         onSelectMode={onSelectMode}
+        showBottomDivider={false}
       />,
     );
 
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-header').props.style),
     ).toMatchObject({
-      backgroundColor: 'neutral-bg-1',
-      borderBottomColor: 'neutral-bg-5',
-      borderBottomWidth: 1,
+      backgroundColor: 'neutral-bg-0',
       gap: 8,
       height: PERPS_HEADER_HEIGHT,
       paddingLeft: 8,
       paddingRight: 15,
+      position: 'relative',
     });
+    expect(screen.queryByTestId('perps-header-bottom-divider')).toBeNull();
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-header-left').props.style),
     ).toMatchObject({ flex: 1, gap: 4, minWidth: 0 });
@@ -124,17 +125,37 @@ describe('PerpsHeader', () => {
 
   it('keeps the same shell when Pro is active and no account is available', () => {
     const screen = render(
-      <PerpsHeader activeMode="pro" isModeSwitching onSelectMode={jest.fn()} />,
+      <PerpsHeader
+        activeMode="pro"
+        isModeSwitching
+        onSelectMode={jest.fn()}
+        showBottomDivider
+      />,
     );
 
     expect(
-      StyleSheet.flatten(screen.getByTestId('perps-header').props.style).height,
-    ).toBe(PERPS_HEADER_HEIGHT);
+      StyleSheet.flatten(screen.getByTestId('perps-header').props.style),
+    ).toMatchObject({
+      backgroundColor: 'neutral-bg-1',
+      height: PERPS_HEADER_HEIGHT,
+    });
     expect(screen.getByTestId('mode-switch').props).toMatchObject({
       activeMode: 'pro',
       disabled: true,
       extendProHitAreaRight: false,
     });
     expect(screen.queryByTestId('account-trigger')).toBeNull();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-header-bottom-divider').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      bottom: 0,
+      height: 1,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+    });
   });
 });

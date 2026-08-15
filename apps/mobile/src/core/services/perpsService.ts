@@ -43,6 +43,10 @@ export type ApproveSignatures = (SendApproveParams & {
 })[];
 
 export type PerpsViewMode = 'simple' | 'pro';
+export type PerpsViewModePreference = {
+  hasVisitedPro: boolean;
+  viewMode: PerpsViewMode;
+};
 export type PerpsProInfoTab = 'account' | 'positions' | 'openOrders';
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
 export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
@@ -51,6 +55,7 @@ export type PerpsProOpenOrderEditCategory = 'basic' | 'conditional';
 export type PerpsProPreferences = {
   version: number;
   viewMode: PerpsViewMode;
+  hasVisitedPro: boolean;
   activeInfoTab: PerpsProInfoTab;
   skipLimitCloseDoubleConfirmation: boolean;
   skipPositionTpSlDoubleConfirmation: boolean;
@@ -64,11 +69,12 @@ export type PerpsProPreferences = {
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 8;
+const PERPS_PRO_PREFERENCES_VERSION = 9;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
 const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   version: PERPS_PRO_PREFERENCES_VERSION,
   viewMode: 'simple',
+  hasVisitedPro: false,
   activeInfoTab: 'account',
   skipLimitCloseDoubleConfirmation: false,
   skipPositionTpSlDoubleConfirmation: false,
@@ -107,6 +113,16 @@ const normalizePerpsViewMode = (value: unknown): PerpsViewMode => {
   return value.viewMode === 'simple' || value.viewMode === 'pro'
     ? value.viewMode
     : 'simple';
+};
+
+const normalizeHasVisitedPro = (value: unknown) => {
+  if (!hasReadableProPreferences(value)) {
+    return false;
+  }
+  if (typeof value.hasVisitedPro === 'boolean') {
+    return value.hasVisitedPro;
+  }
+  return normalizePerpsViewMode(value) === 'pro';
 };
 
 const normalizePerpsProInfoTab = (value: unknown): PerpsProInfoTab => {
@@ -194,6 +210,7 @@ const getWritableProPreferences = (
     ...writableValue,
     version: Math.max(value.version, PERPS_PRO_PREFERENCES_VERSION),
     viewMode: normalizePerpsViewMode(value),
+    hasVisitedPro: normalizeHasVisitedPro(value),
     activeInfoTab: normalizePerpsProInfoTab(value),
     skipLimitCloseDoubleConfirmation:
       normalizeSkipLimitCloseDoubleConfirmation(value),
@@ -576,11 +593,23 @@ export class PerpsService extends StoreServiceBase<
     return normalizePerpsViewMode(this.store.proPreferences);
   };
 
+  getPerpsViewModePreference = async (): Promise<PerpsViewModePreference> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return {
+      hasVisitedPro: normalizeHasVisitedPro(this.store.proPreferences),
+      viewMode: normalizePerpsViewMode(this.store.proPreferences),
+    };
+  };
+
   setPerpsViewMode = async (viewMode: PerpsViewMode) => {
     const currentPreferences: unknown = this.store.proPreferences;
     this.mutateStore(draft => {
       draft.proPreferences = {
         ...getWritableProPreferences(currentPreferences),
+        ...(viewMode === 'pro' ? { hasVisitedPro: true } : {}),
         viewMode,
       };
     });

@@ -10,7 +10,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { keyBy, sortBy, uniqBy } from 'lodash';
+import { uniqBy } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
@@ -19,6 +19,10 @@ import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 import { formatSpotState } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { useEnablePerpsWatchAddress } from '@/hooks/appSettings';
+import {
+  buildPerpsAccountSelectorData,
+  type PerpsAccountInfoByAddress,
+} from './accountSelectorData';
 
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;
@@ -81,7 +85,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
     [enablePerpsWatchAddress, myAddresses, watchAddresses],
   );
 
-  const { data: _data, runAsync: runFetchPerpsInfo } = useRequest(
+  const { data: perpsInfoByAddress, runAsync: runFetchPerpsInfo } = useRequest(
     async () => {
       const list = uniqBy(addresses, i => i.address.toLowerCase());
       const res = await Promise.all(
@@ -118,25 +122,16 @@ export const PerpsAccountSelectorPopup: React.FC<{
         }),
       );
 
-      const resDict = keyBy(res, item => item.address.toLowerCase());
-
-      const listWithInfo = addresses.map(account => {
-        const item = resDict[account.address.toLowerCase()];
-        return {
-          account,
-          info: item?.info ? { ...item.info } : null,
-        };
-      });
-
-      return sortBy(
-        listWithInfo,
-        item => -(item.info?.assetPositions?.length || 0),
-        item => -Number(item.info?.withdrawable || 0),
-      );
+      return res.reduce<PerpsAccountInfoByAddress>((result, item) => {
+        result[item.address.toLowerCase()] = item.info
+          ? { ...item.info }
+          : null;
+        return result;
+      }, {});
     },
     {
       manual: true,
-      cacheKey: `PerpsAccountSelectorPopup-fetchPerpsInfo-${addresses
+      cacheKey: `PerpsAccountSelectorPopup-fetchPerpsInfo-v2-${addresses
         .map(i => i.address)
         .join('-')}`,
       // cacheTime: 10 * 1000,
@@ -144,9 +139,10 @@ export const PerpsAccountSelectorPopup: React.FC<{
     },
   );
 
-  const data = useMemo(() => {
-    return _data ?? addresses.map(account => ({ account, info: null }));
-  }, [_data, addresses]);
+  const data = useMemo(
+    () => buildPerpsAccountSelectorData(addresses, perpsInfoByAddress),
+    [addresses, perpsInfoByAddress],
+  );
 
   const [tmpSelectAccount, setTmpSelectAccount] = useState<Account | null>(
     value || null,

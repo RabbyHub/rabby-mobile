@@ -27,7 +27,7 @@ export const PerpsProMarketBar: React.FC<{
       : styles.down;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="perps-pro-market-bar">
       <Pressable
         accessibilityLabel={t('page.perps.pro.marketSelector.title')}
         accessibilityRole="button"
@@ -79,8 +79,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
-    borderTopColor: colors2024['neutral-line'],
-    borderTopWidth: 1,
     flexDirection: 'row',
     height: PERPS_PRO_MARKET_BAR_HEIGHT,
     justifyContent: 'space-between',

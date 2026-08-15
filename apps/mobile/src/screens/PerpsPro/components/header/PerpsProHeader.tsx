@@ -12,7 +12,8 @@ export { PERPS_PRO_HEADER_HEIGHT } from './constants';
 export const PerpsProHeader: React.FC<{
   isModeSwitching: boolean;
   onSwitchToSimple: () => void;
-}> = React.memo(({ isModeSwitching, onSwitchToSimple }) => {
+  showBottomDivider: boolean;
+}> = React.memo(({ isModeSwitching, onSwitchToSimple, showBottomDivider }) => {
   const account = perpsStore(state => state.currentPerpsAccount);
   const [popupState, setPopupState] = usePerpsPopupState();
 
@@ -52,6 +53,7 @@ export const PerpsProHeader: React.FC<{
       isModeSwitching={isModeSwitching}
       onPressAccount={account ? handlePressAccount : undefined}
       onSelectMode={handleSelectMode}
+      showBottomDivider={showBottomDivider}
     />
   );
 });

@@ -1,7 +1,9 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
 import { PerpsSimpleScreen } from './PerpsSimpleScreen';
+
+let mockHasPermission = true;
 
 jest.mock('@/constant', () => ({ APP_VERSIONS: { fromNative: 'test' } }));
 
@@ -61,7 +63,7 @@ jest.mock('@/hooks/perps/usePerpsState', () => ({
     handleDeleteAgent: jest.fn(),
     handleSafeSetReference: jest.fn(),
     handleWithdraw: jest.fn(),
-    hasPermission: true,
+    hasPermission: mockHasPermission,
     isInitialized: false,
     isLogin: false,
     login: jest.fn(),
@@ -153,9 +155,17 @@ jest.mock('./components/PerpsPositionSection', () => ({
 jest.mock('./components/PerpsLimitOrdersSection', () => ({
   PerpsLimitOrdersSection: () => null,
 }));
-jest.mock('./components/PerpsRegionAlert', () => ({
-  PerpsRegionAlert: () => null,
-}));
+jest.mock('./components/PerpsRegionAlert', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsRegionAlert: (props: object) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'perps-region-alert',
+      }),
+  };
+});
 
 jest.mock('./hooks/usePerpsPopupState', () => ({
   usePerpsPopupState: () => [{}, jest.fn()],
@@ -171,6 +181,10 @@ jest.mock('../PerpsMarketDetail/hooks/usePerpsPosition', () => ({
 }));
 
 describe('PerpsSimpleScreen', () => {
+  beforeEach(() => {
+    mockHasPermission = true;
+  });
+
   it('owns Safe Area directly and places the shared page header before content', () => {
     const screen = render(
       <PerpsSimpleScreen isModeSwitching={false} onSwitchToPro={jest.fn()} />,
@@ -182,5 +196,24 @@ describe('PerpsSimpleScreen', () => {
     expect(screen.getByTestId('simple-page-header')).toBeOnTheScreen();
     expect(screen.getByTestId('simple-content')).toBeOnTheScreen();
     expect(screen.getByTestId('simple-popup-group')).toBeOnTheScreen();
+  });
+
+  it('forwards the restricted alert layout without adding page state', () => {
+    mockHasPermission = false;
+    const onRegionAlertLayout = jest.fn();
+    const screen = render(
+      <PerpsSimpleScreen
+        isModeSwitching={false}
+        onRegionAlertLayout={onRegionAlertLayout}
+        onSwitchToPro={jest.fn()}
+      />,
+    );
+    const event = {
+      nativeEvent: { layout: { height: 52, width: 361, x: 16, y: 56 } },
+    };
+
+    fireEvent(screen.getByTestId('perps-region-alert'), 'layout', event);
+
+    expect(onRegionAlertLayout).toHaveBeenCalledWith(event);
   });
 });

@@ -5,6 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export type PerpsModeSwitchProps = {
   activeMode: PerpsViewMode;
@@ -13,6 +14,7 @@ export type PerpsModeSwitchProps = {
   onPressInMode?: (viewMode: PerpsViewMode) => void;
   onPressOutMode?: (viewMode: PerpsViewMode) => void;
   onSelectMode: (viewMode: PerpsViewMode) => void;
+  showProNewBadge?: boolean;
 };
 
 const MODE_OPTIONS: ReadonlyArray<{
@@ -30,8 +32,10 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
   onPressInMode,
   onPressOutMode,
   onSelectMode,
+  showProNewBadge = false,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   return (
     <View
@@ -62,9 +66,21 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
                 : undefined
             }
             testID={`perps-mode-${option.value}`}>
-            <Text style={selected ? styles.activeText : styles.inactiveText}>
-              {option.label}
-            </Text>
+            <View style={styles.optionContent}>
+              <Text style={selected ? styles.activeText : styles.inactiveText}>
+                {option.label}
+              </Text>
+              {option.value === 'pro' && showProNewBadge ? (
+                <View
+                  pointerEvents="none"
+                  style={styles.newBadge}
+                  testID="perps-pro-new-badge">
+                  <Text style={styles.newBadgeText}>
+                    {t('page.perps.pro.mode.new')}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </Pressable>
         );
       })}
@@ -88,6 +104,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     height: '100%',
     justifyContent: 'center',
+  },
+  optionContent: {
+    position: 'relative',
+  },
+  newBadge: {
+    backgroundColor: colors2024['red-light-1'],
+    borderRadius: 4,
+    left: 16,
+    paddingHorizontal: 2,
+    position: 'absolute',
+    top: -10,
+  },
+  newBadgeText: {
+    color: colors2024['red-default'],
+    fontFamily: FontNames.sf_pro_rounded_medium,
+    fontSize: 12,
+    includeFontPadding: false,
+    lineHeight: 16,
   },
   activeText: {
     fontFamily: FontNames.sf_pro,

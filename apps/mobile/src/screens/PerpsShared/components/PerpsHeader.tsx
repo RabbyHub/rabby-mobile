@@ -20,6 +20,8 @@ export type PerpsHeaderProps = {
   onPressInMode?: (viewMode: PerpsViewMode) => void;
   onPressOutMode?: (viewMode: PerpsViewMode) => void;
   onSelectMode: (viewMode: PerpsViewMode) => void;
+  showBottomDivider: boolean;
+  showProNewBadge?: boolean;
 };
 
 /**
@@ -37,11 +39,18 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
     onPressInMode,
     onPressOutMode,
     onSelectMode,
+    showBottomDivider,
+    showProNewBadge = false,
   }) => {
     const { styles } = useTheme2024({ getStyle });
 
     return (
-      <View style={styles.header} testID="perps-header">
+      <View
+        style={[
+          styles.header,
+          activeMode === 'simple' ? styles.simpleHeader : null,
+        ]}
+        testID="perps-header">
         <View style={styles.left} testID="perps-header-left">
           <HeaderBackPressable
             style={styles.backButton}
@@ -56,6 +65,7 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
               onPressInMode={onPressInMode}
               onPressOutMode={onPressOutMode}
               onSelectMode={onSelectMode}
+              showProNewBadge={showProNewBadge}
             />
           </View>
         </View>
@@ -64,6 +74,13 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
             expanded={accountExpanded}
             label={accountLabel}
             onPress={onPressAccount}
+          />
+        ) : null}
+        {showBottomDivider ? (
+          <View
+            pointerEvents="none"
+            style={styles.bottomDivider}
+            testID="perps-header-bottom-divider"
           />
         ) : null}
       </View>
@@ -77,13 +94,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   header: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 8,
     height: PERPS_HEADER_HEIGHT,
     paddingLeft: 8,
     paddingRight: 15,
+    position: 'relative',
+  },
+  simpleHeader: {
+    backgroundColor: colors2024['neutral-bg-0'],
+  },
+  bottomDivider: {
+    backgroundColor: colors2024['neutral-bg-5'],
+    bottom: 0,
+    height: 1,
+    left: 0,
+    position: 'absolute',
+    right: 0,
   },
   left: {
     alignItems: 'center',

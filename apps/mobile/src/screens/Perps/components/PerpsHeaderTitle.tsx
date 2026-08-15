@@ -13,6 +13,7 @@ export const PerpsSimpleHeader: React.FC<{
   onPressInPro?: () => void;
   onPressOutPro?: () => void;
   onSwitchToPro: () => void;
+  showProNewBadge?: boolean;
 }> = React.memo(
   ({
     account,
@@ -20,6 +21,7 @@ export const PerpsSimpleHeader: React.FC<{
     onPressInPro,
     onPressOutPro,
     onSwitchToPro,
+    showProNewBadge = false,
   }) => {
     const [popupState, setPopupState] = usePerpsPopupState();
 
@@ -80,6 +82,8 @@ export const PerpsSimpleHeader: React.FC<{
         onPressInMode={handlePressInMode}
         onPressOutMode={handlePressOutMode}
         onSelectMode={handleSelectMode}
+        showBottomDivider={false}
+        showProNewBadge={showProNewBadge}
       />
     );
   },

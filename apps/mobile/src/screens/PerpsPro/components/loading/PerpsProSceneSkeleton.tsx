@@ -149,8 +149,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketBar: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
-    borderTopColor: colors2024['neutral-line'],
-    borderTopWidth: 1,
     flexDirection: 'row',
     height: 40,
     justifyContent: 'space-between',
