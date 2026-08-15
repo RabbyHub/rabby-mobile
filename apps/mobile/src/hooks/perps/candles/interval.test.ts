@@ -35,11 +35,13 @@ describe('Perps candle intervals', () => {
 
   it('maps weekly and natural-month products to daily source candles', () => {
     expect(getPerpsCandleSource('1w')).toMatchObject({
-      sourceCandleCount: 3500,
+      sourceCandleCount: 500,
+      maximumSourceCandleCount: 5000,
       sourceInterval: '1d',
     });
     expect(getPerpsCandleSource('1M')).toMatchObject({
-      sourceCandleCount: 5000,
+      sourceCandleCount: 1240,
+      maximumSourceCandleCount: 5000,
       sourceInterval: '1d',
     });
     expect(getPerpsCandleSource('15m')).toMatchObject({
@@ -54,7 +56,7 @@ describe('Perps candle intervals', () => {
       end - 500 * 60 * 1000,
     );
     expect(getPerpsCandleHistoryStartTime('1M', end)).toBe(
-      Math.max(0, end - 5000 * 24 * 60 * 60 * 1000),
+      Math.max(0, end - 1240 * 24 * 60 * 60 * 1000),
     );
   });
 

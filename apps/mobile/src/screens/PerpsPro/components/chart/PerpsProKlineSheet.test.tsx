@@ -13,7 +13,9 @@ const mockModalProps = jest.fn();
 const mockClearCrosshair = jest.fn();
 const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
+const mockCompleteOlderCandlesRequest = jest.fn();
 const mockSetData = jest.fn();
+const mockTradingViewProps = jest.fn();
 const mockUpdateCandleData = jest.fn();
 const mockToolbarProps = jest.fn();
 const mockUsePerpsProKline = jest.fn();
@@ -39,6 +41,10 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
             identity: string;
             revision: number;
           }) => void;
+          onRequestOlderCandles?: (request: {
+            earliestTime: number;
+            identity: string;
+          }) => Promise<void>;
         },
         ref: React.Ref<unknown>,
       ) => {
@@ -46,8 +52,10 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
           mockChartMount();
           return mockChartUnmount;
         }, []);
+        mockTradingViewProps(props);
         ReactModule.useImperativeHandle(ref, () => ({
           clearCrosshair: mockClearCrosshair,
+          completeOlderCandlesRequest: mockCompleteOlderCandlesRequest,
           setData: (data: { identity: string; revision: number }) => {
             mockSetData(data);
             mockLastDataDelivery = {
@@ -171,6 +179,7 @@ const createKlineState = (
   },
   hydrated: true,
   interval: '15m',
+  loadOlder: jest.fn().mockResolvedValue('ignored'),
   selectInterval: jest.fn(),
 });
 
@@ -222,6 +231,44 @@ describe('PerpsProKlineSheet', () => {
 
     act(() => props.onChange(-1));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads older candles only for the current visible Pro identity', async () => {
+    const loadOlder = jest.fn().mockResolvedValue('exhausted');
+    mockKlineState = {
+      ...createKlineState('ready'),
+      loadOlder,
+    };
+    render(<PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />);
+    const chartProps = mockTradingViewProps.mock.calls.at(-1)?.[0];
+
+    await act(async () => {
+      await chartProps.onRequestOlderCandles({
+        earliestTime: 1800,
+        identity: 'BTC:15m',
+      });
+    });
+
+    expect(loadOlder).toHaveBeenCalledTimes(1);
+    expect(mockCompleteOlderCandlesRequest).toHaveBeenCalledWith({
+      earliestTime: 1800,
+      identity: 'BTC:15m',
+      outcome: 'exhausted',
+    });
+
+    await act(async () => {
+      await chartProps.onRequestOlderCandles({
+        earliestTime: 1800,
+        identity: 'ETH:15m',
+      });
+    });
+
+    expect(loadOlder).toHaveBeenCalledTimes(1);
+    expect(mockCompleteOlderCandlesRequest).toHaveBeenLastCalledWith({
+      earliestTime: 1800,
+      identity: 'ETH:15m',
+      outcome: 'retry',
+    });
   });
 
   it('removes the retained sheet from hit testing while it is hidden', () => {
@@ -326,7 +373,7 @@ describe('PerpsProKlineSheet', () => {
         variant: 'perps-pro',
       },
       revision: 1,
-      showVolume: true,
+      showVolume: false,
     });
     expect(screen.getByTestId('kline-overlay-skeleton')).toBeTruthy();
     fireEvent(screen.getByTestId('trading-view-chart'), 'pressOut');

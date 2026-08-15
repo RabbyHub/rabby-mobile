@@ -87,6 +87,7 @@ type DuplexDefs = {
             identity?: string;
             revision?: number;
             proConfig?: PerpsProChartConfig;
+            preserveVisibleRange?: boolean;
           }
         | {
             type: 'UPDATE_CANDLESTICK_DATA';
@@ -103,6 +104,12 @@ type DuplexDefs = {
           }
         | {
             type: 'CLEAR_CROSSHAIR';
+          }
+        | {
+            type: 'COMPLETE_OLDER_CANDLES_REQUEST';
+            earliestTime: number;
+            identity: string;
+            outcome: 'exhausted' | 'retry';
           }
         | {
             type: 'UPDATE_THEME';
@@ -162,6 +169,8 @@ type DuplexDefs = {
       timestamp: string;
       capabilities?: {
         candleDataAppliedAck?: boolean;
+        olderCandleRequest?: boolean;
+        perpsProKlineProtocolVersion?: number;
       };
     };
     receive: never;
@@ -171,6 +180,14 @@ type DuplexDefs = {
       type: 'CANDLE_DATA_APPLIED';
       identity: string;
       revision: number;
+    };
+    receive: never;
+  };
+  TradingView_RequestOlderCandles: {
+    post: {
+      type: 'REQUEST_OLDER_CANDLES';
+      earliestTime: number;
+      identity: string;
     };
     receive: never;
   };

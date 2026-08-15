@@ -357,4 +357,72 @@ describe('usePerpsCandleFeed', () => {
     expect(hook.result.current.candles).toHaveLength(500);
     expect(hook.result.current.candles[0]?.time).toBe(2 * 60_000);
   });
+
+  it('loads older source candles on demand without replacing the live tail', async () => {
+    const initialRequest = deferred<CandleSnapshot>();
+    const historyRequest = deferred<CandleSnapshot>();
+    mockCandleSnapshot
+      .mockReturnValueOnce(initialRequest.promise)
+      .mockReturnValueOnce(historyRequest.promise);
+    const initial = Array.from({ length: 500 }, (_, index) =>
+      rawCandle((index + 1000) * 60_000, { i: '1m' }),
+    );
+    const older = Array.from({ length: 1000 }, (_, index) =>
+      rawCandle(index * 60_000, { i: '1m' }),
+    );
+    const hook = renderHook(() =>
+      usePerpsCandleFeed({ coin: 'BTC', enabled: true, interval: '1m' }),
+    );
+
+    await act(async () => {
+      initialRequest.resolve(initial);
+      await initialRequest.promise;
+    });
+    let loadResult: string | undefined;
+    await act(async () => {
+      const loadPromise = hook.result.current.loadOlder();
+      historyRequest.resolve(older);
+      loadResult = await loadPromise;
+    });
+
+    expect(loadResult).toBe('loaded');
+    expect(hook.result.current).toMatchObject({
+      status: 'ready',
+      updateType: 'history',
+    });
+    expect(hook.result.current.candles).toHaveLength(1500);
+    expect(hook.result.current.candles.at(-1)?.time).toBe(1499 * 60_000);
+    expect(mockCandleSnapshot.mock.calls[1]?.[3]).toBe(1000 * 60_000 - 1);
+  });
+
+  it('coalesces concurrent history requests and stops at the official boundary', async () => {
+    const initialRequest = deferred<CandleSnapshot>();
+    const historyRequest = deferred<CandleSnapshot>();
+    mockCandleSnapshot
+      .mockReturnValueOnce(initialRequest.promise)
+      .mockReturnValueOnce(historyRequest.promise);
+    const hook = renderHook(() =>
+      usePerpsCandleFeed({ coin: 'BTC', enabled: true, interval: '1m' }),
+    );
+
+    await act(async () => {
+      initialRequest.resolve([rawCandle(2_000 * 60_000, { i: '1m' })]);
+      await initialRequest.promise;
+    });
+
+    let firstResult: string | undefined;
+    let secondResult: string | undefined;
+    await act(async () => {
+      const first = hook.result.current.loadOlder();
+      const second = hook.result.current.loadOlder();
+      expect(first).toBe(second);
+      historyRequest.resolve([]);
+      [firstResult, secondResult] = await Promise.all([first, second]);
+    });
+
+    expect(firstResult).toBe('exhausted');
+    expect(secondResult).toBe('exhausted');
+    await expect(hook.result.current.loadOlder()).resolves.toBe('exhausted');
+    expect(mockCandleSnapshot).toHaveBeenCalledTimes(2);
+  });
 });

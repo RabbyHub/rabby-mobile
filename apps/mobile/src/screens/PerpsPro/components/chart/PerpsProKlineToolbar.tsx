@@ -5,7 +5,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, ScrollView, type LayoutChangeEvent } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 type ItemLayout = {
   width: number;
@@ -20,7 +19,6 @@ export const PerpsProKlineToolbar: React.FC<{
   onSelect: (interval: PerpsCandleInterval) => void;
 }> = React.memo(({ disabled = false, interval, onSelect }) => {
   const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
   const itemLayoutsRef = useRef(new Map<PerpsCandleInterval, ItemLayout>());
   const viewportWidthRef = useRef(0);
@@ -70,7 +68,6 @@ export const PerpsProKlineToolbar: React.FC<{
       showsHorizontalScrollIndicator={false}
       style={styles.container}
       testID="perps-pro-kline-toolbar">
-      <Text style={styles.label}>{t('component.kline.time')}</Text>
       {PERPS_PRO_CANDLE_INTERVAL_OPTIONS.map(option => {
         const selected = option.value === interval;
         return (
@@ -114,28 +111,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   content: {
     alignItems: 'center',
-    gap: 20,
+    gap: 8,
     minHeight: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
-    paddingHorizontal: 16,
-  },
-  label: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 10,
-    fontWeight: '400',
-    lineHeight: 14,
+    paddingHorizontal: 8,
   },
   option: {
     alignItems: 'center',
     height: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
     justifyContent: 'center',
+    minWidth: 40,
   },
   optionText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '400',
-    lineHeight: 14,
+    lineHeight: 16,
   },
   selectedOptionText: {
     color: colors2024['neutral-title-1'],

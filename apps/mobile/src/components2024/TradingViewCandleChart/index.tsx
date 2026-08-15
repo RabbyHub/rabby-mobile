@@ -31,6 +31,7 @@ interface ChartProps {
   onChartReady?: () => void;
   onChartError?: () => void;
   onDataApplied?: (data: CandleDataApplied) => void;
+  onRequestOlderCandles?: (request: OlderCandlesRequest) => void;
   style?: StyleProp<ViewStyle>;
   backGroundColor?: string;
   variant?: 'perps-pro';
@@ -39,6 +40,11 @@ interface ChartProps {
 export type CandleDataApplied = {
   identity: string;
   revision: number;
+};
+
+export type OlderCandlesRequest = {
+  earliestTime: number;
+  identity: string;
 };
 
 interface TPSLPriceLines {
@@ -50,10 +56,17 @@ interface TPSLPriceLines {
 
 export interface TradingViewChartRef {
   clearCrosshair: () => void;
+  completeOlderCandlesRequest: (
+    request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' },
+  ) => void;
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
+
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_PRO_KLINE_PROTOCOL_ERROR =
+  'Perps Pro K-line resource protocol mismatch';
 
 const formatCandleItem = (candle: CandleStick) => {
   const timeInSeconds = Math.floor(candle.time);
@@ -107,6 +120,7 @@ const TradingViewCandleChart = ({
   onChartReady,
   onChartError,
   onDataApplied,
+  onRequestOlderCandles,
   backGroundColor,
   variant,
   ref,
@@ -117,6 +131,8 @@ const TradingViewCandleChart = ({
   const [isChartReady, setIsChartReady] = React.useState(false);
   const supportsDataAppliedAckRef = useRef(false);
   const pendingLegacyAppliedFrameRef = useRef<number | null>(null);
+  const protocolReloadAttemptedRef = useRef(false);
+  const protocolErrorReportedRef = useRef(false);
   const { t } = useTranslation();
 
   const cancelPendingLegacyApplied = useCallback(() => {
@@ -228,13 +244,39 @@ const TradingViewCandleChart = ({
         const message = JSON.parse(event.nativeEvent.data);
 
         switch (message.type) {
-          case 'CHART_READY':
+          case 'CHART_READY': {
             cancelPendingLegacyApplied();
+            if (
+              variant === 'perps-pro' &&
+              (!Number.isInteger(
+                message.capabilities?.perpsProKlineProtocolVersion,
+              ) ||
+                message.capabilities.perpsProKlineProtocolVersion <
+                  PERPS_PRO_KLINE_PROTOCOL_VERSION)
+            ) {
+              supportsDataAppliedAckRef.current = false;
+              setIsChartReady(false);
+              if (
+                !protocolReloadAttemptedRef.current &&
+                typeof localWebViewRef.current?.reload === 'function'
+              ) {
+                protocolReloadAttemptedRef.current = true;
+                localWebViewRef.current.reload();
+                break;
+              }
+              if (!protocolErrorReportedRef.current) {
+                protocolErrorReportedRef.current = true;
+                setWebViewError(PERPS_PRO_KLINE_PROTOCOL_ERROR);
+                onChartError?.();
+              }
+              break;
+            }
             supportsDataAppliedAckRef.current =
               message.capabilities?.candleDataAppliedAck === true;
             setIsChartReady(true);
             onChartReady?.();
             break;
+          }
           case 'ATTR_LOGO_CLICK':
             openExternalUrl('https://www.tradingview.com');
             break;
@@ -250,6 +292,17 @@ const TradingViewCandleChart = ({
               });
             }
             break;
+          case 'REQUEST_OLDER_CANDLES':
+            if (
+              typeof message.identity === 'string' &&
+              Number.isFinite(message.earliestTime)
+            ) {
+              onRequestOlderCandles?.({
+                earliestTime: message.earliestTime,
+                identity: message.identity,
+              });
+            }
+            break;
           default:
             break;
         }
@@ -260,7 +313,14 @@ const TradingViewCandleChart = ({
         );
       }
     },
-    [cancelPendingLegacyApplied, onChartReady, onDataApplied],
+    [
+      cancelPendingLegacyApplied,
+      onChartReady,
+      onChartError,
+      onDataApplied,
+      onRequestOlderCandles,
+      variant,
+    ],
   );
 
   // Handle WebView errors
@@ -298,6 +358,7 @@ const TradingViewCandleChart = ({
           ...(data.identity !== undefined ? { identity: data.identity } : {}),
           ...(data.revision !== undefined ? { revision: data.revision } : {}),
           ...(data.proConfig ? { proConfig: data.proConfig } : {}),
+          ...(data.preserveVisibleRange ? { preserveVisibleRange: true } : {}),
         },
       });
 
@@ -367,8 +428,25 @@ const TradingViewCandleChart = ({
     });
   }, [isChartReady]);
 
+  const handleCompleteOlderCandlesRequest = useCallback(
+    (request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' }) => {
+      if (!isChartReady || !localWebViewRef.current) {
+        return;
+      }
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
+          type: 'COMPLETE_OLDER_CANDLES_REQUEST',
+          ...request,
+        },
+      });
+    },
+    [isChartReady],
+  );
+
   useImperativeHandle(ref, () => ({
     clearCrosshair: handleClearCrosshair,
+    completeOlderCandlesRequest: handleCompleteOlderCandlesRequest,
     setData: handleSetData,
     updateCandleData: handleUpdateCandleData,
     updateTPSLPriceLines: handleUpdateTPSLPriceLines,
@@ -391,6 +469,8 @@ const TradingViewCandleChart = ({
         ) {
           cancelPendingLegacyApplied();
           supportsDataAppliedAckRef.current = false;
+          protocolReloadAttemptedRef.current = false;
+          protocolErrorReportedRef.current = false;
           setWebViewKey(k => k + 1);
           setIsChartReady(false);
         }

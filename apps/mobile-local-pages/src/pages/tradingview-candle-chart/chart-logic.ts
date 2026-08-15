@@ -237,6 +237,76 @@ export function getInitialVisibleLogicalRange(
   };
 }
 
+export const PERPS_PRO_PRICE_SCALE_MARGINS = {
+  top: 0.12,
+  bottom: 0.16,
+} as const;
+
+export function clampPerpsProCrosshairCoordinate(
+  coordinate: number,
+  chartHeight: number,
+  margins: { top: number; bottom: number } = PERPS_PRO_PRICE_SCALE_MARGINS,
+) {
+  if (!Number.isFinite(coordinate) || !Number.isFinite(chartHeight)) {
+    return coordinate;
+  }
+  const safeHeight = Math.max(0, chartHeight);
+  const minimum = safeHeight * Math.max(0, Math.min(1, margins.top));
+  const maximum = safeHeight * (1 - Math.max(0, Math.min(1, margins.bottom)));
+  return Math.min(Math.max(coordinate, minimum), Math.max(minimum, maximum));
+}
+
+export type LogicalRange = { from: number; to: number };
+
+export function constrainPerpsProFutureLogicalRange(
+  range: LogicalRange,
+  dataLength: number,
+  minimumVisibleBars = 5,
+): LogicalRange {
+  const safeDataLength = Math.max(0, Math.floor(dataLength));
+  const safeMinimumVisibleBars = Math.max(1, Math.floor(minimumVisibleBars));
+  const maximumFrom = Math.max(
+    0,
+    safeDataLength - Math.min(safeDataLength, safeMinimumVisibleBars),
+  );
+  if (!Number.isFinite(range.from) || !Number.isFinite(range.to)) {
+    return range;
+  }
+  if (range.from <= maximumFrom) {
+    return range;
+  }
+  const correction = range.from - maximumFrom;
+  return {
+    from: maximumFrom,
+    to: Math.max(range.to - correction, safeDataLength),
+  };
+}
+
+export function getPrependedCandleCount(
+  previousData: ReadonlyArray<{ time: unknown }>,
+  nextData: ReadonlyArray<{ time: unknown }>,
+) {
+  const previousFirstTime = Number(previousData[0]?.time);
+  if (!Number.isFinite(previousFirstTime)) {
+    return 0;
+  }
+  const nextIndex = nextData.findIndex(
+    item => Number(item.time) === previousFirstTime,
+  );
+  return nextIndex > 0 ? nextIndex : 0;
+}
+
+export function shiftLogicalRangeForPrependedCandles(
+  range: LogicalRange,
+  prependedCandleCount: number,
+): LogicalRange {
+  const offset = Math.max(0, Math.floor(prependedCandleCount));
+  return {
+    from: range.from + offset,
+    to: range.to + offset,
+  };
+}
+
 const MONTHS = [
   'Jan',
   'Feb',
@@ -362,6 +432,7 @@ export interface ChartState {
   selectedTime: number | null;
   selectedPointX: number | null;
   currentData: TradingViewCandlestickData[];
+  currentDataIdentity: string | null;
 }
 
 export function createChartState(): ChartState {
@@ -395,6 +466,7 @@ export function createChartState(): ChartState {
     selectedTime: null,
     selectedPointX: null,
     currentData: [],
+    currentDataIdentity: null,
   };
 }
 

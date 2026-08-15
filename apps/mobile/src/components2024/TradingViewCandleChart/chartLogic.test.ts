@@ -8,15 +8,19 @@ jest.mock(
 
 const {
   calculateSimpleMovingAverage,
+  clampPerpsProCrosshairCoordinate,
+  constrainPerpsProFutureLogicalRange,
   formatPerpsProCrosshairChange,
   formatPerpsProCrosshairPrice,
   formatProCompactNumber,
   formatProPrice,
   formatProTooltipTime,
   getInitialVisibleLogicalRange,
+  getPrependedCandleCount,
   getPerpsProLatestCandleClose,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
+  shiftLogicalRangeForPrependedCandles,
 } =
   require('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic') as typeof import('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic');
 
@@ -187,5 +191,47 @@ describe('Perps Pro local chart calculations', () => {
       from: 0,
       to: 12,
     });
+  });
+
+  it('keeps the Pro crosshair inside the approved price-scale margins', () => {
+    expect(clampPerpsProCrosshairCoordinate(-100, 200)).toBe(24);
+    expect(clampPerpsProCrosshairCoordinate(100, 200)).toBe(100);
+    expect(clampPerpsProCrosshairCoordinate(300, 200)).toBe(168);
+  });
+
+  it('allows future whitespace while keeping at least five candles visible', () => {
+    expect(
+      constrainPerpsProFutureLogicalRange({ from: 80, to: 120 }, 100),
+    ).toEqual({ from: 80, to: 120 });
+    expect(
+      constrainPerpsProFutureLogicalRange({ from: 110, to: 150 }, 100),
+    ).toEqual({ from: 95, to: 135 });
+    expect(
+      constrainPerpsProFutureLogicalRange({ from: 110, to: 112 }, 100),
+    ).toEqual({ from: 95, to: 100 });
+    expect(constrainPerpsProFutureLogicalRange({ from: 3, to: 43 }, 3)).toEqual(
+      { from: 0, to: 40 },
+    );
+  });
+
+  it('counts prepended candles so a history merge can preserve the viewport', () => {
+    expect(
+      getPrependedCandleCount(
+        [{ time: 3 }, { time: 4 }],
+        [{ time: 1 }, { time: 2 }, { time: 3 }, { time: 4 }],
+      ),
+    ).toBe(2);
+    expect(
+      getPrependedCandleCount([{ time: 3 }], [{ time: 3 }, { time: 4 }]),
+    ).toBe(0);
+  });
+
+  it('keeps the viewport when the official last page only extends an aggregate', () => {
+    expect(
+      shiftLogicalRangeForPrependedCandles({ from: 4, to: 44 }, 0),
+    ).toEqual({ from: 4, to: 44 });
+    expect(
+      shiftLogicalRangeForPrependedCandles({ from: 4, to: 44 }, 10),
+    ).toEqual({ from: 14, to: 54 });
   });
 });

@@ -26,6 +26,8 @@ import {
   updateTPSLPriceLines as updateTPSLPriceLinesLogic,
   updatePriceLines,
   calculateSimpleMovingAverage,
+  clampPerpsProCrosshairCoordinate,
+  constrainPerpsProFutureLogicalRange,
   formatPrice,
   formatNumber,
   formatProCompactNumber,
@@ -35,9 +37,12 @@ import {
   formatProTooltipTime,
   formatTime,
   getInitialVisibleLogicalRange,
+  getPrependedCandleCount,
   getPerpsProLatestCandleClose,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
+  PERPS_PRO_PRICE_SCALE_MARGINS,
+  shiftLogicalRangeForPrependedCandles,
 } from './chart-logic';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
 
@@ -230,6 +235,27 @@ const chartState = createChartState();
 chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;
+const candleByTime = new Map<number, TradingViewCandlestickData>();
+const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
+  7: new Map(),
+  25: new Map(),
+  99: new Map(),
+};
+
+function rebuildCandleLookup() {
+  candleByTime.clear();
+  chartState.currentData.forEach(candle => {
+    candleByTime.set(Number(candle.time), candle);
+  });
+}
+
+function clearMovingAverageLookup() {
+  ([7, 25, 99] as const).forEach(period => {
+    movingAverageByTime[period].clear();
+  });
+}
+
 // DOM Elements
 const containerEl = document.getElementById('container') as HTMLDivElement;
 containerEl.style.position = 'relative';
@@ -371,6 +397,8 @@ function resetPriceLines() {
 
 function clearChartData() {
   chartState.currentData = [];
+  candleByTime.clear();
+  clearMovingAverageLookup();
   chartState.isInitialDataLoad = true;
   chartState.lastDataKey = null;
   chartState.currentExtremes = null;
@@ -534,8 +562,7 @@ function schedulePerpsProCrosshairLabelRender() {
 }
 
 function getCandleAtTime(time: number): CandleStick | null {
-  const candle =
-    chartState.currentData.find(item => Number(item.time) === time) ?? null;
+  const candle = candleByTime.get(time) ?? null;
   if (!candle || typeof candle.time !== 'number') {
     return null;
   }
@@ -553,20 +580,7 @@ function getCandleAtTime(time: number): CandleStick | null {
 }
 
 function getMovingAverageValueAtTime(period: 7 | 25 | 99, time: number) {
-  const point = calculateSimpleMovingAverage(
-    chartState.currentData.map(item => ({
-      close: item.close,
-      high: item.high,
-      low: item.low,
-      open: item.open,
-      quoteTurnover: item.quoteTurnover,
-      time: Number(item.time),
-      trades: item.trades,
-      volume: item.volume,
-    })),
-    period,
-  ).find(item => item.time === time);
-  return point?.value ?? null;
+  return movingAverageByTime[period].get(time) ?? null;
 }
 
 function updateMaLegend(time?: number) {
@@ -630,7 +644,12 @@ function getPerpsProCrosshairSelection(param: PerpsProCrosshairEvent) {
   ) {
     return null;
   }
-  const price = chartState.candlestickSeries.coordinateToPrice(point.y);
+  const paneHeight = chartState.chart?.paneSize(0).height;
+  const coordinateY = clampPerpsProCrosshairCoordinate(
+    point.y,
+    Number.isFinite(paneHeight) ? paneHeight : containerEl.clientHeight,
+  );
+  const price = chartState.candlestickSeries.coordinateToPrice(coordinateY);
   if (price == null || !Number.isFinite(price)) {
     return null;
   }
@@ -638,6 +657,7 @@ function getPerpsProCrosshairSelection(param: PerpsProCrosshairEvent) {
     pointX: point.x,
     price,
     time,
+    wasClamped: coordinateY !== point.y,
   };
 }
 
@@ -649,6 +669,7 @@ let crosshairMarkerFrameId: number | null = null;
 let pendingCrosshairMarker: { time: number; price: number } | null = null;
 let renderedCrosshairMarkerKey: string | null = null;
 let isWritingCrosshairMarker = false;
+let isCorrectingPerpsProCrosshair = false;
 
 function getCrosshairMarkerKey(time: number, price: number) {
   return `${time}:${price}`;
@@ -903,6 +924,23 @@ function updatePerpsProTooltip(param: PerpsProCrosshairEvent) {
   }
 
   applyPerpsProCrosshairSelection(selection, candle);
+  if (
+    selection.wasClamped &&
+    !isCorrectingPerpsProCrosshair &&
+    chartState.chart &&
+    chartState.candlestickSeries
+  ) {
+    isCorrectingPerpsProCrosshair = true;
+    try {
+      chartState.chart.setCrosshairPosition(
+        selection.price,
+        selection.time,
+        chartState.candlestickSeries,
+      );
+    } finally {
+      isCorrectingPerpsProCrosshair = false;
+    }
+  }
 }
 
 // Update tooltip content
@@ -1094,6 +1132,90 @@ function updateTooltipContent(param: any) {
   tooltipEl.style.display = 'block';
 }
 
+let pendingVisibleLogicalRange: { from: number; to: number } | null = null;
+let visibleLogicalRangeFrameId: number | null = null;
+let isApplyingVisibleLogicalRange = false;
+let lastOlderCandlesRequestKey: string | null = null;
+let exhaustedHistoryIdentity: string | null = null;
+
+function scheduleConstrainedPerpsProLogicalRange(range: {
+  from: number;
+  to: number;
+}) {
+  const constrained = constrainPerpsProFutureLogicalRange(
+    range,
+    chartState.currentData.length,
+  );
+  if (constrained === range) {
+    return;
+  }
+  pendingVisibleLogicalRange = constrained;
+  if (visibleLogicalRangeFrameId != null) {
+    return;
+  }
+  visibleLogicalRangeFrameId = window.requestAnimationFrame(() => {
+    visibleLogicalRangeFrameId = null;
+    const nextRange = pendingVisibleLogicalRange;
+    pendingVisibleLogicalRange = null;
+    if (!nextRange || !chartState.chart || !chartState.proConfig) {
+      return;
+    }
+    isApplyingVisibleLogicalRange = true;
+    try {
+      chartState.chart.timeScale().setVisibleLogicalRange(nextRange);
+    } finally {
+      isApplyingVisibleLogicalRange = false;
+    }
+  });
+}
+
+function requestOlderPerpsProCandlesIfNeeded(range: {
+  from: number;
+  to: number;
+}) {
+  if (
+    !chartState.proConfig ||
+    !chartState.candlestickSeries ||
+    !chartState.currentDataIdentity ||
+    chartState.currentData.length === 0 ||
+    exhaustedHistoryIdentity === chartState.currentDataIdentity
+  ) {
+    return;
+  }
+  const barsInfo = chartState.candlestickSeries.barsInLogicalRange(range);
+  const threshold = chartState.proConfig.initialVisibleBars * 2;
+  if (!barsInfo || barsInfo.barsBefore >= threshold) {
+    return;
+  }
+  const earliestTime = Number(chartState.currentData[0]?.time);
+  if (!Number.isFinite(earliestTime)) {
+    return;
+  }
+  const requestKey = `${chartState.currentDataIdentity}:${earliestTime}`;
+  if (lastOlderCandlesRequestKey === requestKey) {
+    return;
+  }
+  lastOlderCandlesRequestKey = requestKey;
+  postMessageToRN({
+    type: 'REQUEST_OLDER_CANDLES',
+    earliestTime,
+    identity: chartState.currentDataIdentity,
+  });
+}
+
+function handleVisibleLogicalRangeChange(
+  range: { from: number; to: number } | null,
+) {
+  schedulePerpsProCrosshairLabelRender();
+  if (!range || !chartState.proConfig) {
+    return;
+  }
+  if (!isApplyingVisibleLogicalRange) {
+    scheduleConstrainedPerpsProLogicalRange(range);
+  }
+  requestOlderPerpsProCandlesIfNeeded(range);
+}
+
 // Create chart
 function createChart() {
   if (!containerEl) {
@@ -1214,15 +1336,19 @@ function createChart() {
 
   // Subscribe to visible range change
   let updateTimeout: number | null = null;
-  chartState.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-    schedulePerpsProCrosshairLabelRender();
-    if (updateTimeout) {
-      clearTimeout(updateTimeout);
-    }
-    updateTimeout = window.setTimeout(() => {
-      updatePriceLines(chartState);
-    }, 100);
-  });
+  chartState.chart
+    .timeScale()
+    .subscribeVisibleLogicalRangeChange(
+      (range: { from: number; to: number } | null) => {
+        handleVisibleLogicalRangeChange(range);
+        if (updateTimeout) {
+          clearTimeout(updateTimeout);
+        }
+        updateTimeout = window.setTimeout(() => {
+          updatePriceLines(chartState);
+        }, 100);
+      },
+    );
 
   // Notify RN that chart is ready
   postMessageToRN({
@@ -1230,6 +1356,8 @@ function createChart() {
     timestamp: new Date().toISOString(),
     capabilities: {
       candleDataAppliedAck: true,
+      olderCandleRequest: true,
+      perpsProKlineProtocolVersion: PERPS_PRO_KLINE_PROTOCOL_VERSION,
     },
   });
 }
@@ -1256,9 +1384,11 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
     },
     rightPriceScale: {
       scaleMargins: {
-        top: 0.12,
-        bottom: 0.16,
+        ...PERPS_PRO_PRICE_SCALE_MARGINS,
       },
+    },
+    timeScale: {
+      fixRightEdge: false,
     },
   });
 }
@@ -1335,6 +1465,7 @@ function ensurePerpsProCrosshairMarkerSeries() {
       lineVisible: false,
       pointMarkersVisible: false,
       priceLineVisible: false,
+      autoscaleInfoProvider: () => null,
     });
   }
   return chartState.crosshairMarkerSeries;
@@ -1357,8 +1488,9 @@ function ensureMovingAverageSeries() {
   });
 }
 
-function updateMovingAverageSeries() {
+function rebuildMovingAverageSeries() {
   if (!chartState.proConfig) {
+    clearMovingAverageLookup();
     return;
   }
   ensureMovingAverageSeries();
@@ -1373,9 +1505,37 @@ function updateMovingAverageSeries() {
     volume: item.volume,
   }));
   chartState.proConfig.maPeriods.forEach(period => {
-    chartState.maSeries[period]?.setData(
-      calculateSimpleMovingAverage(candles, period),
+    const movingAverage = calculateSimpleMovingAverage(candles, period);
+    movingAverageByTime[period] = new Map(
+      movingAverage.map(point => [point.time, point.value]),
     );
+    chartState.maSeries[period]?.setData(movingAverage);
+  });
+  updateMaLegend(chartState.selectedTime ?? undefined);
+}
+
+function updateMovingAverageTail() {
+  const config = chartState.proConfig;
+  const latest = chartState.currentData[chartState.currentData.length - 1];
+  if (!config || !latest) {
+    return;
+  }
+  const latestTime = Number(latest.time);
+  config.maPeriods.forEach(period => {
+    if (chartState.currentData.length < period) {
+      return;
+    }
+    let sum = 0;
+    for (
+      let index = chartState.currentData.length - period;
+      index < chartState.currentData.length;
+      index += 1
+    ) {
+      sum += chartState.currentData[index].close;
+    }
+    const value = sum / period;
+    movingAverageByTime[period].set(latestTime, value);
+    chartState.maSeries[period]?.update({ time: latest.time, value });
   });
   updateMaLegend(chartState.selectedTime ?? undefined);
 }
@@ -1389,6 +1549,17 @@ function handleSetCandlestickData(
     'type'
   >,
 ) {
+  if (visibleLogicalRangeFrameId != null) {
+    window.cancelAnimationFrame(visibleLogicalRangeFrameId);
+    visibleLogicalRangeFrameId = null;
+    pendingVisibleLogicalRange = null;
+  }
+  const previousData = chartState.currentData;
+  const previousIdentity = chartState.currentDataIdentity;
+  const previousVisibleRange =
+    message.preserveVisibleRange && previousIdentity === message.identity
+      ? chartState.chart?.timeScale().getVisibleLogicalRange() ?? null
+      : null;
   const acknowledgeAppliedData = () => {
     if (
       typeof message.identity !== 'string' ||
@@ -1407,11 +1578,20 @@ function handleSetCandlestickData(
   chartState.noTime = !!message.noTime;
   clearPerpsProCrosshair();
   chartState.proConfig = message.proConfig ?? null;
+  chartState.currentDataIdentity = message.identity ?? null;
+  if (previousIdentity !== chartState.currentDataIdentity) {
+    lastOlderCandlesRequestKey = null;
+    exhaustedHistoryIdentity = null;
+  }
 
   if (!chartState.chart) return;
 
   if (chartState.proConfig) {
     applyPerpsProChartOptions(chartState.proConfig);
+  } else {
+    chartState.chart.applyOptions({
+      timeScale: { fixRightEdge: true },
+    });
   }
 
   if (!message.data?.length) {
@@ -1430,8 +1610,9 @@ function handleSetCandlestickData(
     hasRenderableData = true;
     setOverlayState('hidden');
     chartState.currentData = message.data;
+    rebuildCandleLookup();
     chartState.candlestickSeries.setData(message.data);
-    updateMovingAverageSeries();
+    rebuildMovingAverageSeries();
 
     const currentDataKey = message.source + '_' + (message.data?.length || 0);
     const shouldAutoscale =
@@ -1458,7 +1639,7 @@ function handleSetCandlestickData(
       );
       chartState.candlestickSeries.priceScale().applyOptions({
         scaleMargins: chartState.proConfig
-          ? { top: 0.12, bottom: 0.16 }
+          ? PERPS_PRO_PRICE_SCALE_MARGINS
           : { top: 0, bottom: 0.1 },
       });
       chartState.volumeSeries
@@ -1468,13 +1649,27 @@ function handleSetCandlestickData(
     }
 
     if (chartState.proConfig) {
+      const prependedCount = previousVisibleRange
+        ? getPrependedCandleCount(previousData, message.data)
+        : 0;
+      if (previousVisibleRange && prependedCount === 0) {
+        // The final weekly/monthly source page can extend the oldest aggregate
+        // without introducing another visible bucket. Keep the viewport and
+        // allow one more request so RN can confirm the official boundary.
+        lastOlderCandlesRequestKey = null;
+      }
       chartState.chart
         .timeScale()
         .setVisibleLogicalRange(
-          getInitialVisibleLogicalRange(
-            message.data.length,
-            chartState.proConfig.initialVisibleBars,
-          ),
+          previousVisibleRange
+            ? shiftLogicalRangeForPrependedCandles(
+                previousVisibleRange,
+                prependedCount,
+              )
+            : getInitialVisibleLogicalRange(
+                message.data.length,
+                chartState.proConfig.initialVisibleBars,
+              ),
         );
     } else if (message.fitContent) {
       chartState.chart.timeScale().fitContent();
@@ -1492,13 +1687,29 @@ function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
   hasRenderableData = true;
   setOverlayState('hidden');
   chartState.candlestickSeries.update(data);
-  const currentData = new Map(
-    chartState.currentData.map(item => [Number(item.time), item]),
-  );
-  currentData.set(Number(data.time), data);
-  chartState.currentData = Array.from(currentData.values()).sort(
-    (a, b) => Number(a.time) - Number(b.time),
-  );
+  const dataTime = Number(data.time);
+  const latestIndex = chartState.currentData.length - 1;
+  const latestTime = Number(chartState.currentData[latestIndex]?.time);
+  let updatesLatestCandle = false;
+  if (dataTime === latestTime) {
+    chartState.currentData[latestIndex] = data;
+    updatesLatestCandle = true;
+  } else if (!Number.isFinite(latestTime) || dataTime > latestTime) {
+    chartState.currentData.push(data);
+    updatesLatestCandle = true;
+  } else {
+    const existingIndex = chartState.currentData.findIndex(
+      candle => Number(candle.time) === dataTime,
+    );
+    if (existingIndex >= 0) {
+      chartState.currentData[existingIndex] = data;
+    } else {
+      chartState.currentData = [...chartState.currentData, data].sort(
+        (left, right) => Number(left.time) - Number(right.time),
+      );
+    }
+  }
+  candleByTime.set(dataTime, data);
 
   if (chartState.proConfig) {
     if (chartState.volumeSeries) {
@@ -1510,7 +1721,11 @@ function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
         value: data.volume ?? 0,
       });
     }
-    updateMovingAverageSeries();
+    if (updatesLatestCandle) {
+      updateMovingAverageTail();
+    } else {
+      rebuildMovingAverageSeries();
+    }
     schedulePerpsProCrosshairLabelRender();
     if (chartState.selectedTime === Number(data.time)) {
       const selectedCandle = getCandleAtTime(Number(data.time));
@@ -1622,7 +1837,22 @@ function handleMessage(event: CustomEvent) {
             identity: tvMessage.identity,
             revision: tvMessage.revision,
             proConfig: tvMessage.proConfig,
+            preserveVisibleRange: tvMessage.preserveVisibleRange,
           });
+          break;
+        case 'COMPLETE_OLDER_CANDLES_REQUEST':
+          if (
+            tvMessage.identity !== chartState.currentDataIdentity ||
+            `${tvMessage.identity}:${tvMessage.earliestTime}` !==
+              lastOlderCandlesRequestKey
+          ) {
+            break;
+          }
+          if (tvMessage.outcome === 'exhausted') {
+            exhaustedHistoryIdentity = tvMessage.identity;
+          } else {
+            lastOlderCandlesRequestKey = null;
+          }
           break;
         case 'UPDATE_CANDLESTICK_DATA':
           handleUpdateCandlestickData(tvMessage.data);
@@ -1686,6 +1916,9 @@ function init() {
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
   cancelPendingPerpsProCrosshairMarker();
+  if (visibleLogicalRangeFrameId != null) {
+    window.cancelAnimationFrame(visibleLogicalRangeFrameId);
+  }
   window.removeEventListener('messageFromRN', handleMessage as EventListener);
   window.removeEventListener('resize', handleResize);
   if (chartState.chart) {

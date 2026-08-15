@@ -1,5 +1,6 @@
 import TradingViewCandleChart, {
   type CandleDataApplied,
+  type OlderCandlesRequest,
   type TradingViewChartRef,
 } from '@/components2024/TradingViewCandleChart';
 import type {
@@ -8,7 +9,10 @@ import type {
 } from '@/components2024/TradingViewCandleChart/type';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import type { PerpsCandleInterval } from '@/constant/perps';
-import type { PerpsCandleFeedSnapshot } from '@/hooks/perps/candles/usePerpsCandleFeed';
+import type {
+  PerpsCandleFeedSnapshot,
+  PerpsCandleHistoryLoadResult,
+} from '@/hooks/perps/candles/usePerpsCandleFeed';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BottomSheet, {
@@ -60,8 +64,9 @@ const PerpsProKlineChart: React.FC<{
   feed: PerpsCandleFeedSnapshot;
   interval: PerpsCandleInterval;
   market: PerpsProMarket;
+  onLoadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
   visible: boolean;
-}> = ({ feed, interval, market, visible }) => {
+}> = ({ feed, interval, market, onLoadOlder, visible }) => {
   const chartRef = useRef<TradingViewChartRef>(null);
   const lastSentRef = useRef<{
     identity: string;
@@ -98,7 +103,7 @@ const PerpsProKlineChart: React.FC<{
         quoteAsset: market.quoteAsset,
         variant: 'perps-pro',
       },
-      showVolume: true,
+      showVolume: false,
     }),
     [
       candles,
@@ -164,6 +169,9 @@ const PerpsProKlineChart: React.FC<{
       chart.setData({
         ...chartData,
         identity: feed.identity,
+        ...(feed.updateType === 'history'
+          ? { preserveVisibleRange: true }
+          : {}),
         revision,
       });
       return;
@@ -182,6 +190,27 @@ const PerpsProKlineChart: React.FC<{
     feed.updateType,
     readyVersion,
   ]);
+
+  const handleRequestOlderCandles = useCallback(
+    async (request: OlderCandlesRequest) => {
+      if (!visible || request.identity !== feed.identity) {
+        chartRef.current?.completeOlderCandlesRequest({
+          ...request,
+          outcome: 'retry',
+        });
+        return;
+      }
+      const result = await onLoadOlder();
+      if (result === 'loaded') {
+        return;
+      }
+      chartRef.current?.completeOlderCandlesRequest({
+        ...request,
+        outcome: result === 'exhausted' ? 'exhausted' : 'retry',
+      });
+    },
+    [feed.identity, onLoadOlder, visible],
+  );
 
   const hasDisplayedSnapshot =
     displayedSnapshot != null &&
@@ -234,6 +263,7 @@ const PerpsProKlineChart: React.FC<{
         onChartError={handleChartError}
         onChartReady={handleChartReady}
         onDataApplied={handleDataApplied}
+        onRequestOlderCandles={handleRequestOlderCandles}
         variant="perps-pro"
       />
       {showSkeleton ? <PerpsProKlineSkeleton overlay /> : null}
@@ -336,6 +366,7 @@ export const PerpsProKlineSheet: React.FC<{
             feed={kline.feed}
             interval={kline.interval}
             market={market}
+            onLoadOlder={kline.loadOlder}
             visible={visible}
           />
           <View style={themedStyles.footer} />

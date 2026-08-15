@@ -49,6 +49,30 @@ const limitCandles = (
   maximumSize: number,
 ) => candles.slice(-maximumSize);
 
+export const loadPerpsCandleSourcePage = async ({
+  candleCount,
+  coin,
+  endTime,
+  interval,
+}: {
+  candleCount: number;
+  coin: string;
+  endTime: number;
+  interval: PerpsCandleInterval;
+}): Promise<PerpsCandle[]> => {
+  const sdk = apisPerps.getPerpsSDK();
+  const { sourceInterval, sourceIntervalMs } = getPerpsCandleSource(interval);
+  const safeCandleCount = Math.max(1, Math.floor(candleCount));
+  const startTime = Math.max(0, endTime - safeCandleCount * sourceIntervalMs);
+  const response = await sdk.info.candleSnapshot(
+    coin,
+    sourceInterval,
+    startTime,
+    endTime,
+  );
+  return limitCandles(parsePerpsCandles(response), safeCandleCount);
+};
+
 export const loadPerpsCandleSourceSnapshot = ({
   coin,
   forceRefresh = false,
