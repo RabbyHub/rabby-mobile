@@ -13,6 +13,7 @@ jest.mock('@/hooks/perps/useActiveAssetDataCache', () => ({
 }));
 
 import {
+  prefetchPerpsProLeverageSources,
   prefetchPerpsProZeroAddressLeverageBaseline,
   preparePerpsProLeverageSources,
   preparePerpsProZeroAddressLeverageBaseline,
@@ -110,6 +111,22 @@ describe('Perps Pro zero-address leverage baseline', () => {
       accountLeverageConfiguration: { type: 'isolated', value: 4 },
       zeroAddressLeverageBaseline: { type: 'cross', value: 20 },
     });
+    expect(mockFetchActiveAssetDataWithCache).toHaveBeenCalledWith(
+      'SOL',
+      USER_ADDRESS,
+    );
+    expect(mockFetchActiveAssetDataWithCache).toHaveBeenCalledWith(
+      'SOL',
+      ZERO_ADDRESS,
+    );
+  });
+
+  it('prefetches current-account and zero-address sources once for Home idle', async () => {
+    mockFetchActiveAssetDataWithCache.mockResolvedValue(null);
+
+    await prefetchPerpsProLeverageSources('SOL', USER_ADDRESS);
+
+    expect(mockFetchActiveAssetDataWithCache).toHaveBeenCalledTimes(2);
     expect(mockFetchActiveAssetDataWithCache).toHaveBeenCalledWith(
       'SOL',
       USER_ADDRESS,
