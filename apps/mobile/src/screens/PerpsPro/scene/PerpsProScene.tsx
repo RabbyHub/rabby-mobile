@@ -61,6 +61,10 @@ import {
   PerpsProMarketBar,
 } from '../components/market/PerpsProMarketBar';
 import {
+  createPerpsProMarketTranslateY,
+  getPerpsProMarketNaturalAnchor,
+} from '../components/market/perpsProMarketSticky';
+import {
   PerpsProMarketSelector,
   type PerpsProMarketSelectorHandle,
 } from '../components/market/PerpsProMarketSelector';
@@ -126,8 +130,9 @@ interface FundingOverlayState {
   targetAsset: PerpsQuoteAsset;
 }
 
-const PERPS_PRO_SCENE_LEAD_IN_HEIGHT =
+const PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT =
   PERPS_PRO_HEADER_HEIGHT + PERPS_PRO_MARKET_BAR_HEIGHT;
+const PERPS_PRO_REGION_ALERT_ESTIMATED_EXTENT = 46;
 
 export const PerpsProScene: React.FC<{
   historyEnabled?: boolean;
@@ -207,6 +212,7 @@ export const PerpsProScene: React.FC<{
   const [tradeRowHeight, setTradeRowHeight] = useState(
     PERPS_PRO_MAIN_COLUMN_HEIGHT + 8,
   );
+  const [measuredRegionAlertExtent, setMeasuredRegionAlertExtent] = useState(0);
   const fundingAccountIdentityRef = useRef(info.accountIdentity);
 
   useEffect(() => {
@@ -292,18 +298,54 @@ export const PerpsProScene: React.FC<{
       Math.abs(current - measured) > 1 ? measured : current,
     );
   }, []);
+  const updateRegionAlertExtent = useCallback((event: LayoutChangeEvent) => {
+    const measured = Math.ceil(event.nativeEvent.layout.height);
+    if (measured <= 0) {
+      return;
+    }
+    setMeasuredRegionAlertExtent(current =>
+      Math.abs(current - measured) > 1 ? measured : current,
+    );
+  }, []);
+  const showRegionAlert = !!scene.currentMarket && !trade.hasPermission;
+  const regionAlertExtent = showRegionAlert
+    ? measuredRegionAlertExtent || PERPS_PRO_REGION_ALERT_ESTIMATED_EXTENT
+    : 0;
+  const sceneLeadInHeight =
+    PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT + regionAlertExtent;
+  const marketTranslateY = useMemo(
+    () =>
+      createPerpsProMarketTranslateY({
+        headerMarketTranslateY: headerCollapse.marketTranslateY,
+        naturalAnchorY: getPerpsProMarketNaturalAnchor({
+          headerHeight: PERPS_PRO_HEADER_HEIGHT,
+          regionAlertExtent,
+        }),
+        scrollY: headerCollapse.scrollY,
+      }),
+    [
+      headerCollapse.marketTranslateY,
+      headerCollapse.scrollY,
+      regionAlertExtent,
+    ],
+  );
   const infoTabsTranslateY = useMemo(
     () =>
       createPerpsProInfoTabsTranslateY({
         anchorY: getPerpsProInfoTabsNaturalAnchor({
-          leadInHeight: PERPS_PRO_SCENE_LEAD_IN_HEIGHT,
+          leadInHeight: sceneLeadInHeight,
           tradeRowHeight,
         }),
         marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
-        marketTranslateY: headerCollapse.marketTranslateY,
+        marketTranslateY,
         scrollY: headerCollapse.scrollY,
       }),
-    [headerCollapse.marketTranslateY, headerCollapse.scrollY, tradeRowHeight],
+    [
+      headerCollapse.scrollY,
+      marketTranslateY,
+      sceneLeadInHeight,
+      tradeRowHeight,
+    ],
   );
   const isMarketLoading =
     !scene.currentMarket &&
@@ -312,9 +354,30 @@ export const PerpsProScene: React.FC<{
       scene.isResolvingMarket);
   const renderScrollLeadIn = useCallback(
     () => (
-      <View style={styles.scrollLeadIn} testID="perps-pro-scroll-lead-in" />
+      <View testID="perps-pro-scroll-lead-in">
+        <View
+          style={styles.headerLeadInSpacer}
+          testID="perps-pro-header-lead-in-spacer"
+        />
+        {showRegionAlert ? (
+          <View
+            onLayout={updateRegionAlertExtent}
+            testID="perps-pro-region-alert-slot">
+            <PerpsRegionAlert />
+          </View>
+        ) : null}
+        <View
+          style={styles.marketLeadInSpacer}
+          testID="perps-pro-market-lead-in-spacer"
+        />
+      </View>
     ),
-    [styles.scrollLeadIn],
+    [
+      showRegionAlert,
+      styles.headerLeadInSpacer,
+      styles.marketLeadInSpacer,
+      updateRegionAlertExtent,
+    ],
   );
 
   const rows = useMemo<PerpsProSceneRow[]>(() => {
@@ -389,7 +452,6 @@ export const PerpsProScene: React.FC<{
           if (scene.currentMarket) {
             return (
               <View onLayout={updateTradeRowHeight}>
-                {!trade.hasPermission ? <PerpsRegionAlert /> : null}
                 <View style={[styles.columns, columnsStyle]}>
                   <View style={orderBookColumnStyle}>
                     <PerpsProRealtimeOrderBook
@@ -617,7 +679,7 @@ export const PerpsProScene: React.FC<{
           style={[
             styles.marketOverlay,
             {
-              transform: [{ translateY: headerCollapse.marketTranslateY }],
+              transform: [{ translateY: marketTranslateY }],
             },
           ]}
           testID="perps-pro-market-overlay">
@@ -878,9 +940,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 1,
     paddingBottom: 32,
   },
-  scrollLeadIn: {
-    height: PERPS_PRO_SCENE_LEAD_IN_HEIGHT,
-  },
+  headerLeadInSpacer: { height: PERPS_PRO_HEADER_HEIGHT },
+  marketLeadInSpacer: { height: PERPS_PRO_MARKET_BAR_HEIGHT },
   columns: {
     alignItems: 'flex-start',
     flexDirection: 'row',
