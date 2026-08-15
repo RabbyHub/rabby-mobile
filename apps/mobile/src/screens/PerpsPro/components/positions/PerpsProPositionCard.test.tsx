@@ -9,6 +9,12 @@ jest.mock('@/assets2024/icons/perps/IconPerpEdit.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
+jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
 jest.mock('@/assets/icons/swap/switch-cc.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -66,6 +72,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positions.liquidationDistance': 'Liq. Distance',
         'page.perps.pro.positions.long': 'Long',
         'page.perps.pro.positions.margin': 'Margin',
+        'page.perps.pro.positions.manageMargin': 'Manage Margin',
         'page.perps.pro.positions.marginRatio': 'Margin Ratio',
         'page.perps.pro.positions.mark': 'Mark Price',
         'page.perps.pro.positions.pnl': 'PNL',
@@ -142,18 +149,38 @@ describe('PerpsProPositionCard', () => {
     __resetPerpsProPositionSizeUnitSessionForTests();
   });
 
-  it('opens the card market', () => {
+  it('opens the card market and exposes margin management only for Isolated', () => {
+    const onManageMargin = jest.fn();
     const onPressMarket = jest.fn();
-    render(
+    const isolated = createPosition();
+    const view = render(
       <PerpsProPositionCard
         accountIdentity="account-a"
+        onManageMargin={onManageMargin}
         onPressMarket={onPressMarket}
-        position={createPosition()}
+        position={isolated}
       />,
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-position-market-BTC'));
     expect(onPressMarket).toHaveBeenCalledWith('BTC');
+    fireEvent.press(screen.getByTestId('perps-pro-position-manage-margin-BTC'));
+    expect(onManageMargin).toHaveBeenCalledWith(isolated);
+    expect(
+      screen.getByTestId('perps-pro-position-manage-margin-BTC').props.style,
+    ).toMatchObject({ height: 16, width: 16 });
+
+    view.rerender(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onManageMargin={onManageMargin}
+        onPressMarket={onPressMarket}
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+    expect(
+      screen.queryByTestId('perps-pro-position-manage-margin-BTC'),
+    ).toBeNull();
   });
 
   it('maps every position dotted label to its approved explanation', () => {

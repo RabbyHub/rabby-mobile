@@ -138,6 +138,10 @@ jest.mock('../components/positions/PerpsProLeverageSheet', () => ({
   PerpsProLeverageSheet: () => null,
 }));
 
+jest.mock('../components/positions/PerpsProManageMarginSheet', () => ({
+  PerpsProManageMarginSheet: () => null,
+}));
+
 jest.mock(
   '../components/positions/PerpsProPositionTpSlConfirmationSheet',
   () => ({ PerpsProPositionTpSlConfirmationSheet: () => null }),
@@ -414,6 +418,22 @@ jest.mock('./usePerpsProCloseAll', () => ({
 
 jest.mock('./usePerpsProPositionActions', () => ({
   usePerpsProPositionActions: mockUsePerpsProPositionActions,
+}));
+
+jest.mock('./usePerpsProManageMargin', () => ({
+  usePerpsProManageMargin: () => ({
+    beginEditing: jest.fn(),
+    changeDraft: jest.fn(),
+    close: jest.fn(),
+    confirm: jest.fn(),
+    dirty: false,
+    draft: '',
+    editor: null,
+    open: jest.fn(),
+    pending: false,
+    selectTarget: jest.fn(),
+    view: null,
+  }),
 }));
 
 jest.mock('./usePerpsProPositionTpSl', () => ({
