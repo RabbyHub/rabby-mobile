@@ -267,6 +267,34 @@ describe('PerpsProLeverageSheet', () => {
     );
   });
 
+  it('retains the leverage-specific empty selection while clearing and retyping', () => {
+    render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={jest.fn()}
+        pending={false}
+        visible
+      />,
+    );
+
+    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '');
+
+    expect(
+      screen.getByTestId('perps-pro-leverage-input').props.selection,
+    ).toEqual({ end: 0, start: 0 });
+
+    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '1');
+
+    expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
+      '1',
+    );
+    expect(
+      screen.getByTestId('perps-pro-leverage-input').props.selection,
+    ).toBeUndefined();
+  });
+
   it.each(['', '0'])('treats %p as invalid and closes the sheet', draft => {
     const onClose = jest.fn();
     const onConfirm = jest.fn();

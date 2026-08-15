@@ -23,6 +23,7 @@ type PerpsProDecimalTextInputProps = Omit<
   | 'selection'
   | 'value'
 > & {
+  emptySelection?: NonNullable<TextInputProps['selection']>;
   focusCursorAtEnd?: boolean;
   inputComponent?: React.ForwardRefExoticComponent<
     TextInputProps & React.RefAttributes<TextInput>
@@ -39,6 +40,7 @@ export const PerpsProDecimalTextInput = React.memo(
   React.forwardRef<TextInput, PerpsProDecimalTextInputProps>(
     (
       {
+        emptySelection,
         focusCursorAtEnd = false,
         inputComponent: InputComponent = TextInput,
         inputMode = 'decimal',
@@ -201,7 +203,7 @@ export const PerpsProDecimalTextInput = React.memo(
           shouldForceCursorAtEnd && inputValue.length > 0
             ? { end: inputValue.length, start: inputValue.length }
             : inputValue.length === 0
-            ? resolvePerpsProEmptyInputSelection()
+            ? emptySelection ?? resolvePerpsProEmptyInputSelection()
             : undefined,
         value: inputValue,
       };

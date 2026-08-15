@@ -18,6 +18,7 @@ import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
 // Figma 80481:14828 is a documented compact sheet action special case.
 const PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT = 36;
+const PERPS_PRO_LEVERAGE_EMPTY_SELECTION = { end: 0, start: 0 } as const;
 
 const PerpsProLeverageBottomSheetTextInput = React.forwardRef<
   TextInput,
@@ -160,6 +161,7 @@ export const PerpsProLeverageSheet: React.FC<{
                   )}
                   cursorColor={colors2024['brand-default']}
                   editable={!pending}
+                  emptySelection={PERPS_PRO_LEVERAGE_EMPTY_SELECTION}
                   focusCursorAtEnd
                   inputComponent={PerpsProLeverageBottomSheetTextInput}
                   inputMode="numeric"

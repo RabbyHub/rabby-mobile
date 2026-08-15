@@ -82,6 +82,27 @@ describe('PerpsProDecimalTextInput', () => {
     });
   });
 
+  it('allows one caller to retain an explicit empty selection', () => {
+    render(
+      <PerpsProDecimalTextInput
+        emptySelection={{ end: 0, start: 0 }}
+        focusCursorAtEnd
+        maxDecimals={0}
+        onChangeText={jest.fn()}
+        testID="decimal-input"
+        value=""
+      />,
+    );
+
+    expect(screen.getByTestId('decimal-input').props.selection).toEqual({
+      end: 0,
+      start: 0,
+    });
+    expect(mockSetNativeProps).not.toHaveBeenCalledWith({
+      selection: { end: 0, start: 0 },
+    });
+  });
+
   it('keeps sequential iOS input under native selection ownership', () => {
     const onChangeText = jest.fn();
     render(
