@@ -25,12 +25,16 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
       activeMode,
       extendProHitAreaRight,
       onPressAccount,
+      onPressInMode,
+      onPressOutMode,
       onSelectMode,
     }: {
       accountLabel?: string;
       activeMode: 'simple' | 'pro';
       extendProHitAreaRight?: boolean;
       onPressAccount?: () => void;
+      onPressInMode?: (mode: 'simple' | 'pro') => void;
+      onPressOutMode?: (mode: 'simple' | 'pro') => void;
       onSelectMode: (mode: 'simple' | 'pro') => void;
     }) =>
       ReactModule.createElement(
@@ -43,6 +47,8 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
         },
         ReactModule.createElement(Pressable, {
           onPress: () => onSelectMode('pro'),
+          onPressIn: () => onPressInMode?.('pro'),
+          onPressOut: () => onPressOutMode?.('pro'),
           testID: 'switch-to-pro',
         }),
         onPressAccount
@@ -62,6 +68,8 @@ describe('PerpsSimpleHeader', () => {
 
   it('renders the shared page header and preserves the Simple mode corridor', () => {
     const onSwitchToPro = jest.fn();
+    const onPressInPro = jest.fn();
+    const onPressOutPro = jest.fn();
     const screen = render(
       <PerpsSimpleHeader
         account={{
@@ -71,6 +79,8 @@ describe('PerpsSimpleHeader', () => {
           type: 'WatchAddressKeyring',
         }}
         isModeSwitching={false}
+        onPressInPro={onPressInPro}
+        onPressOutPro={onPressOutPro}
         onSwitchToPro={onSwitchToPro}
       />,
     );
@@ -82,7 +92,11 @@ describe('PerpsSimpleHeader', () => {
       '0x1234567890123456789012345678901234567890',
     );
 
+    fireEvent(screen.getByTestId('switch-to-pro'), 'pressIn');
+    fireEvent(screen.getByTestId('switch-to-pro'), 'pressOut');
     fireEvent.press(screen.getByTestId('switch-to-pro'));
+    expect(onPressInPro).toHaveBeenCalledTimes(1);
+    expect(onPressOutPro).toHaveBeenCalledTimes(1);
     expect(onSwitchToPro).toHaveBeenCalledTimes(1);
   });
 

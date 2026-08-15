@@ -10,6 +10,8 @@ export type PerpsModeSwitchProps = {
   activeMode: PerpsViewMode;
   disabled?: boolean;
   extendProHitAreaRight?: boolean;
+  onPressInMode?: (viewMode: PerpsViewMode) => void;
+  onPressOutMode?: (viewMode: PerpsViewMode) => void;
   onSelectMode: (viewMode: PerpsViewMode) => void;
 };
 
@@ -25,6 +27,8 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
   activeMode,
   disabled = false,
   extendProHitAreaRight = false,
+  onPressInMode,
+  onPressOutMode,
   onSelectMode,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -50,6 +54,8 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
             }}
             disabled={optionDisabled}
             onPress={() => onSelectMode(option.value)}
+            onPressIn={() => onPressInMode?.(option.value)}
+            onPressOut={() => onPressOutMode?.(option.value)}
             style={
               option.value === 'pro' && extendProHitAreaRight
                 ? styles.extendedProTarget

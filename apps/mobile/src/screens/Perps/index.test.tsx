@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
 import { PerpsOriginScreen } from './index';
@@ -8,6 +8,8 @@ const mockNavigation = { setOptions: mockSetOptions };
 const mockSetViewMode = jest.fn(async () => true);
 const mockUseEnsurePerpsRuntime = jest.fn();
 const mockPrefetchBaseline = jest.fn();
+const mockCancelEntryIntent = jest.fn();
+const mockPrewarmEntryIntent = jest.fn(() => mockCancelEntryIntent);
 let mockRuntimeMounts = 0;
 let mockRuntimeUnmounts = 0;
 let mockMarketDataStatus: 'idle' | 'success' = 'idle';
@@ -28,7 +30,7 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => {
-  const state = { marketData: [{}] };
+  const state = { currentPerpsAccount: null, marketData: [{}] };
   const perpsStore = (selector: (value: object) => unknown) =>
     selector({ ...state, marketDataStatus: mockMarketDataStatus });
   perpsStore.getState = () => state;
@@ -50,6 +52,11 @@ jest.mock('../PerpsPro/session/perpsProMarketSession', () => ({
 jest.mock('../PerpsPro/scene/perpsProZeroAddressLeverageBaseline', () => ({
   prefetchPerpsProZeroAddressLeverageBaseline: (...args: unknown[]) =>
     mockPrefetchBaseline(...args),
+}));
+
+jest.mock('../PerpsPro/scene/perpsProEntryIntent', () => ({
+  prewarmPerpsProEntryIntent: (...args: unknown[]) =>
+    mockPrewarmEntryIntent(...args),
 }));
 
 jest.mock('@/hooks/perps/runtime/useEnsurePerpsRuntime', () => ({
@@ -77,9 +84,13 @@ jest.mock('./PerpsSimpleScreen', () => {
   return {
     PerpsSimpleScreen: ({
       isModeSwitching,
+      onPressInPro,
+      onPressOutPro,
       onSwitchToPro,
     }: {
       isModeSwitching: boolean;
+      onPressInPro?: () => void;
+      onPressOutPro?: () => void;
       onSwitchToPro: () => void;
     }) =>
       ReactModule.createElement(
@@ -90,6 +101,8 @@ jest.mock('./PerpsSimpleScreen', () => {
           accessibilityState: { disabled: isModeSwitching },
           disabled: isModeSwitching,
           onPress: onSwitchToPro,
+          onPressIn: onPressInPro,
+          onPressOut: onPressOutPro,
           testID: 'switch-to-pro',
         }),
       ),
@@ -134,6 +147,10 @@ describe('PerpsOriginScreen', () => {
       error: null,
       setViewMode: mockSetViewMode,
     };
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('keeps both scenes unmounted and owns a permanently hidden native header', () => {
@@ -192,6 +209,46 @@ describe('PerpsOriginScreen', () => {
 
     fireEvent.press(screen.getByTestId('switch-to-simple'));
     expect(mockSetViewMode).toHaveBeenCalledWith('simple');
+  });
+
+  it('starts the exact Pro intent on press-in and cancels an abandoned press', () => {
+    jest.useFakeTimers();
+    mockMarketDataStatus = 'success';
+    mockViewModeState = {
+      ...mockViewModeState,
+      hydrated: true,
+    };
+    const screen = render(<PerpsOriginScreen />);
+
+    fireEvent(screen.getByTestId('switch-to-pro'), 'pressIn');
+    expect(mockPrewarmEntryIntent).toHaveBeenCalledWith({
+      accountAddress: undefined,
+      market: { canonicalCoin: 'SUI' },
+    });
+
+    fireEvent(screen.getByTestId('switch-to-pro'), 'pressOut');
+    act(() => jest.runOnlyPendingTimers());
+    expect(mockCancelEntryIntent).toHaveBeenCalledTimes(1);
+    expect(mockSetViewMode).not.toHaveBeenCalled();
+  });
+
+  it('keeps the intent alive when press-out is followed by the committed switch', () => {
+    jest.useFakeTimers();
+    mockMarketDataStatus = 'success';
+    mockViewModeState = {
+      ...mockViewModeState,
+      hydrated: true,
+    };
+    const screen = render(<PerpsOriginScreen />);
+    const target = screen.getByTestId('switch-to-pro');
+
+    fireEvent(target, 'pressIn');
+    fireEvent(target, 'pressOut');
+    fireEvent.press(target);
+    act(() => jest.runOnlyPendingTimers());
+
+    expect(mockSetViewMode).toHaveBeenCalledWith('pro');
+    expect(mockCancelEntryIntent).not.toHaveBeenCalled();
   });
 
   it('disables the active scene switch while persistence is pending', () => {

@@ -48,11 +48,15 @@ import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 export type PerpsSimpleScreenProps = {
   isModeSwitching: boolean;
+  onPressInPro?: () => void;
+  onPressOutPro?: () => void;
   onSwitchToPro: () => void;
 };
 
 export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
   isModeSwitching,
+  onPressInPro,
+  onPressOutPro,
   onSwitchToPro,
 }) => {
   const tracedReadyRef = useRef(false);
@@ -256,6 +260,8 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
         <PerpsSimpleHeader
           account={currentPerpsAccount}
           isModeSwitching={isModeSwitching}
+          onPressInPro={onPressInPro}
+          onPressOutPro={onPressOutPro}
           onSwitchToPro={onSwitchToPro}
         />
         {!hasPermission ? <PerpsRegionAlert /> : null}
