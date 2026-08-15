@@ -15,8 +15,12 @@ import com.facebook.react.bridge.JavaScriptExecutor;
 import com.facebook.react.bridge.JSExceptionHandler;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.ReactInstanceManager;
+import com.facebook.react.ReactPackageTurboModuleManagerDelegate;
 import com.facebook.react.bridge.queue.ReactQueueConfigurationSpec;
+import com.facebook.react.defaults.DefaultTurboModuleManagerDelegate;
 import com.facebook.react.devsupport.interfaces.DevSupportManager;
+import com.facebook.react.internal.featureflags.ReactNativeNewArchitectureFeatureFlags;
+import com.facebook.react.internal.turbomodule.core.TurboModuleManager;
 import com.facebook.soloader.SoLoader;
 
 import java.util.ArrayList;
@@ -104,12 +108,29 @@ public class ReactContextBuilder {
         final CatalystInstance catalystInstance;
         catalystInstance = catalystInstanceBuilder.build();
 
+        reactContext.initializeWithInstance(catalystInstance);
+        catalystInstance.getRuntimeScheduler();
+
+        if (ReactNativeNewArchitectureFeatureFlags.useTurboModules()) {
+            ReactPackageTurboModuleManagerDelegate turboModuleManagerDelegate =
+                    new DefaultTurboModuleManagerDelegate.Builder()
+                            .setPackages(reactPackages)
+                            .setReactApplicationContext(reactContext)
+                            .build();
+            TurboModuleManager turboModuleManager = new TurboModuleManager(
+                    catalystInstance.getRuntimeExecutor(),
+                    turboModuleManagerDelegate,
+                    catalystInstance.getJSCallInvokerHolder(),
+                    catalystInstance.getNativeMethodCallInvokerHolder()
+            );
+            catalystInstance.setTurboModuleRegistry(turboModuleManager);
+        }
+
         catalystInstance.getReactQueueConfiguration().getJSQueueThread().callOnQueue(
                 new Callable<Object>() {
                     @Override
                     public Object call() throws Exception {
                         try {
-                            reactContext.initializeWithInstance(catalystInstance);
                             catalystInstance.runJSBundle();
                         } catch (Exception e) {
                             e.printStackTrace();

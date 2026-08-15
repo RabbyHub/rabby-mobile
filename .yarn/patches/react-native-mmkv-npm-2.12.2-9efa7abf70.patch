@@ -97,7 +97,7 @@ index 5ad11ee6909221b599ac42a4054588ea68126a1a..def1a450d94c8a90212c6b1e4b56d28c
 +}
 \ No newline at end of file
 diff --git a/cpp/TypedArray.h b/cpp/TypedArray.h
-index c58140bc012f5ccef3ab9acc128d0ab0eed90635..02db7c168d54143750273194da5213137f412836 100644
+index c58140bc012f5ccef3ab9acc128d0ab0eed90635..a0345ea726ae419e4f7443c3d72af932613018cf 100644
 --- a/cpp/TypedArray.h
 +++ b/cpp/TypedArray.h
 @@ -14,6 +14,8 @@
@@ -233,6 +233,17 @@ index 98de6b8fefec0ffcc46de4544d8c3cfb002d342c..f2d0b4f2c9f1db500a431fe64472847d
      toString(): string;
      toJSON(): object;
      addOnValueChangedListener(onValueChanged: (key: string) => void): Listener;
+diff --git a/package.json b/package.json
+index d0a18430d9bb21ea87010b17a355c775ada69ba7..f56755dcf4be115b5315fd0e47c5f7014a26a5a2 100644
+--- a/package.json
++++ b/package.json
+@@ -1,5 +1,5 @@
+ {
+-  "name": "react-native-mmkv",
++  "name": "react-native-mmkv-legacy",
+   "version": "2.12.2",
+   "description": "The fastest key/value storage for React Native. ~30x faster than AsyncStorage! Works on Android, iOS and Web.",
+   "main": "lib/commonjs/index",
 diff --git a/react-native-mmkv.podspec b/react-native-mmkv.podspec
 index 599f39e20baad5a1db037a80560f5105a0ad7d20..34c5f847d787e44f53f7ed7da632a3ed39edf061 100644
 --- a/react-native-mmkv.podspec

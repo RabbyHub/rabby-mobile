@@ -1,5 +1,6 @@
-import { NativeModules, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
+import RNHelpers from '@/core/native/RNHelpers';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
 type TraceArgs = Record<string, unknown>;
@@ -48,7 +49,7 @@ function getNativeTraceGlobal() {
 }
 
 function getNativeModuleTrace() {
-  return NativeModules.RNHelpers as NativeModuleTrace | undefined;
+  return RNHelpers as NativeModuleTrace | undefined;
 }
 
 function normalizeTraceName(name: string) {

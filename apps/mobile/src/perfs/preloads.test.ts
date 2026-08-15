@@ -21,6 +21,8 @@ jest.mock('react-native-bundle-splitter', () => ({
   }),
 }));
 
+jest.mock('@/perfs/loadables/singleAddressScreens', () => ({}));
+
 describe('preloads', () => {
   const originalDev = (globalThis as { __DEV__?: boolean }).__DEV__;
 
@@ -64,5 +66,28 @@ describe('preloads', () => {
     await expect(preloadTransactionHotNavigator()).resolves.toBeUndefined();
 
     expect(mockPreloadComponent).toHaveBeenCalledTimes(2);
+  });
+
+  it('loads the lazy settings navigator before its registered settings screen', async () => {
+    mockPreloadComponent.mockResolvedValue(undefined);
+    const { preloadSettingsScreen } = require('./preloads');
+
+    await preloadSettingsScreen();
+
+    expect(mockPreloadComponent.mock.calls).toEqual([
+      ['StackSettings'],
+      ['SettingsScreen'],
+    ]);
+  });
+
+  it('initializes the single-address screen registration before preloading it', async () => {
+    mockPreloadComponent.mockResolvedValue(undefined);
+    const { preloadSingleAddressNavigator } = require('./preloads');
+
+    await preloadSingleAddressNavigator();
+
+    expect(mockPreloadComponent.mock.calls).toEqual([
+      ['SingleAddressHomeScreen'],
+    ]);
   });
 });

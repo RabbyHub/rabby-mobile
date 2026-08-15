@@ -1,5 +1,6 @@
-# Disable New Architecture
-ENV['RCT_NEW_ARCH_ENABLED'] = "0"
+# Default to the New Architecture, while allowing an explicit old-architecture
+# compatibility build with RCT_NEW_ARCH_ENABLED=0.
+ENV['RCT_NEW_ARCH_ENABLED'] = ENV.fetch('RCT_NEW_ARCH_ENABLED', '1')
 
 def node_require(script)
   # Resolve script with node to allow for hoisting
@@ -14,6 +15,7 @@ node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
 
 $RNFirebaseAsStaticFramework = true
+$FirebaseSDKVersion = '11.4.0'
 $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
 # $NotifeeExtension = true
@@ -56,7 +58,7 @@ target 'RabbyMobile' do
   config = use_native_modules!
 
   # Keep transitive OpenSSL resolution stable when Podfile.lock is regenerated.
-  pod 'OpenSSL-Universal', '3.6.0000'
+  pod 'OpenSSL-Universal', '3.6.2000'
 
   # Flags change depending on the env values.
   flags = get_default_flags()

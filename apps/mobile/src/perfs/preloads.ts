@@ -12,6 +12,7 @@ export const PRELOAD_SCREENS = {
 };
 
 export const PRELOAD_NAVIGATORS = {
+  [RootNames.StackSettings]: RootNames.StackSettings,
   [RootNames.StackTransaction]: RootNames.StackTransaction,
   [RootNames.SingleAddressStack]: RootNames.SingleAddressStack,
 };
@@ -41,7 +42,14 @@ async function preloadNamedComponent(name?: string) {
   }
 }
 
+function ensureSingleAddressScreenRegistration() {
+  return import('@/perfs/loadables/singleAddressScreens').then(() => undefined);
+}
+
 export async function preloadSettingsScreen() {
+  // SettingsScreen is registered by the lazy Settings navigator module. Load
+  // that module first so the named screen is available to bundle-splitter.
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackSettings]);
   await preloadNamedComponent(PRELOAD_SCREENS[RootNames.Settings]);
 }
 
@@ -55,6 +63,10 @@ export async function preloadTransactionHotNavigator() {
 }
 
 export async function preloadSingleAddressNavigator() {
+  // The root stack references SingleAddressNavigator directly, but its lazy
+  // Home screen registration is not itself a named navigator preload. Ensure
+  // the registration module has run before asking bundle-splitter for it.
+  await ensureSingleAddressScreenRegistration();
   await preloadNamedComponent(PRELOAD_SCREENS[RootNames.SingleAddressHome]);
 }
 

@@ -1,4 +1,5 @@
 import { resolveNativeModule } from './utils';
+import NativeRNFileHelpers from './specs/NativeRNFileHelpers';
 import type {
   NativeAccessibleVisualMediaList,
   NativeAccessibleVisualMediaQueryOptions,
@@ -6,7 +7,10 @@ import type {
   NativeFileCapabilitySnapshot,
 } from './fileCapability';
 
-const { RNFileHelpers: nativeModule } = resolveNativeModule('RNFileHelpers');
+const { RNFileHelpers: nativeModule } = resolveNativeModule(
+  'RNFileHelpers',
+  NativeRNFileHelpers,
+);
 
 const RNFileHelpers = Object.freeze({
   getFileCapabilitySnapshot:

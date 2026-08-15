@@ -1,10 +1,10 @@
-import { NativeModules } from 'react-native';
 import {
   DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
   RABBY_MOBILE_E2E_SILENT_LOGS as RABBY_MOBILE_E2E_SILENT_LOGS_,
   RABBY_MOBILE_FE_SERVICE_URL as RABBY_MOBILE_FE_SERVICE_URL_,
   RABBY_MOBILE_WALLETCONNECT_PROJECT_ID as RABBY_MOBILE_WALLETCONNECT_PROJECT_ID_,
 } from '@env';
+import RNHelpers from '@/core/native/RNHelpers';
 
 export const APP_RUNTIME_ENV = __DEV__
   ? 'development'
@@ -28,8 +28,7 @@ type AppBuildGitInfo = {
   METRO_CACHE_ENABLED?: boolean;
 };
 
-const nativeBuildInfo = (NativeModules?.RNHelpers?.buildInfo ||
-  {}) as Partial<AppBuildGitInfo>;
+const nativeBuildInfo = (RNHelpers.buildInfo || {}) as Partial<AppBuildGitInfo>;
 
 export const BUILD_GIT_INFO: AppBuildGitInfo = {
   BUILD_GIT_HASH: 'unknown',
