@@ -103,6 +103,8 @@ export const PerpsProClosePositionSheet: React.FC<{
       coin: position.coin,
       enabled: visible && !coveredByReview,
     });
+    const readyLatestTradePrice =
+      latestTrade.status === 'ready' ? latestTrade.trade?.price : null;
     const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
     const [inputSource, setInputSource] =
       useState<PerpsProCloseDraft['inputSource']>('slider');
@@ -138,14 +140,10 @@ export const PerpsProClosePositionSheet: React.FC<{
     }, [position.key, visible]);
 
     useEffect(() => {
-      if (
-        orderType === 'limit' &&
-        !limitPriceDirty &&
-        latestTrade.trade?.price
-      ) {
-        setLimitPrice(latestTrade.trade.price);
+      if (orderType === 'limit' && !limitPriceDirty && readyLatestTradePrice) {
+        setLimitPrice(readyLatestTradePrice);
       }
-    }, [latestTrade.trade?.price, limitPriceDirty, orderType]);
+    }, [limitPriceDirty, orderType, readyLatestTradePrice]);
 
     const markPrice = liveMarket.markPrice || market.markPrice;
     const referencePrice =
@@ -244,8 +242,8 @@ export const PerpsProClosePositionSheet: React.FC<{
 
     const selectLimit = () => {
       setOrderType('limit');
-      if (!limitPriceDirty && latestTrade.trade?.price) {
-        setLimitPrice(latestTrade.trade.price);
+      if (!limitPriceDirty && readyLatestTradePrice) {
+        setLimitPrice(readyLatestTradePrice);
       }
     };
     const beginAmountEntry = (discardNextChange = false) => {

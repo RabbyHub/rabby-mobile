@@ -377,7 +377,7 @@ export const PerpsProScene: React.FC<{
                   <View style={orderBookColumnStyle}>
                     <PerpsProRealtimeOrderBook
                       amountUnit={trade.amountUnit}
-                      enabled={scene.realtimeEnabled}
+                      enabled={scene.orderBookSubscriptionEnabled}
                       height={mainColumnHeight}
                       market={scene.currentMarket}
                       onSelectTickOption={scene.selectTickOption}
@@ -392,6 +392,7 @@ export const PerpsProScene: React.FC<{
                           : undefined
                       }
                       precision={scene.precision}
+                      publicationEnabled={scene.realtimeEnabled}
                       selectedTickOption={scene.selectedTickOption}
                       tickOptions={scene.tickOptions}
                     />

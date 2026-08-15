@@ -1,9 +1,15 @@
 import type { WsTrade } from '@rabby-wallet/hyperliquid-sdk';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { apisPerps } from '@/core/apis/perps';
 
-import type { PerpsRealtimeStatus } from './usePerpsFastL2';
+import { PERPS_FAST_L2_DISPLAY_CACHE_MS } from './usePerpsFastL2';
+import {
+  usePerpsRealtimePublication,
+  type PerpsRealtimeStatus,
+} from './usePerpsRealtimePublication';
+
+const MAX_LATEST_TRADE_CACHE_ENTRIES = 4;
 
 export type PerpsLatestTrade = {
   coin: string;
@@ -14,23 +20,79 @@ export type PerpsLatestTrade = {
   time: number;
 };
 
-type LatestTradeSnapshot = {
+export type LatestTradeSnapshot = {
   error: Error | null;
   identity: string;
+  receivedAt: number | null;
+  revision: number;
   status: PerpsRealtimeStatus;
   trade: PerpsLatestTrade | null;
 };
 
 type LatestTradeListener = (snapshot: LatestTradeSnapshot) => void;
+type PerpsSdk = ReturnType<typeof apisPerps.getPerpsSDK>;
 
 type LatestTradeRegistryEntry = {
+  active: boolean;
   listeners: Set<LatestTradeListener>;
   release: () => void;
-  sdk: ReturnType<typeof apisPerps.getPerpsSDK>;
+  sdk: PerpsSdk;
   snapshot: LatestTradeSnapshot;
 };
 
+type LatestTradeCacheEntry = {
+  coin: string;
+  receivedAt: number;
+  revision: number;
+  trade: PerpsLatestTrade;
+  ws: PerpsSdk['ws'];
+};
+
 const latestTradeRegistry = new Map<string, LatestTradeRegistryEntry>();
+const latestTradeCache = new Map<string, LatestTradeCacheEntry>();
+
+const isFresh = (receivedAt: number | null, now = Date.now()) =>
+  receivedAt != null && now - receivedAt < PERPS_FAST_L2_DISPLAY_CACHE_MS;
+
+const readLatestTradeCache = (
+  coin: string,
+  ws: PerpsSdk['ws'],
+): LatestTradeCacheEntry | null => {
+  const cached = latestTradeCache.get(coin);
+  if (!cached) {
+    return null;
+  }
+  if (cached.ws !== ws || !isFresh(cached.receivedAt)) {
+    latestTradeCache.delete(coin);
+    return null;
+  }
+  latestTradeCache.delete(coin);
+  latestTradeCache.set(coin, cached);
+  return cached;
+};
+
+const writeLatestTradeCache = (
+  entry: LatestTradeRegistryEntry,
+  trade: PerpsLatestTrade,
+  receivedAt: number,
+  revision: number,
+) => {
+  latestTradeCache.delete(entry.snapshot.identity);
+  latestTradeCache.set(entry.snapshot.identity, {
+    coin: entry.snapshot.identity,
+    receivedAt,
+    revision,
+    trade,
+    ws: entry.sdk.ws,
+  });
+  while (latestTradeCache.size > MAX_LATEST_TRADE_CACHE_ENTRIES) {
+    const oldestCoin = latestTradeCache.keys().next().value;
+    if (!oldestCoin) {
+      break;
+    }
+    latestTradeCache.delete(oldestCoin);
+  }
+};
 
 const isLaterTrade = (
   candidate: PerpsLatestTrade,
@@ -71,35 +133,87 @@ export const selectLatestPerpsTrade = (
     return isLaterTrade(candidate, latest) ? candidate : latest;
   }, current);
 
+const publishLatestTrade = (
+  entry: LatestTradeRegistryEntry,
+  snapshot: LatestTradeSnapshot,
+) => {
+  if (!entry.active) {
+    return;
+  }
+  entry.snapshot = snapshot;
+  entry.listeners.forEach(listener => listener(snapshot));
+};
+
+const retainFreshTrade = (
+  entry: LatestTradeRegistryEntry,
+): Pick<LatestTradeSnapshot, 'receivedAt' | 'revision' | 'trade'> => {
+  if (entry.snapshot.trade && isFresh(entry.snapshot.receivedAt)) {
+    return {
+      receivedAt: entry.snapshot.receivedAt,
+      revision: entry.snapshot.revision,
+      trade: entry.snapshot.trade,
+    };
+  }
+  const cached = readLatestTradeCache(entry.snapshot.identity, entry.sdk.ws);
+  return cached
+    ? {
+        receivedAt: cached.receivedAt,
+        revision: cached.revision,
+        trade: cached.trade,
+      }
+    : {
+        receivedAt: null,
+        revision: entry.snapshot.revision,
+        trade: null,
+      };
+};
+
 const createLatestTradeRegistryEntry = (
   coin: string,
 ): LatestTradeRegistryEntry => {
   const sdk = apisPerps.getPerpsSDK();
+  const cached = readLatestTradeCache(coin, sdk.ws);
   const entry: LatestTradeRegistryEntry = {
+    active: true,
     listeners: new Set(),
     release: () => undefined,
     sdk,
-    snapshot: {
+    snapshot: cached
+      ? {
+          error: null,
+          identity: coin,
+          receivedAt: cached.receivedAt,
+          revision: cached.revision,
+          status: 'stale',
+          trade: cached.trade,
+        }
+      : {
+          error: null,
+          identity: coin,
+          receivedAt: null,
+          revision: 0,
+          status: 'loading',
+          trade: null,
+        },
+  };
+  const publishConnectionState = (status: 'loading' | 'stale') => {
+    const retained = retainFreshTrade(entry);
+    publishLatestTrade(entry, {
+      ...retained,
       error: null,
       identity: coin,
-      status: 'loading',
-      trade: null,
-    },
+      status,
+    });
   };
-  const publish = (snapshot: LatestTradeSnapshot) => {
-    entry.snapshot = snapshot;
-    entry.listeners.forEach(listener => listener(snapshot));
-  };
-  const handleConnectionLoss = () => {
-    publish({ error: null, identity: coin, status: 'stale', trade: null });
-  };
-  const handleOpen = () => {
-    publish({ error: null, identity: coin, status: 'loading', trade: null });
-  };
+  const handleConnectionLoss = () => publishConnectionState('stale');
+  const handleOpen = () => publishConnectionState('loading');
   const handleReconnectFailed = () => {
-    publish({
+    latestTradeCache.delete(coin);
+    publishLatestTrade(entry, {
       error: new Error('Perps trades reconnect failed'),
       identity: coin,
+      receivedAt: null,
+      revision: entry.snapshot.revision,
       status: 'error',
       trade: null,
     });
@@ -113,30 +227,48 @@ const createLatestTradeRegistryEntry = (
   let unsubscribe: () => void = () => undefined;
   try {
     const subscription = sdk.ws.subscribeToTrades(coin, trades => {
-      const trade = selectLatestPerpsTrade(
-        trades ?? [],
-        coin,
-        entry.snapshot.trade,
-      );
-      if (trade === entry.snapshot.trade) {
+      if (!entry.active) {
         return;
       }
-      publish({ error: null, identity: coin, status: 'ready', trade });
+      const candidate = selectLatestPerpsTrade(trades ?? [], coin);
+      if (!candidate) {
+        return;
+      }
+      const trade = isLaterTrade(candidate, entry.snapshot.trade)
+        ? candidate
+        : entry.snapshot.trade ?? candidate;
+      const receivedAt = Date.now();
+      const revision = entry.snapshot.revision + 1;
+      writeLatestTradeCache(entry, trade, receivedAt, revision);
+      publishLatestTrade(entry, {
+        error: null,
+        identity: coin,
+        receivedAt,
+        revision,
+        status: 'ready',
+        trade,
+      });
     });
     unsubscribe = subscription.unsubscribe;
   } catch (error) {
-    publish({
+    publishLatestTrade(entry, {
       error:
         error instanceof Error
           ? error
           : new Error('Failed to subscribe to Perps trades'),
       identity: coin,
+      receivedAt: null,
+      revision: entry.snapshot.revision,
       status: 'error',
       trade: null,
     });
   }
 
   entry.release = () => {
+    if (!entry.active) {
+      return;
+    }
+    entry.active = false;
     sdk.ws.off('close', handleConnectionLoss);
     sdk.ws.off('reconnecting', handleConnectionLoss);
     sdk.ws.off('open', handleOpen);
@@ -150,27 +282,33 @@ const createLatestTradeRegistryEntry = (
   return entry;
 };
 
-const subscribeLatestPerpsTrade = (
-  coin: string,
-  listener: LatestTradeListener,
-) => {
+const getLatestTradeRegistryEntry = (coin: string) => {
   const sdk = apisPerps.getPerpsSDK();
   let entry = latestTradeRegistry.get(coin);
   if (entry && entry.sdk.ws !== sdk.ws) {
     entry.release();
     latestTradeRegistry.delete(coin);
+    latestTradeCache.delete(coin);
     entry = undefined;
   }
   if (!entry) {
     entry = createLatestTradeRegistryEntry(coin);
     latestTradeRegistry.set(coin, entry);
   }
+  return entry;
+};
+
+const subscribeLatestPerpsTrade = (
+  coin: string,
+  listener: LatestTradeListener,
+) => {
+  const entry = getLatestTradeRegistryEntry(coin);
   entry.listeners.add(listener);
   listener(entry.snapshot);
 
   return () => {
     const liveEntry = latestTradeRegistry.get(coin);
-    if (!liveEntry) {
+    if (!liveEntry || liveEntry !== entry) {
       return;
     }
     liveEntry.listeners.delete(listener);
@@ -181,47 +319,131 @@ const subscribeLatestPerpsTrade = (
   };
 };
 
+const readLatestTradeSnapshot = (coin: string): LatestTradeSnapshot => {
+  const sdk = apisPerps.getPerpsSDK();
+  const liveEntry = latestTradeRegistry.get(coin);
+  if (liveEntry?.sdk.ws === sdk.ws) {
+    return liveEntry.snapshot;
+  }
+  const cached = readLatestTradeCache(coin, sdk.ws);
+  return cached
+    ? {
+        error: null,
+        identity: coin,
+        receivedAt: cached.receivedAt,
+        revision: cached.revision,
+        status: 'stale',
+        trade: cached.trade,
+      }
+    : {
+        error: null,
+        identity: coin,
+        receivedAt: null,
+        revision: 0,
+        status: 'loading',
+        trade: null,
+      };
+};
+
+export const prewarmPerpsLatestTrade = ({
+  coin,
+  timeoutMs = 1500,
+}: {
+  coin: string;
+  timeoutMs?: number;
+}) => {
+  let detached = false;
+  let detach: (() => void) | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const finish = () => {
+    if (detached) {
+      return;
+    }
+    detached = true;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    detach?.();
+  };
+  detach = subscribeLatestPerpsTrade(coin, snapshot => {
+    if (snapshot.status === 'ready' && snapshot.trade) {
+      finish();
+    }
+  });
+  if (detached) {
+    detach();
+  } else {
+    timeoutId = setTimeout(finish, Math.max(0, timeoutMs));
+  }
+  return finish;
+};
+
+const disabledLatestTradeSnapshot = (): LatestTradeSnapshot => ({
+  error: null,
+  identity: 'disabled',
+  receivedAt: null,
+  revision: 0,
+  status: 'idle',
+  trade: null,
+});
+
+const loadingLatestTradeSnapshot = (identity: string): LatestTradeSnapshot => ({
+  error: null,
+  identity,
+  receivedAt: null,
+  revision: 0,
+  status: 'loading',
+  trade: null,
+});
+
+const hasLatestTradeValue = (snapshot: LatestTradeSnapshot) => !!snapshot.trade;
+const clearLatestTradeValue = (
+  snapshot: LatestTradeSnapshot,
+): LatestTradeSnapshot => ({
+  ...snapshot,
+  receivedAt: null,
+  trade: null,
+});
+
 export const usePerpsLatestTrade = ({
   coin,
   enabled,
+  publicationEnabled = enabled,
 }: {
   coin: string;
   enabled: boolean;
+  publicationEnabled?: boolean;
 }) => {
   const identity = enabled && coin ? coin : 'disabled';
-  const [snapshot, setSnapshot] = useState<LatestTradeSnapshot>({
-    error: null,
-    identity,
-    status: identity === 'disabled' ? 'idle' : 'loading',
-    trade: null,
-  });
-
-  useEffect(() => {
-    setSnapshot({
-      error: null,
-      identity,
-      status: identity === 'disabled' ? 'idle' : 'loading',
-      trade: null,
-    });
-    if (identity === 'disabled') {
-      return;
-    }
-    return subscribeLatestPerpsTrade(coin, setSnapshot);
-  }, [coin, identity]);
-
-  return useMemo(
-    () =>
-      snapshot.identity === identity
-        ? snapshot
-        : {
-            error: null,
-            identity,
-            status:
-              identity === 'disabled'
-                ? ('idle' as const)
-                : ('loading' as const),
-            trade: null,
-          },
-    [identity, snapshot],
+  const readSnapshot = useMemo(
+    () => () => readLatestTradeSnapshot(coin),
+    [coin],
   );
+  const subscribe = useMemo(
+    () =>
+      identity === 'disabled'
+        ? null
+        : (listener: LatestTradeListener) =>
+            subscribeLatestPerpsTrade(coin, listener),
+    [coin, identity],
+  );
+
+  return usePerpsRealtimePublication({
+    clearValue: clearLatestTradeValue,
+    createDisabledSnapshot: disabledLatestTradeSnapshot,
+    createLoadingSnapshot: loadingLatestTradeSnapshot,
+    displayCacheMs: PERPS_FAST_L2_DISPLAY_CACHE_MS,
+    hasValue: hasLatestTradeValue,
+    identity,
+    publicationEnabled,
+    readSnapshot,
+    subscribe,
+  });
+};
+
+export const resetPerpsLatestTradeRegistryForTests = () => {
+  latestTradeRegistry.forEach(entry => entry.release());
+  latestTradeRegistry.clear();
+  latestTradeCache.clear();
 };

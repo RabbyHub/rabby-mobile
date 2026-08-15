@@ -1,8 +1,12 @@
 import type { L2Book, WsTrade } from '@rabby-wallet/hyperliquid-sdk';
 import { act, renderHook } from '@testing-library/react-native';
 
-import { usePerpsFastL2 } from './usePerpsFastL2';
 import {
+  resetPerpsFastL2RegistryForTests,
+  usePerpsFastL2,
+} from './usePerpsFastL2';
+import {
+  resetPerpsLatestTradeRegistryForTests,
   selectLatestPerpsTrade,
   usePerpsLatestTrade,
 } from './usePerpsLatestTrade';
@@ -78,12 +82,19 @@ const trade = (overrides: Partial<WsTrade> = {}): WsTrade => ({
 
 describe('Perps Pro focused subscriptions', () => {
   beforeEach(() => {
+    resetPerpsFastL2RegistryForTests();
+    resetPerpsLatestTradeRegistryForTests();
     jest.clearAllMocks();
     mockListeners.clear();
     mockFastL2Callbacks.length = 0;
     mockTradeCallbacks.length = 0;
     mockFastUnsubscribes.length = 0;
     mockTradeUnsubscribes.length = 0;
+  });
+
+  afterEach(() => {
+    resetPerpsFastL2RegistryForTests();
+    resetPerpsLatestTradeRegistryForTests();
   });
 
   it('subscribes to FastL2 once per identity and never calls l2Book', () => {
@@ -115,7 +126,7 @@ describe('Perps Pro focused subscriptions', () => {
     });
   });
 
-  it('keeps SDK replay registration during reconnect and clears stale UI', () => {
+  it('keeps SDK replay registration and the display-only snapshot during reconnect', () => {
     const hook = renderHook(() =>
       usePerpsFastL2({
         coin: 'BTC',
@@ -127,7 +138,7 @@ describe('Perps Pro focused subscriptions', () => {
     act(() => emit('reconnecting'));
 
     expect(hook.result.current).toMatchObject({
-      book: null,
+      book: book('BTC'),
       status: 'stale',
     });
     expect(mockFastUnsubscribes[0]).not.toHaveBeenCalled();
@@ -289,7 +300,7 @@ describe('Perps Pro focused subscriptions', () => {
     expect(batch).toEqual(original);
   });
 
-  it('restores latest trade only after the replayed callback', () => {
+  it('retains latest trade as stale until the replayed callback', () => {
     const hook = renderHook(() =>
       usePerpsLatestTrade({ coin: 'BTC', enabled: true }),
     );
@@ -299,7 +310,7 @@ describe('Perps Pro focused subscriptions', () => {
     act(() => emit('close'));
     expect(hook.result.current).toMatchObject({
       status: 'stale',
-      trade: null,
+      trade: expect.objectContaining({ tid: 2 }),
     });
     expect(mockTradeUnsubscribes[0]).not.toHaveBeenCalled();
 
