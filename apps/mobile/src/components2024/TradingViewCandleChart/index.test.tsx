@@ -6,6 +6,7 @@ import { CandlePeriod } from './type';
 
 const mockLocalWebViewProps = jest.fn();
 const mockSendMessage = jest.fn();
+const mockReload = jest.fn();
 const mockDataApplied = jest.fn();
 
 jest.mock('@/components/Typography', () => ({
@@ -19,6 +20,7 @@ jest.mock('@/components/WebView/LocalWebView/LocalWebView', () => {
     LocalWebView: ReactModule.forwardRef(
       (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
+          reload: mockReload,
           sendMessage: mockSendMessage,
         }));
         mockLocalWebViewProps(props);
@@ -64,8 +66,10 @@ const TradingViewCandleChart = require('./index')
   .default as typeof import('./index').default;
 
 const markChartReady = ({
+  perpsProKlineProtocolVersion = 1,
   supportsDataAppliedAck = true,
 }: {
+  perpsProKlineProtocolVersion?: number | null;
   supportsDataAppliedAck?: boolean;
 } = {}) => {
   const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
@@ -74,9 +78,12 @@ const markChartReady = ({
       nativeEvent: {
         data: JSON.stringify({
           type: 'CHART_READY',
-          ...(supportsDataAppliedAck
-            ? { capabilities: { candleDataAppliedAck: true } }
-            : {}),
+          capabilities: {
+            ...(supportsDataAppliedAck ? { candleDataAppliedAck: true } : {}),
+            ...(perpsProKlineProtocolVersion == null
+              ? {}
+              : { perpsProKlineProtocolVersion }),
+          },
         }),
       },
     });
@@ -92,6 +99,39 @@ const getLastSetDataMessage = () =>
 describe('TradingViewCandleChart protocol compatibility', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('keeps legacy charts compatible with resources that do not declare the Pro protocol', () => {
+    const onChartReady = jest.fn();
+    render(<TradingViewCandleChart height={184} onChartReady={onChartReady} />);
+
+    markChartReady({ perpsProKlineProtocolVersion: null });
+
+    expect(onChartReady).toHaveBeenCalledTimes(1);
+    expect(mockReload).not.toHaveBeenCalled();
+  });
+
+  it('reloads once and then rejects a stale resource for Perps Pro', () => {
+    const onChartError = jest.fn();
+    const onChartReady = jest.fn();
+    render(
+      <TradingViewCandleChart
+        height={184}
+        onChartError={onChartError}
+        onChartReady={onChartReady}
+        variant="perps-pro"
+      />,
+    );
+
+    markChartReady({ perpsProKlineProtocolVersion: null });
+    expect(mockReload).toHaveBeenCalledTimes(1);
+    expect(onChartReady).not.toHaveBeenCalled();
+    expect(onChartError).not.toHaveBeenCalled();
+
+    markChartReady({ perpsProKlineProtocolVersion: null });
+    expect(mockReload).toHaveBeenCalledTimes(1);
+    expect(onChartReady).not.toHaveBeenCalled();
+    expect(onChartError).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the legacy payload free of Pro configuration and Pro-only candle fields', () => {
@@ -238,6 +278,52 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     expect(mockDataApplied).toHaveBeenCalledWith({
       identity: 'BTC:15m',
       revision: 7,
+    });
+  });
+
+  it('bridges history requests and completion without affecting legacy payloads', () => {
+    const onRequestOlderCandles = jest.fn();
+    const chartRef = React.createRef<TradingViewChartRef>();
+    render(
+      <TradingViewCandleChart
+        ref={chartRef}
+        height={184}
+        onRequestOlderCandles={onRequestOlderCandles}
+        variant="perps-pro"
+      />,
+    );
+    markChartReady();
+    const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
+
+    act(() => {
+      props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'REQUEST_OLDER_CANDLES',
+            earliestTime: 1800,
+            identity: 'BTC:15m',
+          }),
+        },
+      });
+      chartRef.current?.completeOlderCandlesRequest({
+        earliestTime: 1800,
+        identity: 'BTC:15m',
+        outcome: 'exhausted',
+      });
+    });
+
+    expect(onRequestOlderCandles).toHaveBeenCalledWith({
+      earliestTime: 1800,
+      identity: 'BTC:15m',
+    });
+    expect(mockSendMessage).toHaveBeenLastCalledWith({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: {
+        type: 'COMPLETE_OLDER_CANDLES_REQUEST',
+        earliestTime: 1800,
+        identity: 'BTC:15m',
+        outcome: 'exhausted',
+      },
     });
   });
 

@@ -203,6 +203,7 @@ export const usePerpsProKline = ({
     feed,
     hydrated: preference.hydrated,
     interval: preference.interval,
+    loadOlder: liveFeed.loadOlder,
     selectInterval,
   };
 };

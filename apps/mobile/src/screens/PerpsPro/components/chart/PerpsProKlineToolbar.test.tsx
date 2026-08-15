@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { PERPS_PRO_CANDLE_INTERVAL_OPTIONS } from '@/hooks/perps/candles/interval';
 
@@ -39,6 +40,10 @@ describe('PerpsProKlineToolbar', () => {
     expect(screen.getAllByRole('radio')).toHaveLength(
       PERPS_PRO_CANDLE_INTERVAL_OPTIONS.length,
     );
+    expect(screen.queryByText('component.kline.time')).toBeNull();
+    expect(screen.getAllByRole('radio')[0].props.testID).toBe(
+      'perps-pro-kline-interval-1m',
+    );
     expect(
       screen.getByTestId('perps-pro-kline-interval-15m').props
         .accessibilityState,
@@ -50,6 +55,17 @@ describe('PerpsProKlineToolbar', () => {
           (style: { fontWeight?: string }) => style?.fontWeight === '700',
         ),
     ).toBe(true);
+    expect(
+      StyleSheet.flatten(screen.getByText('15m').props.style),
+    ).toMatchObject({
+      fontSize: 12,
+      lineHeight: 16,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-kline-interval-15m').props.style,
+      ),
+    ).toMatchObject({ minWidth: 40 });
 
     fireEvent.press(screen.getByTestId('perps-pro-kline-interval-1M'));
     expect(onSelect).toHaveBeenCalledWith('1M');

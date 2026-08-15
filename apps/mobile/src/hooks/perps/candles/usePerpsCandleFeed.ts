@@ -1,5 +1,5 @@
 import type { Candle } from '@rabby-wallet/hyperliquid-sdk';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { PerpsCandleInterval } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
@@ -11,7 +11,10 @@ import {
   type PerpsCandle,
 } from './candle';
 import { getPerpsCandleSource } from './interval';
-import { loadPerpsCandleSourceSnapshot } from './sourceSnapshot';
+import {
+  loadPerpsCandleSourcePage,
+  loadPerpsCandleSourceSnapshot,
+} from './sourceSnapshot';
 
 export type PerpsCandleFeedStatus =
   | 'idle'
@@ -27,7 +30,17 @@ export type PerpsCandleFeedSnapshot = {
   identity: string;
   latestCandle: PerpsCandle | null;
   status: PerpsCandleFeedStatus;
-  updateType: 'reset' | 'snapshot' | 'realtime';
+  updateType: 'history' | 'reset' | 'snapshot' | 'realtime';
+};
+
+export type PerpsCandleHistoryLoadResult =
+  | 'exhausted'
+  | 'failed'
+  | 'ignored'
+  | 'loaded';
+
+export type PerpsCandleFeed = PerpsCandleFeedSnapshot & {
+  loadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
 };
 
 const createIdentity = (
@@ -53,6 +66,14 @@ const limitCandleMap = (
   );
 };
 
+const getLatestCandleTime = (candles: Map<number, PerpsCandle>) => {
+  let latestTime = Number.NEGATIVE_INFINITY;
+  candles.forEach((_candle, time) => {
+    latestTime = Math.max(latestTime, time);
+  });
+  return latestTime;
+};
+
 const toError = (error: unknown, fallback: string) =>
   error instanceof Error ? error : new Error(fallback);
 
@@ -71,6 +92,9 @@ export const usePerpsCandleFeed = ({
   initialSourceCandlesRef.current = initialSourceCandles;
   const identity = createIdentity(enabled, coin, interval);
   const generationRef = useRef(0);
+  const loadOlderRef = useRef<() => Promise<PerpsCandleHistoryLoadResult>>(() =>
+    Promise.resolve('ignored'),
+  );
   const [snapshot, setSnapshot] = useState<PerpsCandleFeedSnapshot>({
     candles: [],
     error: null,
@@ -111,15 +135,19 @@ export const usePerpsCandleFeed = ({
       return;
     }
 
-    const { sourceCandleCount, sourceInterval } =
+    const { historyPageCandleCount, maximumSourceCandleCount, sourceInterval } =
       getPerpsCandleSource(interval);
     let sourceCandles = limitCandleMap(
       toCandleMap(initialSourceCandlesRef.current ?? []),
-      sourceCandleCount,
+      maximumSourceCandleCount,
     );
+    let latestSourceTime = getLatestCandleTime(sourceCandles);
     let bufferedCandles = new Map<number, PerpsCandle>();
     let baselineReady = sourceCandles.size > 0;
     let baselineRequest = 0;
+    let baselineLoading = false;
+    let historyExhausted = sourceCandles.size >= maximumSourceCandleCount;
+    let historyRequest: Promise<PerpsCandleHistoryLoadResult> | null = null;
     let waitingForReconnect = false;
     let unsubscribe = () => {};
 
@@ -167,6 +195,7 @@ export const usePerpsCandleFeed = ({
       preserveVisible?: boolean;
     } = {}) => {
       const request = ++baselineRequest;
+      baselineLoading = true;
       baselineReady = false;
       if (!preserveVisible) {
         sourceCandles = new Map();
@@ -189,10 +218,13 @@ export const usePerpsCandleFeed = ({
               Array.from(bufferedCandles.values()),
             ),
           ),
-          sourceCandleCount,
+          maximumSourceCandleCount,
         );
+        latestSourceTime = getLatestCandleTime(sourceCandles);
         bufferedCandles = new Map();
         baselineReady = true;
+        historyExhausted = sourceCandles.size >= maximumSourceCandleCount;
+        baselineLoading = false;
         commitSourceCandles('snapshot');
       } catch (error) {
         if (!isCurrent() || request !== baselineRequest) {
@@ -206,19 +238,95 @@ export const usePerpsCandleFeed = ({
                 Array.from(bufferedCandles.values()),
               ),
             ),
-            sourceCandleCount,
+            maximumSourceCandleCount,
           );
+          latestSourceTime = getLatestCandleTime(sourceCandles);
           bufferedCandles = new Map();
           baselineReady = true;
+          baselineLoading = false;
           commitSourceCandles('snapshot');
         } else {
           baselineReady = false;
+          baselineLoading = false;
           setNonReady(
             'error',
             toError(error, 'Failed to load Perps candle snapshot'),
           );
         }
       }
+    };
+
+    loadOlderRef.current = () => {
+      if (historyRequest) {
+        return historyRequest;
+      }
+      if (
+        !isCurrent() ||
+        !baselineReady ||
+        baselineLoading ||
+        historyExhausted ||
+        sourceCandles.size === 0
+      ) {
+        return Promise.resolve(historyExhausted ? 'exhausted' : 'ignored');
+      }
+      const oldestTime = Math.min(...sourceCandles.keys());
+      const remainingCapacity = maximumSourceCandleCount - sourceCandles.size;
+      const candleCount = Math.min(historyPageCandleCount, remainingCapacity);
+      if (!Number.isFinite(oldestTime) || candleCount <= 0) {
+        historyExhausted = true;
+        return Promise.resolve('exhausted');
+      }
+      const historyBaselineRequest = baselineRequest;
+
+      const request = loadPerpsCandleSourcePage({
+        candleCount,
+        coin,
+        endTime: oldestTime - 1,
+        interval,
+      })
+        .then(response => {
+          if (
+            !isCurrent() ||
+            !baselineReady ||
+            historyBaselineRequest !== baselineRequest
+          ) {
+            return 'ignored' as const;
+          }
+          const olderCandles = response.filter(
+            candle => candle.time < oldestTime,
+          );
+          if (olderCandles.length === 0) {
+            historyExhausted = true;
+            return 'exhausted' as const;
+          }
+          sourceCandles = limitCandleMap(
+            toCandleMap(
+              mergePerpsCandles(
+                olderCandles,
+                Array.from(sourceCandles.values()),
+              ),
+            ),
+            maximumSourceCandleCount,
+          );
+          historyExhausted =
+            response.length < candleCount ||
+            sourceCandles.size >= maximumSourceCandleCount;
+          commitSourceCandles('history');
+          return 'loaded' as const;
+        })
+        .catch(error => {
+          if (isCurrent()) {
+            console.error('[usePerpsCandleFeed] history load failed', error);
+          }
+          return isCurrent() ? ('failed' as const) : ('ignored' as const);
+        })
+        .finally(() => {
+          if (historyRequest === request) {
+            historyRequest = null;
+          }
+        });
+      historyRequest = request;
+      return request;
     };
 
     const handleCandle = (data: Candle | null | undefined) => {
@@ -236,15 +344,16 @@ export const usePerpsCandleFeed = ({
       }
       if (!baselineReady) {
         bufferedCandles.set(candle.time, candle);
-        bufferedCandles = limitCandleMap(bufferedCandles, sourceCandleCount);
+        bufferedCandles = limitCandleMap(
+          bufferedCandles,
+          maximumSourceCandleCount,
+        );
         return;
       }
-      const previousLatestTime = Math.max(
-        ...Array.from(sourceCandles.keys()),
-        Number.NEGATIVE_INFINITY,
-      );
+      const previousLatestTime = latestSourceTime;
       sourceCandles.set(candle.time, candle);
-      sourceCandles = limitCandleMap(sourceCandles, sourceCandleCount);
+      sourceCandles = limitCandleMap(sourceCandles, maximumSourceCandleCount);
+      latestSourceTime = Math.max(latestSourceTime, candle.time);
       commitSourceCandles(
         candle.time >= previousLatestTime ? 'realtime' : 'snapshot',
       );
@@ -254,7 +363,9 @@ export const usePerpsCandleFeed = ({
       waitingForReconnect = true;
       baselineReady = false;
       baselineRequest += 1;
+      baselineLoading = false;
       sourceCandles = new Map();
+      latestSourceTime = Number.NEGATIVE_INFINITY;
       bufferedCandles = new Map();
       setNonReady('stale');
     };
@@ -301,6 +412,7 @@ export const usePerpsCandleFeed = ({
 
     return () => {
       generationRef.current += 1;
+      loadOlderRef.current = () => Promise.resolve('ignored');
       baselineRequest += 1;
       sdk.ws.off('close', handleConnectionLoss);
       sdk.ws.off('reconnecting', handleConnectionLoss);
@@ -314,7 +426,7 @@ export const usePerpsCandleFeed = ({
     };
   }, [coin, identity, interval]);
 
-  return useMemo<PerpsCandleFeedSnapshot>(
+  const visibleSnapshot = useMemo<PerpsCandleFeedSnapshot>(
     () =>
       snapshot.identity === identity
         ? snapshot
@@ -327,5 +439,11 @@ export const usePerpsCandleFeed = ({
             updateType: 'reset',
           },
     [identity, snapshot],
+  );
+  const loadOlder = useCallback(() => loadOlderRef.current(), []);
+
+  return useMemo<PerpsCandleFeed>(
+    () => ({ ...visibleSnapshot, loadOlder }),
+    [loadOlder, visibleSnapshot],
   );
 };

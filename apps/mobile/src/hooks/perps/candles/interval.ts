@@ -4,6 +4,8 @@ const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
 const DIRECT_HISTORY_CANDLE_COUNT = 500;
 const MAX_SOURCE_CANDLE_COUNT = 5000;
+const HISTORY_PAGE_CANDLE_COUNT = 1000;
+const MONTHLY_INITIAL_SOURCE_CANDLE_COUNT = 1240;
 
 const INTERVAL_DURATION_MS: Record<
   Exclude<PerpsCandleInterval, '1w' | '1M'>,
@@ -41,25 +43,33 @@ export const getPerpsCandleSource = (
   interval: PerpsCandleInterval,
 ): {
   sourceCandleCount: number;
+  maximumSourceCandleCount: number;
+  historyPageCandleCount: number;
   sourceInterval: Exclude<PerpsCandleInterval, '1w' | '1M'>;
   sourceIntervalMs: number;
 } => {
   if (interval === '1w') {
     return {
-      sourceCandleCount: 500 * 7,
+      sourceCandleCount: DIRECT_HISTORY_CANDLE_COUNT,
+      maximumSourceCandleCount: MAX_SOURCE_CANDLE_COUNT,
+      historyPageCandleCount: HISTORY_PAGE_CANDLE_COUNT,
       sourceInterval: '1d',
       sourceIntervalMs: DAY_MS,
     };
   }
   if (interval === '1M') {
     return {
-      sourceCandleCount: MAX_SOURCE_CANDLE_COUNT,
+      sourceCandleCount: MONTHLY_INITIAL_SOURCE_CANDLE_COUNT,
+      maximumSourceCandleCount: MAX_SOURCE_CANDLE_COUNT,
+      historyPageCandleCount: HISTORY_PAGE_CANDLE_COUNT,
       sourceInterval: '1d',
       sourceIntervalMs: DAY_MS,
     };
   }
   return {
     sourceCandleCount: DIRECT_HISTORY_CANDLE_COUNT,
+    maximumSourceCandleCount: MAX_SOURCE_CANDLE_COUNT,
+    historyPageCandleCount: HISTORY_PAGE_CANDLE_COUNT,
     sourceInterval: interval,
     sourceIntervalMs: INTERVAL_DURATION_MS[interval],
   };

@@ -37,6 +37,7 @@ export interface CandleData {
   fitContent?: boolean;
   noTime?: boolean;
   proConfig?: PerpsProCandleChartConfig;
+  preserveVisibleRange?: boolean;
   candles: CandleStick[];
 }
 
