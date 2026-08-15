@@ -17,6 +17,8 @@ export type PerpsHeaderProps = {
   extendProHitAreaRight?: boolean;
   isModeSwitching: boolean;
   onPressAccount?: () => void;
+  onPressInMode?: (viewMode: PerpsViewMode) => void;
+  onPressOutMode?: (viewMode: PerpsViewMode) => void;
   onSelectMode: (viewMode: PerpsViewMode) => void;
 };
 
@@ -32,6 +34,8 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
     extendProHitAreaRight = false,
     isModeSwitching,
     onPressAccount,
+    onPressInMode,
+    onPressOutMode,
     onSelectMode,
   }) => {
     const { styles } = useTheme2024({ getStyle });
@@ -49,6 +53,8 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
               activeMode={activeMode}
               disabled={isModeSwitching}
               extendProHitAreaRight={extendProHitAreaRight}
+              onPressInMode={onPressInMode}
+              onPressOutMode={onPressOutMode}
               onSelectMode={onSelectMode}
             />
           </View>

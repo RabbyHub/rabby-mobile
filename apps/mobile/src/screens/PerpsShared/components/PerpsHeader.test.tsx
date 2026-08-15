@@ -59,6 +59,8 @@ jest.mock('./PerpsAccountTrigger', () => {
 describe('PerpsHeader', () => {
   it('owns the single Figma geometry used by both modes', () => {
     const onPressAccount = jest.fn();
+    const onPressInMode = jest.fn();
+    const onPressOutMode = jest.fn();
     const onSelectMode = jest.fn();
     const screen = render(
       <PerpsHeader
@@ -68,6 +70,8 @@ describe('PerpsHeader', () => {
         extendProHitAreaRight
         isModeSwitching={false}
         onPressAccount={onPressAccount}
+        onPressInMode={onPressInMode}
+        onPressOutMode={onPressOutMode}
         onSelectMode={onSelectMode}
       />,
     );
@@ -107,6 +111,8 @@ describe('PerpsHeader', () => {
       activeMode: 'simple',
       disabled: false,
       extendProHitAreaRight: true,
+      onPressInMode,
+      onPressOutMode,
       onSelectMode,
     });
     expect(screen.getByTestId('account-trigger').props).toMatchObject({

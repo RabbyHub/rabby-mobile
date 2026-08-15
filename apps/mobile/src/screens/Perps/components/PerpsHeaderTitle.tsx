@@ -10,49 +10,79 @@ import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 export const PerpsSimpleHeader: React.FC<{
   account?: Account | null;
   isModeSwitching: boolean;
+  onPressInPro?: () => void;
+  onPressOutPro?: () => void;
   onSwitchToPro: () => void;
-}> = React.memo(({ account, isModeSwitching, onSwitchToPro }) => {
-  const [popupState, setPopupState] = usePerpsPopupState();
+}> = React.memo(
+  ({
+    account,
+    isModeSwitching,
+    onPressInPro,
+    onPressOutPro,
+    onSwitchToPro,
+  }) => {
+    const [popupState, setPopupState] = usePerpsPopupState();
 
-  const contactAlias = useMemo(() => {
-    if (!account?.address) {
-      return null;
-    }
-    return apiContact.getAliasName(account.address);
-  }, [account?.address]);
-
-  const accountLabel = useMemo(
-    () => resolvePerpsHeaderAccountLabel(account, contactAlias),
-    [account, contactAlias],
-  );
-
-  const handleSelectMode = useCallback(
-    (viewMode: PerpsViewMode) => {
-      if (viewMode === 'pro') {
-        onSwitchToPro();
+    const contactAlias = useMemo(() => {
+      if (!account?.address) {
+        return null;
       }
-    },
-    [onSwitchToPro],
-  );
+      return apiContact.getAliasName(account.address);
+    }, [account?.address]);
 
-  const handlePressAccount = useCallback(() => {
-    setPopupState(current => ({
-      ...current,
-      isShowLoginPopup: !current.isShowLoginPopup,
-    }));
-  }, [setPopupState]);
+    const accountLabel = useMemo(
+      () => resolvePerpsHeaderAccountLabel(account, contactAlias),
+      [account, contactAlias],
+    );
 
-  return (
-    <PerpsHeader
-      accountExpanded={popupState.isShowLoginPopup}
-      accountLabel={accountLabel}
-      activeMode="simple"
-      extendProHitAreaRight
-      isModeSwitching={isModeSwitching}
-      onPressAccount={account ? handlePressAccount : undefined}
-      onSelectMode={handleSelectMode}
-    />
-  );
-});
+    const handleSelectMode = useCallback(
+      (viewMode: PerpsViewMode) => {
+        if (viewMode === 'pro') {
+          onSwitchToPro();
+        }
+      },
+      [onSwitchToPro],
+    );
+
+    const handlePressInMode = useCallback(
+      (viewMode: PerpsViewMode) => {
+        if (viewMode === 'pro') {
+          onPressInPro?.();
+        }
+      },
+      [onPressInPro],
+    );
+
+    const handlePressOutMode = useCallback(
+      (viewMode: PerpsViewMode) => {
+        if (viewMode === 'pro') {
+          onPressOutPro?.();
+        }
+      },
+      [onPressOutPro],
+    );
+
+    const handlePressAccount = useCallback(() => {
+      setPopupState(current => ({
+        ...current,
+        isShowLoginPopup: !current.isShowLoginPopup,
+      }));
+    }, [setPopupState]);
+
+    return (
+      <PerpsHeader
+        accountExpanded={popupState.isShowLoginPopup}
+        accountLabel={accountLabel}
+        activeMode="simple"
+        extendProHitAreaRight
+        isModeSwitching={isModeSwitching}
+        onPressAccount={account ? handlePressAccount : undefined}
+        onPressInMode={handlePressInMode}
+        onPressOutMode={handlePressOutMode}
+        onSelectMode={handleSelectMode}
+      />
+    );
+  },
+);
 
 PerpsSimpleHeader.displayName = 'PerpsSimpleHeader';

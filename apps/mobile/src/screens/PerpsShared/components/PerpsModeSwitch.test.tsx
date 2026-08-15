@@ -116,4 +116,23 @@ describe('PerpsModeSwitch', () => {
       justifyContent: 'center',
     });
   });
+
+  it('reports press intent only for the enabled target before selection', () => {
+    const onPressInMode = jest.fn();
+    const onPressOutMode = jest.fn();
+    const screen = render(
+      <PerpsModeSwitch
+        activeMode="simple"
+        onPressInMode={onPressInMode}
+        onPressOutMode={onPressOutMode}
+        onSelectMode={jest.fn()}
+      />,
+    );
+
+    fireEvent(screen.getByTestId('perps-mode-pro'), 'pressIn');
+    fireEvent(screen.getByTestId('perps-mode-pro'), 'pressOut');
+
+    expect(onPressInMode).toHaveBeenCalledWith('pro');
+    expect(onPressOutMode).toHaveBeenCalledWith('pro');
+  });
 });
