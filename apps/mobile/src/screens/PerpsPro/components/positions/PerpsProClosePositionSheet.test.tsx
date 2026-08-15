@@ -13,6 +13,7 @@ const mockSliderHapticStart = jest.fn();
 const mockSliderHapticValueChange = jest.fn();
 const mockUseSliderHaptics = jest.fn();
 let mockLatestTradePrice = '60001';
+let mockLatestTradeStatus: 'ready' | 'stale' = 'ready';
 
 jest.mock('@/assets2024/icons/perps/icon-switch-mode.svg', () => {
   const ReactModule = require('react');
@@ -74,7 +75,7 @@ jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
     return {
       error: null,
       identity: 'BTC',
-      status: 'ready',
+      status: mockLatestTradeStatus,
       trade: { price: mockLatestTradePrice },
     };
   },
@@ -207,6 +208,7 @@ describe('PerpsProClosePositionSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLatestTradePrice = '60001';
+    mockLatestTradeStatus = 'ready';
   });
   it('uses the 502px sheet, switches the price field to Limit, and seeds latest trade', async () => {
     const onReview = jest.fn();
@@ -434,6 +436,30 @@ describe('PerpsProClosePositionSheet', () => {
     view.rerender(<PerpsProClosePositionSheet {...props} />);
 
     expect(screen.getByLabelText('Price').props.value).toBe('60001');
+  });
+
+  it('does not seed a Limit price from a stale cached latest trade', async () => {
+    mockLatestTradeStatus = 'stale';
+    const props = {
+      amountUnit: 'base' as const,
+      market,
+      onClose: jest.fn(),
+      onReview: jest.fn(),
+      position,
+      visible: true,
+    };
+    const view = render(<PerpsProClosePositionSheet {...props} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
+    expect(screen.getByLabelText('Price').props.value).toBe('');
+
+    mockLatestTradeStatus = 'ready';
+    view.rerender(
+      <PerpsProClosePositionSheet {...props} market={{ ...market }} />,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Price').props.value).toBe('60001'),
+    );
   });
 
   it('opens the Estimated PNL explanation without reviewing the order', () => {

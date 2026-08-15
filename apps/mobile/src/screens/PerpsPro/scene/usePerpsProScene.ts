@@ -314,6 +314,11 @@ export const usePerpsProScene = () => {
     appState === 'active' &&
     !!currentMarket;
   const subscriptionsEnabled = klineEnabled && !!selectedTickOption;
+  const orderBookSubscriptionEnabled =
+    runtime.status === 'ready' &&
+    isFocused &&
+    !!currentMarket &&
+    !!selectedTickOption;
 
   const retryMarketData = useCallback(() => {
     fetchMarketData();
@@ -334,6 +339,7 @@ export const usePerpsProScene = () => {
     marketDataStatus,
     precision,
     prefetchMarket,
+    orderBookSubscriptionEnabled,
     realtimeEnabled: subscriptionsEnabled,
     retryMarketData,
     selectMarket,

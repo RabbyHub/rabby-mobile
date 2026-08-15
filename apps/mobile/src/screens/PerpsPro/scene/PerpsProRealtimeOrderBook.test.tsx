@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 import React from 'react';
 
@@ -6,10 +6,7 @@ import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFa
 import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 
 import type { PerpsProMarket } from '../model/market';
-import {
-  PERPS_PRO_ORDER_BOOK_RECONNECT_GRACE_MS,
-  PerpsProRealtimeOrderBook,
-} from './PerpsProRealtimeOrderBook';
+import { PerpsProRealtimeOrderBook } from './PerpsProRealtimeOrderBook';
 
 type FastL2State = {
   book: L2Book | null;
@@ -62,7 +59,6 @@ const market = {
 
 describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
     mockFastL2State = {
       book: liveBook,
       identity: 'BTC:5:null',
@@ -72,12 +68,7 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     mockRenderedOrderBookProps = null;
   });
 
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-  });
-
-  it('keeps the same-market snapshot briefly but disables cached price selection', () => {
+  it('renders a registry-retained snapshot but disables cached price selection', () => {
     const onSelectPrice = jest.fn();
     const view = render(
       <PerpsProRealtimeOrderBook
@@ -94,8 +85,7 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
     expect(mockRenderedOrderBookProps?.onSelectPrice).toBe(onSelectPrice);
 
-    mockFastL2State = { ...mockFastL2State, book: null, status: 'stale' };
-    mockLatestTradeState = { trade: null };
+    mockFastL2State = { ...mockFastL2State, status: 'stale' };
     view.rerender(
       <PerpsProRealtimeOrderBook
         enabled
@@ -112,10 +102,19 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     expect(mockRenderedOrderBookProps?.latestTrade).toEqual(liveTrade);
     expect(mockRenderedOrderBookProps?.onSelectPrice).toBeUndefined();
 
-    act(() => {
-      jest.advanceTimersByTime(PERPS_PRO_ORDER_BOOK_RECONNECT_GRACE_MS);
-    });
-
+    mockFastL2State = { ...mockFastL2State, book: null };
+    mockLatestTradeState = { trade: null };
+    view.rerender(
+      <PerpsProRealtimeOrderBook
+        enabled
+        market={market}
+        onSelectPrice={onSelectPrice}
+        onSelectTickOption={jest.fn()}
+        precision={{ mantissa: null, nSigFigs: 5 }}
+        selectedTickOption={null}
+        tickOptions={[]}
+      />,
+    );
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
   });
 
