@@ -17,6 +17,20 @@ type PerpsProHomeNavigationIntentDependencies = {
   }>;
 };
 
+type PerpsProExternalNavigationIntent = {
+  accountAddress?: string;
+  market?: string;
+  marketCandidates?: readonly string[];
+};
+
+type PerpsProExternalNavigationIntentDependencies = {
+  loadWarmupOwner: () => Promise<{
+    prewarmPerpsProExternalNavigationIntent: (
+      intent: PerpsProExternalNavigationIntent,
+    ) => Promise<boolean>;
+  }>;
+};
+
 const defaultDependencies: PerpsProAffinityWarmupDependencies = {
   getAppState: () => AppState.currentState,
   getViewMode: () => perpsServiceApi.getPerpsViewMode(),
@@ -26,6 +40,12 @@ const defaultDependencies: PerpsProAffinityWarmupDependencies = {
 const defaultNavigationIntentDependencies: PerpsProHomeNavigationIntentDependencies =
   {
     getViewMode: () => perpsServiceApi.getPerpsViewMode(),
+    loadWarmupOwner: () =>
+      import('@/screens/PerpsPro/scene/perpsProHomeWarmup'),
+  };
+
+const defaultExternalNavigationIntentDependencies: PerpsProExternalNavigationIntentDependencies =
+  {
     loadWarmupOwner: () =>
       import('@/screens/PerpsPro/scene/perpsProHomeWarmup'),
   };
@@ -92,4 +112,13 @@ export const startPerpsProHomeNavigationIntent = async (
   const { prewarmPerpsProHomeNavigationIntent } =
     await dependencies.loadWarmupOwner();
   return prewarmPerpsProHomeNavigationIntent();
+};
+
+export const startPerpsProExternalNavigationIntent = async (
+  intent: PerpsProExternalNavigationIntent,
+  dependencies: PerpsProExternalNavigationIntentDependencies = defaultExternalNavigationIntentDependencies,
+) => {
+  const { prewarmPerpsProExternalNavigationIntent } =
+    await dependencies.loadWarmupOwner();
+  return prewarmPerpsProExternalNavigationIntent(intent);
 };

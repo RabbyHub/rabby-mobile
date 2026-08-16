@@ -1,9 +1,8 @@
 import { useEnsurePerpsRuntime } from '@/hooks/perps/runtime/useEnsurePerpsRuntime';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
@@ -21,7 +20,6 @@ import type { PerpsRegionAlertLayout } from './components/PerpsRegionAlert';
 export const PerpsOriginScreen = () => {
   useEnsurePerpsRuntime();
 
-  const navigation = useRabbyAppNavigation();
   const route =
     useRoute<
       RouteProp<TransactionNavigatorParamList, typeof RootNames.Perps>
@@ -51,9 +49,10 @@ export const PerpsOriginScreen = () => {
     return resolveInitialPerpsProMarket({
       markets,
       navigationMarket: route.params?.market,
+      navigationMarketCandidates: route.params?.marketCandidates,
       sessionMarketKey: getPerpsProMarketSession().marketKey,
     });
-  }, [route.params?.market]);
+  }, [route.params?.market, route.params?.marketCandidates]);
 
   const startProIntent = useCallback(() => {
     cancelProIntent();
@@ -83,12 +82,6 @@ export const PerpsOriginScreen = () => {
       }
     }, 0);
   }, [cancelProIntent]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
 
   useEffect(() => {
     if (!hydrated || viewMode !== 'simple' || marketDataStatus !== 'success') {

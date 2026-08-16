@@ -10,7 +10,7 @@ import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { ellipsisAddress } from '@/utils/address';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { isAppChain } from '../../utils/appchain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -34,7 +34,6 @@ import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
 import { Text } from '@/components/Typography';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { RootNames } from '@/constant/layout';
 
 type SectionListItem = {
   data: IProtocolPortfolio[];
@@ -76,10 +75,10 @@ export const FullDefiRenderItem = ({
   const handleOpenSite = useCallback(async () => {
     if (data?.site_url) {
       if (data?.id === 'hyperliquid' && account) {
-        switchPerpsAccountBeforeNavigate(account);
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Perps,
-          params: {},
+        await navigateToPreferredPerps({
+          account,
+          navigation,
+          source: 'defi-protocol-site',
         });
       } else {
         const origin = safeGetOrigin(data?.site_url);

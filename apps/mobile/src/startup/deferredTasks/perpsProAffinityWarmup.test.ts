@@ -1,6 +1,7 @@
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import {
   runPerpsProAffinityWarmup,
+  startPerpsProExternalNavigationIntent,
   startPerpsProHomeNavigationIntent,
 } from './perpsProAffinityWarmup';
 
@@ -97,5 +98,25 @@ describe('Perps Pro Home navigation intent gate', () => {
     );
     expect(dependencies.loadWarmupOwner).toHaveBeenCalledTimes(1);
     expect(owner.prewarmPerpsProHomeNavigationIntent).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Perps Pro external navigation intent loader', () => {
+  it('forwards the exact target to the dynamically loaded Pro owner', async () => {
+    const owner = {
+      prewarmPerpsProExternalNavigationIntent: jest.fn(async () => true),
+    };
+    const dependencies = { loadWarmupOwner: jest.fn(async () => owner) };
+    const intent = {
+      accountAddress: '0x341a1fBD51825E5a107DB54cCb3166DeBA145479',
+      market: 'BTC',
+    };
+
+    await expect(
+      startPerpsProExternalNavigationIntent(intent, dependencies),
+    ).resolves.toBe(true);
+    expect(owner.prewarmPerpsProExternalNavigationIntent).toHaveBeenCalledWith(
+      intent,
+    );
   });
 });

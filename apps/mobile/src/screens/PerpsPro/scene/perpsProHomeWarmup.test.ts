@@ -21,6 +21,7 @@ jest.mock('./perpsProZeroAddressLeverageBaseline', () => ({
 }));
 
 import {
+  prewarmPerpsProExternalNavigationIntent,
   prewarmPerpsProHomeAffinity,
   prewarmPerpsProHomeNavigationIntent,
 } from './perpsProHomeWarmup';
@@ -126,5 +127,33 @@ describe('Perps Pro Home warmup', () => {
         marketKey: 'hyperliquid::SOL',
       }),
     });
+  });
+
+  it('prewarms the explicit external market and account without session fallback', async () => {
+    const dependencies = createDependencies();
+
+    await expect(
+      prewarmPerpsProExternalNavigationIntent(
+        { accountAddress: PERSISTED_ADDRESS, market: 'BTC' },
+        dependencies,
+      ),
+    ).resolves.toBe(true);
+
+    expect(dependencies.prewarmEntryIntent).toHaveBeenCalledWith({
+      accountAddress: PERSISTED_ADDRESS,
+      market: expect.objectContaining({ canonicalCoin: 'BTC' }),
+    });
+  });
+
+  it('does not prewarm a fallback market for an unresolved external target', async () => {
+    const dependencies = createDependencies();
+
+    await expect(
+      prewarmPerpsProExternalNavigationIntent(
+        { marketCandidates: ['MISSING'] },
+        dependencies,
+      ),
+    ).resolves.toBe(false);
+    expect(dependencies.prewarmEntryIntent).not.toHaveBeenCalled();
   });
 });

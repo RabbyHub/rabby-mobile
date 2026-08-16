@@ -2,7 +2,10 @@ import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { perpsStore, type PerpsState } from '@/hooks/perps/usePerpsStore';
 
 import { buildPerpsProMarkets, type PerpsProMarket } from '../model/market';
-import { resolveInitialPerpsProMarket } from '../model/resolveInitialMarket';
+import {
+  resolveInitialPerpsProMarket,
+  resolvePerpsProNavigationMarketCandidates,
+} from '../model/resolveInitialMarket';
 import { getPerpsProMarketSession } from '../session/perpsProMarketSession';
 import { prewarmPerpsProEntryIntent } from './perpsProEntryIntent';
 import { prefetchPerpsProLeverageSources } from './perpsProZeroAddressLeverageBaseline';
@@ -11,6 +14,12 @@ type PerpsProHomeWarmupState = Pick<
   PerpsState,
   'currentPerpsAccount' | 'marketData'
 >;
+
+export type PerpsProExternalNavigationIntent = {
+  accountAddress?: string;
+  market?: string;
+  marketCandidates?: readonly string[];
+};
 
 type PerpsProHomeWarmupDependencies = {
   getCurrentAccount: typeof perpsServiceApi.getCurrentAccount;
@@ -87,6 +96,29 @@ export const prewarmPerpsProHomeNavigationIntent = async (
   }
   dependencies.prewarmEntryIntent({
     accountAddress: state.currentPerpsAccount?.address,
+    market: target,
+  });
+  return true;
+};
+
+export const prewarmPerpsProExternalNavigationIntent = async (
+  intent: PerpsProExternalNavigationIntent,
+  dependencies: PerpsProHomeWarmupDependencies = defaultDependencies,
+) => {
+  const state = dependencies.getState();
+  const markets = buildPerpsProMarkets(state.marketData);
+  const target = intent.market
+    ? markets.find(market => market.canonicalCoin === intent.market) ?? null
+    : resolvePerpsProNavigationMarketCandidates({
+        markets,
+        navigationMarketCandidates: intent.marketCandidates,
+      });
+  if (!target) {
+    return false;
+  }
+  dependencies.prewarmEntryIntent({
+    accountAddress:
+      intent.accountAddress ?? state.currentPerpsAccount?.address ?? undefined,
     market: target,
   });
   return true;
