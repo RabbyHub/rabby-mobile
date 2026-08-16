@@ -1,6 +1,9 @@
 import BigNumber from 'bignumber.js';
 
-import { formatPerpsProDecimal } from '@/screens/PerpsPro/utils/format';
+import {
+  formatPerpsProDecimal,
+  isPerpsProStableAsset,
+} from '@/screens/PerpsPro/utils/format';
 
 export type PerpsProHistoryTone = 'info' | 'negative' | 'neutral' | 'positive';
 
@@ -34,3 +37,12 @@ export const formatPerpsProHistoryAmount = (
   );
   return formatPerpsProDecimal(decimal.toString(), decimals);
 };
+
+export const formatPerpsProHistoryAssetAmount = (
+  value: string | null,
+  asset: string,
+  maximumDecimals: number,
+) =>
+  isPerpsProStableAsset(asset)
+    ? formatPerpsProDecimal(value, 2)
+    : formatPerpsProHistoryAmount(value, maximumDecimals);

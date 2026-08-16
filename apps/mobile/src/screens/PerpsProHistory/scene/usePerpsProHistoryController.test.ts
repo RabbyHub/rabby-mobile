@@ -24,6 +24,7 @@ const mockPerpsState = {
   },
   isInitialized: true,
   marketDataMap: {},
+  spotMeta: null,
 };
 
 jest.mock('@react-navigation/native', () => ({
@@ -63,6 +64,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
       generation: 1,
       isInitialized: true,
     }),
+    fetchSpotMeta: jest.fn(async () => undefined),
     perpsStore,
   };
 });

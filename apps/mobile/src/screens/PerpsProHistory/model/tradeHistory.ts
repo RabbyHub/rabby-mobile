@@ -1,4 +1,4 @@
-import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
+import type { SpotMeta, WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
@@ -15,6 +15,7 @@ const finiteDecimal = (value: unknown) => {
 export const mapPerpsProTradeHistoryFact = (
   fill: WsFill,
   marketDataMap: Readonly<Record<string, MarketData | undefined>>,
+  spotMeta?: SpotMeta | null,
 ): PerpsProTradeHistoryRow => {
   const price = finiteDecimal(fill.px);
   const size = BigNumber.max(finiteDecimal(fill.sz), 0);
@@ -32,7 +33,7 @@ export const mapPerpsProTradeHistoryFact = (
     isLiquidation: Boolean(fill.liquidation),
     key: getFillKey(fill),
     kind: 'trade',
-    market: resolvePerpsProHistoryMarket(fill.coin, marketDataMap),
+    market: resolvePerpsProHistoryMarket(fill.coin, marketDataMap, spotMeta),
     netRealizedPnl: closedPnl.minus(fee).toString(),
     oid: fill.oid,
     price: price.toString(),

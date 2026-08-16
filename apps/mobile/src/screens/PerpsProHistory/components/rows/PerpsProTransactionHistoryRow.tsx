@@ -1,4 +1,7 @@
-import { formatPerpsProSignedDecimal } from '@/screens/PerpsPro/utils/format';
+import {
+  formatPerpsProSignedDecimal,
+  isPerpsProStableAsset,
+} from '@/screens/PerpsPro/utils/format';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,7 +28,10 @@ export const PerpsProTransactionHistoryRowView: React.FC<{
         {
           label: t('page.perps.pro.history.fields.amount'),
           tone: isDeposit ? 'positive' : 'negative',
-          value: formatPerpsProSignedDecimal(signedAmount, 8),
+          value: formatPerpsProSignedDecimal(
+            signedAmount,
+            isPerpsProStableAsset(row.asset) ? 2 : 8,
+          ),
         },
       ]}
       testID={`perps-pro-history-transaction-${row.key}`}

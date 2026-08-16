@@ -2,12 +2,13 @@ import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
 import {
   formatPerpsProDecimal,
   formatPerpsProPrice,
+  isPerpsProStableAsset,
 } from '@/screens/PerpsPro/utils/format';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTradeHistoryRow } from '../../types';
-import { formatPerpsProHistoryAmount } from '../historyRowFormatters';
+import { formatPerpsProHistoryAssetAmount } from '../historyRowFormatters';
 import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
 
 export const PerpsProTradeHistoryRowView: React.FC<{
@@ -21,7 +22,7 @@ export const PerpsProTradeHistoryRowView: React.FC<{
   const filled = isBase ? row.filledBase : row.filledQuote;
   const decimals = isBase ? row.market.szDecimals ?? 8 : 2;
   const filledValue = isBase
-    ? formatPerpsProHistoryAmount(filled, decimals)
+    ? formatPerpsProHistoryAssetAmount(filled, unit, decimals)
     : formatPerpsProDecimal(filled, 2);
   const sideLabel =
     row.side === 'buy'
@@ -48,16 +49,21 @@ export const PerpsProTradeHistoryRowView: React.FC<{
           label: `${t('page.perps.pro.history.fields.fee')} (${row.feeToken})`,
           labelAccessibilityLabel: t('page.perps.historyDetail.feeTitle'),
           onLabelPress: () => onShowFeeExplanation(row.isLiquidation),
-          value: formatPerpsProDecimal(row.fee, 8),
+          value: formatPerpsProDecimal(
+            row.fee,
+            isPerpsProStableAsset(row.feeToken) ? 2 : 8,
+          ),
         },
         {
           label: `${t('page.perps.pro.history.fields.realizedPnl')} (${
             row.market.quoteAsset
           })`,
-          value: formatPerpsProDecimal(row.netRealizedPnl, 8),
+          value: formatPerpsProDecimal(
+            row.netRealizedPnl,
+            isPerpsProStableAsset(row.market.quoteAsset) ? 2 : 8,
+          ),
         },
       ]}
-      showArrow
       sourceTag={row.market.sourceTag}
       testID={`perps-pro-history-trade-${row.key}`}
       time={row.time}

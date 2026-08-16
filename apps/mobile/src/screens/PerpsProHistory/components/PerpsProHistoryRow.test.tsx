@@ -1,4 +1,5 @@
 import type {
+  SpotMeta,
   UserHistoricalOrders,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
@@ -61,6 +62,14 @@ const makeOrder = (orderType: string): UserHistoricalOrders => ({
   statusTimestamp: 100,
 });
 
+const stableSpotMeta: SpotMeta = {
+  tokens: [
+    { index: 0, name: 'USDC' },
+    { index: 235, name: 'USDE' },
+  ],
+  universe: [{ index: 150, name: 'USDE/USDC', tokens: [235, 0] }],
+};
+
 describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
   const onShowFeeExplanation = jest.fn();
   const fill: WsFill = {
@@ -93,8 +102,8 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
       />,
     );
     expect(screen.getByText('0.25')).toBeTruthy();
-    expect(screen.getByText('0.50000000')).toBeTruthy();
-    expect(screen.getByText('12.00000000')).toBeTruthy();
+    expect(screen.getByText('0.50')).toBeTruthy();
+    expect(screen.getByText('12.00')).toBeTruthy();
     expect(screen.getByText('2,000.0')).toBeTruthy();
 
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
@@ -109,7 +118,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
       />,
     );
     expect(screen.getByText('500.00')).toBeTruthy();
-    expect(screen.getByText('12.00000000')).toBeTruthy();
+    expect(screen.getByText('12.00')).toBeTruthy();
   });
 
   it('opens the liquidation-specific Fee explanation for liquidation fills', () => {
@@ -157,7 +166,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
       />,
     );
     expect(screen.getByText('page.perps.pro.history.deposit')).toBeTruthy();
-    expect(screen.getByText('+1.25000000')).toBeTruthy();
+    expect(screen.getByText('+1.25')).toBeTruthy();
     expect(screen.queryByTestId('history-arrow')).toBeNull();
   });
 
@@ -183,7 +192,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     expect(screen.getByText('page.perps.pro.history.long')).toBeTruthy();
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.queryByText(/perpetual/i)).toBeNull();
-    expect(screen.getByText('-0.03313285')).toBeTruthy();
+    expect(screen.getByText('-0.03')).toBeTruthy();
   });
 });
 
@@ -199,7 +208,7 @@ describe('PerpsProHistoryRowView Orders', () => {
 
     expect(screen.getByText('15.00/20.00')).toBeTruthy();
     expect(screen.getByText('-- / 0.2000')).toBeTruthy();
-    expect(screen.getByTestId('history-arrow')).toBeTruthy();
+    expect(screen.queryByTestId('history-arrow')).toBeNull();
     expect(screen.UNSAFE_queryAllByType(Pressable)).toHaveLength(0);
     expect(screen.queryByText('Perp')).toBeNull();
   });
@@ -216,6 +225,32 @@ describe('PerpsProHistoryRowView Orders', () => {
     expect(screen.getByText('75/100')).toBeTruthy();
     expect(screen.getByText('-- / page.perps.pro.history.market')).toBeTruthy();
     expect(screen.getByText('page.perps.pro.history.true')).toBeTruthy();
+  });
+
+  it('keeps stablecoin base amounts at exactly two decimal places', () => {
+    render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={jest.fn()}
+        row={mapPerpsProOrderHistoryFact(
+          {
+            ...makeOrder('Limit'),
+            order: {
+              ...makeOrder('Limit').order,
+              coin: '@150',
+              origSz: '100.1234',
+              sz: '25',
+            },
+          },
+          {},
+          new Map(),
+          stableSpotMeta,
+        )}
+      />,
+    );
+
+    expect(screen.getByText('USDEUSDC')).toBeTruthy();
+    expect(screen.getByText('75.12/100.12')).toBeTruthy();
   });
 
   it('uses complete fills for Market quote Amount and VWAP Price', () => {

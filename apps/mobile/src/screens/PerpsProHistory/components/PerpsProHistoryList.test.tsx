@@ -6,10 +6,22 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
+jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { colors2024, styles: getStyle({ colors2024 }) };
+    return { colors2024, isLight: true, styles: getStyle({ colors2024 }) };
   },
 }));
 
@@ -68,9 +80,21 @@ describe('PerpsProHistoryList', () => {
         tab="transaction"
       />,
     );
+    expect(screen.getByText('page.perps.pro.history.noHistory')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-history-empty-light')).toBeTruthy();
     expect(
-      screen.getByText('page.perps.pro.history.empty.transaction'),
-    ).toBeTruthy();
+      StyleSheet.flatten(
+        screen.getByText('page.perps.pro.history.noHistory').props.style,
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        color: 'neutral-info',
+        fontFamily: 'SF Pro',
+        fontSize: 14,
+        lineHeight: 18,
+        marginTop: 12,
+      }),
+    );
   });
 
   it('renders initial error Retry', () => {

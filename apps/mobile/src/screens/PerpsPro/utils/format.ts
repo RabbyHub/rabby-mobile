@@ -1,4 +1,13 @@
 import { formatNum } from '@/utils/math';
+import { PERPS_QUOTE_ASSET_FULL_NAME } from '@/constant/perps';
+
+const PERPS_PRO_STABLE_ASSETS = new Set([
+  ...Object.keys(PERPS_QUOTE_ASSET_FULL_NAME),
+  'USDT0',
+]);
+
+export const isPerpsProStableAsset = (asset: string | null | undefined) =>
+  PERPS_PRO_STABLE_ASSETS.has(asset?.trim().toUpperCase() ?? '');
 
 const withThousandsSeparators = (value: string) => {
   const [integer, fraction] = value.split('.');

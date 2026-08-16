@@ -1,9 +1,13 @@
 import type {
+  SpotMeta,
   UserHistoricalOrders,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
 
-import { mapPerpsProFundingHistoryFact } from './fundingHistory';
+import {
+  getPerpsProFundingHistoryKey,
+  mapPerpsProFundingHistoryFact,
+} from './fundingHistory';
 import { mergePerpsProHistoryRows } from './historyModel';
 import {
   getPerpsProOrderHistoryKey,
@@ -19,6 +23,19 @@ import type { PerpsProLedgerFact } from '../types';
 
 const ACCOUNT = '0x1111111111111111111111111111111111111111';
 const OTHER = '0x2222222222222222222222222222222222222222';
+const spotMeta: SpotMeta = {
+  tokens: [
+    { index: 0, name: 'USDC' },
+    { index: 1, name: 'HYPE' },
+    { index: 235, name: 'USDE' },
+    { index: 268, name: 'USDT0' },
+  ],
+  universe: [
+    { index: 107, name: 'HYPE/USDC', tokens: [1, 0] },
+    { index: 150, name: 'USDE/USDC', tokens: [235, 0] },
+    { index: 166, name: 'USDT0/USDC', tokens: [268, 0] },
+  ],
+};
 
 const makeOrder = (
   overrides: Partial<UserHistoricalOrders> = {},
@@ -213,6 +230,42 @@ describe('Perps Pro history models', () => {
     });
   });
 
+  it('resolves @index markets from SpotMeta and canonicalizes settlement names', () => {
+    expect(
+      mapPerpsProTradeHistoryFact(makeFill({ coin: '@150' }), {}, spotMeta),
+    ).toMatchObject({
+      market: {
+        displayBase: 'USDE',
+        displayPair: 'USDEUSDC',
+        quoteAsset: 'USDC',
+        sourceTag: null,
+      },
+    });
+    expect(
+      mapPerpsProTradeHistoryFact(makeFill({ coin: '@166' }), {}, spotMeta),
+    ).toMatchObject({
+      market: { displayBase: 'USDT', displayPair: 'USDTUSDC' },
+    });
+    expect(
+      mapPerpsProTradeHistoryFact(makeFill({ coin: '@107' }), {}, spotMeta),
+    ).toMatchObject({
+      market: { displayBase: 'HYPE', displayPair: 'HYPEUSDC' },
+    });
+  });
+
+  it('uses the existing settlement index fallback when SpotMeta is unavailable', () => {
+    expect(
+      mapPerpsProTradeHistoryFact(makeFill({ coin: '@150' }), {}),
+    ).toMatchObject({
+      market: { displayBase: 'USDE', displayPair: 'USDEUSDC' },
+    });
+    expect(
+      mapPerpsProTradeHistoryFact(makeFill({ coin: '@999' }), {}),
+    ).toMatchObject({
+      market: { displayBase: '@999', displayPair: '@999' },
+    });
+  });
+
   it('maps only transaction facts whose Perps direction is provable', () => {
     expect(
       mapPerpsProTransactionHistoryFact(
@@ -349,6 +402,26 @@ describe('Perps Pro history models', () => {
         {},
       ),
     ).toMatchObject({ amount: '2.5', positionSide: 'short' });
+  });
+
+  it('treats protocol null funding hashes as composite identities', () => {
+    const base = {
+      coin: 'BTC',
+      fundingRate: '0.0001000',
+      hash: `0x${'0'.repeat(64)}`,
+      szi: '1.00',
+      time: 400,
+      usdc: '2.500',
+    };
+    expect(getPerpsProFundingHistoryKey(base)).toBe(
+      'funding:400:BTC:1:2.5:0.0001',
+    );
+    expect(getPerpsProFundingHistoryKey({ ...base, coin: 'ETH' })).not.toBe(
+      getPerpsProFundingHistoryKey(base),
+    );
+    expect(getPerpsProFundingHistoryKey({ ...base, hash: '0xABC123' })).toBe(
+      'hash:0xabc123',
+    );
   });
 
   it('merges by stable key, keeps incoming updates and caps newest first', () => {

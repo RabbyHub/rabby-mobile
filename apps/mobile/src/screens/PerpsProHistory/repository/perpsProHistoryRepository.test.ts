@@ -115,6 +115,72 @@ describe('Perps Pro history repository', () => {
     expect(result.items.map(item => item.time)).toEqual([90]);
   });
 
+  it('keeps distinct funding rows whose protocol hashes are all zero', async () => {
+    const zeroHash = `0x${'0'.repeat(64)}`;
+    const fundingRows = [
+      {
+        delta: {
+          coin: 'BTC',
+          fundingRate: '0.0001',
+          szi: '1',
+          type: 'funding',
+          usdc: '-0.01',
+        },
+        hash: zeroHash,
+        time: 10,
+      },
+      {
+        delta: {
+          coin: 'ETH',
+          fundingRate: '0.0002',
+          szi: '-2',
+          type: 'funding',
+          usdc: '0.02',
+        },
+        hash: zeroHash,
+        time: 10,
+      },
+      {
+        delta: {
+          coin: 'BTC',
+          fundingRate: '0.0003',
+          szi: '3',
+          type: 'funding',
+          usdc: '-0.03',
+        },
+        hash: zeroHash,
+        time: 20,
+      },
+    ];
+    const repository = createPerpsProHistoryRepository({
+      getInfoClient: () =>
+        ({
+          getUserFills: jest.fn(),
+          getUserFillsByTime: jest.fn(),
+          getUserFunding: jest.fn(async () => [...fundingRows, fundingRows[0]]),
+          getUserHistoricalOrders: jest.fn(),
+          getUserNonFundingLedgerUpdates: jest.fn(),
+        } as any),
+      getWsClient: () =>
+        ({
+          subscribeToUserFunding: jest.fn(),
+          subscribeToUserHistoricalOrders: jest.fn(),
+        } as any),
+    });
+
+    const result = await repository.fetchFundingWindow(
+      '0x1111111111111111111111111111111111111111',
+      { endTime: 30, startTime: 0 },
+    );
+
+    expect(result.items).toHaveLength(3);
+    expect(result.items.map(item => `${item.time}:${item.coin}`)).toEqual([
+      '10:BTC',
+      '10:ETH',
+      '20:BTC',
+    ]);
+  });
+
   it('gates support on the fills-by-time method and makes WS cleanup idempotent', () => {
     const unsubscribe = jest.fn();
     const subscribeToUserHistoricalOrders = jest.fn(() => ({ unsubscribe }));
