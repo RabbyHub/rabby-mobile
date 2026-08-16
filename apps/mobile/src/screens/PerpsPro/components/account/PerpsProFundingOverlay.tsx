@@ -3,6 +3,7 @@ import { usePerpsFundingActions } from '@/hooks/perps/funding/usePerpsFundingAct
 import { PerpsDepositPopup } from '@/screens/Perps/components/PerpsDepositPopup';
 import { PerpsSpotSwapPopup } from '@/screens/Perps/components/PerpsSpotSwapPopup';
 import { PerpsWithdrawPopup } from '@/screens/Perps/components/PerpsWithdrawPopup';
+import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 
 export type PerpsProFundingMode = 'deposit' | 'withdraw' | 'swap';
@@ -19,6 +20,12 @@ export const PerpsProFundingOverlay: React.FC<{
     handleStableCoinOrder,
     handleWithdraw,
   } = usePerpsFundingActions();
+  const handleWithdrawAndClose = useMemoizedFn(
+    async (...args: Parameters<typeof handleWithdraw>) => {
+      await handleWithdraw(...args);
+      onClose();
+    },
+  );
 
   if (mode === 'deposit') {
     return (
@@ -35,7 +42,7 @@ export const PerpsProFundingOverlay: React.FC<{
     return (
       <PerpsWithdrawPopup
         onClose={onClose}
-        onWithdraw={handleWithdraw}
+        onWithdraw={handleWithdrawAndClose}
         visible
       />
     );

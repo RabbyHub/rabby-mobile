@@ -1,6 +1,9 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 
+import { HYPE_EVM_BRIDGE_ADDRESS_MAP } from '@/constant/perps';
+import { getPerpsFundingLedgerSettlementNonce } from '@/hooks/perps/funding/fundingHistoryIdentity';
+
 import type {
   PerpsProLedgerFact,
   PerpsProTransactionHistoryRow,
@@ -33,6 +36,10 @@ const resolveAmount = (delta: PerpsProLedgerFact['delta']) => {
   return {
     amount: value.absoluteValue().toString(),
     asset: delta.amount != null && delta.token ? delta.token : 'USDC',
+    assetAmountSource:
+      delta.amount != null && delta.token
+        ? ('explicit' as const)
+        : ('legacyUsdc' as const),
   };
 };
 
@@ -40,6 +47,11 @@ const isExplicitSpotDex = (dex?: string) =>
   dex?.trim().toLowerCase() === 'spot';
 
 const isDefaultPerpsDex = (dex?: string) => !dex?.trim();
+
+const isHyperEvmBridgeDestination = (destination?: string) =>
+  Object.values(HYPE_EVM_BRIDGE_ADDRESS_MAP).some(address =>
+    safeSameAddress(destination, address),
+  );
 
 const resolveSameAccountSendDirection = ({
   currentAddress,
@@ -96,6 +108,7 @@ export const getPerpsProTransactionHistoryKey = (fact: PerpsProLedgerFact) => {
     delta.destination ?? '',
     delta.token ?? 'USDC',
     delta.amount ?? delta.usdc ?? delta.usdcValue ?? '',
+    delta.nonce == null ? '' : String(delta.nonce),
     delta.toPerp == null ? '' : String(delta.toPerp),
   ].join(':');
 };
@@ -130,22 +143,27 @@ export const mapPerpsProTransactionHistoryFact = (
       break;
     case 'send': {
       const source = delta.source ?? delta.user;
-      direction =
-        resolveSameAccountSendDirection({
-          currentAddress,
-          destination: delta.destination,
-          destinationDex: delta.destinationDex,
-          source,
-          sourceDex: delta.sourceDex,
-        }) ||
-        resolveEndpointDirection({
-          currentAddress,
-          destination: delta.destination,
-          source,
-        });
+      const isHyperEvmWithdraw =
+        safeSameAddress(source, currentAddress) &&
+        isHyperEvmBridgeDestination(delta.destination);
+      direction = isHyperEvmWithdraw
+        ? 'withdraw'
+        : resolveSameAccountSendDirection({
+            currentAddress,
+            destination: delta.destination,
+            destinationDex: delta.destinationDex,
+            source,
+            sourceDex: delta.sourceDex,
+          }) ||
+          resolveEndpointDirection({
+            currentAddress,
+            destination: delta.destination,
+            source,
+          });
       if (
-        (direction === 'deposit' && isExplicitSpotDex(delta.destinationDex)) ||
-        (direction === 'withdraw' && isExplicitSpotDex(delta.sourceDex))
+        !isHyperEvmWithdraw &&
+        ((direction === 'deposit' && isExplicitSpotDex(delta.destinationDex)) ||
+          (direction === 'withdraw' && isExplicitSpotDex(delta.sourceDex)))
       ) {
         return { exclusionReason: 'spotOnly', row: null };
       }
@@ -175,6 +193,8 @@ export const mapPerpsProTransactionHistoryFact = (
       key: getPerpsProTransactionHistoryKey(fact),
       kind: 'transaction',
       rawType: delta.type,
+      settlementNonce: getPerpsFundingLedgerSettlementNonce(delta),
+      status: 'success',
       time: fact.time,
     },
   };

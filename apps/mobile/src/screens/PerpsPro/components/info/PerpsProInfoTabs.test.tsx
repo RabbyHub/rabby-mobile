@@ -7,6 +7,13 @@ jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
+jest.mock('@/assets2024/icons/home/pending.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) =>
+    ReactModule.createElement(View, { ...props, testID: 'pending-ring' });
+});
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -45,6 +52,7 @@ describe('PerpsProInfoTabs', () => {
         onChange={jest.fn()}
         onHistoryPress={jest.fn()}
         openOrdersCount={123}
+        pendingFundingCount={0}
         positionsCount={45}
       />,
     );
@@ -62,6 +70,7 @@ describe('PerpsProInfoTabs', () => {
         onChange={jest.fn()}
         onHistoryPress={onHistoryPress}
         openOrdersCount={0}
+        pendingFundingCount={0}
         positionsCount={0}
       />,
     );
@@ -75,10 +84,62 @@ describe('PerpsProInfoTabs', () => {
         onChange={jest.fn()}
         onHistoryPress={onHistoryPress}
         openOrdersCount={0}
+        pendingFundingCount={0}
         positionsCount={0}
       />,
     );
     fireEvent.press(screen.getByTestId('perps-pro-history'));
     expect(onHistoryPress).toHaveBeenCalledTimes(1);
+    expect(onHistoryPress).toHaveBeenLastCalledWith(false);
+  });
+
+  it('hides the count for one pending operation and shows it above one', () => {
+    const view = render(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        onChange={jest.fn()}
+        onHistoryPress={jest.fn()}
+        openOrdersCount={0}
+        pendingFundingCount={1}
+        positionsCount={0}
+      />,
+    );
+    expect(screen.getByTestId('perps-pro-history-pending')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-history-pending-count')).toBeNull();
+
+    view.rerender(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        onChange={jest.fn()}
+        onHistoryPress={jest.fn()}
+        openOrdersCount={0}
+        pendingFundingCount={3}
+        positionsCount={0}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-history-pending-count').props.children,
+    ).toBe(3);
+    view.unmount();
+  });
+
+  it('reports pending funding when History is opened', () => {
+    const onHistoryPress = jest.fn();
+    render(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        onChange={jest.fn()}
+        onHistoryPress={onHistoryPress}
+        openOrdersCount={0}
+        pendingFundingCount={1}
+        positionsCount={0}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-history'));
+    expect(onHistoryPress).toHaveBeenCalledWith(true);
   });
 });

@@ -6,9 +6,12 @@ import { apisPerps } from '@/core/apis/perps';
 import type { Account } from '@/core/startupServices/preference';
 
 import { showToast } from '../showToast';
-import type { AccountHistoryItem } from '../usePerpsStore';
+import {
+  createPerpsFundingOperation,
+  persistPerpsFundingJournalEntry,
+} from './fundingHistory';
 import { signPerpsMasterTypedData } from './signPerpsMasterTypedData';
-import type { PerpsWithdrawTarget } from './types';
+import type { AccountHistoryItem, PerpsWithdrawTarget } from './types';
 
 type SetLocalLoadingHistory = (
   payload: AccountHistoryItem[],
@@ -54,10 +57,6 @@ export const executePerpsWithdraw = async ({
       throw new Error(`Invalid target asset, targetAsset: ${targetAsset}`);
     }
 
-    // The server-side HYPE send timestamp can be slightly earlier than the
-    // client clock. Backdating keeps the pending entry removable by the next
-    // confirmed history event, matching the existing deposit path.
-    const time = Date.now() - 1000;
     const tokenId = HYPE_SEND_ASSET_TOKEN_MAP[targetAsset];
     const hyperDestination = HYPE_EVM_BRIDGE_ADDRESS_MAP[targetAsset];
 
@@ -73,6 +72,12 @@ export const executePerpsWithdraw = async ({
           amount: amount.toString(),
           destination: account.address,
         });
+    const time =
+      typeof action.nonce === 'number' &&
+      Number.isSafeInteger(action.nonce) &&
+      action.nonce > 0
+        ? action.nonce
+        : Date.now();
 
     const signature = await signPerpsMasterTypedData({
       account,
@@ -92,21 +97,28 @@ export const executePerpsWithdraw = async ({
           signature,
         });
 
-    if (!isAccountCurrent || isAccountCurrent(account)) {
-      setLocalLoadingHistory(
-        [
-          {
-            time,
-            hash: res.hash || '',
-            type: 'withdraw',
-            status: 'pending',
-            usdValue: isHypeWithdraw
-              ? amount.toString()
-              : (+amount - 1).toString(),
-          },
-        ],
-        false,
-      );
+    const displayAmount = isHypeWithdraw
+      ? amount.toString()
+      : (+amount - 1).toString();
+    const operation = createPerpsFundingOperation({
+      account,
+      history: {
+        amount: displayAmount,
+        asset: targetAsset,
+        settlementAmount: displayAmount,
+      },
+      identity: {
+        settlementNonce: action.nonce,
+        sourceHash: res.hash || undefined,
+      },
+      localType: 'withdraw',
+      time,
+    });
+    if (operation) {
+      await persistPerpsFundingJournalEntry(operation.journalEntry);
+    }
+    if (operation && (!isAccountCurrent || isAccountCurrent(account))) {
+      setLocalLoadingHistory([operation.historyItem], false);
     }
     return true;
   } catch (error: any) {

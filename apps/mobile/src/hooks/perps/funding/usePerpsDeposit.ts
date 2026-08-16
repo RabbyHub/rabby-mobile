@@ -16,7 +16,11 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { openapi } from '@/core/request';
 
 import { isSamePerpsFundingAccount } from './accountGuard';
-import type { PerpBridgeHistory } from './types';
+import {
+  createPerpsFundingOperation,
+  persistPerpsFundingJournalEntry,
+} from './fundingHistory';
+import type { PerpBridgeHistory, PerpsDepositOptions } from './types';
 
 export const usePerpsDeposit = ({
   currentPerpsAccount,
@@ -58,7 +62,7 @@ export const usePerpsDeposit = ({
       txs: Tx[],
       amount: string,
       cacheBridgeHistory?: PerpBridgeHistory,
-      options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+      options?: PerpsDepositOptions,
     ): Promise<string | undefined> => {
       if (!txs || txs.length === 0) {
         throw new Error('No txs');
@@ -69,27 +73,32 @@ export const usePerpsDeposit = ({
         return;
       }
 
-      const handleSetHistory = (hash: string) => {
+      const handleSetHistory = async (hash: string) => {
         if (options?.skipHistory) {
           return;
         }
+        const operation = createPerpsFundingOperation({
+          account: currentPerpsAccount,
+          fundingRoute: cacheBridgeHistory ? 'provider' : 'direct',
+          history: options?.history ?? {
+            amount: amount.toString(),
+            asset: 'USDC',
+            settlementAmount: amount.toString(),
+          },
+          localType:
+            cacheBridgeHistory || options?.isHypeDeposit
+              ? 'receive'
+              : 'deposit',
+          identity: { sourceHash: hash },
+          time,
+        });
+        if (!operation) {
+          return;
+        }
+        await persistPerpsFundingJournalEntry(operation.journalEntry);
         const activeAccount = perpsStore.getState().currentPerpsAccount;
         if (isSamePerpsFundingAccount(activeAccount, currentPerpsAccount)) {
-          setLocalLoadingHistory(
-            [
-              {
-                time,
-                hash,
-                type:
-                  cacheBridgeHistory || options?.isHypeDeposit
-                    ? 'receive'
-                    : 'deposit',
-                status: 'pending',
-                usdValue: amount.toString(),
-              },
-            ],
-            false,
-          );
+          setLocalLoadingHistory([operation.historyItem], false);
         }
         if (cacheBridgeHistory) {
           postPerpBridgeQuote(hash, cacheBridgeHistory).catch(error => {
@@ -119,7 +128,7 @@ export const usePerpsDeposit = ({
           results.push(result);
         }
         const signature = last(results);
-        handleSetHistory(signature || '');
+        await handleSetHistory(signature || '');
         return signature;
       };
 
@@ -136,7 +145,7 @@ export const usePerpsDeposit = ({
             },
           });
           const txHash = last(result) || '';
-          handleSetHistory(txHash);
+          await handleSetHistory(txHash);
           return txHash;
         } catch (error) {
           console.error(error);
@@ -163,7 +172,7 @@ export const usePerpsDeposit = ({
             },
           });
           const txHash = last(result) || '';
-          handleSetHistory(txHash);
+          await handleSetHistory(txHash);
           return txHash;
         } catch (error) {
           if (error === MINI_SIGN_ERROR.USER_CANCELLED) {

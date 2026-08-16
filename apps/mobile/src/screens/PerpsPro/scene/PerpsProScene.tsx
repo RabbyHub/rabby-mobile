@@ -117,6 +117,7 @@ import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
 import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
+import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
 type PerpsProSceneRow =
   | { key: 'trade'; type: 'trade' }
@@ -163,7 +164,7 @@ export const PerpsProScene: React.FC<{
   historyEnabled?: boolean;
   initialRegionAlertLayout?: PerpsRegionAlertLayout | null;
   isModeSwitching: boolean;
-  onOpenHistory?: () => void;
+  onOpenHistory?: (hasPendingFunding: boolean) => void;
   onSwitchToSimple: () => void;
 }> = ({
   historyEnabled = false,
@@ -204,6 +205,7 @@ export const PerpsProScene: React.FC<{
     updateLeverageRequest: leverageUpdate.update,
   });
   const info = usePerpsProInfoPanel(scene.currentMarket?.canonicalCoin ?? '');
+  usePerpsFundingHistoryJournal({ enabled: scene.fundingHistoryEnabled });
   const positionActions = usePerpsProPositionActions({
     accountIdentity: info.accountIdentity,
     leveragePending: leverageUpdate.pending,
@@ -417,6 +419,10 @@ export const PerpsProScene: React.FC<{
       sceneLeadInHeight,
       tradeRowHeight,
     ],
+  );
+  const openHistory = useCallback(
+    () => onOpenHistory(info.pendingFundingCount > 0),
+    [info.pendingFundingCount, onOpenHistory],
   );
   const isMarketLoading =
     !scene.currentMarket &&
@@ -804,8 +810,9 @@ export const PerpsProScene: React.FC<{
                   historyEnabled && info.accountState !== 'noAccount'
                 }
                 onChange={tab => info.setActiveInfoTab(tab)}
-                onHistoryPress={onOpenHistory}
+                onHistoryPress={openHistory}
                 openOrdersCount={info.allOpenOrdersCount}
+                pendingFundingCount={info.pendingFundingCount}
                 positionsCount={info.allPositionsCount}
               />
             </Animated.View>

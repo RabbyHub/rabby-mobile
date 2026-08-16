@@ -88,7 +88,7 @@ describe('PerpsProFundingOverlay', () => {
     expect(screen.queryAllByTestId(/-popup$/)).toHaveLength(1);
   });
 
-  it('delegates withdraw without changing the shared popup close behavior', async () => {
+  it('closes the Pro overlay after the shared withdraw action settles', async () => {
     const onClose = jest.fn();
     renderOverlay('withdraw', onClose);
 
@@ -97,6 +97,16 @@ describe('PerpsProFundingOverlay', () => {
     await waitFor(() => {
       expect(mockHandleWithdraw).toHaveBeenCalledWith('12', true, 'USDT');
     });
-    expect(onClose).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('also closes after a handled withdraw failure, matching Simple', async () => {
+    mockHandleWithdraw.mockResolvedValueOnce(false);
+    const onClose = jest.fn();
+    renderOverlay('withdraw', onClose);
+
+    fireEvent.press(screen.getByTestId('withdraw-popup'));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 });

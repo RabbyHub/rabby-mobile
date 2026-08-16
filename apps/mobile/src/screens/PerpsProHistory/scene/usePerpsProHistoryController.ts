@@ -1,19 +1,26 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
+import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
 import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { showToast } from '@/hooks/perps/showToast';
+import {
+  isPerpsFundingJournalEntryForAccount,
+  readPerpsFundingJournal,
+} from '@/hooks/perps/funding/fundingJournal';
 import { mergeUserFills, reconcileHttpFills } from '@/hooks/perps/userFills';
 import {
+  confirmPerpsFundingOperations,
   fetchSpotMeta,
   getPerpsAccountRuntimeContext,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 
 import { mergePerpsProHistoryRows } from '../model/historyModel';
+import { mergePerpsProLocalTransactionHistory } from '../model/localTransactionHistory';
 import { mapPerpsProHistoryRawRows } from '../model/historyRows';
 import {
   applyPerpsProOrderExecution,
@@ -52,6 +59,7 @@ type RequestToken = Readonly<{
 }>;
 
 type RefreshPresentation = 'background' | 'manual';
+const EMPTY_LOCAL_FUNDING_HISTORY = [] as const;
 
 export const usePerpsProHistoryController = (
   initialTab: PerpsProHistoryTab = 'orders',
@@ -59,6 +67,9 @@ export const usePerpsProHistoryController = (
   const { t } = useTranslation();
   const isFocused = useIsFocused();
   const currentAccount = perpsStore(state => state.currentPerpsAccount);
+  const localFundingHistory = perpsStore(
+    state => state.localLoadingHistory ?? EMPTY_LOCAL_FUNDING_HISTORY,
+  );
   const isRuntimeInitialized = perpsStore(state => state.isInitialized);
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState,
@@ -67,6 +78,9 @@ export const usePerpsProHistoryController = (
     useState<PerpsProHistoryTab>(initialTab);
   const [historyState, setHistoryState] =
     useState<PerpsProHistoryControllerState>(createPerpsProHistoryState);
+  const [fundingJournalEntries, setFundingJournalEntries] = useState<
+    PerpsFundingJournalEntry[]
+  >([]);
   const stateRef = useRef(historyState);
   const requestSequencesRef = useRef<Record<PerpsProHistoryTab, number>>({
     funding: 0,
@@ -112,6 +126,26 @@ export const usePerpsProHistoryController = (
   useEffect(() => {
     stateRef.current = historyState;
   }, [historyState]);
+
+  useEffect(() => {
+    if (!currentAccount) {
+      setFundingJournalEntries([]);
+      return;
+    }
+    let active = true;
+    void readPerpsFundingJournal().then(entries => {
+      if (active) {
+        setFundingJournalEntries(
+          entries.filter(entry =>
+            isPerpsFundingJournalEntryForAccount(entry, currentAccount),
+          ),
+        );
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [accountIdentity, currentAccount, localFundingHistory]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
@@ -650,14 +684,89 @@ export const usePerpsProHistoryController = (
     updateTabState,
   });
 
+  const transactionProjection = useMemo(
+    () =>
+      mergePerpsProLocalTransactionHistory({
+        journalEntries: fundingJournalEntries,
+        localHistory: localFundingHistory,
+        remoteRows: historyState.transaction.rows.filter(
+          row => row.kind === 'transaction',
+        ),
+      }),
+    [fundingJournalEntries, historyState.transaction.rows, localFundingHistory],
+  );
+  const unsettledConfirmations = useMemo(() => {
+    const unsettled = new Set(
+      fundingJournalEntries
+        .filter(entry => entry.status !== 'confirmed')
+        .map(entry => entry.operationId),
+    );
+    localFundingHistory.forEach(item => {
+      if (item.operationId) {
+        unsettled.add(item.operationId);
+      }
+    });
+    return transactionProjection.confirmations.filter(confirmation =>
+      unsettled.has(confirmation.operationId),
+    );
+  }, [
+    fundingJournalEntries,
+    localFundingHistory,
+    transactionProjection.confirmations,
+  ]);
+  const confirmedOperationSignature = JSON.stringify(unsettledConfirmations);
+
+  useEffect(() => {
+    if (unsettledConfirmations.length === 0 || !currentAccount) {
+      return;
+    }
+    const confirmationByOperationId = new Map(
+      unsettledConfirmations.map(confirmation => [
+        confirmation.operationId,
+        confirmation,
+      ]),
+    );
+    confirmPerpsFundingOperations(unsettledConfirmations);
+    setFundingJournalEntries(entries =>
+      entries.map(entry => {
+        const confirmation = confirmationByOperationId.get(entry.operationId);
+        return confirmation
+          ? {
+              ...entry,
+              providerSettlementIdentity:
+                confirmation.providerSettlementIdentity ??
+                entry.providerSettlementIdentity,
+              status: 'confirmed' as const,
+            }
+          : entry;
+      }),
+    );
+  }, [confirmedOperationSignature, currentAccount, unsettledConfirmations]);
+
+  const presentedHistoryState = useMemo<PerpsProHistoryControllerState>(
+    () => ({
+      ...historyState,
+      transaction: {
+        ...historyState.transaction,
+        rows: transactionProjection.rows,
+        status:
+          historyState.transaction.status === 'empty' &&
+          transactionProjection.rows.length > 0
+            ? 'ready'
+            : historyState.transaction.status,
+      },
+    }),
+    [historyState, transactionProjection.rows],
+  );
+
   return {
     activeTab,
     loadEarlier,
     refresh,
     sdkSupported,
     setActiveTab,
-    state: historyState,
-    tabState: historyState[activeTab],
+    state: presentedHistoryState,
+    tabState: presentedHistoryState[activeTab],
   };
 };
 

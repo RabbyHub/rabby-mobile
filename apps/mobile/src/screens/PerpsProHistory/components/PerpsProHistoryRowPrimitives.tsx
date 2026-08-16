@@ -28,14 +28,8 @@ export const PerpsProHistoryRowLayout: React.FC<{
   testID: string;
   time: number;
   title: string;
-}> = ({
-  badges = [],
-  details,
-  sourceTag,
-  testID,
-  time,
-  title,
-}) => {
+  trailing?: React.ReactNode;
+}> = ({ badges = [], details, sourceTag, testID, time, title, trailing }) => {
   const { styles } = useTheme2024({ getStyle });
   const badgeStyles = {
     info: styles.infoBadge,
@@ -70,9 +64,11 @@ export const PerpsProHistoryRowLayout: React.FC<{
               </View>
             ) : null}
           </View>
-          <View style={styles.timeRow}>
-            <Text style={styles.time}>{formatPerpsProTime(time)}</Text>
-          </View>
+          {trailing ?? (
+            <View style={styles.timeRow}>
+              <Text style={styles.time}>{formatPerpsProTime(time)}</Text>
+            </View>
+          )}
         </View>
         {badges.length ? (
           <View style={styles.badges}>

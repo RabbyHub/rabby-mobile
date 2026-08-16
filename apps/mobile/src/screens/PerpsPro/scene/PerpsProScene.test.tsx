@@ -44,6 +44,10 @@ jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
   }),
 }));
 
+jest.mock('@/hooks/perps/funding/usePerpsFundingHistoryJournal', () => ({
+  usePerpsFundingHistoryJournal: jest.fn(),
+}));
+
 jest.mock('@/hooks/navigation', () => ({
   useRabbyAppNavigation: () => ({ setOptions: jest.fn() }),
 }));
@@ -502,6 +506,7 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => ({
   openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
   openOrdersEmpty: false,
   openOrders: [],
+  pendingFundingCount: 0,
   positionsEmpty: false,
   positions: [],
   retryAccount: jest.fn(),

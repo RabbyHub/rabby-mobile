@@ -4,6 +4,8 @@ import type {
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
 
+import { HYPE_EVM_BRIDGE_ADDRESS_MAP } from '@/constant/perps';
+
 import {
   getPerpsProFundingHistoryKey,
   mapPerpsProFundingHistoryFact,
@@ -272,7 +274,35 @@ describe('Perps Pro history models', () => {
         makeLedger({ type: 'deposit', usdc: '-12.5' }),
         ACCOUNT,
       ).row,
-    ).toMatchObject({ amount: '12.5', direction: 'deposit' });
+    ).toMatchObject({
+      amount: '12.5',
+      assetAmountSource: 'legacyUsdc',
+      direction: 'deposit',
+    });
+    expect(
+      mapPerpsProTransactionHistoryFact(
+        makeLedger({ amount: '3', token: 'USDT', type: 'deposit' }),
+        ACCOUNT,
+      ).row,
+    ).toMatchObject({
+      amount: '3',
+      asset: 'USDT',
+      assetAmountSource: 'explicit',
+      direction: 'deposit',
+    });
+    expect(
+      mapPerpsProTransactionHistoryFact(
+        makeLedger({
+          nonce: 1786805795351000,
+          type: 'withdraw',
+          usdc: '5',
+        }),
+        ACCOUNT,
+      ).row,
+    ).toMatchObject({
+      direction: 'withdraw',
+      settlementNonce: 1786805795351,
+    });
     expect(
       mapPerpsProTransactionHistoryFact(
         makeLedger({ type: 'accountClassTransfer', toPerp: false, usdc: '5' }),
@@ -313,6 +343,27 @@ describe('Perps Pro history models', () => {
         ACCOUNT,
       ),
     ).toEqual({ exclusionReason: 'spotOnly', row: null });
+    expect(
+      mapPerpsProTransactionHistoryFact(
+        makeLedger({
+          amount: '4.942581',
+          destination: HYPE_EVM_BRIDGE_ADDRESS_MAP.USDE,
+          destinationDex: 'spot',
+          nonce: 1786604975615,
+          sourceDex: 'spot',
+          token: 'USDE',
+          type: 'send',
+          usdcValue: '4.941592',
+          user: ACCOUNT,
+        }),
+        ACCOUNT,
+      ).row,
+    ).toMatchObject({
+      amount: '4.942581',
+      asset: 'USDE',
+      direction: 'withdraw',
+      settlementNonce: 1786604975615,
+    });
     expect(
       mapPerpsProTransactionHistoryFact(
         makeLedger({

@@ -2851,6 +2851,10 @@
           "market": "Market",
           "deposit": "Deposit",
           "withdraw": "Withdraw",
+          "status": {
+            "pending": "Pending",
+            "failed": "Failed"
+          },
           "long": "Long",
           "short": "Short",
           "true": "True",

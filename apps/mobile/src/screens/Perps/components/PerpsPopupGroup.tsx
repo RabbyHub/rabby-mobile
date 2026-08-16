@@ -6,7 +6,10 @@ import { apisPerps } from '@/core/apis';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { HYPE_SEND_ASSET_TOKEN_MAP } from '@/constant/perps';
-import type { PerpBridgeHistory } from './PerpsDepositPopup';
+import type {
+  PerpBridgeHistory,
+  PerpsDepositOptions,
+} from '@/hooks/perps/funding/types';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { PerpsAccountSelectorPopup } from './PerpsAccountSelectorPopup';
 import { PerpsAccountLogoutPopup } from './PerpsAccountLogoutPopup';
@@ -36,7 +39,7 @@ type Props = {
     txs: Tx[],
     amount: string,
     cacheBridgeHistory?: PerpBridgeHistory,
-    options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+    options?: PerpsDepositOptions,
   ) => Promise<string | undefined>;
   onWithdraw: (
     amount: number | string,
@@ -100,7 +103,7 @@ const PerpsPopupGroupComponent: React.FC<Props> = ({
       txs: Tx[],
       amount: string,
       cacheBridgeHistory?: PerpBridgeHistory,
-      options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+      options?: PerpsDepositOptions,
     ) => {
       try {
         return await onDeposit(txs, amount, cacheBridgeHistory, options);

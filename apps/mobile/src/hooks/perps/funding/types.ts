@@ -9,6 +9,55 @@ export interface PerpBridgeHistory {
   tx: Tx;
 }
 
+export interface PerpsFundingHistoryMetadata {
+  amount: string;
+  asset: string;
+  settlementAmount: string;
+  sourceChainId?: string;
+  sourceTokenId?: string;
+}
+
+export type PerpsFundingRoute = 'direct' | 'provider';
+
+export type PerpsFundingAssetAmountSource = 'explicit' | 'legacyUsdc' | 'local';
+
+export type PerpsFundingProviderSettlementIdentity = Readonly<{
+  hash: string;
+  kind: 'hyperliquidLedgerHash';
+}>;
+
+export type PerpsFundingConfirmation = Readonly<{
+  operationId: string;
+  providerSettlementIdentity?: PerpsFundingProviderSettlementIdentity;
+}>;
+
+export interface AccountHistoryItem {
+  time: number;
+  hash: string;
+  accountAddress?: string;
+  accountType?: string;
+  amount?: string;
+  asset?: string;
+  assetAmountSource?: PerpsFundingAssetAmountSource;
+  destinationDex?: string;
+  fundingRoute?: PerpsFundingRoute;
+  operationId?: string;
+  settlementAmount?: string;
+  settlementNonce?: number;
+  sourceChainId?: string;
+  sourceHash?: string;
+  sourceTokenId?: string;
+  type: 'deposit' | 'withdraw' | 'receive' | 'transfer';
+  status: 'pending' | 'success' | 'failed';
+  usdValue: string;
+}
+
+export interface PerpsDepositOptions {
+  history?: PerpsFundingHistoryMetadata;
+  isHypeDeposit?: boolean;
+  skipHistory?: boolean;
+}
+
 export type PerpsStableCoin = 'USDH' | 'USDT' | 'USDE';
 
 export interface PerpsStableCoinOrderParams {
