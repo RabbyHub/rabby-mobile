@@ -31,6 +31,7 @@ import { BackHandler, View } from 'react-native';
 
 import type { PerpsProMarket } from '../../model/market';
 import { usePerpsProKline } from '../../scene/usePerpsProKline';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import {
   PERPS_PRO_KLINE_CHART_HEIGHT,
   PerpsProKlineSkeleton,
@@ -391,39 +392,30 @@ const styles = {
   },
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  modal: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 19,
-    paddingTop: 17,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
-  content: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: PERPS_PRO_KLINE_SHEET_HEIGHT - 40,
-  },
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const chrome = getPerpsProBottomSheetChromeStyles(colors2024, {
+    handlePlacement: 'centered',
+  });
+
+  return {
+    ...chrome,
+    modal: {
+      ...chrome.modal,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    },
+    background: {
+      ...chrome.background,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    },
+    content: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: PERPS_PRO_KLINE_SHEET_HEIGHT - 40,
+    },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: 40,
+    },
+  };
+});

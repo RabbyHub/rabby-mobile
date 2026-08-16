@@ -236,6 +236,8 @@ chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_PRO_FONT_FAMILY =
+  '"SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const candleByTime = new Map<number, TradingViewCandlestickData>();
 const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
   7: new Map(),
@@ -269,8 +271,7 @@ maLegend.style.display = 'none';
 maLegend.style.alignItems = 'center';
 maLegend.style.gap = '8px';
 maLegend.style.pointerEvents = 'none';
-maLegend.style.fontFamily =
-  '"SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+maLegend.style.fontFamily = PERPS_PRO_FONT_FAMILY;
 maLegend.style.fontSize = '9px';
 maLegend.style.lineHeight = '12px';
 maLegend.style.whiteSpace = 'nowrap';
@@ -452,8 +453,7 @@ proCrosshairLabel.style.minHeight = '42px';
 proCrosshairLabel.style.padding = '4px 6px';
 proCrosshairLabel.style.borderRadius = '6px';
 proCrosshairLabel.style.pointerEvents = 'none';
-proCrosshairLabel.style.fontFamily =
-  '"SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+proCrosshairLabel.style.fontFamily = PERPS_PRO_FONT_FAMILY;
 proCrosshairLabel.style.fontSize = '12px';
 proCrosshairLabel.style.fontWeight = '500';
 proCrosshairLabel.style.lineHeight = '16px';
@@ -813,7 +813,7 @@ function createProTooltipRow(
   valueColor: string,
   isLast = false,
 ) {
-  return `<div style="display:flex;justify-content:space-between;gap:8px;${
+  return `<div style="display:flex;justify-content:space-between;gap:8px;white-space:nowrap;${
     isLast ? '' : 'margin-bottom:2px;'
   }"><span style="color:${
     chartState.colors?.tooltip.title
@@ -855,6 +855,7 @@ function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
   tooltipEl.style.lineHeight = '12px';
   tooltipEl.style.minWidth = '112px';
   tooltipEl.style.maxWidth = '132px';
+  tooltipEl.style.whiteSpace = 'nowrap';
   tooltipEl.innerHTML = [
     createProTooltipRow(
       description.time,
@@ -1578,6 +1579,13 @@ function handleSetCandlestickData(
   chartState.noTime = !!message.noTime;
   clearPerpsProCrosshair();
   chartState.proConfig = message.proConfig ?? null;
+  if (chartState.tooltip) {
+    if (chartState.proConfig) {
+      chartState.tooltip.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+    } else {
+      chartState.tooltip.style.removeProperty('font-family');
+    }
+  }
   chartState.currentDataIdentity = message.identity ?? null;
   if (previousIdentity !== chartState.currentDataIdentity) {
     lastOlderCandlesRequestKey = null;

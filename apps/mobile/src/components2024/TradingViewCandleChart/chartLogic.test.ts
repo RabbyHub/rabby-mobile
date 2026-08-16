@@ -176,7 +176,7 @@ describe('Perps Pro local chart calculations', () => {
     const year = String(localDate.getFullYear());
 
     expect(formatProTooltipTime(time, '15m')).toBe(
-      `${month}-${day} ${hours}:${minutes}`,
+      `${year}-${month}-${day} ${hours}:${minutes}`,
     );
     expect(formatProTooltipTime(time, '1d')).toBe(`${year}-${month}-${day}`);
     expect(formatProTooltipTime(time, '1M')).toBe(`${year}-${month}-${day}`);
