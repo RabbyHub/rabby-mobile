@@ -123,7 +123,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   optionText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
