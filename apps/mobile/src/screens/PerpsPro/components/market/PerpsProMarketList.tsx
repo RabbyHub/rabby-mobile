@@ -223,7 +223,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   emptyText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',

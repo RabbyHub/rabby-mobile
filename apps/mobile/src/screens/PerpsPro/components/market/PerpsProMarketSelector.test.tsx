@@ -644,6 +644,11 @@ describe('PerpsProMarketSelector', () => {
         mockMarketListProps.mock.calls.length - 1
       ][0].searchMode,
     ).toBe(true);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-search-results').props.style,
+      ),
+    ).toMatchObject({ flex: 1, paddingTop: 16 });
 
     const modalProps =
       mockBottomSheetModalProps.mock.calls[
@@ -756,7 +761,7 @@ describe('PerpsProMarketSelector', () => {
       expect.objectContaining({
         marginLeft: 15,
         marginRight: 15,
-        marginTop: 4,
+        marginTop: 0,
       }),
     );
 

@@ -121,7 +121,12 @@ export const PerpsProMarketTabs: React.FC<{
             <Text style={active ? styles.activeText : styles.text}>
               {tab.label}
             </Text>
-            {active ? <View style={styles.indicator} /> : null}
+            {active ? (
+              <View
+                style={styles.indicator}
+                testID="perps-pro-market-tab-indicator"
+              />
+            ) : null}
           </Pressable>
         );
       })}
@@ -133,40 +138,40 @@ PerpsProMarketTabs.displayName = 'PerpsProMarketTabs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scroll: {
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     flexGrow: 0,
-    marginTop: 10,
+    height: 34,
   },
   content: {
-    gap: 14,
-    paddingLeft: 16,
-    paddingRight: 20,
+    gap: 12,
+    paddingHorizontal: 15,
   },
   tab: {
     alignItems: 'center',
-    height: 40,
-    paddingTop: 12,
+    height: 34,
+    paddingHorizontal: 2,
+    paddingTop: 8,
   },
   text: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
   },
   activeText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
+    fontFamily: 'SF Pro',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
   },
   indicator: {
-    backgroundColor: colors2024['neutral-title-1'],
-    borderRadius: 2,
+    backgroundColor: colors2024['neutral-body'],
+    borderRadius: 1,
     bottom: 0,
-    height: 4,
+    height: 2,
     left: '50%',
     marginLeft: -10,
     position: 'absolute',

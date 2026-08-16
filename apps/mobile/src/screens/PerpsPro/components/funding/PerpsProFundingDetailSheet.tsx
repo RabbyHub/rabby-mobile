@@ -27,6 +27,7 @@ import {
   formatPerpsProFundingRate,
   formatPerpsProSignedUsd,
 } from '../../utils/format';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 type FundingHistoryState = {
@@ -154,7 +155,11 @@ export const PerpsProFundingDetailSheet: React.FC<{
       {...makeBottomSheetProps({
         colors: colors2024,
         linearGradientType: isLight ? 'bg0' : 'bg1',
-      })}>
+      })}
+      backgroundStyle={styles.background}
+      handleIndicatorStyle={styles.handleIndicator}
+      handleStyle={styles.handle}
+      style={styles.modal}>
       <BottomSheetView style={styles.sheet}>
         <Text style={styles.title}>{t('page.perps.pro.funding.title')}</Text>
         <View style={styles.values}>
@@ -236,7 +241,14 @@ export const PerpsProFundingDetailSheet: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  ...getPerpsProBottomSheetChromeStyles(colors2024, {
+    backgroundColor:
+      isLight !== false
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+    handlePlacement: 'centered',
+  }),
   sheet: {
     flex: 1,
     paddingHorizontal: 20,
@@ -244,7 +256,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 20,
     fontWeight: '700',
     lineHeight: 24,
@@ -262,14 +274,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   valueLabel: {
     color: colors2024['neutral-secondary'],
     flex: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 13,
     fontWeight: '400',
     lineHeight: 18,
   },
   value: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
@@ -290,16 +302,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   error: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 11,
     lineHeight: 16,
     marginTop: 12,
   },
   explanation: {
-    borderTopColor: colors2024['neutral-line'],
+    borderTopColor: colors2024['neutral-bg-5'],
     borderTopWidth: 1,
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 11,
     lineHeight: 16,
     marginTop: 18,

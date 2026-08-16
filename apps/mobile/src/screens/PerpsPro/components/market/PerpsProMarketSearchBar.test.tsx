@@ -107,7 +107,7 @@ describe('PerpsProMarketSearchBar', () => {
     );
     expect(containerStyle).toEqual(
       expect.objectContaining({
-        backgroundColor: 'neutral-bg-0',
+        backgroundColor: '#F4F5F5',
         borderRadius: 6,
         gap: 8,
         height: 34,

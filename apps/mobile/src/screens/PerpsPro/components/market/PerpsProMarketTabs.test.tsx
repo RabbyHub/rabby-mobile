@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 const mockScrollTo = jest.fn();
 
@@ -113,5 +114,43 @@ describe('PerpsProMarketTabs', () => {
     expect(
       screen.queryByTestId('perps-pro-market-tab-last-category'),
     ).toBeNull();
+  });
+
+  it('matches the approved compact typography, spacing and divider contract', () => {
+    render(
+      <PerpsProMarketTabs activeTab="all" onChange={jest.fn()} tabs={tabs} />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tabs').props.style,
+      ),
+    ).toMatchObject({
+      borderBottomColor: 'neutral-bg-5',
+      borderBottomWidth: 1,
+      height: 34,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tab-all').props.style,
+      ),
+    ).toMatchObject({ height: 34, paddingHorizontal: 2, paddingTop: 8 });
+    expect(
+      StyleSheet.flatten(screen.getByText('All').props.style),
+    ).toMatchObject({
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tab-indicator').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'neutral-body',
+      height: 2,
+      width: 20,
+    });
   });
 });

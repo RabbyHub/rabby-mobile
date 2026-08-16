@@ -1,5 +1,5 @@
-import RcStarFull from '@/assets/icons/dapp/icon-star-full.svg';
-import RcStar from '@/assets/icons/dapp/icon-star.svg';
+import RcFavoriteStar from '@/assets2024/icons/perps/PerpsProFavoriteStar.svg';
+import RcFavoriteStarEmpty from '@/assets/icons/dapp/icon-star.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -33,7 +33,7 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
   onToggleFavorite,
   selected,
 }) => {
-  const { isLight, styles } = useTheme2024({ getStyle });
+  const { colors2024, isLight, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   // A live volume reorder may rebind this physical row between press-in and
   // press. Never dispatch an action for the newly bound market in that case.
@@ -98,9 +98,13 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
         onPressIn={captureFavoriteIdentity}
         style={styles.star}>
         {favorite ? (
-          <RcStarFull height={16} width={16} />
+          <RcFavoriteStar
+            color={colors2024['orange-default']}
+            height={13.5445}
+            width={13.6231}
+          />
         ) : (
-          <RcStar height={16} width={16} />
+          <RcFavoriteStarEmpty height={16} width={16} />
         )}
       </TouchableOpacity>
       <PerpsProMarketLogo

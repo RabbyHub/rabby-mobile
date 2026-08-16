@@ -24,6 +24,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
+import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 
 export type PerpsProMarketSearchBarHandle = {
   blur: () => void;
@@ -185,7 +186,7 @@ export const PerpsProMarketSearchBar = React.memo(
   PerpsProMarketSearchBarComponent,
 );
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -194,7 +195,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   inputContainer: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-0'],
+      isLight,
+    }),
     borderRadius: 6,
     flex: 1,
     flexDirection: 'row',

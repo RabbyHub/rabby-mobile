@@ -158,11 +158,39 @@ describe('Perps Pro account visual contract', () => {
         screen.getByTestId('perps-pro-asset-spot:USDC').props.style,
       ),
     ).toMatchObject({
+      borderBottomColor: 'neutral-bg-5',
+      borderBottomWidth: 1,
       gap: 12,
       marginHorizontal: 15,
       marginTop: 8,
       minHeight: 92,
       paddingVertical: 8,
     });
+    const assetRow = screen.getByTestId('perps-pro-asset-spot:USDC');
+    const rowStyles = assetRow
+      .findAll(node => node.props.style != null)
+      .map(node => StyleSheet.flatten(node.props.style));
+    const coin = screen.getByText('USDC');
+    expect(rowStyles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+        }),
+        expect.objectContaining({ alignItems: 'flex-start', gap: 4 }),
+        expect.objectContaining({ gap: 2 }),
+      ]),
+    );
+    expect(StyleSheet.flatten(coin.props.style)).toMatchObject({
+      fontSize: 16,
+      fontWeight: '500',
+      lineHeight: 20,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('USD Coin').props.style),
+    ).toEqual(expect.objectContaining({ color: 'neutral-secondary' }));
+    expect(StyleSheet.flatten(screen.getByText('$10.00').props.style)).toEqual(
+      expect.objectContaining({ color: 'neutral-secondary' }),
+    );
   });
 });
