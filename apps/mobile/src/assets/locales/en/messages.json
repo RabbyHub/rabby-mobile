@@ -2858,6 +2858,7 @@
           "loadingMore": "Loading more history"
         },
         "positions": {
+          "empty": "You have no positions",
           "closeAll": "Close All",
           "closeAllConfirmTitle": "Confirm Close All Positions",
           "closeAllConfirmMessage": "This will close all your positions and cancel their associated TP/SL orders.",
@@ -2954,6 +2955,7 @@
           "volume": "Volume"
         },
         "openOrders": {
+          "empty": "No open orders",
           "basic": "Basic",
           "conditional": "Conditional",
           "cancelAll": "Cancel All",

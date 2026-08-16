@@ -3,10 +3,15 @@ import { useShallow } from 'zustand/react/shallow';
 import type { WsFastAssetCtxs } from '@rabby-wallet/hyperliquid-sdk';
 
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
-import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  isPerpsUserAbstractionReadyForAccount,
+  perpsStore,
+  usePerpsStore,
+} from '@/hooks/perps/usePerpsStore';
 
 import {
   buildPerpsAccountViewModel,
+  getPerpsAccountMarginRatio,
   getSpotPriceDependencyKeys,
   resolvePerpsAccountMode,
 } from '../model/account';
@@ -16,6 +21,7 @@ import {
   getPerpsOpenOrderCounts,
   type PerpsOpenOrderCategory,
 } from '../model/openOrder';
+import { isPerpsProCollectionAuthoritativelyEmpty } from '../model/infoPanelPresentation';
 import {
   buildPerpsPositions,
   filterPerpsPositionsForMarket,
@@ -25,7 +31,6 @@ import { usePerpsProInfoPreferences } from './usePerpsProInfoPreferences';
 export type PerpsProAccountPanelState =
   | 'noAccount'
   | 'loading'
-  | 'empty'
   | 'error'
   | 'ready';
 
@@ -49,14 +54,14 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
       currentAccount: state.currentPerpsAccount,
       isSpotStateReady: state.isSpotStateReady,
       isUserDataReady: state.isUserDataReady,
-      maintenanceMarginTiersByCoin: state.maintenanceMarginTiersByCoin,
+      isOpenOrdersReady: state.isOpenOrdersReady,
       marketDataStatus: state.marketDataStatus,
       openOrders: state.openOrders,
       spotMeta: state.spotMeta,
       spotMetaStatus: state.spotMetaStatus,
       spotState: state.spotState,
       userAbstraction: state.userAbstraction,
-      userAbstractionReady: state.userAbstractionReady,
+      userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
     })),
   );
   const marketFactSignatures = perpsStore(
@@ -163,13 +168,9 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
       buildPerpsPositions(
         facts.clearinghouseState?.assetPositions || [],
         facts.openOrders,
-        facts.maintenanceMarginTiersByCoin,
+        getPerpsAccountMarginRatio(account),
       ),
-    [
-      facts.clearinghouseState?.assetPositions,
-      facts.maintenanceMarginTiersByCoin,
-      facts.openOrders,
-    ],
+    [account, facts.clearinghouseState?.assetPositions, facts.openOrders],
   );
   const allOpenOrders = useMemo(
     () => buildPerpsOpenOrders(facts.openOrders),
@@ -230,16 +231,10 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
     if (account.diagnostics.unresolvedDexes.length > 0) {
       return 'error';
     }
-    const hasValue =
-      Number(account.primaryValue) !== 0 ||
-      Number(account.unrealizedPnl) !== 0 ||
-      account.assets.some(asset => Number(asset.total) !== 0) ||
-      allPositions.length > 0;
-    return hasValue ? 'ready' : 'empty';
+    return 'ready';
   }, [
     account,
     accountMode,
-    allPositions.length,
     facts.currentAccount,
     facts.isSpotStateReady,
     facts.isUserDataReady,
@@ -270,6 +265,18 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
     activeInfoTab: preferences.activeInfoTab,
     allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
     allPositionsCount: allPositions.length,
+    openOrdersEmpty: isPerpsProCollectionAuthoritativelyEmpty({
+      hasAccount: !!facts.currentAccount,
+      runtimeReady: runtime.status === 'ready',
+      sourceReady: facts.isOpenOrdersReady,
+      totalCount: facts.openOrders.length,
+    }),
+    positionsEmpty: isPerpsProCollectionAuthoritativelyEmpty({
+      hasAccount: !!facts.currentAccount,
+      runtimeReady: runtime.status === 'ready',
+      sourceReady: facts.isUserDataReady,
+      totalCount: allPositions.length,
+    }),
     hideOtherSymbols,
     hydrated: preferences.hydrated,
     openOrderCategory,

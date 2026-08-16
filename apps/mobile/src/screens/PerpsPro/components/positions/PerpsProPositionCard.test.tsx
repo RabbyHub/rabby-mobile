@@ -194,7 +194,7 @@ describe('PerpsProPositionCard', () => {
     for (const [label, key] of [
       ['PNL', 'pnl'],
       ['ROI', 'roi'],
-      ['Liq. Distance', 'liquidationDistance'],
+      ['Margin Ratio', 'marginRatio'],
       ['Liq. Price', 'liquidationPrice'],
     ] as const) {
       fireEvent.press(screen.getByLabelText(label));
@@ -207,8 +207,10 @@ describe('PerpsProPositionCard', () => {
         position={createPosition({ marginMode: 'isolated' })}
       />,
     );
-    fireEvent.press(screen.getByLabelText('Margin Ratio'));
-    expect(mockOpenFieldExplanation).toHaveBeenLastCalledWith('marginRatio');
+    fireEvent.press(screen.getByLabelText('Liq. Distance'));
+    expect(mockOpenFieldExplanation).toHaveBeenLastCalledWith(
+      'liquidationDistance',
+    );
   });
 
   it('shows signed Liq. Distance and the nearest partial TP/SL to Mark', () => {
@@ -224,8 +226,8 @@ describe('PerpsProPositionCard', () => {
           leverage: 40,
           liquidationPrice: '80',
           margin: '5',
-          marginMode: 'cross',
-          marginRatio: '0.025',
+          marginMode: 'isolated',
+          marginRatio: null,
           maxLeverage: 50,
           pnl: '10',
           quoteSize: '200',
@@ -323,7 +325,7 @@ describe('PerpsProPositionCard', () => {
     ).toMatchObject({ left: 0, right: 0 });
   });
 
-  it('shows the current maintenance risk ratio for Isolated', () => {
+  it('shows the account margin ratio for Cross', () => {
     render(
       <PerpsProPositionCard
         accountIdentity="account-a"
@@ -336,7 +338,7 @@ describe('PerpsProPositionCard', () => {
           leverage: 20,
           liquidationPrice: '80',
           margin: '4.967826',
-          marginMode: 'isolated',
+          marginMode: 'cross',
           marginRatio: '0.20135095311309212521',
           maxLeverage: 50,
           pnl: '-0.0134',
@@ -352,6 +354,24 @@ describe('PerpsProPositionCard', () => {
     expect(screen.queryByText('Liq. Distance')).toBeNull();
     expect(screen.queryByText('TP/SL(0)')).toBeNull();
   });
+
+  it.each([null, '', '0', '-1', 'not-a-price'])(
+    'renders an unavailable liquidation price (%s) with the shared double dash',
+    liquidationPrice => {
+      render(
+        <PerpsProPositionCard
+          accountIdentity="account-a"
+          position={createPosition({
+            liquidationPrice,
+            marginMode: 'cross',
+          })}
+        />,
+      );
+
+      expect(screen.getByText('--')).toBeTruthy();
+      expect(screen.queryByText('-')).toBeNull();
+    },
+  );
 
   it.each([
     {

@@ -1,6 +1,4 @@
 import type { AssetPosition, OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
-import { buildPerpsMaintenanceMarginTiers } from '@/utils/perpsMargin';
-
 import {
   buildPerpsPositions,
   calculateSignedLiquidationDistance,
@@ -69,15 +67,7 @@ describe('Perps Pro position model', () => {
     ).toBeNull();
   });
 
-  it('derives direction, ROI, and isolated-only risk from position facts', () => {
-    const maintenanceMarginTiersByCoin = {
-      BTC: buildPerpsMaintenanceMarginTiers([
-        { lowerBound: '0', maxLeverage: 50 },
-      ]),
-      ETH: buildPerpsMaintenanceMarginTiers([
-        { lowerBound: '0', maxLeverage: 25 },
-      ]),
-    };
+  it('derives direction, ROI, and cross-only account risk from position facts', () => {
     const positions = buildPerpsPositions(
       [
         makePosition({
@@ -100,27 +90,27 @@ describe('Perps Pro position model', () => {
         }),
       ],
       [],
-      maintenanceMarginTiersByCoin,
+      '0.37',
     );
 
     expect(positions[0]).toMatchObject({
       baseSize: '0.02',
       direction: 'long',
-      marginRatio: '0.4',
+      marginRatio: null,
       quoteSize: '1000',
       roiRatio: '0.12',
     });
     expect(positions[1]).toMatchObject({
       baseSize: '2',
       direction: 'short',
-      marginRatio: '0.32',
+      marginRatio: null,
       quoteSize: '400',
       roiRatio: '-0.3',
     });
     expect(positions[2]).toMatchObject({
       coin: 'SOL',
       marginMode: 'cross',
-      marginRatio: null,
+      marginRatio: '0.37',
     });
   });
 

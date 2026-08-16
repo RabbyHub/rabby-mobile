@@ -103,7 +103,7 @@ export const PerpsProPositionCard: React.FC<{
     )}`;
     const signedLiquidationDistance = React.useMemo(
       () =>
-        position.marginMode === 'cross'
+        position.marginMode === 'isolated'
           ? calculateSignedLiquidationDistance({
               liquidationPrice: position.liquidationPrice,
               markPrice: market.markPrice,
@@ -120,6 +120,12 @@ export const PerpsProPositionCard: React.FC<{
           market.pxDecimals,
         )})`
       : '--';
+    const formattedLiquidationPrice = formatPerpsProPrice(
+      position.liquidationPrice,
+      market.pxDecimals,
+    );
+    const displayLiquidationPrice =
+      formattedLiquidationPrice === '-' ? '--' : formattedLiquidationPrice;
     const pnlStyle =
       pnl > 0
         ? styles.positiveValue
@@ -262,7 +268,7 @@ export const PerpsProPositionCard: React.FC<{
             </View>
           </View>
           <View style={styles.thirdColumn}>
-            {position.marginMode === 'isolated' ? (
+            {position.marginMode === 'cross' ? (
               <>
                 <PerpsProDottedUnderlineText
                   accessibilityLabel={t('page.perps.pro.positions.marginRatio')}
@@ -295,7 +301,7 @@ export const PerpsProPositionCard: React.FC<{
               </>
             )}
           </View>
-          {position.marginMode === 'cross' ? (
+          {position.marginMode === 'isolated' ? (
             <View
               pointerEvents="none"
               style={styles.liquidationDistanceValueOverlay}
@@ -335,10 +341,7 @@ export const PerpsProPositionCard: React.FC<{
               {t('page.perps.pro.positions.liquidation')} ({market.quoteAsset})
             </PerpsProDottedUnderlineText>
             <Text style={styles.value}>
-              {formatPerpsProPrice(
-                position.liquidationPrice,
-                market.pxDecimals,
-              )}
+              {displayLiquidationPrice}
             </Text>
           </View>
         </View>

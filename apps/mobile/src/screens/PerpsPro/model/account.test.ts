@@ -20,6 +20,7 @@ import {
   buildPerpsAccountViewModel,
   computeSpotPortfolioValue,
   computeUnifiedAccountRatio,
+  getPerpsAccountMarginRatio,
   getSpotPriceDependencyKeys,
   resolveSpotUsdcPrice,
 } from './account';
@@ -118,6 +119,27 @@ const formattedSpotState = () =>
   });
 
 describe('Perps Pro account facts', () => {
+  it('selects the account ratio by Standard, Unified, and Portfolio Margin mode', () => {
+    const metrics = [
+      { key: 'crossMarginRatio', kind: 'ratio', value: '0.1' },
+      { key: 'unifiedAccountRatio', kind: 'ratio', value: '0.2' },
+      { key: 'portfolioMarginRatio', kind: 'ratio', value: '0.3' },
+    ] as const;
+
+    expect(
+      getPerpsAccountMarginRatio({ metrics: [...metrics], mode: 'standard' }),
+    ).toBe('0.1');
+    expect(
+      getPerpsAccountMarginRatio({ metrics: [...metrics], mode: 'unified' }),
+    ).toBe('0.2');
+    expect(
+      getPerpsAccountMarginRatio({
+        metrics: [...metrics],
+        mode: 'portfolioMargin',
+      }),
+    ).toBe('0.3');
+  });
+
   it('shows Spot USDC Transfer only for exact Standard abstraction values', () => {
     const build = (userAbstraction: string) =>
       buildPerpsAccountViewModel({

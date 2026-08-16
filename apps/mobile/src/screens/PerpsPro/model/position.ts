@@ -2,11 +2,6 @@ import type { AssetPosition, OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
 import {
-  calculateIsolatedPositionMarginRatio,
-  type PerpsMaintenanceMarginTier,
-} from '@/utils/perpsMargin';
-
-import {
   collectActivePositionTpSlOrders,
   type PerpsPositionTpSlOrderViewModel,
 } from './positionTpSl';
@@ -49,10 +44,7 @@ export const collectPositionTpslOrders = (
 export const buildPerpsPositionViewModel = (
   assetPosition: AssetPosition,
   openOrders: OpenOrder[],
-  maintenanceMarginTiersByCoin: Record<
-    string,
-    readonly PerpsMaintenanceMarginTier[]
-  > = {},
+  accountMarginRatio: string | null = null,
 ): PerpsPositionViewModel | null => {
   const position = assetPosition.position;
   const signedSize = validDecimal(position.szi);
@@ -79,14 +71,7 @@ export const buildPerpsPositionViewModel = (
       .abs()
       .toString(),
     marginMode,
-    marginRatio:
-      marginMode === 'isolated'
-        ? calculateIsolatedPositionMarginRatio({
-            isolatedEquity: position.marginUsed,
-            positionNotional: position.positionValue,
-            tiers: maintenanceMarginTiersByCoin[position.coin] || [],
-          })
-        : null,
+    marginRatio: marginMode === 'cross' ? accountMarginRatio : null,
     maxLeverage: Number(position.maxLeverage) || 0,
     pnl: pnl.toString(),
     quoteSize: (validDecimal(position.positionValue) ?? new BigNumber(0))
@@ -108,19 +93,12 @@ export const sortPerpsPositions = (
 export const buildPerpsPositions = (
   assetPositions: AssetPosition[],
   openOrders: OpenOrder[],
-  maintenanceMarginTiersByCoin: Record<
-    string,
-    readonly PerpsMaintenanceMarginTier[]
-  > = {},
+  accountMarginRatio: string | null = null,
 ): PerpsPositionViewModel[] =>
   sortPerpsPositions(
     assetPositions
       .map(position =>
-        buildPerpsPositionViewModel(
-          position,
-          openOrders,
-          maintenanceMarginTiersByCoin,
-        ),
+        buildPerpsPositionViewModel(position, openOrders, accountMarginRatio),
       )
       .filter((position): position is PerpsPositionViewModel => !!position),
   );

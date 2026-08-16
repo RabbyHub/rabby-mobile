@@ -56,7 +56,7 @@ export const PerpsProAccountAssetRow: React.FC<{
         </View>
         <View style={styles.assetValue}>
           <Text style={styles.total}>
-            {formatPerpsProDecimal(asset.total, 8)}
+            {formatPerpsProDecimal(asset.total, 2)}
           </Text>
           <Text style={styles.usdValue}>
             {formatPerpsProUsdValue(asset.usdValue)}

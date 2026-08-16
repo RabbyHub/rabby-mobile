@@ -38,6 +38,7 @@ import {
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import {
   PerpsProSheetGlobalEdgeTarget,
@@ -128,8 +129,10 @@ type PerpsProSceneRow =
   | { key: 'account-summary'; type: 'account-summary' }
   | { asset: PerpsAccountAssetRow; key: string; type: 'account-asset' }
   | { key: 'positions-controls'; type: 'positions-controls' }
+  | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
   | { key: 'open-orders-controls'; type: 'open-orders-controls' }
+  | { key: 'open-orders-empty'; type: 'open-orders-empty' }
   | { key: string; order: PerpsOpenOrderViewModel; type: 'open-order' };
 
 interface FundingOverlayState {
@@ -478,6 +481,10 @@ export const PerpsProScene: React.FC<{
     }
 
     if (info.activeInfoTab === 'positions') {
+      if (info.positionsEmpty) {
+        result.push({ key: 'positions-empty', type: 'positions-empty' });
+        return result;
+      }
       result.push({ key: 'positions-controls', type: 'positions-controls' });
       result.push(
         ...info.positions.map(position => ({
@@ -489,10 +496,11 @@ export const PerpsProScene: React.FC<{
       return result;
     }
 
-    result.push({
-      key: 'open-orders-controls',
-      type: 'open-orders-controls',
-    });
+    if (info.openOrdersEmpty) {
+      result.push({ key: 'open-orders-empty', type: 'open-orders-empty' });
+      return result;
+    }
+    result.push({ key: 'open-orders-controls', type: 'open-orders-controls' });
     result.push(
       ...info.openOrders.map(order => ({
         key: `open-order:${info.accountIdentity}:${order.key}`,
@@ -507,7 +515,9 @@ export const PerpsProScene: React.FC<{
     info.accountState,
     info.activeInfoTab,
     info.openOrders,
+    info.openOrdersEmpty,
     info.positions,
+    info.positionsEmpty,
   ]);
   const positionsByCoin = useMemo(
     () => new Map(info.positions.map(position => [position.coin, position])),
@@ -598,7 +608,6 @@ export const PerpsProScene: React.FC<{
         case 'account-state':
           return (
             <PerpsProAccountState
-              onDeposit={openDeposit}
               onRetry={info.retryAccount}
               state={item.state}
             />
@@ -629,6 +638,13 @@ export const PerpsProScene: React.FC<{
               onToggleHideOtherSymbols={toggleHideOtherSymbols}
             />
           );
+        case 'positions-empty':
+          return (
+            <PerpsProEmptyState
+              message={t('page.perps.pro.positions.empty')}
+              testID="perps-pro-positions-empty"
+            />
+          );
         case 'position':
           return (
             <PerpsProPositionCard
@@ -657,6 +673,13 @@ export const PerpsProScene: React.FC<{
               }
               onSetCategory={info.setOpenOrderCategory}
               onToggleHideOtherSymbols={toggleHideOtherSymbols}
+            />
+          );
+        case 'open-orders-empty':
+          return (
+            <PerpsProEmptyState
+              message={t('page.perps.pro.openOrders.empty')}
+              testID="perps-pro-open-orders-empty"
             />
           );
         case 'open-order': {
