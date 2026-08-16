@@ -104,6 +104,20 @@ export interface BuildPerpsAccountViewModelInput {
   userAbstraction: UserAbstractionResp | string;
 }
 
+export const getPerpsAccountMarginRatio = (
+  account: Pick<PerpsAccountViewModel, 'metrics' | 'mode'>,
+): string | null => {
+  const metricKey =
+    account.mode === 'unified'
+      ? 'unifiedAccountRatio'
+      : account.mode === 'portfolioMargin'
+      ? 'portfolioMarginRatio'
+      : 'crossMarginRatio';
+  return (
+    account.metrics.find(metric => metric.key === metricKey)?.value ?? null
+  );
+};
+
 export const resolvePerpsAccountMode = (
   userAbstraction: UserAbstractionResp | string,
 ): PerpsAccountMode => {

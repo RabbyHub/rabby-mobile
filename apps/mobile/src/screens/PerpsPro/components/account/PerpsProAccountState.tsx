@@ -9,10 +9,9 @@ import type { PerpsProAccountPanelState } from '../../scene/usePerpsProInfoPanel
 import { PerpsProAccountSkeleton } from './PerpsProAccountSkeleton';
 
 export const PerpsProAccountState: React.FC<{
-  onDeposit: () => void;
   onRetry: () => void;
   state: Exclude<PerpsProAccountPanelState, 'ready'>;
-}> = React.memo(({ onDeposit, onRetry, state }) => {
+}> = React.memo(({ onRetry, state }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -23,30 +22,17 @@ export const PerpsProAccountState: React.FC<{
   const title =
     state === 'noAccount'
       ? t('page.perps.pro.account.selectAccount')
-      : state === 'empty'
-      ? t('page.perps.pro.account.noAssets')
       : t('page.perps.pro.account.loadFailed');
   const description =
     state === 'noAccount'
       ? t('page.perps.pro.account.selectAccountDescription')
-      : state === 'empty'
-      ? t('page.perps.pro.account.noAssetsDescription')
       : t('page.perps.pro.account.loadFailedDescription');
 
   return (
     <View style={styles.container} testID={`perps-pro-account-state-${state}`}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
-      {state === 'empty' ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={onDeposit}
-          style={styles.action}>
-          <Text style={styles.actionText}>
-            {t('page.perps.pro.account.deposit')}
-          </Text>
-        </Pressable>
-      ) : state === 'error' ? (
+      {state === 'error' ? (
         <Pressable
           accessibilityRole="button"
           onPress={onRetry}

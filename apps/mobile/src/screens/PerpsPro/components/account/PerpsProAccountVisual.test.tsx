@@ -92,7 +92,7 @@ const spotUsdc = {
   fullName: 'USD Coin',
   key: 'spot:USDC',
   ledger: 'spot',
-  total: '10',
+  total: '10.126',
   usdValue: '10',
 } satisfies PerpsAccountAssetRow;
 
@@ -194,6 +194,7 @@ describe('Perps Pro account visual contract', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-transfer'));
     expect(onTransfer).toHaveBeenCalledWith(spotUsdc);
+    expect(screen.getByText('10.13')).toBeTruthy();
   });
 
   it('keeps the 8px asset rhythm outside the 92px row', () => {

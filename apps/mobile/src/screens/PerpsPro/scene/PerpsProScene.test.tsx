@@ -74,6 +74,18 @@ jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
+jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -88,6 +100,7 @@ jest.mock('@/hooks/theme', () => ({
     );
     return {
       colors2024,
+      isLight: true,
       styles: getStyle({ colors2024 }),
     };
   },
@@ -487,7 +500,9 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => ({
   openOrderCategory: 'basic',
   openOrderCommandCandidates: [],
   openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
+  openOrdersEmpty: false,
   openOrders: [],
+  positionsEmpty: false,
   positions: [],
   retryAccount: jest.fn(),
   setActiveInfoTab: jest.fn(),
@@ -998,10 +1013,105 @@ describe('PerpsProScene market loading states', () => {
     });
   });
 
+  it('renders the zero-value Account Summary as ready without an empty illustration', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        account: {
+          assets: [],
+          diagnostics: {
+            complete: true,
+            unresolvedDexes: [],
+            unpricedNonZeroAssets: [],
+          },
+          metrics: [],
+          mode: 'standard',
+          primaryKey: 'balance',
+          primaryValue: '0',
+          titleKey: 'perpsAccountSummary',
+          unrealizedPnl: '0',
+        },
+        accountState: 'ready',
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('perps-pro-account-summary')).toBeTruthy();
+    expect(screen.getAllByText('$0.00')).toHaveLength(2);
+    expect(screen.getByText('page.perps.pro.account.deposit')).toBeTruthy();
+    expect(screen.getByText('page.perps.pro.account.withdraw')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-account-state-empty')).toBeNull();
+  });
+
+  it('renders approved Position and Open Orders empty rows only for authoritative emptiness', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'positions',
+        positionsEmpty: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('perps-pro-positions-empty-light')).toBeTruthy();
+    expect(screen.getByText('page.perps.pro.positions.empty')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-positions-controls')).toBeNull();
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'openOrders',
+        openOrdersEmpty: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-open-orders-empty-light'),
+    ).toBeTruthy();
+    expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+  });
+
+  it('keeps controls when a filter has no visible rows but the source is not empty', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'positions',
+        positions: [],
+        positionsEmpty: false,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.getByTestId('perps-pro-positions-controls')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-positions-empty')).toBeNull();
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'openOrders',
+        openOrders: [],
+        openOrdersEmpty: false,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-open-orders-empty')).toBeNull();
+  });
+
   it('closes the local funding overlay when the active account changes', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ accountIdentity: 'account-a', accountState: 'empty' }),
+      createInfoState({ accountIdentity: 'account-a', accountState: 'ready' }),
     );
     const view = render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
@@ -1011,7 +1121,7 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('funding-overlay')).toBeTruthy();
 
     mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ accountIdentity: 'account-b', accountState: 'empty' }),
+      createInfoState({ accountIdentity: 'account-b', accountState: 'ready' }),
     );
     view.rerender(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,

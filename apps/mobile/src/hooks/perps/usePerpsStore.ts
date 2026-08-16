@@ -214,6 +214,8 @@ export interface PerpsState {
   userAbstractionReady: boolean;
   userAbstractionOwnerAddress: string | null;
   openOrders: OpenOrder[];
+  // A complete open-orders snapshot has been received for the current account.
+  isOpenOrdersReady: boolean;
   currentPerpsAccount: Account | null;
   clearinghouseStateMap: Record<string, AggregatedClearinghouseState | null>;
   isFetchAllDone: boolean; // init ClearinghouseStateMap has done
@@ -290,6 +292,7 @@ export const initialState: PerpsState = {
   userAbstraction: UserAbstractionResp.default,
   userAbstractionReady: false,
   userAbstractionOwnerAddress: null,
+  isOpenOrdersReady: false,
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
@@ -673,6 +676,7 @@ const setCurrentPerpsAccount = (payload: Account) => {
         : null,
       spotState: sameAccount ? prev.spotState : initialState.spotState,
       openOrders: sameAccount ? prev.openOrders : [],
+      isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
       userAbstraction: sameAccount
         ? prev.userAbstraction
         : UserAbstractionResp.default,
@@ -718,6 +722,7 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
       currentClearinghouseState: null,
       spotState: initialState.spotState,
       openOrders: [],
+      isOpenOrdersReady: false,
       homePositionPnl: pnl,
       accountNeedApproveAgent: false,
       accountNeedApproveBuilderFee: false,
@@ -1273,6 +1278,7 @@ const resetAccountState = () => {
     currentClearinghouseState: null,
     spotState: initialState.spotState,
     openOrders: [],
+    isOpenOrdersReady: false,
   }));
 };
 
@@ -1757,7 +1763,7 @@ export const subscribeToUserData = (account: Account) => {
       setPerpsState(prev =>
         prev.currentPerpsAccount &&
         isSameAddress(prev.currentPerpsAccount.address, address)
-          ? { ...prev, openOrders: orders }
+          ? { ...prev, isOpenOrdersReady: true, openOrders: orders }
           : prev,
       );
     },
@@ -1959,7 +1965,10 @@ const fetchAndCacheOpenOrdersForDex = async (
   return true;
 };
 
-const flushAggregatedOpenOrders = (expectedAddress: string) => {
+const flushAggregatedOpenOrders = (
+  expectedAddress: string,
+  markReady = false,
+) => {
   if (!isCurrentPerpsAccountAddress(expectedAddress)) {
     return;
   }
@@ -1967,7 +1976,11 @@ const flushAggregatedOpenOrders = (expectedAddress: string) => {
   setPerpsState(prev =>
     prev.currentPerpsAccount &&
     isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
-      ? { ...prev, openOrders: flattened }
+      ? {
+          ...prev,
+          isOpenOrdersReady: prev.isOpenOrdersReady || markReady,
+          openOrders: flattened,
+        }
       : prev,
   );
 };
@@ -2039,7 +2052,7 @@ export const fetchAllDexsPositionOpenOrdersHttp = async () => {
     collectAllDexes().map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
   );
   if (results.some(Boolean)) {
-    flushAggregatedOpenOrders(address);
+    flushAggregatedOpenOrders(address, results.every(Boolean));
   }
 };
 
@@ -2316,6 +2329,7 @@ export const usePerpsStore = () => {
         isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
         spotState: sameAccount ? prev.spotState : initialState.spotState,
         openOrders: sameAccount ? prev.openOrders : [],
+        isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
         userAbstraction: sameAccount
           ? prev.userAbstraction
           : UserAbstractionResp.default,
