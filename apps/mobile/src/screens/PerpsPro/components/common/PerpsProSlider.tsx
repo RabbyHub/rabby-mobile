@@ -14,6 +14,7 @@ export const PerpsProSlider: React.FC<{
   onSlidingStart?: (value: number) => void;
   onValueChange?: (value: number) => void;
   pointCount?: number;
+  showPoints?: boolean;
   step?: number;
   tone?: 'brand' | 'neutral';
   value: number;
@@ -28,6 +29,7 @@ export const PerpsProSlider: React.FC<{
     onSlidingStart,
     onValueChange,
     pointCount = 7,
+    showPoints = true,
     step = 1,
     tone = 'brand',
     value,
@@ -46,7 +48,11 @@ export const PerpsProSlider: React.FC<{
     }, [maximumValue, minimumValue, value]);
 
     return (
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          tone === 'neutral' && styles.neutralContainer,
+        ]}>
         <Slider
           allowTouchTrack={!disabled}
           disabled={disabled}
@@ -66,7 +72,7 @@ export const PerpsProSlider: React.FC<{
           onSlidingStart={onSlidingStart}
           onValueChange={onValueChange}
           step={step}
-          style={styles.slider}
+          style={[styles.slider, tone === 'neutral' && styles.neutralSlider]}
           thumbStyle={
             tone === 'neutral'
               ? styles.invisibleThumb
@@ -74,7 +80,9 @@ export const PerpsProSlider: React.FC<{
               ? styles.disabledThumb
               : styles.thumb
           }
-          trackStyle={styles.track}
+          trackStyle={
+            tone === 'neutral' ? styles.neutralInputTrack : styles.track
+          }
           value={value}
         />
         {tone === 'neutral' ? (
@@ -85,7 +93,20 @@ export const PerpsProSlider: React.FC<{
                 styles.neutralTrack,
                 showDisabledAppearance && styles.neutralTrackDisabled,
               ]}
-              testID="perps-pro-slider-neutral-track">
+              testID="perps-pro-slider-neutral-track"
+            />
+            <View
+              pointerEvents="none"
+              style={[
+                styles.neutralTrackProgressStart,
+                showDisabledAppearance && styles.neutralTrackProgressDisabled,
+              ]}
+              testID="perps-pro-slider-neutral-track-progress-start"
+            />
+            <View
+              pointerEvents="none"
+              style={styles.neutralTrackProgressRail}
+              testID="perps-pro-slider-neutral-track-progress-rail">
               <View
                 style={[
                   styles.neutralTrackProgress,
@@ -103,41 +124,42 @@ export const PerpsProSlider: React.FC<{
                 style={[
                   styles.neutralThumb,
                   showDisabledAppearance && styles.neutralThumbDisabled,
-                  { left: `${neutralProgress * 100}%`, marginLeft: -6.5 },
+                  { left: `${neutralProgress * 100}%` },
                 ]}
                 testID="perps-pro-slider-neutral-thumb"
               />
             </View>
           </>
         ) : null}
-        <View
-          pointerEvents="none"
-          style={[styles.points, tone === 'neutral' && styles.neutralPoints]}>
-          {points.map((point, index) =>
-            hideMinimumPoint && index === 0 ? null : (
-              <View
-                key={point}
-                style={[
-                  styles.point,
-                  tone === 'neutral' && styles.neutralPoint,
-                  tone === 'neutral' &&
-                    index / (points.length - 1) <= neutralProgress &&
-                    styles.neutralPointActive,
-                  tone === 'neutral' && {
-                    left: `${(index * 100) / (points.length - 1)}%`,
-                    marginLeft: -3.5,
-                    position: 'absolute',
-                  },
-                ]}
-                testID={
-                  tone === 'neutral'
-                    ? 'perps-pro-slider-neutral-point'
-                    : undefined
-                }
-              />
-            ),
-          )}
-        </View>
+        {tone !== 'neutral' || showPoints ? (
+          <View
+            pointerEvents="none"
+            style={[styles.points, tone === 'neutral' && styles.neutralPoints]}>
+            {points.map((point, index) =>
+              hideMinimumPoint && index === 0 ? null : (
+                <View
+                  key={point}
+                  style={[
+                    styles.point,
+                    tone === 'neutral' && styles.neutralPoint,
+                    tone === 'neutral' &&
+                      index / (points.length - 1) <= neutralProgress &&
+                      styles.neutralPointActive,
+                    tone === 'neutral' && {
+                      left: `${(index * 100) / (points.length - 1)}%`,
+                      position: 'absolute',
+                    },
+                  ]}
+                  testID={
+                    tone === 'neutral'
+                      ? 'perps-pro-slider-neutral-point'
+                      : undefined
+                  }
+                />
+              ),
+            )}
+          </View>
+        ) : null}
       </View>
     );
   },
@@ -154,6 +176,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   slider: {
     height: 24,
     zIndex: 2,
+  },
+  neutralContainer: {
+    height: 32,
+  },
+  neutralSlider: {
+    height: 32,
   },
   track: {
     borderRadius: 1,
@@ -178,19 +206,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   neutralThumb: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderColor: colors2024['neutral-title-1'],
-    borderRadius: 7,
+    borderRadius: 8,
     borderWidth: 1,
-    height: 13,
+    height: 16,
     position: 'absolute',
-    width: 13,
+    width: 16,
     zIndex: 3,
   },
   neutralThumbRail: {
-    height: 13,
-    left: 6.5,
+    height: 16,
+    left: 0,
     position: 'absolute',
-    right: 6.5,
-    top: 5.5,
+    right: 16,
+    top: 8,
     zIndex: 3,
   },
   neutralThumbDisabled: {
@@ -199,16 +227,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   invisibleThumb: {
     backgroundColor: 'transparent',
     borderWidth: 0,
-    height: 13,
-    width: 13,
+    height: 16,
+    width: 16,
+  },
+  neutralInputTrack: {
+    borderRadius: 1,
+    height: 2,
   },
   neutralTrack: {
     backgroundColor: colors2024['neutral-line'],
-    height: 1,
-    left: 6.5,
-    overflow: 'hidden',
+    borderRadius: 1,
+    height: 2,
+    left: 0,
     position: 'absolute',
-    right: 6.5,
+    right: 0,
+    top: 15,
     zIndex: 1,
   },
   neutralTrackDisabled: {
@@ -216,7 +249,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   neutralTrackProgress: {
     backgroundColor: colors2024['neutral-title-1'],
-    height: 1,
+    height: 2,
+  },
+  neutralTrackProgressStart: {
+    backgroundColor: colors2024['neutral-title-1'],
+    height: 2,
+    left: 0,
+    position: 'absolute',
+    top: 15,
+    width: 8,
+    zIndex: 1,
+  },
+  neutralTrackProgressRail: {
+    height: 2,
+    left: 8,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 8,
+    top: 15,
+    zIndex: 1,
   },
   neutralTrackProgressDisabled: {
     backgroundColor: colors2024['neutral-secondary'],
@@ -241,15 +292,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   neutralPoint: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderColor: colors2024['neutral-line'],
-    borderRadius: 3.5,
-    height: 7,
-    width: 7,
+    borderRadius: 4,
+    height: 8,
+    width: 8,
   },
   neutralPointActive: {
     borderColor: colors2024['neutral-title-1'],
   },
   neutralPoints: {
-    left: 6.5,
-    right: 6.5,
+    height: 8,
+    left: 0,
+    right: 8,
+    top: 12,
   },
 }));

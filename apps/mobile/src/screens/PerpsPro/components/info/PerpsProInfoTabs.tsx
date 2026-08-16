@@ -148,14 +148,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   text: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,
   },
   activeText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

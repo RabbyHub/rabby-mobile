@@ -5,6 +5,7 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { View } from 'react-native';
 
+import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
 const OpenOrderBottomSheetTextInput = React.forwardRef<
@@ -84,9 +85,12 @@ export const PerpsProOpenOrderEditInput: React.FC<{
 
 PerpsProOpenOrderEditInput.displayName = 'PerpsProOpenOrderEditInput';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-2'],
+      isLight,
+    }),
     borderRadius: 6,
     height: 40,
     justifyContent: 'center',

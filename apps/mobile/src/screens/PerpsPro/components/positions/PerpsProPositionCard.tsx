@@ -1,6 +1,6 @@
 import RcIconEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import RcManageMargin from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
-import RcIconSwitchUnit from '@/assets/icons/swap/switch-cc.svg';
+import RcIconSwitchUnit from '@/assets2024/icons/perps/PerpsProPositionUnitSwitch.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -26,6 +26,7 @@ import {
   formatPerpsProSignedDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 const SIZE_UNIT_HIT_SLOP = {
@@ -154,8 +155,12 @@ export const PerpsProPositionCard: React.FC<{
 
     return (
       <View style={styles.row} testID={`perps-pro-position-${position.key}`}>
-        <View style={styles.titleRow}>
-          <View style={isLong ? styles.longSide : styles.shortSide}>
+        <View
+          style={styles.titleRow}
+          testID={`perps-pro-position-title-${position.key}`}>
+          <View
+            style={isLong ? styles.longSide : styles.shortSide}
+            testID={`perps-pro-position-side-${position.key}`}>
             <Text style={isLong ? styles.longSideText : styles.shortSideText}>
               {isLong ? 'B' : 'S'}
             </Text>
@@ -171,7 +176,33 @@ export const PerpsProPositionCard: React.FC<{
               {market.displayPair}
             </Text>
           </Pressable>
-          <View style={isLong ? styles.longTag : styles.shortTag}>
+          {market.sourceTag ? (
+            <View
+              style={styles.sourceTag}
+              testID={`perps-pro-position-source-${position.key}`}>
+              <Text style={styles.sourceText}>
+                {market.sourceTag.toUpperCase()}
+              </Text>
+            </View>
+          ) : null}
+          <View
+            style={styles.modeTag}
+            testID={`perps-pro-position-mode-${position.key}`}>
+            <Text
+              style={[
+                styles.modeText,
+                position.marginMode === 'isolated'
+                  ? PERPS_PRO_ISOLATED_TEXT_STYLE
+                  : null,
+              ]}>
+              {position.marginMode === 'cross'
+                ? t('page.perps.pro.positions.cross')
+                : t('page.perps.pro.positions.isolated')}
+            </Text>
+          </View>
+          <View
+            style={isLong ? styles.longTag : styles.shortTag}
+            testID={`perps-pro-position-direction-${position.key}`}>
             <Text style={isLong ? styles.longText : styles.shortText}>
               {isLong
                 ? t('page.perps.pro.positions.long')
@@ -179,20 +210,6 @@ export const PerpsProPositionCard: React.FC<{
               {position.leverage}x
             </Text>
           </View>
-          <View style={styles.modeTag}>
-            <Text style={styles.modeText}>
-              {position.marginMode === 'cross'
-                ? t('page.perps.pro.positions.cross')
-                : t('page.perps.pro.positions.isolated')}
-            </Text>
-          </View>
-          {market.sourceTag ? (
-            <View style={styles.sourceTag}>
-              <Text style={styles.sourceText}>
-                {market.sourceTag.toUpperCase()}
-              </Text>
-            </View>
-          ) : null}
         </View>
 
         <View style={styles.pnlRow}>
@@ -234,6 +251,7 @@ export const PerpsProPositionCard: React.FC<{
                 <RcIconSwitchUnit
                   color={colors2024['neutral-secondary']}
                   height={16}
+                  testID={`perps-pro-position-unit-icon-${position.key}`}
                   width={16}
                 />
               </View>
@@ -288,30 +306,37 @@ export const PerpsProPositionCard: React.FC<{
                 </Text>
               </>
             ) : (
-              <>
+              <View style={styles.metricLabelSpacer} />
+            )}
+          </View>
+          {position.marginMode === 'isolated' ? (
+            <>
+              <View
+                pointerEvents="box-none"
+                style={styles.rightMetricLabelOverlay}
+                testID={`perps-pro-position-liquidation-distance-label-${position.key}`}>
                 <PerpsProDottedUnderlineText
                   accessibilityLabel={t(
                     'page.perps.pro.positions.liquidationDistance',
                   )}
+                  allowNaturalWidth
                   containerStyle={styles.rightDottedLabel}
                   onPress={() => openFieldExplanation('liquidationDistance')}
                   style={styles.label}>
                   {t('page.perps.pro.positions.liquidationDistance')}
                 </PerpsProDottedUnderlineText>
-              </>
-            )}
-          </View>
-          {position.marginMode === 'isolated' ? (
-            <View
-              pointerEvents="none"
-              style={styles.liquidationDistanceValueOverlay}
-              testID={`perps-pro-position-liquidation-distance-${position.key}`}>
-              <Text
-                numberOfLines={1}
-                style={[styles.value, styles.liquidationDistanceValue]}>
-                {displayLiquidationDistance}
-              </Text>
-            </View>
+              </View>
+              <View
+                pointerEvents="none"
+                style={styles.liquidationDistanceValueOverlay}
+                testID={`perps-pro-position-liquidation-distance-${position.key}`}>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.value, styles.liquidationDistanceValue]}>
+                  {displayLiquidationDistance}
+                </Text>
+              </View>
+            </>
           ) : null}
         </View>
 
@@ -333,23 +358,33 @@ export const PerpsProPositionCard: React.FC<{
             </Text>
           </View>
           <View style={styles.thirdColumn}>
+            <View style={styles.metricLabelSpacer} />
+            <Text style={styles.value}>{displayLiquidationPrice}</Text>
+          </View>
+          <View
+            pointerEvents="box-none"
+            style={styles.rightMetricLabelOverlay}
+            testID={`perps-pro-position-liquidation-label-${position.key}`}>
             <PerpsProDottedUnderlineText
               accessibilityLabel={t('page.perps.pro.positions.liquidation')}
+              allowNaturalWidth
               containerStyle={styles.rightDottedLabel}
               onPress={() => openFieldExplanation('liquidationPrice')}
               style={styles.label}>
               {t('page.perps.pro.positions.liquidation')} ({market.quoteAsset})
             </PerpsProDottedUnderlineText>
-            <Text style={styles.value}>
-              {displayLiquidationPrice}
-            </Text>
           </View>
         </View>
 
         {tpSlSummary.mode !== 'none' ? (
-          <View
+          <Pressable
+            accessibilityLabel={t('page.perps.pro.positions.tpsl')}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !onEditTpSl }}
+            disabled={!onEditTpSl}
+            onPress={() => onEditTpSl?.(position, editDefaultTab)}
             style={styles.tpslRow}
-            testID={`perps-pro-position-tpsl-${position.key}`}>
+            testID={`perps-pro-position-tpsl-edit-${position.key}`}>
             <Text style={styles.tpslTitle}>
               {tpSlSummary.mode === 'partial'
                 ? `${t('page.perps.pro.positions.tpsl')}(${
@@ -384,21 +419,14 @@ export const PerpsProPositionCard: React.FC<{
                 </Text>
               ) : null}
             </View>
-            <Pressable
-              accessibilityLabel={t('page.perps.pro.positions.tpsl')}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !onEditTpSl }}
-              disabled={!onEditTpSl}
-              onPress={() => onEditTpSl?.(position, editDefaultTab)}
-              style={styles.editIcon}
-              testID={`perps-pro-position-tpsl-edit-${position.key}`}>
+            <View pointerEvents="none" style={styles.editIcon}>
               <RcIconEdit
                 color={colors2024['neutral-secondary']}
                 height={16}
                 width={16}
               />
-            </Pressable>
-          </View>
+            </View>
+          </Pressable>
         ) : null}
 
         <View style={styles.actions}>
@@ -429,7 +457,7 @@ PerpsProPositionCard.displayName = 'PerpsProPositionCard';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     gap: 12,
     marginHorizontal: 15,
@@ -445,35 +473,35 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['green-default'],
     borderRadius: 2,
-    height: 12,
+    height: 18,
     justifyContent: 'center',
-    width: 12,
+    width: 16,
   },
   shortSide: {
     alignItems: 'center',
     backgroundColor: colors2024['red-default'],
     borderRadius: 2,
-    height: 12,
+    height: 18,
     justifyContent: 'center',
-    width: 12,
+    width: 16,
   },
   longSideText: {
     color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 8,
-    fontWeight: '700',
-    lineHeight: 10,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   shortSideText: {
     color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 8,
-    fontWeight: '700',
-    lineHeight: 10,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   coin: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -482,55 +510,67 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketButton: { flexShrink: 1, maxWidth: 140 },
   longTag: {
     backgroundColor: colors2024['green-light-1'],
-    borderRadius: 4,
+    borderColor: colors2024['green-light-2'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    height: 14,
+    justifyContent: 'center',
     paddingHorizontal: 4,
-    paddingVertical: 1,
   },
   shortTag: {
     backgroundColor: colors2024['red-light-1'],
-    borderRadius: 4,
+    borderColor: colors2024['red-light-2'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    height: 14,
+    justifyContent: 'center',
     paddingHorizontal: 4,
-    paddingVertical: 1,
   },
   longText: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
-    fontWeight: '700',
-    lineHeight: 14,
+    fontWeight: '500',
+    lineHeight: 12,
   },
   shortText: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
-    fontWeight: '700',
-    lineHeight: 14,
+    fontWeight: '500',
+    lineHeight: 12,
   },
   modeTag: {
     backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 4,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    height: 14,
+    justifyContent: 'center',
     paddingHorizontal: 4,
-    paddingVertical: 1,
   },
   modeText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
-    lineHeight: 14,
+    lineHeight: 12,
   },
   sourceTag: {
     backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 4,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 2,
+    borderWidth: 0.5,
+    height: 14,
+    justifyContent: 'center',
     paddingHorizontal: 4,
-    paddingVertical: 1,
   },
   sourceText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
-    lineHeight: 14,
+    lineHeight: 12,
   },
   pnlRow: {
     flexDirection: 'row',
@@ -548,13 +588,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
   },
   emphasizedValue: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -562,7 +602,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   positiveValue: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -570,7 +610,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   negativeValue: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -597,10 +637,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 103,
     minWidth: 0,
   },
+  metricLabelSpacer: {
+    height: 16,
+  },
+  rightMetricLabelOverlay: {
+    alignItems: 'flex-end',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   labelWithIcon: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 2,
   },
   unitSwitch: {
     alignItems: 'center',
@@ -610,7 +659,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   value: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -624,7 +673,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   marginValue: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -653,7 +702,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tpslTitle: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -665,21 +714,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   takeProfit: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   stopLoss: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   partialTpSlCount: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -687,7 +736,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   separator: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -714,14 +763,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   disabledActionText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

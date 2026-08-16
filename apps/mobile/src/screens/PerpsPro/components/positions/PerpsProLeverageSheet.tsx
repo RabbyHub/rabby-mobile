@@ -3,6 +3,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
 import { showToast } from '@/hooks/perps/showToast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,12 +13,15 @@ import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
+import {
+  getPerpsProBottomSheetChromeStyles,
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  resolvePerpsProFieldBackground,
+} from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
-// Figma 80481:14828 is a documented compact sheet action special case.
-const PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT = 36;
 const PERPS_PRO_LEVERAGE_EMPTY_SELECTION = { end: 0, start: 0 } as const;
 
 const PerpsProLeverageBottomSheetTextInput = React.forwardRef<
@@ -132,8 +136,12 @@ export const PerpsProLeverageSheet: React.FC<{
           colors: colors2024,
           linearGradientType: 'bg1',
         })}
+        backgroundStyle={styles.background}
+        handleIndicatorStyle={styles.handleIndicator}
+        handleStyle={styles.handle}
         onDismiss={onClose}
-        snapPoints={[288]}>
+        snapPoints={[296]}
+        style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
           <AutoLockView style={styles.container}>
             <View style={styles.titleGroup}>
@@ -210,19 +218,20 @@ export const PerpsProLeverageSheet: React.FC<{
                   setDraft(String(roundedNext));
                 }}
                 pointCount={5}
+                showPoints={false}
                 step={1}
                 tone="neutral"
                 value={sliderValue}
               />
             </View>
-            <View style={styles.footer}>
+            <View style={styles.footer} testID="perps-pro-leverage-footer">
               <Button
                 disabled={pending}
-                height={PERPS_PRO_LEVERAGE_CONFIRM_HEIGHT}
+                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
                 loading={pending}
                 onPress={confirm}
                 title={t('global.confirm')}
-                titleStyle={styles.buttonTitle}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
                 testID="perps-pro-leverage-confirm"
                 type="primary"
               />
@@ -236,103 +245,104 @@ export const PerpsProLeverageSheet: React.FC<{
 
 PerpsProLeverageSheet.displayName = 'PerpsProLeverageSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  sheetView: {
-    height: '100%',
-  },
-  container: {
-    height: '100%',
-    paddingHorizontal: 15,
-    paddingTop: 8,
-  },
-  titleGroup: {
-    gap: 8,
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  maximum: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  inputRow: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 6,
-    flexDirection: 'row',
-    height: 40,
-    justifyContent: 'space-between',
-    marginTop: 16,
-    paddingHorizontal: 8,
-  },
-  stepButton: {
-    alignItems: 'center',
-    height: 24,
-    justifyContent: 'center',
-    position: 'relative',
-    width: 20,
-  },
-  minus: {
-    backgroundColor: colors2024['neutral-info'],
-    borderRadius: 1,
-    height: 1.5,
-    width: 10,
-  },
-  plusHorizontal: {
-    backgroundColor: colors2024['neutral-info'],
-    borderRadius: 1,
-    height: 1.5,
-    position: 'absolute',
-    width: 10,
-  },
-  plusVertical: {
-    backgroundColor: colors2024['neutral-info'],
-    borderRadius: 1,
-    height: 10,
-    position: 'absolute',
-    width: 1.5,
-  },
-  valueEditor: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  valueInput: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    height: 24,
-    lineHeight: 18,
-    margin: 0,
-    padding: 0,
-    textAlign: 'right',
-  },
-  valueSuffix: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  sliderSection: {
-    marginTop: 8,
-  },
-  footer: {
-    marginTop: 32,
-    paddingBottom: Math.max(40, safeAreaInsets.bottom),
-  },
-  buttonTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProBottomSheetChromeStyles(colors2024),
+    sheetView: {
+      height: '100%',
+    },
+    container: {
+      height: '100%',
+      paddingHorizontal: 15,
+      paddingTop: 8,
+    },
+    titleGroup: {
+      gap: 8,
+    },
+    title: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
+    },
+    maximum: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    inputRow: {
+      alignItems: 'center',
+      backgroundColor: resolvePerpsProFieldBackground({
+        darkBackground: colors2024['neutral-bg-5'],
+        isLight,
+      }),
+      borderRadius: 6,
+      flexDirection: 'row',
+      height: 40,
+      justifyContent: 'space-between',
+      marginTop: 16,
+      paddingHorizontal: 8,
+    },
+    stepButton: {
+      alignItems: 'center',
+      height: 24,
+      justifyContent: 'center',
+      position: 'relative',
+      width: 20,
+    },
+    minus: {
+      backgroundColor: colors2024['neutral-info'],
+      borderRadius: 1,
+      height: 1.5,
+      width: 10,
+    },
+    plusHorizontal: {
+      backgroundColor: colors2024['neutral-info'],
+      borderRadius: 1,
+      height: 1.5,
+      position: 'absolute',
+      width: 10,
+    },
+    plusVertical: {
+      backgroundColor: colors2024['neutral-info'],
+      borderRadius: 1,
+      height: 10,
+      position: 'absolute',
+      width: 1.5,
+    },
+    valueEditor: {
+      alignItems: 'center',
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    valueInput: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      height: 24,
+      lineHeight: 18,
+      margin: 0,
+      padding: 0,
+      textAlign: 'right',
+    },
+    valueSuffix: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    },
+    sliderSection: {
+      marginTop: 8,
+    },
+    footer: {
+      marginTop: 32,
+      paddingBottom: Math.max(40, safeAreaInsets.bottom),
+    },
+  }),
+);

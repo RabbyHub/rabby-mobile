@@ -457,12 +457,22 @@ describe('PerpsProPositionTpSlForm', () => {
         screen.getByTestId('perps-pro-position-tpsl-review').props.style,
       ),
     ).toMatchObject({ backgroundColor: 'brand-default' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
+      ),
+    ).toMatchObject({ paddingBottom: 44, paddingTop: 12 });
     expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 100 });
 
     fireEvent.changeText(
       screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
       '110',
     );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
+      ),
+    ).toMatchObject({ paddingBottom: 40, paddingTop: 12 });
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '+10.00',
       roi: '+100.00',
@@ -486,7 +496,7 @@ describe('PerpsProPositionTpSlForm', () => {
     render(
       <PerpsProPositionTpSlForm
         {...props()}
-        minimumHeight={482}
+        minimumHeight={486}
         mode="position"
         position={position()}
       />,
@@ -496,7 +506,7 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
       ),
-    ).toMatchObject({ minHeight: 482, paddingTop: 24 });
+    ).toMatchObject({ minHeight: 486, paddingTop: 24 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,

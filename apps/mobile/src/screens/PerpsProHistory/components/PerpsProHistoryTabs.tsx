@@ -122,7 +122,7 @@ PerpsProHistoryTabs.displayName = 'PerpsProHistoryTabs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scroll: {
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     flexGrow: 0,
   },
@@ -146,13 +146,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   text: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     lineHeight: 18,
   },
   activeText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

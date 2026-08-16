@@ -1,10 +1,11 @@
-import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
+import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
 
@@ -116,13 +117,10 @@ export const PerpsProPositionTpSlInput: React.FC<{
             <Text numberOfLines={1} style={styles.unit}>
               {unit}
             </Text>
-            <View style={styles.caret} testID={`${testID}-caret`}>
-              <RcPrecisionCaret
-                color={colors2024['neutral-secondary']}
-                height={6}
-                width={8}
-              />
-            </View>
+            <PerpsProSelectCaret
+              color={colors2024['neutral-secondary']}
+              testID={`${testID}-caret`}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -132,10 +130,13 @@ export const PerpsProPositionTpSlInput: React.FC<{
 
 PerpsProPositionTpSlInput.displayName = 'PerpsProPositionTpSlInput';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-2'],
+      isLight,
+    }),
     borderRadius: 6,
     flex: 1,
     flexDirection: 'row',
@@ -221,10 +222,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
-  },
-  caret: {
-    height: 6,
-    transform: [{ rotate: '180deg' }],
-    width: 8,
   },
 }));

@@ -318,7 +318,7 @@ describe('Perps Pro open order edit sheets', () => {
     ).toBe('55');
   });
 
-  it('locks the Conditional editor to 534px with the exact remaining coverage', () => {
+  it('locks the Conditional editor to 542px with the exact remaining coverage', () => {
     render(
       <PerpsProConditionalOrderEditSheet
         coveredByReview={false}
@@ -330,20 +330,20 @@ describe('Perps Pro open order edit sheets', () => {
       />,
     );
     expect(mockModalProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ snapPoints: [534] }),
+      expect.objectContaining({ snapPoints: [542] }),
     );
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-conditional-order-edit-content').props
           .style,
       ),
-    ).toMatchObject({ height: 494, paddingHorizontal: 15, paddingTop: 8 });
+    ).toMatchObject({ height: 502, paddingHorizontal: 15, paddingTop: 8 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-conditional-order-edit-footer').props
           .style,
       ),
-    ).toMatchObject({ top: 418 });
+    ).toMatchObject({ top: 426 });
     expect(
       screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
     ).toBe('50% (≈50.00)');
@@ -457,7 +457,7 @@ describe('Perps Pro open order edit sheets', () => {
       expect.objectContaining({
         backdropProps: { pressBehavior: 'none' },
         enablePanDownToClose: false,
-        snapPoints: [534],
+        snapPoints: [542],
       }),
     );
     unmount();

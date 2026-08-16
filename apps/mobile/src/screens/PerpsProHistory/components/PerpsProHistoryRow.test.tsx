@@ -5,17 +5,11 @@ import type {
 } from '@rabby-wallet/hyperliquid-sdk';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Pressable } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
-
-jest.mock('@/assets2024/icons/history/IconRightArrowCC.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return () => ReactModule.createElement(View, { testID: 'history-arrow' });
-});
 
 jest.mock('@/assets2024/icons/bridge/IconPendingCC.svg', () => {
   const ReactModule = require('react');
@@ -119,6 +113,15 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     expect(screen.getByText('0.50')).toBeTruthy();
     expect(screen.getByText('12.00')).toBeTruthy();
     expect(screen.getByText('2,000.0')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-history-trade-200-BTC-A-9-details').props
+          .style,
+      ),
+    ).toMatchObject({
+      borderBottomColor: 'neutral-bg-5',
+      borderBottomWidth: 1,
+    });
 
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
     expect(onShowFeeExplanation).toHaveBeenCalledWith(false);

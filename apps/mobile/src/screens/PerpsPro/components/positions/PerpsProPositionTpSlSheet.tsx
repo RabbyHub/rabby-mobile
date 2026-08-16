@@ -35,6 +35,7 @@ import {
   PerpsProPositionTpSlPageHeader,
 } from './PerpsProPositionTpSlHeader';
 import { PerpsProPositionTpSlOrderList } from './PerpsProPositionTpSlOrderList';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 type PartialPage = 'add' | 'list' | 'modify';
@@ -346,28 +347,7 @@ const TabButton: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 27,
-    paddingTop: 9,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   scrollContent: { flexGrow: 1 },
   page: { flexGrow: 1 },
   tabs: {

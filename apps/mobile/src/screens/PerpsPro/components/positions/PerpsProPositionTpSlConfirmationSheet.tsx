@@ -7,7 +7,6 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,6 +19,10 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
+import {
+  getPerpsProBottomSheetChromeStyles,
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+} from '../common/perpsProVisual';
 import {
   calculatePositionTpSlEstimatedPnl,
   type PerpsPositionTpSlMarketSnapshot,
@@ -213,7 +216,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                 onPress={onConfirm}
                 testID="perps-pro-position-tpsl-confirm"
                 title={t('global.confirm')}
-                titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
                 type="primary"
               />
             </View>
@@ -251,28 +254,7 @@ const DetailRow: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 27,
-    paddingTop: 9,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   container: { paddingHorizontal: 15, paddingTop: 8 },
   title: {
     color: colors2024['neutral-title-1'],

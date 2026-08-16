@@ -5,6 +5,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 const mockUsePerpsLatestTrade = jest.fn();
@@ -210,7 +211,7 @@ describe('PerpsProClosePositionSheet', () => {
     mockLatestTradePrice = '60001';
     mockLatestTradeStatus = 'ready';
   });
-  it('uses the 502px sheet, switches the price field to Limit, and seeds latest trade', async () => {
+  it('uses the 510px sheet, switches the price field to Limit, and seeds latest trade', async () => {
     const onReview = jest.fn();
     render(
       <PerpsProClosePositionSheet
@@ -224,7 +225,7 @@ describe('PerpsProClosePositionSheet', () => {
     );
 
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
-      [502],
+      [510],
     );
     expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
       enableDynamicSizing: false,
@@ -244,6 +245,22 @@ describe('PerpsProClosePositionSheet', () => {
       tone: 'neutral',
       value: 100,
     });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-close-position-footer').props.style,
+      ),
+    ).toMatchObject({ paddingBottom: 40, paddingTop: 12 });
+    for (const testID of [
+      'perps-pro-close-position-header',
+      'perps-pro-close-position-summary',
+    ]) {
+      expect(
+        StyleSheet.flatten(screen.getByTestId(testID).props.style),
+      ).toMatchObject({
+        borderBottomColor: 'neutral-bg-5',
+        borderBottomWidth: 1,
+      });
+    }
 
     fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
     await waitFor(() =>

@@ -345,7 +345,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
     expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 504,
+      minimumHeight: 508,
       presentation: 'subpage',
     });
     expect(screen.getByText('Add TP/SL')).toBeTruthy();
@@ -366,7 +366,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     fireEvent.press(screen.getByText('Position TP/SL'));
     expect(screen.getByTestId('tpsl-form-position')).toBeTruthy();
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 482,
+      minimumHeight: 486,
       presentation: 'tab',
     });
   });
@@ -460,10 +460,10 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.getByTestId('perps-pro-position-tpsl-order-2')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([714]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([718]);
   });
 
-  it('renders the 714px inline form and full position header when the TP/SL tab has no partial orders', () => {
+  it('renders the 718px inline form and full position header when the TP/SL tab has no partial orders', () => {
     render(
       <PerpsProPositionTpSlSheet
         amountUnit="base"
@@ -481,12 +481,12 @@ describe('PerpsProPositionTpSlSheet', () => {
       />,
     );
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([714]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([718]);
     expect(mockHeaderProps.mock.lastCall?.[0]).toMatchObject({
       variant: 'empty',
     });
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 478,
+      minimumHeight: 482,
       mode: 'add',
       presentation: 'inline-empty',
     });
@@ -536,6 +536,6 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.queryByTestId('perps-pro-position-tpsl-order-1')).toBeNull();
     expect(screen.queryByTestId('perps-pro-position-tpsl-order-2')).toBeNull();
     expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([714]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([718]);
   });
 });

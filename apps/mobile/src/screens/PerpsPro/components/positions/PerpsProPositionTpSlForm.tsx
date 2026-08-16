@@ -2,7 +2,6 @@ import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
   BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -14,6 +13,10 @@ import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
+import {
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  resolvePerpsProFieldBackground,
+} from '../common/perpsProVisual';
 import type { PerpsProPositionTpSlFormPresentation } from '../../model/layout';
 import {
   buildPositionTpSlSummary,
@@ -524,7 +527,12 @@ export const PerpsProPositionTpSlForm: React.FC<{
           </View>
         ) : null}
 
-        <View style={styles.footer} testID="perps-pro-position-tpsl-footer">
+        <View
+          style={[
+            styles.footer,
+            isPristineInlineEmpty ? styles.pristineInlineEmptyFooter : null,
+          ]}
+          testID="perps-pro-position-tpsl-footer">
           <Button
             buttonStyle={
               isPristineInlineEmpty ? styles.inlineEmptyConfirm : undefined
@@ -534,7 +542,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
             onPress={submit}
             testID="perps-pro-position-tpsl-review"
             title={t('global.confirm')}
-            titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+            titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
             type="primary"
           />
         </View>
@@ -556,152 +564,163 @@ export const PerpsProPositionTpSlForm: React.FC<{
 
 PerpsProPositionTpSlForm.displayName = 'PerpsProPositionTpSlForm';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  container: {
-    flexGrow: 1,
-    paddingHorizontal: 15,
-  },
-  subpageContainer: { paddingTop: 16 },
-  tabContainer: { paddingTop: 24 },
-  sides: { gap: 24 },
-  sideSection: {
-    gap: 12,
-  },
-  sideHeading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  sideTitleRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  takeProfitBar: {
-    backgroundColor: colors2024['green-default'],
-    borderRadius: 2,
-    height: 18,
-    width: 4,
-  },
-  stopLossBar: {
-    backgroundColor: colors2024['red-default'],
-    borderRadius: 2,
-    height: 18,
-    width: 4,
-  },
-  sideTitle: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  cancelText: {
-    color: colors2024['blue-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  inputShell: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 6,
-    flex: 1,
-    height: 40,
-    justifyContent: 'center',
-    minWidth: 0,
-    position: 'relative',
-  },
-  floatingLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    left: 8,
-    lineHeight: 12,
-    position: 'absolute',
-    top: 4,
-  },
-  amountPlaceholder: {
-    color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    left: 8,
-    lineHeight: 12,
-    position: 'absolute',
-    top: 14,
-  },
-  input: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    height: 40,
-    includeFontPadding: false,
-    lineHeight: 18,
-    paddingBottom: 0,
-    paddingHorizontal: 8,
-    paddingRight: 72,
-    paddingTop: 12,
-    textAlignVertical: 'center',
-  },
-  inputUnit: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    position: 'absolute',
-    right: 8,
-    top: 18,
-  },
-  duplicateBox: {
-    backgroundColor: colors2024['orange-light-1'],
-    borderRadius: 6,
-    gap: 8,
-    padding: 8,
-  },
-  warningText: {
-    color: colors2024['orange-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 11,
-    lineHeight: 14,
-  },
-  duplicateOrderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  duplicateOrderPrice: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  amountSection: { gap: 8, marginTop: 24 },
-  sliderAmountValue: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    left: 8,
-    lineHeight: 18,
-    position: 'absolute',
-    top: 18,
-  },
-  amountAvailable: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  hiddenAmountAvailable: { opacity: 0 },
-  inlineEmptyConfirm: {
-    backgroundColor: colors2024['brand-default'],
-  },
-  footer: {
-    marginTop: 'auto',
-    paddingBottom: Math.max(
-      40,
-      getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    ),
-    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    container: {
+      flexGrow: 1,
+      paddingHorizontal: 15,
+    },
+    subpageContainer: { paddingTop: 16 },
+    tabContainer: { paddingTop: 24 },
+    sides: { gap: 24 },
+    sideSection: {
+      gap: 12,
+    },
+    sideHeading: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    sideTitleRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+    takeProfitBar: {
+      backgroundColor: colors2024['green-default'],
+      borderRadius: 2,
+      height: 18,
+      width: 4,
+    },
+    stopLossBar: {
+      backgroundColor: colors2024['red-default'],
+      borderRadius: 2,
+      height: 18,
+      width: 4,
+    },
+    sideTitle: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    },
+    cancelText: {
+      color: colors2024['blue-default'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    inputShell: {
+      backgroundColor: resolvePerpsProFieldBackground({
+        darkBackground: colors2024['neutral-bg-2'],
+        isLight,
+      }),
+      borderRadius: 6,
+      flex: 1,
+      height: 40,
+      justifyContent: 'center',
+      minWidth: 0,
+      position: 'relative',
+    },
+    floatingLabel: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro',
+      fontSize: 10,
+      fontWeight: '500',
+      left: 8,
+      lineHeight: 12,
+      position: 'absolute',
+      top: 4,
+    },
+    amountPlaceholder: {
+      color: colors2024['neutral-info'],
+      fontFamily: 'SF Pro',
+      fontSize: 10,
+      fontWeight: '500',
+      left: 8,
+      lineHeight: 12,
+      position: 'absolute',
+      top: 14,
+    },
+    input: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      height: 40,
+      includeFontPadding: false,
+      lineHeight: 18,
+      paddingBottom: 0,
+      paddingHorizontal: 8,
+      paddingRight: 72,
+      paddingTop: 12,
+      textAlignVertical: 'center',
+    },
+    inputUnit: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+      position: 'absolute',
+      right: 8,
+      top: 18,
+    },
+    duplicateBox: {
+      backgroundColor: colors2024['orange-light-1'],
+      borderRadius: 6,
+      gap: 8,
+      padding: 8,
+    },
+    warningText: {
+      color: colors2024['orange-default'],
+      fontFamily: 'SF Pro',
+      fontSize: 11,
+      lineHeight: 14,
+    },
+    duplicateOrderRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    duplicateOrderPrice: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    amountSection: { gap: 8, marginTop: 24 },
+    sliderAmountValue: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      left: 8,
+      lineHeight: 18,
+      position: 'absolute',
+      top: 18,
+    },
+    amountAvailable: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    hiddenAmountAvailable: { opacity: 0 },
+    inlineEmptyConfirm: {
+      backgroundColor: colors2024['brand-default'],
+    },
+    footer: {
+      marginTop: 'auto',
+      paddingBottom: Math.max(
+        40,
+        getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      ),
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    },
+    pristineInlineEmptyFooter: {
+      paddingBottom: Math.max(
+        44,
+        getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      ),
+    },
+  }),
+);

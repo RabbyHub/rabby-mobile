@@ -4,10 +4,11 @@ import { StyleSheet } from 'react-native';
 
 const mockDecimalProps = jest.fn();
 
-jest.mock(
-  '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg',
-  () => () => null,
-);
+jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
   TextInput: require('react-native').TextInput,
@@ -90,9 +91,15 @@ describe('PerpsProPositionTpSlInput', () => {
       StyleSheet.flatten(screen.getByTestId('field-caret').props.style),
     ).toMatchObject({
       height: 6,
-      transform: [{ rotate: '180deg' }],
       width: 8,
     });
+    expect(screen.getByTestId('field-caret-glyph').props).toMatchObject({
+      height: 4.11638,
+      width: 5.69228,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('field-caret-glyph').props.style),
+    ).toMatchObject({ transform: [{ rotate: '180deg' }] });
     expect(mockDecimalProps.mock.lastCall?.[0].inputComponent).toBe(
       PerpsProPositionTpSlBottomSheetTextInput,
     );
