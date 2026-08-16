@@ -14,7 +14,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import type { Account } from '@/core/startupServices/preference';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { Abstraction, UserAbstraction } from '@rabby-wallet/hyperliquid-sdk';
+import { UserAbstraction } from '@rabby-wallet/hyperliquid-sdk';
 import { formatSpotState } from '@/utils/perps';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo, useRef } from 'react';
@@ -45,6 +45,7 @@ import { useEnsurePerpsRuntime } from './runtime/useEnsurePerpsRuntime';
 import { executePerpsWithdraw } from './funding/perpsWithdraw';
 import { isSamePerpsFundingAccount } from './funding/accountGuard';
 import { ensurePerpsActionApproval } from './actions/perpsActionApproval';
+import { setPerpsAgentUnifiedAccount } from './actions/setAgentUnifiedAccount';
 
 type SignActionType =
   | 'approveAgent'
@@ -324,23 +325,26 @@ export const usePerpsState = (
     }
   }, []);
 
-  const handleSafeSetUnifiedAccount = useCallback(async () => {
-    try {
-      const sdk = apisPerps.getPerpsSDK();
-      await sdk.exchange?.agentSetAbstraction(Abstraction.UNIFIED_ACCOUNT);
-    } catch (e) {
-      // silent: this is a best-effort post-approve sync
-      handleSafeSetDexAbstraction();
-    } finally {
-      // need fetch setAbstraction
-      setTimeout(() => {
-        fetchUserAbstraction('');
-      }, 100);
-    }
-  }, [handleSafeSetDexAbstraction]);
+  const handleSafeSetUnifiedAccount = useCallback(
+    async (account: Account) => {
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        await setPerpsAgentUnifiedAccount(sdk.exchange);
+      } catch (e) {
+        // silent: this is a best-effort post-approve sync
+        void handleSafeSetDexAbstraction();
+      } finally {
+        // need fetch setAbstraction
+        setTimeout(() => {
+          void fetchUserAbstraction(account).catch(() => undefined);
+        }, 100);
+      }
+    },
+    [handleSafeSetDexAbstraction],
+  );
 
   const handleDirectApprove = useCallback(
-    async (signActions: SignAction[]): Promise<void> => {
+    async (signActions: SignAction[], account: Account): Promise<void> => {
       const sdk = apisPerps.getPerpsSDK();
 
       const results = await Promise.all(
@@ -366,7 +370,7 @@ export const usePerpsState = (
 
       // wait 100ms for backend to process approve, then setUnifiedAccount
       await sleep(100);
-      handleSafeSetUnifiedAccount();
+      void handleSafeSetUnifiedAccount(account);
       setTimeout(() => {
         handleSafeSetReference();
       }, 100);
@@ -476,7 +480,7 @@ export const usePerpsState = (
         if (signActions.length === 0) {
           setAccountNeedApproveAgent(false);
           setAccountNeedApproveBuilderFee(false);
-          handleSafeSetUnifiedAccount();
+          void handleSafeSetUnifiedAccount(account);
           return;
         }
 
@@ -495,7 +499,7 @@ export const usePerpsState = (
             );
             actionObj.signature = signature;
           }
-          await handleDirectApprove(signActions);
+          await handleDirectApprove(signActions, account);
           setAccountNeedApproveAgent(false);
           setAccountNeedApproveBuilderFee(false);
         } else {
@@ -628,7 +632,7 @@ export const usePerpsState = (
       if (isNeedDepositBeforeApprove) {
         handleSetLaterApproveStatus(signActions);
       } else {
-        await handleDirectApprove(signActions);
+        await handleDirectApprove(signActions, account);
         setAccountNeedApproveAgent(false);
         setAccountNeedApproveBuilderFee(false);
       }
@@ -683,7 +687,7 @@ export const usePerpsState = (
               },
             ];
             await executeSignatures(signActions, account);
-            await handleDirectApprove(signActions);
+            await handleDirectApprove(signActions, account);
             setAccountNeedApproveBuilderFee(false);
           }
         } catch (e) {
@@ -818,15 +822,18 @@ export const usePerpsState = (
       await executeSignatures([signAction], account);
 
       // Step 3: Send signed request
-      await sdk.exchange?.sendUserSetAbstraction({
+      const response = await sdk.exchange?.sendUserSetAbstraction({
         action: prepared.message,
         nonce: prepared.nonce,
         signature: signAction.signature,
       });
+      if (response?.status !== 'ok') {
+        throw new Error('Hyperliquid rejected Unified Account configuration');
+      }
 
       // Refresh account state
       setTimeout(() => {
-        fetchUserAbstraction(account.address);
+        void fetchUserAbstraction(account).catch(() => undefined);
       }, 100);
       showToast('Unified Account enabled', 'success');
       return true;

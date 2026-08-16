@@ -15,11 +15,11 @@ import {
   setAccountNeedApproveBuilderFee,
 } from '@/hooks/perps/usePerpsStore';
 import { sleep } from '@/utils/async';
-import { Abstraction } from '@rabby-wallet/hyperliquid-sdk';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 import { isSamePerpsActionAccount } from './accountGuard';
 import { PerpsActionUserCancelledError } from './actionError';
+import { setPerpsAgentUnifiedAccount } from './setAgentUnifiedAccount';
 
 type ApprovalAction = {
   action: any;
@@ -126,7 +126,7 @@ const syncPostApprovalConfiguration = async (account: Account) => {
   }
   const exchange = apisPerps.getPerpsSDK().exchange;
   try {
-    await exchange?.agentSetAbstraction(Abstraction.UNIFIED_ACCOUNT);
+    await setPerpsAgentUnifiedAccount(exchange);
   } catch {
     try {
       await exchange?.agentEnableDexAbstraction();
@@ -141,7 +141,7 @@ const syncPostApprovalConfiguration = async (account: Account) => {
           account,
         )
       ) {
-        void fetchUserAbstraction(account.address).catch(() => undefined);
+        void fetchUserAbstraction(account).catch(() => undefined);
       }
     }, 100);
   }
