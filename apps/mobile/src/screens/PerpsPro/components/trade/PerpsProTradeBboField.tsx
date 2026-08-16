@@ -1,10 +1,11 @@
-import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
+import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
+import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
 
 const strategyFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
@@ -22,19 +23,18 @@ export const PerpsProTradeBboField: React.FC<{
         accessibilityLabel={strategyLabel}
         accessibilityRole="button"
         onPress={onPressStrategy}
-        style={styles.strategy}>
+        style={styles.strategy}
+        testID="perps-pro-trade-bbo-strategy">
         <Text
+          ellipsizeMode="tail"
           numberOfLines={1}
           style={[styles.strategyText, strategyFontStyle]}
           testID="perps-pro-trade-bbo-strategy-label">
           {strategyLabel}
         </Text>
-        <RcPrecisionCaret
+        <PerpsProSelectCaret
           color={colors2024['neutral-secondary']}
-          height={6}
-          style={styles.caret}
           testID="perps-pro-trade-bbo-caret"
-          width={8}
         />
       </Pressable>
       <Pressable
@@ -43,7 +43,9 @@ export const PerpsProTradeBboField: React.FC<{
         onPress={onPressToggle}
         style={styles.bbo}
         testID="perps-pro-trade-price-suffix-BBO">
-        <Text style={[styles.bboText, strategyFontStyle]}>BBO</Text>
+        <Text numberOfLines={1} style={[styles.bboText, strategyFontStyle]}>
+          BBO
+        </Text>
       </Pressable>
     </View>
   );
@@ -51,7 +53,7 @@ export const PerpsProTradeBboField: React.FC<{
 
 PerpsProTradeBboField.displayName = 'PerpsProTradeBboField';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -61,7 +63,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   strategy: {
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-5'],
+      isLight,
+    }),
     borderRadius: 6,
     flex: 1,
     flexDirection: 'row',
@@ -78,17 +83,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
     textAlign: 'center',
   },
-  caret: {
-    flexShrink: 0,
-    transform: [{ rotate: '180deg' }],
-  },
   bbo: {
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-5'],
+      isLight,
+    }),
     borderColor: colors2024['neutral-title-1'],
     borderRadius: 8,
     borderWidth: 1,
+    height: 40,
     justifyContent: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -99,5 +104,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     textAlign: 'center',
+    width: 40,
   },
 }));

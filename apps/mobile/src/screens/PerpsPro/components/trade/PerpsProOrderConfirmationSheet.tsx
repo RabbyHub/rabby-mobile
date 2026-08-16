@@ -16,6 +16,12 @@ import type { PerpsProOpenOrderCommand } from '../../actions/openOrder';
 import type { PerpsProAttachedTpSlCommand } from '../../actions/openOrderWithAttachedTpSl';
 import type { PerpsProMarket } from '../../model/market';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import {
+  getPerpsProBottomSheetChromeStyles,
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_ISOLATED_TEXT_STYLE,
+  PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
+} from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 // Figma 80430:12847 defines a compact 36px Pro confirmation action.
@@ -114,7 +120,14 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                     {reviewFacts.sourceTag.toUpperCase()}
                   </Text>
                 ) : null}
-                <Text numberOfLines={1} style={styles.marketTag}>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.marketTag,
+                    reviewFacts.marginMode === 'isolated'
+                      ? PERPS_PRO_ISOLATED_TEXT_STYLE
+                      : null,
+                  ]}>
                   {reviewFacts.marginMode === 'cross' ? 'Cross' : 'Isolated'}{' '}
                   {reviewFacts.leverage}x
                 </Text>
@@ -267,7 +280,7 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 loading={pending}
                 onPress={onConfirm}
                 title={t('global.confirm')}
-                titleStyle={styles.buttonTitle}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
                 type="primary"
               />
             </View>
@@ -296,28 +309,9 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({
 PerpsProOrderConfirmationSheet.displayName = 'PerpsProOrderConfirmationSheet';
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 19,
-    paddingTop: 17,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
+  ...getPerpsProBottomSheetChromeStyles(colors2024, {
+    handlePlacement: 'centered',
+  }),
   container: {
     paddingHorizontal: 15,
     paddingTop: 8,
@@ -427,11 +421,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   footer: {
     paddingBottom: Math.max(40, safeAreaInsets.bottom),
-    paddingTop: 12,
-  },
-  buttonTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
+    paddingTop: PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
   },
 }));

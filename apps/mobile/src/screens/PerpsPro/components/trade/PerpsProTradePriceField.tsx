@@ -1,14 +1,15 @@
-import RcIconAmountUnitArrow from '@/assets2024/icons/perps/PerpsProAmountUnitArrow.svg';
+import RcIconAmountUnitSwitch from '@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
+import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
 
-const conditionalSuffixFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
+const suffixFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
 
 export const PerpsProTradePriceField: React.FC<{
   editable?: boolean;
@@ -104,30 +105,21 @@ export const PerpsProTradePriceField: React.FC<{
               numberOfLines={1}
               style={[
                 styles.suffix,
+                suffixFontStyle,
                 variant === 'conditionalExecution'
-                  ? [styles.conditionalSuffix, conditionalSuffixFontStyle]
+                  ? styles.conditionalSuffix
                   : null,
               ]}>
               {suffix}
             </Text>
             {variant === 'conditionalExecution' ? (
-              <View
+              <RcIconAmountUnitSwitch
+                color={colors2024['neutral-secondary']}
+                height={10}
                 pointerEvents="none"
-                style={styles.switchIcon}
-                testID="perps-pro-trade-conditional-execution-switch">
-                <RcIconAmountUnitArrow
-                  color={colors2024['neutral-secondary']}
-                  height={4.5}
-                  style={styles.switchArrowTop}
-                  width={8}
-                />
-                <RcIconAmountUnitArrow
-                  color={colors2024['neutral-secondary']}
-                  height={4.5}
-                  style={styles.switchArrowBottom}
-                  width={8}
-                />
-              </View>
+                testID="perps-pro-trade-conditional-execution-switch"
+                width={10}
+              />
             ) : null}
           </Pressable>
         ) : null}
@@ -138,7 +130,7 @@ export const PerpsProTradePriceField: React.FC<{
 
 PerpsProTradePriceField.displayName = 'PerpsProTradePriceField';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -147,7 +139,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   fieldArea: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-5'],
+      isLight,
+    }),
     borderRadius: 6,
     flex: 1,
     flexDirection: 'row',
@@ -164,7 +159,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     left: 8,
     lineHeight: 12,
@@ -175,7 +170,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   input: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     height: 40,
@@ -189,19 +184,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   centeredPlaceholder: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontFamily: 'SF Pro',
+    fontSize: 14,
     fontWeight: '500',
     left: 8,
-    lineHeight: 16,
+    lineHeight: 18,
     position: 'absolute',
     right: 8,
     textAlign: 'center',
-    top: 12,
+    top: 11,
   },
   suffixArea: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-5'],
+      isLight,
+    }),
     borderRadius: 6,
     height: 40,
     justifyContent: 'center',
@@ -216,7 +214,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   suffix: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -234,21 +232,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   conditionalSuffix: {
     fontSize: 10,
     lineHeight: 12,
-  },
-  switchIcon: {
-    height: 10,
-    position: 'relative',
-    width: 10,
-  },
-  switchArrowTop: {
-    left: 1,
-    position: 'absolute',
-    top: 0,
-    transform: [{ rotate: '180deg' }],
-  },
-  switchArrowBottom: {
-    bottom: 0,
-    left: 1,
-    position: 'absolute',
   },
 }));

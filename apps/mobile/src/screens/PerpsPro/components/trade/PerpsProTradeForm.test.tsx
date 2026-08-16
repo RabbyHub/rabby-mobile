@@ -2,13 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 
-jest.mock('@/assets/icons/swap/switch-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
-jest.mock('@/assets2024/icons/perps/PerpsProAmountUnitArrow.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -228,7 +222,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
-  it('uses the shared selector font and the isolated stylistic I', () => {
+  it('keeps the readable variant off the leverage configuration button only', () => {
     render(
       <PerpsProTradeForm controller={controller()} onDeposit={jest.fn()} />,
     );
@@ -240,22 +234,37 @@ describe('PerpsProTradeForm order matrix', () => {
     const leverageStyle = StyleSheet.flatten(
       screen.getByText('25x').props.style,
     );
+    const orderTypeStyle = StyleSheet.flatten(
+      screen.getByText('market').props.style,
+    );
 
-    expect(isolatedStyle).toMatchObject({
+    const sharedVisibleStyle = {
       ...sharedFontStyle,
-      fontVariant: ['stylistic-six'],
+      fontSize: 14,
+      lineHeight: 18,
+    };
+
+    expect(isolatedStyle).toMatchObject(sharedVisibleStyle);
+    expect(orderTypeStyle).toMatchObject(sharedVisibleStyle);
+    expect(leverageStyle).toMatchObject({
+      fontFamily: sharedVisibleStyle.fontFamily,
+      fontSize: 14,
+      lineHeight: 18,
     });
-    expect(leverageStyle).toMatchObject(sharedFontStyle);
-    expect(isolatedStyle.fontFamily).toBe(leverageStyle.fontFamily);
+    expect(leverageStyle.fontVariant).toBeUndefined();
+    expect(isolatedStyle.fontVariant).toEqual(['stylistic-six']);
+    expect(orderTypeStyle.fontVariant).toEqual(['stylistic-six']);
   });
 
-  it('uses an Android bundled font whose ss06 changes the isolated glyph', () => {
+  it('keeps every selector on the same platform font and stylistic variant', () => {
     expect(getPerpsProTradeSelectFontStyle('android')).toEqual({
       fontFamily: 'SF-Pro-Rounded-Medium',
+      fontVariant: ['stylistic-six'],
     });
     expect(getPerpsProTradeSelectFontStyle('ios')).toEqual({
       fontFamily: 'SF Pro',
       fontWeight: '500',
+      fontVariant: ['stylistic-six'],
     });
   });
 
@@ -279,6 +288,13 @@ describe('PerpsProTradeForm order matrix', () => {
 
     expect(screen.getByTestId('perps-pro-trade-tif-trigger')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-trade-price-suffix-BBO')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByText('BBO').props.style),
+    ).toMatchObject({
+      ...getPerpsProTradeSelectFontStyle(Platform.OS),
+      fontSize: 12,
+      lineHeight: 16,
+    });
 
     view.rerender(
       <PerpsProTradeForm
@@ -304,21 +320,80 @@ describe('PerpsProTradeForm order matrix', () => {
       ),
     ).toMatchObject({
       flexShrink: 0,
-      transform: [{ rotate: '180deg' }],
+      height: 6,
+      width: 8,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-bbo-strategy-label').props.style,
       ),
-    ).toMatchObject({ flex: 1, minWidth: 0, textAlign: 'center' });
-    expect(screen.getByTestId('perps-pro-trade-bbo-caret').props).toMatchObject(
-      { height: 6, width: 8 },
-    );
+    ).toMatchObject({
+      flex: 1,
+      fontSize: 14,
+      lineHeight: 18,
+      minWidth: 0,
+      textAlign: 'center',
+    });
+    expect(
+      screen.getByTestId('perps-pro-trade-bbo-strategy-label').props
+        .numberOfLines,
+    ).toBe(1);
+    expect(
+      screen.getByTestId('perps-pro-trade-bbo-strategy-label').props
+        .ellipsizeMode,
+    ).toBe('tail');
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-bbo-field').props.style,
+      ),
+    ).toMatchObject({ flexDirection: 'row', gap: 4, height: 40 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-bbo-strategy').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: '#F4F5F5',
+      borderRadius: 6,
+      flex: 1,
+      flexDirection: 'row',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    });
+    expect(
+      screen.getByTestId('perps-pro-trade-bbo-caret-glyph').props,
+    ).toMatchObject({
+      height: 4.11638,
+      width: 5.69228,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-bbo-caret-glyph').props.style,
+      ),
+    ).toMatchObject({ transform: [{ rotate: '180deg' }] });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-price-suffix-BBO').props.style,
       ),
-    ).toMatchObject({ borderRadius: 8, width: 60 });
+    ).toMatchObject({
+      backgroundColor: '#F4F5F5',
+      borderRadius: 8,
+      borderWidth: 1,
+      height: 40,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      width: 60,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('BBO').props.style),
+    ).toMatchObject({
+      ...getPerpsProTradeSelectFontStyle(Platform.OS),
+      fontSize: 14,
+      lineHeight: 18,
+      textAlign: 'center',
+      width: 40,
+    });
+    expect(screen.getByText('BBO').props.numberOfLines).toBe(1);
     expect(screen.queryByText('price')).toBeNull();
   });
 
@@ -362,7 +437,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.enableBbo).toHaveBeenLastCalledWith('q5');
   });
 
-  it('keeps the Limit Price native input stable behind a 12px overlay', () => {
+  it('keeps the Limit Price native input stable behind the Size-matched overlay', () => {
     render(
       <PerpsProTradeForm
         controller={controller({ orderType: 'limit' })}
@@ -374,7 +449,11 @@ describe('PerpsProTradeForm order matrix', () => {
     const placeholder = screen.getByTestId('perps-pro-trade-price-placeholder');
 
     expect(price.props.placeholder).toBeUndefined();
-    expect(StyleSheet.flatten(placeholder.props.style)?.fontSize).toBe(12);
+    expect(StyleSheet.flatten(placeholder.props.style)).toMatchObject({
+      fontSize: 14,
+      lineHeight: 18,
+      top: 11,
+    });
     expect(price.props.multiline).toBe(false);
     expect(screen.queryByLabelText('Decrease price(USDC)')).toBeNull();
     expect(screen.queryByLabelText('Increase price(USDC)')).toBeNull();
@@ -456,7 +535,10 @@ describe('PerpsProTradeForm order matrix', () => {
     });
     expect(
       screen.getByTestId('perps-pro-trade-conditional-execution-switch'),
-    ).toBeTruthy();
+    ).toHaveProp('height', 10);
+    expect(
+      screen.getByTestId('perps-pro-trade-conditional-execution-switch'),
+    ).toHaveProp('width', 10);
 
     fireEvent.press(screen.getByTestId('perps-pro-trade-price-suffix-market'));
     expect(trade.setConditionalExecution).toHaveBeenCalledWith('limit');

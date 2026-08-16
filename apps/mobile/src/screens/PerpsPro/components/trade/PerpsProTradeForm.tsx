@@ -1,5 +1,4 @@
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
-import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +10,8 @@ import type { PerpsProBboStrategy } from '../../model/bbo';
 import type { PerpsProTradeTif } from '../../model/trade';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
+import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
+import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { PerpsProLeverageSheet } from '../positions/PerpsProLeverageSheet';
 import { PerpsProBboSheet } from './PerpsProBboSheet';
@@ -104,7 +105,7 @@ export const PerpsProTradeForm: React.FC<{
             style={styles.flexItem}
             textStyle={
               configurationReady && controller.marginMode === 'isolated'
-                ? styles.isolatedSelectText
+                ? PERPS_PRO_ISOLATED_TEXT_STYLE
                 : undefined
             }
           />
@@ -114,6 +115,7 @@ export const PerpsProTradeForm: React.FC<{
             onPress={() => openSheet('leverage')}
             showCaret={false}
             style={styles.flexItem}
+            useReadableTextVariant={false}
           />
         </View>
         <PerpsProTradeSelect
@@ -276,13 +278,10 @@ export const PerpsProTradeForm: React.FC<{
               style={styles.tif}
               testID="perps-pro-trade-tif-trigger">
               <Text style={styles.tifText}>{tifLabels[form.tif]}</Text>
-              <View style={styles.tifCaret} testID="perps-pro-trade-tif-caret">
-                <RcPrecisionCaret
-                  color={colors2024['neutral-secondary']}
-                  height={6}
-                  width={8}
-                />
-              </View>
+              <PerpsProSelectCaret
+                color={colors2024['neutral-secondary']}
+                testID="perps-pro-trade-tif-caret"
+              />
             </Pressable>
           ) : null}
         </View>
@@ -425,11 +424,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputGroup: { gap: 8 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
-  isolatedSelectText: { fontVariant: ['stylistic-six'] as const },
   optionsGroup: { gap: 8 },
   convertedAmount: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
     marginTop: -4,
@@ -440,11 +438,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  tif: { alignItems: 'center', flexDirection: 'row', gap: 3, height: 20 },
+  tif: { alignItems: 'center', flexDirection: 'row', gap: 4, height: 18 },
   tifText: { color: colors2024['neutral-body'], fontSize: 12, lineHeight: 16 },
-  tifCaret: {
-    transform: [{ rotate: '180deg' }],
-  },
   orderGroups: { gap: 16 },
   orderGroup: { gap: 8 },
   orderSummary: { gap: 4 },

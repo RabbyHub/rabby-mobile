@@ -149,6 +149,8 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
       generation: 1,
       isInitialized: true,
     }),
+    isPerpsUserAbstractionReadyForAccount: (state: typeof mockPerpsState) =>
+      state.userAbstractionReady,
     perpsStore: store,
   };
 });

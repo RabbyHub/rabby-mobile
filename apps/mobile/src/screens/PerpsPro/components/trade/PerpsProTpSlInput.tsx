@@ -1,4 +1,3 @@
-import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -7,6 +6,8 @@ import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTpSlMode } from '../../model/tpsl';
+import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
+import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 
 const NEGATIVE_PREFIX_SLOT_WIDTH = 9;
@@ -151,15 +152,10 @@ export const PerpsProTpSlInput: React.FC<{
                 testID={`perps-pro-tpsl-${kind}-unit`}>
                 {unitLabel}
               </Text>
-              <View
-                style={styles.caret}
-                testID={`perps-pro-tpsl-${kind}-caret`}>
-                <RcPrecisionCaret
-                  color={colors2024['neutral-secondary']}
-                  height={6}
-                  width={8}
-                />
-              </View>
+              <PerpsProSelectCaret
+                color={colors2024['neutral-secondary']}
+                testID={`perps-pro-tpsl-${kind}-caret`}
+              />
             </View>
           </Pressable>
         </View>
@@ -170,7 +166,7 @@ export const PerpsProTpSlInput: React.FC<{
 
 PerpsProTpSlInput.displayName = 'PerpsProTpSlInput';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: { gap: 4, minWidth: 0 },
   legLabel: {
     color: colors2024['neutral-secondary'],
@@ -180,7 +176,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   field: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-5'],
+      isLight,
+    }),
     borderRadius: 6,
     flexDirection: 'row',
     gap: 6,
@@ -274,10 +273,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
     textAlign: 'center',
     width: 36,
-  },
-  caret: {
-    height: 6,
-    transform: [{ rotate: '180deg' }],
-    width: 8,
   },
 }));

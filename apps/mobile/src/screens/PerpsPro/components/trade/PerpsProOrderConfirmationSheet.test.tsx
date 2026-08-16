@@ -259,7 +259,10 @@ describe('PerpsProOrderConfirmationSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
       ),
-    ).toMatchObject({ paddingBottom: 40, paddingTop: 12 });
+    ).toMatchObject({ paddingBottom: 40, paddingTop: 24 });
+    expect(
+      StyleSheet.flatten(screen.getByText('Isolated 10x').props.style),
+    ).toMatchObject({ fontVariant: ['stylistic-six'] });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
