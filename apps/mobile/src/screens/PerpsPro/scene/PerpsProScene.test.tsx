@@ -281,8 +281,6 @@ jest.mock('../components/header/PerpsProAccountSelectorLayer', () => ({
 }));
 
 jest.mock('../components/header/usePerpsProHeaderCollapse', () => ({
-  getPerpsProMinimumScrollContentHeight: (viewportHeight: number) =>
-    viewportHeight + 56,
   usePerpsProHeaderCollapse: () => {
     const { Animated } = require('react-native');
     return {
@@ -713,7 +711,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 756 });
+    ).toMatchObject({ minHeight: 1196 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-header-lead-in-spacer').props.style,
@@ -1119,6 +1117,103 @@ describe('PerpsProScene market loading states', () => {
     );
     expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-open-orders-empty')).toBeNull();
+  });
+
+  it('preserves the empty-state trailing distance after populated account, position, and order rows', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        account: {
+          assets: [],
+          diagnostics: {
+            complete: true,
+            unresolvedDexes: [],
+            unpricedNonZeroAssets: [],
+          },
+          metrics: [],
+          mode: 'standard',
+          primaryKey: 'balance',
+          primaryValue: '0',
+          titleKey: 'perpsAccountSummary',
+          unrealizedPnl: '0',
+        },
+        accountState: 'ready',
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const scroll = screen.getByTestId('perps-pro-scroll');
+    fireEvent(scroll, 'layout', {
+      nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
+    });
+
+    expect(
+      StyleSheet.flatten(scroll.props.contentContainerStyle),
+    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'positions',
+        positions: [{ coin: 'BTC', key: 'BTC' }],
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
+      ),
+    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'openOrders',
+        openOrders: [{ coin: 'BTC', key: 'order-1' }],
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
+      ),
+    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'positions',
+        positionsEmpty: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
+      ),
+    ).toMatchObject({ minHeight: 1196, paddingBottom: 32 });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountState: 'loading',
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
+      ),
+    ).toMatchObject({ minHeight: 1196, paddingBottom: 32 });
   });
 
   it('closes the local funding overlay when the active account changes', () => {

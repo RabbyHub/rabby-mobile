@@ -1,5 +1,4 @@
 import {
-  getPerpsProMinimumScrollContentHeight,
   getPerpsProHeaderGeometry,
   getNextPerpsProHeaderScrollState,
   PERPS_PRO_HEADER_SCROLL_THRESHOLD,
@@ -17,18 +16,6 @@ const initialState = (): PerpsProHeaderScrollState => ({
 describe('Perps Pro collapsible header', () => {
   it('derives the collapse geometry from the shared mode header height', () => {
     expect(PERPS_PRO_HEADER_HEIGHT).toBe(PERPS_HEADER_HEIGHT);
-  });
-
-  it('reserves one real header height of scroll range for short iOS content', () => {
-    expect(getPerpsProMinimumScrollContentHeight(700)).toBe(
-      700 + PERPS_PRO_HEADER_HEIGHT,
-    );
-    expect(getPerpsProMinimumScrollContentHeight(0)).toBe(
-      PERPS_PRO_HEADER_HEIGHT,
-    );
-    expect(getPerpsProMinimumScrollContentHeight(Number.NaN)).toBe(
-      PERPS_PRO_HEADER_HEIGHT,
-    );
   });
 
   it('hides only after cumulative upward content movement reaches threshold', () => {
