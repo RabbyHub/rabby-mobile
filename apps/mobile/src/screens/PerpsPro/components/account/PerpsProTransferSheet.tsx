@@ -1,22 +1,20 @@
 import RcDirectionArrow from '@/assets2024/icons/perps/PerpsProTransferDirectionArrow.svg';
-import RcIconUSDC from '@/assets2024/icons/perps/IconUSDC.svg';
+import ImgTransferUSDC from '@/assets2024/icons/perps/PerpsProTransferUSDC.png';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { formatPerpsProDecimal } from '../../utils/format';
+import { PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
 
@@ -71,14 +69,18 @@ export const PerpsProTransferSheet: React.FC<{
         colors: colors2024,
         linearGradientType: 'bg1',
       })}
+      backgroundStyle={styles.background}
       backdropProps={{ pressBehavior: pending ? 'none' : 'close' }}
       enableDynamicSizing={false}
       enablePanDownToClose={!pending}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
+      handleIndicatorStyle={styles.handleIndicator}
+      handleStyle={styles.handle}
       onDismiss={() => {
         if (!pending) onClose();
       }}
+      style={styles.modal}
       snapPoints={[546]}>
       <BottomSheetView style={styles.sheetView}>
         <AutoLockView style={styles.container}>
@@ -90,7 +92,9 @@ export const PerpsProTransferSheet: React.FC<{
               <Text style={styles.sectionLabel}>
                 {t('page.perps.pro.account.transfer')}
               </Text>
-              <View style={styles.directionCard}>
+              <View
+                style={styles.directionCard}
+                testID="perps-pro-transfer-direction-card">
                 <View style={styles.directionRow}>
                   <Text style={styles.directionLabel}>{t('global.from')}</Text>
                   <Text style={styles.directionValue}>
@@ -114,7 +118,9 @@ export const PerpsProTransferSheet: React.FC<{
             </View>
 
             <View style={styles.section}>
-              <View style={styles.amountHeader}>
+              <View
+                style={styles.amountHeader}
+                testID="perps-pro-transfer-amount-header">
                 <Text style={styles.sectionLabel}>
                   {t('page.perps.pro.account.amount')}
                 </Text>
@@ -122,9 +128,12 @@ export const PerpsProTransferSheet: React.FC<{
                   'page.perps.pro.account.balance',
                 )}:${formatPerpsProDecimal(available, 2)} USDC`}</Text>
               </View>
-              <View style={styles.amountField}>
+              <View
+                style={styles.amountField}
+                testID="perps-pro-transfer-amount-field">
                 <BottomSheetTextInput
                   accessibilityLabel={t('page.perps.pro.account.amount')}
+                  allowFontScaling={false}
                   cursorColor={colors2024['brand-default']}
                   editable={!pending}
                   keyboardType="decimal-pad"
@@ -138,8 +147,14 @@ export const PerpsProTransferSheet: React.FC<{
                   testID="perps-pro-transfer-amount"
                   value={amount}
                 />
-                <View style={styles.tokenPill}>
-                  <RcIconUSDC height={24} width={24} />
+                <View
+                  style={styles.tokenPill}
+                  testID="perps-pro-transfer-token-pill">
+                  <Image
+                    source={ImgTransferUSDC}
+                    style={styles.tokenIcon}
+                    testID="perps-pro-transfer-usdc-icon"
+                  />
                   <Text style={styles.tokenText}>USDC</Text>
                 </View>
               </View>
@@ -175,14 +190,15 @@ export const PerpsProTransferSheet: React.FC<{
               </View>
             </View>
           </View>
-          <View style={styles.footer}>
+          <View style={styles.footer} testID="perps-pro-transfer-footer">
             <Button
               disabled={!valid || pending}
+              buttonStyle={styles.confirmButton}
               height={BOTTOM_BUTTON_COMPACT_HEIGHT}
               loading={pending}
               onPress={() => onConfirm(amountValue.toFixed())}
               title={t('global.confirm')}
-              titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+              titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
               type="primary"
             />
           </View>

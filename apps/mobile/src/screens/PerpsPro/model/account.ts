@@ -10,6 +10,7 @@ import {
   PERPS_QUOTE_ASSET_FULL_NAME,
   type PerpsQuoteAsset,
 } from '@/constant/perps';
+import { isPerpsStandardTransferAbstraction } from '@/hooks/perps/funding/transferEligibility';
 import type {
   AggregatedClearinghouseState,
   RawSpotBalance,
@@ -262,7 +263,8 @@ const buildAccountAssets = ({
   spotAssetCtxs,
   spotMeta,
   spotState,
-}: Omit<BuildPerpsAccountViewModelInput, 'userAbstraction'> & {
+  userAbstraction,
+}: BuildPerpsAccountViewModelInput & {
   mode: PerpsAccountMode;
 }): PerpsAccountAssetRow[] => {
   if (mode !== 'standard') {
@@ -295,7 +297,9 @@ const buildAccountAssets = ({
   const rows: PerpsAccountAssetRow[] = [];
   const spotUsdc = spotState.rawBalancesByToken[0];
   rows.push({
-    action: 'transfer',
+    action: isPerpsStandardTransferAbstraction(userAbstraction)
+      ? 'transfer'
+      : 'none',
     available: spotUsdc?.available || '0',
     coin: 'USDC',
     fullName: PERPS_QUOTE_ASSET_FULL_NAME.USDC,

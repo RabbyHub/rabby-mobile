@@ -118,6 +118,30 @@ const formattedSpotState = () =>
   });
 
 describe('Perps Pro account facts', () => {
+  it('shows Spot USDC Transfer only for exact Standard abstraction values', () => {
+    const build = (userAbstraction: string) =>
+      buildPerpsAccountViewModel({
+        clearinghouseState: null,
+        marketDataMap: {},
+        spotAssetCtxs: {},
+        spotMeta,
+        spotState: formattedSpotState(),
+        userAbstraction,
+      });
+
+    expect(build('default').assets[0]).toMatchObject({
+      action: 'transfer',
+      key: 'spot:USDC',
+    });
+    expect(build('disabled').assets[0]).toMatchObject({
+      action: 'transfer',
+      key: 'spot:USDC',
+    });
+    expect(build('dexAbstraction').assets[0]).toMatchObject({
+      action: 'none',
+      key: 'spot:USDC',
+    });
+  });
   it('merges fast asset-context deltas without deleting omitted fields or keys', () => {
     const previous = {
       '@10': { markPx: '2', midPx: '1.9' },
