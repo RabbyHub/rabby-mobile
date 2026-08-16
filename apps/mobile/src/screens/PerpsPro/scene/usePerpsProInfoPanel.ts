@@ -8,6 +8,7 @@ import {
   perpsStore,
   usePerpsStore,
 } from '@/hooks/perps/usePerpsStore';
+import { getPerpsPendingFundingCount } from '@/hooks/perps/funding/fundingJournal';
 
 import {
   buildPerpsAccountViewModel,
@@ -63,6 +64,9 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
       userAbstraction: state.userAbstraction,
       userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
     })),
+  );
+  const pendingFundingCount = perpsStore(state =>
+    getPerpsPendingFundingCount(state.localLoadingHistory),
   );
   const marketFactSignatures = perpsStore(
     useShallow(state => state.marketData.map(marketFactSignature)),
@@ -283,6 +287,7 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
     openOrderCommandCandidates,
     openOrderCounts,
     openOrders,
+    pendingFundingCount,
     positions,
     retryAccount,
     setActiveInfoTab: preferences.setActiveInfoTab,

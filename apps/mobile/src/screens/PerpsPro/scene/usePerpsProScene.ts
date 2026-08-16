@@ -417,11 +417,9 @@ export const usePerpsProScene = () => {
       tickOptions,
     });
 
-  const klineEnabled =
-    runtime.status === 'ready' &&
-    isFocused &&
-    appState === 'active' &&
-    !!currentMarket;
+  const fundingHistoryEnabled =
+    runtime.status === 'ready' && isFocused && appState === 'active';
+  const klineEnabled = fundingHistoryEnabled && !!currentMarket;
   const subscriptionsEnabled = klineEnabled && !!selectedTickOption;
   const orderBookSubscriptionEnabled =
     runtime.status === 'ready' &&
@@ -443,6 +441,7 @@ export const usePerpsProScene = () => {
     cancelPendingMarketSelection,
     currentMarket,
     executionActive: klineEnabled && tradeConfigurationReady,
+    fundingHistoryEnabled,
     isResolvingMarket,
     klineEnabled,
     marketDataStatus,

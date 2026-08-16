@@ -63,7 +63,20 @@ import { mergeUserFills, reconcileHttpFills } from './userFills';
 import { publishPerpsProHistoryEvent } from './history/perpsHistoryEvents';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import type { PerpsMaintenanceMarginTier } from '@/utils/perpsMargin';
+import { confirmPerpsFundingJournalEntry } from './funding/fundingJournal';
+import { getPerpsFundingLedgerSettlementNonce } from './funding/fundingHistoryIdentity';
+import { createPerpsFundingLedgerQuery } from './funding/fundingHistoryLedgerQuery';
+import {
+  reconcilePerpsFundingHistory,
+  type PerpsFundingHistoryObservation,
+} from './funding/fundingHistoryReconciliation';
+import type {
+  AccountHistoryItem,
+  PerpsFundingConfirmation,
+} from './funding/types';
 import { createPerpsUserAbstractionLifecycle } from './userAbstractionLifecycle';
+
+export type { AccountHistoryItem } from './funding/types';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
@@ -169,15 +182,6 @@ export type MaintenanceMarginTiersByCoin = Record<
   string,
   PerpsMaintenanceMarginTier[]
 >;
-
-export interface AccountHistoryItem {
-  time: number;
-  hash: string;
-  destinationDex?: string;
-  type: 'deposit' | 'withdraw' | 'receive' | 'transfer';
-  status: 'pending' | 'success' | 'failed';
-  usdValue: string;
-}
 
 export type AllDexsClearinghouseState = [string, ClearinghouseState][];
 
@@ -1347,6 +1351,9 @@ const mapLedgerUpdatesToHistory = (
         return {
           time: item.time,
           hash: item.hash,
+          amount: Math.abs(realUsdValue).toString(),
+          asset: 'USDC',
+          assetAmountSource: 'legacyUsdc' as const,
           type: 'receive' as const,
           status: 'success' as const,
           usdValue: realUsdValue.toString(),
@@ -1363,9 +1370,20 @@ const mapLedgerUpdatesToHistory = (
         HYPE_EVM_BRIDGE_ADDRESS_MAP,
       ).includes(destination);
       if (item.delta.type === 'send' && isWithdrawSend) {
+        const rawAmount = item.delta.amount ?? usdcValue;
         return {
           time: item.time,
           hash: item.hash,
+          amount: new BigNumber(rawAmount || 0).abs().toString(),
+          asset:
+            item.delta.amount != null && item.delta.token
+              ? item.delta.token
+              : 'USDC',
+          assetAmountSource:
+            item.delta.amount != null && item.delta.token
+              ? ('explicit' as const)
+              : ('legacyUsdc' as const),
+          settlementNonce: getPerpsFundingLedgerSettlementNonce(item.delta),
           type: 'withdraw' as const,
           status: 'success' as const,
           usdValue: usdcValue?.toString() || '0',
@@ -1380,6 +1398,9 @@ const mapLedgerUpdatesToHistory = (
           return {
             time: item.time,
             hash: item.hash,
+            amount: new BigNumber(usdcValue || 0).abs().toString(),
+            asset: 'USDC',
+            assetAmountSource: 'legacyUsdc' as const,
             destinationDex,
             type: 'transfer' as const,
             status: 'success' as const,
@@ -1389,6 +1410,9 @@ const mapLedgerUpdatesToHistory = (
           return {
             time: item.time,
             hash: item.hash,
+            amount: new BigNumber(usdcValue || 0).abs().toString(),
+            asset: 'USDC',
+            assetAmountSource: 'legacyUsdc' as const,
             type: 'receive' as const,
             status: 'success' as const,
             usdValue: usdcValue.toString(),
@@ -1403,9 +1427,21 @@ const mapLedgerUpdatesToHistory = (
             : 'withdraw'
           : item.delta.type;
 
+      const rawAmount =
+        item.delta.amount || item.delta.usdc || (item.delta as any).usdcValue;
       return {
         time: item.time,
         hash: item.hash,
+        amount: new BigNumber(rawAmount || 0).abs().toString(),
+        asset:
+          item.delta.amount != null && item.delta.token
+            ? item.delta.token
+            : 'USDC',
+        assetAmountSource:
+          item.delta.amount != null && item.delta.token
+            ? ('explicit' as const)
+            : ('legacyUsdc' as const),
+        settlementNonce: getPerpsFundingLedgerSettlementNonce(item.delta),
         type: type as 'deposit' | 'withdraw',
         status: 'success' as const,
         usdValue: item.delta.usdc || (item.delta as any).usdcValue || '0',
@@ -1413,79 +1449,132 @@ const mapLedgerUpdatesToHistory = (
     });
 };
 
-const fetchUserNonFundingLedgerUpdates = async () => {
-  const sdk = apisPerps.getPerpsSDK();
-  const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
-  if (!expectedAddress) {
+type PerpsFundingRemoteWrite = 'prepend' | 'preserve' | 'replace';
+
+export const confirmPerpsFundingOperations = (
+  confirmations: readonly PerpsFundingConfirmation[],
+) => {
+  if (confirmations.length === 0) {
     return;
   }
-  try {
-    const res = await sdk.info.getUserNonFundingLedgerUpdates();
-    if (!isCurrentPerpsAccountAddress(expectedAddress)) {
-      return;
-    }
-    const list = mapLedgerUpdatesToHistory(res, expectedAddress);
-
-    setPerpsState(prev =>
-      prev.currentPerpsAccount &&
-      isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
-        ? { ...prev, userAccountHistory: list }
-        : prev,
+  const operationIds = confirmations.map(item => item.operationId);
+  const operationIdSet = new Set(operationIds);
+  setPerpsState(prev => {
+    const localLoadingHistory = prev.localLoadingHistory.filter(
+      item => !item.operationId || !operationIdSet.has(item.operationId),
     );
-  } catch (error) {
-    console.error('Failed to fetch user non-funding ledger updates:', error);
-  }
+    return localLoadingHistory.length === prev.localLoadingHistory.length
+      ? prev
+      : { ...prev, localLoadingHistory };
+  });
+  confirmations.forEach(confirmation => {
+    void confirmPerpsFundingJournalEntry(confirmation);
+  });
 };
+
+export const reconcilePerpsFundingHistoryObservation = ({
+  confirmedHistory,
+  localHistory,
+  observation,
+  remoteWrite = 'preserve',
+}: {
+  confirmedHistory: readonly AccountHistoryItem[];
+  localHistory?: readonly AccountHistoryItem[];
+  observation: PerpsFundingHistoryObservation;
+  remoteWrite?: PerpsFundingRemoteWrite;
+}) => {
+  let confirmations: PerpsFundingConfirmation[] = [];
+  setPerpsState(prev => {
+    const reconciled = reconcilePerpsFundingHistory({
+      localHistory: localHistory ?? prev.localLoadingHistory,
+      observation,
+      remoteHistory: confirmedHistory,
+    });
+    confirmations = reconciled.confirmations;
+    const userAccountHistory =
+      remoteWrite === 'replace'
+        ? reconciled.history
+        : remoteWrite === 'prepend'
+        ? [...reconciled.history, ...prev.userAccountHistory]
+        : prev.userAccountHistory;
+    return {
+      ...prev,
+      localLoadingHistory: reconciled.local,
+      userAccountHistory,
+    };
+  });
+  confirmPerpsFundingOperations(confirmations);
+  return confirmations;
+};
+
+type PerpsFundingLedgerQueryScope = Readonly<{
+  account: Account;
+  generation: number;
+}>;
+
+const getPerpsFundingLedgerQueryScope =
+  (): PerpsFundingLedgerQueryScope | null => {
+    const runtime = getPerpsAccountRuntimeContext();
+    return runtime.account
+      ? { account: runtime.account, generation: runtime.generation }
+      : null;
+  };
+
+const getPerpsFundingLedgerQueryScopeKey = (
+  scope: PerpsFundingLedgerQueryScope,
+) =>
+  `${scope.account.address.toLowerCase()}::${scope.account.type}::${
+    scope.generation
+  }`;
+
+export const fetchUserNonFundingLedgerUpdates = createPerpsFundingLedgerQuery<
+  PerpsFundingLedgerQueryScope,
+  UserNonFundingLedgerUpdates
+>({
+  applyLedger: (items, scope) => {
+    const list = mapLedgerUpdatesToHistory([...items], scope.account.address);
+    reconcilePerpsFundingHistoryObservation({
+      confirmedHistory: list,
+      observation: 'baseline',
+      remoteWrite: 'replace',
+    });
+  },
+  fetchLedger: scope =>
+    apisPerps
+      .getPerpsSDK()
+      .info.getUserNonFundingLedgerUpdates(scope.account.address),
+  getScope: getPerpsFundingLedgerQueryScope,
+  getScopeKey: getPerpsFundingLedgerQueryScopeKey,
+  onError: error => {
+    console.error('Failed to fetch user non-funding ledger updates:', error);
+  },
+});
 
 const setUserNonFundingLedgerUpdates = (payload: {
   list: UserNonFundingLedgerUpdates[];
   isSnapshot?: boolean;
 }) => {
   const { list, isSnapshot } = payload;
-  const state = perpsStore.getState();
   const newList = mapLedgerUpdatesToHistory(
     list,
-    state.currentPerpsAccount?.address,
+    perpsStore.getState().currentPerpsAccount?.address,
   );
 
   if (isSnapshot) {
-    // Snapshot may be large (historical replay after WS reconnect on app
-    // foreground). Avoid O(pending * snapshot) type scan — take the latest
-    // ledger time per type and drop any pending of the same type whose time
-    // is older, since HL has already recorded an event for it.
-    const maxTimeByType: Record<string, number> = {};
-    for (const item of newList) {
-      const prev = maxTimeByType[item.type];
-      if (prev === undefined || item.time > prev) {
-        maxTimeByType[item.type] = item.time;
-      }
-    }
-    const filteredLocalHistory = state.localLoadingHistory.filter(p => {
-      const cutoff = maxTimeByType[p.type];
-      return cutoff === undefined || p.time > cutoff;
+    void fetchUserNonFundingLedgerUpdates();
+    reconcilePerpsFundingHistoryObservation({
+      confirmedHistory: newList,
+      observation: 'baseline',
+      remoteWrite: 'replace',
     });
-
-    fetchUserNonFundingLedgerUpdates();
-    setPerpsState(prev => ({
-      ...prev,
-      localLoadingHistory: filteredLocalHistory,
-      userAccountHistory: newList,
-    }));
     return;
   }
 
-  let filteredLocalHistory = [...state.localLoadingHistory];
-  newList.forEach(item => {
-    filteredLocalHistory = filteredLocalHistory.filter(i => {
-      return i.type !== item.type;
-    });
+  reconcilePerpsFundingHistoryObservation({
+    confirmedHistory: newList,
+    observation: 'incremental',
+    remoteWrite: 'prepend',
   });
-
-  setPerpsState(prev => ({
-    ...prev,
-    localLoadingHistory: filteredLocalHistory,
-    userAccountHistory: [...newList, ...prev.userAccountHistory],
-  }));
 };
 
 const updateMarketData = (payload: [string, AssetCtx[]][]) => {
@@ -2250,25 +2339,27 @@ export const usePerpsStore = () => {
   // Reducers 转换为 setState 操作
   const setLocalLoadingHistory = useMemoizedFn(
     (payload: AccountHistoryItem[], isReset: boolean = false) => {
+      let confirmations: PerpsFundingConfirmation[] = [];
       setPerpsState(prev => {
         if (isReset) {
           return { ...prev, localLoadingHistory: payload };
         }
-        // If WS already delivered a confirmed entry for this type,
-        // skip adding the pending item (WS arrived before HTTP response)
-        const filtered = payload.filter(item => {
-          return !prev.userAccountHistory.some(
-            h => h.type === item.type && h.time >= item.time,
-          );
+        // A ledger event may arrive before the signing flow persists its local
+        // pending item. Re-run the same exact-first/baseline reconciliation so
+        // the already-settled operation is never reinserted as pending.
+        const reconciled = reconcilePerpsFundingHistory({
+          localHistory: [...payload, ...prev.localLoadingHistory],
+          observation: 'baseline',
+          remoteHistory: prev.userAccountHistory,
         });
-        if (filtered.length === 0) {
-          return prev;
-        }
+        confirmations = reconciled.confirmations;
         return {
           ...prev,
-          localLoadingHistory: [...filtered, ...prev.localLoadingHistory],
+          localLoadingHistory: reconciled.local,
+          userAccountHistory: reconciled.history,
         };
       });
+      confirmPerpsFundingOperations(confirmations);
     },
   );
 

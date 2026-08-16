@@ -17,6 +17,20 @@ jest.mock('@/assets2024/icons/history/IconRightArrowCC.svg', () => {
   return () => ReactModule.createElement(View, { testID: 'history-arrow' });
 });
 
+jest.mock('@/assets2024/icons/bridge/IconPendingCC.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) =>
+    ReactModule.createElement(View, { ...props, testID: 'pending-icon' });
+});
+
+jest.mock('@/assets2024/icons/bridge/IconFailedCC.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) =>
+    ReactModule.createElement(View, { ...props, testID: 'failed-icon' });
+});
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
@@ -169,6 +183,41 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     expect(screen.getByText('+1.25')).toBeTruthy();
     expect(screen.queryByTestId('history-arrow')).toBeNull();
   });
+
+  it.each([
+    ['pending', 'pending-icon'],
+    ['failed', 'failed-icon'],
+  ] as const)(
+    'renders the %s Transaction status instead of time',
+    (status, icon) => {
+      const view = render(
+        <PerpsProHistoryRowView
+          amountUnit="base"
+          onShowFeeExplanation={onShowFeeExplanation}
+          row={{
+            amount: '12',
+            asset: 'USDT',
+            direction: status === 'pending' ? 'deposit' : 'withdraw',
+            hash: `0x${status}`,
+            key: status,
+            kind: 'transaction',
+            rawType: status === 'pending' ? 'receive' : 'withdraw',
+            status,
+            time: 300,
+          }}
+        />,
+      );
+      expect(
+        screen.getByText(`page.perps.pro.history.status.${status}`),
+      ).toBeTruthy();
+      expect(screen.getByTestId(icon).props).toMatchObject({
+        height: 18,
+        width: 18,
+      });
+      expect(screen.getByText('USDT')).toBeTruthy();
+      view.unmount();
+    },
+  );
 
   it('renders Funding asset, side, pair symbol and signed amount', () => {
     const row = mapPerpsProFundingHistoryFact(

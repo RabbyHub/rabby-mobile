@@ -9,8 +9,16 @@ const mockSignTypedData = jest.fn();
 const mockSendRequest = jest.fn();
 const mockMiniSignTypedData = jest.fn();
 const mockShowToast = jest.fn();
+const mockUpsertFundingJournal = jest.fn(async () => undefined);
 
 jest.mock('@/constant', () => ({ INTERNAL_REQUEST_SESSION: {} }));
+
+jest.mock('@/core/serviceApi/perps', () => ({
+  perpsServiceApi: {
+    upsertPerpsFundingJournalEntry: (...args: unknown[]) =>
+      mockUpsertFundingJournal(...args),
+  },
+}));
 
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: {
@@ -141,9 +149,121 @@ describe('executePerpsWithdraw', () => {
       signature: '0xsigned',
     });
     expect(setLocalLoadingHistory).toHaveBeenCalledWith(
-      [expect.objectContaining({ hash: '0xsend', usdValue: '3' })],
+      [
+        expect.objectContaining({
+          amount: '3',
+          asset: 'USDT',
+          hash: '0xsend',
+          usdValue: '3',
+        }),
+      ],
       false,
     );
+    expect(mockUpsertFundingJournal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: '3',
+        asset: 'USDT',
+        settlementIdentity: { kind: 'hyperliquidNonce', nonce: 8 },
+        sourceIdentity: {
+          hash: '0xsend',
+          kind: 'evmTransactionHash',
+        },
+        status: 'pending',
+      }),
+    );
+  });
+
+  it('uses the prepared nonce when standard withdraw returns no hash', async () => {
+    mockSendWithdraw.mockResolvedValueOnce({});
+    const setLocalLoadingHistory = jest.fn();
+
+    await expect(
+      executePerpsWithdraw({
+        account,
+        amount: '12',
+        setLocalLoadingHistory,
+      }),
+    ).resolves.toBe(true);
+
+    expect(setLocalLoadingHistory).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          hash: 'hl-nonce:7',
+          settlementNonce: 7,
+          status: 'pending',
+          type: 'withdraw',
+        }),
+      ],
+      false,
+    );
+    expect(mockUpsertFundingJournal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settlementIdentity: { kind: 'hyperliquidNonce', nonce: 7 },
+        sourceIdentity: undefined,
+        version: 2,
+      }),
+    );
+  });
+
+  it('uses the prepared sendAsset nonce when a HYPE send returns no hash', async () => {
+    mockSendSendAsset.mockResolvedValueOnce({});
+    const setLocalLoadingHistory = jest.fn();
+
+    await expect(
+      executePerpsWithdraw({
+        account,
+        amount: '3',
+        isHypeWithdraw: true,
+        setLocalLoadingHistory,
+      }),
+    ).resolves.toBe(true);
+
+    expect(setLocalLoadingHistory).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          hash: 'hl-nonce:8',
+          settlementNonce: 8,
+          status: 'pending',
+          type: 'withdraw',
+        }),
+      ],
+      false,
+    );
+    expect(mockUpsertFundingJournal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settlementIdentity: { kind: 'hyperliquidNonce', nonce: 8 },
+        sourceIdentity: undefined,
+        version: 2,
+      }),
+    );
+  });
+
+  it('persists the operation before exposing its pending UI state', async () => {
+    let releaseWrite!: () => void;
+    let markWriteStarted!: () => void;
+    const writeStarted = new Promise<void>(resolve => {
+      markWriteStarted = resolve;
+    });
+    mockUpsertFundingJournal.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          releaseWrite = resolve;
+          markWriteStarted();
+        }),
+    );
+    const setLocalLoadingHistory = jest.fn();
+
+    const execution = executePerpsWithdraw({
+      account,
+      amount: '12',
+      setLocalLoadingHistory,
+    });
+    await writeStarted;
+
+    expect(setLocalLoadingHistory).not.toHaveBeenCalled();
+    releaseWrite();
+    await expect(execution).resolves.toBe(true);
+    expect(setLocalLoadingHistory).toHaveBeenCalledTimes(1);
   });
 
   it('does not write a completed action into a newly selected account', async () => {

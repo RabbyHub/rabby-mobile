@@ -58,7 +58,7 @@ jest.mock('./scene/PerpsProScene', () => {
       historyEnabled: boolean;
       initialRegionAlertLayout?: { height: number; width: number } | null;
       isModeSwitching: boolean;
-      onOpenHistory: () => void;
+      onOpenHistory: (hasPendingFunding: boolean) => void;
       onSwitchToSimple: () => void;
     }) =>
       ReactModule.createElement(
@@ -79,8 +79,14 @@ jest.mock('./scene/PerpsProScene', () => {
         ReactModule.createElement(Pressable, {
           accessibilityState: { disabled: !historyEnabled },
           disabled: !historyEnabled,
-          onPress: onOpenHistory,
+          onPress: () => onOpenHistory(false),
           testID: 'perps-pro-history',
+        }),
+        ReactModule.createElement(Pressable, {
+          accessibilityState: { disabled: !historyEnabled },
+          disabled: !historyEnabled,
+          onPress: () => onOpenHistory(true),
+          testID: 'perps-pro-history-pending',
         }),
       ),
   };
@@ -129,5 +135,17 @@ describe('PerpsProScreen', () => {
     expect(
       screen.getByTestId('perps-pro-scene').props.accessibilityState,
     ).toEqual({ disabled: true });
+  });
+
+  it('opens Transaction history when a funding operation is pending', () => {
+    const screen = render(
+      <PerpsProScreen isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-history-pending'));
+    expect(mockPush).toHaveBeenCalledWith('StackTransaction', {
+      params: { initialTab: 'transaction' },
+      screen: 'PerpsProHistory',
+    });
   });
 });

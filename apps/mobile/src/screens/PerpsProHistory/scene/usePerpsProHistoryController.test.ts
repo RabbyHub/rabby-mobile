@@ -14,6 +14,8 @@ const mockFetchFundingWindow = jest.fn();
 const mockSubscribeOrders = jest.fn(() => jest.fn());
 const mockSubscribeFunding = jest.fn(() => jest.fn());
 const mockShowToast = jest.fn();
+const mockReadFundingJournal = jest.fn(async () => []);
+const mockConfirmFundingOperations = jest.fn();
 let mockHistoryListener: ((event: any) => void) | null = null;
 let mockIsFocused = true;
 
@@ -23,6 +25,7 @@ const mockPerpsState = {
     type: 'SimpleKeyring',
   },
   isInitialized: true,
+  localLoadingHistory: [],
   marketDataMap: {},
   spotMeta: null,
 };
@@ -56,9 +59,12 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
       selector(mockPerpsState),
     {
       getState: () => mockPerpsState,
+      setState: jest.fn(),
     },
   );
   return {
+    confirmPerpsFundingOperations: (...args: unknown[]) =>
+      mockConfirmFundingOperations(...args),
     getPerpsAccountRuntimeContext: () => ({
       account: mockPerpsState.currentPerpsAccount,
       generation: 1,
@@ -68,6 +74,13 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     perpsStore,
   };
 });
+
+jest.mock('@/hooks/perps/funding/fundingJournal', () => ({
+  isPerpsFundingJournalEntryForAccount: () => true,
+  readPerpsFundingJournal: (...args: unknown[]) =>
+    mockReadFundingJournal(...args),
+  updatePerpsFundingJournalStatus: jest.fn(async () => undefined),
+}));
 
 jest.mock('../repository/perpsProHistoryRepository', () => ({
   isPerpsProHistorySdkSupported: () => true,
@@ -135,6 +148,8 @@ describe('usePerpsProHistoryController', () => {
       address: '0x1111111111111111111111111111111111111111',
       type: 'SimpleKeyring',
     };
+    mockPerpsState.localLoadingHistory = [];
+    mockReadFundingJournal.mockResolvedValue([]);
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
       value: 'active',
@@ -190,6 +205,117 @@ describe('usePerpsProHistoryController', () => {
     expect(mockFetchTransactionsWindow).toHaveBeenCalledTimes(1);
     expect(mockFetchFundingWindow).toHaveBeenCalledTimes(1);
     expect(mockFetchOrderFills).not.toHaveBeenCalled();
+  });
+
+  it('projects a local pending funding operation into an empty Transaction tab', async () => {
+    mockPerpsState.localLoadingHistory = [
+      {
+        amount: '12',
+        asset: 'USDT',
+        hash: '0xpending',
+        operationId: 'operation-1',
+        status: 'pending',
+        time: 100,
+        type: 'receive',
+        usdValue: '11.9',
+      },
+    ] as never[];
+    const hook = renderHook(() => usePerpsProHistoryController('transaction'));
+
+    await waitFor(() =>
+      expect(hook.result.current.tabState).toMatchObject({
+        rows: [
+          expect.objectContaining({
+            asset: 'USDT',
+            status: 'pending',
+          }),
+        ],
+        status: 'ready',
+      }),
+    );
+  });
+
+  it('keeps provider metadata after the unique success is confirmed and refreshed', async () => {
+    mockReadFundingJournal.mockResolvedValue([
+      {
+        accountAddress: mockPerpsState.currentPerpsAccount.address,
+        accountType: mockPerpsState.currentPerpsAccount.type,
+        amount: '25',
+        asset: 'USDT',
+        createdAt: 100,
+        direction: 'deposit',
+        fundingRoute: 'provider',
+        localType: 'receive',
+        operationId: 'operation-1',
+        settlementAmount: '24.9',
+        sourceIdentity: {
+          hash: '0xsource',
+          kind: 'evmTransactionHash',
+        },
+        status: 'pending',
+        updatedAt: 100,
+        version: 2,
+      },
+    ]);
+    mockFetchTransactionsWindow.mockResolvedValue({
+      completed: true,
+      diagnostics: {
+        excludedByReason: {
+          ambiguousDirection: 0,
+          excludedType: 0,
+          invalidAmount: 0,
+          spotOnly: 0,
+        },
+        visible: 1,
+      },
+      items: [
+        {
+          delta: {
+            destination: mockPerpsState.currentPerpsAccount.address,
+            source: '0x2222222222222222222222222222222222222222',
+            type: 'send',
+            usdc: '24.9',
+            usdcValue: '24.9',
+          },
+          hash: '0xprovider-ledger',
+          time: 200,
+        },
+      ],
+      requests: 1,
+      stalled: false,
+      truncated: false,
+      window: { endTime: Date.now(), startTime: 0 },
+    });
+
+    const hook = renderHook(() => usePerpsProHistoryController('transaction'));
+
+    await waitFor(() =>
+      expect(hook.result.current.tabState.rows[0]).toMatchObject({
+        asset: 'USDT',
+        status: 'success',
+      }),
+    );
+    await waitFor(() =>
+      expect(mockConfirmFundingOperations).toHaveBeenCalledWith([
+        {
+          operationId: 'operation-1',
+          providerSettlementIdentity: {
+            hash: '0xprovider-ledger',
+            kind: 'hyperliquidLedgerHash',
+          },
+        },
+      ]),
+    );
+
+    await act(async () => {
+      await hook.result.current.refresh();
+    });
+    await waitFor(() =>
+      expect(hook.result.current.tabState.rows[0]).toMatchObject({
+        asset: 'USDT',
+        status: 'success',
+      }),
+    );
   });
 
   it('shares the initial fills snapshot between Orders and Trade', async () => {

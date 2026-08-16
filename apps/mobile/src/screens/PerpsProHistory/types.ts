@@ -72,11 +72,14 @@ export interface PerpsProTradeHistoryRow {
 export interface PerpsProTransactionHistoryRow {
   amount: string;
   asset: string;
+  assetAmountSource?: 'explicit' | 'legacyUsdc' | 'local';
   direction: 'deposit' | 'withdraw';
   hash: string;
   key: string;
   kind: 'transaction';
   rawType: string;
+  settlementNonce?: number;
+  status: 'failed' | 'pending' | 'success';
   time: number;
 }
 
@@ -133,6 +136,7 @@ export type PerpsProLedgerFact = UserNonFundingLedgerUpdates & {
     amount?: string;
     destination?: string;
     destinationDex?: string;
+    nonce?: number;
     source?: string;
     sourceDex?: string;
     token?: string;

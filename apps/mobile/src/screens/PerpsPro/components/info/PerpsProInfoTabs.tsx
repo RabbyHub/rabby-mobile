@@ -1,10 +1,11 @@
 import RcIconHistory from '@/assets2024/icons/perps/IconHistoryCC.svg';
+import RcIconPending from '@/assets2024/icons/home/pending.svg';
 import { Text } from '@/components/Typography';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Animated, Easing, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
@@ -13,12 +14,48 @@ interface PerpsProInfoTabsProps {
   activeTab: PerpsProInfoTab;
   historyEnabled: boolean;
   openOrdersCount: number;
-  onHistoryPress: () => void;
+  onHistoryPress: (hasPendingFunding: boolean) => void;
+  pendingFundingCount: number;
   positionsCount: number;
   onChange: (tab: PerpsProInfoTab) => void;
 }
 
 const TABS: PerpsProInfoTab[] = ['account', 'positions', 'openOrders'];
+
+const PerpsProPendingHistoryIcon: React.FC<{ count: number }> = ({ count }) => {
+  const { styles } = useTheme2024({ getStyle });
+  const rotation = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(rotation, {
+        duration: 1600,
+        easing: Easing.linear,
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [rotation]);
+  const rotate = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+  return (
+    <View style={styles.pendingIcon} testID="perps-pro-history-pending">
+      <Animated.View style={{ transform: [{ rotate }] }}>
+        <RcIconPending height={24} width={24} />
+      </Animated.View>
+      {count > 1 ? (
+        <Text
+          style={styles.pendingCount}
+          testID="perps-pro-history-pending-count">
+          {count}
+        </Text>
+      ) : null}
+    </View>
+  );
+};
 
 export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
   ({
@@ -27,6 +64,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
     onChange,
     onHistoryPress,
     openOrdersCount,
+    pendingFundingCount,
     positionsCount,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
@@ -66,18 +104,22 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
           accessibilityRole="button"
           accessibilityState={{ disabled: !historyEnabled }}
           disabled={!historyEnabled}
-          onPress={onHistoryPress}
+          onPress={() => onHistoryPress(pendingFundingCount > 0)}
           style={styles.history}
           testID="perps-pro-history">
-          <RcIconHistory
-            color={
-              historyEnabled
-                ? colors2024['neutral-title-1']
-                : colors2024['neutral-foot']
-            }
-            height={24}
-            width={24}
-          />
+          {historyEnabled && pendingFundingCount > 0 ? (
+            <PerpsProPendingHistoryIcon count={pendingFundingCount} />
+          ) : (
+            <RcIconHistory
+              color={
+                historyEnabled
+                  ? colors2024['neutral-title-1']
+                  : colors2024['neutral-foot']
+              }
+              height={24}
+              width={24}
+            />
+          )}
         </Pressable>
       </View>
     );
@@ -132,5 +174,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     marginLeft: 'auto',
     width: 24,
+  },
+  pendingIcon: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    position: 'relative',
+    width: 24,
+  },
+  pendingCount: {
+    color: colors2024['orange-default'],
+    fontFamily: 'SF Pro',
+    fontSize: 10,
+    fontWeight: '700',
+    lineHeight: 12,
+    position: 'absolute',
+    textAlign: 'center',
   },
 }));

@@ -20,14 +20,23 @@ export const PerpsProScreen: React.FC<PerpsProScreenProps> = ({
 }) => {
   const navigation = useRabbyAppNavigation();
   const historyEnabled = useMemo(isPerpsProHistorySdkSupported, []);
-  const openHistory = useCallback(() => {
-    if (!historyEnabled) {
-      return;
-    }
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.PerpsProHistory,
-    });
-  }, [historyEnabled, navigation]);
+  const openHistory = useCallback(
+    (hasPendingFunding: boolean) => {
+      if (!historyEnabled) {
+        return;
+      }
+      navigation.push(
+        RootNames.StackTransaction,
+        hasPendingFunding
+          ? {
+              params: { initialTab: 'transaction' },
+              screen: RootNames.PerpsProHistory,
+            }
+          : { screen: RootNames.PerpsProHistory },
+      );
+    },
+    [historyEnabled, navigation],
+  );
 
   return (
     <NormalScreenContainer2024 noHeader type="bg1">

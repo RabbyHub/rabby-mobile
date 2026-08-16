@@ -320,6 +320,185 @@ type PerpsAttachedTpSlJournal = {
   version: 1;
 };
 
+export type PerpsFundingJournalStatus = 'confirmed' | 'failed' | 'pending';
+
+type PerpsFundingJournalEntryCommon = {
+  accountAddress: string;
+  accountType: string;
+  amount: string;
+  asset: string;
+  createdAt: number;
+  direction: 'deposit' | 'withdraw';
+  fundingRoute?: 'direct' | 'provider';
+  localType: 'deposit' | 'receive' | 'withdraw';
+  operationId: string;
+  settlementAmount: string;
+  sourceChainId?: string;
+  sourceTokenId?: string;
+  status: PerpsFundingJournalStatus;
+  updatedAt: number;
+};
+
+type PerpsFundingJournalEntryV1 = PerpsFundingJournalEntryCommon & {
+  sourceHash: string;
+  version: 1;
+};
+
+export type PerpsFundingJournalEntry = PerpsFundingJournalEntryCommon & {
+  providerSettlementIdentity?: {
+    hash: string;
+    kind: 'hyperliquidLedgerHash';
+  };
+  settlementIdentity?: {
+    kind: 'hyperliquidNonce';
+    nonce: number;
+  };
+  sourceIdentity?: {
+    hash: string;
+    kind: 'evmTransactionHash';
+  };
+  version: 2;
+};
+
+type PerpsFundingJournal = {
+  entries: PerpsFundingJournalEntry[];
+  version: 2;
+};
+
+type PerpsFundingJournalV1 = {
+  entries: PerpsFundingJournalEntryV1[];
+  version: 1;
+};
+
+const PERPS_FUNDING_JOURNAL_LIMIT = 5000;
+
+const isPerpsFundingJournalEntry = (
+  value: unknown,
+): value is PerpsFundingJournalEntry =>
+  isRecord(value) &&
+  value.version === 2 &&
+  typeof value.operationId === 'string' &&
+  value.operationId.length > 0 &&
+  typeof value.accountAddress === 'string' &&
+  value.accountAddress.length > 0 &&
+  typeof value.accountType === 'string' &&
+  value.accountType.length > 0 &&
+  (value.direction === 'deposit' || value.direction === 'withdraw') &&
+  (value.localType === 'deposit' ||
+    value.localType === 'receive' ||
+    value.localType === 'withdraw') &&
+  (value.status === 'confirmed' ||
+    value.status === 'failed' ||
+    value.status === 'pending') &&
+  typeof value.asset === 'string' &&
+  value.asset.length > 0 &&
+  typeof value.amount === 'string' &&
+  value.amount.length > 0 &&
+  typeof value.settlementAmount === 'string' &&
+  value.settlementAmount.length > 0 &&
+  (value.fundingRoute === undefined ||
+    value.fundingRoute === 'direct' ||
+    value.fundingRoute === 'provider') &&
+  (value.providerSettlementIdentity === undefined ||
+    (isRecord(value.providerSettlementIdentity) &&
+      value.providerSettlementIdentity.kind === 'hyperliquidLedgerHash' &&
+      typeof value.providerSettlementIdentity.hash === 'string' &&
+      value.providerSettlementIdentity.hash.length > 0)) &&
+  (value.sourceIdentity === undefined ||
+    (isRecord(value.sourceIdentity) &&
+      value.sourceIdentity.kind === 'evmTransactionHash' &&
+      typeof value.sourceIdentity.hash === 'string' &&
+      value.sourceIdentity.hash.length > 0)) &&
+  (value.settlementIdentity === undefined ||
+    (isRecord(value.settlementIdentity) &&
+      value.settlementIdentity.kind === 'hyperliquidNonce' &&
+      typeof value.settlementIdentity.nonce === 'number' &&
+      Number.isSafeInteger(value.settlementIdentity.nonce) &&
+      value.settlementIdentity.nonce > 0)) &&
+  (value.sourceIdentity !== undefined ||
+    value.settlementIdentity !== undefined) &&
+  (value.sourceChainId === undefined ||
+    typeof value.sourceChainId === 'string') &&
+  (value.sourceTokenId === undefined ||
+    typeof value.sourceTokenId === 'string') &&
+  typeof value.createdAt === 'number' &&
+  Number.isFinite(value.createdAt) &&
+  value.createdAt >= 0 &&
+  typeof value.updatedAt === 'number' &&
+  Number.isFinite(value.updatedAt) &&
+  value.updatedAt >= value.createdAt;
+
+const isPerpsFundingJournal = (value: unknown): value is PerpsFundingJournal =>
+  isRecord(value) &&
+  value.version === 2 &&
+  Array.isArray(value.entries) &&
+  value.entries.length <= PERPS_FUNDING_JOURNAL_LIMIT &&
+  value.entries.every(isPerpsFundingJournalEntry) &&
+  new Set(value.entries.map(entry => entry.operationId)).size ===
+    value.entries.length;
+
+const isPerpsFundingJournalEntryV1 = (
+  value: unknown,
+): value is PerpsFundingJournalEntryV1 =>
+  isRecord(value) &&
+  value.version === 1 &&
+  typeof value.operationId === 'string' &&
+  value.operationId.length > 0 &&
+  typeof value.accountAddress === 'string' &&
+  value.accountAddress.length > 0 &&
+  typeof value.accountType === 'string' &&
+  value.accountType.length > 0 &&
+  (value.direction === 'deposit' || value.direction === 'withdraw') &&
+  (value.localType === 'deposit' ||
+    value.localType === 'receive' ||
+    value.localType === 'withdraw') &&
+  (value.status === 'confirmed' ||
+    value.status === 'failed' ||
+    value.status === 'pending') &&
+  typeof value.asset === 'string' &&
+  value.asset.length > 0 &&
+  typeof value.amount === 'string' &&
+  value.amount.length > 0 &&
+  typeof value.settlementAmount === 'string' &&
+  value.settlementAmount.length > 0 &&
+  typeof value.sourceHash === 'string' &&
+  value.sourceHash.length > 0 &&
+  (value.sourceChainId === undefined ||
+    typeof value.sourceChainId === 'string') &&
+  (value.sourceTokenId === undefined ||
+    typeof value.sourceTokenId === 'string') &&
+  typeof value.createdAt === 'number' &&
+  Number.isFinite(value.createdAt) &&
+  value.createdAt >= 0 &&
+  typeof value.updatedAt === 'number' &&
+  Number.isFinite(value.updatedAt) &&
+  value.updatedAt >= value.createdAt;
+
+const isPerpsFundingJournalV1 = (
+  value: unknown,
+): value is PerpsFundingJournalV1 =>
+  isRecord(value) &&
+  value.version === 1 &&
+  Array.isArray(value.entries) &&
+  value.entries.length <= PERPS_FUNDING_JOURNAL_LIMIT &&
+  value.entries.every(isPerpsFundingJournalEntryV1) &&
+  new Set(value.entries.map(entry => entry.operationId)).size ===
+    value.entries.length;
+
+const migratePerpsFundingJournalEntry = (
+  entry: PerpsFundingJournalEntryV1,
+): PerpsFundingJournalEntry => {
+  const { sourceHash, version: _version, ...common } = entry;
+  return {
+    ...common,
+    sourceIdentity: {
+      hash: sourceHash,
+      kind: 'evmTransactionHash',
+    },
+    version: 2,
+  };
+};
+
 const ATTACHED_TP_SL_CLOID_PATTERN = /^0x[0-9a-f]{32}$/u;
 
 const isAttachedTpSlCloid = (value: unknown): value is `0x${string}` =>
@@ -444,6 +623,7 @@ export class PerpsService extends StoreServiceBase<
   // rewrites its whole object and would clobber foreign fields.
   private marketCacheStorage?: StorageAdapaterOptions['storageAdapter'];
   private attachedTpSlJournalStorage?: StorageAdapaterOptions['storageAdapter'];
+  private fundingJournalStorage?: StorageAdapaterOptions['storageAdapter'];
   private keyringCrypto: KeyringCrypto;
   private agentWalletUnlockVersion = 0;
   private memoryState: PerpsServiceMemoryState = {
@@ -476,6 +656,7 @@ export class PerpsService extends StoreServiceBase<
     this.keyringCrypto = options.keyringCrypto;
     this.marketCacheStorage = options?.storageAdapter;
     this.attachedTpSlJournalStorage = options?.storageAdapter;
+    this.fundingJournalStorage = options?.storageAdapter;
     this.memoryState.agentWallets = {};
     const migratedProPreferences = migrateLegacyProPreferences(
       this.store.proPreferences,
@@ -550,6 +731,58 @@ export class PerpsService extends StoreServiceBase<
       APP_STORE_NAMES.perpsAttachedTpSlJournal,
       { entries, version: 1 } satisfies PerpsAttachedTpSlJournal,
     );
+  };
+
+  getPerpsFundingJournal = (): PerpsFundingJournalEntry[] => {
+    const value = this.fundingJournalStorage?.getItem(
+      APP_STORE_NAMES.perpsFundingJournal,
+    );
+    if (value == null) return [];
+    if (isPerpsFundingJournal(value)) {
+      return value.entries;
+    }
+    if (isPerpsFundingJournalV1(value)) {
+      return value.entries.map(migratePerpsFundingJournalEntry);
+    }
+    throw new Error('Perps funding journal is invalid');
+  };
+
+  upsertPerpsFundingJournalEntry = (entry: PerpsFundingJournalEntry) => {
+    if (!isPerpsFundingJournalEntry(entry)) {
+      throw new Error('Perps funding journal entry is invalid');
+    }
+    const entries = [
+      ...this.getPerpsFundingJournal().filter(
+        item => item.operationId !== entry.operationId,
+      ),
+      entry,
+    ]
+      .sort(
+        (left, right) =>
+          right.updatedAt - left.updatedAt ||
+          left.operationId.localeCompare(right.operationId),
+      )
+      .slice(0, PERPS_FUNDING_JOURNAL_LIMIT);
+    this.fundingJournalStorage?.setItem(APP_STORE_NAMES.perpsFundingJournal, {
+      entries,
+      version: 2,
+    } satisfies PerpsFundingJournal);
+  };
+
+  removePerpsFundingJournalEntry = (operationId: string) => {
+    const entries = this.getPerpsFundingJournal().filter(
+      entry => entry.operationId !== operationId,
+    );
+    if (entries.length === 0) {
+      this.fundingJournalStorage?.removeItem(
+        APP_STORE_NAMES.perpsFundingJournal,
+      );
+      return;
+    }
+    this.fundingJournalStorage?.setItem(APP_STORE_NAMES.perpsFundingJournal, {
+      entries,
+      version: 2,
+    } satisfies PerpsFundingJournal);
   };
 
   getFavoriteMarkets = async () => {
