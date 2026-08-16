@@ -218,6 +218,16 @@ describe('Perps Pro trade selection sheets', () => {
     ).toEqual({ checked: false, disabled: false });
     expect(screen.queryByTestId('perps-pro-margin-mode-selected')).toBeNull();
     expect(screen.getByText('Isolated description')).toBeTruthy();
+    const crossTitleStyle = StyleSheet.flatten(
+      screen.getByText('Cross').props.style,
+    );
+    const isolatedTitleStyle = StyleSheet.flatten(
+      screen.getByText('Isolated').props.style,
+    );
+    expect(crossTitleStyle).toEqual(isolatedTitleStyle);
+    expect(crossTitleStyle).toMatchObject({
+      fontVariant: ['stylistic-six'],
+    });
   });
 
   it('matches the 326px Order Type icon-list contract', () => {

@@ -1,13 +1,18 @@
-import RcIconAmountUnitArrow from '@/assets2024/icons/perps/PerpsProAmountUnitArrow.svg';
+import RcIconAmountUnitSwitch from '@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 
+import {
+  getPerpsProTradeControlMediumTextStyle,
+  resolvePerpsProFieldBackground,
+} from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 
 const noop = () => undefined;
+const unitFontStyle = getPerpsProTradeControlMediumTextStyle(Platform.OS);
 
 export const PerpsProTradeAmountField: React.FC<{
   label: string;
@@ -39,11 +44,17 @@ export const PerpsProTradeAmountField: React.FC<{
       <View style={styles.container} testID="perps-pro-trade-amount-field">
         <View style={styles.amountArea}>
           {showFloatingLabel ? (
-            <Text style={styles.floatingLabel} testID="perps-pro-amount-label">
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={styles.floatingLabel}
+              testID="perps-pro-amount-label">
               {label}
             </Text>
           ) : (
             <Text
+              ellipsizeMode="tail"
+              numberOfLines={1}
               pointerEvents="none"
               style={styles.centeredPlaceholder}
               testID="perps-pro-amount-placeholder">
@@ -75,23 +86,19 @@ export const PerpsProTradeAmountField: React.FC<{
           onPress={onToggleUnit}
           style={styles.unitArea}
           testID="perps-pro-trade-amount-unit">
-          <Text numberOfLines={1} style={styles.unit}>
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            style={[styles.unit, unitFontStyle]}>
             {unit}
           </Text>
-          <View pointerEvents="none" style={styles.switchIcon}>
-            <RcIconAmountUnitArrow
-              color={colors2024['neutral-secondary']}
-              height={4.5}
-              style={styles.switchArrowTop}
-              width={8}
-            />
-            <RcIconAmountUnitArrow
-              color={colors2024['neutral-secondary']}
-              height={4.5}
-              style={styles.switchArrowBottom}
-              width={8}
-            />
-          </View>
+          <RcIconAmountUnitSwitch
+            color={colors2024['neutral-secondary']}
+            height={10}
+            pointerEvents="none"
+            testID="perps-pro-trade-amount-unit-switch"
+            width={10}
+          />
         </Pressable>
       </View>
     );
@@ -100,10 +107,13 @@ export const PerpsProTradeAmountField: React.FC<{
 
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-5'],
+      isLight,
+    }),
     borderRadius: 6,
     flexDirection: 'row',
     gap: 6,
@@ -119,7 +129,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   floatingLabel: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '400',
     left: 0,
@@ -131,7 +141,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   centeredPlaceholder: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     left: 0,
@@ -143,7 +153,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   input: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     height: 40,
@@ -162,7 +172,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 2,
     height: 24,
-    paddingLeft: 3,
+    paddingLeft: 6,
+    paddingRight: 4,
     width: 52,
   },
   unit: {
@@ -172,22 +183,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
     textAlign: 'center',
-    width: 36,
-  },
-  switchIcon: {
-    height: 10,
-    position: 'relative',
-    width: 10,
-  },
-  switchArrowTop: {
-    left: 1,
-    position: 'absolute',
-    top: 0,
-    transform: [{ rotate: '180deg' }],
-  },
-  switchArrowBottom: {
-    bottom: 0,
-    left: 1,
-    position: 'absolute',
+    width: 34,
   },
 }));

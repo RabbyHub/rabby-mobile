@@ -2,19 +2,13 @@ import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-jest.mock('@/assets/icons/swap/switch-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
 jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/icons/perps/PerpsProAmountUnitArrow.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -131,7 +125,12 @@ describe('PerpsProTradeSkeleton', () => {
     ).toMatchObject({ gap: 16 });
     expect(
       StyleSheet.flatten(screen.getByText('Isolated').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18, textAlign: 'center' });
+    ).toMatchObject({
+      fontSize: 14,
+      fontVariant: ['stylistic-six'],
+      lineHeight: 18,
+      textAlign: 'center',
+    });
     expect(
       StyleSheet.flatten(screen.getByText('25x').props.style),
     ).toMatchObject({
@@ -139,6 +138,9 @@ describe('PerpsProTradeSkeleton', () => {
       lineHeight: 18,
       textAlign: 'center',
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('25x').props.style).fontVariant,
+    ).toBeUndefined();
     expect(screen.getAllByTestId('perps-pro-trade-select-caret')).toHaveLength(
       1,
     );
@@ -181,12 +183,16 @@ describe('PerpsProTradeSkeleton', () => {
     ).toMatchObject({
       borderLeftWidth: 1,
       height: 24,
-      paddingLeft: 3,
+      paddingLeft: 6,
+      paddingRight: 4,
       width: 52,
     });
     expect(
       StyleSheet.flatten(screen.getByText('USDT').props.style),
-    ).toMatchObject({ fontSize: 12, lineHeight: 16, width: 36 });
+    ).toMatchObject({ fontSize: 12, lineHeight: 16, width: 34 });
+    expect(
+      screen.getByTestId('perps-pro-trade-amount-unit-switch').props,
+    ).toMatchObject({ height: 10, width: 10 });
   });
 
   it('adds the Available action and dotted explanatory labels', () => {

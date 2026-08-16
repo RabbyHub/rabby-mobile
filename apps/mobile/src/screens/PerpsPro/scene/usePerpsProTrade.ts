@@ -16,6 +16,7 @@ import {
 } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
   getPerpsAccountRuntimeContext,
+  isPerpsUserAbstractionReadyForAccount,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import {
@@ -206,7 +207,7 @@ export const usePerpsProTrade = ({
         isUserDataReady: state.isUserDataReady,
         unifiedAvailableAfterMaintenance,
         userAbstraction: state.userAbstraction,
-        userAbstractionReady: state.userAbstractionReady,
+        userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
       };
     }),
   );

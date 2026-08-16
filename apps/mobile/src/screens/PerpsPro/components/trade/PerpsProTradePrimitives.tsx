@@ -1,4 +1,3 @@
-import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
 import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
@@ -18,15 +17,24 @@ import {
 import type { PerpsProFieldExplanationKey } from '../../model/fieldExplanation';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
+import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
+import {
+  getPerpsProIsolatedTextStyle,
+  getPerpsProTradeControlMediumTextStyle,
+  resolvePerpsProFieldBackground,
+} from '../common/perpsProVisual';
 
 export const getPerpsProTradeSelectFontStyle = (
   platform: typeof Platform.OS,
-): TextStyle =>
-  platform === 'android'
-    ? { fontFamily: 'SF-Pro-Rounded-Medium' }
-    : { fontFamily: 'SF Pro', fontWeight: '500' };
+): TextStyle => ({
+  ...getPerpsProTradeControlMediumTextStyle(platform),
+  ...getPerpsProIsolatedTextStyle(platform),
+});
 
 const tradeSelectFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
+const tradeSelectPlainFontStyle = getPerpsProTradeControlMediumTextStyle(
+  Platform.OS,
+);
 
 export const PerpsProTradeSelect: React.FC<{
   label: string;
@@ -35,8 +43,17 @@ export const PerpsProTradeSelect: React.FC<{
   showCaret?: boolean;
   style?: ViewStyle;
   textStyle?: StyleProp<TextStyle>;
+  useReadableTextVariant?: boolean;
 }> = React.memo(
-  ({ disabled, label, onPress, showCaret = true, style, textStyle }) => {
+  ({
+    disabled,
+    label,
+    onPress,
+    showCaret = true,
+    style,
+    textStyle,
+    useReadableTextVariant = true,
+  }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     return (
       <Pressable
@@ -46,15 +63,20 @@ export const PerpsProTradeSelect: React.FC<{
         style={[styles.select, disabled ? styles.disabled : null, style]}>
         <Text
           numberOfLines={1}
-          style={[styles.selectText, tradeSelectFontStyle, textStyle]}>
+          style={[
+            styles.selectText,
+            useReadableTextVariant
+              ? tradeSelectFontStyle
+              : tradeSelectPlainFontStyle,
+            textStyle,
+          ]}>
           {label}
         </Text>
         {showCaret ? (
-          <View style={styles.caret} testID="perps-pro-trade-select-caret">
-            <RcPrecisionCaret
+          <View style={styles.caret}>
+            <PerpsProSelectCaret
               color={colors2024['neutral-secondary']}
-              height={6}
-              width={8}
+              testID="perps-pro-trade-select-caret"
             />
           </View>
         ) : null}
@@ -160,6 +182,7 @@ export const PerpsProTradeCheckbox: React.FC<{
         </Pressable>
         <PerpsProDottedUnderlineText
           accessibilityLabel={label}
+          containerStyle={disabled ? styles.disabled : undefined}
           onPress={
             explanationKey
               ? () => openFieldExplanation(explanationKey)
@@ -218,10 +241,13 @@ export const PerpsProTradeButton: React.FC<{
 
 PerpsProTradeButton.displayName = 'PerpsProTradeButton';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   select: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: resolvePerpsProFieldBackground({
+      darkBackground: colors2024['neutral-bg-5'],
+      isLight,
+    }),
     borderRadius: 6,
     flexDirection: 'row',
     height: 26,
@@ -240,7 +266,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   caret: {
     marginLeft: 4,
-    transform: [{ rotate: '180deg' }],
   },
   disabled: {
     opacity: 0.5,
@@ -306,7 +331,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tradeButtonText: {
     color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

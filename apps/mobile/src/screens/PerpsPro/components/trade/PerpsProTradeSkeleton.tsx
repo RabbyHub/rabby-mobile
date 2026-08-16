@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PERPS_PRO_MAIN_COLUMN_HEIGHT } from '../../model/layout';
+import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { PerpsProTradeAmountField } from './PerpsProTradeAmountField';
 import { PerpsProTradeAmountSlider } from './PerpsProTradeAmountSlider';
 import {
@@ -39,11 +40,17 @@ export const PerpsProTradeSkeleton: React.FC<{
             }
             showCaret={false}
             style={styles.flexItem}
+            textStyle={
+              marginMode === 'isolated'
+                ? PERPS_PRO_ISOLATED_TEXT_STYLE
+                : undefined
+            }
           />
           <PerpsProTradeSelect
             label={`${Math.max(1, leverage)}x`}
             showCaret={false}
             style={styles.flexItem}
+            useReadableTextVariant={false}
           />
         </View>
         <PerpsProTradeSelect label={t('page.perps.pro.trade.market')} />

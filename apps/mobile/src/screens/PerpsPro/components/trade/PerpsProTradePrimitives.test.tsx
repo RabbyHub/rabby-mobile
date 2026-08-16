@@ -34,16 +34,26 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => {
     PerpsProDottedUnderlineText: ({
       accessibilityLabel,
       children,
+      containerStyle,
       onPress,
       style,
     }: any) =>
       onPress
         ? ReactModule.createElement(
             Pressable,
-            { accessibilityLabel, accessibilityRole: 'button', onPress },
+            {
+              accessibilityLabel,
+              accessibilityRole: 'button',
+              onPress,
+              style: containerStyle,
+            },
             ReactModule.createElement(Text, { style }, children),
           )
-        : ReactModule.createElement(Text, { style }, children),
+        : ReactModule.createElement(
+            Text,
+            { style: [containerStyle, style] },
+            children,
+          ),
   };
 });
 jest.mock('../common/PerpsProFieldExplanationContext', () => ({
@@ -90,6 +100,16 @@ describe('PerpsProTradePrimitives explanations', () => {
 
     fireEvent.press(screen.getByRole('button'));
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('reduceOnly');
+    expect(
+      require('react-native').StyleSheet.flatten(
+        screen.getByRole('checkbox').props.style,
+      ),
+    ).toMatchObject({ opacity: 0.5 });
+    expect(
+      require('react-native').StyleSheet.flatten(
+        screen.getByRole('button').props.style,
+      ),
+    ).toMatchObject({ opacity: 0.5 });
   });
 
   it.each([

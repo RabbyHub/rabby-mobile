@@ -10,6 +10,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTradeTif } from '../../model/trade';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 export const PerpsProTifSheet: React.FC<{
@@ -115,28 +116,9 @@ export const PerpsProTifSheet: React.FC<{
 PerpsProTifSheet.displayName = 'PerpsProTifSheet';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 19,
-    paddingTop: 17,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
+  ...getPerpsProBottomSheetChromeStyles(colors2024, {
+    handlePlacement: 'centered',
+  }),
   sheet: { height: '100%' },
   content: {
     height: '100%',
