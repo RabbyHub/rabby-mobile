@@ -2881,6 +2881,7 @@
           "maximumMargin": "Maximum amount is {{amount}} {{quote}}",
           "marginUpdated": "Margin updated.",
           "marginUpdateFailed": "Cannot update margin: {{reason}}",
+          "marginRefreshFailed": "Cannot refresh current margin data. Please try again.",
           "marginUpdateUnknown": "The margin update outcome is unknown. Check the position before retrying.",
           "marginContextChanged": "Position or account changed. Please review again.",
           "marginRatio": "Margin Ratio",

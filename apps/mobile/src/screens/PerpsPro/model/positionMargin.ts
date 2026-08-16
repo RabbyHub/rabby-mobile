@@ -3,7 +3,6 @@ import BigNumber from 'bignumber.js';
 import type { PerpsMarketMarginMode, PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsMaintenanceMarginTier } from '@/utils/perpsMargin';
 
-import { getPerpsProCollateralToken } from './tradeRiskAccount';
 import {
   calculateLiquidationDistance,
   type PerpsPositionDirection,
@@ -53,10 +52,9 @@ export interface PositionMarginAvailableInput {
   accountFactsReady: boolean;
   dexWithdrawable: unknown;
   isSpotStateReady: boolean;
+  portfolioAvailableAfterMaintenance: unknown;
   quoteAsset: PerpsQuoteAsset;
-  tokenToAvailableAfterMaintenance:
-    | readonly (readonly [number, string])[]
-    | null;
+  spotQuoteAvailable: unknown;
   userAbstraction: string;
   userAbstractionReady: boolean;
 }
@@ -66,31 +64,27 @@ export const resolvePositionMarginAvailable = ({
   accountFactsReady,
   dexWithdrawable,
   isSpotStateReady,
+  portfolioAvailableAfterMaintenance,
   quoteAsset,
-  tokenToAvailableAfterMaintenance,
+  spotQuoteAvailable,
   userAbstraction,
   userAbstractionReady,
 }: PositionMarginAvailableInput): string | null => {
   if (!accountFactsReady || !userAbstractionReady) {
     return null;
   }
-  const usesSpotCollateral =
-    userAbstraction === 'unifiedAccount' ||
-    userAbstraction === 'portfolioMargin';
-  const source = usesSpotCollateral
-    ? (() => {
-        if (!isSpotStateReady || !tokenToAvailableAfterMaintenance) {
-          return null;
-        }
-        const token = getPerpsProCollateralToken(quoteAsset);
-        if (token == null) {
-          return null;
-        }
-        return tokenToAvailableAfterMaintenance.find(
-          entry => Number(entry[0]) === token,
-        )?.[1];
-      })()
-    : dexWithdrawable;
+  let source: unknown;
+  if (userAbstraction === 'unifiedAccount') {
+    source = isSpotStateReady ? spotQuoteAvailable : null;
+  } else if (userAbstraction === 'portfolioMargin') {
+    source = isSpotStateReady
+      ? quoteAsset === 'USDC'
+        ? portfolioAvailableAfterMaintenance
+        : spotQuoteAvailable
+      : null;
+  } else {
+    source = dexWithdrawable;
+  }
   const available = decimal(source);
   if (!available) {
     return null;
@@ -183,14 +177,15 @@ export const validatePositionMarginTarget = ({
   if (!range || !range.hasRepresentableRange) {
     return 'unavailable';
   }
+  const visibleCurrent = formatPositionMarginTarget(range.current);
+  if (visibleCurrent != null && value.eq(visibleCurrent)) {
+    return 'noChange';
+  }
   if (value.lt(range.min)) {
     return 'belowMin';
   }
   if (value.gt(range.max)) {
     return 'aboveMax';
-  }
-  if (value.eq(range.current)) {
-    return 'noChange';
   }
   return 'valid';
 };

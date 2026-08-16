@@ -5,44 +5,44 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Keyboard, Pressable, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProManageMarginView } from '../../scene/usePerpsProManageMargin';
+import {
+  getPerpsProBottomSheetChromeStyles,
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  resolvePerpsProFieldBackground,
+} from '../common/perpsProVisual';
 import {
   formatPerpsProDecimal,
   formatPerpsProPercent,
   formatPerpsProPrice,
 } from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
-import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
+import { PerpsProManageMarginAmountRow } from './PerpsProManageMarginAmountRow';
 import { PerpsProManageMarginSlider } from './PerpsProManageMarginSlider';
 
 const SHEET_HEIGHT = 552;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 
-const PerpsProManageMarginBottomSheetTextInput = React.forwardRef<
-  TextInput,
-  React.ComponentProps<typeof TextInput>
->((props, forwardedRef) => (
-  <BottomSheetTextInput
-    {...props}
-    ref={
-      forwardedRef as React.Ref<React.ElementRef<typeof BottomSheetTextInput>>
-    }
-  />
-));
+const formatManageMarginLiquidationPrice = (
+  value: string | null,
+  pxDecimals: number,
+) => {
+  const formatted = formatPerpsProPrice(value, pxDecimals);
+  return formatted === '-' ? '--' : formatted;
+};
 
-PerpsProManageMarginBottomSheetTextInput.displayName =
-  'PerpsProManageMarginBottomSheetTextInput';
+interface ManageMarginPresentation {
+  draft: string;
+  view: PerpsProManageMarginView;
+}
 
 export const PerpsProManageMarginSheet: React.FC<{
   dirty: boolean;
@@ -72,10 +72,24 @@ export const PerpsProManageMarginSheet: React.FC<{
     const inputRef = useRef<TextInput>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const interactivePresentation = { draft, view };
+    const lastInteractivePresentationRef = useRef<ManageMarginPresentation>(
+      interactivePresentation,
+    );
+    if (!pending) {
+      lastInteractivePresentationRef.current = interactivePresentation;
+    }
+    const presentation = pending
+      ? lastInteractivePresentationRef.current
+      : interactivePresentation;
+    const displayDraft = presentation.draft;
+    const displayView = presentation.view;
     const hasBoundaryError =
-      view.targetState === 'belowMin' || view.targetState === 'aboveMax';
-    const range = view.range;
-    const confirmDisabled = pending || !dirty || view.targetState !== 'valid';
+      displayView.targetState === 'belowMin' ||
+      displayView.targetState === 'aboveMax';
+    const range = displayView.range;
+    const confirmDisabled =
+      pending || !dirty || displayView.targetState !== 'valid';
     usePerpsProSheetNavigationRegistration({
       active: visible,
       dismiss: onClose,
@@ -101,19 +115,22 @@ export const PerpsProManageMarginSheet: React.FC<{
       },
       [dismissInput, onSelectTarget],
     );
-    const currentDistance = view.currentLiquidationDistance
-      ? formatPerpsProPercent(Number(view.currentLiquidationDistance), 2)
+    const currentDistance = displayView.currentLiquidationDistance
+      ? formatPerpsProPercent(Number(displayView.currentLiquidationDistance), 2)
       : '--';
-    const projectedDistance = view.projectedLiquidationDistance
-      ? formatPerpsProPercent(Number(view.projectedLiquidationDistance), 2)
+    const projectedDistance = displayView.projectedLiquidationDistance
+      ? formatPerpsProPercent(
+          Number(displayView.projectedLiquidationDistance),
+          2,
+        )
       : '--';
-    const currentLiq = formatPerpsProPrice(
-      view.currentLiquidationPrice,
-      view.pxDecimals,
+    const currentLiq = formatManageMarginLiquidationPrice(
+      displayView.currentLiquidationPrice,
+      displayView.pxDecimals,
     );
-    const projectedLiq = formatPerpsProPrice(
-      view.projectedLiquidationPrice,
-      view.pxDecimals,
+    const projectedLiq = formatManageMarginLiquidationPrice(
+      displayView.projectedLiquidationPrice,
+      displayView.pxDecimals,
     );
 
     return (
@@ -143,46 +160,56 @@ export const PerpsProManageMarginSheet: React.FC<{
               {t('page.perps.pro.positions.manageMargin')}
             </Text>
             <View style={styles.identityRow}>
-              <Text style={styles.pair}>{view.displayPair}</Text>
-              {view.sourceTag ? (
+              <Text style={styles.pair}>{displayView.displayPair}</Text>
+              {displayView.sourceTag ? (
                 <View style={styles.sourceTag}>
                   <Text style={styles.sourceText}>
-                    {view.sourceTag.toUpperCase()}
+                    {displayView.sourceTag.toUpperCase()}
                   </Text>
                 </View>
               ) : null}
               <View
                 style={
-                  view.direction === 'long' ? styles.longTag : styles.shortTag
+                  displayView.direction === 'long'
+                    ? styles.longTag
+                    : styles.shortTag
                 }>
                 <Text
                   style={
-                    view.direction === 'long'
+                    displayView.direction === 'long'
                       ? styles.longText
                       : styles.shortText
                   }>
-                  {view.direction === 'long'
+                  {displayView.direction === 'long'
                     ? t('page.perps.pro.positions.long')
                     : t('page.perps.pro.positions.short')}{' '}
-                  {view.leverage}x
+                  {displayView.leverage}x
                 </Text>
               </View>
             </View>
             <View style={styles.priceGroup}>
               <View style={styles.factRow}>
                 <Text style={styles.factLabel}>
-                  {t('page.perps.pro.positions.entry')} ({view.quoteAsset})
+                  {t('page.perps.pro.positions.entry')} (
+                  {displayView.quoteAsset})
                 </Text>
                 <Text style={styles.factValueRounded}>
-                  {formatPerpsProPrice(view.entryPrice, view.pxDecimals)}
+                  {formatPerpsProPrice(
+                    displayView.entryPrice,
+                    displayView.pxDecimals,
+                  )}
                 </Text>
               </View>
               <View style={styles.factRow}>
                 <Text style={styles.factLabel}>
-                  {t('page.perps.pro.positions.mark')} ({view.quoteAsset})
+                  {t('page.perps.pro.positions.mark')} ({displayView.quoteAsset}
+                  )
                 </Text>
                 <Text style={styles.factValue}>
-                  {formatPerpsProPrice(view.markPrice, view.pxDecimals)}
+                  {formatPerpsProPrice(
+                    displayView.markPrice,
+                    displayView.pxDecimals,
+                  )}
                 </Text>
               </View>
             </View>
@@ -196,52 +223,16 @@ export const PerpsProManageMarginSheet: React.FC<{
                 hasBoundaryError && styles.amountCardError,
               ]}
               testID="perps-pro-manage-margin-amount-card">
-              <Pressable
-                accessibilityRole="button"
-                disabled={pending || !range}
-                onPress={() => range && selectTarget(range.min)}
-                style={styles.boundButton}
-                testID="perps-pro-manage-margin-min">
-                <Text style={styles.boundButtonText}>
-                  {t('page.perps.pro.positions.min')}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                disabled={pending || !range}
-                onPress={() => range && selectTarget(range.max)}
-                style={[styles.boundButton, styles.maxButton]}
-                testID="perps-pro-manage-margin-max">
-                <Text style={styles.boundButtonText}>
-                  {t('page.perps.pro.positions.max')}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                disabled={pending}
-                onPress={() => inputRef.current?.focus()}
-                style={styles.amountEditor}>
-                <Text pointerEvents="none" style={styles.unit}>
-                  {view.quoteAsset}
-                </Text>
-                <PerpsProDecimalTextInput
-                  accessibilityLabel={t(
-                    'page.perps.pro.positions.configureMargin',
-                  )}
-                  cursorColor={colors2024['brand-default']}
-                  editable={!pending}
-                  inputComponent={PerpsProManageMarginBottomSheetTextInput}
-                  keyboardType="decimal-pad"
-                  maxDecimals={2}
-                  onChangeText={onChangeDraft}
-                  onFocus={onBeginEditing}
-                  ref={inputRef}
-                  selectionColor={colors2024['brand-default']}
-                  style={styles.amountInput}
-                  testID="perps-pro-manage-margin-input"
-                  value={draft}
-                />
-              </Pressable>
+              <PerpsProManageMarginAmountRow
+                draft={displayDraft}
+                onBeginEditing={onBeginEditing}
+                onChangeDraft={onChangeDraft}
+                onSelectTarget={selectTarget}
+                pending={pending}
+                quoteAsset={displayView.quoteAsset}
+                range={range}
+                ref={inputRef}
+              />
               <Text style={styles.minimumValue}>
                 {range ? formatPerpsProDecimal(range.min, 2) : '--'}
               </Text>
@@ -251,10 +242,11 @@ export const PerpsProManageMarginSheet: React.FC<{
               <View style={styles.slider}>
                 <PerpsProManageMarginSlider
                   disabled={pending || !range?.hasRepresentableRange}
+                  dimWhenDisabled={!range?.hasRepresentableRange}
                   maximum={range?.max ?? '0'}
                   minimum={range?.min ?? '0'}
                   onValueChange={onSelectTarget}
-                  value={draft}
+                  value={displayDraft}
                 />
               </View>
               {hasBoundaryError ? (
@@ -267,14 +259,14 @@ export const PerpsProManageMarginSheet: React.FC<{
                     width={14}
                   />
                   <Text numberOfLines={1} style={styles.warningText}>
-                    {view.targetState === 'belowMin'
+                    {displayView.targetState === 'belowMin'
                       ? t('page.perps.pro.positions.minimumMargin', {
                           amount: formatPerpsProDecimal(range?.min, 2),
-                          quote: view.quoteAsset,
+                          quote: displayView.quoteAsset,
                         })
                       : t('page.perps.pro.positions.maximumMargin', {
                           amount: formatPerpsProDecimal(range?.max, 2),
-                          quote: view.quoteAsset,
+                          quote: displayView.quoteAsset,
                         })}
                   </Text>
                 </View>
@@ -322,7 +314,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                 }}
                 testID="perps-pro-manage-margin-confirm"
                 title={t('global.confirm')}
-                titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
                 type="primary"
               />
             </View>
@@ -335,253 +327,192 @@ export const PerpsProManageMarginSheet: React.FC<{
 
 PerpsProManageMarginSheet.displayName = 'PerpsProManageMarginSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 27,
-    paddingTop: 9,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
-  container: {
-    height: CONTENT_HEIGHT,
-    paddingHorizontal: 15,
-    paddingTop: 8,
-    position: 'relative',
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  identityRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    height: 18,
-    marginTop: 12,
-  },
-  pair: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  sourceTag: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  sourceText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
-  longTag: {
-    alignItems: 'center',
-    backgroundColor: colors2024['green-light-1'],
-    borderColor: colors2024['green-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  shortTag: {
-    alignItems: 'center',
-    backgroundColor: colors2024['red-light-1'],
-    borderColor: colors2024['red-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  longText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
-  shortText: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
-  priceGroup: { gap: 8, marginTop: 16 },
-  factRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    height: 16,
-    justifyContent: 'space-between',
-  },
-  factLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  factValue: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  factValueRounded: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  configureLabel: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    position: 'absolute',
-    right: 15,
-    top: 136,
-  },
-  amountCard: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 12,
-    height: 138,
-    left: 15,
-    position: 'absolute',
-    right: 15,
-    top: 164,
-  },
-  amountCardError: { height: 184 },
-  boundButton: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 6,
-    justifyContent: 'center',
-    left: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    position: 'absolute',
-    top: 16,
-    zIndex: 2,
-  },
-  maxButton: { left: undefined, right: 12 },
-  boundButtonText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  amountEditor: {
-    alignItems: 'center',
-    left: 72,
-    position: 'absolute',
-    right: 72,
-    top: 16,
-  },
-  unit: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  amountInput: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 36,
-    fontWeight: '700',
-    height: 42,
-    lineHeight: 42,
-    margin: 0,
-    padding: 0,
-    textAlign: 'center',
-    width: '100%',
-  },
-  minimumValue: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    left: 12,
-    lineHeight: 16,
-    position: 'absolute',
-    top: 62,
-  },
-  maximumValue: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    position: 'absolute',
-    right: 12,
-    top: 62,
-  },
-  slider: { left: 12, position: 'absolute', right: 12, top: 90 },
-  warning: {
-    alignItems: 'center',
-    backgroundColor: colors2024['orange-light-1'],
-    borderRadius: 6,
-    flexDirection: 'row',
-    gap: 4,
-    left: 12,
-    padding: 8,
-    position: 'absolute',
-    right: 12,
-    top: 134,
-  },
-  warningText: {
-    color: colors2024['orange-default'],
-    flex: 1,
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  riskGroup: {
-    gap: 8,
-    left: 15,
-    position: 'absolute',
-    right: 15,
-    top: 318,
-  },
-  riskGroupError: { top: 364 },
-  riskValue: { alignItems: 'center', flexDirection: 'row', gap: 4 },
-  footer: {
-    bottom: Math.max(40, safeAreaInsets.bottom),
-    left: 15,
-    position: 'absolute',
-    right: 15,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProBottomSheetChromeStyles(colors2024),
+    container: {
+      height: CONTENT_HEIGHT,
+      paddingHorizontal: 15,
+      paddingTop: 8,
+      position: 'relative',
+    },
+    title: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
+    },
+    identityRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      height: 18,
+      marginTop: 12,
+    },
+    pair: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    },
+    sourceTag: {
+      alignItems: 'center',
+      backgroundColor: colors2024['neutral-bg-5'],
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 2,
+      borderWidth: 0.5,
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    sourceText: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro',
+      fontSize: 10,
+      fontWeight: '500',
+      lineHeight: 12,
+    },
+    longTag: {
+      alignItems: 'center',
+      backgroundColor: colors2024['green-light-1'],
+      borderColor: colors2024['green-light-2'],
+      borderRadius: 2,
+      borderWidth: 0.5,
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    shortTag: {
+      alignItems: 'center',
+      backgroundColor: colors2024['red-light-1'],
+      borderColor: colors2024['red-light-2'],
+      borderRadius: 2,
+      borderWidth: 0.5,
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    longText: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro',
+      fontSize: 10,
+      fontWeight: '500',
+      lineHeight: 12,
+    },
+    shortText: {
+      color: colors2024['red-default'],
+      fontFamily: 'SF Pro',
+      fontSize: 10,
+      fontWeight: '500',
+      lineHeight: 12,
+    },
+    priceGroup: { gap: 8, marginTop: 16 },
+    factRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      height: 16,
+      justifyContent: 'space-between',
+    },
+    factLabel: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    factValue: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    factValueRounded: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    configureLabel: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+      position: 'absolute',
+      left: 15,
+      top: 138,
+    },
+    amountCard: {
+      backgroundColor: resolvePerpsProFieldBackground({
+        darkBackground: colors2024['neutral-bg-5'],
+        isLight,
+      }),
+      borderRadius: 12,
+      height: 138,
+      left: 15,
+      position: 'absolute',
+      right: 15,
+      top: 164,
+    },
+    amountCardError: { height: 184 },
+    minimumValue: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      left: 12,
+      lineHeight: 16,
+      position: 'absolute',
+      top: 62,
+    },
+    maximumValue: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+      position: 'absolute',
+      right: 12,
+      top: 62,
+    },
+    slider: { left: 12, position: 'absolute', right: 12, top: 90 },
+    warning: {
+      alignItems: 'center',
+      backgroundColor: colors2024['orange-light-1'],
+      borderRadius: 6,
+      flexDirection: 'row',
+      gap: 4,
+      left: 12,
+      padding: 8,
+      position: 'absolute',
+      right: 12,
+      top: 134,
+    },
+    warningText: {
+      color: colors2024['orange-default'],
+      flex: 1,
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    riskGroup: {
+      gap: 8,
+      left: 15,
+      position: 'absolute',
+      right: 15,
+      top: 318,
+    },
+    riskGroupError: { top: 364 },
+    riskValue: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+    footer: {
+      bottom: Math.max(40, safeAreaInsets.bottom),
+      left: 15,
+      position: 'absolute',
+      right: 15,
+    },
+  }),
+);

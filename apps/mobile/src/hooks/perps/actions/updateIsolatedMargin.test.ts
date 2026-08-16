@@ -103,6 +103,26 @@ describe('updateIsolatedMargin action', () => {
     });
   });
 
+  it('does not submit an invisible delta when the latest margin rounds to the target', async () => {
+    const dependencies = createDependencies({
+      getLiveContext: () => ({
+        account,
+        dexId: 'xyz',
+        hasPermission: true,
+        position: {
+          leverageType: 'isolated',
+          marginUsed: '20.004',
+          signedSize: '-2',
+        },
+      }),
+    });
+
+    await expect(
+      executePerpsUpdateIsolatedMargin(command, dependencies),
+    ).resolves.toEqual({ delta: '0', kind: 'noChange' });
+    expect(dependencies.updateIsolatedMargin).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['account', { account: { address: '0xdef', type: 'HdKeyring' } }],
     ['dex', { dexId: 'other' }],
@@ -203,5 +223,26 @@ describe('updateIsolatedMargin action', () => {
       kind: 'failed',
     });
     expect(cancelled.refresh).not.toHaveBeenCalled();
+  });
+
+  it('classifies an insufficient-margin rejection without retrying in the action', async () => {
+    const dependencies = createDependencies({
+      updateIsolatedMargin: jest.fn().mockResolvedValue({
+        response: {
+          data: { statuses: [{ error: 'Insufficient margin' }] },
+        },
+        status: 'err',
+      }),
+    });
+
+    await expect(
+      executePerpsUpdateIsolatedMargin(command, dependencies),
+    ).resolves.toMatchObject({
+      error: 'Insufficient margin',
+      failureReason: 'insufficientMargin',
+      kind: 'failed',
+    });
+    expect(dependencies.updateIsolatedMargin).toHaveBeenCalledTimes(1);
+    expect(dependencies.refresh).not.toHaveBeenCalled();
   });
 });

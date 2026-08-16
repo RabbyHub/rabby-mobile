@@ -43,13 +43,18 @@ const mockPerpsState: any = {
       quoteAsset: 'USDC',
     },
   },
-  spotState: { tokenToAvailableAfterMaintenance: null },
+  spotState: {
+    rawBalancesByToken: {},
+    tokenToAvailableAfterMaintenance: null,
+  },
   userAbstraction: 'default',
   userAbstractionReady: true,
 };
 const mockEnsureApproval = jest.fn();
 const mockBuildCommand = jest.fn();
 const mockExecute = jest.fn();
+const mockFetchClearinghouse = jest.fn();
+const mockFetchSpot = jest.fn();
 const mockShowToast = jest.fn();
 
 jest.mock('@/hooks/perps/actions/actionError', () => ({
@@ -81,7 +86,12 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     selector(mockPerpsState);
   store.getState = () => mockPerpsState;
   return {
+    fetchClearinghouseStateHttp: (...args: unknown[]) =>
+      mockFetchClearinghouse(...args),
+    fetchSpotStateHttp: (...args: unknown[]) => mockFetchSpot(...args),
     getDexByCoin: jest.fn(() => ''),
+    isPerpsUserAbstractionReadyForAccount: (state: typeof mockPerpsState) =>
+      state.userAbstractionReady,
     perpsStore: store,
   };
 });
@@ -131,9 +141,23 @@ describe('usePerpsProManageMargin', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     replaceRawPosition('20');
+    mockPerpsState.currentClearinghouseState.perDexSummaries = {
+      '': { withdrawable: '5' },
+    };
     mockPerpsState.currentPerpsAccount = mockAccount;
     mockPerpsState.hasPermission = true;
+    mockPerpsState.isSpotStateReady = true;
+    mockPerpsState.userAbstraction = 'default';
+    mockPerpsState.userAbstractionReady = true;
+    mockPerpsState.marketDataMap.BTC.markPx = '100';
+    mockPerpsState.marketDataMap.BTC.marginMode = 'normal';
+    mockPerpsState.spotState = {
+      rawBalancesByToken: {},
+      tokenToAvailableAfterMaintenance: null,
+    };
     mockEnsureApproval.mockResolvedValue(undefined);
+    mockFetchClearinghouse.mockResolvedValue(true);
+    mockFetchSpot.mockResolvedValue(true);
     mockBuildCommand.mockImplementation(input => ({
       ...input,
       type: 'updateIsolatedMargin',
@@ -156,6 +180,22 @@ describe('usePerpsProManageMargin', () => {
     act(() => hook.result.current.close());
     act(() => hook.result.current.open({ ...position, marginMode: 'cross' }));
     expect(hook.result.current.editor).toBeNull();
+  });
+
+  it('uses unreserved spot quote balance instead of maintenance availability for unified accounts', () => {
+    mockPerpsState.userAbstraction = 'unifiedAccount';
+    mockPerpsState.spotState = {
+      rawBalancesByToken: { 0: { available: '18.99135512' } },
+      tokenToAvailableAfterMaintenance: [[0, '24.01346112']],
+    };
+    replaceRawPosition('10.77317', '0.00051');
+    mockPerpsState.marketDataMap.BTC.markPx = '63123';
+    mockPerpsState.marketDataMap.BTC.marginMode = 'normal';
+
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+
+    expect(hook.result.current.view?.range?.max).toBe('29.76');
   });
 
   it('accepts live margin updates until the user takes draft ownership', () => {
@@ -184,6 +224,10 @@ describe('usePerpsProManageMargin', () => {
     await act(async () => hook.result.current.confirm());
 
     expect(mockEnsureApproval).toHaveBeenCalledWith(mockAccount);
+    expect(mockFetchClearinghouse).toHaveBeenCalledWith(
+      '',
+      mockAccount.address,
+    );
     expect(mockBuildCommand).toHaveBeenCalledWith(
       expect.objectContaining({
         coin: 'BTC',
@@ -197,6 +241,79 @@ describe('usePerpsProManageMargin', () => {
       'success',
     );
     expect(hook.result.current.editor).toBeNull();
+  });
+
+  it('fails closed without signing when current margin facts cannot refresh', async () => {
+    mockFetchClearinghouse.mockResolvedValue(false);
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+    act(() => hook.result.current.changeDraft('15'));
+
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockExecute).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.positions.marginRefreshFailed',
+      'error',
+    );
+    expect(hook.result.current.editor).not.toBeNull();
+  });
+
+  it('revalidates the refreshed range and does not sign above its new maximum', async () => {
+    mockFetchClearinghouse.mockImplementation(async () => {
+      mockPerpsState.currentClearinghouseState = {
+        ...mockPerpsState.currentClearinghouseState,
+        perDexSummaries: { '': { withdrawable: '0' } },
+      };
+      return true;
+    });
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+    act(() => hook.result.current.changeDraft('24'));
+
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockExecute).not.toHaveBeenCalled();
+    expect(hook.result.current.editor).not.toBeNull();
+    expect(hook.result.current.draft).toBe('24');
+  });
+
+  it('refreshes unified spot facts before submitting', async () => {
+    mockPerpsState.userAbstraction = 'unifiedAccount';
+    mockPerpsState.spotState = {
+      rawBalancesByToken: { 0: { available: '5' } },
+      tokenToAvailableAfterMaintenance: [[0, '9']],
+    };
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+    act(() => hook.result.current.changeDraft('15'));
+
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockFetchSpot).toHaveBeenCalledWith(mockAccount.address);
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes facts after insufficient margin, keeps the draft, and never retries', async () => {
+    mockExecute.mockResolvedValue({
+      error: 'Insufficient margin',
+      failureReason: 'insufficientMargin',
+      kind: 'failed',
+    });
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+    act(() => hook.result.current.changeDraft('15'));
+
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+    expect(mockFetchClearinghouse).toHaveBeenCalledTimes(2);
+    expect(hook.result.current.editor).not.toBeNull();
+    expect(hook.result.current.draft).toBe('15');
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.positions.marginUpdateFailed',
+      'error',
+    );
   });
 
   it('fails closed when the position fingerprint changes after approval', async () => {
