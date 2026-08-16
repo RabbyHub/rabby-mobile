@@ -6,11 +6,6 @@ jest.mock('@/assets2024/icons/perps/PerpsProTransferDirectionArrow.svg', () => {
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
 });
-jest.mock('@/assets2024/icons/perps/IconUSDC.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
 jest.mock('@/components/AutoLockView', () => require('react-native').View);
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -37,15 +32,25 @@ jest.mock('@/components2024/Button', () => {
   const ReactModule = require('react');
   const { Pressable, Text } = require('react-native');
   return {
-    Button: ({ disabled, loading, onPress, title, type }: any) =>
+    Button: ({
+      buttonStyle,
+      disabled,
+      loading,
+      onPress,
+      title,
+      titleStyle,
+      type,
+    }: any) =>
       ReactModule.createElement(
         Pressable,
         {
+          buttonStyle,
           disabled,
           isDisabled: disabled,
           loading,
           onPress,
           testID: 'transfer-confirm',
+          titleStyle,
           type,
         },
         ReactModule.createElement(Text, null, title),
@@ -114,10 +119,14 @@ describe('PerpsProTransferSheet', () => {
       screen.getByTestId('transfer-sheet').props.backdropProps.pressBehavior,
     ).toBe('close');
     expect(screen.getByTestId('transfer-confirm').props).toMatchObject({
+      buttonStyle: expect.objectContaining({ borderRadius: 8 }),
       isDisabled: true,
       loading: false,
       type: 'primary',
     });
+    expect(
+      screen.getByTestId('perps-pro-transfer-usdc-icon').props.style,
+    ).toEqual({ height: 24, width: 24 });
 
     fireEvent.changeText(screen.getByTestId('perps-pro-transfer-amount'), '2');
     expect(screen.getByTestId('transfer-confirm').props.isDisabled).toBe(false);

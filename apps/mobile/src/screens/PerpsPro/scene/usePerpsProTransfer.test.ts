@@ -16,6 +16,18 @@ jest.mock('@/hooks/perps/showToast', () => ({
   showToast: (...args: unknown[]) => mockShowToast(...args),
 }));
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  getPerpsAccountRuntimeContext: () => ({
+    account: mockGetState().currentPerpsAccount,
+    generation: 5,
+  }),
+  isPerpsUserAbstractionReadyForAccount: (state: {
+    currentPerpsAccount?: { address?: string };
+    userAbstractionOwnerAddress?: string | null;
+    userAbstractionReady?: boolean;
+  }) =>
+    !!state.userAbstractionReady &&
+    state.userAbstractionOwnerAddress?.toLowerCase() ===
+      state.currentPerpsAccount?.address?.toLowerCase(),
   perpsStore: { getState: () => mockGetState() },
 }));
 jest.mock('react-i18next', () => ({
@@ -45,9 +57,65 @@ describe('usePerpsProTransfer', () => {
     jest.clearAllMocks();
     mockGetState.mockReturnValue({
       currentPerpsAccount: account,
+      userAbstractionOwnerAddress: account.address,
       userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: true,
     });
     mockBuildCommand.mockReturnValue({ type: 'command' });
+  });
+
+  it('uses the exact Standard eligibility and rejects stale or malformed entry facts', () => {
+    const hook = renderHook(() => usePerpsProTransfer('account-a'));
+
+    mockGetState.mockReturnValue({
+      currentPerpsAccount: account,
+      userAbstractionOwnerAddress: account.address,
+      userAbstraction: UserAbstractionResp.disabled,
+      userAbstractionReady: true,
+    });
+    act(() => hook.result.current.open(asset));
+    expect(hook.result.current.editor).not.toBeNull();
+
+    act(() => hook.result.current.close());
+    mockGetState.mockReturnValue({
+      currentPerpsAccount: account,
+      userAbstractionOwnerAddress: account.address,
+      userAbstraction: UserAbstractionResp.dexAbstraction,
+      userAbstractionReady: true,
+    });
+    act(() => hook.result.current.open(asset));
+    expect(hook.result.current.editor).toBeNull();
+
+    mockGetState.mockReturnValue({
+      currentPerpsAccount: account,
+      userAbstractionOwnerAddress: account.address,
+      userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: false,
+    });
+    act(() => hook.result.current.open(asset));
+    expect(hook.result.current.editor).toBeNull();
+
+    mockGetState.mockReturnValue({
+      currentPerpsAccount: account,
+      userAbstractionOwnerAddress: account.address,
+      userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: true,
+    });
+    act(() => hook.result.current.open({ ...asset, ledger: 'perps' }));
+    expect(hook.result.current.editor).toBeNull();
+
+    mockGetState.mockReturnValue({
+      currentPerpsAccount: account,
+      userAbstractionOwnerAddress: '0x2222222222222222222222222222222222222222',
+      userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: true,
+    });
+    act(() => hook.result.current.open(asset));
+    expect(hook.result.current.editor).toBeNull();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.account.transferContextChanged',
+      'error',
+    );
   });
 
   it('opens only from an eligible standard-account asset and closes on account switch', () => {
@@ -58,6 +126,7 @@ describe('usePerpsProTransfer', () => {
     act(() => hook.result.current.open(asset));
     expect(hook.result.current.editor).toMatchObject({
       account,
+      accountRuntimeGeneration: 5,
       available: '10',
     });
 
@@ -79,6 +148,7 @@ describe('usePerpsProTransfer', () => {
 
     expect(mockBuildCommand).toHaveBeenCalledWith({
       account: expect.objectContaining(account),
+      accountRuntimeGeneration: 5,
       amount: '2',
       available: '10',
     });

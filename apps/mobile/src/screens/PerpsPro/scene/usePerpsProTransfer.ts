@@ -3,9 +3,14 @@ import {
   buildPerpsSpotToPerpsTransferCommand,
   executePerpsSpotToPerpsTransfer,
 } from '@/hooks/perps/funding/perpsTransfer';
+import { isSamePerpsFundingAccount } from '@/hooks/perps/funding/accountGuard';
+import { isPerpsStandardTransferAbstraction } from '@/hooks/perps/funding/transferEligibility';
 import { showToast } from '@/hooks/perps/showToast';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  getPerpsAccountRuntimeContext,
+  isPerpsUserAbstractionReadyForAccount,
+  perpsStore,
+} from '@/hooks/perps/usePerpsStore';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +20,7 @@ interface PerpsProTransferEditor {
   account: NonNullable<
     ReturnType<typeof perpsStore.getState>['currentPerpsAccount']
   >;
+  accountRuntimeGeneration: number;
   available: string;
 }
 
@@ -34,15 +40,25 @@ export const usePerpsProTransfer = (accountIdentity: string) => {
         return;
       }
       const state = perpsStore.getState();
+      const accountRuntime = getPerpsAccountRuntimeContext();
       if (
         !state.currentPerpsAccount ||
-        state.userAbstraction !== UserAbstractionResp.default
+        !isPerpsUserAbstractionReadyForAccount(state) ||
+        !isSamePerpsFundingAccount(
+          accountRuntime.account,
+          state.currentPerpsAccount,
+        ) ||
+        !isPerpsStandardTransferAbstraction(state.userAbstraction) ||
+        asset.key !== 'spot:USDC' ||
+        asset.coin !== 'USDC' ||
+        asset.ledger !== 'spot'
       ) {
         showToast(t('page.perps.pro.account.transferContextChanged'), 'error');
         return;
       }
       setEditor({
         account: { ...state.currentPerpsAccount },
+        accountRuntimeGeneration: accountRuntime.generation,
         available: asset.available,
       });
     },
@@ -63,6 +79,7 @@ export const usePerpsProTransfer = (accountIdentity: string) => {
       try {
         const command = buildPerpsSpotToPerpsTransferCommand({
           account: editor.account,
+          accountRuntimeGeneration: editor.accountRuntimeGeneration,
           amount,
           available: editor.available,
         });
