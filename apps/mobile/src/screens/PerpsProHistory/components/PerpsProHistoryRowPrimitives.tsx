@@ -82,7 +82,7 @@ export const PerpsProHistoryRowLayout: React.FC<{
           </View>
         ) : null}
       </View>
-      <View style={styles.details}>
+      <View style={styles.details} testID={`${testID}-details`}>
         {details.map((detail, index) => (
           <View key={`${detail.label}:${index}`} style={styles.detailRow}>
             {detail.onLabelPress ? (
@@ -121,7 +121,7 @@ const badge = (backgroundColor: string, borderColor: string) => ({
 
 const badgeText = (color: string) => ({
   color,
-  fontFamily: 'SF Pro Rounded',
+  fontFamily: 'SF Pro',
   fontSize: 10,
   fontWeight: '500' as const,
   lineHeight: 12,
@@ -130,7 +130,7 @@ const badgeText = (color: string) => ({
 const value = (color: string) => ({
   color,
   flexShrink: 1,
-  fontFamily: 'SF Pro Rounded',
+  fontFamily: 'SF Pro',
   fontSize: 12,
   fontWeight: '500' as const,
   lineHeight: 16,
@@ -162,7 +162,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -177,7 +177,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sourceText: {
     color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
@@ -190,7 +190,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   time: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     lineHeight: 12,
   },
@@ -211,7 +211,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   neutralBadgeText: badgeText(colors2024['neutral-body']),
   infoBadgeText: badgeText(colors2024['neutral-info']),
   details: {
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     gap: 8,
     paddingBottom: 12,
@@ -224,7 +224,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
   },

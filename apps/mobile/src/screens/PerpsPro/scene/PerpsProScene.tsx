@@ -1067,7 +1067,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   emptyText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
@@ -1083,7 +1083,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   retryText: {
     color: colors2024['blue-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,

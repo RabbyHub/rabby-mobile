@@ -1,3 +1,5 @@
+import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
+import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -26,24 +28,31 @@ export const PerpsProInfoControls: React.FC<PerpsProInfoControlsProps> =
       onToggleHideOtherSymbols,
       testID,
     }) => {
-      const { styles } = useTheme2024({ getStyle });
+      const { colors2024, styles } = useTheme2024({ getStyle });
       const { t } = useTranslation();
 
       return (
         <View style={styles.container} testID={testID}>
           <Pressable
+            accessibilityLabel={t('page.perps.pro.info.hideOtherSymbols')}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: hideOtherSymbols }}
             onPress={onToggleHideOtherSymbols}
             style={styles.filter}>
-            <View
-              style={
-                hideOtherSymbols ? styles.checkedBox : styles.uncheckedBox
-              }>
-              {hideOtherSymbols ? (
-                <Text style={styles.checkmark}>✓</Text>
-              ) : null}
-            </View>
+            {hideOtherSymbols ? (
+              <RcIconCheckboxFilled
+                height={24}
+                testID="perps-pro-info-filter-checkbox-icon"
+                width={24}
+              />
+            ) : (
+              <RcIconCheckboxEmpty
+                color={colors2024['neutral-secondary']}
+                height={24}
+                testID="perps-pro-info-filter-checkbox-icon"
+                width={24}
+              />
+            )}
             <Text numberOfLines={1} style={styles.filterText}>
               {t('page.perps.pro.info.hideOtherSymbols')}
             </Text>
@@ -91,32 +100,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 6,
     minWidth: 0,
   },
-  uncheckedBox: {
-    borderColor: colors2024['neutral-foot'],
-    borderRadius: 4,
-    borderWidth: 1,
-    height: 16,
-    width: 16,
-  },
-  checkedBox: {
-    alignItems: 'center',
-    backgroundColor: colors2024['brand-default'],
-    borderRadius: 4,
-    height: 16,
-    justifyContent: 'center',
-    width: 16,
-  },
-  checkmark: {
-    color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 11,
-    fontWeight: '700',
-    lineHeight: 14,
-  },
   filterText: {
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -143,14 +130,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   disabledActionText: {
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

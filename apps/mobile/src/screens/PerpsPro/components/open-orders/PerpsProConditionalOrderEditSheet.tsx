@@ -3,10 +3,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
@@ -22,6 +19,10 @@ import {
   getOpenOrderEditDisplayAmount,
   type PerpsProConditionalOrderEditDraft,
 } from '../../model/openOrderEdit';
+import {
+  getPerpsProBottomSheetChromeStyles,
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+} from '../common/perpsProVisual';
 import { validatePositionTpSlTrigger } from '../../model/positionTpSl';
 import {
   getPerpsProAmountInputDecimals,
@@ -42,7 +43,7 @@ import { PerpsProOpenOrderEditHeader } from './PerpsProOpenOrderEditHeader';
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-conditional-order-edit';
-const SHEET_HEIGHT = 534;
+const SHEET_HEIGHT = 542;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 
 export const PerpsProConditionalOrderEditSheet: React.FC<{
@@ -337,7 +338,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                 }
                 testID="perps-pro-conditional-order-edit-confirm"
                 title={t('global.confirm')}
-                titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
                 type="primary"
               />
             </View>
@@ -352,28 +353,7 @@ PerpsProConditionalOrderEditSheet.displayName =
   'PerpsProConditionalOrderEditSheet';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 27,
-    paddingTop: 9,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   container: {
     height: CONTENT_HEIGHT,
     paddingHorizontal: 15,
@@ -430,6 +410,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     left: 15,
     position: 'absolute',
     right: 15,
-    top: 418,
+    top: 426,
   },
 }));

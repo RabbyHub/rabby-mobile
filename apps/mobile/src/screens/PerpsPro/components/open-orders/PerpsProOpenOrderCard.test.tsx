@@ -103,6 +103,14 @@ describe('PerpsProOpenOrderCard', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-order-market-basic:BTC:1'));
     expect(onPressMarket).toHaveBeenCalledWith('BTC');
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-basic:BTC:1').props.style,
+      ),
+    ).toMatchObject({
+      borderBottomColor: 'neutral-bg-5',
+      borderBottomWidth: 1,
+    });
   });
 
   it('shows Basic progress in the base asset and an enabled cancel entry', () => {
@@ -162,7 +170,7 @@ describe('PerpsProOpenOrderCard', () => {
     const cancelButton = screen.getByRole('button', { name: 'Cancel' });
     expect(screen.getByText('Cancel').props.style).toMatchObject({
       color: 'neutral-title-1',
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -325,7 +333,11 @@ describe('PerpsProOpenOrderCard', () => {
       />,
     );
 
-    fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    const priceEdit = screen.getByTestId(
+      'perps-pro-order-price-edit-basic:BTC:1',
+    );
+    expect(priceEdit).toHaveTextContent('100.00');
+    fireEvent.press(screen.getByText('100.00'));
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ oid: 1 }));
 
     rerender(
@@ -340,5 +352,31 @@ describe('PerpsProOpenOrderCard', () => {
     expect(
       screen.getByRole('button', { name: 'Edit' }).props.accessibilityState,
     ).toMatchObject({ disabled: true });
+  });
+
+  it('makes the Conditional condition text part of the edit control', () => {
+    const onEdit = jest.fn();
+    render(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        editEnabled
+        onCancel={jest.fn()}
+        onEdit={onEdit}
+        order={order({
+          category: 'conditional',
+          editKind: 'trigger',
+          key: 'conditional:BTC:2',
+          oid: 2,
+          triggerCondition: 'Below',
+        })}
+      />,
+    );
+
+    const conditionsEdit = screen.getByTestId(
+      'perps-pro-order-conditions-edit-conditional:BTC:2',
+    );
+    expect(conditionsEdit).toHaveTextContent('Below');
+    fireEvent.press(screen.getByText('Below'));
+    expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ oid: 2 }));
   });
 });

@@ -168,7 +168,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   footerText: {
     color: colors2024['blue-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,

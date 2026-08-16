@@ -4,10 +4,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
 import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -17,6 +14,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
+import { PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE } from '../common/perpsProVisual';
 import {
   resolvePerpsProCloseSize,
   type PerpsProCloseDraft,
@@ -302,14 +300,16 @@ export const PerpsProClosePositionSheet: React.FC<{
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
         onDismiss={onClose}
-        snapPoints={[502]}
+        snapPoints={[510]}
         style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
           <AutoLockView style={styles.container}>
             <Text style={styles.title}>
               {t('page.perps.pro.positions.closePosition')}
             </Text>
-            <View style={styles.positionHeader}>
+            <View
+              style={styles.positionHeader}
+              testID="perps-pro-close-position-header">
               <View style={styles.pairRow}>
                 <Text style={styles.pair}>{market.displayPair}</Text>
                 <PerpsProCloseMarketTag sourceTag={market.sourceTag} />
@@ -470,7 +470,9 @@ export const PerpsProClosePositionSheet: React.FC<{
                 />
               </View>
 
-              <View style={styles.summary}>
+              <View
+                style={styles.summary}
+                testID="perps-pro-close-position-summary">
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>
                     {t('page.perps.pro.positions.positionAmount')}
@@ -500,7 +502,9 @@ export const PerpsProClosePositionSheet: React.FC<{
               </View>
             </View>
 
-            <View style={styles.footer}>
+            <View
+              style={styles.footer}
+              testID="perps-pro-close-position-footer">
               <Button
                 disabled={!valid || coveredByReview}
                 height={BOTTOM_BUTTON_COMPACT_HEIGHT}
@@ -524,7 +528,7 @@ export const PerpsProClosePositionSheet: React.FC<{
                   );
                 }}
                 title={t('global.confirm')}
-                titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
                 type="primary"
               />
             </View>

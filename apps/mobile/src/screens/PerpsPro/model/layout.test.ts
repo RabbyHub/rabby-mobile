@@ -104,7 +104,7 @@ describe('Perps Pro layout model', () => {
         topInset: 47,
         windowHeight: 852,
       }),
-    ).toBe(714);
+    ).toBe(718);
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'form',
@@ -114,24 +114,24 @@ describe('Perps Pro layout model', () => {
     ).toBe(686);
   });
 
-  it('reserves the exact remaining 714px sheet height for every TP/SL form presentation', () => {
+  it('reserves the exact remaining 718px sheet height for every TP/SL form presentation', () => {
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'subpage',
-        snapPoint: 714,
+        snapPoint: 718,
       }),
-    ).toBe(504);
+    ).toBe(508);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'tab',
-        snapPoint: 714,
+        snapPoint: 718,
       }),
-    ).toBe(482);
+    ).toBe(486);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'inline-empty',
-        snapPoint: 714,
+        snapPoint: 718,
       }),
-    ).toBe(478);
+    ).toBe(482);
   });
 });

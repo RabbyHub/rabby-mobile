@@ -111,7 +111,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
@@ -120,7 +120,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   message: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     lineHeight: 18,
     textAlign: 'left',
@@ -138,14 +138,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   confirmButton: { backgroundColor: colors2024['brand-default'] },
   cancelText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
   },
   confirmText: {
     color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,

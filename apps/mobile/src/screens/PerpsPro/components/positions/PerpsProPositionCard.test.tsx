@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 
@@ -15,7 +16,7 @@ jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets/icons/swap/switch-cc.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProPositionUnitSwitch.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -67,6 +68,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positions.close': 'Close',
         'page.perps.pro.positions.cross': 'Cross',
         'page.perps.pro.positions.entry': 'Entry Price',
+        'page.perps.pro.positions.isolated': 'Isolated',
         'page.perps.pro.positions.leverage': 'Leverage',
         'page.perps.pro.positions.liquidation': 'Liq. Price',
         'page.perps.pro.positions.liquidationDistance': 'Liq. Distance',
@@ -183,6 +185,59 @@ describe('PerpsProPositionCard', () => {
     ).toBeNull();
   });
 
+  it('matches the approved title tag order and dimensions', () => {
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition()}
+      />,
+    );
+
+    const title = screen.getByTestId('perps-pro-position-title-BTC');
+    expect(
+      title.props.children.map(
+        (child: React.ReactElement) => child.props.testID,
+      ),
+    ).toEqual([
+      'perps-pro-position-side-BTC',
+      'perps-pro-position-market-BTC',
+      'perps-pro-position-source-BTC',
+      'perps-pro-position-mode-BTC',
+      'perps-pro-position-direction-BTC',
+    ]);
+    expect(
+      screen.getByTestId('perps-pro-position-side-BTC').props.style,
+    ).toMatchObject({ borderRadius: 2, height: 18, width: 16 });
+    expect(screen.getByText('B').props.style).toMatchObject({
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    for (const testID of [
+      'perps-pro-position-source-BTC',
+      'perps-pro-position-mode-BTC',
+      'perps-pro-position-direction-BTC',
+    ]) {
+      expect(screen.getByTestId(testID).props.style).toMatchObject({
+        borderRadius: 2,
+        borderWidth: 0.5,
+        height: 14,
+        paddingHorizontal: 4,
+      });
+    }
+    for (const label of ['XYZ', 'Isolated', 'Long 20x']) {
+      expect(
+        StyleSheet.flatten(screen.getByText(label).props.style),
+      ).toMatchObject({
+        fontFamily: 'SF Pro',
+        fontSize: 10,
+        fontWeight: '500',
+        lineHeight: 12,
+      });
+    }
+  });
+
   it('maps every position dotted label to its approved explanation', () => {
     const view = render(
       <PerpsProPositionCard
@@ -291,6 +346,17 @@ describe('PerpsProPositionCard', () => {
       position: 'absolute',
       right: 0,
     });
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-distance-label-BTC')
+        .props.style,
+    ).toMatchObject({ left: 0, position: 'absolute', right: 0, top: 0 });
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-label-BTC').props
+        .style,
+    ).toMatchObject({ left: 0, position: 'absolute', right: 0, top: 0 });
+    expect(
+      StyleSheet.flatten(screen.getByText('Isolated').props.style),
+    ).toEqual(expect.objectContaining({ fontVariant: ['stylistic-six'] }));
     expect(screen.getByText('TP/SL(3)')).toBeTruthy();
     expect(screen.getByText('120.00')).toBeTruthy();
     expect(screen.queryByText('130.00')).toBeNull();
@@ -300,20 +366,20 @@ describe('PerpsProPositionCard', () => {
       screen.getByTestId('perps-pro-position-tpsl-values-BTC').props.style.flex,
     ).toBeUndefined();
     expect(
-      screen.getByTestId('perps-pro-position-tpsl-BTC').props.style.gap,
+      screen.getByTestId('perps-pro-position-tpsl-edit-BTC').props.style.gap,
     ).toBe(4);
     expect(
       screen.getByRole('button', { name: 'Leverage' }).props.accessibilityState,
     ).toEqual({ disabled: true });
   });
 
-  it('gives a long Cross Liq. Distance the full metric row width', () => {
+  it('gives a long Isolated Liq. Distance the full metric row width', () => {
     render(
       <PerpsProPositionCard
         accountIdentity="account-a"
         position={createPosition({
           liquidationPrice: '123456.78',
-          marginMode: 'cross',
+          marginMode: 'isolated',
         })}
       />,
     );
@@ -418,7 +484,8 @@ describe('PerpsProPositionCard', () => {
       />,
     );
 
-    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-edit-BTC'));
+    expect(screen.getByTestId('perps-pro-position-tpsl-edit-BTC')).toBeTruthy();
+    fireEvent.press(screen.getByText('TP/SL(1)'));
     expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'partial');
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-action-BTC'));
     expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'partial');
@@ -482,6 +549,21 @@ describe('PerpsProPositionCard', () => {
       accessibilityRole: 'button',
       accessibilityValue: { text: 'USDC' },
       hitSlop: { bottom: 14, left: 4, right: 4, top: 14 },
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-unit-icon-BTC').props,
+    ).toMatchObject({
+      color: 'neutral-secondary',
+      height: 16,
+      width: 16,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-BTC').props.style,
+      ),
+    ).toMatchObject({
+      borderBottomColor: 'neutral-bg-5',
+      borderBottomWidth: 1,
     });
     fireEvent.press(screen.getByText('Size (USDC)'));
     expect(screen.getByText('Size (BTC)')).toBeTruthy();

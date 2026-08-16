@@ -161,7 +161,7 @@ describe('PerpsProLeverageSheet', () => {
     );
 
     expect(screen.getByTestId('leverage-sheet').props.snapPoints).toEqual([
-      288,
+      296,
     ]);
     expect(screen.getByTestId('leverage-sheet').props).toMatchObject({
       android_keyboardInputMode: 'adjustPan',
@@ -169,8 +169,34 @@ describe('PerpsProLeverageSheet', () => {
       keyboardBehavior: 'interactive',
       keyboardBlurBehavior: 'restore',
     });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('leverage-sheet').props.handleStyle,
+      ),
+    ).toMatchObject({ height: 40, paddingBottom: 27, paddingTop: 9 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('leverage-sheet').props.handleIndicatorStyle,
+      ),
+    ).toMatchObject({ height: 4, width: 40 });
     expect(screen.getByText('Adjust Leverage')).toBeTruthy();
     expect(screen.getByText('Up To 40x')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByText('Adjust Leverage').props.style),
+    ).toMatchObject({
+      fontFamily: 'SF Pro',
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Up To 40x').props.style),
+    ).toMatchObject({
+      fontFamily: 'SF Pro',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
       '20',
     );
@@ -188,6 +214,7 @@ describe('PerpsProLeverageSheet', () => {
     expect(screen.getByTestId('leverage-slider').props).toMatchObject({
       dimWhenDisabled: false,
       pointCount: 5,
+      showPoints: false,
       tone: 'neutral',
     });
     expect(mockUseSliderHaptics).toHaveBeenCalledWith({
@@ -220,6 +247,11 @@ describe('PerpsProLeverageSheet', () => {
     expect(screen.getByTestId('perps-pro-leverage-confirm').props.type).toBe(
       'primary',
     );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-leverage-footer').props.style,
+      ),
+    ).toMatchObject({ marginTop: 32, paddingBottom: 40 });
   });
 
   it('blurs the leverage input before the slider handles a touch', () => {

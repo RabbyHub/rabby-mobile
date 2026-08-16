@@ -1,44 +1,25 @@
-import {
-  BOTTOM_BUTTON_TOP_OFFSET,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_TOP_OFFSET } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 
+import {
+  getPerpsProBottomSheetChromeStyles,
+  resolvePerpsProFieldBackground,
+} from '../common/perpsProVisual';
+
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
-  ({ colors2024, safeAreaInsets }) => ({
-    modal: {
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      overflow: 'hidden',
-    },
-    background: {
-      backgroundColor: colors2024['neutral-bg-1'],
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-    },
-    handle: {
-      backgroundColor: colors2024['neutral-bg-1'],
-      height: 40,
-      paddingBottom: 27,
-      paddingTop: 9,
-    },
-    handleIndicator: {
-      backgroundColor: colors2024['neutral-line'],
-      borderRadius: 2,
-      height: 4,
-      width: 40,
-    },
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProBottomSheetChromeStyles(colors2024),
     sheetView: { height: '100%' },
     container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
     title: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
     },
     positionHeader: {
-      borderBottomColor: colors2024['neutral-line'],
+      borderBottomColor: colors2024['neutral-bg-5'],
       borderBottomWidth: 1,
       gap: 8,
       marginTop: 12,
@@ -47,7 +28,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     pairRow: { alignItems: 'center', flexDirection: 'row', gap: 4 },
     pair: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -70,14 +51,14 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     longTagText: {
       color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
     },
     shortTagText: {
       color: colors2024['red-default'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
@@ -102,7 +83,10 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     form: { gap: 24, marginTop: 24 },
     orderRow: { flexDirection: 'row', gap: 4 },
     priceField: {
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: resolvePerpsProFieldBackground({
+        darkBackground: colors2024['neutral-bg-2'],
+        isLight,
+      }),
       borderRadius: 6,
       flex: 1,
       height: 40,
@@ -114,7 +98,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     disabledPriceField: {},
     centeredFieldText: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -122,7 +106,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     floatingLabel: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 10,
       left: 8,
       lineHeight: 12,
@@ -132,7 +116,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     priceInput: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       fontWeight: '500',
       height: 40,
@@ -144,7 +128,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     priceUnit: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       lineHeight: 18,
       position: 'absolute',
@@ -152,7 +136,10 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     orderTypeField: {
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: resolvePerpsProFieldBackground({
+        darkBackground: colors2024['neutral-bg-2'],
+        isLight,
+      }),
       borderRadius: 8,
       flexDirection: 'row',
       height: 40,
@@ -161,7 +148,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     orderTypeText: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -169,7 +156,10 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     orderTypeSwitch: { marginLeft: 4 },
     amountGroup: { gap: 8 },
     amountField: {
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: resolvePerpsProFieldBackground({
+        darkBackground: colors2024['neutral-bg-2'],
+        isLight,
+      }),
       borderRadius: 6,
       height: 40,
       justifyContent: 'center',
@@ -178,7 +168,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     amountInput: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       fontWeight: '500',
       height: 40,
@@ -192,7 +182,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     amountUnit: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -200,7 +190,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       right: 8,
     },
     summary: {
-      borderBottomColor: colors2024['neutral-line'],
+      borderBottomColor: colors2024['neutral-bg-5'],
       borderBottomWidth: 1,
       gap: 8,
       paddingBottom: 12,
@@ -236,7 +226,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     footer: {
       marginTop: 'auto',
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      paddingBottom: Math.max(40, safeAreaInsets.bottom),
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     },
   }),

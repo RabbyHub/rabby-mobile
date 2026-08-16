@@ -39,11 +39,13 @@ const CancelButton: React.FC<{
   );
 };
 
-const EditButton: React.FC<{
+const EditableValue: React.FC<{
   enabled: boolean;
   label: string;
   onPress: () => void;
-}> = ({ enabled, label, onPress }) => {
+  testID: string;
+  value: string;
+}> = ({ enabled, label, onPress, testID, value }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   return (
     <Pressable
@@ -52,16 +54,20 @@ const EditButton: React.FC<{
       accessibilityState={{ disabled: !enabled }}
       disabled={!enabled}
       onPress={onPress}
-      style={styles.editIcon}>
-      <RcIconEdit
-        color={
-          enabled
-            ? colors2024['neutral-title-1']
-            : colors2024['neutral-secondary']
-        }
-        height={16}
-        width={16}
-      />
+      style={styles.editableValue}
+      testID={testID}>
+      <Text style={styles.detailValue}>{value}</Text>
+      <View pointerEvents="none" style={styles.editIcon}>
+        <RcIconEdit
+          color={
+            enabled
+              ? colors2024['neutral-title-1']
+              : colors2024['neutral-secondary']
+          }
+          height={16}
+          width={16}
+        />
+      </View>
     </Pressable>
   );
 };
@@ -195,14 +201,13 @@ export const PerpsProOpenOrderCard: React.FC<{
                 <Text style={styles.label}>
                   {t('page.perps.pro.openOrders.price')}
                 </Text>
-                <View style={styles.editableValue}>
-                  <Text style={styles.detailValue}>{executionPrice}</Text>
-                  <EditButton
-                    enabled={editEnabled && !!order.editKind}
-                    label={t('page.perps.pro.openOrders.edit')}
-                    onPress={() => onEdit(order)}
-                  />
-                </View>
+                <EditableValue
+                  enabled={editEnabled && !!order.editKind}
+                  label={t('page.perps.pro.openOrders.edit')}
+                  onPress={() => onEdit(order)}
+                  testID={`perps-pro-order-price-edit-${order.key}`}
+                  value={executionPrice}
+                />
               </View>
             </>
           ) : (
@@ -225,16 +230,13 @@ export const PerpsProOpenOrderCard: React.FC<{
                 <Text style={styles.label}>
                   {t('page.perps.pro.openOrders.conditions')}
                 </Text>
-                <View style={styles.editableValue}>
-                  <Text style={styles.detailValue}>
-                    {order.triggerCondition || '-'}
-                  </Text>
-                  <EditButton
-                    enabled={editEnabled && !!order.editKind}
-                    label={t('page.perps.pro.openOrders.edit')}
-                    onPress={() => onEdit(order)}
-                  />
-                </View>
+                <EditableValue
+                  enabled={editEnabled && !!order.editKind}
+                  label={t('page.perps.pro.openOrders.edit')}
+                  onPress={() => onEdit(order)}
+                  testID={`perps-pro-order-conditions-edit-${order.key}`}
+                  value={order.triggerCondition || '-'}
+                />
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.label}>
@@ -258,7 +260,7 @@ PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     gap: 12,
     marginHorizontal: 15,
@@ -281,7 +283,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   coin: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -295,7 +297,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sourceText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 14,
@@ -321,21 +323,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buyText: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 14,
   },
   sellText: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 14,
   },
   time: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -387,7 +389,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   cancelText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -403,14 +405,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
   },
   detailValue: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

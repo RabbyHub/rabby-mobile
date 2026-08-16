@@ -25,7 +25,7 @@ jest.mock('@/utils/styles', () => ({
 import { PerpsProSlider } from './PerpsProSlider';
 
 describe('PerpsProSlider neutral design', () => {
-  it('masks the line with hollow points and uses a hollow custom thumb', () => {
+  it('matches the 32/2/16/8 neutral geometry with aligned rails', () => {
     render(
       <PerpsProSlider
         hideMinimumPoint
@@ -46,9 +46,10 @@ describe('PerpsProSlider neutral design', () => {
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-line',
-      height: 1,
-      left: 6.5,
-      right: 6.5,
+      height: 2,
+      left: 0,
+      right: 0,
+      top: 15,
     });
     expect(
       StyleSheet.flatten(
@@ -57,6 +58,7 @@ describe('PerpsProSlider neutral design', () => {
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-title-1',
+      height: 2,
       width: `${(19 / 39) * 100}%`,
     });
     expect(
@@ -67,18 +69,38 @@ describe('PerpsProSlider neutral design', () => {
       backgroundColor: 'neutral-bg-1',
       borderColor: 'neutral-title-1',
       borderWidth: 1,
-      height: 13,
-      width: 13,
+      height: 16,
+      width: 16,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-slider-neutral-thumb-rail').props.style,
       ),
-    ).toMatchObject({ left: 6.5, right: 6.5 });
+    ).toMatchObject({ left: 0, right: 16, top: 8 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-track-progress-rail').props
+          .style,
+      ),
+    ).toMatchObject({ height: 2, left: 8, right: 8, top: 15 });
+    expect(
+      StyleSheet.flatten(
+        screen.getAllByTestId('perps-pro-slider-neutral-point')[0].props.style,
+      ),
+    ).toMatchObject({ height: 8, width: 8 });
     expect(screen.getByTestId('slider-input').props).toMatchObject({
       maximumTrackTintColor: 'transparent',
       minimumTrackTintColor: 'transparent',
     });
+  });
+
+  it('can remove all fixed points while retaining the draggable thumb', () => {
+    render(<PerpsProSlider showPoints={false} tone="neutral" value={20} />);
+
+    expect(
+      screen.queryAllByTestId('perps-pro-slider-neutral-point'),
+    ).toHaveLength(0);
+    expect(screen.getByTestId('perps-pro-slider-neutral-thumb')).toBeTruthy();
   });
 
   it('uses gray outlines after the current neutral progress', () => {

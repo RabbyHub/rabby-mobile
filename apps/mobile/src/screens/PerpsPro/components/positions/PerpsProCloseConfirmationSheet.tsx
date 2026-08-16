@@ -7,7 +7,6 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -20,6 +19,10 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
+import {
+  getPerpsProBottomSheetChromeStyles,
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+} from '../common/perpsProVisual';
 import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
@@ -184,7 +187,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 loading={pending}
                 onPress={onConfirm}
                 title={t('global.confirm')}
-                titleStyle={BOTTOM_BUTTON_COMPACT_TITLE_STYLE}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
                 type="primary"
               />
             </View>
@@ -198,35 +201,14 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
 PerpsProCloseConfirmationSheet.displayName = 'PerpsProCloseConfirmationSheet';
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 27,
-    paddingTop: 9,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   sheetView: { height: '100%' },
   container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
   heading: { gap: 8 },
   pairRow: { alignItems: 'center', flexDirection: 'row', gap: 4 },
   pair: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -266,28 +248,28 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   buyTagText: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
   },
   sellTagText: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
   },
   longTagText: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
   },
   shortTagText: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
@@ -295,7 +277,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   details: { marginTop: 16 },
   detailRow: {
     alignItems: 'center',
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     flexDirection: 'row',
     height: 33,
