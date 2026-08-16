@@ -63,6 +63,7 @@ import { mergeUserFills, reconcileHttpFills } from './userFills';
 import { publishPerpsProHistoryEvent } from './history/perpsHistoryEvents';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import type { PerpsMaintenanceMarginTier } from '@/utils/perpsMargin';
+import { createPerpsUserAbstractionLifecycle } from './userAbstractionLifecycle';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
@@ -211,6 +212,7 @@ export interface PerpsState {
   spotAssetCtxs: WsFastAssetCtxs;
   userAbstraction: UserAbstractionResp;
   userAbstractionReady: boolean;
+  userAbstractionOwnerAddress: string | null;
   openOrders: OpenOrder[];
   currentPerpsAccount: Account | null;
   clearinghouseStateMap: Record<string, AggregatedClearinghouseState | null>;
@@ -287,6 +289,7 @@ export const initialState: PerpsState = {
   spotAssetCtxs: {},
   userAbstraction: UserAbstractionResp.default,
   userAbstractionReady: false,
+  userAbstractionOwnerAddress: null,
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
@@ -393,6 +396,111 @@ function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
   });
 }
 
+const isKnownUserAbstraction = (value: unknown): value is UserAbstractionResp =>
+  value === UserAbstractionResp.default ||
+  value === UserAbstractionResp.disabled ||
+  value === UserAbstractionResp.unifiedAccount ||
+  value === UserAbstractionResp.portfolioMargin ||
+  value === UserAbstractionResp.dexAbstraction;
+
+export const isPerpsUserAbstractionReadyForAccount = (
+  state: Pick<
+    PerpsState,
+    | 'currentPerpsAccount'
+    | 'userAbstractionOwnerAddress'
+    | 'userAbstractionReady'
+  >,
+  account: Account | null = state.currentPerpsAccount,
+) =>
+  !!account?.address &&
+  state.userAbstractionReady &&
+  !!state.userAbstractionOwnerAddress &&
+  isSameAddress(state.userAbstractionOwnerAddress, account.address);
+
+export const queryUserAbstraction = async (
+  address: string,
+): Promise<UserAbstractionResp> => {
+  if (!address.trim()) {
+    throw new Error('Perps abstraction address is required');
+  }
+  return apisPerps.getPerpsSDK().info.getUserAbstraction(address);
+};
+
+export const reconcileUserAbstractionSnapshot = ({
+  account,
+  generation,
+  userAbstraction,
+}: {
+  account: Account;
+  generation: number;
+  userAbstraction: unknown;
+}): boolean => {
+  const runtime = getPerpsAccountRuntimeContext();
+  if (
+    runtime.generation !== generation ||
+    !isSamePerpsAccountIdentity(runtime.account, account)
+  ) {
+    return false;
+  }
+
+  setPerpsState(prev => {
+    if (!isSamePerpsAccountIdentity(prev.currentPerpsAccount, account)) {
+      return prev;
+    }
+    if (!isKnownUserAbstraction(userAbstraction)) {
+      return {
+        ...prev,
+        userAbstractionReady: false,
+        userAbstractionOwnerAddress: null,
+      };
+    }
+    return {
+      ...prev,
+      userAbstraction,
+      userAbstractionReady: true,
+      userAbstractionOwnerAddress: account.address,
+    };
+  });
+  return true;
+};
+
+const userAbstractionLifecycle = createPerpsUserAbstractionLifecycle<
+  Account,
+  UserAbstractionResp
+>({
+  getRuntimeContext: getPerpsAccountRuntimeContext,
+  isSameAccount: isSamePerpsAccountIdentity,
+  onLoading: request => {
+    const runtime = getPerpsAccountRuntimeContext();
+    if (
+      runtime.generation !== request.generation ||
+      !isSamePerpsAccountIdentity(runtime.account, request.account)
+    ) {
+      return;
+    }
+    setPerpsState(prev =>
+      isSamePerpsAccountIdentity(prev.currentPerpsAccount, request.account)
+        ? {
+            ...prev,
+            userAbstractionReady: false,
+            userAbstractionOwnerAddress: null,
+          }
+        : prev,
+    );
+  },
+  onResolved: (request, userAbstraction) => {
+    reconcileUserAbstractionSnapshot({
+      account: request.account,
+      generation: request.generation,
+      userAbstraction,
+    });
+  },
+  query: queryUserAbstraction,
+});
+
+export const fetchUserAbstraction = (account: Account) =>
+  userAbstractionLifecycle.refresh({ ...account });
+
 function stopHomeSpotSubscription() {
   if (!homeSpotSubscription) {
     return;
@@ -479,21 +587,6 @@ const fetchPerpPermission = async (address: string) => {
   // setHasPermission(true);
 };
 
-export const fetchUserAbstraction = async (address: string) => {
-  const sdk = apisPerps.getPerpsSDK();
-  const userAbstraction = await sdk.info.getUserAbstraction(address);
-  const currentAddress = perpsStore.getState().currentPerpsAccount?.address;
-  if (!currentAddress || !isSameAddress(currentAddress, address)) {
-    return null;
-  }
-  setPerpsState(prev => ({
-    ...prev,
-    userAbstraction: userAbstraction,
-    userAbstractionReady: true,
-  }));
-  return userAbstraction;
-};
-
 const setIsFetchAllDone = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, isFetchAllDone: payload }));
 };
@@ -575,6 +668,9 @@ const setCurrentPerpsAccount = (payload: Account) => {
         : !!cachedClearinghouseState,
       isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
       userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
+      userAbstractionOwnerAddress: sameAccount
+        ? prev.userAbstractionOwnerAddress
+        : null,
       spotState: sameAccount ? prev.spotState : initialState.spotState,
       openOrders: sameAccount ? prev.openOrders : [],
       userAbstraction: sameAccount
@@ -605,24 +701,29 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   // Tear down only the old account's streams. Global market feeds have their
   // own lifecycle and remain warm while the Perps screen initializes.
   stopAccountSubscriptions();
-  setPerpsState(prev => ({
-    ...prev,
-    currentPerpsAccount: payload,
-    isLogin: !!payload,
-    isInitialized: false,
-    isUserDataReady: false,
-    isSpotStateReady: false,
-    userAbstractionReady: false,
-    currentClearinghouseState: null,
-    spotState: initialState.spotState,
-    openOrders: [],
-    homePositionPnl: pnl,
-    accountNeedApproveAgent: false,
-    accountNeedApproveBuilderFee: false,
-    userFills: isSamePerpsAccount(prev.currentPerpsAccount, payload)
-      ? prev.userFills
-      : [],
-  }));
+  setPerpsState(prev => {
+    const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, payload);
+    return {
+      ...prev,
+      currentPerpsAccount: payload,
+      isLogin: !!payload,
+      isInitialized: false,
+      isUserDataReady: false,
+      isSpotStateReady: false,
+      userAbstraction: sameAccount
+        ? prev.userAbstraction
+        : UserAbstractionResp.default,
+      userAbstractionReady: false,
+      userAbstractionOwnerAddress: null,
+      currentClearinghouseState: null,
+      spotState: initialState.spotState,
+      openOrders: [],
+      homePositionPnl: pnl,
+      accountNeedApproveAgent: false,
+      accountNeedApproveBuilderFee: false,
+      userFills: sameAccount ? prev.userFills : [],
+    };
+  });
   void perpsServiceApi.setCurrentAccount(payload).catch(error => {
     console.error('[perpsService] persist current account failed', error);
   });
@@ -1055,7 +1156,7 @@ const prepareHomePerpsAccount = async (account: Account) => {
   if (!reusesFullSubscription) {
     sdk.initAccount(account.address);
   }
-  const userAbstraction = await fetchUserAbstraction(account.address);
+  const userAbstraction = await fetchUserAbstraction(account);
   if (
     !userAbstraction ||
     !isSameAddress(
@@ -1150,6 +1251,7 @@ const resetAccountState = () => {
     currentPerpsAccount: null,
     isLogin: false,
     userAbstraction: UserAbstractionResp.default,
+    userAbstractionOwnerAddress: null,
     userAccountHistory: [],
     localLoadingHistory: [],
     userFills: [],
@@ -2213,6 +2315,9 @@ export const usePerpsStore = () => {
           ? prev.userAbstraction
           : UserAbstractionResp.default,
         userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
+        userAbstractionOwnerAddress: sameAccount
+          ? prev.userAbstractionOwnerAddress
+          : null,
         localLoadingHistory: [],
         userFills: sameAccount ? prev.userFills : [],
       };
@@ -2223,7 +2328,9 @@ export const usePerpsStore = () => {
     }
     fetchUserNonFundingLedgerUpdates();
     fetchPerpPermission(account.address);
-    fetchUserAbstraction(account.address);
+    void fetchUserAbstraction(account).catch(error => {
+      console.error('[perps] fetch user abstraction failed', error);
+    });
 
     setTimeout(() => {
       fetchPerpFee();
