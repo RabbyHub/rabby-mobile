@@ -6,7 +6,12 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ListRenderItem, ViewStyle } from 'react-native';
+import type {
+  LayoutChangeEvent,
+  ListRenderItem,
+  ViewStyle,
+  ViewToken,
+} from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -49,7 +54,10 @@ import {
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
-import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import {
+  useRegressionScenario,
+  useRegressionScenarioAssertion,
+} from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
@@ -134,8 +142,13 @@ export const ProtocolList = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
+  const isHighCardinalityRegressionScenario =
+    regressionScenarioActive &&
+    regressionScenarioId === 'high-cardinality-assets' &&
+    !!regressionScenarioRunId &&
+    !!regressionScenarioReport;
 
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Accounts, myTop10Addresses } = useAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
   const [showAllProtocols, setShowAllProtocols] = useState(false);
@@ -145,7 +158,7 @@ export const ProtocolList = () => {
     chain,
     isCurrentTab: isFocusing,
   });
-  const getAccountByAddress = useFindAccountByAddress();
+  const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const multiProtocolsKey = useMemo(() => {
@@ -180,6 +193,79 @@ export const ProtocolList = () => {
     availability: protocolProjection.availability,
     hasData: protocolIndex.protocolIds.length > 0,
   });
+
+  // The high-cardinality probe intentionally selects Watch addresses. Keep the
+  // assertion at the final entity-to-row boundary so it catches a future
+  // account-filter mismatch that would otherwise leave a populated projection
+  // visually blank.
+  const [highCardinalityDefiRenderable, setHighCardinalityDefiRenderable] =
+    useState<Readonly<Record<string, unknown>> | null>(null);
+  const highCardinalityRenderableProtocolIds = useMemo(
+    () => protocolIndex.protocolIds.slice(0, 5),
+    [protocolIndex.protocolIds],
+  );
+  useEffect(() => {
+    if (
+      !isHighCardinalityRegressionScenario ||
+      !regressionScenarioRunId ||
+      protocolProjectionViewState !== 'data' ||
+      !highCardinalityRenderableProtocolIds.length
+    ) {
+      return;
+    }
+
+    let disposed = false;
+    const checkRenderableRows = () => {
+      if (disposed) {
+        return;
+      }
+      const valueMap = protocolEntityResourceStore.getState().valueMap;
+      const renderableCount = highCardinalityRenderableProtocolIds.reduce(
+        (count, protocolId) => {
+          const protocol = valueMap[protocolId];
+          return (
+            count +
+            Number(
+              Boolean(protocol && getAccountByAddress(protocol.owner_addr)),
+            )
+          );
+        },
+        0,
+      );
+
+      if (renderableCount !== highCardinalityRenderableProtocolIds.length) {
+        return;
+      }
+
+      setHighCardinalityDefiRenderable(previous => {
+        if (previous?.runId === regressionScenarioRunId) {
+          return previous;
+        }
+        return {
+          runId: regressionScenarioRunId,
+          protocolCount: protocolIndex.protocolIds.length,
+          sampleSize: highCardinalityRenderableProtocolIds.length,
+          renderableCount,
+        };
+      });
+    };
+
+    checkRenderableRows();
+    return protocolEntityResourceStore.subscribe(checkRenderableRows);
+  }, [
+    getAccountByAddress,
+    highCardinalityRenderableProtocolIds,
+    isHighCardinalityRegressionScenario,
+    protocolIndex.protocolIds.length,
+    protocolProjectionViewState,
+    regressionScenarioRunId,
+  ]);
+  useRegressionScenarioAssertion(
+    'high-cardinality-defi-rows-renderable',
+    highCardinalityDefiRenderable?.runId === regressionScenarioRunId
+      ? highCardinalityDefiRenderable
+      : null,
+  );
 
   const shouldDefaultExpand = useMemo(
     () => protocolIndex.defaultVisibleProtocolCount <= 5,
@@ -242,6 +328,175 @@ export const ProtocolList = () => {
       .map(item => item.data)
       .flat();
   }, [protocolIndex, protocolProjectionViewState, showAllProtocols, t]);
+
+  const lastHighCardinalityRenderStateKeyRef = useRef<string | null>(null);
+  const lastHighCardinalityListMeasurementKeyRef = useRef<string | null>(null);
+  const reportHighCardinalityListMeasurement = useCallback(
+    (mark: string, details: Record<string, number>) => {
+      if (!isHighCardinalityRegressionScenario || !regressionScenarioReport) {
+        return;
+      }
+
+      const measurementKey = [
+        regressionScenarioRunId,
+        mark,
+        ...Object.entries(details).flat(),
+      ].join(':');
+      if (lastHighCardinalityListMeasurementKeyRef.current === measurementKey) {
+        return;
+      }
+      lastHighCardinalityListMeasurementKeyRef.current = measurementKey;
+
+      regressionScenarioReport('perf-mark', {
+        mark,
+        ...details,
+      });
+    },
+    [
+      isHighCardinalityRegressionScenario,
+      regressionScenarioReport,
+      regressionScenarioRunId,
+    ],
+  );
+  const onHighCardinalityListLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const { width, height } = event.nativeEvent.layout;
+      reportHighCardinalityListMeasurement('home-assets-defi-list-layout', {
+        width,
+        height,
+        itemCount: portfolioListData.length,
+      });
+    },
+    [portfolioListData.length, reportHighCardinalityListMeasurement],
+  );
+  const onHighCardinalityListContentSizeChange = useCallback(
+    (width: number, height: number) => {
+      reportHighCardinalityListMeasurement(
+        'home-assets-defi-list-content-size',
+        {
+          width,
+          height,
+          itemCount: portfolioListData.length,
+        },
+      );
+    },
+    [portfolioListData.length, reportHighCardinalityListMeasurement],
+  );
+  const highCardinalityListReporterRef = useRef<
+    ((mark: string, details: Record<string, number>) => void) | null
+  >(null);
+  highCardinalityListReporterRef.current = reportHighCardinalityListMeasurement;
+  const onHighCardinalityViewableItemsChanged = useRef(
+    ({
+      viewableItems,
+    }: {
+      viewableItems: Array<ViewToken<ProtocolListItem>>;
+    }) => {
+      const visibleProtocolCount = viewableItems.filter(
+        item => item.isViewable && item.item?.type !== 'loading-defi-skeleton',
+      ).length;
+      highCardinalityListReporterRef.current?.(
+        'home-assets-defi-list-viewable-items',
+        {
+          itemCount: viewableItems.length,
+          visibleProtocolCount,
+        },
+      );
+    },
+  ).current;
+  useEffect(() => {
+    if (
+      !isHighCardinalityRegressionScenario ||
+      !regressionScenarioRunId ||
+      !regressionScenarioReport
+    ) {
+      return;
+    }
+
+    const stateKey = [
+      regressionScenarioRunId,
+      isFocused,
+      isFocusing,
+      protocolProjection.availability,
+      protocolProjectionViewState,
+      protocolIndex.protocolIds.length,
+      protocolIndex.defaultVisibleProtocolCount,
+      portfolioListData.length,
+      showAllProtocols,
+    ].join(':');
+    if (lastHighCardinalityRenderStateKeyRef.current === stateKey) {
+      return;
+    }
+    lastHighCardinalityRenderStateKeyRef.current = stateKey;
+
+    regressionScenarioReport('perf-mark', {
+      mark: 'home-assets-defi-render-state',
+      isFocused,
+      isFocusing,
+      availability: protocolProjection.availability,
+      viewState: protocolProjectionViewState,
+      protocolCount: protocolIndex.protocolIds.length,
+      defaultVisibleProtocolCount: protocolIndex.defaultVisibleProtocolCount,
+      listItemCount: portfolioListData.length,
+      showAllProtocols,
+    });
+  }, [
+    isFocused,
+    isFocusing,
+    portfolioListData.length,
+    protocolIndex.defaultVisibleProtocolCount,
+    protocolIndex.protocolIds.length,
+    protocolProjection.availability,
+    protocolProjectionViewState,
+    isHighCardinalityRegressionScenario,
+    regressionScenarioReport,
+    regressionScenarioRunId,
+    showAllProtocols,
+  ]);
+
+  const lastHighCardinalityEntitySnapshotKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !isHighCardinalityRegressionScenario ||
+      !regressionScenarioRunId ||
+      !regressionScenarioReport ||
+      !protocolIndex.protocolIds.length
+    ) {
+      return;
+    }
+
+    const sampledProtocolIds = protocolIndex.protocolIds.slice(0, 32);
+    const valueMap = protocolEntityResourceStore.getState().valueMap;
+    const resolvedCount = sampledProtocolIds.reduce(
+      (count, protocolId) => count + Number(Boolean(valueMap[protocolId])),
+      0,
+    );
+    const stateKey = [
+      regressionScenarioRunId,
+      protocolIndex.protocolIds.length,
+      sampledProtocolIds.length,
+      resolvedCount,
+      Object.keys(valueMap).length,
+    ].join(':');
+    if (lastHighCardinalityEntitySnapshotKeyRef.current === stateKey) {
+      return;
+    }
+    lastHighCardinalityEntitySnapshotKeyRef.current = stateKey;
+
+    regressionScenarioReport('perf-mark', {
+      mark: 'home-assets-defi-entity-snapshot',
+      protocolCount: protocolIndex.protocolIds.length,
+      sampleSize: sampledProtocolIds.length,
+      resolvedCount,
+      missingCount: sampledProtocolIds.length - resolvedCount,
+      entityCount: Object.keys(valueMap).length,
+    });
+  }, [
+    isHighCardinalityRegressionScenario,
+    protocolIndex.protocolIds,
+    regressionScenarioReport,
+    regressionScenarioRunId,
+  ]);
 
   const hasNotAssets = useMemo(() => {
     return protocolProjectionViewState === 'empty' && isFocused;
@@ -473,6 +728,9 @@ export const ProtocolList = () => {
         updateCellsBatchingPeriod={32}
         removeClippedSubviews={IS_ANDROID}
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        onLayout={onHighCardinalityListLayout}
+        onContentSizeChange={onHighCardinalityListContentSizeChange}
+        onViewableItemsChanged={onHighCardinalityViewableItemsChanged}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <>

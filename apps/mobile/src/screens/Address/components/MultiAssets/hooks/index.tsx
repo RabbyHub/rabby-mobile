@@ -1,6 +1,5 @@
 import {
   accountEvents,
-  filterOutTop10Accounts,
   isDirectlySignableAccount,
   isHardwareAccount,
 } from '@/core/apis/account';
@@ -11,8 +10,13 @@ import {
   storeApiAccounts,
   useAccounts,
 } from '@/hooks/account';
+import { useHomeAssetSelectionSettings } from '@/hooks/appSettings';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
-import addressBalanceStore from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
+import {
+  pickHomeAccountSelectionFromAddresses,
+  pickHomeAccountSelectionFromSortedAccounts,
+} from '@/store/homePortfolio/accountSelection';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
@@ -25,37 +29,61 @@ export const isTabsSwiping = {
   value: false,
 };
 
+const EMPTY_SELECTED_ADDRESSES: string[] = [];
+
 export function useAccountInfo() {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const {
+    topN,
+    includeWatchAddresses,
+    isExperimentEnabled: isHomeAssetSelectionExperimentEnabled,
+  } = useHomeAssetSelectionSettings();
+  const selectedAddresses = balanceAccountsStore(state =>
+    isHomeAssetSelectionExperimentEnabled
+      ? state.selectedAddresses
+      : EMPTY_SELECTED_ADDRESSES,
+  );
+  const hasResolvedSelection = balanceAccountsStore(state =>
+    isHomeAssetSelectionExperimentEnabled ? state.hasResolvedSelection : false,
+  );
 
   const myAccounts = useCreationWithShallowCompare(
     () => filterMyAccounts(accounts),
     [accounts],
   );
 
-  const sortedList = useSortAddressList(myAccounts);
+  const sortedList = useSortAddressList(
+    includeWatchAddresses ? accounts : myAccounts,
+  );
   const {
     myTop10Accounts,
     myTop10Addresses,
     myTop10Records,
     myNotTop10Accounts,
   } = useCreationWithShallowCompare(() => {
-    const {
-      top10Accounts: myTop10Accounts,
-      top10Addresses: myTop10Addresses,
-      top10Records: myTop10Records,
-      restAccounts: myNotTop10Accounts,
-    } = filterOutTop10Accounts(sortedList, { gatherSameAddress: false });
+    const selection =
+      isHomeAssetSelectionExperimentEnabled && hasResolvedSelection
+        ? pickHomeAccountSelectionFromAddresses(sortedList, selectedAddresses)
+        : pickHomeAccountSelectionFromSortedAccounts(sortedList, {
+            topN,
+            uniqueAddresses: isHomeAssetSelectionExperimentEnabled,
+          });
 
     return {
-      myTop10Accounts,
-      myTop10Addresses,
-      myTop10Records,
-      myNotTop10Accounts,
+      myTop10Accounts: selection.selectedAccounts,
+      myTop10Addresses: selection.selectedAddresses,
+      myTop10Records: selection.selectedAddressRecords,
+      myNotTop10Accounts: selection.restAccounts,
     };
-  }, [sortedList]);
+  }, [
+    hasResolvedSelection,
+    isHomeAssetSelectionExperimentEnabled,
+    topN,
+    selectedAddresses,
+    sortedList,
+  ]);
 
   const stableTop10Addresses = useCreationWithShallowCompare(
     () => myTop10Addresses,
@@ -85,8 +113,16 @@ export function useAccountInfo() {
     }, [accounts]);
 
   const notMatteredAccounts = useCreationWithShallowCompare(() => {
+    if (includeWatchAddresses) {
+      return myNotTop10Accounts;
+    }
     return [...myNotTop10Accounts, ...gnosisAccounts, ...watchAccounts];
-  }, [myNotTop10Accounts, gnosisAccounts, watchAccounts]);
+  }, [
+    includeWatchAddresses,
+    myNotTop10Accounts,
+    gnosisAccounts,
+    watchAccounts,
+  ]);
 
   return {
     myTop10Accounts,
@@ -101,7 +137,9 @@ export function useAccountInfo() {
     hasSafeAddress,
     fetchAccounts,
     rawAllAccounts: accounts,
-    matteredAccountCount: filterMyAccounts(sortedList).length,
+    matteredAccountCount: includeWatchAddresses
+      ? sortedList.length
+      : filterMyAccounts(sortedList).length,
   };
 }
 
