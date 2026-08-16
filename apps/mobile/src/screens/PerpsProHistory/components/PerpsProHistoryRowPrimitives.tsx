@@ -1,4 +1,3 @@
-import ArrowRight from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
@@ -25,7 +24,6 @@ export type PerpsProHistoryBadge = Readonly<{
 export const PerpsProHistoryRowLayout: React.FC<{
   badges?: readonly PerpsProHistoryBadge[];
   details: readonly PerpsProHistoryDetail[];
-  showArrow?: boolean;
   sourceTag?: string | null;
   testID: string;
   time: number;
@@ -33,13 +31,12 @@ export const PerpsProHistoryRowLayout: React.FC<{
 }> = ({
   badges = [],
   details,
-  showArrow = false,
   sourceTag,
   testID,
   time,
   title,
 }) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const badgeStyles = {
     info: styles.infoBadge,
     negative: styles.negativeBadge,
@@ -75,15 +72,6 @@ export const PerpsProHistoryRowLayout: React.FC<{
           </View>
           <View style={styles.timeRow}>
             <Text style={styles.time}>{formatPerpsProTime(time)}</Text>
-            {showArrow ? (
-              <ArrowRight
-                accessible={false}
-                color={colors2024['neutral-secondary']}
-                height={12}
-                pointerEvents="none"
-                width={12}
-              />
-            ) : null}
           </View>
         </View>
         {badges.length ? (

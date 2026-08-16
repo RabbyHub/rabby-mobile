@@ -19,6 +19,7 @@ import {
   PERPS_PRO_HISTORY_TRADE_INITIAL_LIMIT,
   PERPS_PRO_HISTORY_TRADE_PAGE_HINT,
 } from '../constants';
+import { getPerpsProFundingHistoryKey } from '../model/fundingHistory';
 import {
   getPerpsProTransactionHistoryKey,
   summarizePerpsProTransactionHistoryFacts,
@@ -223,10 +224,6 @@ const normalizeLatestFills = (fills: readonly WsFill[]) =>
         getFillKey(left).localeCompare(getFillKey(right)),
     )
     .slice(0, PERPS_PRO_HISTORY_TRADE_INITIAL_LIMIT);
-const getFundingKey = (fact: PerpsProFundingFact) =>
-  fact.hash ||
-  `${fact.time}:${fact.coin}:${fact.szi}:${fact.usdc}:${fact.fundingRate}`;
-
 const mapUserFunding = (fact: UserFunding): PerpsProFundingFact | null => {
   if (fact.delta.type !== 'funding') {
     return null;
@@ -340,7 +337,7 @@ export const createPerpsProHistoryRepository = (
         (await info.getUserFunding(address, startTime, endTime))
           .map(mapUserFunding)
           .filter((item): item is PerpsProFundingFact => !!item),
-      getKey: getFundingKey,
+      getKey: getPerpsProFundingHistoryKey,
       getTime: item => item.time,
       limit,
       pageSizeHint: PERPS_PRO_HISTORY_LEDGER_PAGE_HINT,

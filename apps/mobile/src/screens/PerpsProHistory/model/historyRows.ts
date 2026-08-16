@@ -1,3 +1,5 @@
+import type { SpotMeta } from '@rabby-wallet/hyperliquid-sdk';
+
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 
 import type {
@@ -18,18 +20,24 @@ export const mapPerpsProHistoryRawRows = (
   address: string,
   marketDataMap: Readonly<Record<string, MarketData | undefined>>,
   orderExecutionIndex: PerpsProOrderExecutionIndex = new Map(),
+  spotMeta?: SpotMeta | null,
 ): PerpsProHistoryRow[] => {
   switch (tab) {
     case 'orders':
       return (
         rawItems as Parameters<typeof mapPerpsProOrderHistoryFact>[0][]
       ).map(item =>
-        mapPerpsProOrderHistoryFact(item, marketDataMap, orderExecutionIndex),
+        mapPerpsProOrderHistoryFact(
+          item,
+          marketDataMap,
+          orderExecutionIndex,
+          spotMeta,
+        ),
       );
     case 'trade':
       return (
         rawItems as Parameters<typeof mapPerpsProTradeHistoryFact>[0][]
-      ).map(item => mapPerpsProTradeHistoryFact(item, marketDataMap));
+      ).map(item => mapPerpsProTradeHistoryFact(item, marketDataMap, spotMeta));
     case 'transaction':
       return (rawItems as PerpsProLedgerFact[]).flatMap(item => {
         const result = mapPerpsProTransactionHistoryFact(item, address);
@@ -37,7 +45,7 @@ export const mapPerpsProHistoryRawRows = (
       });
     case 'funding':
       return (rawItems as PerpsProFundingFact[]).map(item =>
-        mapPerpsProFundingHistoryFact(item, marketDataMap),
+        mapPerpsProFundingHistoryFact(item, marketDataMap, spotMeta),
       );
   }
 };

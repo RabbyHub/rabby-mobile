@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { showToast } from '@/hooks/perps/showToast';
 import { mergeUserFills, reconcileHttpFills } from '@/hooks/perps/userFills';
 import {
+  fetchSpotMeta,
   getPerpsAccountRuntimeContext,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
@@ -258,6 +259,7 @@ export const usePerpsProHistoryController = (
         address,
         perpsStore.getState().marketDataMap,
         orderExecutionIndexRef.current,
+        perpsStore.getState().spotMeta,
       ),
     [],
   );
@@ -318,12 +320,15 @@ export const usePerpsProHistoryController = (
       }));
 
       try {
-        const batch = await loadLatestPerpsProHistoryBatch({
-          accountAddress: token.accountAddress,
-          latestFills,
-          now: Date.now(),
-          tab,
-        });
+        const [batch] = await Promise.all([
+          loadLatestPerpsProHistoryBatch({
+            accountAddress: token.accountAddress,
+            latestFills,
+            now: Date.now(),
+            tab,
+          }),
+          fetchSpotMeta(),
+        ]);
         if (!isRequestCurrent(token)) {
           return;
         }
@@ -398,12 +403,15 @@ export const usePerpsProHistoryController = (
       }
 
       try {
-        const batch = await loadLatestPerpsProHistoryBatch({
-          accountAddress: token.accountAddress,
-          latestFills,
-          now: Date.now(),
-          tab,
-        });
+        const [batch] = await Promise.all([
+          loadLatestPerpsProHistoryBatch({
+            accountAddress: token.accountAddress,
+            latestFills,
+            now: Date.now(),
+            tab,
+          }),
+          fetchSpotMeta(),
+        ]);
         if (!isRequestCurrent(token)) {
           return;
         }
@@ -509,12 +517,15 @@ export const usePerpsProHistoryController = (
       }));
 
       try {
-        const batch = await loadEarlierPerpsProHistoryBatch({
-          accountAddress: token.accountAddress,
-          limit: remaining,
-          tab,
-          window,
-        });
+        const [batch] = await Promise.all([
+          loadEarlierPerpsProHistoryBatch({
+            accountAddress: token.accountAddress,
+            limit: remaining,
+            tab,
+            window,
+          }),
+          fetchSpotMeta(),
+        ]);
         if (!isRequestCurrent(token)) {
           return;
         }

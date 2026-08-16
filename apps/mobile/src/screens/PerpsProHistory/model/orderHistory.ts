@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js';
+import type { SpotMeta } from '@rabby-wallet/hyperliquid-sdk';
 
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateOpenOrderProgress } from '@/screens/PerpsPro/model/openOrder';
@@ -33,6 +34,7 @@ export const mapPerpsProOrderHistoryFact = (
   fact: PerpsProHistoryOrderFact,
   marketDataMap: Readonly<Record<string, MarketData | undefined>>,
   executionIndex: PerpsProOrderExecutionIndex = new Map(),
+  spotMeta?: SpotMeta | null,
 ): PerpsProOrderHistoryRow => {
   const { order } = fact;
   const originalSize = nonNegativeDecimalOrNull(order.origSz);
@@ -64,7 +66,7 @@ export const mapPerpsProOrderHistoryFact = (
       key: getPerpsProOrderHistoryKey(fact),
       kind: 'orders',
       isTrigger: order.isTrigger,
-      market: resolvePerpsProHistoryMarket(order.coin, marketDataMap),
+      market: resolvePerpsProHistoryMarket(order.coin, marketDataMap, spotMeta),
       oid: order.oid,
       orderType: order.orderType || 'Unknown',
       price: price?.toString() ?? null,

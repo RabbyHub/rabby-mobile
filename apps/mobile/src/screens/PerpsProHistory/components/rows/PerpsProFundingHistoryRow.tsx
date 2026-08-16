@@ -30,7 +30,7 @@ export const PerpsProFundingHistoryRowView: React.FC<{
         {
           label: t('page.perps.pro.history.fields.amount'),
           tone: getPerpsProHistorySignedTone(row.amount),
-          value: formatPerpsProSignedDecimal(row.amount, 8),
+          value: formatPerpsProSignedDecimal(row.amount, 2),
         },
       ]}
       testID={`perps-pro-history-funding-${row.key}`}

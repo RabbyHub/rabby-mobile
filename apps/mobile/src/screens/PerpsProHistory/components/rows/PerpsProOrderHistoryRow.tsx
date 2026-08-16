@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProOrderHistoryRow } from '../../types';
 import {
-  formatPerpsProHistoryAmount,
+  formatPerpsProHistoryAssetAmount,
   titleCasePerpsProHistoryValue,
 } from '../historyRowFormatters';
 import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
@@ -33,7 +33,7 @@ export const PerpsProOrderHistoryRowView: React.FC<{
   const decimals = isBase ? row.market.szDecimals ?? 8 : 2;
   const formatAmount = (value: string | null) =>
     isBase
-      ? formatPerpsProHistoryAmount(value, decimals)
+      ? formatPerpsProHistoryAssetAmount(value, unit, decimals)
       : formatPerpsProDecimal(value, 2);
   const sideLabel =
     row.side === 'buy'
@@ -84,7 +84,6 @@ export const PerpsProOrderHistoryRowView: React.FC<{
         { label: sideLabel, tone: sideTone },
       ]}
       details={details}
-      showArrow
       sourceTag={row.market.sourceTag}
       testID={`perps-pro-history-order-${row.key}`}
       time={row.time}

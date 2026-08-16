@@ -4,9 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { PerpsProEmptyState } from '@/screens/PerpsPro/components/common/PerpsProEmptyState';
 import { createGetStyles2024 } from '@/utils/styles';
-
-import type { PerpsProHistoryTab } from '../types';
 
 export const PerpsProHistorySkeleton = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -26,17 +25,13 @@ export const PerpsProHistorySkeleton = () => {
   );
 };
 
-export const PerpsProHistoryEmpty: React.FC<{
-  tab: PerpsProHistoryTab;
-}> = ({ tab }) => {
-  const { styles } = useTheme2024({ getStyle });
+export const PerpsProHistoryEmpty = () => {
   const { t } = useTranslation();
   return (
-    <View style={styles.center}>
-      <Text style={styles.message}>
-        {t(`page.perps.pro.history.empty.${tab}`)}
-      </Text>
-    </View>
+    <PerpsProEmptyState
+      message={t('page.perps.pro.history.noHistory')}
+      testID="perps-pro-history-empty"
+    />
   );
 };
 

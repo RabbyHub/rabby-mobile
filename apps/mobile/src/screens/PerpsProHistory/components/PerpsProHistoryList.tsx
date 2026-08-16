@@ -95,7 +95,7 @@ export const PerpsProHistoryList: React.FC<{
       extraData={amountUnit}
       initialNumToRender={10}
       keyExtractor={item => item.key}
-      ListEmptyComponent={<PerpsProHistoryEmpty tab={tab} />}
+      ListEmptyComponent={<PerpsProHistoryEmpty />}
       ListFooterComponent={
         state.loadingEarlier || state.loadEarlierError ? (
           <View style={styles.footer}>

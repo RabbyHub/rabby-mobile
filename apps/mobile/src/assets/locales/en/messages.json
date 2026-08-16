@@ -2834,6 +2834,7 @@
             "transaction": "No transaction history",
             "funding": "No funding history"
           },
+          "noHistory": "No History",
           "fields": {
             "type": "Type",
             "amount": "Amount",
