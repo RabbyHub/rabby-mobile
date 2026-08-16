@@ -49,6 +49,7 @@ import {
   getPerpsProMarketSession,
   setPerpsProSessionSort,
 } from '../../session/perpsProMarketSession';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import {
   PerpsProMarketList,
   type PerpsProMarketListHandle,
@@ -427,7 +428,11 @@ const PerpsProMarketSelectorComponent = forwardRef<
         {...makeBottomSheetProps({
           colors: colors2024,
           linearGradientType: 'bg1',
-        })}>
+        })}
+        backgroundStyle={styles.background}
+        handleIndicatorStyle={styles.handleIndicator}
+        handleStyle={styles.handle}
+        style={styles.modal}>
         <View style={styles.sheet} testID="perps-pro-market-selector-content">
           <PerpsProMarketSearchBar
             onChangeText={setQuery}
@@ -488,19 +493,23 @@ const PerpsProMarketSelectorComponent = forwardRef<
             </View>
           ) : null}
           {isSearchMode ? (
-            <PerpsProMarketList
-              bottomInset={insets.bottom}
-              currentMarketKey={currentMarketKey}
-              data={searchSlots}
-              favoriteSet={favoriteSet}
-              marketDataStatus={marketDataStatus}
-              onPrefetch={onPrefetch}
-              onSelect={selectMarket}
-              onToggleFavorite={toggleFavorite}
-              pageTab="search"
-              ref={handle => setListRef('search', handle)}
-              searchMode
-            />
+            <View
+              style={styles.searchResults}
+              testID="perps-pro-market-search-results">
+              <PerpsProMarketList
+                bottomInset={insets.bottom}
+                currentMarketKey={currentMarketKey}
+                data={searchSlots}
+                favoriteSet={favoriteSet}
+                marketDataStatus={marketDataStatus}
+                onPrefetch={onPrefetch}
+                onSelect={selectMarket}
+                onToggleFavorite={toggleFavorite}
+                pageTab="search"
+                ref={handle => setListRef('search', handle)}
+                searchMode
+              />
+            </View>
           ) : (
             <PagerView
               initialPage={activeTabIndex}
@@ -551,6 +560,7 @@ export const PerpsProMarketSelector = React.memo(
 );
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   sheet: {
     flex: 1,
     paddingTop: 0,
@@ -564,7 +574,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   search: {
     marginLeft: 15,
     marginRight: 15,
-    marginTop: 4,
+    marginTop: 0,
+  },
+  searchResults: {
+    flex: 1,
+    paddingTop: 16,
   },
   columnHeader: {
     alignItems: 'flex-start',
@@ -597,7 +611,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   columnText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

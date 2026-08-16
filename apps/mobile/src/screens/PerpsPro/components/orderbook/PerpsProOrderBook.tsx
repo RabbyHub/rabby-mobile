@@ -1,4 +1,3 @@
-import RcPrecisionCaret from '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg';
 import { Text } from '@/components/Typography';
 import { FontNames } from '@/core/utils/fonts';
 import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFastL2';
@@ -26,6 +25,7 @@ import {
   type ProcessedPerpsOrderBook,
 } from '../../model/orderBook';
 import { formatPerpsProPrice } from '../../utils/format';
+import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
 import { PerpsProFundingSummary } from '../funding/PerpsProFundingSummary';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
@@ -290,13 +290,7 @@ export const PerpsProOrderBook: React.FC<{
                   )
                 : '-'}
             </Text>
-            <View style={styles.precisionCaret}>
-              <RcPrecisionCaret
-                color={colors2024['neutral-foot']}
-                height={6}
-                width={8}
-              />
-            </View>
+            <PerpsProSelectCaret color={colors2024['neutral-foot']} />
           </Pressable>
           <Pressable
             accessibilityLabel={modeLabels[mode]}
@@ -420,9 +414,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
-  },
-  precisionCaret: {
-    transform: [{ scaleY: -1 }],
   },
   ratioRow: {
     alignItems: 'center',

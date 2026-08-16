@@ -2,13 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-jest.mock('@/assets/icons/dapp/icon-star-full.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) =>
     ReactModule.createElement(View, {
       ...props,
-      testID: 'favorite-full',
+      testID: 'favorite-star',
     });
 });
 
@@ -18,7 +18,7 @@ jest.mock('@/assets/icons/dapp/icon-star.svg', () => {
   return (props: object) =>
     ReactModule.createElement(View, {
       ...props,
-      testID: 'favorite-empty',
+      testID: 'favorite-star-empty',
     });
 });
 
@@ -55,9 +55,7 @@ jest.mock('@/hooks/theme', () => ({
         get: (_target, key) => String(key),
       },
     );
-    return {
-      styles: getStyle({ colors2024 }),
-    };
+    return { colors2024, isLight: true, styles: getStyle({ colors2024 }) };
   },
 }));
 
@@ -148,7 +146,7 @@ describe('PerpsProMarketRow', () => {
     ).toEqual(
       expect.objectContaining({ height: 24, marginRight: 6, width: 16 }),
     );
-    expect(screen.getByTestId('favorite-empty').props).toEqual(
+    expect(screen.getByTestId('favorite-star-empty').props).toEqual(
       expect.objectContaining({ height: 16, width: 16 }),
     );
     expect(screen.getByTestId('market-logo').props).toEqual(
@@ -233,7 +231,7 @@ describe('PerpsProMarketRow', () => {
         'hyperliquid::ALPHA:https://example.test/ALPHA.png',
       ),
     ).toBeTruthy();
-    expect(screen.getByTestId('favorite-empty')).toBeTruthy();
+    expect(screen.getByTestId('favorite-star-empty')).toBeTruthy();
 
     rerender(
       <PerpsProMarketRow
@@ -253,7 +251,11 @@ describe('PerpsProMarketRow', () => {
     expect(
       screen.getByLabelText('hyperliquid::BETA:https://example.test/BETA.png'),
     ).toBeTruthy();
-    expect(screen.getByTestId('favorite-full')).toBeTruthy();
+    expect(screen.getByTestId('favorite-star').props).toMatchObject({
+      color: 'orange-default',
+      height: 13.5445,
+      width: 13.6231,
+    });
     expect(
       screen.getByLabelText('page.perps.pro.marketSelector.select:BETAUSDC')
         .props.accessibilityState,

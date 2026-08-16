@@ -31,7 +31,7 @@ jest.mock('react-native-pager-view', () => {
   );
 });
 
-jest.mock('@/assets/icons/dapp/icon-star-full.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);

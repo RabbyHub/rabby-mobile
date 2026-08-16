@@ -42,7 +42,7 @@ export const PerpsProAccountAssetRow: React.FC<{
       <View style={styles.assetMain}>
         <View style={styles.assetIdentity}>
           <AssetIcon height={24} width={24} />
-          <View>
+          <View style={styles.assetCopy}>
             <View style={styles.coinRow}>
               <Text style={styles.coin}>{asset.coin}</Text>
               {ledgerLabel ? (
@@ -95,7 +95,7 @@ PerpsProAccountAssetRow.displayName = 'PerpsProAccountAssetRow';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   assetRow: {
-    borderBottomColor: colors2024['neutral-line'],
+    borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     gap: 12,
     justifyContent: 'center',
@@ -105,15 +105,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 8,
   },
   assetMain: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   assetIdentity: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
     flexDirection: 'row',
     gap: 4,
+  },
+  assetCopy: {
+    gap: 2,
   },
   coinRow: {
     alignItems: 'center',
@@ -122,9 +125,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   coin: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 20,
   },
   ledgerTag: {
@@ -135,14 +138,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   ledgerTagText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 14,
   },
   fullName: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -151,14 +154,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   total: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,
   },
   usdValue: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
     marginTop: 4,
@@ -176,7 +179,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   assetActionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

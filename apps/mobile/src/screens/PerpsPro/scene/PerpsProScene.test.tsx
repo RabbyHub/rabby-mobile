@@ -804,9 +804,7 @@ describe('PerpsProScene market loading states', () => {
     ).toBeTruthy();
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(
-      false,
-    );
+    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
 
     expect(screen.getByTestId('perps-region-alert').props.bottomSpacing).toBe(
       4,
@@ -854,9 +852,7 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(
-      false,
-    );
+    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
     expect(screen.getByTestId('market-bar-skeleton')).toBeOnTheScreen();
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,

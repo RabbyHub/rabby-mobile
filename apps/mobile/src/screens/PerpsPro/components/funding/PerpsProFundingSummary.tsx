@@ -1,4 +1,5 @@
 import { Text } from '@/components/Typography';
+import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useState } from 'react';
@@ -14,6 +15,8 @@ import {
 import type { PerpsProMarket } from '../../model/market';
 import { formatPerpsProFundingRate } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+
+const PERPS_PRO_FUNDING_LABEL_MIN_WIDTH = 136;
 
 const FundingCountdown = React.memo(
   ({ serverClock }: { serverClock: PerpsServerClockSample | null }) => {
@@ -59,7 +62,10 @@ export const PerpsProFundingSummary: React.FC<{
       disabled={!market}
       onPress={onPress}
       style={styles.container}>
-      <PerpsProDottedUnderlineText style={styles.label}>
+      <PerpsProDottedUnderlineText
+        allowNaturalWidth
+        containerStyle={styles.labelContainer}
+        style={styles.label}>
         {t('page.perps.pro.funding.summary')}
       </PerpsProDottedUnderlineText>
       <View style={styles.valueLine}>
@@ -80,10 +86,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
+  },
+  labelContainer: {
+    minWidth: PERPS_PRO_FUNDING_LABEL_MIN_WIDTH,
   },
   valueLine: {
     alignItems: 'center',
@@ -92,20 +101,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rate: {
     color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
   },
   separator: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     lineHeight: 12,
   },
   countdown: {
     color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: FontNames.sf_pro,
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,

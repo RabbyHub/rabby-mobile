@@ -101,7 +101,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
   },
   metrics: {
-    borderTopColor: colors2024['neutral-line'],
+    borderTopColor: colors2024['neutral-bg-5'],
     borderTopWidth: 1,
     flexDirection: 'row',
     gap: 8,

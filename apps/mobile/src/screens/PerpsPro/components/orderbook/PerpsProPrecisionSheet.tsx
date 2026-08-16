@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPerpsProPrecisionSheetLayout } from '../../model/layout';
 import type { PerpsTickOption } from '../../model/orderBook';
 import { formatPerpsProPrice } from '../../utils/format';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 export const PerpsProPrecisionSheet: React.FC<{
@@ -96,28 +97,7 @@ export const PerpsProPrecisionSheet: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  modal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
-  },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  handle: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 40,
-    paddingBottom: 27,
-    paddingTop: 9,
-  },
-  handleIndicator: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    height: 4,
-    width: 40,
-  },
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   sheetContent: {
     gap: 8,
     paddingHorizontal: 15,

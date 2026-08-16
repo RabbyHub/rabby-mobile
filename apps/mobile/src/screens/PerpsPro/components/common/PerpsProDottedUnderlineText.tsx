@@ -20,6 +20,7 @@ const UNDERLINE_CANVAS_HEIGHT = 1;
 const UNDERLINE_Y = UNDERLINE_CANVAS_HEIGHT - UNDERLINE_STROKE_WIDTH / 2;
 
 interface PerpsProDottedUnderlineTextProps {
+  allowNaturalWidth?: boolean;
   children: React.ReactNode;
   accessibilityLabel?: string;
   containerStyle?: StyleProp<ViewStyle>;
@@ -38,6 +39,7 @@ export const PerpsProDottedUnderlineText: React.FC<
   PerpsProDottedUnderlineTextProps
 > = ({
   accessibilityLabel,
+  allowNaturalWidth = false,
   children,
   containerStyle,
   numberOfLines = 1,
@@ -93,12 +95,26 @@ export const PerpsProDottedUnderlineText: React.FC<
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       onPress={onPress}
-      style={[styles.container, containerStyle]}
+      style={[
+        styles.container,
+        allowNaturalWidth
+          ? styles.naturalWidthContainer
+          : styles.boundedContainer,
+        containerStyle,
+      ]}
       testID={testID}>
       {content}
     </Pressable>
   ) : (
-    <View style={[styles.container, containerStyle]} testID={testID}>
+    <View
+      style={[
+        styles.container,
+        allowNaturalWidth
+          ? styles.naturalWidthContainer
+          : styles.boundedContainer,
+        containerStyle,
+      ]}
+      testID={testID}>
       {content}
     </View>
   );
@@ -108,8 +124,13 @@ const getStyle = createGetStyles2024(() => ({
   container: {
     alignItems: 'flex-start',
     alignSelf: 'flex-start',
-    maxWidth: '100%',
     position: 'relative',
+  },
+  boundedContainer: {
+    maxWidth: '100%',
+  },
+  naturalWidthContainer: {
+    flexShrink: 0,
   },
   underline: {
     bottom: 0,

@@ -76,4 +76,30 @@ describe('PerpsProDottedUnderlineText', () => {
     );
     expect(screen.queryByRole('button')).toBeNull();
   });
+
+  it('keeps bounded width by default and opts field labels into natural width', () => {
+    const view = render(
+      <PerpsProDottedUnderlineText testID="label">
+        Funding (1h) / Countdown
+      </PerpsProDottedUnderlineText>,
+    );
+
+    expect(StyleSheet.flatten(screen.getByTestId('label').props.style)).toEqual(
+      expect.objectContaining({ maxWidth: '100%' }),
+    );
+
+    view.rerender(
+      <PerpsProDottedUnderlineText allowNaturalWidth testID="label">
+        Funding (1h) / Countdown
+      </PerpsProDottedUnderlineText>,
+    );
+    const naturalStyle = StyleSheet.flatten(
+      screen.getByTestId('label').props.style,
+    );
+    expect(naturalStyle).toEqual(expect.objectContaining({ flexShrink: 0 }));
+    expect(naturalStyle.maxWidth).toBeUndefined();
+    expect(
+      screen.getByText('Funding (1h) / Countdown').props.numberOfLines,
+    ).toBe(1);
+  });
 });

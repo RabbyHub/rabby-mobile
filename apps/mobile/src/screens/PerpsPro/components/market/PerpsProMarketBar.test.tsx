@@ -94,6 +94,11 @@ describe('PerpsProMarketBar', () => {
       StyleSheet.flatten(screen.getByTestId('perps-pro-market-bar').props.style)
         .borderTopWidth,
     ).toBeUndefined();
+    expect(screen.getByTestId('market-caret').props).toMatchObject({
+      color: 'neutral-title-1',
+      height: 18,
+      width: 18,
+    });
   });
 
   it('disables the K-line action when no market is resolved', () => {
