@@ -33,7 +33,11 @@ export interface PerpsUpdateIsolatedMarginLiveContext {
 export interface PerpsUpdateIsolatedMarginResult {
   delta?: string;
   error?: string;
-  failureReason?: 'regionRestricted' | 'requestFailed' | 'userCancelled';
+  failureReason?:
+    | 'insufficientMargin'
+    | 'regionRestricted'
+    | 'requestFailed'
+    | 'userCancelled';
   kind: 'failed' | 'noChange' | 'staleContext' | 'success' | 'unknownOutcome';
   refreshError?: string;
 }
@@ -140,6 +144,47 @@ const isUnknownOutcomeError = (error: unknown) => {
   );
 };
 
+const isInsufficientMarginError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  return /insufficient margin/i.test(message);
+};
+
+const readMarginUpdateResponseError = (response: unknown) => {
+  if (typeof response === 'string' && response) {
+    return response;
+  }
+  const shape = response as
+    | {
+        data?: {
+          error?: unknown;
+          statuses?: unknown[];
+        };
+        error?: unknown;
+      }
+    | null
+    | undefined;
+  const status = shape?.data?.statuses?.[0];
+  if (typeof status === 'string' && status) {
+    return status;
+  }
+  if (
+    status &&
+    typeof status === 'object' &&
+    'error' in status &&
+    typeof status.error === 'string' &&
+    status.error
+  ) {
+    return status.error;
+  }
+  if (typeof shape?.data?.error === 'string' && shape.data.error) {
+    return shape.data.error;
+  }
+  if (typeof shape?.error === 'string' && shape.error) {
+    return shape.error;
+  }
+  return 'Hyperliquid rejected margin update';
+};
+
 const refreshFacts = async (
   dexId: string,
   dependencies: UpdateIsolatedMarginDependencies,
@@ -195,6 +240,11 @@ export const executePerpsUpdateIsolatedMargin = async (
     if (!latestMargin || latestMargin.isNegative()) {
       return { kind: 'staleContext' };
     }
+    if (
+      targetMargin.eq(latestMargin.decimalPlaces(2, BigNumber.ROUND_HALF_UP))
+    ) {
+      return { delta: '0', kind: 'noChange' };
+    }
     const roundedDelta = targetMargin
       .minus(latestMargin)
       .decimalPlaces(6, BigNumber.ROUND_HALF_UP);
@@ -225,13 +275,13 @@ export const executePerpsUpdateIsolatedMargin = async (
           refreshError,
         };
       }
+      const responseError = readMarginUpdateResponseError(payload.response);
       return {
         delta,
-        error:
-          typeof payload.response === 'string' && payload.response
-            ? payload.response
-            : 'Hyperliquid rejected margin update',
-        failureReason: 'requestFailed',
+        error: responseError,
+        failureReason: isInsufficientMarginError(responseError)
+          ? 'insufficientMargin'
+          : 'requestFailed',
         kind: 'failed',
       };
     }
@@ -263,7 +313,9 @@ export const executePerpsUpdateIsolatedMargin = async (
     return {
       delta,
       error: message,
-      failureReason: 'requestFailed',
+      failureReason: isInsufficientMarginError(message)
+        ? 'insufficientMargin'
+        : 'requestFailed',
       kind: 'failed',
     };
   }

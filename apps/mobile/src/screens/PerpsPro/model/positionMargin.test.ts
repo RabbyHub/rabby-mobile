@@ -29,8 +29,9 @@ describe('positionMargin', () => {
       accountFactsReady: true,
       dexWithdrawable: '12.34',
       isSpotStateReady: false,
+      portfolioAvailableAfterMaintenance: null,
       quoteAsset: 'USDT' as const,
-      tokenToAvailableAfterMaintenance: null,
+      spotQuoteAvailable: null,
       userAbstraction: 'default',
       userAbstractionReady: true,
     };
@@ -40,16 +41,14 @@ describe('positionMargin', () => {
     ).toBe('0');
   });
 
-  it('resolves the exact quote token for unified and portfolio accounts', () => {
+  it('uses unreserved quote balance for unified accounts', () => {
     const base = {
       accountFactsReady: true,
       dexWithdrawable: '99',
       isSpotStateReady: true,
+      portfolioAvailableAfterMaintenance: '24.01346112',
       quoteAsset: 'USDT' as const,
-      tokenToAvailableAfterMaintenance: [
-        [0, '1'],
-        [268, '7.5'],
-      ] as const,
+      spotQuoteAvailable: '18.99135512',
       userAbstractionReady: true,
     };
     expect(
@@ -57,13 +56,7 @@ describe('positionMargin', () => {
         ...base,
         userAbstraction: 'unifiedAccount',
       }),
-    ).toBe('7.5');
-    expect(
-      resolvePositionMarginAvailable({
-        ...base,
-        userAbstraction: 'portfolioMargin',
-      }),
-    ).toBe('7.5');
+    ).toBe('18.99135512');
     expect(
       resolvePositionMarginAvailable({
         ...base,
@@ -71,6 +64,53 @@ describe('positionMargin', () => {
         userAbstraction: 'unifiedAccount',
       }),
     ).toBeNull();
+  });
+
+  it('uses maintenance availability only for portfolio USDC', () => {
+    const base = {
+      accountFactsReady: true,
+      dexWithdrawable: '99',
+      isSpotStateReady: true,
+      portfolioAvailableAfterMaintenance: '24.01346112',
+      spotQuoteAvailable: '18.99135512',
+      userAbstraction: 'portfolioMargin',
+      userAbstractionReady: true,
+    };
+    expect(
+      resolvePositionMarginAvailable({
+        ...base,
+        quoteAsset: 'USDC',
+      }),
+    ).toBe('24.01346112');
+    expect(
+      resolvePositionMarginAvailable({
+        ...base,
+        quoteAsset: 'USDT',
+      }),
+    ).toBe('18.99135512');
+  });
+
+  it('reproduces the unified account max without maintenance overstatement', () => {
+    const available = resolvePositionMarginAvailable({
+      accountFactsReady: true,
+      dexWithdrawable: '0.034071',
+      isSpotStateReady: true,
+      portfolioAvailableAfterMaintenance: '24.01346112',
+      quoteAsset: 'USDC',
+      spotQuoteAvailable: '18.99135512',
+      userAbstraction: 'unifiedAccount',
+      userAbstractionReady: true,
+    });
+    expect(
+      buildPositionMarginRange({
+        available,
+        currentMargin: '10.77317',
+        leverage: '13',
+        marginModeConstraint: 'normal',
+        markPrice: '63123',
+        positionSize: '0.00051',
+      })?.max,
+    ).toBe('29.76');
   });
 
   it('builds a removable normal range with conservative two-decimal bounds', () => {
@@ -143,6 +183,21 @@ describe('positionMargin', () => {
       'noChange',
     );
     expect(validatePositionMarginTarget({ range, target: '15' })).toBe('valid');
+  });
+
+  it('treats the visible two-decimal current margin as no change', () => {
+    const range = buildPositionMarginRange({
+      available: '5',
+      currentMargin: '10.77317',
+      leverage: '10',
+      marginModeConstraint: 'noCross',
+      markPrice: '100',
+      positionSize: '1',
+    });
+    expect(range?.min).toBe('10.78');
+    expect(validatePositionMarginTarget({ range, target: '10.77' })).toBe(
+      'noChange',
+    );
   });
 
   it('keeps targets on two decimals and signed deltas on six decimals', () => {

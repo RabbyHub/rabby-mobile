@@ -6,7 +6,9 @@ import {
   executePerpsUpdateIsolatedMargin,
 } from '@/hooks/perps/actions/updateIsolatedMargin';
 import {
-  getDexByCoin,
+  fetchClearinghouseStateHttp,
+  fetchSpotStateHttp,
+  isPerpsUserAbstractionReadyForAccount,
   perpsStore,
   type PerpsState,
 } from '@/hooks/perps/usePerpsStore';
@@ -36,6 +38,7 @@ import {
   type PositionMarginRange,
   type PositionMarginTargetState,
 } from '../model/positionMargin';
+import { getPerpsProCollateralToken } from '../model/tradeRiskAccount';
 
 type ManageMarginEditor = Readonly<{
   accountIdentity: string;
@@ -51,30 +54,108 @@ const EMPTY_FACTS = Object.freeze({
   isSpotStateReady: false,
   isUserDataReady: false,
   market: undefined,
-  spotAvailable: null,
+  portfolioAvailableAfterMaintenance: null,
+  spotQuoteAvailable: null,
   userAbstraction: 'default',
   userAbstractionReady: false,
 });
 
-const selectManageMarginFacts = (state: PerpsState, coin: string) =>
-  !coin
-    ? EMPTY_FACTS
-    : {
-        account: state.currentPerpsAccount,
-        clearinghouseState: state.currentClearinghouseState,
-        hasPermission: state.hasPermission,
-        isSpotStateReady: state.isSpotStateReady,
-        isUserDataReady: state.isUserDataReady,
-        market: state.marketDataMap[coin],
-        spotAvailable: state.spotState.tokenToAvailableAfterMaintenance,
-        userAbstraction: state.userAbstraction,
-        userAbstractionReady: state.userAbstractionReady,
-      };
+const selectManageMarginFacts = (state: PerpsState, coin: string) => {
+  if (!coin) {
+    return EMPTY_FACTS;
+  }
+  const market = state.marketDataMap[coin];
+  const collateralToken = getPerpsProCollateralToken(market?.quoteAsset);
+  return {
+    account: state.currentPerpsAccount,
+    clearinghouseState: state.currentClearinghouseState,
+    hasPermission: state.hasPermission,
+    isSpotStateReady: state.isSpotStateReady,
+    isUserDataReady: state.isUserDataReady,
+    market,
+    portfolioAvailableAfterMaintenance:
+      collateralToken == null
+        ? null
+        : state.spotState.tokenToAvailableAfterMaintenance?.find(
+            ([token]) => Number(token) === collateralToken,
+          )?.[1] ?? null,
+    spotQuoteAvailable:
+      collateralToken == null
+        ? null
+        : state.spotState.rawBalancesByToken[collateralToken]?.available ??
+          null,
+    userAbstraction: state.userAbstraction,
+    userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
+  };
+};
 
 const readLivePosition = (state: PerpsState, coin: string) =>
   state.currentClearinghouseState?.assetPositions.find(
     item => item.position.coin === coin,
   )?.position ?? null;
+
+const isSpotCollateralAccount = (userAbstraction: string) =>
+  userAbstraction === 'unifiedAccount' || userAbstraction === 'portfolioMargin';
+
+const buildManageMarginRange = (
+  facts: ReturnType<typeof selectManageMarginFacts>,
+  position: ReturnType<typeof readLivePosition>,
+) => {
+  const market = facts.market;
+  if (!market || !position) {
+    return null;
+  }
+  const available = resolvePositionMarginAvailable({
+    accountFactsReady: facts.isUserDataReady,
+    dexWithdrawable:
+      facts.clearinghouseState?.perDexSummaries[market.dexId || '']
+        ?.withdrawable,
+    isSpotStateReady: facts.isSpotStateReady,
+    portfolioAvailableAfterMaintenance:
+      facts.portfolioAvailableAfterMaintenance,
+    quoteAsset: market.quoteAsset,
+    spotQuoteAvailable: facts.spotQuoteAvailable,
+    userAbstraction: facts.userAbstraction,
+    userAbstractionReady: facts.userAbstractionReady,
+  });
+  return buildPositionMarginRange({
+    available,
+    currentMargin: position.marginUsed,
+    leverage: position.leverage?.value,
+    marginModeConstraint:
+      market.marginMode ?? (market.onlyIsolated ? 'noCross' : null),
+    markPrice: market.markPx,
+    positionSize: position.szi,
+  });
+};
+
+const refreshManageMarginFacts = async ({
+  accountAddress,
+  dexId,
+  userAbstraction,
+}: {
+  accountAddress: string;
+  dexId: string;
+  userAbstraction: string;
+}) => {
+  const initiallyNeedsSpot = isSpotCollateralAccount(userAbstraction);
+  const [clearinghouseReady, initialSpotReady] = await Promise.all([
+    fetchClearinghouseStateHttp(dexId, accountAddress),
+    initiallyNeedsSpot
+      ? fetchSpotStateHttp(accountAddress).catch(() => false)
+      : Promise.resolve(true),
+  ]);
+  if (!clearinghouseReady || !initialSpotReady) {
+    return false;
+  }
+  if (
+    !initiallyNeedsSpot &&
+    isSpotCollateralAccount(perpsStore.getState().userAbstraction)
+  ) {
+    return fetchSpotStateHttp(accountAddress).catch(() => false);
+  }
+  return true;
+};
 
 export interface PerpsProManageMarginView {
   currentLiquidationDistance: string | null;
@@ -187,32 +268,10 @@ export const usePerpsProManageMargin = () => {
     }
   }, [editor, facts.account, livePosition, resetEditor]);
 
-  const range = useMemo(() => {
-    const market = facts.market;
-    if (!market || !livePosition) {
-      return null;
-    }
-    const available = resolvePositionMarginAvailable({
-      accountFactsReady: facts.isUserDataReady,
-      dexWithdrawable:
-        facts.clearinghouseState?.perDexSummaries[market.dexId || '']
-          ?.withdrawable,
-      isSpotStateReady: facts.isSpotStateReady,
-      quoteAsset: market.quoteAsset,
-      tokenToAvailableAfterMaintenance: facts.spotAvailable,
-      userAbstraction: facts.userAbstraction,
-      userAbstractionReady: facts.userAbstractionReady,
-    });
-    return buildPositionMarginRange({
-      available,
-      currentMargin: livePosition.marginUsed,
-      leverage: livePosition.leverage?.value,
-      marginModeConstraint:
-        market.marginMode ?? (market.onlyIsolated ? 'noCross' : null),
-      markPrice: market.markPx,
-      positionSize: livePosition.szi,
-    });
-  }, [facts, livePosition]);
+  const range = useMemo(
+    () => buildManageMarginRange(facts, livePosition),
+    [facts, livePosition],
+  );
   const targetState = validatePositionMarginTarget({ range, target: draft });
 
   const view = useMemo<PerpsProManageMarginView | null>(() => {
@@ -295,6 +354,29 @@ export const usePerpsProManageMargin = () => {
     setPending(true);
     try {
       await ensurePerpsActionApproval(openingAccount as Account);
+      const beforeRefresh = perpsStore.getState();
+      const beforeRefreshAccount = beforeRefresh.currentPerpsAccount;
+      const beforeRefreshMarket =
+        beforeRefresh.marketDataMap[activeEditor.coin];
+      if (
+        !beforeRefreshAccount ||
+        !beforeRefreshMarket ||
+        getPerpsRuntimeIdentity(beforeRefreshAccount) !==
+          activeEditor.accountIdentity
+      ) {
+        resetEditor();
+        showToast(t('page.perps.pro.positions.marginContextChanged'), 'error');
+        return;
+      }
+      const refreshed = await refreshManageMarginFacts({
+        accountAddress: beforeRefreshAccount.address,
+        dexId: beforeRefreshMarket.dexId || '',
+        userAbstraction: beforeRefresh.userAbstraction,
+      });
+      if (!refreshed) {
+        showToast(t('page.perps.pro.positions.marginRefreshFailed'), 'error');
+        return;
+      }
       const state = perpsStore.getState();
       const account = state.currentPerpsAccount;
       const position = readLivePosition(state, activeEditor.coin);
@@ -320,27 +402,10 @@ export const usePerpsProManageMargin = () => {
         );
         return;
       }
-      const available = resolvePositionMarginAvailable({
-        accountFactsReady: state.isUserDataReady,
-        dexWithdrawable:
-          state.currentClearinghouseState?.perDexSummaries[market.dexId || '']
-            ?.withdrawable,
-        isSpotStateReady: state.isSpotStateReady,
-        quoteAsset: market.quoteAsset,
-        tokenToAvailableAfterMaintenance:
-          state.spotState.tokenToAvailableAfterMaintenance,
-        userAbstraction: state.userAbstraction,
-        userAbstractionReady: state.userAbstractionReady,
-      });
-      const latestRange = buildPositionMarginRange({
-        available,
-        currentMargin: position.marginUsed,
-        leverage: position.leverage?.value,
-        marginModeConstraint:
-          market.marginMode ?? (market.onlyIsolated ? 'noCross' : null),
-        markPrice: market.markPx,
-        positionSize: signedSize.abs().toFixed(),
-      });
+      const latestRange = buildManageMarginRange(
+        selectManageMarginFacts(state, activeEditor.coin),
+        position,
+      );
       const latestTargetState = validatePositionMarginTarget({
         range: latestRange,
         target: draft,
@@ -350,13 +415,21 @@ export const usePerpsProManageMargin = () => {
         showToast(t('page.perps.pro.positions.marginUpdated'), 'success');
         return;
       }
+      if (
+        latestTargetState === 'aboveMax' ||
+        latestTargetState === 'belowMin'
+      ) {
+        return;
+      }
       if (latestTargetState !== 'valid') {
+        resetEditor();
+        showToast(t('page.perps.pro.positions.marginContextChanged'), 'error');
         return;
       }
       const command = buildPerpsUpdateIsolatedMarginCommand({
         account,
         coin: activeEditor.coin,
-        dexId: getDexByCoin(activeEditor.coin),
+        dexId: market.dexId || '',
         expectedSignedSize: signedSize.toFixed(),
         targetMargin: draft,
       });
@@ -393,6 +466,18 @@ export const usePerpsProManageMargin = () => {
         return;
       }
       const error = result.error || 'Margin update failed';
+      if (result.failureReason === 'insufficientMargin') {
+        await refreshManageMarginFacts({
+          accountAddress: account.address,
+          dexId: command.dexId,
+          userAbstraction: perpsStore.getState().userAbstraction,
+        });
+        showToast(
+          t('page.perps.pro.positions.marginUpdateFailed', { reason: error }),
+          'error',
+        );
+        return;
+      }
       if (
         (await judgeIsUserAgentIsExpired(error)) ||
         judgeIsBuilderFeeNeedApprove(error)

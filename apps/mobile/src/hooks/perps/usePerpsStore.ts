@@ -1831,11 +1831,14 @@ export const subscribeToUserData = (account: Account) => {
   return true;
 };
 
-// Returns true when the cache changed; callers batch the setState flush.
+type ClearinghouseRefreshResult = 'failed' | 'unchanged' | 'updated';
+
+// Distinguish a successful unchanged response from a transport failure so
+// transaction preflights can fail closed without forcing redundant renders.
 const fetchAndCacheClearinghouseForDex = async (
   dex: string,
   expectedAddress: string,
-): Promise<boolean> => {
+): Promise<ClearinghouseRefreshResult> => {
   const sdk = apisPerps.getPerpsSDK();
   let state: ClearinghouseState;
   try {
@@ -1845,18 +1848,18 @@ const fetchAndCacheClearinghouseForDex = async (
     );
   } catch (e) {
     console.error('[fetchClearinghouseStateHttp] failed', dex, e);
-    return false;
+    return 'failed';
   }
   // Account switched during the await — drop the response.
   if (!isCurrentPerpsAccountAddress(expectedAddress)) {
-    return false;
+    return 'failed';
   }
   const prevDex = dexClearinghouseStatesCache.get(dex);
   if (prevDex && (state.time ?? 0) <= (prevDex.time ?? 0)) {
-    return false;
+    return 'unchanged';
   }
   dexClearinghouseStatesCache.set(dex, state);
-  return true;
+  return 'updated';
 };
 
 const flushAggregatedClearinghouseState = (expectedAddress: string) => {
@@ -1896,13 +1899,14 @@ export const fetchClearinghouseStateHttp = async (
     !account?.address ||
     (expectedAddress && !isSameAddress(account.address, expectedAddress))
   ) {
-    return;
+    return false;
   }
   const address = expectedAddress || account.address;
-  const touched = await fetchAndCacheClearinghouseForDex(dex, address);
-  if (touched) {
+  const result = await fetchAndCacheClearinghouseForDex(dex, address);
+  if (result === 'updated') {
     flushAggregatedClearinghouseState(address);
   }
+  return result !== 'failed';
 };
 
 export const fetchSpotStateHttp = async (expectedAddress?: string) => {
@@ -1911,14 +1915,14 @@ export const fetchSpotStateHttp = async (expectedAddress?: string) => {
     !account?.address ||
     (expectedAddress && !isSameAddress(account.address, expectedAddress))
   ) {
-    return;
+    return false;
   }
   const address = expectedAddress || account.address;
   const spotState = await apisPerps
     .getPerpsSDK()
     .info.getSpotClearingHouseState(address);
   if (!isCurrentPerpsAccountAddress(address)) {
-    return;
+    return false;
   }
   setPerpsState(prev =>
     prev.currentPerpsAccount &&
@@ -1930,6 +1934,7 @@ export const fetchSpotStateHttp = async (expectedAddress?: string) => {
         }
       : prev,
   );
+  return true;
 };
 
 const fetchAndCacheOpenOrdersForDex = async (
@@ -2019,7 +2024,7 @@ export const fetchAllDexsClearinghouseStateHttp = async () => {
       fetchAndCacheClearinghouseForDex(dex, address),
     ),
   );
-  if (results.some(Boolean)) {
+  if (results.some(result => result === 'updated')) {
     flushAggregatedClearinghouseState(address);
   }
 };

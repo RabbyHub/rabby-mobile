@@ -155,8 +155,10 @@ const renderSheet = (
     visible: true,
     ...overrides,
   };
-  render(<PerpsProManageMarginSheet {...props} />);
-  return props;
+  return {
+    props,
+    ...render(<PerpsProManageMarginSheet {...props} />),
+  };
 };
 
 describe('PerpsProManageMarginSheet', () => {
@@ -184,6 +186,40 @@ describe('PerpsProManageMarginSheet', () => {
         screen.getByTestId('perps-pro-manage-margin-amount-card').props.style,
       ),
     ).toMatchObject({ borderRadius: 12, height: 138, top: 164 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-amount-row').props.style,
+      ),
+    ).toMatchObject({
+      alignItems: 'center',
+      flexDirection: 'row',
+      height: 58,
+      justifyContent: 'space-between',
+      left: 12,
+      right: 12,
+      top: 16,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-min').props.style,
+      ),
+    ).toMatchObject({ height: 26, width: 37 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-max').props.style,
+      ),
+    ).toMatchObject({ height: 26, width: 44 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-amount-editor').props.style,
+      ),
+    ).toMatchObject({ flex: 1, height: 58 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('page.perps.pro.positions.configureMargin').props
+          .style,
+      ),
+    ).toMatchObject({ left: 15, top: 138 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-risk').props.style,
@@ -215,8 +251,21 @@ describe('PerpsProManageMarginSheet', () => {
     ).toBe(364);
   });
 
+  it('renders unavailable liquidation prices with double dashes', () => {
+    renderSheet({
+      view: {
+        ...baseView,
+        currentLiquidationPrice: null,
+        projectedLiquidationPrice: null,
+      },
+    });
+
+    expect(screen.getByText('-- → --')).toBeTruthy();
+    expect(screen.queryByText('- → -')).toBeNull();
+  });
+
   it('sanitizes decimal input and wires Min, MAX, slider, and confirm actions', () => {
-    const props = renderSheet();
+    const { props } = renderSheet();
 
     fireEvent.changeText(
       screen.getByTestId('perps-pro-manage-margin-input'),
@@ -243,7 +292,7 @@ describe('PerpsProManageMarginSheet', () => {
   });
 
   it('locks all mutations while the request outcome is pending', () => {
-    const props = renderSheet({ pending: true });
+    const { props } = renderSheet({ pending: true });
 
     expect(screen.getByTestId('manage-margin-slider').props.disabled).toBe(
       true,
@@ -256,5 +305,78 @@ describe('PerpsProManageMarginSheet', () => {
     expect(
       screen.getByTestId('perps-pro-manage-margin-input').props.editable,
     ).toBe(false);
+  });
+
+  it('freezes the complete interactive presentation while pending', () => {
+    const { props, rerender } = renderSheet();
+    const refreshedView: PerpsProManageMarginView = {
+      ...baseView,
+      currentLiquidationDistance: '0.1',
+      currentLiquidationPrice: '85',
+      entryPrice: '96',
+      markPrice: '101',
+      projectedLiquidationDistance: '0.15',
+      projectedLiquidationPrice: '82',
+      range: {
+        ...baseView.range!,
+        current: '30',
+        max: '40',
+        min: '15',
+        rawMax: '40',
+        rawMin: '15',
+      },
+      targetState: 'aboveMax',
+    };
+
+    rerender(
+      <PerpsProManageMarginSheet
+        {...props}
+        draft="45"
+        pending
+        view={refreshedView}
+      />,
+    );
+
+    expect(screen.getByText('95.00')).toBeTruthy();
+    expect(screen.getByText('100.00')).toBeTruthy();
+    expect(screen.getByText('10.10')).toBeTruthy();
+    expect(screen.getByText('25.00')).toBeTruthy();
+    expect(screen.queryByText('96.00')).toBeNull();
+    expect(screen.queryByText('40.00')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-manage-margin-warning')).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-manage-margin-input').props.value,
+    ).toBe('20');
+    expect(screen.getByTestId('manage-margin-slider').props).toMatchObject({
+      disabled: true,
+      dimWhenDisabled: false,
+      maximum: '25',
+      minimum: '10.1',
+      value: '20',
+    });
+    expect(screen.getByText('80.00 → 70.00')).toBeTruthy();
+    expect(screen.getByText('+20.00% → +30.00%')).toBeTruthy();
+
+    rerender(
+      <PerpsProManageMarginSheet
+        {...props}
+        draft="35"
+        pending={false}
+        view={{ ...refreshedView, targetState: 'valid' }}
+      />,
+    );
+
+    expect(screen.getByText('96.00')).toBeTruthy();
+    expect(screen.getByText('40.00')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-manage-margin-input').props.value,
+    ).toBe('35');
+    expect(screen.getByTestId('manage-margin-slider').props).toMatchObject({
+      disabled: false,
+      dimWhenDisabled: false,
+      maximum: '40',
+      minimum: '15',
+      value: '35',
+    });
   });
 });
