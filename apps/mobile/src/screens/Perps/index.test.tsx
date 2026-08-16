@@ -3,8 +3,6 @@ import React from 'react';
 
 import { PerpsOriginScreen } from './index';
 
-const mockSetOptions = jest.fn();
-const mockNavigation = { setOptions: mockSetOptions };
 const mockSetViewMode = jest.fn(async () => true);
 const mockUseEnsurePerpsRuntime = jest.fn();
 const mockPrefetchBaseline = jest.fn();
@@ -21,10 +19,6 @@ let mockViewModeState = {
   error: null as unknown,
   setViewMode: mockSetViewMode,
 };
-
-jest.mock('@/hooks/navigation', () => ({
-  useRabbyAppNavigation: () => mockNavigation,
-}));
 
 jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: undefined }),
@@ -173,15 +167,12 @@ describe('PerpsOriginScreen', () => {
     jest.useRealTimers();
   });
 
-  it('keeps both scenes unmounted and owns a permanently hidden native header', () => {
+  it('keeps both scenes unmounted while the native route background owns hydration', () => {
     const screen = render(<PerpsOriginScreen />);
 
     expect(screen.queryByTestId('simple-scene')).toBeNull();
     expect(screen.queryByTestId('pro-scene')).toBeNull();
-    expect(mockSetOptions).toHaveBeenCalledWith({
-      headerShown: false,
-    });
-    expect(mockSetOptions).toHaveBeenCalledTimes(1);
+    expect(screen.toJSON()).toBeNull();
     expect(mockRuntimeMounts).toBe(1);
   });
 
@@ -196,9 +187,6 @@ describe('PerpsOriginScreen', () => {
     render(<PerpsOriginScreen />);
 
     expect(mockPrefetchBaseline).toHaveBeenCalledWith('SUI');
-    expect(mockSetOptions).toHaveBeenCalledWith({
-      headerShown: false,
-    });
   });
 
   it('shows the New badge only before the persisted Pro visit', () => {
@@ -253,7 +241,6 @@ describe('PerpsOriginScreen', () => {
     );
     expect(mockRuntimeMounts).toBe(1);
     expect(mockRuntimeUnmounts).toBe(0);
-    expect(mockSetOptions).toHaveBeenCalledTimes(1);
 
     fireEvent.press(screen.getByTestId('switch-to-simple'));
     expect(mockSetViewMode).toHaveBeenCalledWith('simple');

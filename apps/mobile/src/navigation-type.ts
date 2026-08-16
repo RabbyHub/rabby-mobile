@@ -404,6 +404,7 @@ export type TransactionNavigatorParamList = {
     fromName?: string;
     dappId?: string;
     market?: string;
+    marketCandidates?: string[];
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {

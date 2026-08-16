@@ -380,6 +380,7 @@ export default function TransactionNavigator() {
         name={RootNames.Perps}
         component={PerpsOriginScreen}
         options={mergeScreenOptions({
+          headerShown: false,
           title: t('page.home.services.perps'),
           // ...headerPresets.withBgCard1_2024,
           // headerStyle: {

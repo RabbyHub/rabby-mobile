@@ -1,7 +1,10 @@
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 
 import { buildPerpsProMarket } from './market';
-import { resolveInitialPerpsProMarket } from './resolveInitialMarket';
+import {
+  resolveInitialPerpsProMarket,
+  resolvePerpsProNavigationMarketCandidates,
+} from './resolveInitialMarket';
 
 const market = (name: string, dexId = '') =>
   buildPerpsProMarket({
@@ -51,6 +54,47 @@ describe('resolveInitialPerpsProMarket', () => {
         sessionMarketKey: eth.marketKey,
       }),
     ).toBe(eth);
+  });
+
+  it('resolves explicit internal candidates without weakening strict route markets', () => {
+    expect(
+      resolveInitialPerpsProMarket({
+        markets,
+        navigationMarketCandidates: ['aapl'],
+        sessionMarketKey: eth.marketKey,
+      }),
+    ).toBe(apple);
+    expect(
+      resolveInitialPerpsProMarket({
+        markets,
+        navigationMarketCandidates: ['AAPL'],
+        sessionMarketKey: eth.marketKey,
+      }),
+    ).toBe(apple);
+  });
+
+  it('rejects ambiguous display candidates instead of opening the wrong dex', () => {
+    const anotherApple = market('abc:AAPL', 'abc');
+    expect(
+      resolvePerpsProNavigationMarketCandidates({
+        markets: [...markets, anotherApple],
+        navigationMarketCandidates: ['AAPL'],
+      }),
+    ).toBeNull();
+  });
+
+  it('uses a later unique name candidate to disambiguate a shared symbol', () => {
+    const appleComputer = market('xyz:AAPL', 'xyz');
+    const anotherApple = market('abc:AAPL', 'abc');
+    appleComputer.marketData.brief = 'Apple Computer';
+    anotherApple.marketData.brief = 'Another Apple';
+
+    expect(
+      resolvePerpsProNavigationMarketCandidates({
+        markets: [appleComputer, anotherApple],
+        navigationMarketCandidates: ['AAPL', 'Apple Computer'],
+      }),
+    ).toBe(appleComputer);
   });
 
   it('falls back through session, native BTC, first and null', () => {

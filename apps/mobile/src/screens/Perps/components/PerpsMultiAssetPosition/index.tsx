@@ -26,9 +26,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { calculateDistanceToLiquidation } from '../PerpsPositionSection/utils';
 import { useMemoizedFn } from 'ahooks';
 import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup';
-import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -106,34 +105,21 @@ const AssetPositionItem = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
 
   const handleHyperliquidPress = useCallback(() => {
-    try {
-      switchPerpsAccountBeforeNavigate(item.account);
-      matomoRequestEvent({
-        category: 'Rabby Perps',
-        action: 'Perps_CardToPerps',
-      });
-      // Backing out of the detail page should land on Perps home first.
-      // Don't preset a multi-route nested state instead: the child navigator
-      // sets gestureEnabled: false, so iOS swipe-back falls to the root stack
-      // and pops the whole nested stack at once.
-      navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.Perps,
-        params: {
-          dappId: 'hyperliquid',
-          account: item.account,
-        },
-      });
-      navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.PerpsMarketDetail,
-        params: {
-          market: coin,
-          fromSource: 'homePagePositionList',
-          showOpenPosition: false,
-        },
-      });
-    } catch (error) {
-      console.error('Failed to navigate to Perps screen:', error);
-    }
+    matomoRequestEvent({
+      category: 'Rabby Perps',
+      action: 'Perps_CardToPerps',
+    });
+    void navigateToPreferredPerps({
+      account: item.account,
+      canonicalMarket: coin,
+      navigation,
+      simpleDetail: {
+        market: coin,
+        fromSource: 'homePagePositionList',
+        showOpenPosition: false,
+      },
+      source: 'home-position-card',
+    });
   }, [item, navigation, coin]);
 
   return (
