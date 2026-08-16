@@ -48,14 +48,13 @@ import {
 import { usePerpsProDismissKeyboard } from '../components/common/usePerpsProDismissKeyboard';
 import { PerpsProHeader } from '../components/header/PerpsProHeader';
 import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
-import {
-  getPerpsProMinimumScrollContentHeight,
-  usePerpsProHeaderCollapse,
-} from '../components/header/usePerpsProHeaderCollapse';
+import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
 import {
   createPerpsProInfoTabsTranslateY,
+  getPerpsProPopulatedInfoSectionBottomPadding,
+  getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
@@ -355,16 +354,6 @@ export const PerpsProScene: React.FC<{
       Math.abs(current - measured) > 1 ? measured : current,
     );
   }, []);
-  const scrollContentMinimumHeightStyle = useMemo<ViewStyle | null>(
-    () =>
-      scrollViewportHeight > 0
-        ? {
-            minHeight:
-              getPerpsProMinimumScrollContentHeight(scrollViewportHeight),
-          }
-        : null,
-    [scrollViewportHeight],
-  );
   const showRegionAlert = !trade.hasPermission;
   const reusableMeasuredRegionAlertLayout = isReusableRegionAlertLayout({
     containerWidth: width,
@@ -386,6 +375,43 @@ export const PerpsProScene: React.FC<{
   const positionedOverlaysReady = !showRegionAlert || !!regionAlertLayout;
   const sceneLeadInHeight =
     PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT + regionAlertExtent;
+  const infoTabsNaturalAnchor = getPerpsProInfoTabsNaturalAnchor({
+    leadInHeight: sceneLeadInHeight,
+    tradeRowHeight,
+  });
+  const scrollContentMinimumHeightStyle = useMemo<ViewStyle | null>(
+    () =>
+      scrollViewportHeight > 0
+        ? {
+            minHeight: getPerpsProInfoSectionMinimumContentHeight({
+              infoTabsNaturalAnchor,
+              marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
+              viewportHeight: scrollViewportHeight,
+            }),
+          }
+        : null,
+    [infoTabsNaturalAnchor, scrollViewportHeight],
+  );
+  const hasVisibleInfoRows =
+    (info.activeInfoTab === 'account' && info.accountState === 'ready') ||
+    (info.activeInfoTab === 'positions' &&
+      !info.positionsEmpty &&
+      info.positions.length > 0) ||
+    (info.activeInfoTab === 'openOrders' &&
+      !info.openOrdersEmpty &&
+      info.openOrders.length > 0);
+  const scrollContentTrailingSpaceStyle = useMemo<ViewStyle | null>(
+    () =>
+      hasVisibleInfoRows && scrollViewportHeight > 0
+        ? {
+            paddingBottom: getPerpsProPopulatedInfoSectionBottomPadding({
+              marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
+              viewportHeight: scrollViewportHeight,
+            }),
+          }
+        : null,
+    [hasVisibleInfoRows, scrollViewportHeight],
+  );
   const marketTranslateY = useMemo(
     () =>
       createPerpsProMarketTranslateY({
@@ -405,20 +431,12 @@ export const PerpsProScene: React.FC<{
   const infoTabsTranslateY = useMemo(
     () =>
       createPerpsProInfoTabsTranslateY({
-        anchorY: getPerpsProInfoTabsNaturalAnchor({
-          leadInHeight: sceneLeadInHeight,
-          tradeRowHeight,
-        }),
+        anchorY: infoTabsNaturalAnchor,
         marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
         marketTranslateY,
         scrollY: headerCollapse.scrollY,
       }),
-    [
-      headerCollapse.scrollY,
-      marketTranslateY,
-      sceneLeadInHeight,
-      tradeRowHeight,
-    ],
+    [headerCollapse.scrollY, marketTranslateY, infoTabsNaturalAnchor],
   );
   const openHistory = useCallback(
     () => onOpenHistory(info.pendingFundingCount > 0),
@@ -749,6 +767,7 @@ export const PerpsProScene: React.FC<{
           contentContainerStyle={[
             styles.scrollContent,
             scrollContentMinimumHeightStyle,
+            scrollContentTrailingSpaceStyle,
           ]}
           data={rows}
           initialNumToRender={8}

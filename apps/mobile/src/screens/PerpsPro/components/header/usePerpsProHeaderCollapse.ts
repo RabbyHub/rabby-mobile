@@ -24,16 +24,6 @@ export interface PerpsProHeaderGeometry {
   marketTranslateY: number;
 }
 
-export const getPerpsProMinimumScrollContentHeight = (
-  rawViewportHeight: number,
-) => {
-  const viewportHeight =
-    Number.isFinite(rawViewportHeight) && rawViewportHeight > 0
-      ? rawViewportHeight
-      : 0;
-  return viewportHeight + PERPS_PRO_HEADER_HEIGHT;
-};
-
 export const getPerpsProHeaderGeometry = (
   rawOffset: number,
   rawVisibilityProgress: number,
