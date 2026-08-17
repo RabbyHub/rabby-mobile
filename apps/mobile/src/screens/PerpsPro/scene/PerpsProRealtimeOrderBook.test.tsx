@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 import React from 'react';
 
@@ -17,9 +17,16 @@ type FastL2State = {
 let mockFastL2State: FastL2State;
 let mockLatestTradeState: { trade: PerpsLatestTrade | null };
 let mockRenderedOrderBookProps: Record<string, any> | null;
+const mockPrewarmHttpSnapshot = jest.fn(() => Promise.resolve(true));
+const mockWaitForHttpSnapshot = jest.fn(() => Promise.resolve(true));
 
 jest.mock('@/hooks/perps/subscriptions/usePerpsFastL2', () => ({
+  PERPS_FAST_L2_DISPLAY_CACHE_MS: 3000,
+  prewarmPerpsFastL2HttpSnapshot: (...args: unknown[]) =>
+    mockPrewarmHttpSnapshot(...args),
   usePerpsFastL2: () => mockFastL2State,
+  waitForPerpsFastL2HttpSnapshot: (...args: unknown[]) =>
+    mockWaitForHttpSnapshot(...args),
 }));
 
 jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
@@ -66,6 +73,8 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     };
     mockLatestTradeState = { trade: liveTrade };
     mockRenderedOrderBookProps = null;
+    mockPrewarmHttpSnapshot.mockReset().mockResolvedValue(true);
+    mockWaitForHttpSnapshot.mockReset().mockResolvedValue(true);
   });
 
   it('renders a registry-retained snapshot but disables cached price selection', () => {
@@ -147,5 +156,103 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     );
 
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
+  });
+
+  it('prewarms and commits a precision only after the bounded exact snapshot wait', async () => {
+    const selected = {
+      displayPrice: 1,
+      mantissa: null,
+      nSigFigs: 5,
+      priceDecimals: 0,
+    } as const;
+    const target = {
+      displayPrice: 10,
+      mantissa: null,
+      nSigFigs: 4,
+      priceDecimals: 0,
+    } as const;
+    const onSelectTickOption = jest.fn();
+    let resolveWait!: (value: boolean) => void;
+    mockWaitForHttpSnapshot.mockImplementationOnce(
+      () =>
+        new Promise<boolean>(resolve => {
+          resolveWait = resolve;
+        }),
+    );
+    render(
+      <PerpsProRealtimeOrderBook
+        enabled
+        market={market}
+        onSelectTickOption={onSelectTickOption}
+        precision={{ mantissa: null, nSigFigs: 5 }}
+        selectedTickOption={selected}
+        tickOptions={[selected, target]}
+      />,
+    );
+
+    mockRenderedOrderBookProps?.onPrecisionIntentStart(target);
+    expect(mockPrewarmHttpSnapshot).toHaveBeenCalledWith({
+      coin: 'BTC',
+      precision: { mantissa: null, nSigFigs: 4 },
+    });
+    expect(onSelectTickOption).not.toHaveBeenCalled();
+
+    act(() => {
+      mockRenderedOrderBookProps?.onSelectTickOption(target);
+    });
+    expect(mockWaitForHttpSnapshot).toHaveBeenCalledWith({
+      coin: 'BTC',
+      precision: { mantissa: null, nSigFigs: 4 },
+      timeoutMs: 250,
+    });
+    expect(onSelectTickOption).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveWait(true);
+      await Promise.resolve();
+    });
+    expect(onSelectTickOption).toHaveBeenCalledWith(target);
+  });
+
+  it('lets selecting the still-current precision cancel a pending target', async () => {
+    const selected = {
+      displayPrice: 1,
+      mantissa: null,
+      nSigFigs: 5,
+      priceDecimals: 0,
+    } as const;
+    const target = {
+      displayPrice: 10,
+      mantissa: null,
+      nSigFigs: 4,
+      priceDecimals: 0,
+    } as const;
+    const onSelectTickOption = jest.fn();
+    let resolveWait!: (value: boolean) => void;
+    mockWaitForHttpSnapshot.mockImplementationOnce(
+      () =>
+        new Promise<boolean>(resolve => {
+          resolveWait = resolve;
+        }),
+    );
+    render(
+      <PerpsProRealtimeOrderBook
+        enabled
+        market={market}
+        onSelectTickOption={onSelectTickOption}
+        precision={{ mantissa: null, nSigFigs: 5 }}
+        selectedTickOption={selected}
+        tickOptions={[selected, target]}
+      />,
+    );
+
+    act(() => mockRenderedOrderBookProps?.onSelectTickOption(target));
+    act(() => mockRenderedOrderBookProps?.onSelectTickOption(selected));
+    await act(async () => {
+      resolveWait(true);
+      await Promise.resolve();
+    });
+
+    expect(onSelectTickOption).not.toHaveBeenCalled();
   });
 });

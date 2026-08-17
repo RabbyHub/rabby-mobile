@@ -17,10 +17,11 @@ import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetN
 
 export const PerpsProPrecisionSheet: React.FC<{
   onClose: () => void;
+  onIntentStart?: (option: PerpsTickOption) => void;
   onSelect: (option: PerpsTickOption) => void;
   options: PerpsTickOption[];
   selected: PerpsTickOption | null;
-}> = ({ onClose, onSelect, options, selected }) => {
+}> = ({ onClose, onIntentStart, onSelect, options, selected }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -73,6 +74,7 @@ export const PerpsProPrecisionSheet: React.FC<{
                 onSelect(option);
                 onClose();
               }}
+              onPressIn={() => onIntentStart?.(option)}
               style={styles.option}
               testID={`perps-pro-precision-${option.nSigFigs}-${
                 option.mantissa ?? 'null'
