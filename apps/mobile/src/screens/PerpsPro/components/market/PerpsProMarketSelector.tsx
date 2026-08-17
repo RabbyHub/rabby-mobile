@@ -24,9 +24,6 @@ import React, {
   useState,
 } from 'react';
 import { Keyboard, useWindowDimensions, View } from 'react-native';
-import PagerView, {
-  type PagerViewOnPageSelectedEvent,
-} from 'react-native-pager-view';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -54,6 +51,10 @@ import {
   PerpsProMarketList,
   type PerpsProMarketListHandle,
 } from './PerpsProMarketList';
+import {
+  PerpsProMarketPager,
+  type PerpsProMarketPagerHandle,
+} from './PerpsProMarketPager';
 import { PerpsProMarketTabs } from './PerpsProMarketTabs';
 import {
   PerpsProMarketSearchBar,
@@ -142,13 +143,13 @@ const PerpsProMarketSelectorComponent = forwardRef<
     },
     ref,
   ) => {
-    const { height } = useWindowDimensions();
+    const { height, width } = useWindowDimensions();
     const insets = useSafeAreaInsets();
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { currentLanguage } = useAppLanguage();
     const { t } = useTranslation();
     const modalRef = useRef<AppBottomSheetModal>(null);
-    const pagerRef = useRef<PagerView>(null);
+    const pagerRef = useRef<PerpsProMarketPagerHandle>(null);
     const listRefs = useRef(
       new Map<PerpsProMarketTab | 'search', PerpsProMarketListHandle>(),
     );
@@ -431,8 +432,8 @@ const PerpsProMarketSelectorComponent = forwardRef<
       [activeTabIndex, tabs],
     );
     const handlePageSelected = useCallback(
-      (event: PagerViewOnPageSelectedEvent) => {
-        const selectedTab = tabs[event.nativeEvent.position];
+      (position: number) => {
+        const selectedTab = tabs[position];
         if (selectedTab) {
           setActiveTab(selectedTab.id);
         }
@@ -543,10 +544,11 @@ const PerpsProMarketSelectorComponent = forwardRef<
                 />
               </View>
             ) : (
-              <PagerView
+              <PerpsProMarketPager
                 initialPage={activeTabIndex}
                 key={tabIdsKey}
                 onPageSelected={handlePageSelected}
+                pageWidth={width}
                 ref={pagerRef}
                 style={styles.pager}
                 testID="perps-pro-market-pager">
@@ -579,7 +581,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
                     </View>
                   );
                 })}
-              </PagerView>
+              </PerpsProMarketPager>
             )}
           </View>
         </AppBottomSheetModal>
@@ -604,8 +606,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
   },
   page: {
-    height: '100%',
-    width: '100%',
+    flex: 1,
   },
   search: {
     marginLeft: 15,

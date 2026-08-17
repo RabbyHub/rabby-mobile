@@ -15,21 +15,34 @@ const mockMakeBottomSheetProps = jest.fn(() => ({}));
 const mockPagerSetPage = jest.fn();
 const mockPagerSetPageWithoutAnimation = jest.fn();
 
-jest.mock('react-native-pager-view', () => {
+jest.mock('./PerpsProMarketPager', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
-  return ReactModule.forwardRef(
-    (
-      { children, ...props }: { children: React.ReactNode },
-      ref: React.Ref<unknown>,
-    ) => {
-      ReactModule.useImperativeHandle(ref, () => ({
-        setPage: mockPagerSetPage,
-        setPageWithoutAnimation: mockPagerSetPageWithoutAnimation,
-      }));
-      return ReactModule.createElement(View, props, children);
-    },
-  );
+  return {
+    PerpsProMarketPager: ReactModule.forwardRef(
+      (
+        {
+          children,
+          onPageSelected,
+          ...props
+        }: {
+          children: React.ReactNode;
+          onPageSelected: (position: number) => void;
+        },
+        ref: React.Ref<unknown>,
+      ) => {
+        ReactModule.useImperativeHandle(ref, () => ({
+          setPage: mockPagerSetPage,
+          setPageWithoutAnimation: mockPagerSetPageWithoutAnimation,
+        }));
+        return ReactModule.createElement(
+          View,
+          { ...props, onPageSelected },
+          children,
+        );
+      },
+    ),
+  };
 });
 
 jest.mock('@/assets2024/icons/perps/PerpsProSortArrowDown.svg', () => {
@@ -549,7 +562,7 @@ describe('PerpsProMarketSelector', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('mounts adjacent tab content and commits native page selection', () => {
+  it('mounts adjacent tab content and commits pager selection', () => {
     __setFavoriteMarkets(['BTC']);
     render(
       <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
@@ -557,20 +570,11 @@ describe('PerpsProMarketSelector', () => {
 
     expect(screen.getByTestId('perps-pro-market-list-all')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-market-list-favorites')).toBeTruthy();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-page-all').props.style,
-      ),
-    ).toEqual(
-      expect.objectContaining({
-        height: '100%',
-        width: '100%',
-      }),
-    );
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-favorites'));
+    expect(mockPagerSetPage).toHaveBeenCalledWith(0);
+    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
 
-    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', {
-      nativeEvent: { position: 0 },
-    });
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', 0);
 
     expect(
       screen.getByTestId('perps-pro-market-tab-favorites').props
