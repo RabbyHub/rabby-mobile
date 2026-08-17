@@ -116,6 +116,27 @@ interface NativeModulesStatic {
     ): Promise<{
       requestId: string;
     }>;
+    runNativeNftCacheSyncDiagnostic?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      kind: 'nft';
+      success: boolean;
+      address: string;
+      generation: number;
+      stage: string;
+      sourceItemCount: number;
+      committedRowCount: number;
+      committedAtMs: number;
+      durationMs: number;
+      error: string;
+    }>;
+    startNativeNftSync?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      requestId: string;
+    }>;
     runNativeTokenCacheWriteDiagnostic?(): Promise<{
       success: boolean;
       stage: string;
@@ -127,6 +148,8 @@ interface NativeModulesStatic {
     cancelAllNativeTokenCacheSyncs?(): void;
     cancelNativeProtocolCacheSync?(address: string): void;
     cancelAllNativeProtocolCacheSyncs?(): void;
+    cancelNativeNftCacheSync?(address: string): void;
+    cancelAllNativeNftCacheSyncs?(): void;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath

@@ -224,6 +224,7 @@ export function getNativeTokenChainSyncEnabled() {
 }
 
 export const getNativeProtocolSyncEnabled = getNativeTokenChainSyncEnabled;
+export const getNativeNftSyncEnabled = getNativeTokenChainSyncEnabled;
 
 export function setNativeTokenChainSyncEnabled(enabled: boolean) {
   if (!isNonPublicProductionEnv) {

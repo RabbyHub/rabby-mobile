@@ -411,6 +411,71 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
   }
 
   @ReactMethod
+  public void runNativeNftCacheSyncDiagnostic(
+    String address,
+    boolean replaceExisting,
+    Promise promise
+  ) {
+    if (!RabbyStartupTrace.isEnabled()) {
+      promise.reject(
+        "E_NATIVE_NFT_SYNC_DISABLED",
+        "Native NFT sync diagnostics are disabled in production builds"
+      );
+      return;
+    }
+
+    RabbyNativeOpenApiRuntime.syncNftCache(
+      reactContext,
+      BuildConfig.APPLICATION_ID,
+      BuildConfig.VERSION_NAME,
+      address,
+      replaceExisting,
+      new NativeAddressAssetSyncCallback() {
+        @Override
+        public void onComplete(NativeAddressAssetSyncResult result) {
+          WritableMap output = Arguments.createMap();
+          output.putString("kind", result.getKind());
+          output.putBoolean("success", result.getSuccess());
+          output.putString("address", result.getAddress());
+          output.putDouble("generation", result.getGeneration());
+          output.putString("stage", result.getStage());
+          output.putDouble("sourceItemCount", result.getSourceItemCount());
+          output.putDouble("committedRowCount", result.getCommittedRowCount());
+          output.putDouble("committedAtMs", result.getCommittedAtMs());
+          output.putDouble("durationMs", result.getDurationMs());
+          output.putString("error", result.getError());
+          promise.resolve(output);
+        }
+      }
+    );
+  }
+
+  @ReactMethod
+  public void startNativeNftSync(
+    String address,
+    boolean replaceExisting,
+    Promise promise
+  ) {
+    String requestId = UUID.randomUUID().toString().toLowerCase();
+    RabbyNativeOpenApiRuntime.syncNftCache(
+      reactContext,
+      BuildConfig.APPLICATION_ID,
+      BuildConfig.VERSION_NAME,
+      address,
+      replaceExisting,
+      new NativeAddressAssetSyncCallback() {
+        @Override
+        public void onComplete(NativeAddressAssetSyncResult result) {
+          emitNativeAddressAssetSyncCompletion(requestId, result);
+        }
+      }
+    );
+    WritableMap startResult = Arguments.createMap();
+    startResult.putString("requestId", requestId);
+    promise.resolve(startResult);
+  }
+
+  @ReactMethod
   public void runNativeTokenCacheWriteDiagnostic(Promise promise) {
     if (!RabbyStartupTrace.isEnabled()) {
       promise.reject(
@@ -448,6 +513,16 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
   @ReactMethod
   public void cancelAllNativeProtocolCacheSyncs() {
     RabbyNativeOpenApiRuntime.cancelAllProtocolCacheSyncs();
+  }
+
+  @ReactMethod
+  public void cancelNativeNftCacheSync(String address) {
+    RabbyNativeOpenApiRuntime.cancelNftCacheSync(address);
+  }
+
+  @ReactMethod
+  public void cancelAllNativeNftCacheSyncs() {
+    RabbyNativeOpenApiRuntime.cancelAllNftCacheSyncs();
   }
 
   @ReactMethod

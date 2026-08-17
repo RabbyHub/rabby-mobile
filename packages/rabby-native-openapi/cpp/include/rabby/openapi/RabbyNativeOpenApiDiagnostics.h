@@ -38,6 +38,11 @@ typedef void (^RabbyNativeTokenCacheWriteDiagnosticCompletion)(
                           completion:
                               (RabbyNativeAddressAssetSyncCompletion)completion;
 
++ (void)syncNftCacheForAddress:(NSString*)address
+               replaceExisting:(BOOL)replaceExisting
+                     completion:
+                         (RabbyNativeAddressAssetSyncCompletion)completion;
+
 + (void)verifyTokenCacheWriteWithCompletion:
     (RabbyNativeTokenCacheWriteDiagnosticCompletion)completion;
 
@@ -48,6 +53,10 @@ typedef void (^RabbyNativeTokenCacheWriteDiagnosticCompletion)(
 + (void)cancelProtocolCacheSyncForAddress:(NSString*)address;
 
 + (void)cancelAllProtocolCacheSyncs;
+
++ (void)cancelNftCacheSyncForAddress:(NSString*)address;
+
++ (void)cancelAllNftCacheSyncs;
 
 @end
 

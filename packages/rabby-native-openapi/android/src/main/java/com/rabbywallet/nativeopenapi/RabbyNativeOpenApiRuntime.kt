@@ -348,6 +348,47 @@ object RabbyNativeOpenApiRuntime {
   }
 
   @JvmStatic
+  fun syncNftCache(
+    context: Context,
+    applicationIdentity: String,
+    clientVersion: String,
+    address: String,
+    replaceExisting: Boolean,
+    callback: NativeAddressAssetSyncCallback,
+  ) {
+    initialize(context)
+    val syncId = nextAddressAssetSyncId.getAndIncrement()
+    addressAssetSyncCallbacks[syncId] = callback
+    try {
+      startNftSync(
+        syncId,
+        applicationIdentity,
+        clientVersion,
+        address,
+        replaceExisting,
+      )
+    } catch (_: Throwable) {
+      addressAssetSyncCallbacks.remove(syncId)
+      mainHandler.post {
+        callback.onComplete(
+          NativeAddressAssetSyncResult(
+            kind = "nft",
+            success = false,
+            address = address.lowercase(),
+            generation = 0,
+            stage = "none",
+            sourceItemCount = 0,
+            committedRowCount = 0,
+            committedAtMs = 0,
+            durationMs = 0,
+            error = "native NFT sync could not start",
+          ),
+        )
+      }
+    }
+  }
+
+  @JvmStatic
   fun runTokenCacheWriteDiagnostic(
     context: Context,
     callback: NativeTokenCacheWriteDiagnosticCallback,
@@ -392,6 +433,16 @@ object RabbyNativeOpenApiRuntime {
   }
 
   @JvmStatic
+  fun cancelNftCacheSync(address: String) {
+    cancelNftSync(address)
+  }
+
+  @JvmStatic
+  fun cancelAllNftCacheSyncs() {
+    cancelAllNftSyncs()
+  }
+
+  @JvmStatic
   private external fun startDiagnostic(
     diagnosticId: Long,
     applicationIdentity: String,
@@ -429,6 +480,15 @@ object RabbyNativeOpenApiRuntime {
   )
 
   @JvmStatic
+  private external fun startNftSync(
+    syncId: Long,
+    applicationIdentity: String,
+    clientVersion: String,
+    address: String,
+    replaceExisting: Boolean,
+  )
+
+  @JvmStatic
   private external fun cancelTokenSync(address: String)
 
   @JvmStatic
@@ -439,6 +499,12 @@ object RabbyNativeOpenApiRuntime {
 
   @JvmStatic
   private external fun cancelAllProtocolSyncs()
+
+  @JvmStatic
+  private external fun cancelNftSync(address: String)
+
+  @JvmStatic
+  private external fun cancelAllNftSyncs()
 
   @JvmStatic
   private external fun verifyTokenCacheWrite(syncTimestampMs: Long): String?

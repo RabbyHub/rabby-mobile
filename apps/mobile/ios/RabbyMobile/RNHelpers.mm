@@ -191,6 +191,46 @@ RCT_EXPORT_METHOD(startNativeProtocolSync:
     resolve(@{ @"requestId": requestId });
 }
 
+RCT_EXPORT_METHOD(runNativeNftCacheSyncDiagnostic:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_NFT_SYNC_DISABLED",
+            @"Native NFT sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        syncNftCacheForAddress:address
+               replaceExisting:replaceExisting
+                     completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(startNativeNftSync:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *requestId = [NSUUID UUID].UUIDString.lowercaseString;
+    [RabbyNativeOpenApiDiagnostics
+        syncNftCacheForAddress:address
+               replaceExisting:replaceExisting
+                     completion:^(NSDictionary<NSString *, id> *result) {
+        [self emitNativeAddressAssetSyncCompletion:requestId result:result];
+    }];
+    resolve(@{ @"requestId": requestId });
+}
+
 RCT_EXPORT_METHOD(runNativeTokenCacheWriteDiagnostic:
   (RCTPromiseResolveBlock)resolve
   rejecter:(RCTPromiseRejectBlock)reject
@@ -226,6 +266,14 @@ RCT_EXPORT_METHOD(cancelNativeProtocolCacheSync:(NSString *)address) {
 
 RCT_EXPORT_METHOD(cancelAllNativeProtocolCacheSyncs) {
     [RabbyNativeOpenApiDiagnostics cancelAllProtocolCacheSyncs];
+}
+
+RCT_EXPORT_METHOD(cancelNativeNftCacheSync:(NSString *)address) {
+    [RabbyNativeOpenApiDiagnostics cancelNftCacheSyncForAddress:address];
+}
+
+RCT_EXPORT_METHOD(cancelAllNativeNftCacheSyncs) {
+    [RabbyNativeOpenApiDiagnostics cancelAllNftCacheSyncs];
 }
 
 RCT_EXPORT_METHOD(iosExcludeFileFromBackup:

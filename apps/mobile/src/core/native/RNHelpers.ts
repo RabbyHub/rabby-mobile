@@ -72,6 +72,16 @@ const RNHelpers = Object.freeze({
       Promise.reject(
         new Error('RNHelpers.startNativeProtocolSync is unavailable'),
       )),
+  runNativeNftCacheSyncDiagnostic:
+    nativeModule.runNativeNftCacheSyncDiagnostic ||
+    (() =>
+      Promise.reject(
+        new Error('RNHelpers.runNativeNftCacheSyncDiagnostic is unavailable'),
+      )),
+  startNativeNftSync:
+    nativeModule.startNativeNftSync ||
+    (() =>
+      Promise.reject(new Error('RNHelpers.startNativeNftSync is unavailable'))),
   runNativeTokenCacheWriteDiagnostic:
     nativeModule.runNativeTokenCacheWriteDiagnostic ||
     (() =>
@@ -88,6 +98,10 @@ const RNHelpers = Object.freeze({
     nativeModule.cancelNativeProtocolCacheSync || (() => undefined),
   cancelAllNativeProtocolCacheSyncs:
     nativeModule.cancelAllNativeProtocolCacheSyncs || (() => undefined),
+  cancelNativeNftCacheSync:
+    nativeModule.cancelNativeNftCacheSync || (() => undefined),
+  cancelAllNativeNftCacheSyncs:
+    nativeModule.cancelAllNativeNftCacheSyncs || (() => undefined),
   iosExcludeFileFromBackup: wrapPlatformOnlyMethod({
     method: nativeModule.iosExcludeFileFromBackup,
     platform: 'ios',

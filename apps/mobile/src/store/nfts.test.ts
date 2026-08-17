@@ -19,16 +19,19 @@ jest.mock('@/databases/entities/nftItem', () => ({
     batchMultAddressNFTs: jest.fn(async () => []),
   },
 }));
+jest.mock('@/databases/nftAssetProjection', () => ({
+  compileNftAssetSqlProjection: jest.fn(),
+}));
 jest.mock('@/store/balance', () => ({
-  getSelectedBalanceAddressesSnapshot: (...args: unknown[]) =>
-    mockGetSelectedBalanceAddressesSnapshot(...args),
+  getSelectedBalanceAddressesSnapshot: () =>
+    mockGetSelectedBalanceAddressesSnapshot(),
 }));
 jest.mock('@/core/apis/account', () => ({
-  getTop10MyAccounts: (...args: unknown[]) => mockGetTop10MyAccounts(...args),
+  getTop10MyAccounts: () => mockGetTop10MyAccounts(),
 }));
 jest.mock('@/hooks/appSettings', () => ({
-  isHomeAssetSelectionExperimentEnabled: (...args: unknown[]) =>
-    mockIsHomeAssetSelectionExperimentEnabled(...args),
+  isHomeAssetSelectionExperimentEnabled: () =>
+    mockIsHomeAssetSelectionExperimentEnabled(),
 }));
 jest.mock('@/core/utils/assetDataLoadDiagnostics', () => ({
   beginAssetDataLoadDiagnostic: jest.fn(() => ({
@@ -43,9 +46,17 @@ jest.mock('./assetProjectionPersistence', () => ({
   scheduleAssetProjectionPersistence: jest.fn(),
   subscribeAssetProjectionDatabaseCommits: jest.fn(),
 }));
+jest.mock('./nftSyncExecutor', () => ({
+  getNftSyncMode: jest.fn(() => 'js'),
+  executeNftSync: jest.fn(async ({ executeJs }) => ({
+    mode: 'js',
+    value: await executeJs(),
+  })),
+}));
 
 import { syncNFTs } from '@/databases/hooks/assets';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
+import { compileNftAssetSqlProjection } from '@/databases/nftAssetProjection';
 import { syncRemoteNFTs } from '@/databases/sync/assets';
 import nftListStore, {
   buildNftEntityId,
@@ -57,6 +68,7 @@ import {
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
 } from './assetProjectionPersistence';
+import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
 
 const mockedSyncNFTs = jest.mocked(syncNFTs);
 const mockedNftEntity = jest.mocked(NFTItemEntity);
@@ -65,13 +77,16 @@ const mockedScheduleAssetProjectionPersistence = jest.mocked(
   scheduleAssetProjectionPersistence,
 );
 const mockedRestoreAssetProjection = jest.mocked(restoreAssetProjection);
+const mockedCompileNftAssetSqlProjection = jest.mocked(
+  compileNftAssetSqlProjection,
+);
 const ADDRESS = '0xabc';
 const cachedNft = {
   id: 'cached',
   inner_id: 'cached-inner',
   owner_addr: ADDRESS,
   chain: 'eth',
-} as DisplayNftItem;
+} as unknown as DisplayNftItem;
 
 const createDeferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -116,6 +131,7 @@ describe('NFT list refresh semantics', () => {
     mockedNftEntity.batchMultAddressNFTs.mockResolvedValue([]);
     mockedSyncRemoteNFTs.mockReset();
     mockedSyncRemoteNFTs.mockResolvedValue(undefined);
+    mockedCompileNftAssetSqlProjection.mockReset();
     mockedScheduleAssetProjectionPersistence.mockClear();
     mockGetSelectedBalanceAddressesSnapshot.mockReset();
     mockGetSelectedBalanceAddressesSnapshot.mockReturnValue([]);
@@ -551,5 +567,77 @@ describe('NFT list refresh semantics', () => {
         scene: 'multi-address',
       }),
     );
+  });
+
+  it('resolves a native completion only after the committed SQL projection is published', async () => {
+    jest.useFakeTimers();
+    try {
+      const committed = {
+        ...cachedNft,
+        address: ADDRESS,
+        collection: null,
+        collection_id: '',
+        id: 'native-committed',
+        inner_id: 'native-committed-inner',
+      } as DisplayNftItem;
+      const nftId = buildNftEntityId(committed);
+      mockedNftEntity.batchMultAddressNFTs.mockResolvedValueOnce([
+        committed,
+      ] as never);
+      mockedCompileNftAssetSqlProjection.mockImplementation(
+        async ({ scene }) => ({
+          ruleVersion: 1,
+          scene,
+          rows: [{ type: 'nft', nftId }],
+          resourceIds: [nftId],
+          defaultVisibleRowCount: 1,
+        }),
+      );
+      nftListStore.setState({
+        nftsMap: {},
+        sourceSnapshotReadyByAddress: {},
+      });
+
+      const key = useNftListComputedStore
+        .getState()
+        .registerSingleNfts(ADDRESS);
+      const completion = dispatchNativeAssetSyncCompletion({
+        schemaVersion: 1,
+        requestId: 'nft-native-publish-1',
+        kind: 'nft',
+        success: true,
+        address: ADDRESS,
+        generation: 1,
+        committedAt: 100,
+        replacementScope: 'address',
+        chainIds: [],
+        committedRowCount: 1,
+        stage: 'persistence',
+        error: '',
+      });
+
+      await Promise.resolve();
+      jest.advanceTimersByTime(20);
+      await completion;
+
+      expect(nftListStore.getState().nftsMap[ADDRESS]).toEqual([committed]);
+      expect(nftEntityResourceStore.getValue(nftId)).toEqual(
+        expect.objectContaining(committed),
+      );
+      expect(
+        useNftListComputedStore.getState().singleNftsIndexCache[key],
+      ).toEqual({
+        rows: [{ type: 'nft', nftId }],
+        defaultVisibleRowCount: 1,
+      });
+      expect(mockedCompileNftAssetSqlProjection).toHaveBeenCalledWith({
+        addresses: [ADDRESS],
+        chainServerId: undefined,
+        scene: 'single-address',
+        previousRowKeys: [],
+      });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

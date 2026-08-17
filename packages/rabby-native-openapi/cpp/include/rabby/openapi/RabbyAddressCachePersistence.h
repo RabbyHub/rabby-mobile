@@ -76,6 +76,9 @@ inline constexpr const char* kProtocolCacheTableName =
     "rabby_cache_portocolitem_20260817";
 inline constexpr const char* kEmptyProtocolItemId =
     "rabby-empty-protocol-item-id";
+inline constexpr const char* kNftCacheTableName =
+    "rabby_cache_nftitem_20260813";
+inline constexpr const char* kEmptyNftItemId = "rabby-empty-nft-item-id";
 
 AddressCacheContract protocolCacheContract();
 NativeProtocolRecord makeEmptyProtocolRecord(
@@ -86,6 +89,16 @@ AddressCacheRow makeProtocolCacheRow(
 std::vector<AddressCacheRow> makeProtocolCacheRows(
     const std::string& ownerAddress,
     const std::vector<NativeProtocolRecord>& protocols,
+    std::int64_t syncTimestampMs);
+
+AddressCacheContract nftCacheContract();
+NativeNftRecord makeEmptyNftRecord(const std::string& ownerAddress);
+AddressCacheRow makeNftCacheRow(
+    const NativeNftRecord& nft,
+    std::int64_t syncTimestampMs);
+std::vector<AddressCacheRow> makeNftCacheRows(
+    const std::string& ownerAddress,
+    const std::vector<NativeNftRecord>& nfts,
     std::int64_t syncTimestampMs);
 
 // Implemented by exactly one platform adapter in each native target.

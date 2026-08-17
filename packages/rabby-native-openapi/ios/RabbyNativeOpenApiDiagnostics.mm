@@ -4,6 +4,7 @@
 #include <rabby/openapi/RabbyNativeOpenApiDiagnostics.h>
 #include <rabby/openapi/RabbyOpenApiClient.h>
 #include <rabby/openapi/RabbyOpenApiDiagnostic.h>
+#include <rabby/openapi/RabbyOpenApiNftSync.h>
 #include <rabby/openapi/RabbyOpenApiPlatform.h>
 #include <rabby/openapi/RabbyOpenApiProtocolSync.h>
 #include <rabby/openapi/RabbyOpenApiTokenSync.h>
@@ -148,6 +149,8 @@ std::mutex tokenSyncCoordinatorMutex;
 std::shared_ptr<TokenSyncCoordinator> sharedTokenSyncCoordinator;
 std::mutex protocolSyncCoordinatorMutex;
 std::shared_ptr<ProtocolSyncCoordinator> sharedProtocolSyncCoordinator;
+std::mutex nftSyncCoordinatorMutex;
+std::shared_ptr<NftSyncCoordinator> sharedNftSyncCoordinator;
 
 std::shared_ptr<OpenApiClient> getClient(std::string& error) {
   auto* bundle = [NSBundle mainBundle];
@@ -235,6 +238,29 @@ std::shared_ptr<ProtocolSyncCoordinator> getProtocolSyncCoordinator(
   return sharedProtocolSyncCoordinator;
 }
 
+std::shared_ptr<NftSyncCoordinator> getNftSyncCoordinator(
+    std::string& error) {
+  auto client = getClient(error);
+  if (!client) {
+    return nullptr;
+  }
+
+  std::lock_guard<std::mutex> lock(nftSyncCoordinatorMutex);
+  if (!sharedNftSyncCoordinator) {
+    sharedNftSyncCoordinator = std::make_shared<NftSyncCoordinator>(
+        [client](OpenApiClientRequest request, OpenApiClientCompletion completion) {
+          return client->execute(std::move(request), std::move(completion));
+        },
+        makePlatformAddressCachePersistence(),
+        []() {
+          return std::chrono::duration_cast<std::chrono::milliseconds>(
+                     std::chrono::system_clock::now().time_since_epoch())
+              .count();
+        });
+  }
+  return sharedNftSyncCoordinator;
+}
+
 NSDictionary<NSString*, id>* makeResultDictionary(
     const OpenApiDiagnosticResult& result) {
   return @{
@@ -291,6 +317,22 @@ NSDictionary<NSString*, id>* makeProtocolSyncResultDictionary(
     @"generation" : @(result.generation),
     @"stage" : [NSString
         stringWithUTF8String:protocolSyncStageName(result.stage)],
+    @"sourceItemCount" : @(result.sourceItemCount),
+    @"committedRowCount" : @(result.committedRowCount),
+    @"committedAtMs" : @(result.committedAtMs),
+    @"durationMs" : @(result.durationMs),
+    @"error" : [NSString stringWithUTF8String:result.error.c_str()],
+  };
+}
+
+NSDictionary<NSString*, id>* makeNftSyncResultDictionary(
+    const NftSyncResult& result) {
+  return @{
+    @"kind" : @"nft",
+    @"success" : @(result.success),
+    @"address" : [NSString stringWithUTF8String:result.address.c_str()],
+    @"generation" : @(result.generation),
+    @"stage" : [NSString stringWithUTF8String:nftSyncStageName(result.stage)],
     @"sourceItemCount" : @(result.sourceItemCount),
     @"committedRowCount" : @(result.committedRowCount),
     @"committedAtMs" : @(result.committedAtMs),
@@ -454,6 +496,33 @@ std::int64_t platformEpochSeconds() {
       });
 }
 
++ (void)syncNftCacheForAddress:(NSString*)address
+               replaceExisting:(BOOL)replaceExisting
+                     completion:
+                         (RabbyNativeAddressAssetSyncCompletion)completion {
+  std::string error;
+  auto coordinator = rabby::openapi::apple::getNftSyncCoordinator(error);
+  if (!coordinator) {
+    rabby::openapi::NftSyncResult result;
+    result.address = rabby::openapi::apple::fromNSString(address);
+    result.error = std::move(error);
+    completion(rabby::openapi::apple::makeNftSyncResultDictionary(result));
+    return;
+  }
+
+  RabbyNativeAddressAssetSyncCompletion callback = [completion copy];
+  coordinator->syncAddress(
+      rabby::openapi::apple::fromNSString(address),
+      replaceExisting,
+      [callback](rabby::openapi::NftSyncResult result) {
+        auto* dictionary =
+            rabby::openapi::apple::makeNftSyncResultDictionary(result);
+        dispatch_async(dispatch_get_main_queue(), ^{
+          callback(dictionary);
+        });
+      });
+}
+
 + (void)verifyTokenCacheWriteWithCompletion:
     (RabbyNativeTokenCacheWriteDiagnosticCompletion)completion {
   RabbyNativeTokenCacheWriteDiagnosticCompletion callback = [completion copy];
@@ -527,6 +596,30 @@ std::int64_t platformEpochSeconds() {
     std::lock_guard<std::mutex> lock(
         rabby::openapi::apple::protocolSyncCoordinatorMutex);
     coordinator = rabby::openapi::apple::sharedProtocolSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAll();
+  }
+}
+
++ (void)cancelNftCacheSyncForAddress:(NSString*)address {
+  std::shared_ptr<rabby::openapi::NftSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(
+        rabby::openapi::apple::nftSyncCoordinatorMutex);
+    coordinator = rabby::openapi::apple::sharedNftSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAddress(rabby::openapi::apple::fromNSString(address));
+  }
+}
+
++ (void)cancelAllNftCacheSyncs {
+  std::shared_ptr<rabby::openapi::NftSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(
+        rabby::openapi::apple::nftSyncCoordinatorMutex);
+    coordinator = rabby::openapi::apple::sharedNftSyncCoordinator;
   }
   if (coordinator) {
     coordinator->cancelAll();

@@ -2,6 +2,7 @@
 #include <rabby/openapi/RabbyOpenApiClient.h>
 #include <rabby/openapi/RabbyAddressCachePersistence.h>
 #include <rabby/openapi/RabbyOpenApiDiagnostic.h>
+#include <rabby/openapi/RabbyOpenApiNftSync.h>
 #include <rabby/openapi/RabbyOpenApiPlatform.h>
 #include <rabby/openapi/RabbyOpenApiProtocolSync.h>
 #include <rabby/openapi/RabbyOpenApiTokenSync.h>
@@ -44,6 +45,9 @@ std::shared_ptr<rabby::openapi::TokenSyncCoordinator>
 std::mutex protocolSyncCoordinatorMutex;
 std::shared_ptr<rabby::openapi::ProtocolSyncCoordinator>
     sharedProtocolSyncCoordinator;
+std::mutex nftSyncCoordinatorMutex;
+std::shared_ptr<rabby::openapi::NftSyncCoordinator>
+    sharedNftSyncCoordinator;
 
 class ScopedEnv {
  public:
@@ -489,6 +493,36 @@ getProtocolSyncCoordinator(
   return sharedProtocolSyncCoordinator;
 }
 
+std::shared_ptr<rabby::openapi::NftSyncCoordinator>
+getNftSyncCoordinator(
+    const std::string& applicationIdentity,
+    const std::string& clientVersion,
+    std::string& error) {
+  auto client = getClient(applicationIdentity, clientVersion, error);
+  if (!client) {
+    return nullptr;
+  }
+
+  std::lock_guard<std::mutex> lock(nftSyncCoordinatorMutex);
+  if (!sharedNftSyncCoordinator) {
+    sharedNftSyncCoordinator =
+        std::make_shared<rabby::openapi::NftSyncCoordinator>(
+            [client](
+                rabby::openapi::OpenApiClientRequest request,
+                rabby::openapi::OpenApiClientCompletion completion) {
+              return client->execute(
+                  std::move(request), std::move(completion));
+            },
+            rabby::openapi::makePlatformAddressCachePersistence(),
+            []() {
+              return std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::system_clock::now().time_since_epoch())
+                  .count();
+            });
+  }
+  return sharedNftSyncCoordinator;
+}
+
 void notifyDiagnostic(
     jlong diagnosticId,
     const rabby::openapi::OpenApiDiagnosticResult& result) {
@@ -584,6 +618,42 @@ void notifyProtocolSync(
   auto address = toJavaString(env, result.address);
   auto stage = toJavaString(
       env, rabby::openapi::protocolSyncStageName(result.stage));
+  auto error = toJavaString(env, result.error);
+  env->CallStaticVoidMethod(
+      runtimeClass,
+      addressAssetSyncCompletedMethod,
+      syncId,
+      kind,
+      result.success ? JNI_TRUE : JNI_FALSE,
+      address,
+      static_cast<jlong>(result.generation),
+      stage,
+      static_cast<jlong>(result.sourceItemCount),
+      static_cast<jlong>(result.committedRowCount),
+      static_cast<jlong>(result.committedAtMs),
+      static_cast<jlong>(result.durationMs),
+      error);
+  env->DeleteLocalRef(kind);
+  env->DeleteLocalRef(address);
+  env->DeleteLocalRef(stage);
+  env->DeleteLocalRef(error);
+  clearJavaException(env);
+}
+
+void notifyNftSync(
+    jlong syncId,
+    const rabby::openapi::NftSyncResult& result) {
+  ScopedEnv scopedEnv;
+  auto* env = scopedEnv.get();
+  if (env == nullptr || runtimeClass == nullptr ||
+      addressAssetSyncCompletedMethod == nullptr) {
+    return;
+  }
+
+  auto kind = toJavaString(env, "nft");
+  auto address = toJavaString(env, result.address);
+  auto stage = toJavaString(
+      env, rabby::openapi::nftSyncStageName(result.stage));
   auto error = toJavaString(env, result.error);
   env->CallStaticVoidMethod(
       runtimeClass,
@@ -756,6 +826,38 @@ void startProtocolSync(
       });
 }
 
+void startNftSync(
+    JNIEnv* env,
+    jclass,
+    jlong syncId,
+    jstring applicationIdentity,
+    jstring clientVersion,
+    jstring address,
+    jboolean replaceExisting) {
+  const auto applicationIdentityValue =
+      fromJavaString(env, applicationIdentity);
+  const auto clientVersionValue = fromJavaString(env, clientVersion);
+  const auto addressValue = fromJavaString(env, address);
+
+  std::string error;
+  auto coordinator = getNftSyncCoordinator(
+      applicationIdentityValue, clientVersionValue, error);
+  if (!coordinator) {
+    rabby::openapi::NftSyncResult result;
+    result.address = addressValue;
+    result.error = std::move(error);
+    notifyNftSync(syncId, result);
+    return;
+  }
+
+  coordinator->syncAddress(
+      addressValue,
+      replaceExisting == JNI_TRUE,
+      [syncId](rabby::openapi::NftSyncResult result) {
+        notifyNftSync(syncId, result);
+      });
+}
+
 void cancelTokenSync(JNIEnv* env, jclass, jstring address) {
   std::shared_ptr<rabby::openapi::TokenSyncCoordinator> coordinator;
   {
@@ -794,6 +896,28 @@ void cancelAllProtocolSyncs(JNIEnv*, jclass) {
   {
     std::lock_guard<std::mutex> lock(protocolSyncCoordinatorMutex);
     coordinator = sharedProtocolSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAll();
+  }
+}
+
+void cancelNftSync(JNIEnv* env, jclass, jstring address) {
+  std::shared_ptr<rabby::openapi::NftSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(nftSyncCoordinatorMutex);
+    coordinator = sharedNftSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAddress(fromJavaString(env, address));
+  }
+}
+
+void cancelAllNftSyncs(JNIEnv*, jclass) {
+  std::shared_ptr<rabby::openapi::NftSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(nftSyncCoordinatorMutex);
+    coordinator = sharedNftSyncCoordinator;
   }
   if (coordinator) {
     coordinator->cancelAll();
@@ -932,6 +1056,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
       {"startProtocolSync",
        "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V",
        reinterpret_cast<void*>(startProtocolSync)},
+      {"startNftSync",
+       "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V",
+       reinterpret_cast<void*>(startNftSync)},
       {"cancelTokenSync",
        "(Ljava/lang/String;)V",
        reinterpret_cast<void*>(cancelTokenSync)},
@@ -944,6 +1071,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
       {"cancelAllProtocolSyncs",
        "()V",
        reinterpret_cast<void*>(cancelAllProtocolSyncs)},
+      {"cancelNftSync",
+       "(Ljava/lang/String;)V",
+       reinterpret_cast<void*>(cancelNftSync)},
+      {"cancelAllNftSyncs",
+       "()V",
+       reinterpret_cast<void*>(cancelAllNftSyncs)},
       {"verifyTokenCacheWrite",
        "(J)Ljava/lang/String;",
        reinterpret_cast<void*>(verifyTokenCacheWrite)},

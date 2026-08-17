@@ -92,11 +92,40 @@ void testProtocolCacheContractAndRows() {
   assert(emptyRows[0][5].text == "rabby-empty-protocol-item-id");
 }
 
+void testNftCacheContractAndRows() {
+  const auto contract = rabby::openapi::nftCacheContract();
+  assert(contract.tableName == "rabby_cache_nftitem_20260813");
+  assert(contract.columns.size() == 26);
+  assert(contract.columns[3] == "owner_addr");
+  assert(contract.columns[14] == "amount");
+  assert(contract.columns.back() == "collection");
+
+  auto nft = rabby::openapi::NativeNftRecord{};
+  nft.ownerAddress = "0xabc";
+  nft.chain = "eth";
+  nft.id = "nft-1";
+  nft.dbId = "0xabc-eth-nft-1";
+  nft.amount = 1.5;
+  nft.collectionJson = R"({"id":"collection","nft_list":[]})";
+  const auto rows = rabby::openapi::makeNftCacheRows("0xabc", {nft}, 1234);
+  assert(rows.size() == 1);
+  assert(rows[0].size() == contract.columns.size());
+  assert(rows[0][3].text == "0xabc");
+  assert(std::abs(rows[0][14].real - 27.0) < 0.000001);
+  assert(rows[0][25].text == nft.collectionJson);
+
+  const auto emptyRows =
+      rabby::openapi::makeNftCacheRows("0xabc", {}, 1234);
+  assert(emptyRows.size() == 1);
+  assert(emptyRows[0][5].text == "rabby-empty-nft-item-id");
+}
+
 } // namespace
 
 int main() {
   testAddressSnapshotRoundTrip();
   testAddressSnapshotRejectsInvalidRows();
   testProtocolCacheContractAndRows();
+  testNftCacheContractAndRows();
   return 0;
 }

@@ -414,4 +414,111 @@ std::vector<AddressCacheRow> makeProtocolCacheRows(
   return rows;
 }
 
+AddressCacheContract nftCacheContract() {
+  return {
+      kNftCacheTableName,
+      {
+          "_local_created_at",
+          "_local_updated_at",
+          "_db_id",
+          "owner_addr",
+          "chain",
+          "id",
+          "contract_id",
+          "inner_id",
+          "token_id",
+          "name",
+          "contract_name",
+          "collection_name",
+          "description",
+          "usd_price",
+          "amount",
+          "collection_id",
+          "content_type",
+          "content",
+          "detail_url",
+          "total_supply",
+          "is_erc1155",
+          "is_erc721",
+          "is_core",
+          "thumbnail_url",
+          "pay_token",
+          "collection",
+      },
+  };
+}
+
+NativeNftRecord makeEmptyNftRecord(const std::string& ownerAddress) {
+  NativeNftRecord nft;
+  nft.ownerAddress = ownerAddress;
+  nft.chain = kEmptyNftItemId;
+  nft.id = kEmptyNftItemId;
+  nft.contractId = kEmptyNftItemId;
+  nft.innerId = kEmptyNftItemId;
+  nft.name = kEmptyNftItemId;
+  nft.contractName = kEmptyNftItemId;
+  nft.description = kEmptyNftItemId;
+  nft.content = kEmptyNftItemId;
+  nft.detailUrl = kEmptyNftItemId;
+  nft.dbId = buildNftDbId(nft.ownerAddress, nft.chain, nft.id, nft.tokenId);
+  nft.projectionResourceId = buildNftProjectionResourceId(
+      nft.ownerAddress,
+      nft.chain,
+      nft.collectionId,
+      nft.id,
+      nft.innerId);
+  return nft;
+}
+
+AddressCacheRow makeNftCacheRow(
+    const NativeNftRecord& nft,
+    std::int64_t syncTimestampMs) {
+  constexpr double kLegacyRealStorageRatio = 18.0;
+  return {
+      AddressCacheValue::integerValue(syncTimestampMs),
+      AddressCacheValue::integerValue(syncTimestampMs),
+      AddressCacheValue::textValue(nft.dbId),
+      AddressCacheValue::textValue(nft.ownerAddress),
+      AddressCacheValue::textValue(nft.chain),
+      AddressCacheValue::textValue(nft.id),
+      AddressCacheValue::textValue(nft.contractId),
+      AddressCacheValue::textValue(nft.innerId),
+      AddressCacheValue::textValue(nft.tokenId),
+      AddressCacheValue::textValue(nft.name),
+      AddressCacheValue::textValue(nft.contractName),
+      AddressCacheValue::textValue(nft.collectionName),
+      AddressCacheValue::textValue(nft.description),
+      AddressCacheValue::realValue(nft.usdPrice),
+      AddressCacheValue::realValue(nft.amount * kLegacyRealStorageRatio),
+      AddressCacheValue::textValue(nft.collectionId),
+      AddressCacheValue::textValue(nft.contentType),
+      AddressCacheValue::textValue(nft.content),
+      AddressCacheValue::textValue(nft.detailUrl),
+      AddressCacheValue::textValue(nft.totalSupply),
+      AddressCacheValue::booleanValue(nft.isErc1155),
+      AddressCacheValue::booleanValue(nft.isErc721),
+      AddressCacheValue::booleanValue(nft.isCore),
+      AddressCacheValue::textValue(nft.thumbnailUrl),
+      AddressCacheValue::textValue(nft.payTokenJson),
+      AddressCacheValue::textValue(nft.collectionJson),
+  };
+}
+
+std::vector<AddressCacheRow> makeNftCacheRows(
+    const std::string& ownerAddress,
+    const std::vector<NativeNftRecord>& nfts,
+    std::int64_t syncTimestampMs) {
+  std::vector<AddressCacheRow> rows;
+  if (nfts.empty()) {
+    rows.push_back(makeNftCacheRow(
+        makeEmptyNftRecord(ownerAddress), syncTimestampMs));
+    return rows;
+  }
+  rows.reserve(nfts.size());
+  for (const auto& nft : nfts) {
+    rows.push_back(makeNftCacheRow(nft, syncTimestampMs));
+  }
+  return rows;
+}
+
 } // namespace rabby::openapi

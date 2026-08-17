@@ -21,6 +21,7 @@ COMMON_ARGS=(
   "$PACKAGE_DIR/cpp/RabbyOpenApiClient.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiCredential.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiDiagnostic.cpp"
+  "$PACKAGE_DIR/cpp/RabbyOpenApiNftSync.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiProtocolSync.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiRequest.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiSigning.cpp"
@@ -87,3 +88,10 @@ fi
   -o "$BUILD_DIR/rabby-openapi-protocol-sync-test"
 
 "$BUILD_DIR/rabby-openapi-protocol-sync-test"
+
+"${CXX:-c++}" \
+  "${COMMON_ARGS[@]}" \
+  "$PACKAGE_DIR/cpp/tests/RabbyOpenApiNftSyncTest.cpp" \
+  -o "$BUILD_DIR/rabby-openapi-nft-sync-test"
+
+"$BUILD_DIR/rabby-openapi-nft-sync-test"
