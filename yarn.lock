@@ -9767,6 +9767,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/rabby-native-http@workspace:*, @rabby-wallet/rabby-native-http@workspace:packages/rabby-native-http":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/rabby-native-http@workspace:packages/rabby-native-http"
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/rabby-native-openapi@workspace:packages/rabby-native-openapi":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/rabby-native-openapi@workspace:packages/rabby-native-openapi"
+  dependencies:
+    "@rabby-wallet/rabby-native-http": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/rabby-security-engine@npm:2.0.12":
   version: 2.0.12
   resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.12"
