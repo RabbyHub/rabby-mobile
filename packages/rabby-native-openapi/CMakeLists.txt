@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(
   rabbynativeopenapi
   STATIC
+  cpp/RabbyAddressCachePersistence.cpp
   cpp/RabbyOpenApiAssetModels.cpp
   cpp/RabbyOpenApiClient.cpp
   cpp/RabbyOpenApiCredential.cpp
