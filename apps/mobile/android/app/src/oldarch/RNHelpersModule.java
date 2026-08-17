@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class RNHelpersModule extends SimplePackageSpec {
   public static final String NAME = "RNHelpers";
@@ -93,6 +94,47 @@ public class RNHelpersModule extends SimplePackageSpec {
   @ReactMethod
   public void forceExitApp() {
     android.os.Process.killProcess(android.os.Process.myPid());
+  }
+
+  @ReactMethod
+  public void checkDeviceSecurityRisk(Promise promise) {
+    new Thread(() -> {
+      String flashLocked = readSystemProperty("ro.boot.flash.locked");
+      promise.resolve("0".equals(flashLocked));
+    }, "rabby-device-security-check").start();
+  }
+
+  private String readSystemProperty(String key) {
+    Process process = null;
+
+    try {
+      process = new ProcessBuilder("getprop", key).start();
+      if (!process.waitFor(300, TimeUnit.MILLISECONDS)) {
+        process.destroyForcibly();
+        return "";
+      }
+
+      try (
+        BufferedReader reader = new BufferedReader(
+          new InputStreamReader(
+            process.getInputStream(),
+            StandardCharsets.UTF_8
+          )
+        )
+      ) {
+        String value = reader.readLine();
+        return value == null ? "" : value.trim();
+      }
+    } catch (InterruptedException error) {
+      Thread.currentThread().interrupt();
+      return "";
+    } catch (IOException ignored) {
+      return "";
+    } finally {
+      if (process != null) {
+        process.destroy();
+      }
+    }
   }
 
   @ReactMethod

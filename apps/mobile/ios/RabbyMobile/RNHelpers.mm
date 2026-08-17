@@ -1,6 +1,8 @@
 // RNHelpers.mm
 #import "RNHelpers.h"
 #import <Foundation/Foundation.h>
+#import <TargetConditionals.h>
+#import <UIKit/UIKit.h>
 
 @implementation RNHelpers
 
@@ -31,6 +33,32 @@ RCT_EXPORT_MODULE();
 #pragma mark - Public API
 RCT_EXPORT_METHOD(forceExitApp) {
     exit(0);
+}
+
+RCT_EXPORT_METHOD(checkDeviceSecurityRisk:
+  (RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    (void)reject;
+
+#if TARGET_OS_SIMULATOR
+    resolve(@NO);
+#else
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSArray<NSString *> *schemes = @[@"cydia", @"sileo", @"undecimus"];
+        UIApplication *application = [UIApplication sharedApplication];
+
+        for (NSString *scheme in schemes) {
+            NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://", scheme]];
+            if (url != nil && [application canOpenURL:url]) {
+                resolve(@YES);
+                return;
+            }
+        }
+
+        resolve(@NO);
+    });
+#endif
 }
 
 RCT_EXPORT_METHOD(iosExcludeFileFromBackup:

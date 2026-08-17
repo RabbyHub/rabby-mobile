@@ -33,6 +33,7 @@ export const APP_MMKV_WEAK_KEYS = {
   HAS_TIPED_USER_ENABLE_BIOMETRICS: '@hasTipedUserEnableBiometrics',
   LENDING_MARKET: '@lendingMarket',
   FAILED_UNLOCK: '@failed_unlock',
+  DEVICE_SECURITY_WARNING_ACKNOWLEDGED: '@deviceSecurityWarningAcknowledged',
   HOME_TOP10_ADDRESSES: '@homeTop10Addresses',
   WALLETCONNECT_SETTINGS: '@walletConnectSettings',
   WALLETCONNECT_LAST_APPROVED_ACCOUNTS: '@walletConnectLastApprovedAccounts',

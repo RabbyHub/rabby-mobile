@@ -3731,6 +3731,10 @@
     }
   },
   "global": {
+    "deviceSecurityRisk": {
+      "title": "Risque de sécurité de l’appareil",
+      "message": "Cet appareil est peut-être jailbreaké ou son bootloader est déverrouillé. Utiliser Rabby sur cet appareil peut mettre en danger votre portefeuille et vos actifs."
+    },
     "next": "Suivant",
     "proceedButton": "Procéder",
     "backButton": "Retour",

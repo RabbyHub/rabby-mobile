@@ -3422,6 +3422,10 @@
     }
   },
   "global": {
+    "deviceSecurityRisk": {
+      "title": "기기 보안 위험",
+      "message": "이 기기는 탈옥되었거나 부트로더가 잠금 해제되었을 수 있습니다. 이 기기에서 Rabby를 사용하면 지갑과 자산이 위험에 노출될 수 있습니다."
+    },
     "Confirm": "확인",
     "Cancel": "취소",
     "backButton": "뒤로",

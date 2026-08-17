@@ -3701,6 +3701,10 @@
     }
   },
   "global": {
+    "deviceSecurityRisk": {
+      "title": "Risiko keamanan perangkat",
+      "message": "Perangkat ini mungkin telah di-jailbreak atau bootloader-nya tidak terkunci. Menggunakan Rabby di perangkat ini dapat membahayakan dompet dan aset Anda."
+    },
     "time": {
       "mins": "{{t}} menit",
       "hour": "{{t}} jam",

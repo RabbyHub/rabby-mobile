@@ -252,6 +252,14 @@ export const STARTUP_TASKS = {
     fallbackMs: 5000,
     budgetMs: 120,
   }),
+  deviceSecurityRiskWarning: defineStartupTask({
+    label: 'security.deviceRiskWarning',
+    owner: 'security',
+    reason: 'warn once when the device reports a compromised environment',
+    stage: 'immediate',
+    priority: 'low',
+    budgetMs: 8,
+  }),
   setupRuntimePerpsAppStateSubscription: defineStartupTask({
     label: 'setup.runtimePerpsAppStateSubscription',
     owner: 'perps',

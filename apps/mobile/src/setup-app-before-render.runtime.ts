@@ -62,6 +62,13 @@ export function registerSetupAppBeforeRenderDeferredTasks(reason = 'unknown') {
   }, STARTUP_TASKS.setupRuntimeSecuritySubscriptions);
 
   runStartupTask(async () => {
+    const { showDeviceSecurityRiskWarningIfNeeded } = await import(
+      './core/utils/deviceSecurityRisk'
+    );
+    await showDeviceSecurityRiskWarningIfNeeded();
+  }, STARTUP_TASKS.deviceSecurityRiskWarning);
+
+  runStartupTask(async () => {
     const { startSetupRuntimeNotificationBootstrap } = await import(
       './startup/deferredTasks/setupRuntimeNotificationBootstrap'
     );

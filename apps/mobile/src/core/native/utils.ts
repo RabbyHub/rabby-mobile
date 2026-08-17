@@ -41,6 +41,7 @@ interface NativeModulesStatic {
       METRO_CACHE_ENABLED?: boolean;
     };
     forceExitApp(): void;
+    checkDeviceSecurityRisk(): Promise<boolean>;
     androidTraceInstant?(name: string): void;
     androidTraceBeginSection?(name: string): void;
     androidTraceEndSection?(): void;

@@ -63,6 +63,9 @@
 		<string>cbwallet</string>
 		<string>blob</string>
 		<string>debank</string>
+		<string>cydia</string>
+		<string>sileo</string>
+		<string>undecimus</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

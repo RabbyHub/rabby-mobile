@@ -47,6 +47,10 @@
     }
   },
   "global": {
+    "deviceSecurityRisk": {
+      "title": "Sicherheitsrisiko des Geräts",
+      "message": "Dieses Gerät wurde möglicherweise einem Jailbreak unterzogen oder der Bootloader wurde entsperrt. Die Verwendung von Rabby auf diesem Gerät kann Ihre Wallet und Ihre Vermögenswerte gefährden."
+    },
     "Paste": "Einfügen",
     "next": "Weiter",
     "Deleted": "Gelöscht",

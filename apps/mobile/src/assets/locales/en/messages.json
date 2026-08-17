@@ -3749,6 +3749,10 @@
     }
   },
   "global": {
+    "deviceSecurityRisk": {
+      "title": "Device security risk",
+      "message": "This device may be jailbroken or have an unlocked bootloader. Using Rabby on this device may put your wallet and assets at risk."
+    },
     "appName": "Rabby Wallet",
     "appDescription": "Your go-to wallet for Ethereum and EVM",
     "copy": "Copy",
