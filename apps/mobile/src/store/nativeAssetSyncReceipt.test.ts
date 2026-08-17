@@ -41,6 +41,27 @@ describe('nativeAssetSyncReceipt', () => {
     expect(() =>
       normalizeNativeAssetSyncCompletion(completion({ committedAt: 0 })),
     ).toThrow('must include committedAt');
+    expect(
+      normalizeNativeAssetSyncCompletion(
+        completion({ kind: 'protocol', chainIds: [] }),
+      ),
+    ).toEqual(expect.objectContaining({ kind: 'protocol' }));
+    expect(
+      normalizeNativeAssetSyncCompletion(
+        completion({ kind: 'nft', chainIds: [] }),
+      ),
+    ).toEqual(expect.objectContaining({ kind: 'nft' }));
+    expect(() =>
+      normalizeNativeAssetSyncCompletion({
+        ...completion(),
+        kind: 'unsupported',
+      }),
+    ).toThrow('kind is unsupported');
+    expect(() =>
+      normalizeNativeAssetSyncCompletion(
+        completion({ kind: 'protocol', replacementScope: 'chains' }),
+      ),
+    ).toThrow('must replace one address');
   });
 
   it('waits for one request and resolves only after its snapshot is applied', async () => {
@@ -95,6 +116,30 @@ describe('nativeAssetSyncReceipt', () => {
     await expect(
       waitForNativeAssetSyncCompletion('request-2'),
     ).resolves.toEqual(expect.objectContaining({ requestId: 'request-2' }));
+  });
+
+  it('routes each asset kind to its own snapshot handler', async () => {
+    const tokenApply = jest.fn();
+    const protocolApply = jest.fn();
+    const nftApply = jest.fn();
+    registerNativeAssetSyncHandler('token', tokenApply);
+    registerNativeAssetSyncHandler('protocol', protocolApply);
+    registerNativeAssetSyncHandler('nft', nftApply);
+
+    await dispatchNativeAssetSyncCompletion(
+      completion({
+        requestId: 'protocol-1',
+        kind: 'protocol',
+        chainIds: [],
+      }),
+    );
+    await dispatchNativeAssetSyncCompletion(
+      completion({ requestId: 'nft-1', kind: 'nft', chainIds: [] }),
+    );
+
+    expect(tokenApply).not.toHaveBeenCalled();
+    expect(protocolApply).toHaveBeenCalledTimes(1);
+    expect(nftApply).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a failed native request without publishing a snapshot', async () => {
