@@ -48,6 +48,7 @@ export const PerpsProOrderBook: React.FC<{
   latestTrade: PerpsLatestTrade | null;
   market: PerpsProMarket | null;
   onOpenFunding: () => void;
+  onPrecisionIntentStart?: (option: PerpsTickOption) => void;
   onSelectPrice?: (price: string) => void;
   onSelectTickOption: (option: PerpsTickOption) => void;
   selectedTickOption: PerpsTickOption | null;
@@ -62,6 +63,7 @@ export const PerpsProOrderBook: React.FC<{
   latestTrade,
   market,
   onOpenFunding,
+  onPrecisionIntentStart,
   onSelectPrice,
   onSelectTickOption,
   selectedTickOption,
@@ -304,6 +306,7 @@ export const PerpsProOrderBook: React.FC<{
       {precisionOpen ? (
         <PerpsProPrecisionSheet
           onClose={() => setPrecisionOpen(false)}
+          onIntentStart={onPrecisionIntentStart}
           onSelect={onSelectTickOption}
           options={tickOptions}
           selected={selectedTickOption}

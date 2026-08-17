@@ -78,10 +78,12 @@ const options: PerpsTickOption[] = [
 describe('PerpsProPrecisionSheet', () => {
   it('matches the compact no-title option layout and selected icon', () => {
     const onClose = jest.fn();
+    const onIntentStart = jest.fn();
     const onSelect = jest.fn();
     render(
       <PerpsProPrecisionSheet
         onClose={onClose}
+        onIntentStart={onIntentStart}
         onSelect={onSelect}
         options={options}
         selected={options[1]}
@@ -127,6 +129,8 @@ describe('PerpsProPrecisionSheet', () => {
       paddingVertical: 8,
     });
 
+    fireEvent(screen.getByTestId('perps-pro-precision-5-2'), 'pressIn');
+    expect(onIntentStart).toHaveBeenCalledWith(options[1]);
     fireEvent.press(screen.getByTestId('perps-pro-precision-5-2'));
     expect(onSelect).toHaveBeenCalledWith(options[1]);
     expect(onClose).toHaveBeenCalledTimes(1);
