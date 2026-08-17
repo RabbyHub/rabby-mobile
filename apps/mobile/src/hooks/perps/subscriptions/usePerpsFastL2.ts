@@ -69,15 +69,20 @@ const deleteFastL2DisplayCache = (identity: string, ws?: PerpsSdk['ws']) => {
   fastL2DisplayCache.delete(identity);
 };
 
-const readFastL2DisplayCache = (
+const peekFastL2DisplayCache = (
   identity: string,
   ws: PerpsSdk['ws'],
 ): FastL2DisplayCacheEntry | null => {
   const cached = fastL2DisplayCache.get(identity);
+  return cached?.ws === ws && isFresh(cached.receivedAt) ? cached : null;
+};
+
+const readFastL2DisplayCache = (
+  identity: string,
+  ws: PerpsSdk['ws'],
+): FastL2DisplayCacheEntry | null => {
+  const cached = peekFastL2DisplayCache(identity, ws);
   if (!cached) {
-    return null;
-  }
-  if (cached.ws !== ws || !isFresh(cached.receivedAt)) {
     fastL2DisplayCache.delete(identity);
     return null;
   }
@@ -344,6 +349,46 @@ const readPerpsFastL2Snapshot = (
       };
 };
 
+const peekPerpsFastL2Snapshot = (
+  coin: string,
+  precision: PerpsBookPrecision,
+): FastL2Snapshot => {
+  const identity = createPerpsFastL2Identity(coin, precision);
+  const sdk = apisPerps.getPerpsSDKSnapshot();
+  if (!sdk) {
+    return {
+      book: null,
+      error: null,
+      identity,
+      receivedAt: null,
+      revision: 0,
+      status: 'loading',
+    };
+  }
+  const liveEntry = fastL2Registry.get(identity);
+  if (liveEntry?.sdk.ws === sdk.ws) {
+    return liveEntry.snapshot;
+  }
+  const cached = peekFastL2DisplayCache(identity, sdk.ws);
+  return cached
+    ? {
+        book: cached.book,
+        error: null,
+        identity,
+        receivedAt: cached.receivedAt,
+        revision: cached.revision,
+        status: 'stale',
+      }
+    : {
+        book: null,
+        error: null,
+        identity,
+        receivedAt: null,
+        revision: 0,
+        status: 'loading',
+      };
+};
+
 export const prewarmPerpsFastL2 = ({
   coin,
   precision,
@@ -438,6 +483,13 @@ export const usePerpsFastL2 = ({
         : disabledFastL2Snapshot(),
     [coin, stablePrecision],
   );
+  const peekSnapshot = useMemo(
+    () => () =>
+      stablePrecision
+        ? peekPerpsFastL2Snapshot(coin, stablePrecision)
+        : disabledFastL2Snapshot(),
+    [coin, stablePrecision],
+  );
   const subscribe = useMemo(
     () =>
       stablePrecision
@@ -454,6 +506,7 @@ export const usePerpsFastL2 = ({
     displayCacheMs: PERPS_FAST_L2_DISPLAY_CACHE_MS,
     hasValue: hasFastL2Value,
     identity,
+    peekSnapshot,
     publicationEnabled,
     readSnapshot,
     subscribe,

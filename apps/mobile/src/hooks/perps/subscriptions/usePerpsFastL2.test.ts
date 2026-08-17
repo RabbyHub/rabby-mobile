@@ -25,7 +25,10 @@ const mockWs = {
 const mockSdk = { ws: mockWs };
 
 jest.mock('@/core/apis/perps', () => ({
-  apisPerps: { getPerpsSDK: () => mockSdk },
+  apisPerps: {
+    getPerpsSDK: () => mockSdk,
+    getPerpsSDKSnapshot: () => mockSdk,
+  },
 }));
 
 import {
@@ -36,8 +39,8 @@ import {
 } from './usePerpsFastL2';
 
 const precision = { mantissa: null, nSigFigs: 5 as const };
-const book = (time: number): L2Book => ({
-  coin: 'BTC',
+const book = (time: number, coin = 'BTC'): L2Book => ({
+  coin,
   levels: [[{ n: 1, px: '100', sz: '1' }], [{ n: 1, px: '101', sz: '1' }]],
   time,
 });
@@ -96,6 +99,41 @@ describe('usePerpsFastL2 shared registry', () => {
     act(() => jest.advanceTimersByTime(PERPS_FAST_L2_DISPLAY_CACHE_MS));
     expect(second.result.current.book).toBeNull();
     expect(mockWs.subscribeToFastL2).toHaveBeenCalledTimes(2);
+  });
+
+  it('publishes a prewarmed exact target on the first identity-change render', () => {
+    const renderHistory: Array<{
+      bookCoin: string | null;
+      identity: string;
+      status: ReturnType<typeof usePerpsFastL2>['status'];
+    }> = [];
+    const hook = renderHook(
+      ({ coin }) => {
+        const current = usePerpsFastL2({ coin, enabled: true, precision });
+        renderHistory.push({
+          bookCoin: current.book?.coin ?? null,
+          identity: current.identity,
+          status: current.status,
+        });
+        return current;
+      },
+      { initialProps: { coin: 'BTC' } },
+    );
+    act(() => emitFastL2(book(1)));
+    prewarmPerpsFastL2({ coin: 'ETH', precision });
+    act(() => emitFastL2(book(2, 'ETH')));
+    renderHistory.length = 0;
+
+    hook.rerender({ coin: 'ETH' });
+
+    expect(renderHistory[0]).toEqual({
+      bookCoin: 'ETH',
+      identity: 'ETH:5:null',
+      status: 'stale',
+    });
+    expect(renderHistory).not.toContainEqual(
+      expect.objectContaining({ bookCoin: null, identity: 'ETH:5:null' }),
+    );
   });
 
   it('keeps the logical subscription in background and requires a post-resume revision', () => {
