@@ -3,6 +3,11 @@ import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import {
+  compileTokenAssetSqlProjection,
+  type TokenAssetSqlProjection,
+  type TokenAssetSqlProjectionRow,
+} from '@/databases/tokenAssetProjection';
+import {
   syncRemoteTokens,
   syncRemoteTokensForAddresses,
 } from '@/databases/sync/assets';
@@ -104,6 +109,20 @@ const multiAddressTokenRequests = new LatestAsyncRequest();
 const tokenAssetSyncCoordinator = new AssetSyncCoordinator();
 const tokenAddressRequests = new LatestAddressRequest();
 const tokenProjectionPersistenceGate = new TokenProjectionPersistenceGate();
+
+let automaticTokenProjectionSyncSuppressionDepth = 0;
+
+const isAutomaticTokenProjectionSyncSuppressed = () =>
+  automaticTokenProjectionSyncSuppressionDepth > 0;
+
+const withAutomaticTokenProjectionSyncSuppressed = <T>(callback: () => T) => {
+  automaticTokenProjectionSyncSuppressionDepth += 1;
+  try {
+    return callback();
+  } finally {
+    automaticTokenProjectionSyncSuppressionDepth -= 1;
+  }
+};
 
 registerSyncAbortHandler(() => tokenProjectionPersistenceGate.clear());
 
@@ -1569,6 +1588,111 @@ const buildTokenAssetsIndexResult = (
   return nextResult;
 };
 
+const createEmptyTokenAssetsProjectionSourceSections =
+  (): TokenAssetsProjectionSourceSections => ({
+    primary: [],
+    additionalDefault: [],
+    additionalLp: [],
+    lowValueDefault: [],
+    lowValueLp: [],
+  });
+
+const buildTokenItemFromSqlProjectionRow = (
+  row: TokenAssetSqlProjectionRow,
+): ITokenItem => {
+  const primaryToken = tokenEntityResourceStore.getValue(
+    row.primaryResourceId as TokenEntityId,
+  );
+  if (!primaryToken) {
+    throw new Error(
+      `Token SQL projection primary entity is missing: ${row.primaryResourceId}`,
+    );
+  }
+  if (!row.groupKey) {
+    return primaryToken;
+  }
+
+  const groupItems = row.memberResourceIds.map(resourceId => {
+    const token = tokenEntityResourceStore.getValue(
+      resourceId as TokenEntityId,
+    );
+    if (!token) {
+      throw new Error(
+        `Token SQL projection member entity is missing: ${resourceId}`,
+      );
+    }
+    return token;
+  });
+  if (
+    !groupItems.some(
+      token => buildTokenEntityId(token) === row.primaryResourceId,
+    )
+  ) {
+    throw new Error(
+      `Token SQL projection primary is not a group member: ${row.primaryResourceId}`,
+    );
+  }
+
+  return {
+    ...primaryToken,
+    amount: row.totalAmount,
+    usd_value: row.totalUsdValue,
+    groupKey: row.groupKey,
+    groupItems,
+  } as AggregatedTokenItem;
+};
+
+const buildTokenAssetsIndexResultFromSqlProjection = ({
+  projection,
+  isLpTokenEnabled,
+  listKey,
+  previousResult,
+}: {
+  projection: TokenAssetSqlProjection;
+  isLpTokenEnabled?: boolean;
+  listKey?: string;
+  previousResult?: TokenAssetsIndexResult;
+}) => {
+  const sourceSections = createEmptyTokenAssetsProjectionSourceSections();
+  projection.rows.forEach(row => {
+    sourceSections[row.segment].push(buildTokenItemFromSqlProjectionRow(row));
+  });
+
+  const additionalTokens = isLpTokenEnabled
+    ? sourceSections.additionalLp
+    : sourceSections.additionalDefault;
+  const lowValueTokens = isLpTokenEnabled
+    ? sourceSections.lowValueLp
+    : sourceSections.lowValueDefault;
+  const hasLpTokens =
+    sourceSections.additionalLp.length + sourceSections.lowValueLp.length > 0;
+  const result: TokenAssetsProjectionResult = {
+    tokens: sourceSections.primary.concat(additionalTokens, lowValueTokens),
+    sourceSections,
+    defaultVisibleTokenCount: sourceSections.primary.length,
+    additionalTokenCount: additionalTokens.length,
+    lowValueTokenCount: lowValueTokens.length,
+    additionalCoreUsdValue: sourceSections.additionalDefault.reduce(
+      (total, token) =>
+        token.is_core ? total + (token.usd_value || 0) : total,
+      0,
+    ),
+    lowValueTokenPreviewLogoUrls: lowValueTokens
+      .slice(0, 3)
+      .map(token => token.logo_url),
+    lpLowValueTokenPreviewLogoUrls: sourceSections.lowValueLp
+      .slice(0, 3)
+      .map(token => token.logo_url),
+    hasAdditionalTokens:
+      sourceSections.additionalDefault.length +
+        sourceSections.lowValueDefault.length >
+        0 || hasLpTokens,
+    hasLpTokens,
+  };
+
+  return buildTokenAssetsIndexResult(result, listKey, previousResult);
+};
+
 type AggregatedTokenItem = ITokenItem & {
   groupKey: string;
   groupItems: ITokenItem[];
@@ -1866,6 +1990,7 @@ const syncTokenAssetReadModel = ({
   source = 'memory',
   generation,
   committedAt,
+  committedRequestId,
   requestId,
 }: {
   key: string;
@@ -1875,6 +2000,7 @@ const syncTokenAssetReadModel = ({
   source?: Exclude<AssetReadModelSource, 'none'>;
   generation?: number;
   committedAt?: number;
+  committedRequestId?: string;
   requestId?: string;
 }) => {
   const identity = getTokenAssetReadModelIdentity(key, scene);
@@ -1896,6 +2022,7 @@ const syncTokenAssetReadModel = ({
     sourceComplete,
     generation,
     committedAt,
+    committedRequestId,
     requestId,
   });
 };
@@ -3298,6 +3425,9 @@ useTokenIndexStore.subscribe(state => {
 
   const previousVersions = lastTokenIndexAddressVersions;
   lastTokenIndexAddressVersions = state.addressVersions;
+  if (isAutomaticTokenProjectionSyncSuppressed()) {
+    return;
+  }
   const changedAddresses = getChangedTokenIndexAddresses(
     previousVersions,
     state.addressVersions,
@@ -4425,10 +4555,274 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
   },
 }));
 
-const applyNativeTokenCommit = async (
-  completion: NativeAssetSyncCompletion,
+type NativeTokenProjectionTarget =
+  | {
+      key: string;
+      scene: 'single-address';
+      config: SingleTokenAssetsIndexConfig;
+    }
+  | {
+      key: string;
+      scene: 'multi-address';
+      config: MultiTokenAssetsIndexConfig;
+    };
+
+type CompiledNativeTokenProjectionTarget = NativeTokenProjectionTarget & {
+  projection: TokenAssetSqlProjection;
+};
+
+const selectCanonicalTokenEntities = (entities: TokenItemEntity[]) => {
+  const entityByResourceId = new Map<TokenEntityId, TokenItemEntity>();
+  entities.forEach(entity => {
+    const resourceId = buildTokenEntityId(entity);
+    const current = entityByResourceId.get(resourceId);
+    if (
+      !current ||
+      entity._local_updated_at > current._local_updated_at ||
+      (entity._local_updated_at === current._local_updated_at &&
+        entity._db_id < current._db_id)
+    ) {
+      entityByResourceId.set(resourceId, entity);
+    }
+  });
+  return Array.from(entityByResourceId.values());
+};
+
+const getNativeTokenProjectionTargets = (
+  addresses: string[],
+): NativeTokenProjectionTarget[] => {
+  const state = useTokenAssetsIndexStore.getState();
+  const targets: NativeTokenProjectionTarget[] = [];
+  getTokenAssetReadModelTargets(addresses).forEach(({ key, scene }) => {
+    if (scene === 'single-address') {
+      const config = state.singleAssetsConfigByKey[key];
+      if (config) {
+        targets.push({ key, scene, config });
+      }
+      return;
+    }
+    const config = state.multiAssetsConfigByKey[key];
+    if (config) {
+      targets.push({ key, scene, config });
+    }
+  });
+  return targets;
+};
+
+const getNativeTokenProjectionSelectorKey = (
+  target: NativeTokenProjectionTarget,
 ) => {
-  const normalizedAddress = normalizeAddress(completion.address);
+  const addresses =
+    target.scene === 'single-address'
+      ? [target.config.address]
+      : target.config.addresses;
+  return JSON.stringify([
+    target.scene,
+    addresses.map(normalizeAddress),
+    target.config.chainServerId || '',
+    target.scene === 'multi-address'
+      ? target.config.tokenDisplayMode || 'byAddress'
+      : 'byAddress',
+  ]);
+};
+
+const compileNativeTokenProjectionTargets = async (
+  targets: NativeTokenProjectionTarget[],
+) => {
+  const projectionBySelector = new Map<string, TokenAssetSqlProjection>();
+  const compiledTargets: CompiledNativeTokenProjectionTarget[] = [];
+
+  for (const target of targets) {
+    const selectorKey = getNativeTokenProjectionSelectorKey(target);
+    let projection = projectionBySelector.get(selectorKey);
+    if (!projection) {
+      projection = await compileTokenAssetSqlProjection({
+        addresses:
+          target.scene === 'single-address'
+            ? [target.config.address]
+            : target.config.addresses,
+        chainServerId: target.config.chainServerId,
+        scene: target.scene,
+        tokenDisplayMode:
+          target.scene === 'multi-address'
+            ? target.config.tokenDisplayMode
+            : 'byAddress',
+      });
+      projectionBySelector.set(selectorKey, projection);
+    }
+    compiledTargets.push({ ...target, projection });
+  }
+
+  return compiledTargets;
+};
+
+const collectTokenIdsForAddresses = (addresses: string[]) => {
+  const tokenIndexState = useTokenIndexStore.getState();
+  const seen = new Set<TokenEntityId>();
+  return normalizeAddresses(addresses).flatMap(address =>
+    (tokenIndexState.addressTokenIds[address] || []).filter(tokenId => {
+      if (seen.has(tokenId)) {
+        return false;
+      }
+      seen.add(tokenId);
+      return true;
+    }),
+  );
+};
+
+const includeProjectionResourceIds = (
+  tokenIds: TokenEntityId[],
+  projection: TokenAssetSqlProjection,
+) => {
+  const seen = new Set(tokenIds);
+  const nextTokenIds = tokenIds.slice();
+  projection.resourceIds.forEach(resourceId => {
+    const tokenId = resourceId as TokenEntityId;
+    if (!seen.has(tokenId)) {
+      seen.add(tokenId);
+      nextTokenIds.push(tokenId);
+    }
+  });
+  return nextTokenIds;
+};
+
+const publishCompiledNativeTokenProjections = ({
+  address,
+  completion,
+  compiledTargets,
+  committedTokens,
+  canonicalCommittedTokens,
+  supportingTokens,
+}: {
+  address: string;
+  completion: NativeAssetSyncCompletion;
+  compiledTargets: CompiledNativeTokenProjectionTarget[];
+  committedTokens: ITokenItem[];
+  canonicalCommittedTokens: ITokenItem[];
+  supportingTokens: ITokenItem[];
+}) => {
+  const currentTokenListState = tokenListStore.getState();
+  const nextTokenListMap = {
+    ...currentTokenListState.tokenListMap,
+    [address]: committedTokens,
+  };
+  const publications: Array<{
+    target: NativeTokenProjectionTarget;
+    config: SingleTokenAssetsIndexConfig | MultiTokenAssetsIndexConfig;
+    result: TokenAssetsIndexResult;
+  }> = [];
+
+  withAutomaticTokenProjectionSyncSuppressed(() => {
+    syncTokenRuntimeStoresFromTokenListMap(
+      nextTokenListMap,
+      [address],
+      'hydrate',
+      { markTokenListMapSynced: true },
+    );
+    tokenEntityResourceStore.upsertTokens(canonicalCommittedTokens, 'hydrate');
+    tokenEntityResourceStore.upsertTokens(supportingTokens, 'hydrate');
+    tokenListStore.setState(state => ({
+      tokenListMap: nextTokenListMap,
+      sourceSnapshotReadyByAddress:
+        completion.replacementScope === 'address'
+          ? markAssetSourceSnapshotsReady(state.sourceSnapshotReadyByAddress, [
+              address,
+            ])
+          : state.sourceSnapshotReadyByAddress,
+    }));
+
+    const projectionState = useTokenAssetsIndexStore.getState();
+    compiledTargets.forEach(target => {
+      const currentConfig =
+        target.scene === 'single-address'
+          ? projectionState.singleAssetsConfigByKey[target.key]
+          : projectionState.multiAssetsConfigByKey[target.key];
+      if (currentConfig !== target.config) {
+        throw new Error(
+          `Token SQL projection config changed before publish: ${target.key}`,
+        );
+      }
+
+      const sourceAddresses =
+        target.scene === 'single-address'
+          ? [target.config.address]
+          : target.config.addresses;
+      const tokenIds = includeProjectionResourceIds(
+        collectTokenIdsForAddresses(sourceAddresses),
+        target.projection,
+      );
+      const nextConfig =
+        target.scene === 'single-address'
+          ? { ...target.config, tokenIds }
+          : {
+              ...target.config,
+              tokenIds,
+              sourceVersionKey: getMultiTokenAssetsSourceVersionKey(
+                useTokenIndexStore.getState(),
+                target.config.addresses,
+              ),
+            };
+      const previousResult =
+        target.scene === 'single-address'
+          ? projectionState.singleAssetsResultByKey[target.key]
+          : projectionState.multiAssetsResultByKey[target.key];
+      const result = buildTokenAssetsIndexResultFromSqlProjection({
+        projection: target.projection,
+        isLpTokenEnabled: target.config.isLpTokenEnabled,
+        listKey:
+          target.scene === 'multi-address' ? target.config.key : undefined,
+        previousResult,
+      });
+      publications.push({ target, config: nextConfig, result });
+    });
+
+    useTokenAssetsIndexStore.setState(draft => {
+      publications.forEach(({ target, config, result }) => {
+        const availability = getTokenAssetsProjectionAvailability(
+          config,
+          result,
+        );
+        if (target.scene === 'single-address') {
+          draft.singleAssetsConfigByKey[target.key] =
+            config as SingleTokenAssetsIndexConfig;
+          draft.singleAssetsResultByKey[target.key] = result;
+          draft.singleAssetsAvailabilityByKey[target.key] = availability;
+        } else {
+          draft.multiAssetsConfigByKey[target.key] =
+            config as MultiTokenAssetsIndexConfig;
+          draft.multiAssetsResultByKey[target.key] = result;
+          draft.multiAssetsAvailabilityByKey[target.key] = availability;
+        }
+      });
+    });
+  });
+
+  publications.forEach(({ target, config, result }) => {
+    syncTokenAssetReadModel({
+      key: target.key,
+      scene: target.scene,
+      config,
+      result,
+      source: 'native',
+      generation: completion.generation,
+      committedAt: completion.committedAt,
+      committedRequestId: completion.requestId,
+    });
+    scheduleTokenAssetsProjectionPersistence(
+      target.key,
+      target.scene,
+      result,
+      target.scene === 'multi-address'
+        ? target.config.tokenDisplayMode
+        : undefined,
+    );
+  });
+};
+
+const applyNativeTokenCommitWithJsProjection = async (
+  completion: NativeAssetSyncCompletion,
+  normalizedAddress: string,
+) => {
   await tokenCacheHydrator.refresh([normalizedAddress]);
   if (completion.replacementScope === 'address') {
     tokenListStore.setState(state => ({
@@ -4438,6 +4832,12 @@ const applyNativeTokenCommit = async (
       ),
     }));
   }
+  useTokenAssetsIndexStore
+    .getState()
+    .syncSingleAssetsResultsForAddresses([normalizedAddress]);
+  useTokenAssetsIndexStore
+    .getState()
+    .syncMultiAssetsResultsForAddresses([normalizedAddress]);
 
   const projectionState = useTokenAssetsIndexStore.getState();
   getTokenAssetReadModelTargets([normalizedAddress]).forEach(
@@ -4461,9 +4861,102 @@ const applyNativeTokenCommit = async (
         source: 'native',
         generation: completion.generation,
         committedAt: completion.committedAt,
+        committedRequestId: completion.requestId,
       });
     },
   );
+};
+
+const applyNativeTokenCommit = async (
+  completion: NativeAssetSyncCompletion,
+) => {
+  const normalizedAddress = normalizeAddress(completion.address);
+  const targets = getNativeTokenProjectionTargets([normalizedAddress]);
+  if (!targets.length) {
+    await applyNativeTokenCommitWithJsProjection(completion, normalizedAddress);
+    return;
+  }
+
+  const trace = beginAssetDataLoadDiagnostic(
+    'token-native-sql-projection',
+    completion.requestId,
+    { addressCount: 1, targetCount: targets.length },
+  );
+  try {
+    const compiledTargets = await compileNativeTokenProjectionTargets(targets);
+    trace.mark('projection-compiled', {
+      projectionCount: new Set(
+        compiledTargets.map(getNativeTokenProjectionSelectorKey),
+      ).size,
+      rowCount: compiledTargets.reduce(
+        (count, target) => count + target.projection.rows.length,
+        0,
+      ),
+    });
+
+    tokenCacheHydrator.invalidate([normalizedAddress]);
+    const committedEntities = await TokenItemEntity.batchMultiAddressTokens([
+      normalizedAddress,
+    ]);
+    const committedTokens = (committedEntities as TokenItemEntity[]).map(
+      tokenItemEntityToTokenItem,
+    );
+    const canonicalCommittedTokens = selectCanonicalTokenEntities(
+      committedEntities as TokenItemEntity[],
+    ).map(tokenItemEntityToTokenItem);
+    const committedResourceIds = new Set(
+      committedTokens.map(buildTokenEntityId),
+    );
+    const missingResourceIds = Array.from(
+      new Set(compiledTargets.flatMap(target => target.projection.resourceIds)),
+    ).filter(
+      resourceId =>
+        !committedResourceIds.has(resourceId as TokenEntityId) &&
+        !tokenEntityResourceStore.getValue(resourceId as TokenEntityId),
+    );
+    const supportingEntities = missingResourceIds.length
+      ? await TokenItemEntity.batchMultiAddressTokensByResourceIds(
+          missingResourceIds,
+        )
+      : [];
+    const supportingTokensById = new Map(
+      selectCanonicalTokenEntities(supportingEntities as TokenItemEntity[]).map(
+        entity => {
+          const token = tokenItemEntityToTokenItem(entity);
+          return [buildTokenEntityId(token), token] as const;
+        },
+      ),
+    );
+    const supportingTokens = missingResourceIds
+      .map(resourceId => supportingTokensById.get(resourceId as TokenEntityId))
+      .filter((token): token is ITokenItem => !!token);
+    if (supportingTokens.length !== missingResourceIds.length) {
+      throw new Error(
+        `Token SQL projection entities are incomplete: ${supportingTokens.length}/${missingResourceIds.length}`,
+      );
+    }
+
+    publishCompiledNativeTokenProjections({
+      address: normalizedAddress,
+      completion,
+      compiledTargets,
+      committedTokens,
+      canonicalCommittedTokens,
+      supportingTokens,
+    });
+    trace.finish({
+      path: 'sql-projection',
+      itemCount: committedTokens.length,
+      supportingItemCount: supportingTokens.length,
+    });
+  } catch (error) {
+    trace.fail({ path: 'js-fallback' });
+    console.warn(
+      '[tokenProjection] native SQL projection failed; using JS fallback',
+      error,
+    );
+    await applyNativeTokenCommitWithJsProjection(completion, normalizedAddress);
+  }
 };
 
 registerNativeAssetSyncHandler('token', applyNativeTokenCommit);
@@ -4634,7 +5127,13 @@ tokenListStore.subscribe(state => {
   lastTokenSourceSnapshotReadiness = state.sourceSnapshotReadyByAddress;
   if (state.tokenListMap === lastTokenListMapSyncedToRuntime) {
     lastTokenListMapSyncedToRuntime = undefined;
+    if (isAutomaticTokenProjectionSyncSuppressed()) {
+      return;
+    }
     syncKnownTokenProjectionsForAddresses(projectionChangedAddresses);
+    return;
+  }
+  if (isAutomaticTokenProjectionSyncSuppressed()) {
     return;
   }
   if (!tokenListChangedAddresses.size) {
@@ -4655,6 +5154,9 @@ tokenListStore.subscribe(state => {
 });
 
 tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {
+  if (isAutomaticTokenProjectionSyncSuppressed()) {
+    return;
+  }
   useTokenAssetsIndexStore
     .getState()
     .syncChangedTokenAssetsResults(changedTokenIds);

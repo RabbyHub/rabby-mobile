@@ -22,6 +22,16 @@ jest.mock('@/databases/entities/tokenitem', () => ({
     isExpired: jest.fn(async () => true),
   },
 }));
+jest.mock('@/databases/tokenAssetProjection', () => ({
+  TOKEN_ASSET_SQL_PROJECTION_RULE_VERSION: 1,
+  compileTokenAssetSqlProjection: jest.fn(async () => ({
+    ruleVersion: 1,
+    scene: 'single-address',
+    tokenDisplayMode: 'byAddress',
+    rows: [],
+    resourceIds: [],
+  })),
+}));
 jest.mock('@/databases/sync/assets', () => ({
   syncRemoteTokens: jest.fn(async () => true),
   syncRemoteTokensForAddresses: jest.fn(async () => true),
@@ -80,6 +90,7 @@ import {
   syncRemoteTokensForAddresses,
 } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { compileTokenAssetSqlProjection } from '@/databases/tokenAssetProjection';
 import {
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
@@ -100,6 +111,9 @@ const mockedSyncRemoteTokensForAddresses = jest.mocked(
   syncRemoteTokensForAddresses,
 );
 const mockedTokenItemEntity = jest.mocked(TokenItemEntity);
+const mockedCompileTokenAssetSqlProjection = jest.mocked(
+  compileTokenAssetSqlProjection,
+);
 const mockedScheduleAssetProjectionPersistence = jest.mocked(
   scheduleAssetProjectionPersistence,
 );
@@ -176,6 +190,13 @@ describe('single-address token assets projection', () => {
     mockedSyncRemoteTokens.mockResolvedValue(true);
     mockedSyncRemoteTokensForAddresses.mockResolvedValue(true);
     mockedUsedChainList.mockResolvedValue([{ id: 'eth' }] as never);
+    mockedCompileTokenAssetSqlProjection.mockResolvedValue({
+      ruleVersion: 1,
+      scene: 'single-address',
+      tokenDisplayMode: 'byAddress',
+      rows: [],
+      resourceIds: [],
+    });
     useTokenAssetsIndexStore.setState({
       singleAssetsConfigByKey: {},
       singleAssetsResultByKey: {},
@@ -1764,9 +1785,28 @@ describe('single-address token assets projection', () => {
 
   it('publishes one native database commit through the receipt subscriber', async () => {
     const nativeToken = createToken('native-token', { usd_value: 9 });
+    const nativeTokenId = buildTokenEntityId(nativeToken);
     mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
       nativeToken,
     ] as never);
+    mockedCompileTokenAssetSqlProjection.mockResolvedValueOnce({
+      ruleVersion: 1,
+      scene: 'single-address',
+      tokenDisplayMode: 'byAddress',
+      rows: [
+        {
+          segment: 'primary',
+          position: 0,
+          primaryResourceId: nativeTokenId,
+          memberResourceIds: [nativeTokenId],
+          totalAmount: nativeToken.amount,
+          totalUsdValue: nativeToken.usd_value,
+          logoUrl: nativeToken.logo_url,
+          isCore: nativeToken.is_core,
+        },
+      ],
+      resourceIds: [nativeTokenId],
+    });
     const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
 
     await dispatchNativeAssetSyncCompletion({
@@ -1795,6 +1835,13 @@ describe('single-address token assets projection', () => {
         NORMALIZED_ADDRESS
       ],
     ).toBe(true);
+    expect(mockedCompileTokenAssetSqlProjection).toHaveBeenCalledTimes(1);
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]?.rows,
+    ).toHaveLength(1);
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsAvailabilityByKey[key],
+    ).toBe('ready');
     expect(
       getAssetReadModel({
         kind: 'token',
@@ -1807,9 +1854,65 @@ describe('single-address token assets projection', () => {
         source: 'native',
         generation: 11,
         committedAt: 5678,
+        committedRequestId: 'native-token-projection-request',
         rowCount: 1,
       }),
     );
+  });
+
+  it('falls back to the existing JS projection when native SQL projection compilation fails', async () => {
+    const nativeToken = createToken('native-fallback-token', {
+      usd_value: 7,
+    });
+    mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
+      nativeToken,
+    ] as never);
+    mockedCompileTokenAssetSqlProjection.mockRejectedValueOnce(
+      new Error('projection query failed'),
+    );
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+
+    await dispatchNativeAssetSyncCompletion({
+      schemaVersion: 1,
+      requestId: 'native-token-projection-fallback-request',
+      kind: 'token',
+      success: true,
+      address: ADDRESS,
+      generation: 12,
+      committedAt: 6789,
+      replacementScope: 'address',
+      chainIds: ['eth'],
+      committedRowCount: 1,
+      stage: 'persistence',
+      error: '',
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]
+        ?.tokenIds,
+    ).toEqual([buildTokenEntityId(nativeToken)]);
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        source: 'native',
+        generation: 12,
+        committedAt: 6789,
+        committedRequestId: 'native-token-projection-fallback-request',
+        rowCount: 1,
+      }),
+    );
+    expect(warn).toHaveBeenCalledWith(
+      '[tokenProjection] native SQL projection failed; using JS fallback',
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 
   it('does not let an older local hydration overwrite a remote refresh', async () => {

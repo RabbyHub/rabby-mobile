@@ -115,6 +115,29 @@ describe('asset read model', () => {
     );
   });
 
+  it('tracks a native commit id without consuming the coordinator request gate', () => {
+    beginAssetReadModelRefresh(IDENTITY, 'coordinator-request');
+
+    publishAssetReadModel(IDENTITY, {
+      source: 'native',
+      rowCount: 4,
+      sourceComplete: true,
+      generation: 8,
+      committedAt: 200,
+      committedRequestId: 'native-request',
+    });
+
+    expect(getAssetReadModel(IDENTITY)).toEqual(
+      expect.objectContaining({
+        phase: 'refreshing',
+        activeRequestId: 'coordinator-request',
+        committedRequestId: 'native-request',
+        generation: 8,
+        committedAt: 200,
+      }),
+    );
+  });
+
   it('rejects completion from a superseded refresh', () => {
     beginAssetReadModelRefresh(IDENTITY, 'refresh-1');
     beginAssetReadModelRefresh(IDENTITY, 'refresh-2');

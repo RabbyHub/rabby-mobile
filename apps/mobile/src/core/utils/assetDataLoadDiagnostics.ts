@@ -9,6 +9,7 @@ export type AssetDataLoadDiagnosticDomain =
   | 'multi-address-token'
   | 'multi-address-token-projection'
   | 'token-runtime-sync'
+  | 'token-native-sql-projection'
   | 'multi-address-protocol'
   | 'multi-address-nft'
   | 'asset-projection-token-restore'

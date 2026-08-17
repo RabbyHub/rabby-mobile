@@ -29,6 +29,7 @@ export type AssetReadModelEntry = AssetProjectionIdentity & {
   revision: number;
   generation?: number;
   committedAt?: number;
+  committedRequestId?: string;
   activeRequestId?: string;
   lastError?: string;
 };
@@ -43,6 +44,7 @@ type PublishAssetReadModelInput = {
   sourceComplete: boolean;
   generation?: number;
   committedAt?: number;
+  committedRequestId?: string;
   requestId?: string;
 };
 
@@ -133,6 +135,8 @@ export const publishAssetReadModel = (
     const hasData = rowCount > 0;
     const generation = input.generation ?? entry.generation;
     const committedAt = input.committedAt ?? entry.committedAt;
+    const committedRequestId =
+      input.committedRequestId ?? entry.committedRequestId;
     const snapshotChanged =
       entry.source !== input.source ||
       entry.hasSnapshot !== hasSnapshot ||
@@ -140,7 +144,8 @@ export const publishAssetReadModel = (
       entry.sourceComplete !== input.sourceComplete ||
       entry.rowCount !== rowCount ||
       entry.generation !== generation ||
-      entry.committedAt !== committedAt;
+      entry.committedAt !== committedAt ||
+      entry.committedRequestId !== committedRequestId;
     const hasActiveRefresh =
       !!entry.activeRequestId && input.requestId === undefined;
 
@@ -165,6 +170,7 @@ export const publishAssetReadModel = (
     }
     entry.generation = generation;
     entry.committedAt = committedAt;
+    entry.committedRequestId = committedRequestId;
     if (!hasActiveRefresh) {
       entry.activeRequestId = undefined;
     }
