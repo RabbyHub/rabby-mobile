@@ -1035,7 +1035,9 @@ export const HomeOverview = React.memo(() => {
     syncTop10History(top10Addresses, forceRefresh);
 
     // refresh token/protocol list
-    useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);
+    useTokenList
+      .getState()
+      .batchGetTokenList(top10Addresses, forceRefresh, 'pull-refresh');
     useProtocol.getState().batchGetProtocols(top10Addresses, forceRefresh);
   }, []);
 

@@ -1712,6 +1712,55 @@ describe('single-address token assets projection', () => {
     ]);
   });
 
+  it('keeps the read model usable while a coordinated refresh is in flight', async () => {
+    const cached = createToken('cached', { usd_value: 1 });
+    const refreshed = createToken('refreshed', { usd_value: 2 });
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+    });
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+    const pendingRefresh = deferred<ITokenItem[]>();
+    mockedRequestOpenApiWithChainId.mockReturnValueOnce(pendingRefresh.promise);
+
+    const refresh = tokenListStore
+      .getState()
+      .getTokenList(ADDRESS, true, undefined, 'pull-refresh');
+    await waitFor(
+      () => mockedRequestOpenApiWithChainId.mock.calls.length === 1,
+    );
+
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'refreshing',
+        hasData: true,
+        rowCount: 1,
+      }),
+    );
+
+    pendingRefresh.resolve([refreshed]);
+    await refresh;
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        source: 'remote',
+        rowCount: 1,
+      }),
+    );
+  });
+
   it('does not let an older local hydration overwrite a remote refresh', async () => {
     const stale = createToken('stale', { usd_value: 1 });
     const refreshed = createToken('refreshed', { usd_value: 2 });
@@ -1741,7 +1790,9 @@ describe('single-address token assets projection', () => {
     const cached = createToken('cached', { usd_value: 1 });
     tokenListStore.setState({
       tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
     });
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
     mockedRequestOpenApiWithChainId.mockRejectedValue(
       new Error('network failed'),
     );
@@ -1758,6 +1809,20 @@ describe('single-address token assets projection', () => {
     expect(consoleError).toHaveBeenCalledWith(
       'ServiceErrorType.Token',
       expect.any(Error),
+    );
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'stale',
+        hasData: true,
+        rowCount: 1,
+        lastError: 'source-incomplete',
+      }),
     );
     consoleError.mockRestore();
   });

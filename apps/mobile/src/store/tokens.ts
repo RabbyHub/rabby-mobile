@@ -37,7 +37,6 @@ import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { uniqBy } from 'lodash';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
-import { AddressBatchRefreshCoordinator } from '@/core/utils/addressBatchRefreshCoordinator';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
@@ -68,11 +67,19 @@ import {
   getTokenChainSyncMode,
 } from './tokenChainSyncExecutor';
 import {
+  beginAssetReadModelRefresh,
   beginAssetReadModelRestore,
   ensureAssetReadModel,
+  failAssetReadModel,
+  getAssetReadModel,
   publishAssetReadModel,
   type AssetReadModelSource,
 } from './assetReadModel';
+import {
+  AssetSyncCoordinator,
+  type AssetSyncTicket,
+  type AssetSyncTrigger,
+} from './assetSyncCoordinator';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -90,7 +97,7 @@ type TokenAssetsProjectionResult = TokenAssetsResult & {
 };
 
 const multiAddressTokenRequests = new LatestAsyncRequest();
-const multiAddressTokenBatchRefreshes = new AddressBatchRefreshCoordinator();
+const tokenAssetSyncCoordinator = new AssetSyncCoordinator();
 const tokenAddressRequests = new LatestAddressRequest();
 const tokenProjectionPersistenceGate = new TokenProjectionPersistenceGate();
 
@@ -128,11 +135,16 @@ interface TokenListState {
     }
   >;
   initStore(): void;
-  batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
+  batchGetTokenList(
+    addresses: string[],
+    force?: boolean,
+    trigger?: AssetSyncTrigger,
+  ): Promise<void>;
   getTokenList(
     address: string,
     force?: boolean,
     chainServerId?: string,
+    trigger?: AssetSyncTrigger,
   ): Promise<void>;
   setTokenDisplayMode(mode: TokenDisplayMode): void;
 }
@@ -1850,6 +1862,7 @@ const syncTokenAssetReadModel = ({
   source = 'memory',
   generation,
   committedAt,
+  requestId,
 }: {
   key: string;
   scene: TokenProjectionScene;
@@ -1858,6 +1871,7 @@ const syncTokenAssetReadModel = ({
   source?: Exclude<AssetReadModelSource, 'none'>;
   generation?: number;
   committedAt?: number;
+  requestId?: string;
 }) => {
   const identity = getTokenAssetReadModelIdentity(key, scene);
   ensureAssetReadModel(identity);
@@ -1878,6 +1892,7 @@ const syncTokenAssetReadModel = ({
     sourceComplete,
     generation,
     committedAt,
+    requestId,
   });
 };
 
@@ -3347,6 +3362,163 @@ const syncTokenRuntimeStoresFromTokenListMap = (
   return persistenceTicket;
 };
 
+type TokenAssetSyncOutcome = {
+  status: 'complete' | 'partial' | 'superseded';
+  source?: Exclude<AssetReadModelSource, 'none'>;
+};
+
+type TokenAssetReadModelTarget = {
+  key: string;
+  scene: TokenProjectionScene;
+};
+
+const getTokenAssetReadModelTargets = (
+  addresses: string[],
+): TokenAssetReadModelTarget[] => {
+  const addressSet = normalizeAddressSet(addresses);
+  const state = useTokenAssetsIndexStore.getState();
+  const targets: TokenAssetReadModelTarget[] = [];
+
+  Object.values(state.singleAssetsConfigByKey).forEach(config => {
+    if (addressSet.has(normalizeAddress(config.address))) {
+      targets.push({ key: config.key, scene: 'single-address' });
+    }
+  });
+  Object.values(state.multiAssetsConfigByKey).forEach(config => {
+    if (
+      config.addresses.some(address =>
+        addressSet.has(normalizeAddress(address)),
+      )
+    ) {
+      targets.push({ key: config.key, scene: 'multi-address' });
+    }
+  });
+
+  return targets;
+};
+
+const beginTokenAssetReadModelRefresh = (
+  addresses: string[],
+  requestId: string,
+) => {
+  const targets = getTokenAssetReadModelTargets(addresses);
+  targets.forEach(({ key, scene }) => {
+    beginAssetReadModelRefresh(
+      getTokenAssetReadModelIdentity(key, scene),
+      requestId,
+    );
+  });
+  return targets;
+};
+
+const failTokenAssetReadModelRefresh = (
+  targets: TokenAssetReadModelTarget[],
+  requestId: string,
+  error: unknown,
+) => {
+  targets.forEach(({ key, scene }) => {
+    failAssetReadModel(
+      getTokenAssetReadModelIdentity(key, scene),
+      error,
+      requestId,
+    );
+  });
+};
+
+const completeTokenAssetReadModelRefresh = (
+  targets: TokenAssetReadModelTarget[],
+  requestId: string,
+  source?: Exclude<AssetReadModelSource, 'none'>,
+) => {
+  const state = useTokenAssetsIndexStore.getState();
+  targets.forEach(({ key, scene }) => {
+    const config =
+      scene === 'single-address'
+        ? state.singleAssetsConfigByKey[key]
+        : state.multiAssetsConfigByKey[key];
+    const result =
+      scene === 'single-address'
+        ? state.singleAssetsResultByKey[key]
+        : state.multiAssetsResultByKey[key];
+    if (!config || !result) {
+      failAssetReadModel(
+        getTokenAssetReadModelIdentity(key, scene),
+        'projection-unavailable',
+        requestId,
+      );
+      return;
+    }
+
+    const identity = getTokenAssetReadModelIdentity(key, scene);
+    const currentSource = getAssetReadModel(identity).source;
+    syncTokenAssetReadModel({
+      key,
+      scene,
+      config,
+      result,
+      source: source || (currentSource === 'none' ? 'memory' : currentSource),
+      requestId,
+    });
+
+    if (getAssetReadModel(identity).activeRequestId === requestId) {
+      failAssetReadModel(identity, 'source-incomplete', requestId);
+    }
+  });
+};
+
+const runTokenAssetSync = async ({
+  addresses,
+  variant,
+  force,
+  trigger,
+  execute,
+}: {
+  addresses: string[];
+  variant: string;
+  force: boolean;
+  trigger: AssetSyncTrigger;
+  execute: (ticket: AssetSyncTicket) => Promise<TokenAssetSyncOutcome>;
+}) => {
+  let readModelTargets: TokenAssetReadModelTarget[] = [];
+
+  await tokenAssetSyncCoordinator.run({
+    scope: { kind: 'token', addresses, variant },
+    force,
+    trigger,
+    onStart: ticket => {
+      readModelTargets = beginTokenAssetReadModelRefresh(
+        addresses,
+        ticket.requestId,
+      );
+    },
+    onSuccess: (ticket, outcome) => {
+      if (outcome.status === 'complete') {
+        completeTokenAssetReadModelRefresh(
+          readModelTargets,
+          ticket.requestId,
+          outcome.source,
+        );
+        return;
+      }
+      failTokenAssetReadModelRefresh(
+        readModelTargets,
+        ticket.requestId,
+        outcome.status === 'partial'
+          ? 'source-incomplete'
+          : 'request-superseded',
+      );
+    },
+    onError: (ticket, error) => {
+      failTokenAssetReadModelRefresh(
+        readModelTargets,
+        ticket.requestId,
+        error instanceof Error ? error.name : 'asset-sync-failed',
+      );
+    },
+    execute,
+  });
+};
+
 const settleTokenProjectionPersistence = (
   ticket: AddressPersistenceTicket | undefined,
   persistence: Promise<boolean>,
@@ -3439,14 +3611,20 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     });
   },
 
-  async batchGetTokenList(addresses: string[], force = false) {
+  async batchGetTokenList(
+    addresses: string[],
+    force = false,
+    trigger: AssetSyncTrigger = 'on-demand',
+  ) {
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
-    return multiAddressTokenBatchRefreshes.run(
-      lowerAddresses,
+    await runTokenAssetSync({
+      addresses: lowerAddresses,
+      variant: 'multi-address',
       force,
-      async ticket => {
+      trigger,
+      execute: async ticket => {
         const requestId = multiAddressTokenRequests.next();
         const addressRequest = tokenAddressRequests.reserve(lowerAddresses);
         const trace = beginAssetDataLoadDiagnostic(
@@ -3455,6 +3633,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           {
             addressCount: lowerAddresses.length,
             force,
+            trigger: ticket.getTrigger(),
           },
         );
         const isCurrentRequest = () =>
@@ -3463,7 +3642,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           isCurrentRequest()
             ? tokenAddressRequests.getCurrentAddresses(addressRequest)
             : [];
-        const isForceRequested = () => force || ticket.isForceRequested();
+        const isForceRequested = () => ticket.isForceRequested();
 
         if (!lowerAddresses.length) {
           set(() => ({ isLoading: true }));
@@ -3476,11 +3655,12 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             }));
           }
           trace.finish({ path: 'empty-addresses' });
-          return;
+          return { status: 'complete', source: 'database' };
         }
 
         try {
           let confirmedLocalAddresses: string[] = [];
+          const completedAddresses = new Set<string>();
           if (!isForceRequested()) {
             const expirationByAddress = await getDataExpirationByAddress(
               lowerAddresses,
@@ -3505,7 +3685,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
               );
               trace.mark('local-db-loaded', { itemCount });
               trace.finish({ path: 'local-db', itemCount });
-              return;
+              return { status: 'complete', source: 'database' };
             }
             if (!isExpired) {
               confirmedLocalAddresses = [];
@@ -3518,7 +3698,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             !tokenAddressRequests.activate(addressRequest).length
           ) {
             trace.finish({ path: 'stale-before-remote' });
-            return;
+            return { status: 'superseded' };
           }
           tokenCacheHydrator.invalidate(lowerAddresses);
 
@@ -3572,6 +3752,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             });
           }
           if (confirmedLocalAddresses.length) {
+            confirmedLocalAddresses.forEach(address =>
+              completedAddresses.add(address),
+            );
             set(state => ({
               sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
                 state.sourceSnapshotReadyByAddress,
@@ -3594,7 +3777,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           const currentAddressesAfterCache = getCurrentAddresses();
           if (!currentAddressesAfterCache.length) {
             trace.finish({ path: 'stale-after-cache' });
-            return;
+            return { status: 'superseded' };
           }
           const latestTokenListMap = get().tokenListMap;
           const confirmedLocalAddressSet = new Set(confirmedLocalAddresses);
@@ -3767,6 +3950,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                 0,
               ),
             });
+            nativeApplicableAddresses.forEach(address =>
+              completedAddresses.add(address),
+            );
           }
 
           const remoteApplicableAddresses = getCurrentAddresses().filter(
@@ -3791,7 +3977,14 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                 ? 'native-remote'
                 : 'stale-after-remote',
             });
-            return;
+            return {
+              status: lowerAddresses.every(address =>
+                completedAddresses.has(address),
+              )
+                ? 'complete'
+                : 'partial',
+              source: nativeApplicableAddresses.length ? 'native' : undefined,
+            };
           }
 
           const nextTokenListMap = mergeAddressListSnapshots(
@@ -3816,6 +4009,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                 address,
               ),
           );
+          completeApplicableAddresses.forEach(address =>
+            completedAddresses.add(address),
+          );
           set(state => ({
             tokenListMap: nextTokenListMap,
             sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
@@ -3838,6 +4034,14 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             );
           }
           trace.finish({ path: 'cache-then-remote' });
+          return {
+            status: lowerAddresses.every(address =>
+              completedAddresses.has(address),
+            )
+              ? 'complete'
+              : 'partial',
+            source: 'remote',
+          };
         } catch (error) {
           trace.fail({ phase: 'load' });
           throw error;
@@ -3847,361 +4051,389 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           }
         }
       },
-    );
+    });
   },
 
-  async getTokenList(address: string, force = false, chainServerId?: string) {
+  async getTokenList(
+    address: string,
+    force = false,
+    chainServerId?: string,
+    trigger: AssetSyncTrigger = 'on-demand',
+  ) {
     const normalizedAddress = address.toLowerCase();
-    const addressRequest = tokenAddressRequests.reserve([normalizedAddress]);
-    const isCurrentRequest = () =>
-      tokenAddressRequests.isCurrent(addressRequest, normalizedAddress);
-    const trace = beginAssetDataLoadDiagnostic(
-      'single-address-token',
-      normalizedAddress,
-      {
-        force,
-        chainServerId: chainServerId || null,
-      },
-    );
-    let isExpired: boolean;
-    try {
-      isExpired = await isDataExpired(normalizedAddress);
-      trace.mark('expiry-resolved', { isExpired });
-    } catch (error) {
-      trace.fail({ phase: 'expiry' });
-      throw error;
-    }
-    const currentStateTokens = get().tokenListMap[normalizedAddress] || [];
-    const hasCurrentAddressTokens = currentStateTokens.length > 0;
-    const hasCurrentAddressSnapshot = Object.prototype.hasOwnProperty.call(
-      get().tokenListMap,
-      normalizedAddress,
-    );
-    const targetChainServerId = chainServerId || undefined;
-
-    // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
-    const isRefreshingWithValidLocalTokens =
-      hasCurrentAddressTokens && (force || !isExpired || !!targetChainServerId);
-
-    /**
-     * 阶段一： 校验有效期，有效期内直接用本地数据
-     */
-    if (!force && !isExpired) {
-      try {
-        if (!hasCurrentAddressSnapshot) {
-          await tokenCacheHydrator.hydrate([normalizedAddress]);
-        }
-        set(state => ({
-          sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-            state.sourceSnapshotReadyByAddress,
-            [normalizedAddress],
-          ),
-        }));
-        const itemCount = get().tokenListMap[normalizedAddress]?.length || 0;
-        trace.mark('local-db-loaded', { itemCount });
-        trace.mark('local-store-published', { itemCount });
-        trace.finish({ path: 'local-db' });
-        return;
-      } catch (error) {
-        trace.fail({ phase: 'local-db' });
-        throw error;
-      }
-    }
-
-    if (!tokenAddressRequests.activate(addressRequest).length) {
-      trace.finish({ path: 'stale-before-remote' });
-      return;
-    }
-    tokenCacheHydrator.invalidate([normalizedAddress]);
-
-    set(state => ({
-      isLoadingByAddress: {
-        ...state.isLoadingByAddress,
-        [normalizedAddress]: { loading: true, allLoading: true },
-      },
-    }));
-
-    try {
-      const shouldHydrateStaleLocalTokens =
-        !force && isExpired && !hasCurrentAddressSnapshot;
-      const cacheListPromise = isRefreshingWithValidLocalTokens
-        ? null
-        : queryTokensCache(address);
-
-      if (shouldHydrateStaleLocalTokens) {
+    await runTokenAssetSync({
+      addresses: [normalizedAddress],
+      // A cache-only read must not wait behind (or cancel) an active manual
+      // refresh. Requests with the same strength still share one flight.
+      variant: `single-address:${chainServerId || 'all'}:${
+        force ? 'force' : 'standard'
+      }`,
+      force,
+      trigger,
+      execute: async ticket => {
+        const addressRequest = tokenAddressRequests.reserve([
+          normalizedAddress,
+        ]);
+        const isCurrentRequest = () =>
+          tokenAddressRequests.isCurrent(addressRequest, normalizedAddress);
+        const isForceRequested = () => ticket.isForceRequested();
+        const trace = beginAssetDataLoadDiagnostic(
+          'single-address-token',
+          normalizedAddress,
+          {
+            force,
+            trigger: ticket.getTrigger(),
+            chainServerId: chainServerId || null,
+          },
+        );
+        let isExpired: boolean;
         try {
-          await tokenCacheHydrator.hydrate([normalizedAddress]);
-          if (!isCurrentRequest()) {
-            trace.finish({ path: 'stale-after-hydrate' });
-            return;
-          }
-          const localTokens = get().tokenListMap[normalizedAddress] || [];
-          trace.mark('stale-local-db-loaded', {
-            itemCount: localTokens.length,
-          });
+          isExpired = await isDataExpired(normalizedAddress);
+          trace.mark('expiry-resolved', { isExpired });
+        } catch (error) {
+          trace.fail({ phase: 'expiry' });
+          throw error;
+        }
+        const currentStateTokens = get().tokenListMap[normalizedAddress] || [];
+        const hasCurrentAddressTokens = currentStateTokens.length > 0;
+        const hasCurrentAddressSnapshot = Object.prototype.hasOwnProperty.call(
+          get().tokenListMap,
+          normalizedAddress,
+        );
+        const targetChainServerId = chainServerId || undefined;
 
-          if (localTokens.length > 0) {
+        // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
+        const isRefreshingWithValidLocalTokens =
+          hasCurrentAddressTokens &&
+          (isForceRequested() || !isExpired || !!targetChainServerId);
+
+        /**
+         * 阶段一： 校验有效期，有效期内直接用本地数据
+         */
+        if (!isForceRequested() && !isExpired) {
+          try {
+            if (!hasCurrentAddressSnapshot) {
+              await tokenCacheHydrator.hydrate([normalizedAddress]);
+            }
+            set(state => ({
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                [normalizedAddress],
+              ),
+            }));
+            const itemCount =
+              get().tokenListMap[normalizedAddress]?.length || 0;
+            trace.mark('local-db-loaded', { itemCount });
+            trace.mark('local-store-published', { itemCount });
+            trace.finish({ path: 'local-db' });
+            return { status: 'complete', source: 'database' };
+          } catch (error) {
+            trace.fail({ phase: 'local-db' });
+            throw error;
+          }
+        }
+
+        if (!tokenAddressRequests.activate(addressRequest).length) {
+          trace.finish({ path: 'stale-before-remote' });
+          return { status: 'superseded' };
+        }
+        tokenCacheHydrator.invalidate([normalizedAddress]);
+
+        set(state => ({
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            [normalizedAddress]: { loading: true, allLoading: true },
+          },
+        }));
+
+        try {
+          const shouldHydrateStaleLocalTokens =
+            !isForceRequested() && isExpired && !hasCurrentAddressSnapshot;
+          const cacheListPromise = isRefreshingWithValidLocalTokens
+            ? null
+            : queryTokensCache(address);
+
+          if (shouldHydrateStaleLocalTokens) {
+            try {
+              await tokenCacheHydrator.hydrate([normalizedAddress]);
+              if (!isCurrentRequest()) {
+                trace.finish({ path: 'stale-after-hydrate' });
+                return { status: 'superseded' };
+              }
+              const localTokens = get().tokenListMap[normalizedAddress] || [];
+              trace.mark('stale-local-db-loaded', {
+                itemCount: localTokens.length,
+              });
+
+              if (localTokens.length > 0) {
+                set(state => ({
+                  isLoadingByAddress: {
+                    ...state.isLoadingByAddress,
+                    [normalizedAddress]: { loading: false, allLoading: true },
+                  },
+                }));
+                trace.mark('stale-local-store-published', {
+                  itemCount: localTokens.length,
+                });
+              }
+            } catch (error) {
+              trace.mark('stale-local-hydrate-failed');
+              console.error('hydrate stale local token snapshot failed', error);
+            }
+          }
+
+          /**
+           * 阶段二： 从缓存接口中获取数据，注意缓存接口有30s延迟，且不完整（只包含核心token）
+           */
+          if (isRefreshingWithValidLocalTokens) {
             set(state => ({
               isLoadingByAddress: {
                 ...state.isLoadingByAddress,
                 [normalizedAddress]: { loading: false, allLoading: true },
               },
             }));
-            trace.mark('stale-local-store-published', {
-              itemCount: localTokens.length,
+            trace.mark('cache-skipped', {
+              itemCount: currentStateTokens.length,
+            });
+          } else {
+            const cacheList = await cacheListPromise!;
+            if (!isCurrentRequest()) {
+              trace.finish({ path: 'stale-after-cache' });
+              return { status: 'superseded' };
+            }
+            trace.mark('cache-response', { itemCount: cacheList.length });
+            const cacheTokens = filterInterfaceTokenList(
+              cacheList.map(item => tokenItemToITokenItem(item, address)),
+            );
+            const currentState = get();
+            const previousTokens =
+              currentState.tokenListMap[normalizedAddress] || [];
+
+            // 以此弥补cache接口数据不完整，带来的接口列表闪动
+            let noCoreDBTokens: ITokenItem[] = [];
+            if (!previousTokens.some(token => !token.is_core)) {
+              const noCoreDBTokensList =
+                await TokenItemEntity.batchQueryNoCoreTokens(normalizedAddress);
+              if (!isCurrentRequest()) {
+                trace.finish({ path: 'stale-after-non-core-cache' });
+                return { status: 'superseded' };
+              }
+              noCoreDBTokens = filterInterfaceTokenList(
+                noCoreDBTokensList.map(tokenItemEntityToTokenItem),
+              );
+              trace.mark('non-core-db-loaded', {
+                itemCount: noCoreDBTokens.length,
+              });
+            }
+
+            const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
+              previousTokens,
+              cacheTokens,
+              noCoreDBTokens,
+            );
+            const nextTokenListMap = {
+              ...currentState.tokenListMap,
+              [normalizedAddress]: mergedCacheTokens,
+            };
+            syncTokenRuntimeStoresFromTokenListMap(
+              nextTokenListMap,
+              [normalizedAddress],
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+              },
+            );
+            tokenCacheHydrator.invalidate([normalizedAddress]);
+            set(state => ({
+              tokenListMap: nextTokenListMap,
+              isLoadingByAddress: {
+                ...state.isLoadingByAddress,
+                // cache已经拿到，但是不是所有token都拿到
+                [normalizedAddress]: { loading: false, allLoading: true },
+              },
+            }));
+            trace.mark('cache-store-published', {
+              itemCount: mergedCacheTokens.length,
             });
           }
-        } catch (error) {
-          trace.mark('stale-local-hydrate-failed');
-          console.error('hydrate stale local token snapshot failed', error);
-        }
-      }
 
-      /**
-       * 阶段二： 从缓存接口中获取数据，注意缓存接口有30s延迟，且不完整（只包含核心token）
-       */
-      if (isRefreshingWithValidLocalTokens) {
-        set(state => ({
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            [normalizedAddress]: { loading: false, allLoading: true },
-          },
-        }));
-        trace.mark('cache-skipped', {
-          itemCount: currentStateTokens.length,
-        });
-      } else {
-        const cacheList = await cacheListPromise!;
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-after-cache' });
-          return;
-        }
-        trace.mark('cache-response', { itemCount: cacheList.length });
-        const cacheTokens = filterInterfaceTokenList(
-          cacheList.map(item => tokenItemToITokenItem(item, address)),
-        );
-        const currentState = get();
-        const previousTokens =
-          currentState.tokenListMap[normalizedAddress] || [];
-
-        // 以此弥补cache接口数据不完整，带来的接口列表闪动
-        let noCoreDBTokens: ITokenItem[] = [];
-        if (!previousTokens.some(token => !token.is_core)) {
-          const noCoreDBTokensList =
-            await TokenItemEntity.batchQueryNoCoreTokens(normalizedAddress);
+          /**
+           * 阶段三： 从链接口中获取数据
+           */
+          let chainIdList: string[] = [];
+          if (targetChainServerId) {
+            chainIdList = [targetChainServerId];
+          } else {
+            // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
+            const chains = await openapi.usedChainList(address);
+            chainIdList = chains.map(item => item.id);
+          }
           if (!isCurrentRequest()) {
-            trace.finish({ path: 'stale-after-non-core-cache' });
-            return;
+            trace.finish({ path: 'stale-after-chains' });
+            return { status: 'superseded' };
           }
-          noCoreDBTokens = filterInterfaceTokenList(
-            noCoreDBTokensList.map(tokenItemEntityToTokenItem),
-          );
-          trace.mark('non-core-db-loaded', {
-            itemCount: noCoreDBTokens.length,
+          trace.mark('remote-chains-resolved', {
+            chainCount: chainIdList.length,
           });
-        }
-
-        const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
-          previousTokens,
-          cacheTokens,
-          noCoreDBTokens,
-        );
-        const nextTokenListMap = {
-          ...currentState.tokenListMap,
-          [normalizedAddress]: mergedCacheTokens,
-        };
-        syncTokenRuntimeStoresFromTokenListMap(
-          nextTokenListMap,
-          [normalizedAddress],
-          'remote',
-          {
-            markTokenListMapSynced: true,
-            markPersistencePending: true,
-          },
-        );
-        tokenCacheHydrator.invalidate([normalizedAddress]);
-        set(state => ({
-          tokenListMap: nextTokenListMap,
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            // cache已经拿到，但是不是所有token都拿到
-            [normalizedAddress]: { loading: false, allLoading: true },
-          },
-        }));
-        trace.mark('cache-store-published', {
-          itemCount: mergedCacheTokens.length,
-        });
-      }
-
-      /**
-       * 阶段三： 从链接口中获取数据
-       */
-      let chainIdList: string[] = [];
-      if (targetChainServerId) {
-        chainIdList = [targetChainServerId];
-      } else {
-        // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
-        const chains = await openapi.usedChainList(address);
-        chainIdList = chains.map(item => item.id);
-      }
-      if (!isCurrentRequest()) {
-        trace.finish({ path: 'stale-after-chains' });
-        return;
-      }
-      trace.mark('remote-chains-resolved', {
-        chainCount: chainIdList.length,
-      });
-      const tokenChainSyncMode = getTokenChainSyncMode();
-      const realTimeTokenQueue = new PQueue({
-        concurrency: 15,
-      });
-      const syncExecution = await executeTokenChainSync({
-        mode: tokenChainSyncMode,
-        address: normalizedAddress,
-        chainIds: chainIdList,
-        replacementScope: targetChainServerId ? 'chains' : 'address',
-        replaceExisting: true,
-        executeJs: async () => {
-          const res = await Promise.allSettled(
-            chainIdList.map(
-              async serverId =>
-                await realTimeTokenQueue.add(async () => {
-                  const chainTokensRes = await requestOpenApiWithChainId(
-                    ({ openapi }) => openapi.listToken(address, serverId, true),
-                    {
-                      isTestnet: false,
-                    },
-                  );
-                  return filterInterfaceTokenList(
-                    chainTokensRes.map(item =>
-                      tokenItemToITokenItem(item, address),
-                    ),
-                  );
-                }),
-            ),
-          );
-          const failed = res.find(result => result.status === 'rejected');
-          if (failed?.status === 'rejected') {
-            console.error('ServiceErrorType.Token', failed.reason);
-            return null;
-          }
-          return res
-            .map(result => (result.status === 'fulfilled' ? result.value : []))
-            .flat() as ITokenItem[];
-        },
-      });
-
-      if (syncExecution.mode === 'native') {
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-after-native-remote' });
-          return;
-        }
-        await tokenCacheHydrator.refresh([normalizedAddress]);
-        if (!targetChainServerId) {
-          set(state => ({
-            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-              state.sourceSnapshotReadyByAddress,
-              [normalizedAddress],
-            ),
-          }));
-        }
-        const itemCount = get().tokenListMap[normalizedAddress]?.length || 0;
-        trace.mark('native-snapshot-hydrated', {
-          itemCount,
-          committedRowCount: syncExecution.result.committedRowCount,
-        });
-        trace.finish({ path: 'native-remote', itemCount });
-        return;
-      }
-
-      const results = syncExecution.value;
-      if (!results) {
-        trace.fail({ phase: 'remote-chain' });
-        return;
-      }
-      trace.mark('remote-token-responses', { itemCount: results.length });
-      if (!isCurrentRequest()) {
-        trace.finish({ path: 'stale-after-remote' });
-        return;
-      }
-
-      if (targetChainServerId) {
-        const currentState = get();
-        const previousTokens =
-          currentState.tokenListMap[normalizedAddress] || [];
-        const nextTokenListMap = {
-          ...currentState.tokenListMap,
-          [normalizedAddress]: replaceTokensByChain(
-            previousTokens,
-            results,
-            targetChainServerId,
-          ),
-        };
-        const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
-          nextTokenListMap,
-          [normalizedAddress],
-          'remote',
-          {
-            markTokenListMapSynced: true,
-            markPersistencePending: true,
-          },
-        );
-        tokenCacheHydrator.invalidate([normalizedAddress]);
-        set(() => ({
-          tokenListMap: nextTokenListMap,
-        }));
-        settleTokenProjectionPersistence(
-          persistenceTicket,
-          syncRemoteTokens(
-            normalizedAddress,
-            nextTokenListMap[normalizedAddress],
-            {
-              cleanupStale: false,
+          const tokenChainSyncMode = getTokenChainSyncMode();
+          const realTimeTokenQueue = new PQueue({
+            concurrency: 15,
+          });
+          const syncExecution = await executeTokenChainSync({
+            mode: tokenChainSyncMode,
+            address: normalizedAddress,
+            chainIds: chainIdList,
+            replacementScope: targetChainServerId ? 'chains' : 'address',
+            replaceExisting: true,
+            executeJs: async () => {
+              const res = await Promise.allSettled(
+                chainIdList.map(
+                  async serverId =>
+                    await realTimeTokenQueue.add(async () => {
+                      const chainTokensRes = await requestOpenApiWithChainId(
+                        ({ openapi }) =>
+                          openapi.listToken(address, serverId, true),
+                        {
+                          isTestnet: false,
+                        },
+                      );
+                      return filterInterfaceTokenList(
+                        chainTokensRes.map(item =>
+                          tokenItemToITokenItem(item, address),
+                        ),
+                      );
+                    }),
+                ),
+              );
+              const failed = res.find(result => result.status === 'rejected');
+              if (failed?.status === 'rejected') {
+                console.error('ServiceErrorType.Token', failed.reason);
+                return null;
+              }
+              return res
+                .map(result =>
+                  result.status === 'fulfilled' ? result.value : [],
+                )
+                .flat() as ITokenItem[];
             },
-          ),
-        );
-      } else {
-        const nextTokenListMap = {
-          ...get().tokenListMap,
-          [normalizedAddress]: results,
-        };
-        const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
-          nextTokenListMap,
-          [normalizedAddress],
-          'remote',
-          {
-            markTokenListMapSynced: true,
-            markPersistencePending: true,
-          },
-        );
-        tokenCacheHydrator.invalidate([normalizedAddress]);
-        set(state => ({
-          tokenListMap: nextTokenListMap,
-          sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-            state.sourceSnapshotReadyByAddress,
-            [normalizedAddress],
-          ),
-        }));
-        settleTokenProjectionPersistence(
-          persistenceTicket,
-          syncRemoteTokens(normalizedAddress, results),
-        );
-      }
-      trace.mark('remote-store-published', { itemCount: results.length });
-      trace.finish({ path: 'remote' });
-    } catch (error) {
-      trace.fail({ phase: 'refresh' });
-      throw error;
-    } finally {
-      if (isCurrentRequest()) {
-        set(state => ({
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            [normalizedAddress]: { loading: false, allLoading: false },
-          },
-        }));
-      }
-    }
+          });
+
+          if (syncExecution.mode === 'native') {
+            if (!isCurrentRequest()) {
+              trace.finish({ path: 'stale-after-native-remote' });
+              return { status: 'superseded' };
+            }
+            await tokenCacheHydrator.refresh([normalizedAddress]);
+            if (!targetChainServerId) {
+              set(state => ({
+                sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                  state.sourceSnapshotReadyByAddress,
+                  [normalizedAddress],
+                ),
+              }));
+            }
+            const itemCount =
+              get().tokenListMap[normalizedAddress]?.length || 0;
+            trace.mark('native-snapshot-hydrated', {
+              itemCount,
+              committedRowCount: syncExecution.result.committedRowCount,
+            });
+            trace.finish({ path: 'native-remote', itemCount });
+            return { status: 'complete', source: 'native' };
+          }
+
+          const results = syncExecution.value;
+          if (!results) {
+            trace.fail({ phase: 'remote-chain' });
+            return { status: 'partial' };
+          }
+          trace.mark('remote-token-responses', { itemCount: results.length });
+          if (!isCurrentRequest()) {
+            trace.finish({ path: 'stale-after-remote' });
+            return { status: 'superseded' };
+          }
+
+          if (targetChainServerId) {
+            const currentState = get();
+            const previousTokens =
+              currentState.tokenListMap[normalizedAddress] || [];
+            const nextTokenListMap = {
+              ...currentState.tokenListMap,
+              [normalizedAddress]: replaceTokensByChain(
+                previousTokens,
+                results,
+                targetChainServerId,
+              ),
+            };
+            const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
+              nextTokenListMap,
+              [normalizedAddress],
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+              },
+            );
+            tokenCacheHydrator.invalidate([normalizedAddress]);
+            set(() => ({
+              tokenListMap: nextTokenListMap,
+            }));
+            settleTokenProjectionPersistence(
+              persistenceTicket,
+              syncRemoteTokens(
+                normalizedAddress,
+                nextTokenListMap[normalizedAddress],
+                {
+                  cleanupStale: false,
+                },
+              ),
+            );
+          } else {
+            const nextTokenListMap = {
+              ...get().tokenListMap,
+              [normalizedAddress]: results,
+            };
+            const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
+              nextTokenListMap,
+              [normalizedAddress],
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+              },
+            );
+            tokenCacheHydrator.invalidate([normalizedAddress]);
+            set(state => ({
+              tokenListMap: nextTokenListMap,
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                [normalizedAddress],
+              ),
+            }));
+            settleTokenProjectionPersistence(
+              persistenceTicket,
+              syncRemoteTokens(normalizedAddress, results),
+            );
+          }
+          trace.mark('remote-store-published', { itemCount: results.length });
+          trace.finish({ path: 'remote' });
+          return { status: 'complete', source: 'remote' };
+        } catch (error) {
+          trace.fail({ phase: 'refresh' });
+          throw error;
+        } finally {
+          if (isCurrentRequest()) {
+            set(state => ({
+              isLoadingByAddress: {
+                ...state.isLoadingByAddress,
+                [normalizedAddress]: { loading: false, allLoading: false },
+              },
+            }));
+          }
+        }
+      },
+    });
   },
 }));
 

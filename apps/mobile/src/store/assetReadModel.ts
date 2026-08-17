@@ -141,6 +141,8 @@ export const publishAssetReadModel = (
       entry.rowCount !== rowCount ||
       entry.generation !== generation ||
       entry.committedAt !== committedAt;
+    const hasActiveRefresh =
+      !!entry.activeRequestId && input.requestId === undefined;
 
     if (
       !snapshotChanged &&
@@ -152,7 +154,7 @@ export const publishAssetReadModel = (
       return;
     }
 
-    entry.phase = 'ready';
+    entry.phase = hasActiveRefresh ? 'refreshing' : 'ready';
     entry.source = input.source;
     entry.hasSnapshot = hasSnapshot;
     entry.hasData = hasData;
@@ -163,7 +165,9 @@ export const publishAssetReadModel = (
     }
     entry.generation = generation;
     entry.committedAt = committedAt;
-    entry.activeRequestId = undefined;
+    if (!hasActiveRefresh) {
+      entry.activeRequestId = undefined;
+    }
     entry.lastError = undefined;
     published = true;
   });

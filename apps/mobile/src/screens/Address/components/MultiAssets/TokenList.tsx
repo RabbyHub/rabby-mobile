@@ -87,6 +87,7 @@ import {
   type TokenProjectionSectionSpec,
 } from '@/screens/Home/components/TokenProjectionSectionList';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import type { AssetSyncTrigger } from '@/store/assetSyncCoordinator';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -234,6 +235,7 @@ export const TokenList = () => {
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
   const [hasSettledTokenRequest, setHasSettledTokenRequest] = useState(false);
   const tokenRequestIdRef = useRef(0);
+  const lastTokenScopeRef = useRef<string | null>(null);
   const customTestnetAddTokenModalIdRef = useRef<ReturnType<
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
@@ -398,11 +400,11 @@ export const TokenList = () => {
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
   const requestTokenList = useCallback(
-    (force = false) => {
+    (force = false, trigger: AssetSyncTrigger = 'on-demand') => {
       const requestId = tokenRequestIdRef.current + 1;
       tokenRequestIdRef.current = requestId;
       setHasSettledTokenRequest(false);
-      const request = batchGetTokenList(myTop10Addresses, force);
+      const request = batchGetTokenList(myTop10Addresses, force, trigger);
       void request.then(
         () => {
           if (tokenRequestIdRef.current === requestId) {
@@ -421,18 +423,28 @@ export const TokenList = () => {
   );
 
   useEffect(() => {
-    void requestTokenList();
+    const nextScope = myTop10Addresses
+      .map(address => address.toLowerCase())
+      .sort()
+      .join('|');
+    const trigger: AssetSyncTrigger = lastTokenScopeRef.current
+      ? lastTokenScopeRef.current === nextScope
+        ? 'on-demand'
+        : 'scope-change'
+      : 'initial';
+    lastTokenScopeRef.current = nextScope;
+    void requestTokenList(false, trigger);
     return () => {
       tokenRequestIdRef.current += 1;
     };
-  }, [requestTokenList]);
+  }, [myTop10Addresses, requestTokenList]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    void requestTokenList();
+    void requestTokenList(false, 'resume');
   }, [
     isFocusing,
     isLoading,
@@ -758,7 +770,7 @@ export const TokenList = () => {
 
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
-    const tokenRefresh = requestTokenList(true);
+    const tokenRefresh = requestTokenList(true, 'pull-refresh');
 
     withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);

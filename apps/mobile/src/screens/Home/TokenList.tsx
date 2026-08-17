@@ -76,6 +76,7 @@ import {
   type TokenProjectionSectionItem,
   type TokenProjectionSectionSpec,
 } from './components/TokenProjectionSectionList';
+import type { AssetSyncTrigger } from '@/store/assetSyncCoordinator';
 
 type TokenListExtraItem =
   | {
@@ -208,6 +209,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
   const [isTokenListRequestSettled, setIsTokenListRequestSettled] =
     useState(false);
   const tokenListRequestIdRef = useRef(0);
+  const lastTokenScopeRef = useRef<string | null>(null);
   const customTestnetAddTokenModalIdRef = useRef<ReturnType<
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
@@ -378,34 +380,44 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         !isAllLoading));
   const getTokenList = useTokenList.getState().getTokenList;
 
-  const refreshTokenList = useCallback(() => {
-    if (!currentAddress) {
-      return;
-    }
-    const requestId = tokenListRequestIdRef.current + 1;
-    tokenListRequestIdRef.current = requestId;
-    setHasRequestedTokenList(true);
-    setIsTokenListRequestSettled(false);
-    void getTokenList(currentAddress).then(
-      () => {
-        if (tokenListRequestIdRef.current === requestId) {
-          setIsTokenListRequestSettled(true);
-        }
-      },
-      () => {
-        if (tokenListRequestIdRef.current === requestId) {
-          setIsTokenListRequestSettled(true);
-        }
-      },
-    );
-  }, [currentAddress, getTokenList]);
+  const refreshTokenList = useCallback(
+    (trigger: AssetSyncTrigger) => {
+      if (!currentAddress) {
+        return;
+      }
+      const requestId = tokenListRequestIdRef.current + 1;
+      tokenListRequestIdRef.current = requestId;
+      setHasRequestedTokenList(true);
+      setIsTokenListRequestSettled(false);
+      void getTokenList(currentAddress, false, undefined, trigger).then(
+        () => {
+          if (tokenListRequestIdRef.current === requestId) {
+            setIsTokenListRequestSettled(true);
+          }
+        },
+        () => {
+          if (tokenListRequestIdRef.current === requestId) {
+            setIsTokenListRequestSettled(true);
+          }
+        },
+      );
+    },
+    [currentAddress, getTokenList],
+  );
 
   useEffect(() => {
     if (!isFocused) {
       return;
     }
-    refreshTokenList();
-  }, [isFocused, refreshTokenList]);
+    const nextScope = currentAddress?.toLowerCase() || '';
+    const trigger: AssetSyncTrigger = lastTokenScopeRef.current
+      ? lastTokenScopeRef.current === nextScope
+        ? 'on-demand'
+        : 'scope-change'
+      : 'initial';
+    lastTokenScopeRef.current = nextScope;
+    refreshTokenList(trigger);
+  }, [currentAddress, isFocused, refreshTokenList]);
 
   useAppForeground({
     enabled: isFocused,
@@ -414,7 +426,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         return;
       }
       onForeground?.();
-      refreshTokenList();
+      refreshTokenList('resume');
     },
   });
 
@@ -659,7 +671,12 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     setIsManualRefreshing(true);
     try {
       const balanceRefresh = Promise.resolve().then(() => onRefresh?.());
-      const tokenRefresh = getTokenList(currentAddress, true);
+      const tokenRefresh = getTokenList(
+        currentAddress,
+        true,
+        undefined,
+        'pull-refresh',
+      );
       withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
         console.error('Refresh balance failed:', error);
       });

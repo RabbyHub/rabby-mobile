@@ -82,6 +82,39 @@ describe('asset read model', () => {
     );
   });
 
+  it('accepts an intermediate snapshot without completing the active refresh', () => {
+    beginAssetReadModelRefresh(IDENTITY, 'refresh-1');
+
+    publishAssetReadModel(IDENTITY, {
+      source: 'database',
+      rowCount: 4,
+      sourceComplete: false,
+    });
+
+    expect(getAssetReadModel(IDENTITY)).toEqual(
+      expect.objectContaining({
+        phase: 'refreshing',
+        hasData: true,
+        rowCount: 4,
+        activeRequestId: 'refresh-1',
+      }),
+    );
+
+    publishAssetReadModel(IDENTITY, {
+      source: 'remote',
+      rowCount: 5,
+      sourceComplete: true,
+      requestId: 'refresh-1',
+    });
+    expect(getAssetReadModel(IDENTITY)).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        rowCount: 5,
+        activeRequestId: undefined,
+      }),
+    );
+  });
+
   it('rejects completion from a superseded refresh', () => {
     beginAssetReadModelRefresh(IDENTITY, 'refresh-1');
     beginAssetReadModelRefresh(IDENTITY, 'refresh-2');
