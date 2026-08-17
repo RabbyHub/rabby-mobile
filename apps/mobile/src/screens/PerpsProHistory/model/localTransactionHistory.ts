@@ -1,6 +1,9 @@
 import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
 import { mapPerpsFundingJournalEntryToHistory } from '@/hooks/perps/funding/fundingHistory';
-import { matchPerpsFundingHistory } from '@/hooks/perps/funding/fundingHistoryReconciliation';
+import {
+  matchPerpsFundingHistory,
+  shouldUsePerpsFundingSourceAssetAmount,
+} from '@/hooks/perps/funding/fundingHistoryReconciliation';
 import type { AccountHistoryItem } from '@/hooks/perps/funding/types';
 
 import type { PerpsProTransactionHistoryRow } from '../types';
@@ -90,7 +93,12 @@ export const mergePerpsProLocalTransactionHistory = ({
     if (!metadata) {
       return row;
     }
-    if (row.assetAmountSource === 'explicit') {
+    if (
+      !shouldUsePerpsFundingSourceAssetAmount({
+        local: metadata,
+        remote: row,
+      })
+    ) {
       return row;
     }
     return {

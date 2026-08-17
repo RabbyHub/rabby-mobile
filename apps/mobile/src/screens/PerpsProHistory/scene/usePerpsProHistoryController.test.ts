@@ -240,20 +240,20 @@ describe('usePerpsProHistoryController', () => {
       {
         accountAddress: mockPerpsState.currentPerpsAccount.address,
         accountType: mockPerpsState.currentPerpsAccount.type,
-        amount: '25',
+        amount: '6',
         asset: 'USDT',
-        createdAt: 100,
+        createdAt: 1786895703000,
         direction: 'deposit',
         fundingRoute: 'provider',
         localType: 'receive',
         operationId: 'operation-1',
-        settlementAmount: '24.9',
+        settlementAmount: '5.974031',
         sourceIdentity: {
           hash: '0xsource',
           kind: 'evmTransactionHash',
         },
         status: 'pending',
-        updatedAt: 100,
+        updatedAt: 1786895703000,
         version: 2,
       },
     ]);
@@ -272,13 +272,16 @@ describe('usePerpsProHistoryController', () => {
         {
           delta: {
             destination: mockPerpsState.currentPerpsAccount.address,
-            source: '0x2222222222222222222222222222222222222222',
+            destinationDex: '',
+            amount: '5.974031',
+            sourceDex: '',
+            token: 'USDC',
             type: 'send',
-            usdc: '24.9',
-            usdcValue: '24.9',
+            user: '0xf70da97812cb96acdf810712aa562db8dfa3dbef',
+            usdcValue: '5.974031',
           },
-          hash: '0xprovider-ledger',
-          time: 200,
+          hash: '0xa435b8fad560ffcea5af04424db9f702018b00e070641ea047fe644d9464d9b9',
+          time: 1786895704121,
         },
       ],
       requests: 1,
@@ -291,7 +294,9 @@ describe('usePerpsProHistoryController', () => {
 
     await waitFor(() =>
       expect(hook.result.current.tabState.rows[0]).toMatchObject({
+        amount: '6',
         asset: 'USDT',
+        assetAmountSource: 'local',
         status: 'success',
       }),
     );
@@ -300,7 +305,7 @@ describe('usePerpsProHistoryController', () => {
         {
           operationId: 'operation-1',
           providerSettlementIdentity: {
-            hash: '0xprovider-ledger',
+            hash: '0xa435b8fad560ffcea5af04424db9f702018b00e070641ea047fe644d9464d9b9',
             kind: 'hyperliquidLedgerHash',
           },
         },
@@ -312,7 +317,9 @@ describe('usePerpsProHistoryController', () => {
     });
     await waitFor(() =>
       expect(hook.result.current.tabState.rows[0]).toMatchObject({
+        amount: '6',
         asset: 'USDT',
+        assetAmountSource: 'local',
         status: 'success',
       }),
     );

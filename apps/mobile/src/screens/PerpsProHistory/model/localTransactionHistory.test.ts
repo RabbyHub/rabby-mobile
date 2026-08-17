@@ -125,6 +125,8 @@ describe('Perps Pro local transaction history', () => {
       localHistory: [localItem({ fundingRoute: 'provider' })],
       remoteRows: [
         remoteRow({
+          amount: '5.974031',
+          assetAmountSource: 'explicit',
           hash: '0xprovider-ledger',
           rawType: 'send',
           time: 300,
@@ -167,6 +169,8 @@ describe('Perps Pro local transaction history', () => {
       localHistory: [],
       remoteRows: [
         remoteRow({
+          amount: '5.974031',
+          assetAmountSource: 'explicit',
           hash: '0xprovider-ledger',
           rawType: 'send',
           time: 300,
@@ -201,10 +205,12 @@ describe('Perps Pro local transaction history', () => {
     expect(result.rows[0]).toMatchObject({ asset: 'USDT', status: 'success' });
   });
 
-  it('preserves an explicit official asset and amount over local metadata', () => {
+  it('preserves an explicit official asset and amount for a direct deposit', () => {
     const result = mergePerpsProLocalTransactionHistory({
-      journalEntries: [journalEntry()],
-      localHistory: [localItem()],
+      journalEntries: [
+        journalEntry({ fundingRoute: 'direct', localType: 'deposit' }),
+      ],
+      localHistory: [localItem({ fundingRoute: 'direct', type: 'deposit' })],
       remoteRows: [
         remoteRow({
           amount: '24.75',
@@ -215,6 +221,28 @@ describe('Perps Pro local transaction history', () => {
     });
 
     expect(result.rows[0]).toMatchObject({ amount: '24.75', asset: 'USDE' });
+  });
+
+  it('preserves an unmatched explicit official settlement', () => {
+    const result = mergePerpsProLocalTransactionHistory({
+      journalEntries: [],
+      localHistory: [],
+      remoteRows: [
+        remoteRow({
+          amount: '5.974031',
+          asset: 'USDC',
+          assetAmountSource: 'explicit',
+          hash: '0xprovider-ledger',
+          rawType: 'send',
+        }),
+      ],
+    });
+
+    expect(result.rows[0]).toMatchObject({
+      amount: '5.974031',
+      asset: 'USDC',
+      assetAmountSource: 'explicit',
+    });
   });
 
   it('binds a standard withdraw only by the prepared Hyperliquid nonce', () => {

@@ -4,7 +4,8 @@ import type { Account } from '@/core/startupServices/preference';
 import { createPerpsFundingOperation } from '@/hooks/perps/funding/fundingHistory';
 import { applyPerpsFundingConfirmationToJournalEntry } from '@/hooks/perps/funding/fundingJournal';
 import { mergePerpsProLocalTransactionHistory } from '@/screens/PerpsProHistory/model/localTransactionHistory';
-import type { PerpsProTransactionHistoryRow } from '@/screens/PerpsProHistory/types';
+import { mapPerpsProTransactionHistoryFact } from '@/screens/PerpsProHistory/model/transactionHistory';
+import type { PerpsProLedgerFact } from '@/screens/PerpsProHistory/types';
 
 import { PerpsService } from './perpsService';
 
@@ -31,25 +32,43 @@ const keyringCrypto = {
 };
 
 const account = {
-  address: '0x1111111111111111111111111111111111111111',
+  address: '0x341a1fBD51825E5a107DB54cCb3166DeBA145479',
   type: 'SimpleKeyring',
 } as Account;
 
-const providerSuccess: PerpsProTransactionHistoryRow = {
-  amount: '24.9',
-  asset: 'USDC',
-  assetAmountSource: 'legacyUsdc',
-  direction: 'deposit',
-  hash: '0xprovider-ledger',
-  key: 'remote:provider-ledger',
-  kind: 'transaction',
-  rawType: 'send',
-  status: 'success',
-  time: 200,
+const providerSettlementFact: PerpsProLedgerFact = {
+  time: 1786895704121,
+  hash: '0xa435b8fad560ffcea5af04424db9f702018b00e070641ea047fe644d9464d9b9',
+  delta: {
+    type: 'send',
+    user: '0xf70da97812cb96acdf810712aa562db8dfa3dbef',
+    destination: account.address.toLowerCase(),
+    sourceDex: '',
+    destinationDex: '',
+    token: 'USDC',
+    amount: '5.974031',
+    usdcValue: '5.974031',
+    fee: '0.0',
+    nativeTokenFee: '0.0',
+    nonce: 1786895703456,
+    feeToken: '',
+  },
 };
 
 describe('Perps Pro funding history correlation integration', () => {
   it('keeps provider USDT metadata after confirmation and service recreation', () => {
+    const providerSuccess = mapPerpsProTransactionHistoryFact(
+      providerSettlementFact,
+      account.address,
+    ).row;
+    expect(providerSuccess).toMatchObject({
+      amount: '5.974031',
+      asset: 'USDC',
+      assetAmountSource: 'explicit',
+      direction: 'deposit',
+      rawType: 'send',
+    });
+    expect(providerSuccess).not.toBeNull();
     const storage = createMemoryStorage();
     const service = new PerpsService({
       keyringCrypto,
@@ -59,15 +78,15 @@ describe('Perps Pro funding history correlation integration', () => {
       account,
       fundingRoute: 'provider',
       history: {
-        amount: '25',
+        amount: '6',
         asset: 'USDT',
-        settlementAmount: '24.9',
+        settlementAmount: '5.974031',
         sourceChainId: 'eth',
         sourceTokenId: '0xusdt',
       },
       identity: { sourceHash: '0xsource' },
       localType: 'receive',
-      time: 100,
+      time: 1786895703000,
     });
     expect(operation).not.toBeNull();
     service.upsertPerpsFundingJournalEntry(operation!.journalEntry);
@@ -75,10 +94,10 @@ describe('Perps Pro funding history correlation integration', () => {
     const settled = mergePerpsProLocalTransactionHistory({
       journalEntries: service.getPerpsFundingJournal(),
       localHistory: [operation!.historyItem],
-      remoteRows: [providerSuccess],
+      remoteRows: [providerSuccess!],
     });
     expect(settled.rows[0]).toMatchObject({
-      amount: '25',
+      amount: '6',
       asset: 'USDT',
       status: 'success',
     });
@@ -88,7 +107,7 @@ describe('Perps Pro funding history correlation integration', () => {
       applyPerpsFundingConfirmationToJournalEntry(
         service.getPerpsFundingJournal()[0],
         settled.confirmations[0],
-        300,
+        1786895705000,
       ),
     );
     const recreated = new PerpsService({
@@ -98,15 +117,15 @@ describe('Perps Pro funding history correlation integration', () => {
     const afterRestart = mergePerpsProLocalTransactionHistory({
       journalEntries: recreated.getPerpsFundingJournal(),
       localHistory: [],
-      remoteRows: [providerSuccess],
+      remoteRows: [providerSuccess!],
     });
 
     expect(afterRestart.confirmations).toEqual([]);
     expect(afterRestart.rows).toEqual([
       expect.objectContaining({
-        amount: '25',
+        amount: '6',
         asset: 'USDT',
-        hash: '0xprovider-ledger',
+        hash: '0xa435b8fad560ffcea5af04424db9f702018b00e070641ea047fe644d9464d9b9',
         status: 'success',
       }),
     ]);
