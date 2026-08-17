@@ -17,7 +17,8 @@ export const ORM_TABLE_NAMES = {
   cache_historyitem: 'cache_historyitem',
   cache_local_historyitem: 'cache_local_historyitem',
 
-  cache_portocolitem: 'cache_portocolitem',
+  cache_portocolitem_legacy: 'cache_portocolitem',
+  cache_portocolitem: 'cache_portocolitem_20260817',
   cache_appchain: 'cache_appchain',
 
   projection_snapshot: 'projection_snapshot',

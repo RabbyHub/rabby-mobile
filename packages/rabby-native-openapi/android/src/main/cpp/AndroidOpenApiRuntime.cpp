@@ -1,5 +1,6 @@
 #include <rabby/http/RabbyHttpTypes.h>
 #include <rabby/openapi/RabbyOpenApiClient.h>
+#include <rabby/openapi/RabbyAddressCachePersistence.h>
 #include <rabby/openapi/RabbyOpenApiDiagnostic.h>
 #include <rabby/openapi/RabbyOpenApiPlatform.h>
 #include <rabby/openapi/RabbyOpenApiTokenSync.h>
@@ -26,6 +27,7 @@ jmethodID loadCredentialMethod = nullptr;
 jmethodID saveCredentialMethod = nullptr;
 jmethodID randomUuidMethod = nullptr;
 jmethodID commitTokenSnapshotMethod = nullptr;
+jmethodID commitAddressSnapshotMethod = nullptr;
 jmethodID verifyTokenSnapshotMethod = nullptr;
 jmethodID diagnosticCompletedMethod = nullptr;
 jmethodID tokenSyncCompletedMethod = nullptr;
@@ -214,6 +216,81 @@ std::string joinTokenCacheColumns() {
   }
   return result;
 }
+
+std::string joinAddressCacheColumns(
+    const rabby::openapi::AddressCacheContract& contract) {
+  std::string result;
+  for (std::size_t index = 0; index < contract.columns.size(); ++index) {
+    if (index != 0) {
+      result.push_back(',');
+    }
+    result.append(contract.columns[index]);
+  }
+  return result;
+}
+
+class AndroidAddressCachePersistence final
+    : public rabby::openapi::AddressCachePersistence {
+ public:
+  rabby::openapi::AddressCacheCommitResult commitSnapshot(
+      const std::string& ownerAddress,
+      const rabby::openapi::AddressCacheContract& contract,
+      const std::vector<rabby::openapi::AddressCacheRow>& rows,
+      std::int64_t syncTimestampMs) override {
+    ScopedEnv scopedEnv;
+    auto* env = scopedEnv.get();
+    if (env == nullptr || runtimeClass == nullptr ||
+        commitAddressSnapshotMethod == nullptr) {
+      return {false, 0, "Android address cache storage is unavailable"};
+    }
+
+    auto payload = rabby::openapi::encodeAddressSnapshot(
+        rows, contract.columns.size());
+    if (payload.empty()) {
+      return {false, 0, "address cache snapshot encoding failed"};
+    }
+    auto owner = toJavaString(env, ownerAddress);
+    auto tableName = toJavaString(env, contract.tableName);
+    auto upsertSql = toJavaString(
+        env, rabby::openapi::addressCacheUpsertSql(contract));
+    auto deleteStaleSql = toJavaString(
+        env, rabby::openapi::addressCacheDeleteStaleSql(contract));
+    auto expectedColumns =
+        toJavaString(env, joinAddressCacheColumns(contract));
+    auto payloadBuffer = env->NewDirectByteBuffer(
+        payload.data(), static_cast<jlong>(payload.size()));
+
+    auto error = static_cast<jstring>(env->CallStaticObjectMethod(
+        runtimeClass,
+        commitAddressSnapshotMethod,
+        owner,
+        static_cast<jlong>(syncTimestampMs),
+        tableName,
+        upsertSql,
+        deleteStaleSql,
+        expectedColumns,
+        payloadBuffer));
+
+    env->DeleteLocalRef(owner);
+    env->DeleteLocalRef(tableName);
+    env->DeleteLocalRef(upsertSql);
+    env->DeleteLocalRef(deleteStaleSql);
+    env->DeleteLocalRef(expectedColumns);
+    env->DeleteLocalRef(payloadBuffer);
+    if (clearJavaException(env)) {
+      return {false, 0, "Android address cache transaction failed"};
+    }
+    if (error == nullptr) {
+      return {true, rows.size(), {}};
+    }
+    auto errorValue = fromJavaString(env, error);
+    env->DeleteLocalRef(error);
+    if (errorValue.empty()) {
+      errorValue = "Android address cache transaction failed";
+    }
+    return {false, 0, std::move(errorValue)};
+  }
+};
 
 class AndroidTokenCachePersistence final
     : public rabby::openapi::TokenCachePersistence {
@@ -622,6 +699,13 @@ std::shared_ptr<TokenCachePersistence> makePlatformTokenCachePersistence() {
   return persistence;
 }
 
+std::shared_ptr<AddressCachePersistence>
+makePlatformAddressCachePersistence() {
+  static auto persistence =
+      std::make_shared<AndroidAddressCachePersistence>();
+  return persistence;
+}
+
 std::string makePlatformUuid() {
   ScopedEnv scopedEnv;
   auto* env = scopedEnv.get();
@@ -679,6 +763,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
       runtimeClass,
       "commitTokenSnapshot",
       "(Ljava/lang/String;JI[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/ByteBuffer;)Ljava/lang/String;");
+  commitAddressSnapshotMethod = env->GetStaticMethodID(
+      runtimeClass,
+      "commitAddressSnapshot",
+      "(Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/ByteBuffer;)Ljava/lang/String;");
   verifyTokenSnapshotMethod = env->GetStaticMethodID(
       runtimeClass,
       "verifyTokenSnapshotWriteContract",
@@ -693,6 +781,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
       "(JZLjava/lang/String;JLjava/lang/String;JJJJJJLjava/lang/String;)V");
   if (loadCredentialMethod == nullptr || saveCredentialMethod == nullptr ||
       randomUuidMethod == nullptr || commitTokenSnapshotMethod == nullptr ||
+      commitAddressSnapshotMethod == nullptr ||
       verifyTokenSnapshotMethod == nullptr ||
       diagnosticCompletedMethod == nullptr ||
       tokenSyncCompletedMethod == nullptr) {

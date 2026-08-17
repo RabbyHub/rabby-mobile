@@ -118,6 +118,30 @@ object RabbyNativeOpenApiRuntime {
   }
 
   @JvmStatic
+  fun commitAddressSnapshot(
+    ownerAddress: String,
+    syncTimestampMs: Long,
+    tableName: String,
+    upsertSql: String,
+    deleteStaleSql: String,
+    expectedColumnsCsv: String,
+    payload: ByteBuffer,
+  ): String? {
+    val context = applicationContext
+      ?: return "native OpenAPI runtime is not initialized"
+    return NativeAddressCachePersistence.commit(
+      context = context,
+      ownerAddress = ownerAddress,
+      syncTimestampMs = syncTimestampMs,
+      tableName = tableName,
+      upsertSql = upsertSql,
+      deleteStaleSql = deleteStaleSql,
+      expectedColumnsCsv = expectedColumnsCsv,
+      payload = payload,
+    )
+  }
+
+  @JvmStatic
   fun verifyTokenSnapshotWriteContract(
     ownerAddress: String,
     syncTimestampMs: Long,

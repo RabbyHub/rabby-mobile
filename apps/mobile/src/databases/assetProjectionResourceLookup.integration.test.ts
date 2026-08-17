@@ -14,6 +14,8 @@ import { TokenItemEntity } from './entities/tokenitem';
 import { TOKEN_PROJECTION_RESOURCE_ID_INDEX_NAME } from './tokenProjectionResourceId';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from './constant';
 import { ReplaceTokenCacheTable1786867200000 } from './migrations/20260816';
+import { ReplaceProtocolCacheTable1786953600000 } from './migrations/20260817_protocol';
+import { PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME } from './protocolProjectionResourceId';
 
 const OWNER = '0xAbCd';
 const OTHER_OWNER = '0xDeF0';
@@ -261,6 +263,64 @@ describe('asset projection resource lookups', () => {
     );
   });
 
+  it('stores protocol projection summaries and uses its resource index', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const protocol = new ProtocolItemEntity();
+    ProtocolItemEntity.fillEntity(
+      protocol,
+      OWNER,
+      {
+        ...createProtocol('protocol-a'),
+        portfolio_item_list: [
+          {
+            name: 'Lending',
+            pool: { id: 'pool-a' },
+            stats: { net_usd_value: 12 },
+            asset_token_list: [
+              { amount: 2, price: 5 },
+              { amount: -1, price: 3 },
+            ],
+          },
+          {
+            name: 'Borrowing',
+            pool: { id: 'pool-b' },
+            asset_token_list: [{ amount: -2, price: 4 }],
+          },
+        ],
+      } as ComplexProtocol,
+      7,
+    );
+    await dataSource.getRepository(ProtocolItemEntity).save(protocol);
+
+    const stored = await dataSource
+      .getRepository(ProtocolItemEntity)
+      .createQueryBuilder('protocol')
+      .addSelect('protocol.projection_resource_id')
+      .where('protocol._db_id = :id', { id: protocol._db_id })
+      .getOneOrFail();
+    expect(stored).toMatchObject({
+      projection_resource_id: protocolResourceId(OWNER, 'eth', 'protocol-a'),
+      net_worth: 20,
+      positive_real_usd_value: 7,
+      source_order: 7,
+    });
+
+    const indexes = await dataSource.query(
+      `SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?`,
+      [PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME],
+    );
+    expect(indexes).toEqual([
+      { name: PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME },
+    ]);
+    const queryPlan = await dataSource.query(
+      `EXPLAIN QUERY PLAN SELECT * FROM "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_portocolitem}" WHERE "projection_resource_id" IN (?)`,
+      [protocolResourceId(OWNER, 'eth', 'protocol-a')],
+    );
+    expect(JSON.stringify(queryPlan)).toContain(
+      PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME,
+    );
+  });
+
   it('rebuilds the dated token cache instead of backfilling legacy rows', async () => {
     dataSource = await createMemoryAppDataSource();
     const legacyTableName = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_tokenitem_legacy}`;
@@ -321,5 +381,43 @@ describe('asset projection resource lookups', () => {
         [legacyTableName, datedTableName],
       ),
     ).resolves.toEqual([{ name: datedTableName }]);
+  });
+
+  it('rebuilds the dated protocol cache instead of backfilling legacy rows', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const legacyTableName = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_portocolitem_legacy}`;
+    const datedTableName = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_portocolitem}`;
+    await dataSource.query(`DROP TABLE "${datedTableName}"`);
+    await dataSource.query(
+      `CREATE TABLE "${legacyTableName}" (
+        "_db_id" text PRIMARY KEY NOT NULL,
+        "owner_addr" text NOT NULL,
+        "chain" text NOT NULL,
+        "id" text NOT NULL
+      )`,
+    );
+    await dataSource.query(
+      `INSERT INTO "${legacyTableName}" ("_db_id", "owner_addr", "chain", "id")
+       VALUES (?, ?, ?, ?)`,
+      ['legacy-protocol', OWNER, 'eth', 'protocol-a'],
+    );
+
+    const queryRunner = dataSource.createQueryRunner();
+    try {
+      await new ReplaceProtocolCacheTable1786953600000().up(queryRunner);
+    } finally {
+      await queryRunner.release();
+    }
+    await dataSource.synchronize(false);
+
+    await expect(
+      dataSource.query(`SELECT COUNT(*) AS count FROM "${datedTableName}"`),
+    ).resolves.toEqual([{ count: 0 }]);
+    await expect(
+      dataSource.query(
+        `SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?`,
+        [PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME],
+      ),
+    ).resolves.toEqual([{ name: PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME }]);
   });
 });

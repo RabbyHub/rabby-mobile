@@ -477,9 +477,9 @@ function buildProtocolEntities(
   syncTimestamp: number,
 ) {
   const data = normalizeProtocolInput(protocols);
-  const items = data.map(raw => {
+  const items = data.map((raw, sourceOrder) => {
     const protocolItem = new ProtocolItemEntity();
-    ProtocolItemEntity.fillEntity(protocolItem, address, raw);
+    ProtocolItemEntity.fillEntity(protocolItem, address, raw, sourceOrder);
     protocolItem._local_updated_at = syncTimestamp;
 
     return protocolItem;
