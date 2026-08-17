@@ -91,6 +91,7 @@ export const usePerpsProScene = () => {
     sequence: number;
   } | null>(null);
   const navigationMarketRef = useRef(route.params?.market);
+  const navigationMarketCandidatesRef = useRef(route.params?.marketCandidates);
   const navigationMarketConsumedRef = useRef(false);
 
   const marketCatalogueSignature = perpsStore(
@@ -120,6 +121,9 @@ export const usePerpsProScene = () => {
         navigationMarket: navigationMarketConsumedRef.current
           ? undefined
           : navigationMarketRef.current,
+        navigationMarketCandidates: navigationMarketConsumedRef.current
+          ? undefined
+          : navigationMarketCandidatesRef.current,
         sessionMarketKey: getPerpsProMarketSession().marketKey,
       });
       if (!resolved) {
@@ -309,6 +313,9 @@ export const usePerpsProScene = () => {
       navigationMarket: navigationMarketConsumedRef.current
         ? undefined
         : navigationMarketRef.current,
+      navigationMarketCandidates: navigationMarketConsumedRef.current
+        ? undefined
+        : navigationMarketCandidatesRef.current,
       sessionMarketKey:
         pendingMarketSelectionRef.current?.marketKey ??
         marketSelectionRef.current?.marketKey ??
@@ -360,6 +367,9 @@ export const usePerpsProScene = () => {
         navigationMarket: navigationMarketConsumedRef.current
           ? undefined
           : navigationMarketRef.current,
+        navigationMarketCandidates: navigationMarketConsumedRef.current
+          ? undefined
+          : navigationMarketCandidatesRef.current,
         sessionMarketKey:
           pendingMarketSelectionRef.current?.marketKey ??
           marketSelectionRef.current?.marketKey ??
