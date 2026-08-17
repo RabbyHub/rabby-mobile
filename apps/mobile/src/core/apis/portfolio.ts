@@ -2,9 +2,52 @@ import { openapi, testOpenapi } from '@/core/request';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { pQueue } from '@/utils/requestQueue';
 
-export const loadPortfolioSnapshot = (userAddr: string) => {
-  return pQueue.add(() => {
-    return openapi.getComplexProtocolList(userAddr);
+export type PortfolioSnapshotRequestPhase =
+  | 'queue-entered'
+  | 'request-started'
+  | 'request-fulfilled'
+  | 'request-rejected';
+
+export type PortfolioSnapshotRequestDetails = {
+  queueSize?: number;
+  pendingCount?: number;
+  queueWaitMs?: number;
+  requestMs?: number;
+  itemCount?: number;
+};
+
+export type PortfolioSnapshotRequestObserver = (
+  phase: PortfolioSnapshotRequestPhase,
+  details: PortfolioSnapshotRequestDetails,
+) => void;
+
+export const loadPortfolioSnapshot = (
+  userAddr: string,
+  observe?: PortfolioSnapshotRequestObserver,
+) => {
+  const queuedAt = Date.now();
+  observe?.('queue-entered', {
+    queueSize: pQueue.size,
+    pendingCount: pQueue.pending,
+  });
+  return pQueue.add(async () => {
+    const startedAt = Date.now();
+    observe?.('request-started', {
+      queueWaitMs: startedAt - queuedAt,
+    });
+    try {
+      const result = await openapi.getComplexProtocolList(userAddr);
+      observe?.('request-fulfilled', {
+        requestMs: Date.now() - startedAt,
+        itemCount: result?.length || 0,
+      });
+      return result;
+    } catch (error) {
+      observe?.('request-rejected', {
+        requestMs: Date.now() - startedAt,
+      });
+      throw error;
+    }
   });
 };
 

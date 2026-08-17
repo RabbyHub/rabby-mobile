@@ -919,6 +919,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           const remoteProtocolsPromise = loadProtocolsForAddresses(
             lowerAddresses,
             isForceRequested(),
+            trace,
           ).then(
             result => ({ status: 'fulfilled' as const, result }),
             error => ({ status: 'rejected' as const, error }),
