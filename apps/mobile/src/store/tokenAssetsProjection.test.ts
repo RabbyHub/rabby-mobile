@@ -86,6 +86,7 @@ import {
 } from './assetProjectionPersistence';
 import { getAssetReadModel, resetAssetReadModels } from './assetReadModel';
 import { notifySyncAbortHandlers } from '@/databases/sync/abort';
+import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -1756,6 +1757,56 @@ describe('single-address token assets projection', () => {
       expect.objectContaining({
         phase: 'ready',
         source: 'remote',
+        rowCount: 1,
+      }),
+    );
+  });
+
+  it('publishes one native database commit through the receipt subscriber', async () => {
+    const nativeToken = createToken('native-token', { usd_value: 9 });
+    mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
+      nativeToken,
+    ] as never);
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+
+    await dispatchNativeAssetSyncCompletion({
+      schemaVersion: 1,
+      requestId: 'native-token-projection-request',
+      kind: 'token',
+      success: true,
+      address: ADDRESS,
+      generation: 11,
+      committedAt: 5678,
+      replacementScope: 'address',
+      chainIds: ['eth'],
+      committedRowCount: 1,
+      stage: 'persistence',
+      error: '',
+    });
+
+    expect(mockedTokenItemEntity.batchMultiAddressTokens).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      nativeToken,
+    ]);
+    expect(
+      tokenListStore.getState().sourceSnapshotReadyByAddress[
+        NORMALIZED_ADDRESS
+      ],
+    ).toBe(true);
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        source: 'native',
+        generation: 11,
+        committedAt: 5678,
         rowCount: 1,
       }),
     );

@@ -1,5 +1,5 @@
 const NATIVE_HELPERS_MODULE = '@/core/native/RNHelpers';
-const NATIVE_SYNC_METHOD = 'syncNativeTokenChains';
+const NATIVE_SYNC_METHOD = 'startNativeTokenChains';
 const EXECUTOR_FILE_SUFFIX = '/src/store/tokenChainSyncExecutor.ts';
 
 function unwrap(node) {
@@ -45,7 +45,7 @@ module.exports = {
     schema: [],
     messages: {
       directCall:
-        'Call executeTokenChainSync instead of invoking RNHelpers.syncNativeTokenChains directly.',
+        'Call executeTokenChainSync instead of invoking RNHelpers.startNativeTokenChains directly.',
     },
   },
   create(context) {

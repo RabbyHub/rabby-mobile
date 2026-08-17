@@ -449,6 +449,7 @@ void notifyTokenSync(
       static_cast<jlong>(result.sourceTokenCount),
       static_cast<jlong>(result.filteredTokenCount),
       static_cast<jlong>(result.committedRowCount),
+      static_cast<jlong>(result.committedAtMs),
       static_cast<jlong>(result.durationMs),
       error);
   env->DeleteLocalRef(address);
@@ -689,7 +690,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
   tokenSyncCompletedMethod = env->GetStaticMethodID(
       runtimeClass,
       "onTokenSyncCompleted",
-      "(JZLjava/lang/String;JLjava/lang/String;JJJJJLjava/lang/String;)V");
+      "(JZLjava/lang/String;JLjava/lang/String;JJJJJJLjava/lang/String;)V");
   if (loadCredentialMethod == nullptr || saveCredentialMethod == nullptr ||
       randomUuidMethod == nullptr || commitTokenSnapshotMethod == nullptr ||
       verifyTokenSnapshotMethod == nullptr ||

@@ -2,11 +2,15 @@ import RNHelpers from '@/core/native/RNHelpers';
 import { registerSyncAbortHandler } from '@/databases/sync/abort';
 import { getNativeTokenChainSyncEnabled } from '@/hooks/appSettings';
 
+import { ensureNativeAssetSyncEventsStarted } from './nativeAssetSyncEvents';
+import {
+  waitForNativeAssetSyncCompletion,
+  type NativeAssetSyncCompletion,
+} from './nativeAssetSyncReceipt';
+
 export type TokenChainSyncMode = 'js' | 'native';
 export type TokenChainReplacementScope = 'address' | 'chains';
-export type NativeTokenChainSyncResult = Awaited<
-  ReturnType<typeof RNHelpers.syncNativeTokenChains>
->;
+export type NativeTokenChainSyncResult = NativeAssetSyncCompletion;
 
 type TokenChainSyncRequest<T> = {
   mode: TokenChainSyncMode;
@@ -47,17 +51,14 @@ export async function executeTokenChainSync<T>({
     };
   }
 
-  const result = await RNHelpers.syncNativeTokenChains(
+  ensureNativeAssetSyncEventsStarted();
+  const { requestId } = await RNHelpers.startNativeTokenChains(
     address,
     chainIds,
     replacementScope,
     replaceExisting,
   );
-  if (!result.success) {
-    throw new Error(
-      `Native token chain sync failed at ${result.stage}: ${result.error}`,
-    );
-  }
+  const result = await waitForNativeAssetSyncCompletion(requestId);
 
   return {
     mode,

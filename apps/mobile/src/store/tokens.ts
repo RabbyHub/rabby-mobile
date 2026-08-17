@@ -80,6 +80,10 @@ import {
   type AssetSyncTicket,
   type AssetSyncTrigger,
 } from './assetSyncCoordinator';
+import {
+  registerNativeAssetSyncHandler,
+  type NativeAssetSyncCompletion,
+} from './nativeAssetSyncReceipt';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -3935,14 +3939,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             address => nativeCommittedAddresses.has(address),
           );
           if (nativeApplicableAddresses.length) {
-            await tokenCacheHydrator.refresh(nativeApplicableAddresses);
-            set(state => ({
-              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-                state.sourceSnapshotReadyByAddress,
-                nativeApplicableAddresses,
-              ),
-            }));
-            trace.mark('native-snapshots-hydrated', {
+            trace.mark('native-snapshots-published', {
               addressCount: nativeApplicableAddresses.length,
               itemCount: nativeApplicableAddresses.reduce(
                 (count, address) =>
@@ -4324,18 +4321,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
               trace.finish({ path: 'stale-after-native-remote' });
               return { status: 'superseded' };
             }
-            await tokenCacheHydrator.refresh([normalizedAddress]);
-            if (!targetChainServerId) {
-              set(state => ({
-                sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-                  state.sourceSnapshotReadyByAddress,
-                  [normalizedAddress],
-                ),
-              }));
-            }
             const itemCount =
               get().tokenListMap[normalizedAddress]?.length || 0;
-            trace.mark('native-snapshot-hydrated', {
+            trace.mark('native-snapshot-published', {
               itemCount,
               committedRowCount: syncExecution.result.committedRowCount,
             });
@@ -4436,6 +4424,49 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     });
   },
 }));
+
+const applyNativeTokenCommit = async (
+  completion: NativeAssetSyncCompletion,
+) => {
+  const normalizedAddress = normalizeAddress(completion.address);
+  await tokenCacheHydrator.refresh([normalizedAddress]);
+  if (completion.replacementScope === 'address') {
+    tokenListStore.setState(state => ({
+      sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+        state.sourceSnapshotReadyByAddress,
+        [normalizedAddress],
+      ),
+    }));
+  }
+
+  const projectionState = useTokenAssetsIndexStore.getState();
+  getTokenAssetReadModelTargets([normalizedAddress]).forEach(
+    ({ key, scene }) => {
+      const config =
+        scene === 'single-address'
+          ? projectionState.singleAssetsConfigByKey[key]
+          : projectionState.multiAssetsConfigByKey[key];
+      const result =
+        scene === 'single-address'
+          ? projectionState.singleAssetsResultByKey[key]
+          : projectionState.multiAssetsResultByKey[key];
+      if (!config || !result) {
+        return;
+      }
+      syncTokenAssetReadModel({
+        key,
+        scene,
+        config,
+        result,
+        source: 'native',
+        generation: completion.generation,
+        committedAt: completion.committedAt,
+      });
+    },
+  );
+};
+
+registerNativeAssetSyncHandler('token', applyNativeTokenCommit);
 
 const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
   const normalizedAddress = normalizeAddress(address);

@@ -224,6 +224,7 @@ object RabbyNativeOpenApiRuntime {
             sourceTokenCount = 0,
             filteredTokenCount = 0,
             committedRowCount = 0,
+            committedAtMs = 0,
             durationMs = 0,
             error = "native token sync could not start",
           ),
@@ -269,6 +270,7 @@ object RabbyNativeOpenApiRuntime {
             sourceTokenCount = 0,
             filteredTokenCount = 0,
             committedRowCount = 0,
+            committedAtMs = 0,
             durationMs = 0,
             error = "native token sync could not start",
           ),
@@ -399,6 +401,7 @@ object RabbyNativeOpenApiRuntime {
     sourceTokenCount: Long,
     filteredTokenCount: Long,
     committedRowCount: Long,
+    committedAtMs: Long,
     durationMs: Long,
     error: String,
   ) {
@@ -412,6 +415,7 @@ object RabbyNativeOpenApiRuntime {
       sourceTokenCount = sourceTokenCount,
       filteredTokenCount = filteredTokenCount,
       committedRowCount = committedRowCount,
+      committedAtMs = committedAtMs,
       durationMs = durationMs,
       error = error,
     )

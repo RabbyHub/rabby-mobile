@@ -761,6 +761,7 @@ class TokenSyncCoordinator::Impl
     }
 
     TokenCacheCommitResult commitResult;
+    std::int64_t committedAtMs = 0;
     {
       std::lock_guard<std::mutex> commitLock(commitMutex_);
       {
@@ -769,10 +770,11 @@ class TokenSyncCoordinator::Impl
           return;
         }
       }
+      committedAtMs = millisecondsProvider_();
       commitResult = persistence_->commitSnapshot(
           operation->address,
           tokens,
-          millisecondsProvider_(),
+          committedAtMs,
           replacementScope);
     }
 
@@ -796,6 +798,7 @@ class TokenSyncCoordinator::Impl
       result.success = true;
       result.stage = TokenSyncStage::Persistence;
       result.committedRowCount = commitResult.rowCount;
+      result.committedAtMs = committedAtMs;
       finished = finishLocked(operation, std::move(result));
     }
     deliver(std::move(finished));

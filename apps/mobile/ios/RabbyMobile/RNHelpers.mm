@@ -3,6 +3,9 @@
 #import <Foundation/Foundation.h>
 #import <rabby/openapi/RabbyNativeOpenApiDiagnostics.h>
 
+static NSString *const RabbyNativeAssetSyncCompletedEvent =
+    @"@RabbyNativeAssetSyncCompleted";
+
 @implementation RNHelpers
 
 // To export a module named RNHelpers
@@ -10,6 +13,31 @@ RCT_EXPORT_MODULE();
 
 + (BOOL)requiresMainQueueSetup {
     return NO;
+}
+
+- (NSArray<NSString *> *)supportedEvents {
+    return @[RabbyNativeAssetSyncCompletedEvent];
+}
+
+- (void)emitNativeAssetSyncCompletion:(NSString *)requestId
+                     replacementScope:(NSString *)replacementScope
+                              chainIds:(NSArray<NSString *> *)chainIds
+                                result:(NSDictionary<NSString *, id> *)result {
+    [self sendEventWithName:RabbyNativeAssetSyncCompletedEvent
+                       body:@{
+        @"schemaVersion": @1,
+        @"requestId": requestId,
+        @"kind": @"token",
+        @"success": result[@"success"] ?: @NO,
+        @"address": result[@"address"] ?: @"",
+        @"generation": result[@"generation"] ?: @0,
+        @"committedAt": result[@"committedAtMs"] ?: @0,
+        @"replacementScope": replacementScope,
+        @"chainIds": chainIds,
+        @"committedRowCount": result[@"committedRowCount"] ?: @0,
+        @"stage": result[@"stage"] ?: @"none",
+        @"error": result[@"error"] ?: @"",
+    }];
 }
 
 - (NSDictionary *)constantsToExport {
@@ -80,7 +108,7 @@ RCT_EXPORT_METHOD(runNativeTokenCacheSyncDiagnostic:
     }];
 }
 
-RCT_EXPORT_METHOD(syncNativeTokenChains:
+RCT_EXPORT_METHOD(startNativeTokenChains:
   (NSString *)address
   chainIds:(NSArray<NSString *> *)chainIds
   replacementScope:(NSString *)replacementScope
@@ -88,14 +116,19 @@ RCT_EXPORT_METHOD(syncNativeTokenChains:
   resolver:(RCTPromiseResolveBlock)resolve
   rejecter:(RCTPromiseRejectBlock)reject
 ) {
+    NSString *requestId = [NSUUID UUID].UUIDString.lowercaseString;
     [RabbyNativeOpenApiDiagnostics
         syncTokenChainsForAddress:address
                          chainIds:chainIds
                  replacementScope:replacementScope
                   replaceExisting:replaceExisting
                         completion:^(NSDictionary<NSString *, id> *result) {
-        resolve(result);
+        [self emitNativeAssetSyncCompletion:requestId
+                           replacementScope:replacementScope
+                                    chainIds:chainIds
+                                      result:result];
     }];
+    resolve(@{ @"requestId": requestId });
 }
 
 RCT_EXPORT_METHOD(runNativeTokenCacheWriteDiagnostic:

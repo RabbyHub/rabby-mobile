@@ -1,10 +1,18 @@
 jest.mock('@/core/native/RNHelpers', () => ({
   __esModule: true,
   default: {
-    syncNativeTokenChains: jest.fn(),
+    startNativeTokenChains: jest.fn(),
     cancelNativeTokenCacheSync: jest.fn(),
     cancelAllNativeTokenCacheSyncs: jest.fn(),
   },
+}));
+
+jest.mock('./nativeAssetSyncEvents', () => ({
+  ensureNativeAssetSyncEventsStarted: jest.fn(),
+}));
+
+jest.mock('./nativeAssetSyncReceipt', () => ({
+  waitForNativeAssetSyncCompletion: jest.fn(),
 }));
 
 jest.mock('@/databases/sync/abort', () => ({
@@ -18,21 +26,25 @@ jest.mock('@/hooks/appSettings', () => ({
 import RNHelpers from '@/core/native/RNHelpers';
 import { registerSyncAbortHandler } from '@/databases/sync/abort';
 import { getNativeTokenChainSyncEnabled } from '@/hooks/appSettings';
+import { ensureNativeAssetSyncEventsStarted } from './nativeAssetSyncEvents';
+import { waitForNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
 import {
   executeTokenChainSync,
   getTokenChainSyncMode,
 } from './tokenChainSyncExecutor';
 
 const mockNativeSuccess = {
+  schemaVersion: 1 as const,
+  requestId: 'native-token-request-7',
+  kind: 'token' as const,
   success: true,
   address: '0xabc',
   generation: 7,
-  stage: 'committed',
-  chainCount: 2,
-  sourceTokenCount: 4,
-  filteredTokenCount: 3,
+  committedAt: 1234,
+  replacementScope: 'chains' as const,
+  chainIds: ['eth', 'arb'],
   committedRowCount: 3,
-  durationMs: 10,
+  stage: 'persistence',
   error: '',
 };
 const registeredAbortHandler = jest.mocked(registerSyncAbortHandler).mock
@@ -66,12 +78,15 @@ describe('tokenChainSyncExecutor', () => {
     ).resolves.toEqual({ mode: 'js', value: ['token'] });
 
     expect(RNHelpers.cancelNativeTokenCacheSync).toHaveBeenCalledWith('0xabc');
-    expect(RNHelpers.syncNativeTokenChains).not.toHaveBeenCalled();
+    expect(RNHelpers.startNativeTokenChains).not.toHaveBeenCalled();
   });
 
   it('uses the formal native bridge without running the JS callback', async () => {
+    jest.mocked(RNHelpers.startNativeTokenChains).mockResolvedValue({
+      requestId: mockNativeSuccess.requestId,
+    });
     jest
-      .mocked(RNHelpers.syncNativeTokenChains)
+      .mocked(waitForNativeAssetSyncCompletion)
       .mockResolvedValue(mockNativeSuccess);
     const executeJs = jest.fn();
 
@@ -86,22 +101,26 @@ describe('tokenChainSyncExecutor', () => {
       }),
     ).resolves.toEqual({ mode: 'native', result: mockNativeSuccess });
 
-    expect(RNHelpers.syncNativeTokenChains).toHaveBeenCalledWith(
+    expect(ensureNativeAssetSyncEventsStarted).toHaveBeenCalledTimes(1);
+    expect(RNHelpers.startNativeTokenChains).toHaveBeenCalledWith(
       '0xabc',
       ['eth', 'arb'],
       'chains',
       true,
     );
+    expect(waitForNativeAssetSyncCompletion).toHaveBeenCalledWith(
+      mockNativeSuccess.requestId,
+    );
     expect(executeJs).not.toHaveBeenCalled();
   });
 
   it('surfaces native failures without falling back to JS', async () => {
-    jest.mocked(RNHelpers.syncNativeTokenChains).mockResolvedValue({
-      ...mockNativeSuccess,
-      success: false,
-      stage: 'persistence',
-      error: 'commit failed',
+    jest.mocked(RNHelpers.startNativeTokenChains).mockResolvedValue({
+      requestId: mockNativeSuccess.requestId,
     });
+    jest
+      .mocked(waitForNativeAssetSyncCompletion)
+      .mockRejectedValue(new Error('commit failed'));
     const executeJs = jest.fn();
 
     await expect(
@@ -113,7 +132,7 @@ describe('tokenChainSyncExecutor', () => {
         replaceExisting: true,
         executeJs,
       }),
-    ).rejects.toThrow('Native token chain sync failed at persistence');
+    ).rejects.toThrow('commit failed');
     expect(executeJs).not.toHaveBeenCalled();
   });
 

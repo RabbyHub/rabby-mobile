@@ -252,6 +252,8 @@ void testCoalescingConcurrencyAndCommit() {
   assert(firstResult->chainCount == 16);
   assert(firstResult->sourceTokenCount == 16);
   assert(firstResult->committedRowCount == 16);
+  assert(firstResult->committedAtMs == persistence->lastSyncTimestampMs);
+  assert(firstResult->committedAtMs > 0);
   assert(firstResult->durationMs > 0);
   assert(persistence->commitCount == 1);
   assert(persistence->lastOwnerAddress == kAddress);

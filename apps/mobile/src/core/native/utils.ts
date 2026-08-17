@@ -83,25 +83,17 @@ interface NativeModulesStatic {
       sourceTokenCount: number;
       filteredTokenCount: number;
       committedRowCount: number;
+      committedAtMs: number;
       durationMs: number;
       error: string;
     }>;
-    syncNativeTokenChains?(
+    startNativeTokenChains?(
       address: string,
       chainIds: string[],
       replacementScope: 'address' | 'chains',
       replaceExisting: boolean,
     ): Promise<{
-      success: boolean;
-      address: string;
-      generation: number;
-      stage: string;
-      chainCount: number;
-      sourceTokenCount: number;
-      filteredTokenCount: number;
-      committedRowCount: number;
-      durationMs: number;
-      error: string;
+      requestId: string;
     }>;
     runNativeTokenCacheWriteDiagnostic?(): Promise<{
       success: boolean;

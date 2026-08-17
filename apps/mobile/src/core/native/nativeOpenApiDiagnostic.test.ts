@@ -52,6 +52,7 @@ const successfulResult = {
   sourceTokenCount: 4,
   filteredTokenCount: 1,
   committedRowCount: 3,
+  committedAtMs: 1234,
   durationMs: 25,
   error: '',
 };

@@ -14,7 +14,9 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.rabbywallet.nativeopenapi.NativeOpenApiDiagnosticCallback;
 import com.rabbywallet.nativeopenapi.NativeOpenApiDiagnosticResult;
 import com.rabbywallet.nativeopenapi.NativeTokenSyncCallback;
@@ -36,9 +38,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-public class RNHelpersModule extends SimplePackageSpec {
+public class RNHelpersModule extends EventEmitterPackageSpec {
   public static final String NAME = "RNHelpers";
+  private static final String NATIVE_ASSET_SYNC_COMPLETED_EVENT =
+    "@RabbyNativeAssetSyncCompleted";
   private final ReactApplicationContext reactContext;
 
   public RNHelpersModule(ReactApplicationContext reactContext) {
@@ -50,6 +55,34 @@ public class RNHelpersModule extends SimplePackageSpec {
   @NonNull
   public String getName() {
     return NAME;
+  }
+
+  private void emitNativeAssetSyncCompletion(
+    String requestId,
+    String replacementScope,
+    String[] chainIds,
+    NativeTokenSyncResult result
+  ) {
+    WritableArray receiptChainIds = Arguments.createArray();
+    for (String chainId : chainIds) {
+      receiptChainIds.pushString(chainId);
+    }
+    WritableMap receipt = Arguments.createMap();
+    receipt.putInt("schemaVersion", 1);
+    receipt.putString("requestId", requestId);
+    receipt.putString("kind", "token");
+    receipt.putBoolean("success", result.getSuccess());
+    receipt.putString("address", result.getAddress());
+    receipt.putDouble("generation", result.getGeneration());
+    receipt.putDouble("committedAt", result.getCommittedAtMs());
+    receipt.putString("replacementScope", replacementScope);
+    receipt.putArray("chainIds", receiptChainIds);
+    receipt.putDouble("committedRowCount", result.getCommittedRowCount());
+    receipt.putString("stage", result.getStage());
+    receipt.putString("error", result.getError());
+    reactContext
+      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+      .emit(NATIVE_ASSET_SYNC_COMPLETED_EVENT, receipt);
   }
 
   @Override
@@ -228,6 +261,7 @@ public class RNHelpersModule extends SimplePackageSpec {
           output.putDouble("sourceTokenCount", result.getSourceTokenCount());
           output.putDouble("filteredTokenCount", result.getFilteredTokenCount());
           output.putDouble("committedRowCount", result.getCommittedRowCount());
+          output.putDouble("committedAtMs", result.getCommittedAtMs());
           output.putDouble("durationMs", result.getDurationMs());
           output.putString("error", result.getError());
           promise.resolve(output);
@@ -237,7 +271,7 @@ public class RNHelpersModule extends SimplePackageSpec {
   }
 
   @ReactMethod
-  public void syncNativeTokenChains(
+  public void startNativeTokenChains(
     String address,
     ReadableArray chainIds,
     String replacementScope,
@@ -261,6 +295,7 @@ public class RNHelpersModule extends SimplePackageSpec {
     for (int index = 0; index < chainIds.size(); index += 1) {
       nativeChainIds[index] = chainIds.getString(index);
     }
+    String requestId = UUID.randomUUID().toString().toLowerCase();
     RabbyNativeOpenApiRuntime.syncTokenChains(
       reactContext,
       BuildConfig.APPLICATION_ID,
@@ -272,21 +307,18 @@ public class RNHelpersModule extends SimplePackageSpec {
       new NativeTokenSyncCallback() {
         @Override
         public void onComplete(NativeTokenSyncResult result) {
-          WritableMap output = Arguments.createMap();
-          output.putBoolean("success", result.getSuccess());
-          output.putString("address", result.getAddress());
-          output.putDouble("generation", result.getGeneration());
-          output.putString("stage", result.getStage());
-          output.putDouble("chainCount", result.getChainCount());
-          output.putDouble("sourceTokenCount", result.getSourceTokenCount());
-          output.putDouble("filteredTokenCount", result.getFilteredTokenCount());
-          output.putDouble("committedRowCount", result.getCommittedRowCount());
-          output.putDouble("durationMs", result.getDurationMs());
-          output.putString("error", result.getError());
-          promise.resolve(output);
+          emitNativeAssetSyncCompletion(
+            requestId,
+            replacementScope,
+            nativeChainIds,
+            result
+          );
         }
       }
     );
+    WritableMap startResult = Arguments.createMap();
+    startResult.putString("requestId", requestId);
+    promise.resolve(startResult);
   }
 
   @ReactMethod

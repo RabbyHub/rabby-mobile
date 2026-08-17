@@ -250,6 +250,7 @@ NSDictionary<NSString*, id>* makeTokenSyncResultDictionary(
     @"sourceTokenCount" : @(result.sourceTokenCount),
     @"filteredTokenCount" : @(result.filteredTokenCount),
     @"committedRowCount" : @(result.committedRowCount),
+    @"committedAtMs" : @(result.committedAtMs),
     @"durationMs" : @(result.durationMs),
     @"error" : [NSString stringWithUTF8String:result.error.c_str()],
   };

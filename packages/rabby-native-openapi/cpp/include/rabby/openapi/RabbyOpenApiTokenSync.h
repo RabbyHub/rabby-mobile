@@ -30,6 +30,7 @@ struct TokenSyncResult {
   std::size_t sourceTokenCount{0};
   std::size_t filteredTokenCount{0};
   std::size_t committedRowCount{0};
+  std::int64_t committedAtMs{0};
   std::int64_t durationMs{0};
   std::string error;
 };

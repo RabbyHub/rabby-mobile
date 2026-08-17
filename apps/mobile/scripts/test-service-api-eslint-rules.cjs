@@ -224,7 +224,7 @@ const nativeTokenSyncConfig = {
 
 const nativeTokenSyncSource = `
   import NativeHelpers from '@/core/native/RNHelpers';
-  NativeHelpers.syncNativeTokenChains('0xabc', ['eth'], 'address', true);
+  NativeHelpers.startNativeTokenChains('0xabc', ['eth'], 'address', true);
 `;
 
 assert.deepStrictEqual(

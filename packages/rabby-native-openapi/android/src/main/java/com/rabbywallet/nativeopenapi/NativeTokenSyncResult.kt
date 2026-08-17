@@ -9,6 +9,7 @@ data class NativeTokenSyncResult(
   val sourceTokenCount: Long,
   val filteredTokenCount: Long,
   val committedRowCount: Long,
+  val committedAtMs: Long,
   val durationMs: Long,
   val error: String,
 )

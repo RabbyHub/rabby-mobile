@@ -1,6 +1,29 @@
-import { resolveNativeModule, wrapPlatformOnlyMethod } from './utils';
+import {
+  makeRnEEClass,
+  resolveNativeModule,
+  wrapPlatformOnlyMethod,
+} from './utils';
+
+export const NATIVE_ASSET_SYNC_COMPLETED_EVENT =
+  '@RabbyNativeAssetSyncCompleted' as const;
+
+type RNHelpersListeners = {
+  [NATIVE_ASSET_SYNC_COMPLETED_EVENT]: (receipt: unknown) => void;
+};
 
 const { RNHelpers: nativeModule } = resolveNativeModule('RNHelpers');
+const { NativeEventEmitter } = makeRnEEClass<RNHelpersListeners>();
+let nativeEventEmitter: InstanceType<typeof NativeEventEmitter> | undefined;
+
+export const addNativeAssetSyncCompletionListener = (
+  listener: RNHelpersListeners[typeof NATIVE_ASSET_SYNC_COMPLETED_EVENT],
+) => {
+  nativeEventEmitter ||= new NativeEventEmitter(nativeModule);
+  return nativeEventEmitter.addListener(
+    NATIVE_ASSET_SYNC_COMPLETED_EVENT,
+    listener,
+  );
+};
 
 const RNHelpers = Object.freeze({
   ...nativeModule,
@@ -29,11 +52,11 @@ const RNHelpers = Object.freeze({
       Promise.reject(
         new Error('RNHelpers.runNativeTokenCacheSyncDiagnostic is unavailable'),
       )),
-  syncNativeTokenChains:
-    nativeModule.syncNativeTokenChains ||
+  startNativeTokenChains:
+    nativeModule.startNativeTokenChains ||
     (() =>
       Promise.reject(
-        new Error('RNHelpers.syncNativeTokenChains is unavailable'),
+        new Error('RNHelpers.startNativeTokenChains is unavailable'),
       )),
   runNativeTokenCacheWriteDiagnostic:
     nativeModule.runNativeTokenCacheWriteDiagnostic ||
