@@ -3,6 +3,7 @@
 #include <rabby/openapi/RabbyAddressCachePersistence.h>
 #include <rabby/openapi/RabbyOpenApiDiagnostic.h>
 #include <rabby/openapi/RabbyOpenApiPlatform.h>
+#include <rabby/openapi/RabbyOpenApiProtocolSync.h>
 #include <rabby/openapi/RabbyOpenApiTokenSync.h>
 #include <rabby/openapi/RabbyTokenCachePersistence.h>
 #include <rabby/openapi/RabbyTokenSnapshotCodec.h>
@@ -31,6 +32,7 @@ jmethodID commitAddressSnapshotMethod = nullptr;
 jmethodID verifyTokenSnapshotMethod = nullptr;
 jmethodID diagnosticCompletedMethod = nullptr;
 jmethodID tokenSyncCompletedMethod = nullptr;
+jmethodID addressAssetSyncCompletedMethod = nullptr;
 
 std::mutex clientMutex;
 std::shared_ptr<rabby::openapi::OpenApiClient> sharedClient;
@@ -39,6 +41,9 @@ std::string sharedClientVersion;
 std::mutex tokenSyncCoordinatorMutex;
 std::shared_ptr<rabby::openapi::TokenSyncCoordinator>
     sharedTokenSyncCoordinator;
+std::mutex protocolSyncCoordinatorMutex;
+std::shared_ptr<rabby::openapi::ProtocolSyncCoordinator>
+    sharedProtocolSyncCoordinator;
 
 class ScopedEnv {
  public:
@@ -454,6 +459,36 @@ getTokenSyncCoordinator(
   return sharedTokenSyncCoordinator;
 }
 
+std::shared_ptr<rabby::openapi::ProtocolSyncCoordinator>
+getProtocolSyncCoordinator(
+    const std::string& applicationIdentity,
+    const std::string& clientVersion,
+    std::string& error) {
+  auto client = getClient(applicationIdentity, clientVersion, error);
+  if (!client) {
+    return nullptr;
+  }
+
+  std::lock_guard<std::mutex> lock(protocolSyncCoordinatorMutex);
+  if (!sharedProtocolSyncCoordinator) {
+    sharedProtocolSyncCoordinator =
+        std::make_shared<rabby::openapi::ProtocolSyncCoordinator>(
+            [client](
+                rabby::openapi::OpenApiClientRequest request,
+                rabby::openapi::OpenApiClientCompletion completion) {
+              return client->execute(
+                  std::move(request), std::move(completion));
+            },
+            rabby::openapi::makePlatformAddressCachePersistence(),
+            []() {
+              return std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::system_clock::now().time_since_epoch())
+                  .count();
+            });
+  }
+  return sharedProtocolSyncCoordinator;
+}
+
 void notifyDiagnostic(
     jlong diagnosticId,
     const rabby::openapi::OpenApiDiagnosticResult& result) {
@@ -529,6 +564,42 @@ void notifyTokenSync(
       static_cast<jlong>(result.committedAtMs),
       static_cast<jlong>(result.durationMs),
       error);
+  env->DeleteLocalRef(address);
+  env->DeleteLocalRef(stage);
+  env->DeleteLocalRef(error);
+  clearJavaException(env);
+}
+
+void notifyProtocolSync(
+    jlong syncId,
+    const rabby::openapi::ProtocolSyncResult& result) {
+  ScopedEnv scopedEnv;
+  auto* env = scopedEnv.get();
+  if (env == nullptr || runtimeClass == nullptr ||
+      addressAssetSyncCompletedMethod == nullptr) {
+    return;
+  }
+
+  auto kind = toJavaString(env, "protocol");
+  auto address = toJavaString(env, result.address);
+  auto stage = toJavaString(
+      env, rabby::openapi::protocolSyncStageName(result.stage));
+  auto error = toJavaString(env, result.error);
+  env->CallStaticVoidMethod(
+      runtimeClass,
+      addressAssetSyncCompletedMethod,
+      syncId,
+      kind,
+      result.success ? JNI_TRUE : JNI_FALSE,
+      address,
+      static_cast<jlong>(result.generation),
+      stage,
+      static_cast<jlong>(result.sourceItemCount),
+      static_cast<jlong>(result.committedRowCount),
+      static_cast<jlong>(result.committedAtMs),
+      static_cast<jlong>(result.durationMs),
+      error);
+  env->DeleteLocalRef(kind);
   env->DeleteLocalRef(address);
   env->DeleteLocalRef(stage);
   env->DeleteLocalRef(error);
@@ -653,6 +724,38 @@ void startTokenChainSync(
       });
 }
 
+void startProtocolSync(
+    JNIEnv* env,
+    jclass,
+    jlong syncId,
+    jstring applicationIdentity,
+    jstring clientVersion,
+    jstring address,
+    jboolean replaceExisting) {
+  const auto applicationIdentityValue =
+      fromJavaString(env, applicationIdentity);
+  const auto clientVersionValue = fromJavaString(env, clientVersion);
+  const auto addressValue = fromJavaString(env, address);
+
+  std::string error;
+  auto coordinator = getProtocolSyncCoordinator(
+      applicationIdentityValue, clientVersionValue, error);
+  if (!coordinator) {
+    rabby::openapi::ProtocolSyncResult result;
+    result.address = addressValue;
+    result.error = std::move(error);
+    notifyProtocolSync(syncId, result);
+    return;
+  }
+
+  coordinator->syncAddress(
+      addressValue,
+      replaceExisting == JNI_TRUE,
+      [syncId](rabby::openapi::ProtocolSyncResult result) {
+        notifyProtocolSync(syncId, result);
+      });
+}
+
 void cancelTokenSync(JNIEnv* env, jclass, jstring address) {
   std::shared_ptr<rabby::openapi::TokenSyncCoordinator> coordinator;
   {
@@ -669,6 +772,28 @@ void cancelAllTokenSyncs(JNIEnv*, jclass) {
   {
     std::lock_guard<std::mutex> lock(tokenSyncCoordinatorMutex);
     coordinator = sharedTokenSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAll();
+  }
+}
+
+void cancelProtocolSync(JNIEnv* env, jclass, jstring address) {
+  std::shared_ptr<rabby::openapi::ProtocolSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(protocolSyncCoordinatorMutex);
+    coordinator = sharedProtocolSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAddress(fromJavaString(env, address));
+  }
+}
+
+void cancelAllProtocolSyncs(JNIEnv*, jclass) {
+  std::shared_ptr<rabby::openapi::ProtocolSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(protocolSyncCoordinatorMutex);
+    coordinator = sharedProtocolSyncCoordinator;
   }
   if (coordinator) {
     coordinator->cancelAll();
@@ -779,12 +904,17 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
       runtimeClass,
       "onTokenSyncCompleted",
       "(JZLjava/lang/String;JLjava/lang/String;JJJJJJLjava/lang/String;)V");
+  addressAssetSyncCompletedMethod = env->GetStaticMethodID(
+      runtimeClass,
+      "onAddressAssetSyncCompleted",
+      "(JLjava/lang/String;ZLjava/lang/String;JLjava/lang/String;JJJJLjava/lang/String;)V");
   if (loadCredentialMethod == nullptr || saveCredentialMethod == nullptr ||
       randomUuidMethod == nullptr || commitTokenSnapshotMethod == nullptr ||
       commitAddressSnapshotMethod == nullptr ||
       verifyTokenSnapshotMethod == nullptr ||
       diagnosticCompletedMethod == nullptr ||
-      tokenSyncCompletedMethod == nullptr) {
+      tokenSyncCompletedMethod == nullptr ||
+      addressAssetSyncCompletedMethod == nullptr) {
     env->ExceptionClear();
     return JNI_ERR;
   }
@@ -799,12 +929,21 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
       {"startTokenChainSync",
        "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;IZ)V",
        reinterpret_cast<void*>(startTokenChainSync)},
+      {"startProtocolSync",
+       "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V",
+       reinterpret_cast<void*>(startProtocolSync)},
       {"cancelTokenSync",
        "(Ljava/lang/String;)V",
        reinterpret_cast<void*>(cancelTokenSync)},
       {"cancelAllTokenSyncs",
        "()V",
        reinterpret_cast<void*>(cancelAllTokenSyncs)},
+      {"cancelProtocolSync",
+       "(Ljava/lang/String;)V",
+       reinterpret_cast<void*>(cancelProtocolSync)},
+      {"cancelAllProtocolSyncs",
+       "()V",
+       reinterpret_cast<void*>(cancelAllProtocolSyncs)},
       {"verifyTokenCacheWrite",
        "(J)Ljava/lang/String;",
        reinterpret_cast<void*>(verifyTokenCacheWrite)},

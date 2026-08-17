@@ -21,6 +21,7 @@ COMMON_ARGS=(
   "$PACKAGE_DIR/cpp/RabbyOpenApiClient.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiCredential.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiDiagnostic.cpp"
+  "$PACKAGE_DIR/cpp/RabbyOpenApiProtocolSync.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiRequest.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiSigning.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiTokenSync.cpp"
@@ -79,3 +80,10 @@ fi
   -o "$BUILD_DIR/rabby-openapi-token-sync-test"
 
 "$BUILD_DIR/rabby-openapi-token-sync-test"
+
+"${CXX:-c++}" \
+  "${COMMON_ARGS[@]}" \
+  "$PACKAGE_DIR/cpp/tests/RabbyOpenApiProtocolSyncTest.cpp" \
+  -o "$BUILD_DIR/rabby-openapi-protocol-sync-test"
+
+"$BUILD_DIR/rabby-openapi-protocol-sync-test"

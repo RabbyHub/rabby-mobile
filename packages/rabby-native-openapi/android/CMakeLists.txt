@@ -13,6 +13,7 @@ add_library(
   ../cpp/RabbyOpenApiClient.cpp
   ../cpp/RabbyOpenApiCredential.cpp
   ../cpp/RabbyOpenApiDiagnostic.cpp
+  ../cpp/RabbyOpenApiProtocolSync.cpp
   ../cpp/RabbyOpenApiRequest.cpp
   ../cpp/RabbyOpenApiSigning.cpp
   ../cpp/RabbyOpenApiTokenSync.cpp

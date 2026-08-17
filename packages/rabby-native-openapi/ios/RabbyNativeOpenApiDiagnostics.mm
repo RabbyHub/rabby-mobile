@@ -5,6 +5,7 @@
 #include <rabby/openapi/RabbyOpenApiClient.h>
 #include <rabby/openapi/RabbyOpenApiDiagnostic.h>
 #include <rabby/openapi/RabbyOpenApiPlatform.h>
+#include <rabby/openapi/RabbyOpenApiProtocolSync.h>
 #include <rabby/openapi/RabbyOpenApiTokenSync.h>
 #include <rabby/openapi/RabbyTokenCachePersistence.h>
 
@@ -145,6 +146,8 @@ std::string sharedApplicationIdentity;
 std::string sharedClientVersion;
 std::mutex tokenSyncCoordinatorMutex;
 std::shared_ptr<TokenSyncCoordinator> sharedTokenSyncCoordinator;
+std::mutex protocolSyncCoordinatorMutex;
+std::shared_ptr<ProtocolSyncCoordinator> sharedProtocolSyncCoordinator;
 
 std::shared_ptr<OpenApiClient> getClient(std::string& error) {
   auto* bundle = [NSBundle mainBundle];
@@ -209,6 +212,29 @@ std::shared_ptr<TokenSyncCoordinator> getTokenSyncCoordinator(
   return sharedTokenSyncCoordinator;
 }
 
+std::shared_ptr<ProtocolSyncCoordinator> getProtocolSyncCoordinator(
+    std::string& error) {
+  auto client = getClient(error);
+  if (!client) {
+    return nullptr;
+  }
+
+  std::lock_guard<std::mutex> lock(protocolSyncCoordinatorMutex);
+  if (!sharedProtocolSyncCoordinator) {
+    sharedProtocolSyncCoordinator = std::make_shared<ProtocolSyncCoordinator>(
+        [client](OpenApiClientRequest request, OpenApiClientCompletion completion) {
+          return client->execute(std::move(request), std::move(completion));
+        },
+        makePlatformAddressCachePersistence(),
+        []() {
+          return std::chrono::duration_cast<std::chrono::milliseconds>(
+                     std::chrono::system_clock::now().time_since_epoch())
+              .count();
+        });
+  }
+  return sharedProtocolSyncCoordinator;
+}
+
 NSDictionary<NSString*, id>* makeResultDictionary(
     const OpenApiDiagnosticResult& result) {
   return @{
@@ -249,6 +275,23 @@ NSDictionary<NSString*, id>* makeTokenSyncResultDictionary(
     @"chainCount" : @(result.chainCount),
     @"sourceTokenCount" : @(result.sourceTokenCount),
     @"filteredTokenCount" : @(result.filteredTokenCount),
+    @"committedRowCount" : @(result.committedRowCount),
+    @"committedAtMs" : @(result.committedAtMs),
+    @"durationMs" : @(result.durationMs),
+    @"error" : [NSString stringWithUTF8String:result.error.c_str()],
+  };
+}
+
+NSDictionary<NSString*, id>* makeProtocolSyncResultDictionary(
+    const ProtocolSyncResult& result) {
+  return @{
+    @"kind" : @"protocol",
+    @"success" : @(result.success),
+    @"address" : [NSString stringWithUTF8String:result.address.c_str()],
+    @"generation" : @(result.generation),
+    @"stage" : [NSString
+        stringWithUTF8String:protocolSyncStageName(result.stage)],
+    @"sourceItemCount" : @(result.sourceItemCount),
     @"committedRowCount" : @(result.committedRowCount),
     @"committedAtMs" : @(result.committedAtMs),
     @"durationMs" : @(result.durationMs),
@@ -384,6 +427,33 @@ std::int64_t platformEpochSeconds() {
       });
 }
 
++ (void)syncProtocolCacheForAddress:(NSString*)address
+                    replaceExisting:(BOOL)replaceExisting
+                          completion:
+                              (RabbyNativeAddressAssetSyncCompletion)completion {
+  std::string error;
+  auto coordinator = rabby::openapi::apple::getProtocolSyncCoordinator(error);
+  if (!coordinator) {
+    rabby::openapi::ProtocolSyncResult result;
+    result.address = rabby::openapi::apple::fromNSString(address);
+    result.error = std::move(error);
+    completion(rabby::openapi::apple::makeProtocolSyncResultDictionary(result));
+    return;
+  }
+
+  RabbyNativeAddressAssetSyncCompletion callback = [completion copy];
+  coordinator->syncAddress(
+      rabby::openapi::apple::fromNSString(address),
+      replaceExisting,
+      [callback](rabby::openapi::ProtocolSyncResult result) {
+        auto* dictionary =
+            rabby::openapi::apple::makeProtocolSyncResultDictionary(result);
+        dispatch_async(dispatch_get_main_queue(), ^{
+          callback(dictionary);
+        });
+      });
+}
+
 + (void)verifyTokenCacheWriteWithCompletion:
     (RabbyNativeTokenCacheWriteDiagnosticCompletion)completion {
   RabbyNativeTokenCacheWriteDiagnosticCompletion callback = [completion copy];
@@ -433,6 +503,30 @@ std::int64_t platformEpochSeconds() {
     std::lock_guard<std::mutex> lock(
         rabby::openapi::apple::tokenSyncCoordinatorMutex);
     coordinator = rabby::openapi::apple::sharedTokenSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAll();
+  }
+}
+
++ (void)cancelProtocolCacheSyncForAddress:(NSString*)address {
+  std::shared_ptr<rabby::openapi::ProtocolSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(
+        rabby::openapi::apple::protocolSyncCoordinatorMutex);
+    coordinator = rabby::openapi::apple::sharedProtocolSyncCoordinator;
+  }
+  if (coordinator) {
+    coordinator->cancelAddress(rabby::openapi::apple::fromNSString(address));
+  }
+}
+
++ (void)cancelAllProtocolCacheSyncs {
+  std::shared_ptr<rabby::openapi::ProtocolSyncCoordinator> coordinator;
+  {
+    std::lock_guard<std::mutex> lock(
+        rabby::openapi::apple::protocolSyncCoordinatorMutex);
+    coordinator = rabby::openapi::apple::sharedProtocolSyncCoordinator;
   }
   if (coordinator) {
     coordinator->cancelAll();

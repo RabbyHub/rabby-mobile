@@ -40,6 +40,26 @@ RCT_EXPORT_MODULE();
     }];
 }
 
+- (void)emitNativeAddressAssetSyncCompletion:(NSString *)requestId
+                                       result:
+                                           (NSDictionary<NSString *, id> *)result {
+    [self sendEventWithName:RabbyNativeAssetSyncCompletedEvent
+                       body:@{
+        @"schemaVersion": @1,
+        @"requestId": requestId,
+        @"kind": result[@"kind"] ?: @"",
+        @"success": result[@"success"] ?: @NO,
+        @"address": result[@"address"] ?: @"",
+        @"generation": result[@"generation"] ?: @0,
+        @"committedAt": result[@"committedAtMs"] ?: @0,
+        @"replacementScope": @"address",
+        @"chainIds": @[],
+        @"committedRowCount": result[@"committedRowCount"] ?: @0,
+        @"stage": result[@"stage"] ?: @"none",
+        @"error": result[@"error"] ?: @"",
+    }];
+}
+
 - (NSDictionary *)constantsToExport {
     NSURL *buildInfoURL = [[NSBundle mainBundle] URLForResource:@"rabby-build-info" withExtension:@"json"];
     NSDictionary *buildInfo = @{};
@@ -131,6 +151,46 @@ RCT_EXPORT_METHOD(startNativeTokenChains:
     resolve(@{ @"requestId": requestId });
 }
 
+RCT_EXPORT_METHOD(runNativeProtocolCacheSyncDiagnostic:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_PROTOCOL_SYNC_DISABLED",
+            @"Native protocol sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        syncProtocolCacheForAddress:address
+                    replaceExisting:replaceExisting
+                          completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(startNativeProtocolSync:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *requestId = [NSUUID UUID].UUIDString.lowercaseString;
+    [RabbyNativeOpenApiDiagnostics
+        syncProtocolCacheForAddress:address
+                    replaceExisting:replaceExisting
+                          completion:^(NSDictionary<NSString *, id> *result) {
+        [self emitNativeAddressAssetSyncCompletion:requestId result:result];
+    }];
+    resolve(@{ @"requestId": requestId });
+}
+
 RCT_EXPORT_METHOD(runNativeTokenCacheWriteDiagnostic:
   (RCTPromiseResolveBlock)resolve
   rejecter:(RCTPromiseRejectBlock)reject
@@ -158,6 +218,14 @@ RCT_EXPORT_METHOD(cancelNativeTokenCacheSync:(NSString *)address) {
 
 RCT_EXPORT_METHOD(cancelAllNativeTokenCacheSyncs) {
     [RabbyNativeOpenApiDiagnostics cancelAllTokenCacheSyncs];
+}
+
+RCT_EXPORT_METHOD(cancelNativeProtocolCacheSync:(NSString *)address) {
+    [RabbyNativeOpenApiDiagnostics cancelProtocolCacheSyncForAddress:address];
+}
+
+RCT_EXPORT_METHOD(cancelAllNativeProtocolCacheSyncs) {
+    [RabbyNativeOpenApiDiagnostics cancelAllProtocolCacheSyncs];
 }
 
 RCT_EXPORT_METHOD(iosExcludeFileFromBackup:

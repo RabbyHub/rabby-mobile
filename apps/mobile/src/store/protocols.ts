@@ -2,6 +2,11 @@ import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { AppChainEntity } from '@/databases/entities/appchain';
 import {
+  compileProtocolAssetSqlProjection,
+  type ProtocolAssetSqlProjection,
+} from '@/databases/protocolAssetProjection';
+import {
+  loadAppChainComplexProtocols,
   loadProtocols,
   loadProtocolsForAddresses,
   syncSpecificProtocol,
@@ -10,7 +15,7 @@ import {
   syncRemoteProtocols,
   syncRemoteProtocolsForAddresses,
 } from '@/databases/sync/assets';
-import { formatAppChain } from '@/utils/appchain';
+import { formatAppChain, isAppChain } from '@/utils/appchain';
 import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
@@ -30,6 +35,7 @@ import {
 } from './protocolAssetsIndex';
 import {
   completeAddressListSnapshots,
+  createAddressListCommitBatcher,
   createAddressListSnapshotHydrator,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
@@ -46,6 +52,14 @@ import {
   type AssetProjectionAvailability,
   type AssetSourceSnapshotReadiness,
 } from './assetProjectionAvailability';
+import {
+  executeProtocolSync,
+  getProtocolSyncMode,
+} from './protocolSyncExecutor';
+import {
+  registerNativeAssetSyncHandler,
+  type NativeAssetSyncCompletion,
+} from './nativeAssetSyncReceipt';
 
 export {
   buildProtocolEntityId,
@@ -95,6 +109,22 @@ const PROTOCOL_ENTITY_RESOURCE_FAMILY = 'protocol.entity';
 const multiAddressProtocolRequests = new LatestAsyncRequest();
 const multiAddressProtocolBatchRefreshes = new AddressBatchRefreshCoordinator();
 const protocolAddressRequests = new LatestAddressRequest();
+
+let automaticProtocolProjectionSyncSuppressionDepth = 0;
+
+const isAutomaticProtocolProjectionSyncSuppressed = () =>
+  automaticProtocolProjectionSyncSuppressionDepth > 0;
+
+const withAutomaticProtocolProjectionSyncSuppressed = <T>(
+  callback: () => T,
+) => {
+  automaticProtocolProjectionSyncSuppressionDepth += 1;
+  try {
+    return callback();
+  } finally {
+    automaticProtocolProjectionSyncSuppressionDepth -= 1;
+  }
+};
 
 const normalizeAddresses = (addresses: string[]) =>
   addresses.map(address => address.toLowerCase());
@@ -789,6 +819,43 @@ const protocolCacheHydrator = createAddressListSnapshotHydrator<IProtocolItem>({
   },
 });
 
+const toAppChainProtocolMap = (
+  entries: Array<
+    readonly [string, Awaited<ReturnType<typeof loadAppChainComplexProtocols>>]
+  >,
+): ProtocolListMap =>
+  Object.fromEntries(
+    entries.map(([address, result]) => [
+      address,
+      result.protocols.map(protocol =>
+        complexProtocol2ProtocolItem(protocol, address),
+      ),
+    ]),
+  );
+
+const mergeNativeProtocolsWithAppChains = (
+  addresses: string[],
+  appChainProtocolMap: ProtocolListMap,
+) => {
+  const currentProtocolMap = useProtocolListStore.getState().protocolMap;
+  const nextSnapshots = Object.fromEntries(
+    addresses.map(address => {
+      const remoteProtocols = (currentProtocolMap[address] || []).filter(
+        protocol => !isAppChain(protocol.chain || ''),
+      );
+      return [
+        address,
+        remoteProtocols.concat(appChainProtocolMap[address] || []),
+      ];
+    }),
+  );
+  return mergeAddressListSnapshots(
+    currentProtocolMap,
+    addresses,
+    nextSnapshots,
+  );
+};
+
 export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
   protocolMap: {},
   sourceSnapshotReadyByAddress: {},
@@ -916,10 +983,47 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           trace.mark('remote-address-requests-dispatched', {
             addressCount: lowerAddresses.length,
           });
-          const remoteProtocolsPromise = loadProtocolsForAddresses(
-            lowerAddresses,
-            isForceRequested(),
-            trace,
+          const protocolSyncMode = getProtocolSyncMode();
+          const remoteProtocolsPromise = (
+            protocolSyncMode === 'native'
+              ? Promise.all(
+                  lowerAddresses.map(async address => {
+                    const [syncExecution, appChainResult] = await Promise.all([
+                      executeProtocolSync({
+                        mode: protocolSyncMode,
+                        address,
+                        replaceExisting: true,
+                        executeJs: () =>
+                          Promise.reject(
+                            new Error('Unexpected JS protocol execution'),
+                          ),
+                      }),
+                      loadAppChainComplexProtocols(address, isForceRequested()),
+                    ]);
+                    return [address, syncExecution, appChainResult] as const;
+                  }),
+                ).then(results => {
+                  const appChainProtocolMap = toAppChainProtocolMap(
+                    results.map(
+                      ([address, , appChainResult]) =>
+                        [address, appChainResult] as const,
+                    ),
+                  );
+                  const protocolMap = mergeNativeProtocolsWithAppChains(
+                    lowerAddresses,
+                    appChainProtocolMap,
+                  );
+                  return {
+                    protocolMap,
+                    remoteProtocolMap: {},
+                    native: true,
+                  };
+                })
+              : loadProtocolsForAddresses(
+                  lowerAddresses,
+                  isForceRequested(),
+                  trace,
+                ).then(result => ({ ...result, native: false }))
           ).then(
             result => ({ status: 'fulfilled' as const, result }),
             error => ({ status: 'rejected' as const, error }),
@@ -960,8 +1064,11 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           if (remoteProtocols.status === 'rejected') {
             throw remoteProtocols.error;
           }
-          const { protocolMap: resultMap, remoteProtocolMap } =
-            remoteProtocols.result;
+          const {
+            protocolMap: resultMap,
+            remoteProtocolMap,
+            native,
+          } = remoteProtocols.result;
           trace.mark('remote-response-completed', {
             itemCount: Object.values(resultMap).reduce(
               (count, protocols) => count + protocols.length,
@@ -996,7 +1103,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           );
           protocolEntityResourceStore.syncFromProtocolMap(
             nextProtocolMap,
-            'remote',
+            native ? 'hydrate' : 'remote',
           );
           protocolCacheHydrator.invalidate(currentAddresses);
           set(state => ({
@@ -1009,7 +1116,9 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           trace.mark('remote-store-published', {
             addressCount: currentAddresses.length,
           });
-          void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
+          if (!native) {
+            void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
+          }
           reportLendingUserStatusOnce({
             addresses: currentAddresses,
             protocolMap: applicableProtocolMap,
@@ -1072,10 +1181,31 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
         },
       }));
 
-      const result = await loadProtocols(normalizedAddress, force);
+      const protocolSyncMode = getProtocolSyncMode();
+      const [syncExecution, appChainResult] = await Promise.all([
+        executeProtocolSync({
+          mode: protocolSyncMode,
+          address: normalizedAddress,
+          replaceExisting: true,
+          executeJs: () => loadProtocols(normalizedAddress, force),
+        }),
+        protocolSyncMode === 'native'
+          ? loadAppChainComplexProtocols(normalizedAddress, force)
+          : Promise.resolve(null),
+      ]);
       if (!isCurrentRequest()) {
         return;
       }
+      const result =
+        syncExecution.mode === 'native'
+          ? {
+              address: normalizedAddress,
+              protocols: mergeNativeProtocolsWithAppChains(
+                [normalizedAddress],
+                toAppChainProtocolMap([[normalizedAddress, appChainResult!]]),
+              )[normalizedAddress],
+            }
+          : syncExecution.value;
       const nextProtocolMap = {
         ...get().protocolMap,
         [normalizedAddress]: result.protocols,
@@ -1091,7 +1221,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           [normalizedAddress],
         ),
       }));
-      if (result.remoteProtocols) {
+      if (syncExecution.mode === 'js' && result.remoteProtocols) {
         void syncRemoteProtocols(normalizedAddress, result.remoteProtocols);
       }
     } finally {
@@ -1159,6 +1289,280 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     }
   },
 }));
+
+type NativeProtocolProjectionTarget =
+  | {
+      key: string;
+      scene: 'single-address';
+      params: { address: string; chainServerId?: string };
+    }
+  | {
+      key: string;
+      scene: 'multi-address';
+      params: { addresses: string[]; chainServerId?: string };
+    };
+
+type CompiledNativeProtocolProjectionTarget = NativeProtocolProjectionTarget & {
+  projection?: ProtocolAssetSqlProjection;
+};
+
+const getNativeProtocolProjectionTargets = (
+  changedAddresses: string[],
+): NativeProtocolProjectionTarget[] => {
+  const changedAddressSet = new Set(normalizeAddresses(changedAddresses));
+  const targets: NativeProtocolProjectionTarget[] = [];
+
+  singleProtocolsCacheParams.forEach((params, key) => {
+    if (changedAddressSet.has(params.address.toLowerCase())) {
+      targets.push({ key, scene: 'single-address', params });
+    }
+  });
+  multiProtocolsCacheParams.forEach((params, key) => {
+    if (
+      params.addresses.some(address =>
+        changedAddressSet.has(address.toLowerCase()),
+      )
+    ) {
+      targets.push({ key, scene: 'multi-address', params });
+    }
+  });
+
+  return targets;
+};
+
+const getNativeProtocolProjectionSelectorKey = (
+  target: NativeProtocolProjectionTarget,
+) =>
+  JSON.stringify([
+    target.scene,
+    target.scene === 'single-address'
+      ? [target.params.address.toLowerCase()]
+      : normalizeAddresses(target.params.addresses),
+    target.params.chainServerId?.toLowerCase() || '',
+  ]);
+
+const getProtocolsForNativeProjectionTarget = (
+  protocolMap: ProtocolListMap,
+  target: NativeProtocolProjectionTarget,
+) =>
+  target.scene === 'single-address'
+    ? computeSingleProtocols(
+        protocolMap,
+        target.params.address,
+        target.params.chainServerId,
+      )
+    : computeMultiProtocols(
+        protocolMap,
+        target.params.addresses,
+        target.params.chainServerId,
+      );
+
+const buildProtocolIndexFromSqlProjection = (
+  projection: ProtocolAssetSqlProjection,
+  previousResult?: ProtocolAssetsIndexResult,
+): ProtocolAssetsIndexResult => {
+  const nextProtocolIds = projection.protocolIds as ProtocolEntityId[];
+  const canReuseProtocolIds =
+    previousResult?.protocolIds.length === nextProtocolIds.length &&
+    previousResult.protocolIds.every(
+      (protocolId, index) => protocolId === nextProtocolIds[index],
+    );
+  const protocolIds = canReuseProtocolIds
+    ? previousResult.protocolIds
+    : nextProtocolIds;
+
+  if (
+    previousResult?.protocolIds === protocolIds &&
+    previousResult.defaultVisibleProtocolCount ===
+      projection.defaultVisibleProtocolCount &&
+    previousResult.foldedProtocolUsdValue === projection.foldedProtocolUsdValue
+  ) {
+    return previousResult;
+  }
+
+  return {
+    protocolIds,
+    defaultVisibleProtocolCount: projection.defaultVisibleProtocolCount,
+    foldedProtocolUsdValue: projection.foldedProtocolUsdValue,
+  };
+};
+
+const compileNativeProtocolProjectionTargets = async (
+  protocolMap: ProtocolListMap,
+  targets: NativeProtocolProjectionTarget[],
+) => {
+  const projectionBySelector = new Map<string, ProtocolAssetSqlProjection>();
+  const compiledTargets: CompiledNativeProtocolProjectionTarget[] = [];
+
+  for (const target of targets) {
+    const targetProtocols = getProtocolsForNativeProjectionTarget(
+      protocolMap,
+      target,
+    );
+    if (targetProtocols.some(protocol => isAppChain(protocol.chain || ''))) {
+      compiledTargets.push(target);
+      continue;
+    }
+
+    const selectorKey = getNativeProtocolProjectionSelectorKey(target);
+    let projection = projectionBySelector.get(selectorKey);
+    if (!projection) {
+      projection = await compileProtocolAssetSqlProjection({
+        addresses:
+          target.scene === 'single-address'
+            ? [target.params.address]
+            : target.params.addresses,
+        chainServerId: target.params.chainServerId,
+        scene: target.scene,
+      });
+      projectionBySelector.set(selectorKey, projection);
+    }
+    compiledTargets.push({ ...target, projection });
+  }
+
+  return compiledTargets;
+};
+
+const publishNativeProtocolBatch = async (addresses: string[]) => {
+  const normalizedAddresses = Array.from(
+    new Set(normalizeAddresses(addresses)),
+  );
+  protocolCacheHydrator.invalidate(normalizedAddresses);
+  const snapshots = await loadProtocolSnapshots(normalizedAddresses);
+  const nextProtocolMap = mergeAddressListSnapshots(
+    useProtocolListStore.getState().protocolMap,
+    normalizedAddresses,
+    snapshots,
+  );
+  const targets = getNativeProtocolProjectionTargets(normalizedAddresses);
+  const compiledTargets = await compileNativeProtocolProjectionTargets(
+    nextProtocolMap,
+    targets,
+  );
+  const protocolIdsInMap = new Set(
+    getProtocolListFromProtocolMap(nextProtocolMap).map(buildProtocolEntityId),
+  );
+  const missingProjectionProtocolIds = Array.from(
+    new Set(
+      compiledTargets.flatMap(target => target.projection?.protocolIds || []),
+    ),
+  ).filter(protocolId => !protocolIdsInMap.has(protocolId as ProtocolEntityId));
+  const supportingProtocols = missingProjectionProtocolIds.length
+    ? await ProtocolItemEntity.batchMultiAddressProtocolsByResourceIds(
+        missingProjectionProtocolIds,
+      )
+    : [];
+  if (supportingProtocols.length !== missingProjectionProtocolIds.length) {
+    throw new Error(
+      `Protocol SQL projection entities are incomplete: ${supportingProtocols.length}/${missingProjectionProtocolIds.length}`,
+    );
+  }
+
+  const previousComputedState = useProtocolListComputedStore.getState();
+  const publications = compiledTargets.map(target => {
+    const previousResult =
+      target.scene === 'single-address'
+        ? previousComputedState.singleProtocolsIndexCache[target.key]
+        : previousComputedState.multiProtocolsIndexCache[target.key];
+    const result = target.projection
+      ? buildProtocolIndexFromSqlProjection(target.projection, previousResult)
+      : buildProtocolAssetsIndexResult(
+          getProtocolsForNativeProjectionTarget(nextProtocolMap, target),
+          previousResult,
+        );
+    return { target, result };
+  });
+
+  withAutomaticProtocolProjectionSyncSuppressed(() => {
+    protocolEntityResourceStore.syncFromProtocolMap(nextProtocolMap, 'hydrate');
+    protocolEntityResourceStore.upsertProtocols(supportingProtocols, 'hydrate');
+    useProtocolListStore.setState(state => ({
+      protocolMap: nextProtocolMap,
+      sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+        state.sourceSnapshotReadyByAddress,
+        normalizedAddresses,
+      ),
+      hasLoadedByAddress: {
+        ...state.hasLoadedByAddress,
+        ...Object.fromEntries(
+          normalizedAddresses.map(address => [address, true]),
+        ),
+      },
+    }));
+    useProtocolListComputedStore.setState(state => {
+      const multiProtocolsIndexCache = { ...state.multiProtocolsIndexCache };
+      const singleProtocolsIndexCache = { ...state.singleProtocolsIndexCache };
+      const multiProtocolsAvailabilityByKey = {
+        ...state.multiProtocolsAvailabilityByKey,
+      };
+      const singleProtocolsAvailabilityByKey = {
+        ...state.singleProtocolsAvailabilityByKey,
+      };
+
+      publications.forEach(({ target, result }) => {
+        if (target.scene === 'single-address') {
+          if (singleProtocolsCacheParams.get(target.key) !== target.params) {
+            throw new Error(
+              `Protocol projection config changed before publish: ${target.key}`,
+            );
+          }
+          singleProtocolsIndexCache[target.key] = result;
+          singleProtocolsAvailabilityByKey[target.key] =
+            getProtocolProjectionAvailability(target.params, result);
+        } else {
+          if (multiProtocolsCacheParams.get(target.key) !== target.params) {
+            throw new Error(
+              `Protocol projection config changed before publish: ${target.key}`,
+            );
+          }
+          multiProtocolsIndexCache[target.key] = result;
+          multiProtocolsAvailabilityByKey[target.key] =
+            getProtocolProjectionAvailability(target.params, result);
+        }
+      });
+
+      return {
+        multiProtocolsIndexCache,
+        singleProtocolsIndexCache,
+        multiProtocolsAvailabilityByKey,
+        singleProtocolsAvailabilityByKey,
+      };
+    });
+  });
+
+  publications.forEach(({ target, result }) => {
+    scheduleProtocolProjectionPersistence(target.key, target.scene, result);
+  });
+};
+
+const nativeProtocolCommitBatcher = createAddressListCommitBatcher({
+  apply: async addresses => {
+    try {
+      await publishNativeProtocolBatch(addresses);
+    } catch (error) {
+      console.warn(
+        '[protocolProjection] native SQL projection failed; using JS fallback',
+        error,
+      );
+      await protocolCacheHydrator.refresh(addresses);
+      useProtocolListStore.setState(state => ({
+        sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+          state.sourceSnapshotReadyByAddress,
+          addresses,
+        ),
+        hasLoadedByAddress: {
+          ...state.hasLoadedByAddress,
+          ...Object.fromEntries(addresses.map(address => [address, true])),
+        },
+      }));
+    }
+  },
+});
+
+const applyNativeProtocolCommit = (completion: NativeAssetSyncCompletion) =>
+  nativeProtocolCommitBatcher.enqueue([completion.address]);
+
+registerNativeAssetSyncHandler('protocol', applyNativeProtocolCommit);
 
 export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
   set => ({
@@ -1395,6 +1799,9 @@ useProtocolListStore.subscribe(state => {
   }
   latestProtocolMap = state.protocolMap;
   latestProtocolSourceSnapshotReadiness = state.sourceSnapshotReadyByAddress;
+  if (isAutomaticProtocolProjectionSyncSuppressed()) {
+    return;
+  }
   if (protocolMapChanged) {
     rebuildComputedCaches(state.protocolMap);
     return;

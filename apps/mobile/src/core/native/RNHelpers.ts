@@ -58,6 +58,20 @@ const RNHelpers = Object.freeze({
       Promise.reject(
         new Error('RNHelpers.startNativeTokenChains is unavailable'),
       )),
+  runNativeProtocolCacheSyncDiagnostic:
+    nativeModule.runNativeProtocolCacheSyncDiagnostic ||
+    (() =>
+      Promise.reject(
+        new Error(
+          'RNHelpers.runNativeProtocolCacheSyncDiagnostic is unavailable',
+        ),
+      )),
+  startNativeProtocolSync:
+    nativeModule.startNativeProtocolSync ||
+    (() =>
+      Promise.reject(
+        new Error('RNHelpers.startNativeProtocolSync is unavailable'),
+      )),
   runNativeTokenCacheWriteDiagnostic:
     nativeModule.runNativeTokenCacheWriteDiagnostic ||
     (() =>
@@ -70,6 +84,10 @@ const RNHelpers = Object.freeze({
     nativeModule.cancelNativeTokenCacheSync || (() => undefined),
   cancelAllNativeTokenCacheSyncs:
     nativeModule.cancelAllNativeTokenCacheSyncs || (() => undefined),
+  cancelNativeProtocolCacheSync:
+    nativeModule.cancelNativeProtocolCacheSync || (() => undefined),
+  cancelAllNativeProtocolCacheSyncs:
+    nativeModule.cancelAllNativeProtocolCacheSyncs || (() => undefined),
   iosExcludeFileFromBackup: wrapPlatformOnlyMethod({
     method: nativeModule.iosExcludeFileFromBackup,
     platform: 'ios',

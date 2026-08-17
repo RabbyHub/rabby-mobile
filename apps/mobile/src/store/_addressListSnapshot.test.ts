@@ -1,5 +1,6 @@
 import {
   completeAddressListSnapshots,
+  createAddressListCommitBatcher,
   createAddressListSnapshotHydrator,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
@@ -119,5 +120,39 @@ describe('address list snapshots', () => {
 
     expect(apply).toHaveBeenCalledTimes(1);
     expect(apply).toHaveBeenCalledWith({ '0xa': ['fresh'] }, ['0xa']);
+  });
+
+  it('publishes a burst of native address commits as one normalized batch', async () => {
+    jest.useFakeTimers();
+    const apply = jest.fn().mockResolvedValue(undefined);
+    const batcher = createAddressListCommitBatcher({ apply, delayMs: 8 });
+
+    const first = batcher.enqueue(['0xA', '0xB']);
+    const second = batcher.enqueue(['0xb', '0xC']);
+    await jest.advanceTimersByTimeAsync(8);
+    await Promise.all([first, second]);
+
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(apply).toHaveBeenCalledWith(['0xa', '0xb', '0xc']);
+    jest.useRealTimers();
+  });
+
+  it('rejects every waiter when a native commit batch cannot be published', async () => {
+    jest.useFakeTimers();
+    const error = new Error('database unavailable');
+    const batcher = createAddressListCommitBatcher({
+      apply: jest.fn().mockRejectedValue(error),
+      delayMs: 1,
+    });
+
+    const first = batcher.enqueue(['0xA']);
+    const second = batcher.enqueue(['0xB']);
+    const firstResult = expect(first).rejects.toBe(error);
+    const secondResult = expect(second).rejects.toBe(error);
+    await jest.advanceTimersByTimeAsync(1);
+
+    await firstResult;
+    await secondResult;
+    jest.useRealTimers();
   });
 });

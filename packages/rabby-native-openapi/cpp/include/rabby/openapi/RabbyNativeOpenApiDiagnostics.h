@@ -10,6 +10,8 @@ typedef void (^RabbyNativeOpenApiDiagnosticCompletion)(
     NSDictionary<NSString*, id>* result);
 typedef void (^RabbyNativeTokenSyncCompletion)(
     NSDictionary<NSString*, id>* result);
+typedef void (^RabbyNativeAddressAssetSyncCompletion)(
+    NSDictionary<NSString*, id>* result);
 typedef void (^RabbyNativeTokenCacheWriteDiagnosticCompletion)(
     NSDictionary<NSString*, id>* result);
 
@@ -31,12 +33,21 @@ typedef void (^RabbyNativeTokenCacheWriteDiagnosticCompletion)(
                   replaceExisting:(BOOL)replaceExisting
                         completion:(RabbyNativeTokenSyncCompletion)completion;
 
++ (void)syncProtocolCacheForAddress:(NSString*)address
+                    replaceExisting:(BOOL)replaceExisting
+                          completion:
+                              (RabbyNativeAddressAssetSyncCompletion)completion;
+
 + (void)verifyTokenCacheWriteWithCompletion:
     (RabbyNativeTokenCacheWriteDiagnosticCompletion)completion;
 
 + (void)cancelTokenCacheSyncForAddress:(NSString*)address;
 
 + (void)cancelAllTokenCacheSyncs;
+
++ (void)cancelProtocolCacheSyncForAddress:(NSString*)address;
+
++ (void)cancelAllProtocolCacheSyncs;
 
 @end
 

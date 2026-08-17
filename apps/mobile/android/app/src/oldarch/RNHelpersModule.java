@@ -19,6 +19,8 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.rabbywallet.nativeopenapi.NativeOpenApiDiagnosticCallback;
 import com.rabbywallet.nativeopenapi.NativeOpenApiDiagnosticResult;
+import com.rabbywallet.nativeopenapi.NativeAddressAssetSyncCallback;
+import com.rabbywallet.nativeopenapi.NativeAddressAssetSyncResult;
 import com.rabbywallet.nativeopenapi.NativeTokenSyncCallback;
 import com.rabbywallet.nativeopenapi.NativeTokenSyncResult;
 import com.rabbywallet.nativeopenapi.NativeTokenCacheWriteDiagnosticCallback;
@@ -77,6 +79,28 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
     receipt.putDouble("committedAt", result.getCommittedAtMs());
     receipt.putString("replacementScope", replacementScope);
     receipt.putArray("chainIds", receiptChainIds);
+    receipt.putDouble("committedRowCount", result.getCommittedRowCount());
+    receipt.putString("stage", result.getStage());
+    receipt.putString("error", result.getError());
+    reactContext
+      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+      .emit(NATIVE_ASSET_SYNC_COMPLETED_EVENT, receipt);
+  }
+
+  private void emitNativeAddressAssetSyncCompletion(
+    String requestId,
+    NativeAddressAssetSyncResult result
+  ) {
+    WritableMap receipt = Arguments.createMap();
+    receipt.putInt("schemaVersion", 1);
+    receipt.putString("requestId", requestId);
+    receipt.putString("kind", result.getKind());
+    receipt.putBoolean("success", result.getSuccess());
+    receipt.putString("address", result.getAddress());
+    receipt.putDouble("generation", result.getGeneration());
+    receipt.putDouble("committedAt", result.getCommittedAtMs());
+    receipt.putString("replacementScope", "address");
+    receipt.putArray("chainIds", Arguments.createArray());
     receipt.putDouble("committedRowCount", result.getCommittedRowCount());
     receipt.putString("stage", result.getStage());
     receipt.putString("error", result.getError());
@@ -322,6 +346,71 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
   }
 
   @ReactMethod
+  public void runNativeProtocolCacheSyncDiagnostic(
+    String address,
+    boolean replaceExisting,
+    Promise promise
+  ) {
+    if (!RabbyStartupTrace.isEnabled()) {
+      promise.reject(
+        "E_NATIVE_PROTOCOL_SYNC_DISABLED",
+        "Native protocol sync diagnostics are disabled in production builds"
+      );
+      return;
+    }
+
+    RabbyNativeOpenApiRuntime.syncProtocolCache(
+      reactContext,
+      BuildConfig.APPLICATION_ID,
+      BuildConfig.VERSION_NAME,
+      address,
+      replaceExisting,
+      new NativeAddressAssetSyncCallback() {
+        @Override
+        public void onComplete(NativeAddressAssetSyncResult result) {
+          WritableMap output = Arguments.createMap();
+          output.putString("kind", result.getKind());
+          output.putBoolean("success", result.getSuccess());
+          output.putString("address", result.getAddress());
+          output.putDouble("generation", result.getGeneration());
+          output.putString("stage", result.getStage());
+          output.putDouble("sourceItemCount", result.getSourceItemCount());
+          output.putDouble("committedRowCount", result.getCommittedRowCount());
+          output.putDouble("committedAtMs", result.getCommittedAtMs());
+          output.putDouble("durationMs", result.getDurationMs());
+          output.putString("error", result.getError());
+          promise.resolve(output);
+        }
+      }
+    );
+  }
+
+  @ReactMethod
+  public void startNativeProtocolSync(
+    String address,
+    boolean replaceExisting,
+    Promise promise
+  ) {
+    String requestId = UUID.randomUUID().toString().toLowerCase();
+    RabbyNativeOpenApiRuntime.syncProtocolCache(
+      reactContext,
+      BuildConfig.APPLICATION_ID,
+      BuildConfig.VERSION_NAME,
+      address,
+      replaceExisting,
+      new NativeAddressAssetSyncCallback() {
+        @Override
+        public void onComplete(NativeAddressAssetSyncResult result) {
+          emitNativeAddressAssetSyncCompletion(requestId, result);
+        }
+      }
+    );
+    WritableMap startResult = Arguments.createMap();
+    startResult.putString("requestId", requestId);
+    promise.resolve(startResult);
+  }
+
+  @ReactMethod
   public void runNativeTokenCacheWriteDiagnostic(Promise promise) {
     if (!RabbyStartupTrace.isEnabled()) {
       promise.reject(
@@ -349,6 +438,16 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
         }
       }
     );
+  }
+
+  @ReactMethod
+  public void cancelNativeProtocolCacheSync(String address) {
+    RabbyNativeOpenApiRuntime.cancelProtocolCacheSync(address);
+  }
+
+  @ReactMethod
+  public void cancelAllNativeProtocolCacheSyncs() {
+    RabbyNativeOpenApiRuntime.cancelAllProtocolCacheSyncs();
   }
 
   @ReactMethod

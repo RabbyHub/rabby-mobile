@@ -95,6 +95,27 @@ interface NativeModulesStatic {
     ): Promise<{
       requestId: string;
     }>;
+    runNativeProtocolCacheSyncDiagnostic?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      kind: 'protocol';
+      success: boolean;
+      address: string;
+      generation: number;
+      stage: string;
+      sourceItemCount: number;
+      committedRowCount: number;
+      committedAtMs: number;
+      durationMs: number;
+      error: string;
+    }>;
+    startNativeProtocolSync?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      requestId: string;
+    }>;
     runNativeTokenCacheWriteDiagnostic?(): Promise<{
       success: boolean;
       stage: string;
@@ -104,6 +125,8 @@ interface NativeModulesStatic {
     }>;
     cancelNativeTokenCacheSync?(address: string): void;
     cancelAllNativeTokenCacheSyncs?(): void;
+    cancelNativeProtocolCacheSync?(address: string): void;
+    cancelAllNativeProtocolCacheSyncs?(): void;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath

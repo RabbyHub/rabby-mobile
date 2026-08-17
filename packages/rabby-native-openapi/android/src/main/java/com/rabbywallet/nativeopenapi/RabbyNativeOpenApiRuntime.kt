@@ -24,6 +24,9 @@ object RabbyNativeOpenApiRuntime {
   private val nextTokenSyncId = AtomicLong(1)
   private val tokenSyncCallbacks =
     ConcurrentHashMap<Long, NativeTokenSyncCallback>()
+  private val nextAddressAssetSyncId = AtomicLong(1)
+  private val addressAssetSyncCallbacks =
+    ConcurrentHashMap<Long, NativeAddressAssetSyncCallback>()
   private val storageDiagnosticExecutor = Executors.newSingleThreadExecutor {
     runnable -> Thread(runnable, "rabby-native-token-cache-diagnostic")
   }
@@ -304,6 +307,47 @@ object RabbyNativeOpenApiRuntime {
   }
 
   @JvmStatic
+  fun syncProtocolCache(
+    context: Context,
+    applicationIdentity: String,
+    clientVersion: String,
+    address: String,
+    replaceExisting: Boolean,
+    callback: NativeAddressAssetSyncCallback,
+  ) {
+    initialize(context)
+    val syncId = nextAddressAssetSyncId.getAndIncrement()
+    addressAssetSyncCallbacks[syncId] = callback
+    try {
+      startProtocolSync(
+        syncId,
+        applicationIdentity,
+        clientVersion,
+        address,
+        replaceExisting,
+      )
+    } catch (_: Throwable) {
+      addressAssetSyncCallbacks.remove(syncId)
+      mainHandler.post {
+        callback.onComplete(
+          NativeAddressAssetSyncResult(
+            kind = "protocol",
+            success = false,
+            address = address.lowercase(),
+            generation = 0,
+            stage = "none",
+            sourceItemCount = 0,
+            committedRowCount = 0,
+            committedAtMs = 0,
+            durationMs = 0,
+            error = "native protocol sync could not start",
+          ),
+        )
+      }
+    }
+  }
+
+  @JvmStatic
   fun runTokenCacheWriteDiagnostic(
     context: Context,
     callback: NativeTokenCacheWriteDiagnosticCallback,
@@ -338,6 +382,16 @@ object RabbyNativeOpenApiRuntime {
   }
 
   @JvmStatic
+  fun cancelProtocolCacheSync(address: String) {
+    cancelProtocolSync(address)
+  }
+
+  @JvmStatic
+  fun cancelAllProtocolCacheSyncs() {
+    cancelAllProtocolSyncs()
+  }
+
+  @JvmStatic
   private external fun startDiagnostic(
     diagnosticId: Long,
     applicationIdentity: String,
@@ -366,10 +420,25 @@ object RabbyNativeOpenApiRuntime {
   )
 
   @JvmStatic
+  private external fun startProtocolSync(
+    syncId: Long,
+    applicationIdentity: String,
+    clientVersion: String,
+    address: String,
+    replaceExisting: Boolean,
+  )
+
+  @JvmStatic
   private external fun cancelTokenSync(address: String)
 
   @JvmStatic
   private external fun cancelAllTokenSyncs()
+
+  @JvmStatic
+  private external fun cancelProtocolSync(address: String)
+
+  @JvmStatic
+  private external fun cancelAllProtocolSyncs()
 
   @JvmStatic
   private external fun verifyTokenCacheWrite(syncTimestampMs: Long): String?
@@ -438,6 +507,36 @@ object RabbyNativeOpenApiRuntime {
       chainCount = chainCount,
       sourceTokenCount = sourceTokenCount,
       filteredTokenCount = filteredTokenCount,
+      committedRowCount = committedRowCount,
+      committedAtMs = committedAtMs,
+      durationMs = durationMs,
+      error = error,
+    )
+    mainHandler.post { callback.onComplete(result) }
+  }
+
+  @JvmStatic
+  private fun onAddressAssetSyncCompleted(
+    syncId: Long,
+    kind: String,
+    success: Boolean,
+    address: String,
+    generation: Long,
+    stage: String,
+    sourceItemCount: Long,
+    committedRowCount: Long,
+    committedAtMs: Long,
+    durationMs: Long,
+    error: String,
+  ) {
+    val callback = addressAssetSyncCallbacks.remove(syncId) ?: return
+    val result = NativeAddressAssetSyncResult(
+      kind = kind,
+      success = success,
+      address = address,
+      generation = generation,
+      stage = stage,
+      sourceItemCount = sourceItemCount,
       committedRowCount = committedRowCount,
       committedAtMs = committedAtMs,
       durationMs = durationMs,

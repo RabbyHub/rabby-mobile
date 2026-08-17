@@ -15,7 +15,14 @@ jest.mock('@/databases/entities/appchain', () => ({
     queryByOwners: jest.fn(async () => ({})),
   },
 }));
+jest.mock('@/databases/protocolAssetProjection', () => ({
+  compileProtocolAssetSqlProjection: jest.fn(),
+}));
 jest.mock('@/databases/hooks/assets', () => ({
+  loadAppChainComplexProtocols: jest.fn(async () => ({
+    protocols: [],
+    errorAppIds: [],
+  })),
   loadProtocols: jest.fn(),
   loadProtocolsForAddresses: jest.fn(),
   syncSpecificProtocol: jest.fn(),
@@ -26,6 +33,7 @@ jest.mock('@/databases/sync/assets', () => ({
 }));
 jest.mock('@/utils/appchain', () => ({
   formatAppChain: jest.fn(value => value),
+  isAppChain: jest.fn((chain: string) => chain.startsWith('RABBY_APP_CHAIN_')),
 }));
 jest.mock('@/utils/lendingUserStatus', () => ({
   reportLendingUserStatusOnce: jest.fn(),
@@ -55,6 +63,13 @@ jest.mock('./assetProjectionPersistence', () => ({
   scheduleAssetProjectionPersistence: jest.fn(),
   subscribeAssetProjectionDatabaseCommits: jest.fn(),
 }));
+jest.mock('./protocolSyncExecutor', () => ({
+  getProtocolSyncMode: jest.fn(() => 'js'),
+  executeProtocolSync: jest.fn(async ({ executeJs }) => ({
+    mode: 'js',
+    value: await executeJs(),
+  })),
+}));
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
@@ -69,6 +84,7 @@ import {
 } from '@/databases/sync/assets';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { AppChainEntity } from '@/databases/entities/appchain';
+import { compileProtocolAssetSqlProjection } from '@/databases/protocolAssetProjection';
 import useProtocolListStore, {
   buildProtocolEntityId,
   protocolEntityResourceStore,
@@ -78,6 +94,7 @@ import {
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
 } from './assetProjectionPersistence';
+import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -94,6 +111,9 @@ const mockedScheduleAssetProjectionPersistence = jest.mocked(
 );
 const mockedRestoreAssetProjection = jest.mocked(restoreAssetProjection);
 const mockedAppChainEntity = jest.mocked(AppChainEntity);
+const mockedCompileProtocolAssetSqlProjection = jest.mocked(
+  compileProtocolAssetSqlProjection,
+);
 
 const createProtocol = (id: string, netWorth: number): IProtocolItem =>
   ({
@@ -458,5 +478,67 @@ describe('protocol list request freshness', () => {
         scene: 'multi-address',
       }),
     );
+  });
+
+  it('resolves a native completion only after the committed SQL projection is published', async () => {
+    jest.useFakeTimers();
+    try {
+      const committed = createProtocol('native-committed', 42);
+      const protocolId = buildProtocolEntityId(committed);
+      mockedProtocolItemEntity.getDefaultProtocolsByAddresses.mockResolvedValueOnce(
+        { [NORMALIZED_ADDRESS]: [committed] } as never,
+      );
+      mockedAppChainEntity.queryByOwners.mockResolvedValueOnce({});
+      mockedCompileProtocolAssetSqlProjection.mockResolvedValue({
+        ruleVersion: 1,
+        scene: 'single-address',
+        protocolIds: [protocolId],
+        defaultVisibleProtocolCount: 1,
+        foldedProtocolUsdValue: '',
+      });
+
+      const key = useProtocolListComputedStore
+        .getState()
+        .registerSingleProtocols(ADDRESS);
+      const completion = dispatchNativeAssetSyncCompletion({
+        schemaVersion: 1,
+        requestId: 'protocol-native-publish-1',
+        kind: 'protocol',
+        success: true,
+        address: ADDRESS,
+        generation: 1,
+        committedAt: 100,
+        replacementScope: 'address',
+        chainIds: [],
+        committedRowCount: 1,
+        stage: 'persistence',
+        error: '',
+      });
+
+      await Promise.resolve();
+      jest.advanceTimersByTime(20);
+      await completion;
+
+      expect(
+        useProtocolListStore.getState().protocolMap[NORMALIZED_ADDRESS],
+      ).toEqual([committed]);
+      expect(protocolEntityResourceStore.getValue(protocolId)).toEqual(
+        committed,
+      );
+      expect(
+        useProtocolListComputedStore.getState().singleProtocolsIndexCache[key],
+      ).toEqual({
+        protocolIds: [protocolId],
+        defaultVisibleProtocolCount: 1,
+        foldedProtocolUsdValue: '',
+      });
+      expect(mockedCompileProtocolAssetSqlProjection).toHaveBeenCalledWith({
+        addresses: [NORMALIZED_ADDRESS],
+        chainServerId: undefined,
+        scene: 'single-address',
+      });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
