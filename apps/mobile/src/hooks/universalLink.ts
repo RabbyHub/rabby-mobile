@@ -46,6 +46,7 @@ import {
   parseRegressionScenarioLink,
   sanitizeLinkForLogging,
 } from '@/devtools/regressionScenarios/runtime';
+import { resetRegressionWalletCredentials } from '@/devtools/regressionScenarios/reset';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -70,6 +71,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'walletconnect-redirect'
     | 'open-testkit-screen'
     | 'clear-app-cache'
+    | 'reset-regression-wallet'
     | 'debug-sync-all-history'
     | 'debug-db-sync-policy'
     | 'debug-lending'
@@ -82,9 +84,15 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
     | typeof RootNames.DevDataSQLite
-    | typeof RootNames.DevSwitches;
+    | typeof RootNames.DevSwitches
+    | typeof RootNames.DevPerf;
   testkitParams?: {
     tab?: 'overview' | 'debug';
+    action?:
+      | 'native-openapi'
+      | 'native-openapi-token-sync'
+      | 'native-openapi-storage';
+    address?: string;
   };
   debugDbSyncPolicy?: {
     resetWritePolicyOverride?: boolean;
@@ -105,6 +113,7 @@ const NON_PRODUCTION_TESTKIT_SCREENS = {
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
   DevSwitches: RootNames.DevSwitches,
+  DevPerf: RootNames.DevPerf,
 } as const;
 
 function getRabbyGoTarget(
@@ -151,12 +160,28 @@ function parseNonProductionTestkitLink(appLink: string) {
   }
 
   const tabRaw = urlInfo.searchParams.get('tab');
+  const actionRaw = urlInfo.searchParams.get('action');
+  const addressRaw = urlInfo.searchParams.get('address');
+  const tab = tabRaw === 'debug' || tabRaw === 'overview' ? tabRaw : undefined;
+  const action =
+    screen === RootNames.DevPerf &&
+    (actionRaw === 'native-openapi' ||
+      actionRaw === 'native-openapi-token-sync' ||
+      actionRaw === 'native-openapi-storage')
+      ? actionRaw
+      : undefined;
+  const address =
+    screen === RootNames.DevPerf &&
+    addressRaw &&
+    /^0x[0-9a-fA-F]{40}$/.test(addressRaw)
+      ? addressRaw
+      : undefined;
 
   return {
     type: 'open-testkit-screen',
     testkitScreen: screen,
     testkitParams:
-      tabRaw === 'debug' || tabRaw === 'overview' ? { tab: tabRaw } : undefined,
+      tab || action || address ? { tab, action, address } : undefined,
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
 }
 
@@ -276,6 +301,15 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   ) {
     return {
       type: 'clear-app-cache',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'reset-regression-wallet' ||
+    target === 'reset-regression-wallet'
+  ) {
+    return {
+      type: 'reset-regression-wallet',
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -428,6 +462,35 @@ const clearAppCacheFromLinkStateRef = {
   running: false,
 };
 
+const resetRegressionWalletFromLinkStateRef = {
+  running: false,
+};
+
+async function resetRegressionWalletFromLink() {
+  if (
+    !isNonPublicProductionEnv ||
+    resetRegressionWalletFromLinkStateRef.running
+  ) {
+    return;
+  }
+
+  resetRegressionWalletFromLinkStateRef.running = true;
+  try {
+    abortAllSyncTasks('reset-regression-wallet-link');
+    await resetRegressionWalletCredentials();
+    resetUpdateHistoryTime();
+    await dropAppDataSourceAndQuitApp({
+      exitDelayMs: 300,
+    });
+  } catch (error) {
+    resetRegressionWalletFromLinkStateRef.running = false;
+    console.error(
+      '[useUniversalLinkOnTop] reset regression wallet failed',
+      error,
+    );
+  }
+}
+
 async function clearAppCacheFromLink() {
   if (clearAppCacheFromLinkStateRef.running) {
     return;
@@ -557,6 +620,9 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       break;
     case 'clear-app-cache':
       void clearAppCacheFromLink();
+      break;
+    case 'reset-regression-wallet':
+      void resetRegressionWalletFromLink();
       break;
     case 'debug-sync-all-history':
       void debugSyncAllHistoryFromLink(payload.debugDbSyncPolicy);
