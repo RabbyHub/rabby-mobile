@@ -1,6 +1,8 @@
 const mockCancelFastL2 = jest.fn();
 const mockCancelLatestTrade = jest.fn();
 const mockPrewarmFastL2 = jest.fn(() => mockCancelFastL2);
+const mockPrewarmFastL2HttpSnapshot = jest.fn(async () => true);
+const mockWaitForFastL2HttpSnapshot = jest.fn(async () => true);
 const mockPrewarmLatestTrade = jest.fn(() => mockCancelLatestTrade);
 const mockPrepareLeverageSources = jest.fn(async () => ({
   accountLeverageConfiguration: null,
@@ -13,6 +15,10 @@ const mockGetSessionPrecision = jest.fn(() => ({
 
 jest.mock('@/hooks/perps/subscriptions/usePerpsFastL2', () => ({
   prewarmPerpsFastL2: (...args: unknown[]) => mockPrewarmFastL2(...args),
+  prewarmPerpsFastL2HttpSnapshot: (...args: unknown[]) =>
+    mockPrewarmFastL2HttpSnapshot(...args),
+  waitForPerpsFastL2HttpSnapshot: (...args: unknown[]) =>
+    mockWaitForFastL2HttpSnapshot(...args),
 }));
 
 jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
@@ -34,7 +40,10 @@ import type { PerpsProMarket } from '../model/market';
 import {
   PERPS_PRO_ENTRY_INTENT_TIMEOUT_MS,
   prewarmPerpsProEntryIntent,
+  prewarmPerpsProRealtimeDisplaySnapshot,
   prewarmPerpsProRealtimeIntent,
+  resolvePerpsProRealtimeTarget,
+  waitForPerpsProRealtimeDisplaySnapshot,
 } from './perpsProEntryIntent';
 
 const market = {
@@ -96,5 +105,43 @@ describe('prewarmPerpsProEntryIntent', () => {
     cancel();
     expect(mockCancelFastL2).toHaveBeenCalledTimes(1);
     expect(mockCancelLatestTrade).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves and warms the exact display target without creating a second owner', async () => {
+    expect(resolvePerpsProRealtimeTarget(market)).toEqual({
+      coin: 'BTC',
+      precision: { mantissa: 2, nSigFigs: 5 },
+    });
+
+    await expect(prewarmPerpsProRealtimeDisplaySnapshot(market)).resolves.toBe(
+      true,
+    );
+    await expect(
+      waitForPerpsProRealtimeDisplaySnapshot(market, 123),
+    ).resolves.toBe(true);
+
+    expect(mockPrewarmFastL2HttpSnapshot).toHaveBeenCalledWith({
+      coin: 'BTC',
+      precision: { mantissa: 2, nSigFigs: 5 },
+    });
+    expect(mockWaitForFastL2HttpSnapshot).toHaveBeenCalledWith({
+      coin: 'BTC',
+      precision: { mantissa: 2, nSigFigs: 5 },
+      timeoutMs: 123,
+    });
+    expect(mockPrewarmFastL2).not.toHaveBeenCalled();
+    expect(mockPrewarmLatestTrade).not.toHaveBeenCalled();
+  });
+
+  it('skips exact display warming when the precision target is invalid', async () => {
+    await expect(
+      prewarmPerpsProRealtimeDisplaySnapshot({ ...market, price: null }),
+    ).resolves.toBe(false);
+    await expect(
+      waitForPerpsProRealtimeDisplaySnapshot({ ...market, price: null }, 123),
+    ).resolves.toBe(false);
+
+    expect(mockPrewarmFastL2HttpSnapshot).not.toHaveBeenCalled();
+    expect(mockWaitForFastL2HttpSnapshot).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { RootNames } from '@/constant/layout';
 import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
+import { PERPS_BOOK_ATOMIC_SWITCH_BUDGET_MS } from '@/hooks/perps/subscriptions/perpsBookTypes';
 import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
 
@@ -28,7 +29,11 @@ import {
   readPerpsProAccountLeverageConfiguration,
   readPerpsProZeroAddressLeverageBaseline,
 } from './perpsProZeroAddressLeverageBaseline';
-import { prewarmPerpsProRealtimeIntent } from './perpsProEntryIntent';
+import {
+  prewarmPerpsProRealtimeDisplaySnapshot,
+  prewarmPerpsProRealtimeIntent,
+  waitForPerpsProRealtimeDisplaySnapshot,
+} from './perpsProEntryIntent';
 import { usePerpsBookPrecision } from './usePerpsBookPrecision';
 
 const getStaticMarketSignature = (market: {
@@ -89,6 +94,10 @@ export const usePerpsProScene = () => {
   const pendingRealtimeIntentRef = useRef<{
     cancel: () => void;
     sequence: number;
+  } | null>(null);
+  const pressedRealtimeIntentRef = useRef<{
+    cancel: () => void;
+    marketKey: string;
   } | null>(null);
   const navigationMarketRef = useRef(route.params?.market);
   const navigationMarketCandidatesRef = useRef(route.params?.marketCandidates);
@@ -175,6 +184,37 @@ export const usePerpsProScene = () => {
     [],
   );
 
+  const releasePressedRealtimeIntent = useCallback((marketKey?: string) => {
+    const intent = pressedRealtimeIntentRef.current;
+    if (!intent || (marketKey != null && intent.marketKey !== marketKey)) {
+      return;
+    }
+    pressedRealtimeIntentRef.current = null;
+    intent.cancel();
+  }, []);
+
+  const startMarketRealtimeIntent = useCallback(
+    (market: PerpsProMarket) => {
+      if (marketSelectionRef.current?.marketKey === market.marketKey) {
+        releasePressedRealtimeIntent();
+        return;
+      }
+      if (pressedRealtimeIntentRef.current?.marketKey === market.marketKey) {
+        return;
+      }
+      releasePressedRealtimeIntent();
+      try {
+        pressedRealtimeIntentRef.current = {
+          cancel: prewarmPerpsProRealtimeIntent(market),
+          marketKey: market.marketKey,
+        };
+      } catch (error) {
+        console.error('[usePerpsProScene] start press intent failed', error);
+      }
+    },
+    [releasePressedRealtimeIntent],
+  );
+
   const prepareMarketSelection = useCallback(
     async (market: PerpsProMarket, prewarmRealtime: boolean) => {
       const selectedAccount = perpsStore.getState().currentPerpsAccount;
@@ -188,6 +228,7 @@ export const usePerpsProScene = () => {
         marketSelectionSequenceRef.current += 1;
         pendingMarketSelectionRef.current = null;
         releasePendingRealtimeIntent();
+        releasePressedRealtimeIntent();
         return true;
       }
       const sequence = ++marketSelectionSequenceRef.current;
@@ -196,14 +237,36 @@ export const usePerpsProScene = () => {
         marketKey: market.marketKey,
       };
       releasePendingRealtimeIntent();
+      const currentPressedIntent = pressedRealtimeIntentRef.current;
+      const pressedIntent =
+        prewarmRealtime && currentPressedIntent?.marketKey === market.marketKey
+          ? currentPressedIntent
+          : null;
+      if (pressedIntent) {
+        pressedRealtimeIntentRef.current = null;
+      } else {
+        releasePressedRealtimeIntent();
+      }
+      let displaySnapshotDeadline: number | null = null;
       if (prewarmRealtime) {
         try {
           pendingRealtimeIntentRef.current = {
-            cancel: prewarmPerpsProRealtimeIntent(market),
+            cancel:
+              pressedIntent?.cancel ?? prewarmPerpsProRealtimeIntent(market),
             sequence,
           };
         } catch (error) {
           console.error('[usePerpsProScene] prewarm realtime failed', error);
+        }
+        try {
+          displaySnapshotDeadline =
+            Date.now() + PERPS_BOOK_ATOMIC_SWITCH_BUDGET_MS;
+          void prewarmPerpsProRealtimeDisplaySnapshot(market);
+        } catch (error) {
+          console.error(
+            '[usePerpsProScene] prewarm display snapshot failed',
+            error,
+          );
         }
       }
 
@@ -220,6 +283,19 @@ export const usePerpsProScene = () => {
         releasePendingRealtimeIntent(sequence);
         console.error('[usePerpsProScene] prepare market failed', error);
         return false;
+      }
+      if (displaySnapshotDeadline != null) {
+        try {
+          await waitForPerpsProRealtimeDisplaySnapshot(
+            market,
+            Math.max(0, displaySnapshotDeadline - Date.now()),
+          );
+        } catch (error) {
+          console.error(
+            '[usePerpsProScene] wait display snapshot failed',
+            error,
+          );
+        }
       }
       if (sequence !== marketSelectionSequenceRef.current) {
         releasePendingRealtimeIntent(sequence);
@@ -259,7 +335,7 @@ export const usePerpsProScene = () => {
       releasePendingRealtimeIntent(sequence, false);
       return true;
     },
-    [releasePendingRealtimeIntent],
+    [releasePendingRealtimeIntent, releasePressedRealtimeIntent],
   );
 
   const selectMarket = useCallback(
@@ -283,7 +359,8 @@ export const usePerpsProScene = () => {
     marketSelectionSequenceRef.current += 1;
     pendingMarketSelectionRef.current = null;
     releasePendingRealtimeIntent();
-  }, [releasePendingRealtimeIntent]);
+    releasePressedRealtimeIntent();
+  }, [releasePendingRealtimeIntent, releasePressedRealtimeIntent]);
 
   const prefetchMarket = useCallback((coin: string) => {
     prefetchPerpsProZeroAddressLeverageBaseline(coin);
@@ -343,8 +420,9 @@ export const usePerpsProScene = () => {
       marketSelectionSequenceRef.current += 1;
       pendingMarketSelectionRef.current = null;
       releasePendingRealtimeIntent();
+      releasePressedRealtimeIntent();
     },
-    [releasePendingRealtimeIntent],
+    [releasePendingRealtimeIntent, releasePressedRealtimeIntent],
   );
 
   useEffect(() => {
@@ -460,9 +538,11 @@ export const usePerpsProScene = () => {
     orderBookSubscriptionEnabled,
     realtimeEnabled: subscriptionsEnabled,
     retryMarketData,
+    cancelMarketRealtimeIntent: releasePressedRealtimeIntent,
     selectMarket,
     selectMarketByCoin,
     selectTickOption,
+    startMarketRealtimeIntent,
     selectedTickOption,
     tickOptions,
     tradeConfigurationReady,

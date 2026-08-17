@@ -4,6 +4,7 @@ import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 const mockWsListeners = new Map<string, Set<(...args: any[]) => void>>();
 const mockFastL2Callbacks: Array<(data: L2Book) => void> = [];
 const mockUnsubscribers: jest.Mock[] = [];
+const mockGetL2Book = jest.fn();
 const mockWs = {
   off: jest.fn((event: string, listener: (...args: any[]) => void) => {
     mockWsListeners.get(event)?.delete(listener);
@@ -22,7 +23,7 @@ const mockWs = {
     },
   ),
 };
-const mockSdk = { ws: mockWs };
+const mockSdk = { info: { getL2Book: mockGetL2Book }, ws: mockWs };
 
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: {
@@ -33,9 +34,11 @@ jest.mock('@/core/apis/perps', () => ({
 
 import {
   PERPS_FAST_L2_DISPLAY_CACHE_MS,
+  prewarmPerpsFastL2HttpSnapshot,
   prewarmPerpsFastL2,
   resetPerpsFastL2RegistryForTests,
   usePerpsFastL2,
+  waitForPerpsFastL2HttpSnapshot,
 } from './usePerpsFastL2';
 
 const precision = { mantissa: null, nSigFigs: 5 as const };
@@ -49,12 +52,21 @@ const emitFastL2 = (value: L2Book) => {
   mockFastL2Callbacks.at(-1)?.(value);
 };
 
+const deferred = <T>() => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(next => {
+    resolve = next;
+  });
+  return { promise, resolve };
+};
+
 describe('usePerpsFastL2 shared registry', () => {
   beforeEach(() => {
     resetPerpsFastL2RegistryForTests();
     jest.clearAllMocks();
     mockWsListeners.clear();
     mockFastL2Callbacks.length = 0;
+    mockGetL2Book.mockResolvedValue(book(100));
     mockUnsubscribers.length = 0;
   });
 
@@ -136,6 +148,37 @@ describe('usePerpsFastL2 shared registry', () => {
     );
   });
 
+  it('deduplicates and seeds an exact display-only HTTP snapshot', async () => {
+    const response = deferred<L2Book>();
+    mockGetL2Book.mockReturnValueOnce(response.promise);
+
+    const first = prewarmPerpsFastL2HttpSnapshot({
+      coin: 'ETH',
+      precision,
+    });
+    const second = prewarmPerpsFastL2HttpSnapshot({
+      coin: 'ETH',
+      precision,
+    });
+    expect(first).toBe(second);
+    await act(async () => Promise.resolve());
+    expect(mockGetL2Book).toHaveBeenCalledTimes(1);
+    expect(mockGetL2Book).toHaveBeenCalledWith('ETH', 5, undefined);
+
+    await act(async () => {
+      response.resolve(book(5, 'ETH'));
+      await expect(first).resolves.toBe(true);
+    });
+    const hook = renderHook(() =>
+      usePerpsFastL2({ coin: 'ETH', enabled: true, precision }),
+    );
+    expect(hook.result.current).toMatchObject({
+      book: book(5, 'ETH'),
+      identity: 'ETH:5:null',
+      status: 'stale',
+    });
+  });
+
   it('keeps the logical subscription in background and requires a post-resume revision', () => {
     jest.useFakeTimers();
     jest.setSystemTime(10_000);
@@ -163,11 +206,100 @@ describe('usePerpsFastL2 shared registry', () => {
     expect(hook.result.current.status).toBe('stale');
     expect(hook.result.current.book?.time).toBe(2);
     expect(mockWs.subscribeToFastL2).toHaveBeenCalledTimes(1);
+    expect(mockGetL2Book).not.toHaveBeenCalled();
 
     jest.setSystemTime(12_001);
     act(() => emitFastL2(book(3)));
     expect(hook.result.current.status).toBe('ready');
     expect(hook.result.current.book?.time).toBe(3);
+  });
+
+  it('races one exact HTTP snapshot after an expired foreground resume', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(10_000);
+    const hook = renderHook(
+      ({ publicationEnabled }) =>
+        usePerpsFastL2({
+          coin: 'BTC',
+          enabled: true,
+          precision,
+          publicationEnabled,
+        }),
+      { initialProps: { publicationEnabled: true } },
+    );
+    act(() => emitFastL2(book(1)));
+    hook.rerender({ publicationEnabled: false });
+    jest.setSystemTime(10_000 + PERPS_FAST_L2_DISPLAY_CACHE_MS + 1);
+
+    hook.rerender({ publicationEnabled: true });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockGetL2Book).toHaveBeenCalledTimes(1);
+    expect(mockGetL2Book).toHaveBeenCalledWith('BTC', 5, undefined);
+    expect(hook.result.current.status).toBe('stale');
+    expect(hook.result.current.book?.time).toBe(100);
+    expect(mockWs.subscribeToFastL2).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not let a late HTTP snapshot overwrite a newer ready WebSocket book', async () => {
+    const response = deferred<L2Book>();
+    mockGetL2Book.mockReturnValueOnce(response.promise);
+    const request = prewarmPerpsFastL2HttpSnapshot({
+      coin: 'ETH',
+      precision,
+    });
+    await act(async () => Promise.resolve());
+
+    const hook = renderHook(() =>
+      usePerpsFastL2({ coin: 'ETH', enabled: true, precision }),
+    );
+    act(() => emitFastL2(book(20, 'ETH')));
+    expect(hook.result.current).toMatchObject({
+      book: book(20, 'ETH'),
+      status: 'ready',
+    });
+
+    await act(async () => {
+      response.resolve(book(10, 'ETH'));
+      await expect(request).resolves.toBe(true);
+    });
+
+    expect(hook.result.current).toMatchObject({
+      book: book(20, 'ETH'),
+      status: 'ready',
+    });
+  });
+
+  it('bounds an exact snapshot handoff without cancelling the shared request', async () => {
+    jest.useFakeTimers();
+    const response = deferred<L2Book>();
+    mockGetL2Book.mockReturnValueOnce(response.promise);
+    const handoff = waitForPerpsFastL2HttpSnapshot({
+      coin: 'ETH',
+      precision,
+      timeoutMs: 50,
+    });
+    await act(async () => Promise.resolve());
+
+    act(() => jest.advanceTimersByTime(50));
+    await expect(handoff).resolves.toBe(false);
+
+    await act(async () => {
+      response.resolve(book(30, 'ETH'));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const hook = renderHook(() =>
+      usePerpsFastL2({ coin: 'ETH', enabled: true, precision }),
+    );
+    expect(hook.result.current).toMatchObject({
+      book: book(30, 'ETH'),
+      status: 'stale',
+    });
   });
 
   it('never renders an expired ready book while reopening the publication gate', () => {

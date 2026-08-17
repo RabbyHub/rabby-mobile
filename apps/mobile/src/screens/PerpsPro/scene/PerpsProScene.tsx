@@ -842,6 +842,8 @@ export const PerpsProScene: React.FC<{
         currentMarketKey={scene.currentMarket?.marketKey ?? null}
         onClose={scene.cancelPendingMarketSelection}
         onPrefetch={scene.prefetchMarket}
+        onRealtimeIntentCancel={scene.cancelMarketRealtimeIntent}
+        onRealtimeIntentStart={scene.startMarketRealtimeIntent}
         onSelect={scene.selectMarket}
         ref={marketSelectorRef}
       />

@@ -9,6 +9,8 @@ const mockReadBaseline = jest.fn();
 const mockSetSessionMarket = jest.fn();
 const mockCancelRealtimeIntent = jest.fn();
 const mockPrewarmRealtimeIntent = jest.fn(() => mockCancelRealtimeIntent);
+const mockPrewarmDisplaySnapshot = jest.fn(() => Promise.resolve(true));
+const mockWaitDisplaySnapshot = jest.fn(() => Promise.resolve(true));
 let mockSelectedTickOption: object | null = null;
 
 const createMarketData = (name: string, maxLeverage: number): MarketData => ({
@@ -64,6 +66,8 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     selector(mockPerpsState);
   store.getState = () => mockPerpsState;
   return {
+    isPerpsUserAbstractionReadyForAccount: (state: typeof mockPerpsState) =>
+      state.userAbstractionReady,
     perpsStore: store,
     usePerpsStore: () => ({ fetchMarketData: jest.fn() }),
   };
@@ -87,8 +91,12 @@ jest.mock('./perpsProZeroAddressLeverageBaseline', () => ({
 }));
 
 jest.mock('./perpsProEntryIntent', () => ({
+  prewarmPerpsProRealtimeDisplaySnapshot: (...args: unknown[]) =>
+    mockPrewarmDisplaySnapshot(...args),
   prewarmPerpsProRealtimeIntent: (...args: unknown[]) =>
     mockPrewarmRealtimeIntent(...args),
+  waitForPerpsProRealtimeDisplaySnapshot: (...args: unknown[]) =>
+    mockWaitDisplaySnapshot(...args),
 }));
 
 jest.mock('./usePerpsBookPrecision', () => ({
@@ -280,6 +288,41 @@ describe('usePerpsProScene prepared market selection', () => {
       value: 10,
     });
     expect(mockCancelRealtimeIntent).not.toHaveBeenCalled();
+  });
+
+  it('adopts one row PressIn lease and waits only for the bounded display handoff', async () => {
+    const hook = renderHook(() => usePerpsProScene());
+    await waitFor(() =>
+      expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC'),
+    );
+    const targetMarket = buildPerpsProMarket(sui);
+    const displayReady = deferred<boolean>();
+    mockWaitDisplaySnapshot.mockReturnValueOnce(displayReady.promise);
+
+    act(() => hook.result.current.startMarketRealtimeIntent(targetMarket));
+    expect(mockPrewarmRealtimeIntent).toHaveBeenCalledTimes(1);
+
+    let selection!: Promise<boolean>;
+    act(() => {
+      selection = hook.result.current.selectMarket(targetMarket);
+    });
+    expect(mockPrewarmRealtimeIntent).toHaveBeenCalledTimes(1);
+    expect(mockPrewarmDisplaySnapshot).toHaveBeenCalledWith(targetMarket);
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+
+    await act(async () => {
+      displayReady.resolve(true);
+      await expect(selection).resolves.toBe(true);
+    });
+    expect(mockWaitDisplaySnapshot).toHaveBeenCalledWith(
+      targetMarket,
+      expect.any(Number),
+    );
+    const remainingBudget = mockWaitDisplaySnapshot.mock.calls[0]?.[1];
+    expect(remainingBudget).toBeGreaterThanOrEqual(0);
+    expect(remainingBudget).toBeLessThanOrEqual(250);
+    expect(mockCancelRealtimeIntent).not.toHaveBeenCalled();
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('SUI');
   });
 
   it('rejects a late selection when a newer market wins', async () => {

@@ -54,6 +54,8 @@ type PerpsProMarketListProps = {
   favoriteSet: ReadonlySet<string>;
   marketDataStatus: MarketDataStatus;
   onPrefetch?: (coin: string) => void;
+  onRealtimeIntentCancel?: (marketKey: string) => void;
+  onRealtimeIntentStart?: (marketKey: string) => void;
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
   pageTab: PerpsProMarketTab | 'search';
@@ -72,6 +74,8 @@ const PerpsProMarketListComponent = forwardRef<
       favoriteSet,
       marketDataStatus,
       onPrefetch,
+      onRealtimeIntentCancel,
+      onRealtimeIntentStart,
       onSelect,
       onToggleFavorite,
       pageTab,
@@ -133,13 +137,23 @@ const PerpsProMarketListComponent = forwardRef<
             favorite={favoriteSet.has(item.canonicalCoin.toUpperCase())}
             marketKey={item.marketKey}
             onPrefetch={onPrefetch}
+            onRealtimeIntentCancel={onRealtimeIntentCancel}
+            onRealtimeIntentStart={onRealtimeIntentStart}
             onSelect={onSelect}
             onToggleFavorite={onToggleFavorite}
             selected={selected}
           />
         );
       },
-      [currentMarketKey, favoriteSet, onPrefetch, onSelect, onToggleFavorite],
+      [
+        currentMarketKey,
+        favoriteSet,
+        onPrefetch,
+        onRealtimeIntentCancel,
+        onRealtimeIntentStart,
+        onSelect,
+        onToggleFavorite,
+      ],
     );
     const isSearchEmpty =
       searchMode && marketDataStatus !== 'loading' && data.length === 0;

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -350,5 +350,41 @@ describe('PerpsProMarketRow', () => {
       { stopPropagation: jest.fn() },
     );
     expect(onToggleFavorite).toHaveBeenCalledWith('hyperliquid::BETA');
+  });
+
+  it('starts realtime only on touch and defers PressOut cancellation for onPress handoff', () => {
+    jest.useFakeTimers();
+    const model = buildPerpsProMarketRowModel(createMarketData('ALPHA'));
+    const onRealtimeIntentCancel = jest.fn();
+    const onRealtimeIntentStart = jest.fn();
+    const onSelect = jest.fn();
+    render(
+      <PerpsProMarketRow
+        favorite={false}
+        model={model}
+        onRealtimeIntentCancel={onRealtimeIntentCancel}
+        onRealtimeIntentStart={onRealtimeIntentStart}
+        onSelect={onSelect}
+        onToggleFavorite={jest.fn()}
+        selected={false}
+      />,
+    );
+    const row = screen.getByLabelText(
+      'page.perps.pro.marketSelector.select:ALPHAUSDC',
+    );
+
+    fireEvent(row, 'pressIn');
+    fireEvent(row, 'pressOut');
+    fireEvent.press(row);
+    act(() => jest.runOnlyPendingTimers());
+    expect(onRealtimeIntentStart).toHaveBeenCalledWith('hyperliquid::ALPHA');
+    expect(onSelect).toHaveBeenCalledWith('hyperliquid::ALPHA');
+    expect(onRealtimeIntentCancel).not.toHaveBeenCalled();
+
+    fireEvent(row, 'pressIn');
+    fireEvent(row, 'pressOut');
+    act(() => jest.runOnlyPendingTimers());
+    expect(onRealtimeIntentCancel).toHaveBeenCalledWith('hyperliquid::ALPHA');
+    jest.useRealTimers();
   });
 });
