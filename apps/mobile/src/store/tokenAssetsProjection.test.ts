@@ -84,6 +84,7 @@ import {
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
 } from './assetProjectionPersistence';
+import { getAssetReadModel, resetAssetReadModels } from './assetReadModel';
 import { notifySyncAbortHandlers } from '@/databases/sync/abort';
 
 const ADDRESS = '0xAbCd';
@@ -170,6 +171,7 @@ describe('single-address token assets projection', () => {
   beforeEach(() => {
     notifySyncAbortHandlers('token-assets-projection-test-reset');
     jest.clearAllMocks();
+    resetAssetReadModels();
     mockedSyncRemoteTokens.mockResolvedValue(true);
     mockedSyncRemoteTokensForAddresses.mockResolvedValue(true);
     mockedUsedChainList.mockResolvedValue([{ id: 'eth' }] as never);
@@ -269,6 +271,19 @@ describe('single-address token assets projection', () => {
       buildTokenEntityId(eth),
     ]);
     expect(state.singleAssetsAvailabilityByKey[key]).toBe('ready');
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        source: 'memory',
+        rowCount: 1,
+      }),
+    );
   });
 
   it('marks an explicit empty token snapshot as a ready empty projection', () => {
@@ -304,6 +319,8 @@ describe('single-address token assets projection', () => {
     const restored = createToken('restored', { usd_value: 20 });
     const tokenId = buildTokenEntityId(restored);
     mockedRestoreAssetProjection.mockResolvedValueOnce({
+      generation: 7,
+      committedAt: 1234,
       rows: [{ type: 'token', id: tokenId }],
       groups: [],
       metadata: {
@@ -346,6 +363,21 @@ describe('single-address token assets projection', () => {
     expect(
       mockedTokenItemEntity.batchMultiAddressTokens,
     ).not.toHaveBeenCalled();
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        source: 'database',
+        generation: 7,
+        committedAt: 1234,
+        rowCount: 1,
+      }),
+    );
   });
 
   it('publishes a staged projection before deferred token entities finish restoring', async () => {

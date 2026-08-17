@@ -67,6 +67,12 @@ import {
   executeTokenChainSync,
   getTokenChainSyncMode,
 } from './tokenChainSyncExecutor';
+import {
+  beginAssetReadModelRestore,
+  ensureAssetReadModel,
+  publishAssetReadModel,
+  type AssetReadModelSource,
+} from './assetReadModel';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1827,6 +1833,54 @@ const getTokenAssetsProjectionAvailability = (
   });
 };
 
+const getTokenAssetReadModelIdentity = (
+  runtimeKey: string,
+  scene: TokenProjectionScene,
+) => ({
+  kind: 'token' as const,
+  scene,
+  runtimeKey,
+});
+
+const syncTokenAssetReadModel = ({
+  key,
+  scene,
+  config,
+  result,
+  source = 'memory',
+  generation,
+  committedAt,
+}: {
+  key: string;
+  scene: TokenProjectionScene;
+  config: SingleTokenAssetsIndexConfig | MultiTokenAssetsIndexConfig;
+  result: TokenAssetsIndexResult;
+  source?: Exclude<AssetReadModelSource, 'none'>;
+  generation?: number;
+  committedAt?: number;
+}) => {
+  const identity = getTokenAssetReadModelIdentity(key, scene);
+  ensureAssetReadModel(identity);
+  const addresses = 'address' in config ? [config.address] : config.addresses;
+  const sourceComplete = hasConfirmedAssetProjectionSources(
+    addresses,
+    tokenListStore.getState().sourceSnapshotReadyByAddress,
+  );
+  const availability = getTokenAssetsProjectionAvailability(config, result);
+
+  if (availability !== 'ready') {
+    return;
+  }
+
+  publishAssetReadModel(identity, {
+    source,
+    rowCount: result.rows.length,
+    sourceComplete,
+    generation,
+    committedAt,
+  });
+};
+
 const scheduleTokenAssetsProjectionPersistence = (
   key: string,
   scene: TokenProjectionScene,
@@ -2298,6 +2352,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       draft.multiAssetsAvailabilityByKey[key] = 'restoring';
     }
   });
+  beginAssetReadModelRestore(getTokenAssetReadModelIdentity(key, scene));
   const trace = beginAssetDataLoadDiagnostic(
     'asset-projection-token-restore',
     scene,
@@ -2444,6 +2499,15 @@ const restoreTokenAssetsProjectionIfEmpty = (
         draft.multiAssetsResultByKey[key] = result;
         draft.multiAssetsAvailabilityByKey[key] = 'ready';
       }
+    });
+    syncTokenAssetReadModel({
+      key,
+      scene,
+      config: startedConfig,
+      result,
+      source: 'database',
+      generation: restored.generation,
+      committedAt: restored.committedAt,
     });
     trace.finish({
       itemCount: result.rows.length,
@@ -2709,6 +2773,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.singleAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'single-address',
+          config: nextConfig,
+          result: nextResult,
+        });
         scheduleTokenAssetsProjectionPersistence(
           key,
           'single-address',
@@ -2727,6 +2797,12 @@ export const useTokenAssetsIndexStore = zCreate(
         draft.singleAssetsResultByKey[key] = nextResult;
         draft.singleAssetsAvailabilityByKey[key] =
           getTokenAssetsProjectionAvailability(nextConfig, nextResult);
+      });
+      syncTokenAssetReadModel({
+        key,
+        scene: 'single-address',
+        config: nextConfig,
+        result: nextResult,
       });
       scheduleTokenAssetsProjectionPersistence(
         key,
@@ -2772,6 +2848,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.singleAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'single-address',
+          config: nextConfig,
+          result: state.singleAssetsResultByKey[key],
+        });
         return key;
       }
 
@@ -2825,6 +2907,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.multiAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'multi-address',
+          config: state.multiAssetsConfigByKey[key],
+          result: state.multiAssetsResultByKey[key],
+        });
         return key;
       }
 
@@ -2916,7 +3004,17 @@ export const useTokenAssetsIndexStore = zCreate(
           });
         });
       }
+      const publishedState = get();
       Object.entries(projectionResults).forEach(([key, result]) => {
+        const config = publishedState.singleAssetsConfigByKey[key];
+        if (config) {
+          syncTokenAssetReadModel({
+            key,
+            scene: 'single-address',
+            config,
+            result,
+          });
+        }
         scheduleTokenAssetsProjectionPersistence(key, 'single-address', result);
         if (!result.rows.length) {
           restoreTokenAssetsProjectionIfEmpty(key, 'single-address');
@@ -2995,6 +3093,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.multiAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'multi-address',
+          config: nextConfig,
+          result: previousResult,
+        });
         return;
       }
 
@@ -3014,6 +3118,12 @@ export const useTokenAssetsIndexStore = zCreate(
         draft.multiAssetsResultByKey[key] = nextResult;
         draft.multiAssetsAvailabilityByKey[key] =
           getTokenAssetsProjectionAvailability(nextConfig, nextResult);
+      });
+      syncTokenAssetReadModel({
+        key,
+        scene: 'multi-address',
+        config: nextConfig,
+        result: nextResult,
       });
       scheduleTokenAssetsProjectionPersistence(
         key,
@@ -3106,10 +3216,27 @@ export const useTokenAssetsIndexStore = zCreate(
         });
       });
       Object.entries(singleResultUpdates).forEach(([key, result]) => {
+        const config = state.singleAssetsConfigByKey[key];
+        if (config) {
+          syncTokenAssetReadModel({
+            key,
+            scene: 'single-address',
+            config,
+            result,
+          });
+        }
         scheduleTokenAssetsProjectionPersistence(key, 'single-address', result);
       });
       Object.entries(multiResultUpdates).forEach(([key, result]) => {
         const config = state.multiAssetsConfigByKey[key];
+        if (config) {
+          syncTokenAssetReadModel({
+            key,
+            scene: 'multi-address',
+            config,
+            result,
+          });
+        }
         scheduleTokenAssetsProjectionPersistence(
           key,
           'multi-address',
