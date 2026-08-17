@@ -31,7 +31,9 @@ const getSettlementIdentityKeys = (item: AccountHistoryItem) =>
 const isMetadataCandidate = (item: AccountHistoryItem) =>
   item.status === 'pending' || item.status === 'success';
 
-const isLegacyProviderOperation = (item: AccountHistoryItem) => {
+const isLegacyProviderOperation = (
+  item: Pick<AccountHistoryItem, 'sourceChainId' | 'sourceTokenId' | 'type'>,
+) => {
   if (
     item.type !== 'receive' ||
     !item.sourceChainId?.trim() ||
@@ -46,11 +48,35 @@ const isLegacyProviderOperation = (item: AccountHistoryItem) => {
   );
 };
 
-const isProviderPending = (item: AccountHistoryItem) =>
-  item.status === 'pending' &&
+const isProviderOperation = (
+  item: Pick<
+    AccountHistoryItem,
+    'fundingRoute' | 'sourceChainId' | 'sourceTokenId' | 'type'
+  >,
+) =>
   item.type === 'receive' &&
   (item.fundingRoute === 'provider' ||
     (item.fundingRoute === undefined && isLegacyProviderOperation(item)));
+
+const isProviderPending = (item: AccountHistoryItem) =>
+  item.status === 'pending' && isProviderOperation(item);
+
+/**
+ * A provider ledger row describes the settled asset (normally USDC), while
+ * the linked local operation describes the asset the user deposited. Once the
+ * association is proven, transaction history presents the source operation.
+ * Direct or unassociated funding continues to trust explicit ledger fields.
+ */
+export const shouldUsePerpsFundingSourceAssetAmount = ({
+  local,
+  remote,
+}: {
+  local: Pick<
+    AccountHistoryItem,
+    'fundingRoute' | 'sourceChainId' | 'sourceTokenId' | 'type'
+  >;
+  remote: Pick<AccountHistoryItem, 'assetAmountSource'>;
+}) => isProviderOperation(local) || remote.assetAmountSource !== 'explicit';
 
 const normalizeProviderLedgerHash = (hash: string) => {
   const normalized = hash.trim().toLowerCase();
@@ -221,7 +247,10 @@ export const reconcilePerpsFundingHistory = ({
     if (!local) {
       return remote;
     }
-    const canUseLocalAssetAmount = remote.assetAmountSource !== 'explicit';
+    const canUseLocalAssetAmount = shouldUsePerpsFundingSourceAssetAmount({
+      local,
+      remote,
+    });
     return {
       ...remote,
       accountAddress: local.accountAddress,

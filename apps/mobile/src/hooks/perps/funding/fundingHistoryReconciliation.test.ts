@@ -33,15 +33,15 @@ const providerSuccess = (
   overrides: Partial<AccountHistoryItem> = {},
 ): AccountHistoryItem =>
   item({
-    amount: '24.9',
+    amount: '5.974031',
     asset: 'USDC',
-    assetAmountSource: 'legacyUsdc',
-    hash: '0xprovider-ledger',
+    assetAmountSource: 'explicit',
+    hash: '0xa435b8fad560ffcea5af04424db9f702018b00e070641ea047fe644d9464d9b9',
     operationId: undefined,
     status: 'success',
-    time: 200,
+    time: 1786895704121,
     type: 'receive',
-    usdValue: '24.9',
+    usdValue: '5.974031',
     ...overrides,
   });
 
@@ -91,7 +91,7 @@ describe('funding history reconciliation', () => {
       {
         operationId: 'operation-1',
         providerSettlementIdentity: {
-          hash: '0xprovider-ledger',
+          hash: '0xa435b8fad560ffcea5af04424db9f702018b00e070641ea047fe644d9464d9b9',
           kind: 'hyperliquidLedgerHash',
         },
       },
@@ -237,9 +237,33 @@ describe('funding history reconciliation', () => {
     expect(result.history[0]).toMatchObject({ amount: '25', asset: 'USDT' });
   });
 
-  it('never overrides an explicit official asset and amount', () => {
+  it('uses provider source asset and amount over its explicit USDC settlement', () => {
     const result = reconcilePerpsFundingHistory({
-      localHistory: [item({ amount: '10', asset: 'USDT' })],
+      localHistory: [
+        providerPending({
+          amount: '6',
+          settlementAmount: '5.974031',
+          time: 1786895703000,
+          usdValue: '5.974031',
+        }),
+      ],
+      observation: 'baseline',
+      remoteHistory: [providerSuccess()],
+    });
+
+    expect(result.confirmedOperationIds).toEqual(['operation-1']);
+    expect(result.history[0]).toMatchObject({
+      amount: '6',
+      asset: 'USDT',
+      assetAmountSource: 'local',
+    });
+  });
+
+  it('preserves an explicit official asset and amount for direct funding', () => {
+    const result = reconcilePerpsFundingHistory({
+      localHistory: [
+        item({ amount: '10', asset: 'USDT', fundingRoute: 'direct' }),
+      ],
       observation: 'baseline',
       remoteHistory: [
         item({
