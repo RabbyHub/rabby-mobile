@@ -25,7 +25,10 @@ const mockWs = {
 const mockSdk = { ws: mockWs };
 
 jest.mock('@/core/apis/perps', () => ({
-  apisPerps: { getPerpsSDK: () => mockSdk },
+  apisPerps: {
+    getPerpsSDK: () => mockSdk,
+    getPerpsSDKSnapshot: () => mockSdk,
+  },
 }));
 
 import {
@@ -35,8 +38,8 @@ import {
   usePerpsLatestTrade,
 } from './usePerpsLatestTrade';
 
-const trade = (time: number, tid = time): WsTrade => ({
-  coin: 'BTC',
+const trade = (time: number, tid = time, coin = 'BTC'): WsTrade => ({
+  coin,
   hash: `hash-${tid}`,
   px: `${100 + time}`,
   side: 'B',
@@ -103,6 +106,38 @@ describe('usePerpsLatestTrade shared registry', () => {
     expect(mockUnsubscribers[0]).not.toHaveBeenCalled();
     hook.unmount();
     expect(mockUnsubscribers[0]).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes a prewarmed exact coin on the first identity-change render', () => {
+    const renderHistory: Array<{
+      identity: string;
+      status: ReturnType<typeof usePerpsLatestTrade>['status'];
+      tradeCoin: string | null;
+    }> = [];
+    const hook = renderHook(
+      ({ coin }) => {
+        const current = usePerpsLatestTrade({ coin, enabled: true });
+        renderHistory.push({
+          identity: current.identity,
+          status: current.status,
+          tradeCoin: current.trade?.coin ?? null,
+        });
+        return current;
+      },
+      { initialProps: { coin: 'BTC' } },
+    );
+    act(() => emitTrades([trade(1)]));
+    prewarmPerpsLatestTrade({ coin: 'ETH' });
+    act(() => emitTrades([trade(2, 2, 'ETH')]));
+    renderHistory.length = 0;
+
+    hook.rerender({ coin: 'ETH' });
+
+    expect(renderHistory[0]).toEqual({
+      identity: 'ETH',
+      status: 'stale',
+      tradeCoin: 'ETH',
+    });
   });
 
   it('does not turn an invalid payload into a fresh revision', () => {

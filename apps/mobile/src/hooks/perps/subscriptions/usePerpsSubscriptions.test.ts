@@ -52,10 +52,12 @@ const mockWs = {
   ),
   subscribeToL2Book: jest.fn(),
 };
+const mockSdk = { ws: mockWs };
 
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: {
-    getPerpsSDK: () => ({ ws: mockWs }),
+    getPerpsSDK: () => mockSdk,
+    getPerpsSDKSnapshot: () => mockSdk,
   },
 }));
 

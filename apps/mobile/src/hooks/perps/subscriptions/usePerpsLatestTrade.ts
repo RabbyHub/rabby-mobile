@@ -54,15 +54,20 @@ const latestTradeCache = new Map<string, LatestTradeCacheEntry>();
 const isFresh = (receivedAt: number | null, now = Date.now()) =>
   receivedAt != null && now - receivedAt < PERPS_FAST_L2_DISPLAY_CACHE_MS;
 
-const readLatestTradeCache = (
+const peekLatestTradeCache = (
   coin: string,
   ws: PerpsSdk['ws'],
 ): LatestTradeCacheEntry | null => {
   const cached = latestTradeCache.get(coin);
+  return cached?.ws === ws && isFresh(cached.receivedAt) ? cached : null;
+};
+
+const readLatestTradeCache = (
+  coin: string,
+  ws: PerpsSdk['ws'],
+): LatestTradeCacheEntry | null => {
+  const cached = peekLatestTradeCache(coin, ws);
   if (!cached) {
-    return null;
-  }
-  if (cached.ws !== ws || !isFresh(cached.receivedAt)) {
     latestTradeCache.delete(coin);
     return null;
   }
@@ -350,6 +355,42 @@ const readLatestTradeSnapshot = (coin: string): LatestTradeSnapshot => {
       };
 };
 
+const peekLatestTradeSnapshot = (coin: string): LatestTradeSnapshot => {
+  const sdk = apisPerps.getPerpsSDKSnapshot();
+  if (!sdk) {
+    return {
+      error: null,
+      identity: coin,
+      receivedAt: null,
+      revision: 0,
+      status: 'loading',
+      trade: null,
+    };
+  }
+  const liveEntry = latestTradeRegistry.get(coin);
+  if (liveEntry?.sdk.ws === sdk.ws) {
+    return liveEntry.snapshot;
+  }
+  const cached = peekLatestTradeCache(coin, sdk.ws);
+  return cached
+    ? {
+        error: null,
+        identity: coin,
+        receivedAt: cached.receivedAt,
+        revision: cached.revision,
+        status: 'stale',
+        trade: cached.trade,
+      }
+    : {
+        error: null,
+        identity: coin,
+        receivedAt: null,
+        revision: 0,
+        status: 'loading',
+        trade: null,
+      };
+};
+
 export const prewarmPerpsLatestTrade = ({
   coin,
   timeoutMs = 1500,
@@ -425,6 +466,10 @@ export const usePerpsLatestTrade = ({
     () => () => readLatestTradeSnapshot(coin),
     [coin],
   );
+  const peekSnapshot = useMemo(
+    () => () => peekLatestTradeSnapshot(coin),
+    [coin],
+  );
   const subscribe = useMemo(
     () =>
       identity === 'disabled'
@@ -441,6 +486,7 @@ export const usePerpsLatestTrade = ({
     displayCacheMs: PERPS_FAST_L2_DISPLAY_CACHE_MS,
     hasValue: hasLatestTradeValue,
     identity,
+    peekSnapshot,
     publicationEnabled,
     readSnapshot,
     subscribe,

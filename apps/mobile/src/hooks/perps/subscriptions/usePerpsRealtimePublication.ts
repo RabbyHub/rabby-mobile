@@ -33,6 +33,7 @@ export const usePerpsRealtimePublication = <
   displayCacheMs,
   hasValue,
   identity,
+  peekSnapshot,
   publicationEnabled,
   readSnapshot,
   subscribe,
@@ -43,12 +44,13 @@ export const usePerpsRealtimePublication = <
   displayCacheMs: number;
   hasValue: (snapshot: TSnapshot) => boolean;
   identity: string;
+  peekSnapshot: () => TSnapshot;
   publicationEnabled: boolean;
   readSnapshot: () => TSnapshot;
   subscribe: ((listener: (snapshot: TSnapshot) => void) => () => void) | null;
 }) => {
   const [snapshot, setSnapshot] = useState<TSnapshot>(() =>
-    identity === 'disabled' ? createDisabledSnapshot() : readSnapshot(),
+    identity === 'disabled' ? createDisabledSnapshot() : peekSnapshot(),
   );
   const [expirationClock, setExpirationClock] = useState(0);
   const publicationEnabledRef = useRef(publicationEnabled);
@@ -173,33 +175,37 @@ export const usePerpsRealtimePublication = <
         : snapshot,
     [forceStale, identity, presentationPhase, snapshot],
   );
+  const identitySnapshot = useMemo(() => {
+    if (presentationSnapshot.identity === identity) {
+      return presentationSnapshot;
+    }
+    if (identity === 'disabled') {
+      return createDisabledSnapshot();
+    }
+    const exactTarget = peekSnapshot();
+    return exactTarget.identity === identity
+      ? exactTarget
+      : createLoadingSnapshot(identity);
+  }, [
+    createDisabledSnapshot,
+    createLoadingSnapshot,
+    identity,
+    peekSnapshot,
+    presentationSnapshot,
+  ]);
 
   return useMemo(() => {
-    if (presentationSnapshot.identity !== identity) {
-      return identity === 'disabled'
-        ? createDisabledSnapshot()
-        : createLoadingSnapshot(identity);
-    }
     if (
-      hasValue(presentationSnapshot) &&
-      presentationSnapshot.status !== 'ready' &&
+      hasValue(identitySnapshot) &&
+      identitySnapshot.status !== 'ready' &&
       !isFresh(
-        presentationSnapshot.receivedAt,
+        identitySnapshot.receivedAt,
         displayCacheMs,
         expirationClock || Date.now(),
       )
     ) {
-      return clearValue(presentationSnapshot);
+      return clearValue(identitySnapshot);
     }
-    return presentationSnapshot;
-  }, [
-    clearValue,
-    createDisabledSnapshot,
-    createLoadingSnapshot,
-    displayCacheMs,
-    expirationClock,
-    hasValue,
-    identity,
-    presentationSnapshot,
-  ]);
+    return identitySnapshot;
+  }, [clearValue, displayCacheMs, expirationClock, hasValue, identitySnapshot]);
 };
