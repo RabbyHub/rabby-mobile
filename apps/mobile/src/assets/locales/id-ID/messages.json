@@ -1225,6 +1225,11 @@
         "descriptionIOS": "Jika Anda menyukai Rabby, memberikan rating cepat di App Store akan sangat berarti.",
         "descriptionAndroid": "Jika Anda suka Rabby, penilaian cepat di Google Play akan sangat berarti."
       },
+      "upgradeModal": {
+        "title": "Yang Baru",
+        "slideToUpdate": "Geser untuk memperbarui",
+        "close": "Tutup"
+      },
       "homeCenterTipScreenshot": {
         "description": "Ambil tangkapan layar kapan saja untuk cepat melaporkan bug",
         "title": "Saran"
@@ -3048,6 +3053,7 @@
         "actions": "Pinjam",
         "approveAndBorrow": "Setujui dan Pinjam",
         "almostReachedError": "Jumlah maksimum yang tersedia untuk dipinjam terbatas karena batas peminjaman protokol sudah hampir tercapai.",
+        "borrowingUnavailable": "Aset ini tidak tersedia untuk dipinjam dalam mode saat ini.",
         "almostReachedWarning": "Batas pinjaman protokol adalah 100% untuk aset ini. Pinjaman lebih lanjut tidak tersedia.",
         "swapDebt": "Tukar",
         "borrowed": "Dipinjam",
@@ -3088,6 +3094,7 @@
         "withdrawWarning": "Menarik jumlah ini akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi.",
         "toggleCollateralWarning": "Menonaktifkan aset ini sebagai jaminan akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi.",
         "blockEmodeWarning": "Anda tidak dapat menonaktifkan E-Mode karena dapat memicu likuidasi. Untuk keluar dari E-Mode, tambahkan jaminan atau lunasi posisi pinjaman.",
+        "zeroLtvEmodeExitWarning": "Nonaktifkan {{assets}} sebagai jaminan sebelum keluar dari E-Mode karena aset tersebut memiliki LTV 0% di luar E-Mode.",
         "emodeBlockWarning": "Menonaktifkan E-mode akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi."
       },
       "lqDescription": {
@@ -3248,6 +3255,7 @@
         "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
         "repayWith": "Jaminan untuk pelunasan",
         "insufficientLiquidity": "Likuiditas tidak mencukupi.",
+        "flashLoanDisabled": "Konversi posisi dinonaktifkan untuk aset ini karena alasan keamanan.",
         "frozenCollateral": "Aset ini dibekukan karena keputusan komunitas Aave."
       },
       "repayWithAToken": {

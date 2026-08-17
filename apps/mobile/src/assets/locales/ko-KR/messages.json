@@ -1159,6 +1159,11 @@
         "descriptionAndroid": "Rabby가 마음에 드시면 구글 플레이에서 빠른 평가를 남기는 것이 많은 도움이 됩니다.",
         "descriptionIOS": "Rabby가 마음에 드신다면, App Store에서 간단한 평가를 남겨주시면 큰 도움이 됩니다."
       },
+      "upgradeModal": {
+        "title": "새로운 기능",
+        "slideToUpdate": "밀어서 업데이트",
+        "close": "닫기"
+      },
       "homeCenterTipScreenshot": {
         "description": "언제든지 스크린샷을 찍어 버그를 빠르게 신고하세요.",
         "title": "팁"
@@ -3048,6 +3053,7 @@
       "borrowDetail": {
         "approveAndBorrow": "승인하고 차입",
         "actions": "차입",
+        "borrowingUnavailable": "현재 모드에서는 이 자산을 빌릴 수 없습니다.",
         "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
         "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다.",
         "swapDebt": "스왑",
@@ -3089,7 +3095,8 @@
         "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
         "toggleCollateralWarning": "이 자산을 담보로 사용 중지하면 귀하의 건강 지수가 청산을 위한 위험한 수준으로 낮아집니다.",
         "emodeBlockWarning": "E-mode를 비활성화하면 청산을 위한 위험한 수준으로 Health Factor가 낮아집니다.",
-        "blockEmodeWarning": "E-Mode를 비활성화할 수 없습니다. 청산이 발생할 수 있기 때문입니다. E-Mode를 종료하려면 담보를 추가하거나 차입 포지션을 상환하세요."
+        "blockEmodeWarning": "E-Mode를 비활성화할 수 없습니다. 청산이 발생할 수 있기 때문입니다. E-Mode를 종료하려면 담보를 추가하거나 차입 포지션을 상환하세요.",
+        "zeroLtvEmodeExitWarning": "E-Mode가 아닐 때는 {{assets}}의 LTV가 0%이므로, E-Mode를 종료하기 전에 해당 자산의 담보 사용을 해제하세요."
       },
       "lqDescription": {
         "below1title": "건강 지수 ≤ 1.0:",
@@ -3249,6 +3256,7 @@
         "collateralNotEnough": "귀하의 담보 잔액이 선택한 금액보다 낮습니다.",
         "toRepay": "상환 예상 금액",
         "insufficientLiquidity": "유동성이 부족합니다.",
+        "flashLoanDisabled": "보안상의 이유로 이 자산에 대한 포지션 전환이 비활성화되어 있습니다.",
         "frozenCollateral": "이 자산은 Aave 커뮤니티 결정으로 인해 동결되었습니다."
       },
       "repayWithAToken": {

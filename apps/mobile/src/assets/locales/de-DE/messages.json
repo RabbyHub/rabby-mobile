@@ -1493,6 +1493,11 @@
         "descriptionAndroid": "Wenn Ihnen Rabby gefällt, würden wir uns sehr über eine kurze Bewertung bei Google Play freuen.",
         "descriptionIOS": "Wenn Ihnen Rabby gefällt, würden wir uns sehr über eine kurze Bewertung im App Store freuen."
       },
+      "upgradeModal": {
+        "title": "Neuigkeiten",
+        "slideToUpdate": "Zum Aktualisieren schieben",
+        "close": "Schließen"
+      },
       "homeCenterTipScreenshot": {
         "description": "Machen Sie jederzeit einen Screenshot, um schnell einen Fehler zu melden.",
         "title": "Tipps"
@@ -3433,6 +3438,7 @@
       "borrowDetail": {
         "actions": "Leihen",
         "approveAndBorrow": "Genehmigen und Ausleihen",
+        "borrowingUnavailable": "Dieses Asset kann im aktuellen Modus nicht ausgeliehen werden.",
         "almostReachedWarning": "Die Kreditobergrenze des Protokolls ist für dieses Asset zu 100 % erreicht. Weitere Kredite sind nicht verfügbar.",
         "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist.",
         "swapDebt": "Tausch",
@@ -3474,7 +3480,8 @@
         "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken.",
         "toggleCollateralWarning": "Das Deaktivieren dieses Assets als Sicherheit wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für die Liquidation senken.",
         "emodeBlockWarning": "Das Deaktivieren des E-Modus verringert Ihren Gesundheitsfaktor auf ein riskantes Niveau für Liquidationen.",
-        "blockEmodeWarning": "Sie können E-Mode nicht deaktivieren, da dies eine Liquidation auslösen könnte. Um E-Mode zu verlassen, stellen Sie mehr Sicherheiten bereit oder zahlen Sie geliehene Positionen zurück."
+        "blockEmodeWarning": "Sie können E-Mode nicht deaktivieren, da dies eine Liquidation auslösen könnte. Um E-Mode zu verlassen, stellen Sie mehr Sicherheiten bereit oder zahlen Sie geliehene Positionen zurück.",
+        "zeroLtvEmodeExitWarning": "Deaktivieren Sie {{assets}} als Sicherheit, bevor Sie E-Mode verlassen, da diese Assets außerhalb von E-Mode einen LTV von 0 % haben."
       },
       "lqDescription": {
         "over3title": "Gesundheitsfaktor > 3.0:",
@@ -3634,6 +3641,7 @@
         "toRepay": "Erwarteter Rückzahlungsbetrag",
         "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag.",
         "insufficientLiquidity": "Unzureichende Liquidität.",
+        "flashLoanDisabled": "Das Umwandeln von Positionen ist für dieses Asset aus Sicherheitsgründen deaktiviert.",
         "frozenCollateral": "Dieses Asset ist aufgrund einer Aave-Gemeinschaftsentscheidung eingefroren."
       },
       "repayWithAToken": {

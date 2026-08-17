@@ -86,7 +86,9 @@ describe('AddressItemEntry', () => {
 
     fireEvent.press(screen.getByText(account.address));
 
-    expect(mockNavigateToSingleHome).toHaveBeenCalledWith(account);
+    expect(mockNavigateToSingleHome).toHaveBeenCalledWith(account, {
+      activationCycleId: expect.any(Number),
+    });
     expect(onManage).toHaveBeenCalledTimes(1);
   });
 });

@@ -1225,6 +1225,11 @@
         "feedbackTitle": "Geri bildiriminiz mi var? Dinliyoruz.",
         "descriptionIOS": "Eğer Rabby'i beğeniyorsanız, App Store'da vereceğiniz hızlı bir puan çok şey ifade eder."
       },
+      "upgradeModal": {
+        "title": "Yenilikler",
+        "slideToUpdate": "Güncellemek için kaydırın",
+        "close": "Kapat"
+      },
       "homeCenterTipScreenshot": {
         "description": "Herhangi bir zamanda bir hatayı hızlı bir şekilde bildirmek için ekran görüntüsü alın.",
         "title": "İpuçları"
@@ -3048,6 +3053,7 @@
         "actions": "Ödünç Al",
         "approveAndBorrow": "Onayla ve Borç Al",
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
+        "borrowingUnavailable": "Bu varlık mevcut modda ödünç alınamaz.",
         "almostReachedWarning": "Bu varlık için protokol borç limiti %100'e ulaştı. Daha fazla borç alınamaz.",
         "swapDebt": "Değiştir",
         "borrowed": "Ödünç Alındı",
@@ -3088,7 +3094,8 @@
         "withdrawWarning": "Bu miktarın çekilmesi, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
         "toggleCollateralWarning": "Bu varlığı teminat olarak devre dışı bırakmak, Sağlık Faktörünüzü likidasyon için riskli bir seviyeye düşürecektir.",
         "emodeBlockWarning": "E-modu kapatmak, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
-        "blockEmodeWarning": "E-Mode devre dışı bırakılamaz, çünkü tasfiyeyi tetikleyebilir. E-Mode’dan çıkmak için daha fazla teminat ekleyin veya borç pozisyonlarını geri ödeyin."
+        "blockEmodeWarning": "E-Mode devre dışı bırakılamaz, çünkü tasfiyeyi tetikleyebilir. E-Mode’dan çıkmak için daha fazla teminat ekleyin veya borç pozisyonlarını geri ödeyin.",
+        "zeroLtvEmodeExitWarning": "E-Mode'dan çıkmadan önce {{assets}} varlıklarını teminat olarak devre dışı bırakın, çünkü bu varlıkların E-Mode dışındaki LTV oranları %0'dır."
       },
       "lqDescription": {
         "desc": "Tasfiye değeri",
@@ -3248,6 +3255,7 @@
         "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
         "toRepay": "Beklenen geri ödeme tutarı",
         "insufficientLiquidity": "Yetersiz likidite.",
+        "flashLoanDisabled": "Bu varlık için pozisyon dönüştürme işlemleri güvenlik nedenleriyle devre dışı bırakılmıştır.",
         "frozenCollateral": "Bu varlık, Aave topluluğu kararı nedeniyle donduruldu."
       },
       "repayWithAToken": {
