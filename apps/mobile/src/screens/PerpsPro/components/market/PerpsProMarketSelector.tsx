@@ -604,7 +604,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
   },
   page: {
-    flex: 1,
+    height: '100%',
+    width: '100%',
   },
   search: {
     marginLeft: 15,

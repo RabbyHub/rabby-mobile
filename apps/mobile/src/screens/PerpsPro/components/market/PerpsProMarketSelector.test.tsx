@@ -557,6 +557,16 @@ describe('PerpsProMarketSelector', () => {
 
     expect(screen.getByTestId('perps-pro-market-list-all')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-market-list-favorites')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-page-all').props.style,
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        height: '100%',
+        width: '100%',
+      }),
+    );
 
     fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', {
       nativeEvent: { position: 0 },
