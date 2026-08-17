@@ -54,6 +54,64 @@ interface NativeModulesStatic {
       title?: string;
       subject?: string;
     }): Promise<void>;
+    runNativeOpenApiDiagnostic?(address: string): Promise<{
+      success: boolean;
+      error: string;
+      firstStatusCode: number;
+      secondStatusCode: number;
+      firstDurationMs: number;
+      secondDurationMs: number;
+      firstBodyBytes: number;
+      secondBodyBytes: number;
+      firstCredentialDisposition: string;
+      secondCredentialDisposition: string;
+      firstRequestCredentialRevision: number;
+      firstCurrentCredentialRevision: number;
+      secondRequestCredentialRevision: number;
+      secondCurrentCredentialRevision: number;
+      secondUsedLatestAvailableCredential: boolean;
+    }>;
+    runNativeTokenCacheSyncDiagnostic?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      success: boolean;
+      address: string;
+      generation: number;
+      stage: string;
+      chainCount: number;
+      sourceTokenCount: number;
+      filteredTokenCount: number;
+      committedRowCount: number;
+      durationMs: number;
+      error: string;
+    }>;
+    syncNativeTokenChains?(
+      address: string,
+      chainIds: string[],
+      replacementScope: 'address' | 'chains',
+      replaceExisting: boolean,
+    ): Promise<{
+      success: boolean;
+      address: string;
+      generation: number;
+      stage: string;
+      chainCount: number;
+      sourceTokenCount: number;
+      filteredTokenCount: number;
+      committedRowCount: number;
+      durationMs: number;
+      error: string;
+    }>;
+    runNativeTokenCacheWriteDiagnostic?(): Promise<{
+      success: boolean;
+      stage: string;
+      attemptedRowCount: number;
+      durationMs: number;
+      error: string;
+    }>;
+    cancelNativeTokenCacheSync?(address: string): void;
+    cancelAllNativeTokenCacheSyncs?(): void;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath

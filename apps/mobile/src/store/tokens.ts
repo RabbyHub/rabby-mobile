@@ -63,6 +63,10 @@ import {
   TokenProjectionPersistenceGate,
   type AddressPersistenceTicket,
 } from './tokenProjectionPersistenceGate';
+import {
+  executeTokenChainSync,
+  getTokenChainSyncMode,
+} from './tokenChainSyncExecutor';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -3466,13 +3470,29 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             return;
           }
           const latestTokenListMap = get().tokenListMap;
+          const confirmedLocalAddressSet = new Set(confirmedLocalAddresses);
           const cacheApplicableAddresses = currentAddressesAfterCache.filter(
-            address =>
-              cacheSucceededAddresses.has(address) &&
-              !Object.prototype.hasOwnProperty.call(
+            address => {
+              if (
+                !cacheSucceededAddresses.has(address) ||
+                confirmedLocalAddressSet.has(address)
+              ) {
+                return false;
+              }
+
+              const hasMemorySnapshot = Object.prototype.hasOwnProperty.call(
                 latestTokenListMap,
                 address,
-              ),
+              );
+              if (!hasMemorySnapshot) {
+                return true;
+              }
+
+              return (
+                (latestTokenListMap[address]?.length || 0) === 0 &&
+                (cacheTokenMap[address]?.length || 0) > 0
+              );
+            },
           );
 
           if (cacheApplicableAddresses.length) {
@@ -3502,6 +3522,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
           const realTimeTokenMap: Record<string, ITokenItem[]> = {};
           const completeRealTimeTokenMap: Record<string, ITokenItem[]> = {};
+          const nativeCommittedAddresses = new Set<string>();
+          const tokenChainSyncMode = getTokenChainSyncMode();
           const realTimeTokenQueue = new PQueue({
             concurrency: 15,
           });
@@ -3517,26 +3539,42 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
               const chainIdList = chains.map(item => item.id);
               usedChainListSucceededAddressCount += 1;
               requestedChainCount += chainIdList.length;
-              const res = await Promise.allSettled(
-                chainIdList.map(async serverId => {
-                  const tokens =
-                    (await realTimeTokenQueue.add(async () => {
-                      const chainTokensRes = await requestOpenApiWithChainId(
-                        ({ openapi }) =>
-                          openapi.listToken(address, serverId, true),
-                        {
-                          isTestnet: false,
-                        },
-                      );
-                      return filterInterfaceTokenList(
-                        chainTokensRes.map(item =>
-                          tokenItemToITokenItem(item, address),
-                        ),
-                      );
-                    })) || [];
-                  return { serverId, tokens };
-                }),
-              );
+              const syncExecution = await executeTokenChainSync({
+                mode: tokenChainSyncMode,
+                address,
+                chainIds: chainIdList,
+                replacementScope: 'address',
+                replaceExisting: true,
+                executeJs: () =>
+                  Promise.allSettled(
+                    chainIdList.map(async serverId => {
+                      const tokens =
+                        (await realTimeTokenQueue.add(async () => {
+                          const chainTokensRes =
+                            await requestOpenApiWithChainId(
+                              ({ openapi }) =>
+                                openapi.listToken(address, serverId, true),
+                              {
+                                isTestnet: false,
+                              },
+                            );
+                          return filterInterfaceTokenList(
+                            chainTokensRes.map(item =>
+                              tokenItemToITokenItem(item, address),
+                            ),
+                          );
+                        })) || [];
+                      return { serverId, tokens };
+                    }),
+                  ),
+              });
+
+              if (syncExecution.mode === 'native') {
+                nativeCommittedAddresses.add(address);
+                return;
+              }
+
+              const res = syncExecution.value;
 
               const fulfilledChainSnapshots = res.flatMap(result =>
                 result.status === 'fulfilled' ? [result.value] : [],
@@ -3580,7 +3618,29 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             ).length,
             usedChainListSucceededAddressCount,
             requestedChainCount,
+            syncMode: tokenChainSyncMode,
           });
+
+          const nativeApplicableAddresses = getCurrentAddresses().filter(
+            address => nativeCommittedAddresses.has(address),
+          );
+          if (nativeApplicableAddresses.length) {
+            await tokenCacheHydrator.refresh(nativeApplicableAddresses);
+            set(state => ({
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                nativeApplicableAddresses,
+              ),
+            }));
+            trace.mark('native-snapshots-hydrated', {
+              addressCount: nativeApplicableAddresses.length,
+              itemCount: nativeApplicableAddresses.reduce(
+                (count, address) =>
+                  count + (get().tokenListMap[address]?.length || 0),
+                0,
+              ),
+            });
+          }
 
           const remoteApplicableAddresses = getCurrentAddresses().filter(
             address =>
@@ -3599,7 +3659,11 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             ),
           });
           if (!remoteApplicableAddresses.length) {
-            trace.finish({ path: 'stale-after-remote' });
+            trace.finish({
+              path: nativeApplicableAddresses.length
+                ? 'native-remote'
+                : 'stale-after-remote',
+            });
             return;
           }
 
@@ -3860,37 +3924,74 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       trace.mark('remote-chains-resolved', {
         chainCount: chainIdList.length,
       });
+      const tokenChainSyncMode = getTokenChainSyncMode();
       const realTimeTokenQueue = new PQueue({
         concurrency: 15,
       });
-      const res = await Promise.allSettled(
-        chainIdList.map(
-          async serverId =>
-            await realTimeTokenQueue.add(async () => {
-              const chainTokensRes = await requestOpenApiWithChainId(
-                ({ openapi }) => openapi.listToken(address, serverId, true),
-                {
-                  isTestnet: false,
-                },
-              );
-              const tokenList = filterInterfaceTokenList(
-                chainTokensRes.map(item =>
-                  tokenItemToITokenItem(item, address),
-                ),
-              );
-              return tokenList;
-            }),
-        ),
-      );
-      const failed = res.find(result => result.status === 'rejected');
-      if (failed?.status === 'rejected') {
-        trace.fail({ phase: 'remote-chain' });
-        console.error('ServiceErrorType.Token', failed.reason);
+      const syncExecution = await executeTokenChainSync({
+        mode: tokenChainSyncMode,
+        address: normalizedAddress,
+        chainIds: chainIdList,
+        replacementScope: targetChainServerId ? 'chains' : 'address',
+        replaceExisting: true,
+        executeJs: async () => {
+          const res = await Promise.allSettled(
+            chainIdList.map(
+              async serverId =>
+                await realTimeTokenQueue.add(async () => {
+                  const chainTokensRes = await requestOpenApiWithChainId(
+                    ({ openapi }) => openapi.listToken(address, serverId, true),
+                    {
+                      isTestnet: false,
+                    },
+                  );
+                  return filterInterfaceTokenList(
+                    chainTokensRes.map(item =>
+                      tokenItemToITokenItem(item, address),
+                    ),
+                  );
+                }),
+            ),
+          );
+          const failed = res.find(result => result.status === 'rejected');
+          if (failed?.status === 'rejected') {
+            console.error('ServiceErrorType.Token', failed.reason);
+            return null;
+          }
+          return res
+            .map(result => (result.status === 'fulfilled' ? result.value : []))
+            .flat() as ITokenItem[];
+        },
+      });
+
+      if (syncExecution.mode === 'native') {
+        if (!isCurrentRequest()) {
+          trace.finish({ path: 'stale-after-native-remote' });
+          return;
+        }
+        await tokenCacheHydrator.refresh([normalizedAddress]);
+        if (!targetChainServerId) {
+          set(state => ({
+            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+              state.sourceSnapshotReadyByAddress,
+              [normalizedAddress],
+            ),
+          }));
+        }
+        const itemCount = get().tokenListMap[normalizedAddress]?.length || 0;
+        trace.mark('native-snapshot-hydrated', {
+          itemCount,
+          committedRowCount: syncExecution.result.committedRowCount,
+        });
+        trace.finish({ path: 'native-remote', itemCount });
         return;
       }
-      const results = res
-        .map(result => (result.status === 'fulfilled' ? result.value : []))
-        .flat() as ITokenItem[];
+
+      const results = syncExecution.value;
+      if (!results) {
+        trace.fail({ phase: 'remote-chain' });
+        return;
+      }
       trace.mark('remote-token-responses', { itemCount: results.length });
       if (!isCurrentRequest()) {
         trace.finish({ path: 'stale-after-remote' });
@@ -4168,5 +4269,17 @@ tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {
     .getState()
     .syncChangedTokenAssetsResults(changedTokenIds);
 });
+
+export async function hydrateCommittedNativeTokenSnapshot(address: string) {
+  const normalizedAddress = normalizeAddress(address);
+  await tokenCacheHydrator.refresh([normalizedAddress]);
+  tokenListStore.setState(state => ({
+    sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+      state.sourceSnapshotReadyByAddress,
+      [normalizedAddress],
+    ),
+  }));
+  return tokenListStore.getState().tokenListMap[normalizedAddress]?.length || 0;
+}
 
 export default tokenListStore;

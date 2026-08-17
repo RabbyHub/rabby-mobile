@@ -82,13 +82,18 @@ export const resolveAssetProjectionAvailability = ({
 export const resolveAssetProjectionViewState = ({
   availability,
   hasData,
+  hasSettledRequest = false,
 }: {
   availability: AssetProjectionAvailability;
   hasData: boolean;
+  hasSettledRequest?: boolean;
 }): AssetProjectionViewState => {
   if (hasData) {
     return 'data';
   }
 
-  return availability === 'ready' ? 'empty' : 'loading';
+  return availability === 'ready' ||
+    (availability === 'unresolved' && hasSettledRequest)
+    ? 'empty'
+    : 'loading';
 };

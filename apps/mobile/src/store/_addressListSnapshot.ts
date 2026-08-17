@@ -106,8 +106,26 @@ export const createAddressListSnapshotHydrator = <TItem>({
     await Promise.all(Array.from(new Set(requests)));
   };
 
+  const refresh = async (addresses: string[]) => {
+    const normalizedAddresses = normalizeSnapshotAddresses(addresses);
+    if (!normalizedAddresses.length) {
+      return;
+    }
+
+    const activeAddresses = normalizedAddresses.filter(address =>
+      inFlightByAddress.has(address),
+    );
+    invalidate(normalizedAddresses);
+    await hydrate(normalizedAddresses);
+
+    if (activeAddresses.length) {
+      await hydrate(activeAddresses);
+    }
+  };
+
   return {
     hydrate,
     invalidate,
+    refresh,
   };
 };

@@ -1,6 +1,7 @@
 // RNHelpers.mm
 #import "RNHelpers.h"
 #import <Foundation/Foundation.h>
+#import <rabby/openapi/RabbyNativeOpenApiDiagnostics.h>
 
 @implementation RNHelpers
 
@@ -31,6 +32,99 @@ RCT_EXPORT_MODULE();
 #pragma mark - Public API
 RCT_EXPORT_METHOD(forceExitApp) {
     exit(0);
+}
+
+RCT_EXPORT_METHOD(runNativeOpenApiDiagnostic:
+  (NSString *)address
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_OPENAPI_DIAGNOSTIC_DISABLED",
+            @"Native OpenAPI diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        runUsedChainListProbeForAddress:address
+                            completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(runNativeTokenCacheSyncDiagnostic:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_TOKEN_SYNC_DISABLED",
+            @"Native token sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        syncTokenCacheForAddress:address
+                 replaceExisting:replaceExisting
+                       completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(syncNativeTokenChains:
+  (NSString *)address
+  chainIds:(NSArray<NSString *> *)chainIds
+  replacementScope:(NSString *)replacementScope
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    [RabbyNativeOpenApiDiagnostics
+        syncTokenChainsForAddress:address
+                         chainIds:chainIds
+                 replacementScope:replacementScope
+                  replaceExisting:replaceExisting
+                        completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(runNativeTokenCacheWriteDiagnostic:
+  (RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_TOKEN_CACHE_WRITE_DIAGNOSTIC_DISABLED",
+            @"Native token cache write diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        verifyTokenCacheWriteWithCompletion:
+            ^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(cancelNativeTokenCacheSync:(NSString *)address) {
+    [RabbyNativeOpenApiDiagnostics cancelTokenCacheSyncForAddress:address];
+}
+
+RCT_EXPORT_METHOD(cancelAllNativeTokenCacheSyncs) {
+    [RabbyNativeOpenApiDiagnostics cancelAllTokenCacheSyncs];
 }
 
 RCT_EXPORT_METHOD(iosExcludeFileFromBackup:

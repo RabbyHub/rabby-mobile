@@ -80,6 +80,23 @@ describe('asset projection availability', () => {
     ).toBe('empty');
   });
 
+  it('does not leave an unresolved projection loading after its request settles', () => {
+    expect(
+      resolveAssetProjectionViewState({
+        availability: 'unresolved',
+        hasData: false,
+        hasSettledRequest: true,
+      }),
+    ).toBe('empty');
+    expect(
+      resolveAssetProjectionViewState({
+        availability: 'restoring',
+        hasData: false,
+        hasSettledRequest: true,
+      }),
+    ).toBe('loading');
+  });
+
   it('does not treat hidden asset variants as visible projection data', () => {
     const hasHiddenLpTokens = true;
     const visibleProjectedTokenCount = 0;

@@ -11,7 +11,17 @@ import androidx.core.content.FileProvider;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.Arguments;
+import com.rabbywallet.nativeopenapi.NativeOpenApiDiagnosticCallback;
+import com.rabbywallet.nativeopenapi.NativeOpenApiDiagnosticResult;
+import com.rabbywallet.nativeopenapi.NativeTokenSyncCallback;
+import com.rabbywallet.nativeopenapi.NativeTokenSyncResult;
+import com.rabbywallet.nativeopenapi.NativeTokenCacheWriteDiagnosticCallback;
+import com.rabbywallet.nativeopenapi.NativeTokenCacheWriteDiagnosticResult;
+import com.rabbywallet.nativeopenapi.RabbyNativeOpenApiRuntime;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -123,6 +133,200 @@ public class RNHelpersModule extends SimplePackageSpec {
   @ReactMethod
   public void androidTraceCounter(String name, double value) {
     RabbyStartupTrace.counter(name, (int) value);
+  }
+
+  @ReactMethod
+  public void runNativeOpenApiDiagnostic(String address, Promise promise) {
+    if (!RabbyStartupTrace.isEnabled()) {
+      promise.reject(
+        "E_NATIVE_OPENAPI_DIAGNOSTIC_DISABLED",
+        "Native OpenAPI diagnostics are disabled in production builds"
+      );
+      return;
+    }
+
+    RabbyNativeOpenApiRuntime.runDiagnostic(
+      reactContext,
+      BuildConfig.APPLICATION_ID,
+      BuildConfig.VERSION_NAME,
+      address,
+      new NativeOpenApiDiagnosticCallback() {
+        @Override
+        public void onComplete(NativeOpenApiDiagnosticResult result) {
+          WritableMap output = Arguments.createMap();
+          output.putBoolean("success", result.getSuccess());
+          output.putString("error", result.getError());
+          output.putInt("firstStatusCode", result.getFirstStatusCode());
+          output.putInt("secondStatusCode", result.getSecondStatusCode());
+          output.putDouble("firstDurationMs", result.getFirstDurationMs());
+          output.putDouble("secondDurationMs", result.getSecondDurationMs());
+          output.putDouble("firstBodyBytes", result.getFirstBodyBytes());
+          output.putDouble("secondBodyBytes", result.getSecondBodyBytes());
+          output.putString(
+            "firstCredentialDisposition",
+            result.getFirstCredentialDisposition()
+          );
+          output.putString(
+            "secondCredentialDisposition",
+            result.getSecondCredentialDisposition()
+          );
+          output.putDouble(
+            "firstRequestCredentialRevision",
+            result.getFirstRequestCredentialRevision()
+          );
+          output.putDouble(
+            "firstCurrentCredentialRevision",
+            result.getFirstCurrentCredentialRevision()
+          );
+          output.putDouble(
+            "secondRequestCredentialRevision",
+            result.getSecondRequestCredentialRevision()
+          );
+          output.putDouble(
+            "secondCurrentCredentialRevision",
+            result.getSecondCurrentCredentialRevision()
+          );
+          output.putBoolean(
+            "secondUsedLatestAvailableCredential",
+            result.getSecondUsedLatestAvailableCredential()
+          );
+          promise.resolve(output);
+        }
+      }
+    );
+  }
+
+  @ReactMethod
+  public void runNativeTokenCacheSyncDiagnostic(
+    String address,
+    boolean replaceExisting,
+    Promise promise
+  ) {
+    if (!RabbyStartupTrace.isEnabled()) {
+      promise.reject(
+        "E_NATIVE_TOKEN_SYNC_DISABLED",
+        "Native token sync diagnostics are disabled in production builds"
+      );
+      return;
+    }
+
+    RabbyNativeOpenApiRuntime.syncTokenCache(
+      reactContext,
+      BuildConfig.APPLICATION_ID,
+      BuildConfig.VERSION_NAME,
+      address,
+      replaceExisting,
+      new NativeTokenSyncCallback() {
+        @Override
+        public void onComplete(NativeTokenSyncResult result) {
+          WritableMap output = Arguments.createMap();
+          output.putBoolean("success", result.getSuccess());
+          output.putString("address", result.getAddress());
+          output.putDouble("generation", result.getGeneration());
+          output.putString("stage", result.getStage());
+          output.putDouble("chainCount", result.getChainCount());
+          output.putDouble("sourceTokenCount", result.getSourceTokenCount());
+          output.putDouble("filteredTokenCount", result.getFilteredTokenCount());
+          output.putDouble("committedRowCount", result.getCommittedRowCount());
+          output.putDouble("durationMs", result.getDurationMs());
+          output.putString("error", result.getError());
+          promise.resolve(output);
+        }
+      }
+    );
+  }
+
+  @ReactMethod
+  public void syncNativeTokenChains(
+    String address,
+    ReadableArray chainIds,
+    String replacementScope,
+    boolean replaceExisting,
+    Promise promise
+  ) {
+    int replacementKind;
+    if ("address".equals(replacementScope)) {
+      replacementKind = 0;
+    } else if ("chains".equals(replacementScope)) {
+      replacementKind = 1;
+    } else {
+      promise.reject(
+        "E_NATIVE_TOKEN_SYNC_SCOPE",
+        "Native token sync replacement scope is invalid"
+      );
+      return;
+    }
+
+    String[] nativeChainIds = new String[chainIds.size()];
+    for (int index = 0; index < chainIds.size(); index += 1) {
+      nativeChainIds[index] = chainIds.getString(index);
+    }
+    RabbyNativeOpenApiRuntime.syncTokenChains(
+      reactContext,
+      BuildConfig.APPLICATION_ID,
+      BuildConfig.VERSION_NAME,
+      address,
+      nativeChainIds,
+      replacementKind,
+      replaceExisting,
+      new NativeTokenSyncCallback() {
+        @Override
+        public void onComplete(NativeTokenSyncResult result) {
+          WritableMap output = Arguments.createMap();
+          output.putBoolean("success", result.getSuccess());
+          output.putString("address", result.getAddress());
+          output.putDouble("generation", result.getGeneration());
+          output.putString("stage", result.getStage());
+          output.putDouble("chainCount", result.getChainCount());
+          output.putDouble("sourceTokenCount", result.getSourceTokenCount());
+          output.putDouble("filteredTokenCount", result.getFilteredTokenCount());
+          output.putDouble("committedRowCount", result.getCommittedRowCount());
+          output.putDouble("durationMs", result.getDurationMs());
+          output.putString("error", result.getError());
+          promise.resolve(output);
+        }
+      }
+    );
+  }
+
+  @ReactMethod
+  public void runNativeTokenCacheWriteDiagnostic(Promise promise) {
+    if (!RabbyStartupTrace.isEnabled()) {
+      promise.reject(
+        "E_NATIVE_TOKEN_CACHE_WRITE_DIAGNOSTIC_DISABLED",
+        "Native token cache write diagnostics are disabled in production builds"
+      );
+      return;
+    }
+
+    RabbyNativeOpenApiRuntime.runTokenCacheWriteDiagnostic(
+      reactContext,
+      new NativeTokenCacheWriteDiagnosticCallback() {
+        @Override
+        public void onComplete(NativeTokenCacheWriteDiagnosticResult result) {
+          WritableMap output = Arguments.createMap();
+          output.putBoolean("success", result.getSuccess());
+          output.putString("stage", result.getStage());
+          output.putDouble(
+            "attemptedRowCount",
+            result.getAttemptedRowCount()
+          );
+          output.putDouble("durationMs", result.getDurationMs());
+          output.putString("error", result.getError());
+          promise.resolve(output);
+        }
+      }
+    );
+  }
+
+  @ReactMethod
+  public void cancelNativeTokenCacheSync(String address) {
+    RabbyNativeOpenApiRuntime.cancelTokenCacheSync(address);
+  }
+
+  @ReactMethod
+  public void cancelAllNativeTokenCacheSyncs() {
+    RabbyNativeOpenApiRuntime.cancelAllTokenCacheSyncs();
   }
 
   @ReactMethod

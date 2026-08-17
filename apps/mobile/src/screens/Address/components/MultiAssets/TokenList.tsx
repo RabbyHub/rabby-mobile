@@ -232,6 +232,8 @@ export const TokenList = () => {
   const [showLowValueTokens, setShowLowValueTokens] = useState(false);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
+  const [hasSettledTokenRequest, setHasSettledTokenRequest] = useState(false);
+  const tokenRequestIdRef = useRef(0);
   const customTestnetAddTokenModalIdRef = useRef<ReturnType<
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
@@ -385,6 +387,7 @@ export const TokenList = () => {
   const tokenProjectionViewState = resolveAssetProjectionViewState({
     availability: tokenProjectionAvailability,
     hasData: hasDefaultTokenData,
+    hasSettledRequest: hasSettledTokenRequest && !isLoading,
   });
   const shouldHideCustomTestnetSectionsWhileLoading =
     tokenProjectionViewState === 'loading';
@@ -394,17 +397,49 @@ export const TokenList = () => {
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
+  const requestTokenList = useCallback(
+    (force = false) => {
+      const requestId = tokenRequestIdRef.current + 1;
+      tokenRequestIdRef.current = requestId;
+      setHasSettledTokenRequest(false);
+      const request = batchGetTokenList(myTop10Addresses, force);
+      void request.then(
+        () => {
+          if (tokenRequestIdRef.current === requestId) {
+            setHasSettledTokenRequest(true);
+          }
+        },
+        () => {
+          if (tokenRequestIdRef.current === requestId) {
+            setHasSettledTokenRequest(true);
+          }
+        },
+      );
+      return request;
+    },
+    [myTop10Addresses],
+  );
+
   useEffect(() => {
-    batchGetTokenList(myTop10Addresses);
-  }, [myTop10Addresses]);
+    void requestTokenList();
+    return () => {
+      tokenRequestIdRef.current += 1;
+    };
+  }, [requestTokenList]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    batchGetTokenList(myTop10Addresses);
-  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
+    void requestTokenList();
+  }, [
+    isFocusing,
+    isLoading,
+    myTop10Addresses,
+    requestTokenList,
+    triggerUpdate,
+  ]);
 
   useAppForeground({
     enabled: isFocusing,
@@ -723,7 +758,7 @@ export const TokenList = () => {
 
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
-    const tokenRefresh = batchGetTokenList(myTop10Addresses, true);
+    const tokenRefresh = requestTokenList(true);
 
     withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);
@@ -734,7 +769,7 @@ export const TokenList = () => {
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [myTop10Addresses, triggerUpdate]);
+  }, [requestTokenList, triggerUpdate]);
 
   const handleLpTokenEnabledChange = useCallback((nextEnabled: boolean) => {
     setIsLpTokenEnabled(nextEnabled);

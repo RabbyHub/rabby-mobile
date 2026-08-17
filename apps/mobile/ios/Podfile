@@ -57,6 +57,8 @@ target 'RabbyMobile' do
 
   # Keep transitive OpenSSL resolution stable when Podfile.lock is regenerated.
   pod 'OpenSSL-Universal', '3.6.0000'
+  pod 'RabbyNativeHttp', :path => '../../../packages/rabby-native-http'
+  pod 'RabbyNativeOpenApi', :path => '../../../packages/rabby-native-openapi'
 
   # Flags change depending on the env values.
   flags = get_default_flags()

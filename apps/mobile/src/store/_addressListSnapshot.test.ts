@@ -89,4 +89,35 @@ describe('address list snapshots', () => {
 
     expect(apply).toHaveBeenCalledWith({ '0xb': ['cached-b'] }, ['0xb']);
   });
+
+  it('refreshes again after an invalidated in-flight hydration settles', async () => {
+    const stale = deferred<Record<string, string[]>>();
+    const fresh = deferred<Record<string, string[]>>();
+    const load = jest
+      .fn<Promise<Record<string, string[]>>, [string[]]>()
+      .mockImplementationOnce(() => stale.promise)
+      .mockImplementationOnce(() => fresh.promise);
+    const apply = jest.fn();
+    const hydrator = createAddressListSnapshotHydrator({ load, apply });
+
+    const staleHydration = hydrator.hydrate(['0xA']);
+    await Promise.resolve();
+    const refresh = hydrator.refresh(['0xA']);
+    await Promise.resolve();
+
+    expect(load).toHaveBeenCalledTimes(1);
+    stale.resolve({ '0xa': ['stale'] });
+    await staleHydration;
+    for (let index = 0; index < 4 && load.mock.calls.length < 2; index += 1) {
+      await Promise.resolve();
+    }
+
+    expect(load).toHaveBeenNthCalledWith(2, ['0xa']);
+    expect(apply).not.toHaveBeenCalled();
+    fresh.resolve({ '0xa': ['fresh'] });
+    await refresh;
+
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(apply).toHaveBeenCalledWith({ '0xa': ['fresh'] }, ['0xa']);
+  });
 });

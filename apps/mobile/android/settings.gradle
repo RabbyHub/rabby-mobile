@@ -3,6 +3,10 @@ plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'RabbyMobile'
 include ':app'
+include ':rabby-native-http'
+project(':rabby-native-http').projectDir = new File(rootProject.projectDir, '../../../packages/rabby-native-http/android')
+include ':rabby-native-openapi'
+project(':rabby-native-openapi').projectDir = new File(rootProject.projectDir, '../../../packages/rabby-native-openapi/android')
 includeBuild('../node_modules/@react-native/gradle-plugin')
 
 // include ':@react-native-firebase_analytics'

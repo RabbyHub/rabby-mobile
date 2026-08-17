@@ -88,6 +88,8 @@ describe('hooks/appSettings keychain defaults', () => {
       const {
         DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
         getCurrentKeychainVersion,
+        getNativeTokenChainSyncEnabled,
+        setNativeTokenChainSyncEnabled,
         setCurrentKeychainVersion,
       } = require('./appSettings') as typeof import('./appSettings');
 
@@ -97,6 +99,9 @@ describe('hooks/appSettings keychain defaults', () => {
       expect(getCurrentKeychainVersion()).toBe('9.0.0');
       expect(setCurrentKeychainVersion('10.0.0')).toBe('9.0.0');
       expect(getCurrentKeychainVersion()).toBe('9.0.0');
+      expect(getNativeTokenChainSyncEnabled()).toBe(false);
+      expect(setNativeTokenChainSyncEnabled(true)).toBe(false);
+      expect(getNativeTokenChainSyncEnabled()).toBe(false);
     });
   });
 });

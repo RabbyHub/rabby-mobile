@@ -49,6 +49,13 @@ jest.mock('@/utils/events', () => ({
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
+jest.mock('./tokenChainSyncExecutor', () => ({
+  getTokenChainSyncMode: jest.fn(() => 'js'),
+  executeTokenChainSync: jest.fn(async ({ executeJs }) => ({
+    mode: 'js',
+    value: await executeJs(),
+  })),
+}));
 
 import {
   buildMultiAssetsIndexFromTokenIds,
@@ -1521,6 +1528,44 @@ describe('single-address token assets projection', () => {
       cached,
     ]);
     expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+  });
+
+  it('publishes non-empty cache data over an unconfirmed empty hydration when remote discovery fails', async () => {
+    const cached = createToken('cached', {
+      owner_addr: NORMALIZED_ADDRESS,
+      usd_value: 2,
+    });
+    tokenListStore.setState({
+      tokenListMap: {
+        [NORMALIZED_ADDRESS]: [],
+        [NORMALIZED_SECOND_ADDRESS]: [],
+      },
+      sourceSnapshotReadyByAddress: {},
+    });
+    mockedQueryTokensCache
+      .mockResolvedValueOnce([cached] as never)
+      .mockResolvedValueOnce([]);
+    mockedUsedChainList.mockRejectedValue(createHttpError(429) as never);
+
+    await tokenListStore
+      .getState()
+      .batchGetTokenList([ADDRESS, SECOND_ADDRESS], false);
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      cached,
+    ]);
+    expect(
+      tokenListStore.getState().sourceSnapshotReadyByAddress,
+    ).not.toHaveProperty(NORMALIZED_ADDRESS);
+
+    const projectionKey = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS, SECOND_ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[projectionKey]
+        ?.tokenIds,
+    ).toEqual([buildTokenEntityId(cached)]);
   });
 
   it('persists a refreshed projection only after canonical token entities succeed', async () => {

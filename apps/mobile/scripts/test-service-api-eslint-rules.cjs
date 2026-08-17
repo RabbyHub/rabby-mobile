@@ -5,6 +5,7 @@ const { Linter } = require('eslint');
 const typescriptParser = require('@typescript-eslint/parser');
 const noFloatingDeferredServiceApiCalls = require('../eslint-rules/no-floating-deferred-service-api-calls');
 const noPersistStoreDirectMutation = require('../eslint-rules/no-persist-store-direct-mutation');
+const noDirectNativeTokenChainSync = require('../eslint-rules/no-direct-native-token-chain-sync');
 
 const linter = new Linter();
 linter.defineRule(
@@ -14,6 +15,10 @@ linter.defineRule(
 linter.defineRule(
   'no-persist-store-direct-mutation',
   noPersistStoreDirectMutation,
+);
+linter.defineRule(
+  'no-direct-native-token-chain-sync',
+  noDirectNativeTokenChainSync,
 );
 linter.defineParser('@typescript-eslint/parser', typescriptParser);
 
@@ -206,5 +211,41 @@ invalidPersistStoreCases.forEach((source, index) => {
   );
   assert.strictEqual(messages[0].ruleId, 'no-persist-store-direct-mutation');
 });
+
+const nativeTokenSyncConfig = {
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+  },
+  rules: {
+    'no-direct-native-token-chain-sync': 'error',
+  },
+};
+
+const nativeTokenSyncSource = `
+  import NativeHelpers from '@/core/native/RNHelpers';
+  NativeHelpers.syncNativeTokenChains('0xabc', ['eth'], 'address', true);
+`;
+
+assert.deepStrictEqual(
+  linter.verify(
+    nativeTokenSyncSource,
+    nativeTokenSyncConfig,
+    '/workspace/src/store/tokenChainSyncExecutor.ts',
+  ),
+  [],
+  'expected the central token-chain executor to access the native bridge',
+);
+
+const directNativeSyncMessages = linter.verify(
+  nativeTokenSyncSource,
+  nativeTokenSyncConfig,
+  '/workspace/src/store/tokens.ts',
+);
+assert.strictEqual(directNativeSyncMessages.length, 1);
+assert.strictEqual(
+  directNativeSyncMessages[0].ruleId,
+  'no-direct-native-token-chain-sync',
+);
 
 console.log('service API ESLint rule tests passed');
