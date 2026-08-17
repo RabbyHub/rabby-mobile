@@ -3,7 +3,7 @@ import RcFavoriteStarEmpty from '@/assets/icons/dapp/icon-star.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -20,6 +20,8 @@ type PerpsProMarketRowProps = {
   favorite: boolean;
   model: PerpsProMarketRowModel;
   onPrefetch?: () => void;
+  onRealtimeIntentCancel?: (marketKey: string) => void;
+  onRealtimeIntentStart?: (marketKey: string) => void;
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
   selected: boolean;
@@ -29,6 +31,8 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
   favorite,
   model,
   onPrefetch,
+  onRealtimeIntentCancel,
+  onRealtimeIntentStart,
   onSelect,
   onToggleFavorite,
   selected,
@@ -39,6 +43,10 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
   // press. Never dispatch an action for the newly bound market in that case.
   const selectPressMarketKeyRef = useRef<string | null>(null);
   const favoritePressMarketKeyRef = useRef<string | null>(null);
+  const selectIdentityInvalidatedRef = useRef(false);
+  const selectIntentCancelTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const changeStyle =
     model.change24h == null
       ? styles.changeMuted
@@ -46,20 +54,69 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
       ? styles.changeUp
       : styles.changeDown;
   const captureSelectIdentity = useCallback(() => {
+    selectIdentityInvalidatedRef.current = false;
     selectPressMarketKeyRef.current = model.marketKey;
     onPrefetch?.();
-  }, [model.marketKey, onPrefetch]);
+    onRealtimeIntentStart?.(model.marketKey);
+  }, [model.marketKey, onPrefetch, onRealtimeIntentStart]);
+  const cancelCapturedSelectIntent = useCallback(() => {
+    if (selectIntentCancelTimerRef.current) {
+      clearTimeout(selectIntentCancelTimerRef.current);
+      selectIntentCancelTimerRef.current = null;
+    }
+    const pressedMarketKey = selectPressMarketKeyRef.current;
+    selectPressMarketKeyRef.current = null;
+    if (pressedMarketKey) {
+      onRealtimeIntentCancel?.(pressedMarketKey);
+    }
+  }, [onRealtimeIntentCancel]);
+  const scheduleSelectIntentCancel = useCallback(() => {
+    const pressedMarketKey = selectPressMarketKeyRef.current;
+    if (!pressedMarketKey) {
+      return;
+    }
+    if (selectIntentCancelTimerRef.current) {
+      clearTimeout(selectIntentCancelTimerRef.current);
+    }
+    // React Native may fire onPressOut immediately before onPress. Give a
+    // successful press one task to transfer the same intent lease.
+    selectIntentCancelTimerRef.current = setTimeout(() => {
+      selectIntentCancelTimerRef.current = null;
+      if (selectPressMarketKeyRef.current !== pressedMarketKey) {
+        return;
+      }
+      selectPressMarketKeyRef.current = null;
+      selectIdentityInvalidatedRef.current = true;
+      onRealtimeIntentCancel?.(pressedMarketKey);
+    }, 0);
+  }, [onRealtimeIntentCancel]);
   const captureFavoriteIdentity = useCallback(() => {
+    if (selectIntentCancelTimerRef.current) {
+      clearTimeout(selectIntentCancelTimerRef.current);
+      selectIntentCancelTimerRef.current = null;
+    }
+    if (selectPressMarketKeyRef.current) {
+      onRealtimeIntentCancel?.(selectPressMarketKeyRef.current);
+    }
     favoritePressMarketKeyRef.current = model.marketKey;
-  }, [model.marketKey]);
+  }, [model.marketKey, onRealtimeIntentCancel]);
   const selectMarket = useCallback(() => {
+    if (selectIntentCancelTimerRef.current) {
+      clearTimeout(selectIntentCancelTimerRef.current);
+      selectIntentCancelTimerRef.current = null;
+    }
+    if (selectIdentityInvalidatedRef.current) {
+      selectIdentityInvalidatedRef.current = false;
+      return;
+    }
     const pressedMarketKey = selectPressMarketKeyRef.current;
     selectPressMarketKeyRef.current = null;
     if (pressedMarketKey != null && pressedMarketKey !== model.marketKey) {
+      onRealtimeIntentCancel?.(pressedMarketKey);
       return;
     }
     onSelect(model.marketKey);
-  }, [model.marketKey, onSelect]);
+  }, [model.marketKey, onRealtimeIntentCancel, onSelect]);
   const toggleFavorite = useCallback(() => {
     const pressedMarketKey = favoritePressMarketKeyRef.current;
     favoritePressMarketKeyRef.current = null;
@@ -68,6 +125,17 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
     }
     onToggleFavorite(model.marketKey);
   }, [model.marketKey, onToggleFavorite]);
+
+  useEffect(
+    () => () => {
+      const hadCapturedIdentity = selectPressMarketKeyRef.current != null;
+      cancelCapturedSelectIntent();
+      if (hadCapturedIdentity) {
+        selectIdentityInvalidatedRef.current = true;
+      }
+    },
+    [cancelCapturedSelectIntent, model.marketKey],
+  );
 
   return (
     <Pressable
@@ -78,6 +146,7 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
       accessibilityState={{ selected }}
       onPress={selectMarket}
       onPressIn={captureSelectIdentity}
+      onPressOut={scheduleSelectIntentCancel}
       style={styles.marketRow}>
       <TouchableOpacity
         accessibilityLabel={
@@ -156,6 +225,9 @@ export const PerpsProMarketRow = React.memo(
   (previous, next) =>
     previous.favorite === next.favorite &&
     previous.model === next.model &&
+    previous.onPrefetch === next.onPrefetch &&
+    previous.onRealtimeIntentCancel === next.onRealtimeIntentCancel &&
+    previous.onRealtimeIntentStart === next.onRealtimeIntentStart &&
     previous.onSelect === next.onSelect &&
     previous.onToggleFavorite === next.onToggleFavorite &&
     previous.selected === next.selected,

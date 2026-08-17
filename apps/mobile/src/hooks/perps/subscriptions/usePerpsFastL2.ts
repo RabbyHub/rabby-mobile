@@ -1,5 +1,5 @@
 import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { apisPerps } from '@/core/apis/perps';
 
@@ -42,8 +42,18 @@ type FastL2DisplayCacheEntry = {
   ws: PerpsSdk['ws'];
 };
 
+type FastL2HttpSnapshotInflight = {
+  promise: Promise<boolean>;
+  ws: PerpsSdk['ws'];
+};
+
 const fastL2Registry = new Map<string, FastL2RegistryEntry>();
 const fastL2DisplayCache = new Map<string, FastL2DisplayCacheEntry>();
+const fastL2HttpSnapshotInflight = new Map<
+  string,
+  FastL2HttpSnapshotInflight
+>();
+let fastL2TestGeneration = 0;
 
 export const createPerpsFastL2Identity = (
   coin: string,
@@ -91,19 +101,26 @@ const readFastL2DisplayCache = (
   return cached;
 };
 
-const writeFastL2DisplayCache = (
-  entry: FastL2RegistryEntry,
-  book: L2Book,
-  receivedAt: number,
-  revision: number,
-) => {
-  fastL2DisplayCache.delete(entry.snapshot.identity);
-  fastL2DisplayCache.set(entry.snapshot.identity, {
+const writeFastL2DisplayCacheValue = ({
+  book,
+  identity,
+  receivedAt,
+  revision,
+  ws,
+}: {
+  book: L2Book;
+  identity: string;
+  receivedAt: number;
+  revision: number;
+  ws: PerpsSdk['ws'];
+}) => {
+  fastL2DisplayCache.delete(identity);
+  fastL2DisplayCache.set(identity, {
     book,
-    identity: entry.snapshot.identity,
+    identity,
     receivedAt,
     revision,
-    ws: entry.sdk.ws,
+    ws,
   });
   while (fastL2DisplayCache.size > MAX_FAST_L2_DISPLAY_CACHE_ENTRIES) {
     const oldestIdentity = fastL2DisplayCache.keys().next().value;
@@ -113,6 +130,20 @@ const writeFastL2DisplayCache = (
     fastL2DisplayCache.delete(oldestIdentity);
   }
 };
+
+const writeFastL2DisplayCache = (
+  entry: FastL2RegistryEntry,
+  book: L2Book,
+  receivedAt: number,
+  revision: number,
+) =>
+  writeFastL2DisplayCacheValue({
+    book,
+    identity: entry.snapshot.identity,
+    receivedAt,
+    revision,
+    ws: entry.sdk.ws,
+  });
 
 const publishFastL2 = (
   entry: FastL2RegistryEntry,
@@ -389,6 +420,147 @@ const peekPerpsFastL2Snapshot = (
       };
 };
 
+export const hasFreshPerpsFastL2DisplaySnapshot = ({
+  coin,
+  precision,
+}: {
+  coin: string;
+  precision: PerpsBookPrecision;
+}) => {
+  const snapshot = peekPerpsFastL2Snapshot(coin, precision);
+  return !!snapshot.book && isFresh(snapshot.receivedAt);
+};
+
+/**
+ * Fetches one exact REST book without creating a second FastL2 subscription.
+ * The result is display-only (`stale`) until the matching realtime stream
+ * publishes a complete post-handoff frame.
+ */
+export const prewarmPerpsFastL2HttpSnapshot = ({
+  coin,
+  precision,
+}: {
+  coin: string;
+  precision: PerpsBookPrecision;
+}): Promise<boolean> => {
+  let sdk: PerpsSdk;
+  try {
+    if (hasFreshPerpsFastL2DisplaySnapshot({ coin, precision })) {
+      return Promise.resolve(true);
+    }
+    sdk = apisPerps.getPerpsSDK();
+  } catch {
+    return Promise.resolve(false);
+  }
+  const identity = createPerpsFastL2Identity(coin, precision);
+  const existing = fastL2HttpSnapshotInflight.get(identity);
+  if (existing?.ws === sdk.ws) {
+    return existing.promise;
+  }
+  const generation = fastL2TestGeneration;
+  const promise = Promise.resolve()
+    .then(() =>
+      sdk.info.getL2Book(
+        coin,
+        precision.nSigFigs,
+        precision.mantissa ?? undefined,
+      ),
+    )
+    .then(book => {
+      if (
+        generation !== fastL2TestGeneration ||
+        apisPerps.getPerpsSDKSnapshot() !== sdk ||
+        book?.coin !== coin ||
+        !Number.isFinite(book.time) ||
+        book.time <= 0 ||
+        !hasFastL2BookShape(book)
+      ) {
+        return false;
+      }
+      const liveEntry = fastL2Registry.get(identity);
+      if (
+        liveEntry?.sdk.ws === sdk.ws &&
+        liveEntry.snapshot.status === 'ready' &&
+        isFresh(liveEntry.snapshot.receivedAt)
+      ) {
+        return !!liveEntry.snapshot.book;
+      }
+      const cached = fastL2DisplayCache.get(identity);
+      const cachedForOwner = cached?.ws === sdk.ws ? cached : null;
+      const liveBookTime =
+        liveEntry?.sdk.ws === sdk.ws ? liveEntry.snapshot.book?.time ?? 0 : 0;
+      const cachedBookTime = cachedForOwner?.book.time ?? 0;
+      if (Math.max(liveBookTime, cachedBookTime) > book.time) {
+        return false;
+      }
+      const receivedAt = Date.now();
+      const revision = Math.max(
+        liveEntry?.sdk.ws === sdk.ws ? liveEntry.snapshot.revision : 0,
+        cachedForOwner?.revision ?? 0,
+      );
+      const displayBook: L2Book = book;
+      writeFastL2DisplayCacheValue({
+        book: displayBook,
+        identity,
+        receivedAt,
+        revision,
+        ws: sdk.ws,
+      });
+      if (liveEntry?.sdk.ws === sdk.ws) {
+        publishFastL2(liveEntry, {
+          book: displayBook,
+          error: null,
+          identity,
+          receivedAt,
+          revision,
+          status: 'stale',
+        });
+      }
+      return true;
+    })
+    .catch(() => false);
+  const inflight = { promise, ws: sdk.ws };
+  fastL2HttpSnapshotInflight.set(identity, inflight);
+  void promise.finally(() => {
+    if (fastL2HttpSnapshotInflight.get(identity) === inflight) {
+      fastL2HttpSnapshotInflight.delete(identity);
+    }
+  });
+  return promise;
+};
+
+export const waitForPerpsFastL2HttpSnapshot = async ({
+  coin,
+  precision,
+  timeoutMs,
+}: {
+  coin: string;
+  precision: PerpsBookPrecision;
+  timeoutMs: number;
+}) => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  try {
+    if (hasFreshPerpsFastL2DisplaySnapshot({ coin, precision })) {
+      return true;
+    }
+    const request = prewarmPerpsFastL2HttpSnapshot({ coin, precision });
+    if (timeoutMs <= 0) {
+      return false;
+    }
+    const timedOut = new Promise<false>(resolve => {
+      timeoutId = setTimeout(() => resolve(false), timeoutMs);
+    });
+    const result = await Promise.race([request, timedOut]);
+    return result || hasFreshPerpsFastL2DisplaySnapshot({ coin, precision });
+  } catch {
+    return false;
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
 export const prewarmPerpsFastL2 = ({
   coin,
   precision,
@@ -498,6 +670,25 @@ export const usePerpsFastL2 = ({
         : null,
     [coin, stablePrecision],
   );
+  const wasPublicationEnabledRef = useRef(publicationEnabled);
+
+  useEffect(() => {
+    const wasPublicationEnabled = wasPublicationEnabledRef.current;
+    wasPublicationEnabledRef.current = publicationEnabled;
+    if (
+      wasPublicationEnabled ||
+      !publicationEnabled ||
+      !enabled ||
+      !stablePrecision ||
+      hasFreshPerpsFastL2DisplaySnapshot({ coin, precision: stablePrecision })
+    ) {
+      return;
+    }
+    void prewarmPerpsFastL2HttpSnapshot({
+      coin,
+      precision: stablePrecision,
+    });
+  }, [coin, enabled, publicationEnabled, stablePrecision]);
 
   return usePerpsRealtimePublication({
     clearValue: clearFastL2Value,
@@ -514,7 +705,9 @@ export const usePerpsFastL2 = ({
 };
 
 export const resetPerpsFastL2RegistryForTests = () => {
+  fastL2TestGeneration += 1;
   fastL2Registry.forEach(entry => entry.release());
   fastL2Registry.clear();
   fastL2DisplayCache.clear();
+  fastL2HttpSnapshotInflight.clear();
 };

@@ -11,6 +11,8 @@ type PerpsProMarketSlotRowProps = {
   favorite: boolean;
   marketKey: string;
   onPrefetch?: (coin: string) => void;
+  onRealtimeIntentCancel?: (marketKey: string) => void;
+  onRealtimeIntentStart?: (marketKey: string) => void;
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
   selected: boolean;
@@ -21,6 +23,8 @@ const PerpsProMarketSlotRowComponent: React.FC<PerpsProMarketSlotRowProps> = ({
   favorite,
   marketKey,
   onPrefetch,
+  onRealtimeIntentCancel,
+  onRealtimeIntentStart,
   onSelect,
   onToggleFavorite,
   selected,
@@ -57,6 +61,8 @@ const PerpsProMarketSlotRowComponent: React.FC<PerpsProMarketSlotRowProps> = ({
       favorite={favorite}
       model={model}
       onPrefetch={prefetch}
+      onRealtimeIntentCancel={onRealtimeIntentCancel}
+      onRealtimeIntentStart={onRealtimeIntentStart}
       onSelect={onSelect}
       onToggleFavorite={onToggleFavorite}
       selected={selected}

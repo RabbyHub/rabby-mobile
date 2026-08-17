@@ -615,4 +615,43 @@ describe('PerpsProMarketSelector component', () => {
     expect(mockDismiss).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('resolves a touch intent from the latest market data and forwards cancellation by key', () => {
+    const onRealtimeIntentCancel = jest.fn();
+    const onRealtimeIntentStart = jest.fn();
+    const selectorRef = React.createRef<PerpsProMarketSelectorHandle>();
+    render(
+      <PerpsProMarketSelector
+        currentMarketKey="hyperliquid::MARKET000"
+        onClose={jest.fn()}
+        onRealtimeIntentCancel={onRealtimeIntentCancel}
+        onRealtimeIntentStart={onRealtimeIntentStart}
+        onSelect={jest.fn()}
+        ref={selectorRef}
+      />,
+    );
+    act(() => selectorRef.current?.present());
+    act(() => {
+      __updateMarket('MARKET295', { markPx: '777' });
+    });
+    const row = screen.getByLabelText(
+      'page.perps.pro.marketSelector.select:MARKET295USDC',
+    );
+
+    fireEvent(row, 'pressIn');
+    expect(onRealtimeIntentStart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canonicalCoin: 'MARKET295',
+        marketKey: 'hyperliquid::MARKET295',
+        price: 777,
+      }),
+    );
+
+    fireEvent(row, 'pressOut');
+    expect(onRealtimeIntentCancel).not.toHaveBeenCalled();
+    act(() => jest.runOnlyPendingTimers());
+    expect(onRealtimeIntentCancel).toHaveBeenCalledWith(
+      'hyperliquid::MARKET295',
+    );
+  });
 });
