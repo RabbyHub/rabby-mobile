@@ -10,6 +10,8 @@ namespace {
 
 using rabby::openapi::parseTokenListResponse;
 using rabby::openapi::parseUsedChainListResponse;
+using rabby::openapi::parseNftListResponse;
+using rabby::openapi::parseProtocolListResponse;
 
 void testUsedChainListParsing() {
   const auto result = parseUsedChainListResponse(
@@ -186,6 +188,157 @@ void testTokenCacheSqlAndEmptySentinel() {
   assert(probe.usdValue == 1);
 }
 
+void testProtocolParsingMatchesProjectionSemantics() {
+  const auto result = parseProtocolListResponse(
+      "0xAbC",
+      R"([{
+        "id":"Aave",
+        "chain":"ETH",
+        "name":"Aave",
+        "site_url":"https://aave.example",
+        "logo_url":"https://aave.example/logo.png",
+        "has_supported_portfolio":true,
+        "tvl":100,
+        "portfolio_item_list":[
+          {
+            "asset_token_list":[
+              {"price":2,"amount":3},
+              {"price":4,"amount":-1}
+            ],
+            "stats":{"net_usd_value":7}
+          },
+          {
+            "asset_token_list":[
+              {"price":5,"amount":2},
+              {"price":3,"amount":-1}
+            ],
+            "stats":null
+          }
+        ]
+      }])");
+
+  assert(result.isSuccess());
+  assert(result.sourceItemCount == 1);
+  assert(result.protocols.size() == 1);
+  const auto& protocol = result.protocols[0];
+  assert(protocol.ownerAddress == "0xabc");
+  assert(protocol.dbId == "0xabc-ETH-Aave");
+  assert(protocol.projectionResourceId == "0xabc:eth:aave");
+  assert(protocol.sourceIndex == 0);
+  assert(std::abs(protocol.netWorth - 20) < 0.000001);
+  assert(std::abs(protocol.positiveRealUsdValue - 9) < 0.000001);
+  assert(protocol.portfolioItemListJson.find("asset_token_list") !=
+      std::string::npos);
+}
+
+void testProtocolParsingFailsClosed() {
+  const auto missingPortfolio = parseProtocolListResponse(
+      "0xabc", R"([{"id":"aave","chain":"eth","name":"Aave"}])");
+  assert(!missingPortfolio.isSuccess());
+
+  const auto invalidToken = parseProtocolListResponse(
+      "0xabc",
+      R"([{
+        "id":"aave","chain":"eth","name":"Aave",
+        "portfolio_item_list":[{"asset_token_list":[{"price":"2"}]}]
+      }])");
+  assert(!invalidToken.isSuccess());
+  assert(invalidToken.protocols.empty());
+}
+
+void testNftParsingMatchesCollectionSemantics() {
+  const auto result = parseNftListResponse(
+      "0xAbC",
+      R"([{
+        "chain":"ETH",
+        "id":"NftOne",
+        "contract_id":"contract",
+        "inner_id":"Inner",
+        "token_id":"7",
+        "name":"NFT One",
+        "contract_name":"Contract",
+        "collection_name":"Collection",
+        "description":"Description",
+        "usd_price":2.5,
+        "amount":1,
+        "collection_id":"ETH:Collection",
+        "content_type":"image_url",
+        "content":"https://example.test/nft.png",
+        "detail_url":"https://example.test/nft",
+        "total_supply":"10",
+        "is_erc1155":false,
+        "is_erc721":true,
+        "is_core":true,
+        "thumbnail_url":"https://example.test/thumb.png",
+        "pay_token":{"id":"eth"}
+      }])",
+      R"([{
+        "id":"Collection",
+        "chain":"ETH",
+        "name":"Collection",
+        "is_verified":true,
+        "credit_score":88,
+        "is_core":true,
+        "is_hidden":false
+      }])");
+
+  assert(result.isSuccess());
+  assert(result.sourceItemCount == 1);
+  assert(result.sourceCollectionCount == 1);
+  assert(result.filteredItemCount == 0);
+  assert(result.nfts.size() == 1);
+  const auto& nft = result.nfts[0];
+  assert(nft.ownerAddress == "0xabc");
+  assert(nft.dbId == "0xabc-ETH-NftOne-7");
+  assert(nft.projectionResourceId ==
+      "0xabc:eth:eth:collection:nftone:inner");
+  assert(nft.collectionResourceId == "0xabc::eth::collection");
+  assert(nft.collectionCreditScore == 88);
+  assert(nft.collectionIsCore);
+  assert(!nft.collectionIsHidden);
+  assert(nft.collectionJson.find("\"nft_list\": []") !=
+      std::string::npos);
+  assert(nft.payTokenJson == R"({"id": "eth"})");
+}
+
+void testNftParsingPreservesBaselineFilteringAndStandaloneRows() {
+  const auto result = parseNftListResponse(
+      "0xabc",
+      R"([
+        {"chain":"eth","id":"hidden","collection_id":"eth:bad","is_erc721":true},
+        {"chain":"eth","id":"standalone","inner_id":"one","is_erc721":true},
+        {"chain":"eth","id":"missing","collection_id":"eth:missing","is_erc721":true}
+      ])",
+      R"([{
+        "id":"bad","chain":"eth","is_verified":false,
+        "credit_score":1,"is_core":false
+      }])");
+
+  assert(result.isSuccess());
+  assert(result.sourceItemCount == 3);
+  assert(result.filteredItemCount == 1);
+  assert(result.nfts.size() == 2);
+  assert(result.nfts[0].id == "standalone");
+  assert(result.nfts[0].collectionResourceId.empty());
+  assert(result.nfts[1].id == "missing");
+  assert(result.nfts[1].collectionResourceId == "0xabc::eth::");
+}
+
+void testNftParsingFailsClosed() {
+  const auto invalidCollection = parseNftListResponse(
+      "0xabc",
+      "[]",
+      R"([{"id":"collection","chain":"eth","credit_score":"1"}])");
+  assert(!invalidCollection.isSuccess());
+
+  const auto invalidNft = parseNftListResponse(
+      "0xabc",
+      R"([{"chain":"eth","id":"nft","amount":"1"}])",
+      "[]");
+  assert(!invalidNft.isSuccess());
+  assert(invalidNft.nfts.empty());
+}
+
 } // namespace
 
 int main() {
@@ -196,5 +349,10 @@ int main() {
   testTokenParsingFailsClosed();
   testTokenSnapshotCodecRoundTrip();
   testTokenCacheSqlAndEmptySentinel();
+  testProtocolParsingMatchesProjectionSemantics();
+  testProtocolParsingFailsClosed();
+  testNftParsingMatchesCollectionSemantics();
+  testNftParsingPreservesBaselineFilteringAndStandaloneRows();
+  testNftParsingFailsClosed();
   return 0;
 }
