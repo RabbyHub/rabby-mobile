@@ -31,6 +31,30 @@ jest.mock('react-native-pager-view', () => {
   );
 });
 
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      ScrollView: ReactNative.ScrollView,
+      createAnimatedComponent: (Component: React.ComponentType) => Component,
+    },
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    useAnimatedScrollHandler:
+      (handlers: { onScroll: (event: unknown) => void }) =>
+      (event: { nativeEvent?: unknown }) =>
+        handlers.onScroll(event.nativeEvent ?? event),
+    useEvent:
+      (handler: (event: object) => void) => (event: { nativeEvent?: object }) =>
+        handler({
+          ...(event.nativeEvent ?? event),
+          eventName: 'onPageScroll',
+        }),
+    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+  };
+});
+
 jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

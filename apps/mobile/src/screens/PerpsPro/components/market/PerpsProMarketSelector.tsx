@@ -159,6 +159,9 @@ const PerpsProMarketSelectorComponent = forwardRef<
     const [query, setQuery] = useState('');
     const [inputFocused, setInputFocused] = useState(false);
     const [activeTab, setActiveTab] = useState<PerpsProMarketTab>('all');
+    const [previewTab, setPreviewTab] = useState<PerpsProMarketTab | null>(
+      null,
+    );
     const [sort, setSort] = useState(() => {
       const initialSort = getPerpsProMarketSession();
       return {
@@ -217,6 +220,9 @@ const PerpsProMarketSelectorComponent = forwardRef<
     );
     const validTabIds = useMemo(() => new Set(tabs.map(tab => tab.id)), [tabs]);
     const resolvedActiveTab = validTabIds.has(activeTab) ? activeTab : 'all';
+    const resolvedPreviewTab =
+      previewTab && validTabIds.has(previewTab) ? previewTab : null;
+    const displayedTab = resolvedPreviewTab ?? resolvedActiveTab;
     const isSearchMode = inputFocused || !!query.trim();
     const tabIdsKey = tabs.map(tab => tab.id).join('\u0000');
     const activeTabIndex = Math.max(
@@ -301,6 +307,10 @@ const PerpsProMarketSelectorComponent = forwardRef<
     }, [activeTab, resolvedActiveTab]);
 
     useEffect(() => {
+      setPreviewTab(null);
+    }, [isSearchMode, tabIdsKey]);
+
+    useEffect(() => {
       const frame = requestAnimationFrame(() => {
         listRefs.current.forEach(list => list.scrollToTopIfNeeded());
       });
@@ -324,11 +334,16 @@ const PerpsProMarketSelectorComponent = forwardRef<
       markDismissed();
       Keyboard.dismiss();
       searchRef.current?.blur();
+      if (resolvedActiveTab !== 'all' || previewTab) {
+        const allTabIndex = tabs.findIndex(tab => tab.id === 'all');
+        pagerRef.current?.setPageWithoutAnimation(Math.max(0, allTabIndex));
+      }
       setQuery('');
       setInputFocused(false);
+      setPreviewTab(null);
       setActiveTab('all');
       onClose?.();
-    }, [markDismissed, onClose]);
+    }, [markDismissed, onClose, previewTab, resolvedActiveTab, tabs]);
     const selectSort = useCallback((field: 'name' | 'volume') => {
       setSort(current =>
         getNextPerpsProSort(current.field, current.direction, field),
@@ -415,6 +430,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
     );
     const selectTab = useCallback(
       (tab: PerpsProMarketTab) => {
+        setPreviewTab(null);
         const targetIndex = tabs.findIndex(item => item.id === tab);
         if (targetIndex < 0 || targetIndex === activeTabIndex) {
           return;
@@ -431,8 +447,19 @@ const PerpsProMarketSelectorComponent = forwardRef<
       },
       [activeTabIndex, tabs],
     );
+    const handlePagePreview = useCallback(
+      (position: number | null) => {
+        if (position === null) {
+          setPreviewTab(null);
+          return;
+        }
+        setPreviewTab(tabs[position]?.id ?? null);
+      },
+      [tabs],
+    );
     const handlePageSelected = useCallback(
       (position: number) => {
+        setPreviewTab(null);
         const selectedTab = tabs[position];
         if (selectedTab) {
           setActiveTab(selectedTab.id);
@@ -473,7 +500,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
             />
             {!isSearchMode ? (
               <PerpsProMarketTabs
-                activeTab={resolvedActiveTab}
+                activeTab={displayedTab}
                 onChange={selectTab}
                 tabs={tabs}
               />
@@ -547,6 +574,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
               <PerpsProMarketPager
                 initialPage={activeTabIndex}
                 key={tabIdsKey}
+                onPagePreview={handlePagePreview}
                 onPageSelected={handlePageSelected}
                 pageWidth={width}
                 ref={pagerRef}

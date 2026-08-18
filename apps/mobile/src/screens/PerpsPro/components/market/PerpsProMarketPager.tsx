@@ -11,7 +11,6 @@ import React, {
   type ReactNode,
 } from 'react';
 import {
-  ScrollView,
   StyleSheet,
   View,
   type NativeScrollEvent,
@@ -20,8 +19,15 @@ import {
   type ViewStyle,
 } from 'react-native';
 import PagerView, {
+  type PagerViewOnPageScrollEvent,
   type PagerViewOnPageSelectedEvent,
 } from 'react-native-pager-view';
+import Animated, {
+  runOnJS,
+  useAnimatedScrollHandler,
+  useEvent,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 export type PerpsProMarketPagerHandle = {
   setPage: (position: number) => void;
@@ -31,6 +37,7 @@ export type PerpsProMarketPagerHandle = {
 type PerpsProMarketPagerProps = {
   children: ReactNode;
   initialPage: number;
+  onPagePreview: (position: number | null) => void;
   onPageSelected: (position: number) => void;
   pageWidth: number;
   style?: StyleProp<ViewStyle>;
@@ -47,19 +54,30 @@ const getPagePositionFromOffset = (
 ) => clampPagePosition(Math.round(offsetX / Math.max(1, pageWidth)), pageCount);
 
 const PAGE_OFFSET_EPSILON = 0.5;
+const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
 const IosPerpsProMarketPager = forwardRef<
   PerpsProMarketPagerHandle,
   PerpsProMarketPagerProps
 >(
   (
-    { children, initialPage, onPageSelected, pageWidth, style, testID },
+    {
+      children,
+      initialPage,
+      onPagePreview,
+      onPageSelected,
+      pageWidth,
+      style,
+      testID,
+    },
     ref,
   ) => {
-    const scrollViewRef = useRef<ScrollView>(null);
+    const scrollViewRef =
+      useRef<React.ElementRef<typeof Animated.ScrollView>>(null);
     const pageCount = Children.count(children);
     const initialPageRef = useRef(clampPagePosition(initialPage, pageCount));
     const settledPageRef = useRef(initialPageRef.current);
+    const previewPagePosition = useSharedValue(initialPageRef.current);
     const previousPageWidthRef = useRef(pageWidth);
     const initialContentOffsetRef = useRef({
       x: initialPageRef.current * pageWidth,
@@ -73,13 +91,35 @@ const IosPerpsProMarketPager = forwardRef<
     const commitPagePosition = useCallback(
       (position: number) => {
         const nextPosition = clampPagePosition(position, pageCount);
+        previewPagePosition.value = nextPosition;
+        onPagePreview(null);
         if (nextPosition === settledPageRef.current) {
           return;
         }
         settledPageRef.current = nextPosition;
         onPageSelected(nextPosition);
       },
-      [onPageSelected, pageCount],
+      [onPagePreview, onPageSelected, pageCount, previewPagePosition],
+    );
+
+    const handleScroll = useAnimatedScrollHandler(
+      {
+        onScroll: event => {
+          const nextPosition = Math.max(
+            0,
+            Math.min(
+              pageCount - 1,
+              Math.round(event.contentOffset.x / Math.max(1, pageWidth)),
+            ),
+          );
+          if (nextPosition === previewPagePosition.value) {
+            return;
+          }
+          previewPagePosition.value = nextPosition;
+          runOnJS(onPagePreview)(nextPosition);
+        },
+      },
+      [onPagePreview, pageCount, pageWidth],
     );
 
     const scrollToPage = useCallback(
@@ -159,7 +199,7 @@ const IosPerpsProMarketPager = forwardRef<
     ));
 
     return (
-      <ScrollView
+      <Animated.ScrollView
         alwaysBounceHorizontal={false}
         bounces={false}
         contentOffset={initialContentOffsetRef.current}
@@ -170,8 +210,10 @@ const IosPerpsProMarketPager = forwardRef<
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
         onMomentumScrollEnd={handleMomentumScrollEnd}
+        onScroll={handleScroll}
         onScrollEndDrag={handleScrollEndDrag}
         ref={scrollViewRef}
+        scrollEventThrottle={16}
         scrollsToTop={false}
         showsHorizontalScrollIndicator={false}
         snapToAlignment="start"
@@ -179,7 +221,7 @@ const IosPerpsProMarketPager = forwardRef<
         style={style}
         testID={testID}>
         {pages}
-      </ScrollView>
+      </Animated.ScrollView>
     );
   },
 );
@@ -189,37 +231,70 @@ IosPerpsProMarketPager.displayName = 'IosPerpsProMarketPager';
 const AndroidPerpsProMarketPager = forwardRef<
   PerpsProMarketPagerHandle,
   PerpsProMarketPagerProps
->(({ children, initialPage, onPageSelected, style, testID }, ref) => {
-  const pagerRef = useRef<PagerView>(null);
-
-  useImperativeHandle(
+>(
+  (
+    { children, initialPage, onPagePreview, onPageSelected, style, testID },
     ref,
-    () => ({
-      setPage: position => pagerRef.current?.setPage(position),
-      setPageWithoutAnimation: position =>
-        pagerRef.current?.setPageWithoutAnimation(position),
-    }),
-    [],
-  );
+  ) => {
+    const pagerRef = useRef<PagerView>(null);
+    const pageCount = Children.count(children);
+    const previewPagePosition = useSharedValue(
+      clampPagePosition(initialPage, pageCount),
+    );
 
-  const handlePageSelected = useCallback(
-    (event: PagerViewOnPageSelectedEvent) => {
-      onPageSelected(event.nativeEvent.position);
-    },
-    [onPageSelected],
-  );
+    useImperativeHandle(
+      ref,
+      () => ({
+        setPage: position => pagerRef.current?.setPage(position),
+        setPageWithoutAnimation: position =>
+          pagerRef.current?.setPageWithoutAnimation(position),
+      }),
+      [],
+    );
 
-  return (
-    <PagerView
-      initialPage={initialPage}
-      onPageSelected={handlePageSelected}
-      ref={pagerRef}
-      style={style}
-      testID={testID}>
-      {children}
-    </PagerView>
-  );
-});
+    const handlePageScroll = useEvent<PagerViewOnPageScrollEvent>(
+      event => {
+        'worklet';
+        const nextPosition = Math.max(
+          0,
+          Math.min(pageCount - 1, Math.round(event.position + event.offset)),
+        );
+        if (nextPosition === previewPagePosition.value) {
+          return;
+        }
+        previewPagePosition.value = nextPosition;
+        runOnJS(onPagePreview)(nextPosition);
+      },
+      ['onPageScroll'],
+      true,
+    );
+
+    const handlePageSelected = useCallback(
+      (event: PagerViewOnPageSelectedEvent) => {
+        const position = clampPagePosition(
+          event.nativeEvent.position,
+          pageCount,
+        );
+        previewPagePosition.value = position;
+        onPagePreview(null);
+        onPageSelected(position);
+      },
+      [onPagePreview, onPageSelected, pageCount, previewPagePosition],
+    );
+
+    return (
+      <AnimatedPagerView
+        initialPage={initialPage}
+        onPageScroll={handlePageScroll}
+        onPageSelected={handlePageSelected}
+        ref={pagerRef}
+        style={style}
+        testID={testID}>
+        {children}
+      </AnimatedPagerView>
+    );
+  },
+);
 
 AndroidPerpsProMarketPager.displayName = 'AndroidPerpsProMarketPager';
 
