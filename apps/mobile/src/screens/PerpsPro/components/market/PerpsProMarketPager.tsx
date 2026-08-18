@@ -1,23 +1,22 @@
 import { IS_IOS } from '@/core/native/utils';
 import React, {
   Children,
-  cloneElement,
   forwardRef,
   isValidElement,
   useCallback,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
-  type ReactElement,
   type ReactNode,
 } from 'react';
 import {
   ScrollView,
   StyleSheet,
+  View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type StyleProp,
-  type ViewProps,
   type ViewStyle,
 } from 'react-native';
 import PagerView, {
@@ -41,19 +40,13 @@ type PerpsProMarketPagerProps = {
 const clampPagePosition = (position: number, pageCount: number) =>
   Math.max(0, Math.min(pageCount - 1, position));
 
-const getSettledPagePosition = (
-  event: NativeSyntheticEvent<NativeScrollEvent>,
+const getPagePositionFromOffset = (
+  offsetX: number,
   pageWidth: number,
   pageCount: number,
-) => {
-  const eventWidth = event.nativeEvent.layoutMeasurement.width;
-  const resolvedPageWidth = eventWidth > 0 ? eventWidth : pageWidth;
-  const targetX =
-    event.nativeEvent.targetContentOffset?.x ??
-    event.nativeEvent.contentOffset.x;
+) => clampPagePosition(Math.round(offsetX / Math.max(1, pageWidth)), pageCount);
 
-  return clampPagePosition(Math.round(targetX / resolvedPageWidth), pageCount);
-};
+const PAGE_OFFSET_EPSILON = 0.5;
 
 const IosPerpsProMarketPager = forwardRef<
   PerpsProMarketPagerHandle,
@@ -64,25 +57,57 @@ const IosPerpsProMarketPager = forwardRef<
     ref,
   ) => {
     const scrollViewRef = useRef<ScrollView>(null);
-    const currentPageRef = useRef(initialPage);
     const pageCount = Children.count(children);
-    const initialContentOffset = useMemo(
-      () => ({ x: initialPage * pageWidth, y: 0 }),
-      [initialPage, pageWidth],
+    const initialPageRef = useRef(clampPagePosition(initialPage, pageCount));
+    const settledPageRef = useRef(initialPageRef.current);
+    const previousPageWidthRef = useRef(pageWidth);
+    const initialContentOffsetRef = useRef({
+      x: initialPageRef.current * pageWidth,
+      y: 0,
+    });
+    const iosPageStyle = useMemo(
+      () => [styles.iosPage, { flexBasis: pageWidth, width: pageWidth }],
+      [pageWidth],
+    );
+
+    const commitPagePosition = useCallback(
+      (position: number) => {
+        const nextPosition = clampPagePosition(position, pageCount);
+        if (nextPosition === settledPageRef.current) {
+          return;
+        }
+        settledPageRef.current = nextPosition;
+        onPageSelected(nextPosition);
+      },
+      [onPageSelected, pageCount],
     );
 
     const scrollToPage = useCallback(
       (position: number, animated: boolean) => {
         const nextPosition = clampPagePosition(position, pageCount);
-        currentPageRef.current = nextPosition;
         scrollViewRef.current?.scrollTo({
           animated,
           x: nextPosition * pageWidth,
           y: 0,
         });
+        if (!animated) {
+          commitPagePosition(nextPosition);
+        }
       },
-      [pageCount, pageWidth],
+      [commitPagePosition, pageCount, pageWidth],
     );
+
+    useLayoutEffect(() => {
+      if (previousPageWidthRef.current === pageWidth) {
+        return;
+      }
+      previousPageWidthRef.current = pageWidth;
+      scrollViewRef.current?.scrollTo({
+        animated: false,
+        x: settledPageRef.current * pageWidth,
+        y: 0,
+      });
+    }, [pageWidth]);
 
     useImperativeHandle(
       ref,
@@ -93,46 +118,64 @@ const IosPerpsProMarketPager = forwardRef<
       [scrollToPage],
     );
 
-    const commitSettledPage = useCallback(
+    const handleScrollEndDrag = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const nextPosition = getSettledPagePosition(
-          event,
-          pageWidth,
-          pageCount,
-        );
-        if (nextPosition === currentPageRef.current) {
+        const contentOffsetX = event.nativeEvent.contentOffset.x;
+        const targetOffsetX =
+          event.nativeEvent.targetContentOffset?.x ?? contentOffsetX;
+        if (Math.abs(targetOffsetX - contentOffsetX) > PAGE_OFFSET_EPSILON) {
           return;
         }
-        currentPageRef.current = nextPosition;
-        onPageSelected(nextPosition);
+        commitPagePosition(
+          getPagePositionFromOffset(contentOffsetX, pageWidth, pageCount),
+        );
       },
-      [onPageSelected, pageCount, pageWidth],
+      [commitPagePosition, pageCount, pageWidth],
     );
 
-    const pages = Children.map(children, child => {
-      if (!isValidElement<ViewProps>(child)) {
-        return child;
-      }
-      return cloneElement(child as ReactElement<ViewProps>, {
-        style: [child.props.style, styles.iosPage, { width: pageWidth }],
-      });
-    });
+    const handleMomentumScrollEnd = useCallback(
+      (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        commitPagePosition(
+          getPagePositionFromOffset(
+            event.nativeEvent.contentOffset.x,
+            pageWidth,
+            pageCount,
+          ),
+        );
+      },
+      [commitPagePosition, pageCount, pageWidth],
+    );
+
+    const pages = Children.toArray(children).map((child, index) => (
+      <View
+        collapsable={false}
+        key={
+          isValidElement(child) && child.key != null ? child.key : String(child)
+        }
+        style={iosPageStyle}
+        testID={testID ? `${testID}-page-${index}` : undefined}>
+        {child}
+      </View>
+    ));
 
     return (
       <ScrollView
         alwaysBounceHorizontal={false}
         bounces={false}
-        contentOffset={initialContentOffset}
+        contentOffset={initialContentOffsetRef.current}
+        decelerationRate="fast"
         directionalLockEnabled
+        disableIntervalMomentum
         horizontal
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
-        onMomentumScrollEnd={commitSettledPage}
-        onScrollEndDrag={commitSettledPage}
-        pagingEnabled
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        onScrollEndDrag={handleScrollEndDrag}
         ref={scrollViewRef}
         scrollsToTop={false}
         showsHorizontalScrollIndicator={false}
+        snapToAlignment="start"
+        snapToInterval={pageWidth}
         style={style}
         testID={testID}>
         {pages}
@@ -195,6 +238,8 @@ PerpsProMarketPager.displayName = 'PerpsProMarketPager';
 
 const styles = StyleSheet.create({
   iosPage: {
+    flexGrow: 0,
+    flexShrink: 0,
     height: '100%',
   },
 });
