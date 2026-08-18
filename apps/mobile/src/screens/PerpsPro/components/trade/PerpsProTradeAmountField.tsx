@@ -13,6 +13,9 @@ import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 
 const noop = () => undefined;
 const unitFontStyle = getPerpsProTradeControlMediumTextStyle(Platform.OS);
+const UNIT_AREA_MIN_WIDTH = 52;
+const UNIT_AREA_MAX_WIDTH = 72;
+const UNIT_TEXT_MIN_WIDTH = 34;
 
 export const PerpsProTradeAmountField: React.FC<{
   label: string;
@@ -170,19 +173,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderLeftColor: colors2024['neutral-line'],
     borderLeftWidth: 1,
     flexDirection: 'row',
+    flexShrink: 0,
     gap: 2,
     height: 24,
-    paddingLeft: 6,
-    paddingRight: 4,
-    width: 52,
+    maxWidth: UNIT_AREA_MAX_WIDTH,
+    minWidth: UNIT_AREA_MIN_WIDTH,
+    paddingLeft: 5,
   },
   unit: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
+    flexShrink: 1,
     lineHeight: 16,
+    minWidth: UNIT_TEXT_MIN_WIDTH,
     textAlign: 'center',
-    width: 34,
   },
 }));

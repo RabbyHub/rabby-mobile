@@ -147,7 +147,7 @@ describe('PerpsProTradeSkeleton', () => {
   });
 
   it('renders the Trade-only five-point slider and amount field geometry', () => {
-    render(<PerpsProTradeSkeleton quoteAsset="USDT" />);
+    render(<PerpsProTradeSkeleton quoteAsset="USDC" />);
 
     expect(
       screen.getAllByTestId('perps-pro-trade-amount-slider-point'),
@@ -173,23 +173,29 @@ describe('PerpsProTradeSkeleton', () => {
       height: 7,
       width: 7,
     });
-    expect(screen.getByLabelText('Amount(USDT)')).toBeTruthy();
+    expect(screen.getByLabelText('Amount(USDC)')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-trade-amount-minus')).toBeNull();
     expect(screen.queryByTestId('perps-pro-trade-amount-plus')).toBeNull();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-trade-amount-unit').props.style,
-      ),
-    ).toMatchObject({
+    const unitAreaStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-trade-amount-unit').props.style,
+    );
+    expect(unitAreaStyle).toMatchObject({
       borderLeftWidth: 1,
+      flexShrink: 0,
       height: 24,
-      paddingLeft: 6,
-      paddingRight: 4,
-      width: 52,
+      maxWidth: 72,
+      minWidth: 52,
+      paddingLeft: 5,
     });
-    expect(
-      StyleSheet.flatten(screen.getByText('USDT').props.style),
-    ).toMatchObject({ fontSize: 12, lineHeight: 16, width: 34 });
+    expect(unitAreaStyle.width).toBeUndefined();
+    const unitStyle = StyleSheet.flatten(screen.getByText('USDC').props.style);
+    expect(unitStyle).toMatchObject({
+      flexShrink: 1,
+      fontSize: 12,
+      lineHeight: 16,
+      minWidth: 34,
+    });
+    expect(unitStyle.width).toBeUndefined();
     expect(
       screen.getByTestId('perps-pro-trade-amount-unit-switch').props,
     ).toMatchObject({ height: 10, width: 10 });
