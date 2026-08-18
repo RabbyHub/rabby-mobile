@@ -23,10 +23,12 @@ jest.mock('./PerpsProMarketPager', () => {
       (
         {
           children,
+          onPagePreview,
           onPageSelected,
           ...props
         }: {
           children: React.ReactNode;
+          onPagePreview: (position: number | null) => void;
           onPageSelected: (position: number) => void;
         },
         ref: React.Ref<unknown>,
@@ -37,7 +39,7 @@ jest.mock('./PerpsProMarketPager', () => {
         }));
         return ReactModule.createElement(
           View,
-          { ...props, onPageSelected },
+          { ...props, onPagePreview, onPageSelected },
           children,
         );
       },
@@ -579,6 +581,57 @@ describe('PerpsProMarketSelector', () => {
     expect(
       screen.getByTestId('perps-pro-market-tab-favorites').props
         .accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
+  it('previews the swipe target without feeding it back into pager state', () => {
+    __setFavoriteMarkets(['BTC']);
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-market-pager');
+
+    expect(pager.props.initialPage).toBe(1);
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    fireEvent(pager, 'pagePreview', 0);
+    expect(
+      screen.getByTestId('perps-pro-market-tab-favorites').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    expect(screen.getByTestId('perps-pro-market-pager').props.initialPage).toBe(
+      1,
+    );
+    expect(mockPagerSetPage).not.toHaveBeenCalled();
+    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+    fireEvent(screen.getByTestId('market-search'), 'focus');
+    expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
+    fireEvent.press(screen.getByTestId('market-search-cancel'));
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pagePreview', 1);
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pagePreview', 0);
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', 0);
+    expect(
+      screen.getByTestId('perps-pro-market-tab-favorites').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+
+    const modalProps =
+      mockBottomSheetModalProps.mock.calls[
+        mockBottomSheetModalProps.mock.calls.length - 1
+      ][0];
+    act(() => {
+      modalProps.onDismiss();
+    });
+    expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(1);
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });
   });
 
