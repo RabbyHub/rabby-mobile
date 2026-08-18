@@ -41,4 +41,8 @@ using OpenApiRequestSigner =
 
 OpenApiSigningResult unavailableOpenApiRequestSigner(OpenApiSigningInput input);
 
+// Returns the private signer when the optional native package is linked into
+// this build. Public and audit builds receive the explicit unavailable signer.
+OpenApiRequestSigner configuredOpenApiRequestSigner();
+
 } // namespace rabby::openapi

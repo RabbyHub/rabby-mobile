@@ -24,6 +24,7 @@
     "doctor": "react-native doctor",
     "ensure-git-hooks": "yarn ../../ install-husky",
     "postinstall": "sh ./scripts/run-postinstall.sh",
+    "install:private-native-packages": "node ./scripts/ci/install-private-native-packages.mjs --required",
     "ios": "react-native run-ios",
     "ios:clean:podlock": "rimraf ./ios/Pods ./ios/Podfile.lock",
     "ios:installpod": "cd ios && bundle install && bundle exec pod install && cd ..",

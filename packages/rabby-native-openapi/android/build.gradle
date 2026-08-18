@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 buildscript {
     ext.safeExtGet = { prop, fallback ->
         rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
@@ -19,6 +21,40 @@ apply plugin: "kotlin-android"
 def reactNativeArchitectures() {
     def value = project.getProperties().get("reactNativeArchitectures")
     return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+}
+
+def privateSignerEnabled =
+    (System.getenv("RABBY_NATIVE_OPENAPI_SIGNER_ENABLED") ?: "1") != "0"
+def mobileRoot = new File(project.projectDir, "../../..").canonicalFile
+def privateSignerCandidates = [
+    System.getenv("RABBY_NATIVE_OPENAPI_SIGNER_DIR"),
+    new File(
+        mobileRoot,
+        "node_modules/@debank/rabby-native-openapi-signer"
+    ).absolutePath,
+    new File(mobileRoot, "../rabby-native-openapi-signer").absolutePath,
+].findAll { it != null }.collect { new File(it).canonicalFile }
+def privateSignerDir = privateSignerCandidates.find {
+    new File(it, "CMakeLists.txt").isFile()
+}
+def hasPrivateSigner =
+    privateSignerEnabled && privateSignerDir != null
+if (hasPrivateSigner) {
+    def nativeOpenApiPackage = new JsonSlurper().parse(
+        new File(project.projectDir, "../package.json")
+    )
+    def expectedSignerVersion = nativeOpenApiPackage.peerDependencies[
+        "@debank/rabby-native-openapi-signer"
+    ]
+    def privateSignerPackage = new JsonSlurper().parse(
+        new File(privateSignerDir, "package.json")
+    )
+    if (privateSignerPackage.version != expectedSignerVersion) {
+        throw new GradleException(
+            "Rabby Native OpenAPI signer version mismatch: " +
+            "expected ${expectedSignerVersion}, got ${privateSignerPackage.version}"
+        )
+    }
 }
 
 android {
@@ -44,6 +80,10 @@ android {
             cmake {
                 cppFlags "-O2 -frtti -fexceptions -Wall -Wextra"
                 arguments "-DANDROID_STL=c++_shared"
+                arguments "-DRABBY_NATIVE_OPENAPI_SIGNER_ENABLED=${hasPrivateSigner ? "ON" : "OFF"}"
+                if (hasPrivateSigner) {
+                    arguments "-DRABBY_NATIVE_OPENAPI_SIGNER_DIR=${privateSignerDir.absolutePath}"
+                }
                 abiFilters (*reactNativeArchitectures())
             }
         }

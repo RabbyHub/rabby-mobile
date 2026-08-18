@@ -75,6 +75,14 @@ main() {
   echo "[prepare-mobile-build] yarn: $(yarn --version)"
   yarn install --immutable
 
+  if [ "${RABBY_MOBILE_INSTALL_PRIVATE_NATIVE_PACKAGES:-0}" = "1" ] ||
+    [ -n "${RABBY_MOBILE_PRIVATE_NPM_TOKEN:-}" ]; then
+    echo "[prepare-mobile-build] install private native packages"
+    node ./scripts/ci/install-private-native-packages.mjs --required
+  else
+    echo "[prepare-mobile-build] skip private native packages"
+  fi
+
   local requested_version="${INPUT_NEW_VERSION_NAME:-}"
   if [ -n "$requested_version" ]; then
     REQUESTED_VERSION="$requested_version" apply_requested_version "$requested_version"

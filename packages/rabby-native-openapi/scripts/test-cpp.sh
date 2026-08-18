@@ -47,6 +47,43 @@ fi
 
 "$BUILD_DIR/rabby-openapi-request-test"
 
+PRIVATE_SIGNER_DIR="${RABBY_NATIVE_OPENAPI_SIGNER_DIR:-}"
+if [[ -z "$PRIVATE_SIGNER_DIR" ]]; then
+  for PRIVATE_SIGNER_CANDIDATE in \
+    "$PACKAGE_DIR/../../node_modules/@debank/rabby-native-openapi-signer" \
+    "$PACKAGE_DIR/../../../rabby-native-openapi-signer"; do
+    if [[ -f "$PRIVATE_SIGNER_CANDIDATE/cpp/RabbyNativeOpenApiSigner.cpp" ]]; then
+      PRIVATE_SIGNER_DIR="$PRIVATE_SIGNER_CANDIDATE"
+      break
+    fi
+  done
+fi
+if [[ "${RABBY_NATIVE_OPENAPI_SIGNER_ENABLED:-1}" != "0" ]] &&
+  [[ -f "$PRIVATE_SIGNER_DIR/cpp/RabbyNativeOpenApiSigner.cpp" ]]; then
+  EXPECTED_SIGNER_VERSION="$(
+    node -p \
+      "require('$PACKAGE_DIR/package.json').peerDependencies['@debank/rabby-native-openapi-signer']"
+  )"
+  ACTUAL_SIGNER_VERSION="$(
+    node -p "require('$PRIVATE_SIGNER_DIR/package.json').version"
+  )"
+  if [[ "$ACTUAL_SIGNER_VERSION" != "$EXPECTED_SIGNER_VERSION" ]]; then
+    echo "Private signer version mismatch: expected $EXPECTED_SIGNER_VERSION, got $ACTUAL_SIGNER_VERSION" >&2
+    exit 1
+  fi
+
+  "${CXX:-c++}" \
+    "${COMMON_ARGS[@]}" \
+    -DRABBY_NATIVE_OPENAPI_PRIVATE_SIGNER=1 \
+    -I"$PRIVATE_SIGNER_DIR/cpp/include" \
+    "$PRIVATE_SIGNER_DIR/cpp/RabbyNativeOpenApiSigner.cpp" \
+    "$PRIVATE_SIGNER_DIR/cpp/Sha256.cpp" \
+    "$PACKAGE_DIR/cpp/tests/RabbyOpenApiRequestTest.cpp" \
+    -o "$BUILD_DIR/rabby-openapi-request-private-signer-test"
+
+  "$BUILD_DIR/rabby-openapi-request-private-signer-test"
+fi
+
 "${CXX:-c++}" \
   "${COMMON_ARGS[@]}" \
   "$PACKAGE_DIR/cpp/tests/RabbyOpenApiCredentialTest.cpp" \

@@ -91,6 +91,40 @@ resolve_mobile_build_env() {
   return 1
 }
 
+prepare_private_native_packages() {
+  local current_project_dir installer mode
+  current_project_dir=$(resolve_mobile_project_dir)
+  installer="$current_project_dir/scripts/ci/install-private-native-packages.mjs"
+  mode="${RABBY_MOBILE_INSTALL_PRIVATE_NATIVE_PACKAGES:-auto}"
+
+  if [ ! -f "$installer" ]; then
+    echo "[RabbyMobileBuild] private native package installer is missing: $installer" >&2
+    return 1
+  fi
+
+  case "$mode" in
+    1|true)
+      echo "[RabbyMobileBuild] install required private native packages"
+      node "$installer" --required
+      ;;
+    0|false)
+      echo "[RabbyMobileBuild] private native package installation is disabled"
+      ;;
+    auto)
+      if [ -n "${RABBY_MOBILE_PRIVATE_NPM_TOKEN:-}" ]; then
+        echo "[RabbyMobileBuild] install private native packages with configured npm access"
+        node "$installer" --required
+      else
+        node "$installer"
+      fi
+      ;;
+    *)
+      echo "[RabbyMobileBuild] invalid RABBY_MOBILE_INSTALL_PRIVATE_NATIVE_PACKAGES value: $mode" >&2
+      return 1
+      ;;
+  esac
+}
+
 list_candidate_env_files() {
   local current_project_dir
   current_project_dir=$(resolve_mobile_project_dir)

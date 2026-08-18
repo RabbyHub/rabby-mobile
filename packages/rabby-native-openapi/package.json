@@ -4,9 +4,6 @@
   "private": true,
   "description": "Native-only Rabby OpenAPI request construction foundation",
   "license": "MIT",
-  "dependencies": {
-    "@rabby-wallet/rabby-native-http": "workspace:*"
-  },
   "files": [
     "android",
     "cpp",
@@ -17,5 +14,16 @@
   ],
   "scripts": {
     "test": "bash scripts/test-cpp.sh"
+  },
+  "dependencies": {
+    "@rabby-wallet/rabby-native-http": "workspace:*"
+  },
+  "peerDependencies": {
+    "@debank/rabby-native-openapi-signer": "0.1.0-alpha.0"
+  },
+  "peerDependenciesMeta": {
+    "@debank/rabby-native-openapi-signer": {
+      "optional": true
+    }
   }
 }

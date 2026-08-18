@@ -423,7 +423,7 @@ std::shared_ptr<rabby::openapi::OpenApiClient> getClient(
           clientVersion,
       },
       rabby::http::makePlatformClient(),
-      rabby::openapi::unavailableOpenApiRequestSigner,
+      rabby::openapi::configuredOpenApiRequestSigner(),
       rabby::openapi::makePlatformApiCredentialPersistence(),
       uuidProvider,
       epochProvider,

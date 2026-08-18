@@ -44,3 +44,32 @@ target_link_libraries(
   rabby-native-http::rabbynativehttp
   ${LOG_LIB}
 )
+
+option(
+  RABBY_NATIVE_OPENAPI_SIGNER_ENABLED
+  "Link the optional private Rabby OpenAPI signer"
+  ON
+)
+set(
+  RABBY_NATIVE_OPENAPI_SIGNER_DIR
+  ""
+  CACHE PATH
+  "Path to the private Rabby Native OpenAPI signer package"
+)
+if(
+  RABBY_NATIVE_OPENAPI_SIGNER_ENABLED
+  AND EXISTS "${RABBY_NATIVE_OPENAPI_SIGNER_DIR}/CMakeLists.txt"
+)
+  add_subdirectory(
+    "${RABBY_NATIVE_OPENAPI_SIGNER_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}/private-openapi-signer"
+  )
+  target_compile_definitions(
+    rabbynativeopenapi
+    PRIVATE RABBY_NATIVE_OPENAPI_PRIVATE_SIGNER=1
+  )
+  target_link_libraries(
+    rabbynativeopenapi
+    rabby-native-openapi-signer::rabbynativeopenapisigner
+  )
+endif()

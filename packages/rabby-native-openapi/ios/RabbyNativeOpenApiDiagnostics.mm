@@ -182,7 +182,7 @@ std::shared_ptr<OpenApiClient> getClient(std::string& error) {
           clientVersion,
       },
       http::makePlatformClient(),
-      unavailableOpenApiRequestSigner,
+      configuredOpenApiRequestSigner(),
       makePlatformApiCredentialPersistence(),
       uuidProvider,
       epochProvider,

@@ -185,6 +185,27 @@ int main() {
         unavailable.error ==
         "signing failed: private OpenAPI signer is unavailable");
 
+    auto configuredInput = makeInput();
+    configuredInput.nonce =
+        "n_m6HznkDhkugs9Cz2T2CQqSyIceF7IoAQBEDPJl4h";
+    const auto configured = prepareOpenApiRequest(
+        std::move(configuredInput), configuredOpenApiRequestSigner());
+#if defined(RABBY_NATIVE_OPENAPI_PRIVATE_SIGNER)
+    assert(configured.isSuccess());
+    assert(requireHeader(configured.value->request.headers, "x-api-ver").value ==
+           "v2");
+    const auto signature =
+        requireHeader(configured.value->request.headers, "x-api-sign").value;
+    assert(signature.size() == 64);
+    assert(signature.find_first_not_of("0123456789abcdef") ==
+           std::string::npos);
+#else
+    assert(!configured.isSuccess());
+    assert(
+        configured.error ==
+        "signing failed: private OpenAPI signer is unavailable");
+#endif
+
     const auto invalidHeader = prepareOpenApiRequest(
         makeInput(),
         [](OpenApiSigningInput) {

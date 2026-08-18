@@ -16,9 +16,26 @@ Pod::Spec.new do |s|
   s.header_mappings_dir = 'cpp/include'
   s.public_header_files = 'cpp/include/**/*.h'
   s.dependency 'RabbyNativeHttp', '0.1.0'
+  private_signer_enabled =
+    ENV['RABBY_NATIVE_OPENAPI_PRIVATE_SIGNER_POD'] == '1'
+  if private_signer_enabled
+    s.dependency 'RabbyNativeOpenApiSigner', ENV.fetch('RABBY_NATIVE_OPENAPI_SIGNER_VERSION')
+  end
   s.library = 'sqlite3'
+  private_signer_header_path =
+    '"${PODS_CONFIGURATION_BUILD_DIR}/RabbyNativeOpenApiSigner/RabbyNativeOpenApiSigner.framework/Headers"'
   s.pod_target_xcconfig = {
     'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
-    'HEADER_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/cpp/include" "${PODS_TARGET_SRCROOT}/cpp/third_party/json11" "${PODS_CONFIGURATION_BUILD_DIR}/RabbyNativeHttp/RabbyNativeHttp.framework/Headers"',
+    'HEADER_SEARCH_PATHS' => [
+      '$(inherited)',
+      '"${PODS_TARGET_SRCROOT}/cpp/include"',
+      '"${PODS_TARGET_SRCROOT}/cpp/third_party/json11"',
+      '"${PODS_CONFIGURATION_BUILD_DIR}/RabbyNativeHttp/RabbyNativeHttp.framework/Headers"',
+      (private_signer_header_path if private_signer_enabled),
+    ].compact.join(' '),
+    'GCC_PREPROCESSOR_DEFINITIONS' => [
+      '$(inherited)',
+      ('RABBY_NATIVE_OPENAPI_PRIVATE_SIGNER=1' if private_signer_enabled),
+    ].compact.join(' '),
   }
 end

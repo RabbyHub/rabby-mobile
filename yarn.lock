@@ -9778,6 +9778,11 @@ __metadata:
   resolution: "@rabby-wallet/rabby-native-openapi@workspace:packages/rabby-native-openapi"
   dependencies:
     "@rabby-wallet/rabby-native-http": "workspace:*"
+  peerDependencies:
+    "@debank/rabby-native-openapi-signer": 0.1.0-alpha.0
+  peerDependenciesMeta:
+    "@debank/rabby-native-openapi-signer":
+      optional: true
   languageName: unknown
   linkType: soft
 
