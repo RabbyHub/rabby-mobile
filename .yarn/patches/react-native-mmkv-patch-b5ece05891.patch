@@ -47,7 +47,7 @@ index 9ccc10fc28f5a4a0aebd9ded4c266592d000f781..18d96e9b96748f18bf19f1b655fc3699
 +        runtime, jsi::PropNameID::forAscii(runtime, propName), 0,
 +        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
 +               size_t count) -> jsi::Value {
-+          instance->sync(mmkv::MMKV_SYNC);
++          instance->sync(MMKV_SYNC);
 +          return jsi::Value::undefined();
 +        });
 +  }
