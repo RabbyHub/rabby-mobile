@@ -5,29 +5,9 @@ export const appMMKV = new MMKV({
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
-const KEYRING_EXPECTED_CAPACITY = 256 * 1024;
-
-/** Original encrypted keyring file, retained only as a migration fallback. */
-export const legacyKeyringMMKV = new MMKV({
+export const keyringMMKV = new MMKV({
   id: MMKV_FILE_NAMES.KEYRING,
   encryptionKey: 'keyring',
-});
-
-/**
- * New primary file. Reserving capacity avoids the 4 KiB -> 64 KiB expansion
- * branch observed immediately before the Huawei MiniPB corruption.
- */
-export const keyringMMKV = new MMKV({
-  id: MMKV_FILE_NAMES.KEYRING_V2,
-  encryptionKey: 'keyring',
-  expectedCapacity: KEYRING_EXPECTED_CAPACITY,
-});
-
-/** One-generation encrypted rollback point for the v2 primary. */
-export const keyringCheckpointMMKV = new MMKV({
-  id: MMKV_FILE_NAMES.KEYRING_CHECKPOINT,
-  encryptionKey: 'keyring',
-  expectedCapacity: KEYRING_EXPECTED_CAPACITY,
 });
 
 export const keychainMMKV = new MMKV({
@@ -66,9 +46,7 @@ export const lendingDataCacheMMKV = new MMKV({
 export const ALL_KNOWN_MMKV_INSTANCES = {
   [MMKV_FILE_NAMES.DEFAULT]: appMMKV,
   [MMKV_FILE_NAMES.KEYCHAIN]: keychainMMKV,
-  [MMKV_FILE_NAMES.KEYRING]: legacyKeyringMMKV,
-  [MMKV_FILE_NAMES.KEYRING_V2]: keyringMMKV,
-  [MMKV_FILE_NAMES.KEYRING_CHECKPOINT]: keyringCheckpointMMKV,
+  [MMKV_FILE_NAMES.KEYRING]: keyringMMKV,
   [MMKV_FILE_NAMES.CHAINS]: chainsMMKV,
   [MMKV_FILE_NAMES.DAYCURVE]: dayCurveMMKV,
   [MMKV_FILE_NAMES.CEXID]: cexIdMMKV,

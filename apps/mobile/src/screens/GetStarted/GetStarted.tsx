@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Dimensions, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -41,7 +41,6 @@ import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.sv
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
-import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchive';
 
 import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
 import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
@@ -54,54 +53,21 @@ import logoDark from '@/assets/images/get-started/logo-dark.png';
 
 // Lottie animation dimensions
 const HERO_ASPECT_RATIO = 452 / 393;
-const LOCAL_STORAGE_EXPORT_TAP_COUNT = 20;
-const LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS = 500;
 
 // Hero illustration component using Lottie animation
 const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const { styles } = useTheme2024({ getStyle });
-  const animationCompletedRef = useRef(false);
-  const rapidTapRef = useRef({ count: 0, lastTappedAt: 0 });
 
   const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
 
-  const handleAnimationTap = useCallback(() => {
-    if (!isNonPublicProductionEnv || !animationCompletedRef.current) {
-      return;
-    }
-
-    const now = Date.now();
-    const isRapidTap =
-      now - rapidTapRef.current.lastTappedAt <=
-      LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS;
-    const count = isRapidTap ? rapidTapRef.current.count + 1 : 1;
-
-    rapidTapRef.current = { count, lastTappedAt: now };
-
-    if (count < LOCAL_STORAGE_EXPORT_TAP_COUNT) {
-      return;
-    }
-
-    rapidTapRef.current = { count: 0, lastTappedAt: 0 };
-    promptLocalStorageArchiveShare();
-  }, []);
-
   return (
     <View style={[styles.heroContainer, { height: heroHeight }]}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={handleAnimationTap}
-        disabled={!isNonPublicProductionEnv}>
-        <Lottie
-          source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
-          style={[styles.heroBackground, { height: heroHeight }]}
-          loop={false}
-          autoPlay
-          onAnimationFinish={() => {
-            animationCompletedRef.current = true;
-          }}
-        />
-      </TouchableOpacity>
+      <Lottie
+        source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
+        style={[styles.heroBackground, { height: heroHeight }]}
+        loop={false}
+        autoPlay
+      />
     </View>
   );
 };
