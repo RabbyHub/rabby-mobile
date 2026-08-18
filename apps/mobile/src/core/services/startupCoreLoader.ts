@@ -23,11 +23,16 @@ import {
 import { logger } from '@/utils/logger';
 
 import {
+  appMMKVInstance,
   appStorage,
-  keyringStorage,
+  keyringCheckpointMMKV,
+  keyringMMKVInstance,
+  legacyKeyringMMKV,
   normalizeKeyringState,
+  persistKeyringState,
 } from '../storage/mmkv';
 import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
+import { inspectPersistedKeyringState } from '../storage/keyringStateMigration';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { PreferenceService } from '../startupServices/preference';
 import { openapi } from '../request';
@@ -65,6 +70,46 @@ function capturePreferenceStorageIssue(
   }
 }
 
+function getKeyringStateSummary(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { valueType: Array.isArray(value) ? 'array' : typeof value };
+  }
+
+  const state = value as Record<string, unknown>;
+  const publicAccountSnapshot = state.publicAccountSnapshot;
+  const accounts =
+    publicAccountSnapshot &&
+    typeof publicAccountSnapshot === 'object' &&
+    !Array.isArray(publicAccountSnapshot)
+      ? (publicAccountSnapshot as Record<string, unknown>).accounts
+      : undefined;
+
+  return {
+    valueType: 'record',
+    hasBooted: typeof state.booted === 'string',
+    hasVault: typeof state.vault === 'string',
+    hasEncryptedKeyringData: state.hasEncryptedKeyringData === true,
+    hasPasswordState:
+      !!state.passwordState && typeof state.passwordState === 'object',
+    unencryptedKeyringCount: Array.isArray(state.unencryptedKeyringData)
+      ? state.unencryptedKeyringData.length
+      : null,
+    publicAccountCount: Array.isArray(accounts) ? accounts.length : null,
+  };
+}
+
+function recordKeyringStorageDiagnostic(
+  event: string,
+  data: Record<string, unknown>,
+) {
+  if (!isNonPublicProductionEnv) {
+    return;
+  }
+
+  logger.info(`[RabbyKeyringStorageDiagnostic] ${event}`, data);
+  traceAndroidInstant(`keyring.storage.${event}`, data);
+}
+
 const keyringClasses = [
   MockWalletConnectKeyring,
   WatchKeyring,
@@ -80,7 +125,49 @@ const keyringClasses = [
 export function loadStartupCoreServices() {
   migrateAppStorage(appStorage);
 
-  const keyringState = normalizeKeyringState().keyringData;
+  const normalizedKeyringState = normalizeKeyringState({
+    onKeyringStateWrite(event) {
+      recordKeyringStorageDiagnostic(`migration.${event.phase}`, {
+        source: event.source,
+        state: getKeyringStateSummary(event.value),
+        ...(event.error
+          ? {
+              error:
+                event.error instanceof Error
+                  ? event.error.message.slice(0, 160)
+                  : String(event.error).slice(0, 160),
+            }
+          : {}),
+      });
+    },
+  });
+  const keyringState = normalizedKeyringState.keyringData;
+
+  recordKeyringStorageDiagnostic('normalize.result', {
+    result: {
+      hasKeyringData: !!normalizedKeyringState.keyringData,
+      hasLegacyData: !!normalizedKeyringState.legacyData,
+      recoverySource: normalizedKeyringState.recoverySource,
+      persistenceBlocked: normalizedKeyringState.persistenceBlocked === true,
+      keyringState: getKeyringStateSummary(normalizedKeyringState.keyringData),
+    },
+    keyring: inspectPersistedKeyringState(
+      keyringMMKVInstance,
+      APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+    ),
+    checkpoint: inspectPersistedKeyringState(
+      keyringCheckpointMMKV,
+      APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+    ),
+    legacyKeyring: inspectPersistedKeyringState(
+      legacyKeyringMMKV,
+      APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+    ),
+    legacy: inspectPersistedKeyringState(
+      appMMKVInstance,
+      APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+    ),
+  });
   capturePreferenceStorageIssue('before_preference', keyringState);
 
   GnosisKeyring.setOpenapiService(openapi);
@@ -120,9 +207,57 @@ export function loadStartupCoreServices() {
       },
     },
   });
+  recordKeyringStorageDiagnostic('load-store', {
+    input: getKeyringStateSummary(keyringState || {}),
+  });
   keyringService.loadStore(keyringState || {});
+  recordKeyringStorageDiagnostic('load-store.complete', {
+    input: getKeyringStateSummary(keyringState || {}),
+  });
+
+  let keyringPersistSequence = 0;
+  let keyringPersistenceBlocked =
+    normalizedKeyringState.persistenceBlocked === true;
   keyringService.store.subscribe(value => {
-    keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, value);
+    const sequence = ++keyringPersistSequence;
+    const summary = getKeyringStateSummary(value);
+    recordKeyringStorageDiagnostic('persist.request', {
+      sequence,
+      state: summary,
+    });
+
+    if (keyringPersistenceBlocked) {
+      recordKeyringStorageDiagnostic('persist.blocked', {
+        sequence,
+        state: summary,
+        reason: 'recovery-or-verification-required',
+      });
+      return;
+    }
+
+    try {
+      persistKeyringState({
+        key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+        keyringStorage: keyringMMKVInstance,
+        checkpointStorage: keyringCheckpointMMKV,
+        value,
+      });
+      recordKeyringStorageDiagnostic('persist.complete', {
+        sequence,
+        state: summary,
+      });
+    } catch (error) {
+      keyringPersistenceBlocked = true;
+      recordKeyringStorageDiagnostic('persist.error', {
+        sequence,
+        state: summary,
+        error:
+          error instanceof Error
+            ? error.message.slice(0, 160)
+            : String(error).slice(0, 160),
+      });
+      throw error;
+    }
   });
 
   const preferenceService = new PreferenceService({

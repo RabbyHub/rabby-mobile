@@ -21,13 +21,10 @@ async function exportAndShareLocalStorageArchive() {
   try {
     toast.show('Preparing local storage archive...');
     const result = await shareCurrentLocalStorageArchive();
-    const sharedParts = [
-      !result.archive.dismissed && 'archive',
-      !result.keyringDump.dismissed && 'keyring dump',
-    ].filter(Boolean);
-
-    if (sharedParts.length > 0) {
-      toast.success(`${sharedParts.join(' and ')} ready to share`);
+    if (!result.dismissed) {
+      toast.success(
+        `Archive with ${result.mmkvDumpCount} MMKV dumps and ${result.keyringStartupDiagnosticFileCount} startup diagnostic files ready to share`,
+      );
     }
   } catch (error) {
     Alert.alert('Local storage export failed', getErrorMessage(error));
@@ -45,7 +42,7 @@ export function promptLocalStorageArchiveShare() {
 
   Alert.alert(
     'Export local storage?',
-    'This opens two share dialogs: a ZIP with the current raw MMKV and SQLite files, then a JSON dump of raw keyring MMKV values. They can include wallet and keyring data. Share them only with a trusted recipient.',
+    'This creates one ZIP with the current raw MMKV and SQLite files, JSON dumps for every known MMKV storage, and preserved pre-React-Native keyring snapshots. It can include wallet and keyring data. Share it only with a trusted recipient.',
     [
       {
         text: 'Cancel',
