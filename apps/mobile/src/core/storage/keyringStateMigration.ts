@@ -4,11 +4,7 @@ type PersistedKeyringState = Record<string, unknown>;
 
 export type KeyringStateMigrationWriteEvent = {
   phase: 'request' | 'complete' | 'error';
-  source:
-    | 'keyring-v2'
-    | 'keyring-checkpoint'
-    | 'legacy-keyring-mmkv'
-    | 'legacy-default-mmkv';
+  source: 'keyring-primary' | 'keyring-checkpoint' | 'legacy-default-mmkv';
   value: PersistedKeyringState;
   error?: unknown;
 };
@@ -30,7 +26,6 @@ export type KeyringStateStorage = {
   set(key: string, value: string): void;
   sync(): void;
   reload(): void;
-  trim(): void;
 };
 
 type KeyringStateDiagnosticStorage = Pick<
@@ -350,7 +345,8 @@ function hasInvalidKeyringState(states: KeyringStateReadResult[]) {
 }
 
 /**
- * Persists a new primary keyring value with a one-generation rollback copy.
+ * Persists a new value in the established primary keyring file with a
+ * one-generation rollback copy.
  *
  * The checkpoint is intentionally written and verified before mutating the
  * primary file. It is a separate encrypted MMKV file, so a primary decode
@@ -436,19 +432,16 @@ export function normalizePersistedKeyringState({
   key,
   keyringStorage,
   checkpointStorage,
-  legacyKeyringStorage,
   legacyStorage,
   onKeyringStateWrite,
 }: {
   key: string;
   keyringStorage: KeyringStateStorage;
   checkpointStorage: KeyringStateStorage;
-  legacyKeyringStorage: KeyringStateStorage;
   legacyStorage: KeyringStateStorage;
   onKeyringStateWrite?(event: KeyringStateMigrationWriteEvent): void;
 }) {
   const legacy = readPersistedKeyringState(legacyStorage, key);
-  const legacyKeyring = readPersistedKeyringState(legacyKeyringStorage, key);
   const checkpoint = readPersistedKeyringState(checkpointStorage, key);
   const keyring = readPersistedKeyringState(keyringStorage, key);
 
@@ -479,14 +472,13 @@ export function normalizePersistedKeyringState({
     return {
       legacyData: legacy.value,
       keyringData: keyring.value,
-      recoverySource: 'keyring-v2' as const,
+      recoverySource: 'keyring-primary' as const,
       ...(persistenceBlocked ? { persistenceBlocked: true } : {}),
     };
   }
 
   const candidate = getFirstValidKeyringState([
     { source: 'keyring-checkpoint', state: checkpoint },
-    { source: 'legacy-keyring-mmkv', state: legacyKeyring },
     { source: 'legacy-default-mmkv', state: legacy },
   ]);
 
@@ -522,7 +514,7 @@ export function normalizePersistedKeyringState({
     }
 
     if (candidate.source === 'legacy-default-mmkv') {
-      // This is no longer an authority after the v2 primary and encrypted
+      // This is no longer an authority after the primary keyring state and encrypted
       // checkpoint have both been verified. Do not trim here: trim clears the
       // native cache and is not a durability primitive.
       legacyStorage.delete(key);
@@ -539,7 +531,7 @@ export function normalizePersistedKeyringState({
     legacyData: legacy.value,
     keyringData: null,
     recoverySource: null,
-    ...(hasInvalidKeyringState([keyring, checkpoint, legacyKeyring, legacy])
+    ...(hasInvalidKeyringState([keyring, checkpoint, legacy])
       ? { persistenceBlocked: true }
       : {}),
   };
