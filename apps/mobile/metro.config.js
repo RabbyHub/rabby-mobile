@@ -7,6 +7,7 @@ const { withRozenite } = require('@rozenite/metro');
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
+const { createWardenSerializer } = require('warden.rn');
 
 const {
   createI18nLivePreviewSerializer,
@@ -24,6 +25,38 @@ const withI18nLivePreview = config => {
       customSerializer: createI18nLivePreviewSerializer({
         upstreamSerializer: config.serializer?.customSerializer,
       }),
+    },
+  };
+};
+
+const withWarden = config => {
+  const upstreamSerializer = config.serializer?.customSerializer;
+
+  return {
+    ...config,
+    serializer: {
+      ...config.serializer,
+      customSerializer: (entryPoint, preModules, graph, options) => {
+        const wardenSerializer = createWardenSerializer(upstreamSerializer, {
+          dev: false,
+          harden: true,
+          hardenDynamicCode: true,
+          hardenMode: 'compat',
+          hardenAfterModule: path.isAbsolute(entryPoint)
+            ? entryPoint
+            : path.resolve(__dirname, entryPoint),
+          protectModuleImports: true,
+          trustedRuntimePackages: [
+            'react-native-gesture-handler',
+            'react-native-reanimated',
+          ],
+          rootDir: './',
+          sourceRoot: './src',
+          policyDir: './Warden-RN',
+        });
+
+        return wardenSerializer(entryPoint, preModules, graph, options);
+      },
     },
   };
 };
@@ -418,5 +451,6 @@ const configWithRozenite = rozeniteEnabled
     })
   : mergedConfig;
 
-// Temporarily disabled until Warden supports entry-specific policy overrides.
-module.exports = configWithRozenite;
+// Keep Warden outermost so it can transform the complete Metro graph before
+// delegating final serialization to Sentry, Reanimated, Rozenite, and others.
+module.exports = withWarden(configWithRozenite);

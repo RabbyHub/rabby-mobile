@@ -39012,7 +39012,7 @@ __metadata:
     typescript: "npm:5.7.3"
     use-count-up: "npm:^3.0.1"
     viem: "npm:2.47.6"
-    warden.rn: "npm:2.2.0"
+    warden.rn: "npm:2.2.1"
     web3: "npm:^4.3.0"
     web3-eth-abi: "npm:1.7.0"
     web3-utils: "npm:1.7.0"
@@ -47060,16 +47060,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"warden.rn@npm:2.2.0":
-  version: 2.2.0
-  resolution: "warden.rn@npm:2.2.0"
+"warden.rn@npm:2.2.1":
+  version: 2.2.1
+  resolution: "warden.rn@npm:2.2.1"
   dependencies:
     "@babel/generator": "npm:7.28.5"
     "@babel/parser": "npm:7.28.5"
     "@babel/traverse": "npm:7.28.5"
     "@babel/types": "npm:7.28.5"
     metro-source-map: "npm:0.83.3"
-  checksum: 10/34e9727a94907c03c1364c075aa88e36b35095f2cfc8d0a0e00213b9343752a340473f7e4f354eee1c388e6627fa74aa74acc0f97ae331d3a682b96e328cca99
+  checksum: 10/8c3f67065497d8e24e7bccde7f642bf3f35e0c37d8a6aede3a606640de36cdb310645e31f6cc811b38d2c550d484e1efdc5b3ffbdef2d9547f2247dfeea26db5
   languageName: node
   linkType: hard
 
