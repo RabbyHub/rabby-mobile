@@ -27,7 +27,6 @@ import {
   appStorage,
   keyringCheckpointMMKV,
   keyringMMKVInstance,
-  legacyKeyringMMKV,
   normalizeKeyringState,
   persistKeyringState,
 } from '../storage/mmkv';
@@ -157,10 +156,6 @@ export function loadStartupCoreServices() {
     ),
     checkpoint: inspectPersistedKeyringState(
       keyringCheckpointMMKV,
-      APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
-    ),
-    legacyKeyring: inspectPersistedKeyringState(
-      legacyKeyringMMKV,
       APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
     ),
     legacy: inspectPersistedKeyringState(
