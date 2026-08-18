@@ -193,6 +193,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
+import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchive';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -1142,6 +1143,11 @@ function DevSettingsBlocks({
               onPress: () => {
                 setDataPlaygroundModalVisible(true);
               },
+            },
+            {
+              label: 'Export Local Storage Archive',
+              icon: RcCode,
+              onPress: promptLocalStorageArchiveShare,
             },
             {
               label: 'Capability Playground',
