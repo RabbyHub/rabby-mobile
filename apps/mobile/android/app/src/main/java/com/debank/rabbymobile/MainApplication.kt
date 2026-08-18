@@ -46,6 +46,7 @@ class MainApplication : Application(), ReactApplication {
     try {
       super.onCreate()
       RabbyStartupTrace.instant("Application.super.onCreate")
+      KeyringStorageStartupDiagnostics.capture(this)
       // Rabby currently ships LTR locales only. Set this before React resolves layout direction.
       I18nUtil.instance.allowRTL(this, false)
       I18nUtil.instance.forceRTL(this, false)
