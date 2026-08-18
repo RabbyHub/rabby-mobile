@@ -314,7 +314,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "Risco de segurança do dispositivo",
-      "message": "Este dispositivo pode ter jailbreak ou o bootloader desbloqueado. Utilizar a Rabby neste dispositivo pode colocar a sua carteira e os seus ativos em risco."
+      "message": "Este dispositivo pode ter sido sujeito a jailbreak ou ter acesso root. Utilizar a Rabby neste dispositivo pode colocar os seus ativos em risco."
     },
     "Cancel": "Cancelar",
     "cancelButton": "Cancelar",

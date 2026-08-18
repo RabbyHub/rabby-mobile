@@ -3704,7 +3704,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "Riesgo de seguridad del dispositivo",
-      "message": "Es posible que este dispositivo tenga jailbreak o el gestor de arranque desbloqueado. Usar Rabby en este dispositivo puede poner en riesgo tu cartera y tus activos."
+      "message": "Es posible que este dispositivo tenga jailbreak o esté rooteado. Usar Rabby en este dispositivo puede poner en riesgo tus activos."
     },
     "Balance": "Saldo",
     "Price": "Precio",

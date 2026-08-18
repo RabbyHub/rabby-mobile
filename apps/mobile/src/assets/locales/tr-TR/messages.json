@@ -3703,7 +3703,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "Cihaz güvenliği riski",
-      "message": "Bu cihaz jailbreak yapılmış veya önyükleyici kilidi açılmış olabilir. Rabby'yi bu cihazda kullanmak cüzdanınızı ve varlıklarınızı riske atabilir."
+      "message": "Bu cihaz jailbreak yapılmış veya rootlanmış olabilir. Rabby'yi bu cihazda kullanmak varlıklarınızı riske atabilir."
     },
     "time": {
       "hour": "{{t}} saat",

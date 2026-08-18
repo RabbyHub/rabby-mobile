@@ -3751,7 +3751,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "Device security risk",
-      "message": "This device may be jailbroken or have an unlocked bootloader. Using Rabby on this device may put your wallet and assets at risk."
+      "message": "This device may be jailbroken or rooted. Using Rabby on this device may put your assets at risk."
     },
     "appName": "Rabby Wallet",
     "appDescription": "Your go-to wallet for Ethereum and EVM",

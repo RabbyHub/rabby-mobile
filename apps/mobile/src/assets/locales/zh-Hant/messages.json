@@ -58,7 +58,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "裝置安全風險",
-      "message": "目前裝置可能已越獄或 Bootloader 已解鎖。在此裝置上使用 Rabby 可能會使您的錢包和資產面臨風險。"
+      "message": "目前裝置可能已越獄或 Root，在此裝置上使用 Rabby 可能會使您的資產面臨風險。"
     },
     "confirm": "確認",
     "Paste": "貼上",

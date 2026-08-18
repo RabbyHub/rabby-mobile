@@ -1,5 +1,6 @@
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
+import type { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { type ModalComponentProps } from './utils';
 
@@ -102,6 +103,7 @@ export enum APPROVAL_MODAL_NAMES {
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;
 
 export type GlobalBottomSheetModalProps = Partial<BottomSheetModalProps> & {
+  backdropProps?: Partial<BottomSheetDefaultBackdropProps>;
   linearGradientType?: LinearGradientContainerProps['type'];
   /**
    * @description by default we use BottomSheetView, but if your sub views contain scrollable content, you MUST use View as modal's inner root

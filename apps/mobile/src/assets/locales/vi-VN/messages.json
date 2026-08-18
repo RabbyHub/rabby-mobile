@@ -49,7 +49,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "Rủi ro bảo mật thiết bị",
-      "message": "Thiết bị này có thể đã bị bẻ khóa hoặc mở khóa bootloader. Việc sử dụng Rabby trên thiết bị này có thể khiến ví và tài sản của bạn gặp rủi ro."
+      "message": "Thiết bị này có thể đã bị bẻ khóa hoặc root. Việc sử dụng Rabby trên thiết bị này có thể khiến tài sản của bạn gặp rủi ro."
     },
     "cancel": "Hủy",
     "ok": "OK",

@@ -3733,7 +3733,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "Risque de sécurité de l’appareil",
-      "message": "Cet appareil est peut-être jailbreaké ou son bootloader est déverrouillé. Utiliser Rabby sur cet appareil peut mettre en danger votre portefeuille et vos actifs."
+      "message": "Cet appareil est peut-être jailbreaké ou rooté. Utiliser Rabby sur cet appareil peut mettre vos actifs en danger."
     },
     "next": "Suivant",
     "proceedButton": "Procéder",

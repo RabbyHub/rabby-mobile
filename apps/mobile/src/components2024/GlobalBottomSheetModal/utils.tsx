@@ -131,7 +131,7 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.CANCEL_CONNECT]: { snapPoints: [244], Component: CancelConnect },
   [MODAL_NAMES.SELECT_CHAIN]: { snapPoints: ['80%'], Component: SelectChain },
   [MODAL_NAMES.SIMPLE_CONFIRM]: {
-    snapPoints: [229],
+    snapPoints: undefined,
     Component: SimpleConfirmInner,
   },
   [MODAL_NAMES.VIEW_RAW_DETAILS]: {

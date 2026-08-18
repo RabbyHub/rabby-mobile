@@ -1,12 +1,22 @@
 const mockCheckDeviceSecurityRisk = jest.fn<Promise<boolean>, []>();
 const mockGetItem = jest.fn();
 const mockSetItem = jest.fn();
-const mockAlert = jest.fn();
+const mockCreateGlobalBottomSheetModal = jest.fn();
+const mockRemoveGlobalBottomSheetModal = jest.fn();
 const mockTranslate = jest.fn((key: string) => key);
 
-jest.mock('react-native', () => ({
-  Alert: {
-    alert: (...args: unknown[]) => mockAlert(...args),
+jest.mock('@/components2024/GlobalBottomSheetModal/types', () => ({
+  MODAL_NAMES: {
+    SIMPLE_CONFIRM: 'SIMPLE_CONFIRM',
+  },
+}));
+
+jest.mock('@/core/serviceApi/appWin', () => ({
+  apisAppWin2024: {
+    createGlobalBottomSheetModal: (...args: unknown[]) =>
+      mockCreateGlobalBottomSheetModal(...args),
+    removeGlobalBottomSheetModal: (...args: unknown[]) =>
+      mockRemoveGlobalBottomSheetModal(...args),
   },
 }));
 
@@ -42,6 +52,8 @@ describe('showDeviceSecurityRiskWarningIfNeeded', () => {
     jest.clearAllMocks();
     mockGetItem.mockReturnValue(null);
     mockCheckDeviceSecurityRisk.mockResolvedValue(false);
+    mockCreateGlobalBottomSheetModal.mockReturnValue('SIMPLE_CONFIRM_test');
+    mockRemoveGlobalBottomSheetModal.mockResolvedValue(undefined);
   });
 
   it('skips detection after the user has acknowledged the warning', async () => {
@@ -51,37 +63,40 @@ describe('showDeviceSecurityRiskWarningIfNeeded', () => {
 
     expect(mockGetItem).toHaveBeenCalledWith(ACKNOWLEDGED_KEY);
     expect(mockCheckDeviceSecurityRisk).not.toHaveBeenCalled();
-    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockCreateGlobalBottomSheetModal).not.toHaveBeenCalled();
   });
 
   it('does not warn when the native check reports no risk', async () => {
     await showDeviceSecurityRiskWarningIfNeeded();
 
     expect(mockCheckDeviceSecurityRisk).toHaveBeenCalledTimes(1);
-    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockCreateGlobalBottomSheetModal).not.toHaveBeenCalled();
   });
 
-  it('shows a non-cancelable warning and persists acknowledgment on confirm', async () => {
+  it('disables gesture dismissal and persists acknowledgment on confirm', async () => {
     mockCheckDeviceSecurityRisk.mockResolvedValue(true);
 
     await showDeviceSecurityRiskWarningIfNeeded();
 
-    expect(mockAlert).toHaveBeenCalledWith(
-      'global.deviceSecurityRisk.title',
-      'global.deviceSecurityRisk.message',
-      expect.any(Array),
-      { cancelable: false },
-    );
+    expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledWith({
+      name: 'SIMPLE_CONFIRM',
+      title: 'global.deviceSecurityRisk.title',
+      description: 'global.deviceSecurityRisk.message',
+      confirmText: 'global.confirm',
+      onConfirm: expect.any(Function),
+      bottomSheetModalProps: {
+        enableDynamicSizing: true,
+        enablePanDownToClose: false,
+        backdropProps: { pressBehavior: 'none' },
+      },
+    });
 
-    const buttons = mockAlert.mock.calls[0][2] as {
-      text: string;
-      onPress: () => void;
-    }[];
-    expect(buttons[0].text).toBe('global.confirm');
-
-    buttons[0].onPress();
+    mockCreateGlobalBottomSheetModal.mock.calls[0][0].onConfirm();
 
     expect(mockSetItem).toHaveBeenCalledWith(ACKNOWLEDGED_KEY, true);
+    expect(mockRemoveGlobalBottomSheetModal).toHaveBeenCalledWith(
+      'SIMPLE_CONFIRM_test',
+    );
   });
 
   it('silently ignores native check failures', async () => {
@@ -90,6 +105,6 @@ describe('showDeviceSecurityRiskWarningIfNeeded', () => {
     await expect(showDeviceSecurityRiskWarningIfNeeded()).resolves.toBe(
       undefined,
     );
-    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockCreateGlobalBottomSheetModal).not.toHaveBeenCalled();
   });
 });

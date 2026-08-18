@@ -64,6 +64,9 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.SELECT_CHAIN]: {};
   [MODAL_NAMES.SIMPLE_CONFIRM]: {
     title: string;
+    description?: string;
+    confirmText: string;
+    onConfirm: () => void;
   };
   [MODAL_NAMES.VIEW_RAW_DETAILS]: {};
   [MODAL_NAMES.CANCEL_TX_POPUP]: {};

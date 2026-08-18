@@ -49,7 +49,7 @@
   "global": {
     "deviceSecurityRisk": {
       "title": "设备安全风险",
-      "message": "当前设备可能已越狱或 Bootloader 已解锁。在此设备上使用 Rabby 可能会使您的钱包和资产面临风险。"
+      "message": "当前设备可能已越狱或 Root，在此设备上使用 Rabby 可能会使您的资产面临风险。"
     },
     "ok": "OK",
     "Balance": "余额",
