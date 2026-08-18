@@ -1376,6 +1376,11 @@
         "confirmButtonTitleAndroid": "Califica en Google Play",
         "descriptionIOS": "Si te gusta Rabby, una rápida valoración en la App Store significaría mucho."
       },
+      "upgradeModal": {
+        "title": "Novedades",
+        "slideToUpdate": "Desliza para actualizar",
+        "close": "Cerrar"
+      },
       "homeCenterTipScreenshot": {
         "description": "Toma una captura de pantalla en cualquier momento para informar rápidamente de un error.",
         "title": "Consejos"
@@ -3329,6 +3334,7 @@
         "approveAndBorrow": "Aprobar y pedir prestado",
         "actions": "Pedir prestado",
         "almostReachedError": "El importe máximo disponible para pedir prestado está limitado porque casi se ha alcanzado el límite de préstamo del protocolo.",
+        "borrowingUnavailable": "Este activo no se puede pedir prestado en el modo actual.",
         "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos.",
         "swapDebt": "Intercambiar",
         "borrowed": "Prestado",
@@ -3369,6 +3375,7 @@
         "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
         "toggleCollateralWarning": "Deshabilitar este activo como colateral reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
         "blockEmodeWarning": "No puedes desactivar E-Mode porque podría provocar una liquidación. Para salir de E-Mode, añade más colateral o reembolsa posiciones prestadas.",
+        "zeroLtvEmodeExitWarning": "Deshabilita {{assets}} como colateral antes de salir de E-Mode, ya que estos activos tienen un LTV del 0 % fuera de E-Mode.",
         "emodeBlockWarning": "Desactivar el E-mode reducirá tu Factor de Salud a un nivel arriesgado para la Liquidación."
       },
       "lqDescription": {
@@ -3529,6 +3536,7 @@
         "toRepay": "Cantidad esperada a reembolsar",
         "repayWith": "Colateral para reembolsar",
         "insufficientLiquidity": "Liquidez insuficiente.",
+        "flashLoanDisabled": "La conversión de posiciones está deshabilitada para este activo por motivos de seguridad.",
         "frozenCollateral": "Este activo está congelado debido a una decisión de la comunidad de Aave."
       },
       "repayWithAToken": {

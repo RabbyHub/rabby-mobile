@@ -1289,6 +1289,11 @@
         "descriptionIOS": "如果您喜欢 Rabby，欢迎在 App Store 上快速评分，这对我们意义重大。",
         "feedbackTitle": "有反馈吗？我们在倾听。"
       },
+      "upgradeModal": {
+        "title": "新功能",
+        "slideToUpdate": "滑动以更新",
+        "close": "关闭"
+      },
       "homeCenterTipScreenshot": {
         "description": "随时截屏，快速报告问题",
         "title": "小提示"
@@ -3201,6 +3206,7 @@
       "borrowDetail": {
         "actions": "借款",
         "approveAndBorrow": "授权并借入",
+        "borrowingUnavailable": "当前模式下无法借入该资产。",
         "almostReachedWarning": "该资产的协议借款上限已达 100%，无法继续借入。",
         "almostReachedError": "由于协议借款上限即将达到，可借最大金额受到限制。",
         "swapDebt": "转换",
@@ -3242,7 +3248,8 @@
         "withdrawWarning": "提取该金额会使您的健康因子降至有清算风险的水平。",
         "toggleCollateralWarning": "关闭该资产的抵押用途会使您的健康因子降至有清算风险的水平。",
         "emodeBlockWarning": "关闭 E-Mode 会使您的健康因子降至有清算风险的水平。",
-        "blockEmodeWarning": "您无法关闭 E-Mode，因为这可能导致清算。若要退出 E-Mode，请先存入更多抵押品或偿还借款头寸。"
+        "blockEmodeWarning": "您无法关闭 E-Mode，因为这可能导致清算。若要退出 E-Mode，请先存入更多抵押品或偿还借款头寸。",
+        "zeroLtvEmodeExitWarning": "退出 E-Mode 前，请先关闭 {{assets}} 的抵押用途，因为这些资产在 E-Mode 之外的 LTV 为 0%。"
       },
       "lqDescription": {
         "risky": "高风险",
@@ -3402,6 +3409,7 @@
         "collateralNotEnough": "您的抵押品余额低于所选金额。",
         "toRepay": "预计还款金额",
         "insufficientLiquidity": "流动性不足。",
+        "flashLoanDisabled": "出于安全原因，该资产的头寸转换功能已禁用。",
         "frozenCollateral": "该资产因 Aave 社区决议被冻结。"
       },
       "repayWithAToken": {
