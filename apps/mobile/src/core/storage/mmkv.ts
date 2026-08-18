@@ -23,12 +23,7 @@ import {
   zMutative,
   zPersist,
 } from '../utils/reexports';
-import {
-  appMMKV,
-  keyringCheckpointMMKV,
-  keyringMMKV,
-  legacyKeyringMMKV,
-} from './mmkvInstances';
+import { appMMKV, keyringCheckpointMMKV, keyringMMKV } from './mmkvInstances';
 import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
 import { unwrapDuplicatedJsonString } from './mmkvJsonCompat';
 import {
@@ -138,9 +133,8 @@ const {
 
 const { storage: keyringStorage, mmkv: keyringMMKVInstance } =
   makeMMKVStorageByInstance(keyringMMKV, {
-    id: MMKV_FILE_NAMES.KEYRING_V2,
+    id: MMKV_FILE_NAMES.KEYRING,
     encryptionKey: 'keyring',
-    expectedCapacity: 256 * 1024,
   });
 
 export function normalizeKeyringState(options?: {
@@ -150,7 +144,6 @@ export function normalizeKeyringState(options?: {
     key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
     keyringStorage: keyringMMKVInstance,
     checkpointStorage: keyringCheckpointMMKV,
-    legacyKeyringStorage: legacyKeyringMMKV,
     legacyStorage: appMMKVInstance,
     onKeyringStateWrite: options?.onKeyringStateWrite,
   });
@@ -168,7 +161,6 @@ export {
   appMMKVInstance,
   keyringMMKVInstance,
   keyringCheckpointMMKV,
-  legacyKeyringMMKV,
   persistKeyringState,
 };
 
@@ -183,10 +175,6 @@ export const IS_BOOTED_USER =
   ) ||
   hasValidPersistedKeyringState(
     keyringCheckpointMMKV,
-    APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
-  ) ||
-  hasValidPersistedKeyringState(
-    legacyKeyringMMKV,
     APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
   );
 
@@ -440,7 +428,6 @@ export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
         default:
         case MMKV_FILE_NAMES.DEFAULT:
         case MMKV_FILE_NAMES.KEYRING:
-        case MMKV_FILE_NAMES.KEYRING_V2:
         case MMKV_FILE_NAMES.KEYRING_CHECKPOINT:
         case MMKV_FILE_NAMES.KEYCHAIN: {
           if (fileExist) {

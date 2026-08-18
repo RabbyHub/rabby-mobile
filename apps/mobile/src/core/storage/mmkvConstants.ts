@@ -2,7 +2,6 @@ export enum MMKV_FILE_NAMES {
   DEFAULT = 'mmkv.default',
   KEYCHAIN = 'mmkv.keychain',
   KEYRING = 'mmkv.keyring',
-  KEYRING_V2 = 'mmkv.keyring.v2',
   KEYRING_CHECKPOINT = 'mmkv.keyring.checkpoint',
   CHAINS = 'mmkv.chains',
   DAYCURVE = 'mmkv.24hCurve',

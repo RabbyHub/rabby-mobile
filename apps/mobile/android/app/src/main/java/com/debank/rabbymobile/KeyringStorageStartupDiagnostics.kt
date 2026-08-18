@@ -20,7 +20,12 @@ object KeyringStorageStartupDiagnostics {
   private const val ROOT_DIRECTORY = "keyring-startup-diagnostics"
   private const val SNAPSHOTS_DIRECTORY = "snapshots"
   private const val MAX_SNAPSHOT_COUNT = 6
-  private val KEYRING_FILE_NAMES = arrayOf("mmkv.keyring", "mmkv.keyring.crc")
+  private val KEYRING_FILE_NAMES = arrayOf(
+    "mmkv.keyring",
+    "mmkv.keyring.crc",
+    "mmkv.keyring.checkpoint",
+    "mmkv.keyring.checkpoint.crc",
+  )
 
   fun capture(context: Context) {
     if (!RabbyStartupTrace.isEnabled()) {

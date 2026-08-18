@@ -39957,11 +39957,11 @@ __metadata:
 
 "react-native-mmkv@patch:react-native-mmkv@patch%3Areact-native-mmkv@npm%253A2.12.2%23./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch%3A%3Aversion=2.12.2&hash=e0fc6c&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#~/.yarn/patches/react-native-mmkv-patch-b5ece05891.patch":
   version: 2.12.2
-  resolution: "react-native-mmkv@patch:react-native-mmkv@patch%3Areact-native-mmkv@npm%253A2.12.2%23./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch%3A%3Aversion=2.12.2&hash=e0fc6c&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#~/.yarn/patches/react-native-mmkv-patch-b5ece05891.patch::version=2.12.2&hash=5ed6c0"
+  resolution: "react-native-mmkv@patch:react-native-mmkv@patch%3Areact-native-mmkv@npm%253A2.12.2%23./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch%3A%3Aversion=2.12.2&hash=e0fc6c&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#~/.yarn/patches/react-native-mmkv-patch-b5ece05891.patch::version=2.12.2&hash=7c9bad"
   peerDependencies:
     react: "*"
     react-native: ">=0.71.0"
-  checksum: 10/8ee9734cb3e72fb820869ba45eb470e34fd7855d9a3eeb9585f3508381f2431e2b478fe31ccd25e5d147dfd32d74ee266b029893b4da17c3314eefb10ec3470f
+  checksum: 10/44c37e137ae191e72693b3ef4be096f0b07ba562b384c95ac5d338d3023b1995cdb187f7c6584d05af6861ad8b1973554737cb58928dd740080a235703cd9411
   languageName: node
   linkType: hard
 
