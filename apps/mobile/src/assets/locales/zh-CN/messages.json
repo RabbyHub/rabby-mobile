@@ -913,6 +913,7 @@
       }
     },
     "manageAddress": {
+      "moreWallets": "更多钱包",
       "watch-address": "仅查看地址",
       "confirm": "确认",
       "enterThePassphrase": "输入密码短语",
@@ -994,6 +995,7 @@
       "swap-best-subtitle": "最佳报价由最低预估总成本决定，包括汇率和 Gas 费。"
     },
     "approvals": {
+      "title": "授权",
       "tab-switch": {
         "contract": "按合约",
         "assets": "按资产"
@@ -3491,6 +3493,9 @@
       "createWalletError": "创建钱包失败",
       "walletReady": "您的钱包已准备好 🚀",
       "setPasswordTip": "设置密码以保护您的钱包"
+    },
+    "batchRevoke": {
+      "title": "批量撤销"
     },
     "convertDust": {
       "failReason": {

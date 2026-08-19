@@ -910,6 +910,7 @@
       "swap-best-subtitle": "최적 견적은 환율과 가스비를 포함한 예상 총비용이 가장 낮은 항목으로 결정됩니다."
     },
     "manageAddress": {
+      "moreWallets": "더 많은 지갑",
       "confirm": "확인",
       "cancel": "취소",
       "watch-address": "보기 전용 주소",
@@ -979,6 +980,7 @@
       }
     },
     "approvals": {
+      "title": "승인",
       "search": {
         "placeholder": "이름/주소로 검색"
       },
@@ -3338,6 +3340,9 @@
       "walletReady": "지갑이 준비되었습니다 🚀",
       "createWalletError": "지갑 생성 실패",
       "setPasswordTip": "지갑을 보호하기 위해 비밀번호를 설정하세요."
+    },
+    "batchRevoke": {
+      "title": "일괄 철회"
     },
     "convertDust": {
       "failReason": {

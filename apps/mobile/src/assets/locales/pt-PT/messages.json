@@ -1168,6 +1168,7 @@
       }
     },
     "manageAddress": {
+      "moreWallets": "Mais carteiras",
       "enterPassphraseTitle": "Introduzir frase-passe para assinar",
       "seed-phrase": "Frase-semente",
       "confirm": "Confirmar",
@@ -1364,6 +1365,7 @@
       "market-closed": "Mercado fechado: a colocação de ordens não é suportada."
     },
     "approvals": {
+      "title": "Aprovações",
       "tab-switch": {
         "contract": "Por contratos",
         "assets": "Por Ativos"
@@ -3723,6 +3725,9 @@
       "walletReady": "A sua carteira está pronta 🚀",
       "createWalletError": "Falha ao criar a carteira",
       "setPasswordTip": "Defina uma palavra-passe para proteger a sua carteira"
+    },
+    "batchRevoke": {
+      "title": "Revogação em lote"
     },
     "convertDust": {
       "failReason": {

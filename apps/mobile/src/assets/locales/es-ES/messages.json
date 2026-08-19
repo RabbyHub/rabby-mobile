@@ -1026,7 +1026,8 @@
         "unsupportedDesc": "La revocación de delegaciones EIP-7702 solo es compatible con direcciones de clave privada o frase semilla."
       },
       "delegatedAddress": "Dirección Delegada",
-      "supportedChains": "Cadenas compatibles"
+      "supportedChains": "Cadenas compatibles",
+      "title": "Aprobaciones"
     },
     "sendToken": {
       "whitelistAlert__temporaryGranted": "Permiso temporal concedido",
@@ -1226,7 +1227,8 @@
       "delete-checklist-1": "Entiendo que, si elimino esta cartera, también se eliminarán la clave privada y la frase semilla correspondientes, y Rabby NO podrá recuperarlas.",
       "delete-private-key-title": "Eliminar cartera y clave privada",
       "delete-seed-phrase-title": "Eliminar cartera y frase semilla",
-      "delete-title": "Eliminar cartera"
+      "delete-title": "Eliminar cartera",
+      "moreWallets": "Más carteras"
     },
     "swap": {
       "chain": "Red",
@@ -3618,6 +3620,9 @@
       "walletReady": "Tu cartera está lista 🚀",
       "setPasswordTip": "Establece una contraseña para proteger tu cartera",
       "createWalletError": "Error al crear la cartera"
+    },
+    "batchRevoke": {
+      "title": "Revocación por lotes"
     },
     "convertDust": {
       "failReason": {
