@@ -95,6 +95,7 @@ import {
   scheduleAssetProjectionPersistence,
 } from './assetProjectionPersistence';
 import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
+import { getAssetReadModel, resetAssetReadModels } from './assetReadModel';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -156,6 +157,7 @@ const waitFor = async (predicate: () => boolean) => {
 describe('protocol list request freshness', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetAssetReadModels();
     useProtocolListComputedStore.setState({
       multiProtocolsIndexCache: {},
       singleProtocolsIndexCache: {},
@@ -350,7 +352,11 @@ describe('protocol list request freshness', () => {
     const cached = createProtocol('cached', 1);
     useProtocolListStore.setState({
       protocolMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
     });
+    const key = useProtocolListComputedStore
+      .getState()
+      .registerSingleProtocols(ADDRESS);
     mockedLoadProtocols.mockRejectedValueOnce(new Error('network failed'));
 
     await expect(
@@ -361,6 +367,73 @@ describe('protocol list request freshness', () => {
       useProtocolListStore.getState().protocolMap[NORMALIZED_ADDRESS],
     ).toEqual([cached]);
     expect(mockedSyncRemoteProtocols).not.toHaveBeenCalled();
+    expect(
+      getAssetReadModel({
+        kind: 'protocol',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'stale',
+        hasData: true,
+        rowCount: 1,
+      }),
+    );
+  });
+
+  it('publishes one deterministic read-model lifecycle for a remote refresh', async () => {
+    const cached = createProtocol('cached', 1);
+    const refreshed = createProtocol('refreshed', 2);
+    useProtocolListStore.setState({
+      protocolMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+    });
+    const key = useProtocolListComputedStore
+      .getState()
+      .registerSingleProtocols(ADDRESS);
+    const identity = {
+      kind: 'protocol' as const,
+      scene: 'single-address' as const,
+      runtimeKey: key,
+    };
+    const pendingRemote = deferred<{
+      address: string;
+      protocols: IProtocolItem[];
+      remoteProtocols: ComplexProtocol[];
+    }>();
+    mockedLoadProtocols.mockReturnValueOnce(pendingRemote.promise);
+
+    const refresh = useProtocolListStore
+      .getState()
+      .getProtocols(ADDRESS, true, 'pull-refresh');
+    await waitFor(() => mockedLoadProtocols.mock.calls.length === 1);
+
+    expect(getAssetReadModel(identity)).toEqual(
+      expect.objectContaining({
+        phase: 'refreshing',
+        hasData: true,
+        rowCount: 1,
+      }),
+    );
+
+    pendingRemote.resolve({
+      address: NORMALIZED_ADDRESS,
+      protocols: [refreshed],
+      remoteProtocols: [createRemoteProtocol('refreshed')],
+    });
+    await refresh;
+
+    expect(getAssetReadModel(identity)).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        source: 'remote',
+        hasData: true,
+        sourceComplete: true,
+        rowCount: 1,
+        activeRequestId: undefined,
+      }),
+    );
   });
 
   it('publishes and persists a successful empty remote snapshot', async () => {
