@@ -930,6 +930,11 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconSwapCC,
         },
         {
+          key: MultiHomeFeatTitle.Bridge,
+          title: t('page.home.services.bridge'),
+          icon: RcIconBridgeCC,
+        },
+        {
           key: MultiHomeFeatTitle.Send,
           title: t('page.home.services.send'),
           icon: RcIconSendCC,
@@ -938,11 +943,6 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
           icon: RcIconReceiveCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Bridge,
-          title: t('page.home.services.bridge'),
-          icon: RcIconBridgeCC,
         },
         {
           key: MultiHomeFeatTitle.Perps,
