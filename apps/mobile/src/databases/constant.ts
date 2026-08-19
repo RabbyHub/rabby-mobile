@@ -35,6 +35,15 @@ export function getRabbyAppDbName(purpose?: 'share') {
   }
 }
 
+/**
+ * Keyring state intentionally does not share rabby-app.db: that database is a
+ * clearable resource cache, while keyring persistence needs an independent
+ * encrypted durability boundary.
+ */
+export function getRabbyKeyringDbName() {
+  return 'rabby-keyring.db';
+}
+
 export function getRabbyAppDbDir() {
   try {
     return Platform.OS === 'android'
@@ -53,6 +62,14 @@ export function getRabbyAppDbDir() {
 
 export function getRabbyAppDbPath() {
   return [getRabbyAppDbDir(), getRabbyAppDbName()].join('/');
+}
+
+export function getRabbyKeyringDbDir() {
+  return getRabbyAppDbDir();
+}
+
+export function getRabbyKeyringDbPath() {
+  return [getRabbyKeyringDbDir(), getRabbyKeyringDbName()].join('/');
 }
 
 // if (__DEV__) {

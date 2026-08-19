@@ -1,12 +1,26 @@
 import { stringUtils } from '@rabby-wallet/base-utils';
 
-type PersistedKeyringState = Record<string, unknown>;
+export type PersistedKeyringState = Record<string, unknown>;
 
 export type KeyringStateMigrationWriteEvent = {
   phase: 'request' | 'complete' | 'error';
   source: 'keyring-primary' | 'keyring-checkpoint' | 'legacy-default-mmkv';
   value: PersistedKeyringState;
   error?: unknown;
+};
+
+type KeyringStateSource = KeyringStateMigrationWriteEvent['source'];
+
+/**
+ * A side-effect-free view of the established MMKV stores. It exists for the
+ * SQLite migration/recovery path: callers may inspect old keyring storage
+ * without normalizing, deleting, or rewriting it.
+ */
+export type LegacyKeyringStateResolution = {
+  legacyData: PersistedKeyringState | null;
+  keyringData: PersistedKeyringState | null;
+  recoverySource: KeyringStateSource | null;
+  persistenceBlocked?: true;
 };
 
 type KeyringStateReadResult =
@@ -108,7 +122,7 @@ function probeNativeValue(
  * KeyringService.loadStore(), so an unrelated default-MMKV value cannot be
  * copied into the encrypted keyring store during the legacy migration.
  */
-function isPersistedKeyringState(
+export function isPersistedKeyringState(
   value: unknown,
 ): value is PersistedKeyringState {
   if (!isRecord(value)) {
@@ -297,7 +311,49 @@ export function hasValidPersistedKeyringState(
   return readPersistedKeyringState(storage, key).status === 'valid';
 }
 
-type KeyringStateSource = KeyringStateMigrationWriteEvent['source'];
+/**
+ * Resolve a keyring state from the historic MMKV locations without changing
+ * any of them. The priority mirrors the established authority order, but is
+ * deliberately not a migration: SQLite owns all normal reads after its first
+ * successfully committed initialization marker.
+ */
+export function resolveLegacyKeyringState({
+  key,
+  keyringStorage,
+  checkpointStorage,
+  legacyStorage,
+}: {
+  key: string;
+  keyringStorage: KeyringStateStorage;
+  checkpointStorage: KeyringStateStorage;
+  legacyStorage: KeyringStateStorage;
+}): LegacyKeyringStateResolution {
+  const legacy = readPersistedKeyringState(legacyStorage, key);
+  const checkpoint = readPersistedKeyringState(checkpointStorage, key);
+  const keyring = readPersistedKeyringState(keyringStorage, key);
+  const candidate = getFirstValidKeyringState([
+    { source: 'keyring-primary', state: keyring },
+    { source: 'keyring-checkpoint', state: checkpoint },
+    { source: 'legacy-default-mmkv', state: legacy },
+  ]);
+
+  if (candidate) {
+    return {
+      legacyData: legacy.value,
+      keyringData: candidate.state.value,
+      recoverySource: candidate.source,
+    };
+  }
+
+  return {
+    legacyData: legacy.value,
+    keyringData: null,
+    recoverySource: null,
+    ...(hasInvalidKeyringState([keyring, checkpoint, legacy])
+      ? { persistenceBlocked: true as const }
+      : {}),
+  };
+}
 
 function serializePersistedKeyringState(value: PersistedKeyringState) {
   return JSON.stringify(value);

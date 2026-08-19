@@ -1,7 +1,12 @@
 import RNFS from '@rabby-wallet/react-native-fs';
 
 import { isNonPublicProductionEnv } from '@/constant';
-import { getRabbyAppDbName, getRabbyAppDbPath } from '@/databases/constant';
+import {
+  getRabbyAppDbName,
+  getRabbyAppDbPath,
+  getRabbyKeyringDbName,
+  getRabbyKeyringDbPath,
+} from '@/databases/constant';
 import { APP_DOCUMENT_LIKE_PATH, MMKV_ROOT_PATH } from '@/core/utils/appFS';
 import { shareLocalFile } from '@/utils/shareLocalFile';
 import { ALL_KNOWN_MMKV_INSTANCES, keyringMMKV } from './mmkvInstances';
@@ -64,12 +69,12 @@ async function collectMMKVArchiveEntries(): Promise<ArchiveEntry[]> {
 }
 
 async function collectSQLiteArchiveEntries(): Promise<ArchiveEntry[]> {
-  const dbPath = getRabbyAppDbPath();
-  const dbName = getRabbyAppDbName();
   const candidates = [
-    { path: dbPath, archiveName: dbName },
-    { path: `${dbPath}-shm`, archiveName: `${dbName}-shm` },
-    { path: `${dbPath}-wal`, archiveName: `${dbName}-wal` },
+    ...getSQLiteArchiveCandidates(getRabbyAppDbPath(), getRabbyAppDbName()),
+    ...getSQLiteArchiveCandidates(
+      getRabbyKeyringDbPath(),
+      getRabbyKeyringDbName(),
+    ),
   ];
 
   const existing = await Promise.all(
@@ -89,6 +94,15 @@ async function collectSQLiteArchiveEntries(): Promise<ArchiveEntry[]> {
         ]
       : [],
   );
+}
+
+function getSQLiteArchiveCandidates(dbPath: string, dbName: string) {
+  return [
+    { path: dbPath, archiveName: dbName },
+    { path: `${dbPath}-shm`, archiveName: `${dbName}-shm` },
+    { path: `${dbPath}-wal`, archiveName: `${dbName}-wal` },
+    { path: `${dbPath}-journal`, archiveName: `${dbName}-journal` },
+  ];
 }
 
 async function collectArchiveEntriesRecursively({

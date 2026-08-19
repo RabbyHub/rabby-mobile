@@ -30,6 +30,7 @@ import {
   hasValidPersistedKeyringState,
   normalizePersistedKeyringState,
   persistKeyringState,
+  resolveLegacyKeyringState,
   type KeyringStateMigrationWriteEvent,
 } from './keyringStateMigration';
 // import { lendingCacheStorage } from '@/screens/Lending/hooks';
@@ -146,6 +147,19 @@ export function normalizeKeyringState(options?: {
     checkpointStorage: keyringCheckpointMMKV,
     legacyStorage: appMMKVInstance,
     onKeyringStateWrite: options?.onKeyringStateWrite,
+  });
+}
+
+/**
+ * Reads historic MMKV keyring locations without repairing or mutating them.
+ * SQLite calls this only for first-run migration and semantic-failure recovery.
+ */
+export function resolveLegacyKeyringStateForSqlite() {
+  return resolveLegacyKeyringState({
+    key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+    keyringStorage: keyringMMKVInstance,
+    checkpointStorage: keyringCheckpointMMKV,
+    legacyStorage: appMMKVInstance,
   });
 }
 

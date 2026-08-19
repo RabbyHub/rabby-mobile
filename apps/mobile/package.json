@@ -320,6 +320,7 @@
     "hoistingLimits": "workspaces"
   },
   "op-sqlite": {
+    "sqlcipher": true,
     "performanceMode": true,
     "sqliteFlags": "-DSQLITE_ENABLE_MATH_FUNCTIONS"
   }

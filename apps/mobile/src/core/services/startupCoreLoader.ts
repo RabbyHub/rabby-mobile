@@ -27,11 +27,16 @@ import {
   appStorage,
   keyringCheckpointMMKV,
   keyringMMKVInstance,
-  normalizeKeyringState,
   persistKeyringState,
+  resolveLegacyKeyringStateForSqlite,
 } from '../storage/mmkv';
 import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 import { inspectPersistedKeyringState } from '../storage/keyringStateMigration';
+import {
+  normalizeKeyringStateFromSqlite,
+  persistKeyringStateToSqlite,
+} from '../storage/keyringStateSqlite';
+import { getKeyringSqliteStore } from '../storage/keyringStateSqliteNative';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { PreferenceService } from '../startupServices/preference';
 import { openapi } from '../request';
@@ -124,32 +129,24 @@ const keyringClasses = [
 export function loadStartupCoreServices() {
   migrateAppStorage(appStorage);
 
-  const normalizedKeyringState = normalizeKeyringState({
-    onKeyringStateWrite(event) {
-      recordKeyringStorageDiagnostic(`migration.${event.phase}`, {
-        source: event.source,
-        state: getKeyringStateSummary(event.value),
-        ...(event.error
-          ? {
-              error:
-                event.error instanceof Error
-                  ? event.error.message.slice(0, 160)
-                  : String(event.error).slice(0, 160),
-            }
-          : {}),
-      });
-    },
+  const keyringSqliteStore = getKeyringSqliteStore();
+  const normalizedKeyringState = normalizeKeyringStateFromSqlite({
+    sqliteStore: keyringSqliteStore,
+    resolveLegacyState: resolveLegacyKeyringStateForSqlite,
   });
   const keyringState = normalizedKeyringState.keyringData;
 
   recordKeyringStorageDiagnostic('normalize.result', {
     result: {
       hasKeyringData: !!normalizedKeyringState.keyringData,
-      hasLegacyData: !!normalizedKeyringState.legacyData,
-      recoverySource: normalizedKeyringState.recoverySource,
+      source: normalizedKeyringState.source,
       persistenceBlocked: normalizedKeyringState.persistenceBlocked === true,
       keyringState: getKeyringStateSummary(normalizedKeyringState.keyringData),
+      ...(normalizedKeyringState.sqliteError
+        ? { sqliteError: normalizedKeyringState.sqliteError }
+        : {}),
     },
+    sqlite: keyringSqliteStore.read().status,
     keyring: inspectPersistedKeyringState(
       keyringMMKVInstance,
       APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
@@ -213,6 +210,8 @@ export function loadStartupCoreServices() {
   let keyringPersistSequence = 0;
   let keyringPersistenceBlocked =
     normalizedKeyringState.persistenceBlocked === true;
+  const useLegacyMMKVPersistence =
+    normalizedKeyringState.source === 'mmkv-unavailable';
   keyringService.store.subscribe(value => {
     const sequence = ++keyringPersistSequence;
     const summary = getKeyringStateSummary(value);
@@ -231,15 +230,23 @@ export function loadStartupCoreServices() {
     }
 
     try {
-      persistKeyringState({
-        key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
-        keyringStorage: keyringMMKVInstance,
-        checkpointStorage: keyringCheckpointMMKV,
-        value,
-      });
+      if (useLegacyMMKVPersistence) {
+        persistKeyringState({
+          key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+          keyringStorage: keyringMMKVInstance,
+          checkpointStorage: keyringCheckpointMMKV,
+          value,
+        });
+      } else {
+        persistKeyringStateToSqlite({
+          sqliteStore: keyringSqliteStore,
+          value,
+        });
+      }
       recordKeyringStorageDiagnostic('persist.complete', {
         sequence,
         state: summary,
+        storage: useLegacyMMKVPersistence ? 'mmkv' : 'sqlite',
       });
     } catch (error) {
       keyringPersistenceBlocked = true;
