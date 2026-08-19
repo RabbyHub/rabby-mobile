@@ -68,6 +68,7 @@ import {
   restoreAssetProjection,
   scheduleAssetProjectionPersistence,
 } from './assetProjectionPersistence';
+import { getAssetReadModel, resetAssetReadModels } from './assetReadModel';
 import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
 
 const mockedSyncNFTs = jest.mocked(syncNFTs);
@@ -141,6 +142,7 @@ describe('NFT list refresh semantics', () => {
     });
     mockIsHomeAssetSelectionExperimentEnabled.mockReset();
     mockIsHomeAssetSelectionExperimentEnabled.mockReturnValue(false);
+    resetAssetReadModels();
     clearResourceStore(nftEntityResourceStore);
     clearResourceStore(nftCollectionResourceStore);
     useNftListComputedStore.setState({
@@ -237,6 +239,85 @@ describe('NFT list refresh semantics', () => {
       'ServiceErrorType.NFT',
       expect.any(Error),
     );
+  });
+
+  it('keeps the usable NFT projection visible while a remote refresh is pending', async () => {
+    const remote = createDeferred<{
+      status: 'snapshot';
+      nfts: DisplayNftItem[];
+      remoteNfts: DisplayNftItem[];
+    }>();
+    const remoteNft = { ...cachedNft, id: 'remote' };
+    const key = useNftListComputedStore.getState().registerSingleNfts(ADDRESS);
+    mockedSyncNFTs.mockImplementation(
+      async (_address, _force, _only, options) => {
+        expect(options?.beforeRemote?.()).toBe(true);
+        return remote.promise;
+      },
+    );
+
+    const request = nftListStore.getState().getNFTList(ADDRESS, true);
+    await waitFor(() => mockedSyncNFTs.mock.calls.length === 1);
+
+    expect(nftListStore.getState().nftsMap[ADDRESS]).toEqual([cachedNft]);
+    expect(
+      useNftListComputedStore.getState().singleNftsIndexCache[key]?.rows,
+    ).toHaveLength(1);
+    expect(
+      getAssetReadModel({
+        kind: 'nft',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toMatchObject({
+      phase: 'refreshing',
+      source: 'memory',
+      hasSnapshot: true,
+      rowCount: 1,
+    });
+
+    remote.resolve({
+      status: 'snapshot',
+      nfts: [remoteNft],
+      remoteNfts: [remoteNft],
+    });
+    await request;
+
+    expect(nftListStore.getState().nftsMap[ADDRESS]).toEqual([remoteNft]);
+    expect(
+      getAssetReadModel({
+        kind: 'nft',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toMatchObject({
+      phase: 'ready',
+      source: 'remote',
+      hasSnapshot: true,
+      rowCount: 1,
+    });
+  });
+
+  it('marks a usable NFT projection stale when its refresh fails', async () => {
+    const key = useNftListComputedStore.getState().registerSingleNfts(ADDRESS);
+    mockedSyncNFTs.mockRejectedValue(new Error('network failed'));
+
+    await nftListStore.getState().getNFTList(ADDRESS, true);
+
+    expect(nftListStore.getState().nftsMap[ADDRESS]).toEqual([cachedNft]);
+    expect(
+      getAssetReadModel({
+        kind: 'nft',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toMatchObject({
+      phase: 'stale',
+      source: 'memory',
+      hasSnapshot: true,
+      rowCount: 1,
+      lastError: 'source-incomplete',
+    });
   });
 
   it('does not let an older remote result overwrite or persist after a newer request', async () => {
@@ -645,6 +726,21 @@ describe('NFT list refresh semantics', () => {
       expect(
         mockedNftEntity.batchMultiAddressNFTsByResourceIds,
       ).toHaveBeenCalledWith([nftId]);
+      expect(
+        getAssetReadModel({
+          kind: 'nft',
+          scene: 'single-address',
+          runtimeKey: key,
+        }),
+      ).toMatchObject({
+        phase: 'ready',
+        source: 'native',
+        hasSnapshot: true,
+        rowCount: 1,
+        generation: 1,
+        committedAt: 100,
+        committedRequestId: 'nft-native-publish-1',
+      });
 
       jest.advanceTimersByTime(1);
       await waitFor(

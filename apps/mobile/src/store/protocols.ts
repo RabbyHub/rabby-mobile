@@ -1262,6 +1262,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
                     native: true,
                     sourceComplete: results.every(
                       ([, execution]) =>
+                        execution.mode === 'native' &&
                         execution.result.outcome === 'complete',
                     ),
                   };
@@ -1403,7 +1404,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     const normalizedAddress = address.toLowerCase();
     await runProtocolAssetSync({
       addresses: [normalizedAddress],
-      variant: 'single-address',
+      variant: `single-address:${force ? 'force' : 'cached'}`,
       force,
       trigger,
       execute: async ticket => {

@@ -54,6 +54,20 @@ import {
 } from './assetProjectionAvailability';
 import { executeNftSync, getNftSyncMode } from './nftSyncExecutor';
 import {
+  beginAssetReadModelRefresh,
+  beginAssetReadModelRestore,
+  ensureAssetReadModel,
+  failAssetReadModel,
+  getAssetReadModel,
+  publishAssetReadModel,
+  type AssetReadModelSource,
+} from './assetReadModel';
+import {
+  AssetSyncCoordinator,
+  type AssetSyncTicket,
+  type AssetSyncTrigger,
+} from './assetSyncCoordinator';
+import {
   registerNativeAssetSyncHandler,
   type NativeAssetSyncCompletion,
 } from './nativeAssetSyncReceipt';
@@ -514,6 +528,217 @@ const getNftProjectionAvailability = (
   });
 };
 
+type NftAssetSyncOutcome = {
+  status: 'complete' | 'partial' | 'superseded';
+  source?: Exclude<AssetReadModelSource, 'none'>;
+  nativeCompletion?: NativeAssetSyncCompletion;
+};
+
+type NftAssetReadModelTarget = {
+  key: string;
+  scene: NftProjectionScene;
+};
+
+const getNftAssetReadModelIdentity = (
+  runtimeKey: string,
+  scene: NftProjectionScene,
+) => ({
+  kind: 'nft' as const,
+  scene,
+  runtimeKey,
+});
+
+const syncNftAssetReadModel = ({
+  key,
+  scene,
+  params,
+  result,
+  source = 'memory',
+  generation,
+  committedAt,
+  committedRequestId,
+  requestId,
+}: {
+  key: string;
+  scene: NftProjectionScene;
+  params:
+    | { address: string; chainServerId?: string }
+    | { addresses: string[]; chainServerId?: string };
+  result: NftAssetsIndexResult;
+  source?: Exclude<AssetReadModelSource, 'none'>;
+  generation?: number;
+  committedAt?: number;
+  committedRequestId?: string;
+  requestId?: string;
+}) => {
+  const identity = getNftAssetReadModelIdentity(key, scene);
+  ensureAssetReadModel(identity);
+  if (getNftProjectionAvailability(params, result) !== 'ready') {
+    return;
+  }
+
+  const addresses = 'address' in params ? [params.address] : params.addresses;
+  publishAssetReadModel(identity, {
+    source,
+    rowCount: result.rows.length,
+    sourceComplete: hasConfirmedAssetProjectionSources(
+      addresses,
+      nftListStore.getState().sourceSnapshotReadyByAddress,
+    ),
+    generation,
+    committedAt,
+    committedRequestId,
+    requestId,
+  });
+};
+
+const getNftAssetReadModelTargets = (
+  addresses: string[],
+): NftAssetReadModelTarget[] => {
+  const addressSet = new Set(normalizeAddresses(addresses));
+  const targets: NftAssetReadModelTarget[] = [];
+
+  singleNftsCacheParams.forEach((params, key) => {
+    if (addressSet.has(params.address.toLowerCase())) {
+      targets.push({ key, scene: 'single-address' });
+    }
+  });
+  multiNftsCacheParams.forEach((params, key) => {
+    if (
+      params.addresses.some(address => addressSet.has(address.toLowerCase()))
+    ) {
+      targets.push({ key, scene: 'multi-address' });
+    }
+  });
+
+  return targets;
+};
+
+const beginNftAssetReadModelRefresh = (
+  addresses: string[],
+  requestId: string,
+) => {
+  const targets = getNftAssetReadModelTargets(addresses);
+  targets.forEach(({ key, scene }) => {
+    beginAssetReadModelRefresh(
+      getNftAssetReadModelIdentity(key, scene),
+      requestId,
+    );
+  });
+  return targets;
+};
+
+const failNftAssetReadModelRefresh = (
+  targets: NftAssetReadModelTarget[],
+  requestId: string,
+  error: unknown,
+) => {
+  targets.forEach(({ key, scene }) => {
+    failAssetReadModel(
+      getNftAssetReadModelIdentity(key, scene),
+      error,
+      requestId,
+    );
+  });
+};
+
+const completeNftAssetReadModelRefresh = (
+  targets: NftAssetReadModelTarget[],
+  requestId: string,
+  outcome: NftAssetSyncOutcome,
+) => {
+  const state = useNftListComputedStore.getState();
+  targets.forEach(({ key, scene }) => {
+    const params =
+      scene === 'single-address'
+        ? singleNftsCacheParams.get(key)
+        : multiNftsCacheParams.get(key);
+    const result =
+      scene === 'single-address'
+        ? state.singleNftsIndexCache[key]
+        : state.multiNftsIndexCache[key];
+    if (!params || !result) {
+      failAssetReadModel(
+        getNftAssetReadModelIdentity(key, scene),
+        'projection-unavailable',
+        requestId,
+      );
+      return;
+    }
+
+    const identity = getNftAssetReadModelIdentity(key, scene);
+    const currentSource = getAssetReadModel(identity).source;
+    syncNftAssetReadModel({
+      key,
+      scene,
+      params,
+      result,
+      source:
+        outcome.source || (currentSource === 'none' ? 'memory' : currentSource),
+      generation: outcome.nativeCompletion?.generation,
+      committedAt: outcome.nativeCompletion?.committedAt,
+      committedRequestId: outcome.nativeCompletion?.requestId,
+      requestId,
+    });
+    if (getAssetReadModel(identity).activeRequestId === requestId) {
+      failAssetReadModel(identity, 'source-incomplete', requestId);
+    }
+  });
+};
+
+const runNftAssetSync = async ({
+  addresses,
+  variant,
+  force,
+  trigger,
+  execute,
+}: {
+  addresses: string[];
+  variant: string;
+  force: boolean;
+  trigger: AssetSyncTrigger;
+  execute: (ticket: AssetSyncTicket) => Promise<NftAssetSyncOutcome>;
+}) => {
+  let readModelTargets: NftAssetReadModelTarget[] = [];
+
+  await nftAssetSyncCoordinator.run({
+    scope: { kind: 'nft', addresses, variant },
+    force,
+    trigger,
+    onStart: ticket => {
+      readModelTargets = beginNftAssetReadModelRefresh(
+        addresses,
+        ticket.requestId,
+      );
+    },
+    onSuccess: (ticket, outcome) => {
+      if (outcome.status === 'complete') {
+        completeNftAssetReadModelRefresh(
+          readModelTargets,
+          ticket.requestId,
+          outcome,
+        );
+        return;
+      }
+      failNftAssetReadModelRefresh(
+        readModelTargets,
+        ticket.requestId,
+        outcome.status === 'partial'
+          ? 'source-incomplete'
+          : 'request-superseded',
+      );
+    },
+    onError: (ticket, error) => {
+      failNftAssetReadModelRefresh(
+        readModelTargets,
+        ticket.requestId,
+        error instanceof Error ? error.name : 'asset-sync-failed',
+      );
+    },
+    execute,
+  });
+};
+
 const scheduleNftProjectionPersistence = (
   key: string,
   scene: NftProjectionScene,
@@ -711,6 +936,7 @@ const restoreNftProjectionIfEmpty = (
           },
         },
   );
+  beginAssetReadModelRestore(getNftAssetReadModelIdentity(key, scene));
   const trace = beginAssetDataLoadDiagnostic(
     'asset-projection-nft-restore',
     scene,
@@ -837,6 +1063,15 @@ const restoreNftProjectionIfEmpty = (
         },
       }));
     }
+    syncNftAssetReadModel({
+      key,
+      scene,
+      params,
+      result: projection.result,
+      source: 'database',
+      generation: restored.generation,
+      committedAt: restored.committedAt,
+    });
     trace.finish({ itemCount: projection.result.rows.length });
   })()
     .catch(error => {
@@ -950,6 +1185,15 @@ const updateSingleNftsIndex = (
       }));
     }
   }
+  const identity = getNftAssetReadModelIdentity(key, 'single-address');
+  const currentSource = getAssetReadModel(identity).source;
+  syncNftAssetReadModel({
+    key,
+    scene: 'single-address',
+    params,
+    result: projection.result,
+    source: currentSource === 'none' ? 'memory' : currentSource,
+  });
   scheduleNftProjectionPersistence(key, 'single-address', projection.result);
   if (!projection.result.rows.length) {
     restoreNftProjectionIfEmpty(key, 'single-address');
@@ -1012,6 +1256,15 @@ const updateMultiNftsIndex = (
       }));
     }
   }
+  const identity = getNftAssetReadModelIdentity(key, 'multi-address');
+  const currentSource = getAssetReadModel(identity).source;
+  syncNftAssetReadModel({
+    key,
+    scene: 'multi-address',
+    params,
+    result: projection.result,
+    source: currentSource === 'none' ? 'memory' : currentSource,
+  });
   scheduleNftProjectionPersistence(key, 'multi-address', projection.result);
   if (!projection.result.rows.length) {
     restoreNftProjectionIfEmpty(key, 'multi-address');
@@ -1131,12 +1384,14 @@ export interface NFTListState {
     address: string,
     force?: boolean,
     updateReturn?: boolean,
+    trigger?: AssetSyncTrigger,
   ): Promise<void>;
   getNFTListWithCache(
     address: string,
     force?: boolean,
     updateReturn?: boolean,
     options?: { skipCache?: boolean },
+    trigger?: AssetSyncTrigger,
   ): Promise<void>;
   hydrateSingleNftCache(address: string): Promise<void>;
   batchGetNFTList(
@@ -1146,6 +1401,7 @@ export interface NFTListState {
       ignoreLoading?: boolean;
       updateReturn?: boolean;
     },
+    trigger?: AssetSyncTrigger,
   ): Promise<void>;
   getCacheTop10NFTs(options?: {
     realTimeAddresses?: string[];
@@ -1158,6 +1414,7 @@ const singleNftLoadRequests = new Map<string, Promise<void>>();
 const latestSingleNftLoadByAddress = new Map<string, Promise<void>>();
 const multiAddressNftRequests = new LatestAsyncRequest();
 const nftAddressRequests = new LatestAddressRequest();
+const nftAssetSyncCoordinator = new AssetSyncCoordinator();
 
 const getSingleNftRequestKey = (
   address: string,
@@ -1196,7 +1453,7 @@ const nftCacheHydrator = createAddressListSnapshotHydrator<DisplayNftItem>({
 
 type TaggedNftLoadResult =
   | NftSnapshotLoadResult
-  | { status: 'native' }
+  | { status: 'native'; completion: NativeAssetSyncCompletion }
   | { status: 'failed'; error: unknown };
 
 const loadTaggedNfts = async (
@@ -1241,7 +1498,9 @@ const loadTaggedNfts = async (
           deferPersistence: true,
         }),
     });
-    return execution.mode === 'native' ? { status: 'native' } : execution.value;
+    return execution.mode === 'native'
+      ? { status: 'native', completion: execution.result }
+      : execution.value;
   } catch (error) {
     console.error('ServiceErrorType.NFT', error);
     return { status: 'failed', error };
@@ -1311,7 +1570,26 @@ const loadAndPublishNfts = async (
   updateReturn?: boolean,
 ) => {
   const result = await loadTaggedNfts(address, ticket, force, updateReturn);
-  return publishNftSnapshot(address, ticket, result);
+  const published = publishNftSnapshot(address, ticket, result);
+  if (!published) {
+    return {
+      status: result.status === 'failed' ? 'partial' : 'superseded',
+    } satisfies NftAssetSyncOutcome;
+  }
+  if (result.status === 'native') {
+    return {
+      status: 'complete',
+      source: 'native',
+      nativeCompletion: result.completion,
+    } satisfies NftAssetSyncOutcome;
+  }
+  return {
+    status: 'complete',
+    source:
+      result.status === 'snapshot' && result.remoteNfts !== undefined
+        ? 'remote'
+        : 'database',
+  } satisfies NftAssetSyncOutcome;
 };
 
 const nftListStore = zCreate<NFTListState>((set, get) => ({
@@ -1442,14 +1720,34 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     });
   },
 
-  async getNFTList(address, force, updateReturn) {
+  async getNFTList(
+    address,
+    force = false,
+    updateReturn,
+    trigger = 'on-demand',
+  ) {
     if (!address) {
       return;
     }
 
     const normalizedAddress = address.toLowerCase();
-    const ticket = nftAddressRequests.reserve([normalizedAddress]);
-    await loadAndPublishNfts(normalizedAddress, ticket, force, updateReturn);
+    await runNftAssetSync({
+      addresses: [normalizedAddress],
+      variant: `single-address:${updateReturn ? 'return' : 'default'}:${
+        force ? 'force' : 'cached'
+      }`,
+      force,
+      trigger,
+      execute: async syncTicket => {
+        const addressTicket = nftAddressRequests.reserve([normalizedAddress]);
+        return loadAndPublishNfts(
+          normalizedAddress,
+          addressTicket,
+          syncTicket.isForceRequested(),
+          updateReturn,
+        );
+      },
+    });
   },
 
   hydrateSingleNftCache(address) {
@@ -1478,7 +1776,13 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
       });
   },
 
-  getNFTListWithCache(address, force, updateReturn, options) {
+  getNFTListWithCache(
+    address,
+    force = false,
+    updateReturn,
+    options,
+    trigger = 'on-demand',
+  ) {
     if (!address) {
       return Promise.resolve();
     }
@@ -1510,28 +1814,41 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
       },
     }));
 
-    const ticket = nftAddressRequests.reserve([normalizedAddress]);
     let request: Promise<void> | undefined;
     request = (async () => {
       try {
-        if (!options?.skipCache) {
-          await get().hydrateSingleNftCache(normalizedAddress);
-          trace.mark('cache-store-published', {
-            itemCount: get().nftsMap[normalizedAddress]?.length || 0,
-          });
-        } else {
-          trace.mark('cache-preloaded', {
-            itemCount: get().nftsMap[normalizedAddress]?.length || 0,
-          });
-        }
-        await loadAndPublishNfts(
-          normalizedAddress,
-          ticket,
+        await runNftAssetSync({
+          addresses: [normalizedAddress],
+          variant: `single-address-cache:${
+            updateReturn ? 'return' : 'default'
+          }:${force ? 'force' : 'cached'}`,
           force,
-          updateReturn,
-        );
-        trace.mark('remote-store-published', {
-          itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+          trigger,
+          execute: async syncTicket => {
+            const addressTicket = nftAddressRequests.reserve([
+              normalizedAddress,
+            ]);
+            if (!options?.skipCache) {
+              await get().hydrateSingleNftCache(normalizedAddress);
+              trace.mark('cache-store-published', {
+                itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+              });
+            } else {
+              trace.mark('cache-preloaded', {
+                itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+              });
+            }
+            const outcome = await loadAndPublishNfts(
+              normalizedAddress,
+              addressTicket,
+              syncTicket.isForceRequested(),
+              updateReturn,
+            );
+            trace.mark('remote-store-published', {
+              itemCount: get().nftsMap[normalizedAddress]?.length || 0,
+            });
+            return outcome;
+          },
         });
         trace.finish({ path: 'cache-then-remote' });
       } catch (error) {
@@ -1557,106 +1874,140 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     return request;
   },
 
-  async batchGetNFTList(force, options) {
-    const requestId = multiAddressNftRequests.next();
-    const invocationRevision = nftAddressRequests.issueRevision();
-    const isCurrentRequest = () => multiAddressNftRequests.isCurrent(requestId);
+  async batchGetNFTList(force = false, options, trigger = 'on-demand') {
     const addresses = normalizeAddresses(
       options?.realTimeAddresses ||
         (await getSelectedBalanceAddressesOrTop10Fallback()),
     );
-    const addressTickets = new Map(
-      addresses.map(address => [
-        address,
-        nftAddressRequests.reserveAtRevision([address], invocationRevision),
-      ]),
-    );
-    const trace = beginAssetDataLoadDiagnostic(
-      'multi-address-nft',
-      addresses.join('|'),
-      {
-        addressCount: addresses.length,
-        force: !!force,
-        ignoreLoading: !!options?.ignoreLoading,
-      },
-    );
-
-    if (!isCurrentRequest()) {
-      trace.finish({ path: 'stale-before-hydrate' });
-      return;
-    }
-
-    get().clearUnusedNFTs(addresses);
-    if (!options?.ignoreLoading) {
-      set(state => ({ ...state, isLoading: true }));
-    }
-
-    try {
-      const currentNftsMap = get().nftsMap;
-      const hasMemorySnapshot = addresses.every(address =>
-        Object.prototype.hasOwnProperty.call(currentNftsMap, address),
-      );
-      if (!force && !hasMemorySnapshot) {
-        await get().batchLoadCacheNFT(addresses, {
-          shouldApply: isCurrentRequest,
-          shouldApplyAddress: address => {
-            const ticket = addressTickets.get(address);
-            return (
-              !!ticket && !nftAddressRequests.isSuperseded(ticket, address)
-            );
-          },
-        });
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-after-hydrate' });
-          return;
-        }
-        trace.mark('local-store-published', {
-          itemCount: addresses.reduce(
-            (count, address) => count + (get().nftsMap[address]?.length || 0),
-            0,
-          ),
-        });
-      } else {
-        trace.mark('memory-snapshot-retained', {
-          hasMemorySnapshot,
-        });
-      }
-
-      for (const address of addresses) {
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-before-remote' });
-          return;
-        }
-        const ticket = addressTickets.get(address);
-        if (!ticket) {
-          continue;
-        }
-        const result = await loadTaggedNfts(
-          address,
-          ticket,
-          force,
-          options?.updateReturn,
+    await runNftAssetSync({
+      addresses,
+      variant: `multi-address:${options?.updateReturn ? 'return' : 'default'}:${
+        force ? 'force' : 'cached'
+      }`,
+      force,
+      trigger,
+      execute: async syncTicket => {
+        const requestId = multiAddressNftRequests.next();
+        const invocationRevision = nftAddressRequests.issueRevision();
+        const isCurrentRequest = () =>
+          multiAddressNftRequests.isCurrent(requestId);
+        const addressTickets = new Map(
+          addresses.map(address => [
+            address,
+            nftAddressRequests.reserveAtRevision([address], invocationRevision),
+          ]),
         );
-        if (isCurrentRequest() && publishNftSnapshot(address, ticket, result)) {
-          trace.mark('remote-address-published', {
-            itemCount: get().nftsMap[address]?.length || 0,
-          });
+        const trace = beginAssetDataLoadDiagnostic(
+          'multi-address-nft',
+          addresses.join('|'),
+          {
+            addressCount: addresses.length,
+            force,
+            ignoreLoading: !!options?.ignoreLoading,
+          },
+        );
+
+        if (!isCurrentRequest()) {
+          trace.finish({ path: 'stale-before-hydrate' });
+          return { status: 'superseded' };
         }
-      }
-      await new Promise(resolve => setTimeout(resolve, 0));
-      trace.finish({ path: 'local-then-remote' });
-    } catch (error) {
-      trace.fail({ phase: 'load' });
-      throw error;
-    } finally {
-      if (isCurrentRequest()) {
-        set(state => ({
-          ...state,
-          isLoading: false,
-          isFirstFetch: false,
-        }));
-      }
-    }
+
+        get().clearUnusedNFTs(addresses);
+        if (!options?.ignoreLoading) {
+          set(state => ({ ...state, isLoading: true }));
+        }
+
+        try {
+          const currentNftsMap = get().nftsMap;
+          const hasMemorySnapshot = addresses.every(address =>
+            Object.prototype.hasOwnProperty.call(currentNftsMap, address),
+          );
+          if (!syncTicket.isForceRequested() && !hasMemorySnapshot) {
+            await get().batchLoadCacheNFT(addresses, {
+              shouldApply: isCurrentRequest,
+              shouldApplyAddress: address => {
+                const addressTicket = addressTickets.get(address);
+                return (
+                  !!addressTicket &&
+                  !nftAddressRequests.isSuperseded(addressTicket, address)
+                );
+              },
+            });
+            if (!isCurrentRequest()) {
+              trace.finish({ path: 'stale-after-hydrate' });
+              return { status: 'superseded' };
+            }
+            trace.mark('local-store-published', {
+              itemCount: addresses.reduce(
+                (count, address) =>
+                  count + (get().nftsMap[address]?.length || 0),
+                0,
+              ),
+            });
+          } else {
+            trace.mark('memory-snapshot-retained', {
+              hasMemorySnapshot,
+            });
+          }
+
+          let completedAddressCount = 0;
+          let hasPartialAddress = false;
+          let source: Exclude<AssetReadModelSource, 'none'> = 'database';
+          for (const address of addresses) {
+            if (!isCurrentRequest()) {
+              trace.finish({ path: 'stale-before-remote' });
+              return { status: 'superseded' };
+            }
+            const addressTicket = addressTickets.get(address);
+            if (!addressTicket) {
+              continue;
+            }
+            const outcome = await loadAndPublishNfts(
+              address,
+              addressTicket,
+              syncTicket.isForceRequested(),
+              options?.updateReturn,
+            );
+            if (outcome.status === 'complete') {
+              completedAddressCount += 1;
+              if (outcome.source === 'native') {
+                source = 'native';
+              } else if (outcome.source === 'remote' && source !== 'native') {
+                source = 'remote';
+              }
+              trace.mark('remote-address-published', {
+                itemCount: get().nftsMap[address]?.length || 0,
+              });
+            } else {
+              hasPartialAddress = true;
+            }
+          }
+          await new Promise(resolve => setTimeout(resolve, 0));
+          trace.finish({ path: 'local-then-remote' });
+          if (!isCurrentRequest()) {
+            return { status: 'superseded' };
+          }
+          if (hasPartialAddress) {
+            return {
+              status: completedAddressCount ? 'partial' : 'superseded',
+              source,
+            };
+          }
+          return { status: 'complete', source };
+        } catch (error) {
+          trace.fail({ phase: 'load' });
+          throw error;
+        } finally {
+          if (isCurrentRequest()) {
+            set(state => ({
+              ...state,
+              isLoading: false,
+              isFirstFetch: false,
+            }));
+          }
+        }
+      },
+    });
   },
 
   async getCacheTop10NFTs(options) {
@@ -2020,8 +2371,29 @@ const nativeNftCommitBatcher = createAddressListCommitBatcher({
   },
 });
 
-const applyNativeNftCommit = (completion: NativeAssetSyncCompletion) =>
-  nativeNftCommitBatcher.enqueue([completion.address]);
+const applyNativeNftCommit = async (completion: NativeAssetSyncCompletion) => {
+  await nativeNftCommitBatcher.enqueue([completion.address]);
+  const state = useNftListComputedStore.getState();
+  getNativeNftProjectionTargets([completion.address]).forEach(target => {
+    const result =
+      target.scene === 'single-address'
+        ? state.singleNftsIndexCache[target.key]
+        : state.multiNftsIndexCache[target.key];
+    if (!result) {
+      return;
+    }
+    syncNftAssetReadModel({
+      key: target.key,
+      scene: target.scene,
+      params: target.params,
+      result,
+      source: 'native',
+      generation: completion.generation,
+      committedAt: completion.committedAt,
+      committedRequestId: completion.requestId,
+    });
+  });
+};
 
 registerNativeAssetSyncHandler('nft', applyNativeNftCommit);
 
