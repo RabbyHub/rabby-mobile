@@ -147,8 +147,15 @@ export const ProtocolList = () => {
     regressionScenarioId === 'high-cardinality-assets' &&
     !!regressionScenarioRunId &&
     !!regressionScenarioReport;
+  const requestedHighCardinalityAddressCount = regressionScenario.active
+    ? Number(regressionScenario.params.addressCount)
+    : 0;
 
   const { myTop10Accounts, myTop10Addresses } = useAccountInfo();
+  const hasExpectedHighCardinalityAddressSelection =
+    Number.isInteger(requestedHighCardinalityAddressCount) &&
+    requestedHighCardinalityAddressCount > 0 &&
+    myTop10Addresses.length === requestedHighCardinalityAddressCount;
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
   const [showAllProtocols, setShowAllProtocols] = useState(false);
@@ -215,6 +222,7 @@ export const ProtocolList = () => {
     if (
       !isHighCardinalityRegressionScenario ||
       !regressionScenarioRunId ||
+      !hasExpectedHighCardinalityAddressSelection ||
       protocolProjectionViewState !== 'data' ||
       !highCardinalityRenderableProtocolIds.length
     ) {
@@ -261,6 +269,7 @@ export const ProtocolList = () => {
     return protocolEntityResourceStore.subscribe(checkRenderableRows);
   }, [
     getAccountByAddress,
+    hasExpectedHighCardinalityAddressSelection,
     highCardinalityRenderableProtocolIds,
     isHighCardinalityRegressionScenario,
     protocolIndex.protocolIds.length,

@@ -41,6 +41,17 @@ export type AssetDataLoadDiagnosticTrace = {
   fail: (details?: AssetDataLoadTraceDetails) => void;
 };
 
+export type AssetDataLoadSettlementState = {
+  domain: AssetDataLoadDiagnosticDomain;
+  requestIds: number[];
+  terminalRequestIds: number[];
+  pendingRequestIds: number[];
+  failedRequestIds: number[];
+  phase: 'completed' | 'failed' | null;
+  elapsedMs: number | null;
+  paths: string[];
+};
+
 // High-cardinality probes intentionally keep several address-scoped asset
 // requests in flight. Retain enough non-production history to observe each
 // request's terminal state instead of evicting its start marker mid-run.
@@ -127,4 +138,73 @@ export function getAssetDataLoadDiagnosticsSnapshot() {
     enabled: records !== null,
     records: records ? [...records] : [],
   };
+}
+
+export function summarizeAssetDataLoadSettlements(
+  sourceRecords: readonly AssetDataLoadDiagnosticRecord[],
+  cursor: number,
+  expectedDomains: readonly AssetDataLoadDiagnosticDomain[],
+): AssetDataLoadSettlementState[] {
+  const expectedDomainSet = new Set(expectedDomains);
+  const observedRequestIds = new Map<
+    AssetDataLoadDiagnosticDomain,
+    Set<number>
+  >();
+  const terminalRecords = new Map<number, AssetDataLoadDiagnosticRecord>();
+
+  for (const record of sourceRecords) {
+    if (record.phase === 'completed' || record.phase === 'failed') {
+      terminalRecords.set(record.requestId, record);
+    }
+    if (record.id <= cursor || !expectedDomainSet.has(record.domain)) {
+      continue;
+    }
+    const requestIds = observedRequestIds.get(record.domain) || new Set();
+    requestIds.add(record.requestId);
+    observedRequestIds.set(record.domain, requestIds);
+  }
+
+  return expectedDomains.map(domain => {
+    const requestIds = Array.from(observedRequestIds.get(domain) || []).sort(
+      (left, right) => left - right,
+    );
+    const terminalRequestIds: number[] = [];
+    const pendingRequestIds: number[] = [];
+    const failedRequestIds: number[] = [];
+    const paths = new Set<string>();
+    let elapsedMs: number | null = null;
+
+    for (const requestId of requestIds) {
+      const terminal = terminalRecords.get(requestId);
+      if (!terminal || terminal.domain !== domain) {
+        pendingRequestIds.push(requestId);
+        continue;
+      }
+      terminalRequestIds.push(requestId);
+      if (terminal.phase === 'failed') {
+        failedRequestIds.push(requestId);
+      }
+      elapsedMs = Math.max(elapsedMs || 0, terminal.elapsedMs);
+      const path = terminal.details?.path;
+      if (typeof path === 'string') {
+        paths.add(path);
+      }
+    }
+
+    return {
+      domain,
+      requestIds,
+      terminalRequestIds,
+      pendingRequestIds,
+      failedRequestIds,
+      phase:
+        requestIds.length === 0 || pendingRequestIds.length > 0
+          ? null
+          : failedRequestIds.length > 0
+          ? 'failed'
+          : 'completed',
+      elapsedMs,
+      paths: Array.from(paths).sort(),
+    };
+  });
 }

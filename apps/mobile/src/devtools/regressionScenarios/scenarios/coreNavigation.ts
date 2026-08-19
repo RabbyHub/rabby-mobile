@@ -14,6 +14,7 @@ import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { getSingleAddressChainProjectionDiagnosticsSnapshot } from '@/screens/Home/singleAddressChainDiagnostics';
 import {
   getAssetDataLoadDiagnosticsSnapshot,
+  summarizeAssetDataLoadSettlements,
   type AssetDataLoadDiagnosticRecord,
   type AssetDataLoadDiagnosticDomain,
 } from '@/core/utils/assetDataLoadDiagnostics';
@@ -1564,43 +1565,13 @@ async function waitForHomeAssetDataLoadSettlement(
   timeoutMs = 90_000,
 ) {
   const startedAt = Date.now();
-  const requestIdsByDomain = new Map<AssetDataLoadDiagnosticDomain, number>();
 
   while (Date.now() - startedAt < timeoutMs) {
-    const records = getAssetDataLoadDiagnosticsSnapshot().records.filter(
-      record => record.id > cursor,
+    const settlements = summarizeAssetDataLoadSettlements(
+      getAssetDataLoadDiagnosticsSnapshot().records,
+      cursor,
+      expectedDomains,
     );
-
-    for (const domain of expectedDomains) {
-      if (requestIdsByDomain.has(domain)) {
-        continue;
-      }
-      const started = records.find(
-        record => record.domain === domain && record.phase === 'started',
-      );
-      if (started) {
-        requestIdsByDomain.set(domain, started.requestId);
-      }
-    }
-
-    const settlements = expectedDomains.map(domain => {
-      const requestId = requestIdsByDomain.get(domain);
-      const terminal = requestId
-        ? records.find(
-            record =>
-              record.domain === domain &&
-              record.requestId === requestId &&
-              (record.phase === 'completed' || record.phase === 'failed'),
-          )
-        : undefined;
-      return {
-        domain,
-        requestId: requestId || null,
-        phase: terminal?.phase || null,
-        elapsedMs: terminal?.elapsedMs || null,
-        path: terminal?.details?.path || null,
-      };
-    });
 
     if (settlements.every(item => item.phase)) {
       const failedDomains = settlements
@@ -1629,23 +1600,21 @@ async function waitForHomeAssetDataLoadSettlement(
     await delay(100);
   }
 
-  const observedRequests = expectedDomains.map(domain => ({
-    domain,
-    requestId: requestIdsByDomain.get(domain) || null,
-  }));
+  const settlements = summarizeAssetDataLoadSettlements(
+    getAssetDataLoadDiagnosticsSnapshot().records,
+    cursor,
+    expectedDomains,
+  );
   reportHomeAssetDataLoadDiagnostics(context, cursor, startedAt, {
     mark: 'home-assets-data-load-settlement-timeout',
     summary: {
-      settlements: expectedDomains.map(domain => ({
-        domain,
-        requestId: requestIdsByDomain.get(domain) || null,
-      })),
+      settlements,
     },
   });
   context.report('assertion', {
     assertion: 'home-assets-data-load-settled',
     passed: false,
-    observedRequests,
+    settlements,
     elapsedMs: Date.now() - startedAt,
   });
   throw new Error(
