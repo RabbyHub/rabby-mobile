@@ -64,23 +64,69 @@ export function createRegressionScenarioPerformanceProbe(
     gapMs: number;
     phase: string;
   }> = [];
+  const jsGapPhaseSegments: Array<{
+    elapsedMs: number;
+    gapMs: number;
+    phase: string;
+  }> = [];
   const phaseMarks: Array<{ elapsedMs: number; phase: string }> = [];
   let activePhase = 'initial';
   let previousHeartbeatAt = startedAt;
   let stopped = false;
 
+  function splitGapByPhase(startElapsedMs: number, endElapsedMs: number) {
+    const timeline = [
+      { elapsedMs: 0, phase: 'initial' },
+      ...phaseMarks,
+      { elapsedMs: endElapsedMs, phase: activePhase },
+    ];
+    const segments: Array<{
+      elapsedMs: number;
+      gapMs: number;
+      phase: string;
+    }> = [];
+
+    for (let index = 0; index < timeline.length - 1; index += 1) {
+      const current = timeline[index];
+      const next = timeline[index + 1];
+      const segmentStart = Math.max(startElapsedMs, current.elapsedMs);
+      const segmentEnd = Math.min(endElapsedMs, next.elapsedMs);
+      if (segmentEnd <= segmentStart) {
+        continue;
+      }
+      segments.push({
+        elapsedMs: segmentEnd,
+        gapMs: segmentEnd - segmentStart,
+        phase: current.phase,
+      });
+    }
+
+    return segments;
+  }
+
   const heartbeatTimer = setInterval(() => {
     const current = now();
-    const gapMs = current - previousHeartbeatAt;
+    const previous = previousHeartbeatAt;
+    const gapMs = current - previous;
     previousHeartbeatAt = current;
     if (gapMs >= stallThresholdMs) {
+      const phaseSegments = splitGapByPhase(
+        previous - startedAt,
+        current - startedAt,
+      );
+      const dominantPhase = phaseSegments.reduce(
+        (dominant, segment) =>
+          !dominant || segment.gapMs >= dominant.gapMs ? segment : dominant,
+        phaseSegments[0],
+      );
       jsGapSamples.push(gapMs);
       if (jsGapDetails.length < maxGapDetails) {
         jsGapDetails.push({
           elapsedMs: current - startedAt,
           gapMs,
-          phase: activePhase,
+          phase: dominantPhase?.phase || activePhase,
         });
+        jsGapPhaseSegments.push(...phaseSegments);
       }
     }
   }, heartbeatMs);
@@ -126,6 +172,7 @@ export function createRegressionScenarioPerformanceProbe(
       stallThresholdMs,
       jsGaps: summarizeRegressionScenarioDurations(jsGapSamples),
       jsGapDetails,
+      jsGapPhaseSegments,
       phaseMarks,
       estimatedJsStallMs: jsGapSamples.reduce(
         (total, gapMs) => total + Math.max(0, gapMs - heartbeatMs),
@@ -173,7 +220,7 @@ export function compactRegressionScenarioPerformanceSummary(
   });
 
   const gapSamplesByPhase = new Map<string, number[]>();
-  summary.jsGapDetails.forEach(({ phase, gapMs }) => {
+  summary.jsGapPhaseSegments.forEach(({ phase, gapMs }) => {
     const samples = gapSamplesByPhase.get(phase) || [];
     samples.push(gapMs);
     gapSamplesByPhase.set(phase, samples);
