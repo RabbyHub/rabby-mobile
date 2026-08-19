@@ -78,6 +78,10 @@ import {
   getTokenChainSyncMode,
 } from './tokenChainSyncExecutor';
 import {
+  selectTokenCacheApplicableAddresses,
+  selectTokenCacheRequestAddresses,
+} from './tokenCacheRequestPolicy';
+import {
   beginAssetReadModelRefresh,
   beginAssetReadModelRestore,
   ensureAssetReadModel,
@@ -3851,12 +3855,22 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           });
           const cacheTokenMap: Record<string, ITokenItem[]> = {};
           const cacheSucceededAddresses = new Set<string>();
+          const tokenListMapBeforeCache = get().tokenListMap;
+          const confirmedLocalAddressSet = new Set(confirmedLocalAddresses);
+          const cacheRequestAddresses = selectTokenCacheRequestAddresses(
+            lowerAddresses,
+            tokenListMapBeforeCache,
+            confirmedLocalAddressSet,
+          );
           trace.mark('cache-requests-dispatched', {
-            addressCount: lowerAddresses.length,
+            addressCount: cacheRequestAddresses.length,
+            skippedAddressCount:
+              lowerAddresses.length - cacheRequestAddresses.length,
+            candidateAddressCount: lowerAddresses.length,
             concurrency: 5,
           });
           const cacheTokensPromise = Promise.allSettled(
-            lowerAddresses.map(address =>
+            cacheRequestAddresses.map(address =>
               cacheTokenQueue.add(async () => {
                 const list = await queryTokensCache(address);
                 cacheTokenMap[address] = filterInterfaceTokenList(
@@ -3905,10 +3919,13 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
           await cacheTokensPromise;
           trace.mark('cache-responses-completed', {
-            addressCount: lowerAddresses.length,
+            addressCount: cacheRequestAddresses.length,
+            skippedAddressCount:
+              lowerAddresses.length - cacheRequestAddresses.length,
+            candidateAddressCount: lowerAddresses.length,
             succeededAddressCount: cacheSucceededAddresses.size,
             failedAddressCount:
-              lowerAddresses.length - cacheSucceededAddresses.size,
+              cacheRequestAddresses.length - cacheSucceededAddresses.size,
             itemCount: Object.values(cacheTokenMap).reduce(
               (count, tokens) => count + tokens.length,
               0,
@@ -3920,29 +3937,12 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             return { status: 'superseded' };
           }
           const latestTokenListMap = get().tokenListMap;
-          const confirmedLocalAddressSet = new Set(confirmedLocalAddresses);
-          const cacheApplicableAddresses = currentAddressesAfterCache.filter(
-            address => {
-              if (
-                !cacheSucceededAddresses.has(address) ||
-                confirmedLocalAddressSet.has(address)
-              ) {
-                return false;
-              }
-
-              const hasMemorySnapshot = Object.prototype.hasOwnProperty.call(
-                latestTokenListMap,
-                address,
-              );
-              if (!hasMemorySnapshot) {
-                return true;
-              }
-
-              return (
-                (latestTokenListMap[address]?.length || 0) === 0 &&
-                (cacheTokenMap[address]?.length || 0) > 0
-              );
-            },
+          const cacheApplicableAddresses = selectTokenCacheApplicableAddresses(
+            currentAddressesAfterCache,
+            latestTokenListMap,
+            cacheTokenMap,
+            cacheSucceededAddresses,
+            confirmedLocalAddressSet,
           );
 
           if (cacheApplicableAddresses.length) {

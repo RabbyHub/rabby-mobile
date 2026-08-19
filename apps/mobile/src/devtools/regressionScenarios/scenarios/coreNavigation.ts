@@ -1237,9 +1237,23 @@ async function openHighCardinalityAssets(
       }
     }
   }
+  const finalSettings = getHomeAssetSelectionSettings();
+  const finalSelectedAddressCount =
+    getSelectedBalanceAddressesSnapshot().length;
+  context.report('assertion', {
+    assertion: 'high-cardinality-address-selection-stable',
+    passed:
+      finalSettings.topN === requestedAddressCount &&
+      finalSettings.includeWatchAddresses &&
+      finalSelectedAddressCount === expectedSelectionCount,
+    expectedSelectionCount,
+    selectedAddressCount: finalSelectedAddressCount,
+    homeAssetTopN: finalSettings.topN,
+    includeWatchAddresses: finalSettings.includeWatchAddresses,
+  });
   context.report('postcondition-ready', {
     route: navigationRef.getCurrentRoute()?.name || null,
-    selectedAddressCount: getSelectedBalanceAddressesSnapshot().length,
+    selectedAddressCount: finalSelectedAddressCount,
   });
 }
 
