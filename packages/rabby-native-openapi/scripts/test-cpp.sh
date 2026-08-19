@@ -12,11 +12,13 @@ COMMON_ARGS=(
   -Wall
   -Wextra
   -Werror
+  -pthread
   -I"$PACKAGE_DIR/cpp/include"
   -I"$HTTP_PACKAGE_DIR/cpp/include"
   -I"$PACKAGE_DIR/cpp/third_party/json11"
   "$HTTP_PACKAGE_DIR/cpp/RabbyHttpTypes.cpp"
   "$PACKAGE_DIR/cpp/RabbyAddressCachePersistence.cpp"
+  "$PACKAGE_DIR/cpp/RabbyOpenApiAssetSyncScheduler.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiAssetModels.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiClient.cpp"
   "$PACKAGE_DIR/cpp/RabbyOpenApiCredential.cpp"
@@ -111,6 +113,13 @@ fi
   -o "$BUILD_DIR/rabby-address-cache-persistence-test"
 
 "$BUILD_DIR/rabby-address-cache-persistence-test"
+
+"${CXX:-c++}" \
+  "${COMMON_ARGS[@]}" \
+  "$PACKAGE_DIR/cpp/tests/RabbyOpenApiAssetSyncSchedulerTest.cpp" \
+  -o "$BUILD_DIR/rabby-openapi-asset-sync-scheduler-test"
+
+"$BUILD_DIR/rabby-openapi-asset-sync-scheduler-test"
 
 "${CXX:-c++}" \
   "${COMMON_ARGS[@]}" \

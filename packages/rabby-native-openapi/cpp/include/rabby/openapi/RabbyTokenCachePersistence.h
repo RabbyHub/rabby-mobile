@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rabby/openapi/RabbyAddressCachePersistence.h>
 #include <rabby/openapi/RabbyOpenApiAssetModels.h>
 
 #include <cstdint>
@@ -48,9 +49,17 @@ class TokenCachePersistence {
 };
 
 std::vector<std::string> tokenCacheColumnNames();
+AddressCacheContract tokenCacheContract();
 std::string tokenCacheUpsertSql();
 std::string tokenCacheDeleteStaleSql();
 std::string tokenCacheDeleteStaleForChainSql();
+
+AddressCacheRow makeTokenCacheRow(
+    const NativeTokenRecord& token,
+    std::int64_t syncTimestampMs);
+std::vector<AddressCacheRow> makeTokenCacheRows(
+    const std::vector<NativeTokenRecord>& tokens,
+    std::int64_t syncTimestampMs);
 
 NativeTokenRecord makeEmptyTokenRecord(const std::string& ownerAddress);
 NativeTokenRecord makeEmptyTokenRecord(

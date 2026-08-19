@@ -21,6 +21,7 @@ using rabby::openapi::TokenCacheCommitResult;
 using rabby::openapi::TokenCacheReplacementKind;
 using rabby::openapi::TokenCacheReplacementScope;
 using rabby::openapi::TokenSyncCoordinator;
+using rabby::openapi::TokenSyncOutcome;
 using rabby::openapi::TokenSyncResult;
 using rabby::openapi::TokenSyncStage;
 
@@ -227,7 +228,7 @@ void testCoalescingConcurrencyAndCommit() {
       [&](TokenSyncResult result) { firstResult = std::move(result); });
   const auto joined = coordinator->syncAddress(
       kAddress,
-      false,
+      true,
       [&](TokenSyncResult result) { joinedResult = std::move(result); });
 
   assert(first.accepted && !first.joinedExisting);
@@ -261,7 +262,7 @@ void testCoalescingConcurrencyAndCommit() {
   assert(coordinator->activeSyncCount() == 0);
 }
 
-void testFailureCancelsSiblingsAndDoesNotCommit() {
+void testPartialFailureCommitsSuccessfulChainsAndPreservesFailedChains() {
   auto executor = std::make_shared<FakeExecutor>();
   auto persistence = std::make_shared<FakePersistence>();
   auto coordinator = makeCoordinator(executor, persistence);
@@ -275,16 +276,53 @@ void testFailureCancelsSiblingsAndDoesNotCommit() {
   assert(executor->pending.size() == 3);
 
   executor->complete(1, 429, R"({"error":"rate limited"})");
+  assert(!result.has_value());
+  assert(!executor->pending[2].handle->cancelled);
+  executor->complete(2, 200, tokenJson(1));
 
   assert(result.has_value());
-  assert(!result->success);
-  assert(result->stage == TokenSyncStage::TokenLists);
+  assert(result->success);
+  assert(result->outcome == TokenSyncOutcome::Partial);
+  assert(result->stage == TokenSyncStage::Persistence);
   assert(
       result->error ==
       "token-list request failed for chain chain0: HTTP 429");
-  assert(persistence->commitCount == 0);
-  assert(executor->pending[2].handle->cancelled);
+  assert(result->successfulChainIds == std::vector<std::string>{"chain1"});
+  assert(result->failedChainIds == std::vector<std::string>{"chain0"});
+  assert(persistence->commitCount == 1);
+  assert(
+      persistence->lastReplacementScope.kind ==
+      TokenCacheReplacementKind::Chains);
+  assert(
+      persistence->lastReplacementScope.chainIds ==
+      std::vector<std::string>{"chain1"});
+  assert(persistence->lastTokens.size() == 1);
   assert(coordinator->activeSyncCount() == 0);
+}
+
+void testAllChainFailuresDoNotCommit() {
+  auto executor = std::make_shared<FakeExecutor>();
+  auto persistence = std::make_shared<FakePersistence>();
+  auto coordinator = makeCoordinator(executor, persistence);
+  std::optional<TokenSyncResult> result;
+
+  coordinator->syncAddress(
+      kAddress,
+      false,
+      [&](TokenSyncResult value) { result = std::move(value); });
+  executor->complete(0, 200, usedChainsJson(2));
+  executor->complete(1, 429, R"({"error":"rate limited"})");
+  executor->complete(2, 500, R"({"error":"upstream failed"})");
+
+  assert(result.has_value());
+  assert(!result->success);
+  assert(result->outcome == TokenSyncOutcome::Failed);
+  assert(result->stage == TokenSyncStage::TokenLists);
+  assert(result->successfulChainIds.empty());
+  assert(
+      result->failedChainIds ==
+      std::vector<std::string>({"chain0", "chain1"}));
+  assert(persistence->commitCount == 0);
 }
 
 void testRequestFailureDiagnosticsStayBounded() {
@@ -327,8 +365,11 @@ void testReplacementSupersedesOldGeneration() {
       kAddress,
       false,
       [&](TokenSyncResult value) { oldResult = std::move(value); });
-  const auto newStart = coordinator->syncAddress(
+  TokenCacheReplacementScope scope;
+  const auto newStart = coordinator->syncChains(
       kAddress,
+      {"chain0"},
+      scope,
       true,
       [&](TokenSyncResult value) { newResult = std::move(value); });
 
@@ -581,7 +622,8 @@ void testTokenRequestConcurrencyIsGlobalAcrossAddresses() {
 
 int main() {
   testCoalescingConcurrencyAndCommit();
-  testFailureCancelsSiblingsAndDoesNotCommit();
+  testPartialFailureCommitsSuccessfulChainsAndPreservesFailedChains();
+  testAllChainFailuresDoNotCommit();
   testRequestFailureDiagnosticsStayBounded();
   testReplacementSupersedesOldGeneration();
   testCancellationAndPersistenceFailure();

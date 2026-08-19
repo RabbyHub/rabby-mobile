@@ -8,6 +8,7 @@ add_library(
   rabbynativeopenapi
   STATIC
   cpp/RabbyAddressCachePersistence.cpp
+  cpp/RabbyOpenApiAssetSyncScheduler.cpp
   cpp/RabbyOpenApiAssetModels.cpp
   cpp/RabbyOpenApiClient.cpp
   cpp/RabbyOpenApiCredential.cpp

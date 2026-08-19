@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rabby/openapi/RabbyOpenApiAssetSyncScheduler.h>
 #include <rabby/openapi/RabbyOpenApiClient.h>
 #include <rabby/openapi/RabbyTokenCachePersistence.h>
 
@@ -21,8 +22,15 @@ enum class TokenSyncStage {
   Superseded,
 };
 
+enum class TokenSyncOutcome {
+  Failed,
+  Complete,
+  Partial,
+};
+
 struct TokenSyncResult {
   bool success{false};
+  TokenSyncOutcome outcome{TokenSyncOutcome::Failed};
   std::string address;
   std::uint64_t generation{0};
   TokenSyncStage stage{TokenSyncStage::None};
@@ -30,6 +38,8 @@ struct TokenSyncResult {
   std::size_t sourceTokenCount{0};
   std::size_t filteredTokenCount{0};
   std::size_t committedRowCount{0};
+  std::vector<std::string> successfulChainIds;
+  std::vector<std::string> failedChainIds;
   std::int64_t committedAtMs{0};
   std::int64_t durationMs{0};
   std::string error;
@@ -54,7 +64,8 @@ class TokenSyncCoordinator {
       OpenApiExecute execute,
       std::shared_ptr<TokenCachePersistence> persistence,
       MillisecondsProvider millisecondsProvider,
-      std::size_t maximumConcurrentTokenRequests = 15);
+      std::size_t maximumConcurrentTokenRequests = 15,
+      AssetSyncTaskDispatch processingDispatch = {});
   ~TokenSyncCoordinator();
 
   TokenSyncStartResult syncAddress(
@@ -79,5 +90,6 @@ class TokenSyncCoordinator {
 };
 
 const char* tokenSyncStageName(TokenSyncStage stage);
+const char* tokenSyncOutcomeName(TokenSyncOutcome outcome);
 
 } // namespace rabby::openapi

@@ -1,16 +1,17 @@
 #include <rabby/http/RabbyHttpTypes.h>
 #include <rabby/openapi/RabbyOpenApiClient.h>
 #include <rabby/openapi/RabbyAddressCachePersistence.h>
+#include <rabby/openapi/RabbyOpenApiAssetSyncScheduler.h>
 #include <rabby/openapi/RabbyOpenApiDiagnostic.h>
 #include <rabby/openapi/RabbyOpenApiNftSync.h>
 #include <rabby/openapi/RabbyOpenApiPlatform.h>
 #include <rabby/openapi/RabbyOpenApiProtocolSync.h>
 #include <rabby/openapi/RabbyOpenApiTokenSync.h>
 #include <rabby/openapi/RabbyTokenCachePersistence.h>
-#include <rabby/openapi/RabbyTokenSnapshotCodec.h>
 
 #include <jni.h>
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -39,6 +40,8 @@ std::mutex clientMutex;
 std::shared_ptr<rabby::openapi::OpenApiClient> sharedClient;
 std::string sharedApplicationIdentity;
 std::string sharedClientVersion;
+std::mutex assetSyncSchedulerMutex;
+std::shared_ptr<rabby::openapi::AssetSyncScheduler> sharedAssetSyncScheduler;
 std::mutex tokenSyncCoordinatorMutex;
 std::shared_ptr<rabby::openapi::TokenSyncCoordinator>
     sharedTokenSyncCoordinator;
@@ -344,7 +347,25 @@ class AndroidTokenCachePersistence final
       return {false, 0, "Android token cache storage is unavailable"};
     }
 
-    auto payload = rabby::openapi::encodeTokenSnapshot(tokens);
+    for (const auto& token : tokens) {
+      if (token.ownerAddress != ownerAddress ||
+          (replacementScope.kind ==
+               rabby::openapi::TokenCacheReplacementKind::Chains &&
+           std::find(
+               replacementScope.chainIds.begin(),
+               replacementScope.chainIds.end(),
+               token.chain) == replacementScope.chainIds.end())) {
+        return {false, 0, "Android token cache snapshot scope is invalid"};
+      }
+    }
+    const auto contract = rabby::openapi::tokenCacheContract();
+    const auto rows = rabby::openapi::makeTokenCacheRows(
+        tokens, syncTimestampMs);
+    auto payload = rabby::openapi::encodeAddressSnapshot(
+        rows, contract.columns.size());
+    if (payload.empty()) {
+      return {false, 0, "Android token cache snapshot encoding failed"};
+    }
     auto owner = toJavaString(env, ownerAddress);
     auto tableName = toJavaString(env, rabby::openapi::kTokenCacheTableName);
     auto upsertSql = toJavaString(env, rabby::openapi::tokenCacheUpsertSql());
@@ -433,6 +454,15 @@ std::shared_ptr<rabby::openapi::OpenApiClient> getClient(
   return sharedClient;
 }
 
+std::shared_ptr<rabby::openapi::AssetSyncScheduler> getAssetSyncScheduler() {
+  std::lock_guard<std::mutex> lock(assetSyncSchedulerMutex);
+  if (!sharedAssetSyncScheduler) {
+    sharedAssetSyncScheduler =
+        std::make_shared<rabby::openapi::AssetSyncScheduler>(12, 2, 64);
+  }
+  return sharedAssetSyncScheduler;
+}
+
 std::shared_ptr<rabby::openapi::TokenSyncCoordinator>
 getTokenSyncCoordinator(
     const std::string& applicationIdentity,
@@ -442,22 +472,36 @@ getTokenSyncCoordinator(
   if (!client) {
     return nullptr;
   }
+  auto scheduler = getAssetSyncScheduler();
 
   std::lock_guard<std::mutex> lock(tokenSyncCoordinatorMutex);
   if (!sharedTokenSyncCoordinator) {
     sharedTokenSyncCoordinator =
         std::make_shared<rabby::openapi::TokenSyncCoordinator>(
-            [client](
+            [client, scheduler](
                 rabby::openapi::OpenApiClientRequest request,
                 rabby::openapi::OpenApiClientCompletion completion) {
-              return client->execute(
-                  std::move(request), std::move(completion));
+              return scheduler->execute(
+                  [client](
+                      rabby::openapi::OpenApiClientRequest scheduledRequest,
+                      rabby::openapi::OpenApiClientCompletion
+                          scheduledCompletion) {
+                    return client->execute(
+                        std::move(scheduledRequest),
+                        std::move(scheduledCompletion));
+                  },
+                  std::move(request),
+                  std::move(completion));
             },
             rabby::openapi::makePlatformTokenCachePersistence(),
             []() {
               return std::chrono::duration_cast<std::chrono::milliseconds>(
                          std::chrono::system_clock::now().time_since_epoch())
                   .count();
+            },
+            15,
+            [scheduler](rabby::openapi::AssetSyncTask task) {
+              scheduler->postProcessing(std::move(task));
             });
   }
   return sharedTokenSyncCoordinator;
@@ -472,22 +516,35 @@ getProtocolSyncCoordinator(
   if (!client) {
     return nullptr;
   }
+  auto scheduler = getAssetSyncScheduler();
 
   std::lock_guard<std::mutex> lock(protocolSyncCoordinatorMutex);
   if (!sharedProtocolSyncCoordinator) {
     sharedProtocolSyncCoordinator =
         std::make_shared<rabby::openapi::ProtocolSyncCoordinator>(
-            [client](
+            [client, scheduler](
                 rabby::openapi::OpenApiClientRequest request,
                 rabby::openapi::OpenApiClientCompletion completion) {
-              return client->execute(
-                  std::move(request), std::move(completion));
+              return scheduler->execute(
+                  [client](
+                      rabby::openapi::OpenApiClientRequest scheduledRequest,
+                      rabby::openapi::OpenApiClientCompletion
+                          scheduledCompletion) {
+                    return client->execute(
+                        std::move(scheduledRequest),
+                        std::move(scheduledCompletion));
+                  },
+                  std::move(request),
+                  std::move(completion));
             },
             rabby::openapi::makePlatformAddressCachePersistence(),
             []() {
               return std::chrono::duration_cast<std::chrono::milliseconds>(
                          std::chrono::system_clock::now().time_since_epoch())
                   .count();
+            },
+            [scheduler](rabby::openapi::AssetSyncTask task) {
+              scheduler->postProcessing(std::move(task));
             });
   }
   return sharedProtocolSyncCoordinator;
@@ -502,22 +559,35 @@ getNftSyncCoordinator(
   if (!client) {
     return nullptr;
   }
+  auto scheduler = getAssetSyncScheduler();
 
   std::lock_guard<std::mutex> lock(nftSyncCoordinatorMutex);
   if (!sharedNftSyncCoordinator) {
     sharedNftSyncCoordinator =
         std::make_shared<rabby::openapi::NftSyncCoordinator>(
-            [client](
+            [client, scheduler](
                 rabby::openapi::OpenApiClientRequest request,
                 rabby::openapi::OpenApiClientCompletion completion) {
-              return client->execute(
-                  std::move(request), std::move(completion));
+              return scheduler->execute(
+                  [client](
+                      rabby::openapi::OpenApiClientRequest scheduledRequest,
+                      rabby::openapi::OpenApiClientCompletion
+                          scheduledCompletion) {
+                    return client->execute(
+                        std::move(scheduledRequest),
+                        std::move(scheduledCompletion));
+                  },
+                  std::move(request),
+                  std::move(completion));
             },
             rabby::openapi::makePlatformAddressCachePersistence(),
             []() {
               return std::chrono::duration_cast<std::chrono::milliseconds>(
                          std::chrono::system_clock::now().time_since_epoch())
                   .count();
+            },
+            [scheduler](rabby::openapi::AssetSyncTask task) {
+              scheduler->postProcessing(std::move(task));
             });
   }
   return sharedNftSyncCoordinator;
@@ -582,6 +652,10 @@ void notifyTokenSync(
   auto address = toJavaString(env, result.address);
   auto stage = toJavaString(
       env, rabby::openapi::tokenSyncStageName(result.stage));
+  auto outcome = toJavaString(
+      env, rabby::openapi::tokenSyncOutcomeName(result.outcome));
+  auto successfulChainIds = toJavaStringArray(env, result.successfulChainIds);
+  auto failedChainIds = toJavaStringArray(env, result.failedChainIds);
   auto error = toJavaString(env, result.error);
   env->CallStaticVoidMethod(
       runtimeClass,
@@ -591,6 +665,9 @@ void notifyTokenSync(
       address,
       static_cast<jlong>(result.generation),
       stage,
+      outcome,
+      successfulChainIds,
+      failedChainIds,
       static_cast<jlong>(result.chainCount),
       static_cast<jlong>(result.sourceTokenCount),
       static_cast<jlong>(result.filteredTokenCount),
@@ -600,6 +677,9 @@ void notifyTokenSync(
       error);
   env->DeleteLocalRef(address);
   env->DeleteLocalRef(stage);
+  env->DeleteLocalRef(outcome);
+  env->DeleteLocalRef(successfulChainIds);
+  env->DeleteLocalRef(failedChainIds);
   env->DeleteLocalRef(error);
   clearJavaException(env);
 }
@@ -1027,7 +1107,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
   tokenSyncCompletedMethod = env->GetStaticMethodID(
       runtimeClass,
       "onTokenSyncCompleted",
-      "(JZLjava/lang/String;JLjava/lang/String;JJJJJJLjava/lang/String;)V");
+      "(JZLjava/lang/String;JLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;JJJJJJLjava/lang/String;)V");
   addressAssetSyncCompletedMethod = env->GetStaticMethodID(
       runtimeClass,
       "onAddressAssetSyncCompleted",

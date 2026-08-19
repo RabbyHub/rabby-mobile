@@ -2,6 +2,7 @@
 
 #include <rabby/http/RabbyHttpTypes.h>
 #include <rabby/openapi/RabbyNativeOpenApiDiagnostics.h>
+#include <rabby/openapi/RabbyOpenApiAssetSyncScheduler.h>
 #include <rabby/openapi/RabbyOpenApiClient.h>
 #include <rabby/openapi/RabbyOpenApiDiagnostic.h>
 #include <rabby/openapi/RabbyOpenApiNftSync.h>
@@ -33,6 +34,17 @@ std::string fromNSString(NSString* value) {
   }
   const auto* bytes = value.UTF8String;
   return bytes == nullptr ? std::string{} : std::string{bytes};
+}
+
+NSArray<NSString*>* toNSStringArray(const std::vector<std::string>& values) {
+  auto* result = [NSMutableArray arrayWithCapacity:values.size()];
+  for (const auto& value : values) {
+    auto* stringValue = [NSString stringWithUTF8String:value.c_str()];
+    if (stringValue != nil) {
+      [result addObject:stringValue];
+    }
+  }
+  return result;
 }
 
 NSURL* credentialFileUrl(NSError** error) {
@@ -145,6 +157,8 @@ std::mutex clientMutex;
 std::shared_ptr<OpenApiClient> sharedClient;
 std::string sharedApplicationIdentity;
 std::string sharedClientVersion;
+std::mutex assetSyncSchedulerMutex;
+std::shared_ptr<AssetSyncScheduler> sharedAssetSyncScheduler;
 std::mutex tokenSyncCoordinatorMutex;
 std::shared_ptr<TokenSyncCoordinator> sharedTokenSyncCoordinator;
 std::mutex protocolSyncCoordinatorMutex;
@@ -192,24 +206,49 @@ std::shared_ptr<OpenApiClient> getClient(std::string& error) {
   return sharedClient;
 }
 
+std::shared_ptr<AssetSyncScheduler> getAssetSyncScheduler() {
+  std::lock_guard<std::mutex> lock(assetSyncSchedulerMutex);
+  if (!sharedAssetSyncScheduler) {
+    sharedAssetSyncScheduler =
+        std::make_shared<AssetSyncScheduler>(12, 2, 64);
+  }
+  return sharedAssetSyncScheduler;
+}
+
 std::shared_ptr<TokenSyncCoordinator> getTokenSyncCoordinator(
     std::string& error) {
   auto client = getClient(error);
   if (!client) {
     return nullptr;
   }
+  auto scheduler = getAssetSyncScheduler();
 
   std::lock_guard<std::mutex> lock(tokenSyncCoordinatorMutex);
   if (!sharedTokenSyncCoordinator) {
     sharedTokenSyncCoordinator = std::make_shared<TokenSyncCoordinator>(
-        [client](OpenApiClientRequest request, OpenApiClientCompletion completion) {
-          return client->execute(std::move(request), std::move(completion));
+        [client, scheduler](
+            OpenApiClientRequest request,
+            OpenApiClientCompletion completion) {
+          return scheduler->execute(
+              [client](
+                  OpenApiClientRequest scheduledRequest,
+                  OpenApiClientCompletion scheduledCompletion) {
+                return client->execute(
+                    std::move(scheduledRequest),
+                    std::move(scheduledCompletion));
+              },
+              std::move(request),
+              std::move(completion));
         },
         makePlatformTokenCachePersistence(),
         []() {
           return std::chrono::duration_cast<std::chrono::milliseconds>(
                      std::chrono::system_clock::now().time_since_epoch())
               .count();
+        },
+        15,
+        [scheduler](AssetSyncTask task) {
+          scheduler->postProcessing(std::move(task));
         });
   }
   return sharedTokenSyncCoordinator;
@@ -221,18 +260,33 @@ std::shared_ptr<ProtocolSyncCoordinator> getProtocolSyncCoordinator(
   if (!client) {
     return nullptr;
   }
+  auto scheduler = getAssetSyncScheduler();
 
   std::lock_guard<std::mutex> lock(protocolSyncCoordinatorMutex);
   if (!sharedProtocolSyncCoordinator) {
     sharedProtocolSyncCoordinator = std::make_shared<ProtocolSyncCoordinator>(
-        [client](OpenApiClientRequest request, OpenApiClientCompletion completion) {
-          return client->execute(std::move(request), std::move(completion));
+        [client, scheduler](
+            OpenApiClientRequest request,
+            OpenApiClientCompletion completion) {
+          return scheduler->execute(
+              [client](
+                  OpenApiClientRequest scheduledRequest,
+                  OpenApiClientCompletion scheduledCompletion) {
+                return client->execute(
+                    std::move(scheduledRequest),
+                    std::move(scheduledCompletion));
+              },
+              std::move(request),
+              std::move(completion));
         },
         makePlatformAddressCachePersistence(),
         []() {
           return std::chrono::duration_cast<std::chrono::milliseconds>(
                      std::chrono::system_clock::now().time_since_epoch())
               .count();
+        },
+        [scheduler](AssetSyncTask task) {
+          scheduler->postProcessing(std::move(task));
         });
   }
   return sharedProtocolSyncCoordinator;
@@ -244,18 +298,33 @@ std::shared_ptr<NftSyncCoordinator> getNftSyncCoordinator(
   if (!client) {
     return nullptr;
   }
+  auto scheduler = getAssetSyncScheduler();
 
   std::lock_guard<std::mutex> lock(nftSyncCoordinatorMutex);
   if (!sharedNftSyncCoordinator) {
     sharedNftSyncCoordinator = std::make_shared<NftSyncCoordinator>(
-        [client](OpenApiClientRequest request, OpenApiClientCompletion completion) {
-          return client->execute(std::move(request), std::move(completion));
+        [client, scheduler](
+            OpenApiClientRequest request,
+            OpenApiClientCompletion completion) {
+          return scheduler->execute(
+              [client](
+                  OpenApiClientRequest scheduledRequest,
+                  OpenApiClientCompletion scheduledCompletion) {
+                return client->execute(
+                    std::move(scheduledRequest),
+                    std::move(scheduledCompletion));
+              },
+              std::move(request),
+              std::move(completion));
         },
         makePlatformAddressCachePersistence(),
         []() {
           return std::chrono::duration_cast<std::chrono::milliseconds>(
                      std::chrono::system_clock::now().time_since_epoch())
               .count();
+        },
+        [scheduler](AssetSyncTask task) {
+          scheduler->postProcessing(std::move(task));
         });
   }
   return sharedNftSyncCoordinator;
@@ -295,6 +364,8 @@ NSDictionary<NSString*, id>* makeTokenSyncResultDictionary(
     const TokenSyncResult& result) {
   return @{
     @"success" : @(result.success),
+    @"outcome" : [NSString
+        stringWithUTF8String:tokenSyncOutcomeName(result.outcome)],
     @"address" : [NSString stringWithUTF8String:result.address.c_str()],
     @"generation" : @(result.generation),
     @"stage" : [NSString stringWithUTF8String:tokenSyncStageName(result.stage)],
@@ -302,6 +373,8 @@ NSDictionary<NSString*, id>* makeTokenSyncResultDictionary(
     @"sourceTokenCount" : @(result.sourceTokenCount),
     @"filteredTokenCount" : @(result.filteredTokenCount),
     @"committedRowCount" : @(result.committedRowCount),
+    @"successfulChainIds" : toNSStringArray(result.successfulChainIds),
+    @"failedChainIds" : toNSStringArray(result.failedChainIds),
     @"committedAtMs" : @(result.committedAtMs),
     @"durationMs" : @(result.durationMs),
     @"error" : [NSString stringWithUTF8String:result.error.c_str()],

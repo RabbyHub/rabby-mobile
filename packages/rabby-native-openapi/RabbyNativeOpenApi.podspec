@@ -16,12 +16,12 @@ Pod::Spec.new do |s|
   s.header_mappings_dir = 'cpp/include'
   s.public_header_files = 'cpp/include/**/*.h'
   s.dependency 'RabbyNativeHttp', '0.1.0'
+  s.dependency 'op-sqlite', '15.1.1'
   private_signer_enabled =
     ENV['RABBY_NATIVE_OPENAPI_PRIVATE_SIGNER_POD'] == '1'
   if private_signer_enabled
     s.dependency 'RabbyNativeOpenApiSigner', ENV.fetch('RABBY_NATIVE_OPENAPI_SIGNER_VERSION')
   end
-  s.library = 'sqlite3'
   private_signer_header_path =
     '"${PODS_CONFIGURATION_BUILD_DIR}/RabbyNativeOpenApiSigner/RabbyNativeOpenApiSigner.framework/Headers"'
   s.pod_target_xcconfig = {

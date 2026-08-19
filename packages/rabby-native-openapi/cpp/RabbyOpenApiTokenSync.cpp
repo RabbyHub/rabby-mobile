@@ -163,6 +163,9 @@ struct Operation {
   std::size_t completedTokenRequests{0};
   std::size_t sourceTokenCount{0};
   std::size_t filteredTokenCount{0};
+  std::vector<std::string> successfulChainIds;
+  std::vector<std::string> failedChainIds;
+  std::string firstTokenRequestError;
   std::vector<NativeTokenRecord> tokens;
 };
 
@@ -209,11 +212,13 @@ class TokenSyncCoordinator::Impl
       OpenApiExecute execute,
       std::shared_ptr<TokenCachePersistence> persistence,
       MillisecondsProvider millisecondsProvider,
-      std::size_t maximumConcurrentTokenRequests)
+      std::size_t maximumConcurrentTokenRequests,
+      AssetSyncTaskDispatch processingDispatch)
       : execute_(std::move(execute)),
         persistence_(std::move(persistence)),
         millisecondsProvider_(std::move(millisecondsProvider)),
-        maximumConcurrentTokenRequests_(maximumConcurrentTokenRequests) {}
+        maximumConcurrentTokenRequests_(maximumConcurrentTokenRequests),
+        processingDispatch_(std::move(processingDispatch)) {}
 
   TokenSyncStartResult syncAddress(
       std::string address,
@@ -371,28 +376,40 @@ class TokenSyncCoordinator::Impl
     {
       std::lock_guard<std::mutex> lock(mutex_);
       const auto active = activeOperations_.find(address);
-      if (active != activeOperations_.end() && !active->second->finished &&
-          !replaceExisting) {
+      if (active != activeOperations_.end() && !active->second->finished) {
         if (active->second->requestKey == requestKey) {
           if (completion) {
             active->second->subscribers.push_back({std::move(completion)});
           }
           return {true, true, active->second->generation, {}};
         }
-        rejectedResult.address = address;
-        rejectedResult.stage = validationStage;
-        rejectedResult.error =
-            "a different token sync is already active for this address";
-        rejectedCompletion = std::move(completion);
-      } else {
-        if (active != activeOperations_.end()) {
+        if (!replaceExisting) {
+          rejectedResult.address = address;
+          rejectedResult.stage = validationStage;
+          rejectedResult.error =
+              "a different token sync is already active for this address";
+          rejectedCompletion = std::move(completion);
+        } else {
           superseded = finishLocked(
               active->second,
               TokenSyncStage::Superseded,
               "token sync was superseded by a newer generation",
               false);
-        }
 
+          operation = std::make_shared<Operation>();
+          operation->address = address;
+          operation->requestKey = requestKey;
+          operation->generation = ++generations_[address];
+          operation->startedAtMs = millisecondsProvider_();
+          operation->stage = validationStage;
+          operation->replacementScope = std::move(replacementScope);
+          operation->chainIds = std::move(chainIds);
+          if (completion) {
+            operation->subscribers.push_back({std::move(completion)});
+          }
+          activeOperations_[address] = operation;
+        }
+      } else {
         operation = std::make_shared<Operation>();
         operation->address = address;
         operation->requestKey = requestKey;
@@ -446,6 +463,14 @@ class TokenSyncCoordinator::Impl
         current->second == operation && !operation->finished;
   }
 
+  void dispatchProcessing(AssetSyncTask task) {
+    if (processingDispatch_) {
+      processingDispatch_(std::move(task));
+      return;
+    }
+    task();
+  }
+
   std::size_t reserveRequestSlotLocked(
       const std::shared_ptr<Operation>& operation,
       bool tokenRequest) {
@@ -493,10 +518,18 @@ class TokenSyncCoordinator::Impl
         std::make_shared<ResponseHandler>(std::move(handler));
     auto handle = execute_(
         std::move(request),
-        [weakSelf, operation, slot, sharedHandler](
+        [weakSelf, slot, sharedHandler](
             OpenApiClientResult result) mutable {
           if (auto self = weakSelf.lock()) {
-            (*sharedHandler)(slot, std::move(result));
+            self->dispatchProcessing(
+                [weakSelf,
+                 slot,
+                 sharedHandler,
+                 result = std::move(result)]() mutable {
+                  if (auto currentSelf = weakSelf.lock()) {
+                    (*sharedHandler)(slot, std::move(result));
+                  }
+                });
           }
         });
 
@@ -515,7 +548,15 @@ class TokenSyncCoordinator::Impl
       OpenApiClientResult result;
       result.failureStage = OpenApiClientFailureStage::Transport;
       result.error = "native request did not start";
-      (*sharedHandler)(slot, std::move(result));
+      dispatchProcessing(
+          [weakSelf,
+           slot,
+           sharedHandler,
+           result = std::move(result)]() mutable {
+            if (auto self = weakSelf.lock()) {
+              (*sharedHandler)(slot, std::move(result));
+            }
+          });
     }
   }
 
@@ -685,9 +726,9 @@ class TokenSyncCoordinator::Impl
 
     if (!result.isSuccess() || !result.response.has_value() ||
         !isSuccessfulHttpStatus(result.response->statusCode)) {
-      fail(
+      completeTokenRequestFailure(
           operation,
-          TokenSyncStage::TokenLists,
+          chainId,
           describeRequestFailure(
               "token-list", "chain " + chainId, result));
       return;
@@ -695,7 +736,8 @@ class TokenSyncCoordinator::Impl
     auto parsed =
         parseTokenListResponse(operation->address, responseBody(*result.response));
     if (!parsed.isSuccess()) {
-      fail(operation, TokenSyncStage::TokenLists, std::move(parsed.error));
+      completeTokenRequestFailure(
+          operation, chainId, std::move(parsed.error));
       return;
     }
     if (std::any_of(
@@ -704,9 +746,9 @@ class TokenSyncCoordinator::Impl
             [&chainId](const NativeTokenRecord& token) {
               return token.chain != chainId;
             })) {
-      fail(
+      completeTokenRequestFailure(
           operation,
-          TokenSyncStage::TokenLists,
+          chainId,
           "token-list response contains a different chain");
       return;
     }
@@ -718,6 +760,7 @@ class TokenSyncCoordinator::Impl
       operationIsCurrent = isCurrentLocked(operation);
       if (operationIsCurrent) {
         ++operation->completedTokenRequests;
+        operation->successfulChainIds.push_back(chainId);
         operation->sourceTokenCount += parsed.sourceItemCount;
         operation->filteredTokenCount += parsed.filteredItemCount;
         operation->tokens.insert(
@@ -734,10 +777,50 @@ class TokenSyncCoordinator::Impl
     }
   }
 
+  void completeTokenRequestFailure(
+      const std::shared_ptr<Operation>& operation,
+      const std::string& chainId,
+      std::string error) {
+    bool readyToCommit = false;
+    bool allRequestsFailed = false;
+    bool operationIsCurrent = false;
+    std::string failure;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      operationIsCurrent = isCurrentLocked(operation);
+      if (operationIsCurrent) {
+        ++operation->completedTokenRequests;
+        operation->failedChainIds.push_back(chainId);
+        if (operation->firstTokenRequestError.empty()) {
+          operation->firstTokenRequestError = std::move(error);
+        }
+        readyToCommit =
+            operation->completedTokenRequests == operation->chainIds.size();
+        allRequestsFailed = readyToCommit &&
+            operation->successfulChainIds.empty();
+        failure = operation->firstTokenRequestError;
+      }
+    }
+    pumpTokenRequests();
+    if (!operationIsCurrent || !readyToCommit) {
+      return;
+    }
+    if (allRequestsFailed) {
+      fail(
+          operation,
+          TokenSyncStage::TokenLists,
+          failure.empty() ? "all token-list requests failed" : failure);
+      return;
+    }
+    commit(operation);
+  }
+
   void commit(const std::shared_ptr<Operation>& operation) {
     std::vector<NativeTokenRecord> tokens;
     TokenCacheReplacementScope replacementScope;
     std::vector<std::string> chainIds;
+    std::vector<std::string> successfulChainIds;
+    std::vector<std::string> failedChainIds;
     {
       std::lock_guard<std::mutex> lock(mutex_);
       if (!isCurrentLocked(operation) || operation->committing) {
@@ -748,6 +831,13 @@ class TokenSyncCoordinator::Impl
       tokens = operation->tokens;
       replacementScope = operation->replacementScope;
       chainIds = operation->chainIds;
+      successfulChainIds = operation->successfulChainIds;
+      failedChainIds = operation->failedChainIds;
+    }
+    if (!failedChainIds.empty()) {
+      replacementScope.kind = TokenCacheReplacementKind::Chains;
+      replacementScope.chainIds = successfulChainIds;
+      chainIds = successfulChainIds;
     }
     if (tokens.empty()) {
       if (replacementScope.kind == TokenCacheReplacementKind::Chains) {
@@ -796,9 +886,17 @@ class TokenSyncCoordinator::Impl
       }
       TokenSyncResult result = makeResultLocked(operation);
       result.success = true;
+      result.outcome = failedChainIds.empty()
+          ? TokenSyncOutcome::Complete
+          : TokenSyncOutcome::Partial;
       result.stage = TokenSyncStage::Persistence;
       result.committedRowCount = commitResult.rowCount;
       result.committedAtMs = committedAtMs;
+      result.successfulChainIds = std::move(successfulChainIds);
+      result.failedChainIds = std::move(failedChainIds);
+      if (result.outcome == TokenSyncOutcome::Partial) {
+        result.error = operation->firstTokenRequestError;
+      }
       finished = finishLocked(operation, std::move(result));
     }
     deliver(std::move(finished));
@@ -831,6 +929,8 @@ class TokenSyncCoordinator::Impl
     result.chainCount = operation->chainIds.size();
     result.sourceTokenCount = operation->sourceTokenCount;
     result.filteredTokenCount = operation->filteredTokenCount;
+    result.successfulChainIds = operation->successfulChainIds;
+    result.failedChainIds = operation->failedChainIds;
     result.durationMs = std::max<std::int64_t>(
         0, millisecondsProvider_() - operation->startedAtMs);
     return result;
@@ -908,6 +1008,7 @@ class TokenSyncCoordinator::Impl
   std::shared_ptr<TokenCachePersistence> persistence_;
   MillisecondsProvider millisecondsProvider_;
   std::size_t maximumConcurrentTokenRequests_{15};
+  AssetSyncTaskDispatch processingDispatch_;
   mutable std::mutex mutex_;
   std::mutex commitMutex_;
   std::size_t activeTokenRequestCount_{0};
@@ -920,12 +1021,14 @@ TokenSyncCoordinator::TokenSyncCoordinator(
     OpenApiExecute execute,
     std::shared_ptr<TokenCachePersistence> persistence,
     MillisecondsProvider millisecondsProvider,
-    std::size_t maximumConcurrentTokenRequests)
+    std::size_t maximumConcurrentTokenRequests,
+    AssetSyncTaskDispatch processingDispatch)
     : impl_(std::make_shared<Impl>(
           std::move(execute),
           std::move(persistence),
           std::move(millisecondsProvider),
-          maximumConcurrentTokenRequests)) {}
+          maximumConcurrentTokenRequests,
+          std::move(processingDispatch))) {}
 
 TokenSyncCoordinator::~TokenSyncCoordinator() {
   if (impl_) {
@@ -983,6 +1086,18 @@ const char* tokenSyncStageName(TokenSyncStage stage) {
       return "superseded";
   }
   return "unknown";
+}
+
+const char* tokenSyncOutcomeName(TokenSyncOutcome outcome) {
+  switch (outcome) {
+    case TokenSyncOutcome::Failed:
+      return "failed";
+    case TokenSyncOutcome::Complete:
+      return "complete";
+    case TokenSyncOutcome::Partial:
+      return "partial";
+  }
+  return "failed";
 }
 
 } // namespace rabby::openapi

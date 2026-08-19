@@ -111,4 +111,5 @@ repositories {
 
 dependencies {
     implementation project(":rabby-native-http")
+    implementation project(":op-engineering_op-sqlite")
 }

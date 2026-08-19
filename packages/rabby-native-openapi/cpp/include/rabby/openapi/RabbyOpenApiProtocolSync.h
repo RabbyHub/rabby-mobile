@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rabby/openapi/RabbyAddressCachePersistence.h>
+#include <rabby/openapi/RabbyOpenApiAssetSyncScheduler.h>
 #include <rabby/openapi/RabbyOpenApiClient.h>
 
 #include <cstddef>
@@ -50,7 +51,8 @@ class ProtocolSyncCoordinator {
   ProtocolSyncCoordinator(
       ProtocolSyncExecute execute,
       std::shared_ptr<AddressCachePersistence> persistence,
-      ProtocolSyncMillisecondsProvider millisecondsProvider);
+      ProtocolSyncMillisecondsProvider millisecondsProvider,
+      AssetSyncTaskDispatch processingDispatch = {});
   ~ProtocolSyncCoordinator();
 
   ProtocolSyncStartResult syncAddress(

@@ -76,6 +76,7 @@ interface NativeModulesStatic {
       replaceExisting: boolean,
     ): Promise<{
       success: boolean;
+      outcome: 'complete' | 'partial' | 'failed';
       address: string;
       generation: number;
       stage: string;
@@ -83,6 +84,8 @@ interface NativeModulesStatic {
       sourceTokenCount: number;
       filteredTokenCount: number;
       committedRowCount: number;
+      successfulChainIds: string[];
+      failedChainIds: string[];
       committedAtMs: number;
       durationMs: number;
       error: string;

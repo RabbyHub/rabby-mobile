@@ -65,20 +65,29 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
     String[] chainIds,
     NativeTokenSyncResult result
   ) {
+    String actualReplacementScope = result.getOutcome().equals("partial")
+      ? "chains"
+      : replacementScope;
     WritableArray receiptChainIds = Arguments.createArray();
-    for (String chainId : chainIds) {
+    for (String chainId : result.getSuccessfulChainIds()) {
       receiptChainIds.pushString(chainId);
     }
+    WritableArray failedChainIds = Arguments.createArray();
+    for (String chainId : result.getFailedChainIds()) {
+      failedChainIds.pushString(chainId);
+    }
     WritableMap receipt = Arguments.createMap();
-    receipt.putInt("schemaVersion", 1);
+    receipt.putInt("schemaVersion", 2);
     receipt.putString("requestId", requestId);
     receipt.putString("kind", "token");
     receipt.putBoolean("success", result.getSuccess());
+    receipt.putString("outcome", result.getOutcome());
     receipt.putString("address", result.getAddress());
     receipt.putDouble("generation", result.getGeneration());
     receipt.putDouble("committedAt", result.getCommittedAtMs());
-    receipt.putString("replacementScope", replacementScope);
+    receipt.putString("replacementScope", actualReplacementScope);
     receipt.putArray("chainIds", receiptChainIds);
+    receipt.putArray("failedChainIds", failedChainIds);
     receipt.putDouble("committedRowCount", result.getCommittedRowCount());
     receipt.putString("stage", result.getStage());
     receipt.putString("error", result.getError());
@@ -92,15 +101,17 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
     NativeAddressAssetSyncResult result
   ) {
     WritableMap receipt = Arguments.createMap();
-    receipt.putInt("schemaVersion", 1);
+    receipt.putInt("schemaVersion", 2);
     receipt.putString("requestId", requestId);
     receipt.putString("kind", result.getKind());
     receipt.putBoolean("success", result.getSuccess());
+    receipt.putString("outcome", result.getSuccess() ? "complete" : "failed");
     receipt.putString("address", result.getAddress());
     receipt.putDouble("generation", result.getGeneration());
     receipt.putDouble("committedAt", result.getCommittedAtMs());
     receipt.putString("replacementScope", "address");
     receipt.putArray("chainIds", Arguments.createArray());
+    receipt.putArray("failedChainIds", Arguments.createArray());
     receipt.putDouble("committedRowCount", result.getCommittedRowCount());
     receipt.putString("stage", result.getStage());
     receipt.putString("error", result.getError());
@@ -278,6 +289,7 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
         public void onComplete(NativeTokenSyncResult result) {
           WritableMap output = Arguments.createMap();
           output.putBoolean("success", result.getSuccess());
+          output.putString("outcome", result.getOutcome());
           output.putString("address", result.getAddress());
           output.putDouble("generation", result.getGeneration());
           output.putString("stage", result.getStage());
@@ -285,6 +297,16 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
           output.putDouble("sourceTokenCount", result.getSourceTokenCount());
           output.putDouble("filteredTokenCount", result.getFilteredTokenCount());
           output.putDouble("committedRowCount", result.getCommittedRowCount());
+          WritableArray successfulChainIds = Arguments.createArray();
+          for (String chainId : result.getSuccessfulChainIds()) {
+            successfulChainIds.pushString(chainId);
+          }
+          output.putArray("successfulChainIds", successfulChainIds);
+          WritableArray failedChainIds = Arguments.createArray();
+          for (String chainId : result.getFailedChainIds()) {
+            failedChainIds.pushString(chainId);
+          }
+          output.putArray("failedChainIds", failedChainIds);
           output.putDouble("committedAtMs", result.getCommittedAtMs());
           output.putDouble("durationMs", result.getDurationMs());
           output.putString("error", result.getError());

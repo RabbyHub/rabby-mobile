@@ -9,6 +9,7 @@ add_library(
   SHARED
   src/main/cpp/AndroidOpenApiRuntime.cpp
   ../cpp/RabbyAddressCachePersistence.cpp
+  ../cpp/RabbyOpenApiAssetSyncScheduler.cpp
   ../cpp/RabbyOpenApiAssetModels.cpp
   ../cpp/RabbyOpenApiClient.cpp
   ../cpp/RabbyOpenApiCredential.cpp

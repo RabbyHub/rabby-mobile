@@ -163,7 +163,7 @@ void testSuccessAndEmptySnapshot() {
       "rabby-empty-protocol-item-id");
 }
 
-void testJoinSupersedeAndCancel() {
+void testJoinAndCancel() {
   auto executor = std::make_shared<FakeExecutor>();
   auto persistence = std::make_shared<FakePersistence>();
   auto coordinator = makeCoordinator(executor, persistence);
@@ -174,7 +174,7 @@ void testJoinSupersedeAndCancel() {
         joinedResults.push_back(std::move(value));
       });
   const auto joined = coordinator->syncAddress(
-      kAddress, false, [&joinedResults](ProtocolSyncResult value) {
+      kAddress, true, [&joinedResults](ProtocolSyncResult value) {
         joinedResults.push_back(std::move(value));
       });
   assert(first.accepted && joined.accepted && joined.joinedExisting);
@@ -183,15 +183,6 @@ void testJoinSupersedeAndCancel() {
   executor->complete(0, 200, "[]");
   assert(joinedResults.size() == 2);
   assert(joinedResults[0].success && joinedResults[1].success);
-
-  ProtocolSyncResult superseded;
-  coordinator->syncAddress(
-      kAddress, false, [&superseded](ProtocolSyncResult value) {
-        superseded = std::move(value);
-      });
-  coordinator->syncAddress(kAddress, true, nullptr);
-  assert(superseded.stage == ProtocolSyncStage::Superseded);
-  assert(executor->pending[1].handle->cancelled);
 
   ProtocolSyncResult cancelled;
   coordinator->syncAddress(
@@ -245,7 +236,7 @@ void testFailuresAreNotCommitted() {
 
 int main() {
   testSuccessAndEmptySnapshot();
-  testJoinSupersedeAndCancel();
+  testJoinAndCancel();
   testFailuresAreNotCommitted();
   return 0;
 }

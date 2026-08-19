@@ -179,7 +179,7 @@ void testSuccessAndEmptySnapshot() {
       "rabby-empty-nft-item-id");
 }
 
-void testJoinSupersedeAndCancel() {
+void testJoinAndCancel() {
   auto executor = std::make_shared<FakeExecutor>();
   auto persistence = std::make_shared<FakePersistence>();
   auto coordinator = makeCoordinator(executor, persistence);
@@ -190,7 +190,7 @@ void testJoinSupersedeAndCancel() {
         joinedResults.push_back(std::move(value));
       });
   const auto joined = coordinator->syncAddress(
-      kAddress, false, [&joinedResults](NftSyncResult value) {
+      kAddress, true, [&joinedResults](NftSyncResult value) {
         joinedResults.push_back(std::move(value));
       });
   assert(first.accepted && joined.accepted && joined.joinedExisting);
@@ -199,15 +199,6 @@ void testJoinSupersedeAndCancel() {
   completeSuccessfulSync(executor, 0);
   assert(joinedResults.size() == 2);
   assert(joinedResults[0].success && joinedResults[1].success);
-
-  NftSyncResult superseded;
-  coordinator->syncAddress(
-      kAddress, false, [&superseded](NftSyncResult value) {
-        superseded = std::move(value);
-      });
-  coordinator->syncAddress(kAddress, true, nullptr);
-  assert(superseded.stage == NftSyncStage::Superseded);
-  assert(executor->pending[2].handle->cancelled);
 
   NftSyncResult cancelled;
   coordinator->syncAddress(
@@ -273,7 +264,7 @@ void testFailuresAreNotCommitted() {
 
 int main() {
   testSuccessAndEmptySnapshot();
-  testJoinSupersedeAndCancel();
+  testJoinAndCancel();
   testFailuresAreNotCommitted();
   return 0;
 }

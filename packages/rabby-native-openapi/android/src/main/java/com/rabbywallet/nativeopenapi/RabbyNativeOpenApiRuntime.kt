@@ -103,10 +103,10 @@ object RabbyNativeOpenApiRuntime {
     expectedColumnsCsv: String,
     payload: ByteBuffer,
   ): String? {
-    val context = applicationContext
-      ?: return "native OpenAPI runtime is not initialized"
+    if (applicationContext == null) {
+      return "native OpenAPI runtime is not initialized"
+    }
     return NativeTokenCachePersistence.commit(
-      context = context,
       ownerAddress = ownerAddress,
       syncTimestampMs = syncTimestampMs,
       tableName = tableName,
@@ -130,10 +130,10 @@ object RabbyNativeOpenApiRuntime {
     expectedColumnsCsv: String,
     payload: ByteBuffer,
   ): String? {
-    val context = applicationContext
-      ?: return "native OpenAPI runtime is not initialized"
+    if (applicationContext == null) {
+      return "native OpenAPI runtime is not initialized"
+    }
     return NativeAddressCachePersistence.commit(
-      context = context,
       ownerAddress = ownerAddress,
       syncTimestampMs = syncTimestampMs,
       tableName = tableName,
@@ -157,10 +157,10 @@ object RabbyNativeOpenApiRuntime {
     expectedColumnsCsv: String,
     payload: ByteBuffer,
   ): String? {
-    val context = applicationContext
-      ?: return "native OpenAPI runtime is not initialized"
+    if (applicationContext == null) {
+      return "native OpenAPI runtime is not initialized"
+    }
     return NativeTokenCachePersistence.verifyWriteContract(
-      context = context,
       ownerAddress = ownerAddress,
       syncTimestampMs = syncTimestampMs,
       tableName = tableName,
@@ -244,6 +244,7 @@ object RabbyNativeOpenApiRuntime {
         callback.onComplete(
           NativeTokenSyncResult(
             success = false,
+            outcome = "failed",
             address = address.lowercase(),
             generation = 0,
             stage = "none",
@@ -251,6 +252,8 @@ object RabbyNativeOpenApiRuntime {
             sourceTokenCount = 0,
             filteredTokenCount = 0,
             committedRowCount = 0,
+            successfulChainIds = emptyArray(),
+            failedChainIds = emptyArray(),
             committedAtMs = 0,
             durationMs = 0,
             error = "native token sync could not start",
@@ -290,6 +293,7 @@ object RabbyNativeOpenApiRuntime {
         callback.onComplete(
           NativeTokenSyncResult(
             success = false,
+            outcome = "failed",
             address = address.lowercase(),
             generation = 0,
             stage = "none",
@@ -297,6 +301,8 @@ object RabbyNativeOpenApiRuntime {
             sourceTokenCount = 0,
             filteredTokenCount = 0,
             committedRowCount = 0,
+            successfulChainIds = emptyArray(),
+            failedChainIds = emptyArray(),
             committedAtMs = 0,
             durationMs = 0,
             error = "native token sync could not start",
@@ -556,6 +562,9 @@ object RabbyNativeOpenApiRuntime {
     address: String,
     generation: Long,
     stage: String,
+    outcome: String,
+    successfulChainIds: Array<String>,
+    failedChainIds: Array<String>,
     chainCount: Long,
     sourceTokenCount: Long,
     filteredTokenCount: Long,
@@ -567,6 +576,7 @@ object RabbyNativeOpenApiRuntime {
     val callback = tokenSyncCallbacks.remove(syncId) ?: return
     val result = NativeTokenSyncResult(
       success = success,
+      outcome = outcome,
       address = address,
       generation = generation,
       stage = stage,
@@ -574,6 +584,8 @@ object RabbyNativeOpenApiRuntime {
       sourceTokenCount = sourceTokenCount,
       filteredTokenCount = filteredTokenCount,
       committedRowCount = committedRowCount,
+      successfulChainIds = successfulChainIds,
+      failedChainIds = failedChainIds,
       committedAtMs = committedAtMs,
       durationMs = durationMs,
       error = error,

@@ -1,4 +1,5 @@
 #include <rabby/openapi/RabbyAddressCachePersistence.h>
+#include <rabby/openapi/RabbyTokenCachePersistence.h>
 
 #include <cassert>
 #include <cmath>
@@ -120,6 +121,44 @@ void testNftCacheContractAndRows() {
   assert(emptyRows[0][5].text == "rabby-empty-nft-item-id");
 }
 
+void testTokenCacheContractAndRows() {
+  const auto contract = rabby::openapi::tokenCacheContract();
+  assert(contract.tableName == "rabby_cache_tokenitem_20260816");
+  assert(contract.columns.size() == 38);
+
+  rabby::openapi::NativeTokenRecord token;
+  token.dbId = "0xabc-token-eth";
+  token.ownerAddress = "0xabc";
+  token.projectionResourceId = "0xabc:eth:token";
+  token.id = "token";
+  token.chain = "eth";
+  token.amount = 2;
+  token.price = 3;
+  token.isCore = true;
+  token.isVerified = std::nullopt;
+  token.price24hChange = 0.25;
+
+  const auto rows = rabby::openapi::makeTokenCacheRows({token}, 1234);
+  assert(rows.size() == 1);
+  assert(rows[0].size() == contract.columns.size());
+  assert(rows[0][0].integer == 1234);
+  assert(rows[0][3].text == "0xabc");
+  assert(std::abs(rows[0][8].real - 36.0) < 0.000001);
+  assert(rows[0][13].integer == 1);
+  assert(rows[0][14].kind ==
+      rabby::openapi::AddressCacheValueKind::Null);
+  assert(std::abs(rows[0][22].real - 54.0) < 0.000001);
+  assert(std::abs(rows[0][33].real - 0.25) < 0.000001);
+
+  const auto encoded = rabby::openapi::encodeAddressSnapshot(
+      rows, contract.columns.size());
+  const auto decoded = rabby::openapi::decodeAddressSnapshot(
+      encoded, contract.columns.size());
+  assert(decoded.isSuccess());
+  assert(decoded.rows.size() == 1);
+  assert(decoded.rows[0][2].text == token.dbId);
+}
+
 } // namespace
 
 int main() {
@@ -127,5 +166,6 @@ int main() {
   testAddressSnapshotRejectsInvalidRows();
   testProtocolCacheContractAndRows();
   testNftCacheContractAndRows();
+  testTokenCacheContractAndRows();
   return 0;
 }

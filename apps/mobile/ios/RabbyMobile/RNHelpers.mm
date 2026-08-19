@@ -23,17 +23,21 @@ RCT_EXPORT_MODULE();
                      replacementScope:(NSString *)replacementScope
                               chainIds:(NSArray<NSString *> *)chainIds
                                 result:(NSDictionary<NSString *, id> *)result {
+    NSString *outcome = result[@"outcome"] ?: @"failed";
+    BOOL isPartial = [outcome isEqualToString:@"partial"];
     [self sendEventWithName:RabbyNativeAssetSyncCompletedEvent
                        body:@{
-        @"schemaVersion": @1,
+        @"schemaVersion": @2,
         @"requestId": requestId,
         @"kind": @"token",
         @"success": result[@"success"] ?: @NO,
+        @"outcome": outcome,
         @"address": result[@"address"] ?: @"",
         @"generation": result[@"generation"] ?: @0,
         @"committedAt": result[@"committedAtMs"] ?: @0,
-        @"replacementScope": replacementScope,
-        @"chainIds": chainIds,
+        @"replacementScope": isPartial ? @"chains" : replacementScope,
+        @"chainIds": result[@"successfulChainIds"] ?: @[],
+        @"failedChainIds": result[@"failedChainIds"] ?: @[],
         @"committedRowCount": result[@"committedRowCount"] ?: @0,
         @"stage": result[@"stage"] ?: @"none",
         @"error": result[@"error"] ?: @"",
@@ -45,15 +49,17 @@ RCT_EXPORT_MODULE();
                                            (NSDictionary<NSString *, id> *)result {
     [self sendEventWithName:RabbyNativeAssetSyncCompletedEvent
                        body:@{
-        @"schemaVersion": @1,
+        @"schemaVersion": @2,
         @"requestId": requestId,
         @"kind": result[@"kind"] ?: @"",
         @"success": result[@"success"] ?: @NO,
+        @"outcome": [result[@"success"] boolValue] ? @"complete" : @"failed",
         @"address": result[@"address"] ?: @"",
         @"generation": result[@"generation"] ?: @0,
         @"committedAt": result[@"committedAtMs"] ?: @0,
         @"replacementScope": @"address",
         @"chainIds": @[],
+        @"failedChainIds": @[],
         @"committedRowCount": result[@"committedRowCount"] ?: @0,
         @"stage": result[@"stage"] ?: @"none",
         @"error": result[@"error"] ?: @"",

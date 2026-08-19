@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rabby/openapi/RabbyAddressCachePersistence.h>
+#include <rabby/openapi/RabbyOpenApiAssetSyncScheduler.h>
 #include <rabby/openapi/RabbyOpenApiClient.h>
 
 #include <cstddef>
@@ -52,7 +53,8 @@ class NftSyncCoordinator {
   NftSyncCoordinator(
       NftSyncExecute execute,
       std::shared_ptr<AddressCachePersistence> persistence,
-      NftSyncMillisecondsProvider millisecondsProvider);
+      NftSyncMillisecondsProvider millisecondsProvider,
+      AssetSyncTaskDispatch processingDispatch = {});
   ~NftSyncCoordinator();
 
   NftSyncStartResult syncAddress(

@@ -100,14 +100,16 @@ class ProtocolSyncCoordinator::Impl
   Impl(
       ProtocolSyncExecute execute,
       std::shared_ptr<AddressCachePersistence> persistence,
-      ProtocolSyncMillisecondsProvider millisecondsProvider)
+      ProtocolSyncMillisecondsProvider millisecondsProvider,
+      AssetSyncTaskDispatch processingDispatch)
       : execute_(std::move(execute)),
         persistence_(std::move(persistence)),
-        millisecondsProvider_(std::move(millisecondsProvider)) {}
+        millisecondsProvider_(std::move(millisecondsProvider)),
+        processingDispatch_(std::move(processingDispatch)) {}
 
   ProtocolSyncStartResult syncAddress(
       std::string address,
-      bool replaceExisting,
+      bool /*replaceExisting*/,
       ProtocolSyncCompletion completion) {
     address = normalizeAddress(std::move(address));
     if (const auto error = validateAddress(address); !error.empty()) {
@@ -123,8 +125,7 @@ class ProtocolSyncCoordinator::Impl
     {
       std::lock_guard<std::mutex> lock(mutex_);
       const auto active = activeOperations_.find(address);
-      if (active != activeOperations_.end() && !active->second->finished &&
-          !replaceExisting) {
+      if (active != activeOperations_.end() && !active->second->finished) {
         if (completion) {
           active->second->subscribers.push_back({std::move(completion)});
         }
@@ -220,13 +221,27 @@ class ProtocolSyncCoordinator::Impl
         !operation->finished;
   }
 
+  void dispatchProcessing(AssetSyncTask task) {
+    if (processingDispatch_) {
+      processingDispatch_(std::move(task));
+      return;
+    }
+    task();
+  }
+
   void dispatch(const std::shared_ptr<Operation>& operation) {
     auto weakSelf = weak_from_this();
     auto handle = execute_(
         makeProtocolListRequest(operation->address),
         [weakSelf, operation](OpenApiClientResult result) mutable {
           if (const auto self = weakSelf.lock()) {
-            self->handleResponse(operation, std::move(result));
+            self->dispatchProcessing(
+                [weakSelf, operation, result = std::move(result)]() mutable {
+                  if (const auto currentSelf = weakSelf.lock()) {
+                    currentSelf->handleResponse(
+                        operation, std::move(result));
+                  }
+                });
           }
         });
 
@@ -245,7 +260,13 @@ class ProtocolSyncCoordinator::Impl
       OpenApiClientResult result;
       result.failureStage = OpenApiClientFailureStage::Transport;
       result.error = "native request did not start";
-      handleResponse(operation, std::move(result));
+      auto weakSelf = weak_from_this();
+      dispatchProcessing(
+          [weakSelf, operation, result = std::move(result)]() mutable {
+            if (const auto self = weakSelf.lock()) {
+              self->handleResponse(operation, std::move(result));
+            }
+          });
     }
   }
 
@@ -422,6 +443,7 @@ class ProtocolSyncCoordinator::Impl
   ProtocolSyncExecute execute_;
   std::shared_ptr<AddressCachePersistence> persistence_;
   ProtocolSyncMillisecondsProvider millisecondsProvider_;
+  AssetSyncTaskDispatch processingDispatch_;
   mutable std::mutex mutex_;
   std::mutex commitMutex_;
   std::unordered_map<std::string, std::shared_ptr<Operation>> activeOperations_;
@@ -431,11 +453,13 @@ class ProtocolSyncCoordinator::Impl
 ProtocolSyncCoordinator::ProtocolSyncCoordinator(
     ProtocolSyncExecute execute,
     std::shared_ptr<AddressCachePersistence> persistence,
-    ProtocolSyncMillisecondsProvider millisecondsProvider)
+    ProtocolSyncMillisecondsProvider millisecondsProvider,
+    AssetSyncTaskDispatch processingDispatch)
     : impl_(std::make_shared<Impl>(
           std::move(execute),
           std::move(persistence),
-          std::move(millisecondsProvider))) {}
+          std::move(millisecondsProvider),
+          std::move(processingDispatch))) {}
 
 ProtocolSyncCoordinator::~ProtocolSyncCoordinator() {
   if (impl_) {

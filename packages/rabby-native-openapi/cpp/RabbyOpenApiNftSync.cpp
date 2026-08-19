@@ -119,14 +119,16 @@ class NftSyncCoordinator::Impl
   Impl(
       NftSyncExecute execute,
       std::shared_ptr<AddressCachePersistence> persistence,
-      NftSyncMillisecondsProvider millisecondsProvider)
+      NftSyncMillisecondsProvider millisecondsProvider,
+      AssetSyncTaskDispatch processingDispatch)
       : execute_(std::move(execute)),
         persistence_(std::move(persistence)),
-        millisecondsProvider_(std::move(millisecondsProvider)) {}
+        millisecondsProvider_(std::move(millisecondsProvider)),
+        processingDispatch_(std::move(processingDispatch)) {}
 
   NftSyncStartResult syncAddress(
       std::string address,
-      bool replaceExisting,
+      bool /*replaceExisting*/,
       NftSyncCompletion completion) {
     address = normalizeAddress(std::move(address));
     if (const auto error = validateAddress(address); !error.empty()) {
@@ -142,8 +144,7 @@ class NftSyncCoordinator::Impl
     {
       std::lock_guard<std::mutex> lock(mutex_);
       const auto active = activeOperations_.find(address);
-      if (active != activeOperations_.end() && !active->second->finished &&
-          !replaceExisting) {
+      if (active != activeOperations_.end() && !active->second->finished) {
         if (completion) {
           active->second->subscribers.push_back({std::move(completion)});
         }
@@ -239,6 +240,14 @@ class NftSyncCoordinator::Impl
         !operation->finished;
   }
 
+  void dispatchProcessing(AssetSyncTask task) {
+    if (processingDispatch_) {
+      processingDispatch_(std::move(task));
+      return;
+    }
+    task();
+  }
+
   void dispatch(
       const std::shared_ptr<Operation>& operation,
       NftSyncStage stage) {
@@ -250,7 +259,16 @@ class NftSyncCoordinator::Impl
         request,
         [weakSelf, operation, stage](OpenApiClientResult result) mutable {
           if (const auto self = weakSelf.lock()) {
-            self->handleResponse(operation, stage, std::move(result));
+            self->dispatchProcessing(
+                [weakSelf,
+                 operation,
+                 stage,
+                 result = std::move(result)]() mutable {
+                  if (const auto currentSelf = weakSelf.lock()) {
+                    currentSelf->handleResponse(
+                        operation, stage, std::move(result));
+                  }
+                });
           }
         });
 
@@ -270,7 +288,13 @@ class NftSyncCoordinator::Impl
       OpenApiClientResult result;
       result.failureStage = OpenApiClientFailureStage::Transport;
       result.error = "native request did not start";
-      handleResponse(operation, stage, std::move(result));
+      auto weakSelf = weak_from_this();
+      dispatchProcessing(
+          [weakSelf, operation, stage, result = std::move(result)]() mutable {
+            if (const auto self = weakSelf.lock()) {
+              self->handleResponse(operation, stage, std::move(result));
+            }
+          });
     }
   }
 
@@ -464,6 +488,7 @@ class NftSyncCoordinator::Impl
   NftSyncExecute execute_;
   std::shared_ptr<AddressCachePersistence> persistence_;
   NftSyncMillisecondsProvider millisecondsProvider_;
+  AssetSyncTaskDispatch processingDispatch_;
   mutable std::mutex mutex_;
   std::mutex commitMutex_;
   std::unordered_map<std::string, std::shared_ptr<Operation>> activeOperations_;
@@ -473,11 +498,13 @@ class NftSyncCoordinator::Impl
 NftSyncCoordinator::NftSyncCoordinator(
     NftSyncExecute execute,
     std::shared_ptr<AddressCachePersistence> persistence,
-    NftSyncMillisecondsProvider millisecondsProvider)
+    NftSyncMillisecondsProvider millisecondsProvider,
+    AssetSyncTaskDispatch processingDispatch)
     : impl_(std::make_shared<Impl>(
           std::move(execute),
           std::move(persistence),
-          std::move(millisecondsProvider))) {}
+          std::move(millisecondsProvider),
+          std::move(processingDispatch))) {}
 
 NftSyncCoordinator::~NftSyncCoordinator() {
   if (impl_) {

@@ -1,6 +1,8 @@
 #include <rabby/openapi/RabbyTokenCachePersistence.h>
 
+#include <optional>
 #include <sstream>
+#include <utility>
 
 namespace rabby::openapi {
 namespace {
@@ -53,10 +55,33 @@ std::string quoteIdentifier(const std::string& value) {
   return '"' + value + '"';
 }
 
+AddressCacheValue optionalBooleanValue(const std::optional<bool>& value) {
+  return value.has_value()
+      ? AddressCacheValue::booleanValue(*value)
+      : AddressCacheValue::null();
+}
+
+AddressCacheValue optionalRealValue(const std::optional<double>& value) {
+  return value.has_value()
+      ? AddressCacheValue::realValue(*value)
+      : AddressCacheValue::null();
+}
+
+AddressCacheValue optionalTextValue(
+    const std::optional<std::string>& value) {
+  return value.has_value()
+      ? AddressCacheValue::textValue(*value)
+      : AddressCacheValue::null();
+}
+
 } // namespace
 
 std::vector<std::string> tokenCacheColumnNames() {
   return columns();
+}
+
+AddressCacheContract tokenCacheContract() {
+  return {kTokenCacheTableName, columns()};
 }
 
 std::string tokenCacheUpsertSql() {
@@ -100,6 +125,65 @@ std::string tokenCacheDeleteStaleForChainSql() {
   return "DELETE FROM \"" + std::string(kTokenCacheTableName) +
       "\" WHERE \"owner_addr\"=? AND \"chain\"=? AND "
       "\"_local_updated_at\"<?";
+}
+
+AddressCacheRow makeTokenCacheRow(
+    const NativeTokenRecord& token,
+    std::int64_t syncTimestampMs) {
+  AddressCacheRow row;
+  row.reserve(columns().size());
+  row.push_back(AddressCacheValue::integerValue(syncTimestampMs));
+  row.push_back(AddressCacheValue::integerValue(syncTimestampMs));
+  row.push_back(AddressCacheValue::textValue(token.dbId));
+  row.push_back(AddressCacheValue::textValue(token.ownerAddress));
+  row.push_back(AddressCacheValue::textValue(token.projectionResourceId));
+  row.push_back(AddressCacheValue::textValue(token.contentType));
+  row.push_back(AddressCacheValue::textValue(token.content));
+  row.push_back(AddressCacheValue::textValue(token.innerId));
+  row.push_back(AddressCacheValue::realValue(
+      token.amount * kLegacyRealStorageRatio));
+  row.push_back(AddressCacheValue::textValue(token.chain));
+  row.push_back(AddressCacheValue::realValue(token.decimals));
+  row.push_back(AddressCacheValue::textValue(token.displaySymbol));
+  row.push_back(AddressCacheValue::textValue(token.id));
+  row.push_back(optionalBooleanValue(token.isCore));
+  row.push_back(optionalBooleanValue(token.isVerified));
+  row.push_back(AddressCacheValue::booleanValue(token.isWallet));
+  row.push_back(AddressCacheValue::booleanValue(token.isScam));
+  row.push_back(AddressCacheValue::booleanValue(token.isInfinity));
+  row.push_back(AddressCacheValue::booleanValue(token.isSuspicious));
+  row.push_back(AddressCacheValue::textValue(token.logoUrl));
+  row.push_back(AddressCacheValue::textValue(token.name));
+  row.push_back(AddressCacheValue::textValue(token.optimizedSymbol));
+  row.push_back(AddressCacheValue::realValue(
+      token.price * kLegacyRealStorageRatio));
+  row.push_back(AddressCacheValue::textValue(token.symbol));
+  row.push_back(AddressCacheValue::realValue(token.timeAt));
+  row.push_back(AddressCacheValue::realValue(token.usdValue));
+  row.push_back(AddressCacheValue::realValue(token.creditScore));
+  row.push_back(AddressCacheValue::textValue(token.protocolId));
+  row.push_back(optionalTextValue(token.launchpadJson));
+  row.push_back(optionalTextValue(token.assetJson));
+  row.push_back(AddressCacheValue::textValue(token.marketStatus));
+  row.push_back(AddressCacheValue::textValue(token.rawAmount));
+  row.push_back(AddressCacheValue::textValue(token.rawAmountHex));
+  row.push_back(optionalRealValue(token.price24hChange));
+  row.push_back(AddressCacheValue::booleanValue(token.lowCreditScore));
+  row.push_back(AddressCacheValue::realValue(token.fdv));
+  row.push_back(AddressCacheValue::textValue(token.value24hChange));
+  row.push_back(AddressCacheValue::textValue(token.cexIdsJson));
+  return row;
+}
+
+std::vector<AddressCacheRow> makeTokenCacheRows(
+    const std::vector<NativeTokenRecord>& tokens,
+    std::int64_t syncTimestampMs) {
+  std::vector<AddressCacheRow> rows;
+  rows.reserve(tokens.size());
+  for (const auto& token : tokens) {
+    rows.push_back(makeTokenCacheRow(token, syncTimestampMs));
+  }
+  return rows;
 }
 
 NativeTokenRecord makeEmptyTokenRecord(const std::string& ownerAddress) {
