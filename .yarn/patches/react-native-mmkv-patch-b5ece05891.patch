@@ -1,0 +1,234 @@
+diff --git a/android/src/main/cpp/MmkvHostObject.cpp b/android/src/main/cpp/MmkvHostObject.cpp
+index 9ccc10fc28f5a4a0aebd9ded4c266592d000f781..44efb8f76433e3b49c6c38b4262c9eb0ea1de385 100644
+--- a/android/src/main/cpp/MmkvHostObject.cpp
++++ b/android/src/main/cpp/MmkvHostObject.cpp
+@@ -52,6 +52,8 @@ std::vector<jsi::PropNameID> MmkvHostObject::getPropertyNames(jsi::Runtime& rt)
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("getAllKeys")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("deleteAll")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("recrypt")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("sync")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("reload")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("trim")));
+   return result;
+ }
+@@ -300,5 +302,26 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+         });
+   }
+ 
++  if (propName == "sync") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, propName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          instance->sync(MMKV_SYNC);
++          return jsi::Value::undefined();
++        });
++  }
++
++  if (propName == "reload") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, propName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          instance->clearMemoryCache();
++          instance->allKeys();
++          return jsi::Value::undefined();
++        });
++  }
++
+   return jsi::Value::undefined();
+ }
+diff --git a/ios/MmkvHostObject.mm b/ios/MmkvHostObject.mm
+index fb80fb9790f40669b6f4ee0bc48ba8798d0317e8..6961bb41ff593667fd5679c7c9d57f7c7ede75a9 100644
+--- a/ios/MmkvHostObject.mm
++++ b/ios/MmkvHostObject.mm
+@@ -64,6 +64,9 @@
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("getAllKeys")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("deleteAll")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("recrypt")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("sync")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("reload")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("trim")));
+   return result;
+ }
+ 
+@@ -303,5 +306,26 @@
+         });
+   }
+ 
++  if (propName == "sync") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, funcName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          [instance sync];
++          return jsi::Value::undefined();
++        });
++  }
++
++  if (propName == "reload") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, funcName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          [instance clearMemoryCache];
++          [instance allKeys];
++          return jsi::Value::undefined();
++        });
++  }
++
+   return jsi::Value::undefined();
+ }
+diff --git a/lib/commonjs/MMKV.js b/lib/commonjs/MMKV.js
+index 291f0ba4f08c10896ea1abbc82c1e631cbf1f53b..9a5b000d4981488a489b2467b80d157fb4e95a5a 100644
+--- a/lib/commonjs/MMKV.js
++++ b/lib/commonjs/MMKV.js
+@@ -89,6 +89,14 @@ class MMKV {
+     const func = this.getFunctionFromCache('recrypt');
+     return func(key);
+   }
++  sync() {
++    const func = this.getFunctionFromCache('sync');
++    return func();
++  }
++  reload() {
++    const func = this.getFunctionFromCache('reload');
++    return func();
++  }
+   toString() {
+     return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
+   }
+diff --git a/lib/commonjs/createMMKV.mock.js b/lib/commonjs/createMMKV.mock.js
+index f48545bb5c79e81c2686986f6cf51988919e9bbf..8f06a5534af4629d68f9666bc4b2635b053fd71e 100644
+--- a/lib/commonjs/createMMKV.mock.js
++++ b/lib/commonjs/createMMKV.mock.js
+@@ -31,7 +31,9 @@ const createMockMMKV = () => {
+     contains: key => storage.has(key),
+     recrypt: () => {
+       console.warn('Encryption is not supported in mocked MMKV instances!');
+-    }
++    },
++    sync: () => undefined,
++    reload: () => undefined
+   };
+ };
+ exports.createMockMMKV = createMockMMKV;
+diff --git a/lib/module/MMKV.js b/lib/module/MMKV.js
+index e6f28cedc4476859347b9b4df9c98ac72a026edf..87e298f03349c11fce3fa90c1a96e7782de3fe3b 100644
+--- a/lib/module/MMKV.js
++++ b/lib/module/MMKV.js
+@@ -83,6 +83,14 @@ export class MMKV {
+     const func = this.getFunctionFromCache('recrypt');
+     return func(key);
+   }
++  sync() {
++    const func = this.getFunctionFromCache('sync');
++    return func();
++  }
++  reload() {
++    const func = this.getFunctionFromCache('reload');
++    return func();
++  }
+   trim() {
+     const func = this.getFunctionFromCache('trim');
+     return func();
+diff --git a/lib/module/createMMKV.mock.js b/lib/module/createMMKV.mock.js
+index 31077a2e151b9d305dae5dc316f9c9b7057ca4a3..9a5f10e7dbaf82f382167406517df1608093e428 100644
+--- a/lib/module/createMMKV.mock.js
++++ b/lib/module/createMMKV.mock.js
+@@ -25,7 +25,9 @@ export const createMockMMKV = () => {
+     contains: key => storage.has(key),
+     recrypt: () => {
+       console.warn('Encryption is not supported in mocked MMKV instances!');
+-    }
++    },
++    sync: () => undefined,
++    reload: () => undefined
+   };
+ };
+ //# sourceMappingURL=createMMKV.mock.js.map
+diff --git a/lib/typescript/MMKV.d.ts b/lib/typescript/MMKV.d.ts
+index f2d0b4f2c9f1db500a431fe64472847dcd68ea83..c37633d6c0008b1d5302d60da658351786103edf 100644
+--- a/lib/typescript/MMKV.d.ts
++++ b/lib/typescript/MMKV.d.ts
+@@ -100,6 +100,10 @@ interface MMKVInterface {
+      * Encryption keys can have a maximum length of 16 bytes.
+      */
+     recrypt: (key: string | undefined) => void;
++    /** Flushes this MMKV instance to disk. */
++    sync: () => void;
++    /** Clears the native cache and forces the next read to decode the file. */
++    reload: () => void;
+     /**
+      * Trims the storage space and clears memory cache.
+      *
+@@ -118,7 +122,7 @@ interface MMKVInterface {
+      */
+     addOnValueChangedListener: (onValueChanged: (key: string) => void) => Listener;
+ }
+-export type NativeMMKV = Pick<MMKVInterface, 'clearAll' | 'contains' | 'delete' | 'getAllKeys' | 'getBoolean' | 'getNumber' | 'getString' | 'getBuffer' | 'set' | 'recrypt' | 'trim'>;
++export type NativeMMKV = Pick<MMKVInterface, 'clearAll' | 'contains' | 'delete' | 'getAllKeys' | 'getBoolean' | 'getNumber' | 'getString' | 'getBuffer' | 'set' | 'recrypt' | 'sync' | 'reload' | 'trim'>;
+ /**
+  * A single MMKV instance.
+  */
+@@ -144,6 +148,8 @@ export declare class MMKV implements MMKVInterface {
+     getAllKeys(): string[];
+     clearAll(): void;
+     recrypt(key: string | undefined): void;
++    sync(): void;
++    reload(): void;
+     trim(): void;
+     toString(): string;
+     toJSON(): object;
+diff --git a/src/MMKV.ts b/src/MMKV.ts
+index 5b32d703ff898c2ad732f011c54d259e1027fde0..61cfe0851fb438fc1bacbbbb7bb75d8edf689c81 100644
+--- a/src/MMKV.ts
++++ b/src/MMKV.ts
+@@ -106,6 +106,10 @@ interface MMKVInterface {
+    * Encryption keys can have a maximum length of 16 bytes.
+    */
+   recrypt: (key: string | undefined) => void;
++  /** Flushes this MMKV instance to disk. */
++  sync: () => void;
++  /** Clears the native cache and forces the next read to decode the file. */
++  reload: () => void;
+   /**
+    * Trims the storage space and clears memory cache.
+    *
+@@ -139,6 +143,8 @@ export type NativeMMKV = Pick<
+   | 'getBuffer'
+   | 'set'
+   | 'recrypt'
++  | 'sync'
++  | 'reload'
+   | 'trim'
+ >;
+ 
+@@ -238,6 +244,14 @@ export class MMKV implements MMKVInterface {
+     const func = this.getFunctionFromCache('recrypt');
+     return func(key);
+   }
++  sync(): void {
++    const func = this.getFunctionFromCache('sync');
++    return func();
++  }
++  reload(): void {
++    const func = this.getFunctionFromCache('reload');
++    return func();
++  }
+   trim() {
+     const func = this.getFunctionFromCache('trim');
+     return func();
+diff --git a/src/createMMKV.mock.ts b/src/createMMKV.mock.ts
+index 29ebc9168ef7a58dc11abeb4f3992e2b5c66d6f9..e3b1b7a0bd1e03adf97c39e05f1965d50c8fff0d 100644
+--- a/src/createMMKV.mock.ts
++++ b/src/createMMKV.mock.ts
+@@ -29,6 +29,8 @@ export const createMockMMKV = (): NativeMMKV => {
+     recrypt: () => {
+       console.warn('Encryption is not supported in mocked MMKV instances!');
+     },
++    sync: () => undefined,
++    reload: () => undefined,
+     trim: () => {
+       console.warn('trim() is not supported in mocked MMKV instances!');
+     }
