@@ -70,7 +70,7 @@ import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
-import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
 import { useShallow } from 'zustand/react/shallow';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
@@ -229,9 +229,15 @@ const NFTListInner = () => {
   );
   const nftIndex = nftProjection.result;
   const nftRowCount = nftIndex.rows.length;
-  const nftProjectionViewState = resolveAssetProjectionViewState({
+  const { viewState: nftProjectionViewState } = useAssetProjectionPresentation({
+    identity: {
+      kind: 'nft',
+      scene: 'multi-address',
+      runtimeKey: multiNftsKey,
+    },
     availability: nftProjection.availability,
     hasData: nftRowCount > 0,
+    storeLabel: 'home-multi-assets-nft-read-model',
   });
 
   const dataList = useMemo(() => {

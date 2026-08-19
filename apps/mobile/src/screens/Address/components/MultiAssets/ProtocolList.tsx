@@ -60,7 +60,7 @@ import {
 } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
-import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -189,10 +189,17 @@ export const ProtocolList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-defi-loading' },
   );
-  const protocolProjectionViewState = resolveAssetProjectionViewState({
-    availability: protocolProjection.availability,
-    hasData: protocolIndex.protocolIds.length > 0,
-  });
+  const { viewState: protocolProjectionViewState } =
+    useAssetProjectionPresentation({
+      identity: {
+        kind: 'protocol',
+        scene: 'multi-address',
+        runtimeKey: multiProtocolsKey,
+      },
+      availability: protocolProjection.availability,
+      hasData: protocolIndex.protocolIds.length > 0,
+      storeLabel: 'home-multi-assets-defi-read-model',
+    });
 
   // The high-cardinality probe intentionally selects Watch addresses. Keep the
   // assertion at the final entity-to-row boundary so it catches a future

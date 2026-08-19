@@ -1,6 +1,14 @@
+import type { AssetReadModelEntry } from './assetReadModel';
+
 export type AssetProjectionAvailability = 'unresolved' | 'restoring' | 'ready';
 
 export type AssetProjectionViewState = 'loading' | 'data' | 'empty';
+
+export type AssetProjectionPresentation = {
+  viewState: AssetProjectionViewState;
+  isRefreshing: boolean;
+  isStale: boolean;
+};
 
 export type AssetSourceSnapshotReadiness = Record<string, true>;
 
@@ -96,4 +104,43 @@ export const resolveAssetProjectionViewState = ({
     (availability === 'unresolved' && hasSettledRequest)
     ? 'empty'
     : 'loading';
+};
+
+export const resolveAssetProjectionPresentation = ({
+  readModel,
+  availability,
+  hasData,
+  hasSettledRequest = false,
+}: {
+  readModel?: AssetReadModelEntry;
+  availability: AssetProjectionAvailability;
+  hasData: boolean;
+  hasSettledRequest?: boolean;
+}): AssetProjectionPresentation => {
+  const isRefreshing = readModel?.phase === 'refreshing';
+  const isStale = readModel?.phase === 'stale';
+
+  if (hasData) {
+    return { viewState: 'data', isRefreshing, isStale };
+  }
+
+  if (readModel) {
+    if (readModel.hasSnapshot && readModel.sourceComplete) {
+      return { viewState: 'empty', isRefreshing, isStale };
+    }
+
+    if (readModel.phase === 'error') {
+      return { viewState: 'empty', isRefreshing, isStale };
+    }
+  }
+
+  return {
+    viewState: resolveAssetProjectionViewState({
+      availability,
+      hasData,
+      hasSettledRequest,
+    }),
+    isRefreshing,
+    isStale,
+  };
 };

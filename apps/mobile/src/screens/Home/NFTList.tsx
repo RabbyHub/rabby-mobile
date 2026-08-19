@@ -57,6 +57,8 @@ import {
 } from '@/devtools/regressionScenarios/react';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
+import { useShallow } from 'zustand/react/shallow';
 
 type NftListItem =
   | NftAssetsIndexRow
@@ -163,18 +165,36 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
     return getSingleNftsCacheKey(userAddr, selectedChain);
   }, [selectedChain, userAddr]);
 
-  const nftIndex = useActivityStore(
+  const nftProjection = useActivityStore(
     useNftListComputedStore,
-    state =>
-      singleNftsKey
+    useShallow(state => ({
+      result: singleNftsKey
         ? state.singleNftsIndexCache[singleNftsKey] ||
           EMPTY_NFT_ASSETS_INDEX_RESULT
         : EMPTY_NFT_ASSETS_INDEX_RESULT,
+      availability: singleNftsKey
+        ? state.singleNftsAvailabilityByKey[singleNftsKey] || 'unresolved'
+        : 'unresolved',
+    })),
     Object.is,
     { storeLabel: 'single-address-computed-nfts' },
   );
+  const nftIndex = nftProjection.result;
   const nftRowCount = nftIndex.rows.length;
-  const isNftContentReady = nftRowCount > 0 || !loadingNft;
+  const { viewState: nftProjectionViewState } = useAssetProjectionPresentation({
+    identity: singleNftsKey
+      ? {
+          kind: 'nft',
+          scene: 'single-address',
+          runtimeKey: singleNftsKey,
+        }
+      : null,
+    availability: nftProjection.availability,
+    hasData: nftRowCount > 0,
+    hasSettledRequest: !loadingNft,
+    storeLabel: 'single-address-nft-read-model',
+  });
+  const isNftContentReady = nftProjectionViewState !== 'loading';
 
   const refreshNftList = useCallback(() => {
     reloadNftList?.();
@@ -207,14 +227,14 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         data: [{ type: 'toggle-nft' }, ...(showAllNfts ? foldedRows : [])],
       },
       {
-        show: !!loadingNft && nftRowCount === 0,
+        show: nftProjectionViewState === 'loading',
         data: Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton',
           data: 'index-nft' + index.toString(),
         })),
       },
       {
-        show: !loadingNft && nftRowCount === 0,
+        show: nftProjectionViewState === 'empty',
         data: [
           {
             type: 'empty-nft',
@@ -229,7 +249,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [loadingNft, nftIndex, nftRowCount, showAllNfts, t]);
+  }, [nftIndex, nftProjectionViewState, showAllNfts, t]);
 
   const regressionScenario = useRegressionScenario<'SingleAddressHome'>();
   const regressionRunId = regressionScenario.active

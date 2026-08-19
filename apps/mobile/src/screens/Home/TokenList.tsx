@@ -77,6 +77,7 @@ import {
   type TokenProjectionSectionSpec,
 } from './components/TokenProjectionSectionList';
 import type { AssetSyncTrigger } from '@/store/assetSyncCoordinator';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
 
 type TokenListExtraItem =
   | {
@@ -276,16 +277,6 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     return getSingleAssetsCacheKey(lowerAddress, selectedChain, false);
   }, [lowerAddress, selectedChain]);
 
-  const isTokenProjectionReady = useActivityStore(
-    useTokenAssetsIndexStore,
-    state =>
-      !!singleAssetsKey &&
-      !!state.singleAssetsConfigByKey[singleAssetsKey] &&
-      !!state.singleAssetsResultByKey[singleAssetsKey],
-    Object.is,
-    { storeLabel: 'single-address-token-assets-index-readiness' },
-  );
-
   const tokenProjectionMetadata = useActivityStore(
     useTokenAssetsIndexStore,
     useShallow(state => {
@@ -294,6 +285,9 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
           ? state.singleAssetsResultByKey[singleAssetsKey]
           : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
+        availability: singleAssetsKey
+          ? state.singleAssetsAvailabilityByKey[singleAssetsKey] || 'unresolved'
+          : 'unresolved',
         additionalCoreUsdValue: result.additionalCoreUsdValue,
         lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
         lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
@@ -312,6 +306,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     { storeLabel: 'single-address-token-assets-index' },
   );
   const {
+    availability: tokenProjectionAvailability,
     additionalCoreUsdValue,
     lowValueTokenPreviewLogoUrls,
     lpLowValueTokenPreviewLogoUrls,
@@ -358,26 +353,34 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     Object.is,
     { storeLabel: 'single-address-token-list' },
   );
-  const hasDefaultTokenData = projectedTokenCount > 0 || hasLpTokens;
-  const isTokenProjectionLoading = !!singleAssetsKey && !isTokenProjectionReady;
+  const hasDefaultTokenData = projectedTokenCount > 0;
+  const { viewState: tokenProjectionViewState } =
+    useAssetProjectionPresentation({
+      identity: singleAssetsKey
+        ? {
+            kind: 'token',
+            scene: 'single-address',
+            runtimeKey: singleAssetsKey,
+          }
+        : null,
+      availability: tokenProjectionAvailability,
+      hasData: hasDefaultTokenData,
+      hasSettledRequest:
+        hasRequestedTokenList &&
+        isTokenListRequestSettled &&
+        !isLoading &&
+        !isAllLoading,
+      storeLabel: 'single-address-token-read-model',
+    });
   const shouldHideCustomTestnetSectionsWhileLoading =
-    (isLoading || isAllLoading || isTokenProjectionLoading) &&
-    !hasDefaultTokenData;
+    tokenProjectionViewState === 'loading' && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     hasRequestedTokenList &&
     !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
-  const hasVisibleTokenContent =
-    hasDefaultTokenData || visibleCustomTestnetSections.length > 0;
-  const isTokenContentReady =
-    isTokenProjectionReady &&
-    (hasVisibleTokenContent ||
-      (hasRequestedTokenList &&
-        isTokenListRequestSettled &&
-        !isLoading &&
-        !isAllLoading));
+  const isTokenContentReady = tokenProjectionViewState !== 'loading';
   const getTokenList = useTokenList.getState().getTokenList;
 
   const refreshTokenList = useCallback(
@@ -479,7 +482,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     : ('lowValueDefault' as const);
   const hasAdditionalSection = hasAdditionalTokens || isLpTokenEnabled;
   const shouldShowInitialLoading =
-    (isLoading || isTokenProjectionLoading) &&
+    tokenProjectionViewState === 'loading' &&
     projectedTokenCount === 0 &&
     visibleCustomTestnetSections.length === 0;
   const shouldShowLpLoading =
@@ -487,7 +490,9 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     isLpTokenEnabled &&
     selectedAdditionalTokenCount + selectedLowValueTokenCount === 0;
   const shouldShowEmpty =
-    !isLoading && projectedTokenCount === 0 && !hasLpTokens;
+    tokenProjectionViewState === 'empty' &&
+    projectedTokenCount === 0 &&
+    !hasLpTokens;
   const sectionSpecs = useMemo<
     TokenProjectionSectionSpec<TokenListExtraItem>[]
   >(() => {

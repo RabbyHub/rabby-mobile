@@ -86,8 +86,8 @@ import {
   type TokenProjectionSectionItem,
   type TokenProjectionSectionSpec,
 } from '@/screens/Home/components/TokenProjectionSectionList';
-import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 import type { AssetSyncTrigger } from '@/store/assetSyncCoordinator';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -386,11 +386,18 @@ export const TokenList = () => {
   // currently selected segments contain rows, the list still has no visible
   // data and must remain in its loading/empty state.
   const hasDefaultTokenData = projectedTokenCount > 0;
-  const tokenProjectionViewState = resolveAssetProjectionViewState({
-    availability: tokenProjectionAvailability,
-    hasData: hasDefaultTokenData,
-    hasSettledRequest: hasSettledTokenRequest && !isLoading,
-  });
+  const { viewState: tokenProjectionViewState } =
+    useAssetProjectionPresentation({
+      identity: {
+        kind: 'token',
+        scene: 'multi-address',
+        runtimeKey: multiAssetsKey,
+      },
+      availability: tokenProjectionAvailability,
+      hasData: hasDefaultTokenData,
+      hasSettledRequest: hasSettledTokenRequest && !isLoading,
+      storeLabel: 'home-multi-assets-token-read-model',
+    });
   const shouldHideCustomTestnetSectionsWhileLoading =
     tokenProjectionViewState === 'loading';
   const visibleCustomTestnetSections =
