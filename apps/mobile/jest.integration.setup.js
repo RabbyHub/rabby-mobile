@@ -19,13 +19,38 @@ jest.mock('react-native-aes-crypto', () => ({
   randomKey: jest.fn(async () => 'integration-test-random-key'),
 }));
 
-jest.mock('axios', () => ({
-  __esModule: true,
-  default: {
+jest.mock('axios', () => {
+  const createInterceptorManager = () => {
+    const handlers = [];
+
+    return {
+      handlers,
+      use: jest.fn((fulfilled, rejected) => {
+        handlers.push({ fulfilled, rejected });
+        return handlers.length - 1;
+      }),
+    };
+  };
+  const createInstance = () => ({
+    defaults: {},
     get: jest.fn(async () => ({ data: {} })),
-  },
-  get: jest.fn(async () => ({ data: {} })),
-}));
+    post: jest.fn(async () => ({ data: {} })),
+    interceptors: {
+      request: createInterceptorManager(),
+      response: createInterceptorManager(),
+    },
+  });
+  const axios = {
+    create: jest.fn(createInstance),
+    get: jest.fn(async () => ({ data: {} })),
+  };
+
+  return {
+    __esModule: true,
+    default: axios,
+    ...axios,
+  };
+});
 
 jest.mock('react-i18next', () => ({
   initReactI18next: {
