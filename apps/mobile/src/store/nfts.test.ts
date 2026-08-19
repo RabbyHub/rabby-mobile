@@ -581,9 +581,13 @@ describe('NFT list refresh semantics', () => {
         inner_id: 'native-committed-inner',
       } as DisplayNftItem;
       const nftId = buildNftEntityId(committed);
-      mockedNftEntity.batchMultAddressNFTs.mockResolvedValueOnce([
+      const pendingLegacySnapshot = createDeferred<DisplayNftItem[]>();
+      mockedNftEntity.batchMultiAddressNFTsByResourceIds.mockResolvedValueOnce([
         committed,
       ] as never);
+      mockedNftEntity.batchMultAddressNFTs.mockReturnValueOnce(
+        pendingLegacySnapshot.promise as never,
+      );
       mockedCompileNftAssetSqlProjection.mockImplementation(
         async ({ scene }) => ({
           ruleVersion: 1,
@@ -602,15 +606,17 @@ describe('NFT list refresh semantics', () => {
         .getState()
         .registerSingleNfts(ADDRESS);
       const completion = dispatchNativeAssetSyncCompletion({
-        schemaVersion: 1,
+        schemaVersion: 2,
         requestId: 'nft-native-publish-1',
         kind: 'nft',
         success: true,
+        outcome: 'complete',
         address: ADDRESS,
         generation: 1,
         committedAt: 100,
         replacementScope: 'address',
         chainIds: [],
+        failedChainIds: [],
         committedRowCount: 1,
         stage: 'persistence',
         error: '',
@@ -620,7 +626,7 @@ describe('NFT list refresh semantics', () => {
       jest.advanceTimersByTime(20);
       await completion;
 
-      expect(nftListStore.getState().nftsMap[ADDRESS]).toEqual([committed]);
+      expect(nftListStore.getState().nftsMap[ADDRESS]).toBeUndefined();
       expect(nftEntityResourceStore.getValue(nftId)).toEqual(
         expect.objectContaining(committed),
       );
@@ -636,6 +642,19 @@ describe('NFT list refresh semantics', () => {
         scene: 'single-address',
         previousRowKeys: [],
       });
+      expect(
+        mockedNftEntity.batchMultiAddressNFTsByResourceIds,
+      ).toHaveBeenCalledWith([nftId]);
+
+      jest.advanceTimersByTime(1);
+      await waitFor(
+        () => mockedNftEntity.batchMultAddressNFTs.mock.calls.length === 1,
+      );
+      pendingLegacySnapshot.resolve([committed]);
+      await waitFor(
+        () => nftListStore.getState().nftsMap[ADDRESS]?.length === 1,
+      );
+      expect(nftListStore.getState().nftsMap[ADDRESS]).toEqual([committed]);
     } finally {
       jest.useRealTimers();
     }

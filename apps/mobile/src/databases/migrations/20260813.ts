@@ -2,9 +2,9 @@ import type { MigrationInterface, QueryRunner } from 'typeorm/browser';
 
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 
-const snapshotTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_snapshot}`;
-const itemTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_item}`;
-const groupItemTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_group_item}`;
+const snapshotTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_snapshot_legacy}`;
+const itemTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_item_legacy}`;
+const groupItemTable = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_group_item_legacy}`;
 
 export class CreateAssetProjectionTables1786566000000
   implements MigrationInterface

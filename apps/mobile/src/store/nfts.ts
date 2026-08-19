@@ -1791,34 +1791,6 @@ const compileNativeNftProjectionTargets = async (
   return compiledTargets;
 };
 
-const buildCombinedNftEntityMap = (
-  nftsMap: Record<string, DisplayNftItem[]>,
-  addresses: string[],
-) => {
-  const entityMap = new Map<NftEntityId, CombinedNftItem>();
-  normalizeAddresses(addresses)
-    .flatMap(address =>
-      (nftsMap[address] || []).map(nft => ({
-        ...nft,
-        address,
-        owner_addr: address,
-      })),
-    )
-    .sort(
-      (left, right) =>
-        Number(
-          (left as CombinedNftItem & { _local_updated_at?: number })
-            ._local_updated_at || 0,
-        ) -
-        Number(
-          (right as CombinedNftItem & { _local_updated_at?: number })
-            ._local_updated_at || 0,
-        ),
-    )
-    .forEach(nft => entityMap.set(buildNftEntityId(nft), nft));
-  return entityMap;
-};
-
 const buildNftIndexFromSqlProjection = (
   projection: NftAssetSqlProjection,
   entityMap: Map<NftEntityId, CombinedNftItem>,
@@ -1883,34 +1855,34 @@ const buildNftIndexFromSqlProjection = (
   return { result, collections };
 };
 
+const scheduleNativeNftLegacyHydration = (addresses: string[]) => {
+  const normalizedAddresses = normalizeAddresses(addresses).sort();
+  if (!normalizedAddresses.length) {
+    return;
+  }
+
+  (async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await nftCacheHydrator.refresh(normalizedAddresses);
+  })().catch(error => {
+    console.warn('[nftProjection] deferred legacy hydration failed', error);
+  });
+};
+
 const publishNativeNftBatch = async (addresses: string[]) => {
   const normalizedAddresses = normalizeAddresses(addresses);
   nftCacheHydrator.invalidate(normalizedAddresses);
-  const snapshots = await loadNftSnapshots(normalizedAddresses);
-  const nextNftsMap = mergeAddressListSnapshots(
-    nftListStore.getState().nftsMap,
-    normalizedAddresses,
-    snapshots,
-  );
   const targets = getNativeNftProjectionTargets(normalizedAddresses);
   const compiledTargets = await compileNativeNftProjectionTargets(targets);
-  const targetAddresses = normalizeAddresses(
-    compiledTargets.flatMap(target =>
-      target.scene === 'single-address'
-        ? [target.params.address]
-        : target.params.addresses,
-    ),
-  );
-  const entityMap = buildCombinedNftEntityMap(nextNftsMap, targetAddresses);
   const requiredResourceIds = Array.from(
     new Set(compiledTargets.flatMap(target => target.projection.resourceIds)),
   ) as NftEntityId[];
-  const missingResourceIds = requiredResourceIds.filter(
-    resourceId => !entityMap.has(resourceId),
-  );
-  const supportingNfts = missingResourceIds.length
-    ? await NFTItemEntity.batchMultiAddressNFTsByResourceIds(missingResourceIds)
+  const supportingNfts = requiredResourceIds.length
+    ? await NFTItemEntity.batchMultiAddressNFTsByResourceIds(
+        requiredResourceIds,
+      )
     : [];
+  const entityMap = new Map<NftEntityId, CombinedNftItem>();
   supportingNfts
     .map(nft => ({
       ...nft,
@@ -1949,11 +1921,6 @@ const publishNativeNftBatch = async (addresses: string[]) => {
   });
 
   withAutomaticNftProjectionSyncSuppressed(() => {
-    nftEntityResourceStore.syncAddressesFromNftsMap(
-      nextNftsMap,
-      normalizedAddresses,
-      'hydrate',
-    );
     nftEntityResourceStore.upsertNfts(
       Array.from(entityMap.values()),
       'hydrate',
@@ -1979,7 +1946,6 @@ const publishNativeNftBatch = async (addresses: string[]) => {
     });
 
     nftListStore.setState(state => ({
-      nftsMap: nextNftsMap,
       sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
         state.sourceSnapshotReadyByAddress,
         normalizedAddresses,
@@ -2031,6 +1997,7 @@ const publishNativeNftBatch = async (addresses: string[]) => {
   publications.forEach(({ target, result }) => {
     scheduleNftProjectionPersistence(target.key, target.scene, result);
   });
+  scheduleNativeNftLegacyHydration(normalizedAddresses);
 };
 
 const nativeNftCommitBatcher = createAddressListCommitBatcher({

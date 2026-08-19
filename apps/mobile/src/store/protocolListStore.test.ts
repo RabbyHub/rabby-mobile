@@ -485,8 +485,12 @@ describe('protocol list request freshness', () => {
     try {
       const committed = createProtocol('native-committed', 42);
       const protocolId = buildProtocolEntityId(committed);
-      mockedProtocolItemEntity.getDefaultProtocolsByAddresses.mockResolvedValueOnce(
-        { [NORMALIZED_ADDRESS]: [committed] } as never,
+      const pendingLegacySnapshot = deferred<Record<string, IProtocolItem[]>>();
+      mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mockResolvedValueOnce(
+        [committed] as never,
+      );
+      mockedProtocolItemEntity.getDefaultProtocolsByAddresses.mockReturnValueOnce(
+        pendingLegacySnapshot.promise as never,
       );
       mockedAppChainEntity.queryByOwners.mockResolvedValueOnce({});
       mockedCompileProtocolAssetSqlProjection.mockResolvedValue({
@@ -501,15 +505,17 @@ describe('protocol list request freshness', () => {
         .getState()
         .registerSingleProtocols(ADDRESS);
       const completion = dispatchNativeAssetSyncCompletion({
-        schemaVersion: 1,
+        schemaVersion: 2,
         requestId: 'protocol-native-publish-1',
         kind: 'protocol',
         success: true,
+        outcome: 'complete',
         address: ADDRESS,
         generation: 1,
         committedAt: 100,
         replacementScope: 'address',
         chainIds: [],
+        failedChainIds: [],
         committedRowCount: 1,
         stage: 'persistence',
         error: '',
@@ -517,6 +523,33 @@ describe('protocol list request freshness', () => {
 
       await Promise.resolve();
       jest.advanceTimersByTime(20);
+      await waitFor(
+        () =>
+          mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mock
+            .calls.length === 1,
+      );
+      await waitFor(
+        () =>
+          useProtocolListComputedStore.getState().singleProtocolsIndexCache[key]
+            ?.protocolIds.length === 1,
+      );
+
+      expect(
+        useProtocolListStore.getState().protocolMap[NORMALIZED_ADDRESS],
+      ).toBeUndefined();
+      expect(protocolEntityResourceStore.getValue(protocolId)).toEqual(
+        committed,
+      );
+
+      jest.advanceTimersByTime(1);
+      await waitFor(
+        () =>
+          mockedProtocolItemEntity.getDefaultProtocolsByAddresses.mock.calls
+            .length === 1,
+      );
+      pendingLegacySnapshot.resolve({
+        [NORMALIZED_ADDRESS]: [committed],
+      });
       await completion;
 
       expect(
@@ -537,6 +570,9 @@ describe('protocol list request freshness', () => {
         chainServerId: undefined,
         scene: 'single-address',
       });
+      expect(
+        mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds,
+      ).toHaveBeenCalledWith([protocolId]);
     } finally {
       jest.useRealTimers();
     }

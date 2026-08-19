@@ -167,6 +167,11 @@ import {
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { getNativeTokenChainSyncEnabled } from '@/hooks/appSettings';
+import {
+  prepareHomeManualAssetRefreshAddresses,
+  shouldReconcileHomeManualAssetRefresh,
+} from '../homeManualAssetRefresh';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -1019,27 +1024,71 @@ export const HomeOverview = React.memo(() => {
     });
   }, [triggerUpdate]);
 
-  const refreshManualHomeBackgroundData = useCallback(async () => {
-    // update at background
-    forceUpdateApprovalAlertCounts();
-    apisLending.fetchLendingData();
-    const forceRefresh = true;
-    void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
-      console.error('[HomeOverview] refresh currency list failed', error);
-    });
+  const dispatchManualHomeAssetRefresh = useCallback(
+    (addresses: readonly string[]) => {
+      const normalizedAddresses =
+        prepareHomeManualAssetRefreshAddresses(addresses);
+      if (!normalizedAddresses.length) {
+        return normalizedAddresses;
+      }
 
-    const top10Addresses = getSelectedBalanceAddressesSnapshot();
-    if (!top10Addresses.length) {
-      return;
+      void useTokenList
+        .getState()
+        .batchGetTokenList(normalizedAddresses, true, 'pull-refresh')
+        .catch(error => {
+          console.error('[HomeOverview] refresh token list failed', error);
+        });
+      void useProtocol
+        .getState()
+        .batchGetProtocols(normalizedAddresses, true)
+        .catch(error => {
+          console.error('[HomeOverview] refresh protocol list failed', error);
+        });
+      return normalizedAddresses;
+    },
+    [],
+  );
+
+  const dispatchEarlyNativeHomeAssetRefresh = useCallback(() => {
+    if (!getNativeTokenChainSyncEnabled()) {
+      return undefined;
     }
-    syncTop10History(top10Addresses, forceRefresh);
+    return dispatchManualHomeAssetRefresh(
+      getSelectedBalanceAddressesSnapshot(),
+    );
+  }, [dispatchManualHomeAssetRefresh]);
 
-    // refresh token/protocol list
-    useTokenList
-      .getState()
-      .batchGetTokenList(top10Addresses, forceRefresh, 'pull-refresh');
-    useProtocol.getState().batchGetProtocols(top10Addresses, forceRefresh);
-  }, []);
+  const refreshManualHomeBackgroundData = useCallback(
+    (earlyAssetAddresses?: readonly string[]) => {
+      // update at background
+      forceUpdateApprovalAlertCounts();
+      apisLending.fetchLendingData();
+      const forceRefresh = true;
+      void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
+        console.error('[HomeOverview] refresh currency list failed', error);
+      });
+
+      const top10Addresses = getSelectedBalanceAddressesSnapshot();
+      if (!top10Addresses.length) {
+        return 'no-addresses' as const;
+      }
+      syncTop10History(top10Addresses, forceRefresh);
+
+      if (
+        shouldReconcileHomeManualAssetRefresh(
+          earlyAssetAddresses,
+          top10Addresses,
+        )
+      ) {
+        dispatchManualHomeAssetRefresh(top10Addresses);
+        return earlyAssetAddresses?.length
+          ? ('reconciled-assets-dispatched' as const)
+          : ('deferred-assets-dispatched' as const);
+      }
+      return 'early-assets-retained' as const;
+    },
+    [dispatchManualHomeAssetRefresh],
+  );
 
   const onRefresh = useCallback(async () => {
     if (!couldDoRefresh()) {
@@ -1047,11 +1096,16 @@ export const HomeOverview = React.memo(() => {
     }
 
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
+    const earlyAssetAddresses = dispatchEarlyNativeHomeAssetRefresh();
     return Promise.all([
       refreshManualBalance(),
       checkGasAccountAddressesEligibility(true),
-    ]).finally(refreshManualHomeBackgroundData);
-  }, [refreshManualBalance, refreshManualHomeBackgroundData]);
+    ]).finally(() => refreshManualHomeBackgroundData(earlyAssetAddresses));
+  }, [
+    dispatchEarlyNativeHomeAssetRefresh,
+    refreshManualBalance,
+    refreshManualHomeBackgroundData,
+  ]);
 
   // 只有手动刷新需要检查跳跃数字是否和刷新前是否一致
   const handleManualPulldownRefresh = useCallback(async () => {
@@ -1064,6 +1118,12 @@ export const HomeOverview = React.memo(() => {
       'home-manual-refresh',
       'home',
     );
+    const earlyAssetAddresses = dispatchEarlyNativeHomeAssetRefresh();
+    if (earlyAssetAddresses?.length) {
+      refreshTrace.mark('asset-refresh-early-dispatched', {
+        addressCount: earlyAssetAddresses.length,
+      });
+    }
     const balanceRefresh = refreshManualBalance();
     const gasAccountRefresh = checkGasAccountAddressesEligibility(true);
     refreshTrace.mark('foreground-requests-dispatched');
@@ -1080,13 +1140,13 @@ export const HomeOverview = React.memo(() => {
       gasAccountRefresh,
     ]).finally(() => {
       refreshTrace.mark('foreground-requests-settled');
-      refreshTrace.mark('asset-refresh-dispatch-started');
-      return refreshManualHomeBackgroundData();
+      const backgroundResult =
+        refreshManualHomeBackgroundData(earlyAssetAddresses);
+      refreshTrace.mark(backgroundResult);
     });
     const safeFullRefresh = fullRefresh.then(
       () => {
-        refreshTrace.mark('asset-refresh-dispatched');
-        refreshTrace.finish({ path: 'manual-refresh-dispatched' });
+        refreshTrace.finish({ path: 'manual-refresh-complete' });
       },
       error => {
         refreshTrace.fail({ phase: 'manual-refresh' });
@@ -1100,7 +1160,11 @@ export const HomeOverview = React.memo(() => {
       console.error('Refresh balance failed:', error);
     });
     await Promise.race([safeFullRefresh, sleep(3000)]);
-  }, [refreshManualBalance, refreshManualHomeBackgroundData]);
+  }, [
+    dispatchEarlyNativeHomeAssetRefresh,
+    refreshManualBalance,
+    refreshManualHomeBackgroundData,
+  ]);
 
   // Regression scenarios call the same refresh path as the native pull-down
   // control. The production alias is a no-op, so this has no release behavior.

@@ -5,7 +5,7 @@ import {
   Column,
   Entity,
   Index,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm/browser';
 
 import { ORM_TABLE_NAMES } from '../constant';
@@ -20,17 +20,17 @@ export type AssetProjectionRowType =
   | 'nft-collection';
 
 @Index(
-  'IDX_projection_snapshot_key_generation',
+  'IDX_projection_snapshot_20260818_key_generation',
   ['projection_key', 'generation'],
   {
     unique: true,
   },
 )
-@Index('IDX_projection_snapshot_committed_at', ['committed_at'])
+@Index('IDX_projection_snapshot_20260818_committed_at', ['committed_at'])
 @Entity(ORM_TABLE_NAMES.projection_snapshot)
 export class AssetProjectionSnapshotEntity extends BaseEntity {
-  @PrimaryColumn({ type: 'text' })
-  _db_id: string = '';
+  @PrimaryGeneratedColumn({ type: 'integer' })
+  _db_id!: number;
 
   @Column({ type: 'text' })
   projection_key: string = '';
@@ -58,30 +58,23 @@ export class AssetProjectionSnapshotEntity extends BaseEntity {
 
   @Column({ type: 'integer' })
   committed_at: number = 0;
-
-  static buildDbId(projectionKey: string, generation: number) {
-    return JSON.stringify([projectionKey, generation]);
-  }
 }
 
 @Index(
-  'IDX_projection_item_key_generation_position',
-  ['projection_key', 'generation', 'position'],
+  'IDX_projection_item_20260818_snapshot_position',
+  ['snapshot_id', 'position'],
   {
     unique: true,
   },
 )
-@Index('IDX_projection_item_row_id', ['row_id'])
+@Index('IDX_projection_item_20260818_row_id', ['row_id'])
 @Entity(ORM_TABLE_NAMES.projection_item)
 export class AssetProjectionItemEntity extends BaseEntity {
-  @PrimaryColumn({ type: 'text' })
-  _db_id: string = '';
-
-  @Column({ type: 'text' })
-  projection_key: string = '';
+  @PrimaryGeneratedColumn({ type: 'integer' })
+  _db_id!: number;
 
   @Column({ type: 'integer' })
-  generation: number = 0;
+  snapshot_id: number = 0;
 
   @Column({ type: 'integer' })
   position: number = 0;
@@ -91,34 +84,23 @@ export class AssetProjectionItemEntity extends BaseEntity {
 
   @Column({ type: 'text' })
   row_id: string = '';
-
-  static buildDbId(
-    projectionKey: string,
-    generation: number,
-    position: number,
-  ) {
-    return JSON.stringify([projectionKey, generation, position]);
-  }
 }
 
 @Index(
-  'IDX_projection_group_item_key_generation_group_position',
-  ['projection_key', 'generation', 'group_id', 'position'],
+  'IDX_projection_group_item_20260818_snapshot_group_position',
+  ['snapshot_id', 'group_id', 'position'],
   {
     unique: true,
   },
 )
-@Index('IDX_projection_group_item_member_id', ['member_id'])
+@Index('IDX_projection_group_item_20260818_member_id', ['member_id'])
 @Entity(ORM_TABLE_NAMES.projection_group_item)
 export class AssetProjectionGroupItemEntity extends BaseEntity {
-  @PrimaryColumn({ type: 'text' })
-  _db_id: string = '';
-
-  @Column({ type: 'text' })
-  projection_key: string = '';
+  @PrimaryGeneratedColumn({ type: 'integer' })
+  _db_id!: number;
 
   @Column({ type: 'integer' })
-  generation: number = 0;
+  snapshot_id: number = 0;
 
   @Column({ type: 'text' })
   group_id: string = '';
@@ -128,13 +110,4 @@ export class AssetProjectionGroupItemEntity extends BaseEntity {
 
   @Column({ type: 'text' })
   member_id: string = '';
-
-  static buildDbId(
-    projectionKey: string,
-    generation: number,
-    groupId: string,
-    position: number,
-  ) {
-    return JSON.stringify([projectionKey, generation, groupId, position]);
-  }
 }

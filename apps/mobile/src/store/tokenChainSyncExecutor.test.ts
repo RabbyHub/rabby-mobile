@@ -34,15 +34,17 @@ import {
 } from './tokenChainSyncExecutor';
 
 const mockNativeSuccess = {
-  schemaVersion: 1 as const,
+  schemaVersion: 2 as const,
   requestId: 'native-token-request-7',
   kind: 'token' as const,
   success: true,
+  outcome: 'complete' as const,
   address: '0xabc',
   generation: 7,
   committedAt: 1234,
   replacementScope: 'chains' as const,
   chainIds: ['eth', 'arb'],
+  failedChainIds: [],
   committedRowCount: 3,
   stage: 'persistence',
   error: '',

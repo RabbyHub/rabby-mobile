@@ -372,7 +372,7 @@ describe('asset projection persistence', () => {
     ).resolves.toBeNull();
   });
 
-  it('keeps only the latest three complete generations', async () => {
+  it('atomically keeps only the latest three complete generations', async () => {
     dataSource = await createMemoryAppDataSource();
     for (let generation = 1; generation <= 5; generation += 1) {
       await persistAssetProjection(
@@ -386,13 +386,6 @@ describe('asset projection persistence', () => {
         dataSource,
       );
     }
-
-    const cleanup = await cleanupAssetProjectionGenerations(
-      PROJECTION_KEY,
-      3,
-      dataSource,
-    );
-    expect(cleanup.deletedGenerations).toEqual([2, 1]);
 
     const snapshots = await dataSource
       .getRepository(AssetProjectionSnapshotEntity)
@@ -438,8 +431,11 @@ describe('asset projection persistence', () => {
       },
       dataSource,
     );
+    const snapshot = await dataSource
+      .getRepository(AssetProjectionSnapshotEntity)
+      .findOneByOrFail({ projection_key: PROJECTION_KEY, generation: 1 });
     await dataSource.getRepository(AssetProjectionItemEntity).delete({
-      projection_key: PROJECTION_KEY,
+      snapshot_id: snapshot._db_id,
       position: 1,
     });
 
@@ -471,9 +467,11 @@ describe('asset projection persistence', () => {
       },
       dataSource,
     );
+    const latestSnapshot = await dataSource
+      .getRepository(AssetProjectionSnapshotEntity)
+      .findOneByOrFail({ projection_key: PROJECTION_KEY, generation: 2 });
     await dataSource.getRepository(AssetProjectionItemEntity).delete({
-      projection_key: PROJECTION_KEY,
-      generation: 2,
+      snapshot_id: latestSnapshot._db_id,
       position: 1,
     });
 

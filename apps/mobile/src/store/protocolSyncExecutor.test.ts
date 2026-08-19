@@ -61,15 +61,17 @@ describe('protocolSyncExecutor', () => {
 
   it('waits for the native protocol commit to be applied', async () => {
     const completion = {
-      schemaVersion: 1 as const,
+      schemaVersion: 2 as const,
       requestId: 'protocol-request',
       kind: 'protocol' as const,
       success: true,
+      outcome: 'complete' as const,
       address: '0x0000000000000000000000000000000000000001',
       generation: 2,
       committedAt: 10,
       replacementScope: 'address' as const,
       chainIds: [],
+      failedChainIds: [],
       committedRowCount: 3,
       stage: 'persistence',
       error: '',

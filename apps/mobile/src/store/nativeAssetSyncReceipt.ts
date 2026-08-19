@@ -2,17 +2,20 @@ export const NATIVE_ASSET_SYNC_KINDS = ['token', 'protocol', 'nft'] as const;
 
 export type NativeAssetSyncKind = (typeof NATIVE_ASSET_SYNC_KINDS)[number];
 export type NativeAssetReplacementScope = 'address' | 'chains';
+export type NativeAssetSyncOutcome = 'complete' | 'partial' | 'failed';
 
 export type NativeAssetSyncCompletion = Readonly<{
-  schemaVersion: 1;
+  schemaVersion: 2;
   requestId: string;
   kind: NativeAssetSyncKind;
   success: boolean;
+  outcome: NativeAssetSyncOutcome;
   address: string;
   generation: number;
   committedAt: number;
   replacementScope: NativeAssetReplacementScope;
   chainIds: string[];
+  failedChainIds: string[];
   committedRowCount: number;
   stage: string;
   error: string;
@@ -85,11 +88,16 @@ const readInteger = (
 const isNativeAssetSyncKind = (value: unknown): value is NativeAssetSyncKind =>
   NATIVE_ASSET_SYNC_KINDS.includes(value as NativeAssetSyncKind);
 
+const isNativeAssetSyncOutcome = (
+  value: unknown,
+): value is NativeAssetSyncOutcome =>
+  value === 'complete' || value === 'partial' || value === 'failed';
+
 export const normalizeNativeAssetSyncCompletion = (
   input: unknown,
 ): NativeAssetSyncCompletion => {
   const record = asRecord(input);
-  if (record.schemaVersion !== 1) {
+  if (record.schemaVersion !== 2) {
     throw new Error('Native asset sync completion schema is unsupported');
   }
   if (!isNativeAssetSyncKind(record.kind)) {
@@ -97,6 +105,12 @@ export const normalizeNativeAssetSyncCompletion = (
   }
   if (typeof record.success !== 'boolean') {
     throw new Error('Native asset sync completion has invalid success');
+  }
+  if (!isNativeAssetSyncOutcome(record.outcome)) {
+    throw new Error('Native asset sync completion has invalid outcome');
+  }
+  if (record.success !== (record.outcome !== 'failed')) {
+    throw new Error('Native asset sync completion outcome is inconsistent');
   }
   if (
     record.replacementScope !== 'address' &&
@@ -113,12 +127,32 @@ export const normalizeNativeAssetSyncCompletion = (
     throw new Error('Native asset sync completion has invalid chainIds');
   }
   if (
+    !Array.isArray(record.failedChainIds) ||
+    record.failedChainIds.some(
+      chainId => typeof chainId !== 'string' || !chainId,
+    )
+  ) {
+    throw new Error('Native asset sync completion has invalid failedChainIds');
+  }
+  if (
     record.kind !== 'token' &&
-    (record.replacementScope !== 'address' || record.chainIds.length > 0)
+    (record.replacementScope !== 'address' ||
+      record.chainIds.length > 0 ||
+      record.failedChainIds.length > 0 ||
+      record.outcome === 'partial')
   ) {
     throw new Error(
       `Native ${record.kind} sync completion must replace one address`,
     );
+  }
+  if (
+    record.outcome === 'partial' &&
+    (record.kind !== 'token' ||
+      record.replacementScope !== 'chains' ||
+      record.chainIds.length === 0 ||
+      record.failedChainIds.length === 0)
+  ) {
+    throw new Error('Partial native token sync completion is invalid');
   }
 
   const committedAt = readInteger(record, 'committedAt');
@@ -129,15 +163,17 @@ export const normalizeNativeAssetSyncCompletion = (
   }
 
   return Object.freeze({
-    schemaVersion: 1,
+    schemaVersion: 2,
     requestId: readString(record, 'requestId'),
     kind: record.kind,
     success: record.success,
+    outcome: record.outcome,
     address: readString(record, 'address').toLowerCase(),
     generation: readInteger(record, 'generation'),
     committedAt,
     replacementScope: record.replacementScope,
     chainIds: Array.from(new Set(record.chainIds)),
+    failedChainIds: Array.from(new Set(record.failedChainIds)),
     committedRowCount: readInteger(record, 'committedRowCount'),
     stage: readString(record, 'stage'),
     error: readString(record, 'error', true),

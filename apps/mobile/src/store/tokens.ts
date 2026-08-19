@@ -3967,6 +3967,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           const realTimeTokenMap: Record<string, ITokenItem[]> = {};
           const completeRealTimeTokenMap: Record<string, ITokenItem[]> = {};
           const nativeCommittedAddresses = new Set<string>();
+          const nativeCompleteAddresses = new Set<string>();
           const tokenChainSyncMode = getTokenChainSyncMode();
           const realTimeTokenQueue = new PQueue({
             concurrency: 15,
@@ -4015,6 +4016,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
               if (syncExecution.mode === 'native') {
                 nativeCommittedAddresses.add(address);
+                if (syncExecution.result.outcome === 'complete') {
+                  nativeCompleteAddresses.add(address);
+                }
                 return;
               }
 
@@ -4063,6 +4067,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             usedChainListSucceededAddressCount,
             requestedChainCount,
             syncMode: tokenChainSyncMode,
+            nativePartialAddressCount:
+              nativeCommittedAddresses.size - nativeCompleteAddresses.size,
           });
 
           const nativeApplicableAddresses = getCurrentAddresses().filter(
@@ -4071,15 +4077,20 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           if (nativeApplicableAddresses.length) {
             trace.mark('native-snapshots-published', {
               addressCount: nativeApplicableAddresses.length,
+              completeAddressCount: nativeApplicableAddresses.filter(address =>
+                nativeCompleteAddresses.has(address),
+              ).length,
               itemCount: nativeApplicableAddresses.reduce(
                 (count, address) =>
                   count + (get().tokenListMap[address]?.length || 0),
                 0,
               ),
             });
-            nativeApplicableAddresses.forEach(address =>
-              completedAddresses.add(address),
-            );
+            nativeApplicableAddresses.forEach(address => {
+              if (nativeCompleteAddresses.has(address)) {
+                completedAddresses.add(address);
+              }
+            });
           }
 
           const remoteApplicableAddresses = getCurrentAddresses().filter(
@@ -4456,9 +4467,13 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             trace.mark('native-snapshot-published', {
               itemCount,
               committedRowCount: syncExecution.result.committedRowCount,
+              outcome: syncExecution.result.outcome,
+              failedChainCount: syncExecution.result.failedChainIds.length,
             });
             trace.finish({ path: 'native-remote', itemCount });
-            return { status: 'complete', source: 'native' };
+            return syncExecution.result.outcome === 'complete'
+              ? { status: 'complete', source: 'native' }
+              : { status: 'partial', source: 'native' };
           }
 
           const results = syncExecution.value;
@@ -4656,56 +4671,17 @@ const compileNativeTokenProjectionTargets = async (
   return compiledTargets;
 };
 
-const collectTokenIdsForAddresses = (addresses: string[]) => {
-  const tokenIndexState = useTokenIndexStore.getState();
-  const seen = new Set<TokenEntityId>();
-  return normalizeAddresses(addresses).flatMap(address =>
-    (tokenIndexState.addressTokenIds[address] || []).filter(tokenId => {
-      if (seen.has(tokenId)) {
-        return false;
-      }
-      seen.add(tokenId);
-      return true;
-    }),
-  );
-};
-
-const includeProjectionResourceIds = (
-  tokenIds: TokenEntityId[],
-  projection: TokenAssetSqlProjection,
-) => {
-  const seen = new Set(tokenIds);
-  const nextTokenIds = tokenIds.slice();
-  projection.resourceIds.forEach(resourceId => {
-    const tokenId = resourceId as TokenEntityId;
-    if (!seen.has(tokenId)) {
-      seen.add(tokenId);
-      nextTokenIds.push(tokenId);
-    }
-  });
-  return nextTokenIds;
-};
-
 const publishCompiledNativeTokenProjections = ({
   address,
   completion,
   compiledTargets,
-  committedTokens,
-  canonicalCommittedTokens,
-  supportingTokens,
+  projectionTokens,
 }: {
   address: string;
   completion: NativeAssetSyncCompletion;
   compiledTargets: CompiledNativeTokenProjectionTarget[];
-  committedTokens: ITokenItem[];
-  canonicalCommittedTokens: ITokenItem[];
-  supportingTokens: ITokenItem[];
+  projectionTokens: ITokenItem[];
 }) => {
-  const currentTokenListState = tokenListStore.getState();
-  const nextTokenListMap = {
-    ...currentTokenListState.tokenListMap,
-    [address]: committedTokens,
-  };
   const publications: Array<{
     target: NativeTokenProjectionTarget;
     config: SingleTokenAssetsIndexConfig | MultiTokenAssetsIndexConfig;
@@ -4713,16 +4689,8 @@ const publishCompiledNativeTokenProjections = ({
   }> = [];
 
   withAutomaticTokenProjectionSyncSuppressed(() => {
-    syncTokenRuntimeStoresFromTokenListMap(
-      nextTokenListMap,
-      [address],
-      'hydrate',
-      { markTokenListMapSynced: true },
-    );
-    tokenEntityResourceStore.upsertTokens(canonicalCommittedTokens, 'hydrate');
-    tokenEntityResourceStore.upsertTokens(supportingTokens, 'hydrate');
+    tokenEntityResourceStore.upsertTokens(projectionTokens, 'hydrate');
     tokenListStore.setState(state => ({
-      tokenListMap: nextTokenListMap,
       sourceSnapshotReadyByAddress:
         completion.replacementScope === 'address'
           ? markAssetSourceSnapshotsReady(state.sourceSnapshotReadyByAddress, [
@@ -4743,14 +4711,15 @@ const publishCompiledNativeTokenProjections = ({
         );
       }
 
-      const sourceAddresses =
-        target.scene === 'single-address'
-          ? [target.config.address]
-          : target.config.addresses;
-      const tokenIds = includeProjectionResourceIds(
-        collectTokenIdsForAddresses(sourceAddresses),
-        target.projection,
-      );
+      const projectedTokenIds = target.projection
+        .resourceIds as TokenEntityId[];
+      const tokenIds =
+        target.config.tokenIds.length === projectedTokenIds.length &&
+        target.config.tokenIds.every(
+          (tokenId, index) => tokenId === projectedTokenIds[index],
+        )
+          ? target.config.tokenIds
+          : projectedTokenIds;
       const nextConfig =
         target.scene === 'single-address'
           ? { ...target.config, tokenIds }
@@ -4816,6 +4785,15 @@ const publishCompiledNativeTokenProjections = ({
         ? target.config.tokenDisplayMode
         : undefined,
     );
+  });
+};
+
+const scheduleNativeTokenLegacyHydration = (address: string) => {
+  (async () => {
+    await yieldTokenProjectionEntityRestore();
+    await tokenCacheHydrator.refresh([address]);
+  })().catch(error => {
+    console.warn('[tokenProjection] deferred legacy hydration failed', error);
   });
 };
 
@@ -4895,44 +4873,28 @@ const applyNativeTokenCommit = async (
     });
 
     tokenCacheHydrator.invalidate([normalizedAddress]);
-    const committedEntities = await TokenItemEntity.batchMultiAddressTokens([
-      normalizedAddress,
-    ]);
-    const committedTokens = (committedEntities as TokenItemEntity[]).map(
-      tokenItemEntityToTokenItem,
-    );
-    const canonicalCommittedTokens = selectCanonicalTokenEntities(
-      committedEntities as TokenItemEntity[],
-    ).map(tokenItemEntityToTokenItem);
-    const committedResourceIds = new Set(
-      committedTokens.map(buildTokenEntityId),
-    );
-    const missingResourceIds = Array.from(
+    const requiredResourceIds = Array.from(
       new Set(compiledTargets.flatMap(target => target.projection.resourceIds)),
-    ).filter(
-      resourceId =>
-        !committedResourceIds.has(resourceId as TokenEntityId) &&
-        !tokenEntityResourceStore.getValue(resourceId as TokenEntityId),
     );
-    const supportingEntities = missingResourceIds.length
+    const projectionEntities = requiredResourceIds.length
       ? await TokenItemEntity.batchMultiAddressTokensByResourceIds(
-          missingResourceIds,
+          requiredResourceIds,
         )
       : [];
-    const supportingTokensById = new Map(
-      selectCanonicalTokenEntities(supportingEntities as TokenItemEntity[]).map(
+    const projectionTokensById = new Map(
+      selectCanonicalTokenEntities(projectionEntities as TokenItemEntity[]).map(
         entity => {
           const token = tokenItemEntityToTokenItem(entity);
           return [buildTokenEntityId(token), token] as const;
         },
       ),
     );
-    const supportingTokens = missingResourceIds
-      .map(resourceId => supportingTokensById.get(resourceId as TokenEntityId))
+    const projectionTokens = requiredResourceIds
+      .map(resourceId => projectionTokensById.get(resourceId as TokenEntityId))
       .filter((token): token is ITokenItem => !!token);
-    if (supportingTokens.length !== missingResourceIds.length) {
+    if (projectionTokens.length !== requiredResourceIds.length) {
       throw new Error(
-        `Token SQL projection entities are incomplete: ${supportingTokens.length}/${missingResourceIds.length}`,
+        `Token SQL projection entities are incomplete: ${projectionTokens.length}/${requiredResourceIds.length}`,
       );
     }
 
@@ -4940,14 +4902,13 @@ const applyNativeTokenCommit = async (
       address: normalizedAddress,
       completion,
       compiledTargets,
-      committedTokens,
-      canonicalCommittedTokens,
-      supportingTokens,
+      projectionTokens,
     });
+    scheduleNativeTokenLegacyHydration(normalizedAddress);
     trace.finish({
       path: 'sql-projection',
-      itemCount: committedTokens.length,
-      supportingItemCount: supportingTokens.length,
+      itemCount: projectionTokens.length,
+      deferredLegacyHydration: true,
     });
   } catch (error) {
     trace.fail({ path: 'js-fallback' });

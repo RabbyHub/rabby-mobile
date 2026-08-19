@@ -10,15 +10,17 @@ import {
 const completion = (
   overrides: Partial<NativeAssetSyncCompletion> = {},
 ): NativeAssetSyncCompletion => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   requestId: 'request-1',
   kind: 'token',
   success: true,
+  outcome: 'complete',
   address: '0xAbC',
   generation: 7,
   committedAt: 1234,
   replacementScope: 'address',
   chainIds: ['eth'],
+  failedChainIds: [],
   committedRowCount: 3,
   stage: 'persistence',
   error: '',
@@ -147,6 +149,7 @@ describe('nativeAssetSyncReceipt', () => {
     registerNativeAssetSyncHandler('token', apply);
     const failed = completion({
       success: false,
+      outcome: 'failed',
       committedAt: 0,
       committedRowCount: 0,
       stage: 'token_lists',
@@ -160,6 +163,29 @@ describe('nativeAssetSyncReceipt', () => {
       'HTTP 429',
     );
     expect(apply).not.toHaveBeenCalled();
+  });
+
+  it('publishes a partial token commit without marking failed chains replaced', async () => {
+    const apply = jest.fn();
+    registerNativeAssetSyncHandler('token', apply);
+    const partial = completion({
+      outcome: 'partial',
+      replacementScope: 'chains',
+      chainIds: ['eth'],
+      failedChainIds: ['arb'],
+      error: 'token-list request failed for chain arb: HTTP 429',
+    });
+
+    await expect(dispatchNativeAssetSyncCompletion(partial)).resolves.toEqual(
+      expect.objectContaining({ outcome: 'partial' }),
+    );
+    expect(apply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replacementScope: 'chains',
+        chainIds: ['eth'],
+        failedChainIds: ['arb'],
+      }),
+    );
   });
 
   it('times out one waiter without cancelling a late native commit', async () => {

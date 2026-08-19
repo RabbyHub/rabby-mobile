@@ -98,6 +98,10 @@ import {
 import { getAssetReadModel, resetAssetReadModels } from './assetReadModel';
 import { notifySyncAbortHandlers } from '@/databases/sync/abort';
 import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
+import {
+  executeTokenChainSync,
+  getTokenChainSyncMode,
+} from './tokenChainSyncExecutor';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -118,6 +122,8 @@ const mockedScheduleAssetProjectionPersistence = jest.mocked(
   scheduleAssetProjectionPersistence,
 );
 const mockedRestoreAssetProjection = jest.mocked(restoreAssetProjection);
+const mockedExecuteTokenChainSync = jest.mocked(executeTokenChainSync);
+const mockedGetTokenChainSyncMode = jest.mocked(getTokenChainSyncMode);
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -1562,6 +1568,65 @@ describe('single-address token assets projection', () => {
     expect(mockedUsedChainList).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps a multi-address native partial refresh source-incomplete', async () => {
+    const cached = createToken('native-partial-multi-cached', {
+      chain: 'arb',
+      usd_value: 4,
+    });
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: {},
+    });
+    replaceAddressTokens([cached]);
+    const key = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    mockedUsedChainList.mockResolvedValueOnce([
+      { id: 'eth' },
+      { id: 'arb' },
+    ] as never);
+    mockedGetTokenChainSyncMode.mockReturnValueOnce('native');
+    mockedExecuteTokenChainSync.mockResolvedValueOnce({
+      mode: 'native',
+      result: {
+        schemaVersion: 2,
+        requestId: 'native-partial-multi',
+        kind: 'token',
+        success: true,
+        outcome: 'partial',
+        address: ADDRESS,
+        generation: 1,
+        committedAt: 100,
+        replacementScope: 'chains',
+        chainIds: ['eth', 'arb'],
+        failedChainIds: ['arb'],
+        committedRowCount: 1,
+        stage: 'persistence',
+        error: '',
+      },
+    } as never);
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(
+      tokenListStore.getState().sourceSnapshotReadyByAddress,
+    ).not.toHaveProperty(NORMALIZED_ADDRESS);
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'multi-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'stale',
+        hasData: true,
+        lastError: 'source-incomplete',
+      }),
+    );
+  });
+
   it('keeps the previous snapshot when chain discovery is rate limited', async () => {
     const cached = createToken('cached', {
       chain: 'eth',
@@ -1786,9 +1851,13 @@ describe('single-address token assets projection', () => {
   it('publishes one native database commit through the receipt subscriber', async () => {
     const nativeToken = createToken('native-token', { usd_value: 9 });
     const nativeTokenId = buildTokenEntityId(nativeToken);
-    mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
-      nativeToken,
-    ] as never);
+    const pendingLegacySnapshot = deferred<ITokenItem[]>();
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+      [nativeToken] as never,
+    );
+    mockedTokenItemEntity.batchMultiAddressTokens.mockReturnValueOnce(
+      pendingLegacySnapshot.promise as never,
+    );
     mockedCompileTokenAssetSqlProjection.mockResolvedValueOnce({
       ruleVersion: 1,
       scene: 'single-address',
@@ -1810,26 +1879,31 @@ describe('single-address token assets projection', () => {
     const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
 
     await dispatchNativeAssetSyncCompletion({
-      schemaVersion: 1,
+      schemaVersion: 2,
       requestId: 'native-token-projection-request',
       kind: 'token',
       success: true,
+      outcome: 'complete',
       address: ADDRESS,
       generation: 11,
       committedAt: 5678,
       replacementScope: 'address',
       chainIds: ['eth'],
+      failedChainIds: [],
       committedRowCount: 1,
       stage: 'persistence',
       error: '',
     });
 
-    expect(mockedTokenItemEntity.batchMultiAddressTokens).toHaveBeenCalledTimes(
-      1,
-    );
-    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+    expect(
+      mockedTokenItemEntity.batchMultiAddressTokensByResourceIds,
+    ).toHaveBeenCalledWith([nativeTokenId]);
+    expect(
+      tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS],
+    ).toBeUndefined();
+    expect(tokenEntityResourceStore.getValue(nativeTokenId)).toEqual(
       nativeToken,
-    ]);
+    );
     expect(
       tokenListStore.getState().sourceSnapshotReadyByAddress[
         NORMALIZED_ADDRESS
@@ -1858,6 +1932,20 @@ describe('single-address token assets projection', () => {
         rowCount: 1,
       }),
     );
+
+    await waitForNextTask();
+    await waitFor(
+      () => mockedTokenItemEntity.batchMultiAddressTokens.mock.calls.length > 0,
+    );
+    pendingLegacySnapshot.resolve([nativeToken]);
+    await waitFor(
+      () =>
+        tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]?.length ===
+        1,
+    );
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      nativeToken,
+    ]);
   });
 
   it('falls back to the existing JS projection when native SQL projection compilation fails', async () => {
@@ -1874,15 +1962,17 @@ describe('single-address token assets projection', () => {
     const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
 
     await dispatchNativeAssetSyncCompletion({
-      schemaVersion: 1,
+      schemaVersion: 2,
       requestId: 'native-token-projection-fallback-request',
       kind: 'token',
       success: true,
+      outcome: 'complete',
       address: ADDRESS,
       generation: 12,
       committedAt: 6789,
       replacementScope: 'address',
       chainIds: ['eth'],
+      failedChainIds: [],
       committedRowCount: 1,
       stage: 'persistence',
       error: '',
@@ -1979,6 +2069,62 @@ describe('single-address token assets projection', () => {
       }),
     );
     consoleError.mockRestore();
+  });
+
+  it('keeps a single-address native partial refresh source-incomplete', async () => {
+    const cached = createToken('native-partial-single-cached', {
+      chain: 'arb',
+      usd_value: 3,
+    });
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: {},
+    });
+    replaceAddressTokens([cached]);
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+    mockedUsedChainList.mockResolvedValueOnce([
+      { id: 'eth' },
+      { id: 'arb' },
+    ] as never);
+    mockedGetTokenChainSyncMode.mockReturnValueOnce('native');
+    mockedExecuteTokenChainSync.mockResolvedValueOnce({
+      mode: 'native',
+      result: {
+        schemaVersion: 2,
+        requestId: 'native-partial-single',
+        kind: 'token',
+        success: true,
+        outcome: 'partial',
+        address: ADDRESS,
+        generation: 2,
+        committedAt: 200,
+        replacementScope: 'chains',
+        chainIds: ['eth', 'arb'],
+        failedChainIds: ['arb'],
+        committedRowCount: 1,
+        stage: 'persistence',
+        error: '',
+      },
+    } as never);
+
+    await tokenListStore.getState().getTokenList(ADDRESS, true);
+
+    expect(
+      tokenListStore.getState().sourceSnapshotReadyByAddress,
+    ).not.toHaveProperty(NORMALIZED_ADDRESS);
+    expect(
+      getAssetReadModel({
+        kind: 'token',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'stale',
+        hasData: true,
+        lastError: 'source-incomplete',
+      }),
+    );
   });
 
   it('publishes and persists a successful empty token snapshot', async () => {

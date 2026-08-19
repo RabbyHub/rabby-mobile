@@ -10,10 +10,10 @@ import {
 } from './entities/assetProjection';
 import { prepareAppDataSource } from './imports';
 
-export const ASSET_PROJECTION_RULE_VERSION = 3;
+export const ASSET_PROJECTION_RULE_VERSION = 4;
 export const ASSET_PROJECTION_GENERATIONS_TO_KEEP = 3;
 
-// Projection rows have six persisted columns. Keep one insert below SQLite's
+// Projection rows have at most five persisted columns. Keep one insert below SQLite's
 // conservative 999-variable limit while preserving one transaction per generation.
 const ASSET_PROJECTION_INSERT_BATCH_SIZE = 100;
 
@@ -108,6 +108,41 @@ const insertInBatches = async <T>(
   }
 };
 
+const deleteStaleAssetProjectionGenerations = async (
+  manager: EntityManager,
+  projectionKey: string,
+  generationsToKeep: number,
+) => {
+  const retainCount = Math.max(1, Math.floor(generationsToKeep));
+  const snapshotRepository = manager.getRepository(
+    AssetProjectionSnapshotEntity,
+  );
+  const itemRepository = manager.getRepository(AssetProjectionItemEntity);
+  const groupItemRepository = manager.getRepository(
+    AssetProjectionGroupItemEntity,
+  );
+  const snapshots = await snapshotRepository.find({
+    where: { projection_key: projectionKey },
+    order: { generation: 'DESC' },
+  });
+  const staleSnapshots = snapshots.slice(retainCount);
+  const staleSnapshotIds = staleSnapshots.map(snapshot => snapshot._db_id);
+
+  if (staleSnapshotIds.length) {
+    await groupItemRepository.delete({
+      snapshot_id: In(staleSnapshotIds),
+    });
+    await itemRepository.delete({
+      snapshot_id: In(staleSnapshotIds),
+    });
+    await snapshotRepository.delete({
+      _db_id: In(staleSnapshotIds),
+    });
+  }
+
+  return staleSnapshots.map(snapshot => snapshot.generation);
+};
+
 export async function persistAssetProjection(
   input: PersistAssetProjectionInput,
   dataSource?: DataSource,
@@ -135,15 +170,34 @@ export async function persistAssetProjection(
       .getRawOne<{ maxGeneration?: number | string | null }>();
     const generation = Number(rawGeneration?.maxGeneration || 0) + 1;
 
-    const items = input.rows.map((row, position) =>
-      itemRepository.create({
-        _db_id: AssetProjectionItemEntity.buildDbId(
-          input.projectionKey,
-          generation,
-          position,
-        ),
+    // Keep serialization inside the transaction: a malformed metadata value
+    // must roll back the complete generation.
+    const metadataJson = JSON.stringify(input.metadata || {});
+    const committedAt = Date.now();
+    const groupItemCount = (input.groups || []).reduce(
+      (count, group) => count + group.memberIds.length,
+      0,
+    );
+    const snapshot = await snapshotRepository.save(
+      snapshotRepository.create({
         projection_key: input.projectionKey,
         generation,
+        projection_kind: input.kind,
+        scene: input.scene,
+        rule_version: ruleVersion,
+        item_count: input.rows.length,
+        group_item_count: groupItemCount,
+        metadata_json: metadataJson,
+        committed_at: committedAt,
+      }),
+    );
+    if (!Number.isSafeInteger(snapshot._db_id) || snapshot._db_id <= 0) {
+      throw new Error('Asset projection snapshot id is invalid');
+    }
+
+    const items = input.rows.map((row, position) =>
+      itemRepository.create({
+        snapshot_id: snapshot._db_id,
         position,
         row_type: row.type,
         row_id: row.id,
@@ -156,14 +210,7 @@ export async function persistAssetProjection(
     const groupItems = (input.groups || []).flatMap(group =>
       group.memberIds.map((memberId, position) =>
         groupItemRepository.create({
-          _db_id: AssetProjectionGroupItemEntity.buildDbId(
-            input.projectionKey,
-            generation,
-            group.id,
-            position,
-          ),
-          projection_key: input.projectionKey,
-          generation,
+          snapshot_id: snapshot._db_id,
           group_id: group.id,
           position,
           member_id: memberId,
@@ -176,26 +223,13 @@ export async function persistAssetProjection(
       );
     }
 
-    // Keep serialization inside the transaction: a malformed metadata value
-    // must roll back item rows rather than leave an unpublished generation.
-    const metadataJson = JSON.stringify(input.metadata || {});
-    const committedAt = Date.now();
-    await snapshotRepository.insert(
-      snapshotRepository.create({
-        _db_id: AssetProjectionSnapshotEntity.buildDbId(
-          input.projectionKey,
-          generation,
-        ),
-        projection_key: input.projectionKey,
-        generation,
-        projection_kind: input.kind,
-        scene: input.scene,
-        rule_version: ruleVersion,
-        item_count: items.length,
-        group_item_count: groupItems.length,
-        metadata_json: metadataJson,
-        committed_at: committedAt,
-      }),
+    // Retention is part of the generation commit. A newer projection may
+    // supersede its scheduling task immediately after this transaction, but
+    // it must never leave an extra generation behind.
+    await deleteStaleAssetProjectionGenerations(
+      manager,
+      input.projectionKey,
+      ASSET_PROJECTION_GENERATIONS_TO_KEEP,
     );
 
     return { generation, committedAt };
@@ -227,15 +261,13 @@ export async function restoreLatestAssetProjection(
     const [items, groupItems] = await Promise.all([
       source.getRepository(AssetProjectionItemEntity).find({
         where: {
-          projection_key: projectionKey,
-          generation: snapshot.generation,
+          snapshot_id: snapshot._db_id,
         },
         order: { position: 'ASC' },
       }),
       source.getRepository(AssetProjectionGroupItemEntity).find({
         where: {
-          projection_key: projectionKey,
-          generation: snapshot.generation,
+          snapshot_id: snapshot._db_id,
         },
         order: { group_id: 'ASC', position: 'ASC' },
       }),
@@ -290,9 +322,13 @@ export async function cleanupAssetProjectionGenerations(
   dataSource?: DataSource,
 ) {
   const source = await resolveDataSource(dataSource);
-  const retainCount = Math.max(1, Math.floor(generationsToKeep));
 
   return source.transaction(async manager => {
+    const deletedGenerations = await deleteStaleAssetProjectionGenerations(
+      manager,
+      projectionKey,
+      generationsToKeep,
+    );
     const snapshotRepository = manager.getRepository(
       AssetProjectionSnapshotEntity,
     );
@@ -300,48 +336,22 @@ export async function cleanupAssetProjectionGenerations(
     const groupItemRepository = manager.getRepository(
       AssetProjectionGroupItemEntity,
     );
-    const snapshots = await snapshotRepository.find({
-      where: { projection_key: projectionKey },
-      order: { generation: 'DESC' },
-    });
-    const staleGenerations = snapshots
-      .slice(retainCount)
-      .map(snapshot => snapshot.generation);
-
-    if (staleGenerations.length) {
-      await groupItemRepository.delete({
-        projection_key: projectionKey,
-        generation: In(staleGenerations),
-      });
-      await itemRepository.delete({
-        projection_key: projectionKey,
-        generation: In(staleGenerations),
-      });
-      await snapshotRepository.delete({
-        projection_key: projectionKey,
-        generation: In(staleGenerations),
-      });
-    }
 
     const snapshotTable = snapshotRepository.metadata.tableName;
     const itemTable = itemRepository.metadata.tableName;
     const groupItemTable = groupItemRepository.metadata.tableName;
-    const orphanParams = [projectionKey, projectionKey];
-    const orphanPredicate = `projection_key = ? AND generation NOT IN (
-      SELECT snapshot.generation FROM "${snapshotTable}" snapshot
-      WHERE snapshot.projection_key = ?
+    const orphanPredicate = `snapshot_id NOT IN (
+      SELECT snapshot._db_id FROM "${snapshotTable}" snapshot
     )`;
     const orphanItems = await manager.query(
       `DELETE FROM "${itemTable}" WHERE ${orphanPredicate}`,
-      orphanParams,
     );
     const orphanGroupItems = await manager.query(
       `DELETE FROM "${groupItemTable}" WHERE ${orphanPredicate}`,
-      orphanParams,
     );
 
     return {
-      deletedGenerations: staleGenerations,
+      deletedGenerations,
       orphanItems,
       orphanGroupItems,
     };

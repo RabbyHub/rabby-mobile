@@ -1306,6 +1306,11 @@ type CompiledNativeProtocolProjectionTarget = NativeProtocolProjectionTarget & {
   projection?: ProtocolAssetSqlProjection;
 };
 
+type NativeProtocolProjectionPublication = {
+  target: CompiledNativeProtocolProjectionTarget;
+  result: ProtocolAssetsIndexResult;
+};
+
 const getNativeProtocolProjectionTargets = (
   changedAddresses: string[],
 ): NativeProtocolProjectionTarget[] => {
@@ -1423,59 +1428,168 @@ const compileNativeProtocolProjectionTargets = async (
   return compiledTargets;
 };
 
+const publishNativeProtocolProjectionResults = (
+  publications: NativeProtocolProjectionPublication[],
+) => {
+  if (!publications.length) {
+    return;
+  }
+
+  useProtocolListComputedStore.setState(state => {
+    const multiProtocolsIndexCache = { ...state.multiProtocolsIndexCache };
+    const singleProtocolsIndexCache = { ...state.singleProtocolsIndexCache };
+    const multiProtocolsAvailabilityByKey = {
+      ...state.multiProtocolsAvailabilityByKey,
+    };
+    const singleProtocolsAvailabilityByKey = {
+      ...state.singleProtocolsAvailabilityByKey,
+    };
+
+    publications.forEach(({ target, result }) => {
+      if (target.scene === 'single-address') {
+        if (singleProtocolsCacheParams.get(target.key) !== target.params) {
+          throw new Error(
+            `Protocol projection config changed before publish: ${target.key}`,
+          );
+        }
+        singleProtocolsIndexCache[target.key] = result;
+        singleProtocolsAvailabilityByKey[target.key] =
+          getProtocolProjectionAvailability(target.params, result);
+      } else {
+        if (multiProtocolsCacheParams.get(target.key) !== target.params) {
+          throw new Error(
+            `Protocol projection config changed before publish: ${target.key}`,
+          );
+        }
+        multiProtocolsIndexCache[target.key] = result;
+        multiProtocolsAvailabilityByKey[target.key] =
+          getProtocolProjectionAvailability(target.params, result);
+      }
+    });
+
+    return {
+      multiProtocolsIndexCache,
+      singleProtocolsIndexCache,
+      multiProtocolsAvailabilityByKey,
+      singleProtocolsAvailabilityByKey,
+    };
+  });
+};
+
+const persistNativeProtocolProjectionResults = (
+  publications: NativeProtocolProjectionPublication[],
+) => {
+  publications.forEach(({ target, result }) => {
+    scheduleProtocolProjectionPersistence(target.key, target.scene, result);
+  });
+};
+
 const publishNativeProtocolBatch = async (addresses: string[]) => {
   const normalizedAddresses = Array.from(
     new Set(normalizeAddresses(addresses)),
   );
   protocolCacheHydrator.invalidate(normalizedAddresses);
+  const targets = getNativeProtocolProjectionTargets(normalizedAddresses);
+  const compiledTargets = await compileNativeProtocolProjectionTargets(
+    useProtocolListStore.getState().protocolMap,
+    targets,
+  );
+  const projectionProtocolIds = Array.from(
+    new Set(
+      compiledTargets.flatMap(target => target.projection?.protocolIds || []),
+    ),
+  );
+  const supportingProtocols = projectionProtocolIds.length
+    ? await ProtocolItemEntity.batchMultiAddressProtocolsByResourceIds(
+        projectionProtocolIds,
+      )
+    : [];
+  const supportingProtocolIds = new Set(
+    supportingProtocols.map(buildProtocolEntityId),
+  );
+  const unresolvedProjectionProtocolIds = projectionProtocolIds.filter(
+    protocolId => !supportingProtocolIds.has(protocolId as ProtocolEntityId),
+  );
+  if (unresolvedProjectionProtocolIds.length) {
+    throw new Error(
+      `Protocol SQL projection entities are incomplete: ${unresolvedProjectionProtocolIds.length}`,
+    );
+  }
+
+  const previousComputedState = useProtocolListComputedStore.getState();
+  const projectionPublications = compiledTargets.flatMap(target => {
+    if (!target.projection) {
+      return [];
+    }
+    const previousResult =
+      target.scene === 'single-address'
+        ? previousComputedState.singleProtocolsIndexCache[target.key]
+        : previousComputedState.multiProtocolsIndexCache[target.key];
+    return [
+      {
+        target,
+        result: buildProtocolIndexFromSqlProjection(
+          target.projection,
+          previousResult,
+        ),
+      },
+    ];
+  });
+
+  withAutomaticProtocolProjectionSyncSuppressed(() => {
+    protocolEntityResourceStore.upsertProtocols(supportingProtocols, 'hydrate');
+    useProtocolListStore.setState(state => ({
+      sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+        state.sourceSnapshotReadyByAddress,
+        normalizedAddresses,
+      ),
+      hasLoadedByAddress: {
+        ...state.hasLoadedByAddress,
+        ...Object.fromEntries(
+          normalizedAddresses.map(address => [address, true]),
+        ),
+      },
+    }));
+    publishNativeProtocolProjectionResults(projectionPublications);
+  });
+  persistNativeProtocolProjectionResults(projectionPublications);
+
+  if (projectionPublications.length) {
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+
   const snapshots = await loadProtocolSnapshots(normalizedAddresses);
   const nextProtocolMap = mergeAddressListSnapshots(
     useProtocolListStore.getState().protocolMap,
     normalizedAddresses,
     snapshots,
   );
-  const targets = getNativeProtocolProjectionTargets(normalizedAddresses);
-  const compiledTargets = await compileNativeProtocolProjectionTargets(
-    nextProtocolMap,
-    targets,
-  );
-  const protocolIdsInMap = new Set(
-    getProtocolListFromProtocolMap(nextProtocolMap).map(buildProtocolEntityId),
-  );
-  const missingProjectionProtocolIds = Array.from(
-    new Set(
-      compiledTargets.flatMap(target => target.projection?.protocolIds || []),
-    ),
-  ).filter(protocolId => !protocolIdsInMap.has(protocolId as ProtocolEntityId));
-  const supportingProtocols = missingProjectionProtocolIds.length
-    ? await ProtocolItemEntity.batchMultiAddressProtocolsByResourceIds(
-        missingProjectionProtocolIds,
-      )
-    : [];
-  if (supportingProtocols.length !== missingProjectionProtocolIds.length) {
-    throw new Error(
-      `Protocol SQL projection entities are incomplete: ${supportingProtocols.length}/${missingProjectionProtocolIds.length}`,
+  const hydratedComputedState = useProtocolListComputedStore.getState();
+  const compatibilityPublications = compiledTargets.flatMap(target => {
+    const targetProtocols = getProtocolsForNativeProjectionTarget(
+      nextProtocolMap,
+      target,
     );
-  }
-
-  const previousComputedState = useProtocolListComputedStore.getState();
-  const publications = compiledTargets.map(target => {
+    if (
+      target.projection &&
+      !targetProtocols.some(protocol => isAppChain(protocol.chain || ''))
+    ) {
+      return [];
+    }
     const previousResult =
       target.scene === 'single-address'
-        ? previousComputedState.singleProtocolsIndexCache[target.key]
-        : previousComputedState.multiProtocolsIndexCache[target.key];
-    const result = target.projection
-      ? buildProtocolIndexFromSqlProjection(target.projection, previousResult)
-      : buildProtocolAssetsIndexResult(
-          getProtocolsForNativeProjectionTarget(nextProtocolMap, target),
-          previousResult,
-        );
-    return { target, result };
+        ? hydratedComputedState.singleProtocolsIndexCache[target.key]
+        : hydratedComputedState.multiProtocolsIndexCache[target.key];
+    return [
+      {
+        target,
+        result: buildProtocolAssetsIndexResult(targetProtocols, previousResult),
+      },
+    ];
   });
 
   withAutomaticProtocolProjectionSyncSuppressed(() => {
     protocolEntityResourceStore.syncFromProtocolMap(nextProtocolMap, 'hydrate');
-    protocolEntityResourceStore.upsertProtocols(supportingProtocols, 'hydrate');
     useProtocolListStore.setState(state => ({
       protocolMap: nextProtocolMap,
       sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
@@ -1489,50 +1603,9 @@ const publishNativeProtocolBatch = async (addresses: string[]) => {
         ),
       },
     }));
-    useProtocolListComputedStore.setState(state => {
-      const multiProtocolsIndexCache = { ...state.multiProtocolsIndexCache };
-      const singleProtocolsIndexCache = { ...state.singleProtocolsIndexCache };
-      const multiProtocolsAvailabilityByKey = {
-        ...state.multiProtocolsAvailabilityByKey,
-      };
-      const singleProtocolsAvailabilityByKey = {
-        ...state.singleProtocolsAvailabilityByKey,
-      };
-
-      publications.forEach(({ target, result }) => {
-        if (target.scene === 'single-address') {
-          if (singleProtocolsCacheParams.get(target.key) !== target.params) {
-            throw new Error(
-              `Protocol projection config changed before publish: ${target.key}`,
-            );
-          }
-          singleProtocolsIndexCache[target.key] = result;
-          singleProtocolsAvailabilityByKey[target.key] =
-            getProtocolProjectionAvailability(target.params, result);
-        } else {
-          if (multiProtocolsCacheParams.get(target.key) !== target.params) {
-            throw new Error(
-              `Protocol projection config changed before publish: ${target.key}`,
-            );
-          }
-          multiProtocolsIndexCache[target.key] = result;
-          multiProtocolsAvailabilityByKey[target.key] =
-            getProtocolProjectionAvailability(target.params, result);
-        }
-      });
-
-      return {
-        multiProtocolsIndexCache,
-        singleProtocolsIndexCache,
-        multiProtocolsAvailabilityByKey,
-        singleProtocolsAvailabilityByKey,
-      };
-    });
+    publishNativeProtocolProjectionResults(compatibilityPublications);
   });
-
-  publications.forEach(({ target, result }) => {
-    scheduleProtocolProjectionPersistence(target.key, target.scene, result);
-  });
+  persistNativeProtocolProjectionResults(compatibilityPublications);
 };
 
 const nativeProtocolCommitBatcher = createAddressListCommitBatcher({
