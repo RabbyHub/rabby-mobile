@@ -96,6 +96,7 @@ describe('formatMarkData maintenance rules', () => {
         ],
       };
       const topAsset = {
+        brief: 'Test Market',
         dex_id: '',
         display_name: 'TEST/USDC',
         name: 'TEST',
@@ -103,6 +104,7 @@ describe('formatMarkData maintenance rules', () => {
       } as unknown as PerpTopTokenV3;
 
       expect(formatMarkData([meta], [topAsset], { 0: '' })[0]).toMatchObject({
+        brief: 'Test Market',
         marginMode,
         onlyIsolated,
       });

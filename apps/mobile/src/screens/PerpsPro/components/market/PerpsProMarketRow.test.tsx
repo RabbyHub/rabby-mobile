@@ -200,6 +200,26 @@ describe('PerpsProMarketRow', () => {
     );
   });
 
+  it('keeps volume visible without a backend full name', () => {
+    const model = buildPerpsProMarketRowModel(
+      createMarketData('BTC', { brief: '   ' }),
+    );
+
+    render(
+      <PerpsProMarketRow
+        favorite={false}
+        model={model}
+        onSelect={jest.fn()}
+        onToggleFavorite={jest.fn()}
+        selected={false}
+      />,
+    );
+
+    expect(model.fullName).toBeNull();
+    expect(screen.queryByText('BTC full name')).toBeNull();
+    expect(screen.getByText('1.20M')).toBeTruthy();
+  });
+
   it('updates every market-bound field and handler when business identity changes', () => {
     const first = buildPerpsProMarketRowModel(createMarketData('ALPHA'));
     const second = buildPerpsProMarketRowModel(

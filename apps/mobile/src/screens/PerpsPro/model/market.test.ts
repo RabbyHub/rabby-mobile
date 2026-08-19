@@ -60,11 +60,18 @@ describe('Perps Pro market model', () => {
     });
   });
 
-  it('uses local full-name fallback and omits unknown names', () => {
-    expect(buildPerpsProMarket(createMarketData()).fullName).toBe('Bitcoin');
+  it('uses only trimmed backend full names and never infers local aliases', () => {
     expect(
-      buildPerpsProMarket(createMarketData({ name: 'NEW', displayName: 'NEW' }))
-        .fullName,
+      buildPerpsProMarket(createMarketData({ brief: '  Bitcoin  ' })).fullName,
+    ).toBe('Bitcoin');
+    ['BTC', 'ETH', 'SOL', 'DOGE', 'PUNDIX'].forEach(name => {
+      expect(
+        buildPerpsProMarket(createMarketData({ name, displayName: name }))
+          .fullName,
+      ).toBeNull();
+    });
+    expect(
+      buildPerpsProMarket(createMarketData({ brief: '   ' })).fullName,
     ).toBeNull();
   });
 
