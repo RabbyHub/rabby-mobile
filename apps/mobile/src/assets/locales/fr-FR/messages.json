@@ -1168,6 +1168,11 @@
         "feedbackTitle": "Vous avez des commentaires ? Nous vous écoutons.",
         "descriptionIOS": "Si vous aimez Rabby, une évaluation rapide sur l'App Store signifierait beaucoup."
       },
+      "upgradeModal": {
+        "title": "Nouveautés",
+        "slideToUpdate": "Glissez pour mettre à jour",
+        "close": "Fermer"
+      },
       "homeCenterTipScreenshot": {
         "description": "Prenez une capture d'écran à tout moment pour signaler rapidement un bug.",
         "title": "Conseils"
@@ -3058,6 +3063,7 @@
         "actions": "Emprunter",
         "approveAndBorrow": "Approuver et Emprunter",
         "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
+        "borrowingUnavailable": "Cet actif ne peut pas être emprunté dans le mode actuel.",
         "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles.",
         "swapDebt": "Échanger",
         "borrowed": "Emprunté",
@@ -3098,7 +3104,8 @@
         "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
         "toggleCollateralWarning": "Désactiver cet actif en tant que garantie fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
         "emodeBlockWarning": "Désactiver le mode E réduira votre facteur de santé à un niveau risqué pour la liquidation.",
-        "blockEmodeWarning": "Vous ne pouvez pas désactiver E-Mode, car cela pourrait déclencher une liquidation. Pour quitter E-Mode, ajoutez davantage de garantie ou remboursez les positions empruntées."
+        "blockEmodeWarning": "Vous ne pouvez pas désactiver E-Mode, car cela pourrait déclencher une liquidation. Pour quitter E-Mode, ajoutez davantage de garantie ou remboursez les positions empruntées.",
+        "zeroLtvEmodeExitWarning": "Désactivez {{assets}} en tant que garantie avant de quitter E-Mode, car ces actifs ont un LTV de 0 % en dehors d’E-Mode."
       },
       "lqDescription": {
         "desc": "Valeur de liquidation",
@@ -3258,6 +3265,7 @@
           "title": "Remboursez avec {{collateral}}"
         },
         "insufficientLiquidity": "Liquidité insuffisante.",
+        "flashLoanDisabled": "Pour des raisons de sécurité, la conversion de positions est désactivée pour cet actif.",
         "frozenCollateral": "Cet actif est gelé en raison d'une décision de la communauté Aave."
       },
       "repayWithAToken": {
