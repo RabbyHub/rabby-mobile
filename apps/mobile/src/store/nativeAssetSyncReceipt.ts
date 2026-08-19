@@ -237,12 +237,28 @@ const applyCommittedSnapshot = (completion: NativeAssetSyncCompletion) => {
   return promise;
 };
 
+export class NativeAssetSyncError extends Error {
+  readonly completion: NativeAssetSyncCompletion;
+
+  constructor(completion: NativeAssetSyncCompletion) {
+    super(
+      `Native ${completion.kind} sync ${completion.requestId} failed at ${
+        completion.stage
+      }: ${completion.error || 'unknown error'}`,
+    );
+    this.name = 'NativeAssetSyncError';
+    this.completion = completion;
+  }
+}
+
+export const isNativeAssetSyncRateLimitedError = (
+  error: unknown,
+): error is NativeAssetSyncError =>
+  error instanceof NativeAssetSyncError &&
+  /(?:^|\D)429(?:\D|$)/.test(error.completion.error);
+
 const createCompletionError = (completion: NativeAssetSyncCompletion) =>
-  new Error(
-    `Native ${completion.kind} sync ${completion.requestId} failed at ${
-      completion.stage
-    }: ${completion.error || 'unknown error'}`,
-  );
+  new NativeAssetSyncError(completion);
 
 export const dispatchNativeAssetSyncCompletion = (input: unknown) => {
   pruneRetainedEntries();

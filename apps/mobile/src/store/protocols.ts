@@ -24,6 +24,11 @@ import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
+import {
+  ASSET_REMOTE_ADDRESS_CONCURRENCY,
+  mapSettledWithConcurrency,
+} from '@/core/utils/boundedConcurrency';
+import { isHttpRateLimitedError } from '@/core/utils/rateLimitError';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
@@ -1225,27 +1230,59 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
 
           trace.mark('remote-address-requests-dispatched', {
             addressCount: lowerAddresses.length,
+            addressConcurrency: ASSET_REMOTE_ADDRESS_CONCURRENCY,
           });
           const protocolSyncMode = getProtocolSyncMode();
           const remoteProtocolsPromise = (
             protocolSyncMode === 'native'
-              ? Promise.all(
-                  lowerAddresses.map(async address => {
-                    const [syncExecution, appChainResult] = await Promise.all([
-                      executeProtocolSync({
-                        mode: protocolSyncMode,
-                        address,
-                        replaceExisting: true,
-                        executeJs: () =>
-                          Promise.reject(
-                            new Error('Unexpected JS protocol execution'),
-                          ),
-                      }),
-                      loadAppChainComplexProtocols(address, isForceRequested()),
-                    ]);
-                    return [address, syncExecution, appChainResult] as const;
-                  }),
-                ).then(results => {
+              ? (async () => {
+                  const nativeProjectionBatch =
+                    nativeProtocolCommitBatcher.beginBatch();
+                  let settledResults: PromiseSettledResult<
+                    readonly [
+                      string,
+                      Awaited<ReturnType<typeof executeProtocolSync>>,
+                      Awaited<ReturnType<typeof loadAppChainComplexProtocols>>,
+                    ]
+                  >[];
+                  try {
+                    settledResults = await mapSettledWithConcurrency(
+                      lowerAddresses,
+                      ASSET_REMOTE_ADDRESS_CONCURRENCY,
+                      async address => {
+                        const [syncExecution, appChainResult] =
+                          await Promise.all([
+                            executeProtocolSync({
+                              mode: protocolSyncMode,
+                              address,
+                              replaceExisting: true,
+                              executeJs: () =>
+                                Promise.reject(
+                                  new Error('Unexpected JS protocol execution'),
+                                ),
+                            }),
+                            loadAppChainComplexProtocols(
+                              address,
+                              isForceRequested(),
+                            ),
+                          ]);
+                        return [
+                          address,
+                          syncExecution,
+                          appChainResult,
+                        ] as const;
+                      },
+                      { stopOnError: isHttpRateLimitedError },
+                    );
+                  } finally {
+                    await nativeProjectionBatch.finish();
+                  }
+                  const results = settledResults.flatMap(result =>
+                    result.status === 'fulfilled' ? [result.value] : [],
+                  );
+                  const successfulAddresses = results.map(
+                    ([address]) => address,
+                  );
                   const appChainProtocolMap = toAppChainProtocolMap(
                     results.map(
                       ([address, , appChainResult]) =>
@@ -1253,20 +1290,25 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
                     ),
                   );
                   const protocolMap = mergeNativeProtocolsWithAppChains(
-                    lowerAddresses,
+                    successfulAddresses,
                     appChainProtocolMap,
                   );
                   return {
                     protocolMap,
                     remoteProtocolMap: {},
                     native: true,
-                    sourceComplete: results.every(
-                      ([, execution]) =>
-                        execution.mode === 'native' &&
-                        execution.result.outcome === 'complete',
-                    ),
+                    successfulAddresses,
+                    failedAddressCount:
+                      lowerAddresses.length - successfulAddresses.length,
+                    sourceComplete:
+                      successfulAddresses.length === lowerAddresses.length &&
+                      results.every(
+                        ([, execution]) =>
+                          execution.mode === 'native' &&
+                          execution.result.outcome === 'complete',
+                      ),
                   };
-                })
+                })()
               : loadProtocolsForAddresses(
                   lowerAddresses,
                   isForceRequested(),
@@ -1274,6 +1316,8 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
                 ).then(result => ({
                   ...result,
                   native: false,
+                  successfulAddresses: lowerAddresses,
+                  failedAddressCount: 0,
                   sourceComplete: true,
                 }))
           ).then(
@@ -1320,27 +1364,42 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
             protocolMap: resultMap,
             remoteProtocolMap,
             native,
+            successfulAddresses,
+            failedAddressCount,
             sourceComplete,
           } = remoteProtocols.result;
           trace.mark('remote-response-completed', {
-            itemCount: Object.values(resultMap).reduce(
-              (count, protocols) => count + protocols.length,
+            itemCount: successfulAddresses.reduce(
+              (count, address) => count + (resultMap[address]?.length || 0),
               0,
             ),
+            succeededAddressCount: successfulAddresses.length,
+            failedAddressCount,
           });
           const currentAddresses = getCurrentAddresses();
           if (!currentAddresses.length) {
             trace.finish({ path: 'stale-after-remote' });
             return { status: 'superseded' };
           }
+          const successfulAddressSet = new Set(successfulAddresses);
+          const applicableAddresses = currentAddresses.filter(address =>
+            successfulAddressSet.has(address),
+          );
+          if (!applicableAddresses.length) {
+            trace.finish({ path: 'remote-partial-cache-retained' });
+            return {
+              status: 'partial',
+              source: native ? 'native' : 'remote',
+            };
+          }
           const applicableProtocolMap = Object.fromEntries(
-            currentAddresses.map(address => [
+            applicableAddresses.map(address => [
               address,
               resultMap[address] || [],
             ]),
           );
           const applicableRemoteProtocolMap = Object.fromEntries(
-            currentAddresses
+            applicableAddresses
               .filter(address =>
                 Object.prototype.hasOwnProperty.call(
                   remoteProtocolMap,
@@ -1351,29 +1410,29 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           );
           const nextProtocolMap = mergeAddressListSnapshots(
             get().protocolMap,
-            currentAddresses,
+            applicableAddresses,
             applicableProtocolMap,
           );
           protocolEntityResourceStore.syncFromProtocolMap(
             nextProtocolMap,
             native ? 'hydrate' : 'remote',
           );
-          protocolCacheHydrator.invalidate(currentAddresses);
+          protocolCacheHydrator.invalidate(applicableAddresses);
           set(state => ({
             protocolMap: nextProtocolMap,
             sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
               state.sourceSnapshotReadyByAddress,
-              currentAddresses,
+              applicableAddresses,
             ),
           }));
           trace.mark('remote-store-published', {
-            addressCount: currentAddresses.length,
+            addressCount: applicableAddresses.length,
           });
           if (!native) {
             void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
           }
           reportLendingUserStatusOnce({
-            addresses: currentAddresses,
+            addresses: applicableAddresses,
             protocolMap: applicableProtocolMap,
           });
           trace.finish({ path: 'local-then-remote' });

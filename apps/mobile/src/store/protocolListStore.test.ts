@@ -96,6 +96,10 @@ import {
 } from './assetProjectionPersistence';
 import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
 import { getAssetReadModel, resetAssetReadModels } from './assetReadModel';
+import {
+  executeProtocolSync,
+  getProtocolSyncMode,
+} from './protocolSyncExecutor';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -115,6 +119,8 @@ const mockedAppChainEntity = jest.mocked(AppChainEntity);
 const mockedCompileProtocolAssetSqlProjection = jest.mocked(
   compileProtocolAssetSqlProjection,
 );
+const mockedExecuteProtocolSync = jest.mocked(executeProtocolSync);
+const mockedGetProtocolSyncMode = jest.mocked(getProtocolSyncMode);
 
 const createProtocol = (id: string, netWorth: number): IProtocolItem =>
   ({
@@ -157,6 +163,11 @@ const waitFor = async (predicate: () => boolean) => {
 describe('protocol list request freshness', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGetProtocolSyncMode.mockReturnValue('js');
+    mockedExecuteProtocolSync.mockImplementation(async ({ executeJs }) => ({
+      mode: 'js',
+      value: await executeJs(),
+    }));
     resetAssetReadModels();
     useProtocolListComputedStore.setState({
       multiProtocolsIndexCache: {},
@@ -380,6 +391,73 @@ describe('protocol list request freshness', () => {
         rowCount: 1,
       }),
     );
+  });
+
+  it('publishes successful native addresses while retaining a rate-limited address snapshot', async () => {
+    const secondAddress = '0xDef0';
+    const normalizedSecondAddress = secondAddress.toLowerCase();
+    const cachedFirst = createProtocol('cached-first', 1);
+    const cachedSecond = {
+      ...createProtocol('cached-second', 2),
+      owner_addr: normalizedSecondAddress,
+    };
+    const refreshedFirst = createProtocol('refreshed-first', 3);
+    useProtocolListStore.setState({
+      protocolMap: {
+        [NORMALIZED_ADDRESS]: [cachedFirst],
+        [normalizedSecondAddress]: [cachedSecond],
+      },
+      sourceSnapshotReadyByAddress: {},
+    });
+    mockedGetProtocolSyncMode.mockReturnValue('native');
+    mockedExecuteProtocolSync.mockImplementation(async ({ address }) => {
+      if (address === normalizedSecondAddress) {
+        throw Object.assign(new Error('HTTP 429'), {
+          response: { status: 429 },
+        });
+      }
+      useProtocolListStore.setState(state => ({
+        protocolMap: {
+          ...state.protocolMap,
+          [address]: [refreshedFirst],
+        },
+      }));
+      return {
+        mode: 'native',
+        result: {
+          schemaVersion: 2,
+          requestId: `protocol-${address}`,
+          kind: 'protocol',
+          success: true,
+          outcome: 'complete',
+          address,
+          generation: 1,
+          committedAt: 100,
+          replacementScope: 'address',
+          chainIds: [],
+          failedChainIds: [],
+          committedRowCount: 1,
+          stage: 'persistence',
+          error: '',
+        },
+      };
+    });
+
+    await expect(
+      useProtocolListStore
+        .getState()
+        .batchGetProtocols([ADDRESS, secondAddress], true),
+    ).resolves.toBeUndefined();
+
+    expect(useProtocolListStore.getState().protocolMap).toEqual({
+      [NORMALIZED_ADDRESS]: [refreshedFirst],
+      [normalizedSecondAddress]: [cachedSecond],
+    });
+    expect(
+      useProtocolListStore.getState().sourceSnapshotReadyByAddress,
+    ).toEqual({
+      [NORMALIZED_ADDRESS]: true,
+    });
   });
 
   it('publishes one deterministic read-model lifecycle for a remote refresh', async () => {

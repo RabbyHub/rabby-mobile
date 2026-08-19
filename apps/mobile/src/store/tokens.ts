@@ -42,9 +42,15 @@ import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { uniqBy } from 'lodash';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
+import {
+  ASSET_REMOTE_ADDRESS_CONCURRENCY,
+  mapSettledWithConcurrency,
+} from '@/core/utils/boundedConcurrency';
+import { isHttpRateLimitedError } from '@/core/utils/rateLimitError';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
+  createAddressListCommitBatcher,
   createAddressListSnapshotHydrator,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
@@ -3976,86 +3982,101 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           let requestedChainCount = 0;
           trace.mark('remote-address-requests-dispatched', {
             addressCount: lowerAddresses.length,
+            addressConcurrency: ASSET_REMOTE_ADDRESS_CONCURRENCY,
             chainConcurrency: 15,
           });
-          const remoteAddressResults = await Promise.allSettled(
-            lowerAddresses.map(async address => {
-              const chains = await openapi.usedChainList(address);
-              const chainIdList = chains.map(item => item.id);
-              usedChainListSucceededAddressCount += 1;
-              requestedChainCount += chainIdList.length;
-              const syncExecution = await executeTokenChainSync({
-                mode: tokenChainSyncMode,
-                address,
-                chainIds: chainIdList,
-                replacementScope: 'address',
-                replaceExisting: true,
-                executeJs: () =>
-                  Promise.allSettled(
-                    chainIdList.map(async serverId => {
-                      const tokens =
-                        (await realTimeTokenQueue.add(async () => {
-                          const chainTokensRes =
-                            await requestOpenApiWithChainId(
-                              ({ openapi }) =>
-                                openapi.listToken(address, serverId, true),
-                              {
-                                isTestnet: false,
-                              },
+          const nativeProjectionBatch =
+            tokenChainSyncMode === 'native'
+              ? nativeTokenCommitBatcher.beginBatch()
+              : undefined;
+          let remoteAddressResults: PromiseSettledResult<void>[];
+          try {
+            remoteAddressResults = await mapSettledWithConcurrency(
+              lowerAddresses,
+              ASSET_REMOTE_ADDRESS_CONCURRENCY,
+              async address => {
+                const chains = await openapi.usedChainList(address);
+                const chainIdList = chains.map(item => item.id);
+                usedChainListSucceededAddressCount += 1;
+                requestedChainCount += chainIdList.length;
+                const syncExecution = await executeTokenChainSync({
+                  mode: tokenChainSyncMode,
+                  address,
+                  chainIds: chainIdList,
+                  replacementScope: 'address',
+                  replaceExisting: true,
+                  executeJs: () =>
+                    Promise.allSettled(
+                      chainIdList.map(async serverId => {
+                        const tokens =
+                          (await realTimeTokenQueue.add(async () => {
+                            const chainTokensRes =
+                              await requestOpenApiWithChainId(
+                                ({ openapi }) =>
+                                  openapi.listToken(address, serverId, true),
+                                {
+                                  isTestnet: false,
+                                },
+                              );
+                            return filterInterfaceTokenList(
+                              chainTokensRes.map(item =>
+                                tokenItemToITokenItem(item, address),
+                              ),
                             );
-                          return filterInterfaceTokenList(
-                            chainTokensRes.map(item =>
-                              tokenItemToITokenItem(item, address),
-                            ),
-                          );
-                        })) || [];
-                      return { serverId, tokens };
-                    }),
-                  ),
-              });
+                          })) || [];
+                        return { serverId, tokens };
+                      }),
+                    ),
+                });
 
-              if (syncExecution.mode === 'native') {
-                nativeCommittedAddresses.add(address);
-                if (syncExecution.result.outcome === 'complete') {
-                  nativeCompleteAddresses.add(address);
+                if (syncExecution.mode === 'native') {
+                  nativeCommittedAddresses.add(address);
+                  if (syncExecution.result.outcome === 'complete') {
+                    nativeCompleteAddresses.add(address);
+                  }
+                  return;
                 }
-                return;
-              }
 
-              const res = syncExecution.value;
+                const res = syncExecution.value;
 
-              const fulfilledChainSnapshots = res.flatMap(result =>
-                result.status === 'fulfilled' ? [result.value] : [],
-              );
-              const hasFailedChain = res.some(
-                result => result.status === 'rejected',
-              );
+                const fulfilledChainSnapshots = res.flatMap(result =>
+                  result.status === 'fulfilled' ? [result.value] : [],
+                );
+                const hasFailedChain = res.some(
+                  result => result.status === 'rejected',
+                );
 
-              // A chain failure must not invalidate the other chains of this
-              // address. Keep the last usable snapshot for failed chains and only
-              // mark the address fresh when every requested chain succeeded.
-              if (!fulfilledChainSnapshots.length && hasFailedChain) {
-                return;
-              }
+                // A chain failure must not invalidate the other chains of this
+                // address. Keep the last usable snapshot for failed chains and only
+                // mark the address fresh when every requested chain succeeded.
+                if (!fulfilledChainSnapshots.length && hasFailedChain) {
+                  return;
+                }
 
-              const nextTokens = hasFailedChain
-                ? fulfilledChainSnapshots.reduce(
-                    (tokens, snapshot) =>
-                      replaceTokensByChain(
-                        tokens,
-                        snapshot.tokens,
-                        snapshot.serverId,
-                      ),
-                    get().tokenListMap[address] || [],
-                  )
-                : fulfilledChainSnapshots.flatMap(snapshot => snapshot.tokens);
+                const nextTokens = hasFailedChain
+                  ? fulfilledChainSnapshots.reduce(
+                      (tokens, snapshot) =>
+                        replaceTokensByChain(
+                          tokens,
+                          snapshot.tokens,
+                          snapshot.serverId,
+                        ),
+                      get().tokenListMap[address] || [],
+                    )
+                  : fulfilledChainSnapshots.flatMap(
+                      snapshot => snapshot.tokens,
+                    );
 
-              realTimeTokenMap[address] = nextTokens;
-              if (!hasFailedChain) {
-                completeRealTimeTokenMap[address] = nextTokens;
-              }
-            }),
-          );
+                realTimeTokenMap[address] = nextTokens;
+                if (!hasFailedChain) {
+                  completeRealTimeTokenMap[address] = nextTokens;
+                }
+              },
+              { stopOnError: isHttpRateLimitedError },
+            );
+          } finally {
+            await nativeProjectionBatch?.finish();
+          }
           trace.mark('remote-addresses-settled', {
             addressCount: lowerAddresses.length,
             succeededAddressCount: remoteAddressResults.filter(
@@ -4671,14 +4692,37 @@ const compileNativeTokenProjectionTargets = async (
   return compiledTargets;
 };
 
+const getLatestNativeTokenCompletion = (
+  completions: NativeAssetSyncCompletion[],
+) =>
+  completions.reduce((latest, completion) =>
+    completion.committedAt >= latest.committedAt ? completion : latest,
+  );
+
+const getNativeTokenCompletionForTarget = (
+  target: NativeTokenProjectionTarget,
+  completions: NativeAssetSyncCompletion[],
+) => {
+  const targetAddresses = new Set(
+    (target.scene === 'single-address'
+      ? [target.config.address]
+      : target.config.addresses
+    ).map(normalizeAddress),
+  );
+  const targetCompletions = completions.filter(completion =>
+    targetAddresses.has(normalizeAddress(completion.address)),
+  );
+  return getLatestNativeTokenCompletion(
+    targetCompletions.length ? targetCompletions : completions,
+  );
+};
+
 const publishCompiledNativeTokenProjections = ({
-  address,
-  completion,
+  completions,
   compiledTargets,
   projectionTokens,
 }: {
-  address: string;
-  completion: NativeAssetSyncCompletion;
+  completions: NativeAssetSyncCompletion[];
   compiledTargets: CompiledNativeTokenProjectionTarget[];
   projectionTokens: ITokenItem[];
 }) => {
@@ -4687,16 +4731,19 @@ const publishCompiledNativeTokenProjections = ({
     config: SingleTokenAssetsIndexConfig | MultiTokenAssetsIndexConfig;
     result: TokenAssetsIndexResult;
   }> = [];
+  const completedAddresses = completions
+    .filter(completion => completion.replacementScope === 'address')
+    .map(completion => normalizeAddress(completion.address));
 
   withAutomaticTokenProjectionSyncSuppressed(() => {
     tokenEntityResourceStore.upsertTokens(projectionTokens, 'hydrate');
     tokenListStore.setState(state => ({
-      sourceSnapshotReadyByAddress:
-        completion.replacementScope === 'address'
-          ? markAssetSourceSnapshotsReady(state.sourceSnapshotReadyByAddress, [
-              address,
-            ])
-          : state.sourceSnapshotReadyByAddress,
+      sourceSnapshotReadyByAddress: completedAddresses.length
+        ? markAssetSourceSnapshotsReady(
+            state.sourceSnapshotReadyByAddress,
+            completedAddresses,
+          )
+        : state.sourceSnapshotReadyByAddress,
     }));
 
     const projectionState = useTokenAssetsIndexStore.getState();
@@ -4767,6 +4814,7 @@ const publishCompiledNativeTokenProjections = ({
   });
 
   publications.forEach(({ target, config, result }) => {
+    const completion = getNativeTokenCompletionForTarget(target, completions);
     syncTokenAssetReadModel({
       key: target.key,
       scene: target.scene,
@@ -4788,37 +4836,44 @@ const publishCompiledNativeTokenProjections = ({
   });
 };
 
-const scheduleNativeTokenLegacyHydration = (address: string) => {
+const scheduleNativeTokenLegacyHydration = (addresses: string[]) => {
   (async () => {
     await yieldTokenProjectionEntityRestore();
-    await tokenCacheHydrator.refresh([address]);
+    await tokenCacheHydrator.refresh(addresses);
   })().catch(error => {
     console.warn('[tokenProjection] deferred legacy hydration failed', error);
   });
 };
 
 const applyNativeTokenCommitWithJsProjection = async (
-  completion: NativeAssetSyncCompletion,
-  normalizedAddress: string,
+  completions: NativeAssetSyncCompletion[],
 ) => {
-  await tokenCacheHydrator.refresh([normalizedAddress]);
-  if (completion.replacementScope === 'address') {
+  const normalizedAddresses = Array.from(
+    new Set(
+      completions.map(completion => normalizeAddress(completion.address)),
+    ),
+  );
+  await tokenCacheHydrator.refresh(normalizedAddresses);
+  const completedAddresses = completions
+    .filter(completion => completion.replacementScope === 'address')
+    .map(completion => normalizeAddress(completion.address));
+  if (completedAddresses.length) {
     tokenListStore.setState(state => ({
       sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
         state.sourceSnapshotReadyByAddress,
-        [normalizedAddress],
+        completedAddresses,
       ),
     }));
   }
   useTokenAssetsIndexStore
     .getState()
-    .syncSingleAssetsResultsForAddresses([normalizedAddress]);
+    .syncSingleAssetsResultsForAddresses(normalizedAddresses);
   useTokenAssetsIndexStore
     .getState()
-    .syncMultiAssetsResultsForAddresses([normalizedAddress]);
+    .syncMultiAssetsResultsForAddresses(normalizedAddresses);
 
   const projectionState = useTokenAssetsIndexStore.getState();
-  getTokenAssetReadModelTargets([normalizedAddress]).forEach(
+  getTokenAssetReadModelTargets(normalizedAddresses).forEach(
     ({ key, scene }) => {
       const config =
         scene === 'single-address'
@@ -4831,6 +4886,10 @@ const applyNativeTokenCommitWithJsProjection = async (
       if (!config || !result) {
         return;
       }
+      const completion = getNativeTokenCompletionForTarget(
+        { key, scene, config } as NativeTokenProjectionTarget,
+        completions,
+      );
       syncTokenAssetReadModel({
         key,
         scene,
@@ -4845,20 +4904,25 @@ const applyNativeTokenCommitWithJsProjection = async (
   );
 };
 
-const applyNativeTokenCommit = async (
-  completion: NativeAssetSyncCompletion,
+const publishNativeTokenBatch = async (
+  completions: NativeAssetSyncCompletion[],
 ) => {
-  const normalizedAddress = normalizeAddress(completion.address);
-  const targets = getNativeTokenProjectionTargets([normalizedAddress]);
+  const normalizedAddresses = Array.from(
+    new Set(
+      completions.map(completion => normalizeAddress(completion.address)),
+    ),
+  );
+  const targets = getNativeTokenProjectionTargets(normalizedAddresses);
   if (!targets.length) {
-    await applyNativeTokenCommitWithJsProjection(completion, normalizedAddress);
+    await applyNativeTokenCommitWithJsProjection(completions);
     return;
   }
 
+  const latestCompletion = getLatestNativeTokenCompletion(completions);
   const trace = beginAssetDataLoadDiagnostic(
     'token-native-sql-projection',
-    completion.requestId,
-    { addressCount: 1, targetCount: targets.length },
+    latestCompletion.requestId,
+    { addressCount: normalizedAddresses.length, targetCount: targets.length },
   );
   try {
     const compiledTargets = await compileNativeTokenProjectionTargets(targets);
@@ -4872,7 +4936,7 @@ const applyNativeTokenCommit = async (
       ),
     });
 
-    tokenCacheHydrator.invalidate([normalizedAddress]);
+    tokenCacheHydrator.invalidate(normalizedAddresses);
     const requiredResourceIds = Array.from(
       new Set(compiledTargets.flatMap(target => target.projection.resourceIds)),
     );
@@ -4899,12 +4963,11 @@ const applyNativeTokenCommit = async (
     }
 
     publishCompiledNativeTokenProjections({
-      address: normalizedAddress,
-      completion,
+      completions,
       compiledTargets,
       projectionTokens,
     });
-    scheduleNativeTokenLegacyHydration(normalizedAddress);
+    scheduleNativeTokenLegacyHydration(normalizedAddresses);
     trace.finish({
       path: 'sql-projection',
       itemCount: projectionTokens.length,
@@ -4916,8 +4979,42 @@ const applyNativeTokenCommit = async (
       '[tokenProjection] native SQL projection failed; using JS fallback',
       error,
     );
-    await applyNativeTokenCommitWithJsProjection(completion, normalizedAddress);
+    await applyNativeTokenCommitWithJsProjection(completions);
   }
+};
+
+const pendingNativeTokenCompletions = new Map<
+  string,
+  NativeAssetSyncCompletion
+>();
+
+const nativeTokenCommitBatcher = createAddressListCommitBatcher({
+  apply: async addresses => {
+    const completions = addresses
+      .map(address => pendingNativeTokenCompletions.get(address))
+      .filter(
+        (completion): completion is NativeAssetSyncCompletion => !!completion,
+      );
+    if (!completions.length) {
+      return;
+    }
+    try {
+      await publishNativeTokenBatch(completions);
+    } finally {
+      completions.forEach(completion => {
+        const address = normalizeAddress(completion.address);
+        if (pendingNativeTokenCompletions.get(address) === completion) {
+          pendingNativeTokenCompletions.delete(address);
+        }
+      });
+    }
+  },
+});
+
+const applyNativeTokenCommit = (completion: NativeAssetSyncCompletion) => {
+  const normalizedAddress = normalizeAddress(completion.address);
+  pendingNativeTokenCompletions.set(normalizedAddress, completion);
+  return nativeTokenCommitBatcher.enqueue([normalizedAddress]);
 };
 
 registerNativeAssetSyncHandler('token', applyNativeTokenCommit);

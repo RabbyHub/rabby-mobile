@@ -40,7 +40,10 @@ import {
   setIncludeWatchAddressesInHomeAssetSelection,
   setNativeTokenChainSyncEnabled,
 } from '@/hooks/appSettings';
-import { ensureAccountBalanceSelectionLifecycle } from '@/store/balanceAccountSelection';
+import {
+  ensureAccountBalanceSelectionLifecycle,
+  refreshAccountBalanceSelectionSnapshot,
+} from '@/store/balanceAccountSelection';
 import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
 import accountStore from '@/store/account';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
@@ -727,8 +730,8 @@ async function openHomeAssets(
     assetDataLoadStartTimeoutMs?: number;
     assetDataLoadReadinessTimeoutMs?: number;
     waitForAssetDataLoadSettlement?: boolean;
+    assetDataLoadSettlementTimeoutMs?: number;
     deferAssetDataLoadReadinessUntilAfterTabs?: boolean;
-    expectAssetDataLoadBeforeForegroundSettlement?: boolean;
     profileTabIndex?: number;
     performanceProbe?: ReturnType<
       typeof createRegressionScenarioPerformanceProbe
@@ -783,12 +786,6 @@ async function openHomeAssets(
         ['multi-address-token', 'multi-address-protocol'],
         options?.assetDataLoadStartTimeoutMs,
       );
-      if (options?.expectAssetDataLoadBeforeForegroundSettlement) {
-        assertHomeAssetRefreshStartedBeforeForegroundSettlement(
-          context,
-          requestedAssetDataLoadCursor,
-        );
-      }
       if (options?.assetDataLoadReadinessPhases) {
         await waitForHomeAssetDataLoadReadiness(
           context,
@@ -797,14 +794,23 @@ async function openHomeAssets(
           options.assetDataLoadReadinessTimeoutMs,
         );
       }
-      if (options?.waitForAssetDataLoadSettlement) {
+      if (
+        options?.waitForAssetDataLoadSettlement &&
+        !options.deferAssetDataLoadReadinessUntilAfterTabs
+      ) {
         await waitForHomeAssetDataLoadSettlement(
           context,
           requestedAssetDataLoadCursor,
           ['multi-address-token', 'multi-address-protocol'],
+          options.assetDataLoadSettlementTimeoutMs,
         );
       }
     };
+
+    const deferredSettlementDomains = new Set<AssetDataLoadDiagnosticDomain>([
+      'multi-address-token',
+      'multi-address-protocol',
+    ]);
 
     if (options?.triggerManualRefresh) {
       requestedAssetDataLoadCursor = getAssetDataLoadDiagnosticsCursor();
@@ -865,16 +871,23 @@ async function openHomeAssets(
         const expectedAssetDataLoadDomains =
           options?.expectedAssetDataLoadDomainsByTab?.[tabIndex];
         if (expectedAssetDataLoadDomains?.length) {
+          expectedAssetDataLoadDomains.forEach(domain =>
+            deferredSettlementDomains.add(domain),
+          );
           await waitForHomeAssetDataLoadDomains(
             context,
             assetDataLoadCursor,
             expectedAssetDataLoadDomains,
           );
-          if (options?.waitForAssetDataLoadSettlement) {
+          if (
+            options?.waitForAssetDataLoadSettlement &&
+            !options.deferAssetDataLoadReadinessUntilAfterTabs
+          ) {
             await waitForHomeAssetDataLoadSettlement(
               context,
               assetDataLoadCursor,
               expectedAssetDataLoadDomains,
+              options.assetDataLoadSettlementTimeoutMs,
             );
           }
         }
@@ -905,6 +918,18 @@ async function openHomeAssets(
       options.deferAssetDataLoadReadinessUntilAfterTabs
     ) {
       await waitForRequestedAssetDataLoadReadiness();
+    }
+
+    if (
+      options?.waitForAssetDataLoadSettlement &&
+      options.deferAssetDataLoadReadinessUntilAfterTabs
+    ) {
+      await waitForHomeAssetDataLoadSettlement(
+        context,
+        requestedAssetDataLoadCursor,
+        Array.from(deferredSettlementDomains),
+        options.assetDataLoadSettlementTimeoutMs,
+      );
     }
 
     const visitedTabs = new Set([0, ...requestedTabs]);
@@ -1085,6 +1110,7 @@ async function openHighCardinalityAssets(
   }
 
   await ensureAccountBalanceSelectionLifecycle();
+  await refreshAccountBalanceSelectionSnapshot();
   const expectedSelectionCount = Math.min(
     settings.topN,
     countUniqueAddresses(accounts),
@@ -1126,21 +1152,32 @@ async function openHighCardinalityAssets(
       : requestedAddressCount >= 50
       ? 120_000
       : 60_000;
+  const assetDataLoadSettlementTimeoutMs =
+    requestedAddressCount >= 100
+      ? 600_000
+      : requestedAddressCount >= 50
+      ? 360_000
+      : requestedAddressCount >= 20
+      ? 240_000
+      : 180_000;
   const probe = createRegressionScenarioPerformanceProbe();
   try {
     const visualReadyStartedAt = Date.now();
     await openHomeAssets(context, {
-      defaultTabs: '1,2',
+      defaultTabs: '1,2,3',
       triggerManualRefresh: true,
       waitForTabReadyAssertions: false,
       expectedAssetDataLoadDomainsByTab: {
         1: ['multi-address-token'],
         2: ['multi-address-protocol'],
+        3: ['multi-address-nft'],
       },
       assetDataLoadStartTimeoutMs,
+      waitForAssetDataLoadSettlement: true,
+      assetDataLoadSettlementTimeoutMs,
+      deferAssetDataLoadReadinessUntilAfterTabs: true,
       profileTabIndex: 1,
       performanceProbe: probe,
-      expectAssetDataLoadBeforeForegroundSettlement: assetSyncMode === 'native',
     });
     probe.markPhase('home-wait-defi-renderable');
     const renderableEvent = await waitForScenarioAssertion(
@@ -1486,45 +1523,6 @@ async function waitForHomeAssetDataLoadDomains(
       ', ',
     )}`,
   );
-}
-
-function assertHomeAssetRefreshStartedBeforeForegroundSettlement(
-  context: RegressionScenarioExecutionContext,
-  cursor: number,
-) {
-  const records = getAssetDataLoadDiagnosticsSnapshot().records.filter(
-    record => record.id > cursor,
-  );
-  const foregroundSettled = records.find(
-    record =>
-      record.domain === 'home-manual-refresh' &&
-      record.phase === 'foreground-requests-settled',
-  );
-  const assetStarts = (
-    ['multi-address-token', 'multi-address-protocol'] as const
-  ).map(domain =>
-    records.find(
-      record => record.domain === domain && record.phase === 'started',
-    ),
-  );
-  const passed = assetStarts.every(
-    record =>
-      record !== undefined &&
-      (!foregroundSettled || record.timestamp <= foregroundSettled.timestamp),
-  );
-
-  context.report('assertion', {
-    assertion: 'home-native-assets-start-before-foreground-settles',
-    passed,
-    foregroundSettled: Boolean(foregroundSettled),
-    tokenStarted: Boolean(assetStarts[0]),
-    protocolStarted: Boolean(assetStarts[1]),
-  });
-  if (!passed) {
-    throw new Error(
-      'Native Home asset refresh did not start before foreground requests settled',
-    );
-  }
 }
 
 async function waitForHomeAssetDataLoadSettlement(

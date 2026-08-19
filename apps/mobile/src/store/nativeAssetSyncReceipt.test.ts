@@ -1,5 +1,6 @@
 import {
   dispatchNativeAssetSyncCompletion,
+  isNativeAssetSyncRateLimitedError,
   normalizeNativeAssetSyncCompletion,
   registerNativeAssetSyncHandler,
   resetNativeAssetSyncReceiptsForTests,
@@ -156,9 +157,15 @@ describe('nativeAssetSyncReceipt', () => {
       error: 'HTTP 429',
     });
 
-    await expect(dispatchNativeAssetSyncCompletion(failed)).rejects.toThrow(
-      'HTTP 429',
-    );
+    const request = dispatchNativeAssetSyncCompletion(failed);
+    await expect(request).rejects.toThrow('HTTP 429');
+    await request.catch(error => {
+      expect(isNativeAssetSyncRateLimitedError(error)).toBe(true);
+      expect(error.completion).toEqual({
+        ...failed,
+        address: failed.address.toLowerCase(),
+      });
+    });
     await expect(waitForNativeAssetSyncCompletion('request-1')).rejects.toThrow(
       'HTTP 429',
     );

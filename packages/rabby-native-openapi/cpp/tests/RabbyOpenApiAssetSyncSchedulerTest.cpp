@@ -1,6 +1,7 @@
 #include <rabby/openapi/RabbyOpenApiAssetSyncScheduler.h>
 
 #include <cassert>
+#include <chrono>
 #include <condition_variable>
 #include <cstdint>
 #include <memory>
@@ -54,9 +55,17 @@ class ManualNetwork {
     return handle;
   }
 
-  void complete(std::size_t index) {
+  void complete(
+      std::size_t index,
+      int statusCode = 200,
+      std::vector<rabby::http::Header> headers = {}) {
     auto completion = std::move(pending.at(index).completion);
-    completion(OpenApiClientResult{});
+    OpenApiClientResult result;
+    rabby::http::Response response;
+    response.statusCode = statusCode;
+    response.headers = std::move(headers);
+    result.response = std::move(response);
+    completion(std::move(result));
   }
 
   std::vector<Pending> pending;
@@ -166,11 +175,62 @@ void testProcessingRunsOffCallerThread() {
   assert(taskThread != callerThread);
 }
 
+void testRateLimitFailsQueuedAndNewRequestsWithoutDispatchingThem() {
+  AssetSyncScheduler scheduler(1, 1, 8);
+  ManualNetwork network;
+  std::mutex mutex;
+  std::condition_variable condition;
+  std::vector<int> statuses;
+  std::vector<int> retryAfterSeconds;
+  auto execute = [&network](
+                     OpenApiClientRequest request,
+                     OpenApiClientCompletion completion) {
+    return network.execute(std::move(request), std::move(completion));
+  };
+  auto recordStatus = [&](OpenApiClientResult result) {
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      statuses.push_back(result.response ? result.response->statusCode : 0);
+      if (result.response) {
+        for (const auto& header : result.response->headers) {
+          if (header.name == "Retry-After") {
+            retryAfterSeconds.push_back(std::stoi(header.value));
+          }
+        }
+      }
+    }
+    condition.notify_all();
+  };
+
+  scheduler.execute(execute, makeRequest("/active"), recordStatus);
+  scheduler.execute(execute, makeRequest("/queued-1"), recordStatus);
+  scheduler.execute(execute, makeRequest("/queued-2"), recordStatus);
+  assert(network.pending.size() == 1);
+  assert(scheduler.queuedRequestCount() == 2);
+
+  network.complete(0, 429, {{"Retry-After", "30"}});
+  scheduler.execute(execute, makeRequest("/during-cooldown"), recordStatus);
+
+  std::unique_lock<std::mutex> lock(mutex);
+  condition.wait_for(lock, std::chrono::seconds(2), [&]() {
+    return statuses.size() == 4;
+  });
+  assert(statuses.size() == 4);
+  assert(statuses == std::vector<int>({429, 429, 429, 429}));
+  assert(!retryAfterSeconds.empty());
+  assert(*std::max_element(
+             retryAfterSeconds.begin(), retryAfterSeconds.end()) >= 59);
+  assert(network.pending.size() == 1);
+  assert(scheduler.activeRequestCount() == 0);
+  assert(scheduler.queuedRequestCount() == 0);
+}
+
 } // namespace
 
 int main() {
   testNetworkConcurrencyAndPriority();
   testQueuedCancellation();
   testProcessingRunsOffCallerThread();
+  testRateLimitFailsQueuedAndNewRequestsWithoutDispatchingThem();
   return 0;
 }

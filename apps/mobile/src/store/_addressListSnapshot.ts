@@ -152,27 +152,41 @@ export const createAddressListCommitBatcher = ({
   let pendingAddresses = new Set<string>();
   let pendingWaiters: AddressListCommitWaiter[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let holdCount = 0;
+
+  const flush = async () => {
+    if (!pendingAddresses.size) {
+      return;
+    }
+
+    const addresses = Array.from(pendingAddresses);
+    const waiters = pendingWaiters;
+    pendingAddresses = new Set();
+    pendingWaiters = [];
+
+    try {
+      await apply(addresses);
+      waiters.forEach(waiter => waiter.resolve());
+    } catch (error) {
+      waiters.forEach(waiter => waiter.reject(error));
+      throw error;
+    } finally {
+      if (pendingAddresses.size && holdCount === 0) {
+        schedule();
+      }
+    }
+  };
 
   const schedule = () => {
-    if (timer) {
+    if (timer || holdCount > 0) {
       return;
     }
     timer = setTimeout(async () => {
       timer = undefined;
-      const addresses = Array.from(pendingAddresses);
-      const waiters = pendingWaiters;
-      pendingAddresses = new Set();
-      pendingWaiters = [];
-
       try {
-        await apply(addresses);
-        waiters.forEach(waiter => waiter.resolve());
-      } catch (error) {
-        waiters.forEach(waiter => waiter.reject(error));
-      }
-
-      if (pendingAddresses.size) {
-        schedule();
+        await flush();
+      } catch {
+        // Enqueue waiters receive the exact apply error from flush().
       }
     }, delayMs);
   };
@@ -183,6 +197,9 @@ export const createAddressListCommitBatcher = ({
       return Promise.resolve();
     }
     normalizedAddresses.forEach(address => pendingAddresses.add(address));
+    if (holdCount > 0) {
+      return Promise.resolve();
+    }
     const result = new Promise<void>((resolve, reject) => {
       pendingWaiters.push({ resolve, reject });
     });
@@ -190,5 +207,27 @@ export const createAddressListCommitBatcher = ({
     return result;
   };
 
-  return { enqueue };
+  const beginBatch = () => {
+    holdCount += 1;
+    if (timer) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    let finished = false;
+
+    return {
+      async finish() {
+        if (finished) {
+          return;
+        }
+        finished = true;
+        holdCount = Math.max(0, holdCount - 1);
+        if (holdCount === 0) {
+          await flush();
+        }
+      },
+    };
+  };
+
+  return { enqueue, beginBatch };
 };

@@ -155,4 +155,34 @@ describe('address list snapshots', () => {
     await secondResult;
     jest.useRealTimers();
   });
+
+  it('holds a long-running address burst and publishes it once on finish', async () => {
+    jest.useFakeTimers();
+    const apply = jest.fn().mockResolvedValue(undefined);
+    const batcher = createAddressListCommitBatcher({ apply, delayMs: 8 });
+    const batch = batcher.beginBatch();
+
+    await batcher.enqueue(['0xA']);
+    await jest.advanceTimersByTimeAsync(80);
+    await batcher.enqueue(['0xB', '0xC']);
+
+    expect(apply).not.toHaveBeenCalled();
+    await batch.finish();
+
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(apply).toHaveBeenCalledWith(['0xa', '0xb', '0xc']);
+    jest.useRealTimers();
+  });
+
+  it('propagates a held batch failure from finish', async () => {
+    const error = new Error('projection failed');
+    const batcher = createAddressListCommitBatcher({
+      apply: jest.fn().mockRejectedValue(error),
+    });
+    const batch = batcher.beginBatch();
+
+    await batcher.enqueue(['0xA']);
+
+    await expect(batch.finish()).rejects.toBe(error);
+  });
 });

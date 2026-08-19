@@ -8,6 +8,7 @@ import {
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
+import { ASSET_REMOTE_ADDRESS_CONCURRENCY } from '@/core/utils/boundedConcurrency';
 import { appChainResourceStore } from './appchainResource';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
@@ -55,6 +56,7 @@ interface AppChainState {
 }
 
 const getAppChainQueue = new PQueue({
+  concurrency: ASSET_REMOTE_ADDRESS_CONCURRENCY,
   interval: 1000,
   intervalCap: 10,
 });
@@ -490,6 +492,7 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
     diagnostic?.mark('app-chain-remote-requests-started', {
       queueSizeAtStart,
       queuePendingAtStart,
+      concurrency: ASSET_REMOTE_ADDRESS_CONCURRENCY,
     });
 
     // 并发请求

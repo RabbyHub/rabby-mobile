@@ -2,10 +2,15 @@
 
 #include <algorithm>
 #include <atomic>
+#include <charconv>
+#include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <cctype>
 #include <deque>
 #include <mutex>
+#include <optional>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -19,6 +24,76 @@ std::size_t priorityIndex(AssetSyncPriority priority) {
 }
 
 constexpr std::size_t kPriorityCount = 3;
+constexpr auto kDefaultRateLimitCooldown = std::chrono::seconds(60);
+constexpr auto kMinimumRateLimitCooldown = std::chrono::seconds(1);
+constexpr auto kMaximumRateLimitCooldown = std::chrono::seconds(60);
+constexpr auto kRateLimitQuietPeriod = std::chrono::seconds(60);
+
+bool equalsAsciiCaseInsensitive(const std::string& left, const char* right) {
+  std::size_t index = 0;
+  while (index < left.size() && right[index] != '\0') {
+    if (std::tolower(static_cast<unsigned char>(left[index])) !=
+        std::tolower(static_cast<unsigned char>(right[index]))) {
+      return false;
+    }
+    ++index;
+  }
+  return index == left.size() && right[index] == '\0';
+}
+
+std::string trimAsciiWhitespace(const std::string& value) {
+  auto begin = value.begin();
+  while (begin != value.end() &&
+         std::isspace(static_cast<unsigned char>(*begin))) {
+    ++begin;
+  }
+  auto end = value.end();
+  while (end != begin &&
+         std::isspace(static_cast<unsigned char>(*(end - 1)))) {
+    --end;
+  }
+  return std::string(begin, end);
+}
+
+std::chrono::milliseconds rateLimitCooldownFor(
+    const OpenApiClientResult& result) {
+  if (!result.response || result.response->statusCode != 429) {
+    return std::chrono::milliseconds::zero();
+  }
+  for (const auto& header : result.response->headers) {
+    if (!equalsAsciiCaseInsensitive(header.name, "retry-after")) {
+      continue;
+    }
+    const auto value = trimAsciiWhitespace(header.value);
+    std::int64_t seconds = 0;
+    const auto parsed = std::from_chars(
+        value.data(), value.data() + value.size(), seconds);
+    if (parsed.ec == std::errc{} &&
+        parsed.ptr == value.data() + value.size() && seconds >= 0) {
+      return std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::clamp(
+              std::chrono::seconds(seconds),
+              kMinimumRateLimitCooldown,
+              kMaximumRateLimitCooldown));
+    }
+    break;
+  }
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+      kDefaultRateLimitCooldown);
+}
+
+OpenApiClientResult makeRateLimitedResult(
+    std::chrono::milliseconds remainingCooldown) {
+  OpenApiClientResult result;
+  http::Response response;
+  response.statusCode = 429;
+  const auto retryAfterSeconds = std::max<std::int64_t>(
+      1, (remainingCooldown.count() + 999) / 1000);
+  response.headers.push_back(
+      {"Retry-After", std::to_string(retryAfterSeconds)});
+  result.response = std::move(response);
+  return result;
+}
 
 } // namespace
 
@@ -86,6 +161,7 @@ class AssetSyncScheduler::Impl
     }
 
     auto entry = std::make_shared<NetworkEntry>();
+    std::optional<std::chrono::milliseconds> remainingCooldown;
     {
       std::lock_guard<std::mutex> lock(networkMutex_);
       if (stopping_.load()) {
@@ -96,11 +172,30 @@ class AssetSyncScheduler::Impl
       entry->execute = std::move(execute);
       entry->request = std::move(request);
       entry->completion = std::move(completion);
-      queuedRequests_[priorityIndex(priority)].push_back(entry);
-      queuedById_[entry->id] = entry;
+      const auto now = std::chrono::steady_clock::now();
+      if (now < rateLimitedUntil_) {
+        // A high-cardinality sync starts one coordinator per address. Keep the
+        // circuit open until that burst has stopped instead of allowing a new
+        // request through between two address coordinators.
+        rateLimitedUntil_ = std::max(
+            rateLimitedUntil_,
+            now + kRateLimitQuietPeriod);
+        remainingCooldown = std::chrono::duration_cast<std::chrono::milliseconds>(
+            rateLimitedUntil_ - now);
+      } else {
+        queuedRequests_[priorityIndex(priority)].push_back(entry);
+        queuedById_[entry->id] = entry;
+      }
     }
     auto handle = std::make_shared<ScheduledRequestHandle>(
         weak_from_this(), entry->id);
+    if (remainingCooldown) {
+      dispatchCompletion(
+          std::move(entry->completion),
+          makeRateLimitedResult(*remainingCooldown),
+          priority);
+      return handle;
+    }
     pumpNetwork();
     return handle;
   }
@@ -242,6 +337,9 @@ class AssetSyncScheduler::Impl
       std::uint64_t requestId,
       OpenApiClientResult result) {
     OpenApiClientCompletion completion;
+    std::vector<std::pair<OpenApiClientCompletion, AssetSyncPriority>>
+        rateLimitedCompletions;
+    auto remainingCooldown = std::chrono::milliseconds::zero();
     {
       std::lock_guard<std::mutex> lock(networkMutex_);
       const auto active = activeRequests_.find(requestId);
@@ -250,11 +348,51 @@ class AssetSyncScheduler::Impl
       }
       completion = std::move(active->second->completion);
       activeRequests_.erase(active);
+
+      const auto cooldown = rateLimitCooldownFor(result);
+      if (cooldown > std::chrono::milliseconds::zero()) {
+        const auto now = std::chrono::steady_clock::now();
+        rateLimitedUntil_ = std::max(rateLimitedUntil_, now + cooldown);
+        remainingCooldown = std::chrono::duration_cast<std::chrono::milliseconds>(
+            rateLimitedUntil_ - now);
+        for (auto& queue : queuedRequests_) {
+          while (!queue.empty()) {
+            auto entry = std::move(queue.front());
+            queue.pop_front();
+            queuedById_.erase(entry->id);
+            if (!entry->cancelled && entry->completion) {
+              rateLimitedCompletions.emplace_back(
+                  std::move(entry->completion), entry->priority);
+            }
+          }
+        }
+      }
     }
     if (completion) {
       completion(std::move(result));
     }
+    for (auto& [queuedCompletion, priority] : rateLimitedCompletions) {
+      dispatchCompletion(
+          std::move(queuedCompletion),
+          makeRateLimitedResult(remainingCooldown),
+          priority);
+    }
     pumpNetwork();
+  }
+
+  void dispatchCompletion(
+      OpenApiClientCompletion completion,
+      OpenApiClientResult result,
+      AssetSyncPriority priority) {
+    if (!completion) {
+      return;
+    }
+    postProcessing(
+        [completion = std::move(completion),
+         result = std::move(result)]() mutable {
+          completion(std::move(result));
+        },
+        priority);
   }
 
   void cancel(std::uint64_t requestId) {
@@ -342,6 +480,7 @@ class AssetSyncScheduler::Impl
   std::deque<std::shared_ptr<NetworkEntry>> queuedRequests_[kPriorityCount];
   std::unordered_map<std::uint64_t, std::shared_ptr<NetworkEntry>> queuedById_;
   std::unordered_map<std::uint64_t, std::shared_ptr<NetworkEntry>> activeRequests_;
+  std::chrono::steady_clock::time_point rateLimitedUntil_{};
   std::deque<AssetSyncTask> processingTasks_[kPriorityCount];
   std::vector<std::thread> processingThreads_;
 };

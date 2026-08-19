@@ -17,6 +17,10 @@ import { formatAppChain, isAppChain } from '@/utils/appchain';
 import type { IProtocolItem } from '@/types/assets';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import { useAppChainStore } from '@/store/appchain';
+import {
+  ASSET_REMOTE_ADDRESS_CONCURRENCY,
+  mapWithConcurrency,
+} from '@/core/utils/boundedConcurrency';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -211,8 +215,10 @@ export const loadProtocolsForAddresses = async (
   }
 
   let settledAddressCount = 0;
-  const results = await Promise.all(
-    lowerAddresses.map((address, addressIndex) => {
+  const results = await mapWithConcurrency(
+    lowerAddresses,
+    ASSET_REMOTE_ADDRESS_CONCURRENCY,
+    (address, addressIndex) => {
       const mark = (phase: string, details?: ProtocolLoadDiagnosticDetails) =>
         diagnostics?.mark(phase, {
           addressIndex,
@@ -227,7 +233,7 @@ export const loadProtocolsForAddresses = async (
         settledAddressCount += 1;
         mark('address-settled', { settledAddressCount });
       });
-    }),
+    },
   );
   const protocolMap: Record<string, IProtocolItem[]> = {};
   const remoteProtocolMap: Record<string, ComplexProtocol[]> = {};

@@ -83,6 +83,12 @@ const accountBalanceSelectionLifecycleStateRef = {
   hasSubscribed: false,
   prevSelectionSignature: '',
   syncGeneration: 0,
+  syncSelectionFromAccounts: null as
+    | null
+    | ((options?: {
+        accountState?: ReturnType<typeof accountStore.getState>;
+        allowFetchFallback?: boolean;
+      }) => Promise<void>),
 };
 
 async function initAccountBalanceSelectionLifecycle() {
@@ -137,6 +143,8 @@ async function initAccountBalanceSelectionLifecycle() {
         source: 'accounts_changed',
       });
     };
+    accountBalanceSelectionLifecycleStateRef.syncSelectionFromAccounts =
+      syncSelectionFromAccounts;
 
     if (!accountBalanceSelectionLifecycleStateRef.hasSubscribed) {
       accountBalanceSelectionLifecycleStateRef.hasSubscribed = true;
@@ -196,6 +204,13 @@ export async function ensureAccountBalanceSelectionLifecycle() {
   });
   accountBalanceSelectionLifecycleStateRef.promise = promise;
   await promise;
+}
+
+export async function refreshAccountBalanceSelectionSnapshot() {
+  await ensureAccountBalanceSelectionLifecycle();
+  await accountBalanceSelectionLifecycleStateRef.syncSelectionFromAccounts?.({
+    allowFetchFallback: true,
+  });
 }
 
 let hasStartedAccountBalanceLifecycle = false;

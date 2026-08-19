@@ -41,7 +41,10 @@ export type AssetDataLoadDiagnosticTrace = {
   fail: (details?: AssetDataLoadTraceDetails) => void;
 };
 
-const MAX_RECORDS = 160;
+// High-cardinality probes intentionally keep several address-scoped asset
+// requests in flight. Retain enough non-production history to observe each
+// request's terminal state instead of evicting its start marker mid-run.
+const MAX_RECORDS = 4096;
 const records = isNonProductionDiagnosticsEnabled
   ? ([] as AssetDataLoadDiagnosticRecord[])
   : null;
