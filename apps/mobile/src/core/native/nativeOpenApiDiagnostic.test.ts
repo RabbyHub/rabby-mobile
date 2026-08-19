@@ -14,6 +14,7 @@ jest.mock('./RNHelpers', () => ({
   __esModule: true,
   default: {
     runNativeOpenApiDiagnostic: jest.fn(),
+    getNativeAssetSyncSchedulerDiagnostics: jest.fn(),
     runNativeTokenCacheSyncDiagnostic: jest.fn(),
     runNativeTokenCacheWriteDiagnostic: jest.fn(),
     cancelAllNativeTokenCacheSyncs: jest.fn(),
@@ -24,12 +25,17 @@ import { registerSyncAbortHandler } from '@/databases/sync/abort';
 import { hydrateCommittedNativeTokenSnapshot } from '@/store/tokens';
 import RNHelpers from './RNHelpers';
 import {
+  diffNativeAssetSyncSchedulerDiagnostics,
+  getNativeAssetSyncSchedulerDiagnostics,
   runNativeTokenCacheSyncDiagnostic,
   runNativeTokenCacheWriteDiagnostic,
 } from './nativeOpenApiDiagnostic';
 
 const mockRunNativeTokenCacheSyncDiagnostic = jest.mocked(
   RNHelpers.runNativeTokenCacheSyncDiagnostic,
+);
+const mockGetNativeAssetSyncSchedulerDiagnostics = jest.mocked(
+  RNHelpers.getNativeAssetSyncSchedulerDiagnostics,
 );
 const mockCancelAllNativeTokenCacheSyncs = jest.mocked(
   RNHelpers.cancelAllNativeTokenCacheSyncs,
@@ -130,5 +136,47 @@ describe('native OpenAPI diagnostics', () => {
 
     await expect(runNativeTokenCacheWriteDiagnostic()).resolves.toEqual(result);
     expect(mockRunNativeTokenCacheWriteDiagnostic).toHaveBeenCalledWith();
+  });
+
+  it('reports scheduler work as a bounded before-and-after delta', async () => {
+    const before = {
+      realRequestDispatchCount: 10,
+      completedRequestCount: 8,
+      http429ResponseCount: 1,
+      queuedSynthetic429Count: 2,
+      cooldownSynthetic429Count: 3,
+      activeRequestCount: 2,
+      queuedRequestCount: 4,
+      queuedProcessingTaskCount: 1,
+      cooldownRemainingMs: 500,
+    };
+    const after = {
+      realRequestDispatchCount: 16,
+      completedRequestCount: 14,
+      http429ResponseCount: 2,
+      queuedSynthetic429Count: 5,
+      cooldownSynthetic429Count: 7,
+      activeRequestCount: 0,
+      queuedRequestCount: 0,
+      queuedProcessingTaskCount: 0,
+      cooldownRemainingMs: 100,
+    };
+    mockGetNativeAssetSyncSchedulerDiagnostics.mockResolvedValue(before);
+
+    await expect(getNativeAssetSyncSchedulerDiagnostics()).resolves.toEqual(
+      before,
+    );
+    expect(diffNativeAssetSyncSchedulerDiagnostics(before, after)).toEqual({
+      realRequestDispatchCount: 6,
+      completedRequestCount: 6,
+      http429ResponseCount: 1,
+      queuedSynthetic429Count: 3,
+      cooldownSynthetic429Count: 4,
+      activeRequestCount: 0,
+      queuedRequestCount: 0,
+      queuedProcessingTaskCount: 0,
+      cooldownRemainingMsBefore: 500,
+      cooldownRemainingMsAfter: 100,
+    });
   });
 });

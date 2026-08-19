@@ -265,6 +265,46 @@ public class RNHelpersModule extends EventEmitterPackageSpec {
   }
 
   @ReactMethod
+  public void getNativeAssetSyncSchedulerDiagnostics(Promise promise) {
+    if (!RabbyStartupTrace.isEnabled()) {
+      promise.reject(
+        "E_NATIVE_ASSET_SYNC_DIAGNOSTICS_DISABLED",
+        "Native asset sync diagnostics are disabled in production builds"
+      );
+      return;
+    }
+
+    try {
+      long[] values =
+        RabbyNativeOpenApiRuntime.getAssetSyncSchedulerDiagnostics();
+      if (values == null || values.length != 9) {
+        promise.reject(
+          "E_NATIVE_ASSET_SYNC_DIAGNOSTICS_INVALID",
+          "Native asset sync diagnostics returned an invalid snapshot"
+        );
+        return;
+      }
+      WritableMap output = Arguments.createMap();
+      output.putDouble("realRequestDispatchCount", values[0]);
+      output.putDouble("completedRequestCount", values[1]);
+      output.putDouble("http429ResponseCount", values[2]);
+      output.putDouble("queuedSynthetic429Count", values[3]);
+      output.putDouble("cooldownSynthetic429Count", values[4]);
+      output.putDouble("activeRequestCount", values[5]);
+      output.putDouble("queuedRequestCount", values[6]);
+      output.putDouble("queuedProcessingTaskCount", values[7]);
+      output.putDouble("cooldownRemainingMs", values[8]);
+      promise.resolve(output);
+    } catch (Throwable error) {
+      promise.reject(
+        "E_NATIVE_ASSET_SYNC_DIAGNOSTICS_FAILED",
+        "Native asset sync diagnostics could not be read",
+        error
+      );
+    }
+  }
+
+  @ReactMethod
   public void runNativeTokenCacheSyncDiagnostic(
     String address,
     boolean replaceExisting,

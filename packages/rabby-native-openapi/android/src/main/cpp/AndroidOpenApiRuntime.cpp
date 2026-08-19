@@ -1011,6 +1011,32 @@ jstring verifyTokenCacheWrite(JNIEnv* env, jclass, jlong syncTimestampMs) {
   return result.success ? nullptr : toJavaString(env, result.error);
 }
 
+jlongArray readAssetSyncSchedulerDiagnostics(JNIEnv* env, jclass) {
+  const auto diagnostics = getAssetSyncScheduler()->diagnostics();
+  const jlong values[] = {
+      static_cast<jlong>(diagnostics.realRequestDispatchCount),
+      static_cast<jlong>(diagnostics.completedRequestCount),
+      static_cast<jlong>(diagnostics.http429ResponseCount),
+      static_cast<jlong>(diagnostics.queuedSynthetic429Count),
+      static_cast<jlong>(diagnostics.cooldownSynthetic429Count),
+      static_cast<jlong>(diagnostics.activeRequestCount),
+      static_cast<jlong>(diagnostics.queuedRequestCount),
+      static_cast<jlong>(diagnostics.queuedProcessingTaskCount),
+      static_cast<jlong>(diagnostics.cooldownRemainingMs),
+  };
+  auto result = env->NewLongArray(
+      static_cast<jsize>(sizeof(values) / sizeof(values[0])));
+  if (result == nullptr) {
+    return nullptr;
+  }
+  env->SetLongArrayRegion(
+      result,
+      0,
+      static_cast<jsize>(sizeof(values) / sizeof(values[0])),
+      values);
+  return result;
+}
+
 } // namespace
 
 namespace rabby::openapi {
@@ -1160,6 +1186,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
       {"verifyTokenCacheWrite",
        "(J)Ljava/lang/String;",
        reinterpret_cast<void*>(verifyTokenCacheWrite)},
+      {"readAssetSyncSchedulerDiagnostics",
+       "()[J",
+       reinterpret_cast<void*>(readAssetSyncSchedulerDiagnostics)},
   };
   if (env->RegisterNatives(
           runtimeClass,

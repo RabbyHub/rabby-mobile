@@ -46,6 +46,8 @@ typedef void (^RabbyNativeTokenCacheWriteDiagnosticCompletion)(
 + (void)verifyTokenCacheWriteWithCompletion:
     (RabbyNativeTokenCacheWriteDiagnosticCompletion)completion;
 
++ (NSDictionary<NSString*, id>*)assetSyncSchedulerDiagnostics;
+
 + (void)cancelTokenCacheSyncForAddress:(NSString*)address;
 
 + (void)cancelAllTokenCacheSyncs;

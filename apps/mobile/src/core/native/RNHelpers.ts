@@ -46,6 +46,14 @@ const RNHelpers = Object.freeze({
       Promise.reject(
         new Error('RNHelpers.runNativeOpenApiDiagnostic is unavailable'),
       )),
+  getNativeAssetSyncSchedulerDiagnostics:
+    nativeModule.getNativeAssetSyncSchedulerDiagnostics ||
+    (() =>
+      Promise.reject(
+        new Error(
+          'RNHelpers.getNativeAssetSyncSchedulerDiagnostics is unavailable',
+        ),
+      )),
   runNativeTokenCacheSyncDiagnostic:
     nativeModule.runNativeTokenCacheSyncDiagnostic ||
     (() =>

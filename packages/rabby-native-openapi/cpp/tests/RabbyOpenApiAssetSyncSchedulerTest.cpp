@@ -223,6 +223,16 @@ void testRateLimitFailsQueuedAndNewRequestsWithoutDispatchingThem() {
   assert(network.pending.size() == 1);
   assert(scheduler.activeRequestCount() == 0);
   assert(scheduler.queuedRequestCount() == 0);
+
+  const auto diagnostics = scheduler.diagnostics();
+  assert(diagnostics.realRequestDispatchCount == 1);
+  assert(diagnostics.completedRequestCount == 1);
+  assert(diagnostics.http429ResponseCount == 1);
+  assert(diagnostics.queuedSynthetic429Count == 2);
+  assert(diagnostics.cooldownSynthetic429Count == 1);
+  assert(diagnostics.activeRequestCount == 0);
+  assert(diagnostics.queuedRequestCount == 0);
+  assert(diagnostics.cooldownRemainingMs >= 59'000);
 }
 
 } // namespace

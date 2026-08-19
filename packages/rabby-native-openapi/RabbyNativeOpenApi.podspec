@@ -30,6 +30,7 @@ Pod::Spec.new do |s|
       '$(inherited)',
       '"${PODS_TARGET_SRCROOT}/cpp/include"',
       '"${PODS_TARGET_SRCROOT}/cpp/third_party/json11"',
+      '"${PODS_ROOT}/Headers/Public"',
       '"${PODS_CONFIGURATION_BUILD_DIR}/RabbyNativeHttp/RabbyNativeHttp.framework/Headers"',
       (private_signer_header_path if private_signer_enabled),
     ].compact.join(' '),

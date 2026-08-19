@@ -110,6 +110,23 @@ RCT_EXPORT_METHOD(runNativeOpenApiDiagnostic:
     }];
 }
 
+RCT_EXPORT_METHOD(getNativeAssetSyncSchedulerDiagnostics:
+  (RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_ASSET_SYNC_DIAGNOSTICS_DISABLED",
+            @"Native asset sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    resolve([RabbyNativeOpenApiDiagnostics assetSyncSchedulerDiagnostics]);
+}
+
 RCT_EXPORT_METHOD(runNativeTokenCacheSyncDiagnostic:
   (NSString *)address
   replaceExisting:(BOOL)replaceExisting

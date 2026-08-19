@@ -50,6 +50,11 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { findChain, findChainByEnum, makeTokenFromChain } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import {
+  diffNativeAssetSyncSchedulerDiagnostics,
+  getNativeAssetSyncSchedulerDiagnostics,
+  type NativeAssetSyncSchedulerDiagnostics,
+} from '@/core/native/nativeOpenApiDiagnostic';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
 import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
@@ -1091,6 +1096,16 @@ async function openHighCardinalityAssets(
   const selectionBeforeActivation = [
     ...balanceAccountsStore.getState().selectedAddresses,
   ];
+  let nativeSchedulerBefore: NativeAssetSyncSchedulerDiagnostics | null = null;
+  if (assetSyncMode === 'native') {
+    try {
+      nativeSchedulerBefore = await getNativeAssetSyncSchedulerDiagnostics();
+    } catch {
+      context.report('perf-mark', {
+        mark: 'native-asset-sync-scheduler-unavailable',
+      });
+    }
+  }
   const selectionTransitionStartedAt = Date.now();
   const currentSettings = getHomeAssetSelectionSettings();
   if (currentSettings.topN !== requestedAddressCount) {
@@ -1203,6 +1218,23 @@ async function openHighCardinalityAssets(
       mark: 'high-cardinality-assets-performance-summary',
       ...compactRegressionScenarioPerformanceSummary(probe.stop()),
     });
+    if (nativeSchedulerBefore) {
+      try {
+        const nativeSchedulerAfter =
+          await getNativeAssetSyncSchedulerDiagnostics();
+        context.report('perf-mark', {
+          mark: 'native-asset-sync-scheduler-delta',
+          ...diffNativeAssetSyncSchedulerDiagnostics(
+            nativeSchedulerBefore,
+            nativeSchedulerAfter,
+          ),
+        });
+      } catch {
+        context.report('perf-mark', {
+          mark: 'native-asset-sync-scheduler-unavailable-after-run',
+        });
+      }
+    }
   }
   context.report('postcondition-ready', {
     route: navigationRef.getCurrentRoute()?.name || null,

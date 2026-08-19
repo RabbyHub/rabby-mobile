@@ -266,6 +266,7 @@ PODS:
   - PromisesObjC (2.4.0)
   - RabbyNativeHttp (0.1.0)
   - RabbyNativeOpenApi (0.1.0):
+    - op-sqlite (= 15.1.1)
     - RabbyNativeHttp (= 0.1.0)
     - RabbyNativeOpenApiSigner (= 0.1.0-alpha.0)
   - RabbyNativeOpenApiSigner (0.1.0-alpha.0)
@@ -3860,11 +3861,11 @@ SPEC CHECKSUMS:
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   NitroModules: 6a5fd5734111638e8311a4f797eb98263b310c0a
-  op-sqlite: 559e7d37fe743edcc74f45bb49cab6259e30a144
+  op-sqlite: c728fc4ed4b638371e35b743d7030a40aa29b169
   OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RabbyNativeHttp: 1e3f919eae3484889e950b227052d0a2602929c2
-  RabbyNativeOpenApi: b85f44894a7d6dbd7ce2d72ee252b02b081a9442
+  RabbyNativeOpenApi: 422082d84944a42e2a592adcd939f1ac1ce8512d
   RabbyNativeOpenApiSigner: 22fb4eb311f788815be2bec1631ed37ab8a87f1d
   RabbyRNKeychain: cc2d4ef9630a23dd2a9d72ba3532d54a2fb58c66
   RabbyRNKeychainV9: 149a60d8e00ab5ce9e5a2d27361994d60c332264

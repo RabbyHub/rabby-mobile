@@ -182,6 +182,7 @@ class AssetSyncScheduler::Impl
             now + kRateLimitQuietPeriod);
         remainingCooldown = std::chrono::duration_cast<std::chrono::milliseconds>(
             rateLimitedUntil_ - now);
+        ++cooldownSynthetic429Count_;
       } else {
         queuedRequests_[priorityIndex(priority)].push_back(entry);
         queuedById_[entry->id] = entry;
@@ -230,6 +231,32 @@ class AssetSyncScheduler::Impl
   std::size_t queuedProcessingTaskCount() const {
     std::lock_guard<std::mutex> lock(processingMutex_);
     return queuedProcessingTaskCountLocked();
+  }
+
+  AssetSyncSchedulerDiagnostics diagnostics() const {
+    AssetSyncSchedulerDiagnostics result;
+    {
+      std::lock_guard<std::mutex> lock(networkMutex_);
+      result.realRequestDispatchCount = realRequestDispatchCount_;
+      result.completedRequestCount = completedRequestCount_;
+      result.http429ResponseCount = http429ResponseCount_;
+      result.queuedSynthetic429Count = queuedSynthetic429Count_;
+      result.cooldownSynthetic429Count = cooldownSynthetic429Count_;
+      result.activeRequestCount = activeRequests_.size();
+      result.queuedRequestCount = queuedRequestCountLocked();
+      const auto now = std::chrono::steady_clock::now();
+      if (now < rateLimitedUntil_) {
+        result.cooldownRemainingMs =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                rateLimitedUntil_ - now)
+                .count();
+      }
+    }
+    {
+      std::lock_guard<std::mutex> lock(processingMutex_);
+      result.queuedProcessingTaskCount = queuedProcessingTaskCountLocked();
+    }
+    return result;
   }
 
  private:
@@ -293,6 +320,7 @@ class AssetSyncScheduler::Impl
         activeRequests_[entry->id] = entry;
         dispatches.push_back(std::move(entry));
       }
+      realRequestDispatchCount_ += dispatches.size();
     }
     for (auto& entry : dispatches) {
       startNetworkRequest(entry);
@@ -348,9 +376,11 @@ class AssetSyncScheduler::Impl
       }
       completion = std::move(active->second->completion);
       activeRequests_.erase(active);
+      ++completedRequestCount_;
 
       const auto cooldown = rateLimitCooldownFor(result);
       if (cooldown > std::chrono::milliseconds::zero()) {
+        ++http429ResponseCount_;
         const auto now = std::chrono::steady_clock::now();
         rateLimitedUntil_ = std::max(rateLimitedUntil_, now + cooldown);
         remainingCooldown = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -366,6 +396,7 @@ class AssetSyncScheduler::Impl
             }
           }
         }
+        queuedSynthetic429Count_ += rateLimitedCompletions.size();
       }
     }
     if (completion) {
@@ -481,6 +512,11 @@ class AssetSyncScheduler::Impl
   std::unordered_map<std::uint64_t, std::shared_ptr<NetworkEntry>> queuedById_;
   std::unordered_map<std::uint64_t, std::shared_ptr<NetworkEntry>> activeRequests_;
   std::chrono::steady_clock::time_point rateLimitedUntil_{};
+  std::uint64_t realRequestDispatchCount_{0};
+  std::uint64_t completedRequestCount_{0};
+  std::uint64_t http429ResponseCount_{0};
+  std::uint64_t queuedSynthetic429Count_{0};
+  std::uint64_t cooldownSynthetic429Count_{0};
   std::deque<AssetSyncTask> processingTasks_[kPriorityCount];
   std::vector<std::thread> processingThreads_;
 };
@@ -524,6 +560,10 @@ std::size_t AssetSyncScheduler::queuedRequestCount() const {
 
 std::size_t AssetSyncScheduler::queuedProcessingTaskCount() const {
   return impl_->queuedProcessingTaskCount();
+}
+
+AssetSyncSchedulerDiagnostics AssetSyncScheduler::diagnostics() const {
+  return impl_->diagnostics();
 }
 
 } // namespace rabby::openapi

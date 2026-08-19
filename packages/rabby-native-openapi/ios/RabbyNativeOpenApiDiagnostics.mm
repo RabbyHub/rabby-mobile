@@ -627,6 +627,22 @@ std::int64_t platformEpochSeconds() {
       });
 }
 
++ (NSDictionary<NSString*, id>*)assetSyncSchedulerDiagnostics {
+  const auto diagnostics =
+      rabby::openapi::apple::getAssetSyncScheduler()->diagnostics();
+  return @{
+    @"realRequestDispatchCount" : @(diagnostics.realRequestDispatchCount),
+    @"completedRequestCount" : @(diagnostics.completedRequestCount),
+    @"http429ResponseCount" : @(diagnostics.http429ResponseCount),
+    @"queuedSynthetic429Count" : @(diagnostics.queuedSynthetic429Count),
+    @"cooldownSynthetic429Count" : @(diagnostics.cooldownSynthetic429Count),
+    @"activeRequestCount" : @(diagnostics.activeRequestCount),
+    @"queuedRequestCount" : @(diagnostics.queuedRequestCount),
+    @"queuedProcessingTaskCount" : @(diagnostics.queuedProcessingTaskCount),
+    @"cooldownRemainingMs" : @(diagnostics.cooldownRemainingMs),
+  };
+}
+
 + (void)cancelTokenCacheSyncForAddress:(NSString*)address {
   std::shared_ptr<rabby::openapi::TokenSyncCoordinator> coordinator;
   {

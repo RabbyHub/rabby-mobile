@@ -3,6 +3,7 @@
 #include <rabby/openapi/RabbyOpenApiClient.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 
@@ -20,6 +21,18 @@ using AssetSyncNetworkExecute =
         OpenApiClientCompletion)>;
 using AssetSyncTask = std::function<void()>;
 using AssetSyncTaskDispatch = std::function<void(AssetSyncTask)>;
+
+struct AssetSyncSchedulerDiagnostics {
+  std::uint64_t realRequestDispatchCount{0};
+  std::uint64_t completedRequestCount{0};
+  std::uint64_t http429ResponseCount{0};
+  std::uint64_t queuedSynthetic429Count{0};
+  std::uint64_t cooldownSynthetic429Count{0};
+  std::size_t activeRequestCount{0};
+  std::size_t queuedRequestCount{0};
+  std::size_t queuedProcessingTaskCount{0};
+  std::int64_t cooldownRemainingMs{0};
+};
 
 class AssetSyncScheduler {
  public:
@@ -42,6 +55,7 @@ class AssetSyncScheduler {
   std::size_t activeRequestCount() const;
   std::size_t queuedRequestCount() const;
   std::size_t queuedProcessingTaskCount() const;
+  AssetSyncSchedulerDiagnostics diagnostics() const;
 
  private:
   class Impl;

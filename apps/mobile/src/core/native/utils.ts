@@ -71,6 +71,17 @@ interface NativeModulesStatic {
       secondCurrentCredentialRevision: number;
       secondUsedLatestAvailableCredential: boolean;
     }>;
+    getNativeAssetSyncSchedulerDiagnostics?(): Promise<{
+      realRequestDispatchCount: number;
+      completedRequestCount: number;
+      http429ResponseCount: number;
+      queuedSynthetic429Count: number;
+      cooldownSynthetic429Count: number;
+      activeRequestCount: number;
+      queuedRequestCount: number;
+      queuedProcessingTaskCount: number;
+      cooldownRemainingMs: number;
+    }>;
     runNativeTokenCacheSyncDiagnostic?(
       address: string,
       replaceExisting: boolean,

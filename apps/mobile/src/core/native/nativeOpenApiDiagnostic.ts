@@ -15,6 +15,44 @@ export function runNativeOpenApiDiagnostic(address: string) {
   return RNHelpers.runNativeOpenApiDiagnostic(address);
 }
 
+export type NativeAssetSyncSchedulerDiagnostics = Awaited<
+  ReturnType<typeof RNHelpers.getNativeAssetSyncSchedulerDiagnostics>
+>;
+
+export function getNativeAssetSyncSchedulerDiagnostics() {
+  if (!isNonPublicProductionEnv) {
+    return Promise.reject(
+      new Error(
+        'Native asset sync diagnostics are disabled in production builds',
+      ),
+    );
+  }
+  return RNHelpers.getNativeAssetSyncSchedulerDiagnostics();
+}
+
+export function diffNativeAssetSyncSchedulerDiagnostics(
+  before: NativeAssetSyncSchedulerDiagnostics,
+  after: NativeAssetSyncSchedulerDiagnostics,
+) {
+  return {
+    realRequestDispatchCount:
+      after.realRequestDispatchCount - before.realRequestDispatchCount,
+    completedRequestCount:
+      after.completedRequestCount - before.completedRequestCount,
+    http429ResponseCount:
+      after.http429ResponseCount - before.http429ResponseCount,
+    queuedSynthetic429Count:
+      after.queuedSynthetic429Count - before.queuedSynthetic429Count,
+    cooldownSynthetic429Count:
+      after.cooldownSynthetic429Count - before.cooldownSynthetic429Count,
+    activeRequestCount: after.activeRequestCount,
+    queuedRequestCount: after.queuedRequestCount,
+    queuedProcessingTaskCount: after.queuedProcessingTaskCount,
+    cooldownRemainingMsBefore: before.cooldownRemainingMs,
+    cooldownRemainingMsAfter: after.cooldownRemainingMs,
+  };
+}
+
 export type NativeTokenCacheSyncDiagnosticResult = Awaited<
   ReturnType<typeof RNHelpers.runNativeTokenCacheSyncDiagnostic>
 > & {

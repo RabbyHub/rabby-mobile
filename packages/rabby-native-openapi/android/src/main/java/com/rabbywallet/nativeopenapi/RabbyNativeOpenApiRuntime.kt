@@ -449,6 +449,10 @@ object RabbyNativeOpenApiRuntime {
   }
 
   @JvmStatic
+  fun getAssetSyncSchedulerDiagnostics(): LongArray =
+    readAssetSyncSchedulerDiagnostics()
+
+  @JvmStatic
   private external fun startDiagnostic(
     diagnosticId: Long,
     applicationIdentity: String,
@@ -514,6 +518,9 @@ object RabbyNativeOpenApiRuntime {
 
   @JvmStatic
   private external fun verifyTokenCacheWrite(syncTimestampMs: Long): String?
+
+  @JvmStatic
+  private external fun readAssetSyncSchedulerDiagnostics(): LongArray
 
   @JvmStatic
   private fun onDiagnosticCompleted(
