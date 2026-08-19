@@ -50,14 +50,6 @@ export type ReconciledPerpsProMarkets = {
   marketsByKey: PerpsProMarketsByKey;
 };
 
-const LOCAL_FULL_NAMES: Readonly<Record<string, string>> = {
-  BTC: 'Bitcoin',
-  DOGE: 'Dogecoin',
-  ETH: 'Ethereum',
-  PUNDIX: 'Pundi X',
-  SOL: 'Solana',
-};
-
 const createCollator = (options: Intl.CollatorOptions) => {
   if (typeof Intl === 'undefined' || typeof Intl.Collator !== 'function') {
     return null;
@@ -98,16 +90,8 @@ const toFiniteNumber = (value: string | number | undefined) => {
 export const buildPerpsProMarketKey = (dexId: string, canonicalCoin: string) =>
   `${dexId || 'hyperliquid'}::${canonicalCoin}`;
 
-export const getPerpsProMarketFullName = (marketData: MarketData) => {
-  const brief = marketData.brief?.trim();
-  if (brief) {
-    return brief;
-  }
-  const displayBase = formatCanonicalBase(
-    marketData.displayName || marketData.name,
-  ).toUpperCase();
-  return LOCAL_FULL_NAMES[displayBase] ?? null;
-};
+export const getPerpsProMarketFullName = (marketData: MarketData) =>
+  marketData.brief?.trim() || null;
 
 export const calculatePerpsProChange24h = (marketData: MarketData) => {
   const markPrice = new PerpsMarketBigNumber(marketData.markPx || Number.NaN);

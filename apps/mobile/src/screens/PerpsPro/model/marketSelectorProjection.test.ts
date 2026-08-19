@@ -206,6 +206,49 @@ describe('Perps Pro market selector projection', () => {
     );
   });
 
+  it('keeps symbol search without brief and does not invent a full-name alias', () => {
+    const projection = reconcilePerpsProMarketSelectorProjection([
+      createMarketData(0, {
+        brief: '',
+        displayName: 'BTC',
+        name: 'BTC',
+      }),
+    ]);
+
+    expect(
+      buildPerpsProMarketSlotOrders(projection, 'all', [], 'btc').name.asc.map(
+        slot => slot.marketKey,
+      ),
+    ).toEqual(['hyperliquid::BTC']);
+    expect(
+      buildPerpsProMarketSlotOrders(projection, 'all', [], 'bitcoin').name.asc,
+    ).toEqual([]);
+  });
+
+  it('refreshes backend full-name search without rebuilding sort orders', () => {
+    const source = createMarketData(0, {
+      brief: 'Bitcoin',
+      displayName: 'BTC',
+      name: 'BTC',
+    });
+    const initial = reconcilePerpsProMarketSelectorProjection([source]);
+    const refreshed = reconcilePerpsProMarketSelectorProjection(
+      [{ ...source, brief: 'Bitcoin Network' }],
+      initial,
+    );
+
+    expect(refreshed).not.toBe(initial);
+    expect(refreshed.orders).toBe(initial.orders);
+    expect(
+      buildPerpsProMarketSlotOrders(
+        refreshed,
+        'all',
+        [],
+        'bitcoin network',
+      ).name.asc.map(slot => slot.marketKey),
+    ).toEqual(['hyperliquid::BTC']);
+  });
+
   it('resolves actions against the latest raw market instead of a cached row', () => {
     const source = createMarketData(0);
     const initial = reconcilePerpsProMarketSelectorProjection([source]);
