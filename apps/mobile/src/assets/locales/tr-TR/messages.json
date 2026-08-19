@@ -792,6 +792,7 @@
       "Collection": "Koleksiyon"
     },
     "approvals": {
+      "title": "Onaylar",
       "list": {
         "symbol": "Onaylar"
       },
@@ -1026,6 +1027,7 @@
       "swap-best-subtitle": "En iyi teklif, döviz kuru ve Gas ücretleri dahil olmak üzere en düşük tahmini toplam maliyet ile belirlenir."
     },
     "manageAddress": {
+      "moreWallets": "Daha Fazla Cüzdan",
       "watch-address": "Adres İzle",
       "private-key": "Özel Anahtar",
       "seed-phrase": "Kurtarma İfadesi",
@@ -3337,6 +3339,9 @@
       "common": {
         "orYouCanCreateNewWallet": "Ya da <clickable>yeni bir cüzdan oluşturabilirsiniz</clickable>."
       }
+    },
+    "batchRevoke": {
+      "title": "Toplu İptal"
     },
     "convertDust": {
       "failReason": {

@@ -843,6 +843,7 @@
       }
     },
     "approvals": {
+      "title": "Phê duyệt",
       "list": {
         "symbol": "Phê duyệt"
       },
@@ -1080,6 +1081,7 @@
       "swap-best-subtitle": "Được xác định bởi tổng chi phí ước tính thấp nhất bao gồm tỷ giá hối đoái và phí gas."
     },
     "manageAddress": {
+      "moreWallets": "Thêm ví",
       "enterThePassphrase": "Nhập cụm mật khẩu",
       "watch-address": "Địa chỉ chỉ xem",
       "enterPassphraseTitle": "Nhập cụm mật khẩu để ký",
@@ -3458,6 +3460,9 @@
       "walletReady": "Ví của bạn đã sẵn sàng 🚀",
       "setPasswordTip": "Đặt một mật khẩu để bảo vệ ví của bạn",
       "createWalletError": "Không thể tạo ví"
+    },
+    "batchRevoke": {
+      "title": "Thu hồi hàng loạt"
     },
     "convertDust": {
       "failReason": {

@@ -32,6 +32,7 @@ import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterial
 import type { Account } from '@/core/startupServices/preference';
 import { useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
+import { Text } from '@/components/Typography';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer: React.FC<{

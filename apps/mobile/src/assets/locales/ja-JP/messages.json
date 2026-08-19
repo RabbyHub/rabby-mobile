@@ -768,7 +768,8 @@
         "unsupportedDesc": "EIP-7702の委任は、秘密鍵またはシードフレーズで管理するアドレスでのみ取り消せます。"
       },
       "supportedChains": "サポートされているチェーン",
-      "delegatedAddress": "委任されたアドレス"
+      "delegatedAddress": "委任されたアドレス",
+      "title": "承認"
     },
     "sendToken": {
       "sectionBalance": {
@@ -1278,7 +1279,8 @@
       "delete-checklist-1": "このウォレットを削除すると、対応する秘密鍵とシードフレーズも削除され、Rabbyでは復元できないことを理解しました。",
       "delete-private-key-title": "ウォレットと秘密鍵を削除",
       "delete-seed-phrase-title": "ウォレットとシードフレーズを削除",
-      "delete-title": "ウォレットを削除"
+      "delete-title": "ウォレットを削除",
+      "moreWallets": "その他のウォレット"
     },
     "signText": {
       "title": "テキストに署名",
@@ -3390,6 +3392,9 @@
       "createWalletError": "ウォレットの作成に失敗しました",
       "walletReady": "ウォレットの準備ができました 🚀",
       "setPasswordTip": "ウォレットを保護するためにパスワードを設定してください。"
+    },
+    "batchRevoke": {
+      "title": "一括取り消し"
     },
     "convertDust": {
       "failReason": {

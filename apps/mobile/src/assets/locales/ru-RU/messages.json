@@ -846,6 +846,7 @@
       "allEVMChain": "Все EVM-сети"
     },
     "approvals": {
+      "title": "Одобрения",
       "list": {
         "symbol": "Одобрения"
       },
@@ -1016,6 +1017,7 @@
       "swap-best-subtitle": "Лучшее предложение определяется по минимальной расчётной общей стоимости с учётом курса обмена и комиссии за газ."
     },
     "manageAddress": {
+      "moreWallets": "Больше Кошельков",
       "enterThePassphrase": "Введите кодовую фразу",
       "confirm": "Подтвердить",
       "cancel": "Отмена",
@@ -3458,6 +3460,9 @@
       "createWalletError": "Не удалось создать кошелек",
       "setPasswordTip": "Установите пароль для защиты вашего кошелька",
       "walletReady": "Ваш кошелек готов 🚀"
+    },
+    "batchRevoke": {
+      "title": "Пакетный отзыв"
     },
     "convertDust": {
       "failReason": {
