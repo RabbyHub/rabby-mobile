@@ -1028,14 +1028,17 @@ export const useTokenIndexStore = zCreate(
       const currentState = get();
       const updates = Array.from(addressSet).map(address => {
         const tokens = tokenListMap[address] || [];
+        const previousTokenIds =
+          currentState.addressTokenIds[address] || EMPTY_TOKEN_ENTITY_IDS;
         const nextTokenIds = buildStableTokenEntityIds(
           sortByUsdValueDesc(tokens),
-          currentState.addressTokenIds[address],
+          previousTokenIds,
         );
         const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
 
         return {
           address,
+          previousTokenIds,
           nextTokenIds,
           nextStaticItems,
           nextStaticTokenIds: new Set(
@@ -1046,7 +1049,13 @@ export const useTokenIndexStore = zCreate(
 
       set(draft => {
         updates.forEach(
-          ({ address, nextTokenIds, nextStaticItems, nextStaticTokenIds }) => {
+          ({
+            address,
+            previousTokenIds,
+            nextTokenIds,
+            nextStaticItems,
+            nextStaticTokenIds,
+          }) => {
             let didChange = false;
             if (draft.addressTokenIds[address] !== nextTokenIds) {
               draft.addressTokenIds[address] = nextTokenIds;
@@ -1065,11 +1074,8 @@ export const useTokenIndexStore = zCreate(
               }
             });
 
-            Object.keys(draft.tokenStaticMap).forEach(tokenId => {
-              if (
-                getTokenEntityIdAddress(tokenId) === address &&
-                !nextStaticTokenIds.has(tokenId as TokenEntityId)
-              ) {
+            previousTokenIds.forEach(tokenId => {
+              if (!nextStaticTokenIds.has(tokenId)) {
                 delete draft.tokenStaticMap[tokenId];
                 didChange = true;
               }

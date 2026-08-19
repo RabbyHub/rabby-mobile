@@ -262,6 +262,37 @@ describe('single-address token assets projection', () => {
     }
   });
 
+  it('prunes only the previous token IDs for the updated address', () => {
+    const first = createToken('first', {
+      owner_addr: NORMALIZED_ADDRESS,
+    });
+    const replacement = createToken('replacement', {
+      owner_addr: NORMALIZED_ADDRESS,
+    });
+    const second = createToken('second', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+    });
+
+    useTokenIndexStore.getState().syncFromTokenListMap(
+      {
+        [NORMALIZED_ADDRESS]: [first],
+        [NORMALIZED_SECOND_ADDRESS]: [second],
+      },
+      [NORMALIZED_ADDRESS, NORMALIZED_SECOND_ADDRESS],
+    );
+    useTokenIndexStore
+      .getState()
+      .syncAddressTokens(NORMALIZED_ADDRESS, [replacement]);
+
+    const state = useTokenIndexStore.getState();
+    expect(state.tokenStaticMap[buildTokenEntityId(first)]).toBeUndefined();
+    expect(state.tokenStaticMap[buildTokenEntityId(replacement)]).toBeDefined();
+    expect(state.tokenStaticMap[buildTokenEntityId(second)]).toBeDefined();
+    expect(state.addressTokenIds[NORMALIZED_SECOND_ADDRESS]).toEqual([
+      buildTokenEntityId(second),
+    ]);
+  });
+
   it('keeps the token index current without mounting a token consumer', () => {
     const token = createToken('runtime-token', { usd_value: 7 });
 
