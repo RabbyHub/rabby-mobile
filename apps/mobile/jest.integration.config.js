@@ -21,7 +21,7 @@ module.exports = {
       '<rootDir>/../../packages/service-keyring/test/react-native-buffer.mock.js',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@rneui|@debank|nanoid|react-native-reanimated|react-native-animateable-text|react-native-root-toast|react-native-root-siblings|p-queue|p-timeout|eventemitter3)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@rneui|@debank|@rabby-wallet/rabby-api|nanoid|react-native-reanimated|react-native-animateable-text|react-native-root-toast|react-native-root-siblings|p-queue|p-timeout|eventemitter3)/)',
   ],
   testMatch: ['<rootDir>/src/**/*.integration.test.[jt]s?(x)'],
   testPathIgnorePatterns: ['/node_modules/'],
