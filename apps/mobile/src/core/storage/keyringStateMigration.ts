@@ -9,6 +9,16 @@ export type KeyringStateMigrationWriteEvent = {
   error?: unknown;
 };
 
+export type KeyringStatePersistenceResult = {
+  target: 'keyring-primary';
+};
+
+// MMKV 1.3.3 has an Android-only corruption path when an encrypted instance
+// updates its single stored key. Keep a non-sensitive permanent companion key
+// in both keyring files so legacy files take the multi-key append path too.
+export const KEYRING_MMKV_GUARD_KEY = '__rabby_keyring_mmkv_guard_v1';
+export const KEYRING_MMKV_GUARD_VALUE = '1';
+
 type KeyringStateReadResult =
   | {
       status: 'missing' | 'invalid';
@@ -303,6 +313,31 @@ function serializePersistedKeyringState(value: PersistedKeyringState) {
   return JSON.stringify(value);
 }
 
+function ensureKeyringMMKVGuard(storage: KeyringStateStorage) {
+  const currentValue = storage.getString(KEYRING_MMKV_GUARD_KEY);
+  if (currentValue === KEYRING_MMKV_GUARD_VALUE) {
+    return;
+  }
+
+  // A non-string or unknown guard is storage corruption/configuration drift,
+  // not a value that can safely be replaced while protecting keyring state.
+  if (currentValue !== null && currentValue !== undefined) {
+    throw new Error('Refusing to overwrite an invalid keyring MMKV guard.');
+  }
+
+  if (storage.contains(KEYRING_MMKV_GUARD_KEY)) {
+    throw new Error('Refusing to overwrite an invalid keyring MMKV guard.');
+  }
+
+  storage.set(KEYRING_MMKV_GUARD_KEY, KEYRING_MMKV_GUARD_VALUE);
+  storage.sync();
+  storage.reload();
+
+  if (storage.getString(KEYRING_MMKV_GUARD_KEY) !== KEYRING_MMKV_GUARD_VALUE) {
+    throw new Error('Keyring MMKV guard persistence verification failed.');
+  }
+}
+
 /**
  * A write is accepted only after it has been flushed and reloaded through the
  * native decoder. In particular, an MMKV CRC match alone is insufficient: the
@@ -312,11 +347,17 @@ function writePersistedKeyringStateAndVerify({
   storage,
   key,
   value,
+  ensureMMKVGuard = false,
 }: {
   storage: KeyringStateStorage;
   key: string;
   value: PersistedKeyringState;
+  ensureMMKVGuard?: boolean;
 }) {
+  if (ensureMMKVGuard) {
+    ensureKeyringMMKVGuard(storage);
+  }
+
   const serializedValue = serializePersistedKeyringState(value);
   storage.set(key, serializedValue);
   storage.sync();
@@ -364,7 +405,7 @@ export function persistKeyringState({
   keyringStorage: KeyringStateStorage;
   checkpointStorage: KeyringStateStorage;
   value: PersistedKeyringState;
-}) {
+}): KeyringStatePersistenceResult {
   if (!isPersistedKeyringState(value)) {
     throw new Error('Refusing to persist an invalid keyring state shape.');
   }
@@ -372,10 +413,14 @@ export function persistKeyringState({
   const primary = readPersistedKeyringState(keyringStorage, key);
   const checkpoint = readPersistedKeyringState(checkpointStorage, key);
 
-  if (primary.status === 'invalid' || checkpoint.status === 'invalid') {
+  if (checkpoint.status === 'invalid') {
     throw new Error(
       'Refusing to overwrite an invalid keyring persistence file.',
     );
+  }
+
+  if (primary.status === 'invalid') {
+    throw new Error('Refusing to overwrite an invalid keyring primary file.');
   }
 
   if (primary.status === 'valid') {
@@ -384,13 +429,17 @@ export function persistKeyringState({
       storage: checkpointStorage,
       key,
       value: primary.value,
+      ensureMMKVGuard: true,
     });
+    // Do not advance the checkpoint after a failed primary verification: it
+    // is the last known-good primary generation used for restart recovery.
     writePersistedKeyringStateAndVerify({
       storage: keyringStorage,
       key,
       value,
+      ensureMMKVGuard: true,
     });
-    return;
+    return { target: 'keyring-primary' };
   }
 
   if (checkpoint.status === 'valid') {
@@ -400,18 +449,21 @@ export function persistKeyringState({
       storage: keyringStorage,
       key,
       value: checkpoint.value,
+      ensureMMKVGuard: true,
     });
     writePersistedKeyringStateAndVerify({
       storage: checkpointStorage,
       key,
       value: checkpoint.value,
+      ensureMMKVGuard: true,
     });
     writePersistedKeyringStateAndVerify({
       storage: keyringStorage,
       key,
       value,
+      ensureMMKVGuard: true,
     });
-    return;
+    return { target: 'keyring-primary' };
   }
 
   // First bootstrap: there is no prior state to checkpoint yet. Verify the
@@ -420,12 +472,15 @@ export function persistKeyringState({
     storage: keyringStorage,
     key,
     value,
+    ensureMMKVGuard: true,
   });
   writePersistedKeyringStateAndVerify({
     storage: checkpointStorage,
     key,
     value,
+    ensureMMKVGuard: true,
   });
+  return { target: 'keyring-primary' };
 }
 
 export function normalizePersistedKeyringState({
@@ -454,6 +509,7 @@ export function normalizePersistedKeyringState({
           storage: checkpointStorage,
           key,
           value: keyring.value,
+          ensureMMKVGuard: true,
         });
       } catch {
         // Loading a known-good primary is still safe, but future updates must
@@ -477,6 +533,18 @@ export function normalizePersistedKeyringState({
     };
   }
 
+  if (checkpoint.status === 'valid' && keyring.status === 'invalid') {
+    // Do not attempt to repair a primary file that just failed its native
+    // decoder. The checkpoint is already verified and may be carrying the
+    // newest state recovered by persistKeyringState().
+    return {
+      legacyData: legacy.value,
+      keyringData: checkpoint.value,
+      recoverySource: 'keyring-checkpoint' as const,
+      persistenceBlocked: true,
+    };
+  }
+
   const candidate = getFirstValidKeyringState([
     { source: 'keyring-checkpoint', state: checkpoint },
     { source: 'legacy-default-mmkv', state: legacy },
@@ -495,12 +563,14 @@ export function normalizePersistedKeyringState({
           storage: checkpointStorage,
           key,
           value: candidate.state.value,
+          ensureMMKVGuard: true,
         });
       }
       writePersistedKeyringStateAndVerify({
         storage: keyringStorage,
         key,
         value: candidate.state.value,
+        ensureMMKVGuard: true,
       });
       onKeyringStateWrite?.({ phase: 'complete', ...writeEvent });
     } catch (error) {

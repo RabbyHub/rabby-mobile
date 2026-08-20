@@ -39955,6 +39955,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-mmkv@patch:react-native-mmkv@patch%3Areact-native-mmkv@npm%253A2.12.2%23./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch%3A%3Aversion=2.12.2&hash=e0fc6c&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#~/.yarn/patches/react-native-mmkv-patch-b5ece05891.patch":
+  version: 2.12.2
+  resolution: "react-native-mmkv@patch:react-native-mmkv@patch%3Areact-native-mmkv@npm%253A2.12.2%23./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch%3A%3Aversion=2.12.2&hash=e0fc6c&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#~/.yarn/patches/react-native-mmkv-patch-b5ece05891.patch::version=2.12.2&hash=e0dd71"
+  peerDependencies:
+    react: "*"
+    react-native: ">=0.71.0"
+  checksum: 10/1413ffc66c01f763135995f03994687d676c59fcd29b268b6b9ec07c38d919da5f6ab1713d1d1af6e2d8c8bcf28f15c4d6c74b47855d5adbd2bc572c4e657949
+  languageName: node
+  linkType: hard
+
 "react-native-nitro-modules@npm:0.35.9":
   version: 0.35.9
   resolution: "react-native-nitro-modules@npm:0.35.9"
