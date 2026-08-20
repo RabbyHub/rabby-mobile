@@ -498,19 +498,23 @@ export const usePerpsProTrade = ({
     },
     [market?.marketData.pxDecimals, patchForm],
   );
-  const selectManualLimitPrice = useCallback(
+  const selectOrderBookPrice = useCallback(
     (price: string, sourceMarketKey: string) => {
-      if (
-        !positive(price) ||
-        form.orderType !== 'limit' ||
-        form.bboEnabled ||
-        sourceMarketKey !== currentMarketKeyRef.current
-      ) {
+      const currentForm = formRef.current;
+      if (!positive(price) || sourceMarketKey !== currentMarketKeyRef.current) {
         return;
       }
-      setPrice('limitPrice', price);
+
+      if (currentForm.orderType === 'limit') {
+        if (currentForm.bboEnabled) return;
+        setPrice('limitPrice', price);
+        return;
+      }
+      if (currentForm.orderType === 'conditional') {
+        setPrice('triggerPrice', price);
+      }
     },
-    [form.bboEnabled, form.orderType, setPrice],
+    [setPrice],
   );
   const applyOrderType = useCallback(
     (orderType: PerpsProTradeOrderType) => {
@@ -1996,7 +2000,7 @@ export const usePerpsProTrade = ({
     setOrderType,
     setPercentage,
     setPrice,
-    selectManualLimitPrice,
+    selectOrderBookPrice,
     setSkipConfirmation,
     setTif: (tif: PerpsProTradeTif) => patchForm({ tif }),
     skipConfirmation,

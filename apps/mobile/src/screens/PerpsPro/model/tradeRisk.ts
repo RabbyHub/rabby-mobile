@@ -54,6 +54,7 @@ export const resolvePerpsProProjectedTradeRiskOutcome = ({
   currentPosition?: {
     entryPx?: string;
     marginUsed?: string;
+    positionValue?: string;
     szi?: string;
   } | null;
   entryPrice: string;
@@ -68,7 +69,8 @@ export const resolvePerpsProProjectedTradeRiskOutcome = ({
   const orderSize = positive(baseSize);
   const leverageValue = positive(leverage);
   const mark = positive(markPrice);
-  if (!entry || !orderSize || !leverageValue || !mark) {
+  const maxLeverageValue = positive(maxLeverage);
+  if (!entry || !orderSize || !leverageValue || !mark || !maxLeverageValue) {
     return { kind: 'unavailable', reason: 'input' };
   }
 
@@ -103,9 +105,23 @@ export const resolvePerpsProProjectedTradeRiskOutcome = ({
     ? currentNotional.plus(orderSize.multipliedBy(entry))
     : projectedSize.multipliedBy(entry);
   const projectedEntry = notional.dividedBy(projectedSize);
+  const reportedCurrentNotional = new BigNumber(
+    currentPosition?.positionValue ?? Number.NaN,
+  ).abs();
+  // Cross available-after-maintenance already excludes the current position's
+  // maintenance. Restore it here so the calculator replaces it with the
+  // projected position maintenance instead of charging both positions.
+  const currentMaintenance = currentSize.gt(0)
+    ? (reportedCurrentNotional.isFinite() && reportedCurrentNotional.gt(0)
+        ? reportedCurrentNotional
+        : currentSize.multipliedBy(mark)
+      ).dividedBy(maxLeverageValue.multipliedBy(2))
+    : new BigNumber(0);
   const margin =
     marginMode === 'cross'
-      ? new BigNumber(crossMarginAvailableAfterMaintenance ?? Number.NaN)
+      ? new BigNumber(crossMarginAvailableAfterMaintenance ?? Number.NaN).plus(
+          currentMaintenance,
+        )
       : sameDirection
       ? new BigNumber(currentPosition?.marginUsed ?? 0).plus(
           orderSize.multipliedBy(entry).dividedBy(leverageValue),

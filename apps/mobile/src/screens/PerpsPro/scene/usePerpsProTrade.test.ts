@@ -317,14 +317,12 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.form.limitPrice).toBe('100.12');
 
     act(() =>
-      hook.result.current.selectManualLimitPrice('101.234', market.marketKey),
+      hook.result.current.selectOrderBookPrice('101.234', market.marketKey),
     );
     expect(hook.result.current.form.limitPrice).toBe('101.23');
 
     act(() => hook.result.current.enableBbo('cp1'));
-    act(() =>
-      hook.result.current.selectManualLimitPrice('99', market.marketKey),
-    );
+    act(() => hook.result.current.selectOrderBookPrice('99', market.marketKey));
     expect(hook.result.current.form.limitPrice).toBe('101.23');
 
     act(() => emitLatestTrade('BTC', '102.349', 2));
@@ -336,6 +334,45 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.setOrderType('limit'));
     expect(hook.result.current.form.limitPrice).toBe('103.45');
     expect(hook.result.current.form.bboEnabled).toBe(false);
+  });
+
+  it('fills only the Conditional Trigger Price after an explicit order-book selection', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => emitLatestTrade('BTC', '100.129', 1));
+    act(() => hook.result.current.setOrderType('conditional'));
+    expect(hook.result.current.form.triggerPrice).toBe('');
+
+    act(() => emitLatestTrade('BTC', '102.349', 2));
+    expect(hook.result.current.form.triggerPrice).toBe('');
+
+    act(() =>
+      hook.result.current.selectOrderBookPrice('101.234', market.marketKey),
+    );
+    expect(hook.result.current.form.triggerPrice).toBe('101.23');
+    expect(hook.result.current.form.conditionalLimitPrice).toBe('');
+
+    act(() =>
+      hook.result.current.selectOrderBookPrice('99', 'hyperliquid::ETH'),
+    );
+    expect(hook.result.current.form.triggerPrice).toBe('101.23');
+
+    act(() => hook.result.current.setOrderType('market'));
+    act(() => hook.result.current.selectOrderBookPrice('99', market.marketKey));
+    expect(hook.result.current.form.triggerPrice).toBe('101.23');
   });
 
   it('uses the latest trade when BBO is disabled without a manual Limit price', () => {
@@ -1709,6 +1746,94 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       1.13,
       252.9844,
       20,
+    );
+  });
+
+  it('replaces current BTC-USDE maintenance in Unified Cross projections', () => {
+    mockPerpsState.userAbstraction = 'unifiedAccount';
+    mockPerpsState.spotState.tokenToAvailableAfterMaintenance = [
+      [235, '82.79'],
+    ];
+    mockPerpsState.currentClearinghouseState.assetPositions.push({
+      position: {
+        coin: 'hyna:BTC',
+        entryPx: '64169',
+        leverage: { type: 'cross', value: 12 },
+        marginUsed: '15.39',
+        positionValue: '-184.59165',
+        szi: '-0.00285',
+      },
+    } as never);
+    const usdeMarket = {
+      ...market,
+      canonicalCoin: 'hyna:BTC',
+      displayPair: 'BTCUSDE',
+      marketData: {
+        ...market.marketData,
+        dexId: 'hyna',
+        markPx: '64769',
+        maxLeverage: 40,
+        midPx: '64769',
+        pxDecimals: 0,
+        szDecimals: 5,
+      },
+      marketKey: 'hyna::hyna:BTC',
+      quoteAsset: 'USDE',
+    } as PerpsProMarket;
+    const usdeBook = {
+      coin: 'hyna:BTC',
+      levels: [
+        [{ n: 1, px: '64769', sz: '10' }],
+        [{ n: 1, px: '64770', sz: '10' }],
+      ],
+      time: 123,
+    } as L2Book;
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: {
+          ...activeAssetData,
+          availableToTrade: ['1205.36', '836.17'],
+          coin: 'hyna:BTC',
+          leverage: { type: 'cross', value: 12 },
+          markPx: '64769',
+          maxTradeSzs: ['0.01861', '0.01291'],
+        },
+        bboBook: usdeBook,
+        bboPrices: {
+          asks1: '64770',
+          asks5: null,
+          bids1: '64769',
+          bids5: null,
+        },
+        bboSessionKey: 'hyna:BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market: usdeMarket,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setPercentage(43));
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('50');
+    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
+      64770,
+      85.097395625,
+      'Long',
+      0.00515,
+      333.5655,
+      40,
+    );
+
+    expect(hook.result.current.getEstimatedLiquidationPrice('sell')).toBe('50');
+    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
+      64565.42857142857,
+      85.097395625,
+      'Short',
+      0.0084,
+      542.3496,
+      40,
     );
   });
 

@@ -22,7 +22,12 @@ const mockUsePerpsProPositionTpSl = jest.fn();
 const mockUsePerpsProOpenOrderEdit = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
+const mockSelectOrderBookPrice = jest.fn();
 let mockTradeHasPermission = true;
+let mockTradeForm: {
+  bboEnabled: boolean;
+  orderType: 'conditional' | 'limit' | 'market';
+} = { bboEnabled: false, orderType: 'market' };
 
 jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
@@ -393,13 +398,14 @@ jest.mock('./usePerpsProTrade', () => ({
     amountUnit: 'quote',
     closeReview: jest.fn(),
     confirmReview: jest.fn(),
-    form: { bboEnabled: false, orderType: 'market' },
+    form: mockTradeForm,
     hasPermission: mockTradeHasPermission,
     leverage: 1,
     marginMode: 'isolated',
     market,
     pending: false,
     review: null,
+    selectOrderBookPrice: mockSelectOrderBookPrice,
     setPrice: jest.fn(),
     setSkipConfirmation: jest.fn(),
     skipConfirmation: false,
@@ -551,6 +557,7 @@ describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTradeHasPermission = true;
+    mockTradeForm = { bboEnabled: false, orderType: 'market' };
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
       value: 'active',
@@ -640,6 +647,34 @@ describe('PerpsProScene market loading states', () => {
     expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
       configurationReady: false,
     });
+    expect(mockOrderBookProps.mock.lastCall?.[0].onSelectPrice).toBeUndefined();
+  });
+
+  it('routes an explicit Conditional order-book selection to Trigger Price', () => {
+    mockTradeForm = { bboEnabled: false, orderType: 'conditional' };
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const onSelectPrice = mockOrderBookProps.mock.lastCall?.[0].onSelectPrice;
+    expect(onSelectPrice).toEqual(expect.any(Function));
+    act(() => onSelectPrice('101.23'));
+    expect(mockSelectOrderBookPrice).toHaveBeenCalledWith(
+      '101.23',
+      'hyperliquid::BTC',
+    );
   });
 
   it('keeps the close editor mounted under the confirmation sheet', () => {
