@@ -1,5 +1,7 @@
 import {
   inspectPersistedKeyringState,
+  KEYRING_MMKV_GUARD_KEY,
+  KEYRING_MMKV_GUARD_VALUE,
   normalizePersistedKeyringState,
   persistKeyringState,
   type KeyringStateStorage,
@@ -64,6 +66,18 @@ class FailingMemoryMMKV extends MemoryMMKV {
       throw new Error('expected test write failure');
     }
     super.set(key, value);
+  }
+}
+
+class CorruptingMemoryMMKV extends MemoryMMKV {
+  corruptNextSet = false;
+
+  set(key: string, value: string | number) {
+    super.set(key, value);
+    if (this.corruptNextSet && key === KEY) {
+      this.corruptNextSet = false;
+      this.values.set(key, '{truncated');
+    }
   }
 }
 
@@ -210,7 +224,7 @@ describe('keyring state legacy migration', () => {
     });
   });
 
-  it('restores an invalid primary keyring state from its encrypted checkpoint', () => {
+  it("uses an invalid primary keyring state's encrypted checkpoint without rewriting it", () => {
     const { keyringMMKV, checkpointMMKV, normalizeKeyringState } =
       loadFixture();
     keyringMMKV.set(KEY, '{invalid-json');
@@ -220,10 +234,9 @@ describe('keyring state legacy migration', () => {
       legacyData: null,
       keyringData: VALID_DESTINATION_STATE,
       recoverySource: 'keyring-checkpoint',
+      persistenceBlocked: true,
     });
-    expect(keyringMMKV.getString(KEY)).toBe(
-      JSON.stringify(VALID_DESTINATION_STATE),
-    );
+    expect(keyringMMKV.getString(KEY)).toBe('{invalid-json');
   });
 
   it('writes a verified rollback copy before advancing the primary keyring state', () => {
@@ -242,8 +255,27 @@ describe('keyring state legacy migration', () => {
       JSON.stringify(VALID_DESTINATION_STATE),
     );
     expect(keyringMMKV.getString(KEY)).toBe(JSON.stringify(VALID_LEGACY_STATE));
-    expect(checkpointMMKV.sync).toHaveBeenCalledTimes(1);
-    expect(keyringMMKV.sync).toHaveBeenCalledTimes(1);
+    expect(checkpointMMKV.sync).toHaveBeenCalledTimes(2);
+    expect(keyringMMKV.sync).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a permanent non-sensitive guard key in both encrypted keyring files', () => {
+    const keyringMMKV = new MemoryMMKV();
+    const checkpointMMKV = new MemoryMMKV();
+
+    persistKeyringState({
+      key: KEY,
+      keyringStorage: keyringMMKV,
+      checkpointStorage: checkpointMMKV,
+      value: VALID_DESTINATION_STATE,
+    });
+
+    expect(keyringMMKV.getString(KEYRING_MMKV_GUARD_KEY)).toBe(
+      KEYRING_MMKV_GUARD_VALUE,
+    );
+    expect(checkpointMMKV.getString(KEYRING_MMKV_GUARD_KEY)).toBe(
+      KEYRING_MMKV_GUARD_VALUE,
+    );
   });
 
   it('does not mutate the primary keyring state when the rollback checkpoint cannot be written', () => {
@@ -261,6 +293,38 @@ describe('keyring state legacy migration', () => {
       }),
     ).toThrow('expected test write failure');
     expect(keyringMMKV.getString(KEY)).toBe(
+      JSON.stringify(VALID_DESTINATION_STATE),
+    );
+  });
+
+  it('keeps the last verified primary state in the checkpoint when a primary write becomes unreadable', () => {
+    const keyringMMKV = new CorruptingMemoryMMKV();
+    const checkpointMMKV = new MemoryMMKV();
+    keyringMMKV.set(KEY, JSON.stringify(VALID_DESTINATION_STATE));
+    keyringMMKV.corruptNextSet = true;
+
+    expect(() =>
+      persistKeyringState({
+        key: KEY,
+        keyringStorage: keyringMMKV,
+        checkpointStorage: checkpointMMKV,
+        value: VALID_LEGACY_STATE,
+      }),
+    ).toThrow('Keyring state persistence verification failed.');
+    expect(keyringMMKV.getString(KEY)).toBe('{truncated');
+    expect(checkpointMMKV.getString(KEY)).toBe(
+      JSON.stringify(VALID_DESTINATION_STATE),
+    );
+
+    expect(() =>
+      persistKeyringState({
+        key: KEY,
+        keyringStorage: keyringMMKV,
+        checkpointStorage: checkpointMMKV,
+        value: VALID_DESTINATION_STATE,
+      }),
+    ).toThrow('Refusing to overwrite an invalid keyring primary file.');
+    expect(checkpointMMKV.getString(KEY)).toBe(
       JSON.stringify(VALID_DESTINATION_STATE),
     );
   });
