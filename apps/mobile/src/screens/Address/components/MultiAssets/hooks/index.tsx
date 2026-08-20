@@ -11,6 +11,7 @@ import {
   useAccounts,
 } from '@/hooks/account';
 import { useHomeAssetSelectionSettings } from '@/hooks/appSettings';
+import { DEFAULT_HOME_ASSET_TOP_N } from '@/constant/homeAssetSelection';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import {
@@ -31,15 +32,28 @@ export const isTabsSwiping = {
 
 const EMPTY_SELECTED_ADDRESSES: string[] = [];
 
-export function useAccountInfo() {
+type UseAccountInfoOptions = {
+  useHomeAssetSelectionPolicy?: boolean;
+};
+
+export function useAccountInfo(options?: UseAccountInfoOptions) {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
   const {
-    topN,
-    includeWatchAddresses,
-    isExperimentEnabled: isHomeAssetSelectionExperimentEnabled,
+    topN: configuredTopN,
+    includeWatchAddresses: configuredIncludeWatchAddresses,
+    isExperimentEnabled: configuredHomeAssetSelectionExperimentEnabled,
   } = useHomeAssetSelectionSettings();
+  const useHomeAssetSelectionPolicy = !!options?.useHomeAssetSelectionPolicy;
+  const topN = useHomeAssetSelectionPolicy
+    ? configuredTopN
+    : DEFAULT_HOME_ASSET_TOP_N;
+  const includeWatchAddresses =
+    useHomeAssetSelectionPolicy && configuredIncludeWatchAddresses;
+  const isHomeAssetSelectionExperimentEnabled =
+    useHomeAssetSelectionPolicy &&
+    configuredHomeAssetSelectionExperimentEnabled;
   const selectedAddresses = balanceAccountsStore(state =>
     isHomeAssetSelectionExperimentEnabled
       ? state.selectedAddresses
@@ -143,6 +157,10 @@ export function useAccountInfo() {
   };
 }
 
+export function useHomeAssetAccountInfo() {
+  return useAccountInfo({ useHomeAssetSelectionPolicy: true });
+}
+
 function isAccountToShowReceiveTip(account: KeyringAccountWithAlias) {
   return isDirectlySignableAccount(account) || isHardwareAccount(account);
 }
@@ -165,13 +183,19 @@ export async function getShowReceiveAddressTip(options?: {
     const accountsToCheck = myAccounts.filter(account =>
       isAccountToShowReceiveTip(account),
     );
-    if (accountsToCheck.length !== 1) return null;
+    if (accountsToCheck.length !== 1) {
+      return null;
+    }
 
     targetAccount = accountsToCheck[0];
   }
 
-  if (!targetAccount) return null;
-  if (!isAccountToShowReceiveTip(targetAccount)) return null;
+  if (!targetAccount) {
+    return null;
+  }
+  if (!isAccountToShowReceiveTip(targetAccount)) {
+    return null;
+  }
 
   const evmBalance =
     addressBalanceStore.getAddressValue(targetAccount.address)?.evmBalance ??
@@ -234,7 +258,9 @@ export function useAccountHomeShowReceiveTip(
   }, [detect]);
 
   useEffect(() => {
-    if (isForSingle) return;
+    if (isForSingle) {
+      return;
+    }
 
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] = () => {
       detect();
@@ -257,7 +283,9 @@ export function useAccountHomeShowReceiveTip(
   }, [isForSingle, detect]);
 
   useEffect(() => {
-    if (isForSingle) return;
+    if (isForSingle) {
+      return;
+    }
 
     const onAccountsChanged = () => {
       detect();

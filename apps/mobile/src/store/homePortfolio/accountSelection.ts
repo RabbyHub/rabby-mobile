@@ -36,9 +36,7 @@ export function pickHomeAccountSelectionFromSortedAccounts<
       });
 
     return {
-      selectedAccounts: unionBy(top10Accounts, account =>
-        account.address.toLowerCase(),
-      ),
+      selectedAccounts: top10Accounts,
       selectedAddresses: top10Addresses.map(address => address.toLowerCase()),
       selectedAddressRecords: top10Records,
       restAccounts,

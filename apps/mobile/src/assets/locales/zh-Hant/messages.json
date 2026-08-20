@@ -850,6 +850,7 @@
       "Balance": "餘額"
     },
     "approvals": {
+      "title": "授權",
       "search": {
         "placeholder": "透過名稱/地址搜尋"
       },
@@ -947,6 +948,7 @@
       "delegatedAddress": "委派地址"
     },
     "manageAddress": {
+      "moreWallets": "更多錢包",
       "confirm": "確認",
       "watch-address": "只讀地址",
       "cancel": "取消",
@@ -1387,6 +1389,11 @@
         "descriptionIOS": "如果你喜歡 Rabby，在 App Store 上快速評分將對我們非常重要。",
         "descriptionAndroid": "如果你喜歡 Rabby，在 Google Play 上的快速評分將非常重要。",
         "confirmButtonTitleAndroid": "在 Google Play 上評分"
+      },
+      "upgradeModal": {
+        "title": "新功能",
+        "slideToUpdate": "滑動以更新",
+        "close": "關閉"
       },
       "homeCenterTipScreenshot": {
         "description": "隨時截圖，快速回報問題",
@@ -3229,6 +3236,7 @@
         "approveAndBorrow": "授權並借入",
         "actions": "借入",
         "almostReachedError": "由於協議借款上限即將達到，可借最大金額受到限制。",
+        "borrowingUnavailable": "目前模式下無法借入該資產。",
         "almostReachedWarning": "該資產的協議借款上限已達 100%，無法繼續借入。",
         "swapDebt": "轉換",
         "borrowed": "已借入",
@@ -3269,7 +3277,8 @@
         "warning": "借入該金額會使您的健康因子降至有清算風險的水平。",
         "toggleCollateralWarning": "關閉該資產的抵押用途會使您的健康因子降至有清算風險的水平。",
         "emodeBlockWarning": "關閉 E-Mode 會使您的健康因子降至有清算風險的水平。",
-        "blockEmodeWarning": "您無法關閉 E-Mode，因為這可能導致清算。若要退出 E-Mode，請先存入更多抵押品或償還借款頭寸。"
+        "blockEmodeWarning": "您無法關閉 E-Mode，因為這可能導致清算。若要退出 E-Mode，請先存入更多抵押品或償還借款頭寸。",
+        "zeroLtvEmodeExitWarning": "退出 E-Mode 前，請先關閉 {{assets}} 的抵押用途，因為這些資產在 E-Mode 以外的 LTV 為 0%。"
       },
       "lqDescription": {
         "risky": "高風險",
@@ -3429,6 +3438,7 @@
         "collateralNotEnough": "您的抵押品餘額低於所選金額。",
         "toRepay": "預期償還金額",
         "insufficientLiquidity": "流動性不足。",
+        "flashLoanDisabled": "基於安全考量，該資產的頭寸轉換功能已停用。",
         "frozenCollateral": "該資產因 Aave 社區決議被凍結。"
       },
       "repayWithAToken": {
@@ -3510,6 +3520,9 @@
       "createWalletError": "無法建立錢包",
       "setPasswordTip": "設定密碼以保護你的錢包",
       "walletReady": "你的錢包已準備好 🚀"
+    },
+    "batchRevoke": {
+      "title": "批量撤銷"
     },
     "convertDust": {
       "failReason": {

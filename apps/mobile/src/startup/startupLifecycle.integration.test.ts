@@ -61,6 +61,7 @@ const EXPECTED_LAUNCH_TASK_LABELS = [
   'network.globalPolling',
   'home.preSplashLocalStateWarmup',
   'computation.workerPrewarm',
+  'customTestnet.snapshotHydration',
   'transaction.watchersStart',
   'chain.syncMetadataWarmup',
 ];
@@ -142,6 +143,11 @@ function createBoundaryLoaders(events: string[]): LaunchTaskLoaderCatalog {
     computationWorkerPrewarm: async () => ({
       requestComputationThreadStart: reason => {
         events.push(`worker:${reason}`);
+      },
+    }),
+    customTestnetSnapshotHydration: async () => ({
+      ensureCustomTestnetStoreHydrated: async () => {
+        events.push('custom-testnet:snapshot-hydrated');
       },
     }),
     transactionWatchersStart: async () => ({
@@ -332,6 +338,7 @@ describe.each([
       expect(markHomeEntryReadyIfEligible(readiness, name)).toBe(true);
       await flushMicrotasks();
       expect(events).toContain('keyringService:loader-started');
+      expect(events).not.toContain('custom-testnet:snapshot-hydrated');
       expect(lifecycleStore.getState().accountContextReady).toBe(false);
 
       keyring.release();
@@ -345,6 +352,7 @@ describe.each([
 
       expect(getHomeStartupReady()).toBe(true);
       expect(getHomePostStartupReady()).toBe(true);
+      expect(events).toContain('custom-testnet:snapshot-hydrated');
       expect(events).toEqual(
         expect.arrayContaining([
           'transactionWatcherService:requested',

@@ -82,3 +82,11 @@ export function useUpgradePromptVisible() {
 export function usePendingAutoUpgradePrompt() {
   return upgradePromptStore(state => state.pendingInfo);
 }
+
+export function useLastPromptedUpgradeVersion() {
+  return upgradePromptReceiptStore(state => state.lastPromptedVersion);
+}
+
+export function resetUpgradePromptExposure() {
+  upgradePromptReceiptStore.setState({ lastPromptedVersion: '' });
+}

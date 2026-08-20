@@ -133,6 +133,10 @@ import { useAppLogFileSwitch } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
 import { useAndroidWeakFaceBiometricsRegressionSwitch } from '@/core/apis/androidBiometricsRegression';
 import { storeApisBiometrics } from '@/hooks/biometrics';
+import {
+  resetUpgradePromptExposure,
+  useLastPromptedUpgradeVersion,
+} from '@/components/Upgrade/useUpgradePrompt';
 
 export const makeNoop = () => () => {};
 
@@ -1292,6 +1296,33 @@ function DevTestHomeCenterArea() {
   );
 }
 
+function DevSwitchUpgradePrompt() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const lastPromptedVersion = useLastPromptedUpgradeVersion();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionContent}>
+        <Text style={styles.metaLabel}>
+          Last Prompted Version: {lastPromptedVersion || 'none'}
+        </Text>
+
+        <Button
+          title={'Reset Upgrade Prompt Exposure'}
+          type="ghost"
+          height={48}
+          disabled={!lastPromptedVersion}
+          containerStyle={{ marginTop: 12 }}
+          onPress={() => {
+            resetUpgradePromptExposure();
+            toast.success('Upgrade prompt exposure reset');
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
 function DevSwitchBatchRevoke() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -2006,6 +2037,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Home Notifications</Text>
         <DevTestHomeCenterArea />
+
+        <Text style={styles.areaTitle}>App Update</Text>
+        <DevSwitchUpgradePrompt />
 
         <Text style={styles.areaTitle}>Batch Revoke</Text>
         <DevSwitchBatchRevoke />

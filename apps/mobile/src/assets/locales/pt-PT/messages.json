@@ -1168,6 +1168,7 @@
       }
     },
     "manageAddress": {
+      "moreWallets": "Mais carteiras",
       "enterPassphraseTitle": "Introduzir frase-passe para assinar",
       "seed-phrase": "Frase-semente",
       "confirm": "Confirmar",
@@ -1364,6 +1365,7 @@
       "market-closed": "Mercado fechado: a colocação de ordens não é suportada."
     },
     "approvals": {
+      "title": "Aprovações",
       "tab-switch": {
         "contract": "Por contratos",
         "assets": "Por Ativos"
@@ -1543,6 +1545,11 @@
         "feedbackSuccess": "Obrigado pelo seu feedback",
         "feedbackTitle": "Tem feedback? Estamos a ouvir.",
         "descriptionIOS": "Se gosta da Rabby, uma avaliação rápida na App Store seria muito importante para nós."
+      },
+      "upgradeModal": {
+        "title": "Novidades",
+        "slideToUpdate": "Deslize para atualizar",
+        "close": "Fechar"
       },
       "homeCenterTipScreenshot": {
         "description": "Faça uma captura de ecrã a qualquer momento para comunicar rapidamente um erro",
@@ -3434,6 +3441,7 @@
         "actions": "Pedir emprestado",
         "approveAndBorrow": "Aprovar e Pedir Emprestado",
         "almostReachedError": "O montante máximo disponível para empréstimo é limitado porque o limite de empréstimo do protocolo está quase atingido.",
+        "borrowingUnavailable": "Não é possível pedir este ativo emprestado no modo atual.",
         "almostReachedWarning": "O limite de empréstimo do protocolo está em 100% para este ativo. Novos empréstimos não estão disponíveis.",
         "swapDebt": "Trocar",
         "borrowed": "Emprestado",
@@ -3474,7 +3482,8 @@
         "withdrawWarning": "Levantar este montante reduzirá o seu fator de saúde para um nível com risco de liquidação.",
         "toggleCollateralWarning": "Desativar este ativo como colateral diminuirá o seu Fator de Saúde para um nível arriscado de liquidação.",
         "emodeBlockWarning": "Desativar o E-mode irá diminuir o seu Fator de Saúde para um nível arriscado para liquidação.",
-        "blockEmodeWarning": "Não pode desativar o E-Mode, pois isso pode desencadear liquidação. Para sair do E-Mode, adicione mais colateral ou reembolse posições emprestadas."
+        "blockEmodeWarning": "Não pode desativar o E-Mode, pois isso pode desencadear liquidação. Para sair do E-Mode, adicione mais colateral ou reembolse posições emprestadas.",
+        "zeroLtvEmodeExitWarning": "Desative {{assets}} como colateral antes de sair do E-Mode, pois estes ativos têm um LTV de 0% fora do E-Mode."
       },
       "lqDescription": {
         "over3title": "Fator de saúde > 3.0:",
@@ -3634,6 +3643,7 @@
         "toRepay": "Montante esperado para reembolso",
         "repayWith": "Colateral para reembolsar",
         "insufficientLiquidity": "Liquidez insuficiente.",
+        "flashLoanDisabled": "A conversão de posições está desativada para este ativo por motivos de segurança.",
         "frozenCollateral": "Este ativo está congelado devido a uma decisão da comunidade Aave."
       },
       "repayWithAToken": {
@@ -3715,6 +3725,9 @@
       "walletReady": "A sua carteira está pronta 🚀",
       "createWalletError": "Falha ao criar a carteira",
       "setPasswordTip": "Defina uma palavra-passe para proteger a sua carteira"
+    },
+    "batchRevoke": {
+      "title": "Revogação em lote"
     },
     "convertDust": {
       "failReason": {

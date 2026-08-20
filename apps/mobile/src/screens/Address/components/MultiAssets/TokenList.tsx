@@ -33,7 +33,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { isTabsSwiping, useAccountInfo } from './hooks';
+import { isTabsSwiping, useHomeAssetAccountInfo } from './hooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { HomeTabName as TabName } from '@/hooks/navigation';
@@ -222,7 +222,7 @@ export const TokenList = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Accounts, myTop10Addresses } = useAccountInfo();
+  const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
     return selectedChainItem?.chain;
@@ -246,10 +246,15 @@ export const TokenList = () => {
   const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const {
     sections: customTestnetSections,
+    hydrationState: customTestnetHydrationState,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
   } = useCustomTestnetAssetSections(myTop10Addresses);
   const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
+  const isCustomTestnetSnapshotPending =
+    shouldShowCustomTestnetSections &&
+    customTestnetHydrationState !== 'ready' &&
+    customTestnetHydrationState !== 'failed';
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
@@ -390,9 +395,13 @@ export const TokenList = () => {
     tokenProjectionViewState === 'loading';
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
+    customTestnetHydrationState === 'ready' &&
     !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
+  const isTokenListDisplayLoading =
+    tokenProjectionViewState === 'loading' ||
+    (isCustomTestnetSnapshotPending && projectedTokenCount === 0);
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses, false, {
@@ -415,7 +424,10 @@ export const TokenList = () => {
     onForeground: handleForeground,
   });
 
-  const hasNoAssets = tokenProjectionViewState === 'empty' && isFocused;
+  const hasNoAssets =
+    tokenProjectionViewState === 'empty' &&
+    !isTokenListDisplayLoading &&
+    isFocused;
 
   const lastScenarioViewStateKeyRef = useRef<string | null>(null);
   useEffect(() => {
@@ -458,7 +470,6 @@ export const TokenList = () => {
     tokenProjectionAvailability,
     tokenProjectionViewState,
   ]);
-
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
     if (
@@ -490,7 +501,7 @@ export const TokenList = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      tokenProjectionViewState === 'loading'
+      isTokenListDisplayLoading
     ) {
       return;
     }
@@ -530,7 +541,7 @@ export const TokenList = () => {
     hasLpTokens,
     hasNoAssets,
     isFocused,
-    tokenProjectionViewState,
+    isTokenListDisplayLoading,
     isLpTokenEnabled,
     multiAssetsKey,
     myTop10Addresses.length,
@@ -801,7 +812,7 @@ export const TokenList = () => {
     const hasNoTokenItems =
       projectedTokenCount + visibleCustomTestnetSections.length === 0;
 
-    if (tokenProjectionViewState === 'loading' && hasNoTokenItems) {
+    if (isTokenListDisplayLoading && hasNoTokenItems) {
       return [{ key: 'loading', data: LOADING_ITEMS }];
     }
 
@@ -836,7 +847,7 @@ export const TokenList = () => {
     customTestnetItems,
     emptyItems,
     hasAdditionalSection,
-    tokenProjectionViewState,
+    isTokenListDisplayLoading,
     hasNoAssets,
     lowValueSegmentKey,
     lowValueSummaryItems,

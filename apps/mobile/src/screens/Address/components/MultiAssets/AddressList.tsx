@@ -8,7 +8,7 @@ import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
 import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
-import { useAccountInfo } from './hooks';
+import { useHomeAssetAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
@@ -44,7 +44,7 @@ const AddressList = ({
   const { t } = useTranslation();
 
   const { myTop10Accounts, myTop10Records, notMatteredAccounts } =
-    useAccountInfo();
+    useHomeAssetAccountInfo();
   const top10Addresses = useMemo(() => {
     return myTop10Accounts.map(item => item.address.toLowerCase());
   }, [myTop10Accounts]);

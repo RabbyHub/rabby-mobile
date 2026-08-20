@@ -185,12 +185,12 @@ export const storeApiExpSettingData = {
   getCurrentKeychainVersion,
   getDebugKeychainStorageByVersion,
   getShouldBlockSubmitIfFormChangedOnAuth,
-  getScreenE2EEnabled: () =>
-    isNonPublicProductionEnv &&
-    experimentalSettingsStore.getState().screenE2EEnabled,
   getHomeAssetSelectionSettings,
   setHomeAssetTopN,
   setIncludeWatchAddressesInHomeAssetSelection,
+  getScreenE2EEnabled: () =>
+    isNonPublicProductionEnv &&
+    experimentalSettingsStore.getState().screenE2EEnabled,
   setScreenE2EEnabled: (enabled: boolean) => {
     if (!isNonPublicProductionEnv) {
       return false;
@@ -231,6 +231,10 @@ export type HomeAssetSelectionSettings = {
   includeWatchAddresses: boolean;
 };
 
+/**
+ * This is deliberately a non-production test policy.  Production always uses
+ * the legacy Top 10 owned-address selection, regardless of persisted values.
+ */
 export function getHomeAssetSelectionSettings(): HomeAssetSelectionSettings {
   if (!isNonPublicProductionEnv) {
     return {
@@ -254,6 +258,12 @@ export function isHomeAssetSelectionExperimentEnabled(
     (settings.topN !== DEFAULT_HOME_ASSET_TOP_N ||
       settings.includeWatchAddresses)
   );
+}
+
+export function getHomeAssetSelectionSettingsKey(
+  settings = getHomeAssetSelectionSettings(),
+) {
+  return `${settings.topN}:${settings.includeWatchAddresses ? 1 : 0}`;
 }
 
 export function setHomeAssetTopN(value: unknown) {
