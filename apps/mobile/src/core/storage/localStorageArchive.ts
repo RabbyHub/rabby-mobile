@@ -145,6 +145,16 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
+async function cleanupExistingPaths(paths: string[]) {
+  await Promise.allSettled(
+    paths.map(async path => {
+      if (await RNFS.exists(path)) {
+        await RNFS.unlink(path);
+      }
+    }),
+  );
+}
+
 function readRawMMKVEntry(
   storage: typeof keyringMMKV,
   key: string,
@@ -231,21 +241,27 @@ async function writeRawMMKVDumps({
   const cleanupPaths: string[] = [];
   let totalKeyCount = 0;
 
-  for (const [storageId, storage] of Object.entries(
-    ALL_KNOWN_MMKV_INSTANCES,
-  ).sort(([firstId], [secondId]) => firstId.localeCompare(secondId))) {
-    const name = `rabby-mmkv-${storageId}-${timestamp}.json`;
-    const path = `${archiveDir}/${name}`;
-    const dump = createRawMMKVDump(storageId, storage);
+  try {
+    for (const [storageId, storage] of Object.entries(
+      ALL_KNOWN_MMKV_INSTANCES,
+    ).sort(([firstId], [secondId]) => firstId.localeCompare(secondId))) {
+      const name = `rabby-mmkv-${storageId}-${timestamp}.json`;
+      const path = `${archiveDir}/${name}`;
+      const dump = createRawMMKVDump(storageId, storage);
 
-    await RNFS.writeFile(path, JSON.stringify(dump, null, 2), 'utf8');
+      // A rejected write may still leave a partial file on disk.
+      cleanupPaths.push(path);
+      await RNFS.writeFile(path, JSON.stringify(dump, null, 2), 'utf8');
 
-    entries.push({
-      sourcePath: path,
-      archivePath: `mmkv-json/${storageId}.json`,
-    });
-    cleanupPaths.push(path);
-    totalKeyCount += dump.keyCount;
+      entries.push({
+        sourcePath: path,
+        archivePath: `mmkv-json/${storageId}.json`,
+      });
+      totalKeyCount += dump.keyCount;
+    }
+  } catch (error) {
+    await cleanupExistingPaths(cleanupPaths);
+    throw error;
   }
 
   return {
@@ -330,13 +346,7 @@ export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArc
       keyringStartupDiagnosticFileCount: keyringStartupDiagnosticEntries.length,
     };
   } catch (error) {
-    await Promise.allSettled(
-      [archivePath, ...rawMMKVDumpPaths].map(async path => {
-        if (await RNFS.exists(path)) {
-          await RNFS.unlink(path);
-        }
-      }),
-    );
+    await cleanupExistingPaths([archivePath, ...rawMMKVDumpPaths]);
 
     throw error;
   }
