@@ -34,6 +34,7 @@ import { useSortedAccounts } from '@/screens/Address/useSortAddressList';
 import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
 import type { Account } from '@/core/startupServices/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { normalizeAddressInputBoundaryWhitespace } from './addressInput';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -203,7 +204,7 @@ const ScreenPanelEnterAddress = ({
   const handleInputChange = React.useCallback(
     (text: string) => {
       setError(undefined);
-      setInput(text);
+      setInput(normalizeAddressInputBoundaryWhitespace(text));
     },
     [setInput],
   );
