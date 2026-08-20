@@ -102,7 +102,6 @@ export const TokenInfoPopup = () => {
               {
                 ...longPressToken.tokenEntity,
                 _isPined: false,
-                _isFold: false,
                 _isExcludeBalance: false,
                 _usdValueStr: usdValueStr,
                 _amountStr: formatAmount(longPressToken.tokenItem?.amount),

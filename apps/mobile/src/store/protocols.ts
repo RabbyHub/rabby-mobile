@@ -2,10 +2,14 @@ import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { AppChainEntity } from '@/databases/entities/appchain';
 import {
-  syncProtocols,
-  syncProtocolsForAddresses,
+  loadProtocols,
+  loadProtocolsForAddresses,
   syncSpecificProtocol,
 } from '@/databases/hooks/assets';
+import {
+  syncRemoteProtocols,
+  syncRemoteProtocolsForAddresses,
+} from '@/databases/sync/assets';
 import { formatAppChain } from '@/utils/appchain';
 import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
@@ -16,12 +20,31 @@ import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
+import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
   buildProtocolAssetsIndexResult,
   buildProtocolEntityId,
   type ProtocolAssetsIndexResult,
   type ProtocolEntityId,
 } from './protocolAssetsIndex';
+import {
+  completeAddressListSnapshots,
+  createAddressListSnapshotHydrator,
+  mergeAddressListSnapshots,
+} from './_addressListSnapshot';
+import {
+  isAssetProjectionPersistenceActive,
+  restoreAssetProjection,
+  scheduleAssetProjectionPersistence,
+  subscribeAssetProjectionDatabaseCommits,
+} from './assetProjectionPersistence';
+import {
+  hasConfirmedAssetProjectionSources,
+  markAssetSourceSnapshotsReady,
+  resolveAssetProjectionAvailability,
+  type AssetProjectionAvailability,
+  type AssetSourceSnapshotReadiness,
+} from './assetProjectionAvailability';
 
 export {
   buildProtocolEntityId,
@@ -40,6 +63,7 @@ type ProtocolListMap = Record<string, IProtocolItem[]>;
 
 interface ProtocolListState {
   protocolMap: ProtocolListMap;
+  sourceSnapshotReadyByAddress: AssetSourceSnapshotReadiness;
   isLoading: boolean;
   isLoadingByAddress: Record<string, boolean>;
   hasLoadedByAddress: Record<string, boolean>;
@@ -56,6 +80,8 @@ interface ProtocolListState {
 type ProtocolListComputedState = {
   multiProtocolsIndexCache: Record<string, ProtocolAssetsIndexResult>;
   singleProtocolsIndexCache: Record<string, ProtocolAssetsIndexResult>;
+  multiProtocolsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
+  singleProtocolsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
   registerMultiProtocols: (
     addresses: string[],
     chainServerId?: string,
@@ -66,12 +92,13 @@ type ProtocolListComputedState = {
 const COMPUTED_CACHE_LIMIT = 10;
 const PROTOCOL_ENTITY_RESOURCE_FAMILY = 'protocol.entity';
 const multiAddressProtocolRequests = new LatestAsyncRequest();
+const protocolAddressRequests = new LatestAddressRequest();
 
 const normalizeAddresses = (addresses: string[]) =>
   addresses.map(address => address.toLowerCase());
 
 const getAddressesKey = (addresses: string[]) =>
-  normalizeAddresses(addresses).slice().sort().join('|');
+  normalizeAddresses(addresses).join('|');
 
 export const getMultiProtocolsCacheKey = (
   addresses: string[],
@@ -114,11 +141,11 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
     super(PROTOCOL_ENTITY_RESOURCE_FAMILY, { mutative: true });
   }
 
-  syncFromProtocolMap = (
-    protocolMap: ProtocolListMap,
+  upsertProtocols = (
+    protocols: IProtocolItem[],
     source: ObservableResourceValueSource = 'remote',
+    options?: { pruneMissing?: boolean },
   ) => {
-    const protocols = getProtocolListFromProtocolMap(protocolMap);
     const entries = new Map<ProtocolEntityId, IProtocolItem>();
     protocols.forEach(protocol => {
       entries.set(buildProtocolEntityId(protocol), protocol);
@@ -165,12 +192,14 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
       }
     });
 
-    const removedProtocolIds = Array.from(
-      new Set([
-        ...Object.keys(previous.valueMap),
-        ...Object.keys(previous.metaMap),
-      ]),
-    ).filter(protocolId => !entries.has(protocolId as ProtocolEntityId));
+    const removedProtocolIds = options?.pruneMissing
+      ? Array.from(
+          new Set([
+            ...Object.keys(previous.valueMap),
+            ...Object.keys(previous.metaMap),
+          ]),
+        ).filter(protocolId => !entries.has(protocolId as ProtocolEntityId))
+      : [];
 
     if (!changedProtocols.length && !removedProtocolIds.length) {
       return;
@@ -201,39 +230,18 @@ class ProtocolEntityResourceStore extends ResourceBaseStore<IProtocolItem> {
       });
     });
   };
+
+  syncFromProtocolMap = (
+    protocolMap: ProtocolListMap,
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    this.upsertProtocols(getProtocolListFromProtocolMap(protocolMap), source, {
+      pruneMissing: true,
+    });
+  };
 }
 
 export const protocolEntityResourceStore = new ProtocolEntityResourceStore();
-
-const splitFoldAndUnfold = (list: IProtocolItem[]): ICacheProtocolItem => {
-  const sortedList = list
-    .slice()
-    .sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
-
-  const totalNetWorth = sortedList.reduce(
-    (acc, curr) => acc + (Number(curr?.netWorth) || 0),
-    0,
-  );
-  const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
-  const thresholdIndex = sortedList
-    ? sortedList.findIndex(m => (Number(m?.netWorth) || 0) < threshold)
-    : -1;
-  const hasExpandSwitch =
-    sortedList.length > 3 &&
-    thresholdIndex > -1 &&
-    thresholdIndex <= sortedList.length - 4;
-
-  const isFold = (p: IProtocolItem) => {
-    if (hasExpandSwitch && (p?.netWorth || 0) < threshold) {
-      return true;
-    }
-    return false;
-  };
-  return {
-    fold: sortedList.filter(isFold),
-    unFold: sortedList.filter(p => !isFold(p)),
-  };
-};
 
 const computeSingleProtocols = (
   protocolMap: ProtocolListMap,
@@ -241,10 +249,7 @@ const computeSingleProtocols = (
   chainServerId?: string,
 ): ICacheProtocolItem => {
   if (!address) {
-    return {
-      fold: [],
-      unFold: [],
-    };
+    return [];
   }
 
   const normalizedAddress = address.toLowerCase();
@@ -254,7 +259,7 @@ const computeSingleProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  return splitFoldAndUnfold(filtered);
+  return filtered;
 };
 
 const computeSingleProtocolsIndex = (
@@ -274,10 +279,7 @@ const computeMultiProtocols = (
   chainServerId?: string,
 ): ICacheProtocolItem => {
   if (!addresses.length) {
-    return {
-      fold: [],
-      unFold: [],
-    };
+    return [];
   }
 
   const normalizedAddresses = normalizeAddresses(addresses);
@@ -289,7 +291,7 @@ const computeMultiProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  return splitFoldAndUnfold(filtered);
+  return filtered;
 };
 
 const computeMultiProtocolsIndex = (
@@ -321,6 +323,303 @@ const singleProtocolsCacheParams = new Map<
 
 const multiProtocolsCacheOrder: string[] = [];
 const singleProtocolsCacheOrder: string[] = [];
+
+type ProtocolProjectionScene = 'single-address' | 'multi-address';
+
+const getProtocolProjectionAvailability = (
+  params:
+    | { address: string; chainServerId?: string }
+    | { addresses: string[]; chainServerId?: string }
+    | undefined,
+  result: ProtocolAssetsIndexResult | undefined,
+  isRestoring = false,
+) => {
+  const addresses = params
+    ? 'address' in params
+      ? [params.address]
+      : params.addresses
+    : [];
+  return resolveAssetProjectionAvailability({
+    hasProjection: !!params && !!result,
+    hasData: !!result?.protocolIds.length,
+    hasCompleteSource:
+      !!params &&
+      hasConfirmedAssetProjectionSources(
+        addresses,
+        useProtocolListStore.getState().sourceSnapshotReadyByAddress,
+      ),
+    isRestoring,
+  });
+};
+
+const scheduleProtocolProjectionPersistence = (
+  key: string,
+  scene: ProtocolProjectionScene,
+  result: ProtocolAssetsIndexResult,
+) => {
+  const params =
+    scene === 'single-address'
+      ? singleProtocolsCacheParams.get(key)
+      : multiProtocolsCacheParams.get(key);
+  if (!params) {
+    return;
+  }
+  const addresses = 'address' in params ? [params.address] : params.addresses;
+  const isSourceSnapshotReady = hasConfirmedAssetProjectionSources(
+    addresses,
+    useProtocolListStore.getState().sourceSnapshotReadyByAddress,
+  );
+  if (!result.protocolIds.length && !isSourceSnapshotReady) {
+    return;
+  }
+  scheduleAssetProjectionPersistence({
+    runtimeKey: key,
+    kind: 'protocol',
+    scene,
+    rows: result.protocolIds.map(protocolId => ({
+      type: 'protocol',
+      id: protocolId,
+    })),
+    metadata: {
+      defaultVisibleProtocolCount: result.defaultVisibleProtocolCount,
+      foldedProtocolUsdValue: result.foldedProtocolUsdValue,
+    },
+  });
+};
+
+const protocolProjectionRestoreRequests = new Map<string, Promise<void>>();
+
+const restoreProtocolProjectionIfEmpty = (
+  key: string,
+  scene: ProtocolProjectionScene,
+) => {
+  if (
+    isAssetProjectionPersistenceActive({
+      runtimeKey: key,
+      kind: 'protocol',
+      scene,
+    })
+  ) {
+    return;
+  }
+  const requestKey = `${scene}:${key}`;
+  if (protocolProjectionRestoreRequests.has(requestKey)) {
+    return;
+  }
+  const params =
+    scene === 'single-address'
+      ? singleProtocolsCacheParams.get(key)
+      : multiProtocolsCacheParams.get(key);
+  if (!params) {
+    return;
+  }
+
+  const startedResult =
+    scene === 'single-address'
+      ? useProtocolListComputedStore.getState().singleProtocolsIndexCache[key]
+      : useProtocolListComputedStore.getState().multiProtocolsIndexCache[key];
+  if (startedResult?.protocolIds.length) {
+    return;
+  }
+  const startedSourceMap = useProtocolListStore.getState().protocolMap;
+  const addresses = 'address' in params ? [params.address] : params.addresses;
+  if (
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(
+        startedSourceMap,
+        address.toLowerCase(),
+      ),
+    )
+  ) {
+    return;
+  }
+
+  useProtocolListComputedStore.setState(current =>
+    scene === 'single-address'
+      ? {
+          singleProtocolsAvailabilityByKey: {
+            ...current.singleProtocolsAvailabilityByKey,
+            [key]: 'restoring',
+          },
+        }
+      : {
+          multiProtocolsAvailabilityByKey: {
+            ...current.multiProtocolsAvailabilityByKey,
+            [key]: 'restoring',
+          },
+        },
+  );
+
+  const request = (async () => {
+    const restored = await restoreAssetProjection({
+      runtimeKey: key,
+      kind: 'protocol',
+      scene,
+    });
+    if (!restored) {
+      return;
+    }
+    const requiredProtocolIds = new Set<ProtocolEntityId>();
+    for (const row of restored.rows) {
+      if (row.type !== 'protocol') {
+        return;
+      }
+      requiredProtocolIds.add(row.id as ProtocolEntityId);
+    }
+
+    if (requiredProtocolIds.size) {
+      const cachedProtocolMap = await loadProtocolSnapshots(addresses);
+      const latestParamsBeforeHydrate =
+        scene === 'single-address'
+          ? singleProtocolsCacheParams.get(key)
+          : multiProtocolsCacheParams.get(key);
+      const stateBeforeHydrate = useProtocolListComputedStore.getState();
+      const resultBeforeHydrate =
+        scene === 'single-address'
+          ? stateBeforeHydrate.singleProtocolsIndexCache[key]
+          : stateBeforeHydrate.multiProtocolsIndexCache[key];
+      if (
+        latestParamsBeforeHydrate !== params ||
+        resultBeforeHydrate !== startedResult ||
+        useProtocolListStore.getState().protocolMap !== startedSourceMap
+      ) {
+        return;
+      }
+      const missingProtocols = getProtocolListFromProtocolMap(
+        cachedProtocolMap,
+      ).filter(protocol => {
+        const protocolId = buildProtocolEntityId(protocol);
+        return (
+          requiredProtocolIds.has(protocolId) &&
+          !protocolEntityResourceStore.getValue(protocolId)
+        );
+      });
+      protocolEntityResourceStore.upsertProtocols(missingProtocols, 'hydrate');
+    }
+
+    const protocolIds: ProtocolEntityId[] = [];
+    for (const row of restored.rows) {
+      if (row.type !== 'protocol') {
+        return;
+      }
+      const protocolId = row.id as ProtocolEntityId;
+      if (!protocolEntityResourceStore.getValue(protocolId)) {
+        return;
+      }
+      protocolIds.push(protocolId);
+    }
+
+    const latestParams =
+      scene === 'single-address'
+        ? singleProtocolsCacheParams.get(key)
+        : multiProtocolsCacheParams.get(key);
+    const state = useProtocolListComputedStore.getState();
+    const currentResult =
+      scene === 'single-address'
+        ? state.singleProtocolsIndexCache[key]
+        : state.multiProtocolsIndexCache[key];
+    if (
+      latestParams !== params ||
+      currentResult !== startedResult ||
+      useProtocolListStore.getState().protocolMap !== startedSourceMap
+    ) {
+      return;
+    }
+
+    const defaultVisibleProtocolCount =
+      restored.metadata.defaultVisibleProtocolCount;
+    const foldedProtocolUsdValue = restored.metadata.foldedProtocolUsdValue;
+    if (
+      typeof defaultVisibleProtocolCount !== 'number' ||
+      !Number.isInteger(defaultVisibleProtocolCount) ||
+      defaultVisibleProtocolCount < 0 ||
+      defaultVisibleProtocolCount > protocolIds.length ||
+      typeof foldedProtocolUsdValue !== 'string'
+    ) {
+      return;
+    }
+
+    const result: ProtocolAssetsIndexResult = {
+      protocolIds,
+      defaultVisibleProtocolCount,
+      foldedProtocolUsdValue,
+    };
+    useProtocolListComputedStore.setState(current =>
+      scene === 'single-address'
+        ? {
+            singleProtocolsIndexCache: {
+              ...current.singleProtocolsIndexCache,
+              [key]: result,
+            },
+            singleProtocolsAvailabilityByKey: {
+              ...current.singleProtocolsAvailabilityByKey,
+              [key]: 'ready',
+            },
+          }
+        : {
+            multiProtocolsIndexCache: {
+              ...current.multiProtocolsIndexCache,
+              [key]: result,
+            },
+            multiProtocolsAvailabilityByKey: {
+              ...current.multiProtocolsAvailabilityByKey,
+              [key]: 'ready',
+            },
+          },
+    );
+  })()
+    .catch(error => {
+      console.error('[protocolProjection] restore failed', error);
+    })
+    .finally(() => {
+      protocolProjectionRestoreRequests.delete(requestKey);
+      const state = useProtocolListComputedStore.getState();
+      const availability =
+        scene === 'single-address'
+          ? state.singleProtocolsAvailabilityByKey[key]
+          : state.multiProtocolsAvailabilityByKey[key];
+      if (availability !== 'restoring') {
+        return;
+      }
+      const latestParams =
+        scene === 'single-address'
+          ? singleProtocolsCacheParams.get(key)
+          : multiProtocolsCacheParams.get(key);
+      const result =
+        scene === 'single-address'
+          ? state.singleProtocolsIndexCache[key]
+          : state.multiProtocolsIndexCache[key];
+      const nextAvailability = getProtocolProjectionAvailability(
+        latestParams,
+        result,
+      );
+      useProtocolListComputedStore.setState(current =>
+        scene === 'single-address'
+          ? {
+              singleProtocolsAvailabilityByKey: {
+                ...current.singleProtocolsAvailabilityByKey,
+                [key]: nextAvailability,
+              },
+            }
+          : {
+              multiProtocolsAvailabilityByKey: {
+                ...current.multiProtocolsAvailabilityByKey,
+                [key]: nextAvailability,
+              },
+            },
+      );
+    });
+  protocolProjectionRestoreRequests.set(requestKey, request);
+};
+
+subscribeAssetProjectionDatabaseCommits(() => {
+  singleProtocolsCacheParams.forEach((_params, key) => {
+    restoreProtocolProjectionIfEmpty(key, 'single-address');
+  });
+  multiProtocolsCacheParams.forEach((_params, key) => {
+    restoreProtocolProjectionIfEmpty(key, 'multi-address');
+  });
+});
 
 const removeKeysFromCache = <T extends Record<string, unknown>>(
   cache: T,
@@ -369,10 +668,14 @@ const isDataExpired = async (address: string) => {
   return isExpired;
 };
 
-const isDataExpiredBatch = async (addresses: string[]) => {
-  const res = await Promise.all(addresses.map(isDataExpired));
-  return res.some(item => !!item);
-};
+const getDataExpirationByAddress = async (addresses: string[]) =>
+  Object.fromEntries(
+    await Promise.all(
+      addresses.map(
+        async address => [address, await isDataExpired(address)] as const,
+      ),
+    ),
+  ) as Record<string, boolean>;
 
 const buildAppChainProtocolMap = async (
   addresses: string[],
@@ -410,8 +713,39 @@ const mergeProtocolMaps = (
   return merged;
 };
 
+const loadProtocolSnapshots = async (
+  addresses: string[],
+): Promise<ProtocolListMap> => {
+  const normalizedAddresses = Array.from(
+    new Set(normalizeAddresses(addresses)),
+  );
+  const [protocolMap, appChainMap] = await Promise.all([
+    ProtocolItemEntity.getDefaultProtocolsByAddresses(normalizedAddresses),
+    buildAppChainProtocolMap(normalizedAddresses),
+  ]);
+
+  return completeAddressListSnapshots(
+    normalizedAddresses,
+    mergeProtocolMaps(protocolMap, appChainMap),
+  );
+};
+
+const protocolCacheHydrator = createAddressListSnapshotHydrator<IProtocolItem>({
+  load: loadProtocolSnapshots,
+  apply: (snapshots, addresses) => {
+    const nextProtocolMap = mergeAddressListSnapshots(
+      useProtocolListStore.getState().protocolMap,
+      addresses,
+      snapshots,
+    );
+    protocolEntityResourceStore.syncFromProtocolMap(nextProtocolMap, 'hydrate');
+    useProtocolListStore.setState({ protocolMap: nextProtocolMap });
+  },
+});
+
 export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
   protocolMap: {},
+  sourceSnapshotReadyByAddress: {},
   isLoading: false,
   isLoadingByAddress: {},
   hasLoadedByAddress: {},
@@ -427,19 +761,11 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     });
 
     const loadStartedAt = Date.now();
-    const [protocolMap, appChainMap] = await Promise.all([
-      ProtocolItemEntity.getDefaultProtocolsByAddresses(top10Addresses),
-      buildAppChainProtocolMap(top10Addresses),
-    ]);
+    await protocolCacheHydrator.hydrate(top10Addresses);
     markStartupPerf('protocolListStore', 'load_cache_end', {
       elapsedMs: Date.now() - loadStartedAt,
       count: top10Addresses.length,
     });
-
-    // 写入 Store
-    set(() => ({
-      protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
-    }));
     markStartupPerf('protocolListStore', 'initStore_end', {
       elapsedMs: Date.now() - startedAt,
       count: top10Addresses.length,
@@ -447,19 +773,28 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
   },
   async batchGetProtocols(addresses, force = false) {
     const requestId = multiAddressProtocolRequests.next();
-    const isCurrentRequest = () =>
-      multiAddressProtocolRequests.isCurrent(requestId);
-    if (!addresses.length) {
-      set(() => ({ isLoading: true }));
-      await new Promise(resolve => setTimeout(resolve, 0));
-      if (isCurrentRequest()) {
-        set(() => ({ protocolMap: {}, isLoading: false }));
-      }
-      return;
-    }
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
+    const addressRequest = protocolAddressRequests.reserve(lowerAddresses);
+    const isCurrentRequest = () =>
+      multiAddressProtocolRequests.isCurrent(requestId);
+    const getCurrentAddresses = () =>
+      isCurrentRequest()
+        ? protocolAddressRequests.getCurrentAddresses(addressRequest)
+        : [];
+    if (!lowerAddresses.length) {
+      set(() => ({ isLoading: true }));
+      await new Promise(resolve => setTimeout(resolve, 0));
+      if (isCurrentRequest()) {
+        set(() => ({
+          protocolMap: {},
+          sourceSnapshotReadyByAddress: {},
+          isLoading: false,
+        }));
+      }
+      return;
+    }
     const trace = beginAssetDataLoadDiagnostic(
       'multi-address-protocol',
       lowerAddresses.join('|'),
@@ -470,33 +805,36 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     );
 
     try {
+      let confirmedLocalAddresses: string[] = [];
       if (!force) {
-        const isExpired = await isDataExpiredBatch(lowerAddresses);
+        const expirationByAddress = await getDataExpirationByAddress(
+          lowerAddresses,
+        );
+        const isExpired = Object.values(expirationByAddress).some(Boolean);
+        confirmedLocalAddresses = lowerAddresses.filter(
+          address => !expirationByAddress[address],
+        );
         trace.mark('expiry-resolved', { isExpired });
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-before-hydrate' });
-          return;
-        }
         if (!isExpired) {
-          const [protocolMap, appChainMap] = await Promise.all([
-            ProtocolItemEntity.getDefaultProtocolsByAddresses(lowerAddresses),
-            buildAppChainProtocolMap(lowerAddresses),
-          ]);
+          const hasMemorySnapshot = lowerAddresses.every(address =>
+            Object.prototype.hasOwnProperty.call(get().protocolMap, address),
+          );
+          if (!hasMemorySnapshot) {
+            await protocolCacheHydrator.hydrate(lowerAddresses);
+          }
+          set(state => ({
+            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+              state.sourceSnapshotReadyByAddress,
+              confirmedLocalAddresses,
+            ),
+          }));
+          const protocolMap = get().protocolMap;
           trace.mark('local-db-loaded', {
-            itemCount: Object.values(protocolMap).reduce(
-              (count, protocols) => count + protocols.length,
+            itemCount: lowerAddresses.reduce(
+              (count, address) => count + (protocolMap[address]?.length || 0),
               0,
             ),
           });
-          if (!isCurrentRequest()) {
-            trace.finish({ path: 'stale-after-hydrate' });
-            return;
-          }
-          const mergedProtocolMap = mergeProtocolMaps(protocolMap, appChainMap);
-          set(() => ({
-            protocolMap: mergedProtocolMap,
-            isLoading: false,
-          }));
           reportLendingUserStatusOnce({
             addresses: lowerAddresses,
             protocolMap,
@@ -506,11 +844,17 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
         }
       }
 
-      if (isCurrentRequest()) {
-        set(() => ({ isLoading: true }));
+      if (
+        !isCurrentRequest() ||
+        !protocolAddressRequests.activate(addressRequest).length
+      ) {
+        trace.finish({ path: 'stale-before-remote' });
+        return;
       }
+      protocolCacheHydrator.invalidate(lowerAddresses);
+      set(() => ({ isLoading: true }));
 
-      const remoteProtocolsPromise = syncProtocolsForAddresses(
+      const remoteProtocolsPromise = loadProtocolsForAddresses(
         lowerAddresses,
         force,
       ).then(
@@ -523,20 +867,16 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
       );
 
       if (!force && !hasMemorySnapshot) {
-        const [localProtocolMap, appChainMap] = await Promise.all([
-          ProtocolItemEntity.getDefaultProtocolsByAddresses(lowerAddresses),
-          buildAppChainProtocolMap(lowerAddresses),
-        ]);
+        await protocolCacheHydrator.hydrate(lowerAddresses);
+        const localProtocolMap = get().protocolMap;
         trace.mark('stale-local-db-loaded', {
-          itemCount: Object.values(localProtocolMap).reduce(
-            (count, protocols) => count + protocols.length,
+          itemCount: lowerAddresses.reduce(
+            (count, address) =>
+              count + (localProtocolMap[address]?.length || 0),
             0,
           ),
         });
         if (isCurrentRequest()) {
-          set(() => ({
-            protocolMap: mergeProtocolMaps(localProtocolMap, appChainMap),
-          }));
           trace.mark('stale-local-store-published');
         }
       } else {
@@ -544,26 +884,63 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           hasMemorySnapshot,
         });
       }
+      if (confirmedLocalAddresses.length) {
+        set(state => ({
+          sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+            state.sourceSnapshotReadyByAddress,
+            confirmedLocalAddresses,
+          ),
+        }));
+      }
 
       const remoteProtocols = await remoteProtocolsPromise;
       if (remoteProtocols.status === 'rejected') {
         throw remoteProtocols.error;
       }
-      const resultMap = remoteProtocols.result;
+      const { protocolMap: resultMap, remoteProtocolMap } =
+        remoteProtocols.result;
       trace.mark('remote-response-completed', {
         itemCount: Object.values(resultMap).reduce(
           (count, protocols) => count + protocols.length,
           0,
         ),
       });
-      if (!isCurrentRequest()) {
+      const currentAddresses = getCurrentAddresses();
+      if (!currentAddresses.length) {
         trace.finish({ path: 'stale-after-remote' });
         return;
       }
-      set(() => ({ protocolMap: resultMap }));
+      const applicableProtocolMap = Object.fromEntries(
+        currentAddresses.map(address => [address, resultMap[address] || []]),
+      );
+      const applicableRemoteProtocolMap = Object.fromEntries(
+        currentAddresses
+          .filter(address =>
+            Object.prototype.hasOwnProperty.call(remoteProtocolMap, address),
+          )
+          .map(address => [address, remoteProtocolMap[address]]),
+      );
+      const nextProtocolMap = mergeAddressListSnapshots(
+        get().protocolMap,
+        currentAddresses,
+        applicableProtocolMap,
+      );
+      protocolEntityResourceStore.syncFromProtocolMap(
+        nextProtocolMap,
+        'remote',
+      );
+      protocolCacheHydrator.invalidate(currentAddresses);
+      set(state => ({
+        protocolMap: nextProtocolMap,
+        sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+          state.sourceSnapshotReadyByAddress,
+          currentAddresses,
+        ),
+      }));
+      void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
       reportLendingUserStatusOnce({
-        addresses: lowerAddresses,
-        protocolMap: resultMap,
+        addresses: currentAddresses,
+        protocolMap: applicableProtocolMap,
       });
       trace.finish({ path: 'local-then-remote' });
     } catch (error) {
@@ -581,54 +958,81 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     }
 
     const normalizedAddress = address.toLowerCase();
-
-    set(state => ({
-      isLoadingByAddress: {
-        ...state.isLoadingByAddress,
-        [normalizedAddress]: true,
-      },
-    }));
+    const addressRequest = protocolAddressRequests.reserve([normalizedAddress]);
+    const isCurrentRequest = () =>
+      protocolAddressRequests.isCurrent(addressRequest, normalizedAddress);
 
     try {
       if (!force) {
         const isExpired = await isDataExpired(normalizedAddress);
         if (!isExpired) {
-          const [cacheProtocols, appChainProtocols] = await Promise.all([
-            ProtocolItemEntity.batchQueryProtocols(normalizedAddress),
-            buildAppChainProtocolMap([normalizedAddress]),
-          ]);
+          const hasMemorySnapshot = Object.prototype.hasOwnProperty.call(
+            get().protocolMap,
+            normalizedAddress,
+          );
+          if (!hasMemorySnapshot) {
+            await protocolCacheHydrator.hydrate([normalizedAddress]);
+          }
           set(state => ({
-            protocolMap: {
-              ...state.protocolMap,
-              [normalizedAddress]: [
-                ...cacheProtocols,
-                ...(appChainProtocols[normalizedAddress] || []),
-              ],
+            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+              state.sourceSnapshotReadyByAddress,
+              [normalizedAddress],
+            ),
+            hasLoadedByAddress: {
+              ...state.hasLoadedByAddress,
+              [normalizedAddress]: true,
             },
           }));
           return;
         }
       }
 
-      // 内部通过给db的非阻塞action，所以下面的同步store是先行的
-      const protocols = await syncProtocols(normalizedAddress, force);
-      set(state => ({
-        protocolMap: {
-          ...state.protocolMap,
-          [normalizedAddress]: protocols,
-        },
-      }));
-    } finally {
+      if (!protocolAddressRequests.activate(addressRequest).length) {
+        return;
+      }
+      protocolCacheHydrator.invalidate([normalizedAddress]);
       set(state => ({
         isLoadingByAddress: {
           ...state.isLoadingByAddress,
-          [normalizedAddress]: false,
-        },
-        hasLoadedByAddress: {
-          ...state.hasLoadedByAddress,
           [normalizedAddress]: true,
         },
       }));
+
+      const result = await loadProtocols(normalizedAddress, force);
+      if (!isCurrentRequest()) {
+        return;
+      }
+      const nextProtocolMap = {
+        ...get().protocolMap,
+        [normalizedAddress]: result.protocols,
+      };
+      protocolEntityResourceStore.syncFromProtocolMap(
+        nextProtocolMap,
+        'remote',
+      );
+      set(state => ({
+        protocolMap: nextProtocolMap,
+        sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+          state.sourceSnapshotReadyByAddress,
+          [normalizedAddress],
+        ),
+      }));
+      if (result.remoteProtocols) {
+        void syncRemoteProtocols(normalizedAddress, result.remoteProtocols);
+      }
+    } finally {
+      if (isCurrentRequest()) {
+        set(state => ({
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            [normalizedAddress]: false,
+          },
+          hasLoadedByAddress: {
+            ...state.hasLoadedByAddress,
+            [normalizedAddress]: true,
+          },
+        }));
+      }
     }
   },
   //更新特定的仓位，类似之前的updateSpecificProtocol
@@ -686,6 +1090,8 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
   set => ({
     multiProtocolsIndexCache: {},
     singleProtocolsIndexCache: {},
+    multiProtocolsAvailabilityByKey: {},
+    singleProtocolsAvailabilityByKey: {},
     registerMultiProtocols(addresses, chainServerId) {
       const key = getMultiProtocolsCacheKey(addresses, chainServerId);
       const removedKeys = touchCacheParams(
@@ -699,20 +1105,37 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
       );
       const protocolMap = useProtocolListStore.getState().protocolMap;
       protocolEntityResourceStore.syncFromProtocolMap(protocolMap);
+      const previousState = useProtocolListComputedStore.getState();
+      const previousResult = previousState.multiProtocolsIndexCache[key];
+      const nextResult = computeMultiProtocolsIndex(
+        protocolMap,
+        addresses,
+        chainServerId,
+        previousResult,
+      );
       set(state => ({
         multiProtocolsIndexCache: removeKeysFromCache(
           {
             ...state.multiProtocolsIndexCache,
-            [key]: computeMultiProtocolsIndex(
-              protocolMap,
-              addresses,
-              chainServerId,
-              state.multiProtocolsIndexCache[key],
+            [key]: nextResult,
+          },
+          removedKeys,
+        ),
+        multiProtocolsAvailabilityByKey: removeKeysFromCache(
+          {
+            ...state.multiProtocolsAvailabilityByKey,
+            [key]: getProtocolProjectionAvailability(
+              multiProtocolsCacheParams.get(key),
+              nextResult,
             ),
           },
           removedKeys,
         ),
       }));
+      scheduleProtocolProjectionPersistence(key, 'multi-address', nextResult);
+      if (!nextResult.protocolIds.length) {
+        restoreProtocolProjectionIfEmpty(key, 'multi-address');
+      }
       return key;
     },
     registerSingleProtocols(address, chainServerId) {
@@ -729,20 +1152,37 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
       );
       const protocolMap = useProtocolListStore.getState().protocolMap;
       protocolEntityResourceStore.syncFromProtocolMap(protocolMap);
+      const previousState = useProtocolListComputedStore.getState();
+      const previousResult = previousState.singleProtocolsIndexCache[key];
+      const nextResult = computeSingleProtocolsIndex(
+        protocolMap,
+        address,
+        chainServerId,
+        previousResult,
+      );
       set(state => ({
         singleProtocolsIndexCache: removeKeysFromCache(
           {
             ...state.singleProtocolsIndexCache,
-            [key]: computeSingleProtocolsIndex(
-              protocolMap,
-              address,
-              chainServerId,
-              state.singleProtocolsIndexCache[key],
+            [key]: nextResult,
+          },
+          removedKeys,
+        ),
+        singleProtocolsAvailabilityByKey: removeKeysFromCache(
+          {
+            ...state.singleProtocolsAvailabilityByKey,
+            [key]: getProtocolProjectionAvailability(
+              singleProtocolsCacheParams.get(key),
+              nextResult,
             ),
           },
           removedKeys,
         ),
       }));
+      scheduleProtocolProjectionPersistence(key, 'single-address', nextResult);
+      if (!nextResult.protocolIds.length) {
+        restoreProtocolProjectionIfEmpty(key, 'single-address');
+      }
       return key;
     },
   }),
@@ -779,16 +1219,113 @@ const rebuildComputedCaches = (protocolMap: ProtocolListMap) => {
   useProtocolListComputedStore.setState({
     multiProtocolsIndexCache,
     singleProtocolsIndexCache,
+    multiProtocolsAvailabilityByKey: Object.fromEntries(
+      Object.entries(multiProtocolsIndexCache).map(([key, result]) => [
+        key,
+        getProtocolProjectionAvailability(
+          multiProtocolsCacheParams.get(key),
+          result,
+        ),
+      ]),
+    ),
+    singleProtocolsAvailabilityByKey: Object.fromEntries(
+      Object.entries(singleProtocolsIndexCache).map(([key, result]) => [
+        key,
+        getProtocolProjectionAvailability(
+          singleProtocolsCacheParams.get(key),
+          result,
+        ),
+      ]),
+    ),
+  });
+  Object.entries(multiProtocolsIndexCache).forEach(([key, result]) => {
+    scheduleProtocolProjectionPersistence(key, 'multi-address', result);
+    if (!result.protocolIds.length) {
+      restoreProtocolProjectionIfEmpty(key, 'multi-address');
+    }
+  });
+  Object.entries(singleProtocolsIndexCache).forEach(([key, result]) => {
+    scheduleProtocolProjectionPersistence(key, 'single-address', result);
+    if (!result.protocolIds.length) {
+      restoreProtocolProjectionIfEmpty(key, 'single-address');
+    }
   });
 };
 
+const refreshProtocolProjectionAvailability = () => {
+  const state = useProtocolListComputedStore.getState();
+  let multiProtocolsAvailabilityByKey = state.multiProtocolsAvailabilityByKey;
+  let singleProtocolsAvailabilityByKey = state.singleProtocolsAvailabilityByKey;
+
+  multiProtocolsCacheParams.forEach((params, key) => {
+    const result = state.multiProtocolsIndexCache[key];
+    if (!result) {
+      return;
+    }
+    const availability = getProtocolProjectionAvailability(params, result);
+    if (multiProtocolsAvailabilityByKey[key] !== availability) {
+      if (
+        multiProtocolsAvailabilityByKey ===
+        state.multiProtocolsAvailabilityByKey
+      ) {
+        multiProtocolsAvailabilityByKey = {
+          ...multiProtocolsAvailabilityByKey,
+        };
+      }
+      multiProtocolsAvailabilityByKey[key] = availability;
+    }
+    scheduleProtocolProjectionPersistence(key, 'multi-address', result);
+  });
+
+  singleProtocolsCacheParams.forEach((params, key) => {
+    const result = state.singleProtocolsIndexCache[key];
+    if (!result) {
+      return;
+    }
+    const availability = getProtocolProjectionAvailability(params, result);
+    if (singleProtocolsAvailabilityByKey[key] !== availability) {
+      if (
+        singleProtocolsAvailabilityByKey ===
+        state.singleProtocolsAvailabilityByKey
+      ) {
+        singleProtocolsAvailabilityByKey = {
+          ...singleProtocolsAvailabilityByKey,
+        };
+      }
+      singleProtocolsAvailabilityByKey[key] = availability;
+    }
+    scheduleProtocolProjectionPersistence(key, 'single-address', result);
+  });
+
+  if (
+    multiProtocolsAvailabilityByKey !== state.multiProtocolsAvailabilityByKey ||
+    singleProtocolsAvailabilityByKey !== state.singleProtocolsAvailabilityByKey
+  ) {
+    useProtocolListComputedStore.setState({
+      multiProtocolsAvailabilityByKey,
+      singleProtocolsAvailabilityByKey,
+    });
+  }
+};
+
 let latestProtocolMap = useProtocolListStore.getState().protocolMap;
+let latestProtocolSourceSnapshotReadiness =
+  useProtocolListStore.getState().sourceSnapshotReadyByAddress;
 useProtocolListStore.subscribe(state => {
-  if (state.protocolMap === latestProtocolMap) {
+  const protocolMapChanged = state.protocolMap !== latestProtocolMap;
+  const readinessChanged =
+    state.sourceSnapshotReadyByAddress !==
+    latestProtocolSourceSnapshotReadiness;
+  if (!protocolMapChanged && !readinessChanged) {
     return;
   }
   latestProtocolMap = state.protocolMap;
-  rebuildComputedCaches(state.protocolMap);
+  latestProtocolSourceSnapshotReadiness = state.sourceSnapshotReadyByAddress;
+  if (protocolMapChanged) {
+    rebuildComputedCaches(state.protocolMap);
+    return;
+  }
+  refreshProtocolProjectionAvailability();
 });
 
 export default useProtocolListStore;

@@ -4,6 +4,7 @@ import { createMemoryAppDataSource } from '../../test-support/database/createMem
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from './constant';
 import { BalanceEntity } from './entities/balance';
 import { getMigrations } from './migrations';
+import { getSyncSchedulerSnapshot, submitSyncTask } from './sync/scheduler';
 
 const OWNER_ADDRESS = '0x0000000000000000000000000000000000000001';
 
@@ -91,5 +92,54 @@ describe('app database with the Node in-memory SQLite driver', () => {
     await repository.insert(balance);
     await expect(repository.insert(createBalance(22))).rejects.toThrow();
     expect(await repository.count()).toBe(1);
+  });
+
+  it('holds scheduled writes until migrations and schema setup finish', async () => {
+    const initialization = createMemoryAppDataSource();
+    let writeStarted = false;
+
+    const scheduledWrite = submitSyncTask({
+      key: 'integration-data-source-initialization',
+      taskFor: '@unknown',
+      owner: 'integration-test',
+      entityName: 'schema_probe',
+      rowCount: 1,
+      batchSize: 1,
+      totalBatches: 1,
+      replaceQueuedDuplicates: false,
+      runner: async () => {
+        writeStarted = true;
+        const initializedDataSource = await initialization;
+        const projectionTables = await initializedDataSource.query(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (?, ?)",
+          [
+            `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_snapshot}`,
+            `${APP_DB_PREFIX}${ORM_TABLE_NAMES.projection_item}`,
+          ],
+        );
+        expect(projectionTables).toHaveLength(2);
+      },
+    });
+
+    await Promise.resolve();
+
+    const queuedTask = getSyncSchedulerSnapshot().tasks.find(
+      task => task.id === scheduledWrite.taskId,
+    );
+    expect(writeStarted).toBe(false);
+    expect(queuedTask).toMatchObject({
+      status: 'paused',
+      stage: expect.stringContaining('data-source-initialization:'),
+    });
+
+    dataSource = await initialization;
+    await scheduledWrite.promise;
+
+    expect(writeStarted).toBe(true);
+    expect(
+      getSyncSchedulerSnapshot().pauseReasons.filter(reason =>
+        reason.startsWith('data-source-initialization:'),
+      ),
+    ).toEqual([]);
   });
 });

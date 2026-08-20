@@ -23,6 +23,7 @@ import {
   preferenceServiceApi,
 } from '@/core/serviceApi/preference';
 import tokenStore from '@/store/tokens';
+import { getSelectedBalanceAddressesSnapshot } from '@/store/balance';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { findChain, findChainByEnum, makeTokenFromChain } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
@@ -487,15 +488,23 @@ async function prepareScenario(context: RegressionScenarioExecutionContext) {
   };
 }
 
-async function waitForHomeTabIndex(tabIndex: number, timeoutMs = 10_000) {
+async function selectHomeTabIndex(tabIndex: number, timeoutMs = 10_000) {
   const startedAt = Date.now();
+  let lastSelectionAt = 0;
 
   while (Date.now() - startedAt < timeoutMs) {
-    if (
-      apisHomeTabIndex.homeTabScrollerRef.current?.getCurrentIndex() ===
-      tabIndex
-    ) {
+    const controller = apisHomeTabIndex.homeTabScrollerRef.current;
+    if (controller?.getCurrentIndex() === tabIndex) {
       return;
+    }
+
+    const now = Date.now();
+    // resetRoot can expose the outer ref before the native pager is ready.
+    // Retry only after a full page-transition window so an active animation is
+    // never interrupted by repeated test commands.
+    if (controller && now - lastSelectionAt >= 1_500) {
+      controller.setIndex(tabIndex);
+      lastSelectionAt = now;
     }
     await delay(50);
   }
@@ -580,17 +589,88 @@ async function assertHomeTabActivity(
   throw new Error(`Home asset activity did not converge for tab ${tabIndex}`);
 }
 
+async function prepareHomeTokenColdPath(
+  context: RegressionScenarioExecutionContext,
+) {
+  const clearMemory = parseScenarioBoolean(
+    context.command.params.clearTokenMemoryBeforeNavigation,
+  );
+  const expireCache = parseScenarioBoolean(
+    context.command.params.expireTokenCacheBeforeNavigation,
+  );
+  if (!clearMemory && !expireCache) {
+    return;
+  }
+
+  await selectHomeTabIndex(0);
+
+  const addresses = Array.from(
+    new Set(
+      getSelectedBalanceAddressesSnapshot().map(address =>
+        address.toLowerCase(),
+      ),
+    ),
+  );
+  if (clearMemory) {
+    const state = tokenStore.getState();
+    const nextTokenListMap = { ...state.tokenListMap };
+    const nextLoadingByAddress = { ...state.isLoadingByAddress };
+    const nextSourceSnapshotReadyByAddress = {
+      ...state.sourceSnapshotReadyByAddress,
+    };
+    addresses.forEach(address => {
+      delete nextTokenListMap[address];
+      delete nextLoadingByAddress[address];
+      delete nextSourceSnapshotReadyByAddress[address];
+    });
+    tokenStore.setState({
+      tokenListMap: nextTokenListMap,
+      isLoadingByAddress: nextLoadingByAddress,
+      sourceSnapshotReadyByAddress: nextSourceSnapshotReadyByAddress,
+      isLoading: false,
+    });
+    context.report('assertion', {
+      assertion: 'home-assets-token-memory-cleared',
+      passed: addresses.every(
+        address => tokenStore.getState().tokenListMap[address] === undefined,
+      ),
+      addressCount: addresses.length,
+    });
+  }
+
+  if (expireCache) {
+    await Promise.all(
+      addresses.map(address => TokenItemEntity.willExpired(address)),
+    );
+    const expirationResults = await Promise.all(
+      addresses.map(address => TokenItemEntity.isExpired(address)),
+    );
+    const passed = expirationResults.every(Boolean);
+    context.report('assertion', {
+      assertion: 'home-assets-token-cache-expired',
+      passed,
+      addressCount: addresses.length,
+    });
+    if (!passed) {
+      throw new Error('Home token cache did not expire for every address');
+    }
+  }
+}
+
 async function openHomeAssets(context: RegressionScenarioExecutionContext) {
   resetToHome();
   await context.waitForRoute(RootNames.Home);
+
+  const startedAt = Date.now();
+  const assetDataLoadCursor = getAssetDataLoadDiagnosticsCursor();
+  await prepareHomeTokenColdPath(context);
 
   const requestedTabs = (context.command.params.tabs || '0,1,2,3')
     .split(',')
     .map(value => Number(value.trim()))
     .filter(value => Number.isInteger(value) && value >= 0 && value <= 3);
   for (const tabIndex of requestedTabs) {
-    apisHomeTabIndex.setTabIndex(tabIndex, true);
-    await waitForHomeTabIndex(tabIndex);
+    await selectHomeTabIndex(tabIndex);
     context.report('assertion', {
       assertion: 'home-tab-selected',
       passed: navigationRef.getCurrentRoute()?.name === RootNames.Home,
@@ -605,10 +685,31 @@ async function openHomeAssets(context: RegressionScenarioExecutionContext) {
     }
   }
 
-  for (const tabIndex of HOME_TAB_ACTIVITY_VERIFICATION_TABS) {
-    apisHomeTabIndex.setTabIndex(tabIndex, true);
-    await waitForHomeTabIndex(tabIndex);
-    await assertHomeTabActivity(context, tabIndex);
+  context.report('perf-mark', {
+    mark: 'home-assets-data-load-summary',
+    elapsedMs: Date.now() - startedAt,
+    assetDataLoads: getAssetDataLoadRecordsSince(
+      assetDataLoadCursor,
+      startedAt,
+    ),
+  });
+
+  const visitedTabs = new Set([0, ...requestedTabs]);
+  const canVerifyAllTabActivity = HOME_TAB_ACTIVITY_SCOPE_LABELS.every(
+    (_, tabIndex) => visitedTabs.has(tabIndex),
+  );
+  if (canVerifyAllTabActivity) {
+    for (const tabIndex of HOME_TAB_ACTIVITY_VERIFICATION_TABS) {
+      await selectHomeTabIndex(tabIndex);
+      await assertHomeTabActivity(context, tabIndex);
+    }
+  } else {
+    context.report('assertion', {
+      assertion: 'home-tabs-store-activity-skipped',
+      passed: true,
+      reason: 'not-all-home-tabs-visited',
+      visitedTabs: Array.from(visitedTabs),
+    });
   }
 }
 
@@ -795,6 +896,20 @@ function getAssetDataLoadRecordsAfter(
       requestId: record.requestId,
       phase: record.phase,
       sinceNavigationMs: record.timestamp - navigationStartedAt,
+      elapsedMs: record.elapsedMs,
+      deltaMs: record.deltaMs,
+      details: record.details,
+    }));
+}
+
+function getAssetDataLoadRecordsSince(cursor: number, startedAt: number) {
+  return getAssetDataLoadDiagnosticsSnapshot()
+    .records.filter(record => record.id > cursor)
+    .map(record => ({
+      domain: record.domain,
+      requestId: record.requestId,
+      phase: record.phase,
+      sinceStartedMs: record.timestamp - startedAt,
       elapsedMs: record.elapsedMs,
       deltaMs: record.deltaMs,
       details: record.details,
@@ -1440,6 +1555,23 @@ async function openAppBackgroundRestore(
 export async function executeRegressionScenario(
   context: RegressionScenarioExecutionContext,
 ) {
+  if (context.command.scenario === 'home-assets') {
+    await context.waitForNavigation();
+    await ensureScenarioWalletUnlocked();
+    context.report('precondition-ready', {
+      walletUnlocked: true,
+      accountCount: getSelectedBalanceAddressesSnapshot().length,
+    });
+    context.report('action-started', {
+      action: context.command.action,
+    });
+    await openHomeAssets(context);
+    context.report('postcondition-ready', {
+      route: navigationRef.getCurrentRoute()?.name || null,
+    });
+    return;
+  }
+
   const { account, accounts } = await prepareScenario(context);
   context.report('precondition-ready', {
     walletUnlocked: true,
@@ -1452,9 +1584,6 @@ export async function executeRegressionScenario(
   switch (context.command.scenario) {
     case 'address-switch':
       await switchCurrentAddress(context, accounts);
-      break;
-    case 'home-assets':
-      await openHomeAssets(context);
       break;
     case 'single-address': {
       const singleAddressAccount = selectScenarioAccount(

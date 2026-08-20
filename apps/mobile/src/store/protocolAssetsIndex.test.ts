@@ -8,6 +8,7 @@ const makeProtocol = (
   id: string,
   netWorth: number,
   portfolioValue = netWorth,
+  overrides: Partial<IProtocolItem> = {},
 ): IProtocolItem => ({
   id,
   name: id,
@@ -22,6 +23,7 @@ const makeProtocol = (
       _originPortfolio: {} as never,
     },
   ],
+  ...overrides,
 });
 
 describe('protocol asset index', () => {
@@ -32,54 +34,101 @@ describe('protocol asset index', () => {
   });
 
   it('reuses the complete result when only source object identities change', () => {
-    const first = buildProtocolAssetsIndexResult({
-      unFold: [makeProtocol('aave', 10)],
-      fold: [makeProtocol('curve', 1)],
-    });
+    const first = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10),
+      makeProtocol('curve', 1),
+    ]);
     const second = buildProtocolAssetsIndexResult(
-      {
-        unFold: [makeProtocol('aave', 10)],
-        fold: [makeProtocol('curve', 1)],
-      },
+      [makeProtocol('aave', 10), makeProtocol('curve', 1)],
       first,
     );
 
     expect(second).toBe(first);
   });
 
-  it('keeps id arrays stable when only the folded value changes', () => {
-    const first = buildProtocolAssetsIndexResult({
-      unFold: [makeProtocol('aave', 10)],
-      fold: [makeProtocol('curve', 1)],
-    });
+  it('keeps the id array stable when entity values change without reordering', () => {
+    const first = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10),
+      makeProtocol('curve', 1),
+    ]);
     const second = buildProtocolAssetsIndexResult(
-      {
-        unFold: [makeProtocol('aave', 10)],
-        fold: [makeProtocol('curve', 2)],
-      },
+      [makeProtocol('aave', 11), makeProtocol('curve', 2)],
       first,
     );
 
-    expect(second).not.toBe(first);
-    expect(second.unFoldIds).toBe(first.unFoldIds);
-    expect(second.foldIds).toBe(first.foldIds);
-    expect(second.foldDeFiValue).not.toBe(first.foldDeFiValue);
+    expect(second).toBe(first);
+    expect(second.protocolIds).toBe(first.protocolIds);
   });
 
-  it('changes the list identity when row order changes', () => {
-    const first = buildProtocolAssetsIndexResult({
-      unFold: [makeProtocol('aave', 10), makeProtocol('curve', 5)],
-      fold: [],
-    });
+  it('orders protocols by net worth regardless of source order', () => {
+    const first = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10),
+      makeProtocol('curve', 5),
+    ]);
     const second = buildProtocolAssetsIndexResult(
-      {
-        unFold: [makeProtocol('curve', 5), makeProtocol('aave', 10)],
-        fold: [],
-      },
+      [makeProtocol('curve', 15), makeProtocol('aave', 10)],
       first,
     );
 
-    expect(second.unFoldIds).not.toBe(first.unFoldIds);
-    expect(second.unFoldIds).toEqual(['0xabc:eth:curve', '0xabc:eth:aave']);
+    expect(second.protocolIds).not.toBe(first.protocolIds);
+    expect(second.protocolIds).toEqual(['0xabc:eth:curve', '0xabc:eth:aave']);
+  });
+
+  it('preserves source order for equal net worth values', () => {
+    const result = buildProtocolAssetsIndexResult([
+      makeProtocol('second', 10),
+      makeProtocol('first', 10),
+    ]);
+
+    expect(result.protocolIds).toEqual(['0xabc:eth:second', '0xabc:eth:first']);
+  });
+
+  it('keeps equal protocols isolated across owners', () => {
+    const result = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 10, 10, { owner_addr: '0xAAA' }),
+      makeProtocol('aave', 20, 20, { owner_addr: '0xBBB' }),
+    ]);
+
+    expect(result.protocolIds).toEqual(['0xbbb:eth:aave', '0xaaa:eth:aave']);
+  });
+
+  it('keeps regular and AppChain protocols in the same ordered projection', () => {
+    const result = buildProtocolAssetsIndexResult([
+      makeProtocol('aave', 30),
+      makeProtocol('app', 50, 50, {
+        chain: 'RABBY_APP_CHAIN_app',
+      }),
+    ]);
+
+    expect(result.protocolIds).toEqual([
+      '0xabc:rabby_app_chain_app:app',
+      '0xabc:eth:aave',
+    ]);
+  });
+
+  it('keeps the baseline threshold-based default protocol subset', () => {
+    const protocols = [1000, 100, 0.5, 0.4, 0.3, 0.2].map((netWorth, index) =>
+      makeProtocol(`protocol-${index}`, netWorth),
+    );
+
+    const result = buildProtocolAssetsIndexResult(protocols);
+
+    expect(
+      result.protocolIds.slice(0, result.defaultVisibleProtocolCount),
+    ).toEqual(['0xabc:eth:protocol-0', '0xabc:eth:protocol-1']);
+    expect(result.protocolIds).toHaveLength(protocols.length);
+    expect(result.defaultVisibleProtocolCount).toBe(2);
+    expect(result.foldedProtocolUsdValue).not.toBe('');
+  });
+
+  it('keeps all protocols when fewer than four rows fall below the threshold', () => {
+    const protocols = [1000, 100, 10, 0.5, 0.4, 0.3].map((netWorth, index) =>
+      makeProtocol(`protocol-${index}`, netWorth),
+    );
+
+    const result = buildProtocolAssetsIndexResult(protocols);
+    expect(result.protocolIds).toHaveLength(protocols.length);
+    expect(result.defaultVisibleProtocolCount).toBe(protocols.length);
+    expect(result.foldedProtocolUsdValue).toBe('');
   });
 });

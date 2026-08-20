@@ -1,16 +1,6 @@
 import BigNumber from 'bignumber.js';
-import {
-  AbstractPortfolioToken,
-  AbstractProject,
-  DisplayNftItem,
-} from '../types';
-import { useMemo } from 'react';
-import { useHomeAssetAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import nftListStore, {
-  combinedNfts,
-  getAssetsMapDirectly,
-  useOnNftRefresh,
-} from '@/store/nfts';
+import { AbstractPortfolioToken, DisplayNftItem } from '../types';
+import nftListStore, { combinedNfts, getAssetsMapDirectly } from '@/store/nfts';
 
 export type CombineNFTItem = DisplayNftItem & {
   address?: string;
@@ -27,12 +17,6 @@ export type CombineTokensItem = Omit<
   totalAmount: number;
   totalUsdValue: number;
 };
-
-type OriginalCombineDefiItem = AbstractProject & {
-  totalUsdValue: BigNumber;
-  address: string;
-};
-export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'>;
 
 export type AssetsMapState = {
   nftsMap: { [address: string]: DisplayNftItem[] };
@@ -68,8 +52,6 @@ export const useAssetsMap = () => {
   };
 };
 
-export { useOnNftRefresh };
-
 export const computeAssetsApis = {
   memoNfts: (caredAddresses: string[], nftsMap?: AssetsMapState['nftsMap']) => {
     const globalNftsMap = nftsMap || nftListStore.getState().nftsMap;
@@ -78,27 +60,3 @@ export const computeAssetsApis = {
     return nfts;
   },
 };
-
-let top10NftsCache: CombineNFTItem[] = [];
-export function useAssetsNFTs({
-  hideCombined = false,
-}: {
-  hideCombined?: boolean;
-}) {
-  const globalNftsMap = nftListStore(s => s.nftsMap);
-
-  const { myTop10Addresses } = useHomeAssetAccountInfo();
-
-  const memoNfts = useMemo(() => {
-    if (hideCombined) {
-      return top10NftsCache;
-    }
-    const nfts = combinedNfts(globalNftsMap, myTop10Addresses);
-    top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 20) || [];
-    return nfts;
-  }, [hideCombined, globalNftsMap, myTop10Addresses]);
-
-  return {
-    nfts: memoNfts,
-  };
-}

@@ -126,6 +126,7 @@ type ScreenshotSettings = {
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
+  toastOpenApiHttpErrorStatusDefaultEnabledV1: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
   wideScreenDebugPanelEnabled: boolean;
   wideScreenDebugPanelMinWidth: number;
@@ -152,6 +153,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
+    toastOpenApiHttpErrorStatusDefaultEnabledV1: false,
     debugSwapHistorySkipLocalLookup: false,
     wideScreenDebugPanelEnabled: false,
     wideScreenDebugPanelMinWidth: WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH,
@@ -165,6 +167,17 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     screenE2EEnabled: false,
   },
 );
+
+if (
+  isNonPublicProductionEnv &&
+  !experimentalSettingsStore.getState()
+    .toastOpenApiHttpErrorStatusDefaultEnabledV1
+) {
+  experimentalSettingsStore.setState({
+    toastOpenApiHttpErrorStatus: true,
+    toastOpenApiHttpErrorStatusDefaultEnabledV1: true,
+  });
+}
 
 export const storeApiExpSettingData = {
   set: setExpSettingData,

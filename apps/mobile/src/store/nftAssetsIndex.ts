@@ -1,8 +1,14 @@
-import type { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  Collection,
+  CollectionList,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 import type { DisplayNftItem } from '@/types/assets';
 
-export type CombinedNftItem = DisplayNftItem & { address?: string };
+export type CombinedNftItem = DisplayNftItem & {
+  address?: string;
+  owner_addr?: string;
+};
 
 export type NftEntityId = string & {
   readonly __nftEntityId: unique symbol;
@@ -22,13 +28,16 @@ export type NftAssetsIndexRow =
       collectionId: NftCollectionId;
     };
 
-export type NftCollectionResourceValue = CollectionList & {
-  address?: string;
-};
+export type NftCollectionResourceValue = Collection &
+  Partial<Omit<CollectionList, keyof Collection | 'chain' | 'nft_list'>> & {
+    chain: string;
+    nft_list: DisplayNftItem[];
+    address?: string;
+  };
 
 export type NftAssetsIndexResult = {
-  unFoldRows: NftAssetsIndexRow[];
-  foldRows: NftAssetsIndexRow[];
+  rows: NftAssetsIndexRow[];
+  defaultVisibleRowCount: number;
 };
 
 export type NftAssetsIndexProjection = {
@@ -42,8 +51,8 @@ export type NftAssetsIndexProjection = {
 const EMPTY_NFT_ASSETS_INDEX_ROWS: NftAssetsIndexRow[] = [];
 
 export const EMPTY_NFT_ASSETS_INDEX_RESULT: NftAssetsIndexResult = {
-  unFoldRows: EMPTY_NFT_ASSETS_INDEX_ROWS,
-  foldRows: EMPTY_NFT_ASSETS_INDEX_ROWS,
+  rows: EMPTY_NFT_ASSETS_INDEX_ROWS,
+  defaultVisibleRowCount: 0,
 };
 
 const getNftOwnerAddress = (nft: { owner_addr?: string; address?: string }) =>
@@ -66,17 +75,33 @@ export const buildNftEntityId = (
   ].join(':') as NftEntityId;
 
 const buildNftCollectionId = (
-  listKey: string,
-  section: 'unfold' | 'fold',
-  collection: NftCollectionResourceValue,
+  collection: Pick<NftCollectionResourceValue, 'address' | 'chain' | 'id'>,
 ): NftCollectionId =>
   [
-    listKey,
-    section,
     collection.address?.toLowerCase() || '',
     collection.chain?.toLowerCase() || '',
     collection.id?.toLowerCase() || '',
   ].join('::') as NftCollectionId;
+
+export const createNftCollectionResourceValue = (
+  item: CombinedNftItem,
+  address: string,
+  nftList: DisplayNftItem[],
+): NftCollectionResourceValue => {
+  const collection = item.collection;
+  if (!collection) {
+    throw new Error('NFT collection is required');
+  }
+  const collectionListFields = collection as Collection &
+    Partial<CollectionList>;
+
+  return {
+    ...collectionListFields,
+    address,
+    chain: collectionListFields.chain || item.chain || '',
+    nft_list: nftList,
+  };
+};
 
 export const getNftAssetsIndexRowKey = (row: NftAssetsIndexRow) => {
   if (row.type === 'collection') {
@@ -122,74 +147,118 @@ const stabilizeRows = (
 
 const buildRows = (
   nfts: CombinedNftItem[],
-  section: 'unfold' | 'fold',
-  listKey: string,
+  previousRows?: NftAssetsIndexRow[],
 ) => {
-  const rows: NftAssetsIndexRow[] = [];
+  const candidates: Array<{
+    row: NftAssetsIndexRow;
+    creditScore: number;
+    stableKey: string;
+    defaultVisible: boolean;
+  }> = [];
   const collections: NftAssetsIndexProjection['collections'] = [];
-  const collectionMap = new Map<string, NftCollectionResourceValue>();
+  const collectionMap = new Map<NftCollectionId, NftCollectionResourceValue>();
 
   nfts.forEach(item => {
     if (!item.collection_id || !item.collection) {
-      rows.push({
-        type: 'nft',
-        nftId: buildNftEntityId(item),
+      const collection = item.collection as CollectionList | null | undefined;
+      const nftId = buildNftEntityId(item);
+      candidates.push({
+        row: { type: 'nft', nftId },
+        creditScore: Number(collection?.credit_score) || 0,
+        stableKey: `nft:${nftId}`,
+        defaultVisible: !!collection?.is_core && !collection.is_hidden,
       });
       return;
     }
 
-    const collectionKey = `${getNftOwnerAddress(item)}-${item.chain}-${
-      item.collection.id
-    }`;
-    const existingCollection = collectionMap.get(collectionKey);
+    const collectionAddress = item.address || getNftOwnerAddress(item);
+    const collectionId = buildNftCollectionId({
+      address: collectionAddress,
+      chain:
+        (item.collection as Collection & Partial<CollectionList>).chain ||
+        item.chain ||
+        '',
+      id: item.collection.id,
+    });
+    const existingCollection = collectionMap.get(collectionId);
     if (existingCollection) {
       existingCollection.nft_list.push({ ...item, collection: null });
       return;
     }
 
-    const collection = {
-      ...item.collection,
-      address: item.address || getNftOwnerAddress(item),
-      nft_list: [{ ...item, collection: null }],
-    } as unknown as NftCollectionResourceValue;
-    const collectionId = buildNftCollectionId(listKey, section, collection);
-    collectionMap.set(collectionKey, collection);
+    const collection = createNftCollectionResourceValue(
+      item,
+      collectionAddress,
+      [{ ...item, collection: null }],
+    );
+    collectionMap.set(collectionId, collection);
     collections.push({ collectionId, value: collection });
-    rows.push({ type: 'collection', collectionId });
+    candidates.push({
+      row: { type: 'collection', collectionId },
+      creditScore: Number(collection.credit_score) || 0,
+      stableKey: `collection:${collectionId}`,
+      defaultVisible: !!collection.is_core && !collection.is_hidden,
+    });
   });
 
-  return { rows, collections };
+  collections.forEach(({ value }) => {
+    value.nft_list.sort((a, b) =>
+      buildNftEntityId(a).localeCompare(buildNftEntityId(b)),
+    );
+  });
+
+  const previousPosition = new Map(
+    (previousRows || []).map((row, index) => [
+      getNftAssetsIndexRowKey(row),
+      index,
+    ]),
+  );
+  candidates.sort((a, b) => {
+    if (a.defaultVisible !== b.defaultVisible) {
+      return a.defaultVisible ? -1 : 1;
+    }
+    const scoreDelta = b.creditScore - a.creditScore;
+    if (scoreDelta) {
+      return scoreDelta;
+    }
+    const aPosition = previousPosition.get(getNftAssetsIndexRowKey(a.row));
+    const bPosition = previousPosition.get(getNftAssetsIndexRowKey(b.row));
+    if (aPosition !== undefined || bPosition !== undefined) {
+      return (
+        (aPosition ?? Number.MAX_SAFE_INTEGER) -
+        (bPosition ?? Number.MAX_SAFE_INTEGER)
+      );
+    }
+    return a.stableKey.localeCompare(b.stableKey);
+  });
+
+  return {
+    rows: candidates.map(candidate => candidate.row),
+    defaultVisibleRowCount: candidates.filter(
+      candidate => candidate.defaultVisible,
+    ).length,
+    collections,
+  };
 };
 
 export const buildNftAssetsIndexProjection = (
   nfts: CombinedNftItem[],
-  listKey: string,
+  _listKey: string,
   previousResult?: NftAssetsIndexResult,
 ): NftAssetsIndexProjection => {
-  const foldNfts: CombinedNftItem[] = [];
-  const unFoldNfts: CombinedNftItem[] = [];
-
-  nfts.forEach(item => {
-    if (item._isFold) {
-      foldNfts.push(item);
-    } else {
-      unFoldNfts.push(item);
-    }
-  });
-
-  const unFold = buildRows(unFoldNfts, 'unfold', listKey);
-  const fold = buildRows(foldNfts, 'fold', listKey);
-  const unFoldRows = stabilizeRows(unFold.rows, previousResult?.unFoldRows);
-  const foldRows = stabilizeRows(fold.rows, previousResult?.foldRows);
+  const projection = buildRows(nfts, previousResult?.rows);
+  const rows = stabilizeRows(projection.rows, previousResult?.rows);
   const result =
-    previousResult &&
-    previousResult.unFoldRows === unFoldRows &&
-    previousResult.foldRows === foldRows
+    previousResult?.rows === rows &&
+    previousResult.defaultVisibleRowCount === projection.defaultVisibleRowCount
       ? previousResult
-      : { unFoldRows, foldRows };
+      : {
+          rows,
+          defaultVisibleRowCount: projection.defaultVisibleRowCount,
+        };
 
   return {
     result,
-    collections: [...unFold.collections, ...fold.collections],
+    collections: projection.collections,
   };
 };
