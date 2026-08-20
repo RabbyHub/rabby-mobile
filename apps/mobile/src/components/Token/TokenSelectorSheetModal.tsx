@@ -119,7 +119,7 @@ import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
 import { useIsUserTokenPinned } from '@/hooks/useTokenSettings';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
+import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 import { getTokenSelectorActivityState } from './tokenSelectorActivity';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -1581,20 +1581,20 @@ export const TokenSelectorSheetModal = ({
   );
   useFocusEffect(onHardwareBackHandler);
 
-  const { renderActive } = getTokenSelectorActivityState({
+  const { activityActive } = getTokenSelectorActivityState({
     controlledVisible: visible,
     sheetVisible: activityVisible,
   });
 
   return (
-    <RenderActivityBoundary active={renderActive} label="token-selector-modal">
+    <StoreActivityBoundary active={activityActive} label="token-selector-modal">
       <TokenSelectorSheetModalContent
         {...props}
         visible={visible}
         onCancel={onCancel}
         onActivityVisibleChange={handleActivityVisibleChange}
       />
-    </RenderActivityBoundary>
+    </StoreActivityBoundary>
   );
 };
 

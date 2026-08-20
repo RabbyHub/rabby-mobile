@@ -1,26 +1,26 @@
 import { getTokenSelectorActivityState } from './tokenSelectorActivity';
 
 describe('getTokenSelectorActivityState', () => {
-  it('keeps rendering during the controlled close delay without consuming Android back', () => {
+  it('keeps Store publication active during the controlled close delay without consuming Android back', () => {
     expect(
       getTokenSelectorActivityState({
         controlledVisible: true,
         sheetVisible: false,
       }),
     ).toEqual({
-      renderActive: true,
+      activityActive: true,
       shouldHandleAndroidBack: false,
     });
   });
 
-  it('freezes only after both visibility sources have closed', () => {
+  it('pauses Store publication only after both visibility sources have closed', () => {
     expect(
       getTokenSelectorActivityState({
         controlledVisible: false,
         sheetVisible: false,
       }),
     ).toEqual({
-      renderActive: false,
+      activityActive: false,
       shouldHandleAndroidBack: false,
     });
   });
@@ -32,7 +32,7 @@ describe('getTokenSelectorActivityState', () => {
         sheetVisible: true,
       }),
     ).toEqual({
-      renderActive: true,
+      activityActive: true,
       shouldHandleAndroidBack: true,
     });
   });
