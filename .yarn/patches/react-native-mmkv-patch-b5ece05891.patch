@@ -232,3 +232,64 @@ index 29ebc9168ef7a58dc11abeb4f3992e2b5c66d6f9..e3b1b7a0bd1e03adf97c39e05f1965d5
      trim: () => {
        console.warn('trim() is not supported in mocked MMKV instances!');
      }
+diff --git a/MMKV/Core/KeyValueHolder.cpp b/MMKV/Core/KeyValueHolder.cpp
+index 04e966c4f2f3e8f9cdeba2b3575d64e251513b22..c2c23102d75ff29a1a6c33e43d8c21659e1af350 100644
+--- a/MMKV/Core/KeyValueHolder.cpp
++++ b/MMKV/Core/KeyValueHolder.cpp
+@@ -132,7 +132,7 @@ uint32_t KeyValueHolderCrypt::realValueSize() const {
+ // get decrypt data with [position, -1)
+ static MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
+-    static size_t smallBuffer[16 / sizeof(size_t)];
++    size_t smallBuffer[16 / sizeof(size_t)];
+     auto basePtr = (uint8_t *) inputBuffer.getPtr();
+     auto ptr = basePtr;
+     for (size_t index = sizeof(smallBuffer); index < position; index += sizeof(smallBuffer)) {
+         crypter.decrypt(ptr, smallBuffer, sizeof(smallBuffer));
+diff --git a/MMKV/Core/KeyValueHolder.h b/MMKV/Core/KeyValueHolder.h
+index db7761db95e0fdbaa30cce228379d845c5709aa6..d4f9ae5a8ce57163d64afd7cc495ed453009cd4f 100644
+--- a/MMKV/Core/KeyValueHolder.h
++++ b/MMKV/Core/KeyValueHolder.h
+@@ -81,1 +81,5 @@ struct KeyValueHolderCrypt {
+-    static bool isValueStoredAsOffset(size_t valueSize) { return valueSize >= 256; }
++    static constexpr size_t MediumBufferSize() {
++        return 256;
++    }
++
++    static bool isValueStoredAsOffset(size_t valueSize) { return valueSize > MediumBufferSize(); }
+diff --git a/MMKV/Core/MMKV_IO.cpp b/MMKV/Core/MMKV_IO.cpp
+index e54c8defddc442cfcd69ed580e21b9c69ff3fb03..8b65b95d3c20661d2b15921ec8336f870f107a29 100644
+--- a/MMKV/Core/MMKV_IO.cpp
++++ b/MMKV/Core/MMKV_IO.cpp
+@@ -899,8 +899,5 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
+         } else {
+             m_crypter->resetIV();
+         }
+-        if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
+-            m_crypter->getCurStatus(t_status);
+-        }
+     }
+ #endif
+@@ -909,3 +906,12 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
+         m_output->setPosition(0);
+         m_output->writeRawVarint32(ItemSizeHolder);
+         m_actualSize = ItemSizeHolderSize;
++#ifndef MMKV_DISABLE_CRYPT
++        if (m_crypter) {
++            auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size;
++            m_crypter->encrypt(ptr, ptr, m_actualSize);
++            if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
++                m_crypter->getCurStatus(t_status);
++            }
++        }
++#endif
+@@ -930,8 +935,8 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
+     auto offset = static_cast<uint32_t>(m_actualSize);
+     m_actualSize += size;
+-    auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+ #ifndef MMKV_DISABLE_CRYPT
+     if (m_crypter) {
+-        m_crypter->encrypt(ptr, ptr, m_actualSize);
++        auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size + offset;
++        m_crypter->encrypt(ptr, ptr, size);
+     }
+ #endif
