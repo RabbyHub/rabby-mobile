@@ -33,7 +33,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { isTabsSwiping, useAccountInfo } from './hooks';
+import { isTabsSwiping, useHomeAssetAccountInfo } from './hooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { HomeTabName as TabName } from '@/hooks/navigation';
@@ -255,7 +255,7 @@ export const TokenList = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
     return selectedChainItem?.chain;
@@ -279,10 +279,15 @@ export const TokenList = () => {
   const getAccountByAddress = useFindAccountByAddress();
   const {
     sections: customTestnetSections,
+    hydrationState: customTestnetHydrationState,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
   } = useCustomTestnetAssetSections(myTop10Addresses);
   const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
+  const isCustomTestnetSnapshotPending =
+    shouldShowCustomTestnetSections &&
+    customTestnetHydrationState !== 'ready' &&
+    customTestnetHydrationState !== 'failed';
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
@@ -409,9 +414,11 @@ export const TokenList = () => {
     isLoading && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
+    customTestnetHydrationState === 'ready' &&
     !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
+  const isTokenListDisplayLoading = isLoading || isCustomTestnetSnapshotPending;
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
@@ -432,7 +439,7 @@ export const TokenList = () => {
 
   const hasNoAssets =
     tokenRows.length + foldRows.length + scamRows.length === 0 &&
-    !isLoading &&
+    !isTokenListDisplayLoading &&
     !hasFoldTokens &&
     isFocused;
 
@@ -467,7 +474,7 @@ export const TokenList = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      isLoading
+      isTokenListDisplayLoading
     ) {
       return;
     }
@@ -509,6 +516,7 @@ export const TokenList = () => {
     hasNoAssets,
     isFocused,
     isLoading,
+    isTokenListDisplayLoading,
     isLpTokenEnabled,
     multiAssetsKey,
     myTop10Addresses.length,
@@ -767,7 +775,7 @@ export const TokenList = () => {
     //tokenRows.length + foldRows.length + scamRows.length > 0;
     const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
 
-    if (isLoading && hasNoTokenItems) {
+    if (isTokenListDisplayLoading && hasNoTokenItems) {
       items.push(
         ...Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton' as const,
@@ -833,7 +841,7 @@ export const TokenList = () => {
     visibleCustomTestnetSections,
     hasFoldTokens,
     isLpTokenEnabled,
-    isLoading,
+    isTokenListDisplayLoading,
     hasNoAssets,
     foldHideList,
     t,
