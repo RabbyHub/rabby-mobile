@@ -8,13 +8,7 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Keyboard,
-  Pressable,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { Keyboard, Pressable, TouchableOpacity, View } from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
 import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
@@ -114,7 +108,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       const inputValue = isSeedPhrase ? mnemonics : privateKey;
 
       return (
-        <View key={tab} style={styles.pagerPage}>
+        <View collapsable={false} key={tab} style={styles.pagerPage}>
           <View style={styles.topContent}>
             <NextInput.TextArea
               style={styles.textContainer}
@@ -437,48 +431,46 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       }}
       style={styles.screen}
       footerBottomOffset={48}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <PagerView
-              ref={pagerRef}
-              style={styles.pager}
-              initialPage={initialTab === 'privateKey' ? 1 : 0}
-              onPageSelected={({ nativeEvent }) => {
-                setActiveTab(
-                  nativeEvent.position === 1 ? 'privateKey' : 'seedPhrase',
-                );
-                setMnemonicError(undefined);
-                setPrivateKeyError(undefined);
-              }}>
-              {renderInputPage('seedPhrase')}
-              {renderInputPage('privateKey')}
-            </PagerView>
-          </View>
-
-          {/* Create New Wallet Link - hidden for in_app flow */}
-          {!isInAppFlow && !deferredHasInputContent && (
-            <View style={styles.linkWrapper}>
-              <Text style={styles.linkText}>
-                <Trans
-                  i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
-                  t={t}
-                  components={{
-                    clickable: (
-                      <Text
-                        key="clickable"
-                        style={styles.linkTextHighlight}
-                        onPress={handleCreateNewWallet}
-                        suppressHighlighting
-                      />
-                    ),
-                  }}
-                />
-              </Text>
-            </View>
-          )}
+      <View style={styles.container} onTouchStart={() => Keyboard.dismiss()}>
+        <View style={styles.content}>
+          <PagerView
+            ref={pagerRef}
+            style={styles.pager}
+            initialPage={initialTab === 'privateKey' ? 1 : 0}
+            onPageSelected={({ nativeEvent }) => {
+              setActiveTab(
+                nativeEvent.position === 1 ? 'privateKey' : 'seedPhrase',
+              );
+              setMnemonicError(undefined);
+              setPrivateKeyError(undefined);
+            }}>
+            {renderInputPage('seedPhrase')}
+            {renderInputPage('privateKey')}
+          </PagerView>
         </View>
-      </TouchableWithoutFeedback>
+
+        {/* Create New Wallet Link - hidden for in_app flow */}
+        {!isInAppFlow && !deferredHasInputContent && (
+          <View style={styles.linkWrapper}>
+            <Text style={styles.linkText}>
+              <Trans
+                i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
+                t={t}
+                components={{
+                  clickable: (
+                    <Text
+                      key="clickable"
+                      style={styles.linkTextHighlight}
+                      onPress={handleCreateNewWallet}
+                      suppressHighlighting
+                    />
+                  ),
+                }}
+              />
+            </Text>
+          </View>
+        )}
+      </View>
     </FooterButtonScreenContainer>
   );
 };
