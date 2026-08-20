@@ -48,7 +48,7 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { isTabsSwiping, useAccountInfo } from './hooks';
+import { isTabsSwiping, useHomeAssetAccountInfo } from './hooks';
 import nftListStore, {
   EMPTY_NFT_ASSETS_INDEX_RESULT,
   getMultiNftsCacheKey,
@@ -184,7 +184,7 @@ const NFTListInner = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
   const [showAllNfts, setShowAllNfts] = useState(false);
 
   const selectedChainItem = useSelectedChainItem();
@@ -460,7 +460,9 @@ const NFTListInner = () => {
 
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
-    const nftListRefresh = batchGetNFTList(true, {});
+    const nftListRefresh = batchGetNFTList(true, {
+      realTimeAddresses: myTop10Addresses,
+    });
 
     withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);
@@ -471,14 +473,14 @@ const NFTListInner = () => {
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [batchGetNFTList, triggerUpdate]);
+  }, [batchGetNFTList, triggerUpdate, myTop10Addresses]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    batchGetNFTList(false, {});
+    batchGetNFTList(false, { realTimeAddresses: myTop10Addresses });
   }, [isLoading, isFocusing, myTop10Addresses, triggerUpdate, batchGetNFTList]);
 
   useAppForeground({

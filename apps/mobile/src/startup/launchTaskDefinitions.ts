@@ -130,6 +130,17 @@ export function createLaunchTaskDefinitions(
       },
     },
     {
+      taskKey: 'customTestnetSnapshotHydration',
+      run: async () => {
+        const { ensureCustomTestnetStoreHydrated } = await loadLaunchModule(
+          'customTestnetSnapshotHydration',
+          'core/serviceApi/customTestnet',
+          loaders.customTestnetSnapshotHydration,
+        );
+        await ensureCustomTestnetStoreHydrated();
+      },
+    },
+    {
       taskKey: 'transactionWatchersStart',
       run: async () => {
         const { ensureServiceApiReady } = await loadLaunchModule(

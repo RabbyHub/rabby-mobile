@@ -35,6 +35,7 @@ export const APP_MMKV_WEAK_KEYS = {
   LENDING_MARKET: '@lendingMarket',
   FAILED_UNLOCK: '@failed_unlock',
   HOME_TOP10_ADDRESSES: '@homeTop10Addresses',
+  HOME_NONPROD_ASSET_SELECTION: '@homeNonprodAssetSelectionV1',
   WALLETCONNECT_SETTINGS: '@walletConnectSettings',
   WALLETCONNECT_LAST_APPROVED_ACCOUNTS: '@walletConnectLastApprovedAccounts',
   WALLETCONNECT_APPROVED_ACCOUNTS_BY_TOPIC:

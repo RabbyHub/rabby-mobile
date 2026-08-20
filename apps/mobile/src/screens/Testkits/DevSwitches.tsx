@@ -42,6 +42,7 @@ import {
   useDebugSwapHistorySkipLocalLookup,
   useEnablePerpsWatchAddress,
   useExpScreenCapture,
+  useHomeAssetSelectionSettings,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
   useScreenE2EEnabled,
@@ -52,6 +53,7 @@ import {
   WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
   WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
+import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
 import type { SwitchToggleType } from '@/components';
 import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
@@ -124,10 +126,6 @@ import { useAppLogFileSwitch } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
 import { useAndroidWeakFaceBiometricsRegressionSwitch } from '@/core/apis/androidBiometricsRegression';
 import { storeApisBiometrics } from '@/hooks/biometrics';
-import {
-  getIncludeAllAccountTypesInAssetTop10,
-  setIncludeAllAccountTypesInAssetTop10,
-} from '@/core/utils/assetTop10AccountTypeSetting';
 
 export const makeNoop = () => () => {};
 
@@ -1622,15 +1620,15 @@ function DevSwitchPerpsWatchAddress() {
   );
 }
 
-function DevSwitchAssetTop10AccountTypes() {
+function DevSwitchHomeAssetSelection() {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [includeAllAccountTypes, setIncludeAllAccountTypes] = useState(
-    getIncludeAllAccountTypesInAssetTop10,
-  );
-
-  const updateIncludeAllAccountTypes = useCallback((enabled: boolean) => {
-    setIncludeAllAccountTypes(setIncludeAllAccountTypesInAssetTop10(enabled));
-  }, []);
+  const {
+    topN,
+    includeWatchAddresses,
+    isExperimentEnabled,
+    setTopN,
+    setIncludeWatchAddresses,
+  } = useHomeAssetSelectionSettings();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -1645,30 +1643,50 @@ function DevSwitchAssetTop10AccountTypes() {
             styles.secondarySectionTitle,
             { fontSize: 24, marginLeft: 2 },
           ]}>
-          Asset Top10 Account Types
+          Home Asset Selection
         </Text>
       </View>
 
       <TouchableOpacity
         style={styles.switchRowWrapper}
         onPress={() => {
-          updateIncludeAllAccountTypes(!includeAllAccountTypes);
+          setIncludeWatchAddresses(!includeWatchAddresses);
         }}>
         <AppSwitch2024
-          value={includeAllAccountTypes}
+          value={includeWatchAddresses}
           onPress={evt => evt.stopPropagation()}
-          onValueChange={updateIncludeAllAccountTypes}
+          onValueChange={setIncludeWatchAddresses}
         />
         <Text style={styles.switchLabel}>
-          {includeAllAccountTypes
-            ? 'Include Watch, Safe, and WalletConnect in asset Top10'
-            : 'Exclude Watch, Safe, and WalletConnect (default)'}
+          {includeWatchAddresses
+            ? 'Include Watch and other non-owned addresses in Home Top-N'
+            : 'Use owned addresses only (default)'}
         </Text>
       </TouchableOpacity>
+
+      <View
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+        ]}>
+        {HOME_ASSET_TOP_N_OPTIONS.map(option => (
+          <Button
+            key={option}
+            title={'Top ' + option}
+            type={option === topN ? 'primary' : 'ghost'}
+            height={40}
+            containerStyle={{ minWidth: 84 }}
+            onPress={() => setTopN(option)}
+          />
+        ))}
+      </View>
       <Text style={[styles.metaLabel, { marginTop: 4 }]}>
-        Development/regression builds only. Restart the app after changing this
-        switch. Balance/AppChain refresh, 24h, Curve, Token, DeFi, NFT, History,
-        and Perps will use the resulting Top10 addresses.
+        {isExperimentEnabled
+          ? 'Test-only policy active: Top ' +
+            topN +
+            (includeWatchAddresses ? ' with Watch addresses.' : '.')
+          : 'Production-compatible default: Top 10 owned addresses.'}{' '}
+        Production builds always keep the default policy.
       </Text>
     </View>
   );
@@ -1906,9 +1924,6 @@ function DevSwitches(): JSX.Element {
         <Text style={styles.areaTitle}>Home Notifications</Text>
         <DevTestHomeCenterArea />
 
-        <Text style={styles.areaTitle}>Home Assets</Text>
-        <DevSwitchAssetTop10AccountTypes />
-
         <Text style={styles.areaTitle}>Batch Revoke</Text>
         <DevSwitchBatchRevoke />
 
@@ -1921,6 +1936,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Perps</Text>
         <DevSwitchPerpsWatchAddress />
+
+        <Text style={styles.areaTitle}>Asset Scale</Text>
+        <DevSwitchHomeAssetSelection />
 
         <Text style={styles.areaTitle}>Lifecycle E2E</Text>
         <DevSwitchRegressionScenarioE2E />
