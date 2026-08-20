@@ -850,6 +850,7 @@
       "Balance": "餘額"
     },
     "approvals": {
+      "title": "授權",
       "search": {
         "placeholder": "透過名稱/地址搜尋"
       },
@@ -947,6 +948,7 @@
       "delegatedAddress": "委派地址"
     },
     "manageAddress": {
+      "moreWallets": "更多錢包",
       "confirm": "確認",
       "watch-address": "只讀地址",
       "cancel": "取消",
@@ -3518,6 +3520,9 @@
       "createWalletError": "無法建立錢包",
       "setPasswordTip": "設定密碼以保護你的錢包",
       "walletReady": "你的錢包已準備好 🚀"
+    },
+    "batchRevoke": {
+      "title": "批量撤銷"
     },
     "convertDust": {
       "failReason": {

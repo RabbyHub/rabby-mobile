@@ -99,7 +99,9 @@ export const SeedPhraseGroup: React.FC<Props> = ({
                 onPress={() => {
                   setShowMoreWallet(e => !e);
                 }}>
-                <Text style={styles.moreText}>More wallet</Text>
+                <Text style={styles.moreText}>
+                  {t('page.manageAddress.moreWallets')}
+                </Text>
                 <IcRightArrow style={styles.moreTextArrow} />
               </TouchableOpacity>
             )}

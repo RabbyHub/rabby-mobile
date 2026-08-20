@@ -1215,7 +1215,8 @@
         "unsupportedDesc": "Das Widerrufen von EIP-7702-Delegationen wird nur für Adressen mit privatem Schlüssel oder Seed-Phrase unterstützt."
       },
       "supportedChains": "Unterstützte Netzwerke",
-      "delegatedAddress": "Delegierte Adresse"
+      "delegatedAddress": "Delegierte Adresse",
+      "title": "Genehmigungen"
     },
     "home": {
       "services": {
@@ -1280,7 +1281,8 @@
       "delete-checklist-1": "Ich verstehe, dass beim Löschen dieser Wallet auch der zugehörige private Schlüssel und die Seed-Phrase gelöscht werden und Rabby sie NICHT wiederherstellen kann.",
       "delete-private-key-title": "Wallet und privaten Schlüssel löschen",
       "delete-seed-phrase-title": "Wallet und Seed-Phrase löschen",
-      "delete-title": "Wallet löschen"
+      "delete-title": "Wallet löschen",
+      "moreWallets": "Mehr Wallets"
     },
     "swap": {
       "no-transaction-records": "Keine Transaktionsaufzeichnungen",
@@ -3723,6 +3725,9 @@
       "createWalletError": "Wallet konnte nicht erstellt werden",
       "walletReady": "Ihre Wallet ist bereit 🚀",
       "setPasswordTip": "Setzen Sie ein Passwort, um Ihre Wallet zu sichern."
+    },
+    "batchRevoke": {
+      "title": "Batch-Widerruf"
     },
     "convertDust": {
       "failReason": {
