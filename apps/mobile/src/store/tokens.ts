@@ -42,6 +42,7 @@ import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
   createAddressListSnapshotHydrator,
+  getAddressesWithoutListSnapshot,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
 import type { RestoredAssetProjection } from '@/databases/assetProjection';
@@ -3291,11 +3292,16 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
     const loadStartedAt = Date.now();
-    await tokenCacheHydrator.hydrate(lowerAddresses);
+    const missingAddresses = getAddressesWithoutListSnapshot(
+      lowerAddresses,
+      get().tokenListMap,
+    );
+    await tokenCacheHydrator.hydrate(missingAddresses);
     const tokenMap = get().tokenListMap;
     markStartupPerf('tokenListStore', 'load_cache_end', {
       elapsedMs: Date.now() - loadStartedAt,
       count: lowerAddresses.length,
+      loadedAddressCount: missingAddresses.length,
       tokenCount: Object.values(tokenMap).reduce(
         (acc, tokens) => acc + tokens.length,
         0,
@@ -3360,7 +3366,11 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             );
             trace.mark('expiry-resolved', { isExpired });
             if (!isExpired && !isForceRequested()) {
-              await tokenCacheHydrator.hydrate(lowerAddresses);
+              const missingAddresses = getAddressesWithoutListSnapshot(
+                lowerAddresses,
+                get().tokenListMap,
+              );
+              await tokenCacheHydrator.hydrate(missingAddresses);
               set(state => ({
                 sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
                   state.sourceSnapshotReadyByAddress,
@@ -3373,7 +3383,11 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                 0,
               );
               trace.mark('local-db-loaded', { itemCount });
-              trace.finish({ path: 'local-db', itemCount });
+              trace.finish({
+                path: missingAddresses.length ? 'local-db' : 'memory-snapshot',
+                itemCount,
+                loadedAddressCount: missingAddresses.length,
+              });
               return;
             }
             if (!isExpired) {
@@ -3421,7 +3435,11 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             Object.prototype.hasOwnProperty.call(currentTokenListMap, address),
           );
           if (!force && !hasMemorySnapshot) {
-            await tokenCacheHydrator.hydrate(lowerAddresses);
+            const missingAddresses = getAddressesWithoutListSnapshot(
+              lowerAddresses,
+              get().tokenListMap,
+            );
+            await tokenCacheHydrator.hydrate(missingAddresses);
             const localItemCount = lowerAddresses.reduce(
               (count, address) =>
                 count + (get().tokenListMap[address]?.length || 0),
@@ -3429,6 +3447,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             );
             trace.mark('stale-local-db-loaded', {
               itemCount: localItemCount,
+              loadedAddressCount: missingAddresses.length,
             });
             if (getCurrentAddresses().length) {
               trace.mark('stale-local-store-published', {
