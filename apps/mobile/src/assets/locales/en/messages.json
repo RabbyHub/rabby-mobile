@@ -908,7 +908,8 @@
       "eip7702": {
         "unsupportedTitle": "Unsupported Address Type",
         "unsupportedDesc": "Revoking EIP-7702 delegations is only supported for private key or seed phrase addresses"
-      }
+      },
+      "title": "Approvals"
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
@@ -1063,7 +1064,8 @@
       "enterPassphraseTitle": "Enter Passphrase to Sign",
       "passphraseError": "Passphrase invalid",
       "quickAddressTitle_one": "{{count}} Address",
-      "quickAddressTitle_other": "{{count}} Addresses"
+      "quickAddressTitle_other": "{{count}} Addresses",
+      "moreWallets": "More wallets"
     },
     "home": {
       "services": {
@@ -3451,6 +3453,9 @@
     },
     "settings": {
       "chooseWallet": "Choose a wallet to manage"
+    },
+    "batchRevoke": {
+      "title": "Batch Revoke"
     }
   },
   "component": {

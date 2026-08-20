@@ -9,7 +9,6 @@ const mockFilterOutTop10Accounts = jest.fn(
     const top10Records = new Set(
       top10Accounts.map(account => account.address.toLowerCase()),
     );
-
     return {
       top10Accounts,
       top10Addresses: Array.from(top10Records),
@@ -20,28 +19,22 @@ const mockFilterOutTop10Accounts = jest.fn(
 );
 
 const mockFilterOutTopAccounts = jest.fn(
-  (
-    accounts: Array<{ address: string }>,
-    options: { topCount: number; gatherSameAddress: boolean },
-  ) => {
+  (accounts: Array<{ address: string }>, options: { topCount: number }) => {
     const topRecords = new Set<string>();
-    accounts.forEach(item => {
+    accounts.forEach(account => {
       if (topRecords.size < options.topCount) {
-        topRecords.add(item.address.toLowerCase());
+        topRecords.add(account.address.toLowerCase());
       }
     });
-
-    const topAccounts = options.gatherSameAddress
-      ? accounts.filter(item => topRecords.has(item.address.toLowerCase()))
-      : accounts.slice(0, options.topCount);
-
     return {
-      topAccounts,
+      topAccounts: accounts.filter(account =>
+        topRecords.has(account.address.toLowerCase()),
+      ),
       topAddresses: Array.from(topRecords),
       topRecords,
-      restAccounts: options.gatherSameAddress
-        ? accounts.filter(item => !topRecords.has(item.address.toLowerCase()))
-        : accounts.slice(options.topCount),
+      restAccounts: accounts.filter(
+        account => !topRecords.has(account.address.toLowerCase()),
+      ),
     };
   },
 );
@@ -55,77 +48,50 @@ jest.mock('@/core/apis/account', () => ({
 
 import { pickHomeAccountSelectionFromSortedAccounts } from './accountSelection';
 
-type TestAccount = {
-  address: string;
-  label: string;
-};
-
-function account(address: string, label: string): TestAccount {
-  return { address, label };
-}
-
 describe('home account selection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('keeps the legacy Top-10 account and address selection behavior by default', () => {
+  it('keeps the legacy Top-10 behavior for the production-compatible default', () => {
+    const accounts = Array.from({ length: 12 }, (_, index) => ({
+      address: `0x${index}`,
+    }));
+
+    const selection = pickHomeAccountSelectionFromSortedAccounts(accounts);
+
+    expect(selection.selectedAddresses).toEqual(
+      accounts.slice(0, 10).map(account => account.address),
+    );
+    expect(mockFilterOutTop10Accounts).toHaveBeenCalledWith(accounts, {
+      gatherSameAddress: false,
+    });
+    expect(mockFilterOutTopAccounts).not.toHaveBeenCalled();
+  });
+
+  it('preserves distinct legacy account records that share an address', () => {
     const accounts = [
-      account('0xAaA', 'a-primary'),
-      account('0xaaa', 'a-secondary'),
-      account('0xbbb', 'b'),
-      account('0xccc', 'c'),
-      account('0xddd', 'd'),
-      account('0xeee', 'e'),
-      account('0xfff', 'f'),
-      account('0x111', 'g'),
-      account('0x222', 'h'),
-      account('0x333', 'i'),
-      account('0x444', 'j'),
-      account('0x555', 'k'),
+      { address: '0xaaa', brandName: 'Rabby' },
+      { address: '0xAAA', brandName: 'Ledger' },
+      ...Array.from({ length: 9 }, (_, index) => ({
+        address: `0x${index}`,
+        brandName: 'Rabby',
+      })),
     ];
 
     const selection = pickHomeAccountSelectionFromSortedAccounts(accounts);
 
-    // This matches filterOutTop10Accounts({ gatherSameAddress: false }): the
-    // first ten account records define the scope, then duplicate addresses are
-    // collapsed only for the downstream balance work.
-    expect(selection.selectedAddresses).toEqual([
-      '0xaaa',
-      '0xbbb',
-      '0xccc',
-      '0xddd',
-      '0xeee',
-      '0xfff',
-      '0x111',
-      '0x222',
-      '0x333',
-    ]);
-    expect(selection.selectedAccounts.map(item => item.label)).toEqual([
-      'a-primary',
-      'b',
-      'c',
-      'd',
-      'e',
-      'f',
-      'g',
-      'h',
-      'i',
-    ]);
-    expect(selection.restAccounts.map(item => item.label)).toEqual(['j', 'k']);
-    expect(mockFilterOutTop10Accounts).toHaveBeenCalledWith(accounts, {
-      gatherSameAddress: false,
-    });
+    expect(selection.selectedAccounts).toEqual(accounts.slice(0, 10));
+    expect(selection.restAccounts).toEqual(accounts.slice(10));
   });
 
-  it('counts unique addresses for an explicit Top-N capacity policy', () => {
+  it('counts unique addresses for an explicit non-production Top-N policy', () => {
     const accounts = [
-      account('0xAaA', 'a-primary'),
-      account('0xaaa', 'a-secondary'),
-      account('0xbbb', 'b'),
-      account('0xccc', 'c-primary'),
-      account('0xCCC', 'c-secondary'),
-      account('0xddd', 'd'),
+      { address: '0xaaa' },
+      { address: '0xAAA' },
+      { address: '0xbbb' },
+      { address: '0xccc' },
+      { address: '0xddd' },
     ];
 
     const selection = pickHomeAccountSelectionFromSortedAccounts(accounts, {
@@ -134,19 +100,14 @@ describe('home account selection', () => {
     });
 
     expect(selection.selectedAddresses).toEqual(['0xaaa', '0xbbb', '0xccc']);
-    expect(selection.selectedAccounts.map(item => item.label)).toEqual([
-      'a-primary',
-      'b',
-      'c-primary',
+    expect(selection.selectedAccounts.map(account => account.address)).toEqual([
+      '0xaaa',
+      '0xbbb',
+      '0xccc',
     ]);
-    expect(selection.restAccounts.map(item => item.label)).toEqual(['d']);
-    expect(mockFilterOutTopAccounts).toHaveBeenCalledWith(accounts, {
-      topCount: 3,
-      gatherSameAddress: true,
-    });
   });
 
-  it('only accepts reviewed capacity tiers', () => {
+  it('accepts only the reviewed Top-N tiers', () => {
     expect(coerceHomeAssetTopN(50)).toBe(50);
     expect(coerceHomeAssetTopN('100')).toBe(100);
     expect(coerceHomeAssetTopN(75)).toBe(DEFAULT_HOME_ASSET_TOP_N);

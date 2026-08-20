@@ -755,7 +755,8 @@
         "unsupportedDesc": "La révocation des délégations EIP-7702 n'est prise en charge que pour les adresses de clés privées ou de phrases de récupération."
       },
       "delegatedAddress": "Adresse déléguée",
-      "supportedChains": "Chaînes prises en charge"
+      "supportedChains": "Chaînes prises en charge",
+      "title": "Approbations"
     },
     "sendToken": {
       "Amount": "Montant :",
@@ -921,7 +922,8 @@
       "delete-checklist-1": "Je comprends que si je supprime ce portefeuille, la clé privée et la phrase de récupération correspondantes seront supprimées et que Rabby ne pourra PAS les récupérer.",
       "delete-private-key-title": "Supprimer le portefeuille et la clé privée",
       "delete-seed-phrase-title": "Supprimer le portefeuille et la phrase de récupération",
-      "delete-title": "Supprimer le portefeuille"
+      "delete-title": "Supprimer le portefeuille",
+      "moreWallets": "Plus de Portefeuilles"
     },
     "home": {
       "services": {
@@ -3347,6 +3349,9 @@
       "walletReady": "Votre portefeuille est prêt 🚀",
       "setPasswordTip": "Définissez un mot de passe pour sécuriser votre portefeuille",
       "createWalletError": "Échec de la création du portefeuille"
+    },
+    "batchRevoke": {
+      "title": "Révocation par lot"
     },
     "convertDust": {
       "failReason": {

@@ -886,7 +886,8 @@
         "unsupportedTitle": "Alamat Tipe Tidak Didukung"
       },
       "delegatedAddress": "Alamat Delegasi",
-      "supportedChains": "Rantai yang Didukung"
+      "supportedChains": "Rantai yang Didukung",
+      "title": "Persetujuan"
     },
     "gasTopUp": {
       "Token": "Token",
@@ -1041,7 +1042,8 @@
       "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus dompet ini, kunci privat dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya.",
       "delete-private-key-title": "Hapus Dompet dan Kunci Privat",
       "delete-seed-phrase-title": "Hapus Dompet dan Frasa Benih",
-      "delete-title": "Hapus Dompet"
+      "delete-title": "Hapus Dompet",
+      "moreWallets": "Lebih Banyak Dompet"
     },
     "home": {
       "services": {
@@ -3337,6 +3339,9 @@
       "createWalletError": "Gagal membuat dompet",
       "walletReady": "Dompet Anda sudah siap 🚀",
       "setPasswordTip": "Atur kata sandi untuk mengamankan dompet Anda"
+    },
+    "batchRevoke": {
+      "title": "Pencabutan Massal"
     },
     "convertDust": {
       "failReason": {

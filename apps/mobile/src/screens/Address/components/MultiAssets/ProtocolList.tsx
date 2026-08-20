@@ -36,7 +36,7 @@ import useProtocols, {
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
-import { useAccountInfo } from './hooks';
+import { useHomeAssetAccountInfo } from './hooks';
 import addressBalanceStore from '@/store/balance';
 import {
   HOME_TOP_HEADER_SIZES,
@@ -151,7 +151,7 @@ export const ProtocolList = () => {
     ? Number(regressionScenario.params.addressCount)
     : 0;
 
-  const { myTop10Accounts, myTop10Addresses } = useAccountInfo();
+  const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
   const hasExpectedHighCardinalityAddressSelection =
     Number.isInteger(requestedHighCardinalityAddressCount) &&
     requestedHighCardinalityAddressCount > 0 &&

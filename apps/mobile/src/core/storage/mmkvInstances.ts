@@ -5,8 +5,15 @@ export const appMMKV = new MMKV({
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
+/** The established encrypted primary keyring file. */
 export const keyringMMKV = new MMKV({
   id: MMKV_FILE_NAMES.KEYRING,
+  encryptionKey: 'keyring',
+});
+
+/** One-generation encrypted rollback point for the established primary. */
+export const keyringCheckpointMMKV = new MMKV({
+  id: MMKV_FILE_NAMES.KEYRING_CHECKPOINT,
   encryptionKey: 'keyring',
 });
 
@@ -47,6 +54,7 @@ export const ALL_KNOWN_MMKV_INSTANCES = {
   [MMKV_FILE_NAMES.DEFAULT]: appMMKV,
   [MMKV_FILE_NAMES.KEYCHAIN]: keychainMMKV,
   [MMKV_FILE_NAMES.KEYRING]: keyringMMKV,
+  [MMKV_FILE_NAMES.KEYRING_CHECKPOINT]: keyringCheckpointMMKV,
   [MMKV_FILE_NAMES.CHAINS]: chainsMMKV,
   [MMKV_FILE_NAMES.DAYCURVE]: dayCurveMMKV,
   [MMKV_FILE_NAMES.CEXID]: cexIdMMKV,

@@ -36,9 +36,9 @@ import { intToHex } from '@/utils/number';
 import {
   explainGas,
   getGasTokenBalance,
-  getRecommendGas,
   getRecommendNonce,
 } from '@/components/Approval/components/SignTx/calc';
+import { getRecommendGas } from '@/components/Approval/components/SignTx/getRecommendGas';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { ALIAS_ADDRESS, CAN_ESTIMATE_L1_FEE_CHAINS } from '@/constant/gas';

@@ -1,3 +1,5 @@
+import { unionBy } from 'lodash';
+
 import {
   filterMyAccounts,
   getAccountList,
@@ -7,6 +9,7 @@ import {
   getHomeAssetSelectionSettings,
   isHomeAssetSelectionExperimentEnabled,
   subscribeHomeAssetSelectionSettings,
+  type HomeAssetSelectionSettings,
 } from '@/hooks/appSettings';
 import {
   bindKeyringEventAfterRegistration,
@@ -25,8 +28,8 @@ import { pickHomeAccountSelectionFromSortedAccounts } from './homePortfolio/acco
 
 export function pickSelectedAccountsFromSortedAccounts(
   sortedAccounts: Account[],
+  settings: HomeAssetSelectionSettings = getHomeAssetSelectionSettings(),
 ) {
-  const settings = getHomeAssetSelectionSettings();
   const { selectedAccounts, selectedAddresses } =
     pickHomeAccountSelectionFromSortedAccounts(sortedAccounts, {
       topN: settings.topN,
@@ -34,25 +37,31 @@ export function pickSelectedAccountsFromSortedAccounts(
     });
 
   return {
-    selectedAccounts,
+    selectedAccounts: unionBy(selectedAccounts, account =>
+      account.address.toLowerCase(),
+    ),
     selectedAddresses,
   };
 }
 
 async function getMatteredAccountsSnapshot(): Promise<AccountBalanceSelectionSnapshot> {
-  const { includeWatchAddresses } = getHomeAssetSelectionSettings();
+  const settings = getHomeAssetSelectionSettings();
   const { sortedAccounts } = await getAccountList({
-    filter: includeWatchAddresses ? 'all' : 'onlyMine',
+    filter: settings.includeWatchAddresses ? 'all' : 'onlyMine',
   });
-  return buildMatteredAccountsSnapshotFromSortedAccounts(sortedAccounts);
+  return buildMatteredAccountsSnapshotFromSortedAccounts(
+    sortedAccounts,
+    settings,
+  );
 }
 
 function buildMatteredAccountsSnapshotFromSortedAccounts(
   sortedAccounts: Account[],
+  settings: HomeAssetSelectionSettings = getHomeAssetSelectionSettings(),
 ): AccountBalanceSelectionSnapshot {
   const matteredAccountLength = sortedAccounts.length;
   const { selectedAccounts, selectedAddresses } =
-    pickSelectedAccountsFromSortedAccounts(sortedAccounts);
+    pickSelectedAccountsFromSortedAccounts(sortedAccounts, settings);
 
   return {
     selectedAccounts,
@@ -65,15 +74,18 @@ function buildMatteredAccountsSnapshotFromStoreAccounts(
   accounts: Account[],
   pinnedAddresses: IPinAddress[],
 ) {
-  const { includeWatchAddresses } = getHomeAssetSelectionSettings();
+  const settings = getHomeAssetSelectionSettings();
   const sortedAccounts = sortAccountList(
-    includeWatchAddresses ? accounts : filterMyAccounts(accounts),
+    settings.includeWatchAddresses ? accounts : filterMyAccounts(accounts),
     {
       highlightedAddresses: pinnedAddresses,
     },
   );
 
-  return buildMatteredAccountsSnapshotFromSortedAccounts(sortedAccounts);
+  return buildMatteredAccountsSnapshotFromSortedAccounts(
+    sortedAccounts,
+    settings,
+  );
 }
 
 setAccountBalanceSelectionSnapshotGetter(getMatteredAccountsSnapshot);
@@ -83,12 +95,6 @@ const accountBalanceSelectionLifecycleStateRef = {
   hasSubscribed: false,
   prevSelectionSignature: '',
   syncGeneration: 0,
-  syncSelectionFromAccounts: null as
-    | null
-    | ((options?: {
-        accountState?: ReturnType<typeof accountStore.getState>;
-        allowFetchFallback?: boolean;
-      }) => Promise<void>),
 };
 
 async function initAccountBalanceSelectionLifecycle() {
@@ -143,8 +149,6 @@ async function initAccountBalanceSelectionLifecycle() {
         source: 'accounts_changed',
       });
     };
-    accountBalanceSelectionLifecycleStateRef.syncSelectionFromAccounts =
-      syncSelectionFromAccounts;
 
     if (!accountBalanceSelectionLifecycleStateRef.hasSubscribed) {
       accountBalanceSelectionLifecycleStateRef.hasSubscribed = true;
@@ -204,13 +208,6 @@ export async function ensureAccountBalanceSelectionLifecycle() {
   });
   accountBalanceSelectionLifecycleStateRef.promise = promise;
   await promise;
-}
-
-export async function refreshAccountBalanceSelectionSnapshot() {
-  await ensureAccountBalanceSelectionLifecycle();
-  await accountBalanceSelectionLifecycleStateRef.syncSelectionFromAccounts?.({
-    allowFetchFallback: true,
-  });
 }
 
 let hasStartedAccountBalanceLifecycle = false;

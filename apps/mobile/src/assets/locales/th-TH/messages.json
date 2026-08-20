@@ -555,6 +555,7 @@
       "GasReserved": "สำรอง <1>0</1> {{ tokenName }} สำหรับค่าใช้จ่าย gas"
     },
     "approvals": {
+      "title": "การอนุมัติ",
       "list": {
         "symbol": "การอนุมัติ"
       },
@@ -1259,6 +1260,7 @@
       }
     },
     "manageAddress": {
+      "moreWallets": "กระเป๋าเงินเพิ่มเติม",
       "passphraseError": "Passphrase ไม่ถูกต้อง",
       "seed-phrase": "Seed Phrase",
       "cancel": "ยกเลิก",
@@ -3603,6 +3605,9 @@
       "createWalletError": "การสร้างกระเป๋าเงินล้มเหลว",
       "walletReady": "กระเป๋าเงินของคุณพร้อมแล้ว 🚀",
       "setPasswordTip": "ตั้งรหัสผ่านเพื่อป้องกันกระเป๋าเงินของคุณ"
+    },
+    "batchRevoke": {
+      "title": "เพิกถอนเป็นชุด"
     },
     "convertDust": {
       "failReason": {

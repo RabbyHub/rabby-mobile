@@ -10,6 +10,7 @@ import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import {
   getHomeAssetSelectionSettings,
+  getHomeAssetSelectionSettingsKey,
   isHomeAssetSelectionExperimentEnabled,
 } from '@/hooks/appSettings';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -1121,8 +1122,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           return nextBalance;
         }
 
+        const selectionPolicyKey = getHomeAssetSelectionSettingsKey();
         const selectionSnapshot = await getAccountBalanceSelectionSnapshot();
         if (!selectionSnapshot) {
+          return retBalances;
+        }
+        if (selectionPolicyKey !== getHomeAssetSelectionSettingsKey()) {
           return retBalances;
         }
         const { selectedAccounts, selectedAddresses } = selectionSnapshot;
@@ -1137,6 +1142,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
               endpoint: 'openapi.getTotalBalanceV2',
             },
           );
+        }
+
+        if (selectionPolicyKey !== getHomeAssetSelectionSettingsKey()) {
+          return retBalances;
         }
 
         Object.assign(

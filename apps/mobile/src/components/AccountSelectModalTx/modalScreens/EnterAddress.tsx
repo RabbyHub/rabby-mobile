@@ -34,6 +34,8 @@ import { useSortedAccounts } from '@/screens/Address/useSortAddressList';
 import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
 import type { Account } from '@/core/startupServices/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { TextInput as TextInputRef } from '@/components/Typography';
+import { normalizeAddressInputAndSyncNativeText } from './addressInput';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -59,6 +61,7 @@ const ScreenPanelEnterAddress = ({
   const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, _setInput] = React.useState('');
+  const addressInputRef = React.useRef<TextInputRef>(null);
   const setInput = useCallback((text: string) => {
     _setInput(text);
     setEnsResult(null);
@@ -202,8 +205,12 @@ const ScreenPanelEnterAddress = ({
 
   const handleInputChange = React.useCallback(
     (text: string) => {
+      const normalizedText = normalizeAddressInputAndSyncNativeText(
+        text,
+        addressInputRef.current,
+      );
       setError(undefined);
-      setInput(text);
+      setInput(normalizedText);
     },
     [setInput],
   );
@@ -289,6 +296,7 @@ const ScreenPanelEnterAddress = ({
           keyboardShouldPersistTaps="handled">
           <View style={styles.inputAreaContainer}>
             <NextInput.TextArea
+              ref={addressInputRef}
               as="TextInput"
               style={styles.textContainer}
               inputStyle={styles.textArea}

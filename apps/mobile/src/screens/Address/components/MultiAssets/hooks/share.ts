@@ -4,7 +4,7 @@ import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useLoadAssets } from '@/screens/Search/useAssets';
-import { useAccountInfo } from '../hooks';
+import { useHomeAssetAccountInfo } from '../hooks';
 import type { HomeTabName as TabName } from '@/hooks/navigation';
 import { type KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
@@ -56,7 +56,7 @@ export const useCheckIsExpireAndUpdate = ({
   isFocusing: boolean;
 }) => {
   const initRef = useRef(false);
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
   const balanceAccounts = useActivityStore(
     balanceAccountsStore,
     state => state.balance,

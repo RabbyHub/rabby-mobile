@@ -41,10 +41,7 @@ import {
   setIncludeWatchAddressesInHomeAssetSelection,
   setNativeTokenChainSyncEnabled,
 } from '@/hooks/appSettings';
-import {
-  ensureAccountBalanceSelectionLifecycle,
-  refreshAccountBalanceSelectionSnapshot,
-} from '@/store/balanceAccountSelection';
+import { ensureAccountBalanceSelectionLifecycle } from '@/store/balanceAccountSelection';
 import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
 import accountStore from '@/store/account';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
@@ -1126,7 +1123,6 @@ async function openHighCardinalityAssets(
   }
 
   await ensureAccountBalanceSelectionLifecycle();
-  await refreshAccountBalanceSelectionSnapshot();
   const expectedSelectionCount = Math.min(
     settings.topN,
     countUniqueAddresses(accounts),
