@@ -119,7 +119,13 @@ interface TokenListState {
     }
   >;
   initStore(): void;
-  batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
+  batchGetTokenList(
+    addresses: string[],
+    force?: boolean,
+    options?: {
+      preferredMultiAssetsProjectionKey?: string;
+    },
+  ): Promise<void>;
   getTokenList(
     address: string,
     force?: boolean,
@@ -1824,6 +1830,19 @@ const getTokenAssetsProjectionAvailability = (
   });
 };
 
+const parsePersistedStringList = (value: unknown) => {
+  if (
+    !Array.isArray(value) ||
+    !value.every(item => item == null || typeof item === 'string')
+  ) {
+    return null;
+  }
+
+  // Older JSON snapshots can contain null where an in-memory optional logo
+  // was undefined. The preview is cosmetic, so keep the projection usable.
+  return value.filter((item): item is string => typeof item === 'string');
+};
+
 const scheduleTokenAssetsProjectionPersistence = (
   key: string,
   scene: TokenProjectionScene,
@@ -1898,8 +1917,10 @@ const scheduleTokenAssetsProjectionPersistence = (
         additionalTokenCount: result.additionalTokenCount,
         lowValueTokenCount: result.lowValueTokenCount,
         additionalCoreUsdValue: result.additionalCoreUsdValue,
-        lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
-        lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
+        lowValueTokenPreviewLogoUrls:
+          parsePersistedStringList(result.lowValueTokenPreviewLogoUrls) || [],
+        lpLowValueTokenPreviewLogoUrls:
+          parsePersistedStringList(result.lpLowValueTokenPreviewLogoUrls) || [],
         hasAdditionalTokens: result.hasAdditionalTokens,
         hasLpTokens: result.hasLpTokens,
         tokenDisplayMode,
@@ -1921,11 +1942,6 @@ type StagedTokenProjectionRestoreMetadata = {
   lpLowValueTokenPreviewLogoUrls: string[];
   primaryRowCount: number;
 };
-
-const parsePersistedStringList = (value: unknown) =>
-  Array.isArray(value) && value.every(item => typeof item === 'string')
-    ? (value as string[])
-    : null;
 
 const parseStagedTokenProjectionRestoreMetadata = (
   restored: RestoredAssetProjection,
@@ -2237,7 +2253,7 @@ const buildRestoredTokenAssetsIndexResult = (
   };
 };
 
-const tokenProjectionRestoreRequests = new Map<string, Promise<void>>();
+const tokenProjectionRestoreRequests = new Map<string, Promise<boolean>>();
 
 const yieldTokenProjectionEntityRestore = () =>
   new Promise<void>(resolve => setTimeout(resolve, 0));
@@ -2245,7 +2261,7 @@ const yieldTokenProjectionEntityRestore = () =>
 const restoreTokenAssetsProjectionIfEmpty = (
   key: string,
   scene: TokenProjectionScene,
-) => {
+): Promise<boolean> => {
   if (
     isAssetProjectionPersistenceActive({
       runtimeKey: key,
@@ -2253,11 +2269,12 @@ const restoreTokenAssetsProjectionIfEmpty = (
       scene,
     })
   ) {
-    return;
+    return Promise.resolve(false);
   }
   const requestKey = `${scene}:${key}`;
-  if (tokenProjectionRestoreRequests.has(requestKey)) {
-    return;
+  const activeRequest = tokenProjectionRestoreRequests.get(requestKey);
+  if (activeRequest) {
+    return activeRequest;
   }
 
   const startedState = useTokenAssetsIndexStore.getState();
@@ -2269,8 +2286,11 @@ const restoreTokenAssetsProjectionIfEmpty = (
     scene === 'single-address'
       ? startedState.singleAssetsConfigByKey[key]
       : startedState.multiAssetsConfigByKey[key];
-  if (!startedConfig || startedResult?.rows.length) {
-    return;
+  if (!startedConfig) {
+    return Promise.resolve(false);
+  }
+  if (startedResult?.rows.length) {
+    return Promise.resolve(true);
   }
   const startedSourceMap = tokenListStore.getState().tokenListMap;
   const addresses =
@@ -2285,7 +2305,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       ),
     )
   ) {
-    return;
+    return Promise.resolve(true);
   }
 
   useTokenAssetsIndexStore.setState(draft => {
@@ -2314,7 +2334,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
     );
     if (!restored) {
       trace.finish({ reason: 'projection-missing' });
-      return;
+      return false;
     }
     trace.mark('projection-restored', { itemCount: restored.rows.length });
 
@@ -2326,7 +2346,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       : undefined;
     if (usesStagedEntityRestore && !stagedMetadata) {
       trace.finish({ reason: 'staged-metadata-invalid' });
-      return;
+      return false;
     }
 
     const beforeHydrate = useTokenAssetsIndexStore.getState();
@@ -2344,7 +2364,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       tokenListStore.getState().tokenListMap !== startedSourceMap
     ) {
       trace.finish({ reason: 'state-changed-before-hydrate' });
-      return;
+      return false;
     }
 
     const allTokenIds = collectRestoredTokenEntityIds(restored);
@@ -2384,7 +2404,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
         tokenListStore.getState().tokenListMap !== startedSourceMap
       ) {
         trace.finish({ reason: 'state-changed-before-entity-publish' });
-        return;
+        return false;
       }
       const missingTokens = cachedTokens
         .map(token => tokenItemEntityToTokenItem(token))
@@ -2412,7 +2432,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
     );
     if (!result) {
       trace.finish({ reason: 'projection-invalid' });
-      return;
+      return false;
     }
 
     const latest = useTokenAssetsIndexStore.getState();
@@ -2430,7 +2450,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       tokenListStore.getState().tokenListMap !== startedSourceMap
     ) {
       trace.finish({ reason: 'state-changed-before-projection-publish' });
-      return;
+      return false;
     }
 
     useTokenAssetsIndexStore.setState(draft => {
@@ -2449,14 +2469,14 @@ const restoreTokenAssetsProjectionIfEmpty = (
     });
 
     if (!stagedMetadata) {
-      return;
+      return true;
     }
 
     const remainingTokenIds = Array.from(allTokenIds).filter(
       tokenId => !tokenEntityResourceStore.getValue(tokenId),
     );
     if (!remainingTokenIds.length) {
-      return;
+      return true;
     }
 
     const backgroundTrace = beginAssetDataLoadDiagnostic(
@@ -2552,10 +2572,12 @@ const restoreTokenAssetsProjectionIfEmpty = (
       backgroundTrace.fail({ reason: 'background-restore-error' });
       console.error('[tokenProjection] background restore failed', error);
     });
+    return true;
   })()
     .catch(error => {
       trace.fail({ reason: 'restore-error' });
       console.error('[tokenProjection] restore failed', error);
+      return false;
     })
     .finally(() => {
       tokenProjectionRestoreRequests.delete(requestKey);
@@ -2589,6 +2611,26 @@ const restoreTokenAssetsProjectionIfEmpty = (
     });
 
   tokenProjectionRestoreRequests.set(requestKey, request);
+  return request;
+};
+
+const restoreMultiAssetsProjectionForAddresses = (
+  key: string | undefined,
+  addresses: string[],
+) => {
+  if (!key) {
+    return Promise.resolve(false);
+  }
+  const config =
+    useTokenAssetsIndexStore.getState().multiAssetsConfigByKey[key];
+  if (
+    !config ||
+    getAddressesKey(config.addresses) !== getAddressesKey(addresses)
+  ) {
+    return Promise.resolve(false);
+  }
+
+  return restoreTokenAssetsProjectionIfEmpty(key, 'multi-address');
 };
 
 subscribeAssetProjectionDatabaseCommits(() => {
@@ -3292,6 +3334,32 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
     const loadStartedAt = Date.now();
+    const projectionKey = prepareMultiAddressTokenAssetsProjection({
+      addresses: lowerAddresses,
+      tokenDisplayMode: get().tokenDisplayMode,
+    });
+    const projectionRestored = await restoreMultiAssetsProjectionForAddresses(
+      projectionKey,
+      lowerAddresses,
+    );
+    if (projectionRestored) {
+      const projection =
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[
+          projectionKey
+        ];
+      markStartupPerf('tokenListStore', 'load_cache_end', {
+        elapsedMs: Date.now() - loadStartedAt,
+        count: lowerAddresses.length,
+        loadedAddressCount: 0,
+        tokenCount: projection?.tokenIds.length || 0,
+        path: 'projection',
+      });
+      markStartupPerf('tokenListStore', 'initStore_end', {
+        elapsedMs: Date.now() - startedAt,
+        count: lowerAddresses.length,
+      });
+      return;
+    }
     const missingAddresses = getAddressesWithoutListSnapshot(
       lowerAddresses,
       get().tokenListMap,
@@ -3314,10 +3382,11 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     });
   },
 
-  async batchGetTokenList(addresses: string[], force = false) {
+  async batchGetTokenList(addresses: string[], force = false, options = {}) {
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
+    const preferredProjectionKey = options.preferredMultiAssetsProjectionKey;
     return multiAddressTokenBatchRefreshes.run(
       lowerAddresses,
       force,
@@ -3339,6 +3408,13 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             ? tokenAddressRequests.getCurrentAddresses(addressRequest)
             : [];
         const isForceRequested = () => force || ticket.isForceRequested();
+        const projectionRestorePromise =
+          preferredProjectionKey && !force
+            ? restoreMultiAssetsProjectionForAddresses(
+                preferredProjectionKey,
+                lowerAddresses,
+              )
+            : Promise.resolve(false);
 
         if (!lowerAddresses.length) {
           set(() => ({ isLoading: true }));
@@ -3357,15 +3433,38 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         try {
           let confirmedLocalAddresses: string[] = [];
           if (!isForceRequested()) {
-            const expirationByAddress = await getDataExpirationByAddress(
-              lowerAddresses,
+            const [expirationByAddress, projectionRestored] = await Promise.all(
+              [
+                getDataExpirationByAddress(lowerAddresses),
+                projectionRestorePromise,
+              ],
             );
             const isExpired = Object.values(expirationByAddress).some(Boolean);
             confirmedLocalAddresses = lowerAddresses.filter(
               address => !expirationByAddress[address],
             );
-            trace.mark('expiry-resolved', { isExpired });
+            trace.mark('expiry-resolved', {
+              isExpired,
+              projectionRestored,
+            });
             if (!isExpired && !isForceRequested()) {
+              if (projectionRestored && !ticket.isFullSnapshotRequested()) {
+                set(state => ({
+                  sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                    state.sourceSnapshotReadyByAddress,
+                    confirmedLocalAddresses,
+                  ),
+                }));
+                const projection = preferredProjectionKey
+                  ? useTokenAssetsIndexStore.getState().multiAssetsResultByKey[
+                      preferredProjectionKey
+                    ]
+                  : undefined;
+                const itemCount = projection?.tokenIds.length || 0;
+                trace.mark('local-projection-loaded', { itemCount });
+                trace.finish({ path: 'local-projection', itemCount });
+                return;
+              }
               const missingAddresses = getAddressesWithoutListSnapshot(
                 lowerAddresses,
                 get().tokenListMap,
@@ -3434,7 +3533,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           const hasMemorySnapshot = lowerAddresses.every(address =>
             Object.prototype.hasOwnProperty.call(currentTokenListMap, address),
           );
-          if (!force && !hasMemorySnapshot) {
+          const projectionRestored = await projectionRestorePromise;
+          const canRetainProjectionOnly =
+            projectionRestored && !ticket.isFullSnapshotRequested();
+          if (!force && !hasMemorySnapshot && !canRetainProjectionOnly) {
             const missingAddresses = getAddressesWithoutListSnapshot(
               lowerAddresses,
               get().tokenListMap,
@@ -3457,6 +3559,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           } else {
             trace.mark('memory-snapshot-retained', {
               hasMemorySnapshot,
+              projectionRestored,
             });
           }
           if (confirmedLocalAddresses.length) {
@@ -3571,6 +3674,16 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                 return;
               }
 
+              if (
+                hasFailedChain &&
+                canRetainProjectionOnly &&
+                !hasMemorySnapshot
+              ) {
+                // Projection-first Home restores do not populate the complete
+                // address map. Hydrate only this failure case so successful
+                // chains can still merge with the last usable failed-chain data.
+                await tokenCacheHydrator.hydrate([address]);
+              }
               const nextTokens = hasFailedChain
                 ? fulfilledChainSnapshots.reduce(
                     (tokens, snapshot) =>
@@ -3674,6 +3787,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             set(() => ({ isLoading: false }));
           }
         }
+      },
+      {
+        allowProjectionOnly: !!preferredProjectionKey && !force,
       },
     );
   },

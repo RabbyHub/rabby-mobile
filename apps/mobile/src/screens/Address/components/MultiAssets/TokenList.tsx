@@ -395,16 +395,20 @@ export const TokenList = () => {
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
   useEffect(() => {
-    batchGetTokenList(myTop10Addresses);
-  }, [myTop10Addresses]);
+    batchGetTokenList(myTop10Addresses, false, {
+      preferredMultiAssetsProjectionKey: multiAssetsKey,
+    });
+  }, [multiAssetsKey, myTop10Addresses]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    batchGetTokenList(myTop10Addresses);
-  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
+    batchGetTokenList(myTop10Addresses, false, {
+      preferredMultiAssetsProjectionKey: multiAssetsKey,
+    });
+  }, [isFocusing, isLoading, multiAssetsKey, myTop10Addresses, triggerUpdate]);
 
   useAppForeground({
     enabled: isFocusing,

@@ -166,6 +166,7 @@ describe('single-address token assets projection', () => {
     mockedSyncRemoteTokens.mockResolvedValue(true);
     mockedSyncRemoteTokensForAddresses.mockResolvedValue(true);
     mockedUsedChainList.mockResolvedValue([{ id: 'eth' }] as never);
+    mockedTokenItemEntity.isExpired.mockResolvedValue(true);
     useTokenAssetsIndexStore.setState({
       singleAssetsConfigByKey: {},
       singleAssetsResultByKey: {},
@@ -418,6 +419,141 @@ describe('single-address token assets projection', () => {
         tokenEntityResourceStore.getValue(deferredTokenId) === deferredToken,
     );
     await waitForNextTask();
+  });
+
+  it('keeps a staged projection usable when legacy preview slots are null', async () => {
+    const visibleToken = createToken('visible-token', {
+      logo_url: 'https://example.test/visible.png',
+      usd_value: 20,
+    });
+    const visibleTokenId = buildTokenEntityId(visibleToken);
+
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [{ type: 'token', id: visibleTokenId }],
+      groups: [],
+      metadata: {
+        entityRestoreMode: 'staged-v1',
+        groupPrimaryTokenIds: {},
+        lowValueTokenPreviewLogoUrls: [
+          null,
+          'https://example.test/preview.png',
+        ],
+        lpLowValueTokenPreviewLogoUrls: [null],
+        additionalCoreUsdValue: 0,
+        additionalTokenCount: 0,
+        defaultVisibleTokenCount: 1,
+        hasAdditionalTokens: false,
+        hasLpTokens: false,
+        lowValueTokenCount: 0,
+        segmentRowCounts: {
+          additionalDefault: 0,
+          additionalLp: 0,
+          lowValueDefault: 0,
+          lowValueLp: 0,
+          primary: 1,
+        },
+        selectedSegmentMode: 'default',
+      },
+    } as never);
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+      [visibleToken] as never,
+    );
+
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+    await waitFor(
+      () =>
+        useTokenAssetsIndexStore.getState().singleAssetsAvailabilityByKey[
+          key
+        ] === 'ready',
+    );
+
+    const restored =
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key];
+    expect(restored?.lowValueTokenPreviewLogoUrls).toEqual([
+      'https://example.test/preview.png',
+    ]);
+    expect(restored?.lpLowValueTokenPreviewLogoUrls).toEqual([]);
+  });
+
+  it('uses a fresh Home projection without hydrating the full token map', async () => {
+    const visibleToken = createToken('visible-token', { usd_value: 20 });
+    const visibleTokenId = buildTokenEntityId(visibleToken);
+    mockedTokenItemEntity.isExpired.mockResolvedValue(false);
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [{ type: 'token', id: visibleTokenId }],
+      groups: [],
+      metadata: {
+        entityRestoreMode: 'staged-v1',
+        groupPrimaryTokenIds: {},
+        lowValueTokenPreviewLogoUrls: [],
+        lpLowValueTokenPreviewLogoUrls: [],
+        additionalCoreUsdValue: 0,
+        additionalTokenCount: 0,
+        defaultVisibleTokenCount: 1,
+        hasAdditionalTokens: false,
+        hasLpTokens: false,
+        lowValueTokenCount: 0,
+        segmentRowCounts: {
+          additionalDefault: 0,
+          additionalLp: 0,
+          lowValueDefault: 0,
+          lowValueLp: 0,
+          primary: 1,
+        },
+        selectedSegmentMode: 'default',
+      },
+    } as never);
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+      [visibleToken] as never,
+    );
+    const key = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], false, {
+      preferredMultiAssetsProjectionKey: key,
+    });
+
+    expect(
+      mockedTokenItemEntity.batchMultiAddressTokens,
+    ).not.toHaveBeenCalled();
+    expect(mockedUsedChainList).not.toHaveBeenCalled();
+    expect(
+      tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS],
+    ).toBeUndefined();
+    expect(
+      tokenListStore.getState().sourceSnapshotReadyByAddress[
+        NORMALIZED_ADDRESS
+      ],
+    ).toBe(true);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual([{ type: 'token', tokenId: visibleTokenId }]);
+  });
+
+  it('falls back to full local hydration when the Home projection is missing', async () => {
+    const cached = createToken('cached', { usd_value: 20 });
+    mockedTokenItemEntity.isExpired.mockResolvedValue(false);
+    mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
+      cached,
+    ] as never);
+    const key = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], false, {
+      preferredMultiAssetsProjectionKey: key,
+    });
+
+    expect(mockedTokenItemEntity.batchMultiAddressTokens).toHaveBeenCalledWith([
+      NORMALIZED_ADDRESS,
+    ]);
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      cached,
+    ]);
+    expect(mockedUsedChainList).not.toHaveBeenCalled();
   });
 
   it('restores every member of an eager staged token group', async () => {
@@ -1499,6 +1635,77 @@ describe('single-address token assets projection', () => {
       buildTokenEntityId(freshLpToken),
     ]);
     expect(mockedUsedChainList).toHaveBeenCalledTimes(1);
+  });
+
+  it('hydrates only the failed-chain fallback during a projection-first refresh', async () => {
+    const cachedArbitrumToken = createToken('cached-arbitrum', {
+      chain: 'arb',
+      usd_value: 4,
+    });
+    const freshLpToken = createToken('fresh-lp', {
+      chain: 'eth',
+      is_core: false,
+      protocol_id: 'curve',
+      usd_value: 3,
+    });
+    const cachedTokenId = buildTokenEntityId(cachedArbitrumToken);
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [{ type: 'token', id: cachedTokenId }],
+      groups: [],
+      metadata: {
+        entityRestoreMode: 'staged-v1',
+        groupPrimaryTokenIds: {},
+        lowValueTokenPreviewLogoUrls: [],
+        lpLowValueTokenPreviewLogoUrls: [],
+        additionalCoreUsdValue: 0,
+        additionalTokenCount: 0,
+        defaultVisibleTokenCount: 1,
+        hasAdditionalTokens: false,
+        hasLpTokens: false,
+        lowValueTokenCount: 0,
+        segmentRowCounts: {
+          additionalDefault: 0,
+          additionalLp: 0,
+          lowValueDefault: 0,
+          lowValueLp: 0,
+          primary: 1,
+        },
+        selectedSegmentMode: 'default',
+      },
+    } as never);
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+      [cachedArbitrumToken] as never,
+    );
+    mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
+      cachedArbitrumToken,
+    ] as never);
+    mockedUsedChainList.mockResolvedValueOnce([
+      { id: 'eth' },
+      { id: 'arb' },
+    ] as never);
+    mockedRequestOpenApiWithChainId
+      .mockResolvedValueOnce([freshLpToken])
+      .mockRejectedValueOnce(new Error('arb request failed'));
+    const key = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], false, {
+      preferredMultiAssetsProjectionKey: key,
+    });
+
+    expect(mockedTokenItemEntity.batchMultiAddressTokens).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(mockedTokenItemEntity.batchMultiAddressTokens).toHaveBeenCalledWith([
+      NORMALIZED_ADDRESS,
+    ]);
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      cachedArbitrumToken,
+      freshLpToken,
+    ]);
+    expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
   });
 
   it('keeps the previous snapshot when chain discovery is rate limited', async () => {

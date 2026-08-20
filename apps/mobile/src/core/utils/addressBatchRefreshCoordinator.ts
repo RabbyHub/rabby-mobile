@@ -1,11 +1,17 @@
 type BatchRefreshTicket = {
   isForceRequested(): boolean;
+  isFullSnapshotRequested(): boolean;
 };
 
 type InFlightBatchRefresh = {
   scopeKey: string;
   forceRequested: boolean;
+  fullSnapshotRequested: boolean;
   promise: Promise<void>;
+};
+
+type BatchRefreshOptions = {
+  allowProjectionOnly?: boolean;
 };
 
 const getScopeKey = (addresses: string[]) =>
@@ -25,6 +31,7 @@ export class AddressBatchRefreshCoordinator {
     addresses: string[],
     force: boolean,
     execute: (ticket: BatchRefreshTicket) => Promise<void>,
+    options: BatchRefreshOptions = {},
   ): Promise<void> {
     const scopeKey = getScopeKey(addresses);
     const active = this.inFlight;
@@ -33,16 +40,21 @@ export class AddressBatchRefreshCoordinator {
       if (force) {
         active.forceRequested = true;
       }
+      if (!options.allowProjectionOnly) {
+        active.fullSnapshotRequested = true;
+      }
       return active.promise;
     }
 
     const flight = {
       scopeKey,
       forceRequested: force,
+      fullSnapshotRequested: !options.allowProjectionOnly,
       promise: undefined as unknown as Promise<void>,
     };
     const ticket: BatchRefreshTicket = {
       isForceRequested: () => flight.forceRequested,
+      isFullSnapshotRequested: () => flight.fullSnapshotRequested,
     };
     const promise = Promise.resolve().then(() => execute(ticket));
     flight.promise = promise;

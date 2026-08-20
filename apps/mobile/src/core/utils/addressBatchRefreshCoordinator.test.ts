@@ -39,4 +39,24 @@ describe('AddressBatchRefreshCoordinator', () => {
 
     expect(execute).toHaveBeenCalledTimes(2);
   });
+
+  it('promotes a projection-only flight when a full snapshot consumer joins', async () => {
+    const coordinator = new AddressBatchRefreshCoordinator();
+    const pending = deferred<void>();
+    let observedFullSnapshotRequested = false;
+    const execute = jest.fn(async ticket => {
+      await pending.promise;
+      observedFullSnapshotRequested = ticket.isFullSnapshotRequested();
+    });
+
+    const projection = coordinator.run(['0xA'], false, execute, {
+      allowProjectionOnly: true,
+    });
+    const fullSnapshot = coordinator.run(['0xa'], false, execute);
+    pending.resolve();
+
+    await Promise.all([projection, fullSnapshot]);
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(observedFullSnapshotRequested).toBe(true);
+  });
 });
