@@ -650,6 +650,7 @@ export const SignMainnetHeaderContent = ({
           displayGasMethod === 'gasAccount' ? (
             <Tip
               isVisible={gasAccountTipVisible}
+              contentStyle={styles.tipPopover}
               onClose={() => {
                 setGasAccountTipVisible(false);
               }}
@@ -856,6 +857,9 @@ const GasMethod = (props: {
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  tipPopover: {
+    height: 'auto',
+  },
   tipContent: {
     paddingHorizontal: 12,
     paddingVertical: 8,

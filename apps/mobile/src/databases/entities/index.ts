@@ -8,6 +8,11 @@ import { LocalHistoryItemEntity } from './localhistoryItem';
 import { NFTItemEntity } from './nftItem';
 import { ProtocolItemEntity } from './portocolItem';
 import { TokenItemEntity } from './tokenitem';
+import {
+  AssetProjectionGroupItemEntity,
+  AssetProjectionItemEntity,
+  AssetProjectionSnapshotEntity,
+} from './assetProjection';
 
 export const ALL_ORM_ENTITIES = {
   TokenItemEntity,
@@ -20,4 +25,7 @@ export const ALL_ORM_ENTITIES = {
   CexEntity,
   AccountInfoEntity,
   AppChainEntity,
+  AssetProjectionSnapshotEntity,
+  AssetProjectionItemEntity,
+  AssetProjectionGroupItemEntity,
 };

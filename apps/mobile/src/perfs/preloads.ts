@@ -8,6 +8,7 @@ const pendingNamedComponentPreloads = new Map<string, Promise<void>>();
 
 export const PRELOAD_SCREENS = {
   [RootNames.Settings]: 'SettingsScreen',
+  [RootNames.SingleAddressHome]: 'SingleAddressHomeScreen',
 };
 
 export const PRELOAD_NAVIGATORS = {
@@ -54,7 +55,7 @@ export async function preloadTransactionHotNavigator() {
 }
 
 export async function preloadSingleAddressNavigator() {
-  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.SingleAddressStack]);
+  await preloadNamedComponent(PRELOAD_SCREENS[RootNames.SingleAddressHome]);
 }
 
 export async function preloadHomeShortcutNavigators() {

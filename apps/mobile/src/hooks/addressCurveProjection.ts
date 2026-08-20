@@ -16,6 +16,7 @@ type AddressCurveProjection = ReturnType<typeof formChartData>;
 
 type NormalizedProjectionOptions = {
   realtimeNetWorth: number;
+  realtimeTimestamp: number;
   staticBalance: number;
   baseUsdValue?: number | null;
   type: CurveDayType;
@@ -27,6 +28,7 @@ type ProjectionCacheEntry = {
 };
 
 const MAX_PROJECTIONS_PER_CURVE = 4;
+const REALTIME_TIMESTAMP_CACHE_INTERVAL = 60 * 1000;
 const EMPTY_PROJECTION = makeDefaultSelectData();
 const projectionCache = new WeakMap<CurveList, ProjectionCacheEntry[]>();
 
@@ -35,6 +37,9 @@ function normalizeOptions(
 ): NormalizedProjectionOptions {
   return {
     realtimeNetWorth: options?.realtimeNetWorth ?? 0,
+    realtimeTimestamp:
+      Math.floor(Date.now() / REALTIME_TIMESTAMP_CACHE_INTERVAL) *
+      REALTIME_TIMESTAMP_CACHE_INTERVAL,
     staticBalance: options?.staticBalance ?? 0,
     baseUsdValue: options?.baseUsdValue,
     type: options?.type ?? CurveDayType.DAY,
@@ -47,6 +52,7 @@ function areOptionsEqual(
 ) {
   return (
     left.realtimeNetWorth === right.realtimeNetWorth &&
+    left.realtimeTimestamp === right.realtimeTimestamp &&
     left.staticBalance === right.staticBalance &&
     left.baseUsdValue === right.baseUsdValue &&
     left.type === right.type
@@ -72,7 +78,6 @@ export function getAddressCurveProjection(
 
   const projection = formChartData(curveList, {
     ...normalizedOptions,
-    realtimeTimestamp: Date.now(),
   });
   const nextEntries = [
     { options: normalizedOptions, projection },

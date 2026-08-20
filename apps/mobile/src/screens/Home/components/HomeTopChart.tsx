@@ -205,35 +205,37 @@ export const HomeTopChart = memo(function Chart({
               balance={balance}
             />
           )}
-          <Animated.View style={[animOpacityStyle]}>
-            {isOffline ||
-            isNoAssets ||
-            !chartData.length ? null : !isLoadingChartData ? (
-              <LineChart
-                height={104}
-                width={ScreenWidth - 32}
-                shape={d3Shape.curveCatmullRom}
-                style={styles.chart}>
-                <LineChart.Path
-                  showInactivePath={false}
-                  color={pathColor}
-                  width={2}>
-                  <LineChart.Gradient color={pathColor} />
-                </LineChart.Path>
-                <LineChart.CursorLine color={colors['neutral-line']} />
-                <LineChart.CursorCrosshair
-                  color={pathColor}
-                  outerSize={12}
-                  size={8}
+          {!fold ? (
+            <Animated.View style={[animOpacityStyle]}>
+              {isOffline ||
+              isNoAssets ||
+              !chartData.length ? null : !isLoadingChartData ? (
+                <LineChart
+                  height={104}
+                  width={ScreenWidth - 32}
+                  shape={d3Shape.curveCatmullRom}
+                  style={styles.chart}>
+                  <LineChart.Path
+                    showInactivePath={false}
+                    color={pathColor}
+                    width={2}>
+                    <LineChart.Gradient color={pathColor} />
+                  </LineChart.Path>
+                  <LineChart.CursorLine color={colors['neutral-line']} />
+                  <LineChart.CursorCrosshair
+                    color={pathColor}
+                    outerSize={12}
+                    size={8}
+                  />
+                </LineChart>
+              ) : (
+                <CurveLoader
+                  {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
+                  style={styles.loading}
                 />
-              </LineChart>
-            ) : (
-              <CurveLoader
-                {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
-                style={styles.loading}
-              />
-            )}
-          </Animated.View>
+              )}
+            </Animated.View>
+          ) : null}
         </LineChart.Provider>
       </View>
     </Animated.View>

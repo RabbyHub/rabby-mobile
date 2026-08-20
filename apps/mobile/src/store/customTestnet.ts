@@ -16,9 +16,17 @@ type CustomTestnetSnapshot = {
   customTokenList: CustomTestnetTokenBase[];
 };
 
+export type CustomTestnetHydrationState =
+  | 'pending'
+  | 'hydrating'
+  | 'ready'
+  | 'failed';
+
 type CustomTestnetState = CustomTestnetSnapshot & {
+  hydrationState: CustomTestnetHydrationState;
   revision: number;
   setSnapshot(snapshot: CustomTestnetSnapshot): void;
+  setHydrationState(state: CustomTestnetHydrationState): void;
 };
 
 const EMPTY_CUSTOM_TESTNET: Record<string, TestnetChain> = {};
@@ -28,18 +36,39 @@ const EMPTY_OWNER_ADDRESSES: string[] = [];
 export const useCustomTestnetStore = zCreate<CustomTestnetState>(set => ({
   customTestnet: EMPTY_CUSTOM_TESTNET,
   customTokenList: EMPTY_CUSTOM_TOKEN_LIST,
+  hydrationState: 'pending',
   revision: 0,
   setSnapshot(snapshot) {
     set(state => ({
       customTestnet: snapshot.customTestnet,
       customTokenList: snapshot.customTokenList,
+      hydrationState: 'ready',
       revision: state.revision + 1,
     }));
+  },
+  setHydrationState(hydrationState) {
+    set({ hydrationState });
   },
 }));
 
 export const syncCustomTestnetStore = (snapshot: CustomTestnetSnapshot) => {
   useCustomTestnetStore.getState().setSnapshot(snapshot);
+};
+
+export const markCustomTestnetStoreHydrating = () => {
+  const { hydrationState, setHydrationState } =
+    useCustomTestnetStore.getState();
+  if (hydrationState !== 'ready') {
+    setHydrationState('hydrating');
+  }
+};
+
+export const markCustomTestnetStoreHydrationFailed = () => {
+  const { hydrationState, setHydrationState } =
+    useCustomTestnetStore.getState();
+  if (hydrationState !== 'ready') {
+    setHydrationState('failed');
+  }
 };
 
 export const buildCustomTestnetAssetSections = ({
@@ -116,3 +145,11 @@ export const useCustomTestnetAssetSectionsData = (
     [customTestnet, customTokenList, ownerAddresses],
   );
 };
+
+export const useCustomTestnetHydrationState = () =>
+  useActivityStore(
+    useCustomTestnetStore,
+    state => state.hydrationState,
+    Object.is,
+    { storeLabel: 'custom-testnet-assets' },
+  );

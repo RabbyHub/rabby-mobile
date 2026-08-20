@@ -95,38 +95,43 @@ function presetSingHomeAccount(account: Account) {
   });
 }
 export const apisSingleHome = {
-  navigateToSingleHome: (account: Account, options?: { replace?: boolean }) => {
-    const cycleId = beginFeatureActivation(
-      'single-address',
-      'single_address_navigation_requested',
-    );
+  navigateToSingleHome: (
+    account: Account,
+    options?: { replace?: boolean; activationCycleId?: number },
+  ) => {
+    const cycleId =
+      options?.activationCycleId ||
+      beginFeatureActivation(
+        'single-address',
+        'single_address_navigation_requested',
+      );
     presetSingHomeAccount(account);
     markFeatureActivation('single-address', 'state-prepared', {
       cycleId,
       reason: 'single_home_account_preset',
     });
-    requestAnimationFrame(() => {
-      const { replace } = options || {};
-      markFeatureActivation('single-address', 'navigation-dispatched', {
-        cycleId,
-        reason: replace ? 'replace_after_frame' : 'navigate_after_frame',
-      });
-      if (replace) {
-        resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {
-            account: account,
-          },
-        });
-      } else {
-        navigateDeprecated(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {
-            account: account,
-          },
-        });
-      }
+    const { replace } = options || {};
+    markFeatureActivation('single-address', 'navigation-dispatched', {
+      cycleId,
+      reason: replace
+        ? 'replace_after_state_preset'
+        : 'navigate_after_state_preset',
     });
+    if (replace) {
+      resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
+        screen: RootNames.SingleAddressHome,
+        params: {
+          account: account,
+        },
+      });
+    } else {
+      navigateDeprecated(RootNames.SingleAddressStack, {
+        screen: RootNames.SingleAddressHome,
+        params: {
+          account: account,
+        },
+      });
+    }
   },
   clearCurrentAccount: () => {
     singleHomeState.setState(prev => ({

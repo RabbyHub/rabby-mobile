@@ -714,11 +714,11 @@ function logOpenApiFailure(args: {
     return;
   }
 
+  maybeToastOpenApiHttpError(args);
   if (shouldSuppressOpenApiDiagnosticConsole()) {
     return;
   }
 
-  maybeToastOpenApiHttpError(args);
   logger.warn(
     '[openapi] non-200 request detected',
     buildOpenApiFailurePayload(args),

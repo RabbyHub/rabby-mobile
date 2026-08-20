@@ -48,24 +48,35 @@ jobs:
       - mobile-local
     timeout-minutes: 20
     env:
-      JEST_CACHE_DIRECTORY: ${{ github.workspace }}/.ci-cache/jest-mobile-integration
       NODE_OPTIONS: '--max_old_space_size=4096'
       YARN_ENABLE_HARDENED_MODE: '0'
 
     steps:
+      - name: Prepare isolated checkout
+        run: |
+          rm -rf "$GITHUB_WORKSPACE/.ci-source"
+          mkdir -p \
+            "$RUNNER_TEMP/rabby-mobile-integration-jest" \
+            "$RUNNER_TEMP/rabby-mobile-integration-yarn"
+          {
+            echo "JEST_CACHE_DIRECTORY=$RUNNER_TEMP/rabby-mobile-integration-jest"
+            echo "YARN_CACHE_FOLDER=$RUNNER_TEMP/rabby-mobile-integration-yarn"
+          } >> "$GITHUB_ENV"
+
       - name: Checkout git repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          clean: false
+          clean: true
+          path: .ci-source
 
-      - name: Clean workspace while retaining JS caches
+      - name: Clean isolated checkout
+        working-directory: .ci-source
         run: |
           git reset --hard HEAD
-          git clean -ffdx \
-            -e .yarn/cache \
-            -e .ci-cache
+          git clean -ffdx
 
       - name: Use runner Node.js
+        working-directory: .ci-source
         run: |
           export NVM_DIR="$HOME/.nvm"
           source "$NVM_DIR/nvm.sh"
@@ -74,18 +85,23 @@ jobs:
           echo "$(dirname "$(command -v node)")" >> "$GITHUB_PATH"
 
       - name: Enable Corepack
+        working-directory: .ci-source
         run: corepack enable
 
       - name: Install dependencies
+        working-directory: .ci-source
         run: yarn install --immutable
 
       - name: Build workspace packages
+        working-directory: .ci-source
         run: yarn build
 
       - name: Validate integration test boundaries
+        working-directory: .ci-source
         run: yarn workspace rabby-mobile test:integration:boundaries
 
       - name: Run mobile integration tests
+        working-directory: .ci-source
         run: >-
           yarn workspace rabby-mobile test:integration
           --cacheDirectory "$JEST_CACHE_DIRECTORY"

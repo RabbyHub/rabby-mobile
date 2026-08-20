@@ -103,6 +103,14 @@ describe('store/balance', () => {
     jest.doMock('@rabby-wallet/keyring-utils', () => ({
       CORE_KEYRING_TYPES: ['SimpleKeyring'],
     }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      getHomeAssetSelectionSettings: () => ({
+        topN: 10,
+        includeWatchAddresses: false,
+      }),
+      getHomeAssetSelectionSettingsKey: () => '10:0',
+      isHomeAssetSelectionExperimentEnabled: () => false,
+    }));
 
     balanceModule = require('./balance');
   });

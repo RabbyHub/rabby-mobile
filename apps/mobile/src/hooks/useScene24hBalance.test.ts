@@ -61,6 +61,9 @@ describe('store/balance24h scene', () => {
       getTop10MyAccounts: (...args: unknown[]) =>
         mockGetTop10MyAccounts(...args),
     }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      isHomeAssetSelectionExperimentEnabled: jest.fn(() => false),
+    }));
     jest.doMock('@/core/services', () => ({
       keyringService: {
         on: jest.fn(),

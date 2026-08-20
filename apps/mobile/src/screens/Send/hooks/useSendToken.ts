@@ -99,6 +99,10 @@ import {
   useSendRecipientState,
   type SendRecipientDerivedState,
 } from './useSendRecipientState';
+import {
+  DEFAULT_NATIVE_TRANSFER_GAS_LIMIT,
+  resolveNativeTransferGasLimit,
+} from '../nativeTransferGas';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -512,8 +516,6 @@ const fetchGasList = async (
   return list;
 };
 
-const DEFAULT_GAS_USED = 21000;
-
 export type FormSendToken = {
   to: string;
   amount: string;
@@ -619,6 +621,7 @@ export function useSendTokenForm({
 
   const screenState = useSendTokenScreenStateShallowSelector(state => ({
     balanceError: state.balanceError,
+    estimatedGas: state.estimatedGas,
     isLoading: state.isLoading,
     initialTokenIdentityReady: state.initialTokenIdentityReady,
   }));
@@ -1135,28 +1138,30 @@ export function useSendTokenForm({
           currentAccount,
         );
         const notContract = !!code && (code === '0x' || code === '0x0');
-        let gasLimit = 0;
+        const gasLimit = resolveNativeTransferGasLimit({
+          estimatedGas: latestScreenState.estimatedGas,
+          needEstimateGas: !!chain.needEstimateGas,
+          couldSpecifyIntrinsicGas,
+          isContract: !notContract,
+        });
 
-        if (latestScreenState.estimatedGas) {
-          gasLimit = latestScreenState.estimatedGas;
-        }
-
-        /**
-         * we dont' need always fetch estimatedGas, if no `params.gas` set below,
-         * `params.gas` would be filled on Tx Page.
-         */
-        if (gasLimit > 0) {
+        // Keep gas unset while a required estimate is unavailable so the
+        // transaction flow can calculate it instead of locking in 21000.
+        if (gasLimit) {
           params.gas = intToHex(gasLimit);
-        } else if (notContract && couldSpecifyIntrinsicGas) {
-          params.gas = intToHex(DEFAULT_GAS_USED);
-        }
-        if (!notContract) {
-          // not pre-set gasLimit if to address is contract address
+        } else {
           delete params.gas;
         }
       } catch (e) {
-        if (couldSpecifyIntrinsicGas) {
-          params.gas = intToHex(DEFAULT_GAS_USED);
+        const gasLimit = resolveNativeTransferGasLimit({
+          estimatedGas: latestScreenState.estimatedGas,
+          needEstimateGas: !!chain.needEstimateGas,
+          couldSpecifyIntrinsicGas,
+        });
+        if (gasLimit) {
+          params.gas = intToHex(gasLimit);
+        } else {
+          delete params.gas;
         }
       }
       if (
@@ -1289,28 +1294,30 @@ export function useSendTokenForm({
             currentAccount,
           );
           const notContract = !!code && (code === '0x' || code === '0x0');
-          let gasLimit = 0;
+          const gasLimit = resolveNativeTransferGasLimit({
+            estimatedGas: latestScreenState.estimatedGas,
+            needEstimateGas: !!chain.needEstimateGas,
+            couldSpecifyIntrinsicGas,
+            isContract: !notContract,
+          });
 
-          if (latestScreenState.estimatedGas) {
-            gasLimit = latestScreenState.estimatedGas;
-          }
-
-          /**
-           * we dont' need always fetch estimatedGas, if no `params.gas` set below,
-           * `params.gas` would be filled on Tx Page.
-           */
-          if (gasLimit > 0) {
+          // Keep gas unset while a required estimate is unavailable so the
+          // transaction flow can calculate it instead of locking in 21000.
+          if (gasLimit) {
             params.gas = intToHex(gasLimit);
-          } else if (notContract && couldSpecifyIntrinsicGas) {
-            params.gas = intToHex(DEFAULT_GAS_USED);
-          }
-          if (!notContract) {
-            // not pre-set gasLimit if to address is contract address
+          } else {
             delete params.gas;
           }
         } catch (e) {
-          if (couldSpecifyIntrinsicGas) {
-            params.gas = intToHex(DEFAULT_GAS_USED);
+          const gasLimit = resolveNativeTransferGasLimit({
+            estimatedGas: latestScreenState.estimatedGas,
+            needEstimateGas: !!chain.needEstimateGas,
+            couldSpecifyIntrinsicGas,
+          });
+          if (gasLimit) {
+            params.gas = intToHex(gasLimit);
+          } else {
+            delete params.gas;
           }
         }
         if (
@@ -1502,7 +1509,7 @@ export function useSendTokenForm({
       const result = { gasNumber: 0 };
       const shouldCommit = input?.shouldCommit;
 
-      const doReturn = (nextGas = DEFAULT_GAS_USED) => {
+      const doReturn = (nextGas = DEFAULT_NATIVE_TRANSFER_GAS_LIMIT) => {
         result.gasNumber = nextGas;
 
         if (!shouldCommit || shouldCommit()) {
@@ -1520,7 +1527,7 @@ export function useSendTokenForm({
       } = input || {};
 
       if (!lastestChainItem?.needEstimateGas) {
-        return doReturn(DEFAULT_GAS_USED);
+        return doReturn(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT);
       }
       if (!currentAddress) {
         return doReturn();
@@ -1537,7 +1544,7 @@ export function useSendTokenForm({
 
       const to = getLatestFormValues().to;
 
-      let _gasUsed: string = intToHex(DEFAULT_GAS_USED);
+      let _gasUsed: string = intToHex(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT);
       try {
         _gasUsed = await apiProvider.requestETHRpc<string>(
           {
@@ -1588,15 +1595,12 @@ export function useSendTokenForm({
         return null;
       }
       if (result) {
-        const recipientAddress = getLatestFormValues().to;
-        if (isValidAddress(recipientAddress)) {
-          void estimateGasOnChain({
-            chainItem: chain,
-            tokenItem: result,
-            currentAddress,
-            shouldCommit,
-          });
-        }
+        void estimateGasOnChain({
+          chainItem: chain,
+          tokenItem: result,
+          currentAddress,
+          shouldCommit,
+        });
         putChainToken({ currentToken: { ...result, tokenId: id } });
         putScreenState(prev => ({
           agreeRequiredChecks: {
@@ -1729,7 +1733,7 @@ export function useSendTokenForm({
                   from: currentAccount.address,
                   to: to && isValidAddress(to) ? to : zeroAddress(),
                   value: currentToken.raw_amount_hex_str,
-                  gas: intToHex(DEFAULT_GAS_USED),
+                  gas: intToHex(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT),
                   gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
                   data: '0x',
                 },
@@ -2192,6 +2196,7 @@ export function useSendTokenForm({
     formValues.messageDataForContractCall,
     currentAccount?.type,
     currentAccount?.address,
+    screenState.estimatedGas,
     prepareDirectSubmitMiniTx,
   ]);
 

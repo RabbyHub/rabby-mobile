@@ -1,8 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
-import HomeHeaderArea from './HeaderArea';
-import { SingleHomeRightArea } from './SingleHomeRightArea';
 import { AssetContainer } from './AssetContainer';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -22,11 +20,8 @@ import {
 } from './hooks/singleHome';
 import { useUnmount } from 'ahooks';
 import { HomeTopArea } from './components/HomeTopArea';
-import { HeaderBackPressable } from '@/hooks/navigation';
 import { BackupReminderCard } from '@/components2024/BackupReminderCard';
 import { useBackupReminder } from '@/hooks/account';
-import { E2E_ID } from '@/constant/e2e';
-import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useFocusEffect } from '@react-navigation/native';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import {
@@ -69,68 +64,15 @@ function SingleAddressActivationProbe({
   return null;
 }
 
-function HomeHeaderContent() {
-  const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.containerLeft}>
-        <HeaderBackPressable
-          style={styles.backButton}
-          {...makeTestIDProps(E2E_ID.home.singleAddressBack)}
-        />
-        <HomeHeaderArea />
-      </View>
-      <View style={styles.containerRight}>
-        <SingleHomeRightArea />
-      </View>
-    </View>
-  );
-}
-
-function HomeHeader() {
-  return (
-    <ScreenStoreActivityProvider label="single-address-header">
-      <HomeHeaderContent />
-    </ScreenStoreActivityProvider>
-  );
-}
-
-const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
-  container: {
-    marginTop: safeAreaInsets.top,
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    backgroundColor: 'transparent',
-    width: '100%',
-    zIndex: 10,
-  },
-
-  containerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    width: '100%',
-    flexShrink: 1,
-    marginRight: 20,
-  },
-
-  containerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flexShrink: 0,
-  },
-
-  backButton: {
-    marginRight: 4,
-  },
-}));
-
 function SingleAddressHomeContent(): JSX.Element {
+  const activationCycleId = ensureFeatureActivation(
+    'single-address',
+    'single_address_content_render_fallback',
+  );
+  markFeatureActivation('single-address', 'content-render-start', {
+    cycleId: activationCycleId,
+    reason: 'single_address_home_content_render',
+  });
   const { styles } = useTheme2024({ getStyle: getStyles });
   const backgroundOpacity = useSharedValue(1);
   const { topHeight } = useBgSize();
@@ -208,8 +150,6 @@ function SingleAddressHome(): JSX.Element {
     </ScreenStoreActivityProvider>
   );
 }
-
-SingleAddressHome.Header = HomeHeader;
 
 const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   rootScreenContainer: {

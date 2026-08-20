@@ -3,6 +3,7 @@ import { getLatestOpSqliteDBInstance } from './typeorm';
 import { OPSQLiteEvents } from './events';
 import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
 import { runDevIIFEFunc } from '@/core/utils/store';
+import { bindOpSqliteTransactionEvents } from './transactionEvents';
 
 export const waitFirstDBInited = new Promise<DB>(resolve => {
   const inst = getLatestOpSqliteDBInstance();
@@ -21,15 +22,20 @@ export const waitFirstDBInited = new Promise<DB>(resolve => {
 });
 
 const prevDbRef = { current: null as null | DB };
+const disposeTransactionEventsRef = {
+  current: null as null | (() => void),
+};
 
 OPSQLiteEvents.subscribe('__OP_SQLITE_LOADED__', ({ database }) => {
-  if (prevDbRef.current && prevDbRef.current !== database) {
-    prevDbRef.current.updateHook(null);
+  if (prevDbRef.current === database) {
+    return;
   }
+  disposeTransactionEventsRef.current?.();
   prevDbRef.current = database;
-  database.updateHook(payload => {
-    OPSQLiteEvents.emit('UPDATE_HOOK', payload);
-  });
+  disposeTransactionEventsRef.current = bindOpSqliteTransactionEvents(
+    database,
+    (eventType, ...args) => OPSQLiteEvents.emit(eventType, ...args),
+  );
 });
 
 runDevIIFEFunc(() => {

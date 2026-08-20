@@ -51,7 +51,13 @@ function makeCurveList(): CurveList {
 
 describe('getAddressCurveProjection', () => {
   beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(1_000);
     jest.mocked(formChartData).mockClear();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('shares a projection for identical source data and values', () => {
@@ -69,6 +75,29 @@ describe('getAddressCurveProjection', () => {
 
     expect(second).toBe(first);
     expect(formChartData).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes the realtime point after the current cache minute', () => {
+    const curveList = makeCurveList();
+    const first = getAddressCurveProjection(curveList, {
+      realtimeNetWorth: 120,
+      staticBalance: 125,
+      baseUsdValue: 100,
+    });
+
+    jest.setSystemTime(61_000);
+    const second = getAddressCurveProjection(curveList, {
+      realtimeNetWorth: 120,
+      staticBalance: 125,
+      baseUsdValue: 100,
+    });
+
+    expect(second).not.toBe(first);
+    expect(formChartData).toHaveBeenCalledTimes(2);
+    expect(formChartData).toHaveBeenLastCalledWith(
+      curveList,
+      expect.objectContaining({ realtimeTimestamp: 60_000 }),
+    );
   });
 
   it('recomputes when a value that affects the projection changes', () => {

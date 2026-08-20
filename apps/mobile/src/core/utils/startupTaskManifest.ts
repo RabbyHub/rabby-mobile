@@ -343,6 +343,16 @@ export const STARTUP_TASKS = {
     priority: 'normal',
     budgetMs: 220,
   }),
+  customTestnetSnapshotHydration: defineStartupTask({
+    label: 'customTestnet.snapshotHydration',
+    owner: 'home-assets',
+    reason:
+      'restore persisted custom-network sections before Home can present a final empty token state',
+    stage: 'homePostStartupReady',
+    priority: 'high',
+    fallbackMs: 5000,
+    budgetMs: 24,
+  }),
   readableAccountStoresIdleWarmup: defineStartupTask({
     label: 'readableAccountStores.idleWarmup',
     owner: 'home-assets',

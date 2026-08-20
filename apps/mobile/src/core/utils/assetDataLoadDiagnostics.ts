@@ -5,6 +5,7 @@ export type AssetDataLoadDiagnosticDomain =
   | 'single-address-nft'
   | 'single-address-warmup'
   | 'multi-address-token'
+  | 'token-runtime-sync'
   | 'multi-address-protocol'
   | 'multi-address-nft';
 

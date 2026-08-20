@@ -1,4 +1,5 @@
 import { filterMyAccounts } from '@/core/apis/account';
+import { getHomeAssetSelectionSettings } from '@/hooks/appSettings';
 import { zCreate } from '@/core/utils/reexports';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import accountStore from '@/store/account';
@@ -132,7 +133,9 @@ function syncHomeAccountProjection() {
       selectedAddresses: balanceState.selectedAddresses,
       hasResolvedSelection: balanceState.hasResolvedSelection,
       matteredAccountLength: canUseFetchedAccountLength
-        ? filterMyAccounts(accountsState.accounts).length
+        ? getHomeAssetSelectionSettings().includeWatchAddresses
+          ? accountsState.accounts.length
+          : filterMyAccounts(accountsState.accounts).length
         : balanceState.matteredAccountLength,
       hasResolvedMatteredAccountLength:
         balanceState.hasResolvedMatteredAccountLength ||

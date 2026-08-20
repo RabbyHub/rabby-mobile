@@ -22,7 +22,6 @@ import { DisplayNftItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { GestureDetector } from 'react-native-gesture-handler';
 import {
   pulldownRefreshSizes,
@@ -49,7 +48,7 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { isTabsSwiping, useAccountInfo } from './hooks';
+import { isTabsSwiping, useHomeAssetAccountInfo } from './hooks';
 import nftListStore, {
   EMPTY_NFT_ASSETS_INDEX_RESULT,
   getMultiNftsCacheKey,
@@ -58,7 +57,6 @@ import nftListStore, {
   nftEntityResourceStore,
   type NftAssetsIndexRow,
   useNftListComputedStore,
-  useOnNftRefresh,
 } from '@/store/nfts';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import {
@@ -71,6 +69,9 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useShallow } from 'zustand/react/shallow';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
 const NFT_LIST_RENDER_BATCH_SIZE = 8;
@@ -89,11 +90,11 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
 type NftListItem =
   | NftAssetsIndexRow
   | {
-      type: 'toggle_nft_fold';
-    }
-  | {
       type: 'empty-nft' | 'loading-skeleton';
       data: string;
+    }
+  | {
+      type: 'toggle-nft';
     };
 
 const NftResourceRow = React.memo(
@@ -183,18 +184,20 @@ const NFTListInner = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
+  const [showAllNfts, setShowAllNfts] = useState(false);
 
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
 
-  const [foldNft, setFoldNft] = useState(true);
-
   const getAccountByAddress = useFindAccountByAddress();
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
 
-  const { nftRefresh } = useTriggerTagAssets();
-  useOnNftRefresh();
+  useScrollToTopOnChainChange({
+    chain,
+    isCurrentTab: isFocusing,
+  });
+
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
     isFocusing,
@@ -212,40 +215,49 @@ const NFTListInner = () => {
     () => getMultiNftsCacheKey(myTop10Addresses, chain),
     [chain, myTop10Addresses],
   );
-  const nftIndex = useActivityStore(
+  const nftProjection = useActivityStore(
     useNftListComputedStore,
-    state =>
-      state.multiNftsIndexCache[multiNftsKey] || EMPTY_NFT_ASSETS_INDEX_RESULT,
+    useShallow(state => ({
+      result:
+        state.multiNftsIndexCache[multiNftsKey] ||
+        EMPTY_NFT_ASSETS_INDEX_RESULT,
+      availability:
+        state.multiNftsAvailabilityByKey[multiNftsKey] || 'unresolved',
+    })),
     Object.is,
     { storeLabel: 'home-multi-assets-nft-computed-index' },
   );
-  const nftRowCount = nftIndex.unFoldRows.length + nftIndex.foldRows.length;
+  const nftIndex = nftProjection.result;
+  const nftRowCount = nftIndex.rows.length;
+  const nftProjectionViewState = resolveAssetProjectionViewState({
+    availability: nftProjection.availability,
+    hasData: nftRowCount > 0,
+  });
 
   const dataList = useMemo(() => {
+    const defaultRows = nftIndex.rows.slice(0, nftIndex.defaultVisibleRowCount);
+    const foldedRows = nftIndex.rows.slice(nftIndex.defaultVisibleRowCount);
     const itemData: Array<{
       show: boolean;
       data: NftListItem[];
     }> = [
       {
         show: true,
-        data: nftIndex.unFoldRows,
+        data: defaultRows,
       },
       {
-        show: !!nftIndex.foldRows.length,
-        data: [
-          { type: 'toggle_nft_fold' },
-          ...(foldNft ? [] : nftIndex.foldRows),
-        ],
+        show: foldedRows.length > 0,
+        data: [{ type: 'toggle-nft' }, ...(showAllNfts ? foldedRows : [])],
       },
       {
-        show: !!isLoading && nftRowCount === 0,
+        show: nftProjectionViewState === 'loading',
         data: Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton',
           data: 'index-nft' + index.toString(),
         })),
       },
       {
-        show: !isLoading && nftRowCount === 0,
+        show: nftProjectionViewState === 'empty',
         data: [
           {
             type: 'empty-nft',
@@ -260,18 +272,11 @@ const NFTListInner = () => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [
-    foldNft,
-    isLoading,
-    nftIndex.foldRows,
-    nftIndex.unFoldRows,
-    nftRowCount,
-    t,
-  ]);
+  }, [nftIndex, nftProjectionViewState, showAllNfts, t]);
 
   const hasNotAssets = useMemo(() => {
-    return nftRowCount === 0 && !isLoading && isFocused;
-  }, [nftRowCount, isLoading, isFocused]);
+    return nftProjectionViewState === 'empty' && isFocused;
+  }, [nftProjectionViewState, isFocused]);
 
   const [scenarioReadyCheckTick, setScenarioReadyCheckTick] = useState(0);
   useEffect(() => {
@@ -305,19 +310,17 @@ const NFTListInner = () => {
       !regressionScenarioReport ||
       !isFocused ||
       !scenarioReadyCheckTick ||
-      isLoading
+      nftProjectionViewState === 'loading'
     ) {
       return;
     }
 
-    const visibleCount = nftIndex.unFoldRows.length;
-    const foldedCount = nftIndex.foldRows.length;
+    const visibleCount = nftIndex.rows.length;
     const readyKey = [
       regressionScenarioRunId,
       myTop10Addresses.join(','),
       chain || 'all',
       visibleCount,
-      foldedCount,
     ].join(':');
     if (lastReadyReportKeyRef.current === readyKey) {
       return;
@@ -327,24 +330,22 @@ const NFTListInner = () => {
     regressionScenarioReport('assertion', {
       assertion: 'home-assets-nft-ready',
       passed: true,
-      state: visibleCount + foldedCount > 0 ? 'data' : 'empty-nft',
+      state: visibleCount > 0 ? 'data' : 'empty-nft',
       accountCount: myTop10Addresses.length,
       visibleCount,
-      foldedCount,
       selectedChain: chain || null,
     });
   }, [
     chain,
-    nftIndex.foldRows.length,
     isFocused,
-    isLoading,
+    nftProjectionViewState,
     myTop10Addresses,
     regressionScenarioActive,
     regressionScenarioId,
     regressionScenarioReport,
     regressionScenarioRunId,
     scenarioReadyCheckTick,
-    nftIndex.unFoldRows.length,
+    nftIndex.rows.length,
   ]);
 
   useEffect(() => {
@@ -418,17 +419,19 @@ const NFTListInner = () => {
               />
             </View>
           );
-        case 'toggle_nft_fold':
+        case 'toggle-nft':
           return (
             <TokenRowSectionHeader
-              str={'' + nftIndex.foldRows.length}
-              fold={foldNft}
+              str={String(
+                nftIndex.rows.length - nftIndex.defaultVisibleRowCount,
+              )}
+              fold={!showAllNfts}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
                 styles.buttonHeader,
                 !isLight && styles.bg2,
               ])}
-              onPressFold={() => setFoldNft(pre => !pre)}
+              onPressFold={() => setShowAllNfts(visible => !visible)}
             />
           );
         case 'empty-nft':
@@ -446,21 +449,20 @@ const NFTListInner = () => {
       }
     },
     [
-      foldNft,
-      nftIndex.foldRows.length,
       getAccountByAddress,
       handlePressNft,
       isLight,
+      nftIndex,
+      showAllNfts,
       styles,
     ],
   );
 
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
-    const nftListRefresh = Promise.all([
-      batchGetNFTList(true, {}),
-      nftRefresh(),
-    ]);
+    const nftListRefresh = batchGetNFTList(true, {
+      realTimeAddresses: myTop10Addresses,
+    });
 
     withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);
@@ -471,14 +473,14 @@ const NFTListInner = () => {
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [batchGetNFTList, triggerUpdate, nftRefresh]);
+  }, [batchGetNFTList, myTop10Addresses, triggerUpdate]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    batchGetNFTList(false, {});
+    batchGetNFTList(false, { realTimeAddresses: myTop10Addresses });
   }, [isLoading, isFocusing, myTop10Addresses, triggerUpdate, batchGetNFTList]);
 
   useAppForeground({
@@ -541,6 +543,7 @@ const NFTListInner = () => {
         maxToRenderPerBatch={NFT_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={NFT_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <RefreshPlaceholderIOS
@@ -602,15 +605,15 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingBottom: 48,
   },
   sectionHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
     height: ASSETS_SECTION_HEADER,
-    color: ctx.colors2024['neutral-secondary'],
     paddingLeft: 0,
     paddingRight: 0,
     backgroundColor: 'transparent',
+  },
+  buttonHeader: {
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
   },
   emptyAssets: {
     marginHorizontal: 0,
@@ -623,11 +626,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  buttonHeader: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
   },
   removeLeft: {
     marginLeft: 0,
