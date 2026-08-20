@@ -34,8 +34,6 @@ import {
 import {
   getHomeAssetSelectionSettings,
   isHomeAssetSelectionExperimentEnabled,
-  setHomeAssetTopN,
-  setIncludeWatchAddressesInHomeAssetSelection,
 } from '@/hooks/appSettings';
 import { ensureAccountBalanceSelectionLifecycle } from '@/store/balanceAccountSelection';
 import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
@@ -964,11 +962,12 @@ async function openHighCardinalityAssets(
   });
   context.report('fixture-removed');
 
-  // A previous capacity run may have left the non-production selection policy
-  // enabled. Reset it before importing the fixture so every intermediate
-  // Watch-address insertion remains outside Home's selected asset scope.
-  setHomeAssetTopN(10);
-  setIncludeWatchAddressesInHomeAssetSelection(false);
+  const requestedSettings = getHomeAssetSelectionSettings();
+  if (!requestedSettings.includeWatchAddresses) {
+    throw new Error(
+      'high-cardinality-assets requires Watch addresses in Home Asset Selection',
+    );
+  }
 
   const importResult = await importHighCardinalityWatchAddresses(addresses);
   const { accounts, fixtureAddressCount, importedCount } = importResult;
@@ -979,20 +978,18 @@ async function openHighCardinalityAssets(
     throw new Error('One or more fixture watch addresses are not visible');
   }
 
-  // Import through the regular Watch-address API first. Enabling the
-  // experimental selection while each address is being added would make Home
-  // start a separate data refresh for every intermediate account count, which
-  // measures fixture setup rather than the requested Top-N pressure state.
-  // The final selection is still activated before any measured asset action.
-  setHomeAssetTopN(requestedAddressCount);
-  setIncludeWatchAddressesInHomeAssetSelection(true);
+  // The importer temporarily isolates Home while it uses the regular
+  // Watch-address API, then restores the operator-selected policy once. The
+  // scenario must not conflate fixture size with the independently selected
+  // Top-N pressure level.
   const settings = getHomeAssetSelectionSettings();
   if (
-    !settings.includeWatchAddresses ||
-    settings.topN !== requestedAddressCount
+    settings.includeWatchAddresses !==
+      requestedSettings.includeWatchAddresses ||
+    settings.topN !== requestedSettings.topN
   ) {
     throw new Error(
-      'high-cardinality-assets could not apply its requested Home Asset Selection policy',
+      'high-cardinality-assets did not preserve the selected Home Asset Selection policy',
     );
   }
 
