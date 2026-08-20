@@ -68,6 +68,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { touchedFeedback } from '@/utils/touch';
 import type { TextInput as TextInputRef } from '@/components/Typography';
+import { normalizeAddressInputBoundaryWhitespace } from './addressInput';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -208,7 +209,7 @@ export const ScreenAddNewWhitelistAddress = ({
 
   const handleInputChange = useCallback((text: string) => {
     setError(undefined);
-    setInput(text);
+    setInput(normalizeAddressInputBoundaryWhitespace(text));
   }, []);
   const startAliasEditing = useCallback(() => {
     pendingAliasCursorPositionRef.current = aliasName.length;
