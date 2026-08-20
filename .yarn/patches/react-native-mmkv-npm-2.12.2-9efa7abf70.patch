@@ -1,3 +1,76 @@
+diff --git a/MMKV/Core/KeyValueHolder.cpp b/MMKV/Core/KeyValueHolder.cpp
+index a4db7497712b65eecc5055e09311f959eda9fd26..15f5d5db88c3016aef99bfd4521b565378d55da0 100644
+--- a/MMKV/Core/KeyValueHolder.cpp
++++ b/MMKV/Core/KeyValueHolder.cpp
+@@ -131,7 +131,7 @@ uint32_t KeyValueHolderCrypt::realValueSize() const {
+ 
+ // get decrypt data with [position, -1)
+ static MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
+-    static size_t smallBuffer[16 / sizeof(size_t)];
++    size_t smallBuffer[16 / sizeof(size_t)];
+     auto basePtr = (uint8_t *) inputBuffer.getPtr();
+     auto ptr = basePtr;
+     for (size_t index = sizeof(smallBuffer); index < position; index += sizeof(smallBuffer)) {
+diff --git a/MMKV/Core/KeyValueHolder.h b/MMKV/Core/KeyValueHolder.h
+index 5f4cebf4957f329978b7c1737f07e50640a3a8b7..9c4f54b02ec4f84151f55f13195255f12a49bb85 100644
+--- a/MMKV/Core/KeyValueHolder.h
++++ b/MMKV/Core/KeyValueHolder.h
+@@ -78,7 +78,11 @@ struct KeyValueHolderCrypt {
+         return sizeof(KeyValueHolderCrypt) - offsetof(KeyValueHolderCrypt, paddedValue);
+     }
+ 
+-    static bool isValueStoredAsOffset(size_t valueSize) { return valueSize >= 256; }
++    static constexpr size_t MediumBufferSize() {
++        return 256;
++    }
++
++    static bool isValueStoredAsOffset(size_t valueSize) { return valueSize > MediumBufferSize(); }
+ 
+     KeyValueHolderCrypt() = default;
+     KeyValueHolderCrypt(const void *valuePtr, size_t valueLength);
+diff --git a/MMKV/Core/MMKV_IO.cpp b/MMKV/Core/MMKV_IO.cpp
+index 02588edf1e81a6f82b2da705c2a6dfb0105e478d..62f635cb77e09e0b64a7f1a5846157e9e109e239 100755
+--- a/MMKV/Core/MMKV_IO.cpp
++++ b/MMKV/Core/MMKV_IO.cpp
+@@ -899,9 +899,6 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
+         } else {
+             m_crypter->resetIV();
+         }
+-        if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
+-            m_crypter->getCurStatus(t_status);
+-        }
+     }
+ #endif
+     try {
+@@ -909,6 +906,15 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
+         m_output->setPosition(0);
+         m_output->writeRawVarint32(ItemSizeHolder);
+         m_actualSize = ItemSizeHolderSize;
++#ifndef MMKV_DISABLE_CRYPT
++        if (m_crypter) {
++            auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size;
++            m_crypter->encrypt(ptr, ptr, m_actualSize);
++            if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
++                m_crypter->getCurStatus(t_status);
++            }
++        }
++#endif
+ 
+         if (isKeyEncoded) {
+             m_output->writeRawData(keyData);
+@@ -929,10 +935,10 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
+ 
+     auto offset = static_cast<uint32_t>(m_actualSize);
+     m_actualSize += size;
+-    auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+ #ifndef MMKV_DISABLE_CRYPT
+     if (m_crypter) {
+-        m_crypter->encrypt(ptr, ptr, m_actualSize);
++        auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size + offset;
++        m_crypter->encrypt(ptr, ptr, size);
+     }
+ #endif
+     recaculateCRCDigestOnly();
 diff --git a/android/build.gradle b/android/build.gradle
 index d91238762ab58c649b262f1135588b765db235b8..62e8aa21c6e14b22effff8e15cb7e54a71356a90 100644
 --- a/android/build.gradle
@@ -12,18 +85,20 @@ index d91238762ab58c649b262f1135588b765db235b8..62e8aa21c6e14b22effff8e15cb7e54a
        }
      }
 diff --git a/android/src/main/cpp/MmkvHostObject.cpp b/android/src/main/cpp/MmkvHostObject.cpp
-index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..9ccc10fc28f5a4a0aebd9ded4c266592d000f781 100644
+index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..44efb8f76433e3b49c6c38b4262c9eb0ea1de385 100644
 --- a/android/src/main/cpp/MmkvHostObject.cpp
 +++ b/android/src/main/cpp/MmkvHostObject.cpp
-@@ -52,6 +52,7 @@ std::vector<jsi::PropNameID> MmkvHostObject::getPropertyNames(jsi::Runtime& rt)
+@@ -52,6 +52,9 @@ std::vector<jsi::PropNameID> MmkvHostObject::getPropertyNames(jsi::Runtime& rt)
    result.push_back(jsi::PropNameID::forUtf8(rt, std::string("getAllKeys")));
    result.push_back(jsi::PropNameID::forUtf8(rt, std::string("deleteAll")));
    result.push_back(jsi::PropNameID::forUtf8(rt, std::string("recrypt")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("sync")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("reload")));
 +  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("trim")));
    return result;
  }
-
-@@ -86,9 +87,9 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+ 
+@@ -86,9 +89,9 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
            } else if (arguments[1].isObject()) {
              // object
              auto object = arguments[1].asObject(runtime);
@@ -35,7 +110,7 @@ index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..9ccc10fc28f5a4a0aebd9ded4c266592
                auto bufferValue = typedArray.getBuffer(runtime);
                mmkv::MMBuffer buffer(bufferValue.data(runtime), bufferValue.size(runtime),
                                      mmkv::MMBufferCopyFlag::MMBufferNoCopy);
-@@ -191,7 +192,7 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+@@ -191,7 +194,7 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
            bool hasValue = instance->getBytes(keyName, buffer);
            if (hasValue) {
              auto length = buffer.length();
@@ -44,10 +119,10 @@ index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..9ccc10fc28f5a4a0aebd9ded4c266592
              auto data = static_cast<const unsigned char*>(buffer.getPtr());
              std::vector<unsigned char> vector(length);
              vector.assign(data, data + length);
-@@ -286,5 +287,18 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+@@ -286,5 +289,39 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
          });
    }
-
+ 
 +  if (propName == "trim") {
 +    // MMKV.trim()
 +    return jsi::Function::createFromHostFunction(
@@ -61,6 +136,27 @@ index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..9ccc10fc28f5a4a0aebd9ded4c266592
 +        });
 +  }
 +
++  if (propName == "sync") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, propName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          instance->sync(MMKV_SYNC);
++          return jsi::Value::undefined();
++        });
++  }
++
++  if (propName == "reload") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, propName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          instance->clearMemoryCache();
++          instance->allKeys();
++          return jsi::Value::undefined();
++        });
++  }
++
    return jsi::Value::undefined();
  }
 diff --git a/android/src/main/cpp/cpp-adapter.cpp b/android/src/main/cpp/cpp-adapter.cpp
@@ -68,7 +164,7 @@ index 976a2789bd3d1437d40ceec84a580afd1f52a97d..d4a728b0bbc8f0fd3f8878409b100d23
 --- a/android/src/main/cpp/cpp-adapter.cpp
 +++ b/android/src/main/cpp/cpp-adapter.cpp
 @@ -37,7 +37,7 @@ void install(jsi::Runtime& jsiRuntime) {
-
+ 
    // Adds the PropNameIDCache object to the Runtime. If the Runtime gets destroyed, the Object gets
    // destroyed and the cache gets invalidated.
 -  auto propNameIdCache = std::make_shared<InvalidateCacheOnDestroy>(jsiRuntime);
@@ -83,11 +179,11 @@ index 5ad11ee6909221b599ac42a4054588ea68126a1a..def1a450d94c8a90212c6b1e4b56d28c
 @@ -15,6 +15,8 @@
  #include <utility>
  #include <vector>
-
+ 
 +namespace rnmmkv {
 +
  template <TypedArrayKind T> using ContentType = typename typedArrayTypeMap<T>::type;
-
+ 
  enum class Prop {
 @@ -320,3 +322,5 @@ template class TypedArray<TypedArrayKind::Uint16Array>;
  template class TypedArray<TypedArrayKind::Uint32Array>;
@@ -97,25 +193,25 @@ index 5ad11ee6909221b599ac42a4054588ea68126a1a..def1a450d94c8a90212c6b1e4b56d28c
 +}
 \ No newline at end of file
 diff --git a/cpp/TypedArray.h b/cpp/TypedArray.h
-index c58140bc012f5ccef3ab9acc128d0ab0eed90635..02db7c168d54143750273194da5213137f412836 100644
+index c58140bc012f5ccef3ab9acc128d0ab0eed90635..a0345ea726ae419e4f7443c3d72af932613018cf 100644
 --- a/cpp/TypedArray.h
 +++ b/cpp/TypedArray.h
 @@ -14,6 +14,8 @@
-
+ 
  namespace jsi = facebook::jsi;
-
+ 
 +namespace rnmmkv {
 +
  enum class TypedArrayKind {
    Int8Array,
    Int16Array,
 @@ -110,7 +112,7 @@ TypedArrayBase getTypedArray(jsi::Runtime& runtime, const jsi::Object& jsObj);
-
+ 
  std::vector<uint8_t> arrayBufferToVector(jsi::Runtime& runtime, jsi::Object& jsObj);
  void arrayBufferUpdate(jsi::Runtime& runtime, jsi::ArrayBuffer& buffer, std::vector<uint8_t> data,
 -                       size_t offset);
 +                      size_t offset);
-
+ 
  template <TypedArrayKind T> class TypedArray : public TypedArrayBase {
  public:
 @@ -151,3 +153,5 @@ template <TypedArrayKind T> TypedArray<T> TypedArrayBase::as(jsi::Runtime& runti
@@ -125,10 +221,20 @@ index c58140bc012f5ccef3ab9acc128d0ab0eed90635..02db7c168d54143750273194da521313
 +
 +}
 diff --git a/ios/MmkvHostObject.mm b/ios/MmkvHostObject.mm
-index 16045fd7d4b020e9fcb10d0550d5668501b385fb..fb80fb9790f40669b6f4ee0bc48ba8798d0317e8 100644
+index 16045fd7d4b020e9fcb10d0550d5668501b385fb..6961bb41ff593667fd5679c7c9d57f7c7ede75a9 100644
 --- a/ios/MmkvHostObject.mm
 +++ b/ios/MmkvHostObject.mm
-@@ -97,9 +97,9 @@
+@@ -64,6 +64,9 @@
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("getAllKeys")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("deleteAll")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("recrypt")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("sync")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("reload")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("trim")));
+   return result;
+ }
+ 
+@@ -97,9 +100,9 @@
            } else if (arguments[1].isObject()) {
              // object
              auto object = arguments[1].asObject(runtime);
@@ -140,7 +246,7 @@ index 16045fd7d4b020e9fcb10d0550d5668501b385fb..fb80fb9790f40669b6f4ee0bc48ba879
                auto bufferValue = typedArray.getBuffer(runtime);
                auto data = [[NSData alloc] initWithBytes:bufferValue.data(runtime)
                                                   length:bufferValue.length(runtime)];
-@@ -198,7 +198,7 @@
+@@ -198,7 +201,7 @@
            auto keyName = convertJSIStringToNSString(runtime, arguments[0].getString(runtime));
            auto data = [instance getDataForKey:keyName];
            if (data != nil) {
@@ -149,10 +255,10 @@ index 16045fd7d4b020e9fcb10d0550d5668501b385fb..fb80fb9790f40669b6f4ee0bc48ba879
              auto charArray = static_cast<const unsigned char*>([data bytes]);
              std::vector<unsigned char> vector(data.length);
              vector.assign(charArray, charArray + data.length);
-@@ -291,5 +291,17 @@
+@@ -291,5 +294,38 @@
          });
    }
-
+ 
 +  if (propName == "trim") {
 +    // MMKV.trim()
 +    return jsi::Function::createFromHostFunction(
@@ -165,6 +271,27 @@ index 16045fd7d4b020e9fcb10d0550d5668501b385fb..fb80fb9790f40669b6f4ee0bc48ba879
 +        });
 +  }
 +
++  if (propName == "sync") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, funcName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          [instance sync];
++          return jsi::Value::undefined();
++        });
++  }
++
++  if (propName == "reload") {
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, funcName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          [instance clearMemoryCache];
++          [instance allKeys];
++          return jsi::Value::undefined();
++        });
++  }
++
    return jsi::Value::undefined();
  }
 diff --git a/ios/MmkvModule.mm b/ios/MmkvModule.mm
@@ -172,22 +299,64 @@ index 85f93830ebaebe7887f77fccc01bccc682413f25..b2974ac1b7df1ae2258b1fa2fcdea033
 --- a/ios/MmkvModule.mm
 +++ b/ios/MmkvModule.mm
 @@ -90,7 +90,7 @@ + (NSString*)getPropertyAsStringOrNilFromObject:(jsi::Object&)object
-
+ 
    // Adds the PropNameIDCache object to the Runtime. If the Runtime gets destroyed, the Object gets
    // destroyed and the cache gets invalidated.
 -  auto propNameIdCache = std::make_shared<InvalidateCacheOnDestroy>(runtime);
 +  auto propNameIdCache = std::make_shared<rnmmkv::InvalidateCacheOnDestroy>(runtime);
    runtime.global().setProperty(runtime, "mmkvArrayBufferPropNameIdCache",
                                 jsi::Object::createFromHostObject(runtime, propNameIdCache));
-
-diff --git a/lib/module/MMKV.js b/lib/module/MMKV.js
-index c7b6cddc2287ea71841eac6fced4a0f02bc527e4..e6f28cedc4476859347b9b4df9c98ac72a026edf 100644
---- a/lib/module/MMKV.js
-+++ b/lib/module/MMKV.js
-@@ -83,6 +83,10 @@ export class MMKV {
+ 
+diff --git a/lib/commonjs/MMKV.js b/lib/commonjs/MMKV.js
+index 291f0ba4f08c10896ea1abbc82c1e631cbf1f53b..b3d1b45f77d09b518f1c5f97989e7deda5a39fbe 100644
+--- a/lib/commonjs/MMKV.js
++++ b/lib/commonjs/MMKV.js
+@@ -89,6 +89,14 @@ class MMKV {
      const func = this.getFunctionFromCache('recrypt');
      return func(key);
    }
++  sync() {
++    const func = this.getFunctionFromCache('sync');
++    return func();
++  }
++  reload() {
++    const func = this.getFunctionFromCache('reload');
++    return func();
++  }
+   toString() {
+     return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
+   }
+diff --git a/lib/commonjs/createMMKV.mock.js b/lib/commonjs/createMMKV.mock.js
+index f48545bb5c79e81c2686986f6cf51988919e9bbf..6f990b3c2fd648f11ca92e1fb256c5c71df95444 100644
+--- a/lib/commonjs/createMMKV.mock.js
++++ b/lib/commonjs/createMMKV.mock.js
+@@ -31,7 +31,9 @@ const createMockMMKV = () => {
+     contains: key => storage.has(key),
+     recrypt: () => {
+       console.warn('Encryption is not supported in mocked MMKV instances!');
+-    }
++    },
++    sync: () => undefined,
++    reload: () => undefined
+   };
+ };
+ exports.createMockMMKV = createMockMMKV;
+diff --git a/lib/module/MMKV.js b/lib/module/MMKV.js
+index c7b6cddc2287ea71841eac6fced4a0f02bc527e4..91915dc228eaf2d4579c66d18593c9c38c9ffc0e 100644
+--- a/lib/module/MMKV.js
++++ b/lib/module/MMKV.js
+@@ -83,6 +83,18 @@ export class MMKV {
+     const func = this.getFunctionFromCache('recrypt');
+     return func(key);
+   }
++  sync() {
++    const func = this.getFunctionFromCache('sync');
++    return func();
++  }
++  reload() {
++    const func = this.getFunctionFromCache('reload');
++    return func();
++  }
 +  trim() {
 +    const func = this.getFunctionFromCache('trim');
 +    return func();
@@ -195,14 +364,34 @@ index c7b6cddc2287ea71841eac6fced4a0f02bc527e4..e6f28cedc4476859347b9b4df9c98ac7
    toString() {
      return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
    }
+diff --git a/lib/module/createMMKV.mock.js b/lib/module/createMMKV.mock.js
+index 31077a2e151b9d305dae5dc316f9c9b7057ca4a3..d8b266db95538099ff934b1c7982b24dc628baa1 100644
+--- a/lib/module/createMMKV.mock.js
++++ b/lib/module/createMMKV.mock.js
+@@ -25,7 +25,9 @@ export const createMockMMKV = () => {
+     contains: key => storage.has(key),
+     recrypt: () => {
+       console.warn('Encryption is not supported in mocked MMKV instances!');
+-    }
++    },
++    sync: () => undefined,
++    reload: () => undefined
+   };
+ };
+ //# sourceMappingURL=createMMKV.mock.js.map
+\ No newline at end of file
 diff --git a/lib/typescript/MMKV.d.ts b/lib/typescript/MMKV.d.ts
-index 98de6b8fefec0ffcc46de4544d8c3cfb002d342c..f2d0b4f2c9f1db500a431fe64472847dcd68ea83 100644
+index 98de6b8fefec0ffcc46de4544d8c3cfb002d342c..e096c486c94bb4509c2d606a5f5f164e8d6f88cd 100644
 --- a/lib/typescript/MMKV.d.ts
 +++ b/lib/typescript/MMKV.d.ts
-@@ -100,6 +100,16 @@ interface MMKVInterface {
+@@ -100,6 +100,20 @@ interface MMKVInterface {
       * Encryption keys can have a maximum length of 16 bytes.
       */
      recrypt: (key: string | undefined) => void;
++    /** Flushes this MMKV instance to disk. */
++    sync: () => void;
++    /** Clears the native cache and forces the next read to decode the file. */
++    reload: () => void;
 +    /**
 +     * Trims the storage space and clears memory cache.
 +     *
@@ -216,19 +405,21 @@ index 98de6b8fefec0ffcc46de4544d8c3cfb002d342c..f2d0b4f2c9f1db500a431fe64472847d
      /**
       * Adds a value changed listener. The Listener will be called whenever any value
       * in this storage instance changes (set or delete).
-@@ -108,7 +118,7 @@ interface MMKVInterface {
+@@ -108,7 +122,7 @@ interface MMKVInterface {
       */
      addOnValueChangedListener: (onValueChanged: (key: string) => void) => Listener;
  }
 -export type NativeMMKV = Pick<MMKVInterface, 'clearAll' | 'contains' | 'delete' | 'getAllKeys' | 'getBoolean' | 'getNumber' | 'getString' | 'getBuffer' | 'set' | 'recrypt'>;
-+export type NativeMMKV = Pick<MMKVInterface, 'clearAll' | 'contains' | 'delete' | 'getAllKeys' | 'getBoolean' | 'getNumber' | 'getString' | 'getBuffer' | 'set' | 'recrypt' | 'trim'>;
++export type NativeMMKV = Pick<MMKVInterface, 'clearAll' | 'contains' | 'delete' | 'getAllKeys' | 'getBoolean' | 'getNumber' | 'getString' | 'getBuffer' | 'set' | 'recrypt' | 'sync' | 'reload' | 'trim'>;
  /**
   * A single MMKV instance.
   */
-@@ -134,6 +144,7 @@ export declare class MMKV implements MMKVInterface {
+@@ -134,6 +148,9 @@ export declare class MMKV implements MMKVInterface {
      getAllKeys(): string[];
      clearAll(): void;
      recrypt(key: string | undefined): void;
++    sync(): void;
++    reload(): void;
 +    trim(): void;
      toString(): string;
      toJSON(): object;
@@ -240,20 +431,24 @@ index 599f39e20baad5a1db037a80560f5105a0ad7d20..34c5f847d787e44f53f7ed7da632a3ed
 @@ -27,7 +27,7 @@ Pod::Spec.new do |s|
      'ios/**/*.h'
    ]
-
+ 
 -  s.dependency "MMKV", ">= 1.3.3"
 +  s.dependency "MMKV", "= 1.3.5"
    if respond_to?(:install_modules_dependencies, true)
      install_modules_dependencies(s)
    else
 diff --git a/src/MMKV.ts b/src/MMKV.ts
-index 973a5e74244c28ab22c47b2bffba078e20b84fe1..5b32d703ff898c2ad732f011c54d259e1027fde0 100644
+index 973a5e74244c28ab22c47b2bffba078e20b84fe1..61cfe0851fb438fc1bacbbbb7bb75d8edf689c81 100644
 --- a/src/MMKV.ts
 +++ b/src/MMKV.ts
-@@ -106,6 +106,16 @@ interface MMKVInterface {
+@@ -106,6 +106,20 @@ interface MMKVInterface {
     * Encryption keys can have a maximum length of 16 bytes.
     */
    recrypt: (key: string | undefined) => void;
++  /** Flushes this MMKV instance to disk. */
++  sync: () => void;
++  /** Clears the native cache and forces the next read to decode the file. */
++  reload: () => void;
 +  /**
 +   * Trims the storage space and clears memory cache.
 +   *
@@ -267,33 +462,45 @@ index 973a5e74244c28ab22c47b2bffba078e20b84fe1..5b32d703ff898c2ad732f011c54d259e
    /**
     * Adds a value changed listener. The Listener will be called whenever any value
     * in this storage instance changes (set or delete).
-@@ -129,6 +139,7 @@ export type NativeMMKV = Pick<
+@@ -129,6 +143,9 @@ export type NativeMMKV = Pick<
    | 'getBuffer'
    | 'set'
    | 'recrypt'
++  | 'sync'
++  | 'reload'
 +  | 'trim'
  >;
-
+ 
  const onValueChangedListeners = new Map<string, ((key: string) => void)[]>();
-@@ -227,6 +238,10 @@ export class MMKV implements MMKVInterface {
+@@ -227,6 +244,18 @@ export class MMKV implements MMKVInterface {
      const func = this.getFunctionFromCache('recrypt');
      return func(key);
    }
++  sync(): void {
++    const func = this.getFunctionFromCache('sync');
++    return func();
++  }
++  reload(): void {
++    const func = this.getFunctionFromCache('reload');
++    return func();
++  }
 +  trim() {
 +    const func = this.getFunctionFromCache('trim');
 +    return func();
 +  }
-
+ 
    toString(): string {
      return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
 diff --git a/src/createMMKV.mock.ts b/src/createMMKV.mock.ts
-index c81bb57129a2934e4647a5f3dfc06a4bb15be198..29ebc9168ef7a58dc11abeb4f3992e2b5c66d6f9 100644
+index c81bb57129a2934e4647a5f3dfc06a4bb15be198..e3b1b7a0bd1e03adf97c39e05f1965d50c8fff0d 100644
 --- a/src/createMMKV.mock.ts
 +++ b/src/createMMKV.mock.ts
-@@ -29,5 +29,8 @@ export const createMockMMKV = (): NativeMMKV => {
+@@ -29,5 +29,10 @@ export const createMockMMKV = (): NativeMMKV => {
      recrypt: () => {
        console.warn('Encryption is not supported in mocked MMKV instances!');
      },
++    sync: () => undefined,
++    reload: () => undefined,
 +    trim: () => {
 +      console.warn('trim() is not supported in mocked MMKV instances!');
 +    }
