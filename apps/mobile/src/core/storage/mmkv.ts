@@ -23,9 +23,15 @@ import {
   zMutative,
   zPersist,
 } from '../utils/reexports';
-import { appMMKV, keyringMMKV } from './mmkvInstances';
+import { appMMKV, keyringCheckpointMMKV, keyringMMKV } from './mmkvInstances';
 import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
 import { unwrapDuplicatedJsonString } from './mmkvJsonCompat';
+import {
+  hasValidPersistedKeyringState,
+  normalizePersistedKeyringState,
+  persistKeyringState,
+  type KeyringStateMigrationWriteEvent,
+} from './keyringStateMigration';
 // import { lendingCacheStorage } from '@/screens/Lending/hooks';
 
 export function getJsonValueStringCompat(
@@ -131,27 +137,16 @@ const { storage: keyringStorage, mmkv: keyringMMKVInstance } =
     encryptionKey: 'keyring',
   });
 
-export function normalizeKeyringState() {
-  const legacyData = appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
-  const result = {
-    legacyData,
-    keyringData:
-      keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) || legacyData,
-  };
-
-  if (legacyData) appMMKVInstance.trim();
-
-  // console.debug('result.legacyData', result.legacyData);
-  // console.debug('result.keyringData', result.keyringData);
-  if (!result.legacyData) return result;
-
-  keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, result.legacyData);
-  result.keyringData = result.legacyData;
-
-  appStorage.removeItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
-  appMMKVInstance.trim();
-
-  return result;
+export function normalizeKeyringState(options?: {
+  onKeyringStateWrite?(event: KeyringStateMigrationWriteEvent): void;
+}) {
+  return normalizePersistedKeyringState({
+    key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+    keyringStorage: keyringMMKVInstance,
+    checkpointStorage: keyringCheckpointMMKV,
+    legacyStorage: appMMKVInstance,
+    onKeyringStateWrite: options?.onKeyringStateWrite,
+  });
 }
 
 export const appMMKVForDebug = __DEV__
@@ -160,11 +155,28 @@ export const appMMKVForDebug = __DEV__
 export const keyringMMKVForDebug = __DEV__
   ? keyringMMKVInstance
   : (null as any as typeof keyringMMKVInstance);
-export { appStorage, keyringStorage, appMMKVInstance, keyringMMKVInstance };
+export {
+  appStorage,
+  keyringStorage,
+  appMMKVInstance,
+  keyringMMKVInstance,
+  keyringCheckpointMMKV,
+  persistKeyringState,
+};
 
 export const IS_BOOTED_USER =
-  !!appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) ||
-  !!keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
+  hasValidPersistedKeyringState(
+    appMMKVInstance,
+    APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+  ) ||
+  hasValidPersistedKeyringState(
+    keyringMMKVInstance,
+    APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+  ) ||
+  hasValidPersistedKeyringState(
+    keyringCheckpointMMKV,
+    APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+  );
 
 export const enum MMKVStorageStrategy {
   'legacy' = -1,
@@ -416,6 +428,7 @@ export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
         default:
         case MMKV_FILE_NAMES.DEFAULT:
         case MMKV_FILE_NAMES.KEYRING:
+        case MMKV_FILE_NAMES.KEYRING_CHECKPOINT:
         case MMKV_FILE_NAMES.KEYCHAIN: {
           if (fileExist) {
             RNHelpers.iosExcludeFileFromBackup(filePath).then(success => {
