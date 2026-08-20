@@ -18,6 +18,9 @@ export type LaunchTaskLoaderCatalog = {
   computationWorkerPrewarm: LaunchTaskModuleLoader<{
     requestComputationThreadStart: (reason?: string) => unknown;
   }>;
+  customTestnetSnapshotHydration: LaunchTaskModuleLoader<{
+    ensureCustomTestnetStoreHydrated: () => unknown | Promise<unknown>;
+  }>;
   globalNetworkPolling: LaunchTaskModuleLoader<{
     startGlobalNetworkPolling: () => unknown;
   }>;

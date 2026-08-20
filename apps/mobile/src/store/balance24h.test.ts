@@ -4,7 +4,9 @@ describe('store/balance24h', () => {
   const mockSetBalance24hCache = jest.fn();
   const mockComputeTotalBalance = jest.fn();
   const mockGetBalanceCacheAccounts = jest.fn();
+  const mockGetSelectedBalanceAddressesSnapshot = jest.fn(() => [] as string[]);
   const mockGetTop10MyAccounts = jest.fn();
+  const mockIsHomeAssetSelectionExperimentEnabled = jest.fn(() => false);
   const mockPerfEmit = jest.fn();
   let mockBalanceValueMap: Record<
     string,
@@ -54,6 +56,10 @@ describe('store/balance24h', () => {
       getTop10MyAccounts: (...args: unknown[]) =>
         mockGetTop10MyAccounts(...args),
     }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      isHomeAssetSelectionExperimentEnabled: (...args: unknown[]) =>
+        mockIsHomeAssetSelectionExperimentEnabled(...args),
+    }));
     jest.doMock('@/core/services', () => ({
       keyringService: {
         on: jest.fn(),
@@ -79,10 +85,21 @@ describe('store/balance24h', () => {
           balance: mockGetBalanceCacheAccounts(),
         })),
       },
+      getSelectedBalanceAddressesSnapshot: (...args: unknown[]) =>
+        mockGetSelectedBalanceAddressesSnapshot(...args),
       accountsBalanceEvents: {
         on: jest.fn(),
       },
     }));
+
+    mockGetSelectedBalanceAddressesSnapshot.mockReset();
+    mockGetSelectedBalanceAddressesSnapshot.mockReturnValue([]);
+    mockGetTop10MyAccounts.mockReset();
+    mockGetTop10MyAccounts.mockResolvedValue({
+      top10Addresses: [],
+    });
+    mockIsHomeAssetSelectionExperimentEnabled.mockReset();
+    mockIsHomeAssetSelectionExperimentEnabled.mockReturnValue(false);
 
     balance24hModule = require('./balance24h');
   });
@@ -137,6 +154,56 @@ describe('store/balance24h', () => {
       sourceOfCurrentValue: 'hydrate',
       hasValue: true,
     });
+  });
+
+  it('uses the active balance selection instead of re-reading the legacy Top-10 list', async () => {
+    mockGetSelectedBalanceAddressesSnapshot.mockReturnValue([
+      '0xselected-a',
+      '0xselected-b',
+    ]);
+    mockGetBalance24hCache.mockReturnValue(null);
+    mockFetch24hBalance.mockResolvedValue({
+      data: { total_usd_value: 1 },
+      updateTime: 1,
+    });
+
+    await balance24hModule.scene24hBalanceStore.refresh24hAssets({
+      reason: 'manual_refresh',
+    });
+
+    expect(mockFetch24hBalance.mock.calls.map(([address]) => address)).toEqual([
+      '0xselected-a',
+      '0xselected-b',
+    ]);
+  });
+
+  it('retains the legacy Top-10 fallback until normal selection resolves', async () => {
+    mockGetTop10MyAccounts.mockResolvedValue({
+      top10Addresses: ['0xlegacy'],
+    });
+    mockGetBalance24hCache.mockReturnValue(null);
+    mockFetch24hBalance.mockResolvedValue({
+      data: { total_usd_value: 1 },
+      updateTime: 1,
+    });
+
+    await balance24hModule.scene24hBalanceStore.refresh24hAssets({
+      reason: 'manual_refresh',
+    });
+
+    expect(mockGetTop10MyAccounts).toHaveBeenCalledTimes(1);
+    expect(mockFetch24hBalance).toHaveBeenCalledWith('0xlegacy');
+  });
+
+  it('does not fall back to Top-10 while an experimental selection is unresolved', async () => {
+    mockIsHomeAssetSelectionExperimentEnabled.mockReturnValue(true);
+
+    await balance24hModule.scene24hBalanceStore.refresh24hAssets({
+      reason: 'manual_refresh',
+    });
+
+    expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
+    expect(mockFetch24hBalance).not.toHaveBeenCalled();
   });
 
   it('updates in-memory cache before scheduling persistence when fetching fresh data', async () => {

@@ -31,7 +31,7 @@ import useProtocols, {
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
-import { useAccountInfo } from './hooks';
+import { useHomeAssetAccountInfo } from './hooks';
 import addressBalanceStore from '@/store/balance';
 import {
   HOME_TOP_HEADER_SIZES,
@@ -135,7 +135,7 @@ export const ProtocolList = () => {
     ? regressionScenario.report
     : null;
 
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
   const [showAllProtocols, setShowAllProtocols] = useState(false);

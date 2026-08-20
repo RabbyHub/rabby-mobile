@@ -258,6 +258,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
 
   const {
     sections: customTestnetSections,
+    hydrationState: customTestnetHydrationState,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
   } = useSingleAddressCustomTestnetAssetSections(currentAddress);
@@ -266,6 +267,10 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     !isWatchOrSafeAccount(currentAccount) &&
     !selectedChain &&
     !isLpTokenEnabled;
+  const isCustomTestnetSnapshotPending =
+    shouldShowCustomTestnetSections &&
+    customTestnetHydrationState !== 'ready' &&
+    customTestnetHydrationState !== 'failed';
 
   const singleAssetsKey = useMemo(() => {
     if (!lowerAddress) {
@@ -363,6 +368,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
+    customTestnetHydrationState === 'ready' &&
     hasRequestedTokenList &&
     !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
@@ -371,6 +377,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     hasDefaultTokenData || visibleCustomTestnetSections.length > 0;
   const isTokenContentReady =
     isTokenProjectionReady &&
+    !isCustomTestnetSnapshotPending &&
     (hasVisibleTokenContent ||
       (hasRequestedTokenList &&
         isTokenListRequestSettled &&
@@ -467,7 +474,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     : ('lowValueDefault' as const);
   const hasAdditionalSection = hasAdditionalTokens || isLpTokenEnabled;
   const shouldShowInitialLoading =
-    (isLoading || isTokenProjectionLoading) &&
+    (isLoading || isTokenProjectionLoading || isCustomTestnetSnapshotPending) &&
     projectedTokenCount === 0 &&
     visibleCustomTestnetSections.length === 0;
   const shouldShowLpLoading =
@@ -475,7 +482,10 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     isLpTokenEnabled &&
     selectedAdditionalTokenCount + selectedLowValueTokenCount === 0;
   const shouldShowEmpty =
-    !isLoading && projectedTokenCount === 0 && !hasLpTokens;
+    !isLoading &&
+    !isCustomTestnetSnapshotPending &&
+    projectedTokenCount === 0 &&
+    !hasLpTokens;
   const sectionSpecs = useMemo<
     TokenProjectionSectionSpec<TokenListExtraItem>[]
   >(() => {
