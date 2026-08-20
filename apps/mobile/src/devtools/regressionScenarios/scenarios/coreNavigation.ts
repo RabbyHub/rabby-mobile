@@ -908,6 +908,20 @@ function getHighCardinalityFixtureAddressCount(value?: string) {
   return 20;
 }
 
+type HighCardinalityAssetProbeMode = 'local' | 'refresh';
+
+function getHighCardinalityAssetProbeMode(
+  value?: string,
+): HighCardinalityAssetProbeMode {
+  if (!value || value === 'refresh') {
+    return 'refresh';
+  }
+  if (value === 'local') {
+    return value;
+  }
+  throw new Error('assetProbeMode must be either local or refresh');
+}
+
 async function waitForHomeAssetSelection(expectedCount: number) {
   const startedAt = Date.now();
 
@@ -947,6 +961,9 @@ async function openHighCardinalityAssets(
   const fixture = await consumeRegressionWatchAddressFixture(fixtureId);
   const requestedAddressCount = getHighCardinalityFixtureAddressCount(
     context.command.params.addressCount,
+  );
+  const assetProbeMode = getHighCardinalityAssetProbeMode(
+    context.command.params.assetProbeMode,
   );
   const addresses = fixture.addresses.slice(0, requestedAddressCount);
   if (addresses.length !== requestedAddressCount) {
@@ -1009,6 +1026,7 @@ async function openHighCardinalityAssets(
     expectedSelectionCount,
     homeAssetTopN: settings.topN,
     includeWatchAddresses: settings.includeWatchAddresses,
+    assetProbeMode,
   });
   context.report('assertion', {
     assertion: 'high-cardinality-address-selection-ready',
@@ -1035,12 +1053,15 @@ async function openHighCardinalityAssets(
     const visualReadyStartedAt = Date.now();
     await openHomeAssets(context, {
       defaultTabs: '1,2',
-      triggerManualRefresh: true,
+      triggerManualRefresh: assetProbeMode === 'refresh',
       waitForTabReadyAssertions: false,
-      expectedAssetDataLoadDomainsByTab: {
-        1: ['multi-address-token'],
-        2: ['multi-address-protocol'],
-      },
+      expectedAssetDataLoadDomainsByTab:
+        assetProbeMode === 'refresh'
+          ? {
+              1: ['multi-address-token'],
+              2: ['multi-address-protocol'],
+            }
+          : undefined,
       assetDataLoadStartTimeoutMs,
       profileTabIndex: 1,
       performanceProbe: probe,
@@ -1066,6 +1087,7 @@ async function openHighCardinalityAssets(
   context.report('postcondition-ready', {
     route: navigationRef.getCurrentRoute()?.name || null,
     selectedAddressCount: getSelectedBalanceAddressesSnapshot().length,
+    assetProbeMode,
   });
 }
 
