@@ -565,10 +565,11 @@ export const PerpsProScene: React.FC<{
                       onSelectTickOption={scene.selectTickOption}
                       onSelectPrice={
                         scene.tradeConfigurationReady &&
-                        trade.form.orderType === 'limit' &&
-                        !trade.form.bboEnabled
+                        ((trade.form.orderType === 'limit' &&
+                          !trade.form.bboEnabled) ||
+                          trade.form.orderType === 'conditional')
                           ? price =>
-                              trade.selectManualLimitPrice(
+                              trade.selectOrderBookPrice(
                                 price,
                                 scene.currentMarket!.marketKey,
                               )

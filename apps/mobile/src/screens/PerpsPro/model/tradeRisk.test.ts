@@ -97,6 +97,79 @@ describe('resolvePerpsProProjectedTradeRisk', () => {
     );
   });
 
+  it('replaces current target maintenance when projecting cross-position growth', () => {
+    resolve({
+      currentPosition: {
+        entryPx: '80',
+        positionValue: '-100',
+        szi: '-1',
+      },
+      marginMode: 'cross',
+      side: 'sell',
+    });
+    expect(calculateLiquidationPrice).toHaveBeenCalledWith(
+      280 / 3,
+      992.5,
+      'Short',
+      3,
+      280,
+      20,
+    );
+  });
+
+  it('falls back to Mark notional when current position value is unavailable', () => {
+    resolve({
+      currentPosition: {
+        entryPx: '80',
+        szi: '-1',
+      },
+      marginMode: 'cross',
+      side: 'sell',
+    });
+    expect(calculateLiquidationPrice).toHaveBeenCalledWith(
+      280 / 3,
+      992.5,
+      'Short',
+      3,
+      280,
+      20,
+    );
+  });
+
+  it('reproduces the corrected BTC-USDE screenshot projection for both sides', () => {
+    const facts = {
+      calculateLiquidationPrice: calculateProtocolLiquidationPrice,
+      crossMarginAvailableAfterMaintenance: '82.79',
+      currentPosition: {
+        entryPx: '64169',
+        positionValue: '-184.59165',
+        szi: '-0.00285',
+      },
+      entryPrice: '64769',
+      leverage: 12,
+      marginMode: 'cross' as const,
+      markPrice: '64769',
+      maxLeverage: 40,
+      pxDecimals: 0,
+    };
+
+    expect(
+      resolvePerpsProProjectedTradeRisk({
+        ...facts,
+        baseSize: '0.008',
+        entryPrice: '64770',
+        side: 'buy',
+      }),
+    ).toMatchObject({ liquidationPrice: '48857', projectedSize: '0.00515' });
+    expect(
+      resolvePerpsProProjectedTradeRisk({
+        ...facts,
+        baseSize: '0.00555',
+        side: 'sell',
+      }),
+    ).toMatchObject({ liquidationPrice: '73774', projectedSize: '0.0084' });
+  });
+
   it('reproduces the Unified NVDA 37% long and short liquidation prices', () => {
     const facts = {
       baseSize: '1.13',
