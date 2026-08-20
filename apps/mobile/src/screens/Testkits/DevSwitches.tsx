@@ -102,8 +102,12 @@ import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
 import { getKeyring } from '@/core/apis/keyring';
 import type { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  type BottomSheetModal,
+} from '@gorhom/bottom-sheet';
 import type { SharedValue } from 'react-native-reanimated';
+import type { Code } from 'react-native-vision-camera';
 import {
   useAnimatedProps,
   useAnimatedStyle,
@@ -113,6 +117,9 @@ import {
 import { useDappsViewConfig } from '../Dapps/hooks/useDappView';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { getScreenshotFeedbackExtra } from '@/components/Screenshot/utils';
+import { CameraPopup } from '../Address/components/CameraPopup';
+import { parseRegressionWatchAddressFixture } from '@/devtools/regressionScenarios/fixture.nonprod';
+import { importHighCardinalityWatchAddresses } from '@/devtools/highCardinalityWatchAddressImport.nonprod';
 import {
   get0331SnapshotResetAt,
   report0331SnapshotScenarioOptions,
@@ -1621,7 +1628,7 @@ function DevSwitchPerpsWatchAddress() {
 }
 
 function DevSwitchHomeAssetSelection() {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const {
     topN,
     includeWatchAddresses,
@@ -1629,6 +1636,57 @@ function DevSwitchHomeAssetSelection() {
     setTopN,
     setIncludeWatchAddresses,
   } = useHomeAssetSelectionSettings();
+  const cameraRef = useRef<BottomSheetModal>(null);
+  const scanConsumedRef = useRef(false);
+  const [isImportingFixture, setIsImportingFixture] = useState(false);
+  const [fixtureImportSummary, setFixtureImportSummary] = useState<string>();
+
+  const importScannedFixture = useCallback(async (payload: string) => {
+    setIsImportingFixture(true);
+    setFixtureImportSummary('Preparing benchmark addresses...');
+    try {
+      const fixture = parseRegressionWatchAddressFixture(payload);
+      const result = await importHighCardinalityWatchAddresses(
+        fixture.addresses,
+        {
+          onProgress: ({ completedCount, totalCount }) => {
+            setFixtureImportSummary(
+              `Importing benchmark addresses ${completedCount}/${totalCount}`,
+            );
+          },
+        },
+      );
+      const summary =
+        `Fixture ${fixture.addresses.length}; imported ${result.importedCount}; ` +
+        `existing ${result.existingCount}; missing ${result.missingCount}.`;
+      setFixtureImportSummary(summary);
+      if (result.failedCount > 0 || result.missingCount > 0) {
+        toast.error('Benchmark address import is incomplete');
+      } else {
+        toast.success('Benchmark addresses are ready');
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Benchmark import failed';
+      setFixtureImportSummary(message);
+      toast.error(message);
+    } finally {
+      setIsImportingFixture(false);
+    }
+  }, []);
+
+  const onFixtureCodeScanned = useCallback(
+    (codes: Code[]) => {
+      const payload = codes[0]?.value?.trim();
+      if (!payload || scanConsumedRef.current || isImportingFixture) {
+        return;
+      }
+      scanConsumedRef.current = true;
+      cameraRef.current?.close();
+      importScannedFixture(payload).catch(() => undefined);
+    },
+    [importScannedFixture, isImportingFixture],
+  );
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -1687,6 +1745,32 @@ function DevSwitchHomeAssetSelection() {
           : 'Production-compatible default: Top 10 owned addresses.'}{' '}
         Production builds always keep the default policy.
       </Text>
+      <Button
+        title="Scan benchmark addresses"
+        type="ghost"
+        height={44}
+        loading={isImportingFixture}
+        icon={
+          <RcIconScannerCC
+            width={20}
+            height={20}
+            color={colors2024['brand-default']}
+          />
+        }
+        containerStyle={{ width: '100%' }}
+        onPress={() => {
+          scanConsumedRef.current = false;
+          cameraRef.current?.present();
+        }}
+      />
+      {fixtureImportSummary ? (
+        <Text style={styles.metaLabel}>{fixtureImportSummary}</Text>
+      ) : null}
+      <CameraPopup
+        ref={cameraRef}
+        tip="Scan a benchmark address fixture"
+        onCodeScanned={onFixtureCodeScanned}
+      />
     </View>
   );
 }

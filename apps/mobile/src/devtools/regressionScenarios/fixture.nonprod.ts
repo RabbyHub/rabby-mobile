@@ -1,11 +1,16 @@
 import RNFS from '@rabby-wallet/react-native-fs';
+import {
+  decodeRegressionWatchAddressQrPayload,
+  normalizeRegressionWatchAddresses,
+  REGRESSION_WATCH_ADDRESS_QR_PREFIX,
+} from './watchAddressFixturePayload.nonprod';
+
+export { MAX_REGRESSION_WATCH_ADDRESS_FIXTURE_ADDRESSES } from './watchAddressFixturePayload.nonprod';
 
 const FIXTURE_DIRECTORY = 'rabby-regression-fixtures';
 const MAX_FIXTURE_BYTES = 128 * 1024;
 const PRIVATE_KEY_PATTERN = /(?:0x)?[a-fA-F0-9]{64}/g;
 const EVM_ADDRESS_PATTERN = /0x[a-fA-F0-9]{40}/g;
-
-export const MAX_REGRESSION_WATCH_ADDRESS_FIXTURE_ADDRESSES = 100;
 
 export type RegressionWalletFixture = {
   privateKeys: string[];
@@ -76,24 +81,6 @@ function parseFixtureText(contents: string): RegressionWalletFixture {
   };
 }
 
-function normalizeWatchAddresses(addresses: string[]) {
-  const normalized = addresses.map(address => address.trim().toLowerCase());
-  if (normalized.some(address => !/^0x[a-f0-9]{40}$/.test(address))) {
-    throw new Error('Watch-address fixture contains an invalid EVM address');
-  }
-
-  const uniqueAddresses = [...new Set(normalized)];
-  if (!uniqueAddresses.length) {
-    throw new Error('Watch-address fixture contains no EVM addresses');
-  }
-  if (uniqueAddresses.length > MAX_REGRESSION_WATCH_ADDRESS_FIXTURE_ADDRESSES) {
-    throw new Error(
-      `Watch-address fixture exceeds ${MAX_REGRESSION_WATCH_ADDRESS_FIXTURE_ADDRESSES} addresses`,
-    );
-  }
-  return uniqueAddresses;
-}
-
 function parseWatchAddressFixtureJson(
   value: unknown,
 ): RegressionWatchAddressFixture {
@@ -124,7 +111,7 @@ function parseWatchAddressFixtureJson(
   }
 
   return {
-    addresses: normalizeWatchAddresses(rawAddresses),
+    addresses: normalizeRegressionWatchAddresses(rawAddresses),
   };
 }
 
@@ -132,6 +119,11 @@ export function parseRegressionWatchAddressFixture(
   contents: string,
 ): RegressionWatchAddressFixture {
   const trimmed = contents.trim();
+  if (trimmed.startsWith(REGRESSION_WATCH_ADDRESS_QR_PREFIX)) {
+    return {
+      addresses: decodeRegressionWatchAddressQrPayload(trimmed),
+    };
+  }
   // A Watch-address probe must never accept a wallet fixture by accident.
   // Otherwise a 0x-prefixed private key would also match the first 40 hex
   // characters of the address pattern below.
@@ -146,7 +138,7 @@ export function parseRegressionWatchAddressFixture(
   }
 
   return {
-    addresses: normalizeWatchAddresses(
+    addresses: normalizeRegressionWatchAddresses(
       trimmed.match(EVM_ADDRESS_PATTERN) || [],
     ),
   };

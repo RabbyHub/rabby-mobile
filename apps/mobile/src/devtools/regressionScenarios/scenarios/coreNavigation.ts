@@ -31,7 +31,6 @@ import {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from '@/store/balance';
-import { addWatchAddress } from '@/core/apis/address';
 import {
   getHomeAssetSelectionSettings,
   isHomeAssetSelectionExperimentEnabled,
@@ -40,7 +39,6 @@ import {
 } from '@/hooks/appSettings';
 import { ensureAccountBalanceSelectionLifecycle } from '@/store/balanceAccountSelection';
 import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
-import accountStore from '@/store/account';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { findChain, findChainByEnum, makeTokenFromChain } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
@@ -49,6 +47,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
 import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
 import { consumeRegressionWatchAddressFixture } from '../fixture.nonprod';
+import { importHighCardinalityWatchAddresses } from '../../highCardinalityWatchAddressImport.nonprod';
 import {
   compactRegressionScenarioPerformanceSummary,
   createRegressionScenarioPerformanceProbe,
@@ -971,29 +970,12 @@ async function openHighCardinalityAssets(
   setHomeAssetTopN(10);
   setIncludeWatchAddressesInHomeAssetSelection(false);
 
-  const beforeAccounts = await accountStore.fetchAccounts({ force: true });
-  const existingAddresses = new Set(
-    beforeAccounts.map(account => account.address.toLowerCase()),
-  );
-  let importedCount = 0;
-
-  for (const address of addresses) {
-    if (existingAddresses.has(address)) {
-      continue;
-    }
-    await addWatchAddress(address);
-    existingAddresses.add(address);
-    importedCount += 1;
-  }
-
-  const accounts = await accountStore.fetchAccounts({ force: true });
-  const visibleAddresses = new Set(
-    accounts.map(account => account.address.toLowerCase()),
-  );
-  const fixtureAddressCount = addresses.filter(address =>
-    visibleAddresses.has(address),
-  ).length;
-  if (fixtureAddressCount !== addresses.length) {
+  const importResult = await importHighCardinalityWatchAddresses(addresses);
+  const { accounts, fixtureAddressCount, importedCount } = importResult;
+  if (
+    fixtureAddressCount !== addresses.length ||
+    importResult.failedCount > 0
+  ) {
     throw new Error('One or more fixture watch addresses are not visible');
   }
 

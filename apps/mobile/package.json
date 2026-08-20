@@ -41,6 +41,7 @@
     "module-loading:check": "node ./scripts/check-module-loading-mode.cjs",
     "perf:entry-tree": "node ./perf/print-entry-tree.cjs",
     "prepublish:release": "node ./scripts/prepublish-release.cjs",
+    "regression:watch-address-qr": "node ./scripts/generate-watch-address-fixture-qr.mjs",
     "restart": "yarn start --reset-cache",
     "rnversion": "yarn syncrnversion && yarn android:buildversion",
     "start": "node ./scripts/start-dev.cjs lean",
