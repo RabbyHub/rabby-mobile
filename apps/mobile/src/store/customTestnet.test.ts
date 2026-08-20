@@ -11,6 +11,8 @@ jest.mock('@/core/utils/reexports', () => {
 import {
   buildCustomTestnetAssetSections,
   getCustomTestnetAssetSections,
+  markCustomTestnetStoreHydrating,
+  markCustomTestnetStoreHydrationFailed,
   syncCustomTestnetStore,
   useCustomTestnetStore,
 } from './customTestnet';
@@ -30,8 +32,28 @@ describe('store/customTestnet', () => {
     useCustomTestnetStore.setState({
       customTestnet: {},
       customTokenList: [],
+      hydrationState: 'pending',
       revision: 0,
     });
+  });
+
+  it('keeps the initial empty snapshot distinct from a hydrated empty snapshot', () => {
+    expect(useCustomTestnetStore.getState().hydrationState).toBe('pending');
+
+    markCustomTestnetStoreHydrating();
+    expect(useCustomTestnetStore.getState().hydrationState).toBe('hydrating');
+
+    syncCustomTestnetStore({
+      customTestnet: {},
+      customTokenList: [],
+    });
+    expect(useCustomTestnetStore.getState().hydrationState).toBe('ready');
+
+    markCustomTestnetStoreHydrating();
+    expect(useCustomTestnetStore.getState().hydrationState).toBe('ready');
+
+    markCustomTestnetStoreHydrationFailed();
+    expect(useCustomTestnetStore.getState().hydrationState).toBe('ready');
   });
 
   it('builds native and custom token sections from custom testnet state', () => {

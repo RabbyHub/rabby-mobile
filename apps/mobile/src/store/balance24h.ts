@@ -12,6 +12,7 @@ import {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from './balance';
+import { isHomeAssetSelectionExperimentEnabled } from '@/hooks/appSettings';
 import { formatSmallUsdValue } from './curveShared';
 import { formatUsdValue } from '@/utils/number';
 import { debounce, isEqual } from 'lodash';
@@ -143,7 +144,7 @@ const build24hTraceDetail = (
 
 async function getSelectedBalanceAddressesOrTop10Fallback() {
   const selectedAddresses = getSelectedBalanceAddressesSnapshot();
-  if (selectedAddresses.length) {
+  if (selectedAddresses.length || isHomeAssetSelectionExperimentEnabled()) {
     return selectedAddresses;
   }
 

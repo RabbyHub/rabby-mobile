@@ -5,7 +5,7 @@ import {
   DisplayNftItem,
 } from '../types';
 import { useMemo } from 'react';
-import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { useHomeAssetAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import nftListStore, {
   combinedNfts,
   getAssetsMapDirectly,
@@ -87,7 +87,7 @@ export function useAssetsNFTs({
 }) {
   const globalNftsMap = nftListStore(s => s.nftsMap);
 
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
 
   const memoNfts = useMemo(() => {
     if (hideCombined) {

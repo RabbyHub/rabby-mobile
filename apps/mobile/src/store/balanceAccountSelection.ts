@@ -2,10 +2,15 @@ import { unionBy } from 'lodash';
 
 import {
   filterMyAccounts,
-  filterOutTop10Accounts,
   getAccountList,
   sortAccountList,
 } from '@/core/apis/account';
+import {
+  getHomeAssetSelectionSettings,
+  isHomeAssetSelectionExperimentEnabled,
+  subscribeHomeAssetSelectionSettings,
+  type HomeAssetSelectionSettings,
+} from '@/hooks/appSettings';
 import {
   bindKeyringEventAfterRegistration,
   isKeyringUnlockedSnapshot,
@@ -19,34 +24,44 @@ import addressBalanceStore, {
   setAccountBalanceSelectionSnapshotGetter,
   startProcessAddressBalanceEvents,
 } from './balance';
+import { pickHomeAccountSelectionFromSortedAccounts } from './homePortfolio/accountSelection';
 
-function pickSelectedAccountsFromSortedAccounts(sortedAccounts: Account[]) {
-  const { top10Accounts, top10Addresses } = filterOutTop10Accounts(
-    sortedAccounts,
-    {
-      gatherSameAddress: false,
-    },
-  );
+export function pickSelectedAccountsFromSortedAccounts(
+  sortedAccounts: Account[],
+  settings: HomeAssetSelectionSettings = getHomeAssetSelectionSettings(),
+) {
+  const { selectedAccounts, selectedAddresses } =
+    pickHomeAccountSelectionFromSortedAccounts(sortedAccounts, {
+      topN: settings.topN,
+      uniqueAddresses: isHomeAssetSelectionExperimentEnabled(settings),
+    });
 
   return {
-    selectedAccounts: unionBy(top10Accounts, account =>
+    selectedAccounts: unionBy(selectedAccounts, account =>
       account.address.toLowerCase(),
     ),
-    selectedAddresses: top10Addresses.map(address => address.toLowerCase()),
+    selectedAddresses,
   };
 }
 
 async function getMatteredAccountsSnapshot(): Promise<AccountBalanceSelectionSnapshot> {
-  const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-  return buildMatteredAccountsSnapshotFromSortedAccounts(sortedAccounts);
+  const settings = getHomeAssetSelectionSettings();
+  const { sortedAccounts } = await getAccountList({
+    filter: settings.includeWatchAddresses ? 'all' : 'onlyMine',
+  });
+  return buildMatteredAccountsSnapshotFromSortedAccounts(
+    sortedAccounts,
+    settings,
+  );
 }
 
 function buildMatteredAccountsSnapshotFromSortedAccounts(
   sortedAccounts: Account[],
+  settings: HomeAssetSelectionSettings = getHomeAssetSelectionSettings(),
 ): AccountBalanceSelectionSnapshot {
   const matteredAccountLength = sortedAccounts.length;
   const { selectedAccounts, selectedAddresses } =
-    pickSelectedAccountsFromSortedAccounts(sortedAccounts);
+    pickSelectedAccountsFromSortedAccounts(sortedAccounts, settings);
 
   return {
     selectedAccounts,
@@ -59,11 +74,18 @@ function buildMatteredAccountsSnapshotFromStoreAccounts(
   accounts: Account[],
   pinnedAddresses: IPinAddress[],
 ) {
-  const sortedAccounts = sortAccountList(filterMyAccounts(accounts), {
-    highlightedAddresses: pinnedAddresses,
-  });
+  const settings = getHomeAssetSelectionSettings();
+  const sortedAccounts = sortAccountList(
+    settings.includeWatchAddresses ? accounts : filterMyAccounts(accounts),
+    {
+      highlightedAddresses: pinnedAddresses,
+    },
+  );
 
-  return buildMatteredAccountsSnapshotFromSortedAccounts(sortedAccounts);
+  return buildMatteredAccountsSnapshotFromSortedAccounts(
+    sortedAccounts,
+    settings,
+  );
 }
 
 setAccountBalanceSelectionSnapshotGetter(getMatteredAccountsSnapshot);
@@ -156,6 +178,12 @@ async function initAccountBalanceSelectionLifecycle() {
         accountBalanceSelectionLifecycleStateRef.prevSelectionSignature =
           nextSignature;
         void syncSelectionFromAccounts({ accountState: state });
+      });
+
+      subscribeHomeAssetSelectionSettings(() => {
+        void syncSelectionFromAccounts({
+          allowFetchFallback: true,
+        });
       });
     }
 

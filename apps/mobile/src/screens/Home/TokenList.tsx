@@ -450,6 +450,7 @@ export const TokenList = ({
 
   const {
     sections: customTestnetSections,
+    hydrationState: customTestnetHydrationState,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
   } = useSingleAddressCustomTestnetAssetSections(currentAddress);
@@ -458,6 +459,10 @@ export const TokenList = ({
     !isWatchOrSafeAccount(currentAccount) &&
     !selectedChain &&
     !isLpTokenEnabled;
+  const isCustomTestnetSnapshotPending =
+    shouldShowCustomTestnetSections &&
+    customTestnetHydrationState !== 'ready' &&
+    customTestnetHydrationState !== 'failed';
 
   const singleAssetsKey = useMemo(() => {
     if (!lowerAddress) {
@@ -528,6 +533,7 @@ export const TokenList = ({
     !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
+    customTestnetHydrationState === 'ready' &&
     hasRequestedTokenList &&
     !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
@@ -536,6 +542,7 @@ export const TokenList = ({
     hasDefaultTokenData || visibleCustomTestnetSections.length > 0;
   const isTokenContentReady =
     isTokenProjectionReady &&
+    !isCustomTestnetSnapshotPending &&
     (hasVisibleTokenContent ||
       (hasRequestedTokenList &&
         isTokenListRequestSettled &&
@@ -603,7 +610,8 @@ export const TokenList = ({
       foldScam,
       hasFoldTokens,
       isLpTokenEnabled,
-      isLoading: isLoading || isTokenProjectionLoading,
+      isLoading:
+        isLoading || isTokenProjectionLoading || isCustomTestnetSnapshotPending,
       isAllLoading,
       noAnyAssets,
       emptyAssetsText,
@@ -618,6 +626,7 @@ export const TokenList = ({
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
+    isCustomTestnetSnapshotPending,
     isTokenProjectionLoading,
     noAnyAssets,
     scamTokenIds,

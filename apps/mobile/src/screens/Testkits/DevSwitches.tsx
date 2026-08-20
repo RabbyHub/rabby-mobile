@@ -42,6 +42,7 @@ import {
   useDebugSwapHistorySkipLocalLookup,
   useEnablePerpsWatchAddress,
   useExpScreenCapture,
+  useHomeAssetSelectionSettings,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
   useScreenE2EEnabled,
@@ -52,6 +53,7 @@ import {
   WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
   WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
+import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
 import type { SwitchToggleType } from '@/components';
 import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
@@ -1649,6 +1651,78 @@ function DevSwitchPerpsWatchAddress() {
   );
 }
 
+function DevSwitchHomeAssetSelection() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    topN,
+    includeWatchAddresses,
+    isExperimentEnabled,
+    setTopN,
+    setIncludeWatchAddresses,
+  } = useHomeAssetSelectionSettings();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Home Asset Selection
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          setIncludeWatchAddresses(!includeWatchAddresses);
+        }}>
+        <AppSwitch2024
+          value={includeWatchAddresses}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={setIncludeWatchAddresses}
+        />
+        <Text style={styles.switchLabel}>
+          {includeWatchAddresses
+            ? 'Include Watch and other non-owned addresses in Home Top-N'
+            : 'Use owned addresses only (default)'}
+        </Text>
+      </TouchableOpacity>
+
+      <View
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+        ]}>
+        {HOME_ASSET_TOP_N_OPTIONS.map(option => (
+          <Button
+            key={option}
+            title={'Top ' + option}
+            type={option === topN ? 'primary' : 'ghost'}
+            height={40}
+            containerStyle={{ minWidth: 84 }}
+            onPress={() => setTopN(option)}
+          />
+        ))}
+      </View>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        {isExperimentEnabled
+          ? 'Test-only policy active: Top ' +
+            topN +
+            (includeWatchAddresses ? ' with Watch addresses.' : '.')
+          : 'Production-compatible default: Top 10 owned addresses.'}{' '}
+        Production builds always keep the default policy.
+      </Text>
+    </View>
+  );
+}
+
 function DevSwitchRegressionScenarioE2E() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { screenE2EEnabled, setScreenE2EEnabled } = useScreenE2EEnabled();
@@ -1896,6 +1970,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Perps</Text>
         <DevSwitchPerpsWatchAddress />
+
+        <Text style={styles.areaTitle}>Asset Scale</Text>
+        <DevSwitchHomeAssetSelection />
 
         <Text style={styles.areaTitle}>Lifecycle E2E</Text>
         <DevSwitchRegressionScenarioE2E />

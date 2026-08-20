@@ -2,7 +2,10 @@ import { useCallback, useMemo } from 'react';
 import PQueue from 'p-queue';
 
 import { apiCustomTestnet } from '@/core/apis';
-import { useCustomTestnetAssetSectionsData } from '@/store/customTestnet';
+import {
+  useCustomTestnetAssetSectionsData,
+  useCustomTestnetHydrationState,
+} from '@/store/customTestnet';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 
 import type {
@@ -33,6 +36,7 @@ const makeFallbackTokenItem = (
 // for multi-address
 export function useCustomTestnetAssetSections(addresses: string[]) {
   const sections = useCustomTestnetAssetSectionsData(addresses);
+  const hydrationState = useCustomTestnetHydrationState();
 
   const loadTokenItems = useCallback(
     async (
@@ -109,6 +113,7 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
 
   return {
     sections,
+    hydrationState,
     loadTokens,
     loadToken,
   };
