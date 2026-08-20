@@ -68,7 +68,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { touchedFeedback } from '@/utils/touch';
 import type { TextInput as TextInputRef } from '@/components/Typography';
-import { normalizeAddressInputBoundaryWhitespace } from './addressInput';
+import { normalizeAddressInputAndSyncNativeText } from './addressInput';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -98,6 +98,7 @@ export const ScreenAddNewWhitelistAddress = ({
   const [cex, setCex] = useState<ProjectItem | undefined>();
   const [error, setError] = useState<INPUT_ERROR>();
   const [loading, setLoading] = useState(false);
+  const addressInputRef = useRef<TextInputRef>(null);
   const aliasInputRef = useRef<TextInputRef>(null);
   const pendingAliasCursorPositionRef = useRef<number | null>(null);
   const detectAddressRequestIdRef = useRef(0);
@@ -208,8 +209,12 @@ export const ScreenAddNewWhitelistAddress = ({
   });
 
   const handleInputChange = useCallback((text: string) => {
+    const normalizedText = normalizeAddressInputAndSyncNativeText(
+      text,
+      addressInputRef.current,
+    );
     setError(undefined);
-    setInput(normalizeAddressInputBoundaryWhitespace(text));
+    setInput(normalizedText);
   }, []);
   const startAliasEditing = useCallback(() => {
     pendingAliasCursorPositionRef.current = aliasName.length;
@@ -374,6 +379,7 @@ export const ScreenAddNewWhitelistAddress = ({
         </View>
         <View>
           <NextInput.TextArea
+            ref={addressInputRef}
             as="TextInput"
             style={styles.textContainer}
             inputStyle={styles.textArea}
