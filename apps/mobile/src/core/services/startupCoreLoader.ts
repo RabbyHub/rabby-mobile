@@ -231,7 +231,7 @@ export function loadStartupCoreServices() {
     }
 
     try {
-      persistKeyringState({
+      const persistence = persistKeyringState({
         key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
         keyringStorage: keyringMMKVInstance,
         checkpointStorage: keyringCheckpointMMKV,
@@ -240,6 +240,7 @@ export function loadStartupCoreServices() {
       recordKeyringStorageDiagnostic('persist.complete', {
         sequence,
         state: summary,
+        persistence,
       });
     } catch (error) {
       keyringPersistenceBlocked = true;
