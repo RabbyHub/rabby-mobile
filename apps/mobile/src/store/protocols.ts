@@ -996,10 +996,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
           ...state.isLoadingByAddress,
           [normalizedAddress]: true,
         },
-        hasLoadedByAddress: {
-          ...state.hasLoadedByAddress,
-          [normalizedAddress]: true,
-        },
       }));
 
       const result = await loadProtocols(normalizedAddress, force);

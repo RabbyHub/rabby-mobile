@@ -28,9 +28,6 @@ import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { singleAddressNoAssetsDecisionCoordinator } from '../Home/singleAddressNoAssetsDecisionResource';
 
 const SingleAddressStack = createNativeStackNavigator();
-const RegressionSingleAddressHome = withRegressionScenario(SingleAddressHome, {
-  screen: 'SingleAddressHome',
-});
 
 type OpeningTransitionEvent = {
   data?: {

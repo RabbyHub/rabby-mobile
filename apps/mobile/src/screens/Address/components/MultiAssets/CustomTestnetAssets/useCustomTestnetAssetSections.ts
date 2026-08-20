@@ -17,7 +17,6 @@ import { makeMetadataTokenItem } from './utils';
 import type { ITokenItem } from '@/types/assets';
 import type { TestnetChain } from '@/types/customTestnet';
 import { withTimeoutFallback } from '@/utils/async';
-import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const EMPTY_ADDRESSES: string[] = [];
 const CUSTOM_TESTNET_TOKEN_REQUEST_TIMEOUT = 8000;
