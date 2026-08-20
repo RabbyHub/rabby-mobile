@@ -1071,7 +1071,6 @@ async function openHighCardinalityAssets(
       context,
       'high-cardinality-defi-rows-renderable',
       120_000,
-      visualReadyStartedAt,
     );
     probe.recordDuration(
       'home.defi-renderable',

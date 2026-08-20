@@ -6,7 +6,7 @@ import accountStore from '@/store/account';
 import { navigationRef } from '@/utils/navigation';
 
 import { REGRESSION_DEFAULT_PASSWORD } from '../credentials.nonprod';
-import { getRegressionScenarioRuntimeSnapshot } from '../runtime.nonprod';
+import { findPassingRegressionScenarioAssertion } from '../runtime.nonprod';
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
 
 export function delay(ms: number) {
@@ -125,22 +125,11 @@ export async function waitForScenarioAssertion(
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < timeoutMs) {
-    const snapshot = getRegressionScenarioRuntimeSnapshot();
-    const event = [...snapshot.events].reverse().find(item => {
-      const data = item.data as
-        | {
-            assertion?: unknown;
-            passed?: unknown;
-          }
-        | undefined;
-      return (
-        item.runId === context.command.runId &&
-        item.name === 'assertion' &&
-        item.timestamp >= afterTimestamp &&
-        data?.assertion === assertion &&
-        data?.passed === true
-      );
-    });
+    const event = findPassingRegressionScenarioAssertion(
+      context.command.runId,
+      assertion,
+      afterTimestamp,
+    );
 
     if (event) {
       return event;
