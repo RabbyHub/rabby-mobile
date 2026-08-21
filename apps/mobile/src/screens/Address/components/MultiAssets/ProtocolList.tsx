@@ -472,7 +472,9 @@ export const ProtocolList = () => {
         maxToRenderPerBatch={8}
         updateCellsBatchingPeriod={32}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        {...(!IS_ANDROID && {
+          maintainVisibleContentPosition: { minIndexForVisible: 0 },
+        })}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <>

@@ -695,15 +695,19 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
 
   const renderAdditionalHeaderItem = useCallback(
     () => (
-      <TokenRowSectionLpTokenHeader
-        isEnabled={isLpTokenEnabled}
-        onValueChange={handleLpTokenEnabledChange}
-        fold={!showAllTokens}
-        str={additionalTokenUsdValue}
-        onPressFold={handleToggleAdditionalTokens}
-        style={styles.sectionHeader}
-        buttonStyle={additionalHeaderButtonStyle}
-      />
+      <View>
+        <View style={styles.additionalToggleSpacer} />
+        <TokenRowSectionLpTokenHeader
+          isEnabled={isLpTokenEnabled}
+          onValueChange={handleLpTokenEnabledChange}
+          fold={!showAllTokens}
+          str={additionalTokenUsdValue}
+          onPressFold={handleToggleAdditionalTokens}
+          style={styles.sectionHeader}
+          buttonStyle={additionalHeaderButtonStyle}
+        />
+        {!showAllTokens ? <View style={styles.additionalToggleSpacer} /> : null}
+      </View>
     ),
     [
       additionalTokenUsdValue,
@@ -712,6 +716,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
       handleToggleAdditionalTokens,
       isLpTokenEnabled,
       showAllTokens,
+      styles.additionalToggleSpacer,
       styles.sectionHeader,
     ],
   );
@@ -934,6 +939,9 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
     // paddingRight: 8,
     height: ASSETS_SECTION_HEADER,
+  },
+  additionalToggleSpacer: {
+    height: SPACING_HEIGHT,
   },
   buttonHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
