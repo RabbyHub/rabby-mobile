@@ -120,7 +120,10 @@ import { Text } from '@/components/Typography';
 import { useIsUserTokenPinned } from '@/hooks/useTokenSettings';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
-import { getTokenSelectorActivityState } from './tokenSelectorActivity';
+import {
+  getTokenSelectorActivityState,
+  isTokenSelectorSheetOpeningCommand,
+} from './tokenSelectorActivity';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'SwapBridge'>,
@@ -421,11 +424,6 @@ type TokenSelectorSheetModalContentProps = TokenSelectorSheetModalProps & {
   onActivityVisibleChange(visible: boolean): void;
 };
 
-const isActiveSheetCommand = (command: SheetModalShowType) =>
-  command === true ||
-  command === 'collapse' ||
-  (typeof command === 'number' && command >= 0);
-
 const TokenSelectorSheetModalContent = ({
   visible,
   list = [],
@@ -466,7 +464,11 @@ const TokenSelectorSheetModalContent = ({
   } = useSheetModal();
   const toggleShowSheetModal = useCallback(
     (command: SheetModalShowType) => {
-      onActivityVisibleChange(isActiveSheetCommand(command));
+      if (isTokenSelectorSheetOpeningCommand(command)) {
+        onActivityVisibleChange(true);
+      }
+      // A close command only starts the native animation. The native
+      // onChange/onDismiss callbacks confirm when the sheet is actually gone.
       return toggleNativeSheetModal(command);
     },
     [onActivityVisibleChange, toggleNativeSheetModal],
@@ -1564,7 +1566,11 @@ export const TokenSelectorSheetModal = ({
   }, []);
 
   useLayoutEffect(() => {
-    handleActivityVisibleChange(visible);
+    if (visible) {
+      handleActivityVisibleChange(true);
+    }
+    // Controlled false is only close intent; keep consuming Android back until
+    // the native sheet confirms closure through onChange/onDismiss.
   }, [handleActivityVisibleChange, visible]);
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(

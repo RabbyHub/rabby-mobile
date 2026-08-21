@@ -1,4 +1,23 @@
-import { getTokenSelectorActivityState } from './tokenSelectorActivity';
+import {
+  getTokenSelectorActivityState,
+  isTokenSelectorSheetOpeningCommand,
+} from './tokenSelectorActivity';
+
+describe('isTokenSelectorSheetOpeningCommand', () => {
+  it.each([true, 'collapse', 0, 1] as const)(
+    'marks %p as an opening command',
+    command => {
+      expect(isTokenSelectorSheetOpeningCommand(command)).toBe(true);
+    },
+  );
+
+  it.each([false, 'destroy', -1] as const)(
+    'does not treat %p as native close confirmation',
+    command => {
+      expect(isTokenSelectorSheetOpeningCommand(command)).toBe(false);
+    },
+  );
+});
 
 describe('getTokenSelectorActivityState', () => {
   it('keeps Store publication active during the controlled close delay without consuming Android back', () => {

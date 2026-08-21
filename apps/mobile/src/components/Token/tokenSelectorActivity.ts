@@ -3,6 +3,22 @@ export type TokenSelectorActivityState = {
   sheetVisible: boolean;
 };
 
+export type TokenSelectorSheetCommand =
+  | boolean
+  | 'destroy'
+  | 'collapse'
+  | number;
+
+export function isTokenSelectorSheetOpeningCommand(
+  command: TokenSelectorSheetCommand,
+) {
+  return (
+    command === true ||
+    command === 'collapse' ||
+    (typeof command === 'number' && command >= 0)
+  );
+}
+
 export function getTokenSelectorActivityState({
   controlledVisible,
   sheetVisible,
