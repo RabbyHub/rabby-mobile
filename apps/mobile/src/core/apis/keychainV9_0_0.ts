@@ -26,6 +26,7 @@ import {
   type KeychainBusinessRequestResult,
   type KeychainCompatibleModule,
   type KeychainDebugState,
+  type KeychainEntryState,
   type KeychainSupportedBiometryType,
   type SecureKeyChainInstance,
 } from './keychainCommon';
@@ -60,6 +61,7 @@ export {
   type KeychainBusinessApi,
   type KeychainBusinessRequestResult,
   type KeychainDebugState,
+  type KeychainEntryState,
   type KeychainSupportedBiometryType,
   type SecureKeyChainInstance,
 };
@@ -71,6 +73,7 @@ export const requestGenericPassword = keychainApi.requestGenericPassword;
 export const getSupportedBiometryType = keychainApi.getSupportedBiometryType;
 export const isPasscodeAuthAvailable = keychainApi.isPasscodeAuthAvailable;
 export const getKeychainDebugState = keychainApi.getKeychainDebugState;
+export const getKeychainEntryState = keychainApi.getKeychainEntryState;
 export const debugRemoveCurrentCipherStorageMarker =
   keychainApi.debugRemoveCurrentCipherStorageMarker;
 export const getSupportedStorageTypes = keychainApi.getSupportedStorageTypes;

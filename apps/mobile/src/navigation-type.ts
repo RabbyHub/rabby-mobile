@@ -191,7 +191,9 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevCapabilityFile]?: {
     tab?: 'overview' | 'debug';
   };
-  [RootNames.DevSwitches]?: {};
+  [RootNames.DevSwitches]?: {
+    appLaunchLock?: boolean;
+  };
   [RootNames.DevPerf]?: {};
   [RootNames.DebugLogViewer]?: {};
   [RootNames.StartupPerformanceLogViewer]?: {};

@@ -461,6 +461,24 @@ class KeychainModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun getGenericPasswordEntryStateForOptions(options: ReadableMap?, promise: Promise) {
+    try {
+      val service = getServiceOrDefault(options)
+      val entry = prefsStorage.getDebugEntry(service)
+      val result = Arguments.createMap()
+
+      result.putString(Maps.SERVICE, entry.service)
+      result.putBoolean("hasEntry", entry.hasEntry)
+      result.putBoolean("hasUsername", entry.hasUsername)
+      result.putBoolean("hasPassword", entry.hasPassword)
+      promise.resolve(result)
+    } catch (fail: Throwable) {
+      Log.e(KEYCHAIN_MODULE, fail.message, fail)
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
+    }
+  }
+
+  @ReactMethod
   fun debugGetGenericPasswordStateForOptions(options: ReadableMap?, promise: Promise) {
     try {
       val service = getServiceOrDefault(options)

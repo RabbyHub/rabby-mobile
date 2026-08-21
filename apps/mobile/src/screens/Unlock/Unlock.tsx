@@ -522,6 +522,9 @@ export default function UnlockScreen({
   );
   const biometricActionIdRef = React.useRef(0);
   const lockBiometricRef = React.useRef(false);
+  const initialBiometricsReadinessRef = React.useRef<Promise<boolean> | null>(
+    null,
+  );
   const showSystemAuthUnavailableTip = useCallback(() => {
     Alert.alert(
       'Security tip',
@@ -537,6 +540,33 @@ export default function UnlockScreen({
   React.useEffect(() => {
     usingBiometricsRef.current = usingBiometrics;
   }, [usingBiometrics]);
+
+  React.useEffect(() => {
+    if (!apisKeychain.isAuthenticatedByBiometrics()) {
+      return;
+    }
+
+    const startedAt = Date.now();
+    traceAndroidUnlockPerf('biometrics_readiness_prewarm_start');
+    const readinessPromise = storeApisBiometrics
+      .ensureBiometricsReadyForUnlock()
+      .then(ready => {
+        traceAndroidUnlockPerf('biometrics_readiness_prewarm_end', {
+          elapsedMs: Date.now() - startedAt,
+          ready,
+        });
+        return ready;
+      })
+      .catch(error => {
+        traceAndroidUnlockPerf('biometrics_readiness_prewarm_error', {
+          elapsedMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return false;
+      });
+
+    initialBiometricsReadinessRef.current = readinessPromise;
+  }, []);
 
   React.useEffect(() => {
     const next = getNextUnlockAuthenticationState({
@@ -811,14 +841,26 @@ export default function UnlockScreen({
       lockBiometricRef.current = false;
     };
 
-    const biometricsReady = await storeApisBiometrics
-      .ensureBiometricsReadyForUnlock()
-      .catch(error => {
-        logger.warn('[unlock] biometrics readiness check failed', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return false;
+    const actionStartedAt = Date.now();
+    const initialReadinessPromise = initialBiometricsReadinessRef.current;
+    initialBiometricsReadinessRef.current = null;
+    traceAndroidUnlockPerf('biometrics_action_start', {
+      usesPrewarmedReadiness: !!initialReadinessPromise,
+    });
+    const biometricsReady = await (
+      initialReadinessPromise ||
+      storeApisBiometrics.ensureBiometricsReadyForUnlock()
+    ).catch(error => {
+      logger.warn('[unlock] biometrics readiness check failed', {
+        error: error instanceof Error ? error.message : String(error),
       });
+      return false;
+    });
+    traceAndroidUnlockPerf('biometrics_readiness_action_end', {
+      elapsedMs: Date.now() - actionStartedAt,
+      ready: biometricsReady,
+      usesPrewarmedReadiness: !!initialReadinessPromise,
+    });
     if (!biometricsReady) {
       const latestBiometricsInfo =
         storeApisBiometrics.getBiometricsInfoSnapshot();
@@ -849,6 +891,10 @@ export default function UnlockScreen({
       return;
     }
 
+    traceAndroidUnlockPerf('biometrics_request_dispatch', {
+      elapsedMs: Date.now() - actionStartedAt,
+    });
+
     if (!isFaceID && !isAndroid) {
       const hideToast = toastUnlocking();
       await unlockBiometricsIfActive().finally(() => {
@@ -872,8 +918,13 @@ export default function UnlockScreen({
     incToReset(true);
     const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
       const pendingActionId = biometricActionIdRef.current;
+      const autoTriggerStartedAt = Date.now();
+      traceAndroidUnlockPerf('auto_trigger_unlock_received');
       // wait screen rendered
       await sleep(500);
+      traceAndroidUnlockPerf('auto_trigger_unlock_render_delay_end', {
+        elapsedMs: Date.now() - autoTriggerStartedAt,
+      });
       if (
         pendingActionId !== biometricActionIdRef.current ||
         shouldKeepStoredCredentialIconWhenSystemAuthUnavailable({

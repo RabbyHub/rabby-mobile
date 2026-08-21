@@ -611,6 +611,25 @@ public class KeychainModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void getGenericPasswordEntryStateForOptions(@Nullable final ReadableMap options,
+                                                     @NonNull final Promise promise) {
+    try {
+      final String service = getServiceOrDefault(options);
+      final PrefsStorage.DebugEntry entry = prefsStorage.getDebugEntry(service);
+      final WritableMap result = Arguments.createMap();
+
+      result.putString(Maps.SERVICE, entry.service);
+      result.putBoolean("hasEntry", entry.hasEntry);
+      result.putBoolean("hasUsername", entry.hasUsername);
+      result.putBoolean("hasPassword", entry.hasPassword);
+      promise.resolve(result);
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
   public void debugGetGenericPasswordStateForOptions(@Nullable final ReadableMap options,
                                                      @NonNull final Promise promise) {
     try {
