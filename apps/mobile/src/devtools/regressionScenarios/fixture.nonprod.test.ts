@@ -9,33 +9,6 @@ function loadFixtureModule() {
 }
 
 describe('high-cardinality watch-address regression fixture', () => {
-  it('round-trips a compact single-QR fixture with 120 addresses', () => {
-    const { parseRegressionWatchAddressFixture } = loadFixtureModule();
-    const { encodeRegressionWatchAddressQrPayload } =
-      require('./watchAddressFixturePayload.nonprod') as typeof import('./watchAddressFixturePayload.nonprod');
-    const addresses = Array.from(
-      { length: 120 },
-      (_, index) => `0x${index.toString(16).padStart(40, '0')}`,
-    );
-
-    const payload = encodeRegressionWatchAddressQrPayload(addresses);
-
-    expect(payload).toMatch(/^RABBY-WATCH-V1:/);
-    expect(payload.length).toBeLessThan(3700);
-    expect(parseRegressionWatchAddressFixture(payload)).toEqual({ addresses });
-  });
-
-  it('rejects malformed compact QR fixtures', () => {
-    const { parseRegressionWatchAddressFixture } = loadFixtureModule();
-
-    expect(() =>
-      parseRegressionWatchAddressFixture('RABBY-WATCH-V1:ABC!'),
-    ).toThrow('invalid Base45');
-    expect(() =>
-      parseRegressionWatchAddressFixture('RABBY-WATCH-V1:00'),
-    ).toThrow('invalid address length');
-  });
-
   it('normalizes and de-duplicates JSON address fixtures', () => {
     const { parseRegressionWatchAddressFixture } = loadFixtureModule();
 

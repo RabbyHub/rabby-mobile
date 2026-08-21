@@ -1,9 +1,5 @@
 import RNFS from '@rabby-wallet/react-native-fs';
-import {
-  decodeRegressionWatchAddressQrPayload,
-  normalizeRegressionWatchAddresses,
-  REGRESSION_WATCH_ADDRESS_QR_PREFIX,
-} from './watchAddressFixturePayload.nonprod';
+import { normalizeRegressionWatchAddresses } from './watchAddressFixturePayload.nonprod';
 
 export { MAX_REGRESSION_WATCH_ADDRESS_FIXTURE_ADDRESSES } from './watchAddressFixturePayload.nonprod';
 
@@ -119,11 +115,6 @@ export function parseRegressionWatchAddressFixture(
   contents: string,
 ): RegressionWatchAddressFixture {
   const trimmed = contents.trim();
-  if (trimmed.startsWith(REGRESSION_WATCH_ADDRESS_QR_PREFIX)) {
-    return {
-      addresses: decodeRegressionWatchAddressQrPayload(trimmed),
-    };
-  }
   // A Watch-address probe must never accept a wallet fixture by accident.
   // Otherwise a 0x-prefixed private key would also match the first 40 hex
   // characters of the address pattern below.
