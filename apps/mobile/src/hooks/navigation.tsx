@@ -71,6 +71,7 @@ import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
 import { makeMutable, runOnJS } from 'react-native-reanimated';
 import PQueue from 'p-queue';
 import { resolveWalletEntryDestination } from '@/core/utils/walletEntryState';
+import { createAutoUnlockGate } from '@/utils/autoUnlockGate';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -557,21 +558,27 @@ const unlockUIState = {
   finishedUnlockResetNav: false,
   resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
 };
+const autoUnlockGate = createAutoUnlockGate({
+  isAtUnlock: () =>
+    navigationRouteStore.getState().currentRouteName === RootNames.Unlock,
+  dispatch: () => perfEvents.emit('AUTO_TRIGGER_UNLOCK'),
+});
+perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
+  if (currentRouteName === RootNames.Unlock) {
+    autoUnlockGate.dispatchIfReady();
+  }
+});
 bindKeyringEventAfterRegistration('lock', () => {
   unlockUIState.finishedUnlockResetNav = false;
+  autoUnlockGate.clearPending();
 });
 export class UnlockUIManager {
-  static triggerAutoUnlock(delay = 500) {
-    const action = () => {
-      const currentRouteName = navigationRef.current?.getCurrentRoute()?.name;
-      if (!currentRouteName || currentRouteName !== RootNames.Unlock) return;
-      perfEvents.emit('AUTO_TRIGGER_UNLOCK');
-    };
-    if (delay) {
-      setTimeout(action, delay);
-    } else {
-      action();
-    }
+  static triggerAutoUnlock() {
+    autoUnlockGate.request();
+  }
+
+  static setAutoUnlockScreenReady(ready: boolean) {
+    autoUnlockGate.setScreenReady(ready);
   }
 
   static markUnlockedOnce() {
