@@ -84,6 +84,12 @@ describe('core/apis/keychainV9_0_0', () => {
       keystorePublicKeySha256: 'debug-public-key',
       keystoreDebugErrorMessage: null,
     }));
+    const mockGetGenericPasswordEntryStateForOptions = jest.fn(async () => ({
+      service: 'com.debank',
+      hasEntry: true,
+      hasUsername: true,
+      hasPassword: true,
+    }));
     const mockDebugDecryptGenericPasswordForOptions = jest.fn(async () => ({
       service: 'com.debank',
       username: 'rabbymobile-user',
@@ -107,6 +113,8 @@ describe('core/apis/keychainV9_0_0', () => {
       },
       NativeModules: {
         RNRabbyKeychainV9Manager: {
+          getGenericPasswordEntryStateForOptions:
+            mockGetGenericPasswordEntryStateForOptions,
           debugGetGenericPasswordStateForOptions:
             mockDebugGetGenericPasswordStateForOptions,
           debugDecryptGenericPasswordForOptions:
@@ -224,6 +232,7 @@ describe('core/apis/keychainV9_0_0', () => {
       mockGetGenericPassword,
       mockSetGenericPassword,
       mockCanImplyAuthentication,
+      mockGetGenericPasswordEntryStateForOptions,
       mockDebugGetGenericPasswordStateForOptions,
       mockDebugDecryptGenericPasswordForOptions,
       mockSafeVerifyPasswordAndUpdateUnlockTime,
@@ -704,6 +713,26 @@ describe('core/apis/keychainV9_0_0', () => {
       module.KEYCHAIN_STORAGE_TYPES.RSA,
       module.KEYCHAIN_STORAGE_TYPES.AES,
     ]);
+  });
+
+  it('reads Android entry presence without a KeyStore debug probe', async () => {
+    const {
+      module,
+      mockGetGenericPasswordEntryStateForOptions,
+      mockDebugGetGenericPasswordStateForOptions,
+    } = await setup();
+
+    await expect(module.getKeychainEntryState()).resolves.toEqual({
+      service: 'com.debank',
+      hasEntry: true,
+      hasUsername: true,
+      hasPassword: true,
+      sourceLabel: '@rabby-wallet/react-native-keychain-9@9.2.3-rabby.0',
+    });
+    expect(mockGetGenericPasswordEntryStateForOptions).toHaveBeenCalledWith({
+      service: 'com.debank',
+    });
+    expect(mockDebugGetGenericPasswordStateForOptions).not.toHaveBeenCalled();
   });
 
   it('exposes Android keychain debug state from the native storage layer', async () => {
