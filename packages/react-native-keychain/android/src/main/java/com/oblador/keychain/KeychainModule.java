@@ -197,17 +197,20 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     return instance;
   }
 
-  /** cipher (crypto api) warming up logic. force java load classes and intializations. */
+  /**
+   * Warm provider classes without mutating the Android KeyStore.
+   *
+   * Generating or probing a synthetic secure-hardware key here serializes with
+   * the first real credential read on some devices. That makes the first
+   * biometric prompt wait for an unrelated background key-generation request.
+   */
   private void internalWarmingBestCipher() {
     try {
       final long startTime = System.nanoTime();
 
       Log.v(KEYCHAIN_MODULE, "warming up started at " + startTime);
       final CipherStorageBase best = (CipherStorageBase) getCipherStorageForCurrentAPILevel();
-      final Cipher instance = best.getCachedInstance();
-      final boolean isSecure = best.supportsSecureHardware();
-      final SecurityLevel requiredLevel = isSecure ? SecurityLevel.SECURE_HARDWARE : SecurityLevel.SECURE_SOFTWARE;
-      best.generateKeyAndStoreUnderAlias(WARMING_UP_ALIAS, requiredLevel, false);
+      best.getCachedInstance();
       best.getKeyStoreAndLoad();
 
       Log.v(KEYCHAIN_MODULE, "warming up takes: " +
