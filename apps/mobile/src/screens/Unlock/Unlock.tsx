@@ -50,7 +50,6 @@ import {
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { storeApisBiometrics, useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
-import { sleep } from '@/utils/async';
 import { updateUnlockTime } from '@/core/apis/lock';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
@@ -522,6 +521,7 @@ export default function UnlockScreen({
   );
   const biometricActionIdRef = React.useRef(0);
   const lockBiometricRef = React.useRef(false);
+  const unlockScreenActiveRef = React.useRef(false);
   const initialBiometricsReadinessRef = React.useRef<Promise<boolean> | null>(
     null,
   );
@@ -609,8 +609,19 @@ export default function UnlockScreen({
 
   const isBiometricActionActive = useCallback((actionId: number) => {
     return (
-      actionId === biometricActionIdRef.current && !usingPasswordRef.current
+      unlockScreenActiveRef.current &&
+      actionId === biometricActionIdRef.current &&
+      !usingPasswordRef.current
     );
+  }, []);
+
+  useLayoutEffect(() => {
+    unlockScreenActiveRef.current = true;
+
+    return () => {
+      unlockScreenActiveRef.current = false;
+      biometricActionIdRef.current += 1;
+    };
   }, []);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
@@ -920,11 +931,6 @@ export default function UnlockScreen({
       const pendingActionId = biometricActionIdRef.current;
       const autoTriggerStartedAt = Date.now();
       traceAndroidUnlockPerf('auto_trigger_unlock_received');
-      // wait screen rendered
-      await sleep(500);
-      traceAndroidUnlockPerf('auto_trigger_unlock_render_delay_end', {
-        elapsedMs: Date.now() - autoTriggerStartedAt,
-      });
       if (
         pendingActionId !== biometricActionIdRef.current ||
         shouldKeepStoredCredentialIconWhenSystemAuthUnavailable({
@@ -938,10 +944,15 @@ export default function UnlockScreen({
         return;
       }
 
+      traceAndroidUnlockPerf('auto_trigger_unlock_dispatch', {
+        elapsedMs: Date.now() - autoTriggerStartedAt,
+      });
       await processUnlockWithBiometrics();
     });
+    UnlockUIManager.setAutoUnlockScreenReady(true);
 
     return () => {
+      UnlockUIManager.setAutoUnlockScreenReady(false);
       sub.remove();
     };
   }, [
