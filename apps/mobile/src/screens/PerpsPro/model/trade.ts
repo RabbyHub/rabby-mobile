@@ -5,6 +5,7 @@ import {
   createPerpsProAttachedTpSlDraft,
   getPerpsProAttachedTpSlCompatibilityError,
   type PerpsProAttachedTpSlDraft,
+  type PerpsProAttachedTpSlModes,
 } from './tpsl';
 
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
@@ -280,13 +281,15 @@ export const isPerpsProTradeCombinationSupported = (
 export const createPerpsProTradeFormState = ({
   amountUnit = 'quote',
   orderType = 'market',
+  tpSlModes,
 }: {
   amountUnit?: PerpsProTradeAmountUnit;
   orderType?: PerpsProTradeOrderType;
+  tpSlModes?: PerpsProAttachedTpSlModes;
 } = {}): PerpsProTradeFormState => ({
   amount: '',
   amountUnit,
-  attachedTpSl: createPerpsProAttachedTpSlDraft(),
+  attachedTpSl: createPerpsProAttachedTpSlDraft(tpSlModes),
   bboEnabled: false,
   bboStrategy: 'cp1',
   conditionalExecution: 'market',

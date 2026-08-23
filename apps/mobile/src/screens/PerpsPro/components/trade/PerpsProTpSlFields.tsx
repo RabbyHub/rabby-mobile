@@ -55,7 +55,7 @@ export const PerpsProTpSlFields: React.FC<{
             <PerpsProTpSlInput
               kind="tp"
               label={t('page.perps.pro.trade.takeProfit')}
-              maxDecimals={draft.tp.mode === 'price' ? pxDecimals : 8}
+              maxDecimals={draft.tp.mode === 'price' ? pxDecimals : 2}
               mode={draft.tp.mode}
               onBlur={() => controller.setFocusedLeg(null)}
               onChangeText={value => controller.setRawMagnitude('tp', value)}
@@ -81,7 +81,7 @@ export const PerpsProTpSlFields: React.FC<{
             <PerpsProTpSlInput
               kind="sl"
               label={t('page.perps.pro.trade.stopLoss')}
-              maxDecimals={draft.sl.mode === 'price' ? pxDecimals : 8}
+              maxDecimals={draft.sl.mode === 'price' ? pxDecimals : 2}
               mode={draft.sl.mode}
               onBlur={() => controller.setFocusedLeg(null)}
               onChangeText={value => controller.setRawMagnitude('sl', value)}

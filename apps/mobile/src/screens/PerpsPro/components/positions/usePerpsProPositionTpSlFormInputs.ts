@@ -1,6 +1,8 @@
 import BigNumber from 'bignumber.js';
 import { useCallback, useEffect, useState } from 'react';
 
+import type { PerpsProPositionTpSlMode } from '@/core/services/perpsService';
+
 import {
   calculatePositionTpSlEstimatedPnl,
   calculatePositionTpSlRoi,
@@ -8,12 +10,12 @@ import {
   calculatePositionTpSlTriggerFromRoi,
   type PerpsPositionTpSlKind,
 } from '../../model/positionTpSl';
-import type { PerpsProTpSlMode } from '../../model/tpsl';
+import { sanitizePerpsProDecimalInput } from '../../model/trade';
 
 type SideInputSource = 'mode' | 'trigger';
 
 export type PerpsProPositionTpSlSideInputDraft = {
-  mode: PerpsProTpSlMode;
+  mode: PerpsProPositionTpSlMode;
   rawMagnitude: string;
   source: SideInputSource;
   triggerPrice: string;
@@ -36,15 +38,12 @@ const formatDerivedMagnitude = (value: string | null) => {
 };
 
 const calculateModeMagnitude = (
-  mode: PerpsProTpSlMode,
+  mode: PerpsProPositionTpSlMode,
   triggerPrice: string,
   context: SideInputCalculationContext,
 ) => {
   if (!triggerPrice) {
     return '';
-  }
-  if (mode === 'price') {
-    return triggerPrice;
   }
   if (mode === 'pnl') {
     return formatDerivedMagnitude(
@@ -67,13 +66,10 @@ const calculateModeMagnitude = (
 };
 
 const calculateTriggerFromMode = (
-  mode: PerpsProTpSlMode,
+  mode: PerpsProPositionTpSlMode,
   rawMagnitude: string,
   context: SideInputCalculationContext,
 ) => {
-  if (mode === 'price') {
-    return rawMagnitude;
-  }
   if (mode === 'pnl') {
     return (
       calculatePositionTpSlTriggerFromPnl({
@@ -99,11 +95,12 @@ const calculateTriggerFromMode = (
 };
 
 const createSideInputDraft = (
+  mode: PerpsProPositionTpSlMode,
   triggerPrice: string,
   context: SideInputCalculationContext,
 ): PerpsProPositionTpSlSideInputDraft => ({
-  mode: 'roi',
-  rawMagnitude: calculateModeMagnitude('roi', triggerPrice, context),
+  mode,
+  rawMagnitude: calculateModeMagnitude(mode, triggerPrice, context),
   source: 'trigger',
   triggerPrice,
 });
@@ -111,13 +108,15 @@ const createSideInputDraft = (
 const synchronizeSideInputDraft = (
   draft: PerpsProPositionTpSlSideInputDraft,
   context: SideInputCalculationContext,
+  preferredMode: PerpsProPositionTpSlMode,
 ) => {
   const next =
     draft.source === 'trigger'
       ? {
           ...draft,
+          mode: preferredMode,
           rawMagnitude: calculateModeMagnitude(
-            draft.mode,
+            preferredMode,
             draft.triggerPrice,
             context,
           ),
@@ -144,6 +143,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialTakeProfit,
   leverage,
   pxDecimals,
+  preferredModes,
   sideSize,
 }: {
   direction: 'long' | 'short';
@@ -153,6 +153,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialTakeProfit: string;
   leverage: number;
   pxDecimals: number;
+  preferredModes: Record<'sl' | 'tp', PerpsProPositionTpSlMode>;
   sideSize: string | null;
 }) => {
   const createContext = useCallback(
@@ -168,12 +169,14 @@ export const usePerpsProPositionTpSlFormInputs = ({
   );
   const [takeProfit, setTakeProfit] = useState(() =>
     createSideInputDraft(
+      preferredModes.tp,
       initialTakeProfit,
       createContext('takeProfit', initialSize),
     ),
   );
   const [stopLoss, setStopLoss] = useState(() =>
     createSideInputDraft(
+      preferredModes.sl,
       initialStopLoss,
       createContext('stopLoss', initialSize),
     ),
@@ -181,12 +184,20 @@ export const usePerpsProPositionTpSlFormInputs = ({
 
   useEffect(() => {
     setTakeProfit(current =>
-      synchronizeSideInputDraft(current, createContext('takeProfit', sideSize)),
+      synchronizeSideInputDraft(
+        current,
+        createContext('takeProfit', sideSize),
+        preferredModes.tp,
+      ),
     );
     setStopLoss(current =>
-      synchronizeSideInputDraft(current, createContext('stopLoss', sideSize)),
+      synchronizeSideInputDraft(
+        current,
+        createContext('stopLoss', sideSize),
+        preferredModes.sl,
+      ),
     );
-  }, [createContext, sideSize]);
+  }, [createContext, preferredModes.sl, preferredModes.tp, sideSize]);
 
   const updateSide = useCallback(
     (
@@ -216,13 +227,14 @@ export const usePerpsProPositionTpSlFormInputs = ({
   );
   const changeModeMagnitude = useCallback(
     (kind: PerpsPositionTpSlKind, next: string) => {
+      const sanitized = sanitizePerpsProDecimalInput(next, 2);
       updateSide(kind, current => ({
         ...current,
-        rawMagnitude: next,
+        rawMagnitude: sanitized,
         source: 'mode',
         triggerPrice: calculateTriggerFromMode(
           current.mode,
-          next,
+          sanitized,
           createContext(kind, sideSize),
         ),
       }));
@@ -230,7 +242,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
     [createContext, sideSize, updateSide],
   );
   const selectMode = useCallback(
-    (kind: PerpsPositionTpSlKind, nextMode: PerpsProTpSlMode) => {
+    (kind: PerpsPositionTpSlKind, nextMode: PerpsProPositionTpSlMode) => {
       updateSide(kind, current =>
         current.mode === nextMode
           ? current

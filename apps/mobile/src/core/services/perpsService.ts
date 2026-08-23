@@ -51,6 +51,24 @@ export type PerpsProInfoTab = 'account' | 'positions' | 'openOrders';
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
 export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
 export type PerpsProOpenOrderEditCategory = 'basic' | 'conditional';
+export type PerpsProOpeningTpSlMode = 'pnl' | 'price' | 'roi';
+export type PerpsProPositionTpSlMode = 'pnl' | 'roi';
+export type PerpsProTpSlModeLeg = 'sl' | 'tp';
+export type PerpsProTpSlModePreferences = {
+  opening: Record<PerpsProTpSlModeLeg, PerpsProOpeningTpSlMode>;
+  position: Record<PerpsProTpSlModeLeg, PerpsProPositionTpSlMode>;
+};
+export type PerpsProTpSlModePreferenceSelection =
+  | {
+      leg: PerpsProTpSlModeLeg;
+      mode: PerpsProOpeningTpSlMode;
+      surface: 'opening';
+    }
+  | {
+      leg: PerpsProTpSlModeLeg;
+      mode: PerpsProPositionTpSlMode;
+      surface: 'position';
+    };
 
 export type PerpsProPreferences = {
   version: number;
@@ -66,11 +84,16 @@ export type PerpsProPreferences = {
   tradeAmountUnit: PerpsProTradeAmountUnit;
   tradeOrderType: PerpsProTradeOrderType;
   skipTradeConfirmationByOrderType: Record<PerpsProTradeOrderType, boolean>;
+  tpSlModePreferences: PerpsProTpSlModePreferences;
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 9;
+const PERPS_PRO_PREFERENCES_VERSION = 10;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
+const DEFAULT_PERPS_PRO_TP_SL_MODE_PREFERENCES: PerpsProTpSlModePreferences = {
+  opening: { sl: 'price', tp: 'price' },
+  position: { sl: 'pnl', tp: 'pnl' },
+};
 const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   version: PERPS_PRO_PREFERENCES_VERSION,
   viewMode: 'simple',
@@ -89,6 +112,7 @@ const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
     limit: false,
     market: false,
   },
+  tpSlModePreferences: DEFAULT_PERPS_PRO_TP_SL_MODE_PREFERENCES,
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -190,6 +214,31 @@ const normalizeSkipTradeConfirmationByOrderType = (
   };
 };
 
+const normalizePerpsProTpSlModePreferences = (
+  value: unknown,
+): PerpsProTpSlModePreferences => {
+  const source =
+    hasReadableProPreferences(value) && isRecord(value.tpSlModePreferences)
+      ? value.tpSlModePreferences
+      : {};
+  const opening = isRecord(source.opening) ? source.opening : {};
+  const position = isRecord(source.position) ? source.position : {};
+  const openingMode = (mode: unknown): PerpsProOpeningTpSlMode =>
+    mode === 'pnl' || mode === 'roi' || mode === 'price' ? mode : 'price';
+  const positionMode = (mode: unknown): PerpsProPositionTpSlMode =>
+    mode === 'roi' ? 'roi' : 'pnl';
+  return {
+    opening: {
+      sl: openingMode(opening.sl),
+      tp: openingMode(opening.tp),
+    },
+    position: {
+      sl: positionMode(position.sl),
+      tp: positionMode(position.tp),
+    },
+  };
+};
+
 const removeLegacyBookPrecision = (value: ReadableProPreferences) => {
   const nextValue = { ...value };
   delete nextValue.bookPrecisionByMarket;
@@ -222,6 +271,7 @@ const getWritableProPreferences = (
     tradeOrderType: normalizePerpsProTradeOrderType(value),
     skipTradeConfirmationByOrderType:
       normalizeSkipTradeConfirmationByOrderType(value),
+    tpSlModePreferences: normalizePerpsProTpSlModePreferences(value),
   } as PerpsProPreferences & Record<string, unknown>;
 };
 
@@ -982,6 +1032,47 @@ export class PerpsService extends StoreServiceBase<
         skipTradeConfirmationByOrderType: {
           ...normalizeSkipTradeConfirmationByOrderType(current),
           [orderType]: value === true,
+        },
+      };
+    });
+  };
+
+  getPerpsProTpSlModePreferences =
+    async (): Promise<PerpsProTpSlModePreferences> => {
+      if (!this.store) throw new Error('PerpsService not initialized');
+      return cloneDeep(
+        normalizePerpsProTpSlModePreferences(this.store.proPreferences),
+      );
+    };
+
+  setPerpsProTpSlModePreference = async (
+    selection: PerpsProTpSlModePreferenceSelection,
+  ) => {
+    const { leg, mode, surface } = selection;
+    const validMode =
+      surface === 'opening'
+        ? mode === 'price' || mode === 'pnl' || mode === 'roi'
+        : surface === 'position'
+        ? mode === 'pnl' || mode === 'roi'
+        : false;
+    if (
+      (surface !== 'opening' && surface !== 'position') ||
+      (leg !== 'tp' && leg !== 'sl') ||
+      !validMode
+    ) {
+      throw new Error('Invalid Perps Pro TP/SL mode preference');
+    }
+    const current = getWritableProPreferences(this.store.proPreferences);
+    const currentModes = normalizePerpsProTpSlModePreferences(current);
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...current,
+        tpSlModePreferences: {
+          ...currentModes,
+          [surface]: {
+            ...currentModes[surface],
+            [leg]: mode,
+          },
         },
       };
     });
