@@ -380,6 +380,25 @@ describe('Perps Pro trade selection sheets', () => {
     expect(onSelect).toHaveBeenCalledWith('roi');
   });
 
+  it('can restrict the Position TP/SL mode sheet to PnL and ROI', () => {
+    render(
+      <PerpsProTpSlModeSheet
+        allowedModes={['pnl', 'roi']}
+        onClose={jest.fn()}
+        onSelect={jest.fn()}
+        selected="pnl"
+        visible
+      />,
+    );
+
+    expect(screen.queryByTestId('perps-pro-tpsl-mode-price')).toBeNull();
+    expect(screen.getByTestId('perps-pro-tpsl-mode-pnl')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-tpsl-mode-roi')).toBeTruthy();
+    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
+      240,
+    ]);
+  });
+
   it('matches the 304px Time in Force card contract', () => {
     const onClose = jest.fn();
     const onSelect = jest.fn();
