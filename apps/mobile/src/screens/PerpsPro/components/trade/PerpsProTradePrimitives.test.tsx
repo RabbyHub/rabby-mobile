@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 
@@ -61,6 +62,7 @@ jest.mock('../common/PerpsProFieldExplanationContext', () => ({
 }));
 
 import {
+  PerpsProTradeButton,
   PerpsProTradeCheckbox,
   PerpsProTradeSummaryRow,
 } from './PerpsProTradePrimitives';
@@ -127,5 +129,27 @@ describe('PerpsProTradePrimitives explanations', () => {
 
     fireEvent.press(screen.getByRole('button'));
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith(explanationKey);
+  });
+
+  it('keeps the trade action title color stable with and without Size', () => {
+    const view = render(
+      <PerpsProTradeButton label="Buy / Long" onPress={jest.fn()} side="buy" />,
+    );
+
+    expect(
+      StyleSheet.flatten(screen.getByText('Buy / Long').props.style),
+    ).toMatchObject({ color: 'neutral-title-2' });
+
+    view.rerender(
+      <PerpsProTradeButton
+        label="Buy / Long"
+        onPress={jest.fn()}
+        side="buy"
+        subtitle="≈1.00 BTC"
+      />,
+    );
+    expect(
+      StyleSheet.flatten(screen.getByText('Buy / Long').props.style),
+    ).toMatchObject({ color: 'neutral-title-2' });
   });
 });

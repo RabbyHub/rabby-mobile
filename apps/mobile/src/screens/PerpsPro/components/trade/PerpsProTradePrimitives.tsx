@@ -219,13 +219,7 @@ export const PerpsProTradeButton: React.FC<{
       ]}
       testID={`perps-pro-trade-button-${side}`}>
       <View style={styles.tradeButtonCopy}>
-        <Text
-          style={[
-            styles.tradeButtonText,
-            subtitle ? styles.tradeButtonTextWithSubtitle : null,
-          ]}>
-          {label}
-        </Text>
+        <Text style={styles.tradeButtonText}>{label}</Text>
         {subtitle ? (
           <Text
             numberOfLines={1}
@@ -330,15 +324,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['red-default'],
   },
   tradeButtonText: {
-    color: colors2024['neutral-bg-1'],
+    color: colors2024['neutral-title-2'],
     fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
-  },
-  tradeButtonTextWithSubtitle: {
-    color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro',
   },
   tradeButtonSubtitle: {
     color: colors2024['neutral-InvertHighlight'],

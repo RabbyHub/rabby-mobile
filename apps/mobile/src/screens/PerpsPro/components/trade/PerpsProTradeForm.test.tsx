@@ -320,7 +320,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByTestId('perps-pro-trade-price-suffix-BBO')).toBeNull();
   });
 
-  it('shows TIF only for manual Limit and removes it for fixed-GTC BBO', () => {
+  it('keeps TIF visible for both manual Limit and BBO', () => {
     const view = render(
       <PerpsProTradeForm
         controller={controller({ limitPrice: '63000', orderType: 'limit' })}
@@ -348,7 +348,7 @@ describe('PerpsProTradeForm order matrix', () => {
         onAddFunds={jest.fn()}
       />,
     );
-    expect(screen.queryByTestId('perps-pro-trade-tif-trigger')).toBeNull();
+    expect(screen.getByTestId('perps-pro-trade-tif-trigger')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('Counterparty 1').props.style),
     ).toMatchObject({
@@ -494,6 +494,23 @@ describe('PerpsProTradeForm order matrix', () => {
     });
     fireEvent.press(bbo);
     expect(trade.enableBbo).not.toHaveBeenCalled();
+  });
+
+  it.each(['Ioc', 'Alo'] as const)('disables BBO while TIF is %s', tif => {
+    const trade = controller({
+      limitPrice: '63000',
+      orderType: 'limit',
+      tif,
+    });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    const bbo = screen.getByTestId('perps-pro-trade-price-suffix-BBO');
+    expect(StyleSheet.flatten(bbo.props.style)).toMatchObject({
+      opacity: 0.45,
+    });
+    fireEvent.press(bbo);
+    expect(trade.enableBbo).not.toHaveBeenCalled();
+    expect(screen.getByTestId('perps-pro-trade-tif-trigger')).toBeTruthy();
   });
 
   it('keeps TP/SL clickable while BBO is active so the controller can replace it', () => {

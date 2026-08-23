@@ -1,4 +1,3 @@
-import RcOptionCheck from '@/assets2024/icons/perps/PerpsProOptionCheck.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -93,16 +92,6 @@ export const PerpsProTpSlModeSheet: React.FC<{
                     <Text style={styles.label}>{option.label}</Text>
                     <Text style={styles.description}>{option.description}</Text>
                   </View>
-                  {active ? (
-                    <View style={styles.check}>
-                      <RcOptionCheck
-                        color={colors2024['green-default']}
-                        height={26}
-                        testID="perps-pro-tpsl-mode-selected"
-                        width={26}
-                      />
-                    </View>
-                  ) : null}
                 </Pressable>
               );
             })}
@@ -162,12 +151,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro',
     fontSize: 12,
     lineHeight: 16,
-  },
-  check: {
-    alignItems: 'center',
-    height: 26,
-    justifyContent: 'center',
-    marginLeft: 8,
-    width: 26,
   },
 }));
