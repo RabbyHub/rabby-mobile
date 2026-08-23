@@ -23,6 +23,24 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
+jest.mock('@/components2024/Button', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text } = require('react-native');
+  return {
+    Button: ({ disabled, loading, onPress, testID, title }: any) =>
+      ReactModule.createElement(
+        Pressable,
+        {
+          accessibilityState: { busy: loading, disabled },
+          disabled,
+          onPress,
+          testID,
+        },
+        ReactModule.createElement(Text, null, loading ? 'loading' : title),
+      ),
+  };
+});
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
@@ -61,6 +79,7 @@ describe('PerpsProCloseAllConfirmationModal', () => {
         confirmation={{} as any}
         onCancel={jest.fn()}
         onConfirm={jest.fn()}
+        pending={false}
       />,
     );
 
@@ -81,5 +100,23 @@ describe('PerpsProCloseAllConfirmationModal', () => {
         'This will close all your positions and cancel their associated TP/SL orders.',
       ),
     ).toBeTruthy();
+  });
+
+  it('keeps the confirmation visible and exposes the shared button loading state', () => {
+    render(
+      <PerpsProCloseAllConfirmationModal
+        confirmation={{} as any}
+        onCancel={jest.fn()}
+        onConfirm={jest.fn()}
+        pending
+      />,
+    );
+
+    expect(screen.getByTestId('tracked-modal')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-close-all-confirm').props
+        .accessibilityState,
+    ).toEqual({ busy: true, disabled: true });
+    expect(screen.getByText('loading')).toBeTruthy();
   });
 });
