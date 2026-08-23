@@ -114,6 +114,16 @@ export type PerpsProTooltipPlacement = {
   right: number | null;
 };
 
+export function getPerpsProTooltipMaxWidth(containerWidth: number): number {
+  return Math.max(
+    0,
+    containerWidth -
+      PERPS_PRO_PRICE_SCALE_WIDTH -
+      PERPS_PRO_TOOLTIP_GAP -
+      PERPS_PRO_TOOLTIP_EDGE_INSET,
+  );
+}
+
 export function getPerpsProTooltipPlacement(
   pointX: number,
   containerWidth: number,
