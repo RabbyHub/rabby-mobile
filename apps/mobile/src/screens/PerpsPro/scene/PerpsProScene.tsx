@@ -94,6 +94,7 @@ import { PerpsProPositionTpSlSheet } from '../components/positions/PerpsProPosit
 import { PerpsProPositionsControls } from '../components/positions/PerpsProPositionsControls';
 import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrderConfirmationSheet';
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
+import { resolvePerpsProTradeAddFundsAction } from '../model/addFunds';
 import type { PerpsAccountAssetRow } from '../model/account';
 import {
   getPerpsProColumnLayout,
@@ -285,6 +286,18 @@ export const PerpsProScene: React.FC<{
         : { mode: 'swap', targetAsset },
     );
   }, []);
+  const tradeAddFundsAction = useMemo(
+    () =>
+      resolvePerpsProTradeAddFundsAction({
+        accountMode: info.account.mode,
+        quoteAsset: scene.currentMarket?.quoteAsset ?? 'USDC',
+      }),
+    [info.account.mode, scene.currentMarket?.quoteAsset],
+  );
+  const openTradeAddFunds = useCallback(
+    () => setFundingOverlay(tradeAddFundsAction),
+    [tradeAddFundsAction],
+  );
   const openMarketSelector = useCallback(
     () => dismissKeyboardThen(() => marketSelectorRef.current?.present()),
     [dismissKeyboardThen],
@@ -602,9 +615,10 @@ export const PerpsProScene: React.FC<{
                     onLayout={updateMainColumnHeight}
                     style={tradeColumnStyle}>
                     <PerpsProTradeForm
+                      addFundsMode={tradeAddFundsAction.mode}
                       configurationReady={scene.tradeConfigurationReady}
                       controller={trade}
-                      onDeposit={openDeposit}
+                      onAddFunds={openTradeAddFunds}
                     />
                   </View>
                 </View>
@@ -754,6 +768,7 @@ export const PerpsProScene: React.FC<{
       mainColumnHeight,
       manageMargin.open,
       openDeposit,
+      openTradeAddFunds,
       openSwap,
       openWithdraw,
       orderBookColumnStyle,
@@ -771,6 +786,7 @@ export const PerpsProScene: React.FC<{
       tradeColumnStyle,
       tradeWidth,
       trade,
+      tradeAddFundsAction.mode,
       transfer.open,
       updateMainColumnHeight,
       updateTradeRowHeight,

@@ -47,11 +47,19 @@ const tifLabels: Record<PerpsProTradeTif, string> = {
   Ioc: 'IOC',
 };
 
-export const PerpsProTradeForm: React.FC<{
+type PerpsProTradeFormProps = {
+  addFundsMode?: 'deposit' | 'swap';
   configurationReady?: boolean;
   controller: PerpsProTradeController;
-  onDeposit: () => void;
-}> = React.memo(({ configurationReady = true, controller, onDeposit }) => {
+  onAddFunds: () => void;
+};
+
+const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
+  addFundsMode = 'deposit',
+  configurationReady = true,
+  controller,
+  onAddFunds,
+}) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -235,16 +243,22 @@ export const PerpsProTradeForm: React.FC<{
             configurationReady
               ? () =>
                   dismissKeyboardThen(() => {
-                    onDeposit();
+                    onAddFunds();
                   })
               : undefined
           }
           trailing={
-            <RcIconAvailableAdd
-              color={colors2024['neutral-title-1']}
-              height={16}
-              width={16}
-            />
+            addFundsMode === 'swap' ? (
+              <Text style={styles.swapAction}>
+                {t('page.perps.PerpsDepositCard.swap')}
+              </Text>
+            ) : (
+              <RcIconAvailableAdd
+                color={colors2024['neutral-title-1']}
+                height={16}
+                width={16}
+              />
+            )
           }
           value={
             configurationReady
@@ -427,7 +441,9 @@ export const PerpsProTradeForm: React.FC<{
       />
     </View>
   );
-});
+};
+
+export const PerpsProTradeForm = React.memo(PerpsProTradeFormComponent);
 
 PerpsProTradeForm.displayName = 'PerpsProTradeForm';
 
@@ -437,6 +453,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
   optionsGroup: { gap: 8 },
+  swapAction: {
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
   convertedAmount: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',
