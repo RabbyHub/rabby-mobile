@@ -278,6 +278,17 @@ describe('PerpsProOrderConfirmationSheet', () => {
     ).toEqual({ text: '36:primary' });
   });
 
+  it('renders unavailable liquidation as a double dash', () => {
+    renderSheet(parent, { estimatedLiquidation: null });
+
+    const detailTexts = screen
+      .getByTestId('perps-pro-order-confirmation-details')
+      .findAllByType(NativeText)
+      .map(node => node.props.children);
+    expect(detailTexts).toContain('--');
+    expect(detailTexts).not.toContain('-');
+  });
+
   it('keeps attached TP/SL on the same per-type skip preference control', () => {
     const onToggleSkip = jest.fn();
     renderSheet(attached, { onToggleSkip });
