@@ -22,7 +22,7 @@ export const PerpsProBboSheet: React.FC<{
   onClose: () => void;
   onSelect: (value: PerpsProBboStrategy) => void;
   options: readonly PerpsProBboOption[];
-  selected: PerpsProBboStrategy;
+  selected: PerpsProBboStrategy | null;
   visible: boolean;
 }> = React.memo(({ onClose, onSelect, options, selected, visible }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);

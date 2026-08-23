@@ -25,7 +25,7 @@ type PerpsProDecimalTextInputProps = Omit<
 > & {
   emptySelection?: NonNullable<TextInputProps['selection']>;
   focusCursorAtEnd?: boolean;
-  inputComponent?: React.ForwardRefExoticComponent<
+  inputComponent?: React.ElementType<
     TextInputProps & React.RefAttributes<TextInput>
   >;
   inputMode?: TextInputProps['inputMode'];

@@ -18,7 +18,7 @@ export interface PerpsProTradeFormState {
   amountUnit: PerpsProTradeAmountUnit;
   attachedTpSl: PerpsProAttachedTpSlDraft;
   bboEnabled: boolean;
-  bboStrategy: PerpsProBboStrategy;
+  bboStrategy: PerpsProBboStrategy | null;
   conditionalExecution: PerpsProConditionalExecution;
   conditionalLimitPrice: string;
   limitPrice: string;

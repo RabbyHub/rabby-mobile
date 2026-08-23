@@ -1,18 +1,36 @@
 import RcIconAmountUnitSwitch from '@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg';
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
 
 const suffixFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
+const AnimatedPriceTextInput = Animated.createAnimatedComponent(TextInput);
 
-export const PerpsProTradePriceField: React.FC<{
+export const PERPS_PRO_PRICE_FILL_ANIMATION = {
+  durationMs: 180,
+  endFontSize: 14,
+  endLineHeight: 18,
+  startFontSize: 18,
+  startLineHeight: 22,
+} as const;
+
+type PerpsProTradePriceFieldProps = {
   editable?: boolean;
+  fillRevision?: number;
   label: string;
   maxDecimals: number;
   onChangeText: (value: string) => void;
@@ -22,21 +40,53 @@ export const PerpsProTradePriceField: React.FC<{
   suffixActive?: boolean;
   value: string;
   variant?: 'default' | 'conditionalExecution';
-}> = React.memo(
-  ({
-    editable = true,
-    label,
-    maxDecimals,
-    onChangeText,
-    onPressSuffix,
-    onPressValue,
-    suffix,
-    suffixActive = false,
-    value,
-    variant = 'default',
-  }) => {
+};
+
+export const PerpsProTradePriceField = React.memo(
+  React.forwardRef<TextInput, PerpsProTradePriceFieldProps>((props, ref) => {
+    const {
+      editable = true,
+      fillRevision = 0,
+      label,
+      maxDecimals,
+      onChangeText,
+      onPressSuffix,
+      onPressValue,
+      suffix,
+      suffixActive = false,
+      value,
+      variant = 'default',
+    } = props;
     const { colors2024, styles } = useTheme2024({ getStyle });
     const [focused, setFocused] = useState(false);
+    const previousFillRevisionRef = useRef(fillRevision);
+    const fillProgress = useSharedValue(1);
+    const animatedInputStyle = useAnimatedStyle(() => ({
+      fontSize:
+        PERPS_PRO_PRICE_FILL_ANIMATION.startFontSize +
+        (PERPS_PRO_PRICE_FILL_ANIMATION.endFontSize -
+          PERPS_PRO_PRICE_FILL_ANIMATION.startFontSize) *
+          fillProgress.value,
+      lineHeight:
+        PERPS_PRO_PRICE_FILL_ANIMATION.startLineHeight +
+        (PERPS_PRO_PRICE_FILL_ANIMATION.endLineHeight -
+          PERPS_PRO_PRICE_FILL_ANIMATION.startLineHeight) *
+          fillProgress.value,
+    }));
+    useEffect(() => {
+      const previousRevision = previousFillRevisionRef.current;
+      previousFillRevisionRef.current = fillRevision;
+      if (fillRevision <= 0 || fillRevision === previousRevision) {
+        return;
+      }
+      cancelAnimation(fillProgress);
+      fillProgress.value = 0;
+      fillProgress.value = withTiming(1, {
+        duration: PERPS_PRO_PRICE_FILL_ANIMATION.durationMs,
+        easing: Easing.out(Easing.cubic),
+        reduceMotion: ReduceMotion.System,
+      });
+    }, [fillProgress, fillRevision]);
     const showFloatingLabel = focused || !!value;
     return (
       <View style={styles.container} testID="perps-pro-trade-price-field">
@@ -75,14 +125,16 @@ export const PerpsProTradePriceField: React.FC<{
               accessibilityLabel={label}
               cursorColor={colors2024['brand-default']}
               editable={editable}
+              inputComponent={AnimatedPriceTextInput}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
+              ref={ref}
               onBlur={() => setFocused(false)}
               onChangeText={onChangeText}
               onFocus={() => setFocused(true)}
               pointerEvents={onPressValue ? 'none' : 'auto'}
               selectionColor={colors2024['brand-default']}
-              style={styles.input}
+              style={[styles.input, animatedInputStyle]}
               value={value}
             />
           </View>
@@ -125,7 +177,7 @@ export const PerpsProTradePriceField: React.FC<{
         ) : null}
       </View>
     );
-  },
+  }),
 );
 
 PerpsProTradePriceField.displayName = 'PerpsProTradePriceField';

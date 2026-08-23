@@ -234,8 +234,13 @@ export const usePerpsProTrade = ({
   const [amountSource, setAmountSource] =
     useState<PerpsProTradeAmountSource>('manual');
   const [percentage, setPercentageState] = useState(0);
+  const [priceFillFeedback, setPriceFillFeedback] = useState<{
+    field: 'limitPrice' | 'triggerPrice';
+    revision: number;
+  } | null>(null);
   const amountSourceRef = useRef<PerpsProTradeAmountSource>('manual');
   const percentageRef = useRef(0);
+  const priceFillRevisionRef = useRef(0);
   const amountDraftRef = useRef(createPerpsProTradeAmountDraft());
   const amountDraftsByOrderTypeRef = useRef(
     createPerpsProTradeOrderTypeAmountDrafts(),
@@ -404,6 +409,7 @@ export const usePerpsProTrade = ({
     shouldAutoFillLimitPriceRef.current = formRef.current.orderType === 'limit';
     setAmountSource('manual');
     setPercentageState(0);
+    setPriceFillFeedback(null);
     formRevisionRef.current += 1;
     setForm(current => {
       const next = {
@@ -508,10 +514,20 @@ export const usePerpsProTrade = ({
       if (currentForm.orderType === 'limit') {
         if (currentForm.bboEnabled) return;
         setPrice('limitPrice', price);
+        priceFillRevisionRef.current += 1;
+        setPriceFillFeedback({
+          field: 'limitPrice',
+          revision: priceFillRevisionRef.current,
+        });
         return;
       }
       if (currentForm.orderType === 'conditional') {
         setPrice('triggerPrice', price);
+        priceFillRevisionRef.current += 1;
+        setPriceFillFeedback({
+          field: 'triggerPrice',
+          revision: priceFillRevisionRef.current,
+        });
       }
     },
     [setPrice],
@@ -1146,8 +1162,34 @@ export const usePerpsProTrade = ({
     [getTpSlPreviewFacts],
   );
   const patchAttachedTpSl = useCallback(
-    (attachedTpSl: PerpsProAttachedTpSlDraft) => patchForm({ attachedTpSl }),
-    [patchForm],
+    (attachedTpSl: PerpsProAttachedTpSlDraft) => {
+      const currentForm = formRef.current;
+      const enablingWhileBboActive =
+        attachedTpSl.enabled &&
+        !currentForm.attachedTpSl.enabled &&
+        currentForm.orderType === 'limit' &&
+        currentForm.bboEnabled;
+      if (!enablingWhileBboActive) {
+        patchForm({ attachedTpSl });
+        return;
+      }
+
+      const latestPrice = latestTradeRef.current
+        ? sanitizePerpsProDecimalInput(
+            latestTradeRef.current.price,
+            market?.marketData.pxDecimals ?? 2,
+          )
+        : '';
+      limitManualPriceRef.current = null;
+      shouldAutoFillLimitPriceRef.current = !latestPrice;
+      patchForm({
+        attachedTpSl,
+        bboEnabled: false,
+        bboStrategy: null,
+        limitPrice: latestPrice,
+      });
+    },
+    [market?.marketData.pxDecimals, patchForm],
   );
   const tpSl = usePerpsProTpSl({
     draft: form.attachedTpSl,
@@ -1988,6 +2030,7 @@ export const usePerpsProTrade = ({
     patchForm,
     pending,
     percentage,
+    priceFillFeedback,
     reduceOnlyAvailability,
     requestReview,
     resolvedAmount,

@@ -364,6 +364,18 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
     expect(hook.result.current.form.triggerPrice).toBe('101.23');
     expect(hook.result.current.form.conditionalLimitPrice).toBe('');
+    expect(hook.result.current.priceFillFeedback).toEqual({
+      field: 'triggerPrice',
+      revision: 1,
+    });
+
+    act(() =>
+      hook.result.current.selectOrderBookPrice('101.234', market.marketKey),
+    );
+    expect(hook.result.current.priceFillFeedback).toEqual({
+      field: 'triggerPrice',
+      revision: 2,
+    });
 
     act(() =>
       hook.result.current.selectOrderBookPrice('99', 'hyperliquid::ETH'),
@@ -402,6 +414,76 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       bboStrategy: 'q1',
       limitPrice: '102.34',
     });
+  });
+
+  it('atomically replaces BBO with TP/SL and clears the selected level', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => emitLatestTrade('BTC', '100.129', 1));
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setPrice('limitPrice', '88'));
+    act(() => hook.result.current.enableBbo('q5'));
+    act(() => emitLatestTrade('BTC', '102.349', 2));
+
+    expect(hook.result.current.tpSl.compatibilityError).toBe('bboUnsupported');
+    expect(hook.result.current.tpSl.disabled).toBe(false);
+    act(() => hook.result.current.tpSl.setEnabled(true));
+
+    expect(hook.result.current.form).toMatchObject({
+      attachedTpSl: { enabled: true },
+      bboEnabled: false,
+      bboStrategy: null,
+      limitPrice: '102.34',
+    });
+
+    act(() => hook.result.current.tpSl.setEnabled(false));
+    act(() => hook.result.current.enableBbo('cp1'));
+    act(() => hook.result.current.disableBbo());
+    expect(hook.result.current.form.limitPrice).toBe('102.34');
+  });
+
+  it('fills the next latest trade once when TP/SL replaces BBO before a trade exists', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.enableBbo('cp5'));
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    expect(hook.result.current.form).toMatchObject({
+      bboEnabled: false,
+      bboStrategy: null,
+      limitPrice: '',
+    });
+
+    act(() => emitLatestTrade('BTC', '103.459', 1));
+    expect(hook.result.current.form.limitPrice).toBe('103.45');
+    act(() => emitLatestTrade('BTC', '104.999', 2));
+    expect(hook.result.current.form.limitPrice).toBe('103.45');
   });
 
   it('keeps quote Max available before manual Limit prices are entered', () => {
@@ -486,7 +568,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     act(() => hook.result.current.setAmount('25'));
     act(() => hook.result.current.patchForm({ bboEnabled: true }));
-    expect(hook.result.current.tpSl.disabled).toBe(true);
+    expect(hook.result.current.tpSl.disabled).toBe(false);
 
     act(() => hook.result.current.setOrderType('market'));
     expect(hook.result.current.form.amount).toBe('100%');

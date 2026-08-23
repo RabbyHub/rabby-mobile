@@ -128,11 +128,18 @@ export const PerpsProTradeForm: React.FC<{
             <PerpsProTradeBboField
               onPressStrategy={() => openSheet('bbo')}
               onPressToggle={controller.disableBbo}
-              strategyLabel={bboLabels[form.bboStrategy]}
+              strategyLabel={
+                form.bboStrategy ? bboLabels[form.bboStrategy] : '-'
+              }
             />
           ) : (
             <PerpsProTradePriceField
               editable={configurationReady}
+              fillRevision={
+                controller.priceFillFeedback?.field === 'limitPrice'
+                  ? controller.priceFillFeedback.revision
+                  : 0
+              }
               label={`${t('page.perps.pro.trade.price')}(${quoteAsset})`}
               maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('limitPrice', value)}
@@ -150,6 +157,11 @@ export const PerpsProTradeForm: React.FC<{
           <>
             <PerpsProTradePriceField
               editable={configurationReady}
+              fillRevision={
+                controller.priceFillFeedback?.field === 'triggerPrice'
+                  ? controller.priceFillFeedback.revision
+                  : 0
+              }
               label={`${t('page.perps.pro.trade.triggerPrice')}(${quoteAsset})`}
               maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('triggerPrice', value)}
