@@ -4,6 +4,7 @@ import {
   getPerpsProMaxDisplayReferencePrice,
   getPerpsProNetNewBaseSize,
   getPerpsProTradeDisplayReferencePrice,
+  resolvePerpsProMaxBaseCapacity,
   resolvePerpsProTradeProjection,
 } from './tradeProjection';
 
@@ -31,25 +32,62 @@ describe('Perps Pro trade projection', () => {
 
     expect(
       getPerpsProMaxDisplayReferencePrice({
-        bboPrice: '101',
         form: limitForm,
         marketPrice: '100',
       }),
     ).toBe('100');
     expect(
       getPerpsProMaxDisplayReferencePrice({
-        bboPrice: '101',
         form: { ...limitForm, limitPrice: '95' },
         marketPrice: '100',
       }),
     ).toBe('95');
     expect(
       getPerpsProMaxDisplayReferencePrice({
-        bboPrice: '101',
         form: { ...limitForm, bboEnabled: true },
         marketPrice: '100',
       }),
-    ).toBe('101');
+    ).toBe('100');
+  });
+
+  it('applies the plugin Limit safety reserve without exceeding the server max', () => {
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        leverage: 10,
+        orderType: 'limit',
+        referencePrice: '100',
+        serverMaxBase: '12',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('9.9');
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '1000',
+        leverage: 10,
+        orderType: 'limit',
+        referencePrice: '100',
+        serverMaxBase: '10',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('10');
+  });
+
+  it('adds closable opposite exposure to the conservative Limit capacity', () => {
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        currentPositionSize: '-2',
+        leverage: 10,
+        orderType: 'limit',
+        referencePrice: '100',
+        serverMaxBase: '20',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('11.9');
   });
 
   it('uses live market only as the empty Conditional Limit Max fallback', () => {
@@ -60,14 +98,12 @@ describe('Perps Pro trade projection', () => {
 
     expect(
       getPerpsProMaxDisplayReferencePrice({
-        bboPrice: null,
         form: conditionalForm,
         marketPrice: '100',
       }),
     ).toBe('100');
     expect(
       getPerpsProMaxDisplayReferencePrice({
-        bboPrice: null,
         form: { ...conditionalForm, conditionalLimitPrice: '96' },
         marketPrice: '100',
       }),
