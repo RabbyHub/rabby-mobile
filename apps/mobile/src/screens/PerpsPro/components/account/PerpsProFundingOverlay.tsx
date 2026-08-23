@@ -12,8 +12,9 @@ export const PerpsProFundingOverlay: React.FC<{
   mode: PerpsProFundingMode;
   onClose: () => void;
   onOpenDeposit: () => void;
+  sourceAsset?: PerpsQuoteAsset;
   targetAsset: PerpsQuoteAsset;
-}> = ({ mode, onClose, onOpenDeposit, targetAsset }) => {
+}> = ({ mode, onClose, onOpenDeposit, sourceAsset, targetAsset }) => {
   const {
     currentPerpsAccount,
     handleDeposit,
@@ -50,11 +51,12 @@ export const PerpsProFundingOverlay: React.FC<{
 
   return (
     <PerpsSpotSwapPopup
-      disableSwitch
+      disableSwitch={!sourceAsset}
       onClose={onClose}
       onDepositPress={onOpenDeposit}
       onSpotOrder={handleStableCoinOrder}
-      targetAsset={targetAsset}
+      sourceAsset={sourceAsset}
+      targetAsset={sourceAsset ? undefined : targetAsset}
       visible
     />
   );

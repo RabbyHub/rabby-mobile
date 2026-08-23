@@ -293,7 +293,7 @@ const buildAccountAssets = ({
       }
       const price = resolveSpotUsdcPrice(balance.coin, spotAssetCtxs, spotMeta);
       rows.push({
-        action: coin === 'USDC' ? 'none' : 'swap',
+        action: 'swap',
         available: balance.available,
         coin,
         fullName: PERPS_QUOTE_ASSET_FULL_NAME[coin],

@@ -4,7 +4,7 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { PerpsQuoteAsset } from '@/constant/perps';
+import type { PerpsQuoteAsset } from '@/constant/perps';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -34,6 +34,7 @@ import {
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import { resolvePerpsSpotSwapPreset } from './perpsSpotSwapPreset';
 
 const COIN_ICONS: Record<string, (size: number) => React.ReactNode> = {
   USDC: (s: number) => <RcIconUSDC width={s} height={s} />,
@@ -59,6 +60,7 @@ export const SPOT_STABLE_COIN_NAME: Record<SpotStableCoin, string> = {
 
 export const PerpsSpotSwapPopup: React.FC<{
   visible?: boolean;
+  sourceAsset?: PerpsQuoteAsset;
   targetAsset?: PerpsQuoteAsset;
   disableSwitch?: boolean;
   onClose(): void;
@@ -72,6 +74,7 @@ export const PerpsSpotSwapPopup: React.FC<{
   }): Promise<unknown>;
 }> = ({
   visible,
+  sourceAsset,
   targetAsset,
   disableSwitch,
   onClose,
@@ -137,10 +140,10 @@ export const PerpsSpotSwapPopup: React.FC<{
       setAmount('');
       fetchMidPrices();
 
-      if (targetAsset) {
-        // From detail page: fixed target
-        setFromCoin('USDC');
-        setToCoin(targetAsset);
+      const preset = resolvePerpsSpotSwapPreset({ sourceAsset, targetAsset });
+      if (preset) {
+        setFromCoin(preset.fromCoin);
+        setToCoin(preset.toCoin);
       } else {
         // USDC is the only hub — either from=USDC (buy) or to=USDC (sell).
         const top1 = sortedByBalance[0];
@@ -165,7 +168,7 @@ export const PerpsSpotSwapPopup: React.FC<{
       modalRef.current?.dismiss();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, targetAsset]);
+  }, [visible, sourceAsset, targetAsset]);
 
   const fromBalance = useMemo(() => {
     return getSpotBalance(fromCoin);

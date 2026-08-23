@@ -113,18 +113,28 @@ describe('Perps Pro Standard Spot USDC Transfer integration', () => {
   );
 
   it.each([
-    UserAbstractionResp.unifiedAccount,
-    UserAbstractionResp.dexAbstraction,
+    {
+      action: 'swap',
+      key: 'unified:0',
+      userAbstraction: UserAbstractionResp.unifiedAccount,
+    },
+    {
+      action: 'swap',
+      key: 'unified:0',
+      userAbstraction: UserAbstractionResp.portfolioMargin,
+    },
+    {
+      action: 'none',
+      key: 'spot:USDC',
+      userAbstraction: UserAbstractionResp.dexAbstraction,
+    },
   ])(
-    'keeps %s out of both the visible action and executor',
-    async userAbstraction => {
+    'keeps $userAbstraction out of Transfer while exposing only its approved action',
+    async ({ action, key, userAbstraction }) => {
       const asset = buildAccount(userAbstraction).assets[0];
       expect(asset).toMatchObject({
-        action: 'none',
-        key:
-          userAbstraction === UserAbstractionResp.unifiedAccount
-            ? 'unified:0'
-            : 'spot:USDC',
+        action,
+        key,
       });
 
       const command = buildPerpsSpotToPerpsTransferCommand({
