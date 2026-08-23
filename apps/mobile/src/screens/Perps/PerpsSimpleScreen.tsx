@@ -26,7 +26,10 @@ import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarket
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
-import { PerpsRegionAlert } from './components/PerpsRegionAlert';
+import {
+  PERPS_REGION_ALERT_HEADER_SPACING,
+  PerpsRegionAlert,
+} from './components/PerpsRegionAlert';
 import { PerpsSimpleHeader } from './components/PerpsHeaderTitle';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
@@ -271,7 +274,10 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
           showProNewBadge={showProNewBadge}
         />
         {!hasPermission ? (
-          <PerpsRegionAlert onLayout={onRegionAlertLayout} />
+          <PerpsRegionAlert
+            onLayout={onRegionAlertLayout}
+            topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
+          />
         ) : null}
         {!isInitialized ? (
           <PerpsSkeletonLoader />

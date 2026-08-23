@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 
 import {
   PERPS_REGION_ALERT_DEFAULT_BOTTOM_SPACING,
+  PERPS_REGION_ALERT_HEADER_SPACING,
   PerpsRegionAlert,
 } from './PerpsRegionAlert';
 
@@ -52,6 +53,20 @@ describe('PerpsRegionAlert', () => {
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-region-alert').props.style),
     ).toMatchObject({ marginBottom: 4 });
+  });
+
+  it('keeps top spacing opt-in and supports the shared Perps mode gap', () => {
+    const view = render(<PerpsRegionAlert />);
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-region-alert').props.style),
+    ).toMatchObject({ marginTop: 0 });
+
+    view.rerender(
+      <PerpsRegionAlert topSpacing={PERPS_REGION_ALERT_HEADER_SPACING} />,
+    );
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-region-alert').props.style),
+    ).toMatchObject({ marginTop: 8 });
   });
 
   it('constrains long text inside the padded background without truncation', () => {

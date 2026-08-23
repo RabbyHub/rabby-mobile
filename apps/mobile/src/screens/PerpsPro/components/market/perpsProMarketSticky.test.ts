@@ -2,8 +2,10 @@ import { Animated } from 'react-native';
 
 import {
   createPerpsProMarketTranslateY,
+  createPerpsProRestrictedMarketTranslateY,
   getPerpsProMarketNaturalAnchor,
   getPerpsProMarketTop,
+  getPerpsProRestrictedMarketTop,
 } from './perpsProMarketSticky';
 
 describe('Perps Pro Market sticky geometry', () => {
@@ -61,5 +63,29 @@ describe('Perps Pro Market sticky geometry', () => {
     headerMarketTranslateY.setValue(0);
     scrollY.setValue(120);
     expect((translateY as Animated.Value).__getValue()).toBe(0);
+  });
+
+  it('keeps restricted Market below the sticky alert as the header collapses', () => {
+    expect(
+      getPerpsProRestrictedMarketTop({
+        headerMarketTop: 56,
+        regionAlertExtent: 64,
+      }),
+    ).toBe(120);
+    expect(
+      getPerpsProRestrictedMarketTop({
+        headerMarketTop: 0,
+        regionAlertExtent: 64,
+      }),
+    ).toBe(64);
+
+    const headerMarketTranslateY = new Animated.Value(56);
+    const translateY = createPerpsProRestrictedMarketTranslateY({
+      headerMarketTranslateY,
+      regionAlertExtent: 64,
+    });
+    expect((translateY as Animated.Value).__getValue()).toBe(120);
+    headerMarketTranslateY.setValue(0);
+    expect((translateY as Animated.Value).__getValue()).toBe(64);
   });
 });

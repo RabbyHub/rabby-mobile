@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 
 export const PERPS_REGION_ALERT_DEFAULT_BOTTOM_SPACING = 12;
+export const PERPS_REGION_ALERT_HEADER_SPACING = 8;
 export const PERPS_REGION_ALERT_HORIZONTAL_MARGIN = 16;
 
 export type PerpsRegionAlertLayout = {
@@ -18,9 +19,11 @@ export type PerpsRegionAlertLayout = {
 export const PerpsRegionAlert: React.FC<{
   bottomSpacing?: number;
   onLayout?: (event: LayoutChangeEvent) => void;
+  topSpacing?: number;
 }> = ({
   bottomSpacing = PERPS_REGION_ALERT_DEFAULT_BOTTOM_SPACING,
   onLayout,
+  topSpacing = 0,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -28,7 +31,10 @@ export const PerpsRegionAlert: React.FC<{
   return (
     <View
       onLayout={onLayout}
-      style={[styles.container, { marginBottom: bottomSpacing }]}
+      style={[
+        styles.container,
+        { marginBottom: bottomSpacing, marginTop: topSpacing },
+      ]}
       testID="perps-region-alert">
       <RcIconWarningCC
         color={colors2024['orange-default']}
