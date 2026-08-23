@@ -202,12 +202,12 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
         <View style={styles.subtitle}>
           <View style={styles.marketMeta}>
             {model.fullName ? (
-              <Text numberOfLines={1} style={styles.marketMetaText}>
+              <Text numberOfLines={1} style={styles.fullNameText}>
                 {model.fullName}
               </Text>
             ) : null}
             {model.fullName ? <View style={styles.marketMetaDivider} /> : null}
-            <Text numberOfLines={1} style={styles.marketMetaText}>
+            <Text numberOfLines={1} style={styles.volumeText}>
               {formatPerpsProCompactNumber(model.volume24h)}
             </Text>
           </View>
@@ -306,12 +306,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   marketMeta: {
     alignItems: 'center',
+    flex: 1,
     flexDirection: 'row',
-    flexShrink: 1,
     gap: 6,
     minWidth: 0,
   },
-  marketMetaText: {
+  fullNameText: {
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
     fontFamily: 'SF Pro',
@@ -319,8 +319,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     lineHeight: 16,
   },
+  volumeText: {
+    color: colors2024['neutral-secondary'],
+    flexShrink: 0,
+    fontFamily: 'SF Pro',
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 16,
+  },
   marketMetaDivider: {
     backgroundColor: colors2024['neutral-line'],
+    flexShrink: 0,
     height: 12,
     width: 1,
   },
@@ -334,7 +343,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   changeUp: {
     color: colors2024['green-default'],
-    marginLeft: 8,
+    flexShrink: 0,
+    marginLeft: 20,
     fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
@@ -342,7 +352,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   changeDown: {
     color: colors2024['red-default'],
-    marginLeft: 8,
+    flexShrink: 0,
+    marginLeft: 20,
     fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
@@ -350,7 +361,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   changeMuted: {
     color: colors2024['neutral-secondary'],
-    marginLeft: 8,
+    flexShrink: 0,
+    marginLeft: 20,
     fontFamily: 'SF Pro',
     fontSize: 12,
     fontWeight: '500',
