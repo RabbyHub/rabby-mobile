@@ -61,6 +61,13 @@ export const getNextPerpsProHeaderScrollState = (
   }
 
   const delta = offset - state.lastOffset;
+  if (!state.visible) {
+    return {
+      accumulatedDelta: 0,
+      lastOffset: offset,
+      visible: false,
+    };
+  }
   const accumulatedDelta =
     delta === 0
       ? state.accumulatedDelta
@@ -73,13 +80,6 @@ export const getNextPerpsProHeaderScrollState = (
       accumulatedDelta: 0,
       lastOffset: offset,
       visible: false,
-    };
-  }
-  if (accumulatedDelta <= -PERPS_PRO_HEADER_SCROLL_THRESHOLD) {
-    return {
-      accumulatedDelta: 0,
-      lastOffset: offset,
-      visible: true,
     };
   }
   return {
