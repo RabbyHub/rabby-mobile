@@ -26,6 +26,7 @@ import {
   PerpsProHistoryError,
   PerpsProHistorySkeleton,
 } from './PerpsProHistoryState';
+import { PERPS_PRO_HISTORY_FEE_TIPS_OWNER } from '../constants';
 
 export const PerpsProHistoryList: React.FC<{
   active?: boolean;
@@ -46,7 +47,9 @@ export const PerpsProHistoryList: React.FC<{
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation();
+  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation(
+    PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
+  );
   const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
     ({ item }) => (
       <PerpsProHistoryRowView

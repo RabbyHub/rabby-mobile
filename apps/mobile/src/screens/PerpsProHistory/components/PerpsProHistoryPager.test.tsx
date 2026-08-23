@@ -3,6 +3,11 @@ import React from 'react';
 
 const mockSetPage = jest.fn();
 const mockSetPageWithoutAnimation = jest.fn();
+const mockHideFeeTipsPopup = jest.fn();
+
+jest.mock('@/hooks/useTipsPopup', () => ({
+  useHideTipsPopup: () => mockHideFeeTipsPopup,
+}));
 
 jest.mock('react-native-pager-view', () => {
   const ReactModule = require('react');
@@ -111,6 +116,28 @@ describe('PerpsProHistoryPager', () => {
     });
 
     expect(onChange).toHaveBeenCalledWith('trade');
+    expect(mockHideFeeTipsPopup).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the owned Fee explanation as soon as a native swipe starts', () => {
+    render(
+      <PerpsProHistoryPager
+        activeTab="trade"
+        amountUnit="quote"
+        onChange={jest.fn()}
+        onLoadEarlier={jest.fn()}
+        onRefresh={jest.fn()}
+        state={createPerpsProHistoryState()}
+      />,
+    );
+
+    fireEvent(
+      screen.getByTestId('perps-pro-history-pager'),
+      'pageScrollStateChanged',
+      { nativeEvent: { pageScrollState: 'dragging' } },
+    );
+
+    expect(mockHideFeeTipsPopup).toHaveBeenCalledTimes(1);
   });
 
   it('prepares a distant tab before requesting a non-animated jump', () => {
@@ -131,6 +158,7 @@ describe('PerpsProHistoryPager', () => {
 
     expect(screen.getByTestId('history-list-funding-preview')).toBeTruthy();
     expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(3);
+    expect(mockHideFeeTipsPopup).toHaveBeenCalledTimes(1);
   });
 
   it('bounds prepared pages to three and keeps a distant jump target ready', () => {

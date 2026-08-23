@@ -11,6 +11,8 @@ import PagerView, {
 } from 'react-native-pager-view';
 
 import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
+import { useHideTipsPopup } from '@/hooks/useTipsPopup';
+import { PERPS_PRO_HISTORY_FEE_TIPS_OWNER } from '../constants';
 import {
   PERPS_PRO_HISTORY_TABS,
   type PerpsProHistoryControllerState,
@@ -53,6 +55,7 @@ export const PerpsProHistoryPager: React.FC<{
   state: PerpsProHistoryControllerState;
 }> = ({ activeTab, amountUnit, onChange, onLoadEarlier, onRefresh, state }) => {
   const pagerRef = useRef<PagerView>(null);
+  const hideFeeTipsPopup = useHideTipsPopup(PERPS_PRO_HISTORY_FEE_TIPS_OWNER);
   const selectedIndexRef = useRef(PERPS_PRO_HISTORY_TABS.indexOf(activeTab));
   const [requestedTab, setRequestedTab] = useState<PerpsProHistoryTab | null>(
     null,
@@ -72,24 +75,32 @@ export const PerpsProHistoryPager: React.FC<{
     pagerRef.current?.setPageWithoutAnimation(activeIndex);
   }, [activeTab, requestedTab]);
 
-  const selectTab = useCallback((tab: PerpsProHistoryTab) => {
-    const targetIndex = PERPS_PRO_HISTORY_TABS.indexOf(tab);
-    if (targetIndex < 0 || targetIndex === selectedIndexRef.current) {
-      return;
-    }
-    const distance = Math.abs(targetIndex - selectedIndexRef.current);
-    setRequestedTab(tab);
-    requestAnimationFrame(() => {
-      if (distance === 1) {
-        pagerRef.current?.setPage(targetIndex);
-      } else {
-        pagerRef.current?.setPageWithoutAnimation(targetIndex);
+  const selectTab = useCallback(
+    (tab: PerpsProHistoryTab) => {
+      const targetIndex = PERPS_PRO_HISTORY_TABS.indexOf(tab);
+      if (targetIndex < 0) {
+        return;
       }
-    });
-  }, []);
+      hideFeeTipsPopup();
+      if (targetIndex === selectedIndexRef.current) {
+        return;
+      }
+      const distance = Math.abs(targetIndex - selectedIndexRef.current);
+      setRequestedTab(tab);
+      requestAnimationFrame(() => {
+        if (distance === 1) {
+          pagerRef.current?.setPage(targetIndex);
+        } else {
+          pagerRef.current?.setPageWithoutAnimation(targetIndex);
+        }
+      });
+    },
+    [hideFeeTipsPopup],
+  );
 
   const handlePageSelected = useCallback(
     (event: PagerViewOnPageSelectedEvent) => {
+      hideFeeTipsPopup();
       const position = event.nativeEvent.position;
       const tab = PERPS_PRO_HISTORY_TABS[position];
       if (!tab) {
@@ -99,7 +110,21 @@ export const PerpsProHistoryPager: React.FC<{
       setRequestedTab(null);
       onChange(tab);
     },
-    [onChange],
+    [hideFeeTipsPopup, onChange],
+  );
+  const handlePageScrollStateChanged = useCallback(
+    (
+      event: Parameters<
+        NonNullable<
+          React.ComponentProps<typeof PagerView>['onPageScrollStateChanged']
+        >
+      >[0],
+    ) => {
+      if (event.nativeEvent.pageScrollState === 'dragging') {
+        hideFeeTipsPopup();
+      }
+    },
+    [hideFeeTipsPopup],
   );
 
   return (
@@ -107,6 +132,7 @@ export const PerpsProHistoryPager: React.FC<{
       <PerpsProHistoryTabs activeTab={displayedTab} onChange={selectTab} />
       <PagerView
         initialPage={PERPS_PRO_HISTORY_TABS.indexOf(activeTab)}
+        onPageScrollStateChanged={handlePageScrollStateChanged}
         onPageSelected={handlePageSelected}
         ref={pagerRef}
         style={styles.pager}
