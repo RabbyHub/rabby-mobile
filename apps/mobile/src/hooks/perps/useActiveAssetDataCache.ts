@@ -5,6 +5,7 @@ import { apisPerps } from '@/core/apis/perps';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 
 const TTL_MS = 10 * 60 * 1000;
+const LEVERAGE_CONFIRMATION_GUARD_MS = 30 * 1000;
 
 type CacheEntry = {
   data: ActiveAssetData;
@@ -13,6 +14,11 @@ type CacheEntry = {
 
 const cache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<ActiveAssetData | null>>();
+const revisions = new Map<string, number>();
+const leverageConfirmations = new Map<
+  string,
+  { expiresAt: number; leverage: ActiveAssetData['leverage'] }
+>();
 
 const buildKey = (address: string, coin: string) =>
   `${address.toLowerCase()}::${coin}`;
@@ -22,11 +28,60 @@ export const writeActiveAssetDataToCache = (
   coin: string,
   address: string,
   data: ActiveAssetData,
-): void => {
+): ActiveAssetData => {
   if (!coin || !address) {
+    return data;
+  }
+  const key = buildKey(address, coin);
+  const confirmation = leverageConfirmations.get(key);
+  const confirmationActive =
+    confirmation && confirmation.expiresAt > Date.now();
+  const serverConfirmed =
+    confirmationActive &&
+    confirmation.leverage.type === data.leverage.type &&
+    confirmation.leverage.value === data.leverage.value;
+  if (confirmation && !confirmationActive) {
+    leverageConfirmations.delete(key);
+  }
+  const effectiveData =
+    confirmationActive && !serverConfirmed
+      ? { ...data, leverage: { ...confirmation.leverage } }
+      : data;
+  revisions.set(key, (revisions.get(key) ?? 0) + 1);
+  cache.set(key, { data: effectiveData, fetchedAt: Date.now() });
+  return effectiveData;
+};
+
+/**
+ * A successful updateLeverage response confirms this exact configuration on
+ * the server. Project it into the existing scoped snapshot immediately so a
+ * rapid market round trip cannot resurrect the pre-update cache entry. A short
+ * confirmation guard also projects delayed REST/WS frames onto the accepted
+ * mode; after it expires, normal server snapshots are authoritative again.
+ */
+export const updateActiveAssetLeverageCache = (
+  coin: string,
+  address: string,
+  leverage: ActiveAssetData['leverage'],
+) => {
+  const key = buildKey(address, coin);
+  const cached = cache.get(key);
+  revisions.set(key, (revisions.get(key) ?? 0) + 1);
+  leverageConfirmations.set(key, {
+    expiresAt: Date.now() + LEVERAGE_CONFIRMATION_GUARD_MS,
+    leverage: { ...leverage },
+  });
+  if (
+    !cached ||
+    cached.data.coin !== coin ||
+    cached.data.user?.toLowerCase() !== address.toLowerCase()
+  ) {
     return;
   }
-  cache.set(buildKey(address, coin), { data, fetchedAt: Date.now() });
+  cache.set(key, {
+    data: { ...cached.data, leverage: { ...leverage } },
+    fetchedAt: Date.now(),
+  });
 };
 
 // Synchronous read for callers that need an immediate value without triggering
@@ -67,11 +122,16 @@ export const fetchActiveAssetDataWithCache = async (
   }
 
   const sdk = apisPerps.getPerpsSDK();
+  const revisionAtStart = revisions.get(key) ?? 0;
   const promise = (async () => {
     try {
       const data = await sdk.info.getActiveAssetData(coin, address);
-      cache.set(key, { data, fetchedAt: Date.now() });
-      return data;
+      if ((revisions.get(key) ?? 0) === revisionAtStart) {
+        return writeActiveAssetDataToCache(coin, address, data);
+      }
+      return (
+        cache.get(key)?.data ?? writeActiveAssetDataToCache(coin, address, data)
+      );
     } catch (e) {
       console.error('[useActiveAssetDataCache] fetch failed', coin, e);
       // Prefer stale data over a blank cell on failure.

@@ -4,6 +4,7 @@ const mockEnsureApproval = jest.fn(async () => undefined);
 const mockBuildCommand = jest.fn((input: object) => input);
 const mockExecute = jest.fn(async () => ({ kind: 'success' }));
 const mockShowToast = jest.fn();
+const mockUpdateActiveAssetLeverageCache = jest.fn();
 
 jest.mock('@/hooks/perps/actions/actionError', () => ({
   isPerpsActionUserCancelled: () => false,
@@ -27,6 +28,11 @@ jest.mock('@/hooks/perps/perpsActionError', () => ({
 
 jest.mock('@/hooks/perps/showToast', () => ({
   showToast: (...args: unknown[]) => mockShowToast(...args),
+}));
+
+jest.mock('@/hooks/perps/useActiveAssetDataCache', () => ({
+  updateActiveAssetLeverageCache: (...args: unknown[]) =>
+    mockUpdateActiveAssetLeverageCache(...args),
 }));
 
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
@@ -79,6 +85,11 @@ describe('usePerpsProLeverageUpdate', () => {
     );
     expect(mockEnsureApproval).not.toHaveBeenCalled();
     expect(mockExecute).toHaveBeenCalledTimes(1);
+    expect(mockUpdateActiveAssetLeverageCache).toHaveBeenCalledWith(
+      'BTC',
+      account.address,
+      { type: 'isolated', value: 20 },
+    );
     expect(refreshActiveAssetData).toHaveBeenCalledTimes(1);
     expect(mockShowToast).toHaveBeenCalledTimes(1);
     expect(mockShowToast).toHaveBeenCalledWith(
