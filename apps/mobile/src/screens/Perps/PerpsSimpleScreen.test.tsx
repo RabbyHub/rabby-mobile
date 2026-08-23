@@ -159,6 +159,7 @@ jest.mock('./components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
+    PERPS_REGION_ALERT_HEADER_SPACING: 8,
     PerpsRegionAlert: (props: object) =>
       ReactModule.createElement(View, {
         ...props,
@@ -215,5 +216,6 @@ describe('PerpsSimpleScreen', () => {
     fireEvent(screen.getByTestId('perps-region-alert'), 'layout', event);
 
     expect(onRegionAlertLayout).toHaveBeenCalledWith(event);
+    expect(screen.getByTestId('perps-region-alert').props.topSpacing).toBe(8);
   });
 });

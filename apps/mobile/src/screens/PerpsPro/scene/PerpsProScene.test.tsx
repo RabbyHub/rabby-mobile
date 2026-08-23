@@ -34,6 +34,7 @@ jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
+    PERPS_REGION_ALERT_HEADER_SPACING: 8,
     PERPS_REGION_ALERT_HORIZONTAL_MARGIN: 16,
     PerpsRegionAlert: (props: object) =>
       ReactModule.createElement(View, {
@@ -863,11 +864,8 @@ describe('PerpsProScene market loading states', () => {
       />,
     );
 
-    expect(
-      screen
-        .getByTestId('perps-pro-scroll-lead-in')
-        .findByProps({ testID: 'perps-region-alert' }),
-    ).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-region-alert-slot')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-region-alert-overlay')).toBeTruthy();
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
     expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
@@ -875,6 +873,12 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('perps-region-alert').props.bottomSpacing).toBe(
       4,
     );
+    expect(screen.getByTestId('perps-region-alert').props.topSpacing).toBe(8);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-region-alert-slot').props.style,
+      ),
+    ).toMatchObject({ height: 64 });
     const getMarketTranslateY = () => {
       const marketOverlayStyle = StyleSheet.flatten(
         screen.getByTestId('perps-pro-market-overlay').props.style,
@@ -885,7 +889,7 @@ describe('PerpsProScene market loading states', () => {
         ? marketTranslateY
         : marketTranslateY.__getValue();
     };
-    expect(getMarketTranslateY()).toBe(112);
+    expect(getMarketTranslateY()).toBe(120);
 
     fireEvent(screen.getByTestId('perps-region-alert'), 'layout', {
       nativeEvent: {
@@ -897,7 +901,7 @@ describe('PerpsProScene market loading states', () => {
         },
       },
     });
-    expect(getMarketTranslateY()).toBe(112);
+    expect(getMarketTranslateY()).toBe(120);
   });
 
   it('uses the account restriction before the current market resolves', () => {
@@ -929,7 +933,7 @@ describe('PerpsProScene market loading states', () => {
       typeof marketTranslateY === 'number'
         ? marketTranslateY
         : marketTranslateY.__getValue(),
-    ).toBe(94);
+    ).toBe(102);
   });
 
   it('waits for the restricted alert measurement before painting positioned overlays', () => {
@@ -964,7 +968,7 @@ describe('PerpsProScene market loading states', () => {
       typeof marketTranslateY === 'number'
         ? marketTranslateY
         : marketTranslateY.__getValue(),
-    ).toBe(112);
+    ).toBe(120);
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
   });
 

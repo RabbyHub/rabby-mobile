@@ -3,6 +3,7 @@ import type { PerpsQuoteAsset } from '@/constant/perps';
 import { useTheme2024 } from '@/hooks/theme';
 import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
 import {
+  PERPS_REGION_ALERT_HEADER_SPACING,
   PERPS_REGION_ALERT_HORIZONTAL_MARGIN,
   PerpsRegionAlert,
   type PerpsRegionAlertLayout,
@@ -69,6 +70,7 @@ import {
 } from '../components/market/PerpsProMarketBar';
 import {
   createPerpsProMarketTranslateY,
+  createPerpsProRestrictedMarketTranslateY,
   getPerpsProMarketNaturalAnchor,
 } from '../components/market/perpsProMarketSticky';
 import {
@@ -375,7 +377,9 @@ export const PerpsProScene: React.FC<{
   const regionAlertLayout =
     reusableMeasuredRegionAlertLayout ?? reusableInitialRegionAlertLayout;
   const regionAlertExtent = showRegionAlert
-    ? (regionAlertLayout?.height ?? 0) + PERPS_PRO_REGION_ALERT_BOTTOM_SPACING
+    ? PERPS_REGION_ALERT_HEADER_SPACING +
+      (regionAlertLayout?.height ?? 0) +
+      PERPS_PRO_REGION_ALERT_BOTTOM_SPACING
     : 0;
   const positionedOverlaysReady = !showRegionAlert || !!regionAlertLayout;
   const sceneLeadInHeight =
@@ -419,19 +423,29 @@ export const PerpsProScene: React.FC<{
   );
   const marketTranslateY = useMemo(
     () =>
-      createPerpsProMarketTranslateY({
-        headerMarketTranslateY: headerCollapse.marketTranslateY,
-        naturalAnchorY: getPerpsProMarketNaturalAnchor({
-          headerHeight: PERPS_PRO_HEADER_HEIGHT,
-          regionAlertExtent,
-        }),
-        scrollY: headerCollapse.scrollY,
-      }),
+      showRegionAlert
+        ? createPerpsProRestrictedMarketTranslateY({
+            headerMarketTranslateY: headerCollapse.marketTranslateY,
+            regionAlertExtent,
+          })
+        : createPerpsProMarketTranslateY({
+            headerMarketTranslateY: headerCollapse.marketTranslateY,
+            naturalAnchorY: getPerpsProMarketNaturalAnchor({
+              headerHeight: PERPS_PRO_HEADER_HEIGHT,
+              regionAlertExtent: 0,
+            }),
+            scrollY: headerCollapse.scrollY,
+          }),
     [
       headerCollapse.marketTranslateY,
       headerCollapse.scrollY,
       regionAlertExtent,
+      showRegionAlert,
     ],
+  );
+  const regionAlertLeadInStyle = useMemo<ViewStyle | null>(
+    () => (showRegionAlert ? { height: regionAlertExtent } : null),
+    [regionAlertExtent, showRegionAlert],
   );
   const infoTabsTranslateY = useMemo(
     () =>
@@ -460,12 +474,10 @@ export const PerpsProScene: React.FC<{
           testID="perps-pro-header-lead-in-spacer"
         />
         {showRegionAlert ? (
-          <View testID="perps-pro-region-alert-slot">
-            <PerpsRegionAlert
-              bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
-              onLayout={updateRegionAlertLayout}
-            />
-          </View>
+          <View
+            style={regionAlertLeadInStyle}
+            testID="perps-pro-region-alert-slot"
+          />
         ) : null}
         <View
           style={styles.marketLeadInSpacer}
@@ -474,10 +486,10 @@ export const PerpsProScene: React.FC<{
       </View>
     ),
     [
+      regionAlertLeadInStyle,
       showRegionAlert,
       styles.headerLeadInSpacer,
       styles.marketLeadInSpacer,
-      updateRegionAlertLayout,
     ],
   );
 
@@ -803,6 +815,22 @@ export const PerpsProScene: React.FC<{
             showBottomDivider
           />
         </Animated.View>
+        {showRegionAlert ? (
+          <Animated.View
+            style={[
+              styles.regionAlertOverlay,
+              {
+                transform: [{ translateY: headerCollapse.marketTranslateY }],
+              },
+            ]}
+            testID="perps-pro-region-alert-overlay">
+            <PerpsRegionAlert
+              bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
+              onLayout={updateRegionAlertLayout}
+              topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
+            />
+          </Animated.View>
+        ) : null}
         {positionedOverlaysReady ? (
           <>
             <Animated.View
@@ -1044,6 +1072,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: PERPS_PRO_HEADER_HEIGHT,
     left: 0,
     overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 4,
+  },
+  regionAlertOverlay: {
+    left: 0,
     position: 'absolute',
     right: 0,
     top: 0,

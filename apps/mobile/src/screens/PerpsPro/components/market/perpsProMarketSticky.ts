@@ -20,6 +20,22 @@ export const getPerpsProMarketTop = ({
   scrollY: number;
 }) => Math.max(naturalAnchorY - scrollY, headerMarketTop);
 
+export const getPerpsProRestrictedMarketTop = ({
+  headerMarketTop,
+  regionAlertExtent,
+}: {
+  headerMarketTop: number;
+  regionAlertExtent: number;
+}) => headerMarketTop + regionAlertExtent;
+
+export const createPerpsProRestrictedMarketTranslateY = ({
+  headerMarketTranslateY,
+  regionAlertExtent,
+}: {
+  headerMarketTranslateY: Animated.Animated;
+  regionAlertExtent: number;
+}) => Animated.add(headerMarketTranslateY, regionAlertExtent);
+
 export const createPerpsProMarketTranslateY = ({
   headerMarketTranslateY,
   naturalAnchorY,
@@ -45,9 +61,9 @@ export const createPerpsProMarketTranslateY = ({
     ],
   });
 
-  // max(a, b) = (a + b + |a - b|) / 2. This keeps the alert's natural
-  // scroll-away behavior and the Market sticky constraint on the native
-  // Animated path without publishing a React state update for every frame.
+  // max(a, b) = (a + b + |a - b|) / 2. This keeps the unrestricted Market
+  // sticky constraint on the native Animated path without publishing a React
+  // state update for every frame.
   return Animated.divide(
     Animated.add(
       Animated.add(naturalTop, headerMarketTranslateY),
