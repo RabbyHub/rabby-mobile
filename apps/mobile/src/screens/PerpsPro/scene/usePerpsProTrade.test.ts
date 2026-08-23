@@ -281,7 +281,9 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       }),
     );
 
-    act(() => hook.result.current.setMarginMode('cross'));
+    await act(async () => {
+      await hook.result.current.setMarginMode('cross');
+    });
     expect(hook.result.current.marginMode).toBe('isolated');
     await act(async () => {
       await expect(hook.result.current.confirmLeverage(15)).resolves.toBe(
@@ -292,6 +294,48 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(updateLeverageRequest).not.toHaveBeenCalled();
     expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
     expect(hook.result.current.review).toBeNull();
+  });
+
+  it('applies Margin Mode on the server immediately and keeps failures unchanged', async () => {
+    const updateLeverageRequest = jest
+      .fn()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest,
+      }),
+    );
+
+    await act(async () => {
+      expect(await hook.result.current.setMarginMode('cross')).toBe(true);
+    });
+    expect(updateLeverageRequest).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        action: 'marginMode',
+        coin: 'BTC',
+        isCross: true,
+        leverage: 10,
+      }),
+    );
+    expect(hook.result.current.marginMode).toBe('cross');
+
+    await act(async () => {
+      expect(await hook.result.current.setMarginMode('isolated')).toBe(false);
+    });
+    expect(updateLeverageRequest).toHaveBeenLastCalledWith(
+      expect.objectContaining({ currentIsCross: true, isCross: false }),
+    );
+    expect(hook.result.current.marginMode).toBe('cross');
   });
 
   it('uses the latest trade for a new Limit session and keeps manual price only within that session', () => {
@@ -1226,7 +1270,9 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         midPrice: '100',
       },
     });
-    act(() => hook.result.current.setMarginMode('cross'));
+    await act(async () => {
+      await hook.result.current.setMarginMode('cross');
+    });
     await act(async () => hook.result.current.confirmReview());
 
     expect(mockBuildUpdateLeverage).not.toHaveBeenCalled();
@@ -1694,7 +1740,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     mockPerpsState.currentClearinghouseState.assetPositions.length = 0;
   });
 
-  it('shows an isolated-only reason instead of the exposure toast', () => {
+  it('shows an isolated-only reason instead of the exposure toast', async () => {
     const isolatedOnlyMarket = {
       ...market,
       canonicalCoin: 'xyz:KIOXIA',
@@ -1722,7 +1768,9 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
 
     expect(hook.result.current.marginMode).toBe('isolated');
-    act(() => hook.result.current.setMarginMode('cross'));
+    await act(async () => {
+      await hook.result.current.setMarginMode('cross');
+    });
     expect(mockShowToast).toHaveBeenCalledWith(
       'page.perps.pro.trade.onlyIsolatedMargin',
       'error',
@@ -1730,7 +1778,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.marginMode).toBe('isolated');
   });
 
-  it('keeps the position/open-order toast for an existing exposure', () => {
+  it('keeps the position/open-order toast for an existing exposure', async () => {
     mockPerpsState.currentClearinghouseState.assetPositions.push({
       position: {
         coin: 'BTC',
@@ -1754,7 +1802,9 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
 
     expect(hook.result.current.marginMode).toBe('cross');
-    act(() => hook.result.current.setMarginMode('isolated'));
+    await act(async () => {
+      await hook.result.current.setMarginMode('isolated');
+    });
     expect(mockShowToast).toHaveBeenCalledWith(
       'page.perps.pro.trade.marginModeUnavailable',
       'error',

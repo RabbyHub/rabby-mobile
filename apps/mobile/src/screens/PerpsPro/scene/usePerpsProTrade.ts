@@ -701,12 +701,18 @@ export const usePerpsProTrade = ({
     [hasCurrentPosition, hasOpenOrders, marginModeConstraint],
   );
   const setMarginMode = useCallback(
-    (next: 'cross' | 'isolated') => {
-      if (!tradeConfigurationReady) {
-        return;
+    async (next: 'cross' | 'isolated') => {
+      if (
+        !tradeConfigurationReady ||
+        !accountFacts.account ||
+        !accountIdentity ||
+        !market ||
+        leveragePending
+      ) {
+        return false;
       }
       if (next === marginMode) {
-        return;
+        return true;
       }
       if (marginModeDisabledReason) {
         showToast(
@@ -717,22 +723,60 @@ export const usePerpsProTrade = ({
           ),
           'error',
         );
-        return;
+        return false;
       }
       dirtyConfigurationRef.current = true;
+      const expectedMarketKey = market.marketKey;
+      const expectedAccountIdentity = accountIdentity;
+      const success = await updateLeverageRequest({
+        account: accountFacts.account,
+        action: 'marginMode',
+        coin: market.canonicalCoin,
+        currentIsCross: marginMode === 'cross',
+        currentLeverage: leverage,
+        isCross: next === 'cross',
+        leverage,
+        maxLeverage: market.marketData.maxLeverage,
+      });
+      if (!success) {
+        dirtyConfigurationRef.current = false;
+        return false;
+      }
+      const liveAccount = perpsStore.getState().currentPerpsAccount;
+      if (
+        currentMarketKeyRef.current !== expectedMarketKey ||
+        !liveAccount ||
+        getPerpsRuntimeIdentity(liveAccount) !== expectedAccountIdentity
+      ) {
+        dirtyConfigurationRef.current = false;
+        return false;
+      }
       setLeverageConfigurationState({
         scopeKey: leverageConfigurationScopeKey,
         type: next,
         value: leverage,
       });
+      appliedConfigurationRef.current = {
+        accountIdentity,
+        leverage,
+        marginMode: next,
+        marketKey: market.marketKey,
+      };
+      dirtyConfigurationRef.current = false;
+      return true;
     },
     [
+      accountFacts.account,
+      accountIdentity,
       leverage,
+      leveragePending,
       leverageConfigurationScopeKey,
       marginMode,
       marginModeDisabledReason,
+      market,
       t,
       tradeConfigurationReady,
+      updateLeverageRequest,
     ],
   );
   const confirmLeverage = useCallback(
@@ -751,8 +795,8 @@ export const usePerpsProTrade = ({
       const success = await updateLeverageRequest({
         account: accountFacts.account,
         coin: market.canonicalCoin,
-        currentIsCross: currentAccountLeverageConfiguration?.type === 'cross',
-        currentLeverage: currentAccountLeverageConfiguration?.value ?? 0,
+        currentIsCross: marginMode === 'cross',
+        currentLeverage: leverage,
         isCross: marginMode === 'cross',
         leverage: normalized,
         maxLeverage: max,
@@ -775,7 +819,7 @@ export const usePerpsProTrade = ({
     [
       accountFacts.account,
       accountIdentity,
-      currentAccountLeverageConfiguration,
+      leverage,
       leveragePending,
       leverageConfigurationScopeKey,
       marginMode,

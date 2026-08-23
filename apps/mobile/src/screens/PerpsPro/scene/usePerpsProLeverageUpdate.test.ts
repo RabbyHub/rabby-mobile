@@ -98,6 +98,39 @@ describe('usePerpsProLeverageUpdate', () => {
     );
   });
 
+  it('uses the margin-mode copy and projects the accepted server mode', async () => {
+    const refreshActiveAssetData = jest.fn(async () => undefined);
+    const hook = renderHook(() =>
+      usePerpsProLeverageUpdate({ refreshActiveAssetData }),
+    );
+
+    await act(async () => {
+      expect(
+        await hook.result.current.update({
+          account: account as never,
+          action: 'marginMode',
+          coin: 'DOGE',
+          currentIsCross: false,
+          currentLeverage: 10,
+          isCross: true,
+          leverage: 10,
+          maxLeverage: 20,
+        }),
+      ).toBe(true);
+    });
+
+    expect(mockUpdateActiveAssetLeverageCache).toHaveBeenCalledWith(
+      'DOGE',
+      account.address,
+      { type: 'cross', value: 10 },
+    );
+    expect(refreshActiveAssetData).toHaveBeenCalledTimes(1);
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.positions.marginUpdated',
+      'success',
+    );
+  });
+
   it('closes an unchanged draft without a duplicate server update or Toast', async () => {
     const hook = renderHook(() =>
       usePerpsProLeverageUpdate({
