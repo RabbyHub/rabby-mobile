@@ -1,8 +1,8 @@
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
-import { Text } from '@/components/Typography';
+import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -63,6 +63,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [sheet, setSheet] = useState<Sheet>(null);
+  const amountInputRef = useRef<TextInput>(null);
+  const triggerPriceInputRef = useRef<TextInput>(null);
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
   const openSheet = useCallback(
     (nextSheet: Exclude<Sheet, null>) =>
@@ -85,6 +87,28 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     : controller.marginMode === 'cross'
     ? t('page.perps.pro.positions.cross')
     : t('page.perps.pro.trade.isolated');
+  const requestOrder = useCallback(
+    (side: 'buy' | 'sell') => {
+      const triggerPrice = Number(controller.form.triggerPrice);
+      if (
+        controller.form.orderType === 'conditional' &&
+        (!Number.isFinite(triggerPrice) || triggerPrice <= 0)
+      ) {
+        triggerPriceInputRef.current?.focus();
+        return;
+      }
+      const manualAmount = Number(controller.form.amount);
+      if (
+        controller.amountSource === 'manual' &&
+        (!Number.isFinite(manualAmount) || manualAmount <= 0)
+      ) {
+        amountInputRef.current?.focus();
+        return;
+      }
+      dismissKeyboardThen(() => controller.requestReview(side));
+    },
+    [controller, dismissKeyboardThen],
+  );
   return (
     <View
       accessibilityState={{ disabled: !configurationReady }}
@@ -173,6 +197,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
               label={`${t('page.perps.pro.trade.triggerPrice')}(${quoteAsset})`}
               maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('triggerPrice', value)}
+              ref={triggerPriceInputRef}
               value={form.triggerPrice}
             />
             <PerpsProTradePriceField
@@ -214,6 +239,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           onFocus={controller.beginAmountEntry}
           onPressIn={controller.beginAmountEntry}
           onToggleUnit={controller.toggleAmountUnit}
+          ref={amountInputRef}
           unit={controller.amountUnitLabel}
           value={form.amount}
         />
@@ -376,9 +402,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                     side === 'buy' ? 'buyLong' : 'sellShort'
                   }`,
                 )}
-                onPress={() =>
-                  dismissKeyboardThen(() => controller.requestReview(side))
-                }
+                onPress={() => requestOrder(side)}
                 side={side}
                 subtitle={
                   sliderAmount == null

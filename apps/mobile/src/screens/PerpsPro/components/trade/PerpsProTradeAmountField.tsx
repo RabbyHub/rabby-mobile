@@ -1,5 +1,5 @@
 import RcIconAmountUnitSwitch from '@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg';
-import { Text } from '@/components/Typography';
+import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
@@ -17,7 +17,7 @@ const UNIT_AREA_MIN_WIDTH = 52;
 const UNIT_AREA_MAX_WIDTH = 72;
 const UNIT_TEXT_MIN_WIDTH = 34;
 
-export const PerpsProTradeAmountField: React.FC<{
+type PerpsProTradeAmountFieldProps = {
   label: string;
   maxDecimals: number;
   onChangeText?: (value: string) => void;
@@ -27,85 +27,91 @@ export const PerpsProTradeAmountField: React.FC<{
   onToggleUnit?: () => void;
   unit: string;
   value?: string;
-}> = React.memo(
-  ({
-    label,
-    maxDecimals,
-    onBlur,
-    onChangeText,
-    onFocus,
-    onPressIn,
-    onToggleUnit,
-    unit,
-    value = '',
-  }) => {
-    const { colors2024, styles } = useTheme2024({ getStyle });
-    const [focused, setFocused] = useState(false);
-    const showFloatingLabel = focused || !!value;
+};
 
-    return (
-      <View style={styles.container} testID="perps-pro-trade-amount-field">
-        <View style={styles.amountArea}>
-          {showFloatingLabel ? (
+export const PerpsProTradeAmountField = React.memo(
+  React.forwardRef<TextInput, PerpsProTradeAmountFieldProps>(
+    (props, forwardedRef) => {
+      const {
+        label,
+        maxDecimals,
+        onBlur,
+        onChangeText,
+        onFocus,
+        onPressIn,
+        onToggleUnit,
+        unit,
+        value = '',
+      } = props;
+      const { colors2024, styles } = useTheme2024({ getStyle });
+      const [focused, setFocused] = useState(false);
+      const showFloatingLabel = focused || !!value;
+
+      return (
+        <View style={styles.container} testID="perps-pro-trade-amount-field">
+          <View style={styles.amountArea}>
+            {showFloatingLabel ? (
+              <Text
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                style={styles.floatingLabel}
+                testID="perps-pro-amount-label">
+                {label}
+              </Text>
+            ) : (
+              <Text
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                pointerEvents="none"
+                style={styles.centeredPlaceholder}
+                testID="perps-pro-amount-placeholder">
+                {label}
+              </Text>
+            )}
+            <PerpsProDecimalTextInput
+              accessibilityLabel={label}
+              cursorColor={colors2024['brand-default']}
+              maxFontSizeMultiplier={1.2}
+              maxDecimals={maxDecimals}
+              ref={forwardedRef}
+              onBlur={() => {
+                setFocused(false);
+                onBlur?.();
+              }}
+              onChangeText={onChangeText ?? noop}
+              onFocus={() => {
+                setFocused(true);
+                onFocus?.();
+              }}
+              onPressIn={onPressIn}
+              selectionColor={colors2024['brand-default']}
+              style={styles.input}
+              value={value}
+            />
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onToggleUnit}
+            style={styles.unitArea}
+            testID="perps-pro-trade-amount-unit">
             <Text
               ellipsizeMode="tail"
               numberOfLines={1}
-              style={styles.floatingLabel}
-              testID="perps-pro-amount-label">
-              {label}
+              style={[styles.unit, unitFontStyle]}>
+              {unit}
             </Text>
-          ) : (
-            <Text
-              ellipsizeMode="tail"
-              numberOfLines={1}
+            <RcIconAmountUnitSwitch
+              color={colors2024['neutral-secondary']}
+              height={10}
               pointerEvents="none"
-              style={styles.centeredPlaceholder}
-              testID="perps-pro-amount-placeholder">
-              {label}
-            </Text>
-          )}
-          <PerpsProDecimalTextInput
-            accessibilityLabel={label}
-            cursorColor={colors2024['brand-default']}
-            maxFontSizeMultiplier={1.2}
-            maxDecimals={maxDecimals}
-            onBlur={() => {
-              setFocused(false);
-              onBlur?.();
-            }}
-            onChangeText={onChangeText ?? noop}
-            onFocus={() => {
-              setFocused(true);
-              onFocus?.();
-            }}
-            onPressIn={onPressIn}
-            selectionColor={colors2024['brand-default']}
-            style={styles.input}
-            value={value}
-          />
+              testID="perps-pro-trade-amount-unit-switch"
+              width={10}
+            />
+          </Pressable>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onToggleUnit}
-          style={styles.unitArea}
-          testID="perps-pro-trade-amount-unit">
-          <Text
-            ellipsizeMode="tail"
-            numberOfLines={1}
-            style={[styles.unit, unitFontStyle]}>
-            {unit}
-          </Text>
-          <RcIconAmountUnitSwitch
-            color={colors2024['neutral-secondary']}
-            height={10}
-            pointerEvents="none"
-            testID="perps-pro-trade-amount-unit-switch"
-            width={10}
-          />
-        </Pressable>
-      </View>
-    );
-  },
+      );
+    },
+  ),
 );
 
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
