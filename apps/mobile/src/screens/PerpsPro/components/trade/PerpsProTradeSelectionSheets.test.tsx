@@ -8,12 +8,6 @@ jest.mock('@/assets2024/icons/perps/PerpsProOptionCheck.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/icons/perps/PerpsProOrderTypeHelp.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
 jest.mock('@/components', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -247,11 +241,7 @@ describe('Perps Pro trade selection sheets', () => {
     expect(
       StyleSheet.flatten(screen.getByText('Order Type').props.style),
     ).toMatchObject({ fontSize: 16, lineHeight: 20 });
-    expect(
-      screen.getByTestId('perps-pro-order-type-help', {
-        includeHiddenElements: true,
-      }).props,
-    ).toMatchObject({ height: 16, width: 16 });
+    expect(screen.queryByTestId('perps-pro-order-type-help')).toBeNull();
     expect(screen.getByTestId('perps-pro-order-type-selected')).toBeTruthy();
     expect(
       StyleSheet.flatten(
@@ -302,11 +292,7 @@ describe('Perps Pro trade selection sheets', () => {
     expect(
       StyleSheet.flatten(screen.getByText('BBO').props.style),
     ).toMatchObject({ fontSize: 16, lineHeight: 20 });
-    expect(
-      screen.getByTestId('perps-pro-bbo-help', {
-        includeHiddenElements: true,
-      }).props,
-    ).toMatchObject({ height: 16, width: 16 });
+    expect(screen.queryByTestId('perps-pro-bbo-help')).toBeNull();
     expect(
       StyleSheet.flatten(screen.getByText('Counterparty 1').props.style),
     ).toMatchObject({ fontSize: 14, lineHeight: 18 });
