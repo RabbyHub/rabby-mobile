@@ -75,6 +75,10 @@ import type {
   PerpsFundingConfirmation,
 } from './funding/types';
 import { createPerpsUserAbstractionLifecycle } from './userAbstractionLifecycle';
+import {
+  decidePerpsMarketRefresh,
+  fetchPerpsRemoteList,
+} from './marketDataRefresh';
 
 export type { AccountHistoryItem } from './funding/types';
 
@@ -897,7 +901,8 @@ const scheduleMarketDataRetry = () => {
 };
 
 // These openapi endpoints have no axios timeout — a stalled connection would
-// hang fetchMarketData forever. Cap them and fall back to defaults on timeout.
+// hang fetchMarketData forever. Cap them and fall back to last-good memory,
+// then bundled defaults, on timeout.
 const MARKET_DATA_FETCH_TIMEOUT = 10000;
 
 function withTimeout<T>(
@@ -935,56 +940,52 @@ const runFetchMarketData = async () => {
 
   const sdk = apisPerps.getPerpsSDK();
 
-  const fetchTopTokenList = async () => {
-    if (perpsTopTokenCache.length > 0) {
-      return perpsTopTokenCache;
-    }
-    try {
-      const topAssets = await withTimeout(
-        openapi.getPerpTopTokenListV3({ dex_id: 'all' }),
-        MARKET_DATA_FETCH_TIMEOUT,
-        'getPerpTopTokenListV3',
-      );
-      if (topAssets.length > 0) {
-        perpsTopTokenCache = topAssets;
-        return topAssets;
-      }
-    } catch (error) {
-      console.error('Failed to fetch top assets:', error);
-    }
-    return DEFAULT_TOP_ASSET;
-  };
-
-  const fetchTokenCategories = async () => {
-    if (perpsCategoryCache.length > 0) {
-      return perpsCategoryCache;
-    }
-    try {
-      const categories = await withTimeout(
-        openapi.getPerpTokenCategories({ lang: 'en-US' }),
-        MARKET_DATA_FETCH_TIMEOUT,
-        'getPerpTokenCategories',
-      );
-      if (categories.length > 0) {
-        perpsCategoryCache = categories;
-        return categories;
-      }
-    } catch (error) {
-      console.error('Failed to fetch token categories:', error);
-    }
-    return DEFAULT_TOKEN_CATEGORY;
-  };
-
   try {
-    // Core data — must succeed (retried). perpDexs is degradable.
-    const [topAssets, categories, allMetas, perpDexs] = await Promise.all([
-      fetchTopTokenList(),
-      fetchTokenCategories(),
-      withRetry(() => sdk.info.getPerpsAllMetas(), {
-        label: 'getPerpsAllMetas',
-      }),
-      withRetry(() => sdk.info.getPerpDexs(), { label: 'getPerpDexs' }),
-    ]);
+    // SDK metadata is the trade-safe identity source and must be available.
+    // Rabby catalogue data degrades to last-good/static display metadata.
+    const [topAssetsResult, categoriesResult, allMetas, perpDexs] =
+      await Promise.all([
+        fetchPerpsRemoteList<PerpTopTokenV3>({
+          fallback: DEFAULT_TOP_ASSET,
+          label: 'getPerpTopTokenListV3',
+          memory: perpsTopTokenCache,
+          request: () =>
+            withTimeout(
+              openapi.getPerpTopTokenListV3({ dex_id: 'all' }),
+              MARKET_DATA_FETCH_TIMEOUT,
+              'getPerpTopTokenListV3',
+            ),
+        }),
+        fetchPerpsRemoteList<PerpTopTokenCategory>({
+          fallback: DEFAULT_TOKEN_CATEGORY,
+          label: 'getPerpTokenCategories',
+          memory: perpsCategoryCache,
+          request: () =>
+            withTimeout(
+              openapi.getPerpTokenCategories({ lang: 'en-US' }),
+              MARKET_DATA_FETCH_TIMEOUT,
+              'getPerpTokenCategories',
+            ),
+        }),
+        withRetry(() => sdk.info.getPerpsAllMetas(), {
+          label: 'getPerpsAllMetas',
+        }),
+        withRetry(() => sdk.info.getPerpDexs(), { label: 'getPerpDexs' }),
+      ]);
+
+    if (topAssetsResult.source === 'remote') {
+      perpsTopTokenCache = topAssetsResult.items;
+    } else {
+      console.error('Failed to fetch top assets:', topAssetsResult.error);
+    }
+    if (categoriesResult.source === 'remote') {
+      perpsCategoryCache = categoriesResult.items;
+    } else {
+      console.error(
+        'Failed to fetch token categories:',
+        categoriesResult.error,
+      );
+    }
 
     if (!allMetas || allMetas.length === 0) {
       // Core data unavailable — mark error for retry
@@ -1003,24 +1004,37 @@ const runFetchMarketData = async () => {
       dexIdMap[idx] = dex?.name ?? '';
     });
 
-    const marketData = formatMarkData(allMetas, topAssets, dexIdMap);
-    if (marketData.length === 0) {
-      setMarketDataStatus('error');
-      return;
+    const marketData = formatMarkData(
+      allMetas,
+      topAssetsResult.items,
+      dexIdMap,
+    );
+    const decision = decidePerpsMarketRefresh({
+      categoriesSource: categoriesResult.source,
+      hasCurrentMarketData: perpsStore.getState().marketData.length > 0,
+      hasFormattedMarketData: marketData.length > 0,
+      topAssetsSource: topAssetsResult.source,
+    });
+    if (decision.publish) {
+      setMarketData(marketData, categoriesResult.items);
     }
-    setMarketData(marketData, categories);
-    setMarketDataStatus('success');
-    void perpsServiceApi
-      .setMarketDataCache({
-        v: MARKET_DATA_CACHE_VERSION,
-        updatedAt: Date.now(),
-        // Blank the ticker; read from the store (WS-merged) so the cached
-        // pxDecimals is the price-informed one.
-        list: perpsStore.getState().marketData.map(toCachedMarketData),
-      })
-      .catch(error => {
-        console.error('[perpsService] persist market data cache failed', error);
-      });
+    setMarketDataStatus(decision.status);
+    if (decision.persist) {
+      void perpsServiceApi
+        .setMarketDataCache({
+          v: MARKET_DATA_CACHE_VERSION,
+          updatedAt: Date.now(),
+          // Blank the ticker; read from the store (WS-merged) so the cached
+          // pxDecimals is the price-informed one.
+          list: perpsStore.getState().marketData.map(toCachedMarketData),
+        })
+        .catch(error => {
+          console.error(
+            '[perpsService] persist market data cache failed',
+            error,
+          );
+        });
+    }
   } catch (error) {
     console.error('Failed to fetch market data:', error);
     setMarketDataStatus('error');

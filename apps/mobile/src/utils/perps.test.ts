@@ -287,3 +287,67 @@ describe('formatMarkData maintenance rules', () => {
     });
   });
 });
+
+describe('formatMarkData market identity', () => {
+  const createMeta = (name: string, index: number): Meta => {
+    const universe: Meta['universe'] = [];
+    universe[index] = {
+      maxLeverage: 3,
+      name,
+      szDecimals: 2,
+    };
+    return {
+      collateralToken: 0,
+      marginTables: [],
+      universe,
+    };
+  };
+
+  const koruAsset = {
+    brief: 'Direxion Daily MSCI South Korea Bull 3X Shares',
+    category: 'Stocks',
+    category_id: 'stocks',
+    dex_id: 'xyz',
+    display_name: 'KORU',
+    full_logo_url: 'https://example.test/koru.png',
+    name: 'xyz:KORU',
+    token_id: 103,
+  } as unknown as PerpTopTokenV3;
+
+  it('maps an SDK-known xyz market and preserves its display metadata', () => {
+    const nativeMeta = createMeta('BTC', 0);
+    const xyzMeta = createMeta('xyz:KORU', 103);
+
+    expect(
+      formatMarkData([nativeMeta, xyzMeta], [koruAsset], {
+        0: '',
+        1: 'xyz',
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        brief: 'Direxion Daily MSCI South Korea Bull 3X Shares',
+        category: 'Stocks',
+        categoryId: 'stocks',
+        dexId: 'xyz',
+        displayName: 'KORU',
+        index: 103,
+        name: 'xyz:KORU',
+        quoteAsset: 'USDC',
+      }),
+    ]);
+  });
+
+  it('does not project a non-native market through the native dex metadata', () => {
+    expect(
+      formatMarkData([createMeta('xyz:KORU', 103)], [koruAsset], { 0: '' }),
+    ).toEqual([]);
+  });
+
+  it('rejects a stale token index whose canonical SDK coin changed', () => {
+    expect(
+      formatMarkData([createMeta('xyz:OTHER', 103)], [koruAsset], {
+        0: 'xyz',
+      }),
+    ).toEqual([]);
+  });
+});

@@ -151,14 +151,18 @@ export const formatMarkData = (
       .map(topAsset => {
         const index = topAsset.token_id;
         const dexId = topAsset.dex_id ?? '';
-        const dexInfo = dexLookup[dexId] ?? dexLookup[''];
+        const dexInfo = dexLookup[dexId];
         if (!dexInfo) {
           return null;
         }
 
         const { meta, marginTableMap, quoteAsset } = dexInfo;
         const hlDataAsset = meta.universe[index];
-        if (!hlDataAsset || hlDataAsset.isDelisted) {
+        if (
+          !hlDataAsset ||
+          hlDataAsset.isDelisted ||
+          hlDataAsset.name !== topAsset.name
+        ) {
           return null;
         }
 
