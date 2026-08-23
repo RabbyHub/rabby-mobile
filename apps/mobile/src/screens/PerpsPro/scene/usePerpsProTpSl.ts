@@ -56,6 +56,8 @@ export const usePerpsProTpSl = ({
     null,
   );
   const compatibilityError = getPerpsProAttachedTpSlCompatibilityError(order);
+  const blockingCompatibilityError =
+    compatibilityError === 'bboUnsupported' ? null : compatibilityError;
 
   useEffect(() => {
     if (!compatibilityError || !draft.enabled) return;
@@ -65,11 +67,11 @@ export const usePerpsProTpSl = ({
 
   const setEnabled = useCallback(
     (enabled: boolean) => {
-      if (enabled && compatibilityError) return;
+      if (enabled && blockingCompatibilityError) return;
       onChange({ ...draft, enabled });
       if (!enabled) setFocusedLeg(null);
     },
-    [compatibilityError, draft, onChange],
+    [blockingCompatibilityError, draft, onChange],
   );
 
   const setMode = useCallback(
@@ -134,7 +136,7 @@ export const usePerpsProTpSl = ({
   return {
     clearForMarketChange,
     compatibilityError,
-    disabled: compatibilityError != null,
+    disabled: blockingCompatibilityError != null,
     focusedLeg,
     previews,
     setEnabled,

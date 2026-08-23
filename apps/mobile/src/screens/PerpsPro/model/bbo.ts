@@ -31,8 +31,11 @@ export const resolvePerpsProBboPrice = ({
 }: {
   isBuy: boolean;
   prices: PerpsProBboPrices;
-  strategy: PerpsProBboStrategy;
+  strategy: PerpsProBboStrategy | null;
 }): string | null => {
+  if (!strategy) {
+    return null;
+  }
   const isCounterparty = strategy === 'cp1' || strategy === 'cp5';
   const isFifth = strategy === 'cp5' || strategy === 'q5';
   const opposingKey = `${isBuy ? 'asks' : 'bids'}${

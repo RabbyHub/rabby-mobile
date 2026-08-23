@@ -2,6 +2,26 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 
+const mockCancelAnimation = jest.fn();
+const mockWithTiming = jest.fn((value: number) => value);
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  return {
+    __esModule: true,
+    default: { createAnimatedComponent: (component: unknown) => component },
+    Easing: {
+      cubic: (value: number) => value,
+      out: (easing: (value: number) => number) => easing,
+    },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
+    useAnimatedStyle: (updater: () => object) => updater(),
+    useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
+    withTiming: (...args: [number, object]) => mockWithTiming(...args),
+  };
+});
+
 jest.mock('@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -114,6 +134,7 @@ jest.mock('./PerpsProTpSlModeSheet', () => ({
 import { createPerpsProTradeFormState } from '../../model/trade';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PerpsProTradeForm } from './PerpsProTradeForm';
+import { PERPS_PRO_PRICE_FILL_ANIMATION } from './PerpsProTradePriceField';
 import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
 
 const market = {
@@ -154,6 +175,7 @@ const controller = (
     patchForm: jest.fn(),
     pending: false,
     percentage: 0,
+    priceFillFeedback: null,
     reduceOnlyAvailability: {
       buyUnavailable: false,
       checkboxDisabled: false,
@@ -193,6 +215,8 @@ describe('PerpsProTradeForm order matrix', () => {
   beforeEach(() => {
     mockDismissKeyboardThen.mockReset();
     mockDismissKeyboardThen.mockImplementation(action => action());
+    mockCancelAnimation.mockClear();
+    mockWithTiming.mockClear();
   });
 
   it('keeps the real form frame visible but fail-closed while configuration is preparing', () => {
@@ -437,6 +461,35 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.enableBbo).toHaveBeenLastCalledWith('q5');
   });
 
+  it('disables BBO while TP/SL is enabled', () => {
+    const base = createPerpsProTradeFormState({ orderType: 'limit' });
+    const trade = controller({
+      attachedTpSl: { ...base.attachedTpSl, enabled: true },
+      limitPrice: '63000',
+      orderType: 'limit',
+    });
+    render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
+
+    const bbo = screen.getByTestId('perps-pro-trade-price-suffix-BBO');
+    expect(StyleSheet.flatten(bbo.props.style)).toMatchObject({
+      opacity: 0.45,
+    });
+    fireEvent.press(bbo);
+    expect(trade.enableBbo).not.toHaveBeenCalled();
+  });
+
+  it('keeps TP/SL clickable while BBO is active so the controller can replace it', () => {
+    const trade = controller({
+      bboEnabled: true,
+      bboStrategy: 'q5',
+      orderType: 'limit',
+    });
+    render(<PerpsProTradeForm controller={trade} onDeposit={jest.fn()} />);
+
+    fireEvent.press(screen.getAllByRole('checkbox')[0]);
+    expect(trade.tpSl.setEnabled).toHaveBeenCalledWith(true);
+  });
+
   it('keeps the Limit Price native input stable behind the Size-matched overlay', () => {
     render(
       <PerpsProTradeForm
@@ -466,6 +519,58 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(
       StyleSheet.flatten(screen.getByLabelText('price(USDC)').props.style),
     ).toEqual(initialInputStyle);
+  });
+
+  it('animates only accepted order-book fill revisions, including repeated prices', () => {
+    const base = controller({ orderType: 'limit' });
+    const view = render(
+      <PerpsProTradeForm controller={base} onDeposit={jest.fn()} />,
+    );
+    mockCancelAnimation.mockClear();
+    mockWithTiming.mockClear();
+
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...base,
+          form: { ...base.form, limitPrice: '63000' },
+          priceFillFeedback: { field: 'limitPrice', revision: 1 },
+        }}
+        onDeposit={jest.fn()}
+      />,
+    );
+    expect(mockCancelAnimation).toHaveBeenCalledTimes(1);
+    expect(mockWithTiming).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        duration: PERPS_PRO_PRICE_FILL_ANIMATION.durationMs,
+        reduceMotion: 'system',
+      }),
+    );
+
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...base,
+          form: { ...base.form, limitPrice: '63000' },
+          priceFillFeedback: { field: 'limitPrice', revision: 2 },
+        }}
+        onDeposit={jest.fn()}
+      />,
+    );
+    expect(mockWithTiming).toHaveBeenCalledTimes(2);
+
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...base,
+          form: { ...base.form, limitPrice: '64000' },
+          priceFillFeedback: { field: 'limitPrice', revision: 2 },
+        }}
+        onDeposit={jest.fn()}
+      />,
+    );
+    expect(mockWithTiming).toHaveBeenCalledTimes(2);
   });
 
   it('keeps Conditional Trigger and Limit Price geometry stable on focus', () => {
