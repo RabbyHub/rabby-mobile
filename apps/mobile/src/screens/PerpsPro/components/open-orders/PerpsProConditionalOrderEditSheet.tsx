@@ -37,6 +37,8 @@ import {
   formatPerpsProSignedDecimal,
 } from '../../utils/format';
 import { PerpsProSlider } from '../common/PerpsProSlider';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
@@ -65,6 +67,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const openFieldExplanation = usePerpsProFieldExplanation();
     const dismissKeyboardThen = usePerpsProDismissKeyboard();
     const liveMarket = usePerpsProPositionMark(editor.order.coin);
     const markPrice = liveMarket.markPrice || editor.market.markPrice;
@@ -308,9 +311,14 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                   </Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>
+                  <PerpsProDottedUnderlineText
+                    accessibilityLabel={t(
+                      'page.perps.pro.openOrders.estimatedPnl',
+                    )}
+                    onPress={() => openFieldExplanation('estimatedPnl')}
+                    style={styles.summaryLabel}>
                     {t('page.perps.pro.openOrders.estimatedPnl')}
-                  </Text>
+                  </PerpsProDottedUnderlineText>
                   <Text
                     style={
                       pnl.gt(0)

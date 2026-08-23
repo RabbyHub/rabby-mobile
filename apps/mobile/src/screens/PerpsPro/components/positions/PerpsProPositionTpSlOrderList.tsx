@@ -5,6 +5,8 @@ import BigNumber from 'bignumber.js';
 import React, { useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
@@ -159,6 +161,7 @@ const PartialOrderRow: React.FC<{
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const openFieldExplanation = usePerpsProFieldExplanation();
   const coverage = new BigNumber(order.remainingSize).dividedBy(
     position.baseSize,
   );
@@ -197,9 +200,16 @@ const PartialOrderRow: React.FC<{
       <View style={styles.orderMetrics}>
         <OrderMetric
           flex={128}
-          label={`${t('page.perps.pro.positionTpsl.estimatedPnl')} (${
-            market.quoteAsset
-          })`}
+          label={
+            <PerpsProDottedUnderlineText
+              accessibilityLabel={t('page.perps.pro.positionTpsl.estimatedPnl')}
+              onPress={() => openFieldExplanation('estimatedPnl')}
+              style={styles.orderMetricLabel}>
+              {`${t('page.perps.pro.positionTpsl.estimatedPnl')} (${
+                market.quoteAsset
+              })`}
+            </PerpsProDottedUnderlineText>
+          }
           tone={kind === 'takeProfit' ? 'positive' : 'negative'}
           value={pnl == null ? '-' : formatPerpsProSignedDecimal(pnl, 2)}
         />
@@ -245,7 +255,7 @@ const PartialOrderRow: React.FC<{
 
 const OrderMetric: React.FC<{
   flex: number;
-  label: string;
+  label: React.ReactNode;
   testID?: string;
   textAlign?: 'left' | 'right';
   tone?: 'negative' | 'neutral' | 'positive';
@@ -260,15 +270,19 @@ const OrderMetric: React.FC<{
         { flex },
       ]}
       testID={testID}>
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.orderMetricLabel,
-          textAlign === 'right' && styles.orderMetricRightLabel,
-        ]}
-        testID={testID ? `${testID}-label` : undefined}>
-        {label}
-      </Text>
+      {typeof label === 'string' ? (
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.orderMetricLabel,
+            textAlign === 'right' && styles.orderMetricRightLabel,
+          ]}
+          testID={testID ? `${testID}-label` : undefined}>
+          {label}
+        </Text>
+      ) : (
+        label
+      )}
       <Text
         numberOfLines={1}
         style={[

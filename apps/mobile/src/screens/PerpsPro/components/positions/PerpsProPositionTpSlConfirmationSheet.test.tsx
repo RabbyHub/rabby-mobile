@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+const mockOpenFieldExplanation = jest.fn();
+
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -76,6 +78,9 @@ jest.mock('@/utils/styles', () => ({
 
 jest.mock('@/utils/modalGate', () => ({
   useRegisterBlockingModal: jest.fn(),
+}));
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
 }));
 
 jest.mock('react-i18next', () => ({
@@ -183,6 +188,8 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
     expect(screen.getByText('Stop Loss')).toBeTruthy();
     expect(screen.getAllByText('Volume')).toHaveLength(2);
     expect(screen.getByText(/Limit Order/)).toBeTruthy();
+    fireEvent.press(screen.getAllByLabelText('Total Estimated PNL')[0]!);
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
     const checkbox = screen.getByTestId(
       'perps-pro-position-tpsl-skip-confirmation',
     );

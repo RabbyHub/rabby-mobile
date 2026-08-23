@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native';
 const mockModalProps = jest.fn();
 const mockPresent = jest.fn();
 const mockClose = jest.fn();
+const mockOpenFieldExplanation = jest.fn();
 
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
@@ -97,6 +98,9 @@ jest.mock('../common/perpsProSheetNavigationRegistry', () => ({
 }));
 jest.mock('../common/usePerpsProDismissKeyboard', () => ({
   usePerpsProDismissKeyboard: () => (action: () => void) => action(),
+}));
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
 }));
 jest.mock('../common/usePerpsProSliderHaptics', () => ({
   usePerpsProSliderHaptics: () => ({
@@ -347,6 +351,10 @@ describe('Perps Pro open order edit sheets', () => {
     expect(
       screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
     ).toBe('50% (≈50.00)');
+    fireEvent.press(
+      screen.getByLabelText('page.perps.pro.openOrders.estimatedPnl'),
+    );
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
   });
 
   it('keeps a Conditional draft when the live position changes', () => {
