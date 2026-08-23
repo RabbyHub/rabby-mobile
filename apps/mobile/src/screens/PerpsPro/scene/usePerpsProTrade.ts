@@ -1,4 +1,5 @@
 import { perpsServiceApi } from '@/core/serviceApi/perps';
+import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
@@ -33,6 +34,7 @@ import { useShallow } from 'zustand/react/shallow';
 import {
   buildPerpsProOpenOrderCommand,
   executePerpsProOpenOrder,
+  finalizePerpsProBboOpenOrderCommand,
   type PerpsProOpenOrderCommand,
 } from '../actions/openOrder';
 import {
@@ -70,6 +72,7 @@ import {
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
   isPerpsProAmountAboveBothMax,
+  resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
   type PerpsProConditionalExecution,
@@ -262,10 +265,14 @@ export const usePerpsProTrade = ({
   );
   const currentBboSessionKeyRef = useRef<string | null>(bboSessionKey);
   const currentBboStatusRef = useRef(bboStatus);
+  const currentBboBookRef = useRef<L2Book | null>(bboBook);
+  const currentBboPricesRef = useRef(bboPrices);
   currentMarketKeyRef.current = market?.marketKey ?? null;
   currentMidPriceRef.current = market?.marketData.midPx || null;
   currentBboSessionKeyRef.current = bboSessionKey;
   currentBboStatusRef.current = bboStatus;
+  currentBboBookRef.current = bboBook;
+  currentBboPricesRef.current = bboPrices;
 
   const scopedActiveAssetData =
     activeAssetData &&
@@ -275,6 +282,10 @@ export const usePerpsProTrade = ({
       accountFacts.account.address.toLowerCase()
       ? activeAssetData
       : null;
+  const currentActiveAssetDataRef = useRef<WsActiveAssetData | null>(
+    scopedActiveAssetData,
+  );
+  currentActiveAssetDataRef.current = scopedActiveAssetData;
 
   const { execute: executeAttachedTpSl } = usePerpsProAttachedTpSlExecution({
     active: executionActive,
@@ -623,28 +634,53 @@ export const usePerpsProTrade = ({
     });
   }, [executionActive, market?.marketData.pxDecimals, patchForm, tradeCoin]);
 
-  const enableBbo = useCallback(
-    (bboStrategy: PerpsProBboStrategy) =>
-      patchForm({
-        bboStrategy,
-        bboEnabled: true,
-        tif: 'Gtc',
-      }),
-    [patchForm],
-  );
-  const disableBbo = useCallback(() => {
-    const currentForm = formRef.current;
-    if (currentForm.orderType !== 'limit') return;
+  const getRestoredLimitPrice = useCallback(() => {
     const latestPrice = latestTradeRef.current
       ? sanitizePerpsProDecimalInput(
           latestTradeRef.current.price,
           market?.marketData.pxDecimals ?? 2,
         )
       : '';
-    const limitPrice = limitManualPriceRef.current ?? latestPrice;
+    return limitManualPriceRef.current ?? latestPrice;
+  }, [market?.marketData.pxDecimals]);
+  const enableBbo = useCallback(
+    (bboStrategy: PerpsProBboStrategy) => {
+      const currentForm = formRef.current;
+      if (
+        currentForm.orderType !== 'limit' ||
+        currentForm.tif !== 'Gtc' ||
+        currentForm.attachedTpSl.enabled
+      ) {
+        return;
+      }
+      patchForm({
+        bboStrategy,
+        bboEnabled: true,
+      });
+    },
+    [patchForm],
+  );
+  const disableBbo = useCallback(() => {
+    const currentForm = formRef.current;
+    if (currentForm.orderType !== 'limit') return;
+    const limitPrice = getRestoredLimitPrice();
     shouldAutoFillLimitPriceRef.current = !limitPrice;
     patchForm({ bboEnabled: false, limitPrice });
-  }, [market?.marketData.pxDecimals, patchForm]);
+  }, [getRestoredLimitPrice, patchForm]);
+  const setTif = useCallback(
+    (tif: PerpsProTradeTif) => {
+      const currentForm = formRef.current;
+      if (currentForm.orderType !== 'limit') return;
+      if (!currentForm.bboEnabled || tif === 'Gtc') {
+        patchForm({ tif });
+        return;
+      }
+      const limitPrice = getRestoredLimitPrice();
+      shouldAutoFillLimitPriceRef.current = !limitPrice;
+      patchForm({ bboEnabled: false, limitPrice, tif });
+    },
+    [getRestoredLimitPrice, patchForm],
+  );
 
   useEffect(() => {
     if (!preferences.hydrated) return;
@@ -1620,8 +1656,98 @@ export const usePerpsProTrade = ({
             marketKey: command.marketKey,
           };
         }
+        let executableCommand = command;
+        if (command.execution.kind === 'bboLimit') {
+          const liveBook = currentBboBookRef.current;
+          const liveSessionKey = currentBboSessionKeyRef.current;
+          if (
+            currentBboStatusRef.current !== 'ready' ||
+            !liveBook ||
+            liveBook.coin !== command.coin ||
+            !Number.isFinite(liveBook.time) ||
+            liveBook.time <= 0 ||
+            !liveSessionKey ||
+            liveSessionKey !== command.bboSessionKey
+          ) {
+            throw new Error(t('page.perps.pro.trade.contextChanged'));
+          }
+          const latePrice = resolvePerpsProBboPrice({
+            isBuy: command.side === 'buy',
+            prices: currentBboPricesRef.current,
+            strategy: command.execution.strategy,
+          });
+          const price = positive(latePrice);
+          if (!price) {
+            throw new Error(t('page.perps.pro.trade.contextChanged'));
+          }
+          const baseSize = positive(command.baseSize);
+          if (!baseSize) {
+            throw new Error(t('page.perps.pro.trade.contextChanged'));
+          }
+          const livePosition = perpsStore
+            .getState()
+            .currentClearinghouseState?.assetPositions.find(
+              item => item.position.coin === command.coin,
+            )?.position;
+          const liveActiveAsset = currentActiveAssetDataRef.current;
+          const liveMaxBase = command.reduceOnly
+            ? positive(new BigNumber(livePosition?.szi ?? 0).abs())
+            : liveActiveAsset
+            ? positive(
+                resolvePerpsProMaxBaseCapacity({
+                  availableQuote: BigNumber.min(
+                    liveActiveAsset.availableToTrade[0],
+                    liveActiveAsset.availableToTrade[1],
+                  ).toFixed(),
+                  currentPositionSize: livePosition?.szi,
+                  leverage: desired.leverage,
+                  orderType: 'limit',
+                  referencePrice: price.toFixed(),
+                  serverMaxBase:
+                    liveActiveAsset.maxTradeSzs[command.side === 'buy' ? 0 : 1],
+                  side: command.side,
+                  szDecimals: market.marketData.szDecimals,
+                }),
+              )
+            : null;
+          const reduceDirectionInvalid =
+            command.reduceOnly &&
+            (!livePosition ||
+              (command.side === 'buy'
+                ? !new BigNumber(livePosition.szi).lt(0)
+                : !new BigNumber(livePosition.szi).gt(0)));
+          if (
+            reduceDirectionInvalid ||
+            !liveMaxBase ||
+            baseSize.gt(liveMaxBase)
+          ) {
+            throw new Error(t('page.perps.pro.trade.insufficientBalance'));
+          }
+          const quoteAmount = baseSize.multipliedBy(price);
+          const maximum = positive(market.marketData.maxUsdValueSize);
+          if (
+            quoteAmount.lt(PERPS_MINI_USD_VALUE) ||
+            (maximum && quoteAmount.gt(maximum))
+          ) {
+            throw new Error(
+              maximum && quoteAmount.gt(maximum)
+                ? `Maximum amount is ${maximum.toFixed()}`
+                : `Minimum amount is ${
+                    resolvePerpsProMinimumOrderAmount({
+                      minimumQuoteAmount: PERPS_MINI_USD_VALUE,
+                      price: price.toFixed(),
+                      szDecimals: market.marketData.szDecimals,
+                    })?.displayQuoteAmount ?? PERPS_MINI_USD_VALUE
+                  }`,
+            );
+          }
+          executableCommand = finalizePerpsProBboOpenOrderCommand(
+            command,
+            price.toFixed(),
+          );
+        }
         const result = await executePerpsProOpenOrder(
-          command,
+          executableCommand,
           undefined,
           isSceneCurrent,
         );
@@ -2059,7 +2185,7 @@ export const usePerpsProTrade = ({
     setPrice,
     selectOrderBookPrice,
     setSkipConfirmation,
-    setTif: (tif: PerpsProTradeTif) => patchForm({ tif }),
+    setTif,
     skipConfirmation,
     tpSl,
     toggleAmountUnit,

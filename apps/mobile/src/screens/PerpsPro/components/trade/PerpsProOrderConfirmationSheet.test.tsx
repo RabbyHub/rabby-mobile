@@ -344,4 +344,15 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(screen.getByText('102.00 USDC')).toBeTruthy();
     expect(screen.queryByText('orderType')).toBeNull();
   });
+
+  it('shows the BBO level instead of freezing a reviewed numeric price', () => {
+    renderSheet({
+      ...parent,
+      bboSessionKey: 'BTC:1',
+      execution: { kind: 'bboLimit', strategy: 'cp1' },
+    });
+
+    expect(screen.getByText('Counterparty 1')).toBeTruthy();
+    expect(screen.getAllByText('100.00 USDC')).toHaveLength(1);
+  });
 });

@@ -13,6 +13,7 @@ import { createPerpsProTradeFormState } from '../model/trade';
 import {
   buildPerpsProOpenOrderCommand,
   executePerpsProOpenOrder,
+  finalizePerpsProBboOpenOrderCommand,
   type PerpsProOpenOrderDependencies,
 } from './openOrder';
 
@@ -152,7 +153,7 @@ describe('Perps Pro open order action', () => {
     ).toEqual({ kind: 'limit', limitPrice: '62000', tif: 'Ioc' });
   });
 
-  it('resolves a BBO Limit snapshot and always forces GTC', () => {
+  it('freezes a BBO strategy without freezing its numeric price', () => {
     const command = buildPerpsProOpenOrderCommand({
       account,
       bboPrice: '63010',
@@ -173,10 +174,15 @@ describe('Perps Pro open order action', () => {
       szDecimals: 5,
     });
     expect(command.execution).toEqual({
-      kind: 'limit',
-      limitPrice: '63010',
-      tif: 'Gtc',
+      kind: 'bboLimit',
+      strategy: 'cp1',
     });
+    expect(finalizePerpsProBboOpenOrderCommand(command, '63020')).toMatchObject(
+      {
+        execution: { kind: 'limit', limitPrice: '63020', tif: 'Gtc' },
+        quoteAmount: '63.02',
+      },
+    );
   });
 
   it('hard-gates attached TP/SL at the parent command builder', () => {
@@ -331,7 +337,7 @@ describe('Perps Pro open order action', () => {
     expect(deps.refreshClearinghouse).not.toHaveBeenCalled();
   });
 
-  it('blocks a stale BBO scene before the SDK call', async () => {
+  it('rejects an unresolved BBO command before the SDK call', async () => {
     const deps = dependencies();
     const command = buildPerpsProOpenOrderCommand({
       account,
@@ -350,9 +356,11 @@ describe('Perps Pro open order action', () => {
       szDecimals: 5,
     });
 
-    await expect(
-      executePerpsProOpenOrder(command, deps, () => false),
-    ).resolves.toEqual({ kind: 'staleContext' });
+    await expect(executePerpsProOpenOrder(command, deps)).resolves.toEqual({
+      error: 'BBO price must be finalized immediately before submission',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
     expect(deps.limitOrder).not.toHaveBeenCalled();
   });
 

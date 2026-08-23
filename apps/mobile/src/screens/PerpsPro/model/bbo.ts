@@ -9,6 +9,16 @@ export interface PerpsProBboPrices {
   bids5: string | null;
 }
 
+export const getPerpsProBboStrategyLabel = (strategy: PerpsProBboStrategy) =>
+  ((
+    {
+      cp1: 'Counterparty 1',
+      cp5: 'Counterparty 5',
+      q1: 'Queue 1',
+      q5: 'Queue 5',
+    } as const
+  )[strategy]);
+
 const readPrice = (levels: WsLevel[] | undefined, index: number) => {
   const value = levels?.[index]?.px;
   const numeric = Number(value);

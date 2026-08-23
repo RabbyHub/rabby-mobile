@@ -35,6 +35,10 @@ const mockExecuteUpdateLeverage = jest.fn(async (_command?: unknown) => ({
   kind: 'success' as const,
 }));
 const mockGetPerpsSdk = jest.fn();
+const mockLimitOrderOpen = jest.fn(async () => ({
+  response: { data: { statuses: [{ resting: { oid: 2 } }] } },
+  status: 'ok',
+}));
 const mockShowToast = jest.fn();
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
 const mockExecuteAttached = jest.fn(async () => ({
@@ -254,6 +258,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     mockPerpsState.userAbstractionReady = true;
     mockGetPerpsSdk.mockReturnValue({
       exchange: {
+        limitOrderOpen: mockLimitOrderOpen,
         marketOrderOpen: jest.fn(async () => ({
           response: { data: { statuses: [{ filled: { oid: 1 } }] } },
           status: 'ok',
@@ -560,6 +565,125 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     act(() => hook.result.current.patchForm({ conditionalLimitPrice: '96' }));
     expect(hook.result.current.getMaxDisplayAmount('buy')).toBe('960.00');
+  });
+
+  it('shows a BBO level in review and resolves its numeric price at SDK submission', async () => {
+    const hook = renderHook(
+      ({ ask }: { ask: string }) =>
+        usePerpsProTrade({
+          activeAssetData,
+          bboBook: {
+            ...book,
+            levels: [book.levels[0], [{ n: 1, px: ask, sz: '10' }]],
+          },
+          bboPrices: {
+            asks1: ask,
+            asks5: null,
+            bids1: '99',
+            bids5: null,
+          },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      { initialProps: { ask: '101' } },
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.enableBbo('cp1'));
+    act(() => hook.result.current.setAmount('101'));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(hook.result.current.review).toMatchObject({
+      execution: { kind: 'bboLimit', strategy: 'cp1' },
+    });
+    hook.rerender({ ask: '102' });
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockLimitOrderOpen).toHaveBeenCalledWith(
+      expect.objectContaining({ limitPx: '102', tif: 'Gtc' }),
+    );
+  });
+
+  it('keeps TIF visible state mutually exclusive with BBO', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => emitLatestTrade('BTC', '100.129', 1));
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setPrice('limitPrice', '88'));
+    act(() => hook.result.current.enableBbo('cp1'));
+    expect(hook.result.current.form.bboEnabled).toBe(true);
+
+    act(() => hook.result.current.setTif('Ioc'));
+    expect(hook.result.current.form).toMatchObject({
+      bboEnabled: false,
+      limitPrice: '88',
+      tif: 'Ioc',
+    });
+
+    act(() => hook.result.current.enableBbo('q1'));
+    expect(hook.result.current.form.bboEnabled).toBe(false);
+
+    act(() => hook.result.current.setTif('Gtc'));
+    act(() => hook.result.current.enableBbo('q1'));
+    expect(hook.result.current.form).toMatchObject({
+      bboEnabled: true,
+      bboStrategy: 'q1',
+      tif: 'Gtc',
+    });
+
+    act(() => hook.result.current.setTif('Alo'));
+    expect(hook.result.current.form).toMatchObject({
+      bboEnabled: false,
+      limitPrice: '88',
+      tif: 'Alo',
+    });
+  });
+
+  it('clears Conditional prices when order type or execution mode changes', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('conditional'));
+    act(() => hook.result.current.setPrice('triggerPrice', '110'));
+    act(() => hook.result.current.setConditionalExecution('limit'));
+    act(() => hook.result.current.setPrice('conditionalLimitPrice', '111'));
+    act(() => hook.result.current.setConditionalExecution('market'));
+    expect(hook.result.current.form.triggerPrice).toBe('110');
+    expect(hook.result.current.form.conditionalLimitPrice).toBe('');
+
+    act(() => hook.result.current.setOrderType('market'));
+    expect(hook.result.current.form.triggerPrice).toBe('');
+    expect(hook.result.current.form.conditionalLimitPrice).toBe('');
   });
 
   it('falls back from missing mid to mark for quote Max display only', () => {
