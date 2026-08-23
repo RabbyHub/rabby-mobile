@@ -36,6 +36,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   market: PerpsProMarket;
   onSelectTickOption: (option: PerpsTickOption) => void;
   onSelectPrice?: (price: string) => void;
+  onSelectPriceIntentStart?: () => boolean;
   precision: PerpsBookPrecision | null;
   publicationEnabled?: boolean;
   selectedTickOption: PerpsTickOption | null;
@@ -47,6 +48,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   market,
   onSelectTickOption,
   onSelectPrice,
+  onSelectPriceIntentStart,
   precision,
   publicationEnabled = enabled,
   selectedTickOption,
@@ -184,6 +186,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
         onPrecisionIntentStart={startPrecisionIntent}
         onSelectTickOption={selectTickOptionWithSnapshot}
         onSelectPrice={usesCachedSnapshot ? undefined : onSelectPrice}
+        onSelectPriceIntentStart={onSelectPriceIntentStart}
         selectedTickOption={selectedTickOption}
         serverClock={currentServerClock}
         tickOptions={tickOptions}

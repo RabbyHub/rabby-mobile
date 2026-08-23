@@ -19,6 +19,7 @@ import React, {
 import {
   Animated,
   AppState,
+  Keyboard,
   Pressable,
   useWindowDimensions,
   View,
@@ -257,6 +258,11 @@ export const PerpsProScene: React.FC<{
     setFundingOverlay(null);
   }, [info.accountIdentity]);
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
+  const consumeOrderBookPriceIntent = useCallback(() => {
+    if (!trade.tpSl.focusedLeg) return false;
+    Keyboard.dismiss();
+    return true;
+  }, [trade.tpSl.focusedLeg]);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
@@ -605,6 +611,7 @@ export const PerpsProScene: React.FC<{
                               )
                           : undefined
                       }
+                      onSelectPriceIntentStart={consumeOrderBookPriceIntent}
                       precision={scene.precision}
                       publicationEnabled={scene.realtimeEnabled}
                       selectedTickOption={scene.selectedTickOption}
@@ -762,6 +769,7 @@ export const PerpsProScene: React.FC<{
       cancelOrders,
       closeAll.pending,
       closeAll.requestCloseAll,
+      consumeOrderBookPriceIntent,
       gap,
       info,
       isMarketLoading,

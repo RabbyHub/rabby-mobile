@@ -59,6 +59,7 @@ export const PerpsProOrderBookRow: React.FC<{
   level?: PerpsOrderBookLevel;
   maxTotal: number;
   onSelectPrice?: (price: string) => void;
+  onSelectPriceIntentStart?: () => void;
   priceDecimals: number;
   side: 'ask' | 'bid';
 }> = ({
@@ -66,6 +67,7 @@ export const PerpsProOrderBookRow: React.FC<{
   level,
   maxTotal,
   onSelectPrice,
+  onSelectPriceIntentStart,
   priceDecimals,
   side,
 }) => {
@@ -80,6 +82,7 @@ export const PerpsProOrderBookRow: React.FC<{
     <Pressable
       accessibilityRole={level && onSelectPrice ? 'button' : undefined}
       disabled={!level || !onSelectPrice}
+      onPressIn={onSelectPriceIntentStart}
       onPress={() => level && onSelectPrice?.(level.price)}
       style={styles.bookRow}
       testID="perps-pro-order-book-row">

@@ -79,11 +79,13 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
 
   it('renders a registry-retained snapshot but disables cached price selection', () => {
     const onSelectPrice = jest.fn();
+    const onSelectPriceIntentStart = jest.fn(() => false);
     const view = render(
       <PerpsProRealtimeOrderBook
         enabled
         market={market}
         onSelectPrice={onSelectPrice}
+        onSelectPriceIntentStart={onSelectPriceIntentStart}
         onSelectTickOption={jest.fn()}
         precision={{ mantissa: null, nSigFigs: 5 }}
         selectedTickOption={null}
@@ -93,6 +95,9 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
 
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
     expect(mockRenderedOrderBookProps?.onSelectPrice).toBe(onSelectPrice);
+    expect(mockRenderedOrderBookProps?.onSelectPriceIntentStart).toBe(
+      onSelectPriceIntentStart,
+    );
 
     mockFastL2State = { ...mockFastL2State, status: 'stale' };
     view.rerender(
@@ -100,6 +105,7 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
         enabled
         market={market}
         onSelectPrice={onSelectPrice}
+        onSelectPriceIntentStart={onSelectPriceIntentStart}
         onSelectTickOption={jest.fn()}
         precision={{ mantissa: null, nSigFigs: 5 }}
         selectedTickOption={null}
