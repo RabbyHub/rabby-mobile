@@ -33,7 +33,7 @@ describe('Perps Pro collapsible header', () => {
     ).toBe(false);
   });
 
-  it('restores after cumulative downward content movement reaches threshold', () => {
+  it('stays hidden during upward content movement until the list reaches the top', () => {
     const hidden: PerpsProHeaderScrollState = {
       accumulatedDelta: 0,
       lastOffset: 80,
@@ -42,6 +42,9 @@ describe('Perps Pro collapsible header', () => {
     const beforeThreshold = getNextPerpsProHeaderScrollState(hidden, 69);
     expect(beforeThreshold.visible).toBe(false);
     expect(getNextPerpsProHeaderScrollState(beforeThreshold, 68).visible).toBe(
+      false,
+    );
+    expect(getNextPerpsProHeaderScrollState(beforeThreshold, 0).visible).toBe(
       true,
     );
   });
@@ -100,7 +103,7 @@ describe('Perps Pro collapsible header', () => {
     });
   });
 
-  it('does not reverse a slow monotonic gesture after the threshold transition', () => {
+  it('does not reveal again during a slow monotonic gesture before the top', () => {
     let state = initialState();
     for (const offset of [2, 4, 6, 8, 10, 12, 14, 16]) {
       state = getNextPerpsProHeaderScrollState(state, offset);
@@ -110,6 +113,8 @@ describe('Perps Pro collapsible header', () => {
     for (const offset of [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4]) {
       state = getNextPerpsProHeaderScrollState(state, offset);
     }
+    expect(state.visible).toBe(false);
+    state = getNextPerpsProHeaderScrollState(state, 0);
     expect(state.visible).toBe(true);
   });
 });
