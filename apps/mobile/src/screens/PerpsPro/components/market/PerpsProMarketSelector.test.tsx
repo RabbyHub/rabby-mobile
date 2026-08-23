@@ -14,6 +14,13 @@ const mockMarkPresent = jest.fn();
 const mockMakeBottomSheetProps = jest.fn(() => ({}));
 const mockPagerSetPage = jest.fn();
 const mockPagerSetPageWithoutAnimation = jest.fn();
+let mockSelectorIsIOS = true;
+
+jest.mock('@/core/native/utils', () => ({
+  get IS_IOS() {
+    return mockSelectorIsIOS;
+  },
+}));
 
 jest.mock('./PerpsProMarketPager', () => {
   const ReactModule = require('react');
@@ -226,6 +233,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     {
       dayBaseVlm: '100',
       dayNtlVlm: '1000000',
+      categoryId: '',
       dexId: '',
       displayName: 'BTC',
       funding: '0.0001',
@@ -248,6 +256,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     {
       dayBaseVlm: '200',
       dayNtlVlm: '2000000',
+      categoryId: '',
       dexId: '',
       displayName: 'ETH',
       funding: '0.0002',
@@ -270,6 +279,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     {
       dayBaseVlm: '50',
       dayNtlVlm: '500000',
+      categoryId: '',
       dexId: '',
       displayName: 'SOL',
       funding: '0.0003',
@@ -291,7 +301,13 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     },
   ];
   const state = {
-    categories: [],
+    categories: [] as Array<{
+      id: string;
+      is_disable: boolean;
+      name: string;
+      priority: number;
+      translations: Record<string, string>;
+    }>,
     favoriteMarkets: [],
     marketData: [...initialMarketData],
     marketDataMap: Object.fromEntries(
@@ -321,6 +337,9 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     },
     __setFavoriteMarkets: (favoriteMarkets: string[]) => {
       state.favoriteMarkets = favoriteMarkets;
+    },
+    __setCategories: (categories: typeof state.categories) => {
+      state.categories = categories;
     },
     addFavoriteMarket: jest.fn(),
     perpsStore,
@@ -434,17 +453,31 @@ const { resetPerpsProMarketSessionForTests } =
 type MarketData = import('@/hooks/perps/usePerpsStore').MarketData;
 type PerpsProMarketSelectorHandle =
   import('./PerpsProMarketSelector').PerpsProMarketSelectorHandle;
-const { __resetMarketData, __setFavoriteMarkets, __setMarketData } =
-  jest.requireMock('@/hooks/perps/usePerpsStore') as {
-    __resetMarketData: () => void;
-    __setFavoriteMarkets: (favoriteMarkets: string[]) => void;
-    __setMarketData: (marketData: MarketData[]) => void;
-  };
+const {
+  __resetMarketData,
+  __setCategories,
+  __setFavoriteMarkets,
+  __setMarketData,
+} = jest.requireMock('@/hooks/perps/usePerpsStore') as {
+  __resetMarketData: () => void;
+  __setCategories: (
+    categories: Array<{
+      id: string;
+      is_disable: boolean;
+      name: string;
+      priority: number;
+      translations: Record<string, string>;
+    }>,
+  ) => void;
+  __setFavoriteMarkets: (favoriteMarkets: string[]) => void;
+  __setMarketData: (marketData: MarketData[]) => void;
+};
 const { perpsStore: mockPerpsStore } = jest.requireMock(
   '@/hooks/perps/usePerpsStore',
 ) as {
   perpsStore: {
     getState: () => {
+      marketData: MarketData[];
       marketDataMap: Record<string, MarketData>;
     };
   };
@@ -511,11 +544,13 @@ const getLatestMarketListProps = (pageTab: string = 'all') => {
 describe('PerpsProMarketSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSelectorIsIOS = true;
     jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
       callback(0);
       return 1;
     });
     __resetMarketData();
+    __setCategories([]);
     __setFavoriteMarkets([]);
     resetPerpsProMarketSessionForTests();
   });
@@ -612,8 +647,36 @@ describe('PerpsProMarketSelector', () => {
     expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
 
     fireEvent(screen.getByTestId('market-search'), 'focus');
+    const tabsRetentionHost = screen.getByTestId(
+      'perps-pro-market-tabs-retention-host',
+      { includeHiddenElements: true },
+    );
+    expect(
+      screen.getByTestId('perps-pro-market-tabs', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(tabsRetentionHost.props.pointerEvents).toBe('none');
+    expect(tabsRetentionHost.props.accessibilityElementsHidden).toBe(true);
+    expect(tabsRetentionHost.props.importantForAccessibility).toBe(
+      'no-hide-descendants',
+    );
+    expect(StyleSheet.flatten(tabsRetentionHost.props.style)).toMatchObject({
+      height: 0,
+      opacity: 0,
+      overflow: 'hidden',
+    });
     expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
     fireEvent.press(screen.getByTestId('market-search-cancel'));
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tabs-retention-host').props.style,
+      ),
+    ).toMatchObject({ overflow: 'hidden' });
+    expect(
+      screen.getByTestId('perps-pro-market-tabs-retention-host').props
+        .pointerEvents,
+    ).toBe('auto');
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });
@@ -637,6 +700,93 @@ describe('PerpsProMarketSelector', () => {
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });
+  });
+
+  it('prepares the following iOS neighbor at preview time for consecutive swipes', () => {
+    __setFavoriteMarkets(['BTC']);
+    __setCategories([
+      {
+        id: 'category-a',
+        is_disable: false,
+        name: 'Category A',
+        priority: 0,
+        translations: {},
+      },
+      {
+        id: 'category-b',
+        is_disable: false,
+        name: 'Category B',
+        priority: 1,
+        translations: {},
+      },
+      {
+        id: 'category-c',
+        is_disable: false,
+        name: 'Category C',
+        priority: 2,
+        translations: {},
+      },
+    ]);
+    __setMarketData(
+      mockPerpsStore.getState().marketData.map((market, index) => ({
+        ...market,
+        categoryId: `category-${String.fromCharCode(97 + index)}`,
+      })),
+    );
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-market-pager');
+
+    expect(pager.props.initialPage).toBe(1);
+    expect(screen.getByTestId('perps-pro-market-list-category-a')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-market-list-category-b')).toBeNull();
+
+    fireEvent(pager, 'pagePreview', 2);
+    expect(screen.getByTestId('perps-pro-market-list-category-b')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-market-list-favorites')).toBeNull();
+    expect(screen.getByTestId('perps-pro-market-pager').props.initialPage).toBe(
+      1,
+    );
+    expect(mockPagerSetPage).not.toHaveBeenCalled();
+    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', 2);
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pagePreview', 3);
+    expect(screen.getByTestId('perps-pro-market-list-category-c')).toBeTruthy();
+  });
+
+  it('keeps Android list preparation centered on the settled tab', () => {
+    mockSelectorIsIOS = false;
+    __setFavoriteMarkets(['BTC']);
+    __setCategories([
+      {
+        id: 'category-a',
+        is_disable: false,
+        name: 'Category A',
+        priority: 0,
+        translations: {},
+      },
+      {
+        id: 'category-b',
+        is_disable: false,
+        name: 'Category B',
+        priority: 1,
+        translations: {},
+      },
+    ]);
+    __setMarketData(
+      mockPerpsStore.getState().marketData.map((market, index) => ({
+        ...market,
+        categoryId: index === 0 ? 'category-a' : 'category-b',
+      })),
+    );
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pagePreview', 2);
+    expect(screen.queryByTestId('perps-pro-market-list-category-b')).toBeNull();
   });
 
   it('keeps the selector open until an asynchronous market preparation commits', async () => {
@@ -709,8 +859,24 @@ describe('PerpsProMarketSelector', () => {
 
     expect(screen.queryByTestId('market-row-ETHUSDC')).toBeTruthy();
     expect(
-      screen.queryByText('page.perps.pro.marketSelector.favorites'),
-    ).toBeNull();
+      getRowsFromListProps(
+        mockMarketListProps.mock.calls[
+          mockMarketListProps.mock.calls.length - 1
+        ][0],
+      ).map(market => market.displayPair),
+    ).toEqual(['ETHUSDC', 'BTCUSDC', 'SOLUSDC']);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tabs-retention-host', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({ height: 0, opacity: 0, overflow: 'hidden' });
+    expect(
+      screen.getByTestId('perps-pro-market-tabs', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-market-column-header')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-name')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-volume')).toBeNull();
@@ -795,6 +961,96 @@ describe('PerpsProMarketSelector', () => {
     ).toBeTruthy();
     expect(marketListProps.searchMode).toBe(false);
     expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
+  });
+
+  it('retains a trailing tab strip instance through Search Cancel without selecting Favorites', () => {
+    __setFavoriteMarkets(['BTC']);
+    __setCategories([
+      {
+        id: 'category-a',
+        is_disable: false,
+        name: 'Category A',
+        priority: 0,
+        translations: {},
+      },
+      {
+        id: 'category-b',
+        is_disable: false,
+        name: 'Category B',
+        priority: 1,
+        translations: {},
+      },
+      {
+        id: 'category-c',
+        is_disable: false,
+        name: 'Category C',
+        priority: 2,
+        translations: {},
+      },
+    ]);
+    __setMarketData(
+      mockPerpsStore.getState().marketData.map((market, index) => ({
+        ...market,
+        categoryId: `category-${String.fromCharCode(97 + index)}`,
+      })),
+    );
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-category-c'));
+    expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(4);
+    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', 4);
+    const tabsBeforeSearch = screen.getByTestId('perps-pro-market-tabs');
+    expect(
+      screen.getByTestId('perps-pro-market-tab-category-c').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    mockPagerSetPage.mockClear();
+    mockPagerSetPageWithoutAnimation.mockClear();
+
+    fireEvent(screen.getByTestId('market-search'), 'focus');
+
+    const hiddenHost = screen.getByTestId(
+      'perps-pro-market-tabs-retention-host',
+      { includeHiddenElements: true },
+    );
+    expect(
+      screen.getByTestId('perps-pro-market-tabs', {
+        includeHiddenElements: true,
+      }),
+    ).toBe(tabsBeforeSearch);
+    expect(StyleSheet.flatten(hiddenHost.props.style)).toMatchObject({
+      height: 0,
+      opacity: 0,
+      overflow: 'hidden',
+    });
+    expect(hiddenHost.props.pointerEvents).toBe('none');
+    expect(hiddenHost.props.accessibilityElementsHidden).toBe(true);
+    expect(hiddenHost.props.importantForAccessibility).toBe(
+      'no-hide-descendants',
+    );
+    expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
+    expect(screen.getByTestId('perps-pro-market-list-search')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('market-search-cancel'));
+
+    const visibleHost = screen.getByTestId(
+      'perps-pro-market-tabs-retention-host',
+    );
+    expect(screen.getByTestId('perps-pro-market-tabs')).toBe(tabsBeforeSearch);
+    expect(StyleSheet.flatten(visibleHost.props.style)).toEqual({
+      overflow: 'hidden',
+    });
+    expect(visibleHost.props.pointerEvents).toBe('auto');
+    expect(visibleHost.props.accessibilityElementsHidden).toBe(false);
+    expect(visibleHost.props.importantForAccessibility).toBe('auto');
+    expect(
+      screen.getByTestId('perps-pro-market-tab-category-c').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    expect(mockPagerSetPage).not.toHaveBeenCalled();
+    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
   });
 
   it('matches the Figma header spacing and keeps 44pt gesture-aware sort targets', () => {
