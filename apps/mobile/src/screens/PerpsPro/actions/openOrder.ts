@@ -16,6 +16,7 @@ import {
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
   isPerpsProTradeCombinationSupported,
+  resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   type PerpsProTradeFormState,
   type PerpsProTradeSide,
@@ -123,17 +124,27 @@ export const buildPerpsProOpenOrderCommand = ({
   if (form.orderType === 'limit' && form.bboEnabled && !bboSessionKey) {
     throw new Error('BBO order book is unavailable');
   }
+  const amountPrice = amountReferencePrice ?? executionPrice;
   const amount = resolvePerpsProTradeAmount({
     amount: form.amount,
     amountUnit: form.amountUnit,
-    price: amountReferencePrice ?? executionPrice,
+    price: amountPrice,
     szDecimals,
   });
   if (!amount) {
     throw new Error('Invalid Perps order amount');
   }
   if (new BigNumber(amount.quoteAmount).lt(PERPS_MINI_USD_VALUE)) {
-    throw new Error(`Minimum amount is ${PERPS_MINI_USD_VALUE}`);
+    const minimum = resolvePerpsProMinimumOrderAmount({
+      minimumQuoteAmount: PERPS_MINI_USD_VALUE,
+      price: amountPrice,
+      szDecimals,
+    });
+    throw new Error(
+      `Minimum amount is ${
+        minimum?.displayQuoteAmount ?? PERPS_MINI_USD_VALUE
+      }`,
+    );
   }
   const maximum = decimal(maxUsdValueSize);
   if (maximum?.gt(0) && new BigNumber(amount.quoteAmount).gt(maximum)) {

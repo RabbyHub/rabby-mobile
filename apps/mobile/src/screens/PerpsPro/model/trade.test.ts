@@ -5,6 +5,7 @@ import {
   isPerpsProAmountAboveBothMax,
   isPerpsProTradeCombinationSupported,
   resolvePerpsProDisplayAmount,
+  resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
 } from './trade';
@@ -96,6 +97,40 @@ describe('Perps Pro trade model', () => {
         szDecimals: 3,
       }),
     ).toEqual({ baseSize: '0.023', quoteAmount: '11.71183' });
+  });
+
+  it('resolves the first valid SP500 lot and rounds the hint up to two decimals', () => {
+    expect(
+      resolvePerpsProMinimumOrderAmount({
+        minimumQuoteAmount: 10,
+        price: '7673',
+        szDecimals: 3,
+      }),
+    ).toEqual({
+      displayQuoteAmount: '15.35',
+      exactQuoteAmount: '15.346',
+      minimumBaseSize: '0.002',
+    });
+  });
+
+  it('keeps the fallback display when the first valid lot is exactly 10', () => {
+    expect(
+      resolvePerpsProMinimumOrderAmount({
+        minimumQuoteAmount: 10,
+        price: '50000',
+        szDecimals: 5,
+      })?.displayQuoteAmount,
+    ).toBe('10');
+  });
+
+  it('rejects invalid minimum-order contexts', () => {
+    expect(
+      resolvePerpsProMinimumOrderAmount({
+        minimumQuoteAmount: 10,
+        price: '0',
+        szDecimals: 3,
+      }),
+    ).toBeNull();
   });
 
   it('keeps base amount as canonical protocol size', () => {

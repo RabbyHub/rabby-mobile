@@ -33,6 +33,12 @@ export interface PerpsProResolvedTradeAmount {
   quoteAmount: string;
 }
 
+export interface PerpsProMinimumOrderAmount {
+  displayQuoteAmount: string;
+  exactQuoteAmount: string;
+  minimumBaseSize: string;
+}
+
 export type PerpsProReduceOnlyAvailability = {
   buyUnavailable: boolean;
   checkboxDisabled: boolean;
@@ -118,6 +124,51 @@ export const resolvePerpsProTradeAmount = ({
   return {
     baseSize: base.toFixed(),
     quoteAmount: base.multipliedBy(priceValue).toFixed(),
+  };
+};
+
+/**
+ * Resolves the first protocol-valid base-size lot whose quote notional meets
+ * the exchange floor. The display value is rounded up so the two-decimal hint
+ * never advertises an amount that would still quantize below the floor.
+ */
+export const resolvePerpsProMinimumOrderAmount = ({
+  minimumQuoteAmount,
+  price,
+  szDecimals,
+}: {
+  minimumQuoteAmount: string | number;
+  price: string;
+  szDecimals: number;
+}): PerpsProMinimumOrderAmount | null => {
+  const minimumQuote = decimal(minimumQuoteAmount);
+  const priceValue = decimal(price);
+  if (
+    !Number.isSafeInteger(szDecimals) ||
+    szDecimals < 0 ||
+    !minimumQuote ||
+    !priceValue ||
+    minimumQuote.lte(0) ||
+    priceValue.lte(0)
+  ) {
+    return null;
+  }
+
+  const minimumBaseSize = minimumQuote
+    .dividedBy(priceValue)
+    .decimalPlaces(szDecimals, BigNumber.ROUND_CEIL);
+  if (!minimumBaseSize.gt(0)) {
+    return null;
+  }
+  const exactQuoteAmount = minimumBaseSize.multipliedBy(priceValue);
+  const displayQuoteAmount = exactQuoteAmount.gt(minimumQuote)
+    ? exactQuoteAmount.decimalPlaces(2, BigNumber.ROUND_CEIL).toFixed(2)
+    : minimumQuote.toFixed();
+
+  return {
+    displayQuoteAmount,
+    exactQuoteAmount: exactQuoteAmount.toFixed(),
+    minimumBaseSize: minimumBaseSize.toFixed(),
   };
 };
 
