@@ -704,8 +704,8 @@ describe('PerpsProMarketSelector', () => {
           mockMarketListProps.mock.calls.length - 1
         ][0],
       ).map(market => market.displayPair),
-    ).toEqual(['SOLUSDC', 'ETHUSDC', 'BTCUSDC']);
-    fireEvent.changeText(screen.getByTestId('market-search'), 'eth');
+    ).toEqual(['ETHUSDC', 'BTCUSDC', 'SOLUSDC']);
+    fireEvent.changeText(screen.getByTestId('market-search'), 'usdc');
 
     expect(screen.queryByTestId('market-row-ETHUSDC')).toBeTruthy();
     expect(

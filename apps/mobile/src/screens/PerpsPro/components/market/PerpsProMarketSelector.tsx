@@ -281,7 +281,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
       projection.orders,
       projection.recordsByKey,
     ]);
-    const searchSlots = searchSlotOrders[sort.field][sort.direction];
+    const searchSlots = searchSlotOrders.volume.desc;
     const dismissSelector = useCallback(() => {
       Keyboard.dismiss();
       modalRef.current?.dismiss();
