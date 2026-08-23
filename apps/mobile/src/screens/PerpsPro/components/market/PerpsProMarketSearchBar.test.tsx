@@ -1,8 +1,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard, Platform, StyleSheet } from 'react-native';
 
 const mockBlur = jest.fn();
+const mockBottomSheetInputProps = jest.fn();
+const mockClear = jest.fn();
 const mockFocus = jest.fn();
 const mockInputProps = jest.fn();
 let mockIsLight = true;
@@ -25,9 +27,36 @@ jest.mock('@/assets/icons/common/next-close-circle-dark.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/components/Typography', () => ({
-  Text: require('react-native').Text,
-}));
+jest.mock('@/components/Typography', () => {
+  const ReactNative = require('react-native');
+  return {
+    Text: ReactNative.Text,
+  };
+});
+
+jest.mock('./PerpsProNativeSearchInput', () => {
+  const ReactModule = require('react');
+  const ReactNative = require('react-native');
+  return {
+    PerpsProNativeSearchInput: ReactModule.forwardRef(
+      (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
+        mockInputProps(props);
+        ReactModule.useImperativeHandle(ref, () => ({
+          blur: () => {
+            mockBlur();
+            (props.onBlur as (() => void) | undefined)?.();
+          },
+          clear: mockClear,
+          focus: () => {
+            mockFocus();
+            (props.onFocus as (() => void) | undefined)?.();
+          },
+        }));
+        return ReactModule.createElement(ReactNative.TextInput, props);
+      },
+    ),
+  };
+});
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
@@ -40,7 +69,7 @@ jest.mock('@/hooks/theme', () => ({
     return {
       colors2024,
       isLight: mockIsLight,
-      styles: getStyle({ colors2024 }),
+      styles: getStyle({ colors2024, isLight: mockIsLight }),
     };
   },
 }));
@@ -62,12 +91,13 @@ jest.mock('@gorhom/bottom-sheet', () => {
   return {
     BottomSheetTextInput: ReactModule.forwardRef(
       (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
-        mockInputProps(props);
+        mockBottomSheetInputProps(props);
         ReactModule.useImperativeHandle(ref, () => ({
           blur: () => {
             mockBlur();
             (props.onBlur as (() => void) | undefined)?.();
           },
+          clear: mockClear,
           focus: () => {
             mockFocus();
             (props.onFocus as (() => void) | undefined)?.();
@@ -107,7 +137,7 @@ describe('PerpsProMarketSearchBar', () => {
     );
     expect(containerStyle).toEqual(
       expect.objectContaining({
-        backgroundColor: '#F4F5F5',
+        backgroundColor: 'neutral-bg-0',
         borderRadius: 6,
         gap: 8,
         height: 34,
@@ -126,7 +156,10 @@ describe('PerpsProMarketSearchBar', () => {
     );
 
     const restingInputStyle = StyleSheet.flatten(getLatestInputProps().style);
+    expect(getLatestInputProps().defaultValue).toBe('');
     expect(getLatestInputProps().placeholder).toBeUndefined();
+    expect(getLatestInputProps().value).toBeUndefined();
+    expect(mockBottomSheetInputProps).not.toHaveBeenCalled();
     expect(restingInputStyle).toEqual(
       expect.objectContaining({
         fontFamily: 'SF Pro',
@@ -168,21 +201,26 @@ describe('PerpsProMarketSearchBar', () => {
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-market-search-focus-mask'));
+    fireEvent.changeText(screen.getByTestId('market-search'), '中文');
+    expect(onChangeText).toHaveBeenLastCalledWith('中文');
     rerender(
       <PerpsProMarketSearchBar
         onChangeText={onChangeText}
         onFocusChange={onFocusChange}
         placeholder="Search"
-        value="ETH"
+        value="中文"
       />,
     );
 
+    expect(getLatestInputProps().defaultValue).toBe('');
     expect(getLatestInputProps().selection).toBeUndefined();
+    expect(getLatestInputProps().value).toBeUndefined();
     expect(
       screen.getByTestId('perps-pro-market-search-clear-light'),
     ).toBeTruthy();
     fireEvent.press(screen.getByTestId('market-search-clear'));
     expect(onChangeText).toHaveBeenLastCalledWith('');
+    expect(mockClear).toHaveBeenCalledTimes(1);
     expect(mockBlur).not.toHaveBeenCalled();
 
     act(() => {
@@ -190,6 +228,7 @@ describe('PerpsProMarketSearchBar', () => {
     });
     expect(onChangeText).toHaveBeenLastCalledWith('');
     expect(mockBlur).toHaveBeenCalledTimes(1);
+    expect(mockClear).toHaveBeenCalledTimes(2);
     expect(onFocusChange).toHaveBeenLastCalledWith(false);
     expect(keyboardDismissSpy).toHaveBeenCalledTimes(1);
     keyboardDismissSpy.mockRestore();
@@ -216,10 +255,46 @@ describe('PerpsProMarketSearchBar', () => {
       ),
     ).toEqual(
       expect.objectContaining({
+        backgroundColor: 'neutral-bg-2',
         borderRadius: 6,
         height: 34,
         paddingHorizontal: 12,
       }),
     );
+    expect(StyleSheet.flatten(getLatestInputProps().style)).toEqual(
+      expect.objectContaining({ color: 'neutral-title-1' }),
+    );
+  });
+
+  it('keeps Android on the Bottom Sheet managed input path', () => {
+    const originalPlatform = Platform.OS;
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    });
+
+    try {
+      render(
+        <PerpsProMarketSearchBar
+          onChangeText={jest.fn()}
+          onFocusChange={jest.fn()}
+          placeholder="Search"
+          value="ETH"
+        />,
+      );
+
+      expect(mockBottomSheetInputProps).toHaveBeenCalled();
+      expect(mockInputProps).not.toHaveBeenCalled();
+      expect(
+        mockBottomSheetInputProps.mock.calls[
+          mockBottomSheetInputProps.mock.calls.length - 1
+        ][0].value,
+      ).toBe('ETH');
+    } finally {
+      Object.defineProperty(Platform, 'OS', {
+        configurable: true,
+        value: originalPlatform,
+      });
+    }
   });
 });

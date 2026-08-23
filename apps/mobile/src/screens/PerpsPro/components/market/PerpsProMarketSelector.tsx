@@ -333,6 +333,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
       selectionRequestRef.current += 1;
       markDismissed();
       Keyboard.dismiss();
+      searchRef.current?.clear();
       searchRef.current?.blur();
       if (resolvedActiveTab !== 'all' || previewTab) {
         const allTabIndex = tabs.findIndex(tab => tab.id === 'all');

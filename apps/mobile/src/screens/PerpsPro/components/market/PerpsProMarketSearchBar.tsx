@@ -14,6 +14,7 @@ import React, {
 } from 'react';
 import {
   Keyboard,
+  Platform,
   Pressable,
   StyleSheet,
   TouchableOpacity,
@@ -24,10 +25,11 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
-import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
+import { PerpsProNativeSearchInput } from './PerpsProNativeSearchInput';
 
 export type PerpsProMarketSearchBarHandle = {
   blur: () => void;
+  clear: () => void;
   focus: () => void;
 };
 
@@ -45,17 +47,44 @@ const PerpsProMarketSearchBarComponent = forwardRef<
 >(({ onChangeText, onFocusChange, placeholder, style, value }, ref) => {
   const { colors2024, isLight, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const inputRef = useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const nativeInputRef =
+    useRef<React.ElementRef<typeof PerpsProNativeSearchInput>>(null);
+  const bottomSheetInputRef =
+    useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const initialNativeValueRef = useRef(value);
   const [focused, setFocused] = useState(false);
   const isResting = !focused && !value;
+
+  const blurInput = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      nativeInputRef.current?.blur();
+    } else {
+      bottomSheetInputRef.current?.blur();
+    }
+  }, []);
+  const focusInput = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      nativeInputRef.current?.focus();
+    } else {
+      bottomSheetInputRef.current?.focus();
+    }
+  }, []);
+  const clearInput = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      nativeInputRef.current?.clear();
+    } else {
+      bottomSheetInputRef.current?.clear();
+    }
+  }, []);
 
   useImperativeHandle(
     ref,
     () => ({
-      blur: () => inputRef.current?.blur(),
-      focus: () => inputRef.current?.focus(),
+      blur: blurInput,
+      clear: clearInput,
+      focus: focusInput,
     }),
-    [],
+    [blurInput, clearInput, focusInput],
   );
 
   const handleFocus = useCallback(() => {
@@ -67,16 +96,32 @@ const PerpsProMarketSearchBarComponent = forwardRef<
     onFocusChange(false);
   }, [onFocusChange]);
   const handleCancel = useCallback(() => {
+    clearInput();
     onChangeText('');
-    inputRef.current?.blur();
+    blurInput();
     Keyboard.dismiss();
-  }, [onChangeText]);
+  }, [blurInput, clearInput, onChangeText]);
   const handleClear = useCallback(() => {
+    clearInput();
     onChangeText('');
-  }, [onChangeText]);
-  const focusInput = useCallback(() => {
-    inputRef.current?.focus();
-  }, []);
+  }, [clearInput, onChangeText]);
+  const commonInputProps: React.ComponentProps<
+    typeof PerpsProNativeSearchInput
+  > = {
+    accessibilityLabel: placeholder,
+    accessible: !isResting,
+    allowFontScaling: false,
+    autoCorrect: false,
+    cursorColor: colors2024['brand-default'],
+    onBlur: handleBlur,
+    onChangeText,
+    onFocus: handleFocus,
+    returnKeyType: 'done',
+    selectionColor: colors2024['brand-default'],
+    spellCheck: false,
+    style: styles.input,
+    testID: 'market-search',
+  };
 
   return (
     <View style={[styles.container, style]}>
@@ -101,28 +146,26 @@ const PerpsProMarketSearchBarComponent = forwardRef<
               {placeholder}
             </Text>
           ) : null}
-          <BottomSheetTextInput
-            accessibilityLabel={placeholder}
-            accessible={!isResting}
-            allowFontScaling={false}
-            autoCorrect={false}
-            cursorColor={colors2024['brand-default']}
-            onBlur={handleBlur}
-            onChangeText={onChangeText}
-            onFocus={handleFocus}
-            ref={inputRef}
-            returnKeyType="done"
-            selection={
-              focused && !value
-                ? resolvePerpsProEmptyInputSelection()
-                : undefined
-            }
-            selectionColor={colors2024['brand-default']}
-            spellCheck={false}
-            style={styles.input}
-            testID="market-search"
-            value={value}
-          />
+          {Platform.OS === 'ios' ? (
+            // Keep UIKit as the text owner while an IME has marked text. Query
+            // state still follows onChangeText, but must not echo through value.
+            <PerpsProNativeSearchInput
+              {...commonInputProps}
+              defaultValue={initialNativeValueRef.current}
+              ref={nativeInputRef}
+            />
+          ) : (
+            <BottomSheetTextInput
+              {...commonInputProps}
+              ref={bottomSheetInputRef}
+              selection={
+                focused && !value
+                  ? resolvePerpsProEmptyInputSelection('android')
+                  : undefined
+              }
+              value={value}
+            />
+          )}
         </View>
         {!isResting && value ? (
           <TouchableOpacity
@@ -195,10 +238,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   inputContainer: {
     alignItems: 'center',
-    backgroundColor: resolvePerpsProFieldBackground({
-      darkBackground: colors2024['neutral-bg-0'],
-      isLight,
-    }),
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-2'],
     borderRadius: 6,
     flex: 1,
     flexDirection: 'row',
