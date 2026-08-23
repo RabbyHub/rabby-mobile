@@ -1416,8 +1416,6 @@ export const usePerpsProTrade = ({
             : undefined,
         bboPrice: getBboPrice(side),
         bboSessionKey,
-        bestAsk: bboPrices.asks1,
-        bestBid: bboPrices.bids1,
         coin: market.canonicalCoin,
         dexId: market.marketData.dexId,
         form: parentForm,
@@ -1510,8 +1508,6 @@ export const usePerpsProTrade = ({
     [
       accountFacts.account,
       bboBook,
-      bboPrices.asks1,
-      bboPrices.bids1,
       bboSessionKey,
       bboStatus,
       currentPosition,
