@@ -169,7 +169,11 @@ jest.mock('./PerpsProMarketSearchBar', () => {
           setFocused(false);
           onFocusChange(false);
         };
-        ReactModule.useImperativeHandle(ref, () => ({ blur, focus }));
+        ReactModule.useImperativeHandle(ref, () => ({
+          blur,
+          clear: () => undefined,
+          focus,
+        }));
         return ReactModule.createElement(
           View,
           null,
