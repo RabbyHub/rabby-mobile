@@ -12,6 +12,9 @@ import type { PerpsProTpSlMode } from '../../model/tpsl';
 import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
+const PERPS_PRO_TP_SL_MODE_SHEET_MIN_HEIGHT = 240;
+const PERPS_PRO_TP_SL_MODE_SHEET_THREE_MODE_HEIGHT = 324;
+
 export const PerpsProTpSlModeSheet: React.FC<{
   allowedModes?: readonly PerpsProTpSlMode[];
   onClose: () => void;
@@ -63,11 +66,16 @@ export const PerpsProTpSlModeSheet: React.FC<{
     const options = allOptions.filter(option =>
       allowedModes.includes(option.value),
     );
+    const sheetHeight =
+      options.length >= 3
+        ? PERPS_PRO_TP_SL_MODE_SHEET_THREE_MODE_HEIGHT
+        : PERPS_PRO_TP_SL_MODE_SHEET_MIN_HEIGHT;
+
     return (
       <AppBottomSheetModal
         onDismiss={onClose}
         ref={modalRef}
-        snapPoints={[324]}
+        snapPoints={[sheetHeight]}
         {...makeBottomSheetProps({
           colors: colors2024,
           linearGradientType: 'bg1',
