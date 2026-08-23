@@ -180,9 +180,7 @@ export const PerpsProPositionCard: React.FC<{
             <View
               style={styles.sourceTag}
               testID={`perps-pro-position-source-${position.key}`}>
-              <Text style={styles.sourceText}>
-                {market.sourceTag.toUpperCase()}
-              </Text>
+              <Text style={styles.sourceText}>{market.sourceTag}</Text>
             </View>
           ) : null}
           <View

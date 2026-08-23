@@ -235,7 +235,7 @@ describe('PerpsProClosePositionSheet', () => {
     expect(screen.getByTestId('close-confirm-button').props.type).toBe(
       'primary',
     );
-    expect(screen.getByText('XYZ')).toBeTruthy();
+    expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.getByText('Entry Price (USDC)')).toBeTruthy();
     expect(screen.getByText('Mark Price (USDC)')).toBeTruthy();
     expect(screen.getByDisplayValue('100% (≈1.0000)')).toBeTruthy();

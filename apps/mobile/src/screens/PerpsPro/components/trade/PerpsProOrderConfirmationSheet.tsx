@@ -117,7 +117,7 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 </Text>
                 {reviewFacts.sourceTag ? (
                   <Text numberOfLines={1} style={styles.marketTag}>
-                    {reviewFacts.sourceTag.toUpperCase()}
+                    {reviewFacts.sourceTag}
                   </Text>
                 ) : null}
                 <Text

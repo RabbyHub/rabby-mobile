@@ -173,7 +173,7 @@ describe('PerpsProMarketRow', () => {
         lineHeight: 20,
       }),
     );
-    expect(screen.getByText('XYZ').props.style).toEqual(
+    expect(screen.getByText('xyz').props.style).toEqual(
       expect.objectContaining({
         borderRadius: 2,
         borderWidth: 0.5,

@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js';
 
+import { normalizePerpsProMarketSourceTag } from './market';
 import type { PerpsProTradeAmountUnit } from './trade';
 
 export interface PerpsProCloseMarketSnapshot {
@@ -25,7 +26,7 @@ export interface PerpsProCloseDraft {
 
 export const resolvePerpsProCloseMarketSourceTag = (
   sourceTag: string | null | undefined,
-) => sourceTag?.trim().toUpperCase() || null;
+) => normalizePerpsProMarketSourceTag(sourceTag);
 
 const positive = (value: string) => {
   const result = new BigNumber(value || Number.NaN);

@@ -236,7 +236,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
     renderSheet(attached);
 
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
-    expect(screen.getByText('XYZ')).toBeTruthy();
+    expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.getByText('Isolated 10x')).toBeTruthy();
     expect(screen.getByText('Buy')).toBeTruthy();
     expect(screen.getByText('Long')).toBeTruthy();

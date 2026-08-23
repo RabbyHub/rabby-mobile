@@ -132,9 +132,7 @@ export const PerpsProOpenOrderCard: React.FC<{
               </Pressable>
               {market.sourceTag ? (
                 <View style={styles.sourceTag}>
-                  <Text style={styles.sourceText}>
-                    {market.sourceTag.toUpperCase()}
-                  </Text>
+                  <Text style={styles.sourceText}>{market.sourceTag}</Text>
                 </View>
               ) : null}
             </View>

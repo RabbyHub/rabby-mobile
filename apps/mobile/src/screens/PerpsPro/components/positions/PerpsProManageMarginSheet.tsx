@@ -163,9 +163,7 @@ export const PerpsProManageMarginSheet: React.FC<{
               <Text style={styles.pair}>{displayView.displayPair}</Text>
               {displayView.sourceTag ? (
                 <View style={styles.sourceTag}>
-                  <Text style={styles.sourceText}>
-                    {displayView.sourceTag.toUpperCase()}
-                  </Text>
+                  <Text style={styles.sourceText}>{displayView.sourceTag}</Text>
                 </View>
               ) : null}
               <View

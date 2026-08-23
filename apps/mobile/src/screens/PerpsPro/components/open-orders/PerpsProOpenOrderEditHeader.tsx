@@ -23,9 +23,7 @@ export const PerpsProOpenOrderEditHeader: React.FC<{
         </Text>
         {market.sourceTag ? (
           <View style={styles.sourceTag}>
-            <Text style={styles.sourceText}>
-              {market.sourceTag.toUpperCase()}
-            </Text>
+            <Text style={styles.sourceText}>{market.sourceTag}</Text>
           </View>
         ) : null}
       </View>

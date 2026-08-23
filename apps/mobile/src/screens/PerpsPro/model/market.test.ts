@@ -9,6 +9,7 @@ import {
   comparePerpsProMarketOrder,
   filterPerpsProMarketsByTab,
   getNextPerpsProSort,
+  normalizePerpsProMarketSourceTag,
   reconcilePerpsProMarkets,
   searchPerpsProMarkets,
   sortPerpsProMarkets,
@@ -58,6 +59,12 @@ describe('Perps Pro market model', () => {
       marketKey: 'xyz::xyz:AAPL',
       sourceTag: 'xyz',
     });
+  });
+
+  it('normalizes source labels without changing market identity comparisons', () => {
+    expect(normalizePerpsProMarketSourceTag(' XyZ ')).toBe('xyz');
+    expect(normalizePerpsProMarketSourceTag('')).toBeNull();
+    expect(normalizePerpsProMarketSourceTag(null)).toBeNull();
   });
 
   it('uses only trimmed backend full names and never infers local aliases', () => {
