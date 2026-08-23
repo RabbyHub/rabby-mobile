@@ -532,7 +532,7 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const createInfoState = (overrides: Record<string, unknown> = {}) => ({
-  account: { assets: [] },
+  account: { assets: [], mode: 'standard' },
   accountIdentity: 'test-account',
   accountState: 'loading',
   activeInfoTab: 'account',
@@ -697,6 +697,38 @@ describe('PerpsProScene market loading states', () => {
       '101.23',
       'hyperliquid::BTC',
     );
+  });
+
+  it('routes unified non-USDC Trade add-funds to the current quote Swap', () => {
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        account: { assets: [], mode: 'unified' },
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
+      addFundsMode: 'swap',
+    });
+    act(() => mockTradeFormProps.mock.lastCall?.[0].onAddFunds());
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      mode: 'swap',
+      targetAsset: 'USDE',
+    });
   });
 
   it('keeps the close editor mounted under the confirmation sheet', () => {
