@@ -41,6 +41,7 @@ import {
   buildPerpsProAttachedTpSlCommand,
   hasPerpsProAttachedTpSlExecutionCapability,
   type PerpsProAttachedTpSlCommand,
+  type PerpsProAttachedTpSlGuardFailureReason,
 } from '../actions/openOrderWithAttachedTpSl';
 import type { PerpsProBboPrices, PerpsProBboStrategy } from '../model/bbo';
 import { resolvePerpsProBboPrice } from '../model/bbo';
@@ -177,6 +178,61 @@ export const usePerpsProTrade = ({
         t: (key, options) => t(key, options),
       }),
     [t],
+  );
+  const attachedGuardErrorText = useCallback(
+    ({
+      leg,
+      reason,
+      side,
+    }: {
+      leg?: 'sl' | 'tp';
+      reason?: PerpsProAttachedTpSlGuardFailureReason;
+      side: PerpsProTradeSide;
+    }) => {
+      if (reason === 'regionRestricted') {
+        return t('page.perps.regionNotSupport');
+      }
+      if (reason === 'availableToTrade') {
+        return t('page.perps.pro.trade.insufficientBalance');
+      }
+      if (reason === 'insufficientDepth') {
+        return tpSlErrorText({ code: reason }, { side });
+      }
+      if (
+        reason === 'bookIdentity' ||
+        reason === 'bookStale' ||
+        reason === 'bookUnavailable' ||
+        reason === 'invalidLevel' ||
+        reason === 'marketMismatch'
+      ) {
+        return tpSlErrorText({ code: 'marketBookUnavailable' }, { side });
+      }
+      if (
+        reason === 'invalidAmount' ||
+        reason === 'normalizedBaseSize' ||
+        reason === 'zeroNormalizedSize'
+      ) {
+        return tpSlErrorText({ code: 'invalidOrderAmount' }, { side });
+      }
+      if (
+        reason === 'atLeastOneRequired' ||
+        reason === 'bboUnsupported' ||
+        reason === 'conditionalUnsupported' ||
+        reason === 'invalidDirection' ||
+        reason === 'invalidInput' ||
+        reason === 'invalidOrderAmount' ||
+        reason === 'invalidTrigger' ||
+        reason === 'iocUnsupported' ||
+        reason === 'marketBookUnavailable' ||
+        reason === 'nonPositiveTrigger' ||
+        reason === 'oppositePosition' ||
+        reason === 'reduceOnlyUnsupported'
+      ) {
+        return tpSlErrorText({ code: reason, leg }, { side });
+      }
+      return t('page.perps.pro.trade.contextChanged');
+    },
+    [t, tpSlErrorText],
   );
   const preferences = usePerpsProTradePreferences();
   const tpSlModePreferences = usePerpsProTpSlModePreferences();
@@ -1923,11 +1979,14 @@ export const usePerpsProTrade = ({
         if (result.kind === 'userCancelled') return;
         if (result.kind === 'staleContext') {
           showToast(
-            t(
-              result.reason === 'regionRestricted'
-                ? 'page.perps.regionNotSupport'
-                : 'page.perps.pro.trade.contextChanged',
-            ),
+            attachedGuardErrorText({
+              leg: result.leg,
+              reason:
+                result.reason === 'unresolvedSubmission'
+                  ? undefined
+                  : result.reason,
+              side: command.parent.side,
+            }),
             'error',
           );
           setReview(null);
@@ -1944,19 +2003,27 @@ export const usePerpsProTrade = ({
         }
         if (result.kind === 'parentRejected') {
           showToast(
-            t('page.perps.pro.trade.attachedTpSlParentRejected'),
+            result.error ||
+              t('page.perps.pro.trade.attachedTpSlParentRejected'),
             'error',
           );
           return;
         }
         if (result.kind === 'unknownOutcome') {
-          showToast(t('page.perps.pro.trade.attachedTpSlUnknown'), 'error');
+          showToast(
+            [result.error, t('page.perps.pro.trade.attachedTpSlUnknown')]
+              .filter(Boolean)
+              .join('\n'),
+            'error',
+          );
           setReview(null);
           return;
         }
         if (result.kind === 'childRejected') {
           showToast(
-            t('page.perps.pro.trade.attachedTpSlChildRejected'),
+            [result.error, t('page.perps.pro.trade.attachedTpSlChildRejected')]
+              .filter(Boolean)
+              .join('\n'),
             'error',
           );
           setReview(null);
@@ -2002,6 +2069,7 @@ export const usePerpsProTrade = ({
       }
     },
     [
+      attachedGuardErrorText,
       ensureAttachedLeverage,
       executeAttachedTpSl,
       patchForm,

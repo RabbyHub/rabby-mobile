@@ -17,10 +17,12 @@ import type { PerpsAttachedTpSlJournalEntry } from '@/core/services/perpsService
 import type { PerpsProMarket } from '../model/market';
 import {
   executePerpsProAttachedTpSl,
+  getPerpsProAttachedTpSlBatchError,
   getPerpsProAttachedTpSlPositionIdentity,
   validatePerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlGuardContext,
+  type PerpsProAttachedTpSlGuardFailureReason,
   type PerpsProAttachedTpSlResult,
 } from '../actions/openOrderWithAttachedTpSl';
 import { reconcilePerpsProAttachedTpSl } from '../actions/reconcileAttachedTpSl';
@@ -28,9 +30,10 @@ import { reconcilePerpsProAttachedTpSl } from '../actions/reconcileAttachedTpSl'
 export type PerpsProAttachedTpSlFinalOutcome = {
   error?: string;
   kind: PerpsProAttachedTpSlResult['kind'];
+  leg?: 'sl' | 'tp';
   reconciliationErrors: string[];
   refreshErrors: string[];
-  reason?: 'regionRestricted' | 'unresolvedSubmission';
+  reason?: PerpsProAttachedTpSlGuardFailureReason | 'unresolvedSubmission';
 };
 
 export type EnsurePerpsProAttachedTpSlLeverage = (
@@ -54,6 +57,20 @@ const reconciliationOutcome = (
       : 'unknown',
   updatedAt: Date.now(),
 });
+
+const PARENT_ROLE = new Set(['parent'] as const);
+const CHILD_ROLES = new Set(['stopLoss', 'takeProfit'] as const);
+
+const getResultServerError = (result: PerpsProAttachedTpSlResult) => {
+  if (!('batch' in result)) return undefined;
+  if (result.kind === 'parentRejected') {
+    return getPerpsProAttachedTpSlBatchError(result.batch, PARENT_ROLE);
+  }
+  if (result.kind === 'childRejected') {
+    return getPerpsProAttachedTpSlBatchError(result.batch, CHILD_ROLES);
+  }
+  return getPerpsProAttachedTpSlBatchError(result.batch);
+};
 
 export const usePerpsProAttachedTpSlExecution = ({
   active,
@@ -225,10 +242,8 @@ export const usePerpsProAttachedTpSlExecution = ({
           : {
               ...empty,
               kind: 'staleContext' as const,
-              reason:
-                result.reason === 'regionRestricted'
-                  ? ('regionRestricted' as const)
-                  : undefined,
+              leg: result.leg,
+              reason: result.reason,
             };
       };
       const initialGuardFailure = guardFailure();
@@ -261,6 +276,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         const result = await executePerpsProAttachedTpSl(command, () =>
           getGuardContext(command),
         );
+        const serverError = getResultServerError(result);
         if (
           result.kind !== 'fullAccepted' &&
           result.kind !== 'childRejected' &&
@@ -269,14 +285,13 @@ export const usePerpsProAttachedTpSlExecution = ({
         ) {
           return {
             ...empty,
-            error: 'error' in result ? result.error : undefined,
+            error:
+              ('error' in result ? result.error : undefined) ?? serverError,
             kind: result.kind,
+            leg: result.kind === 'staleContext' ? result.leg : undefined,
             reason:
-              result.kind === 'requestFailed'
+              result.kind === 'requestFailed' || result.kind === 'staleContext'
                 ? result.reason
-                : result.kind === 'staleContext' &&
-                  result.reason === 'regionRestricted'
-                ? 'regionRestricted'
                 : undefined,
           };
         }
@@ -284,11 +299,11 @@ export const usePerpsProAttachedTpSlExecution = ({
           await perpsServiceApi.getPerpsAttachedTpSlJournal()
         ).find(item => item.commandId === command.commandId);
         if (!entry) {
-          return { ...empty, kind: result.kind };
+          return { ...empty, error: serverError, kind: result.kind };
         }
         const reconciled = await reconcileEntry(entry, result.kind);
         return {
-          error: 'error' in result ? result.error : undefined,
+          error: ('error' in result ? result.error : undefined) ?? serverError,
           kind: reconciled.finalKind,
           reconciliationErrors: reconciled.reconciliationErrors,
           refreshErrors: reconciled.refreshErrors,

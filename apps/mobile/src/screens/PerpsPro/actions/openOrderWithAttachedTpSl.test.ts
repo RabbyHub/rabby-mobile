@@ -14,6 +14,7 @@ import type { PerpsProOpenOrderCommand } from './openOrder';
 import {
   buildPerpsProAttachedTpSlCommand,
   executePerpsProAttachedTpSl,
+  getPerpsProAttachedTpSlBatchError,
   getPerpsProAttachedTpSlPositionIdentity,
   validatePerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlGuardContext,
@@ -246,7 +247,7 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     });
   });
 
-  it('fails closed for changed runtime, L2 session, depth or VWAP', () => {
+  it('fails closed for identity or depth changes but accepts safe VWAP movement', () => {
     const command = build();
     expect(
       validatePerpsProAttachedTpSlCommand(command, guardContext()),
@@ -268,7 +269,13 @@ describe('Perps Pro attached TP/SL command and executor', () => {
         command,
         guardContext({ book: book('102') }),
       ),
-    ).toMatchObject({ ok: false, reason: 'expectedEntryPrice' });
+    ).toEqual({ ok: true });
+    expect(
+      validatePerpsProAttachedTpSlCommand(
+        command,
+        guardContext({ book: book('111') }),
+      ),
+    ).toMatchObject({ leg: 'tp', ok: false, reason: 'invalidDirection' });
     expect(
       validatePerpsProAttachedTpSlCommand(
         command,
@@ -281,6 +288,39 @@ describe('Perps Pro attached TP/SL command and executor', () => {
         guardContext({ maxBaseSize: '1.99' }),
       ),
     ).toMatchObject({ ok: false, reason: 'availableToTrade' });
+  });
+
+  it('extracts and deduplicates raw server errors by batch leg role', () => {
+    const command = build();
+    const serverError =
+      'Post only order would have immediately matched, bbo was 101.';
+    const batch = {
+      evidence,
+      kind: 'parentRejected',
+      legs: [
+        {
+          cloid: command.cloids.parent,
+          error: serverError,
+          kind: 'rejected',
+          rawStatus: {},
+          role: 'parent',
+          scope: 'batch',
+        },
+        {
+          cloid: command.cloids.takeProfit!,
+          error: serverError,
+          kind: 'rejected',
+          rawStatus: {},
+          role: 'takeProfit',
+          scope: 'batch',
+        },
+      ],
+    } satisfies NormalTpslBatchResult;
+
+    expect(getPerpsProAttachedTpSlBatchError(batch)).toBe(serverError);
+    expect(getPerpsProAttachedTpSlBatchError(batch, new Set(['parent']))).toBe(
+      serverError,
+    );
   });
 
   it('fails closed for a region-restricted parent order', () => {
@@ -421,6 +461,26 @@ describe('Perps Pro attached TP/SL command and executor', () => {
         }),
       ),
     ).toEqual({ ok: true });
+  });
+
+  it('sends a crossing ALO parent to Hyperliquid for authoritative validation', async () => {
+    const command = build({
+      parent: parent({ kind: 'limit', limitPrice: '101', tif: 'Alo' }),
+    });
+    const setup = createDependencies(command);
+
+    expect(
+      validatePerpsProAttachedTpSlCommand(command, guardContext()),
+    ).toEqual({ ok: true });
+    await executePerpsProAttachedTpSl(
+      command,
+      setup.dependencies.getGuardContext,
+      setup.dependencies,
+    );
+
+    expect(setup.limitOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ limitPx: '101', tif: 'Alo' }),
+    );
   });
 
   it('removes prepared state for user cancellation but keeps unknown transport state', async () => {

@@ -21,12 +21,16 @@ import {
   type PerpsRuntimeSnapshot,
 } from '@/hooks/perps/runtime/perpsRuntimeState';
 
-import { estimatePerpsProMarketFill } from '../model/marketFillEstimate';
+import {
+  estimatePerpsProMarketFill,
+  type PerpsProMarketFillEstimateError,
+} from '../model/marketFillEstimate';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import type { PerpsProTradeAmountUnit } from '../model/trade';
 import {
   validatePerpsProFrozenAttachedTpSl,
   type PerpsProAttachedTpSlEvaluation,
+  type PerpsProTpSlValidationErrorCode,
 } from '../model/tpsl';
 import type { PerpsProOpenOrderCommand } from './openOrder';
 import {
@@ -96,9 +100,25 @@ export type PerpsProAttachedTpSlGuardContext = {
   runtime: PerpsRuntimeSnapshot;
 };
 
+export type PerpsProAttachedTpSlGuardFailureReason =
+  | PerpsProMarketFillEstimateError
+  | PerpsProTpSlValidationErrorCode
+  | 'accountOrRuntime'
+  | 'availableToTrade'
+  | 'bookIdentity'
+  | 'commandIdentity'
+  | 'expectedEntryPrice'
+  | 'marketOrPosition'
+  | 'normalizedBaseSize'
+  | 'regionRestricted';
+
 export type PerpsProAttachedTpSlGuardResult =
   | { ok: true }
-  | { ok: false; reason: string };
+  | {
+      leg?: 'sl' | 'tp';
+      ok: false;
+      reason: PerpsProAttachedTpSlGuardFailureReason;
+    };
 
 export type PerpsProAttachedTpSlResult =
   | { batch: NormalTpslBatchResult; kind: 'fullAccepted' }
@@ -110,7 +130,11 @@ export type PerpsProAttachedTpSlResult =
       error?: string;
       kind: 'unknownOutcome';
     }
-  | { kind: 'staleContext'; reason?: string }
+  | {
+      kind: 'staleContext';
+      leg?: 'sl' | 'tp';
+      reason?: PerpsProAttachedTpSlGuardFailureReason;
+    }
   | { kind: 'userCancelled' }
   | {
       batch?: NormalTpslBatchResult;
@@ -124,6 +148,19 @@ const positive = (value: unknown) => {
     (value as string | number | null | undefined) ?? Number.NaN,
   );
   return result.isFinite() && result.gt(0) ? result : null;
+};
+
+export const getPerpsProAttachedTpSlBatchError = (
+  batch: NormalTpslBatchResult | undefined,
+  roles?: ReadonlySet<'parent' | 'stopLoss' | 'takeProfit'>,
+) => {
+  if (!batch || !('legs' in batch)) return undefined;
+  const errors = batch.legs.flatMap(leg =>
+    leg.kind === 'rejected' && (!roles || roles.has(leg.role))
+      ? [leg.error.trim()]
+      : [],
+  );
+  return [...new Set(errors)].filter(Boolean).join('\n') || undefined;
 };
 
 const freezeAttached = (
@@ -373,29 +410,8 @@ export const validatePerpsProAttachedTpSlCommand = (
       szDecimals: command.reviewFacts.szDecimals,
     });
     if (!estimate.ok) return { ok: false, reason: estimate.error };
-    if (
-      !new BigNumber(estimate.estimate.expectedEntryPrice).eq(
-        command.marketSnapshot.expectedEntryPrice,
-      )
-    ) {
-      return { ok: false, reason: 'expectedEntryPrice' };
-    }
     expectedEntryPrice = estimate.estimate.expectedEntryPrice;
   } else {
-    const levels = context.book.levels;
-    const bestBid = positive(levels[0]?.[0]?.px);
-    const bestAsk = positive(levels[1]?.[0]?.px);
-    const limit = positive(command.parent.execution.limitPrice);
-    if (!bestBid || !bestAsk || !limit) {
-      return { ok: false, reason: 'bookUnavailable' };
-    }
-    if (
-      command.parent.execution.tif === 'Alo' &&
-      ((command.parent.side === 'buy' && limit.gte(bestAsk)) ||
-        (command.parent.side === 'sell' && limit.lte(bestBid)))
-    ) {
-      return { ok: false, reason: 'aloWouldMatch' };
-    }
     if (
       !new BigNumber(command.parent.execution.limitPrice).eq(
         command.marketSnapshot.expectedEntryPrice,
@@ -410,7 +426,11 @@ export const validatePerpsProAttachedTpSlCommand = (
     expectedEntryPrice,
   });
   return errors.length > 0
-    ? { ok: false, reason: errors[0]?.code ?? 'attachedTpSl' }
+    ? {
+        leg: errors[0]?.leg,
+        ok: false,
+        reason: errors[0]?.code ?? 'invalidTrigger',
+      }
     : { ok: true };
 };
 
@@ -460,7 +480,11 @@ export const executePerpsProAttachedTpSl = async (
     dependencies.getGuardContext(),
   );
   if (!initialGuard.ok) {
-    return { kind: 'staleContext', reason: initialGuard.reason };
+    return {
+      kind: 'staleContext',
+      leg: initialGuard.leg,
+      reason: initialGuard.reason,
+    };
   }
   let prepared = createPreparedAttachedTpSlJournalEntry({
     accountAddress: command.parent.account.address,
@@ -499,7 +523,11 @@ export const executePerpsProAttachedTpSl = async (
     await Promise.resolve(dependencies.journal.remove(command.commandId)).catch(
       () => undefined,
     );
-    return { kind: 'staleContext', reason: finalGuard.reason };
+    return {
+      kind: 'staleContext',
+      leg: finalGuard.leg,
+      reason: finalGuard.reason,
+    };
   }
   let batch: NormalTpslBatchResult;
   try {
