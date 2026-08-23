@@ -20,7 +20,8 @@ export const PerpsProMarginModeSheet: React.FC<{
   disabledValues?: readonly MarginMode[];
   marketName: string;
   onClose: () => void;
-  onSelect: (value: MarginMode) => void;
+  onSelect: (value: MarginMode) => Promise<boolean> | boolean;
+  pending?: boolean;
   selected: MarginMode;
   visible: boolean;
 }> = React.memo(
@@ -29,6 +30,7 @@ export const PerpsProMarginModeSheet: React.FC<{
     marketName,
     onClose,
     onSelect,
+    pending = false,
     selected,
     visible,
   }) => {
@@ -38,6 +40,7 @@ export const PerpsProMarginModeSheet: React.FC<{
     usePerpsProSheetNavigationRegistration({
       active: visible,
       dismiss: onClose,
+      dismissible: !pending,
     });
 
     useEffect(() => {
@@ -64,6 +67,7 @@ export const PerpsProMarginModeSheet: React.FC<{
 
     return (
       <AppBottomSheetModal
+        enablePanDownToClose={!pending}
         onDismiss={onClose}
         ref={modalRef}
         snapPoints={[372]}
@@ -83,16 +87,18 @@ export const PerpsProMarginModeSheet: React.FC<{
             <View style={styles.options}>
               {options.map(option => {
                 const active = option.value === selected;
-                const disabled = disabledValues.includes(option.value);
+                const disabled =
+                  pending || disabledValues.includes(option.value);
                 return (
                   <Pressable
                     accessibilityRole="radio"
                     accessibilityState={{ checked: active, disabled }}
                     disabled={disabled}
                     key={option.value}
-                    onPress={() => {
-                      onSelect(option.value);
-                      onClose();
+                    onPress={async () => {
+                      if (await onSelect(option.value)) {
+                        onClose();
+                      }
                     }}
                     style={[
                       styles.option,

@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -106,9 +111,9 @@ import { PerpsProTifSheet } from './PerpsProTifSheet';
 import { PerpsProTpSlModeSheet } from './PerpsProTpSlModeSheet';
 
 describe('Perps Pro trade selection sheets', () => {
-  it('matches the 372px Margin Mode card contract', () => {
+  it('matches the 372px Margin Mode card contract', async () => {
     const onClose = jest.fn();
-    const onSelect = jest.fn();
+    const onSelect = jest.fn(() => true);
     render(
       <PerpsProMarginModeSheet
         marketName="BTC"
@@ -176,7 +181,7 @@ describe('Perps Pro trade selection sheets', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-margin-mode-isolated'));
     expect(onSelect).toHaveBeenCalledWith('isolated');
-    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
   it('keeps Margin Mode selection visible without rendering a check icon', () => {
@@ -222,6 +227,30 @@ describe('Perps Pro trade selection sheets', () => {
     expect(crossTitleStyle).toMatchObject({
       fontVariant: ['stylistic-six'],
     });
+  });
+
+  it('locks Margin Mode dismissal and options while the server update is pending', () => {
+    const onSelect = jest.fn(() => true);
+    render(
+      <PerpsProMarginModeSheet
+        marketName="BTC"
+        onClose={jest.fn()}
+        onSelect={onSelect}
+        pending
+        selected="cross"
+        visible
+      />,
+    );
+
+    expect(
+      screen.getByTestId('selection-sheet').props.enablePanDownToClose,
+    ).toBe(false);
+    expect(
+      screen.getByTestId('perps-pro-margin-mode-isolated').props
+        .accessibilityState,
+    ).toEqual({ checked: false, disabled: true });
+    fireEvent.press(screen.getByTestId('perps-pro-margin-mode-isolated'));
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('matches the 326px Order Type icon-list contract', () => {
@@ -337,7 +366,10 @@ describe('Perps Pro trade selection sheets', () => {
           .style,
       ),
     ).toMatchObject({ fontSize: 12, lineHeight: 16 });
-    expect(screen.getByTestId('perps-pro-tpsl-mode-selected')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-tpsl-mode-price').props.accessibilityState,
+    ).toEqual({ checked: true });
+    expect(screen.queryByTestId('perps-pro-tpsl-mode-selected')).toBeNull();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
@@ -378,11 +410,10 @@ describe('Perps Pro trade selection sheets', () => {
     expect(screen.getByText('Good Till Cancel')).toBeTruthy();
     expect(screen.getByText('Immediate or Cancel')).toBeTruthy();
     expect(screen.getByText('Add Liquidity Only')).toBeTruthy();
-    expect(screen.getByTestId('perps-pro-tif-selected').props).toMatchObject({
-      color: '#58C669',
-      height: 26,
-      width: 26,
-    });
+    expect(
+      screen.getByTestId('perps-pro-tif-gtc').props.accessibilityState,
+    ).toEqual({ checked: true });
+    expect(screen.queryByTestId('perps-pro-tif-selected')).toBeNull();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.handleIndicatorStyle,

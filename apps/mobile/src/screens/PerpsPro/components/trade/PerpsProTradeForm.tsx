@@ -435,6 +435,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         marketName={market?.displayBase ?? '-'}
         onClose={() => setSheet(null)}
         onSelect={controller.setMarginMode}
+        pending={controller.leveragePending}
         selected={controller.marginMode}
         visible={configurationReady && sheet === 'margin'}
       />

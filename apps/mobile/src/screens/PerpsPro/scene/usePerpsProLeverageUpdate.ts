@@ -12,6 +12,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export interface PerpsProLeverageUpdateRequest {
+  action?: 'leverage' | 'marginMode';
   account: Account;
   coin: string;
   currentIsCross: boolean;
@@ -61,9 +62,12 @@ export const usePerpsProLeverageUpdate = ({
             return false;
           }
           showToast(
-            t('page.perps.pro.positions.leverageUpdateFailed', {
-              reason: error,
-            }),
+            t(
+              request.action === 'marginMode'
+                ? 'page.perps.pro.positions.marginUpdateFailed'
+                : 'page.perps.pro.positions.leverageUpdateFailed',
+              { reason: error },
+            ),
             'error',
           );
           Sentry.captureException(new Error(error), {
@@ -86,9 +90,11 @@ export const usePerpsProLeverageUpdate = ({
           });
         });
         showToast(
-          t('page.perps.pro.positions.leverageUpdated', {
-            leverage: request.leverage,
-          }),
+          request.action === 'marginMode'
+            ? t('page.perps.pro.positions.marginUpdated')
+            : t('page.perps.pro.positions.leverageUpdated', {
+                leverage: request.leverage,
+              }),
           'success',
         );
         return true;
@@ -99,9 +105,12 @@ export const usePerpsProLeverageUpdate = ({
           return false;
         }
         showToast(
-          t('page.perps.pro.positions.leverageUpdateFailed', {
-            reason: message,
-          }),
+          t(
+            request.action === 'marginMode'
+              ? 'page.perps.pro.positions.marginUpdateFailed'
+              : 'page.perps.pro.positions.leverageUpdateFailed',
+            { reason: message },
+          ),
           'error',
         );
         Sentry.captureException(
