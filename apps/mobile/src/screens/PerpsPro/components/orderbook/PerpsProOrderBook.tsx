@@ -19,7 +19,7 @@ import {
   getPerpsOrderBookLayout,
   getVisiblePerpsOrderBookMaxTotal,
   selectVisiblePerpsOrderBookRows,
-  type PerpsOrderBookLevel,
+  type PerpsOrderBookDisplayRow,
   type PerpsOrderBookMode,
   type PerpsTickOption,
   type ProcessedPerpsOrderBook,
@@ -114,12 +114,12 @@ export const PerpsProOrderBook: React.FC<{
     status: bookStatus,
   });
 
-  const renderRows = (side: 'ask' | 'bid', rows: PerpsOrderBookLevel[]) =>
+  const renderRows = (side: 'ask' | 'bid', rows: PerpsOrderBookDisplayRow[]) =>
     Array.from({ length: rowCount }, (_, index) => (
       <PerpsProOrderBookRow
         amountUnit={amountUnit}
-        key={`${side}:${rows[index]?.price ?? index}`}
-        level={rows[index]}
+        key={`${side}:${index}`}
+        level={rows[index] ?? undefined}
         maxTotal={maxVisibleTotal}
         onSelectPrice={onSelectPrice}
         priceDecimals={orderBookPriceDecimals}

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -68,6 +68,28 @@ describe('PerpsProOrderBookModeIcon', () => {
 });
 
 describe('PerpsProOrderBookRow', () => {
+  it('renders a neutral non-interactive placeholder row as dashes', () => {
+    const onSelectPrice = jest.fn();
+    render(
+      <PerpsProOrderBookRow
+        maxTotal={0}
+        onSelectPrice={onSelectPrice}
+        priceDecimals={2}
+        side="ask"
+      />,
+    );
+
+    const placeholders = screen.getAllByText('--');
+    expect(placeholders).toHaveLength(2);
+    placeholders.forEach(placeholder => {
+      expect(StyleSheet.flatten(placeholder.props.style)).toMatchObject({
+        color: 'neutral-secondary',
+      });
+    });
+    fireEvent.press(screen.getByTestId('perps-pro-order-book-row'));
+    expect(onSelectPrice).not.toHaveBeenCalled();
+  });
+
   it('keeps the Figma row inset and shared platform font', () => {
     render(
       <PerpsProOrderBookRow
