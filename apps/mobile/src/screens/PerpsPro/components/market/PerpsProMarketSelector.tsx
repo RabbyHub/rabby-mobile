@@ -3,6 +3,7 @@ import RcSortArrowUp from '@/assets2024/icons/perps/PerpsProSortArrowUp.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { IS_IOS } from '@/core/native/utils';
 import {
   addFavoriteMarket,
   perpsStore,
@@ -229,12 +230,19 @@ const PerpsProMarketSelectorComponent = forwardRef<
       0,
       tabs.findIndex(tab => tab.id === resolvedActiveTab),
     );
+    const preparedTabIndex =
+      IS_IOS && resolvedPreviewTab
+        ? Math.max(
+            0,
+            tabs.findIndex(tab => tab.id === resolvedPreviewTab),
+          )
+        : activeTabIndex;
     const preparedTabIds = useMemo(() => {
       const tabIds = tabIdsKey.split('\u0000') as PerpsProMarketTab[];
       const result = new Set<PerpsProMarketTab>();
       for (
-        let index = Math.max(0, activeTabIndex - 1);
-        index <= Math.min(tabIds.length - 1, activeTabIndex + 1);
+        let index = Math.max(0, preparedTabIndex - 1);
+        index <= Math.min(tabIds.length - 1, preparedTabIndex + 1);
         index += 1
       ) {
         const tabId = tabIds[index];
@@ -243,7 +251,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
         }
       }
       return result;
-    }, [activeTabIndex, tabIdsKey]);
+    }, [preparedTabIndex, tabIdsKey]);
     const searchSlotOrders = useMemo(
       () =>
         buildPerpsProMarketSlotOrders(
@@ -499,13 +507,23 @@ const PerpsProMarketSelectorComponent = forwardRef<
               style={styles.search}
               value={query}
             />
-            {!isSearchMode ? (
+            <View
+              accessibilityElementsHidden={isSearchMode}
+              importantForAccessibility={
+                isSearchMode ? 'no-hide-descendants' : 'auto'
+              }
+              pointerEvents={isSearchMode ? 'none' : 'auto'}
+              style={[
+                styles.tabsRetentionHost,
+                isSearchMode && styles.hiddenTabsRetentionHost,
+              ]}
+              testID="perps-pro-market-tabs-retention-host">
               <PerpsProMarketTabs
                 activeTab={displayedTab}
                 onChange={selectTab}
                 tabs={tabs}
               />
-            ) : null}
+            </View>
             {!isSearchMode ? (
               <View
                 style={styles.columnHeader}
@@ -641,6 +659,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 15,
     marginRight: 15,
     marginTop: 0,
+  },
+  tabsRetentionHost: {
+    overflow: 'hidden',
+  },
+  hiddenTabsRetentionHost: {
+    height: 0,
+    opacity: 0,
   },
   searchResults: {
     flex: 1,
