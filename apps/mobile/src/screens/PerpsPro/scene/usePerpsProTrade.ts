@@ -58,11 +58,6 @@ import {
   updatePerpsProTradeAmountDraft,
 } from '../model/tradeAmountDraft';
 import {
-  createPerpsProTradeOrderTypeAmountDrafts,
-  getPerpsProTradeOrderTypeAmountDisplay,
-  type PerpsProTradeAmountSource,
-} from '../model/tradeOrderTypeDraft';
-import {
   createPerpsProAttachedTpSlDraft,
   evaluatePerpsProAttachedTpSl,
   type PerpsProAttachedTpSlDraft,
@@ -78,6 +73,7 @@ import {
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
   type PerpsProConditionalExecution,
+  type PerpsProTradeAmountSource,
   type PerpsProTradeAmountUnit,
   type PerpsProTradeOrderType,
   type PerpsProTradeSide,
@@ -242,9 +238,6 @@ export const usePerpsProTrade = ({
   const percentageRef = useRef(0);
   const priceFillRevisionRef = useRef(0);
   const amountDraftRef = useRef(createPerpsProTradeAmountDraft());
-  const amountDraftsByOrderTypeRef = useRef(
-    createPerpsProTradeOrderTypeAmountDrafts(),
-  );
   const amountOverflowToastActiveRef = useRef(false);
   const latestTradeRef = useRef<PerpsLatestTrade | null>(null);
   const limitManualPriceRef = useRef<string | null>(null);
@@ -398,8 +391,6 @@ export const usePerpsProTrade = ({
       initialLeverageConfiguration,
       leverageConfigurationScopeKey,
     );
-    amountDraftsByOrderTypeRef.current =
-      createPerpsProTradeOrderTypeAmountDrafts();
     amountDraftRef.current = createPerpsProTradeAmountDraft();
     amountOverflowToastActiveRef.current = false;
     amountSourceRef.current = 'manual';
@@ -537,12 +528,6 @@ export const usePerpsProTrade = ({
       const currentForm = formRef.current;
       if (currentForm.orderType === orderType) return;
 
-      amountDraftsByOrderTypeRef.current[currentForm.orderType] = {
-        amountDraft: amountDraftRef.current,
-        amountSource: amountSourceRef.current,
-        percentage: percentageRef.current,
-      };
-      const nextAmount = amountDraftsByOrderTypeRef.current[orderType];
       const latestPrice = latestTradeRef.current
         ? sanitizePerpsProDecimalInput(
             latestTradeRef.current.price,
@@ -551,10 +536,8 @@ export const usePerpsProTrade = ({
         : '';
       const nextForm = {
         ...currentForm,
-        amount: getPerpsProTradeOrderTypeAmountDisplay({
-          amountUnit: currentForm.amountUnit,
-          draft: nextAmount,
-        }),
+        amount: '',
+        conditionalLimitPrice: '',
         ...(orderType === 'limit'
           ? {
               bboEnabled: false,
@@ -562,19 +545,20 @@ export const usePerpsProTrade = ({
             }
           : {}),
         orderType,
+        triggerPrice: '',
       };
 
-      amountDraftRef.current = nextAmount.amountDraft;
+      amountDraftRef.current = createPerpsProTradeAmountDraft();
       amountOverflowToastActiveRef.current = false;
-      amountSourceRef.current = nextAmount.amountSource;
+      amountSourceRef.current = 'manual';
       limitManualPriceRef.current = null;
-      percentageRef.current = nextAmount.percentage;
+      percentageRef.current = 0;
       shouldAutoFillLimitPriceRef.current =
         orderType === 'limit' && !latestPrice;
       formRef.current = nextForm;
       formRevisionRef.current += 1;
-      setAmountSource(nextAmount.amountSource);
-      setPercentageState(nextAmount.percentage);
+      setAmountSource('manual');
+      setPercentageState(0);
       setForm(nextForm);
     },
     [market?.marketData.pxDecimals],
@@ -585,22 +569,14 @@ export const usePerpsProTrade = ({
 
     amountOverflowToastActiveRef.current = false;
 
-    if (amountSourceRef.current === 'slider') {
-      amountDraftRef.current = createPerpsProTradeAmountDraft();
-      amountSourceRef.current = 'manual';
-      percentageRef.current = 0;
-      setAmountSource('manual');
-      setPercentageState(0);
-    }
+    amountDraftRef.current = createPerpsProTradeAmountDraft();
+    amountSourceRef.current = 'manual';
+    percentageRef.current = 0;
+    setAmountSource('manual');
+    setPercentageState(0);
     const nextForm = {
       ...currentForm,
-      amount:
-        amountSourceRef.current === 'manual'
-          ? getPerpsProTradeAmountDraftDisplay(
-              amountDraftRef.current,
-              amountUnit,
-            )
-          : '',
+      amount: '',
       amountUnit,
     };
     formRef.current = nextForm;
@@ -683,37 +659,9 @@ export const usePerpsProTrade = ({
 
   const toggleAmountUnit = useCallback(() => {
     const next = form.amountUnit === 'quote' ? 'base' : 'quote';
-    amountOverflowToastActiveRef.current = false;
-    if (amountSource === 'slider') {
-      amountDraftRef.current = createPerpsProTradeAmountDraft();
-      amountSourceRef.current = 'manual';
-      percentageRef.current = 0;
-      setAmountSource('manual');
-      setPercentageState(0);
-      patchForm({ amount: '', amountUnit: next });
-    } else {
-      amountDraftRef.current = repricePerpsProTradeAmountDraft({
-        draft: amountDraftRef.current,
-        price: displayReferencePrice,
-        szDecimals: market?.marketData.szDecimals ?? 0,
-      });
-      patchForm({
-        amount: getPerpsProTradeAmountDraftDisplay(
-          amountDraftRef.current,
-          next,
-        ),
-        amountUnit: next,
-      });
-    }
+    applyAmountUnit(next);
     void preferences.setAmountUnit(next);
-  }, [
-    amountSource,
-    displayReferencePrice,
-    form.amountUnit,
-    market?.marketData.szDecimals,
-    patchForm,
-    preferences,
-  ]);
+  }, [applyAmountUnit, form.amountUnit, preferences]);
 
   useEffect(() => {
     if (amountSource !== 'manual' || !amountDraftRef.current.inputSource) {
@@ -1636,8 +1584,6 @@ export const usePerpsProTrade = ({
           ),
           'success',
         );
-        amountDraftsByOrderTypeRef.current =
-          createPerpsProTradeOrderTypeAmountDrafts();
         amountDraftRef.current = createPerpsProTradeAmountDraft();
         amountOverflowToastActiveRef.current = false;
         amountSourceRef.current = 'manual';
@@ -1798,8 +1744,6 @@ export const usePerpsProTrade = ({
           ),
           'success',
         );
-        amountDraftsByOrderTypeRef.current =
-          createPerpsProTradeOrderTypeAmountDrafts();
         amountDraftRef.current = createPerpsProTradeAmountDraft();
         amountOverflowToastActiveRef.current = false;
         amountSourceRef.current = 'manual';
@@ -2004,6 +1948,7 @@ export const usePerpsProTrade = ({
 
   return {
     amountDecimals,
+    amountSource,
     amountUnit: form.amountUnit,
     amountUnitLabel,
     attachedTpSlExecutionEnabled: hasPerpsProAttachedTpSlExecutionCapability(),
@@ -2038,7 +1983,10 @@ export const usePerpsProTrade = ({
     review,
     setAmount,
     setConditionalExecution: (value: PerpsProConditionalExecution) =>
-      patchForm({ conditionalExecution: value }),
+      patchForm({
+        conditionalExecution: value,
+        ...(value === 'market' ? { conditionalLimitPrice: '' } : {}),
+      }),
     setMarginMode,
     setOrderType,
     setPercentage,

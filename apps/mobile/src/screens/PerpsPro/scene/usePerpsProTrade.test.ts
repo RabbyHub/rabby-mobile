@@ -384,7 +384,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     act(() => hook.result.current.setOrderType('market'));
     act(() => hook.result.current.selectOrderBookPrice('99', market.marketKey));
-    expect(hook.result.current.form.triggerPrice).toBe('101.23');
+    expect(hook.result.current.form.triggerPrice).toBe('');
   });
 
   it('uses the latest trade when BBO is disabled without a manual Limit price', () => {
@@ -542,7 +542,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.form.limitPrice).toBe('');
   });
 
-  it('restores Amount and Slider independently for each order type', () => {
+  it('clears Amount and Slider on every order type change', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -571,12 +571,12 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.tpSl.disabled).toBe(false);
 
     act(() => hook.result.current.setOrderType('market'));
-    expect(hook.result.current.form.amount).toBe('100%');
-    expect(hook.result.current.percentage).toBe(100);
+    expect(hook.result.current.form.amount).toBe('');
+    expect(hook.result.current.percentage).toBe(0);
     expect(hook.result.current.tpSl.disabled).toBe(false);
 
     act(() => hook.result.current.setOrderType('limit'));
-    expect(hook.result.current.form.amount).toBe('25');
+    expect(hook.result.current.form.amount).toBe('');
     expect(hook.result.current.percentage).toBe(0);
     expect(hook.result.current.form.bboEnabled).toBe(false);
     expect(hook.result.current.tpSl.disabled).toBe(false);
@@ -719,7 +719,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.form.reduceOnly).toBe(false);
   });
 
-  it('preserves a quote source through lossy base-unit round trips', () => {
+  it('clears a manual Amount on every unit switch', () => {
     const roundingMarket = {
       ...market,
       marketData: {
@@ -754,11 +754,12 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     act(() => hook.result.current.toggleAmountUnit());
     expect(hook.result.current.form.amountUnit).toBe('base');
-    expect(hook.result.current.form.amount).toBe('3.17');
+    expect(hook.result.current.form.amount).toBe('');
 
+    act(() => hook.result.current.setAmount('3.17'));
     act(() => hook.result.current.toggleAmountUnit());
     expect(hook.result.current.form.amountUnit).toBe('quote');
-    expect(hook.result.current.form.amount).toBe('200');
+    expect(hook.result.current.form.amount).toBe('');
   });
 
   it('atomically clears Slider percentage and Amount when switching units', () => {
@@ -1093,7 +1094,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.setOrderType('limit'));
     act(() => hook.result.current.setAmount('25'));
     act(() => hook.result.current.setOrderType('market'));
-    expect(hook.result.current.form.amount).toBe('100');
+    expect(hook.result.current.form.amount).toBe('');
     act(() => hook.result.current.setPercentage(50));
     expect(hook.result.current.percentage).toBe(50);
     expect(hook.result.current.form.amount).toBe('50%');

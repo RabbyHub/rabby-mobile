@@ -8,6 +8,7 @@ import {
 } from './tpsl';
 
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
+export type PerpsProTradeAmountSource = 'manual' | 'slider';
 export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
 export type PerpsProTradeTif = 'Alo' | 'Gtc' | 'Ioc';
 export type PerpsProTradeSide = 'buy' | 'sell';
