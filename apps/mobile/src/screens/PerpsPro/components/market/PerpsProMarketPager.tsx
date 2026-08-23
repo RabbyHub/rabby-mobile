@@ -19,6 +19,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import PagerView, {
+  type PageScrollStateChangedNativeEvent,
   type PagerViewOnPageScrollEvent,
   type PagerViewOnPageSelectedEvent,
 } from 'react-native-pager-view';
@@ -77,6 +78,7 @@ const IosPerpsProMarketPager = forwardRef<
     const pageCount = Children.count(children);
     const initialPageRef = useRef(clampPagePosition(initialPage, pageCount));
     const settledPageRef = useRef(initialPageRef.current);
+    const isPreviewGestureActive = useSharedValue(false);
     const previewPagePosition = useSharedValue(initialPageRef.current);
     const previousPageWidthRef = useRef(pageWidth);
     const initialContentOffsetRef = useRef({
@@ -91,6 +93,7 @@ const IosPerpsProMarketPager = forwardRef<
     const commitPagePosition = useCallback(
       (position: number) => {
         const nextPosition = clampPagePosition(position, pageCount);
+        isPreviewGestureActive.value = false;
         previewPagePosition.value = nextPosition;
         onPagePreview(null);
         if (nextPosition === settledPageRef.current) {
@@ -99,12 +102,24 @@ const IosPerpsProMarketPager = forwardRef<
         settledPageRef.current = nextPosition;
         onPageSelected(nextPosition);
       },
-      [onPagePreview, onPageSelected, pageCount, previewPagePosition],
+      [
+        isPreviewGestureActive,
+        onPagePreview,
+        onPageSelected,
+        pageCount,
+        previewPagePosition,
+      ],
     );
 
     const handleScroll = useAnimatedScrollHandler(
       {
+        onBeginDrag: () => {
+          isPreviewGestureActive.value = true;
+        },
         onScroll: event => {
+          if (!isPreviewGestureActive.value) {
+            return;
+          }
           const nextPosition = Math.max(
             0,
             Math.min(
@@ -119,12 +134,13 @@ const IosPerpsProMarketPager = forwardRef<
           runOnJS(onPagePreview)(nextPosition);
         },
       },
-      [onPagePreview, pageCount, pageWidth],
+      [isPreviewGestureActive, onPagePreview, pageCount, pageWidth],
     );
 
     const scrollToPage = useCallback(
       (position: number, animated: boolean) => {
         const nextPosition = clampPagePosition(position, pageCount);
+        isPreviewGestureActive.value = false;
         scrollViewRef.current?.scrollTo({
           animated,
           x: nextPosition * pageWidth,
@@ -134,7 +150,7 @@ const IosPerpsProMarketPager = forwardRef<
           commitPagePosition(nextPosition);
         }
       },
-      [commitPagePosition, pageCount, pageWidth],
+      [commitPagePosition, isPreviewGestureActive, pageCount, pageWidth],
     );
 
     useLayoutEffect(() => {
@@ -238,6 +254,7 @@ const AndroidPerpsProMarketPager = forwardRef<
   ) => {
     const pagerRef = useRef<PagerView>(null);
     const pageCount = Children.count(children);
+    const isPreviewGestureActive = useSharedValue(false);
     const previewPagePosition = useSharedValue(
       clampPagePosition(initialPage, pageCount),
     );
@@ -245,16 +262,44 @@ const AndroidPerpsProMarketPager = forwardRef<
     useImperativeHandle(
       ref,
       () => ({
-        setPage: position => pagerRef.current?.setPage(position),
-        setPageWithoutAnimation: position =>
-          pagerRef.current?.setPageWithoutAnimation(position),
+        setPage: position => {
+          isPreviewGestureActive.value = false;
+          pagerRef.current?.setPage(position);
+        },
+        setPageWithoutAnimation: position => {
+          isPreviewGestureActive.value = false;
+          pagerRef.current?.setPageWithoutAnimation(position);
+        },
       }),
-      [],
+      [isPreviewGestureActive],
     );
+
+    const handlePageScrollStateChanged =
+      useEvent<PageScrollStateChangedNativeEvent>(
+        event => {
+          'worklet';
+          if (event.pageScrollState === 'dragging') {
+            isPreviewGestureActive.value = true;
+            return;
+          }
+          if (event.pageScrollState === 'idle') {
+            const shouldClearPreview = isPreviewGestureActive.value;
+            isPreviewGestureActive.value = false;
+            if (shouldClearPreview) {
+              runOnJS(onPagePreview)(null);
+            }
+          }
+        },
+        ['onPageScrollStateChanged'],
+        true,
+      );
 
     const handlePageScroll = useEvent<PagerViewOnPageScrollEvent>(
       event => {
         'worklet';
+        if (!isPreviewGestureActive.value) {
+          return;
+        }
         const nextPosition = Math.max(
           0,
           Math.min(pageCount - 1, Math.round(event.position + event.offset)),
@@ -275,17 +320,25 @@ const AndroidPerpsProMarketPager = forwardRef<
           event.nativeEvent.position,
           pageCount,
         );
+        isPreviewGestureActive.value = false;
         previewPagePosition.value = position;
         onPagePreview(null);
         onPageSelected(position);
       },
-      [onPagePreview, onPageSelected, pageCount, previewPagePosition],
+      [
+        isPreviewGestureActive,
+        onPagePreview,
+        onPageSelected,
+        pageCount,
+        previewPagePosition,
+      ],
     );
 
     return (
       <AnimatedPagerView
         initialPage={initialPage}
         onPageScroll={handlePageScroll}
+        onPageScrollStateChanged={handlePageScrollStateChanged}
         onPageSelected={handlePageSelected}
         ref={pagerRef}
         style={style}
