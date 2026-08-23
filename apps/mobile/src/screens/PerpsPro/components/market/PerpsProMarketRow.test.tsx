@@ -186,6 +186,15 @@ describe('PerpsProMarketRow', () => {
     );
     expect(screen.getByText('Alpha').props.style).toEqual(
       expect.objectContaining({
+        flexShrink: 1,
+        fontSize: 12,
+        fontWeight: '400',
+        lineHeight: 16,
+      }),
+    );
+    expect(screen.getByText('1.20M').props.style).toEqual(
+      expect.objectContaining({
+        flexShrink: 0,
         fontSize: 12,
         fontWeight: '400',
         lineHeight: 16,
@@ -193,9 +202,11 @@ describe('PerpsProMarketRow', () => {
     );
     expect(screen.getByText('+20.00%').props.style).toEqual(
       expect.objectContaining({
+        flexShrink: 0,
         fontSize: 12,
         fontWeight: '500',
         lineHeight: 16,
+        marginLeft: 20,
       }),
     );
   });
