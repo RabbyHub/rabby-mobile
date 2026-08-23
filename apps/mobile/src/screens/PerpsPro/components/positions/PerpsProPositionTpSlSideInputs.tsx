@@ -22,6 +22,8 @@ import { PerpsProPositionTpSlInput } from './PerpsProPositionTpSlInput';
 export const PerpsProPositionTpSlSideInputs: React.FC<{
   addMode: boolean;
   disabled: boolean;
+  errorMessage?: string | null;
+  highlightInvalidFields?: boolean;
   kind: PerpsPositionTpSlKind;
   market: PerpsPositionTpSlMarketSnapshot;
   onChangeModeMagnitude: (value: string) => void;
@@ -38,6 +40,8 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
   ({
     addMode,
     disabled,
+    errorMessage = null,
+    highlightInvalidFields = false,
     kind,
     market,
     onChangeModeMagnitude,
@@ -81,47 +85,10 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
     );
     const modeUnit = selectedMode === 'roi' ? '%' : market.quoteAsset;
     const showDescription =
-      (value && validationKind === 'valid') ||
+      (value && validationKind !== 'empty') ||
       (!value && validationKind === 'empty' && showEmptyDescription);
-    const hint =
-      value && validationKind === 'invalid' ? (
-        <Text style={styles.errorText}>
-          {t('page.perps.pro.positionTpsl.invalidTrigger')}
-        </Text>
-      ) : showDescription ? (
-        <Text style={styles.fieldHint}>
-          <Trans
-            components={{
-              1: <Text style={styles.fieldHintEmphasis} />,
-              2: (
-                <Text
-                  style={
-                    kind === 'takeProfit'
-                      ? styles.fieldHintPositive
-                      : styles.fieldHintNegative
-                  }
-                />
-              ),
-            }}
-            i18nKey="page.perps.pro.positionTpsl.triggerDescription"
-            t={t}
-            values={{
-              pnl:
-                !value || estimatedPnl == null
-                  ? '--'
-                  : formatPerpsProSignedDecimal(estimatedPnl, 2),
-              quoteAsset: market.quoteAsset,
-              roi:
-                !value || derivedRoi == null
-                  ? '--'
-                  : formatPerpsProSignedDecimal(derivedRoi, 2),
-              trigger: value
-                ? formatPerpsProPrice(value, market.pxDecimals)
-                : '--',
-            }}
-          />
-        </Text>
-      ) : null;
+    const showError =
+      validationKind === 'invalid' && (!!value || !!errorMessage);
 
     return (
       <>
@@ -129,6 +96,7 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
           <PerpsProPositionTpSlInput
             accessibilityLabel={triggerLabel}
             disabled={disabled}
+            invalid={highlightInvalidFields && showError}
             label={triggerLabel}
             maxDecimals={market.pxDecimals}
             onChangeText={onChangeTrigger}
@@ -138,6 +106,7 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
           <PerpsProPositionTpSlInput
             accessibilityLabel={modeLabel}
             disabled={disabled}
+            invalid={highlightInvalidFields && showError}
             label={modeLabel}
             maxDecimals={selectedMode === 'price' ? market.pxDecimals : 8}
             negative={kind === 'stopLoss' && selectedMode !== 'price'}
@@ -148,11 +117,50 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
             value={rawMagnitude}
           />
         </View>
-        {hint ? (
+        {showDescription || showError ? (
           <View
             style={styles.fieldHintRow}
             testID={`perps-pro-position-tpsl-${kind}-hint`}>
-            {hint}
+            {showDescription ? (
+              <Text style={styles.fieldHint}>
+                <Trans
+                  components={{
+                    1: <Text style={styles.fieldHintEmphasis} />,
+                    2: (
+                      <Text
+                        style={
+                          kind === 'takeProfit'
+                            ? styles.fieldHintPositive
+                            : styles.fieldHintNegative
+                        }
+                      />
+                    ),
+                  }}
+                  i18nKey="page.perps.pro.positionTpsl.triggerDescription"
+                  t={t}
+                  values={{
+                    pnl:
+                      !value || estimatedPnl == null
+                        ? '--'
+                        : formatPerpsProSignedDecimal(estimatedPnl, 2),
+                    quoteAsset: market.quoteAsset,
+                    roi:
+                      !value || derivedRoi == null
+                        ? '--'
+                        : formatPerpsProSignedDecimal(derivedRoi, 2),
+                    trigger: value
+                      ? formatPerpsProPrice(value, market.pxDecimals)
+                      : '--',
+                  }}
+                />
+              </Text>
+            ) : null}
+            {showError ? (
+              <Text style={styles.errorText}>
+                {errorMessage ||
+                  t('page.perps.pro.positionTpsl.invalidTrigger')}
+              </Text>
+            ) : null}
           </View>
         ) : null}
       </>
@@ -164,7 +172,7 @@ PerpsProPositionTpSlSideInputs.displayName = 'PerpsProPositionTpSlSideInputs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sideInputs: { flexDirection: 'row', gap: 4 },
-  fieldHintRow: { minHeight: 32 },
+  fieldHintRow: { gap: 4, minHeight: 32 },
   fieldHint: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro',

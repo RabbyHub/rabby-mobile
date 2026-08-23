@@ -10,6 +10,7 @@ import {
   collectActivePositionTpSlOrders,
   sortPartialPositionTpSlOrders,
   validatePartialPositionTpSlAmount,
+  validateFullPositionTpSlFormTrigger,
   validatePositionTpSlTrigger,
   resolvePositionTpSlEditTab,
 } from './positionTpSl';
@@ -271,5 +272,114 @@ describe('Perps Pro position TP/SL model', () => {
         triggerPrice: '101',
       }),
     ).toEqual({ kind: 'valid', normalized: '101' });
+  });
+
+  it('mirrors Desktop full-position feedback without adding PnL or ROI caps', () => {
+    const validate = (
+      overrides: Partial<
+        Parameters<typeof validateFullPositionTpSlFormTrigger>[0]
+      >,
+    ) =>
+      validateFullPositionTpSlFormTrigger({
+        direction: 'long',
+        inputSource: 'trigger',
+        kind: 'stopLoss',
+        liquidationPrice: '80',
+        markPrice: '100',
+        rawMagnitude: '',
+        triggerPrice: '90',
+        ...overrides,
+      });
+
+    expect(validate({ triggerPrice: '80' })).toEqual({
+      kind: 'invalid',
+      liquidationPrice: '80',
+      reason: 'stopLossBelowLiquidation',
+    });
+    expect(validate({ triggerPrice: '100' })).toEqual({
+      kind: 'invalid',
+      reason: 'stopLossAboveMark',
+    });
+    expect(validate({ triggerPrice: '90' })).toEqual({
+      kind: 'valid',
+      normalized: '90',
+    });
+    expect(
+      validate({
+        direction: 'short',
+        liquidationPrice: '120',
+        triggerPrice: '120',
+      }),
+    ).toEqual({
+      kind: 'invalid',
+      liquidationPrice: '120',
+      reason: 'stopLossAboveLiquidation',
+    });
+    expect(
+      validate({
+        direction: 'short',
+        liquidationPrice: '120',
+        triggerPrice: '100',
+      }),
+    ).toEqual({ kind: 'invalid', reason: 'stopLossBelowMark' });
+    expect(
+      validate({
+        direction: 'short',
+        liquidationPrice: '120',
+        triggerPrice: '110',
+      }),
+    ).toEqual({ kind: 'valid', normalized: '110' });
+    expect(validate({ kind: 'takeProfit', triggerPrice: '100' })).toEqual({
+      kind: 'invalid',
+      reason: 'takeProfitBelowMark',
+    });
+    expect(
+      validate({
+        direction: 'short',
+        kind: 'takeProfit',
+        triggerPrice: '100',
+      }),
+    ).toEqual({ kind: 'invalid', reason: 'takeProfitAboveMark' });
+    expect(validate({ liquidationPrice: null, triggerPrice: '1' })).toEqual({
+      kind: 'valid',
+      normalized: '1',
+    });
+    expect(validate({ triggerPrice: '' })).toEqual({ kind: 'empty' });
+    expect(validate({ triggerPrice: '0' })).toEqual({ kind: 'empty' });
+    expect(
+      validate({
+        inputSource: 'mode',
+        rawMagnitude: '999999999999999999999',
+        triggerPrice: '',
+      }),
+    ).toEqual({
+      kind: 'invalid',
+      liquidationPrice: '80',
+      reason: 'stopLossBelowLiquidation',
+    });
+    expect(
+      validate({
+        direction: 'short',
+        inputSource: 'mode',
+        kind: 'stopLoss',
+        liquidationPrice: '120',
+        rawMagnitude: '999999999999999999999',
+        triggerPrice: '',
+      }),
+    ).toEqual({ kind: 'invalid', reason: 'stopLossDerivedInvalid' });
+    expect(
+      validate({
+        inputSource: 'mode',
+        kind: 'takeProfit',
+        rawMagnitude: '999999999999999999999',
+        triggerPrice: '',
+      }),
+    ).toEqual({ kind: 'invalid', reason: 'takeProfitDerivedInvalid' });
+    expect(
+      validate({
+        kind: 'takeProfit',
+        triggerPrice: '100000000000000000000000000000000000000',
+      }).kind,
+    ).toBe('valid');
   });
 });

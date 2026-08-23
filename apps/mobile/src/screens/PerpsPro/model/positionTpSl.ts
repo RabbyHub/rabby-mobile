@@ -405,6 +405,120 @@ export type PerpsPositionTpSlTriggerValidation =
   | { kind: 'invalid' }
   | { kind: 'valid'; normalized: string };
 
+export type PerpsPositionTpSlFormTriggerInvalidReason =
+  | 'takeProfitAboveMark'
+  | 'takeProfitBelowMark'
+  | 'stopLossAboveLiquidation'
+  | 'stopLossAboveMark'
+  | 'stopLossBelowLiquidation'
+  | 'stopLossBelowMark'
+  | 'takeProfitDerivedInvalid'
+  | 'stopLossDerivedInvalid';
+
+export type PerpsPositionTpSlFormTriggerValidation =
+  | { kind: 'empty' }
+  | {
+      kind: 'invalid';
+      liquidationPrice?: string;
+      reason: PerpsPositionTpSlFormTriggerInvalidReason;
+    }
+  | { kind: 'valid'; normalized: string };
+
+/**
+ * Mirrors Desktop Perps' full-position TP/SL form feedback only. This is a
+ * presentation guard: partial TP/SL and the Action/Command boundary keep
+ * using validatePositionTpSlTrigger and their existing invariants.
+ */
+export const validateFullPositionTpSlFormTrigger = ({
+  direction,
+  inputSource,
+  kind,
+  liquidationPrice,
+  markPrice,
+  rawMagnitude,
+  triggerPrice,
+}: {
+  direction: 'long' | 'short';
+  inputSource: 'mode' | 'trigger';
+  kind: PerpsPositionTpSlKind;
+  liquidationPrice: string | null;
+  markPrice: string | null;
+  rawMagnitude: string;
+  triggerPrice: string;
+}): PerpsPositionTpSlFormTriggerValidation => {
+  const trigger = finiteDecimal(triggerPrice);
+  const hasPositiveModeMagnitude =
+    inputSource === 'mode' && !!finiteDecimal(rawMagnitude)?.gt(0);
+  const liquidation = finiteDecimal(liquidationPrice);
+  const validLiquidation = liquidation?.gt(0) ? liquidation : null;
+
+  if (!triggerPrice.trim() || trigger?.isZero()) {
+    if (!hasPositiveModeMagnitude) {
+      return { kind: 'empty' };
+    }
+    if (kind === 'stopLoss' && direction === 'long' && validLiquidation) {
+      return {
+        kind: 'invalid',
+        liquidationPrice: validLiquidation.toString(),
+        reason: 'stopLossBelowLiquidation',
+      };
+    }
+    return {
+      kind: 'invalid',
+      reason:
+        kind === 'takeProfit'
+          ? 'takeProfitDerivedInvalid'
+          : 'stopLossDerivedInvalid',
+    };
+  }
+
+  const mark = finiteDecimal(markPrice);
+  if (!trigger?.gt(0) || !mark?.gt(0)) {
+    return {
+      kind: 'invalid',
+      reason:
+        kind === 'takeProfit'
+          ? 'takeProfitDerivedInvalid'
+          : 'stopLossDerivedInvalid',
+    };
+  }
+
+  if (kind === 'stopLoss' && validLiquidation) {
+    if (direction === 'long' && trigger.lte(validLiquidation)) {
+      return {
+        kind: 'invalid',
+        liquidationPrice: validLiquidation.toString(),
+        reason: 'stopLossBelowLiquidation',
+      };
+    }
+    if (direction === 'short' && trigger.gte(validLiquidation)) {
+      return {
+        kind: 'invalid',
+        liquidationPrice: validLiquidation.toString(),
+        reason: 'stopLossAboveLiquidation',
+      };
+    }
+  }
+
+  if (kind === 'takeProfit') {
+    if (direction === 'long' && trigger.lte(mark)) {
+      return { kind: 'invalid', reason: 'takeProfitBelowMark' };
+    }
+    if (direction === 'short' && trigger.gte(mark)) {
+      return { kind: 'invalid', reason: 'takeProfitAboveMark' };
+    }
+  } else {
+    if (direction === 'long' && trigger.gte(mark)) {
+      return { kind: 'invalid', reason: 'stopLossAboveMark' };
+    }
+    if (direction === 'short' && trigger.lte(mark)) {
+      return { kind: 'invalid', reason: 'stopLossBelowMark' };
+    }
+  }
+
+  return { kind: 'valid', normalized: trigger.toString() };
+};
+
 export const validatePositionTpSlTrigger = ({
   direction,
   kind,
