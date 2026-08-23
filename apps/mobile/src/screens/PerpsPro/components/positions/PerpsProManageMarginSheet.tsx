@@ -17,6 +17,7 @@ import type { PerpsProManageMarginView } from '../../scene/usePerpsProManageMarg
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 import {
@@ -303,6 +304,7 @@ export const PerpsProManageMarginSheet: React.FC<{
             </View>
             <View style={styles.footer} testID="perps-pro-manage-margin-footer">
               <Button
+                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
                 disabled={confirmDisabled}
                 height={BOTTOM_BUTTON_COMPACT_HEIGHT}
                 loading={pending}

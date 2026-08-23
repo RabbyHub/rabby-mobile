@@ -16,6 +16,7 @@ import { PerpsProSlider } from '../common/PerpsProSlider';
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -226,6 +227,7 @@ export const PerpsProLeverageSheet: React.FC<{
             </View>
             <View style={styles.footer} testID="perps-pro-leverage-footer">
               <Button
+                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
                 disabled={pending}
                 height={BOTTOM_BUTTON_COMPACT_HEIGHT}
                 loading={pending}

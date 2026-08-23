@@ -22,6 +22,7 @@ import { getPerpsProAmountInputDecimals } from '../../model/trade';
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
 } from '../common/perpsProVisual';
 import type { PerpsProOpenOrderEditEditorState } from '../../scene/usePerpsProOpenOrderEdit';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
@@ -187,6 +188,7 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
             style={styles.footer}
             testID="perps-pro-basic-order-edit-footer">
             <Button
+              buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
               disabled={!canReview || coveredByReview}
               height={BOTTOM_BUTTON_COMPACT_HEIGHT}
               onPress={() =>

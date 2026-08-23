@@ -14,7 +14,10 @@ import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { formatPerpsProDecimal } from '../../utils/format';
-import { PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE } from '../common/perpsProVisual';
+import {
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
+} from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
 
@@ -193,7 +196,10 @@ export const PerpsProTransferSheet: React.FC<{
           <View style={styles.footer} testID="perps-pro-transfer-footer">
             <Button
               disabled={!valid || pending}
-              buttonStyle={styles.confirmButton}
+              buttonStyle={[
+                PERPS_PRO_CONFIRM_BUTTON_STYLE,
+                styles.confirmButton,
+              ]}
               height={BOTTOM_BUTTON_COMPACT_HEIGHT}
               loading={pending}
               onPress={() => onConfirm(amountValue.toFixed())}

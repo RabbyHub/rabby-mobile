@@ -18,6 +18,10 @@ export const PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE: TextStyle = {
   fontFamily: FontNames.sf_pro,
 };
 
+export const PERPS_PRO_CONFIRM_BUTTON_STYLE: ViewStyle = {
+  borderRadius: 8,
+};
+
 export const getPerpsProTradeControlMediumTextStyle = (
   platform: typeof Platform.OS,
 ): TextStyle =>

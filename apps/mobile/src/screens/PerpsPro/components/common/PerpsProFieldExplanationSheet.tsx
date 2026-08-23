@@ -24,6 +24,7 @@ import { usePerpsProSheetNavigationRegistration } from './perpsProSheetNavigatio
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
 } from './perpsProVisual';
 
 export const PerpsProFieldExplanationSheet: React.FC<{
@@ -68,6 +69,7 @@ export const PerpsProFieldExplanationSheet: React.FC<{
           </Text>
           <View style={styles.footer}>
             <Button
+              buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
               height={BOTTOM_BUTTON_COMPACT_HEIGHT}
               onPress={() => modalRef.current?.close()}
               title={t('global.confirm')}
