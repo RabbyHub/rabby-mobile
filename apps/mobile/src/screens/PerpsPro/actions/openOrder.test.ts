@@ -244,27 +244,29 @@ describe('Perps Pro open order action', () => {
     });
   });
 
-  it('rejects an ALO price that would immediately cross the book', () => {
-    expect(() =>
-      buildPerpsProOpenOrderCommand({
-        account,
-        bboPrice: null,
-        bestAsk: '63000',
-        bestBid: '62999',
-        coin: 'BTC',
-        dexId: '',
-        form: {
-          ...createPerpsProTradeFormState({ orderType: 'limit' }),
-          amount: '63',
-          limitPrice: '63000',
-          tif: 'Alo',
-        },
-        marketKey: 'hyperliquid::BTC',
-        marketPrice: '63000',
-        side: 'buy',
-        szDecimals: 5,
-      }),
-    ).toThrow('ALO price would immediately match the order book');
+  it('sends an ALO order to Hyperliquid instead of replacing its rejection', async () => {
+    const serverError =
+      'Post only order would have immediately matched, bbo was 63000.';
+    const deps = dependencies({
+      limitOrder: jest.fn(async () => ({
+        status: 'ok',
+        response: { data: { statuses: [{ error: serverError }] } },
+      })),
+    });
+    const command = build({
+      limitPrice: '63000',
+      orderType: 'limit',
+      tif: 'Alo',
+    });
+
+    await expect(executePerpsProOpenOrder(command, deps)).resolves.toEqual({
+      error: serverError,
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
+    expect(deps.limitOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ limitPx: '63000', tif: 'Alo' }),
+    );
   });
 
   it('hard-gates legacy attached fields at the executor without SDK calls', async () => {

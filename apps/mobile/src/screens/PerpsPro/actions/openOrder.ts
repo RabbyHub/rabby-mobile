@@ -103,8 +103,6 @@ export const buildPerpsProOpenOrderCommand = ({
   bboSessionKey,
   coin,
   dexId,
-  bestAsk,
-  bestBid,
   form,
   marketKey,
   marketPrice,
@@ -117,8 +115,6 @@ export const buildPerpsProOpenOrderCommand = ({
   amountReferencePrice?: string;
   bboPrice: string | null;
   bboSessionKey?: string | null;
-  bestAsk?: string | null;
-  bestBid?: string | null;
   coin: string;
   dexId: string;
   form: PerpsProTradeFormState;
@@ -187,17 +183,6 @@ export const buildPerpsProOpenOrderCommand = ({
       slippageReferenceMidPrice: marketPrice,
     };
   } else if (form.orderType === 'limit') {
-    const limit = decimal(executionPrice);
-    const ask = decimal(bestAsk);
-    const bid = decimal(bestBid);
-    if (
-      !form.bboEnabled &&
-      form.tif === 'Alo' &&
-      ((isBuy && ask?.gt(0) && limit?.gte(ask)) ||
-        (!isBuy && bid?.gt(0) && limit?.lte(bid)))
-    ) {
-      throw new Error('ALO price would immediately match the order book');
-    }
     execution = form.bboEnabled
       ? { kind: 'bboLimit', strategy: form.bboStrategy! }
       : {
