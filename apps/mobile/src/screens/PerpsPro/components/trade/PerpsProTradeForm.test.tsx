@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 
+const mockFocusTextInput = jest.fn();
 const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((value: number) => value);
 
@@ -58,10 +59,25 @@ jest.mock('@/assets2024/icons/perps/PerpsProTpSlTooltipTail.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/components/Typography', () => ({
-  Text: require('react-native').Text,
-  TextInput: require('react-native').TextInput,
-}));
+jest.mock('@/components/Typography', () => {
+  const ReactModule = require('react');
+  const { Text, TextInput } = require('react-native');
+  return {
+    Text,
+    TextInput: ReactModule.forwardRef(
+      (props: object, ref: React.Ref<unknown>) => {
+        ReactModule.useImperativeHandle(ref, () => ({
+          focus: () =>
+            mockFocusTextInput(
+              (props as { accessibilityLabel?: string }).accessibilityLabel,
+            ),
+          setNativeProps: jest.fn(),
+        }));
+        return ReactModule.createElement(TextInput, props);
+      },
+    ),
+  };
+});
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
@@ -156,6 +172,7 @@ const controller = (
   ({
     attachedTpSlExecutionEnabled: true,
     amountDecimals: 2,
+    amountSource: 'manual',
     amountUnitLabel: 'USDC',
     availableQuote: '1000',
     beginAmountEntry: jest.fn(),
@@ -213,6 +230,7 @@ const controller = (
 
 describe('PerpsProTradeForm order matrix', () => {
   beforeEach(() => {
+    mockFocusTextInput.mockClear();
     mockDismissKeyboardThen.mockReset();
     mockDismissKeyboardThen.mockImplementation(action => action());
     mockCancelAnimation.mockClear();
@@ -769,7 +787,7 @@ describe('PerpsProTradeForm order matrix', () => {
   });
 
   it('waits for keyboard dismissal before requesting Buy or Sell review', () => {
-    const trade = controller();
+    const trade = controller({ amount: '10' });
     let pendingAction: (() => void) | null = null;
     mockDismissKeyboardThen.mockImplementation(action => {
       pendingAction = action;
@@ -797,6 +815,65 @@ describe('PerpsProTradeForm order matrix', () => {
     });
     expect(trade.requestReview).toHaveBeenCalledTimes(1);
     expect(trade.requestReview).toHaveBeenLastCalledWith('sell');
+  });
+
+  it('focuses Amount instead of requesting review when manual Amount is empty', () => {
+    const trade = controller();
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+
+    expect(mockFocusTextInput).toHaveBeenCalledWith('amount(USDC)');
+    expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
+    expect(trade.requestReview).not.toHaveBeenCalled();
+  });
+
+  it('focuses an empty Conditional Trigger Price before submitting a valid Amount', () => {
+    const trade = controller({
+      amount: '10',
+      orderType: 'conditional',
+      triggerPrice: '',
+    });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+
+    expect(mockFocusTextInput).toHaveBeenCalledWith('triggerPrice(USDC)');
+    expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
+    expect(trade.requestReview).not.toHaveBeenCalled();
+  });
+
+  it('focuses an empty Trigger Price without clearing valid Slider input', () => {
+    const trade = controller({
+      amount: '25%',
+      orderType: 'conditional',
+      triggerPrice: '',
+    }) as any;
+    trade.amountSource = 'slider';
+    trade.percentage = 25;
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-sell'));
+
+    expect(mockFocusTextInput).toHaveBeenCalledWith('triggerPrice(USDC)');
+    expect(trade.beginAmountEntry).not.toHaveBeenCalled();
+    expect(trade.form.amount).toBe('25%');
+    expect(trade.percentage).toBe(25);
+    expect(trade.requestReview).not.toHaveBeenCalled();
+  });
+
+  it('keeps a Slider percentage as valid input when Buy is pressed', () => {
+    const trade = controller({ amount: '25%' }) as any;
+    trade.amountSource = 'slider';
+    trade.percentage = 25;
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+
+    expect(trade.beginAmountEntry).not.toHaveBeenCalled();
+    expect(trade.requestReview).toHaveBeenCalledWith('buy');
+    expect(trade.form.amount).toBe('25%');
+    expect(trade.percentage).toBe(25);
   });
 
   it('makes the Available value and USDC text part of the Deposit target', () => {
@@ -887,7 +964,7 @@ describe('PerpsProTradeForm order matrix', () => {
   });
 
   it('keeps Reduce Only directions clickable while disabling an empty-position checkbox', () => {
-    const trade = controller({ reduceOnly: true });
+    const trade = controller({ amount: '10', reduceOnly: true });
     trade.reduceOnlyAvailability = {
       buyUnavailable: true,
       checkboxDisabled: false,
