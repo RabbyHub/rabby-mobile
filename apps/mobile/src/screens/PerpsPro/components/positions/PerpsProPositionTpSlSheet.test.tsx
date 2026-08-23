@@ -7,6 +7,7 @@ const mockDismiss = jest.fn();
 const mockSheetRegistration = jest.fn();
 const mockFormProps = jest.fn();
 const mockHeaderProps = jest.fn();
+const mockOpenFieldExplanation = jest.fn();
 
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
@@ -119,6 +120,9 @@ jest.mock('./PerpsProPositionTpSlHeader', () => ({
 jest.mock('../common/perpsProSheetNavigationRegistry', () => ({
   usePerpsProSheetNavigationRegistration: (...args: any[]) =>
     mockSheetRegistration(...args),
+}));
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
 }));
 
 jest.mock('./PerpsProPositionTpSlForm', () => {
@@ -240,6 +244,8 @@ describe('PerpsProPositionTpSlSheet', () => {
       'perps-pro-position-tpsl-order-2',
       'perps-pro-position-tpsl-order-1',
     ]);
+    fireEvent.press(screen.getAllByLabelText('Est. PnL')[0]!);
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
   });
 
   it('keeps the right-aligned Unfilled column single-line so long content extends left', () => {

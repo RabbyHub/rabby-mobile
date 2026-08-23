@@ -32,6 +32,8 @@ import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import type { PerpsProPositionTpSlReviewState } from '../../scene/usePerpsProPositionTpSl';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 const MODAL_ID = 'perps-pro-position-tpsl-confirmation';
 
@@ -60,6 +62,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const openFieldExplanation = usePerpsProFieldExplanation();
     usePerpsProSheetNavigationRegistration({
       active: !!review,
       dismiss: onClose,
@@ -176,7 +179,16 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                     />
                   ) : null}
                   <DetailRow
-                    label={t('page.perps.pro.positionTpsl.totalEstimatedPnl')}
+                    label={
+                      <PerpsProDottedUnderlineText
+                        accessibilityLabel={t(
+                          'page.perps.pro.positionTpsl.totalEstimatedPnl',
+                        )}
+                        onPress={() => openFieldExplanation('estimatedPnl')}
+                        style={styles.detailLabel}>
+                        {t('page.perps.pro.positionTpsl.totalEstimatedPnl')}
+                      </PerpsProDottedUnderlineText>
+                    }
                     tone={leg.kind === 'takeProfit' ? 'positive' : 'negative'}
                     value={`${formatPerpsProDecimal(estimatedPnl, 2)} ${
                       market.quoteAsset
@@ -233,14 +245,18 @@ PerpsProPositionTpSlConfirmationSheet.displayName =
   'PerpsProPositionTpSlConfirmationSheet';
 
 const DetailRow: React.FC<{
-  label: string;
+  label: React.ReactNode;
   tone?: 'negative' | 'neutral' | 'positive';
   value: string;
 }> = ({ label, tone = 'neutral', value }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>{label}</Text>
+      {typeof label === 'string' ? (
+        <Text style={styles.detailLabel}>{label}</Text>
+      ) : (
+        label
+      )}
       <Text
         style={
           tone === 'positive'
