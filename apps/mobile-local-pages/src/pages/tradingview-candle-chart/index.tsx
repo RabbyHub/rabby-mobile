@@ -39,6 +39,7 @@ import {
   getInitialVisibleLogicalRange,
   getPrependedCandleCount,
   getPerpsProLatestCandleClose,
+  getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
   PERPS_PRO_PRICE_SCALE_MARGINS,
@@ -813,11 +814,11 @@ function createProTooltipRow(
   valueColor: string,
   isLast = false,
 ) {
-  return `<div style="display:flex;justify-content:space-between;gap:8px;white-space:nowrap;${
+  return `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;${
     isLast ? '' : 'margin-bottom:2px;'
   }"><span style="color:${
     chartState.colors?.tooltip.title
-  };">${label}:</span><span style="color:${valueColor};font-weight:600;text-align:right;">${value}</span></div>`;
+  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};flex-shrink:0;font-weight:600;text-align:right;white-space:nowrap;">${value}</span></div>`;
 }
 
 function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
@@ -854,8 +855,9 @@ function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
   tooltipEl.style.fontSize = '10px';
   tooltipEl.style.lineHeight = '12px';
   tooltipEl.style.minWidth = '112px';
-  tooltipEl.style.maxWidth = '132px';
-  tooltipEl.style.whiteSpace = 'nowrap';
+  tooltipEl.style.boxSizing = 'border-box';
+  tooltipEl.style.width = 'max-content';
+  tooltipEl.style.whiteSpace = 'normal';
   tooltipEl.innerHTML = [
     createProTooltipRow(
       description.time,
@@ -898,6 +900,9 @@ function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
   ].join('');
 
   const containerRect = containerEl.getBoundingClientRect();
+  tooltipEl.style.maxWidth = `${getPerpsProTooltipMaxWidth(
+    containerRect.width,
+  )}px`;
   const placement = getPerpsProTooltipPlacement(pointX, containerRect.width);
   tooltipEl.style.top = '16px';
   tooltipEl.style.left =

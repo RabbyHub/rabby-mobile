@@ -18,6 +18,7 @@ const {
   getInitialVisibleLogicalRange,
   getPrependedCandleCount,
   getPerpsProLatestCandleClose,
+  getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
   shiftLogicalRangeForPrependedCandles,
@@ -36,6 +37,12 @@ const candle = (time: number, close: number) => ({
 });
 
 describe('Perps Pro local chart calculations', () => {
+  it('reserves both chart edges and the price scale for intrinsic tooltip width', () => {
+    expect(getPerpsProTooltipMaxWidth(375)).toBe(293);
+    expect(getPerpsProTooltipMaxWidth(320)).toBe(238);
+    expect(getPerpsProTooltipMaxWidth(60)).toBe(0);
+  });
+
   it('calculates close SMA only after a complete window', () => {
     const candles = [1, 2, 3, 4, 5].map((close, index) => candle(index, close));
 
