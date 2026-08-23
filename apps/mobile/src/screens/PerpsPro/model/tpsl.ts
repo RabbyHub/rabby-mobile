@@ -14,6 +14,11 @@ export type PerpsProAttachedTpSlDraft = {
   tp: PerpsProTpSlLegDraft;
 };
 
+export type PerpsProAttachedTpSlModes = Record<
+  PerpsProTpSlLegKind,
+  PerpsProTpSlMode
+>;
+
 export type PerpsProTpSlValidationErrorCode =
   | 'atLeastOneRequired'
   | 'bboUnsupported'
@@ -65,12 +70,13 @@ const positive = (value: unknown) => {
   return result?.gt(0) ? result : null;
 };
 
-export const createPerpsProAttachedTpSlDraft =
-  (): PerpsProAttachedTpSlDraft => ({
-    enabled: false,
-    sl: { mode: 'price', rawMagnitude: '' },
-    tp: { mode: 'price', rawMagnitude: '' },
-  });
+export const createPerpsProAttachedTpSlDraft = (
+  modes: PerpsProAttachedTpSlModes = { sl: 'price', tp: 'price' },
+): PerpsProAttachedTpSlDraft => ({
+  enabled: false,
+  sl: { mode: modes.sl, rawMagnitude: '' },
+  tp: { mode: modes.tp, rawMagnitude: '' },
+});
 
 export const getPerpsProAttachedTpSlCompatibilityError = ({
   bboEnabled,

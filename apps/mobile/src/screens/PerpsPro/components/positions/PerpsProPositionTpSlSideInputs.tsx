@@ -5,6 +5,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 
+import type { PerpsProPositionTpSlMode } from '@/core/services/perpsService';
+
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
   calculatePositionTpSlEstimatedPnl,
@@ -12,7 +14,6 @@ import {
   type PerpsPositionTpSlKind,
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
-import type { PerpsProTpSlMode } from '../../model/tpsl';
 import {
   formatPerpsProPrice,
   formatPerpsProSignedDecimal,
@@ -31,7 +32,7 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
   onPressMode: () => void;
   position: PerpsPositionViewModel;
   rawMagnitude: string;
-  selectedMode: PerpsProTpSlMode;
+  selectedMode: PerpsProPositionTpSlMode;
   showEmptyDescription?: boolean;
   size: string | null;
   validationKind: 'empty' | 'invalid' | 'valid';
@@ -108,8 +109,8 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
             label={modeLabel}
-            maxDecimals={selectedMode === 'price' ? market.pxDecimals : 8}
-            negative={kind === 'stopLoss' && selectedMode !== 'price'}
+            maxDecimals={2}
+            negative={kind === 'stopLoss'}
             onChangeText={onChangeModeMagnitude}
             onPressMode={onPressMode}
             testID={`perps-pro-position-tpsl-${kind}-mode-input`}

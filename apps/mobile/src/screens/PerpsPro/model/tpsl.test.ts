@@ -59,6 +59,11 @@ describe('Perps Pro TP/SL model', () => {
       sl: { mode: 'price', rawMagnitude: '' },
       tp: { mode: 'price', rawMagnitude: '' },
     });
+    expect(createPerpsProAttachedTpSlDraft({ sl: 'roi', tp: 'pnl' })).toEqual({
+      enabled: false,
+      sl: { mode: 'roi', rawMagnitude: '' },
+      tp: { mode: 'pnl', rawMagnitude: '' },
+    });
   });
 
   it.each([

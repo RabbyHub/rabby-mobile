@@ -41,6 +41,7 @@ import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
 import { PerpsProPositionTpSlSideInputs } from './PerpsProPositionTpSlSideInputs';
 import { usePerpsProPositionTpSlFormInputs } from './usePerpsProPositionTpSlFormInputs';
+import { usePerpsProTpSlModePreferences } from '../../scene/usePerpsProTpSlModePreferences';
 
 type FormMode = 'add' | 'modify' | 'position';
 
@@ -74,6 +75,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
   }) => {
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const tpSlModePreferences = usePerpsProTpSlModePreferences();
     const dismissKeyboardThen = usePerpsProDismissKeyboard();
     const resolvedPresentation =
       presentation ?? (mode === 'position' ? 'tab' : 'subpage');
@@ -222,6 +224,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
       initialTakeProfit,
       leverage: position.leverage,
       pxDecimals: market.pxDecimals,
+      preferredModes: tpSlModePreferences.position,
       sideSize,
     });
     const amountValidation =
@@ -605,14 +608,20 @@ export const PerpsProPositionTpSlForm: React.FC<{
           />
         </View>
         <PerpsProTpSlModeSheet
+          allowedModes={['pnl', 'roi']}
           onClose={() => setActiveModeKind(null)}
           onSelect={nextMode => {
-            if (!activeModeKind) {
+            if (!activeModeKind || nextMode === 'price') {
               return;
             }
+            void tpSlModePreferences.setMode({
+              leg: activeModeKind === 'takeProfit' ? 'tp' : 'sl',
+              mode: nextMode,
+              surface: 'position',
+            });
             selectMode(activeModeKind, nextMode);
           }}
-          selected={activeModeKind ? getSideInput(activeModeKind).mode : 'roi'}
+          selected={activeModeKind ? getSideInput(activeModeKind).mode : 'pnl'}
           visible={activeModeKind != null}
         />
       </View>

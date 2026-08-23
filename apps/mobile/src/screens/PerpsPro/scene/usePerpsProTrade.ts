@@ -106,6 +106,7 @@ import {
 import { usePerpsProTradePreferences } from './usePerpsProTradePreferences';
 import type { PerpsProLeverageUpdateRequest } from './usePerpsProLeverageUpdate';
 import { usePerpsProAttachedTpSlExecution } from './usePerpsProAttachedTpSlExecution';
+import { usePerpsProTpSlModePreferences } from './usePerpsProTpSlModePreferences';
 
 const positive = (value: unknown) => {
   const result = new BigNumber(
@@ -178,6 +179,7 @@ export const usePerpsProTrade = ({
     [t],
   );
   const preferences = usePerpsProTradePreferences();
+  const tpSlModePreferences = usePerpsProTpSlModePreferences();
   const tradeCoin = market?.canonicalCoin ?? '';
   const tradeDexId = market?.marketData.dexId ?? '';
   const collateralToken = getPerpsProCollateralToken(market?.quoteAsset);
@@ -215,6 +217,7 @@ export const usePerpsProTrade = ({
     createPerpsProTradeFormState({
       amountUnit: preferences.amountUnit,
       orderType: preferences.orderType,
+      tpSlModes: tpSlModePreferences.opening,
     }),
   );
   const formRef = useRef(form);
@@ -692,6 +695,39 @@ export const usePerpsProTrade = ({
     preferences.amountUnit,
     preferences.hydrated,
     preferences.orderType,
+  ]);
+
+  useEffect(() => {
+    if (!tpSlModePreferences.hydrated) return;
+    setForm(current => {
+      const slMode =
+        current.attachedTpSl.sl.rawMagnitude === ''
+          ? tpSlModePreferences.opening.sl
+          : current.attachedTpSl.sl.mode;
+      const tpMode =
+        current.attachedTpSl.tp.rawMagnitude === ''
+          ? tpSlModePreferences.opening.tp
+          : current.attachedTpSl.tp.mode;
+      if (
+        slMode === current.attachedTpSl.sl.mode &&
+        tpMode === current.attachedTpSl.tp.mode
+      ) {
+        return current;
+      }
+      const attachedTpSl = {
+        ...current.attachedTpSl,
+        sl: { ...current.attachedTpSl.sl, mode: slMode },
+        tp: { ...current.attachedTpSl.tp, mode: tpMode },
+      };
+      const next = { ...current, attachedTpSl };
+      formRevisionRef.current += 1;
+      formRef.current = next;
+      return next;
+    });
+  }, [
+    tpSlModePreferences.hydrated,
+    tpSlModePreferences.opening.sl,
+    tpSlModePreferences.opening.tp,
   ]);
 
   const toggleAmountUnit = useCallback(() => {
@@ -1245,6 +1281,13 @@ export const usePerpsProTrade = ({
     draft: form.attachedTpSl,
     leverage,
     onChange: patchAttachedTpSl,
+    onModeChange: (kind, mode) => {
+      void tpSlModePreferences.setMode({
+        leg: kind,
+        mode,
+        surface: 'opening',
+      });
+    },
     order: form,
     previewFacts: tpSlPreviewFacts,
     pxDecimals: market?.marketData.pxDecimals ?? 2,
@@ -1942,7 +1985,9 @@ export const usePerpsProTrade = ({
         percentageRef.current = 0;
         patchForm({
           amount: '',
-          attachedTpSl: createPerpsProAttachedTpSlDraft(),
+          attachedTpSl: createPerpsProAttachedTpSlDraft(
+            tpSlModePreferences.opening,
+          ),
         });
         setAmountSource('manual');
         setPercentageState(0);
@@ -1965,6 +2010,7 @@ export const usePerpsProTrade = ({
       executeAttachedTpSl,
       patchForm,
       t,
+      tpSlModePreferences.opening,
       tradeConfigurationReady,
     ],
   );

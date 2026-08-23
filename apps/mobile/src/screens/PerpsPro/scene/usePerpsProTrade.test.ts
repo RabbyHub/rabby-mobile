@@ -40,6 +40,7 @@ const mockLimitOrderOpen = jest.fn(async () => ({
   status: 'ok',
 }));
 const mockShowToast = jest.fn();
+const mockSetTpSlMode = jest.fn(async () => undefined);
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
 const mockExecuteAttached = jest.fn(async () => ({
   kind: 'fullAccepted' as const,
@@ -198,6 +199,15 @@ jest.mock('./usePerpsProTradePreferences', () => ({
     orderType: 'market',
     setAmountUnit: jest.fn(),
     setOrderType: jest.fn(),
+  }),
+}));
+
+jest.mock('./usePerpsProTpSlModePreferences', () => ({
+  usePerpsProTpSlModePreferences: () => ({
+    hydrated: true,
+    opening: { sl: 'price', tp: 'price' },
+    position: { sl: 'pnl', tp: 'pnl' },
+    setMode: mockSetTpSlMode,
   }),
 }));
 

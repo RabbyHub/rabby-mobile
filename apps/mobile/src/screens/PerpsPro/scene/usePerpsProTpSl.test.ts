@@ -136,6 +136,7 @@ describe('usePerpsProTpSl', () => {
 
   it('clears only the switched leg and does not reinterpret its raw value', () => {
     const onChange = jest.fn();
+    const onModeChange = jest.fn();
     const hook = renderHook(() =>
       usePerpsProTpSl({
         draft: {
@@ -145,6 +146,7 @@ describe('usePerpsProTpSl', () => {
         },
         leverage: 10,
         onChange,
+        onModeChange,
         order,
         pxDecimals: 2,
         previewFacts: { buy: null, sell: null },
@@ -159,10 +161,44 @@ describe('usePerpsProTpSl', () => {
       sl: { mode: 'pnl', rawMagnitude: '20' },
       tp: { mode: 'roi', rawMagnitude: '' },
     });
+    expect(onModeChange).toHaveBeenCalledWith('tp', 'roi');
+  });
+
+  it('limits Opening PnL and ROI magnitudes to two decimals', () => {
+    const onChange = jest.fn();
+    const hook = renderHook(() =>
+      usePerpsProTpSl({
+        draft: {
+          enabled: true,
+          sl: { mode: 'roi', rawMagnitude: '' },
+          tp: { mode: 'pnl', rawMagnitude: '' },
+        },
+        leverage: 10,
+        onChange,
+        order,
+        pxDecimals: 4,
+        previewFacts: { buy: null, sell: null },
+        szDecimals: 2,
+      }),
+    );
+
+    act(() => hook.result.current.setRawMagnitude('tp', '12.3456'));
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        tp: { mode: 'pnl', rawMagnitude: '12.34' },
+      }),
+    );
+    act(() => hook.result.current.setRawMagnitude('sl', '9.876'));
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sl: { mode: 'roi', rawMagnitude: '9.87' },
+      }),
+    );
   });
 
   it('preserves the raw value when the selected mode does not change', () => {
     const onChange = jest.fn();
+    const onModeChange = jest.fn();
     const hook = renderHook(() =>
       usePerpsProTpSl({
         draft: {
@@ -172,6 +208,7 @@ describe('usePerpsProTpSl', () => {
         },
         leverage: 10,
         onChange,
+        onModeChange,
         order,
         pxDecimals: 2,
         previewFacts: { buy: null, sell: null },
@@ -182,6 +219,7 @@ describe('usePerpsProTpSl', () => {
     act(() => hook.result.current.setMode('tp', 'price'));
 
     expect(onChange).not.toHaveBeenCalled();
+    expect(onModeChange).toHaveBeenCalledWith('tp', 'price');
   });
 
   it('keeps the leg focused when its value is cleared while editing', () => {

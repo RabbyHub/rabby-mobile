@@ -34,6 +34,7 @@ export const usePerpsProTpSl = ({
   draft,
   leverage,
   onChange,
+  onModeChange,
   order,
   pxDecimals,
   previewFacts,
@@ -42,6 +43,7 @@ export const usePerpsProTpSl = ({
   draft: PerpsProAttachedTpSlDraft;
   leverage: number;
   onChange: (draft: PerpsProAttachedTpSlDraft) => void;
+  onModeChange?: (kind: PerpsProTpSlLegKind, mode: PerpsProTpSlMode) => void;
   order: {
     bboEnabled: boolean;
     orderType: 'conditional' | 'limit' | 'market';
@@ -76,6 +78,7 @@ export const usePerpsProTpSl = ({
 
   const setMode = useCallback(
     (kind: PerpsProTpSlLegKind, mode: PerpsProTpSlMode) => {
+      onModeChange?.(kind, mode);
       if (draft[kind].mode !== mode) {
         onChange({
           ...draft,
@@ -83,12 +86,12 @@ export const usePerpsProTpSl = ({
         });
       }
     },
-    [draft, onChange],
+    [draft, onChange, onModeChange],
   );
 
   const setRawMagnitude = useCallback(
     (kind: PerpsProTpSlLegKind, value: string) => {
-      const maxDecimals = draft[kind].mode === 'price' ? pxDecimals : 8;
+      const maxDecimals = draft[kind].mode === 'price' ? pxDecimals : 2;
       onChange({
         ...draft,
         [kind]: {
