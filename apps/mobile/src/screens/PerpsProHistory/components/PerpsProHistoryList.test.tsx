@@ -236,4 +236,22 @@ describe('PerpsProHistoryList', () => {
     fireEvent(list, 'endReached', { distanceFromEnd: 0 });
     expect(onLoadEarlier).not.toHaveBeenCalled();
   });
+
+  it('uses the shared platform refresh indicator appearance', () => {
+    render(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        state={makeState()}
+        tab="trade"
+      />,
+    );
+
+    const refreshControl = screen.getByTestId('perps-pro-history-list-trade')
+      .props.refreshControl;
+    expect(refreshControl.props.colors).toBeUndefined();
+    expect(refreshControl.props.tintColor).toBeUndefined();
+  });
 });
