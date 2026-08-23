@@ -6,6 +6,7 @@ type TipsPopupState = {
   visible: boolean;
   title: string;
   desc: string | React.ReactNode;
+  owner?: string;
   buttonStyle?: StyleProp<ViewStyle>;
   buttonTitleStyle?: StyleProp<TextStyle>;
   buttonType?:
@@ -27,6 +28,12 @@ const tipsAtom = atom<TipsPopupState>({
   desc: '',
 });
 
+const getHiddenTipsPopupState = (): TipsPopupState => ({
+  visible: false,
+  title: '',
+  desc: '',
+});
+
 export const useShowTipsPopup = () => {
   const setState = useSetAtom(tipsAtom);
 
@@ -34,6 +41,19 @@ export const useShowTipsPopup = () => {
     setState({
       visible: true,
       ...payload,
+    });
+  });
+};
+
+export const useHideTipsPopup = (owner?: string) => {
+  const setState = useSetAtom(tipsAtom);
+
+  return useMemoizedFn(() => {
+    setState(current => {
+      if (owner && current.owner !== owner) {
+        return current;
+      }
+      return getHiddenTipsPopupState();
     });
   });
 };
@@ -49,14 +69,7 @@ export const useTipsPopup = () => {
   });
 
   const hideTipsPopup = useMemoizedFn(() => {
-    setState({
-      visible: false,
-      title: '',
-      desc: '',
-      buttonStyle: undefined,
-      buttonTitleStyle: undefined,
-      buttonType: undefined,
-    });
+    setState(getHiddenTipsPopupState());
   });
 
   return {

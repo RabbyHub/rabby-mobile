@@ -59,7 +59,7 @@ export const PerpsTradeFeeExplanationContent: React.FC<{
   );
 };
 
-export const useShowPerpsTradeFeeExplanation = () => {
+export const useShowPerpsTradeFeeExplanation = (owner?: string) => {
   const { t } = useTranslation();
   const showTipsPopup = useShowTipsPopup();
 
@@ -69,9 +69,10 @@ export const useShowPerpsTradeFeeExplanation = () => {
         title: t('page.perps.historyDetail.feeTitle'),
         desc: <PerpsTradeFeeExplanationContent isLiquidation={isLiquidation} />,
         buttonType: 'hyperliquid',
+        owner,
       });
     },
-    [showTipsPopup, t],
+    [owner, showTipsPopup, t],
   );
 };
 
