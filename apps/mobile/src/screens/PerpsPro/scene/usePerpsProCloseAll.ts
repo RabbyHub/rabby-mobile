@@ -63,7 +63,11 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
     }
   }, [t]);
 
-  const dismissConfirmation = useCallback(() => setConfirmation(null), []);
+  const dismissConfirmation = useCallback(() => {
+    if (!pendingRef.current) {
+      setConfirmation(null);
+    }
+  }, []);
 
   const execute = useCallback(
     async ({ account, command }: PerpsProCloseAllConfirmation) => {
@@ -131,16 +135,19 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
   );
 
   const confirmCloseAll = useCallback(() => {
-    if (!confirmation) {
+    if (!confirmation || pendingRef.current) {
       return;
     }
     const snapshot = confirmation;
-    setConfirmation(null);
-    execute(snapshot).catch(error => {
-      Sentry.captureException(error, {
-        extra: { scene: 'Perps Pro launch close all positions' },
+    execute(snapshot)
+      .catch(error => {
+        Sentry.captureException(error, {
+          extra: { scene: 'Perps Pro launch close all positions' },
+        });
+      })
+      .finally(() => {
+        setConfirmation(current => (current === snapshot ? null : current));
       });
-    });
   }, [confirmation, execute]);
 
   return {

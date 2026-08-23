@@ -1,6 +1,7 @@
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
+import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
@@ -14,7 +15,8 @@ export const PerpsProCloseAllConfirmationModal: React.FC<{
   confirmation: PerpsProCloseAllConfirmation | null;
   onCancel: () => void;
   onConfirm: () => void;
-}> = React.memo(({ confirmation, onCancel, onConfirm }) => {
+  pending: boolean;
+}> = React.memo(({ confirmation, onCancel, onConfirm, pending }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -22,7 +24,7 @@ export const PerpsProCloseAllConfirmationModal: React.FC<{
     <TrackedModal
       animationType="fade"
       modalId={MODAL_GATE_IDS.perpsProCloseAllConfirmation}
-      onRequestClose={onCancel}
+      onRequestClose={pending ? () => undefined : onCancel}
       transparent
       visible={!!confirmation}>
       <View style={styles.root}>
@@ -50,6 +52,8 @@ export const PerpsProCloseAllConfirmationModal: React.FC<{
           <View style={styles.actions}>
             <Pressable
               accessibilityRole="button"
+              accessibilityState={{ disabled: pending }}
+              disabled={pending}
               onPress={onCancel}
               style={({ pressed }) => [
                 styles.button,
@@ -58,16 +62,19 @@ export const PerpsProCloseAllConfirmationModal: React.FC<{
               ]}>
               <Text style={styles.cancelText}>{t('global.cancel')}</Text>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
+            <Button
+              buttonStyle={[styles.button, styles.confirmButton]}
+              containerStyle={styles.buttonContainer}
+              disabled={pending}
+              height={36}
+              loading={pending}
+              noShadow
               onPress={onConfirm}
-              style={({ pressed }) => [
-                styles.button,
-                styles.confirmButton,
-                pressed && styles.pressed,
-              ]}>
-              <Text style={styles.confirmText}>{t('global.confirm')}</Text>
-            </Pressable>
+              testID="perps-pro-close-all-confirm"
+              title={t('global.confirm')}
+              titleStyle={styles.confirmText}
+              type="primary"
+            />
           </View>
         </View>
       </View>
@@ -127,6 +134,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   actions: { flexDirection: 'row', gap: 12, width: '100%' },
+  buttonContainer: { flex: 1 },
   button: {
     alignItems: 'center',
     borderRadius: 8,

@@ -992,6 +992,7 @@ export const PerpsProScene: React.FC<{
         confirmation={closeAll.confirmation}
         onCancel={closeAll.dismissConfirmation}
         onConfirm={closeAll.confirmCloseAll}
+        pending={closeAll.pending}
       />
       <PerpsProLeverageSheet
         currentLeverage={positionActions.leverageEditor?.position.leverage ?? 1}
