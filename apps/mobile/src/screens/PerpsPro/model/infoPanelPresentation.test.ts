@@ -1,6 +1,14 @@
-import { isPerpsProCollectionAuthoritativelyEmpty } from './infoPanelPresentation';
+import {
+  isPerpsProCollectionAuthoritativelyEmpty,
+  resolvePerpsProInitialInfoTab,
+} from './infoPanelPresentation';
 
 describe('Perps Pro collection empty-state authority', () => {
+  it('defaults to Positions only when at least one position exists', () => {
+    expect(resolvePerpsProInitialInfoTab(1)).toBe('positions');
+    expect(resolvePerpsProInitialInfoTab(0)).toBe('account');
+  });
+
   it('shows an empty state only after the complete source is ready', () => {
     expect(
       isPerpsProCollectionAuthoritativelyEmpty({

@@ -1273,7 +1273,7 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
     expect(screen.getByTestId('perps-pro-positions-controls')).toBeTruthy();
-    expect(screen.queryByTestId('perps-pro-positions-empty')).toBeNull();
+    expect(screen.getByTestId('perps-pro-positions-empty')).toBeTruthy();
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -1286,7 +1286,7 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
     expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
-    expect(screen.queryByTestId('perps-pro-open-orders-empty')).toBeNull();
+    expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeTruthy();
   });
 
   it('preserves the empty-state trailing distance after populated account, position, and order rows', () => {

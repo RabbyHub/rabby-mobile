@@ -546,13 +546,17 @@ export const PerpsProScene: React.FC<{
         return result;
       }
       result.push({ key: 'positions-controls', type: 'positions-controls' });
-      result.push(
-        ...info.positions.map(position => ({
-          key: `position:${info.accountIdentity}:${position.key}`,
-          position,
-          type: 'position' as const,
-        })),
-      );
+      if (info.positions.length === 0) {
+        result.push({ key: 'positions-empty', type: 'positions-empty' });
+      } else {
+        result.push(
+          ...info.positions.map(position => ({
+            key: `position:${info.accountIdentity}:${position.key}`,
+            position,
+            type: 'position' as const,
+          })),
+        );
+      }
       return result;
     }
 
@@ -561,13 +565,17 @@ export const PerpsProScene: React.FC<{
       return result;
     }
     result.push({ key: 'open-orders-controls', type: 'open-orders-controls' });
-    result.push(
-      ...info.openOrders.map(order => ({
-        key: `open-order:${info.accountIdentity}:${order.key}`,
-        order,
-        type: 'open-order' as const,
-      })),
-    );
+    if (info.openOrders.length === 0) {
+      result.push({ key: 'open-orders-empty', type: 'open-orders-empty' });
+    } else {
+      result.push(
+        ...info.openOrders.map(order => ({
+          key: `open-order:${info.accountIdentity}:${order.key}`,
+          order,
+          type: 'open-order' as const,
+        })),
+      );
+    }
     return result;
   }, [
     info.account,
