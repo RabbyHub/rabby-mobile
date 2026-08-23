@@ -19,6 +19,7 @@ import { buildPerpsProOrderExecutionIndex } from './orderExecution';
 import { mapPerpsProTradeHistoryFact } from './tradeHistory';
 import {
   mapPerpsProTransactionHistoryFact,
+  normalizePerpsProTransactionAssetForDisplay,
   summarizePerpsProTransactionHistoryFacts,
 } from './transactionHistory';
 import type { PerpsProLedgerFact } from '../types';
@@ -290,6 +291,20 @@ describe('Perps Pro history models', () => {
       assetAmountSource: 'explicit',
       direction: 'deposit',
     });
+    const usdt0Fact = makeLedger({
+      amount: '3',
+      token: 'USDT0',
+      type: 'deposit',
+    });
+    expect(
+      mapPerpsProTransactionHistoryFact(usdt0Fact, ACCOUNT).row,
+    ).toMatchObject({
+      amount: '3',
+      asset: 'USDT',
+      assetAmountSource: 'explicit',
+      direction: 'deposit',
+      key: expect.stringContaining(':USDT0:3:'),
+    });
     expect(
       mapPerpsProTransactionHistoryFact(
         makeLedger({
@@ -426,6 +441,15 @@ describe('Perps Pro history models', () => {
       },
       visible: 1,
     });
+  });
+
+  it('normalizes only the known Hyperliquid USDT0 display alias', () => {
+    expect(normalizePerpsProTransactionAssetForDisplay('USDT0')).toBe('USDT');
+    expect(normalizePerpsProTransactionAssetForDisplay(' usdt0 ')).toBe('USDT');
+    expect(normalizePerpsProTransactionAssetForDisplay('USDT')).toBe('USDT');
+    expect(normalizePerpsProTransactionAssetForDisplay('TOKEN0')).toBe(
+      'TOKEN0',
+    );
   });
 
   it('keeps position side independent from signed funding cashflow', () => {

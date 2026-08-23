@@ -222,7 +222,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     },
   );
 
-  it('renders Funding asset, side, pair symbol and signed amount', () => {
+  it('renders Funding asset, pair symbol and four-decimal signed amount without side', () => {
     const row = mapPerpsProFundingHistoryFact(
       {
         coin: 'BTC',
@@ -241,10 +241,11 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
       />,
     );
     expect(screen.getByText('USDC')).toBeTruthy();
-    expect(screen.getByText('page.perps.pro.history.long')).toBeTruthy();
+    expect(screen.queryByText('page.perps.pro.history.long')).toBeNull();
+    expect(screen.queryByText('page.perps.pro.history.short')).toBeNull();
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.queryByText(/perpetual/i)).toBeNull();
-    expect(screen.getByText('-0.03')).toBeTruthy();
+    expect(screen.getByText('-0.0331')).toBeTruthy();
   });
 });
 

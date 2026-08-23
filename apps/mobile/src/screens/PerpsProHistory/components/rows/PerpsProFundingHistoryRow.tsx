@@ -10,18 +10,9 @@ export const PerpsProFundingHistoryRowView: React.FC<{
   row: PerpsProFundingHistoryRow;
 }> = ({ row }) => {
   const { t } = useTranslation();
-  const isLong = row.positionSide === 'long';
 
   return (
     <PerpsProHistoryRowLayout
-      badges={[
-        {
-          label: isLong
-            ? t('page.perps.pro.history.long')
-            : t('page.perps.pro.history.short'),
-          tone: isLong ? 'positive' : 'negative',
-        },
-      ]}
       details={[
         {
           label: t('page.perps.pro.history.fields.symbol'),
@@ -30,7 +21,7 @@ export const PerpsProFundingHistoryRowView: React.FC<{
         {
           label: t('page.perps.pro.history.fields.amount'),
           tone: getPerpsProHistorySignedTone(row.amount),
-          value: formatPerpsProSignedDecimal(row.amount, 2),
+          value: formatPerpsProSignedDecimal(row.amount, 4),
         },
       ]}
       testID={`perps-pro-history-funding-${row.key}`}
