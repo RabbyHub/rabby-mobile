@@ -27,6 +27,9 @@ export type PerpsProTransactionDiagnostics = {
 const safeSameAddress = (left?: string, right?: string) =>
   !!left && !!right && isSameAddress(left, right);
 
+export const normalizePerpsProTransactionAssetForDisplay = (asset: string) =>
+  asset.trim().toUpperCase() === 'USDT0' ? 'USDT' : asset;
+
 const resolveAmount = (delta: PerpsProLedgerFact['delta']) => {
   const rawAmount = delta.amount ?? delta.usdc ?? delta.usdcValue;
   const value = new BigNumber(rawAmount ?? Number.NaN);
@@ -35,7 +38,10 @@ const resolveAmount = (delta: PerpsProLedgerFact['delta']) => {
   }
   return {
     amount: value.absoluteValue().toString(),
-    asset: delta.amount != null && delta.token ? delta.token : 'USDC',
+    asset:
+      delta.amount != null && delta.token
+        ? normalizePerpsProTransactionAssetForDisplay(delta.token)
+        : 'USDC',
     assetAmountSource:
       delta.amount != null && delta.token
         ? ('explicit' as const)
