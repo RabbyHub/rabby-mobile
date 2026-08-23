@@ -134,7 +134,7 @@ describe('Perps Pro order book model', () => {
         book: processed,
         mode: 'both',
         rowCount: 2,
-      }).asks.map(item => [item.price, item.total]),
+      }).asks.map(item => [item?.price, item?.total]),
     ).toEqual([
       ['102', 3],
       ['101', 1],
@@ -146,6 +146,23 @@ describe('Perps Pro order book model', () => {
         rowCount: 1,
       }),
     ).toEqual({ asks: [], bids: [processed.bids[0]] });
+  });
+
+  it('pads shallow books away from the middle so both best levels stay adjacent', () => {
+    const processed = processPerpsOrderBook(
+      book([level('100', '1')], [level('101', '1')]),
+    );
+
+    expect(
+      selectVisiblePerpsOrderBookRows({
+        book: processed,
+        mode: 'both',
+        rowCount: 4,
+      }),
+    ).toEqual({
+      asks: [null, null, null, processed.asks[0]],
+      bids: [processed.bids[0], null, null, null],
+    });
   });
 
   it('uses measured Figma row and middle heights', () => {

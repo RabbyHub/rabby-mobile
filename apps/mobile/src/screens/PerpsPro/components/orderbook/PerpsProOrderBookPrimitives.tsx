@@ -97,17 +97,23 @@ export const PerpsProOrderBookRow: React.FC<{
         numberOfLines={1}
         style={[
           styles.bookPrice,
-          side === 'bid' ? styles.bidPrice : styles.askPrice,
+          level
+            ? side === 'bid'
+              ? styles.bidPrice
+              : styles.askPrice
+            : styles.placeholder,
         ]}>
-        {level ? formatPerpsProPrice(level.priceNumber, priceDecimals) : ''}
+        {level ? formatPerpsProPrice(level.priceNumber, priceDecimals) : '--'}
       </Text>
-      <Text numberOfLines={1} style={styles.bookAmount}>
+      <Text
+        numberOfLines={1}
+        style={[styles.bookAmount, level ? null : styles.placeholder]}>
         {level
           ? formatPerpsProCompactNumber(
               amountUnit === 'base' ? level.size : level.usdSize,
               PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS,
             )
-          : ''}
+          : '--'}
       </Text>
     </Pressable>
   );
@@ -189,6 +195,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bidPrice: {
     color: colors2024['green-default'],
+  },
+  placeholder: {
+    color: colors2024['neutral-secondary'],
   },
   bookAmount: {
     color: colors2024['neutral-title-1'],

@@ -71,6 +71,8 @@ export type ProcessedPerpsOrderBook = {
   serverTime: number | null;
 };
 
+export type PerpsOrderBookDisplayRow = PerpsOrderBookLevel | null;
+
 const cleanTickValue = (value: number) =>
   Number.parseFloat(value.toPrecision(10));
 
@@ -263,23 +265,44 @@ export const selectVisiblePerpsOrderBookRows = ({
   book: ProcessedPerpsOrderBook;
   mode: PerpsOrderBookMode;
   rowCount: number;
-}) => ({
-  asks:
-    mode === 'bids' ? [] : book.asks.slice(0, Math.max(1, rowCount)).reverse(),
-  bids: mode === 'asks' ? [] : book.bids.slice(0, Math.max(1, rowCount)),
-});
+}) => {
+  const count = Math.max(1, rowCount);
+  const asks = mode === 'bids' ? [] : book.asks.slice(0, count).reverse();
+  const bids = mode === 'asks' ? [] : book.bids.slice(0, count);
+
+  return {
+    // Asks render above the middle price. Empty slots must therefore precede
+    // the data so the best ask remains adjacent to the middle price.
+    asks:
+      mode === 'bids'
+        ? []
+        : [
+            ...Array<PerpsOrderBookDisplayRow>(count - asks.length).fill(null),
+            ...asks,
+          ],
+    // Bids render below the middle price, so data comes first and empty slots
+    // fill the remaining space toward the bottom of the column.
+    bids:
+      mode === 'asks'
+        ? []
+        : [
+            ...bids,
+            ...Array<PerpsOrderBookDisplayRow>(count - bids.length).fill(null),
+          ],
+  };
+};
 
 export const getVisiblePerpsOrderBookMaxTotal = ({
   asks,
   bids,
 }: {
-  asks: PerpsOrderBookLevel[];
-  bids: PerpsOrderBookLevel[];
+  asks: PerpsOrderBookDisplayRow[];
+  bids: PerpsOrderBookDisplayRow[];
 }) =>
   Math.max(
     0,
-    ...asks.map(level => level.total),
-    ...bids.map(level => level.total),
+    ...asks.map(level => level?.total ?? 0),
+    ...bids.map(level => level?.total ?? 0),
   );
 
 export const getPerpsOrderBookDepthPercent = (
