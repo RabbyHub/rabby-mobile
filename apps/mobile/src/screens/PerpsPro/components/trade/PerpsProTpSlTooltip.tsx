@@ -23,6 +23,29 @@ const TOOLTIP_MEASURE_WIDTH = 10000;
 const TOOLTIP_TAIL_TRANSLATE_X = -36;
 
 type TriggerTooltipMode = Exclude<PerpsProTpSlMode, 'price'>;
+export type PerpsProTpSlTooltipTone = 'negative' | 'neutral' | 'positive';
+
+export const resolvePerpsProTpSlTooltipTone = ({
+  direction,
+  leg,
+  mode,
+}: {
+  direction: 'buy' | 'sell';
+  leg: PerpsProEvaluatedTpSlLeg | null;
+  mode: PerpsProTpSlMode;
+}): PerpsProTpSlTooltipTone => {
+  if (!leg) {
+    return 'neutral';
+  }
+  if (mode !== 'price') {
+    return direction === 'buy' ? 'positive' : 'negative';
+  }
+  const pnl = new BigNumber(leg.estimatedPnl);
+  if (!pnl.isFinite() || pnl.isZero()) {
+    return 'neutral';
+  }
+  return pnl.gt(0) ? 'positive' : 'negative';
+};
 
 const withThousandsSeparators = (value: string) => {
   const [integer = '', fraction] = value.split('.');
@@ -90,6 +113,18 @@ export const PerpsProTpSlTooltip: React.FC<{
       : (['buyTrigger', 'sellTrigger'] as const);
   const buyValue = value(buy);
   const sellValue = value(sell);
+  const toneStyle = (tone: PerpsProTpSlTooltipTone) =>
+    tone === 'positive'
+      ? styles.positiveValue
+      : tone === 'negative'
+      ? styles.negativeValue
+      : styles.neutralValue;
+  const buyValueStyle = toneStyle(
+    resolvePerpsProTpSlTooltipTone({ direction: 'buy', leg: buy, mode }),
+  );
+  const sellValueStyle = toneStyle(
+    resolvePerpsProTpSlTooltipTone({ direction: 'sell', leg: sell, mode }),
+  );
   const buyLine = `${t(`page.perps.pro.trade.${labelKeys[0]}`)} ${buyValue}`;
   const sellLine = `${t(`page.perps.pro.trade.${labelKeys[1]}`)} ${sellValue}`;
   const triggerMode: TriggerTooltipMode | null = mode === 'price' ? null : mode;
@@ -164,7 +199,7 @@ export const PerpsProTpSlTooltip: React.FC<{
           style={styles.line}
           testID="perps-pro-tpsl-tooltip-buy-line">
           {t(`page.perps.pro.trade.${labelKeys[0]}`)}{' '}
-          <Text style={styles.buyValue}>{buyValue}</Text>
+          <Text style={buyValueStyle}>{buyValue}</Text>
         </Text>
         <Text
           ellipsizeMode="tail"
@@ -172,7 +207,7 @@ export const PerpsProTpSlTooltip: React.FC<{
           style={styles.line}
           testID="perps-pro-tpsl-tooltip-sell-line">
           {t(`page.perps.pro.trade.${labelKeys[1]}`)}{' '}
-          <Text style={styles.sellValue}>{sellValue}</Text>
+          <Text style={sellValueStyle}>{sellValue}</Text>
         </Text>
       </View>
       {shouldMeasureTrigger ? (
@@ -230,8 +265,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     lineHeight: 16,
   },
-  buyValue: { color: colors2024['red-default'] },
-  sellValue: { color: colors2024['green-default'] },
+  positiveValue: { color: colors2024['green-default'] },
+  negativeValue: { color: colors2024['red-default'] },
+  neutralValue: { color: colors2024['neutral-title-2'] },
   measureText: {
     opacity: 0,
     position: 'absolute',

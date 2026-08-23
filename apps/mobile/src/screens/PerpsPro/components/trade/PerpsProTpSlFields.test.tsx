@@ -74,6 +74,7 @@ jest.mock('./PerpsProTpSlModeSheet', () => ({
 
 import type { PerpsProTpSlController } from '../../scene/usePerpsProTpSl';
 import { PerpsProTpSlFields } from './PerpsProTpSlFields';
+import { resolvePerpsProTpSlTooltipTone } from './PerpsProTpSlTooltip';
 
 const draft = {
   enabled: true,
@@ -128,6 +129,55 @@ const controller = (overrides: Partial<PerpsProTpSlController> = {}) =>
   } as PerpsProTpSlController);
 
 describe('PerpsProTpSlFields', () => {
+  it('colors Price profit by sign and Trigger values by trade direction', () => {
+    const positive = evaluated('tp', '110');
+    const negative = evaluated('sl', '90');
+    const zero = { ...positive, estimatedPnl: '0' };
+
+    expect(
+      resolvePerpsProTpSlTooltipTone({
+        direction: 'buy',
+        leg: positive,
+        mode: 'price',
+      }),
+    ).toBe('positive');
+    expect(
+      resolvePerpsProTpSlTooltipTone({
+        direction: 'sell',
+        leg: negative,
+        mode: 'price',
+      }),
+    ).toBe('negative');
+    expect(
+      resolvePerpsProTpSlTooltipTone({
+        direction: 'buy',
+        leg: zero,
+        mode: 'price',
+      }),
+    ).toBe('neutral');
+    expect(
+      resolvePerpsProTpSlTooltipTone({
+        direction: 'buy',
+        leg: negative,
+        mode: 'pnl',
+      }),
+    ).toBe('positive');
+    expect(
+      resolvePerpsProTpSlTooltipTone({
+        direction: 'sell',
+        leg: positive,
+        mode: 'roi',
+      }),
+    ).toBe('negative');
+    expect(
+      resolvePerpsProTpSlTooltipTone({
+        direction: 'buy',
+        leg: null,
+        mode: 'roi',
+      }),
+    ).toBe('neutral');
+  });
+
   it('widens the quote unit while preserving the expanded TP/SL geometry', () => {
     render(
       <PerpsProTpSlFields

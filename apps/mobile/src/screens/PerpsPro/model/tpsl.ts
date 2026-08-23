@@ -117,6 +117,12 @@ export const normalizePerpsProTpSlPrice = ({
   ) {
     return null;
   }
+  // Hyperliquid explicitly permits integer prices regardless of significant
+  // figures. Preserve the user's exact integer before applying the non-integer
+  // five-significant-figure rule.
+  if (price.isInteger()) {
+    return price.toFixed(0);
+  }
   const significant = new BigNumber(price.toPrecision(5, BigNumber.ROUND_DOWN));
   const normalized = significant.decimalPlaces(
     Math.max(0, 6 - szDecimals),
