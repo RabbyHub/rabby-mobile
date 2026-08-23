@@ -99,7 +99,7 @@ describe('Perps Pro trade model', () => {
     ).toEqual({ baseSize: '0.023', quoteAmount: '11.71183' });
   });
 
-  it('resolves the first valid SP500 lot and rounds the hint up to two decimals', () => {
+  it('derives the first SP500 lot above the 10 USDC floor and rounds the hint up', () => {
     expect(
       resolvePerpsProMinimumOrderAmount({
         minimumQuoteAmount: 10,
@@ -113,7 +113,7 @@ describe('Perps Pro trade model', () => {
     });
   });
 
-  it('keeps the fallback display when the first valid lot is exactly 10', () => {
+  it('keeps 10 as the fallback display when one base lot does not raise the floor', () => {
     expect(
       resolvePerpsProMinimumOrderAmount({
         minimumQuoteAmount: 10,
@@ -121,13 +121,10 @@ describe('Perps Pro trade model', () => {
         szDecimals: 5,
       })?.displayQuoteAmount,
     ).toBe('10');
-  });
-
-  it('rejects invalid minimum-order contexts', () => {
     expect(
       resolvePerpsProMinimumOrderAmount({
         minimumQuoteAmount: 10,
-        price: '0',
+        price: '',
         szDecimals: 3,
       }),
     ).toBeNull();

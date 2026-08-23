@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProOpenOrderCommand } from '../../actions/openOrder';
 import type { PerpsProAttachedTpSlCommand } from '../../actions/openOrderWithAttachedTpSl';
 import type { PerpsProMarket } from '../../model/market';
+import { getPerpsProBboStrategyLabel } from '../../model/bbo';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import {
   getPerpsProBottomSheetChromeStyles,
@@ -83,7 +84,9 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
         ? reviewFacts.displayBase
         : reviewFacts.quoteAsset;
     const price =
-      execution.kind === 'limit' || execution.kind === 'conditionalLimit'
+      execution.kind === 'bboLimit'
+        ? getPerpsProBboStrategyLabel(execution.strategy)
+        : execution.kind === 'limit' || execution.kind === 'conditionalLimit'
         ? `${formatPerpsProPrice(
             execution.limitPrice,
             reviewFacts.pxDecimals,

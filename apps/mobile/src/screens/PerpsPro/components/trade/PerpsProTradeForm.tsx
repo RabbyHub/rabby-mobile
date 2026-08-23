@@ -176,7 +176,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
               maxDecimals={market?.marketData.pxDecimals ?? 2}
               onChangeText={value => controller.setPrice('limitPrice', value)}
               onPressSuffix={
-                form.attachedTpSl.enabled
+                form.attachedTpSl.enabled || form.tif !== 'Gtc'
                   ? undefined
                   : () => controller.enableBbo('cp1')
               }
@@ -323,7 +323,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
               });
             }}
           />
-          {form.orderType === 'limit' && !form.bboEnabled ? (
+          {form.orderType === 'limit' ? (
             <Pressable
               disabled={!configurationReady}
               onPress={() => openSheet('tif')}

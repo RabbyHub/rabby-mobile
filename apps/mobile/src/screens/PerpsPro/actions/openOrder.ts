@@ -12,6 +12,7 @@ import {
 import BigNumber from 'bignumber.js';
 
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
+import type { PerpsProBboStrategy } from '../model/bbo';
 import {
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
@@ -25,6 +26,7 @@ import {
 export type PerpsProOpenOrderExecution =
   | { kind: 'market'; slippageReferenceMidPrice: string }
   | { kind: 'limit'; limitPrice: string; tif: 'Alo' | 'Gtc' | 'Ioc' }
+  | { kind: 'bboLimit'; strategy: PerpsProBboStrategy }
   | {
       kind: 'conditionalMarket';
       referencePrice: string;
@@ -68,6 +70,30 @@ const decimal = (value: unknown) => {
     (value as string | number | null | undefined) ?? Number.NaN,
   );
   return number.isFinite() ? number : null;
+};
+
+export const finalizePerpsProBboOpenOrderCommand = (
+  command: PerpsProOpenOrderCommand,
+  limitPrice: string,
+): PerpsProOpenOrderCommand => {
+  const price = decimal(limitPrice);
+  const baseSize = decimal(command.baseSize);
+  if (
+    command.execution.kind !== 'bboLimit' ||
+    !price?.gt(0) ||
+    !baseSize?.gt(0)
+  ) {
+    throw new Error('BBO order price is unavailable');
+  }
+  return Object.freeze({
+    ...command,
+    execution: Object.freeze({
+      kind: 'limit' as const,
+      limitPrice: price.toFixed(),
+      tif: 'Gtc' as const,
+    }),
+    quoteAmount: baseSize.multipliedBy(price).toFixed(),
+  });
 };
 
 export const buildPerpsProOpenOrderCommand = ({
@@ -121,6 +147,9 @@ export const buildPerpsProOpenOrderCommand = ({
   if (!executionPrice) {
     throw new Error('Perps order price is unavailable');
   }
+  if (form.orderType === 'limit' && form.bboEnabled && !form.bboStrategy) {
+    throw new Error('BBO strategy is unavailable');
+  }
   if (form.orderType === 'limit' && form.bboEnabled && !bboSessionKey) {
     throw new Error('BBO order book is unavailable');
   }
@@ -169,11 +198,13 @@ export const buildPerpsProOpenOrderCommand = ({
     ) {
       throw new Error('ALO price would immediately match the order book');
     }
-    execution = {
-      kind: 'limit',
-      limitPrice: executionPrice,
-      tif: form.bboEnabled ? 'Gtc' : form.tif,
-    };
+    execution = form.bboEnabled
+      ? { kind: 'bboLimit', strategy: form.bboStrategy! }
+      : {
+          kind: 'limit',
+          limitPrice: executionPrice,
+          tif: form.tif,
+        };
   } else {
     const tpsl = inferPerpsProConditionalClassification({
       isBuy,
@@ -335,6 +366,13 @@ export const executePerpsProOpenOrder = async (
   }
   if (!dependencies.hasPermission()) {
     return { failureReason: 'regionRestricted', kind: 'failed' };
+  }
+  if (command.execution.kind === 'bboLimit') {
+    return {
+      error: 'BBO price must be finalized immediately before submission',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    };
   }
   if (!isContextCurrent(command, dependencies, sceneGuard)) {
     return { kind: 'staleContext' };
