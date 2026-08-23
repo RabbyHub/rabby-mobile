@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 import type { PerpsProPositionTpSlFormPresentation } from '../../model/layout';
@@ -534,9 +535,10 @@ export const PerpsProPositionTpSlForm: React.FC<{
           ]}
           testID="perps-pro-position-tpsl-footer">
           <Button
-            buttonStyle={
-              isPristineInlineEmpty ? styles.inlineEmptyConfirm : undefined
-            }
+            buttonStyle={[
+              PERPS_PRO_CONFIRM_BUTTON_STYLE,
+              isPristineInlineEmpty ? styles.inlineEmptyConfirm : undefined,
+            ]}
             disabled={!canReview}
             height={BOTTOM_BUTTON_COMPACT_HEIGHT}
             onPress={submit}

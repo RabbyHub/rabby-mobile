@@ -22,6 +22,7 @@ import {
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
 } from '../common/perpsProVisual';
 import { validatePositionTpSlTrigger } from '../../model/positionTpSl';
 import {
@@ -328,6 +329,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
               style={styles.footer}
               testID="perps-pro-conditional-order-edit-footer">
               <Button
+                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
                 disabled={!canReview || coveredByReview}
                 height={BOTTOM_BUTTON_COMPACT_HEIGHT}
                 onPress={() =>

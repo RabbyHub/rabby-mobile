@@ -48,11 +48,13 @@ jest.mock('@/components2024/Button', () => {
   const { Pressable, Text } = require('react-native');
   return {
     Button: ({
+      buttonStyle,
       height,
       onPress,
       title,
       type,
     }: {
+      buttonStyle?: object;
       height: number;
       onPress: () => void;
       title: string;
@@ -64,6 +66,7 @@ jest.mock('@/components2024/Button', () => {
           accessibilityRole: 'button',
           accessibilityValue: { text: `${height}:${type}` },
           onPress,
+          style: buttonStyle,
           testID: 'confirm-button',
         },
         ReactModule.createElement(Text, null, title),
@@ -276,6 +279,9 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(
       screen.getByTestId('confirm-button').props.accessibilityValue,
     ).toEqual({ text: '36:primary' });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('confirm-button').props.style),
+    ).toMatchObject({ borderRadius: 8 });
   });
 
   it('renders unavailable liquidation as a double dash', () => {

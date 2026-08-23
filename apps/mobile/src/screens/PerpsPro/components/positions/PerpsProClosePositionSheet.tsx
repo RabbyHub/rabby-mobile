@@ -14,7 +14,10 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import { PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE } from '../common/perpsProVisual';
+import {
+  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
+} from '../common/perpsProVisual';
 import {
   resolvePerpsProCloseSize,
   type PerpsProCloseDraft,
@@ -506,6 +509,7 @@ export const PerpsProClosePositionSheet: React.FC<{
               style={styles.footer}
               testID="perps-pro-close-position-footer">
               <Button
+                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
                 disabled={!valid || coveredByReview}
                 height={BOTTOM_BUTTON_COMPACT_HEIGHT}
                 onPress={() => {

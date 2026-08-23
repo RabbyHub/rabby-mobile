@@ -20,6 +20,7 @@ import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
   PERPS_PRO_ISOLATED_TEXT_STYLE,
   PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
 } from '../common/perpsProVisual';
@@ -278,6 +279,7 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
               style={styles.footer}
               testID="perps-pro-order-confirmation-footer">
               <Button
+                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
                 disabled={pending}
                 height={PERPS_PRO_ORDER_CONFIRM_HEIGHT}
                 loading={pending}

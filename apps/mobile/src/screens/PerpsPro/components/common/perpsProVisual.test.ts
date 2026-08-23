@@ -6,6 +6,7 @@ import {
   getPerpsProBottomSheetChromeStyles,
   getPerpsProIsolatedTextStyle,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
+  PERPS_PRO_CONFIRM_BUTTON_STYLE,
   PERPS_PRO_ISOLATED_TEXT_STYLE,
   PERPS_PRO_LIGHT_FIELD_BACKGROUND,
   PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
@@ -71,5 +72,6 @@ describe('Perps Pro visual contract', () => {
       fontVariant: ['stylistic-six'],
     });
     expect(PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET).toBe(24);
+    expect(PERPS_PRO_CONFIRM_BUTTON_STYLE).toEqual({ borderRadius: 8 });
   });
 });

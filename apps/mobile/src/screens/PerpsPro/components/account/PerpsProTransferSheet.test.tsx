@@ -119,11 +119,13 @@ describe('PerpsProTransferSheet', () => {
       screen.getByTestId('transfer-sheet').props.backdropProps.pressBehavior,
     ).toBe('close');
     expect(screen.getByTestId('transfer-confirm').props).toMatchObject({
-      buttonStyle: expect.objectContaining({ borderRadius: 8 }),
       isDisabled: true,
       loading: false,
       type: 'primary',
     });
+    expect(screen.getByTestId('transfer-confirm').props.buttonStyle).toEqual(
+      expect.arrayContaining([expect.objectContaining({ borderRadius: 8 })]),
+    );
     expect(
       screen.getByTestId('perps-pro-transfer-usdc-icon').props.style,
     ).toEqual({ height: 24, width: 24 });
