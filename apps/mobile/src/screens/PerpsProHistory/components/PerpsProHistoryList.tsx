@@ -128,11 +128,9 @@ export const PerpsProHistoryList: React.FC<{
       onEndReachedThreshold={0.3}
       refreshControl={
         <RefreshControl
-          colors={[colors2024['blue-default']]}
           enabled={active}
           onRefresh={onRefresh}
           refreshing={state.refreshing}
-          tintColor={colors2024['blue-default']}
         />
       }
       renderItem={renderItem}
