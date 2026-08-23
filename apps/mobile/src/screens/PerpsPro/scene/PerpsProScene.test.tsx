@@ -3,6 +3,7 @@ import React from 'react';
 import {
   AppState,
   Dimensions,
+  Keyboard,
   StyleSheet,
   type AppStateStatus,
 } from 'react-native';
@@ -25,6 +26,7 @@ const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
 const mockSelectOrderBookPrice = jest.fn();
 let mockTradeHasPermission = true;
+let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
 let mockTradeForm: {
   bboEnabled: boolean;
   orderType: 'conditional' | 'limit' | 'market';
@@ -431,6 +433,7 @@ jest.mock('./usePerpsProTrade', () => ({
     setPrice: jest.fn(),
     setSkipConfirmation: jest.fn(),
     skipConfirmation: false,
+    tpSl: { focusedLeg: mockTradeFocusedLeg },
   }),
 }));
 
@@ -579,6 +582,7 @@ describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTradeHasPermission = true;
+    mockTradeFocusedLeg = null;
     mockTradeForm = { bboEnabled: false, orderType: 'market' };
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
@@ -697,6 +701,35 @@ describe('PerpsProScene market loading states', () => {
       '101.23',
       'hyperliquid::BTC',
     );
+  });
+
+  it('consumes the first order-book price gesture while TP/SL is focused', () => {
+    mockTradeFocusedLeg = 'tp';
+    mockTradeForm = { bboEnabled: false, orderType: 'limit' };
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    const dismiss = jest
+      .spyOn(Keyboard, 'dismiss')
+      .mockImplementation(() => undefined);
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const consumeIntent =
+      mockOrderBookProps.mock.lastCall?.[0].onSelectPriceIntentStart;
+    expect(consumeIntent()).toBe(true);
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(mockSelectOrderBookPrice).not.toHaveBeenCalled();
   });
 
   it('routes unified non-USDC Trade add-funds to the current quote Swap', () => {

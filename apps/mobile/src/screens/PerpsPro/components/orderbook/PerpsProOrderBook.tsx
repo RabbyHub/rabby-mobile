@@ -4,7 +4,7 @@ import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFa
 import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -50,6 +50,7 @@ export const PerpsProOrderBook: React.FC<{
   onOpenFunding: () => void;
   onPrecisionIntentStart?: (option: PerpsTickOption) => void;
   onSelectPrice?: (price: string) => void;
+  onSelectPriceIntentStart?: () => boolean;
   onSelectTickOption: (option: PerpsTickOption) => void;
   selectedTickOption: PerpsTickOption | null;
   serverClock: PerpsServerClockSample | null;
@@ -65,6 +66,7 @@ export const PerpsProOrderBook: React.FC<{
   onOpenFunding,
   onPrecisionIntentStart,
   onSelectPrice,
+  onSelectPriceIntentStart,
   onSelectTickOption,
   selectedTickOption,
   serverClock,
@@ -113,6 +115,26 @@ export const PerpsProOrderBook: React.FC<{
     hasSnapshot: hasBookSnapshot,
     status: bookStatus,
   });
+  const priceIntentStartedRef = useRef(false);
+  const priceIntentConsumedRef = useRef(false);
+  const startPriceSelectionIntent = useCallback(() => {
+    priceIntentStartedRef.current = true;
+    priceIntentConsumedRef.current = onSelectPriceIntentStart?.() ?? false;
+  }, [onSelectPriceIntentStart]);
+  const selectPrice = useCallback(
+    (price: string) => {
+      const shouldConsume = priceIntentStartedRef.current
+        ? priceIntentConsumedRef.current
+        : onSelectPriceIntentStart?.() ?? false;
+      priceIntentStartedRef.current = false;
+      priceIntentConsumedRef.current = false;
+      if (!shouldConsume) {
+        onSelectPrice?.(price);
+      }
+    },
+    [onSelectPrice, onSelectPriceIntentStart],
+  );
+  const selectablePrice = onSelectPrice ? selectPrice : undefined;
 
   const renderRows = (side: 'ask' | 'bid', rows: PerpsOrderBookDisplayRow[]) =>
     Array.from({ length: rowCount }, (_, index) => (
@@ -121,7 +143,8 @@ export const PerpsProOrderBook: React.FC<{
         key={`${side}:${index}`}
         level={rows[index] ?? undefined}
         maxTotal={maxVisibleTotal}
-        onSelectPrice={onSelectPrice}
+        onSelectPrice={selectablePrice}
+        onSelectPriceIntentStart={startPriceSelectionIntent}
         priceDecimals={orderBookPriceDecimals}
         side={side}
       />
@@ -169,11 +192,12 @@ export const PerpsProOrderBook: React.FC<{
                   testID="perps-pro-order-book-mid-price">
                   <Pressable
                     accessibilityRole={
-                      latestTrade && onSelectPrice ? 'button' : undefined
+                      latestTrade && selectablePrice ? 'button' : undefined
                     }
-                    disabled={!latestTrade || !onSelectPrice}
+                    disabled={!latestTrade || !selectablePrice}
+                    onPressIn={startPriceSelectionIntent}
                     onPress={() =>
-                      latestTrade && onSelectPrice?.(latestTrade.price)
+                      latestTrade && selectablePrice?.(latestTrade.price)
                     }
                     testID="perps-pro-order-book-latest-price">
                     <Text
@@ -212,11 +236,12 @@ export const PerpsProOrderBook: React.FC<{
                   testID="perps-pro-order-book-mid-price">
                   <Pressable
                     accessibilityRole={
-                      latestTrade && onSelectPrice ? 'button' : undefined
+                      latestTrade && selectablePrice ? 'button' : undefined
                     }
-                    disabled={!latestTrade || !onSelectPrice}
+                    disabled={!latestTrade || !selectablePrice}
+                    onPressIn={startPriceSelectionIntent}
                     onPress={() =>
-                      latestTrade && onSelectPrice?.(latestTrade.price)
+                      latestTrade && selectablePrice?.(latestTrade.price)
                     }
                     testID="perps-pro-order-book-latest-price">
                     <Text

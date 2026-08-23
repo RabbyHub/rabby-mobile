@@ -310,6 +310,44 @@ describe('PerpsProOrderBook display shell', () => {
     expect(onSelectPrice).toHaveBeenCalledTimes(1);
   });
 
+  it('consumes a price gesture that started while TP/SL input was focused', () => {
+    const onSelectPrice = jest.fn();
+    const onSelectPriceIntentStart = jest.fn(() => true);
+    render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={{
+          coin: 'BTC',
+          price: '31.3314',
+          side: 'buy',
+          size: '1',
+          tid: 1,
+          time: 100,
+        }}
+        market={buildPerpsProMarket(marketData)}
+        onSelectPrice={onSelectPrice}
+        onSelectPriceIntentStart={onSelectPriceIntentStart}
+      />,
+    );
+
+    const latestPrice = screen.getByTestId('perps-pro-order-book-latest-price');
+    fireEvent(latestPrice, 'pressIn');
+    fireEvent.press(latestPrice);
+
+    expect(onSelectPriceIntentStart).toHaveBeenCalledTimes(1);
+    expect(onSelectPrice).not.toHaveBeenCalled();
+  });
+
   it('grows to the measured trade height and retains the center block in single mode', () => {
     render(
       <PerpsProOrderBook
