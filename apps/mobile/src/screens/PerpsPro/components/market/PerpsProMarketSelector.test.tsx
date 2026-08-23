@@ -647,36 +647,11 @@ describe('PerpsProMarketSelector', () => {
     expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
 
     fireEvent(screen.getByTestId('market-search'), 'focus');
-    const tabsRetentionHost = screen.getByTestId(
-      'perps-pro-market-tabs-retention-host',
-      { includeHiddenElements: true },
-    );
     expect(
-      screen.getByTestId('perps-pro-market-tabs', {
-        includeHiddenElements: true,
-      }),
-    ).toBeTruthy();
-    expect(tabsRetentionHost.props.pointerEvents).toBe('none');
-    expect(tabsRetentionHost.props.accessibilityElementsHidden).toBe(true);
-    expect(tabsRetentionHost.props.importantForAccessibility).toBe(
-      'no-hide-descendants',
-    );
-    expect(StyleSheet.flatten(tabsRetentionHost.props.style)).toMatchObject({
-      height: 0,
-      opacity: 0,
-      overflow: 'hidden',
-    });
+      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+    ).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
     fireEvent.press(screen.getByTestId('market-search-cancel'));
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-tabs-retention-host').props.style,
-      ),
-    ).toMatchObject({ overflow: 'hidden' });
-    expect(
-      screen.getByTestId('perps-pro-market-tabs-retention-host').props
-        .pointerEvents,
-    ).toBe('auto');
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });
@@ -866,17 +841,8 @@ describe('PerpsProMarketSelector', () => {
       ).map(market => market.displayPair),
     ).toEqual(['ETHUSDC', 'BTCUSDC', 'SOLUSDC']);
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-tabs-retention-host', {
-          includeHiddenElements: true,
-        }).props.style,
-      ),
-    ).toMatchObject({ height: 0, opacity: 0, overflow: 'hidden' });
-    expect(
-      screen.getByTestId('perps-pro-market-tabs', {
-        includeHiddenElements: true,
-      }),
-    ).toBeTruthy();
+      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+    ).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-column-header')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-name')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-volume')).toBeNull();
@@ -961,96 +927,6 @@ describe('PerpsProMarketSelector', () => {
     ).toBeTruthy();
     expect(marketListProps.searchMode).toBe(false);
     expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
-  });
-
-  it('retains a trailing tab strip instance through Search Cancel without selecting Favorites', () => {
-    __setFavoriteMarkets(['BTC']);
-    __setCategories([
-      {
-        id: 'category-a',
-        is_disable: false,
-        name: 'Category A',
-        priority: 0,
-        translations: {},
-      },
-      {
-        id: 'category-b',
-        is_disable: false,
-        name: 'Category B',
-        priority: 1,
-        translations: {},
-      },
-      {
-        id: 'category-c',
-        is_disable: false,
-        name: 'Category C',
-        priority: 2,
-        translations: {},
-      },
-    ]);
-    __setMarketData(
-      mockPerpsStore.getState().marketData.map((market, index) => ({
-        ...market,
-        categoryId: `category-${String.fromCharCode(97 + index)}`,
-      })),
-    );
-    render(
-      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
-    );
-
-    fireEvent.press(screen.getByTestId('perps-pro-market-tab-category-c'));
-    expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(4);
-    fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', 4);
-    const tabsBeforeSearch = screen.getByTestId('perps-pro-market-tabs');
-    expect(
-      screen.getByTestId('perps-pro-market-tab-category-c').props
-        .accessibilityState,
-    ).toEqual({ selected: true });
-    mockPagerSetPage.mockClear();
-    mockPagerSetPageWithoutAnimation.mockClear();
-
-    fireEvent(screen.getByTestId('market-search'), 'focus');
-
-    const hiddenHost = screen.getByTestId(
-      'perps-pro-market-tabs-retention-host',
-      { includeHiddenElements: true },
-    );
-    expect(
-      screen.getByTestId('perps-pro-market-tabs', {
-        includeHiddenElements: true,
-      }),
-    ).toBe(tabsBeforeSearch);
-    expect(StyleSheet.flatten(hiddenHost.props.style)).toMatchObject({
-      height: 0,
-      opacity: 0,
-      overflow: 'hidden',
-    });
-    expect(hiddenHost.props.pointerEvents).toBe('none');
-    expect(hiddenHost.props.accessibilityElementsHidden).toBe(true);
-    expect(hiddenHost.props.importantForAccessibility).toBe(
-      'no-hide-descendants',
-    );
-    expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
-    expect(screen.getByTestId('perps-pro-market-list-search')).toBeTruthy();
-
-    fireEvent.press(screen.getByTestId('market-search-cancel'));
-
-    const visibleHost = screen.getByTestId(
-      'perps-pro-market-tabs-retention-host',
-    );
-    expect(screen.getByTestId('perps-pro-market-tabs')).toBe(tabsBeforeSearch);
-    expect(StyleSheet.flatten(visibleHost.props.style)).toEqual({
-      overflow: 'hidden',
-    });
-    expect(visibleHost.props.pointerEvents).toBe('auto');
-    expect(visibleHost.props.accessibilityElementsHidden).toBe(false);
-    expect(visibleHost.props.importantForAccessibility).toBe('auto');
-    expect(
-      screen.getByTestId('perps-pro-market-tab-category-c').props
-        .accessibilityState,
-    ).toEqual({ selected: true });
-    expect(mockPagerSetPage).not.toHaveBeenCalled();
-    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
   });
 
   it('matches the Figma header spacing and keeps 44pt gesture-aware sort targets', () => {

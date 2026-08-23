@@ -581,26 +581,14 @@ describe('PerpsProMarketSelector component', () => {
     expect(removeFavoriteMarket).toHaveBeenCalledWith('MARKET000');
     expect(getLatestListProps('favorites').data).toHaveLength(1);
 
-    const tabsBeforeSearch = screen.getByTestId('perps-pro-market-tabs');
     act(() => {
       fireEvent(screen.getByTestId('market-search'), 'focus');
       fireEvent.changeText(screen.getByTestId('market-search'), 'MARKET295');
     });
-    const hiddenTabsHost = screen.getByTestId(
-      'perps-pro-market-tabs-retention-host',
-      { includeHiddenElements: true },
-    );
-    expect(hiddenTabsHost.props.pointerEvents).toBe('none');
-    expect(hiddenTabsHost.props.accessibilityElementsHidden).toBe(true);
-    expect(hiddenTabsHost.props.importantForAccessibility).toBe(
-      'no-hide-descendants',
-    );
-    expect(hiddenTabsHost.props.style).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ overflow: 'hidden' }),
-        expect.objectContaining({ height: 0, opacity: 0 }),
-      ]),
-    );
+    expect(
+      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+    ).toBeNull();
+    expect(screen.queryByText('page.perps.pro.marketSelector.all')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-column-header')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-name')).toBeNull();
@@ -613,11 +601,6 @@ describe('PerpsProMarketSelector component', () => {
     act(() => {
       jest.runOnlyPendingTimers();
     });
-    expect(screen.getByTestId('perps-pro-market-tabs')).toBe(tabsBeforeSearch);
-    expect(
-      screen.getByTestId('perps-pro-market-tabs-retention-host').props
-        .pointerEvents,
-    ).toBe('auto');
     expect(getLatestListProps('favorites').data).toHaveLength(1);
     expect(
       screen.getByText('page.perps.pro.marketSelector.favorites'),
@@ -660,6 +643,45 @@ describe('PerpsProMarketSelector component', () => {
     );
     expect(mockDismiss).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the prior tab selected when the iOS pager emits a mount-time page-zero scroll after Search Cancel', () => {
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+
+    act(() => {
+      fireEvent.press(screen.getByTestId('perps-pro-market-tab-layer-one'));
+      jest.runOnlyPendingTimers();
+    });
+    expect(
+      screen.getByTestId('perps-pro-market-tab-layer-one').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+
+    act(() => {
+      fireEvent(screen.getByTestId('market-search'), 'focus');
+    });
+    expect(screen.queryByTestId('perps-pro-market-tabs')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
+    expect(getLatestListProps('search').data).toHaveLength(296);
+
+    act(() => {
+      fireEvent.press(screen.getByTestId('market-search-cancel'));
+      jest.runOnlyPendingTimers();
+    });
+    fireEvent.scroll(screen.getByTestId('perps-pro-market-pager'), {
+      nativeEvent: { contentOffset: { x: 0, y: 0 } },
+    });
+
+    expect(
+      screen.getByTestId('perps-pro-market-tab-layer-one').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    expect(
+      screen.getByTestId('perps-pro-market-tab-favorites').props
+        .accessibilityState,
+    ).toEqual({ selected: false });
   });
 
   it('resolves a touch intent from the latest market data and forwards cancellation by key', () => {

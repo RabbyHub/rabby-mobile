@@ -507,23 +507,13 @@ const PerpsProMarketSelectorComponent = forwardRef<
               style={styles.search}
               value={query}
             />
-            <View
-              accessibilityElementsHidden={isSearchMode}
-              importantForAccessibility={
-                isSearchMode ? 'no-hide-descendants' : 'auto'
-              }
-              pointerEvents={isSearchMode ? 'none' : 'auto'}
-              style={[
-                styles.tabsRetentionHost,
-                isSearchMode && styles.hiddenTabsRetentionHost,
-              ]}
-              testID="perps-pro-market-tabs-retention-host">
+            {!isSearchMode ? (
               <PerpsProMarketTabs
                 activeTab={displayedTab}
                 onChange={selectTab}
                 tabs={tabs}
               />
-            </View>
+            ) : null}
             {!isSearchMode ? (
               <View
                 style={styles.columnHeader}
@@ -659,13 +649,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 15,
     marginRight: 15,
     marginTop: 0,
-  },
-  tabsRetentionHost: {
-    overflow: 'hidden',
-  },
-  hiddenTabsRetentionHost: {
-    height: 0,
-    opacity: 0,
   },
   searchResults: {
     flex: 1,
