@@ -100,6 +100,20 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
 
 jest.mock('../actions/openOrderWithAttachedTpSl', () => ({
   executePerpsProAttachedTpSl: (...args: unknown[]) => mockExecute(...args),
+  getPerpsProAttachedTpSlBatchError: (
+    batch: { legs?: Array<{ error?: string; kind: string; role: string }> },
+    roles?: Set<string>,
+  ) =>
+    [
+      ...new Set(
+        (batch?.legs ?? [])
+          .filter(
+            leg => leg.kind === 'rejected' && (!roles || roles.has(leg.role)),
+          )
+          .map(leg => leg.error)
+          .filter(Boolean),
+      ),
+    ].join('\n') || undefined,
   getPerpsProAttachedTpSlPositionIdentity: () => ({
     entryPx: '',
     marginUsed: '',
@@ -299,5 +313,30 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     expect(mockUpsertJournal).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: 'partial' }),
     );
+  });
+
+  it('preserves a parent rejection returned by Hyperliquid', async () => {
+    const serverError =
+      'Post only order would have immediately matched, bbo was 101.';
+    mockExecute.mockResolvedValueOnce({
+      batch: {
+        legs: [{ error: serverError, kind: 'rejected', role: 'parent' }],
+      },
+      kind: 'parentRejected',
+    });
+    const { hook } = renderExecution();
+
+    let result: Awaited<ReturnType<typeof hook.result.current.execute>>;
+    await act(async () => {
+      result = await hook.result.current.execute(
+        command,
+        jest.fn(async () => 'success'),
+      );
+    });
+
+    expect(result!).toMatchObject({
+      error: serverError,
+      kind: 'parentRejected',
+    });
   });
 });

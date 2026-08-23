@@ -1664,6 +1664,41 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     },
   );
 
+  it('shows the raw child rejection before the local partial-safety guidance', async () => {
+    const serverError = 'Invalid TP trigger price';
+    mockExecuteAttached.mockResolvedValueOnce({
+      error: serverError,
+      kind: 'childRejected',
+      reconciliationErrors: [],
+      refreshErrors: [],
+    });
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+    act(() => hook.result.current.setAmount('101'));
+    act(() => hook.result.current.tpSl.setRawMagnitude('tp', '110'));
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      `${serverError}\npage.perps.pro.trade.attachedTpSlChildRejected`,
+      'error',
+    );
+  });
+
   it('persists a Trade leverage confirmation immediately through the shared updater', async () => {
     const updateLeverageRequest = jest.fn(async () => true);
     const hook = renderHook(() =>
