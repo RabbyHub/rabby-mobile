@@ -575,4 +575,87 @@ describe('PerpsProPositionTpSlForm', () => {
         .value,
     ).toBe('110');
   });
+
+  it('shows the Desktop liquidation error on both full-position inputs without adding a PnL cap', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position()}
+      />,
+    );
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-mode'),
+    );
+    act(() => mockModeSheetProps.mock.lastCall?.[0].onSelect('pnl'));
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '40',
+    );
+
+    expect(
+      screen.getByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeTruthy();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '-40.00',
+      roi: '-400.00',
+      trigger: '60.00',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price-field').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-field')
+          .props.style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '10',
+    );
+    expect(
+      screen.queryByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: false });
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input-mode'),
+    );
+    act(() => mockModeSheetProps.mock.lastCall?.[0].onSelect('pnl'));
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '999999',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        legs: expect.arrayContaining([
+          expect.objectContaining({
+            kind: 'takeProfit',
+            triggerPrice: '1000099',
+          }),
+        ]),
+        mode: 'position',
+        scope: 'position',
+      }),
+    );
+  });
 });

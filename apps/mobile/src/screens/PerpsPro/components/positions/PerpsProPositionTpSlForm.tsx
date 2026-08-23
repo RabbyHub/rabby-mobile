@@ -22,11 +22,13 @@ import type { PerpsProPositionTpSlFormPresentation } from '../../model/layout';
 import {
   buildPositionTpSlSummary,
   validatePartialPositionTpSlAmount,
+  validateFullPositionTpSlFormTrigger,
   validatePositionTpSlTrigger,
   type PerpsPositionTpSlDraft,
   type PerpsPositionTpSlKind,
   type PerpsPositionTpSlMarketSnapshot,
   type PerpsPositionTpSlOrderViewModel,
+  type PerpsPositionTpSlFormTriggerValidation,
 } from '../../model/positionTpSl';
 import { resolvePerpsProCloseSize } from '../../model/positionAction';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
@@ -242,8 +244,45 @@ export const PerpsProPositionTpSlForm: React.FC<{
     const getSideInput = (kind: PerpsPositionTpSlKind) =>
       kind === 'takeProfit' ? takeProfitInput : stopLossInput;
 
+    const getFullPositionTriggerError = (
+      validation: PerpsPositionTpSlFormTriggerValidation,
+    ) => {
+      if (validation.kind !== 'invalid') {
+        return null;
+      }
+      switch (validation.reason) {
+        case 'takeProfitBelowMark':
+          return t('page.perps.PerpsAutoCloseModal.takeProfitTipsLong');
+        case 'takeProfitAboveMark':
+          return t('page.perps.PerpsAutoCloseModal.takeProfitTipsShort');
+        case 'stopLossAboveMark':
+          return t('page.perps.PerpsAutoCloseModal.stopLossTipsLong');
+        case 'stopLossBelowMark':
+          return t('page.perps.PerpsAutoCloseModal.stopLossTipsShort');
+        case 'stopLossBelowLiquidation':
+          return t('page.perps.pro.positionTpsl.triggerHigherThanLiquidation', {
+            price: `$${formatPerpsProPrice(
+              validation.liquidationPrice,
+              market.pxDecimals,
+            )}`,
+          });
+        case 'stopLossAboveLiquidation':
+          return t('page.perps.pro.positionTpsl.triggerLowerThanLiquidation', {
+            price: `$${formatPerpsProPrice(
+              validation.liquidationPrice,
+              market.pxDecimals,
+            )}`,
+          });
+        case 'takeProfitDerivedInvalid':
+          return t('page.perps.pro.positionTpsl.tpTriggerInvalid');
+        case 'stopLossDerivedInvalid':
+          return t('page.perps.pro.positionTpsl.slTriggerInvalid');
+      }
+    };
+
     const sideFacts = (kind: PerpsPositionTpSlKind) => {
-      const value = getSideInput(kind).triggerPrice;
+      const input = getSideInput(kind);
+      const value = input.triggerPrice;
       const initial =
         kind === 'takeProfit' ? initialTakeProfit : initialStopLoss;
       const sideSummary =
@@ -258,17 +297,35 @@ export const PerpsProPositionTpSlForm: React.FC<{
           : null;
       const duplicate =
         mode === 'position' && sideSummary.duplicatePositionOrders;
-      return {
-        changed: value !== initial,
-        duplicate,
-        existing,
-        sideSummary,
-        validation: validatePositionTpSlTrigger({
+      const fullPositionValidation =
+        mode === 'position'
+          ? validateFullPositionTpSlFormTrigger({
+              direction: position.direction,
+              inputSource: input.source,
+              kind,
+              liquidationPrice: position.liquidationPrice,
+              markPrice,
+              rawMagnitude: input.rawMagnitude,
+              triggerPrice: value,
+            })
+          : null;
+      const validation =
+        fullPositionValidation ??
+        validatePositionTpSlTrigger({
           direction: position.direction,
           kind,
           markPrice,
           triggerPrice: value,
-        }),
+        });
+      return {
+        changed: value !== initial,
+        duplicate,
+        errorMessage: fullPositionValidation
+          ? getFullPositionTriggerError(fullPositionValidation)
+          : null,
+        existing,
+        sideSummary,
+        validation,
         value,
       };
     };
@@ -293,10 +350,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
           facts.validation.kind === 'valid' ? facts.validation.normalized : '',
       }));
     const hasInvalidEnteredSide = factsByKind.some(
-      ({ facts }) =>
-        !facts.duplicate &&
-        facts.value.length > 0 &&
-        facts.validation.kind !== 'valid',
+      ({ facts }) => !facts.duplicate && facts.validation.kind === 'invalid',
     );
     const canReview =
       !pending &&
@@ -420,6 +474,8 @@ export const PerpsProPositionTpSlForm: React.FC<{
                     position={position}
                     rawMagnitude={input.rawMagnitude}
                     selectedMode={input.mode}
+                    errorMessage={facts.errorMessage}
+                    highlightInvalidFields={mode === 'position'}
                     showEmptyDescription={mode === 'position'}
                     size={sideSize}
                     validationKind={facts.validation.kind}

@@ -20,6 +20,7 @@ const withThousandsSeparators = (value: string) => {
 export const PerpsProPositionTpSlInput: React.FC<{
   accessibilityLabel: string;
   disabled: boolean;
+  invalid?: boolean;
   label: string;
   maxDecimals: number;
   negative?: boolean;
@@ -32,6 +33,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
   ({
     accessibilityLabel,
     disabled,
+    invalid = false,
     label,
     maxDecimals,
     negative = false,
@@ -50,7 +52,9 @@ export const PerpsProPositionTpSlInput: React.FC<{
     }${withThousandsSeparators(value)}`;
 
     return (
-      <View style={styles.field} testID={`${testID}-field`}>
+      <View
+        style={[styles.field, invalid ? styles.invalidField : null]}
+        testID={`${testID}-field`}>
         <View style={styles.inputArea}>
           {showFloatingLabel ? (
             <Text
@@ -138,6 +142,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       isLight,
     }),
     borderRadius: 6,
+    borderColor: 'transparent',
+    borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
     gap: 4,
@@ -145,6 +151,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     minWidth: 0,
     paddingHorizontal: 8,
   },
+  invalidField: { borderColor: colors2024['red-default'] },
   inputArea: {
     flex: 1,
     height: 40,

@@ -169,6 +169,14 @@ export const usePerpsProPositionTpSl = (
     (scope: PerpsProPositionTpSlSettlement['scope']) => {
       setReview(null);
       setSkipConfirmation(false);
+      if (scope === 'position') {
+        editorSessionRef.current += 1;
+        setEditor(null);
+        setCancelingOids([]);
+        setConfirmedCancelledOids([]);
+        setSettlement(null);
+        return;
+      }
       setSettlement({
         revision: ++settlementRevisionRef.current,
         scope,

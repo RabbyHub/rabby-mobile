@@ -202,6 +202,62 @@ describe('usePerpsProPositionTpSl', () => {
     );
   });
 
+  it('closes the editor after a full-position TP/SL submission', async () => {
+    mockBuildPositionTpSl.mockReturnValue({
+      account,
+      coin: 'BTC',
+      direction: 'long',
+      expectedPositionSize: '1',
+      legs: [
+        {
+          kind: 'takeProfit',
+          replaceOid: null,
+          size: null,
+          triggerPrice: '110',
+        },
+      ],
+      markPrice: '100',
+      scope: 'position',
+      type: 'positionTpSl',
+    });
+    mockExecutePositionTpSl.mockResolvedValue({
+      kind: 'success',
+      legs: [
+        {
+          cancel: 'notRequired',
+          create: 'success',
+          kind: 'takeProfit',
+          oid: 8,
+          replacedOid: null,
+        },
+      ],
+    });
+    const hook = renderHook(() => usePerpsProPositionTpSl('account-a', 'base'));
+    act(() => hook.result.current.open(position, 'position'));
+    await act(async () => {
+      await hook.result.current.requestReview({
+        legs: [
+          {
+            kind: 'takeProfit',
+            replaceOid: null,
+            size: null,
+            triggerPrice: '110',
+          },
+        ],
+        mode: 'position',
+        scope: 'position',
+      });
+    });
+
+    await act(async () => {
+      await hook.result.current.confirm();
+    });
+
+    expect(hook.result.current.editor).toBeNull();
+    expect(hook.result.current.review).toBeNull();
+    expect(hook.result.current.settlement).toBeNull();
+  });
+
   it('persists the TP/SL-specific skip choice only when the checked confirmation is submitted', async () => {
     mockExecutePositionTpSl.mockResolvedValue({
       kind: 'success',
