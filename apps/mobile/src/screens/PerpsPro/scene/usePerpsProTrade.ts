@@ -84,6 +84,7 @@ import {
   getPerpsProMaxDisplayReferencePrice,
   getPerpsProTradeDisplayReferencePrice,
   resolvePerpsProSliderAmount,
+  resolvePerpsProMaxBaseCapacity,
   resolvePerpsProTradeProjection,
 } from '../model/tradeProjection';
 import { resolvePerpsProProjectedTradeRisk } from '../model/tradeRisk';
@@ -842,17 +843,39 @@ export const usePerpsProTrade = ({
           ? new BigNumber(0)
           : new BigNumber(currentPosition?.szi ?? 0).abs();
       }
-      return (
-        positive(scopedActiveAssetData?.maxTradeSzs[side === 'buy' ? 0 : 1]) ??
-        new BigNumber(0)
+      const serverMaxBase =
+        scopedActiveAssetData?.maxTradeSzs[side === 'buy' ? 0 : 1] ?? '0';
+      const maxReferencePrice = getPerpsProMaxDisplayReferencePrice({
+        form,
+        marketPrice: maxDisplayMarketPrice,
+      });
+      return new BigNumber(
+        resolvePerpsProMaxBaseCapacity({
+          availableQuote: scopedActiveAssetData
+            ? BigNumber.min(
+                scopedActiveAssetData.availableToTrade[0],
+                scopedActiveAssetData.availableToTrade[1],
+              ).toFixed()
+            : '0',
+          currentPositionSize: currentPosition?.szi,
+          leverage,
+          orderType: form.orderType,
+          referencePrice: maxReferencePrice,
+          serverMaxBase,
+          side,
+          szDecimals: market?.marketData.szDecimals ?? 0,
+        }),
       );
     },
     [
       currentPosition?.szi,
-      form.reduceOnly,
+      form,
+      leverage,
+      market?.marketData.szDecimals,
+      maxDisplayMarketPrice,
       reduceOnlyAvailability.buyUnavailable,
       reduceOnlyAvailability.sellUnavailable,
-      scopedActiveAssetData?.maxTradeSzs,
+      scopedActiveAssetData,
     ],
   );
   const getMaxDisplayAmount = useCallback(
@@ -861,12 +884,11 @@ export const usePerpsProTrade = ({
         amountUnit: form.amountUnit,
         maxBase: getMaxBase(side).toFixed(),
         referencePrice: getPerpsProMaxDisplayReferencePrice({
-          bboPrice: getBboPrice(side),
           form,
           marketPrice: maxDisplayMarketPrice,
         }),
       }),
-    [form, getBboPrice, getMaxBase, maxDisplayMarketPrice],
+    [form, getMaxBase, maxDisplayMarketPrice],
   );
   const setAmount = useCallback(
     (value: string) => {

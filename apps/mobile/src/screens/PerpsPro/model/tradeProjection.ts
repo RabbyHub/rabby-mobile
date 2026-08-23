@@ -15,6 +15,53 @@ const positive = (value: unknown) => {
   return number.isFinite() && number.gt(0) ? number : null;
 };
 
+export const PERPS_PRO_LIMIT_MARGIN_SAFETY_RATIO = 0.99;
+
+export const resolvePerpsProMaxBaseCapacity = ({
+  availableQuote,
+  currentPositionSize,
+  leverage,
+  orderType,
+  referencePrice,
+  serverMaxBase,
+  side,
+  szDecimals,
+}: {
+  availableQuote: string;
+  currentPositionSize?: string | null;
+  leverage: number;
+  orderType: PerpsProTradeFormState['orderType'];
+  referencePrice: string;
+  serverMaxBase: string;
+  side: PerpsProTradeSide;
+  szDecimals: number;
+}) => {
+  const serverMaximum = positive(serverMaxBase) ?? new BigNumber(0);
+  if (orderType !== 'limit' || !serverMaximum.gt(0)) {
+    return serverMaximum.toFixed();
+  }
+  const balance = positive(availableQuote);
+  const price = positive(referencePrice);
+  if (!balance || !price || !Number.isFinite(leverage) || leverage <= 0) {
+    return serverMaximum.toFixed();
+  }
+  const position = new BigNumber(currentPositionSize ?? 0);
+  const closable =
+    position.isFinite() &&
+    ((side === 'buy' && position.lt(0)) || (side === 'sell' && position.gt(0)))
+      ? position.abs()
+      : new BigNumber(0);
+  const policyMaximum = balance
+    .multipliedBy(leverage)
+    .multipliedBy(PERPS_PRO_LIMIT_MARGIN_SAFETY_RATIO)
+    .dividedBy(price)
+    .decimalPlaces(Math.max(0, szDecimals), BigNumber.ROUND_DOWN)
+    .plus(closable);
+  // Active Asset remains the hard server ceiling. The explicit 0.99 policy
+  // only reserves headroom when its limit-price estimate is more conservative.
+  return BigNumber.min(serverMaximum, policyMaximum).toFixed();
+};
+
 export const getPerpsProTradeDisplayReferencePrice = ({
   form,
   marketPrice,
@@ -32,11 +79,9 @@ export const getPerpsProTradeDisplayReferencePrice = ({
 };
 
 export const getPerpsProMaxDisplayReferencePrice = ({
-  bboPrice,
   form,
   marketPrice,
 }: {
-  bboPrice: string | null;
   form: PerpsProTradeFormState;
   marketPrice: string;
 }) => {
@@ -45,7 +90,7 @@ export const getPerpsProMaxDisplayReferencePrice = ({
   }
   if (form.orderType === 'limit') {
     if (form.bboEnabled) {
-      return bboPrice;
+      return marketPrice;
     }
     return positive(form.limitPrice)?.toFixed() ?? marketPrice;
   }
