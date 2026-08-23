@@ -2112,9 +2112,22 @@ export const usePerpsProTrade = ({
     const reviewFacts = review.reviewFacts;
     if (!reviewFacts) return null;
     if (parent.reduceOnly) return null;
+    const bboEntryPrice =
+      parent.execution.kind === 'bboLimit' &&
+      bboStatus === 'ready' &&
+      !!bboSessionKey &&
+      parent.bboSessionKey === bboSessionKey
+        ? resolvePerpsProBboPrice({
+            isBuy: parent.side === 'buy',
+            prices: bboPrices,
+            strategy: parent.execution.strategy,
+          })
+        : null;
     const entryPrice =
       review.type === 'openOrderWithAttachedTpSl'
         ? review.attached.expectedEntryPrice
+        : parent.execution.kind === 'bboLimit'
+        ? bboEntryPrice
         : parent.execution.kind === 'limit' ||
           parent.execution.kind === 'conditionalLimit'
         ? parent.execution.limitPrice
@@ -2136,7 +2149,15 @@ export const usePerpsProTrade = ({
       side: parent.side,
     });
     return risk ? { gap: risk.gap, price: risk.liquidationPrice } : null;
-  }, [currentPosition, crossMarginAvailableAfterMaintenance, market, review]);
+  }, [
+    bboPrices,
+    bboSessionKey,
+    bboStatus,
+    currentPosition,
+    crossMarginAvailableAfterMaintenance,
+    market,
+    review,
+  ]);
 
   return {
     amountDecimals,

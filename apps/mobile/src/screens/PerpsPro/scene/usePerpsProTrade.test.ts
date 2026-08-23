@@ -601,7 +601,15 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.review).toMatchObject({
       execution: { kind: 'bboLimit', strategy: 'cp1' },
     });
+    expect(hook.result.current.estimatedLiquidation).toMatchObject({
+      price: '50.00',
+    });
+    expect(mockCalLiquidationPrice.mock.lastCall?.[0]).toBe(101);
     hook.rerender({ ask: '102' });
+    expect(hook.result.current.estimatedLiquidation).toMatchObject({
+      price: '50.00',
+    });
+    expect(mockCalLiquidationPrice.mock.lastCall?.[0]).toBe(102);
     await act(async () => hook.result.current.confirmReview());
 
     expect(mockLimitOrderOpen).toHaveBeenCalledWith(

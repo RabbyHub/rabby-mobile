@@ -199,7 +199,7 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                       )} ${reviewFacts.quoteAsset} (${(
                         estimatedLiquidation.gap * 100
                       ).toFixed(2)}%)`
-                    : '-'
+                    : '--'
                 }
               />
               <DetailRow
