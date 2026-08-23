@@ -411,6 +411,16 @@ describe('Perps Pro account facts', () => {
       spotState,
       userAbstraction: 'portfolioMargin',
     });
+    const unified = buildPerpsAccountViewModel({
+      clearinghouseState: aggregate,
+      marketDataMap: {
+        BTC: { coin: 'BTC', dexId: '', quoteAsset: 'USDC' },
+      },
+      spotAssetCtxs: { '@10': { markPx: '2' } },
+      spotMeta,
+      spotState,
+      userAbstraction: 'unifiedAccount',
+    });
     const invalidPortfolioMarginRatio = buildPerpsAccountViewModel({
       clearinghouseState: aggregate,
       marketDataMap: {
@@ -478,6 +488,13 @@ describe('Perps Pro account facts', () => {
       unrealizedPnl: '10',
     });
     expect(portfolioMargin.assets[0]).toMatchObject({
+      action: 'swap',
+      fullName: 'USD Coin',
+      ledger: 'unified',
+    });
+    expect(unified).toMatchObject({ mode: 'unified' });
+    expect(unified.assets[0]).toMatchObject({
+      action: 'swap',
       fullName: 'USD Coin',
       ledger: 'unified',
     });

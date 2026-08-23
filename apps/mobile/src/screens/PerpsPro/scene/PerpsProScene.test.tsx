@@ -13,6 +13,7 @@ const mockMarketSelectorPresent = jest.fn();
 const mockOrderBookRender = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockTradeFormProps = jest.fn();
+const mockFundingOverlayProps = jest.fn();
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
@@ -146,12 +147,32 @@ jest.mock('../components/account/PerpsProAccountSkeleton', () => {
   };
 });
 
+jest.mock('../components/account/PerpsProAccountAssetRow', () => {
+  const ReactModule = require('react');
+  const { Pressable } = require('react-native');
+  return {
+    PerpsProAccountAssetRow: ({
+      asset,
+      onSwap,
+    }: {
+      asset: { coin: string; key: string };
+      onSwap: (coin: string) => void;
+    }) =>
+      ReactModule.createElement(Pressable, {
+        onPress: () => onSwap(asset.coin),
+        testID: `account-asset-${asset.key}`,
+      }),
+  };
+});
+
 jest.mock('../components/account/PerpsProFundingOverlay', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProFundingOverlay: () =>
-      ReactModule.createElement(View, { testID: 'funding-overlay' }),
+    PerpsProFundingOverlay: (props: object) => {
+      mockFundingOverlayProps(props);
+      return ReactModule.createElement(View, { testID: 'funding-overlay' });
+    },
   };
 });
 
@@ -1090,6 +1111,51 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByText('page.perps.pro.account.deposit')).toBeTruthy();
     expect(screen.getByText('page.perps.pro.account.withdraw')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-account-state-empty')).toBeNull();
+  });
+
+  it('opens the Unified USDC Account action as an editable source Swap', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        account: {
+          assets: [
+            {
+              action: 'swap',
+              available: '10',
+              coin: 'USDC',
+              fullName: 'USD Coin',
+              key: 'unified:0',
+              ledger: 'unified',
+              total: '10',
+              usdValue: '10',
+            },
+          ],
+          diagnostics: {
+            complete: true,
+            unresolvedDexes: [],
+            unpricedNonZeroAssets: [],
+          },
+          metrics: [],
+          mode: 'unified',
+          primaryKey: 'accountValue',
+          primaryValue: '10',
+          titleKey: 'accountSummary',
+          unrealizedPnl: '0',
+        },
+        accountState: 'ready',
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    fireEvent.press(screen.getByTestId('account-asset-unified:0'));
+
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      mode: 'swap',
+      sourceAsset: 'USDC',
+      targetAsset: 'USDC',
+    });
   });
 
   it('renders approved Position and Open Orders empty rows only for authoritative emptiness', () => {

@@ -137,6 +137,7 @@ type PerpsProSceneRow =
 
 interface FundingOverlayState {
   mode: PerpsProFundingMode;
+  sourceAsset?: PerpsQuoteAsset;
   targetAsset: PerpsQuoteAsset;
 }
 
@@ -276,7 +277,11 @@ export const PerpsProScene: React.FC<{
     [],
   );
   const openSwap = useCallback((targetAsset: PerpsQuoteAsset) => {
-    setFundingOverlay({ mode: 'swap', targetAsset });
+    setFundingOverlay(
+      targetAsset === 'USDC'
+        ? { mode: 'swap', sourceAsset: 'USDC', targetAsset }
+        : { mode: 'swap', targetAsset },
+    );
   }, []);
   const openMarketSelector = useCallback(
     () => dismissKeyboardThen(() => marketSelectorRef.current?.present()),
@@ -873,6 +878,7 @@ export const PerpsProScene: React.FC<{
             mode={fundingOverlay.mode}
             onClose={closeFundingOverlay}
             onOpenDeposit={openDepositFromFunding}
+            sourceAsset={fundingOverlay.sourceAsset}
             targetAsset={fundingOverlay.targetAsset}
           />
         </PerpsProSheetNavigationBoundary>
