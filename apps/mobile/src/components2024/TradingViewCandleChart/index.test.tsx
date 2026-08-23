@@ -112,6 +112,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
   });
 
   it('reloads once and then rejects a stale resource for Perps Pro', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
     const onChartError = jest.fn();
     const onChartReady = jest.fn();
     render(
@@ -132,6 +133,11 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     expect(mockReload).toHaveBeenCalledTimes(1);
     expect(onChartReady).not.toHaveBeenCalled();
     expect(onChartError).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalledWith(
+      'TradingViewChart: Perps Pro K-line protocol mismatch',
+      { actualVersion: null, requiredVersion: 1 },
+    );
+    consoleError.mockRestore();
   });
 
   it('keeps the legacy payload free of Pro configuration and Pro-only candle fields', () => {

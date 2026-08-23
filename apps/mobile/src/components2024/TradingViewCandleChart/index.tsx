@@ -266,6 +266,15 @@ const TradingViewCandleChart = ({
               }
               if (!protocolErrorReportedRef.current) {
                 protocolErrorReportedRef.current = true;
+                console.error(
+                  'TradingViewChart: Perps Pro K-line protocol mismatch',
+                  {
+                    actualVersion:
+                      message.capabilities?.perpsProKlineProtocolVersion ??
+                      null,
+                    requiredVersion: PERPS_PRO_KLINE_PROTOCOL_VERSION,
+                  },
+                );
                 setWebViewError(PERPS_PRO_KLINE_PROTOCOL_ERROR);
                 onChartError?.();
               }
