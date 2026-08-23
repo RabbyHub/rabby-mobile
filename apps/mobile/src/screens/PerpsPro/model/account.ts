@@ -288,7 +288,7 @@ const buildAccountAssets = ({
         continue;
       }
       const coin = COLLATERAL_TOKEN_TO_QUOTE[balance.token];
-      if (!coin) {
+      if (!coin || coin === 'USDH') {
         continue;
       }
       const price = resolveSpotUsdcPrice(balance.coin, spotAssetCtxs, spotMeta);
@@ -351,6 +351,9 @@ const buildAccountAssets = ({
     });
   }
   for (const [coin, value] of perpsByQuote) {
+    if (coin === 'USDH') {
+      continue;
+    }
     rows.push({
       action: coin === 'USDC' ? 'none' : 'swap',
       available: value.available.toString(),

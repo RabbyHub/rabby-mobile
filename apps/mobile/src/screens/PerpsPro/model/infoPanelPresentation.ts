@@ -1,3 +1,9 @@
+import type { PerpsProInfoTab } from '@/core/services/perpsService';
+
+export const resolvePerpsProInitialInfoTab = (
+  positionCount: number,
+): PerpsProInfoTab => (positionCount > 0 ? 'positions' : 'account');
+
 export const isPerpsProCollectionAuthoritativelyEmpty = ({
   hasAccount,
   runtimeReady,

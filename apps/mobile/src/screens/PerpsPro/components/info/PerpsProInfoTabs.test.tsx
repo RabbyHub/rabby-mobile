@@ -59,6 +59,11 @@ describe('PerpsProInfoTabs', () => {
 
     expect(screen.getByText('Positions (45)').props.numberOfLines).toBe(1);
     expect(screen.getByText('Open Orders (123)').props.numberOfLines).toBe(1);
+    expect(screen.getAllByRole('tab').map(tab => tab.props.testID)).toEqual([
+      'perps-pro-info-tab-positions',
+      'perps-pro-info-tab-openOrders',
+      'perps-pro-info-tab-account',
+    ]);
   });
 
   it('only dispatches the History action when the SDK capability is enabled', () => {

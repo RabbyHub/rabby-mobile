@@ -9,6 +9,7 @@ import { Animated, Easing, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
+import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
 interface PerpsProInfoTabsProps {
   activeTab: PerpsProInfoTab;
@@ -19,8 +20,6 @@ interface PerpsProInfoTabsProps {
   positionsCount: number;
   onChange: (tab: PerpsProInfoTab) => void;
 }
-
-const TABS: PerpsProInfoTab[] = ['account', 'positions', 'openOrders'];
 
 const PerpsProPendingHistoryIcon: React.FC<{ count: number }> = ({ count }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -80,7 +79,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
 
     return (
       <View accessibilityRole="tablist" style={styles.container}>
-        {TABS.map(tab => {
+        {PERPS_PRO_INFO_TABS.map(tab => {
           const selected = tab === activeTab;
           return (
             <Pressable

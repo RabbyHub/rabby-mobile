@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { WsFastAssetCtxs } from '@rabby-wallet/hyperliquid-sdk';
 
@@ -22,7 +22,10 @@ import {
   getPerpsOpenOrderCounts,
   type PerpsOpenOrderCategory,
 } from '../model/openOrder';
-import { isPerpsProCollectionAuthoritativelyEmpty } from '../model/infoPanelPresentation';
+import {
+  isPerpsProCollectionAuthoritativelyEmpty,
+  resolvePerpsProInitialInfoTab,
+} from '../model/infoPanelPresentation';
 import {
   buildPerpsPositions,
   filterPerpsPositionsForMarket,
@@ -176,6 +179,41 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
       ),
     [account, facts.clearinghouseState?.assetPositions, facts.openOrders],
   );
+  const accountIdentity = facts.currentAccount
+    ? facts.currentAccount.address.toLowerCase() +
+      ':' +
+      facts.currentAccount.type
+    : 'no-account';
+  const initialInfoTab = resolvePerpsProInitialInfoTab(allPositions.length);
+  const infoTabInitializationReady =
+    preferences.hydrated &&
+    (!facts.currentAccount ||
+      (runtime.status === 'ready' &&
+        facts.isUserDataReady &&
+        facts.userAbstractionReady));
+  const initializedInfoTabAccountRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !infoTabInitializationReady ||
+      initializedInfoTabAccountRef.current === accountIdentity
+    ) {
+      return;
+    }
+    initializedInfoTabAccountRef.current = accountIdentity;
+    if (preferences.activeInfoTab !== initialInfoTab) {
+      preferences.setActiveInfoTab(initialInfoTab);
+    }
+  }, [
+    accountIdentity,
+    infoTabInitializationReady,
+    initialInfoTab,
+    preferences,
+  ]);
+  const activeInfoTab =
+    infoTabInitializationReady &&
+    initializedInfoTabAccountRef.current !== accountIdentity
+      ? initialInfoTab
+      : preferences.activeInfoTab;
   const allOpenOrders = useMemo(
     () => buildPerpsOpenOrders(facts.openOrders),
     [facts.openOrders],
@@ -266,7 +304,7 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
         }`
       : 'no-account',
     accountState,
-    activeInfoTab: preferences.activeInfoTab,
+    activeInfoTab,
     allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
     allPositionsCount: allPositions.length,
     openOrdersEmpty: isPerpsProCollectionAuthoritativelyEmpty({

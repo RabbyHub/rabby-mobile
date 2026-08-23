@@ -506,4 +506,61 @@ describe('Perps Pro account facts', () => {
     ]);
     expect(invalidPortfolioMarginRatio.metrics[0]?.value).toBeNull();
   });
+
+  it('omits USDH only from the Account asset projection in every account mode', () => {
+    const usdHDexState = formatAllDexsClearinghouseState([
+      [
+        'usdhdex',
+        clearinghouse({
+          accountValue: '25',
+          crossAccountValue: '25',
+          maintenance: '0',
+          time: 1,
+          withdrawable: '25',
+        }),
+      ],
+    ]) as AggregatedClearinghouseState;
+    const usdHBalance = {
+      available: '25',
+      coin: 'USDH',
+      entryNtl: '0',
+      hold: '0',
+      token: 360,
+      total: '25',
+    };
+    const spotStateWithUsdH = {
+      ...formattedSpotState(),
+      rawBalances: [...formattedSpotState().rawBalances, usdHBalance],
+      rawBalancesByToken: {
+        ...formattedSpotState().rawBalancesByToken,
+        360: usdHBalance,
+      },
+    };
+    const input = {
+      clearinghouseState: usdHDexState,
+      marketDataMap: {
+        'usdhdex:BTC': {
+          coin: 'usdhdex:BTC',
+          dexId: 'usdhdex',
+          quoteAsset: 'USDH' as const,
+        },
+      },
+      spotAssetCtxs: {},
+      spotMeta,
+      spotState: spotStateWithUsdH,
+    };
+
+    expect(
+      buildPerpsAccountViewModel({
+        ...input,
+        userAbstraction: 'default',
+      }).assets.some(asset => asset.coin === 'USDH'),
+    ).toBe(false);
+    expect(
+      buildPerpsAccountViewModel({
+        ...input,
+        userAbstraction: 'unifiedAccount',
+      }).assets.some(asset => asset.coin === 'USDH'),
+    ).toBe(false);
+  });
 });
