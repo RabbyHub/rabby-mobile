@@ -1,5 +1,4 @@
 import RcOptionCheck from '@/assets2024/icons/perps/PerpsProOptionCheck.svg';
-import RcBboHelp from '@/assets2024/icons/perps/PerpsProOrderTypeHelp.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -52,19 +51,7 @@ export const PerpsProBboSheet: React.FC<{
       style={styles.modal}>
       <BottomSheetView style={styles.sheet}>
         <View style={styles.content}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>BBO</Text>
-            <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants">
-              <RcBboHelp
-                color={colors2024['neutral-info']}
-                height={16}
-                testID="perps-pro-bbo-help"
-                width={16}
-              />
-            </View>
-          </View>
+          <Text style={styles.title}>BBO</Text>
           <View style={styles.options}>
             {options.map(option => {
               const active = option.value === selected;
@@ -110,7 +97,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 15,
     paddingTop: 8,
   },
-  titleRow: { alignItems: 'center', flexDirection: 'row', gap: 4 },
   title: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro',
