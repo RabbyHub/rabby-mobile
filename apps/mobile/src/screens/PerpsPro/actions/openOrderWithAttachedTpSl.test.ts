@@ -361,6 +361,30 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     });
   });
 
+  it('passes a six-digit integer TP trigger to the SDK unchanged', async () => {
+    const baseAttached = attached();
+    const command = build({
+      attached: attached({
+        tp: {
+          ...baseAttached.tp!,
+          rawMagnitude: '111111',
+          triggerPrice: '111111',
+        },
+      }),
+    });
+    const setup = createDependencies(command);
+
+    await executePerpsProAttachedTpSl(
+      command,
+      setup.dependencies.getGuardContext,
+      setup.dependencies,
+    );
+
+    expect(setup.marketOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ tpTriggerPx: '111111' }),
+    );
+  });
+
   it('maps a GTC Limit parent without using the legacy API', async () => {
     const command = build({
       marketSnapshot: {

@@ -1,7 +1,10 @@
+import BigNumber from 'bignumber.js';
+
 import {
   createPerpsProAttachedTpSlDraft,
   evaluatePerpsProAttachedTpSl,
   getPerpsProAttachedTpSlCompatibilityError,
+  normalizePerpsProTpSlPrice,
   previewPerpsProTpSlLeg,
   validatePerpsProFrozenAttachedTpSl,
 } from './tpsl';
@@ -32,6 +35,24 @@ const evaluate = (
   });
 
 describe('Perps Pro TP/SL model', () => {
+  it('preserves protocol-valid six-digit integer trigger prices exactly', () => {
+    expect(
+      normalizePerpsProTpSlPrice({
+        price: new BigNumber('111111'),
+        szDecimals: 5,
+      }),
+    ).toBe('111111');
+  });
+
+  it('continues to normalize non-integer triggers to protocol precision', () => {
+    expect(
+      normalizePerpsProTpSlPrice({
+        price: new BigNumber('111111.9'),
+        szDecimals: 5,
+      }),
+    ).toBe('111110');
+  });
+
   it('creates independent Price drafts without enabling attachment', () => {
     expect(createPerpsProAttachedTpSlDraft()).toEqual({
       enabled: false,

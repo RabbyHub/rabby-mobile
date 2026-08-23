@@ -286,6 +286,22 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(onToggleSkip).toHaveBeenCalledTimes(1);
   });
 
+  it('renders a six-digit integer attached TP trigger without truncation', () => {
+    renderSheet({
+      ...attached,
+      attached: {
+        ...attached.attached,
+        tp: {
+          ...attached.attached.tp!,
+          rawMagnitude: '111111',
+          triggerPrice: '111111',
+        },
+      },
+    });
+
+    expect(screen.getByText('Mark Price ≥ 111,111.00 USDC')).toBeTruthy();
+  });
+
   it('shows the reviewed Reduce Only value', () => {
     renderSheet({ ...parent, reduceOnly: true });
 
