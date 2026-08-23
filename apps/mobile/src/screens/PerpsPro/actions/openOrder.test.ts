@@ -105,6 +105,30 @@ describe('Perps Pro open order action', () => {
     expect(Number(command.quoteAmount)).toBeCloseTo(11.7142, 8);
   });
 
+  it('reports the effective SP500 minimum after base-size quantization', () => {
+    expect(() =>
+      buildPerpsProOpenOrderCommand({
+        account,
+        amountReferencePrice: '7673',
+        bboPrice: null,
+        coin: 'xyz:SP500',
+        dexId: 'xyz',
+        form: {
+          ...createPerpsProTradeFormState(),
+          amount: '10',
+        },
+        marketKey: 'xyz::xyz:SP500',
+        marketPrice: '7673',
+        side: 'buy',
+        szDecimals: 3,
+      }),
+    ).toThrow('Minimum amount is 15.35');
+  });
+
+  it('keeps the 10 USDC minimum message when precision does not raise it', () => {
+    expect(() => build({ amount: '9' })).toThrow('Minimum amount is 10');
+  });
+
   it('maps conditional limit without a TIF field', () => {
     expect(
       build({
