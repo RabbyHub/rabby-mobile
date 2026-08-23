@@ -5,7 +5,10 @@ import {
   STABLE_COIN_INDEX_ID_MAP,
 } from '@/constant/perps';
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
-import { buildPerpsProMarketDescriptor } from '@/screens/PerpsPro/model/market';
+import {
+  buildPerpsProMarketDescriptor,
+  normalizePerpsProMarketSourceTag,
+} from '@/screens/PerpsPro/model/market';
 
 import type { PerpsProHistoryMarket, PerpsProHistoryRow } from '../types';
 
@@ -128,7 +131,9 @@ export const resolvePerpsProHistoryMarket = (
       logoUrl: null,
       pxDecimals: null,
       quoteAsset: 'USDC',
-      sourceTag: coin.includes(':') ? coin.split(':')[0] || null : null,
+      sourceTag: coin.includes(':')
+        ? normalizePerpsProMarketSourceTag(coin.split(':')[0])
+        : null,
       szDecimals: null,
     };
   }

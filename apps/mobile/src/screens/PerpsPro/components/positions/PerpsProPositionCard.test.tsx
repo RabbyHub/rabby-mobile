@@ -226,7 +226,7 @@ describe('PerpsProPositionCard', () => {
         paddingHorizontal: 4,
       });
     }
-    for (const label of ['XYZ', 'Isolated', 'Long 20x']) {
+    for (const label of ['xyz', 'Isolated', 'Long 20x']) {
       expect(
         StyleSheet.flatten(screen.getByText(label).props.style),
       ).toMatchObject({

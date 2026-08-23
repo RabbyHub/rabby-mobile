@@ -193,7 +193,7 @@ describe('PerpsProCloseConfirmationSheet', () => {
       />,
     );
 
-    expect(screen.getByText('XYZ')).toBeTruthy();
+    expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.queryByText('Perp')).toBeNull();
     expect(screen.getByTestId('close-confirmation-sheet').props).toMatchObject({
       backdropProps: { pressBehavior: 'none' },

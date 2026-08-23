@@ -40,7 +40,7 @@ export const PerpsProMarketBar: React.FC<{
         </Text>
         {market?.sourceTag ? (
           <Text numberOfLines={1} style={styles.source}>
-            {market.sourceTag.toUpperCase()}
+            {market.sourceTag}
           </Text>
         ) : null}
         <Text style={changeStyle}>

@@ -223,7 +223,7 @@ describe('Perps Pro history models', () => {
 
   it('keeps a canonical HIP-3 source without market metadata', () => {
     expect(
-      mapPerpsProTradeHistoryFact(makeFill({ coin: 'xyz:AAPL' }), {}),
+      mapPerpsProTradeHistoryFact(makeFill({ coin: 'XyZ:AAPL' }), {}),
     ).toMatchObject({
       market: {
         displayBase: 'AAPL',

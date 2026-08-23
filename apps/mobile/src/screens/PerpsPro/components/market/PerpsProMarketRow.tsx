@@ -191,7 +191,7 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
             </Text>
             {model.sourceTag ? (
               <Text numberOfLines={1} style={styles.sourceTag}>
-                {model.sourceTag.toUpperCase()}
+                {model.sourceTag}
               </Text>
             ) : null}
           </View>

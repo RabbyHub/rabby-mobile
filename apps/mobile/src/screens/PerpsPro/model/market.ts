@@ -93,6 +93,10 @@ export const buildPerpsProMarketKey = (dexId: string, canonicalCoin: string) =>
 export const getPerpsProMarketFullName = (marketData: MarketData) =>
   marketData.brief?.trim() || null;
 
+export const normalizePerpsProMarketSourceTag = (
+  sourceTag: string | null | undefined,
+) => sourceTag?.trim().toLocaleLowerCase() || null;
+
 export const calculatePerpsProChange24h = (marketData: MarketData) => {
   const markPrice = new PerpsMarketBigNumber(marketData.markPx || Number.NaN);
   const previousPrice = new PerpsMarketBigNumber(
@@ -128,7 +132,7 @@ export const buildPerpsProMarketDescriptor = (
     fullName: getPerpsProMarketFullName(marketData),
     marketKey: buildPerpsProMarketKey(marketData.dexId, marketData.name),
     quoteAsset: marketData.quoteAsset,
-    sourceTag: marketData.dexId.trim() || null,
+    sourceTag: normalizePerpsProMarketSourceTag(marketData.dexId),
   };
 };
 

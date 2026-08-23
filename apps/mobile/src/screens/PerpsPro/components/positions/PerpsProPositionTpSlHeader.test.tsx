@@ -69,7 +69,7 @@ describe('PerpsProPositionTpSlHeader', () => {
       ),
     ).toMatchObject({ gap: 8, marginTop: 16 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
-    expect(screen.getByText('XYZ')).toBeTruthy();
+    expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.getByText('100.00')).toBeTruthy();
     expect(screen.getByText('101.25')).toBeTruthy();
     expect(screen.queryByText('99.00')).toBeNull();
@@ -117,7 +117,7 @@ describe('PerpsProPositionTpSlHeader', () => {
       ),
     ).toMatchObject({ marginTop: 12 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
-    expect(screen.getByText('XYZ')).toBeTruthy();
+    expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.getByText('long 10x')).toBeTruthy();
   });
 
