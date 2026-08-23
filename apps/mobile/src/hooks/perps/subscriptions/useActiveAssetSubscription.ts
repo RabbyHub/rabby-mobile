@@ -88,8 +88,9 @@ export const useActiveAssetSubscription = (
         if (liveAddress !== address) {
           return;
         }
-        setActiveAssetData(data);
-        writeActiveAssetDataToCache(data.coin, address, data);
+        setActiveAssetData(
+          writeActiveAssetDataToCache(data.coin, address, data),
+        );
       },
     ).unsubscribe;
   });
@@ -132,9 +133,13 @@ export const useActiveAssetSubscription = (
     ) {
       return null;
     }
-    setActiveAssetData(data);
-    writeActiveAssetDataToCache(expectedCoin, expectedAddress, data);
-    return data;
+    const effectiveData = writeActiveAssetDataToCache(
+      expectedCoin,
+      expectedAddress,
+      data,
+    );
+    setActiveAssetData(effectiveData);
+    return effectiveData;
   });
 
   return {

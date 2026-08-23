@@ -6,6 +6,7 @@ import {
 } from '@/hooks/perps/actions/updateLeverage';
 import { judgeIsUserAgentIsExpired } from '@/hooks/perps/perpsActionError';
 import { showToast } from '@/hooks/perps/showToast';
+import { updateActiveAssetLeverageCache } from '@/hooks/perps/useActiveAssetDataCache';
 import * as Sentry from '@sentry/react-native';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -75,6 +76,10 @@ export const usePerpsProLeverageUpdate = ({
             extra: { scene: 'Perps Pro leverage clearinghouse refresh' },
           });
         }
+        updateActiveAssetLeverageCache(request.coin, request.account.address, {
+          type: request.isCross ? 'cross' : 'isolated',
+          value: request.leverage,
+        });
         await refreshActiveAssetData().catch(error => {
           Sentry.captureException(error, {
             extra: { scene: 'Perps Pro active asset leverage refresh' },
