@@ -126,6 +126,7 @@ describe('positionMargin', () => {
     ).toEqual({
       addOnly: false,
       current: '20.005',
+      displayMin: '10.1',
       hasRepresentableRange: true,
       max: '25.01',
       min: '10.1',
@@ -195,8 +196,32 @@ describe('positionMargin', () => {
       positionSize: '1',
     });
     expect(range?.min).toBe('10.78');
+    expect(range?.displayMin).toBe('10.77');
     expect(validatePositionMarginTarget({ range, target: '10.77' })).toBe(
       'noChange',
+    );
+  });
+
+  it('separates a rounded no-op endpoint from the first actionable target', () => {
+    const range = buildPositionMarginRange({
+      available: '36',
+      currentMargin: '0.324',
+      leverage: '43',
+      marginModeConstraint: 'noCross',
+      markPrice: '7652.7',
+      positionSize: '0.0018',
+    });
+
+    expect(range).toMatchObject({
+      current: '0.324',
+      displayMin: '0.32',
+      min: '0.33',
+    });
+    expect(validatePositionMarginTarget({ range, target: '0.32' })).toBe(
+      'noChange',
+    );
+    expect(validatePositionMarginTarget({ range, target: '0.33' })).toBe(
+      'valid',
     );
   });
 

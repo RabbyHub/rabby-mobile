@@ -537,7 +537,7 @@ describe('PerpsProPositionCard', () => {
   });
 
   it('remembers each position unit only for the current app process', () => {
-    const position = createPosition();
+    const position = createPosition({ baseSize: '0.033500' });
     const first = render(
       <PerpsProPositionCard accountIdentity="account-a" position={position} />,
     );

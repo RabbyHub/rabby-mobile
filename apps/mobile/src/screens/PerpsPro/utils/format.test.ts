@@ -7,6 +7,7 @@ import {
   formatPerpsProSignedUsd,
   formatPerpsProTime,
   formatPerpsProUsdValue,
+  formatPerpsProVariableDecimal,
 } from './format';
 
 describe('Perps Pro formatters', () => {
@@ -45,6 +46,15 @@ describe('Perps Pro formatters', () => {
       '-$12,345.60',
     );
     expect(formatPerpsProUsdValue('12', { signed: true })).toBe('+$12.00');
+  });
+
+  it('formats exact base amounts without fixed padding or scientific notation', () => {
+    expect(formatPerpsProVariableDecimal('1.2300')).toBe('1.23');
+    expect(formatPerpsProVariableDecimal('12345.6000')).toBe('12,345.6');
+    expect(formatPerpsProVariableDecimal('0.00000000000000000100')).toBe(
+      '0.000000000000000001',
+    );
+    expect(formatPerpsProVariableDecimal('invalid')).toBe('-');
   });
 
   it('formats timestamps deterministically in local time', () => {

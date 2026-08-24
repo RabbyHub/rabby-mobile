@@ -233,7 +233,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                 ref={inputRef}
               />
               <Text style={styles.minimumValue}>
-                {range ? formatPerpsProDecimal(range.min, 2) : '--'}
+                {range ? formatPerpsProDecimal(range.displayMin, 2) : '--'}
               </Text>
               <Text style={styles.maximumValue}>
                 {range ? formatPerpsProDecimal(range.max, 2) : '--'}
@@ -243,7 +243,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                   disabled={pending || !range?.hasRepresentableRange}
                   dimWhenDisabled={!range?.hasRepresentableRange}
                   maximum={range?.max ?? '0'}
-                  minimum={range?.min ?? '0'}
+                  minimum={range?.displayMin ?? '0'}
                   onValueChange={onSelectTarget}
                   value={displayDraft}
                 />

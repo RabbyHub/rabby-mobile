@@ -63,7 +63,7 @@ export const PerpsProManageMarginAmountRow = React.memo(
           <Pressable
             accessibilityRole="button"
             disabled={pending || !range}
-            onPress={() => range && onSelectTarget(range.min)}
+            onPress={() => range && onSelectTarget(range.displayMin)}
             style={[styles.boundButton, styles.minButton]}
             testID="perps-pro-manage-margin-min">
             <Text style={styles.boundButtonText}>

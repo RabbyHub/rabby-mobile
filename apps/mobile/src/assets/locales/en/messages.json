@@ -2886,7 +2886,7 @@
           "manageMargin": "Manage Margin",
           "configureMargin": "Configure Margin",
           "min": "Min",
-          "max": "MAX",
+          "max": "Max",
           "minimumMargin": "Minimum amount is {{amount}} {{quote}}",
           "maximumMargin": "Maximum amount is {{amount}} {{quote}}",
           "marginUpdated": "Margin updated.",

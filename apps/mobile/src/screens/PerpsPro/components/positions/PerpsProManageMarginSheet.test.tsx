@@ -127,6 +127,7 @@ const baseView: PerpsProManageMarginView = {
   range: {
     addOnly: false,
     current: '20',
+    displayMin: '10.1',
     hasRepresentableRange: true,
     max: '25',
     min: '10.1',
@@ -264,7 +265,7 @@ describe('PerpsProManageMarginSheet', () => {
     expect(screen.queryByText('- → -')).toBeNull();
   });
 
-  it('sanitizes decimal input and wires Min, MAX, slider, and confirm actions', () => {
+  it('sanitizes decimal input and wires Min, Max, slider, and confirm actions', () => {
     const { props } = renderSheet();
 
     fireEvent.changeText(
@@ -320,6 +321,7 @@ describe('PerpsProManageMarginSheet', () => {
       range: {
         ...baseView.range!,
         current: '30',
+        displayMin: '15',
         max: '40',
         min: '15',
         rawMax: '40',
@@ -378,5 +380,41 @@ describe('PerpsProManageMarginSheet', () => {
       minimum: '15',
       value: '35',
     });
+  });
+
+  it('uses the visible current margin as the no-op slider endpoint', () => {
+    const { props } = renderSheet({
+      dirty: false,
+      draft: '0.32',
+      view: {
+        ...baseView,
+        currentMargin: '0.324',
+        range: {
+          addOnly: true,
+          current: '0.324',
+          displayMin: '0.32',
+          hasRepresentableRange: true,
+          max: '36.32',
+          min: '0.33',
+          rawMax: '36.324',
+          rawMin: '0.324',
+        },
+        targetState: 'noChange',
+      },
+    });
+
+    expect(screen.getByText('0.32')).toBeTruthy();
+    expect(screen.getByTestId('manage-margin-slider').props).toMatchObject({
+      maximum: '36.32',
+      minimum: '0.32',
+      value: '0.32',
+    });
+    expect(
+      screen.getByTestId('perps-pro-manage-margin-confirm').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+
+    fireEvent.press(screen.getByTestId('perps-pro-manage-margin-min'));
+    expect(props.onSelectTarget).toHaveBeenCalledWith('0.32');
   });
 });

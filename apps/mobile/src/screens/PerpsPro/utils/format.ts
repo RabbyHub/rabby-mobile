@@ -1,5 +1,6 @@
 import { formatNum } from '@/utils/math';
 import { PERPS_QUOTE_ASSET_FULL_NAME } from '@/constant/perps';
+import BigNumber from 'bignumber.js';
 
 const PERPS_PRO_STABLE_ASSETS = new Set([
   ...Object.keys(PERPS_QUOTE_ASSET_FULL_NAME),
@@ -91,6 +92,19 @@ export const formatPerpsProDecimal = (
     return '-';
   }
   return withThousandsSeparators(number.toFixed(decimals));
+};
+
+export const formatPerpsProVariableDecimal = (
+  value: number | string | null | undefined,
+) => {
+  if (value == null || value === '') {
+    return '-';
+  }
+  const decimal = new BigNumber(value);
+  if (!decimal.isFinite()) {
+    return '-';
+  }
+  return withThousandsSeparators(decimal.toFixed());
 };
 
 export const formatPerpsProSignedDecimal = (

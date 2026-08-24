@@ -198,6 +198,27 @@ describe('usePerpsProManageMargin', () => {
     expect(hook.result.current.view?.range?.max).toBe('29.76');
   });
 
+  it('keeps rounded current margin as a no-op endpoint without changing risk', () => {
+    replaceRawPosition('0.324', '0.0018');
+    mockPerpsState.marketDataMap.BTC.markPx = '7652.7';
+    mockPerpsState.marketDataMap.BTC.marginMode = 'noCross';
+
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+
+    expect(hook.result.current.draft).toBe('0.32');
+    expect(hook.result.current.view).toMatchObject({
+      range: { displayMin: '0.32', min: '0.33' },
+      targetState: 'noChange',
+    });
+    expect(hook.result.current.view?.projectedLiquidationPrice).toBe(
+      hook.result.current.view?.currentLiquidationPrice,
+    );
+    expect(hook.result.current.view?.projectedLiquidationDistance).toBe(
+      hook.result.current.view?.currentLiquidationDistance,
+    );
+  });
+
   it('accepts live margin updates until the user takes draft ownership', () => {
     const hook = renderHook(() => usePerpsProManageMargin());
     act(() => hook.result.current.open(position));

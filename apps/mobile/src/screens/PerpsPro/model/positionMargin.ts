@@ -95,6 +95,7 @@ export const resolvePositionMarginAvailable = ({
 export interface PositionMarginRange {
   addOnly: boolean;
   current: string;
+  displayMin: string;
   hasRepresentableRange: boolean;
   max: string;
   min: string;
@@ -139,10 +140,16 @@ export const buildPositionMarginRange = ({
   const rawMax = current.plus(free);
   const min = rawMin.decimalPlaces(TARGET_DECIMALS, BigNumber.ROUND_CEIL);
   const max = rawMax.decimalPlaces(TARGET_DECIMALS, BigNumber.ROUND_FLOOR);
+  const visibleCurrent = current.decimalPlaces(
+    TARGET_DECIMALS,
+    BigNumber.ROUND_HALF_UP,
+  );
+  const displayMin = BigNumber.min(min, visibleCurrent);
 
   return {
     addOnly,
     current: current.toFixed(),
+    displayMin: trimFixedDecimal(displayMin.toFixed(TARGET_DECIMALS)),
     hasRepresentableRange: max.gte(min),
     max: trimFixedDecimal(max.toFixed(TARGET_DECIMALS)),
     min: trimFixedDecimal(min.toFixed(TARGET_DECIMALS)),
