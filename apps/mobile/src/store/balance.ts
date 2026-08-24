@@ -749,11 +749,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       queuePendingAtStart,
     });
 
-    const results = await Promise.all(
-      fetchList.map(async ({ address, isCore }) => {
-        const localTargets = buildBalanceLocalTargets(address);
-        const requestId = this.startRemoteFetch(address, {
-          localTargets,
+    const remoteRequests = this.startRemoteFetchBatch(
+      fetchList.map(({ address, isCore }) => ({
+        resourceKey: address,
+        options: {
+          localTargets: buildBalanceLocalTargets(address),
           detail: buildBalanceTraceDetail(
             {
               source: 'batchGetTotalBalance',
@@ -762,7 +762,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
             },
             trace,
           ),
-        });
+        },
+      })),
+    );
+
+    const results = await Promise.all(
+      fetchList.map(async ({ address, isCore }, index) => {
+        const { requestId, options } = remoteRequests[index];
+        const localTargets = options?.localTargets || [];
 
         try {
           const queuedBalance = await getTotalBalanceQueue.add(async () => {
@@ -840,41 +847,61 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
             trace,
           ),
         });
-        return;
       }
+    });
 
+    const successfulResults = results.flatMap(result => {
+      if (!result.ok) {
+        return [];
+      }
       const appChainUsdValue = getAppChainUsdValue(result.address);
       const { formatBalance, value } = buildRemoteBalancePayload(
         result.balance,
         appChainUsdValue,
         result.isCore,
       );
-      const applied = this.applyRemoteValue(
-        result.address,
-        result.requestId,
-        value,
-        {
-          localTargets: result.localTargets,
-          detail: buildBalanceTraceDetail(
-            {
-              source: 'batchGetTotalBalance',
-              force,
-              isCore: result.isCore,
-              appChainUsdValue,
-              totalBalance: value.totalBalance,
-            },
-            trace,
-          ),
-        },
-      );
 
-      if (!applied) {
+      return [
+        {
+          ...result,
+          appChainUsdValue,
+          formatBalance,
+          value,
+          options: {
+            localTargets: result.localTargets,
+            detail: buildBalanceTraceDetail(
+              {
+                source: 'batchGetTotalBalance',
+                force,
+                isCore: result.isCore,
+                appChainUsdValue,
+                totalBalance: value.totalBalance,
+              },
+              trace,
+            ),
+          },
+        },
+      ];
+    });
+
+    const appliedResults = this.applyRemoteValueBatch(
+      successfulResults.map(result => ({
+        resourceKey: result.address,
+        requestId: result.requestId,
+        value: result.value,
+        options: result.options,
+      })),
+    );
+
+    successfulResults.forEach((result, index) => {
+      if (!appliedResults[index]) {
         return;
       }
 
       this.persistInBackground(
         result.address,
-        () => syncBalanceToDb(result.address, result.isCore, formatBalance),
+        () =>
+          syncBalanceToDb(result.address, result.isCore, result.formatBalance),
         {
           requestId: result.requestId,
           localTargets: result.localTargets,
@@ -883,7 +910,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
               source: 'batchGetTotalBalance',
               force,
               isCore: result.isCore,
-              totalBalance: formatBalance.total_usd_value,
+              totalBalance: result.formatBalance.total_usd_value,
             },
             trace,
           ),

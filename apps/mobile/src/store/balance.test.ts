@@ -307,6 +307,52 @@ describe('store/balance', () => {
     });
   });
 
+  it('publishes a multi-address remote balance result as one value update', async () => {
+    mockKeyringServiceGetAllAddresses.mockResolvedValue([
+      {
+        address: '0xAAAA',
+        type: 'SimpleKeyring',
+      },
+      {
+        address: '0xBBBB',
+        type: 'SimpleKeyring',
+      },
+    ]);
+    mockBatchGetAppChains.mockResolvedValue(undefined);
+    mockGetAppChainTotalUsdValue.mockReturnValue(0);
+    mockOpenapiGetTotalBalanceV2.mockImplementation(
+      ({ address }: { address: string }) =>
+        Promise.resolve({
+          total_usd_value: address === '0xaaaa' ? 10 : 20,
+          chain_list: [],
+        }),
+    );
+
+    let valuePublicationCount = 0;
+    const unsubscribe = balanceModule.default.subscribe((state, prev) => {
+      if (state.valueMap !== prev.valueMap) {
+        valuePublicationCount += 1;
+      }
+    });
+
+    await balanceModule.default.batchGetTotalBalance(
+      ['0xAAAA', '0xBBBB'],
+      true,
+    );
+
+    expect(valuePublicationCount).toBe(1);
+    expect(balanceModule.default.getAddressValue('0xaaaa')).toMatchObject({
+      evmBalance: 10,
+      totalBalance: 10,
+    });
+    expect(balanceModule.default.getAddressValue('0xbbbb')).toMatchObject({
+      evmBalance: 20,
+      totalBalance: 20,
+    });
+    unsubscribe();
+    await flushResourceFlowPersist();
+  });
+
   it('recomputes total balance when appchain value changes after balance hydrate', async () => {
     mockQueryBalanceCache.mockResolvedValue({
       total_usd_value: 80,
