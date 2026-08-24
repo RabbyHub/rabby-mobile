@@ -123,7 +123,11 @@ describe('preferred Perps external navigation', () => {
         RootNames.StackTransaction,
         {
           screen: RootNames.Perps,
-          params: { account, dappId: 'hyperliquid' },
+          params: {
+            account,
+            dappId: 'hyperliquid',
+            fromSource: 'homePagePositionList',
+          },
         },
       ],
       [
