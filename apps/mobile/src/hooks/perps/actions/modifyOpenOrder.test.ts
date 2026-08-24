@@ -57,12 +57,55 @@ const command = () =>
     tif: 'Alo',
   });
 
+const triggerMarketOrder: OpenOrder = {
+  ...liveOrder,
+  isTrigger: true,
+  limitPx: '101.2',
+  oid: 9,
+  orderType: 'Take Profit Market',
+  reduceOnly: false,
+  side: 'B',
+  sz: '0.4',
+  tif: null,
+  triggerCondition: 'Above 110',
+  triggerPx: '110',
+};
+
+const triggerCommand = () =>
+  buildPerpsModifyOpenOrderCommand({
+    account,
+    baseSize: '0.5',
+    coin: 'BTC',
+    dexId: '',
+    editKind: 'triggerMarket',
+    expectedLimitPrice: '101.2',
+    expectedOrderType: 'Take Profit Market',
+    expectedRemainingSize: '0.4',
+    expectedTriggerPrice: '110',
+    marketKey: 'hyperliquid::BTC',
+    oid: 9,
+    pxDecimals: 2,
+    reduceOnly: false,
+    side: 'buy',
+    szDecimals: 3,
+    triggerKind: 'takeProfit',
+    triggerPrice: '120',
+  });
+
 const dependencies = (
   overrides: Partial<PerpsModifyOpenOrderDependencies> = {},
 ): PerpsModifyOpenOrderDependencies => ({
   getCurrentAccount: () => account,
   getCurrentDex: () => '',
   getLiveOpenOrders: () => [liveOrder],
+  getOrderStatus: jest.fn(async () => ({
+    order: {
+      order: liveOrder,
+      status: 'open',
+      statusTimestamp: 1,
+    },
+    status: 'order',
+  })),
   hasPermission: () => true,
   modifyOrder: jest.fn(async () => ({
     response: { type: 'default' },
@@ -77,6 +120,7 @@ describe('Perps modify open order action', () => {
   it('freezes a complete replacement and rounds down to market precision', () => {
     expect(command()).toMatchObject({
       expected: {
+        kind: 'limit',
         limitPrice: '50000',
         reduceOnly: true,
         remainingSize: '0.004',
@@ -106,6 +150,85 @@ describe('Perps modify open order action', () => {
     expect(deps.refreshClearinghouse).toHaveBeenCalledWith('');
   });
 
+  it('modifies an opening Trigger Market directly and preserves its protection ratio', async () => {
+    const deps = dependencies({
+      getLiveOpenOrders: () => [triggerMarketOrder],
+      getOrderStatus: jest.fn(async () => ({
+        order: {
+          order: triggerMarketOrder,
+          status: 'open',
+          statusTimestamp: 1,
+        },
+        status: 'order',
+      })),
+    });
+    expect(triggerCommand()).toMatchObject({
+      expected: {
+        kind: 'triggerMarket',
+        reduceOnly: false,
+        triggerKind: 'takeProfit',
+        triggerPrice: '110',
+      },
+      replacement: {
+        baseSize: '0.5',
+        limitPrice: '110.4',
+        orderType: {
+          trigger: { isMarket: true, tpsl: 'tp', triggerPx: '120' },
+        },
+        triggerPrice: '120',
+      },
+    });
+    await expect(
+      executePerpsModifyOpenOrder(triggerCommand(), deps),
+    ).resolves.toEqual({ kind: 'updated', refreshError: undefined });
+    expect(deps.modifyOrder).toHaveBeenCalledWith({
+      coin: 'BTC',
+      isBuy: true,
+      limitPx: '110.4',
+      oid: 9,
+      orderType: {
+        trigger: { isMarket: true, tpsl: 'tp', triggerPx: '120' },
+      },
+      reduceOnly: false,
+      sz: '0.5',
+    });
+  });
+
+  it('builds a Position Trigger Limit with untouched dynamic size zero', () => {
+    expect(
+      buildPerpsModifyOpenOrderCommand({
+        account,
+        baseSize: '0',
+        coin: 'BTC',
+        dexId: '',
+        editKind: 'triggerLimit',
+        expectedIsPositionTpsl: true,
+        expectedLimitPrice: '90',
+        expectedOrderType: 'Stop Limit',
+        expectedRemainingSize: '0',
+        expectedTriggerPrice: '95',
+        limitPrice: '91',
+        marketKey: 'hyperliquid::BTC',
+        oid: 10,
+        pxDecimals: 2,
+        reduceOnly: true,
+        side: 'sell',
+        szDecimals: 3,
+        triggerKind: 'stopLoss',
+        triggerPrice: '96',
+      }),
+    ).toMatchObject({
+      expected: { isPositionTpsl: true, remainingSize: '0' },
+      replacement: {
+        baseSize: '0',
+        limitPrice: '91',
+        orderType: {
+          trigger: { isMarket: false, tpsl: 'sl', triggerPx: '96' },
+        },
+      },
+    });
+  });
+
   it('retains compatibility with a legacy resting order response', async () => {
     const deps = dependencies({
       modifyOrder: jest.fn(async () => ({
@@ -124,6 +247,23 @@ describe('Perps modify open order action', () => {
   it('fails stale before signing when the live remaining size changed', async () => {
     const deps = dependencies({
       getLiveOpenOrders: () => [{ ...liveOrder, sz: '0.0039' }],
+    });
+    await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
+      { kind: 'staleContext' },
+    );
+    expect(deps.modifyOrder).not.toHaveBeenCalled();
+  });
+
+  it('fails stale before signing when orderStatus exposes attached children', async () => {
+    const deps = dependencies({
+      getOrderStatus: jest.fn(async () => ({
+        order: {
+          order: { ...liveOrder, children: [{ ...liveOrder, oid: 8 }] },
+          status: 'open',
+          statusTimestamp: 1,
+        },
+        status: 'order',
+      })),
     });
     await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
       { kind: 'staleContext' },
