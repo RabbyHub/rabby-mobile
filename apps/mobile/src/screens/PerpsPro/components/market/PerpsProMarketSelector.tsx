@@ -600,6 +600,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
                   onToggleFavorite={toggleFavorite}
                   pageTab="search"
                   ref={handle => setListRef('search', handle)}
+                  renderProfile="active"
                   searchMode
                 />
               </View>
@@ -636,6 +637,9 @@ const PerpsProMarketSelectorComponent = forwardRef<
                           onToggleFavorite={toggleFavorite}
                           pageTab={tab.id}
                           ref={handle => setListRef(tab.id, handle)}
+                          renderProfile={
+                            tab.id === resolvedActiveTab ? 'active' : 'prepared'
+                          }
                           searchMode={false}
                         />
                       ) : null}

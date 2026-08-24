@@ -468,7 +468,7 @@ describe('PerpsProMarketSelector component', () => {
       within(screen.getByTestId('perps-pro-market-page-all')).getAllByLabelText(
         /page\.perps\.pro\.marketSelector\.select:/,
       ).length,
-    ).toBeLessThanOrEqual(10);
+    ).toBeLessThanOrEqual(12);
 
     const nameSortControl = screen.getByTestId('perps-pro-market-sort-name');
     const volumeSortControl = screen.getByTestId(
@@ -494,7 +494,7 @@ describe('PerpsProMarketSelector component', () => {
         within(
           screen.getByTestId('perps-pro-market-page-all'),
         ).getAllByLabelText(/page\.perps\.pro\.marketSelector\.select:/).length,
-      ).toBeLessThanOrEqual(10);
+      ).toBeLessThanOrEqual(12);
     }
 
     const allPage = within(screen.getByTestId('perps-pro-market-page-all'));

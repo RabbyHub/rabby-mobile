@@ -406,6 +406,8 @@ jest.mock('./PerpsProMarketList', () => {
             slotKey: string;
           }[];
           onSelect: (marketKey: string) => void;
+          pageTab: string;
+          renderProfile: 'active' | 'prepared';
         },
         ref: React.Ref<unknown>,
       ) => {
@@ -611,6 +613,10 @@ describe('PerpsProMarketSelector', () => {
 
     expect(screen.getByTestId('perps-pro-market-list-all')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-market-list-favorites')).toBeTruthy();
+    expect(getLatestMarketListProps('all').renderProfile).toBe('active');
+    expect(getLatestMarketListProps('favorites').renderProfile).toBe(
+      'prepared',
+    );
     fireEvent.press(screen.getByTestId('perps-pro-market-tab-favorites'));
     expect(mockPagerSetPage).toHaveBeenCalledWith(0);
     expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
@@ -621,6 +627,8 @@ describe('PerpsProMarketSelector', () => {
       screen.getByTestId('perps-pro-market-tab-favorites').props
         .accessibilityState,
     ).toEqual({ selected: true });
+    expect(getLatestMarketListProps('favorites').renderProfile).toBe('active');
+    expect(getLatestMarketListProps('all').renderProfile).toBe('prepared');
   });
 
   it('previews the swipe target without feeding it back into pager state', () => {
@@ -645,12 +653,17 @@ describe('PerpsProMarketSelector', () => {
     );
     expect(mockPagerSetPage).not.toHaveBeenCalled();
     expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(getLatestMarketListProps('all').renderProfile).toBe('active');
+    expect(getLatestMarketListProps('favorites').renderProfile).toBe(
+      'prepared',
+    );
 
     fireEvent(screen.getByTestId('market-search'), 'focus');
     expect(
       screen.queryByText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
+    expect(getLatestMarketListProps('search').renderProfile).toBe('active');
     fireEvent.press(screen.getByTestId('market-search-cancel'));
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,

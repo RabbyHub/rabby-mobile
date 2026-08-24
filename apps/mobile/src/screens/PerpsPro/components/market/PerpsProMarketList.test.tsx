@@ -112,6 +112,8 @@ const {
 }: typeof import('./PerpsProMarketList') = require('./PerpsProMarketList');
 type PerpsProMarketListHandle =
   import('./PerpsProMarketList').PerpsProMarketListHandle;
+type PerpsProMarketListRenderProfile =
+  import('./PerpsProMarketList').PerpsProMarketListRenderProfile;
 type MarketData = import('@/hooks/perps/usePerpsStore').MarketData;
 
 const createMarketData = (index: number): MarketData => ({
@@ -153,6 +155,7 @@ const renderMarketList = (
   searchMode = false,
   marketDataStatus: import('@/hooks/perps/usePerpsStore').MarketDataStatus = 'success',
   currentMarketKey: string | null = null,
+  renderProfile: PerpsProMarketListRenderProfile = 'active',
 ) => (
   <PerpsProMarketList
     bottomInset={0}
@@ -164,6 +167,7 @@ const renderMarketList = (
     onToggleFavorite={jest.fn()}
     pageTab={searchMode ? 'search' : 'all'}
     ref={ref}
+    renderProfile={renderProfile}
     searchMode={searchMode}
   />
 );
@@ -182,7 +186,7 @@ describe('PerpsProMarketList', () => {
     jest.useRealTimers();
   });
 
-  it('uses stable physical slots with business row mapping and fixed layouts', () => {
+  it('uses the active fill profile with stable slots and fixed layouts', () => {
     render(renderMarketList(slots));
 
     const props =
@@ -190,10 +194,10 @@ describe('PerpsProMarketList', () => {
         mockBottomSheetFlatListProps.mock.calls.length - 1
       ][0];
     expect(props.data).toHaveLength(296);
-    expect(props.initialNumToRender).toBe(10);
-    expect(props.maxToRenderPerBatch).toBe(8);
+    expect(props.initialNumToRender).toBe(12);
+    expect(props.maxToRenderPerBatch).toBe(16);
     expect(props.updateCellsBatchingPeriod).toBe(16);
-    expect(props.windowSize).toBe(3);
+    expect(props.windowSize).toBe(5);
     expect(props.getItemLayout(slots, 17)).toEqual({
       index: 17,
       length: 60,
@@ -208,10 +212,25 @@ describe('PerpsProMarketList', () => {
 
     const mountedRows = screen.getAllByTestId(/perps-pro-market-row-MARKET/);
     expect(mountedRows.length).toBeGreaterThan(0);
-    expect(mountedRows.length).toBeLessThanOrEqual(10);
+    expect(mountedRows.length).toBeLessThanOrEqual(12);
     expect(
       screen.getAllByTestId('perps-pro-market-row-separator')[0].props.style,
     ).toEqual({ height: 4 });
+  });
+
+  it('keeps adjacent prepared pages on the bounded preview profile', () => {
+    render(
+      renderMarketList(slots, undefined, false, 'success', null, 'prepared'),
+    );
+
+    const props =
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0];
+    expect(props.initialNumToRender).toBe(10);
+    expect(props.maxToRenderPerBatch).toBe(8);
+    expect(props.updateCellsBatchingPeriod).toBe(16);
+    expect(props.windowSize).toBe(3);
   });
 
   it('preserves physical rows across 20 independent full-catalog reversals', () => {
@@ -227,7 +246,7 @@ describe('PerpsProMarketList', () => {
 
       expect(
         screen.getAllByTestId(/perps-pro-market-row-MARKET/).length,
-      ).toBeLessThanOrEqual(10);
+      ).toBeLessThanOrEqual(12);
       expect(mockRowMount).toHaveBeenCalledTimes(initialMountCount);
       expect(mockRowUnmount).not.toHaveBeenCalled();
     }
