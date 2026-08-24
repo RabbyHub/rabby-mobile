@@ -102,7 +102,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   simpleHeader: {
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: 'transparent',
   },
   bottomDivider: {
     backgroundColor: colors2024['neutral-bg-5'],
