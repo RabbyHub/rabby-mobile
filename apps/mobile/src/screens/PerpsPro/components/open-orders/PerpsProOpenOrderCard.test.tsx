@@ -64,18 +64,21 @@ const order = (
   amountBase: '2',
   amountQuote: '200',
   category: 'basic',
+  cloid: null,
   coin: 'BTC',
   displayAmountQuote: '200',
-  editKind: 'basicLimit',
+  editKind: 'limit',
   executionPrice: '100',
   executionPriceKind: 'limit',
   filledQuote: '100',
   filledRatio: '0.5',
   filledSize: '1',
+  hasChildren: false,
   key: 'basic:BTC:1',
   isPositionTpsl: false,
   isTopLevel: true,
   isTrigger: false,
+  limitPrice: '100',
   oid: 1,
   orderType: 'Limit',
   reduceOnly: false,
@@ -349,9 +352,10 @@ describe('PerpsProOpenOrderCard', () => {
         order={order({ editKind: null })}
       />,
     );
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
     expect(
-      screen.getByRole('button', { name: 'Edit' }).props.accessibilityState,
-    ).toMatchObject({ disabled: true });
+      screen.queryByTestId('perps-pro-order-price-edit-basic:BTC:1'),
+    ).toBeNull();
   });
 
   it('makes the Conditional condition text part of the edit control', () => {
@@ -364,7 +368,9 @@ describe('PerpsProOpenOrderCard', () => {
         onEdit={onEdit}
         order={order({
           category: 'conditional',
-          editKind: 'trigger',
+          editKind: 'triggerMarket',
+          isTrigger: true,
+          limitPrice: '82.8',
           key: 'conditional:BTC:2',
           oid: 2,
           triggerCondition: 'Below',

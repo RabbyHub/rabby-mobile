@@ -1,27 +1,29 @@
 import type { PerpsOpenOrderViewModel } from './openOrder';
+import type { PerpsPositionViewModel } from './position';
 import {
   calculateOpenOrderEditEstimatedPnl,
-  getOpenOrderEditCoveragePercent,
-  isMatchingPartialTpSlPosition,
+  isRelevantOpenOrderEditPosition,
   resolveBasicOrderEditBaseSize,
 } from './openOrderEdit';
-import type { PerpsPositionViewModel } from './position';
 
 const order = {
   amountBase: '1',
   amountQuote: '100',
   category: 'conditional',
+  cloid: null,
   coin: 'BTC',
   displayAmountQuote: '50',
-  editKind: 'partialTpSlMarket',
+  editKind: 'triggerMarket',
   executionPrice: null,
   executionPriceKind: 'market',
   filledQuote: '0',
   filledRatio: '0',
   filledSize: '0',
+  hasChildren: false,
   isPositionTpsl: false,
   isTopLevel: true,
   isTrigger: true,
+  limitPrice: '101.2',
   key: 'conditional:BTC:1',
   oid: 1,
   orderType: 'Take Profit Market',
@@ -35,34 +37,24 @@ const order = {
   triggerPrice: '110',
 } satisfies PerpsOpenOrderViewModel;
 
-const position = {
-  baseSize: '1',
-  coin: 'BTC',
-  direction: 'long',
-  entryPrice: '90',
-  key: 'BTC',
-  leverage: 2,
-  liquidationPrice: null,
-  margin: '45',
-  marginMode: 'cross',
-  marginRatio: null,
-  maxLeverage: 10,
-  pnl: '10',
-  quoteSize: '100',
-  roiRatio: '0.1',
-  tpslOrders: [],
-} satisfies PerpsPositionViewModel;
-
 describe('Perps Pro open order edit model', () => {
-  it('requires a closing-side live position for Partial TP/SL edit', () => {
-    expect(isMatchingPartialTpSlPosition(order, position)).toBe(true);
+  it('uses a Position only as matching reduce-only display context', () => {
+    const position = {
+      baseSize: '1',
+      coin: 'BTC',
+      direction: 'long',
+    } as PerpsPositionViewModel;
+
+    expect(isRelevantOpenOrderEditPosition(order, position)).toBe(true);
     expect(
-      isMatchingPartialTpSlPosition(order, {
-        ...position,
-        direction: 'short',
-      }),
+      isRelevantOpenOrderEditPosition(
+        { ...order, reduceOnly: false },
+        position,
+      ),
     ).toBe(false);
-    expect(isMatchingPartialTpSlPosition(order, null)).toBe(false);
+    expect(
+      isRelevantOpenOrderEditPosition({ ...order, side: 'buy' }, position),
+    ).toBe(false);
   });
 
   it('preserves the exact remaining base size until Amount is edited', () => {
@@ -84,13 +76,7 @@ describe('Perps Pro open order edit model', () => {
     ).toBe('0.5');
   });
 
-  it('keeps coverage bounded and derives directional PnL', () => {
-    expect(
-      getOpenOrderEditCoveragePercent({ positionSize: '2', size: '0.5' }),
-    ).toBe(25);
-    expect(
-      getOpenOrderEditCoveragePercent({ positionSize: '1', size: '2' }),
-    ).toBe(100);
+  it('derives directional PnL independently from edit eligibility', () => {
     expect(
       calculateOpenOrderEditEstimatedPnl({
         direction: 'long',

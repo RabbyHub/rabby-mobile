@@ -30,6 +30,7 @@ export type PerpsProBasicOrderEditDraft = {
 
 export type PerpsProConditionalOrderEditDraft = {
   baseSize: string;
+  limitPrice: string | null;
   triggerPrice: string;
 };
 
@@ -40,12 +41,13 @@ const positive = (value: unknown) => {
   return result.isFinite() && result.gt(0) ? result : null;
 };
 
-export const isMatchingPartialTpSlPosition = (
+export const isRelevantOpenOrderEditPosition = (
   order: PerpsOpenOrderViewModel,
   position: PerpsPositionViewModel | null | undefined,
 ) =>
   !!position &&
-  order.editKind === 'partialTpSlMarket' &&
+  order.category === 'conditional' &&
+  (order.reduceOnly || order.isPositionTpsl) &&
   order.coin === position.coin &&
   ((position.direction === 'long' && order.side === 'sell') ||
     (position.direction === 'short' && order.side === 'buy'));
@@ -113,22 +115,4 @@ export const calculateOpenOrderEditEstimatedPnl = ({
   return (direction === 'long' ? trigger.minus(entry) : entry.minus(trigger))
     .multipliedBy(amount)
     .toString();
-};
-
-export const getOpenOrderEditCoveragePercent = ({
-  positionSize,
-  size,
-}: {
-  positionSize: string;
-  size: string;
-}) => {
-  const position = positive(positionSize);
-  const amount = positive(size);
-  if (!position || !amount) {
-    return 0;
-  }
-  return Math.max(
-    0,
-    Math.min(100, amount.dividedBy(position).multipliedBy(100).toNumber()),
-  );
 };

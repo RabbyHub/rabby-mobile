@@ -47,23 +47,20 @@ const EditableValue: React.FC<{
   value: string;
 }> = ({ enabled, label, onPress, testID, value }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
+  if (!enabled) {
+    return <Text style={styles.detailValue}>{value}</Text>;
+  }
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      accessibilityState={{ disabled: !enabled }}
-      disabled={!enabled}
       onPress={onPress}
       style={styles.editableValue}
       testID={testID}>
       <Text style={styles.detailValue}>{value}</Text>
       <View pointerEvents="none" style={styles.editIcon}>
         <RcIconEdit
-          color={
-            enabled
-              ? colors2024['neutral-title-1']
-              : colors2024['neutral-secondary']
-          }
+          color={colors2024['neutral-title-1']}
           height={16}
           width={16}
         />

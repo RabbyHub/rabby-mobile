@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 
 import {
   calculateOpenOrderEditEstimatedPnl,
-  getOpenOrderEditCoveragePercent,
   getOpenOrderEditDisplayAmount,
   type PerpsProConditionalOrderEditDraft,
 } from '../../model/openOrderEdit';
@@ -24,7 +23,6 @@ import {
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
   PERPS_PRO_CONFIRM_BUTTON_STYLE,
 } from '../common/perpsProVisual';
-import { validatePositionTpSlTrigger } from '../../model/positionTpSl';
 import {
   getPerpsProAmountInputDecimals,
   resolvePerpsProTradeAmount,
@@ -72,20 +70,25 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
     const liveMarket = usePerpsProPositionMark(editor.order.coin);
     const markPrice = liveMarket.markPrice || editor.market.markPrice;
     const initialTrigger = editor.order.triggerPrice || '';
+    const initialLimit = editor.order.limitPrice || '';
     const initialSize = editor.order.remainingSize;
+    const isTriggerLimit = editor.order.editKind === 'triggerLimit';
+    const isPositionSize =
+      editor.order.isPositionTpsl && new BigNumber(initialSize).isZero();
     const [triggerPrice, setTriggerPrice] = useState(initialTrigger);
+    const [limitPrice, setLimitPrice] = useState(initialLimit);
     const [amountSource, setAmountSource] = useState<
       'initial' | 'manual' | 'slider'
     >('initial');
     const [manualAmount, setManualAmount] = useState('');
-    const initialPercent = getOpenOrderEditCoveragePercent({
-      positionSize: position.baseSize,
-      size: initialSize,
-    });
+    const sliderSizeBasis = isPositionSize
+      ? position?.baseSize || ''
+      : initialSize;
+    const initialPercent = sliderSizeBasis ? 100 : 0;
     const [percent, setPercent] = useState(initialPercent);
     const activePercent = amountSource === 'initial' ? initialPercent : percent;
     const sliderHaptics = usePerpsProSliderHaptics({
-      disabled: coveredByReview,
+      disabled: coveredByReview || !sliderSizeBasis,
       maximumValue: 100,
       minimumValue: 0,
       step: 1,
@@ -104,7 +107,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
     }, [visible]);
 
     const sliderBaseSize = useMemo(() => {
-      const size = new BigNumber(position.baseSize || Number.NaN);
+      const size = new BigNumber(sliderSizeBasis || Number.NaN);
       if (!size.isFinite() || !size.gt(0) || percent <= 0) return null;
       const normalized = size
         .multipliedBy(percent)
@@ -112,11 +115,13 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
         .decimalPlaces(editor.market.szDecimals, BigNumber.ROUND_DOWN)
         .toFixed();
       return new BigNumber(normalized).gt(0) ? normalized : null;
-    }, [editor.market.szDecimals, percent, position.baseSize]);
+    }, [editor.market.szDecimals, percent, sliderSizeBasis]);
+    const amountReferencePrice =
+      markPrice || limitPrice || triggerPrice || initialLimit || initialTrigger;
     const manualBaseSize = resolvePerpsProTradeAmount({
       amount: manualAmount,
       amountUnit: editor.amountUnit,
-      price: markPrice,
+      price: amountReferencePrice,
       szDecimals: editor.market.szDecimals,
     })?.baseSize;
     const baseSize =
@@ -125,10 +130,14 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
         : amountSource === 'slider'
         ? sliderBaseSize
         : manualBaseSize || null;
+    const displayBaseSize =
+      isPositionSize && amountSource === 'initial'
+        ? position?.baseSize || ''
+        : baseSize || '';
     const displayAmount = getOpenOrderEditDisplayAmount({
       amountUnit: editor.amountUnit,
-      baseSize: baseSize || '',
-      referencePrice: markPrice,
+      baseSize: displayBaseSize,
+      referencePrice: amountReferencePrice,
     });
     const displayUnit =
       editor.amountUnit === 'base'
@@ -142,40 +151,39 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
         : `${new BigNumber(activePercent)
             .decimalPlaces(2, BigNumber.ROUND_DOWN)
             .toFixed()
-            .replace(/\.0+$/u, '')}% (≈${formatPerpsProDecimal(
-            displayAmount,
-            displayDecimals,
-          )})`;
-    const positionDisplayAmount = getOpenOrderEditDisplayAmount({
-      amountUnit: editor.amountUnit,
-      baseSize: position.baseSize,
-      referencePrice: markPrice,
-    });
-    const estimatedPnl = calculateOpenOrderEditEstimatedPnl({
-      direction: position.direction,
-      entryPrice: position.entryPrice,
-      size: baseSize || '',
-      triggerPrice,
-    });
-    const pnl = new BigNumber(estimatedPnl || 0);
-    const triggerValidation = editor.order.triggerKind
-      ? validatePositionTpSlTrigger({
+            .replace(/\.0+$/u, '')}% (≈${
+            displayAmount
+              ? formatPerpsProDecimal(displayAmount, displayDecimals)
+              : '--'
+          })`;
+    const positionDisplayAmount = position
+      ? getOpenOrderEditDisplayAmount({
+          amountUnit: editor.amountUnit,
+          baseSize: position.baseSize,
+          referencePrice: amountReferencePrice,
+        })
+      : null;
+    const estimatedPnl = position
+      ? calculateOpenOrderEditEstimatedPnl({
           direction: position.direction,
-          kind: editor.order.triggerKind,
-          markPrice,
+          entryPrice: position.entryPrice,
+          size: isPositionSize ? position.baseSize : baseSize || '',
           triggerPrice,
         })
-      : { kind: 'invalid' as const };
+      : null;
+    const pnl = new BigNumber(estimatedPnl || 0);
+    const triggerValue = new BigNumber(triggerPrice || Number.NaN);
+    const limitValue = new BigNumber(limitPrice || Number.NaN);
     const sizeValue = new BigNumber(baseSize || Number.NaN);
-    const positionSize = new BigNumber(position.baseSize || Number.NaN);
     const canReview =
-      triggerValidation.kind === 'valid' &&
+      triggerValue.isFinite() &&
+      triggerValue.gt(0) &&
+      (!isTriggerLimit || (limitValue.isFinite() && limitValue.gt(0))) &&
       sizeValue.isFinite() &&
-      sizeValue.gt(0) &&
-      positionSize.isFinite() &&
-      sizeValue.lte(positionSize) &&
+      (sizeValue.gt(0) || (isPositionSize && sizeValue.isZero())) &&
       (!sizeValue.eq(initialSize) ||
-        !new BigNumber(triggerPrice).eq(initialTrigger));
+        !triggerValue.eq(initialTrigger) ||
+        (isTriggerLimit && !limitValue.eq(initialLimit)));
 
     const beginManualAmount = () => {
       if (amountSource === 'manual') return;
@@ -216,34 +224,52 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                 {editor.market.quoteAsset})
               </Text>
               <Text style={styles.summaryValue}>
-                {formatPerpsProPrice(
-                  position.entryPrice,
-                  editor.market.pxDecimals,
-                )}
+                {position
+                  ? formatPerpsProPrice(
+                      position.entryPrice,
+                      editor.market.pxDecimals,
+                    )
+                  : '--'}
               </Text>
             </View>
             <View style={styles.form}>
               <PerpsProOpenOrderEditInput
-                accessibilityLabel={t('page.perps.pro.openOrders.stopPrice')}
+                accessibilityLabel={t('page.perps.pro.openOrders.triggerPrice')}
                 currentValue={`Current ${formatPerpsProPrice(
                   initialTrigger,
                   editor.market.pxDecimals,
                 )}`}
-                label={t('page.perps.pro.openOrders.stopPrice')}
+                label={t('page.perps.pro.openOrders.triggerPrice')}
                 maxDecimals={editor.market.pxDecimals}
                 onChangeText={setTriggerPrice}
                 testID="perps-pro-conditional-order-edit-trigger"
                 unit={editor.market.quoteAsset}
                 value={triggerPrice}
               />
-              <PerpsProOpenOrderEditInput
-                accessibilityLabel={t('page.perps.pro.openOrders.price')}
-                disabled
-                maxDecimals={0}
-                onChangeText={() => undefined}
-                testID="perps-pro-conditional-order-edit-market"
-                value={t('page.perps.pro.openOrders.marketPrice')}
-              />
+              {isTriggerLimit ? (
+                <PerpsProOpenOrderEditInput
+                  accessibilityLabel={t('page.perps.pro.openOrders.limitPrice')}
+                  currentValue={`Current ${formatPerpsProPrice(
+                    initialLimit,
+                    editor.market.pxDecimals,
+                  )}`}
+                  label={t('page.perps.pro.openOrders.limitPrice')}
+                  maxDecimals={editor.market.pxDecimals}
+                  onChangeText={setLimitPrice}
+                  testID="perps-pro-conditional-order-edit-limit"
+                  unit={editor.market.quoteAsset}
+                  value={limitPrice}
+                />
+              ) : (
+                <PerpsProOpenOrderEditInput
+                  accessibilityLabel={t('page.perps.pro.openOrders.price')}
+                  disabled
+                  maxDecimals={0}
+                  onChangeText={() => undefined}
+                  testID="perps-pro-conditional-order-edit-market"
+                  value={t('page.perps.pro.openOrders.marketPrice')}
+                />
+              )}
               <View style={styles.amountGroup}>
                 <PerpsProOpenOrderEditInput
                   accessibilityLabel={t('page.perps.pro.openOrders.amount')}
@@ -254,23 +280,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                   })}
                   onChangeText={value => {
                     setAmountSource('manual');
-                    const maximum = getOpenOrderEditDisplayAmount({
-                      amountUnit: editor.amountUnit,
-                      baseSize: position.baseSize,
-                      referencePrice: markPrice,
-                    });
-                    const next = new BigNumber(value || Number.NaN);
-                    const max = new BigNumber(maximum || Number.NaN);
-                    setManualAmount(
-                      next.isFinite() && max.isFinite() && next.gt(max)
-                        ? max
-                            .decimalPlaces(
-                              displayDecimals,
-                              BigNumber.ROUND_DOWN,
-                            )
-                            .toFixed()
-                        : value,
-                    );
+                    setManualAmount(value);
                   }}
                   onFocus={beginManualAmount}
                   testID="perps-pro-conditional-order-edit-amount"
@@ -278,6 +288,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                   value={amountValue}
                 />
                 <PerpsProSlider
+                  disabled={coveredByReview || !sliderSizeBasis}
                   maximumValue={100}
                   minimumValue={0}
                   onSlidingComplete={sliderHaptics.onSlidingComplete}
@@ -303,11 +314,13 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                     {t('page.perps.pro.openOrders.positionAmount')}
                   </Text>
                   <Text style={styles.summaryValue}>
-                    {formatPerpsProDecimal(
-                      positionDisplayAmount,
-                      displayDecimals,
-                    )}{' '}
-                    {displayUnit}
+                    {positionDisplayAmount
+                      ? formatPerpsProDecimal(
+                          positionDisplayAmount,
+                          displayDecimals,
+                        )
+                      : '--'}
+                    {positionDisplayAmount ? ` ${displayUnit}` : ''}
                   </Text>
                 </View>
                 <View style={styles.summaryRow}>
@@ -327,8 +340,11 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                         ? styles.negativeValue
                         : styles.summaryValue
                     }>
-                    {formatPerpsProSignedDecimal(estimatedPnl, 2)}{' '}
-                    {editor.market.quoteAsset}
+                    {estimatedPnl
+                      ? `${formatPerpsProSignedDecimal(estimatedPnl, 2)} ${
+                          editor.market.quoteAsset
+                        }`
+                      : '--'}
                   </Text>
                 </View>
               </View>
@@ -343,7 +359,11 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                 onPress={() =>
                   dismissKeyboardThen(() => {
                     if (!baseSize) return;
-                    onReview({ baseSize, triggerPrice });
+                    onReview({
+                      baseSize,
+                      limitPrice: isTriggerLimit ? limitPrice : null,
+                      triggerPrice,
+                    });
                   })
                 }
                 testID="perps-pro-conditional-order-edit-confirm"

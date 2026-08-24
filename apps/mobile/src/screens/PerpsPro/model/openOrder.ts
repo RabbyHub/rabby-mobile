@@ -7,7 +7,7 @@ import {
 } from './openOrderTopology';
 
 export type PerpsOpenOrderCategory = 'basic' | 'conditional' | 'unsupported';
-export type PerpsOpenOrderEditKind = 'basicLimit' | 'partialTpSlMarket';
+export type PerpsOpenOrderEditKind = 'limit' | 'triggerLimit' | 'triggerMarket';
 export type PerpsOpenOrderTriggerKind = 'stopLoss' | 'takeProfit';
 
 export interface PerpsOpenOrderProgress {
@@ -19,6 +19,7 @@ export interface PerpsOpenOrderViewModel {
   amountBase: string;
   amountQuote: string;
   category: PerpsOpenOrderCategory;
+  cloid: string | null;
   coin: string;
   displayAmountQuote: string | null;
   executionPrice: string | null;
@@ -27,10 +28,12 @@ export interface PerpsOpenOrderViewModel {
   filledRatio: string;
   filledQuote: string;
   filledSize: string;
+  hasChildren: boolean;
   key: string;
   isPositionTpsl: boolean;
   isTopLevel: boolean;
   isTrigger: boolean;
+  limitPrice: string | null;
   oid: number;
   orderType: string;
   reduceOnly: boolean;
@@ -57,11 +60,37 @@ const resolveTriggerKind = (
   order: OpenOrder,
 ): PerpsOpenOrderTriggerKind | null => {
   const orderType = String(order.orderType || '').toLowerCase();
-  if (orderType === 'take profit market') {
+  if (
+    orderType === 'take profit market' ||
+    orderType === 'take market' ||
+    orderType === 'take profit limit' ||
+    orderType === 'take limit'
+  ) {
     return 'takeProfit';
   }
-  if (orderType === 'stop market') {
+  if (orderType === 'stop market' || orderType === 'stop limit') {
     return 'stopLoss';
+  }
+  return null;
+};
+
+const resolveTriggerExecution = (
+  order: OpenOrder,
+): 'limit' | 'market' | null => {
+  const orderType = String(order.orderType || '').toLowerCase();
+  if (
+    orderType === 'take profit market' ||
+    orderType === 'take market' ||
+    orderType === 'stop market'
+  ) {
+    return 'market';
+  }
+  if (
+    orderType === 'take profit limit' ||
+    orderType === 'take limit' ||
+    orderType === 'stop limit'
+  ) {
+    return 'limit';
   }
   return null;
 };
@@ -77,26 +106,39 @@ const resolveEditKind = ({
   isTopLevel: boolean;
   order: OpenOrder;
 }): PerpsOpenOrderEditKind | null => {
-  if (!isTopLevel || hasChildren || !positiveDecimalOrNull(order.sz)) {
+  const remainingSize = decimal(order.sz);
+  const hasEditableSize =
+    remainingSize.gt(0) ||
+    (order.isTrigger && order.isPositionTpsl && remainingSize.isZero());
+  if (
+    !isTopLevel ||
+    hasChildren ||
+    !hasEditableSize ||
+    (typeof order.cloid === 'string' && !!order.cloid.trim())
+  ) {
     return null;
   }
   if (
     category === 'basic' &&
     order.orderType === 'Limit' &&
-    (order.tif === 'Gtc' || order.tif === 'Alo') &&
+    (order.tif === 'Gtc' || order.tif === 'Alo' || order.tif === 'Ioc') &&
     !!positiveDecimalOrNull(order.limitPx)
   ) {
-    return 'basicLimit';
+    return 'limit';
   }
+  const triggerExecution = resolveTriggerExecution(order);
   if (
     category === 'conditional' &&
     order.isTrigger &&
-    !order.isPositionTpsl &&
-    order.reduceOnly &&
     !!positiveDecimalOrNull(order.triggerPx) &&
+    !!positiveDecimalOrNull(order.limitPx) &&
     !!resolveTriggerKind(order)
   ) {
-    return 'partialTpSlMarket';
+    return triggerExecution === 'market'
+      ? 'triggerMarket'
+      : triggerExecution === 'limit'
+      ? 'triggerLimit'
+      : null;
   }
   return null;
 };
@@ -175,8 +217,13 @@ export const buildPerpsOpenOrderViewModel = (
   });
   const amountBase = BigNumber.max(decimal(order.origSz), 0);
   const limitPrice = positiveDecimalOrNull(order.limitPx);
-  const isMarket = order.orderType.toLowerCase().includes('market');
-  const executionPriceKind = isMarket ? 'market' : 'limit';
+  const triggerExecution = resolveTriggerExecution(order);
+  const executionPriceKind =
+    category === 'conditional'
+      ? triggerExecution === 'market'
+        ? 'market'
+        : 'limit'
+      : 'limit';
   const triggerPrice =
     category === 'conditional' ? positiveDecimalOrNull(order.triggerPx) : null;
 
@@ -186,6 +233,10 @@ export const buildPerpsOpenOrderViewModel = (
       ? amountBase.multipliedBy(limitPrice).toString()
       : '0',
     category,
+    cloid:
+      typeof order.cloid === 'string' && order.cloid.trim()
+        ? order.cloid
+        : null,
     coin: order.coin,
     displayAmountQuote: calculateDisplayAmountQuote({
       amountBase,
@@ -194,7 +245,7 @@ export const buildPerpsOpenOrderViewModel = (
       limitPrice,
       triggerPrice,
     }),
-    executionPrice: isMarket ? null : limitPrice,
+    executionPrice: executionPriceKind === 'market' ? null : limitPrice,
     executionPriceKind,
     editKind: resolveEditKind({
       category,
@@ -207,10 +258,12 @@ export const buildPerpsOpenOrderViewModel = (
       ? decimal(progress.filledSize).multipliedBy(limitPrice).toString()
       : '0',
     filledSize: progress.filledSize,
+    hasChildren: !!order.children?.length,
     key: `${category}:${order.coin}:${order.oid}`,
     isPositionTpsl: order.isPositionTpsl,
     isTopLevel,
     isTrigger: order.isTrigger,
+    limitPrice,
     oid: order.oid,
     orderType: order.orderType,
     reduceOnly: order.reduceOnly,

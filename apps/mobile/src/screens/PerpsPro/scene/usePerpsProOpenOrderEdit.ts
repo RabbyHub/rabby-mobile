@@ -1,4 +1,5 @@
 import type { Account } from '@/core/startupServices/preference';
+import { apisPerps } from '@/core/apis/perps';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { isSamePerpsActionAccount } from '@/hooks/perps/actions/accountGuard';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
@@ -9,25 +10,23 @@ import {
 } from '@/hooks/perps/actions/modifyOpenOrder';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
-  buildPerpsPositionTpSlCommand,
-  executePerpsPositionTpSl,
-  type PerpsPositionTpSlCommand,
-} from '@/hooks/perps/actions/positionTpSl';
-import {
   judgeIsBuilderFeeNeedApprove,
   judgeIsUserAgentIsExpired,
 } from '@/hooks/perps/perpsActionError';
 import { showToast } from '@/hooks/perps/showToast';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import * as Sentry from '@sentry/react-native';
+import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { buildPerpsProMarketDescriptor } from '../model/market';
-import type { PerpsOpenOrderViewModel } from '../model/openOrder';
 import {
-  isMatchingPartialTpSlPosition,
+  buildPerpsOpenOrderViewModel,
+  type PerpsOpenOrderViewModel,
+} from '../model/openOrder';
+import {
   resolveBasicOrderEditBaseSize,
   type PerpsProBasicOrderEditDraft,
   type PerpsProConditionalOrderEditDraft,
@@ -47,7 +46,7 @@ export type PerpsProOpenOrderEditEditorState =
   | (CommonEditorState & { category: 'basic' })
   | (CommonEditorState & {
       category: 'conditional';
-      position: PerpsPositionViewModel;
+      position: PerpsPositionViewModel | null;
     });
 
 export type PerpsProOpenOrderEditReviewState =
@@ -57,27 +56,35 @@ export type PerpsProOpenOrderEditReviewState =
     }
   | {
       category: 'conditional';
-      command: PerpsPositionTpSlCommand;
-      markPrice: string;
+      command: PerpsModifyOpenOrderCommand;
+      referencePrice: string;
     };
-
-const getLivePosition = (coin: string) => {
-  const position = perpsStore
-    .getState()
-    .currentClearinghouseState?.assetPositions.find(
-      item => item.position.coin === coin,
-    )?.position;
-  if (!position) return null;
-  const signedSize = new BigNumber(position.szi || Number.NaN);
-  if (!signedSize.isFinite() || signedSize.isZero()) return null;
-  return {
-    direction: signedSize.gt(0) ? ('long' as const) : ('short' as const),
-    size: signedSize.abs().toString(),
-  };
-};
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error || '');
+
+const getOrderIdentity = (
+  order: Pick<PerpsOpenOrderViewModel, 'coin' | 'oid'>,
+) => `${order.coin}\u0000${order.oid}`;
+
+const equalDecimal = (left: string | null, right: string | null) =>
+  left === right ||
+  (!!left && !!right && new BigNumber(left).eq(new BigNumber(right)));
+
+const hasSameEditableFingerprint = (
+  left: PerpsOpenOrderViewModel,
+  right: PerpsOpenOrderViewModel,
+) =>
+  left.editKind === right.editKind &&
+  left.orderType === right.orderType &&
+  left.side === right.side &&
+  left.reduceOnly === right.reduceOnly &&
+  left.isPositionTpsl === right.isPositionTpsl &&
+  left.tif === right.tif &&
+  left.cloid === right.cloid &&
+  equalDecimal(left.limitPrice, right.limitPrice) &&
+  equalDecimal(left.triggerPrice, right.triggerPrice) &&
+  equalDecimal(left.remainingSize, right.remainingSize);
 
 export const usePerpsProOpenOrderEdit = (
   accountIdentity: string,
@@ -85,6 +92,7 @@ export const usePerpsProOpenOrderEdit = (
 ) => {
   const { t } = useTranslation();
   const sessionRef = useRef(0);
+  const openRequestRef = useRef(false);
   const pendingRef = useRef(false);
   const reviewRequestRef = useRef(false);
   const [editor, setEditor] = useState<PerpsProOpenOrderEditEditorState | null>(
@@ -95,33 +103,105 @@ export const usePerpsProOpenOrderEdit = (
   );
   const [pending, setPending] = useState(false);
   const [skipConfirmation, setSkipConfirmation] = useState(false);
+  const [unavailableOrderKeys, setUnavailableOrderKeys] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
 
   useEffect(() => {
     sessionRef.current += 1;
+    openRequestRef.current = false;
     pendingRef.current = false;
     reviewRequestRef.current = false;
     setEditor(null);
     setReview(null);
     setPending(false);
     setSkipConfirmation(false);
+    setUnavailableOrderKeys(new Set());
     return () => {
       sessionRef.current += 1;
+      openRequestRef.current = false;
       reviewRequestRef.current = false;
     };
   }, [accountIdentity]);
 
+  const markUnavailable = useCallback((order: PerpsOpenOrderViewModel) => {
+    const identity = getOrderIdentity(order);
+    setUnavailableOrderKeys(current => {
+      if (current.has(identity)) return current;
+      const next = new Set(current);
+      next.add(identity);
+      return next;
+    });
+  }, []);
+
+  const isEditUnavailable = useCallback(
+    (order: PerpsOpenOrderViewModel) =>
+      unavailableOrderKeys.has(getOrderIdentity(order)),
+    [unavailableOrderKeys],
+  );
+
   const open = useCallback(
-    (
+    async (
       order: PerpsOpenOrderViewModel,
       position?: PerpsPositionViewModel | null,
     ) => {
-      if (pendingRef.current || !order.editKind) return;
+      if (
+        pendingRef.current ||
+        openRequestRef.current ||
+        !order.editKind ||
+        isEditUnavailable(order)
+      ) {
+        return;
+      }
       const state = perpsStore.getState();
       const account = state.currentPerpsAccount;
       const marketData = state.marketDataMap[order.coin];
       if (!account || !marketData) {
         showToast(t('page.perps.pro.openOrders.editUnavailable'), 'error');
         return;
+      }
+      const session = sessionRef.current;
+      openRequestRef.current = true;
+      let verifiedOrder: PerpsOpenOrderViewModel;
+      try {
+        const status = await apisPerps
+          .getPerpsSDK()
+          .info.getOrderStatus(order.oid, account.address);
+        if (
+          sessionRef.current !== session ||
+          !isSamePerpsActionAccount(
+            perpsStore.getState().currentPerpsAccount,
+            account,
+          )
+        ) {
+          return;
+        }
+        if (status.status !== 'order' || status.order.status !== 'open') {
+          markUnavailable(order);
+          showToast(t('page.perps.pro.openOrders.editContextChanged'), 'error');
+          return;
+        }
+        verifiedOrder = buildPerpsOpenOrderViewModel(
+          status.order.order as OpenOrder,
+        );
+        if (!verifiedOrder.editKind) {
+          markUnavailable(order);
+          showToast(t('page.perps.pro.openOrders.editUnavailable'), 'error');
+          return;
+        }
+        if (!hasSameEditableFingerprint(order, verifiedOrder)) {
+          showToast(t('page.perps.pro.openOrders.editContextChanged'), 'error');
+          return;
+        }
+      } catch (error) {
+        const message = getErrorMessage(error);
+        showToast(
+          message || t('page.perps.pro.openOrders.editFailed'),
+          'error',
+        );
+        return;
+      } finally {
+        openRequestRef.current = false;
       }
       const descriptor = buildPerpsProMarketDescriptor(marketData);
       const market: PerpsProOpenOrderEditMarketSnapshot = {
@@ -136,26 +216,22 @@ export const usePerpsProOpenOrderEdit = (
         szDecimals: marketData.szDecimals,
       };
       let next: PerpsProOpenOrderEditEditorState | null = null;
-      if (order.editKind === 'basicLimit' && order.executionPrice) {
+      if (verifiedOrder.editKind === 'limit' && verifiedOrder.executionPrice) {
         next = {
           account: { ...account },
           amountUnit: tradeAmountUnit,
           category: 'basic',
           market,
-          order: { ...order },
+          order: { ...verifiedOrder },
         };
-      } else if (
-        order.editKind === 'partialTpSlMarket' &&
-        market.markPrice &&
-        isMatchingPartialTpSlPosition(order, position)
-      ) {
+      } else if (verifiedOrder.editKind !== 'limit') {
         next = {
           account: { ...account },
           amountUnit: tradeAmountUnit,
           category: 'conditional',
           market,
-          order: { ...order },
-          position: { ...position! },
+          order: { ...verifiedOrder },
+          position: position ? { ...position } : null,
         };
       }
       if (!next) {
@@ -167,7 +243,7 @@ export const usePerpsProOpenOrderEdit = (
       setReview(null);
       setEditor(next);
     },
-    [t, tradeAmountUnit],
+    [isEditUnavailable, markUnavailable, t, tradeAmountUnit],
   );
 
   const close = useCallback(() => {
@@ -212,101 +288,46 @@ export const usePerpsProOpenOrderEdit = (
       setPending(true);
       try {
         await ensurePerpsActionApproval(editorSnapshot.account);
-        if (reviewSnapshot.category === 'basic') {
-          const result = await executePerpsModifyOpenOrder(
-            reviewSnapshot.command,
-          );
-          if (result.failureReason === 'userCancelled') return;
-          if (result.failureReason === 'regionRestricted') {
-            showToast(t('page.perps.regionNotSupport'), 'error');
-            setReview(null);
-            return;
-          }
-          if (result.kind === 'staleContext') {
-            showToast(
-              t('page.perps.pro.openOrders.editContextChanged'),
-              'error',
-            );
-            finish();
-            return;
-          }
-          if (result.refreshError) {
-            Sentry.captureException(
-              new Error(
-                `Open order edit refresh failed: ${result.refreshError}`,
-              ),
-            );
-          }
-          if (
-            result.kind === 'filled' ||
-            result.kind === 'resting' ||
-            result.kind === 'updated'
-          ) {
-            showToast(t('page.perps.pro.openOrders.editSubmitted'), 'success');
-            finish();
-            return;
-          }
-          if (result.kind === 'unknownOutcome') {
-            showToast(t('page.perps.pro.openOrders.editUnknown'), 'error');
-            finish();
-            return;
-          }
-          if (await handleKnownActionError(result.error || '')) return;
-          showToast(
-            result.error || t('page.perps.pro.openOrders.editFailed'),
-            'error',
-          );
+        const result = await executePerpsModifyOpenOrder(
+          reviewSnapshot.command,
+        );
+        if (result.failureReason === 'userCancelled') return;
+        if (result.failureReason === 'regionRestricted') {
+          showToast(t('page.perps.regionNotSupport'), 'error');
           setReview(null);
           return;
         }
-
-        const result = await executePerpsPositionTpSl(reviewSnapshot.command);
-        const hasMutation = result.legs.some(
-          leg => leg.cancel === 'success' || leg.create === 'success',
-        );
-        if (result.failureReason === 'userCancelled' && !hasMutation) return;
         if (result.kind === 'staleContext') {
           showToast(t('page.perps.pro.openOrders.editContextChanged'), 'error');
+          markUnavailable(editorSnapshot.order);
           finish();
           return;
         }
         if (result.refreshError) {
           Sentry.captureException(
-            new Error(
-              `Conditional open order edit refresh failed: ${result.refreshError}`,
-            ),
+            new Error(`Open order edit refresh failed: ${result.refreshError}`),
           );
         }
-        if (result.kind === 'success') {
+        if (
+          result.kind === 'filled' ||
+          result.kind === 'resting' ||
+          result.kind === 'updated'
+        ) {
           showToast(t('page.perps.pro.openOrders.editSubmitted'), 'success');
           finish();
           return;
         }
-        const replacedButNotCreated = result.legs.some(
-          leg => leg.cancel === 'success' && leg.create !== 'success',
-        );
-        const message = result.legs.find(leg => leg.error)?.error || '';
-        if (await handleKnownActionError(message)) {
-          if (hasMutation) finish();
+        if (result.kind === 'unknownOutcome') {
+          showToast(t('page.perps.pro.openOrders.editUnknown'), 'error');
+          finish();
           return;
         }
+        if (await handleKnownActionError(result.error || '')) return;
         showToast(
-          hasMutation
-            ? t(
-                replacedButNotCreated
-                  ? 'page.perps.pro.openOrders.editReplaceFailedAfterCancel'
-                  : 'page.perps.pro.openOrders.editPartial',
-              )
-            : message || t('page.perps.pro.openOrders.editFailed'),
+          result.error || t('page.perps.pro.openOrders.editFailed'),
           'error',
         );
-        if (hasMutation) finish();
-        Sentry.captureException(
-          new Error(
-            `Conditional open order edit failed: ${JSON.stringify(result)}`,
-          ),
-        );
-        if (!hasMutation) setReview(null);
+        setReview(null);
       } catch (error) {
         if (isPerpsActionUserCancelled(error)) return;
         const message = getErrorMessage(error);
@@ -324,7 +345,7 @@ export const usePerpsProOpenOrderEdit = (
         setPending(false);
       }
     },
-    [finish, handleKnownActionError, t],
+    [finish, handleKnownActionError, markUnavailable, t],
   );
 
   const stageReview = useCallback(
@@ -384,9 +405,13 @@ export const usePerpsProOpenOrderEdit = (
         const command = buildPerpsModifyOpenOrderCommand({
           account: editor.account,
           baseSize,
+          cloid: editor.order.cloid,
           coin: editor.order.coin,
           dexId: editor.market.dexId,
+          editKind: 'limit',
+          expectedIsPositionTpsl: editor.order.isPositionTpsl,
           expectedLimitPrice: editor.order.executionPrice,
+          expectedOrderType: editor.order.orderType,
           expectedRemainingSize: editor.order.remainingSize,
           limitPrice: draft.price,
           marketKey: editor.market.marketKey,
@@ -395,7 +420,7 @@ export const usePerpsProOpenOrderEdit = (
           reduceOnly: editor.order.reduceOnly,
           side: editor.order.side,
           szDecimals: editor.market.szDecimals,
-          tif: editor.order.tif as 'Alo' | 'Gtc',
+          tif: editor.order.tif as 'Alo' | 'Gtc' | 'Ioc',
         });
         if (
           new BigNumber(command.replacement.limitPrice).eq(
@@ -433,69 +458,76 @@ export const usePerpsProOpenOrderEdit = (
         editor.category !== 'conditional' ||
         !editor.order.triggerKind ||
         !editor.order.triggerPrice ||
+        !editor.order.limitPrice ||
+        (editor.order.editKind !== 'triggerMarket' &&
+          editor.order.editKind !== 'triggerLimit') ||
         pendingRef.current ||
         reviewRequestRef.current
       ) {
         return;
       }
-      const state = perpsStore.getState();
-      const market = state.marketDataMap[editor.order.coin];
-      const livePosition = getLivePosition(editor.order.coin);
-      if (
-        !isSamePerpsActionAccount(state.currentPerpsAccount, editor.account) ||
-        !market?.markPx ||
-        !livePosition ||
-        livePosition.direction !== editor.position.direction
-      ) {
-        showToast(t('page.perps.pro.openOrders.editContextChanged'), 'error');
-        finish();
-        return;
-      }
       reviewRequestRef.current = true;
       try {
-        const command = buildPerpsPositionTpSlCommand({
+        const command = buildPerpsModifyOpenOrderCommand({
           account: editor.account,
+          baseSize: draft.baseSize,
+          cloid: editor.order.cloid,
           coin: editor.order.coin,
-          direction: livePosition.direction,
-          expectedPositionSize: livePosition.size,
-          legs: [
-            {
-              expectedOrder: {
-                execution: 'market',
-                remainingSize: editor.order.remainingSize,
-                side: editor.order.side === 'buy' ? 'B' : 'A',
-                triggerPrice: editor.order.triggerPrice,
-              },
-              kind: editor.order.triggerKind,
-              replaceOid: editor.order.oid,
-              size: draft.baseSize,
-              triggerPrice: draft.triggerPrice,
-            },
-          ],
-          markPrice: market.markPx,
-          pxDecimals: market.pxDecimals,
-          scope: 'partial',
-          szDecimals: market.szDecimals,
+          dexId: editor.market.dexId,
+          editKind: editor.order.editKind,
+          expectedIsPositionTpsl: editor.order.isPositionTpsl,
+          expectedLimitPrice: editor.order.limitPrice,
+          expectedOrderType: editor.order.orderType,
+          expectedRemainingSize: editor.order.remainingSize,
+          expectedTriggerPrice: editor.order.triggerPrice,
+          limitPrice: draft.limitPrice || undefined,
+          marketKey: editor.market.marketKey,
+          oid: editor.order.oid,
+          pxDecimals: editor.market.pxDecimals,
+          reduceOnly: editor.order.reduceOnly,
+          side: editor.order.side,
+          szDecimals: editor.market.szDecimals,
+          triggerKind: editor.order.triggerKind,
+          triggerPrice: draft.triggerPrice,
         });
-        const leg = command.legs[0]!;
-        if (
-          new BigNumber(leg.triggerPrice).eq(editor.order.triggerPrice) &&
-          new BigNumber(leg.size || Number.NaN).eq(editor.order.remainingSize)
-        ) {
+        const triggerUnchanged = new BigNumber(
+          command.replacement.triggerPrice || Number.NaN,
+        ).eq(editor.order.triggerPrice);
+        const amountUnchanged = new BigNumber(command.replacement.baseSize).eq(
+          editor.order.remainingSize,
+        );
+        const limitUnchanged =
+          editor.order.editKind === 'triggerMarket' ||
+          new BigNumber(command.replacement.limitPrice).eq(
+            editor.order.limitPrice,
+          );
+        if (triggerUnchanged && amountUnchanged && limitUnchanged) {
           throw new Error('Conditional edit is unchanged');
         }
         await stageReview(editor, {
           category: 'conditional',
           command,
-          markPrice: market.markPx,
+          referencePrice:
+            editor.order.editKind === 'triggerLimit'
+              ? command.replacement.limitPrice
+              : editor.market.markPrice ||
+                command.replacement.triggerPrice ||
+                command.replacement.limitPrice,
         });
-      } catch {
-        showToast(t('page.perps.pro.openOrders.invalidEdit'), 'error');
+      } catch (error) {
+        const message = getErrorMessage(error);
+        showToast(
+          message === 'Conditional edit is unchanged' ||
+            message === 'Invalid open order modification'
+            ? t('page.perps.pro.openOrders.invalidEdit')
+            : message || t('page.perps.pro.openOrders.invalidEdit'),
+          'error',
+        );
       } finally {
         reviewRequestRef.current = false;
       }
     },
-    [editor, finish, stageReview, t],
+    [editor, stageReview, t],
   );
 
   const confirm = useCallback(async () => {
@@ -523,6 +555,7 @@ export const usePerpsProOpenOrderEdit = (
     closeReview,
     confirm,
     editor,
+    isEditUnavailable,
     open,
     pending,
     requestBasicReview,
