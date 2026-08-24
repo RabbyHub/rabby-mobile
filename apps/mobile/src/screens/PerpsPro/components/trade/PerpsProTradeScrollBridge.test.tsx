@@ -1,9 +1,19 @@
 import { act, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
+const mockDispatchCommand = jest.fn();
 const mockScrollTo = jest.fn();
 let mockScrollHandlers: Record<string, (event: any) => void> = {};
+const mockAndroidGesture = {};
+
+jest.mock('react-native-gesture-handler', () => ({
+  GestureDetector: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock('./usePerpsProAndroidTradeScrollDriver', () => ({
+  usePerpsProAndroidTradeScrollDriver: () => mockAndroidGesture,
+}));
 
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
@@ -14,6 +24,7 @@ jest.mock('react-native-reanimated', () => {
       ScrollView: ReactNative.ScrollView,
       View: ReactNative.View,
     },
+    dispatchCommand: (...args: unknown[]) => mockDispatchCommand(...args),
     scrollTo: (...args: unknown[]) => mockScrollTo(...args),
     useAnimatedRef: () => {
       const ref = (component?: unknown) => {
@@ -36,8 +47,17 @@ import type { PerpsProInfoScrollBridgeController } from '../info/usePerpsProInfo
 import {
   getPerpsProInfoBridgeOffset,
   interruptPerpsProInfoScrollBridge,
+  stopPerpsProInfoBridgeTargetMomentum,
 } from '../info/usePerpsProInfoScrollBridge';
 import { PerpsProTradeScrollBridge } from './PerpsProTradeScrollBridge';
+
+const initialPlatform = Platform.OS;
+const setPlatform = (platform: 'android' | 'ios') => {
+  Object.defineProperty(Platform, 'OS', {
+    configurable: true,
+    value: platform,
+  });
+};
 
 const createController = () => {
   const shared = <T,>(value: T) => ({ value });
@@ -57,9 +77,12 @@ describe('PerpsProTradeScrollBridge', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockScrollHandlers = {};
+    setPlatform('ios');
   });
 
-  it('keeps Trade under a native keyboard-dismissable vertical scroll owner', () => {
+  afterAll(() => setPlatform(initialPlatform as 'android' | 'ios'));
+
+  it('keeps the iOS Trade under its existing native vertical scroll owner', () => {
     render(
       <PerpsProTradeScrollBridge controller={createController()} height={520}>
         <View testID="trade-content" />
@@ -71,6 +94,23 @@ describe('PerpsProTradeScrollBridge', () => {
     expect(bridge.props.nestedScrollEnabled).toBe(true);
     expect(bridge.props.scrollEnabled).toBe(true);
     expect(bridge.props.scrollEventThrottle).toBe(16);
+    expect(screen.getAllByTestId('trade-content')).toHaveLength(1);
+  });
+
+  it('uses a stationary keyboard responder instead of a proxy ScrollView on Android', () => {
+    setPlatform('android');
+    render(
+      <PerpsProTradeScrollBridge controller={createController()} height={520}>
+        <View testID="trade-content" />
+      </PerpsProTradeScrollBridge>,
+    );
+
+    const bridge = screen.getByTestId('perps-pro-trade-scroll-bridge');
+    expect(bridge.props.keyboardShouldPersistTaps).toBe('handled');
+    expect(bridge.props.scrollEnabled).toBe(false);
+    expect(bridge.props.contentOffset).toBeUndefined();
+    expect(bridge.props.contentContainerStyle).toBeUndefined();
+    expect(bridge.props.onScroll).toBeUndefined();
     expect(screen.getAllByTestId('trade-content')).toHaveLength(1);
   });
 
@@ -145,5 +185,18 @@ describe('PerpsProTradeScrollBridge', () => {
         offset: Number.NaN,
       }),
     ).toBe(0);
+  });
+
+  it('uses the native manager command to abort Android target momentum', () => {
+    const controller = createController();
+    controller.targets[0].offset.value = 350;
+
+    stopPerpsProInfoBridgeTargetMomentum(controller, 0);
+
+    expect(mockDispatchCommand).toHaveBeenCalledWith(
+      controller.targets[0].ref,
+      'scrollTo',
+      [0, 300, false],
+    );
   });
 });

@@ -1,5 +1,6 @@
 import React, { useMemo, type PropsWithChildren } from 'react';
-import type { ViewStyle } from 'react-native';
+import { Platform, ScrollView, type ViewStyle } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   scrollTo,
   useAnimatedRef,
@@ -13,16 +14,19 @@ import {
   scrollPerpsProInfoBridgeTarget,
   type PerpsProInfoScrollBridgeController,
 } from '../info/usePerpsProInfoScrollBridge';
+import { usePerpsProAndroidTradeScrollDriver } from './usePerpsProAndroidTradeScrollDriver';
 
 const PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR = 100_000;
 const PERPS_PRO_TRADE_SCROLL_BRIDGE_SETTLE_VELOCITY = 0.01;
 
-export const PerpsProTradeScrollBridge: React.FC<
-  PropsWithChildren<{
-    controller: PerpsProInfoScrollBridgeController;
-    enabled?: boolean;
-    height: number;
-  }>
+type PerpsProTradeScrollBridgeProps = PropsWithChildren<{
+  controller: PerpsProInfoScrollBridgeController;
+  enabled?: boolean;
+  height: number;
+}>;
+
+const PerpsProNativeTradeScrollBridge: React.FC<
+  PerpsProTradeScrollBridgeProps
 > = ({ children, controller, enabled = true, height }) => {
   const scrollRef = useAnimatedRef<Reanimated.ScrollView>();
   const proxyOffset = useSharedValue(PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR);
@@ -138,3 +142,35 @@ export const PerpsProTradeScrollBridge: React.FC<
     </Reanimated.ScrollView>
   );
 };
+
+const PerpsProAndroidTradeScrollBridge: React.FC<
+  PerpsProTradeScrollBridgeProps
+> = ({ children, controller, enabled = true, height }) => {
+  const gesture = usePerpsProAndroidTradeScrollDriver({
+    controller,
+    enabled,
+  });
+
+  return (
+    <GestureDetector gesture={gesture}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={false}
+        scrollEnabled={false}
+        showsVerticalScrollIndicator={false}
+        style={{ height }}
+        testID="perps-pro-trade-scroll-bridge">
+        {children}
+      </ScrollView>
+    </GestureDetector>
+  );
+};
+
+export const PerpsProTradeScrollBridge: React.FC<
+  PerpsProTradeScrollBridgeProps
+> = props =>
+  Platform.OS === 'android' ? (
+    <PerpsProAndroidTradeScrollBridge {...props} />
+  ) : (
+    <PerpsProNativeTradeScrollBridge {...props} />
+  );
