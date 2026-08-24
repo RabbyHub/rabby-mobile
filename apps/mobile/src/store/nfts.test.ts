@@ -49,6 +49,7 @@ import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { syncRemoteNFTs } from '@/databases/sync/assets';
 import nftListStore, {
   buildNftEntityId,
+  getMultiNftsCacheKey,
   nftCollectionResourceStore,
   nftEntityResourceStore,
   useNftListComputedStore,
@@ -551,5 +552,66 @@ describe('NFT list refresh semantics', () => {
         scene: 'multi-address',
       }),
     );
+  });
+
+  it('coalesces hidden multi-address updates and catches up once activated', async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    jest.useFakeTimers();
+    const secondAddress = '0xactivity-def';
+    const key = getMultiNftsCacheKey([ADDRESS, secondAddress]);
+    const first = { ...cachedNft, id: 'first' };
+    const latestFirst = { ...cachedNft, id: 'latest-first' };
+    const second = {
+      ...cachedNft,
+      id: 'second',
+      inner_id: 'second-inner',
+      owner_addr: secondAddress,
+    };
+
+    try {
+      useNftListComputedStore
+        .getState()
+        .setMultiNftsProjectionActive(key, false);
+      useNftListComputedStore
+        .getState()
+        .registerMultiNfts([ADDRESS, secondAddress]);
+      mockedScheduleAssetProjectionPersistence.mockClear();
+
+      nftListStore.getState().updateNFTListByAddress(ADDRESS, [first]);
+      nftListStore.getState().updateNFTListByAddress(ADDRESS, [latestFirst]);
+      nftListStore.getState().updateNFTListByAddress(secondAddress, [second]);
+
+      expect(
+        useNftListComputedStore.getState().multiNftsIndexCache[key],
+      ).toBeUndefined();
+      expect(
+        mockedScheduleAssetProjectionPersistence.mock.calls.filter(
+          ([options]) => options.runtimeKey === key,
+        ),
+      ).toHaveLength(0);
+
+      useNftListComputedStore
+        .getState()
+        .setMultiNftsProjectionActive(key, true);
+      jest.runOnlyPendingTimers();
+
+      const result =
+        useNftListComputedStore.getState().multiNftsIndexCache[key];
+      expect(result?.rows).toEqual([
+        { type: 'nft', nftId: buildNftEntityId(latestFirst) },
+        { type: 'nft', nftId: buildNftEntityId(second) },
+      ]);
+      expect(
+        mockedScheduleAssetProjectionPersistence.mock.calls.filter(
+          ([options]) => options.runtimeKey === key,
+        ),
+      ).toHaveLength(1);
+    } finally {
+      useNftListComputedStore
+        .getState()
+        .setMultiNftsProjectionActive(key, false);
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+    }
   });
 });

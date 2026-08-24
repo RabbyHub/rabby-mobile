@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -192,6 +193,8 @@ const NFTListInner = () => {
 
   const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
+  const isScreenFocused = useIsFocused();
+  const isProjectionActive = isScreenFocused && isFocusing;
 
   useScrollToTopOnChainChange({
     chain,
@@ -347,6 +350,18 @@ const NFTListInner = () => {
     scenarioReadyCheckTick,
     nftIndex.rows.length,
   ]);
+
+  useEffect(() => {
+    useNftListComputedStore
+      .getState()
+      .setMultiNftsProjectionActive(multiNftsKey, isProjectionActive);
+
+    return () => {
+      useNftListComputedStore
+        .getState()
+        .setMultiNftsProjectionActive(multiNftsKey, false);
+    };
+  }, [isProjectionActive, multiNftsKey]);
 
   useEffect(() => {
     useNftListComputedStore
