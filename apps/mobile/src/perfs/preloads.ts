@@ -4,9 +4,11 @@ import { isCached, preload } from 'react-native-bundle-splitter';
 
 const loadablesAreEager =
   process.env.RABBY_MOBILE_MODULE_LOADING_MODE === 'eager';
+const pendingNamedComponentPreloads = new Map<string, Promise<void>>();
 
 export const PRELOAD_SCREENS = {
   [RootNames.Settings]: 'SettingsScreen',
+  [RootNames.SingleAddressHome]: 'SingleAddressHomeScreen',
 };
 
 export const PRELOAD_NAVIGATORS = {
@@ -27,7 +29,24 @@ async function preloadNamedComponent(
     return;
   }
 
-  await preload().component(name);
+  const pendingPreload = pendingNamedComponentPreloads.get(name);
+  if (pendingPreload) {
+    await pendingPreload;
+    return;
+  }
+
+  const preloadPromise = Promise.resolve(preload().component(name)).then(
+    () => undefined,
+  );
+  pendingNamedComponentPreloads.set(name, preloadPromise);
+
+  try {
+    await preloadPromise;
+  } finally {
+    if (pendingNamedComponentPreloads.get(name) === preloadPromise) {
+      pendingNamedComponentPreloads.delete(name);
+    }
+  }
 }
 
 export async function preloadSettingsScreen() {
@@ -57,7 +76,7 @@ export async function prepareTransactionNavigatorForPerpsNavigation() {
 }
 
 export async function preloadSingleAddressNavigator() {
-  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.SingleAddressStack]);
+  await preloadNamedComponent(PRELOAD_SCREENS[RootNames.SingleAddressHome]);
 }
 
 export async function preloadHomeShortcutNavigators() {

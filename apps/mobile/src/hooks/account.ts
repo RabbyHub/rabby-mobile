@@ -137,19 +137,24 @@ export function useBackupReminder(account: KeyringAccount | null | undefined) {
   const brandName = account?.brandName;
   const hdPathBasePublicKey = account?.hdPathBasePublicKey;
   const publicKey = account?.publicKey;
-  const storedPublicKey = useAccountStore(s => {
-    if (!address || type !== KEYRING_TYPE.HdKeyring) {
-      return null;
-    }
+  const storedPublicKey = useActivityStore(
+    accountStore.useStore,
+    state => {
+      if (!address || type !== KEYRING_TYPE.HdKeyring) {
+        return null;
+      }
 
-    const storedAccount = s.accounts.find(
-      item =>
-        isSameAddress(item.address, address) &&
-        item.type === type &&
-        (!brandName || item.brandName === brandName),
-    );
-    return getBackupReminderKey(storedAccount);
-  });
+      const storedAccount = state.accounts.find(
+        item =>
+          isSameAddress(item.address, address) &&
+          item.type === type &&
+          (!brandName || item.brandName === brandName),
+      );
+      return getBackupReminderKey(storedAccount);
+    },
+    Object.is,
+    { storeLabel: 'account-backup-reminder' },
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -245,7 +250,12 @@ export function setCurrentAccount(
 }
 
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const accounts = useAccountStore(s => s.accounts);
+  const accounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'accounts' },
+  );
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -278,7 +288,12 @@ export const storeApiAccounts = {
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const allAccounts = useAccountStore(s => s.accounts);
+  const allAccounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'my-accounts' },
+  );
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -300,7 +315,12 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
-  const pinAddresses = useAccountStore(s => s.pinnedAddresses);
+  const pinAddresses = useActivityStore(
+    accountStore.useStore,
+    state => state.pinnedAddresses,
+    Object.is,
+    { storeLabel: 'pinned-addresses' },
+  );
 
   const getPinAddressesAsync = useCallback(
     () => accountStore.refreshPinnedAddresses(),

@@ -44,7 +44,6 @@ export function useAuthTypeSelection(
 
   return { currentAuthType, setCurrentAuthType, updateAuthType };
 }
-
 export function useAuthenticationModal(options: {
   authTypes: apisLock.UIAuthType[];
 }) {

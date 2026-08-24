@@ -6,7 +6,7 @@ import { AddressItemEntry } from './components/AddressItem';
 import { createGetStyles2024 } from '@/utils/styles';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAccountInfo } from './components/MultiAssets/hooks';
+import { useHomeAssetAccountInfo } from './components/MultiAssets/hooks';
 import { useTranslation } from 'react-i18next';
 import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
@@ -27,7 +27,7 @@ export const NotMatterAddressDialog: React.FC<{
   isShowBackupBadge?: boolean;
 }> = ({ onDone, onBack, showBackArrow = true, variant, isShowBackupBadge }) => {
   const { myNotTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
-    useAccountInfo();
+    useHomeAssetAccountInfo();
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });

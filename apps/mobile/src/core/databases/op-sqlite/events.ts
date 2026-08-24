@@ -10,6 +10,8 @@ export type EventBusListeners = {
 
   UPDATE_HOOK: (payload: UppdateHookPayload) => void;
 
+  DATABASE_COMMITTED: (ctx: { tables: string[] }) => void;
+
   ASSET_TOKEN_TAG_TABLE_READY: () => void;
 
   TRIGGER_TOKEN_STATICS_REFRESH: () => void;

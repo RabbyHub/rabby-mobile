@@ -1,7 +1,7 @@
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import addressBalanceStore from '@/store/balance';
-import { useAccountStore } from '@/store/account';
+import accountStore from '@/store/account';
 import { findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,8 @@ import {
   hydrateClosedTipsChains,
   setClosedTipsChain,
 } from './offlineChainState';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export const useMockClearOfflineChainTips = () => {
   return { clearOfflineChainTips };
@@ -37,9 +39,21 @@ export const useOfflineChain = () => {
     void hydrateClosedTipsChains().catch(console.error);
   }, []);
 
-  const closedTipsChains = closedTipsStore(s => s.closedTipsChains);
-  const closedTipsHydrated = closedTipsStore(s => s.hydrated);
-  const accounts = useAccountStore(s => s.accounts);
+  const { closedTipsChains, closedTipsHydrated } = useActivityStore(
+    closedTipsStore,
+    useShallow(state => ({
+      closedTipsChains: state.closedTipsChains,
+      closedTipsHydrated: state.hydrated,
+    })),
+    Object.is,
+    { storeLabel: 'offline-chain-tips' },
+  );
+  const accounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'offline-chain-accounts' },
+  );
   const { mockData } = useMockDataForHomeCenterArea();
   const { value: offlineList } = useAsync(async () => {
     // leave here for mock data
@@ -53,17 +67,20 @@ export const useOfflineChain = () => {
 
     return openapi.getOfflineChainList();
   }, [mockData.forceShowOffchainNotify]);
-  const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
-    useMemo(() => {
-      return accounts.map(account => account.address.toLowerCase());
-    }, [accounts]),
+  const balanceAddresses = useMemo(
+    () => accounts.map(account => account.address.toLowerCase()),
+    [accounts],
+  );
+  const accountChainBalanceList = useActivityStore(
+    addressBalanceStore.useStore,
+    useShallow(state =>
+      balanceAddresses.map(address => state.valueMap[address]?.chainList || []),
+    ),
+    Object.is,
+    { storeLabel: 'offline-chain-balances' },
   );
 
   const list = useMemo(() => {
-    const accountChainBalanceList = balanceSnapshots.map(snapshot => {
-      return snapshot.value?.chainList || [];
-    });
-
     return offlineList
       ?.filter(e => {
         const isIn7days = dayjs
@@ -82,7 +99,7 @@ export const useOfflineChain = () => {
         );
       })
       .sort((a, b) => a.offline_at - b.offline_at);
-  }, [balanceSnapshots, offlineList, mockData.forceShowOffchainNotify]);
+  }, [accountChainBalanceList, offlineList, mockData.forceShowOffchainNotify]);
 
   const displayWillClosedChain = useMemo(
     () =>

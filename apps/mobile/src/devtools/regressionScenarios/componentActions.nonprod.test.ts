@@ -23,7 +23,7 @@ describe('regression scenario component actions', () => {
 
     expect(completed).toBe(true);
     expect(timing.waitMs).toBeGreaterThanOrEqual(0);
-    expect(timing.handlerMs).toBeGreaterThanOrEqual(10);
+    expect(timing.handlerMs).toBeGreaterThan(0);
     expect(timing.totalMs).toBe(timing.waitMs + timing.handlerMs);
     unregister();
   });

@@ -1,6 +1,7 @@
 import { sendRequest } from '@/core/apis/sendRequest';
 import { requestReadOnlyETHRpc } from '@/core/apis/readOnlyRpc';
 import i18n from '@/utils/i18n';
+import * as Sentry from '@sentry/react-native';
 import type { IWalletKit, WalletKitTypes } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
 import { ethErrors } from 'eth-rpc-errors';
@@ -21,6 +22,7 @@ import {
   syncWalletConnectSessionsFromClient,
 } from './sessions';
 import { resolveWalletConnectAccount } from './sessionAccountResolution';
+import { getWalletConnectTelemetrySource } from './telemetry';
 import {
   WALLETCONNECT_READ_ONLY_RPC_METHODS,
   WALLETCONNECT_SIGN_METHODS,
@@ -290,6 +292,25 @@ async function executeSessionRequest(input: {
   const { method, params } = event.params.request;
 
   if (!method || !isSupportedWalletConnectMethod(method)) {
+    const telemetrySource = getWalletConnectTelemetrySource({
+      url: session.peer?.metadata?.url,
+      nativeRedirect: session.peer?.metadata?.redirect?.native,
+    });
+    Sentry.captureException(
+      new Error('Unsupported WalletConnect method requested'),
+      {
+        tags: {
+          scene: 'walletconnect_request',
+          source: 'walletconnect',
+        },
+        extra: {
+          dappName: session.peer?.metadata?.name || 'Unknown dapp',
+          ...telemetrySource,
+          method: method || 'unknown',
+          chainId: event.params.chainId,
+        },
+      },
+    );
     throw ethErrors.rpc.methodNotFound({
       message: `WalletConnect method is not supported: ${method || 'unknown'}`,
     });

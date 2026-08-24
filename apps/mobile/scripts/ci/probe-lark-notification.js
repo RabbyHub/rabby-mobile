@@ -2,7 +2,6 @@
 
 const { createHmac } = require('crypto');
 const { Buffer } = require('buffer');
-const http = require('http');
 const https = require('https');
 
 const args = new Set(process.argv.slice(2));
@@ -56,14 +55,12 @@ function makeSignature(secret) {
 
 function postPayload({ urlString, payload, headers, stage }) {
   const url = new URL(urlString);
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-    throw new Error(`${stage} URL must use HTTP or HTTPS`);
+  if (url.protocol !== 'https:') {
+    throw new Error(`${stage} URL must use HTTPS`);
   }
 
-  const client = url.protocol === 'https:' ? https : http;
-
   return new Promise((resolve, reject) => {
-    const request = client.request(
+    const request = https.request(
       url,
       {
         method: 'POST',

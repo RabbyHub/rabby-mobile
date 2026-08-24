@@ -15,6 +15,7 @@ import {
   getRabbyLockInfo,
   isUnlockSessionValid,
   PasswordStatus,
+  setAppLaunchLockEnabled,
 } from '@/core/apis/lock';
 import { getPwdStatus } from './useLock';
 import {
@@ -85,6 +86,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DevSwitches;
   testkitParams?: {
     tab?: 'overview' | 'debug';
+    appLaunchLock?: boolean;
   };
   debugDbSyncPolicy?: {
     resetWritePolicyOverride?: boolean;
@@ -151,12 +153,26 @@ function parseNonProductionTestkitLink(appLink: string) {
   }
 
   const tabRaw = urlInfo.searchParams.get('tab');
+  const appLaunchLockRaw = urlInfo.searchParams.get('appLaunchLock');
+  const appLaunchLock =
+    appLaunchLockRaw === 'enabled'
+      ? true
+      : appLaunchLockRaw === 'disabled'
+      ? false
+      : undefined;
 
   return {
     type: 'open-testkit-screen',
     testkitScreen: screen,
     testkitParams:
-      tabRaw === 'debug' || tabRaw === 'overview' ? { tab: tabRaw } : undefined,
+      tabRaw === 'debug' || tabRaw === 'overview' || appLaunchLock !== undefined
+        ? {
+            ...(tabRaw === 'debug' || tabRaw === 'overview'
+              ? { tab: tabRaw }
+              : {}),
+            ...(appLaunchLock !== undefined ? { appLaunchLock } : {}),
+          }
+        : undefined,
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
 }
 
@@ -546,6 +562,15 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
     case 'open-testkit-screen':
       if (!payload.testkitScreen) {
         return;
+      }
+      if (
+        isNonPublicProductionEnv &&
+        typeof payload.testkitParams?.appLaunchLock === 'boolean'
+      ) {
+        setAppLaunchLockEnabled(payload.testkitParams.appLaunchLock);
+        console.info('[useUniversalLinkOnTop] App Launch Lock set by testkit', {
+          enabled: payload.testkitParams.appLaunchLock,
+        });
       }
       dispatchWhenNavigationReady(
         StackActions.push(RootNames.StackTestkits, {

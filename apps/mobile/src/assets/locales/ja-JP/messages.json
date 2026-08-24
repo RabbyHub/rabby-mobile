@@ -768,7 +768,8 @@
         "unsupportedDesc": "EIP-7702の委任は、秘密鍵またはシードフレーズで管理するアドレスでのみ取り消せます。"
       },
       "supportedChains": "サポートされているチェーン",
-      "delegatedAddress": "委任されたアドレス"
+      "delegatedAddress": "委任されたアドレス",
+      "title": "承認"
     },
     "sendToken": {
       "sectionBalance": {
@@ -1079,6 +1080,11 @@
         "descriptionIOS": "Rabbyを気に入っていただけたら、App Storeで簡単な評価をいただけると、とても励みになります。",
         "descriptionAndroid": "Rabbyを気に入っていただけたら、Google Playで簡単な評価をいただけると、とても励みになります。"
       },
+      "upgradeModal": {
+        "title": "新機能",
+        "slideToUpdate": "スライドして更新",
+        "close": "閉じる"
+      },
       "homeCenterTipScreenshot": {
         "description": "いつでもスクリーンショットを撮って、すぐにバグを報告できます",
         "title": "ヒント"
@@ -1273,7 +1279,8 @@
       "delete-checklist-1": "このウォレットを削除すると、対応する秘密鍵とシードフレーズも削除され、Rabbyでは復元できないことを理解しました。",
       "delete-private-key-title": "ウォレットと秘密鍵を削除",
       "delete-seed-phrase-title": "ウォレットとシードフレーズを削除",
-      "delete-title": "ウォレットを削除"
+      "delete-title": "ウォレットを削除",
+      "moreWallets": "その他のウォレット"
     },
     "signText": {
       "title": "テキストに署名",
@@ -3101,6 +3108,7 @@
         "actions": "借入",
         "approveAndBorrow": "承認して借入",
         "almostReachedError": "プロトコルの借入上限に近づいているため、借入可能な最大金額が制限されています。",
+        "borrowingUnavailable": "現在のモードでは、この資産を借り入れることはできません。",
         "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。",
         "swapDebt": "スワップ",
         "borrowed": "借入済み",
@@ -3141,7 +3149,8 @@
         "warning": "この金額を借り入れると、ヘルスファクターが清算リスクのある水準まで低下します。",
         "toggleCollateralWarning": "この資産を担保として無効にすると、清算のリスクがあるレベルまでヘルスファクターが低下します。",
         "emodeBlockWarning": "E-Modeを無効にすると、ヘルスファクターが清算リスクのある水準まで低下します。",
-        "blockEmodeWarning": "E-Modeを無効にできません。清算を引き起こす可能性があるためです。E-Modeを終了するには、担保を追加するか借入ポジションを返済してください。"
+        "blockEmodeWarning": "E-Modeを無効にできません。清算を引き起こす可能性があるためです。E-Modeを終了するには、担保を追加するか借入ポジションを返済してください。",
+        "zeroLtvEmodeExitWarning": "{{assets}}はE-Mode外ではLTVが0%になるため、E-Modeを終了する前に担保としての使用を無効にしてください。"
       },
       "lqDescription": {
         "desc": "清算値",
@@ -3301,6 +3310,7 @@
         "repayWith": "返済に使う担保",
         "collateralNotEnough": "選択した金額よりも担保残高が低いです。",
         "insufficientLiquidity": "流動性が不足しています。",
+        "flashLoanDisabled": "セキュリティ上の理由により、この資産ではポジションのスワップが無効になっています。",
         "frozenCollateral": "この資産はAaveコミュニティの決定により凍結されています。"
       },
       "repayWithAToken": {
@@ -3382,6 +3392,9 @@
       "createWalletError": "ウォレットの作成に失敗しました",
       "walletReady": "ウォレットの準備ができました 🚀",
       "setPasswordTip": "ウォレットを保護するためにパスワードを設定してください。"
+    },
+    "batchRevoke": {
+      "title": "一括取り消し"
     },
     "convertDust": {
       "failReason": {

@@ -112,7 +112,7 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     e.description = input.description ?? '';
     e.usd_price = input.usd_price ?? 0;
     e.amount = input.amount ?? 0;
-    e.collection_id = input.contract_id ?? '';
+    e.collection_id = input.collection_id ?? '';
     e.content_type = input.content_type || 'image_url';
     e.content = input.content ?? '';
     e.detail_url = input.detail_url ?? '';

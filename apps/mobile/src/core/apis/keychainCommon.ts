@@ -18,6 +18,7 @@ import {
   type AndroidBiometricSecurityLevel,
 } from './androidBiometricsRegression';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
+import { markWalletUnlockDiagnosticStage } from '@/utils/walletUnlockDiagnostics';
 
 export const KEYCHAIN_DEFAULT_SERVICE = 'com.debank';
 export const KEYCHAIN_GENERIC_USER = 'rabbymobile-user';
@@ -253,7 +254,17 @@ type NativeKeychainDebugState =
   | NativeAndroidKeychainDebugState
   | NativeIOSKeychainDebugState;
 
+type NativeKeychainEntryState = {
+  service: string;
+  hasEntry: boolean;
+  hasUsername: boolean;
+  hasPassword: boolean;
+};
+
 type RNKeychainDebugModule = {
+  getGenericPasswordEntryStateForOptions?: (
+    options: KeychainCompatibleOptions,
+  ) => Promise<NativeKeychainEntryState>;
   debugGetGenericPasswordStateForOptions?: (
     options: KeychainCompatibleOptions,
   ) => Promise<NativeKeychainDebugState>;
@@ -304,6 +315,10 @@ export type DebugGenericPasswordDecryptResult = {
   credentials: KeychainCompatibleUserCredentials;
   decryptedPayload: DebugDecryptedKeychainPayload;
   usedFallbackRabbitCode: boolean;
+};
+
+export type KeychainEntryState = NativeKeychainEntryState & {
+  sourceLabel: string;
 };
 
 type KeychainDebugStateBase = {
@@ -771,6 +786,23 @@ export function createBusinessKeychainApi({
     }
   }
 
+  async function getKeychainEntryState(
+    service: string = KEYCHAIN_DEFAULT_SERVICE,
+  ): Promise<KeychainEntryState> {
+    const nativeState = await callKeychainDebugMethod<NativeKeychainEntryState>(
+      'getGenericPasswordEntryStateForOptions',
+      {
+        ...DEFAULT_BASE_OPTIONS,
+        service,
+      },
+    );
+
+    return {
+      ...nativeState,
+      sourceLabel,
+    };
+  }
+
   async function normalizeRequestGenericPasswordError(error: unknown) {
     const normalizedError =
       error instanceof Error ? error : new Error(getErrorMessage(error));
@@ -853,9 +885,25 @@ export function createBusinessKeychainApi({
 
   async function getGenericPasswordWithBiometricPrompt(
     options: KeychainCompatibleOptions,
+    walletUnlockDiagnosticsAttemptId?: string,
   ) {
+    const startedAt = Date.now();
+    markWalletUnlockDiagnosticStage(
+      walletUnlockDiagnosticsAttemptId,
+      'keychain_native_get',
+      { keychainSource: sourceLabel },
+    );
     const result = await keychainModule.getGenericPassword(options);
     const credentials = result as DefaultRet;
+
+    traceAndroidKeychainPerf('biometric_entry_read_end', {
+      elapsedMs: Date.now() - startedAt,
+      hasPassword: !!credentials && !!credentials.password,
+      storage:
+        credentials && typeof credentials.storage === 'string'
+          ? credentials.storage
+          : undefined,
+    });
 
     if (
       isAndroid &&
@@ -864,6 +912,18 @@ export function createBusinessKeychainApi({
       credentials.storage === KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH &&
       isAuthenticatedByBiometrics()
     ) {
+      markWalletUnlockDiagnosticStage(
+        walletUnlockDiagnosticsAttemptId,
+        'system_auth_availability',
+        {
+          keychainSource: sourceLabel,
+          storage: credentials.storage,
+        },
+      );
+      const availabilityStartedAt = Date.now();
+      traceAndroidKeychainPerf('system_auth_availability_start', {
+        storage: credentials.storage,
+      });
       const [supportedBiometry, keychainPasscodeAvailable, keyguardSecure] =
         await Promise.all([
           keychainModule.getSupportedBiometryType(),
@@ -873,6 +933,13 @@ export function createBusinessKeychainApi({
           DeviceInfo.isPinOrFingerprintSet().catch(() => false),
         ]);
       const passcodeAvailable = keychainPasscodeAvailable || keyguardSecure;
+
+      traceAndroidKeychainPerf('system_auth_availability_end', {
+        elapsedMs: Date.now() - availabilityStartedAt,
+        storage: credentials.storage,
+        supportedBiometry: supportedBiometry || null,
+        passcodeAvailable,
+      });
 
       traceAndroidKeychainPerf('system_auth_prompt_start', {
         storage: credentials.storage,
@@ -899,7 +966,16 @@ export function createBusinessKeychainApi({
       let promptResult: Awaited<
         ReturnType<ReactNativeBiometrics['simplePrompt']>
       >;
+      const promptStartedAt = Date.now();
       try {
+        markWalletUnlockDiagnosticStage(
+          walletUnlockDiagnosticsAttemptId,
+          'system_auth_prompt',
+          {
+            keychainSource: sourceLabel,
+            storage: credentials.storage,
+          },
+        );
         promptResult = await getRNBiometrics().simplePrompt({
           promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
           allowDeviceCredentials: true,
@@ -917,6 +993,8 @@ export function createBusinessKeychainApi({
       }
 
       traceAndroidKeychainPerf('system_auth_prompt_end', {
+        elapsedMs: Date.now() - promptStartedAt,
+        requestElapsedMs: Date.now() - startedAt,
         storage: credentials.storage,
         success: promptResult.success,
         error: promptResult.error || null,
@@ -1207,6 +1285,7 @@ export function createBusinessKeychainApi({
     skipBiometricsPasscodeUpgrade = false,
     skipPostDecryptKeychainRewrite = false,
     deferPostDecryptKeychainRewrite = false,
+    walletUnlockDiagnosticsAttemptId,
   }: {
     purpose?: T;
     onPlainPassword?: (
@@ -1220,7 +1299,13 @@ export function createBusinessKeychainApi({
     skipBiometricsPasscodeUpgrade?: boolean;
     skipPostDecryptKeychainRewrite?: boolean;
     deferPostDecryptKeychainRewrite?: boolean;
+    walletUnlockDiagnosticsAttemptId?: string;
   }): Promise<null | DefaultRet> {
+    markWalletUnlockDiagnosticStage(
+      walletUnlockDiagnosticsAttemptId,
+      'keychain_instance_wait',
+      { keychainSource: sourceLabel, purpose },
+    );
     const instance = await waitInstance();
     const startedAt = Date.now();
 
@@ -1237,15 +1322,18 @@ export function createBusinessKeychainApi({
       const androidAccessControl =
         getAndroidRequestAccessControl(authenticationType);
 
-      const keychainObject = (await getGenericPasswordWithBiometricPrompt({
-        ...DEFAULT_GET_OPTIONS,
-        ...getAndroidBiometricSecurityLevelOptions(),
-        ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
-        // Access control is only used by Android when requesting device authentication
-        // For iOS, the access control is derived from the access control when the password was stored
-        accessControl: isAndroid ? androidAccessControl : undefined,
-        ...(isAndroid ? { androidAllowKeyStoreRecovery } : {}),
-      })) as DefaultRet;
+      const keychainObject = (await getGenericPasswordWithBiometricPrompt(
+        {
+          ...DEFAULT_GET_OPTIONS,
+          ...getAndroidBiometricSecurityLevelOptions(),
+          ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
+          // Access control is only used by Android when requesting device authentication
+          // For iOS, the access control is derived from the access control when the password was stored
+          accessControl: isAndroid ? androidAccessControl : undefined,
+          ...(isAndroid ? { androidAllowKeyStoreRecovery } : {}),
+        },
+        walletUnlockDiagnosticsAttemptId,
+      )) as DefaultRet;
       traceAndroidKeychainPerf('request_generic_password_native_end', {
         elapsedMs: Date.now() - startedAt,
         hasPassword: !!keychainObject && !!keychainObject.password,
@@ -1269,6 +1357,17 @@ export function createBusinessKeychainApi({
         traceAndroidKeychainPerf('decrypt_password_payload_start', {
           elapsedMs: Date.now() - startedAt,
         });
+        markWalletUnlockDiagnosticStage(
+          walletUnlockDiagnosticsAttemptId,
+          'decrypt_password_payload',
+          {
+            keychainSource: sourceLabel,
+            storage:
+              typeof keychainObject.storage === 'string'
+                ? keychainObject.storage
+                : undefined,
+          },
+        );
         const { decrypted, usedFallbackRabbitCode } =
           await decryptStoredPasswordWithRabbitCodeCandidates(
             instance,
@@ -1362,6 +1461,11 @@ export function createBusinessKeychainApi({
               hasTrustedVaultKeyString:
                 !!credentialsWithVaultKey.vaultKeyString,
             });
+            markWalletUnlockDiagnosticStage(
+              walletUnlockDiagnosticsAttemptId,
+              'plain_password_callback',
+              { keychainSource: sourceLabel, purpose },
+            );
             await onPlainPassword?.(
               credentialsWithVaultKey.password,
               credentialsWithVaultKey,
@@ -1372,6 +1476,11 @@ export function createBusinessKeychainApi({
                 !!credentialsWithVaultKey.vaultKeyString,
             });
             apisLock.updateUnlockTime();
+            markWalletUnlockDiagnosticStage(
+              walletUnlockDiagnosticsAttemptId,
+              'post_decrypt_keychain_rewrite',
+              { keychainSource: sourceLabel, purpose },
+            );
             await runPostDecryptKeychainRewrite();
             onRequestReturn(instance);
             traceAndroidKeychainPerf('request_generic_password_end', {
@@ -1741,6 +1850,7 @@ export function createBusinessKeychainApi({
     getSupportedBiometryType,
     isPasscodeAuthAvailable,
     getKeychainDebugState,
+    getKeychainEntryState,
     debugRemoveCurrentCipherStorageMarker,
     getSupportedStorageTypes,
     debugWriteMockLegacyBiometricsEntry,

@@ -128,7 +128,7 @@
       "apiExport": "customTestnetServiceApi",
       "access": "deferred-api",
       "defaultReadiness": "loaded",
-      "snapshotApi": false
+      "snapshotApi": true
     },
     "dappService": {
       "apiModule": "dapp",

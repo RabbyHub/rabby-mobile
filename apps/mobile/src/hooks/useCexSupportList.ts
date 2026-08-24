@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import { openapi } from '@/core/request';
@@ -8,6 +7,7 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { findSupportedExchange } from '@/utils/cex';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const globalSupportCexList: ProjectItem[] = [];
 type SupportedCexListState = {
@@ -47,7 +47,12 @@ runStartupTask(loadCexSupportList, STARTUP_TASKS.cexSupportListFetch);
 export const waitForCexSupportListReady = loadCexSupportList;
 
 export const useCexSupportList = () => {
-  const list = supportCexListStore(s => s.list);
+  const list = useActivityStore(
+    supportCexListStore,
+    state => state.list,
+    Object.is,
+    { storeLabel: 'supported-cex-list' },
+  );
 
   return { list };
 };

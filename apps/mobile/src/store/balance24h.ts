@@ -12,13 +12,17 @@ import {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from './balance';
+import { isHomeAssetSelectionExperimentEnabled } from '@/hooks/appSettings';
 import { formatSmallUsdValue } from './curveShared';
 import { formatUsdValue } from '@/utils/number';
 import { debounce, isEqual } from 'lodash';
 import PQueue from 'p-queue';
 import { useShallow } from 'zustand/react/shallow';
 import { BaseStore } from './_base';
-import type { ResourceFlowState } from './_resourceBase';
+import {
+  buildResourceFlowState,
+  type ResourceFlowState,
+} from './_resourceBase';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import addressBalanceStore, { type AddressBalanceSnapshot } from './balance';
@@ -30,6 +34,7 @@ import {
 } from '@/utils/24hBalanceCache';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { computeBalanceChange } from '@/core/utils/balanceChange';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export type Address24hBalanceValue = IBalance24hData['data'] & {
   updateTime: IBalance24hData['updateTime'];
@@ -139,7 +144,7 @@ const build24hTraceDetail = (
 
 async function getSelectedBalanceAddressesOrTop10Fallback() {
   const selectedAddresses = getSelectedBalanceAddressesSnapshot();
-  if (selectedAddresses.length) {
+  if (selectedAddresses.length || isHomeAssetSelectionExperimentEnabled()) {
     return selectedAddresses;
   }
 
@@ -322,7 +327,14 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   };
 
   refreshAddress24hBalance = makeSWRKeyAsyncFunc(
-    async (address: string, force = false, trace?: Balance24hTraceContext) => {
+    async (
+      address: string,
+      force = false,
+      trace?: Balance24hTraceContext,
+      options?: {
+        cacheAlreadyHydrated?: boolean;
+      },
+    ) => {
       const lowerAddress = this.normalizeAddress(address);
       if (!lowerAddress) {
         return undefined;
@@ -332,7 +344,9 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
       let requestId: string | undefined;
 
       try {
-        const cacheData = this.hydrateAddress24hBalanceFromCache(lowerAddress);
+        const cacheData = options?.cacheAlreadyHydrated
+          ? getBalance24hCache(lowerAddress)
+          : this.hydrateAddress24hBalanceFromCache(lowerAddress);
 
         if (cacheData?.data && !force && !cacheData.isExpired) {
           return {
@@ -457,7 +471,13 @@ export function useAddress24hChangeFlowState(
   },
 ) {
   const normalizedAddress = address?.toLowerCase() || '';
-  const flow = balance24hStore.useAddress24hBalanceFlowState(normalizedAddress);
+  const meta = useActivityStore(
+    balance24hStore.useStore,
+    state => state.metaMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-24h-balance' },
+  );
+  const flow = useMemo(() => buildResourceFlowState(meta), [meta]);
 
   return useMemo(() => {
     return buildAddress24hChangeFlowState(
@@ -854,11 +874,18 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
           queue.add(async () => {
             this.setSceneAddrLoading(scene, address, true);
             try {
-              await balance24hStore.refreshAddress24hBalance(address, force, {
-                scene,
-                requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
-                endpoint: 'openapi.get24hTotalBalance',
-              });
+              await balance24hStore.refreshAddress24hBalance(
+                address,
+                force,
+                {
+                  scene,
+                  requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
+                  endpoint: 'openapi.get24hTotalBalance',
+                },
+                {
+                  cacheAlreadyHydrated: true,
+                },
+              );
             } catch (error) {
               console.error('Fetch curve error', error);
             } finally {

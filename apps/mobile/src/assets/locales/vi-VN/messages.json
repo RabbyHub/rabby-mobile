@@ -843,6 +843,7 @@
       }
     },
     "approvals": {
+      "title": "Phê duyệt",
       "list": {
         "symbol": "Phê duyệt"
       },
@@ -1080,6 +1081,7 @@
       "swap-best-subtitle": "Được xác định bởi tổng chi phí ước tính thấp nhất bao gồm tỷ giá hối đoái và phí gas."
     },
     "manageAddress": {
+      "moreWallets": "Thêm ví",
       "enterThePassphrase": "Nhập cụm mật khẩu",
       "watch-address": "Địa chỉ chỉ xem",
       "enterPassphraseTitle": "Nhập cụm mật khẩu để ký",
@@ -1231,6 +1233,11 @@
         "descriptionAndroid": "Nếu bạn thích Rabby, một đánh giá nhanh trên Google Play sẽ là nguồn động viên lớn đối với chúng tôi.",
         "feedbackTitle": "Bạn có phản hồi? Chúng tôi đang lắng nghe.",
         "descriptionIOS": "Nếu bạn thích Rabby, một đánh giá nhanh trên App Store sẽ là nguồn động viên lớn đối với chúng tôi."
+      },
+      "upgradeModal": {
+        "title": "Có gì mới",
+        "slideToUpdate": "Trượt để cập nhật",
+        "close": "Đóng"
       },
       "homeCenterTipScreenshot": {
         "description": "Chụp màn hình bất cứ lúc nào để nhanh chóng báo cáo lỗi",
@@ -3169,6 +3176,7 @@
         "actions": "Vay",
         "approveAndBorrow": "Phê duyệt và vay",
         "almostReachedError": "Số tiền tối đa có sẵn để vay bị giới hạn vì giới hạn vay của giao thức gần đạt.",
+        "borrowingUnavailable": "Không thể vay tài sản này trong chế độ hiện tại.",
         "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm.",
         "swapDebt": "Hoán đổi",
         "borrowed": "Đã vay",
@@ -3209,7 +3217,8 @@
         "warning": "Vay số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
         "toggleCollateralWarning": "Tắt tài sản này làm tài sản thế chấp sẽ khiến Hệ số sức khỏe giảm xuống mức có nguy cơ thanh lý.",
         "emodeBlockWarning": "Vô hiệu hóa E-mode sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
-        "blockEmodeWarning": "Bạn không thể tắt E-Mode vì có thể kích hoạt thanh lý. Để thoát E-Mode, hãy thêm tài sản thế chấp hoặc trả nợ các vị thế đã vay."
+        "blockEmodeWarning": "Bạn không thể tắt E-Mode vì có thể kích hoạt thanh lý. Để thoát E-Mode, hãy thêm tài sản thế chấp hoặc trả nợ các vị thế đã vay.",
+        "zeroLtvEmodeExitWarning": "Tắt {{assets}} làm tài sản thế chấp trước khi thoát E-Mode vì các tài sản này có LTV 0% khi không ở E-Mode."
       },
       "lqDescription": {
         "desc": "Giá trị thanh lý",
@@ -3369,6 +3378,7 @@
         "collateralNotEnough": "Số dư tài sản thế chấp của bạn thấp hơn số tiền đã chọn.",
         "repayWith": "Tài sản thế chấp dùng để trả nợ",
         "insufficientLiquidity": "Không đủ thanh khoản.",
+        "flashLoanDisabled": "Việc chuyển đổi vị thế bị vô hiệu hóa đối với tài sản này vì lý do bảo mật.",
         "frozenCollateral": "Tài sản này đã bị đóng băng do quyết định của cộng đồng Aave."
       },
       "repayWithAToken": {
@@ -3450,6 +3460,9 @@
       "walletReady": "Ví của bạn đã sẵn sàng 🚀",
       "setPasswordTip": "Đặt một mật khẩu để bảo vệ ví của bạn",
       "createWalletError": "Không thể tạo ví"
+    },
+    "batchRevoke": {
+      "title": "Thu hồi hàng loạt"
     },
     "convertDust": {
       "failReason": {

@@ -1,11 +1,15 @@
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
 
+import { pauseSyncScheduler, resumeSyncScheduler } from './sync/scheduler';
+
 type MigrationFailurePolicy = 'continue' | 'throw';
 
 type InitializeConfiguredDataSourceOptions = {
   journalMode?: 'WAL' | 'MEMORY' | false;
   migrationFailurePolicy?: MigrationFailurePolicy;
 };
+
+let initializationSequence = 0;
 
 export async function initializeConfiguredDataSource(
   dataSourceOptions: DataSourceOptions,
@@ -14,41 +18,51 @@ export async function initializeConfiguredDataSource(
   const { journalMode = 'WAL', migrationFailurePolicy = 'continue' } = options;
   const dataSource = new DataSource({ ...dataSourceOptions });
 
-  await dataSource.initialize();
-  console.debug(
-    '[initializeConfiguredDataSource] initialized, will run migrations',
-  );
+  const schedulerPauseReason = `data-source-initialization:${++initializationSequence}`;
+  pauseSyncScheduler(schedulerPauseReason);
 
   try {
-    const migrations = await dataSource.runMigrations({
-      transaction: 'each',
-      fake: false,
-    });
+    await dataSource.initialize();
     console.debug(
-      `[initializeConfiguredDataSource] runMigrations finish: ${migrations.length}`,
+      '[initializeConfiguredDataSource] initialized, will run migrations',
     );
-  } catch (error) {
-    console.error(
-      '[initializeConfiguredDataSource] runMigrations error',
-      error,
-    );
-    if (migrationFailurePolicy === 'throw') {
+
+    try {
+      const migrations = await dataSource.runMigrations({
+        transaction: 'each',
+        fake: false,
+      });
+      console.debug(
+        `[initializeConfiguredDataSource] runMigrations finish: ${migrations.length}`,
+      );
+    } catch (error) {
+      console.error(
+        '[initializeConfiguredDataSource] runMigrations error',
+        error,
+      );
+      if (migrationFailurePolicy === 'throw') {
+        throw error;
+      }
+    }
+
+    try {
+      // Do not drop the database when the schema changes. Migrations and the
+      // existing post-migration synchronization own that upgrade path.
+      await dataSource.synchronize(false);
+    } catch (error) {
+      console.error(
+        '[initializeConfiguredDataSource] synchronize error',
+        error,
+      );
       throw error;
     }
-  }
 
-  try {
-    // Do not drop the database when the schema changes. Migrations and the
-    // existing post-migration synchronization own that upgrade path.
-    await dataSource.synchronize(false);
-  } catch (error) {
-    console.error('[initializeConfiguredDataSource] synchronize error', error);
-    throw error;
-  }
+    if (journalMode) {
+      await dataSource.query(`PRAGMA journal_mode=${journalMode}`);
+    }
 
-  if (journalMode) {
-    await dataSource.query(`PRAGMA journal_mode=${journalMode}`);
+    return dataSource;
+  } finally {
+    resumeSyncScheduler(schedulerPauseReason);
   }
-
-  return dataSource;
 }

@@ -20,13 +20,25 @@ jest.mock('react-native-aes-crypto', () => ({
 }));
 
 jest.mock('axios', () => {
+  const createInterceptorManager = () => {
+    const handlers = [];
+
+    return {
+      eject: jest.fn(),
+      handlers,
+      use: jest.fn((fulfilled, rejected) => {
+        handlers.push({ fulfilled, rejected });
+        return handlers.length - 1;
+      }),
+    };
+  };
   const createClient = () => ({
     defaults: { headers: { common: {} } },
     delete: jest.fn(async () => ({ data: {} })),
     get: jest.fn(async () => ({ data: {} })),
     interceptors: {
-      request: { eject: jest.fn(), use: jest.fn() },
-      response: { eject: jest.fn(), use: jest.fn() },
+      request: createInterceptorManager(),
+      response: createInterceptorManager(),
     },
     patch: jest.fn(async () => ({ data: {} })),
     post: jest.fn(async () => ({ data: {} })),

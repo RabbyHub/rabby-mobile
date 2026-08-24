@@ -755,7 +755,8 @@
         "unsupportedDesc": "La révocation des délégations EIP-7702 n'est prise en charge que pour les adresses de clés privées ou de phrases de récupération."
       },
       "delegatedAddress": "Adresse déléguée",
-      "supportedChains": "Chaînes prises en charge"
+      "supportedChains": "Chaînes prises en charge",
+      "title": "Approbations"
     },
     "sendToken": {
       "Amount": "Montant :",
@@ -921,7 +922,8 @@
       "delete-checklist-1": "Je comprends que si je supprime ce portefeuille, la clé privée et la phrase de récupération correspondantes seront supprimées et que Rabby ne pourra PAS les récupérer.",
       "delete-private-key-title": "Supprimer le portefeuille et la clé privée",
       "delete-seed-phrase-title": "Supprimer le portefeuille et la phrase de récupération",
-      "delete-title": "Supprimer le portefeuille"
+      "delete-title": "Supprimer le portefeuille",
+      "moreWallets": "Plus de Portefeuilles"
     },
     "home": {
       "services": {
@@ -1167,6 +1169,11 @@
         "descriptionAndroid": "Si vous aimez Rabby, une évaluation rapide sur Google Play signifierait beaucoup.",
         "feedbackTitle": "Vous avez des commentaires ? Nous vous écoutons.",
         "descriptionIOS": "Si vous aimez Rabby, une évaluation rapide sur l'App Store signifierait beaucoup."
+      },
+      "upgradeModal": {
+        "title": "Nouveautés",
+        "slideToUpdate": "Glissez pour mettre à jour",
+        "close": "Fermer"
       },
       "homeCenterTipScreenshot": {
         "description": "Prenez une capture d'écran à tout moment pour signaler rapidement un bug.",
@@ -3058,6 +3065,7 @@
         "actions": "Emprunter",
         "approveAndBorrow": "Approuver et Emprunter",
         "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
+        "borrowingUnavailable": "Cet actif ne peut pas être emprunté dans le mode actuel.",
         "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles.",
         "swapDebt": "Échanger",
         "borrowed": "Emprunté",
@@ -3098,7 +3106,8 @@
         "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
         "toggleCollateralWarning": "Désactiver cet actif en tant que garantie fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
         "emodeBlockWarning": "Désactiver le mode E réduira votre facteur de santé à un niveau risqué pour la liquidation.",
-        "blockEmodeWarning": "Vous ne pouvez pas désactiver E-Mode, car cela pourrait déclencher une liquidation. Pour quitter E-Mode, ajoutez davantage de garantie ou remboursez les positions empruntées."
+        "blockEmodeWarning": "Vous ne pouvez pas désactiver E-Mode, car cela pourrait déclencher une liquidation. Pour quitter E-Mode, ajoutez davantage de garantie ou remboursez les positions empruntées.",
+        "zeroLtvEmodeExitWarning": "Désactivez {{assets}} en tant que garantie avant de quitter E-Mode, car ces actifs ont un LTV de 0 % en dehors d’E-Mode."
       },
       "lqDescription": {
         "desc": "Valeur de liquidation",
@@ -3258,6 +3267,7 @@
           "title": "Remboursez avec {{collateral}}"
         },
         "insufficientLiquidity": "Liquidité insuffisante.",
+        "flashLoanDisabled": "Pour des raisons de sécurité, la conversion de positions est désactivée pour cet actif.",
         "frozenCollateral": "Cet actif est gelé en raison d'une décision de la communauté Aave."
       },
       "repayWithAToken": {
@@ -3339,6 +3349,9 @@
       "walletReady": "Votre portefeuille est prêt 🚀",
       "setPasswordTip": "Définissez un mot de passe pour sécuriser votre portefeuille",
       "createWalletError": "Échec de la création du portefeuille"
+    },
+    "batchRevoke": {
+      "title": "Révocation par lot"
     },
     "convertDust": {
       "failReason": {

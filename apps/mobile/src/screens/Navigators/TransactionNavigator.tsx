@@ -324,7 +324,7 @@ export default function TransactionNavigator() {
         name={RootNames.Approvals}
         component={ApprovalsScreen}
         options={mergeScreenOptions({
-          title: 'Approvals',
+          title: t('page.approvals.title'),
           ...headerPresets.withBgCard2_2024,
         })}
       />
@@ -333,7 +333,7 @@ export default function TransactionNavigator() {
         name={RootNames.BatchRevoke}
         component={BatchRevokeScreen}
         options={mergeScreenOptions({
-          title: 'Batch Revoke',
+          title: t('page.batchRevoke.title'),
           ...headerPresets.withBgCard2_2024,
           headerStyle: {},
         })}
