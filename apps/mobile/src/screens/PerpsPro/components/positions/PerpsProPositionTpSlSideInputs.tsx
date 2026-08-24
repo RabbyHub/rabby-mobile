@@ -87,7 +87,9 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
     const modeUnit = selectedMode === 'roi' ? '%' : market.quoteAsset;
     const showDescription =
       (value && validationKind !== 'empty') ||
-      (!value && validationKind === 'empty' && showEmptyDescription);
+      (!value &&
+        showEmptyDescription &&
+        (validationKind === 'empty' || !!rawMagnitude));
     const showError =
       validationKind === 'invalid' && (!!value || !!errorMessage);
 
