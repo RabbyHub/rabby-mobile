@@ -693,6 +693,111 @@ describe('PerpsProPositionTpSlForm', () => {
     );
   });
 
+  it('keeps the full-position estimate visible when PnL or ROI cannot derive a positive trigger', () => {
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        mode="position"
+        position={position()}
+      />,
+    );
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '101',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    expect(
+      screen.getByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-hint'),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByText('page.perps.pro.positionTpsl.triggerDescription'),
+    ).toHaveLength(2);
+    expect(mockTransProps).toHaveBeenCalledTimes(2);
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+      trigger: '--',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price-field').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-field')
+          .props.style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '10',
+    );
+    expect(
+      screen.queryByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeNull();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '-10.00',
+      roi: '-100.00',
+      trigger: '90.00',
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: false });
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-mode'),
+    );
+    act(() => mockModeSheetProps.mock.lastCall?.[0].onSelect('roi'));
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '1000',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    expect(
+      screen.getByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByText('page.perps.pro.positionTpsl.triggerDescription'),
+    ).toHaveLength(2);
+    expect(mockTransProps).toHaveBeenCalledTimes(2);
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+      trigger: '--',
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+  });
+
   it('restores the persisted Position leg mode after the form remounts', async () => {
     const first = render(
       <PerpsProPositionTpSlForm
