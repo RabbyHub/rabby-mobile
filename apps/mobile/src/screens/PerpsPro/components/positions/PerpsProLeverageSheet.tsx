@@ -22,8 +22,6 @@ import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetN
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
-const PERPS_PRO_LEVERAGE_EMPTY_SELECTION = { end: 0, start: 0 } as const;
-
 const PerpsProLeverageBottomSheetTextInput = React.forwardRef<
   TextInput,
   React.ComponentProps<typeof TextInput>
@@ -180,8 +178,8 @@ export const PerpsProLeverageSheet: React.FC<{
                   )}
                   cursorColor={colors2024['brand-default']}
                   editable={!pending}
-                  emptySelection={PERPS_PRO_LEVERAGE_EMPTY_SELECTION}
                   focusCursorAtEnd
+                  focusCursorAtEndMode="initialFocus"
                   inputComponent={PerpsProLeverageBottomSheetTextInput}
                   inputMode="numeric"
                   keyboardType="number-pad"

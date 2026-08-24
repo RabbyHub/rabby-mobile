@@ -82,27 +82,6 @@ describe('PerpsProDecimalTextInput', () => {
     });
   });
 
-  it('allows one caller to retain an explicit empty selection', () => {
-    render(
-      <PerpsProDecimalTextInput
-        emptySelection={{ end: 0, start: 0 }}
-        focusCursorAtEnd
-        maxDecimals={0}
-        onChangeText={jest.fn()}
-        testID="decimal-input"
-        value=""
-      />,
-    );
-
-    expect(screen.getByTestId('decimal-input').props.selection).toEqual({
-      end: 0,
-      start: 0,
-    });
-    expect(mockSetNativeProps).not.toHaveBeenCalledWith({
-      selection: { end: 0, start: 0 },
-    });
-  });
-
   it('keeps sequential iOS input under native selection ownership', () => {
     const onChangeText = jest.fn();
     render(
@@ -240,6 +219,93 @@ describe('PerpsProDecimalTextInput', () => {
     fireEvent.changeText(screen.getByTestId('decimal-input'), '201');
 
     expect(onChangeText).toHaveBeenCalledWith('201');
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+  });
+
+  it('releases an initial-focus cursor before Backspace mutates native text', () => {
+    const onChangeText = jest.fn();
+    render(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        focusCursorAtEndMode="initialFocus"
+        maxDecimals={0}
+        onChangeText={onChangeText}
+        testID="decimal-input"
+        value="21"
+      />,
+    );
+    const input = screen.getByTestId('decimal-input');
+
+    fireEvent(input, 'touchStart', { nativeEvent: {} });
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(input.props.selection).toEqual({ end: 2, start: 2 });
+    mockSetNativeProps.mockClear();
+
+    fireEvent(input, 'keyPress', { nativeEvent: { key: 'Backspace' } });
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { end: 1, start: 1 } },
+    });
+    fireEvent.changeText(input, '2');
+
+    expect(onChangeText).toHaveBeenCalledWith('2');
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+    expect(mockSetNativeProps).not.toHaveBeenCalledWith({
+      selection: { end: 2, start: 2 },
+    });
+  });
+
+  it('does not replay an empty selection before the first retyped digit', () => {
+    const onChangeText = jest.fn();
+    render(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        focusCursorAtEndMode="initialFocus"
+        maxDecimals={0}
+        onChangeText={onChangeText}
+        testID="decimal-input"
+        value="21"
+      />,
+    );
+    const input = screen.getByTestId('decimal-input');
+
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    fireEvent(input, 'keyPress', { nativeEvent: { key: 'Backspace' } });
+    fireEvent.changeText(input, '');
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+    mockSetNativeProps.mockClear();
+
+    fireEvent(input, 'keyPress', { nativeEvent: { key: '1' } });
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { end: 1, start: 1 } },
+    });
+    fireEvent.changeText(input, '1');
+
+    expect(onChangeText.mock.calls).toEqual([[''], ['1']]);
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+    expect(mockSetNativeProps).not.toHaveBeenCalledWith({
+      selection: { end: 0, start: 0 },
+    });
+  });
+
+  it('releases an initial-focus cursor before a second press selects text', () => {
+    render(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        focusCursorAtEndMode="initialFocus"
+        maxDecimals={0}
+        onChangeText={jest.fn()}
+        testID="decimal-input"
+        value="21"
+      />,
+    );
+    const input = screen.getByTestId('decimal-input');
+
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    fireEvent(input, 'touchStart', { nativeEvent: {} });
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { end: 1, start: 0 } },
+    });
+
     expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
   });
 

@@ -23,8 +23,8 @@ type PerpsProDecimalTextInputProps = Omit<
   | 'selection'
   | 'value'
 > & {
-  emptySelection?: NonNullable<TextInputProps['selection']>;
   focusCursorAtEnd?: boolean;
+  focusCursorAtEndMode?: 'initialFocus' | 'untilChange';
   inputComponent?: React.ElementType<
     TextInputProps & React.RefAttributes<TextInput>
   >;
@@ -40,8 +40,8 @@ export const PerpsProDecimalTextInput = React.memo(
   React.forwardRef<TextInput, PerpsProDecimalTextInputProps>(
     (
       {
-        emptySelection,
         focusCursorAtEnd = false,
+        focusCursorAtEndMode = 'untilChange',
         inputComponent: InputComponent = TextInput,
         inputMode = 'decimal',
         keyboardType = 'decimal-pad',
@@ -50,12 +50,15 @@ export const PerpsProDecimalTextInput = React.memo(
         onBlur,
         onChangeText,
         onFocus,
+        onKeyPress,
+        onTouchStart,
         value,
         ...inputProps
       },
       forwardedRef,
     ) => {
       const inputRef = useRef<TextInput>(null);
+      const isFocusedRef = useRef(false);
       React.useImperativeHandle(forwardedRef, () => inputRef.current!);
       const selectionRef = useRef({ start: value.length, end: value.length });
       const shouldForceCursorAtEndRef = useRef(false);
@@ -139,6 +142,7 @@ export const PerpsProDecimalTextInput = React.memo(
 
       const handleFocus = useCallback<NonNullable<TextInputProps['onFocus']>>(
         event => {
+          isFocusedRef.current = true;
           if (focusCursorAtEnd && inputValue.length > 0) {
             const end = inputValue.length;
             const endSelection = { end, start: end };
@@ -159,10 +163,35 @@ export const PerpsProDecimalTextInput = React.memo(
 
       const handleBlur = useCallback<NonNullable<TextInputProps['onBlur']>>(
         event => {
+          isFocusedRef.current = false;
           releaseForcedCursor();
           onBlur?.(event);
         },
         [onBlur, releaseForcedCursor],
+      );
+
+      const handleKeyPress = useCallback<
+        NonNullable<TextInputProps['onKeyPress']>
+      >(
+        event => {
+          if (focusCursorAtEndMode === 'initialFocus') {
+            releaseForcedCursor();
+          }
+          onKeyPress?.(event);
+        },
+        [focusCursorAtEndMode, onKeyPress, releaseForcedCursor],
+      );
+
+      const handleTouchStart = useCallback<
+        NonNullable<TextInputProps['onTouchStart']>
+      >(
+        event => {
+          if (focusCursorAtEndMode === 'initialFocus' && isFocusedRef.current) {
+            releaseForcedCursor();
+          }
+          onTouchStart?.(event);
+        },
+        [focusCursorAtEndMode, onTouchStart, releaseForcedCursor],
       );
 
       const normalizedSelectionStart = Math.max(
@@ -197,13 +226,15 @@ export const PerpsProDecimalTextInput = React.memo(
         onBlur: handleBlur,
         onChangeText: handleChangeText,
         onFocus: handleFocus,
+        onKeyPress: handleKeyPress,
         onSelectionChange: handleSelectionChange,
+        onTouchStart: handleTouchStart,
         scrollEnabled: true,
         selection:
           shouldForceCursorAtEnd && inputValue.length > 0
             ? { end: inputValue.length, start: inputValue.length }
             : inputValue.length === 0
-            ? emptySelection ?? resolvePerpsProEmptyInputSelection()
+            ? resolvePerpsProEmptyInputSelection()
             : undefined,
         value: inputValue,
       };
