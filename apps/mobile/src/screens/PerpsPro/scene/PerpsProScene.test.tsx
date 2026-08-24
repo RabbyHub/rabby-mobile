@@ -1000,6 +1000,11 @@ describe('PerpsProScene market loading states', () => {
     expect(scroll.props.stickyHeaderIndices).toEqual([]);
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
     expect(tradeScrollBridge.props.keyboardShouldPersistTaps).toBe('handled');
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-overlay').props.style,
+      ),
+    ).toMatchObject({ backgroundColor: 'neutral-bg-1', zIndex: 1 });
     expect(screen.getAllByTestId('perps-pro-trade-scroll-bridge')).toHaveLength(
       1,
     );

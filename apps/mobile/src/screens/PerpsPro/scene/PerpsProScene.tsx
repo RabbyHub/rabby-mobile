@@ -1307,6 +1307,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 2,
   },
   tradeOverlay: {
+    backgroundColor: colors2024['neutral-bg-1'],
     left: 0,
     position: 'absolute',
     right: 0,
