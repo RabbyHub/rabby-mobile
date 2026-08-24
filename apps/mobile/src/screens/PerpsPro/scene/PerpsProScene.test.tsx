@@ -29,6 +29,9 @@ const mockGetOrderBookPriceIntent = jest.fn();
 const mockTriggerImpact = jest.fn();
 const mockInfoPagerSetPage = jest.fn();
 const mockInfoPagerSetPageWithoutAnimation = jest.fn();
+let mockManualTouchesDown:
+  | ((event: unknown, stateManager: { fail: () => void }) => void)
+  | null = null;
 let mockTradeHasPermission = true;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
 let mockOrderBookPriceIntent:
@@ -136,13 +139,18 @@ jest.mock('react-native-screens', () => ({
 }));
 
 jest.mock('react-native-gesture-handler', () => {
-  const gesture: Record<string, jest.Mock> = {};
-  gesture.activeOffsetX = jest.fn(() => gesture);
-  gesture.failOffsetY = jest.fn(() => gesture);
-  gesture.runOnJS = jest.fn(() => gesture);
-  gesture.onEnd = jest.fn(() => gesture);
+  const panGesture: Record<string, jest.Mock> = {};
+  panGesture.activeOffsetX = jest.fn(() => panGesture);
+  panGesture.failOffsetY = jest.fn(() => panGesture);
+  panGesture.runOnJS = jest.fn(() => panGesture);
+  panGesture.onEnd = jest.fn(() => panGesture);
+  const manualGesture: Record<string, jest.Mock> = {};
+  manualGesture.onTouchesDown = jest.fn(callback => {
+    mockManualTouchesDown = callback;
+    return manualGesture;
+  });
   return {
-    Gesture: { Pan: () => gesture },
+    Gesture: { Manual: () => manualGesture, Pan: () => panGesture },
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   };
 });
@@ -662,6 +670,7 @@ describe('PerpsProScene market loading states', () => {
     mockOrderBookPriceIntent = { type: 'tradePrice' };
     mockOrderBookSelectionOutcome = 'accepted';
     mockTradeForm = { bboEnabled: false, orderType: 'market' };
+    mockManualTouchesDown = null;
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
       value: 'active',
@@ -751,6 +760,18 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
     ).toBe(true);
+  });
+
+  it('observes a new touch without taking ownership from child gestures', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const stateManager = { fail: jest.fn() };
+
+    act(() => mockManualTouchesDown?.({}, stateManager));
+
+    expect(stateManager.fail).toHaveBeenCalledTimes(1);
   });
 
   it('renders the order-book and static trade frame before account trade configuration is ready', () => {

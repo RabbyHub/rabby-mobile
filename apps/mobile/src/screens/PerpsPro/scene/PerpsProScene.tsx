@@ -30,6 +30,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -58,7 +59,10 @@ import {
   PerpsProInfoPager,
   type PerpsProInfoPagerHandle,
 } from '../components/info/PerpsProInfoPager';
-import { usePerpsProInfoScrollBridge } from '../components/info/usePerpsProInfoScrollBridge';
+import {
+  interruptPerpsProInfoScrollBridge,
+  usePerpsProInfoScrollBridge,
+} from '../components/info/usePerpsProInfoScrollBridge';
 import {
   createPerpsProInfoTabsTranslateY,
   getPerpsProPopulatedInfoSectionBottomPadding,
@@ -246,6 +250,15 @@ export const PerpsProScene: React.FC<{
   const headerCollapse = usePerpsProHeaderCollapse();
   const infoScrollBridge = usePerpsProInfoScrollBridge(
     info.activeInfoTab ?? 'account',
+  );
+  const infoScrollInterruptionGesture = useMemo(
+    () =>
+      Gesture.Manual().onTouchesDown((_event, stateManager) => {
+        'worklet';
+        interruptPerpsProInfoScrollBridge(infoScrollBridge);
+        stateManager.fail();
+      }),
+    [infoScrollBridge],
   );
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const infoPagerRef = useRef<PerpsProInfoPagerHandle>(null);
@@ -952,115 +965,117 @@ export const PerpsProScene: React.FC<{
 
   return (
     <PerpsProFieldExplanationProvider>
-      <View style={styles.container}>
-        {info.activeInfoTab ? (
-          <PerpsProInfoPager
-            activeTab={info.activeInfoTab}
-            contentContainerStyle={scrollContentStyles}
-            data={rowsByTab}
-            getActiveScrollOffset={headerCollapse.getScrollOffset}
-            onActivateOffset={headerCollapse.syncScrollOffset}
-            onActiveScroll={headerCollapse.onScroll}
-            onLayout={updateScrollViewportHeight}
-            onPageDragStart={beginInfoPageDrag}
-            onPagePreview={setPreviewInfoTab}
-            onPageSelected={commitInfoTab}
-            ref={infoPagerRef}
-            renderItem={renderItem}
-            renderListHeader={renderScrollLeadIn}
-            requestedTab={requestedInfoTab}
-            scrollBridge={infoScrollBridge}
-            stickyOffset={infoStickyOffset}
-            style={styles.scroll}
-          />
-        ) : null}
-        <Animated.View
-          style={[
-            styles.tradeOverlay,
-            { transform: [{ translateY: tradeTranslateY }] },
-          ]}
-          testID="perps-pro-trade-overlay">
-          <PerpsProTradeScrollBridge
-            controller={infoScrollBridge}
-            enabled={info.activeInfoTab != null}
-            height={tradeRowHeight}>
-            {renderTrade()}
-          </PerpsProTradeScrollBridge>
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.headerClip,
-            {
-              opacity: headerCollapse.headerOpacity,
-              transform: [{ translateY: headerCollapse.headerTranslateY }],
-            },
-          ]}
-          testID="perps-pro-header-overlay">
-          <PerpsProHeader
-            isModeSwitching={isModeSwitching}
-            onSwitchToSimple={onSwitchToSimple}
-            showBottomDivider
-          />
-        </Animated.View>
-        {showRegionAlert ? (
+      <GestureDetector gesture={infoScrollInterruptionGesture}>
+        <View collapsable={false} style={styles.container}>
+          {info.activeInfoTab ? (
+            <PerpsProInfoPager
+              activeTab={info.activeInfoTab}
+              contentContainerStyle={scrollContentStyles}
+              data={rowsByTab}
+              getActiveScrollOffset={headerCollapse.getScrollOffset}
+              onActivateOffset={headerCollapse.syncScrollOffset}
+              onActiveScroll={headerCollapse.onScroll}
+              onLayout={updateScrollViewportHeight}
+              onPageDragStart={beginInfoPageDrag}
+              onPagePreview={setPreviewInfoTab}
+              onPageSelected={commitInfoTab}
+              ref={infoPagerRef}
+              renderItem={renderItem}
+              renderListHeader={renderScrollLeadIn}
+              requestedTab={requestedInfoTab}
+              scrollBridge={infoScrollBridge}
+              stickyOffset={infoStickyOffset}
+              style={styles.scroll}
+            />
+          ) : null}
           <Animated.View
             style={[
-              styles.regionAlertOverlay,
+              styles.tradeOverlay,
+              { transform: [{ translateY: tradeTranslateY }] },
+            ]}
+            testID="perps-pro-trade-overlay">
+            <PerpsProTradeScrollBridge
+              controller={infoScrollBridge}
+              enabled={info.activeInfoTab != null}
+              height={tradeRowHeight}>
+              {renderTrade()}
+            </PerpsProTradeScrollBridge>
+          </Animated.View>
+          <Animated.View
+            style={[
+              styles.headerClip,
               {
-                transform: [{ translateY: headerCollapse.marketTranslateY }],
+                opacity: headerCollapse.headerOpacity,
+                transform: [{ translateY: headerCollapse.headerTranslateY }],
               },
             ]}
-            testID="perps-pro-region-alert-overlay">
-            <PerpsRegionAlert
-              bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
-              onLayout={updateRegionAlertLayout}
-              topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
+            testID="perps-pro-header-overlay">
+            <PerpsProHeader
+              isModeSwitching={isModeSwitching}
+              onSwitchToSimple={onSwitchToSimple}
+              showBottomDivider
             />
           </Animated.View>
-        ) : null}
-        {positionedOverlaysReady ? (
-          <>
+          {showRegionAlert ? (
             <Animated.View
               style={[
-                styles.marketOverlay,
+                styles.regionAlertOverlay,
                 {
-                  transform: [{ translateY: marketTranslateY }],
+                  transform: [{ translateY: headerCollapse.marketTranslateY }],
                 },
               ]}
-              testID="perps-pro-market-overlay">
-              {isMarketLoading ? (
-                <PerpsProMarketBarSkeleton />
-              ) : (
-                <PerpsProMarketBar
-                  market={scene.currentMarket}
-                  onOpenKline={openKline}
-                  onPress={openMarketSelector}
-                />
-              )}
+              testID="perps-pro-region-alert-overlay">
+              <PerpsRegionAlert
+                bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
+                onLayout={updateRegionAlertLayout}
+                topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
+              />
             </Animated.View>
-            {info.activeInfoTab && displayedInfoTab ? (
+          ) : null}
+          {positionedOverlaysReady ? (
+            <>
               <Animated.View
                 style={[
-                  styles.infoTabsOverlay,
-                  { transform: [{ translateY: infoTabsTranslateY }] },
+                  styles.marketOverlay,
+                  {
+                    transform: [{ translateY: marketTranslateY }],
+                  },
                 ]}
-                testID="perps-pro-info-tabs-overlay">
-                <PerpsProInfoTabs
-                  activeTab={displayedInfoTab}
-                  historyEnabled={
-                    historyEnabled && info.accountState !== 'noAccount'
-                  }
-                  onChange={requestInfoTab}
-                  onHistoryPress={openHistory}
-                  openOrdersCount={info.allOpenOrdersCount}
-                  pendingFundingCount={info.pendingFundingCount}
-                  positionsCount={info.allPositionsCount}
-                />
+                testID="perps-pro-market-overlay">
+                {isMarketLoading ? (
+                  <PerpsProMarketBarSkeleton />
+                ) : (
+                  <PerpsProMarketBar
+                    market={scene.currentMarket}
+                    onOpenKline={openKline}
+                    onPress={openMarketSelector}
+                  />
+                )}
               </Animated.View>
-            ) : null}
-          </>
-        ) : null}
-      </View>
+              {info.activeInfoTab && displayedInfoTab ? (
+                <Animated.View
+                  style={[
+                    styles.infoTabsOverlay,
+                    { transform: [{ translateY: infoTabsTranslateY }] },
+                  ]}
+                  testID="perps-pro-info-tabs-overlay">
+                  <PerpsProInfoTabs
+                    activeTab={displayedInfoTab}
+                    historyEnabled={
+                      historyEnabled && info.accountState !== 'noAccount'
+                    }
+                    onChange={requestInfoTab}
+                    onHistoryPress={openHistory}
+                    openOrdersCount={info.allOpenOrdersCount}
+                    pendingFundingCount={info.pendingFundingCount}
+                    positionsCount={info.allPositionsCount}
+                  />
+                </Animated.View>
+              ) : null}
+            </>
+          ) : null}
+        </View>
+      </GestureDetector>
       <PerpsProMarketSelector
         currentMarketKey={scene.currentMarket?.marketKey ?? null}
         onClose={scene.cancelPendingMarketSelection}

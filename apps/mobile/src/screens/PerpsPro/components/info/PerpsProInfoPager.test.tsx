@@ -418,19 +418,22 @@ describe('PerpsProInfoPager', () => {
     expect(scrollBridge.targets[0].ref).toHaveBeenCalled();
 
     const initialEpoch = scrollBridge.epoch.value;
+    fireEvent(scroll, 'scrollBeginDrag');
+    expect(scrollBridge.epoch.value).toBe(initialEpoch + 1);
+
     fireEvent(
       screen.getByTestId('perps-pro-info-pager'),
       'pageScrollStateChanged',
       { nativeEvent: { pageScrollState: 'dragging' } },
     );
-    expect(scrollBridge.epoch.value).toBe(initialEpoch + 1);
+    expect(scrollBridge.epoch.value).toBe(initialEpoch + 2);
     expect(scrollBridge.pageGestureActive.value).toBe(true);
 
     fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
       nativeEvent: { position: 1 },
     });
     expect(scrollBridge.activeIndex.value).toBe(1);
-    expect(scrollBridge.epoch.value).toBe(initialEpoch + 2);
+    expect(scrollBridge.epoch.value).toBe(initialEpoch + 3);
     expect(scrollBridge.pageGestureActive.value).toBe(false);
   });
 });

@@ -34,6 +34,7 @@ import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPrevie
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 import {
   getPerpsProInfoScrollTarget,
+  interruptPerpsProInfoScrollBridge,
   type PerpsProInfoScrollBridgeController,
 } from './usePerpsProInfoScrollBridge';
 
@@ -474,6 +475,11 @@ const PerpsProInfoPagerInner = <Row,>(
                 onLayout={event => recordViewportHeight(tab, event, active)}
                 onMomentumScrollEnd={event => recordScrollEnd(tab, event)}
                 onScroll={active ? onActiveScroll : undefined}
+                onScrollBeginDrag={
+                  active && scrollBridge
+                    ? () => interruptPerpsProInfoScrollBridge(scrollBridge)
+                    : undefined
+                }
                 onScrollEndDrag={event => recordScrollEnd(tab, event)}
                 ref={list => {
                   listRefs.current[tab] =

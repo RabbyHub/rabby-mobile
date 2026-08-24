@@ -33,7 +33,10 @@ jest.mock('react-native-reanimated', () => {
 });
 
 import type { PerpsProInfoScrollBridgeController } from '../info/usePerpsProInfoScrollBridge';
-import { getPerpsProInfoBridgeOffset } from '../info/usePerpsProInfoScrollBridge';
+import {
+  getPerpsProInfoBridgeOffset,
+  interruptPerpsProInfoScrollBridge,
+} from '../info/usePerpsProInfoScrollBridge';
 import { PerpsProTradeScrollBridge } from './PerpsProTradeScrollBridge';
 
 const createController = () => {
@@ -90,7 +93,7 @@ describe('PerpsProTradeScrollBridge', () => {
       false,
     );
 
-    controller.epoch.value += 1;
+    interruptPerpsProInfoScrollBridge(controller);
     act(() => {
       mockScrollHandlers.onScroll({ contentOffset: { y: 100_080 } });
     });
