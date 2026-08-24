@@ -170,7 +170,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   indicator: {
     backgroundColor: colors2024['neutral-body'],
     borderRadius: 1,
-    bottom: 0,
+    bottom: 1,
     height: 2,
     left: '50%',
     marginLeft: -10,
