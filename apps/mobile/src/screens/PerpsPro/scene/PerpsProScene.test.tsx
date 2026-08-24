@@ -1516,10 +1516,91 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('account-asset-unified:0'));
 
     expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      depositFromSwapVisible: false,
       mode: 'swap',
       sourceAsset: 'USDC',
       targetAsset: 'USDC',
     });
+  });
+
+  it('keeps Swap mounted while Deposit is topmost and restores Swap on Back', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        account: {
+          assets: [
+            {
+              action: 'swap',
+              available: '10',
+              coin: 'USDC',
+              fullName: 'USD Coin',
+              key: 'unified:0',
+              ledger: 'unified',
+              total: '10',
+              usdValue: '10',
+            },
+          ],
+          diagnostics: {
+            complete: true,
+            unresolvedDexes: [],
+            unpricedNonZeroAssets: [],
+          },
+          metrics: [],
+          mode: 'unified',
+          primaryKey: 'accountValue',
+          primaryValue: '10',
+          titleKey: 'accountSummary',
+          unrealizedPnl: '0',
+        },
+        accountState: 'ready',
+      }),
+    );
+
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    fireEvent.press(screen.getByTestId('account-asset-unified:0'));
+
+    const swapProps = mockFundingOverlayProps.mock.lastCall?.[0] as {
+      depositFromSwapVisible: boolean;
+      mode: string;
+      onOpenDeposit: () => void;
+    };
+    act(() => swapProps.onOpenDeposit());
+
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      depositFromSwapVisible: true,
+      mode: 'swap',
+    });
+
+    const {
+      getTopPerpsProSheetNavigationRegistration,
+      requestDismissPerpsProSheet,
+    } =
+      require('../components/common/perpsProSheetNavigationRegistry') as typeof import('../components/common/perpsProSheetNavigationRegistry');
+    const nestedDeposit = getTopPerpsProSheetNavigationRegistration();
+    expect(nestedDeposit).not.toBeNull();
+    act(() => requestDismissPerpsProSheet(nestedDeposit!));
+
+    expect(screen.getByTestId('funding-overlay')).toBeTruthy();
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      depositFromSwapVisible: false,
+      mode: 'swap',
+    });
+
+    act(() => swapProps.onOpenDeposit());
+    const staleNestedClose = mockFundingOverlayProps.mock.lastCall?.[0]
+      .onCloseDeposit as () => void;
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ accountIdentity: 'account-b', accountState: 'ready' }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.queryByTestId('funding-overlay')).toBeNull();
+
+    act(staleNestedClose);
+    expect(screen.queryByTestId('funding-overlay')).toBeNull();
   });
 
   it('renders approved Position and Open Orders empty rows only for authoritative emptiness', () => {
