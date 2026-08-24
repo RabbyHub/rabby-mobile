@@ -401,6 +401,37 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     });
   });
 
+  it('keeps child size equal to the frozen parent when opening against an opposite position', async () => {
+    const oppositePosition = {
+      entryPx: '105',
+      marginUsed: '10',
+      szi: '-0.5',
+    };
+    const command = build({ position: oppositePosition });
+    const setup = createDependencies(command);
+    setup.dependencies.getGuardContext = () =>
+      guardContext({
+        positionIdentity:
+          getPerpsProAttachedTpSlPositionIdentity(oppositePosition),
+      });
+
+    await expect(
+      executePerpsProAttachedTpSl(
+        command,
+        setup.dependencies.getGuardContext,
+        setup.dependencies,
+      ),
+    ).resolves.toMatchObject({ kind: 'fullAccepted' });
+    expect(command.attached.normalizedBaseSize).toBe('2');
+    expect(setup.marketOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isBuy: true,
+        reduceOnly: false,
+        size: '2',
+      }),
+    );
+  });
+
   it('passes a six-digit integer TP trigger to the SDK unchanged', async () => {
     const baseAttached = attached();
     const command = build({

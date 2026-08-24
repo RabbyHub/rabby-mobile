@@ -31,7 +31,6 @@ export type PerpsProTpSlValidationErrorCode =
   | 'insufficientDepth'
   | 'marketBookUnavailable'
   | 'nonPositiveTrigger'
-  | 'oppositePosition'
   | 'reduceOnlyUnsupported';
 
 export type PerpsProTpSlValidationError = {
@@ -94,18 +93,6 @@ export const getPerpsProAttachedTpSlCompatibilityError = ({
   if (orderType === 'limit' && bboEnabled) return 'bboUnsupported';
   if (orderType === 'limit' && tif === 'Ioc') return 'iocUnsupported';
   return null;
-};
-
-export const hasPerpsProOppositePosition = ({
-  currentPositionSize,
-  side,
-}: {
-  currentPositionSize: string | null | undefined;
-  side: 'buy' | 'sell';
-}) => {
-  const position = decimal(currentPositionSize);
-  if (!position || position.isZero()) return false;
-  return side === 'buy' ? position.lt(0) : position.gt(0);
 };
 
 export const normalizePerpsProTpSlPrice = ({
@@ -249,7 +236,6 @@ const validateDirection = ({
 
 export const evaluatePerpsProAttachedTpSl = ({
   baseSize,
-  currentPositionSize,
   draft,
   expectedEntryPrice,
   leverage,
@@ -259,7 +245,6 @@ export const evaluatePerpsProAttachedTpSl = ({
   szDecimals,
 }: {
   baseSize: string;
-  currentPositionSize?: string | null;
   draft: PerpsProAttachedTpSlDraft;
   expectedEntryPrice: string;
   leverage: number;
@@ -276,9 +261,6 @@ export const evaluatePerpsProAttachedTpSl = ({
   const errors: PerpsProTpSlValidationError[] = [];
   const compatibility = getPerpsProAttachedTpSlCompatibilityError(order);
   if (compatibility) errors.push({ code: compatibility });
-  if (hasPerpsProOppositePosition({ currentPositionSize, side })) {
-    errors.push({ code: 'oppositePosition' });
-  }
 
   const tpCalculation = calculatePerpsProTpSlLeg({
     baseSize,

@@ -231,7 +231,6 @@ export const usePerpsProTrade = ({
         reason === 'iocUnsupported' ||
         reason === 'marketBookUnavailable' ||
         reason === 'nonPositiveTrigger' ||
-        reason === 'oppositePosition' ||
         reason === 'reduceOnlyUnsupported'
       ) {
         return tpSlErrorText({ code: reason, leg }, { side });
@@ -1592,7 +1591,6 @@ export const usePerpsProTrade = ({
       });
       const evaluation = evaluatePerpsProAttachedTpSl({
         baseSize: command.baseSize,
-        currentPositionSize: currentPosition?.szi,
         draft: commandForm.attachedTpSl,
         expectedEntryPrice,
         leverage,
