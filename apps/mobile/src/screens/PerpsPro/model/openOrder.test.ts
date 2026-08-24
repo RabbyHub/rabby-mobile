@@ -155,61 +155,94 @@ describe('Perps Pro open order model', () => {
     expect(marketOrder.displayAmountQuote).toBeNull();
   });
 
-  it('only enables the two approved top-level edit shapes', () => {
-    const [basic, partial, full, opening, conditionalLimit, parent, child] =
-      buildPerpsOpenOrders([
-        makeOrder({ oid: 1 }),
-        makeOrder({
-          isTrigger: true,
-          oid: 2,
-          orderType: 'Take Profit Market',
-          reduceOnly: true,
-          side: 'A',
-          triggerPx: '60000',
-        }),
-        makeOrder({
-          isPositionTpsl: true,
-          isTrigger: true,
-          oid: 3,
-          orderType: 'Stop Market',
-          reduceOnly: true,
-          sz: '0',
-          triggerPx: '40000',
-        }),
-        makeOrder({
-          isTrigger: true,
-          oid: 4,
-          orderType: 'Stop Market',
-          reduceOnly: false,
-          triggerPx: '40000',
-        }),
-        makeOrder({
-          isTrigger: true,
-          oid: 5,
-          orderType: 'Stop Limit',
-          reduceOnly: true,
-          triggerPx: '40000',
-        }),
-        makeOrder({
-          children: [
-            makeOrder({
-              isTrigger: true,
-              oid: 7,
-              orderType: 'Take Profit Market',
-              reduceOnly: true,
-              triggerPx: '60000',
-            }),
-          ],
-          oid: 6,
-        }),
-      ]).sort((left, right) => left.oid - right.oid);
+  it('enables every top-level reconstructible Limit and Trigger shape', () => {
+    const [
+      basic,
+      partial,
+      full,
+      opening,
+      conditionalLimit,
+      parent,
+      child,
+      ioc,
+    ] = buildPerpsOpenOrders([
+      makeOrder({ oid: 1 }),
+      makeOrder({
+        isTrigger: true,
+        oid: 2,
+        orderType: 'Take Profit Market',
+        reduceOnly: true,
+        side: 'A',
+        triggerPx: '60000',
+      }),
+      makeOrder({
+        isPositionTpsl: true,
+        isTrigger: true,
+        oid: 3,
+        orderType: 'Stop Market',
+        reduceOnly: true,
+        sz: '0',
+        triggerPx: '40000',
+      }),
+      makeOrder({
+        isTrigger: true,
+        oid: 4,
+        orderType: 'Stop Market',
+        reduceOnly: false,
+        triggerPx: '40000',
+      }),
+      makeOrder({
+        isTrigger: true,
+        oid: 5,
+        orderType: 'Stop Limit',
+        reduceOnly: true,
+        triggerPx: '40000',
+      }),
+      makeOrder({ oid: 8, tif: 'Ioc' }),
+      makeOrder({
+        children: [
+          makeOrder({
+            isTrigger: true,
+            oid: 7,
+            orderType: 'Take Profit Market',
+            reduceOnly: true,
+            triggerPx: '60000',
+          }),
+        ],
+        oid: 6,
+      }),
+    ]).sort((left, right) => left.oid - right.oid);
 
-    expect(basic.editKind).toBe('basicLimit');
-    expect(partial.editKind).toBe('partialTpSlMarket');
-    expect(full.editKind).toBeNull();
-    expect(opening.editKind).toBeNull();
-    expect(conditionalLimit.editKind).toBeNull();
+    expect(basic.editKind).toBe('limit');
+    expect(partial.editKind).toBe('triggerMarket');
+    expect(full.editKind).toBe('triggerMarket');
+    expect(opening.editKind).toBe('triggerMarket');
+    expect(conditionalLimit.editKind).toBe('triggerLimit');
+    expect(ioc.editKind).toBe('limit');
     expect(parent.editKind).toBeNull();
     expect(child).toMatchObject({ editKind: null, isTopLevel: false });
+  });
+
+  it('hides edit for cloid, unknown Trigger and unreconstructible protection facts', () => {
+    const [cloid, unknown, missingProtection] = buildPerpsOpenOrders([
+      makeOrder({ cloid: '0x1234', oid: 1 }),
+      makeOrder({
+        isTrigger: true,
+        oid: 2,
+        orderType: 'Future Trigger',
+        triggerPx: '40000',
+      }),
+      makeOrder({
+        isTrigger: true,
+        limitPx: '0',
+        oid: 3,
+        orderType: 'Stop Market',
+        triggerPx: '40000',
+      }),
+    ]).sort((left, right) => left.oid - right.oid);
+
+    expect(cloid.editKind).toBeNull();
+    expect(unknown.editKind).toBeNull();
+    expect(missingProtection.editKind).toBeNull();
   });
 });

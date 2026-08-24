@@ -1,14 +1,23 @@
 import { act, renderHook } from '@testing-library/react-native';
 
 const mockGetState = jest.fn();
+const mockGetOrderStatus = jest.fn();
 const mockBuildModify = jest.fn();
 const mockExecuteModify = jest.fn();
-const mockBuildPositionTpSl = jest.fn();
-const mockExecutePositionTpSl = jest.fn();
 const mockEnsureApproval = jest.fn();
 const mockGetSkip = jest.fn();
 const mockSetSkip = jest.fn();
 const mockShowToast = jest.fn();
+
+jest.mock('@/core/apis/perps', () => ({
+  apisPerps: {
+    getPerpsSDK: () => ({
+      info: {
+        getOrderStatus: (...args: unknown[]) => mockGetOrderStatus(...args),
+      },
+    }),
+  },
+}));
 
 jest.mock('@/core/serviceApi/perps', () => ({
   perpsServiceApi: {
@@ -37,12 +46,6 @@ jest.mock('@/hooks/perps/actions/modifyOpenOrder', () => ({
 jest.mock('@/hooks/perps/actions/perpsActionApproval', () => ({
   ensurePerpsActionApproval: (...args: unknown[]) =>
     mockEnsureApproval(...args),
-}));
-jest.mock('@/hooks/perps/actions/positionTpSl', () => ({
-  buildPerpsPositionTpSlCommand: (...args: unknown[]) =>
-    mockBuildPositionTpSl(...args),
-  executePerpsPositionTpSl: (...args: unknown[]) =>
-    mockExecutePositionTpSl(...args),
 }));
 jest.mock('@/hooks/perps/perpsActionError', () => ({
   judgeIsBuilderFeeNeedApprove: () => false,
@@ -80,17 +83,20 @@ const basicOrder = {
   amountBase: '1',
   amountQuote: '100',
   category: 'basic',
+  cloid: null,
   coin: 'BTC',
   displayAmountQuote: '100',
-  editKind: 'basicLimit',
+  editKind: 'limit',
   executionPrice: '100',
   executionPriceKind: 'limit',
   filledQuote: '50',
   filledRatio: '0.5',
   filledSize: '0.5',
+  hasChildren: false,
   isPositionTpsl: false,
   isTopLevel: true,
   isTrigger: false,
+  limitPrice: '100',
   key: 'basic:BTC:1',
   oid: 1,
   orderType: 'Limit',
@@ -108,10 +114,11 @@ const conditionalOrder = {
   ...basicOrder,
   category: 'conditional',
   displayAmountQuote: '50',
-  editKind: 'partialTpSlMarket',
+  editKind: 'triggerMarket',
   executionPrice: null,
   executionPriceKind: 'market',
   isTrigger: true,
+  limitPrice: '101.2',
   key: 'conditional:BTC:2',
   oid: 2,
   orderType: 'Take Profit Market',
@@ -138,15 +145,38 @@ describe('usePerpsProOpenOrderEdit', () => {
     mockGetSkip.mockResolvedValue(false);
     mockSetSkip.mockResolvedValue(undefined);
     mockExecuteModify.mockResolvedValue({ kind: 'updated' });
-    mockExecutePositionTpSl.mockResolvedValue({
-      kind: 'success',
-      legs: [{ cancel: 'success', create: 'success' }],
-    });
+    mockGetOrderStatus.mockImplementation(async (oid: number) => ({
+      order: {
+        order: {
+          ...(oid === conditionalOrder.oid ? conditionalOrder : basicOrder),
+          limitPx:
+            oid === conditionalOrder.oid
+              ? conditionalOrder.limitPrice
+              : basicOrder.limitPrice,
+          side: oid === conditionalOrder.oid ? 'A' : 'B',
+          sz:
+            oid === conditionalOrder.oid
+              ? conditionalOrder.remainingSize
+              : basicOrder.remainingSize,
+          origSz:
+            oid === conditionalOrder.oid
+              ? conditionalOrder.amountBase
+              : basicOrder.amountBase,
+          triggerPx:
+            oid === conditionalOrder.oid ? conditionalOrder.triggerPrice : '0',
+          children: [],
+        },
+        status: 'open',
+        statusTimestamp: 1,
+      },
+      status: 'order',
+    }));
     mockBuildModify.mockImplementation((input: any) => ({
       account,
       coin: 'BTC',
       dexId: '',
       expected: {
+        kind: input.editKind,
         limitPrice: '100',
         reduceOnly: false,
         remainingSize: '0.5',
@@ -155,18 +185,22 @@ describe('usePerpsProOpenOrderEdit', () => {
       },
       marketKey: 'hyperliquid::BTC',
       oid: 1,
-      replacement: { baseSize: input.baseSize, limitPrice: input.limitPrice },
+      replacement: {
+        baseSize: input.baseSize,
+        limitPrice: input.limitPrice || '110.4',
+        orderType:
+          input.editKind === 'limit'
+            ? { limit: { tif: input.tif } }
+            : {
+                trigger: {
+                  isMarket: input.editKind === 'triggerMarket',
+                  tpsl: 'tp',
+                  triggerPx: input.triggerPrice,
+                },
+              },
+        triggerPrice: input.triggerPrice || null,
+      },
       type: 'modifyOpenOrder',
-    }));
-    mockBuildPositionTpSl.mockImplementation((input: any) => ({
-      account,
-      coin: 'BTC',
-      direction: 'long',
-      expectedPositionSize: '1',
-      legs: input.legs,
-      markPrice: '100',
-      scope: 'partial',
-      type: 'positionTpSl',
     }));
     mockGetState.mockReturnValue({
       currentClearinghouseState: {
@@ -191,7 +225,7 @@ describe('usePerpsProOpenOrderEdit', () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'quote'),
     );
-    act(() => hook.result.current.open(basicOrder));
+    await act(async () => hook.result.current.open(basicOrder));
     await act(async () => {
       await hook.result.current.requestBasicReview({
         amount: '60',
@@ -214,7 +248,7 @@ describe('usePerpsProOpenOrderEdit', () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(basicOrder));
+    await act(async () => hook.result.current.open(basicOrder));
     await act(async () => {
       await hook.result.current.requestBasicReview({
         amount: '0.4',
@@ -234,7 +268,7 @@ describe('usePerpsProOpenOrderEdit', () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(basicOrder));
+    await act(async () => hook.result.current.open(basicOrder));
     await act(async () => {
       await hook.result.current.requestBasicReview({
         amount: '0.5',
@@ -263,7 +297,7 @@ describe('usePerpsProOpenOrderEdit', () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(basicOrder));
+    await act(async () => hook.result.current.open(basicOrder));
     await act(async () => {
       await hook.result.current.requestBasicReview({
         amount: '0.5',
@@ -282,14 +316,11 @@ describe('usePerpsProOpenOrderEdit', () => {
     expect(hook.result.current.review).toBeNull();
   });
 
-  it('surfaces the normal-order minimum Amount validation message', async () => {
-    mockBuildModify.mockImplementationOnce(() => {
-      throw new Error('Minimum amount is 10');
-    });
+  it('passes a small valid Amount to the command so the backend remains authoritative', async () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(basicOrder));
+    await act(async () => hook.result.current.open(basicOrder));
     await act(async () => {
       await hook.result.current.requestBasicReview({
         amount: '0.01',
@@ -298,39 +329,39 @@ describe('usePerpsProOpenOrderEdit', () => {
       });
     });
 
-    expect(mockShowToast).toHaveBeenCalledWith('Minimum amount is 10', 'error');
-    expect(hook.result.current.review).toBeNull();
+    expect(mockBuildModify).toHaveBeenCalledWith(
+      expect.objectContaining({ baseSize: '0.01' }),
+    );
+    expect(hook.result.current.review?.category).toBe('basic');
   });
 
-  it('freezes the approved top-level Partial TP/SL fingerprint', async () => {
+  it('freezes a Trigger Market replacement without a Position gate', async () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(conditionalOrder, position));
+    await act(async () => hook.result.current.open(conditionalOrder, null));
     await act(async () => {
       await hook.result.current.requestConditionalReview({
         baseSize: '0.4',
+        limitPrice: null,
         triggerPrice: '112',
       });
     });
 
-    expect(mockBuildPositionTpSl).toHaveBeenCalledWith(
+    expect(mockBuildModify).toHaveBeenCalledWith(
       expect.objectContaining({
-        scope: 'partial',
-        legs: [
-          expect.objectContaining({
-            expectedOrder: {
-              execution: 'market',
-              remainingSize: '0.5',
-              side: 'A',
-              triggerPrice: '110',
-            },
-            replaceOid: 2,
-            size: '0.4',
-          }),
-        ],
+        baseSize: '0.4',
+        editKind: 'triggerMarket',
+        expectedOrderType: 'Take Profit Market',
+        expectedTriggerPrice: '110',
+        triggerKind: 'takeProfit',
+        triggerPrice: '112',
       }),
     );
+    expect(hook.result.current.editor).toMatchObject({
+      category: 'conditional',
+      position: null,
+    });
   });
 
   it('bypasses only the matching category review preference', async () => {
@@ -338,72 +369,72 @@ describe('usePerpsProOpenOrderEdit', () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(conditionalOrder, position));
+    await act(async () => hook.result.current.open(conditionalOrder, position));
     await act(async () => {
       await hook.result.current.requestConditionalReview({
         baseSize: '0.4',
+        limitPrice: null,
         triggerPrice: '112',
       });
     });
 
     expect(mockGetSkip).toHaveBeenCalledWith('conditional');
-    expect(mockExecutePositionTpSl).toHaveBeenCalledTimes(1);
+    expect(mockExecuteModify).toHaveBeenCalledTimes(1);
     expect(hook.result.current.review).toBeNull();
   });
 
-  it('closes a stale Conditional editor after cancel succeeds but recreate fails', async () => {
-    mockExecutePositionTpSl.mockResolvedValue({
-      failureReason: 'requestFailed',
-      kind: 'partial',
-      legs: [
-        {
-          cancel: 'success',
-          create: 'failed',
-          error: 'create failed',
-          kind: 'takeProfit',
+  it('hides a candidate after orderStatus exposes attached children', async () => {
+    mockGetOrderStatus.mockResolvedValueOnce({
+      order: {
+        order: {
+          coin: 'BTC',
+          isPositionTpsl: false,
+          isTrigger: false,
+          limitPx: '100',
+          oid: 1,
+          orderType: 'Limit',
+          origSz: '1',
+          reduceOnly: false,
+          side: 'B',
+          sz: '0.5',
+          tif: 'Gtc',
+          timestamp: 1,
+          triggerCondition: '',
+          triggerPx: '0',
+          children: [{ oid: 2 }],
         },
-      ],
+        status: 'open',
+        statusTimestamp: 1,
+      },
+      status: 'order',
     });
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(conditionalOrder, position));
-    await act(async () => {
-      await hook.result.current.requestConditionalReview({
-        baseSize: '0.4',
-        triggerPrice: '112',
-      });
-    });
-    await act(async () => hook.result.current.confirm());
+    await act(async () => hook.result.current.open(basicOrder));
 
     expect(mockShowToast).toHaveBeenCalledWith(
-      'page.perps.pro.openOrders.editReplaceFailedAfterCancel',
+      'page.perps.pro.openOrders.editUnavailable',
       'error',
     );
     expect(hook.result.current.editor).toBeNull();
-    expect(hook.result.current.review).toBeNull();
+    expect(hook.result.current.isEditUnavailable(basicOrder)).toBe(true);
   });
 
-  it('shows one explicit Conditional error when no mutation occurred', async () => {
-    mockExecutePositionTpSl.mockResolvedValue({
+  it('shows one explicit backend Conditional error without canceling the order', async () => {
+    mockExecuteModify.mockResolvedValue({
       failureReason: 'requestFailed',
       kind: 'failed',
-      legs: [
-        {
-          cancel: 'failed',
-          create: 'notAttempted',
-          error: 'Invalid TP/SL price.',
-          kind: 'takeProfit',
-        },
-      ],
+      error: 'Invalid TP/SL price.',
     });
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
     );
-    act(() => hook.result.current.open(conditionalOrder, position));
+    await act(async () => hook.result.current.open(conditionalOrder, position));
     await act(async () => {
       await hook.result.current.requestConditionalReview({
         baseSize: '0.4',
+        limitPrice: null,
         triggerPrice: '112',
       });
     });

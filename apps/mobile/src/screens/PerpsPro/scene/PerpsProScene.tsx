@@ -113,7 +113,7 @@ import {
   PERPS_PRO_MAIN_COLUMN_HEIGHT,
 } from '../model/layout';
 import type { PerpsOpenOrderViewModel } from '../model/openOrder';
-import { isMatchingPartialTpSlPosition } from '../model/openOrderEdit';
+import { isRelevantOpenOrderEditPosition } from '../model/openOrderEdit';
 import type { PerpsPositionViewModel } from '../model/position';
 import { PerpsProRealtimeOrderBook } from './PerpsProRealtimeOrderBook';
 import {
@@ -244,6 +244,7 @@ export const PerpsProScene: React.FC<{
     trade.amountUnit,
   );
   const openOpenOrderEdit = openOrderEdit.open;
+  const isOpenOrderEditUnavailable = openOrderEdit.isEditUnavailable;
   const closeAll = usePerpsProCloseAll(info.accountIdentity);
   const transfer = usePerpsProTransfer(info.accountIdentity);
   const { setActiveInfoTab, setHideOtherSymbols } = info;
@@ -866,14 +867,19 @@ export const PerpsProScene: React.FC<{
             />
           );
         case 'open-order': {
-          const editPosition = positionsByCoin.get(item.order.coin) ?? null;
+          const position = positionsByCoin.get(item.order.coin) ?? null;
+          const editPosition = isRelevantOpenOrderEditPosition(
+            item.order,
+            position,
+          )
+            ? position
+            : null;
           return (
             <PerpsProOpenOrderCard
               amountUnit={trade.amountUnit}
               cancelPending={cancelOrders.isOrderPending(item.order.oid)}
               editEnabled={
-                item.order.editKind === 'basicLimit' ||
-                isMatchingPartialTpSlPosition(item.order, editPosition)
+                !!item.order.editKind && !isOpenOrderEditUnavailable(item.order)
               }
               onCancel={cancelOrders.confirmCancelOrder}
               onEdit={order => openOpenOrderEdit(order, editPosition)}
@@ -890,6 +896,7 @@ export const PerpsProScene: React.FC<{
       closeAll.requestCloseAll,
       info,
       manageMargin.open,
+      isOpenOrderEditUnavailable,
       openDeposit,
       openSwap,
       openWithdraw,

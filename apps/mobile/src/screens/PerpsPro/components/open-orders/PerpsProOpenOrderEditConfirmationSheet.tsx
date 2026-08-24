@@ -65,13 +65,14 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
 
     if (!review || review.category !== editor.category) return null;
     const basic = review.category === 'basic';
+    const triggerLimit = !basic && editor.order.editKind === 'triggerLimit';
     const sheetHeight = basic ? 302 : 326;
     const baseSize = basic
       ? review.command.replacement.baseSize
-      : review.command.legs[0]?.size || '0';
+      : review.command.replacement.baseSize;
     const referencePrice = basic
       ? review.command.replacement.limitPrice
-      : review.markPrice;
+      : review.referencePrice;
     const displayAmount = getOpenOrderEditDisplayAmount({
       amountUnit: editor.amountUnit,
       baseSize,
@@ -129,15 +130,26 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
               ) : (
                 <>
                   <DetailRow
-                    label={t('page.perps.pro.openOrders.stopPrice')}
+                    label={t('page.perps.pro.openOrders.triggerPrice')}
                     value={`${formatPerpsProPrice(
-                      review.command.legs[0]?.triggerPrice,
+                      review.command.replacement.triggerPrice,
                       editor.market.pxDecimals,
                     )} ${editor.market.quoteAsset}`}
                   />
                   <DetailRow
-                    label={t('page.perps.pro.openOrders.price')}
-                    value={t('page.perps.pro.openOrders.marketPrice')}
+                    label={t(
+                      triggerLimit
+                        ? 'page.perps.pro.openOrders.limitPrice'
+                        : 'page.perps.pro.openOrders.price',
+                    )}
+                    value={
+                      triggerLimit
+                        ? `${formatPerpsProPrice(
+                            review.command.replacement.limitPrice,
+                            editor.market.pxDecimals,
+                          )} ${editor.market.quoteAsset}`
+                        : t('page.perps.pro.openOrders.marketPrice')
+                    }
                   />
                   <DetailRow
                     label={t('page.perps.pro.openOrders.amount')}

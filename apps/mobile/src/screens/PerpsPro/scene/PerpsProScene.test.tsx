@@ -687,6 +687,7 @@ describe('PerpsProScene market loading states', () => {
       closeReview: jest.fn(),
       confirm: jest.fn(),
       editor: null,
+      isEditUnavailable: () => false,
       open: jest.fn(),
       pending: false,
       requestReview: jest.fn(),

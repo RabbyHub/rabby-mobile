@@ -140,17 +140,20 @@ const order = (
   amountBase: '1',
   amountQuote: '100',
   category: 'basic',
+  cloid: null,
   coin: 'BTC',
   displayAmountQuote: '100',
-  editKind: 'basicLimit',
+  editKind: 'limit',
   executionPrice: '100',
   executionPriceKind: 'limit',
   filledQuote: '50',
   filledRatio: '0.5',
   filledSize: '0.5',
+  hasChildren: false,
   isPositionTpsl: false,
   isTopLevel: true,
   isTrigger: false,
+  limitPrice: '100',
   key: 'basic:BTC:1',
   oid: 1,
   orderType: 'Limit',
@@ -199,10 +202,11 @@ const conditionalEditor = {
   category: 'conditional',
   order: order({
     category: 'conditional',
-    editKind: 'partialTpSlMarket',
+    editKind: 'triggerMarket',
     executionPrice: null,
     executionPriceKind: 'market',
     isTrigger: true,
+    limitPrice: '101.2',
     orderType: 'Take Profit Market',
     reduceOnly: true,
     side: 'sell',
@@ -350,7 +354,7 @@ describe('Perps Pro open order edit sheets', () => {
     ).toMatchObject({ top: 426 });
     expect(
       screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
-    ).toBe('50% (≈50.00)');
+    ).toBe('100% (≈50.00)');
     fireEvent.press(
       screen.getByLabelText('page.perps.pro.openOrders.estimatedPnl'),
     );
@@ -369,7 +373,7 @@ describe('Perps Pro open order edit sheets', () => {
       />,
     );
     fireEvent.changeText(
-      screen.getByLabelText('page.perps.pro.openOrders.stopPrice'),
+      screen.getByLabelText('page.perps.pro.openOrders.triggerPrice'),
       '115',
     );
     const amountInput = screen.getByLabelText(
@@ -390,11 +394,55 @@ describe('Perps Pro open order edit sheets', () => {
     );
 
     expect(
-      screen.getByLabelText('page.perps.pro.openOrders.stopPrice').props.value,
+      screen.getByLabelText('page.perps.pro.openOrders.triggerPrice').props
+        .value,
     ).toBe('115');
     expect(
       screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
     ).toBe('20');
+  });
+
+  it('renders Conditional Limit with editable Trigger and Limit prices', () => {
+    const onReview = jest.fn();
+    render(
+      <PerpsProConditionalOrderEditSheet
+        coveredByReview={false}
+        editor={{
+          ...conditionalEditor,
+          order: order({
+            ...conditionalEditor.order,
+            editKind: 'triggerLimit',
+            executionPrice: '105',
+            executionPriceKind: 'limit',
+            limitPrice: '105',
+            orderType: 'Take Profit Limit',
+          }),
+        }}
+        onClose={jest.fn()}
+        onReview={onReview}
+        position={null}
+        visible
+      />,
+    );
+
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.triggerPrice').props
+        .value,
+    ).toBe('110');
+    const limitInput = screen.getByLabelText(
+      'page.perps.pro.openOrders.limitPrice',
+    );
+    expect(limitInput.props.value).toBe('105');
+    fireEvent.changeText(limitInput, '106');
+    fireEvent.press(
+      screen.getByTestId('perps-pro-conditional-order-edit-confirm'),
+    );
+    expect(onReview).toHaveBeenCalledWith({
+      baseSize: '0.5',
+      limitPrice: '106',
+      triggerPrice: '110',
+    });
+    expect(screen.getAllByText('--')).toHaveLength(3);
   });
 
   it('covers the editor with a 302px Basic confirmation and retained checkbox', () => {
@@ -417,7 +465,7 @@ describe('Perps Pro open order edit sheets', () => {
         replacement: { baseSize: '0.4', limitPrice: '110' },
         type: 'modifyOpenOrder',
       },
-    } satisfies PerpsProOpenOrderEditReviewState;
+    } as PerpsProOpenOrderEditReviewState;
     render(
       <PerpsProOpenOrderEditConfirmationSheet
         editor={basicEditor}
@@ -475,22 +523,22 @@ describe('Perps Pro open order edit sheets', () => {
       command: {
         account: conditionalEditor.account,
         coin: 'BTC',
-        direction: 'long',
-        expectedPositionSize: '1',
-        legs: [
-          {
-            kind: 'takeProfit',
-            replaceOid: 2,
-            size: '0.4',
-            triggerPrice: '112',
+        dexId: '',
+        expected: {},
+        marketKey: 'hyperliquid::BTC',
+        oid: 2,
+        replacement: {
+          baseSize: '0.4',
+          limitPrice: '103.04',
+          orderType: {
+            trigger: { isMarket: true, tpsl: 'tp', triggerPx: '112' },
           },
-        ],
-        markPrice: '100',
-        scope: 'partial',
-        type: 'positionTpSl',
+          triggerPrice: '112',
+        },
+        type: 'modifyOpenOrder',
       },
-      markPrice: '100',
-    } satisfies PerpsProOpenOrderEditReviewState;
+      referencePrice: '100',
+    } as PerpsProOpenOrderEditReviewState;
     render(
       <PerpsProOpenOrderEditConfirmationSheet
         editor={conditionalEditor}
