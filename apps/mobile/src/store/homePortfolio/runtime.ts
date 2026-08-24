@@ -7,6 +7,7 @@ import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { balance24hStore, scene24hBalanceStore } from '@/store/balance24h';
 import { addressCurve24hStore, sceneCurve24hStore } from '@/store/curve24h';
 import type { ResourceFlowState } from '@/store/_resourceBase';
+import { didResourceLoadingStateChange } from '@/store/_resourceFlow';
 import {
   areHomeCurveProjectionsEqual,
   buildHomeCurveProjection,
@@ -291,7 +292,19 @@ export function ensureHomeProjectionLifecycle() {
   accountStore.subscribe(() => {
     homeProjectionScheduler.schedule('account');
   });
-  addressBalanceStore.subscribe(() => {
+  addressBalanceStore.subscribe((state, previousState) => {
+    const addresses = homeAccountProjectionStore.getState().addresses;
+    if (
+      state.valueMap === previousState.valueMap &&
+      !didResourceLoadingStateChange(
+        previousState.metaMap,
+        state.metaMap,
+        addresses,
+      )
+    ) {
+      return;
+    }
+
     homeProjectionScheduler.schedule('balance', 'change24h');
   });
   balance24hStore.subscribe(() => {

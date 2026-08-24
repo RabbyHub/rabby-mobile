@@ -109,6 +109,7 @@ describe('store/_resourceFlow', () => {
 
   it('marks persist lifecycle in background without blocking memory writes', async () => {
     const {
+      didResourceLoadingStateChange,
       ObservableResourceStore,
     }: typeof import('./_resourceFlow') = require('./_resourceFlow');
 
@@ -125,6 +126,7 @@ describe('store/_resourceFlow', () => {
       persistStatus: 'queued',
       sourceOfCurrentValue: 'hydrate',
     });
+    const queuedMetaMap = store.getMetaMap();
 
     await flushMicrotasks();
 
@@ -133,5 +135,32 @@ describe('store/_resourceFlow', () => {
       persistStatus: 'success',
       lastPersistAt: expect.any(Number),
     });
+    expect(
+      didResourceLoadingStateChange(queuedMetaMap, store.getMetaMap(), ['foo']),
+    ).toBe(false);
+  });
+
+  it('detects loading changes while ignoring persistence-only metadata', () => {
+    const {
+      didResourceLoadingStateChange,
+      ObservableResourceStore,
+    }: typeof import('./_resourceFlow') = require('./_resourceFlow');
+
+    const store = new ObservableResourceStore<number>('test-resource');
+    store.applyHydratedValue('foo', 1);
+    const hydratedMetaMap = store.getMetaMap();
+
+    store.queuePersist('foo');
+    expect(
+      didResourceLoadingStateChange(hydratedMetaMap, store.getMetaMap(), [
+        'foo',
+      ]),
+    ).toBe(false);
+
+    const queuedMetaMap = store.getMetaMap();
+    store.startRemoteFetch('foo');
+    expect(
+      didResourceLoadingStateChange(queuedMetaMap, store.getMetaMap(), ['foo']),
+    ).toBe(true);
   });
 });

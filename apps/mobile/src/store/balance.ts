@@ -1700,7 +1700,11 @@ export function startProcessAddressBalanceEvents() {
     syncBalanceAccountStore();
   });
 
-  addressBalanceStore.subscribe(() => {
+  addressBalanceStore.subscribe((state, previousState) => {
+    if (state.valueMap === previousState.valueMap) {
+      return;
+    }
+
     const current = balanceAccountsStore.getState();
     if (!current.selectedAddresses.length) {
       return;

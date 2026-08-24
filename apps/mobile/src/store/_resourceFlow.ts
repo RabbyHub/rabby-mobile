@@ -45,6 +45,22 @@ export type ObservableResourceState<TValue> = {
   metaMap: Record<string, ObservableResourceMeta>;
 };
 
+export function didResourceLoadingStateChange(
+  previousMetaMap: Record<string, ObservableResourceMeta>,
+  nextMetaMap: Record<string, ObservableResourceMeta>,
+  resourceKeys: string[],
+) {
+  return resourceKeys.some(resourceKey => {
+    const previous = previousMetaMap[resourceKey];
+    const next = nextMetaMap[resourceKey];
+
+    return (
+      !!previous?.isHydrating !== !!next?.isHydrating ||
+      !!previous?.isFetchingRemote !== !!next?.isFetchingRemote
+    );
+  });
+}
+
 type ResourceLifecycleOptions = {
   requestId?: string;
   localTargets?: ResourceLocalTarget[];
