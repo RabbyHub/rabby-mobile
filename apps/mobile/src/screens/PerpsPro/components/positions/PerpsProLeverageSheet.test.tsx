@@ -341,7 +341,7 @@ describe('PerpsProLeverageSheet', () => {
     );
   });
 
-  it('retains the leverage-specific empty selection while clearing and retyping', () => {
+  it('keeps native cursor ownership while clearing and retyping leverage', () => {
     render(
       <PerpsProLeverageSheet
         currentLeverage={20}
@@ -353,13 +353,20 @@ describe('PerpsProLeverageSheet', () => {
       />,
     );
 
-    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '');
+    const input = screen.getByTestId('perps-pro-leverage-input');
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    fireEvent(input, 'keyPress', { nativeEvent: { key: 'Backspace' } });
+    fireEvent.changeText(input, '');
 
     expect(
       screen.getByTestId('perps-pro-leverage-input').props.selection,
-    ).toEqual({ end: 0, start: 0 });
+    ).toBeUndefined();
 
-    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '1');
+    fireEvent(input, 'keyPress', { nativeEvent: { key: '1' } });
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { end: 1, start: 1 } },
+    });
+    fireEvent.changeText(input, '1');
 
     expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
       '1',
@@ -367,6 +374,9 @@ describe('PerpsProLeverageSheet', () => {
     expect(
       screen.getByTestId('perps-pro-leverage-input').props.selection,
     ).toBeUndefined();
+    expect(mockBottomSheetInputSetNativeProps).not.toHaveBeenCalledWith({
+      selection: { end: 0, start: 0 },
+    });
   });
 
   it('keeps an empty replacement draft disabled without closing the sheet', () => {
