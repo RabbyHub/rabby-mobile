@@ -64,6 +64,13 @@ export const scrollPerpsProInfoBridgeTarget = (
   scrollTo(target.ref, 0, offset, false);
 };
 
+export const interruptPerpsProInfoScrollBridge = (
+  controller: PerpsProInfoScrollBridgeController,
+) => {
+  'worklet';
+  controller.epoch.value += 1;
+};
+
 export const usePerpsProInfoScrollBridge = (
   initialTab: PerpsProInfoTab = 'positions',
 ) => {
