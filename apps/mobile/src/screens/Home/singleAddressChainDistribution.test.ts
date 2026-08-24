@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 
 import {
+  aggregateAddressChainInfo,
   applyAddressChainDomainUpdates,
   computeChainDistribution,
   computeNftChainAssets,
@@ -42,6 +43,27 @@ describe('singleAddressChainDistribution', () => {
     ]);
 
     expect(result.eth.toNumber()).toBe(0);
+  });
+
+  it('can exclude non-core-only chains for the multi-address projection', () => {
+    const result = computeTokenChainAssets(
+      [
+        {
+          chain: 'eth',
+          is_core: false,
+          usd_value: 12,
+        },
+        {
+          chain: 'arb',
+          is_core: true,
+          usd_value: 8,
+        },
+      ] as Parameters<typeof computeTokenChainAssets>[0],
+      { includeNonCoreChains: false },
+    );
+
+    expect(result.eth).toBeUndefined();
+    expect(result.arb.toNumber()).toBe(8);
   });
 
   it('updates one domain without mutating the previous store snapshot', () => {
@@ -113,5 +135,41 @@ describe('singleAddressChainDistribution', () => {
         },
       ]),
     ).toBe(next);
+  });
+
+  it('aggregates selected address projections without revisiting asset rows', () => {
+    const first = applyAddressChainDomainUpdates({}, [
+      {
+        address: '0xAAAA',
+        domain: 'token',
+        chainUnit: { eth: new BigNumber(10), matic: new BigNumber(0) },
+      },
+      {
+        address: '0xAAAA',
+        domain: 'portfolio',
+        chainUnit: { arb: new BigNumber(5) },
+      },
+    ]);
+    const infoByAddress = applyAddressChainDomainUpdates(first, [
+      {
+        address: '0xBBBB',
+        domain: 'nft',
+        chainUnit: { base: new BigNumber(0) },
+      },
+    ]);
+
+    const result = aggregateAddressChainInfo(
+      ['0xAAAA', '0xBBBB', '0xaaaa'],
+      infoByAddress,
+      {
+        '0xaaaa': { eth: new BigNumber(7) },
+      },
+    );
+
+    expect(result.token.eth.toNumber()).toBe(7);
+    expect(result.token.matic).toBeUndefined();
+    expect(result.portfolio.arb.toNumber()).toBe(5);
+    expect(result.nft.base.toNumber()).toBe(0);
+    expect(result.computedResult.top3Chains).toEqual(['eth', 'arb', 'base']);
   });
 });

@@ -1,8 +1,8 @@
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { assetsMapStore, computeAssetsApis } from './hooks/store';
+import { assetsMapStore } from './hooks/store';
 import tokenStore from '@/store/tokens';
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useMemo } from 'react';
@@ -14,6 +14,7 @@ import {
 } from '@/store/balance';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
+  aggregateAddressChainInfo,
   applyAddressChainDomainUpdates,
   computeChainDistribution,
   computeNftChainAssets,
@@ -53,10 +54,6 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
     return newVal;
   });
 }
-
-const debounceComputeChainList = debounce(() => {
-  setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
-}, 100);
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();
@@ -107,6 +104,12 @@ export function setSelectChainItem(
 }
 
 const addrChainStaticsStore = zCreate<Record<string, FinalInfo>>(() => ({}));
+const multiAddressCoreTokenChainAssets: Record<
+  string,
+  ReturnType<typeof computeTokenChainAssets>
+> = {};
+const fullySynchronizedAddressChainInfo = new Set<string>();
+
 function setAddressChainInfo(
   valOrFunc: UpdaterOrPartials<Record<string, FinalInfo>>,
 ) {
@@ -239,6 +242,8 @@ export const apisAddrChainStatics = {
     const portfolios =
       useProtocolListStore.getState().protocolMap[normalizedAddress] || [];
     const nfts = assetsMapStore.getState().nftsMap[normalizedAddress] || [];
+    multiAddressCoreTokenChainAssets[normalizedAddress] =
+      computeTokenChainAssets(tokens, { includeNonCoreChains: false });
     projectAddressChainDomains({
       source: 'sync-address',
       addresses: [normalizedAddress],
@@ -261,37 +266,84 @@ export const apisAddrChainStatics = {
         },
       ],
     });
+    fullySynchronizedAddressChainInfo.add(normalizedAddress);
   },
 };
 
 /* computation section :start */
-function computeChainsListV2(caredAddresses: string[]) {
-  const caredAddressSet = new Set(
-    caredAddresses.map(address => address.toLowerCase()),
+function synchronizeMissingAddressChainInfo(addresses: string[]) {
+  const normalizedAddresses = Array.from(
+    new Set(addresses.map(address => address.toLowerCase())),
   );
-  const tokenListMap = tokenStore.getState().tokenListMap;
-  const protocolList = useProtocolListStore.getState().protocolMap;
-  const nftListMap = assetsMapStore.getState().nftsMap;
-  const tokens = Object.entries(tokenListMap)
-    .filter(([address]) => caredAddressSet.has(address.toLowerCase()))
-    .flatMap(([, list]) => list || [])
-    .filter(token => token.is_core);
-  const portfolios = Object.entries(protocolList)
-    .filter(([address]) => caredAddressSet.has(address.toLowerCase()))
-    .flatMap(([, list]) => list || []);
-  const nfts = computeAssetsApis.memoNfts(caredAddresses, nftListMap);
-  const finalInfo = {
-    token: computeTokenChainAssets(tokens),
-    portfolio: computePortfolioChainAssets(portfolios),
-    nft: computeNftChainAssets(nfts),
-    computedResult: makeSingleAddressChainInfo().computedResult,
-  };
+  const missingAddresses = normalizedAddresses.filter(
+    address => !fullySynchronizedAddressChainInfo.has(address),
+  );
+  if (!missingAddresses.length) {
+    return;
+  }
 
-  return {
-    ...finalInfo,
-    computedResult: recomputeSingleAddressChainInfo(finalInfo),
-  };
+  const tokenListMap = tokenStore.getState().tokenListMap;
+  const protocolMap = useProtocolListStore.getState().protocolMap;
+  const nftListMap = assetsMapStore.getState().nftsMap;
+
+  projectAddressChainDomains({
+    source: 'sync-address',
+    addresses: missingAddresses,
+    inputCount: missingAddresses.reduce(
+      (total, address) =>
+        total +
+        (tokenListMap[address]?.length || 0) +
+        (protocolMap[address]?.length || 0) +
+        (nftListMap[address]?.length || 0),
+      0,
+    ),
+    makeUpdates: () =>
+      missingAddresses.flatMap(address => {
+        const tokens = tokenListMap[address] || [];
+        const portfolios = protocolMap[address] || [];
+        const nfts = nftListMap[address] || [];
+        multiAddressCoreTokenChainAssets[address] = computeTokenChainAssets(
+          tokens,
+          { includeNonCoreChains: false },
+        );
+        return [
+          {
+            address,
+            domain: 'token' as const,
+            chainUnit: computeTokenChainAssets(tokens),
+          },
+          {
+            address,
+            domain: 'portfolio' as const,
+            chainUnit: computePortfolioChainAssets(portfolios),
+          },
+          {
+            address,
+            domain: 'nft' as const,
+            chainUnit: computeNftChainAssets(nfts),
+          },
+        ];
+      }),
+  });
+  missingAddresses.forEach(address =>
+    fullySynchronizedAddressChainInfo.add(address),
+  );
 }
+
+function computeSelectedAddressesChainInfo() {
+  const addresses = getSelectedBalanceAddressesSnapshot();
+  synchronizeMissingAddressChainInfo(addresses);
+  return aggregateAddressChainInfo(
+    addresses,
+    addrChainStaticsStore.getState(),
+    multiAddressCoreTokenChainAssets,
+  );
+}
+
+const debounceComputeChainList = debounce(() => {
+  const nextInfo = computeSelectedAddressesChainInfo();
+  setFinalInfo(previous => (isEqual(previous, nextInfo) ? previous : nextInfo));
+}, 100);
 
 let previousTokenListMap = tokenStore.getState().tokenListMap;
 let previousProtocolMap = useProtocolListStore.getState().protocolMap;
@@ -307,6 +359,12 @@ tokenStore.subscribe(state => {
     nextTokenListMap,
   );
   previousTokenListMap = nextTokenListMap;
+  changedAddresses.forEach(address => {
+    multiAddressCoreTokenChainAssets[address] = computeTokenChainAssets(
+      nextTokenListMap[address] || [],
+      { includeNonCoreChains: false },
+    );
+  });
   projectAddressChainDomains({
     source: 'token-store',
     addresses: changedAddresses,

@@ -40,10 +40,14 @@ export const makeSingleAddressChainInfo = (): SingleAddressChainInfo => ({
   },
 });
 
-export const computeTokenChainAssets = (tokens: ITokenItem[]) => {
+export const computeTokenChainAssets = (
+  tokens: ITokenItem[],
+  options: { includeNonCoreChains?: boolean } = {},
+) => {
+  const includeNonCoreChains = options.includeNonCoreChains ?? true;
   const chainUnit: ChainAssetsUnit = {};
   tokens.forEach(token => {
-    if (!token.chain) {
+    if (!token.chain || (!includeNonCoreChains && !token.is_core)) {
       return;
     }
     chainUnit[token.chain] = chainUnit[token.chain] || new BigNumber(0);
@@ -114,6 +118,37 @@ export const recomputeSingleAddressChainInfo = (
     });
   });
   return computeChainDistribution(chainUnit);
+};
+
+export const aggregateAddressChainInfo = (
+  addresses: string[],
+  infoByAddress: Record<string, SingleAddressChainInfo>,
+  tokenChainAssetsByAddress: Record<string, ChainAssetsUnit> = {},
+): SingleAddressChainInfo => {
+  const result = makeSingleAddressChainInfo();
+  const normalizedAddresses = Array.from(
+    new Set(addresses.map(address => address.toLowerCase())),
+  );
+
+  normalizedAddresses.forEach(address => {
+    const info = infoByAddress[address];
+    const domainUnits = {
+      token: tokenChainAssetsByAddress[address] || info?.token || {},
+      portfolio: info?.portfolio || {},
+      nft: info?.nft || {},
+    };
+
+    (['token', 'portfolio', 'nft'] as const).forEach(domain => {
+      Object.entries(domainUnits[domain]).forEach(([chainId, total]) => {
+        result[domain][chainId] = (
+          result[domain][chainId] || new BigNumber(0)
+        ).plus(total);
+      });
+    });
+  });
+
+  result.computedResult = recomputeSingleAddressChainInfo(result);
+  return result;
 };
 
 export const updateSingleAddressChainDomain = (
