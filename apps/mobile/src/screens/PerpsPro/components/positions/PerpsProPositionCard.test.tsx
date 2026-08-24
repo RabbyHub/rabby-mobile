@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 
@@ -371,6 +371,20 @@ describe('PerpsProPositionCard', () => {
     expect(
       screen.getByRole('button', { name: 'Leverage' }).props.accessibilityState,
     ).toEqual({ disabled: true });
+    const leverageAction = screen.getByRole('button', { name: 'Leverage' });
+    expect(StyleSheet.flatten(leverageAction.props.style)).toMatchObject({
+      borderRadius: 6,
+      flex: 1,
+      height: 26,
+    });
+    const actions = screen.UNSAFE_getAllByType(View).find(view => {
+      const style = StyleSheet.flatten(view.props.style);
+      return style?.flexDirection === 'row' && style.gap === 12;
+    })!;
+    expect(StyleSheet.flatten(actions.props.style)).toMatchObject({
+      flexDirection: 'row',
+      gap: 12,
+    });
   });
 
   it('gives a long Isolated Liq. Distance the full metric row width', () => {

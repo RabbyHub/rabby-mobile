@@ -5,16 +5,16 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   BOTTOM_BUTTON_COMPACT_HEIGHT,
-  BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useRef } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   PERPS_PRO_FIELD_EXPLANATIONS,
@@ -27,6 +27,10 @@ import {
   PERPS_PRO_CONFIRM_BUTTON_STYLE,
 } from './perpsProVisual';
 
+export const PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT = 240;
+const PERPS_PRO_FIELD_EXPLANATION_HANDLE_HEIGHT = 40;
+const PERPS_PRO_FIELD_EXPLANATION_ACTION_GAP = 44;
+
 export const PerpsProFieldExplanationSheet: React.FC<{
   explanationKey: PerpsProFieldExplanationKey;
   onDismiss: () => void;
@@ -34,7 +38,13 @@ export const PerpsProFieldExplanationSheet: React.FC<{
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { height } = useWindowDimensions();
+  const { top } = useSafeAreaInsets();
   const explanation = PERPS_PRO_FIELD_EXPLANATIONS[explanationKey];
+  const maxDynamicContentSize = Math.max(
+    PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT,
+    height - top,
+  );
   usePerpsProSheetNavigationRegistration({
     active: true,
     dismiss: onDismiss,
@@ -55,13 +65,13 @@ export const PerpsProFieldExplanationSheet: React.FC<{
       })}
       backdropProps={{ pressBehavior: 'close' }}
       backgroundStyle={styles.background}
-      enableDynamicSizing={false}
+      enableDynamicSizing
       handleIndicatorStyle={styles.handleIndicator}
       handleStyle={styles.handle}
+      maxDynamicContentSize={maxDynamicContentSize}
       onDismiss={onDismiss}
-      snapPoints={[290]}
       style={styles.modal}>
-      <BottomSheetView style={styles.sheetView}>
+      <BottomSheetScrollView showsVerticalScrollIndicator={false}>
         <AutoLockView style={styles.container}>
           <Text style={styles.title}>{t(explanation.titleKey)}</Text>
           <Text style={styles.description}>
@@ -78,7 +88,7 @@ export const PerpsProFieldExplanationSheet: React.FC<{
             />
           </View>
         </AutoLockView>
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 });
@@ -87,9 +97,10 @@ PerpsProFieldExplanationSheet.displayName = 'PerpsProFieldExplanationSheet';
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   ...getPerpsProBottomSheetChromeStyles(colors2024),
-  sheetView: { height: '100%' },
   container: {
-    height: '100%',
+    minHeight:
+      PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT -
+      PERPS_PRO_FIELD_EXPLANATION_HANDLE_HEIGHT,
     paddingHorizontal: 15,
     paddingTop: 8,
   },
@@ -103,13 +114,12 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   description: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro',
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 12,
+    fontSize: 14,
+    lineHeight: 18,
+    marginTop: 16,
   },
   footer: {
-    marginTop: 'auto',
     paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingTop: PERPS_PRO_FIELD_EXPLANATION_ACTION_GAP,
   },
 }));

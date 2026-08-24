@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
@@ -77,6 +78,14 @@ describe('PerpsProInfoControls', () => {
       color: 'neutral-secondary',
       height: 24,
       width: 24,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByRole('button').props.style),
+    ).toMatchObject({
+      borderRadius: 6,
+      height: 26,
+      minWidth: 64,
+      paddingHorizontal: 8,
     });
   });
 });

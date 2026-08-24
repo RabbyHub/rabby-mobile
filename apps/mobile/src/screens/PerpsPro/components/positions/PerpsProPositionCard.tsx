@@ -747,14 +747,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   action: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
+    borderRadius: 6,
     flex: 1,
-    height: 32,
+    height: 26,
     justifyContent: 'center',
   },
   actionPressed: {
