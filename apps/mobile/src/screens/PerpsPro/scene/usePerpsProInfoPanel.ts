@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { WsFastAssetCtxs } from '@rabby-wallet/hyperliquid-sdk';
 
+import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
 import {
   isPerpsUserAbstractionReadyForAccount,
@@ -44,7 +45,10 @@ const marketFactSignature = (market: {
   quoteAsset: string;
 }) => `${market.name}\u0000${market.dexId}\u0000${market.quoteAsset}`;
 
-export const usePerpsProInfoPanel = (canonicalCoin: string) => {
+export const usePerpsProInfoPanel = (
+  canonicalCoin: string,
+  requestedInfoTab: PerpsProInfoTab | null = null,
+) => {
   const preferences = usePerpsProInfoPreferences();
   const runtime = usePerpsRuntimeStatus();
   const { fetchMarketData, fetchSpotMeta } = usePerpsStore();
@@ -100,9 +104,12 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
   }, [marketFactSignatures]);
 
   const accountMode = resolvePerpsAccountMode(facts.userAbstraction);
+  const accountPagePrepared =
+    preferences.activeInfoTab !== 'openOrders' ||
+    requestedInfoTab === 'account';
   const priceDependencyKeys = useMemo(
     () =>
-      preferences.activeInfoTab === 'account'
+      accountPagePrepared
         ? getSpotPriceDependencyKeys(
             facts.spotState.rawBalances
               .filter(balance => Number(balance.total) !== 0)
@@ -110,7 +117,7 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
             facts.spotMeta,
           )
         : [],
-    [facts.spotMeta, facts.spotState.rawBalances, preferences.activeInfoTab],
+    [accountPagePrepared, facts.spotMeta, facts.spotState.rawBalances],
   );
   const spotPriceValues = perpsStore(
     useShallow(state =>
@@ -136,7 +143,7 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
 
   useEffect(() => {
     if (
-      preferences.activeInfoTab === 'account' &&
+      accountPagePrepared &&
       facts.currentAccount &&
       accountMode !== 'standard' &&
       facts.spotMetaStatus === 'idle'
@@ -145,10 +152,10 @@ export const usePerpsProInfoPanel = (canonicalCoin: string) => {
     }
   }, [
     accountMode,
+    accountPagePrepared,
     facts.currentAccount,
     facts.spotMetaStatus,
     fetchSpotMeta,
-    preferences.activeInfoTab,
   ]);
 
   const account = useMemo(
