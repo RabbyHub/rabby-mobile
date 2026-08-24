@@ -14,12 +14,16 @@ describe('createAutoUnlockGate', () => {
     });
   });
 
-  it('waits for the committed unlock screen instead of a fixed timeout', () => {
+  it('waits for the unlock listener and prompt presentation boundary', () => {
     gate.request();
 
     expect(dispatch).not.toHaveBeenCalled();
 
     gate.setScreenReady(true);
+
+    expect(dispatch).not.toHaveBeenCalled();
+
+    gate.setPresentationReady(true);
 
     expect(dispatch).toHaveBeenCalledTimes(1);
   });
@@ -30,12 +34,14 @@ describe('createAutoUnlockGate', () => {
     atUnlock = false;
 
     gate.setScreenReady(true);
+    gate.setPresentationReady(true);
 
     expect(dispatch).not.toHaveBeenCalled();
   });
 
   it('keeps the committed screen ready across a lock-state reset', () => {
     gate.setScreenReady(true);
+    gate.setPresentationReady(true);
     gate.clearPending();
 
     gate.request();
@@ -46,6 +52,7 @@ describe('createAutoUnlockGate', () => {
   it('dispatches once navigation reaches an already committed unlock screen', () => {
     atUnlock = false;
     gate.setScreenReady(true);
+    gate.setPresentationReady(true);
     gate.request();
 
     expect(dispatch).not.toHaveBeenCalled();
@@ -61,7 +68,19 @@ describe('createAutoUnlockGate', () => {
 
     gate.request();
     gate.setScreenReady(true);
+    gate.setPresentationReady(true);
 
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('does not dispatch before iOS marks the presentation boundary ready', () => {
+    gate.setScreenReady(true);
+    gate.request();
+
+    expect(dispatch).not.toHaveBeenCalled();
+
+    gate.setPresentationReady(true);
+
+    expect(dispatch).toHaveBeenCalledTimes(1);
   });
 });
