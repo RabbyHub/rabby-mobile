@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 jest.mock('@/components/AutoLockView', () => require('react-native').View);
 jest.mock('@/components/Typography', () => ({
@@ -56,7 +56,10 @@ jest.mock('@/utils/modalGate', () => ({
   useRegisterBlockingModal: jest.fn(),
 }));
 jest.mock('@gorhom/bottom-sheet', () => ({
-  BottomSheetView: require('react-native').View,
+  BottomSheetScrollView: require('react-native').ScrollView,
+}));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 47 }),
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -71,10 +74,13 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-import { PerpsProFieldExplanationSheet } from './PerpsProFieldExplanationSheet';
+import {
+  PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT,
+  PerpsProFieldExplanationSheet,
+} from './PerpsProFieldExplanationSheet';
 
 describe('PerpsProFieldExplanationSheet', () => {
-  it('matches the approved 290px explanation sheet contract', () => {
+  it('uses content-driven sizing with the approved 240px minimum', () => {
     render(
       <PerpsProFieldExplanationSheet
         explanationKey="liquidationDistance"
@@ -83,8 +89,11 @@ describe('PerpsProFieldExplanationSheet', () => {
     );
 
     const sheet = screen.getByTestId('field-explanation-bottom-sheet');
-    expect(sheet.props.snapPoints).toEqual([290]);
-    expect(sheet.props.enableDynamicSizing).toBe(false);
+    expect(sheet.props.snapPoints).toBeUndefined();
+    expect(sheet.props.enableDynamicSizing).toBe(true);
+    expect(sheet.props.maxDynamicContentSize).toBeGreaterThanOrEqual(
+      PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT,
+    );
     expect(sheet.props.backdropProps).toEqual({ pressBehavior: 'close' });
     expect(StyleSheet.flatten(sheet.props.handleStyle)).toMatchObject({
       height: 40,
@@ -95,6 +104,22 @@ describe('PerpsProFieldExplanationSheet', () => {
     });
     expect(screen.getByText('Liq. Distance')).toBeTruthy();
     expect(screen.getByText('Distance explanation')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByText('Distance explanation').props.style),
+    ).toMatchObject({
+      fontFamily: 'SF Pro',
+      fontSize: 14,
+      lineHeight: 18,
+      marginTop: 16,
+    });
+    const container = screen
+      .UNSAFE_getAllByType(View)
+      .find(view => StyleSheet.flatten(view.props.style)?.minHeight === 200)!;
+    expect(StyleSheet.flatten(container.props.style)).toMatchObject({
+      minHeight: 200,
+      paddingHorizontal: 15,
+      paddingTop: 8,
+    });
     expect(screen.getByTestId('field-explanation-confirm').props.type).toBe(
       'primary',
     );
