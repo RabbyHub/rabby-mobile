@@ -373,14 +373,13 @@ const PerpsProInfoPagerInner = <Row,>(
         }
         if (event.pageScrollState === 'idle') {
           const sessionId = previewGestureSessionId.value;
-          const shouldClearPreview = isPreviewGestureActive.value;
+          const shouldFinishPreviewSession = isPreviewGestureActive.value;
           isPreviewGestureActive.value = false;
           if (scrollBridge) {
             scrollBridge.pageGestureActive.value = false;
           }
-          previewPagePosition.value = settledPagePosition.value;
-          if (shouldClearPreview) {
-            runOnJS(finishPreviewSession)(sessionId, true);
+          if (shouldFinishPreviewSession) {
+            runOnJS(finishPreviewSession)(sessionId, false);
           }
         }
       },
