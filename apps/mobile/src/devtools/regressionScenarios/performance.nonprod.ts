@@ -19,6 +19,7 @@ type ActionTimingSamples = {
 type PerformanceProbeOptions = Readonly<{
   heartbeatMs?: number;
   stallThresholdMs?: number;
+  maxGapDetails?: number;
   now?: () => number;
 }>;
 
@@ -53,10 +54,18 @@ export function createRegressionScenarioPerformanceProbe(
   const stallThresholdMs =
     options.stallThresholdMs ?? DEFAULT_STALL_THRESHOLD_MS;
   const now = options.now ?? Date.now;
+  const maxGapDetails = options.maxGapDetails ?? 40;
   const startedAt = now();
   const actionSamples = new Map<string, ActionTimingSamples>();
   const durationSamples = new Map<string, number[]>();
   const jsGapSamples: number[] = [];
+  const jsGapDetails: Array<{
+    elapsedMs: number;
+    gapMs: number;
+    phase: string;
+  }> = [];
+  const phaseMarks: Array<{ elapsedMs: number; phase: string }> = [];
+  let activePhase = 'initial';
   let previousHeartbeatAt = startedAt;
   let stopped = false;
 
@@ -66,8 +75,23 @@ export function createRegressionScenarioPerformanceProbe(
     previousHeartbeatAt = current;
     if (gapMs >= stallThresholdMs) {
       jsGapSamples.push(gapMs);
+      if (jsGapDetails.length < maxGapDetails) {
+        jsGapDetails.push({
+          elapsedMs: current - startedAt,
+          gapMs,
+          phase: activePhase,
+        });
+      }
     }
   }, heartbeatMs);
+
+  function markPhase(phase: string) {
+    activePhase = phase;
+    phaseMarks.push({
+      elapsedMs: now() - startedAt,
+      phase,
+    });
+  }
 
   function recordAction(
     label: string,
@@ -101,6 +125,8 @@ export function createRegressionScenarioPerformanceProbe(
       heartbeatMs,
       stallThresholdMs,
       jsGaps: summarizeRegressionScenarioDurations(jsGapSamples),
+      jsGapDetails,
+      phaseMarks,
       estimatedJsStallMs: jsGapSamples.reduce(
         (total, gapMs) => total + Math.max(0, gapMs - heartbeatMs),
         0,
@@ -125,8 +151,67 @@ export function createRegressionScenarioPerformanceProbe(
   }
 
   return {
+    markPhase,
     recordAction,
     recordDuration,
     stop,
+  };
+}
+
+export type RegressionScenarioPerformanceSummary = ReturnType<
+  ReturnType<typeof createRegressionScenarioPerformanceProbe>['stop']
+>;
+
+export function compactRegressionScenarioPerformanceSummary(
+  summary: RegressionScenarioPerformanceSummary,
+) {
+  const phaseOrder = ['initial'];
+  summary.phaseMarks.forEach(({ phase }) => {
+    if (!phaseOrder.includes(phase)) {
+      phaseOrder.push(phase);
+    }
+  });
+
+  const gapSamplesByPhase = new Map<string, number[]>();
+  summary.jsGapDetails.forEach(({ phase, gapMs }) => {
+    const samples = gapSamplesByPhase.get(phase) || [];
+    samples.push(gapMs);
+    gapSamplesByPhase.set(phase, samples);
+  });
+
+  return {
+    elapsedMs: summary.elapsedMs,
+    heartbeatMs: summary.heartbeatMs,
+    stallThresholdMs: summary.stallThresholdMs,
+    jsGaps: summary.jsGaps,
+    estimatedJsStallMs: summary.estimatedJsStallMs,
+    phaseMarks: summary.phaseMarks,
+    phaseGaps: phaseOrder.map(phase => {
+      const phaseSummary = summarizeRegressionScenarioDurations(
+        gapSamplesByPhase.get(phase) || [],
+      );
+      return {
+        phase,
+        count: phaseSummary.count,
+        totalMs: phaseSummary.totalMs,
+        maxMs: phaseSummary.maxMs,
+      };
+    }),
+    actions: Object.fromEntries(
+      Object.entries(summary.actions).map(([label, timing]) => [
+        label,
+        {
+          waitMs: timing.wait.maxMs,
+          handlerMs: timing.handler.maxMs,
+          totalMs: timing.total.maxMs,
+        },
+      ]),
+    ),
+    durations: Object.fromEntries(
+      Object.entries(summary.durations).map(([label, duration]) => [
+        label,
+        duration.maxMs,
+      ]),
+    ),
   };
 }

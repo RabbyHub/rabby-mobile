@@ -926,6 +926,11 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconSwapCC,
         },
         {
+          key: MultiHomeFeatTitle.Bridge,
+          title: t('page.home.services.bridge'),
+          icon: RcIconBridgeCC,
+        },
+        {
           key: MultiHomeFeatTitle.Send,
           title: t('page.home.services.send'),
           icon: RcIconSendCC,
@@ -934,11 +939,6 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
           icon: RcIconReceiveCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Bridge,
-          title: t('page.home.services.bridge'),
-          icon: RcIconBridgeCC,
         },
         {
           key: MultiHomeFeatTitle.Perps,
@@ -1443,10 +1443,8 @@ const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
 
   const handlePress = useCallback(() => {
     console.debug('[perf] touched menu', el.key);
-    requestAnimationFrame(() => {
-      markVisited();
-      onPress(el.key);
-    });
+    onPress(el.key);
+    markVisited();
     matomoRequestEvent({
       category: 'Click_Services',
       action: `Click_${el.key}`,

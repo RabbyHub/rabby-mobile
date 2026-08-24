@@ -178,10 +178,8 @@ export function isTokenMarketClosed(token?: { market_status?: string | null }) {
 export type TokenItemFromAbstractPortfolioToken = TokenItemMaybeWithOwner & {
   cex_ids?: string[];
   isFakerFoldRow?: boolean;
-  isManualFold?: boolean;
   smallTokenAllUsdValue?: string;
   isPined?: boolean;
-  isFold?: boolean;
   isExcludeBalance?: boolean;
   pinIndex?: number;
 };
@@ -217,8 +215,6 @@ export const abstractTokenToTokenItem = (
     smallTokenAllUsdValue:
       token?.id === SMALL_TOKEN_ID ? token?._usdValueStr : undefined,
     isPined: token?._isPined,
-    isFold: token?._isFold,
-    isManualFold: token?._isManualFold,
     isExcludeBalance: token?._isExcludeBalance,
     pinIndex: token?._pinIndex,
   };

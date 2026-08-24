@@ -6,6 +6,11 @@ import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
+import {
+  getHomeAssetSelectionSettings,
+  getHomeAssetSelectionSettingsKey,
+  isHomeAssetSelectionExperimentEnabled,
+} from '@/hooks/appSettings';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
@@ -1043,8 +1048,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           return nextBalance;
         }
 
+        const selectionPolicyKey = getHomeAssetSelectionSettingsKey();
         const selectionSnapshot = await getAccountBalanceSelectionSnapshot();
         if (!selectionSnapshot) {
+          return retBalances;
+        }
+        if (selectionPolicyKey !== getHomeAssetSelectionSettingsKey()) {
           return retBalances;
         }
         const { selectedAccounts, selectedAddresses } = selectionSnapshot;
@@ -1059,6 +1068,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
               endpoint: 'openapi.getTotalBalanceV2',
             },
           );
+        }
+
+        if (selectionPolicyKey !== getHomeAssetSelectionSettingsKey()) {
+          return retBalances;
         }
 
         Object.assign(
@@ -1191,7 +1204,7 @@ const { EventEmitter: AccountsBalanceEE } =
 export const balanceAccountsStore = zCreate(
   zMutative<AccountsBalanceState>(() => ({
     balance: {},
-    selectedAddresses: getCachedHomeTop10Addresses(),
+    selectedAddresses: getCachedHomeSelectedAddresses(),
     hasResolvedSelection: false,
     hasResolvedMatteredAccountLength: false,
     matteredAccountLength: 0,
@@ -1249,10 +1262,12 @@ async function getAccountBalanceSelectionSnapshot() {
   return accountBalanceSelectionSnapshotGetter?.() ?? null;
 }
 
-function getCachedHomeTop10Addresses() {
-  const cached = appStorage.getItem(APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES) as
-    | string[]
-    | null;
+function getCachedHomeAddresses(
+  key:
+    | typeof APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES
+    | typeof APP_MMKV_WEAK_KEYS.HOME_NONPROD_ASSET_SELECTION,
+) {
+  const cached = appStorage.getItem(key) as string[] | null;
   if (!Array.isArray(cached)) {
     return [];
   }
@@ -1266,12 +1281,64 @@ function getCachedHomeTop10Addresses() {
   );
 }
 
-function persistCachedHomeTop10Addresses(addresses: string[]) {
+function getCachedHomeTop10Addresses() {
+  return getCachedHomeAddresses(APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES);
+}
+
+type CachedNonprodHomeAssetSelection = {
+  topN?: unknown;
+  includeWatchAddresses?: unknown;
+  addresses?: unknown;
+};
+
+function getCachedHomeNonprodAssetSelectionAddresses() {
+  const cached = appStorage.getItem(
+    APP_MMKV_WEAK_KEYS.HOME_NONPROD_ASSET_SELECTION,
+  ) as CachedNonprodHomeAssetSelection | null;
+  const settings = getHomeAssetSelectionSettings();
+
+  if (
+    !cached ||
+    cached.topN !== settings.topN ||
+    cached.includeWatchAddresses !== settings.includeWatchAddresses ||
+    !Array.isArray(cached.addresses)
+  ) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      cached.addresses
+        .filter(address => typeof address === 'string' && !!address)
+        .map(address => address.toLowerCase()),
+    ),
+  );
+}
+
+function getCachedHomeSelectedAddresses() {
+  return isHomeAssetSelectionExperimentEnabled()
+    ? getCachedHomeNonprodAssetSelectionAddresses()
+    : getCachedHomeTop10Addresses();
+}
+
+function persistCachedHomeSelectedAddresses(addresses: string[]) {
+  const normalizedAddresses = Array.from(
+    new Set(addresses.filter(Boolean).map(address => address.toLowerCase())),
+  );
+
+  if (isHomeAssetSelectionExperimentEnabled()) {
+    const { topN, includeWatchAddresses } = getHomeAssetSelectionSettings();
+    appStorage.setItem(APP_MMKV_WEAK_KEYS.HOME_NONPROD_ASSET_SELECTION, {
+      topN,
+      includeWatchAddresses,
+      addresses: normalizedAddresses,
+    });
+    return;
+  }
+
   appStorage.setItem(
     APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES,
-    Array.from(
-      new Set(addresses.filter(Boolean).map(address => address.toLowerCase())),
-    ),
+    normalizedAddresses,
   );
 }
 
@@ -1352,7 +1419,7 @@ function setAccountsBalanceState(
   );
 
   if (selectionChanged) {
-    persistCachedHomeTop10Addresses(nextState.selectedAddresses);
+    persistCachedHomeSelectedAddresses(nextState.selectedAddresses);
     accountsBalanceEvents.emit('SELECTION_CHANGED', {
       prevAddresses: prevState.selectedAddresses,
       nextAddresses: nextState.selectedAddresses,
@@ -1578,4 +1645,8 @@ export function startProcessAddressBalanceEvents() {
 
 export const addressBalanceStore = new AddressBalanceStore();
 export default addressBalanceStore;
-export { getCachedHomeTop10Addresses };
+export {
+  getCachedHomeNonprodAssetSelectionAddresses,
+  getCachedHomeSelectedAddresses,
+  getCachedHomeTop10Addresses,
+};

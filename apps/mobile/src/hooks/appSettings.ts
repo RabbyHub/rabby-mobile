@@ -22,6 +22,11 @@ import {
 } from '@/core/apis/keychainVersionShared';
 import { setPreference } from '@/core/serviceApi/preference';
 import { useCallback, useMemo } from 'react';
+import {
+  coerceHomeAssetTopN,
+  DEFAULT_HOME_ASSET_TOP_N,
+  type HomeAssetTopN,
+} from '@/constant/homeAssetSelection';
 
 export {
   CURRENT_KEYCHAIN_VERSION_VALUES,
@@ -121,6 +126,7 @@ type ScreenshotSettings = {
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
+  toastOpenApiHttpErrorStatusDefaultEnabledV1: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
   wideScreenDebugPanelEnabled: boolean;
   wideScreenDebugPanelMinWidth: number;
@@ -128,6 +134,8 @@ type ScreenshotSettings = {
   [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
   enablePerpsWatchAddress: boolean;
+  homeAssetTopN: HomeAssetTopN;
+  includeWatchAddressesInHomeAssetSelection: boolean;
   screenE2EEnabled: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
@@ -145,6 +153,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
+    toastOpenApiHttpErrorStatusDefaultEnabledV1: false,
     debugSwapHistorySkipLocalLookup: false,
     wideScreenDebugPanelEnabled: false,
     wideScreenDebugPanelMinWidth: WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH,
@@ -153,9 +162,22 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
     enablePerpsWatchAddress: false,
+    homeAssetTopN: DEFAULT_HOME_ASSET_TOP_N,
+    includeWatchAddressesInHomeAssetSelection: false,
     screenE2EEnabled: false,
   },
 );
+
+if (
+  isNonPublicProductionEnv &&
+  !experimentalSettingsStore.getState()
+    .toastOpenApiHttpErrorStatusDefaultEnabledV1
+) {
+  experimentalSettingsStore.setState({
+    toastOpenApiHttpErrorStatus: true,
+    toastOpenApiHttpErrorStatusDefaultEnabledV1: true,
+  });
+}
 
 export const storeApiExpSettingData = {
   set: setExpSettingData,
@@ -163,6 +185,9 @@ export const storeApiExpSettingData = {
   getCurrentKeychainVersion,
   getDebugKeychainStorageByVersion,
   getShouldBlockSubmitIfFormChangedOnAuth,
+  getHomeAssetSelectionSettings,
+  setHomeAssetTopN,
+  setIncludeWatchAddressesInHomeAssetSelection,
   getScreenE2EEnabled: () =>
     isNonPublicProductionEnv &&
     experimentalSettingsStore.getState().screenE2EEnabled,
@@ -198,6 +223,123 @@ export function useScreenE2EEnabled() {
   return {
     screenE2EEnabled: isNonPublicProductionEnv && screenE2EEnabled,
     setScreenE2EEnabled,
+  };
+}
+
+export type HomeAssetSelectionSettings = {
+  topN: HomeAssetTopN;
+  includeWatchAddresses: boolean;
+};
+
+/**
+ * This is deliberately a non-production test policy.  Production always uses
+ * the legacy Top 10 owned-address selection, regardless of persisted values.
+ */
+export function getHomeAssetSelectionSettings(): HomeAssetSelectionSettings {
+  if (!isNonPublicProductionEnv) {
+    return {
+      topN: DEFAULT_HOME_ASSET_TOP_N,
+      includeWatchAddresses: false,
+    };
+  }
+
+  const state = experimentalSettingsStore.getState();
+  return {
+    topN: coerceHomeAssetTopN(state.homeAssetTopN),
+    includeWatchAddresses: !!state.includeWatchAddressesInHomeAssetSelection,
+  };
+}
+
+export function isHomeAssetSelectionExperimentEnabled(
+  settings = getHomeAssetSelectionSettings(),
+) {
+  return (
+    isNonPublicProductionEnv &&
+    (settings.topN !== DEFAULT_HOME_ASSET_TOP_N ||
+      settings.includeWatchAddresses)
+  );
+}
+
+export function getHomeAssetSelectionSettingsKey(
+  settings = getHomeAssetSelectionSettings(),
+) {
+  return `${settings.topN}:${settings.includeWatchAddresses ? 1 : 0}`;
+}
+
+export function setHomeAssetTopN(value: unknown) {
+  if (!isNonPublicProductionEnv) {
+    return DEFAULT_HOME_ASSET_TOP_N;
+  }
+
+  const topN = coerceHomeAssetTopN(value);
+  setExpSettingData(prev => ({
+    ...prev,
+    homeAssetTopN: topN,
+  }));
+  return topN;
+}
+
+export function setIncludeWatchAddressesInHomeAssetSelection(enabled: boolean) {
+  if (!isNonPublicProductionEnv) {
+    return false;
+  }
+
+  setExpSettingData(prev => ({
+    ...prev,
+    includeWatchAddressesInHomeAssetSelection: enabled,
+  }));
+  return enabled;
+}
+
+export function subscribeHomeAssetSelectionSettings(
+  listener: (settings: HomeAssetSelectionSettings) => void,
+) {
+  if (!isNonPublicProductionEnv) {
+    return () => undefined;
+  }
+
+  let previous = getHomeAssetSelectionSettings();
+  return experimentalSettingsStore.subscribe(() => {
+    const next = getHomeAssetSelectionSettings();
+    if (
+      next.topN === previous.topN &&
+      next.includeWatchAddresses === previous.includeWatchAddresses
+    ) {
+      return;
+    }
+    previous = next;
+    listener(next);
+  });
+}
+
+export function useHomeAssetSelectionSettings() {
+  const persistedTopN = experimentalSettingsStore(state => state.homeAssetTopN);
+  const persistedIncludeWatchAddresses = experimentalSettingsStore(
+    state => state.includeWatchAddressesInHomeAssetSelection,
+  );
+
+  const setTopN = useCallback((value: HomeAssetTopN) => {
+    return setHomeAssetTopN(value);
+  }, []);
+  const setIncludeWatchAddresses = useCallback((enabled: boolean) => {
+    return setIncludeWatchAddressesInHomeAssetSelection(enabled);
+  }, []);
+
+  const topN = isNonPublicProductionEnv
+    ? coerceHomeAssetTopN(persistedTopN)
+    : DEFAULT_HOME_ASSET_TOP_N;
+  const includeWatchAddresses =
+    isNonPublicProductionEnv && persistedIncludeWatchAddresses;
+
+  return {
+    topN,
+    includeWatchAddresses,
+    isExperimentEnabled: isHomeAssetSelectionExperimentEnabled({
+      topN,
+      includeWatchAddresses,
+    }),
+    setTopN,
+    setIncludeWatchAddresses,
   };
 }
 

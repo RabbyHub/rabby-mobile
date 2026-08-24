@@ -174,7 +174,7 @@ export function MultiAddressHomeHeader(
         },
       },
       onDone: () => {
-        removeGlobalBottomSheetModal2024(modalRef.current);
+        removeGlobalBottomSheetModal2024(modalRef.current, { duration: 0 });
         modalRef.current = undefined;
       },
     });

@@ -405,6 +405,8 @@ export type TransactionNavigatorParamList = {
     dappId?: string;
     market?: string;
     marketCandidates?: string[];
+    /** set when this screen is the underlay pushed beneath the market detail page */
+    fromSource?: 'homePagePositionList';
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {

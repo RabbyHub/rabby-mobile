@@ -105,6 +105,15 @@ export const GlobalSecurityTipStubModal = registerAppScreen<
   loader: () => import('@/components/Security/SecurityTipStubModal'),
 });
 
+export const UpgradePromptModal = registerAppScreen<
+  typeof import('@/components/Upgrade/UpgradePromptModal').UpgradePromptModal
+>({
+  loader: () =>
+    import('@/components/Upgrade/UpgradePromptModal').then(m => ({
+      default: m.UpgradePromptModal,
+    })),
+});
+
 export const BackgroundSecureBlurView = registerAppScreen<
   typeof import('@/components/customized/BlurViews').BackgroundSecureBlurView
 >({

@@ -355,6 +355,16 @@ export const STARTUP_TASKS = {
     priority: 'normal',
     budgetMs: 220,
   }),
+  customTestnetSnapshotHydration: defineStartupTask({
+    label: 'customTestnet.snapshotHydration',
+    owner: 'home-assets',
+    reason:
+      'restore persisted custom-network sections before Home can present a final empty token state',
+    stage: 'homePostStartupReady',
+    priority: 'high',
+    fallbackMs: 5000,
+    budgetMs: 24,
+  }),
   readableAccountStoresIdleWarmup: defineStartupTask({
     label: 'readableAccountStores.idleWarmup',
     owner: 'home-assets',
@@ -366,6 +376,39 @@ export const STARTUP_TASKS = {
     fallbackMs: 20000,
     idleTimeoutMs: 10000,
     budgetMs: 450,
+  }),
+  singleAddressTransactionNavigatorWarmup: defineStartupTask({
+    label: 'singleAddress.transactionNavigatorWarmup',
+    owner: 'single-address',
+    reason:
+      'preload transaction routes after single-address entry interactions settle while preserving on-demand navigation',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 3000,
+    budgetMs: 16,
+  }),
+  singleAddressAssetDataWarmup: defineStartupTask({
+    label: 'singleAddress.assetDataWarmup',
+    owner: 'single-address',
+    reason:
+      'warm DeFi and NFT data after single-address navigation settles without mounting their tab views',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 2500,
+    budgetMs: 16,
+  }),
+  singleAddressHistoryBadgeWarmup: defineStartupTask({
+    label: 'singleAddress.historyBadgeWarmup',
+    owner: 'single-address',
+    reason:
+      'load the non-blocking history badge after single-address entry interactions settle',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 2500,
+    budgetMs: 12,
   }),
   homeSceneDerivedDataActivation: defineStartupTask({
     label: 'home.sceneDerivedDataActivation',

@@ -164,7 +164,10 @@ export default function BottomSheetApprovalAsset({
               />
 
               <View style={styles.listHeadOps}>
-                <Text style={styles.listHeadText}>
+                <Text
+                  style={styles.listHeadText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
                   {t('page.approvals.approvedAssets')}
                 </Text>
                 <MiniButton
@@ -178,8 +181,8 @@ export default function BottomSheetApprovalAsset({
                     )
                   }>
                   {nextShouldPickAllFocusingAsset
-                    ? 'Select All'
-                    : 'Unselect All'}
+                    ? t('page.approvals.selectAll')
+                    : t('page.approvals.unselectAll')}
                 </MiniButton>
               </View>
             </View>
@@ -265,6 +268,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,
+      minWidth: 0,
+      flex: 1,
     },
     miniBtn: {
       backgroundColor: 'transparent',

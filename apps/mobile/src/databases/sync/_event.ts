@@ -18,7 +18,8 @@ export type SyncTaskOptions = {
     | 'balance'
     | 'buy-history'
     | 'cex'
-    | 'appchain';
+    | 'appchain'
+    | 'asset-projection';
 };
 
 type RemoteDataUpsertedCtx = {
