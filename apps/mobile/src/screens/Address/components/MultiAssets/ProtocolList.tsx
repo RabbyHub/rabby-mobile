@@ -288,12 +288,19 @@ export const ProtocolList = () => {
         type: 'visible-defi',
         protocolId,
       }));
-    const foldedDefiList: ProtocolListItem[] = protocolIndex.protocolIds
-      .slice(protocolIndex.defaultVisibleProtocolCount)
-      .map(protocolId => ({
-        type: 'folded-defi',
-        protocolId,
-      }));
+    const foldedProtocolCount = Math.max(
+      0,
+      protocolIndex.protocolIds.length -
+        protocolIndex.defaultVisibleProtocolCount,
+    );
+    const foldedDefiList: ProtocolListItem[] = showAllProtocols
+      ? protocolIndex.protocolIds
+          .slice(protocolIndex.defaultVisibleProtocolCount)
+          .map(protocolId => ({
+            type: 'folded-defi',
+            protocolId,
+          }))
+      : [];
 
     const itemData: Array<{
       show: boolean;
@@ -304,7 +311,7 @@ export const ProtocolList = () => {
         data: visibleDefiList,
       },
       {
-        show: foldedDefiList.length > 0,
+        show: foldedProtocolCount > 0,
         data: [
           {
             type: 'toggle-defi',

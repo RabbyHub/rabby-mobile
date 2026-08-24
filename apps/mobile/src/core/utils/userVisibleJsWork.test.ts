@@ -68,4 +68,44 @@ describe('user-visible JS work scheduling', () => {
 
     expect(callback).not.toHaveBeenCalled();
   });
+
+  it('publishes active work snapshots and stops after unsubscribe', () => {
+    const activity = loadModule();
+    const listener = jest.fn();
+    const unsubscribe = activity.subscribeUserVisibleJsWork(listener);
+
+    expect(listener).toHaveBeenLastCalledWith({
+      activeCount: 0,
+      labels: [],
+      lastSettledAt: 0,
+    });
+
+    const releaseToken = activity.beginUserVisibleJsWork('token-load');
+    const releaseDefi = activity.beginUserVisibleJsWork('defi-load');
+    expect(listener).toHaveBeenLastCalledWith({
+      activeCount: 2,
+      labels: ['token-load', 'defi-load'],
+      lastSettledAt: 0,
+    });
+
+    releaseToken();
+    expect(listener).toHaveBeenLastCalledWith({
+      activeCount: 1,
+      labels: ['defi-load'],
+      lastSettledAt: 0,
+    });
+
+    jest.setSystemTime(1_250);
+    releaseDefi();
+    expect(listener).toHaveBeenLastCalledWith({
+      activeCount: 0,
+      labels: [],
+      lastSettledAt: 1_250,
+    });
+
+    unsubscribe();
+    const callCount = listener.mock.calls.length;
+    activity.beginUserVisibleJsWork('ignored');
+    expect(listener).toHaveBeenCalledTimes(callCount);
+  });
 });

@@ -11,8 +11,11 @@ export type UserVisibleJsWorkSnapshot = {
   lastSettledAt: number;
 };
 
+type UserVisibleJsWorkListener = (snapshot: UserVisibleJsWorkSnapshot) => void;
+
 const activeWork = new Map<number, string>();
 const waiters = new Map<number, UserVisibleJsWorkWaiter>();
+const listeners = new Set<UserVisibleJsWorkListener>();
 
 let workSequence = 0;
 let waiterSequence = 0;
@@ -50,6 +53,28 @@ const rescheduleWaiters = () => {
   waiters.forEach(scheduleWaiter);
 };
 
+export const getUserVisibleJsWorkSnapshot = (): UserVisibleJsWorkSnapshot => ({
+  activeCount: activeWork.size,
+  labels: Array.from(activeWork.values()),
+  lastSettledAt,
+});
+
+const notifyListeners = () => {
+  const snapshot = getUserVisibleJsWorkSnapshot();
+  listeners.forEach(listener => listener(snapshot));
+};
+
+export const subscribeUserVisibleJsWork = (
+  listener: UserVisibleJsWorkListener,
+) => {
+  listeners.add(listener);
+  listener(getUserVisibleJsWorkSnapshot());
+
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
 /**
  * Marks JS work whose result is currently visible to the user. This is a
  * scheduling signal only; it never changes or serializes the work itself.
@@ -58,6 +83,7 @@ export const beginUserVisibleJsWork = (label: string) => {
   const workId = ++workSequence;
   activeWork.set(workId, label);
   waiters.forEach(clearWaiterTimer);
+  notifyListeners();
 
   let released = false;
   return () => {
@@ -70,6 +96,7 @@ export const beginUserVisibleJsWork = (label: string) => {
       lastSettledAt = Date.now();
       rescheduleWaiters();
     }
+    notifyListeners();
   };
 };
 
@@ -95,9 +122,3 @@ export const runAfterUserVisibleJsWorkSettles = (
     waiters.delete(waiter.id);
   };
 };
-
-export const getUserVisibleJsWorkSnapshot = (): UserVisibleJsWorkSnapshot => ({
-  activeCount: activeWork.size,
-  labels: Array.from(activeWork.values()),
-  lastSettledAt,
-});

@@ -182,6 +182,31 @@ function HomeDeferredLifecycle() {
   return null;
 }
 
+function HomeVisibleWorkDbSchedulerBridge() {
+  useEffect(() => {
+    let disposed = false;
+    let stopBridge: (() => void) | undefined;
+
+    import('@/databases/sync/userVisibleWorkBridge')
+      .then(({ startUserVisibleWorkSyncSchedulerBridge }) => {
+        if (disposed) {
+          return;
+        }
+        stopBridge = startUserVisibleWorkSyncSchedulerBridge();
+      })
+      .catch(error => {
+        console.error('start visible work DB scheduler bridge failed', error);
+      });
+
+    return () => {
+      disposed = true;
+      stopBridge?.();
+    };
+  }, []);
+
+  return null;
+}
+
 function HomeStartupReadyScheduler() {
   useEffect(() => {
     resetHomeStartupReady();
@@ -455,6 +480,7 @@ function MultiAddressHome(): JSX.Element {
         <TabsMultiAssets />
       </View>
 
+      <HomeVisibleWorkDbSchedulerBridge />
       <HomeStartupReadyScheduler />
       <HomeContentReadyScheduler />
       <HomeReadableAccountStoresBootstrap />
