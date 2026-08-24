@@ -1347,6 +1347,50 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     });
   });
 
+  it.each([
+    ['same-direction', '0.5'],
+    ['opposite-direction', '-0.5'],
+  ] as const)(
+    'allows opening attached TP/SL with an existing %s position',
+    async (_scenario, signedPositionSize) => {
+      mockPerpsState.currentClearinghouseState.assetPositions.push({
+        position: {
+          coin: 'BTC',
+          entryPx: '100',
+          leverage: { type: 'isolated', value: 10 },
+          marginUsed: '5',
+          szi: signedPositionSize,
+        },
+      } as never);
+      const hook = renderHook(() =>
+        usePerpsProTrade({
+          activeAssetData,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      );
+
+      act(() => hook.result.current.setAmount('100'));
+      act(() => hook.result.current.tpSl.setRawMagnitude('tp', '110'));
+      act(() => hook.result.current.tpSl.setEnabled(true));
+      await act(async () => hook.result.current.requestReview('buy'));
+
+      expect(mockShowToast).not.toHaveBeenCalled();
+      expect(hook.result.current.review).toMatchObject({
+        attached: { normalizedBaseSize: '0.99' },
+        parent: { baseSize: '0.99', side: 'buy' },
+        type: 'openOrderWithAttachedTpSl',
+      });
+    },
+  );
+
   it('submits attached TP/SL Limit directly when Limit confirmation is disabled', async () => {
     mockGetSkipConfirmation.mockResolvedValueOnce(true);
     const hook = renderHook(() =>

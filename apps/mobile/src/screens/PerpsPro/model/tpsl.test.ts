@@ -14,7 +14,6 @@ const evaluate = (
 ) =>
   evaluatePerpsProAttachedTpSl({
     baseSize: '2',
-    currentPositionSize: '0',
     draft: {
       enabled: true,
       sl: { mode: 'price', rawMagnitude: '90' },
@@ -193,11 +192,24 @@ describe('Perps Pro TP/SL model', () => {
     expect(evaluate({ liquidationPrice: null }).errors).toEqual([]);
   });
 
-  it('blocks attached TP/SL for any opposite position', () => {
-    expect(evaluate({ currentPositionSize: '-0.01' }).errors).toContainEqual({
-      code: 'oppositePosition',
-    });
-  });
+  it.each([
+    ['buy', '110', '90'],
+    ['sell', '90', '110'],
+  ] as const)(
+    'allows %s opening attached TP/SL without a position-direction gate',
+    (side, takeProfit, stopLoss) => {
+      expect(
+        evaluate({
+          draft: {
+            enabled: true,
+            sl: { mode: 'price', rawMagnitude: stopLoss },
+            tp: { mode: 'price', rawMagnitude: takeProfit },
+          },
+          side,
+        }).errors,
+      ).toEqual([]);
+    },
+  );
 
   it('revalidates frozen triggers without deriving new PnL/ROI prices', () => {
     const attached = evaluate({ liquidationPrice: '95' });
