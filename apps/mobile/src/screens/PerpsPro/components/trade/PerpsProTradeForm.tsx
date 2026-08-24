@@ -235,6 +235,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         <PerpsProTradeAmountField
           label={amountLabel}
           maxDecimals={controller.amountDecimals}
+          onBlur={controller.endAmountEntry}
           onChangeText={controller.setAmount}
           onFocus={controller.beginAmountEntry}
           onPressIn={controller.beginAmountEntry}
@@ -302,6 +303,16 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             draft={form.attachedTpSl}
             pxDecimals={market?.marketData.pxDecimals ?? 2}
             quoteAsset={quoteAsset}
+            slFillRevision={
+              controller.priceFillFeedback?.field === 'sl'
+                ? controller.priceFillFeedback.revision
+                : 0
+            }
+            tpFillRevision={
+              controller.priceFillFeedback?.field === 'tp'
+                ? controller.priceFillFeedback.revision
+                : 0
+            }
           />
         ) : null}
         <View style={styles.optionRow}>

@@ -295,7 +295,9 @@ describe('PerpsProOrderBook display shell', () => {
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-order-book-latest-price'));
-    expect(onSelectPrice).toHaveBeenCalledWith('31.3314');
+    expect(onSelectPrice).toHaveBeenCalledWith('31.3314', {
+      type: 'tradePrice',
+    });
 
     view.rerender(
       <PerpsProOrderBook
@@ -310,9 +312,12 @@ describe('PerpsProOrderBook display shell', () => {
     expect(onSelectPrice).toHaveBeenCalledTimes(1);
   });
 
-  it('consumes a price gesture that started while TP/SL input was focused', () => {
+  it('freezes the typed price intent before the focused input blurs', () => {
     const onSelectPrice = jest.fn();
-    const onSelectPriceIntentStart = jest.fn(() => true);
+    const onSelectPriceIntentStart = jest
+      .fn()
+      .mockReturnValueOnce({ type: 'attachedTpSlPrice', leg: 'tp' })
+      .mockReturnValue({ type: 'tradePrice' });
     render(
       <PerpsProOrderBook
         {...defaultProps}
@@ -345,7 +350,35 @@ describe('PerpsProOrderBook display shell', () => {
     fireEvent.press(latestPrice);
 
     expect(onSelectPriceIntentStart).toHaveBeenCalledTimes(1);
-    expect(onSelectPrice).not.toHaveBeenCalled();
+    expect(onSelectPrice).toHaveBeenCalledWith('31.3314', {
+      type: 'attachedTpSlPrice',
+      leg: 'tp',
+    });
+  });
+
+  it('forwards an empty display row as an invalid price selection attempt', () => {
+    const onSelectPrice = jest.fn();
+    render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+        onSelectPrice={onSelectPrice}
+      />,
+    );
+
+    const rows = screen.getAllByTestId('perps-pro-order-book-row');
+    fireEvent.press(rows[1]);
+    expect(onSelectPrice).toHaveBeenCalledWith(null, { type: 'tradePrice' });
   });
 
   it('grows to the measured trade height and retains the center block in single mode', () => {

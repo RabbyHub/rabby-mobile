@@ -1,5 +1,6 @@
-import { triggerImpact } from '@/utils/common';
 import { useCallback, useEffect, useRef } from 'react';
+
+import { triggerPerpsProLightHaptic } from './triggerPerpsProLightHaptic';
 
 export const PERPS_PRO_SLIDER_HAPTIC_MIN_INTERVAL_MS = 80;
 
@@ -118,10 +119,7 @@ export const usePerpsProSliderHaptics = ({
       }
 
       lastTriggeredAtRef.current = now;
-      triggerImpact({
-        enableVibrateFallback: false,
-        ignoreAndroidSystemSettings: false,
-      });
+      triggerPerpsProLightHaptic();
     },
     [disabled, maximumValue, minimumValue, step],
   );

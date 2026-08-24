@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsServerClockSample } from '../../model/funding';
 import { PERPS_PRO_MAIN_COLUMN_HEIGHT } from '../../model/layout';
 import type { PerpsProMarket } from '../../model/market';
+import type { PerpsProOrderBookPriceIntent } from '../../model/orderBookPriceIntent';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import {
   calculatePerpsBuyRatio,
@@ -49,8 +50,11 @@ export const PerpsProOrderBook: React.FC<{
   market: PerpsProMarket | null;
   onOpenFunding: () => void;
   onPrecisionIntentStart?: (option: PerpsTickOption) => void;
-  onSelectPrice?: (price: string) => void;
-  onSelectPriceIntentStart?: () => boolean;
+  onSelectPrice?: (
+    price: string | null,
+    intent: PerpsProOrderBookPriceIntent,
+  ) => void;
+  onSelectPriceIntentStart?: () => PerpsProOrderBookPriceIntent;
   onSelectTickOption: (option: PerpsTickOption) => void;
   selectedTickOption: PerpsTickOption | null;
   serverClock: PerpsServerClockSample | null;
@@ -115,22 +119,20 @@ export const PerpsProOrderBook: React.FC<{
     hasSnapshot: hasBookSnapshot,
     status: bookStatus,
   });
-  const priceIntentStartedRef = useRef(false);
-  const priceIntentConsumedRef = useRef(false);
+  const priceIntentRef = useRef<PerpsProOrderBookPriceIntent | null>(null);
   const startPriceSelectionIntent = useCallback(() => {
-    priceIntentStartedRef.current = true;
-    priceIntentConsumedRef.current = onSelectPriceIntentStart?.() ?? false;
+    priceIntentRef.current = onSelectPriceIntentStart?.() ?? {
+      type: 'tradePrice',
+    };
   }, [onSelectPriceIntentStart]);
   const selectPrice = useCallback(
-    (price: string) => {
-      const shouldConsume = priceIntentStartedRef.current
-        ? priceIntentConsumedRef.current
-        : onSelectPriceIntentStart?.() ?? false;
-      priceIntentStartedRef.current = false;
-      priceIntentConsumedRef.current = false;
-      if (!shouldConsume) {
-        onSelectPrice?.(price);
-      }
+    (price: string | null) => {
+      const intent =
+        priceIntentRef.current ??
+        onSelectPriceIntentStart?.() ??
+        ({ type: 'tradePrice' } as const);
+      priceIntentRef.current = null;
+      onSelectPrice?.(price, intent);
     },
     [onSelectPrice, onSelectPriceIntentStart],
   );

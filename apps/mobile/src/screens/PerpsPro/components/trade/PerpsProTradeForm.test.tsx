@@ -176,6 +176,7 @@ const controller = (
     amountUnitLabel: 'USDC',
     availableQuote: '1000',
     beginAmountEntry: jest.fn(),
+    endAmountEntry: jest.fn(),
     confirmLeverage: jest.fn(async () => true),
     disableBbo: jest.fn(),
     enableBbo: jest.fn(),
@@ -213,6 +214,7 @@ const controller = (
     stepPrice: jest.fn(),
     toggleAmountUnit: jest.fn(),
     tpSl: {
+      blurFocusedLeg: jest.fn(),
       clearForMarketChange: jest.fn(),
       compatibilityError: null,
       disabled: false,
@@ -736,6 +738,7 @@ describe('PerpsProTradeForm order matrix', () => {
     ).toEqual(initialInputStyle);
     fireEvent(screen.getByLabelText('amount(USDC)'), 'blur');
     expect(screen.getByTestId('perps-pro-amount-placeholder')).toBeTruthy();
+    expect(trade.endAmountEntry).toHaveBeenCalledTimes(1);
   });
 
   it('begins manual Amount entry on press even when the input is already focused', () => {

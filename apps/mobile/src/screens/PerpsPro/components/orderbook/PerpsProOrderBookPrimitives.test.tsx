@@ -68,7 +68,7 @@ describe('PerpsProOrderBookModeIcon', () => {
 });
 
 describe('PerpsProOrderBookRow', () => {
-  it('renders a neutral non-interactive placeholder row as dashes', () => {
+  it('renders a neutral placeholder and emits an invalid price attempt', () => {
     const onSelectPrice = jest.fn();
     render(
       <PerpsProOrderBookRow
@@ -87,7 +87,7 @@ describe('PerpsProOrderBookRow', () => {
       });
     });
     fireEvent.press(screen.getByTestId('perps-pro-order-book-row'));
-    expect(onSelectPrice).not.toHaveBeenCalled();
+    expect(onSelectPrice).toHaveBeenCalledWith(null);
   });
 
   it('keeps the Figma row inset and shared platform font', () => {

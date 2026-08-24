@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   getPerpsProAttachedTpSlCompatibilityError,
@@ -34,6 +34,7 @@ export const usePerpsProTpSl = ({
   draft,
   leverage,
   onChange,
+  onFocusChange,
   onModeChange,
   order,
   pxDecimals,
@@ -43,6 +44,7 @@ export const usePerpsProTpSl = ({
   draft: PerpsProAttachedTpSlDraft;
   leverage: number;
   onChange: (draft: PerpsProAttachedTpSlDraft) => void;
+  onFocusChange?: (kind: PerpsProTpSlLegKind, focused: boolean) => void;
   onModeChange?: (kind: PerpsProTpSlLegKind, mode: PerpsProTpSlMode) => void;
   order: {
     bboEnabled: boolean;
@@ -54,26 +56,64 @@ export const usePerpsProTpSl = ({
   previewFacts: Record<'buy' | 'sell', PerpsProTpSlPreviewFacts | null>;
   szDecimals: number;
 }) => {
-  const [focusedLeg, setFocusedLeg] = useState<PerpsProTpSlLegKind | null>(
+  const [focusedLeg, setFocusedLegState] = useState<PerpsProTpSlLegKind | null>(
     null,
+  );
+  const focusedLegRef = useRef<PerpsProTpSlLegKind | null>(null);
+  const setFocusedLeg = useCallback(
+    (next: PerpsProTpSlLegKind | null) => {
+      const previous = focusedLegRef.current;
+      if (previous === next) {
+        return;
+      }
+      focusedLegRef.current = next;
+      setFocusedLegState(next);
+      if (previous) {
+        onFocusChange?.(previous, false);
+      }
+      if (next) {
+        onFocusChange?.(next, true);
+      }
+    },
+    [onFocusChange],
+  );
+  const blurFocusedLeg = useCallback(
+    (kind: PerpsProTpSlLegKind) => {
+      if (focusedLegRef.current === kind) {
+        setFocusedLeg(null);
+      }
+    },
+    [setFocusedLeg],
   );
   const compatibilityError = getPerpsProAttachedTpSlCompatibilityError(order);
   const blockingCompatibilityError =
     compatibilityError === 'bboUnsupported' ? null : compatibilityError;
 
   useEffect(() => {
-    if (!compatibilityError || !draft.enabled) return;
+    if (!compatibilityError || !draft.enabled) {
+      return;
+    }
     onChange({ ...draft, enabled: false });
     setFocusedLeg(null);
-  }, [compatibilityError, draft, onChange]);
+  }, [compatibilityError, draft, onChange, setFocusedLeg]);
+
+  useEffect(() => {
+    if (!draft.enabled && focusedLegRef.current) {
+      setFocusedLeg(null);
+    }
+  }, [draft.enabled, setFocusedLeg]);
 
   const setEnabled = useCallback(
     (enabled: boolean) => {
-      if (enabled && blockingCompatibilityError) return;
+      if (enabled && blockingCompatibilityError) {
+        return;
+      }
       onChange({ ...draft, enabled });
-      if (!enabled) setFocusedLeg(null);
+      if (!enabled) {
+        setFocusedLeg(null);
+      }
     },
-    [blockingCompatibilityError, draft, onChange],
+    [blockingCompatibilityError, draft, onChange, setFocusedLeg],
   );
 
   const setMode = useCallback(
@@ -134,9 +174,10 @@ export const usePerpsProTpSl = ({
   const clearForMarketChange = useCallback(() => {
     onChange(clearPerpsProTpSlForMarketChange(draft));
     setFocusedLeg(null);
-  }, [draft, onChange]);
+  }, [draft, onChange, setFocusedLeg]);
 
   return {
+    blurFocusedLeg,
     clearForMarketChange,
     compatibilityError,
     disabled: blockingCompatibilityError != null,

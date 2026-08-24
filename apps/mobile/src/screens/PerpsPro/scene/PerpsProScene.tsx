@@ -42,6 +42,7 @@ import {
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
+import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
 import {
   PerpsProSheetGlobalEdgeTarget,
   PerpsProSheetNavigationBoundary,
@@ -272,11 +273,14 @@ export const PerpsProScene: React.FC<{
     setFundingOverlay(null);
   }, [info.accountIdentity]);
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
-  const consumeOrderBookPriceIntent = useCallback(() => {
-    if (!trade.tpSl.focusedLeg) return false;
-    Keyboard.dismiss();
-    return true;
-  }, [trade.tpSl.focusedLeg]);
+  const getOrderBookPriceIntent = trade.getOrderBookPriceIntent;
+  const startOrderBookPriceIntent = useCallback(() => {
+    const intent = getOrderBookPriceIntent();
+    if (intent.type === 'dismissKeyboard') {
+      Keyboard.dismiss();
+    }
+    return intent;
+  }, [getOrderBookPriceIntent]);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
@@ -664,6 +668,13 @@ export const PerpsProScene: React.FC<{
 
   const renderTrade = useCallback(() => {
     if (scene.currentMarket) {
+      const supportsTradePriceSelection =
+        (trade.form.orderType === 'limit' && !trade.form.bboEnabled) ||
+        trade.form.orderType === 'conditional';
+      const supportsFocusedTpSlInteraction = trade.tpSl.focusedLeg != null;
+      const orderBookPriceInteractionEnabled =
+        scene.tradeConfigurationReady &&
+        (supportsTradePriceSelection || supportsFocusedTpSlInteraction);
       return (
         <View onLayout={updateTradeRowHeight}>
           <View style={[styles.columns, columnsStyle]}>
@@ -675,18 +686,23 @@ export const PerpsProScene: React.FC<{
                 market={scene.currentMarket}
                 onSelectTickOption={scene.selectTickOption}
                 onSelectPrice={
-                  scene.tradeConfigurationReady &&
-                  ((trade.form.orderType === 'limit' &&
-                    !trade.form.bboEnabled) ||
-                    trade.form.orderType === 'conditional')
-                    ? price =>
-                        trade.selectOrderBookPrice(
+                  orderBookPriceInteractionEnabled
+                    ? (price, intent) => {
+                        const outcome = trade.selectOrderBookPrice(
                           price,
                           scene.currentMarket!.marketKey,
-                        )
+                          intent,
+                        );
+                        if (
+                          outcome === 'accepted' ||
+                          outcome === 'invalidPrice'
+                        ) {
+                          triggerPerpsProLightHaptic();
+                        }
+                      }
                     : undefined
                 }
-                onSelectPriceIntentStart={consumeOrderBookPriceIntent}
+                onSelectPriceIntentStart={startOrderBookPriceIntent}
                 precision={scene.precision}
                 publicationEnabled={scene.realtimeEnabled}
                 selectedTickOption={scene.selectedTickOption}
@@ -736,7 +752,6 @@ export const PerpsProScene: React.FC<{
     );
   }, [
     columnsStyle,
-    consumeOrderBookPriceIntent,
     gap,
     isMarketLoading,
     mainColumnHeight,
@@ -744,6 +759,7 @@ export const PerpsProScene: React.FC<{
     orderBookColumnStyle,
     orderBookWidth,
     scene,
+    startOrderBookPriceIntent,
     styles,
     t,
     trade,

@@ -2,6 +2,26 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+const mockCancelAnimation = jest.fn();
+const mockWithTiming = jest.fn((value: number) => value);
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  return {
+    __esModule: true,
+    default: { createAnimatedComponent: (component: unknown) => component },
+    Easing: {
+      cubic: (value: number) => value,
+      out: (easing: (value: number) => number) => easing,
+    },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
+    useAnimatedStyle: (updater: () => object) => updater(),
+    useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
+    withTiming: (...args: [number, object]) => mockWithTiming(...args),
+  };
+});
+
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -62,7 +82,9 @@ jest.mock('./PerpsProTpSlModeSheet', () => ({
     onSelect: (mode: 'roi') => void;
     visible: boolean;
   }) => {
-    if (!visible) return null;
+    if (!visible) {
+      return null;
+    }
     const ReactModule = require('react');
     const { Pressable } = require('react-native');
     return ReactModule.createElement(Pressable, {
@@ -114,6 +136,7 @@ const queryTooltipMeasure = () =>
 const controller = (overrides: Partial<PerpsProTpSlController> = {}) =>
   ({
     clearForMarketChange: jest.fn(),
+    blurFocusedLeg: jest.fn(),
     compatibilityError: null,
     disabled: false,
     focusedLeg: null,
@@ -129,6 +152,11 @@ const controller = (overrides: Partial<PerpsProTpSlController> = {}) =>
   } as PerpsProTpSlController);
 
 describe('PerpsProTpSlFields', () => {
+  beforeEach(() => {
+    mockCancelAnimation.mockClear();
+    mockWithTiming.mockClear();
+  });
+
   it('colors Price profit by sign and Trigger values by trade direction', () => {
     const positive = evaluated('tp', '110');
     const negative = evaluated('sl', '90');
@@ -319,6 +347,49 @@ describe('PerpsProTpSlFields', () => {
     expect(tpSl.setFocusedLeg).toHaveBeenCalledWith(null);
     fireEvent.press(screen.getByTestId('mock-tpsl-mode-sheet'));
     expect(tpSl.setMode).toHaveBeenCalledWith('sl', 'roi');
+  });
+
+  it('uses the shared fill animation only for TP/SL Price revisions', () => {
+    const view = render(
+      <PerpsProTpSlFields
+        controller={controller()}
+        draft={draft}
+        pxDecimals={2}
+        quoteAsset="USDC"
+        slFillRevision={0}
+        tpFillRevision={0}
+      />,
+    );
+    mockCancelAnimation.mockClear();
+    mockWithTiming.mockClear();
+
+    view.rerender(
+      <PerpsProTpSlFields
+        controller={controller()}
+        draft={draft}
+        pxDecimals={2}
+        quoteAsset="USDC"
+        slFillRevision={1}
+        tpFillRevision={1}
+      />,
+    );
+    expect(mockCancelAnimation).toHaveBeenCalledTimes(1);
+    expect(mockWithTiming).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ duration: 180, reduceMotion: 'system' }),
+    );
+
+    view.rerender(
+      <PerpsProTpSlFields
+        controller={controller()}
+        draft={draft}
+        pxDecimals={2}
+        quoteAsset="USDC"
+        slFillRevision={2}
+        tpFillRevision={2}
+      />,
+    );
+    expect(mockWithTiming).toHaveBeenCalledTimes(2);
   });
 
   it('centers the SL negative prefix together with the measured input value', () => {
