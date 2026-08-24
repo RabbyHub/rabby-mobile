@@ -1,4 +1,4 @@
-import type { AppColors2024Variants } from '@/constant/theme';
+import { ThemeColors2024 } from '@/constant/theme';
 import { FontNames } from '@/core/utils/fonts';
 import { Platform } from 'react-native';
 
@@ -12,11 +12,6 @@ import {
   PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
   resolvePerpsProFieldBackground,
 } from './perpsProVisual';
-
-const colors2024 = {
-  'neutral-bg-1': '#ffffff',
-  'neutral-line': '#d9d9d9',
-} as AppColors2024Variants;
 
 describe('Perps Pro visual contract', () => {
   it('uses the exact design background only for light field surfaces', () => {
@@ -32,28 +27,32 @@ describe('Perps Pro visual contract', () => {
   });
 
   it('keeps every Pro bottom sheet on the 16px and 40x4px chrome', () => {
-    const contentChrome = getPerpsProBottomSheetChromeStyles(colors2024);
-    const centeredChrome = getPerpsProBottomSheetChromeStyles(colors2024, {
-      handlePlacement: 'centered',
-    });
+    const lightChrome = getPerpsProBottomSheetChromeStyles(
+      ThemeColors2024.light,
+    );
+    const darkChrome = getPerpsProBottomSheetChromeStyles(ThemeColors2024.dark);
 
-    expect(contentChrome.modal).toMatchObject({
+    expect(lightChrome.modal).toMatchObject({
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
     });
-    expect(contentChrome.handle).toMatchObject({
+    expect(lightChrome.handle).toMatchObject({
       height: 40,
       paddingBottom: 27,
       paddingTop: 9,
     });
-    expect(contentChrome.handleIndicator).toMatchObject({
+    expect(lightChrome.handleIndicator).toMatchObject({
+      backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
       height: 4,
       width: 40,
     });
-    expect(centeredChrome.handle).toMatchObject({
+    expect(darkChrome.handle).toMatchObject({
       height: 40,
-      paddingBottom: 19,
-      paddingTop: 17,
+      paddingBottom: 27,
+      paddingTop: 9,
+    });
+    expect(darkChrome.handleIndicator).toMatchObject({
+      backgroundColor: ThemeColors2024.dark['neutral-sheet-handle'],
     });
   });
 

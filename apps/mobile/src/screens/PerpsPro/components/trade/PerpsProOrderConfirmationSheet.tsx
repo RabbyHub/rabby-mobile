@@ -314,9 +314,7 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({
 PerpsProOrderConfirmationSheet.displayName = 'PerpsProOrderConfirmationSheet';
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024, {
-    handlePlacement: 'centered',
-  }),
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   container: {
     paddingHorizontal: 15,
     paddingTop: 8,

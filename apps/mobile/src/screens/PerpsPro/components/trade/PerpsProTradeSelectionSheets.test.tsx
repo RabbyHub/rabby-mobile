@@ -7,6 +7,8 @@ import {
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+import { ThemeColors2024 } from '@/constant/theme';
+
 jest.mock('@/assets2024/icons/perps/PerpsProOptionCheck.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -50,7 +52,13 @@ jest.mock('@/hooks/theme', () => ({
       {},
       {
         get: (_target, key) =>
-          key === 'green-default' ? '#58C669' : '#192945',
+          key === 'green-default'
+            ? '#58C669'
+            : key === 'neutral-sheet-handle'
+            ? 'rgba(209, 212, 219, 1)'
+            : key === 'neutral-line'
+            ? 'rgba(224, 229, 236, 1)'
+            : '#192945',
       },
     );
     return {
@@ -150,14 +158,19 @@ describe('Perps Pro trade selection sheets', () => {
     ).toMatchObject({
       backgroundColor: '#192945',
       height: 40,
-      paddingBottom: 19,
-      paddingTop: 17,
+      paddingBottom: 27,
+      paddingTop: 9,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
       ),
-    ).toMatchObject({ borderRadius: 2, height: 4, width: 40 });
+    ).toMatchObject({
+      backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
+      borderRadius: 2,
+      height: 4,
+      width: 40,
+    });
     expect(screen.getByText('BTC Margin Mode')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('Cross').props.style),

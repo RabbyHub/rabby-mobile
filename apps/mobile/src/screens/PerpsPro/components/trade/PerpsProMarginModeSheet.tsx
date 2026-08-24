@@ -131,9 +131,7 @@ export const PerpsProMarginModeSheet: React.FC<{
 PerpsProMarginModeSheet.displayName = 'PerpsProMarginModeSheet';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024, {
-    handlePlacement: 'centered',
-  }),
+  ...getPerpsProBottomSheetChromeStyles(colors2024),
   sheet: { height: '100%' },
   content: {
     height: '100%',

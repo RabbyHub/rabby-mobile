@@ -42,20 +42,14 @@ export const PERPS_PRO_ISOLATED_TEXT_STYLE = getPerpsProIsolatedTextStyle(
 
 export const PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET = 24;
 
-type PerpsProBottomSheetHandlePlacement = 'content' | 'centered';
-
 export const getPerpsProBottomSheetChromeStyles = (
   colors2024: AppColors2024Variants,
   {
     backgroundColor = colors2024['neutral-bg-1'],
-    handlePlacement = 'content',
   }: {
     backgroundColor?: string;
-    handlePlacement?: PerpsProBottomSheetHandlePlacement;
   } = {},
 ): Record<'modal' | 'background' | 'handle' | 'handleIndicator', ViewStyle> => {
-  const centeredHandle = handlePlacement === 'centered';
-
   return {
     modal: {
       borderTopLeftRadius: 16,
@@ -70,11 +64,11 @@ export const getPerpsProBottomSheetChromeStyles = (
     handle: {
       backgroundColor,
       height: 40,
-      paddingBottom: centeredHandle ? 19 : 27,
-      paddingTop: centeredHandle ? 17 : 9,
+      paddingBottom: 27,
+      paddingTop: 9,
     },
     handleIndicator: {
-      backgroundColor: colors2024['neutral-line'],
+      backgroundColor: colors2024['neutral-sheet-handle'],
       borderRadius: 2,
       height: 4,
       width: 40,

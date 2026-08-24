@@ -68,6 +68,7 @@ const PerpsProKlineChart: React.FC<{
   onLoadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
   visible: boolean;
 }> = ({ feed, interval, market, onLoadOlder, visible }) => {
+  const { colors2024 } = useTheme2024();
   const chartRef = useRef<TradingViewChartRef>(null);
   const lastSentRef = useRef<{
     identity: string;
@@ -257,8 +258,13 @@ const PerpsProKlineChart: React.FC<{
       !isCurrentFeedDisplayed);
 
   return (
-    <View style={styles.chartContainer}>
+    <View
+      style={[
+        styles.chartContainer,
+        { backgroundColor: colors2024['neutral-bg-1'] },
+      ]}>
       <TradingViewCandleChart
+        backGroundColor={colors2024['neutral-bg-1']}
         ref={chartRef}
         height={PERPS_PRO_KLINE_CHART_HEIGHT}
         onChartError={handleChartError}
@@ -393,9 +399,7 @@ const styles = {
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
-  const chrome = getPerpsProBottomSheetChromeStyles(colors2024, {
-    handlePlacement: 'centered',
-  });
+  const chrome = getPerpsProBottomSheetChromeStyles(colors2024);
 
   return {
     ...chrome,
