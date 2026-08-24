@@ -24,6 +24,7 @@ import {
   formatPerpsProPercent,
   formatPerpsProPrice,
   formatPerpsProSignedDecimal,
+  formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
@@ -97,7 +98,7 @@ export const PerpsProPositionCard: React.FC<{
     const displaySize =
       sizeUnit === 'quote'
         ? formatPerpsProDecimal(size, 2)
-        : formatPerpsProDecimal(size, 4);
+        : formatPerpsProVariableDecimal(size);
     const displayPnl = `${pnl > 0 ? '+' : ''}${formatPerpsProDecimal(
       position.pnl,
       2,

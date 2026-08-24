@@ -4,7 +4,6 @@ import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
-import { showToast } from '@/hooks/perps/showToast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -91,15 +90,25 @@ export const PerpsProLeverageSheet: React.FC<{
       [safeMax],
     );
     const normalizeLeverageInput = useCallback(
-      (value: string) =>
-        value && Number(value) > safeMax ? String(safeMax) : value,
+      (value: string) => {
+        if (!value) {
+          return value;
+        }
+        const numericValue = Number(value);
+        if (!Number.isFinite(numericValue)) {
+          return value;
+        }
+        return String(Math.min(safeMax, Math.max(1, numericValue)));
+      },
       [safeMax],
     );
     const numericDraft = Number(draft);
-    const sliderValue =
-      Number.isFinite(numericDraft) && numericDraft > 0
-        ? Math.min(safeMax, numericDraft)
-        : 1;
+    const isDraftValid =
+      draft !== '' &&
+      Number.isInteger(numericDraft) &&
+      numericDraft >= 1 &&
+      numericDraft <= safeMax;
+    const sliderValue = isDraftValid ? numericDraft : 1;
     const sliderHaptics = usePerpsProSliderHaptics({
       disabled: pending,
       maximumValue: safeMax,
@@ -108,14 +117,11 @@ export const PerpsProLeverageSheet: React.FC<{
       value: sliderValue,
     });
     const confirm = useCallback(() => {
-      const numericValue = Number(draft);
-      if (!draft || !Number.isFinite(numericValue) || numericValue <= 0) {
-        showToast(t('page.perps.pro.positions.invalidLeverage'), 'error');
-        onClose();
+      if (!isDraftValid) {
         return;
       }
-      onConfirm(Math.min(safeMax, Math.round(numericValue)));
-    }, [draft, onClose, onConfirm, safeMax, t]);
+      onConfirm(numericDraft);
+    }, [isDraftValid, numericDraft, onConfirm]);
     const dismissLeverageInput = useCallback(() => {
       inputRef.current?.blur();
       Keyboard.dismiss();
@@ -228,7 +234,7 @@ export const PerpsProLeverageSheet: React.FC<{
             <View style={styles.footer} testID="perps-pro-leverage-footer">
               <Button
                 buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
-                disabled={pending}
+                disabled={pending || !isDraftValid}
                 height={BOTTOM_BUTTON_COMPACT_HEIGHT}
                 loading={pending}
                 onPress={confirm}

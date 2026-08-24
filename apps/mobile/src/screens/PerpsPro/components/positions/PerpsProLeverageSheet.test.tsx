@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
 
-const mockShowToast = jest.fn();
 const mockSliderHapticComplete = jest.fn();
 const mockSliderHapticStart = jest.fn();
 const mockSliderHapticValueChange = jest.fn();
@@ -42,10 +41,6 @@ jest.mock('@/components/customized/BottomSheet', () => {
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
   TextInput: require('react-native').TextInput,
-}));
-
-jest.mock('@/hooks/perps/showToast', () => ({
-  showToast: (...args: unknown[]) => mockShowToast(...args),
 }));
 
 jest.mock('@/components2024/Button', () => ({
@@ -374,7 +369,7 @@ describe('PerpsProLeverageSheet', () => {
     ).toBeUndefined();
   });
 
-  it.each(['', '0'])('treats %p as invalid and closes the sheet', draft => {
+  it('keeps an empty replacement draft disabled without closing the sheet', () => {
     const onClose = jest.fn();
     const onConfirm = jest.fn();
     render(
@@ -388,11 +383,39 @@ describe('PerpsProLeverageSheet', () => {
       />,
     );
 
-    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), draft);
+    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '');
+    expect(
+      screen.getByTestId('perps-pro-leverage-confirm').props.accessibilityState,
+    ).toEqual({ disabled: true });
     fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
 
-    expect(mockShowToast).toHaveBeenCalledWith('Invalid leverage', 'error');
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('normalizes a manually entered zero to the minimum 1x', () => {
+    const onConfirm = jest.fn();
+    render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={onConfirm}
+        pending={false}
+        visible
+      />,
+    );
+
+    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '0');
+
+    expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
+      '1',
+    );
+    expect(
+      screen.getByTestId('perps-pro-leverage-decrement').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+    fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
+    expect(onConfirm).toHaveBeenCalledWith(1);
   });
 });

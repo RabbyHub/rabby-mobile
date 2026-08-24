@@ -283,18 +283,26 @@ export const usePerpsProManageMargin = () => {
     const signedSize = new BigNumber(position.szi ?? Number.NaN);
     const direction = signedSize.gte(0) ? 'long' : 'short';
     const descriptor = buildPerpsProMarketDescriptor(market);
-    const projection = buildPositionMarginRiskProjection({
-      direction,
-      margin: draft,
-      markPrice: market.markPx,
-      positionSize: signedSize.abs().toFixed(),
-      tiers: market.maintenanceMarginTiers,
-    });
     const currentLiquidationDistance = calculateLiquidationDistance({
       direction,
       liquidationPrice: position.liquidationPx || null,
       markPrice: market.markPx || null,
     });
+    const projection =
+      targetState === 'noChange'
+        ? position.liquidationPx && currentLiquidationDistance
+          ? {
+              liquidationDistance: currentLiquidationDistance,
+              liquidationPrice: position.liquidationPx,
+            }
+          : null
+        : buildPositionMarginRiskProjection({
+            direction,
+            margin: draft,
+            markPrice: market.markPx,
+            positionSize: signedSize.abs().toFixed(),
+            tiers: market.maintenanceMarginTiers,
+          });
     return {
       currentLiquidationDistance,
       currentLiquidationPrice: position.liquidationPx || null,
