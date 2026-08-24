@@ -8,10 +8,11 @@ export function createAutoUnlockGate({
   dispatch,
 }: AutoUnlockGateOptions) {
   let screenReady = false;
+  let presentationReady = false;
   let pending = false;
 
   const dispatchIfReady = () => {
-    if (!screenReady || !pending || !isAtUnlock()) {
+    if (!screenReady || !presentationReady || !pending || !isAtUnlock()) {
       return;
     }
 
@@ -26,6 +27,10 @@ export function createAutoUnlockGate({
       }
 
       pending = true;
+      dispatchIfReady();
+    },
+    setPresentationReady(ready: boolean) {
+      presentationReady = ready;
       dispatchIfReady();
     },
     setScreenReady(ready: boolean) {

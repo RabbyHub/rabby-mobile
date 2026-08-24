@@ -581,6 +581,10 @@ export class UnlockUIManager {
     autoUnlockGate.setScreenReady(ready);
   }
 
+  static setAutoUnlockPresentationReady(ready: boolean) {
+    autoUnlockGate.setPresentationReady(ready);
+  }
+
   static markUnlockedOnce() {
     unlockUIState.unlockOnceRef = true;
   }
