@@ -573,8 +573,8 @@ bindKeyringEventAfterRegistration('lock', () => {
   autoUnlockGate.clearPending();
 });
 export class UnlockUIManager {
-  static triggerAutoUnlock() {
-    autoUnlockGate.request();
+  static triggerAutoUnlock(options?: { bypassPresentationReady?: boolean }) {
+    autoUnlockGate.request(options);
   }
 
   static setAutoUnlockScreenReady(ready: boolean) {

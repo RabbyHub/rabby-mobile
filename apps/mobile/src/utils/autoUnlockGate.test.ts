@@ -83,4 +83,24 @@ describe('createAutoUnlockGate', () => {
 
     expect(dispatch).toHaveBeenCalledTimes(1);
   });
+
+  it('allows a timeout fallback to bypass only the presentation boundary', () => {
+    gate.request({ bypassPresentationReady: true });
+
+    expect(dispatch).not.toHaveBeenCalled();
+
+    gate.setScreenReady(true);
+
+    expect(dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retain a timeout fallback after leaving the unlock screen', () => {
+    gate.request({ bypassPresentationReady: true });
+    gate.setScreenReady(false);
+    atUnlock = false;
+
+    gate.setScreenReady(true);
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
 });
