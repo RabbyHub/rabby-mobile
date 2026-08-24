@@ -34,6 +34,8 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
+import { useShallow } from 'zustand/react/shallow';
 
 type PortfolioListItem =
   | {
@@ -156,16 +158,36 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     return getSingleProtocolsCacheKey(lowerAddress, selectedChain);
   }, [lowerAddress, selectedChain]);
 
-  const protocolIndex = useActivityStore(
+  const protocolProjection = useActivityStore(
     useProtocolListComputedStore,
-    state =>
-      singleProtocolsKey
+    useShallow(state => ({
+      result: singleProtocolsKey
         ? state.singleProtocolsIndexCache[singleProtocolsKey] ||
           EMPTY_PROTOCOL_ASSETS_INDEX_RESULT
         : EMPTY_PROTOCOL_ASSETS_INDEX_RESULT,
+      availability: singleProtocolsKey
+        ? state.singleProtocolsAvailabilityByKey[singleProtocolsKey] ||
+          'unresolved'
+        : 'unresolved',
+    })),
     Object.is,
     { storeLabel: 'single-address-computed-protocols' },
   );
+  const protocolIndex = protocolProjection.result;
+  const { viewState: protocolProjectionViewState } =
+    useAssetProjectionPresentation({
+      identity: singleProtocolsKey
+        ? {
+            kind: 'protocol',
+            scene: 'single-address',
+            runtimeKey: singleProtocolsKey,
+          }
+        : null,
+      availability: protocolProjection.availability,
+      hasData: protocolIndex.protocolIds.length > 0,
+      hasSettledRequest: !loadingPortfolio,
+      storeLabel: 'single-address-defi-read-model',
+    });
 
   const shouldDefaultExpand = useMemo(
     () => protocolIndex.defaultVisibleProtocolCount <= 5,
@@ -205,14 +227,14 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
         ],
       },
       {
-        show: !!loadingPortfolio && !protocolIndex.protocolIds.length,
+        show: protocolProjectionViewState === 'loading',
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
         })),
       },
       {
-        show: !loadingPortfolio && protocolIndex.protocolIds.length === 0,
+        show: protocolProjectionViewState === 'empty',
         data: [
           {
             type: 'empty-defi',
@@ -227,7 +249,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [loadingPortfolio, protocolIndex, showAllProtocols, t]);
+  }, [protocolIndex, protocolProjectionViewState, showAllProtocols, t]);
 
   const refreshPortfolioList = useCallback(() => {
     if (!lowerAddress) {

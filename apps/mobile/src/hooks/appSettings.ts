@@ -136,6 +136,7 @@ type ScreenshotSettings = {
   enablePerpsWatchAddress: boolean;
   homeAssetTopN: HomeAssetTopN;
   includeWatchAddressesInHomeAssetSelection: boolean;
+  nativeTokenChainSyncPrivateSignerEnabled: boolean;
   screenE2EEnabled: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
@@ -164,6 +165,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     enablePerpsWatchAddress: false,
     homeAssetTopN: DEFAULT_HOME_ASSET_TOP_N,
     includeWatchAddressesInHomeAssetSelection: false,
+    nativeTokenChainSyncPrivateSignerEnabled: false,
     screenE2EEnabled: false,
   },
 );
@@ -191,6 +193,8 @@ export const storeApiExpSettingData = {
   getScreenE2EEnabled: () =>
     isNonPublicProductionEnv &&
     experimentalSettingsStore.getState().screenE2EEnabled,
+  getNativeTokenChainSyncEnabled,
+  setNativeTokenChainSyncEnabled,
   setScreenE2EEnabled: (enabled: boolean) => {
     if (!isNonPublicProductionEnv) {
       return false;
@@ -210,6 +214,43 @@ export const storeApiExpSettingData = {
       .timeTipAboutSeedPhraseAndPrivateKey;
   },
 };
+
+export function getNativeTokenChainSyncEnabled() {
+  return (
+    isNonPublicProductionEnv &&
+    experimentalSettingsStore.getState()
+      .nativeTokenChainSyncPrivateSignerEnabled === true
+  );
+}
+
+export const getNativeProtocolSyncEnabled = getNativeTokenChainSyncEnabled;
+export const getNativeNftSyncEnabled = getNativeTokenChainSyncEnabled;
+
+export function setNativeTokenChainSyncEnabled(enabled: boolean) {
+  if (!isNonPublicProductionEnv) {
+    return false;
+  }
+
+  setExpSettingData(prev => ({
+    ...prev,
+    nativeTokenChainSyncPrivateSignerEnabled: enabled,
+  }));
+  return enabled;
+}
+
+export function useNativeTokenChainSyncEnabled() {
+  const persistedEnabled = experimentalSettingsStore(
+    state => state.nativeTokenChainSyncPrivateSignerEnabled,
+  );
+  const setEnabled = useCallback((enabled: boolean) => {
+    return setNativeTokenChainSyncEnabled(enabled);
+  }, []);
+
+  return {
+    enabled: isNonPublicProductionEnv && persistedEnabled === true,
+    setEnabled,
+  };
+}
 
 export function useScreenE2EEnabled() {
   const screenE2EEnabled = experimentalSettingsStore(

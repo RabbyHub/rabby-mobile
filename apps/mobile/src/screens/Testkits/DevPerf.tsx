@@ -16,7 +16,11 @@ import {
 import RNFS from '@rabby-wallet/react-native-fs';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useNavigation } from '@react-navigation/native';
+import {
+  type RouteProp,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Button } from '@/components2024/Button';
@@ -32,6 +36,16 @@ import { apisLending } from '../Lending/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { worker_plus } from '@/perfs/workerReq';
 import { Text } from '@/components/Typography';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import {
+  NativeOpenApiDiagnosticResult,
+  NativeTokenCacheSyncDiagnosticResult,
+  NativeTokenCacheWriteDiagnosticResult,
+  runNativeOpenApiDiagnostic,
+  runNativeTokenCacheSyncDiagnostic,
+  runNativeTokenCacheWriteDiagnostic,
+} from '@/core/native/nativeOpenApiDiagnostic';
+import { RootNames } from '@/constant/layout';
 
 export const makeNoop = () => () => {};
 
@@ -322,7 +336,231 @@ function DevWorker() {
   );
 }
 
+function DevNativeOpenApi({
+  autoRunAction,
+  initialAddress,
+}: {
+  autoRunAction?: 'probe' | 'token-sync' | 'storage';
+  initialAddress?: string;
+}) {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const [address, setAddress] = useState(
+    () => initialAddress || getFallbackAccountSnapshot()?.address || '',
+  );
+  const [pending, setPending] = useState(false);
+  const [result, setResult] = useState<NativeOpenApiDiagnosticResult | null>(
+    null,
+  );
+  const [tokenSyncResult, setTokenSyncResult] =
+    useState<NativeTokenCacheSyncDiagnosticResult | null>(null);
+  const [storageResult, setStorageResult] =
+    useState<NativeTokenCacheWriteDiagnosticResult | null>(null);
+  const autoRunStartedRef = useRef(false);
+
+  const runProbe = useCallback(async () => {
+    setPending(true);
+    setResult(null);
+    try {
+      const nextResult = await runNativeOpenApiDiagnostic(address.trim());
+      setResult(nextResult);
+      console.info('[NativeOpenApiDiagnostic]', JSON.stringify(nextResult));
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Native OpenAPI diagnostic failed',
+      );
+    } finally {
+      setPending(false);
+    }
+  }, [address]);
+
+  const runTokenSync = useCallback(async () => {
+    setPending(true);
+    setTokenSyncResult(null);
+    try {
+      const nextResult = await runNativeTokenCacheSyncDiagnostic(
+        address.trim(),
+      );
+      setTokenSyncResult(nextResult);
+      console.info('[NativeTokenCacheSync]', JSON.stringify(nextResult));
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Native token sync failed',
+      );
+    } finally {
+      setPending(false);
+    }
+  }, [address]);
+
+  const runStorageDiagnostic = useCallback(async () => {
+    setPending(true);
+    setStorageResult(null);
+    try {
+      const nextResult = await runNativeTokenCacheWriteDiagnostic();
+      setStorageResult(nextResult);
+      console.info(
+        '[NativeTokenCacheWriteDiagnostic]',
+        JSON.stringify(nextResult),
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Native token cache write diagnostic failed',
+      );
+    } finally {
+      setPending(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (
+      !autoRunAction ||
+      autoRunStartedRef.current ||
+      (autoRunAction !== 'storage' && !address.trim())
+    ) {
+      return;
+    }
+
+    autoRunStartedRef.current = true;
+    if (autoRunAction === 'storage') {
+      runStorageDiagnostic();
+    } else if (autoRunAction === 'token-sync') {
+      runTokenSync();
+    } else {
+      runProbe();
+    }
+  }, [address, autoRunAction, runProbe, runStorageDiagnostic, runTokenSync]);
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text style={styles.secondarySectionTitle}>Native OpenAPI</Text>
+      </View>
+      <NextInput
+        containerStyle={{ width: '100%' }}
+        inputProps={{
+          value: address,
+          onChangeText: setAddress,
+          autoCapitalize: 'none',
+          autoCorrect: false,
+          placeholder: '0x address',
+        }}
+      />
+      <Button
+        testID="e2e.devperf.native-openapi.run"
+        disabled={pending || !address.trim()}
+        title={pending ? 'Running...' : 'Run Native OpenAPI Probe'}
+        type="ghost"
+        height={48}
+        containerStyle={{ width: '100%', marginTop: 12 }}
+        onPress={runProbe}
+      />
+      <Button
+        testID="e2e.devperf.native-openapi.sync-token-cache"
+        disabled={pending || !address.trim()}
+        title={pending ? 'Running...' : 'Sync Token Cache Natively'}
+        type="ghost"
+        height={48}
+        containerStyle={{ width: '100%', marginTop: 12 }}
+        onPress={runTokenSync}
+      />
+      <Button
+        testID="e2e.devperf.native-openapi.verify-token-cache-write"
+        disabled={pending}
+        title={pending ? 'Running...' : 'Verify Native Token Cache Write'}
+        type="ghost"
+        height={48}
+        containerStyle={{ width: '100%', marginTop: 12 }}
+        onPress={runStorageDiagnostic}
+      />
+      {result ? (
+        <Text
+          testID="e2e.devperf.native-openapi.result"
+          style={{
+            color: result.success
+              ? colors2024['green-default']
+              : colors2024['red-default'],
+            fontSize: 14,
+            lineHeight: 20,
+            marginTop: 12,
+          }}>
+          {result.success ? 'success' : `failed: ${result.error || 'unknown'}`}
+          {'\n'}HTTP: {result.firstStatusCode} / {result.secondStatusCode}
+          {'\n'}duration: {result.firstDurationMs}ms / {result.secondDurationMs}
+          ms
+          {'\n'}body: {result.firstBodyBytes}B / {result.secondBodyBytes}B{'\n'}
+          credential: {result.firstCredentialDisposition} /{' '}
+          {result.secondCredentialDisposition}
+          {'\n'}revision: {result.firstRequestCredentialRevision}→
+          {result.firstCurrentCredentialRevision} /{' '}
+          {result.secondRequestCredentialRevision}→
+          {result.secondCurrentCredentialRevision}
+        </Text>
+      ) : null}
+      {tokenSyncResult ? (
+        <Text
+          testID="e2e.devperf.native-openapi.token-sync-result"
+          style={{
+            color: tokenSyncResult.success
+              ? colors2024['green-default']
+              : colors2024['red-default'],
+            fontSize: 14,
+            lineHeight: 20,
+            marginTop: 12,
+          }}>
+          {tokenSyncResult.success
+            ? 'token sync success'
+            : `token sync failed: ${tokenSyncResult.error || 'unknown'}`}
+          {'\n'}stage: {tokenSyncResult.stage} / generation:{' '}
+          {tokenSyncResult.generation}
+          {'\n'}chains: {tokenSyncResult.chainCount} / source:{' '}
+          {tokenSyncResult.sourceTokenCount} / committed:{' '}
+          {tokenSyncResult.committedRowCount}
+          {'\n'}native: {tokenSyncResult.durationMs}ms / hydrate:{' '}
+          {tokenSyncResult.hydrationDurationMs}ms / hydrated:{' '}
+          {tokenSyncResult.hydratedTokenCount}
+        </Text>
+      ) : null}
+      {storageResult ? (
+        <Text
+          testID="e2e.devperf.native-openapi.storage-result"
+          style={{
+            color: storageResult.success
+              ? colors2024['green-default']
+              : colors2024['red-default'],
+            fontSize: 14,
+            lineHeight: 20,
+            marginTop: 12,
+          }}>
+          {storageResult.success
+            ? 'token cache write verified and rolled back'
+            : `token cache write failed: ${storageResult.error || 'unknown'}`}
+          {'\n'}stage: {storageResult.stage} / attempted:{' '}
+          {storageResult.attemptedRowCount}
+          {'\n'}duration: {storageResult.durationMs}ms
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 function DevPerf(): JSX.Element {
+  const route = useRoute<
+    RouteProp<
+      {
+        [RootNames.DevPerf]: {
+          action?:
+            | 'native-openapi'
+            | 'native-openapi-token-sync'
+            | 'native-openapi-storage';
+          address?: string;
+        };
+      },
+      typeof RootNames.DevPerf
+    >
+  >();
   const { styles, colors2024, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
@@ -341,6 +579,18 @@ function DevPerf(): JSX.Element {
         horizontal={false}>
         <Text style={styles.areaTitle}>High Performance</Text>
         <DevWorker />
+        <DevNativeOpenApi
+          autoRunAction={
+            route.params?.action === 'native-openapi-token-sync'
+              ? 'token-sync'
+              : route.params?.action === 'native-openapi-storage'
+              ? 'storage'
+              : route.params?.action === 'native-openapi'
+              ? 'probe'
+              : undefined
+          }
+          initialAddress={route.params?.address}
+        />
       </ScrollView>
     </NormalScreenContainer>
   );

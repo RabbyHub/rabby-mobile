@@ -92,6 +92,37 @@ describe('regression scenario performance probe', () => {
     ]);
   });
 
+  it('splits one delayed heartbeat across scenario phase boundaries', () => {
+    jest.useFakeTimers();
+    let currentTime = 0;
+    const probe = createRegressionScenarioPerformanceProbe({
+      heartbeatMs: 50,
+      stallThresholdMs: 120,
+      now: () => currentTime,
+    });
+
+    currentTime = 180;
+    probe.markPhase('home-reset');
+    currentTime = 220;
+    probe.markPhase('home-refresh');
+    currentTime = 260;
+    jest.advanceTimersByTime(50);
+    const summary = probe.stop();
+
+    expect(summary.jsGapDetails).toEqual([
+      {
+        elapsedMs: 260,
+        gapMs: 260,
+        phase: 'initial',
+      },
+    ]);
+    expect(summary.jsGapPhaseSegments).toEqual([
+      { elapsedMs: 180, gapMs: 180, phase: 'initial' },
+      { elapsedMs: 220, gapMs: 40, phase: 'home-reset' },
+      { elapsedMs: 260, gapMs: 40, phase: 'home-refresh' },
+    ]);
+  });
+
   it('compacts phase and action timings for bounded device logs', () => {
     jest.useFakeTimers();
     let currentTime = 0;
@@ -116,8 +147,15 @@ describe('regression scenario performance probe', () => {
       expect.objectContaining({
         elapsedMs: 190,
         phaseGaps: [
-          { phase: 'initial', count: 0, totalMs: 0, maxMs: 0 },
-          { phase: 'expand-list', count: 1, totalMs: 190, maxMs: 190 },
+          { phase: 'initial', count: 1, totalMs: 20, maxMs: 20 },
+          { phase: 'expand-list', count: 1, totalMs: 170, maxMs: 170 },
+        ],
+        largestJsGaps: [
+          {
+            elapsedMs: 190,
+            gapMs: 190,
+            phase: 'expand-list',
+          },
         ],
         actions: {
           'list.expand': { waitMs: 3, handlerMs: 8, totalMs: 11 },

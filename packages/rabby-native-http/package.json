@@ -1,0 +1,17 @@
+{
+  "name": "@rabby-wallet/rabby-native-http",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native-only HTTP transport foundation for Rabby data synchronization",
+  "license": "MIT",
+  "files": [
+    "android",
+    "cpp",
+    "ios",
+    "RabbyNativeHttp.podspec"
+  ],
+  "scripts": {
+    "test": "bash scripts/test-cpp.sh",
+    "test:apple": "bash scripts/test-apple.sh"
+  }
+}

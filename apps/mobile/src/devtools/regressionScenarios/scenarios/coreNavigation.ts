@@ -12,7 +12,12 @@ import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { getSingleAddressChainProjectionDiagnosticsSnapshot } from '@/screens/Home/singleAddressChainDiagnostics';
-import { getAssetDataLoadDiagnosticsSnapshot } from '@/core/utils/assetDataLoadDiagnostics';
+import {
+  getAssetDataLoadDiagnosticsSnapshot,
+  summarizeAssetDataLoadSettlements,
+  type AssetDataLoadDiagnosticRecord,
+  type AssetDataLoadDiagnosticDomain,
+} from '@/core/utils/assetDataLoadDiagnostics';
 import {
   apiSendToken,
   requestSendTokenFormPatch,
@@ -23,14 +28,35 @@ import {
   preferenceServiceApi,
 } from '@/core/serviceApi/preference';
 import tokenStore from '@/store/tokens';
-import { getSelectedBalanceAddressesSnapshot } from '@/store/balance';
+import {
+  balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
+} from '@/store/balance';
+import { addWatchAddress } from '@/core/apis/address';
+import {
+  getHomeAssetSelectionSettings,
+  getNativeTokenChainSyncEnabled,
+  isHomeAssetSelectionExperimentEnabled,
+  setHomeAssetTopN,
+  setIncludeWatchAddressesInHomeAssetSelection,
+  setNativeTokenChainSyncEnabled,
+} from '@/hooks/appSettings';
+import { ensureAccountBalanceSelectionLifecycle } from '@/store/balanceAccountSelection';
+import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
+import accountStore from '@/store/account';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { findChain, findChainByEnum, makeTokenFromChain } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import {
+  diffNativeAssetSyncSchedulerDiagnostics,
+  getNativeAssetSyncSchedulerDiagnostics,
+  type NativeAssetSyncSchedulerDiagnostics,
+} from '@/core/native/nativeOpenApiDiagnostic';
 
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
 import { runRegressionScenarioComponentAction } from '../componentActions.nonprod';
+import { consumeRegressionWatchAddressFixture } from '../fixture.nonprod';
 import {
   compactRegressionScenarioPerformanceSummary,
   createRegressionScenarioPerformanceProbe,
@@ -42,6 +68,7 @@ import {
   parseScenarioBoolean,
   pushNestedScreen,
   resetToHome,
+  startMainRuntimeProfile,
   waitForScenarioAssertion,
 } from './utils';
 
@@ -51,6 +78,7 @@ const DEFAULT_TARGET_USD = '0.1';
 const DEFAULT_MAX_TOTAL_USD = '1';
 const MAX_SWAP_BRIDGE_PRESSURE_CYCLES = 20;
 const MAX_SELECTOR_PRESSURE_CYCLES = 5;
+const HOME_ASSET_SELECTION_TIMEOUT_MS = 30_000;
 const HOME_TAB_READY_ASSERTIONS: Record<number, string | undefined> = {
   1: 'home-assets-token-ready',
   2: 'home-assets-defi-ready',
@@ -63,6 +91,34 @@ const HOME_TAB_ACTIVITY_SCOPE_LABELS = [
   'home-multi-assets-nft',
 ] as const;
 const HOME_TAB_ACTIVITY_VERIFICATION_TABS = [0, 1, 2, 3, 0] as const;
+const MAX_REPORTED_ASSET_LOAD_PHASES = 18;
+const SAFE_ASSET_DATA_LOAD_DETAIL_KEYS = new Set([
+  'addressCount',
+  'cacheEntryCount',
+  'chainConcurrency',
+  'concurrency',
+  'failedAddressCount',
+  'force',
+  'hasMemorySnapshot',
+  'isExpired',
+  'itemCount',
+  'path',
+  'reason',
+  'requestedChainCount',
+  'fetchAddressCount',
+  'succeededCount',
+  'failedCount',
+  'queueSizeAtStart',
+  'queuePendingAtStart',
+  'queueWaitAverageMs',
+  'queueWaitMaxMs',
+  'requestAverageMs',
+  'requestMaxMs',
+  'elapsedMs',
+  'source',
+  'succeededAddressCount',
+  'tokenCount',
+]);
 const SINGLE_ADDRESS_SCREEN_ACTIVITY_SCOPE_LABELS = [
   'single-address',
   'single-address-header',
@@ -494,7 +550,12 @@ async function selectHomeTabIndex(tabIndex: number, timeoutMs = 10_000) {
 
   while (Date.now() - startedAt < timeoutMs) {
     const controller = apisHomeTabIndex.homeTabScrollerRef.current;
-    if (controller?.getCurrentIndex() === tabIndex) {
+    // The native pager can report its target index before the UI worklet has
+    // published the corresponding shared value. The real pull-down handler
+    // checks that shared value, so a regression action must wait for it too.
+    const isRefreshEligible =
+      tabIndex !== 0 || apisHomeTabIndex.isHomeAtFirstTab();
+    if (controller?.getCurrentIndex() === tabIndex && isRefreshEligible) {
       return;
     }
 
@@ -657,60 +718,539 @@ async function prepareHomeTokenColdPath(
   }
 }
 
-async function openHomeAssets(context: RegressionScenarioExecutionContext) {
+async function openHomeAssets(
+  context: RegressionScenarioExecutionContext,
+  options?: {
+    defaultTabs?: string;
+    triggerManualRefresh?: boolean;
+    waitForTabReadyAssertions?: boolean;
+    expectedAssetDataLoadDomainsByTab?: Readonly<
+      Partial<Record<number, readonly AssetDataLoadDiagnosticDomain[]>>
+    >;
+    assetDataLoadReadinessPhases?: Readonly<
+      Partial<Record<AssetDataLoadDiagnosticDomain, readonly string[]>>
+    >;
+    assetDataLoadStartTimeoutMs?: number;
+    assetDataLoadReadinessTimeoutMs?: number;
+    waitForAssetDataLoadSettlement?: boolean;
+    assetDataLoadSettlementTimeoutMs?: number;
+    deferAssetDataLoadReadinessUntilAfterTabs?: boolean;
+    profileTabIndex?: number;
+    performanceProbe?: ReturnType<
+      typeof createRegressionScenarioPerformanceProbe
+    >;
+  },
+) {
+  const resetStartedAt = Date.now();
+  options?.performanceProbe?.markPhase('home-reset-root');
   resetToHome();
+  options?.performanceProbe?.recordDuration(
+    'home.reset-root-dispatch',
+    Date.now() - resetStartedAt,
+  );
+
+  const routeReadyStartedAt = Date.now();
+  options?.performanceProbe?.markPhase('home-wait-route-ready');
   await context.waitForRoute(RootNames.Home);
+  options?.performanceProbe?.recordDuration(
+    'home.wait-route-ready',
+    Date.now() - routeReadyStartedAt,
+  );
+  // The production pull-down handler is intentionally available only on the
+  // overview tab. Make the scenario follow that same user-visible path.
+  const overviewReadyStartedAt = Date.now();
+  options?.performanceProbe?.markPhase('home-wait-overview-tab-ready');
+  await selectHomeTabIndex(0);
+  options?.performanceProbe?.recordDuration(
+    'home.wait-overview-tab-ready',
+    Date.now() - overviewReadyStartedAt,
+  );
 
   const startedAt = Date.now();
   const assetDataLoadCursor = getAssetDataLoadDiagnosticsCursor();
-  await prepareHomeTokenColdPath(context);
-
-  const requestedTabs = (context.command.params.tabs || '0,1,2,3')
-    .split(',')
-    .map(value => Number(value.trim()))
-    .filter(value => Number.isInteger(value) && value >= 0 && value <= 3);
-  for (const tabIndex of requestedTabs) {
-    await selectHomeTabIndex(tabIndex);
-    context.report('assertion', {
-      assertion: 'home-tab-selected',
-      passed: navigationRef.getCurrentRoute()?.name === RootNames.Home,
-      tabIndex,
-      route: navigationRef.getCurrentRoute()?.name || null,
-    });
-    const readyAssertion = HOME_TAB_READY_ASSERTIONS[tabIndex];
-    if (readyAssertion) {
-      await waitForScenarioAssertion(context, readyAssertion, 45_000);
-    } else {
-      await delay(350);
+  let requestedAssetDataLoadCursor = assetDataLoadCursor;
+  let hasReportedAssetDataLoadDiagnostics = false;
+  const reportAssetDataLoadDiagnostics = () => {
+    if (hasReportedAssetDataLoadDiagnostics) {
+      return;
     }
+    hasReportedAssetDataLoadDiagnostics = true;
+    reportHomeAssetDataLoadDiagnostics(context, assetDataLoadCursor, startedAt);
+  };
+
+  try {
+    options?.performanceProbe?.markPhase('home-prepare-token-cold-path');
+    await prepareHomeTokenColdPath(context);
+
+    const waitForRequestedAssetDataLoadReadiness = async () => {
+      await waitForHomeAssetDataLoadDomains(
+        context,
+        requestedAssetDataLoadCursor,
+        ['multi-address-token', 'multi-address-protocol'],
+        options?.assetDataLoadStartTimeoutMs,
+      );
+      if (options?.assetDataLoadReadinessPhases) {
+        await waitForHomeAssetDataLoadReadiness(
+          context,
+          requestedAssetDataLoadCursor,
+          options.assetDataLoadReadinessPhases,
+          options.assetDataLoadReadinessTimeoutMs,
+        );
+      }
+      if (
+        options?.waitForAssetDataLoadSettlement &&
+        !options.deferAssetDataLoadReadinessUntilAfterTabs
+      ) {
+        await waitForHomeAssetDataLoadSettlement(
+          context,
+          requestedAssetDataLoadCursor,
+          ['multi-address-token', 'multi-address-protocol'],
+          options.assetDataLoadSettlementTimeoutMs,
+        );
+      }
+    };
+
+    const deferredSettlementDomains = new Set<AssetDataLoadDiagnosticDomain>([
+      'multi-address-token',
+      'multi-address-protocol',
+    ]);
+
+    if (options?.triggerManualRefresh) {
+      requestedAssetDataLoadCursor = getAssetDataLoadDiagnosticsCursor();
+      options.performanceProbe?.markPhase('home-manual-refresh-handler');
+      const timing = await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'home.manual-pulldown-refresh',
+        10_000,
+      );
+      options.performanceProbe?.recordAction(
+        'home.manual-pulldown-refresh',
+        timing,
+      );
+      context.report('perf-mark', {
+        mark: 'home-assets-manual-refresh',
+        ...timing,
+      });
+      options.performanceProbe?.markPhase('home-manual-refresh-inflight');
+      if (!options.deferAssetDataLoadReadinessUntilAfterTabs) {
+        await waitForRequestedAssetDataLoadReadiness();
+      }
+    }
+
+    const requestedTabs = (
+      context.command.params.tabs ||
+      options?.defaultTabs ||
+      '0,1,2,3'
+    )
+      .split(',')
+      .map(value => Number(value.trim()))
+      .filter(value => Number.isInteger(value) && value >= 0 && value <= 3);
+    for (const tabIndex of requestedTabs) {
+      const profileCapture =
+        options?.profileTabIndex === tabIndex
+          ? await startMainRuntimeProfile(context, {
+              label: `home-assets-tab-${tabIndex}`,
+              observeMs: 10_000,
+              filePrefix: `rabby-home-assets-tab-${tabIndex}-main`,
+            })
+          : null;
+
+      try {
+        options?.performanceProbe?.markPhase(`home-select-tab-${tabIndex}`);
+        await selectHomeTabIndex(tabIndex);
+        options?.performanceProbe?.markPhase(`home-observe-tab-${tabIndex}`);
+        context.report('assertion', {
+          assertion: 'home-tab-selected',
+          passed: navigationRef.getCurrentRoute()?.name === RootNames.Home,
+          tabIndex,
+          route: navigationRef.getCurrentRoute()?.name || null,
+        });
+        const readyAssertion = HOME_TAB_READY_ASSERTIONS[tabIndex];
+        if (readyAssertion && options?.waitForTabReadyAssertions !== false) {
+          await waitForScenarioAssertion(context, readyAssertion, 45_000);
+        } else {
+          await delay(350);
+        }
+        const expectedAssetDataLoadDomains =
+          options?.expectedAssetDataLoadDomainsByTab?.[tabIndex];
+        if (expectedAssetDataLoadDomains?.length) {
+          expectedAssetDataLoadDomains.forEach(domain =>
+            deferredSettlementDomains.add(domain),
+          );
+          await waitForHomeAssetDataLoadDomains(
+            context,
+            assetDataLoadCursor,
+            expectedAssetDataLoadDomains,
+          );
+          if (
+            options?.waitForAssetDataLoadSettlement &&
+            !options.deferAssetDataLoadReadinessUntilAfterTabs
+          ) {
+            await waitForHomeAssetDataLoadSettlement(
+              context,
+              assetDataLoadCursor,
+              expectedAssetDataLoadDomains,
+              options.assetDataLoadSettlementTimeoutMs,
+            );
+          }
+        }
+      } finally {
+        if (profileCapture) {
+          const profileResult = await profileCapture.session.stop();
+          profileCapture.restoreWorker();
+          context.report('perf-mark', {
+            label: `home-assets-tab-${tabIndex}`,
+            mark: 'main-runtime-profile-saved',
+            durationMs: profileResult.durationMs,
+            profilePath: profileResult.profilePath || '',
+            androidProfilePath: profileResult.androidProfilePath || '',
+            error: profileResult.error || '',
+          });
+          if (!profileResult.profilePath) {
+            throw new Error(
+              profileResult.error ||
+                `Home assets tab ${tabIndex} Hermes profile was not saved`,
+            );
+          }
+        }
+      }
+    }
+
+    if (
+      options?.triggerManualRefresh &&
+      options.deferAssetDataLoadReadinessUntilAfterTabs
+    ) {
+      await waitForRequestedAssetDataLoadReadiness();
+    }
+
+    if (
+      options?.waitForAssetDataLoadSettlement &&
+      options.deferAssetDataLoadReadinessUntilAfterTabs
+    ) {
+      await waitForHomeAssetDataLoadSettlement(
+        context,
+        requestedAssetDataLoadCursor,
+        Array.from(deferredSettlementDomains),
+        options.assetDataLoadSettlementTimeoutMs,
+      );
+    }
+
+    const visitedTabs = new Set([0, ...requestedTabs]);
+    const canVerifyAllTabActivity = HOME_TAB_ACTIVITY_SCOPE_LABELS.every(
+      (_, tabIndex) => visitedTabs.has(tabIndex),
+    );
+    if (canVerifyAllTabActivity) {
+      for (const tabIndex of HOME_TAB_ACTIVITY_VERIFICATION_TABS) {
+        await selectHomeTabIndex(tabIndex);
+        await assertHomeTabActivity(context, tabIndex);
+      }
+    } else {
+      context.report('assertion', {
+        assertion: 'home-tabs-store-activity-skipped',
+        passed: true,
+        reason: 'not-all-home-tabs-visited',
+        visitedTabs: Array.from(visitedTabs),
+      });
+    }
+  } finally {
+    reportAssetDataLoadDiagnostics();
+  }
+}
+
+function countUniqueAddresses(accounts: Array<{ address: string }>) {
+  return new Set(accounts.map(account => account.address.toLowerCase())).size;
+}
+
+function areAddressSelectionsEqual(left: string[], right: string[]) {
+  return (
+    left.length === right.length &&
+    left.every(
+      (address, index) => address.toLowerCase() === right[index]?.toLowerCase(),
+    )
+  );
+}
+
+function getHighCardinalityFixtureAddressCount(value?: string) {
+  const requestedCount = Number(value);
+  if (HOME_ASSET_TOP_N_OPTIONS.some(option => option === requestedCount)) {
+    return requestedCount;
   }
 
-  context.report('perf-mark', {
-    mark: 'home-assets-data-load-summary',
-    elapsedMs: Date.now() - startedAt,
-    assetDataLoads: getAssetDataLoadRecordsSince(
-      assetDataLoadCursor,
-      startedAt,
-    ),
+  return 20;
+}
+
+async function waitForHomeAssetSelection(expectedCount: number) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < HOME_ASSET_SELECTION_TIMEOUT_MS) {
+    const selection = balanceAccountsStore.getState();
+    if (
+      isHomeAssetSelectionExperimentEnabled() &&
+      selection.hasResolvedSelection &&
+      selection.selectedAddresses.length === expectedCount
+    ) {
+      return selection;
+    }
+    await delay(100);
+  }
+
+  const selection = balanceAccountsStore.getState();
+  throw new Error(
+    'Home asset selection did not converge (expected ' +
+      expectedCount +
+      ', got ' +
+      selection.selectedAddresses.length +
+      ')',
+  );
+}
+
+async function openHighCardinalityAssets(
+  context: RegressionScenarioExecutionContext,
+) {
+  await context.waitForNavigation();
+  await ensureScenarioWalletUnlocked();
+
+  const requestedAssetSyncMode = context.command.params.assetSyncMode;
+  if (
+    requestedAssetSyncMode !== undefined &&
+    requestedAssetSyncMode !== 'js' &&
+    requestedAssetSyncMode !== 'native'
+  ) {
+    throw new Error('assetSyncMode must be either js or native');
+  }
+  if (requestedAssetSyncMode) {
+    setNativeTokenChainSyncEnabled(requestedAssetSyncMode === 'native');
+  }
+  const assetSyncMode = getNativeTokenChainSyncEnabled() ? 'native' : 'js';
+  if (requestedAssetSyncMode && assetSyncMode !== requestedAssetSyncMode) {
+    throw new Error(
+      `high-cardinality-assets could not enable ${requestedAssetSyncMode} asset sync`,
+    );
+  }
+
+  const fixtureId = context.command.fixture;
+  if (!fixtureId) {
+    throw new Error('high-cardinality-assets requires an opaque fixture id');
+  }
+
+  const fixture = await consumeRegressionWatchAddressFixture(fixtureId);
+  const requestedAddressCount = getHighCardinalityFixtureAddressCount(
+    context.command.params.addressCount,
+  );
+  const addresses = fixture.addresses.slice(0, requestedAddressCount);
+  if (addresses.length !== requestedAddressCount) {
+    throw new Error(
+      'high-cardinality-assets fixture has fewer addresses than the requested pressure level',
+    );
+  }
+
+  context.report('fixture-loaded', {
+    fixtureAddressCount: fixture.addresses.length,
+    requestedAddressCount,
+    importedAddressCount: addresses.length,
+  });
+  context.report('fixture-removed');
+
+  const beforeAccounts = await accountStore.fetchAccounts({ force: true });
+  const existingAddresses = new Set(
+    beforeAccounts.map(account => account.address.toLowerCase()),
+  );
+  const missingAddresses = addresses.filter(
+    address => !existingAddresses.has(address),
+  );
+
+  // Suspend the capacity policy only while real fixture imports are needed.
+  // Repeated probes must not manufacture two expensive Home selection changes
+  // before their measured action when all fixture accounts already exist.
+  if (missingAddresses.length) {
+    setHomeAssetTopN(10);
+    setIncludeWatchAddressesInHomeAssetSelection(false);
+  }
+
+  let importedCount = 0;
+
+  for (const address of missingAddresses) {
+    await addWatchAddress(address);
+    existingAddresses.add(address);
+    importedCount += 1;
+  }
+
+  const accounts = await accountStore.fetchAccounts({ force: true });
+  const visibleAddresses = new Set(
+    accounts.map(account => account.address.toLowerCase()),
+  );
+  const fixtureAddressCount = addresses.filter(address =>
+    visibleAddresses.has(address),
+  ).length;
+  if (fixtureAddressCount !== addresses.length) {
+    throw new Error('One or more fixture watch addresses are not visible');
+  }
+
+  // Import through the regular Watch-address API first. Enabling the
+  // experimental selection while each address is being added would make Home
+  // start a separate data refresh for every intermediate account count, which
+  // measures fixture setup rather than the requested Top-N pressure state.
+  // The final selection is still activated before any measured asset action.
+  const selectionBeforeActivation = [
+    ...balanceAccountsStore.getState().selectedAddresses,
+  ];
+  let nativeSchedulerBefore: NativeAssetSyncSchedulerDiagnostics | null = null;
+  if (assetSyncMode === 'native') {
+    try {
+      nativeSchedulerBefore = await getNativeAssetSyncSchedulerDiagnostics();
+    } catch {
+      context.report('perf-mark', {
+        mark: 'native-asset-sync-scheduler-unavailable',
+      });
+    }
+  }
+  const selectionTransitionStartedAt = Date.now();
+  const currentSettings = getHomeAssetSelectionSettings();
+  if (currentSettings.topN !== requestedAddressCount) {
+    setHomeAssetTopN(requestedAddressCount);
+  }
+  if (!currentSettings.includeWatchAddresses) {
+    setIncludeWatchAddressesInHomeAssetSelection(true);
+  }
+  const settings = getHomeAssetSelectionSettings();
+  if (
+    !settings.includeWatchAddresses ||
+    settings.topN !== requestedAddressCount
+  ) {
+    throw new Error(
+      'high-cardinality-assets could not apply its requested Home Asset Selection policy',
+    );
+  }
+
+  await ensureAccountBalanceSelectionLifecycle();
+  const expectedSelectionCount = Math.min(
+    settings.topN,
+    countUniqueAddresses(accounts),
+  );
+  const selection = await waitForHomeAssetSelection(expectedSelectionCount);
+  const selectionChanged = !areAddressSelectionsEqual(
+    selectionBeforeActivation,
+    selection.selectedAddresses,
+  );
+
+  context.report('precondition-ready', {
+    walletUnlocked: true,
+    importedCount,
+    fixtureAddressCount,
+    visibleAccountCount: accounts.length,
+    selectedAddressCount: selection.selectedAddresses.length,
+    expectedSelectionCount,
+    homeAssetTopN: settings.topN,
+    includeWatchAddresses: settings.includeWatchAddresses,
+    assetSyncMode,
+  });
+  context.report('assertion', {
+    assertion: 'high-cardinality-address-selection-ready',
+    passed:
+      isHomeAssetSelectionExperimentEnabled() &&
+      selection.hasResolvedSelection &&
+      selection.selectedAddresses.length === expectedSelectionCount,
+    selectedAddressCount: selection.selectedAddresses.length,
+    expectedSelectionCount,
+    fixtureAddressCount,
+  });
+  context.report('action-started', {
+    action: context.command.action,
   });
 
-  const visitedTabs = new Set([0, ...requestedTabs]);
-  const canVerifyAllTabActivity = HOME_TAB_ACTIVITY_SCOPE_LABELS.every(
-    (_, tabIndex) => visitedTabs.has(tabIndex),
-  );
-  if (canVerifyAllTabActivity) {
-    for (const tabIndex of HOME_TAB_ACTIVITY_VERIFICATION_TABS) {
-      await selectHomeTabIndex(tabIndex);
-      await assertHomeTabActivity(context, tabIndex);
-    }
-  } else {
-    context.report('assertion', {
-      assertion: 'home-tabs-store-activity-skipped',
-      passed: true,
-      reason: 'not-all-home-tabs-visited',
-      visitedTabs: Array.from(visitedTabs),
+  const assetDataLoadStartTimeoutMs =
+    requestedAddressCount >= 100
+      ? 180_000
+      : requestedAddressCount >= 50
+      ? 120_000
+      : 60_000;
+  const assetDataLoadSettlementTimeoutMs =
+    requestedAddressCount >= 100
+      ? 600_000
+      : requestedAddressCount >= 50
+      ? 360_000
+      : requestedAddressCount >= 20
+      ? 240_000
+      : 180_000;
+  const probe = createRegressionScenarioPerformanceProbe();
+  try {
+    const visualReadyStartedAt = Date.now();
+    await openHomeAssets(context, {
+      defaultTabs: '1,2,3',
+      triggerManualRefresh: true,
+      waitForTabReadyAssertions: false,
+      expectedAssetDataLoadDomainsByTab: {
+        1: ['multi-address-token'],
+        2: ['multi-address-protocol'],
+        3: ['multi-address-nft'],
+      },
+      assetDataLoadStartTimeoutMs,
+      waitForAssetDataLoadSettlement: true,
+      assetDataLoadSettlementTimeoutMs,
+      deferAssetDataLoadReadinessUntilAfterTabs: true,
+      profileTabIndex: 1,
+      performanceProbe: probe,
     });
+    probe.markPhase('home-wait-defi-renderable');
+    const renderableEvent = await waitForScenarioAssertion(
+      context,
+      'high-cardinality-defi-rows-renderable',
+      120_000,
+      selectionChanged ? selectionTransitionStartedAt : 0,
+    );
+    const renderableAt = renderableEvent.timestamp;
+    probe.recordDuration(
+      'home.defi-renderable',
+      Math.max(0, renderableAt - visualReadyStartedAt),
+    );
+    context.report('perf-mark', {
+      mark: 'high-cardinality-defi-renderable',
+      alreadyRenderable: renderableAt < visualReadyStartedAt,
+      selectionChanged,
+      elapsedMs: Math.max(0, renderableAt - visualReadyStartedAt),
+    });
+  } finally {
+    probe.markPhase('complete');
+    context.report('perf-mark', {
+      mark: 'high-cardinality-assets-performance-summary',
+      ...compactRegressionScenarioPerformanceSummary(probe.stop()),
+    });
+    if (nativeSchedulerBefore) {
+      try {
+        const nativeSchedulerAfter =
+          await getNativeAssetSyncSchedulerDiagnostics();
+        context.report('perf-mark', {
+          mark: 'native-asset-sync-scheduler-delta',
+          ...diffNativeAssetSyncSchedulerDiagnostics(
+            nativeSchedulerBefore,
+            nativeSchedulerAfter,
+          ),
+        });
+      } catch {
+        context.report('perf-mark', {
+          mark: 'native-asset-sync-scheduler-unavailable-after-run',
+        });
+      }
+    }
   }
+  const finalSettings = getHomeAssetSelectionSettings();
+  const finalSelectedAddressCount =
+    getSelectedBalanceAddressesSnapshot().length;
+  context.report('assertion', {
+    assertion: 'high-cardinality-address-selection-stable',
+    passed:
+      finalSettings.topN === requestedAddressCount &&
+      finalSettings.includeWatchAddresses &&
+      finalSelectedAddressCount === expectedSelectionCount,
+    expectedSelectionCount,
+    selectedAddressCount: finalSelectedAddressCount,
+    homeAssetTopN: finalSettings.topN,
+    includeWatchAddresses: finalSettings.includeWatchAddresses,
+  });
+  context.report('postcondition-ready', {
+    route: navigationRef.getCurrentRoute()?.name || null,
+    selectedAddressCount: finalSelectedAddressCount,
+  });
 }
 
 async function switchCurrentAddress(
@@ -914,6 +1454,266 @@ function getAssetDataLoadRecordsSince(cursor: number, startedAt: number) {
       deltaMs: record.deltaMs,
       details: record.details,
     }));
+}
+
+function compactAssetDataLoadDetails(
+  details: AssetDataLoadDiagnosticRecord['details'],
+) {
+  if (!details) {
+    return undefined;
+  }
+
+  const compacted = Object.fromEntries(
+    Object.entries(details).filter(([key]) =>
+      SAFE_ASSET_DATA_LOAD_DETAIL_KEYS.has(key),
+    ),
+  );
+  return Object.keys(compacted).length ? compacted : undefined;
+}
+
+function reportHomeAssetDataLoadDiagnostics(
+  context: RegressionScenarioExecutionContext,
+  cursor: number,
+  startedAt: number,
+  options?: {
+    mark?: string;
+    summary?: Readonly<Record<string, unknown>>;
+  },
+) {
+  const mark = options?.mark || 'home-assets-data-load-summary';
+  const assetDataLoads = getAssetDataLoadRecordsSince(cursor, startedAt);
+  const groups = new Map<string, typeof assetDataLoads>();
+
+  for (const record of assetDataLoads) {
+    const groupKey = `${record.domain}:${record.requestId}`;
+    const group = groups.get(groupKey);
+    if (group) {
+      group.push(record);
+    } else {
+      groups.set(groupKey, [record]);
+    }
+  }
+
+  for (const records of groups.values()) {
+    const [firstRecord] = records;
+    const visibleRecords = records.slice(0, MAX_REPORTED_ASSET_LOAD_PHASES);
+    context.report('perf-mark', {
+      mark: 'home-assets-data-load-group',
+      domain: firstRecord.domain,
+      requestId: firstRecord.requestId,
+      phaseCount: records.length,
+      omittedPhaseCount: Math.max(0, records.length - visibleRecords.length),
+      phases: visibleRecords.map(record => ({
+        phase: record.phase,
+        sinceStartedMs: record.sinceStartedMs,
+        elapsedMs: record.elapsedMs,
+        deltaMs: record.deltaMs,
+        details: compactAssetDataLoadDetails(record.details),
+      })),
+    });
+  }
+
+  context.report('perf-mark', {
+    ...options?.summary,
+    mark,
+    elapsedMs: Date.now() - startedAt,
+    requestGroupCount: groups.size,
+    recordCount: assetDataLoads.length,
+  });
+}
+
+async function waitForHomeAssetDataLoadDomains(
+  context: RegressionScenarioExecutionContext,
+  cursor: number,
+  expectedDomains: readonly AssetDataLoadDiagnosticDomain[],
+  timeoutMs = 30_000,
+) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const records = getAssetDataLoadDiagnosticsSnapshot().records.filter(
+      record => record.id > cursor,
+    );
+    const observedDomains = new Set(records.map(record => record.domain));
+    if (expectedDomains.every(domain => observedDomains.has(domain))) {
+      context.report('assertion', {
+        assertion: 'home-assets-data-load-started',
+        passed: true,
+        expectedDomains,
+        observedDomains: Array.from(observedDomains).sort(),
+        elapsedMs: Date.now() - startedAt,
+      });
+      return;
+    }
+    await delay(100);
+  }
+
+  const records = getAssetDataLoadDiagnosticsSnapshot().records.filter(
+    record => record.id > cursor,
+  );
+  const observedDomains = Array.from(
+    new Set(records.map(record => record.domain)),
+  ).sort();
+  context.report('assertion', {
+    assertion: 'home-assets-data-load-started',
+    passed: false,
+    expectedDomains,
+    observedDomains,
+    elapsedMs: Date.now() - startedAt,
+  });
+  throw new Error(
+    `Timed out waiting for Home asset data load domains: ${expectedDomains.join(
+      ', ',
+    )}`,
+  );
+}
+
+async function waitForHomeAssetDataLoadSettlement(
+  context: RegressionScenarioExecutionContext,
+  cursor: number,
+  expectedDomains: readonly AssetDataLoadDiagnosticDomain[],
+  timeoutMs = 90_000,
+) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const settlements = summarizeAssetDataLoadSettlements(
+      getAssetDataLoadDiagnosticsSnapshot().records,
+      cursor,
+      expectedDomains,
+    );
+
+    if (settlements.every(item => item.phase)) {
+      const failedDomains = settlements
+        .filter(item => item.phase === 'failed')
+        .map(item => item.domain);
+      context.report('perf-mark', {
+        mark: 'home-assets-data-load-settlement',
+        elapsedMs: Date.now() - startedAt,
+        settlements,
+        failedDomains,
+      });
+      context.report('assertion', {
+        assertion: 'home-assets-data-load-settled',
+        passed: failedDomains.length === 0,
+        settlements,
+        failedDomains,
+      });
+      if (failedDomains.length) {
+        throw new Error(
+          `Home asset data load failed: ${failedDomains.join(', ')}`,
+        );
+      }
+      return;
+    }
+
+    await delay(100);
+  }
+
+  const settlements = summarizeAssetDataLoadSettlements(
+    getAssetDataLoadDiagnosticsSnapshot().records,
+    cursor,
+    expectedDomains,
+  );
+  reportHomeAssetDataLoadDiagnostics(context, cursor, startedAt, {
+    mark: 'home-assets-data-load-settlement-timeout',
+    summary: {
+      settlements,
+    },
+  });
+  context.report('assertion', {
+    assertion: 'home-assets-data-load-settled',
+    passed: false,
+    settlements,
+    elapsedMs: Date.now() - startedAt,
+  });
+  throw new Error(
+    `Timed out waiting for Home asset data load settlement: ${expectedDomains.join(
+      ', ',
+    )}`,
+  );
+}
+
+async function waitForHomeAssetDataLoadReadiness(
+  context: RegressionScenarioExecutionContext,
+  cursor: number,
+  readinessPhases: Readonly<
+    Partial<Record<AssetDataLoadDiagnosticDomain, readonly string[]>>
+  >,
+  timeoutMs = 45_000,
+) {
+  const startedAt = Date.now();
+  const expectedEntries = Object.entries(readinessPhases).filter(
+    (entry): entry is [AssetDataLoadDiagnosticDomain, readonly string[]] =>
+      entry[1].length > 0,
+  );
+  const requestIdsByDomain = new Map<AssetDataLoadDiagnosticDomain, number>();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const records = getAssetDataLoadDiagnosticsSnapshot().records.filter(
+      record => record.id > cursor,
+    );
+    for (const [domain] of expectedEntries) {
+      if (requestIdsByDomain.has(domain)) {
+        continue;
+      }
+      const started = records.find(
+        record => record.domain === domain && record.phase === 'started',
+      );
+      if (started) {
+        requestIdsByDomain.set(domain, started.requestId);
+      }
+    }
+
+    const readiness = expectedEntries.map(([domain, phases]) => {
+      const requestId = requestIdsByDomain.get(domain);
+      const record = requestId
+        ? records.find(
+            item =>
+              item.domain === domain &&
+              item.requestId === requestId &&
+              phases.includes(item.phase),
+          )
+        : undefined;
+      return {
+        domain,
+        requestId: requestId || null,
+        acceptedPhases: phases,
+        phase: record?.phase || null,
+        elapsedMs: record?.elapsedMs || null,
+      };
+    });
+
+    if (readiness.every(item => item.phase)) {
+      context.report('perf-mark', {
+        mark: 'home-assets-data-load-readiness',
+        elapsedMs: Date.now() - startedAt,
+        readiness,
+      });
+      context.report('assertion', {
+        assertion: 'home-assets-data-load-ready',
+        passed: true,
+        readiness,
+      });
+      return;
+    }
+
+    await delay(100);
+  }
+
+  reportHomeAssetDataLoadDiagnostics(context, cursor, startedAt, {
+    mark: 'home-assets-data-load-readiness-timeout',
+  });
+  context.report('assertion', {
+    assertion: 'home-assets-data-load-ready',
+    passed: false,
+    expectedDomains: expectedEntries.map(([domain]) => domain),
+  });
+  throw new Error(
+    `Timed out waiting for Home asset data readiness: ${expectedEntries
+      .map(([domain]) => domain)
+      .join(', ')}`,
+  );
 }
 
 async function assertSingleAddressActivity(
@@ -1555,6 +2355,11 @@ async function openAppBackgroundRestore(
 export async function executeRegressionScenario(
   context: RegressionScenarioExecutionContext,
 ) {
+  if (context.command.scenario === 'high-cardinality-assets') {
+    await openHighCardinalityAssets(context);
+    return;
+  }
+
   if (context.command.scenario === 'home-assets') {
     await context.waitForNavigation();
     await ensureScenarioWalletUnlocked();

@@ -1,6 +1,10 @@
 // RNHelpers.mm
 #import "RNHelpers.h"
 #import <Foundation/Foundation.h>
+#import <rabby/openapi/RabbyNativeOpenApiDiagnostics.h>
+
+static NSString *const RabbyNativeAssetSyncCompletedEvent =
+    @"@RabbyNativeAssetSyncCompleted";
 
 @implementation RNHelpers
 
@@ -9,6 +13,57 @@ RCT_EXPORT_MODULE();
 
 + (BOOL)requiresMainQueueSetup {
     return NO;
+}
+
+- (NSArray<NSString *> *)supportedEvents {
+    return @[RabbyNativeAssetSyncCompletedEvent];
+}
+
+- (void)emitNativeAssetSyncCompletion:(NSString *)requestId
+                     replacementScope:(NSString *)replacementScope
+                              chainIds:(NSArray<NSString *> *)chainIds
+                                result:(NSDictionary<NSString *, id> *)result {
+    NSString *outcome = result[@"outcome"] ?: @"failed";
+    BOOL isPartial = [outcome isEqualToString:@"partial"];
+    [self sendEventWithName:RabbyNativeAssetSyncCompletedEvent
+                       body:@{
+        @"schemaVersion": @2,
+        @"requestId": requestId,
+        @"kind": @"token",
+        @"success": result[@"success"] ?: @NO,
+        @"outcome": outcome,
+        @"address": result[@"address"] ?: @"",
+        @"generation": result[@"generation"] ?: @0,
+        @"committedAt": result[@"committedAtMs"] ?: @0,
+        @"replacementScope": isPartial ? @"chains" : replacementScope,
+        @"chainIds": result[@"successfulChainIds"] ?: @[],
+        @"failedChainIds": result[@"failedChainIds"] ?: @[],
+        @"committedRowCount": result[@"committedRowCount"] ?: @0,
+        @"stage": result[@"stage"] ?: @"none",
+        @"error": result[@"error"] ?: @"",
+    }];
+}
+
+- (void)emitNativeAddressAssetSyncCompletion:(NSString *)requestId
+                                       result:
+                                           (NSDictionary<NSString *, id> *)result {
+    [self sendEventWithName:RabbyNativeAssetSyncCompletedEvent
+                       body:@{
+        @"schemaVersion": @2,
+        @"requestId": requestId,
+        @"kind": result[@"kind"] ?: @"",
+        @"success": result[@"success"] ?: @NO,
+        @"outcome": [result[@"success"] boolValue] ? @"complete" : @"failed",
+        @"address": result[@"address"] ?: @"",
+        @"generation": result[@"generation"] ?: @0,
+        @"committedAt": result[@"committedAtMs"] ?: @0,
+        @"replacementScope": @"address",
+        @"chainIds": @[],
+        @"failedChainIds": @[],
+        @"committedRowCount": result[@"committedRowCount"] ?: @0,
+        @"stage": result[@"stage"] ?: @"none",
+        @"error": result[@"error"] ?: @"",
+    }];
 }
 
 - (NSDictionary *)constantsToExport {
@@ -31,6 +86,217 @@ RCT_EXPORT_MODULE();
 #pragma mark - Public API
 RCT_EXPORT_METHOD(forceExitApp) {
     exit(0);
+}
+
+RCT_EXPORT_METHOD(runNativeOpenApiDiagnostic:
+  (NSString *)address
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_OPENAPI_DIAGNOSTIC_DISABLED",
+            @"Native OpenAPI diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        runUsedChainListProbeForAddress:address
+                            completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(getNativeAssetSyncSchedulerDiagnostics:
+  (RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_ASSET_SYNC_DIAGNOSTICS_DISABLED",
+            @"Native asset sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    resolve([RabbyNativeOpenApiDiagnostics assetSyncSchedulerDiagnostics]);
+}
+
+RCT_EXPORT_METHOD(runNativeTokenCacheSyncDiagnostic:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_TOKEN_SYNC_DISABLED",
+            @"Native token sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        syncTokenCacheForAddress:address
+                 replaceExisting:replaceExisting
+                       completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(startNativeTokenChains:
+  (NSString *)address
+  chainIds:(NSArray<NSString *> *)chainIds
+  replacementScope:(NSString *)replacementScope
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *requestId = [NSUUID UUID].UUIDString.lowercaseString;
+    [RabbyNativeOpenApiDiagnostics
+        syncTokenChainsForAddress:address
+                         chainIds:chainIds
+                 replacementScope:replacementScope
+                  replaceExisting:replaceExisting
+                        completion:^(NSDictionary<NSString *, id> *result) {
+        [self emitNativeAssetSyncCompletion:requestId
+                           replacementScope:replacementScope
+                                    chainIds:chainIds
+                                      result:result];
+    }];
+    resolve(@{ @"requestId": requestId });
+}
+
+RCT_EXPORT_METHOD(runNativeProtocolCacheSyncDiagnostic:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_PROTOCOL_SYNC_DISABLED",
+            @"Native protocol sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        syncProtocolCacheForAddress:address
+                    replaceExisting:replaceExisting
+                          completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(startNativeProtocolSync:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *requestId = [NSUUID UUID].UUIDString.lowercaseString;
+    [RabbyNativeOpenApiDiagnostics
+        syncProtocolCacheForAddress:address
+                    replaceExisting:replaceExisting
+                          completion:^(NSDictionary<NSString *, id> *result) {
+        [self emitNativeAddressAssetSyncCompletion:requestId result:result];
+    }];
+    resolve(@{ @"requestId": requestId });
+}
+
+RCT_EXPORT_METHOD(runNativeNftCacheSyncDiagnostic:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_NFT_SYNC_DISABLED",
+            @"Native NFT sync diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        syncNftCacheForAddress:address
+               replaceExisting:replaceExisting
+                     completion:^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(startNativeNftSync:
+  (NSString *)address
+  replaceExisting:(BOOL)replaceExisting
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *requestId = [NSUUID UUID].UUIDString.lowercaseString;
+    [RabbyNativeOpenApiDiagnostics
+        syncNftCacheForAddress:address
+               replaceExisting:replaceExisting
+                     completion:^(NSDictionary<NSString *, id> *result) {
+        [self emitNativeAddressAssetSyncCompletion:requestId result:result];
+    }];
+    resolve(@{ @"requestId": requestId });
+}
+
+RCT_EXPORT_METHOD(runNativeTokenCacheWriteDiagnostic:
+  (RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+) {
+    NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleIdentifier isEqualToString:@"com.debank.rabby-mobile"]) {
+        reject(
+            @"E_NATIVE_TOKEN_CACHE_WRITE_DIAGNOSTIC_DISABLED",
+            @"Native token cache write diagnostics are disabled in production builds",
+            nil
+        );
+        return;
+    }
+
+    [RabbyNativeOpenApiDiagnostics
+        verifyTokenCacheWriteWithCompletion:
+            ^(NSDictionary<NSString *, id> *result) {
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(cancelNativeTokenCacheSync:(NSString *)address) {
+    [RabbyNativeOpenApiDiagnostics cancelTokenCacheSyncForAddress:address];
+}
+
+RCT_EXPORT_METHOD(cancelAllNativeTokenCacheSyncs) {
+    [RabbyNativeOpenApiDiagnostics cancelAllTokenCacheSyncs];
+}
+
+RCT_EXPORT_METHOD(cancelNativeProtocolCacheSync:(NSString *)address) {
+    [RabbyNativeOpenApiDiagnostics cancelProtocolCacheSyncForAddress:address];
+}
+
+RCT_EXPORT_METHOD(cancelAllNativeProtocolCacheSyncs) {
+    [RabbyNativeOpenApiDiagnostics cancelAllProtocolCacheSyncs];
+}
+
+RCT_EXPORT_METHOD(cancelNativeNftCacheSync:(NSString *)address) {
+    [RabbyNativeOpenApiDiagnostics cancelNftCacheSyncForAddress:address];
+}
+
+RCT_EXPORT_METHOD(cancelAllNativeNftCacheSyncs) {
+    [RabbyNativeOpenApiDiagnostics cancelAllNftCacheSyncs];
 }
 
 RCT_EXPORT_METHOD(iosExcludeFileFromBackup:

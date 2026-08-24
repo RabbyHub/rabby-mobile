@@ -9089,13 +9089,13 @@ __metadata:
 
 "@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 15.1.1
-  resolution: "@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::version=15.1.1&hash=b47906&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::version=15.1.1&hash=134de4&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     react-native-safe-area-context: "npm:^5.6.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/b862c54c45b515264915871dbbb24dafaa929a61ad078fc6c8c0495cbd5a0e81bfc42533797249eb4a96a8f4603fa619cdb90ce34966b50707d27977a480e493
+  checksum: 10/a7be6489bb0fad627d888149622e738fec295b88022b7ff0da6e870b483621ad2c2bc9d714abe4293d69e28cdc2c77e093f457d4fca67bd7cba6cfc94da0710c
   languageName: node
   linkType: hard
 
@@ -9766,6 +9766,25 @@ __metadata:
   checksum: 10/d123d3edacaee72b6b007bbe2cac3c5c0fe88c0f8f3dc8d123efd6bcb810c30d186c780c09a46fa96fa841dbd7e2f03f42045d5c966c85d0af89b566da185b5a
   languageName: node
   linkType: hard
+
+"@rabby-wallet/rabby-native-http@workspace:*, @rabby-wallet/rabby-native-http@workspace:packages/rabby-native-http":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/rabby-native-http@workspace:packages/rabby-native-http"
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/rabby-native-openapi@workspace:packages/rabby-native-openapi":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/rabby-native-openapi@workspace:packages/rabby-native-openapi"
+  dependencies:
+    "@rabby-wallet/rabby-native-http": "workspace:*"
+  peerDependencies:
+    "@debank/rabby-native-openapi-signer": 0.1.0-alpha.0
+  peerDependenciesMeta:
+    "@debank/rabby-native-openapi-signer":
+      optional: true
+  languageName: unknown
+  linkType: soft
 
 "@rabby-wallet/rabby-security-engine@npm:2.0.12":
   version: 2.0.12

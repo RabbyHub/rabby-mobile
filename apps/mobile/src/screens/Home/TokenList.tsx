@@ -76,6 +76,8 @@ import {
   type TokenProjectionSectionItem,
   type TokenProjectionSectionSpec,
 } from './components/TokenProjectionSectionList';
+import type { AssetSyncTrigger } from '@/store/assetSyncCoordinator';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
 
 type TokenListExtraItem =
   | {
@@ -208,6 +210,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
   const [isTokenListRequestSettled, setIsTokenListRequestSettled] =
     useState(false);
   const tokenListRequestIdRef = useRef(0);
+  const lastTokenScopeRef = useRef<string | null>(null);
   const customTestnetAddTokenModalIdRef = useRef<ReturnType<
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
@@ -279,16 +282,6 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     return getSingleAssetsCacheKey(lowerAddress, selectedChain, false);
   }, [lowerAddress, selectedChain]);
 
-  const isTokenProjectionReady = useActivityStore(
-    useTokenAssetsIndexStore,
-    state =>
-      !!singleAssetsKey &&
-      !!state.singleAssetsConfigByKey[singleAssetsKey] &&
-      !!state.singleAssetsResultByKey[singleAssetsKey],
-    Object.is,
-    { storeLabel: 'single-address-token-assets-index-readiness' },
-  );
-
   const tokenProjectionMetadata = useActivityStore(
     useTokenAssetsIndexStore,
     useShallow(state => {
@@ -297,6 +290,9 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
           ? state.singleAssetsResultByKey[singleAssetsKey]
           : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
+        availability: singleAssetsKey
+          ? state.singleAssetsAvailabilityByKey[singleAssetsKey] || 'unresolved'
+          : 'unresolved',
         additionalCoreUsdValue: result.additionalCoreUsdValue,
         lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
         lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
@@ -315,6 +311,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     { storeLabel: 'single-address-token-assets-index' },
   );
   const {
+    availability: tokenProjectionAvailability,
     additionalCoreUsdValue,
     lowValueTokenPreviewLogoUrls,
     lpLowValueTokenPreviewLogoUrls,
@@ -361,11 +358,27 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     Object.is,
     { storeLabel: 'single-address-token-list' },
   );
-  const hasDefaultTokenData = projectedTokenCount > 0 || hasLpTokens;
-  const isTokenProjectionLoading = !!singleAssetsKey && !isTokenProjectionReady;
+  const hasDefaultTokenData = projectedTokenCount > 0;
+  const { viewState: tokenProjectionViewState } =
+    useAssetProjectionPresentation({
+      identity: singleAssetsKey
+        ? {
+            kind: 'token',
+            scene: 'single-address',
+            runtimeKey: singleAssetsKey,
+          }
+        : null,
+      availability: tokenProjectionAvailability,
+      hasData: hasDefaultTokenData,
+      hasSettledRequest:
+        hasRequestedTokenList &&
+        isTokenListRequestSettled &&
+        !isLoading &&
+        !isAllLoading,
+      storeLabel: 'single-address-token-read-model',
+    });
   const shouldHideCustomTestnetSectionsWhileLoading =
-    (isLoading || isAllLoading || isTokenProjectionLoading) &&
-    !hasDefaultTokenData;
+    tokenProjectionViewState === 'loading' && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     customTestnetHydrationState === 'ready' &&
@@ -376,7 +389,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
   const hasVisibleTokenContent =
     hasDefaultTokenData || visibleCustomTestnetSections.length > 0;
   const isTokenContentReady =
-    isTokenProjectionReady &&
+    tokenProjectionViewState !== 'loading' &&
     !isCustomTestnetSnapshotPending &&
     (hasVisibleTokenContent ||
       (hasRequestedTokenList &&
@@ -385,34 +398,44 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         !isAllLoading));
   const getTokenList = useTokenList.getState().getTokenList;
 
-  const refreshTokenList = useCallback(() => {
-    if (!currentAddress) {
-      return;
-    }
-    const requestId = tokenListRequestIdRef.current + 1;
-    tokenListRequestIdRef.current = requestId;
-    setHasRequestedTokenList(true);
-    setIsTokenListRequestSettled(false);
-    void getTokenList(currentAddress).then(
-      () => {
-        if (tokenListRequestIdRef.current === requestId) {
-          setIsTokenListRequestSettled(true);
-        }
-      },
-      () => {
-        if (tokenListRequestIdRef.current === requestId) {
-          setIsTokenListRequestSettled(true);
-        }
-      },
-    );
-  }, [currentAddress, getTokenList]);
+  const refreshTokenList = useCallback(
+    (trigger: AssetSyncTrigger) => {
+      if (!currentAddress) {
+        return;
+      }
+      const requestId = tokenListRequestIdRef.current + 1;
+      tokenListRequestIdRef.current = requestId;
+      setHasRequestedTokenList(true);
+      setIsTokenListRequestSettled(false);
+      void getTokenList(currentAddress, false, undefined, trigger).then(
+        () => {
+          if (tokenListRequestIdRef.current === requestId) {
+            setIsTokenListRequestSettled(true);
+          }
+        },
+        () => {
+          if (tokenListRequestIdRef.current === requestId) {
+            setIsTokenListRequestSettled(true);
+          }
+        },
+      );
+    },
+    [currentAddress, getTokenList],
+  );
 
   useEffect(() => {
     if (!isFocused) {
       return;
     }
-    refreshTokenList();
-  }, [isFocused, refreshTokenList]);
+    const nextScope = currentAddress?.toLowerCase() || '';
+    const trigger: AssetSyncTrigger = lastTokenScopeRef.current
+      ? lastTokenScopeRef.current === nextScope
+        ? 'on-demand'
+        : 'scope-change'
+      : 'initial';
+    lastTokenScopeRef.current = nextScope;
+    refreshTokenList(trigger);
+  }, [currentAddress, isFocused, refreshTokenList]);
 
   useAppForeground({
     enabled: isFocused,
@@ -421,7 +444,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         return;
       }
       onForeground?.();
-      refreshTokenList();
+      refreshTokenList('resume');
     },
   });
 
@@ -474,7 +497,9 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     : ('lowValueDefault' as const);
   const hasAdditionalSection = hasAdditionalTokens || isLpTokenEnabled;
   const shouldShowInitialLoading =
-    (isLoading || isTokenProjectionLoading || isCustomTestnetSnapshotPending) &&
+    (isLoading ||
+      tokenProjectionViewState === 'loading' ||
+      isCustomTestnetSnapshotPending) &&
     projectedTokenCount === 0 &&
     visibleCustomTestnetSections.length === 0;
   const shouldShowLpLoading =
@@ -669,7 +694,12 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     setIsManualRefreshing(true);
     try {
       const balanceRefresh = Promise.resolve().then(() => onRefresh?.());
-      const tokenRefresh = getTokenList(currentAddress, true);
+      const tokenRefresh = getTokenList(
+        currentAddress,
+        true,
+        undefined,
+        'pull-refresh',
+      );
       withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
         console.error('Refresh balance failed:', error);
       });

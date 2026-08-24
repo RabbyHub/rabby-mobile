@@ -2,10 +2,6 @@ jest.mock('@/core/utils/startupDiagnostics', () => ({
   traceStartupDiagnostic: jest.fn(),
 }));
 jest.mock('@/databases/assetProjection', () => ({
-  ASSET_PROJECTION_GENERATIONS_TO_KEEP: 3,
-  cleanupAssetProjectionGenerations: jest.fn(async () => ({
-    deletedGenerations: [],
-  })),
   persistAssetProjection: jest.fn(),
   restoreLatestAssetProjection: jest.fn(),
 }));
@@ -25,10 +21,7 @@ jest.mock('@/databases/sync/scheduler', () => {
   };
 });
 
-import {
-  cleanupAssetProjectionGenerations,
-  persistAssetProjection,
-} from '@/databases/assetProjection';
+import { persistAssetProjection } from '@/databases/assetProjection';
 import { registerSyncAbortHandler } from '@/databases/sync/abort';
 import { submitSyncTask } from '@/databases/sync/scheduler';
 import { OPSQLiteEvents } from '@/core/databases/op-sqlite/events';
@@ -39,7 +32,6 @@ import {
 } from './assetProjectionPersistence';
 
 const mockedPersist = jest.mocked(persistAssetProjection);
-const mockedCleanup = jest.mocked(cleanupAssetProjectionGenerations);
 const mockedSubmit = jest.mocked(submitSyncTask);
 const mockedRegisterAbort = jest.mocked(registerSyncAbortHandler);
 
@@ -56,7 +48,6 @@ describe('asset projection write scheduling', () => {
   beforeEach(() => {
     abortAll?.();
     mockedPersist.mockReset();
-    mockedCleanup.mockClear();
     mockedSubmit.mockReset();
     mockedSubmit.mockImplementation(options => {
       const promise = options.runner({
@@ -104,12 +95,15 @@ describe('asset projection write scheduling', () => {
     const subscription = subscribeAssetProjectionDatabaseCommits(listener);
 
     OPSQLiteEvents.emit('DATABASE_COMMITTED', {
-      tables: ['rabby_projection_item'],
+      tables: ['rabby_projection_item_20260818'],
     });
     expect(listener).not.toHaveBeenCalled();
 
     OPSQLiteEvents.emit('DATABASE_COMMITTED', {
-      tables: ['rabby_projection_item', 'rabby_projection_snapshot'],
+      tables: [
+        'rabby_projection_item_20260818',
+        'rabby_projection_snapshot_20260818',
+      ],
     });
     expect(listener).toHaveBeenCalledTimes(1);
     subscription.remove();
@@ -149,6 +143,5 @@ describe('asset projection write scheduling', () => {
       expect.objectContaining({ priority: 'low' }),
     );
     expect(mockedPersist).toHaveBeenCalledTimes(2);
-    expect(mockedCleanup).toHaveBeenCalledTimes(2);
   });
 });

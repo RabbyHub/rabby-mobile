@@ -1,20 +1,34 @@
 import 'reflect-metadata';
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In } from 'typeorm/browser';
+import { Entity, Column, In, Index } from 'typeorm/browser';
+import type { DataSource } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 import type { IProtocolItem } from '@/types/assets';
-import { protocolEntity2IProtocolItem } from '@/utils/protocol';
+import {
+  portfolioToIProtocolPortfolio,
+  protocolEntity2IProtocolItem,
+} from '@/utils/protocol';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+import {
+  buildProtocolProjectionResourceId,
+  PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME,
+} from '../protocolProjectionResourceId';
+
+const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_portocolitem)
+@Index(PROTOCOL_PROJECTION_RESOURCE_ID_INDEX_NAME, ['projection_resource_id'])
 export class ProtocolItemEntity extends EntityAddressAssetBase {
+  @Column('text', { default: '', select: false })
+  projection_resource_id!: string;
+
   // id
   @Column('text', { default: '' })
   id: ComplexProtocol['id'] = '';
@@ -43,6 +57,15 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
   })
   portfolio_item_list: string = '[]';
 
+  @Column('real', { default: 0 })
+  net_worth: number = 0;
+
+  @Column('real', { default: 0 })
+  positive_real_usd_value: number = 0;
+
+  @Column('integer', { default: 0 })
+  source_order: number = 0;
+
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.id]
       .filter(Boolean)
@@ -53,6 +76,7 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     e: ProtocolItemEntity,
     owner_addr: string,
     input: ComplexProtocol,
+    sourceOrder = 0,
   ) {
     e.owner_addr = owner_addr;
 
@@ -65,6 +89,24 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     e.tvl = input.tvl ?? 0;
     e.portfolio_item_list = columnConverter.jsonObjToString(
       input.portfolio_item_list || [],
+    );
+    const portfolios = (input.portfolio_item_list || []).map(
+      portfolioToIProtocolPortfolio,
+    );
+    e.net_worth = portfolios.reduce(
+      (total, portfolio) => total + (Number(portfolio.netWorth) || 0),
+      0,
+    );
+    e.positive_real_usd_value = portfolios.reduce(
+      (total, portfolio) =>
+        total + Math.max(Number(portfolio._sumTokenRealUsdValue) || 0, 0),
+      0,
+    );
+    e.source_order = sourceOrder;
+    e.projection_resource_id = buildProtocolProjectionResourceId(
+      e.owner_addr,
+      e.chain,
+      e.id,
     );
 
     e.makeDbId();
@@ -132,6 +174,47 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     });
 
     return results;
+  }
+
+  static async batchMultiAddressProtocolsByResourceIds(
+    resourceIds: string[],
+    dataSource?: DataSource,
+  ): Promise<IProtocolItem[]> {
+    const repo = dataSource
+      ? dataSource.getRepository(ProtocolItemEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+
+    const normalizedResourceIds = Array.from(
+      new Set(resourceIds.map(resourceId => resourceId.toLowerCase())),
+    ).filter(Boolean);
+    if (!normalizedResourceIds.length) {
+      return [];
+    }
+
+    const protocols: ProtocolItemEntity[] = [];
+
+    for (
+      let start = 0;
+      start < normalizedResourceIds.length;
+      start += PROJECTION_RESOURCE_QUERY_BATCH_SIZE
+    ) {
+      const resourceIdChunk = normalizedResourceIds.slice(
+        start,
+        start + PROJECTION_RESOURCE_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('portocolitem')
+        .where('portocolitem.projection_resource_id IN (:...resourceIds)', {
+          resourceIds: resourceIdChunk,
+        })
+        .andWhere('portocolitem.id != :emptyProtocolId', {
+          emptyProtocolId: EMPTY_PROTOCOL_ITEM_ID,
+        })
+        .getMany();
+      protocols.push(...rows);
+    }
+
+    return protocols.map(protocolEntity2IProtocolItem);
   }
 
   static async isExpired(owner_addr: string) {

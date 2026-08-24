@@ -23,6 +23,8 @@ jest.mock('@/core/utils/concurrency', () => ({
 
 jest.mock('@/utils/requestQueue', () => ({
   pQueue: {
+    size: 2,
+    pending: 3,
     add: (...args: unknown[]) => mockPQueueAdd(...args),
   },
 }));
@@ -64,6 +66,40 @@ describe('core/apis/portfolio', () => {
     expect(mockPQueueAdd).toHaveBeenCalledTimes(2);
     expect(mockOpenapiGetComplexProtocolList).toHaveBeenCalledWith('0xabc');
     expect(mockTestOpenapiGetComplexProtocolList).toHaveBeenCalledWith('0xabc');
+  });
+
+  it('reports queue and request phases without exposing the address', async () => {
+    const observer = jest.fn();
+
+    await loadPortfolioSnapshot('0xprivate', observer);
+
+    expect(observer.mock.calls.map(([phase]) => phase)).toEqual([
+      'queue-entered',
+      'request-started',
+      'request-fulfilled',
+    ]);
+    expect(observer).toHaveBeenNthCalledWith(1, 'queue-entered', {
+      queueSize: 2,
+      pendingCount: 3,
+    });
+    expect(observer.mock.calls.flat().join('|')).not.toContain('0xprivate');
+  });
+
+  it('reports rejected portfolio requests before rethrowing', async () => {
+    const observer = jest.fn();
+    mockOpenapiGetComplexProtocolList.mockRejectedValueOnce(
+      new Error('network failed'),
+    );
+
+    await expect(loadPortfolioSnapshot('0xprivate', observer)).rejects.toThrow(
+      'network failed',
+    );
+
+    expect(observer.mock.calls.map(([phase]) => phase)).toEqual([
+      'queue-entered',
+      'request-started',
+      'request-rejected',
+    ]);
   });
 
   it('loads mainnet project details in queue order', async () => {

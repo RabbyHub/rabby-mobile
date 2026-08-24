@@ -45,6 +45,7 @@ import {
   useHomeAssetSelectionSettings,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
+  useNativeTokenChainSyncEnabled,
   useScreenE2EEnabled,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
@@ -1694,7 +1695,6 @@ function DevSwitchHomeAssetSelection() {
             : 'Use owned addresses only (default)'}
         </Text>
       </TouchableOpacity>
-
       <View
         style={[
           styles.secondarySectionContent,
@@ -1718,6 +1718,49 @@ function DevSwitchHomeAssetSelection() {
             (includeWatchAddresses ? ' with Watch addresses.' : '.')
           : 'Production-compatible default: Top 10 owned addresses.'}{' '}
         Production builds always keep the default policy.
+      </Text>
+    </View>
+  );
+}
+
+function DevSwitchNativeTokenChainSync() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { enabled, setEnabled } = useNativeTokenChainSyncEnabled();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Native Token Sync
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => setEnabled(!enabled)}>
+        <AppSwitch2024
+          value={enabled}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={setEnabled}
+        />
+        <Text style={styles.switchLabel}>
+          {enabled
+            ? 'Fetch per-chain token snapshots on the native sync thread'
+            : 'Fetch per-chain token snapshots on the JS thread'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Test-only persisted switch. Builds default to JS; enable Native only
+        when the private signer package is integrated.
       </Text>
     </View>
   );
@@ -1973,6 +2016,7 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Asset Scale</Text>
         <DevSwitchHomeAssetSelection />
+        <DevSwitchNativeTokenChainSync />
 
         <Text style={styles.areaTitle}>Lifecycle E2E</Text>
         <DevSwitchRegressionScenarioE2E />

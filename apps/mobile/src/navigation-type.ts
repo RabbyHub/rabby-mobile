@@ -192,7 +192,13 @@ type TestKitsNavigatorParamsList = {
     tab?: 'overview' | 'debug';
   };
   [RootNames.DevSwitches]?: {};
-  [RootNames.DevPerf]?: {};
+  [RootNames.DevPerf]?: {
+    action?:
+      | 'native-openapi'
+      | 'native-openapi-token-sync'
+      | 'native-openapi-storage';
+    address?: string;
+  };
   [RootNames.DebugLogViewer]?: {};
   [RootNames.StartupPerformanceLogViewer]?: {};
   [RootNames.InMemoryLogViewer]?: {};

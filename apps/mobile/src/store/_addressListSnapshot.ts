@@ -106,8 +106,128 @@ export const createAddressListSnapshotHydrator = <TItem>({
     await Promise.all(Array.from(new Set(requests)));
   };
 
+  const refresh = async (addresses: string[]) => {
+    const normalizedAddresses = normalizeSnapshotAddresses(addresses);
+    if (!normalizedAddresses.length) {
+      return;
+    }
+
+    const activeAddresses = normalizedAddresses.filter(address =>
+      inFlightByAddress.has(address),
+    );
+    invalidate(normalizedAddresses);
+    await hydrate(normalizedAddresses);
+
+    if (activeAddresses.length) {
+      await hydrate(activeAddresses);
+    }
+  };
+
   return {
     hydrate,
     invalidate,
+    refresh,
   };
+};
+
+type AddressListCommitBatcherOptions = {
+  apply(addresses: string[]): Promise<void>;
+  delayMs?: number;
+};
+
+type AddressListCommitWaiter = {
+  resolve(): void;
+  reject(error: unknown): void;
+};
+
+/**
+ * Native address snapshots usually finish in a short burst. Publish that burst
+ * as one database read and one store update instead of rebuilding projections
+ * once per address.
+ */
+export const createAddressListCommitBatcher = ({
+  apply,
+  delayMs = 16,
+}: AddressListCommitBatcherOptions) => {
+  let pendingAddresses = new Set<string>();
+  let pendingWaiters: AddressListCommitWaiter[] = [];
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let holdCount = 0;
+
+  const flush = async () => {
+    if (!pendingAddresses.size) {
+      return;
+    }
+
+    const addresses = Array.from(pendingAddresses);
+    const waiters = pendingWaiters;
+    pendingAddresses = new Set();
+    pendingWaiters = [];
+
+    try {
+      await apply(addresses);
+      waiters.forEach(waiter => waiter.resolve());
+    } catch (error) {
+      waiters.forEach(waiter => waiter.reject(error));
+      throw error;
+    } finally {
+      if (pendingAddresses.size && holdCount === 0) {
+        schedule();
+      }
+    }
+  };
+
+  const schedule = () => {
+    if (timer || holdCount > 0) {
+      return;
+    }
+    timer = setTimeout(async () => {
+      timer = undefined;
+      try {
+        await flush();
+      } catch {
+        // Enqueue waiters receive the exact apply error from flush().
+      }
+    }, delayMs);
+  };
+
+  const enqueue = (addresses: string[]) => {
+    const normalizedAddresses = normalizeSnapshotAddresses(addresses);
+    if (!normalizedAddresses.length) {
+      return Promise.resolve();
+    }
+    normalizedAddresses.forEach(address => pendingAddresses.add(address));
+    if (holdCount > 0) {
+      return Promise.resolve();
+    }
+    const result = new Promise<void>((resolve, reject) => {
+      pendingWaiters.push({ resolve, reject });
+    });
+    schedule();
+    return result;
+  };
+
+  const beginBatch = () => {
+    holdCount += 1;
+    if (timer) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    let finished = false;
+
+    return {
+      async finish() {
+        if (finished) {
+          return;
+        }
+        finished = true;
+        holdCount = Math.max(0, holdCount - 1);
+        if (holdCount === 0) {
+          await flush();
+        }
+      },
+    };
+  };
+
+  return { enqueue, beginBatch };
 };

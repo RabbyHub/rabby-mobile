@@ -1,0 +1,29 @@
+{
+  "name": "@rabby-wallet/rabby-native-openapi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native-only Rabby OpenAPI request construction foundation",
+  "license": "MIT",
+  "files": [
+    "android",
+    "cpp",
+    "ios",
+    "CMakeLists.txt",
+    "RabbyNativeOpenApi.podspec",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "test": "bash scripts/test-cpp.sh"
+  },
+  "dependencies": {
+    "@rabby-wallet/rabby-native-http": "workspace:*"
+  },
+  "peerDependencies": {
+    "@debank/rabby-native-openapi-signer": "0.1.0-alpha.0"
+  },
+  "peerDependenciesMeta": {
+    "@debank/rabby-native-openapi-signer": {
+      "optional": true
+    }
+  }
+}

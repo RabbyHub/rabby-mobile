@@ -1,16 +1,181 @@
+diff --git a/android/CMakeLists.txt b/android/CMakeLists.txt
+index da63239484b85bf07684f97882388104fc15182b..6bca85014281bc75ef801e7c7d4ba0ab7b126538 100644
+--- a/android/CMakeLists.txt
++++ b/android/CMakeLists.txt
+@@ -23,6 +23,7 @@ add_library(
+   ../cpp/PreparedStatementHostObject.cpp
+   ../cpp/DumbHostObject.cpp
+   ../cpp/DBHostObject.cpp
++  ../cpp/NativeSnapshot.cpp
+   cpp-adapter.cpp
+ )
+
+diff --git a/android/cpp-adapter.cpp b/android/cpp-adapter.cpp
+index 5912d7b1ce5947d49418c34b60d7abbaf0810157..b2fcd15f0d8e1c63eac2df1642725368da2b5b23 100644
+--- a/android/cpp-adapter.cpp
++++ b/android/cpp-adapter.cpp
+@@ -1,10 +1,14 @@
+ #include "OPSqlite.hpp"
+ #include "logs.h"
+ #include <ReactCommon/CallInvokerHolder.h>
++#include <fbjni/ByteBuffer.h>
+ #include <fbjni/fbjni.h>
+ #include <jni.h>
+ #include <jsi/jsi.h>
++#include <string>
+ #include <typeinfo>
++#include <utility>
++#include <vector>
+
+ namespace jsi = facebook::jsi;
+ namespace react = facebook::react;
+@@ -20,7 +24,9 @@ struct OPSQLiteBridge : jni::JavaClass<OPSQLiteBridge> {
+     javaClassStatic()->registerNatives(
+         {makeNativeMethod("installNativeJsi", OPSQLiteBridge::installNativeJsi),
+          makeNativeMethod("clearStateNativeJsi",
+-                          OPSQLiteBridge::clearStateNativeJsi)});
++                          OPSQLiteBridge::clearStateNativeJsi),
++         makeNativeMethod("executeNativeSnapshotNative",
++                          OPSQLiteBridge::executeNativeSnapshotNative)});
+   }
+
+ private:
+@@ -39,6 +45,63 @@ private:
+   static void clearStateNativeJsi(jni::alias_ref<jni::JObject> thiz) {
+     opsqlite::invalidate();
+   }
++
++  static jni::local_ref<jni::JString> executeNativeSnapshotNative(
++      jni::alias_ref<jni::JObject> thiz,
++      jni::alias_ref<jni::JString> databaseName,
++      jni::alias_ref<jni::JString> tableName,
++      jni::alias_ref<jni::JString> expectedColumnsCsv,
++      jni::alias_ref<jni::JString> upsertSql,
++      jni::alias_ref<jni::JString> deleteSql,
++      jni::alias_ref<jni::JByteBuffer> rowPayload,
++      jni::alias_ref<jni::JByteBuffer> deletePayload,
++      jboolean rollbackOnly) {
++    const auto rowBytes = rowPayload->getDirectBytes();
++    const auto rowSize = rowPayload->getDirectSize();
++    const auto deleteBytes = deletePayload->getDirectBytes();
++    const auto deleteSize = deletePayload->getDirectSize();
++    if ((rowBytes == nullptr && rowSize != 0) ||
++        (deleteBytes == nullptr && deleteSize != 0)) {
++      return jni::make_jstring("native snapshot requires direct buffers");
++    }
++
++    std::vector<std::string> expectedColumns;
++    const auto columnsCsv = expectedColumnsCsv->toStdString();
++    std::size_t start = 0;
++    while (start <= columnsCsv.size()) {
++      const auto end = columnsCsv.find(',', start);
++      const auto length = end == std::string::npos
++          ? columnsCsv.size() - start
++          : end - start;
++      expectedColumns.push_back(columnsCsv.substr(start, length));
++      if (end == std::string::npos) {
++        break;
++      }
++      start = end + 1;
++    }
++
++    opsqlite::NativeSnapshotRequest request{
++        tableName->toStdString(),
++        std::move(expectedColumns),
++        upsertSql->toStdString(),
++        deleteSql->toStdString(),
++        {rowBytes, rowSize},
++        {deleteBytes, deleteSize},
++        rollbackOnly == JNI_TRUE,
++    };
++    try {
++      const auto result = opsqlite::executeNativeSnapshotForDatabase(
++          databaseName->toStdString(), request);
++      if (result.success) {
++        return nullptr;
++      }
++      return jni::make_jstring(result.error.empty()
++          ? "native snapshot transaction failed"
++          : result.error);
++    } catch (...) {
++      return jni::make_jstring("native snapshot transaction failed");
++    }
++  }
+ };
+
+ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *) {
+diff --git a/android/src/main/java/com/op/sqlite/OPSQLiteBridge.kt b/android/src/main/java/com/op/sqlite/OPSQLiteBridge.kt
+index 44f86df6a21a6f7272b2c79b196586ef8fec886b..ce8c7f290dbeb8e6f201e1613640edfb9b944ef1 100644
+--- a/android/src/main/java/com/op/sqlite/OPSQLiteBridge.kt
++++ b/android/src/main/java/com/op/sqlite/OPSQLiteBridge.kt
+@@ -3,6 +3,7 @@ package com.op.sqlite
+ import com.facebook.react.bridge.ReactContext
+ import com.facebook.react.turbomodule.core.CallInvokerHolderImpl
+ import com.facebook.react.common.annotations.FrameworkAPI
++import java.nio.ByteBuffer
+
+ @OptIn(FrameworkAPI::class)
+ class OPSQLiteBridge {
+@@ -12,6 +13,16 @@ class OPSQLiteBridge {
+         docPath: String
+     )
+     private external fun clearStateNativeJsi()
++    private external fun executeNativeSnapshotNative(
++        databaseName: String,
++        tableName: String,
++        expectedColumnsCsv: String,
++        upsertSql: String,
++        deleteSql: String,
++        rowPayload: ByteBuffer,
++        deletePayload: ByteBuffer,
++        rollbackOnly: Boolean,
++    ): String?
+
+     fun install(context: ReactContext) {
+         val jsContextPointer = context.javaScriptContextHolder!!.get()
+@@ -31,6 +42,26 @@ class OPSQLiteBridge {
+         clearStateNativeJsi()
+     }
+
++    fun executeNativeSnapshot(
++        databaseName: String,
++        tableName: String,
++        expectedColumnsCsv: String,
++        upsertSql: String,
++        deleteSql: String,
++        rowPayload: ByteBuffer,
++        deletePayload: ByteBuffer,
++        rollbackOnly: Boolean = false,
++    ): String? = executeNativeSnapshotNative(
++        databaseName,
++        tableName,
++        expectedColumnsCsv,
++        upsertSql,
++        deleteSql,
++        rowPayload,
++        deletePayload,
++        rollbackOnly,
++    )
++
+     companion object {
+         val instance = OPSQLiteBridge()
+     }
 diff --git a/cpp/DBHostObject.cpp b/cpp/DBHostObject.cpp
-index a8b0fd2ccdf8af78ef7141db606274d6262a0569..e0400e8b32df84247f429ba7b5dbf951e8738d0f 100644
+index a8b0fd2ccdf8af78ef7141db606274d6262a0569..159158df0392128c5819ffd2e546e14d43df45c6 100644
 --- a/cpp/DBHostObject.cpp
 +++ b/cpp/DBHostObject.cpp
-@@ -8,6 +8,7 @@
+@@ -8,7 +8,10 @@
  #include "logs.h"
  #include "macros.hpp"
  #include "utils.hpp"
++#include <algorithm>
 +#include <chrono>
  #include <iostream>
++#include <thread>
  #include <utility>
 
-@@ -16,6 +17,11 @@ namespace opsqlite {
+ namespace opsqlite {
+@@ -16,6 +19,11 @@ namespace opsqlite {
  namespace jsi = facebook::jsi;
  namespace react = facebook::react;
 
@@ -22,7 +187,7 @@ index a8b0fd2ccdf8af78ef7141db606274d6262a0569..e0400e8b32df84247f429ba7b5dbf951
  #ifdef OP_SQLITE_USE_LIBSQL
  void DBHostObject::flush_pending_reactive_queries(
      const std::shared_ptr<jsi::Value> &resolve) {
-@@ -407,19 +413,24 @@ void DBHostObject::create_jsi_functions() {
+@@ -407,19 +415,24 @@ void DBHostObject::create_jsi_functions() {
            "commands or parameters is needed");
      }
 
@@ -48,7 +213,7 @@ index a8b0fd2ccdf8af78ef7141db606274d6262a0569..e0400e8b32df84247f429ba7b5dbf951
            return batchResult;
          },
          [](jsi::Runtime &rt, std::any prev) {
-@@ -427,6 +438,14 @@ void DBHostObject::create_jsi_functions() {
+@@ -427,6 +440,14 @@ void DBHostObject::create_jsi_functions() {
            auto res = jsi::Object(rt);
            res.setProperty(rt, "rowsAffected",
                            jsi::Value(batchResult.affectedRows));
@@ -63,11 +228,507 @@ index a8b0fd2ccdf8af78ef7141db606274d6262a0569..e0400e8b32df84247f429ba7b5dbf951
            return res;
          });
    });
+@@ -664,6 +685,40 @@ void DBHostObject::set(jsi::Runtime &_rt, const jsi::PropNameID &name,
+   throw std::runtime_error("You cannot write to this object!");
+ }
+
++const std::string &DBHostObject::databaseName() const {
++  return db_name;
++}
++
++NativeSnapshotResult DBHostObject::executeNativeSnapshot(
++    const NativeSnapshotRequest &request) {
++  constexpr auto timeout = std::chrono::seconds(30);
++  constexpr auto maximumDelay = std::chrono::milliseconds(16);
++  auto delay = std::chrono::milliseconds(1);
++  const auto startedAt = std::chrono::steady_clock::now();
++
++  while (true) {
++    if (invalidated || db == nullptr) {
++      return {false, 0, "database connection is unavailable"};
++    }
++
++    try {
++      auto result = opsqlite::executeNativeSnapshot(db, request);
++      if (result.success ||
++          result.error != "native snapshot transaction is busy") {
++        return result;
++      }
++    } catch (...) {
++      return {false, 0, "native snapshot transaction failed"};
++    }
++
++    if (std::chrono::steady_clock::now() - startedAt >= timeout) {
++      return {false, 0, "native snapshot transaction wait timed out"};
++    }
++    std::this_thread::sleep_for(delay);
++    delay = std::min(delay * 2, maximumDelay);
++  }
++}
++
+ void DBHostObject::invalidate() {
+   if (invalidated) {
+     return;
+diff --git a/cpp/DBHostObject.h b/cpp/DBHostObject.h
+index 0e4da2bf8e63358285aa7290d6c84b5cd5739d24..df3816d542781d940a85cee818f7a1a605121c1f 100644
+--- a/cpp/DBHostObject.h
++++ b/cpp/DBHostObject.h
+@@ -1,6 +1,7 @@
+ #pragma once
+
+ #include "OPThreadPool.h"
++#include "NativeSnapshot.h"
+ #include "types.hpp"
+ #include <ReactCommon/CallInvoker.h>
+ #include <jsi/jsi.h>
+@@ -70,6 +71,9 @@ public:
+                  long long row_id);
+   void on_commit();
+   void on_rollback();
++  const std::string &databaseName() const;
++  NativeSnapshotResult executeNativeSnapshot(
++      const NativeSnapshotRequest &request);
+   void invalidate();
+   ~DBHostObject() override;
+
+diff --git a/cpp/NativeSnapshot.cpp b/cpp/NativeSnapshot.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..69a3b03bee6d406f0b374979b13ac74748286d6b
+--- /dev/null
++++ b/cpp/NativeSnapshot.cpp
+@@ -0,0 +1,348 @@
++#include "NativeSnapshot.h"
++
++#ifdef __ANDROID__
++#include "sqlite3.h"
++#else
++#include <sqlite3.h>
++#endif
++
++#include <algorithm>
++#include <cctype>
++#include <cmath>
++#include <cstring>
++#include <limits>
++#include <set>
++#include <stdexcept>
++#include <utility>
++
++namespace opsqlite {
++namespace {
++
++constexpr std::uint8_t kMagic[] = {'R', 'A', 'S', '1'};
++constexpr std::uint32_t kMaximumRows = 1000000;
++constexpr std::uint32_t kMaximumColumns = 256;
++constexpr std::size_t kMaximumPayloadBytes = 256 * 1024 * 1024;
++constexpr std::size_t kMaximumStringBytes = 64 * 1024 * 1024;
++
++class DatabaseMutexGuard {
++public:
++  explicit DatabaseMutexGuard(sqlite3 *database)
++      : mutex_(sqlite3_db_mutex(database)) {
++    if (mutex_ != nullptr) {
++      sqlite3_mutex_enter(mutex_);
++    }
++  }
++
++  ~DatabaseMutexGuard() {
++    if (mutex_ != nullptr) {
++      sqlite3_mutex_leave(mutex_);
++    }
++  }
++
++private:
++  sqlite3_mutex *mutex_{nullptr};
++};
++
++class SnapshotReader {
++public:
++  explicit SnapshotReader(NativeSnapshotBytes input)
++      : input_(input.data), size_(input.size) {}
++
++  bool readHeader(std::uint32_t &columnCount, std::uint32_t &rowCount) {
++    if (input_ == nullptr || size_ > kMaximumPayloadBytes) {
++      return false;
++    }
++    for (const auto expected : kMagic) {
++      std::uint8_t actual = 0;
++      if (!readByte(actual) || actual != expected) {
++        return false;
++      }
++    }
++    return readUint32(columnCount) && columnCount > 0 &&
++        columnCount <= kMaximumColumns && readUint32(rowCount) &&
++        rowCount <= kMaximumRows;
++  }
++
++  bool bindRow(sqlite3_stmt *statement, std::uint32_t columnCount) {
++    sqlite3_clear_bindings(statement);
++    for (std::uint32_t index = 0; index < columnCount; ++index) {
++      std::uint8_t kind = 0;
++      if (!readByte(kind)) {
++        return false;
++      }
++      const auto parameterIndex = static_cast<int>(index + 1);
++      int status = SQLITE_ERROR;
++      switch (kind) {
++      case 0:
++        status = sqlite3_bind_null(statement, parameterIndex);
++        break;
++      case 1: {
++        const char *value = nullptr;
++        std::uint32_t length = 0;
++        if (!readString(value, length)) {
++          return false;
++        }
++        status = sqlite3_bind_text(
++            statement,
++            parameterIndex,
++            value,
++            static_cast<int>(length),
++            SQLITE_TRANSIENT);
++        break;
++      }
++      case 2: {
++        double value = 0;
++        if (!readDouble(value)) {
++          return false;
++        }
++        status = sqlite3_bind_double(statement, parameterIndex, value);
++        break;
++      }
++      case 3: {
++        std::int64_t value = 0;
++        if (!readInteger(value)) {
++          return false;
++        }
++        status = sqlite3_bind_int64(statement, parameterIndex, value);
++        break;
++      }
++      default:
++        return false;
++      }
++      if (status != SQLITE_OK) {
++        return false;
++      }
++    }
++    return true;
++  }
++
++  bool finished() const {
++    return position_ == size_;
++  }
++
++private:
++  bool readByte(std::uint8_t &value) {
++    if (position_ >= size_) {
++      return false;
++    }
++    value = input_[position_++];
++    return true;
++  }
++
++  bool readUint32(std::uint32_t &value) {
++    value = 0;
++    for (int shift = 0; shift < 32; shift += 8) {
++      std::uint8_t byte = 0;
++      if (!readByte(byte)) {
++        return false;
++      }
++      value |= static_cast<std::uint32_t>(byte) << shift;
++    }
++    return true;
++  }
++
++  bool readUint64(std::uint64_t &value) {
++    value = 0;
++    for (int shift = 0; shift < 64; shift += 8) {
++      std::uint8_t byte = 0;
++      if (!readByte(byte)) {
++        return false;
++      }
++      value |= static_cast<std::uint64_t>(byte) << shift;
++    }
++    return true;
++  }
++
++  bool readInteger(std::int64_t &value) {
++    std::uint64_t bits = 0;
++    if (!readUint64(bits)) {
++      return false;
++    }
++    std::memcpy(&value, &bits, sizeof(value));
++    return true;
++  }
++
++  bool readDouble(double &value) {
++    std::uint64_t bits = 0;
++    if (!readUint64(bits)) {
++      return false;
++    }
++    std::memcpy(&value, &bits, sizeof(value));
++    return std::isfinite(value);
++  }
++
++  bool readString(const char *&value, std::uint32_t &length) {
++    if (!readUint32(length) || length > kMaximumStringBytes ||
++        length > size_ - position_) {
++      return false;
++    }
++    value = reinterpret_cast<const char *>(input_ + position_);
++    position_ += length;
++    return true;
++  }
++
++  const std::uint8_t *input_{nullptr};
++  std::size_t size_{0};
++  std::size_t position_{0};
++};
++
++bool isValidIdentifier(const std::string &value) {
++  return !value.empty() &&
++      std::all_of(value.begin(), value.end(), [](unsigned char character) {
++        return std::isalnum(character) || character == '_';
++      });
++}
++
++bool executeSql(sqlite3 *database, const char *sql) {
++  return sqlite3_exec(database, sql, nullptr, nullptr, nullptr) == SQLITE_OK;
++}
++
++bool hasExpectedSchema(
++    sqlite3 *database,
++    const std::string &tableName,
++    const std::vector<std::string> &expectedColumns) {
++  const std::set<std::string> expectedColumnSet(
++      expectedColumns.begin(), expectedColumns.end());
++  if (!isValidIdentifier(tableName) || expectedColumns.empty() ||
++      expectedColumns.size() > kMaximumColumns ||
++      expectedColumnSet.size() != expectedColumns.size() ||
++      std::any_of(
++          expectedColumns.begin(), expectedColumns.end(),
++          [](const std::string &column) { return !isValidIdentifier(column); })) {
++    return false;
++  }
++  const auto sql = "PRAGMA table_info(\"" + tableName + "\")";
++  sqlite3_stmt *statement = nullptr;
++  if (sqlite3_prepare_v2(
++          database, sql.c_str(), -1, &statement, nullptr) != SQLITE_OK) {
++    return false;
++  }
++  std::set<std::string> actualColumns;
++  int status = SQLITE_ROW;
++  while ((status = sqlite3_step(statement)) == SQLITE_ROW) {
++    const auto *name = sqlite3_column_text(statement, 1);
++    const auto size = sqlite3_column_bytes(statement, 1);
++    if (name == nullptr || size <= 0) {
++      sqlite3_finalize(statement);
++      return false;
++    }
++    actualColumns.emplace(
++        reinterpret_cast<const char *>(name), static_cast<std::size_t>(size));
++  }
++  sqlite3_finalize(statement);
++  return status == SQLITE_DONE && actualColumns == expectedColumnSet;
++}
++
++bool executeRows(
++    sqlite3 *database,
++    const std::string &sql,
++    SnapshotReader &reader,
++    std::uint32_t expectedColumnCount,
++    std::uint32_t &rowCount) {
++  std::uint32_t columnCount = 0;
++  if (!reader.readHeader(columnCount, rowCount) ||
++      columnCount != expectedColumnCount) {
++    return false;
++  }
++  sqlite3_stmt *statement = nullptr;
++  if (sqlite3_prepare_v2(
++          database, sql.c_str(), -1, &statement, nullptr) != SQLITE_OK) {
++    return false;
++  }
++  bool success = true;
++  for (std::uint32_t index = 0; index < rowCount; ++index) {
++    if (!reader.bindRow(statement, columnCount) ||
++        sqlite3_step(statement) != SQLITE_DONE) {
++      success = false;
++      break;
++    }
++    if (index + 1 < rowCount && sqlite3_reset(statement) != SQLITE_OK) {
++      success = false;
++      break;
++    }
++  }
++  sqlite3_finalize(statement);
++  return success && reader.finished();
++}
++
++} // namespace
++
++NativeSnapshotResult executeNativeSnapshot(
++    sqlite3 *database, const NativeSnapshotRequest &request) {
++  NativeSnapshotResult result;
++  if (database == nullptr || request.expectedColumns.empty() ||
++      request.upsertSql.empty() || request.deleteSql.empty()) {
++    result.error = "native snapshot contract is unavailable";
++    return result;
++  }
++
++  DatabaseMutexGuard databaseGuard(database);
++  if (!hasExpectedSchema(
++          database, request.tableName, request.expectedColumns)) {
++    result.error = "native snapshot schema does not match";
++    return result;
++  }
++  if (sqlite3_get_autocommit(database) == 0) {
++    result.error = "native snapshot transaction is busy";
++    return result;
++  }
++  if (!executeSql(database, "BEGIN IMMEDIATE")) {
++    result.error = "native snapshot transaction could not begin";
++    return result;
++  }
++
++  SnapshotReader rowReader(request.rowPayload);
++  SnapshotReader deleteReader(request.deletePayload);
++  std::uint32_t rowCount = 0;
++  std::uint32_t deleteCount = 0;
++  bool success = executeRows(
++      database,
++      request.upsertSql,
++      rowReader,
++      static_cast<std::uint32_t>(request.expectedColumns.size()),
++      rowCount);
++  if (success) {
++    std::uint32_t deleteColumnCount = 0;
++    if (!deleteReader.readHeader(deleteColumnCount, deleteCount) ||
++        deleteColumnCount == 0) {
++      success = false;
++    } else {
++      sqlite3_stmt *statement = nullptr;
++      if (sqlite3_prepare_v2(
++              database,
++              request.deleteSql.c_str(),
++              -1,
++              &statement,
++              nullptr) != SQLITE_OK) {
++        success = false;
++      }
++      for (std::uint32_t index = 0; success && index < deleteCount; ++index) {
++        if (!deleteReader.bindRow(statement, deleteColumnCount) ||
++            sqlite3_step(statement) != SQLITE_DONE) {
++          success = false;
++          break;
++        }
++        if (index + 1 < deleteCount && sqlite3_reset(statement) != SQLITE_OK) {
++          success = false;
++        }
++      }
++      if (statement != nullptr) {
++        sqlite3_finalize(statement);
++      }
++      success = success && deleteCount > 0 && deleteReader.finished();
++    }
++  }
++
++  const auto shouldCommit = success && !request.rollbackOnly;
++  if (!executeSql(database, shouldCommit ? "COMMIT" : "ROLLBACK")) {
++    success = false;
++  }
++  result.success = success;
++  result.rowCount = success ? rowCount : 0;
++  if (!success) {
++    result.error = "native snapshot transaction failed";
++  }
++  return result;
++}
++
++} // namespace opsqlite
+diff --git a/cpp/NativeSnapshot.h b/cpp/NativeSnapshot.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ef55f0fb575ab422ca08ca004f4ee51d5b8ed7d
+--- /dev/null
++++ b/cpp/NativeSnapshot.h
+@@ -0,0 +1,36 @@
++#pragma once
++
++#include <cstddef>
++#include <cstdint>
++#include <string>
++#include <vector>
++
++struct sqlite3;
++
++namespace opsqlite {
++
++struct NativeSnapshotBytes {
++  const std::uint8_t *data{nullptr};
++  std::size_t size{0};
++};
++
++struct NativeSnapshotRequest {
++  std::string tableName;
++  std::vector<std::string> expectedColumns;
++  std::string upsertSql;
++  std::string deleteSql;
++  NativeSnapshotBytes rowPayload;
++  NativeSnapshotBytes deletePayload;
++  bool rollbackOnly{false};
++};
++
++struct NativeSnapshotResult {
++  bool success{false};
++  std::size_t rowCount{0};
++  std::string error;
++};
++
++NativeSnapshotResult executeNativeSnapshot(
++    ::sqlite3 *database, const NativeSnapshotRequest &request);
++
++} // namespace opsqlite
 diff --git a/cpp/OPSqlite.cpp b/cpp/OPSqlite.cpp
-index 33a869788b4d7d9e4d8ab66bc90218858613227e..e1139a4e19d9b030be73b0962817fe5caeed6fdc 100644
+index 33a869788b4d7d9e4d8ab66bc90218858613227e..7c329ff09f6e216fb540850e9dd007bfb1b2b274 100644
 --- a/cpp/OPSqlite.cpp
 +++ b/cpp/OPSqlite.cpp
-@@ -47,6 +47,9 @@ void install(jsi::Runtime &rt,
+@@ -11,6 +11,7 @@
+ #include "macros.hpp"
+ #include "utils.hpp"
+ #include <iostream>
++#include <mutex>
+ #include <string>
+ #include <unordered_map>
+ #include <vector>
+@@ -24,6 +25,7 @@ std::string _base_path;
+ std::string _crsqlite_path;
+ std::string _sqlite_vec_path;
+ std::vector<std::shared_ptr<DBHostObject>> dbs;
++std::mutex dbsMutex;
+ bool invalidated = false;
+ std::shared_ptr<react::CallInvoker> invoker;
+
+@@ -33,13 +35,15 @@ void invalidate() {
+   // Global flag used by the threads to stop work
+   invalidated = true;
+
+-  for (const auto &db : dbs) {
++  std::vector<std::shared_ptr<DBHostObject>> invalidatedDatabases;
++  {
++    std::lock_guard<std::mutex> lock(dbsMutex);
++    invalidatedDatabases = std::move(dbs);
++    dbs.clear();
++  }
++  for (const auto &db : invalidatedDatabases) {
+     db->invalidate();
+   }
+-
+-  // Clear our existing vector of shared pointers so they can be garbage
+-  // collected
+-  dbs.clear();
+ }
+
+ void install(jsi::Runtime &rt,
+@@ -47,6 +51,9 @@ void install(jsi::Runtime &rt,
               const char *base_path, const char *crsqlite_path,
               const char *sqlite_vec_path) {
 
@@ -77,11 +738,114 @@ index 33a869788b4d7d9e4d8ab66bc90218858613227e..e1139a4e19d9b030be73b0962817fe5c
    _base_path = std::string(base_path);
    _crsqlite_path = std::string(crsqlite_path);
    _sqlite_vec_path = std::string(sqlite_vec_path);
+@@ -87,7 +94,10 @@ void install(jsi::Runtime &rt,
+     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
+         rt, path, opsqlite::invoker, name, path, _crsqlite_path,
+         _sqlite_vec_path, encryption_key);
+-    dbs.emplace_back(db);
++    {
++      std::lock_guard<std::mutex> lock(dbsMutex);
++      dbs.emplace_back(db);
++    }
+     return jsi::Object::createFromHostObject(rt, db);
+   });
+
+@@ -195,6 +205,25 @@ void install(jsi::Runtime &rt,
+   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
+ }
+
++NativeSnapshotResult executeNativeSnapshotForDatabase(
++    const std::string &databaseName,
++    const NativeSnapshotRequest &request) {
++  std::shared_ptr<DBHostObject> database;
++  {
++    std::lock_guard<std::mutex> lock(dbsMutex);
++    for (auto iterator = dbs.rbegin(); iterator != dbs.rend(); ++iterator) {
++      if ((*iterator)->databaseName() == databaseName) {
++        database = *iterator;
++        break;
++      }
++    }
++  }
++  if (database == nullptr) {
++    return {false, 0, "database connection is unavailable"};
++  }
++  return database->executeNativeSnapshot(request);
++}
++
+ void expoUpdatesWorkaround(const char *base_path) {
+ #ifdef OP_SQLITE_USE_LIBSQL
+   std::string path = std::string(base_path);
+diff --git a/cpp/OPSqlite.hpp b/cpp/OPSqlite.hpp
+index 91511ab8dff0cbd34c6b8b844c1783c39d4317cb..d99cdbfdef984a6db023d4e0b0d0a5defb8473bd 100644
+--- a/cpp/OPSqlite.hpp
++++ b/cpp/OPSqlite.hpp
+@@ -4,6 +4,10 @@
+ #include <jsi/jsi.h>
+ #include <jsi/jsilib.h>
+
++#include "NativeSnapshot.h"
++
++#include <string>
++
+ namespace opsqlite {
+
+ namespace jsi = facebook::jsi;
+@@ -16,4 +20,8 @@ void install(jsi::Runtime &rt,
+ void invalidate();
+ void expoUpdatesWorkaround(const char *base_path);
+
++NativeSnapshotResult executeNativeSnapshotForDatabase(
++    const std::string &databaseName,
++    const NativeSnapshotRequest &request);
++
+ } // namespace opsqlite
 diff --git a/cpp/bridge.cpp b/cpp/bridge.cpp
-index f298505fa6d3093fb91c8a5ae8d793dfc09cfa1d..be5e5080ba9f9eb68c629090c04e9a1cface8ac1 100644
+index f298505fa6d3093fb91c8a5ae8d793dfc09cfa1d..403f3fd9c8eb11f87a6740936e98f197802b88fa 100644
 --- a/cpp/bridge.cpp
 +++ b/cpp/bridge.cpp
-@@ -870,6 +870,8 @@ opsqlite_execute_batch(sqlite3 *db,
+@@ -855,21 +855,40 @@ opsqlite_execute_batch(sqlite3 *db,
+     throw std::runtime_error("No SQL commands provided");
+   }
+
++  auto *databaseMutex = sqlite3_db_mutex(db);
++  if (databaseMutex != nullptr) {
++    sqlite3_mutex_enter(databaseMutex);
++  }
+   int affectedRows = 0;
+-  // opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
+-  for (int i = 0; i < commandCount; i++) {
+-    const auto &command = commands->at(i);
+-    // We do not provide a datastructure to receive query data because we
+-    // don't need/want to handle this results in a batch execution
+-    // There is also no need to commit/catch this transaction, this is done
+-    // in the JS code
+-    auto result = opsqlite_execute(db, command.sql, &command.params);
+-    affectedRows += result.affectedRows;
++  try {
++    if (sqlite3_exec(db, "BEGIN TRANSACTION", nullptr, nullptr, nullptr) !=
++        SQLITE_OK) {
++      throw std::runtime_error("[op-sqlite] Could not begin batch transaction");
++    }
++    for (std::size_t index = 0; index < commandCount; ++index) {
++      const auto &command = commands->at(index);
++      auto result = opsqlite_execute(db, command.sql, &command.params);
++      affectedRows += result.affectedRows;
++    }
++    if (sqlite3_exec(db, "COMMIT", nullptr, nullptr, nullptr) != SQLITE_OK) {
++      throw std::runtime_error("[op-sqlite] Could not commit batch transaction");
++    }
++  } catch (...) {
++    sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
++    if (databaseMutex != nullptr) {
++      sqlite3_mutex_leave(databaseMutex);
++    }
++    throw;
++  }
++  if (databaseMutex != nullptr) {
++    sqlite3_mutex_leave(databaseMutex);
+   }
+
    return BatchResult{
        .affectedRows = affectedRows,
        .commands = static_cast<int>(commandCount),
@@ -143,7 +907,7 @@ index d3e49ed2b9023fcbad2bd9f1b275e1f7be329f62..8b00e4f45b2f039930eb927593957b4a
          if (opsqlite::invalidated) {
            return;
 diff --git a/lib/module/functions.js b/lib/module/functions.js
-index 28836e28059cfaa75f878f4c995160fdabca6a73..7c38a8841ef1023e0a319b0c589b1c6b48ef33ca 100644
+index 28836e28059cfaa75f878f4c995160fdabca6a73..bf1e4b4c984e86fc2108bddc26d94b8543622a00 100644
 --- a/lib/module/functions.js
 +++ b/lib/module/functions.js
 @@ -19,6 +19,21 @@ if (global.__OPSQLiteProxy == null) {
@@ -193,7 +957,7 @@ index 28836e28059cfaa75f878f4c995160fdabca6a73..7c38a8841ef1023e0a319b0c589b1c6b
        // Do normal for loop and replace in place for performance
        for (let i = 0; i < commands.length; i++) {
          // [1] is the params arg
-@@ -81,21 +114,58 @@ function enhanceDB(db, options) {
+@@ -81,21 +114,36 @@ function enhanceDB(db, options) {
            commands[i][1] = sanitizeArrayBuffersInArray(commands[i][1]);
          }
        }
@@ -203,24 +967,14 @@ index 28836e28059cfaa75f878f4c995160fdabca6a73..7c38a8841ef1023e0a319b0c589b1c6b
        async function run() {
 +        let status = 'success';
          try {
-+          traceDiagnostic('begin_start');
-+          const beginStartedAt = Date.now();
-           enhancedDb.executeSync('BEGIN TRANSACTION;');
-+          traceDiagnostic('begin_end', {
-+            durationMs: Date.now() - beginStartedAt
-+          });
+-          enhancedDb.executeSync('BEGIN TRANSACTION;');
 +          traceDiagnostic('native_start');
 +          const nativeStartedAt = Date.now();
            let res = await db.executeBatch(commands);
+-          enhancedDb.executeSync('COMMIT;');
 +          traceDiagnostic('native_end', {
 +            durationMs: Date.now() - nativeStartedAt,
 +            ...(res.__diagnostics || {})
-+          });
-+          traceDiagnostic('commit_start');
-+          const commitStartedAt = Date.now();
-           enhancedDb.executeSync('COMMIT;');
-+          traceDiagnostic('commit_end', {
-+            durationMs: Date.now() - commitStartedAt
 +          });
 +          traceDiagnostic('flush_reactive_start');
 +          const flushStartedAt = Date.now();
@@ -230,17 +984,12 @@ index 28836e28059cfaa75f878f4c995160fdabca6a73..7c38a8841ef1023e0a319b0c589b1c6b
 +          });
            return res;
          } catch (executionError) {
+-          try {
+-            enhancedDb.executeSync('ROLLBACK;');
+-          } catch (rollbackError) {
+-            throw rollbackError;
+-          }
 +          status = 'error';
-           try {
-+            traceDiagnostic('rollback_start');
-+            const rollbackStartedAt = Date.now();
-             enhancedDb.executeSync('ROLLBACK;');
-+            traceDiagnostic('rollback_end', {
-+              durationMs: Date.now() - rollbackStartedAt
-+            });
-           } catch (rollbackError) {
-             throw rollbackError;
-           }
 +          traceDiagnostic('error', {
 +            error: executionError instanceof Error ? executionError.message : String(executionError)
 +          });
@@ -253,7 +1002,7 @@ index 28836e28059cfaa75f878f4c995160fdabca6a73..7c38a8841ef1023e0a319b0c589b1c6b
            startNextTransaction();
          }
 diff --git a/lib/typescript/src/types.d.ts b/lib/typescript/src/types.d.ts
-index d2f7a20253b8180d0abd22455dd36ffe3de0d9ca..a01ee806808f835c1fc1ae5cf40be5fe59d535b8 100644
+index d2f7a20253b8180d0abd22455dd36ffe3de0d9ca..dd03dcb7adab9b6fa3ac5b74088c72f991c8d899 100644
 --- a/lib/typescript/src/types.d.ts
 +++ b/lib/typescript/src/types.d.ts
 @@ -49,6 +49,11 @@ export type UpdateHookOperation = 'INSERT' | 'DELETE' | 'UPDATE';
@@ -269,7 +1018,7 @@ index d2f7a20253b8180d0abd22455dd36ffe3de0d9ca..a01ee806808f835c1fc1ae5cf40be5fe
  /**
   * Result of loading a file and executing every line as a SQL command
 diff --git a/src/functions.ts b/src/functions.ts
-index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f708205800b4cc 100644
+index a6176e369dbdb6628231747dda303a072051d2ff..4552b180153a1b0337cffc109eee43dc7f0eea7a 100644
 --- a/src/functions.ts
 +++ b/src/functions.ts
 @@ -14,6 +14,22 @@ import {
@@ -328,7 +1077,7 @@ index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f70820
        // Do normal for loop and replace in place for performance
        for (let i = 0; i < commands.length; i++) {
          // [1] is the params arg
-@@ -116,27 +158,67 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
+@@ -116,27 +158,42 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
            commands[i]![1] = sanitizeArrayBuffersInArray(commands[i]![1]) as any;
          }
        }
@@ -339,13 +1088,8 @@ index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f70820
        async function run() {
 +        let status = 'success';
          try {
-+          traceDiagnostic('begin_start');
-+          const beginStartedAt = Date.now();
-           enhancedDb.executeSync('BEGIN TRANSACTION;');
-+          traceDiagnostic('begin_end', {
-+            durationMs: Date.now() - beginStartedAt,
-+          });
-
+-          enhancedDb.executeSync('BEGIN TRANSACTION;');
+-
 +          traceDiagnostic('native_start');
 +          const nativeStartedAt = Date.now();
            let res = await db.executeBatch(commands as any[]);
@@ -354,13 +1098,8 @@ index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f70820
 +            ...(res.__diagnostics || {}),
 +          });
 
-+          traceDiagnostic('commit_start');
-+          const commitStartedAt = Date.now();
-           enhancedDb.executeSync('COMMIT;');
-+          traceDiagnostic('commit_end', {
-+            durationMs: Date.now() - commitStartedAt,
-+          });
-
+-          enhancedDb.executeSync('COMMIT;');
+-
 +          traceDiagnostic('flush_reactive_start');
 +          const flushStartedAt = Date.now();
            await db.flushPendingReactiveQueries();
@@ -370,18 +1109,13 @@ index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f70820
 
            return res;
          } catch (executionError) {
+-          try {
+-            enhancedDb.executeSync('ROLLBACK;');
+-          } catch (rollbackError) {
+-            throw rollbackError;
+-          }
+-
 +          status = 'error';
-           try {
-+            traceDiagnostic('rollback_start');
-+            const rollbackStartedAt = Date.now();
-             enhancedDb.executeSync('ROLLBACK;');
-+            traceDiagnostic('rollback_end', {
-+              durationMs: Date.now() - rollbackStartedAt,
-+            });
-           } catch (rollbackError) {
-             throw rollbackError;
-           }
-
 +          traceDiagnostic('error', {
 +            error:
 +              executionError instanceof Error

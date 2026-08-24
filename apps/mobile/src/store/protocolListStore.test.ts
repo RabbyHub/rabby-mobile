@@ -3,6 +3,7 @@ import type { IProtocolItem } from '@/types/assets';
 
 jest.mock('@/databases/entities/portocolItem', () => ({
   ProtocolItemEntity: {
+    batchMultiAddressProtocolsByResourceIds: jest.fn(async () => []),
     batchQueryProtocols: jest.fn(async () => []),
     getDefaultProtocolsByAddresses: jest.fn(async () => ({})),
     isExpired: jest.fn(async () => true),
@@ -10,10 +11,18 @@ jest.mock('@/databases/entities/portocolItem', () => ({
 }));
 jest.mock('@/databases/entities/appchain', () => ({
   AppChainEntity: {
+    queryByProtocolResourceIds: jest.fn(async () => ({})),
     queryByOwners: jest.fn(async () => ({})),
   },
 }));
+jest.mock('@/databases/protocolAssetProjection', () => ({
+  compileProtocolAssetSqlProjection: jest.fn(),
+}));
 jest.mock('@/databases/hooks/assets', () => ({
+  loadAppChainComplexProtocols: jest.fn(async () => ({
+    protocols: [],
+    errorAppIds: [],
+  })),
   loadProtocols: jest.fn(),
   loadProtocolsForAddresses: jest.fn(),
   syncSpecificProtocol: jest.fn(),
@@ -24,6 +33,7 @@ jest.mock('@/databases/sync/assets', () => ({
 }));
 jest.mock('@/utils/appchain', () => ({
   formatAppChain: jest.fn(value => value),
+  isAppChain: jest.fn((chain: string) => chain.startsWith('RABBY_APP_CHAIN_')),
 }));
 jest.mock('@/utils/lendingUserStatus', () => ({
   reportLendingUserStatusOnce: jest.fn(),
@@ -53,6 +63,13 @@ jest.mock('./assetProjectionPersistence', () => ({
   scheduleAssetProjectionPersistence: jest.fn(),
   subscribeAssetProjectionDatabaseCommits: jest.fn(),
 }));
+jest.mock('./protocolSyncExecutor', () => ({
+  getProtocolSyncMode: jest.fn(() => 'js'),
+  executeProtocolSync: jest.fn(async ({ executeJs }) => ({
+    mode: 'js',
+    value: await executeJs(),
+  })),
+}));
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
@@ -66,12 +83,23 @@ import {
   syncRemoteProtocolsForAddresses,
 } from '@/databases/sync/assets';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
+import { AppChainEntity } from '@/databases/entities/appchain';
+import { compileProtocolAssetSqlProjection } from '@/databases/protocolAssetProjection';
 import useProtocolListStore, {
   buildProtocolEntityId,
   protocolEntityResourceStore,
   useProtocolListComputedStore,
 } from './protocols';
-import { scheduleAssetProjectionPersistence } from './assetProjectionPersistence';
+import {
+  restoreAssetProjection,
+  scheduleAssetProjectionPersistence,
+} from './assetProjectionPersistence';
+import { dispatchNativeAssetSyncCompletion } from './nativeAssetSyncReceipt';
+import { getAssetReadModel, resetAssetReadModels } from './assetReadModel';
+import {
+  executeProtocolSync,
+  getProtocolSyncMode,
+} from './protocolSyncExecutor';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -86,6 +114,13 @@ const mockedProtocolItemEntity = jest.mocked(ProtocolItemEntity);
 const mockedScheduleAssetProjectionPersistence = jest.mocked(
   scheduleAssetProjectionPersistence,
 );
+const mockedRestoreAssetProjection = jest.mocked(restoreAssetProjection);
+const mockedAppChainEntity = jest.mocked(AppChainEntity);
+const mockedCompileProtocolAssetSqlProjection = jest.mocked(
+  compileProtocolAssetSqlProjection,
+);
+const mockedExecuteProtocolSync = jest.mocked(executeProtocolSync);
+const mockedGetProtocolSyncMode = jest.mocked(getProtocolSyncMode);
 
 const createProtocol = (id: string, netWorth: number): IProtocolItem =>
   ({
@@ -128,6 +163,12 @@ const waitFor = async (predicate: () => boolean) => {
 describe('protocol list request freshness', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGetProtocolSyncMode.mockReturnValue('js');
+    mockedExecuteProtocolSync.mockImplementation(async ({ executeJs }) => ({
+      mode: 'js',
+      value: await executeJs(),
+    }));
+    resetAssetReadModels();
     useProtocolListComputedStore.setState({
       multiProtocolsIndexCache: {},
       singleProtocolsIndexCache: {},
@@ -141,6 +182,47 @@ describe('protocol list request freshness', () => {
       protocolMap: {},
       sourceSnapshotReadyByAddress: {},
     });
+  });
+
+  it('restores a persisted projection through exact protocol resources only', async () => {
+    const restored = createProtocol('restored-projection', 20);
+    const protocolId = buildProtocolEntityId(restored);
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [{ type: 'protocol', id: protocolId }],
+      groups: [],
+      metadata: {
+        defaultVisibleProtocolCount: 1,
+        foldedProtocolUsdValue: '',
+      },
+    } as never);
+    mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mockResolvedValueOnce(
+      [restored] as never,
+    );
+
+    const key = useProtocolListComputedStore
+      .getState()
+      .registerSingleProtocols(ADDRESS);
+
+    await waitFor(
+      () =>
+        mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mock
+          .calls.length > 0,
+    );
+    await waitFor(
+      () =>
+        useProtocolListComputedStore.getState().singleProtocolsIndexCache[key]
+          ?.protocolIds.length === 1,
+    );
+
+    expect(
+      mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds,
+    ).toHaveBeenCalledWith([protocolId]);
+    expect(
+      mockedProtocolItemEntity.getDefaultProtocolsByAddresses,
+    ).not.toHaveBeenCalled();
+    expect(
+      mockedAppChainEntity.queryByProtocolResourceIds,
+    ).toHaveBeenCalledWith([protocolId]);
   });
 
   it('does not let a late multi-address response overwrite a newer single-address response', async () => {
@@ -181,6 +263,36 @@ describe('protocol list request freshness', () => {
       latestRemote,
     ]);
     expect(mockedSyncRemoteProtocolsForAddresses).not.toHaveBeenCalled();
+  });
+
+  it('shares an in-flight multi-address refresh with a later manual force refresh', async () => {
+    const pendingRemote = deferred<{
+      protocolMap: Record<string, IProtocolItem[]>;
+      remoteProtocolMap: Record<string, ComplexProtocol[]>;
+    }>();
+    mockedLoadProtocolsForAddresses.mockReturnValueOnce(pendingRemote.promise);
+
+    const initialRequest = useProtocolListStore
+      .getState()
+      .batchGetProtocols([ADDRESS], false);
+    await waitFor(
+      () => mockedLoadProtocolsForAddresses.mock.calls.length === 1,
+    );
+
+    const manualRefresh = useProtocolListStore
+      .getState()
+      .batchGetProtocols([ADDRESS], true);
+
+    expect(mockedLoadProtocolsForAddresses).toHaveBeenCalledTimes(1);
+    pendingRemote.resolve({
+      protocolMap: { [NORMALIZED_ADDRESS]: [createProtocol('fresh', 1)] },
+      remoteProtocolMap: {
+        [NORMALIZED_ADDRESS]: [createRemoteProtocol('fresh')],
+      },
+    });
+    await Promise.all([initialRequest, manualRefresh]);
+
+    expect(mockedLoadProtocolsForAddresses).toHaveBeenCalledTimes(1);
   });
 
   it('does not cancel active remote work when a newer call only uses fresh memory', async () => {
@@ -251,7 +363,11 @@ describe('protocol list request freshness', () => {
     const cached = createProtocol('cached', 1);
     useProtocolListStore.setState({
       protocolMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
     });
+    const key = useProtocolListComputedStore
+      .getState()
+      .registerSingleProtocols(ADDRESS);
     mockedLoadProtocols.mockRejectedValueOnce(new Error('network failed'));
 
     await expect(
@@ -262,6 +378,140 @@ describe('protocol list request freshness', () => {
       useProtocolListStore.getState().protocolMap[NORMALIZED_ADDRESS],
     ).toEqual([cached]);
     expect(mockedSyncRemoteProtocols).not.toHaveBeenCalled();
+    expect(
+      getAssetReadModel({
+        kind: 'protocol',
+        scene: 'single-address',
+        runtimeKey: key,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        phase: 'stale',
+        hasData: true,
+        rowCount: 1,
+      }),
+    );
+  });
+
+  it('publishes successful native addresses while retaining a rate-limited address snapshot', async () => {
+    const secondAddress = '0xDef0';
+    const normalizedSecondAddress = secondAddress.toLowerCase();
+    const cachedFirst = createProtocol('cached-first', 1);
+    const cachedSecond = {
+      ...createProtocol('cached-second', 2),
+      owner_addr: normalizedSecondAddress,
+    };
+    const refreshedFirst = createProtocol('refreshed-first', 3);
+    useProtocolListStore.setState({
+      protocolMap: {
+        [NORMALIZED_ADDRESS]: [cachedFirst],
+        [normalizedSecondAddress]: [cachedSecond],
+      },
+      sourceSnapshotReadyByAddress: {},
+    });
+    mockedGetProtocolSyncMode.mockReturnValue('native');
+    mockedExecuteProtocolSync.mockImplementation(async ({ address }) => {
+      if (address === normalizedSecondAddress) {
+        throw Object.assign(new Error('HTTP 429'), {
+          response: { status: 429 },
+        });
+      }
+      useProtocolListStore.setState(state => ({
+        protocolMap: {
+          ...state.protocolMap,
+          [address]: [refreshedFirst],
+        },
+      }));
+      return {
+        mode: 'native',
+        result: {
+          schemaVersion: 2,
+          requestId: `protocol-${address}`,
+          kind: 'protocol',
+          success: true,
+          outcome: 'complete',
+          address,
+          generation: 1,
+          committedAt: 100,
+          replacementScope: 'address',
+          chainIds: [],
+          failedChainIds: [],
+          committedRowCount: 1,
+          stage: 'persistence',
+          error: '',
+        },
+      };
+    });
+
+    await expect(
+      useProtocolListStore
+        .getState()
+        .batchGetProtocols([ADDRESS, secondAddress], true),
+    ).resolves.toBeUndefined();
+
+    expect(useProtocolListStore.getState().protocolMap).toEqual({
+      [NORMALIZED_ADDRESS]: [refreshedFirst],
+      [normalizedSecondAddress]: [cachedSecond],
+    });
+    expect(
+      useProtocolListStore.getState().sourceSnapshotReadyByAddress,
+    ).toEqual({
+      [NORMALIZED_ADDRESS]: true,
+    });
+  });
+
+  it('publishes one deterministic read-model lifecycle for a remote refresh', async () => {
+    const cached = createProtocol('cached', 1);
+    const refreshed = createProtocol('refreshed', 2);
+    useProtocolListStore.setState({
+      protocolMap: { [NORMALIZED_ADDRESS]: [cached] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+    });
+    const key = useProtocolListComputedStore
+      .getState()
+      .registerSingleProtocols(ADDRESS);
+    const identity = {
+      kind: 'protocol' as const,
+      scene: 'single-address' as const,
+      runtimeKey: key,
+    };
+    const pendingRemote = deferred<{
+      address: string;
+      protocols: IProtocolItem[];
+      remoteProtocols: ComplexProtocol[];
+    }>();
+    mockedLoadProtocols.mockReturnValueOnce(pendingRemote.promise);
+
+    const refresh = useProtocolListStore
+      .getState()
+      .getProtocols(ADDRESS, true, 'pull-refresh');
+    await waitFor(() => mockedLoadProtocols.mock.calls.length === 1);
+
+    expect(getAssetReadModel(identity)).toEqual(
+      expect.objectContaining({
+        phase: 'refreshing',
+        hasData: true,
+        rowCount: 1,
+      }),
+    );
+
+    pendingRemote.resolve({
+      address: NORMALIZED_ADDRESS,
+      protocols: [refreshed],
+      remoteProtocols: [createRemoteProtocol('refreshed')],
+    });
+    await refresh;
+
+    expect(getAssetReadModel(identity)).toEqual(
+      expect.objectContaining({
+        phase: 'ready',
+        source: 'remote',
+        hasData: true,
+        sourceComplete: true,
+        rowCount: 1,
+        activeRequestId: undefined,
+      }),
+    );
   });
 
   it('publishes and persists a successful empty remote snapshot', async () => {
@@ -379,5 +629,103 @@ describe('protocol list request freshness', () => {
         scene: 'multi-address',
       }),
     );
+  });
+
+  it('resolves a native completion only after the committed SQL projection is published', async () => {
+    jest.useFakeTimers();
+    try {
+      const committed = createProtocol('native-committed', 42);
+      const protocolId = buildProtocolEntityId(committed);
+      const pendingLegacySnapshot = deferred<Record<string, IProtocolItem[]>>();
+      mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mockResolvedValueOnce(
+        [committed] as never,
+      );
+      mockedProtocolItemEntity.getDefaultProtocolsByAddresses.mockReturnValueOnce(
+        pendingLegacySnapshot.promise as never,
+      );
+      mockedAppChainEntity.queryByOwners.mockResolvedValueOnce({});
+      mockedCompileProtocolAssetSqlProjection.mockResolvedValue({
+        ruleVersion: 1,
+        scene: 'single-address',
+        protocolIds: [protocolId],
+        defaultVisibleProtocolCount: 1,
+        foldedProtocolUsdValue: '',
+      });
+
+      const key = useProtocolListComputedStore
+        .getState()
+        .registerSingleProtocols(ADDRESS);
+      const completion = dispatchNativeAssetSyncCompletion({
+        schemaVersion: 2,
+        requestId: 'protocol-native-publish-1',
+        kind: 'protocol',
+        success: true,
+        outcome: 'complete',
+        address: ADDRESS,
+        generation: 1,
+        committedAt: 100,
+        replacementScope: 'address',
+        chainIds: [],
+        failedChainIds: [],
+        committedRowCount: 1,
+        stage: 'persistence',
+        error: '',
+      });
+
+      await Promise.resolve();
+      jest.advanceTimersByTime(20);
+      await waitFor(
+        () =>
+          mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mock
+            .calls.length === 1,
+      );
+      await waitFor(
+        () =>
+          useProtocolListComputedStore.getState().singleProtocolsIndexCache[key]
+            ?.protocolIds.length === 1,
+      );
+
+      expect(
+        useProtocolListStore.getState().protocolMap[NORMALIZED_ADDRESS],
+      ).toBeUndefined();
+      expect(protocolEntityResourceStore.getValue(protocolId)).toEqual(
+        committed,
+      );
+
+      jest.advanceTimersByTime(1);
+      await waitFor(
+        () =>
+          mockedProtocolItemEntity.getDefaultProtocolsByAddresses.mock.calls
+            .length === 1,
+      );
+      pendingLegacySnapshot.resolve({
+        [NORMALIZED_ADDRESS]: [committed],
+      });
+      await completion;
+
+      expect(
+        useProtocolListStore.getState().protocolMap[NORMALIZED_ADDRESS],
+      ).toEqual([committed]);
+      expect(protocolEntityResourceStore.getValue(protocolId)).toEqual(
+        committed,
+      );
+      expect(
+        useProtocolListComputedStore.getState().singleProtocolsIndexCache[key],
+      ).toEqual({
+        protocolIds: [protocolId],
+        defaultVisibleProtocolCount: 1,
+        foldedProtocolUsdValue: '',
+      });
+      expect(mockedCompileProtocolAssetSqlProjection).toHaveBeenCalledWith({
+        addresses: [NORMALIZED_ADDRESS],
+        chainServerId: undefined,
+        scene: 'single-address',
+      });
+      expect(
+        mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds,
+      ).toHaveBeenCalledWith([protocolId]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

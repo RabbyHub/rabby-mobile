@@ -14,6 +14,9 @@ import { UpdateTokenItemAddMarketMeta1774318632186 } from './20260323';
 import { UpdateHistoryRejudgeSmallTx1785297040800 } from './20260729';
 import { CreateAssetProjectionTables1786566000000 } from './20260813';
 import { ReplaceNftCacheTable1786566001000 } from './20260813_nft';
+import { ReplaceTokenCacheTable1786867200000 } from './20260816';
+import { ReplaceProtocolCacheTable1786953600000 } from './20260817_protocol';
+import { ReplaceAssetProjectionTables1787040000000 } from './20260818_projection';
 
 export function getMigrations() {
   return [
@@ -33,5 +36,8 @@ export function getMigrations() {
     UpdateHistoryRejudgeSmallTx1785297040800,
     CreateAssetProjectionTables1786566000000,
     ReplaceNftCacheTable1786566001000,
+    ReplaceTokenCacheTable1786867200000,
+    ReplaceProtocolCacheTable1786953600000,
+    ReplaceAssetProjectionTables1787040000000,
   ];
 }

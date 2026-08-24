@@ -1,0 +1,2 @@
+-keep class com.rabbywallet.nativehttp.NativeHttpExecutor { *; }
+-keep class com.rabbywallet.nativehttp.RabbyNativeHttpRuntime { *; }

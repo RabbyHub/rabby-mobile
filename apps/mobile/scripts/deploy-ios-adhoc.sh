@@ -119,7 +119,8 @@ prepare_ios_ruby_bundle() {
 }
 
 prepare_ios_build_artifacts() {
-  turbo_prepare_js_dependencies;
+  turbo_prepare_js_dependencies || return $?
+  prepare_private_native_packages || return $?
 
   if turbo_build_enabled; then
     ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)

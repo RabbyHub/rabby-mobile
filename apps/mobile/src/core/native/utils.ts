@@ -54,6 +54,116 @@ interface NativeModulesStatic {
       title?: string;
       subject?: string;
     }): Promise<void>;
+    runNativeOpenApiDiagnostic?(address: string): Promise<{
+      success: boolean;
+      error: string;
+      firstStatusCode: number;
+      secondStatusCode: number;
+      firstDurationMs: number;
+      secondDurationMs: number;
+      firstBodyBytes: number;
+      secondBodyBytes: number;
+      firstCredentialDisposition: string;
+      secondCredentialDisposition: string;
+      firstRequestCredentialRevision: number;
+      firstCurrentCredentialRevision: number;
+      secondRequestCredentialRevision: number;
+      secondCurrentCredentialRevision: number;
+      secondUsedLatestAvailableCredential: boolean;
+    }>;
+    getNativeAssetSyncSchedulerDiagnostics?(): Promise<{
+      realRequestDispatchCount: number;
+      completedRequestCount: number;
+      http429ResponseCount: number;
+      queuedSynthetic429Count: number;
+      cooldownSynthetic429Count: number;
+      activeRequestCount: number;
+      queuedRequestCount: number;
+      queuedProcessingTaskCount: number;
+      cooldownRemainingMs: number;
+    }>;
+    runNativeTokenCacheSyncDiagnostic?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      success: boolean;
+      outcome: 'complete' | 'partial' | 'failed';
+      address: string;
+      generation: number;
+      stage: string;
+      chainCount: number;
+      sourceTokenCount: number;
+      filteredTokenCount: number;
+      committedRowCount: number;
+      successfulChainIds: string[];
+      failedChainIds: string[];
+      committedAtMs: number;
+      durationMs: number;
+      error: string;
+    }>;
+    startNativeTokenChains?(
+      address: string,
+      chainIds: string[],
+      replacementScope: 'address' | 'chains',
+      replaceExisting: boolean,
+    ): Promise<{
+      requestId: string;
+    }>;
+    runNativeProtocolCacheSyncDiagnostic?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      kind: 'protocol';
+      success: boolean;
+      address: string;
+      generation: number;
+      stage: string;
+      sourceItemCount: number;
+      committedRowCount: number;
+      committedAtMs: number;
+      durationMs: number;
+      error: string;
+    }>;
+    startNativeProtocolSync?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      requestId: string;
+    }>;
+    runNativeNftCacheSyncDiagnostic?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      kind: 'nft';
+      success: boolean;
+      address: string;
+      generation: number;
+      stage: string;
+      sourceItemCount: number;
+      committedRowCount: number;
+      committedAtMs: number;
+      durationMs: number;
+      error: string;
+    }>;
+    startNativeNftSync?(
+      address: string,
+      replaceExisting: boolean,
+    ): Promise<{
+      requestId: string;
+    }>;
+    runNativeTokenCacheWriteDiagnostic?(): Promise<{
+      success: boolean;
+      stage: string;
+      attemptedRowCount: number;
+      durationMs: number;
+      error: string;
+    }>;
+    cancelNativeTokenCacheSync?(address: string): void;
+    cancelAllNativeTokenCacheSyncs?(): void;
+    cancelNativeProtocolCacheSync?(address: string): void;
+    cancelAllNativeProtocolCacheSyncs?(): void;
+    cancelNativeNftCacheSync?(address: string): void;
+    cancelAllNativeNftCacheSyncs?(): void;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath

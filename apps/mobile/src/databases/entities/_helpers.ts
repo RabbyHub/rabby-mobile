@@ -76,7 +76,9 @@ export const badRealTransformer: ValueTransformer = {
 export function correctBadRealOnSql(
   columnName: `tokenitem.price` | `tokenitem.amount`,
 ) {
-  return `(${columnName} / ${DECIMALS_INT_RATIO})`;
+  // amount has INTEGER affinity, so an integer divisor would truncate values
+  // such as 27 / 18 to 1 in SQLite instead of restoring 1.5.
+  return `(${columnName} / ${DECIMALS_INT_RATIO}.0)`;
 }
 
 /**

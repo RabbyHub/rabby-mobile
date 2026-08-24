@@ -1,8 +1,6 @@
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { OPSQLiteEvents } from '@/core/databases/op-sqlite/events';
 import {
-  ASSET_PROJECTION_GENERATIONS_TO_KEEP,
-  cleanupAssetProjectionGenerations,
   persistAssetProjection,
   restoreLatestAssetProjection,
   type PersistAssetProjectionInput,
@@ -101,13 +99,6 @@ export const scheduleAssetProjectionPersistence = (
         projectionKey,
       });
       ensureNotAborted(controller.signal);
-      ctx.setStage('cleanup_projection_generations', {
-        generation: persisted.generation,
-      });
-      await cleanupAssetProjectionGenerations(
-        projectionKey,
-        ASSET_PROJECTION_GENERATIONS_TO_KEEP,
-      );
       persistedProjectionFingerprints.set(projectionKey, fingerprint);
       ctx.markBatch({
         round: 0,

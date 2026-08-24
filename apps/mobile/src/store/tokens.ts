@@ -3,9 +3,15 @@ import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import {
+  compileTokenAssetSqlProjection,
+  type TokenAssetSqlProjection,
+  type TokenAssetSqlProjectionRow,
+} from '@/databases/tokenAssetProjection';
+import {
   syncRemoteTokens,
   syncRemoteTokensForAddresses,
 } from '@/databases/sync/assets';
+import { registerSyncAbortHandler } from '@/databases/sync/abort';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import {
   commonTokenFilter,
@@ -36,9 +42,15 @@ import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { uniqBy } from 'lodash';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
+import {
+  ASSET_REMOTE_ADDRESS_CONCURRENCY,
+  mapSettledWithConcurrency,
+} from '@/core/utils/boundedConcurrency';
+import { isHttpRateLimitedError } from '@/core/utils/rateLimitError';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
+  createAddressListCommitBatcher,
   createAddressListSnapshotHydrator,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
@@ -57,6 +69,36 @@ import {
   type AssetProjectionAvailability,
   type AssetSourceSnapshotReadiness,
 } from './assetProjectionAvailability';
+import {
+  TokenProjectionPersistenceGate,
+  type AddressPersistenceTicket,
+} from './tokenProjectionPersistenceGate';
+import {
+  executeTokenChainSync,
+  getTokenChainSyncMode,
+} from './tokenChainSyncExecutor';
+import {
+  selectTokenCacheApplicableAddresses,
+  selectTokenCacheRequestAddresses,
+} from './tokenCacheRequestPolicy';
+import {
+  beginAssetReadModelRefresh,
+  beginAssetReadModelRestore,
+  ensureAssetReadModel,
+  failAssetReadModel,
+  getAssetReadModel,
+  publishAssetReadModel,
+  type AssetReadModelSource,
+} from './assetReadModel';
+import {
+  AssetSyncCoordinator,
+  type AssetSyncTicket,
+  type AssetSyncTrigger,
+} from './assetSyncCoordinator';
+import {
+  registerNativeAssetSyncHandler,
+  type NativeAssetSyncCompletion,
+} from './nativeAssetSyncReceipt';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -74,7 +116,25 @@ type TokenAssetsProjectionResult = TokenAssetsResult & {
 };
 
 const multiAddressTokenRequests = new LatestAsyncRequest();
+const tokenAssetSyncCoordinator = new AssetSyncCoordinator();
 const tokenAddressRequests = new LatestAddressRequest();
+const tokenProjectionPersistenceGate = new TokenProjectionPersistenceGate();
+
+let automaticTokenProjectionSyncSuppressionDepth = 0;
+
+const isAutomaticTokenProjectionSyncSuppressed = () =>
+  automaticTokenProjectionSyncSuppressionDepth > 0;
+
+const withAutomaticTokenProjectionSyncSuppressed = <T>(callback: () => T) => {
+  automaticTokenProjectionSyncSuppressionDepth += 1;
+  try {
+    return callback();
+  } finally {
+    automaticTokenProjectionSyncSuppressionDepth -= 1;
+  }
+};
+
+registerSyncAbortHandler(() => tokenProjectionPersistenceGate.clear());
 
 const buildTokenListMapFromEntities = (
   addresses: string[],
@@ -108,11 +168,16 @@ interface TokenListState {
     }
   >;
   initStore(): void;
-  batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
+  batchGetTokenList(
+    addresses: string[],
+    force?: boolean,
+    trigger?: AssetSyncTrigger,
+  ): Promise<void>;
   getTokenList(
     address: string,
     force?: boolean,
     chainServerId?: string,
+    trigger?: AssetSyncTrigger,
   ): Promise<void>;
   setTokenDisplayMode(mode: TokenDisplayMode): void;
 }
@@ -963,14 +1028,17 @@ export const useTokenIndexStore = zCreate(
       const currentState = get();
       const updates = Array.from(addressSet).map(address => {
         const tokens = tokenListMap[address] || [];
+        const previousTokenIds =
+          currentState.addressTokenIds[address] || EMPTY_TOKEN_ENTITY_IDS;
         const nextTokenIds = buildStableTokenEntityIds(
           sortByUsdValueDesc(tokens),
-          currentState.addressTokenIds[address],
+          previousTokenIds,
         );
         const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
 
         return {
           address,
+          previousTokenIds,
           nextTokenIds,
           nextStaticItems,
           nextStaticTokenIds: new Set(
@@ -981,7 +1049,13 @@ export const useTokenIndexStore = zCreate(
 
       set(draft => {
         updates.forEach(
-          ({ address, nextTokenIds, nextStaticItems, nextStaticTokenIds }) => {
+          ({
+            address,
+            previousTokenIds,
+            nextTokenIds,
+            nextStaticItems,
+            nextStaticTokenIds,
+          }) => {
             let didChange = false;
             if (draft.addressTokenIds[address] !== nextTokenIds) {
               draft.addressTokenIds[address] = nextTokenIds;
@@ -1000,11 +1074,8 @@ export const useTokenIndexStore = zCreate(
               }
             });
 
-            Object.keys(draft.tokenStaticMap).forEach(tokenId => {
-              if (
-                getTokenEntityIdAddress(tokenId) === address &&
-                !nextStaticTokenIds.has(tokenId as TokenEntityId)
-              ) {
+            previousTokenIds.forEach(tokenId => {
+              if (!nextStaticTokenIds.has(tokenId)) {
                 delete draft.tokenStaticMap[tokenId];
                 didChange = true;
               }
@@ -1533,6 +1604,111 @@ const buildTokenAssetsIndexResult = (
   return nextResult;
 };
 
+const createEmptyTokenAssetsProjectionSourceSections =
+  (): TokenAssetsProjectionSourceSections => ({
+    primary: [],
+    additionalDefault: [],
+    additionalLp: [],
+    lowValueDefault: [],
+    lowValueLp: [],
+  });
+
+const buildTokenItemFromSqlProjectionRow = (
+  row: TokenAssetSqlProjectionRow,
+): ITokenItem => {
+  const primaryToken = tokenEntityResourceStore.getValue(
+    row.primaryResourceId as TokenEntityId,
+  );
+  if (!primaryToken) {
+    throw new Error(
+      `Token SQL projection primary entity is missing: ${row.primaryResourceId}`,
+    );
+  }
+  if (!row.groupKey) {
+    return primaryToken;
+  }
+
+  const groupItems = row.memberResourceIds.map(resourceId => {
+    const token = tokenEntityResourceStore.getValue(
+      resourceId as TokenEntityId,
+    );
+    if (!token) {
+      throw new Error(
+        `Token SQL projection member entity is missing: ${resourceId}`,
+      );
+    }
+    return token;
+  });
+  if (
+    !groupItems.some(
+      token => buildTokenEntityId(token) === row.primaryResourceId,
+    )
+  ) {
+    throw new Error(
+      `Token SQL projection primary is not a group member: ${row.primaryResourceId}`,
+    );
+  }
+
+  return {
+    ...primaryToken,
+    amount: row.totalAmount,
+    usd_value: row.totalUsdValue,
+    groupKey: row.groupKey,
+    groupItems,
+  } as AggregatedTokenItem;
+};
+
+const buildTokenAssetsIndexResultFromSqlProjection = ({
+  projection,
+  isLpTokenEnabled,
+  listKey,
+  previousResult,
+}: {
+  projection: TokenAssetSqlProjection;
+  isLpTokenEnabled?: boolean;
+  listKey?: string;
+  previousResult?: TokenAssetsIndexResult;
+}) => {
+  const sourceSections = createEmptyTokenAssetsProjectionSourceSections();
+  projection.rows.forEach(row => {
+    sourceSections[row.segment].push(buildTokenItemFromSqlProjectionRow(row));
+  });
+
+  const additionalTokens = isLpTokenEnabled
+    ? sourceSections.additionalLp
+    : sourceSections.additionalDefault;
+  const lowValueTokens = isLpTokenEnabled
+    ? sourceSections.lowValueLp
+    : sourceSections.lowValueDefault;
+  const hasLpTokens =
+    sourceSections.additionalLp.length + sourceSections.lowValueLp.length > 0;
+  const result: TokenAssetsProjectionResult = {
+    tokens: sourceSections.primary.concat(additionalTokens, lowValueTokens),
+    sourceSections,
+    defaultVisibleTokenCount: sourceSections.primary.length,
+    additionalTokenCount: additionalTokens.length,
+    lowValueTokenCount: lowValueTokens.length,
+    additionalCoreUsdValue: sourceSections.additionalDefault.reduce(
+      (total, token) =>
+        token.is_core ? total + (token.usd_value || 0) : total,
+      0,
+    ),
+    lowValueTokenPreviewLogoUrls: lowValueTokens
+      .slice(0, 3)
+      .map(token => token.logo_url),
+    lpLowValueTokenPreviewLogoUrls: sourceSections.lowValueLp
+      .slice(0, 3)
+      .map(token => token.logo_url),
+    hasAdditionalTokens:
+      sourceSections.additionalDefault.length +
+        sourceSections.lowValueDefault.length >
+        0 || hasLpTokens,
+    hasLpTokens,
+  };
+
+  return buildTokenAssetsIndexResult(result, listKey, previousResult);
+};
+
 type AggregatedTokenItem = ITokenItem & {
   groupKey: string;
   groupItems: ITokenItem[];
@@ -1783,6 +1959,8 @@ type MultiTokenAssetsIndexConfig = {
 
 type TokenProjectionScene = 'single-address' | 'multi-address';
 const TOKEN_ASSET_PROJECTION_RULE_VERSION = 4;
+const TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_MODE = 'staged-v1';
+const TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_BATCH_SIZE = 200;
 
 const getTokenAssetsProjectionAvailability = (
   config:
@@ -1811,6 +1989,60 @@ const getTokenAssetsProjectionAvailability = (
   });
 };
 
+const getTokenAssetReadModelIdentity = (
+  runtimeKey: string,
+  scene: TokenProjectionScene,
+) => ({
+  kind: 'token' as const,
+  scene,
+  runtimeKey,
+});
+
+const syncTokenAssetReadModel = ({
+  key,
+  scene,
+  config,
+  result,
+  source = 'memory',
+  generation,
+  committedAt,
+  committedRequestId,
+  requestId,
+}: {
+  key: string;
+  scene: TokenProjectionScene;
+  config: SingleTokenAssetsIndexConfig | MultiTokenAssetsIndexConfig;
+  result: TokenAssetsIndexResult;
+  source?: Exclude<AssetReadModelSource, 'none'>;
+  generation?: number;
+  committedAt?: number;
+  committedRequestId?: string;
+  requestId?: string;
+}) => {
+  const identity = getTokenAssetReadModelIdentity(key, scene);
+  ensureAssetReadModel(identity);
+  const addresses = 'address' in config ? [config.address] : config.addresses;
+  const sourceComplete = hasConfirmedAssetProjectionSources(
+    addresses,
+    tokenListStore.getState().sourceSnapshotReadyByAddress,
+  );
+  const availability = getTokenAssetsProjectionAvailability(config, result);
+
+  if (availability !== 'ready') {
+    return;
+  }
+
+  publishAssetReadModel(identity, {
+    source,
+    rowCount: result.rows.length,
+    sourceComplete,
+    generation,
+    committedAt,
+    committedRequestId,
+    requestId,
+  });
+};
+
 const scheduleTokenAssetsProjectionPersistence = (
   key: string,
   scene: TokenProjectionScene,
@@ -1834,60 +2066,187 @@ const scheduleTokenAssetsProjectionPersistence = (
     return;
   }
 
-  const persistedRows = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.flatMap(
-    segmentKey => result.segments[segmentKey].rows,
-  );
-  const groups = persistedRows.flatMap(row => {
-    if (row.type !== 'group') {
-      return [];
+  tokenProjectionPersistenceGate.schedule(`${scene}:${key}`, addresses, () => {
+    const persistedRows = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.flatMap(
+      segmentKey => result.segments[segmentKey].rows,
+    );
+    const persistedGroups = persistedRows.flatMap(row => {
+      if (row.type !== 'group') {
+        return [];
+      }
+      const group = tokenGroupResourceStore.getValue(row.groupId);
+      return group
+        ? [
+            {
+              id: row.groupId,
+              memberIds: [...group.memberTokenIds],
+              primaryTokenId: group.primaryTokenId,
+            },
+          ]
+        : [];
+    });
+    const groupRowCount = persistedRows.filter(
+      row => row.type === 'group',
+    ).length;
+    if (persistedGroups.length !== groupRowCount) {
+      return;
     }
-    const group = tokenGroupResourceStore.getValue(row.groupId);
-    return group
-      ? [{ id: row.groupId, memberIds: [...group.memberTokenIds] }]
-      : [];
+
+    const selectedSegmentMode = config?.isLpTokenEnabled ? 'lp' : 'default';
+
+    scheduleAssetProjectionPersistence({
+      runtimeKey: key,
+      kind: 'token',
+      scene,
+      ruleVersion: TOKEN_ASSET_PROJECTION_RULE_VERSION,
+      rows: persistedRows.map(row =>
+        row.type === 'group'
+          ? { type: 'token-group', id: row.groupId }
+          : { type: 'token', id: row.tokenId },
+      ),
+      groups: persistedGroups.map(group => ({
+        id: group.id,
+        memberIds: group.memberIds,
+      })),
+      metadata: {
+        entityRestoreMode: TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_MODE,
+        groupPrimaryTokenIds: Object.fromEntries(
+          persistedGroups.map(group => [group.id, group.primaryTokenId]),
+        ),
+        defaultVisibleTokenCount: result.defaultVisibleTokenCount,
+        additionalTokenCount: result.additionalTokenCount,
+        lowValueTokenCount: result.lowValueTokenCount,
+        additionalCoreUsdValue: result.additionalCoreUsdValue,
+        lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
+        lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
+        hasAdditionalTokens: result.hasAdditionalTokens,
+        hasLpTokens: result.hasLpTokens,
+        tokenDisplayMode,
+        selectedSegmentMode,
+        segmentRowCounts: Object.fromEntries(
+          TOKEN_ASSETS_INDEX_SEGMENT_KEYS.map(segmentKey => [
+            segmentKey,
+            result.segments[segmentKey].rows.length,
+          ]),
+        ),
+      },
+    });
   });
-  const groupRowCount = persistedRows.filter(
-    row => row.type === 'group',
-  ).length;
-  if (groups.length !== groupRowCount) {
-    return;
+};
+
+type StagedTokenProjectionRestoreMetadata = {
+  groupPrimaryTokenIds: Record<string, TokenEntityId>;
+  lowValueTokenPreviewLogoUrls: string[];
+  lpLowValueTokenPreviewLogoUrls: string[];
+  primaryRowCount: number;
+};
+
+const parsePersistedStringList = (value: unknown) =>
+  Array.isArray(value) && value.every(item => typeof item === 'string')
+    ? (value as string[])
+    : null;
+
+const parseStagedTokenProjectionRestoreMetadata = (
+  restored: RestoredAssetProjection,
+): StagedTokenProjectionRestoreMetadata | null => {
+  if (
+    restored.metadata.entityRestoreMode !==
+    TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_MODE
+  ) {
+    return null;
   }
 
-  const selectedSegmentMode = config?.isLpTokenEnabled ? 'lp' : 'default';
+  const rawGroupPrimaryTokenIds = restored.metadata.groupPrimaryTokenIds;
+  const groupPrimaryTokenIds =
+    rawGroupPrimaryTokenIds &&
+    typeof rawGroupPrimaryTokenIds === 'object' &&
+    !Array.isArray(rawGroupPrimaryTokenIds)
+      ? (rawGroupPrimaryTokenIds as Record<string, unknown>)
+      : null;
+  const lowValueTokenPreviewLogoUrls = parsePersistedStringList(
+    restored.metadata.lowValueTokenPreviewLogoUrls,
+  );
+  const lpLowValueTokenPreviewLogoUrls = parsePersistedStringList(
+    restored.metadata.lpLowValueTokenPreviewLogoUrls,
+  );
+  const segmentRowCounts = restored.metadata.segmentRowCounts;
+  const primaryRowCount =
+    segmentRowCounts &&
+    typeof segmentRowCounts === 'object' &&
+    !Array.isArray(segmentRowCounts)
+      ? (segmentRowCounts as Record<string, unknown>).primary
+      : null;
 
-  scheduleAssetProjectionPersistence({
-    runtimeKey: key,
-    kind: 'token',
-    scene,
-    ruleVersion: TOKEN_ASSET_PROJECTION_RULE_VERSION,
-    rows: persistedRows.map(row =>
-      row.type === 'group'
-        ? { type: 'token-group', id: row.groupId }
-        : { type: 'token', id: row.tokenId },
-    ),
-    groups,
-    metadata: {
-      defaultVisibleTokenCount: result.defaultVisibleTokenCount,
-      additionalTokenCount: result.additionalTokenCount,
-      lowValueTokenCount: result.lowValueTokenCount,
-      additionalCoreUsdValue: result.additionalCoreUsdValue,
-      hasAdditionalTokens: result.hasAdditionalTokens,
-      hasLpTokens: result.hasLpTokens,
-      tokenDisplayMode,
-      selectedSegmentMode,
-      segmentRowCounts: Object.fromEntries(
-        TOKEN_ASSETS_INDEX_SEGMENT_KEYS.map(segmentKey => [
-          segmentKey,
-          result.segments[segmentKey].rows.length,
-        ]),
-      ),
-    },
+  if (
+    !groupPrimaryTokenIds ||
+    !lowValueTokenPreviewLogoUrls ||
+    !lpLowValueTokenPreviewLogoUrls ||
+    !Number.isInteger(primaryRowCount) ||
+    (primaryRowCount as number) < 0 ||
+    (primaryRowCount as number) > restored.rows.length
+  ) {
+    return null;
+  }
+
+  const groupMembers = new Map(
+    restored.groups.map(group => [group.id, group.memberIds]),
+  );
+  const parsedGroupPrimaryTokenIds: Record<string, TokenEntityId> = {};
+  for (const row of restored.rows) {
+    if (row.type !== 'token-group') {
+      continue;
+    }
+    const primaryTokenId = groupPrimaryTokenIds[row.id];
+    const memberIds = groupMembers.get(row.id) || [];
+    if (
+      typeof primaryTokenId !== 'string' ||
+      !primaryTokenId ||
+      !memberIds.includes(primaryTokenId)
+    ) {
+      return null;
+    }
+    parsedGroupPrimaryTokenIds[row.id] = primaryTokenId as TokenEntityId;
+  }
+
+  return {
+    groupPrimaryTokenIds: parsedGroupPrimaryTokenIds,
+    lowValueTokenPreviewLogoUrls,
+    lpLowValueTokenPreviewLogoUrls,
+    primaryRowCount: primaryRowCount as number,
+  };
+};
+
+const collectRestoredTokenEntityIds = (
+  restored: RestoredAssetProjection,
+  rows: RestoredAssetProjection['rows'] = restored.rows,
+) => {
+  const groupMembers = new Map(
+    restored.groups.map(group => [group.id, group.memberIds]),
+  );
+  const tokenIds = new Set<TokenEntityId>();
+
+  rows.forEach(row => {
+    if (row.type === 'token') {
+      tokenIds.add(row.id as TokenEntityId);
+      return;
+    }
+    if (row.type === 'token-group') {
+      (groupMembers.get(row.id) || []).forEach(memberId => {
+        tokenIds.add(memberId as TokenEntityId);
+      });
+    }
   });
+
+  return tokenIds;
 };
 
 const buildRestoredTokenAssetsIndexResult = (
   restored: RestoredAssetProjection,
   tokenDisplayMode: TokenDisplayMode,
+  options: {
+    requiredEntityIds?: ReadonlySet<TokenEntityId>;
+    stagedMetadata?: StagedTokenProjectionRestoreMetadata;
+  } = {},
 ): TokenAssetsIndexResult | null => {
   const groupMembers = new Map(
     restored.groups.map(group => [group.id, group.memberIds]),
@@ -1902,7 +2261,10 @@ const buildRestoredTokenAssetsIndexResult = (
   for (const row of restored.rows) {
     if (row.type === 'token') {
       const tokenId = row.id as TokenEntityId;
-      if (!tokenEntityResourceStore.getValue(tokenId)) {
+      if (
+        (!options.stagedMetadata || options.requiredEntityIds?.has(tokenId)) &&
+        !tokenEntityResourceStore.getValue(tokenId)
+      ) {
         return null;
       }
       rows.push({ type: 'token', tokenId });
@@ -1920,26 +2282,45 @@ const buildRestoredTokenAssetsIndexResult = (
     const memberTokens = memberTokenIds.map(tokenId =>
       tokenEntityResourceStore.getValue(tokenId),
     );
-    if (!memberTokenIds.length || memberTokens.some(token => !token)) {
+    if (!memberTokenIds.length) {
       return null;
     }
-    const [summary] = aggregateTokens(
-      memberTokens as ITokenItem[],
-      tokenDisplayMode,
+    const hasEveryMember = memberTokens.every(
+      (token): token is ITokenItem => !!token,
     );
-    if (!summary) {
+    const requiresEveryMember = memberTokenIds.some(tokenId =>
+      options.requiredEntityIds?.has(tokenId),
+    );
+    if (!options.stagedMetadata || requiresEveryMember) {
+      if (!hasEveryMember) {
+        return null;
+      }
+    }
+    const [summary] = hasEveryMember
+      ? aggregateTokens(memberTokens, tokenDisplayMode)
+      : [];
+    const primaryTokenId = options.stagedMetadata
+      ? options.stagedMetadata.groupPrimaryTokenIds[groupId]
+      : summary
+      ? buildTokenEntityId(summary)
+      : undefined;
+    if (!primaryTokenId) {
       return null;
     }
-    const primaryTokenId = buildTokenEntityId(summary);
-    groups.push({
-      groupId,
-      value: {
-        groupKey: summary.groupKey,
-        primaryTokenId,
-        memberTokenIds,
-        summary: stripTokenRuntimeGroupFields(summary),
-      },
-    });
+    if (hasEveryMember) {
+      if (!summary || buildTokenEntityId(summary) !== primaryTokenId) {
+        return null;
+      }
+      groups.push({
+        groupId,
+        value: {
+          groupKey: summary.groupKey,
+          primaryTokenId,
+          memberTokenIds,
+          summary: stripTokenRuntimeGroupFields(summary),
+        },
+      });
+    }
     rows.push({ type: 'group', groupId });
     tokenIds.push(primaryTokenId);
   }
@@ -2046,12 +2427,20 @@ const buildRestoredTokenAssetsIndexResult = (
     selectedAdditionalSegment.tokenIds,
     selectedLowValueSegment.tokenIds,
   );
-  const lowValueTokenPreviewLogoUrls = segments.lowValueDefault.tokenIds
-    .slice(0, 3)
-    .map(tokenId => tokenEntityResourceStore.getValue(tokenId)?.logo_url || '');
-  const lpLowValueTokenPreviewLogoUrls = segments.lowValueLp.tokenIds
-    .slice(0, 3)
-    .map(tokenId => tokenEntityResourceStore.getValue(tokenId)?.logo_url || '');
+  const lowValueTokenPreviewLogoUrls = options.stagedMetadata
+    ? options.stagedMetadata.lowValueTokenPreviewLogoUrls
+    : segments.lowValueDefault.tokenIds
+        .slice(0, 3)
+        .map(
+          tokenId => tokenEntityResourceStore.getValue(tokenId)?.logo_url || '',
+        );
+  const lpLowValueTokenPreviewLogoUrls = options.stagedMetadata
+    ? options.stagedMetadata.lpLowValueTokenPreviewLogoUrls
+    : segments.lowValueLp.tokenIds
+        .slice(0, 3)
+        .map(
+          tokenId => tokenEntityResourceStore.getValue(tokenId)?.logo_url || '',
+        );
   return {
     rows: selectedRows,
     tokenIds: selectedTokenIds,
@@ -2068,6 +2457,9 @@ const buildRestoredTokenAssetsIndexResult = (
 };
 
 const tokenProjectionRestoreRequests = new Map<string, Promise<void>>();
+
+const yieldTokenProjectionEntityRestore = () =>
+  new Promise<void>(resolve => setTimeout(resolve, 0));
 
 const restoreTokenAssetsProjectionIfEmpty = (
   key: string,
@@ -2122,6 +2514,12 @@ const restoreTokenAssetsProjectionIfEmpty = (
       draft.multiAssetsAvailabilityByKey[key] = 'restoring';
     }
   });
+  beginAssetReadModelRestore(getTokenAssetReadModelIdentity(key, scene));
+  const trace = beginAssetDataLoadDiagnostic(
+    'asset-projection-token-restore',
+    scene,
+    { addressCount: addresses.length },
+  );
 
   const request = (async () => {
     const restored = await restoreAssetProjection(
@@ -2135,6 +2533,19 @@ const restoreTokenAssetsProjectionIfEmpty = (
       },
     );
     if (!restored) {
+      trace.finish({ reason: 'projection-missing' });
+      return;
+    }
+    trace.mark('projection-restored', { itemCount: restored.rows.length });
+
+    const usesStagedEntityRestore =
+      restored.metadata.entityRestoreMode ===
+      TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_MODE;
+    const stagedMetadata = usesStagedEntityRestore
+      ? parseStagedTokenProjectionRestoreMetadata(restored) || undefined
+      : undefined;
+    if (usesStagedEntityRestore && !stagedMetadata) {
+      trace.finish({ reason: 'staged-metadata-invalid' });
       return;
     }
 
@@ -2152,32 +2563,32 @@ const restoreTokenAssetsProjectionIfEmpty = (
       beforeHydrateResult !== startedResult ||
       tokenListStore.getState().tokenListMap !== startedSourceMap
     ) {
+      trace.finish({ reason: 'state-changed-before-hydrate' });
       return;
     }
 
-    const requiredTokenIds = new Set<TokenEntityId>();
-    restored.rows.forEach(row => {
-      if (row.type === 'token') {
-        requiredTokenIds.add(row.id as TokenEntityId);
-      }
-    });
-    restored.groups.forEach(group => {
-      group.memberIds.forEach(id => requiredTokenIds.add(id as TokenEntityId));
-    });
-    const ownerAddresses = Array.from(
-      new Set(
-        Array.from(requiredTokenIds)
-          .map(getTokenEntityIdAddress)
-          .filter(Boolean),
-      ),
+    const allTokenIds = collectRestoredTokenEntityIds(restored);
+    const requiredTokenIds = stagedMetadata
+      ? collectRestoredTokenEntityIds(
+          restored,
+          restored.rows.slice(0, stagedMetadata.primaryRowCount),
+        )
+      : allTokenIds;
+    const missingTokenIds = Array.from(requiredTokenIds).filter(
+      tokenId => !tokenEntityResourceStore.getValue(tokenId),
     );
-    if (requiredTokenIds.size && !ownerAddresses.length) {
-      return;
-    }
-    if (ownerAddresses.length) {
-      const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
-        ownerAddresses,
-      );
+    trace.mark('entity-selection-ready', {
+      itemCount: requiredTokenIds.size,
+      deferredItemCount: allTokenIds.size - requiredTokenIds.size,
+      path: stagedMetadata ? 'staged' : 'legacy-full',
+    });
+    if (missingTokenIds.length) {
+      trace.mark('entity-query-started', { itemCount: missingTokenIds.length });
+      const cachedTokens =
+        await TokenItemEntity.batchMultiAddressTokensByResourceIds(
+          missingTokenIds,
+        );
+      trace.mark('entity-query-finished', { itemCount: cachedTokens.length });
       const latestBeforeEntityPublish = useTokenAssetsIndexStore.getState();
       const latestBeforeEntityResult =
         scene === 'single-address'
@@ -2192,6 +2603,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
         latestBeforeEntityResult !== startedResult ||
         tokenListStore.getState().tokenListMap !== startedSourceMap
       ) {
+        trace.finish({ reason: 'state-changed-before-entity-publish' });
         return;
       }
       const missingTokens = cachedTokens
@@ -2204,6 +2616,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
           );
         });
       tokenEntityResourceStore.upsertTokens(missingTokens, 'hydrate');
+      trace.mark('entities-published', { itemCount: missingTokens.length });
     }
 
     const result = buildRestoredTokenAssetsIndexResult(
@@ -2212,8 +2625,13 @@ const restoreTokenAssetsProjectionIfEmpty = (
         ? (startedConfig as MultiTokenAssetsIndexConfig).tokenDisplayMode ||
             'byAddress'
         : 'byAddress',
+      {
+        requiredEntityIds: requiredTokenIds,
+        stagedMetadata,
+      },
     );
     if (!result) {
+      trace.finish({ reason: 'projection-invalid' });
       return;
     }
 
@@ -2231,6 +2649,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       latestResult !== startedResult ||
       tokenListStore.getState().tokenListMap !== startedSourceMap
     ) {
+      trace.finish({ reason: 'state-changed-before-projection-publish' });
       return;
     }
 
@@ -2243,8 +2662,128 @@ const restoreTokenAssetsProjectionIfEmpty = (
         draft.multiAssetsAvailabilityByKey[key] = 'ready';
       }
     });
+    syncTokenAssetReadModel({
+      key,
+      scene,
+      config: startedConfig,
+      result,
+      source: 'database',
+      generation: restored.generation,
+      committedAt: restored.committedAt,
+    });
+    trace.finish({
+      itemCount: result.rows.length,
+      restoredEntityCount: requiredTokenIds.size,
+      path: stagedMetadata ? 'staged' : 'legacy-full',
+    });
+
+    if (!stagedMetadata) {
+      return;
+    }
+
+    const remainingTokenIds = Array.from(allTokenIds).filter(
+      tokenId => !tokenEntityResourceStore.getValue(tokenId),
+    );
+    if (!remainingTokenIds.length) {
+      return;
+    }
+
+    const backgroundTrace = beginAssetDataLoadDiagnostic(
+      'asset-projection-token-entity-background-restore',
+      scene,
+      {
+        addressCount: addresses.length,
+        itemCount: remainingTokenIds.length,
+      },
+    );
+    const isBackgroundRestoreCurrent = () => {
+      const currentState = useTokenAssetsIndexStore.getState();
+      const currentConfig =
+        scene === 'single-address'
+          ? currentState.singleAssetsConfigByKey[key]
+          : currentState.multiAssetsConfigByKey[key];
+      const currentResult =
+        scene === 'single-address'
+          ? currentState.singleAssetsResultByKey[key]
+          : currentState.multiAssetsResultByKey[key];
+      return (
+        currentConfig === startedConfig &&
+        currentResult === result &&
+        tokenListStore.getState().tokenListMap === startedSourceMap
+      );
+    };
+
+    void (async () => {
+      await yieldTokenProjectionEntityRestore();
+      let restoredCount = 0;
+      for (
+        let start = 0;
+        start < remainingTokenIds.length;
+        start += TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_BATCH_SIZE
+      ) {
+        if (!isBackgroundRestoreCurrent()) {
+          backgroundTrace.finish({
+            reason: 'state-changed',
+            restoredEntityCount: restoredCount,
+          });
+          return;
+        }
+        const batchIds = remainingTokenIds.slice(
+          start,
+          start + TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_BATCH_SIZE,
+        );
+        const cachedTokens =
+          await TokenItemEntity.batchMultiAddressTokensByResourceIds(batchIds);
+        if (!isBackgroundRestoreCurrent()) {
+          backgroundTrace.finish({
+            reason: 'state-changed-after-query',
+            restoredEntityCount: restoredCount,
+          });
+          return;
+        }
+        const batchIdSet = new Set(batchIds);
+        const tokens = cachedTokens
+          .map(token => tokenItemEntityToTokenItem(token))
+          .filter(token => batchIdSet.has(buildTokenEntityId(token)));
+        tokenEntityResourceStore.upsertTokens(tokens, 'hydrate');
+        restoredCount += tokens.length;
+        backgroundTrace.mark('entity-batch-published', {
+          batchItemCount: tokens.length,
+          restoredEntityCount: restoredCount,
+        });
+        await yieldTokenProjectionEntityRestore();
+      }
+
+      if (!isBackgroundRestoreCurrent()) {
+        backgroundTrace.finish({
+          reason: 'state-changed-before-group-publish',
+          restoredEntityCount: restoredCount,
+        });
+        return;
+      }
+      const completeResult = buildRestoredTokenAssetsIndexResult(
+        restored,
+        scene === 'multi-address'
+          ? (startedConfig as MultiTokenAssetsIndexConfig).tokenDisplayMode ||
+              'byAddress'
+          : 'byAddress',
+        {
+          requiredEntityIds: allTokenIds,
+          stagedMetadata,
+        },
+      );
+      backgroundTrace.finish({
+        itemCount: remainingTokenIds.length,
+        restoredEntityCount: restoredCount,
+        groupsReady: !!completeResult,
+      });
+    })().catch(error => {
+      backgroundTrace.fail({ reason: 'background-restore-error' });
+      console.error('[tokenProjection] background restore failed', error);
+    });
   })()
     .catch(error => {
+      trace.fail({ reason: 'restore-error' });
       console.error('[tokenProjection] restore failed', error);
     })
     .finally(() => {
@@ -2396,6 +2935,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.singleAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'single-address',
+          config: nextConfig,
+          result: nextResult,
+        });
         scheduleTokenAssetsProjectionPersistence(
           key,
           'single-address',
@@ -2414,6 +2959,12 @@ export const useTokenAssetsIndexStore = zCreate(
         draft.singleAssetsResultByKey[key] = nextResult;
         draft.singleAssetsAvailabilityByKey[key] =
           getTokenAssetsProjectionAvailability(nextConfig, nextResult);
+      });
+      syncTokenAssetReadModel({
+        key,
+        scene: 'single-address',
+        config: nextConfig,
+        result: nextResult,
       });
       scheduleTokenAssetsProjectionPersistence(
         key,
@@ -2459,6 +3010,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.singleAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'single-address',
+          config: nextConfig,
+          result: state.singleAssetsResultByKey[key],
+        });
         return key;
       }
 
@@ -2512,6 +3069,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.multiAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'multi-address',
+          config: state.multiAssetsConfigByKey[key],
+          result: state.multiAssetsResultByKey[key],
+        });
         return key;
       }
 
@@ -2603,7 +3166,17 @@ export const useTokenAssetsIndexStore = zCreate(
           });
         });
       }
+      const publishedState = get();
       Object.entries(projectionResults).forEach(([key, result]) => {
+        const config = publishedState.singleAssetsConfigByKey[key];
+        if (config) {
+          syncTokenAssetReadModel({
+            key,
+            scene: 'single-address',
+            config,
+            result,
+          });
+        }
         scheduleTokenAssetsProjectionPersistence(key, 'single-address', result);
         if (!result.rows.length) {
           restoreTokenAssetsProjectionIfEmpty(key, 'single-address');
@@ -2682,6 +3255,12 @@ export const useTokenAssetsIndexStore = zCreate(
             draft.multiAssetsAvailabilityByKey[key] = availability;
           });
         }
+        syncTokenAssetReadModel({
+          key,
+          scene: 'multi-address',
+          config: nextConfig,
+          result: previousResult,
+        });
         return;
       }
 
@@ -2701,6 +3280,12 @@ export const useTokenAssetsIndexStore = zCreate(
         draft.multiAssetsResultByKey[key] = nextResult;
         draft.multiAssetsAvailabilityByKey[key] =
           getTokenAssetsProjectionAvailability(nextConfig, nextResult);
+      });
+      syncTokenAssetReadModel({
+        key,
+        scene: 'multi-address',
+        config: nextConfig,
+        result: nextResult,
       });
       scheduleTokenAssetsProjectionPersistence(
         key,
@@ -2793,10 +3378,27 @@ export const useTokenAssetsIndexStore = zCreate(
         });
       });
       Object.entries(singleResultUpdates).forEach(([key, result]) => {
+        const config = state.singleAssetsConfigByKey[key];
+        if (config) {
+          syncTokenAssetReadModel({
+            key,
+            scene: 'single-address',
+            config,
+            result,
+          });
+        }
         scheduleTokenAssetsProjectionPersistence(key, 'single-address', result);
       });
       Object.entries(multiResultUpdates).forEach(([key, result]) => {
         const config = state.multiAssetsConfigByKey[key];
+        if (config) {
+          syncTokenAssetReadModel({
+            key,
+            scene: 'multi-address',
+            config,
+            result,
+          });
+        }
         scheduleTokenAssetsProjectionPersistence(
           key,
           'multi-address',
@@ -2839,6 +3441,9 @@ useTokenIndexStore.subscribe(state => {
 
   const previousVersions = lastTokenIndexAddressVersions;
   lastTokenIndexAddressVersions = state.addressVersions;
+  if (isAutomaticTokenProjectionSyncSuppressed()) {
+    return;
+  }
   const changedAddresses = getChangedTokenIndexAddresses(
     previousVersions,
     state.addressVersions,
@@ -2860,9 +3465,13 @@ const syncTokenRuntimeStoresFromTokenListMap = (
   source: ObservableResourceValueSource = 'remote',
   options?: {
     markTokenListMapSynced?: boolean;
+    markPersistencePending?: boolean;
   },
 ) => {
   const normalizedAddresses = Array.from(normalizeAddressSet(addresses));
+  const persistenceTicket = options?.markPersistencePending
+    ? tokenProjectionPersistenceGate.markDirty(normalizedAddresses)
+    : undefined;
   const trace = beginAssetDataLoadDiagnostic(
     'token-runtime-sync',
     normalizedAddresses.join('|'),
@@ -2877,7 +3486,7 @@ const syncTokenRuntimeStoresFromTokenListMap = (
       lastTokenListMapSyncedToRuntime = tokenListMap;
     }
     trace.finish({ path: 'empty-addresses' });
-    return;
+    return persistenceTicket;
   }
 
   tokenEntityResourceStore.syncAddressesFromTokenListMap(
@@ -2900,6 +3509,185 @@ const syncTokenRuntimeStoresFromTokenListMap = (
     lastTokenListMapSyncedToRuntime = tokenListMap;
   }
   trace.finish();
+  return persistenceTicket;
+};
+
+type TokenAssetSyncOutcome = {
+  status: 'complete' | 'partial' | 'superseded';
+  source?: Exclude<AssetReadModelSource, 'none'>;
+};
+
+type TokenAssetReadModelTarget = {
+  key: string;
+  scene: TokenProjectionScene;
+};
+
+const getTokenAssetReadModelTargets = (
+  addresses: string[],
+): TokenAssetReadModelTarget[] => {
+  const addressSet = normalizeAddressSet(addresses);
+  const state = useTokenAssetsIndexStore.getState();
+  const targets: TokenAssetReadModelTarget[] = [];
+
+  Object.values(state.singleAssetsConfigByKey).forEach(config => {
+    if (addressSet.has(normalizeAddress(config.address))) {
+      targets.push({ key: config.key, scene: 'single-address' });
+    }
+  });
+  Object.values(state.multiAssetsConfigByKey).forEach(config => {
+    if (
+      config.addresses.some(address =>
+        addressSet.has(normalizeAddress(address)),
+      )
+    ) {
+      targets.push({ key: config.key, scene: 'multi-address' });
+    }
+  });
+
+  return targets;
+};
+
+const beginTokenAssetReadModelRefresh = (
+  addresses: string[],
+  requestId: string,
+) => {
+  const targets = getTokenAssetReadModelTargets(addresses);
+  targets.forEach(({ key, scene }) => {
+    beginAssetReadModelRefresh(
+      getTokenAssetReadModelIdentity(key, scene),
+      requestId,
+    );
+  });
+  return targets;
+};
+
+const failTokenAssetReadModelRefresh = (
+  targets: TokenAssetReadModelTarget[],
+  requestId: string,
+  error: unknown,
+) => {
+  targets.forEach(({ key, scene }) => {
+    failAssetReadModel(
+      getTokenAssetReadModelIdentity(key, scene),
+      error,
+      requestId,
+    );
+  });
+};
+
+const completeTokenAssetReadModelRefresh = (
+  targets: TokenAssetReadModelTarget[],
+  requestId: string,
+  source?: Exclude<AssetReadModelSource, 'none'>,
+) => {
+  const state = useTokenAssetsIndexStore.getState();
+  targets.forEach(({ key, scene }) => {
+    const config =
+      scene === 'single-address'
+        ? state.singleAssetsConfigByKey[key]
+        : state.multiAssetsConfigByKey[key];
+    const result =
+      scene === 'single-address'
+        ? state.singleAssetsResultByKey[key]
+        : state.multiAssetsResultByKey[key];
+    if (!config || !result) {
+      failAssetReadModel(
+        getTokenAssetReadModelIdentity(key, scene),
+        'projection-unavailable',
+        requestId,
+      );
+      return;
+    }
+
+    const identity = getTokenAssetReadModelIdentity(key, scene);
+    const currentSource = getAssetReadModel(identity).source;
+    syncTokenAssetReadModel({
+      key,
+      scene,
+      config,
+      result,
+      source: source || (currentSource === 'none' ? 'memory' : currentSource),
+      requestId,
+    });
+
+    if (getAssetReadModel(identity).activeRequestId === requestId) {
+      failAssetReadModel(identity, 'source-incomplete', requestId);
+    }
+  });
+};
+
+const runTokenAssetSync = async ({
+  addresses,
+  variant,
+  force,
+  trigger,
+  execute,
+}: {
+  addresses: string[];
+  variant: string;
+  force: boolean;
+  trigger: AssetSyncTrigger;
+  execute: (ticket: AssetSyncTicket) => Promise<TokenAssetSyncOutcome>;
+}) => {
+  let readModelTargets: TokenAssetReadModelTarget[] = [];
+
+  await tokenAssetSyncCoordinator.run({
+    scope: { kind: 'token', addresses, variant },
+    force,
+    trigger,
+    onStart: ticket => {
+      readModelTargets = beginTokenAssetReadModelRefresh(
+        addresses,
+        ticket.requestId,
+      );
+    },
+    onSuccess: (ticket, outcome) => {
+      if (outcome.status === 'complete') {
+        completeTokenAssetReadModelRefresh(
+          readModelTargets,
+          ticket.requestId,
+          outcome.source,
+        );
+        return;
+      }
+      failTokenAssetReadModelRefresh(
+        readModelTargets,
+        ticket.requestId,
+        outcome.status === 'partial'
+          ? 'source-incomplete'
+          : 'request-superseded',
+      );
+    },
+    onError: (ticket, error) => {
+      failTokenAssetReadModelRefresh(
+        readModelTargets,
+        ticket.requestId,
+        error instanceof Error ? error.name : 'asset-sync-failed',
+      );
+    },
+    execute,
+  });
+};
+
+const settleTokenProjectionPersistence = (
+  ticket: AddressPersistenceTicket | undefined,
+  persistence: Promise<boolean>,
+  addresses?: string[],
+) => {
+  void persistence
+    .then(success => {
+      tokenProjectionPersistenceGate.settle(ticket, {
+        addresses,
+        success,
+      });
+    })
+    .catch(error => {
+      tokenProjectionPersistenceGate.settle(ticket, {
+        addresses,
+        success: false,
+      });
+      console.error('Token entity persistence failed:', error);
+    });
 };
 
 const tokenCacheHydrator = createAddressListSnapshotHydrator<ITokenItem>({
@@ -2973,609 +3761,1269 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     });
   },
 
-  async batchGetTokenList(addresses: string[], force = false) {
-    const requestId = multiAddressTokenRequests.next();
+  async batchGetTokenList(
+    addresses: string[],
+    force = false,
+    trigger: AssetSyncTrigger = 'on-demand',
+  ) {
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
-    const addressRequest = tokenAddressRequests.reserve(lowerAddresses);
-    const trace = beginAssetDataLoadDiagnostic(
-      'multi-address-token',
-      lowerAddresses.join('|'),
-      {
-        addressCount: lowerAddresses.length,
-        force,
-      },
-    );
-    const isCurrentRequest = () =>
-      multiAddressTokenRequests.isCurrent(requestId);
-    const getCurrentAddresses = () =>
-      isCurrentRequest()
-        ? tokenAddressRequests.getCurrentAddresses(addressRequest)
-        : [];
-
-    if (!lowerAddresses.length) {
-      set(() => ({ isLoading: true }));
-      await new Promise(resolve => setTimeout(resolve, 0));
-      if (isCurrentRequest()) {
-        set(() => ({
-          tokenListMap: {},
-          sourceSnapshotReadyByAddress: {},
-          isLoading: false,
-        }));
-      }
-      trace.finish({ path: 'empty-addresses' });
-      return;
-    }
-
-    try {
-      let confirmedLocalAddresses: string[] = [];
-      if (!force) {
-        const expirationByAddress = await getDataExpirationByAddress(
-          lowerAddresses,
-        );
-        const isExpired = Object.values(expirationByAddress).some(Boolean);
-        confirmedLocalAddresses = lowerAddresses.filter(
-          address => !expirationByAddress[address],
-        );
-        trace.mark('expiry-resolved', { isExpired });
-        if (!isExpired) {
-          await tokenCacheHydrator.hydrate(lowerAddresses);
-          set(state => ({
-            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-              state.sourceSnapshotReadyByAddress,
-              confirmedLocalAddresses,
-            ),
-          }));
-          const itemCount = lowerAddresses.reduce(
-            (count, address) =>
-              count + (get().tokenListMap[address]?.length || 0),
-            0,
-          );
-          trace.mark('local-db-loaded', { itemCount });
-          trace.finish({ path: 'local-db', itemCount });
-          return;
-        }
-      }
-
-      if (
-        !isCurrentRequest() ||
-        !tokenAddressRequests.activate(addressRequest).length
-      ) {
-        trace.finish({ path: 'stale-before-remote' });
-        return;
-      }
-      tokenCacheHydrator.invalidate(lowerAddresses);
-
-      if (isCurrentRequest()) {
-        set(() => ({ isLoading: true }));
-      }
-
-      const cacheTokenQueue = new PQueue({
-        concurrency: 5,
-      });
-      const cacheTokenMap: Record<string, ITokenItem[]> = {};
-      const cacheSucceededAddresses = new Set<string>();
-      const cacheTokensPromise = Promise.allSettled(
-        lowerAddresses.map(address =>
-          cacheTokenQueue.add(async () => {
-            const list = await queryTokensCache(address);
-            cacheTokenMap[address] = filterInterfaceTokenList(
-              list.map(item => tokenItemToITokenItem(item, address)),
-            );
-            cacheSucceededAddresses.add(address);
-          }),
-        ),
-      );
-
-      const currentTokenListMap = get().tokenListMap;
-      const hasMemorySnapshot = lowerAddresses.every(address =>
-        Object.prototype.hasOwnProperty.call(currentTokenListMap, address),
-      );
-      if (!force && !hasMemorySnapshot) {
-        await tokenCacheHydrator.hydrate(lowerAddresses);
-        const localItemCount = lowerAddresses.reduce(
-          (count, address) =>
-            count + (get().tokenListMap[address]?.length || 0),
-          0,
-        );
-        trace.mark('stale-local-db-loaded', {
-          itemCount: localItemCount,
-        });
-        if (getCurrentAddresses().length) {
-          trace.mark('stale-local-store-published', {
-            itemCount: localItemCount,
-          });
-        }
-      } else {
-        trace.mark('memory-snapshot-retained', {
-          hasMemorySnapshot,
-        });
-      }
-      if (confirmedLocalAddresses.length) {
-        set(state => ({
-          sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-            state.sourceSnapshotReadyByAddress,
-            confirmedLocalAddresses,
-          ),
-        }));
-      }
-
-      await cacheTokensPromise;
-      trace.mark('cache-responses-completed', {
-        itemCount: Object.values(cacheTokenMap).reduce(
-          (count, tokens) => count + tokens.length,
-          0,
-        ),
-      });
-      const currentAddressesAfterCache = getCurrentAddresses();
-      if (!currentAddressesAfterCache.length) {
-        trace.finish({ path: 'stale-after-cache' });
-        return;
-      }
-      const latestTokenListMap = get().tokenListMap;
-      const cacheApplicableAddresses = currentAddressesAfterCache.filter(
-        address =>
-          cacheSucceededAddresses.has(address) &&
-          !Object.prototype.hasOwnProperty.call(latestTokenListMap, address),
-      );
-
-      if (cacheApplicableAddresses.length) {
-        const mergedCacheTokenMap = { ...latestTokenListMap };
-        cacheApplicableAddresses.forEach(address => {
-          mergedCacheTokenMap[address] = cacheTokenMap[address] || [];
-        });
-        syncTokenRuntimeStoresFromTokenListMap(
-          mergedCacheTokenMap,
-          cacheApplicableAddresses,
-          'remote',
+    await runTokenAssetSync({
+      addresses: lowerAddresses,
+      variant: 'multi-address',
+      force,
+      trigger,
+      execute: async ticket => {
+        const requestId = multiAddressTokenRequests.next();
+        const addressRequest = tokenAddressRequests.reserve(lowerAddresses);
+        const trace = beginAssetDataLoadDiagnostic(
+          'multi-address-token',
+          lowerAddresses.join('|'),
           {
-            markTokenListMapSynced: true,
+            addressCount: lowerAddresses.length,
+            force,
+            trigger: ticket.getTrigger(),
           },
         );
-        tokenCacheHydrator.invalidate(cacheApplicableAddresses);
-        set(() => ({ tokenListMap: mergedCacheTokenMap }));
-        trace.mark('cache-store-published', {
-          addressCount: cacheApplicableAddresses.length,
-        });
-      } else {
-        trace.mark('cache-store-skipped', {
-          reason: 'memory-snapshot-retained',
-        });
-      }
+        const isCurrentRequest = () =>
+          multiAddressTokenRequests.isCurrent(requestId);
+        const getCurrentAddresses = () =>
+          isCurrentRequest()
+            ? tokenAddressRequests.getCurrentAddresses(addressRequest)
+            : [];
+        const isForceRequested = () => ticket.isForceRequested();
 
-      const realTimeTokenMap: Record<string, ITokenItem[]> = {};
-      const completeRealTimeTokenMap: Record<string, ITokenItem[]> = {};
-      const realTimeTokenQueue = new PQueue({
-        concurrency: 15,
-      });
-      await Promise.allSettled(
-        lowerAddresses.map(async address => {
-          const chains = await openapi.usedChainList(address);
-          const chainIdList = chains.map(item => item.id);
-          const res = await Promise.allSettled(
-            chainIdList.map(async serverId => {
-              const tokens =
-                (await realTimeTokenQueue.add(async () => {
-                  const chainTokensRes = await requestOpenApiWithChainId(
-                    ({ openapi }) => openapi.listToken(address, serverId, true),
-                    {
-                      isTestnet: false,
-                    },
-                  );
-                  return filterInterfaceTokenList(
-                    chainTokensRes.map(item =>
-                      tokenItemToITokenItem(item, address),
-                    ),
-                  );
-                })) || [];
-              return { serverId, tokens };
-            }),
-          );
-
-          const fulfilledChainSnapshots = res.flatMap(result =>
-            result.status === 'fulfilled' ? [result.value] : [],
-          );
-          const hasFailedChain = res.some(
-            result => result.status === 'rejected',
-          );
-
-          // A chain failure must not invalidate the other chains of this
-          // address. Keep the last usable snapshot for failed chains and only
-          // mark the address fresh when every requested chain succeeded.
-          if (!fulfilledChainSnapshots.length && hasFailedChain) {
-            return;
+        if (!lowerAddresses.length) {
+          set(() => ({ isLoading: true }));
+          await new Promise(resolve => setTimeout(resolve, 0));
+          if (isCurrentRequest()) {
+            set(() => ({
+              tokenListMap: {},
+              sourceSnapshotReadyByAddress: {},
+              isLoading: false,
+            }));
           }
-
-          const nextTokens = hasFailedChain
-            ? fulfilledChainSnapshots.reduce(
-                (tokens, snapshot) =>
-                  replaceTokensByChain(
-                    tokens,
-                    snapshot.tokens,
-                    snapshot.serverId,
-                  ),
-                get().tokenListMap[address] || [],
-              )
-            : fulfilledChainSnapshots.flatMap(snapshot => snapshot.tokens);
-
-          realTimeTokenMap[address] = nextTokens;
-          if (!hasFailedChain) {
-            completeRealTimeTokenMap[address] = nextTokens;
-          }
-        }),
-      );
-
-      const remoteApplicableAddresses = getCurrentAddresses().filter(address =>
-        Object.prototype.hasOwnProperty.call(realTimeTokenMap, address),
-      );
-      const applicableRealTimeTokenMap = Object.fromEntries(
-        remoteApplicableAddresses.map(address => [
-          address,
-          realTimeTokenMap[address] || [],
-        ]),
-      );
-      trace.mark('remote-responses-completed', {
-        itemCount: Object.values(applicableRealTimeTokenMap).reduce(
-          (count, tokens) => count + tokens.length,
-          0,
-        ),
-      });
-      if (!remoteApplicableAddresses.length) {
-        trace.finish({ path: 'stale-after-remote' });
-        return;
-      }
-
-      const nextTokenListMap = mergeAddressListSnapshots(
-        get().tokenListMap,
-        remoteApplicableAddresses,
-        applicableRealTimeTokenMap,
-      );
-      syncTokenRuntimeStoresFromTokenListMap(
-        nextTokenListMap,
-        remoteApplicableAddresses,
-        'remote',
-        {
-          markTokenListMapSynced: true,
-        },
-      );
-      tokenCacheHydrator.invalidate(remoteApplicableAddresses);
-      const completeApplicableAddresses = remoteApplicableAddresses.filter(
-        address =>
-          Object.prototype.hasOwnProperty.call(
-            completeRealTimeTokenMap,
-            address,
-          ),
-      );
-      set(state => ({
-        tokenListMap: nextTokenListMap,
-        sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-          state.sourceSnapshotReadyByAddress,
-          completeApplicableAddresses,
-        ),
-        isLoading: false,
-      }));
-      const completeApplicableRealTimeTokenMap = Object.fromEntries(
-        completeApplicableAddresses.map(address => [
-          address,
-          completeRealTimeTokenMap[address] || [],
-        ]),
-      );
-      if (Object.keys(completeApplicableRealTimeTokenMap).length) {
-        void syncRemoteTokensForAddresses(completeApplicableRealTimeTokenMap);
-      }
-      trace.finish({ path: 'cache-then-remote' });
-    } catch (error) {
-      trace.fail({ phase: 'load' });
-      throw error;
-    } finally {
-      if (isCurrentRequest() && get().isLoading) {
-        set(() => ({ isLoading: false }));
-      }
-    }
-  },
-
-  async getTokenList(address: string, force = false, chainServerId?: string) {
-    const normalizedAddress = address.toLowerCase();
-    const addressRequest = tokenAddressRequests.reserve([normalizedAddress]);
-    const isCurrentRequest = () =>
-      tokenAddressRequests.isCurrent(addressRequest, normalizedAddress);
-    const trace = beginAssetDataLoadDiagnostic(
-      'single-address-token',
-      normalizedAddress,
-      {
-        force,
-        chainServerId: chainServerId || null,
-      },
-    );
-    let isExpired: boolean;
-    try {
-      isExpired = await isDataExpired(normalizedAddress);
-      trace.mark('expiry-resolved', { isExpired });
-    } catch (error) {
-      trace.fail({ phase: 'expiry' });
-      throw error;
-    }
-    const currentStateTokens = get().tokenListMap[normalizedAddress] || [];
-    const hasCurrentAddressTokens = currentStateTokens.length > 0;
-    const hasCurrentAddressSnapshot = Object.prototype.hasOwnProperty.call(
-      get().tokenListMap,
-      normalizedAddress,
-    );
-    const targetChainServerId = chainServerId || undefined;
-
-    // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
-    const isRefreshingWithValidLocalTokens =
-      hasCurrentAddressTokens && (force || !isExpired || !!targetChainServerId);
-
-    /**
-     * 阶段一： 校验有效期，有效期内直接用本地数据
-     */
-    if (!force && !isExpired) {
-      try {
-        if (!hasCurrentAddressSnapshot) {
-          await tokenCacheHydrator.hydrate([normalizedAddress]);
+          trace.finish({ path: 'empty-addresses' });
+          return { status: 'complete', source: 'database' };
         }
-        set(state => ({
-          sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-            state.sourceSnapshotReadyByAddress,
-            [normalizedAddress],
-          ),
-        }));
-        const itemCount = get().tokenListMap[normalizedAddress]?.length || 0;
-        trace.mark('local-db-loaded', { itemCount });
-        trace.mark('local-store-published', { itemCount });
-        trace.finish({ path: 'local-db' });
-        return;
-      } catch (error) {
-        trace.fail({ phase: 'local-db' });
-        throw error;
-      }
-    }
 
-    if (!tokenAddressRequests.activate(addressRequest).length) {
-      trace.finish({ path: 'stale-before-remote' });
-      return;
-    }
-    tokenCacheHydrator.invalidate([normalizedAddress]);
-
-    set(state => ({
-      isLoadingByAddress: {
-        ...state.isLoadingByAddress,
-        [normalizedAddress]: { loading: true, allLoading: true },
-      },
-    }));
-
-    try {
-      const shouldHydrateStaleLocalTokens =
-        !force && isExpired && !hasCurrentAddressSnapshot;
-      const cacheListPromise = isRefreshingWithValidLocalTokens
-        ? null
-        : queryTokensCache(address);
-
-      if (shouldHydrateStaleLocalTokens) {
         try {
-          await tokenCacheHydrator.hydrate([normalizedAddress]);
-          if (!isCurrentRequest()) {
-            trace.finish({ path: 'stale-after-hydrate' });
-            return;
+          let confirmedLocalAddresses: string[] = [];
+          const completedAddresses = new Set<string>();
+          if (!isForceRequested()) {
+            const expirationByAddress = await getDataExpirationByAddress(
+              lowerAddresses,
+            );
+            const isExpired = Object.values(expirationByAddress).some(Boolean);
+            confirmedLocalAddresses = lowerAddresses.filter(
+              address => !expirationByAddress[address],
+            );
+            trace.mark('expiry-resolved', { isExpired });
+            if (!isExpired && !isForceRequested()) {
+              await tokenCacheHydrator.hydrate(lowerAddresses);
+              set(state => ({
+                sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                  state.sourceSnapshotReadyByAddress,
+                  confirmedLocalAddresses,
+                ),
+              }));
+              const itemCount = lowerAddresses.reduce(
+                (count, address) =>
+                  count + (get().tokenListMap[address]?.length || 0),
+                0,
+              );
+              trace.mark('local-db-loaded', { itemCount });
+              trace.finish({ path: 'local-db', itemCount });
+              return { status: 'complete', source: 'database' };
+            }
+            if (!isExpired) {
+              confirmedLocalAddresses = [];
+              trace.mark('force-refresh-coalesced');
+            }
           }
-          const localTokens = get().tokenListMap[normalizedAddress] || [];
-          trace.mark('stale-local-db-loaded', {
-            itemCount: localTokens.length,
+
+          if (
+            !isCurrentRequest() ||
+            !tokenAddressRequests.activate(addressRequest).length
+          ) {
+            trace.finish({ path: 'stale-before-remote' });
+            return { status: 'superseded' };
+          }
+          tokenCacheHydrator.invalidate(lowerAddresses);
+
+          if (isCurrentRequest()) {
+            set(() => ({ isLoading: true }));
+          }
+
+          const cacheTokenQueue = new PQueue({
+            concurrency: 5,
+          });
+          const cacheTokenMap: Record<string, ITokenItem[]> = {};
+          const cacheSucceededAddresses = new Set<string>();
+          const tokenListMapBeforeCache = get().tokenListMap;
+          const confirmedLocalAddressSet = new Set(confirmedLocalAddresses);
+          const cacheRequestAddresses = selectTokenCacheRequestAddresses(
+            lowerAddresses,
+            tokenListMapBeforeCache,
+            confirmedLocalAddressSet,
+          );
+          trace.mark('cache-requests-dispatched', {
+            addressCount: cacheRequestAddresses.length,
+            skippedAddressCount:
+              lowerAddresses.length - cacheRequestAddresses.length,
+            candidateAddressCount: lowerAddresses.length,
+            concurrency: 5,
+          });
+          const cacheTokensPromise = Promise.allSettled(
+            cacheRequestAddresses.map(address =>
+              cacheTokenQueue.add(async () => {
+                const list = await queryTokensCache(address);
+                cacheTokenMap[address] = filterInterfaceTokenList(
+                  list.map(item => tokenItemToITokenItem(item, address)),
+                );
+                cacheSucceededAddresses.add(address);
+              }),
+            ),
+          );
+
+          const currentTokenListMap = get().tokenListMap;
+          const hasMemorySnapshot = lowerAddresses.every(address =>
+            Object.prototype.hasOwnProperty.call(currentTokenListMap, address),
+          );
+          if (!force && !hasMemorySnapshot) {
+            await tokenCacheHydrator.hydrate(lowerAddresses);
+            const localItemCount = lowerAddresses.reduce(
+              (count, address) =>
+                count + (get().tokenListMap[address]?.length || 0),
+              0,
+            );
+            trace.mark('stale-local-db-loaded', {
+              itemCount: localItemCount,
+            });
+            if (getCurrentAddresses().length) {
+              trace.mark('stale-local-store-published', {
+                itemCount: localItemCount,
+              });
+            }
+          } else {
+            trace.mark('memory-snapshot-retained', {
+              hasMemorySnapshot,
+            });
+          }
+          if (confirmedLocalAddresses.length) {
+            confirmedLocalAddresses.forEach(address =>
+              completedAddresses.add(address),
+            );
+            set(state => ({
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                confirmedLocalAddresses,
+              ),
+            }));
+          }
+
+          await cacheTokensPromise;
+          trace.mark('cache-responses-completed', {
+            addressCount: cacheRequestAddresses.length,
+            skippedAddressCount:
+              lowerAddresses.length - cacheRequestAddresses.length,
+            candidateAddressCount: lowerAddresses.length,
+            succeededAddressCount: cacheSucceededAddresses.size,
+            failedAddressCount:
+              cacheRequestAddresses.length - cacheSucceededAddresses.size,
+            itemCount: Object.values(cacheTokenMap).reduce(
+              (count, tokens) => count + tokens.length,
+              0,
+            ),
+          });
+          const currentAddressesAfterCache = getCurrentAddresses();
+          if (!currentAddressesAfterCache.length) {
+            trace.finish({ path: 'stale-after-cache' });
+            return { status: 'superseded' };
+          }
+          const latestTokenListMap = get().tokenListMap;
+          const cacheApplicableAddresses = selectTokenCacheApplicableAddresses(
+            currentAddressesAfterCache,
+            latestTokenListMap,
+            cacheTokenMap,
+            cacheSucceededAddresses,
+            confirmedLocalAddressSet,
+          );
+
+          if (cacheApplicableAddresses.length) {
+            const mergedCacheTokenMap = { ...latestTokenListMap };
+            cacheApplicableAddresses.forEach(address => {
+              mergedCacheTokenMap[address] = cacheTokenMap[address] || [];
+            });
+            syncTokenRuntimeStoresFromTokenListMap(
+              mergedCacheTokenMap,
+              cacheApplicableAddresses,
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+              },
+            );
+            tokenCacheHydrator.invalidate(cacheApplicableAddresses);
+            set(() => ({ tokenListMap: mergedCacheTokenMap }));
+            trace.mark('cache-store-published', {
+              addressCount: cacheApplicableAddresses.length,
+            });
+          } else {
+            trace.mark('cache-store-skipped', {
+              reason: 'memory-snapshot-retained',
+            });
+          }
+
+          const realTimeTokenMap: Record<string, ITokenItem[]> = {};
+          const completeRealTimeTokenMap: Record<string, ITokenItem[]> = {};
+          const nativeCommittedAddresses = new Set<string>();
+          const nativeCompleteAddresses = new Set<string>();
+          const tokenChainSyncMode = getTokenChainSyncMode();
+          const realTimeTokenQueue = new PQueue({
+            concurrency: 15,
+          });
+          let usedChainListSucceededAddressCount = 0;
+          let requestedChainCount = 0;
+          trace.mark('remote-address-requests-dispatched', {
+            addressCount: lowerAddresses.length,
+            addressConcurrency: ASSET_REMOTE_ADDRESS_CONCURRENCY,
+            chainConcurrency: 15,
+          });
+          const nativeProjectionBatch =
+            tokenChainSyncMode === 'native'
+              ? nativeTokenCommitBatcher.beginBatch()
+              : undefined;
+          let remoteAddressResults: PromiseSettledResult<void>[];
+          try {
+            remoteAddressResults = await mapSettledWithConcurrency(
+              lowerAddresses,
+              ASSET_REMOTE_ADDRESS_CONCURRENCY,
+              async address => {
+                const chains = await openapi.usedChainList(address);
+                const chainIdList = chains.map(item => item.id);
+                usedChainListSucceededAddressCount += 1;
+                requestedChainCount += chainIdList.length;
+                const syncExecution = await executeTokenChainSync({
+                  mode: tokenChainSyncMode,
+                  address,
+                  chainIds: chainIdList,
+                  replacementScope: 'address',
+                  replaceExisting: true,
+                  executeJs: () =>
+                    Promise.allSettled(
+                      chainIdList.map(async serverId => {
+                        const tokens =
+                          (await realTimeTokenQueue.add(async () => {
+                            const chainTokensRes =
+                              await requestOpenApiWithChainId(
+                                ({ openapi }) =>
+                                  openapi.listToken(address, serverId, true),
+                                {
+                                  isTestnet: false,
+                                },
+                              );
+                            return filterInterfaceTokenList(
+                              chainTokensRes.map(item =>
+                                tokenItemToITokenItem(item, address),
+                              ),
+                            );
+                          })) || [];
+                        return { serverId, tokens };
+                      }),
+                    ),
+                });
+
+                if (syncExecution.mode === 'native') {
+                  nativeCommittedAddresses.add(address);
+                  if (syncExecution.result.outcome === 'complete') {
+                    nativeCompleteAddresses.add(address);
+                  }
+                  return;
+                }
+
+                const res = syncExecution.value;
+
+                const fulfilledChainSnapshots = res.flatMap(result =>
+                  result.status === 'fulfilled' ? [result.value] : [],
+                );
+                const hasFailedChain = res.some(
+                  result => result.status === 'rejected',
+                );
+
+                // A chain failure must not invalidate the other chains of this
+                // address. Keep the last usable snapshot for failed chains and only
+                // mark the address fresh when every requested chain succeeded.
+                if (!fulfilledChainSnapshots.length && hasFailedChain) {
+                  return;
+                }
+
+                const nextTokens = hasFailedChain
+                  ? fulfilledChainSnapshots.reduce(
+                      (tokens, snapshot) =>
+                        replaceTokensByChain(
+                          tokens,
+                          snapshot.tokens,
+                          snapshot.serverId,
+                        ),
+                      get().tokenListMap[address] || [],
+                    )
+                  : fulfilledChainSnapshots.flatMap(
+                      snapshot => snapshot.tokens,
+                    );
+
+                realTimeTokenMap[address] = nextTokens;
+                if (!hasFailedChain) {
+                  completeRealTimeTokenMap[address] = nextTokens;
+                }
+              },
+              { stopOnError: isHttpRateLimitedError },
+            );
+          } finally {
+            await nativeProjectionBatch?.finish();
+          }
+          trace.mark('remote-addresses-settled', {
+            addressCount: lowerAddresses.length,
+            succeededAddressCount: remoteAddressResults.filter(
+              result => result.status === 'fulfilled',
+            ).length,
+            failedAddressCount: remoteAddressResults.filter(
+              result => result.status === 'rejected',
+            ).length,
+            usedChainListSucceededAddressCount,
+            requestedChainCount,
+            syncMode: tokenChainSyncMode,
+            nativePartialAddressCount:
+              nativeCommittedAddresses.size - nativeCompleteAddresses.size,
           });
 
-          if (localTokens.length > 0) {
+          const nativeApplicableAddresses = getCurrentAddresses().filter(
+            address => nativeCommittedAddresses.has(address),
+          );
+          if (nativeApplicableAddresses.length) {
+            trace.mark('native-snapshots-published', {
+              addressCount: nativeApplicableAddresses.length,
+              completeAddressCount: nativeApplicableAddresses.filter(address =>
+                nativeCompleteAddresses.has(address),
+              ).length,
+              itemCount: nativeApplicableAddresses.reduce(
+                (count, address) =>
+                  count + (get().tokenListMap[address]?.length || 0),
+                0,
+              ),
+            });
+            nativeApplicableAddresses.forEach(address => {
+              if (nativeCompleteAddresses.has(address)) {
+                completedAddresses.add(address);
+              }
+            });
+          }
+
+          const remoteApplicableAddresses = getCurrentAddresses().filter(
+            address =>
+              Object.prototype.hasOwnProperty.call(realTimeTokenMap, address),
+          );
+          const applicableRealTimeTokenMap = Object.fromEntries(
+            remoteApplicableAddresses.map(address => [
+              address,
+              realTimeTokenMap[address] || [],
+            ]),
+          );
+          trace.mark('remote-responses-completed', {
+            itemCount: Object.values(applicableRealTimeTokenMap).reduce(
+              (count, tokens) => count + tokens.length,
+              0,
+            ),
+          });
+          if (!remoteApplicableAddresses.length) {
+            trace.finish({
+              path: nativeApplicableAddresses.length
+                ? 'native-remote'
+                : 'stale-after-remote',
+            });
+            return {
+              status: lowerAddresses.every(address =>
+                completedAddresses.has(address),
+              )
+                ? 'complete'
+                : 'partial',
+              source: nativeApplicableAddresses.length ? 'native' : undefined,
+            };
+          }
+
+          const nextTokenListMap = mergeAddressListSnapshots(
+            get().tokenListMap,
+            remoteApplicableAddresses,
+            applicableRealTimeTokenMap,
+          );
+          const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
+            nextTokenListMap,
+            remoteApplicableAddresses,
+            'remote',
+            {
+              markTokenListMapSynced: true,
+              markPersistencePending: true,
+            },
+          );
+          tokenCacheHydrator.invalidate(remoteApplicableAddresses);
+          const completeApplicableAddresses = remoteApplicableAddresses.filter(
+            address =>
+              Object.prototype.hasOwnProperty.call(
+                completeRealTimeTokenMap,
+                address,
+              ),
+          );
+          completeApplicableAddresses.forEach(address =>
+            completedAddresses.add(address),
+          );
+          set(state => ({
+            tokenListMap: nextTokenListMap,
+            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+              state.sourceSnapshotReadyByAddress,
+              completeApplicableAddresses,
+            ),
+            isLoading: false,
+          }));
+          const completeApplicableRealTimeTokenMap = Object.fromEntries(
+            completeApplicableAddresses.map(address => [
+              address,
+              completeRealTimeTokenMap[address] || [],
+            ]),
+          );
+          if (Object.keys(completeApplicableRealTimeTokenMap).length) {
+            settleTokenProjectionPersistence(
+              persistenceTicket,
+              syncRemoteTokensForAddresses(completeApplicableRealTimeTokenMap),
+              completeApplicableAddresses,
+            );
+          }
+          trace.finish({ path: 'cache-then-remote' });
+          return {
+            status: lowerAddresses.every(address =>
+              completedAddresses.has(address),
+            )
+              ? 'complete'
+              : 'partial',
+            source: 'remote',
+          };
+        } catch (error) {
+          trace.fail({ phase: 'load' });
+          throw error;
+        } finally {
+          if (isCurrentRequest() && get().isLoading) {
+            set(() => ({ isLoading: false }));
+          }
+        }
+      },
+    });
+  },
+
+  async getTokenList(
+    address: string,
+    force = false,
+    chainServerId?: string,
+    trigger: AssetSyncTrigger = 'on-demand',
+  ) {
+    const normalizedAddress = address.toLowerCase();
+    await runTokenAssetSync({
+      addresses: [normalizedAddress],
+      // A cache-only read must not wait behind (or cancel) an active manual
+      // refresh. Requests with the same strength still share one flight.
+      variant: `single-address:${chainServerId || 'all'}:${
+        force ? 'force' : 'standard'
+      }`,
+      force,
+      trigger,
+      execute: async ticket => {
+        const addressRequest = tokenAddressRequests.reserve([
+          normalizedAddress,
+        ]);
+        const isCurrentRequest = () =>
+          tokenAddressRequests.isCurrent(addressRequest, normalizedAddress);
+        const isForceRequested = () => ticket.isForceRequested();
+        const trace = beginAssetDataLoadDiagnostic(
+          'single-address-token',
+          normalizedAddress,
+          {
+            force,
+            trigger: ticket.getTrigger(),
+            chainServerId: chainServerId || null,
+          },
+        );
+        let isExpired: boolean;
+        try {
+          isExpired = await isDataExpired(normalizedAddress);
+          trace.mark('expiry-resolved', { isExpired });
+        } catch (error) {
+          trace.fail({ phase: 'expiry' });
+          throw error;
+        }
+        const currentStateTokens = get().tokenListMap[normalizedAddress] || [];
+        const hasCurrentAddressTokens = currentStateTokens.length > 0;
+        const hasCurrentAddressSnapshot = Object.prototype.hasOwnProperty.call(
+          get().tokenListMap,
+          normalizedAddress,
+        );
+        const targetChainServerId = chainServerId || undefined;
+
+        // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
+        const isRefreshingWithValidLocalTokens =
+          hasCurrentAddressTokens &&
+          (isForceRequested() || !isExpired || !!targetChainServerId);
+
+        /**
+         * 阶段一： 校验有效期，有效期内直接用本地数据
+         */
+        if (!isForceRequested() && !isExpired) {
+          try {
+            if (!hasCurrentAddressSnapshot) {
+              await tokenCacheHydrator.hydrate([normalizedAddress]);
+            }
+            set(state => ({
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                [normalizedAddress],
+              ),
+            }));
+            const itemCount =
+              get().tokenListMap[normalizedAddress]?.length || 0;
+            trace.mark('local-db-loaded', { itemCount });
+            trace.mark('local-store-published', { itemCount });
+            trace.finish({ path: 'local-db' });
+            return { status: 'complete', source: 'database' };
+          } catch (error) {
+            trace.fail({ phase: 'local-db' });
+            throw error;
+          }
+        }
+
+        if (!tokenAddressRequests.activate(addressRequest).length) {
+          trace.finish({ path: 'stale-before-remote' });
+          return { status: 'superseded' };
+        }
+        tokenCacheHydrator.invalidate([normalizedAddress]);
+
+        set(state => ({
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            [normalizedAddress]: { loading: true, allLoading: true },
+          },
+        }));
+
+        try {
+          const shouldHydrateStaleLocalTokens =
+            !isForceRequested() && isExpired && !hasCurrentAddressSnapshot;
+          const cacheListPromise = isRefreshingWithValidLocalTokens
+            ? null
+            : queryTokensCache(address);
+
+          if (shouldHydrateStaleLocalTokens) {
+            try {
+              await tokenCacheHydrator.hydrate([normalizedAddress]);
+              if (!isCurrentRequest()) {
+                trace.finish({ path: 'stale-after-hydrate' });
+                return { status: 'superseded' };
+              }
+              const localTokens = get().tokenListMap[normalizedAddress] || [];
+              trace.mark('stale-local-db-loaded', {
+                itemCount: localTokens.length,
+              });
+
+              if (localTokens.length > 0) {
+                set(state => ({
+                  isLoadingByAddress: {
+                    ...state.isLoadingByAddress,
+                    [normalizedAddress]: { loading: false, allLoading: true },
+                  },
+                }));
+                trace.mark('stale-local-store-published', {
+                  itemCount: localTokens.length,
+                });
+              }
+            } catch (error) {
+              trace.mark('stale-local-hydrate-failed');
+              console.error('hydrate stale local token snapshot failed', error);
+            }
+          }
+
+          /**
+           * 阶段二： 从缓存接口中获取数据，注意缓存接口有30s延迟，且不完整（只包含核心token）
+           */
+          if (isRefreshingWithValidLocalTokens) {
             set(state => ({
               isLoadingByAddress: {
                 ...state.isLoadingByAddress,
                 [normalizedAddress]: { loading: false, allLoading: true },
               },
             }));
-            trace.mark('stale-local-store-published', {
-              itemCount: localTokens.length,
+            trace.mark('cache-skipped', {
+              itemCount: currentStateTokens.length,
+            });
+          } else {
+            const cacheList = await cacheListPromise!;
+            if (!isCurrentRequest()) {
+              trace.finish({ path: 'stale-after-cache' });
+              return { status: 'superseded' };
+            }
+            trace.mark('cache-response', { itemCount: cacheList.length });
+            const cacheTokens = filterInterfaceTokenList(
+              cacheList.map(item => tokenItemToITokenItem(item, address)),
+            );
+            const currentState = get();
+            const previousTokens =
+              currentState.tokenListMap[normalizedAddress] || [];
+
+            // 以此弥补cache接口数据不完整，带来的接口列表闪动
+            let noCoreDBTokens: ITokenItem[] = [];
+            if (!previousTokens.some(token => !token.is_core)) {
+              const noCoreDBTokensList =
+                await TokenItemEntity.batchQueryNoCoreTokens(normalizedAddress);
+              if (!isCurrentRequest()) {
+                trace.finish({ path: 'stale-after-non-core-cache' });
+                return { status: 'superseded' };
+              }
+              noCoreDBTokens = filterInterfaceTokenList(
+                noCoreDBTokensList.map(tokenItemEntityToTokenItem),
+              );
+              trace.mark('non-core-db-loaded', {
+                itemCount: noCoreDBTokens.length,
+              });
+            }
+
+            const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
+              previousTokens,
+              cacheTokens,
+              noCoreDBTokens,
+            );
+            const nextTokenListMap = {
+              ...currentState.tokenListMap,
+              [normalizedAddress]: mergedCacheTokens,
+            };
+            syncTokenRuntimeStoresFromTokenListMap(
+              nextTokenListMap,
+              [normalizedAddress],
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+              },
+            );
+            tokenCacheHydrator.invalidate([normalizedAddress]);
+            set(state => ({
+              tokenListMap: nextTokenListMap,
+              isLoadingByAddress: {
+                ...state.isLoadingByAddress,
+                // cache已经拿到，但是不是所有token都拿到
+                [normalizedAddress]: { loading: false, allLoading: true },
+              },
+            }));
+            trace.mark('cache-store-published', {
+              itemCount: mergedCacheTokens.length,
             });
           }
-        } catch (error) {
-          trace.mark('stale-local-hydrate-failed');
-          console.error('hydrate stale local token snapshot failed', error);
-        }
-      }
 
-      /**
-       * 阶段二： 从缓存接口中获取数据，注意缓存接口有30s延迟，且不完整（只包含核心token）
-       */
-      if (isRefreshingWithValidLocalTokens) {
-        set(state => ({
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            [normalizedAddress]: { loading: false, allLoading: true },
-          },
-        }));
-        trace.mark('cache-skipped', {
-          itemCount: currentStateTokens.length,
-        });
-      } else {
-        const cacheList = await cacheListPromise!;
-        if (!isCurrentRequest()) {
-          trace.finish({ path: 'stale-after-cache' });
-          return;
-        }
-        trace.mark('cache-response', { itemCount: cacheList.length });
-        const cacheTokens = filterInterfaceTokenList(
-          cacheList.map(item => tokenItemToITokenItem(item, address)),
-        );
-        const currentState = get();
-        const previousTokens =
-          currentState.tokenListMap[normalizedAddress] || [];
-
-        // 以此弥补cache接口数据不完整，带来的接口列表闪动
-        let noCoreDBTokens: ITokenItem[] = [];
-        if (!previousTokens.some(token => !token.is_core)) {
-          const noCoreDBTokensList =
-            await TokenItemEntity.batchQueryNoCoreTokens(normalizedAddress);
-          if (!isCurrentRequest()) {
-            trace.finish({ path: 'stale-after-non-core-cache' });
-            return;
+          /**
+           * 阶段三： 从链接口中获取数据
+           */
+          let chainIdList: string[] = [];
+          if (targetChainServerId) {
+            chainIdList = [targetChainServerId];
+          } else {
+            // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
+            const chains = await openapi.usedChainList(address);
+            chainIdList = chains.map(item => item.id);
           }
-          noCoreDBTokens = filterInterfaceTokenList(
-            noCoreDBTokensList.map(tokenItemEntityToTokenItem),
-          );
-          trace.mark('non-core-db-loaded', {
-            itemCount: noCoreDBTokens.length,
+          if (!isCurrentRequest()) {
+            trace.finish({ path: 'stale-after-chains' });
+            return { status: 'superseded' };
+          }
+          trace.mark('remote-chains-resolved', {
+            chainCount: chainIdList.length,
           });
-        }
-
-        const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
-          previousTokens,
-          cacheTokens,
-          noCoreDBTokens,
-        );
-        const nextTokenListMap = {
-          ...currentState.tokenListMap,
-          [normalizedAddress]: mergedCacheTokens,
-        };
-        syncTokenRuntimeStoresFromTokenListMap(
-          nextTokenListMap,
-          [normalizedAddress],
-          'remote',
-          {
-            markTokenListMapSynced: true,
-          },
-        );
-        tokenCacheHydrator.invalidate([normalizedAddress]);
-        set(state => ({
-          tokenListMap: nextTokenListMap,
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            // cache已经拿到，但是不是所有token都拿到
-            [normalizedAddress]: { loading: false, allLoading: true },
-          },
-        }));
-        trace.mark('cache-store-published', {
-          itemCount: mergedCacheTokens.length,
-        });
-      }
-
-      /**
-       * 阶段三： 从链接口中获取数据
-       */
-      let chainIdList: string[] = [];
-      if (targetChainServerId) {
-        chainIdList = [targetChainServerId];
-      } else {
-        // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
-        const chains = await openapi.usedChainList(address);
-        chainIdList = chains.map(item => item.id);
-      }
-      if (!isCurrentRequest()) {
-        trace.finish({ path: 'stale-after-chains' });
-        return;
-      }
-      trace.mark('remote-chains-resolved', {
-        chainCount: chainIdList.length,
-      });
-      const realTimeTokenQueue = new PQueue({
-        concurrency: 15,
-      });
-      const res = await Promise.allSettled(
-        chainIdList.map(
-          async serverId =>
-            await realTimeTokenQueue.add(async () => {
-              const chainTokensRes = await requestOpenApiWithChainId(
-                ({ openapi }) => openapi.listToken(address, serverId, true),
-                {
-                  isTestnet: false,
-                },
-              );
-              const tokenList = filterInterfaceTokenList(
-                chainTokensRes.map(item =>
-                  tokenItemToITokenItem(item, address),
+          const tokenChainSyncMode = getTokenChainSyncMode();
+          const realTimeTokenQueue = new PQueue({
+            concurrency: 15,
+          });
+          const syncExecution = await executeTokenChainSync({
+            mode: tokenChainSyncMode,
+            address: normalizedAddress,
+            chainIds: chainIdList,
+            replacementScope: targetChainServerId ? 'chains' : 'address',
+            replaceExisting: true,
+            executeJs: async () => {
+              const res = await Promise.allSettled(
+                chainIdList.map(
+                  async serverId =>
+                    await realTimeTokenQueue.add(async () => {
+                      const chainTokensRes = await requestOpenApiWithChainId(
+                        ({ openapi }) =>
+                          openapi.listToken(address, serverId, true),
+                        {
+                          isTestnet: false,
+                        },
+                      );
+                      return filterInterfaceTokenList(
+                        chainTokensRes.map(item =>
+                          tokenItemToITokenItem(item, address),
+                        ),
+                      );
+                    }),
                 ),
               );
-              return tokenList;
-            }),
-        ),
-      );
-      const failed = res.find(result => result.status === 'rejected');
-      if (failed?.status === 'rejected') {
-        trace.fail({ phase: 'remote-chain' });
-        console.error('ServiceErrorType.Token', failed.reason);
-        return;
-      }
-      const results = res
-        .map(result => (result.status === 'fulfilled' ? result.value : []))
-        .flat() as ITokenItem[];
-      trace.mark('remote-token-responses', { itemCount: results.length });
-      if (!isCurrentRequest()) {
-        trace.finish({ path: 'stale-after-remote' });
-        return;
-      }
+              const failed = res.find(result => result.status === 'rejected');
+              if (failed?.status === 'rejected') {
+                console.error('ServiceErrorType.Token', failed.reason);
+                return null;
+              }
+              return res
+                .map(result =>
+                  result.status === 'fulfilled' ? result.value : [],
+                )
+                .flat() as ITokenItem[];
+            },
+          });
 
-      if (targetChainServerId) {
-        const currentState = get();
-        const previousTokens =
-          currentState.tokenListMap[normalizedAddress] || [];
-        const nextTokenListMap = {
-          ...currentState.tokenListMap,
-          [normalizedAddress]: replaceTokensByChain(
-            previousTokens,
-            results,
-            targetChainServerId,
-          ),
-        };
-        syncTokenRuntimeStoresFromTokenListMap(
-          nextTokenListMap,
-          [normalizedAddress],
-          'remote',
-          {
-            markTokenListMapSynced: true,
-          },
-        );
-        tokenCacheHydrator.invalidate([normalizedAddress]);
-        set(() => ({
-          tokenListMap: nextTokenListMap,
-        }));
-      } else {
-        const nextTokenListMap = {
-          ...get().tokenListMap,
-          [normalizedAddress]: results,
-        };
-        syncTokenRuntimeStoresFromTokenListMap(
-          nextTokenListMap,
-          [normalizedAddress],
-          'remote',
-          {
-            markTokenListMapSynced: true,
-          },
-        );
-        tokenCacheHydrator.invalidate([normalizedAddress]);
-        set(state => ({
-          tokenListMap: nextTokenListMap,
-          sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-            state.sourceSnapshotReadyByAddress,
-            [normalizedAddress],
-          ),
-        }));
-        void syncRemoteTokens(normalizedAddress, results);
-      }
-      trace.mark('remote-store-published', { itemCount: results.length });
-      trace.finish({ path: 'remote' });
-    } catch (error) {
-      trace.fail({ phase: 'refresh' });
-      throw error;
-    } finally {
-      if (isCurrentRequest()) {
-        set(state => ({
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            [normalizedAddress]: { loading: false, allLoading: false },
-          },
-        }));
-      }
-    }
+          if (syncExecution.mode === 'native') {
+            if (!isCurrentRequest()) {
+              trace.finish({ path: 'stale-after-native-remote' });
+              return { status: 'superseded' };
+            }
+            const itemCount =
+              get().tokenListMap[normalizedAddress]?.length || 0;
+            trace.mark('native-snapshot-published', {
+              itemCount,
+              committedRowCount: syncExecution.result.committedRowCount,
+              outcome: syncExecution.result.outcome,
+              failedChainCount: syncExecution.result.failedChainIds.length,
+            });
+            trace.finish({ path: 'native-remote', itemCount });
+            return syncExecution.result.outcome === 'complete'
+              ? { status: 'complete', source: 'native' }
+              : { status: 'partial', source: 'native' };
+          }
+
+          const results = syncExecution.value;
+          if (!results) {
+            trace.fail({ phase: 'remote-chain' });
+            return { status: 'partial' };
+          }
+          trace.mark('remote-token-responses', { itemCount: results.length });
+          if (!isCurrentRequest()) {
+            trace.finish({ path: 'stale-after-remote' });
+            return { status: 'superseded' };
+          }
+
+          if (targetChainServerId) {
+            const currentState = get();
+            const previousTokens =
+              currentState.tokenListMap[normalizedAddress] || [];
+            const nextTokenListMap = {
+              ...currentState.tokenListMap,
+              [normalizedAddress]: replaceTokensByChain(
+                previousTokens,
+                results,
+                targetChainServerId,
+              ),
+            };
+            const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
+              nextTokenListMap,
+              [normalizedAddress],
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+              },
+            );
+            tokenCacheHydrator.invalidate([normalizedAddress]);
+            set(() => ({
+              tokenListMap: nextTokenListMap,
+            }));
+            settleTokenProjectionPersistence(
+              persistenceTicket,
+              syncRemoteTokens(
+                normalizedAddress,
+                nextTokenListMap[normalizedAddress],
+                {
+                  cleanupStale: false,
+                },
+              ),
+            );
+          } else {
+            const nextTokenListMap = {
+              ...get().tokenListMap,
+              [normalizedAddress]: results,
+            };
+            const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
+              nextTokenListMap,
+              [normalizedAddress],
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+              },
+            );
+            tokenCacheHydrator.invalidate([normalizedAddress]);
+            set(state => ({
+              tokenListMap: nextTokenListMap,
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                [normalizedAddress],
+              ),
+            }));
+            settleTokenProjectionPersistence(
+              persistenceTicket,
+              syncRemoteTokens(normalizedAddress, results),
+            );
+          }
+          trace.mark('remote-store-published', { itemCount: results.length });
+          trace.finish({ path: 'remote' });
+          return { status: 'complete', source: 'remote' };
+        } catch (error) {
+          trace.fail({ phase: 'refresh' });
+          throw error;
+        } finally {
+          if (isCurrentRequest()) {
+            set(state => ({
+              isLoadingByAddress: {
+                ...state.isLoadingByAddress,
+                [normalizedAddress]: { loading: false, allLoading: false },
+              },
+            }));
+          }
+        }
+      },
+    });
   },
 }));
+
+type NativeTokenProjectionTarget =
+  | {
+      key: string;
+      scene: 'single-address';
+      config: SingleTokenAssetsIndexConfig;
+    }
+  | {
+      key: string;
+      scene: 'multi-address';
+      config: MultiTokenAssetsIndexConfig;
+    };
+
+type CompiledNativeTokenProjectionTarget = NativeTokenProjectionTarget & {
+  projection: TokenAssetSqlProjection;
+};
+
+const selectCanonicalTokenEntities = (entities: TokenItemEntity[]) => {
+  const entityByResourceId = new Map<TokenEntityId, TokenItemEntity>();
+  entities.forEach(entity => {
+    const resourceId = buildTokenEntityId(entity);
+    const current = entityByResourceId.get(resourceId);
+    if (
+      !current ||
+      entity._local_updated_at > current._local_updated_at ||
+      (entity._local_updated_at === current._local_updated_at &&
+        entity._db_id < current._db_id)
+    ) {
+      entityByResourceId.set(resourceId, entity);
+    }
+  });
+  return Array.from(entityByResourceId.values());
+};
+
+const getNativeTokenProjectionTargets = (
+  addresses: string[],
+): NativeTokenProjectionTarget[] => {
+  const state = useTokenAssetsIndexStore.getState();
+  const targets: NativeTokenProjectionTarget[] = [];
+  getTokenAssetReadModelTargets(addresses).forEach(({ key, scene }) => {
+    if (scene === 'single-address') {
+      const config = state.singleAssetsConfigByKey[key];
+      if (config) {
+        targets.push({ key, scene, config });
+      }
+      return;
+    }
+    const config = state.multiAssetsConfigByKey[key];
+    if (config) {
+      targets.push({ key, scene, config });
+    }
+  });
+  return targets;
+};
+
+const getNativeTokenProjectionSelectorKey = (
+  target: NativeTokenProjectionTarget,
+) => {
+  const addresses =
+    target.scene === 'single-address'
+      ? [target.config.address]
+      : target.config.addresses;
+  return JSON.stringify([
+    target.scene,
+    addresses.map(normalizeAddress),
+    target.config.chainServerId || '',
+    target.scene === 'multi-address'
+      ? target.config.tokenDisplayMode || 'byAddress'
+      : 'byAddress',
+  ]);
+};
+
+const compileNativeTokenProjectionTargets = async (
+  targets: NativeTokenProjectionTarget[],
+) => {
+  const projectionBySelector = new Map<string, TokenAssetSqlProjection>();
+  const compiledTargets: CompiledNativeTokenProjectionTarget[] = [];
+
+  for (const target of targets) {
+    const selectorKey = getNativeTokenProjectionSelectorKey(target);
+    let projection = projectionBySelector.get(selectorKey);
+    if (!projection) {
+      projection = await compileTokenAssetSqlProjection({
+        addresses:
+          target.scene === 'single-address'
+            ? [target.config.address]
+            : target.config.addresses,
+        chainServerId: target.config.chainServerId,
+        scene: target.scene,
+        tokenDisplayMode:
+          target.scene === 'multi-address'
+            ? target.config.tokenDisplayMode
+            : 'byAddress',
+      });
+      projectionBySelector.set(selectorKey, projection);
+    }
+    compiledTargets.push({ ...target, projection });
+  }
+
+  return compiledTargets;
+};
+
+const getLatestNativeTokenCompletion = (
+  completions: NativeAssetSyncCompletion[],
+) =>
+  completions.reduce((latest, completion) =>
+    completion.committedAt >= latest.committedAt ? completion : latest,
+  );
+
+const getNativeTokenCompletionForTarget = (
+  target: NativeTokenProjectionTarget,
+  completions: NativeAssetSyncCompletion[],
+) => {
+  const targetAddresses = new Set(
+    (target.scene === 'single-address'
+      ? [target.config.address]
+      : target.config.addresses
+    ).map(normalizeAddress),
+  );
+  const targetCompletions = completions.filter(completion =>
+    targetAddresses.has(normalizeAddress(completion.address)),
+  );
+  return getLatestNativeTokenCompletion(
+    targetCompletions.length ? targetCompletions : completions,
+  );
+};
+
+const publishCompiledNativeTokenProjections = ({
+  completions,
+  compiledTargets,
+  projectionTokens,
+}: {
+  completions: NativeAssetSyncCompletion[];
+  compiledTargets: CompiledNativeTokenProjectionTarget[];
+  projectionTokens: ITokenItem[];
+}) => {
+  const publications: Array<{
+    target: NativeTokenProjectionTarget;
+    config: SingleTokenAssetsIndexConfig | MultiTokenAssetsIndexConfig;
+    result: TokenAssetsIndexResult;
+  }> = [];
+  const completedAddresses = completions
+    .filter(completion => completion.replacementScope === 'address')
+    .map(completion => normalizeAddress(completion.address));
+
+  withAutomaticTokenProjectionSyncSuppressed(() => {
+    tokenEntityResourceStore.upsertTokens(projectionTokens, 'hydrate');
+    tokenListStore.setState(state => ({
+      sourceSnapshotReadyByAddress: completedAddresses.length
+        ? markAssetSourceSnapshotsReady(
+            state.sourceSnapshotReadyByAddress,
+            completedAddresses,
+          )
+        : state.sourceSnapshotReadyByAddress,
+    }));
+
+    const projectionState = useTokenAssetsIndexStore.getState();
+    compiledTargets.forEach(target => {
+      const currentConfig =
+        target.scene === 'single-address'
+          ? projectionState.singleAssetsConfigByKey[target.key]
+          : projectionState.multiAssetsConfigByKey[target.key];
+      if (currentConfig !== target.config) {
+        throw new Error(
+          `Token SQL projection config changed before publish: ${target.key}`,
+        );
+      }
+
+      const projectedTokenIds = target.projection
+        .resourceIds as TokenEntityId[];
+      const tokenIds =
+        target.config.tokenIds.length === projectedTokenIds.length &&
+        target.config.tokenIds.every(
+          (tokenId, index) => tokenId === projectedTokenIds[index],
+        )
+          ? target.config.tokenIds
+          : projectedTokenIds;
+      const nextConfig =
+        target.scene === 'single-address'
+          ? { ...target.config, tokenIds }
+          : {
+              ...target.config,
+              tokenIds,
+              sourceVersionKey: getMultiTokenAssetsSourceVersionKey(
+                useTokenIndexStore.getState(),
+                target.config.addresses,
+              ),
+            };
+      const previousResult =
+        target.scene === 'single-address'
+          ? projectionState.singleAssetsResultByKey[target.key]
+          : projectionState.multiAssetsResultByKey[target.key];
+      const result = buildTokenAssetsIndexResultFromSqlProjection({
+        projection: target.projection,
+        isLpTokenEnabled: target.config.isLpTokenEnabled,
+        listKey:
+          target.scene === 'multi-address' ? target.config.key : undefined,
+        previousResult,
+      });
+      publications.push({ target, config: nextConfig, result });
+    });
+
+    useTokenAssetsIndexStore.setState(draft => {
+      publications.forEach(({ target, config, result }) => {
+        const availability = getTokenAssetsProjectionAvailability(
+          config,
+          result,
+        );
+        if (target.scene === 'single-address') {
+          draft.singleAssetsConfigByKey[target.key] =
+            config as SingleTokenAssetsIndexConfig;
+          draft.singleAssetsResultByKey[target.key] = result;
+          draft.singleAssetsAvailabilityByKey[target.key] = availability;
+        } else {
+          draft.multiAssetsConfigByKey[target.key] =
+            config as MultiTokenAssetsIndexConfig;
+          draft.multiAssetsResultByKey[target.key] = result;
+          draft.multiAssetsAvailabilityByKey[target.key] = availability;
+        }
+      });
+    });
+  });
+
+  publications.forEach(({ target, config, result }) => {
+    const completion = getNativeTokenCompletionForTarget(target, completions);
+    syncTokenAssetReadModel({
+      key: target.key,
+      scene: target.scene,
+      config,
+      result,
+      source: 'native',
+      generation: completion.generation,
+      committedAt: completion.committedAt,
+      committedRequestId: completion.requestId,
+    });
+    scheduleTokenAssetsProjectionPersistence(
+      target.key,
+      target.scene,
+      result,
+      target.scene === 'multi-address'
+        ? target.config.tokenDisplayMode
+        : undefined,
+    );
+  });
+};
+
+const scheduleNativeTokenLegacyHydration = (addresses: string[]) => {
+  (async () => {
+    await yieldTokenProjectionEntityRestore();
+    await tokenCacheHydrator.refresh(addresses);
+  })().catch(error => {
+    console.warn('[tokenProjection] deferred legacy hydration failed', error);
+  });
+};
+
+const applyNativeTokenCommitWithJsProjection = async (
+  completions: NativeAssetSyncCompletion[],
+) => {
+  const normalizedAddresses = Array.from(
+    new Set(
+      completions.map(completion => normalizeAddress(completion.address)),
+    ),
+  );
+  await tokenCacheHydrator.refresh(normalizedAddresses);
+  const completedAddresses = completions
+    .filter(completion => completion.replacementScope === 'address')
+    .map(completion => normalizeAddress(completion.address));
+  if (completedAddresses.length) {
+    tokenListStore.setState(state => ({
+      sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+        state.sourceSnapshotReadyByAddress,
+        completedAddresses,
+      ),
+    }));
+  }
+  useTokenAssetsIndexStore
+    .getState()
+    .syncSingleAssetsResultsForAddresses(normalizedAddresses);
+  useTokenAssetsIndexStore
+    .getState()
+    .syncMultiAssetsResultsForAddresses(normalizedAddresses);
+
+  const projectionState = useTokenAssetsIndexStore.getState();
+  getTokenAssetReadModelTargets(normalizedAddresses).forEach(
+    ({ key, scene }) => {
+      const config =
+        scene === 'single-address'
+          ? projectionState.singleAssetsConfigByKey[key]
+          : projectionState.multiAssetsConfigByKey[key];
+      const result =
+        scene === 'single-address'
+          ? projectionState.singleAssetsResultByKey[key]
+          : projectionState.multiAssetsResultByKey[key];
+      if (!config || !result) {
+        return;
+      }
+      const completion = getNativeTokenCompletionForTarget(
+        { key, scene, config } as NativeTokenProjectionTarget,
+        completions,
+      );
+      syncTokenAssetReadModel({
+        key,
+        scene,
+        config,
+        result,
+        source: 'native',
+        generation: completion.generation,
+        committedAt: completion.committedAt,
+        committedRequestId: completion.requestId,
+      });
+    },
+  );
+};
+
+const publishNativeTokenBatch = async (
+  completions: NativeAssetSyncCompletion[],
+) => {
+  const normalizedAddresses = Array.from(
+    new Set(
+      completions.map(completion => normalizeAddress(completion.address)),
+    ),
+  );
+  const targets = getNativeTokenProjectionTargets(normalizedAddresses);
+  if (!targets.length) {
+    await applyNativeTokenCommitWithJsProjection(completions);
+    return;
+  }
+
+  const latestCompletion = getLatestNativeTokenCompletion(completions);
+  const trace = beginAssetDataLoadDiagnostic(
+    'token-native-sql-projection',
+    latestCompletion.requestId,
+    { addressCount: normalizedAddresses.length, targetCount: targets.length },
+  );
+  try {
+    const compiledTargets = await compileNativeTokenProjectionTargets(targets);
+    trace.mark('projection-compiled', {
+      projectionCount: new Set(
+        compiledTargets.map(getNativeTokenProjectionSelectorKey),
+      ).size,
+      rowCount: compiledTargets.reduce(
+        (count, target) => count + target.projection.rows.length,
+        0,
+      ),
+    });
+
+    tokenCacheHydrator.invalidate(normalizedAddresses);
+    const requiredResourceIds = Array.from(
+      new Set(compiledTargets.flatMap(target => target.projection.resourceIds)),
+    );
+    const projectionEntities = requiredResourceIds.length
+      ? await TokenItemEntity.batchMultiAddressTokensByResourceIds(
+          requiredResourceIds,
+        )
+      : [];
+    const projectionTokensById = new Map(
+      selectCanonicalTokenEntities(projectionEntities as TokenItemEntity[]).map(
+        entity => {
+          const token = tokenItemEntityToTokenItem(entity);
+          return [buildTokenEntityId(token), token] as const;
+        },
+      ),
+    );
+    const projectionTokens = requiredResourceIds
+      .map(resourceId => projectionTokensById.get(resourceId as TokenEntityId))
+      .filter((token): token is ITokenItem => !!token);
+    if (projectionTokens.length !== requiredResourceIds.length) {
+      throw new Error(
+        `Token SQL projection entities are incomplete: ${projectionTokens.length}/${requiredResourceIds.length}`,
+      );
+    }
+
+    publishCompiledNativeTokenProjections({
+      completions,
+      compiledTargets,
+      projectionTokens,
+    });
+    scheduleNativeTokenLegacyHydration(normalizedAddresses);
+    trace.finish({
+      path: 'sql-projection',
+      itemCount: projectionTokens.length,
+      deferredLegacyHydration: true,
+    });
+  } catch (error) {
+    trace.fail({ path: 'js-fallback' });
+    console.warn(
+      '[tokenProjection] native SQL projection failed; using JS fallback',
+      error,
+    );
+    await applyNativeTokenCommitWithJsProjection(completions);
+  }
+};
+
+const pendingNativeTokenCompletions = new Map<
+  string,
+  NativeAssetSyncCompletion
+>();
+
+const nativeTokenCommitBatcher = createAddressListCommitBatcher({
+  apply: async addresses => {
+    const completions = addresses
+      .map(address => pendingNativeTokenCompletions.get(address))
+      .filter(
+        (completion): completion is NativeAssetSyncCompletion => !!completion,
+      );
+    if (!completions.length) {
+      return;
+    }
+    try {
+      await publishNativeTokenBatch(completions);
+    } finally {
+      completions.forEach(completion => {
+        const address = normalizeAddress(completion.address);
+        if (pendingNativeTokenCompletions.get(address) === completion) {
+          pendingNativeTokenCompletions.delete(address);
+        }
+      });
+    }
+  },
+});
+
+const applyNativeTokenCommit = (completion: NativeAssetSyncCompletion) => {
+  const normalizedAddress = normalizeAddress(completion.address);
+  pendingNativeTokenCompletions.set(normalizedAddress, completion);
+  return nativeTokenCommitBatcher.enqueue([normalizedAddress]);
+};
+
+registerNativeAssetSyncHandler('token', applyNativeTokenCommit);
 
 const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
   const normalizedAddress = normalizeAddress(address);
@@ -3743,7 +5191,13 @@ tokenListStore.subscribe(state => {
   lastTokenSourceSnapshotReadiness = state.sourceSnapshotReadyByAddress;
   if (state.tokenListMap === lastTokenListMapSyncedToRuntime) {
     lastTokenListMapSyncedToRuntime = undefined;
+    if (isAutomaticTokenProjectionSyncSuppressed()) {
+      return;
+    }
     syncKnownTokenProjectionsForAddresses(projectionChangedAddresses);
+    return;
+  }
+  if (isAutomaticTokenProjectionSyncSuppressed()) {
     return;
   }
   if (!tokenListChangedAddresses.size) {
@@ -3764,9 +5218,24 @@ tokenListStore.subscribe(state => {
 });
 
 tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {
+  if (isAutomaticTokenProjectionSyncSuppressed()) {
+    return;
+  }
   useTokenAssetsIndexStore
     .getState()
     .syncChangedTokenAssetsResults(changedTokenIds);
 });
+
+export async function hydrateCommittedNativeTokenSnapshot(address: string) {
+  const normalizedAddress = normalizeAddress(address);
+  await tokenCacheHydrator.refresh([normalizedAddress]);
+  tokenListStore.setState(state => ({
+    sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+      state.sourceSnapshotReadyByAddress,
+      [normalizedAddress],
+    ),
+  }));
+  return tokenListStore.getState().tokenListMap[normalizedAddress]?.length || 0;
+}
 
 export default tokenListStore;

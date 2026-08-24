@@ -47,7 +47,6 @@ import useTokenList, {
   tokenEntityResourceStore,
   tokenGroupResourceStore,
   useTokenAssetsIndexStore,
-  useTokenIndexStore,
 } from '@/store/tokens';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
@@ -78,6 +77,7 @@ import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { formatNetworth } from '@/utils/math';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import {
@@ -86,7 +86,8 @@ import {
   type TokenProjectionSectionItem,
   type TokenProjectionSectionSpec,
 } from '@/screens/Home/components/TokenProjectionSectionList';
-import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import type { AssetSyncTrigger } from '@/store/assetSyncCoordinator';
+import { useAssetProjectionPresentation } from '@/hooks/useAssetProjectionPresentation';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -222,7 +223,7 @@ export const TokenList = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Addresses } = useHomeAssetAccountInfo();
+  const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
     return selectedChainItem?.chain;
@@ -232,6 +233,9 @@ export const TokenList = () => {
   const [showLowValueTokens, setShowLowValueTokens] = useState(false);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
+  const [hasSettledTokenRequest, setHasSettledTokenRequest] = useState(false);
+  const tokenRequestIdRef = useRef(0);
+  const lastTokenScopeRef = useRef<string | null>(null);
   const customTestnetAddTokenModalIdRef = useRef<ReturnType<
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
@@ -243,7 +247,7 @@ export const TokenList = () => {
     { storeLabel: 'home-multi-assets-token-preferences' },
   );
 
-  const getAccountByAddress = useFindAccountByAddress();
+  const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const {
     sections: customTestnetSections,
     hydrationState: customTestnetHydrationState,
@@ -297,21 +301,26 @@ export const TokenList = () => {
     [myTop10Addresses, chain, tokenDisplayMode],
   );
 
-  useEffect(() => {
-    useTokenIndexStore
-      .getState()
-      .syncFromTokenListMap(
-        useTokenList.getState().tokenListMap,
-        myTop10Addresses,
-      );
-  }, [myTop10Addresses]);
-
   useLayoutEffect(() => {
-    useTokenAssetsIndexStore.getState().ensureMultiAssetsResult({
-      addresses: myTop10Addresses,
-      chainServerId: chain,
-      isLpTokenEnabled: false,
-      tokenDisplayMode,
+    const trace = beginAssetDataLoadDiagnostic(
+      'multi-address-token-projection',
+      myTop10Addresses.join('|'),
+      {
+        addressCount: myTop10Addresses.length,
+        chainServerId: chain || 'all',
+        tokenDisplayMode,
+      },
+    );
+    const projectionKey = useTokenAssetsIndexStore
+      .getState()
+      .ensureMultiAssetsResult({
+        addresses: myTop10Addresses,
+        chainServerId: chain,
+        isLpTokenEnabled: false,
+        tokenDisplayMode,
+      });
+    trace.finish({
+      projectionKeyMatches: projectionKey === multiAssetsKey,
     });
   }, [chain, multiAssetsKey, myTop10Addresses, tokenDisplayMode]);
 
@@ -382,10 +391,18 @@ export const TokenList = () => {
   // currently selected segments contain rows, the list still has no visible
   // data and must remain in its loading/empty state.
   const hasDefaultTokenData = projectedTokenCount > 0;
-  const tokenProjectionViewState = resolveAssetProjectionViewState({
-    availability: tokenProjectionAvailability,
-    hasData: hasDefaultTokenData,
-  });
+  const { viewState: tokenProjectionViewState } =
+    useAssetProjectionPresentation({
+      identity: {
+        kind: 'token',
+        scene: 'multi-address',
+        runtimeKey: multiAssetsKey,
+      },
+      availability: tokenProjectionAvailability,
+      hasData: hasDefaultTokenData,
+      hasSettledRequest: hasSettledTokenRequest && !isLoading,
+      storeLabel: 'home-multi-assets-token-read-model',
+    });
   const shouldHideCustomTestnetSectionsWhileLoading =
     tokenProjectionViewState === 'loading';
   const visibleCustomTestnetSections =
@@ -398,17 +415,59 @@ export const TokenList = () => {
     tokenProjectionViewState === 'loading' ||
     (isCustomTestnetSnapshotPending && projectedTokenCount === 0);
 
+  const requestTokenList = useCallback(
+    (force = false, trigger: AssetSyncTrigger = 'on-demand') => {
+      const requestId = tokenRequestIdRef.current + 1;
+      tokenRequestIdRef.current = requestId;
+      setHasSettledTokenRequest(false);
+      const request = batchGetTokenList(myTop10Addresses, force, trigger);
+      void request.then(
+        () => {
+          if (tokenRequestIdRef.current === requestId) {
+            setHasSettledTokenRequest(true);
+          }
+        },
+        () => {
+          if (tokenRequestIdRef.current === requestId) {
+            setHasSettledTokenRequest(true);
+          }
+        },
+      );
+      return request;
+    },
+    [myTop10Addresses],
+  );
+
   useEffect(() => {
-    batchGetTokenList(myTop10Addresses);
-  }, [myTop10Addresses]);
+    const nextScope = myTop10Addresses
+      .map(address => address.toLowerCase())
+      .sort()
+      .join('|');
+    const trigger: AssetSyncTrigger = lastTokenScopeRef.current
+      ? lastTokenScopeRef.current === nextScope
+        ? 'on-demand'
+        : 'scope-change'
+      : 'initial';
+    lastTokenScopeRef.current = nextScope;
+    void requestTokenList(false, trigger);
+    return () => {
+      tokenRequestIdRef.current += 1;
+    };
+  }, [myTop10Addresses, requestTokenList]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    batchGetTokenList(myTop10Addresses);
-  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
+    void requestTokenList(false, 'resume');
+  }, [
+    isFocusing,
+    isLoading,
+    myTop10Addresses,
+    requestTokenList,
+    triggerUpdate,
+  ]);
 
   useAppForeground({
     enabled: isFocusing,
@@ -729,7 +788,7 @@ export const TokenList = () => {
 
   const onRefresh = useCallback(async () => {
     const balanceRefresh = triggerUpdate(true);
-    const tokenRefresh = batchGetTokenList(myTop10Addresses, true);
+    const tokenRefresh = requestTokenList(true, 'pull-refresh');
 
     withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);
@@ -740,7 +799,7 @@ export const TokenList = () => {
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [myTop10Addresses, triggerUpdate]);
+  }, [requestTokenList, triggerUpdate]);
 
   const handleLpTokenEnabledChange = useCallback((nextEnabled: boolean) => {
     setIsLpTokenEnabled(nextEnabled);

@@ -1,6 +1,9 @@
 # Disable New Architecture
 ENV['RCT_NEW_ARCH_ENABLED'] = "0"
 
+require 'json'
+require 'pathname'
+
 def node_require(script)
   # Resolve script with node to allow for hoisting
   require Pod::Executable.execute_command('node', ['-p',
@@ -55,8 +58,47 @@ target 'RabbyMobile' do
   use_frameworks! :linkage => :static
   config = use_native_modules!
 
+  mobile_root = File.expand_path('../../..', __dir__)
+  private_signer_candidates = [
+    ENV['RABBY_NATIVE_OPENAPI_SIGNER_DIR'],
+    File.join(mobile_root, 'node_modules/@debank/rabby-native-openapi-signer'),
+    File.expand_path('../rabby-native-openapi-signer', mobile_root),
+  ].compact.map { |path| File.expand_path(path, mobile_root) }
+  private_signer_dir = private_signer_candidates.find do |path|
+    File.file?(File.join(path, 'RabbyNativeOpenApiSigner.podspec'))
+  end
+  private_signer_enabled =
+    ENV.fetch('RABBY_NATIVE_OPENAPI_SIGNER_ENABLED', '1') != '0' &&
+    !private_signer_dir.nil?
+  ENV['RABBY_NATIVE_OPENAPI_PRIVATE_SIGNER_POD'] =
+    private_signer_enabled ? '1' : '0'
+  if private_signer_enabled
+    native_openapi_package = JSON.parse(
+      File.read(File.join(mobile_root, 'packages/rabby-native-openapi/package.json')),
+    )
+    expected_signer_version = native_openapi_package
+      .fetch('peerDependencies')
+      .fetch('@debank/rabby-native-openapi-signer')
+    private_signer_package = JSON.parse(
+      File.read(File.join(private_signer_dir, 'package.json')),
+    )
+    actual_signer_version = private_signer_package.fetch('version')
+    if actual_signer_version != expected_signer_version
+      raise Pod::Informative,
+        "Rabby Native OpenAPI signer version mismatch: expected #{expected_signer_version}, got #{actual_signer_version}"
+    end
+    ENV['RABBY_NATIVE_OPENAPI_SIGNER_VERSION'] = actual_signer_version
+    private_signer_pod_path = Pathname.new(private_signer_dir)
+      .relative_path_from(Pathname.new(__dir__))
+      .to_s
+    pod 'RabbyNativeOpenApiSigner', :path => private_signer_pod_path
+  else
+    ENV.delete('RABBY_NATIVE_OPENAPI_SIGNER_VERSION')
+  end
   # Keep transitive OpenSSL resolution stable when Podfile.lock is regenerated.
   pod 'OpenSSL-Universal', '3.6.0000'
+  pod 'RabbyNativeHttp', :path => '../../../packages/rabby-native-http'
+  pod 'RabbyNativeOpenApi', :path => '../../../packages/rabby-native-openapi'
 
   # Flags change depending on the env values.
   flags = get_default_flags()

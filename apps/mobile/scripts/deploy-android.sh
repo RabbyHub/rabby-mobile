@@ -82,6 +82,7 @@ fi
 
 prepare_android_build_artifacts() {
   turbo_prepare_js_dependencies || return $?
+  prepare_private_native_packages || return $?
   turbo_prepare_ruby_bundle || return $?
 
   if turbo_build_enabled; then
@@ -149,6 +150,7 @@ build_appstore() {
   else
     ensure_inpage_bridge_assets || return $?
     yarn &&
+      prepare_private_native_packages &&
       yarn check-nodeengines &&
       yarn ../mobile-local-pages bundle:all &&
       yarn link-assets &&

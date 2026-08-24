@@ -264,6 +264,12 @@ PODS:
     - Yoga
   - OpenSSL-Universal (3.6.0000)
   - PromisesObjC (2.4.0)
+  - RabbyNativeHttp (0.1.0)
+  - RabbyNativeOpenApi (0.1.0):
+    - op-sqlite (= 15.1.1)
+    - RabbyNativeHttp (= 0.1.0)
+    - RabbyNativeOpenApiSigner (= 0.1.0-alpha.0)
+  - RabbyNativeOpenApiSigner (0.1.0-alpha.0)
   - RabbyRNKeychain (8.2.0-rabby.0):
     - React-Core
   - RabbyRNKeychainV9 (9.2.3-rabby.0):
@@ -3409,6 +3415,9 @@ DEPENDENCIES:
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - OpenSSL-Universal (= 3.6.0000)
+  - RabbyNativeHttp (from `../../../packages/rabby-native-http`)
+  - RabbyNativeOpenApi (from `../../../packages/rabby-native-openapi`)
+  - "RabbyNativeOpenApiSigner (from `../../../node_modules/@debank/rabby-native-openapi-signer`)"
   - "RabbyRNKeychain (from `../node_modules/@rabby-wallet/react-native-keychain`)"
   - "RabbyRNKeychainV9 (from `../node_modules/@rabby-wallet/react-native-keychain-9`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3583,6 +3592,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-nitro-modules"
   op-sqlite:
     :path: "../node_modules/@op-engineering/op-sqlite"
+  RabbyNativeHttp:
+    :path: "../../../packages/rabby-native-http"
+  RabbyNativeOpenApi:
+    :path: "../../../packages/rabby-native-openapi"
+  RabbyNativeOpenApiSigner:
+    :path: "../../../node_modules/@debank/rabby-native-openapi-signer"
   RabbyRNKeychain:
     :path: "../node_modules/@rabby-wallet/react-native-keychain"
   RabbyRNKeychainV9:
@@ -3846,9 +3861,12 @@ SPEC CHECKSUMS:
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   NitroModules: 6a5fd5734111638e8311a4f797eb98263b310c0a
-  op-sqlite: 559e7d37fe743edcc74f45bb49cab6259e30a144
+  op-sqlite: c728fc4ed4b638371e35b743d7030a40aa29b169
   OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  RabbyNativeHttp: 1e3f919eae3484889e950b227052d0a2602929c2
+  RabbyNativeOpenApi: 422082d84944a42e2a592adcd939f1ac1ce8512d
+  RabbyNativeOpenApiSigner: 22fb4eb311f788815be2bec1631ed37ab8a87f1d
   RabbyRNKeychain: cc2d4ef9630a23dd2a9d72ba3532d54a2fb58c66
   RabbyRNKeychainV9: 149a60d8e00ab5ce9e5a2d27361994d60c332264
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
@@ -3970,6 +3988,6 @@ SPEC CHECKSUMS:
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
   YttriumWrapper: d7f63336830536f1da41b745ed8bacedb04228c4
 
-PODFILE CHECKSUM: 851bcc0d211b5717a5f3a23a27f1b0b7f4aa38ff
+PODFILE CHECKSUM: 3c30ee0cae946d801b4682bc238fee866fa728ce
 
 COCOAPODS: 1.14.3

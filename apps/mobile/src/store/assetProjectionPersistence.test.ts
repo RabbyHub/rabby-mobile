@@ -36,4 +36,22 @@ describe('asset projection storage identity', () => {
       }),
     );
   });
+
+  it('keeps high-cardinality runtime identities fixed-width and deterministic', () => {
+    const identity = {
+      kind: 'token' as const,
+      scene: 'multi-address' as const,
+      runtimeKey: Array.from(
+        { length: 100 },
+        (_, index) => `0x${index.toString(16).padStart(40, '0')}`,
+      ).join('|'),
+    };
+
+    const first = buildAssetProjectionStorageKey(identity);
+    const second = buildAssetProjectionStorageKey(identity);
+
+    expect(first).toBe(second);
+    expect(first).toMatch(/^ap:2:[0-9a-f]{64}$/);
+    expect(first).toHaveLength(69);
+  });
 });

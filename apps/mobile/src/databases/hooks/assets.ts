@@ -8,6 +8,8 @@ import type { NftSnapshotLoadOptions } from '@/databases/hooks/nft';
 import {
   batchLoadProjects,
   loadPortfolioSnapshot,
+  type PortfolioSnapshotRequestDetails,
+  type PortfolioSnapshotRequestPhase,
 } from '@/core/apis/portfolio';
 
 import { TokenItemEntity } from '../entities/tokenitem';
@@ -15,6 +17,10 @@ import { formatAppChain, isAppChain } from '@/utils/appchain';
 import type { IProtocolItem } from '@/types/assets';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import { useAppChainStore } from '@/store/appchain';
+import {
+  ASSET_REMOTE_ADDRESS_CONCURRENCY,
+  mapWithConcurrency,
+} from '@/core/utils/boundedConcurrency';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -117,6 +123,7 @@ export type LoadedProtocolResult = {
 async function loadProtocolsForSync(
   address: string,
   force?: boolean,
+  diagnostics?: ProtocolAddressLoadDiagnostics,
 ): Promise<LoadedProtocolResult> {
   if (!address) {
     return {
@@ -138,21 +145,54 @@ async function loadProtocolsForSync(
     };
   }
 
-  const snapshotRes = (await loadPortfolioSnapshot(normalizedAddress)) || [];
+  const snapshotRes =
+    (await loadPortfolioSnapshot(normalizedAddress, (phase, details) => {
+      diagnostics?.markPortfolioRequest(phase, details);
+    })) || [];
+  diagnostics?.mark('portfolio-payload-ready', {
+    itemCount: snapshotRes.length,
+  });
+  const appChainStartedAt = Date.now();
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
     normalizedAddress,
     force,
   );
+  diagnostics?.mark('appchain-completed', {
+    elapsedMs: Date.now() - appChainStartedAt,
+    itemCount: appChainProtocols.length,
+  });
   const protocols = [...snapshotRes, ...appChainProtocols];
+  const conversionStartedAt = Date.now();
+  const convertedProtocols = protocols.map(p =>
+    complexProtocol2ProtocolItem(p, normalizedAddress),
+  );
+  diagnostics?.mark('protocol-conversion-completed', {
+    elapsedMs: Date.now() - conversionStartedAt,
+    itemCount: convertedProtocols.length,
+  });
 
   return {
     address: normalizedAddress,
-    protocols: protocols.map(p =>
-      complexProtocol2ProtocolItem(p, normalizedAddress),
-    ),
+    protocols: convertedProtocols,
     remoteProtocols: snapshotRes,
   };
 }
+
+type ProtocolLoadDiagnosticDetails = Readonly<
+  Record<string, string | number | boolean | null | undefined>
+>;
+
+export type ProtocolLoadDiagnostics = {
+  mark: (phase: string, details?: ProtocolLoadDiagnosticDetails) => void;
+};
+
+type ProtocolAddressLoadDiagnostics = {
+  mark: (phase: string, details?: ProtocolLoadDiagnosticDetails) => void;
+  markPortfolioRequest: (
+    phase: PortfolioSnapshotRequestPhase,
+    details: PortfolioSnapshotRequestDetails,
+  ) => void;
+};
 
 export type LoadedProtocolMapResult = {
   protocolMap: Record<string, IProtocolItem[]>;
@@ -162,6 +202,7 @@ export type LoadedProtocolMapResult = {
 export const loadProtocolsForAddresses = async (
   addresses: string[],
   force?: boolean,
+  diagnostics?: ProtocolLoadDiagnostics,
 ): Promise<LoadedProtocolMapResult> => {
   const lowerAddresses = Array.from(
     new Set(addresses.map(address => address.toLowerCase()).filter(Boolean)),
@@ -173,8 +214,26 @@ export const loadProtocolsForAddresses = async (
     };
   }
 
-  const results = await Promise.all(
-    lowerAddresses.map(address => loadProtocolsForSync(address, force)),
+  let settledAddressCount = 0;
+  const results = await mapWithConcurrency(
+    lowerAddresses,
+    ASSET_REMOTE_ADDRESS_CONCURRENCY,
+    (address, addressIndex) => {
+      const mark = (phase: string, details?: ProtocolLoadDiagnosticDetails) =>
+        diagnostics?.mark(phase, {
+          addressIndex,
+          addressCount: lowerAddresses.length,
+          ...details,
+        });
+      return loadProtocolsForSync(address, force, {
+        mark,
+        markPortfolioRequest: (phase, details) =>
+          mark(`portfolio-${phase}`, details),
+      }).finally(() => {
+        settledAddressCount += 1;
+        mark('address-settled', { settledAddressCount });
+      });
+    },
   );
   const protocolMap: Record<string, IProtocolItem[]> = {};
   const remoteProtocolMap: Record<string, ComplexProtocol[]> = {};
