@@ -1261,6 +1261,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 5,
   },
   regionAlertOverlay: {
+    backgroundColor: colors2024['neutral-bg-1'],
     left: 0,
     position: 'absolute',
     right: 0,

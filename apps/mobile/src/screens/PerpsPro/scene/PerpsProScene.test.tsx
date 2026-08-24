@@ -1148,6 +1148,15 @@ describe('PerpsProScene market loading states', () => {
 
     expect(screen.getByTestId('perps-pro-region-alert-slot')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-region-alert-overlay')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'neutral-bg-1',
+      left: 0,
+      right: 0,
+    });
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
     expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
