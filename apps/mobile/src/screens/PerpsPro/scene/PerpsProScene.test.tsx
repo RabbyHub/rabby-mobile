@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
 import React from 'react';
 import {
   AppState,
@@ -22,6 +28,8 @@ const mockKlineProps = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
 const mockUsePerpsProPositionTpSl = jest.fn();
 const mockUsePerpsProOpenOrderEdit = jest.fn();
+const mockOpenOrderCardProps = jest.fn();
+const mockConditionalOrderEditSheetProps = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
 const mockSelectOrderBookPrice = jest.fn();
@@ -324,7 +332,10 @@ jest.mock('../components/open-orders/PerpsProBasicOrderEditSheet', () => ({
 jest.mock(
   '../components/open-orders/PerpsProConditionalOrderEditSheet',
   () => ({
-    PerpsProConditionalOrderEditSheet: () => null,
+    PerpsProConditionalOrderEditSheet: (props: object) => {
+      mockConditionalOrderEditSheetProps(props);
+      return null;
+    },
   }),
 );
 
@@ -337,8 +348,10 @@ jest.mock('../components/open-orders/PerpsProOpenOrderCard', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProOpenOrderCard: () =>
-      ReactModule.createElement(View, { testID: 'open-order-card' }),
+    PerpsProOpenOrderCard: (props: object) => {
+      mockOpenOrderCardProps(props);
+      return ReactModule.createElement(View, { testID: 'open-order-card' });
+    },
   };
 });
 
@@ -619,7 +632,9 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => ({
   activeInfoTab: 'account',
   allOpenOrdersCount: 0,
   allPositionsCount: 0,
-  hideOtherSymbols: false,
+  allPositionsByCoin: new Map(),
+  hideOtherOpenOrderSymbols: false,
+  hideOtherPositionSymbols: false,
   openOrderCategory: 'basic',
   openOrderCommandCandidates: [],
   openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
@@ -630,7 +645,8 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => ({
   positions: [],
   retryAccount: jest.fn(),
   setActiveInfoTab: jest.fn(),
-  setHideOtherSymbols: jest.fn(),
+  setHideOtherOpenOrderSymbols: jest.fn(),
+  setHideOtherPositionSymbols: jest.fn(),
   setOpenOrderCategory: jest.fn(),
   ...overrides,
 });
@@ -698,6 +714,7 @@ describe('PerpsProScene market loading states', () => {
       closeReview: jest.fn(),
       confirm: jest.fn(),
       editor: null,
+      isEditUnavailable: () => false,
       open: jest.fn(),
       pending: false,
       requestBasicReview: jest.fn(),
@@ -1663,6 +1680,119 @@ describe('PerpsProScene market loading states', () => {
     );
     expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeTruthy();
+  });
+
+  it('routes Position and Open Orders filters to independent local state', () => {
+    const setHideOtherPositionSymbols = jest.fn();
+    const setHideOtherOpenOrderSymbols = jest.fn();
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'positions',
+        hideOtherOpenOrderSymbols: false,
+        hideOtherPositionSymbols: true,
+        setHideOtherOpenOrderSymbols,
+        setHideOtherPositionSymbols,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const positionCheckbox = within(
+      screen.getByTestId('perps-pro-positions-controls'),
+    ).getByRole('checkbox');
+    expect(positionCheckbox.props.accessibilityState).toEqual({
+      checked: true,
+    });
+    fireEvent.press(positionCheckbox);
+    expect(setHideOtherPositionSymbols).toHaveBeenCalledTimes(1);
+    expect(setHideOtherOpenOrderSymbols).not.toHaveBeenCalled();
+    expect(setHideOtherPositionSymbols.mock.calls[0][0](true)).toBe(false);
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'openOrders',
+        hideOtherOpenOrderSymbols: false,
+        hideOtherPositionSymbols: true,
+        setHideOtherOpenOrderSymbols,
+        setHideOtherPositionSymbols,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const openOrderCheckbox = within(
+      screen.getByTestId('perps-pro-open-orders-controls'),
+    ).getByRole('checkbox');
+    expect(openOrderCheckbox.props.accessibilityState).toEqual({
+      checked: false,
+    });
+    fireEvent.press(openOrderCheckbox);
+    expect(setHideOtherOpenOrderSymbols).toHaveBeenCalledTimes(1);
+    expect(setHideOtherPositionSymbols).toHaveBeenCalledTimes(1);
+    expect(setHideOtherOpenOrderSymbols.mock.calls[0][0](false)).toBe(true);
+  });
+
+  it('uses unfiltered positions for visible Open Order edit context', () => {
+    const position = {
+      baseSize: '2',
+      coin: 'ETH',
+      direction: 'long',
+      entryPrice: '3000',
+      key: 'ETH',
+    };
+    const order = {
+      category: 'conditional',
+      coin: 'ETH',
+      editKind: 'triggerMarket',
+      isPositionTpsl: true,
+      key: 'conditional-eth',
+      oid: 7,
+      reduceOnly: true,
+      side: 'sell',
+    };
+    const open = jest.fn();
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'openOrders',
+        allOpenOrdersCount: 1,
+        allPositionsByCoin: new Map([['ETH', position]]),
+        hideOtherOpenOrderSymbols: false,
+        hideOtherPositionSymbols: true,
+        openOrderCategory: 'conditional',
+        openOrderCounts: { basic: 0, conditional: 1, unsupported: 0 },
+        openOrders: [order],
+        positions: [],
+      }),
+    );
+    mockUsePerpsProOpenOrderEdit.mockReturnValue({
+      close: jest.fn(),
+      closeReview: jest.fn(),
+      confirm: jest.fn(),
+      editor: { category: 'conditional', order, position: null },
+      isEditUnavailable: () => false,
+      open,
+      pending: false,
+      requestBasicReview: jest.fn(),
+      requestConditionalReview: jest.fn(),
+      review: null,
+      skipConfirmation: false,
+      toggleSkipConfirmation: jest.fn(),
+    });
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const openOrderCardProps = mockOpenOrderCardProps.mock.lastCall?.[0];
+    act(() => openOrderCardProps.onEdit(order));
+    expect(open).toHaveBeenCalledWith(order, position);
+    expect(mockConditionalOrderEditSheetProps.mock.lastCall?.[0]).toMatchObject(
+      { position },
+    );
   });
 
   it('preserves the empty-state trailing distance after populated account, position, and order rows', () => {

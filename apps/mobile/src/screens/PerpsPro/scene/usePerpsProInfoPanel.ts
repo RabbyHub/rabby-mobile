@@ -39,6 +39,7 @@ import {
 import {
   buildPerpsPositionsFromTopology,
   filterPerpsPositionsForMarket,
+  type PerpsPositionViewModel,
 } from '../model/position';
 import { usePerpsProInfoPreferences } from './usePerpsProInfoPreferences';
 
@@ -61,7 +62,10 @@ export const usePerpsProInfoPanel = (
   const preferences = usePerpsProInfoPreferences();
   const runtime = usePerpsRuntimeStatus();
   const { fetchMarketData, fetchSpotMeta } = usePerpsStore();
-  const [hideOtherSymbols, setHideOtherSymbols] = useState(false);
+  const [hideOtherPositionSymbols, setHideOtherPositionSymbols] =
+    useState(false);
+  const [hideOtherOpenOrderSymbols, setHideOtherOpenOrderSymbols] =
+    useState(false);
   const [openOrderCategory, setOpenOrderCategory] =
     useState<Exclude<PerpsOpenOrderCategory, 'unsupported'>>('basic');
 
@@ -200,6 +204,12 @@ export const usePerpsProInfoPanel = (
       ),
     [account, facts.clearinghouseState?.assetPositions, openOrderTopology],
   );
+  const allPositionsByCoin = useMemo<
+    ReadonlyMap<string, PerpsPositionViewModel>
+  >(
+    () => new Map(allPositions.map(position => [position.coin, position])),
+    [allPositions],
+  );
   const accountIdentity = facts.currentAccount
     ? facts.currentAccount.address.toLowerCase() +
       ':' +
@@ -252,19 +262,24 @@ export const usePerpsProInfoPanel = (
       filterPerpsPositionsForMarket(
         allPositions,
         canonicalCoin,
-        hideOtherSymbols,
+        hideOtherPositionSymbols,
       ),
-    [allPositions, canonicalCoin, hideOtherSymbols],
+    [allPositions, canonicalCoin, hideOtherPositionSymbols],
   );
   const openOrders = useMemo(
     () =>
       filterPerpsOpenOrders({
         canonicalCoin,
         category: openOrderCategory,
-        hideOtherSymbols,
+        hideOtherSymbols: hideOtherOpenOrderSymbols,
         orders: allOpenOrders,
       }),
-    [allOpenOrders, canonicalCoin, hideOtherSymbols, openOrderCategory],
+    [
+      allOpenOrders,
+      canonicalCoin,
+      hideOtherOpenOrderSymbols,
+      openOrderCategory,
+    ],
   );
   const openOrderCommandCandidates = useMemo(
     () => allOpenOrders.filter(order => order.category === openOrderCategory),
@@ -332,6 +347,7 @@ export const usePerpsProInfoPanel = (
     activeInfoTab,
     allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
     allPositionsCount: allPositions.length,
+    allPositionsByCoin,
     openOrdersEmpty: isPerpsProCollectionAuthoritativelyEmpty({
       hasAccount: !!facts.currentAccount,
       runtimeReady: runtime.status === 'ready',
@@ -344,7 +360,8 @@ export const usePerpsProInfoPanel = (
       sourceReady: facts.isUserDataReady,
       totalCount: allPositions.length,
     }),
-    hideOtherSymbols,
+    hideOtherOpenOrderSymbols,
+    hideOtherPositionSymbols,
     hydrated: preferences.hydrated,
     openOrderCategory,
     openOrderCommandCandidates,
@@ -354,7 +371,8 @@ export const usePerpsProInfoPanel = (
     positions,
     retryAccount,
     setActiveInfoTab: preferences.setActiveInfoTab,
-    setHideOtherSymbols,
+    setHideOtherOpenOrderSymbols,
+    setHideOtherPositionSymbols,
     setOpenOrderCategory,
   };
 };

@@ -253,7 +253,11 @@ export const PerpsProScene: React.FC<{
   const isOpenOrderEditUnavailable = openOrderEdit.isEditUnavailable;
   const closeAll = usePerpsProCloseAll(info.accountIdentity);
   const transfer = usePerpsProTransfer(info.accountIdentity);
-  const { setActiveInfoTab, setHideOtherSymbols } = info;
+  const {
+    setActiveInfoTab,
+    setHideOtherOpenOrderSymbols,
+    setHideOtherPositionSymbols,
+  } = info;
   const headerCollapse = usePerpsProHeaderCollapse();
   const infoScrollBridge = usePerpsProInfoScrollBridge(
     info.activeInfoTab ?? 'account',
@@ -388,9 +392,13 @@ export const PerpsProScene: React.FC<{
     },
     [selectMarketByCoin],
   );
-  const toggleHideOtherSymbols = useCallback(
-    () => setHideOtherSymbols(value => !value),
-    [setHideOtherSymbols],
+  const toggleHideOtherPositionSymbols = useCallback(
+    () => setHideOtherPositionSymbols(value => !value),
+    [setHideOtherPositionSymbols],
+  );
+  const toggleHideOtherOpenOrderSymbols = useCallback(
+    () => setHideOtherOpenOrderSymbols(value => !value),
+    [setHideOtherOpenOrderSymbols],
   );
   const { gap, orderBookWidth, tradeWidth } = useMemo(
     () => getPerpsProColumnLayout(width),
@@ -716,11 +724,6 @@ export const PerpsProScene: React.FC<{
     info.positions,
     info.positionsEmpty,
   ]);
-  const positionsByCoin = useMemo(
-    () => new Map(info.positions.map(position => [position.coin, position])),
-    [info.positions],
-  );
-
   const renderTrade = useCallback(() => {
     if (scene.currentMarket) {
       const supportsTradePriceSelection =
@@ -856,9 +859,9 @@ export const PerpsProScene: React.FC<{
             <PerpsProPositionsControls
               actionDisabled={info.allPositionsCount === 0}
               actionPending={closeAll.pending}
-              hideOtherSymbols={info.hideOtherSymbols}
+              hideOtherSymbols={info.hideOtherPositionSymbols}
               onCloseAll={closeAll.requestCloseAll}
-              onToggleHideOtherSymbols={toggleHideOtherSymbols}
+              onToggleHideOtherSymbols={toggleHideOtherPositionSymbols}
             />
           );
         case 'positions-empty':
@@ -886,7 +889,7 @@ export const PerpsProScene: React.FC<{
               basicCount={info.openOrderCounts.basic}
               category={info.openOrderCategory}
               conditionalCount={info.openOrderCounts.conditional}
-              hideOtherSymbols={info.hideOtherSymbols}
+              hideOtherSymbols={info.hideOtherOpenOrderSymbols}
               isCancelAllPending={cancelOrders.isCancelAllPending}
               onCancelAll={() =>
                 cancelOrders.confirmCancelAll(
@@ -895,7 +898,7 @@ export const PerpsProScene: React.FC<{
                 )
               }
               onSetCategory={info.setOpenOrderCategory}
-              onToggleHideOtherSymbols={toggleHideOtherSymbols}
+              onToggleHideOtherSymbols={toggleHideOtherOpenOrderSymbols}
             />
           );
         case 'open-orders-empty':
@@ -906,7 +909,7 @@ export const PerpsProScene: React.FC<{
             />
           );
         case 'open-order': {
-          const position = positionsByCoin.get(item.order.coin) ?? null;
+          const position = info.allPositionsByCoin.get(item.order.coin) ?? null;
           const editPosition = isRelevantOpenOrderEditPosition(
             item.order,
             position,
@@ -943,10 +946,10 @@ export const PerpsProScene: React.FC<{
       positionActions.openCloseEditor,
       positionTpSl.open,
       openOpenOrderEdit,
-      positionsByCoin,
       selectCardMarket,
       t,
-      toggleHideOtherSymbols,
+      toggleHideOtherOpenOrderSymbols,
+      toggleHideOtherPositionSymbols,
       trade.amountUnit,
       transfer.open,
     ],
@@ -1206,7 +1209,7 @@ export const PerpsProScene: React.FC<{
           onClose={openOrderEdit.close}
           onReview={openOrderEdit.requestConditionalReview}
           position={
-            positionsByCoin.get(openOrderEdit.editor.order.coin) ??
+            info.allPositionsByCoin.get(openOrderEdit.editor.order.coin) ??
             openOrderEdit.editor.position
           }
           visible
