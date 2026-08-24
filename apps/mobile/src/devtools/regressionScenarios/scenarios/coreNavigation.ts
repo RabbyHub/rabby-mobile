@@ -951,6 +951,54 @@ async function openHighCardinalityAssets(
   context: RegressionScenarioExecutionContext,
 ) {
   await context.waitForNavigation();
+  const requestedAddressCount = getHighCardinalityFixtureAddressCount(
+    context.command.params.addressCount,
+  );
+  const assetProbeMode = getHighCardinalityAssetProbeMode(
+    context.command.params.assetProbeMode,
+  );
+  const useExistingSelection = parseScenarioBoolean(
+    context.command.params.useExistingSelection,
+  );
+
+  if (useExistingSelection) {
+    const settings = getHomeAssetSelectionSettings();
+    if (
+      !isHomeAssetSelectionExperimentEnabled() ||
+      !settings.includeWatchAddresses ||
+      settings.topN !== requestedAddressCount
+    ) {
+      throw new Error(
+        'Existing Home asset selection does not match the requested pressure level',
+      );
+    }
+
+    const selection = await waitForHomeAssetSelection(requestedAddressCount);
+    context.report('precondition-ready', {
+      selectionSource: 'existing',
+      selectedAddressCount: selection.selectedAddresses.length,
+      expectedSelectionCount: requestedAddressCount,
+      homeAssetTopN: settings.topN,
+      includeWatchAddresses: settings.includeWatchAddresses,
+      assetProbeMode,
+    });
+    context.report('assertion', {
+      assertion: 'high-cardinality-address-selection-ready',
+      passed:
+        selection.hasResolvedSelection &&
+        selection.selectedAddresses.length === requestedAddressCount,
+      selectedAddressCount: selection.selectedAddresses.length,
+      expectedSelectionCount: requestedAddressCount,
+      selectionSource: 'existing',
+    });
+    await runHighCardinalityAssetsProbe(
+      context,
+      requestedAddressCount,
+      assetProbeMode,
+    );
+    return;
+  }
+
   await ensureScenarioWalletUnlocked();
 
   const fixtureId = context.command.fixture;
@@ -959,12 +1007,6 @@ async function openHighCardinalityAssets(
   }
 
   const fixture = await consumeRegressionWatchAddressFixture(fixtureId);
-  const requestedAddressCount = getHighCardinalityFixtureAddressCount(
-    context.command.params.addressCount,
-  );
-  const assetProbeMode = getHighCardinalityAssetProbeMode(
-    context.command.params.assetProbeMode,
-  );
   const addresses = fixture.addresses.slice(0, requestedAddressCount);
   if (addresses.length !== requestedAddressCount) {
     throw new Error(
@@ -1038,6 +1080,18 @@ async function openHighCardinalityAssets(
     expectedSelectionCount,
     fixtureAddressCount,
   });
+  await runHighCardinalityAssetsProbe(
+    context,
+    requestedAddressCount,
+    assetProbeMode,
+  );
+}
+
+async function runHighCardinalityAssetsProbe(
+  context: RegressionScenarioExecutionContext,
+  requestedAddressCount: number,
+  assetProbeMode: HighCardinalityAssetProbeMode,
+) {
   context.report('action-started', {
     action: context.command.action,
   });
