@@ -1,4 +1,3 @@
-import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 import type { Account } from '@/core/startupServices/preference';
 import {
@@ -7,30 +6,56 @@ import {
   getDexByCoin,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
-import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
+import type {
+  OpenOrder,
+  OrderStatusResponse,
+} from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
 import { isSamePerpsActionAccount } from './accountGuard';
 import { isPerpsActionUserCancelled } from './actionError';
 
-export type PerpsModifyOpenOrderTif = 'Alo' | 'Gtc';
+export type PerpsModifyOpenOrderTif = 'Alo' | 'Gtc' | 'Ioc';
+export type PerpsModifyOpenOrderKind =
+  | 'limit'
+  | 'triggerLimit'
+  | 'triggerMarket';
+export type PerpsModifyOpenOrderTriggerKind = 'stopLoss' | 'takeProfit';
+
+type PerpsModifyOpenOrderWireType =
+  | { limit: { tif: PerpsModifyOpenOrderTif } }
+  | {
+      trigger: {
+        isMarket: boolean;
+        tpsl: 'sl' | 'tp';
+        triggerPx: string;
+      };
+    };
 
 export type PerpsModifyOpenOrderCommand = {
   account: Pick<Account, 'address' | 'type'>;
   coin: string;
   dexId: string;
   expected: {
+    cloid: null;
+    isPositionTpsl: boolean;
+    kind: PerpsModifyOpenOrderKind;
     limitPrice: string;
+    orderType: string;
     reduceOnly: boolean;
     remainingSize: string;
     side: 'buy' | 'sell';
-    tif: PerpsModifyOpenOrderTif;
+    tif: PerpsModifyOpenOrderTif | null;
+    triggerKind: PerpsModifyOpenOrderTriggerKind | null;
+    triggerPrice: string | null;
   };
   marketKey: string;
   oid: number;
   replacement: {
     baseSize: string;
     limitPrice: string;
+    orderType: PerpsModifyOpenOrderWireType;
+    triggerPrice: string | null;
   };
   type: 'modifyOpenOrder';
 };
@@ -53,13 +78,17 @@ export type PerpsModifyOpenOrderDependencies = {
   getCurrentAccount: () => Pick<Account, 'address' | 'type'> | null;
   getCurrentDex: (coin: string) => string;
   getLiveOpenOrders: () => readonly OpenOrder[];
+  getOrderStatus: (
+    oid: number,
+    address: string,
+  ) => Promise<OrderStatusResponse>;
   hasPermission: () => boolean;
   modifyOrder: (params: {
     coin: string;
     isBuy: boolean;
     limitPx: string;
     oid: number;
-    orderType: { limit: { tif: PerpsModifyOpenOrderTif } };
+    orderType: PerpsModifyOpenOrderWireType;
     reduceOnly: boolean;
     sz: string;
   }) => Promise<unknown>;
@@ -83,13 +112,56 @@ const normalize = (value: string, decimals: number) => {
   return positive(result)?.toFixed() ?? null;
 };
 
+const normalizeSize = (value: string, decimals: number, allowZero: boolean) => {
+  const number = new BigNumber(value || Number.NaN);
+  if (
+    !number.isFinite() ||
+    number.isNegative() ||
+    (!allowZero && number.isZero()) ||
+    !Number.isSafeInteger(decimals) ||
+    decimals < 0
+  ) {
+    return null;
+  }
+  const result = number.decimalPlaces(decimals, BigNumber.ROUND_DOWN).toFixed();
+  return allowZero && new BigNumber(result).isZero()
+    ? '0'
+    : positive(result)?.toFixed() ?? null;
+};
+
+const isValidTif = (
+  value: string | null | undefined,
+): value is PerpsModifyOpenOrderTif =>
+  value === 'Gtc' || value === 'Alo' || value === 'Ioc';
+
+const expectedOrderTypeFor = ({
+  kind,
+  triggerKind,
+}: {
+  kind: PerpsModifyOpenOrderKind;
+  triggerKind: PerpsModifyOpenOrderTriggerKind | null;
+}) => {
+  if (kind === 'limit') return ['Limit'];
+  const execution = kind === 'triggerMarket' ? 'Market' : 'Limit';
+  return triggerKind === 'takeProfit'
+    ? [`Take Profit ${execution}`, `Take ${execution}`]
+    : triggerKind === 'stopLoss'
+    ? [`Stop ${execution}`]
+    : [];
+};
+
 export const buildPerpsModifyOpenOrderCommand = ({
   account,
   baseSize,
+  cloid = null,
   coin,
   dexId,
+  editKind = 'limit',
+  expectedIsPositionTpsl = false,
   expectedLimitPrice,
+  expectedOrderType = 'Limit',
   expectedRemainingSize,
+  expectedTriggerPrice = null,
   limitPrice,
   marketKey,
   oid,
@@ -98,27 +170,69 @@ export const buildPerpsModifyOpenOrderCommand = ({
   side,
   szDecimals,
   tif,
+  triggerKind = null,
+  triggerPrice = null,
 }: {
   account: Pick<Account, 'address' | 'type'>;
   baseSize: string;
+  cloid?: string | null;
   coin: string;
   dexId: string;
+  editKind?: PerpsModifyOpenOrderKind;
+  expectedIsPositionTpsl?: boolean;
   expectedLimitPrice: string;
+  expectedOrderType?: string;
   expectedRemainingSize: string;
-  limitPrice: string;
+  expectedTriggerPrice?: string | null;
+  limitPrice?: string;
   marketKey: string;
   oid: number;
   pxDecimals: number;
   reduceOnly: boolean;
   side: 'buy' | 'sell';
   szDecimals: number;
-  tif: PerpsModifyOpenOrderTif;
+  tif?: PerpsModifyOpenOrderTif | null;
+  triggerKind?: PerpsModifyOpenOrderTriggerKind | null;
+  triggerPrice?: string | null;
 }): PerpsModifyOpenOrderCommand => {
   const normalizedCoin = coin.trim();
-  const normalizedPrice = normalize(limitPrice, pxDecimals);
-  const normalizedSize = normalize(baseSize, szDecimals);
+  const allowZeroSize = editKind !== 'limit' && expectedIsPositionTpsl;
+  const normalizedSize = normalizeSize(baseSize, szDecimals, allowZeroSize);
   const expectedPrice = positive(expectedLimitPrice)?.toFixed();
-  const expectedSize = positive(expectedRemainingSize)?.toFixed();
+  const expectedSize = normalizeSize(
+    expectedRemainingSize,
+    szDecimals,
+    allowZeroSize,
+  );
+  const expectedTrigger =
+    editKind === 'limit'
+      ? null
+      : positive(expectedTriggerPrice)?.toFixed() ?? null;
+  const normalizedTrigger =
+    editKind === 'limit'
+      ? null
+      : triggerPrice
+      ? normalize(triggerPrice, pxDecimals)
+      : null;
+  const normalizedPrice =
+    editKind === 'triggerMarket'
+      ? expectedPrice && expectedTrigger && normalizedTrigger
+        ? normalize(
+            new BigNumber(expectedPrice)
+              .dividedBy(expectedTrigger)
+              .multipliedBy(normalizedTrigger)
+              .toFixed(),
+            pxDecimals,
+          )
+        : null
+      : limitPrice
+      ? normalize(limitPrice, pxDecimals)
+      : null;
+  const normalizedTif = editKind === 'limit' && isValidTif(tif) ? tif : null;
+  const acceptedOrderTypes = expectedOrderTypeFor({
+    kind: editKind,
+    triggerKind,
+  });
   if (
     !account.address ||
     !normalizedCoin ||
@@ -129,33 +243,47 @@ export const buildPerpsModifyOpenOrderCommand = ({
     !normalizedSize ||
     !expectedPrice ||
     !expectedSize ||
-    (tif !== 'Gtc' && tif !== 'Alo')
+    cloid !== null ||
+    !acceptedOrderTypes.includes(expectedOrderType) ||
+    (editKind === 'limit' && !normalizedTif) ||
+    (editKind !== 'limit' && (!expectedTrigger || !normalizedTrigger))
   ) {
     throw new Error('Invalid open order modification');
   }
-  if (
-    new BigNumber(normalizedPrice)
-      .multipliedBy(normalizedSize)
-      .lt(PERPS_MINI_USD_VALUE)
-  ) {
-    throw new Error(`Minimum amount is ${PERPS_MINI_USD_VALUE}`);
-  }
+  const replacementOrderType: PerpsModifyOpenOrderWireType =
+    editKind === 'limit'
+      ? { limit: { tif: normalizedTif! } }
+      : {
+          trigger: {
+            isMarket: editKind === 'triggerMarket',
+            tpsl: triggerKind === 'takeProfit' ? 'tp' : 'sl',
+            triggerPx: normalizedTrigger!,
+          },
+        };
   return Object.freeze({
     account: Object.freeze({ address: account.address, type: account.type }),
     coin: normalizedCoin,
     dexId,
     expected: Object.freeze({
+      cloid: null,
+      isPositionTpsl: expectedIsPositionTpsl,
+      kind: editKind,
       limitPrice: expectedPrice,
+      orderType: expectedOrderType,
       reduceOnly,
       remainingSize: expectedSize,
       side,
-      tif,
+      tif: normalizedTif,
+      triggerKind,
+      triggerPrice: expectedTrigger,
     }),
     marketKey,
     oid,
     replacement: Object.freeze({
       baseSize: normalizedSize,
       limitPrice: normalizedPrice,
+      orderType: Object.freeze(replacementOrderType),
+      triggerPrice: normalizedTrigger,
     }),
     type: 'modifyOpenOrder' as const,
   });
@@ -171,6 +299,8 @@ const defaultDependencies: PerpsModifyOpenOrderDependencies = {
   getCurrentAccount: () => perpsStore.getState().currentPerpsAccount,
   getCurrentDex: coin => getDexByCoin(coin),
   getLiveOpenOrders: () => perpsStore.getState().openOrders,
+  getOrderStatus: (oid, address) =>
+    apisPerps.getPerpsSDK().info.getOrderStatus(oid, address),
   hasPermission: () => perpsStore.getState().hasPermission,
   modifyOrder: params => getExchange().modifyOrder(params),
   refreshClearinghouse: dex => fetchClearinghouseStateHttp(dex),
@@ -195,18 +325,35 @@ const hasExpectedOrder = (
   );
   return (
     !!order &&
-    !order.isTrigger &&
-    !order.isPositionTpsl &&
-    order.orderType === 'Limit' &&
+    !order.children?.length &&
+    !order.cloid &&
+    order.isTrigger === (command.expected.kind !== 'limit') &&
+    order.isPositionTpsl === command.expected.isPositionTpsl &&
+    order.orderType === command.expected.orderType &&
     order.side === (command.expected.side === 'buy' ? 'B' : 'A') &&
     order.reduceOnly === command.expected.reduceOnly &&
-    order.tif === command.expected.tif &&
+    (command.expected.kind === 'limit'
+      ? order.tif === command.expected.tif
+      : true) &&
     new BigNumber(order.limitPx || Number.NaN).eq(
       command.expected.limitPrice,
     ) &&
-    new BigNumber(order.sz || Number.NaN).eq(command.expected.remainingSize)
+    new BigNumber(order.sz || Number.NaN).eq(command.expected.remainingSize) &&
+    (command.expected.kind === 'limit'
+      ? true
+      : new BigNumber(order.triggerPx || Number.NaN).eq(
+          command.expected.triggerPrice || Number.NaN,
+        ))
   );
 };
+
+const hasExpectedOrderStatus = (
+  command: PerpsModifyOpenOrderCommand,
+  response: OrderStatusResponse,
+) =>
+  response.status === 'order' &&
+  response.order.status === 'open' &&
+  hasExpectedOrder(command, [response.order.order as OpenOrder]);
 
 const isUnknownOutcomeError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
@@ -327,6 +474,25 @@ export const executePerpsModifyOpenOrder = async (
   ) {
     return { kind: 'staleContext' };
   }
+  let status: OrderStatusResponse;
+  try {
+    status = await dependencies.getOrderStatus(
+      command.oid,
+      command.account.address,
+    );
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    };
+  }
+  if (
+    !hasBaseContext(command, dependencies, sceneGuard) ||
+    !hasExpectedOrderStatus(command, status)
+  ) {
+    return { kind: 'staleContext' };
+  }
   try {
     if (!dependencies.hasPermission()) {
       return { failureReason: 'regionRestricted', kind: 'failed' };
@@ -336,7 +502,7 @@ export const executePerpsModifyOpenOrder = async (
       isBuy: command.expected.side === 'buy',
       limitPx: command.replacement.limitPrice,
       oid: command.oid,
-      orderType: { limit: { tif: command.expected.tif } },
+      orderType: command.replacement.orderType,
       reduceOnly: command.expected.reduceOnly,
       sz: command.replacement.baseSize,
     });
