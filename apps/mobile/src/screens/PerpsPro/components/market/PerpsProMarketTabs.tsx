@@ -1,7 +1,7 @@
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
   Pressable,
   View,
@@ -18,6 +18,11 @@ type MarketTabItem = Readonly<{
 }>;
 
 type MarketTabFrames = Partial<Record<PerpsProMarketTab, LayoutRectangle>>;
+
+type MarketTabScrollPosition = Readonly<{
+  tab: PerpsProMarketTab;
+  x: number;
+}>;
 
 export const getPerpsProMarketTabScrollOffset = ({
   contentWidth,
@@ -68,6 +73,7 @@ export const PerpsProMarketTabs: React.FC<{
 }> = React.memo(({ activeTab, onChange, tabs }) => {
   const { styles } = useTheme2024({ getStyle });
   const scrollRef = useRef<GestureHandlerScrollView>(null);
+  const lastScrollPositionRef = useRef<MarketTabScrollPosition | null>(null);
   const [tabFrames, setTabFrames] = useState<MarketTabFrames>({});
   const [viewportWidth, setViewportWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
@@ -85,10 +91,24 @@ export const PerpsProMarketTabs: React.FC<{
     if (x === null) {
       return;
     }
-    scrollRef.current?.scrollTo({ animated: true, x });
-  }, [activeFrame, contentWidth, viewportWidth]);
+    const lastPosition = lastScrollPositionRef.current;
+    if (lastPosition?.x === x) {
+      lastScrollPositionRef.current = { tab: activeTab, x };
+      return;
+    }
+    if (!scrollRef.current) {
+      return;
+    }
+    // Search mode unmounts this strip. Its first valid geometry is restored
+    // in place; only a later controlled tab change should visibly animate.
+    scrollRef.current.scrollTo({
+      animated: lastPosition !== null && lastPosition.tab !== activeTab,
+      x,
+    });
+    lastScrollPositionRef.current = { tab: activeTab, x };
+  }, [activeFrame, activeTab, contentWidth, viewportWidth]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     scrollActiveTabIntoView();
   }, [scrollActiveTabIntoView]);
 
