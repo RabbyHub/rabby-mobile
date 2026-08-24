@@ -6,6 +6,7 @@ import {
   filterPerpsPositionsForMarket,
   getPerpsPositionDisplaySize,
 } from './position';
+import { buildPerpsOpenOrderTopology } from './openOrderTopology';
 
 const makeOrder = (overrides: Partial<OpenOrder>): OpenOrder => ({
   coin: 'BTC',
@@ -131,7 +132,13 @@ describe('Perps Pro position model', () => {
       makeOrder({ coin: 'ETH', oid: 4 }),
     ];
 
-    expect(collectPositionTpslOrders('BTC', orders)).toEqual([
+    expect(
+      collectPositionTpslOrders(
+        'BTC',
+        'long',
+        buildPerpsOpenOrderTopology(orders),
+      ),
+    ).toEqual([
       expect.objectContaining({ kind: 'stopLoss', oid: 3, scope: 'position' }),
     ]);
   });

@@ -1,6 +1,8 @@
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
+import type { PerpsOpenOrderTopology } from './openOrderTopology';
+
 export type PerpsPositionTpSlKind = 'takeProfit' | 'stopLoss';
 export type PerpsPositionTpSlScope = 'partial' | 'position';
 
@@ -97,12 +99,14 @@ const resolveKind = (order: OpenOrder): PerpsPositionTpSlKind | null => {
  */
 export const collectActivePositionTpSlOrders = (
   coin: string,
-  openOrders: readonly OpenOrder[],
+  direction: 'long' | 'short',
+  topology: PerpsOpenOrderTopology,
 ): PerpsPositionTpSlOrderViewModel[] => {
   const seen = new Set<number>();
   const result: PerpsPositionTpSlOrderViewModel[] = [];
+  const closingSide: OpenOrder['side'] = direction === 'long' ? 'A' : 'B';
 
-  for (const order of openOrders) {
+  for (const { order } of topology.topLevelNodesByCoin.get(coin) ?? []) {
     if (seen.has(order.oid)) {
       continue;
     }
@@ -110,7 +114,7 @@ export const collectActivePositionTpSlOrders = (
     const kind = resolveKind(order);
     const triggerPrice = positiveDecimal(order.triggerPx);
     if (
-      order.coin !== coin ||
+      order.side !== closingSide ||
       !order.reduceOnly ||
       !order.isTrigger ||
       !kind ||

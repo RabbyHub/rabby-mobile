@@ -2,6 +2,10 @@ import type { AssetPosition, OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
 import {
+  buildPerpsOpenOrderTopology,
+  type PerpsOpenOrderTopology,
+} from './openOrderTopology';
+import {
   collectActivePositionTpSlOrders,
   type PerpsPositionTpSlOrderViewModel,
 } from './positionTpSl';
@@ -37,13 +41,14 @@ const normalizedOptionalDecimal = (value: unknown): string | null => {
 
 export const collectPositionTpslOrders = (
   coin: string,
-  openOrders: OpenOrder[],
+  direction: PerpsPositionDirection,
+  topology: PerpsOpenOrderTopology,
 ): PerpsPositionTpSlOrderViewModel[] =>
-  collectActivePositionTpSlOrders(coin, openOrders);
+  collectActivePositionTpSlOrders(coin, direction, topology);
 
-export const buildPerpsPositionViewModel = (
+export const buildPerpsPositionViewModelFromTopology = (
   assetPosition: AssetPosition,
-  openOrders: OpenOrder[],
+  topology: PerpsOpenOrderTopology,
   accountMarginRatio: string | null = null,
 ): PerpsPositionViewModel | null => {
   const position = assetPosition.position;
@@ -58,11 +63,12 @@ export const buildPerpsPositionViewModel = (
   const leverage = Number(position.leverage?.value);
   const marginMode =
     position.leverage?.type === 'isolated' ? 'isolated' : 'cross';
+  const direction = signedSize.gt(0) ? 'long' : 'short';
 
   return {
     baseSize: signedSize.abs().toString(),
     coin: position.coin,
-    direction: signedSize.gt(0) ? 'long' : 'short',
+    direction,
     entryPrice: normalizedOptionalDecimal(position.entryPx),
     key: position.coin,
     leverage: Number.isFinite(leverage) && leverage > 0 ? leverage : 0,
@@ -81,26 +87,52 @@ export const buildPerpsPositionViewModel = (
       ? roiMagnitude.negated()
       : roiMagnitude
     ).toString(),
-    tpslOrders: collectPositionTpslOrders(position.coin, openOrders),
+    tpslOrders: collectPositionTpslOrders(position.coin, direction, topology),
   };
 };
+
+export const buildPerpsPositionViewModel = (
+  assetPosition: AssetPosition,
+  openOrders: readonly OpenOrder[],
+  accountMarginRatio: string | null = null,
+): PerpsPositionViewModel | null =>
+  buildPerpsPositionViewModelFromTopology(
+    assetPosition,
+    buildPerpsOpenOrderTopology(openOrders),
+    accountMarginRatio,
+  );
 
 export const sortPerpsPositions = (
   positions: PerpsPositionViewModel[],
 ): PerpsPositionViewModel[] =>
   [...positions].sort((left, right) => left.coin.localeCompare(right.coin));
 
-export const buildPerpsPositions = (
+export const buildPerpsPositionsFromTopology = (
   assetPositions: AssetPosition[],
-  openOrders: OpenOrder[],
+  topology: PerpsOpenOrderTopology,
   accountMarginRatio: string | null = null,
 ): PerpsPositionViewModel[] =>
   sortPerpsPositions(
     assetPositions
       .map(position =>
-        buildPerpsPositionViewModel(position, openOrders, accountMarginRatio),
+        buildPerpsPositionViewModelFromTopology(
+          position,
+          topology,
+          accountMarginRatio,
+        ),
       )
       .filter((position): position is PerpsPositionViewModel => !!position),
+  );
+
+export const buildPerpsPositions = (
+  assetPositions: AssetPosition[],
+  openOrders: readonly OpenOrder[],
+  accountMarginRatio: string | null = null,
+): PerpsPositionViewModel[] =>
+  buildPerpsPositionsFromTopology(
+    assetPositions,
+    buildPerpsOpenOrderTopology(openOrders),
+    accountMarginRatio,
   );
 
 export const filterPerpsPositionsForMarket = (

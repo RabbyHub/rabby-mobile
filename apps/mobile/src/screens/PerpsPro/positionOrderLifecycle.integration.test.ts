@@ -349,4 +349,55 @@ describe('Perps Pro position and order lifecycle integration', () => {
         .nearestPartialOrder,
     ).toMatchObject({ oid: 8, triggerPrice: '62000' });
   });
+
+  it('moves a reverse-opening child from dormant Open Orders to the matching net position only', () => {
+    const child = makeOrder({
+      isTrigger: true,
+      oid: 22,
+      orderType: 'Take Profit Market',
+      origSz: '0.04',
+      reduceOnly: true,
+      side: 'B',
+      sz: '0.04',
+      triggerCondition: 'Price below 59000',
+      triggerPx: '59000',
+    });
+    const dormantSnapshot = [
+      makeOrder({
+        children: [child],
+        oid: 21,
+        origSz: '0.04',
+        side: 'A',
+        sz: '0.04',
+      }),
+    ];
+
+    expect(buildPerpsOpenOrders(dormantSnapshot)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ isTopLevel: false, oid: 22 }),
+      ]),
+    );
+    expect(
+      buildPerpsPositions([makePosition({ szi: '0.025' })], dormantSnapshot)[0]
+        ?.tpslOrders,
+    ).toEqual([]);
+
+    const activeSnapshot = [child];
+    expect(buildPerpsOpenOrders(activeSnapshot)).toEqual([
+      expect.objectContaining({ isTopLevel: true, oid: 22 }),
+    ]);
+    expect(
+      buildPerpsPositions([makePosition({ szi: '0.01' })], activeSnapshot)[0]
+        ?.tpslOrders,
+    ).toEqual([]);
+    expect(buildPerpsPositions([], activeSnapshot)).toEqual([]);
+    expect(
+      buildPerpsPositions([makePosition({ szi: '-0.015' })], activeSnapshot)[0]
+        ?.tpslOrders,
+    ).toEqual([expect.objectContaining({ oid: 22, scope: 'partial' })]);
+    expect(
+      buildPerpsPositions([makePosition({ szi: '0.02' })], activeSnapshot)[0]
+        ?.tpslOrders,
+    ).toEqual([]);
+  });
 });

@@ -1,5 +1,6 @@
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 
+import { buildPerpsOpenOrderTopology } from './openOrderTopology';
 import {
   buildPositionTpSlSummary,
   calculatePartialTpSlCoverage,
@@ -33,10 +34,20 @@ const order = (overrides: Partial<OpenOrder> = {}): OpenOrder => ({
   ...overrides,
 });
 
+const collect = (
+  orders: readonly OpenOrder[],
+  direction: 'long' | 'short' = 'long',
+) =>
+  collectActivePositionTpSlOrders(
+    'BTC',
+    direction,
+    buildPerpsOpenOrderTopology(orders),
+  );
+
 describe('Perps Pro position TP/SL model', () => {
   it('classifies active top-level full and fixed-size orders but excludes attached children', () => {
     const attachedChild = order({ oid: 3, triggerPx: '73000' });
-    const result = collectActivePositionTpSlOrders('BTC', [
+    const result = collect([
       order({ oid: 1 }),
       order({ isPositionTpsl: true, oid: 2, sz: '0' }),
       order({
@@ -64,8 +75,19 @@ describe('Perps Pro position TP/SL model', () => {
     ]);
   });
 
+  it('only assigns top-level triggers whose side closes the current net position', () => {
+    const orders = [
+      order({ oid: 1, side: 'A' }),
+      order({ isPositionTpsl: true, oid: 2, side: 'B', sz: '0' }),
+      order({ oid: 3, side: 'B' }),
+    ];
+
+    expect(collect(orders, 'long').map(item => item.oid)).toEqual([1]);
+    expect(collect(orders, 'short').map(item => item.oid)).toEqual([2, 3]);
+  });
+
   it('counts independent partial TP and SL and selects each nearest Mark order', () => {
-    const orders = collectActivePositionTpSlOrders('BTC', [
+    const orders = collect([
       order({ oid: 1, triggerPx: '70000' }),
       order({ oid: 2, triggerPx: '68000' }),
       order({ oid: 3, orderType: 'Stop Market', triggerPx: '60000' }),
@@ -87,8 +109,8 @@ describe('Perps Pro position TP/SL model', () => {
   });
 
   it('routes edit to Position only when a Position TP/SL order exists', () => {
-    const partial = collectActivePositionTpSlOrders('BTC', [order({ oid: 1 })]);
-    const position = collectActivePositionTpSlOrders('BTC', [
+    const partial = collect([order({ oid: 1 })]);
+    const position = collect([
       order({ isPositionTpsl: true, oid: 2, sz: '0' }),
     ]);
 
@@ -100,7 +122,7 @@ describe('Perps Pro position TP/SL model', () => {
   });
 
   it('uses deterministic Mark-nearest tie breaking and detects duplicate full sides', () => {
-    const orders = collectActivePositionTpSlOrders('BTC', [
+    const orders = collect([
       order({
         isPositionTpsl: true,
         oid: 2,
@@ -126,7 +148,7 @@ describe('Perps Pro position TP/SL model', () => {
   });
 
   it('sorts long high-to-low and short low-to-high with stable tie breakers', () => {
-    const orders = collectActivePositionTpSlOrders('BTC', [
+    const orders = collect([
       order({ oid: 3, timestamp: 3, triggerPx: '69000' }),
       order({ oid: 1, timestamp: 2, triggerPx: '70000' }),
       order({ oid: 2, timestamp: 1, triggerPx: '70000' }),
@@ -141,7 +163,7 @@ describe('Perps Pro position TP/SL model', () => {
   });
 
   it('does not clamp cumulative coverage over one hundred percent', () => {
-    const orders = collectActivePositionTpSlOrders('BTC', [
+    const orders = collect([
       order({ oid: 1, sz: '0.8' }),
       order({ oid: 2, sz: '0.7' }),
     ]);
