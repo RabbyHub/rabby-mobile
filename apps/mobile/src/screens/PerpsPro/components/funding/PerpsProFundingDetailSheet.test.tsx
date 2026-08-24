@@ -1,4 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react-native';
+import fs from 'fs';
+import path from 'path';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -199,5 +201,20 @@ describe('PerpsProFundingDetailSheet', () => {
     expect(
       screen.getByText('page.perps.pro.funding.historyUnavailable'),
     ).toBeTruthy();
+  });
+
+  it('keeps the approved English funding rate label line breaks', () => {
+    const localePath = path.resolve(
+      __dirname,
+      '../../../../assets/locales/en/messages.json',
+    );
+    const messages = JSON.parse(fs.readFileSync(localePath, 'utf8'));
+
+    expect(messages.page.perps.pro.funding.previousRate).toBe(
+      'Previous Funding\nRate / Annualized',
+    );
+    expect(messages.page.perps.pro.funding.nextRate).toBe(
+      'Next Funding\nRate / Annualized',
+    );
   });
 });
