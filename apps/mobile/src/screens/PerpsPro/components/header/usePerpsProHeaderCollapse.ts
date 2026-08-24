@@ -149,6 +149,26 @@ export const usePerpsProHeaderCollapse = () => {
       ),
     [handleScroll, scrollY],
   );
+  const getScrollOffset = useCallback(
+    () => scrollStateRef.current.lastOffset,
+    [],
+  );
+  const syncScrollOffset = useCallback(
+    (rawOffset: number) => {
+      const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0;
+      const current = scrollStateRef.current;
+      const visible =
+        offset <= PERPS_PRO_HEADER_TOP_TOLERANCE ? true : current.visible;
+      scrollStateRef.current = {
+        accumulatedDelta: 0,
+        lastOffset: offset,
+        visible,
+      };
+      scrollY.setValue(offset);
+      if (visible !== current.visible) setHeaderVisible(visible);
+    },
+    [scrollY, setHeaderVisible],
+  );
   const clampedScrollY = useMemo(
     () =>
       scrollY.interpolate({
@@ -181,10 +201,12 @@ export const usePerpsProHeaderCollapse = () => {
   );
 
   return {
+    getScrollOffset,
     headerOpacity,
     headerTranslateY,
     marketTranslateY,
     onScroll,
     scrollY,
+    syncScrollOffset,
   };
 };

@@ -1,5 +1,6 @@
 import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
+import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
 import {
@@ -24,7 +25,6 @@ import {
   useWindowDimensions,
   View,
   type AppStateStatus,
-  type FlatList,
   type LayoutChangeEvent,
   type ListRenderItem,
   type ViewStyle,
@@ -53,6 +53,11 @@ import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccou
 import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
+import {
+  PerpsProInfoPager,
+  type PerpsProInfoPagerHandle,
+} from '../components/info/PerpsProInfoPager';
+import { usePerpsProInfoScrollBridge } from '../components/info/usePerpsProInfoScrollBridge';
 import {
   createPerpsProInfoTabsTranslateY,
   getPerpsProPopulatedInfoSectionBottomPadding,
@@ -95,6 +100,7 @@ import { PerpsProPositionTpSlSheet } from '../components/positions/PerpsProPosit
 import { PerpsProPositionsControls } from '../components/positions/PerpsProPositionsControls';
 import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrderConfirmationSheet';
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
+import { PerpsProTradeScrollBridge } from '../components/trade/PerpsProTradeScrollBridge';
 import { resolvePerpsProTradeAddFundsAction } from '../model/addFunds';
 import type { PerpsAccountAssetRow } from '../model/account';
 import {
@@ -123,8 +129,6 @@ import { usePerpsProTransfer } from './usePerpsProTransfer';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
 type PerpsProSceneRow =
-  | { key: 'trade'; type: 'trade' }
-  | { key: 'info-tabs'; type: 'info-tabs' }
   | {
       key: 'account-state';
       state: Exclude<PerpsProAccountPanelState, 'ready'>;
@@ -208,7 +212,16 @@ export const PerpsProScene: React.FC<{
     refreshActiveAssetData: activeAsset.refreshActiveAssetData,
     updateLeverageRequest: leverageUpdate.update,
   });
-  const info = usePerpsProInfoPanel(scene.currentMarket?.canonicalCoin ?? '');
+  const [requestedInfoTab, setRequestedInfoTab] =
+    useState<PerpsProInfoTab | null>(null);
+  const [previewInfoTab, setPreviewInfoTab] = useState<PerpsProInfoTab | null>(
+    null,
+  );
+  const infoTabRequestFrameRef = useRef<number | null>(null);
+  const info = usePerpsProInfoPanel(
+    scene.currentMarket?.canonicalCoin ?? '',
+    requestedInfoTab,
+  );
   usePerpsFundingHistoryJournal({ enabled: scene.fundingHistoryEnabled });
   const positionActions = usePerpsProPositionActions({
     accountIdentity: info.accountIdentity,
@@ -228,10 +241,11 @@ export const PerpsProScene: React.FC<{
   const openOpenOrderEdit = openOrderEdit.open;
   const closeAll = usePerpsProCloseAll(info.accountIdentity);
   const transfer = usePerpsProTransfer(info.accountIdentity);
-  const { setHideOtherSymbols } = info;
+  const { setActiveInfoTab, setHideOtherSymbols } = info;
   const headerCollapse = usePerpsProHeaderCollapse();
+  const infoScrollBridge = usePerpsProInfoScrollBridge(info.activeInfoTab);
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
-  const scrollRef = useRef<FlatList<PerpsProSceneRow>>(null);
+  const infoPagerRef = useRef<PerpsProInfoPagerHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
   const [klineActivated, setKlineActivated] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(
@@ -313,7 +327,7 @@ export const PerpsProScene: React.FC<{
     async (coin: string) => {
       const selected = await selectMarketByCoin(coin);
       if (selected) {
-        scrollRef.current?.scrollToOffset({ animated: true, offset: 0 });
+        infoPagerRef.current?.scrollActiveToOffset(0);
       }
       return selected;
     },
@@ -420,26 +434,55 @@ export const PerpsProScene: React.FC<{
         : null,
     [infoTabsNaturalAnchor, scrollViewportHeight],
   );
-  const hasVisibleInfoRows =
-    (info.activeInfoTab === 'account' && info.accountState === 'ready') ||
-    (info.activeInfoTab === 'positions' &&
-      !info.positionsEmpty &&
-      info.positions.length > 0) ||
-    (info.activeInfoTab === 'openOrders' &&
-      !info.openOrdersEmpty &&
-      info.openOrders.length > 0);
-  const scrollContentTrailingSpaceStyle = useMemo<ViewStyle | null>(
-    () =>
-      hasVisibleInfoRows && scrollViewportHeight > 0
-        ? {
-            paddingBottom: getPerpsProPopulatedInfoSectionBottomPadding({
-              marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
-              viewportHeight: scrollViewportHeight,
-            }),
-          }
-        : null,
-    [hasVisibleInfoRows, scrollViewportHeight],
-  );
+  const populatedInfoBottomPadding =
+    scrollViewportHeight > 0
+      ? getPerpsProPopulatedInfoSectionBottomPadding({
+          marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
+          viewportHeight: scrollViewportHeight,
+        })
+      : null;
+  const scrollContentStyles = useMemo<
+    Record<PerpsProInfoTab, ViewStyle[]>
+  >(() => {
+    const trailingStyle = (populated: boolean): ViewStyle => ({
+      paddingBottom:
+        populated && populatedInfoBottomPadding != null
+          ? populatedInfoBottomPadding
+          : 32,
+    });
+    return {
+      account: [
+        styles.scrollContent,
+        ...(scrollContentMinimumHeightStyle
+          ? [scrollContentMinimumHeightStyle]
+          : []),
+        trailingStyle(info.accountState === 'ready'),
+      ],
+      positions: [
+        styles.scrollContent,
+        ...(scrollContentMinimumHeightStyle
+          ? [scrollContentMinimumHeightStyle]
+          : []),
+        trailingStyle(!info.positionsEmpty && info.positions.length > 0),
+      ],
+      openOrders: [
+        styles.scrollContent,
+        ...(scrollContentMinimumHeightStyle
+          ? [scrollContentMinimumHeightStyle]
+          : []),
+        trailingStyle(!info.openOrdersEmpty && info.openOrders.length > 0),
+      ],
+    };
+  }, [
+    info.accountState,
+    info.openOrders.length,
+    info.openOrdersEmpty,
+    info.positions.length,
+    info.positionsEmpty,
+    populatedInfoBottomPadding,
+    scrollContentMinimumHeightStyle,
+    styles.scrollContent,
+  ]);
   const marketTranslateY = useMemo(
     () =>
       showRegionAlert
@@ -485,22 +528,59 @@ export const PerpsProScene: React.FC<{
     (scene.marketDataStatus === 'idle' ||
       scene.marketDataStatus === 'loading' ||
       scene.isResolvingMarket);
+  const tradeLeadInSpacerStyle = useMemo<ViewStyle>(
+    () => ({ height: tradeRowHeight }),
+    [tradeRowHeight],
+  );
   const renderScrollLeadIn = useCallback(
-    () => (
-      <View testID="perps-pro-scroll-lead-in">
+    (tab: PerpsProInfoTab, active: boolean) => (
+      <View
+        testID={
+          active
+            ? 'perps-pro-scroll-lead-in'
+            : `perps-pro-scroll-lead-in-${tab}`
+        }>
         <View
           style={styles.headerLeadInSpacer}
-          testID="perps-pro-header-lead-in-spacer"
+          testID={
+            active
+              ? 'perps-pro-header-lead-in-spacer'
+              : `perps-pro-header-lead-in-spacer-${tab}`
+          }
         />
         {showRegionAlert ? (
           <View
             style={regionAlertLeadInStyle}
-            testID="perps-pro-region-alert-slot"
+            testID={
+              active
+                ? 'perps-pro-region-alert-slot'
+                : `perps-pro-region-alert-slot-${tab}`
+            }
           />
         ) : null}
         <View
           style={styles.marketLeadInSpacer}
-          testID="perps-pro-market-lead-in-spacer"
+          testID={
+            active
+              ? 'perps-pro-market-lead-in-spacer'
+              : `perps-pro-market-lead-in-spacer-${tab}`
+          }
+        />
+        <View
+          style={tradeLeadInSpacerStyle}
+          testID={
+            active
+              ? 'perps-pro-trade-lead-in-spacer'
+              : `perps-pro-trade-lead-in-spacer-${tab}`
+          }
+        />
+        <View
+          style={styles.infoTabsSpacer}
+          testID={
+            active
+              ? 'perps-pro-info-tabs-spacer'
+              : `perps-pro-info-tabs-spacer-${tab}`
+          }
         />
       </View>
     ),
@@ -508,80 +588,70 @@ export const PerpsProScene: React.FC<{
       regionAlertLeadInStyle,
       showRegionAlert,
       styles.headerLeadInSpacer,
+      styles.infoTabsSpacer,
       styles.marketLeadInSpacer,
+      tradeLeadInSpacerStyle,
     ],
   );
 
-  const rows = useMemo<PerpsProSceneRow[]>(() => {
-    const result: PerpsProSceneRow[] = [
-      { key: 'trade', type: 'trade' },
-      { key: 'info-tabs', type: 'info-tabs' },
-    ];
-
-    if (info.activeInfoTab === 'account') {
-      if (info.accountState === 'ready') {
-        result.push({ key: 'account-summary', type: 'account-summary' });
-        if (info.account.assets.length > 0) {
-          result.push(
-            ...info.account.assets.map(asset => ({
-              asset,
-              key: `account-asset:${asset.key}`,
-              type: 'account-asset' as const,
-            })),
-          );
-        }
-      } else {
-        result.push({
-          key: 'account-state',
-          state: info.accountState,
-          type: 'account-state',
-        });
-      }
-      return result;
-    }
-
-    if (info.activeInfoTab === 'positions') {
-      if (info.positionsEmpty) {
-        result.push({ key: 'positions-empty', type: 'positions-empty' });
-        return result;
-      }
-      result.push({ key: 'positions-controls', type: 'positions-controls' });
-      if (info.positions.length === 0) {
-        result.push({ key: 'positions-empty', type: 'positions-empty' });
-      } else {
-        result.push(
-          ...info.positions.map(position => ({
-            key: `position:${info.accountIdentity}:${position.key}`,
-            position,
-            type: 'position' as const,
-          })),
-        );
-      }
-      return result;
-    }
-
-    if (info.openOrdersEmpty) {
-      result.push({ key: 'open-orders-empty', type: 'open-orders-empty' });
-      return result;
-    }
-    result.push({ key: 'open-orders-controls', type: 'open-orders-controls' });
-    if (info.openOrders.length === 0) {
-      result.push({ key: 'open-orders-empty', type: 'open-orders-empty' });
-    } else {
-      result.push(
-        ...info.openOrders.map(order => ({
-          key: `open-order:${info.accountIdentity}:${order.key}`,
-          order,
-          type: 'open-order' as const,
+  const rowsByTab = useMemo<Record<PerpsProInfoTab, PerpsProSceneRow[]>>(() => {
+    const accountRows: PerpsProSceneRow[] = [];
+    if (info.accountState === 'ready') {
+      accountRows.push({ key: 'account-summary', type: 'account-summary' });
+      accountRows.push(
+        ...info.account.assets.map(asset => ({
+          asset,
+          key: `account-asset:${asset.key}`,
+          type: 'account-asset' as const,
         })),
       );
+    } else {
+      accountRows.push({
+        key: 'account-state',
+        state: info.accountState,
+        type: 'account-state',
+      });
     }
-    return result;
+
+    const visiblePositionRows: PerpsProSceneRow[] =
+      info.positions.length === 0
+        ? [{ key: 'positions-empty', type: 'positions-empty' }]
+        : info.positions.map(position => ({
+            key: `position:${info.accountIdentity}:${position.key}`,
+            position,
+            type: 'position',
+          }));
+    const positionRows: PerpsProSceneRow[] = info.positionsEmpty
+      ? [{ key: 'positions-empty', type: 'positions-empty' }]
+      : [
+          { key: 'positions-controls', type: 'positions-controls' },
+          ...visiblePositionRows,
+        ];
+
+    const visibleOpenOrderRows: PerpsProSceneRow[] =
+      info.openOrders.length === 0
+        ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
+        : info.openOrders.map(order => ({
+            key: `open-order:${info.accountIdentity}:${order.key}`,
+            order,
+            type: 'open-order',
+          }));
+    const openOrderRows: PerpsProSceneRow[] = info.openOrdersEmpty
+      ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
+      : [
+          { key: 'open-orders-controls', type: 'open-orders-controls' },
+          ...visibleOpenOrderRows,
+        ];
+
+    return {
+      account: accountRows,
+      positions: positionRows,
+      openOrders: openOrderRows,
+    };
   }, [
     info.account,
     info.accountIdentity,
     info.accountState,
-    info.activeInfoTab,
     info.openOrders,
     info.openOrdersEmpty,
     info.positions,
@@ -592,90 +662,101 @@ export const PerpsProScene: React.FC<{
     [info.positions],
   );
 
+  const renderTrade = useCallback(() => {
+    if (scene.currentMarket) {
+      return (
+        <View onLayout={updateTradeRowHeight}>
+          <View style={[styles.columns, columnsStyle]}>
+            <View style={orderBookColumnStyle}>
+              <PerpsProRealtimeOrderBook
+                amountUnit={trade.amountUnit}
+                enabled={scene.orderBookSubscriptionEnabled}
+                height={mainColumnHeight}
+                market={scene.currentMarket}
+                onSelectTickOption={scene.selectTickOption}
+                onSelectPrice={
+                  scene.tradeConfigurationReady &&
+                  ((trade.form.orderType === 'limit' &&
+                    !trade.form.bboEnabled) ||
+                    trade.form.orderType === 'conditional')
+                    ? price =>
+                        trade.selectOrderBookPrice(
+                          price,
+                          scene.currentMarket!.marketKey,
+                        )
+                    : undefined
+                }
+                onSelectPriceIntentStart={consumeOrderBookPriceIntent}
+                precision={scene.precision}
+                publicationEnabled={scene.realtimeEnabled}
+                selectedTickOption={scene.selectedTickOption}
+                tickOptions={scene.tickOptions}
+              />
+            </View>
+            <View onLayout={updateMainColumnHeight} style={tradeColumnStyle}>
+              <PerpsProTradeForm
+                addFundsMode={tradeAddFundsAction.mode}
+                configurationReady={scene.tradeConfigurationReady}
+                controller={trade}
+                onAddFunds={openTradeAddFunds}
+              />
+            </View>
+          </View>
+        </View>
+      );
+    }
+    if (isMarketLoading) {
+      return (
+        <View onLayout={updateTradeRowHeight}>
+          <PerpsProSceneSkeleton
+            gap={gap}
+            orderBookWidth={orderBookWidth}
+            tradeWidth={tradeWidth}
+          />
+        </View>
+      );
+    }
+    return (
+      <View onLayout={updateTradeRowHeight} style={styles.empty}>
+        <Text style={styles.emptyText}>
+          {t('page.perps.pro.common.unavailable')}
+        </Text>
+        {scene.marketDataStatus === 'error' ? (
+          <Pressable
+            accessibilityLabel={t('page.perps.pro.common.retry')}
+            accessibilityRole="button"
+            onPress={scene.retryMarketData}
+            style={styles.retryButton}>
+            <Text style={styles.retryText}>
+              {t('page.perps.pro.common.retry')}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }, [
+    columnsStyle,
+    consumeOrderBookPriceIntent,
+    gap,
+    isMarketLoading,
+    mainColumnHeight,
+    openTradeAddFunds,
+    orderBookColumnStyle,
+    orderBookWidth,
+    scene,
+    styles,
+    t,
+    trade,
+    tradeAddFundsAction.mode,
+    tradeColumnStyle,
+    tradeWidth,
+    updateMainColumnHeight,
+    updateTradeRowHeight,
+  ]);
+
   const renderItem = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
       switch (item.type) {
-        case 'trade':
-          if (scene.currentMarket) {
-            return (
-              <View onLayout={updateTradeRowHeight}>
-                <View style={[styles.columns, columnsStyle]}>
-                  <View style={orderBookColumnStyle}>
-                    <PerpsProRealtimeOrderBook
-                      amountUnit={trade.amountUnit}
-                      enabled={scene.orderBookSubscriptionEnabled}
-                      height={mainColumnHeight}
-                      market={scene.currentMarket}
-                      onSelectTickOption={scene.selectTickOption}
-                      onSelectPrice={
-                        scene.tradeConfigurationReady &&
-                        ((trade.form.orderType === 'limit' &&
-                          !trade.form.bboEnabled) ||
-                          trade.form.orderType === 'conditional')
-                          ? price =>
-                              trade.selectOrderBookPrice(
-                                price,
-                                scene.currentMarket!.marketKey,
-                              )
-                          : undefined
-                      }
-                      onSelectPriceIntentStart={consumeOrderBookPriceIntent}
-                      precision={scene.precision}
-                      publicationEnabled={scene.realtimeEnabled}
-                      selectedTickOption={scene.selectedTickOption}
-                      tickOptions={scene.tickOptions}
-                    />
-                  </View>
-                  <View
-                    onLayout={updateMainColumnHeight}
-                    style={tradeColumnStyle}>
-                    <PerpsProTradeForm
-                      addFundsMode={tradeAddFundsAction.mode}
-                      configurationReady={scene.tradeConfigurationReady}
-                      controller={trade}
-                      onAddFunds={openTradeAddFunds}
-                    />
-                  </View>
-                </View>
-              </View>
-            );
-          }
-          if (isMarketLoading) {
-            return (
-              <View onLayout={updateTradeRowHeight}>
-                <PerpsProSceneSkeleton
-                  gap={gap}
-                  orderBookWidth={orderBookWidth}
-                  tradeWidth={tradeWidth}
-                />
-              </View>
-            );
-          }
-          return (
-            <View onLayout={updateTradeRowHeight} style={styles.empty}>
-              <Text style={styles.emptyText}>
-                {t('page.perps.pro.common.unavailable')}
-              </Text>
-              {scene.marketDataStatus === 'error' ? (
-                <Pressable
-                  accessibilityLabel={t('page.perps.pro.common.retry')}
-                  accessibilityRole="button"
-                  onPress={scene.retryMarketData}
-                  style={styles.retryButton}>
-                  <Text style={styles.retryText}>
-                    {t('page.perps.pro.common.retry')}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          );
-        case 'info-tabs':
-          return (
-            <View
-              style={styles.infoTabsSpacer}
-              testID="perps-pro-info-tabs-spacer"
-            />
-          );
         case 'account-state':
           return (
             <PerpsProAccountState
@@ -773,65 +854,118 @@ export const PerpsProScene: React.FC<{
       }
     },
     [
-      columnsStyle,
       cancelOrders,
       closeAll.pending,
       closeAll.requestCloseAll,
-      consumeOrderBookPriceIntent,
-      gap,
       info,
-      isMarketLoading,
-      mainColumnHeight,
       manageMargin.open,
       openDeposit,
-      openTradeAddFunds,
       openSwap,
       openWithdraw,
-      orderBookColumnStyle,
-      orderBookWidth,
-      scene,
       positionActions.openLeverageEditor,
       positionActions.openCloseEditor,
       positionTpSl.open,
       openOpenOrderEdit,
       positionsByCoin,
       selectCardMarket,
-      styles,
       t,
       toggleHideOtherSymbols,
-      tradeColumnStyle,
-      tradeWidth,
-      trade,
-      tradeAddFundsAction.mode,
+      trade.amountUnit,
       transfer.open,
-      updateMainColumnHeight,
-      updateTradeRowHeight,
     ],
   );
+
+  const tradeTranslateY = useMemo(
+    () => Animated.subtract(sceneLeadInHeight, headerCollapse.scrollY),
+    [headerCollapse.scrollY, sceneLeadInHeight],
+  );
+  const infoStickyOffset = Math.max(
+    infoTabsNaturalAnchor - PERPS_PRO_MARKET_BAR_HEIGHT,
+    0,
+  );
+  const displayedInfoTab =
+    requestedInfoTab ?? previewInfoTab ?? info.activeInfoTab;
+  const cancelInfoTabRequest = useCallback(() => {
+    if (infoTabRequestFrameRef.current == null) {
+      return;
+    }
+    cancelAnimationFrame(infoTabRequestFrameRef.current);
+    infoTabRequestFrameRef.current = null;
+  }, []);
+  useEffect(() => cancelInfoTabRequest, [cancelInfoTabRequest]);
+  const requestInfoTab = useCallback(
+    (tab: PerpsProInfoTab) => {
+      if (tab === displayedInfoTab) {
+        return;
+      }
+      cancelInfoTabRequest();
+      if (tab === info.activeInfoTab) {
+        setRequestedInfoTab(null);
+        return;
+      }
+      setRequestedInfoTab(tab);
+      infoTabRequestFrameRef.current = requestAnimationFrame(() => {
+        infoTabRequestFrameRef.current = null;
+        infoPagerRef.current?.setPage(tab);
+      });
+    },
+    [cancelInfoTabRequest, displayedInfoTab, info.activeInfoTab],
+  );
+  const commitInfoTab = useCallback(
+    (tab: PerpsProInfoTab) => {
+      cancelInfoTabRequest();
+      setRequestedInfoTab(null);
+      setPreviewInfoTab(tab);
+      if (tab !== info.activeInfoTab) {
+        setActiveInfoTab(tab);
+      }
+    },
+    [cancelInfoTabRequest, info.activeInfoTab, setActiveInfoTab],
+  );
+  useEffect(() => {
+    if (previewInfoTab === info.activeInfoTab) {
+      setPreviewInfoTab(null);
+    }
+  }, [info.activeInfoTab, previewInfoTab]);
+  const beginInfoPageDrag = useCallback(() => {
+    cancelInfoTabRequest();
+    setRequestedInfoTab(null);
+  }, [cancelInfoTabRequest]);
 
   return (
     <PerpsProFieldExplanationProvider>
       <View style={styles.container}>
-        <Animated.FlatList
-          ListHeaderComponent={renderScrollLeadIn}
-          contentContainerStyle={[
-            styles.scrollContent,
-            scrollContentMinimumHeightStyle,
-            scrollContentTrailingSpaceStyle,
-          ]}
-          data={rows}
-          initialNumToRender={8}
-          keyExtractor={item => item.key}
-          keyboardShouldPersistTaps="handled"
+        <PerpsProInfoPager
+          activeTab={info.activeInfoTab}
+          contentContainerStyle={scrollContentStyles}
+          data={rowsByTab}
+          getActiveScrollOffset={headerCollapse.getScrollOffset}
+          onActivateOffset={headerCollapse.syncScrollOffset}
+          onActiveScroll={headerCollapse.onScroll}
           onLayout={updateScrollViewportHeight}
-          onScroll={headerCollapse.onScroll}
-          ref={scrollRef}
+          onPageDragStart={beginInfoPageDrag}
+          onPagePreview={setPreviewInfoTab}
+          onPageSelected={commitInfoTab}
+          ref={infoPagerRef}
           renderItem={renderItem}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
+          renderListHeader={renderScrollLeadIn}
+          requestedTab={requestedInfoTab}
+          scrollBridge={infoScrollBridge}
+          stickyOffset={infoStickyOffset}
           style={styles.scroll}
-          testID="perps-pro-scroll"
         />
+        <Animated.View
+          style={[
+            styles.tradeOverlay,
+            { transform: [{ translateY: tradeTranslateY }] },
+          ]}
+          testID="perps-pro-trade-overlay">
+          <PerpsProTradeScrollBridge
+            controller={infoScrollBridge}
+            height={tradeRowHeight}>
+            {renderTrade()}
+          </PerpsProTradeScrollBridge>
+        </Animated.View>
         <Animated.View
           style={[
             styles.headerClip,
@@ -890,11 +1024,11 @@ export const PerpsProScene: React.FC<{
               ]}
               testID="perps-pro-info-tabs-overlay">
               <PerpsProInfoTabs
-                activeTab={info.activeInfoTab}
+                activeTab={displayedInfoTab}
                 historyEnabled={
                   historyEnabled && info.accountState !== 'noAccount'
                 }
-                onChange={tab => info.setActiveInfoTab(tab)}
+                onChange={requestInfoTab}
                 onHistoryPress={openHistory}
                 openOrdersCount={info.allOpenOrdersCount}
                 pendingFundingCount={info.pendingFundingCount}
@@ -1108,14 +1242,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     right: 0,
     top: 0,
-    zIndex: 4,
+    zIndex: 5,
   },
   regionAlertOverlay: {
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
-    zIndex: 3,
+    zIndex: 4,
   },
   marketOverlay: {
     height: PERPS_PRO_MARKET_BAR_HEIGHT,
@@ -1123,10 +1257,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     right: 0,
     top: 0,
-    zIndex: 2,
+    zIndex: 3,
   },
   infoTabsOverlay: {
     height: PERPS_PRO_INFO_TABS_HEIGHT,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 2,
+  },
+  tradeOverlay: {
     left: 0,
     position: 'absolute',
     right: 0,

@@ -25,12 +25,66 @@ const mockUsePerpsProOpenOrderEdit = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
 const mockSelectOrderBookPrice = jest.fn();
+const mockInfoPagerSetPage = jest.fn();
+const mockInfoPagerSetPageWithoutAnimation = jest.fn();
 let mockTradeHasPermission = true;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
 let mockTradeForm: {
   bboEnabled: boolean;
   orderType: 'conditional' | 'limit' | 'market';
 } = { bboEnabled: false, orderType: 'market' };
+
+jest.mock('react-native-pager-view', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return ReactModule.forwardRef(
+    (
+      { children, ...props }: { children: React.ReactNode },
+      ref: React.Ref<unknown>,
+    ) => {
+      ReactModule.useImperativeHandle(ref, () => ({
+        setPage: mockInfoPagerSetPage,
+        setPageWithoutAnimation: mockInfoPagerSetPageWithoutAnimation,
+      }));
+      return ReactModule.createElement(View, props, children);
+    },
+  );
+});
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      createAnimatedComponent: (Component: React.ComponentType) => Component,
+      ScrollView: ReactNative.ScrollView,
+      View: ReactNative.View,
+    },
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    scrollTo: jest.fn(),
+    useAnimatedRef: () => {
+      const ref = (component?: unknown) => {
+        ref.current = component ?? null;
+        return 0;
+      };
+      ref.current = null;
+      ref.observe = jest.fn(() => jest.fn());
+      return ref;
+    },
+    useAnimatedScrollHandler: () => jest.fn(),
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useEvent:
+      (handler: (event: object) => void, eventNames?: string[]) =>
+      (event: { nativeEvent?: object }) =>
+        handler({
+          ...(event.nativeEvent ?? event),
+          eventName: eventNames?.[0] ?? 'onPageScroll',
+        }),
+    useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
+    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+  };
+});
 
 jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
@@ -313,11 +367,13 @@ jest.mock('../components/header/usePerpsProHeaderCollapse', () => ({
   usePerpsProHeaderCollapse: () => {
     const { Animated } = require('react-native');
     return {
+      getScrollOffset: () => 0,
       headerOpacity: 1,
       headerTranslateY: 0,
       marketTranslateY: 56,
       onScroll: jest.fn(),
       scrollY: new Animated.Value(0),
+      syncScrollOffset: jest.fn(),
     };
   },
 }));
@@ -823,8 +879,15 @@ describe('PerpsProScene market loading states', () => {
     );
 
     const scroll = screen.getByTestId('perps-pro-scroll');
+    const tradeScrollBridge = screen.getByTestId(
+      'perps-pro-trade-scroll-bridge',
+    );
     expect(scroll.props.stickyHeaderIndices).toEqual([]);
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
+    expect(tradeScrollBridge.props.keyboardShouldPersistTaps).toBe('handled');
+    expect(screen.getAllByTestId('perps-pro-trade-scroll-bridge')).toHaveLength(
+      1,
+    );
     expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
     fireEvent(scroll, 'layout', {
       nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
@@ -874,6 +937,97 @@ describe('PerpsProScene market loading states', () => {
         : infoTabsTranslateY.__getValue(),
     ).toBe(536);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
+  });
+
+  it('animates adjacent info tabs and persists only after Pager selection', () => {
+    const setActiveInfoTab = jest.fn();
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+    const animationFrame = jest
+      .spyOn(global, 'requestAnimationFrame')
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    expect(mockInfoPagerSetPage).toHaveBeenCalledWith(1);
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+    expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
+      expect.any(String),
+      'openOrders',
+    );
+
+    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
+      nativeEvent: { position: 1 },
+    });
+    expect(setActiveInfoTab).toHaveBeenCalledWith('openOrders');
+    animationFrame.mockRestore();
+  });
+
+  it('previews the top info tab during a drag without persisting it', () => {
+    const setActiveInfoTab = jest.fn();
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.49, position: 1 },
+    });
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.49, position: 1 },
+    });
+    expect(
+      screen.getByTestId('perps-pro-info-tab-openOrders').props
+        .accessibilityState,
+    ).toMatchObject({ selected: true });
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.51, position: 1 },
+    });
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'settling' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.49, position: 1 },
+    });
+    expect(
+      screen.getByTestId('perps-pro-info-tab-openOrders').props
+        .accessibilityState,
+    ).toMatchObject({ selected: true });
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(setActiveInfoTab).toHaveBeenCalledTimes(1);
+    expect(setActiveInfoTab).toHaveBeenCalledWith('openOrders');
   });
 
   it('presents the prewarmed selector without rerendering the scene content', () => {
