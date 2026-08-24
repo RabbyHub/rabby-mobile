@@ -228,7 +228,6 @@ export const PerpsProScene: React.FC<{
   const [previewInfoTab, setPreviewInfoTab] = useState<PerpsProInfoTab | null>(
     null,
   );
-  const infoTabRequestFrameRef = useRef<number | null>(null);
   const info = usePerpsProInfoPanel(
     scene.currentMarket?.canonicalCoin ?? '',
     requestedInfoTab,
@@ -965,42 +964,28 @@ export const PerpsProScene: React.FC<{
   );
   const displayedInfoTab =
     requestedInfoTab ?? previewInfoTab ?? info.activeInfoTab;
-  const cancelInfoTabRequest = useCallback(() => {
-    if (infoTabRequestFrameRef.current == null) {
-      return;
-    }
-    cancelAnimationFrame(infoTabRequestFrameRef.current);
-    infoTabRequestFrameRef.current = null;
-  }, []);
-  useEffect(() => cancelInfoTabRequest, [cancelInfoTabRequest]);
   const requestInfoTab = useCallback(
     (tab: PerpsProInfoTab) => {
       if (tab === displayedInfoTab) {
         return;
       }
-      cancelInfoTabRequest();
       if (tab === info.activeInfoTab) {
         setRequestedInfoTab(null);
         return;
       }
       setRequestedInfoTab(tab);
-      infoTabRequestFrameRef.current = requestAnimationFrame(() => {
-        infoTabRequestFrameRef.current = null;
-        infoPagerRef.current?.setPage(tab);
-      });
     },
-    [cancelInfoTabRequest, displayedInfoTab, info.activeInfoTab],
+    [displayedInfoTab, info.activeInfoTab],
   );
   const commitInfoTab = useCallback(
     (tab: PerpsProInfoTab) => {
-      cancelInfoTabRequest();
       setRequestedInfoTab(null);
       setPreviewInfoTab(tab);
       if (tab !== info.activeInfoTab) {
         setActiveInfoTab(tab);
       }
     },
-    [cancelInfoTabRequest, info.activeInfoTab, setActiveInfoTab],
+    [info.activeInfoTab, setActiveInfoTab],
   );
   useEffect(() => {
     if (previewInfoTab === info.activeInfoTab) {
@@ -1008,9 +993,8 @@ export const PerpsProScene: React.FC<{
     }
   }, [info.activeInfoTab, previewInfoTab]);
   const beginInfoPageDrag = useCallback(() => {
-    cancelInfoTabRequest();
     setRequestedInfoTab(null);
-  }, [cancelInfoTabRequest]);
+  }, []);
 
   return (
     <PerpsProFieldExplanationProvider>
