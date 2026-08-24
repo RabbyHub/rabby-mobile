@@ -31,6 +31,8 @@ export {
 
 const isAndroid = Platform.OS === 'android';
 const GENERIC_USER = 'rabbymobile-user';
+const ANDROID_SECURITY_RULE_AUTOMATIC_UPGRADE =
+  'automaticUpgradeToMoreSecuredStorage';
 export const KEYCHAIN_PROBE_SERVICE = `${KEYCHAIN_DEFAULT_SERVICE}.rn-keychain-v10`;
 export const KEYCHAIN_PROBE_PASSWORD = 'rn-keychain-v10-probe-password';
 export const KEYCHAIN_SOURCE_LABEL = 'react-native-keychain@10.0.0 raw';
@@ -78,7 +80,9 @@ const DEFAULT_GET_OPTIONS: RawOfficialOptions = {
   },
   authenticationType: OfficialKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
   ...(isAndroid && {
-    rules: OfficialKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
+    rules:
+      OfficialKeychain.SECURITY_RULES?.AUTOMATIC_UPGRADE ??
+      ANDROID_SECURITY_RULE_AUTOMATIC_UPGRADE,
   }),
 };
 

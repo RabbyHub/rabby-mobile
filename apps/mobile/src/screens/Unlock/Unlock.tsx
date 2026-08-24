@@ -789,6 +789,7 @@ export default function UnlockScreen({
   );
 
   const processUnlockWithBiometrics = useCallback(async () => {
+    const startedAt = Date.now();
     if (
       lockBiometricRef.current ||
       usingPasswordRef.current ||
@@ -811,6 +812,7 @@ export default function UnlockScreen({
       lockBiometricRef.current = false;
     };
 
+    traceAndroidUnlockPerf('biometrics_ready_check_start');
     const biometricsReady = await storeApisBiometrics
       .ensureBiometricsReadyForUnlock()
       .catch(error => {
@@ -819,6 +821,10 @@ export default function UnlockScreen({
         });
         return false;
       });
+    traceAndroidUnlockPerf('biometrics_ready_check_end', {
+      elapsedMs: Date.now() - startedAt,
+      biometricsReady,
+    });
     if (!biometricsReady) {
       const latestBiometricsInfo =
         storeApisBiometrics.getBiometricsInfoSnapshot();
