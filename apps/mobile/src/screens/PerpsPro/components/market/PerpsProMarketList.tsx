@@ -33,10 +33,28 @@ import {
 import { PerpsProMarketSlotRow } from './PerpsProMarketSlotRow';
 
 const PERPS_PRO_MARKET_TOP_THRESHOLD = 1;
-const PERPS_PRO_MARKET_INITIAL_RENDER_COUNT = 10;
-const PERPS_PRO_MARKET_MAX_RENDER_BATCH = 8;
 const PERPS_PRO_MARKET_RENDER_BATCH_PERIOD = 16;
-const PERPS_PRO_MARKET_WINDOW_SIZE = 3;
+export type PerpsProMarketListRenderProfile = 'active' | 'prepared';
+
+const PERPS_PRO_MARKET_RENDER_PROFILES: Record<
+  PerpsProMarketListRenderProfile,
+  Readonly<{
+    initialNumToRender: number;
+    maxToRenderPerBatch: number;
+    windowSize: number;
+  }>
+> = {
+  active: {
+    initialNumToRender: 12,
+    maxToRenderPerBatch: 16,
+    windowSize: 5,
+  },
+  prepared: {
+    initialNumToRender: 10,
+    maxToRenderPerBatch: 8,
+    windowSize: 3,
+  },
+};
 const rowSeparatorStyle: ViewStyle = { height: PERPS_PRO_MARKET_ROW_GAP };
 
 const PerpsProMarketRowSeparator = () => (
@@ -59,6 +77,7 @@ type PerpsProMarketListProps = {
   onSelect: (marketKey: string) => void;
   onToggleFavorite: (marketKey: string) => void;
   pageTab: PerpsProMarketTab | 'search';
+  renderProfile: PerpsProMarketListRenderProfile;
   searchMode: boolean;
 };
 
@@ -79,6 +98,7 @@ const PerpsProMarketListComponent = forwardRef<
       onSelect,
       onToggleFavorite,
       pageTab,
+      renderProfile,
       searchMode,
     },
     ref,
@@ -95,6 +115,7 @@ const PerpsProMarketListComponent = forwardRef<
       () => ({ currentMarketKey, favoriteSet }),
       [currentMarketKey, favoriteSet],
     );
+    const renderConfig = PERPS_PRO_MARKET_RENDER_PROFILES[renderProfile];
 
     const handleScrollPositionChange = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -169,7 +190,7 @@ const PerpsProMarketListComponent = forwardRef<
         data={data}
         extraData={extraData}
         getItemLayout={getItemLayout}
-        initialNumToRender={PERPS_PRO_MARKET_INITIAL_RENDER_COUNT}
+        initialNumToRender={renderConfig.initialNumToRender}
         ItemSeparatorComponent={PerpsProMarketRowSeparator}
         keyboardShouldPersistTaps="handled"
         keyExtractor={item => item.slotKey}
@@ -203,7 +224,7 @@ const PerpsProMarketListComponent = forwardRef<
             </Text>
           )
         }
-        maxToRenderPerBatch={PERPS_PRO_MARKET_MAX_RENDER_BATCH}
+        maxToRenderPerBatch={renderConfig.maxToRenderPerBatch}
         nestedScrollEnabled
         onMomentumScrollBegin={handleScrollPositionChange}
         onMomentumScrollEnd={handleScrollPositionChange}
@@ -214,7 +235,7 @@ const PerpsProMarketListComponent = forwardRef<
         style={styles.list}
         testID={`perps-pro-market-flat-list-${pageTab}`}
         updateCellsBatchingPeriod={PERPS_PRO_MARKET_RENDER_BATCH_PERIOD}
-        windowSize={PERPS_PRO_MARKET_WINDOW_SIZE}
+        windowSize={renderConfig.windowSize}
       />
     );
   },
