@@ -159,10 +159,11 @@ const PerpsProMarketSelectorComponent = forwardRef<
     const selectionRequestRef = useRef(0);
     const [query, setQuery] = useState('');
     const [inputFocused, setInputFocused] = useState(false);
-    const [activeTab, setActiveTab] = useState<PerpsProMarketTab>('all');
-    const [previewTab, setPreviewTab] = useState<PerpsProMarketTab | null>(
-      null,
-    );
+    const [tabPresentation, setTabPresentation] = useState<{
+      activeTab: PerpsProMarketTab;
+      previewTab: PerpsProMarketTab | null;
+    }>({ activeTab: 'all', previewTab: null });
+    const { activeTab, previewTab } = tabPresentation;
     const [sort, setSort] = useState(() => {
       const initialSort = getPerpsProMarketSession();
       return {
@@ -310,12 +311,19 @@ const PerpsProMarketSelectorComponent = forwardRef<
 
     useEffect(() => {
       if (resolvedActiveTab !== activeTab) {
-        setActiveTab(resolvedActiveTab);
+        setTabPresentation(current => ({
+          ...current,
+          activeTab: resolvedActiveTab,
+        }));
       }
     }, [activeTab, resolvedActiveTab]);
 
     useEffect(() => {
-      setPreviewTab(null);
+      setTabPresentation(current =>
+        current.previewTab === null
+          ? current
+          : { ...current, previewTab: null },
+      );
     }, [isSearchMode, tabIdsKey]);
 
     useEffect(() => {
@@ -349,8 +357,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
       }
       setQuery('');
       setInputFocused(false);
-      setPreviewTab(null);
-      setActiveTab('all');
+      setTabPresentation({ activeTab: 'all', previewTab: null });
       onClose?.();
     }, [markDismissed, onClose, previewTab, resolvedActiveTab, tabs]);
     const selectSort = useCallback((field: 'name' | 'volume') => {
@@ -439,13 +446,17 @@ const PerpsProMarketSelectorComponent = forwardRef<
     );
     const selectTab = useCallback(
       (tab: PerpsProMarketTab) => {
-        setPreviewTab(null);
         const targetIndex = tabs.findIndex(item => item.id === tab);
         if (targetIndex < 0 || targetIndex === activeTabIndex) {
+          setTabPresentation(current =>
+            current.previewTab === null
+              ? current
+              : { ...current, previewTab: null },
+          );
           return;
         }
         const distance = Math.abs(targetIndex - activeTabIndex);
-        setActiveTab(tab);
+        setTabPresentation({ activeTab: tab, previewTab: null });
         requestAnimationFrame(() => {
           if (distance === 1) {
             pagerRef.current?.setPage(targetIndex);
@@ -459,20 +470,33 @@ const PerpsProMarketSelectorComponent = forwardRef<
     const handlePagePreview = useCallback(
       (position: number | null) => {
         if (position === null) {
-          setPreviewTab(null);
+          setTabPresentation(current =>
+            current.previewTab === null
+              ? current
+              : { ...current, previewTab: null },
+          );
           return;
         }
-        setPreviewTab(tabs[position]?.id ?? null);
+        const nextPreviewTab = tabs[position]?.id ?? null;
+        setTabPresentation(current =>
+          current.previewTab === nextPreviewTab
+            ? current
+            : { ...current, previewTab: nextPreviewTab },
+        );
       },
       [tabs],
     );
     const handlePageSelected = useCallback(
       (position: number) => {
-        setPreviewTab(null);
         const selectedTab = tabs[position];
         if (selectedTab) {
-          setActiveTab(selectedTab.id);
+          setTabPresentation({
+            activeTab: selectedTab.id,
+            previewTab: null,
+          });
+          return;
         }
+        setTabPresentation(current => ({ ...current, previewTab: null }));
       },
       [tabs],
     );

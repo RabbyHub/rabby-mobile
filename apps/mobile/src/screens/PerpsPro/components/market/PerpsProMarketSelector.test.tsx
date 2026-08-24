@@ -727,6 +727,10 @@ describe('PerpsProMarketSelector', () => {
     expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
 
     fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pageSelected', 2);
+    expect(
+      screen.getByTestId('perps-pro-market-tab-category-a').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
     fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pagePreview', 3);
     expect(screen.getByTestId('perps-pro-market-list-category-c')).toBeTruthy();
   });

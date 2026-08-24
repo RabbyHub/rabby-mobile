@@ -30,6 +30,8 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
+import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPreviewSession';
+
 export type PerpsProMarketPagerHandle = {
   setPage: (position: number) => void;
   setPageWithoutAnimation: (position: number) => void;
@@ -79,6 +81,7 @@ const IosPerpsProMarketPager = forwardRef<
     const initialPageRef = useRef(clampPagePosition(initialPage, pageCount));
     const settledPageRef = useRef(initialPageRef.current);
     const isPreviewGestureActive = useSharedValue(false);
+    const previewGestureSessionId = useSharedValue(0);
     const previewPagePosition = useSharedValue(initialPageRef.current);
     const previousPageWidthRef = useRef(pageWidth);
     const initialContentOffsetRef = useRef({
@@ -89,24 +92,37 @@ const IosPerpsProMarketPager = forwardRef<
       () => [styles.iosPage, { flexBasis: pageWidth, width: pageWidth }],
       [pageWidth],
     );
+    const {
+      beginPreviewSession,
+      finishPreviewSession,
+      publishPreview,
+      resetPreviewSession,
+    } = usePerpsProPagerPreviewSession({
+      gestureSessionId: previewGestureSessionId,
+      isGestureActive: isPreviewGestureActive,
+      onPreview: onPagePreview,
+    });
 
     const commitPagePosition = useCallback(
       (position: number) => {
         const nextPosition = clampPagePosition(position, pageCount);
+        const sessionId = previewGestureSessionId.value;
         isPreviewGestureActive.value = false;
         previewPagePosition.value = nextPosition;
-        onPagePreview(null);
         if (nextPosition === settledPageRef.current) {
+          finishPreviewSession(sessionId, true);
           return;
         }
+        finishPreviewSession(sessionId, false);
         settledPageRef.current = nextPosition;
         onPageSelected(nextPosition);
       },
       [
+        finishPreviewSession,
         isPreviewGestureActive,
-        onPagePreview,
         onPageSelected,
         pageCount,
+        previewGestureSessionId,
         previewPagePosition,
       ],
     );
@@ -114,7 +130,10 @@ const IosPerpsProMarketPager = forwardRef<
     const handleScroll = useAnimatedScrollHandler(
       {
         onBeginDrag: () => {
+          const sessionId = previewGestureSessionId.value + 1;
+          previewGestureSessionId.value = sessionId;
           isPreviewGestureActive.value = true;
+          runOnJS(beginPreviewSession)(sessionId);
         },
         onScroll: event => {
           if (!isPreviewGestureActive.value) {
@@ -131,16 +150,23 @@ const IosPerpsProMarketPager = forwardRef<
             return;
           }
           previewPagePosition.value = nextPosition;
-          runOnJS(onPagePreview)(nextPosition);
+          runOnJS(publishPreview)(previewGestureSessionId.value, nextPosition);
         },
       },
-      [isPreviewGestureActive, onPagePreview, pageCount, pageWidth],
+      [
+        beginPreviewSession,
+        isPreviewGestureActive,
+        pageCount,
+        pageWidth,
+        previewGestureSessionId,
+        publishPreview,
+      ],
     );
 
     const scrollToPage = useCallback(
       (position: number, animated: boolean) => {
         const nextPosition = clampPagePosition(position, pageCount);
-        isPreviewGestureActive.value = false;
+        resetPreviewSession();
         scrollViewRef.current?.scrollTo({
           animated,
           x: nextPosition * pageWidth,
@@ -150,7 +176,7 @@ const IosPerpsProMarketPager = forwardRef<
           commitPagePosition(nextPosition);
         }
       },
-      [commitPagePosition, isPreviewGestureActive, pageCount, pageWidth],
+      [commitPagePosition, pageCount, pageWidth, resetPreviewSession],
     );
 
     useLayoutEffect(() => {
@@ -255,23 +281,37 @@ const AndroidPerpsProMarketPager = forwardRef<
     const pagerRef = useRef<PagerView>(null);
     const pageCount = Children.count(children);
     const isPreviewGestureActive = useSharedValue(false);
+    const previewGestureSessionId = useSharedValue(0);
+    const settledPagePosition = useSharedValue(
+      clampPagePosition(initialPage, pageCount),
+    );
     const previewPagePosition = useSharedValue(
       clampPagePosition(initialPage, pageCount),
     );
+    const {
+      beginPreviewSession,
+      finishPreviewSession,
+      publishPreview,
+      resetPreviewSession,
+    } = usePerpsProPagerPreviewSession({
+      gestureSessionId: previewGestureSessionId,
+      isGestureActive: isPreviewGestureActive,
+      onPreview: onPagePreview,
+    });
 
     useImperativeHandle(
       ref,
       () => ({
         setPage: position => {
-          isPreviewGestureActive.value = false;
+          resetPreviewSession();
           pagerRef.current?.setPage(position);
         },
         setPageWithoutAnimation: position => {
-          isPreviewGestureActive.value = false;
+          resetPreviewSession();
           pagerRef.current?.setPageWithoutAnimation(position);
         },
       }),
-      [isPreviewGestureActive],
+      [resetPreviewSession],
     );
 
     const handlePageScrollStateChanged =
@@ -279,14 +319,20 @@ const AndroidPerpsProMarketPager = forwardRef<
         event => {
           'worklet';
           if (event.pageScrollState === 'dragging') {
+            const sessionId = previewGestureSessionId.value + 1;
+            previewGestureSessionId.value = sessionId;
             isPreviewGestureActive.value = true;
+            runOnJS(beginPreviewSession)(sessionId);
             return;
           }
           if (event.pageScrollState === 'idle') {
-            const shouldClearPreview = isPreviewGestureActive.value;
+            const sessionId = previewGestureSessionId.value;
+            const shouldFinishPreviewSession = isPreviewGestureActive.value;
+            const shouldClearPreview =
+              previewPagePosition.value === settledPagePosition.value;
             isPreviewGestureActive.value = false;
-            if (shouldClearPreview) {
-              runOnJS(onPagePreview)(null);
+            if (shouldFinishPreviewSession) {
+              runOnJS(finishPreviewSession)(sessionId, shouldClearPreview);
             }
           }
         },
@@ -308,7 +354,7 @@ const AndroidPerpsProMarketPager = forwardRef<
           return;
         }
         previewPagePosition.value = nextPosition;
-        runOnJS(onPagePreview)(nextPosition);
+        runOnJS(publishPreview)(previewGestureSessionId.value, nextPosition);
       },
       ['onPageScroll'],
       true,
@@ -320,17 +366,21 @@ const AndroidPerpsProMarketPager = forwardRef<
           event.nativeEvent.position,
           pageCount,
         );
+        const sessionId = previewGestureSessionId.value;
         isPreviewGestureActive.value = false;
+        settledPagePosition.value = position;
         previewPagePosition.value = position;
-        onPagePreview(null);
+        finishPreviewSession(sessionId, false);
         onPageSelected(position);
       },
       [
+        finishPreviewSession,
         isPreviewGestureActive,
-        onPagePreview,
         onPageSelected,
         pageCount,
+        previewGestureSessionId,
         previewPagePosition,
+        settledPagePosition,
       ],
     );
 
