@@ -1231,8 +1231,9 @@ describe('PerpsProScene market loading states', () => {
     ).toMatchObject({
       backgroundColor: 'neutral-bg-1',
       left: 0,
-      minHeight: 64,
+      minHeight: 104,
       right: 0,
+      zIndex: 4,
     });
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
@@ -1247,17 +1248,37 @@ describe('PerpsProScene market loading states', () => {
         screen.getByTestId('perps-pro-region-alert-slot').props.style,
       ),
     ).toMatchObject({ height: 64 });
-    const getMarketTranslateY = () => {
+    const getRestrictedOverlayGeometry = () => {
+      const restrictedSurfaceStyle = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+      );
       const marketOverlayStyle = StyleSheet.flatten(
         screen.getByTestId('perps-pro-market-overlay').props.style,
       );
-      const marketTranslateY = marketOverlayStyle?.transform?.[0]
+      const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
         ?.translateY as unknown as number | { __getValue: () => number };
-      return typeof marketTranslateY === 'number'
-        ? marketTranslateY
-        : marketTranslateY.__getValue();
+      const surfaceTranslateY =
+        typeof restrictedSurfaceTranslateY === 'number'
+          ? restrictedSurfaceTranslateY
+          : restrictedSurfaceTranslateY.__getValue();
+      const marketTop = marketOverlayStyle?.top as number;
+      return {
+        effectiveMarketY: surfaceTranslateY + marketTop,
+        marketOverlayStyle,
+      };
     };
-    expect(getMarketTranslateY()).toBe(120);
+    expect(getRestrictedOverlayGeometry()).toEqual({
+      effectiveMarketY: 120,
+      marketOverlayStyle: expect.objectContaining({
+        height: 40,
+        top: 64,
+      }),
+    });
+    expect(
+      getRestrictedOverlayGeometry().marketOverlayStyle?.transform,
+    ).toBeUndefined();
+    fireEvent.press(screen.getByTestId('market-bar'));
+    expect(mockMarketSelectorPresent).toHaveBeenCalledTimes(1);
 
     fireEvent(screen.getByTestId('perps-region-alert'), 'layout', {
       nativeEvent: {
@@ -1273,13 +1294,19 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-region-alert-overlay').props.style,
       ),
-    ).toMatchObject({ minHeight: 65 });
+    ).toMatchObject({ minHeight: 105 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-region-alert-slot').props.style,
       ),
     ).toMatchObject({ height: 65 });
-    expect(getMarketTranslateY()).toBe(121);
+    expect(getRestrictedOverlayGeometry()).toEqual({
+      effectiveMarketY: 121,
+      marketOverlayStyle: expect.objectContaining({
+        height: 40,
+        top: 65,
+      }),
+    });
   });
 
   it('uses the account restriction before the current market resolves', () => {
@@ -1302,16 +1329,22 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
     expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
     expect(screen.getByTestId('market-bar-skeleton')).toBeOnTheScreen();
+    const restrictedSurfaceStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+    );
+    const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
-    const marketTranslateY = marketOverlayStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
-    expect(
-      typeof marketTranslateY === 'number'
-        ? marketTranslateY
-        : marketTranslateY.__getValue(),
-    ).toBe(102);
+    const surfaceTranslateY =
+      typeof restrictedSurfaceTranslateY === 'number'
+        ? restrictedSurfaceTranslateY
+        : restrictedSurfaceTranslateY.__getValue();
+    expect(restrictedSurfaceStyle).toMatchObject({ minHeight: 86 });
+    expect(marketOverlayStyle).toMatchObject({ height: 40, top: 46 });
+    expect(marketOverlayStyle?.transform).toBeUndefined();
+    expect(surfaceTranslateY + (marketOverlayStyle?.top as number)).toBe(102);
   });
 
   it('waits for the restricted alert measurement before painting positioned overlays', () => {
@@ -1337,16 +1370,22 @@ describe('PerpsProScene market loading states', () => {
       },
     });
 
+    const restrictedSurfaceStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+    );
+    const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
-    const marketTranslateY = marketOverlayStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
-    expect(
-      typeof marketTranslateY === 'number'
-        ? marketTranslateY
-        : marketTranslateY.__getValue(),
-    ).toBe(120);
+    const surfaceTranslateY =
+      typeof restrictedSurfaceTranslateY === 'number'
+        ? restrictedSurfaceTranslateY
+        : restrictedSurfaceTranslateY.__getValue();
+    expect(restrictedSurfaceStyle).toMatchObject({ minHeight: 104 });
+    expect(marketOverlayStyle).toMatchObject({ height: 40, top: 64 });
+    expect(marketOverlayStyle?.transform).toBeUndefined();
+    expect(surfaceTranslateY + (marketOverlayStyle?.top as number)).toBe(120);
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
   });
 
