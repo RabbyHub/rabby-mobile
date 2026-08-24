@@ -1,6 +1,7 @@
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
+import { mapWithJsBudget } from '@/core/utils/cooperativeWork';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import {
   syncRemoteTokens,
@@ -46,6 +47,7 @@ import {
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
 import type { RestoredAssetProjection } from '@/databases/assetProjection';
+import type { TokenItemWithEntity } from '@rabby-wallet/rabby-api/dist/types';
 import {
   isAssetProjectionPersistenceActive,
   restoreAssetProjection,
@@ -320,6 +322,20 @@ const replaceTokensByChain = (
 
 const filterInterfaceTokenList = (tokens: ITokenItem[]) =>
   tokens.filter(commonTokenFilter);
+
+const normalizeRemoteTokenList = async (
+  tokens: TokenItemWithEntity[],
+  owner: string,
+  shouldContinue?: () => boolean,
+) => {
+  const normalizedTokens = await mapWithJsBudget(
+    tokens,
+    token => tokenItemToITokenItem(token, owner),
+    { shouldContinue },
+  );
+
+  return normalizedTokens ? filterInterfaceTokenList(normalizedTokens) : null;
+};
 
 const isDataExpired = async (address: string) => {
   const isExpired = await TokenItemEntity.isExpired(address);
@@ -985,20 +1001,29 @@ export const useTokenIndexStore = zCreate(
           currentState.addressTokenIds[address],
         );
         const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
+        const nextStaticTokenIds = new Set(
+          nextStaticItems.map(item => item.tokenId),
+        );
+        const removedStaticTokenIds = (
+          currentState.addressTokenIds[address] || EMPTY_TOKEN_ENTITY_IDS
+        ).filter(tokenId => !nextStaticTokenIds.has(tokenId));
 
         return {
           address,
           nextTokenIds,
           nextStaticItems,
-          nextStaticTokenIds: new Set(
-            nextStaticItems.map(item => item.tokenId),
-          ),
+          removedStaticTokenIds,
         };
       });
 
       set(draft => {
         updates.forEach(
-          ({ address, nextTokenIds, nextStaticItems, nextStaticTokenIds }) => {
+          ({
+            address,
+            nextTokenIds,
+            nextStaticItems,
+            removedStaticTokenIds,
+          }) => {
             let didChange = false;
             if (draft.addressTokenIds[address] !== nextTokenIds) {
               draft.addressTokenIds[address] = nextTokenIds;
@@ -1017,11 +1042,8 @@ export const useTokenIndexStore = zCreate(
               }
             });
 
-            Object.keys(draft.tokenStaticMap).forEach(tokenId => {
-              if (
-                getTokenEntityIdAddress(tokenId) === address &&
-                !nextStaticTokenIds.has(tokenId as TokenEntityId)
-              ) {
+            removedStaticTokenIds.forEach(tokenId => {
+              if (draft.tokenStaticMap[tokenId]) {
                 delete draft.tokenStaticMap[tokenId];
                 didChange = true;
               }
@@ -3521,9 +3543,15 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             lowerAddresses.map(address =>
               cacheTokenQueue.add(async () => {
                 const list = await queryTokensCache(address);
-                cacheTokenMap[address] = filterInterfaceTokenList(
-                  list.map(item => tokenItemToITokenItem(item, address)),
+                const normalizedList = await normalizeRemoteTokenList(
+                  list,
+                  address,
+                  isCurrentRequest,
                 );
+                if (!normalizedList) {
+                  return;
+                }
+                cacheTokenMap[address] = normalizedList;
                 cacheSucceededAddresses.add(address);
               }),
             ),
@@ -3650,10 +3678,12 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                           isTestnet: false,
                         },
                       );
-                      return filterInterfaceTokenList(
-                        chainTokensRes.map(item =>
-                          tokenItemToITokenItem(item, address),
-                        ),
+                      return (
+                        (await normalizeRemoteTokenList(
+                          chainTokensRes,
+                          address,
+                          isCurrentRequest,
+                        )) || []
                       );
                     })) || [];
                   return { serverId, tokens };
@@ -3921,9 +3951,15 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           return;
         }
         trace.mark('cache-response', { itemCount: cacheList.length });
-        const cacheTokens = filterInterfaceTokenList(
-          cacheList.map(item => tokenItemToITokenItem(item, address)),
+        const cacheTokens = await normalizeRemoteTokenList(
+          cacheList,
+          address,
+          isCurrentRequest,
         );
+        if (!cacheTokens) {
+          trace.finish({ path: 'stale-during-cache-normalization' });
+          return;
+        }
         const currentState = get();
         const previousTokens =
           currentState.tokenListMap[normalizedAddress] || [];
@@ -4008,12 +4044,12 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                   isTestnet: false,
                 },
               );
-              const tokenList = filterInterfaceTokenList(
-                chainTokensRes.map(item =>
-                  tokenItemToITokenItem(item, address),
-                ),
+              const tokenList = await normalizeRemoteTokenList(
+                chainTokensRes,
+                address,
+                isCurrentRequest,
               );
-              return tokenList;
+              return tokenList || [];
             }),
         ),
       );
