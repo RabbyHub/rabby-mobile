@@ -89,11 +89,12 @@ describe('regression scenario command', () => {
 
   it('redacts sensitive and nested URL fields from logs', () => {
     const sanitized = sanitizeLinkForLogging(
-      `${BASE_URL}&scenario=dapp-browser&runId=run-4&url=https%3A%2F%2Fexample.com%2Fprivate&fixturePath=%2Ftmp%2Ffixture`,
+      `${BASE_URL}&scenario=dapp-browser&runId=run-4&url=https%3A%2F%2Fexample.com%2Fprivate&host=https%3A%2F%2Foffice-api.example.test&fixturePath=%2Ftmp%2Ffixture`,
     );
 
     expect(sanitized).not.toContain('/tmp/fixture');
     expect(sanitized).not.toContain('example.com');
+    expect(sanitized).not.toContain('office-api.example.test');
     expect(sanitized).toContain('%3Credacted%3E');
   });
 });
