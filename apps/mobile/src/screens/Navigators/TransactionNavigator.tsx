@@ -34,6 +34,7 @@ import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import { PerpsProHistoryScreen } from '../PerpsProHistory';
+import { PerpsProHistoryHeader } from '../PerpsProHistory/components/PerpsProHistoryHeader';
 import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
@@ -435,16 +436,9 @@ export default function TransactionNavigator() {
         component={PerpsProHistoryScreen}
         options={mergeScreenOptions({
           title: t('page.perps.pro.history.title'),
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: '700',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
+          header: () => (
+            <PerpsProHistoryHeader title={t('page.perps.pro.history.title')} />
+          ),
         })}
       />
 
