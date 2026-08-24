@@ -160,6 +160,9 @@ export const runPreferredPerpsNavigation = async (
       params: {
         account: request.account,
         dappId: 'hyperliquid',
+        ...(request.simpleDetail?.fromSource === 'homePagePositionList'
+          ? { fromSource: request.simpleDetail.fromSource }
+          : {}),
       },
     });
     if (request.simpleDetail) {
