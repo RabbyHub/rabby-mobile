@@ -59,6 +59,7 @@ import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import { ScreenshotFeedbackHost } from './components/Screenshot/SubmitFeedback/GlobalHost';
 import { perfEvents } from './core/utils/perf';
+import { hasBootSplashExited } from './core/utils/bootSplashExit';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import { useTranslation } from 'react-i18next';
@@ -111,6 +112,7 @@ const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 const autoUnlockPresentationPolicy = createAutoUnlockPresentationPolicy({
   isIOS: IS_IOS,
+  bootSplashExited: hasBootSplashExited(),
   setPresentationReady: ready =>
     UnlockUIManager.setAutoUnlockPresentationReady(ready),
 });
@@ -468,6 +470,22 @@ export default function AppNavigation() {
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
   const shouldRenderPostUnlockGlobals =
     shouldRenderDeferredGlobals || isUnlockSessionValid;
+
+  React.useEffect(() => {
+    const onBootSplashExited = () => {
+      autoUnlockPresentationPolicy.onBootSplashExited(
+        navigationRef.getCurrentRoute()?.name === RootNames.Unlock,
+      );
+    };
+    const sub = perfEvents.subscribe('BOOT_SPLASH_EXITED', onBootSplashExited);
+
+    if (hasBootSplashExited()) {
+      onBootSplashExited();
+    }
+
+    return () => sub.remove();
+  }, []);
+
   useReadableAccountWarmupsOnHomeVisible({
     shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
     hasVisibleAccounts,

@@ -1,5 +1,6 @@
 type AutoUnlockPresentationPolicyOptions = {
   isIOS: boolean;
+  bootSplashExited: boolean;
   setPresentationReady: (ready: boolean) => void;
 };
 
@@ -14,8 +15,11 @@ type TransitionContext = {
  */
 export function createAutoUnlockPresentationPolicy({
   isIOS,
+  bootSplashExited: initialBootSplashExited,
   setPresentationReady,
 }: AutoUnlockPresentationPolicyOptions) {
+  let bootSplashExited = initialBootSplashExited;
+
   return {
     onRouteChange(isUnlockRoute: boolean) {
       if (!isUnlockRoute) {
@@ -23,7 +27,16 @@ export function createAutoUnlockPresentationPolicy({
       }
     },
     onInitialRouteReady(isUnlockRoute: boolean) {
-      if (isUnlockRoute) {
+      if (isUnlockRoute && (!isIOS || bootSplashExited)) {
+        setPresentationReady(true);
+      } else if (isUnlockRoute) {
+        setPresentationReady(false);
+      }
+    },
+    onBootSplashExited(isUnlockRoute: boolean) {
+      bootSplashExited = true;
+
+      if (isIOS && isUnlockRoute) {
         setPresentationReady(true);
       }
     },
@@ -40,7 +53,7 @@ export function createAutoUnlockPresentationPolicy({
       setPresentationReady(!isIOS);
     },
     onTransitionEnd({ isUnlockRoute, closing }: TransitionContext) {
-      if (!isIOS || !isUnlockRoute || closing) {
+      if (!isIOS || !isUnlockRoute || closing || !bootSplashExited) {
         return;
       }
 

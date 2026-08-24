@@ -5,6 +5,7 @@ describe('createAutoUnlockPresentationPolicy', () => {
     const setPresentationReady = jest.fn();
     const policy = createAutoUnlockPresentationPolicy({
       isIOS: true,
+      bootSplashExited: true,
       setPresentationReady,
     });
 
@@ -18,6 +19,7 @@ describe('createAutoUnlockPresentationPolicy', () => {
     const setPresentationReady = jest.fn();
     const policy = createAutoUnlockPresentationPolicy({
       isIOS: false,
+      bootSplashExited: false,
       setPresentationReady,
     });
 
@@ -27,22 +29,25 @@ describe('createAutoUnlockPresentationPolicy', () => {
     expect(setPresentationReady.mock.calls).toEqual([[true]]);
   });
 
-  it('keeps the initial unlock route eligible without a synthetic timeout', () => {
+  it('waits for the iOS boot splash to leave the initial unlock route', () => {
     const setPresentationReady = jest.fn();
     const policy = createAutoUnlockPresentationPolicy({
       isIOS: true,
+      bootSplashExited: false,
       setPresentationReady,
     });
 
     policy.onInitialRouteReady(true);
+    policy.onBootSplashExited(true);
 
-    expect(setPresentationReady).toHaveBeenCalledWith(true);
+    expect(setPresentationReady.mock.calls).toEqual([[false], [true]]);
   });
 
   it('clears presentation readiness as the unlock route closes', () => {
     const setPresentationReady = jest.fn();
     const policy = createAutoUnlockPresentationPolicy({
       isIOS: true,
+      bootSplashExited: true,
       setPresentationReady,
     });
 
