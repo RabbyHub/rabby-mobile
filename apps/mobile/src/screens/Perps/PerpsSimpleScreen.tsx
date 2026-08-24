@@ -4,7 +4,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ImageBackground,
   RefreshControl,
   ScrollView,
   TouchableOpacity,
@@ -257,14 +256,15 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
 
   return (
     <>
-      <NormalScreenContainer2024 noHeader type={isLight ? 'bg0' : 'bg1'}>
-        {!isLight && (
-          <ImageBackground
-            source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
-            resizeMode="cover"
-            style={[styles.topBg, { width: screenWidth, height: screenWidth }]}
-          />
-        )}
+      <NormalScreenContainer2024
+        bgImageHeight={isLight ? undefined : screenWidth}
+        bgImageSource={
+          isLight
+            ? undefined
+            : require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')
+        }
+        noHeader
+        type={isLight ? 'bg0' : 'bg1'}>
         <PerpsSimpleHeader
           account={currentPerpsAccount}
           isModeSwitching={isModeSwitching}
@@ -415,12 +415,6 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
 };
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
-  topBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: -1,
-  },
   container: {
     flex: 1,
     height: '100%',

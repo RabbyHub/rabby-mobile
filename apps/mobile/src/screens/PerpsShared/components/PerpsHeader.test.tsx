@@ -80,7 +80,7 @@ describe('PerpsHeader', () => {
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-header').props.style),
     ).toMatchObject({
-      backgroundColor: 'neutral-bg-0',
+      backgroundColor: 'transparent',
       gap: 8,
       height: PERPS_HEADER_HEIGHT,
       paddingLeft: 8,

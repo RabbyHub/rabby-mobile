@@ -4,6 +4,7 @@ import React from 'react';
 import { PerpsSimpleScreen } from './PerpsSimpleScreen';
 
 let mockHasPermission = true;
+let mockIsLight = true;
 
 jest.mock('@/constant', () => ({ APP_VERSIONS: { fromNative: 'test' } }));
 
@@ -12,10 +13,14 @@ jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
   const { View } = require('react-native');
   return ({
     children,
+    bgImageHeight,
+    bgImageSource,
     noHeader,
     type,
   }: {
     children: React.ReactNode;
+    bgImageHeight?: number;
+    bgImageSource?: object;
     noHeader?: boolean;
     type?: string;
   }) =>
@@ -23,6 +28,8 @@ jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
       View,
       {
         accessibilityLabel: `${String(noHeader)}:${String(type)}`,
+        bgImageHeight,
+        bgImageSource,
         testID: 'screen-container',
       },
       children,
@@ -34,7 +41,7 @@ jest.mock('@/components2024/Button', () => ({ Button: () => null }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: () => ({
     colors2024: {},
-    isLight: true,
+    isLight: mockIsLight,
     styles: {
       container: {},
       emptyPadding: {},
@@ -46,7 +53,6 @@ jest.mock('@/hooks/theme', () => ({
       screenContainer: {},
       scrollContent: {},
       shortBtn: {},
-      topBg: {},
     },
   }),
 }));
@@ -184,6 +190,7 @@ jest.mock('../PerpsMarketDetail/hooks/usePerpsPosition', () => ({
 describe('PerpsSimpleScreen', () => {
   beforeEach(() => {
     mockHasPermission = true;
+    mockIsLight = true;
   });
 
   it('owns Safe Area directly and places the shared page header before content', () => {
@@ -194,9 +201,30 @@ describe('PerpsSimpleScreen', () => {
     expect(
       screen.getByTestId('screen-container').props.accessibilityLabel,
     ).toBe('true:bg0');
+    expect(
+      screen.getByTestId('screen-container').props.bgImageSource,
+    ).toBeUndefined();
     expect(screen.getByTestId('simple-page-header')).toBeOnTheScreen();
     expect(screen.getByTestId('simple-content')).toBeOnTheScreen();
     expect(screen.getByTestId('simple-popup-group')).toBeOnTheScreen();
+  });
+
+  it('lets the dark Header and content share the container background image', () => {
+    mockIsLight = false;
+
+    const screen = render(
+      <PerpsSimpleScreen isModeSwitching={false} onSwitchToPro={jest.fn()} />,
+    );
+
+    expect(
+      screen.getByTestId('screen-container').props.accessibilityLabel,
+    ).toBe('true:bg1');
+    expect(
+      screen.getByTestId('screen-container').props.bgImageSource,
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('screen-container').props.bgImageHeight,
+    ).toBeGreaterThan(0);
   });
 
   it('forwards the restricted alert layout without adding page state', () => {
