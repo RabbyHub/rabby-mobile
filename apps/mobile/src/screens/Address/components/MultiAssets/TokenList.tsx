@@ -74,7 +74,10 @@ import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { useIsFocused } from '@react-navigation/native';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
-import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import {
+  useRegressionScenario,
+  useRegressionScenarioComponentAction,
+} from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
@@ -222,6 +225,9 @@ export const TokenList = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
+  const isHomeAssetRegressionScenario =
+    regressionScenarioId === 'home-assets' ||
+    regressionScenarioId === 'high-cardinality-assets';
   const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
@@ -433,7 +439,7 @@ export const TokenList = () => {
   useEffect(() => {
     if (
       !regressionScenarioActive ||
-      regressionScenarioId !== 'home-assets' ||
+      !isHomeAssetRegressionScenario ||
       !regressionScenarioRunId ||
       !regressionScenarioReport ||
       !isFocused
@@ -464,7 +470,7 @@ export const TokenList = () => {
     isFocused,
     projectedTokenCount,
     regressionScenarioActive,
-    regressionScenarioId,
+    isHomeAssetRegressionScenario,
     regressionScenarioReport,
     regressionScenarioRunId,
     tokenProjectionAvailability,
@@ -474,7 +480,7 @@ export const TokenList = () => {
   useEffect(() => {
     if (
       !regressionScenarioActive ||
-      regressionScenarioId !== 'home-assets' ||
+      !isHomeAssetRegressionScenario ||
       !isFocused
     ) {
       return;
@@ -488,7 +494,7 @@ export const TokenList = () => {
     isFocused,
     multiAssetsKey,
     regressionScenarioActive,
-    regressionScenarioId,
+    isHomeAssetRegressionScenario,
     regressionScenarioRunId,
   ]);
 
@@ -762,6 +768,77 @@ export const TokenList = () => {
     }
     setShowAllTokens(visible => !visible);
   }, [handleLpTokenEnabledChange, showAllTokens]);
+
+  const expandAdditionalTokensForRegression = useCallback(() => {
+    if (!showAllTokens) {
+      handleToggleAdditionalTokens();
+    }
+  }, [handleToggleAdditionalTokens, showAllTokens]);
+  const collapseAdditionalTokensForRegression = useCallback(() => {
+    if (showAllTokens) {
+      handleToggleAdditionalTokens();
+    }
+  }, [handleToggleAdditionalTokens, showAllTokens]);
+  const enableLpTokensForRegression = useCallback(() => {
+    handleLpTokenEnabledChange(true);
+  }, [handleLpTokenEnabledChange]);
+
+  useRegressionScenarioComponentAction(
+    'home-assets.expand-additional-tokens',
+    expandAdditionalTokensForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'home-assets.collapse-additional-tokens',
+    collapseAdditionalTokensForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'home-assets.enable-lp-tokens',
+    enableLpTokensForRegression,
+  );
+
+  const lastExpandedRegressionModeRef = useRef<'default' | 'lp' | null>(null);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'high-cardinality-assets' ||
+      !regressionScenarioReport ||
+      !isFocused ||
+      !showAllTokens
+    ) {
+      lastExpandedRegressionModeRef.current = null;
+      return;
+    }
+
+    const mode = isLpTokenEnabled ? 'lp' : 'default';
+    if (
+      lastExpandedRegressionModeRef.current === mode ||
+      selectedAdditionalTokenCount === 0
+    ) {
+      return;
+    }
+    lastExpandedRegressionModeRef.current = mode;
+    regressionScenarioReport('assertion', {
+      assertion:
+        mode === 'lp'
+          ? 'high-cardinality-token-lp-expanded'
+          : 'high-cardinality-token-additional-expanded',
+      passed: true,
+      mode,
+      additionalTokenCount: selectedAdditionalTokenCount,
+      primaryTokenCount,
+      projectedTokenCount,
+    });
+  }, [
+    isFocused,
+    isLpTokenEnabled,
+    primaryTokenCount,
+    projectedTokenCount,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioReport,
+    selectedAdditionalTokenCount,
+    showAllTokens,
+  ]);
 
   const emptyAssetsText = useMemo(
     () =>

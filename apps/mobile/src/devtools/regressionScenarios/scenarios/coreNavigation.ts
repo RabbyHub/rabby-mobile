@@ -121,6 +121,7 @@ const SAFE_ASSET_DATA_LOAD_DETAIL_KEYS = new Set([
   'tokenCount',
   'tokenDisplayMode',
   'segmentKeys',
+  'totalItemCount',
 ]);
 const SINGLE_ADDRESS_SCREEN_ACTIVITY_SCOPE_LABELS = [
   'single-address',
@@ -1144,6 +1145,91 @@ async function runHighCardinalityAssetsProbe(
       'home.defi-renderable',
       Date.now() - visualReadyStartedAt,
     );
+
+    if (
+      parseScenarioBoolean(
+        context.command.params.exerciseTokenProjectionSegments,
+      )
+    ) {
+      probe.markPhase('home-select-token-for-segment-pressure');
+      await selectHomeTabIndex(1);
+      await delay(350);
+
+      const coldExpandStartedAt = Date.now();
+      probe.markPhase('home-expand-additional-tokens-cold');
+      const coldExpandTiming = await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'home-assets.expand-additional-tokens',
+        15_000,
+      );
+      probe.recordAction(
+        'home-assets.expand-additional-tokens.cold',
+        coldExpandTiming,
+      );
+      await waitForScenarioAssertion(
+        context,
+        'high-cardinality-token-additional-expanded',
+        60_000,
+        coldExpandStartedAt,
+      );
+      probe.recordDuration(
+        'home.token-additional-expanded.cold',
+        Date.now() - coldExpandStartedAt,
+      );
+
+      probe.markPhase('home-collapse-additional-tokens');
+      const collapseTiming = await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'home-assets.collapse-additional-tokens',
+        15_000,
+      );
+      probe.recordAction(
+        'home-assets.collapse-additional-tokens',
+        collapseTiming,
+      );
+      await delay(350);
+
+      const warmExpandStartedAt = Date.now();
+      probe.markPhase('home-expand-additional-tokens-warm');
+      const warmExpandTiming = await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'home-assets.expand-additional-tokens',
+        15_000,
+      );
+      probe.recordAction(
+        'home-assets.expand-additional-tokens.warm',
+        warmExpandTiming,
+      );
+      await waitForScenarioAssertion(
+        context,
+        'high-cardinality-token-additional-expanded',
+        15_000,
+        warmExpandStartedAt,
+      );
+      probe.recordDuration(
+        'home.token-additional-expanded.warm',
+        Date.now() - warmExpandStartedAt,
+      );
+
+      const lpExpandStartedAt = Date.now();
+      probe.markPhase('home-enable-lp-tokens');
+      const lpTiming = await runRegressionScenarioComponentAction(
+        context.command.runId,
+        'home-assets.enable-lp-tokens',
+        15_000,
+      );
+      probe.recordAction('home-assets.enable-lp-tokens', lpTiming);
+      await waitForScenarioAssertion(
+        context,
+        'high-cardinality-token-lp-expanded',
+        60_000,
+        lpExpandStartedAt,
+      );
+      probe.recordDuration(
+        'home.token-lp-expanded',
+        Date.now() - lpExpandStartedAt,
+      );
+    }
   } finally {
     probe.markPhase('complete');
     context.report('perf-mark', {

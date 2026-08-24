@@ -29,6 +29,7 @@ jest.mock('@/databases/sync/assets', () => ({
 jest.mock('./assetProjectionPersistence', () => ({
   isAssetProjectionPersistenceActive: jest.fn(() => false),
   restoreAssetProjection: jest.fn(async () => null),
+  restoreAssetProjectionRows: jest.fn(async () => null),
   scheduleAssetProjectionPersistence: jest.fn(),
   subscribeAssetProjectionDatabaseCommits: jest.fn(),
 }));
@@ -76,6 +77,7 @@ import {
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import {
   restoreAssetProjection,
+  restoreAssetProjectionRows,
   scheduleAssetProjectionPersistence,
 } from './assetProjectionPersistence';
 import { notifySyncAbortHandlers } from '@/databases/sync/abort';
@@ -96,6 +98,9 @@ const mockedScheduleAssetProjectionPersistence = jest.mocked(
   scheduleAssetProjectionPersistence,
 );
 const mockedRestoreAssetProjection = jest.mocked(restoreAssetProjection);
+const mockedRestoreAssetProjectionRows = jest.mocked(
+  restoreAssetProjectionRows,
+);
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -429,6 +434,86 @@ describe('single-address token assets projection', () => {
     expect(tokenEntityResourceStore.getValue(deferredTokenId)).toEqual(
       deferredToken,
     );
+  });
+
+  it('loads deferred projection rows only when their segment is requested', async () => {
+    const visibleToken = createToken('visible-token', { usd_value: 20 });
+    const deferredToken = createToken('deferred-token', { usd_value: 10 });
+    const visibleTokenId = buildTokenEntityId(visibleToken);
+    const deferredTokenId = buildTokenEntityId(deferredToken);
+    const persistedProjectionKey = 'persisted-partial-token-projection';
+
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      projectionKey: persistedProjectionKey,
+      generation: 7,
+      rows: [{ type: 'token', id: visibleTokenId }],
+      groups: [],
+      totalRowCount: 2,
+      loadedRowRanges: [{ offset: 0, count: 1 }],
+      metadata: {
+        entityRestoreMode: 'staged-v1',
+        groupPrimaryTokenIds: {},
+        lowValueTokenPreviewLogoUrls: [],
+        lpLowValueTokenPreviewLogoUrls: [],
+        additionalCoreUsdValue: 0,
+        additionalTokenCount: 1,
+        defaultVisibleTokenCount: 1,
+        hasAdditionalTokens: true,
+        hasLpTokens: false,
+        lowValueTokenCount: 0,
+        segmentRowCounts: {
+          additionalDefault: 1,
+          additionalLp: 0,
+          lowValueDefault: 0,
+          lowValueLp: 0,
+          primary: 1,
+        },
+        selectedSegmentMode: 'default',
+      },
+    } as never);
+    mockedRestoreAssetProjectionRows.mockResolvedValueOnce({
+      projectionKey: persistedProjectionKey,
+      generation: 7,
+      rows: [{ type: 'token', id: deferredTokenId }],
+      groups: [],
+      loadedRowRanges: [{ offset: 1, count: 1 }],
+    });
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds
+      .mockResolvedValueOnce([visibleToken] as never)
+      .mockResolvedValueOnce([deferredToken] as never);
+
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+    await waitFor(
+      () =>
+        useTokenAssetsIndexStore.getState().singleAssetsAvailabilityByKey[
+          key
+        ] === 'ready',
+    );
+
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]?.rows,
+    ).toEqual([{ type: 'token', tokenId: visibleTokenId }]);
+    expect(mockedRestoreAssetProjectionRows).not.toHaveBeenCalled();
+
+    await expect(
+      ensureTokenAssetsProjectionSegmentsHydrated({
+        projectionKey: key,
+        scene: 'single-address',
+        segmentKeys: ['additionalDefault'],
+      }),
+    ).resolves.toBe(true);
+
+    expect(mockedRestoreAssetProjectionRows).toHaveBeenCalledWith(
+      persistedProjectionKey,
+      7,
+      [{ offset: 1, count: 1 }],
+    );
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]?.rows,
+    ).toEqual([
+      { type: 'token', tokenId: visibleTokenId },
+      { type: 'token', tokenId: deferredTokenId },
+    ]);
   });
 
   it('hydrates only the requested segment once without rebuilding projections', async () => {

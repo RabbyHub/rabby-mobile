@@ -4,7 +4,10 @@ import {
   ASSET_PROJECTION_GENERATIONS_TO_KEEP,
   cleanupAssetProjectionGenerations,
   persistAssetProjection,
+  restoreAssetProjectionGenerationRows,
   restoreLatestAssetProjection,
+  type AssetProjectionRowRange,
+  type AssetProjectionSnapshotInfo,
   type PersistAssetProjectionInput,
 } from '@/databases/assetProjection';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '@/databases/constant';
@@ -142,15 +145,27 @@ export const scheduleAssetProjectionPersistence = (
 
 export const restoreAssetProjection = async (
   identity: AssetProjectionIdentity,
-  options: { ruleVersion?: number } = {},
+  options: {
+    ruleVersion?: number;
+    selectRowRanges?: (
+      snapshot: AssetProjectionSnapshotInfo,
+    ) => AssetProjectionRowRange[] | null | undefined;
+  } = {},
 ) => {
   const projectionKey = buildAssetProjectionStorageKey(identity);
   return restoreLatestAssetProjection(projectionKey, {
     kind: identity.kind,
     scene: identity.scene,
     ruleVersion: options.ruleVersion,
+    selectRowRanges: options.selectRowRanges,
   });
 };
+
+export const restoreAssetProjectionRows = (
+  projectionKey: string,
+  generation: number,
+  ranges: AssetProjectionRowRange[],
+) => restoreAssetProjectionGenerationRows(projectionKey, generation, ranges);
 
 export const isAssetProjectionPersistenceActive = (
   identity: AssetProjectionIdentity,

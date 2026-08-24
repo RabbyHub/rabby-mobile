@@ -47,11 +47,16 @@ import {
   getAddressesWithoutListSnapshot,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
-import type { RestoredAssetProjection } from '@/databases/assetProjection';
+import type {
+  AssetProjectionRowRange,
+  RestoredAssetProjection,
+  RestoredAssetProjectionRows,
+} from '@/databases/assetProjection';
 import type { TokenItemWithEntity } from '@rabby-wallet/rabby-api/dist/types';
 import {
   isAssetProjectionPersistenceActive,
   restoreAssetProjection,
+  restoreAssetProjectionRows,
   scheduleAssetProjectionPersistence,
   subscribeAssetProjectionDatabaseCommits,
 } from './assetProjectionPersistence';
@@ -2007,6 +2012,42 @@ type StagedTokenProjectionRestoreMetadata = {
   lowValueTokenPreviewLogoUrls: string[];
   lpLowValueTokenPreviewLogoUrls: string[];
   primaryRowCount: number;
+  segmentRowCounts: Record<TokenAssetsIndexSegmentKey, number>;
+};
+
+const parseTokenProjectionSegmentRowCounts = (
+  metadata: Record<string, unknown>,
+) => {
+  const rawSegmentRowCounts = metadata.segmentRowCounts;
+  if (
+    !rawSegmentRowCounts ||
+    typeof rawSegmentRowCounts !== 'object' ||
+    Array.isArray(rawSegmentRowCounts)
+  ) {
+    return null;
+  }
+
+  const segmentRowCounts = {} as Record<TokenAssetsIndexSegmentKey, number>;
+  for (const segmentKey of TOKEN_ASSETS_INDEX_SEGMENT_KEYS) {
+    const count = (rawSegmentRowCounts as Record<string, unknown>)[segmentKey];
+    if (!Number.isInteger(count) || (count as number) < 0) {
+      return null;
+    }
+    segmentRowCounts[segmentKey] = count as number;
+  }
+  return segmentRowCounts;
+};
+
+const buildTokenProjectionSegmentRowRanges = (
+  segmentRowCounts: Record<TokenAssetsIndexSegmentKey, number>,
+) => {
+  let offset = 0;
+  return TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce((ranges, segmentKey) => {
+    const count = segmentRowCounts[segmentKey];
+    ranges[segmentKey] = { offset, count };
+    offset += count;
+    return ranges;
+  }, {} as Record<TokenAssetsIndexSegmentKey, AssetProjectionRowRange>);
 };
 
 const parseStagedTokenProjectionRestoreMetadata = (
@@ -2032,21 +2073,30 @@ const parseStagedTokenProjectionRestoreMetadata = (
   const lpLowValueTokenPreviewLogoUrls = parsePersistedStringList(
     restored.metadata.lpLowValueTokenPreviewLogoUrls,
   );
-  const segmentRowCounts = restored.metadata.segmentRowCounts;
-  const primaryRowCount =
-    segmentRowCounts &&
-    typeof segmentRowCounts === 'object' &&
-    !Array.isArray(segmentRowCounts)
-      ? (segmentRowCounts as Record<string, unknown>).primary
-      : null;
+  const segmentRowCounts = parseTokenProjectionSegmentRowCounts(
+    restored.metadata,
+  );
+  const primaryRowCount = segmentRowCounts?.primary;
+  const persistedRowCount = segmentRowCounts
+    ? TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce(
+        (count, segmentKey) => count + segmentRowCounts[segmentKey],
+        0,
+      )
+    : -1;
+  const totalRowCount = restored.totalRowCount ?? persistedRowCount;
+  const hasSupportedRowSelection =
+    restored.rows.length === (primaryRowCount as number) ||
+    restored.rows.length === persistedRowCount;
 
   if (
     !groupPrimaryTokenIds ||
     !lowValueTokenPreviewLogoUrls ||
     !lpLowValueTokenPreviewLogoUrls ||
+    !segmentRowCounts ||
     !Number.isInteger(primaryRowCount) ||
     (primaryRowCount as number) < 0 ||
-    (primaryRowCount as number) > restored.rows.length
+    persistedRowCount !== totalRowCount ||
+    !hasSupportedRowSelection
   ) {
     return null;
   }
@@ -2076,6 +2126,7 @@ const parseStagedTokenProjectionRestoreMetadata = (
     lowValueTokenPreviewLogoUrls,
     lpLowValueTokenPreviewLogoUrls,
     primaryRowCount: primaryRowCount as number,
+    segmentRowCounts,
   };
 };
 
@@ -2104,8 +2155,13 @@ const collectRestoredTokenEntityIds = (
 };
 
 type StagedTokenProjectionHydrationContext = {
+  projectionKey: string;
+  generation: number;
   groupMemberIdsById: Map<TokenGroupId, TokenEntityId[]>;
   groupPrimaryTokenIds: Record<string, TokenEntityId>;
+  segmentRanges: Record<TokenAssetsIndexSegmentKey, AssetProjectionRowRange>;
+  loadedSegmentKeys: Set<TokenAssetsIndexSegmentKey>;
+  selectedSegmentMode: 'default' | 'lp';
   tokenDisplayMode: TokenDisplayMode;
 };
 
@@ -2127,6 +2183,8 @@ const createStagedTokenProjectionHydrationContext = (
   metadata: StagedTokenProjectionRestoreMetadata,
   tokenDisplayMode: TokenDisplayMode,
 ): StagedTokenProjectionHydrationContext => ({
+  projectionKey: restored.projectionKey,
+  generation: restored.generation,
   groupMemberIdsById: new Map(
     restored.groups.map(group => [
       group.id as TokenGroupId,
@@ -2134,6 +2192,20 @@ const createStagedTokenProjectionHydrationContext = (
     ]),
   ),
   groupPrimaryTokenIds: metadata.groupPrimaryTokenIds,
+  segmentRanges: buildTokenProjectionSegmentRowRanges(
+    metadata.segmentRowCounts,
+  ),
+  loadedSegmentKeys: new Set<TokenAssetsIndexSegmentKey>(
+    restored.rows.length ===
+    TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce(
+      (count, segmentKey) => count + metadata.segmentRowCounts[segmentKey],
+      0,
+    )
+      ? TOKEN_ASSETS_INDEX_SEGMENT_KEYS
+      : ['primary'],
+  ),
+  selectedSegmentMode:
+    restored.metadata.selectedSegmentMode === 'lp' ? 'lp' : 'default',
   tokenDisplayMode,
 });
 
@@ -2154,6 +2226,70 @@ const collectTokenProjectionSegmentEntityIds = (
   });
 
   return tokenIds;
+};
+
+const buildStagedTokenProjectionSegment = (
+  restored: RestoredAssetProjectionRows,
+  context: StagedTokenProjectionHydrationContext,
+): TokenAssetsIndexSegment | null => {
+  restored.groups.forEach(group => {
+    context.groupMemberIdsById.set(
+      group.id as TokenGroupId,
+      group.memberIds.map(memberId => memberId as TokenEntityId),
+    );
+  });
+
+  const rows: TokenAssetsIndexRow[] = [];
+  const tokenIds: TokenEntityId[] = [];
+  for (const row of restored.rows) {
+    if (row.type === 'token') {
+      const tokenId = row.id as TokenEntityId;
+      rows.push({ type: 'token', tokenId });
+      tokenIds.push(tokenId);
+      continue;
+    }
+    if (row.type !== 'token-group') {
+      return null;
+    }
+    const groupId = row.id as TokenGroupId;
+    const primaryTokenId = context.groupPrimaryTokenIds[groupId];
+    const memberIds = context.groupMemberIdsById.get(groupId) || [];
+    if (!primaryTokenId || !memberIds.includes(primaryTokenId)) {
+      return null;
+    }
+    rows.push({ type: 'group', groupId });
+    tokenIds.push(primaryTokenId);
+  }
+
+  return { rows, tokenIds };
+};
+
+const buildTokenProjectionResultWithSegments = (
+  result: TokenAssetsIndexResult,
+  segments: TokenAssetsIndexSegments,
+  selectedSegmentMode: 'default' | 'lp',
+): TokenAssetsIndexResult => {
+  const selectedAdditionalSegment =
+    selectedSegmentMode === 'lp'
+      ? segments.additionalLp
+      : segments.additionalDefault;
+  const selectedLowValueSegment =
+    selectedSegmentMode === 'lp'
+      ? segments.lowValueLp
+      : segments.lowValueDefault;
+
+  return {
+    ...result,
+    rows: segments.primary.rows.concat(
+      selectedAdditionalSegment.rows,
+      selectedLowValueSegment.rows,
+    ),
+    tokenIds: segments.primary.tokenIds.concat(
+      selectedAdditionalSegment.tokenIds,
+      selectedLowValueSegment.tokenIds,
+    ),
+    segments,
+  };
 };
 
 const publishHydratedTokenProjectionGroups = (
@@ -2306,26 +2442,8 @@ const buildRestoredTokenAssetsIndexResult = (
   const hasAdditionalTokens = restored.metadata.hasAdditionalTokens;
   const hasLpTokens = restored.metadata.hasLpTokens;
   const selectedSegmentMode = restored.metadata.selectedSegmentMode;
-  const rawSegmentRowCounts = restored.metadata.segmentRowCounts;
-  const segmentRowCounts =
-    rawSegmentRowCounts &&
-    typeof rawSegmentRowCounts === 'object' &&
-    !Array.isArray(rawSegmentRowCounts)
-      ? (rawSegmentRowCounts as Record<string, unknown>)
-      : null;
-  const parsedSegmentRowCounts = segmentRowCounts
-    ? TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce<
-        Partial<Record<keyof TokenAssetsIndexSegments, number>>
-      >((counts, segmentKey) => {
-        const count = segmentRowCounts[segmentKey];
-        if (Number.isInteger(count) && (count as number) >= 0) {
-          counts[segmentKey] = count as number;
-        }
-        return counts;
-      }, {})
-    : null;
-  const hasCompleteSegmentRowCounts = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.every(
-    segmentKey => Number.isInteger(parsedSegmentRowCounts?.[segmentKey]),
+  const parsedSegmentRowCounts = parseTokenProjectionSegmentRowCounts(
+    restored.metadata,
   );
   const persistedRowCount = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce(
     (count, segmentKey) => count + (parsedSegmentRowCounts?.[segmentKey] || 0),
@@ -2339,9 +2457,12 @@ const buildRestoredTokenAssetsIndexResult = (
     selectedSegmentMode === 'lp'
       ? parsedSegmentRowCounts?.lowValueLp
       : parsedSegmentRowCounts?.lowValueDefault;
+  const isStagedPrimaryOnly =
+    !!options.stagedMetadata && rows.length === parsedSegmentRowCounts?.primary;
   if (
-    !hasCompleteSegmentRowCounts ||
-    persistedRowCount !== rows.length ||
+    !parsedSegmentRowCounts ||
+    persistedRowCount !== (restored.totalRowCount ?? restored.rows.length) ||
+    (!isStagedPrimaryOnly && persistedRowCount !== rows.length) ||
     (selectedSegmentMode !== 'default' && selectedSegmentMode !== 'lp') ||
     !Number.isInteger(defaultVisibleTokenCount) ||
     defaultVisibleTokenCount < 0 ||
@@ -2361,13 +2482,18 @@ const buildRestoredTokenAssetsIndexResult = (
   let segmentStart = 0;
   const segments = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce(
     (result, segmentKey) => {
-      const count = parsedSegmentRowCounts![segmentKey]!;
+      const count = parsedSegmentRowCounts[segmentKey];
       const segmentEnd = segmentStart + count;
-      result[segmentKey] = {
-        rows: rows.slice(segmentStart, segmentEnd),
-        tokenIds: tokenIds.slice(segmentStart, segmentEnd),
-      };
-      segmentStart = segmentEnd;
+      const hasLoadedRows = !isStagedPrimaryOnly || segmentKey === 'primary';
+      result[segmentKey] = hasLoadedRows
+        ? {
+            rows: rows.slice(segmentStart, segmentEnd),
+            tokenIds: tokenIds.slice(segmentStart, segmentEnd),
+          }
+        : EMPTY_TOKEN_ASSETS_INDEX_SEGMENT;
+      if (hasLoadedRows) {
+        segmentStart = segmentEnd;
+      }
       return result;
     },
     {} as TokenAssetsIndexSegments,
@@ -2506,13 +2632,39 @@ const restoreTokenAssetsProjectionIfEmpty = (
       },
       {
         ruleVersion: TOKEN_ASSET_PROJECTION_RULE_VERSION,
+        selectRowRanges: snapshot => {
+          if (
+            snapshot.metadata.entityRestoreMode !==
+            TOKEN_ASSET_PROJECTION_ENTITY_RESTORE_MODE
+          ) {
+            return undefined;
+          }
+          const segmentRowCounts = parseTokenProjectionSegmentRowCounts(
+            snapshot.metadata,
+          );
+          if (!segmentRowCounts) {
+            return null;
+          }
+          const segmentRanges =
+            buildTokenProjectionSegmentRowRanges(segmentRowCounts);
+          const persistedRowCount = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.reduce(
+            (count, segmentKey) => count + segmentRowCounts[segmentKey],
+            0,
+          );
+          return persistedRowCount === snapshot.itemCount
+            ? [segmentRanges.primary]
+            : null;
+        },
       },
     );
     if (!restored) {
       trace.finish({ reason: 'projection-missing' });
       return false;
     }
-    trace.mark('projection-restored', { itemCount: restored.rows.length });
+    trace.mark('projection-restored', {
+      itemCount: restored.rows.length,
+      totalItemCount: restored.totalRowCount,
+    });
 
     const usesStagedEntityRestore =
       restored.metadata.entityRestoreMode ===
@@ -3326,7 +3478,10 @@ export const ensureTokenAssetsProjectionSegmentsHydrated = ({
     return Promise.resolve(true);
   }
 
-  const uniqueSegmentKeys = Array.from(new Set(segmentKeys));
+  const requestedSegmentKeySet = new Set(segmentKeys);
+  const uniqueSegmentKeys = TOKEN_ASSETS_INDEX_SEGMENT_KEYS.filter(segmentKey =>
+    requestedSegmentKeySet.has(segmentKey),
+  );
   const requestKey = `${scene}:${projectionKey}`;
   const previousRequest =
     tokenProjectionSegmentHydrationRequests.get(requestKey);
@@ -3347,8 +3502,84 @@ export const ensureTokenAssetsProjectionSegmentsHydrated = ({
       return false;
     }
 
+    const trace = beginAssetDataLoadDiagnostic(
+      'asset-projection-token-segment-hydrate',
+      requestKey,
+      {
+        segmentKeys: uniqueSegmentKeys.join(','),
+      },
+    );
+    const unloadedSegmentKeys = uniqueSegmentKeys.filter(
+      segmentKey => !context.loadedSegmentKeys.has(segmentKey),
+    );
+    let workingSegments = result.segments;
+    if (unloadedSegmentKeys.length) {
+      const ranges = unloadedSegmentKeys
+        .map(segmentKey => context.segmentRanges[segmentKey])
+        .filter(range => range.count > 0);
+      const restoredRows = ranges.length
+        ? await restoreAssetProjectionRows(
+            context.projectionKey,
+            context.generation,
+            ranges,
+          )
+        : {
+            projectionKey: context.projectionKey,
+            generation: context.generation,
+            rows: [],
+            groups: [],
+            loadedRowRanges: [],
+          };
+      if (!restoredRows || !isCurrent()) {
+        trace.finish({ reason: 'projection-generation-unavailable' });
+        return false;
+      }
+
+      const restoredSegments: Partial<TokenAssetsIndexSegments> = {};
+      let restoredRowOffset = 0;
+      for (const segmentKey of unloadedSegmentKeys) {
+        const expectedRowCount = context.segmentRanges[segmentKey].count;
+        const segmentRows = restoredRows.rows.slice(
+          restoredRowOffset,
+          restoredRowOffset + expectedRowCount,
+        );
+        restoredRowOffset += expectedRowCount;
+        const groupIdSet = new Set(
+          segmentRows
+            .filter(row => row.type === 'token-group')
+            .map(row => row.id),
+        );
+        const segment = buildStagedTokenProjectionSegment(
+          {
+            ...restoredRows,
+            rows: segmentRows,
+            groups: restoredRows.groups.filter(group =>
+              groupIdSet.has(group.id),
+            ),
+          },
+          context,
+        );
+        if (!segment || segment.rows.length !== expectedRowCount) {
+          trace.finish({ reason: 'projection-segment-invalid' });
+          return false;
+        }
+        restoredSegments[segmentKey] = segment;
+      }
+      if (restoredRowOffset !== restoredRows.rows.length) {
+        trace.finish({ reason: 'projection-segment-count-mismatch' });
+        return false;
+      }
+      workingSegments = {
+        ...result.segments,
+        ...restoredSegments,
+      };
+      trace.mark('projection-segments-restored', {
+        itemCount: restoredRows.rows.length,
+      });
+    }
+
     const segments = uniqueSegmentKeys.map(
-      segmentKey => result.segments[segmentKey],
+      segmentKey => workingSegments[segmentKey],
     );
     const requiredTokenIds = new Set<TokenEntityId>();
     segments.forEach(segment => {
@@ -3359,14 +3590,9 @@ export const ensureTokenAssetsProjectionSegmentsHydrated = ({
     const missingTokenIds = Array.from(requiredTokenIds).filter(
       tokenId => !tokenEntityResourceStore.getValue(tokenId),
     );
-    const trace = beginAssetDataLoadDiagnostic(
-      'asset-projection-token-segment-hydrate',
-      requestKey,
-      {
-        itemCount: missingTokenIds.length,
-        segmentKeys: uniqueSegmentKeys.join(','),
-      },
-    );
+    trace.mark('entity-selection-ready', {
+      itemCount: missingTokenIds.length,
+    });
     let restoredCount = 0;
 
     for (let start = 0; start < missingTokenIds.length; ) {
@@ -3429,6 +3655,32 @@ export const ensureTokenAssetsProjectionSegmentsHydrated = ({
       return false;
     }
     const groupsReady = publishHydratedTokenProjectionGroups(segments, context);
+    if (!groupsReady) {
+      trace.finish({
+        reason: 'projection-groups-invalid',
+        restoredEntityCount: restoredCount,
+      });
+      return false;
+    }
+    let publishedResult = result;
+    if (unloadedSegmentKeys.length) {
+      unloadedSegmentKeys.forEach(segmentKey =>
+        context.loadedSegmentKeys.add(segmentKey),
+      );
+      publishedResult = buildTokenProjectionResultWithSegments(
+        result,
+        workingSegments,
+        context.selectedSegmentMode,
+      );
+      stagedTokenProjectionHydrationContexts.set(publishedResult, context);
+      useTokenAssetsIndexStore.setState(draft => {
+        if (scene === 'single-address') {
+          draft.singleAssetsResultByKey[projectionKey] = publishedResult;
+        } else {
+          draft.multiAssetsResultByKey[projectionKey] = publishedResult;
+        }
+      });
+    }
     trace.finish({
       restoredEntityCount: restoredCount,
       groupsReady,

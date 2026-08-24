@@ -16,6 +16,7 @@ export const ASSET_PROJECTION_GENERATIONS_TO_KEEP = 3;
 // Projection rows have six persisted columns. Keep one insert below SQLite's
 // conservative 999-variable limit while preserving one transaction per generation.
 const ASSET_PROJECTION_INSERT_BATCH_SIZE = 100;
+const ASSET_PROJECTION_GROUP_QUERY_BATCH_SIZE = 200;
 
 export type AssetProjectionRow = {
   type: AssetProjectionRowType;
@@ -48,12 +49,41 @@ export type RestoredAssetProjection = {
   groups: AssetProjectionGroup[];
   metadata: Record<string, unknown>;
   committedAt: number;
+  totalRowCount: number;
+  loadedRowRanges: AssetProjectionRowRange[];
+};
+
+export type AssetProjectionRowRange = {
+  offset: number;
+  count: number;
+};
+
+export type AssetProjectionSnapshotInfo = {
+  projectionKey: string;
+  generation: number;
+  kind: AssetProjectionKind;
+  scene: AssetProjectionScene;
+  ruleVersion: number;
+  itemCount: number;
+  metadata: Record<string, unknown>;
+  committedAt: number;
+};
+
+export type RestoredAssetProjectionRows = {
+  projectionKey: string;
+  generation: number;
+  rows: AssetProjectionRow[];
+  groups: AssetProjectionGroup[];
+  loadedRowRanges: AssetProjectionRowRange[];
 };
 
 type RestoreAssetProjectionOptions = {
   ruleVersion?: number;
   kind?: AssetProjectionKind;
   scene?: AssetProjectionScene;
+  selectRowRanges?: (
+    snapshot: AssetProjectionSnapshotInfo,
+  ) => AssetProjectionRowRange[] | null | undefined;
 };
 
 const resolveDataSource = async (dataSource?: DataSource) =>
@@ -106,6 +136,160 @@ const insertInBatches = async <T>(
       values.slice(start, start + ASSET_PROJECTION_INSERT_BATCH_SIZE),
     );
   }
+};
+
+const normalizeRowRanges = (
+  ranges: AssetProjectionRowRange[] | undefined,
+  itemCount: number,
+) => {
+  const requestedRanges = ranges || [{ offset: 0, count: itemCount }];
+  const normalized = requestedRanges
+    .map(range => ({ offset: range.offset, count: range.count }))
+    .sort((left, right) => left.offset - right.offset);
+
+  let previousEnd = 0;
+  for (const range of normalized) {
+    const end = range.offset + range.count;
+    if (
+      !Number.isInteger(range.offset) ||
+      !Number.isInteger(range.count) ||
+      range.offset < 0 ||
+      range.count < 0 ||
+      end > itemCount ||
+      range.offset < previousEnd
+    ) {
+      return null;
+    }
+    previousEnd = end;
+  }
+
+  return normalized.filter(range => range.count > 0);
+};
+
+const countProjectionRows = async (
+  source: DataSource,
+  projectionKey: string,
+  generation: number,
+) => {
+  const [itemCount, groupItemCount] = await Promise.all([
+    source.getRepository(AssetProjectionItemEntity).count({
+      where: { projection_key: projectionKey, generation },
+    }),
+    source.getRepository(AssetProjectionGroupItemEntity).count({
+      where: { projection_key: projectionKey, generation },
+    }),
+  ]);
+  return { itemCount, groupItemCount };
+};
+
+const readProjectionRows = async (
+  source: DataSource,
+  projectionKey: string,
+  generation: number,
+  ranges: AssetProjectionRowRange[],
+  includeUnreferencedGroups = false,
+): Promise<RestoredAssetProjectionRows> => {
+  const itemRepository = source.getRepository(AssetProjectionItemEntity);
+  const groupItemRepository = source.getRepository(
+    AssetProjectionGroupItemEntity,
+  );
+  const rows = ranges.length
+    ? await itemRepository
+        .createQueryBuilder('item')
+        .select(['item.position', 'item.row_type', 'item.row_id'])
+        .where('item.projection_key = :projectionKey', { projectionKey })
+        .andWhere('item.generation = :generation', { generation })
+        .andWhere(
+          `(${ranges
+            .map(
+              (_, index) =>
+                `(item.position >= :rangeStart${index} AND item.position < :rangeEnd${index})`,
+            )
+            .join(' OR ')})`,
+          Object.fromEntries(
+            ranges.flatMap((range, index) => [
+              [`rangeStart${index}`, range.offset],
+              [`rangeEnd${index}`, range.offset + range.count],
+            ]),
+          ),
+        )
+        .orderBy('item.position', 'ASC')
+        .getMany()
+    : [];
+  const expectedRowCount = ranges.reduce(
+    (total, range) => total + range.count,
+    0,
+  );
+  if (rows.length !== expectedRowCount) {
+    return {
+      projectionKey,
+      generation,
+      rows: [],
+      groups: [],
+      loadedRowRanges: [],
+    };
+  }
+
+  const referencedGroupIds = Array.from(
+    new Set(
+      rows
+        .filter(item =>
+          ['token-group', 'nft-collection'].includes(item.row_type),
+        )
+        .map(item => item.row_id),
+    ),
+  );
+  const groupItems: AssetProjectionGroupItemEntity[] = includeUnreferencedGroups
+    ? await groupItemRepository.find({
+        where: { projection_key: projectionKey, generation },
+        order: { group_id: 'ASC', position: 'ASC' },
+      })
+    : [];
+  if (!includeUnreferencedGroups) {
+    for (
+      let start = 0;
+      start < referencedGroupIds.length;
+      start += ASSET_PROJECTION_GROUP_QUERY_BATCH_SIZE
+    ) {
+      const batchGroupIds = referencedGroupIds.slice(
+        start,
+        start + ASSET_PROJECTION_GROUP_QUERY_BATCH_SIZE,
+      );
+      groupItems.push(
+        ...(await groupItemRepository.find({
+          where: {
+            projection_key: projectionKey,
+            generation,
+            group_id: In(batchGroupIds),
+          },
+          order: { group_id: 'ASC', position: 'ASC' },
+        })),
+      );
+    }
+  }
+  const membersByGroup = new Map<string, string[]>();
+  groupItems.forEach(item => {
+    const members = membersByGroup.get(item.group_id) || [];
+    members.push(item.member_id);
+    membersByGroup.set(item.group_id, members);
+  });
+
+  const remainingGroupIds = includeUnreferencedGroups
+    ? Array.from(membersByGroup.keys()).filter(
+        groupId => !referencedGroupIds.includes(groupId),
+      )
+    : [];
+
+  return {
+    projectionKey,
+    generation,
+    rows: rows.map(item => ({ type: item.row_type, id: item.row_id })),
+    groups: [...referencedGroupIds, ...remainingGroupIds].map(groupId => ({
+      id: groupId,
+      memberIds: membersByGroup.get(groupId) || [],
+    })),
+    loadedRowRanges: ranges,
+  };
 };
 
 export async function persistAssetProjection(
@@ -224,25 +408,14 @@ export async function restoreLatestAssetProjection(
   });
 
   for (const snapshot of snapshots) {
-    const [items, groupItems] = await Promise.all([
-      source.getRepository(AssetProjectionItemEntity).find({
-        where: {
-          projection_key: projectionKey,
-          generation: snapshot.generation,
-        },
-        order: { position: 'ASC' },
-      }),
-      source.getRepository(AssetProjectionGroupItemEntity).find({
-        where: {
-          projection_key: projectionKey,
-          generation: snapshot.generation,
-        },
-        order: { group_id: 'ASC', position: 'ASC' },
-      }),
-    ]);
+    const counts = await countProjectionRows(
+      source,
+      projectionKey,
+      snapshot.generation,
+    );
     if (
-      items.length !== snapshot.item_count ||
-      groupItems.length !== snapshot.group_item_count
+      counts.itemCount !== snapshot.item_count ||
+      counts.groupItemCount !== snapshot.group_item_count
     ) {
       continue;
     }
@@ -251,19 +424,37 @@ export async function restoreLatestAssetProjection(
     if (!metadata) {
       continue;
     }
-
-    const membersByGroup = new Map<string, string[]>();
-    groupItems.forEach(item => {
-      const members = membersByGroup.get(item.group_id) || [];
-      members.push(item.member_id);
-      membersByGroup.set(item.group_id, members);
-    });
-    const groupOrder = items
-      .filter(item => ['token-group', 'nft-collection'].includes(item.row_type))
-      .map(item => item.row_id);
-    const remainingGroupIds = Array.from(membersByGroup.keys()).filter(
-      groupId => !groupOrder.includes(groupId),
+    const snapshotInfo: AssetProjectionSnapshotInfo = {
+      projectionKey,
+      generation: snapshot.generation,
+      kind: snapshot.projection_kind,
+      scene: snapshot.scene,
+      ruleVersion: snapshot.rule_version,
+      itemCount: snapshot.item_count,
+      metadata,
+      committedAt: snapshot.committed_at,
+    };
+    const selectedRanges = options.selectRowRanges?.(snapshotInfo);
+    if (selectedRanges === null) {
+      continue;
+    }
+    const rowRanges = normalizeRowRanges(selectedRanges, snapshot.item_count);
+    if (!rowRanges) {
+      continue;
+    }
+    const restoredRows = await readProjectionRows(
+      source,
+      projectionKey,
+      snapshot.generation,
+      rowRanges,
+      selectedRanges === undefined,
     );
+    if (
+      restoredRows.rows.length !==
+      rowRanges.reduce((total, range) => total + range.count, 0)
+    ) {
+      continue;
+    }
 
     return {
       projectionKey,
@@ -271,17 +462,57 @@ export async function restoreLatestAssetProjection(
       kind: snapshot.projection_kind,
       scene: snapshot.scene,
       ruleVersion: snapshot.rule_version,
-      rows: items.map(item => ({ type: item.row_type, id: item.row_id })),
-      groups: [...groupOrder, ...remainingGroupIds].map(groupId => ({
-        id: groupId,
-        memberIds: membersByGroup.get(groupId) || [],
-      })),
+      rows: restoredRows.rows,
+      groups: restoredRows.groups,
       metadata,
       committedAt: snapshot.committed_at,
+      totalRowCount: snapshot.item_count,
+      loadedRowRanges: rowRanges,
     };
   }
 
   return null;
+}
+
+export async function restoreAssetProjectionGenerationRows(
+  projectionKey: string,
+  generation: number,
+  requestedRanges: AssetProjectionRowRange[],
+  dataSource?: DataSource,
+): Promise<RestoredAssetProjectionRows | null> {
+  const source = await resolveDataSource(dataSource);
+  const snapshot = await source
+    .getRepository(AssetProjectionSnapshotEntity)
+    .findOne({
+      where: { projection_key: projectionKey, generation },
+    });
+  if (!snapshot) {
+    return null;
+  }
+
+  const ranges = normalizeRowRanges(requestedRanges, snapshot.item_count);
+  if (!ranges) {
+    return null;
+  }
+  const counts = await countProjectionRows(source, projectionKey, generation);
+  if (
+    counts.itemCount !== snapshot.item_count ||
+    counts.groupItemCount !== snapshot.group_item_count
+  ) {
+    return null;
+  }
+
+  const restored = await readProjectionRows(
+    source,
+    projectionKey,
+    generation,
+    ranges,
+  );
+  const expectedRowCount = ranges.reduce(
+    (total, range) => total + range.count,
+    0,
+  );
+  return restored.rows.length === expectedRowCount ? restored : null;
 }
 
 export async function cleanupAssetProjectionGenerations(
