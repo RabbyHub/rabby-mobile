@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { WsFastAssetCtxs } from '@rabby-wallet/hyperliquid-sdk';
 
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
+import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
@@ -25,7 +32,8 @@ import {
 } from '../model/openOrder';
 import {
   isPerpsProCollectionAuthoritativelyEmpty,
-  resolvePerpsProInitialInfoTab,
+  resolvePerpsProInfoTabPresentation,
+  type PerpsProAutomaticInfoTabSelection,
 } from '../model/infoPanelPresentation';
 import {
   buildPerpsPositions,
@@ -61,6 +69,7 @@ export const usePerpsProInfoPanel = (
       clearinghouseState: state.currentClearinghouseState,
       currentAccount: state.currentPerpsAccount,
       isSpotStateReady: state.isSpotStateReady,
+      isFetchAllDone: state.isFetchAllDone,
       isUserDataReady: state.isUserDataReady,
       isOpenOrdersReady: state.isOpenOrdersReady,
       marketDataStatus: state.marketDataStatus,
@@ -191,36 +200,40 @@ export const usePerpsProInfoPanel = (
       ':' +
       facts.currentAccount.type
     : 'no-account';
-  const initialInfoTab = resolvePerpsProInitialInfoTab(allPositions.length);
-  const infoTabInitializationReady =
-    preferences.hydrated &&
-    (!facts.currentAccount ||
-      (runtime.status === 'ready' &&
-        facts.isUserDataReady &&
-        facts.userAbstractionReady));
-  const initializedInfoTabAccountRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (
-      !infoTabInitializationReady ||
-      initializedInfoTabAccountRef.current === accountIdentity
-    ) {
+  const runtimeAccountIdentity = facts.currentAccount
+    ? getPerpsRuntimeIdentity(facts.currentAccount)
+    : null;
+  const accountFactsReady =
+    !!runtimeAccountIdentity &&
+    runtime.status === 'ready' &&
+    runtime.identity === runtimeAccountIdentity &&
+    facts.isUserDataReady &&
+    facts.userAbstractionReady;
+  const [automaticInfoTabSelection, setAutomaticInfoTabSelection] =
+    useState<PerpsProAutomaticInfoTabSelection | null>(null);
+  const infoTabPresentation = resolvePerpsProInfoTabPresentation({
+    accountFactsReady,
+    accountIdentity: facts.currentAccount ? accountIdentity : null,
+    accountSelectionReady: facts.isFetchAllDone,
+    activeInfoTabPreference: preferences.activeInfoTab,
+    hasUserSelectedInfoTab: preferences.hasUserSelectedInfoTab,
+    positionCount: allPositions.length,
+    preferencesHydrated: preferences.hydrated,
+    previousAutomaticSelection: automaticInfoTabSelection,
+  });
+  useLayoutEffect(() => {
+    const nextSelection = infoTabPresentation.automaticSelection;
+    if (!nextSelection) {
       return;
     }
-    initializedInfoTabAccountRef.current = accountIdentity;
-    if (preferences.activeInfoTab !== initialInfoTab) {
-      preferences.setActiveInfoTab(initialInfoTab);
-    }
-  }, [
-    accountIdentity,
-    infoTabInitializationReady,
-    initialInfoTab,
-    preferences,
-  ]);
-  const activeInfoTab =
-    infoTabInitializationReady &&
-    initializedInfoTabAccountRef.current !== accountIdentity
-      ? initialInfoTab
-      : preferences.activeInfoTab;
+    setAutomaticInfoTabSelection(current =>
+      current?.accountIdentity === nextSelection.accountIdentity &&
+      current.activeInfoTab === nextSelection.activeInfoTab
+        ? current
+        : nextSelection,
+    );
+  }, [infoTabPresentation.automaticSelection]);
+  const activeInfoTab = infoTabPresentation.activeInfoTab;
   const allOpenOrders = useMemo(
     () => buildPerpsOpenOrders(facts.openOrders),
     [facts.openOrders],

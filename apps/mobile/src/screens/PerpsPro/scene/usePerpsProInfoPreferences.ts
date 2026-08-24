@@ -1,22 +1,27 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 
 import { perpsServiceApi } from '@/core/serviceApi/perps';
-import type { PerpsProInfoTab } from '@/core/services/perpsService';
+import type {
+  PerpsProInfoTab,
+  PerpsProInfoTabPreference,
+} from '@/core/services/perpsService';
 
 export interface PerpsProInfoPreferencesSnapshot {
   activeInfoTab: PerpsProInfoTab;
+  hasUserSelectedInfoTab: boolean;
   hydrated: boolean;
 }
 
 type Listener = () => void;
 
 interface PerpsProInfoPreferencesDependencies {
-  getPerpsProInfoTab: () => Promise<PerpsProInfoTab>;
+  getPerpsProInfoTabPreference: () => Promise<PerpsProInfoTabPreference>;
   setPerpsProInfoTab: (tab: PerpsProInfoTab) => Promise<unknown>;
 }
 
 const DEFAULT_SNAPSHOT: PerpsProInfoPreferencesSnapshot = {
   activeInfoTab: 'account',
+  hasUserSelectedInfoTab: false,
   hydrated: false,
 };
 
@@ -42,13 +47,17 @@ export const createPerpsProInfoPreferencesController = (
     }
     const tabGenerationAtStart = tabWriteGeneration;
     hydratePromise = dependencies
-      .getPerpsProInfoTab()
-      .then(activeInfoTab => {
+      .getPerpsProInfoTabPreference()
+      .then(preference => {
+        const keepOptimisticSelection =
+          tabWriteGeneration !== tabGenerationAtStart;
         publish({
-          activeInfoTab:
-            tabWriteGeneration === tabGenerationAtStart
-              ? activeInfoTab
-              : snapshot.activeInfoTab,
+          activeInfoTab: keepOptimisticSelection
+            ? snapshot.activeInfoTab
+            : preference.activeInfoTab,
+          hasUserSelectedInfoTab: keepOptimisticSelection
+            ? snapshot.hasUserSelectedInfoTab
+            : preference.hasUserSelectedInfoTab,
           hydrated: true,
         });
       })
@@ -59,6 +68,10 @@ export const createPerpsProInfoPreferencesController = (
             tabWriteGeneration === tabGenerationAtStart
               ? DEFAULT_SNAPSHOT.activeInfoTab
               : snapshot.activeInfoTab,
+          hasUserSelectedInfoTab:
+            tabWriteGeneration === tabGenerationAtStart
+              ? DEFAULT_SNAPSHOT.hasUserSelectedInfoTab
+              : snapshot.hasUserSelectedInfoTab,
           hydrated: true,
         });
       })
@@ -69,13 +82,17 @@ export const createPerpsProInfoPreferencesController = (
   };
 
   const setActiveInfoTab = (activeInfoTab: PerpsProInfoTab) => {
-    const previous = snapshot.activeInfoTab;
+    const previous = snapshot;
     const generation = ++tabWriteGeneration;
-    publish({ ...snapshot, activeInfoTab });
+    publish({
+      ...snapshot,
+      activeInfoTab,
+      hasUserSelectedInfoTab: true,
+    });
     return dependencies.setPerpsProInfoTab(activeInfoTab).catch(error => {
       console.error('[perpsProInfoPreferences] save tab failed', error);
       if (generation === tabWriteGeneration) {
-        publish({ ...snapshot, activeInfoTab: previous });
+        publish(previous);
       }
     });
   };
@@ -94,7 +111,8 @@ export const createPerpsProInfoPreferencesController = (
 };
 
 const controller = createPerpsProInfoPreferencesController({
-  getPerpsProInfoTab: () => perpsServiceApi.getPerpsProInfoTab(),
+  getPerpsProInfoTabPreference: () =>
+    perpsServiceApi.getPerpsProInfoTabPreference(),
   setPerpsProInfoTab: tab => perpsServiceApi.setPerpsProInfoTab(tab),
 });
 

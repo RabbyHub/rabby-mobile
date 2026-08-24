@@ -722,6 +722,37 @@ describe('PerpsProScene market loading states', () => {
     );
   });
 
+  it('mounts the info pager for the resolved tab without exposing a fallback page', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: null }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.queryByTestId('perps-pro-info-pager')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-info-tabs-overlay')).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
+    ).toBe(false);
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'positions' }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('perps-pro-info-pager').props.initialPage).toBe(
+      0,
+    );
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
+    expect(
+      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
+    ).toBe(true);
+  });
+
   it('renders the order-book and static trade frame before account trade configuration is ready', () => {
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({

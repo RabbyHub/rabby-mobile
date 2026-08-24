@@ -20,9 +20,10 @@ const PERPS_PRO_TRADE_SCROLL_BRIDGE_SETTLE_VELOCITY = 0.01;
 export const PerpsProTradeScrollBridge: React.FC<
   PropsWithChildren<{
     controller: PerpsProInfoScrollBridgeController;
+    enabled?: boolean;
     height: number;
   }>
-> = ({ children, controller, height }) => {
+> = ({ children, controller, enabled = true, height }) => {
   const scrollRef = useAnimatedRef<Reanimated.ScrollView>();
   const proxyOffset = useSharedValue(PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR);
   const lastProxyOffset = useSharedValue(PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR);
@@ -128,6 +129,7 @@ export const PerpsProTradeScrollBridge: React.FC<
       onScroll={scrollHandler}
       ref={scrollRef}
       removeClippedSubviews={false}
+      scrollEnabled={enabled}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
       style={{ height }}

@@ -1,4 +1,7 @@
-import type { PerpsProInfoTab } from '@/core/services/perpsService';
+import type {
+  PerpsProInfoTab,
+  PerpsProInfoTabPreference,
+} from '@/core/services/perpsService';
 
 import { createPerpsProInfoPreferencesController } from './usePerpsProInfoPreferences';
 
@@ -14,12 +17,17 @@ const deferred = <T>() => {
 
 const createController = (
   overrides: {
-    getPerpsProInfoTab?: () => Promise<PerpsProInfoTab>;
+    getPerpsProInfoTabPreference?: () => Promise<PerpsProInfoTabPreference>;
     setPerpsProInfoTab?: (tab: PerpsProInfoTab) => Promise<unknown>;
   } = {},
 ) =>
   createPerpsProInfoPreferencesController({
-    getPerpsProInfoTab: overrides.getPerpsProInfoTab ?? (async () => 'account'),
+    getPerpsProInfoTabPreference:
+      overrides.getPerpsProInfoTabPreference ??
+      (async () => ({
+        activeInfoTab: 'account',
+        hasUserSelectedInfoTab: false,
+      })),
     setPerpsProInfoTab: overrides.setPerpsProInfoTab ?? (async () => undefined),
   });
 
@@ -37,9 +45,12 @@ describe('Perps Pro info preferences controller', () => {
   });
 
   it('shares hydration and restores persisted values', async () => {
-    const getTab = jest.fn(async () => 'positions' as const);
+    const getTab = jest.fn(async () => ({
+      activeInfoTab: 'positions' as const,
+      hasUserSelectedInfoTab: true,
+    }));
     const controller = createController({
-      getPerpsProInfoTab: getTab,
+      getPerpsProInfoTabPreference: getTab,
     });
 
     const first = controller.hydrate();
@@ -49,24 +60,29 @@ describe('Perps Pro info preferences controller', () => {
 
     expect(controller.getSnapshot()).toEqual({
       activeInfoTab: 'positions',
+      hasUserSelectedInfoTab: true,
       hydrated: true,
     });
     expect(getTab).toHaveBeenCalledTimes(1);
   });
 
   it('does not let a late hydration response overwrite early user choices', async () => {
-    const tabRead = deferred<PerpsProInfoTab>();
+    const tabRead = deferred<PerpsProInfoTabPreference>();
     const controller = createController({
-      getPerpsProInfoTab: () => tabRead.promise,
+      getPerpsProInfoTabPreference: () => tabRead.promise,
     });
 
     const hydration = controller.hydrate();
     await controller.setActiveInfoTab('openOrders');
-    tabRead.resolve('account');
+    tabRead.resolve({
+      activeInfoTab: 'account',
+      hasUserSelectedInfoTab: false,
+    });
     await hydration;
 
     expect(controller.getSnapshot()).toEqual({
       activeInfoTab: 'openOrders',
+      hasUserSelectedInfoTab: true,
       hydrated: true,
     });
   });
@@ -74,7 +90,10 @@ describe('Perps Pro info preferences controller', () => {
   it('rolls back a failed optimistic tab write', async () => {
     const error = new Error('tab write failed');
     const controller = createController({
-      getPerpsProInfoTab: async () => 'positions',
+      getPerpsProInfoTabPreference: async () => ({
+        activeInfoTab: 'positions',
+        hasUserSelectedInfoTab: true,
+      }),
       setPerpsProInfoTab: async () => {
         throw error;
       },
@@ -84,6 +103,7 @@ describe('Perps Pro info preferences controller', () => {
 
     expect(controller.getSnapshot()).toEqual({
       activeInfoTab: 'positions',
+      hasUserSelectedInfoTab: true,
       hydrated: true,
     });
     expect(consoleError).toHaveBeenCalledWith(
