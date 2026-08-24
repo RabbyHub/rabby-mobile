@@ -228,13 +228,13 @@ describe('PerpsProInfoPager', () => {
     fireEvent(pager, 'pageScrollStateChanged', {
       nativeEvent: { pageScrollState: 'idle' },
     });
-    expect(onPagePreview).toHaveBeenLastCalledWith(null);
+    expect(onPagePreview).toHaveBeenLastCalledWith('positions');
     expect(onPageSelected).not.toHaveBeenCalled();
 
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0.5, position: 0 },
     });
-    expect(onPagePreview).toHaveBeenLastCalledWith(null);
+    expect(onPagePreview).toHaveBeenLastCalledWith('positions');
 
     fireEvent(pager, 'pageScrollStateChanged', {
       nativeEvent: { pageScrollState: 'dragging' },
@@ -286,6 +286,55 @@ describe('PerpsProInfoPager', () => {
     mockQueueRunOnJS = true;
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0.49, position: 0 },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+
+    act(flushMockRunOnJSQueue);
+    expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
+  });
+
+  it('keeps the destination preview when native idle arrives before selection', () => {
+    const onPagePreview = jest.fn();
+    const onPageSelected = jest.fn();
+    renderPager({ onPagePreview, onPageSelected });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.5, position: 0 },
+    });
+    expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
+
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+    act(flushMockRunOnJSQueue);
+    expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
+  });
+
+  it('ignores a delayed idle completion after the destination was selected', () => {
+    const onPagePreview = jest.fn();
+    const onPageSelected = jest.fn();
+    renderPager({ onPagePreview, onPageSelected });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.5, position: 0 },
+    });
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
     });
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
     expect(onPageSelected).toHaveBeenCalledWith('openOrders');
