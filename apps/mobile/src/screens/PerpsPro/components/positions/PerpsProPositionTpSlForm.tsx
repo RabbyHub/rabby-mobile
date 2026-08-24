@@ -594,10 +594,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
           ]}
           testID="perps-pro-position-tpsl-footer">
           <Button
-            buttonStyle={[
-              PERPS_PRO_CONFIRM_BUTTON_STYLE,
-              isPristineInlineEmpty ? styles.inlineEmptyConfirm : undefined,
-            ]}
+            buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
             disabled={!canReview}
             height={BOTTOM_BUTTON_COMPACT_HEIGHT}
             onPress={submit}
@@ -772,9 +769,6 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     hiddenAmountAvailable: { opacity: 0 },
-    inlineEmptyConfirm: {
-      backgroundColor: colors2024['brand-default'],
-    },
     footer: {
       marginTop: 'auto',
       paddingBottom: Math.max(

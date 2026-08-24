@@ -441,7 +441,7 @@ describe('PerpsProPositionTpSlForm', () => {
     ]);
   });
 
-  it('uses the Figma inline-empty geometry, defaults to the full position, and keeps its pristine Confirm visually branded but non-actionable', () => {
+  it('uses the inline-empty geometry, defaults to the full position, and shows a standard disabled Confirm when pristine', () => {
     const input = props();
     render(
       <PerpsProPositionTpSlForm
@@ -478,7 +478,7 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-review').props.style,
       ),
-    ).toMatchObject({ backgroundColor: 'brand-default' });
+    ).not.toHaveProperty('backgroundColor');
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
