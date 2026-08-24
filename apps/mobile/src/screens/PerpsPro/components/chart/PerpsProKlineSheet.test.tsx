@@ -7,6 +7,8 @@ import {
 } from '@testing-library/react-native';
 import React from 'react';
 
+import { ThemeColors2024 } from '@/constant/theme';
+
 import type { PerpsProMarket } from '../../model/market';
 
 const mockModalProps = jest.fn();
@@ -79,16 +81,22 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
 });
 
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+  useTheme2024: (options?: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy(
       {},
       {
-        get: (_target, key) => String(key),
+        get: (_target, key) =>
+          key === 'neutral-line'
+            ? 'rgba(224, 229, 236, 1)'
+            : key === 'neutral-sheet-handle'
+            ? 'rgba(209, 212, 219, 1)'
+            : String(key),
       },
     );
     return {
       colors2024,
-      styles: getStyle({ colors2024 }),
+      isLight: true,
+      styles: options?.getStyle({ colors2024, isLight: true }),
     };
   },
 }));
@@ -214,12 +222,17 @@ describe('PerpsProKlineSheet', () => {
     });
     expect(props.handleStyle).toMatchObject({
       height: 40,
-      paddingBottom: 19,
-      paddingTop: 17,
+      paddingBottom: 27,
+      paddingTop: 9,
     });
     expect(props.handleIndicatorStyle).toMatchObject({
+      backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
       height: 4,
       width: 40,
+    });
+    expect(mockTradingViewProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      backGroundColor: 'neutral-bg-1',
+      variant: 'perps-pro',
     });
 
     const backdrop = props.backdropComponent({});

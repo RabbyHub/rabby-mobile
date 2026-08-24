@@ -129,6 +129,13 @@ const TradingViewCandleChart = ({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [webViewError, setWebViewError] = React.useState<string | null>(null);
   const [isChartReady, setIsChartReady] = React.useState(false);
+  const explicitSurfaceStyle = useMemo(
+    () =>
+      variant === 'perps-pro' && backGroundColor
+        ? { backgroundColor: backGroundColor }
+        : undefined,
+    [backGroundColor, variant],
+  );
   const supportsDataAppliedAckRef = useRef(false);
   const pendingLegacyAppliedFrameRef = useRef<number | null>(null);
   const protocolReloadAttemptedRef = useRef(false);
@@ -496,6 +503,7 @@ const TradingViewCandleChart = ({
           style={[
             styles.container,
             style,
+            explicitSurfaceStyle,
             { height, width: '100%', minHeight: height },
           ]}
         />
@@ -513,6 +521,7 @@ const TradingViewCandleChart = ({
       style={[
         styles.container,
         style,
+        explicitSurfaceStyle,
         { height, width: '100%', minHeight: height },
       ]}>
       <LocalWebView
@@ -523,6 +532,7 @@ const TradingViewCandleChart = ({
         onMessage={handleWebViewMessage}
         onError={handleWebViewError}
         backGroundColor={backGroundColor}
+        style={explicitSurfaceStyle}
         i18nTexts={{
           'component.kline.tp': t('component.kline.tp'),
           'component.kline.entry': t('component.kline.entry'),

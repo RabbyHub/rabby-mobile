@@ -2,6 +2,7 @@ import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { apisPerps } from '@/core/apis/perps';
+import { FontNames } from '@/core/utils/fonts';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -55,7 +56,7 @@ export const PerpsProFundingDetailSheet: React.FC<{
   onClose: () => void;
   serverClock: PerpsServerClockSample | null;
 }> = ({ market, onClose, serverClock }) => {
-  const { colors2024, isLight, styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   usePerpsProSheetNavigationRegistration({ active: true, dismiss: onClose });
@@ -151,10 +152,10 @@ export const PerpsProFundingDetailSheet: React.FC<{
       enableDynamicSizing={false}
       onDismiss={onClose}
       ref={modalRef}
-      snapPoints={[416]}
+      snapPoints={[historyState.error ? 358 : 330]}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isLight ? 'bg0' : 'bg1',
+        linearGradientType: 'bg1',
       })}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handleIndicator}
@@ -162,10 +163,11 @@ export const PerpsProFundingDetailSheet: React.FC<{
       style={styles.modal}>
       <BottomSheetView style={styles.sheet}>
         <Text style={styles.title}>{t('page.perps.pro.funding.title')}</Text>
-        <View style={styles.values}>
+        <View style={styles.values} testID="perps-pro-funding-values">
           <FundingValueRow
             label={t('page.perps.pro.funding.interval')}
             value={PERPS_PRO_FUNDING_SCHEDULE.intervalLabel}
+            valueStyle={styles.intervalValue}
           />
           <FundingValueRow
             label={t('page.perps.pro.funding.previousRate')}
@@ -241,30 +243,28 @@ export const PerpsProFundingDetailSheet: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ...getPerpsProBottomSheetChromeStyles(colors2024, {
-    backgroundColor:
-      isLight !== false
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
-    handlePlacement: 'centered',
+    backgroundColor: colors2024['neutral-bg-1'],
   }),
   sheet: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     paddingTop: 8,
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 20,
+    fontFamily: FontNames.sf_pro,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 24,
-    textAlign: 'center',
+    lineHeight: 20,
   },
   values: {
-    gap: 14,
-    marginTop: 22,
+    borderBottomColor: colors2024['neutral-bg-5'],
+    borderBottomWidth: 1,
+    gap: 8,
+    marginTop: 16,
+    paddingBottom: 12,
   },
   valueRow: {
     alignItems: 'center',
@@ -274,19 +274,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   valueLabel: {
     color: colors2024['neutral-secondary'],
     flex: 1,
-    fontFamily: 'SF Pro',
-    fontSize: 13,
+    fontFamily: FontNames.sf_pro,
+    fontSize: 12,
     fontWeight: '400',
-    lineHeight: 18,
+    lineHeight: 16,
   },
   value: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 13,
+    fontFamily: FontNames.sf_pro,
+    fontSize: 12,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 16,
     marginLeft: 16,
     textAlign: 'right',
+  },
+  intervalValue: {
+    fontFamily: FontNames.sf_pro_rounded_medium,
+    fontWeight: '500',
   },
   valueMuted: {
     color: colors2024['neutral-secondary'],
@@ -302,19 +306,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   error: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 11,
+    fontFamily: FontNames.sf_pro,
+    fontSize: 12,
     lineHeight: 16,
     marginTop: 12,
   },
   explanation: {
-    borderTopColor: colors2024['neutral-bg-5'],
-    borderTopWidth: 1,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 11,
+    color: colors2024['neutral-foot'],
+    fontFamily: FontNames.sf_pro,
+    fontSize: 12,
     lineHeight: 16,
-    marginTop: 18,
-    paddingTop: 16,
+    marginTop: 19,
   },
 }));

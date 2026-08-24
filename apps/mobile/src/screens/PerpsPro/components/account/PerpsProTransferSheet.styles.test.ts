@@ -23,11 +23,11 @@ describe('PerpsProTransferSheet Figma styles', () => {
 
     expect(StyleSheet.flatten(styles.handle)).toMatchObject({
       height: 40,
-      paddingBottom: 30,
-      paddingTop: 6,
+      paddingBottom: 27,
+      paddingTop: 9,
     });
     expect(StyleSheet.flatten(styles.handleIndicator)).toMatchObject({
-      backgroundColor: '#D1D4DB',
+      backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
       borderRadius: 2,
       height: 4,
       width: 40,
@@ -101,7 +101,7 @@ describe('PerpsProTransferSheet Figma styles', () => {
       backgroundColor: ThemeColors2024.dark['neutral-bg-2'],
     });
     expect(StyleSheet.flatten(styles.handleIndicator)).toMatchObject({
-      backgroundColor: ThemeColors2024.dark['neutral-line'],
+      backgroundColor: ThemeColors2024.dark['neutral-sheet-handle'],
     });
   });
 });

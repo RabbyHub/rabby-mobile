@@ -111,6 +111,30 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     expect(mockReload).not.toHaveBeenCalled();
   });
 
+  it('applies an explicit Pro chart background to the native WebView surface', () => {
+    render(
+      <TradingViewCandleChart
+        backGroundColor="#101215"
+        height={184}
+        variant="perps-pro"
+      />,
+    );
+
+    expect(mockLocalWebViewProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      backGroundColor: '#101215',
+      style: { backgroundColor: '#101215' },
+    });
+  });
+
+  it('does not change the native WebView surface for legacy chart callers', () => {
+    render(<TradingViewCandleChart backGroundColor="#101215" height={184} />);
+
+    expect(mockLocalWebViewProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      backGroundColor: '#101215',
+    });
+    expect(mockLocalWebViewProps.mock.calls.at(-1)?.[0].style).toBeUndefined();
+  });
+
   it('reloads once and then rejects a stale resource for Perps Pro', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation();
     const onChartError = jest.fn();

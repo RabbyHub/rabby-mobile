@@ -12,7 +12,6 @@ import {
 } from '../common/perpsProVisual';
 
 const PERPS_PRO_TRANSFER_BOTTOM_OFFSET = 30;
-const PERPS_PRO_TRANSFER_HANDLE_INDICATOR = '#D1D4DB';
 const PERPS_PRO_TRANSFER_BUTTON_SHADOW = 'rgba(112, 132, 255, 0.1)';
 
 export const getPerpsProTransferSheetStyles = createGetStyles2024(
@@ -20,18 +19,6 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
     const chrome = getPerpsProBottomSheetChromeStyles(colors2024);
     return {
       ...chrome,
-      handle: {
-        ...chrome.handle,
-        paddingBottom: 30,
-        paddingTop: 6,
-      },
-      handleIndicator: {
-        ...chrome.handleIndicator,
-        backgroundColor:
-          isLight !== false
-            ? PERPS_PRO_TRANSFER_HANDLE_INDICATOR
-            : colors2024['neutral-line'],
-      },
       sheetView: { height: '100%' },
       container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
       title: {
