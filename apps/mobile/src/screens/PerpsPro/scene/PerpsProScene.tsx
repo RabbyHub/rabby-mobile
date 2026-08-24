@@ -529,6 +529,10 @@ export const PerpsProScene: React.FC<{
     () => (showRegionAlert ? { height: regionAlertExtent } : null),
     [regionAlertExtent, showRegionAlert],
   );
+  const regionAlertOverlayCoverageStyle = useMemo<ViewStyle | null>(
+    () => (showRegionAlert ? { minHeight: regionAlertExtent } : null),
+    [regionAlertExtent, showRegionAlert],
+  );
   const infoTabsTranslateY = useMemo(
     () =>
       createPerpsProInfoTabsTranslateY({
@@ -1027,6 +1031,7 @@ export const PerpsProScene: React.FC<{
             <Animated.View
               style={[
                 styles.regionAlertOverlay,
+                regionAlertOverlayCoverageStyle,
                 {
                   transform: [{ translateY: headerCollapse.marketTranslateY }],
                 },

@@ -1213,6 +1213,7 @@ describe('PerpsProScene market loading states', () => {
     ).toMatchObject({
       backgroundColor: 'neutral-bg-1',
       left: 0,
+      minHeight: 64,
       right: 0,
     });
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
@@ -1243,14 +1244,24 @@ describe('PerpsProScene market loading states', () => {
     fireEvent(screen.getByTestId('perps-region-alert'), 'layout', {
       nativeEvent: {
         layout: {
-          height: 52,
+          height: 52.25,
           width: Dimensions.get('window').width - 32,
           x: 16,
           y: 56,
         },
       },
     });
-    expect(getMarketTranslateY()).toBe(120);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+      ),
+    ).toMatchObject({ minHeight: 65 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-region-alert-slot').props.style,
+      ),
+    ).toMatchObject({ height: 65 });
+    expect(getMarketTranslateY()).toBe(121);
   });
 
   it('uses the account restriction before the current market resolves', () => {
