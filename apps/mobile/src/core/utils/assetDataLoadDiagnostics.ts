@@ -11,8 +11,9 @@ export type AssetDataLoadDiagnosticDomain =
   | 'token-runtime-sync'
   | 'multi-address-protocol'
   | 'multi-address-nft'
+  | 'token-cache-hydrate'
   | 'asset-projection-token-restore'
-  | 'asset-projection-token-entity-background-restore'
+  | 'asset-projection-token-segment-hydrate'
   | 'asset-projection-protocol-restore'
   | 'asset-projection-nft-restore';
 

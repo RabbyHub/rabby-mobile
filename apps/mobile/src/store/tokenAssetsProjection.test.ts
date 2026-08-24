@@ -55,6 +55,7 @@ import {
   buildSingleAssetsEligibleTokenIdsFromTokenIds,
   buildSingleAssetsIndexFromTokenIds,
   buildTokenEntityId,
+  ensureTokenAssetsProjectionSegmentsHydrated,
   getMultiAssetsCacheKey,
   getSingleAssetsCacheKey,
   prepareMultiAddressTokenAssetsProjection,
@@ -178,6 +179,7 @@ describe('single-address token assets projection', () => {
     tokenEntityResourceStore.upsertTokens([], 'remote', {
       pruneMissing: true,
     });
+    tokenGroupResourceStore.setState({ valueMap: {}, metaMap: {} });
     useTokenIndexStore.setState({
       addressTokenIds: {},
       addressVersions: {},
@@ -342,7 +344,7 @@ describe('single-address token assets projection', () => {
     ).not.toHaveBeenCalled();
   });
 
-  it('publishes a staged projection before deferred token entities finish restoring', async () => {
+  it('publishes a staged projection before an inactive segment is requested', async () => {
     const visibleToken = createToken('visible-token', { usd_value: 20 });
     const deferredToken = createToken('deferred-token', { usd_value: 10 });
     const visibleTokenId = buildTokenEntityId(visibleToken);
@@ -404,6 +406,15 @@ describe('single-address token assets projection', () => {
     expect(tokenEntityResourceStore.getValue(deferredTokenId)).toBeUndefined();
 
     await waitForNextTask();
+    expect(
+      mockedTokenItemEntity.batchMultiAddressTokensByResourceIds,
+    ).toHaveBeenCalledTimes(1);
+
+    const segmentHydration = ensureTokenAssetsProjectionSegmentsHydrated({
+      projectionKey: key,
+      scene: 'single-address',
+      segmentKeys: ['additionalDefault'],
+    });
     await waitFor(
       () =>
         mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mock.calls
@@ -414,11 +425,103 @@ describe('single-address token assets projection', () => {
     ).toEqual([[deferredTokenId]]);
 
     deferredEntityRestore.resolve([deferredToken]);
+    await expect(segmentHydration).resolves.toBe(true);
+    expect(tokenEntityResourceStore.getValue(deferredTokenId)).toEqual(
+      deferredToken,
+    );
+  });
+
+  it('hydrates only the requested segment once without rebuilding projections', async () => {
+    const visibleToken = createToken('visible-token', { usd_value: 20 });
+    const deferredTokens = Array.from({ length: 201 }, (_, index) =>
+      createToken(`deferred-token-${index}`, { usd_value: 10 - index / 1000 }),
+    );
+    const lowValueToken = createToken('low-value-token', { usd_value: 0.01 });
+    const visibleTokenId = buildTokenEntityId(visibleToken);
+    const deferredTokenIds = deferredTokens.map(buildTokenEntityId);
+    const lowValueTokenId = buildTokenEntityId(lowValueToken);
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [visibleTokenId, ...deferredTokenIds, lowValueTokenId].map(id => ({
+        type: 'token',
+        id,
+      })),
+      groups: [],
+      metadata: {
+        entityRestoreMode: 'staged-v1',
+        groupPrimaryTokenIds: {},
+        lowValueTokenPreviewLogoUrls: [],
+        lpLowValueTokenPreviewLogoUrls: [],
+        additionalCoreUsdValue: 0,
+        additionalTokenCount: deferredTokens.length,
+        defaultVisibleTokenCount: 1,
+        hasAdditionalTokens: true,
+        hasLpTokens: false,
+        lowValueTokenCount: 1,
+        segmentRowCounts: {
+          additionalDefault: deferredTokens.length,
+          additionalLp: 0,
+          lowValueDefault: 1,
+          lowValueLp: 0,
+          primary: 1,
+        },
+        selectedSegmentMode: 'default',
+      },
+    } as never);
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds
+      .mockResolvedValueOnce([visibleToken] as never)
+      .mockResolvedValueOnce(deferredTokens.slice(0, 40) as never)
+      .mockResolvedValueOnce(deferredTokens.slice(40) as never);
+
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
     await waitFor(
       () =>
-        tokenEntityResourceStore.getValue(deferredTokenId) === deferredToken,
+        useTokenAssetsIndexStore.getState().singleAssetsAvailabilityByKey[
+          key
+        ] === 'ready',
     );
-    await waitForNextTask();
+
+    const listener = jest.fn();
+    const unsubscribe =
+      tokenEntityResourceStore.subscribeTokenChanges(listener);
+    try {
+      await waitForNextTask();
+      expect(
+        mockedTokenItemEntity.batchMultiAddressTokensByResourceIds,
+      ).toHaveBeenCalledTimes(1);
+
+      const firstHydration = ensureTokenAssetsProjectionSegmentsHydrated({
+        projectionKey: key,
+        scene: 'single-address',
+        segmentKeys: ['additionalDefault'],
+      });
+      const duplicateHydration = ensureTokenAssetsProjectionSegmentsHydrated({
+        projectionKey: key,
+        scene: 'single-address',
+        segmentKeys: ['additionalDefault'],
+      });
+      await expect(
+        Promise.all([firstHydration, duplicateHydration]),
+      ).resolves.toEqual([true, true]);
+
+      expect(listener).not.toHaveBeenCalled();
+      expect(
+        mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mock.calls,
+      ).toEqual([
+        [[visibleTokenId]],
+        [deferredTokenIds.slice(0, 40)],
+        [deferredTokenIds.slice(40)],
+      ]);
+      expect(
+        deferredTokenIds.every(tokenId =>
+          Boolean(tokenEntityResourceStore.getValue(tokenId)),
+        ),
+      ).toBe(true);
+      expect(
+        tokenEntityResourceStore.getValue(lowValueTokenId),
+      ).toBeUndefined();
+    } finally {
+      unsubscribe();
+    }
   });
 
   it('keeps a staged projection usable when legacy preview slots are null', async () => {
@@ -530,6 +633,22 @@ describe('single-address token assets projection', () => {
     expect(
       useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
     ).toEqual([{ type: 'token', tokenId: visibleTokenId }]);
+
+    expect(
+      prepareMultiAddressTokenAssetsProjection({
+        addresses: [ADDRESS],
+        isLpTokenEnabled: false,
+        tokenDisplayMode: 'byAddress',
+      }),
+    ).toBe(key);
+    await waitForNextTask();
+    expect(mockedRestoreAssetProjection).toHaveBeenCalledTimes(1);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsConfigByKey[key],
+    ).toMatchObject({
+      isLpTokenEnabled: false,
+      tokenDisplayMode: 'byAddress',
+    });
   });
 
   it('falls back to full local hydration when the Home projection is missing', async () => {
@@ -630,6 +749,89 @@ describe('single-address token assets projection', () => {
     });
   });
 
+  it('hydrates every member before publishing a requested token group', async () => {
+    const visible = createToken('visible', { usd_value: 40 });
+    const first = createToken('shared', {
+      owner_addr: NORMALIZED_ADDRESS,
+      amount: 2,
+      usd_value: 20,
+    });
+    const second = createToken('shared', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      amount: 3,
+      usd_value: 30,
+    });
+    const visibleId = buildTokenEntityId(visible);
+    const firstId = buildTokenEntityId(first);
+    const secondId = buildTokenEntityId(second);
+    const key = getMultiAssetsCacheKey(
+      [ADDRESS, SECOND_ADDRESS],
+      undefined,
+      false,
+      'byAsset',
+    );
+    const groupId = `${key}::eth::shared`;
+
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [
+        { type: 'token', id: visibleId },
+        { type: 'token-group', id: groupId },
+      ],
+      groups: [{ id: groupId, memberIds: [firstId, secondId] }],
+      metadata: {
+        entityRestoreMode: 'staged-v1',
+        groupPrimaryTokenIds: { [groupId]: secondId },
+        lowValueTokenPreviewLogoUrls: [],
+        lpLowValueTokenPreviewLogoUrls: [],
+        additionalCoreUsdValue: 50,
+        additionalTokenCount: 1,
+        defaultVisibleTokenCount: 1,
+        hasAdditionalTokens: true,
+        hasLpTokens: false,
+        lowValueTokenCount: 0,
+        segmentRowCounts: {
+          additionalDefault: 1,
+          additionalLp: 0,
+          lowValueDefault: 0,
+          lowValueLp: 0,
+          primary: 1,
+        },
+        selectedSegmentMode: 'default',
+      },
+    } as never);
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds
+      .mockResolvedValueOnce([visible] as never)
+      .mockResolvedValueOnce([first, second] as never);
+
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS, SECOND_ADDRESS],
+      tokenDisplayMode: 'byAsset',
+    });
+    await waitFor(
+      () =>
+        useTokenAssetsIndexStore.getState().multiAssetsAvailabilityByKey[
+          key
+        ] === 'ready',
+    );
+
+    expect(tokenGroupResourceStore.getValue(groupId as never)).toBeUndefined();
+    await expect(
+      ensureTokenAssetsProjectionSegmentsHydrated({
+        projectionKey: key,
+        scene: 'multi-address',
+        segmentKeys: ['additionalDefault'],
+      }),
+    ).resolves.toBe(true);
+    expect(tokenGroupResourceStore.getValue(groupId as never)).toMatchObject({
+      primaryTokenId: secondId,
+      memberTokenIds: [firstId, secondId],
+      summary: {
+        amount: 5,
+        usd_value: 50,
+      },
+    });
+  });
+
   it('does not publish deferred staged entities after the source snapshot changes', async () => {
     const visibleToken = createToken('visible-before-refresh', {
       usd_value: 20,
@@ -679,7 +881,11 @@ describe('single-address token assets projection', () => {
           key
         ] === 'ready',
     );
-    await waitForNextTask();
+    const segmentHydration = ensureTokenAssetsProjectionSegmentsHydrated({
+      projectionKey: key,
+      scene: 'single-address',
+      segmentKeys: ['additionalDefault'],
+    });
     await waitFor(
       () =>
         mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mock.calls
@@ -691,7 +897,7 @@ describe('single-address token assets projection', () => {
       sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
     });
     deferredEntityRestore.resolve([staleDeferredToken]);
-    await waitForNextTask();
+    await expect(segmentHydration).resolves.toBe(false);
 
     expect(
       tokenEntityResourceStore.getValue(staleDeferredTokenId),

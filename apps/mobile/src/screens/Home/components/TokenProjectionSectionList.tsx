@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type {
   SectionListData,
   SectionListProps,
@@ -9,6 +9,7 @@ import { useShallow } from 'zustand/shallow';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   EMPTY_TOKEN_ASSETS_INDEX_RESULT,
+  ensureTokenAssetsProjectionSegmentsHydrated,
   type TokenAssetsIndexRow,
   type TokenAssetsIndexSegments,
   useTokenAssetsIndexStore,
@@ -83,6 +84,21 @@ export function TokenProjectionSectionList<TExtra>({
     Object.is,
     { storeLabel },
   );
+  useEffect(() => {
+    if (!projectionKey || !segmentKeys.length) {
+      return;
+    }
+    ensureTokenAssetsProjectionSegmentsHydrated({
+      projectionKey,
+      scene,
+      segmentKeys,
+    }).catch(error => {
+      console.error(
+        '[TokenProjectionSectionList] segment hydration failed',
+        error,
+      );
+    });
+  }, [projectionKey, scene, segmentKeys, segmentRows]);
   const sectionCacheRef = useRef(
     new Map<string, TokenProjectionSection<TExtra>>(),
   );
