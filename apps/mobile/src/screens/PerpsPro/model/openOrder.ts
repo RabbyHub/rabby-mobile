@@ -1,6 +1,11 @@
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
+import {
+  buildPerpsOpenOrderTopology,
+  type PerpsOpenOrderTopology,
+} from './openOrderTopology';
+
 export type PerpsOpenOrderCategory = 'basic' | 'conditional' | 'unsupported';
 export type PerpsOpenOrderEditKind = 'basicLimit' | 'partialTpSlMarket';
 export type PerpsOpenOrderTriggerKind = 'stopLoss' | 'takeProfit';
@@ -220,30 +225,6 @@ export const buildPerpsOpenOrderViewModel = (
   };
 };
 
-type FlattenedOpenOrder = {
-  isTopLevel: boolean;
-  order: OpenOrder;
-};
-
-const flattenOpenOrders = (
-  orders: OpenOrder[],
-  seen = new Set<number>(),
-  isTopLevel = true,
-): FlattenedOpenOrder[] => {
-  const result: FlattenedOpenOrder[] = [];
-  for (const order of orders) {
-    if (seen.has(order.oid)) {
-      continue;
-    }
-    seen.add(order.oid);
-    result.push({ isTopLevel, order });
-    if (order.children?.length) {
-      result.push(...flattenOpenOrders(order.children, seen, false));
-    }
-  }
-  return result;
-};
-
 export const sortPerpsOpenOrders = (
   orders: PerpsOpenOrderViewModel[],
 ): PerpsOpenOrderViewModel[] =>
@@ -258,14 +239,19 @@ export const sortPerpsOpenOrders = (
     return left.oid - right.oid;
   });
 
-export const buildPerpsOpenOrders = (
-  orders: OpenOrder[],
+export const buildPerpsOpenOrdersFromTopology = (
+  topology: PerpsOpenOrderTopology,
 ): PerpsOpenOrderViewModel[] =>
   sortPerpsOpenOrders(
-    flattenOpenOrders(orders).map(({ isTopLevel, order }) =>
+    topology.nodes.map(({ isTopLevel, order }) =>
       buildPerpsOpenOrderViewModel(order, { isTopLevel }),
     ),
   );
+
+export const buildPerpsOpenOrders = (
+  orders: readonly OpenOrder[],
+): PerpsOpenOrderViewModel[] =>
+  buildPerpsOpenOrdersFromTopology(buildPerpsOpenOrderTopology(orders));
 
 export const getPerpsOpenOrderCounts = (orders: PerpsOpenOrderViewModel[]) => ({
   basic: orders.filter(order => order.category === 'basic').length,

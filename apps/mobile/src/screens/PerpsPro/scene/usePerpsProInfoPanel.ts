@@ -25,18 +25,19 @@ import {
   resolvePerpsAccountMode,
 } from '../model/account';
 import {
-  buildPerpsOpenOrders,
+  buildPerpsOpenOrdersFromTopology,
   filterPerpsOpenOrders,
   getPerpsOpenOrderCounts,
   type PerpsOpenOrderCategory,
 } from '../model/openOrder';
+import { buildPerpsOpenOrderTopology } from '../model/openOrderTopology';
 import {
   isPerpsProCollectionAuthoritativelyEmpty,
   resolvePerpsProInfoTabPresentation,
   type PerpsProAutomaticInfoTabSelection,
 } from '../model/infoPanelPresentation';
 import {
-  buildPerpsPositions,
+  buildPerpsPositionsFromTopology,
   filterPerpsPositionsForMarket,
 } from '../model/position';
 import { usePerpsProInfoPreferences } from './usePerpsProInfoPreferences';
@@ -186,14 +187,18 @@ export const usePerpsProInfoPanel = (
       spotAssetCtxs,
     ],
   );
+  const openOrderTopology = useMemo(
+    () => buildPerpsOpenOrderTopology(facts.openOrders),
+    [facts.openOrders],
+  );
   const allPositions = useMemo(
     () =>
-      buildPerpsPositions(
+      buildPerpsPositionsFromTopology(
         facts.clearinghouseState?.assetPositions || [],
-        facts.openOrders,
+        openOrderTopology,
         getPerpsAccountMarginRatio(account),
       ),
-    [account, facts.clearinghouseState?.assetPositions, facts.openOrders],
+    [account, facts.clearinghouseState?.assetPositions, openOrderTopology],
   );
   const accountIdentity = facts.currentAccount
     ? facts.currentAccount.address.toLowerCase() +
@@ -235,8 +240,8 @@ export const usePerpsProInfoPanel = (
   }, [infoTabPresentation.automaticSelection]);
   const activeInfoTab = infoTabPresentation.activeInfoTab;
   const allOpenOrders = useMemo(
-    () => buildPerpsOpenOrders(facts.openOrders),
-    [facts.openOrders],
+    () => buildPerpsOpenOrdersFromTopology(openOrderTopology),
+    [openOrderTopology],
   );
   const openOrderCounts = useMemo(
     () => getPerpsOpenOrderCounts(allOpenOrders),
