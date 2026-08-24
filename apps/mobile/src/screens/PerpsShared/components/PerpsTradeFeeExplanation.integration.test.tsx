@@ -1,6 +1,7 @@
 import { Text } from '@/components/Typography';
 import {
   useHideTipsPopup,
+  useIsTipsPopupVisible,
   useShowTipsPopup,
   useTipsPopup,
 } from '@/hooks/useTipsPopup';
@@ -56,6 +57,16 @@ const ScopedTipsControls = () => {
   );
 };
 
+const OwnedVisibilityProbe = () => {
+  const historyVisible = useIsTipsPopupVisible('perps-pro-history-fee');
+  const otherVisible = useIsTipsPopupVisible('other-screen');
+  return (
+    <Text testID="owned-fee-visibility">
+      {`${String(historyVisible)}:${String(otherVisible)}`}
+    </Text>
+  );
+};
+
 const TipsPopupStateProbe = () => {
   const { hideTipsPopup, state } = useTipsPopup();
 
@@ -79,6 +90,7 @@ const FeeExplanationHarness = () => (
   <View>
     <FeeExplanationTrigger />
     <ScopedTipsControls />
+    <OwnedVisibilityProbe />
     <TipsPopupStateProbe />
   </View>
 );
@@ -109,6 +121,9 @@ describe('Perps Trade Fee explanation integration', () => {
     render(<FeeExplanationHarness />);
 
     fireEvent.press(screen.getByTestId('open-owned-fee-explanation'));
+    expect(screen.getByTestId('owned-fee-visibility')).toHaveTextContent(
+      'true:false',
+    );
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
       'page.perps.historyDetail.feeTitle:hyperliquid:true',
     );
@@ -118,6 +133,9 @@ describe('Perps Trade Fee explanation integration', () => {
     );
 
     fireEvent.press(screen.getByTestId('open-other-explanation'));
+    expect(screen.getByTestId('owned-fee-visibility')).toHaveTextContent(
+      'false:true',
+    );
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
       'Other title:undefined:false',
     );
@@ -125,5 +143,6 @@ describe('Perps Trade Fee explanation integration', () => {
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
       'Other title:undefined:false',
     );
+    fireEvent.press(screen.getByTestId('close-fee-explanation'));
   });
 });

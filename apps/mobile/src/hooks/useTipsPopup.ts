@@ -1,5 +1,7 @@
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom, useSetAtom } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { selectAtom } from 'jotai/utils';
+import { useMemo } from 'react';
 import { StyleProp, TextStyle, ViewStyle } from 'react-native';
 
 type TipsPopupState = {
@@ -56,6 +58,14 @@ export const useHideTipsPopup = (owner?: string) => {
       return getHiddenTipsPopupState();
     });
   });
+};
+
+export const useIsTipsPopupVisible = (owner: string) => {
+  const ownedVisibilityAtom = useMemo(
+    () => selectAtom(tipsAtom, state => state.visible && state.owner === owner),
+    [owner],
+  );
+  return useAtomValue(ownedVisibilityAtom);
 };
 
 export const useTipsPopup = () => {

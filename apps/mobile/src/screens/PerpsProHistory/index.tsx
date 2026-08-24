@@ -1,13 +1,13 @@
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import React, { useCallback } from 'react';
-import { View } from 'react-native';
+import { BackHandler, Platform, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useEnsurePerpsRuntime } from '@/hooks/perps/runtime/useEnsurePerpsRuntime';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useHideTipsPopup } from '@/hooks/useTipsPopup';
+import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
 
 import { usePerpsProTradeAmountUnit } from '../PerpsPro/scene/usePerpsProTradePreferences';
 import { PerpsProHistoryPager } from './components/PerpsProHistoryPager';
@@ -25,6 +25,9 @@ export const PerpsProHistoryScreen = () => {
   useEnsurePerpsRuntime();
   const amountUnit = usePerpsProTradeAmountUnit();
   const hideFeeTipsPopup = useHideTipsPopup(PERPS_PRO_HISTORY_FEE_TIPS_OWNER);
+  const isFeeTipsPopupVisible = useIsTipsPopupVisible(
+    PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
+  );
   const { styles } = useTheme2024({ getStyle });
   const route =
     useRoute<
@@ -39,6 +42,21 @@ export const PerpsProHistoryScreen = () => {
   const history = usePerpsProHistoryController(initialTab);
   useFocusEffect(
     useCallback(() => () => hideFeeTipsPopup(), [hideFeeTipsPopup]),
+  );
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android' || !isFeeTipsPopupVisible) {
+        return undefined;
+      }
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          hideFeeTipsPopup();
+          return true;
+        },
+      );
+      return () => subscription.remove();
+    }, [hideFeeTipsPopup, isFeeTipsPopupVisible]),
   );
 
   return (
