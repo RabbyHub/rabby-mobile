@@ -115,6 +115,32 @@ const renderPager = ({
     />,
   );
 
+const publishListGeometry = (
+  testID: string,
+  { contentHeight = 1000, viewportHeight = 600 } = {},
+) => {
+  const list = screen.getByTestId(testID, { includeHiddenElements: true });
+  fireEvent(list, 'layout', {
+    nativeEvent: {
+      layout: { height: viewportHeight, width: 393, x: 0, y: 0 },
+    },
+  });
+  fireEvent(list, 'contentSizeChange', 393, contentHeight);
+  return list;
+};
+
+const publishListOffset = (
+  list: ReturnType<typeof screen.getByTestId>,
+  offset: number,
+) =>
+  fireEvent.scroll(list, {
+    nativeEvent: {
+      contentOffset: { x: 0, y: offset },
+      contentSize: { height: 1000, width: 393 },
+      layoutMeasurement: { height: 600, width: 393 },
+    },
+  });
+
 describe('PerpsProInfoPager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -178,6 +204,9 @@ describe('PerpsProInfoPager', () => {
     expect(onPageDragStart).toHaveBeenCalledTimes(1);
     expect(onPagePreview).not.toHaveBeenCalled();
     expect(onPageSelected).not.toHaveBeenCalled();
+
+    const targetList = publishListGeometry('perps-pro-scroll-openOrders');
+    publishListOffset(targetList, 400);
 
     fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
       nativeEvent: { position: 1 },
@@ -261,6 +290,8 @@ describe('PerpsProInfoPager', () => {
 
     act(() => ref.current?.setPage('account'));
     expect(onPagePreview).toHaveBeenLastCalledWith(null);
+    const targetList = publishListGeometry('perps-pro-scroll-account');
+    publishListOffset(targetList, 400);
     expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(2);
 
     fireEvent(pager, 'pageScroll', {
@@ -362,16 +393,64 @@ describe('PerpsProInfoPager', () => {
     expect(onPageSelected).not.toHaveBeenCalled();
   });
 
-  it('mounts and jumps directly to a requested non-adjacent tab', () => {
-    const ref = React.createRef<PerpsProInfoPagerHandle>();
-    renderPager({ ref, requestedTab: 'account' });
+  it('mounts and jumps directly to a ready requested non-adjacent tab', () => {
+    renderPager({ requestedTab: 'account' });
     expect(
       screen.getByTestId('account-row', { includeHiddenElements: true }),
     ).toBeTruthy();
 
-    act(() => ref.current?.setPage('account'));
+    const targetList = publishListGeometry('perps-pro-scroll-account');
+    expect(mockSetPageWithoutAnimation).not.toHaveBeenCalled();
+    publishListOffset(targetList, 400);
     expect(mockSetPage).not.toHaveBeenCalled();
     expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(2);
+  });
+
+  it('waits for the clamped target offset before issuing a page command', () => {
+    const onActivateOffset = jest.fn();
+    renderPager({ onActivateOffset, requestedTab: 'account' });
+
+    expect(mockSetPageWithoutAnimation).not.toHaveBeenCalled();
+    const targetList = publishListGeometry('perps-pro-scroll-account', {
+      contentHeight: 850,
+      viewportHeight: 600,
+    });
+    expect(mockSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+    publishListOffset(targetList, 250);
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(2);
+
+    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
+      nativeEvent: { position: 2 },
+    });
+    expect(onActivateOffset).toHaveBeenCalledWith(250);
+  });
+
+  it('ignores a stale target offset after a newer page request', () => {
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    renderPager({ ref, requestedTab: 'account' });
+    const staleTarget = publishListGeometry('perps-pro-scroll-account');
+
+    act(() => ref.current?.setPage('openOrders'));
+    publishListOffset(staleTarget, 400);
+    expect(mockSetPageWithoutAnimation).not.toHaveBeenCalledWith(2);
+
+    const currentTarget = publishListGeometry('perps-pro-scroll-openOrders');
+    publishListOffset(currentTarget, 400);
+    expect(mockSetPage).toHaveBeenCalledWith(1);
+  });
+
+  it('activates the actual zero offset if a native swipe beats preparation', () => {
+    const onActivateOffset = jest.fn();
+    renderPager({ onActivateOffset });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    expect(onActivateOffset).toHaveBeenCalledWith(0);
   });
 
   it('normalizes preview offsets without losing an already-deep tab', () => {
