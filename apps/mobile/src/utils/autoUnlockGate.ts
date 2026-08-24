@@ -3,6 +3,10 @@ type AutoUnlockGateOptions = {
   dispatch: () => void;
 };
 
+type AutoUnlockRequestOptions = {
+  bypassPresentationReady?: boolean;
+};
+
 export function createAutoUnlockGate({
   isAtUnlock,
   dispatch,
@@ -10,23 +14,36 @@ export function createAutoUnlockGate({
   let screenReady = false;
   let presentationReady = false;
   let pending = false;
+  let bypassPresentationReady = false;
 
   const dispatchIfReady = () => {
-    if (!screenReady || !presentationReady || !pending || !isAtUnlock()) {
+    if (
+      !screenReady ||
+      (!presentationReady && !bypassPresentationReady) ||
+      !pending ||
+      !isAtUnlock()
+    ) {
       return;
     }
 
     pending = false;
+    bypassPresentationReady = false;
     dispatch();
   };
 
   return {
-    request() {
+    request(options: AutoUnlockRequestOptions = {}) {
+      if (options.bypassPresentationReady && !isAtUnlock()) {
+        return;
+      }
+
       if (!screenReady && !isAtUnlock()) {
         return;
       }
 
       pending = true;
+      bypassPresentationReady =
+        bypassPresentationReady || !!options.bypassPresentationReady;
       dispatchIfReady();
     },
     setPresentationReady(ready: boolean) {
@@ -44,6 +61,7 @@ export function createAutoUnlockGate({
     },
     clearPending() {
       pending = false;
+      bypassPresentationReady = false;
     },
     dispatchIfReady,
   };
