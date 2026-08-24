@@ -1,4 +1,4 @@
-import { mapWithJsBudget } from './cooperativeWork';
+import { forEachWithJsBudget, mapWithJsBudget } from './cooperativeWork';
 
 describe('mapWithJsBudget', () => {
   it('preserves input ordering while yielding between expensive slices', async () => {
@@ -44,5 +44,57 @@ describe('mapWithJsBudget', () => {
     );
 
     expect(result).toBeNull();
+  });
+});
+
+describe('forEachWithJsBudget', () => {
+  it('visits every item while yielding between bounded slices', async () => {
+    let now = 0;
+    const visited: number[] = [];
+    const yieldToHost = jest.fn(async () => {
+      now += 1;
+    });
+
+    await expect(
+      forEachWithJsBudget(
+        [1, 2, 3, 4, 5],
+        item => {
+          visited.push(item);
+          now += 3;
+        },
+        {
+          budgetMs: 5,
+          minimumItemsPerSlice: 2,
+          clock: {
+            now: () => now,
+            yieldToHost,
+          },
+        },
+      ),
+    ).resolves.toBe(true);
+
+    expect(visited).toEqual([1, 2, 3, 4, 5]);
+    expect(yieldToHost).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops before visiting stale work', async () => {
+    let current = true;
+    const visited: number[] = [];
+
+    await expect(
+      forEachWithJsBudget(
+        [1, 2, 3],
+        item => {
+          visited.push(item);
+          current = false;
+        },
+        {
+          minimumItemsPerSlice: 1,
+          shouldContinue: () => current,
+        },
+      ),
+    ).resolves.toBe(false);
+
+    expect(visited).toEqual([1]);
   });
 });

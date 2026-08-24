@@ -181,6 +181,12 @@ describe('single-address token assets projection', () => {
       multiAssetsResultByKey: {},
       multiAssetsAvailabilityByKey: {},
     });
+    tokenListStore.setState({
+      tokenListMap: {},
+      sourceSnapshotReadyByAddress: {},
+      isLoading: false,
+      isLoadingByAddress: {},
+    });
     tokenEntityResourceStore.upsertTokens([], 'remote', {
       pruneMissing: true,
     });
@@ -189,12 +195,6 @@ describe('single-address token assets projection', () => {
       addressTokenIds: {},
       addressVersions: {},
       tokenStaticMap: {},
-    });
-    tokenListStore.setState({
-      tokenListMap: {},
-      sourceSnapshotReadyByAddress: {},
-      isLoading: false,
-      isLoadingByAddress: {},
     });
   });
 
@@ -227,6 +227,84 @@ describe('single-address token assets projection', () => {
       expect(useTokenIndexStore.getState().addressVersions).toEqual({
         [NORMALIZED_ADDRESS]: 1,
         [NORMALIZED_SECOND_ADDRESS]: 1,
+      });
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  it('cooperatively publishes one index update for a large value-only refresh', async () => {
+    const createAddressTokens = (
+      address: string,
+      prefix: string,
+      count: number,
+      valueOffset = 0,
+    ) =>
+      Array.from({ length: count }, (_, index) =>
+        createToken(`${prefix}-${index}`, {
+          amount: index + 1 + valueOffset,
+          owner_addr: address,
+          price: 1 + valueOffset,
+          usd_value: count - index + valueOffset,
+        }),
+      );
+    const firstTokens = createAddressTokens(NORMALIZED_ADDRESS, 'first', 600);
+    const secondTokens = createAddressTokens(
+      NORMALIZED_SECOND_ADDRESS,
+      'second',
+      600,
+    );
+    tokenListStore.setState({
+      tokenListMap: {
+        [NORMALIZED_ADDRESS]: firstTokens,
+        [NORMALIZED_SECOND_ADDRESS]: secondTokens,
+      },
+    });
+    const previousVersions = {
+      ...useTokenIndexStore.getState().addressVersions,
+    };
+    const refreshedFirstTokens = createAddressTokens(
+      NORMALIZED_ADDRESS,
+      'first',
+      600,
+      10,
+    );
+    const refreshedSecondTokens = createAddressTokens(
+      NORMALIZED_SECOND_ADDRESS,
+      'second',
+      600,
+      10,
+    );
+    mockedRequestOpenApiWithChainId
+      .mockResolvedValueOnce(refreshedFirstTokens)
+      .mockResolvedValueOnce(refreshedSecondTokens);
+    const listener = jest.fn();
+    const unsubscribe = useTokenIndexStore.subscribe(listener);
+
+    try {
+      await tokenListStore
+        .getState()
+        .batchGetTokenList([ADDRESS, SECOND_ADDRESS], true);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(useTokenIndexStore.getState().addressVersions).toMatchObject({
+        [NORMALIZED_ADDRESS]: (previousVersions[NORMALIZED_ADDRESS] || 0) + 1,
+        [NORMALIZED_SECOND_ADDRESS]:
+          (previousVersions[NORMALIZED_SECOND_ADDRESS] || 0) + 1,
+      });
+      expect(
+        tokenEntityResourceStore.getValue(
+          buildTokenEntityId(refreshedFirstTokens[0]!),
+        ),
+      ).toEqual(refreshedFirstTokens[0]);
+      expect(
+        tokenEntityResourceStore.getValue(
+          buildTokenEntityId(refreshedSecondTokens[0]!),
+        ),
+      ).toEqual(refreshedSecondTokens[0]);
+      expect(tokenListStore.getState().tokenListMap).toMatchObject({
+        [NORMALIZED_ADDRESS]: refreshedFirstTokens,
+        [NORMALIZED_SECOND_ADDRESS]: refreshedSecondTokens,
       });
     } finally {
       unsubscribe();

@@ -1,7 +1,10 @@
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import { mapWithJsBudget } from '@/core/utils/cooperativeWork';
+import {
+  forEachWithJsBudget,
+  mapWithJsBudget,
+} from '@/core/utils/cooperativeWork';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import {
   syncRemoteTokens,
@@ -32,7 +35,10 @@ import type {
 } from '@/types/assets';
 import PQueue from 'p-queue';
 import { ResourceBaseStore } from './_resourceBase';
-import type { ObservableResourceValueSource } from './_resourceFlow';
+import type {
+  ObservableResourceMeta,
+  ObservableResourceValueSource,
+} from './_resourceFlow';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
@@ -576,6 +582,17 @@ const getTokenListFromTokenMap = (
   tokenListMap: TokenListState['tokenListMap'],
 ) => Object.values(tokenListMap).flat();
 
+type PreparedTokenEntityResourceSync = {
+  baseState: {
+    valueMap: Record<string, ITokenItem>;
+    metaMap: Record<string, ObservableResourceMeta>;
+  };
+  valueMap: Record<string, ITokenItem>;
+  metaMap: Record<string, ObservableResourceMeta>;
+  changedTokenIds: TokenEntityId[];
+  changedAddresses: string[];
+};
+
 class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
   private readonly tokenChangeListeners = new Set<
     (tokenIds: TokenEntityId[]) => void
@@ -597,6 +614,172 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
 
   getAddressVersion = (address: string) =>
     this.addressVersions.get(normalizeAddress(address)) || 0;
+
+  prepareAddressesFromTokenListMap = async (
+    tokenListMap: TokenListState['tokenListMap'],
+    addresses: string[],
+    source: ObservableResourceValueSource = 'remote',
+    shouldContinue?: () => boolean,
+  ): Promise<PreparedTokenEntityResourceSync | null> => {
+    const addressSet = normalizeAddressSet(addresses);
+    const baseState = this.getState();
+    const tokens = Array.from(addressSet).flatMap(
+      address => tokenListMap[address] || [],
+    );
+    const tokenEntries = await mapWithJsBudget(
+      tokens,
+      token => [buildTokenEntityId(token), token] as const,
+      { shouldContinue },
+    );
+    if (!tokenEntries) {
+      return null;
+    }
+
+    const entries = new Map<TokenEntityId, ITokenItem>(tokenEntries);
+    const valueMap: Record<string, ITokenItem> = {};
+    const metaMap: Record<string, ObservableResourceMeta> = {};
+    const copyOptions = { shouldContinue };
+    if (
+      !(await forEachWithJsBudget(
+        Object.keys(baseState.valueMap),
+        tokenId => {
+          valueMap[tokenId] = baseState.valueMap[tokenId]!;
+        },
+        copyOptions,
+      )) ||
+      !(await forEachWithJsBudget(
+        Object.keys(baseState.metaMap),
+        tokenId => {
+          metaMap[tokenId] = baseState.metaMap[tokenId]!;
+        },
+        copyOptions,
+      ))
+    ) {
+      return null;
+    }
+
+    const now = Date.now();
+    const changedTokenIds = new Set<TokenEntityId>();
+    if (
+      !(await forEachWithJsBudget(
+        tokenEntries,
+        ([tokenId, token]) => {
+          const prevToken = baseState.valueMap[tokenId];
+          const prevMeta = baseState.metaMap[tokenId];
+          const changedKeys = getChangedTokenKeys(prevToken, token);
+          const isTokenChanged = !prevToken || !!changedKeys?.length;
+          if (prevMeta && !isTokenChanged) {
+            return;
+          }
+
+          let nextToken = token;
+          if (prevToken && changedKeys) {
+            nextToken = { ...prevToken };
+            changedKeys.forEach(key => {
+              if (Object.prototype.hasOwnProperty.call(token, key)) {
+                nextToken[key] = token[key] as never;
+              } else {
+                delete nextToken[key];
+              }
+            });
+          }
+
+          valueMap[tokenId] = nextToken;
+          metaMap[tokenId] = {
+            family: TOKEN_ENTITY_RESOURCE_FAMILY,
+            resourceKey: tokenId,
+            hasValue: true,
+            version: Math.max(prevMeta?.version || 0, 0) + 1,
+            sourceOfCurrentValue: source,
+            isHydrating: false,
+            isFetchingRemote: false,
+            persistStatus: prevMeta?.persistStatus || 'idle',
+            localTargets: prevMeta?.localTargets || [],
+            activeRemoteRequestId: undefined,
+            lastHydratedAt:
+              source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
+            lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
+            lastPersistAt: prevMeta?.lastPersistAt,
+            lastError: prevMeta?.lastError,
+          };
+          changedTokenIds.add(tokenId);
+        },
+        { shouldContinue },
+      ))
+    ) {
+      return null;
+    }
+
+    const visitedPreviousTokenIds = new Set<string>();
+    const removeMissingToken = (tokenId: string) => {
+      if (visitedPreviousTokenIds.has(tokenId)) {
+        return;
+      }
+      visitedPreviousTokenIds.add(tokenId);
+      if (
+        !addressSet.has(getTokenEntityIdAddress(tokenId)) ||
+        entries.has(tokenId as TokenEntityId)
+      ) {
+        return;
+      }
+      delete valueMap[tokenId];
+      delete metaMap[tokenId];
+      changedTokenIds.add(tokenId as TokenEntityId);
+    };
+    if (
+      !(await forEachWithJsBudget(
+        Object.keys(baseState.valueMap),
+        removeMissingToken,
+        { shouldContinue },
+      )) ||
+      !(await forEachWithJsBudget(
+        Object.keys(baseState.metaMap),
+        removeMissingToken,
+        { shouldContinue },
+      ))
+    ) {
+      return null;
+    }
+
+    return {
+      baseState,
+      valueMap,
+      metaMap,
+      changedTokenIds: Array.from(changedTokenIds),
+      changedAddresses: Array.from(
+        new Set(Array.from(changedTokenIds).map(getTokenEntityIdAddress)),
+      ),
+    };
+  };
+
+  applyPreparedAddressSync = (
+    prepared: PreparedTokenEntityResourceSync,
+    options?: { notifyTokenListeners?: boolean },
+  ) => {
+    if (this.getState() !== prepared.baseState) {
+      return false;
+    }
+    if (!prepared.changedTokenIds.length) {
+      return true;
+    }
+
+    this.setState({
+      valueMap: prepared.valueMap,
+      metaMap: prepared.metaMap,
+    });
+    prepared.changedAddresses.forEach(address => {
+      this.addressVersions.set(
+        address,
+        (this.addressVersions.get(address) || 0) + 1,
+      );
+    });
+    if (options?.notifyTokenListeners !== false) {
+      this.tokenChangeListeners.forEach(listener =>
+        listener(prepared.changedTokenIds),
+      );
+    }
+    return true;
+  };
 
   upsertTokens = (
     tokens: ITokenItem[],
@@ -998,6 +1181,14 @@ type TokenIndexState = {
   ): void;
 };
 
+type PreparedTokenIndexSync = {
+  baseState: TokenIndexState;
+  addressTokenIds: TokenIndexState['addressTokenIds'];
+  addressVersions: TokenIndexState['addressVersions'];
+  tokenStaticMap: TokenIndexState['tokenStaticMap'];
+  changedAddresses: string[];
+};
+
 export const useTokenIndexStore = zCreate(
   zMutative<TokenIndexState>((set, get) => ({
     addressTokenIds: {},
@@ -1080,6 +1271,110 @@ export const useTokenIndexStore = zCreate(
     },
   })),
 );
+
+const prepareTokenIndexSync = async (
+  tokenListMap: TokenListState['tokenListMap'],
+  addresses: string[],
+  forceChangedAddresses: string[],
+  shouldContinue?: () => boolean,
+): Promise<PreparedTokenIndexSync | null> => {
+  const normalizedAddresses = Array.from(normalizeAddressSet(addresses));
+  const forcedAddressSet = normalizeAddressSet(forceChangedAddresses);
+  const baseState = useTokenIndexStore.getState();
+  const addressTokenIds = { ...baseState.addressTokenIds };
+  const addressVersions = { ...baseState.addressVersions };
+  const tokenStaticMap: Record<string, TokenStaticIndexItem> = {};
+  if (
+    !(await forEachWithJsBudget(
+      Object.keys(baseState.tokenStaticMap),
+      tokenId => {
+        tokenStaticMap[tokenId] = baseState.tokenStaticMap[tokenId]!;
+      },
+      { shouldContinue },
+    ))
+  ) {
+    return null;
+  }
+
+  const changedAddresses = new Set<string>();
+  const completed = await forEachWithJsBudget(
+    normalizedAddresses,
+    address => {
+      const tokens = tokenListMap[address] || [];
+      const nextTokenIds = buildStableTokenEntityIds(
+        sortByUsdValueDesc(tokens),
+        baseState.addressTokenIds[address],
+      );
+      const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
+      const nextStaticTokenIds = new Set(
+        nextStaticItems.map(item => item.tokenId),
+      );
+      let didChange = forcedAddressSet.has(address);
+
+      if (baseState.addressTokenIds[address] !== nextTokenIds) {
+        addressTokenIds[address] = nextTokenIds;
+        didChange = true;
+      }
+      nextStaticItems.forEach(item => {
+        if (
+          !isTokenStaticIndexItemSame(
+            baseState.tokenStaticMap[item.tokenId],
+            item,
+          )
+        ) {
+          tokenStaticMap[item.tokenId] = item;
+          didChange = true;
+        }
+      });
+      (baseState.addressTokenIds[address] || EMPTY_TOKEN_ENTITY_IDS).forEach(
+        tokenId => {
+          if (nextStaticTokenIds.has(tokenId) || !tokenStaticMap[tokenId]) {
+            return;
+          }
+          delete tokenStaticMap[tokenId];
+          didChange = true;
+        },
+      );
+
+      if (didChange) {
+        changedAddresses.add(address);
+        addressVersions[address] = (addressVersions[address] || 0) + 1;
+      }
+    },
+    {
+      budgetMs: 6,
+      minimumItemsPerSlice: 1,
+      shouldContinue,
+    },
+  );
+  if (!completed) {
+    return null;
+  }
+
+  return {
+    baseState,
+    addressTokenIds,
+    addressVersions,
+    tokenStaticMap,
+    changedAddresses: Array.from(changedAddresses),
+  };
+};
+
+const applyPreparedTokenIndexSync = (prepared: PreparedTokenIndexSync) => {
+  if (useTokenIndexStore.getState() !== prepared.baseState) {
+    return false;
+  }
+  if (!prepared.changedAddresses.length) {
+    return true;
+  }
+
+  useTokenIndexStore.setState({
+    addressTokenIds: prepared.addressTokenIds,
+    addressVersions: prepared.addressVersions,
+    tokenStaticMap: prepared.tokenStaticMap,
+  });
+  return true;
+};
 
 const getTokenSelectSearchScore = (
   item: TokenStaticIndexItem,
@@ -3798,6 +4093,120 @@ const syncTokenRuntimeStoresFromTokenListMap = (
   return persistenceTicket;
 };
 
+const COOPERATIVE_TOKEN_RUNTIME_SYNC_MIN_TOKEN_COUNT = 1_000;
+
+const syncTokenRuntimeStoresFromTokenListMapCooperatively = async (
+  tokenListMap: TokenListState['tokenListMap'],
+  addresses: string[],
+  source: ObservableResourceValueSource = 'remote',
+  options?: {
+    markTokenListMapSynced?: boolean;
+    markPersistencePending?: boolean;
+    shouldContinue?: () => boolean;
+  },
+): Promise<{
+  applied: boolean;
+  persistenceTicket?: AddressPersistenceTicket;
+}> => {
+  const normalizedAddresses = Array.from(normalizeAddressSet(addresses));
+  const tokenCount = normalizedAddresses.reduce(
+    (count, address) => count + (tokenListMap[address]?.length || 0),
+    0,
+  );
+  if (options?.shouldContinue && !options.shouldContinue()) {
+    return { applied: false };
+  }
+  if (tokenCount < COOPERATIVE_TOKEN_RUNTIME_SYNC_MIN_TOKEN_COUNT) {
+    return {
+      applied: true,
+      persistenceTicket: syncTokenRuntimeStoresFromTokenListMap(
+        tokenListMap,
+        normalizedAddresses,
+        source,
+        options,
+      ),
+    };
+  }
+
+  const trace = beginAssetDataLoadDiagnostic(
+    'token-runtime-sync',
+    normalizedAddresses.join('|'),
+    {
+      addressCount: normalizedAddresses.length,
+      mode: 'cooperative',
+      source,
+      tokenCount,
+    },
+  );
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const resourcePlan =
+      await tokenEntityResourceStore.prepareAddressesFromTokenListMap(
+        tokenListMap,
+        normalizedAddresses,
+        source,
+        options?.shouldContinue,
+      );
+    if (!resourcePlan) {
+      trace.finish({ path: 'stale-during-resource-prepare', attempt });
+      return { applied: false };
+    }
+    const indexPlan = await prepareTokenIndexSync(
+      tokenListMap,
+      normalizedAddresses,
+      resourcePlan.changedAddresses,
+      options?.shouldContinue,
+    );
+    if (!indexPlan) {
+      trace.finish({ path: 'stale-during-index-prepare', attempt });
+      return { applied: false };
+    }
+    if (options?.shouldContinue && !options.shouldContinue()) {
+      trace.finish({ path: 'stale-before-publish', attempt });
+      return { applied: false };
+    }
+    if (
+      tokenEntityResourceStore.getState() !== resourcePlan.baseState ||
+      useTokenIndexStore.getState() !== indexPlan.baseState
+    ) {
+      trace.mark('runtime-state-changed-during-prepare', { attempt });
+      continue;
+    }
+
+    const persistenceTicket = options?.markPersistencePending
+      ? tokenProjectionPersistenceGate.markDirty(normalizedAddresses)
+      : undefined;
+    tokenEntityResourceStore.applyPreparedAddressSync(resourcePlan, {
+      notifyTokenListeners: false,
+    });
+    applyPreparedTokenIndexSync(indexPlan);
+    if (options?.markTokenListMapSynced) {
+      lastTokenListMapSyncedToRuntime = tokenListMap;
+    }
+    trace.finish({
+      path: 'cooperative',
+      attempt,
+      changedAddressCount: indexPlan.changedAddresses.length,
+      changedTokenCount: resourcePlan.changedTokenIds.length,
+    });
+    return { applied: true, persistenceTicket };
+  }
+
+  if (options?.shouldContinue && !options.shouldContinue()) {
+    trace.finish({ path: 'stale-before-fallback' });
+    return { applied: false };
+  }
+  trace.finish({ path: 'synchronous-fallback' });
+  return {
+    applied: true,
+    persistenceTicket: syncTokenRuntimeStoresFromTokenListMap(
+      tokenListMap,
+      normalizedAddresses,
+      source,
+      options,
+    ),
+  };
+};
+
 const settleTokenProjectionPersistence = (
   ticket: AddressPersistenceTicket | undefined,
   persistence: Promise<boolean>,
@@ -3970,6 +4379,12 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           isCurrentRequest()
             ? tokenAddressRequests.getCurrentAddresses(addressRequest)
             : [];
+        const areAddressesCurrent = (targetAddresses: string[]) => {
+          const currentAddressSet = new Set(getCurrentAddresses());
+          return targetAddresses.every(address =>
+            currentAddressSet.has(normalizeAddress(address)),
+          );
+        };
         const isForceRequested = () => force || ticket.isForceRequested();
         const projectionRestorePromise =
           preferredProjectionKey && !force
@@ -4177,20 +4592,29 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             cacheApplicableAddresses.forEach(address => {
               mergedCacheTokenMap[address] = cacheTokenMap[address] || [];
             });
-            syncTokenRuntimeStoresFromTokenListMap(
-              mergedCacheTokenMap,
-              cacheApplicableAddresses,
-              'remote',
-              {
-                markTokenListMapSynced: true,
-                markPersistencePending: true,
-              },
-            );
-            tokenCacheHydrator.invalidate(cacheApplicableAddresses);
-            set(() => ({ tokenListMap: mergedCacheTokenMap }));
-            trace.mark('cache-store-published', {
-              addressCount: cacheApplicableAddresses.length,
-            });
+            const cacheRuntimeSync =
+              await syncTokenRuntimeStoresFromTokenListMapCooperatively(
+                mergedCacheTokenMap,
+                cacheApplicableAddresses,
+                'remote',
+                {
+                  markTokenListMapSynced: true,
+                  markPersistencePending: true,
+                  shouldContinue: () =>
+                    areAddressesCurrent(cacheApplicableAddresses),
+                },
+              );
+            if (cacheRuntimeSync.applied) {
+              tokenCacheHydrator.invalidate(cacheApplicableAddresses);
+              set(() => ({ tokenListMap: mergedCacheTokenMap }));
+              trace.mark('cache-store-published', {
+                addressCount: cacheApplicableAddresses.length,
+              });
+            } else {
+              trace.mark('cache-store-skipped', {
+                reason: 'stale-during-runtime-sync',
+              });
+            }
           } else {
             trace.mark('cache-store-skipped', {
               reason: 'memory-snapshot-retained',
@@ -4320,15 +4744,23 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             remoteApplicableAddresses,
             applicableRealTimeTokenMap,
           );
-          const persistenceTicket = syncTokenRuntimeStoresFromTokenListMap(
-            nextTokenListMap,
-            remoteApplicableAddresses,
-            'remote',
-            {
-              markTokenListMapSynced: true,
-              markPersistencePending: true,
-            },
-          );
+          const runtimeSync =
+            await syncTokenRuntimeStoresFromTokenListMapCooperatively(
+              nextTokenListMap,
+              remoteApplicableAddresses,
+              'remote',
+              {
+                markTokenListMapSynced: true,
+                markPersistencePending: true,
+                shouldContinue: () =>
+                  areAddressesCurrent(remoteApplicableAddresses),
+              },
+            );
+          if (!runtimeSync.applied) {
+            trace.finish({ path: 'stale-during-runtime-sync' });
+            return;
+          }
+          const persistenceTicket = runtimeSync.persistenceTicket;
           tokenCacheHydrator.invalidate(remoteApplicableAddresses);
           const completeApplicableAddresses = remoteApplicableAddresses.filter(
             address =>
