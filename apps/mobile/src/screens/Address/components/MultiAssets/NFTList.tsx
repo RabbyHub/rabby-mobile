@@ -73,6 +73,7 @@ import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 import { useShallow } from 'zustand/react/shallow';
+import { useUserVisibleJsWork } from '@/hooks/useUserVisibleJsWork';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
 const NFT_LIST_RENDER_BATCH_SIZE = 8;
@@ -236,6 +237,10 @@ const NFTListInner = () => {
     availability: nftProjection.availability,
     hasData: nftRowCount > 0,
   });
+  useUserVisibleJsWork(
+    isProjectionActive && (isLoading || nftProjectionViewState === 'loading'),
+    'home-nft-visible-load',
+  );
 
   const dataList = useMemo(() => {
     const defaultRows = nftIndex.rows.slice(0, nftIndex.defaultVisibleRowCount);

@@ -90,6 +90,7 @@ import {
   type TokenProjectionSectionSpec,
 } from '@/screens/Home/components/TokenProjectionSectionList';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useUserVisibleJsWork } from '@/hooks/useUserVisibleJsWork';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -408,6 +409,10 @@ export const TokenList = () => {
   const isTokenListDisplayLoading =
     tokenProjectionViewState === 'loading' ||
     (isCustomTestnetSnapshotPending && projectedTokenCount === 0);
+  useUserVisibleJsWork(
+    isScreenFocused && isFocusing && (isLoading || isTokenListDisplayLoading),
+    'home-token-visible-load',
+  );
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses, false, {
@@ -1098,6 +1103,7 @@ export const TokenList = () => {
         sectionSpecs={sectionSpecs}
         ListComponent={TabsSectionList}
         storeLabel="home-multi-assets-token-section-list"
+        userVisible={isScreenFocused && isFocusing}
         style={[
           styles.container,
           pulldownRefreshReturns.scrollableStyle.container,

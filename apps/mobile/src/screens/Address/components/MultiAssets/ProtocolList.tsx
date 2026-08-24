@@ -61,6 +61,8 @@ import {
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useIsFocused } from '@react-navigation/native';
+import { useUserVisibleJsWork } from '@/hooks/useUserVisibleJsWork';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -153,6 +155,7 @@ export const ProtocolList = () => {
   const chain = selectedChainItem?.chain;
   const [showAllProtocols, setShowAllProtocols] = useState(false);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
+  const isScreenFocused = useIsFocused();
 
   useScrollToTopOnChainChange({
     chain,
@@ -193,6 +196,12 @@ export const ProtocolList = () => {
     availability: protocolProjection.availability,
     hasData: protocolIndex.protocolIds.length > 0,
   });
+  useUserVisibleJsWork(
+    isScreenFocused &&
+      isFocusing &&
+      (isLoading || protocolProjectionViewState === 'loading'),
+    'home-defi-visible-load',
+  );
 
   // The high-cardinality probe intentionally selects Watch addresses. Keep the
   // assertion at the final entity-to-row boundary so it catches a future

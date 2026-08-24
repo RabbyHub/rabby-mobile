@@ -7,6 +7,7 @@ import type {
 import { useShallow } from 'zustand/shallow';
 
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { beginUserVisibleJsWork } from '@/core/utils/userVisibleJsWork';
 import {
   EMPTY_TOKEN_ASSETS_INDEX_RESULT,
   ensureTokenAssetsProjectionSegmentsHydrated,
@@ -53,6 +54,7 @@ type Props<TExtra> = Omit<
     >;
     ListComponent: React.ComponentType<any>;
     storeLabel: string;
+    userVisible?: boolean;
   };
 
 export function TokenProjectionSectionList<TExtra>({
@@ -61,6 +63,7 @@ export function TokenProjectionSectionList<TExtra>({
   sectionSpecs,
   ListComponent,
   storeLabel,
+  userVisible = false,
   ...listProps
 }: Props<TExtra>) {
   const segmentKeys = useMemo(
@@ -88,17 +91,22 @@ export function TokenProjectionSectionList<TExtra>({
     if (!projectionKey || !segmentKeys.length) {
       return;
     }
+    const releaseVisibleWork = userVisible
+      ? beginUserVisibleJsWork(`${storeLabel}:segment-hydration`)
+      : null;
     ensureTokenAssetsProjectionSegmentsHydrated({
       projectionKey,
       scene,
       segmentKeys,
-    }).catch(error => {
-      console.error(
-        '[TokenProjectionSectionList] segment hydration failed',
-        error,
-      );
-    });
-  }, [projectionKey, scene, segmentKeys, segmentRows]);
+    })
+      .catch(error => {
+        console.error(
+          '[TokenProjectionSectionList] segment hydration failed',
+          error,
+        );
+      })
+      .finally(() => releaseVisibleWork?.());
+  }, [projectionKey, scene, segmentKeys, segmentRows, storeLabel, userVisible]);
   const sectionCacheRef = useRef(
     new Map<string, TokenProjectionSection<TExtra>>(),
   );
