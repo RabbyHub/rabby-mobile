@@ -571,9 +571,20 @@ export const PerpsProScene: React.FC<{
     () => (showRegionAlert ? { height: regionAlertExtent } : null),
     [regionAlertExtent, showRegionAlert],
   );
-  const regionAlertOverlayCoverageStyle = useMemo<ViewStyle | null>(
-    () => (showRegionAlert ? { minHeight: regionAlertExtent } : null),
-    [regionAlertExtent, showRegionAlert],
+  const restrictedSurfaceCoverageStyle = useMemo<ViewStyle | null>(
+    () =>
+      showRegionAlert
+        ? {
+            minHeight:
+              regionAlertExtent +
+              (positionedOverlaysReady ? PERPS_PRO_MARKET_BAR_HEIGHT : 0),
+          }
+        : null,
+    [positionedOverlaysReady, regionAlertExtent, showRegionAlert],
+  );
+  const restrictedMarketPositionStyle = useMemo<ViewStyle>(
+    () => ({ top: regionAlertExtent }),
+    [regionAlertExtent],
   );
   const infoTabsTranslateY = useMemo(
     () =>
@@ -995,6 +1006,15 @@ export const PerpsProScene: React.FC<{
   const beginInfoPageDrag = useCallback(() => {
     setRequestedInfoTab(null);
   }, []);
+  const marketBarContent = isMarketLoading ? (
+    <PerpsProMarketBarSkeleton />
+  ) : (
+    <PerpsProMarketBar
+      market={scene.currentMarket}
+      onOpenKline={openKline}
+      onPress={openMarketSelector}
+    />
+  );
 
   return (
     <PerpsProFieldExplanationProvider>
@@ -1053,7 +1073,7 @@ export const PerpsProScene: React.FC<{
             <Animated.View
               style={[
                 styles.regionAlertOverlay,
-                regionAlertOverlayCoverageStyle,
+                restrictedSurfaceCoverageStyle,
                 {
                   transform: [{ translateY: headerCollapse.marketTranslateY }],
                 },
@@ -1064,28 +1084,29 @@ export const PerpsProScene: React.FC<{
                 onLayout={updateRegionAlertLayout}
                 topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
               />
+              {positionedOverlaysReady ? (
+                <View
+                  style={[styles.marketOverlay, restrictedMarketPositionStyle]}
+                  testID="perps-pro-market-overlay">
+                  {marketBarContent}
+                </View>
+              ) : null}
             </Animated.View>
           ) : null}
           {positionedOverlaysReady ? (
             <>
-              <Animated.View
-                style={[
-                  styles.marketOverlay,
-                  {
-                    transform: [{ translateY: marketTranslateY }],
-                  },
-                ]}
-                testID="perps-pro-market-overlay">
-                {isMarketLoading ? (
-                  <PerpsProMarketBarSkeleton />
-                ) : (
-                  <PerpsProMarketBar
-                    market={scene.currentMarket}
-                    onOpenKline={openKline}
-                    onPress={openMarketSelector}
-                  />
-                )}
-              </Animated.View>
+              {!showRegionAlert ? (
+                <Animated.View
+                  style={[
+                    styles.marketOverlay,
+                    {
+                      transform: [{ translateY: marketTranslateY }],
+                    },
+                  ]}
+                  testID="perps-pro-market-overlay">
+                  {marketBarContent}
+                </Animated.View>
+              ) : null}
               {info.activeInfoTab && displayedInfoTab ? (
                 <Animated.View
                   style={[
