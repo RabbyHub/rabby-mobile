@@ -51,10 +51,14 @@ describe('PerpsProMarketTabs', () => {
     jest.clearAllMocks();
   });
 
-  it('keeps a Pager-selected trailing tab fully visible within the strip', () => {
+  it('positions a restored trailing tab without animating its first mount', () => {
     const onChange = jest.fn();
-    const view = render(
-      <PerpsProMarketTabs activeTab="all" onChange={onChange} tabs={tabs} />,
+    render(
+      <PerpsProMarketTabs
+        activeTab="last-category"
+        onChange={onChange}
+        tabs={tabs}
+      />,
     );
     const strip = screen.getByTestId('perps-pro-market-tabs');
     const lastTab = screen.getByTestId('perps-pro-market-tab-last-category');
@@ -69,6 +73,41 @@ describe('PerpsProMarketTabs', () => {
       });
     });
 
+    expect(mockScrollTo).toHaveBeenCalledWith({
+      animated: false,
+      x: 340,
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+    expect(lastTab.props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('animates a later active-tab change after the initial position is ready', () => {
+    const onChange = jest.fn();
+    const view = render(
+      <PerpsProMarketTabs activeTab="all" onChange={onChange} tabs={tabs} />,
+    );
+    const strip = screen.getByTestId('perps-pro-market-tabs');
+    const allTab = screen.getByTestId('perps-pro-market-tab-all');
+    const lastTab = screen.getByTestId('perps-pro-market-tab-last-category');
+
+    act(() => {
+      fireEvent(strip, 'layout', {
+        nativeEvent: { layout: { height: 40, width: 200, x: 0, y: 0 } },
+      });
+      strip.props.onContentSizeChange(540, 40);
+      fireEvent(allTab, 'layout', {
+        nativeEvent: { layout: { height: 40, width: 50, x: 15, y: 0 } },
+      });
+      fireEvent(lastTab, 'layout', {
+        nativeEvent: { layout: { height: 40, width: 70, x: 450, y: 0 } },
+      });
+    });
+
+    expect(mockScrollTo).toHaveBeenLastCalledWith({
+      animated: false,
+      x: 0,
+    });
+
     view.rerender(
       <PerpsProMarketTabs
         activeTab="last-category"
@@ -81,8 +120,45 @@ describe('PerpsProMarketTabs', () => {
       animated: true,
       x: 340,
     });
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
     expect(lastTab.props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('repositions the same active tab without animation when geometry changes', () => {
+    render(
+      <PerpsProMarketTabs
+        activeTab="last-category"
+        onChange={jest.fn()}
+        tabs={tabs}
+      />,
+    );
+    const strip = screen.getByTestId('perps-pro-market-tabs');
+    const lastTab = screen.getByTestId('perps-pro-market-tab-last-category');
+
+    act(() => {
+      fireEvent(strip, 'layout', {
+        nativeEvent: { layout: { height: 40, width: 200, x: 0, y: 0 } },
+      });
+      strip.props.onContentSizeChange(540, 40);
+      fireEvent(lastTab, 'layout', {
+        nativeEvent: { layout: { height: 40, width: 70, x: 450, y: 0 } },
+      });
+    });
+    act(() => {
+      fireEvent(strip, 'layout', {
+        nativeEvent: { layout: { height: 40, width: 220, x: 0, y: 0 } },
+      });
+    });
+
+    expect(mockScrollTo).toHaveBeenNthCalledWith(1, {
+      animated: false,
+      x: 340,
+    });
+    expect(mockScrollTo).toHaveBeenNthCalledWith(2, {
+      animated: false,
+      x: 320,
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
   });
 
   it('keeps direct tab presses controlled by the selector', () => {
