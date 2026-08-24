@@ -244,7 +244,9 @@ export const PerpsProScene: React.FC<{
   const transfer = usePerpsProTransfer(info.accountIdentity);
   const { setActiveInfoTab, setHideOtherSymbols } = info;
   const headerCollapse = usePerpsProHeaderCollapse();
-  const infoScrollBridge = usePerpsProInfoScrollBridge(info.activeInfoTab);
+  const infoScrollBridge = usePerpsProInfoScrollBridge(
+    info.activeInfoTab ?? 'account',
+  );
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const infoPagerRef = useRef<PerpsProInfoPagerHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
@@ -951,25 +953,27 @@ export const PerpsProScene: React.FC<{
   return (
     <PerpsProFieldExplanationProvider>
       <View style={styles.container}>
-        <PerpsProInfoPager
-          activeTab={info.activeInfoTab}
-          contentContainerStyle={scrollContentStyles}
-          data={rowsByTab}
-          getActiveScrollOffset={headerCollapse.getScrollOffset}
-          onActivateOffset={headerCollapse.syncScrollOffset}
-          onActiveScroll={headerCollapse.onScroll}
-          onLayout={updateScrollViewportHeight}
-          onPageDragStart={beginInfoPageDrag}
-          onPagePreview={setPreviewInfoTab}
-          onPageSelected={commitInfoTab}
-          ref={infoPagerRef}
-          renderItem={renderItem}
-          renderListHeader={renderScrollLeadIn}
-          requestedTab={requestedInfoTab}
-          scrollBridge={infoScrollBridge}
-          stickyOffset={infoStickyOffset}
-          style={styles.scroll}
-        />
+        {info.activeInfoTab ? (
+          <PerpsProInfoPager
+            activeTab={info.activeInfoTab}
+            contentContainerStyle={scrollContentStyles}
+            data={rowsByTab}
+            getActiveScrollOffset={headerCollapse.getScrollOffset}
+            onActivateOffset={headerCollapse.syncScrollOffset}
+            onActiveScroll={headerCollapse.onScroll}
+            onLayout={updateScrollViewportHeight}
+            onPageDragStart={beginInfoPageDrag}
+            onPagePreview={setPreviewInfoTab}
+            onPageSelected={commitInfoTab}
+            ref={infoPagerRef}
+            renderItem={renderItem}
+            renderListHeader={renderScrollLeadIn}
+            requestedTab={requestedInfoTab}
+            scrollBridge={infoScrollBridge}
+            stickyOffset={infoStickyOffset}
+            style={styles.scroll}
+          />
+        ) : null}
         <Animated.View
           style={[
             styles.tradeOverlay,
@@ -978,6 +982,7 @@ export const PerpsProScene: React.FC<{
           testID="perps-pro-trade-overlay">
           <PerpsProTradeScrollBridge
             controller={infoScrollBridge}
+            enabled={info.activeInfoTab != null}
             height={tradeRowHeight}>
             {renderTrade()}
           </PerpsProTradeScrollBridge>
@@ -1033,24 +1038,26 @@ export const PerpsProScene: React.FC<{
                 />
               )}
             </Animated.View>
-            <Animated.View
-              style={[
-                styles.infoTabsOverlay,
-                { transform: [{ translateY: infoTabsTranslateY }] },
-              ]}
-              testID="perps-pro-info-tabs-overlay">
-              <PerpsProInfoTabs
-                activeTab={displayedInfoTab}
-                historyEnabled={
-                  historyEnabled && info.accountState !== 'noAccount'
-                }
-                onChange={requestInfoTab}
-                onHistoryPress={openHistory}
-                openOrdersCount={info.allOpenOrdersCount}
-                pendingFundingCount={info.pendingFundingCount}
-                positionsCount={info.allPositionsCount}
-              />
-            </Animated.View>
+            {info.activeInfoTab && displayedInfoTab ? (
+              <Animated.View
+                style={[
+                  styles.infoTabsOverlay,
+                  { transform: [{ translateY: infoTabsTranslateY }] },
+                ]}
+                testID="perps-pro-info-tabs-overlay">
+                <PerpsProInfoTabs
+                  activeTab={displayedInfoTab}
+                  historyEnabled={
+                    historyEnabled && info.accountState !== 'noAccount'
+                  }
+                  onChange={requestInfoTab}
+                  onHistoryPress={openHistory}
+                  openOrdersCount={info.allOpenOrdersCount}
+                  pendingFundingCount={info.pendingFundingCount}
+                  positionsCount={info.allPositionsCount}
+                />
+              </Animated.View>
+            ) : null}
           </>
         ) : null}
       </View>

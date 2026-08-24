@@ -66,6 +66,7 @@ describe('PerpsProTradeScrollBridge', () => {
     const bridge = screen.getByTestId('perps-pro-trade-scroll-bridge');
     expect(bridge.props.keyboardShouldPersistTaps).toBe('handled');
     expect(bridge.props.nestedScrollEnabled).toBe(true);
+    expect(bridge.props.scrollEnabled).toBe(true);
     expect(bridge.props.scrollEventThrottle).toBe(16);
     expect(screen.getAllByTestId('trade-content')).toHaveLength(1);
   });
@@ -94,6 +95,21 @@ describe('PerpsProTradeScrollBridge', () => {
       mockScrollHandlers.onScroll({ contentOffset: { y: 100_080 } });
     });
     expect(mockScrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the proxy until the initial info tab is resolved', () => {
+    render(
+      <PerpsProTradeScrollBridge
+        controller={createController()}
+        enabled={false}
+        height={520}>
+        <View />
+      </PerpsProTradeScrollBridge>,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
+    ).toBe(false);
   });
 
   it('rejects a new vertical session while the horizontal pager is active', () => {
