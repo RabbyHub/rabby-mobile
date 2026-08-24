@@ -9,6 +9,7 @@ import React from 'react';
 const mockHandleDeposit = jest.fn();
 const mockHandleStableCoinOrder = jest.fn();
 const mockHandleWithdraw = jest.fn(async () => true);
+let mockDepositPopupProps: Record<string, unknown> | null = null;
 let mockSwapPopupProps: Record<string, unknown> | null = null;
 
 jest.mock('@/hooks/perps/funding/usePerpsFundingActions', () => ({
@@ -24,8 +25,10 @@ jest.mock('@/screens/Perps/components/PerpsDepositPopup', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsDepositPopup: () =>
-      ReactModule.createElement(View, { testID: 'deposit-popup' }),
+    PerpsDepositPopup: (props: Record<string, unknown>) => {
+      mockDepositPopupProps = props;
+      return ReactModule.createElement(View, { testID: 'deposit-popup' });
+    },
   };
 });
 
@@ -71,8 +74,10 @@ const renderOverlay = (
 ) =>
   render(
     <PerpsProFundingOverlay
+      depositFromSwapVisible={false}
       mode={mode}
       onClose={onClose}
+      onCloseDeposit={jest.fn()}
       onOpenDeposit={jest.fn()}
       sourceAsset={sourceAsset}
       targetAsset="USDC"
@@ -82,6 +87,7 @@ const renderOverlay = (
 describe('PerpsProFundingOverlay', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDepositPopupProps = null;
     mockSwapPopupProps = null;
   });
 
@@ -132,8 +138,10 @@ describe('PerpsProFundingOverlay', () => {
   it('keeps non-USDC Pro swaps on the existing fixed-target path', () => {
     render(
       <PerpsProFundingOverlay
+        depositFromSwapVisible={false}
         mode="swap"
         onClose={jest.fn()}
+        onCloseDeposit={jest.fn()}
         onOpenDeposit={jest.fn()}
         targetAsset="USDE"
       />,
@@ -143,6 +151,34 @@ describe('PerpsProFundingOverlay', () => {
       disableSwitch: true,
       sourceAsset: undefined,
       targetAsset: 'USDE',
+      visible: true,
+    });
+  });
+
+  it('keeps Swap mounted below the nested Deposit popup', () => {
+    const onCloseDeposit = jest.fn();
+    const onOpenDeposit = jest.fn();
+    render(
+      <PerpsProFundingOverlay
+        depositFromSwapVisible
+        mode="swap"
+        onClose={jest.fn()}
+        onCloseDeposit={onCloseDeposit}
+        onOpenDeposit={onOpenDeposit}
+        sourceAsset="USDC"
+        targetAsset="USDC"
+      />,
+    );
+
+    expect(screen.getByTestId('swap-popup')).toBeTruthy();
+    expect(screen.getByTestId('deposit-popup')).toBeTruthy();
+    expect(mockSwapPopupProps).toMatchObject({
+      onDepositPress: onOpenDeposit,
+      visible: true,
+    });
+    expect(mockDepositPopupProps).toMatchObject({
+      onClose: onCloseDeposit,
+      onDeposit: mockHandleDeposit,
       visible: true,
     });
   });

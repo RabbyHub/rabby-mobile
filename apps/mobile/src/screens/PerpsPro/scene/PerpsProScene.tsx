@@ -148,11 +148,17 @@ type PerpsProSceneRow =
   | { key: 'open-orders-empty'; type: 'open-orders-empty' }
   | { key: string; order: PerpsOpenOrderViewModel; type: 'open-order' };
 
-interface FundingOverlayState {
-  mode: PerpsProFundingMode;
-  sourceAsset?: PerpsQuoteAsset;
-  targetAsset: PerpsQuoteAsset;
-}
+type FundingOverlayState =
+  | {
+      mode: Exclude<PerpsProFundingMode, 'swap'>;
+      targetAsset: PerpsQuoteAsset;
+    }
+  | {
+      depositVisible: boolean;
+      mode: 'swap';
+      sourceAsset?: PerpsQuoteAsset;
+      targetAsset: PerpsQuoteAsset;
+    };
 
 const PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT =
   PERPS_PRO_HEADER_HEIGHT + PERPS_PRO_MARKET_BAR_HEIGHT;
@@ -316,14 +322,33 @@ export const PerpsProScene: React.FC<{
     [],
   );
   const openDepositFromFunding = useCallback(
-    () => setFundingOverlay({ mode: 'deposit', targetAsset: 'USDC' }),
+    () =>
+      setFundingOverlay(current =>
+        current?.mode === 'swap'
+          ? { ...current, depositVisible: true }
+          : current,
+      ),
+    [],
+  );
+  const closeDepositFromFunding = useCallback(
+    () =>
+      setFundingOverlay(current =>
+        current?.mode === 'swap'
+          ? { ...current, depositVisible: false }
+          : current,
+      ),
     [],
   );
   const openSwap = useCallback((targetAsset: PerpsQuoteAsset) => {
     setFundingOverlay(
       targetAsset === 'USDC'
-        ? { mode: 'swap', sourceAsset: 'USDC', targetAsset }
-        : { mode: 'swap', targetAsset },
+        ? {
+            depositVisible: false,
+            mode: 'swap',
+            sourceAsset: 'USDC',
+            targetAsset,
+          }
+        : { depositVisible: false, mode: 'swap', targetAsset },
     );
   }, []);
   const tradeAddFundsAction = useMemo(
@@ -334,10 +359,20 @@ export const PerpsProScene: React.FC<{
       }),
     [info.account.mode, scene.currentMarket?.quoteAsset],
   );
-  const openTradeAddFunds = useCallback(
-    () => setFundingOverlay(tradeAddFundsAction),
-    [tradeAddFundsAction],
-  );
+  const openTradeAddFunds = useCallback(() => {
+    if (tradeAddFundsAction.mode === 'swap') {
+      setFundingOverlay({
+        depositVisible: false,
+        mode: 'swap',
+        targetAsset: tradeAddFundsAction.targetAsset,
+      });
+      return;
+    }
+    setFundingOverlay({
+      mode: 'deposit',
+      targetAsset: tradeAddFundsAction.targetAsset,
+    });
+  }, [tradeAddFundsAction]);
   const openMarketSelector = useCallback(
     () => dismissKeyboardThen(() => marketSelectorRef.current?.present()),
     [dismissKeyboardThen],
@@ -1119,12 +1154,28 @@ export const PerpsProScene: React.FC<{
           dismiss={closeFundingOverlay}
           edgeDismissible={false}>
           <PerpsProFundingOverlay
+            depositFromSwapVisible={
+              fundingOverlay.mode === 'swap' && fundingOverlay.depositVisible
+            }
             mode={fundingOverlay.mode}
             onClose={closeFundingOverlay}
+            onCloseDeposit={closeDepositFromFunding}
             onOpenDeposit={openDepositFromFunding}
-            sourceAsset={fundingOverlay.sourceAsset}
+            sourceAsset={
+              fundingOverlay.mode === 'swap'
+                ? fundingOverlay.sourceAsset
+                : undefined
+            }
             targetAsset={fundingOverlay.targetAsset}
           />
+        </PerpsProSheetNavigationBoundary>
+      ) : null}
+      {fundingOverlay?.mode === 'swap' && fundingOverlay.depositVisible ? (
+        <PerpsProSheetNavigationBoundary
+          active
+          dismiss={closeDepositFromFunding}
+          edgeDismissible={false}>
+          {null}
         </PerpsProSheetNavigationBoundary>
       ) : null}
       <PerpsProTransferSheet
