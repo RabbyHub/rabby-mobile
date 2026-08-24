@@ -2,31 +2,20 @@ import RcIconAmountUnitSwitch from '@/assets2024/icons/perps/PerpsProAmountUnitS
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
-import Animated, {
-  Easing,
-  ReduceMotion,
-  cancelAnimation,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
+import {
+  PerpsProAnimatedPriceTextInput,
+  usePerpsProPriceFillAnimation,
+} from './usePerpsProPriceFillAnimation';
+
+export { PERPS_PRO_PRICE_FILL_ANIMATION } from './usePerpsProPriceFillAnimation';
 
 const suffixFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
-const AnimatedPriceTextInput = Animated.createAnimatedComponent(TextInput);
-
-export const PERPS_PRO_PRICE_FILL_ANIMATION = {
-  durationMs: 180,
-  endFontSize: 14,
-  endLineHeight: 18,
-  startFontSize: 18,
-  startLineHeight: 22,
-} as const;
 
 type PerpsProTradePriceFieldProps = {
   editable?: boolean;
@@ -59,34 +48,7 @@ export const PerpsProTradePriceField = React.memo(
     } = props;
     const { colors2024, styles } = useTheme2024({ getStyle });
     const [focused, setFocused] = useState(false);
-    const previousFillRevisionRef = useRef(fillRevision);
-    const fillProgress = useSharedValue(1);
-    const animatedInputStyle = useAnimatedStyle(() => ({
-      fontSize:
-        PERPS_PRO_PRICE_FILL_ANIMATION.startFontSize +
-        (PERPS_PRO_PRICE_FILL_ANIMATION.endFontSize -
-          PERPS_PRO_PRICE_FILL_ANIMATION.startFontSize) *
-          fillProgress.value,
-      lineHeight:
-        PERPS_PRO_PRICE_FILL_ANIMATION.startLineHeight +
-        (PERPS_PRO_PRICE_FILL_ANIMATION.endLineHeight -
-          PERPS_PRO_PRICE_FILL_ANIMATION.startLineHeight) *
-          fillProgress.value,
-    }));
-    useEffect(() => {
-      const previousRevision = previousFillRevisionRef.current;
-      previousFillRevisionRef.current = fillRevision;
-      if (fillRevision <= 0 || fillRevision === previousRevision) {
-        return;
-      }
-      cancelAnimation(fillProgress);
-      fillProgress.value = 0;
-      fillProgress.value = withTiming(1, {
-        duration: PERPS_PRO_PRICE_FILL_ANIMATION.durationMs,
-        easing: Easing.out(Easing.cubic),
-        reduceMotion: ReduceMotion.System,
-      });
-    }, [fillProgress, fillRevision]);
+    const animatedInputStyle = usePerpsProPriceFillAnimation(fillRevision);
     const showFloatingLabel = focused || !!value;
     return (
       <View style={styles.container} testID="perps-pro-trade-price-field">
@@ -125,7 +87,7 @@ export const PerpsProTradePriceField = React.memo(
               accessibilityLabel={label}
               cursorColor={colors2024['brand-default']}
               editable={editable}
-              inputComponent={AnimatedPriceTextInput}
+              inputComponent={PerpsProAnimatedPriceTextInput}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
               ref={ref}

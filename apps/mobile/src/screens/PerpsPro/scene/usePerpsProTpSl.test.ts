@@ -240,4 +240,31 @@ describe('usePerpsProTpSl', () => {
 
     expect(hook.result.current.focusedLeg).toBe('tp');
   });
+
+  it('keeps a newer leg focused when an older input blurs late', () => {
+    const onFocusChange = jest.fn();
+    const hook = renderHook(() =>
+      usePerpsProTpSl({
+        draft: { ...createPerpsProAttachedTpSlDraft(), enabled: true },
+        leverage: 10,
+        onChange: jest.fn(),
+        onFocusChange,
+        order,
+        pxDecimals: 2,
+        previewFacts: { buy: null, sell: null },
+        szDecimals: 2,
+      }),
+    );
+
+    act(() => hook.result.current.setFocusedLeg('tp'));
+    act(() => hook.result.current.setFocusedLeg('sl'));
+    act(() => hook.result.current.blurFocusedLeg('tp'));
+
+    expect(hook.result.current.focusedLeg).toBe('sl');
+    expect(onFocusChange.mock.calls).toEqual([
+      ['tp', true],
+      ['tp', false],
+      ['sl', true],
+    ]);
+  });
 });

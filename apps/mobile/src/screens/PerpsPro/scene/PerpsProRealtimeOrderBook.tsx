@@ -20,6 +20,7 @@ import React, {
 import { PerpsProFundingDetailSheet } from '../components/funding/PerpsProFundingDetailSheet';
 import { PerpsProOrderBook } from '../components/orderbook/PerpsProOrderBook';
 import type { PerpsProMarket } from '../model/market';
+import type { PerpsProOrderBookPriceIntent } from '../model/orderBookPriceIntent';
 import type { PerpsProTradeAmountUnit } from '../model/trade';
 import {
   processPerpsOrderBook,
@@ -35,8 +36,11 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   height?: number;
   market: PerpsProMarket;
   onSelectTickOption: (option: PerpsTickOption) => void;
-  onSelectPrice?: (price: string) => void;
-  onSelectPriceIntentStart?: () => boolean;
+  onSelectPrice?: (
+    price: string | null,
+    intent: PerpsProOrderBookPriceIntent,
+  ) => void;
+  onSelectPriceIntentStart?: () => PerpsProOrderBookPriceIntent;
   precision: PerpsBookPrecision | null;
   publicationEnabled?: boolean;
   selectedTickOption: PerpsTickOption | null;

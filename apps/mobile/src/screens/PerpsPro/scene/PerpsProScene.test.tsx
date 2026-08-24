@@ -25,10 +25,18 @@ const mockUsePerpsProOpenOrderEdit = jest.fn();
 const mockClosePositionSheetProps = jest.fn();
 const mockCloseConfirmationSheetProps = jest.fn();
 const mockSelectOrderBookPrice = jest.fn();
+const mockGetOrderBookPriceIntent = jest.fn();
+const mockTriggerImpact = jest.fn();
 const mockInfoPagerSetPage = jest.fn();
 const mockInfoPagerSetPageWithoutAnimation = jest.fn();
 let mockTradeHasPermission = true;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
+let mockOrderBookPriceIntent:
+  | { type: 'attachedTpSlPrice'; leg: 'sl' | 'tp' }
+  | { type: 'dismissKeyboard' }
+  | { type: 'tradePrice' } = { type: 'tradePrice' };
+let mockOrderBookSelectionOutcome: 'accepted' | 'invalidPrice' | 'rejected' =
+  'accepted';
 let mockTradeForm: {
   bboEnabled: boolean;
   orderType: 'conditional' | 'limit' | 'market';
@@ -117,6 +125,10 @@ jest.mock('@/hooks/navigation', () => ({
 
 jest.mock('@/hooks/useAppGesture', () => ({
   useHandleBackPressClosable: jest.fn(),
+}));
+
+jest.mock('@/utils/common', () => ({
+  triggerImpact: (...args: unknown[]) => mockTriggerImpact(...args),
 }));
 
 jest.mock('react-native-screens', () => ({
@@ -479,13 +491,15 @@ jest.mock('./usePerpsProTrade', () => ({
     closeReview: jest.fn(),
     confirmReview: jest.fn(),
     form: mockTradeForm,
+    getOrderBookPriceIntent: () => mockGetOrderBookPriceIntent(),
     hasPermission: mockTradeHasPermission,
     leverage: 1,
     marginMode: 'isolated',
     market,
     pending: false,
     review: null,
-    selectOrderBookPrice: mockSelectOrderBookPrice,
+    selectOrderBookPrice: (...args: unknown[]) =>
+      mockSelectOrderBookPrice(...args),
     setPrice: jest.fn(),
     setSkipConfirmation: jest.fn(),
     skipConfirmation: false,
@@ -637,8 +651,16 @@ const createPositionActionsState = (
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetOrderBookPriceIntent.mockImplementation(
+      () => mockOrderBookPriceIntent,
+    );
+    mockSelectOrderBookPrice.mockImplementation(
+      () => mockOrderBookSelectionOutcome,
+    );
     mockTradeHasPermission = true;
     mockTradeFocusedLeg = null;
+    mockOrderBookPriceIntent = { type: 'tradePrice' };
+    mockOrderBookSelectionOutcome = 'accepted';
     mockTradeForm = { bboEnabled: false, orderType: 'market' };
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
@@ -752,15 +774,21 @@ describe('PerpsProScene market loading states', () => {
 
     const onSelectPrice = mockOrderBookProps.mock.lastCall?.[0].onSelectPrice;
     expect(onSelectPrice).toEqual(expect.any(Function));
-    act(() => onSelectPrice('101.23'));
+    act(() => onSelectPrice('101.23', { type: 'tradePrice' }));
     expect(mockSelectOrderBookPrice).toHaveBeenCalledWith(
       '101.23',
       'hyperliquid::BTC',
+      { type: 'tradePrice' },
     );
+    expect(mockTriggerImpact).toHaveBeenCalledWith({
+      enableVibrateFallback: false,
+      ignoreAndroidSystemSettings: false,
+    });
   });
 
-  it('consumes the first order-book price gesture while TP/SL is focused', () => {
+  it('dismisses the keyboard for a frozen non-price input intent', () => {
     mockTradeFocusedLeg = 'tp';
+    mockOrderBookPriceIntent = { type: 'dismissKeyboard' };
     mockTradeForm = { bboEnabled: false, orderType: 'limit' };
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
@@ -781,11 +809,46 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    const consumeIntent =
+    const startIntent =
       mockOrderBookProps.mock.lastCall?.[0].onSelectPriceIntentStart;
-    expect(consumeIntent()).toBe(true);
+    expect(startIntent()).toEqual({ type: 'dismissKeyboard' });
     expect(dismiss).toHaveBeenCalledTimes(1);
     expect(mockSelectOrderBookPrice).not.toHaveBeenCalled();
+    expect(mockTriggerImpact).not.toHaveBeenCalled();
+  });
+
+  it('vibrates once for an empty order-book level without writing a price', () => {
+    mockTradeForm = { bboEnabled: false, orderType: 'limit' };
+    mockOrderBookSelectionOutcome = 'invalidPrice';
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const onSelectPrice = mockOrderBookProps.mock.lastCall?.[0].onSelectPrice;
+    act(() => onSelectPrice(null, { type: 'tradePrice' }));
+    expect(mockSelectOrderBookPrice).toHaveBeenCalledWith(
+      null,
+      'hyperliquid::BTC',
+      { type: 'tradePrice' },
+    );
+    expect(mockTriggerImpact).toHaveBeenCalledTimes(1);
+
+    mockTriggerImpact.mockClear();
+    mockOrderBookSelectionOutcome = 'rejected';
+    act(() => onSelectPrice('99', { type: 'tradePrice' }));
+    expect(mockTriggerImpact).not.toHaveBeenCalled();
   });
 
   it('routes unified non-USDC Trade add-funds to the current quote Swap', () => {

@@ -446,6 +446,134 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.form.triggerPrice).toBe('');
   });
 
+  it('resolves order-book intent from the synchronous input focus owner', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    expect(hook.result.current.getOrderBookPriceIntent()).toEqual({
+      type: 'tradePrice',
+    });
+    act(() => hook.result.current.beginAmountEntry());
+    expect(hook.result.current.getOrderBookPriceIntent()).toEqual({
+      type: 'dismissKeyboard',
+    });
+    act(() => hook.result.current.endAmountEntry());
+
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    act(() => hook.result.current.tpSl.setFocusedLeg('tp'));
+    expect(hook.result.current.getOrderBookPriceIntent()).toEqual({
+      type: 'attachedTpSlPrice',
+      leg: 'tp',
+    });
+
+    act(() => hook.result.current.tpSl.setFocusedLeg('sl'));
+    act(() => hook.result.current.tpSl.blurFocusedLeg('tp'));
+    expect(hook.result.current.getOrderBookPriceIntent()).toEqual({
+      type: 'attachedTpSlPrice',
+      leg: 'sl',
+    });
+
+    act(() => hook.result.current.tpSl.setMode('sl', 'roi'));
+    expect(hook.result.current.getOrderBookPriceIntent()).toEqual({
+      type: 'dismissKeyboard',
+    });
+  });
+
+  it('fills only the frozen TP/SL Price leg and revalidates context', () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+    act(() => hook.result.current.tpSl.setEnabled(true));
+
+    let outcome: ReturnType<typeof hook.result.current.selectOrderBookPrice>;
+    act(() => {
+      outcome = hook.result.current.selectOrderBookPrice(
+        '101.239',
+        market.marketKey,
+        { type: 'attachedTpSlPrice', leg: 'tp' },
+      );
+    });
+    expect(outcome!).toBe('accepted');
+    expect(hook.result.current.form.attachedTpSl.tp.rawMagnitude).toBe(
+      '101.23',
+    );
+    expect(hook.result.current.form.attachedTpSl.sl.rawMagnitude).toBe('');
+    expect(hook.result.current.priceFillFeedback).toEqual({
+      field: 'tp',
+      revision: 1,
+    });
+
+    act(() => {
+      outcome = hook.result.current.selectOrderBookPrice(
+        '101.239',
+        market.marketKey,
+        { type: 'attachedTpSlPrice', leg: 'tp' },
+      );
+    });
+    expect(outcome!).toBe('accepted');
+    expect(hook.result.current.priceFillFeedback).toEqual({
+      field: 'tp',
+      revision: 2,
+    });
+
+    act(() => hook.result.current.tpSl.setMode('tp', 'pnl'));
+    act(() => {
+      outcome = hook.result.current.selectOrderBookPrice(
+        '99',
+        market.marketKey,
+        { type: 'attachedTpSlPrice', leg: 'tp' },
+      );
+    });
+    expect(outcome!).toBe('rejected');
+    expect(hook.result.current.form.attachedTpSl.tp.rawMagnitude).toBe('');
+
+    act(() => hook.result.current.tpSl.setMode('tp', 'price'));
+    act(() => {
+      outcome = hook.result.current.selectOrderBookPrice(
+        null,
+        market.marketKey,
+        { type: 'attachedTpSlPrice', leg: 'tp' },
+      );
+    });
+    expect(outcome!).toBe('invalidPrice');
+    expect(hook.result.current.priceFillFeedback).toEqual({
+      field: 'tp',
+      revision: 2,
+    });
+
+    act(() => {
+      outcome = hook.result.current.selectOrderBookPrice(
+        '99',
+        'hyperliquid::ETH',
+        { type: 'attachedTpSlPrice', leg: 'tp' },
+      );
+    });
+    expect(outcome!).toBe('rejected');
+  });
+
   it('uses the latest trade when BBO is disabled without a manual Limit price', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({

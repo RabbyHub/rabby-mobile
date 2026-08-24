@@ -9,10 +9,15 @@ import type { PerpsProTpSlMode } from '../../model/tpsl';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
 import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
+import {
+  PerpsProAnimatedPriceTextInput,
+  usePerpsProPriceFillAnimation,
+} from './usePerpsProPriceFillAnimation';
 
 const NEGATIVE_PREFIX_SLOT_WIDTH = 9;
 
 export const PerpsProTpSlInput: React.FC<{
+  fillRevision?: number;
   kind: 'sl' | 'tp';
   label: string;
   maxDecimals: number;
@@ -25,6 +30,7 @@ export const PerpsProTpSlInput: React.FC<{
   value: string;
 }> = React.memo(
   ({
+    fillRevision = 0,
     kind,
     label,
     maxDecimals,
@@ -39,6 +45,7 @@ export const PerpsProTpSlInput: React.FC<{
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const [focused, setFocused] = useState(false);
+    const animatedInputStyle = usePerpsProPriceFillAnimation(fillRevision);
     const [measuredValue, setMeasuredValue] = useState({
       text: '',
       width: 0,
@@ -117,6 +124,7 @@ export const PerpsProTpSlInput: React.FC<{
             <PerpsProDecimalTextInput
               accessibilityLabel={label}
               cursorColor={colors2024['brand-default']}
+              inputComponent={PerpsProAnimatedPriceTextInput}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
               onBlur={() => {
@@ -132,6 +140,7 @@ export const PerpsProTpSlInput: React.FC<{
               style={[
                 styles.input,
                 showNegativePrefix ? styles.inputWithNegativePrefix : null,
+                animatedInputStyle,
               ]}
               testID={`perps-pro-tpsl-${kind}-input`}
               value={value}

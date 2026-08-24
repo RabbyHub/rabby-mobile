@@ -15,12 +15,24 @@ import { PerpsProTpSlModeSheet } from './PerpsProTpSlModeSheet';
 import { PerpsProTpSlTooltip } from './PerpsProTpSlTooltip';
 import { PerpsProTradeCheckbox } from './PerpsProTradePrimitives';
 
-export const PerpsProTpSlFields: React.FC<{
+type PerpsProTpSlFieldsProps = {
   controller: PerpsProTpSlController;
   draft: PerpsProAttachedTpSlDraft;
   pxDecimals: number;
   quoteAsset: string;
-}> = React.memo(({ controller, draft, pxDecimals, quoteAsset }) => {
+  slFillRevision?: number;
+  tpFillRevision?: number;
+};
+
+const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
+  const {
+    controller,
+    draft,
+    pxDecimals,
+    quoteAsset,
+    slFillRevision,
+    tpFillRevision,
+  } = props;
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
@@ -53,11 +65,14 @@ export const PerpsProTpSlFields: React.FC<{
               />
             ) : null}
             <PerpsProTpSlInput
+              fillRevision={
+                draft.tp.mode === 'price' ? tpFillRevision : undefined
+              }
               kind="tp"
               label={t('page.perps.pro.trade.takeProfit')}
               maxDecimals={draft.tp.mode === 'price' ? pxDecimals : 2}
               mode={draft.tp.mode}
-              onBlur={() => controller.setFocusedLeg(null)}
+              onBlur={() => controller.blurFocusedLeg('tp')}
               onChangeText={value => controller.setRawMagnitude('tp', value)}
               onFocus={() => controller.setFocusedLeg('tp')}
               onPressMode={() => {
@@ -79,11 +94,14 @@ export const PerpsProTpSlFields: React.FC<{
               />
             ) : null}
             <PerpsProTpSlInput
+              fillRevision={
+                draft.sl.mode === 'price' ? slFillRevision : undefined
+              }
               kind="sl"
               label={t('page.perps.pro.trade.stopLoss')}
               maxDecimals={draft.sl.mode === 'price' ? pxDecimals : 2}
               mode={draft.sl.mode}
-              onBlur={() => controller.setFocusedLeg(null)}
+              onBlur={() => controller.blurFocusedLeg('sl')}
               onChangeText={value => controller.setRawMagnitude('sl', value)}
               onFocus={() => controller.setFocusedLeg('sl')}
               onPressMode={() => {
@@ -99,14 +117,18 @@ export const PerpsProTpSlFields: React.FC<{
       <PerpsProTpSlModeSheet
         onClose={() => setModeSheet(null)}
         onSelect={mode => {
-          if (modeSheet) controller.setMode(modeSheet, mode);
+          if (modeSheet) {
+            controller.setMode(modeSheet, mode);
+          }
         }}
         selected={modeSheet ? draft[modeSheet].mode : 'price'}
         visible={modeSheet != null}
       />
     </View>
   );
-});
+};
+
+export const PerpsProTpSlFields = React.memo(PerpsProTpSlFieldsComponent);
 
 PerpsProTpSlFields.displayName = 'PerpsProTpSlFields';
 

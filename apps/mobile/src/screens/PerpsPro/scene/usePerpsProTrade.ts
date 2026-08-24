@@ -55,6 +55,12 @@ import { resolvePerpsProMarketOrderProjection } from '../model/marketOrderProjec
 import type { PerpsProMarket } from '../model/market';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import {
+  resolvePerpsProOrderBookPriceIntent,
+  type PerpsProOrderBookPriceIntent,
+  type PerpsProOrderBookPriceSelectionOutcome,
+  type PerpsProTradeInputFocusOwner,
+} from '../model/orderBookPriceIntent';
+import {
   createPerpsProTradeAmountDraft,
   getPerpsProTradeAmountDraftDisplay,
   repricePerpsProTradeAmountDraft,
@@ -278,6 +284,17 @@ export const usePerpsProTrade = ({
   );
   const formRef = useRef(form);
   formRef.current = form;
+  const tradeInputFocusOwnerRef = useRef<PerpsProTradeInputFocusOwner>(null);
+  const handleTpSlFocusChange = useCallback(
+    (kind: 'sl' | 'tp', focused: boolean) => {
+      if (focused) {
+        tradeInputFocusOwnerRef.current = kind;
+      } else if (tradeInputFocusOwnerRef.current === kind) {
+        tradeInputFocusOwnerRef.current = null;
+      }
+    },
+    [],
+  );
   const [leverageConfigurationState, setLeverageConfigurationState] = useState<
     PerpsProLeverageConfiguration & { scopeKey: string | null }
   >({
@@ -294,7 +311,7 @@ export const usePerpsProTrade = ({
     useState<PerpsProTradeAmountSource>('manual');
   const [percentage, setPercentageState] = useState(0);
   const [priceFillFeedback, setPriceFillFeedback] = useState<{
-    field: 'limitPrice' | 'triggerPrice';
+    field: 'limitPrice' | 'sl' | 'tp' | 'triggerPrice';
     revision: number;
   } | null>(null);
   const amountSourceRef = useRef<PerpsProTradeAmountSource>('manual');
@@ -469,6 +486,7 @@ export const usePerpsProTrade = ({
     limitManualPriceRef.current = null;
     percentageRef.current = 0;
     shouldAutoFillLimitPriceRef.current = formRef.current.orderType === 'limit';
+    tradeInputFocusOwnerRef.current = null;
     setAmountSource('manual');
     setPercentageState(0);
     setPriceFillFeedback(null);
@@ -566,33 +584,82 @@ export const usePerpsProTrade = ({
     },
     [market?.marketData.pxDecimals, patchForm],
   );
+  const getOrderBookPriceIntent = useCallback(
+    () =>
+      resolvePerpsProOrderBookPriceIntent({
+        attachedTpSl: formRef.current.attachedTpSl,
+        focusOwner: tradeInputFocusOwnerRef.current,
+      }),
+    [],
+  );
   const selectOrderBookPrice = useCallback(
-    (price: string, sourceMarketKey: string) => {
+    (
+      price: string | null,
+      sourceMarketKey: string,
+      intent: PerpsProOrderBookPriceIntent = { type: 'tradePrice' },
+    ): PerpsProOrderBookPriceSelectionOutcome => {
       const currentForm = formRef.current;
-      if (!positive(price) || sourceMarketKey !== currentMarketKeyRef.current) {
-        return;
+      if (sourceMarketKey !== currentMarketKeyRef.current) {
+        return 'rejected';
       }
 
-      if (currentForm.orderType === 'limit') {
-        if (currentForm.bboEnabled) return;
-        setPrice('limitPrice', price);
-        priceFillRevisionRef.current += 1;
-        setPriceFillFeedback({
-          field: 'limitPrice',
-          revision: priceFillRevisionRef.current,
-        });
-        return;
+      let field: 'limitPrice' | 'sl' | 'tp' | 'triggerPrice';
+      if (intent.type === 'attachedTpSlPrice') {
+        const leg = intent.leg;
+        if (
+          !currentForm.attachedTpSl.enabled ||
+          currentForm.attachedTpSl[leg].mode !== 'price'
+        ) {
+          return 'rejected';
+        }
+        field = leg;
+      } else if (intent.type === 'tradePrice') {
+        if (currentForm.orderType === 'limit') {
+          if (currentForm.bboEnabled) {
+            return 'rejected';
+          }
+          field = 'limitPrice';
+        } else if (currentForm.orderType === 'conditional') {
+          field = 'triggerPrice';
+        } else {
+          return 'rejected';
+        }
+      } else {
+        return 'rejected';
       }
-      if (currentForm.orderType === 'conditional') {
-        setPrice('triggerPrice', price);
-        priceFillRevisionRef.current += 1;
-        setPriceFillFeedback({
-          field: 'triggerPrice',
-          revision: priceFillRevisionRef.current,
+
+      const normalizedPrice =
+        price == null
+          ? ''
+          : sanitizePerpsProDecimalInput(
+              price,
+              market?.marketData.pxDecimals ?? 2,
+            );
+      if (!positive(normalizedPrice)) {
+        return 'invalidPrice';
+      }
+
+      if (field === 'limitPrice' || field === 'triggerPrice') {
+        setPrice(field, normalizedPrice);
+      } else {
+        patchForm({
+          attachedTpSl: {
+            ...currentForm.attachedTpSl,
+            [field]: {
+              ...currentForm.attachedTpSl[field],
+              rawMagnitude: normalizedPrice,
+            },
+          },
         });
       }
+      priceFillRevisionRef.current += 1;
+      setPriceFillFeedback({
+        field,
+        revision: priceFillRevisionRef.current,
+      });
+      return 'accepted';
     },
-    [setPrice],
+    [market?.marketData.pxDecimals, patchForm, setPrice],
   );
   const applyOrderType = useCallback(
     (orderType: PerpsProTradeOrderType) => {
@@ -1103,6 +1170,7 @@ export const usePerpsProTrade = ({
     ],
   );
   const beginAmountEntry = useCallback(() => {
+    tradeInputFocusOwnerRef.current = 'amount';
     if (amountSource !== 'slider') return;
     amountDraftRef.current = createPerpsProTradeAmountDraft();
     amountOverflowToastActiveRef.current = false;
@@ -1112,6 +1180,11 @@ export const usePerpsProTrade = ({
     setPercentageState(0);
     patchForm({ amount: '' });
   }, [amountSource, patchForm]);
+  const endAmountEntry = useCallback(() => {
+    if (tradeInputFocusOwnerRef.current === 'amount') {
+      tradeInputFocusOwnerRef.current = null;
+    }
+  }, []);
   const getSideProjection = useCallback(
     (side: PerpsProTradeSide) =>
       resolvePerpsProTradeProjection({
@@ -1337,6 +1410,7 @@ export const usePerpsProTrade = ({
     draft: form.attachedTpSl,
     leverage,
     onChange: patchAttachedTpSl,
+    onFocusChange: handleTpSlFocusChange,
     onModeChange: (kind, mode) => {
       void tpSlModePreferences.setMode({
         leg: kind,
@@ -2277,6 +2351,7 @@ export const usePerpsProTrade = ({
     attachedTpSlExecutionEnabled: hasPerpsProAttachedTpSlExecutionCapability(),
     availableQuote,
     beginAmountEntry,
+    endAmountEntry,
     closeReview: () => !pendingRef.current && setReview(null),
     confirmLeverage,
     confirmReview,
@@ -2287,6 +2362,7 @@ export const usePerpsProTrade = ({
     getBboPrice,
     getCostDisplayAmount,
     getEstimatedLiquidationPrice,
+    getOrderBookPriceIntent,
     getMaxDisplayAmount,
     getSliderButtonDisplayAmount,
     estimatedLiquidation,
