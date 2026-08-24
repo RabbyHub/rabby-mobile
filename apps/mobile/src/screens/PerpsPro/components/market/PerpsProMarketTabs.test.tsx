@@ -149,6 +149,7 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-body',
+      bottom: 1,
       height: 2,
       width: 20,
     });
