@@ -1083,20 +1083,18 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({ setActiveInfoTab }),
     );
+    const animationFrame = jest
+      .spyOn(global, 'requestAnimationFrame')
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
-    const targetList = screen.getByTestId('perps-pro-scroll-openOrders', {
-      includeHiddenElements: true,
-    });
-    fireEvent(targetList, 'layout', {
-      nativeEvent: {
-        layout: { height: 600, width: 393, x: 0, y: 0 },
-      },
-    });
-    fireEvent(targetList, 'contentSizeChange', 393, 600);
     expect(mockInfoPagerSetPage).toHaveBeenCalledWith(1);
     expect(setActiveInfoTab).not.toHaveBeenCalled();
     expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
@@ -1108,6 +1106,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: { position: 1 },
     });
     expect(setActiveInfoTab).toHaveBeenCalledWith('openOrders');
+    animationFrame.mockRestore();
   });
 
   it('previews the top info tab during a drag without persisting it', () => {

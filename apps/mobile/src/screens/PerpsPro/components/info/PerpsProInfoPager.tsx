@@ -37,13 +37,8 @@ import {
   interruptPerpsProInfoScrollBridge,
   type PerpsProInfoScrollBridgeController,
 } from './usePerpsProInfoScrollBridge';
-import {
-  type PerpsProInfoListHandle,
-  usePerpsProInfoPageOffsetLifecycle,
-} from './usePerpsProInfoPageOffsetLifecycle';
 
 export { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
-export { getPerpsProInfoPagePreparedOffset } from './usePerpsProInfoPageOffsetLifecycle';
 
 export const getPreparedPerpsProInfoTabs = (
   activeTab: PerpsProInfoTab,
@@ -65,6 +60,30 @@ export const getPreparedPerpsProInfoTabs = (
   }
 
   return result;
+};
+
+export const getPerpsProInfoPagePreparedOffset = ({
+  activeOffset,
+  storedOffset,
+  stickyOffset,
+}: {
+  activeOffset: number;
+  storedOffset: number;
+  stickyOffset: number;
+}) => {
+  const safeActiveOffset = Number.isFinite(activeOffset)
+    ? Math.max(0, activeOffset)
+    : 0;
+  const safeStoredOffset = Number.isFinite(storedOffset)
+    ? Math.max(0, storedOffset)
+    : 0;
+  const safeStickyOffset = Number.isFinite(stickyOffset)
+    ? Math.max(0, stickyOffset)
+    : 0;
+
+  return safeActiveOffset < safeStickyOffset
+    ? safeActiveOffset
+    : Math.max(safeStoredOffset, safeStickyOffset);
 };
 
 export type PerpsProInfoPagerHandle = {
@@ -92,6 +111,10 @@ type PerpsProInfoPagerProps<Row> = {
   style?: StyleProp<ViewStyle>;
 };
 
+type PerpsProInfoListHandle = {
+  scrollToOffset: (params: { animated?: boolean; offset: number }) => void;
+};
+
 const PerpsProInfoPagerInner = <Row,>(
   {
     activeTab,
@@ -114,7 +137,24 @@ const PerpsProInfoPagerInner = <Row,>(
   ref: React.ForwardedRef<PerpsProInfoPagerHandle>,
 ) => {
   const pagerRef = useRef<PagerView>(null);
-  const lastRequestedTabRef = useRef<PerpsProInfoTab | null>(null);
+  const listRefs = useRef<
+    Partial<Record<PerpsProInfoTab, PerpsProInfoListHandle | null>>
+  >({});
+  const offsetsRef = useRef<Record<PerpsProInfoTab, number>>({
+    account: 0,
+    positions: 0,
+    openOrders: 0,
+  });
+  const contentHeightsRef = useRef<Record<PerpsProInfoTab, number>>({
+    account: 0,
+    positions: 0,
+    openOrders: 0,
+  });
+  const viewportHeightsRef = useRef<Record<PerpsProInfoTab, number>>({
+    account: 0,
+    positions: 0,
+    openOrders: 0,
+  });
   const selectedIndexRef = useRef(PERPS_PRO_INFO_TABS.indexOf(activeTab));
   const settledPagePosition = useSharedValue(selectedIndexRef.current);
   const isPreviewGestureActive = useSharedValue(false);
@@ -127,53 +167,15 @@ const PerpsProInfoPagerInner = <Row,>(
     [activeTab, requestedTab],
   );
 
-  const getSelectedTab = useCallback(
-    () => PERPS_PRO_INFO_TABS[selectedIndexRef.current] ?? activeTabRef.current,
+  const recordOffset = useCallback(
+    (tab: PerpsProInfoTab, rawOffset: number) => {
+      if (!Number.isFinite(rawOffset)) {
+        return;
+      }
+      offsetsRef.current[tab] = Math.max(0, rawOffset);
+    },
     [],
   );
-
-  const handlePreparedTransition = useCallback(
-    (tab: PerpsProInfoTab, animated: boolean) => {
-      const targetIndex = PERPS_PRO_INFO_TABS.indexOf(tab);
-      if (
-        targetIndex < 0 ||
-        targetIndex === selectedIndexRef.current ||
-        !pagerRef.current
-      ) {
-        if (scrollBridge) {
-          scrollBridge.pageGestureActive.value = false;
-        }
-        return false;
-      }
-      if (animated && Math.abs(targetIndex - selectedIndexRef.current) === 1) {
-        pagerRef.current.setPage(targetIndex);
-      } else {
-        pagerRef.current.setPageWithoutAnimation(targetIndex);
-      }
-      return true;
-    },
-    [scrollBridge],
-  );
-
-  const pageOffsetLifecycle = usePerpsProInfoPageOffsetLifecycle({
-    getActiveScrollOffset,
-    getSelectedTab,
-    onActivateOffset,
-    onPreparedTransition: handlePreparedTransition,
-    stickyOffset,
-  });
-  const {
-    activatePage,
-    cancelPendingTransition: cancelPendingOffsetTransition,
-    getPageMaxOffset,
-    preparePages,
-    recordActualOffset,
-    recordContentHeight: recordPageContentHeight,
-    recordViewportHeight: recordPageViewportHeight,
-    requestPage: requestOffsetPage,
-    scrollActiveToOffset: scrollActivePageToOffset,
-    setListRef,
-  } = pageOffsetLifecycle;
 
   const updateBridgeMaxOffset = useCallback(
     (tab: PerpsProInfoTab) => {
@@ -184,10 +186,32 @@ const PerpsProInfoPagerInner = <Row,>(
       if (!target) {
         return;
       }
-      target.maxOffset.value = getPageMaxOffset(tab);
+      target.maxOffset.value = Math.max(
+        0,
+        contentHeightsRef.current[tab] - viewportHeightsRef.current[tab],
+      );
     },
-    [getPageMaxOffset, scrollBridge],
+    [scrollBridge],
   );
+
+  const preparePages = useCallback(() => {
+    const currentTab = activeTabRef.current;
+    const activeOffset = Math.max(0, getActiveScrollOffset());
+    recordOffset(currentTab, activeOffset);
+
+    for (const tab of PERPS_PRO_INFO_TABS) {
+      if (tab === currentTab) {
+        continue;
+      }
+      const offset = getPerpsProInfoPagePreparedOffset({
+        activeOffset,
+        stickyOffset,
+        storedOffset: offsetsRef.current[tab],
+      });
+      recordOffset(tab, offset);
+      listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
+    }
+  }, [getActiveScrollOffset, recordOffset, stickyOffset]);
 
   const publishPagePreview = useCallback(
     (position: number | null) => {
@@ -214,71 +238,50 @@ const PerpsProInfoPagerInner = <Row,>(
     resetPreviewSession();
   }, [previewPagePosition, resetPreviewSession, settledPagePosition]);
 
-  const cancelPendingTransition = useCallback(
-    (releasePageGesture = true) => {
-      cancelPendingOffsetTransition();
-      if (releasePageGesture && scrollBridge && !isPreviewGestureActive.value) {
-        scrollBridge.pageGestureActive.value = false;
-      }
-    },
-    [cancelPendingOffsetTransition, isPreviewGestureActive, scrollBridge],
-  );
-
-  const requestPage = useCallback(
+  const setPage = useCallback(
     (tab: PerpsProInfoTab, animated: boolean) => {
       clearPagePreview();
       const targetIndex = PERPS_PRO_INFO_TABS.indexOf(tab);
       if (targetIndex < 0 || targetIndex === selectedIndexRef.current) {
-        cancelPendingTransition();
         return;
       }
-
       if (scrollBridge) {
         scrollBridge.epoch.value += 1;
         scrollBridge.pageGestureActive.value = true;
       }
-      requestOffsetPage(tab, animated);
+      preparePages();
+      if (animated && Math.abs(targetIndex - selectedIndexRef.current) === 1) {
+        pagerRef.current?.setPage(targetIndex);
+      } else {
+        pagerRef.current?.setPageWithoutAnimation(targetIndex);
+      }
     },
-    [
-      cancelPendingTransition,
-      clearPagePreview,
-      requestOffsetPage,
-      scrollBridge,
-    ],
+    [clearPagePreview, preparePages, scrollBridge],
   );
 
   const scrollActiveToOffset = useCallback(
     (rawOffset: number, animated = true) => {
+      const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0;
       const tab = activeTabRef.current;
       if (scrollBridge) {
         scrollBridge.epoch.value += 1;
       }
-      scrollActivePageToOffset(tab, rawOffset, animated);
+      recordOffset(tab, offset);
+      listRefs.current[tab]?.scrollToOffset({ animated, offset });
+      onActivateOffset(offset);
     },
-    [scrollActivePageToOffset, scrollBridge],
+    [onActivateOffset, recordOffset, scrollBridge],
   );
 
   useImperativeHandle(
     ref,
     () => ({
       scrollActiveToOffset,
-      setPage: tab => requestPage(tab, true),
-      setPageWithoutAnimation: tab => requestPage(tab, false),
+      setPage: tab => setPage(tab, true),
+      setPageWithoutAnimation: tab => setPage(tab, false),
     }),
-    [requestPage, scrollActiveToOffset],
+    [scrollActiveToOffset, setPage],
   );
-
-  useEffect(() => {
-    if (requestedTab === lastRequestedTabRef.current) {
-      return;
-    }
-    lastRequestedTabRef.current = requestedTab;
-    if (requestedTab == null) {
-      cancelPendingTransition();
-      return;
-    }
-    requestPage(requestedTab, true);
-  }, [cancelPendingTransition, requestPage, requestedTab]);
 
   useEffect(() => {
     const activeIndex = PERPS_PRO_INFO_TABS.indexOf(activeTab);
@@ -290,7 +293,6 @@ const PerpsProInfoPagerInner = <Row,>(
     if (activeIndex < 0 || activeIndex === selectedIndexRef.current) {
       return;
     }
-    cancelPendingTransition();
     clearPagePreview();
     selectedIndexRef.current = activeIndex;
     settledPagePosition.value = activeIndex;
@@ -298,7 +300,6 @@ const PerpsProInfoPagerInner = <Row,>(
     pagerRef.current?.setPageWithoutAnimation(activeIndex);
   }, [
     activeTab,
-    cancelPendingTransition,
     clearPagePreview,
     previewPagePosition,
     scrollBridge,
@@ -325,13 +326,13 @@ const PerpsProInfoPagerInner = <Row,>(
       previewPagePosition.value = position;
       finishPreviewSession(sessionId, !shouldCommit);
       selectedIndexRef.current = position;
-      onActivateOffset(activatePage(tab));
+      const offset = offsetsRef.current[tab];
+      onActivateOffset(offset);
       if (shouldCommit) {
         onPageSelected(tab);
       }
     },
     [
-      activatePage,
       isPreviewGestureActive,
       onActivateOffset,
       onPageSelected,
@@ -345,17 +346,11 @@ const PerpsProInfoPagerInner = <Row,>(
 
   const beginPageDrag = useCallback(
     (sessionId: number) => {
-      cancelPendingTransition(false);
       beginPreviewSession(sessionId);
       preparePages();
       onPageDragStart();
     },
-    [
-      beginPreviewSession,
-      cancelPendingTransition,
-      onPageDragStart,
-      preparePages,
-    ],
+    [beginPreviewSession, onPageDragStart, preparePages],
   );
 
   const handlePageScrollStateChanged =
@@ -418,34 +413,30 @@ const PerpsProInfoPagerInner = <Row,>(
 
   const recordScrollEnd = useCallback(
     (tab: PerpsProInfoTab, event: NativeSyntheticEvent<NativeScrollEvent>) =>
-      recordActualOffset(tab, event.nativeEvent.contentOffset.y),
-    [recordActualOffset],
-  );
-
-  const recordInactiveScroll = useCallback(
-    (tab: PerpsProInfoTab, event: NativeSyntheticEvent<NativeScrollEvent>) =>
-      recordActualOffset(tab, event.nativeEvent.contentOffset.y),
-    [recordActualOffset],
+      recordOffset(tab, event.nativeEvent.contentOffset.y),
+    [recordOffset],
   );
 
   const recordContentHeight = useCallback(
     (tab: PerpsProInfoTab, height: number) => {
-      recordPageContentHeight(tab, height);
+      contentHeightsRef.current[tab] = Math.max(0, height);
       updateBridgeMaxOffset(tab);
     },
-    [recordPageContentHeight, updateBridgeMaxOffset],
+    [updateBridgeMaxOffset],
   );
 
   const recordViewportHeight = useCallback(
     (tab: PerpsProInfoTab, event: LayoutChangeEvent, active: boolean) => {
-      const height = event.nativeEvent.layout.height;
-      recordPageViewportHeight(tab, height);
+      viewportHeightsRef.current[tab] = Math.max(
+        0,
+        event.nativeEvent.layout.height,
+      );
       updateBridgeMaxOffset(tab);
       if (active) {
         onLayout(event);
       }
     },
-    [onLayout, recordPageViewportHeight, updateBridgeMaxOffset],
+    [onLayout, updateBridgeMaxOffset],
   );
 
   return (
@@ -483,11 +474,7 @@ const PerpsProInfoPagerInner = <Row,>(
                 }
                 onLayout={event => recordViewportHeight(tab, event, active)}
                 onMomentumScrollEnd={event => recordScrollEnd(tab, event)}
-                onScroll={
-                  active
-                    ? onActiveScroll
-                    : event => recordInactiveScroll(tab, event)
-                }
+                onScroll={active ? onActiveScroll : undefined}
                 onScrollBeginDrag={
                   active && scrollBridge
                     ? () => interruptPerpsProInfoScrollBridge(scrollBridge)
@@ -495,10 +482,8 @@ const PerpsProInfoPagerInner = <Row,>(
                 }
                 onScrollEndDrag={event => recordScrollEnd(tab, event)}
                 ref={list => {
-                  setListRef(
-                    tab,
-                    list as unknown as PerpsProInfoListHandle | null,
-                  );
+                  listRefs.current[tab] =
+                    list as unknown as PerpsProInfoListHandle;
                   if (scrollBridge) {
                     getPerpsProInfoScrollTarget(scrollBridge, tab)?.ref(
                       list as never,
