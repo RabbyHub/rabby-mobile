@@ -3,21 +3,24 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useState } from 'react';
 import {
-  StyleSheet,
+  PixelRatio,
   Pressable,
+  StyleSheet,
   View,
-  type LayoutChangeEvent,
   type StyleProp,
+  type TextLayoutEvent,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
-const UNDERLINE_STROKE_WIDTH = StyleSheet.hairlineWidth;
-const UNDERLINE_DOT_LENGTH = UNDERLINE_STROKE_WIDTH;
-const UNDERLINE_DOT_GAP = UNDERLINE_STROKE_WIDTH * 2;
-const UNDERLINE_CANVAS_HEIGHT = 1;
-const UNDERLINE_Y = UNDERLINE_CANVAS_HEIGHT - UNDERLINE_STROKE_WIDTH / 2;
+import {
+  arePerpsProDottedUnderlineGeometriesEqual,
+  PERPS_PRO_DOTTED_UNDERLINE_DEFAULT_FONT_SIZE,
+  resolvePerpsProDottedUnderlineGeometry,
+  type PerpsProDottedUnderlineGeometry,
+  type PerpsProDottedUnderlineLineMetrics,
+} from './perpsProDottedUnderlineGeometry';
 
 interface PerpsProDottedUnderlineTextProps {
   allowNaturalWidth?: boolean;
@@ -48,41 +51,74 @@ export const PerpsProDottedUnderlineText: React.FC<
   testID,
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
-  const [textWidth, setTextWidth] = useState(0);
+  const [underlineGeometry, setUnderlineGeometry] =
+    useState<PerpsProDottedUnderlineGeometry | null>(null);
+  const flattenedTextStyle = StyleSheet.flatten(style);
+  const fontSize =
+    typeof flattenedTextStyle?.fontSize === 'number'
+      ? flattenedTextStyle.fontSize
+      : PERPS_PRO_DOTTED_UNDERLINE_DEFAULT_FONT_SIZE;
   const textColor =
-    StyleSheet.flatten(style)?.color ?? colors2024['neutral-secondary'];
-  const handleTextLayout = useCallback((event: LayoutChangeEvent) => {
-    const nextWidth = event.nativeEvent.layout.width;
-    setTextWidth(currentWidth =>
-      Math.abs(currentWidth - nextWidth) < StyleSheet.hairlineWidth
-        ? currentWidth
-        : nextWidth,
-    );
-  }, []);
+    flattenedTextStyle?.color ?? colors2024['neutral-secondary'];
+  const handleTextLayout = useCallback(
+    (event: TextLayoutEvent) => {
+      const line = event.nativeEvent.lines[0] as
+        | PerpsProDottedUnderlineLineMetrics
+        | undefined;
+      const nextGeometry = line
+        ? resolvePerpsProDottedUnderlineGeometry({
+            fontSize,
+            line,
+            minimumStrokeWidth: StyleSheet.hairlineWidth,
+            roundToNearestPixel: PixelRatio.roundToNearestPixel,
+          })
+        : null;
+      setUnderlineGeometry(currentGeometry =>
+        arePerpsProDottedUnderlineGeometriesEqual(
+          currentGeometry,
+          nextGeometry,
+          StyleSheet.hairlineWidth,
+        )
+          ? currentGeometry
+          : nextGeometry,
+      );
+    },
+    [fontSize],
+  );
 
   const content = (
     <>
       <Text
         numberOfLines={numberOfLines}
-        onLayout={handleTextLayout}
+        onTextLayout={handleTextLayout}
         style={style}>
         {children}
       </Text>
-      {textWidth > 0 ? (
+      {underlineGeometry && underlineGeometry.width > 0 ? (
         <View
           pointerEvents="none"
-          style={[styles.underline, { width: textWidth }]}
+          style={[
+            styles.underline,
+            {
+              height: underlineGeometry.canvasHeight,
+              top: underlineGeometry.canvasTop,
+              width: underlineGeometry.width,
+            },
+          ]}
           testID="perps-pro-dotted-underline">
           <Svg height="100%" pointerEvents="none" width="100%">
             <Line
               stroke={textColor}
-              strokeDasharray={[UNDERLINE_DOT_LENGTH, UNDERLINE_DOT_GAP]}
+              strokeDasharray={[
+                underlineGeometry.dotLength,
+                underlineGeometry.dotGap,
+              ]}
               strokeLinecap="round"
-              strokeWidth={UNDERLINE_STROKE_WIDTH}
-              x1={0}
-              x2="100%"
-              y1={UNDERLINE_Y}
-              y2={UNDERLINE_Y}
+              strokeWidth={underlineGeometry.strokeWidth}
+              x1={underlineGeometry.lineX1}
+              x2={underlineGeometry.lineX2}
+              y1={underlineGeometry.lineY}
+              y2={underlineGeometry.lineY}
             />
           </Svg>
         </View>
@@ -133,8 +169,6 @@ const getStyle = createGetStyles2024(() => ({
     flexShrink: 0,
   },
   underline: {
-    bottom: 0,
-    height: UNDERLINE_CANVAS_HEIGHT,
     left: 0,
     position: 'absolute',
   },

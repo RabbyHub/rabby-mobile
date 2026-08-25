@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { PixelRatio, StyleSheet } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
 jest.mock('@/components/Typography', () => ({
@@ -19,9 +19,10 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 import { PerpsProDottedUnderlineText } from './PerpsProDottedUnderlineText';
+import { resolvePerpsProDottedUnderlineGeometry } from './perpsProDottedUnderlineGeometry';
 
 describe('PerpsProDottedUnderlineText', () => {
-  it('draws a hairline inside a non-zero canvas using the measured text width', () => {
+  it('draws the measured label with the approved thickness and offset', () => {
     const view = render(
       <PerpsProDottedUnderlineText style={{ color: '#9a9ca9', fontSize: 12 }}>
         PNL (USDC)
@@ -30,9 +31,16 @@ describe('PerpsProDottedUnderlineText', () => {
 
     expect(view.UNSAFE_queryByType(Svg)).toBeNull();
 
-    fireEvent(screen.getByText('PNL (USDC)'), 'layout', {
+    const line = { ascender: 11, width: 61.5, y: 0 };
+    const expectedGeometry = resolvePerpsProDottedUnderlineGeometry({
+      fontSize: 12,
+      line,
+      minimumStrokeWidth: StyleSheet.hairlineWidth,
+      roundToNearestPixel: PixelRatio.roundToNearestPixel,
+    });
+    fireEvent(screen.getByText('PNL (USDC)'), 'textLayout', {
       nativeEvent: {
-        layout: { height: 16, width: 61.5, x: 0, y: 0 },
+        lines: [line],
       },
     });
 
@@ -41,8 +49,9 @@ describe('PerpsProDottedUnderlineText', () => {
         screen.getByTestId('perps-pro-dotted-underline').props.style,
       ),
     ).toMatchObject({
-      height: 1,
-      width: 61.5,
+      height: expectedGeometry.canvasHeight,
+      top: expectedGeometry.canvasTop,
+      width: expectedGeometry.width,
     });
     expect(view.UNSAFE_getByType(Svg).props).toMatchObject({
       height: '100%',
@@ -50,11 +59,12 @@ describe('PerpsProDottedUnderlineText', () => {
     });
     expect(view.UNSAFE_getByType(Line).props).toMatchObject({
       stroke: '#9a9ca9',
-      strokeDasharray: [StyleSheet.hairlineWidth, StyleSheet.hairlineWidth * 2],
-      strokeWidth: StyleSheet.hairlineWidth,
-      x2: '100%',
-      y1: 1 - StyleSheet.hairlineWidth / 2,
-      y2: 1 - StyleSheet.hairlineWidth / 2,
+      strokeDasharray: [expectedGeometry.dotLength, expectedGeometry.dotGap],
+      strokeWidth: expectedGeometry.strokeWidth,
+      x1: expectedGeometry.lineX1,
+      x2: expectedGeometry.lineX2,
+      y1: expectedGeometry.lineY,
+      y2: expectedGeometry.lineY,
     });
   });
 
