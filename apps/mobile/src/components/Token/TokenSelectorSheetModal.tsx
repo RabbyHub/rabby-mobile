@@ -74,7 +74,7 @@ import type {
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
-import { TokenItemContextMenu } from './TokenContextMenu';
+import { gotoTokenDetail, TokenItemContextMenu } from './TokenContextMenu';
 import {
   ExternalTokenRow,
   formatPercentage,
@@ -94,6 +94,7 @@ import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/Exchan
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useChainList } from '@/hooks/useChainList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import RcIconTokenDetailInfoCC from '@/assets/icons/common/token-detail-info-cc.svg';
 import { touchedFeedback } from '@/utils/touch';
 import type { ITokenItem, TokenSelectIndexRow } from '@/store/tokens';
 import {
@@ -1187,6 +1188,29 @@ const TokenSelectorSheetModalContent = ({
                               </View>
                             </View>
                           </View>
+                          {needToTokenMarketInfo && (
+                            <TouchableOpacity
+                              accessibilityLabel={t(
+                                'component.TokenSelector.contextMenu.viewDetail',
+                              )}
+                              hitSlop={8}
+                              onPress={event => {
+                                event.stopPropagation();
+                                gotoTokenDetail({
+                                  token,
+                                  type,
+                                  needToTokenMarketInfo,
+                                  isCustomTestnetToken,
+                                });
+                              }}
+                              style={styles.tokenDetailButton}>
+                              <RcIconTokenDetailInfoCC
+                                width={20}
+                                height={20}
+                                color={colors2024['neutral-secondary']}
+                              />
+                            </TouchableOpacity>
+                          )}
                         </View>
                         {lightDisable && (
                           <View
@@ -1830,10 +1854,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexWrap: 'nowrap',
     },
     tokenCenter: {
+      flex: 1,
+      minWidth: 0,
       flexShrink: 1,
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'space-between',
+    },
+    tokenDetailButton: {
+      width: 20,
+      height: 20,
+      flexShrink: 0,
     },
     tokenCenterFloor: {
       flexDirection: 'row',
