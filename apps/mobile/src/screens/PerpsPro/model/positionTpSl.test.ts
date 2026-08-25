@@ -9,6 +9,7 @@ import {
   calculatePositionTpSlTriggerFromPnl,
   calculatePositionTpSlTriggerFromRoi,
   collectActivePositionTpSlOrders,
+  isPositionTpSlModeTriggerUnavailable,
   sortPartialPositionTpSlOrders,
   validatePartialPositionTpSlAmount,
   validateFullPositionTpSlFormTrigger,
@@ -294,6 +295,37 @@ describe('Perps Pro position TP/SL model', () => {
         triggerPrice: '101',
       }),
     ).toEqual({ kind: 'valid', normalized: '101' });
+  });
+
+  it('distinguishes an untouched trigger from a positive mode input that cannot derive one', () => {
+    expect(
+      isPositionTpSlModeTriggerUnavailable({
+        inputSource: 'trigger',
+        rawMagnitude: '101',
+        triggerPrice: '',
+      }),
+    ).toBe(false);
+    expect(
+      isPositionTpSlModeTriggerUnavailable({
+        inputSource: 'mode',
+        rawMagnitude: '0',
+        triggerPrice: '',
+      }),
+    ).toBe(false);
+    expect(
+      isPositionTpSlModeTriggerUnavailable({
+        inputSource: 'mode',
+        rawMagnitude: '999999999999999999999',
+        triggerPrice: '',
+      }),
+    ).toBe(true);
+    expect(
+      isPositionTpSlModeTriggerUnavailable({
+        inputSource: 'mode',
+        rawMagnitude: '10',
+        triggerPrice: '90',
+      }),
+    ).toBe(false);
   });
 
   it('mirrors Desktop full-position feedback without adding PnL or ROI caps', () => {

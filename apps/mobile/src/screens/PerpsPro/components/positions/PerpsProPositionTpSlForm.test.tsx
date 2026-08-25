@@ -389,6 +389,147 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(screen.queryByText(/Last/)).toBeNull();
   });
 
+  it('keeps partial estimates visible and blocks review when PnL or ROI cannot derive a trigger', async () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm {...input} mode="add" position={position()} />,
+    );
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '999999',
+    );
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '101',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    expect(
+      screen.getByText('page.perps.pro.positionTpsl.slTriggerInvalid'),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-hint'),
+    ).toBeTruthy();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+      trigger: '--',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price-field').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-field')
+          .props.style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).not.toHaveBeenCalled();
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-mode'),
+    );
+    await act(async () => {
+      await mockModeSheetProps.mock.lastCall?.[0].onSelect('roi');
+    });
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '1000',
+    );
+    expect(
+      screen.getByText('page.perps.pro.positionTpsl.slTriggerInvalid'),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '100',
+    );
+    expect(
+      screen.queryByText('page.perps.pro.positionTpsl.slTriggerInvalid'),
+    ).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: false });
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      legs: [
+        {
+          kind: 'takeProfit',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '1000099',
+        },
+        {
+          kind: 'stopLoss',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '90',
+        },
+      ],
+      mode: 'add',
+      scope: 'partial',
+    });
+  });
+
+  it('keeps a partial Modify TP error visible when a short PnL cannot derive a trigger', () => {
+    const initialOrder = order('takeProfit', 7, '90');
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        initialOrder={initialOrder}
+        mode="modify"
+        position={{
+          ...position([initialOrder]),
+          direction: 'short',
+          liquidationPrice: '120',
+        }}
+      />,
+    );
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '51',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+        .value,
+    ).toBe('');
+    expect(
+      screen.getByText('page.perps.pro.positionTpsl.tpTriggerInvalid'),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-hint'),
+    ).toBeTruthy();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+      trigger: '--',
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+  });
+
   it('blocks silent Position modification for duplicate same-side remote orders and exposes each Cancel', () => {
     const first = order('takeProfit', 1, '110', 'position');
     const second = order('takeProfit', 2, '120', 'position');

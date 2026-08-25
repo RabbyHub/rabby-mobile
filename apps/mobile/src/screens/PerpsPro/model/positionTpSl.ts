@@ -428,10 +428,29 @@ export type PerpsPositionTpSlFormTriggerValidation =
     }
   | { kind: 'valid'; normalized: string };
 
+export const isPositionTpSlModeTriggerUnavailable = ({
+  inputSource,
+  rawMagnitude,
+  triggerPrice,
+}: {
+  inputSource: 'mode' | 'trigger';
+  rawMagnitude: string;
+  triggerPrice: string;
+}) => {
+  const magnitude = finiteDecimal(rawMagnitude);
+  const trigger = finiteDecimal(triggerPrice);
+  return (
+    inputSource === 'mode' &&
+    !!magnitude?.gt(0) &&
+    (!triggerPrice.trim() || !trigger?.gt(0))
+  );
+};
+
 /**
- * Mirrors Desktop Perps' full-position TP/SL form feedback only. This is a
- * presentation guard: partial TP/SL and the Action/Command boundary keep
- * using validatePositionTpSlTrigger and their existing invariants.
+ * Mirrors Desktop Perps' full-position TP/SL feedback, including its
+ * liquidation priority. Partial TP/SL only shares the mode-trigger
+ * availability predicate above and keeps its generic Mark validation. The
+ * Action/Command boundary remains unchanged.
  */
 export const validateFullPositionTpSlFormTrigger = ({
   direction,
@@ -451,13 +470,16 @@ export const validateFullPositionTpSlFormTrigger = ({
   triggerPrice: string;
 }): PerpsPositionTpSlFormTriggerValidation => {
   const trigger = finiteDecimal(triggerPrice);
-  const hasPositiveModeMagnitude =
-    inputSource === 'mode' && !!finiteDecimal(rawMagnitude)?.gt(0);
+  const modeTriggerUnavailable = isPositionTpSlModeTriggerUnavailable({
+    inputSource,
+    rawMagnitude,
+    triggerPrice,
+  });
   const liquidation = finiteDecimal(liquidationPrice);
   const validLiquidation = liquidation?.gt(0) ? liquidation : null;
 
   if (!triggerPrice.trim() || trigger?.isZero()) {
-    if (!hasPositiveModeMagnitude) {
+    if (!modeTriggerUnavailable) {
       return { kind: 'empty' };
     }
     if (kind === 'stopLoss' && direction === 'long' && validLiquidation) {

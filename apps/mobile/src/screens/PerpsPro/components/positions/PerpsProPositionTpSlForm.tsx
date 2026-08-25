@@ -21,6 +21,7 @@ import {
 import type { PerpsProPositionTpSlFormPresentation } from '../../model/layout';
 import {
   buildPositionTpSlSummary,
+  isPositionTpSlModeTriggerUnavailable,
   validatePartialPositionTpSlAmount,
   validateFullPositionTpSlFormTrigger,
   validatePositionTpSlTrigger,
@@ -312,21 +313,37 @@ export const PerpsProPositionTpSlForm: React.FC<{
               triggerPrice: value,
             })
           : null;
-      const validation =
-        fullPositionValidation ??
-        validatePositionTpSlTrigger({
-          direction: position.direction,
-          kind,
-          markPrice,
+      const modeTriggerUnavailable =
+        mode !== 'position' &&
+        isPositionTpSlModeTriggerUnavailable({
+          inputSource: input.source,
+          rawMagnitude: input.rawMagnitude,
           triggerPrice: value,
         });
+      const validation =
+        fullPositionValidation ??
+        (modeTriggerUnavailable
+          ? ({ kind: 'invalid' } as const)
+          : validatePositionTpSlTrigger({
+              direction: position.direction,
+              kind,
+              markPrice,
+              triggerPrice: value,
+            }));
       return {
         changed: value !== initial,
         duplicate,
         errorMessage: fullPositionValidation
           ? getFullPositionTriggerError(fullPositionValidation)
+          : modeTriggerUnavailable
+          ? t(
+              kind === 'takeProfit'
+                ? 'page.perps.pro.positionTpsl.tpTriggerInvalid'
+                : 'page.perps.pro.positionTpsl.slTriggerInvalid',
+            )
           : null,
         existing,
+        modeTriggerUnavailable,
         sideSummary,
         validation,
         value,
@@ -478,8 +495,12 @@ export const PerpsProPositionTpSlForm: React.FC<{
                     rawMagnitude={input.rawMagnitude}
                     selectedMode={input.mode}
                     errorMessage={facts.errorMessage}
-                    highlightInvalidFields={mode === 'position'}
-                    showEmptyDescription={mode === 'position'}
+                    highlightInvalidFields={
+                      mode === 'position' || facts.modeTriggerUnavailable
+                    }
+                    showEmptyDescription={
+                      mode === 'position' || facts.modeTriggerUnavailable
+                    }
                     size={sideSize}
                     validationKind={facts.validation.kind}
                     value={input.triggerPrice}
