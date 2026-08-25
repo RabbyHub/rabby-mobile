@@ -195,14 +195,32 @@ export const PerpsOpenPositionPopup: React.FC<{
     return markPrice;
   }, [orderType, limitPx, markPrice]);
 
+  const bothFee = React.useMemo(() => {
+    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
+  }, [providerFee]);
+
+  // Opening consumes margin plus taker fees charged on the notional
+  // (margin × leverage), and the availableToTrade snapshot can be slightly
+  // stale by fill time — margin set to the full balance gets rejected by the
+  // exchange with "insufficient margin". Reserve the fee cost plus a small
+  // drift cushion, so the slider's 100% maps to a margin that still clears.
+  const maxSliderMargin = React.useMemo(() => {
+    return BigNumber.max(
+      new BigNumber(availableBalance)
+        .div(1 + bothFee * leverage + 0.001)
+        .decimalPlaces(2, BigNumber.ROUND_DOWN),
+      0,
+    ).toNumber();
+  }, [availableBalance, bothFee, leverage]);
+
   // Calculate slider percentage
   const sliderPercentage = React.useMemo(() => {
     const marginValue = Number(margin) || 0;
-    if (marginValue === 0 || availableBalance === 0) {
+    if (marginValue === 0 || maxSliderMargin === 0) {
       return 0;
     }
-    return Math.min((marginValue / availableBalance) * 100, 100);
-  }, [margin, availableBalance]);
+    return Math.min((marginValue / maxSliderMargin) * 100, 100);
+  }, [margin, maxSliderMargin]);
 
   // 计算交易金额, 不是真实的交易金额，估算
   const tradeAmount = React.useMemo(() => {
@@ -271,10 +289,6 @@ export const PerpsOpenPositionPopup: React.FC<{
     tradeSize,
     pxDecimals,
   ]);
-
-  const bothFee = React.useMemo(() => {
-    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
-  }, [providerFee]);
 
   // Snapshot of everything CheckPopup needs to render the confirm page.
   // Memoized so the child's props identity is stable across unrelated re-renders.
@@ -557,7 +571,7 @@ export const PerpsOpenPositionPopup: React.FC<{
 
   // Handle slider change
   const handleSliderChange = useMemoizedFn((value: number) => {
-    const newMargin = (availableBalance * value) / 100;
+    const newMargin = (maxSliderMargin * value) / 100;
     setMargin(
       new BigNumber(newMargin).decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed(),
     );

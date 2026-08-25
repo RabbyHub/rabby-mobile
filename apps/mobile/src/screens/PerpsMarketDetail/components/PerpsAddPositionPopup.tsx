@@ -26,7 +26,11 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
-import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
+import {
+  PERPS_EXCHANGE_FEE_NUMBER,
+  PERPS_MAX_NTL_VALUE,
+  PERPS_MINI_USD_VALUE,
+} from '@/constant/perps';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -52,6 +56,7 @@ export const PerpsAddPositionPopup: React.FC<{
   visible?: boolean;
   coin: string;
   coinLogo: string;
+  providerFee: number;
   availableBalance: number;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
@@ -78,6 +83,7 @@ export const PerpsAddPositionPopup: React.FC<{
   visible,
   coin,
   coinLogo,
+  providerFee,
   activeAssetCtx,
   currentAssetCtx,
   leverage,
@@ -131,17 +137,35 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   });
 
+  const bothFee = React.useMemo(() => {
+    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
+  }, [providerFee]);
+
+  // Adding consumes margin plus taker fees charged on the notional
+  // (margin × leverage), and the availableToTrade snapshot can be slightly
+  // stale by fill time — margin set to the full balance gets rejected by the
+  // exchange with "insufficient margin". Reserve the fee cost plus a small
+  // drift cushion, so the slider's 100% maps to a margin that still clears.
+  const maxSliderMargin = React.useMemo(() => {
+    return BigNumber.max(
+      new BigNumber(availableBalance)
+        .div(1 + bothFee * leverage + 0.001)
+        .decimalPlaces(2, BigNumber.ROUND_DOWN),
+      0,
+    ).toNumber();
+  }, [availableBalance, bothFee, leverage]);
+
   // Calculate slider percentage
   const sliderPercentage = React.useMemo(() => {
-    if (addMargin === 0 || availableBalance === 0) {
+    if (addMargin === 0 || maxSliderMargin === 0) {
       return 0;
     }
-    return Math.min((addMargin / availableBalance) * 100, 100);
-  }, [addMargin, availableBalance]);
+    return Math.min((addMargin / maxSliderMargin) * 100, 100);
+  }, [addMargin, maxSliderMargin]);
 
   // Handle slider change
   const handleSliderChange = useMemoizedFn((value: number) => {
-    const newMargin = (availableBalance * value) / 100;
+    const newMargin = (maxSliderMargin * value) / 100;
     setMargin(
       new BigNumber(newMargin).decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed(),
     );
