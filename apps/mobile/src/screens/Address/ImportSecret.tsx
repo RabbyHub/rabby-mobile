@@ -417,7 +417,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
