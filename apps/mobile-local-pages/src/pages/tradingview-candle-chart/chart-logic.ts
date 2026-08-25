@@ -155,20 +155,35 @@ export function formatProCompactNumber(v: number | null | undefined): string {
   return normalized.toFixed(2);
 }
 
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
 export function formatProTooltipTime(
   time: number,
   interval: PerpsProChartConfig['interval'],
 ): string {
   const date = new Date(time * 1000);
-  const year = String(date.getFullYear());
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const month = MONTHS[date.getMonth()];
   const day = String(date.getDate()).padStart(2, '0');
+  const dateLabel = `${day} ${month}`;
   if (interval === '1d' || interval === '1w' || interval === '1M') {
-    return `${year}-${month}-${day}`;
+    return dateLabel;
   }
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
+  return `${dateLabel} ${hours}:${minutes}`;
 }
 
 export type PerpsProTooltipMetrics = {
@@ -317,20 +332,6 @@ export function shiftLogicalRangeForPrependedCandles(
   };
 }
 
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function formatYTime(t: number, tickMarkType?: number): string {
