@@ -95,7 +95,6 @@ export type PerpsProAttachedTpSlGuardContext = {
   dexId: string;
   hasPermission: boolean;
   marketKey: string | null;
-  maxBaseSize: string | null;
   positionIdentity: PerpsProAttachedTpSlPositionIdentity;
   runtime: PerpsRuntimeSnapshot;
 };
@@ -104,7 +103,6 @@ export type PerpsProAttachedTpSlGuardFailureReason =
   | PerpsProMarketFillEstimateError
   | PerpsProTpSlValidationErrorCode
   | 'accountOrRuntime'
-  | 'availableToTrade'
   | 'bookIdentity'
   | 'commandIdentity'
   | 'expectedEntryPrice'
@@ -376,10 +374,6 @@ export const validatePerpsProAttachedTpSlCommand = (
     !samePositionIdentity(context.positionIdentity, command.positionIdentity)
   ) {
     return { ok: false, reason: 'marketOrPosition' };
-  }
-  const maxBaseSize = positive(context.maxBaseSize);
-  if (!maxBaseSize || new BigNumber(command.parent.baseSize).gt(maxBaseSize)) {
-    return { ok: false, reason: 'availableToTrade' };
   }
   if (
     context.bookStatus !== 'ready' ||

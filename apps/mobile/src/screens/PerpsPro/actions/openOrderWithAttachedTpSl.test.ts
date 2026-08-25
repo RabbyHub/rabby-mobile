@@ -145,7 +145,6 @@ const guardContext = (
   dexId: '',
   hasPermission: true,
   marketKey: 'BTC:USDC',
-  maxBaseSize: '10',
   positionIdentity: getPerpsProAttachedTpSlPositionIdentity(null),
   runtime,
   ...overrides,
@@ -282,12 +281,6 @@ describe('Perps Pro attached TP/SL command and executor', () => {
         guardContext({ book: { ...book(), levels: [[], []] } }),
       ),
     ).toMatchObject({ ok: false, reason: 'bookUnavailable' });
-    expect(
-      validatePerpsProAttachedTpSlCommand(
-        command,
-        guardContext({ maxBaseSize: '1.99' }),
-      ),
-    ).toMatchObject({ ok: false, reason: 'availableToTrade' });
   });
 
   it('extracts and deduplicates raw server errors by batch leg role', () => {

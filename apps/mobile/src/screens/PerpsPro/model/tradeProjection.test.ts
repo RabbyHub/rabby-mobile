@@ -4,7 +4,9 @@ import {
   getPerpsProMaxDisplayReferencePrice,
   getPerpsProNetNewBaseSize,
   getPerpsProTradeDisplayReferencePrice,
+  resolvePerpsProLimitCapacityPrice,
   resolvePerpsProMaxBaseCapacity,
+  resolvePerpsProSliderAmount,
   resolvePerpsProTradeProjection,
 } from './tradeProjection';
 
@@ -50,11 +52,12 @@ describe('Perps Pro trade projection', () => {
     ).toBe('100');
   });
 
-  it('applies the plugin Limit safety reserve without exceeding the server max', () => {
+  it('applies the plugin Limit safety reserve at the mark price', () => {
     expect(
       resolvePerpsProMaxBaseCapacity({
         availableQuote: '100',
         leverage: 10,
+        markPrice: '100',
         orderType: 'limit',
         referencePrice: '100',
         serverMaxBase: '12',
@@ -66,6 +69,7 @@ describe('Perps Pro trade projection', () => {
       resolvePerpsProMaxBaseCapacity({
         availableQuote: '1000',
         leverage: 10,
+        markPrice: '100',
         orderType: 'limit',
         referencePrice: '100',
         serverMaxBase: '10',
@@ -81,6 +85,7 @@ describe('Perps Pro trade projection', () => {
         availableQuote: '100',
         currentPositionSize: '-2',
         leverage: 10,
+        markPrice: '100',
         orderType: 'limit',
         referencePrice: '100',
         serverMaxBase: '20',
@@ -88,6 +93,165 @@ describe('Perps Pro trade projection', () => {
         szDecimals: 2,
       }),
     ).toBe('11.9');
+  });
+
+  it.each([
+    ['buy', '80', '80'],
+    ['buy', '120', '100'],
+    ['sell', '125', '125'],
+    ['sell', '80', '100'],
+  ] as const)(
+    'uses the Hyperliquid resting-price rule for %s Limit %s',
+    (side, limitPrice, expected) => {
+      expect(
+        resolvePerpsProLimitCapacityPrice({
+          limitPrice,
+          markPrice: '100',
+          side,
+        }),
+      ).toBe(expected);
+    },
+  );
+
+  it('rebases the mark-priced server max before applying the Limit reserve', () => {
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'limit',
+        referencePrice: '80',
+        serverMaxBase: '10',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('12.37');
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'limit',
+        referencePrice: '125',
+        serverMaxBase: '10',
+        side: 'sell',
+        szDecimals: 2,
+      }),
+    ).toBe('7.92');
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'limit',
+        referencePrice: '120',
+        serverMaxBase: '10',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('8.25');
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'limit',
+        referencePrice: '80',
+        serverMaxBase: '10',
+        side: 'sell',
+        szDecimals: 2,
+      }),
+    ).toBe('10');
+  });
+
+  it('keeps the official Limit price adjustment when balance facts are unavailable', () => {
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'limit',
+        referencePrice: '80',
+        serverMaxBase: '10',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('12.5');
+  });
+
+  it.each(['0', '-1'])(
+    'treats a known non-positive balance %s as zero new Limit capacity',
+    availableQuote => {
+      expect(
+        resolvePerpsProMaxBaseCapacity({
+          availableQuote,
+          leverage: 10,
+          markPrice: '100',
+          orderType: 'limit',
+          referencePrice: '80',
+          serverMaxBase: '10',
+          side: 'buy',
+          szDecimals: 2,
+        }),
+      ).toBe('0');
+    },
+  );
+
+  it('keeps opposite closable exposure when the available balance is zero', () => {
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '0',
+        currentPositionSize: '-2',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'limit',
+        referencePrice: '80',
+        serverMaxBase: '10',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('2');
+  });
+
+  it('extends the Limit reserve to Conditional Limit but not Conditional Market', () => {
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        conditionalExecution: 'limit',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'conditional',
+        referencePrice: '80',
+        serverMaxBase: '10',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('12.37');
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        conditionalExecution: 'market',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'conditional',
+        referencePrice: '80',
+        serverMaxBase: '10.129',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('10.12');
+    expect(
+      resolvePerpsProMaxBaseCapacity({
+        availableQuote: '100',
+        leverage: 10,
+        markPrice: '100',
+        orderType: 'market',
+        referencePrice: '80',
+        serverMaxBase: '10.129',
+        side: 'buy',
+        szDecimals: 2,
+      }),
+    ).toBe('10.12');
   });
 
   it('uses live market only as the empty Conditional Limit Max fallback', () => {
@@ -193,5 +357,24 @@ describe('Perps Pro trade projection', () => {
         szDecimals: 2,
       })?.baseSize,
     ).toBe('0.33');
+  });
+
+  it('uses the canonical direction max as the exact 100% endpoint', () => {
+    expect(
+      resolvePerpsProSliderAmount({
+        maxBase: '12.37',
+        percentage: 100,
+        price: '80',
+        szDecimals: 2,
+      }),
+    ).toEqual({ baseSize: '12.37', quoteAmount: '989.6' });
+    expect(
+      resolvePerpsProSliderAmount({
+        maxBase: '12.37',
+        percentage: 37,
+        price: '80',
+        szDecimals: 2,
+      })?.baseSize,
+    ).toBe('4.57');
   });
 });
