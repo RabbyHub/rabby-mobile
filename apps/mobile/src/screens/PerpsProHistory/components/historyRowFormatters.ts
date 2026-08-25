@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js';
 
 import {
   formatPerpsProDecimal,
+  formatPerpsProPrice,
   isPerpsProStableAsset,
 } from '@/screens/PerpsPro/utils/format';
 
@@ -46,3 +47,16 @@ export const formatPerpsProHistoryAssetAmount = (
   isPerpsProStableAsset(asset)
     ? formatPerpsProDecimal(value, 2)
     : formatPerpsProHistoryAmount(value, maximumDecimals);
+
+export const formatPerpsProOrderHistoryPrice = (
+  value: string | null,
+  maximumDecimals?: number,
+) => {
+  const formatted = formatPerpsProPrice(value, maximumDecimals);
+  if (formatted === '-') {
+    return formatted;
+  }
+  const [integer, fraction = ''] = formatted.split('.');
+  const trimmedFraction = fraction.replace(/0+$/u, '').padEnd(2, '0');
+  return `${integer}.${trimmedFraction}`;
+};

@@ -45,6 +45,7 @@ import { buildPerpsProOrderExecutionIndex } from '../model/orderExecution';
 import { mapPerpsProTradeHistoryFact } from '../model/tradeHistory';
 import { mapPerpsProFundingHistoryFact } from '../model/fundingHistory';
 import { mapPerpsProTransactionHistoryFact } from '../model/transactionHistory';
+import { formatPerpsProOrderHistoryPrice } from './historyRowFormatters';
 import { PerpsProHistoryRowView } from './PerpsProHistoryRow';
 
 const makeOrder = (orderType: string): UserHistoricalOrders => ({
@@ -250,6 +251,20 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
 });
 
 describe('PerpsProHistoryRowView Orders', () => {
+  it.each([
+    ['88', 0, '88.00'],
+    ['1.1', 2, '1.10'],
+    ['1.0000', 4, '1.00'],
+    ['0.2000', 4, '0.20'],
+    ['0.897300', 6, '0.8973'],
+    [null, 4, '-'],
+  ] as const)(
+    'formats the Orders History price %s with a two-decimal floor',
+    (value, decimals, expected) => {
+      expect(formatPerpsProOrderHistoryPrice(value, decimals)).toBe(expected);
+    },
+  );
+
   it('renders Limit Amount and Filled in quote', () => {
     render(
       <PerpsProHistoryRowView
@@ -260,7 +275,7 @@ describe('PerpsProHistoryRowView Orders', () => {
     );
 
     expect(screen.getByText('15.00/20.00')).toBeTruthy();
-    expect(screen.getByText('-- / 0.2000')).toBeTruthy();
+    expect(screen.getByText('-- / 0.20')).toBeTruthy();
     expect(screen.queryByTestId('history-arrow')).toBeNull();
     expect(screen.UNSAFE_queryAllByType(Pressable)).toHaveLength(0);
     expect(screen.queryByText('Perp')).toBeNull();

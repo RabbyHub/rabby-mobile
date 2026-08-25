@@ -1,14 +1,12 @@
 import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
-import {
-  formatPerpsProDecimal,
-  formatPerpsProPrice,
-} from '@/screens/PerpsPro/utils/format';
+import { formatPerpsProDecimal } from '@/screens/PerpsPro/utils/format';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProOrderHistoryRow } from '../../types';
 import {
   formatPerpsProHistoryAssetAmount,
+  formatPerpsProOrderHistoryPrice,
   titleCasePerpsProHistoryValue,
 } from '../historyRowFormatters';
 import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
@@ -46,9 +44,12 @@ export const PerpsProOrderHistoryRowView: React.FC<{
   const orderPrice =
     row.priceKind === 'market'
       ? t('page.perps.pro.history.market')
-      : formatPerpsProPrice(row.price, row.market.pxDecimals ?? undefined);
+      : formatPerpsProOrderHistoryPrice(
+          row.price,
+          row.market.pxDecimals ?? undefined,
+        );
   const executionPrice = row.executionPrice
-    ? formatPerpsProPrice(
+    ? formatPerpsProOrderHistoryPrice(
         row.executionPrice,
         row.market.pxDecimals ?? undefined,
       )
