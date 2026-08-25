@@ -272,7 +272,6 @@ export const computeBorrowCapUsed = (
 
 const buildAccountAssets = ({
   clearinghouseState,
-  marketDataMap,
   mode,
   spotAssetCtxs,
   spotMeta,
@@ -323,48 +322,29 @@ const buildAccountAssets = ({
     usdValue: spotUsdc?.total || '0',
   });
 
-  const dexQuotes = quoteByDex(marketDataMap);
-  const perpsByQuote = new Map<
-    PerpsQuoteAsset,
-    { available: BigNumber; total: BigNumber }
-  >();
-  for (const [dex, summary] of Object.entries(
-    clearinghouseState?.perDexSummaries || {},
-  )) {
-    const quote = dexQuotes.get(dex || '') ?? (dex === '' ? 'USDC' : undefined);
-    if (!quote) {
-      continue;
-    }
-    const current = perpsByQuote.get(quote) ?? {
-      available: ZERO,
-      total: ZERO,
-    };
-    perpsByQuote.set(quote, {
-      available: current.available.plus(summary.withdrawable || 0),
-      total: current.total.plus(summary.accountValue || 0),
-    });
-  }
-  if (perpsByQuote.size === 0 && clearinghouseState) {
-    perpsByQuote.set('USDC', {
-      available: decimal(clearinghouseState.withdrawable),
-      total: decimal(clearinghouseState.marginSummary.accountValue),
-    });
-  }
-  for (const [coin, value] of perpsByQuote) {
-    if (coin === 'USDH') {
-      continue;
-    }
-    rows.push({
-      action: coin === 'USDC' ? 'none' : 'swap',
-      available: value.available.toString(),
-      coin,
-      fullName: PERPS_QUOTE_ASSET_FULL_NAME[coin],
-      key: `perps:${coin}`,
-      ledger: 'perps',
-      total: value.total.toString(),
-      usdValue: value.total.toString(),
-    });
-  }
+  const perDexSummaries = clearinghouseState?.perDexSummaries || {};
+  const defaultDexSummary = perDexSummaries[''];
+  const hasPerDexSummaries = Object.keys(perDexSummaries).length > 0;
+  const perpsAvailable = defaultDexSummary
+    ? decimal(defaultDexSummary.withdrawable)
+    : !hasPerDexSummaries && clearinghouseState
+    ? decimal(clearinghouseState.withdrawable)
+    : ZERO;
+  const perpsTotal = defaultDexSummary
+    ? decimal(defaultDexSummary.accountValue)
+    : !hasPerDexSummaries && clearinghouseState
+    ? decimal(clearinghouseState.marginSummary.accountValue)
+    : ZERO;
+  rows.push({
+    action: 'none',
+    available: perpsAvailable.toString(),
+    coin: 'USDC',
+    fullName: PERPS_QUOTE_ASSET_FULL_NAME.USDC,
+    key: 'perps:USDC',
+    ledger: 'perps',
+    total: perpsTotal.toString(),
+    usdValue: perpsTotal.toString(),
+  });
   return rows;
 };
 

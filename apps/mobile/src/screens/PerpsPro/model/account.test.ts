@@ -507,6 +507,126 @@ describe('Perps Pro account facts', () => {
     expect(invalidPortfolioMarginRatio.metrics[0]?.value).toBeNull();
   });
 
+  it('shows only native USDC ledgers for Standard while keeping aggregate totals', () => {
+    const aggregate = formatAllDexsClearinghouseState([
+      [
+        '',
+        clearinghouse({
+          accountValue: '100',
+          crossAccountValue: '80',
+          maintenance: '8',
+          time: 1,
+          withdrawable: '70',
+        }),
+      ],
+      [
+        'xyz',
+        clearinghouse({
+          accountValue: '50',
+          crossAccountValue: '40',
+          maintenance: '4',
+          time: 1,
+          withdrawable: '30',
+        }),
+      ],
+    ]) as AggregatedClearinghouseState;
+    const result = buildPerpsAccountViewModel({
+      clearinghouseState: aggregate,
+      marketDataMap: {
+        BTC: { coin: 'BTC', dexId: '', quoteAsset: 'USDC' },
+        'xyz:ABC': {
+          coin: 'xyz:ABC',
+          dexId: 'xyz',
+          quoteAsset: 'USDE',
+        },
+      },
+      spotAssetCtxs: {},
+      spotMeta,
+      spotState: formattedSpotState(),
+      userAbstraction: 'default',
+    });
+
+    expect(result.assets).toEqual([
+      expect.objectContaining({
+        available: '90',
+        coin: 'USDC',
+        key: 'spot:USDC',
+        total: '100',
+      }),
+      expect.objectContaining({
+        available: '70',
+        coin: 'USDC',
+        key: 'perps:USDC',
+        total: '100',
+      }),
+    ]);
+    expect(result.primaryValue).toBe('150');
+  });
+
+  it('does not relabel a non-default DEX balance as Standard USDC', () => {
+    const aggregate = formatAllDexsClearinghouseState([
+      [
+        'xyz',
+        clearinghouse({
+          accountValue: '50',
+          crossAccountValue: '40',
+          maintenance: '4',
+          time: 1,
+          withdrawable: '30',
+        }),
+      ],
+    ]) as AggregatedClearinghouseState;
+    const result = buildPerpsAccountViewModel({
+      clearinghouseState: aggregate,
+      marketDataMap: {
+        'xyz:ABC': {
+          coin: 'xyz:ABC',
+          dexId: 'xyz',
+          quoteAsset: 'USDE',
+        },
+      },
+      spotAssetCtxs: {},
+      spotMeta,
+      spotState: formattedSpotState(),
+      userAbstraction: 'default',
+    });
+
+    expect(result.assets[1]).toMatchObject({
+      available: '0',
+      coin: 'USDC',
+      total: '0',
+    });
+  });
+
+  it('uses aggregate Standard USDC only for a legacy frame without per-DEX facts', () => {
+    const aggregate = formatAllDexsClearinghouseState([
+      [
+        '',
+        clearinghouse({
+          accountValue: '100',
+          crossAccountValue: '80',
+          maintenance: '8',
+          time: 1,
+          withdrawable: '70',
+        }),
+      ],
+    ]) as AggregatedClearinghouseState;
+    const result = buildPerpsAccountViewModel({
+      clearinghouseState: { ...aggregate, perDexSummaries: {} },
+      marketDataMap: {},
+      spotAssetCtxs: {},
+      spotMeta,
+      spotState: formattedSpotState(),
+      userAbstraction: 'default',
+    });
+
+    expect(result.assets[1]).toMatchObject({
+      available: '70',
+      coin: 'USDC',
+      total: '100',
+    });
+  });
+
   it('omits USDH only from the Account asset projection in every account mode', () => {
     const usdHDexState = formatAllDexsClearinghouseState([
       [
