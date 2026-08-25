@@ -271,7 +271,13 @@ export const projectPositionLiquidationPrice = ({
         .dividedBy(size)
         .dividedBy(denominator),
     );
-    if (!candidate.isFinite() || candidate.lte(0)) {
+    if (!candidate.isFinite()) {
+      continue;
+    }
+    if (candidate.lte(0)) {
+      if (direction === 'long' && lowerBound.isZero()) {
+        return '0';
+      }
       continue;
     }
     const candidateNotional = size.multipliedBy(candidate);
@@ -307,6 +313,9 @@ export const buildPositionMarginRiskProjection = ({
   });
   if (!liquidationPrice) {
     return null;
+  }
+  if (liquidationPrice === '0') {
+    return { liquidationDistance: '1', liquidationPrice };
   }
   const liquidationDistance = calculateLiquidationDistance({
     direction,

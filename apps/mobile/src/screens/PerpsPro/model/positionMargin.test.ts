@@ -286,6 +286,27 @@ describe('positionMargin', () => {
     ).toMatchObject({ liquidationPrice: long });
   });
 
+  it('floors an over-collateralized long projection at zero and 100%', () => {
+    expect(
+      projectPositionLiquidationPrice({
+        direction: 'long',
+        margin: '200',
+        markPrice: '100',
+        positionSize: '1',
+        tiers,
+      }),
+    ).toBe('0');
+    expect(
+      buildPositionMarginRiskProjection({
+        direction: 'long',
+        margin: '200',
+        markPrice: '100',
+        positionSize: '1',
+        tiers,
+      }),
+    ).toEqual({ liquidationDistance: '1', liquidationPrice: '0' });
+  });
+
   it('fails closed for malformed or non-self-consistent tier facts', () => {
     expect(
       projectPositionLiquidationPrice({
