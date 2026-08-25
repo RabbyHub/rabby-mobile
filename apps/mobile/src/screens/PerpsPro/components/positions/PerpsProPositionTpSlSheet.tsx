@@ -4,7 +4,10 @@ import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  type BottomSheetScrollViewMethods,
+} from '@gorhom/bottom-sheet';
 import React, {
   useCallback,
   useEffect,
@@ -75,7 +78,9 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     visible,
   }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
+    const scrollViewRef = useRef<BottomSheetScrollViewMethods>(null);
     const handledSettlementRevisionRef = useRef(0);
+    const keyboardSessionActiveRef = useRef(false);
     const { height: windowHeight } = useWindowDimensions();
     const stableWindowHeight = useRef(windowHeight).current;
     const insets = useSafeAreaInsets();
@@ -125,6 +130,47 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         modalRef.current?.dismiss();
       }
     }, [defaultTab, position.key, visible]);
+
+    useEffect(() => {
+      if (!visible) {
+        keyboardSessionActiveRef.current = false;
+        return;
+      }
+
+      let scrollFrame: number | null = null;
+      const keyboardShowSubscription = Keyboard.addListener(
+        'keyboardDidShow',
+        () => {
+          keyboardSessionActiveRef.current = true;
+          if (scrollFrame !== null) {
+            cancelAnimationFrame(scrollFrame);
+            scrollFrame = null;
+          }
+        },
+      );
+      const keyboardHideSubscription = Keyboard.addListener(
+        'keyboardDidHide',
+        () => {
+          if (!keyboardSessionActiveRef.current) {
+            return;
+          }
+          keyboardSessionActiveRef.current = false;
+          scrollFrame = requestAnimationFrame(() => {
+            scrollFrame = null;
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          });
+        },
+      );
+
+      return () => {
+        keyboardSessionActiveRef.current = false;
+        keyboardShowSubscription.remove();
+        keyboardHideSubscription.remove();
+        if (scrollFrame !== null) {
+          cancelAnimationFrame(scrollFrame);
+        }
+      };
+    }, [visible]);
 
     useEffect(() => {
       if (
@@ -213,6 +259,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         snapPoints={[snapPoint]}
         style={styles.modal}>
         <BottomSheetScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>

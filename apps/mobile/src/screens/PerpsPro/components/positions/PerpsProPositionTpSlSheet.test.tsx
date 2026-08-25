@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 
 const mockBottomSheetProps = jest.fn();
 const mockDismiss = jest.fn();
@@ -8,6 +8,9 @@ const mockSheetRegistration = jest.fn();
 const mockFormProps = jest.fn();
 const mockHeaderProps = jest.fn();
 const mockOpenFieldExplanation = jest.fn();
+const mockScrollToEnd = jest.fn();
+const mockKeyboardListeners = new Map<string, () => void>();
+let mockAnimationFrameCallback: FrameRequestCallback | null = null;
 
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
@@ -43,9 +46,20 @@ jest.mock('@/components/customized/BottomSheet', () => {
   };
 });
 
-jest.mock('@gorhom/bottom-sheet', () => ({
-  BottomSheetScrollView: require('react-native').View,
-}));
+jest.mock('@gorhom/bottom-sheet', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    BottomSheetScrollView: ReactModule.forwardRef(
+      ({ children, ...props }: any, ref: React.Ref<unknown>) => {
+        ReactModule.useImperativeHandle(ref, () => ({
+          scrollToEnd: mockScrollToEnd,
+        }));
+        return ReactModule.createElement(View, props, children);
+      },
+    ),
+  };
+});
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 34, left: 0, right: 0, top: 47 }),
@@ -194,6 +208,29 @@ const market = {
 describe('PerpsProPositionTpSlSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockKeyboardListeners.clear();
+    mockAnimationFrameCallback = null;
+    jest
+      .spyOn(Keyboard, 'addListener')
+      .mockImplementation((eventName, listener) => {
+        mockKeyboardListeners.set(eventName, listener as () => void);
+        return {
+          remove: jest.fn(() => {
+            if (mockKeyboardListeners.get(eventName) === listener) {
+              mockKeyboardListeners.delete(eventName);
+            }
+          }),
+        } as ReturnType<typeof Keyboard.addListener>;
+      });
+    jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
+      mockAnimationFrameCallback = callback;
+      return 1;
+    });
+    jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(jest.fn());
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('shows raw over-100% coverage, Market execution, and long high-to-low order sorting', () => {
@@ -246,6 +283,70 @@ describe('PerpsProPositionTpSlSheet', () => {
     ]);
     fireEvent.press(screen.getAllByLabelText('Est. PnL (USDC)')[0]!);
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
+  });
+
+  it('scrolls the form to the bottom only after a completed keyboard session', () => {
+    const { rerender } = render(
+      <PerpsProPositionTpSlSheet
+        amountUnit="base"
+        cancelingOids={[]}
+        confirmedCancelledOids={[]}
+        coveredByReview={false}
+        defaultTab="position"
+        market={market}
+        onCancelOrder={jest.fn()}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        pending={false}
+        position={position}
+        visible
+      />,
+    );
+
+    act(() => {
+      mockKeyboardListeners.get('keyboardDidHide')?.();
+    });
+    expect(mockAnimationFrameCallback).toBeNull();
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
+
+    act(() => {
+      mockKeyboardListeners.get('keyboardDidShow')?.();
+      mockKeyboardListeners.get('keyboardDidHide')?.();
+    });
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
+    act(() => {
+      mockAnimationFrameCallback?.(0);
+    });
+    expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
+    expect(mockScrollToEnd).toHaveBeenCalledWith({ animated: true });
+
+    act(() => {
+      mockKeyboardListeners.get('keyboardDidHide')?.();
+    });
+    expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      mockKeyboardListeners.get('keyboardDidShow')?.();
+      mockKeyboardListeners.get('keyboardDidHide')?.();
+    });
+    rerender(
+      <PerpsProPositionTpSlSheet
+        amountUnit="base"
+        cancelingOids={[]}
+        confirmedCancelledOids={[]}
+        coveredByReview={false}
+        defaultTab="position"
+        market={market}
+        onCancelOrder={jest.fn()}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        pending={false}
+        position={position}
+        visible={false}
+      />,
+    );
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
+    expect(mockKeyboardListeners.size).toBe(0);
   });
 
   it('keeps the right-aligned Unfilled column single-line so long content extends left', () => {
