@@ -27,10 +27,7 @@ import PQueue from 'p-queue';
 import { last, unionBy, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import type {
-  TxAllHistoryResult,
-  TxHistoryResult,
-} from '@rabby-wallet/rabby-api/dist/types';
+import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryList } from './components/HistoryGroupList';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -61,31 +58,22 @@ import {
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { Text } from '@/components/Typography';
 import type { HistoryDisplayItem } from '@/types/history';
+import { isSupportDBAccount } from '@/utils/account';
 
 export type { HistoryDisplayItem } from '@/types/history';
 
-const _PAGE_COUNT = 200;
-const REALL_TIME_API_PAGE_COUNT = 20;
+const HISTORY_API_PAGE_COUNT = 20;
 
 interface IFetchHistory {
   last: number;
   list: HistoryDisplayItem[];
 }
 
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('empty', () => {
-      if (q.pending <= 0) {
-        resolve(null);
-      }
-    });
-  });
-};
+const waitQueueFinished = (q: PQueue) => q.onIdle();
 
 function HistoryContent({
   isTestnet = false,
@@ -112,7 +100,6 @@ function HistoryContent({
   const [isShowAll, setIsShowAll] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
-  const PAGE_COUNT = isInTokenDetail ? REALL_TIME_API_PAGE_COUNT : _PAGE_COUNT;
   const {
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -126,6 +113,9 @@ function HistoryContent({
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     getTransactionHistorySucceedListSnapshot(),
   );
+  const isSupportAccount =
+    isSceneUsingAllAccounts || isSupportDBAccount(finalSceneCurrentAccount);
+  const isNeedFetchFromApi = isInTokenDetail || !isSupportAccount;
 
   const mergeDataWithDeduplication = useMemoizedFn(
     (
@@ -195,14 +185,6 @@ function HistoryContent({
       return { list, hasMore };
     },
   );
-  const isNeedFetchFromApi = useMemo(() => {
-    const isUseingContactsOrSafe =
-      !isSceneUsingAllAccounts &&
-      (finalSceneCurrentAccount?.type === KEYRING_CLASS.WATCH ||
-        finalSceneCurrentAccount?.type === KEYRING_CLASS.GNOSIS);
-    return isInTokenDetail || isUseingContactsOrSafe;
-  }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, isInTokenDetail]);
-
   const batchFetchData = useMemoizedFn(async () => {
     const list: HistoryDisplayItem[] = [];
 
@@ -240,7 +222,7 @@ function HistoryContent({
                 tokenItem._tokenId,
               )
             : await fetchData(addr, lastMap.current[addr] || 0);
-          if (result.list.length < PAGE_COUNT) {
+          if (result.list.length < HISTORY_API_PAGE_COUNT) {
             hasMoreMap.current[addr] = false;
           } else {
             hasMoreMap.current[addr] = true;
@@ -261,9 +243,8 @@ function HistoryContent({
       if (!isReady.current) {
         isReady.current = true;
       }
-      if (accountList.length > 0) {
-        await waitQueueFinished(queue);
-      }
+      await waitQueueFinished(queue);
+      setFirstFetchDone(true);
       return {
         list: orderBy(list, 'time_at', 'desc'),
         hasMore: Object.values(hasMoreMap.current).some(item => item),
@@ -287,15 +268,12 @@ function HistoryContent({
       throw new Error('no account');
     }
 
-    const getHistory = !isInTokenDetail
-      ? openapi.getAllTxHistory
-      : openapi.listTxHisotry;
     try {
       const [res, transactions] = await Promise.all([
-        getHistory({
+        openapi.listTxHisotry({
           id: address,
           start_time: startTime,
-          page_count: PAGE_COUNT,
+          page_count: HISTORY_API_PAGE_COUNT,
           chain_id,
           token_id,
         }),
@@ -303,9 +281,7 @@ function HistoryContent({
       ]);
 
       const { project_dict, history_list: list } = res;
-      const token_dict = (res as TxHistoryResult).token_dict;
-      const token_uuid_dict = (res as TxAllHistoryResult).token_uuid_dict;
-      const tokenDict = token_dict || token_uuid_dict;
+      const tokenDict = (res as TxHistoryResult).token_dict;
 
       const displayList = list
         .map(item => ({
@@ -563,7 +539,7 @@ function HistoryContent({
       dataList?.list.filter(tx => {
         // based on tx type
         const shouldShowBasedOnType =
-          isShowAll || !isNeedFetchFromApi || !tx.is_scam;
+          !isSupportAccount || isShowAll || !tx.is_scam;
 
         // based on account
         const shouldShowBasedOnAccount =
@@ -578,6 +554,7 @@ function HistoryContent({
     fetchApiData,
     dbData,
     isNeedFetchFromApi,
+    isSupportAccount,
     isShowAll,
     // currentPage,
     isSceneUsingAllAccounts,
@@ -593,18 +570,30 @@ function HistoryContent({
   }, []);
 
   const getHeaderRight = useCallback(() => {
+    if (!isSupportAccount) {
+      return null;
+    }
+
     return (
       <HistoryFilterMenu
         isShowAll={isShowAll}
         setIsShowAll={setIsShowAll}
         handleSwitchShowAll={value => {
           historyListRef.current?.scrollToTop();
-          dbLastCursorRef.current = 0;
-          batchFetchDataFromDb(value);
+          if (!isNeedFetchFromApi) {
+            dbLastCursorRef.current = 0;
+            batchFetchDataFromDb(value);
+          }
         }}
       />
     );
-  }, [isShowAll, setIsShowAll, batchFetchDataFromDb]);
+  }, [
+    isSupportAccount,
+    isShowAll,
+    setIsShowAll,
+    isNeedFetchFromApi,
+    batchFetchDataFromDb,
+  ]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
