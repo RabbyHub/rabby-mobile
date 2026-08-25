@@ -61,6 +61,23 @@ export function isUserCancelledSignature(error: unknown): boolean {
   return error === 'Canceled' || isWalletUnlockCancelled(error);
 }
 
+// Normalize a thrown value into an Error without losing information.
+// `String(obj)` yields "[object Object]" and `JSON.stringify(err)` yields "{}"
+// (Error props are non-enumerable) — both produced message-less Sentry issues.
+function toError(value: unknown): Error {
+  if (value instanceof Error) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    return new Error(value);
+  }
+  try {
+    return new Error(JSON.stringify(value) ?? String(value));
+  } catch {
+    return new Error(String(value));
+  }
+}
+
 type RunPerpsActionConfig<T> = {
   /** Value returned when an error is caught (after the side effects below). */
   fallback: T;
@@ -111,16 +128,20 @@ export async function runPerpsAction<T>(
         (error?.message || `${config.label} error`),
       'error',
     );
-    Sentry.captureException(
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        extra: {
-          title,
-          context: config.context,
-          rawError: error?.message ?? error,
-        },
+    Sentry.captureException(toError(error), {
+      // Searchable in the issue stream (`perps_action:*`) — the captured
+      // error's own message rarely contains "PERPS".
+      tags: { perps_action: config.label },
+      // Appended to the default grouping so that un-symbolicated builds
+      // (minified single-line stacks) can't lump perps errors into the same
+      // catch-all issue as unrelated errors sharing that stack shape.
+      fingerprint: ['{{ default }}', 'perps-action', config.label],
+      extra: {
+        title,
+        context: config.context,
+        rawError: error?.message ?? error,
       },
-    );
+    });
     return config.fallback;
   }
 }
