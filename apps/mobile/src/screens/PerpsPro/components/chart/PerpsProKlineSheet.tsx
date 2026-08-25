@@ -36,9 +36,19 @@ import {
   PERPS_PRO_KLINE_CHART_HEIGHT,
   PerpsProKlineSkeleton,
 } from './PerpsProKlineSkeleton';
-import { PerpsProKlineToolbar } from './PerpsProKlineToolbar';
+import {
+  PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
+  PerpsProKlineToolbar,
+} from './PerpsProKlineToolbar';
 
-export const PERPS_PRO_KLINE_SHEET_HEIGHT = 286;
+export const PERPS_PRO_KLINE_HANDLE_HEIGHT = 40;
+export const PERPS_PRO_KLINE_FOOTER_HEIGHT = 40;
+export const PERPS_PRO_KLINE_CONTENT_HEIGHT =
+  PERPS_PRO_KLINE_TOOLBAR_HEIGHT +
+  PERPS_PRO_KLINE_CHART_HEIGHT +
+  PERPS_PRO_KLINE_FOOTER_HEIGHT;
+export const PERPS_PRO_KLINE_SHEET_HEIGHT =
+  PERPS_PRO_KLINE_HANDLE_HEIGHT + PERPS_PRO_KLINE_CONTENT_HEIGHT;
 const PERPS_PRO_KLINE_INITIAL_VISIBLE_BARS = 40;
 const PERPS_PRO_KLINE_MA_PERIODS = [7, 25, 99] as const;
 
@@ -376,7 +386,7 @@ export const PerpsProKlineSheet: React.FC<{
             onLoadOlder={kline.loadOlder}
             visible={visible}
           />
-          <View style={themedStyles.footer} />
+          <View style={themedStyles.footer} testID="perps-pro-kline-footer" />
         </BottomSheetView>
       </BottomSheet>
     </View>
@@ -415,11 +425,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     content: {
       backgroundColor: colors2024['neutral-bg-1'],
-      height: PERPS_PRO_KLINE_SHEET_HEIGHT - 40,
+      height: PERPS_PRO_KLINE_CONTENT_HEIGHT,
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      height: 40,
+      height: PERPS_PRO_KLINE_FOOTER_HEIGHT,
     },
   };
 });
