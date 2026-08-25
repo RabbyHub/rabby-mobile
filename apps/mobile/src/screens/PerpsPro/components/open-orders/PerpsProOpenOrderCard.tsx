@@ -16,6 +16,13 @@ import {
   formatPerpsProTime,
 } from '../../utils/format';
 
+const EDITABLE_VALUE_HIT_SLOP = {
+  bottom: 4,
+  left: 0,
+  right: 0,
+  top: 4,
+};
+
 const CancelButton: React.FC<{
   onPress: () => void;
   pending: boolean;
@@ -54,10 +61,13 @@ const EditableValue: React.FC<{
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      hitSlop={EDITABLE_VALUE_HIT_SLOP}
       onPress={onPress}
       style={styles.editableValue}
       testID={testID}>
-      <Text style={styles.detailValue}>{value}</Text>
+      <Text style={[styles.detailValue, styles.editableDetailValue]}>
+        {value}
+      </Text>
       <View pointerEvents="none" style={styles.editIcon}>
         <RcIconEdit
           color={colors2024['neutral-title-1']}
@@ -416,10 +426,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   editableValue: {
     alignItems: 'center',
+    alignSelf: 'stretch',
+    flex: 1,
     flexDirection: 'row',
-    flexShrink: 1,
     gap: 4,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
+    minWidth: 0,
   },
+  editableDetailValue: { marginLeft: 0 },
   editIcon: {
     alignItems: 'center',
     height: 16,
