@@ -6,16 +6,22 @@ import { apisKeyring } from './keyring';
 import { PERPS_AGENT_NAME } from '@/constant/perps';
 import type { Account } from '../startupServices/preference';
 import type { ApproveSignatures } from '@/core/services/perpsService';
+import {
+  installPerpsSdkTimeoutReport,
+  attachPerpsWsReconnectReport,
+} from './perpsSdkNetworkReport';
 
 let sdkInstance: HyperliquidSDK | null = null;
 
 class ApisPerps {
   getPerpsSDK() {
     if (!sdkInstance) {
+      installPerpsSdkTimeoutReport();
       sdkInstance = new HyperliquidSDK({
         isTestnet: false,
         timeout: 10000,
       });
+      attachPerpsWsReconnectReport(sdkInstance.ws);
       return sdkInstance;
     }
 
