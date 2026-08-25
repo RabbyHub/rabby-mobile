@@ -3,14 +3,31 @@ import { act, renderHook } from '@testing-library/react-native';
 const mockGetState = jest.fn();
 const mockShowToast = jest.fn();
 const mockGetSkipLimitConfirmation = jest.fn(async () => false);
+const mockGetSkipMarketConfirmation = jest.fn(async () => false);
+const mockSetSkipLimitConfirmation = jest.fn(async () => undefined);
+const mockSetSkipMarketConfirmation = jest.fn(async () => undefined);
+const mockExecuteClose = jest.fn(async () => ({ kind: 'filled' as const }));
 
 jest.mock('@/core/apis/perps', () => ({ apisPerps: {} }));
 jest.mock('@/core/serviceApi/perps', () => ({
   perpsServiceApi: {
     getSkipPerpsProLimitCloseConfirmation: () => mockGetSkipLimitConfirmation(),
-    setSkipPerpsProLimitCloseConfirmation: jest.fn(),
+    getSkipPerpsProMarketCloseConfirmation: () =>
+      mockGetSkipMarketConfirmation(),
+    setSkipPerpsProLimitCloseConfirmation: (value: boolean) =>
+      mockSetSkipLimitConfirmation(value),
+    setSkipPerpsProMarketCloseConfirmation: (value: boolean) =>
+      mockSetSkipMarketConfirmation(value),
   },
 }));
+jest.mock('@/hooks/perps/actions/closePosition', () => {
+  const actual = jest.requireActual('@/hooks/perps/actions/closePosition');
+  return {
+    ...actual,
+    executePerpsClosePosition: (...args: unknown[]) =>
+      mockExecuteClose(...args),
+  };
+});
 jest.mock('@/hooks/perps/actions/actionError', () => ({
   isPerpsActionUserCancelled: () => false,
 }));
@@ -69,6 +86,9 @@ const draft = (size: string): PerpsProCloseDraft => ({
 describe('usePerpsProPositionActions close validation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetSkipLimitConfirmation.mockResolvedValue(false);
+    mockGetSkipMarketConfirmation.mockResolvedValue(false);
+    mockExecuteClose.mockResolvedValue({ kind: 'filled' });
     mockGetState.mockReturnValue({
       currentPerpsAccount: account,
       marketDataMap: {
@@ -122,5 +142,139 @@ describe('usePerpsProPositionActions close validation', () => {
 
     expect(hook.result.current.closeReview).toMatchObject({ size: '0.1' });
     expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it('bypasses a Market review when its independent preference is enabled', async () => {
+    mockGetSkipMarketConfirmation.mockResolvedValue(true);
+    const hook = renderHook(() =>
+      usePerpsProPositionActions({
+        accountIdentity: 'account-a',
+        leveragePending: false,
+        updateLeverageRequest: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      hook.result.current.reviewClose(draft('0.1'));
+      await Promise.resolve();
+    });
+
+    expect(hook.result.current.closeReview).toBeNull();
+    expect(mockExecuteClose).toHaveBeenCalledTimes(1);
+    expect(mockGetSkipLimitConfirmation).toHaveBeenCalledTimes(1);
+    expect(mockGetSkipMarketConfirmation).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the existing Limit review bypass independent from Market', async () => {
+    mockGetSkipLimitConfirmation.mockResolvedValue(true);
+    const hook = renderHook(() =>
+      usePerpsProPositionActions({
+        accountIdentity: 'account-a',
+        leveragePending: false,
+        updateLeverageRequest: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      hook.result.current.reviewClose({
+        ...draft('0.1'),
+        limitPrice: '100',
+        orderType: 'limit',
+      });
+      await Promise.resolve();
+    });
+
+    expect(hook.result.current.closeReview).toBeNull();
+    expect(mockExecuteClose).toHaveBeenCalledTimes(1);
+    expect(mockSetSkipMarketConfirmation).not.toHaveBeenCalled();
+  });
+
+  it('persists Market opt-out only after a checked confirmation', async () => {
+    const hook = renderHook(() =>
+      usePerpsProPositionActions({
+        accountIdentity: 'account-a',
+        leveragePending: false,
+        updateLeverageRequest: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => hook.result.current.reviewClose(draft('0.1')));
+    expect(hook.result.current.closeReview?.orderType).toBe('market');
+    act(() => hook.result.current.toggleSkipCloseConfirmation());
+    expect(hook.result.current.skipCloseConfirmation).toBe(true);
+
+    await act(async () => {
+      hook.result.current.confirmClose();
+      await Promise.resolve();
+    });
+
+    expect(mockSetSkipMarketConfirmation).toHaveBeenCalledWith(true);
+    expect(mockSetSkipLimitConfirmation).not.toHaveBeenCalled();
+    expect(mockExecuteClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not persist a checked Market preference when review is cancelled', async () => {
+    const hook = renderHook(() =>
+      usePerpsProPositionActions({
+        accountIdentity: 'account-a',
+        leveragePending: false,
+        updateLeverageRequest: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => hook.result.current.reviewClose(draft('0.1')));
+    act(() => hook.result.current.toggleSkipCloseConfirmation());
+    act(() => hook.result.current.cancelCloseReview());
+
+    expect(hook.result.current.closeReview).toBeNull();
+    expect(mockSetSkipMarketConfirmation).not.toHaveBeenCalled();
+    expect(mockExecuteClose).not.toHaveBeenCalled();
+  });
+
+  it('resets close preference presentation when the account identity changes', async () => {
+    const hook = renderHook(
+      ({ accountIdentity }) =>
+        usePerpsProPositionActions({
+          accountIdentity,
+          leveragePending: false,
+          updateLeverageRequest: jest.fn(),
+        }),
+      { initialProps: { accountIdentity: 'account-a' } },
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => hook.result.current.reviewClose(draft('0.1')));
+    act(() => hook.result.current.toggleSkipCloseConfirmation());
+    expect(hook.result.current.skipCloseConfirmation).toBe(true);
+
+    hook.rerender({ accountIdentity: 'account-b' });
+
+    expect(hook.result.current.closeEditor).toBeNull();
+    expect(hook.result.current.closeReview).toBeNull();
+    expect(hook.result.current.skipCloseConfirmation).toBe(false);
   });
 });

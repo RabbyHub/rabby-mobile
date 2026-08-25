@@ -666,8 +666,8 @@ const createPositionActionsState = (
   openCloseEditor: jest.fn(),
   openLeverageEditor: jest.fn(),
   reviewClose: jest.fn(),
-  setSkipLimitConfirmation: jest.fn(),
-  skipLimitConfirmation: false,
+  skipCloseConfirmation: false,
+  toggleSkipCloseConfirmation: jest.fn(),
   updateLeverage: jest.fn(),
   ...overrides,
 });

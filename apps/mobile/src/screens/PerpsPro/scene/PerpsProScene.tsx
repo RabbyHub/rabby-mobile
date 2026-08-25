@@ -1331,12 +1331,10 @@ export const PerpsProScene: React.FC<{
           market={positionActions.closeEditor.market}
           onClose={positionActions.cancelCloseReview}
           onConfirm={positionActions.confirmClose}
-          onToggleSkipLimit={() =>
-            positionActions.setSkipLimitConfirmation(value => !value)
-          }
+          onToggleSkipConfirmation={positionActions.toggleSkipCloseConfirmation}
           pending={positionActions.closePending}
           position={positionActions.closeEditor.position}
-          skipLimitConfirmation={positionActions.skipLimitConfirmation}
+          skipConfirmation={positionActions.skipCloseConfirmation}
           visible
         />
       ) : null}

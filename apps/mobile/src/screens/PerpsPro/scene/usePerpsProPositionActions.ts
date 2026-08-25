@@ -63,6 +63,7 @@ export const usePerpsProPositionActions = ({
   );
   const [closePending, setClosePending] = useState(false);
   const [skipLimitConfirmation, setSkipLimitConfirmation] = useState(false);
+  const [skipMarketConfirmation, setSkipMarketConfirmation] = useState(false);
   const showMinimumCloseAmountToast = useCallback(() => {
     showToast(t('page.perps.pro.positions.minimumCloseAmount'), 'error');
   }, [t]);
@@ -72,6 +73,8 @@ export const usePerpsProPositionActions = ({
     setCloseEditor(null);
     setCloseReview(null);
     setClosePending(false);
+    setSkipLimitConfirmation(false);
+    setSkipMarketConfirmation(false);
   }, [accountIdentity]);
 
   const openLeverageEditor = useCallback(
@@ -161,22 +164,32 @@ export const usePerpsProPositionActions = ({
       setCloseEditor(snapshot);
       setCloseReview(null);
       setSkipLimitConfirmation(false);
-      void perpsServiceApi
-        .getSkipPerpsProLimitCloseConfirmation()
-        .then(value => {
-          const live = perpsStore.getState().currentPerpsAccount;
-          if (
-            live?.address.toLowerCase() === account.address.toLowerCase() &&
-            live.type === account.type
-          ) {
-            setSkipLimitConfirmation(value);
-          }
-        })
-        .catch(error => {
+      setSkipMarketConfirmation(false);
+      void Promise.all([
+        perpsServiceApi.getSkipPerpsProLimitCloseConfirmation().catch(error => {
           Sentry.captureException(error, {
-            extra: { scene: 'Perps Pro close preference read' },
+            extra: { scene: 'Perps Pro Limit close preference read' },
           });
-        });
+          return false;
+        }),
+        perpsServiceApi
+          .getSkipPerpsProMarketCloseConfirmation()
+          .catch(error => {
+            Sentry.captureException(error, {
+              extra: { scene: 'Perps Pro Market close preference read' },
+            });
+            return false;
+          }),
+      ]).then(([skipLimit, skipMarket]) => {
+        const live = perpsStore.getState().currentPerpsAccount;
+        if (
+          live?.address.toLowerCase() === account.address.toLowerCase() &&
+          live.type === account.type
+        ) {
+          setSkipLimitConfirmation(skipLimit);
+          setSkipMarketConfirmation(skipMarket);
+        }
+      });
     },
     [t],
   );
@@ -315,13 +328,23 @@ export const usePerpsProPositionActions = ({
       if (!frozenDraft) {
         return;
       }
-      if (frozenDraft.orderType === 'limit' && skipLimitConfirmation) {
+      const skipConfirmation =
+        frozenDraft.orderType === 'market'
+          ? skipMarketConfirmation
+          : skipLimitConfirmation;
+      if (skipConfirmation) {
         void executeClose(frozenDraft);
         return;
       }
       setCloseReview(frozenDraft);
     },
-    [closeReview, executeClose, freezeCloseDraft, skipLimitConfirmation],
+    [
+      closeReview,
+      executeClose,
+      freezeCloseDraft,
+      skipLimitConfirmation,
+      skipMarketConfirmation,
+    ],
   );
 
   const confirmClose = useCallback(() => {
@@ -335,8 +358,34 @@ export const usePerpsProPositionActions = ({
           });
         });
     }
+    if (closeReview.orderType === 'market' && skipMarketConfirmation) {
+      void perpsServiceApi
+        .setSkipPerpsProMarketCloseConfirmation(true)
+        .catch(error => {
+          Sentry.captureException(error, {
+            extra: { scene: 'Perps Pro Market close preference write' },
+          });
+        });
+    }
     void executeClose(closeReview);
-  }, [closeReview, executeClose, skipLimitConfirmation]);
+  }, [
+    closeReview,
+    executeClose,
+    skipLimitConfirmation,
+    skipMarketConfirmation,
+  ]);
+
+  const skipCloseConfirmation =
+    closeReview?.orderType === 'market'
+      ? skipMarketConfirmation
+      : skipLimitConfirmation;
+  const toggleSkipCloseConfirmation = useCallback(() => {
+    if (closeReview?.orderType === 'market') {
+      setSkipMarketConfirmation(value => !value);
+    } else if (closeReview?.orderType === 'limit') {
+      setSkipLimitConfirmation(value => !value);
+    }
+  }, [closeReview?.orderType]);
 
   return {
     cancelCloseReview,
@@ -351,8 +400,8 @@ export const usePerpsProPositionActions = ({
     openCloseEditor,
     reviewClose,
     confirmClose,
-    setSkipLimitConfirmation,
-    skipLimitConfirmation,
+    skipCloseConfirmation,
+    toggleSkipCloseConfirmation,
     updateLeverage,
   };
 };

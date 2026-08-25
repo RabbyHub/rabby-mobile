@@ -2874,6 +2874,7 @@
           "loadingMore": "Loading more history"
         },
         "positions": {
+          "__skip_translation": ["skipMarketCloseConfirmation"],
           "empty": "You have no positions",
           "closeAll": "Close All",
           "closeAllConfirmTitle": "Confirm Close All Positions",
@@ -2931,6 +2932,7 @@
           "positionAmount": "Position Amount",
           "estimatedPnl": "Estimated PnL",
           "skipLimitConfirmation": "Don't display double confirmation for Limit Order again.",
+          "skipMarketCloseConfirmation": "Don't show this Market Close confirmation again.",
           "closeSubmitted": "Close order submitted",
           "closeFailed": "Failed to close position",
           "minimumCloseAmount": "Minimum close amount is $10",

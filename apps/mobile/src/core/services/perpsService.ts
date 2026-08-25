@@ -81,6 +81,7 @@ export type PerpsProPreferences = {
   activeInfoTab: PerpsProInfoTab;
   hasUserSelectedInfoTab: boolean;
   skipLimitCloseDoubleConfirmation: boolean;
+  skipMarketCloseDoubleConfirmation: boolean;
   skipPositionTpSlDoubleConfirmation: boolean;
   skipOpenOrderEditConfirmationByCategory: Record<
     PerpsProOpenOrderEditCategory,
@@ -93,8 +94,9 @@ export type PerpsProPreferences = {
   [key: string]: unknown;
 };
 
-const PERPS_PRO_PREFERENCES_VERSION = 11;
+const PERPS_PRO_PREFERENCES_VERSION = 12;
 const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
+const PERPS_PRO_INFO_TAB_SELECTION_VERSION = 11;
 const DEFAULT_PERPS_PRO_TP_SL_MODE_PREFERENCES: PerpsProTpSlModePreferences = {
   opening: { sl: 'price', tp: 'price' },
   position: { sl: 'pnl', tp: 'pnl' },
@@ -106,6 +108,7 @@ const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
   activeInfoTab: 'account',
   hasUserSelectedInfoTab: false,
   skipLimitCloseDoubleConfirmation: false,
+  skipMarketCloseDoubleConfirmation: false,
   skipPositionTpSlDoubleConfirmation: false,
   skipOpenOrderEditConfirmationByCategory: {
     basic: false,
@@ -168,12 +171,16 @@ const normalizePerpsProInfoTab = (value: unknown): PerpsProInfoTab => {
 
 const normalizeHasUserSelectedInfoTab = (value: unknown) =>
   hasReadableProPreferences(value) &&
-  value.version >= PERPS_PRO_PREFERENCES_VERSION &&
+  value.version >= PERPS_PRO_INFO_TAB_SELECTION_VERSION &&
   value.hasUserSelectedInfoTab === true;
 
 const normalizeSkipLimitCloseDoubleConfirmation = (value: unknown) =>
   hasReadableProPreferences(value) &&
   value.skipLimitCloseDoubleConfirmation === true;
+
+const normalizeSkipMarketCloseDoubleConfirmation = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.skipMarketCloseDoubleConfirmation === true;
 
 const normalizeSkipPositionTpSlDoubleConfirmation = (value: unknown) =>
   hasReadableProPreferences(value) &&
@@ -275,6 +282,8 @@ const getWritableProPreferences = (
     hasUserSelectedInfoTab: normalizeHasUserSelectedInfoTab(value),
     skipLimitCloseDoubleConfirmation:
       normalizeSkipLimitCloseDoubleConfirmation(value),
+    skipMarketCloseDoubleConfirmation:
+      normalizeSkipMarketCloseDoubleConfirmation(value),
     skipPositionTpSlDoubleConfirmation:
       normalizeSkipPositionTpSlDoubleConfirmation(value),
     skipOpenOrderEditConfirmationByCategory:
@@ -956,6 +965,25 @@ export class PerpsService extends StoreServiceBase<
       draft.proPreferences = {
         ...getWritableProPreferences(currentPreferences),
         skipLimitCloseDoubleConfirmation: value === true,
+      };
+    });
+  };
+
+  getSkipPerpsProMarketCloseConfirmation = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipMarketCloseDoubleConfirmation(
+      this.store.proPreferences,
+    );
+  };
+
+  setSkipPerpsProMarketCloseConfirmation = async (value: boolean) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        skipMarketCloseDoubleConfirmation: value === true,
       };
     });
   };

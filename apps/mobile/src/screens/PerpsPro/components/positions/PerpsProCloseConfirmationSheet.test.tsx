@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
@@ -81,6 +81,8 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positions.short': 'Short',
         'page.perps.pro.positions.skipLimitConfirmation':
           "Don't display double confirmation for Limit Order again.",
+        'page.perps.pro.positions.skipMarketCloseConfirmation':
+          "Don't show this Market Close confirmation again.",
       }[key] ?? key),
   }),
 }));
@@ -121,10 +123,10 @@ describe('PerpsProCloseConfirmationSheet', () => {
         market={market}
         onClose={jest.fn()}
         onConfirm={jest.fn()}
-        onToggleSkipLimit={jest.fn()}
+        onToggleSkipConfirmation={jest.fn()}
         pending={false}
         position={position}
-        skipLimitConfirmation={false}
+        skipConfirmation={false}
         visible
       />,
     );
@@ -150,7 +152,8 @@ describe('PerpsProCloseConfirmationSheet', () => {
     expect(screen.queryByText('Confirm Close')).toBeNull();
   });
 
-  it('uses Market Price and omits the Limit-only preference', () => {
+  it('uses Market Price with its own opt-in confirmation preference', () => {
+    const onToggleSkipConfirmation = jest.fn();
     render(
       <PerpsProCloseConfirmationSheet
         amountUnit="base"
@@ -158,23 +161,23 @@ describe('PerpsProCloseConfirmationSheet', () => {
         market={market}
         onClose={jest.fn()}
         onConfirm={jest.fn()}
-        onToggleSkipLimit={jest.fn()}
+        onToggleSkipConfirmation={onToggleSkipConfirmation}
         pending={false}
         position={position}
-        skipLimitConfirmation={false}
+        skipConfirmation={false}
         visible
       />,
     );
 
     expect(
       screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([262]);
+    ).toEqual([302]);
     expect(screen.getByText('Market Price')).toBeTruthy();
     expect(
-      screen.queryByText(
-        "Don't display double confirmation for Limit Order again.",
-      ),
-    ).toBeNull();
+      screen.getByText("Don't show this Market Close confirmation again."),
+    ).toBeTruthy();
+    fireEvent.press(screen.getByRole('checkbox'));
+    expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
   });
 
   it('renders the normalized market source instead of a hardcoded Perp tag', () => {
@@ -185,10 +188,10 @@ describe('PerpsProCloseConfirmationSheet', () => {
         market={{ ...market, sourceTag: 'xyz' }}
         onClose={jest.fn()}
         onConfirm={jest.fn()}
-        onToggleSkipLimit={jest.fn()}
+        onToggleSkipConfirmation={jest.fn()}
         pending
         position={position}
-        skipLimitConfirmation={false}
+        skipConfirmation={false}
         visible
       />,
     );

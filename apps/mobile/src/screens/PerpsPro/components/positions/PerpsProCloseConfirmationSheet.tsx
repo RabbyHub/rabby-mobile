@@ -42,10 +42,10 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
   market: PerpsProCloseMarketSnapshot;
   onClose: () => void;
   onConfirm: () => void;
-  onToggleSkipLimit: () => void;
+  onToggleSkipConfirmation: () => void;
   pending: boolean;
   position: PerpsPositionViewModel;
-  skipLimitConfirmation: boolean;
+  skipConfirmation: boolean;
   visible: boolean;
 }> = React.memo(
   ({
@@ -54,10 +54,10 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
     market,
     onClose,
     onConfirm,
-    onToggleSkipLimit,
+    onToggleSkipConfirmation,
     pending,
     position,
-    skipLimitConfirmation,
+    skipConfirmation,
     visible,
   }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
@@ -100,7 +100,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
         onDismiss={onClose}
-        snapPoints={[draft.orderType === 'limit' ? 302 : 262]}
+        snapPoints={[302]}
         style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
           <AutoLockView style={styles.container}>
@@ -160,26 +160,28 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
               </View>
             </View>
 
-            {draft.orderType === 'limit' ? (
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: skipLimitConfirmation }}
-                onPress={onToggleSkipLimit}
-                style={styles.checkboxRow}>
-                {skipLimitConfirmation ? (
-                  <RcCheckboxFilledBrand height={20} width={20} />
-                ) : (
-                  <RcCheckboxEmptyCC
-                    color={colors2024['neutral-secondary']}
-                    height={20}
-                    width={20}
-                  />
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: skipConfirmation }}
+              onPress={onToggleSkipConfirmation}
+              style={styles.checkboxRow}>
+              {skipConfirmation ? (
+                <RcCheckboxFilledBrand height={20} width={20} />
+              ) : (
+                <RcCheckboxEmptyCC
+                  color={colors2024['neutral-secondary']}
+                  height={20}
+                  width={20}
+                />
+              )}
+              <Text style={styles.checkboxText}>
+                {t(
+                  draft.orderType === 'market'
+                    ? 'page.perps.pro.positions.skipMarketCloseConfirmation'
+                    : 'page.perps.pro.positions.skipLimitConfirmation',
                 )}
-                <Text style={styles.checkboxText}>
-                  {t('page.perps.pro.positions.skipLimitConfirmation')}
-                </Text>
-              </Pressable>
-            ) : null}
+              </Text>
+            </Pressable>
 
             <View style={styles.footer}>
               <Button
