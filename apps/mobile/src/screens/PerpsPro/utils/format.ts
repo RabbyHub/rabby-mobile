@@ -48,6 +48,12 @@ export const formatPerpsProPrice = (
   return withThousandsSeparators(number.toFixed(resolvedDecimals));
 };
 
+export const formatPerpsProMarketSelectorPrice = (
+  value: number | string | null | undefined,
+  decimals?: number,
+) =>
+  formatPerpsProPrice(value, decimals).replace(/(\.\d*?[1-9])0+$|\.0+$/u, '$1');
+
 export const formatPerpsProPercent = (
   value: number | null | undefined,
   decimals = 2,
