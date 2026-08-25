@@ -13,6 +13,10 @@ import {
   formatPerpsProMarketSelectorPrice,
   formatPerpsProPercent,
 } from '../../utils/format';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 import { PerpsProMarketLogo } from './PerpsProMarketLogo';
 import { PERPS_PRO_MARKET_ROW_HEIGHT } from './marketLayout';
 
@@ -291,18 +295,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   sourceTag: {
-    backgroundColor: colors2024['neutral-bg-0'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    height: 14,
-    lineHeight: 12,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
+      backgroundColor: colors2024['neutral-bg-0'],
+      variant: 'compact',
+    }),
+    ...getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
     maxWidth: 52,
-    paddingHorizontal: 4,
   },
   marketMeta: {
     alignItems: 'center',

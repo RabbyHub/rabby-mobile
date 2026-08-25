@@ -1,6 +1,10 @@
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '@/screens/PerpsPro/components/common/perpsProSemanticTagStyles';
 import { formatPerpsProTime } from '@/screens/PerpsPro/utils/format';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -110,23 +114,6 @@ export const PerpsProHistoryRowLayout: React.FC<{
   );
 };
 
-const badge = (backgroundColor: string, borderColor: string) => ({
-  backgroundColor,
-  borderColor,
-  borderRadius: 2,
-  borderWidth: 0.5,
-  paddingHorizontal: 4,
-  paddingVertical: 1,
-});
-
-const badgeText = (color: string) => ({
-  color,
-  fontFamily: 'SF Pro',
-  fontSize: 10,
-  fontWeight: '500' as const,
-  lineHeight: 12,
-});
-
 const value = (color: string) => ({
   color,
   flexShrink: 1,
@@ -167,21 +154,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 20,
   },
-  sourceTag: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  sourceText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  sourceTag: getPerpsProSemanticTagContainerStyle(colors2024, 'neutral'),
+  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
   timeRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -199,17 +173,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 4,
   },
-  positiveBadge: badge(
-    colors2024['green-light-1'],
-    colors2024['green-light-2'],
-  ),
-  negativeBadge: badge(colors2024['red-light-1'], colors2024['red-light-2']),
-  neutralBadge: badge(colors2024['neutral-bg-5'], colors2024['neutral-line']),
-  infoBadge: badge(colors2024['neutral-bg-5'], colors2024['neutral-line']),
-  positiveBadgeText: badgeText(colors2024['green-default']),
-  negativeBadgeText: badgeText(colors2024['red-default']),
-  neutralBadgeText: badgeText(colors2024['neutral-body']),
-  infoBadgeText: badgeText(colors2024['neutral-info']),
+  positiveBadge: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
+  negativeBadge: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
+  neutralBadge: getPerpsProSemanticTagContainerStyle(colors2024, 'neutral'),
+  infoBadge: getPerpsProSemanticTagContainerStyle(colors2024, 'neutral'),
+  positiveBadgeText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
+  negativeBadgeText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  neutralBadgeText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
+  infoBadgeText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
+    color: colors2024['neutral-info'],
+  }),
   details: {
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,

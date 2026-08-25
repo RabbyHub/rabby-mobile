@@ -5,6 +5,10 @@ import {
   getPerpsProBottomSheetChromeStyles,
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
@@ -33,36 +37,10 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       fontWeight: '500',
       lineHeight: 18,
     },
-    longTag: {
-      backgroundColor: colors2024['green-light-1'],
-      borderColor: colors2024['green-light-2'],
-      borderRadius: 2,
-      borderWidth: 0.5,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    },
-    shortTag: {
-      backgroundColor: colors2024['red-light-1'],
-      borderColor: colors2024['red-light-2'],
-      borderRadius: 2,
-      borderWidth: 0.5,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    },
-    longTagText: {
-      color: colors2024['green-default'],
-      fontFamily: 'SF Pro',
-      fontSize: 10,
-      fontWeight: '500',
-      lineHeight: 12,
-    },
-    shortTagText: {
-      color: colors2024['red-default'],
-      fontFamily: 'SF Pro',
-      fontSize: 10,
-      fontWeight: '500',
-      lineHeight: 12,
-    },
+    longTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
+    shortTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
+    longTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
+    shortTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
     priceSummaryRow: {
       alignItems: 'center',
       flexDirection: 'row',

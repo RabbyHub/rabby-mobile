@@ -27,6 +27,10 @@ import {
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
@@ -508,69 +512,37 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   marketButton: { flexShrink: 1, maxWidth: 140 },
   longTag: {
-    backgroundColor: colors2024['green-light-1'],
-    borderColor: colors2024['green-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    height: 14,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'positive', {
+      variant: 'compact',
+    }),
     justifyContent: 'center',
-    paddingHorizontal: 4,
   },
   shortTag: {
-    backgroundColor: colors2024['red-light-1'],
-    borderColor: colors2024['red-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    height: 14,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'negative', {
+      variant: 'compact',
+    }),
     justifyContent: 'center',
-    paddingHorizontal: 4,
   },
-  longText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
-  shortText: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  longText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
+  shortText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
   modeTag: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    height: 14,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
+      variant: 'compact',
+    }),
     justifyContent: 'center',
-    paddingHorizontal: 4,
   },
-  modeText: {
+  modeText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  }),
   sourceTag: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    height: 14,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
+      variant: 'compact',
+    }),
     justifyContent: 'center',
-    paddingHorizontal: 4,
   },
-  sourceText: {
+  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  }),
   pnlRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

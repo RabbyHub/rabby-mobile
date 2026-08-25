@@ -9,6 +9,10 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsPositionViewModel } from '../../model/position';
 import type { PerpsPositionTpSlMarketSnapshot } from '../../model/positionTpSl';
 import { formatPerpsProPrice } from '../../utils/format';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 
 export const PerpsProPositionTpSlPageHeader: React.FC<{
@@ -200,36 +204,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 18,
   },
-  longTag: {
-    backgroundColor: colors2024['green-light-1'],
-    borderColor: colors2024['green-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  shortTag: {
-    backgroundColor: colors2024['red-light-1'],
-    borderColor: colors2024['red-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  longTagText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
-  shortTagText: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  longTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
+  shortTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
+  longTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
+  shortTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
   mainMetrics: { gap: 8, marginTop: 16 },
   emptyMetrics: { gap: 8, marginTop: 16 },
   summaryMetrics: { gap: 8, marginTop: 16 },

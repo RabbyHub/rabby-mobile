@@ -15,6 +15,11 @@ import {
   formatPerpsProPrice,
   formatPerpsProTime,
 } from '../../utils/format';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+  PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND,
+} from '../common/perpsProSemanticTagStyles';
 
 const EDITABLE_VALUE_HIT_SLOP = {
   bottom: 4,
@@ -138,18 +143,24 @@ export const PerpsProOpenOrderCard: React.FC<{
                 </Text>
               </Pressable>
               {market.sourceTag ? (
-                <View style={styles.sourceTag}>
+                <View
+                  style={styles.sourceTag}
+                  testID={`perps-pro-order-source-${order.key}`}>
                   <Text style={styles.sourceText}>{market.sourceTag}</Text>
                 </View>
               ) : null}
             </View>
             <View style={styles.metaRow}>
-              <View style={isBuy ? styles.buyTag : styles.sellTag}>
+              <View
+                style={isBuy ? styles.buyTag : styles.sellTag}
+                testID={`perps-pro-order-type-${order.key}`}>
                 <Text style={isBuy ? styles.buyText : styles.sellText}>
                   {order.orderType}
                 </Text>
               </View>
-              <View style={isBuy ? styles.buyTag : styles.sellTag}>
+              <View
+                style={isBuy ? styles.buyTag : styles.sellTag}
+                testID={`perps-pro-order-side-${order.key}`}>
                 <Text style={isBuy ? styles.buyText : styles.sellText}>
                   {isBuy
                     ? t('page.perps.pro.openOrders.buy')
@@ -263,7 +274,7 @@ export const PerpsProOpenOrderCard: React.FC<{
 
 PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
@@ -295,18 +306,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   marketButton: { flexShrink: 1 },
   sourceTag: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
+      backgroundColor: isLight
+        ? PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND
+        : colors2024['neutral-bg-5'],
+    }),
   },
-  sourceText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 14,
-  },
+  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -314,32 +320,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     marginTop: 2,
   },
-  buyTag: {
-    backgroundColor: colors2024['green-light-1'],
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  sellTag: {
-    backgroundColor: colors2024['red-light-1'],
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  buyText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 14,
-  },
-  sellText: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 14,
-  },
+  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
+  buyText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
+  sellText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
   time: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',

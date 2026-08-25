@@ -7,6 +7,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsOpenOrderViewModel } from '../../model/openOrder';
 import type { PerpsProOpenOrderEditMarketSnapshot } from '../../model/openOrderEdit';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 
 export const PerpsProOpenOrderEditHeader: React.FC<{
   market: PerpsProOpenOrderEditMarketSnapshot;
@@ -62,50 +66,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sourceTag: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
+      backgroundColor: colors2024['neutral-bg-2'],
+    }),
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
   },
-  sourceText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
   tags: { flexDirection: 'row', gap: 4 },
-  buyTag: {
-    backgroundColor: colors2024['green-light-1'],
-    borderColor: colors2024['green-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  sellTag: {
-    backgroundColor: colors2024['red-light-1'],
-    borderColor: colors2024['red-light-2'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  buyText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
-  sellText: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
+  buyText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
+  sellText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
 }));

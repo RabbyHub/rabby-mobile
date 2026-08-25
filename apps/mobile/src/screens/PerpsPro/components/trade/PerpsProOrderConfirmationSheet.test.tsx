@@ -243,6 +243,41 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(screen.getByText('Isolated 10x')).toBeTruthy();
     expect(screen.getByText('Buy')).toBeTruthy();
     expect(screen.getByText('Long')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderColor: 'green-light-2',
+      borderRadius: 2,
+      borderWidth: 0.5,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-position-tag').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'green-light-2', borderWidth: 0.5 });
+    expect(screen.getByText('Buy').props.style).toMatchObject({
+      color: 'green-default',
+      fontSize: 10,
+      lineHeight: 12,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-source-tag').props
+          .style,
+      ),
+    ).toMatchObject({
+      borderColor: 'neutral-line',
+      borderRadius: 2,
+      borderWidth: 0.5,
+      fontSize: 10,
+      lineHeight: 12,
+    });
     expect(screen.getByText('No')).toBeTruthy();
     expect(screen.getByText('105.00 USDC')).toBeTruthy();
     expect(screen.getByText('55.00 USDC (-40.00%)')).toBeTruthy();
@@ -282,6 +317,32 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(
       StyleSheet.flatten(screen.getByTestId('confirm-button').props.style),
     ).toMatchObject({ borderRadius: 8 });
+  });
+
+  it('uses the bordered negative badge contract for Sell and Short', () => {
+    renderSheet({ ...parent, side: 'sell' });
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderColor: 'red-light-2',
+      borderRadius: 2,
+      borderWidth: 0.5,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-position-tag').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'red-light-2', borderWidth: 0.5 });
+    expect(screen.getByText('Sell').props.style).toMatchObject({
+      color: 'red-default',
+      fontSize: 10,
+      lineHeight: 12,
+    });
   });
 
   it('renders unavailable liquidation as a double dash', () => {

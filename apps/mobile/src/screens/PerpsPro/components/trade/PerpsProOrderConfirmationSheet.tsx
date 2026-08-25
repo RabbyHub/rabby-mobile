@@ -24,6 +24,10 @@ import {
   PERPS_PRO_ISOLATED_TEXT_STYLE,
   PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
 } from '../common/perpsProVisual';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 // Figma 80430:12847 defines a compact 36px Pro confirmation action.
@@ -120,7 +124,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                   {reviewFacts.displayPair}
                 </Text>
                 {reviewFacts.sourceTag ? (
-                  <Text numberOfLines={1} style={styles.marketTag}>
+                  <Text
+                    numberOfLines={1}
+                    style={styles.marketTag}
+                    testID="perps-pro-order-confirmation-source-tag">
                     {reviewFacts.sourceTag}
                   </Text>
                 ) : null}
@@ -137,7 +144,9 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 </Text>
               </View>
               <View style={styles.directionRow}>
-                <View style={isBuy ? styles.buyTag : styles.sellTag}>
+                <View
+                  style={isBuy ? styles.buyTag : styles.sellTag}
+                  testID="perps-pro-order-confirmation-side-tag">
                   <Text style={isBuy ? styles.buyTagText : styles.sellTagText}>
                     {t(
                       isBuy
@@ -146,7 +155,9 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                     )}
                   </Text>
                 </View>
-                <View style={isBuy ? styles.buyTag : styles.sellTag}>
+                <View
+                  style={isBuy ? styles.buyTag : styles.sellTag}
+                  testID="perps-pro-order-confirmation-position-tag">
                   <Text style={isBuy ? styles.buyTagText : styles.sellTagText}>
                     {t(
                       isBuy
@@ -334,46 +345,17 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     maxWidth: 160,
   },
   marketTag: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
+    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral'),
+    ...getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
+      color: colors2024['neutral-secondary'],
+    }),
     maxWidth: 100,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
   },
   directionRow: { flexDirection: 'row', gap: 4 },
-  buyTag: {
-    backgroundColor: colors2024['green-light-1'],
-    borderRadius: 2,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  sellTag: {
-    backgroundColor: colors2024['red-light-1'],
-    borderRadius: 2,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  buyTagText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
-  sellTagText: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
+  buyTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
+  sellTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
   details: {
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,

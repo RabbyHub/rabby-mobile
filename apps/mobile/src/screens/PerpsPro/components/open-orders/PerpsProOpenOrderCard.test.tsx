@@ -15,7 +15,7 @@ jest.mock('@/components/Typography', () => ({
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { colors2024, styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024, isLight: true }) };
   },
 }));
 
@@ -227,6 +227,53 @@ describe('PerpsProOpenOrderCard', () => {
     expect(screen.queryByText('0.00')).toBeNull();
     expect(screen.getByText('Reduce Only')).toBeTruthy();
     expect(screen.getByText('Yes')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-type-conditional:BTC:2').props
+          .style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderColor: 'red-light-2',
+      borderRadius: 2,
+      borderWidth: 0.5,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-side-conditional:BTC:2').props
+          .style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderColor: 'red-light-2',
+      borderRadius: 2,
+      borderWidth: 0.5,
+    });
+    expect(screen.getByText('Stop Market').props.style).toMatchObject({
+      color: 'red-default',
+      fontFamily: 'SF Pro',
+      fontSize: 10,
+      fontWeight: '500',
+      lineHeight: 12,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-source-conditional:BTC:2').props
+          .style,
+      ),
+    ).toMatchObject({
+      backgroundColor: '#F4F5F5',
+      borderColor: 'neutral-line',
+      borderRadius: 2,
+      borderWidth: 0.5,
+    });
+    expect(screen.getByText('xyz').props.style).toMatchObject({
+      color: 'neutral-body',
+      fontSize: 10,
+      lineHeight: 12,
+    });
     expect(screen.queryByText('0%')).toBeNull();
     expect(
       screen.queryByTestId('perps-pro-order-progress-conditional:BTC:2'),

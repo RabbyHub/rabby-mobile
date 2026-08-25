@@ -5,6 +5,10 @@ import React from 'react';
 import { View } from 'react-native';
 
 import { resolvePerpsProCloseMarketSourceTag } from '../../model/positionAction';
+import {
+  getPerpsProSemanticTagContainerStyle,
+  getPerpsProSemanticTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 
 export const PerpsProCloseMarketTag: React.FC<{
   sourceTag: string | null | undefined;
@@ -26,19 +30,8 @@ export const PerpsProCloseMarketTag: React.FC<{
 PerpsProCloseMarketTag.displayName = 'PerpsProCloseMarketTag';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  tag: {
+  tag: getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
     backgroundColor: colors2024['neutral-bg-0'],
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    borderWidth: 0.5,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  text: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
-  },
+  }),
+  text: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
 }));
