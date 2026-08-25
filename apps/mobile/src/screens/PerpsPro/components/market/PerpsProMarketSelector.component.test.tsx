@@ -513,7 +513,7 @@ describe('PerpsProMarketSelector component', () => {
         'hyperliquid::MARKET000:https://example.test/MARKET000.png',
       ),
     ).toBeTruthy();
-    expect(allPage.getByText('100.00')).toBeTruthy();
+    expect(allPage.getByText('100')).toBeTruthy();
     expect(allPage.getByText('+1.01%')).toBeTruthy();
 
     const listRenderCountBeforeMarkUpdate =
@@ -526,7 +526,7 @@ describe('PerpsProMarketSelector component', () => {
       listRenderCountBeforeMarkUpdate,
     );
     expect(getLatestListProps().data).toBe(slotsBeforeMarkUpdate);
-    expect(allPage.getByText('150.00')).toBeTruthy();
+    expect(allPage.getByText('150')).toBeTruthy();
     expect(allPage.getByText('+51.52%')).toBeTruthy();
 
     fireEvent(

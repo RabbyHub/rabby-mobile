@@ -99,7 +99,10 @@ export const normalizePerpsMarketMarginMode = (
   ) {
     return marginMode;
   }
-  return onlyIsolated ? 'noCross' : 'normal';
+  // Legacy onlyIsolated is ambiguous: it can mean either noCross or
+  // strictIsolated. Preserve the safe isolated-only behavior without claiming
+  // that margin removal is supported.
+  return onlyIsolated ? 'strictIsolated' : 'normal';
 };
 
 export const isPerpsMarketIsolatedOnly = ({

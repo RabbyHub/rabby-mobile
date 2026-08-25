@@ -228,6 +228,7 @@ export const PerpsProScene: React.FC<{
   const [previewInfoTab, setPreviewInfoTab] = useState<PerpsProInfoTab | null>(
     null,
   );
+  const infoTabRequestFrameRef = useRef<number | null>(null);
   const info = usePerpsProInfoPanel(
     scene.currentMarket?.canonicalCoin ?? '',
     requestedInfoTab,
@@ -571,9 +572,20 @@ export const PerpsProScene: React.FC<{
     () => (showRegionAlert ? { height: regionAlertExtent } : null),
     [regionAlertExtent, showRegionAlert],
   );
-  const regionAlertOverlayCoverageStyle = useMemo<ViewStyle | null>(
-    () => (showRegionAlert ? { minHeight: regionAlertExtent } : null),
-    [regionAlertExtent, showRegionAlert],
+  const restrictedSurfaceCoverageStyle = useMemo<ViewStyle | null>(
+    () =>
+      showRegionAlert
+        ? {
+            minHeight:
+              regionAlertExtent +
+              (positionedOverlaysReady ? PERPS_PRO_MARKET_BAR_HEIGHT : 0),
+          }
+        : null,
+    [positionedOverlaysReady, regionAlertExtent, showRegionAlert],
+  );
+  const restrictedMarketPositionStyle = useMemo<ViewStyle>(
+    () => ({ top: regionAlertExtent }),
+    [regionAlertExtent],
   );
   const infoTabsTranslateY = useMemo(
     () =>
@@ -964,28 +976,42 @@ export const PerpsProScene: React.FC<{
   );
   const displayedInfoTab =
     requestedInfoTab ?? previewInfoTab ?? info.activeInfoTab;
+  const cancelInfoTabRequest = useCallback(() => {
+    if (infoTabRequestFrameRef.current == null) {
+      return;
+    }
+    cancelAnimationFrame(infoTabRequestFrameRef.current);
+    infoTabRequestFrameRef.current = null;
+  }, []);
+  useEffect(() => cancelInfoTabRequest, [cancelInfoTabRequest]);
   const requestInfoTab = useCallback(
     (tab: PerpsProInfoTab) => {
       if (tab === displayedInfoTab) {
         return;
       }
+      cancelInfoTabRequest();
       if (tab === info.activeInfoTab) {
         setRequestedInfoTab(null);
         return;
       }
       setRequestedInfoTab(tab);
+      infoTabRequestFrameRef.current = requestAnimationFrame(() => {
+        infoTabRequestFrameRef.current = null;
+        infoPagerRef.current?.setPage(tab);
+      });
     },
-    [displayedInfoTab, info.activeInfoTab],
+    [cancelInfoTabRequest, displayedInfoTab, info.activeInfoTab],
   );
   const commitInfoTab = useCallback(
     (tab: PerpsProInfoTab) => {
+      cancelInfoTabRequest();
       setRequestedInfoTab(null);
       setPreviewInfoTab(tab);
       if (tab !== info.activeInfoTab) {
         setActiveInfoTab(tab);
       }
     },
-    [info.activeInfoTab, setActiveInfoTab],
+    [cancelInfoTabRequest, info.activeInfoTab, setActiveInfoTab],
   );
   useEffect(() => {
     if (previewInfoTab === info.activeInfoTab) {
@@ -993,8 +1019,18 @@ export const PerpsProScene: React.FC<{
     }
   }, [info.activeInfoTab, previewInfoTab]);
   const beginInfoPageDrag = useCallback(() => {
+    cancelInfoTabRequest();
     setRequestedInfoTab(null);
-  }, []);
+  }, [cancelInfoTabRequest]);
+  const marketBarContent = isMarketLoading ? (
+    <PerpsProMarketBarSkeleton />
+  ) : (
+    <PerpsProMarketBar
+      market={scene.currentMarket}
+      onOpenKline={openKline}
+      onPress={openMarketSelector}
+    />
+  );
 
   return (
     <PerpsProFieldExplanationProvider>
@@ -1053,7 +1089,7 @@ export const PerpsProScene: React.FC<{
             <Animated.View
               style={[
                 styles.regionAlertOverlay,
-                regionAlertOverlayCoverageStyle,
+                restrictedSurfaceCoverageStyle,
                 {
                   transform: [{ translateY: headerCollapse.marketTranslateY }],
                 },
@@ -1064,28 +1100,29 @@ export const PerpsProScene: React.FC<{
                 onLayout={updateRegionAlertLayout}
                 topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
               />
+              {positionedOverlaysReady ? (
+                <View
+                  style={[styles.marketOverlay, restrictedMarketPositionStyle]}
+                  testID="perps-pro-market-overlay">
+                  {marketBarContent}
+                </View>
+              ) : null}
             </Animated.View>
           ) : null}
           {positionedOverlaysReady ? (
             <>
-              <Animated.View
-                style={[
-                  styles.marketOverlay,
-                  {
-                    transform: [{ translateY: marketTranslateY }],
-                  },
-                ]}
-                testID="perps-pro-market-overlay">
-                {isMarketLoading ? (
-                  <PerpsProMarketBarSkeleton />
-                ) : (
-                  <PerpsProMarketBar
-                    market={scene.currentMarket}
-                    onOpenKline={openKline}
-                    onPress={openMarketSelector}
-                  />
-                )}
-              </Animated.View>
+              {!showRegionAlert ? (
+                <Animated.View
+                  style={[
+                    styles.marketOverlay,
+                    {
+                      transform: [{ translateY: marketTranslateY }],
+                    },
+                  ]}
+                  testID="perps-pro-market-overlay">
+                  {marketBarContent}
+                </Animated.View>
+              ) : null}
               {info.activeInfoTab && displayedInfoTab ? (
                 <Animated.View
                   style={[

@@ -340,6 +340,22 @@ describe('PerpsProOpenOrderCard', () => {
       'perps-pro-order-price-edit-basic:BTC:1',
     );
     expect(priceEdit).toHaveTextContent('100.00');
+    expect(StyleSheet.flatten(priceEdit.props.style)).toMatchObject({
+      alignSelf: 'stretch',
+      flex: 1,
+      justifyContent: 'flex-end',
+      marginLeft: 12,
+      minWidth: 0,
+    });
+    expect(priceEdit.props.hitSlop).toEqual({
+      bottom: 4,
+      left: 0,
+      right: 0,
+      top: 4,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('100.00').props.style),
+    ).toMatchObject({ marginLeft: 0 });
     fireEvent.press(screen.getByText('100.00'));
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ oid: 1 }));
 

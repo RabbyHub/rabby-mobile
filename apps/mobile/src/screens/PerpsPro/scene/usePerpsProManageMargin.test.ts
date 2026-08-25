@@ -198,6 +198,22 @@ describe('usePerpsProManageMargin', () => {
     expect(hook.result.current.view?.range?.max).toBe('29.76');
   });
 
+  it('exposes the protocol removal floor for a noCross isolated position', () => {
+    replaceRawPosition('13.77', '-0.35');
+    mockPerpsState.marketDataMap.BTC.markPx = '88.675';
+    mockPerpsState.marketDataMap.BTC.marginMode = 'noCross';
+    mockPerpsState.marketDataMap.BTC.onlyIsolated = true;
+
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+
+    expect(hook.result.current.view?.range).toMatchObject({
+      addOnly: false,
+      displayMin: '3.21',
+      min: '3.21',
+    });
+  });
+
   it('keeps rounded current margin as a no-op endpoint without changing risk', () => {
     replaceRawPosition('0.324', '0.0018');
     mockPerpsState.marketDataMap.BTC.markPx = '7652.7';

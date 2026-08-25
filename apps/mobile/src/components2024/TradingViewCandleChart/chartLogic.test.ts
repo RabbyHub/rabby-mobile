@@ -15,6 +15,7 @@ const {
   formatProCompactNumber,
   formatProPrice,
   formatProTooltipTime,
+  formatYTime,
   getInitialVisibleLogicalRange,
   getPrependedCandleCount,
   getPerpsProLatestCandleClose,
@@ -173,20 +174,35 @@ describe('Perps Pro local chart calculations', () => {
     },
   );
 
-  it('uses device-local time and the approved day-level format', () => {
+  it('uses the x-axis date label and keeps interval-specific local time', () => {
     const time = Date.UTC(2026, 6, 30, 1, 2) / 1000;
     const localDate = new Date(time * 1000);
-    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const month = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ][localDate.getMonth()];
     const day = String(localDate.getDate()).padStart(2, '0');
     const hours = String(localDate.getHours()).padStart(2, '0');
     const minutes = String(localDate.getMinutes()).padStart(2, '0');
-    const year = String(localDate.getFullYear());
+    const dateLabel = `${day} ${month}`;
 
+    expect(formatYTime(time, 2)).toBe(dateLabel);
     expect(formatProTooltipTime(time, '15m')).toBe(
-      `${year}-${month}-${day} ${hours}:${minutes}`,
+      `${dateLabel} ${hours}:${minutes}`,
     );
-    expect(formatProTooltipTime(time, '1d')).toBe(`${year}-${month}-${day}`);
-    expect(formatProTooltipTime(time, '1M')).toBe(`${year}-${month}-${day}`);
+    expect(formatProTooltipTime(time, '1d')).toBe(dateLabel);
+    expect(formatProTooltipTime(time, '1w')).toBe(dateLabel);
+    expect(formatProTooltipTime(time, '1M')).toBe(dateLabel);
   });
 
   it('opens the initial logical range on at most the latest 40 candles', () => {

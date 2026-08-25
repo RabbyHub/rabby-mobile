@@ -29,6 +29,15 @@ jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({ testSharedBottomSheetProp: true }),
 }));
 
+jest.mock('@/components/Typography', () => {
+  const ReactModule = require('react');
+  const { Text } = require('react-native');
+  return {
+    Text: (props: Record<string, unknown>) =>
+      ReactModule.createElement(Text, props),
+  };
+});
+
 jest.mock('@/components2024/TradingViewCandleChart', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
@@ -138,11 +147,23 @@ jest.mock('../../scene/usePerpsProKline', () => ({
   usePerpsProKline: mockUsePerpsProKline,
 }));
 
-jest.mock('./PerpsProKlineSkeleton', () => {
+jest.mock('../loading/PerpsProSkeletonBlock', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PERPS_PRO_KLINE_CHART_HEIGHT: 184,
+    PerpsProSkeletonBlock: (props: Record<string, unknown>) =>
+      ReactModule.createElement(View, props),
+  };
+});
+
+jest.mock('./PerpsProKlineSkeleton', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  const actual = jest.requireActual(
+    './PerpsProKlineSkeleton',
+  ) as typeof import('./PerpsProKlineSkeleton');
+  return {
+    ...actual,
     PerpsProKlineSkeleton: ({ overlay }: { overlay?: boolean }) =>
       ReactModule.createElement(View, {
         testID: overlay ? 'kline-overlay-skeleton' : 'kline-skeleton',
@@ -153,7 +174,11 @@ jest.mock('./PerpsProKlineSkeleton', () => {
 jest.mock('./PerpsProKlineToolbar', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
+  const actual = jest.requireActual(
+    './PerpsProKlineToolbar',
+  ) as typeof import('./PerpsProKlineToolbar');
   return {
+    ...actual,
     PerpsProKlineToolbar: (props: Record<string, unknown>) => {
       mockToolbarProps(props);
       return ReactModule.createElement(View, { testID: 'kline-toolbar' });
@@ -161,8 +186,17 @@ jest.mock('./PerpsProKlineToolbar', () => {
   };
 });
 
-const { PERPS_PRO_KLINE_SHEET_HEIGHT, PerpsProKlineSheet } =
-  require('./PerpsProKlineSheet') as typeof import('./PerpsProKlineSheet');
+const {
+  PERPS_PRO_KLINE_CONTENT_HEIGHT,
+  PERPS_PRO_KLINE_FOOTER_HEIGHT,
+  PERPS_PRO_KLINE_HANDLE_HEIGHT,
+  PERPS_PRO_KLINE_SHEET_HEIGHT,
+  PerpsProKlineSheet,
+} = require('./PerpsProKlineSheet') as typeof import('./PerpsProKlineSheet');
+const { PERPS_PRO_KLINE_CHART_HEIGHT } =
+  require('./PerpsProKlineSkeleton') as typeof import('./PerpsProKlineSkeleton');
+const { PERPS_PRO_KLINE_TOOLBAR_HEIGHT } =
+  require('./PerpsProKlineToolbar') as typeof import('./PerpsProKlineToolbar');
 
 const market = {
   canonicalCoin: 'BTC',
@@ -230,8 +264,34 @@ describe('PerpsProKlineSheet', () => {
       height: 4,
       width: 40,
     });
+    expect({
+      chart: PERPS_PRO_KLINE_CHART_HEIGHT,
+      content: PERPS_PRO_KLINE_CONTENT_HEIGHT,
+      footer: PERPS_PRO_KLINE_FOOTER_HEIGHT,
+      handle: PERPS_PRO_KLINE_HANDLE_HEIGHT,
+      sheet: PERPS_PRO_KLINE_SHEET_HEIGHT,
+      toolbar: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
+    }).toEqual({
+      chart: 224,
+      content: 286,
+      footer: 40,
+      handle: 40,
+      sheet: 326,
+      toolbar: 22,
+    });
+    expect(
+      screen.getByTestId('bottom-sheet-content').props.style,
+    ).toMatchObject({
+      height: PERPS_PRO_KLINE_CONTENT_HEIGHT,
+    });
+    expect(
+      screen.getByTestId('perps-pro-kline-footer').props.style,
+    ).toMatchObject({
+      height: PERPS_PRO_KLINE_FOOTER_HEIGHT,
+    });
     expect(mockTradingViewProps.mock.calls.at(-1)?.[0]).toMatchObject({
       backGroundColor: 'neutral-bg-1',
+      height: PERPS_PRO_KLINE_CHART_HEIGHT,
       variant: 'perps-pro',
     });
 

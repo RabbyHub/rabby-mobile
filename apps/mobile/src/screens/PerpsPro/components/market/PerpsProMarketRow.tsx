@@ -10,8 +10,8 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProMarketRowModel } from '../../model/marketSelectorProjection';
 import {
   formatPerpsProCompactNumber,
+  formatPerpsProMarketSelectorPrice,
   formatPerpsProPercent,
-  formatPerpsProPrice,
 } from '../../utils/format';
 import { PerpsProMarketLogo } from './PerpsProMarketLogo';
 import { PERPS_PRO_MARKET_ROW_HEIGHT } from './marketLayout';
@@ -196,7 +196,7 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
             ) : null}
           </View>
           <Text numberOfLines={1} style={styles.marketPrice}>
-            {formatPerpsProPrice(model.price, model.pxDecimals)}
+            {formatPerpsProMarketSelectorPrice(model.price, model.pxDecimals)}
           </Text>
         </View>
         <View style={styles.subtitle}>

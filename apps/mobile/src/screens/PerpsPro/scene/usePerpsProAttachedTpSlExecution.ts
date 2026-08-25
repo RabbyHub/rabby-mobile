@@ -1,4 +1,4 @@
-import type { L2Book, WsActiveAssetData } from '@rabby-wallet/hyperliquid-sdk';
+import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { perpsServiceApi } from '@/core/serviceApi/perps';
@@ -74,7 +74,6 @@ const getResultServerError = (result: PerpsProAttachedTpSlResult) => {
 
 export const usePerpsProAttachedTpSlExecution = ({
   active,
-  activeAssetData,
   bboBook,
   bboSessionKey,
   bboStatus,
@@ -82,7 +81,6 @@ export const usePerpsProAttachedTpSlExecution = ({
   refreshActiveAssetData,
 }: {
   active: boolean;
-  activeAssetData: WsActiveAssetData | null;
   bboBook: L2Book | null;
   bboSessionKey: string | null;
   bboStatus: 'error' | 'idle' | 'loading' | 'ready' | 'stale';
@@ -91,7 +89,6 @@ export const usePerpsProAttachedTpSlExecution = ({
 }) => {
   const latestRef = useRef({
     active,
-    activeAssetData,
     bboBook,
     bboSessionKey,
     bboStatus,
@@ -99,7 +96,6 @@ export const usePerpsProAttachedTpSlExecution = ({
   });
   latestRef.current = {
     active,
-    activeAssetData,
     bboBook,
     bboSessionKey,
     bboStatus,
@@ -127,10 +123,6 @@ export const usePerpsProAttachedTpSlExecution = ({
         dexId: latest.market?.marketData.dexId ?? '',
         hasPermission: state.hasPermission,
         marketKey: latest.market?.marketKey ?? null,
-        maxBaseSize:
-          latest.activeAssetData?.maxTradeSzs[
-            command.parent.side === 'buy' ? 0 : 1
-          ] ?? null,
         positionIdentity:
           getPerpsProAttachedTpSlPositionIdentity(currentPosition),
         runtime: getPerpsRuntimeSnapshot(),

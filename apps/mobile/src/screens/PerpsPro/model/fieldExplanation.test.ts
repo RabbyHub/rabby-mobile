@@ -36,7 +36,7 @@ describe('Perps Pro field explanations', () => {
           'The Liq. Price shown is an estimate and may differ from the actual price. Please monitor the liquidation price and margin ratio after opening a position.',
       },
       estimatedPnl: {
-        title: 'Estimated PNL',
+        title: 'Estimated PnL',
         description:
           'Estimated PNL represents the projected profit or loss from closing a position. The actual realized PNL may differ due to trading fees and variations in the execution price. This estimate is provided for reference only.',
       },

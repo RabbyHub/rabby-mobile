@@ -82,7 +82,7 @@ jest.mock('react-i18next', () => ({
             'global.cancel': 'Cancel',
             'page.perps.pro.positionTpsl.addButton': 'Add TP/SL',
             'page.perps.pro.positionTpsl.addTitle': 'Add TP/SL',
-            'page.perps.pro.positionTpsl.estimatedPnl': 'Est. PnL',
+            'page.perps.pro.positionTpsl.estimatedPnlShort': 'Est. PnL',
             'page.perps.pro.positionTpsl.modify': 'Modify',
             'page.perps.pro.positionTpsl.stopLoss': 'Stop Loss',
             'page.perps.pro.positionTpsl.takeProfit': 'Take Profit',
@@ -244,7 +244,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       'perps-pro-position-tpsl-order-2',
       'perps-pro-position-tpsl-order-1',
     ]);
-    fireEvent.press(screen.getAllByLabelText('Est. PnL')[0]!);
+    fireEvent.press(screen.getAllByLabelText('Est. PnL (USDC)')[0]!);
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
   });
 

@@ -6,7 +6,6 @@ import React, { useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
-import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
@@ -33,6 +32,7 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
   onAdd: () => void;
   onCancelOrder: (order: PerpsPositionTpSlOrderViewModel) => void;
   onModify: (order: PerpsPositionTpSlOrderViewModel) => void;
+  onOpenEstimatedPnlExplanation: () => void;
   pending: boolean;
   position: PerpsPositionViewModel;
 }> = React.memo(
@@ -44,6 +44,7 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
     onAdd,
     onCancelOrder,
     onModify,
+    onOpenEstimatedPnlExplanation,
     pending,
     position,
   }) => {
@@ -119,6 +120,9 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
                       market={market}
                       onCancel={() => onCancelOrder(order)}
                       onModify={() => onModify(order)}
+                      onOpenEstimatedPnlExplanation={
+                        onOpenEstimatedPnlExplanation
+                      }
                       order={order}
                       pending={pending}
                       position={position}
@@ -144,6 +148,7 @@ const PartialOrderRow: React.FC<{
   market: PerpsPositionTpSlMarketSnapshot;
   onCancel: () => void;
   onModify: () => void;
+  onOpenEstimatedPnlExplanation: () => void;
   order: PerpsPositionTpSlOrderViewModel;
   pending: boolean;
   position: PerpsPositionViewModel;
@@ -155,13 +160,16 @@ const PartialOrderRow: React.FC<{
   market,
   onCancel,
   onModify,
+  onOpenEstimatedPnlExplanation,
   order,
   pending,
   position,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const openFieldExplanation = usePerpsProFieldExplanation();
+  const estimatedPnlLabel = `${t(
+    'page.perps.pro.positionTpsl.estimatedPnlShort',
+  )} (${market.quoteAsset})`;
   const coverage = new BigNumber(order.remainingSize).dividedBy(
     position.baseSize,
   );
@@ -202,12 +210,10 @@ const PartialOrderRow: React.FC<{
           flex={128}
           label={
             <PerpsProDottedUnderlineText
-              accessibilityLabel={t('page.perps.pro.positionTpsl.estimatedPnl')}
-              onPress={() => openFieldExplanation('estimatedPnl')}
+              accessibilityLabel={estimatedPnlLabel}
+              onPress={onOpenEstimatedPnlExplanation}
               style={styles.orderMetricLabel}>
-              {`${t('page.perps.pro.positionTpsl.estimatedPnl')} (${
-                market.quoteAsset
-              })`}
+              {estimatedPnlLabel}
             </PerpsProDottedUnderlineText>
           }
           tone={kind === 'takeProfit' ? 'positive' : 'negative'}

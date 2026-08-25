@@ -5,7 +5,7 @@ import { View } from 'react-native';
 
 import { PerpsProSkeletonBlock } from '../loading/PerpsProSkeletonBlock';
 
-export const PERPS_PRO_KLINE_CHART_HEIGHT = 184;
+export const PERPS_PRO_KLINE_CHART_HEIGHT = 224;
 
 export const PerpsProKlineSkeleton: React.FC<{ overlay?: boolean }> =
   React.memo(({ overlay = false }) => {

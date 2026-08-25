@@ -111,7 +111,7 @@ describe('formatMarkData maintenance rules', () => {
     },
   );
 
-  it('falls back to legacy onlyIsolated when marginMode is missing', () => {
+  it('fails closed for legacy onlyIsolated when marginMode is missing', () => {
     const meta: Meta = {
       collateralToken: 0,
       marginTables: [],
@@ -132,7 +132,7 @@ describe('formatMarkData maintenance rules', () => {
     } as unknown as PerpTopTokenV3;
 
     expect(formatMarkData([meta], [topAsset], { 0: '' })[0]).toMatchObject({
-      marginMode: 'noCross',
+      marginMode: 'strictIsolated',
       onlyIsolated: true,
     });
   });

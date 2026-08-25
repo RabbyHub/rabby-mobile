@@ -182,9 +182,6 @@ const renderExecution = () => {
   const hook = renderHook(() =>
     usePerpsProAttachedTpSlExecution({
       active: false,
-      activeAssetData: {
-        maxTradeSzs: ['10', '10'],
-      } as never,
       bboBook: book,
       bboSessionKey: 'BTC:1',
       bboStatus: 'ready',

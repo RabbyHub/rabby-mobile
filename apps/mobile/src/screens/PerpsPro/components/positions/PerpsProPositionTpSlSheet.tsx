@@ -36,6 +36,7 @@ import {
 } from './PerpsProPositionTpSlHeader';
 import { PerpsProPositionTpSlOrderList } from './PerpsProPositionTpSlOrderList';
 import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
+import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 type PartialPage = 'add' | 'list' | 'modify';
@@ -80,6 +81,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     const insets = useSafeAreaInsets();
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const openFieldExplanation = usePerpsProFieldExplanation();
     const [tab, setTab] = useState<'partial' | 'position'>(defaultTab);
     const [partialPage, setPartialPage] = useState<PartialPage>('list');
     const [editingOrder, setEditingOrder] =
@@ -91,6 +93,10 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       setEditingOrder(null);
       setPartialPage('list');
     }, []);
+    const openEstimatedPnlExplanation = useCallback(
+      () => openFieldExplanation('estimatedPnl'),
+      [openFieldExplanation],
+    );
     const requestDismiss = useCallback(() => {
       if (pending || coveredByReview) {
         return;
@@ -312,6 +318,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                       setEditingOrder(order);
                       setPartialPage('modify');
                     }}
+                    onOpenEstimatedPnlExplanation={openEstimatedPnlExplanation}
                     pending={pending}
                     position={visiblePosition}
                   />
