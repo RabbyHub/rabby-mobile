@@ -412,6 +412,7 @@ export const BridgeContent = ({
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
+    quoteRefreshCountdown,
 
     gasList,
     passGasPrice,
@@ -1723,6 +1724,11 @@ export const BridgeContent = ({
                 style={styles.switchButtonContainer}
                 onPress={switchToken}
                 loading={quoteLoading}
+                refreshCountdown={
+                  sceneActive && selectedBridgeQuote
+                    ? quoteRefreshCountdown
+                    : null
+                }
               />
             </View>
           </View>
