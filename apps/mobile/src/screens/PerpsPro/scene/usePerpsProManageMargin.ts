@@ -123,7 +123,7 @@ const buildManageMarginRange = (
     currentMargin: position.marginUsed,
     leverage: position.leverage?.value,
     marginModeConstraint:
-      market.marginMode ?? (market.onlyIsolated ? 'noCross' : null),
+      market.marginMode ?? (market.onlyIsolated ? 'strictIsolated' : null),
     markPrice: market.markPx,
     positionSize: position.szi,
   });

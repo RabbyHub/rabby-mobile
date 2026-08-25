@@ -148,7 +148,7 @@ describe('positionMargin', () => {
     ).toMatchObject({ max: '25', min: '10.1' });
   });
 
-  it.each([null, undefined, 'noCross', 'strictIsolated'] as const)(
+  it.each([null, undefined, 'strictIsolated'] as const)(
     'fails closed to add-only for %s metadata',
     marginModeConstraint => {
       expect(
@@ -163,6 +163,23 @@ describe('positionMargin', () => {
       ).toBe('20.01');
     },
   );
+
+  it('allows margin removal for an explicit noCross market', () => {
+    expect(
+      buildPositionMarginRange({
+        available: '0',
+        currentMargin: '13.77',
+        leverage: '10',
+        marginModeConstraint: 'noCross',
+        markPrice: '88.675',
+        positionSize: '-0.35',
+      }),
+    ).toMatchObject({
+      addOnly: false,
+      displayMin: '3.21',
+      min: '3.21',
+    });
+  });
 
   it('reports target boundaries and no-op separately', () => {
     const range = buildPositionMarginRange({
@@ -191,7 +208,7 @@ describe('positionMargin', () => {
       available: '5',
       currentMargin: '10.77317',
       leverage: '10',
-      marginModeConstraint: 'noCross',
+      marginModeConstraint: 'strictIsolated',
       markPrice: '100',
       positionSize: '1',
     });

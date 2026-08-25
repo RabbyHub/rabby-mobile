@@ -133,9 +133,10 @@ export const buildPositionMarginRange = ({
     notional.multipliedBy(MINIMUM_NOTIONAL_MARGIN_RATIO),
   );
   const safeFloor = protocolFloor.plus(MINIMUM_MARGIN_BUFFER);
-  // Missing metadata may describe an older only-isolated market. Removal is
-  // enabled only when authoritative metadata explicitly says `normal`.
-  const addOnly = marginModeConstraint !== 'normal';
+  // noCross forbids cross margin but still permits isolated-margin removal.
+  // strictIsolated and missing legacy metadata remain add-only.
+  const addOnly =
+    marginModeConstraint == null || marginModeConstraint === 'strictIsolated';
   const rawMin = addOnly ? current : BigNumber.min(current, safeFloor);
   const rawMax = current.plus(free);
   const min = rawMin.decimalPlaces(TARGET_DECIMALS, BigNumber.ROUND_CEIL);
