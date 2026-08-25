@@ -2,6 +2,7 @@ import {
   formatPerpsProCompactNumber,
   formatPerpsProDecimal,
   formatPerpsProFundingRate,
+  formatPerpsProMarketSelectorPrice,
   formatPerpsProPercent,
   formatPerpsProPrice,
   formatPerpsProSignedUsd,
@@ -24,6 +25,17 @@ describe('Perps Pro formatters', () => {
     expect(formatPerpsProPrice(63870.3, 1)).toBe('63,870.3');
     expect(formatPerpsProPrice(0.0123, 4)).toBe('0.0123');
     expect(formatPerpsProPrice('', 2)).toBe('-');
+  });
+
+  it('trims only insignificant fractional zeros from market selector prices', () => {
+    expect(formatPerpsProMarketSelectorPrice(101.17, 3)).toBe('101.17');
+    expect(formatPerpsProMarketSelectorPrice(101.1799, 3)).toBe('101.18');
+    expect(formatPerpsProMarketSelectorPrice(120, 2)).toBe('120');
+    expect(formatPerpsProMarketSelectorPrice(0.019105, 6)).toBe('0.019105');
+    expect(formatPerpsProMarketSelectorPrice(2503.4, 1)).toBe('2,503.4');
+    expect(formatPerpsProMarketSelectorPrice(80663, 0)).toBe('80,663');
+    expect(formatPerpsProMarketSelectorPrice(1.5065, 4)).toBe('1.5065');
+    expect(formatPerpsProMarketSelectorPrice('', 3)).toBe('-');
   });
 
   it('formats market and funding rates from fractional values', () => {

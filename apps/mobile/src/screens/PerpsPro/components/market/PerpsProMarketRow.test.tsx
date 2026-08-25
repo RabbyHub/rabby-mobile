@@ -165,7 +165,7 @@ describe('PerpsProMarketRow', () => {
         lineHeight: 20,
       }),
     );
-    expect(screen.getByText('120.00').props.style).toEqual(
+    expect(screen.getByText('120').props.style).toEqual(
       expect.objectContaining({
         fontFamily: 'SF Pro',
         fontSize: 16,
@@ -255,7 +255,7 @@ describe('PerpsProMarketRow', () => {
     );
 
     expect(screen.getByText('ALPHAUSDC')).toBeTruthy();
-    expect(screen.getByText('120.00')).toBeTruthy();
+    expect(screen.getByText('120')).toBeTruthy();
     expect(screen.getByText('+20.00%')).toBeTruthy();
     expect(
       screen.getByLabelText(
@@ -277,7 +277,7 @@ describe('PerpsProMarketRow', () => {
 
     expect(screen.queryByText('ALPHAUSDC')).toBeNull();
     expect(screen.getByText('BETAUSDC')).toBeTruthy();
-    expect(screen.getByText('80.00')).toBeTruthy();
+    expect(screen.getByText('80')).toBeTruthy();
     expect(screen.getByText('-20.00%')).toBeTruthy();
     expect(
       screen.getByLabelText('hyperliquid::BETA:https://example.test/BETA.png'),
