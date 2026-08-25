@@ -182,11 +182,11 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                     label={
                       <PerpsProDottedUnderlineText
                         accessibilityLabel={t(
-                          'page.perps.pro.positionTpsl.totalEstimatedPnl',
+                          'page.perps.pro.positionTpsl.estimatedPnl',
                         )}
                         onPress={() => openFieldExplanation('estimatedPnl')}
                         style={styles.detailLabel}>
-                        {t('page.perps.pro.positionTpsl.totalEstimatedPnl')}
+                        {t('page.perps.pro.positionTpsl.estimatedPnl')}
                       </PerpsProDottedUnderlineText>
                     }
                     tone={leg.kind === 'takeProfit' ? 'positive' : 'negative'}

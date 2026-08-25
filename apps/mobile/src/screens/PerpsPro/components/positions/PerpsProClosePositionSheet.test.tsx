@@ -171,7 +171,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positions.amount': 'Amount',
         'page.perps.pro.positions.closePosition': 'Close Position',
         'page.perps.pro.positions.entry': 'Entry Price',
-        'page.perps.pro.positions.estimatedPnl': 'Estimated PNL',
+        'page.perps.pro.positions.estimatedPnl': 'Estimated PnL',
         'page.perps.pro.positions.limit': 'Limit',
         'page.perps.pro.positions.long': 'Long',
         'page.perps.pro.positions.mark': 'Mark Price',
@@ -496,7 +496,7 @@ describe('PerpsProClosePositionSheet', () => {
     );
   });
 
-  it('opens the Estimated PNL explanation without reviewing the order', () => {
+  it('opens the Estimated PnL explanation without reviewing the order', () => {
     const onReview = jest.fn();
     render(
       <PerpsProClosePositionSheet
@@ -509,7 +509,7 @@ describe('PerpsProClosePositionSheet', () => {
       />,
     );
 
-    fireEvent.press(screen.getByLabelText('Estimated PNL'));
+    fireEvent.press(screen.getByLabelText('Estimated PnL'));
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
     expect(onReview).not.toHaveBeenCalled();
   });

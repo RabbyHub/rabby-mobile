@@ -2774,7 +2774,7 @@
             "description": "If the mark price falls below the liquidation price (when long) or rises above it (when short), your position will be liquidated."
           },
           "estimatedPnl": {
-            "title": "Estimated PNL",
+            "title": "Estimated PnL",
             "description": "Estimated PNL represents the projected profit or loss from closing a position. The actual realized PNL may differ due to trading fees and variations in the execution price. This estimate is provided for reference only."
           },
           "totalValue": {
@@ -2929,7 +2929,7 @@
           "price": "Price",
           "limitPrice": "Limit Price",
           "positionAmount": "Position Amount",
-          "estimatedPnl": "Estimated PNL",
+          "estimatedPnl": "Estimated PnL",
           "skipLimitConfirmation": "Don't display double confirmation for Limit Order again.",
           "closeSubmitted": "Close order submitted",
           "closeFailed": "Failed to close position",
@@ -2946,7 +2946,8 @@
           "contextChanged": "Position, account, or Mark Price changed. Please review again.",
           "duplicatePositionOrders": "Multiple Position TP/SL orders exist on this side. Cancel them individually or refresh before modifying.",
           "estimatedLiquidation": "Est. Liq. Price",
-          "estimatedPnl": "Est. PnL",
+          "estimatedPnl": "Estimated PnL",
+          "estimatedPnlShort": "Est. PnL",
           "invalidOrder": "Review the TP/SL price and amount",
           "invalidTrigger": "Trigger price is invalid for the latest Mark Price",
           "slTriggerInvalid": "The SL trigger price is invalid and will not be set",
@@ -2966,7 +2967,6 @@
           "symbol": "Symbol",
           "takeProfit": "Take Profit",
           "takeProfitTrigger": "TP Trigger",
-          "totalEstimatedPnl": "Total Estimated PNL",
           "triggeredByMark": "Triggered by Mark",
           "triggerDescription": "When <1>Mark Price</1> reaches <1>{{trigger}} {{quoteAsset}}</1>, it will trigger a <1>Market</1> order. Estimated PnL will be <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "triggerPrice": "Trigger Price",
@@ -2998,7 +2998,7 @@
           "limitPrice": "Limit Price",
           "marketPrice": "Market Price",
           "positionAmount": "Position Amount",
-          "estimatedPnl": "Est. PnL",
+          "estimatedPnl": "Estimated PnL",
           "amountAdjusted": "Amount (Adjusted)",
           "dontShowAgain": "Don't show again.",
           "editUnavailable": "This order type cannot be edited here.",
