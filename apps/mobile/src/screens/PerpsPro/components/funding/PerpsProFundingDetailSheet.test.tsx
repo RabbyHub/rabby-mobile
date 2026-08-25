@@ -216,5 +216,8 @@ describe('PerpsProFundingDetailSheet', () => {
     expect(messages.page.perps.pro.funding.nextRate).toBe(
       'Next Funding\nRate / Annualized',
     );
+    expect(messages.page.perps.pro.funding.explanation).toBe(
+      '* The payment rate exchanged between the long and short positions for the next funding. If the funding rate is positive, longs pay shorts. If negative, shorts pay longs.',
+    );
   });
 });

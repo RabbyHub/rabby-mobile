@@ -2618,7 +2618,7 @@
           "shortPaysLong": "Short Pays Long",
           "noPayment": "No Payment",
           "historyUnavailable": "Previous funding rate is temporarily unavailable.",
-          "explanation": "The funding rate applied at the next funding settlement. If the rate is positive, long position holders pay short position holders; if it is negative, short position holders pay long position holders."
+          "explanation": "* The payment rate exchanged between the long and short positions for the next funding. If the funding rate is positive, longs pay shorts. If negative, shorts pay longs."
         },
         "orderBook": {
           "price": "Price",
