@@ -2,7 +2,7 @@ import {
   createPerpsProTradeFormState,
   getPerpsProReduceOnlyAvailability,
   inferPerpsProConditionalClassification,
-  isPerpsProAmountAboveBothMax,
+  isPerpsProAmountAboveSharedMax,
   isPerpsProTradeCombinationSupported,
   resolvePerpsProDisplayAmount,
   resolvePerpsProMinimumOrderAmount,
@@ -10,7 +10,16 @@ import {
   sanitizePerpsProDecimalInput,
 } from './trade';
 
+const englishTradeMessages = require('../../../assets/locales/en/messages.json')
+  .page.perps.pro.trade;
+
 describe('Perps Pro trade model', () => {
+  it('uses the approved insufficient-balance feedback copy', () => {
+    expect(englishTradeMessages.insufficientBalance).toBe(
+      'Insufficient balance',
+    );
+  });
+
   it.each([
     [true, '2', false, true, false],
     [true, '-2', false, false, true],
@@ -141,6 +150,70 @@ describe('Perps Pro trade model', () => {
     ).toEqual({ baseSize: '0.00123', quoteAmount: '77.49' });
   });
 
+  it('validates balance against the shared canonical base-size Max', () => {
+    const facts = {
+      amountUnit: 'base' as const,
+      buyMaxBase: '5',
+      minimumQuoteAmount: '10',
+      price: '100',
+      sellMaxBase: '10',
+      szDecimals: 2,
+    };
+
+    expect(isPerpsProAmountAboveSharedMax({ amount: '10.01', ...facts })).toBe(
+      true,
+    );
+    expect(isPerpsProAmountAboveSharedMax({ amount: '6', ...facts })).toBe(
+      false,
+    );
+    expect(isPerpsProAmountAboveSharedMax({ amount: '10', ...facts })).toBe(
+      false,
+    );
+  });
+
+  it('quantizes quote input before comparing it with the shared Max', () => {
+    const facts = {
+      amountUnit: 'quote' as const,
+      buyMaxBase: '5',
+      minimumQuoteAmount: '10',
+      price: '100',
+      sellMaxBase: '10',
+      szDecimals: 2,
+    };
+
+    expect(
+      isPerpsProAmountAboveSharedMax({ amount: '1000.01', ...facts }),
+    ).toBe(false);
+    expect(isPerpsProAmountAboveSharedMax({ amount: '1001', ...facts })).toBe(
+      true,
+    );
+  });
+
+  it('keeps minimum-order and unavailable-Max states ahead of balance feedback', () => {
+    expect(
+      isPerpsProAmountAboveSharedMax({
+        amount: '5',
+        amountUnit: 'quote',
+        buyMaxBase: '0.01',
+        minimumQuoteAmount: '10',
+        price: '100',
+        sellMaxBase: '0.02',
+        szDecimals: 2,
+      }),
+    ).toBe(false);
+    expect(
+      isPerpsProAmountAboveSharedMax({
+        amount: '100',
+        amountUnit: 'quote',
+        buyMaxBase: '0',
+        minimumQuoteAmount: '10',
+        price: '100',
+        sellMaxBase: '0',
+        szDecimals: 2,
+      }),
+    ).toBe(false);
+  });
+
   it('keeps base display independent and requires a price only for quote display', () => {
     expect(
       resolvePerpsProDisplayAmount({
@@ -168,37 +241,6 @@ describe('Perps Pro trade model', () => {
   it('sanitizes unsupported input without adding separators', () => {
     expect(sanitizePerpsProDecimalInput('-01a.23.45e2', 3)).toBe('1.234');
     expect(sanitizePerpsProDecimalInput('01,23', 2)).toBe('1.23');
-  });
-
-  it('only reports a direction-neutral amount overflow above both side maxima', () => {
-    expect(
-      isPerpsProAmountAboveBothMax({
-        amount: '10.01',
-        buyMax: '10',
-        sellMax: '8',
-      }),
-    ).toBe(true);
-    expect(
-      isPerpsProAmountAboveBothMax({
-        amount: '9',
-        buyMax: '10',
-        sellMax: '8',
-      }),
-    ).toBe(false);
-    expect(
-      isPerpsProAmountAboveBothMax({
-        amount: '10',
-        buyMax: '10',
-        sellMax: '8',
-      }),
-    ).toBe(false);
-    expect(
-      isPerpsProAmountAboveBothMax({
-        amount: '',
-        buyMax: '10',
-        sellMax: '8',
-      }),
-    ).toBe(false);
   });
 
   it('only allows BBO with GTC', () => {

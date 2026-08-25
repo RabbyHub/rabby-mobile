@@ -15,12 +15,42 @@ const positive = (value: unknown) => {
   return number.isFinite() && number.gt(0) ? number : null;
 };
 
+const nonNegative = (value: unknown) => {
+  const number = new BigNumber(
+    (value as string | number | null | undefined) ?? Number.NaN,
+  );
+  return number.isFinite() ? BigNumber.max(number, 0) : null;
+};
+
 export const PERPS_PRO_LIMIT_MARGIN_SAFETY_RATIO = 0.99;
+
+const normalizeBaseSize = (value: BigNumber, szDecimals: number) =>
+  value.decimalPlaces(Math.max(0, szDecimals), BigNumber.ROUND_DOWN);
+
+export const resolvePerpsProLimitCapacityPrice = ({
+  limitPrice,
+  markPrice,
+  side,
+}: {
+  limitPrice: string;
+  markPrice: string;
+  side: PerpsProTradeSide;
+}) => {
+  const limit = positive(limitPrice);
+  const mark = positive(markPrice);
+  if (!limit) return mark?.toFixed() ?? null;
+  if (!mark) return limit.toFixed();
+
+  const restsAwayFromMark = side === 'buy' ? limit.lt(mark) : limit.gte(mark);
+  return restsAwayFromMark ? limit.toFixed() : mark.toFixed();
+};
 
 export const resolvePerpsProMaxBaseCapacity = ({
   availableQuote,
+  conditionalExecution,
   currentPositionSize,
   leverage,
+  markPrice,
   orderType,
   referencePrice,
   serverMaxBase,
@@ -28,8 +58,10 @@ export const resolvePerpsProMaxBaseCapacity = ({
   szDecimals,
 }: {
   availableQuote: string;
+  conditionalExecution?: PerpsProTradeFormState['conditionalExecution'];
   currentPositionSize?: string | null;
   leverage: number;
+  markPrice: string;
   orderType: PerpsProTradeFormState['orderType'];
   referencePrice: string;
   serverMaxBase: string;
@@ -37,13 +69,36 @@ export const resolvePerpsProMaxBaseCapacity = ({
   szDecimals: number;
 }) => {
   const serverMaximum = positive(serverMaxBase) ?? new BigNumber(0);
-  if (orderType !== 'limit' || !serverMaximum.gt(0)) {
-    return serverMaximum.toFixed();
+  const normalizedServerMaximum = normalizeBaseSize(serverMaximum, szDecimals);
+  const isLimitExecution =
+    orderType === 'limit' ||
+    (orderType === 'conditional' && conditionalExecution === 'limit');
+  if (!isLimitExecution || !serverMaximum.gt(0)) {
+    return normalizedServerMaximum.toFixed();
   }
-  const balance = positive(availableQuote);
-  const price = positive(referencePrice);
-  if (!balance || !price || !Number.isFinite(leverage) || leverage <= 0) {
-    return serverMaximum.toFixed();
+  const balance = nonNegative(availableQuote);
+  const mark = positive(markPrice);
+  const policyPrice = positive(referencePrice) ?? mark;
+  const capacityPrice = positive(
+    resolvePerpsProLimitCapacityPrice({
+      limitPrice: referencePrice,
+      markPrice,
+      side,
+    }),
+  );
+  // Active Asset maxTradeSzs is mark-priced. Hyperliquid's web client rebases
+  // that capacity for a resting Limit whose execution price is more favorable
+  // than Mark; marketable Limits keep the Mark-priced capacity.
+  const adjustedServerMaximum =
+    mark && capacityPrice && !capacityPrice.eq(mark)
+      ? serverMaximum.multipliedBy(mark).dividedBy(capacityPrice)
+      : serverMaximum;
+  const normalizedAdjustedServerMaximum = normalizeBaseSize(
+    adjustedServerMaximum,
+    szDecimals,
+  );
+  if (!balance || !policyPrice || !Number.isFinite(leverage) || leverage <= 0) {
+    return normalizedAdjustedServerMaximum.toFixed();
   }
   const position = new BigNumber(currentPositionSize ?? 0);
   const closable =
@@ -54,12 +109,15 @@ export const resolvePerpsProMaxBaseCapacity = ({
   const policyMaximum = balance
     .multipliedBy(leverage)
     .multipliedBy(PERPS_PRO_LIMIT_MARGIN_SAFETY_RATIO)
-    .dividedBy(price)
+    // Rabby Desktop's 0.99 balance policy is priced at the user's actual
+    // Limit. It is intentionally separate from the server-capacity price.
+    .dividedBy(policyPrice)
     .decimalPlaces(Math.max(0, szDecimals), BigNumber.ROUND_DOWN)
     .plus(closable);
-  // Active Asset remains the hard server ceiling. The explicit 0.99 policy
-  // only reserves headroom when its limit-price estimate is more conservative.
-  return BigNumber.min(serverMaximum, policyMaximum).toFixed();
+  return normalizeBaseSize(
+    BigNumber.min(adjustedServerMaximum, policyMaximum),
+    szDecimals,
+  ).toFixed();
 };
 
 export const getPerpsProTradeDisplayReferencePrice = ({
@@ -143,10 +201,14 @@ export const resolvePerpsProSliderAmount = ({
   ) {
     return null;
   }
-  const base = maximum
-    .multipliedBy(Math.min(100, percentage))
-    .dividedBy(100)
-    .decimalPlaces(szDecimals, BigNumber.ROUND_DOWN);
+  const normalizedMaximum = normalizeBaseSize(maximum, szDecimals);
+  const base =
+    percentage >= 100
+      ? normalizedMaximum
+      : normalizedMaximum
+          .multipliedBy(percentage)
+          .dividedBy(100)
+          .decimalPlaces(szDecimals, BigNumber.ROUND_DOWN);
   return base.gt(0)
     ? {
         baseSize: base.toFixed(),

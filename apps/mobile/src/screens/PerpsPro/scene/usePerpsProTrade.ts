@@ -78,7 +78,7 @@ import {
   getPerpsProReduceOnlyAvailability,
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
-  isPerpsProAmountAboveBothMax,
+  isPerpsProAmountAboveSharedMax,
   resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
@@ -198,9 +198,6 @@ export const usePerpsProTrade = ({
       if (reason === 'regionRestricted') {
         return t('page.perps.regionNotSupport');
       }
-      if (reason === 'availableToTrade') {
-        return t('page.perps.pro.trade.insufficientBalance');
-      }
       if (reason === 'insufficientDepth') {
         return tpSlErrorText({ code: reason }, { side });
       }
@@ -319,7 +316,6 @@ export const usePerpsProTrade = ({
   const amountDraftRef = useRef(createPerpsProTradeAmountDraft());
   const amountOverflowToastActiveRef = useRef(false);
   const latestTradeRef = useRef<PerpsLatestTrade | null>(null);
-  const limitManualPriceRef = useRef<string | null>(null);
   const shouldAutoFillLimitPriceRef = useRef(form.orderType === 'limit');
   amountSourceRef.current = amountSource;
   percentageRef.current = percentage;
@@ -357,14 +353,8 @@ export const usePerpsProTrade = ({
       accountFacts.account.address.toLowerCase()
       ? activeAssetData
       : null;
-  const currentActiveAssetDataRef = useRef<WsActiveAssetData | null>(
-    scopedActiveAssetData,
-  );
-  currentActiveAssetDataRef.current = scopedActiveAssetData;
-
   const { execute: executeAttachedTpSl } = usePerpsProAttachedTpSlExecution({
     active: executionActive,
-    activeAssetData: scopedActiveAssetData,
     bboBook,
     bboSessionKey,
     bboStatus,
@@ -460,6 +450,7 @@ export const usePerpsProTrade = ({
       initialLeverageConfiguration,
       leverageConfigurationScopeKey,
     );
+    amountOverflowToastActiveRef.current = false;
     setReview(null);
   }, [
     accountIdentity,
@@ -482,7 +473,6 @@ export const usePerpsProTrade = ({
     amountOverflowToastActiveRef.current = false;
     amountSourceRef.current = 'manual';
     latestTradeRef.current = null;
-    limitManualPriceRef.current = null;
     percentageRef.current = 0;
     shouldAutoFillLimitPriceRef.current = formRef.current.orderType === 'limit';
     tradeInputFocusOwnerRef.current = null;
@@ -576,12 +566,21 @@ export const usePerpsProTrade = ({
         market?.marketData.pxDecimals ?? 2,
       );
       if (field === 'limitPrice') {
-        limitManualPriceRef.current = price || null;
         shouldAutoFillLimitPriceRef.current = false;
       }
       patchForm({ [field]: price });
     },
     [market?.marketData.pxDecimals, patchForm],
+  );
+  const getLatestLimitPrice = useCallback(
+    () =>
+      latestTradeRef.current
+        ? sanitizePerpsProDecimalInput(
+            latestTradeRef.current.price,
+            market?.marketData.pxDecimals ?? 2,
+          )
+        : '',
+    [market?.marketData.pxDecimals],
   );
   const getOrderBookPriceIntent = useCallback(
     () =>
@@ -665,12 +664,7 @@ export const usePerpsProTrade = ({
       const currentForm = formRef.current;
       if (currentForm.orderType === orderType) return;
 
-      const latestPrice = latestTradeRef.current
-        ? sanitizePerpsProDecimalInput(
-            latestTradeRef.current.price,
-            market?.marketData.pxDecimals ?? 2,
-          )
-        : '';
+      const latestPrice = getLatestLimitPrice();
       const nextForm = {
         ...currentForm,
         amount: '',
@@ -688,7 +682,6 @@ export const usePerpsProTrade = ({
       amountDraftRef.current = createPerpsProTradeAmountDraft();
       amountOverflowToastActiveRef.current = false;
       amountSourceRef.current = 'manual';
-      limitManualPriceRef.current = null;
       percentageRef.current = 0;
       shouldAutoFillLimitPriceRef.current =
         orderType === 'limit' && !latestPrice;
@@ -698,14 +691,13 @@ export const usePerpsProTrade = ({
       setPercentageState(0);
       setForm(nextForm);
     },
-    [market?.marketData.pxDecimals],
+    [getLatestLimitPrice],
   );
   const applyAmountUnit = useCallback((amountUnit: PerpsProTradeAmountUnit) => {
     const currentForm = formRef.current;
     if (currentForm.amountUnit === amountUnit) return;
 
     amountOverflowToastActiveRef.current = false;
-
     amountDraftRef.current = createPerpsProTradeAmountDraft();
     amountSourceRef.current = 'manual';
     percentageRef.current = 0;
@@ -742,8 +734,7 @@ export const usePerpsProTrade = ({
       if (
         !shouldAutoFillLimitPriceRef.current ||
         currentForm.orderType !== 'limit' ||
-        currentForm.bboEnabled ||
-        limitManualPriceRef.current
+        currentForm.bboEnabled
       ) {
         return;
       }
@@ -759,15 +750,6 @@ export const usePerpsProTrade = ({
     });
   }, [executionActive, market?.marketData.pxDecimals, patchForm, tradeCoin]);
 
-  const getRestoredLimitPrice = useCallback(() => {
-    const latestPrice = latestTradeRef.current
-      ? sanitizePerpsProDecimalInput(
-          latestTradeRef.current.price,
-          market?.marketData.pxDecimals ?? 2,
-        )
-      : '';
-    return limitManualPriceRef.current ?? latestPrice;
-  }, [market?.marketData.pxDecimals]);
   const enableBbo = useCallback(
     (bboStrategy: PerpsProBboStrategy) => {
       const currentForm = formRef.current;
@@ -788,10 +770,10 @@ export const usePerpsProTrade = ({
   const disableBbo = useCallback(() => {
     const currentForm = formRef.current;
     if (currentForm.orderType !== 'limit') return;
-    const limitPrice = getRestoredLimitPrice();
+    const limitPrice = getLatestLimitPrice();
     shouldAutoFillLimitPriceRef.current = !limitPrice;
     patchForm({ bboEnabled: false, limitPrice });
-  }, [getRestoredLimitPrice, patchForm]);
+  }, [getLatestLimitPrice, patchForm]);
   const setTif = useCallback(
     (tif: PerpsProTradeTif) => {
       const currentForm = formRef.current;
@@ -800,11 +782,11 @@ export const usePerpsProTrade = ({
         patchForm({ tif });
         return;
       }
-      const limitPrice = getRestoredLimitPrice();
+      const limitPrice = getLatestLimitPrice();
       shouldAutoFillLimitPriceRef.current = !limitPrice;
       patchForm({ bboEnabled: false, limitPrice, tif });
     },
-    [getRestoredLimitPrice, patchForm],
+    [getLatestLimitPrice, patchForm],
   );
 
   useEffect(() => {
@@ -1095,8 +1077,10 @@ export const usePerpsProTrade = ({
                 scopedActiveAssetData.availableToTrade[1],
               ).toFixed()
             : '0',
+          conditionalExecution: form.conditionalExecution,
           currentPositionSize: currentPosition?.szi,
           leverage,
+          markPrice: market?.marketData.markPx ?? '',
           orderType: form.orderType,
           referencePrice: maxReferencePrice,
           serverMaxBase,
@@ -1109,6 +1093,7 @@ export const usePerpsProTrade = ({
       currentPosition?.szi,
       form,
       leverage,
+      market?.marketData.markPx,
       market?.marketData.szDecimals,
       maxDisplayMarketPrice,
       reduceOnlyAvailability.buyUnavailable,
@@ -1128,6 +1113,33 @@ export const usePerpsProTrade = ({
       }),
     [form, getMaxBase, maxDisplayMarketPrice],
   );
+  const isAmountAboveSharedMax = useCallback(
+    (amount: string) =>
+      tradeConfigurationReady &&
+      isPerpsProAmountAboveSharedMax({
+        amount,
+        amountUnit: form.amountUnit,
+        buyMaxBase: getMaxBase('buy').toFixed(),
+        minimumQuoteAmount: PERPS_MINI_USD_VALUE,
+        price: displayReferencePrice,
+        sellMaxBase: getMaxBase('sell').toFixed(),
+        szDecimals: market?.marketData.szDecimals ?? 0,
+      }),
+    [
+      displayReferencePrice,
+      form.amountUnit,
+      getMaxBase,
+      market?.marketData.szDecimals,
+      tradeConfigurationReady,
+    ],
+  );
+  const currentManualAmountAboveSharedMax =
+    amountSource === 'manual' && isAmountAboveSharedMax(form.amount);
+  useEffect(() => {
+    if (!currentManualAmountAboveSharedMax) {
+      amountOverflowToastActiveRef.current = false;
+    }
+  }, [currentManualAmountAboveSharedMax]);
   const setAmount = useCallback(
     (value: string) => {
       const amount = sanitizePerpsProDecimalInput(value, amountDecimals);
@@ -1143,29 +1155,20 @@ export const usePerpsProTrade = ({
       setPercentageState(0);
       patchForm({ amount });
 
-      const amountAboveBothMax =
-        !form.reduceOnly &&
-        tradeConfigurationReady &&
-        isPerpsProAmountAboveBothMax({
-          amount,
-          buyMax: getMaxDisplayAmount('buy'),
-          sellMax: getMaxDisplayAmount('sell'),
-        });
-      if (amountAboveBothMax && !amountOverflowToastActiveRef.current) {
+      const amountAboveSharedMax = isAmountAboveSharedMax(amount);
+      if (amountAboveSharedMax && !amountOverflowToastActiveRef.current) {
         showToast(t('page.perps.pro.trade.insufficientBalance'), 'error');
       }
-      amountOverflowToastActiveRef.current = amountAboveBothMax;
+      amountOverflowToastActiveRef.current = amountAboveSharedMax;
     },
     [
       amountDecimals,
       displayReferencePrice,
       form.amountUnit,
-      form.reduceOnly,
-      getMaxDisplayAmount,
+      isAmountAboveSharedMax,
       market?.marketData.szDecimals,
       patchForm,
       t,
-      tradeConfigurationReady,
     ],
   );
   const beginAmountEntry = useCallback(() => {
@@ -1388,13 +1391,7 @@ export const usePerpsProTrade = ({
         return;
       }
 
-      const latestPrice = latestTradeRef.current
-        ? sanitizePerpsProDecimalInput(
-            latestTradeRef.current.price,
-            market?.marketData.pxDecimals ?? 2,
-          )
-        : '';
-      limitManualPriceRef.current = null;
+      const latestPrice = getLatestLimitPrice();
       shouldAutoFillLimitPriceRef.current = !latestPrice;
       patchForm({
         attachedTpSl,
@@ -1403,7 +1400,7 @@ export const usePerpsProTrade = ({
         limitPrice: latestPrice,
       });
     },
-    [market?.marketData.pxDecimals, patchForm],
+    [getLatestLimitPrice, patchForm],
   );
   const tpSl = usePerpsProTpSl({
     draft: form.attachedTpSl,
@@ -1558,6 +1555,16 @@ export const usePerpsProTrade = ({
         side,
         szDecimals: market.marketData.szDecimals,
       });
+      const sharedMaxBase = BigNumber.max(
+        getMaxBase('buy'),
+        getMaxBase('sell'),
+      );
+      if (
+        sharedMaxBase.gt(0) &&
+        new BigNumber(command.baseSize).gt(sharedMaxBase)
+      ) {
+        throw new Error(t('page.perps.pro.trade.insufficientBalance'));
+      }
       if (form.reduceOnly) {
         const signedSize = positive(
           new BigNumber(currentPosition?.szi ?? 0).abs(),
@@ -1565,10 +1572,6 @@ export const usePerpsProTrade = ({
         if (!signedSize || new BigNumber(command.baseSize).gt(signedSize)) {
           throw new Error(t('page.perps.pro.trade.reduceOnlyUnavailable'));
         }
-      }
-      const maxBase = getMaxBase(side);
-      if (!maxBase.gt(0) || new BigNumber(command.baseSize).gt(maxBase)) {
-        throw new Error(t('page.perps.pro.trade.insufficientBalance'));
       }
       if (!hasAttached) {
         return command;
@@ -1856,39 +1859,14 @@ export const usePerpsProTrade = ({
             .currentClearinghouseState?.assetPositions.find(
               item => item.position.coin === command.coin,
             )?.position;
-          const liveActiveAsset = currentActiveAssetDataRef.current;
-          const liveMaxBase = command.reduceOnly
-            ? positive(new BigNumber(livePosition?.szi ?? 0).abs())
-            : liveActiveAsset
-            ? positive(
-                resolvePerpsProMaxBaseCapacity({
-                  availableQuote: BigNumber.min(
-                    liveActiveAsset.availableToTrade[0],
-                    liveActiveAsset.availableToTrade[1],
-                  ).toFixed(),
-                  currentPositionSize: livePosition?.szi,
-                  leverage: desired.leverage,
-                  orderType: 'limit',
-                  referencePrice: price.toFixed(),
-                  serverMaxBase:
-                    liveActiveAsset.maxTradeSzs[command.side === 'buy' ? 0 : 1],
-                  side: command.side,
-                  szDecimals: market.marketData.szDecimals,
-                }),
-              )
-            : null;
           const reduceDirectionInvalid =
             command.reduceOnly &&
             (!livePosition ||
               (command.side === 'buy'
                 ? !new BigNumber(livePosition.szi).lt(0)
                 : !new BigNumber(livePosition.szi).gt(0)));
-          if (
-            reduceDirectionInvalid ||
-            !liveMaxBase ||
-            baseSize.gt(liveMaxBase)
-          ) {
-            throw new Error(t('page.perps.pro.trade.insufficientBalance'));
+          if (reduceDirectionInvalid) {
+            throw new Error(t('page.perps.pro.trade.reduceOnlyUnavailable'));
           }
           const quoteAmount = baseSize.multipliedBy(price);
           const maximum = positive(market.marketData.maxUsdValueSize);

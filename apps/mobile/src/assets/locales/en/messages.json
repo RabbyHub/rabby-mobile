@@ -2715,7 +2715,7 @@
           },
           "skipConfirmation": "Don't display confirmation for this order type again.",
           "accountRequired": "Select a Perps account before placing an order.",
-          "insufficientBalance": "The order exceeds the maximum available amount.",
+          "insufficientBalance": "Insufficient balance",
           "reduceOnlyUnavailable": "Reduce Only can only decrease the current position.",
           "onlyIsolatedMargin": "Only isolated margin is supported for this token.",
           "marginModeUnavailable": "Margin mode cannot be changed while this market has a position or open order.",
