@@ -9,6 +9,8 @@ type TipsPopupState = {
   title: string;
   desc: string | React.ReactNode;
   owner?: string;
+  /** Sheet background; defaults to 'bg1'. */
+  bgType?: 'bg0' | 'bg1';
   buttonStyle?: StyleProp<ViewStyle>;
   buttonTitleStyle?: StyleProp<TextStyle>;
   buttonType?:

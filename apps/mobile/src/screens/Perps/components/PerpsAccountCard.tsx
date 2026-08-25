@@ -1,61 +1,273 @@
-/* eslint-disable react-native/no-inline-styles */
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, TouchableOpacity, View } from 'react-native';
+import {
+  AppState,
+  ImageBackground,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { useIsFocused } from '@react-navigation/native';
+import { Skeleton } from '@rneui/base';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { usePerpsPortfolioBreakdown } from '@/hooks/perps/usePerpsPortfolioBreakdown';
+import {
+  fetchPerpsPortfolio,
+  usePerpsPortfolio,
+} from '@/hooks/perps/usePerpsPortfolioStore';
+import {
+  compute24hChange,
+  getLatestPortfolioValue,
+  isPortfolioAllZero,
+} from '@/hooks/perps/perpsPortfolio';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { Text } from '@/components/Typography';
-import RcIconMinButton from '@/assets2024/icons/perps/IconMinButton.svg';
 import ImgLearnMore from '@/assets2024/icons/perps/ImgLearnMore.png';
 import RcIconLearnArrow from '@/assets2024/icons/perps/IconLearnArrow.svg';
-import RcIconPlusButton from '@/assets2024/icons/perps/IconPlusButton.svg';
-import RcIconAddFunds from '@/assets2024/icons/perps/IconAddFunds.svg';
-import RcIconUSDC from '@/assets2024/icons/perps/IconUSDC.svg';
-import RcIconUSDT from '@/assets2024/icons/perps/IconUSDT.svg';
-import RcIconUSDH from '@/assets2024/icons/perps/IconUSDH.svg';
-import RcIconUSDE from '@/assets2024/icons/perps/IconUSDE.svg';
-import RcIconCardArrow from '@/assets2024/icons/perps/IconCardArrow.svg';
+import RcIconPortfolioInfoCC from '@/assets2024/icons/perps/IconPortfolioInfoCC.svg';
+import RcIconPortfolioCollapseCC from '@/assets2024/icons/perps/IconPortfolioCollapseCC.svg';
+import RcIconPortfolioPlusCC from '@/assets2024/icons/perps/IconPortfolioPlusCC.svg';
+import RcIconPortfolioMinusCC from '@/assets2024/icons/perps/IconPortfolioMinusCC.svg';
 import { apisPerps } from '@/core/apis';
 import BigNumber from 'bignumber.js';
-import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { PerpsPortfolioChart } from './PerpsPortfolioChart';
+import { useMemoizedFn } from 'ahooks';
 
-const COIN_ICON_MAP: Record<string, React.ReactNode> = {
-  USDC: <RcIconUSDC width={16} height={16} />,
-  USDT0: <RcIconUSDT width={16} height={16} />,
-  USDH: <RcIconUSDH width={16} height={16} />,
-  USDE: <RcIconUSDE width={16} height={16} />,
+const PERPS_TEAL = '#23C0B0';
+const PERPS_BTN_BG = 'rgba(80, 210, 193, 0.10)';
+
+// chart 120 + tab row (16 + 4 margin) + top margin 16
+const EXPANDED_BLOCK_HEIGHT = 156;
+
+const BreakdownContent = ({
+  desc,
+  rows,
+}: {
+  desc: string;
+  rows: { label: string; value: number }[];
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <View style={styles.breakdownContainer}>
+      <Text style={styles.breakdownDesc}>{desc}</Text>
+      <View style={styles.breakdownCard}>
+        {rows.map(row => (
+          <View key={row.label} style={styles.breakdownRow}>
+            <Text style={styles.breakdownLabel}>{row.label}</Text>
+            <Text style={styles.breakdownValue}>
+              {formatUsdValue(row.value)}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 };
 
-export const PerpsAccountCard: React.FC<{
-  onSwapPress: () => void | Promise<void>;
-}> = ({ onSwapPress }) => {
+export const PerpsAccountCard: React.FC = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const [, setPopupState] = usePerpsPopupState();
+  const [popupState, setPopupState] = usePerpsPopupState();
+  const showTipsPopup = useShowTipsPopup();
 
-  const { availableBalance, accountValue, isUnifiedAccount, spotBalances } =
-    usePerpsAccount();
-  const [isBalanceExpanded, setIsBalanceExpanded] = React.useState(false);
+  const {
+    availableBalance,
+    accountValue,
+    isUnifiedAccount,
+    isPortfolioMargin,
+  } = usePerpsAccount();
+  const { hasNonPerpsAssets, breakdownMode, getBreakdownValues } =
+    usePerpsPortfolioBreakdown();
 
-  const visibleBalances = React.useMemo(() => {
-    return spotBalances
-      .filter(b => Number(b.available) >= 0.1)
-      .sort((a, b) => Number(b.available) - Number(a.available));
-  }, [spotBalances]);
+  const currentAddress = useActivityStore(
+    perpsStore,
+    s => s.currentPerpsAccount?.address,
+    Object.is,
+    { storeLabel: 'perps-account-card' },
+  );
 
-  const isNewUser = React.useMemo(() => {
+  const portfolioEntry = usePerpsPortfolio(currentAddress);
+  const isFocused = useIsFocused();
+
+  // Poll while the Perps screen is focused; the store dedupes and keeps a
+  // short TTL, so focus flaps do not cause request bursts.
+  useEffect(() => {
+    if (!currentAddress || !isFocused) {
+      return;
+    }
+    fetchPerpsPortfolio(currentAddress);
+    const timer = setInterval(() => {
+      if (AppState.currentState === 'active') {
+        fetchPerpsPortfolio(currentAddress, { force: true });
+      }
+    }, 60_000);
+    return () => clearInterval(timer);
+  }, [currentAddress, isFocused]);
+
+  // Refresh shortly after a deposit/withdraw/swap popup closes so the
+  // portfolio value catches the funding change. (Balance-driven triggers are
+  // avoided on purpose: on manual accounts withdrawable ticks with prices
+  // while a position is open — unified keeps it at 0 and moves spot balances
+  // instead — so either way a balance-driven trigger would turn into a
+  // constant forced-refetch stream.)
+  const anyFundingPopupOpen =
+    popupState.isShowDepositPopup ||
+    popupState.isShowWithdrawPopup ||
+    popupState.isShowSwapPopup;
+  const prevFundingPopupOpenRef = useRef(false);
+  useEffect(() => {
+    const wasOpen = prevFundingPopupOpenRef.current;
+    prevFundingPopupOpenRef.current = anyFundingPopupOpen;
+    if (!wasOpen || anyFundingPopupOpen || !currentAddress) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetchPerpsPortfolio(currentAddress, { force: true });
+    }, 3_000);
+    return () => clearTimeout(timer);
+  }, [anyFundingPopupOpen, currentAddress]);
+
+  const portfolioData = portfolioEntry?.data ?? null;
+  const isPortfolioEmpty = useMemo(
+    () => !!portfolioData && isPortfolioAllZero(portfolioData),
+    [portfolioData],
+  );
+  // 'zero': no account, or an account whose history is all zeros — show the
+  // Figma empty state. 'loading': logged in but no data yet (fetch pending or
+  // failed; the 60s poll keeps retrying) — show skeletons, never a fake $0.
+  const portfolioViewState: 'zero' | 'loading' | 'data' = !currentAddress
+    ? 'zero'
+    : portfolioData == null
+    ? 'loading'
+    : isPortfolioEmpty
+    ? 'zero'
+    : 'data';
+  const portfolioValue = useMemo(
+    () => (portfolioData ? getLatestPortfolioValue(portfolioData) : null),
+    [portfolioData],
+  );
+  const change24h = useMemo(
+    () => (portfolioData ? compute24hChange(portfolioData) : null),
+    [portfolioData],
+  );
+
+  const change24hText = useMemo(() => {
+    if (!change24h) {
+      return '';
+    }
+    const sign = change24h.pnl < 0 ? '-' : '+';
+    const amountText = `${sign}$${splitNumberByStep(
+      Math.abs(change24h.pnl).toFixed(2),
+    )}`;
+    if (change24h.percent == null) {
+      return amountText;
+    }
+    const percentText = `${sign}${Math.abs(change24h.percent * 100).toFixed(
+      2,
+    )}%`;
+    return `${percentText}(${amountText})`;
+  }, [change24h]);
+  const isChangeLoss = (change24h?.pnl ?? 0) < 0;
+
+  const [isChartExpanded, setIsChartExpanded] = useState(false);
+  // Keeps the expanded chart mounted while the collapse animation runs.
+  const [renderExpandedChart, setRenderExpandedChart] = useState(false);
+  const expandProgress = useSharedValue(0);
+  const [cardWidth, setCardWidth] = useState(0);
+
+  const toggleChart = useMemoizedFn((next: boolean) => {
+    setIsChartExpanded(next);
+    expandProgress.value = withTiming(next ? 1 : 0, {
+      duration: 200,
+      easing: Easing.inOut(Easing.ease),
+    });
+    if (next) {
+      setRenderExpandedChart(true);
+    }
+  });
+  useEffect(() => {
+    if (isChartExpanded || !renderExpandedChart) {
+      return;
+    }
+    const timer = setTimeout(() => setRenderExpandedChart(false), 200);
+    return () => clearTimeout(timer);
+  }, [isChartExpanded, renderExpandedChart]);
+
+  const expandedBlockStyle = useAnimatedStyle(() => ({
+    height: expandProgress.value * EXPANDED_BLOCK_HEIGHT,
+    opacity: expandProgress.value,
+  }));
+
+  const canExpandChart = !!portfolioData && !isPortfolioEmpty;
+
+  const accountTypeTitle = isPortfolioMargin
+    ? t('page.perps.PerpsCard.portfolioMarginAccount')
+    : isUnifiedAccount
+    ? t('page.perps.PerpsCard.unifiedAccount')
+    : t('page.perps.PerpsCard.manualAccount');
+
+  const handleShowBreakdown = useMemoizedFn(() => {
+    const { perpsValue, secondaryValue } = getBreakdownValues(
+      portfolioValue || 0,
+    );
+    const descKey = {
+      manual: 'page.perps.PerpsCard.manualAccountDesc',
+      unified: 'page.perps.PerpsCard.unifiedAccountDesc',
+      portfolioMargin: 'page.perps.PerpsCard.portfolioMarginAccountDesc',
+    }[breakdownMode];
+    const secondaryLabelKey = {
+      manual: 'page.perps.PerpsCard.breakdownSpot',
+      unified: 'page.perps.PerpsCard.breakdownOtherAssets',
+      portfolioMargin: 'page.perps.PerpsCard.breakdownNetOtherAssets',
+    }[breakdownMode];
+    showTipsPopup({
+      title: accountTypeTitle,
+      bgType: 'bg0',
+      desc: (
+        <BreakdownContent
+          desc={t(descKey)}
+          rows={[
+            {
+              label: t('page.perps.PerpsCard.breakdownPerps'),
+              value: perpsValue,
+            },
+            { label: t(secondaryLabelKey), value: secondaryValue },
+          ]}
+        />
+      ),
+      buttonType: 'hyperliquid',
+    });
+  });
+
+  const isNewUser = useMemo(() => {
     return (
       Number(availableBalance) === 0 && accountValue === 0 && !isUnifiedAccount
     );
   }, [availableBalance, accountValue, isUnifiedAccount]);
 
-  const [hasClosedLearnMore, setHasClosedLearnMore] = React.useState(true);
-  React.useEffect(() => {
+  const [hasClosedLearnMore, setHasClosedLearnMore] = useState(true);
+  useEffect(() => {
     apisPerps.getHasClosedLearnMoreCard().then(closed => {
       setHasClosedLearnMore(closed);
     });
@@ -63,120 +275,190 @@ export const PerpsAccountCard: React.FC<{
 
   const showLearnMore = isNewUser && !hasClosedLearnMore;
 
+  const openDeposit = useCallback(() => {
+    setPopupState(prev => ({ ...prev, isShowDepositPopup: true }));
+  }, [setPopupState]);
+  const openWithdraw = useCallback(() => {
+    setPopupState(prev => ({ ...prev, isShowWithdrawPopup: true }));
+  }, [setPopupState]);
+
   return (
     <>
-      <LinearGradient
-        colors={['#0F2F3A', '#041920']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.card, styles.balanceCard]}>
-        <View style={styles.balanceCardInner}>
-          <View style={styles.balanceCardRow}>
-            <View style={styles.balanceCardContentLeft}>
-              <TickerTexts textStyle={styles.balance} duration={750}>
-                <TickItem rotateItems={['$']}>{'$'}</TickItem>
-                {splitNumberByStep(
-                  new BigNumber(availableBalance || 0).toFixed(2),
+      <View style={styles.cardShadow}>
+        <LinearGradient
+          // Opaque composite of the design's white 90%->54% glass over the
+          // screen's bg0 (#F6F7F7) — deterministic regardless of what is
+          // rendered behind the card.
+          colors={
+            isLight
+              ? ['#FEFEFE', '#FAFBFB']
+              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.card}
+          onLayout={e => setCardWidth(e.nativeEvent.layout.width)}>
+          <View style={styles.upperSection}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerLeft}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.portfolioLabel}>
+                    {t('page.perps.PerpsCard.portfolioValue')}
+                  </Text>
+                  {hasNonPerpsAssets && (
+                    <TouchableOpacity
+                      hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+                      onPress={handleShowBreakdown}>
+                      <RcIconPortfolioInfoCC
+                        width={16}
+                        height={16}
+                        color={colors2024['neutral-foot']}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {portfolioViewState === 'loading' ? (
+                  <Skeleton
+                    width={132}
+                    height={28}
+                    style={styles.valueSkeleton}
+                    LinearGradientComponent={LoadingLinear}
+                  />
+                ) : portfolioViewState === 'zero' ? (
+                  <Text style={styles.portfolioValue}>0</Text>
+                ) : (
+                  <Text style={styles.portfolioValue}>
+                    {'$'}
+                    {splitNumberByStep(
+                      new BigNumber(portfolioValue || 0).toFixed(2),
+                    )}
+                  </Text>
                 )}
-              </TickerTexts>
+                <View style={styles.changeRow}>
+                  {portfolioViewState === 'loading' ? (
+                    <Skeleton
+                      width={92}
+                      height={16}
+                      style={styles.changeSkeleton}
+                      LinearGradientComponent={LoadingLinear}
+                    />
+                  ) : (
+                    <>
+                      <Text
+                        style={[
+                          styles.changeText,
+                          {
+                            color: isChangeLoss
+                              ? colors2024['red-default']
+                              : colors2024['green-default'],
+                          },
+                        ]}>
+                        {portfolioViewState === 'zero'
+                          ? '+0%(+$0.00)'
+                          : change24hText}
+                      </Text>
+                      <Text style={styles.changeTimeText}>24H</Text>
+                    </>
+                  )}
+                </View>
+              </View>
+              {!isChartExpanded && (
+                <Pressable
+                  disabled={!canExpandChart}
+                  onPress={() => toggleChart(true)}
+                  style={styles.sparklineWrap}>
+                  <PerpsPortfolioChart
+                    data={portfolioData}
+                    isEmpty={isPortfolioEmpty || !portfolioData}
+                    expanded={false}
+                    width={0}
+                  />
+                </Pressable>
+              )}
+            </View>
+            {isChartExpanded && (
               <TouchableOpacity
-                disabled={!isUnifiedAccount}
-                onPress={() => setIsBalanceExpanded(prev => !prev)}
-                style={styles.availableToggle}>
-                <Text style={styles.availableBalance}>
+                style={styles.collapseBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                onPress={() => toggleChart(false)}>
+                <RcIconPortfolioCollapseCC
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-foot']}
+                />
+              </TouchableOpacity>
+            )}
+            <Animated.View style={[styles.expandedBlock, expandedBlockStyle]}>
+              {renderExpandedChart && (
+                <View style={styles.expandedChartInner}>
+                  <PerpsPortfolioChart
+                    data={portfolioData}
+                    isEmpty={isPortfolioEmpty || !portfolioData}
+                    expanded
+                    width={Math.max(cardWidth - 32, 0)}
+                  />
+                </View>
+              )}
+            </Animated.View>
+          </View>
+          <View style={styles.lowerSection}>
+            <View style={styles.lowerRow}>
+              <View style={styles.availableLeft}>
+                <Text style={styles.availableLabel}>
                   {t('page.perps.PerpsCard.available')}
                 </Text>
-                {isUnifiedAccount && (
-                  <RcIconCardArrow
-                    style={
-                      isBalanceExpanded
-                        ? { transform: [{ rotate: '180deg' }] }
-                        : undefined
-                    }
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-            {Number(availableBalance) === 0 ? (
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowDepositPopup: true,
-                  }));
-                }}>
-                <RcIconAddFunds />
-                <Text style={styles.actionBtnText}>
-                  {t('page.perps.PerpsCard.addFunds')}
+                <Text style={styles.availableValue}>
+                  {'$'}
+                  {splitNumberByStep(
+                    new BigNumber(availableBalance || 0).toFixed(2),
+                  )}
                 </Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.actionBtns}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setPopupState(prev => ({
-                      ...prev,
-                      isShowDepositPopup: true,
-                    }));
-                  }}>
-                  <RcIconPlusButton />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  // style={styles.actionBtn}
-                  onPress={() => {
-                    setPopupState(prev => ({
-                      ...prev,
-                      isShowWithdrawPopup: true,
-                    }));
-                  }}>
-                  <RcIconMinButton />
-                </TouchableOpacity>
               </View>
-            )}
-          </View>
-          {isUnifiedAccount &&
-            isBalanceExpanded &&
-            !!visibleBalances.length && (
-              <LinearGradient
-                colors={[
-                  'rgba(35, 192, 172, 0.20)',
-                  'rgba(35, 192, 172, 0.00)',
-                ]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                style={styles.expandedBalances}>
-                <View style={styles.balanceChipRow}>
-                  {visibleBalances.map(b => (
-                    <View key={b.coin} style={styles.balanceChip}>
-                      {COIN_ICON_MAP[b.coin] || null}
-                      <Text style={styles.balanceChipText}>
-                        {formatUsdValue(Number(b.available))}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+              {Number(availableBalance) === 0 ? (
                 <TouchableOpacity
-                  style={styles.toSwapBtn}
-                  onPress={onSwapPress}>
-                  <Text style={styles.toSwapText}>
-                    {t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                  style={styles.addFundsBtn}
+                  onPress={openDeposit}>
+                  <RcIconPortfolioPlusCC
+                    width={14}
+                    height={14}
+                    color={PERPS_TEAL}
+                  />
+                  <Text style={styles.addFundsText}>
+                    {t('page.perps.PerpsCard.addFunds')}
                   </Text>
                 </TouchableOpacity>
-              </LinearGradient>
-            )}
-        </View>
-      </LinearGradient>
+              ) : (
+                <View style={styles.actionBtns}>
+                  <TouchableOpacity
+                    style={styles.roundBtn}
+                    onPress={openDeposit}>
+                    <RcIconPortfolioPlusCC
+                      width={13}
+                      height={13}
+                      color={PERPS_TEAL}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.roundBtn}
+                    onPress={openWithdraw}>
+                    <RcIconPortfolioMinusCC
+                      width={13}
+                      height={13}
+                      color={PERPS_TEAL}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
       {showLearnMore && (
         <LinearGradient
           colors={[colors2024['neutral-bg-5'], colors2024['neutral-bg-5']]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[
-            styles.card,
-            styles.balanceCard,
-            { marginTop: 12, backgroundColor: colors2024['neutral-bg-5'] },
-          ]}>
+          style={styles.learnCard}>
           <TouchableOpacity
             onPress={() => {
               setPopupState(prev => ({
@@ -189,7 +471,7 @@ export const PerpsAccountCard: React.FC<{
               resizeMode="cover"
               style={styles.learnCardInner}>
               <TouchableOpacity
-                style={{ position: 'absolute', right: 14, top: 14 }}
+                style={styles.learnCloseBtn}
                 onPress={() => {
                   setHasClosedLearnMore(true);
                   apisPerps.setHasClosedLearnMoreCard(true);
@@ -210,11 +492,7 @@ export const PerpsAccountCard: React.FC<{
                     isShowGuidePopup: true,
                   }));
                 }}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginTop: 4,
-                }}>
+                style={styles.learnMoreRow}>
                 <Text style={styles.learnDesc}>
                   {t('page.perps.PerpsCard.learnMore')}
                 </Text>
@@ -229,59 +507,228 @@ export const PerpsAccountCard: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  // Shadow lives on its own wrapper: `overflow: 'hidden'` (needed to clip
+  // the lower strip's corners) would clip the iOS shadow if they shared a view.
+  cardShadow: {
+    borderRadius: 14,
+    backgroundColor: isLight ? '#FEFEFE' : colors2024['neutral-bg-1'],
+    shadowColor: '#37383F',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 30,
+    elevation: 4,
+  },
   card: {
-    borderRadius: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.08)',
+    overflow: 'hidden',
   },
-  loginCard: {
-    paddingTop: 10,
-    paddingBottom: 20,
+  upperSection: {
+    paddingTop: 16,
     paddingHorizontal: 16,
-    borderRadius: 16,
-    display: 'flex',
+    paddingBottom: 14,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
     flexDirection: 'column',
+    flex: 1,
+    minWidth: 0,
+  },
+  titleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 4,
   },
-  icon: {
-    width: 20,
-    height: 20,
-  },
-  loginCardTitle: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-    textAlign: 'center',
-  },
-  loginCardDesc: {
+  portfolioLabel: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+  },
+  portfolioValue: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    marginTop: 8,
+  },
+  valueSkeleton: {
+    marginTop: 8,
+    borderRadius: 6,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-3'],
+  },
+  changeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+    height: 16,
+  },
+  changeSkeleton: {
+    borderRadius: 4,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-3'],
+  },
+  changeText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+  },
+  changeTimeText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    color: colors2024['neutral-info'],
+  },
+  sparklineWrap: {
+    width: 140,
+    height: 60,
+    marginTop: 12,
+  },
+  collapseBtn: {
+    position: 'absolute',
+    right: 16,
+    top: 17,
+  },
+  expandedBlock: {
+    overflow: 'hidden',
+  },
+  expandedChartInner: {
+    paddingTop: 16,
+  },
+  lowerSection: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    minHeight: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  lowerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  availableLeft: {
+    flexDirection: 'column',
+    flex: 1,
+    minWidth: 0,
+  },
+  availableLabel: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+  },
+  availableValue: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    marginTop: 2,
+  },
+  actionBtns: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  roundBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10.8,
+    backgroundColor: PERPS_BTN_BG,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addFundsBtn: {
+    height: 36,
+    borderRadius: 10.8,
+    backgroundColor: PERPS_BTN_BG,
+    paddingHorizontal: 14,
+    gap: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addFundsText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    color: PERPS_TEAL,
+  },
+  breakdownContainer: {
+    marginTop: 8,
+    gap: 16,
+  },
+  breakdownDesc: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
     textAlign: 'center',
   },
-  btnTitle: {
-    fontSize: 17,
-    lineHeight: 22,
+  breakdownCard: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
   },
-  loginCardContent: {
-    display: 'flex',
-    flexDirection: 'column',
+  breakdownRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
-  loginCardBtns: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-    width: '100%',
-    marginTop: 'auto',
+  breakdownLabel: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+  },
+  breakdownValue: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+  },
+  learnCard: {
+    borderRadius: 16,
+    marginTop: 12,
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  learnCardInner: {
+    position: 'relative',
+    borderRadius: 16,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    height: 106,
+  },
+  learnCloseBtn: {
+    position: 'absolute',
+    right: 14,
+    top: 14,
+  },
+  learnMoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
   },
   learnTitle: {
     fontFamily: 'SF Pro Rounded',
@@ -295,141 +742,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#23C0B0',
-  },
-  learnBtn: {
-    backgroundColor: colors2024['neutral-line'],
-  },
-  learnBtnTitle: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-  },
-  balanceCard: {
-    // marginTop: 10,
-    borderRadius: 16,
-    padding: 2, // gradient border width
-  },
-  balanceCardInner: {
-    minHeight: 106,
-    borderRadius: 16,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: '#0E1A1E',
-  },
-  learnCardInner: {
-    position: 'relative',
-    borderRadius: 16,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    height: 106,
-  },
-  balanceCardRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  balanceCardContentLeft: {
-    flexDirection: 'column',
-    flex: 1,
-  },
-  balance: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 36,
-    lineHeight: 36,
-    fontWeight: '700',
-    color: '#F7FAFC',
-  },
-  availableBalance: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: '#717380',
-    // marginTop: 4,
-  },
-  actionBtns: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionBtn: {
-    width: 120,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#23C0B0',
-    gap: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionBtnText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-    color: '#040601',
-  },
-  history: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
-  },
-  availableToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 10,
-  },
-  expandArrow: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    color: '#717380',
-  },
-  expandedBalances: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  balanceChipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    flex: 1,
-    columnGap: 17,
-    rowGap: 4,
-  },
-  balanceChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-  },
-  toSwapBtn: {
-    flexShrink: 0,
-    paddingVertical: 4,
-  },
-  balanceChipText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-    color: '#F7FAFC',
-  },
-  toSwapText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: '#23C0AC',
+    color: PERPS_TEAL,
   },
 }));

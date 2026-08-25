@@ -15,7 +15,6 @@ export const usePerpsAccount = () => {
     perpsWithdrawable,
     crossMaintenanceMarginUsed,
     spotAccountValue,
-    spotAvailableToTrade,
     spotBalances,
     spotBalancesMap,
     tokenToAvailableAfterMaintenance,
@@ -30,7 +29,6 @@ export const usePerpsAccount = () => {
         s.currentClearinghouseState?.crossMaintenanceMarginUsed,
 
       spotAccountValue: s.spotState.accountValue,
-      spotAvailableToTrade: s.spotState.availableToTrade,
       spotBalances: s.spotState.balances,
       spotBalancesMap: s.spotState.balancesMap,
       tokenToAvailableAfterMaintenance:
@@ -94,15 +92,20 @@ export const usePerpsAccount = () => {
     if (isPortfolioMargin) {
       return portfolioMarginAccountValue ?? 0;
     }
-    return (
-      Number(isSpotCollateralMode ? spotAvailableToTrade : perpsWithdrawable) ||
-      0
-    );
+    if (isUnifiedAccount) {
+      // USDC only (2026-08-25 requirement): spot USDC available plus any
+      // perps-side withdrawable — no longer the sum of all 4 stablecoins.
+      return (
+        (Number(spotBalancesMap.USDC?.available) || 0) +
+        (Number(perpsWithdrawable) || 0)
+      );
+    }
+    return Number(perpsWithdrawable) || 0;
   }, [
     isPortfolioMargin,
     portfolioMarginAccountValue,
-    isSpotCollateralMode,
-    spotAvailableToTrade,
+    isUnifiedAccount,
+    spotBalancesMap,
     perpsWithdrawable,
   ]);
 

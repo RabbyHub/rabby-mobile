@@ -1,0 +1,206 @@
+/**
+ * Hyperliquid portfolio series helpers (pure functions only).
+ *
+ * The `{"type":"portfolio"}` info request — issued via
+ * `sdk.info.getPortfolio()` in usePerpsPortfolioStore — returns 8
+ * [period, series] pairs: day/week/month/allTime plus perp-prefixed
+ * variants. Only the un-prefixed combined series (spot + perps, the
+ * official-site Total Equity basis) are kept here.
+ */
+
+export type PortfolioPeriodKey = 'day' | 'week' | 'month' | 'allTime';
+
+export type PortfolioSeries = {
+  /** [msTimestamp, value] pairs, last point is near-realtime (0~4min old) */
+  accountValueHistory: [number, string][];
+  /** [msTimestamp, cumulativePnl] pairs — 2 elements per point, no vlm */
+  pnlHistory: [number, string][];
+  vlm: string;
+};
+
+export type PortfolioData = Partial<
+  Record<PortfolioPeriodKey, PortfolioSeries>
+>;
+
+export type PortfolioChartPoint = { timestamp: number; value: number };
+
+export const PORTFOLIO_PERIOD_KEYS: PortfolioPeriodKey[] = [
+  'day',
+  'week',
+  'month',
+  'allTime',
+];
+
+const toTuples = (value: unknown): [number, string][] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const tuples: [number, string][] = [];
+  for (const point of value) {
+    if (!Array.isArray(point) || point.length < 2) {
+      continue;
+    }
+    const ts = Number(point[0]);
+    if (!Number.isFinite(ts)) {
+      continue;
+    }
+    tuples.push([ts, String(point[1])]);
+  }
+  return tuples;
+};
+
+export const parsePortfolioResponse = (raw: unknown): PortfolioData => {
+  const data: PortfolioData = {};
+  if (!Array.isArray(raw)) {
+    return data;
+  }
+  for (const entry of raw) {
+    if (!Array.isArray(entry) || entry.length < 2) {
+      continue;
+    }
+    const [period, seriesRaw] = entry;
+    if (!PORTFOLIO_PERIOD_KEYS.includes(period as PortfolioPeriodKey)) {
+      continue;
+    }
+    if (!seriesRaw || typeof seriesRaw !== 'object') {
+      continue;
+    }
+    const accountValueHistory = toTuples(
+      (seriesRaw as Record<string, unknown>).accountValueHistory,
+    );
+    if (
+      !Array.isArray((seriesRaw as Record<string, unknown>).accountValueHistory)
+    ) {
+      continue;
+    }
+    data[period as PortfolioPeriodKey] = {
+      accountValueHistory,
+      pnlHistory: toTuples((seriesRaw as Record<string, unknown>).pnlHistory),
+      vlm: String((seriesRaw as Record<string, unknown>).vlm ?? '0'),
+    };
+  }
+  return data;
+};
+
+/**
+ * An account with no history returns non-empty arrays whose values are all
+ * "0.0" — emptiness must be judged by value, not by array length.
+ */
+export const isPortfolioAllZero = (data: PortfolioData): boolean => {
+  for (const key of PORTFOLIO_PERIOD_KEYS) {
+    const s = data[key];
+    if (!s) {
+      continue;
+    }
+    for (const [, value] of s.accountValueHistory) {
+      if (Number(value) !== 0) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
+export const getLatestPortfolioValue = (data: PortfolioData): number | null => {
+  for (const key of PORTFOLIO_PERIOD_KEYS) {
+    const history = data[key]?.accountValueHistory;
+    if (history?.length) {
+      const value = Number(history[history.length - 1][1]);
+      return Number.isFinite(value) ? value : null;
+    }
+  }
+  return null;
+};
+
+/**
+ * 24H change comes from pnlHistory (last - first). accountValueHistory
+ * first/last deltas are distorted by deposits/withdrawals/transfers (verified
+ * 2026-08-11: a transfer made AV read as -54% while actual pnl was -0.44).
+ * Denominator = current PV - pnl (the flow-adjusted value 24h ago).
+ */
+export const compute24hChange = (
+  data: PortfolioData,
+): { pnl: number; percent: number | null } => {
+  const pnlHistory = data.day?.pnlHistory;
+  let pnl = 0;
+  if (pnlHistory && pnlHistory.length >= 2) {
+    const first = Number(pnlHistory[0][1]);
+    const last = Number(pnlHistory[pnlHistory.length - 1][1]);
+    if (Number.isFinite(first) && Number.isFinite(last)) {
+      pnl = last - first;
+    }
+  }
+  const currentValue = getLatestPortfolioValue(data);
+  if (currentValue == null) {
+    return { pnl, percent: null };
+  }
+  const denominator = currentValue - pnl;
+  if (denominator <= 0) {
+    return { pnl, percent: null };
+  }
+  return { pnl, percent: pnl / denominator };
+};
+
+export const toChartPoints = (
+  series: PortfolioSeries | undefined,
+): PortfolioChartPoint[] => {
+  if (!series) {
+    return [];
+  }
+  return series.accountValueHistory.map(([timestamp, value]) => ({
+    timestamp,
+    value: Number(value) || 0,
+  }));
+};
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/**
+ * Tooltip time in the same style as the Perps candle chart hover
+ * (`formatTime` in mobile-local-pages/.../tradingview-candle-chart), device
+ * local time. The 1D window sits inside the last 24h, so its points show the
+ * clock time only ("14:30"); week/month/allTime (day-level and coarser)
+ * points show the date without time ("Mon 25 Aug '26").
+ */
+export const formatPortfolioTooltipTime = (
+  ts: number,
+  period: PortfolioPeriodKey,
+): string => {
+  const d = new Date(ts);
+  if (period === 'day') {
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+  return `${DAYS[d.getDay()]} ${pad2(d.getDate())} ${
+    MONTHS[d.getMonth()]
+  } '${String(d.getFullYear()).slice(-2)}`;
+};
+
+/**
+ * A well-formed response always carries the 4 combined periods (an empty
+ * account still returns all-zero, non-empty series). An empty parse means a
+ * malformed 200 — throw so callers retry / keep prior data instead of
+ * rendering a fake empty account.
+ */
+export const parsePortfolioResponseStrict = (raw: unknown): PortfolioData => {
+  const data = parsePortfolioResponse(raw);
+  if (!Object.keys(data).length) {
+    throw new Error('[perpsPortfolio] malformed response body');
+  }
+  return data;
+};
