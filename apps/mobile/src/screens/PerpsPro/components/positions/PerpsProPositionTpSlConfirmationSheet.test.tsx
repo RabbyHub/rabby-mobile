@@ -93,7 +93,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positionTpsl.confirmTitle': 'Confirm TP/SL',
         'page.perps.pro.positionTpsl.stopLoss': 'Stop Loss',
         'page.perps.pro.positionTpsl.takeProfit': 'Take Profit',
-        'page.perps.pro.positionTpsl.totalEstimatedPnl': 'Total Estimated PNL',
+        'page.perps.pro.positionTpsl.estimatedPnl': 'Estimated PnL',
         'page.perps.pro.positionTpsl.triggerPrice': 'Trigger Price',
         'page.perps.pro.positionTpsl.volume': 'Volume',
         'page.perps.pro.positionTpsl.symbol': 'Symbol',
@@ -188,7 +188,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
     expect(screen.getByText('Stop Loss')).toBeTruthy();
     expect(screen.getAllByText('Volume')).toHaveLength(2);
     expect(screen.getByText(/Limit Order/)).toBeTruthy();
-    fireEvent.press(screen.getAllByLabelText('Total Estimated PNL')[0]!);
+    fireEvent.press(screen.getAllByLabelText('Estimated PnL')[0]!);
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
     const checkbox = screen.getByTestId(
       'perps-pro-position-tpsl-skip-confirmation',
