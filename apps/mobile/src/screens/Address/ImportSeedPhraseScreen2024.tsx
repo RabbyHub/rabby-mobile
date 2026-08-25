@@ -321,7 +321,7 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
