@@ -5,9 +5,11 @@ import { PerpsProHeader } from './PerpsProHeader';
 
 const mockGetAliasName = jest.fn();
 const mockSetPopupState = jest.fn();
+const mockSharedHeaderProps = jest.fn();
 let mockAccount = {
   address: '0x1234567890123456789012345678901234567890',
   aliasName: '',
+  brandName: 'metamask',
 };
 
 jest.mock('@/core/apis', () => ({
@@ -29,22 +31,17 @@ jest.mock('../../../PerpsShared/components/PerpsHeader', () => {
   const ReactModule = require('react');
   const { Pressable, View } = require('react-native');
   return {
-    PerpsHeader: ({
-      accountLabel,
-      activeMode,
-      extendProHitAreaRight,
-      onPressAccount,
-      onSelectMode,
-      showBottomDivider,
-    }: {
-      accountLabel?: string;
-      activeMode: 'simple' | 'pro';
-      extendProHitAreaRight?: boolean;
-      onPressAccount?: () => void;
-      onSelectMode: (mode: 'simple' | 'pro') => void;
-      showBottomDivider: boolean;
-    }) =>
-      ReactModule.createElement(
+    PerpsHeader: (props: any) => {
+      mockSharedHeaderProps(props);
+      const {
+        accountLabel,
+        activeMode,
+        extendProHitAreaRight,
+        onPressAccount,
+        onSelectMode,
+        showBottomDivider,
+      } = props;
+      return ReactModule.createElement(
         View,
         {
           accessibilityLabel: `${activeMode}:${String(
@@ -62,7 +59,8 @@ jest.mock('../../../PerpsShared/components/PerpsHeader', () => {
               testID: 'account-trigger',
             })
           : null,
-      ),
+      );
+    },
   };
 });
 
@@ -72,6 +70,7 @@ describe('PerpsProHeader', () => {
     mockAccount = {
       address: '0x1234567890123456789012345678901234567890',
       aliasName: '',
+      brandName: 'metamask',
     };
     mockGetAliasName.mockReturnValue('Contact alias');
   });
@@ -90,6 +89,11 @@ describe('PerpsProHeader', () => {
       'pro:undefined:Contact alias:true',
     );
     expect(mockGetAliasName).toHaveBeenCalledWith(mockAccount.address);
+    expect(mockSharedHeaderProps.mock.lastCall?.[0]).toMatchObject({
+      accountAddress: mockAccount.address,
+      accountBrandName: 'metamask',
+      accountTriggerVariant: 'wallet',
+    });
 
     fireEvent.press(screen.getByTestId('switch-to-simple'));
     expect(onSwitchToSimple).toHaveBeenCalledTimes(1);

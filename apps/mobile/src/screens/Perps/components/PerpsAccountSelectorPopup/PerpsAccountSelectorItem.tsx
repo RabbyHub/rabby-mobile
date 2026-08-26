@@ -145,8 +145,10 @@ export const PerpsAccountSelectorItem: React.FC<{
                     </Text>
                     {positionCount > 0 ? (
                       <Text style={styles.positionCountText}>
-                        {positionCount}{' '}
-                        {t('page.perpsDetail.PerpsPosition.title')}
+                        {t(
+                          'page.perps.PerpsAccountSelectorPopup.positionCount',
+                          { count: positionCount },
+                        )}
                       </Text>
                     ) : null}
                   </View>

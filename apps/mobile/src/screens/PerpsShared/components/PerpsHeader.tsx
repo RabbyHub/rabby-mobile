@@ -11,8 +11,11 @@ import { PerpsAccountTrigger } from './PerpsAccountTrigger';
 import { PerpsModeSwitch } from './PerpsModeSwitch';
 
 export type PerpsHeaderProps = {
+  accountAddress?: string;
+  accountBrandName?: string;
   accountExpanded?: boolean;
   accountLabel?: string | null;
+  accountTriggerVariant?: 'compact' | 'wallet';
   activeMode: PerpsViewMode;
   extendProHitAreaRight?: boolean;
   isModeSwitching: boolean;
@@ -30,8 +33,11 @@ export type PerpsHeaderProps = {
  */
 export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
   ({
+    accountAddress,
+    accountBrandName,
     accountExpanded = false,
     accountLabel,
+    accountTriggerVariant = 'compact',
     activeMode,
     extendProHitAreaRight = false,
     isModeSwitching,
@@ -71,9 +77,12 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
         </View>
         {accountLabel && onPressAccount ? (
           <PerpsAccountTrigger
+            address={accountAddress}
+            brandName={accountBrandName}
             expanded={accountExpanded}
             label={accountLabel}
             onPress={onPressAccount}
+            variant={accountTriggerVariant}
           />
         ) : null}
         {showBottomDivider ? (

@@ -3304,7 +3304,9 @@
         "activatedAddress": "Activated",
         "hyperliquidBalance": "Perps Balance",
         "notActivatedAddress": "Not Activated",
-        "noPosition": "No Position"
+        "noPosition": "No Position",
+        "positionCount_one": "{{count}} Position",
+        "positionCount_other": "{{count}} Positions"
       },
       "invitePopup": {
         "title": "Save on Hyperliquid Fees",
