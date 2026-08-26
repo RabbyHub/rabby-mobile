@@ -1,4 +1,4 @@
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
@@ -50,6 +50,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
+    const inputRef = React.useRef<TextInput>(null);
     const [focused, setFocused] = useState(false);
     const normalizePriceValue = React.useCallback(
       (nextValue: string) =>
@@ -71,7 +72,16 @@ export const PerpsProPositionTpSlInput: React.FC<{
       <View
         style={[styles.field, invalid ? styles.invalidField : null]}
         testID={`${testID}-field`}>
-        <View style={styles.inputArea}>
+        <Pressable
+          accessible={false}
+          disabled={disabled}
+          onPress={() => {
+            if (!focused) {
+              inputRef.current?.focus();
+            }
+          }}
+          style={styles.inputArea}
+          testID={`${testID}-focus-proxy`}>
           {showFloatingLabel ? (
             <Text
               pointerEvents="none"
@@ -123,6 +133,8 @@ export const PerpsProPositionTpSlInput: React.FC<{
               priceSzDecimals == null ? undefined : canonicalizePriceValue
             }
             preserveIntegerZeroRun={priceSzDecimals != null}
+            pointerEvents={focused ? 'auto' : 'none'}
+            ref={inputRef}
             selectionColor={colors2024['brand-default']}
             style={[
               styles.input,
@@ -132,7 +144,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
             testID={testID}
             value={value}
           />
-        </View>
+        </Pressable>
         {unit && onPressMode ? (
           <Pressable
             accessibilityLabel={`${accessibilityLabel} mode`}

@@ -1344,7 +1344,9 @@ export const PerpsProScene: React.FC<{
               position => position.key === positionTpSl.editor?.position.key,
             ) ?? positionTpSl.editor.position
           }
+          reviewRequesting={positionTpSl.reviewRequesting}
           settlement={positionTpSl.settlement}
+          submissionPending={positionTpSl.submissionPending}
           visible
         />
       ) : null}

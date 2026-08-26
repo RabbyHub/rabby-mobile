@@ -363,6 +363,8 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(amountProps.inputComponent).toBe(
       PerpsProPositionTpSlBottomSheetTextInput,
     );
+    expect(amountProps.focusCursorAtEnd).toBeUndefined();
+    expect(amountProps.focusCursorAtEndMode).toBeUndefined();
 
     keyboardDismiss.mockRestore();
   });
@@ -395,6 +397,10 @@ describe('PerpsProPositionTpSlForm', () => {
       disabled: true,
       value: 50,
     });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
   });
 
   it('creates independent TP and SL legs with one shared amount and Mark validation', () => {

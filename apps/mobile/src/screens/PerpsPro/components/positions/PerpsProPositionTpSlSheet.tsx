@@ -67,10 +67,12 @@ export const PerpsProPositionTpSlSheet: React.FC<{
   onReview: (draft: PerpsPositionTpSlDraft) => void;
   pending: boolean;
   position: PerpsPositionViewModel;
+  reviewRequesting?: boolean;
   settlement?: {
     revision: number;
     scope: 'partial' | 'position';
   } | null;
+  submissionPending?: boolean;
   visible: boolean;
 }> = React.memo(
   ({
@@ -85,7 +87,9 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     onReview,
     pending,
     position,
+    reviewRequesting = false,
     settlement = null,
+    submissionPending = false,
     visible,
   }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
@@ -108,6 +112,9 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     const [editingOrder, setEditingOrder] =
       useState<PerpsPositionTpSlOrderViewModel | null>(null);
     const liveMarket = usePerpsProPositionMark(position.coin);
+    const interactionLocked = pending || coveredByReview || reviewRequesting;
+    const positionPresentationLocked =
+      submissionPending || coveredByReview || reviewRequesting;
 
     const returnToPartialList = useCallback(() => {
       Keyboard.dismiss();
@@ -119,7 +126,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       [openFieldExplanation],
     );
     const requestDismiss = useCallback(() => {
-      if (pending || coveredByReview) {
+      if (interactionLocked) {
         return;
       }
       if (tab === 'partial' && partialPage !== 'list') {
@@ -128,12 +135,12 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       }
       Keyboard.dismiss();
       modalRef.current?.dismiss();
-    }, [coveredByReview, partialPage, pending, returnToPartialList, tab]);
+    }, [interactionLocked, partialPage, returnToPartialList, tab]);
     usePerpsProSheetNavigationRegistration({
       active: visible,
       dismiss: requestDismiss,
-      dismissible: !pending && !coveredByReview,
-      edgeDismissible: !pending && !coveredByReview,
+      dismissible: !interactionLocked,
+      edgeDismissible: !interactionLocked,
     });
 
     useEffect(() => {
@@ -168,7 +175,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     }, [onClose]);
     const switchTab = useCallback(
       (next: 'partial' | 'position') => {
-        if (pending) {
+        if (interactionLocked) {
           return;
         }
         Keyboard.dismiss();
@@ -176,7 +183,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         setPartialPage('list');
         setEditingOrder(null);
       },
-      [pending],
+      [interactionLocked],
     );
     const visiblePosition = useMemo(
       () => ({
@@ -187,18 +194,39 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       }),
       [confirmedCancelledOids, position],
     );
-    const fullOrderSignature = visiblePosition.tpslOrders
-      .filter(order => order.scope === 'position')
+    const livePositionOrders = visiblePosition.tpslOrders.filter(
+      order => order.scope === 'position',
+    );
+    const stablePositionOrdersRef = useRef({
+      orders: livePositionOrders,
+      positionKey: position.key,
+    });
+    if (stablePositionOrdersRef.current.positionKey !== position.key) {
+      stablePositionOrdersRef.current = {
+        orders: livePositionOrders,
+        positionKey: position.key,
+      };
+    } else if (!positionPresentationLocked) {
+      stablePositionOrdersRef.current.orders = livePositionOrders;
+    }
+    const positionFormOrders = positionPresentationLocked
+      ? stablePositionOrdersRef.current.orders
+      : livePositionOrders;
+    const positionFormPosition = useMemo(
+      () => ({
+        ...visiblePosition,
+        tpslOrders: [
+          ...visiblePosition.tpslOrders.filter(
+            order => order.scope === 'partial',
+          ),
+          ...positionFormOrders,
+        ],
+      }),
+      [positionFormOrders, visiblePosition],
+    );
+    const positionFormResetSignature = positionFormOrders
       .map(order => `${order.oid}:${order.triggerPrice}`)
       .join('|');
-    const stableFullOrderSignatureRef = useRef(fullOrderSignature);
-    if (!coveredByReview && !pending) {
-      stableFullOrderSignatureRef.current = fullOrderSignature;
-    }
-    const positionFormResetSignature =
-      coveredByReview || pending
-        ? stableFullOrderSignatureRef.current
-        : fullOrderSignature;
     const hasPartialOrders = visiblePosition.tpslOrders.some(
       order => order.scope === 'partial',
     );
@@ -344,11 +372,11 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         android_keyboardInputMode="adjustPan"
         animatedPosition={animatedSheetPosition}
         backdropProps={{
-          pressBehavior: coveredByReview || pending ? 'none' : 'close',
+          pressBehavior: interactionLocked ? 'none' : 'close',
         }}
         backgroundStyle={styles.background}
         enableDynamicSizing={false}
-        enablePanDownToClose={!coveredByReview && !pending}
+        enablePanDownToClose={!interactionLocked}
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
         keyboardBehavior="interactive"
@@ -392,7 +420,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                   mode={partialPage === 'add' ? 'add' : 'modify'}
                   onCancelOrder={onCancelOrder}
                   onReview={onReview}
-                  pending={pending}
+                  pending={interactionLocked}
                   presentation="subpage"
                   position={visiblePosition}
                 />
@@ -433,9 +461,9 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                     mode="position"
                     onCancelOrder={onCancelOrder}
                     onReview={onReview}
-                    pending={pending}
+                    pending={interactionLocked}
                     presentation="tab"
-                    position={visiblePosition}
+                    position={positionFormPosition}
                   />
                 ) : isInlineEmpty ? (
                   <PerpsProPositionTpSlForm
@@ -448,7 +476,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                     mode="add"
                     onCancelOrder={onCancelOrder}
                     onReview={onReview}
-                    pending={pending}
+                    pending={interactionLocked}
                     presentation="inline-empty"
                     position={visiblePosition}
                   />
@@ -465,7 +493,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                       setPartialPage('modify');
                     }}
                     onOpenEstimatedPnlExplanation={openEstimatedPnlExplanation}
-                    pending={pending}
+                    pending={interactionLocked}
                     position={visiblePosition}
                   />
                 )}

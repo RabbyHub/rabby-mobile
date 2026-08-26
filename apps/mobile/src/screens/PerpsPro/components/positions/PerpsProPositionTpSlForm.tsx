@@ -537,7 +537,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
               ) : null}
               <PerpsProDecimalTextInput
                 editable={!pending}
-                focusCursorAtEnd
                 inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
                 maxDecimals={displayAmountDecimals}
                 normalizeValue={normalizeAmountInput}

@@ -86,6 +86,8 @@ export const usePerpsProPositionTpSl = (
     null,
   );
   const [pending, setPending] = useState(false);
+  const [reviewRequesting, setReviewRequesting] = useState(false);
+  const [submissionPending, setSubmissionPending] = useState(false);
   const [skipConfirmation, setSkipConfirmation] = useState(false);
   const [cancelingOids, setCancelingOids] = useState<number[]>([]);
   const [confirmedCancelledOids, setConfirmedCancelledOids] = useState<
@@ -99,6 +101,8 @@ export const usePerpsProPositionTpSl = (
     setEditor(null);
     setReview(null);
     setPending(false);
+    setReviewRequesting(false);
+    setSubmissionPending(false);
     setSkipConfirmation(false);
     setCancelingOids([]);
     setConfirmedCancelledOids([]);
@@ -150,7 +154,7 @@ export const usePerpsProPositionTpSl = (
   );
 
   const close = useCallback(() => {
-    if (!pendingRef.current && !review) {
+    if (!pendingRef.current && !reviewRequestRef.current && !review) {
       editorSessionRef.current += 1;
       setEditor(null);
       setCancelingOids([]);
@@ -171,6 +175,8 @@ export const usePerpsProPositionTpSl = (
       setSkipConfirmation(false);
       if (scope === 'position') {
         editorSessionRef.current += 1;
+        reviewRequestRef.current = false;
+        setReviewRequesting(false);
         setEditor(null);
         setCancelingOids([]);
         setConfirmedCancelledOids([]);
@@ -195,6 +201,7 @@ export const usePerpsProPositionTpSl = (
       }
       pendingRef.current = true;
       setPending(true);
+      setSubmissionPending(true);
       try {
         await ensurePerpsActionApproval(editorSnapshot.account);
         const result = await executePerpsPositionTpSl(command);
@@ -268,6 +275,7 @@ export const usePerpsProPositionTpSl = (
       } finally {
         pendingRef.current = false;
         setPending(false);
+        setSubmissionPending(false);
       }
     },
     [settleSubmission, t],
@@ -292,7 +300,9 @@ export const usePerpsProPositionTpSl = (
         setEditor(null);
         return;
       }
+      const editorSession = editorSessionRef.current;
       reviewRequestRef.current = true;
+      setReviewRequesting(true);
       try {
         const command = buildPerpsPositionTpSlCommand({
           account: editor.account,
@@ -305,7 +315,6 @@ export const usePerpsProPositionTpSl = (
           scope: draft.scope,
           szDecimals: market.szDecimals,
         });
-        const editorSession = editorSessionRef.current;
         let skip = false;
         try {
           skip =
@@ -334,7 +343,10 @@ export const usePerpsProPositionTpSl = (
       } catch (error) {
         showToast(t('page.perps.pro.positionTpsl.invalidOrder'), 'error');
       } finally {
-        reviewRequestRef.current = false;
+        if (editorSessionRef.current === editorSession) {
+          reviewRequestRef.current = false;
+          setReviewRequesting(false);
+        }
       }
     },
     [editor, executeSubmission, t],
@@ -471,10 +483,12 @@ export const usePerpsProPositionTpSl = (
     editor,
     open,
     pending,
+    reviewRequesting,
     requestReview,
     review,
     settlement,
     skipConfirmation,
+    submissionPending,
     toggleSkipConfirmation,
   };
 };
