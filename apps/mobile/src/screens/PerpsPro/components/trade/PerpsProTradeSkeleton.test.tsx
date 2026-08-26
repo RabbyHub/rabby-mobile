@@ -2,6 +2,10 @@ import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}));
+
 jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

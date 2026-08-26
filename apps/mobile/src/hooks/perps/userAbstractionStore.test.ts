@@ -1,6 +1,10 @@
 import type { Account } from '@/core/startupServices/preference';
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}));
+
 jest.mock('@/core/apis/perps', () => ({ apisPerps: {} }));
 jest.mock('@/core/request', () => ({ openapi: {} }));
 jest.mock('@/core/utils/startupScheduler', () => ({

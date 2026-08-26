@@ -81,10 +81,6 @@ jest.mock('react-native-mmkv', () => {
   return { MMKV };
 });
 
-jest.mock('react-native-haptic-feedback', () => ({
-  trigger: jest.fn(),
-}));
-
 jest.mock('@sentry/react-native', () => {
   const scope = createScope();
 

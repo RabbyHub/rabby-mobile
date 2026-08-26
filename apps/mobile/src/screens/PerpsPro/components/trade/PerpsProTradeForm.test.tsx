@@ -2,6 +2,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}));
+
 const mockFocusTextInput = jest.fn();
 const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((value: number) => value);
