@@ -217,21 +217,68 @@ export const usePerpsPosition = () => {
       size: string;
       price: string;
       direction: 'Long' | 'Short';
+      orderType?: PerpsOpenOrderType;
+      limitPx?: string;
     }) => {
       return runPerpsAction(
         { fallback: null, label: 'close position', context: params },
         async () => {
           const sdk = apisPerps.getPerpsSDK();
-          const { coin, direction, price, size } = params;
-          const res = await sdk.exchange?.marketOrderClose({
-            coin,
-            isBuy: direction === 'Short',
-            size,
-            midPx: price,
-            builder: PERPS_BUILDER_INFO,
-          });
+          const { coin, direction, price, size, orderType, limitPx } = params;
+          // Normalize like formatTriggerPx: the HL validator rejects
+          // otherwise-valid inputs such as '.5' or '3000.'.
+          const formattedLimitPx =
+            orderType === 'limit' ? formatTriggerPx(limitPx) : undefined;
+          if (orderType === 'limit' && !(Number(formattedLimitPx) > 0)) {
+            // Fail loudly instead of silently degrading to a market close.
+            throw new Error('Invalid Perps limit price');
+          }
+          // Close trades opposite the position: long -> sell, short -> buy.
+          const res =
+            orderType === 'limit' && formattedLimitPx
+              ? await sdk.exchange?.limitOrderOpen({
+                  coin,
+                  isBuy: direction === 'Short',
+                  size,
+                  limitPx: formattedLimitPx,
+                  tif: PERPS_LIMIT_TIF_DEFAULT,
+                  reduceOnly: true,
+                  builder: PERPS_BUILDER_INFO,
+                })
+              : await sdk.exchange?.marketOrderClose({
+                  coin,
+                  isBuy: direction === 'Short',
+                  size,
+                  midPx: price,
+                  builder: PERPS_BUILDER_INFO,
+                });
 
           const filled = res?.response?.data?.statuses[0]?.filled;
+          const resting = res?.response?.data?.statuses[0]?.resting;
+          if (orderType === 'limit' && resting) {
+            // Limit closes usually rest in the book. Treat as success; fake an
+            // avgPx from limitPx so callers' stats code keeps working, and set
+            // `resting` so callers can tell nothing has filled yet.
+            fetchPositionOpenOrdersHttp(getDexByCoin(coin));
+            showToast(
+              t(
+                'page.perpsDetail.PerpsClosePositionPopup.limitClosePlacedToast',
+                {
+                  direction,
+                  coin: formatPerpsCoin(coin),
+                  size,
+                  price: formattedLimitPx,
+                },
+              ),
+              'success',
+            );
+            return {
+              totalSz: size,
+              avgPx: formattedLimitPx ?? '0',
+              oid: resting.oid,
+              resting: true,
+            };
+          }
           if (filled) {
             const { totalSz, avgPx } = filled;
             const msg = `Closed ${direction} ${formatPerpsCoin(
@@ -243,6 +290,7 @@ export const usePerpsPosition = () => {
               totalSz: string;
               avgPx: string;
               oid: number;
+              resting?: boolean;
             };
           } else {
             const msg = res?.response?.data?.statuses[0]?.error;

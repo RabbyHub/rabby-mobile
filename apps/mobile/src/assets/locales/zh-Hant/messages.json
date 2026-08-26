@@ -2704,7 +2704,18 @@
         "loginBtn": "登入以交易永續合約",
         "depositBtn": "入金",
         "addFunds": "入金",
-        "learnMore": "瞭解更多"
+        "learnMore": "瞭解更多",
+        "portfolioValue": "帳戶總價值",
+        "manualAccount": "手動帳戶",
+        "unifiedAccount": "統一帳戶",
+        "portfolioMarginAccount": "組合保證金帳戶",
+        "manualAccountDesc": "現貨與各個永續 DEX 擁有獨立餘額，全倉保證金在每個 DEX 內單獨管理。",
+        "unifiedAccountDesc": "每種抵押資產僅有一個餘額，由現貨和使用相同抵押品的全倉永續合約共享。",
+        "portfolioMarginAccountDesc": "符合條件的現貨資產與永續合約合併至同一投資組合，以提升資金效率。",
+        "breakdownPerps": "永續合約",
+        "breakdownSpot": "現貨",
+        "breakdownOtherAssets": "其他資產",
+        "breakdownNetOtherAssets": "其他資產淨值"
       },
       "PerpsGuidePopup": {
         "step3Title": "做空",
@@ -3027,7 +3038,10 @@
         "closedPnl": "平倉盈虧",
         "minimumWarning": "最低比例為 {{percent}}%",
         "total": "總計",
-        "rabbyFeeTipsV2": "Rabby 手續費：0.02%"
+        "rabbyFeeTipsV2": "Rabby 手續費：0.02%",
+        "estReceive": "預計收到",
+        "estClosedPnl": "預計平倉盈虧",
+        "limitClosePlacedToast": "限價平倉 {{direction}} {{coin}}：數量 {{size}}，已按 ${{price}} 掛單"
       },
       "PerpsOpenPositionPopup": {
         "title": "開啟 {{coin}} 持倉",

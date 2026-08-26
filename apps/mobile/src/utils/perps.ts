@@ -775,7 +775,7 @@ export const computeMarginUsage = (
 /**
  * Absolute deviation of a user-entered limit price from the current mark price,
  * expressed as a unit ratio (0.05 == 5%). Returns Infinity for non-numeric input
- * or a zero/negative mark so callers always trip the block threshold safely.
+ * or a zero/negative mark so callers always trip the confirm threshold safely.
  */
 export const computeLimitPriceDeviation = (
   limitPx: string,

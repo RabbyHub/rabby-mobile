@@ -2909,7 +2909,18 @@
         "loginDesc": "Loggen Sie sich mit der aktuellen Adresse ein und zahlen Sie Guthaben ein, um Perps zu traden.",
         "learnBtn": "Mehr über Perps erfahren",
         "learnMore": "Erfahren Sie mehr",
-        "addFunds": "Guthaben aufladen"
+        "addFunds": "Guthaben aufladen",
+        "portfolioValue": "Portfoliowert",
+        "manualAccount": "Manuelles Konto",
+        "unifiedAccount": "Einheitliches Konto",
+        "portfolioMarginAccount": "Portfolio-Margin",
+        "manualAccountDesc": "Spot und jede Perps-DEX haben separate Guthaben; die Cross-Margin wird innerhalb jeder DEX unabhängig verwaltet.",
+        "unifiedAccountDesc": "Jedes Collateral-Asset hat ein einziges Guthaben, das von Spot und Cross-Margin-Perps mit demselben Collateral gemeinsam genutzt wird.",
+        "portfolioMarginAccountDesc": "Zulässige Spot-Assets und Perps werden für eine höhere Kapitaleffizienz in einem Portfolio zusammengefasst.",
+        "breakdownPerps": "Perps",
+        "breakdownSpot": "Spot",
+        "breakdownOtherAssets": "Sonstige Assets",
+        "breakdownNetOtherAssets": "Sonstige Assets (netto)"
       },
       "PerpsGuidePopup": {
         "step1Title": "Perpetual Futures meistern",
@@ -3232,7 +3243,10 @@
         "closedPnl": "Geschlossener PNL",
         "amount": "Betrag",
         "confirm": "Bestätigen",
-        "rabbyFeeTipsV2": "Rabby Gebühr: 0,02%"
+        "rabbyFeeTipsV2": "Rabby Gebühr: 0,02%",
+        "estReceive": "Gesch. Erhalt",
+        "estClosedPnl": "Gesch. geschlossener PNL",
+        "limitClosePlacedToast": "Limit-Close {{direction}} {{coin}}: Größe {{size}} zu ${{price}} platziert"
       },
       "PerpsOpenPositionPopup": {
         "title": "{{coin}} Position eröffnen",

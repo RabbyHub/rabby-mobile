@@ -2644,7 +2644,18 @@
         "available": "Доступно",
         "title": "Торгуйте перпами",
         "learnMore": "Узнать больше",
-        "addFunds": "Добавить средства"
+        "addFunds": "Добавить средства",
+        "portfolioValue": "Стоимость портфеля",
+        "manualAccount": "Ручной аккаунт",
+        "unifiedAccount": "Единый аккаунт",
+        "portfolioMarginAccount": "Портфельная маржа",
+        "manualAccountDesc": "Спот и каждая DEX перпов имеют отдельные балансы, кросс-маржа управляется независимо внутри каждой DEX.",
+        "unifiedAccountDesc": "Каждый залоговый актив имеет единый баланс, общий для спота и кросс-маржинальных перпов с одинаковым залогом.",
+        "portfolioMarginAccountDesc": "Подходящие спотовые активы и перпы объединяются в один портфель для большей эффективности капитала.",
+        "breakdownPerps": "Перпы",
+        "breakdownSpot": "Спот",
+        "breakdownOtherAssets": "Прочие активы",
+        "breakdownNetOtherAssets": "Чистые прочие активы"
       },
       "PerpsGuidePopup": {
         "step5Title": "Ликвидация",
@@ -2967,7 +2978,10 @@
         "closedPnl": "Реализованный PNL",
         "total": "Всего",
         "minimumWarning": "Минимальная сумма составляет {{percent}}%",
-        "rabbyFeeTipsV2": "Rabby комиссия: 0.02%"
+        "rabbyFeeTipsV2": "Rabby комиссия: 0.02%",
+        "estReceive": "Ожид. получение",
+        "estClosedPnl": "Ожид. реализованный PNL",
+        "limitClosePlacedToast": "Лимитное закрытие {{direction}} {{coin}}: размер {{size}} размещён по ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "Открыть позицию {{coin}}",

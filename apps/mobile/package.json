@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.85",
+  "version": "0.6.86",
   "private": true,
   "repository": {
     "type": "git",
@@ -100,7 +100,7 @@
     "@rabby-wallet/eth-keyring-watch": "workspace:^",
     "@rabby-wallet/eth-simple-keyring": "5.1.2",
     "@rabby-wallet/gnosis-sdk": "1.4.9",
-    "@rabby-wallet/hyperliquid-sdk": "1.1.18-alpha.0",
+    "@rabby-wallet/hyperliquid-sdk": "1.1.18-alpha.1",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.16",

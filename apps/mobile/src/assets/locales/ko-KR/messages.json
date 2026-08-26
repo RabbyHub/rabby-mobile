@@ -2524,7 +2524,18 @@
         "loginDesc": "현재 주소로 로그인하고 자금을 입금하면 무기한 선물 거래를 시작할 수 있습니다.",
         "title": "무기한 선물 거래",
         "learnMore": "더 알아보기",
-        "addFunds": "자금 추가"
+        "addFunds": "자금 추가",
+        "portfolioValue": "포트폴리오 가치",
+        "manualAccount": "수동 계정",
+        "unifiedAccount": "통합 계정",
+        "portfolioMarginAccount": "포트폴리오 마진",
+        "manualAccountDesc": "현물과 각 무기한 선물 DEX의 잔액은 분리되어 있으며, 교차 마진은 각 DEX 내에서 독립적으로 관리됩니다.",
+        "unifiedAccountDesc": "각 담보 자산은 단일 잔액을 가지며, 동일한 담보를 사용하는 현물과 교차 마진 무기한 선물에서 공유됩니다.",
+        "portfolioMarginAccountDesc": "적격 현물 자산과 무기한 선물을 하나의 포트폴리오로 통합하여 자본 효율성을 높입니다.",
+        "breakdownPerps": "무기한 선물",
+        "breakdownSpot": "현물",
+        "breakdownOtherAssets": "기타 자산",
+        "breakdownNetOtherAssets": "기타 자산 순액"
       },
       "PerpsGuidePopup": {
         "step1Title": "무기한 선물 이해하기",
@@ -2847,7 +2858,10 @@
         "confirm": "확인",
         "minimumWarning": "최소 금액은 {{percent}}%입니다.",
         "total": "총계",
-        "rabbyFeeTipsV2": "Rabby 수수료: 0.02%"
+        "rabbyFeeTipsV2": "Rabby 수수료: 0.02%",
+        "estReceive": "예상 수령액",
+        "estClosedPnl": "예상 실현 PNL",
+        "limitClosePlacedToast": "지정가 청산 {{direction}} {{coin}}: 수량 {{size}}, ${{price}}에 주문 완료"
       },
       "PerpsOpenPositionPopup": {
         "title": "{{coin}} 포지션 열기",
