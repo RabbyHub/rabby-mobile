@@ -50,7 +50,10 @@ import {
   resolvePerpsProMarginModeDisabledReason,
   type PerpsProLeverageConfiguration,
 } from '../model/leverage';
-import { resolvePerpsProMarketOrderProjection } from '../model/marketOrderProjection';
+import {
+  resolvePerpsProMarketOrderProjection,
+  resolvePerpsProMarketRiskEntryPrice,
+} from '../model/marketOrderProjection';
 import type { PerpsProMarket } from '../model/market';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import {
@@ -1319,9 +1322,7 @@ export const usePerpsProTrade = ({
         const projection = getSideMarketOrderProjection(side);
         if (!projection) return null;
         const expectedEntryPrice =
-          projection.source === 'fullL2'
-            ? projection.estimatedEntryPrice
-            : projection.slippageReferenceMidPrice;
+          resolvePerpsProMarketRiskEntryPrice(projection);
         const validExpectedEntryPrice = positive(expectedEntryPrice);
         return validExpectedEntryPrice
           ? {
@@ -1443,9 +1444,7 @@ export const usePerpsProTrade = ({
         marginMode,
         markPrice: market.marketData.markPx,
         marketFillRiskEntryPrice:
-          marketProjection?.source === 'fullL2'
-            ? marketProjection.estimatedEntryPrice
-            : null,
+          resolvePerpsProMarketRiskEntryPrice(marketProjection),
         maxLeverage: market.marketData.maxLeverage,
         midPrice: liveMidPrice,
         pxDecimals: market.marketData.pxDecimals,
@@ -1464,9 +1463,7 @@ export const usePerpsProTrade = ({
           throw new Error(t('page.perps.pro.trade.contextChanged'));
         }
         const projectedEntryPrice =
-          marketProjection.source === 'fullL2'
-            ? marketProjection.estimatedEntryPrice
-            : marketProjection.slippageReferenceMidPrice;
+          resolvePerpsProMarketRiskEntryPrice(marketProjection);
         const validProjectedEntryPrice = positive(projectedEntryPrice);
         if (!validProjectedEntryPrice) {
           throw new Error(t('page.perps.pro.trade.contextChanged'));
@@ -2209,7 +2206,9 @@ export const usePerpsProTrade = ({
         form.conditionalExecution === 'market'
           ? market.marketData.markPx
           : form.orderType === 'market'
-          ? getSideMarketOrderProjection(side)?.estimatedEntryPrice
+          ? resolvePerpsProMarketRiskEntryPrice(
+              getSideMarketOrderProjection(side),
+            )
           : getSideExecutionPrice(side);
       if (!projection || !entryPrice) return '--';
       const risk = resolvePerpsProProjectedTradeRisk({

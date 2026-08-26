@@ -27,6 +27,23 @@ export type PerpsProMarketOrderProjection =
       source: 'midFallback';
     };
 
+/**
+ * Risk displays follow the executable projection when the book can fill the
+ * whole order, and otherwise use the same Mid anchor already frozen for the
+ * Market command. The fallback stays explicitly tagged as `midFallback`; it
+ * is never presented as a VWAP estimate.
+ */
+export const resolvePerpsProMarketRiskEntryPrice = (
+  projection: PerpsProMarketOrderProjection | null | undefined,
+): string | null => {
+  if (!projection) {
+    return null;
+  }
+  return projection.source === 'fullL2'
+    ? projection.estimatedEntryPrice
+    : projection.slippageReferenceMidPrice;
+};
+
 const positive = (value: unknown) => {
   const result = new BigNumber(
     (value as string | number | null | undefined) ?? Number.NaN,
