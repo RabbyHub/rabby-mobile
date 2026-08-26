@@ -5,6 +5,7 @@ import { PerpsSimpleHeader } from './PerpsHeaderTitle';
 
 const mockGetAliasName = jest.fn();
 const mockSetPopupState = jest.fn();
+const mockSharedHeaderProps = jest.fn();
 
 jest.mock('@/core/apis', () => ({
   apiContact: {
@@ -21,7 +22,10 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
   const { Pressable, View } = require('react-native');
   return {
     PerpsHeader: ({
+      accountAddress,
+      accountBrandName,
       accountLabel,
+      accountTriggerVariant,
       activeMode,
       extendProHitAreaRight,
       onPressAccount,
@@ -30,7 +34,10 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
       onSelectMode,
       showBottomDivider,
     }: {
+      accountAddress?: string;
+      accountBrandName?: string;
       accountLabel?: string;
+      accountTriggerVariant?: 'compact' | 'wallet';
       activeMode: 'simple' | 'pro';
       extendProHitAreaRight?: boolean;
       onPressAccount?: () => void;
@@ -38,8 +45,13 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
       onPressOutMode?: (mode: 'simple' | 'pro') => void;
       onSelectMode: (mode: 'simple' | 'pro') => void;
       showBottomDivider: boolean;
-    }) =>
-      ReactModule.createElement(
+    }) => {
+      mockSharedHeaderProps({
+        accountAddress,
+        accountBrandName,
+        accountTriggerVariant,
+      });
+      return ReactModule.createElement(
         View,
         {
           accessibilityLabel: `${activeMode}:${String(
@@ -59,7 +71,8 @@ jest.mock('../../PerpsShared/components/PerpsHeader', () => {
               testID: 'account-trigger',
             })
           : null,
-      ),
+      );
+    },
   };
 });
 
@@ -93,6 +106,11 @@ describe('PerpsSimpleHeader', () => {
     expect(mockGetAliasName).toHaveBeenCalledWith(
       '0x1234567890123456789012345678901234567890',
     );
+    expect(mockSharedHeaderProps.mock.lastCall?.[0]).toMatchObject({
+      accountAddress: '0x1234567890123456789012345678901234567890',
+      accountBrandName: 'Rabby',
+      accountTriggerVariant: 'wallet',
+    });
 
     fireEvent(screen.getByTestId('switch-to-pro'), 'pressIn');
     fireEvent(screen.getByTestId('switch-to-pro'), 'pressOut');
