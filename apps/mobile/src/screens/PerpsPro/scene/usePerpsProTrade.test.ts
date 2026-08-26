@@ -20,6 +20,9 @@ const mockPerpsState = {
   currentPerpsAccount: mockAccount,
   hasPermission: true,
   isUserDataReady: true,
+  marketDataMap: {
+    BTC: { dexId: '', midPx: '100' },
+  },
   openOrders: [],
   spotState: {
     tokenToAvailableAfterMaintenance: null as [number, string][] | null,
@@ -2063,7 +2066,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.getCostDisplayAmount('sell')).toBe('9.90');
   });
 
-  it('allows ordinary Market submission with Mid while L2 risk fails closed', async () => {
+  it('uses Mid for ordinary Market submission and risk when L2 is unavailable', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -2080,7 +2083,9 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
 
     act(() => hook.result.current.setAmount('100'));
-    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
+      '50.00',
+    );
     expect(hook.result.current.getCostDisplayAmount('buy')).toBe('10.00');
 
     await act(async () => hook.result.current.requestReview('buy'));
@@ -2091,9 +2096,11 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         slippageReferenceMidPrice: '100',
       },
       quoteAmount: '100',
-      reviewFacts: { marketFillRiskEntryPrice: null },
+      reviewFacts: { marketFillRiskEntryPrice: '100' },
     });
-    expect(hook.result.current.estimatedLiquidation).toBeNull();
+    expect(hook.result.current.estimatedLiquidation).toMatchObject({
+      price: '50.00',
+    });
   });
 
   it('falls back to Mid for an attached Market review when L2 is unavailable', async () => {

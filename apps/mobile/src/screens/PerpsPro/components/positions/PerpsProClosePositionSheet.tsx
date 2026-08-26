@@ -1,7 +1,7 @@
 import RcOrderTypeSwitch from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
@@ -9,7 +9,13 @@ import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestT
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -25,8 +31,12 @@ import {
 } from '../../model/positionAction';
 import {
   getPerpsProAmountInputDecimals,
+  getPerpsProPriceInputMaxDecimals,
+  isPerpsProPriceProtocolValid,
   resolvePerpsProDisplayAmount,
   sanitizePerpsProDecimalInput,
+  sanitizePerpsProPriceEditingInput,
+  sanitizePerpsProPriceInput,
   type PerpsProTradeAmountUnit,
 } from '../../model/trade';
 import { usePerpsProPositionMark } from '../../scene/usePerpsProPositionMark';
@@ -42,8 +52,24 @@ import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationC
 import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
+import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 import { getPerpsProClosePositionSheetStyles } from './PerpsProClosePositionSheet.styles';
+
+const PerpsProCloseBottomSheetTextInput = React.forwardRef<
+  TextInput,
+  React.ComponentProps<typeof TextInput>
+>((props, forwardedRef) => (
+  <BottomSheetTextInput
+    {...props}
+    ref={
+      forwardedRef as React.Ref<React.ElementRef<typeof BottomSheetTextInput>>
+    }
+  />
+));
+
+PerpsProCloseBottomSheetTextInput.displayName =
+  'PerpsProCloseBottomSheetTextInput';
 
 const calculateEstimatedPnl = (
   position: PerpsPositionViewModel,
@@ -123,6 +149,15 @@ export const PerpsProClosePositionSheet: React.FC<{
     const [manualAmount, setManualAmount] = useState('');
     const [limitPrice, setLimitPrice] = useState('');
     const [limitPriceDirty, setLimitPriceDirty] = useState(false);
+    const normalizeLimitPrice = useCallback(
+      (value: string) =>
+        sanitizePerpsProPriceEditingInput(value, market.szDecimals),
+      [market.szDecimals],
+    );
+    const canonicalizeLimitPrice = useCallback(
+      (value: string) => sanitizePerpsProPriceInput(value, market.szDecimals),
+      [market.szDecimals],
+    );
 
     useEffect(() => {
       if (visible) {
@@ -142,9 +177,14 @@ export const PerpsProClosePositionSheet: React.FC<{
 
     useEffect(() => {
       if (orderType === 'limit' && !limitPriceDirty && readyLatestTradePrice) {
-        setLimitPrice(readyLatestTradePrice);
+        setLimitPrice(canonicalizeLimitPrice(readyLatestTradePrice));
       }
-    }, [limitPriceDirty, orderType, readyLatestTradePrice]);
+    }, [
+      canonicalizeLimitPrice,
+      limitPriceDirty,
+      orderType,
+      readyLatestTradePrice,
+    ]);
 
     const markPrice = liveMarket.markPrice || market.markPrice;
     const referencePrice =
@@ -195,7 +235,9 @@ export const PerpsProClosePositionSheet: React.FC<{
       !!size &&
       new BigNumber(size).gt(0) &&
       !!referencePrice &&
-      new BigNumber(referencePrice).gt(0);
+      new BigNumber(referencePrice).gt(0) &&
+      (orderType !== 'limit' ||
+        isPerpsProPriceProtocolValid(limitPrice, market.szDecimals));
 
     useEffect(() => {
       const previousAmountUnit = previousAmountUnitRef.current;
@@ -244,7 +286,7 @@ export const PerpsProClosePositionSheet: React.FC<{
     const selectLimit = () => {
       setOrderType('limit');
       if (!limitPriceDirty && readyLatestTradePrice) {
-        setLimitPrice(readyLatestTradePrice);
+        setLimitPrice(canonicalizeLimitPrice(readyLatestTradePrice));
       }
     };
     const beginAmountEntry = (discardNextChange = false) => {
@@ -372,19 +414,20 @@ export const PerpsProClosePositionSheet: React.FC<{
                     <Text style={styles.floatingLabel}>
                       {t('page.perps.pro.positions.price')}
                     </Text>
-                    <BottomSheetTextInput
+                    <PerpsProDecimalTextInput
                       accessibilityLabel={t('page.perps.pro.positions.price')}
+                      canonicalizeValueOnBlur={canonicalizeLimitPrice}
                       cursorColor={colors2024['brand-default']}
-                      keyboardType="decimal-pad"
+                      inputComponent={PerpsProCloseBottomSheetTextInput}
+                      maxDecimals={getPerpsProPriceInputMaxDecimals(
+                        market.szDecimals,
+                      )}
+                      normalizeValue={normalizeLimitPrice}
                       onChangeText={value => {
                         setLimitPriceDirty(true);
-                        setLimitPrice(
-                          sanitizePerpsProDecimalInput(
-                            value,
-                            market.pxDecimals,
-                          ),
-                        );
+                        setLimitPrice(value);
                       }}
+                      preserveIntegerZeroRun
                       selectionColor={colors2024['brand-default']}
                       style={styles.priceInput}
                       value={limitPrice}

@@ -12,6 +12,11 @@ import type {
 } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
+import {
+  isPerpsProPriceProtocolValid,
+  normalizePerpsProCalculatedPrice,
+} from '@/utils/perpsPriceProtocol';
+
 import { isSamePerpsActionAccount } from './accountGuard';
 import { isPerpsActionUserCancelled } from './actionError';
 
@@ -116,15 +121,6 @@ const positive = (value: unknown) => {
   return result.isFinite() && result.gt(0) ? result : null;
 };
 
-const normalize = (value: string, decimals: number) => {
-  const number = positive(value);
-  if (!number || !Number.isSafeInteger(decimals) || decimals < 0) {
-    return null;
-  }
-  const result = number.decimalPlaces(decimals, BigNumber.ROUND_DOWN).toFixed();
-  return positive(result)?.toFixed() ?? null;
-};
-
 const normalizeSize = (value: string, decimals: number, allowZero: boolean) => {
   const number = new BigNumber(value || Number.NaN);
   if (
@@ -178,7 +174,6 @@ export const buildPerpsModifyOpenOrderCommand = ({
   limitPrice,
   marketKey,
   oid,
-  pxDecimals,
   reduceOnly,
   side,
   szDecimals,
@@ -224,22 +219,21 @@ export const buildPerpsModifyOpenOrderCommand = ({
   const normalizedTrigger =
     editKind === 'limit'
       ? null
-      : triggerPrice
-      ? normalize(triggerPrice, pxDecimals)
+      : triggerPrice && isPerpsProPriceProtocolValid(triggerPrice, szDecimals)
+      ? triggerPrice
       : null;
   const normalizedPrice =
     editKind === 'triggerMarket'
       ? expectedPrice && expectedTrigger && normalizedTrigger
-        ? normalize(
+        ? normalizePerpsProCalculatedPrice(
             new BigNumber(expectedPrice)
               .dividedBy(expectedTrigger)
-              .multipliedBy(normalizedTrigger)
-              .toFixed(),
-            pxDecimals,
+              .multipliedBy(normalizedTrigger),
+            szDecimals,
           )
         : null
-      : limitPrice
-      ? normalize(limitPrice, pxDecimals)
+      : limitPrice && isPerpsProPriceProtocolValid(limitPrice, szDecimals)
+      ? limitPrice
       : null;
   const normalizedTif = editKind === 'limit' && isValidTif(tif) ? tif : null;
   const acceptedOrderTypes = expectedOrderTypeFor({

@@ -1,6 +1,9 @@
 import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 
-import { resolvePerpsProMarketOrderProjection } from './marketOrderProjection';
+import {
+  resolvePerpsProMarketOrderProjection,
+  resolvePerpsProMarketRiskEntryPrice,
+} from './marketOrderProjection';
 
 const book: L2Book = {
   coin: 'xyz:MSFT',
@@ -102,4 +105,43 @@ describe('resolvePerpsProMarketOrderProjection', () => {
       source: 'midFallback',
     });
   });
+
+  it('uses full-L2 VWAP as the risk entry only when the whole order is fillable', () => {
+    const projection = resolvePerpsProMarketOrderProjection({
+      baseSize: '0.023',
+      book,
+      coin: 'xyz:MSFT',
+      midPrice: '509.15',
+      sessionKey: 'xyz:MSFT:1',
+      side: 'buy',
+      status: 'ready',
+      szDecimals: 3,
+    });
+
+    expect(resolvePerpsProMarketRiskEntryPrice(projection)).toBe(
+      '509.31304347826086956522',
+    );
+  });
+
+  it.each(['20', '80', '100', '10000'])(
+    'keeps a Mid risk entry for an unfillable %s-base order',
+    baseSize => {
+      const projection = resolvePerpsProMarketOrderProjection({
+        baseSize,
+        book,
+        coin: 'xyz:MSFT',
+        midPrice: '509.15',
+        sessionKey: 'xyz:MSFT:1',
+        side: 'buy',
+        status: 'ready',
+        szDecimals: 3,
+      });
+
+      expect(projection).toMatchObject({
+        fillError: 'insufficientDepth',
+        source: 'midFallback',
+      });
+      expect(resolvePerpsProMarketRiskEntryPrice(projection)).toBe('509.15');
+    },
+  );
 });

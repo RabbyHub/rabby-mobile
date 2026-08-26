@@ -1,6 +1,5 @@
 import React, { useMemo, type PropsWithChildren } from 'react';
 import { Platform, ScrollView, type ViewStyle } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   scrollTo,
   useAnimatedRef,
@@ -14,7 +13,6 @@ import {
   scrollPerpsProInfoBridgeTarget,
   type PerpsProInfoScrollBridgeController,
 } from '../info/usePerpsProInfoScrollBridge';
-import { usePerpsProAndroidTradeScrollDriver } from './usePerpsProAndroidTradeScrollDriver';
 
 const PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR = 100_000;
 const PERPS_PRO_TRADE_SCROLL_BRIDGE_SETTLE_VELOCITY = 0.01;
@@ -145,26 +143,17 @@ const PerpsProNativeTradeScrollBridge: React.FC<
 
 const PerpsProAndroidTradeScrollBridge: React.FC<
   PerpsProTradeScrollBridgeProps
-> = ({ children, controller, enabled = true, height }) => {
-  const gesture = usePerpsProAndroidTradeScrollDriver({
-    controller,
-    enabled,
-  });
-
-  return (
-    <GestureDetector gesture={gesture}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        removeClippedSubviews={false}
-        scrollEnabled={false}
-        showsVerticalScrollIndicator={false}
-        style={{ height }}
-        testID="perps-pro-trade-scroll-bridge">
-        {children}
-      </ScrollView>
-    </GestureDetector>
-  );
-};
+> = ({ children, height }) => (
+  <ScrollView
+    keyboardShouldPersistTaps="handled"
+    removeClippedSubviews={false}
+    scrollEnabled={false}
+    showsVerticalScrollIndicator={false}
+    style={{ height }}
+    testID="perps-pro-trade-scroll-bridge">
+    {children}
+  </ScrollView>
+);
 
 export const PerpsProTradeScrollBridge: React.FC<
   PerpsProTradeScrollBridgeProps

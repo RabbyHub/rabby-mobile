@@ -97,6 +97,23 @@ export const finalizePerpsProBboOpenOrderCommand = (
   });
 };
 
+export const finalizePerpsProMarketOpenOrderCommand = (
+  command: PerpsProOpenOrderCommand,
+  midPrice: string,
+): PerpsProOpenOrderCommand => {
+  const mid = decimal(midPrice);
+  if (command.execution.kind !== 'market' || !mid?.gt(0)) {
+    throw new Error('Market Mid price is unavailable');
+  }
+  return Object.freeze({
+    ...command,
+    execution: Object.freeze({
+      kind: 'market' as const,
+      slippageReferenceMidPrice: mid.toFixed(),
+    }),
+  });
+};
+
 export const buildPerpsProOpenOrderCommand = ({
   account,
   amountReferencePrice,
@@ -283,6 +300,7 @@ export interface PerpsProOpenOrderDependencies {
   }) => Promise<unknown>;
   getCurrentAccount: () => Pick<Account, 'address' | 'type'> | null;
   getCurrentDex: (coin: string) => string;
+  getLiveMidPrice: (coin: string) => string | null;
   hasPermission: () => boolean;
   limitOrder: (params: {
     builder: typeof PERPS_BUILDER_INFO;
@@ -316,6 +334,8 @@ const defaultDependencies: PerpsProOpenOrderDependencies = {
   conditionalMarket: params => getExchange().placeTPSlMarketOrder(params),
   getCurrentAccount: () => perpsStore.getState().currentPerpsAccount,
   getCurrentDex: coin => getDexByCoin(coin),
+  getLiveMidPrice: coin =>
+    perpsStore.getState().marketDataMap[coin]?.midPx ?? null,
   hasPermission: () => perpsStore.getState().hasPermission,
   limitOrder: params => getExchange().limitOrderOpen(params),
   marketOrder: params => getExchange().marketOrderOpen(params),
@@ -377,39 +397,60 @@ export const executePerpsProOpenOrder = async (
     return { kind: 'staleContext' };
   }
   try {
+    let executableCommand = command;
+    if (command.execution.kind === 'market') {
+      try {
+        executableCommand = finalizePerpsProMarketOpenOrderCommand(
+          command,
+          dependencies.getLiveMidPrice(command.coin) ?? '',
+        );
+      } catch {
+        return { kind: 'staleContext' };
+      }
+      if (!isContextCurrent(executableCommand, dependencies, sceneGuard)) {
+        return { kind: 'staleContext' };
+      }
+    }
+    if (executableCommand.execution.kind === 'bboLimit') {
+      return {
+        error: 'BBO price must be finalized immediately before submission',
+        failureReason: 'requestFailed',
+        kind: 'failed',
+      };
+    }
     const common = {
       builder: PERPS_BUILDER_INFO,
-      coin: command.coin,
-      isBuy: command.side === 'buy',
-      reduceOnly: command.reduceOnly,
-      size: command.baseSize,
+      coin: executableCommand.coin,
+      isBuy: executableCommand.side === 'buy',
+      reduceOnly: executableCommand.reduceOnly,
+      size: executableCommand.baseSize,
     };
     if (!dependencies.hasPermission()) {
       return { failureReason: 'regionRestricted', kind: 'failed' };
     }
     const response =
-      command.execution.kind === 'market'
+      executableCommand.execution.kind === 'market'
         ? await dependencies.marketOrder({
             ...common,
-            midPx: command.execution.slippageReferenceMidPrice,
+            midPx: executableCommand.execution.slippageReferenceMidPrice,
           })
-        : command.execution.kind === 'limit'
+        : executableCommand.execution.kind === 'limit'
         ? await dependencies.limitOrder({
             ...common,
-            limitPx: command.execution.limitPrice,
-            tif: command.execution.tif,
+            limitPx: executableCommand.execution.limitPrice,
+            tif: executableCommand.execution.tif,
           })
-        : command.execution.kind === 'conditionalMarket'
+        : executableCommand.execution.kind === 'conditionalMarket'
         ? await dependencies.conditionalMarket({
             ...common,
-            tpsl: command.execution.tpsl,
-            triggerPx: command.execution.triggerPrice,
+            tpsl: executableCommand.execution.tpsl,
+            triggerPx: executableCommand.execution.triggerPrice,
           })
         : await dependencies.conditionalLimit({
             ...common,
-            limitPx: command.execution.limitPrice,
-            tpsl: command.execution.tpsl,
-            triggerPx: command.execution.triggerPrice,
+            limitPx: executableCommand.execution.limitPrice,
+            tpsl: executableCommand.execution.tpsl,
+            triggerPx: executableCommand.execution.triggerPrice,
           });
     const status = (
       response as {

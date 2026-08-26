@@ -25,15 +25,13 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { buildPerpsProMarketDescriptor } from '../model/market';
-import {
-  calculateLiquidationDistance,
-  type PerpsPositionViewModel,
-} from '../model/position';
+import type { PerpsPositionViewModel } from '../model/position';
 import {
   buildPositionMarginRange,
   buildPositionMarginRiskProjection,
   formatPositionMarginTarget,
   resolvePositionMarginAvailable,
+  resolvePositionMarginCurrentRisk,
   validatePositionMarginTarget,
   type PositionMarginRange,
   type PositionMarginTargetState,
@@ -283,19 +281,17 @@ export const usePerpsProManageMargin = () => {
     const signedSize = new BigNumber(position.szi ?? Number.NaN);
     const direction = signedSize.gte(0) ? 'long' : 'short';
     const descriptor = buildPerpsProMarketDescriptor(market);
-    const currentLiquidationDistance = calculateLiquidationDistance({
+    const currentRisk = resolvePositionMarginCurrentRisk({
       direction,
-      liquidationPrice: position.liquidationPx || null,
-      markPrice: market.markPx || null,
+      liquidationPrice: position.liquidationPx,
+      margin: position.marginUsed,
+      markPrice: market.markPx,
+      positionSize: signedSize.abs().toFixed(),
+      tiers: market.maintenanceMarginTiers,
     });
     const projection =
       targetState === 'noChange'
-        ? position.liquidationPx && currentLiquidationDistance
-          ? {
-              liquidationDistance: currentLiquidationDistance,
-              liquidationPrice: position.liquidationPx,
-            }
-          : null
+        ? currentRisk
         : buildPositionMarginRiskProjection({
             direction,
             margin: draft,
@@ -304,8 +300,8 @@ export const usePerpsProManageMargin = () => {
             tiers: market.maintenanceMarginTiers,
           });
     return {
-      currentLiquidationDistance,
-      currentLiquidationPrice: position.liquidationPx || null,
+      currentLiquidationDistance: currentRisk?.liquidationDistance ?? null,
+      currentLiquidationPrice: currentRisk?.liquidationPrice ?? null,
       currentMargin: String(position.marginUsed ?? '0'),
       direction,
       displayPair: descriptor.displayPair,

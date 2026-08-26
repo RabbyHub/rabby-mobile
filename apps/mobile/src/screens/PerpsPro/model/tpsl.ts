@@ -1,5 +1,10 @@
 import BigNumber from 'bignumber.js';
 
+import {
+  isPerpsProPriceProtocolValid,
+  normalizePerpsProCalculatedPrice,
+} from '@/utils/perpsPriceProtocol';
+
 export type PerpsProTpSlMode = 'pnl' | 'price' | 'roi';
 export type PerpsProTpSlLegKind = 'sl' | 'tp';
 
@@ -110,26 +115,7 @@ export const normalizePerpsProTpSlPrice = ({
   price: BigNumber;
   szDecimals: number;
 }) => {
-  if (
-    !price.isFinite() ||
-    price.lte(0) ||
-    !Number.isSafeInteger(szDecimals) ||
-    szDecimals < 0
-  ) {
-    return null;
-  }
-  // Hyperliquid explicitly permits integer prices regardless of significant
-  // figures. Preserve the user's exact integer before applying the non-integer
-  // five-significant-figure rule.
-  if (price.isInteger()) {
-    return price.toFixed(0);
-  }
-  const significant = new BigNumber(price.toPrecision(5, BigNumber.ROUND_DOWN));
-  const normalized = significant.decimalPlaces(
-    Math.max(0, 6 - szDecimals),
-    BigNumber.ROUND_DOWN,
-  );
-  return normalized.gt(0) ? normalized.toFixed() : null;
+  return normalizePerpsProCalculatedPrice(price, szDecimals);
 };
 
 type PerpsProTpSlLegCalculation =
@@ -190,10 +176,15 @@ const calculatePerpsProTpSlLeg = ({
     return { leg: null, status: 'nonPositiveTrigger' };
   }
 
-  const normalizedTrigger = normalizePerpsProTpSlPrice({
-    price: trigger,
-    szDecimals,
-  });
+  const normalizedTrigger =
+    draft.mode === 'price'
+      ? isPerpsProPriceProtocolValid(draft.rawMagnitude, szDecimals)
+        ? draft.rawMagnitude
+        : null
+      : normalizePerpsProTpSlPrice({
+          price: trigger,
+          szDecimals,
+        });
   if (!normalizedTrigger) return { leg: null, status: 'invalidInput' };
   const normalized = new BigNumber(normalizedTrigger);
   const pnl = (isBuy ? normalized.minus(entry) : entry.minus(normalized))
@@ -334,9 +325,11 @@ export const evaluatePerpsProAttachedTpSl = ({
 export const validatePerpsProFrozenAttachedTpSl = ({
   attached,
   expectedEntryPrice,
+  szDecimals,
 }: {
   attached: Pick<PerpsProAttachedTpSlEvaluation, 'side' | 'sl' | 'tp'>;
   expectedEntryPrice: string;
+  szDecimals: number;
 }): PerpsProFrozenAttachedTpSlValidationError[] => {
   const errors: PerpsProFrozenAttachedTpSlValidationError[] = [];
   const entry = positive(expectedEntryPrice);
@@ -347,7 +340,10 @@ export const validatePerpsProFrozenAttachedTpSl = ({
     const leg = attached[kind];
     if (!leg) return;
     const trigger = positive(leg.triggerPrice);
-    if (!trigger) {
+    if (
+      !trigger ||
+      !isPerpsProPriceProtocolValid(leg.triggerPrice, szDecimals)
+    ) {
       errors.push({ code: 'invalidTrigger', leg: kind });
       return;
     }

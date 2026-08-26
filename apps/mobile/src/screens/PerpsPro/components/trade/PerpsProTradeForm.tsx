@@ -1,4 +1,5 @@
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
+import RcIconAvailableSwap from '@/assets2024/icons/perps/PerpsProAvailableSwap.svg';
 import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -9,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProBboStrategy } from '../../model/bbo';
 import {
   getPerpsProPriceInputMaxDecimals,
+  sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
   type PerpsProTradeTif,
 } from '../../model/trade';
@@ -84,7 +86,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   const priceSzDecimals = market?.marketData.szDecimals ?? 0;
   const priceInputMaxDecimals =
     getPerpsProPriceInputMaxDecimals(priceSzDecimals);
-  const normalizePriceInput = useCallback(
+  const normalizePriceEditingInput = useCallback(
+    (value: string) =>
+      sanitizePerpsProPriceEditingInput(value, priceSzDecimals),
+    [priceSzDecimals],
+  );
+  const canonicalizePriceInput = useCallback(
     (value: string) => sanitizePerpsProPriceInput(value, priceSzDecimals),
     [priceSzDecimals],
   );
@@ -184,8 +191,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   : 0
               }
               label={`${t('page.perps.pro.trade.price')}(${quoteAsset})`}
+              canonicalizeValueOnBlur={canonicalizePriceInput}
               maxDecimals={priceInputMaxDecimals}
-              normalizeValue={normalizePriceInput}
+              normalizeValue={normalizePriceEditingInput}
               onChangeText={value => controller.setPrice('limitPrice', value)}
               onPressSuffix={
                 form.attachedTpSl.enabled || form.tif !== 'Gtc'
@@ -207,8 +215,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   : 0
               }
               label={`${t('page.perps.pro.trade.triggerPrice')}(${quoteAsset})`}
+              canonicalizeValueOnBlur={canonicalizePriceInput}
               maxDecimals={priceInputMaxDecimals}
-              normalizeValue={normalizePriceInput}
+              normalizeValue={normalizePriceEditingInput}
               onChangeText={value => controller.setPrice('triggerPrice', value)}
               ref={triggerPriceInputRef}
               value={form.triggerPrice}
@@ -222,8 +231,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   ? `${t('page.perps.pro.trade.price')}(${quoteAsset})`
                   : t('page.perps.pro.trade.marketPrice')
               }
+              canonicalizeValueOnBlur={canonicalizePriceInput}
               maxDecimals={priceInputMaxDecimals}
-              normalizeValue={normalizePriceInput}
+              normalizeValue={normalizePriceEditingInput}
               onChangeText={value =>
                 controller.setPrice('conditionalLimitPrice', value)
               }
@@ -290,9 +300,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           }
           trailing={
             addFundsMode === 'swap' ? (
-              <Text style={styles.swapAction}>
-                {t('page.perps.PerpsDepositCard.swap')}
-              </Text>
+              <RcIconAvailableSwap
+                color={colors2024['neutral-title-1']}
+                height={16}
+                testID="perps-pro-trade-available-swap"
+                width={16}
+              />
             ) : (
               <RcIconAvailableAdd
                 color={colors2024['neutral-title-1']}
@@ -317,6 +330,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             draft={form.attachedTpSl}
             pxDecimals={market?.marketData.pxDecimals ?? 2}
             quoteAsset={quoteAsset}
+            szDecimals={priceSzDecimals}
             slFillRevision={
               controller.priceFillFeedback?.field === 'sl'
                 ? controller.priceFillFeedback.revision
@@ -503,13 +517,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
   optionsGroup: { gap: 8 },
-  swapAction: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
   convertedAmount: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',

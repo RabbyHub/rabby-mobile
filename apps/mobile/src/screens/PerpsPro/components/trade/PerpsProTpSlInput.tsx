@@ -6,6 +6,10 @@ import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTpSlMode } from '../../model/tpsl';
+import {
+  sanitizePerpsProPriceEditingInput,
+  sanitizePerpsProPriceInput,
+} from '../../model/trade';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
 import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
@@ -26,6 +30,7 @@ export const PerpsProTpSlInput: React.FC<{
   onChangeText: (value: string) => void;
   onFocus: () => void;
   onPressMode: () => void;
+  priceSzDecimals?: number;
   quoteAsset: string;
   value: string;
 }> = React.memo(
@@ -39,6 +44,7 @@ export const PerpsProTpSlInput: React.FC<{
     onChangeText,
     onFocus,
     onPressMode,
+    priceSzDecimals,
     quoteAsset,
     value,
   }) => {
@@ -69,6 +75,21 @@ export const PerpsProTpSlInput: React.FC<{
       },
       [value],
     );
+    const normalizePriceEditingInput = useCallback(
+      (next: string) =>
+        priceSzDecimals == null
+          ? next
+          : sanitizePerpsProPriceEditingInput(next, priceSzDecimals),
+      [priceSzDecimals],
+    );
+    const canonicalizePriceInput = useCallback(
+      (next: string) =>
+        priceSzDecimals == null
+          ? next
+          : sanitizePerpsProPriceInput(next, priceSzDecimals),
+      [priceSzDecimals],
+    );
+    const usesPriceEditingPolicy = mode === 'price' && priceSzDecimals != null;
     return (
       <View style={styles.container}>
         <Text style={styles.legLabel}>{label}</Text>
@@ -123,10 +144,16 @@ export const PerpsProTpSlInput: React.FC<{
             ) : null}
             <PerpsProDecimalTextInput
               accessibilityLabel={label}
+              canonicalizeValueOnBlur={
+                usesPriceEditingPolicy ? canonicalizePriceInput : undefined
+              }
               cursorColor={colors2024['brand-default']}
               inputComponent={PerpsProAnimatedPriceTextInput}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
+              normalizeValue={
+                usesPriceEditingPolicy ? normalizePriceEditingInput : undefined
+              }
               onBlur={() => {
                 setFocused(false);
                 onBlur();
@@ -136,6 +163,7 @@ export const PerpsProTpSlInput: React.FC<{
                 setFocused(true);
                 onFocus();
               }}
+              preserveIntegerZeroRun={usesPriceEditingPolicy}
               selectionColor={colors2024['brand-default']}
               style={[
                 styles.input,

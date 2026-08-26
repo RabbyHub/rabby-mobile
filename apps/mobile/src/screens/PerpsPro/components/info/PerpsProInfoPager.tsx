@@ -97,6 +97,7 @@ type PerpsProInfoPagerProps<Row> = {
   contentContainerStyle: Record<PerpsProInfoTab, StyleProp<ViewStyle>>;
   data: Record<PerpsProInfoTab, readonly Row[]>;
   getActiveScrollOffset: () => number;
+  nativeVerticalScrollEnabled?: boolean;
   onActivateOffset: (offset: number) => void;
   onActiveScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onLayout: (event: LayoutChangeEvent) => void;
@@ -121,6 +122,7 @@ const PerpsProInfoPagerInner = <Row,>(
     contentContainerStyle,
     data,
     getActiveScrollOffset,
+    nativeVerticalScrollEnabled = true,
     onActivateOffset,
     onActiveScroll,
     onLayout,
@@ -476,7 +478,7 @@ const PerpsProInfoPagerInner = <Row,>(
                 onMomentumScrollEnd={event => recordScrollEnd(tab, event)}
                 onScroll={active ? onActiveScroll : undefined}
                 onScrollBeginDrag={
-                  active && scrollBridge
+                  active && nativeVerticalScrollEnabled && scrollBridge
                     ? () => interruptPerpsProInfoScrollBridge(scrollBridge)
                     : undefined
                 }
@@ -491,7 +493,7 @@ const PerpsProInfoPagerInner = <Row,>(
                   }
                 }}
                 renderItem={renderItem}
-                scrollEnabled={active}
+                scrollEnabled={active && nativeVerticalScrollEnabled}
                 scrollEventThrottle={16}
                 scrollsToTop={active}
                 showsVerticalScrollIndicator={false}

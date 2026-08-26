@@ -200,7 +200,10 @@ const TradingViewCandleChart = ({
         value: colors2024['neutral-title-1'],
       },
       crosshairLabel: {
-        background: colors2024['neutral-black'],
+        background:
+          variant === 'perps-pro' && !isLight
+            ? colors2024['neutral-body']
+            : colors2024['neutral-black'],
         text: colors2024['neutral-InvertHighlight'],
       },
     }),

@@ -8,6 +8,7 @@ const mockLocalWebViewProps = jest.fn();
 const mockSendMessage = jest.fn();
 const mockReload = jest.fn();
 const mockDataApplied = jest.fn();
+let mockIsLight = false;
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -46,7 +47,7 @@ jest.mock('@/hooks/theme', () => ({
     );
     return {
       colors2024,
-      isLight: false,
+      isLight: mockIsLight,
       styles: getStyle({ colors2024 }),
     };
   },
@@ -96,9 +97,47 @@ const getLastSetDataMessage = () =>
     .filter(message => message.data?.type === 'SET_CANDLESTICK_DATA')
     .at(-1);
 
+const getLastThemeMessage = () =>
+  mockSendMessage.mock.calls
+    .map(call => call[0])
+    .filter(message => message.data?.type === 'UPDATE_THEME')
+    .at(-1);
+
 describe('TradingViewCandleChart protocol compatibility', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsLight = false;
+  });
+
+  it('sends the approved dark Pro crosshair label colors', () => {
+    render(<TradingViewCandleChart height={184} variant="perps-pro" />);
+    markChartReady();
+
+    expect(getLastThemeMessage().data.colors.crosshairLabel).toEqual({
+      background: 'neutral-body',
+      text: 'neutral-InvertHighlight',
+    });
+  });
+
+  it('keeps the approved light Pro crosshair label colors', () => {
+    mockIsLight = true;
+    render(<TradingViewCandleChart height={184} variant="perps-pro" />);
+    markChartReady();
+
+    expect(getLastThemeMessage().data.colors.crosshairLabel).toEqual({
+      background: 'neutral-black',
+      text: 'neutral-InvertHighlight',
+    });
+  });
+
+  it('does not change legacy dark crosshair label colors', () => {
+    render(<TradingViewCandleChart height={184} />);
+    markChartReady({ perpsProKlineProtocolVersion: null });
+
+    expect(getLastThemeMessage().data.colors.crosshairLabel).toEqual({
+      background: 'neutral-black',
+      text: 'neutral-InvertHighlight',
+    });
   });
 
   it('keeps legacy charts compatible with resources that do not declare the Pro protocol', () => {

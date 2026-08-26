@@ -2,6 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { PortalProvider } from '@gorhom/portal';
 import React from 'react';
 
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  return {
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    useAnimatedReaction: jest.fn(),
+    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+  };
+});
+
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
   default: () => ({ fontScale: 1, height: 852, scale: 3, width: 393 }),

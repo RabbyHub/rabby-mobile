@@ -16,6 +16,7 @@ import type { PerpsAttachedTpSlJournalEntry } from '@/core/services/perpsService
 import type { PerpsProMarket } from '../model/market';
 import {
   executePerpsProAttachedTpSl,
+  finalizePerpsProAttachedTpSlMarketCommand,
   getPerpsProAttachedTpSlBatchError,
   validatePerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlCommand,
@@ -197,10 +198,11 @@ export const usePerpsProAttachedTpSlExecution = ({
       ensureLeverage: EnsurePerpsProAttachedTpSlLeverage,
     ): Promise<PerpsProAttachedTpSlFinalOutcome> => {
       const empty = { reconciliationErrors: [], refreshErrors: [] };
-      const guard = () =>
-        validatePerpsProAttachedTpSlCommand(command, getGuardContext());
-      const guardFailure = () => {
-        const result = guard();
+      const guardFailure = (candidate: PerpsProAttachedTpSlCommand) => {
+        const result = validatePerpsProAttachedTpSlCommand(
+          candidate,
+          getGuardContext(),
+        );
         return result.ok
           ? null
           : {
@@ -210,7 +212,7 @@ export const usePerpsProAttachedTpSlExecution = ({
               reason: result.reason,
             };
       };
-      const initialGuardFailure = guardFailure();
+      const initialGuardFailure = guardFailure(command);
       if (initialGuardFailure) return initialGuardFailure;
       try {
         const account = getPerpsAccountRuntimeContext().account;
@@ -221,7 +223,7 @@ export const usePerpsProAttachedTpSlExecution = ({
           return { ...empty, kind: 'staleContext' };
         }
         await ensurePerpsActionApproval(account);
-        const postApprovalGuardFailure = guardFailure();
+        const postApprovalGuardFailure = guardFailure(command);
         if (postApprovalGuardFailure) return postApprovalGuardFailure;
         const leverageResult = await ensureLeverage(command);
         if (leverageResult !== 'success') {
@@ -235,10 +237,36 @@ export const usePerpsProAttachedTpSlExecution = ({
                 : 'requestFailed',
           };
         }
-        const postLeverageGuardFailure = guardFailure();
+        const postLeverageGuardFailure = guardFailure(command);
         if (postLeverageGuardFailure) return postLeverageGuardFailure;
+        let executableCommand = command;
+        if (command.parent.execution.kind === 'market') {
+          const liveMarket =
+            perpsStore.getState().marketDataMap[command.parent.coin];
+          if (!liveMarket || liveMarket.dexId !== command.parent.dexId) {
+            return {
+              ...empty,
+              kind: 'staleContext',
+              reason: 'marketIdentity',
+            };
+          }
+          try {
+            executableCommand = finalizePerpsProAttachedTpSlMarketCommand(
+              command,
+              liveMarket.midPx,
+            );
+          } catch {
+            return {
+              ...empty,
+              kind: 'staleContext',
+              reason: 'marketIdentity',
+            };
+          }
+        }
+        const postFinalizationGuardFailure = guardFailure(executableCommand);
+        if (postFinalizationGuardFailure) return postFinalizationGuardFailure;
         const result = await executePerpsProAttachedTpSl(
-          command,
+          executableCommand,
           getGuardContext,
         );
         const serverError = getResultServerError(result);
@@ -262,7 +290,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         }
         const entry = (
           await perpsServiceApi.getPerpsAttachedTpSlJournal()
-        ).find(item => item.commandId === command.commandId);
+        ).find(item => item.commandId === executableCommand.commandId);
         if (!entry) {
           return { ...empty, error: serverError, kind: result.kind };
         }

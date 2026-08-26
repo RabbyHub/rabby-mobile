@@ -5,6 +5,10 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { View } from 'react-native';
 
+import {
+  sanitizePerpsProPriceEditingInput,
+  sanitizePerpsProPriceInput,
+} from '../../model/trade';
 import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
@@ -30,6 +34,7 @@ export const PerpsProOpenOrderEditInput: React.FC<{
   maxDecimals: number;
   onChangeText: (value: string) => void;
   onFocus?: () => void;
+  priceSzDecimals?: number;
   testID?: string;
   unit?: string;
   value: string;
@@ -42,11 +47,22 @@ export const PerpsProOpenOrderEditInput: React.FC<{
     maxDecimals,
     onChangeText,
     onFocus,
+    priceSzDecimals,
     testID,
     unit,
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
+    const normalizePriceValue = React.useCallback(
+      (nextValue: string) =>
+        sanitizePerpsProPriceEditingInput(nextValue, priceSzDecimals ?? 0),
+      [priceSzDecimals],
+    );
+    const canonicalizePriceValue = React.useCallback(
+      (nextValue: string) =>
+        sanitizePerpsProPriceInput(nextValue, priceSzDecimals ?? 0),
+      [priceSzDecimals],
+    );
     if (disabled) {
       return (
         <View style={[styles.field, styles.disabled]} testID={testID}>
@@ -67,8 +83,15 @@ export const PerpsProOpenOrderEditInput: React.FC<{
           cursorColor={colors2024['brand-default']}
           inputComponent={OpenOrderBottomSheetTextInput}
           maxDecimals={maxDecimals}
+          normalizeValue={
+            priceSzDecimals == null ? undefined : normalizePriceValue
+          }
           onChangeText={onChangeText}
           onFocus={onFocus}
+          canonicalizeValueOnBlur={
+            priceSzDecimals == null ? undefined : canonicalizePriceValue
+          }
+          preserveIntegerZeroRun={priceSzDecimals != null}
           selectionColor={colors2024['brand-default']}
           style={[styles.input, unit ? styles.inputWithUnit : null]}
           value={value}

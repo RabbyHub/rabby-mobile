@@ -18,13 +18,18 @@ describe('Perps Pro field explanations', () => {
         'reduceOnly',
         'roi',
         'tpSl',
-        'totalValue',
       ].sort(),
     );
   });
 
   it('preserves the approved English titles and descriptions verbatim', () => {
-    expect(fieldExplanations).toEqual({
+    const registeredFieldExplanations = Object.fromEntries(
+      Object.keys(PERPS_PRO_FIELD_EXPLANATIONS).map(key => [
+        key,
+        fieldExplanations[key],
+      ]),
+    );
+    expect(registeredFieldExplanations).toEqual({
       cost: {
         title: 'Cost',
         description:
@@ -79,11 +84,6 @@ describe('Perps Pro field explanations', () => {
         title: 'TP/SL',
         description:
           'Places basic market TP/SL orders. For advanced features such as partial TP/SL, set TP/SL on an open position.',
-      },
-      totalValue: {
-        title: 'Total Value',
-        description:
-          'Portfolio Value includes the value of spot assets in your Unified Account.',
       },
     });
   });

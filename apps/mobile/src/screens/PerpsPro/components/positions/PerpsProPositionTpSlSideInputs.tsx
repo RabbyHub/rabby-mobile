@@ -4,6 +4,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
+import BigNumber from 'bignumber.js';
 
 import type { PerpsProPositionTpSlMode } from '@/core/services/perpsService';
 
@@ -14,6 +15,7 @@ import {
   type PerpsPositionTpSlKind,
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
+import { getPerpsProPriceInputMaxDecimals } from '../../model/trade';
 import {
   formatPerpsProPrice,
   formatPerpsProSignedDecimal,
@@ -70,6 +72,13 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
       size: size || '',
       triggerPrice: value,
     });
+    const estimatedPnlValue = new BigNumber(estimatedPnl ?? 0);
+    const estimatedPnlTone =
+      !estimatedPnl || estimatedPnlValue.isZero()
+        ? styles.fieldHintEmphasis
+        : estimatedPnlValue.isPositive()
+        ? styles.fieldHintPositive
+        : styles.fieldHintNegative;
     const triggerLabel = addMode
       ? t(
           kind === 'takeProfit'
@@ -101,8 +110,9 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
             label={triggerLabel}
-            maxDecimals={market.pxDecimals}
+            maxDecimals={getPerpsProPriceInputMaxDecimals(market.szDecimals)}
             onChangeText={onChangeTrigger}
+            priceSzDecimals={market.szDecimals}
             testID={`perps-pro-position-tpsl-${kind}-price`}
             value={value}
           />
@@ -129,15 +139,7 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
                 <Trans
                   components={{
                     1: <Text style={styles.fieldHintEmphasis} />,
-                    2: (
-                      <Text
-                        style={
-                          kind === 'takeProfit'
-                            ? styles.fieldHintPositive
-                            : styles.fieldHintNegative
-                        }
-                      />
-                    ),
+                    2: <Text style={estimatedPnlTone} />,
                   }}
                   i18nKey="page.perps.pro.positionTpsl.triggerDescription"
                   t={t}

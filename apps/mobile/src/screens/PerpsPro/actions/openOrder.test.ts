@@ -14,6 +14,7 @@ import {
   buildPerpsProOpenOrderCommand,
   executePerpsProOpenOrder,
   finalizePerpsProBboOpenOrderCommand,
+  finalizePerpsProMarketOpenOrderCommand,
   type PerpsProOpenOrderDependencies,
 } from './openOrder';
 
@@ -52,6 +53,7 @@ const dependencies = (
   })),
   getCurrentAccount: () => account,
   getCurrentDex: () => '',
+  getLiveMidPrice: () => '63000',
   hasPermission: () => true,
   limitOrder: jest.fn(async () => ({
     status: 'ok',
@@ -104,6 +106,25 @@ describe('Perps Pro open order action', () => {
       },
     });
     expect(Number(command.quoteAmount)).toBeCloseTo(11.7142, 8);
+  });
+
+  it('late-binds only the Market protection anchor', () => {
+    const command = build();
+    const finalized = finalizePerpsProMarketOpenOrderCommand(command, '62000');
+
+    expect(finalized).not.toBe(command);
+    expect(finalized).toMatchObject({
+      baseSize: command.baseSize,
+      execution: {
+        kind: 'market',
+        slippageReferenceMidPrice: '62000',
+      },
+      quoteAmount: command.quoteAmount,
+    });
+    expect(finalized.account).toBe(command.account);
+    expect(finalized.reviewFacts).toBe(command.reviewFacts);
+    expect(Object.isFrozen(finalized)).toBe(true);
+    expect(Object.isFrozen(finalized.execution)).toBe(true);
   });
 
   it('reports the effective SP500 minimum after base-size quantization', () => {
@@ -302,6 +323,25 @@ describe('Perps Pro open order action', () => {
       triggerPx: '64000',
     });
     expect(deps.limitOrder).not.toHaveBeenCalled();
+  });
+
+  it('uses the latest Mid immediately before a Market SDK call', async () => {
+    const deps = dependencies({ getLiveMidPrice: () => '62000' });
+
+    await executePerpsProOpenOrder(build(), deps);
+
+    expect(deps.marketOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ midPx: '62000', size: '0.001' }),
+    );
+  });
+
+  it('fails closed without a valid latest Market Mid', async () => {
+    const deps = dependencies({ getLiveMidPrice: () => null });
+
+    await expect(executePerpsProOpenOrder(build(), deps)).resolves.toEqual({
+      kind: 'staleContext',
+    });
+    expect(deps.marketOrder).not.toHaveBeenCalled();
   });
 
   it('executes Conditional Limit with fixed limit and trigger prices', async () => {

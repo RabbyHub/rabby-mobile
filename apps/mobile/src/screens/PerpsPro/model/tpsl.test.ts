@@ -105,6 +105,22 @@ describe('Perps Pro TP/SL model', () => {
     ).toMatchObject({ estimatedPnl: '-20', estimatedRoi: '-100' });
   });
 
+  it('rejects a direct Price trigger instead of silently rounding it', () => {
+    expect(
+      evaluate({
+        draft: {
+          enabled: true,
+          sl: { mode: 'price', rawMagnitude: '90' },
+          tp: { mode: 'price', rawMagnitude: '110.123' },
+        },
+        szDecimals: 3,
+      }),
+    ).toMatchObject({
+      errors: expect.arrayContaining([{ code: 'invalidInput', leg: 'tp' }]),
+      tp: null,
+    });
+  });
+
   it('keeps the positive-side preview when a high ROI makes the opposite trigger non-positive', () => {
     const input = {
       baseSize: '2',
@@ -217,18 +233,21 @@ describe('Perps Pro TP/SL model', () => {
       validatePerpsProFrozenAttachedTpSl({
         attached,
         expectedEntryPrice: '100',
+        szDecimals: 2,
       }),
     ).toEqual([]);
     expect(
       validatePerpsProFrozenAttachedTpSl({
         attached,
         expectedEntryPrice: '111',
+        szDecimals: 2,
       }),
     ).toContainEqual({ code: 'invalidDirection', leg: 'tp' });
     expect(
       validatePerpsProFrozenAttachedTpSl({
         attached,
         expectedEntryPrice: '80',
+        szDecimals: 2,
       }),
     ).toContainEqual({ code: 'invalidDirection', leg: 'sl' });
   });

@@ -3,6 +3,25 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
+type MockPositionMarket = {
+  displayBase: string;
+  displayPair: string;
+  markPrice: string | null;
+  metadataReady: boolean;
+  pxDecimals: number | undefined;
+  quoteAsset: 'USDC' | 'USDE' | null;
+  sourceTag: string | null;
+};
+const mockReadyMarket: MockPositionMarket = {
+  displayBase: 'BTC',
+  displayPair: 'BTCUSDC',
+  markPrice: '105',
+  metadataReady: true,
+  pxDecimals: 2,
+  quoteAsset: 'USDC',
+  sourceTag: 'xyz',
+};
+let mockPositionMarket: MockPositionMarket = mockReadyMarket;
 
 jest.mock('@/assets2024/icons/perps/IconPerpEdit.svg', () => {
   const ReactModule = require('react');
@@ -91,14 +110,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('../../scene/usePerpsProPositionMark', () => ({
-  usePerpsProPositionMark: () => ({
-    displayBase: 'BTC',
-    displayPair: 'BTCUSDC',
-    markPrice: '105',
-    pxDecimals: 2,
-    quoteAsset: 'USDC',
-    sourceTag: 'xyz',
-  }),
+  usePerpsProPositionMark: () => mockPositionMarket,
 }));
 
 import { PerpsProPositionCard } from './PerpsProPositionCard';
@@ -148,7 +160,54 @@ const triggerOrder = (
 describe('PerpsProPositionCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPositionMarket = mockReadyMarket;
     __resetPerpsProPositionSizeUnitSessionForTests();
+  });
+
+  it('keeps HIP-3 routing identity out of labels until quote metadata arrives', () => {
+    mockPositionMarket = {
+      displayBase: 'BTC',
+      displayPair: 'BTC',
+      markPrice: null,
+      metadataReady: false,
+      pxDecimals: undefined,
+      quoteAsset: null,
+      sourceTag: 'hyna',
+    };
+    const onPressMarket = jest.fn();
+    const value = createPosition({ coin: 'hyna:BTC', key: 'hyna:BTC' });
+    const view = render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onPressMarket={onPressMarket}
+        position={value}
+      />,
+    );
+
+    expect(screen.getByText('BTC')).toBeTruthy();
+    expect(screen.getByText('hyna')).toBeTruthy();
+    expect(screen.queryByText('hyna:BTC')).toBeNull();
+    expect(screen.getByText('PNL')).toBeTruthy();
+    expect(screen.getByText('Size')).toBeTruthy();
+    expect(screen.queryByText('PNL (USDC)')).toBeNull();
+    fireEvent.press(screen.getByTestId('perps-pro-position-market-hyna:BTC'));
+    expect(onPressMarket).toHaveBeenCalledWith('hyna:BTC');
+
+    mockPositionMarket = {
+      ...mockReadyMarket,
+      displayPair: 'BTCUSDE',
+      quoteAsset: 'USDE',
+      sourceTag: 'hyna',
+    };
+    view.rerender(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onPressMarket={onPressMarket}
+        position={{ ...value }}
+      />,
+    );
+    expect(screen.getByText('BTCUSDE')).toBeTruthy();
+    expect(screen.getByText('PNL (USDE)')).toBeTruthy();
   });
 
   it('opens the card market and exposes margin management only for Isolated', () => {
