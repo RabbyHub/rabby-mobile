@@ -103,6 +103,10 @@ describe('PerpsProPositionTpSlInput', () => {
     expect(mockDecimalProps.mock.lastCall?.[0].inputComponent).toBe(
       PerpsProPositionTpSlBottomSheetTextInput,
     );
+    expect(mockDecimalProps.mock.lastCall?.[0]).toMatchObject({
+      focusCursorAtEnd: true,
+      focusCursorAtEndMode: 'initialFocus',
+    });
   });
 
   it('uses the centered empty label and reveals raw editable input only while focused', () => {

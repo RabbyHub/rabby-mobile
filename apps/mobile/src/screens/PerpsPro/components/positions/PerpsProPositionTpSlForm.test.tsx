@@ -329,6 +329,36 @@ describe('PerpsProPositionTpSlForm', () => {
     keyboardDismiss.mockRestore();
   });
 
+  it('keeps the active Amount Slider appearance while Confirm is pending', () => {
+    const input = props();
+    const { rerender } = render(
+      <PerpsProPositionTpSlForm {...input} mode="add" position={position()} />,
+    );
+
+    act(() => {
+      mockSliderProps.mock.lastCall?.[0].onValueChange(50);
+    });
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({
+      dimWhenDisabled: false,
+      disabled: false,
+      value: 50,
+    });
+
+    rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="add"
+        pending
+        position={position()}
+      />,
+    );
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({
+      dimWhenDisabled: false,
+      disabled: true,
+      value: 50,
+    });
+  });
+
   it('creates independent TP and SL legs with one shared amount and Mark validation', () => {
     const input = props();
     render(

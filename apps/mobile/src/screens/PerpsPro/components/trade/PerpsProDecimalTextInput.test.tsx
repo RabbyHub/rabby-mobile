@@ -330,6 +330,39 @@ describe('PerpsProDecimalTextInput', () => {
     expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
   });
 
+  it('returns native cursor ownership before editing after blur and refocus', () => {
+    const onChangeText = jest.fn();
+    render(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        focusCursorAtEndMode="initialFocus"
+        maxDecimals={0}
+        onChangeText={onChangeText}
+        testID="decimal-input"
+        value="21"
+      />,
+    );
+    const input = screen.getByTestId('decimal-input');
+
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    fireEvent(input, 'blur', { nativeEvent: {} });
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(input.props.selection).toEqual({ end: 2, start: 2 });
+    mockSetNativeProps.mockClear();
+
+    fireEvent(input, 'keyPress', { nativeEvent: { key: 'Backspace' } });
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { end: 1, start: 1 } },
+    });
+    fireEvent.changeText(input, '2');
+
+    expect(onChangeText).toHaveBeenCalledWith('2');
+    expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
+    expect(mockSetNativeProps).not.toHaveBeenCalledWith({
+      selection: { end: 2, start: 2 },
+    });
+  });
+
   it('uses an injected input host only when explicitly requested', () => {
     render(
       <PerpsProDecimalTextInput

@@ -15,7 +15,18 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Keyboard, Pressable, useWindowDimensions, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import {
+  runOnJS,
+  useAnimatedReaction,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -81,6 +92,11 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     const scrollViewRef = useRef<BottomSheetScrollViewMethods>(null);
     const handledSettlementRevisionRef = useRef(0);
     const keyboardSessionActiveRef = useRef(false);
+    const scrollFrameRef = useRef<number | null>(null);
+    const restingSheetPositionRef = useRef<number | null>(null);
+    const animatedSheetPosition = useSharedValue(Number.NaN);
+    const restingSheetPosition = useSharedValue(Number.NaN);
+    const androidScrollAfterKeyboardRestore = useSharedValue(false);
     const { height: windowHeight } = useWindowDimensions();
     const stableWindowHeight = useRef(windowHeight).current;
     const insets = useSafeAreaInsets();
@@ -132,47 +148,6 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     }, [defaultTab, position.key, visible]);
 
     useEffect(() => {
-      if (!visible) {
-        keyboardSessionActiveRef.current = false;
-        return;
-      }
-
-      let scrollFrame: number | null = null;
-      const keyboardShowSubscription = Keyboard.addListener(
-        'keyboardDidShow',
-        () => {
-          keyboardSessionActiveRef.current = true;
-          if (scrollFrame !== null) {
-            cancelAnimationFrame(scrollFrame);
-            scrollFrame = null;
-          }
-        },
-      );
-      const keyboardHideSubscription = Keyboard.addListener(
-        'keyboardDidHide',
-        () => {
-          if (!keyboardSessionActiveRef.current) {
-            return;
-          }
-          keyboardSessionActiveRef.current = false;
-          scrollFrame = requestAnimationFrame(() => {
-            scrollFrame = null;
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-          });
-        },
-      );
-
-      return () => {
-        keyboardSessionActiveRef.current = false;
-        keyboardShowSubscription.remove();
-        keyboardHideSubscription.remove();
-        if (scrollFrame !== null) {
-          cancelAnimationFrame(scrollFrame);
-        }
-      };
-    }, [visible]);
-
-    useEffect(() => {
       if (
         !visible ||
         !settlement ||
@@ -216,6 +191,14 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       .filter(order => order.scope === 'position')
       .map(order => `${order.oid}:${order.triggerPrice}`)
       .join('|');
+    const stableFullOrderSignatureRef = useRef(fullOrderSignature);
+    if (!coveredByReview && !pending) {
+      stableFullOrderSignatureRef.current = fullOrderSignature;
+    }
+    const positionFormResetSignature =
+      coveredByReview || pending
+        ? stableFullOrderSignatureRef.current
+        : fullOrderSignature;
     const hasPartialOrders = visiblePosition.tpslOrders.some(
       order => order.scope === 'partial',
     );
@@ -236,6 +219,120 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         }),
       [snapPoint],
     );
+    const previousSnapPointRef = useRef(snapPoint);
+
+    const cancelScheduledScroll = useCallback(() => {
+      if (scrollFrameRef.current === null) {
+        return;
+      }
+      cancelAnimationFrame(scrollFrameRef.current);
+      scrollFrameRef.current = null;
+    }, []);
+    const scheduleScrollToEnd = useCallback(
+      (animated: boolean) => {
+        cancelScheduledScroll();
+        scrollFrameRef.current = requestAnimationFrame(() => {
+          scrollFrameRef.current = null;
+          scrollViewRef.current?.scrollToEnd({ animated });
+        });
+      },
+      [cancelScheduledScroll],
+    );
+    const handleSheetChange = useCallback(
+      (index: number, sheetPosition: number) => {
+        if (index !== 0 || keyboardSessionActiveRef.current) {
+          return;
+        }
+        const nextRestingPosition = sheetPosition + insets.top;
+        restingSheetPositionRef.current = nextRestingPosition;
+        restingSheetPosition.value = nextRestingPosition;
+      },
+      [insets.top, restingSheetPosition],
+    );
+
+    useEffect(() => {
+      const previousSnapPoint = previousSnapPointRef.current;
+      previousSnapPointRef.current = snapPoint;
+      if (
+        previousSnapPoint === snapPoint ||
+        restingSheetPositionRef.current === null
+      ) {
+        return;
+      }
+      const nextRestingPosition =
+        restingSheetPositionRef.current + previousSnapPoint - snapPoint;
+      restingSheetPositionRef.current = nextRestingPosition;
+      restingSheetPosition.value = nextRestingPosition;
+    }, [restingSheetPosition, snapPoint]);
+
+    useAnimatedReaction(
+      () => ({
+        current: animatedSheetPosition.value,
+        pending: androidScrollAfterKeyboardRestore.value,
+        resting: restingSheetPosition.value,
+      }),
+      state => {
+        if (
+          state.pending &&
+          Number.isFinite(state.resting) &&
+          state.current === state.resting
+        ) {
+          androidScrollAfterKeyboardRestore.value = false;
+          runOnJS(scheduleScrollToEnd)(false);
+        }
+      },
+      [scheduleScrollToEnd],
+    );
+
+    useEffect(() => {
+      if (!visible) {
+        keyboardSessionActiveRef.current = false;
+        androidScrollAfterKeyboardRestore.value = false;
+        restingSheetPositionRef.current = null;
+        restingSheetPosition.value = Number.NaN;
+        cancelScheduledScroll();
+        return;
+      }
+
+      const keyboardShowSubscription = Keyboard.addListener(
+        'keyboardDidShow',
+        () => {
+          keyboardSessionActiveRef.current = true;
+          androidScrollAfterKeyboardRestore.value = false;
+          cancelScheduledScroll();
+        },
+      );
+      const keyboardHideSubscription = Keyboard.addListener(
+        'keyboardDidHide',
+        () => {
+          if (!keyboardSessionActiveRef.current) {
+            return;
+          }
+          keyboardSessionActiveRef.current = false;
+          if (Platform.OS === 'android') {
+            androidScrollAfterKeyboardRestore.value = true;
+            return;
+          }
+          scheduleScrollToEnd(true);
+        },
+      );
+
+      return () => {
+        keyboardSessionActiveRef.current = false;
+        androidScrollAfterKeyboardRestore.value = false;
+        restingSheetPositionRef.current = null;
+        restingSheetPosition.value = Number.NaN;
+        keyboardShowSubscription.remove();
+        keyboardHideSubscription.remove();
+        cancelScheduledScroll();
+      };
+    }, [
+      androidScrollAfterKeyboardRestore,
+      cancelScheduledScroll,
+      restingSheetPosition,
+      scheduleScrollToEnd,
+      visible,
+    ]);
 
     return (
       <AppBottomSheetModal
@@ -245,6 +342,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
           linearGradientType: 'bg1',
         })}
         android_keyboardInputMode="adjustPan"
+        animatedPosition={animatedSheetPosition}
         backdropProps={{
           pressBehavior: coveredByReview || pending ? 'none' : 'close',
         }}
@@ -255,6 +353,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         handleStyle={styles.handle}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
+        onChange={handleSheetChange}
         onDismiss={handleDismiss}
         snapPoints={[snapPoint]}
         style={styles.modal}>
@@ -325,7 +424,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                 </View>
                 {tab === 'position' ? (
                   <PerpsProPositionTpSlForm
-                    key={`${position.key}:position:${fullOrderSignature}`}
+                    key={`${position.key}:position:${positionFormResetSignature}`}
                     amountUnit={amountUnit}
                     cancelingOids={cancelingOids}
                     markPrice={liveMarket.markPrice}

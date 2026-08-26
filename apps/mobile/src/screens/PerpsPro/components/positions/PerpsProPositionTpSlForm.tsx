@@ -569,6 +569,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
               onStartShouldSetResponderCapture={handleAmountSliderTouchCapture}
               testID="perps-pro-position-tpsl-amount-slider-section">
               <PerpsProSlider
+                dimWhenDisabled={false}
                 disabled={pending}
                 maximumValue={100}
                 minimumValue={0}

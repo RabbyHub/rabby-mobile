@@ -93,6 +93,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
             cursorColor={colors2024['brand-default']}
             editable={!disabled}
             focusCursorAtEnd
+            focusCursorAtEndMode="initialFocus"
             inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
             maxFontSizeMultiplier={1.2}
             maxDecimals={maxDecimals}
