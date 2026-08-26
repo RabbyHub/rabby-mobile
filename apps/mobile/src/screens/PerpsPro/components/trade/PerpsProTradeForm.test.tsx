@@ -558,6 +558,29 @@ describe('PerpsProTradeForm order matrix', () => {
     ).toEqual(initialInputStyle);
   });
 
+  it('removes a sixth CXMT significant figure from the native input', () => {
+    const trade = controller({ orderType: 'limit' });
+    trade.market = {
+      ...market,
+      canonicalCoin: 'xyz:CXMT',
+      displayBase: 'CXMT',
+      displayPair: 'CXMTUSDC',
+      marketData: {
+        ...market.marketData,
+        markPx: '8.28',
+        pxDecimals: 4,
+        szDecimals: 1,
+      },
+    } as PerpsProTradeController['market'];
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    const price = screen.getByLabelText('price(USDC)');
+    fireEvent.changeText(price, '12.3456');
+
+    expect(trade.setPrice).toHaveBeenCalledWith('limitPrice', '12.345');
+    expect(screen.getByLabelText('price(USDC)').props.value).toBe('12.345');
+  });
+
   it('animates only accepted order-book fill revisions, including repeated prices', () => {
     const base = controller({ orderType: 'limit' });
     const view = render(

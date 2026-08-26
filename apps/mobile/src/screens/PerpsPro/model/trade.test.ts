@@ -1,13 +1,16 @@
 import {
   createPerpsProTradeFormState,
+  getPerpsProPriceInputMaxDecimals,
   getPerpsProReduceOnlyAvailability,
   inferPerpsProConditionalClassification,
   isPerpsProAmountAboveSharedMax,
   isPerpsProTradeCombinationSupported,
+  isPerpsProPriceProtocolValid,
   resolvePerpsProDisplayAmount,
   resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
+  sanitizePerpsProPriceInput,
 } from './trade';
 
 const englishTradeMessages = require('../../../assets/locales/en/messages.json')
@@ -241,6 +244,30 @@ describe('Perps Pro trade model', () => {
   it('sanitizes unsupported input without adding separators', () => {
     expect(sanitizePerpsProDecimalInput('-01a.23.45e2', 3)).toBe('1.234');
     expect(sanitizePerpsProDecimalInput('01,23', 2)).toBe('1.23');
+  });
+
+  it('enforces Hyperliquid price decimals and significant figures together', () => {
+    expect(getPerpsProPriceInputMaxDecimals(1)).toBe(5);
+    expect(sanitizePerpsProPriceInput('12.3456', 1)).toBe('12.345');
+    expect(sanitizePerpsProPriceInput('1.23456', 1)).toBe('1.2345');
+    expect(sanitizePerpsProPriceInput('0.001234', 1)).toBe('0.00123');
+    expect(sanitizePerpsProPriceInput('0.001234', 0)).toBe('0.001234');
+    expect(sanitizePerpsProPriceInput('123456', 1)).toBe('123456');
+    expect(sanitizePerpsProPriceInput('123456.', 1)).toBe('123456.');
+    expect(sanitizePerpsProPriceInput('123456.7', 1)).toBe('123456');
+    expect(sanitizePerpsProPriceInput('78930.0', 1)).toBe('78930');
+    expect(sanitizePerpsProPriceInput('01,23456', 1)).toBe('1.2345');
+  });
+
+  it('validates only complete canonical protocol prices', () => {
+    expect(isPerpsProPriceProtocolValid('12.345', 1)).toBe(true);
+    expect(isPerpsProPriceProtocolValid('12.3456', 1)).toBe(false);
+    expect(isPerpsProPriceProtocolValid('0.001234', 0)).toBe(true);
+    expect(isPerpsProPriceProtocolValid('0.001234', 1)).toBe(false);
+    expect(isPerpsProPriceProtocolValid('123456', 1)).toBe(true);
+    expect(isPerpsProPriceProtocolValid('123456.', 1)).toBe(false);
+    expect(isPerpsProPriceProtocolValid('012.345', 1)).toBe(false);
+    expect(isPerpsProPriceProtocolValid('0', 1)).toBe(false);
   });
 
   it('only allows BBO with GTC', () => {

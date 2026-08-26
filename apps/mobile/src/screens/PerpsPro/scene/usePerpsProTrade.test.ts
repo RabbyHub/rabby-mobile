@@ -152,7 +152,9 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
   return {
     fetchClearinghouseStateHttp: jest.fn(),
     fetchPositionOpenOrdersHttp: jest.fn(),
-    getDexByCoin: jest.fn(() => ''),
+    getDexByCoin: jest.fn((coin: string) =>
+      coin.includes(':') ? coin.split(':')[0] : '',
+    ),
     getPerpsAccountRuntimeContext: () => ({
       account: mockAccount,
       generation: 1,
@@ -830,6 +832,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
     expect(mockShowToast).toHaveBeenCalledWith(serverError, 'error');
   });
+
   it('maps a known ALO rejection after the server remains authoritative', async () => {
     mockLimitOrderOpen.mockResolvedValueOnce({
       response: {
@@ -875,6 +878,58 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
   });
 
+  it('normalizes a CXMT Limit price before review and sends only the protocol-valid value', async () => {
+    const cxmtMarket = {
+      ...market,
+      canonicalCoin: 'xyz:CXMT',
+      displayBase: 'CXMT',
+      displayPair: 'CXMTUSDC',
+      marketData: {
+        ...market.marketData,
+        dexId: 'xyz',
+        markPx: '8.28',
+        midPx: '8.2894',
+        pxDecimals: 4,
+        szDecimals: 1,
+      },
+      marketKey: 'xyz::xyz:CXMT',
+    } as PerpsProMarket;
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: {
+          ...activeAssetData,
+          availableToTrade: ['1000', '1000'],
+          coin: 'xyz:CXMT',
+          markPx: '8.28',
+          maxTradeSzs: ['100', '100'],
+        },
+        bboBook: { ...book, coin: 'xyz:CXMT' },
+        bboPrices: { asks1: '8.30', asks5: null, bids1: '8.28', bids5: null },
+        bboSessionKey: 'xyz:CXMT:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market: cxmtMarket,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setPrice('limitPrice', '12.3456'));
+    act(() => hook.result.current.setAmount('100'));
+    expect(hook.result.current.form.limitPrice).toBe('12.345');
+
+    await act(async () => hook.result.current.requestReview('buy'));
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockLimitOrderOpen).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coin: 'xyz:CXMT',
+        limitPx: '12.345',
+      }),
+    );
+  });
   it('keeps TIF visible state mutually exclusive with BBO', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({

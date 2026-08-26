@@ -153,6 +153,90 @@ describe('Perps Pro open order action', () => {
     ).toEqual({ kind: 'limit', limitPrice: '62000', tif: 'Ioc' });
   });
 
+  it('rejects a CXMT price that exceeds five significant figures', () => {
+    expect(() =>
+      buildPerpsProOpenOrderCommand({
+        account,
+        bboPrice: null,
+        coin: 'xyz:CXMT',
+        dexId: 'xyz',
+        form: {
+          ...createPerpsProTradeFormState({ orderType: 'limit' }),
+          amount: '100',
+          limitPrice: '12.3456',
+        },
+        marketKey: 'xyz::xyz:CXMT',
+        marketPrice: '8.28',
+        side: 'buy',
+        szDecimals: 1,
+      }),
+    ).toThrow('Invalid Perps order price');
+  });
+
+  it('accepts the canonical five-significant-figure CXMT price', () => {
+    expect(
+      buildPerpsProOpenOrderCommand({
+        account,
+        bboPrice: null,
+        coin: 'xyz:CXMT',
+        dexId: 'xyz',
+        form: {
+          ...createPerpsProTradeFormState({ orderType: 'limit' }),
+          amount: '100',
+          limitPrice: '12.345',
+        },
+        marketKey: 'xyz::xyz:CXMT',
+        marketPrice: '8.28',
+        side: 'buy',
+        szDecimals: 1,
+      }).execution,
+    ).toEqual({ kind: 'limit', limitPrice: '12.345', tif: 'Gtc' });
+  });
+
+  it('validates both legs of a Conditional Limit price', () => {
+    expect(() =>
+      buildPerpsProOpenOrderCommand({
+        account,
+        bboPrice: null,
+        coin: 'xyz:CXMT',
+        dexId: 'xyz',
+        form: {
+          ...createPerpsProTradeFormState({ orderType: 'conditional' }),
+          amount: '100',
+          conditionalExecution: 'limit',
+          conditionalLimitPrice: '12.345',
+          triggerPrice: '12.3456',
+        },
+        marketKey: 'xyz::xyz:CXMT',
+        marketPrice: '8.28',
+        side: 'buy',
+        szDecimals: 1,
+      }),
+    ).toThrow('Invalid Perps order price');
+  });
+
+  it('does not apply typed-price precision rules to a live market reference', () => {
+    expect(
+      buildPerpsProOpenOrderCommand({
+        account,
+        bboPrice: null,
+        coin: 'xyz:CXMT',
+        dexId: 'xyz',
+        form: {
+          ...createPerpsProTradeFormState({ orderType: 'market' }),
+          amount: '100',
+        },
+        marketKey: 'xyz::xyz:CXMT',
+        marketPrice: '12.345678',
+        side: 'buy',
+        szDecimals: 1,
+      }).execution,
+    ).toEqual({
+      kind: 'market',
+      slippageReferenceMidPrice: '12.345678',
+    });
+  });
+
   it('freezes a BBO strategy without freezing its numeric price', () => {
     const command = buildPerpsProOpenOrderCommand({
       account,

@@ -82,6 +82,7 @@ import {
   resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
+  sanitizePerpsProPriceInput,
   type PerpsProConditionalExecution,
   type PerpsProTradeAmountSource,
   type PerpsProTradeAmountUnit,
@@ -567,26 +568,26 @@ export const usePerpsProTrade = ({
       field: 'conditionalLimitPrice' | 'limitPrice' | 'triggerPrice',
       value: string,
     ) => {
-      const price = sanitizePerpsProDecimalInput(
+      const price = sanitizePerpsProPriceInput(
         value,
-        market?.marketData.pxDecimals ?? 2,
+        market?.marketData.szDecimals ?? 0,
       );
       if (field === 'limitPrice') {
         shouldAutoFillLimitPriceRef.current = false;
       }
       patchForm({ [field]: price });
     },
-    [market?.marketData.pxDecimals, patchForm],
+    [market?.marketData.szDecimals, patchForm],
   );
   const getLatestLimitPrice = useCallback(
     () =>
       latestTradeRef.current
-        ? sanitizePerpsProDecimalInput(
+        ? sanitizePerpsProPriceInput(
             latestTradeRef.current.price,
-            market?.marketData.pxDecimals ?? 2,
+            market?.marketData.szDecimals ?? 0,
           )
         : '',
-    [market?.marketData.pxDecimals],
+    [market?.marketData.szDecimals],
   );
   const getOrderBookPriceIntent = useCallback(
     () =>
@@ -635,6 +636,11 @@ export const usePerpsProTrade = ({
       const normalizedPrice =
         price == null
           ? ''
+          : field === 'limitPrice' || field === 'triggerPrice'
+          ? sanitizePerpsProPriceInput(
+              price,
+              market?.marketData.szDecimals ?? 0,
+            )
           : sanitizePerpsProDecimalInput(
               price,
               market?.marketData.pxDecimals ?? 2,
@@ -663,7 +669,12 @@ export const usePerpsProTrade = ({
       });
       return 'accepted';
     },
-    [market?.marketData.pxDecimals, patchForm, setPrice],
+    [
+      market?.marketData.pxDecimals,
+      market?.marketData.szDecimals,
+      patchForm,
+      setPrice,
+    ],
   );
   const applyOrderType = useCallback(
     (orderType: PerpsProTradeOrderType) => {
@@ -744,9 +755,9 @@ export const usePerpsProTrade = ({
       ) {
         return;
       }
-      const limitPrice = sanitizePerpsProDecimalInput(
+      const limitPrice = sanitizePerpsProPriceInput(
         snapshot.trade.price,
-        market?.marketData.pxDecimals ?? 2,
+        market?.marketData.szDecimals ?? 0,
       );
       if (!positive(limitPrice)) {
         return;
@@ -754,7 +765,7 @@ export const usePerpsProTrade = ({
       shouldAutoFillLimitPriceRef.current = false;
       patchForm({ limitPrice });
     });
-  }, [executionActive, market?.marketData.pxDecimals, patchForm, tradeCoin]);
+  }, [executionActive, market?.marketData.szDecimals, patchForm, tradeCoin]);
 
   const enableBbo = useCallback(
     (bboStrategy: PerpsProBboStrategy) => {

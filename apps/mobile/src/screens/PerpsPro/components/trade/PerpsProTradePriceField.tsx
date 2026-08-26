@@ -22,6 +22,7 @@ type PerpsProTradePriceFieldProps = {
   fillRevision?: number;
   label: string;
   maxDecimals: number;
+  normalizeValue?: (value: string) => string;
   onChangeText: (value: string) => void;
   onPressSuffix?: () => void;
   onPressValue?: () => void;
@@ -38,6 +39,7 @@ export const PerpsProTradePriceField = React.memo(
       fillRevision = 0,
       label,
       maxDecimals,
+      normalizeValue,
       onChangeText,
       onPressSuffix,
       onPressValue,
@@ -90,6 +92,7 @@ export const PerpsProTradePriceField = React.memo(
               inputComponent={PerpsProAnimatedPriceTextInput}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
+              normalizeValue={normalizeValue}
               ref={ref}
               onBlur={() => setFocused(false)}
               onChangeText={onChangeText}

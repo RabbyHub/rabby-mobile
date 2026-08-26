@@ -16,6 +16,7 @@ import type { PerpsProBboStrategy } from '../model/bbo';
 import {
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
+  isPerpsProPriceProtocolValid,
   isPerpsProTradeCombinationSupported,
   resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
@@ -224,7 +225,20 @@ export const buildPerpsProOpenOrderCommand = ({
       ? execution.triggerPrice
       : null,
   ].filter((value): value is string => value != null);
-  if (priceValues.some(value => !decimal(value)?.gt(0))) {
+  const protocolPriceValues = [
+    execution.kind === 'limit' ? execution.limitPrice : null,
+    execution.kind === 'conditionalLimit' ? execution.limitPrice : null,
+    execution.kind === 'conditionalLimit' ||
+    execution.kind === 'conditionalMarket'
+      ? execution.triggerPrice
+      : null,
+  ].filter((value): value is string => value != null);
+  if (
+    priceValues.some(value => !decimal(value)?.gt(0)) ||
+    protocolPriceValues.some(
+      value => !isPerpsProPriceProtocolValid(value, szDecimals),
+    )
+  ) {
     throw new Error('Invalid Perps order price');
   }
   return Object.freeze({
