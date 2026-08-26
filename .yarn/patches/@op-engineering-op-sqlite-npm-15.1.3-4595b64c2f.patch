@@ -18,7 +18,8 @@ index eadea09354386b93831e22acfc7511b473b351d5..70c3f636ed7e5d60df010919cd94aaad
 +  auto elapsed = std::chrono::steady_clock::now() - startedAt;
 +  return std::chrono::duration<double, std::milli>(elapsed).count();
 +}
-+ #ifdef OP_SQLITE_USE_LIBSQL
++
+ #ifdef OP_SQLITE_USE_LIBSQL
  void DBHostObject::flush_pending_reactive_queries(
      const std::shared_ptr<jsi::Value> &resolve) {
 @@ -402,19 +408,24 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
@@ -116,18 +117,22 @@ index 28836e28059cfaa75f878f4c995160fdabca6a73..5dc35fc22576d9d87b0f0fbe4295c86d
  }
  const proxy = global.__OPSQLiteProxy;
  export const OPSQLite = proxy;
-++function emitRabbyOPSQLiteDiagnostic(payload) {
++
++function emitRabbyOPSQLiteDiagnostic(payload) {
 +  const hook = global.__RABBY_OP_SQLITE_DIAGNOSTIC__;
-++  if (typeof hook !== 'function') {
++
++  if (typeof hook !== 'function') {
 +    return;
 +  }
-++  try {
++
++  try {
 +    hook(payload);
 +  } catch {
 +    // Diagnostics must never affect database behavior.
 +  }
 +}
-+ function enhanceDB(db, options) {
++
+ function enhanceDB(db, options) {
    const lock = {
      queue: [],
 @@ -74,6 +89,24 @@ function enhanceDB(db, options) {
@@ -140,7 +145,8 @@ index 28836e28059cfaa75f878f4c995160fdabca6a73..5dc35fc22576d9d87b0f0fbe4295c86d
 +        if (!diagnosticEnabled) {
 +          return;
 +        }
-++        emitRabbyOPSQLiteDiagnostic({
++
++        emitRabbyOPSQLiteDiagnostic({
 +          op: 'executeBatch',
 +          opId: diagnosticOpId,
 +          phase,
@@ -241,12 +247,14 @@ index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f70820
 +    | ((payload: Record<string, unknown>) => void)
 +    | undefined;
 +}
-++function emitRabbyOPSQLiteDiagnostic(payload: Record<string, unknown>) {
++
++function emitRabbyOPSQLiteDiagnostic(payload: Record<string, unknown>) {
 +  const hook = global.__RABBY_OP_SQLITE_DIAGNOSTIC__;
 +  if (typeof hook !== 'function') {
 +    return;
 +  }
-++  try {
++
++  try {
 +    hook(payload);
 +  } catch {
 +    // Diagnostics must never affect database behavior.
@@ -270,17 +278,20 @@ index a6176e369dbdb6628231747dda303a072051d2ff..0a5bb9543cec2f5038c2e61406f70820
 +        if (!diagnosticEnabled) {
 +          return;
 +        }
-++        emitRabbyOPSQLiteDiagnostic({
++
++        emitRabbyOPSQLiteDiagnostic({
 +          op: 'executeBatch',
 +          opId: diagnosticOpId,
 +          phase,
 +          ...data,
 +        });
 +      };
-++      traceDiagnostic('wrapper_start', {
++
++      traceDiagnostic('wrapper_start', {
 +        tupleCount: commands.length,
 +      });
-++      const sanitizeStartedAt = Date.now();
++
++      const sanitizeStartedAt = Date.now();
        // Do normal for loop and replace in place for performance
        for (let i = 0; i < commands.length; i++) {
          // [1] is the params arg
