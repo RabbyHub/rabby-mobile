@@ -193,10 +193,25 @@ describe('PerpsProHistoryList', () => {
       />,
     );
 
+    const loadingIndicator = screen.getByLabelText(
+      'page.perps.pro.history.loadingMore',
+    );
+    expect(loadingIndicator.props.accessibilityState).toEqual({ busy: true });
+    expect(loadingIndicator.props.color).toBe('neutral-body');
+    expect(loadingIndicator.props.size).toBe('small');
+    expect(StyleSheet.flatten(loadingIndicator.props.style)).toMatchObject({
+      paddingBottom: 10,
+    });
     expect(
-      screen.getByLabelText('page.perps.pro.history.loadingMore').props
-        .accessibilityState,
-    ).toEqual({ busy: true });
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-history-loading-footer').props.style,
+      ),
+    ).toMatchObject({
+      alignItems: 'center',
+      height: 40,
+      justifyContent: 'center',
+      width: '100%',
+    });
     expect(screen.queryByText('page.perps.pro.history.loadEarlier')).toBeNull();
 
     view.rerender(
