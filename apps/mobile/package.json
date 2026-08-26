@@ -89,7 +89,7 @@
     "@notifee/react-native": "9.1.8",
     "@onekeyfe/hd-ble-sdk": "1.1.26",
     "@onekeyfe/react-native-ble-utils": "0.1.4",
-    "@op-engineering/op-sqlite": "^15.1.1",
+    "@op-engineering/op-sqlite": "^15.1.3",
     "@paraswap/sdk": "6.10.0",
     "@rabby-wallet/biz-utils": "workspace:^",
     "@rabby-wallet/eth-hd-keyring": "4.3.7",
