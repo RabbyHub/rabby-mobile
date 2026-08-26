@@ -10,6 +10,7 @@ import {
   AppState,
   Dimensions,
   Keyboard,
+  Platform,
   StyleSheet,
   type AppStateStatus,
 } from 'react-native';
@@ -48,6 +49,7 @@ let mockOrderBookPriceIntent:
   | { type: 'tradePrice' } = { type: 'tradePrice' };
 let mockOrderBookSelectionOutcome: 'accepted' | 'invalidPrice' | 'rejected' =
   'accepted';
+const initialPlatform = Platform.OS;
 let mockTradeForm: {
   bboEnabled: boolean;
   orderType: 'conditional' | 'limit' | 'market';
@@ -80,6 +82,7 @@ jest.mock('react-native-reanimated', () => {
       ScrollView: ReactNative.ScrollView,
       View: ReactNative.View,
     },
+    cancelAnimation: jest.fn(),
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     scrollTo: jest.fn(),
     useAnimatedRef: () => {
@@ -91,6 +94,7 @@ jest.mock('react-native-reanimated', () => {
       ref.observe = jest.fn(() => jest.fn());
       return ref;
     },
+    useAnimatedReaction: jest.fn(),
     useAnimatedScrollHandler: () => jest.fn(),
     useAnimatedStyle: (factory: () => object) => factory(),
     useEvent:
@@ -102,6 +106,7 @@ jest.mock('react-native-reanimated', () => {
         }),
     useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    withDecay: jest.fn(({ velocity }: { velocity: number }) => velocity),
   };
 });
 
@@ -148,10 +153,26 @@ jest.mock('react-native-screens', () => ({
 
 jest.mock('react-native-gesture-handler', () => {
   const panGesture: Record<string, jest.Mock> = {};
-  panGesture.activeOffsetX = jest.fn(() => panGesture);
-  panGesture.failOffsetY = jest.fn(() => panGesture);
-  panGesture.runOnJS = jest.fn(() => panGesture);
-  panGesture.onEnd = jest.fn(() => panGesture);
+  [
+    'activeOffsetX',
+    'failOffsetY',
+    'manualActivation',
+    'maxPointers',
+    'runOnJS',
+    'shouldCancelWhenOutside',
+  ].forEach(method => {
+    panGesture[method] = jest.fn(() => panGesture);
+  });
+  [
+    'onEnd',
+    'onFinalize',
+    'onStart',
+    'onTouchesDown',
+    'onTouchesMove',
+    'onUpdate',
+  ].forEach(method => {
+    panGesture[method] = jest.fn(() => panGesture);
+  });
   const manualGesture: Record<string, jest.Mock> = {};
   manualGesture.onTouchesDown = jest.fn(callback => {
     mockManualTouchesDown = callback;
@@ -727,6 +748,10 @@ describe('PerpsProScene market loading states', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: initialPlatform,
+    });
   });
 
   it('keeps the full skeleton while a ready catalogue resolves its market', () => {
@@ -1075,6 +1100,31 @@ describe('PerpsProScene market loading states', () => {
         : infoTabsTranslateY.__getValue(),
     ).toBe(536);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
+  });
+
+  it('uses one Android scene gesture owner and a shared Trade offset', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    });
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const scroll = screen.getByTestId('perps-pro-scroll');
+    expect(scroll.props.scrollEnabled).toBe(false);
+    expect(
+      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
+    ).toBe(false);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-overlay').props.style,
+      )?.transform,
+    ).toEqual([{ translateY: 96 }]);
+
+    view.unmount();
   });
 
   it('animates adjacent info tabs and persists only after Pager selection', () => {

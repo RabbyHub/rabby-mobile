@@ -2,7 +2,6 @@ import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { useMemo } from 'react';
 import type { FlatList } from 'react-native';
 import {
-  dispatchCommand,
   scrollTo,
   useAnimatedRef,
   useScrollViewOffset,
@@ -63,23 +62,6 @@ export const scrollPerpsProInfoBridgeTarget = (
     return;
   }
   scrollTo(target.ref, 0, offset, false);
-};
-
-export const stopPerpsProInfoBridgeTargetMomentum = (
-  controller: PerpsProInfoScrollBridgeController,
-  index: number,
-) => {
-  'worklet';
-  const target = controller.targets[index];
-  if (!target) {
-    return;
-  }
-  const offset = getPerpsProInfoBridgeOffset({
-    delta: 0,
-    maxOffset: target.maxOffset.value,
-    offset: target.offset.value,
-  });
-  dispatchCommand(target.ref, 'scrollTo', [0, offset, false]);
 };
 
 export const interruptPerpsProInfoScrollBridge = (

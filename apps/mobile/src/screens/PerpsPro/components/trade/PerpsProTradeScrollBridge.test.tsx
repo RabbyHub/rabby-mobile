@@ -2,18 +2,8 @@ import { act, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Platform, View } from 'react-native';
 
-const mockDispatchCommand = jest.fn();
 const mockScrollTo = jest.fn();
 let mockScrollHandlers: Record<string, (event: any) => void> = {};
-const mockAndroidGesture = {};
-
-jest.mock('react-native-gesture-handler', () => ({
-  GestureDetector: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-jest.mock('./usePerpsProAndroidTradeScrollDriver', () => ({
-  usePerpsProAndroidTradeScrollDriver: () => mockAndroidGesture,
-}));
 
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
@@ -24,7 +14,6 @@ jest.mock('react-native-reanimated', () => {
       ScrollView: ReactNative.ScrollView,
       View: ReactNative.View,
     },
-    dispatchCommand: (...args: unknown[]) => mockDispatchCommand(...args),
     scrollTo: (...args: unknown[]) => mockScrollTo(...args),
     useAnimatedRef: () => {
       const ref = (component?: unknown) => {
@@ -47,7 +36,6 @@ import type { PerpsProInfoScrollBridgeController } from '../info/usePerpsProInfo
 import {
   getPerpsProInfoBridgeOffset,
   interruptPerpsProInfoScrollBridge,
-  stopPerpsProInfoBridgeTargetMomentum,
 } from '../info/usePerpsProInfoScrollBridge';
 import { PerpsProTradeScrollBridge } from './PerpsProTradeScrollBridge';
 
@@ -185,18 +173,5 @@ describe('PerpsProTradeScrollBridge', () => {
         offset: Number.NaN,
       }),
     ).toBe(0);
-  });
-
-  it('uses the native manager command to abort Android target momentum', () => {
-    const controller = createController();
-    controller.targets[0].offset.value = 350;
-
-    stopPerpsProInfoBridgeTargetMomentum(controller, 0);
-
-    expect(mockDispatchCommand).toHaveBeenCalledWith(
-      controller.targets[0].ref,
-      'scrollTo',
-      [0, 300, false],
-    );
   });
 });
