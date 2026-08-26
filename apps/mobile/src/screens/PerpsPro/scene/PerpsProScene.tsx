@@ -1272,6 +1272,7 @@ export const PerpsProScene: React.FC<{
           editor={openOrderEdit.editor}
           onClose={openOrderEdit.close}
           onReview={openOrderEdit.requestBasicReview}
+          reviewRequesting={openOrderEdit.reviewRequesting}
           visible
         />
       ) : null}
@@ -1285,6 +1286,7 @@ export const PerpsProScene: React.FC<{
             info.allPositionsByCoin.get(openOrderEdit.editor.order.coin) ??
             openOrderEdit.editor.position
           }
+          reviewRequesting={openOrderEdit.reviewRequesting}
           visible
         />
       ) : null}

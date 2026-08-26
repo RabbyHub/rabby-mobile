@@ -244,6 +244,37 @@ describe('usePerpsProOpenOrderEdit', () => {
     expect(hook.result.current.review?.category).toBe('basic');
   });
 
+  it('exposes review construction immediately so the editor locks until the preference resolves', async () => {
+    let resolvePreference!: (value: boolean) => void;
+    mockGetSkip.mockImplementationOnce(
+      () =>
+        new Promise<boolean>(resolve => {
+          resolvePreference = resolve;
+        }),
+    );
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'quote'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+
+    let request!: Promise<void>;
+    act(() => {
+      request = hook.result.current.requestBasicReview({
+        amount: '60',
+        amountTouched: false,
+        price: '120',
+      });
+    });
+    expect(hook.result.current.reviewRequesting).toBe(true);
+
+    await act(async () => {
+      resolvePreference(false);
+      await request;
+    });
+    expect(hook.result.current.reviewRequesting).toBe(false);
+    expect(hook.result.current.review?.category).toBe('basic');
+  });
+
   it('persists the category checkbox only after final confirmation', async () => {
     const hook = renderHook(() =>
       usePerpsProOpenOrderEdit('account-a', 'base'),
