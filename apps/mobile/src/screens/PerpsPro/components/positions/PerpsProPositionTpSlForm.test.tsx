@@ -258,6 +258,44 @@ describe('PerpsProPositionTpSlForm', () => {
     ).toHaveTextContent('BTC');
   });
 
+  it('colors the TP estimate by signed PnL instead of TP/SL kind', () => {
+    const initialOrder = order('takeProfit', 7, '105');
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        initialOrder={initialOrder}
+        mode="modify"
+        position={{
+          ...position([initialOrder]),
+          entryPrice: '120',
+        }}
+      />,
+    );
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '110',
+    );
+    expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('-5.00');
+    expect(
+      StyleSheet.flatten(
+        mockTransProps.mock.lastCall?.[0].components['2'].props.style,
+      ),
+    ).toMatchObject({ color: 'red-default' });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '130',
+    );
+    expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+5.00');
+    expect(
+      StyleSheet.flatten(
+        mockTransProps.mock.lastCall?.[0].components['2'].props.style,
+      ),
+    ).toMatchObject({ color: 'green-default' });
+  });
+
   it('transfers Amount ownership between the input and Slider without retaining stale values', () => {
     const initialOrder = order('takeProfit', 7, '110');
     const keyboardDismiss = jest
