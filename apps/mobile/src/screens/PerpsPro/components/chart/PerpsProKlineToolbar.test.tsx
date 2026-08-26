@@ -71,6 +71,28 @@ describe('PerpsProKlineToolbar', () => {
     expect(onSelect).toHaveBeenCalledWith('1M');
   });
 
+  it('renders uppercase long-period labels and emits canonical values', () => {
+    const onSelect = jest.fn();
+    render(<PerpsProKlineToolbar interval="1h" onSelect={onSelect} />);
+
+    ['1H', '4H', '8H', '12H', '1D', '1W', '1M'].forEach(label => {
+      expect(screen.getByText(label)).toBeTruthy();
+    });
+    ['1h', '4h', '8h', '12h', '1d', '1w'].forEach(label => {
+      expect(screen.queryByText(label)).toBeNull();
+    });
+    expect(
+      screen
+        .getByText('1H')
+        .props.style.some(
+          (style: { fontWeight?: string }) => style?.fontWeight === '700',
+        ),
+    ).toBe(true);
+
+    fireEvent.press(screen.getByTestId('perps-pro-kline-interval-1w'));
+    expect(onSelect).toHaveBeenCalledWith('1w');
+  });
+
   it('blocks selection while the shared preference is hydrating', () => {
     const onSelect = jest.fn();
     render(

@@ -11,11 +11,28 @@ import {
   getUtcMonthStart,
   getUtcWeekStart,
   isSimplePerpsCandleInterval,
+  PERPS_PRO_CANDLE_INTERVAL_OPTIONS,
   toCanonicalPerpsCandleInterval,
   toSimplePerpsCandleInterval,
 } from './interval';
 
 describe('Perps candle intervals', () => {
+  it('keeps display labels separate from canonical interval values', () => {
+    expect(PERPS_PRO_CANDLE_INTERVAL_OPTIONS).toEqual([
+      { label: '1m', value: '1m' },
+      { label: '5m', value: '5m' },
+      { label: '15m', value: '15m' },
+      { label: '30m', value: '30m' },
+      { label: '1H', value: '1h' },
+      { label: '4H', value: '4h' },
+      { label: '8H', value: '8h' },
+      { label: '12H', value: '12h' },
+      { label: '1D', value: '1d' },
+      { label: '1W', value: '1w' },
+      { label: '1M', value: '1M' },
+    ]);
+  });
+
   it.each([
     '1m',
     '5m',
