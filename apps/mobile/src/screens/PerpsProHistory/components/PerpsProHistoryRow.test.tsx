@@ -291,9 +291,38 @@ describe('PerpsProHistoryRowView Orders', () => {
     );
 
     expect(screen.getByText('75/100')).toBeTruthy();
+    expect(screen.getByText('Take Profit Market')).toBeTruthy();
+    expect(screen.queryByText('Market (Triggered)')).toBeNull();
     expect(screen.getByText('-- / page.perps.pro.history.market')).toBeTruthy();
     expect(screen.getByText('page.perps.pro.history.true')).toBeTruthy();
   });
+
+  it.each([
+    ['Take Profit Market', true],
+    ['Take Profit Market', false],
+    ['Stop Market', true],
+  ] as const)(
+    'keeps the authoritative %s label when isTrigger=%s',
+    (orderType, isTrigger) => {
+      const fact = makeOrder(orderType);
+      render(
+        <PerpsProHistoryRowView
+          amountUnit="base"
+          onShowFeeExplanation={jest.fn()}
+          row={mapPerpsProOrderHistoryFact(
+            {
+              ...fact,
+              order: { ...fact.order, isTrigger },
+            },
+            {},
+          )}
+        />,
+      );
+
+      expect(screen.getByText(orderType)).toBeTruthy();
+      expect(screen.queryByText('Market (Triggered)')).toBeNull();
+    },
+  );
 
   it('keeps stablecoin base amounts at exactly two decimal places', () => {
     render(

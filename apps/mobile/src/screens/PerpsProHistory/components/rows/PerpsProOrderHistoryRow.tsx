@@ -12,11 +12,7 @@ import {
 import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
 
 const getOrderTypeLabel = (row: PerpsProOrderHistoryRow) => {
-  const type = titleCasePerpsProHistoryValue(row.orderType);
-  if (!row.isTrigger) {
-    return type;
-  }
-  return `${row.priceKind === 'market' ? 'Market' : 'Limit'} (Triggered)`;
+  return titleCasePerpsProHistoryValue(row.orderType);
 };
 
 export const PerpsProOrderHistoryRowView: React.FC<{
