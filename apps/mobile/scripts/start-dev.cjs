@@ -45,6 +45,8 @@ const metro = spawn(
     cwd: MOBILE_DIR,
     env: environment,
     stdio: 'inherit',
+    // Windows requires shell to execute .cmd files (Node CVE-2024-27980 fix)
+    shell: process.platform === 'win32',
   },
 );
 
