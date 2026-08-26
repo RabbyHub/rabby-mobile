@@ -9272,6 +9272,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/asset-sync-worker-core@workspace:^, @rabby-wallet/asset-sync-worker-core@workspace:packages/asset-sync-worker-core":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/asset-sync-worker-core@workspace:packages/asset-sync-worker-core"
+  dependencies:
+    "@types/jest": "npm:^27.4.1"
+    deepmerge: "npm:^4.2.2"
+    jest: "npm:^27.5.1"
+    ts-jest: "npm:^27.1.4"
+    typescript: "npm:5.7.3"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/base-utils@workspace:^, @rabby-wallet/base-utils@workspace:packages/base-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/base-utils@workspace:packages/base-utils"
@@ -38806,6 +38818,7 @@ __metadata:
     "@onekeyfe/react-native-ble-utils": "npm:0.1.4"
     "@op-engineering/op-sqlite": "npm:^15.1.1"
     "@paraswap/sdk": "npm:6.10.0"
+    "@rabby-wallet/asset-sync-worker-core": "workspace:^"
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": "npm:4.3.7"
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
