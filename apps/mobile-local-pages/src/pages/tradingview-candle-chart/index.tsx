@@ -44,6 +44,7 @@ import {
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
   isPerpsProFutureLogicalRangeAtBoundary,
+  PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
   PERPS_PRO_PRICE_SCALE_MARGINS,
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
@@ -84,7 +85,7 @@ function getChartColors(
       background: isLight
         ? colors2024['neutral-black']
         : colors2024['neutral-body'],
-      text: colors2024['neutral-InvertHighlight'],
+      text: colors2024['neutral-contrast'],
     },
   };
 }
@@ -449,44 +450,47 @@ tooltip.style.zIndex = '1000';
 containerEl.appendChild(tooltip);
 chartState.tooltip = tooltip;
 
+function applyPerpsProCrosshairLabelBaseStyles(element: HTMLDivElement) {
+  const layout = PERPS_PRO_CROSSHAIR_LABEL_LAYOUT;
+  element.style.boxSizing = 'border-box';
+  element.style.padding = `${layout.paddingVertical}px ${layout.paddingHorizontal}px`;
+  element.style.border = '0';
+  element.style.borderRadius = `${layout.borderRadius}px`;
+  element.style.overflow = 'hidden';
+  element.style.pointerEvents = 'none';
+  element.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+  element.style.fontSize = `${layout.fontSize}px`;
+  element.style.fontWeight = `${layout.fontWeight}`;
+  element.style.fontVariationSettings = '"wdth" 100';
+  element.style.letterSpacing = '0';
+  element.style.lineHeight = `${layout.lineHeight}px`;
+  element.style.whiteSpace = 'nowrap';
+  element.style.zIndex = '15';
+}
+
 const proCrosshairLabel = document.createElement('div');
+applyPerpsProCrosshairLabelBaseStyles(proCrosshairLabel);
 proCrosshairLabel.style.position = 'absolute';
 proCrosshairLabel.style.right = '0';
 proCrosshairLabel.style.display = 'none';
-proCrosshairLabel.style.boxSizing = 'border-box';
-proCrosshairLabel.style.width = '66px';
-proCrosshairLabel.style.minHeight = '42px';
-proCrosshairLabel.style.padding = '4px 6px';
-proCrosshairLabel.style.border = '0';
-proCrosshairLabel.style.borderRadius = '6px';
-proCrosshairLabel.style.pointerEvents = 'none';
-proCrosshairLabel.style.fontFamily = PERPS_PRO_FONT_FAMILY;
-proCrosshairLabel.style.fontSize = '12px';
-proCrosshairLabel.style.fontWeight = '500';
-proCrosshairLabel.style.lineHeight = '16px';
+proCrosshairLabel.style.width = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceWidth}px`;
+proCrosshairLabel.style.flexDirection = 'column';
+proCrosshairLabel.style.alignItems = 'flex-end';
+proCrosshairLabel.style.justifyContent = 'center';
 proCrosshairLabel.style.textAlign = 'right';
-proCrosshairLabel.style.whiteSpace = 'nowrap';
-proCrosshairLabel.style.zIndex = '15';
 containerEl.appendChild(proCrosshairLabel);
 
 const proCrosshairTimeLabel = document.createElement('div');
+applyPerpsProCrosshairLabelBaseStyles(proCrosshairTimeLabel);
 proCrosshairTimeLabel.style.position = 'absolute';
 proCrosshairTimeLabel.style.bottom = '0';
 proCrosshairTimeLabel.style.display = 'none';
 proCrosshairTimeLabel.style.visibility = 'hidden';
-proCrosshairTimeLabel.style.boxSizing = 'border-box';
-proCrosshairTimeLabel.style.minHeight = '24px';
-proCrosshairTimeLabel.style.padding = '4px 6px';
-proCrosshairTimeLabel.style.border = '0';
-proCrosshairTimeLabel.style.borderRadius = '6px';
-proCrosshairTimeLabel.style.pointerEvents = 'none';
-proCrosshairTimeLabel.style.fontFamily = PERPS_PRO_FONT_FAMILY;
-proCrosshairTimeLabel.style.fontSize = '12px';
-proCrosshairTimeLabel.style.fontWeight = '500';
-proCrosshairTimeLabel.style.lineHeight = '16px';
+proCrosshairTimeLabel.style.width = 'max-content';
+proCrosshairTimeLabel.style.height = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.timeHeight}px`;
+proCrosshairTimeLabel.style.alignItems = 'center';
+proCrosshairTimeLabel.style.justifyContent = 'center';
 proCrosshairTimeLabel.style.textAlign = 'center';
-proCrosshairTimeLabel.style.whiteSpace = 'nowrap';
-proCrosshairTimeLabel.style.zIndex = '15';
 containerEl.appendChild(proCrosshairTimeLabel);
 
 let proCrosshairLabelRows: {
@@ -503,7 +507,7 @@ function ensurePerpsProCrosshairLabelRows() {
   }
   const price = document.createElement('div');
   const change = document.createElement('div');
-  change.style.marginTop = '2px';
+  change.style.marginTop = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.rowGap}px`;
   proCrosshairLabel.appendChild(price);
   proCrosshairLabel.appendChild(change);
   proCrosshairLabelRows = { change, price };
@@ -534,7 +538,7 @@ function renderPerpsProCrosshairTimeLabel(time: number) {
   proCrosshairTimeLabel.style.background = colors.crosshairLabel.background;
   proCrosshairTimeLabel.style.color = colors.crosshairLabel.text;
   proCrosshairTimeLabel.style.visibility = 'hidden';
-  proCrosshairTimeLabel.style.display = 'block';
+  proCrosshairTimeLabel.style.display = 'flex';
   const left = getPerpsProCrosshairTimeLabelLeft(
     pointX,
     proCrosshairTimeLabel.offsetWidth,
@@ -584,14 +588,16 @@ function renderPerpsProCrosshairLabel(price: number) {
   }
   proCrosshairLabel.style.background = colors.crosshairLabel.background;
   proCrosshairLabel.style.color = colors.crosshairLabel.text;
-  const labelHeight = change ? 42 : 24;
+  const labelHeight = change
+    ? PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceTwoRowHeight
+    : PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceSingleRowHeight;
   const maxTop = Math.max(0, containerEl.clientHeight - labelHeight);
   proCrosshairLabel.style.top = `${Math.max(
     0,
     Math.min(maxTop, pointY - labelHeight / 2),
   )}px`;
-  proCrosshairLabel.style.minHeight = `${labelHeight}px`;
-  proCrosshairLabel.style.display = 'block';
+  proCrosshairLabel.style.height = `${labelHeight}px`;
+  proCrosshairLabel.style.display = 'flex';
 }
 
 let proCrosshairLabelFrameId: number | null = null;

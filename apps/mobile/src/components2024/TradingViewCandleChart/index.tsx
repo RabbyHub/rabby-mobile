@@ -204,7 +204,10 @@ const TradingViewCandleChart = ({
           variant === 'perps-pro' && !isLight
             ? colors2024['neutral-body']
             : colors2024['neutral-black'],
-        text: colors2024['neutral-InvertHighlight'],
+        text:
+          variant === 'perps-pro'
+            ? colors2024['neutral-contrast']
+            : colors2024['neutral-InvertHighlight'],
       },
     }),
     [backGroundColor, colors2024, isLight, variant],
