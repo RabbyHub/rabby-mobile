@@ -656,31 +656,39 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const createInfoState = (overrides: Record<string, unknown> = {}) => ({
-  account: { assets: [], mode: 'standard' },
-  accountIdentity: 'test-account',
-  accountState: 'loading',
-  activeInfoTab: 'account',
-  allOpenOrdersCount: 0,
-  allPositionsCount: 0,
-  allPositionsByCoin: new Map(),
-  hideOtherOpenOrderSymbols: false,
-  hideOtherPositionSymbols: false,
-  openOrderCategory: 'basic',
-  openOrderCommandCandidates: [],
-  openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
-  openOrdersEmpty: false,
-  openOrders: [],
-  pendingFundingCount: 0,
-  positionsEmpty: false,
-  positions: [],
-  retryAccount: jest.fn(),
-  setActiveInfoTab: jest.fn(),
-  setHideOtherOpenOrderSymbols: jest.fn(),
-  setHideOtherPositionSymbols: jest.fn(),
-  setOpenOrderCategory: jest.fn(),
-  ...overrides,
-});
+const createInfoState = (overrides: Record<string, unknown> = {}) => {
+  const openOrders = (overrides.openOrders ?? []) as unknown[];
+  const positions = (overrides.positions ?? []) as unknown[];
+  return {
+    account: { assets: [], mode: 'standard' },
+    accountIdentity: 'test-account',
+    accountState: 'loading',
+    activeInfoTab: 'account',
+    allOpenOrdersCount: 0,
+    allPositionsCount: 0,
+    allPositionsByCoin: new Map(),
+    hideOtherOpenOrderSymbols: false,
+    hideOtherPositionSymbols: false,
+    openOrderCategory: 'basic',
+    openOrderCollectionPresentation:
+      overrides.openOrderCollectionPresentation ??
+      (openOrders.length > 0 ? 'populated' : 'unresolved'),
+    openOrderCommandCandidates: [],
+    openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
+    openOrders,
+    pendingFundingCount: 0,
+    positionCollectionPresentation:
+      overrides.positionCollectionPresentation ??
+      (positions.length > 0 ? 'populated' : 'unresolved'),
+    positions,
+    retryAccount: jest.fn(),
+    setActiveInfoTab: jest.fn(),
+    setHideOtherOpenOrderSymbols: jest.fn(),
+    setHideOtherPositionSymbols: jest.fn(),
+    setOpenOrderCategory: jest.fn(),
+    ...overrides,
+  };
+};
 
 const createPositionActionsState = (
   overrides: Record<string, unknown> = {},
@@ -1724,7 +1732,7 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
         activeInfoTab: 'positions',
-        positionsEmpty: true,
+        positionCollectionPresentation: 'authoritativeEmpty',
       }),
     );
     const view = render(
@@ -1738,7 +1746,7 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
         activeInfoTab: 'openOrders',
-        openOrdersEmpty: true,
+        openOrderCollectionPresentation: 'authoritativeEmpty',
       }),
     );
     view.rerender(
@@ -1758,7 +1766,7 @@ describe('PerpsProScene market loading states', () => {
       createInfoState({
         activeInfoTab: 'positions',
         positions: [],
-        positionsEmpty: false,
+        positionCollectionPresentation: 'filteredEmpty',
       }),
     );
     const view = render(
@@ -1771,7 +1779,7 @@ describe('PerpsProScene market loading states', () => {
       createInfoState({
         activeInfoTab: 'openOrders',
         openOrders: [],
-        openOrdersEmpty: false,
+        openOrderCollectionPresentation: 'filteredEmpty',
       }),
     );
     view.rerender(
@@ -1779,6 +1787,33 @@ describe('PerpsProScene market loading states', () => {
     );
     expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeTruthy();
+  });
+
+  it('keeps collection controls visible without showing a false empty row while data is unresolved', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'positions',
+        positionCollectionPresentation: 'unresolved',
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.getByTestId('perps-pro-positions-controls')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-positions-empty')).toBeNull();
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        activeInfoTab: 'openOrders',
+        openOrderCollectionPresentation: 'unresolved',
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-open-orders-empty')).toBeNull();
   });
 
   it('routes Position and Open Orders filters to independent local state', () => {
@@ -1962,7 +1997,7 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
         activeInfoTab: 'positions',
-        positionsEmpty: true,
+        positionCollectionPresentation: 'authoritativeEmpty',
       }),
     );
     view.rerender(

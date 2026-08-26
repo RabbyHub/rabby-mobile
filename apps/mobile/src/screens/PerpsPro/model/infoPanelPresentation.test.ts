@@ -1,5 +1,5 @@
 import {
-  isPerpsProCollectionAuthoritativelyEmpty,
+  resolvePerpsProCollectionPresentation,
   resolvePerpsProInitialInfoTab,
   resolvePerpsProInfoTabPresentation,
 } from './infoPanelPresentation';
@@ -125,42 +125,60 @@ describe('Perps Pro collection empty-state authority', () => {
     ).toBeNull();
   });
 
-  it('shows an empty state only after the complete source is ready', () => {
+  it('distinguishes unresolved, authoritative empty, filtered empty, and populated collections', () => {
     expect(
-      isPerpsProCollectionAuthoritativelyEmpty({
+      resolvePerpsProCollectionPresentation({
         hasAccount: true,
         runtimeReady: true,
         sourceReady: true,
         totalCount: 0,
+        visibleCount: 0,
       }),
-    ).toBe(true);
+    ).toBe('authoritativeEmpty');
 
-    for (const overrides of [
-      { hasAccount: false },
-      { runtimeReady: false },
-      { sourceReady: false },
-      { totalCount: 1 },
-    ]) {
+    for (const overrides of [{ hasAccount: false }, { runtimeReady: false }]) {
       expect(
-        isPerpsProCollectionAuthoritativelyEmpty({
+        resolvePerpsProCollectionPresentation({
           hasAccount: true,
           runtimeReady: true,
           sourceReady: true,
           totalCount: 0,
+          visibleCount: 0,
           ...overrides,
         }),
-      ).toBe(false);
+      ).toBe('unresolved');
     }
-  });
 
-  it('uses the global count rather than a filtered list count', () => {
     expect(
-      isPerpsProCollectionAuthoritativelyEmpty({
+      resolvePerpsProCollectionPresentation({
+        hasAccount: true,
+        runtimeReady: true,
+        sourceReady: false,
+        totalCount: 0,
+        visibleCount: 0,
+      }),
+    ).toBe('unresolved');
+
+    expect(
+      resolvePerpsProCollectionPresentation({
         hasAccount: true,
         runtimeReady: true,
         sourceReady: true,
         totalCount: 2,
+        visibleCount: 0,
       }),
-    ).toBe(false);
+    ).toBe('filteredEmpty');
+  });
+
+  it('preserves visible partial rows while the source readiness baseline is pending', () => {
+    expect(
+      resolvePerpsProCollectionPresentation({
+        hasAccount: true,
+        runtimeReady: true,
+        sourceReady: false,
+        totalCount: 2,
+        visibleCount: 1,
+      }),
+    ).toBe('populated');
   });
 });

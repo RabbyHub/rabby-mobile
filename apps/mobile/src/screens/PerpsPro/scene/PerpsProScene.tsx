@@ -565,22 +565,20 @@ export const PerpsProScene: React.FC<{
         ...(scrollContentMinimumHeightStyle
           ? [scrollContentMinimumHeightStyle]
           : []),
-        trailingStyle(!info.positionsEmpty && info.positions.length > 0),
+        trailingStyle(info.positionCollectionPresentation === 'populated'),
       ],
       openOrders: [
         styles.scrollContent,
         ...(scrollContentMinimumHeightStyle
           ? [scrollContentMinimumHeightStyle]
           : []),
-        trailingStyle(!info.openOrdersEmpty && info.openOrders.length > 0),
+        trailingStyle(info.openOrderCollectionPresentation === 'populated'),
       ],
     };
   }, [
     info.accountState,
-    info.openOrders.length,
-    info.openOrdersEmpty,
-    info.positions.length,
-    info.positionsEmpty,
+    info.openOrderCollectionPresentation,
+    info.positionCollectionPresentation,
     populatedInfoBottomPadding,
     scrollContentMinimumHeightStyle,
     styles.scrollContent,
@@ -730,35 +728,49 @@ export const PerpsProScene: React.FC<{
       });
     }
 
-    const visiblePositionRows: PerpsProSceneRow[] =
-      info.positions.length === 0
+    const positionDataRows: PerpsProSceneRow[] = info.positions.map(
+      position => ({
+        key: `position:${info.accountIdentity}:${position.key}`,
+        position,
+        type: 'position',
+      }),
+    );
+    const positionRows: PerpsProSceneRow[] =
+      info.positionCollectionPresentation === 'authoritativeEmpty'
         ? [{ key: 'positions-empty', type: 'positions-empty' }]
-        : info.positions.map(position => ({
-            key: `position:${info.accountIdentity}:${position.key}`,
-            position,
-            type: 'position',
-          }));
-    const positionRows: PerpsProSceneRow[] = info.positionsEmpty
-      ? [{ key: 'positions-empty', type: 'positions-empty' }]
-      : [
-          { key: 'positions-controls', type: 'positions-controls' },
-          ...visiblePositionRows,
-        ];
+        : info.positionCollectionPresentation === 'filteredEmpty'
+        ? [
+            { key: 'positions-controls', type: 'positions-controls' },
+            { key: 'positions-empty', type: 'positions-empty' },
+          ]
+        : info.positionCollectionPresentation === 'populated'
+        ? [
+            { key: 'positions-controls', type: 'positions-controls' },
+            ...positionDataRows,
+          ]
+        : [{ key: 'positions-controls', type: 'positions-controls' }];
 
-    const visibleOpenOrderRows: PerpsProSceneRow[] =
-      info.openOrders.length === 0
+    const openOrderDataRows: PerpsProSceneRow[] = info.openOrders.map(
+      order => ({
+        key: `open-order:${info.accountIdentity}:${order.key}`,
+        order,
+        type: 'open-order',
+      }),
+    );
+    const openOrderRows: PerpsProSceneRow[] =
+      info.openOrderCollectionPresentation === 'authoritativeEmpty'
         ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
-        : info.openOrders.map(order => ({
-            key: `open-order:${info.accountIdentity}:${order.key}`,
-            order,
-            type: 'open-order',
-          }));
-    const openOrderRows: PerpsProSceneRow[] = info.openOrdersEmpty
-      ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
-      : [
-          { key: 'open-orders-controls', type: 'open-orders-controls' },
-          ...visibleOpenOrderRows,
-        ];
+        : info.openOrderCollectionPresentation === 'filteredEmpty'
+        ? [
+            { key: 'open-orders-controls', type: 'open-orders-controls' },
+            { key: 'open-orders-empty', type: 'open-orders-empty' },
+          ]
+        : info.openOrderCollectionPresentation === 'populated'
+        ? [
+            { key: 'open-orders-controls', type: 'open-orders-controls' },
+            ...openOrderDataRows,
+          ]
+        : [{ key: 'open-orders-controls', type: 'open-orders-controls' }];
 
     return {
       account: accountRows,
@@ -769,10 +781,10 @@ export const PerpsProScene: React.FC<{
     info.account,
     info.accountIdentity,
     info.accountState,
+    info.openOrderCollectionPresentation,
     info.openOrders,
-    info.openOrdersEmpty,
+    info.positionCollectionPresentation,
     info.positions,
-    info.positionsEmpty,
   ]);
   const renderTrade = useCallback(() => {
     if (scene.currentMarket) {

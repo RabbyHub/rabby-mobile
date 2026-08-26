@@ -65,6 +65,10 @@ jest.mock('../common/PerpsProFieldExplanationContext', () => ({
   usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
 }));
 
+jest.mock('../loading/PerpsProSkeletonBlock', () => ({
+  PerpsProSkeletonBlock: require('react-native').View,
+}));
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -184,7 +188,10 @@ describe('PerpsProPositionCard', () => {
       />,
     );
 
-    expect(screen.getByText('BTC')).toBeTruthy();
+    expect(screen.queryByText('BTC')).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-position-market-hyna:BTC-skeleton'),
+    ).toBeTruthy();
     expect(screen.getByText('hyna')).toBeTruthy();
     expect(screen.queryByText('hyna:BTC')).toBeNull();
     expect(screen.getByText('PNL')).toBeTruthy();
@@ -207,6 +214,9 @@ describe('PerpsProPositionCard', () => {
       />,
     );
     expect(screen.getByText('BTCUSDE')).toBeTruthy();
+    expect(
+      screen.queryByTestId('perps-pro-position-market-hyna:BTC-skeleton'),
+    ).toBeNull();
     expect(screen.getByText('PNL (USDE)')).toBeTruthy();
   });
 
