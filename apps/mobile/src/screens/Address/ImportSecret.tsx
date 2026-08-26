@@ -395,14 +395,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   // Handle scanner result
   React.useEffect(() => {
     if (scanner.text) {
-      if (activeTab === 'seedPhrase') {
-        setMnemonics(scanner.text);
-      } else {
-        setPrivateKey(scanner.text);
-      }
+      handleInputChange(activeTab, scanner.text);
       scanner.clear();
     }
-  }, [scanner, activeTab]);
+  }, [scanner, activeTab, handleInputChange]);
 
   const isConfirmDisabled = React.useMemo(() => {
     if (activeTab === 'seedPhrase') {
