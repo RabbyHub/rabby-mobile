@@ -117,9 +117,68 @@ describe('PerpsProOrderBookRow', () => {
       fontFamily: FontNames.sf_pro,
     });
     expect(
-      StyleSheet.flatten(screen.getByText('200.00').props.style),
+      StyleSheet.flatten(screen.getByText('200').props.style),
     ).toMatchObject({
       fontFamily: FontNames.sf_pro,
     });
+  });
+
+  it('uses market size precision below 1K and fixed K/M/B precision', () => {
+    const view = render(
+      <PerpsProOrderBookRow
+        amountDecimals={1}
+        amountUnit="base"
+        level={{
+          price: '100',
+          priceNumber: 100,
+          size: 20,
+          total: 20,
+          totalUsd: 2000,
+          usdSize: 2000,
+        }}
+        maxTotal={20}
+        priceDecimals={2}
+        side="bid"
+      />,
+    );
+
+    expect(screen.getByText('20')).toBeTruthy();
+    view.rerender(
+      <PerpsProOrderBookRow
+        amountDecimals={1}
+        amountUnit="base"
+        level={{
+          price: '100',
+          priceNumber: 100,
+          size: 20.5,
+          total: 20.5,
+          totalUsd: 2050,
+          usdSize: 2050,
+        }}
+        maxTotal={20.5}
+        priceDecimals={2}
+        side="bid"
+      />,
+    );
+    expect(screen.getByText('20.5')).toBeTruthy();
+
+    view.rerender(
+      <PerpsProOrderBookRow
+        amountDecimals={1}
+        amountUnit="base"
+        level={{
+          price: '100',
+          priceNumber: 100,
+          size: 1000,
+          total: 1000,
+          totalUsd: 100000,
+          usdSize: 100000,
+        }}
+        maxTotal={1000}
+        priceDecimals={2}
+        side="bid"
+      />,
+    );
+    expect(screen.getByText('1.00K')).toBeTruthy();
   });
 });

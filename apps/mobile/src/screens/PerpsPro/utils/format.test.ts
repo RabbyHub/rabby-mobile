@@ -3,6 +3,7 @@ import {
   formatPerpsProDecimal,
   formatPerpsProFundingRate,
   formatPerpsProMarketSelectorPrice,
+  formatPerpsProOrderBookAmount,
   formatPerpsProPercent,
   formatPerpsProPrice,
   formatPerpsProSignedUsd,
@@ -19,6 +20,20 @@ describe('Perps Pro formatters', () => {
     expect(formatPerpsProCompactNumber(14_080_000)).toBe('14.08M');
     expect(formatPerpsProCompactNumber(149_900_000)).toBe('149.90M');
     expect(formatPerpsProCompactNumber(1_500_000_000)).toBe('1.50B');
+  });
+
+  it('matches Desktop order-book precision and K/M/B presentation', () => {
+    expect(formatPerpsProOrderBookAmount(null, 1)).toBe('-');
+    expect(formatPerpsProOrderBookAmount('20.0', 1)).toBe('20');
+    expect(formatPerpsProOrderBookAmount('20.5', 1)).toBe('20.5');
+    expect(formatPerpsProOrderBookAmount('20.56', 1)).toBe('20.6');
+    expect(formatPerpsProOrderBookAmount('999.9', 1)).toBe('999.9');
+    expect(formatPerpsProOrderBookAmount('1000', 1)).toBe('1.00K');
+    expect(formatPerpsProOrderBookAmount('1250', 1)).toBe('1.25K');
+    expect(formatPerpsProOrderBookAmount('1000000', 1)).toBe('1.00M');
+    expect(formatPerpsProOrderBookAmount('1000000000', 1)).toBe('1.00B');
+    expect(formatPerpsProOrderBookAmount('1000000000000', 1)).toBe('1000.00B');
+    expect(formatPerpsProOrderBookAmount('20.50', 2)).toBe('20.5');
   });
 
   it('formats prices with the requested aggregation decimals', () => {

@@ -110,6 +110,8 @@ export const PerpsProOrderBook: React.FC<{
     selectedTickOption?.priceDecimals ?? market?.marketData.pxDecimals ?? 2;
   const marketPriceDecimals =
     market?.marketData.pxDecimals ?? orderBookPriceDecimals;
+  const amountDecimals =
+    amountUnit === 'base' ? market?.marketData.szDecimals ?? 2 : 2;
   const modeLabels: Record<PerpsOrderBookMode, string> = {
     both: t('page.perps.pro.orderBook.viewBoth'),
     asks: t('page.perps.pro.orderBook.viewAsks'),
@@ -141,6 +143,7 @@ export const PerpsProOrderBook: React.FC<{
   const renderRows = (side: 'ask' | 'bid', rows: PerpsOrderBookDisplayRow[]) =>
     Array.from({ length: rowCount }, (_, index) => (
       <PerpsProOrderBookRow
+        amountDecimals={amountDecimals}
         amountUnit={amountUnit}
         key={`${side}:${index}`}
         level={rows[index] ?? undefined}

@@ -34,6 +34,41 @@ export const formatPerpsProCompactNumber = (
   });
 };
 
+/**
+ * Mirrors Desktop Perps order-book formatting for valid server amounts:
+ * plain values use the supplied precision and trim insignificant zeroes,
+ * while K/M/B abbreviations always keep two decimals.
+ */
+export const formatPerpsProOrderBookAmount = (
+  value: number | string | null | undefined,
+  decimals = 2,
+) => {
+  if (value == null || value === '') {
+    return '-';
+  }
+  const amount = new BigNumber(value);
+  if (!amount.isFinite()) {
+    return '-';
+  }
+  if (amount.gte(1e9)) {
+    return `${amount.dividedBy(1e9).toFixed(2)}B`;
+  }
+  if (amount.gte(1e6)) {
+    return `${amount.dividedBy(1e6).toFixed(2)}M`;
+  }
+  if (amount.gte(1e3)) {
+    return `${amount.dividedBy(1e3).toFixed(2)}K`;
+  }
+  const safeDecimals = Number.isSafeInteger(decimals)
+    ? Math.max(0, decimals)
+    : 2;
+  const [integer, fraction = ''] = amount.toFixed(safeDecimals).split('.');
+  const trimmedFraction = fraction.replace(/0+$/u, '');
+  return withThousandsSeparators(
+    trimmedFraction ? `${integer}.${trimmedFraction}` : integer,
+  );
+};
+
 export const formatPerpsProPrice = (
   value: number | string | null | undefined,
   decimals?: number,

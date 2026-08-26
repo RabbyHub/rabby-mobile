@@ -12,13 +12,12 @@ import {
   type PerpsOrderBookMode,
 } from '../../model/orderBook';
 import {
-  formatPerpsProCompactNumber,
+  formatPerpsProOrderBookAmount,
   formatPerpsProPrice,
 } from '../../utils/format';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
 
 export const PERPS_PRO_ORDER_BOOK_ROW_HEIGHT = 20;
-const PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS = 2;
 
 export const PerpsProOrderBookModeIcon: React.FC<{
   mode: PerpsOrderBookMode;
@@ -56,6 +55,7 @@ export const PerpsProOrderBookModeIcon: React.FC<{
 
 export const PerpsProOrderBookRow: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
+  amountDecimals?: number;
   level?: PerpsOrderBookLevel;
   maxTotal: number;
   onSelectPrice?: (price: string | null) => void;
@@ -64,6 +64,7 @@ export const PerpsProOrderBookRow: React.FC<{
   side: 'ask' | 'bid';
 }> = ({
   amountUnit = 'quote',
+  amountDecimals = 2,
   level,
   maxTotal,
   onSelectPrice,
@@ -112,9 +113,9 @@ export const PerpsProOrderBookRow: React.FC<{
         numberOfLines={1}
         style={[styles.bookAmount, level ? null : styles.placeholder]}>
         {level
-          ? formatPerpsProCompactNumber(
+          ? formatPerpsProOrderBookAmount(
               amountUnit === 'base' ? level.size : level.usdSize,
-              PERPS_PRO_ORDER_BOOK_AMOUNT_DECIMALS,
+              amountDecimals,
             )
           : '--'}
       </Text>
